@@ -850,6 +850,13 @@ describe('monitor history panel', () => {
   });
 
   it('explains when the history route is wired but the store has not returned samples yet', () => {
+    const historyEmptyTranslator = (key: string, params?: Record<string, string | number | null | undefined>) => {
+      if (key === 'monitor.detail.history.blocker.title') return 'No historical samples yet';
+      if (key === 'monitor.detail.history.blocker.copy') {
+        return 'Realtime metrics can be available before the history store has queryable samples.';
+      }
+      return t(key, params);
+    };
     const html = renderToStaticMarkup(
       <MonitorHistoryPanel
         payload={{ values: {} } as any}
@@ -874,12 +881,12 @@ describe('monitor history panel', () => {
         onSetHistoryMode={() => {}}
         onToggleExpanded={() => {}}
         formatTime={value => `t${value}`}
-        t={t}
+        t={historyEmptyTranslator}
       />
     );
 
-    expect(html).toContain('History not ready');
-    expect(html).toContain('History store has not returned series yet.');
+    expect(html).toContain('No historical samples yet');
+    expect(html).toContain('Realtime metrics can be available before the history store has queryable samples.');
   });
 
   it('disables point navigation at the current boundaries', () => {

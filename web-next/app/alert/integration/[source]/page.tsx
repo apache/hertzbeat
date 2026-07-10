@@ -1,7 +1,6 @@
 import path from 'node:path';
 import Link from 'next/link';
 import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
 import React from 'react';
 import { Settings } from 'lucide-react';
 import { HzSourceDocShell } from '@hertzbeat/ui/source-doc-shell';
@@ -15,12 +14,13 @@ import {
 } from '@/lib/alert-integration/view-model';
 import { normalizeLocale } from '@/lib/i18n';
 import { AlertIntegrationMarkdown } from '../../../../components/pages/alert-integration-markdown';
+import { AlertIntegrationSourceRedirect } from './alert-integration-source-redirect';
 
 export default async function AlertIntegrationPage({ params }: { params: Promise<{ source: string }> }) {
   const { source } = await params;
   const selectedSource = getIntegrationSource(source.trim());
   if (selectedSource.id !== source) {
-    redirect(buildAlertIntegrationSourceHref(selectedSource));
+    return <AlertIntegrationSourceRedirect href={buildAlertIntegrationSourceHref(selectedSource)} />;
   }
   const requestHeaders = await headers();
   const locale = normalizeLocale(requestHeaders.get('accept-language'));
@@ -41,7 +41,8 @@ export default async function AlertIntegrationPage({ params }: { params: Promise
       selected: item.id === selectedSource.id,
       itemProps: {
         'data-alert-integration-source-item': item.id,
-        'data-alert-integration-source-selected': item.id === selectedSource.id ? 'true' : undefined
+        'data-alert-integration-source-selected': item.id === selectedSource.id ? 'true' : undefined,
+        'aria-current': item.id === selectedSource.id ? ('page' as const) : undefined
       },
       iconProps: {
         'data-alert-integration-source-icon': item.id

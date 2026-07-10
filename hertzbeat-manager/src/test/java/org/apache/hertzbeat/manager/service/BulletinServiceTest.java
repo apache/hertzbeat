@@ -106,6 +106,50 @@ public class BulletinServiceTest {
     }
 
     @Test
+    public void testValidateAllowsEditingSameBulletinName() throws Exception {
+        Map<String, List<String>> fields = new HashMap<String, List<String>>();
+        fields.put("summary", List.of("responseTime"));
+
+        List<Long> ids = new ArrayList<Long>();
+        ids.add((long) 1);
+
+        Bulletin obj = new Bulletin();
+        obj.setId((long) 7);
+        obj.setName("Ops board");
+        obj.setApp("website");
+        obj.setFields(fields);
+        obj.setMonitorIds(ids);
+
+        when(bulletinDao.countByNameAndIdNot("Ops board", 7L)).thenReturn(0);
+
+        assertDoesNotThrow(() -> {
+            bulletinService.validate(obj);
+        });
+    }
+
+    @Test
+    public void testValidateRejectsEditingToAnotherBulletinName() throws Exception {
+        Map<String, List<String>> fields = new HashMap<String, List<String>>();
+        fields.put("summary", List.of("responseTime"));
+
+        List<Long> ids = new ArrayList<Long>();
+        ids.add((long) 1);
+
+        Bulletin obj = new Bulletin();
+        obj.setId((long) 7);
+        obj.setName("Ops board");
+        obj.setApp("website");
+        obj.setFields(fields);
+        obj.setMonitorIds(ids);
+
+        when(bulletinDao.countByNameAndIdNot("Ops board", 7L)).thenReturn(1);
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            bulletinService.validate(obj);
+        });
+    }
+
+    @Test
     public void testAddBulletin() throws Exception {
         Map<String, List<String>> fields = new HashMap<String, List<String>>();
         fields.put("field1", null);

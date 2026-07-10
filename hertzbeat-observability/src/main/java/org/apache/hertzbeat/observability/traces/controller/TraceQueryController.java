@@ -151,14 +151,6 @@ public class TraceQueryController {
     private String mergeEntityContextResourceFilter(Long entityId, String entityType, String resourceFilter) {
         String normalizedResourceFilter = StringUtils.trimWhitespace(resourceFilter);
         String scopedResourceFilter = normalizedResourceFilter;
-        if (entityId != null && entityId > 0 && (StringUtils.hasText(scopedResourceFilter)
-                ? !scopedResourceFilter.contains(OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_ID)
-                : true)) {
-            String entityIdFilter = OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_ID + "=\"" + entityId + "\"";
-            scopedResourceFilter = StringUtils.hasText(scopedResourceFilter)
-                    ? scopedResourceFilter + " and " + entityIdFilter
-                    : entityIdFilter;
-        }
         String normalizedEntityType = StringUtils.trimWhitespace(entityType);
         if (!StringUtils.hasText(normalizedEntityType) || !normalizedEntityType.matches("[A-Za-z0-9_.:-]+")) {
             return scopedResourceFilter;

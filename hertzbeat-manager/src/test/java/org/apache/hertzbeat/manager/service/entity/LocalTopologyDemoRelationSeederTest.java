@@ -142,6 +142,9 @@ class LocalTopologyDemoRelationSeederTest {
         ArgumentCaptor<List<ObserveEntity>> entitiesCaptor = ArgumentCaptor.forClass(List.class);
         verify(observeEntityDao).saveAll(entitiesCaptor.capture());
         assertEquals(1993, entitiesCaptor.getValue().size());
+        ArgumentCaptor<List<EntityRelation>> relationsCaptor = ArgumentCaptor.forClass(List.class);
+        verify(entityRelationDao).saveAll(relationsCaptor.capture());
+        assertEquals(1992, relationsCaptor.getValue().size());
     }
 
     @Test
@@ -156,21 +159,37 @@ class LocalTopologyDemoRelationSeederTest {
 
         ArgumentCaptor<List<ObserveEntity>> entitiesCaptor = ArgumentCaptor.forClass(List.class);
         ArgumentCaptor<List<EntityIdentity>> identitiesCaptor = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<List<EntityRelation>> relationsCaptor = ArgumentCaptor.forClass(List.class);
         verify(observeEntityDao).saveAll(entitiesCaptor.capture());
         verify(entityIdentityDao).saveAll(identitiesCaptor.capture());
+        verify(entityRelationDao).saveAll(relationsCaptor.capture());
         List<ObserveEntity> entities = entitiesCaptor.getValue();
         List<EntityIdentity> identities = identitiesCaptor.getValue();
+        List<EntityRelation> relations = relationsCaptor.getValue();
         assertEquals(1993, entities.size());
         assertEquals(1993, identities.size());
+        assertEquals(1992, relations.size());
         assertEquals("hb-mix-1780329856-edge-gateway", entities.getFirst().getName());
         assertEquals("scale-mix", entities.getFirst().getNamespace());
         assertEquals("prod", entities.getFirst().getEnvironment());
+        assertEquals("local-scale-proof", entities.getFirst().getSource());
         assertEquals("service", entities.getFirst().getType());
         assertEquals("hb-mix-1780329856-edge-gateway", identities.getFirst().getIdentityValue());
         assertEquals("service.name", identities.getFirst().getIdentityKey());
         assertEquals("otel_resource", identities.getFirst().getIdentityType());
         assertEquals("hb-mix-1780329856-svc-11-164", entities.getLast().getName());
+        assertEquals("local-scale-proof", entities.getLast().getSource());
         assertEquals("hb-mix-1780329856-svc-11-164", identities.getLast().getIdentityValue());
+        EntityRelation gatewayToDomain = relations.getFirst();
+        assertEquals(646566130000000L, gatewayToDomain.getSourceEntityId());
+        assertEquals(646566130000001L, gatewayToDomain.getTargetEntityId());
+        assertEquals("trace-call", gatewayToDomain.getRelationType());
+        assertEquals("otlp-trace-call", gatewayToDomain.getRelationSource());
+        assertEquals("local-topology-demo-seed", gatewayToDomain.getAttributes().get("seed"));
+        EntityRelation lastDomainToService = relations.getLast();
+        assertEquals(646566130000012L, lastDomainToService.getSourceEntityId());
+        assertEquals(646566130001992L, lastDomainToService.getTargetEntityId());
+        assertEquals("trace-call", lastDomainToService.getRelationType());
     }
 
     @Test
@@ -207,6 +226,9 @@ class LocalTopologyDemoRelationSeederTest {
         assertEquals("hb-mix-1780329856-edge-gateway", gatewayIdentity.getIdentityValue());
         assertEquals("hb-mix-1780329856-edge-gateway", gatewayIdentity.getNormalizedValue());
         assertEquals(1993, identities.size());
+        ArgumentCaptor<List<EntityRelation>> relationsCaptor = ArgumentCaptor.forClass(List.class);
+        verify(entityRelationDao).saveAll(relationsCaptor.capture());
+        assertEquals(1992, relationsCaptor.getValue().size());
     }
 
     private ObserveEntity entity(Long id, String type, String name) {

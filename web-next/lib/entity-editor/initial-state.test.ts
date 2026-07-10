@@ -44,9 +44,65 @@ describe('entity editor initial state', () => {
       componentsText: 'checkout-ui',
       implementedByText: 'checkout-api',
       languagesText: 'java',
-      identitiesItems: ['{\n  "key": "service.name",\n  "value": "checkout-api"\n}'],
-      monitorBindItems: ['{\n  "id": 12\n}'],
+      identitiesItems: ['{\n  "identityKey": "service.name",\n  "identityValue": "checkout-api"\n}'],
+      monitorBindItems: ['{\n  "monitorId": "12"\n}'],
       relationItems: ['{\n  "type": "depends_on",\n  "target": "payments"\n}']
     });
+  });
+
+  it('keeps existing identities focused on editable business fields', () => {
+    expect(
+      buildEntityEditorFormState({
+        entity: {},
+        identities: [
+          {
+            id: 1726,
+            entityId: 659629483818240,
+            identityType: 'derived',
+            identityKey: 'service.name',
+            identityValue: 'checkout-api',
+            normalizedValue: 'checkout-api',
+            priority: 90,
+            primaryIdentity: true,
+            creator: 'admin',
+            modifier: 'admin',
+            gmtCreate: '2026-07-08T21:59:14.48645',
+            gmtUpdate: '2026-07-08T21:59:14.48645'
+          }
+        ],
+        monitorBinds: [],
+        relations: []
+      }).identitiesItems
+    ).toEqual([
+      '{\n  "identityType": "derived",\n  "identityKey": "service.name",\n  "identityValue": "checkout-api",\n  "priority": 90,\n  "primaryIdentity": true\n}'
+    ]);
+  });
+
+  it('keeps existing monitor bindings focused on editable business fields', () => {
+    expect(
+      buildEntityEditorFormState({
+        entity: {},
+        identities: [],
+        monitorBinds: [
+          {
+            id: 17,
+            entityId: 659554516970752,
+            monitorId: 659433550654720,
+            bindType: 'manual',
+            bindSource: 'manual',
+            status: 'active',
+            score: 100,
+            matchContext: { source: 'operator' },
+            creator: 'admin',
+            modifier: 'admin',
+            gmtCreate: '2026-07-08T17:55:01.453337',
+            gmtUpdate: '2026-07-08T17:55:01.453337'
+          }
+        ],
+        relations: []
+      }).monitorBindItems
+    ).toEqual([
+      '{\n  "monitorId": "659433550654720",\n  "bindType": "manual",\n  "bindSource": "manual",\n  "status": "active",\n  "score": 100,\n  "matchContext": {\n    "source": "operator"\n  }\n}'
+    ]);
   });
 });

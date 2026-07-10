@@ -60,4 +60,35 @@ describe('topology query state', () => {
       returnTo: '/alert?status=firing'
     });
   });
+
+  it('accepts focusEntityId as a topology entity focus alias when entityId is absent', () => {
+    expect(
+      readTopologyRouteContext({
+        focusEntityId: ['646566130000000', 'ignored-focus'],
+        environment: ['prod'],
+        depth: ['2'],
+        relationType: ['trace-call'],
+        pageSize: ['200']
+      })
+    ).toMatchObject({
+      entityId: '646566130000000',
+      environment: 'prod',
+      depth: '2',
+      relationType: 'trace-call',
+      pageSize: '200'
+    });
+  });
+
+  it('keeps explicit entityId ahead of the focusEntityId compatibility alias', () => {
+    expect(
+      readTopologyRouteContext({
+        entityId: ['501'],
+        focusEntityId: ['999'],
+        environment: ['prod']
+      })
+    ).toMatchObject({
+      entityId: '501',
+      environment: 'prod'
+    });
+  });
 });

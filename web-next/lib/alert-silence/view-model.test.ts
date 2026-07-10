@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { buildAlertSilenceEvidenceContext, buildAlertSilenceFacts, buildAlertSilenceMetrics, buildAlertSilenceNoteRows, buildAlertSilenceRows, buildAlertSilenceSelectedRows, validateAlertSilenceForm } from './view-model';
+import { buildAlertSilenceEvidenceContext, buildAlertSilenceFacts, buildAlertSilenceMetrics, buildAlertSilenceNoteRows, buildAlertSilenceRows, buildAlertSilenceSelectedRows, getAlertSilenceValidationField, validateAlertSilenceForm } from './view-model';
 import { createTranslatorMock } from '../../test/i18n-test-helper';
 
 const t = createTranslatorMock({ locale: 'zh-CN' });
@@ -259,6 +259,80 @@ describe('alert silence view model', () => {
         },
         t
       )
-    ).toBeNull();
+    ).toBe(t('alert.silence.validation.days'));
+
+    expect(
+      validateAlertSilenceForm(
+        {
+          name: 'one-time',
+          enable: true,
+          matchAll: true,
+          type: '0',
+          labelsText: '',
+          daysText: '',
+          periodStart: '',
+          periodEnd: '2026-04-10T18:00',
+        },
+        t
+      )
+    ).toBe(t('alert.silence.validation.time'));
+
+    expect(
+      validateAlertSilenceForm(
+        {
+          name: 'weekday',
+          enable: true,
+          matchAll: true,
+          type: '1',
+          labelsText: '',
+          daysText: '8, nope',
+          periodStart: '09:00',
+          periodEnd: '18:00',
+        },
+        t
+      )
+    ).toBe(t('alert.silence.validation.days'));
+
+    expect(
+      validateAlertSilenceForm(
+        {
+          name: 'weekday',
+          enable: true,
+          matchAll: true,
+          type: '1',
+          labelsText: '',
+          daysText: '1,2,3,4,5',
+          periodStart: '25:00',
+          periodEnd: '18:00',
+        },
+        t
+      )
+    ).toBe(t('alert.silence.validation.time'));
+
+    expect(
+      getAlertSilenceValidationField({
+        name: 'weekday',
+        enable: true,
+        matchAll: true,
+        type: '1',
+        labelsText: '',
+        daysText: '',
+        periodStart: '09:00',
+        periodEnd: '18:00',
+      })
+    ).toBe('days');
+
+    expect(
+      getAlertSilenceValidationField({
+        name: 'weekday',
+        enable: true,
+        matchAll: true,
+        type: '1',
+        labelsText: '',
+        daysText: '1,2,3,4,5',
+        periodStart: '09:00',
+        periodEnd: '',
+      })
+    ).toBe('time');
   });
 });

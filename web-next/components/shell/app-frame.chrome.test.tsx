@@ -44,7 +44,7 @@ vi.mock('@/components/shell/auth-gate', () => ({
 }));
 
 vi.mock('@/components/shell/app-sidebar', () => ({
-  AppSidebar: () => <aside data-app-sidebar="true">sidebar</aside>
+  AppSidebar: ({ className }: { className?: string }) => <aside className={className} data-app-sidebar="true">sidebar</aside>
 }));
 
 vi.mock('@/lib/api-client', () => ({
@@ -103,6 +103,17 @@ describe('app frame chrome', () => {
     expect(source).not.toContain("from '@hertzbeat/ui'");
   });
 
+  it('keeps compact theme on the dark ops chrome palette', () => {
+    const source = readFileSync(resolve(__dirname, '../../app/globals.css'), 'utf8');
+    const lightPaletteBlock = source.match(/html\[data-theme='light-ops'\][\s\S]*?\n}/)?.[0] || '';
+    const compactBlock = source.match(/html\[data-theme='compact'\][\s\S]*?\n}/)?.[0] || '';
+
+    expect(lightPaletteBlock).toContain("body[data-theme='light-ops']");
+    expect(lightPaletteBlock).not.toContain("data-theme='compact'");
+    expect(compactBlock).toContain('--radius: 0.625rem;');
+    expect(compactBlock).not.toContain('--background: 210 20% 98%');
+  });
+
   it('does not keep the startup baseline once live header setup state resolves empty', async () => {
     const { buildSetupSummary } = await import('./app-frame');
     const summary = buildSetupSummary(emptySetupState, setupT);
@@ -112,6 +123,17 @@ describe('app frame chrome', () => {
     expect(summary.headline).toBe(setupHeadline(0));
   }, 15000);
 
+  it('rebuilds setup progress from the active locale before async header state resolves', () => {
+    const source = readFileSync(resolve(__dirname, 'app-frame.tsx'), 'utf8');
+    const effectStart = source.indexOf('let cancelled = false;');
+    const immediateSummary = source.indexOf('setSetupSummary(buildRouteSetupSummary(pathname, EMPTY_SETUP_SUMMARY_DATA, t));', effectStart);
+    const asyncLoad = source.indexOf('async function loadHeaderState()', effectStart);
+
+    expect(source).toContain('const EMPTY_SETUP_SUMMARY_DATA: SetupSummaryData');
+    expect(immediateSummary).toBeGreaterThan(effectStart);
+    expect(immediateSummary).toBeLessThan(asyncLoad);
+  });
+
   it('keeps the startup setup baseline on the entity create route when the live setup state is empty', async () => {
     const { buildRouteSetupSummary } = await import('./app-frame');
     const summary = buildRouteSetupSummary('/entities/new', emptySetupState, setupT);
@@ -120,6 +142,15 @@ describe('app frame chrome', () => {
     expect(summary.progressPercent).toBe(83);
     expect(summary.headline).toBe(setupHeadline(83));
   }, 15000);
+
+  it('keeps the startup setup baseline on the entity center route when the live setup state is empty', async () => {
+    const { buildRouteSetupSummary } = await import('./app-frame');
+    const summary = buildRouteSetupSummary('/entities', emptySetupState, setupT);
+
+    expect(summary.completedCount).toBe(5);
+    expect(summary.progressPercent).toBe(83);
+    expect(summary.headline).toBe(setupHeadline(83));
+  });
 
   it('keeps the startup setup baseline on the entity import route when the live setup state is empty', async () => {
     const { buildRouteSetupSummary } = await import('./app-frame');
@@ -155,6 +186,18 @@ describe('app frame chrome', () => {
     const { buildRouteSetupSummary } = await import('./app-frame');
 
     for (const pathname of ['/incidents', '/actions']) {
+      const summary = buildRouteSetupSummary(pathname, emptySetupState, setupT);
+
+      expect(summary.completedCount).toBe(5);
+      expect(summary.progressPercent).toBe(83);
+      expect(summary.headline).toBe(setupHeadline(83));
+    }
+  });
+
+  it('keeps the startup setup baseline on alert routes when the live setup state is empty', async () => {
+    const { buildRouteSetupSummary } = await import('./app-frame');
+
+    for (const pathname of ['/alert', '/alert/setting', '/alert/group', '/alert/silence', '/alert/inhibit', '/alert/notice', '/alert/integration/webhook', '/alerts']) {
       const summary = buildRouteSetupSummary(pathname, emptySetupState, setupT);
 
       expect(summary.completedCount).toBe(5);
@@ -210,6 +253,20 @@ describe('app frame chrome', () => {
 
     expect(html).toContain('data-app-frame-icon-trigger="github"');
     expect(html).toContain('data-app-frame-icon-trigger="menu"');
+    expect(html).toContain('data-app-frame-skip-link="main-workbench"');
+    expect(html).toContain('href="#hertzbeat-workbench"');
+    expect(html).toContain(setupT('app.frame.skip-to-workbench'));
+    expect(html).toContain('id="hertzbeat-workbench"');
+    expect(html).toContain('tabindex="-1"');
+    expect(html).toContain('data-app-frame-main-workbench="true"');
+    expect(html).toContain('data-app-frame-brand-home="overview"');
+    expect(html).toContain(`aria-label="${setupT('app.frame.brand-home')}"`);
+    expect(html).toContain('aria-expanded="false"');
+    expect(html).toContain('aria-controls="app-frame-mobile-sidebar"');
+    expect(html).toContain('data-app-frame-mobile-sidebar-trigger-state="closed"');
+    expect(html).toContain('data-app-frame-sidebar-placement="desktop"');
+    expect(html).toContain('class="hidden md:contents"');
+    expect(html).not.toContain('data-app-frame-sidebar-placement="mobile-drawer"');
     expect(html).toContain('data-app-frame-icon-trigger="notify"');
     expect(html).toContain('data-app-frame-header-realtime-sse-contract="angular-alert-and-manager-sse"');
     expect(html).toContain('data-app-frame-header-realtime-sse-owner="route-realtime-sse-contract"');
@@ -222,6 +279,8 @@ describe('app frame chrome', () => {
     expect(html).toContain('data-app-frame-mute-save-lifecycle="angular-success-only-state-update"');
     expect(html).toContain('data-app-frame-mute-save-lifecycle-owner="route-action-state-contract"');
     expect(html).toContain('data-app-frame-icon-trigger="lock"');
+    expect(html.match(/data-app-frame-icon-trigger="lock"/g)).toHaveLength(1);
+    expect(html).not.toContain('<button data-app-frame-icon-trigger="lock"');
     expect(html).toContain('data-app-frame-icon-trigger="settings"');
     expect(html).toContain('data-app-frame-locale-reload-contract="angular-load-use-layout-reload"');
     expect(html).toContain('data-app-frame-locale-reload-owner="route-locale-reload-contract"');
@@ -241,13 +300,19 @@ describe('app frame chrome', () => {
     expect(html).toContain('style="width:83%"');
     expect(html).not.toContain('common.setup');
     expect(html).toContain('data-platform-footer="angular-footer"');
-    expect(html).toContain('class="relative flex min-h-0 min-w-0 flex-col self-stretch"');
+    expect(html).toContain('md:grid-cols-[164px_minmax(0,1fr)]');
+    expect(html).toContain('md:grid-rows-[64px_minmax(0,1fr)]');
+    expect(html).toContain('grid h-16 md:grid-cols-[164px_minmax(0,1fr)]');
+    expect(html).toContain('class="relative flex min-h-0 min-w-0 flex-col self-stretch md:col-start-2 md:row-start-2"');
     expect(html).toContain('data-platform-main-scroll="content-flow"');
     expect(html).toContain('data-platform-footer-placement="flow-end-or-viewport-bottom"');
     expect(html).toContain('Apache HertzBeat™ v1.8.0');
     expect(html).not.toContain(setupT('platform.footer.license'));
     expect(html).not.toContain('Apache License, Version 2.0');
     expect(html).toContain('data-shell-ai-chat-launcher="angular-ai-chat"');
+    expect(html).toContain('hidden h-12 w-12');
+    expect(html).toContain('sm:inline-flex');
+    expect(html).toContain('h-7 w-7');
     expect(html).toContain(srOnlyMarkup(setupT('ai.chat.launch')));
     expect(html).toContain(srOnlyMarkup(setupT('app.frame.utility.github')));
     expect(html).toContain(srOnlyMarkup(setupT('app.frame.utility.menu')));
@@ -411,6 +476,7 @@ describe('app frame chrome', () => {
     expect(source).toContain(
       "const notificationMuteLabel = notificationsMuted ? t('common.unmute') : t('common.mute');"
     );
+    expect(source).toContain('hasClientSessionMarker()');
     expect(source).toContain('loadHeaderMuteConfig()');
     expect(source).toContain('saveHeaderMuteConfig(nextMuted)');
     expect(muteSource).toContain("apiMessageGet<Partial<HeaderMuteConfig> | boolean>('/config/mute')");

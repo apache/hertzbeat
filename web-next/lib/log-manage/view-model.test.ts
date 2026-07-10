@@ -65,6 +65,29 @@ describe('log view model', () => {
     ]);
   });
 
+  it('uses normalized service_name as a selected log service fallback', () => {
+    const rows = buildSelectedLogRows(
+      {
+        resource: { service_name: 'checkout-normalized' },
+        body: 'stream event normalized service field',
+        traceId: 'trace-normalized',
+        spanId: 'span-normalized',
+        severityText: 'ERROR',
+        attributes: {},
+        timeUnixNano: 1712730000000000000
+      },
+      t,
+      () => 'stream event normalized service field',
+      () => '2026-04-10 10:00:00'
+    );
+
+    expect(rows[0]).toMatchObject({
+      title: 'checkout-normalized',
+      copy: 'stream event normalized service field',
+      meta: 'trace-normalized'
+    });
+  });
+
   it('builds HertzBeat log explorer rows from log entries', () => {
     expect(
       buildLogExplorerRows(
@@ -96,6 +119,28 @@ describe('log view model', () => {
         spanId: 'span-1'
       }
     ]);
+  });
+
+  it('uses normalized service_name in log explorer rows', () => {
+    const [row] = buildLogExplorerRows(
+      [
+        {
+          traceId: 'trace-1',
+          spanId: 'span-1',
+          severityText: 'ERROR',
+          body: 'checkout timeout',
+          timeUnixNano: 1712730000000000000,
+          resource: { service_name: 'checkout-normalized' }
+        }
+      ] as any,
+      {
+        bodyText: value => String(value),
+        formatTime: () => '2026-04-10 10:00:00',
+        severityLabel: entry => entry.severityText || 'LOG'
+      }
+    );
+
+    expect(row.service).toBe('checkout-normalized');
   });
 
   it('builds stream detail facts from a selected log entry', () => {
@@ -326,6 +371,13 @@ describe('log view model', () => {
     );
 
     expect(result.entitiesHref).toBe('/entities?search=checkout');
+    const entityDiscoveryHref = new URL(result.entityDiscoveryHref, 'https://example.com');
+    expect(entityDiscoveryHref.pathname).toBe('/entities/discovery');
+    expect(entityDiscoveryHref.searchParams.get('identityKey')).toBe('service.name');
+    expect(entityDiscoveryHref.searchParams.get('identityValue')).toBe('checkout');
+    expect(entityDiscoveryHref.searchParams.get('serviceName')).toBe('checkout');
+    expect(entityDiscoveryHref.searchParams.get('serviceNamespace')).toBe('payments');
+    expect(entityDiscoveryHref.searchParams.get('environment')).toBe('prod');
 
     const intakeParams = new URL(result.intakeHref, 'https://example.com').searchParams;
     expect(intakeParams.get('signal')).toBe('logs');

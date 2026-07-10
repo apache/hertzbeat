@@ -22,7 +22,7 @@ describe('topology API controller', () => {
           timeRange: 'last-1h'
         })
       ).toBe(
-        '/topology?focusEntityId=501&depth=2&environment=prod&relationType=trace-call&start=1780218000000&end=1780221600000'
+        '/topology?focusEntityId=501&depth=2&environment=prod&sourceKind=otlp-trace-call&relationType=trace-call&start=1780218000000&end=1780221600000'
       );
     } finally {
       vi.useRealTimers();
@@ -73,7 +73,7 @@ describe('topology API controller', () => {
           viewMode: 'application',
           timeRange: 'last-1h'
         })
-      ).toBe('/topology?depth=2&environment=prod&start=1780218000000&end=1780221600000');
+      ).toBe('/topology?depth=2&environment=prod&sourceKind=otlp-trace-call&relationType=trace-call&start=1780218000000&end=1780221600000');
     } finally {
       vi.useRealTimers();
     }
@@ -157,7 +157,7 @@ describe('topology API controller', () => {
     });
 
     expect(apiGet).toHaveBeenCalledWith(
-      '/topology?focusEntityId=501&depth=1&environment=prod&relationType=trace-call&hideInternal=true&pageIndex=2&pageSize=50&start=1710000000000&end=1710003600000'
+      '/topology?focusEntityId=501&depth=1&environment=prod&sourceKind=otlp-trace-call&relationType=trace-call&hideInternal=true&pageIndex=2&pageSize=50&start=1710000000000&end=1710003600000'
     );
     expect(buildTopologyApiUrl({ entityId: 'service:commerce/checkout', environment: 'prod' })).toBe(
       '/topology?depth=2&environment=prod'
@@ -178,7 +178,7 @@ describe('topology API controller', () => {
           scaleProof: 'greptime-real'
         })
       ).toBe(
-        '/topology?focusEntityId=646562420231424&depth=2&environment=prod&relationType=trace-call&start=1780344000000&end=1780352700000'
+        '/topology?focusEntityId=646562420231424&depth=2&environment=prod&sourceKind=otlp-trace-call&relationType=trace-call&start=1780344000000&end=1780352700000'
       );
     } finally {
       vi.useRealTimers();
@@ -199,7 +199,7 @@ describe('topology API controller', () => {
           scaleProof: 'greptime-real'
         })
       ).toBe(
-        '/topology?focusEntityId=646562420231424&depth=2&environment=prod&relationType=trace-call&start=1780344000000&end=1780352700000'
+        '/topology?focusEntityId=646562420231424&depth=2&environment=prod&sourceKind=otlp-trace-call&relationType=trace-call&start=1780344000000&end=1780352700000'
       );
     } finally {
       vi.useRealTimers();
@@ -219,7 +219,7 @@ describe('topology API controller', () => {
           depth: '2',
           scaleProof: 'mixed-star-mesh'
         })
-      ).toBe('/topology?depth=2&environment=prod&relationType=trace-call&start=1780344000000&end=1780352700000');
+      ).toBe('/topology?depth=2&environment=prod&sourceKind=otlp-trace-call&relationType=trace-call&start=1780344000000&end=1780352700000');
     } finally {
       vi.useRealTimers();
     }
@@ -238,7 +238,7 @@ describe('topology API controller', () => {
           depth: '2',
           scaleProof: 'mixed-star-mesh'
         })
-      ).toBe('/topology?depth=2&environment=prod&relationType=trace-call&start=1780344000000&end=1780352700000');
+      ).toBe('/topology?depth=2&environment=prod&sourceKind=otlp-trace-call&relationType=trace-call&start=1780344000000&end=1780352700000');
     } finally {
       vi.useRealTimers();
     }
@@ -268,7 +268,7 @@ describe('topology API controller', () => {
     });
 
     expect(apiGet).toHaveBeenCalledWith(
-      '/topology?depth=2&environment=prod&relationType=trace-call'
+      '/topology?depth=2&environment=prod&sourceKind=otlp-trace-call&relationType=trace-call'
     );
     expect(buildTopologyApiUrl({ environment: 'prod', viewMode: 'service-call' })).toBe(
       '/topology?depth=2&environment=prod&relationType=trace-call'
@@ -289,7 +289,7 @@ describe('topology API controller', () => {
 
       await rejection;
       expect(apiGet).toHaveBeenCalledWith(
-        '/topology?depth=2&relationType=trace-call',
+        '/topology?depth=2&sourceKind=otlp-trace-call&relationType=trace-call',
         expect.objectContaining({ signal: expect.any(AbortSignal) })
       );
     } finally {
@@ -334,7 +334,7 @@ describe('topology API controller', () => {
 
     expect(apiGet).toHaveBeenCalledTimes(1);
     expect(apiGet).toHaveBeenCalledWith(
-      '/topology?depth=2&relationType=trace-call',
+      '/topology?depth=2&sourceKind=otlp-trace-call&relationType=trace-call',
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     );
 
@@ -425,13 +425,13 @@ describe('topology API controller', () => {
     };
 
     expect(buildTopologyApiUrl(context)).toBe(
-      '/topology?depth=2&environment=prod&relationType=trace-call&start=1780344000000&end=1780352700000'
+      '/topology?depth=2&environment=prod&sourceKind=otlp-trace-call&relationType=trace-call&start=1780344000000&end=1780352700000'
     );
 
     await expect(loadTopologyGraph(apiGet, context, { cacheBust: () => 'proof-1' })).resolves.toBe(graph);
 
     expect(apiGet).toHaveBeenCalledWith(
-      '/topology?depth=2&environment=prod&relationType=trace-call&start=1780344000000&end=1780352700000&_hbTopologyCacheBust=proof-1'
+      '/topology?depth=2&environment=prod&sourceKind=otlp-trace-call&relationType=trace-call&start=1780344000000&end=1780352700000&_hbTopologyCacheBust=proof-1'
     );
   });
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import EntityImportPage from './entity-import-page';
+import EntityImportRoutePage from './page';
 import { createTranslatorMock } from '../../../test/i18n-test-helper';
 
 const mockState = vi.hoisted(() => ({
@@ -53,8 +54,15 @@ vi.mock('@/components/workbench/client-workbench', () => ({
 }));
 
 vi.mock('@/components/pages/entity-import-surface', () => ({
-  EntityImportSurface: ({ templates, activities }: any) => (
-    <div data-entity-import-surface="true">
+  EntityImportSurface: ({ initialMessage, initialMessageTone, routeContext, templates, activities }: any) => (
+    <div
+      data-entity-import-surface="true"
+      data-initial-message={initialMessage ?? ''}
+      data-initial-message-tone={initialMessageTone ?? ''}
+      data-route-source={routeContext?.source}
+      data-route-return-to={routeContext?.returnTo}
+      data-route-time-range={routeContext?.timeRange}
+    >
       {templates.length} templates / {activities.length} activities
     </div>
   )
@@ -101,5 +109,53 @@ describe('EntityImportPage', () => {
       templates: readImportTemplates,
       activities: readImportActivities
     });
+  });
+
+  it('passes route context into the import surface', () => {
+    const html = renderToStaticMarkup(
+      <EntityImportPage
+        routeContext={{
+          source: 'product-design-1330',
+          returnTo: '/entities?source=product-design-1330&pageSize=50',
+          timeRange: 'last-30m'
+        }}
+      />
+    );
+
+    expect(html).toContain('data-route-source="product-design-1330"');
+    expect(html).toContain('data-route-return-to="/entities?source=product-design-1330&amp;pageSize=50"');
+    expect(html).toContain('data-route-time-range="last-30m"');
+  });
+
+  it('reads route context from import route search params', async () => {
+    const html = renderToStaticMarkup(
+      await EntityImportRoutePage({
+        searchParams: Promise.resolve({
+          source: 'product-design-1330',
+          returnTo: '/entities?source=product-design-1330&pageSize=50',
+          timeRange: 'last-30m'
+        })
+      })
+    );
+
+    expect(html).toContain('data-route-source="product-design-1330"');
+    expect(html).toContain('data-route-return-to="/entities?source=product-design-1330&amp;pageSize=50"');
+    expect(html).toContain('data-route-time-range="last-30m"');
+  });
+
+  it('shows delete success feedback when entity detail returns to import', async () => {
+    const expectedT = createTranslatorMock({ locale: 'zh-CN' });
+    const html = renderToStaticMarkup(
+      await EntityImportRoutePage({
+        searchParams: Promise.resolve({
+          deleteResult: 'success',
+          deletedEntity: '658679066385664',
+          source: 'product-design-1499'
+        })
+      })
+    );
+
+    expect(html).toContain('data-initial-message-tone="success"');
+    expect(html).toContain(expectedT('entities.import.delete-success', { id: '658679066385664' }));
   });
 });

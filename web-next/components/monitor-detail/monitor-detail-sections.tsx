@@ -35,6 +35,69 @@ type MetricCardPayloadState = {
   error: string | null;
 };
 
+function hasRealtimePayloadRows(payload: MonitorRealtimeMetricData | null | undefined) {
+  return Boolean(payload?.valueRows?.length);
+}
+
+function buildRealtimeEvidenceNotice(
+  rows: EvidenceRow[],
+  payloads: Record<string, MetricCardPayloadState | undefined>,
+  t: Translator
+) {
+  const states = rows.map(row => payloads[row.key]).filter((state): state is MetricCardPayloadState => Boolean(state));
+  const readyCount = states.filter(state => hasRealtimePayloadRows(state.payload)).length;
+  const loadingCount = states.filter(state => state.loading).length;
+  const errorCount = states.filter(state => state.error).length;
+  const totalCount = rows.length;
+  const meta = t('monitor.detail.evidence.realtime.meta', { ready: readyCount, total: totalCount });
+
+  if (totalCount === 0) {
+    return {
+      tone: 'neutral' as const,
+      title: t('monitor.detail.evidence.realtime.catalog-empty.title'),
+      description: t('monitor.detail.evidence.realtime.catalog-empty.copy'),
+      meta
+    };
+  }
+
+  if (errorCount > 0 && readyCount === 0 && loadingCount === 0) {
+    return {
+      tone: 'critical' as const,
+      title: t('monitor.detail.evidence.realtime.error.title'),
+      description: t('monitor.detail.evidence.realtime.error.copy'),
+      meta
+    };
+  }
+
+  if (loadingCount > 0) {
+    return {
+      tone: 'info' as const,
+      title: t('monitor.detail.evidence.realtime.loading.title'),
+      description: t('monitor.detail.evidence.realtime.loading.copy'),
+      meta
+    };
+  }
+
+  if (readyCount > 0) {
+    return {
+      tone: errorCount > 0 ? 'warning' as const : 'success' as const,
+      title: t('monitor.detail.evidence.realtime.ready.title'),
+      description:
+        errorCount > 0
+          ? t('monitor.detail.evidence.realtime.partial.copy')
+          : t('monitor.detail.evidence.realtime.ready.copy'),
+      meta
+    };
+  }
+
+  return {
+    tone: 'warning' as const,
+    title: t('monitor.detail.evidence.realtime.empty.title'),
+    description: t('monitor.detail.evidence.realtime.empty.copy'),
+    meta
+  };
+}
+
 function MetricSignalList({
   leadingCard,
   rows,
@@ -346,6 +409,7 @@ export function MonitorDetailSections(props: MonitorSectionCompositionProps): Mo
     .map(row => historyMetricByKey.get(row.targetKey))
     .filter((item): item is MonitorHistoryMetricCatalogItem => Boolean(item))
     .slice(0, favoriteHistoryChartVisibleCount);
+  const realtimeEvidenceNotice = buildRealtimeEvidenceNotice(metricRows, metricCardPayloads, t);
   const renderFavoriteFeedback = (scope: 'realtime' | 'history') => {
     if (favoriteMessage) {
       return (
@@ -385,6 +449,15 @@ export function MonitorDetailSections(props: MonitorSectionCompositionProps): Mo
         data-monitor-detail-stage-owner="hertzbeat-ui-detail-stage"
       >
         {renderFavoriteFeedback('realtime')}
+        <HzStateNotice
+          tone={realtimeEvidenceNotice.tone}
+          title={realtimeEvidenceNotice.title}
+          description={realtimeEvidenceNotice.description}
+          meta={realtimeEvidenceNotice.meta}
+          variant="embedded"
+          data-monitor-detail-evidence-chain="realtime-payload"
+          data-monitor-detail-evidence-source="metric-card-payloads"
+        />
         <MetricSignalList
           leadingCard={<MonitorBasicSharedSurface monitor={monitor} editHref={editHref} t={t} />}
           rows={metricRows}
@@ -421,10 +494,11 @@ export function MonitorDetailSections(props: MonitorSectionCompositionProps): Mo
       ) : historyError ? (
         <HzStateNotice
           tone="critical"
-          title={t('common.load-failed')}
-          description={historyError}
+          title={t('monitor.detail.history.error.title')}
+          description={t('monitor.detail.history.error.copy', { error: historyError })}
           data-monitor-detail-state-owner="hertzbeat-ui-state-notice"
           data-monitor-detail-state-scope="history"
+          data-monitor-detail-history-error-copy="operator-actionable"
         />
       ) : (
         <>

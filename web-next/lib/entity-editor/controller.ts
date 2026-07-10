@@ -29,6 +29,10 @@ type MonitorSeedReader = (monitorId: string) => Promise<Monitor | { monitor?: Mo
 export type EntityEditorNewDraftSeed = {
   source?: string | null;
   monitorId?: string | null;
+  monitorName?: string | null;
+  monitorApp?: string | null;
+  monitorInstance?: string | null;
+  returnTo?: string | null;
   identityKey?: string | null;
   identityValue?: string | null;
   serviceName?: string | null;
@@ -136,6 +140,108 @@ function trimText(value?: string | number | null) {
   return trimmed === '' ? undefined : trimmed;
 }
 
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value != null && !Array.isArray(value);
+}
+
+function readRecordText(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = record[key];
+    const normalized = trimText(typeof value === 'string' || typeof value === 'number' ? value : null);
+    if (normalized != null) {
+      return normalized;
+    }
+  }
+  return undefined;
+}
+
+function validateEntityJsonObjects(
+  items: unknown[] | undefined,
+  label: string,
+  buildObjectRequiredMessage: (label: string, index: number) => string
+) {
+  (items || []).forEach((item, index) => {
+    if (!isPlainRecord(item) || !hasAnyValue(item)) {
+      throw new Error(buildObjectRequiredMessage(label, index + 1));
+    }
+  });
+}
+
+function validateEntityIdentityRows(items: unknown[] | undefined, buildIncompleteMessage: (index: number) => string) {
+  (items || []).forEach((item, index) => {
+    const record = item as Record<string, unknown>;
+    const key = readRecordText(record, ['identityKey', 'key', 'name', 'attributeKey']);
+    const value = readRecordText(record, ['identityValue', 'value', 'attributeValue']);
+    if (key == null || value == null) {
+      throw new Error(buildIncompleteMessage(index + 1));
+    }
+  });
+}
+
+function validateUniqueEntityIdentityRows(items: unknown[] | undefined, buildDuplicateMessage: (index: number) => string) {
+  const seen = new Set<string>();
+  (items || []).forEach((item, index) => {
+    const record = item as Record<string, unknown>;
+    const key = readRecordText(record, ['identityKey', 'key', 'name', 'attributeKey']);
+    const value = readRecordText(record, ['identityValue', 'value', 'attributeValue']);
+    const fingerprint = `${key}\u0000${value}`;
+    if (seen.has(fingerprint)) {
+      throw new Error(buildDuplicateMessage(index + 1));
+    }
+    seen.add(fingerprint);
+  });
+}
+
+function validateEntityMonitorBindRows(items: unknown[] | undefined, buildIncompleteMessage: (index: number) => string) {
+  (items || []).forEach((item, index) => {
+    const record = item as Record<string, unknown>;
+    const monitorId = readRecordText(record, ['monitorId', 'id']);
+    if (monitorId == null) {
+      throw new Error(buildIncompleteMessage(index + 1));
+    }
+  });
+}
+
+function validateUniqueEntityMonitorBindRows(items: unknown[] | undefined, buildDuplicateMessage: (index: number) => string) {
+  const seen = new Set<string>();
+  (items || []).forEach((item, index) => {
+    const record = item as Record<string, unknown>;
+    const monitorId = readRecordText(record, ['monitorId', 'id']);
+    if (monitorId == null) {
+      return;
+    }
+    if (seen.has(monitorId)) {
+      throw new Error(buildDuplicateMessage(index + 1));
+    }
+    seen.add(monitorId);
+  });
+}
+
+function validateEntityRelationRows(items: unknown[] | undefined, buildIncompleteMessage: (index: number) => string) {
+  (items || []).forEach((item, index) => {
+    const record = item as Record<string, unknown>;
+    const relationType = readRecordText(record, ['relationType', 'type']);
+    const target = readRecordText(record, ['targetRef', 'target', 'targetEntityId', 'targetEntityName']);
+    if (relationType == null || target == null) {
+      throw new Error(buildIncompleteMessage(index + 1));
+    }
+  });
+}
+
+function validateUniqueEntityRelationRows(items: unknown[] | undefined, buildDuplicateMessage: (index: number) => string) {
+  const seen = new Set<string>();
+  (items || []).forEach((item, index) => {
+    const record = item as Record<string, unknown>;
+    const relationType = readRecordText(record, ['relationType', 'type']);
+    const target = readRecordText(record, ['targetRef', 'target', 'targetEntityId', 'targetEntityName']);
+    const fingerprint = `${relationType}\u0000${target}`;
+    if (seen.has(fingerprint)) {
+      throw new Error(buildDuplicateMessage(index + 1));
+    }
+    seen.add(fingerprint);
+  });
+}
+
 function appKey(value?: string | null) {
   return trimText(value)?.toLowerCase() || '';
 }
@@ -148,12 +254,12 @@ function putTelemetryIdentityCandidate(target: Map<string, string>, key: string,
   target.set(key, normalized);
 }
 
-function resolveTelemetryEndpointIdentity(instance?: string, name?: string) {
+function resolveTelemetryEndpointIdentity(instance?: string) {
   const normalizedInstance = trimText(instance);
-  if (normalizedInstance != null && !normalizedInstance.toLowerCase().startsWith('null:')) {
+  if (normalizedInstance != null && !/^(?:null|undefined)(?::.*)?$/i.test(normalizedInstance)) {
     return normalizedInstance;
   }
-  return trimText(name) || normalizedInstance;
+  return undefined;
 }
 
 function getEntityIdentityPriority(identityKey?: string) {
@@ -235,7 +341,7 @@ function extractTelemetryIdentityMatches(monitor: Monitor) {
     putTelemetryIdentityCandidate(identities, 'service.name', monitor.name);
   }
   if (endpointLikeApps.has(app)) {
-    putTelemetryIdentityCandidate(identities, 'endpoint.url', resolveTelemetryEndpointIdentity(monitor.instance, monitor.name));
+    putTelemetryIdentityCandidate(identities, 'endpoint.url', resolveTelemetryEndpointIdentity(monitor.instance));
   }
   if (identities.has('k8s.namespace.name')) {
     putTelemetryIdentityCandidate(identities, 'k8s.workload.name', monitor.name);
@@ -365,7 +471,7 @@ export function buildOtlpCandidateEntityDraft(seed: EntityEditorNewDraftSeed): E
   const serviceName = trimText(seed.serviceName);
   const serviceNamespace = trimText(seed.serviceNamespace);
   const environment = trimText(seed.environment);
-  const entityName = serviceName || identityValue;
+  const entityName = identityKey === 'service.name' ? identityValue : serviceName || identityValue;
   const identities = new Map<string, string>();
   const baseDraft = buildInitialEntityDraft();
   putTelemetryIdentityCandidate(identities, identityKey, identityValue);
@@ -378,7 +484,7 @@ export function buildOtlpCandidateEntityDraft(seed: EntityEditorNewDraftSeed): E
       ...baseDraft.entity,
       type: 'service',
       name: entityName,
-      displayName: entityName,
+      displayName: serviceName || entityName,
       namespace: serviceNamespace || '',
       environment: environment || '',
       source: 'otel_resource',
@@ -510,7 +616,7 @@ export async function buildEntityEditorNewDraft(apiGet: ApiGetter, seed: EntityE
     return buildOtlpCandidateEntityDraft(seed);
   }
 
-  if (source !== 'telemetry' || monitorId == null) {
+  if ((source !== 'telemetry' && source !== 'discovery-candidate') || monitorId == null) {
     return buildInitialEntityDraft();
   }
 
@@ -532,7 +638,7 @@ export async function buildEntityEditorNewDraftFromFacade(readSeedMonitor: Monit
     return buildOtlpCandidateEntityDraft(seed);
   }
 
-  if (source !== 'telemetry' || monitorId == null) {
+  if ((source !== 'telemetry' && source !== 'discovery-candidate') || monitorId == null) {
     return buildInitialEntityDraft();
   }
 
@@ -604,8 +710,30 @@ export async function saveEntityPayload(
     updateEntity: EntityUpdate;
     buildCreateSuccessMessage: (id: number) => string;
     saveSuccessMessage: string;
+    nameRequiredMessage: string;
+    jsonObjectRequiredMessage: (label: string, index: number) => string;
+    identityIncompleteMessage: (index: number) => string;
+    monitorBindIncompleteMessage: (index: number) => string;
+    relationIncompleteMessage: (index: number) => string;
+    identityDuplicateMessage: (index: number) => string;
+    monitorBindDuplicateMessage: (index: number) => string;
+    relationDuplicateMessage: (index: number) => string;
   }
 ) {
+  if (!trimText(payload.entity.name)) {
+    throw new Error(actions.nameRequiredMessage);
+  }
+
+  validateEntityJsonObjects(payload.identities, 'Identities', actions.jsonObjectRequiredMessage);
+  validateEntityJsonObjects(payload.monitorBinds, 'Monitor binds', actions.jsonObjectRequiredMessage);
+  validateEntityJsonObjects(payload.relations, 'Relations', actions.jsonObjectRequiredMessage);
+  validateEntityIdentityRows(payload.identities, actions.identityIncompleteMessage);
+  validateEntityMonitorBindRows(payload.monitorBinds, actions.monitorBindIncompleteMessage);
+  validateEntityRelationRows(payload.relations, actions.relationIncompleteMessage);
+  validateUniqueEntityIdentityRows(payload.identities, actions.identityDuplicateMessage);
+  validateUniqueEntityMonitorBindRows(payload.monitorBinds, actions.monitorBindDuplicateMessage);
+  validateUniqueEntityRelationRows(payload.relations, actions.relationDuplicateMessage);
+
   if (mode === 'new') {
     const id = await actions.createEntity(payload);
     return actions.buildCreateSuccessMessage(id);

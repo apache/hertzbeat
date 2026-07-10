@@ -5,11 +5,13 @@ import { Input } from '../ui/input';
 import { Checkbox } from '../ui/checkbox';
 import { NumberStepper } from '../ui/number-stepper';
 import { TagInput } from '../ui/tag-input';
-import { AlertAuthoringFieldLabel } from './alert-authoring-primitives';
+import { AlertAuthoringFieldLabel, AlertAuthoringInlineHelp, AlertAuthoringRequiredMark } from './alert-authoring-primitives';
 import { DEFAULT_ALERT_LABEL_OPTIONS, type AlertLabelOptions } from '../../lib/alert-label-options';
 import type { AlertGroupFormDraft } from '../../lib/alert-group/controller';
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
+type AlertGroupFieldRequirement = 'required' | 'optional';
+type AlertGroupFieldInputMode = 'manual' | 'selection' | 'manual-or-selection';
 
 type AlertGroupAuthoringFieldsProps = {
   t: Translator;
@@ -38,6 +40,51 @@ function getSourceGroupPreviewStatus(sourceGroupLabelsText: string, draftGroupLa
   return 'edited';
 }
 
+function AlertGroupFieldTitle({
+  t,
+  field,
+  requirement,
+  inputMode,
+  children
+}: {
+  t: Translator;
+  field: string;
+  requirement: AlertGroupFieldRequirement;
+  inputMode: AlertGroupFieldInputMode;
+  children: React.ReactNode;
+}) {
+  return (
+    <span
+      data-alert-group-authoring-field-title={field}
+      className="inline-flex min-w-0 flex-wrap items-center gap-1.5"
+    >
+      <span>
+        {children}
+        {requirement === 'required' ? <AlertAuthoringRequiredMark /> : null}
+      </span>
+      <AlertAuthoringInlineHelp
+        id={`alert-group-authoring-${field}-help`}
+        label={t('alert.group.field.help-aria', { field: String(children) })}
+        body={t(`alert.group.field.${field}.help`)}
+        impact={t(`alert.group.field.${field}.impact`)}
+        data-alert-group-authoring-field-help={field}
+      />
+      <span
+        data-alert-group-authoring-field-requirement={requirement}
+        className="rounded-[2px] bg-[#182238] px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#c8d4ee]"
+      >
+        {t(`alert.group.field.requirement.${requirement}`)}
+      </span>
+      <span
+        data-alert-group-authoring-field-input-mode={inputMode}
+        className="rounded-[2px] bg-[#141922] px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#9ba7bc]"
+      >
+        {t(`alert.group.field.input-mode.${inputMode}`)}
+      </span>
+    </span>
+  );
+}
+
 export function AlertGroupAuthoringFields({
   t,
   draft,
@@ -62,7 +109,9 @@ export function AlertGroupAuthoringFields({
     >
       <div data-alert-group-authoring-form="single-column" className="space-y-3">
         <AlertAuthoringFieldLabel>
-          <span>{t('alert.group-converge.name')}</span>
+          <AlertGroupFieldTitle t={t} field="name" requirement="required" inputMode="manual">
+            {t('alert.group-converge.name')}
+          </AlertGroupFieldTitle>
           <Input
             name="alert_group_name"
             value={draft.name}
@@ -76,12 +125,18 @@ export function AlertGroupAuthoringFields({
           <Checkbox
             name="alert_group_enable"
             checked={draft.enable}
-            label={t('common.enable')}
+            label={(
+              <AlertGroupFieldTitle t={t} field="enable" requirement="required" inputMode="selection">
+                {t('common.enable')}
+              </AlertGroupFieldTitle>
+            )}
             onChange={event => onDraftChange({ ...draft, enable: event.target.checked })}
           />
         </div>
         <AlertAuthoringFieldLabel>
-          <span>{t('alert.group-converge.group-labels')}</span>
+          <AlertGroupFieldTitle t={t} field="group-labels" requirement="required" inputMode="manual-or-selection">
+            {t('alert.group-converge.group-labels')}
+          </AlertGroupFieldTitle>
           <div
             data-alert-group-label-selector="shared-label-key-tags"
             data-alert-group-label-mode="group-by-label-keys"
@@ -115,7 +170,9 @@ export function AlertGroupAuthoringFields({
           </div>
         </AlertAuthoringFieldLabel>
         <AlertAuthoringFieldLabel>
-          <span>{t('alert.group-converge.group-wait')}</span>
+          <AlertGroupFieldTitle t={t} field="group-wait" requirement="required" inputMode="manual">
+            {t('alert.group-converge.group-wait')}
+          </AlertGroupFieldTitle>
           <NumberStepper
             name="alert_group_wait"
             min="0"
@@ -125,7 +182,9 @@ export function AlertGroupAuthoringFields({
           />
         </AlertAuthoringFieldLabel>
         <AlertAuthoringFieldLabel>
-          <span>{t('alert.group-converge.group-interval')}</span>
+          <AlertGroupFieldTitle t={t} field="group-interval" requirement="required" inputMode="manual">
+            {t('alert.group-converge.group-interval')}
+          </AlertGroupFieldTitle>
           <NumberStepper
             name="alert_group_interval"
             min="0"
@@ -135,7 +194,9 @@ export function AlertGroupAuthoringFields({
           />
         </AlertAuthoringFieldLabel>
         <AlertAuthoringFieldLabel>
-          <span>{t('alert.group-converge.repeat-interval')}</span>
+          <AlertGroupFieldTitle t={t} field="repeat-interval" requirement="required" inputMode="manual">
+            {t('alert.group-converge.repeat-interval')}
+          </AlertGroupFieldTitle>
           <NumberStepper
             name="alert_group_repeat_interval"
             min="0"

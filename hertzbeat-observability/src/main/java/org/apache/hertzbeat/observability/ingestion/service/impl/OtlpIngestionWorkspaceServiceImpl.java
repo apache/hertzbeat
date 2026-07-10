@@ -1169,9 +1169,13 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
             operationNameMatch.remove("http_route");
             LinkedHashMap<String, String> httpRouteMatch = new LinkedHashMap<>(resourceMatch);
             httpRouteMatch.remove("operation_name");
+            LinkedHashMap<String, String> serviceMatch = new LinkedHashMap<>(resourceMatch);
+            serviceMatch.remove("operation_name");
+            serviceMatch.remove("http_route");
             return List.of(
                     buildRelatedMetricAvailabilityProbe(metricName, candidate, operationNameMatch),
-                    buildRelatedMetricAvailabilityProbe(metricName, candidate, httpRouteMatch)
+                    buildRelatedMetricAvailabilityProbe(metricName, candidate, httpRouteMatch),
+                    buildRelatedMetricAvailabilityProbe(metricName, candidate, serviceMatch)
             );
         }
         return List.of(buildRelatedMetricAvailabilityProbe(metricName, candidate, resourceMatch));

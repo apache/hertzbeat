@@ -76,6 +76,7 @@ import org.apache.hertzbeat.manager.service.helper.MonitorImExportHelper;
 import org.apache.hertzbeat.manager.service.impl.MonitorServiceImpl;
 import org.apache.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDetectException;
+import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import org.junit.jupiter.api.Assertions;
@@ -1089,6 +1090,29 @@ class MonitorServiceTest {
         when(monitorDao.findById(1L)).thenReturn(Optional.of(monitor));
         when(paramDao.findParamsByMonitorId(1L)).thenReturn(params);
         assertDoesNotThrow(() -> monitorService.copyMonitor(1L));
+    }
+
+    @Test
+    void copyMonitorUsesNextAvailableCopyName() {
+        Monitor monitor = Monitor.builder()
+                .intervals(1)
+                .name("memory")
+                .app("demoApp")
+                .instance("localhost")
+                .build();
+        Job job = new Job();
+        when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
+        when(monitorDao.findById(1L)).thenReturn(Optional.of(monitor));
+        when(paramDao.findParamsByMonitorId(1L)).thenReturn(Collections.singletonList(new Param()));
+        when(monitorDao.findMonitorByNameEquals("memory_copy"))
+                .thenReturn(Optional.of(Monitor.builder().id(2L).name("memory_copy").build()));
+        when(monitorDao.findMonitorByNameEquals("memory_copy_2"))
+                .thenReturn(Optional.of(Monitor.builder().id(3L).name("memory_copy_2").build()));
+        when(monitorDao.findMonitorByNameEquals("memory_copy_3")).thenReturn(Optional.empty());
+
+        assertDoesNotThrow(() -> monitorService.copyMonitor(1L));
+
+        verify(monitorDao).save(argThat(saved -> "memory_copy_3".equals(saved.getName())));
     }
 
     @Test

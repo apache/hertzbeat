@@ -30,9 +30,11 @@ describe('shared tab-strip and data-table cold-workbench chrome', () => {
   });
 
   it('adopts shared ops tokens across the current shared-owner slice', () => {
-    const tabStripSource = readFileSync(resolve(process.cwd(), 'components/workbench/workspace-tab-strip.tsx'), 'utf8');
+    const tabStripEntrypointSource = readFileSync(resolve(process.cwd(), 'components/workbench/workspace-tab-strip.tsx'), 'utf8');
+    const tabStripSource = readFileSync(resolve(process.cwd(), 'components/observability/workspace-tab-strip.tsx'), 'utf8');
     const dataTableSource = readFileSync(resolve(process.cwd(), 'components/observability/data-table.tsx'), 'utf8');
 
+    expect(tabStripEntrypointSource).toContain("from '../observability/workspace-tab-strip'");
     expect(tabStripSource).toContain('border-[var(--ops-border-color)]');
     expect(tabStripSource).toContain('bg-[var(--ops-surface-panel)]');
     expect(tabStripSource).toContain('bg-[var(--ops-surface-raised)]');

@@ -9,7 +9,9 @@ import { SegmentedControl } from '../ui/segmented-control';
 import { WeekdayPicker } from '../ui/weekday-picker';
 import {
   AlertAuthoringCallout,
+  AlertAuthoringInlineHelp,
   AlertAuthoringPanel,
+  AlertAuthoringRequiredMark,
   AlertAuthoringValuePill
 } from './alert-authoring-primitives';
 import type { AlertSilenceFormDraft } from '../../lib/alert-silence/controller';
@@ -28,6 +30,9 @@ type AlertSilenceAuthoringFieldsProps = {
   previewLabels?: Array<{ key: string; value: string }>;
   labelOptions?: AlertLabelOptions;
 };
+
+type AlertSilenceFieldRequirement = 'required' | 'conditional' | 'optional';
+type AlertSilenceFieldInputMode = 'manual' | 'selection' | 'manual-or-selection' | 'time-range';
 
 function toLocalDateTimeInput(date: Date) {
   const offset = date.getTimezoneOffset();
@@ -86,6 +91,51 @@ function AlertSilenceFieldRow({
   );
 }
 
+function AlertSilenceFieldTitle({
+  t,
+  field,
+  label,
+  requirement,
+  inputMode
+}: {
+  t: Translator;
+  field: string;
+  label: string;
+  requirement: AlertSilenceFieldRequirement;
+  inputMode: AlertSilenceFieldInputMode;
+}) {
+  return (
+    <span
+      data-alert-silence-authoring-field-title={field}
+      className="inline-flex min-w-0 flex-wrap items-center gap-1.5"
+    >
+      <span>
+        {label}
+        {requirement === 'required' || requirement === 'conditional' ? <AlertAuthoringRequiredMark /> : null}
+      </span>
+      <AlertAuthoringInlineHelp
+        id={`alert-silence-authoring-${field}-help`}
+        label={t('alert.silence.field.help-aria', { field: label })}
+        body={t(`alert.silence.field.${field}.help`)}
+        impact={t(`alert.silence.field.${field}.impact`)}
+        data-alert-silence-authoring-field-help={field}
+      />
+      <span
+        data-alert-silence-authoring-field-requirement={requirement}
+        className="rounded-[4px] bg-[#182238] px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#c8d4ee]"
+      >
+        {t(`alert.silence.field.requirement.${requirement}`)}
+      </span>
+      <span
+        data-alert-silence-authoring-field-input-mode={inputMode}
+        className="rounded-[4px] bg-[#141922] px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#9ba7bc]"
+      >
+        {t(`alert.silence.field.input-mode.${inputMode}`)}
+      </span>
+    </span>
+  );
+}
+
 const SILENCE_LABEL_TIME_ROW_CLASS = 'w-full max-w-[720px]';
 
 export function AlertSilenceAuthoringFields({
@@ -138,30 +188,70 @@ export function AlertSilenceAuthoringFields({
       ) : null}
 
       <div className="space-y-3" data-alert-silence-row-alignment="label-time-fixed-width">
-        <AlertSilenceFieldRow label={t('alert.silence.name')}>
+        <AlertSilenceFieldRow
+          label={(
+            <AlertSilenceFieldTitle
+              t={t}
+              field="name"
+              label={t('alert.silence.name')}
+              requirement="required"
+              inputMode="manual"
+            />
+          )}
+        >
           <Input
             name="silence_name"
             value={draft.name}
             onChange={event => onDraftChange({ ...draft, name: event.target.value })}
           />
         </AlertSilenceFieldRow>
-        <AlertSilenceFieldRow label={t('common.enable')}>
+        <AlertSilenceFieldRow
+          label={(
+            <AlertSilenceFieldTitle
+              t={t}
+              field="enable"
+              label={t('common.enable')}
+              requirement="required"
+              inputMode="selection"
+            />
+          )}
+        >
           <Checkbox
             name="silence_enable"
             checked={draft.enable}
-            label={t('common.enable')}
+            aria-label={t('common.enable')}
             onChange={event => onDraftChange({ ...draft, enable: event.target.checked })}
           />
         </AlertSilenceFieldRow>
-        <AlertSilenceFieldRow label={t('alert.silence.match-all')}>
+        <AlertSilenceFieldRow
+          label={(
+            <AlertSilenceFieldTitle
+              t={t}
+              field="match-all"
+              label={t('alert.silence.match-all')}
+              requirement="optional"
+              inputMode="selection"
+            />
+          )}
+        >
           <Checkbox
             name="silence_match_all"
             checked={draft.matchAll}
-            label={t('alert.silence.match-all')}
+            aria-label={t('alert.silence.match-all')}
             onChange={event => onDraftChange({ ...draft, matchAll: event.target.checked })}
           />
         </AlertSilenceFieldRow>
-        <AlertSilenceFieldRow label={t('alert.silence.type')}>
+        <AlertSilenceFieldRow
+          label={(
+            <AlertSilenceFieldTitle
+              t={t}
+              field="type"
+              label={t('alert.silence.type')}
+              requirement="required"
+              inputMode="selection"
+            />
+          )}
+        >
           <SegmentedControl
             name="silence_type"
             value={draft.type}
@@ -174,7 +264,17 @@ export function AlertSilenceAuthoringFields({
           />
         </AlertSilenceFieldRow>
         {!draft.matchAll ? (
-          <AlertSilenceFieldRow label={t('alert.silence.labels')}>
+          <AlertSilenceFieldRow
+            label={(
+              <AlertSilenceFieldTitle
+                t={t}
+                field="labels"
+                label={t('alert.silence.labels')}
+                requirement="conditional"
+                inputMode="manual-or-selection"
+              />
+            )}
+          >
             <div
               data-alert-silence-label-selector="searchable-label-record"
               data-alert-silence-aligned-control-row="label"
@@ -192,7 +292,17 @@ export function AlertSilenceAuthoringFields({
           </AlertSilenceFieldRow>
         ) : null}
         {draft.type === '1' ? (
-          <AlertSilenceFieldRow label={t('alert.notice.rule.period-chose')}>
+          <AlertSilenceFieldRow
+            label={(
+              <AlertSilenceFieldTitle
+                t={t}
+                field="days"
+                label={t('alert.notice.rule.period-chose')}
+                requirement="required"
+                inputMode="selection"
+              />
+            )}
+          >
             <WeekdayPicker
               name="silence_days[]"
               value={draft.daysText}
@@ -201,7 +311,17 @@ export function AlertSilenceAuthoringFields({
             />
           </AlertSilenceFieldRow>
         ) : null}
-        <AlertSilenceFieldRow label={t('alert.silence.time')}>
+        <AlertSilenceFieldRow
+          label={(
+            <AlertSilenceFieldTitle
+              t={t}
+              field="time"
+              label={t('alert.silence.time')}
+              requirement="required"
+              inputMode="time-range"
+            />
+          )}
+        >
           <div
             data-alert-silence-aligned-control-row="time"
             className={SILENCE_LABEL_TIME_ROW_CLASS}

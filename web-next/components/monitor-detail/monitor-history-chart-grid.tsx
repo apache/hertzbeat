@@ -344,6 +344,7 @@ export function MonitorHistoryChartGrid({
           const title = historyMetricTitle(item);
           const selected = selectedKey === key;
           const values = pickPrimaryHistorySeries(payloads[key]);
+          const hasHistorySeries = values.length > 0;
           const loading = loadingSet.has(key);
           const error = errors[key];
           const favorited = Boolean(resolveHistoryFavoriteToken(item, favoriteNames));
@@ -372,8 +373,8 @@ export function MonitorHistoryChartGrid({
               heading={title}
               unit={item.unit || undefined}
               selected={selected}
-              footer={values.length ? `${values.length} ${t('monitor.detail.history-series.search.count')}` : '-'}
-              option={values.length > 0 ? option : undefined}
+              footer={hasHistorySeries ? `${values.length} ${t('monitor.detail.history-series.search.count')}` : '-'}
+              option={hasHistorySeries ? option : undefined}
               height={360}
               loading={loading}
               loadingLabel={t('common.loading')}
@@ -412,6 +413,7 @@ export function MonitorHistoryChartGrid({
               surfaceProps={{
                 'data-monitor-history-panel': key,
                 'data-monitor-history-panel-source': 'app-yml-metric-catalog',
+                'data-monitor-history-panel-state': hasHistorySeries ? 'series-ready' : 'history-store-empty',
                 'data-monitor-history-panel-metric': title,
                 'data-monitor-history-panel-unit': item.unit || undefined
               } as React.ComponentProps<typeof HzMonitorHistoryChartCard>['surfaceProps']}

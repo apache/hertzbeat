@@ -20,8 +20,12 @@ package org.apache.hertzbeat.manager.service.entity;
 import com.google.common.primitives.Longs;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -171,33 +175,71 @@ public class EntityCatalogQueryService {
         if (!StringUtils.hasText(search)) {
             return orList;
         }
-        String lower = "%" + search.toLowerCase() + "%";
-        orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), lower));
-        orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("displayName")), lower));
-        orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("subtype")), lower));
-        orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("namespace")), lower));
-        orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("environment")), lower));
-        orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), lower));
-        orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("owner")), lower));
-        orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("lifecycle")), lower));
-        orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("tier")), lower));
-        orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("system")), lower));
-        orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("runbook")), lower));
-        orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("inheritFrom")), lower));
-        orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("labels").as(String.class)), lower));
-        orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("tags").as(String.class)), lower));
-        orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("additionalOwners").as(String.class)), lower));
-        orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("componentOf").as(String.class)), lower));
-        orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("components").as(String.class)), lower));
-        orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("implementedBy").as(String.class)), lower));
-        orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("apiInterface").as(String.class)), lower));
-        orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("languages").as(String.class)), lower));
-        orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("links").as(String.class)), lower));
-        orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("contacts").as(String.class)), lower));
+        for (String normalizedSearch : normalizeSearchTextVariants(search)) {
+            String lower = "%" + normalizedSearch + "%";
+            orList.add(criteriaBuilder.equal(criteriaBuilder.lower(root.get("name")), normalizedSearch));
+            orList.add(criteriaBuilder.equal(criteriaBuilder.lower(root.get("displayName")), normalizedSearch));
+            orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), lower));
+            orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("displayName")), lower));
+            List<Predicate> nameTokenPredicates = new ArrayList<>();
+            List<Predicate> displayNameTokenPredicates = new ArrayList<>();
+            for (String token : normalizedSearch.split("[^a-z0-9]+")) {
+                if (token.length() < 2 || token.equals(normalizedSearch)) {
+                    continue;
+                }
+                String tokenLike = "%" + token + "%";
+                nameTokenPredicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), tokenLike));
+                displayNameTokenPredicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("displayName")), tokenLike));
+            }
+            if (!nameTokenPredicates.isEmpty()) {
+                orList.add(criteriaBuilder.or(
+                        criteriaBuilder.and(nameTokenPredicates.toArray(new Predicate[0])),
+                        criteriaBuilder.and(displayNameTokenPredicates.toArray(new Predicate[0]))));
+            }
+            orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("subtype")), lower));
+            orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("namespace")), lower));
+            orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("environment")), lower));
+            orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), lower));
+            orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("owner")), lower));
+            orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("lifecycle")), lower));
+            orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("tier")), lower));
+            orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("system")), lower));
+            orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("runbook")), lower));
+            orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("inheritFrom")), lower));
+            orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("labels").as(String.class)), lower));
+            orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("tags").as(String.class)), lower));
+            orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("additionalOwners").as(String.class)), lower));
+            orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("componentOf").as(String.class)), lower));
+            orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("components").as(String.class)), lower));
+            orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("implementedBy").as(String.class)), lower));
+            orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("apiInterface").as(String.class)), lower));
+            orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("languages").as(String.class)), lower));
+            orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("links").as(String.class)), lower));
+            orList.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("contacts").as(String.class)), lower));
+        }
         Long id = Longs.tryParse(search);
         if (id != null) {
             orList.add(criteriaBuilder.equal(root.get("id"), id));
         }
         return orList;
+    }
+
+    private List<String> normalizeSearchTextVariants(String search) {
+        String trimmedSearch = search.trim();
+        String normalizedSearch;
+        try {
+            normalizedSearch = URLDecoder.decode(trimmedSearch, StandardCharsets.UTF_8).toLowerCase();
+        } catch (IllegalArgumentException ignored) {
+            normalizedSearch = trimmedSearch.toLowerCase();
+        }
+        Set<String> variants = new LinkedHashSet<>();
+        variants.add(normalizedSearch);
+        if (normalizedSearch.contains("localhost")) {
+            variants.add(normalizedSearch.replace("localhost", "127.0.0.1"));
+        }
+        if (normalizedSearch.contains("127.0.0.1")) {
+            variants.add(normalizedSearch.replace("127.0.0.1", "localhost"));
+        }
+        return new ArrayList<>(variants);
     }
 }

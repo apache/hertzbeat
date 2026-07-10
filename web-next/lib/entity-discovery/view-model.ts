@@ -1,4 +1,10 @@
-import type { EntityCatalogSuggestions, EntityDiscoveryGovernanceActivity, EntityDiscoveryGovernancePreset, Monitor } from '@/lib/types';
+import type {
+  EntityCatalogSuggestions,
+  EntityDiscoveryGovernanceActivity,
+  EntityDiscoveryGovernancePreset,
+  EntityMonitorBindingCandidate,
+  Monitor
+} from '@/lib/types';
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
 
@@ -79,6 +85,10 @@ export interface DiscoveryTableRow {
   attributionLabel: string;
   attributionCopy: string;
   primaryActionLabel: string;
+}
+
+export interface DiscoveryNavigationContext {
+  returnTo?: string | null;
 }
 
 export interface DiscoveryGovernanceAction {
@@ -176,18 +186,41 @@ function cleanCell(value: string | number | null | undefined, t: Translator) {
   return normalized || emptyDiscoveryValue(t);
 }
 
+function cleanDiscoveryInstance(value: string | number | null | undefined, t: Translator) {
+  const normalized = String(value ?? '').trim();
+
+  if (!normalized || normalized === 'null' || normalized === 'undefined') {
+    return emptyDiscoveryValue(t);
+  }
+
+  const missingHostWithPort = normalized.match(/^(?:null|undefined):(.+)$/i);
+  if (missingHostWithPort?.[1]?.trim()) {
+    return t('entities.discovery.row.instance.missing-host-port', { port: missingHostWithPort[1].trim() });
+  }
+
+  return normalized;
+}
+
+function cleanDiscoveryRouteInstance(value: string | number | null | undefined) {
+  const normalized = String(value ?? '').trim();
+  if (!normalized || /^(?:null|undefined)(?::.*)?$/i.test(normalized)) {
+    return '';
+  }
+  return normalized;
+}
+
 function localizeDiscoveryStatus(value: string | number | null | undefined, t: Translator): { label: string; tone: DiscoveryStatusTone } {
   const normalized = String(value ?? '').trim().toLowerCase();
   if (normalized === 'active') {
     return { label: t('entities.discovery.row.status.enabled'), tone: 'success' };
   }
-  if (normalized === '0' || normalized === 'success') {
+  if (normalized === '0' || normalized === '1' || normalized === 'success' || normalized === 'up') {
     return { label: t('entities.discovery.row.status.normal'), tone: 'success' };
   }
-  if (normalized === '1' || normalized === 'critical' || normalized === 'down' || normalized === 'failed') {
+  if (normalized === '2' || normalized === 'critical' || normalized === 'down' || normalized === 'failed') {
     return { label: t('entities.discovery.row.status.abnormal'), tone: 'critical' };
   }
-  if (normalized === '2' || normalized === 'pending' || normalized === 'warning' || normalized === 'warn') {
+  if (normalized === 'pending' || normalized === 'warning' || normalized === 'warn') {
     return { label: t('entities.discovery.row.status.review'), tone: 'warning' };
   }
   return { label: t('entities.discovery.row.status.unknown', { status: cleanCell(value, t) }), tone: 'neutral' };
@@ -197,7 +230,8 @@ export function buildDiscoveryTableRows(
   monitors: Monitor[],
   presets: EntityDiscoveryGovernancePreset[],
   catalog: EntityCatalogSuggestions,
-  t: Translator
+  t: Translator,
+  navigationContext: DiscoveryNavigationContext = {}
 ): DiscoveryTableRow[] {
   if (monitors.length > 0) {
     return monitors.map(monitor => {
@@ -211,13 +245,13 @@ export function buildDiscoveryTableRows(
       const draftEnvironment = pickDraftEnvironment(matchingPreset, catalog);
       const state = resolveGovernanceState(monitor, matchingPreset, catalog);
       const candidateName = matchingPreset?.name?.trim() || buildDiscoveryServiceName(monitor.app, t);
-      const attribution = buildDiscoveryRowAttribution(state, monitor, candidateName, draftOwner, draftSystem, draftEnvironment, t);
+      const attribution = buildDiscoveryRowAttribution(state, monitor, candidateName, draftOwner, draftSystem, draftEnvironment, t, navigationContext);
       const status = localizeDiscoveryStatus(monitor.status, t);
 
       return {
         key: `monitor-${monitor.id}`,
         name: cleanCell(monitor.name || monitor.app || monitor.id, t),
-        instance: cleanCell(monitor.instance, t),
+        instance: cleanDiscoveryInstance(monitor.instance, t),
         status: status.label,
         statusTone: status.tone,
         owner: cleanCell(draftOwner, t),
@@ -298,21 +332,68 @@ function buildDraftCompleteness(parts: Array<string | undefined>) {
   return `${Math.round((completed / parts.length) * 100)}%`;
 }
 
-function buildDiscoveryHref(basePath: string, monitor: Monitor) {
+function appendDiscoveryMonitorContext(params: URLSearchParams, monitor: Monitor) {
+  const routeInstance = cleanDiscoveryRouteInstance(monitor.instance);
+  if (monitor.name?.trim()) params.set('monitorName', monitor.name.trim());
+  if (monitor.app?.trim()) params.set('monitorApp', monitor.app.trim());
+  if (routeInstance) params.set('monitorInstance', routeInstance);
+}
+
+function buildDiscoveryHref(basePath: string, monitor: Monitor, navigationContext: DiscoveryNavigationContext = {}) {
   const params = new URLSearchParams({
     source: 'telemetry',
     monitorId: String(monitor.id)
   });
+  appendDiscoveryMonitorContext(params, monitor);
+  appendDiscoveryReturnContext(params, navigationContext);
   return `${basePath}?${params.toString()}`;
 }
 
-function buildDiscoveryActionHref(monitor: Monitor, action: 'merge' | 'enrich') {
-  return `${buildDiscoveryHref('/entities/discovery', monitor)}&action=${action}`;
+function buildDiscoveryActionHref(monitor: Monitor, action: 'merge' | 'enrich', navigationContext: DiscoveryNavigationContext = {}) {
+  return `${buildDiscoveryHref('/entities/discovery', monitor, navigationContext)}&action=${action}`;
 }
 
-function buildCandidateSearchHref(monitor: Monitor) {
-  const query = monitor.app?.trim() || monitor.name?.trim() || String(monitor.id);
-  return `/entities?search=${encodeURIComponent(query)}`;
+function appendDiscoveryReturnContext(params: URLSearchParams, navigationContext: DiscoveryNavigationContext) {
+  const returnTo = navigationContext.returnTo?.trim();
+  if (returnTo?.startsWith('/entities/discovery') && !returnTo.startsWith('//')) {
+    params.set('returnTo', returnTo);
+  }
+}
+
+function buildCandidateSearchHref(monitor: Monitor, navigationContext: DiscoveryNavigationContext = {}) {
+  const routeInstance = cleanDiscoveryRouteInstance(monitor.instance);
+  const query = routeInstance || monitor.name?.trim() || monitor.app?.trim() || String(monitor.id);
+  const params = new URLSearchParams({
+    search: query,
+    source: 'discovery-candidate',
+    monitorId: String(monitor.id)
+  });
+  if (monitor.name?.trim()) params.set('monitorName', monitor.name.trim());
+  if (monitor.app?.trim()) params.set('monitorApp', monitor.app.trim());
+  if (routeInstance) params.set('monitorInstance', routeInstance);
+  appendDiscoveryReturnContext(params, navigationContext);
+  return `/entities?${params.toString()}`;
+}
+
+function findBoundEntityCandidate(monitor: Monitor) {
+  return monitor.entityBindingCandidates?.find(candidate => candidate?.alreadyBound && candidate.entityId != null) ?? null;
+}
+
+function buildBoundEntityHref(monitor: Monitor, candidate: EntityMonitorBindingCandidate, navigationContext: DiscoveryNavigationContext = {}) {
+  const routeInstance = cleanDiscoveryRouteInstance(monitor.instance);
+  const params = new URLSearchParams({
+    source: 'discovery-candidate',
+    monitorId: String(monitor.id)
+  });
+  if (monitor.name?.trim()) params.set('monitorName', monitor.name.trim());
+  if (monitor.app?.trim()) params.set('monitorApp', monitor.app.trim());
+  if (routeInstance) params.set('monitorInstance', routeInstance);
+  appendDiscoveryReturnContext(params, navigationContext);
+  return `/entities/${encodeURIComponent(String(candidate.entityId))}?${params.toString()}`;
+}
+
+function resolvedEntityLabel(candidate: EntityMonitorBindingCandidate | null | undefined, t: Translator) {
+  return candidate?.entityName?.trim() || (candidate?.entityId != null ? String(candidate.entityId) : t('common.none'));
 }
 
 function resolveGovernanceState(
@@ -320,6 +401,10 @@ function resolveGovernanceState(
   preset: EntityDiscoveryGovernancePreset | undefined,
   catalog: EntityCatalogSuggestions
 ): DiscoveryGovernanceState {
+  if (findBoundEntityCandidate(monitor) != null) {
+    return 'resolved';
+  }
+
   const appKey = normalize(monitor.app);
   const catalogSystems = (catalog.systems || []).map(item => normalize(item));
   const presetStatus = normalize(preset?.status);
@@ -360,15 +445,25 @@ function buildDiscoveryRowAttribution(
   draftOwner: string,
   draftSystem: string,
   draftEnvironment: string,
-  t: Translator
+  t: Translator,
+  navigationContext: DiscoveryNavigationContext = {}
 ): Pick<DiscoveryTableRow, 'attributionCopy' | 'attributionLabel' | 'attributionState' | 'href' | 'primaryActionLabel'> {
+  const boundEntityCandidate = findBoundEntityCandidate(monitor);
   switch (state) {
     case 'resolved':
       return {
         attributionState: 'resolved',
         attributionLabel: t('entities.discovery.row.attribution.resolved.label'),
-        attributionCopy: t('entities.discovery.row.attribution.resolved.copy'),
-        href: buildCandidateSearchHref(monitor),
+        attributionCopy: t(
+          boundEntityCandidate != null
+            ? 'entities.discovery.row.attribution.resolved.bound-copy'
+            : 'entities.discovery.row.attribution.resolved.copy',
+          { entity: resolvedEntityLabel(boundEntityCandidate, t) }
+        ),
+        href:
+          boundEntityCandidate != null
+            ? buildBoundEntityHref(monitor, boundEntityCandidate, navigationContext)
+            : buildCandidateSearchHref(monitor, navigationContext),
         primaryActionLabel: t('entities.discovery.row.attribution.resolved.action')
       };
     case 'merge':
@@ -376,7 +471,7 @@ function buildDiscoveryRowAttribution(
         attributionState: 'merge',
         attributionLabel: t('entities.discovery.row.attribution.merge.label'),
         attributionCopy: t('entities.discovery.row.attribution.merge.copy', { candidate: candidateName }),
-        href: buildDiscoveryActionHref(monitor, 'merge'),
+        href: buildCandidateSearchHref(monitor, navigationContext),
         primaryActionLabel: t('entities.discovery.row.attribution.merge.action')
       };
     case 'enrich':
@@ -384,7 +479,7 @@ function buildDiscoveryRowAttribution(
         attributionState: 'review',
         attributionLabel: t('entities.discovery.row.attribution.review.label'),
         attributionCopy: buildMissingGovernanceCopy(draftOwner, draftSystem, draftEnvironment, t),
-        href: buildDiscoveryActionHref(monitor, 'enrich'),
+        href: buildDiscoveryHref('/entities/new', monitor, navigationContext),
         primaryActionLabel: t('entities.discovery.row.attribution.review.action')
       };
     default:
@@ -392,37 +487,50 @@ function buildDiscoveryRowAttribution(
         attributionState: 'create',
         attributionLabel: t('entities.discovery.row.attribution.create.label'),
         attributionCopy: t('entities.discovery.row.attribution.create.copy'),
-        href: buildDiscoveryHref('/entities/new', monitor),
+        href: buildDiscoveryHref('/entities/new', monitor, navigationContext),
         primaryActionLabel: t('entities.discovery.row.attribution.create.action')
       };
   }
 }
 
-function buildCardActions(state: DiscoveryGovernanceState, monitor: Monitor, t: Translator): DiscoveryGovernanceAction[] {
+function buildCardActions(
+  state: DiscoveryGovernanceState,
+  monitor: Monitor,
+  t: Translator,
+  navigationContext: DiscoveryNavigationContext = {}
+): DiscoveryGovernanceAction[] {
+  const boundEntityCandidate = findBoundEntityCandidate(monitor);
   switch (state) {
     case 'resolved':
       return [
-        { label: t('entities.discovery.card.action.open-resolved'), href: buildCandidateSearchHref(monitor), kind: 'primary' },
-        { label: t('entities.discovery.card.action.open-definition'), href: buildDiscoveryHref('/entities/import', monitor), kind: 'secondary' }
+        {
+          label: t('entities.discovery.card.action.open-resolved'),
+          href:
+            boundEntityCandidate != null
+              ? buildBoundEntityHref(monitor, boundEntityCandidate, navigationContext)
+              : buildCandidateSearchHref(monitor, navigationContext),
+          kind: 'primary'
+        },
+        { label: t('entities.discovery.card.action.open-definition'), href: buildDiscoveryHref('/entities/import', monitor, navigationContext), kind: 'secondary' }
       ];
     case 'merge':
       return [
-        { label: t('entities.discovery.card.action.merge-suggested'), href: `${buildDiscoveryHref('/entities/discovery', monitor)}&action=merge`, kind: 'primary' },
-        { label: t('entities.discovery.card.action.open-definition'), href: buildDiscoveryHref('/entities/import', monitor), kind: 'secondary' },
-        { label: t('entities.discovery.card.action.open-suggested'), href: buildCandidateSearchHref(monitor), kind: 'secondary' },
-        { label: t('entities.discovery.card.action.adopt-draft'), href: buildDiscoveryHref('/entities/new', monitor), kind: 'link' }
+        { label: t('entities.discovery.card.action.merge-suggested'), href: buildCandidateSearchHref(monitor, navigationContext), kind: 'primary' },
+        { label: t('entities.discovery.card.action.open-definition'), href: buildDiscoveryHref('/entities/import', monitor, navigationContext), kind: 'secondary' },
+        { label: t('entities.discovery.card.action.open-suggested'), href: buildCandidateSearchHref(monitor, navigationContext), kind: 'secondary' },
+        { label: t('entities.discovery.card.action.adopt-draft'), href: buildDiscoveryHref('/entities/new', monitor, navigationContext), kind: 'link' }
       ];
     case 'enrich':
       return [
-        { label: t('entities.discovery.card.action.review-governance'), href: `${buildDiscoveryHref('/entities/discovery', monitor)}&action=enrich`, kind: 'primary' },
-        { label: t('entities.discovery.card.action.send-definition'), href: buildDiscoveryHref('/entities/import', monitor), kind: 'secondary' },
-        { label: t('entities.discovery.card.action.adopt-draft'), href: buildDiscoveryHref('/entities/new', monitor), kind: 'link' }
+        { label: t('entities.discovery.card.action.review-governance'), href: buildDiscoveryActionHref(monitor, 'enrich', navigationContext), kind: 'primary' },
+        { label: t('entities.discovery.card.action.send-definition'), href: buildDiscoveryHref('/entities/import', monitor, navigationContext), kind: 'secondary' },
+        { label: t('entities.discovery.card.action.adopt-draft'), href: buildDiscoveryHref('/entities/new', monitor, navigationContext), kind: 'link' }
       ];
     default:
       return [
-        { label: t('entities.discovery.card.action.create-draft'), href: buildDiscoveryHref('/entities/new', monitor), kind: 'primary' },
-        { label: t('entities.discovery.card.action.send-definition'), href: buildDiscoveryHref('/entities/import', monitor), kind: 'secondary' },
-        { label: t('entities.discovery.card.action.adopt-draft'), href: buildDiscoveryHref('/entities/new', monitor), kind: 'link' }
+        { label: t('entities.discovery.card.action.create-draft'), href: buildDiscoveryHref('/entities/new', monitor, navigationContext), kind: 'primary' },
+        { label: t('entities.discovery.card.action.send-definition'), href: buildDiscoveryHref('/entities/import', monitor, navigationContext), kind: 'secondary' },
+        { label: t('entities.discovery.card.action.adopt-draft'), href: buildDiscoveryHref('/entities/new', monitor, navigationContext), kind: 'link' }
       ];
   }
 }
@@ -444,7 +552,8 @@ export function buildDiscoveryGovernanceCards(
   monitors: Monitor[],
   presets: EntityDiscoveryGovernancePreset[],
   catalog: EntityCatalogSuggestions,
-  t: Translator
+  t: Translator,
+  navigationContext: DiscoveryNavigationContext = {}
 ): DiscoveryGovernanceCard[] {
   return monitors.map(monitor => {
     const appKey = normalize(monitor.app);
@@ -484,9 +593,14 @@ export function buildDiscoveryGovernanceCards(
               ? t('entities.discovery.card.next.enrich')
               : t('entities.discovery.card.next.create'),
       recommendation: buildRecommendation(state, t),
-      candidateLabel: state === 'merge' ? t('entities.discovery.card.candidate-label', { candidate: candidateName }) : undefined,
+      candidateLabel:
+        state === 'resolved'
+          ? t('entities.discovery.card.resolved-label', { entity: resolvedEntityLabel(findBoundEntityCandidate(monitor), t) })
+          : state === 'merge'
+            ? t('entities.discovery.card.candidate-label', { candidate: candidateName })
+            : undefined,
       candidateContext: state === 'merge' ? buildDiscoveryContextLine([draftOwner, draftSystem, draftEnvironment], t) : undefined,
-      actions: buildCardActions(state, monitor, t)
+      actions: buildCardActions(state, monitor, t, navigationContext)
     };
   });
 }

@@ -1,13 +1,20 @@
+// @vitest-environment jsdom
+
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import React from 'react';
+import { act } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTranslatorMock } from '../../../test/i18n-test-helper';
 import type { AlertInhibitRouteState } from '../../../lib/alert-inhibit/query-state';
 
 const mockState = vi.hoisted(() => ({
   lastLoad: null as null | (() => Promise<unknown>),
+  lastSurfaceProps: null as null | Record<string, any>,
+  currentSearchParams: '',
+  routerReplace: vi.fn(),
   renderData: {
     list: {
       totalElements: 1,
@@ -29,6 +36,16 @@ const mockState = vi.hoisted(() => ({
 }));
 
 const apiMessageGet = vi.hoisted(() => vi.fn());
+
+(globalThis as { React?: typeof React }).React = React;
+(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    replace: mockState.routerReplace
+  }),
+  useSearchParams: () => new URLSearchParams(mockState.currentSearchParams)
+}));
 
 vi.mock('../../../components/providers/i18n-provider', () => ({
   useI18n: () => ({
@@ -56,51 +73,46 @@ vi.mock('../../../components/workbench/client-workbench', () => ({
 }));
 
 vi.mock('../../../components/pages/alert-inhibit-surface', () => ({
-  AlertInhibitSurface: ({
-    data,
-    returnContext,
-    managementContext,
-    matchedViewEnabled,
-    missingMatchedRuleCount,
-    createdOutsideMatchedViewNotice,
-    entityPrefillSource,
-    entityPrefillWarning,
-    evidenceContext,
-    draft,
-    pageSizeOptions
-  }: {
-    data: { list: { totalElements: number } };
-    returnContext?: Record<string, string>;
-    managementContext?: { matchMode?: string; matchingRuleIds?: number[] };
-    matchedViewEnabled?: boolean;
-    missingMatchedRuleCount?: number;
-    createdOutsideMatchedViewNotice?: boolean;
-    entityPrefillSource?: string;
-    entityPrefillWarning?: string | null;
-    evidenceContext?: { signal: string; sourceLabelsText: string; returnHref?: string } | null;
-    draft?: { sourceLabelsText?: string; targetLabelsText?: string; equalLabelsText?: string };
-    pageSizeOptions?: number[];
-  }) => (
-    <div
-      data-alert-inhibit-surface="true"
-      data-total={data.list.totalElements}
-      data-page-size-options={pageSizeOptions?.join('|')}
-      data-return-context={JSON.stringify(returnContext ?? {})}
-      data-management-context={JSON.stringify(managementContext ?? {})}
-      data-alert-inhibit-match-view={matchedViewEnabled ? 'matched' : 'all'}
-      data-alert-inhibit-missing-rule-count={missingMatchedRuleCount ?? 0}
-      data-alert-inhibit-created-outside-matched={createdOutsideMatchedViewNotice ? 'true' : 'false'}
-      data-alert-inhibit-entity-prefill-source={entityPrefillSource ?? 'none'}
-      data-alert-inhibit-entity-prefill-warning={entityPrefillWarning ?? ''}
-      data-alert-inhibit-evidence-context={evidenceContext ? 'signal-route' : 'none'}
-      data-alert-inhibit-evidence-signal={evidenceContext?.signal ?? ''}
-      data-alert-inhibit-evidence-return={evidenceContext?.returnHref ?? ''}
-      data-alert-inhibit-prefill-source-labels={evidenceContext?.sourceLabelsText ?? ''}
-      data-alert-inhibit-draft-source-labels={draft?.sourceLabelsText ?? ''}
-      data-alert-inhibit-draft-target-labels={draft?.targetLabelsText ?? ''}
-      data-alert-inhibit-draft-equal-labels={draft?.equalLabelsText ?? ''}
-    />
-  )
+  AlertInhibitSurface: (props: any) => {
+    const {
+      data,
+      returnContext,
+      managementContext,
+      matchedViewEnabled,
+      missingMatchedRuleCount,
+      createdOutsideMatchedViewNotice,
+      entityPrefillSource,
+      entityPrefillWarning,
+      evidenceContext,
+      draft,
+      pageSizeOptions,
+      search
+    } = props;
+    mockState.lastSurfaceProps = props;
+    return (
+      <div
+        data-alert-inhibit-surface="true"
+        data-total={data.list.totalElements}
+        data-page-size-options={pageSizeOptions?.join('|')}
+        data-requested-page-size={props.requestedPageSize}
+        data-search={search}
+        data-return-context={JSON.stringify(returnContext ?? {})}
+        data-management-context={JSON.stringify(managementContext ?? {})}
+        data-alert-inhibit-match-view={matchedViewEnabled ? 'matched' : 'all'}
+        data-alert-inhibit-missing-rule-count={missingMatchedRuleCount ?? 0}
+        data-alert-inhibit-created-outside-matched={createdOutsideMatchedViewNotice ? 'true' : 'false'}
+        data-alert-inhibit-entity-prefill-source={entityPrefillSource ?? 'none'}
+        data-alert-inhibit-entity-prefill-warning={entityPrefillWarning ?? ''}
+        data-alert-inhibit-evidence-context={evidenceContext ? 'signal-route' : 'none'}
+        data-alert-inhibit-evidence-signal={evidenceContext?.signal ?? ''}
+        data-alert-inhibit-evidence-return={evidenceContext?.returnHref ?? ''}
+        data-alert-inhibit-prefill-source-labels={evidenceContext?.sourceLabelsText ?? ''}
+        data-alert-inhibit-draft-source-labels={draft?.sourceLabelsText ?? ''}
+        data-alert-inhibit-draft-target-labels={draft?.targetLabelsText ?? ''}
+        data-alert-inhibit-draft-equal-labels={draft?.equalLabelsText ?? ''}
+      />
+    );
+  }
 }));
 
 vi.mock('../../../lib/api-client', () => ({
@@ -139,8 +151,25 @@ async function renderAlertInhibitPage(initialRouteState: AlertInhibitRouteState 
 }
 
 describe('alert inhibit page', () => {
+  let interactionContainer: HTMLDivElement | null = null;
+  let interactionRoot: Root | null = null;
+
+  afterEach(() => {
+    if (interactionRoot) {
+      act(() => {
+        interactionRoot?.unmount();
+      });
+    }
+    interactionRoot = null;
+    interactionContainer?.remove();
+    interactionContainer = null;
+  });
+
   beforeEach(() => {
     mockState.lastLoad = null;
+    mockState.lastSurfaceProps = null;
+    mockState.currentSearchParams = '';
+    mockState.routerReplace.mockReset();
     apiMessageGet.mockClear().mockResolvedValue(mockState.renderData.list);
   });
 
@@ -149,6 +178,7 @@ describe('alert inhibit page', () => {
 
     expect(html).toContain('data-alert-inhibit-surface="true"');
     expect(html).toContain('data-page-size-options="8|15|25"');
+    expect(html).toContain('data-search=""');
     expect(html).toContain('data-loading-copy="Loading inhibit rules"');
 
     await mockState.lastLoad?.();
@@ -269,7 +299,7 @@ describe('alert inhibit page', () => {
     expect(html).toContain('data-alert-inhibit-draft-equal-labels="hertzbeat.entity.id, service.name, service.namespace, deployment.environment"');
     expect(html).not.toContain('returnLabel=');
     const source = readFileSync(resolve(process.cwd(), 'app/alert/inhibit/alert-inhibit-page.tsx'), 'utf8');
-    expect(source).not.toContain('useSearchParams');
+    expect(source).toContain("import { useRouter, useSearchParams } from 'next/navigation';");
     expect(source).not.toContain('queryStateFromParams(searchParams)');
     expect(source).not.toContain('readSignalRouteContext(searchParams)');
     expect(source).toContain('const alertInhibitRouteState = initialRouteState ?? EMPTY_ALERT_INHIBIT_ROUTE_STATE');
@@ -282,8 +312,8 @@ describe('alert inhibit page', () => {
     expect(source).toContain('ALERT_INHIBIT_LABEL_OPTIONS_TIMEOUT_MS = 2_500');
     expect(source).toContain('withTimeoutFallback(');
     expect(source).toContain('const [refreshTick, setRefreshTick] = useState(0)');
-    expect(source).toContain('const [pageIndex, setPageIndex] = useState(0)');
-    expect(source).toContain('const [pageSize, setPageSize] = useState<number>(ALERT_INHIBIT_PAGE_SIZE_OPTIONS[0])');
+    expect(source).toContain('const [pageIndex, setPageIndex] = useState(routeListState.pageIndex)');
+    expect(source).toContain('const [pageSize, setPageSize] = useState<number>(routeListState.pageSize)');
     expect(source).toContain("['alert-inhibit', useMatchedView ? `matched:${matchedRuleIdsKey}` : alertInhibitListUrl, refreshTick].join('|')");
     expect(source).toContain('buildAlertInhibitUrl({ search: query, pageIndex, pageSize })');
     expect(source).toContain('[pageIndex, pageSize, query]');
@@ -301,6 +331,148 @@ describe('alert inhibit page', () => {
     expect(source).toContain('function handlePageIndexChange(nextPageIndex: number)');
     expect(source).toContain('function handlePageSizeChange(nextPageSize: number)');
     expect(source).toContain('setPageIndex(0);');
+  });
+
+  it('initializes alert inhibit list state from the route and preserves URL state during search and pagination', async () => {
+    mockState.currentSearchParams = 'search=ops&pageIndex=2&pageSize=15&signal=metrics&entityId=7';
+    const { default: AlertInhibitPage } = await import('./alert-inhibit-page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<AlertInhibitPage />);
+      await Promise.resolve();
+    });
+
+    expect(mockState.lastSurfaceProps?.search).toBe('ops');
+    expect(mockState.lastSurfaceProps?.requestedPageSize).toBe(15);
+    await act(async () => {
+      await mockState.lastLoad?.();
+    });
+    expect(apiMessageGet).toHaveBeenCalledWith('/alert/inhibits?pageIndex=2&pageSize=15&sort=id&order=desc&search=ops');
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onSearchChange('checkout');
+      await Promise.resolve();
+    });
+    await act(async () => {
+      mockState.lastSurfaceProps?.onApplyFilter();
+      await Promise.resolve();
+    });
+
+    expect(mockState.routerReplace).toHaveBeenLastCalledWith('/alert/inhibit?search=checkout&pageSize=15&signal=metrics&entityId=7', { scroll: false });
+
+    mockState.currentSearchParams = 'search=checkout&pageSize=15&signal=metrics&entityId=7';
+    await act(async () => {
+      interactionRoot?.render(<AlertInhibitPage />);
+      await Promise.resolve();
+    });
+    await act(async () => {
+      mockState.lastSurfaceProps?.onPageIndexChange(3);
+      await Promise.resolve();
+    });
+
+    expect(mockState.routerReplace).toHaveBeenLastCalledWith('/alert/inhibit?search=checkout&pageSize=15&signal=metrics&entityId=7&pageIndex=3', { scroll: false });
+
+    mockState.currentSearchParams = 'search=checkout&pageSize=15&signal=metrics&entityId=7';
+    await act(async () => {
+      interactionRoot?.render(<AlertInhibitPage />);
+      await Promise.resolve();
+    });
+    await act(async () => {
+      mockState.lastSurfaceProps?.onPageSizeChange(8);
+      await Promise.resolve();
+    });
+
+    expect(mockState.routerReplace).toHaveBeenLastCalledWith('/alert/inhibit?search=checkout&signal=metrics&entityId=7', { scroll: false });
+
+    mockState.currentSearchParams = 'search=checkout&pageSize=15&signal=metrics&entityId=7';
+    await act(async () => {
+      interactionRoot?.render(<AlertInhibitPage />);
+      await Promise.resolve();
+    });
+    await act(async () => {
+      mockState.lastSurfaceProps?.onClearFilter();
+      await Promise.resolve();
+    });
+
+    expect(mockState.routerReplace).toHaveBeenLastCalledWith('/alert/inhibit?signal=metrics&entityId=7', { scroll: false });
+  });
+
+  it('clears local editor validation when canceling an empty new inhibit draft', async () => {
+    const { default: AlertInhibitPage } = await import('./alert-inhibit-page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<AlertInhibitPage />);
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onSave();
+      await Promise.resolve();
+    });
+
+    expect(mockState.lastSurfaceProps?.editorError).toBe(createTranslatorMock()('alert.inhibit.validation.name'));
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onCloseEditor();
+      await Promise.resolve();
+    });
+
+    expect(mockState.lastSurfaceProps?.editorOpen).toBe(false);
+    expect(mockState.lastSurfaceProps?.editorError).toBeNull();
+    expect(mockState.lastSurfaceProps?.editorErrorDetail).toBeNull();
+    expect(mockState.lastSurfaceProps?.editorErrorContract).toBeNull();
+  });
+
+  it('asks for confirmation before closing a dirty inhibit editor draft', async () => {
+    const { default: AlertInhibitPage } = await import('./alert-inhibit-page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<AlertInhibitPage />);
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onNew();
+      await Promise.resolve();
+    });
+
+    const draft = mockState.lastSurfaceProps?.draft;
+    expect(mockState.lastSurfaceProps?.editorOpen).toBe(true);
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onDraftChange({ ...draft, name: 'Unsaved inhibit draft' });
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onCloseEditor();
+      await Promise.resolve();
+    });
+
+    expect(mockState.lastSurfaceProps?.editorOpen).toBe(true);
+    expect(interactionContainer.innerHTML).toContain('data-alert-inhibit-unsaved-cancel-state="open"');
+    expect(interactionContainer.innerHTML).toContain('Discard unsaved inhibit changes?');
+  });
+
+  it('focuses the first invalid inhibit editor field after local validation fails', () => {
+    const source = readFileSync(resolve(process.cwd(), 'app/alert/inhibit/alert-inhibit-page.tsx'), 'utf8');
+
+    expect(source).toContain('function focusAlertInhibitEditorField(field: AlertInhibitValidationField)');
+    expect(source).toContain('const validationField = getAlertInhibitValidationField(draft)');
+    expect(source).toContain('focusAlertInhibitEditorField(validationField)');
+    expect(source).toContain('input[name="inhibit_name"]');
+    expect(source).toContain('[data-alert-inhibit-source-label-selector] [data-hz-label-selector-draft-row="true"] input[data-hz-label-selector-key-input="searchable-key"]');
+    expect(source).toContain('[data-alert-inhibit-target-label-selector] [data-hz-label-selector-draft-row="true"] input[data-hz-label-selector-key-input="searchable-key"]');
+    expect(source).toContain('[data-alert-inhibit-equal-label-selector] input[data-hz-tag-input-control="draft"]');
   });
 
   it('loads Angular entity-noise-control matched inhibit rules by id', async () => {
@@ -411,6 +583,16 @@ describe('alert inhibit page', () => {
     expect(source).not.toContain('apiMessageDelete');
     expect(source).not.toContain("setEditorMessage(t('common.delete-success'))");
     expect(source).not.toContain("t('common.delete-failed')");
+  });
+
+  it('names the target and destructive action in inhibit delete confirmation', () => {
+    const source = readFileSync(resolve(process.cwd(), 'app/alert/inhibit/alert-inhibit-page.tsx'), 'utf8');
+
+    expect(source).toContain('const deleteTargetNames = deleteRequest?.ids');
+    expect(source).toContain("t('alert.inhibit.delete.confirm.targets', { names: deleteTargetNames.join(', ') })");
+    expect(source).toContain("t('alert.inhibit.delete.confirm.targets-more', { count: missingDeleteTargetCount })");
+    expect(source).toContain("confirmLabel={t('alert.inhibit.delete.confirm.action')}");
+    expect(source).not.toContain("confirmLabel={t('common.button.ok')}");
   });
 
   it('uses Angular edit notifications and facade persistence for enable-toggle feedback', () => {

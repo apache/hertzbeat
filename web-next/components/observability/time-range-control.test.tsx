@@ -278,12 +278,12 @@ describe('TimeRangeControl', () => {
     );
 
     expect(html).toContain('data-time-range-control-visual="grafana-like-narrow-rail"');
-    expect(html).toContain('data-time-range-control-layout="nowrap-top-right-rail"');
+    expect(html).toContain('data-time-range-control-layout="wrapping-top-right-rail"');
     expect(html).toContain('data-time-range-control-align="end"');
-    expect(html).toContain('data-time-range-control-wrap="nowrap"');
+    expect(html).toContain('data-time-range-control-wrap="wrap"');
     expect(html).toContain('data-time-range-control-card="false"');
     expect(html).toContain('data-time-range-control-density="narrow"');
-    expect(html).toContain('data-time-range-control-overflow="fit-without-scroll"');
+    expect(html).toContain('data-time-range-control-overflow="contained-wrap"');
     expect(html).toContain('data-time-range-control-absolute-display="local-seconds"');
     expect(html).toContain('data-time-range-control-manual-entry="visible"');
     expect(html).toContain('data-time-range-control-absolute-draft="ready"');
@@ -291,7 +291,7 @@ describe('TimeRangeControl', () => {
     expect(html).toContain('data-time-range-absolute-inputs="manual-entry"');
     expect(html).toContain('data-time-range-start-input="true"');
     expect(html).toContain('data-time-range-end-input="true"');
-    expect(html).toContain('flex-nowrap');
+    expect(html).toContain('flex-wrap');
     expect(html).toContain('justify-end');
     expect(html).not.toContain('overflow-x-auto');
     expect(html).not.toContain('flex-wrap items-center gap-1.5 rounded-[3px] border');
@@ -308,7 +308,7 @@ describe('TimeRangeControl', () => {
       />
     );
 
-    expect(html).toContain('data-time-range-control-overflow="fit-without-scroll"');
+    expect(html).toContain('data-time-range-control-overflow="contained-wrap"');
     expect(html).toContain('data-time-range-control-absolute-display="local-seconds"');
     expect(html).toContain('value="2024-04-16 00:53:20"');
     expect(html).toContain('value="2024-04-16 01:53:20"');

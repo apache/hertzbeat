@@ -9,6 +9,8 @@ import { createTranslatorMock } from '../../../test/i18n-test-helper';
 
 const mockState = vi.hoisted(() => ({
   lastLoad: null as null | (() => Promise<unknown>),
+  currentSearchParams: '',
+  routerReplace: vi.fn(),
   renderData: {
     receivers: {
       content: [
@@ -116,6 +118,13 @@ vi.mock('next/link', () => ({
       {children}
     </a>
   )
+}));
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    replace: mockState.routerReplace
+  }),
+  useSearchParams: () => new URLSearchParams(mockState.currentSearchParams)
 }));
 
 vi.mock('../../../components/providers/i18n-provider', () => ({
@@ -346,12 +355,15 @@ async function renderAlertNoticePage(initialRouteState: AlertNoticeRouteState = 
 describe('alert notice page', () => {
   beforeEach(() => {
     mockState.lastLoad = null;
+    mockState.currentSearchParams = '';
+    mockState.routerReplace.mockReset();
     mockLoadAlertNoticeData.mockClear().mockResolvedValue(mockState.renderData);
   });
 
   it('renders the OTLP cold notice tab shell with the receiver console selected by default', async () => {
     const t = createTranslatorMock({ locale: 'zh-CN' });
     const source = readFileSync(resolve(process.cwd(), 'app/alert/notice/alert-notice-page.tsx'), 'utf8');
+    const receiverPanelSource = source.slice(source.indexOf('const receiverPanel = ('), source.indexOf('const rulePanel = ('));
     const html = await renderAlertNoticePage();
 
     expect(html).toContain(t('alert.notice.title'));
@@ -363,8 +375,12 @@ describe('alert notice page', () => {
     expect(html).toContain('data-tab="template"');
     expect(html).toContain('data-alert-notice-surface="otlp-hertzbeat-ui-notice-console"');
     expect(html).toContain('data-alert-notice-style-baseline="hertzbeat-ui-matte"');
+    expect(html).toContain('data-alert-notice-page-overflow="route-contained-horizontal"');
+    expect(html).toContain('overflow-x-hidden');
     expect(html).toContain('data-alert-notice-header="hertzbeat-ui-compact-header"');
+    expect(html).toContain('data-alert-notice-header-nesting-contract="flat-page-introduction"');
     expect(html).toContain('data-alert-notice-admin-layout="full-width-admin-list"');
+    expect(html).toContain('class="p-0"');
     expect(html).toContain('data-alert-notice-inline-metrics="hertzbeat-ui-inline-counts"');
     expect(html).toContain('data-alert-notice-command-bar="standard-equal-buttons"');
     expect(html).toContain('data-alert-notice-workbench-panel="cold-tabbed-table-panel"');
@@ -384,6 +400,10 @@ describe('alert notice page', () => {
     expect(html).not.toContain('data-hz-search-input-shell');
     expect(html).toContain('data-hz-search-action="submit"');
     expect(html).toContain('data-alert-notice-receiver-table-shell="hertzbeat-ui-dense-table"');
+    expect(html).toContain('data-alert-notice-receiver-table-layout="viewport-contained-visible-actions"');
+    expect(html).toContain('class="min-w-full border-collapse text-sm text-[var(--ops-text-secondary)] w-full table-fixed text-center"');
+    expect(receiverPanelSource).toContain('data-alert-notice-receiver-table-layout="viewport-contained-visible-actions"');
+    expect(receiverPanelSource).not.toContain('className="min-w-[1240px] text-center"');
     expect(html).toContain('data-alert-notice-pagination="hertzbeat-ui-dense-pagination"');
     expect(html).toContain('data-alert-notice-pagination-owner="hertzbeat-ui-pagination-bar"');
     expect(html).toContain('data-hz-ui="pagination-bar"');
@@ -418,11 +438,15 @@ describe('alert notice page', () => {
 
     expect(source).toContain('hzOpsCatalogVisual');
     expect(source).toContain('data-alert-notice-style-baseline={coldNoticeVisual.canvasName}');
-    expect(source).toContain('className={coldNoticeVisual.canvas.root}');
+    expect(source).toContain('data-alert-notice-page-overflow="route-contained-horizontal"');
+    expect(source).toContain('className={`${coldNoticeVisual.canvas.root} overflow-x-hidden`}');
     expect(source).toContain('style={coldNoticeVisual.canvas.backgroundStyle}');
     expect(source).toContain('<section className={coldNoticeVisual.layout.pageSection}>');
-    expect(source).toContain('className={coldNoticeVisual.panel.hero}');
-    expect(source).toContain('className={coldNoticeVisual.button.row}');
+    expect(source).toContain('data-alert-notice-header-nesting-contract="flat-page-introduction"');
+    expect(source).toContain('className="p-0"');
+    expect(source).not.toContain('className={coldNoticeVisual.panel.hero}');
+    expect(source).toContain('data-alert-notice-command-bar-mobile="two-column-wrap"');
+    expect(source).toContain('className="mt-6 grid grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap"');
     expect(source).toContain('coldButtonClassName');
     expect(source).toContain('coldPrimaryButtonClassName');
     expect(source).toContain('coldCommandButtonClass');
@@ -433,6 +457,17 @@ describe('alert notice page', () => {
     expect(source).toContain("from '../../../lib/alert-label-options'");
     expect(source).toContain('loadAlertLabelOptionsFromFacade(api.alertLabels.list)');
     expect(source).toContain('loadAlertNoticeDataFromFacade');
+    expect(source).toContain("import { useRouter, useSearchParams } from 'next/navigation';");
+    expect(source).toContain("receiverSearch: routeParams.get('receiverSearch') ?? ''");
+    expect(source).toContain("ruleSearch: routeParams.get('ruleSearch') ?? ''");
+    expect(source).toContain("templateSearch: routeParams.get('templateSearch') ?? ''");
+    expect(source).toContain("if (!nextState.templatePresetFilter || currentParams.get('templatePreset') === 'true') nextParams.set('templatePreset', String(nextState.templatePresetFilter));");
+    expect(source).toContain('const nextTemplateSearch = templateDraft.name.trim();');
+    expect(source).toContain('setTemplatePresetFilter(false);');
+    expect(source).toContain("templatePresetFilter: false");
+    expect(source).toContain("templateSearch: nextTemplateSearch");
+    expect(source).toContain('return nextParamString ? `/alert/notice?${nextParamString}` : \'/alert/notice\';');
+    expect(source).toContain('router.replace(nextUrl, { scroll: false });');
     expect(source).toContain('receivers: api.alertNotice.receivers.list');
     expect(source).toContain('rules: api.alertNotice.rules.list');
     expect(source).toContain('receiverOptions: api.alertNotice.receivers.options');
@@ -483,6 +518,249 @@ describe('alert notice page', () => {
     expect(source).not.toContain('NoticeListToolbar');
     expect(source).not.toContain('buildNoticeFacts');
     expect(source).not.toContain("from '../../../components/workbench/primitives'");
+  }, 60_000);
+
+  it('initializes notice tab and list queries from URL state', async () => {
+    mockState.currentSearchParams = [
+      'tab=template',
+      'receiverSearch=ops',
+      'receiverPageIndex=2',
+      'receiverPageSize=15',
+      'ruleSearch=severity',
+      'rulePageIndex=1',
+      'rulePageSize=25',
+      'templateSearch=webhook',
+      'templatePreset=false',
+      'templatePageIndex=3',
+      'templatePageSize=15'
+    ].join('&');
+
+    const html = await renderAlertNoticePage();
+
+    expect(html).toContain('data-selected-tab="template"');
+    expect(html).toContain('value="webhook"');
+    expect(html).toContain('value="false" selected=""');
+
+    await mockState.lastLoad?.();
+
+    expect(mockLoadAlertNoticeData).toHaveBeenLastCalledWith(expect.anything(), {
+      receivers: {
+        search: 'ops',
+        pageIndex: 2,
+        pageSize: 15
+      },
+      rules: {
+        search: 'severity',
+        pageIndex: 1,
+        pageSize: 25
+      },
+      templates: {
+        search: 'webhook',
+        preset: false,
+        pageIndex: 3,
+        pageSize: 15
+      }
+    });
+  }, 30_000);
+
+  it('keeps explicitly supplied default notice list URL params during route sync', async () => {
+    const { buildAlertNoticeListRouteUrl } = await import('./alert-notice-page');
+    const nextUrl = buildAlertNoticeListRouteUrl(
+      [
+        'tab=receiver',
+        'receiverSearch=uv_notice_receiver_webhook_token_help_1082',
+        'receiverPageIndex=0',
+        'receiverPageSize=8',
+        'source=notice-receiver-webhook-token-help-1082',
+        'returnTo=%2Falert%2Fsetting%3Fsource%3Dnotice-receiver-webhook-token-help-return-1082%26probe%3Dnotice-receiver-webhook-token-help-1082',
+        'timeRange=last-30m',
+        'live=false',
+        'probe=notice-receiver-webhook-token-help-1082',
+        'templatePreset=true'
+      ].join('&'),
+      'receiver',
+      {
+        selectedTab: 'receiver',
+        receiverSearch: 'uv_notice_receiver_webhook_token_help_1082',
+        receiverPageIndex: 0,
+        receiverPageSize: 8,
+        ruleSearch: '',
+        rulePageIndex: 0,
+        rulePageSize: 8,
+        templateSearch: '',
+        templatePresetFilter: true,
+        templatePageIndex: 0,
+        templatePageSize: 8
+      }
+    );
+
+    expect(nextUrl).toContain('tab=receiver');
+    expect(nextUrl).toContain('receiverSearch=uv_notice_receiver_webhook_token_help_1082');
+    expect(nextUrl).toContain('receiverPageIndex=0');
+    expect(nextUrl).toContain('receiverPageSize=8');
+    expect(nextUrl).toContain('templatePreset=true');
+    expect(nextUrl).toContain('source=notice-receiver-webhook-token-help-1082');
+    expect(nextUrl).toContain('timeRange=last-30m');
+    expect(nextUrl).toContain('live=false');
+    expect(nextUrl).toContain('probe=notice-receiver-webhook-token-help-1082');
+    expect(decodeURIComponent(nextUrl)).toContain('/alert/setting?source=notice-receiver-webhook-token-help-return-1082&probe=notice-receiver-webhook-token-help-1082');
+  }, 30_000);
+
+  it('drops stale non-default notice list URL params when operators switch back to defaults', async () => {
+    const { buildAlertNoticeListRouteUrl } = await import('./alert-notice-page');
+    const nextUrl = buildAlertNoticeListRouteUrl(
+      'tab=template&receiverPageSize=15&templatePreset=false&source=manual',
+      'receiver',
+      {
+        selectedTab: 'receiver',
+        receiverSearch: '',
+        receiverPageIndex: 0,
+        receiverPageSize: 8,
+        ruleSearch: '',
+        rulePageIndex: 0,
+        rulePageSize: 8,
+        templateSearch: '',
+        templatePresetFilter: true,
+        templatePageIndex: 0,
+        templatePageSize: 8
+      }
+    );
+
+    expect(nextUrl).toBe('/alert/notice?source=manual');
+  }, 30_000);
+
+  it('explains notification lane actions before operators create or delete delivery paths', async () => {
+    const t = createTranslatorMock({ locale: 'zh-CN' });
+    const source = readFileSync(resolve(process.cwd(), 'app/alert/notice/alert-notice-page.tsx'), 'utf8');
+    const receiverHtml = await renderAlertNoticePage();
+    const ruleHtml = await renderAlertNoticePage({
+      signal: 'logs',
+      signalContext: {
+        serviceName: 'checkout',
+        environment: 'prod'
+      }
+    });
+    mockState.currentSearchParams = 'tab=template';
+    const templateHtml = await renderAlertNoticePage();
+
+    expect(source).toContain('function alertNoticeActionHelp');
+    expect(source).toContain('function AlertNoticeActionHelp');
+    for (const id of [
+      'receiver-refresh',
+      'receiver-new',
+      'receiver-delete',
+      'receiver-row-edit',
+      'receiver-row-delete',
+      'receiver-cancel',
+      'receiver-test',
+      'receiver-save',
+      'rule-refresh',
+      'rule-new',
+      'rule-delete',
+      'rule-row-filter-all',
+      'rule-row-enable',
+      'rule-row-edit',
+      'rule-row-delete',
+      'rule-cancel',
+      'rule-save',
+      'template-refresh',
+      'template-new',
+      'template-delete',
+      'template-row-view',
+      'template-row-edit',
+      'template-row-delete',
+      'template-save'
+    ]) {
+      expect(source).toContain(`id="${id}"`);
+      expect(source).toContain(`alertNoticeActionHelp(t, '${id}')`);
+    }
+
+    expect(receiverHtml).toContain('data-alert-notice-action-help="receiver-refresh"');
+    expect(receiverHtml).toContain('data-alert-notice-command-action="receiver-refresh"');
+    expect(receiverHtml).toContain('data-alert-notice-action-help="receiver-new"');
+    expect(receiverHtml).toContain('data-alert-notice-command-action="receiver-new"');
+    expect(receiverHtml).toContain('data-alert-notice-action-help="receiver-delete"');
+    expect(receiverHtml).toContain('data-alert-notice-command-action="receiver-delete"');
+    expect(receiverHtml).toContain('data-alert-notice-action-help="receiver-row-edit"');
+    expect(receiverHtml).toContain('data-alert-notice-command-action="receiver-row-edit"');
+    expect(receiverHtml).toContain('data-alert-notice-action-help="receiver-row-delete"');
+    expect(receiverHtml).toContain('data-alert-notice-command-action="receiver-row-delete"');
+    expect(receiverHtml).toContain('data-alert-notice-action-help-trigger="hertzbeat-ui-action-help"');
+    expect(receiverHtml).toContain('data-alert-notice-action-help-style="icon-after-action"');
+    expect(receiverHtml).toContain('data-alert-notice-action-help-visual="circle-help-icon"');
+    expect(receiverHtml).toContain('data-alert-notice-action-help-icon="lucide-circle-help"');
+    expect(receiverHtml).toContain('lucide-circle-help');
+    expect(receiverHtml).toContain('data-alert-notice-action-help-tooltip="receiver-delete"');
+    expect(receiverHtml).not.toContain('<span aria-hidden="true">?</span>');
+    expect(receiverHtml).toContain(t('alert.notice.action.receiver-new.help'));
+    expect(receiverHtml).toContain(t('alert.notice.action.receiver-delete.impact'));
+    expect(receiverHtml).toContain(t('alert.notice.action.receiver-row-edit.help'));
+    expect(receiverHtml).toContain(t('alert.notice.action.receiver-row-delete.impact'));
+
+    expect(ruleHtml).toContain('data-selected-tab="rule"');
+    expect(ruleHtml).toContain('data-alert-notice-rule-table-actions="sticky-visible-actions"');
+    expect(ruleHtml).toContain('data-alert-notice-action-help="rule-refresh"');
+    expect(ruleHtml).toContain('data-alert-notice-command-action="rule-refresh"');
+    expect(ruleHtml).toContain('data-alert-notice-action-help="rule-new"');
+    expect(ruleHtml).toContain('data-alert-notice-command-action="rule-new"');
+    expect(ruleHtml).toContain('data-alert-notice-action-help="rule-delete"');
+    expect(ruleHtml).toContain('data-alert-notice-command-action="rule-delete"');
+    expect(ruleHtml).toContain('data-alert-notice-action-help="rule-row-filter-all"');
+    expect(ruleHtml).toContain('data-alert-notice-command-action="rule-row-filter-all"');
+    expect(ruleHtml).toContain('data-alert-notice-action-help="rule-row-enable"');
+    expect(ruleHtml).toContain('data-alert-notice-command-action="rule-row-enable"');
+    expect(ruleHtml).toContain('data-alert-notice-action-help="rule-row-edit"');
+    expect(ruleHtml).toContain('data-alert-notice-command-action="rule-row-edit"');
+    expect(ruleHtml).toContain('data-alert-notice-action-help="rule-row-delete"');
+    expect(ruleHtml).toContain('data-alert-notice-command-action="rule-row-delete"');
+    expect(ruleHtml).toContain(t('alert.notice.action.rule-new.impact'));
+    expect(ruleHtml).toContain(t('alert.notice.action.rule-row-enable.help'));
+
+    expect(templateHtml).toContain('data-selected-tab="template"');
+    expect(templateHtml).toContain('data-alert-notice-template-table-actions="sticky-visible-actions"');
+    expect(templateHtml).toContain('data-alert-notice-action-help="template-refresh"');
+    expect(templateHtml).toContain('data-alert-notice-command-action="template-refresh"');
+    expect(templateHtml).toContain('data-alert-notice-action-help="template-new"');
+    expect(templateHtml).toContain('data-alert-notice-command-action="template-new"');
+    expect(templateHtml).toContain('data-alert-notice-action-help="template-delete"');
+    expect(templateHtml).toContain('data-alert-notice-command-action="template-delete"');
+    expect(templateHtml).toContain('data-alert-notice-command-action="template-filter-preset"');
+    expect(templateHtml).toContain('data-alert-notice-command-action="template-row-view"');
+    expect(templateHtml).toContain('data-alert-notice-command-action="template-row-edit"');
+    expect(templateHtml).toContain('data-alert-notice-command-action="template-row-delete"');
+
+    expect(source).toContain('data-alert-notice-action-help={id}');
+    expect(source).toContain('data-alert-notice-command-action={commandAction}');
+    expect(source).toContain('CircleHelp');
+    expect(source).toContain('data-alert-notice-action-help-style="icon-after-action"');
+    expect(source).toContain('data-alert-notice-action-help-visual="circle-help-icon"');
+    expect(source).toContain('data-alert-notice-action-help-icon="lucide-circle-help"');
+    expect(source).toContain('data-alert-notice-action-help-tooltip={id}');
+    expect(source).toContain("alertNoticeActionHelp(t, 'receiver-cancel')");
+    expect(source).toContain('data-alert-notice-command-action="receiver-cancel"');
+    expect(source).toContain("alertNoticeActionHelp(t, 'receiver-test')");
+    expect(source).toContain('data-alert-notice-command-action="receiver-test"');
+    expect(source).toContain("alertNoticeActionHelp(t, 'receiver-save')");
+    expect(source).toContain('data-alert-notice-command-action="receiver-save"');
+    expect(source).toContain("alertNoticeActionHelp(t, 'rule-cancel')");
+    expect(source).toContain('data-alert-notice-command-action="rule-cancel"');
+    expect(source).toContain("alertNoticeActionHelp(t, 'rule-save')");
+    expect(source).toContain('data-alert-notice-command-action="rule-save"');
+    expect(source).toContain('data-alert-notice-command-action="rule-return-to-evidence"');
+    expect(source).toContain("templateReadOnly ? 'template-return' : 'template-cancel'");
+    expect(source).toContain("data-alert-notice-command-action={templateReadOnly ? 'template-return' : 'template-cancel'}");
+    expect(source).toContain("alertNoticeActionHelp(t, templateReadOnly ? 'template-return' : 'template-cancel')");
+    expect(source).toContain("alertNoticeActionHelp(t, 'template-save')");
+    expect(source).toContain('data-alert-notice-command-action="template-save"');
+    expect(source).not.toContain('data-alert-notice-action-help-style="literal-question-after-action"');
+    expect(source).not.toContain('data-alert-notice-action-help-visual="borderless-question"');
+    expect(source).not.toContain('<span aria-hidden="true">?</span>');
+    expect(source).toContain('id="template-refresh"');
+    expect(source).toContain('id="template-new"');
+    expect(source).toContain('id="template-delete"');
+    expect(source).toContain('id="template-row-view"');
+    expect(source).toContain('id="template-row-edit"');
+    expect(source).toContain('id="template-row-delete"');
   }, 30_000);
 
   it('renders missing receiver table settings with the localized empty fallback', async () => {
@@ -613,10 +891,19 @@ describe('alert notice page', () => {
     expect(source).toContain('data-alert-notice-rule-toolbar-layout="compact-inline-actions-query"');
     expect(source).toContain('data-alert-notice-rule-search-submit="angular-enter-and-clear"');
     expect(source).toContain('data-alert-notice-rule-search-submit-owner="hertzbeat-ui-search-row"');
+    expect(source).toContain('data-alert-notice-rule-empty-action={prefix === \'rule\' ? \'new\' : undefined}');
+    expect(source).toContain('w-[min(560px,70vw)]');
+    expect(source).toContain("label: t('alert.notice.rule.new')");
+    expect(source).toContain('onClick: () => void handleNewRule()');
     expect(source).toContain('onSearch={commitRuleSearch}');
     expect(source).toContain('onClear={ruleSearchDraft || ruleSearch ? resetRuleSearch : undefined}');
     expect(source).toContain('setRulePageIndex(0);');
     expect(source).toContain('data-alert-notice-rule-table-shell="hertzbeat-ui-dense-table"');
+    expect(source).toContain('data-alert-notice-rule-table-actions="sticky-visible-actions"');
+    expect(source).toContain('const coldStickyActionHeaderClass =');
+    expect(source).toContain('const coldStickyActionCellClass =');
+    expect(source).toContain("<th className={coldStickyActionHeaderClass}>{t('common.edit')}</th>");
+    expect(source).toContain('<td className={coldStickyActionCellClass} onClick={event => event.stopPropagation()}>');
     expect(source).toContain('function NoticeTableSwitch');
     expect(source).toContain('role="switch"');
     expect(source).toContain('data-alert-notice-rule-table-switch={field}');
@@ -633,7 +920,8 @@ describe('alert notice page', () => {
     expect(source).toContain('const ruleId = rule?.id;');
     expect(source).toContain('const detail = await api.alertNotice.rules.detail(ruleId);');
     expect(source).toContain('setSelectedRuleId(ruleId);');
-    expect(source).toContain('setRuleDraft(buildNoticeRuleDraft(detail));');
+    expect(source).toContain('const nextDraft = buildNoticeRuleDraft(detail);');
+    expect(source).toContain('setRuleDraft(nextDraft);');
     expect(source).toContain('onClick={() => void handleEditRule(rule)}');
     expect(source).toContain('field="filter-all"');
     expect(source).toContain('field="enable"');
@@ -774,6 +1062,9 @@ describe('alert notice page', () => {
     expect(source).toContain('data-alert-notice-template-toolbar="hertzbeat-ui-query-toolbar"');
     expect(source).toContain('data-alert-notice-template-toolbar-layout="compact-inline-actions-query"');
     expect(source).toContain('data-alert-notice-template-preset-filter="hertzbeat-ui-select"');
+    expect(source).toContain('data-alert-notice-template-empty-action={prefix === \'template\' ? \'new\' : undefined}');
+    expect(source).toContain("label: t('alert.notice.template.new')");
+    expect(source).toContain('onClick: () => void handleNewTemplate()');
     expect(source).toContain('onSearch={commitTemplateSearch}');
     expect(source).toContain('onClear={templateSearchDraft || templateSearch ? resetTemplateSearch : undefined}');
     expect(source).toContain('setTemplatePageIndex(0);');
@@ -869,7 +1160,8 @@ describe('alert notice page', () => {
     expect(source).toContain('data-alert-notice-rule-edit-detail-owner="route-detail-fetch-contract"');
     expect(source).toContain('onClick={() => void handleEditRule(rule)}');
     expect(handleEditRuleSource).toContain('const detail = await api.alertNotice.rules.detail(ruleId)');
-    expect(handleEditRuleSource).toContain('setRuleDraft(buildNoticeRuleDraft(detail))');
+    expect(handleEditRuleSource).toContain('const nextDraft = buildNoticeRuleDraft(detail)');
+    expect(handleEditRuleSource).toContain('setRuleDraft(nextDraft)');
     expect(handleEditRuleSource).not.toContain('buildNoticeRuleDraft(rule)');
   });
 
@@ -899,6 +1191,18 @@ describe('alert notice page', () => {
     expect(handleSaveRuleSource).toContain("setRuleError(t(isEdit ? 'common.notify.edit-fail' : 'common.notify.new-fail'))");
     expect(handleSaveRuleSource).toContain('setRuleErrorDetail(error instanceof Error ? error.message : null)');
     expect(handleSaveRuleSource).not.toContain("setRuleError(error instanceof Error ? error.message : t(isEdit ? 'common.notify.edit-fail' : 'common.notify.new-fail'))");
+  });
+
+  it('clears notice-rule authoring feedback when the draft changes', () => {
+    const source = readFileSync(resolve(process.cwd(), 'app/alert/notice/alert-notice-page.tsx'), 'utf8');
+    const handleRuleDraftChangeSource = source.slice(source.indexOf('function handleRuleDraftChange('), source.indexOf('async function handleSaveRule()'));
+
+    expect(handleRuleDraftChangeSource).toContain('setRuleDraft(nextDraft);');
+    expect(handleRuleDraftChangeSource).toContain('setRuleMessage(null);');
+    expect(handleRuleDraftChangeSource).toContain('setRuleError(null);');
+    expect(handleRuleDraftChangeSource).toContain('setRuleErrorDetail(null);');
+    expect(source).toContain('onDraftChange={handleRuleDraftChange}');
+    expect(source).not.toContain('onDraftChange={setRuleDraft}');
   });
 
   it('keeps Angular notice-template save failure title separate from backend detail', () => {
@@ -947,7 +1251,7 @@ describe('alert notice page', () => {
     expect(fieldsSource).toContain('export function AlertNoticeRuleSwitch');
     expect(fieldsSource).toContain('aria-label={label}');
     expect(fieldsSource).toContain('hover:border-[#5f7df6]');
-    expect(fieldsSource).toContain('data-alert-notice-rule-switch-label={row}');
+    expect(fieldsSource).toContain('data-alert-notice-rule-switch={row}');
     expect(fieldsSource).not.toContain('hover:text-white');
     expect(fieldsSource).not.toContain('inline-flex h-8 items-center gap-2 rounded-[3px] border border-[#2b3039] bg-[#101217] px-2');
   });
@@ -965,6 +1269,50 @@ describe('alert notice page', () => {
     expect(source).toContain('!editingReceiver && receiverError');
     expect(source).toContain('!editingRule && ruleError');
     expect(source).toContain('!editingTemplate && templateError');
+  });
+
+  it('clears receiver editor feedback when operators cancel or close the receiver dialog', () => {
+    const source = readFileSync(resolve(process.cwd(), 'app/alert/notice/alert-notice-page.tsx'), 'utf8');
+    const closeReceiverEditorSource = source.slice(source.indexOf('function closeReceiverEditor()'), source.indexOf('async function handleNewReceiver()'));
+
+    expect(closeReceiverEditorSource).toContain('setEditingReceiver(false)');
+    expect(closeReceiverEditorSource).toContain('setReceiverMessage(null)');
+    expect(closeReceiverEditorSource).toContain('setReceiverError(null)');
+    expect(closeReceiverEditorSource).toContain('setReceiverErrorDetail(null)');
+    expect(source).toContain('onClose={requestCloseReceiverEditor}');
+    expect(source).toContain('data-testid="notice-receiver-cancel"');
+    expect(source).toContain('onClick={requestCloseReceiverEditor}');
+    expect(source).not.toContain('data-testid="notice-receiver-cancel" className={coldButtonClassName} size="sm" variant="default" onClick={() => setEditingReceiver(false)}');
+  });
+
+  it('clears template editor feedback when operators cancel or close the template dialog', () => {
+    const source = readFileSync(resolve(process.cwd(), 'app/alert/notice/alert-notice-page.tsx'), 'utf8');
+    const closeTemplateEditorSource = source.slice(source.indexOf('function closeTemplateEditor()'), source.indexOf('async function handleNewTemplate()'));
+
+    expect(closeTemplateEditorSource).toContain('setEditingTemplate(false)');
+    expect(closeTemplateEditorSource).toContain('setTemplateReadOnly(false)');
+    expect(closeTemplateEditorSource).toContain('setTemplateDiscardDialogOpen(false)');
+    expect(closeTemplateEditorSource).toContain('setTemplateMessage(null)');
+    expect(closeTemplateEditorSource).toContain('setTemplateError(null)');
+    expect(closeTemplateEditorSource).toContain('setTemplateErrorDetail(null)');
+    expect(source).toContain('onClose={requestCloseTemplateEditor}');
+    expect(source).toContain('onClick={requestCloseTemplateEditor}');
+    expect(source).not.toContain('onClick={() => {\\n                      setEditingTemplate(false);\\n                      setTemplateReadOnly(false);\\n                    }}');
+  });
+
+  it('clears notice rule editor feedback when operators cancel or close the rule dialog', () => {
+    const source = readFileSync(resolve(process.cwd(), 'app/alert/notice/alert-notice-page.tsx'), 'utf8');
+    const closeRuleEditorSource = source.slice(source.indexOf('function closeRuleEditor()'), source.indexOf('async function handleNewRule()'));
+
+    expect(closeRuleEditorSource).toContain('setEditingRule(false)');
+    expect(closeRuleEditorSource).toContain('setRuleDiscardDialogOpen(false)');
+    expect(closeRuleEditorSource).toContain('setRuleMessage(null)');
+    expect(closeRuleEditorSource).toContain('setRuleError(null)');
+    expect(closeRuleEditorSource).toContain('setRuleErrorDetail(null)');
+    expect(source).toContain('onClose={requestCloseRuleEditor}');
+    expect(source).toContain('onClick={requestCloseRuleEditor}');
+    expect(source).not.toContain('onClose={() => setEditingRule(false)}');
+    expect(source).not.toContain('onClick={() => setEditingRule(false)}');
   });
 
   it('keeps Angular create and edit notification keys for all notice save dialogs', () => {
@@ -1051,7 +1399,9 @@ describe('alert notice page', () => {
     expect(source).toContain('onClick={() => void handleEditReceiver(receiver)}');
     expect(handleEditReceiverSource).toContain('async function handleEditReceiver(receiver = selectedReceiver)');
     expect(handleEditReceiverSource).toContain('await api.alertNotice.receivers.detail(receiver.id)');
-    expect(handleEditReceiverSource).toContain('setReceiverDraft(buildNoticeReceiverDraft(detail))');
+    expect(handleEditReceiverSource).toContain('const nextDraft = buildNoticeReceiverDraft(detail);');
+    expect(handleEditReceiverSource).toContain('setReceiverDraft(nextDraft);');
+    expect(handleEditReceiverSource).toContain('setReceiverInitialFingerprint(serializeNoticeReceiverDraft(nextDraft));');
     expect(handleEditReceiverSource).not.toContain('buildNoticeReceiverDraft(receiver)');
   });
 
@@ -1063,7 +1413,8 @@ describe('alert notice page', () => {
     expect(source).toContain('data-alert-notice-template-edit-detail-owner="route-detail-fetch-contract"');
     expect(source).toContain('onClick={() => void handleEditTemplate(template)}');
     expect(handleEditTemplateSource).toContain('const detail = await api.alertNotice.templates.detail(template.id)');
-    expect(handleEditTemplateSource).toContain('setTemplateDraft(buildNoticeTemplateDraft(detail))');
+    expect(handleEditTemplateSource).toContain('const nextDraft = buildNoticeTemplateDraft(detail)');
+    expect(handleEditTemplateSource).toContain('setTemplateDraft(nextDraft)');
     expect(handleEditTemplateSource).not.toContain('buildNoticeTemplateDraft(template)');
   });
 
@@ -1074,6 +1425,7 @@ describe('alert notice page', () => {
 
     expect(source).toContain('data-alert-notice-template-viewer-return={templateReadOnly ? \'angular-cancel-return\' : undefined}');
     expect(source).toContain('data-alert-notice-template-viewer-return-owner={templateReadOnly ? \'route-modal-footer-contract\' : undefined}');
+    expect(source).toContain("data-alert-notice-template-unsaved-cancel-trigger={!templateReadOnly ? shouldConfirmTemplateDiscard ? 'dirty' : 'clean' : undefined}");
     expect(source).toContain('data-alert-notice-template-viewer-ok="none"');
     expect(source).toContain('data-alert-notice-template-viewer-ok-owner="route-modal-footer-contract"');
     expect(templateEditorDialogSource).toContain("templateReadOnly ? t('common.button.return') : t('common.cancel')");
@@ -1098,6 +1450,16 @@ describe('alert notice page', () => {
     expect(source).toContain('data-alert-notice-delete-confirm-cancel');
     expect(source).toContain('data-alert-notice-delete-feedback="angular-delete-notify"');
     expect(source).toContain('data-alert-notice-delete-feedback-owner="route-action-feedback-contract"');
+    expect(source).toContain('name?: string;');
+    expect(source).toContain("setDeleteRequest({ kind: 'receiver', id: receiverId, name: receiverName?.trim() || undefined })");
+    expect(source).toContain("setDeleteRequest({ kind: 'rule', id: ruleId, name: ruleName?.trim() || undefined })");
+    expect(source).toContain("setDeleteRequest({ kind: 'template', id: templateId, name: templateName?.trim() || undefined })");
+    expect(source).toContain("t('alert.notice.delete.confirm.target', { name: deleteRequest.name })");
+    expect(source).toContain("t('alert.notice.delete.confirm.receiver-action')");
+    expect(source).toContain("t('alert.notice.delete.confirm.template-action')");
+    expect(source).toContain("t('alert.notice.delete.confirm.rule-action')");
+    expect(source).toContain('confirmLabel={deleteConfirmActionLabel}');
+    expect(source).not.toContain("confirmLabel={t('common.button.ok')}");
     expect(source).not.toContain("from '../../../components/ui/hz-confirm-dialog'");
     expect(handleConfirmedDeleteSource.match(/common.notify.delete-success/g)?.length).toBe(3);
     expect(handleConfirmedDeleteSource).toContain("t('common.notify.delete-fail')");
@@ -1111,6 +1473,8 @@ describe('alert notice page', () => {
     const handleTestSendSource = source.slice(source.indexOf('async function handleTestSend()'), source.indexOf('async function handleNewTemplate()'));
 
     expect(source).toContain('const [testingReceiver, setTestingReceiver] = useState(false)');
+    expect(source).toContain('const RECEIVER_TEST_SEND_TIMEOUT_MS = 15_000;');
+    expect(source).toContain('async function withNoticeReceiverTestTimeout<T>(task: Promise<T>, error: Error)');
     expect(source).toContain('setTestingReceiver(true);');
     expect(source).toContain('setTestingReceiver(false);');
     expect(source).toContain('buildNoticeTemplateListUrl');
@@ -1120,23 +1484,115 @@ describe('alert notice page', () => {
     expect(source).toContain('data-alert-notice-receiver-test-loading={testingReceiver ? \'true\' : \'false\'}');
     expect(source).toContain('data-alert-notice-receiver-test-validation="angular-backend-owned"');
     expect(source).toContain('data-alert-notice-receiver-test-validation-owner="route-mutation-contract"');
+    expect(source).toContain("data-alert-notice-receiver-save-blocked-by-test={testingReceiver ? 'true' : undefined}");
     expect(receiverFieldsSource).toContain('data-alert-notice-receiver-default-type="angular-email"');
     expect(receiverFieldsSource).toContain('data-alert-notice-receiver-default-type-owner="route-form-contract"');
     expect(source).toContain('aria-busy={testingReceiver}');
     expect(source).toContain('disabled={testingReceiver || savingReceiver}');
     expect(source).toContain('data-alert-notice-receiver-test-feedback="hertzbeat-ui-test-feedback"');
+    expect(source).toContain('const coldNoticeStatusMessageClass =');
+    expect(source).toContain('const coldNoticeTestStatusMessageClass =');
+    expect(source).toContain('<div role="status" className={coldNoticeStatusMessageClass}>');
+    expect(source).toContain('className={coldNoticeTestStatusMessageClass}');
+    expect(source).not.toContain('text-emerald-300');
+    expect(source).not.toContain('border border-[#24563d] bg-[#0d1a14]');
     expect(source).toContain('data-alert-notice-receiver-test-preview="signal-route"');
     expect(source).toContain('data-alert-notice-receiver-test-preview-owner="signal-alert-handoff"');
-    expect(source).toContain('noticeEvidenceContext.receiverTestPreview.labelsText');
+    expect(source).toContain('noticeEvidenceContext.receiverTestPreview.labelsPreviewText');
+    expect(source).toContain('data-alert-notice-receiver-test-preview-labels-total={noticeEvidenceContext.receiverTestPreview.labelsTotal}');
+    expect(source).toContain('data-alert-notice-receiver-test-preview-labels-rendered={noticeEvidenceContext.receiverTestPreview.labelsRendered}');
+    expect(source).toContain('data-alert-notice-receiver-test-preview-labels-limit={noticeEvidenceContext.receiverTestPreview.labelsLimit}');
+    expect(source).toContain('data-alert-notice-receiver-test-preview-labels-overflow={noticeEvidenceContext.receiverTestPreview.labelsOverflow}');
     expect(source).toContain('data-alert-notice-receiver-test-preview-payload="sample-alert"');
     expect(source).toContain('data-alert-notice-receiver-test-preview-payload-owner="signal-alert-handoff"');
     expect(source).toContain('noticeEvidenceContext.receiverTestPreview.payloadRows.map');
     expect(source).toContain('data-alert-notice-receiver-test-preview-payload-message="sample-rendered"');
     expect(source).toContain('editingReceiver && receiverMessage');
     expect(source).toContain('!editingReceiver && receiverMessage');
-    expect(handleTestSendSource).toContain('await api.alertNotice.receivers.sendTest(receiverDraft)');
+    expect(handleTestSendSource).toContain('await withNoticeReceiverTestTimeout(');
+    expect(handleTestSendSource).toContain('api.alertNotice.receivers.sendTest(receiverDraft)');
+    expect(handleTestSendSource).toContain("new Error(t('alert.notice.send-test.timeout.detail'))");
+    expect(handleTestSendSource).toContain("setReceiverError(t('alert.notice.send-test.notify.failed'))");
+    expect(handleTestSendSource).toContain('setReceiverErrorDetail(error instanceof Error ? error.message : null)');
+    expect(handleTestSendSource).not.toContain("setReceiverError(error instanceof Error ? error.message : t('alert.notice.send-test.notify.failed'))");
     expect(handleTestSendSource).not.toContain('noticeEvidenceContext');
     expect(handleTestSendSource).not.toContain('validateNoticeReceiverDraft(receiverDraft, t)');
+  });
+
+  it('guards dirty receiver cancel with a discard confirmation', () => {
+    const source = readFileSync(resolve(process.cwd(), 'app/alert/notice/alert-notice-page.tsx'), 'utf8');
+    const receiverDialogSource = source.slice(source.indexOf('const receiverEditorDialog = ('), source.indexOf('const ruleEditorDialog = ('));
+
+    expect(source).toContain('const NOTICE_RECEIVER_DRAFT_FINGERPRINT_FIELDS: Array<keyof NoticeReceiverDraft>');
+    expect(source).toContain('function serializeNoticeReceiverDraft(draft: NoticeReceiverDraft)');
+    expect(source).toContain('const [receiverInitialFingerprint, setReceiverInitialFingerprint] = useState');
+    expect(source).toContain('const [receiverDiscardDialogOpen, setReceiverDiscardDialogOpen] = useState(false)');
+    expect(source).toContain('const receiverDraftFingerprint = useMemo(() => serializeNoticeReceiverDraft(receiverDraft), [receiverDraft]);');
+    expect(source).toContain('const shouldConfirmReceiverDiscard = Boolean(editingReceiver && receiverDraftFingerprint !== receiverInitialFingerprint && !savingReceiver);');
+    expect(source).toContain('function requestCloseReceiverEditor()');
+    expect(source).toContain('setReceiverDiscardDialogOpen(true);');
+    expect(source).toContain('setReceiverInitialFingerprint(serializeNoticeReceiverDraft(nextDraft));');
+    expect(receiverDialogSource).toContain('onClose={requestCloseReceiverEditor}');
+    expect(receiverDialogSource).toContain('data-alert-notice-receiver-unsaved-cancel-trigger={shouldConfirmReceiverDiscard ? \'dirty\' : \'clean\'}');
+    expect(source).toContain('data-alert-notice-receiver-unsaved-cancel="hertzbeat-ui-confirm-dialog"');
+    expect(source).toContain('data-alert-notice-receiver-unsaved-cancel-state={receiverDiscardDialogOpen ? \'open\' : \'closed\'}');
+    expect(source).toContain("title={t('alert.notice.receiver.unsaved-cancel.title')}");
+    expect(source).toContain("cancelLabel={t('alert.notice.receiver.unsaved-cancel.keep-editing')}");
+    expect(source).toContain("confirmLabel={t('alert.notice.receiver.unsaved-cancel.discard')}");
+    expect(source).toContain('data-alert-notice-receiver-unsaved-cancel-keep-editing');
+    expect(source).toContain('data-alert-notice-receiver-unsaved-cancel-confirm');
+  });
+
+  it('guards dirty notice-rule cancel with a discard confirmation', () => {
+    const source = readFileSync(resolve(process.cwd(), 'app/alert/notice/alert-notice-page.tsx'), 'utf8');
+    const ruleDialogSource = source.slice(source.indexOf('const ruleEditorDialog = ('), source.indexOf('const templateEditorDialog = ('));
+
+    expect(source).toContain('const NOTICE_RULE_DRAFT_FINGERPRINT_FIELDS: Array<keyof NoticeRuleDraft>');
+    expect(source).toContain('function serializeNoticeRuleDraft(draft: NoticeRuleDraft)');
+    expect(source).toContain('const [ruleInitialFingerprint, setRuleInitialFingerprint] = useState');
+    expect(source).toContain('const [ruleDiscardDialogOpen, setRuleDiscardDialogOpen] = useState(false)');
+    expect(source).toContain('const ruleDraftFingerprint = useMemo(() => serializeNoticeRuleDraft(ruleDraft), [ruleDraft]);');
+    expect(source).toContain('const shouldConfirmRuleDiscard = Boolean(editingRule && ruleDraftFingerprint !== ruleInitialFingerprint && !savingRule);');
+    expect(source).toContain('function requestCloseRuleEditor()');
+    expect(source).toContain('setRuleDiscardDialogOpen(true);');
+    expect(source).toContain('setRuleInitialFingerprint(serializeNoticeRuleDraft(nextDraft));');
+    expect(source).toContain('setRuleInitialFingerprint(serializeNoticeRuleDraft(ruleDraft));');
+    expect(ruleDialogSource).toContain('onClose={requestCloseRuleEditor}');
+    expect(ruleDialogSource).toContain('data-alert-notice-rule-unsaved-cancel-trigger={shouldConfirmRuleDiscard ? \'dirty\' : \'clean\'}');
+    expect(source).toContain('data-alert-notice-rule-unsaved-cancel="hertzbeat-ui-confirm-dialog"');
+    expect(source).toContain('data-alert-notice-rule-unsaved-cancel-state={ruleDiscardDialogOpen ? \'open\' : \'closed\'}');
+    expect(source).toContain("title={t('alert.notice.rule.unsaved-cancel.title')}");
+    expect(source).toContain("cancelLabel={t('alert.notice.rule.unsaved-cancel.keep-editing')}");
+    expect(source).toContain("confirmLabel={t('alert.notice.rule.unsaved-cancel.discard')}");
+    expect(source).toContain('data-alert-notice-rule-unsaved-cancel-keep-editing');
+    expect(source).toContain('data-alert-notice-rule-unsaved-cancel-confirm');
+  });
+
+  it('guards dirty notice-template cancel with a discard confirmation', () => {
+    const source = readFileSync(resolve(process.cwd(), 'app/alert/notice/alert-notice-page.tsx'), 'utf8');
+    const templateDialogStart = source.indexOf('const templateEditorDialog = (');
+    const templateDialogSource = source.slice(templateDialogStart, source.indexOf('        const deleteConfirmCopy = [', templateDialogStart));
+
+    expect(source).toContain('const NOTICE_TEMPLATE_DRAFT_FINGERPRINT_FIELDS: Array<keyof NoticeTemplateDraft>');
+    expect(source).toContain('function serializeNoticeTemplateDraft(draft: NoticeTemplateDraft)');
+    expect(source).toContain('const [templateInitialFingerprint, setTemplateInitialFingerprint] = useState');
+    expect(source).toContain('const [templateDiscardDialogOpen, setTemplateDiscardDialogOpen] = useState(false)');
+    expect(source).toContain('const templateDraftFingerprint = useMemo(() => serializeNoticeTemplateDraft(templateDraft), [templateDraft]);');
+    expect(source).toContain('editingTemplate && !templateReadOnly && templateDraftFingerprint !== templateInitialFingerprint && !savingTemplate');
+    expect(source).toContain('function requestCloseTemplateEditor()');
+    expect(source).toContain('setTemplateDiscardDialogOpen(true);');
+    expect(source).toContain('setTemplateInitialFingerprint(serializeNoticeTemplateDraft(nextDraft));');
+    expect(source).toContain('setTemplateInitialFingerprint(serializeNoticeTemplateDraft(templateDraft));');
+    expect(templateDialogSource).toContain('onClose={requestCloseTemplateEditor}');
+    expect(templateDialogSource).toContain("data-alert-notice-template-unsaved-cancel-trigger={!templateReadOnly ? shouldConfirmTemplateDiscard ? 'dirty' : 'clean' : undefined}");
+    expect(templateDialogSource).toContain('onClick={requestCloseTemplateEditor}');
+    expect(source).toContain('data-alert-notice-template-unsaved-cancel="hertzbeat-ui-confirm-dialog"');
+    expect(source).toContain('data-alert-notice-template-unsaved-cancel-state={templateDiscardDialogOpen ? \'open\' : \'closed\'}');
+    expect(source).toContain("title={t('alert.notice.template.unsaved-cancel.title')}");
+    expect(source).toContain("cancelLabel={t('alert.notice.template.unsaved-cancel.keep-editing')}");
+    expect(source).toContain("confirmLabel={t('alert.notice.template.unsaved-cancel.discard')}");
+    expect(source).toContain('data-alert-notice-template-unsaved-cancel-keep-editing');
+    expect(source).toContain('data-alert-notice-template-unsaved-cancel-confirm');
   });
 
   it('loads alert notice data through the default receiver and rule query contract', async () => {
@@ -1172,6 +1628,7 @@ describe('alert notice page', () => {
 
     expect(html).toContain('data-selected-tab="rule"');
     expect(html).toContain('data-alert-notice-evidence-context="signal-route"');
+    expect(html).toContain('data-alert-notice-evidence-layering="flat-context-band"');
     expect(html).toContain('data-alert-notice-evidence-signal="logs"');
     expect(html).toContain('data-alert-notice-prefill-labels="hertzbeat.signal:logs');
     expect(html).toContain('hertzbeat.entity.id:7');
@@ -1185,10 +1642,11 @@ describe('alert notice page', () => {
     expect(html).toContain(createTranslatorMock({ locale: 'zh-CN' })('alert.rule.evidence.notice.copy'));
     expect(html).toContain('data-alert-notice-evidence-return="true"');
     expect(html).toContain('href="/log/manage?traceId=trace-123"');
-    expect(source).not.toContain('useSearchParams');
     expect(source).not.toContain('readSignalRouteContext(searchParams)');
     expect(source).toContain('const alertNoticeRouteState = initialRouteState ?? EMPTY_ALERT_NOTICE_ROUTE_STATE');
     expect(source).toContain('buildAlertNoticeEvidenceContext');
+    expect(source).toContain('data-alert-notice-evidence-layering="flat-context-band"');
+    expect(source).not.toContain('className="mt-5 rounded-[4px] border border-[#27303c] bg-[#0b0f15] px-4 py-3 shadow-[0_18px_48px_rgba(0,0,0,0.24)]"');
     expect(source).toContain('data-alert-notice-rule-editor-return="evidence-context"');
     expect(source).toContain('noticeEvidenceContext?.returnHref');
     expect(source).toContain('buildNoticeRuleDraft(null, noticeEvidenceContext?.ruleDraftPatch)');
@@ -1199,6 +1657,11 @@ describe('alert notice page', () => {
     expect(source).toContain('data-alert-notice-receiver-test-preview-owner="signal-alert-handoff"');
     expect(source).toContain('data-alert-notice-receiver-test-preview-signal={noticeEvidenceContext.signal}');
     expect(source).toContain('data-alert-notice-receiver-test-preview-labels-text="signal-route"');
+    expect(source).toContain('data-alert-notice-receiver-test-preview-labels-total={noticeEvidenceContext.receiverTestPreview.labelsTotal}');
+    expect(source).toContain('data-alert-notice-receiver-test-preview-labels-rendered={noticeEvidenceContext.receiverTestPreview.labelsRendered}');
+    expect(source).toContain('data-alert-notice-receiver-test-preview-labels-limit={noticeEvidenceContext.receiverTestPreview.labelsLimit}');
+    expect(source).toContain('data-alert-notice-receiver-test-preview-labels-overflow={noticeEvidenceContext.receiverTestPreview.labelsOverflow}');
+    expect(source).toContain('noticeEvidenceContext.receiverTestPreview.labelsPreviewText');
     expect(source).toContain('data-alert-notice-receiver-test-preview-payload="sample-alert"');
     expect(source).toContain('data-alert-notice-receiver-test-preview-payload-row={row.key}');
     expect(source).toContain('data-alert-notice-receiver-test-preview-payload-message="sample-rendered"');
@@ -1214,6 +1677,7 @@ describe('alert notice page', () => {
 
     expect(html).toContain('data-selected-tab="rule"');
     expect(html).toContain('data-alert-notice-evidence-context="signal-route"');
+    expect(html).toContain('data-alert-notice-evidence-layering="flat-context-band"');
     expect(html).toContain('data-alert-notice-prefill-labels=""');
     expect(html).toContain('data-alert-notice-evidence-labels="generated-labels"');
     expect(html).toContain(`>${createTranslatorMock({ locale: 'zh-CN' })('common.none')}</div>`);
@@ -1239,7 +1703,9 @@ describe('alert notice page', () => {
 
       expect(html).toContain('data-alert-notice-receiver-empty-state="hertzbeat-ui-empty-state"');
       expect(html).toContain('data-alert-notice-receiver-empty-icon="hertzbeat-ui-empty-icon"');
+      expect(html).toContain('data-alert-notice-receiver-empty-action="new"');
       expect(html).toContain(t('common.no-data'));
+      expect(html).toContain(t('alert.notice.receiver.new'));
     } finally {
       mockState.renderData = previousData;
     }

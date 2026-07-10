@@ -102,6 +102,8 @@ describe('PublicStatusShell', () => {
     expect(html).toContain('data-public-status-mode-switch-owner="hertzbeat-ui-button"');
     expect(html).toContain('Operator Status');
     expect(html).toContain('Unified public signal posture for the active operator desk.');
+    expect(html).toContain('data-public-status-logo-fallback="text"');
+    expect(html).toContain('OP');
     expect(html).toContain('English(en_US)');
     expect(html).toContain('Contact support');
     expect(html).toContain('Power by Apache HertzBeat™. Star Us !');
@@ -147,6 +149,10 @@ describe('PublicStatusShell', () => {
     expect(source).toContain('data-public-status-mode-switch="component-to-incident"');
     expect(source).toContain('data-public-status-mode-switch="incident-to-component"');
     expect(source).toContain('data-public-status-mode-switch-owner="hertzbeat-ui-button"');
+    expect(source).toContain('function PublicStatusBrandMark');
+    expect(source).toContain('data-public-status-logo="source"');
+    expect(source).toContain('data-public-status-logo-fallback="text"');
+    expect(source).toContain('onError={() => setLogoFailed(true)}');
     expect(source).not.toContain('inline-flex h-9 items-center gap-2 rounded-[2px] border border-[var(--ops-border-color)] bg-[var(--ops-surface-panel)] px-3 text-[12px] text-[var(--ops-text-secondary)] transition-colors hover:border-[var(--ops-primary)] hover:bg-[var(--ops-surface-elevated)] hover:text-[var(--ops-text-primary)]');
   });
 
@@ -214,6 +220,8 @@ describe('PublicStatusShell', () => {
     expect(html).toContain('data-hz-number-stepper-input="true"');
     expect(html).toContain('data-hz-number-stepper-action="decrement"');
     expect(html).toContain('data-hz-number-stepper-action="increment"');
+    expect(html).toContain('Decrease Year');
+    expect(html).toContain('Increase Year');
     expect(html).toContain('value="2026"');
   });
 });

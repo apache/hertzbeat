@@ -14,11 +14,22 @@ function cleanParam(value: string | string[] | undefined) {
 
 export function readEntityNewDraftSeed(searchParams: EntityNewSearchParams = {}): EntityEditorNewDraftSeed {
   const source = cleanParam(searchParams.source);
+  const monitorName = cleanParam(searchParams.monitorName);
+  const monitorApp = cleanParam(searchParams.monitorApp);
+  const monitorInstance = cleanParam(searchParams.monitorInstance);
+  const returnTo = cleanParam(searchParams.returnTo);
+  const monitorContext = {
+    ...(monitorName ? { monitorName } : {}),
+    ...(monitorApp ? { monitorApp } : {}),
+    ...(monitorInstance ? { monitorInstance } : {}),
+    ...(returnTo ? { returnTo } : {})
+  };
 
   if (source === 'otlp-candidate') {
     return {
       source,
       monitorId: cleanParam(searchParams.monitorId),
+      ...monitorContext,
       identityKey: cleanParam(searchParams.identityKey),
       identityValue: cleanParam(searchParams.identityValue),
       serviceName: cleanParam(searchParams.serviceName),
@@ -29,6 +40,7 @@ export function readEntityNewDraftSeed(searchParams: EntityNewSearchParams = {})
 
   return {
     source,
-    monitorId: cleanParam(searchParams.monitorId)
+    monitorId: cleanParam(searchParams.monitorId),
+    ...monitorContext
   };
 }

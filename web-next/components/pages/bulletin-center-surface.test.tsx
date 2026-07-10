@@ -89,20 +89,28 @@ describe('bulletin center surface', () => {
     expect(html).toContain(t('common.button.new'));
   });
 
-  it('routes current bulletin deletion through a cold modal instead of native confirm', () => {
+  it('uses a specific edit label in the row menu instead of the generic operation label', () => {
+    const source = readFileSync(resolve(process.cwd(), 'components/pages/bulletin-center-surface.tsx'), 'utf8');
+
+    expect(source).toContain("t('common.button.edit')");
+    expect(source).not.toContain("t('common.edit')");
+  });
+
+  it('routes current bulletin deletion through the shared HertzBeat modal instead of native confirm', () => {
     const t = createTranslatorMock({ locale: 'zh-CN' });
     const source = readFileSync(resolve(process.cwd(), 'components/pages/bulletin-center-surface.tsx'), 'utf8');
 
     expect(source).not.toContain('window.confirm');
     expect(source).not.toContain('confirm(');
-    expect(source).toContain('data-bulletin-delete-confirm-trigger="cold-modal"');
-    expect(source).toContain('data-bulletin-delete-confirm="cold-modal"');
+    expect(source).toContain('data-bulletin-delete-confirm-trigger="hertzbeat-ui-modal"');
+    expect(source).toContain('data-bulletin-delete-confirm="hertzbeat-ui-modal"');
     expect(source).toContain("ariaLabel={t('bulletin.navigation.aria')}");
     expect(source).not.toContain('ariaLabel="Bulletin navigation"');
     expect(source).toContain("t('bulletin.delete.title')");
     expect(source).toContain("t('bulletin.delete.copy')");
     expect(source).toContain("t('bulletin.delete.confirm')");
     expect(source).toContain("t('common.cancel')");
+    expect(source).toContain("closeLabel={t('common.dialog.close')}");
     expect(source).not.toContain(t('bulletin.delete.title'));
     expect(source).not.toContain(t('bulletin.delete.copy'));
   });

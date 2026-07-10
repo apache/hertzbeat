@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readEntityDetailRouteContext } from './query-state';
+import { readEntityDetailCreatedResult, readEntityDetailRouteContext, readEntityDetailUpdatedResult } from './query-state';
 
 describe('entity detail query state', () => {
   it('normalizes multi-value URL search params into the first entity detail inherited context value', () => {
@@ -44,6 +44,26 @@ describe('entity detail query state', () => {
       })
     ).toEqual({
       entityName: 'checkout-api'
+    });
+  });
+
+  it('reads the post-create success result without adding it to signal handoff context', () => {
+    expect(readEntityDetailCreatedResult({ created: '1' })).toBe(true);
+    expect(readEntityDetailCreatedResult({ created: ['true', '0'] })).toBe(true);
+    expect(readEntityDetailCreatedResult({ created: '0' })).toBe(false);
+
+    expect(readEntityDetailRouteContext({ created: '1', source: 'entity-create' })).toEqual({
+      source: 'entity-create'
+    });
+  });
+
+  it('reads the post-edit readback result without adding it to signal handoff context', () => {
+    expect(readEntityDetailUpdatedResult({ updated: '1' })).toBe(true);
+    expect(readEntityDetailUpdatedResult({ updated: ['true', '0'] })).toBe(true);
+    expect(readEntityDetailUpdatedResult({ updated: '0' })).toBe(false);
+
+    expect(readEntityDetailRouteContext({ updated: '1', source: 'entity-edit' })).toEqual({
+      source: 'entity-edit'
     });
   });
 });

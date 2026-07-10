@@ -61,6 +61,9 @@ import org.springframework.util.CollectionUtils;
 @Service
 public class EntityDetailObservabilityReadModelService {
 
+    static final int ENTITY_DETAIL_RELATION_PREVIEW_LIMIT = 50;
+    static final int ENTITY_DETAIL_BOUND_MONITOR_PREVIEW_LIMIT = 50;
+
     private final EntityDetailReadModelService entityDetailReadModelService;
     private final EntityStatusRefreshService entityStatusRefreshService;
     private final EntityObservabilityGateway entityObservabilityGateway;
@@ -86,24 +89,26 @@ public class EntityDetailObservabilityReadModelService {
     }
 
     public EntityDetailDto buildEntityDetail(long entityId) {
-        EntityDto entityDto = entityDetailReadModelService.loadEntityDto(entityId);
+        EntityDto entityDto = entityDetailReadModelService.loadEntityDto(
+                entityId, ENTITY_DETAIL_RELATION_PREVIEW_LIMIT);
         if (entityDto == null) {
             return null;
         }
-        return buildEntityDetail(entityDto);
+        return buildEntityDetail(entityDto, null, true, entityDetailReadModelService.countEntityRelations(entityId));
     }
 
     public EntityDetailDto buildEntityDetail(EntityDto entityDto) {
-        return buildEntityDetail(entityDto, null, true);
+        return buildEntityDetail(entityDto, null, true, null);
     }
 
     public EntityDetailDto buildEntityDetail(EntityDto entityDto, String requestWorkspaceId) {
-        return buildEntityDetail(entityDto, requestWorkspaceId, false);
+        return buildEntityDetail(entityDto, requestWorkspaceId, false, null);
     }
 
     private EntityDetailDto buildEntityDetail(EntityDto entityDto,
                                               String requestWorkspaceId,
-                                              boolean resolveRequestWorkspaceAtEvidenceBoundaries) {
+                                              boolean resolveRequestWorkspaceAtEvidenceBoundaries,
+                                              Long relationCountOverride) {
         if (entityDto == null || entityDto.getEntity() == null) {
             return null;
         }
@@ -124,7 +129,10 @@ public class EntityDetailObservabilityReadModelService {
                 entityDto.getEntity(), entityDto.getIdentities(),
                 entityDto.getEntityInfo() == null ? null : entityDto.getEntityInfo().getHertzbeat()
         );
-        List<MonitorInfo> boundMonitors = monitors.stream().map(MonitorInfo::fromEntity).toList();
+        List<MonitorInfo> boundMonitors = monitors.stream()
+                .limit(ENTITY_DETAIL_BOUND_MONITOR_PREVIEW_LIMIT)
+                .map(MonitorInfo::fromEntity)
+                .toList();
         List<EntityLogQueryHint> logQueryHints =
                 entityObservabilityGateway.buildEntityLogQueryHints(entityDto.getIdentities(), monitors);
         EntityEvidenceSummaryInfo evidenceSummary = entityObservabilityGateway.buildEntityEvidenceSummary(
@@ -150,7 +158,9 @@ public class EntityDetailObservabilityReadModelService {
         List<TraceEvidence> traceEvidence = observabilityDetail.getTraceEvidence();
         EntityUnifiedEvidenceSummary unifiedEvidenceSummary = observabilityDetail.getUnifiedEvidenceSummary();
         EntityTriageRecommendation triageRecommendation = observabilityDetail.getTriageRecommendation();
-        long relationCount = CollectionUtils.isEmpty(entityDto.getRelations()) ? 0 : entityDto.getRelations().size();
+        long relationCount = relationCountOverride == null
+                ? CollectionUtils.isEmpty(entityDto.getRelations()) ? 0 : entityDto.getRelations().size()
+                : relationCountOverride;
         EntityOpsSummaryInfo opsSummary = entityObservabilityGateway.buildEntityOpsSummary(
                 entityDto.getEntity(), relationCount, evidenceSummary);
         List<EntityNextActionInfo> nextActions =

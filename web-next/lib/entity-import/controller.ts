@@ -28,7 +28,11 @@ function isRecoverableImportLoadError(error: unknown) {
     return false;
   }
 
-  return error.message.includes('404') || error.message.includes('ECONNRESET') || error.message.includes('socket hang up');
+  return error.message.includes('404')
+    || error.message.includes('ECONNRESET')
+    || error.message.includes('socket hang up')
+    || error.message.includes('Backend service unavailable.')
+    || error.message.includes('API request failed: 503');
 }
 
 async function loadImportTemplates(apiGet: ApiGetter) {

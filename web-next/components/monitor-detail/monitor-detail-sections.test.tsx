@@ -70,6 +70,19 @@ describe('monitor detail sections', () => {
     expect(realtimeSource).not.toContain('<HzLoadingState');
   });
 
+  it('explains history source failures instead of exposing only the raw backend message', () => {
+    const source = readFileSync(resolve(process.cwd(), 'components/monitor-detail/monitor-detail-sections.tsx'), 'utf8');
+    const historyErrorStart = source.indexOf('historyError ? (');
+    const historyErrorEnd = source.indexOf(') : (', historyErrorStart);
+    const historyErrorSource = source.slice(historyErrorStart, historyErrorEnd);
+
+    expect(historyErrorSource).toContain("title={t('monitor.detail.history.error.title')}");
+    expect(historyErrorSource).toContain("description={t('monitor.detail.history.error.copy', { error: historyError })}");
+    expect(historyErrorSource).toContain('data-monitor-detail-history-error-copy="operator-actionable"');
+    expect(historyErrorSource).not.toContain("title={t('common.load-failed')}");
+    expect(historyErrorSource).not.toContain('description={historyError}');
+  });
+
   it('builds all five section outputs through the named consumer', async () => {
     const { MonitorDetailSections } = await import('./monitor-detail-sections');
     const sections = MonitorDetailSections({
@@ -338,6 +351,11 @@ describe('monitor detail sections', () => {
     expect(realtimeHtml).toContain('data-monitor-detail-flat-stage="true"');
     expect(realtimeHtml).not.toMatch(/class=\"[^\"]*monitor-detail-stage[^\"]*monitor-detail-stage--overview/);
     expect(realtimeHtml).not.toContain('data-observability-panel-tone="operator-sheet"');
+    expect(realtimeHtml).toContain('data-monitor-detail-evidence-chain="realtime-payload"');
+    expect(realtimeHtml).toContain('data-monitor-detail-evidence-source="metric-card-payloads"');
+    expect(realtimeHtml).toContain(t('monitor.detail.evidence.realtime.ready.title'));
+    expect(realtimeHtml).toContain(t('monitor.detail.evidence.realtime.ready.copy'));
+    expect(realtimeHtml).toContain(t('monitor.detail.evidence.realtime.meta', { ready: 2, total: 2 }));
     expect(realtimeHtml).toContain('data-monitor-detail-signal-list="true"');
     expect(realtimeHtml).toContain('data-monitor-detail-signal-grid="monitor-data-table"');
     expect(realtimeHtml).toContain('data-monitor-detail-signal-list-geometry="shared-two-column-metric-cards"');
@@ -502,6 +520,139 @@ describe('monitor detail sections', () => {
     expect(grafanaHtml).not.toContain('data-observability-panel-tone="operator-sheet"');
   }, 30000);
 
+  it('keeps large history metric catalogs behind the incremental chart boundary', async () => {
+    const { MonitorDetailSections } = await import('./monitor-detail-sections');
+    const historyMetrics = Array.from({ length: 20 }, (_, index) => ({
+      metrics: 'bulk',
+      metric: `metric${index}`,
+      unit: 'ms'
+    }));
+    const historyRows = historyMetrics.map(item => ({
+      key: `${item.metrics}:${item.metric}`,
+      title: `${item.metrics}.${item.metric}`,
+      copy: item.unit,
+      meta: 'history'
+    }));
+    const historyChartPayloads = Object.fromEntries(
+      historyMetrics.map((item, index) => [
+        `${item.metrics}:${item.metric}`,
+        {
+          values: {
+            origin: [
+              { time: 1710000000000, origin: String(100 + index) },
+              { time: 1710000060000, origin: String(101 + index) }
+            ]
+          }
+        }
+      ])
+    );
+
+    const sections = MonitorDetailSections({
+      monitor: {
+        id: 42,
+        name: 'checkout-core',
+        app: 'http',
+        status: 1,
+        instance: '10.0.0.1'
+      },
+      editHref: '/monitors/42/edit?app=http',
+      params: [],
+      selectedMetric: null,
+      metricSearch: '',
+      metricRows: [],
+      realtimeMetricTotalCount: 0,
+      realtimeMetricHasMore: false,
+      metricCardPayloads: {},
+      metrics: [],
+      favoriteNames: [],
+      favoriteJumpRows: [],
+      selectedFavoriteKey: null,
+      favoriteSurfaceMode: 'history',
+      favoriteRealtimeMetricVisibleCount: 0,
+      favoriteRealtimeMetricTotalCount: 0,
+      favoriteRealtimeMetricHasMore: false,
+      selectedMetricKey: null,
+      metricPayload: null,
+      metricPayloadLoading: false,
+      metricPayloadError: null,
+      selectedMetricRowKey: null,
+      metricTableMode: 'table',
+      metricFullscreen: false,
+      historyLoading: false,
+      historyError: null,
+      historyMetrics,
+      historyMetricSearch: '',
+      historyRows,
+      historyChartVisibleCount: 6,
+      historyChartTotalCount: 20,
+      historyChartHasMore: true,
+      selectedHistoryMetricKey: 'bulk:metric0',
+      historySeriesSearch: '',
+      historySeriesRows: [],
+      selectedHistorySeriesKey: null,
+      selectedHistoryPointIndex: null,
+      historyPayload: null,
+      historyChartPayloads: historyChartPayloads as any,
+      historyChartLoadingKeys: [],
+      historyChartErrors: {},
+      historyPayloadLoading: false,
+      historyPayloadError: null,
+      historyInterval: false,
+      historyWindow: '1h',
+      historyWindows: [{ value: '1h', label: '1h' }],
+      historyModes: [{ value: false, label: 'Raw' }],
+      historyFullscreen: false,
+      favoriteHistoryChartVisibleCount: 0,
+      favoriteHistoryChartTotalCount: 0,
+      favoriteHistoryChartHasMore: false,
+      grafanaState: { enabled: false, url: '' },
+      grafanaMessage: null,
+      grafanaError: null,
+      favoriteMessage: null,
+      favoriteError: null,
+      onMetricSearchChange: () => {},
+      onSelectMetric: () => {},
+      onToggleFavorite: () => {},
+      onLoadMoreRealtimeMetrics: () => {},
+      onSelectMetricRow: () => {},
+      onMetricModeChange: () => {},
+      onMetricRefresh: () => {},
+      onMetricFullscreenToggle: () => {},
+      onHistoryMetricSearchChange: () => {},
+      onSelectHistoryMetric: () => {},
+      onToggleHistoryFavorite: () => {},
+      onHistorySeriesSearchChange: () => {},
+      onSelectHistorySeries: () => {},
+      onSelectHistoryPoint: () => {},
+      onHistoryRefresh: () => {},
+      onFavoriteHistoryRefresh: () => {},
+      onLoadMoreHistoryCharts: () => {},
+      onHistoryWindowChange: () => {},
+      onHistoryModeChange: () => {},
+      onHistoryFullscreenToggle: () => {},
+      onSelectFavorite: () => {},
+      onSetFavoriteSurfaceMode: () => {},
+      onLoadMoreFavoriteRealtimeMetrics: () => {},
+      onLoadMoreFavoriteHistoryCharts: () => {},
+      onRemoveFavoriteToken: () => {},
+      onDeleteGrafanaDashboard: () => {},
+      t
+    } as any);
+
+    const historyHtml = renderToStaticMarkup(<>{sections.historyContent}</>);
+
+    expect((historyHtml.match(/data-monitor-history-card="bulk:metric/g) || []).length).toBe(6);
+    expect(historyHtml).toContain('data-monitor-history-card="bulk:metric0"');
+    expect(historyHtml).toContain('data-monitor-history-card="bulk:metric5"');
+    expect(historyHtml).not.toContain('data-monitor-history-card="bulk:metric6"');
+    expect(historyHtml).not.toContain('data-monitor-history-card="bulk:metric19"');
+    expect(historyHtml).toContain('data-monitor-detail-incremental-mode="angular-chart-sentinel"');
+    expect(historyHtml).toContain('data-monitor-detail-incremental-scope="history"');
+    expect(historyHtml).toContain('data-hz-monitor-incremental-visible="6"');
+    expect(historyHtml).toContain('data-hz-monitor-incremental-total="20"');
+    expect(historyHtml).toContain('data-hz-monitor-incremental-action="load-more"');
+  }, 30000);
+
   it('routes favorites through the shared HertzBeat UI favorite surface instead of a preview workbench', () => {
     const source = readFileSync(resolve(process.cwd(), 'components/monitor-detail/monitor-detail-sections.tsx'), 'utf8');
 
@@ -609,6 +760,7 @@ describe('monitor detail sections', () => {
     expect(signalListSource).not.toContain('monitor.detail.panel.summary.total');
     expect(signalListSource).not.toContain('monitor.detail.panel.summary.visible');
     expect(signalListSource).not.toContain('monitor.detail.panel.summary.source');
+    expect(signalListSource).not.toContain('monitor.detail.evidence.realtime.meta');
     expect(source).toContain('HzMonitorDetailTabSequence');
     expect(source).not.toContain('function MonitorRealtimeTightSequence');
     expect(source).not.toContain('data-monitor-detail-tab-sequence="angular-tight"');

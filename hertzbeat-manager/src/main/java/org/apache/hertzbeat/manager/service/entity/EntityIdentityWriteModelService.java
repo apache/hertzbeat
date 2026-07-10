@@ -41,11 +41,14 @@ public class EntityIdentityWriteModelService {
 
     private final EntityIdentityDao entityIdentityDao;
     private final EntityIdentityResolutionService entityIdentityResolutionService;
+    private final EntityWorkspaceAccessService entityWorkspaceAccessService;
 
     public EntityIdentityWriteModelService(EntityIdentityDao entityIdentityDao,
-                                           EntityIdentityResolutionService entityIdentityResolutionService) {
+                                           EntityIdentityResolutionService entityIdentityResolutionService,
+                                           EntityWorkspaceAccessService entityWorkspaceAccessService) {
         this.entityIdentityDao = entityIdentityDao;
         this.entityIdentityResolutionService = entityIdentityResolutionService;
+        this.entityWorkspaceAccessService = entityWorkspaceAccessService;
     }
 
     public void replaceIdentities(ObserveEntity entity, List<EntityIdentity> identities) {
@@ -86,6 +89,7 @@ public class EntityIdentityWriteModelService {
         if (rows.isEmpty()) {
             rows.addAll(buildDefaultIdentities(entity));
         }
+        rejectPrimaryIdentityCollisions(entity, rows);
         entityIdentityDao.saveAll(rows);
     }
 
@@ -171,6 +175,56 @@ public class EntityIdentityWriteModelService {
             case "service", "database", "middleware" -> true;
             default -> false;
         };
+    }
+
+    private void rejectPrimaryIdentityCollisions(ObserveEntity entity, List<EntityIdentity> rows) {
+        List<EntityIdentity> primaryRows = rows.stream()
+                .filter(EntityIdentity::isPrimaryIdentity)
+                .filter(identity -> StringUtils.hasText(identity.getIdentityKey())
+                        && StringUtils.hasText(identity.getNormalizedValue()))
+                .toList();
+        if (primaryRows.isEmpty()) {
+            return;
+        }
+        Set<String> identityKeys = primaryRows.stream()
+                .map(EntityIdentity::getIdentityKey)
+                .collect(java.util.stream.Collectors.toSet());
+        Set<String> normalizedValues = primaryRows.stream()
+                .map(EntityIdentity::getNormalizedValue)
+                .collect(java.util.stream.Collectors.toSet());
+        List<EntityIdentity> matchingIdentities =
+                entityIdentityDao.findAllByIdentityKeyInAndNormalizedValueIn(identityKeys, normalizedValues);
+        if (CollectionUtils.isEmpty(matchingIdentities)) {
+            return;
+        }
+        Set<Long> matchingEntityIds = matchingIdentities.stream()
+                .map(EntityIdentity::getEntityId)
+                .filter(id -> id != null && !id.equals(entity.getId()))
+                .collect(java.util.stream.Collectors.toSet());
+        if (matchingEntityIds.isEmpty()) {
+            return;
+        }
+        Set<Long> accessibleEntityIds = entityWorkspaceAccessService
+                .findAccessibleEntitiesByIdsForRequestWorkspace(matchingEntityIds)
+                .stream()
+                .map(ObserveEntity::getId)
+                .collect(java.util.stream.Collectors.toSet());
+        if (accessibleEntityIds.isEmpty()) {
+            return;
+        }
+        for (EntityIdentity primaryRow : primaryRows) {
+            for (EntityIdentity matchingIdentity : matchingIdentities) {
+                if (!accessibleEntityIds.contains(matchingIdentity.getEntityId())) {
+                    continue;
+                }
+                if (primaryRow.getIdentityKey().equals(matchingIdentity.getIdentityKey())
+                        && primaryRow.getNormalizedValue().equals(matchingIdentity.getNormalizedValue())
+                        && matchingIdentity.isPrimaryIdentity()) {
+                    throw new IllegalArgumentException("Entity primary identity already exists: "
+                            + primaryRow.getIdentityKey() + "=" + primaryRow.getIdentityValue() + ".");
+                }
+            }
+        }
     }
 
     private String defaultText(String... values) {

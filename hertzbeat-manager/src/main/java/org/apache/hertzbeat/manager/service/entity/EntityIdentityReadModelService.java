@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.manager.service.entity;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
 import org.springframework.stereotype.Service;
@@ -44,5 +45,9 @@ public class EntityIdentityReadModelService {
 
     public long countIdentities(long entityId) {
         return entityIdentityQueryService.countIdentities(entityId);
+    }
+
+    public Map<Long, Long> countIdentitiesByEntityIds(List<Long> entityIds) {
+        return entityIdentityQueryService.countIdentitiesByEntityIds(entityIds);
     }
 }

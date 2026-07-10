@@ -1,5 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
-import { buildAlertInhibitEvidenceContext, buildAlertInhibitFacts, buildAlertInhibitMetrics, buildAlertInhibitNoteRows, buildAlertInhibitRows, buildAlertInhibitSelectedRows, validateAlertInhibitForm } from './view-model';
+import {
+  buildAlertInhibitEvidenceContext,
+  buildAlertInhibitFacts,
+  buildAlertInhibitMetrics,
+  buildAlertInhibitNoteRows,
+  buildAlertInhibitRows,
+  buildAlertInhibitSelectedRows,
+  getAlertInhibitValidationField,
+  validateAlertInhibitForm
+} from './view-model';
 import { createTranslatorMock } from '../../test/i18n-test-helper';
 
 const t = createTranslatorMock({ locale: 'zh-CN' });
@@ -150,6 +159,47 @@ describe('alert inhibit view model', () => {
     expect(context?.rows.map(row => row.label)).toContain(t('signal.context.trace.label'));
   });
 
+  it('builds alert-center inhibit evidence from service and environment context without a signal', () => {
+    const context = buildAlertInhibitEvidenceContext(
+      null,
+      {
+        serviceName: 'codex-pd-1527-checkout',
+        environment: 'prod',
+        source: 'product-design-1527',
+        start: '1783313764000',
+        end: '1783315564000'
+      },
+      t
+    );
+
+    expect(context).toMatchObject({
+      signal: 'context',
+      draftPatch: {
+        name: t('alert.rule.evidence.inhibit.draft-name', {
+          signal: t('alert.rule.signal.default'),
+          target: 'codex-pd-1527-checkout'
+        }),
+        sourceLabelsText: 'service.name:codex-pd-1527-checkout, deployment.environment:prod, hertzbeat.source:product-design-1527',
+        targetLabelsText: 'service.name:codex-pd-1527-checkout, deployment.environment:prod, hertzbeat.source:product-design-1527',
+        equalLabelsText: 'service.name, deployment.environment'
+      }
+    });
+    expect(context?.equalLabelsText).not.toContain('severity');
+  });
+
+  it('does not build inhibit evidence from source-only list metadata', () => {
+    expect(
+      buildAlertInhibitEvidenceContext(
+        null,
+        {
+          source: 'alert-inhibit-required-proof',
+          returnTo: '/alert/inhibit?search=uv_alert_inhibit_required'
+        },
+        t
+      )
+    ).toBeNull();
+  });
+
   it('localizes inhibit evidence context and page facts outside zh-CN', () => {
     const context = buildAlertInhibitEvidenceContext(
       'traces',
@@ -200,6 +250,34 @@ describe('alert inhibit view model', () => {
       validateAlertInhibitForm(
         { name: 'db inhibit', enable: true, sourceLabelsText: 'service:checkout', targetLabelsText: 'service:db', equalLabelsText: 'severity' },
         t
+      )
+    ).toBeNull();
+  });
+
+  it('returns the first invalid alert inhibit authoring field', () => {
+    expect(
+      getAlertInhibitValidationField(
+        { name: '', enable: true, sourceLabelsText: '', targetLabelsText: '', equalLabelsText: '' }
+      )
+    ).toBe('name');
+    expect(
+      getAlertInhibitValidationField(
+        { name: 'db inhibit', enable: true, sourceLabelsText: '', targetLabelsText: '', equalLabelsText: '' }
+      )
+    ).toBe('source-labels');
+    expect(
+      getAlertInhibitValidationField(
+        { name: 'db inhibit', enable: true, sourceLabelsText: 'service:checkout', targetLabelsText: '', equalLabelsText: '' }
+      )
+    ).toBe('target-labels');
+    expect(
+      getAlertInhibitValidationField(
+        { name: 'db inhibit', enable: true, sourceLabelsText: 'service:checkout', targetLabelsText: 'service:db', equalLabelsText: '' }
+      )
+    ).toBe('equal-labels');
+    expect(
+      getAlertInhibitValidationField(
+        { name: 'db inhibit', enable: true, sourceLabelsText: 'service:checkout', targetLabelsText: 'service:db', equalLabelsText: 'severity' }
       )
     ).toBeNull();
   });

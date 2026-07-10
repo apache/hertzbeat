@@ -151,10 +151,13 @@ public class EntityDefinitionRelationNormalizationService {
     }
 
     private String relationSignature(EntityDefinition.Relation relation) {
+        String targetReference = defaultText(
+                relation.getTargetRef(),
+                buildEntityReference(relation.getTargetEntityId()),
+                relation.getTargetEntityId() == null ? "" : String.valueOf(relation.getTargetEntityId()));
         return String.join("|",
                 defaultText(relation.getRelationType(), "depends_on"),
-                relation.getTargetEntityId() == null ? "" : String.valueOf(relation.getTargetEntityId()),
-                relation.getTargetRef() == null ? "" : relation.getTargetRef());
+                targetReference.trim().toLowerCase(java.util.Locale.ROOT));
     }
 
     private String buildEntityReference(Long entityId) {

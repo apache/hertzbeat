@@ -81,6 +81,52 @@ describe('shell sidebar helpers', () => {
     expect(settings?.items.some(item => item.href === '/status')).toBe(false);
   });
 
+  it('keeps the novice primary navigation map reachable and highlights nested workflow routes', () => {
+    const sections = buildShellSidebarSections('/entities/new', t);
+    const items = sections.flatMap(section => section.items.map(item => ({ ...item, section: section.key })));
+    const itemByHref = new Map(items.map(item => [item.href, item]));
+
+    [
+      '/overview',
+      '/ingestion/otlp',
+      '/monitors',
+      '/entities',
+      '/entities/discovery',
+      '/entities/import',
+      '/log/manage',
+      '/trace/manage',
+      '/topology',
+      '/alert',
+      '/alert/setting',
+      '/alert/group',
+      '/alert/silence',
+      '/alert/notice',
+      '/setting/settings',
+      '/setting/status',
+      '/setting/plugins'
+    ].forEach(href => {
+      const item = itemByHref.get(href);
+
+      expect(item, `missing novice navigation entry for ${href}`).toBeTruthy();
+      expect(item?.title).toBeTruthy();
+      expect(item?.iconKey).toBeTruthy();
+    });
+
+    expect(itemByHref.get('/entities')?.active).toBe(true);
+    expect(itemByHref.get('/entities')?.section).toBe('objects');
+    expect(itemByHref.get('/entities/discovery')?.section).toBe('objects');
+    expect(itemByHref.get('/setting/status')?.section).toBe('settings');
+
+    const alertIntegrationSections = buildShellSidebarSections('/alert/integration/webhook', t);
+    const alertItems = alertIntegrationSections.flatMap(section => section.items);
+    expect(alertItems.find(item => item.href === '/alert')?.active).toBe(true);
+    expect(alertItems.find(item => item.href === '/alert/integration/webhook')?.active).toBe(true);
+
+    const logStreamSections = buildShellSidebarSections('/log/stream', t);
+    const logItems = logStreamSections.flatMap(section => section.items);
+    expect(logItems.find(item => item.href === '/log/manage')?.active).toBe(true);
+  });
+
   it('does not fall back to catalog English labels for visible sidebar text', () => {
     const source = readFileSync(resolve(process.cwd(), 'lib/shell/sidebar.ts'), 'utf8');
 

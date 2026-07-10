@@ -666,54 +666,7 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
         if (results.isEmpty()) {
             results.addAll(buildStoredLogEvidence(entityContext, entityId, entityIdentityKeys, preferredHint, logSummary, bindingResult));
         }
-        if (!results.isEmpty()) {
-            return results;
-        }
-        if (preferredHint == null && !hasLogSummaryQuerySignal(logSummary)) {
-            return Collections.emptyList();
-        }
-        Map<String, String> resource = preferredHint == null || preferredHint.getResourceFilters() == null
-                ? Collections.emptyMap()
-                : preferredHint.getResourceFilters();
-        List<String> searchTerms = preferredHint == null || CollectionUtils.isEmpty(preferredHint.getSearchTerms())
-                ? buildFallbackSearchTerms(null, null,
-                defaultText(logSummary == null ? null : logSummary.getPreferredQueryTitle(),
-                        logSummary == null ? null : logSummary.getFallbackSearchTerm()))
-                : preferredHint.getSearchTerms();
-        TelemetryIdentitySnapshot identitySnapshot =
-                buildEntityIdentitySnapshot(entityContext, SOURCE_OTLP, SIGNAL_LOGS, System.currentTimeMillis());
-        String queryHint = firstNonBlank(
-                preferredHint == null ? null : preferredHint.getTraceId(),
-                preferredHint == null ? null : preferredHint.getTitle(),
-                logSummary == null ? null : logSummary.getPreferredQueryTitle(),
-                logSummary == null ? null : logSummary.getFallbackSearchTerm()
-        );
-        return List.of(new LogEvidence(
-                SOURCE_OTLP,
-                SIGNAL_LOGS,
-                entityId == 0L ? null : entityId,
-                identitySnapshot,
-                System.currentTimeMillis(),
-                "attention",
-                queryHint,
-                bindingResult,
-                buildCodeNavigationHint(entityContext, resource, Collections.emptyMap(), searchTerms, queryHint),
-                defaultText(logSummary == null ? null : logSummary.getPreferredQueryTitle(), queryHint),
-                null,
-                preferredHint == null ? null : preferredHint.getTraceId(),
-                preferredHint == null ? null : preferredHint.getSpanId(),
-                resource,
-                searchTerms
-        ));
-    }
-
-    private boolean hasLogSummaryQuerySignal(EntityLogSummaryInfo logSummary) {
-        return logSummary != null
-                && (logSummary.getHintCount() > 0
-                || StringUtils.hasText(logSummary.getPreferredQueryTitle())
-                || StringUtils.hasText(logSummary.getFallbackSearchTerm())
-                || !CollectionUtils.isEmpty(logSummary.getPreferredResourceFilters())
-                || !CollectionUtils.isEmpty(logSummary.getPreferredSearchTerms()));
+        return results;
     }
 
     private List<LogEvidence> buildStoredLogEvidence(ObservedEntityContext entityContext,
@@ -801,9 +754,7 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
                 continue;
             }
             recentTraceCount++;
-            if (StringUtils.hasText(signal.errorState())
-                    && !"ok".equalsIgnoreCase(signal.errorState())
-                    && !"false".equalsIgnoreCase(signal.errorState())) {
+            if (isTraceErrorState(signal.errorState())) {
                 recentErrorTraceCount++;
             }
             if (latestObservedAt == null || (signal.observedAt() != null && signal.observedAt() > latestObservedAt)) {
@@ -818,6 +769,19 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
                 recentTraceCount > 0,
                 latestTraceId
         );
+    }
+
+    private boolean isTraceErrorState(String errorState) {
+        String normalized = trimToNull(errorState);
+        if (!StringUtils.hasText(normalized)) {
+            return false;
+        }
+        String lower = normalized.toLowerCase(Locale.ROOT);
+        return "error".equals(lower)
+                || "status_code_error".equals(lower)
+                || "true".equals(lower)
+                || "failed".equals(lower)
+                || "failure".equals(lower);
     }
 
     @Override
@@ -945,8 +909,7 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
                 logsActive,
                 tracesActive,
                 metricEvidence == null ? 0 : metricEvidence.size(),
-                Math.max(logSummary == null ? 0 : logSummary.getHintCount(),
-                        logEvidence == null ? 0 : logEvidence.size()),
+                logEvidence == null ? 0 : logEvidence.size(),
                 traceSummary == null ? 0 : traceSummary.getRecentTraceCount(),
                 latestObservedAt,
                 activeSignals
@@ -996,7 +959,7 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
                     now
             );
         }
-        if (logSummary != null && logSummary.getHintCount() > 0 || !CollectionUtils.isEmpty(logEvidence)) {
+        if (!CollectionUtils.isEmpty(logEvidence)) {
             return new EntityTriageRecommendation(
                     "rule",
                     FOCUS_LOGS,

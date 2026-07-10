@@ -4,6 +4,7 @@ import {
   buildSignalAlertHandlingHref,
   buildSignalAlertGroupKeys,
   buildSignalAlertMatchLabels,
+  buildSignalEntityDiscoveryHref,
   buildSignalEntityContextRows,
   copySignalRouteContextParams,
   isDashboardReturnContext,
@@ -99,6 +100,26 @@ describe('signal route context', () => {
     expect(next.get('returnLabel')).toBeNull();
   });
 
+  it('keeps validation and pagination context across signal handoffs', () => {
+    const context = readSignalRouteContext(
+      new URLSearchParams('entityId=7&entityName=checkout&pageSize=8&probe=entity-definition-link&source=entity-detail')
+    );
+    const next = new URLSearchParams('traceId=trace-1');
+
+    appendSignalRouteContext(next, context);
+
+    expect(context).toEqual({
+      entityId: '7',
+      entityName: 'checkout',
+      pageSize: '8',
+      probe: 'entity-definition-link',
+      source: 'entity-detail'
+    });
+    expect(next.toString()).toBe(
+      'traceId=trace-1&entityId=7&entityName=checkout&pageSize=8&source=entity-detail&probe=entity-definition-link'
+    );
+  });
+
   it('uses the platform time URL contract when appending monitor-linked expression ranges', () => {
     const next = new URLSearchParams('source=monitor');
     appendSignalRouteContext(next, {
@@ -172,6 +193,26 @@ describe('signal route context', () => {
     expect(isDashboardReturnContext('/overview?returnTo=%2Fdashboard')).toBe(false);
     expect(isDashboardReturnContext('https://example.com/dashboard')).toBe(false);
     expect(isDashboardReturnContext('//example.com/dashboard')).toBe(false);
+  });
+
+  it('builds an OTLP discovery candidate link when a signal has service context but no entity id', () => {
+    const href = buildSignalEntityDiscoveryHref({
+      serviceName: 'checkout',
+      serviceNamespace: 'payments',
+      environment: 'prod',
+      traceId: 'trace-1',
+      source: 'otlp'
+    });
+
+    const url = new URL(href, 'https://example.com');
+    expect(url.pathname).toBe('/entities/discovery');
+    expect(url.searchParams.get('identityKey')).toBe('service.name');
+    expect(url.searchParams.get('identityValue')).toBe('checkout');
+    expect(url.searchParams.get('serviceName')).toBe('checkout');
+    expect(url.searchParams.get('serviceNamespace')).toBe('payments');
+    expect(url.searchParams.get('environment')).toBe('prod');
+    expect(url.searchParams.get('traceId')).toBeNull();
+    expect(url.searchParams.get('source')).toBeNull();
   });
 
   it('keeps operation context in alert match labels and group keys', () => {

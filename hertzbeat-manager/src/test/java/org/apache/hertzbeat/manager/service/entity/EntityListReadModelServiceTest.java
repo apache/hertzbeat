@@ -91,6 +91,10 @@ class EntityListReadModelServiceTest {
                 .build();
         when(entitySummaryReadModelService.loadLatestDefinitionActivities(List.of(teamAlpha)))
                 .thenReturn(Map.of(31L, definitionActivity));
+        EntitySummaryReadModelService.EntitySummaryCounts summaryCounts =
+                new EntitySummaryReadModelService.EntitySummaryCounts(2, 1, 3);
+        when(entitySummaryReadModelService.loadSummaryCounts(List.of(teamAlpha)))
+                .thenReturn(Map.of(31L, summaryCounts));
         List<Monitor> monitors = List.of(
                 Monitor.builder().id(701L).status(CommonConstants.MONITOR_UP_CODE).build()
         );
@@ -99,13 +103,15 @@ class EntityListReadModelServiceTest {
         );
         EntityStatusRefreshService.EntityRuntimeStatusEvidence runtimeEvidence =
                 new EntityStatusRefreshService.EntityRuntimeStatusEvidence(monitors, List.of(), statusInfo);
-        when(entityStatusRefreshService.refreshEntityStatusWithEvidence(teamAlpha, "team-a")).thenReturn(runtimeEvidence);
+        when(entityStatusRefreshService.refreshEntityStatusesWithEvidence(List.of(teamAlpha), "team-a"))
+                .thenReturn(Map.of(31L, runtimeEvidence));
         EntitySummaryInfo summaryInfo = new EntitySummaryInfo();
         EntityInfo entityInfo = new EntityInfo();
         entityInfo.setId(31L);
         entityInfo.setWorkspaceId("team-a");
         summaryInfo.setEntity(entityInfo);
-        when(entitySummaryReadModelService.buildEntitySummary(teamAlpha, definitionActivity, statusInfo, monitors))
+        when(entitySummaryReadModelService.buildEntitySummary(teamAlpha, definitionActivity, statusInfo, monitors,
+                summaryCounts))
                 .thenReturn(summaryInfo);
 
         Page<EntitySummaryInfo> page = entityListReadModelService.getEntities(
@@ -120,7 +126,8 @@ class EntityListReadModelServiceTest {
                 eq(null), eq("service"), eq(null), eq("checkout"), eq(null), eq(null), eq(null), eq(null), eq(null),
                 eq(null), eq("gmtUpdate"), eq("desc"), eq(0), eq(8), eq("team-a"));
         verify(entitySummaryReadModelService).loadLatestDefinitionActivities(List.of(teamAlpha));
-        verify(entityStatusRefreshService).refreshEntityStatusWithEvidence(teamAlpha, "team-a");
+        verify(entitySummaryReadModelService).loadSummaryCounts(List.of(teamAlpha));
+        verify(entityStatusRefreshService).refreshEntityStatusesWithEvidence(List.of(teamAlpha), "team-a");
     }
 
     @Test
@@ -137,15 +144,19 @@ class EntityListReadModelServiceTest {
                 any(), any(), anyInt(), anyInt(), any()))
                 .thenReturn(new PageImpl<>(List.of(entity), PageRequest.of(0, 10), 42));
         when(entitySummaryReadModelService.loadLatestDefinitionActivities(List.of(entity))).thenReturn(Map.of());
+        EntitySummaryReadModelService.EntitySummaryCounts summaryCounts =
+                new EntitySummaryReadModelService.EntitySummaryCounts(1, 0, 0);
+        when(entitySummaryReadModelService.loadSummaryCounts(List.of(entity))).thenReturn(Map.of(41L, summaryCounts));
         EntityStatusInfo statusInfo = new EntityStatusInfo(
                 "unknown", "no live evidence bound yet", 0, 0, 0, 0, 0, LocalDateTime.now()
         );
         EntityStatusRefreshService.EntityRuntimeStatusEvidence runtimeEvidence =
                 new EntityStatusRefreshService.EntityRuntimeStatusEvidence(List.of(), List.of(), statusInfo);
-        when(entityStatusRefreshService.refreshEntityStatusWithEvidence(entity, "team-a")).thenReturn(runtimeEvidence);
+        when(entityStatusRefreshService.refreshEntityStatusesWithEvidence(List.of(entity), "team-a"))
+                .thenReturn(Map.of(41L, runtimeEvidence));
         EntitySummaryInfo summaryInfo = new EntitySummaryInfo();
         summaryInfo.setEntity(EntityInfo.fromEntity(entity));
-        when(entitySummaryReadModelService.buildEntitySummary(entity, null, statusInfo, List.of()))
+        when(entitySummaryReadModelService.buildEntitySummary(entity, null, statusInfo, List.of(), summaryCounts))
                 .thenReturn(summaryInfo);
 
         Page<EntitySummaryInfo> page = entityListReadModelService.getEntities(
@@ -154,5 +165,44 @@ class EntityListReadModelServiceTest {
 
         assertEquals(42, page.getTotalElements());
         assertEquals(41L, page.getContent().getFirst().getEntity().getId());
+    }
+
+    @Test
+    void getEntitiesCapsOversizedPagesBeforeRuntimeEvidenceFanout() {
+        ObserveEntity entity = ObserveEntity.builder()
+                .id(51L)
+                .type("service")
+                .name("scale-proof")
+                .status("unknown")
+                .build();
+        when(entityCatalogQueryService.findEntityPage(
+                any(), any(), any(), any(), any(), any(), any(), any(), any(), any(),
+                any(), any(), anyInt(), anyInt()))
+                .thenReturn(new PageImpl<>(List.of(entity), PageRequest.of(0, 50), 1993));
+        when(entitySummaryReadModelService.loadLatestDefinitionActivities(List.of(entity))).thenReturn(Map.of());
+        EntitySummaryReadModelService.EntitySummaryCounts summaryCounts =
+                new EntitySummaryReadModelService.EntitySummaryCounts(1, 0, 0);
+        when(entitySummaryReadModelService.loadSummaryCounts(List.of(entity))).thenReturn(Map.of(51L, summaryCounts));
+        EntityStatusInfo statusInfo = new EntityStatusInfo(
+                "unknown", "no live evidence bound yet", 0, 0, 0, 0, 0, LocalDateTime.now()
+        );
+        EntityStatusRefreshService.EntityRuntimeStatusEvidence runtimeEvidence =
+                new EntityStatusRefreshService.EntityRuntimeStatusEvidence(List.of(), List.of(), statusInfo);
+        when(entityStatusRefreshService.refreshEntityStatusesWithEvidence(List.of(entity)))
+                .thenReturn(Map.of(51L, runtimeEvidence));
+        EntitySummaryInfo summaryInfo = new EntitySummaryInfo();
+        summaryInfo.setEntity(EntityInfo.fromEntity(entity));
+        when(entitySummaryReadModelService.buildEntitySummary(entity, null, statusInfo, List.of(), summaryCounts))
+                .thenReturn(summaryInfo);
+
+        Page<EntitySummaryInfo> page = entityListReadModelService.getEntities(
+                null, null, null, null, null, null, null, null, null, null,
+                "gmtUpdate", "desc", -4, 1000);
+
+        assertEquals(1993, page.getTotalElements());
+        assertEquals(51L, page.getContent().getFirst().getEntity().getId());
+        verify(entityCatalogQueryService).findEntityPage(
+                eq(null), eq(null), eq(null), eq(null), eq(null), eq(null), eq(null), eq(null), eq(null), eq(null),
+                eq("gmtUpdate"), eq("desc"), eq(0), eq(50));
     }
 }

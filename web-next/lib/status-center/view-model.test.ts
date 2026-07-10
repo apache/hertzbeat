@@ -433,6 +433,28 @@ describe('status center view model', () => {
     });
   });
 
+  it('prefers normalized public incident create time over raw start time', () => {
+    const labels = buildStatusIncidentCards(
+      [
+        {
+          id: 12,
+          title: 'Archive incident',
+          state: 3,
+          startTime: 1776851621157,
+          createTime: 1739324100000,
+          updateTime: 1739328300000,
+          contents: [{ message: 'Recovered', state: 3, timestamp: 1739328300000 }]
+        }
+      ] as any,
+      t,
+      value => `time:${value}`
+    )[0];
+
+    expect(labels.startAtLabel).toBe('time:1739324100000');
+    expect(labels.rangeLabel).toContain('time:1739324100000');
+    expect(labels.rangeLabel).not.toContain('time:1776851621157');
+  });
+
   it('uses runtime none fallback for public incident cards without title, name, or id', () => {
     expect(
       buildStatusIncidentCards(

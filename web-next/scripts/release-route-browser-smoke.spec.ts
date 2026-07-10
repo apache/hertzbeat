@@ -74,6 +74,11 @@ const releaseRouteCases = [
     name: 'alert center',
     path: '/alert',
     selector: '[data-alert-center-surface="otlp-hertzbeat-ui-center-console"]'
+  },
+  {
+    name: 'ui lab',
+    path: '/ui-lab',
+    selector: '[data-hz-ui-lab-monitor-filter-bar="shared"]'
   }
 ];
 

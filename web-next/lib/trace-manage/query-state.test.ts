@@ -181,7 +181,7 @@ describe('trace query state codec', () => {
     });
   });
 
-  it('preserves seeded signal-route context in trace list and overview urls when present', () => {
+  it('preserves signal-route context for exact trace list and overview urls', () => {
     expect(
       buildTraceUrls(
         { traceId: 'abc123', spanId: 'span456', serviceName: 'checkout', errorOnly: true, spanScope: 'root' },
@@ -204,6 +204,25 @@ describe('trace query state codec', () => {
         '/traces/list?pageIndex=0&pageSize=8&traceId=abc123&serviceName=checkout&errorOnly=true&spanScope=root&entityId=42&entityType=service&serviceNamespace=payments&environment=prod&start=1713200000000&end=1713203600000',
       overviewUrl:
         '/traces/stats/overview?traceId=abc123&serviceName=checkout&errorOnly=true&spanScope=root&entityId=42&entityType=service&serviceNamespace=payments&environment=prod&start=1713200000000&end=1713203600000'
+    });
+  });
+
+  it('keeps entity context as a broad trace filter when no exact trace id is present', () => {
+    expect(
+      buildTraceUrls(
+        { traceId: '', spanId: '', serviceName: 'checkout', errorOnly: true, spanScope: 'root' },
+        {
+          entityId: '42',
+          entityType: 'service',
+          serviceNamespace: 'payments',
+          environment: 'prod'
+        }
+      )
+    ).toEqual({
+      listUrl:
+        '/traces/list?pageIndex=0&pageSize=8&serviceName=checkout&errorOnly=true&spanScope=root&entityId=42&entityType=service&serviceNamespace=payments&environment=prod',
+      overviewUrl:
+        '/traces/stats/overview?serviceName=checkout&errorOnly=true&spanScope=root&entityId=42&entityType=service&serviceNamespace=payments&environment=prod'
     });
   });
 

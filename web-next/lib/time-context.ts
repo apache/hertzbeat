@@ -223,12 +223,17 @@ function hasRefreshInterval(value: number, intervals: readonly number[]) {
   return intervals.includes(value);
 }
 
+function isManualRefreshParam(value: string | null | undefined) {
+  const normalized = normalizeText(value)?.toLowerCase();
+  return normalized === 'off' || normalized === 'manual' || normalized === 'false' || normalized === '0';
+}
+
 export function resolveTimeContextRefreshInterval(
   context: Pick<TimeContext, 'refresh' | 'live'>,
   intervals: readonly number[] = TIME_CONTEXT_REFRESH_INTERVAL_SECONDS,
   defaultInterval: number = 30
 ) {
-  if (context.live === 'false') return MANUAL_TIME_CONTEXT_REFRESH_INTERVAL;
+  if (context.live === 'false' || isManualRefreshParam(context.refresh)) return MANUAL_TIME_CONTEXT_REFRESH_INTERVAL;
   const value = Number(context.refresh);
   return hasRefreshInterval(value, intervals) ? value : defaultInterval;
 }
@@ -302,6 +307,7 @@ export function readEpochMillisTimeParam(value: string | null | undefined) {
 export function readTimeRangeParam(value: string | null | undefined) {
   const trimmed = normalizeText(value);
   if (!trimmed) return undefined;
+  if (trimmed === 'custom') return trimmed;
   if (PRESET_BY_VALUE.has(trimmed)) return trimmed;
   const durationMs = readRelativeTimeRangeDurationMs(trimmed);
   return durationMs ? trimmed : undefined;
@@ -323,6 +329,7 @@ export function readRelativeTimeRangeDurationMs(value: string | null | undefined
 export function readRefreshSecondsParam(value: string | null | undefined) {
   const trimmed = normalizeText(value);
   if (!trimmed) return undefined;
+  if (isManualRefreshParam(trimmed)) return trimmed.toLowerCase();
   if (!/^\d+$/.test(trimmed)) return undefined;
   const seconds = Number(trimmed);
   return seconds > 0 && seconds <= 86_400 ? trimmed : undefined;

@@ -25,6 +25,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Map;
 import org.apache.hertzbeat.manager.pojo.dto.EntityDefinitionRequest;
 import org.apache.hertzbeat.manager.pojo.dto.EntityDefinitionActivityInfo;
 import org.apache.hertzbeat.manager.pojo.dto.EntityCatalogSuggestionsInfo;
@@ -87,6 +88,15 @@ public class EntityController {
     @Operation(summary = "Parse entity definition", description = "Parse entity definition content to entity dto")
     public ResponseEntity<Message<EntityDto>> parseEntityDefinition(@Valid @RequestBody EntityDefinitionRequest definitionRequest) {
         EntityDto entityDto = observeEntityService.parseEntityDefinition(definitionRequest, null);
+        return ResponseEntity.ok(Message.success(entityDto));
+    }
+
+    @PostMapping("/{id:\\d+}/definition/parse")
+    @Operation(summary = "Parse entity definition for an entity", description = "Parse entity definition content while allowing the current entity identity")
+    public ResponseEntity<Message<EntityDto>> parseEntityDefinitionForEntity(
+            @Parameter(description = "Entity ID", example = "87584674384") @PathVariable("id") long id,
+            @Valid @RequestBody EntityDefinitionRequest definitionRequest) {
+        EntityDto entityDto = observeEntityService.parseEntityDefinition(definitionRequest, id);
         return ResponseEntity.ok(Message.success(entityDto));
     }
 
@@ -330,6 +340,14 @@ public class EntityController {
     public ResponseEntity<Message<List<EntityMonitorBindingCandidate>>> getMonitorBindingCandidates(
             @Parameter(description = "Monitor ID", example = "87584674384") @PathVariable("monitorId") long monitorId) {
         List<EntityMonitorBindingCandidate> candidates = observeEntityService.getMonitorBindingCandidates(monitorId);
+        return ResponseEntity.ok(Message.success(candidates));
+    }
+
+    @GetMapping("/monitor/candidates")
+    @Operation(summary = "Recommend entities for monitors", description = "Recommend entities for multiple monitors")
+    public ResponseEntity<Message<Map<Long, List<EntityMonitorBindingCandidate>>>> getMonitorBindingCandidates(
+            @Parameter(description = "Monitor IDs", example = "87584674384") @RequestParam List<Long> ids) {
+        Map<Long, List<EntityMonitorBindingCandidate>> candidates = observeEntityService.getMonitorBindingCandidates(ids);
         return ResponseEntity.ok(Message.success(candidates));
     }
 }

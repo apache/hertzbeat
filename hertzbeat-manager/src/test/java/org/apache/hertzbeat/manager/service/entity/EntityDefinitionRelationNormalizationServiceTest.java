@@ -105,6 +105,29 @@ class EntityDefinitionRelationNormalizationServiceTest {
     }
 
     @Test
+    void dedupesDependsOnWhenExplicitRelationAlreadyNamesSameTargetReference() {
+        EntityDefinitionRelationNormalizationService normalizationService =
+                new EntityDefinitionRelationNormalizationService(entityRelationService);
+        Map<String, Object> specMap = Map.of(
+                "relations", List.of(Map.of(
+                        "targetEntityId", "42",
+                        "targetRef", "service:commerce/payments-api",
+                        "relationType", "depends_on",
+                        "relationSource", "definition")),
+                "dependsOn", List.of("service:commerce/payments-api")
+        );
+
+        List<EntityDefinition.Relation> relations = normalizationService.mergeDefinitionRelations(
+                normalizationService.extractDefinitionRelations("relations", specMap),
+                normalizationService.extractDefinitionDependsOn(specMap.get("dependsOn")));
+
+        assertEquals(1, relations.size());
+        assertEquals(42L, relations.getFirst().getTargetEntityId());
+        assertEquals("service:commerce/payments-api", relations.getFirst().getTargetRef());
+        assertEquals("definition", relations.getFirst().getRelationSource());
+    }
+
+    @Test
     void attachesRelationEnvelopeFromCanonicalAndLegacyFields() {
         EntityDefinitionRelationNormalizationService normalizationService =
                 new EntityDefinitionRelationNormalizationService(entityRelationService);

@@ -137,6 +137,14 @@ vi.mock('@/lib/monitor-api-facade', () => ({
 }));
 
 vi.mock('@/lib/monitor-editor/controller', () => ({
+  buildMonitorSavePayload: (draft: any) => ({
+    monitor: draft.monitor,
+    collector: draft.collector,
+    params: draft.params,
+    advancedParams: draft.advancedParams,
+    scrapeParams: draft.scrapeParams,
+    grafanaDashboard: draft.grafanaDashboard
+  }),
   buildMonitorEditCacheKey: (monitorId: string) => `monitor-editor-edit:/monitor/${monitorId}:/collector`,
   buildMonitorEditorCollectorsUrl: () => '/collector',
   buildMonitorEditorMonitorUrl: (monitorId: string) => `/monitor/${monitorId}`,
@@ -308,5 +316,9 @@ describe('MonitorEditPage', () => {
     expect(source).toContain("t('monitor.route-state.form.error.copy')");
     expect(source).toContain("t('monitor.route-state.action.retry')");
     expect(source).toContain('data-monitor-editor-route-state-retry-owner="hertzbeat-ui-button"');
+    expect(source).toContain('data-monitor-editor-route-state-list-return-owner="hertzbeat-ui-button"');
+    expect(source).toContain('data-monitor-editor-route-state-list-return-target={routeListReturnHref}');
+    expect(source).toContain("t('monitor.detail.back')");
+    expect(source).toContain('buildMonitorListReturnHref(returnContext)');
   });
 });

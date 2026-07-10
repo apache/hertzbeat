@@ -144,6 +144,7 @@ export interface Monitor {
   _graceTimer?: unknown;
   gmtUpdate?: number;
   gmtCreate?: number;
+  entityBindingCandidates?: EntityMonitorBindingCandidate[];
 }
 
 export interface Param {
@@ -521,8 +522,19 @@ export interface EntitySummaryInfo {
     type?: string;
     status?: string;
     owner?: string;
+    namespace?: string;
     environment?: string;
     system?: string;
+  };
+  status?: {
+    status?: string | null;
+    reason?: string | null;
+    monitorTotal?: number | null;
+    monitorUpCount?: number | null;
+    monitorDownCount?: number | null;
+    monitorPausedCount?: number | null;
+    activeAlertCount?: number | null;
+    evaluatedAt?: string | number | null;
   };
   identityCount?: number;
   monitorCount?: number;
@@ -552,6 +564,7 @@ export interface EntityDetailDto {
   logSummary?: EntityLogSummary;
   traceSummary?: EntityTraceSummary & { latestSpanId?: string | null };
   unifiedEvidenceSummary?: EntityUnifiedEvidenceSummary;
+  opsSummary?: EntityOpsSummary;
   signalEvidence?: EntitySignalEvidenceBundle;
   responseHandoffs?: EntityResponseHandoffsInfo;
   boundMonitors?: Monitor[];
@@ -644,6 +657,16 @@ export interface EntityMonitorSummary {
   latestStatusChangeAt?: number | string | null;
 }
 
+export interface EntityOpsSummary {
+  ownerReady?: boolean;
+  runbookReady?: boolean;
+  relationReady?: boolean;
+  telemetryReady?: boolean;
+  statusReady?: boolean;
+  readinessScore?: number;
+  relationCount?: number;
+}
+
 export interface EntityLogSummary {
   hintCount?: number;
   preferredQueryType?: string | null;
@@ -664,6 +687,10 @@ export interface EntityNextAction {
   title?: string;
   summary?: string;
   actionLabel?: string;
+  href?: string;
+  url?: string;
+  actionUrl?: string;
+  targetUrl?: string;
   priority?: number;
 }
 
@@ -788,6 +815,16 @@ export interface EntityDto {
   identities?: unknown[];
   monitorBinds?: unknown[];
   relations?: unknown[];
+}
+
+export interface EntityMonitorBindingCandidate {
+  entityId?: number | string | null;
+  entityName?: string | null;
+  entityType?: string | null;
+  score?: number | null;
+  recommendation?: string | null;
+  alreadyBound?: boolean | null;
+  matchedIdentities?: Record<string, unknown>;
 }
 
 export interface AlertDefine {
@@ -919,6 +956,8 @@ export interface AuthToken {
   id: number;
   name?: string | null;
   tokenMask?: string | null;
+  tokenScope?: string | null;
+  workspaceId?: string | null;
   creator?: string | null;
   gmtCreate?: string | number | null;
   expireTime?: string | number | null;

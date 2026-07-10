@@ -1,12 +1,12 @@
 'use client';
 
 import React from 'react';
-import { Eye, EyeOff, FileText, Moon, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
-import { HzButton, HzButtonLink, HzConfirmDialog, HzSwitch, HzYamlWorkspace, type HzTemplateCategory } from '@hertzbeat/ui';
+import { Eye, EyeOff, FileText, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
+import { HzButton, HzButtonLink, HzConfirmDialog, HzYamlWorkspace, type HzTemplateCategory } from '@hertzbeat/ui';
 import { Button } from '../ui/button';
 import { HzCodeEditor } from '../ui/hz-code-editor';
 import { hzOpsCatalogVisual } from '../../lib/hz-ops-visual';
-import { buildTemplateFacts, buildTemplateMenuView, buildTemplateSummaryRows } from '../../lib/setting-define/view-model';
+import { buildTemplateMenuView } from '../../lib/setting-define/view-model';
 import type { SettingDefinePageData } from '../../lib/setting-define/controller';
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
@@ -19,7 +19,7 @@ type SettingDefineSurfaceProps = {
   editorValue: string;
   originalYaml: string;
   yamlLabel: string;
-  darkMode: boolean;
+  monitorHref?: string;
   isEditing: boolean;
   menuLoading?: boolean;
   editorLoading?: boolean;
@@ -37,7 +37,6 @@ type SettingDefineSurfaceProps = {
   onSave: () => void;
   onDelete: () => void;
   onToggleTemplateVisibility: (app: string, hide: boolean) => void;
-  onToggleDarkMode: (checked: boolean) => void;
   onEditorValueChange: (value: string) => void;
 };
 
@@ -64,7 +63,7 @@ export function SettingDefineSurface({
   editorValue,
   originalYaml,
   yamlLabel,
-  darkMode,
+  monitorHref,
   isEditing,
   menuLoading = false,
   editorLoading = false,
@@ -82,7 +81,6 @@ export function SettingDefineSurface({
   onSave,
   onDelete,
   onToggleTemplateVisibility,
-  onToggleDarkMode,
   onEditorValueChange
 }: SettingDefineSurfaceProps) {
   const defineTitle = t('setting.define.title');
@@ -92,15 +90,12 @@ export function SettingDefineSurface({
   const visibleMenuGroups = buildTemplateMenuView(data.menuGroups, search, t);
   const hasTemplateItems = data.menuGroups.some(group => group.items.length > 0);
   const isSearchMiss = hasTemplateItems && search.trim().length > 0 && visibleMenuGroups.length === 0;
-  const facts = buildTemplateFacts(data, t);
-  const summaryRows = buildTemplateSummaryRows(selectedApp, editorValue, t, selectedLabel);
   const hasSelectedApp = Boolean(selectedApp);
-  const editorTitle = yamlLabel || selectedLabel;
-  const editorMeta = summaryRows.map(row => `${row.title}: ${row.copy}`).join(' · ');
+  const editorTitle = hasSelectedApp ? (yamlLabel || selectedLabel) : selectedLabel;
   const showExistingTemplateDiff = hasSelectedApp && isEditing;
-  const hasYamlChanges = editorValue !== originalYaml;
+  const hasYamlChanges = editorValue.trimEnd() !== originalYaml.trimEnd();
   const showSaveAction = !editorLoading && hasYamlChanges;
-  const editorTheme = darkMode ? 'vs-dark' : 'vs';
+  const editorTheme = 'vs-dark';
   const applyFailure = messageContract === 'angular-apply-fail-notification';
   const deleteFailure = messageContract === 'angular-delete-fail-notification';
   const [saveConfirmOpen, setSaveConfirmOpen] = React.useState(false);
@@ -115,11 +110,7 @@ export function SettingDefineSurface({
       id: row.app,
       label: row.title,
       meta: row.app,
-      status: (
-        <span className="rounded-[3px] border border-[#303743] bg-[#0b0c0e] px-1.5 py-0.5 text-[10px] text-[#858d9a]">
-          {row.meta}
-        </span>
-      ),
+      status: null,
       action: (
         <HzButton
           size="sm"
@@ -129,9 +120,11 @@ export function SettingDefineSurface({
           data-setting-define-template-visibility={row.app}
           data-setting-define-template-visibility-contract="angular-hide-true-or-undefined-contextual"
           data-setting-define-template-visibility-owner="hertzbeat-ui-button"
+          data-setting-define-template-visibility-density="icon-only-list-action"
           data-setting-define-template-visibility-label={row.title}
           data-setting-define-template-visibility-action={row.hidden ? 'show' : 'hide'}
           data-setting-define-template-visibility-next-hide={String(!row.hidden)}
+          className="h-7 w-7 min-w-0 px-0"
           onClick={event => {
             event.stopPropagation();
             setVisibilityConfirm({
@@ -143,14 +136,14 @@ export function SettingDefineSurface({
           }}
         >
           {row.hidden ? <Eye className="h-3.5 w-3.5" aria-hidden="true" /> : <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />}
-          {row.hidden ? t('setting.define.action.show') : t('setting.define.action.hide')}
+          <span className="sr-only">{row.hidden ? t('setting.define.action.show') : t('setting.define.action.hide')}</span>
         </HzButton>
       )
     }))
   }));
 
   const handleRequestSave = () => {
-    if (editorValue === '') {
+    if (editorValue.trim() === '') {
       setSaveConfirmOpen(false);
       setSaveGuardMessage(t('define.save-apply.no-code'));
       return;
@@ -170,6 +163,11 @@ export function SettingDefineSurface({
     onDelete();
   };
 
+  const handleCancel = () => {
+    setSaveGuardMessage(null);
+    onCancel();
+  };
+
   const handleConfirmVisibility = () => {
     if (!visibilityConfirm) return;
     const { app, nextHide } = visibilityConfirm;
@@ -185,26 +183,12 @@ export function SettingDefineSurface({
       >
         {yamlLabel}
       </span>
-      <HzSwitch
-        data-setting-define-theme-toggle="angular-nz-switch"
-        data-setting-define-theme-toggle-owner="hertzbeat-ui-switch"
-        data-setting-define-theme-toggle-state={editorTheme}
-        checked={darkMode}
-        onCheckedChange={onToggleDarkMode}
-        aria-label={t('common.dark-mode')}
-        label={
-          <>
-            <Moon className="h-3.5 w-3.5 text-[#858d9a]" aria-hidden="true" />
-            <span>{t('common.dark-mode')}</span>
-          </>
-        }
-      />
     </>
   );
 
-  const workspaceFeedback = (
+  const showWorkspaceFeedback = savePending || !hasTemplateItems || isSearchMiss || Boolean(saveGuardMessage || message);
+  const workspaceFeedback = showWorkspaceFeedback ? (
     <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-      <span className="truncate text-[#8f99ab]">{editorMeta}</span>
       {savePending ? (
         <span
           data-setting-define-save-pending-feedback="angular-save-loading"
@@ -242,7 +226,7 @@ export function SettingDefineSurface({
         </span>
       ) : null}
     </div>
-  );
+  ) : null;
 
   const yamlEditor = showExistingTemplateDiff ? (
     <div data-setting-define-diff-shell="monitor-template-diff" className="grid gap-4 p-3 lg:grid-cols-2">
@@ -251,6 +235,7 @@ export function SettingDefineSurface({
           {t('setting.define.diff.original')}
         </div>
         <HzCodeEditor
+          key={`${selectedApp || 'new-template'}:original:${yamlLabel}`}
           data-setting-define-editor-field="hz-code-editor"
           data-setting-define-code-editor="monitor-template-yaml-original"
           data-setting-define-editor-theme={editorTheme}
@@ -258,7 +243,7 @@ export function SettingDefineSurface({
           data-setting-define-editor-folding="true"
           data-setting-define-editor-automatic-layout="true"
           data-setting-define-editor-loading={editorLoading ? 'true' : 'false'}
-          className={darkMode ? 'bg-[#0d1117]' : undefined}
+          className="bg-[#0d1117]"
           value={originalYaml}
           language="yaml"
           theme={editorTheme}
@@ -274,6 +259,7 @@ export function SettingDefineSurface({
           {t('setting.define.diff.current')}
         </div>
         <HzCodeEditor
+          key={`${selectedApp || 'new-template'}:current:${yamlLabel}`}
           data-hz-ui="yaml-editor"
           data-setting-define-editor-field="hz-code-editor"
           data-setting-define-code-editor="monitor-template-yaml"
@@ -282,7 +268,7 @@ export function SettingDefineSurface({
           data-setting-define-editor-folding="true"
           data-setting-define-editor-automatic-layout="true"
           data-setting-define-editor-loading={editorLoading ? 'true' : 'false'}
-          className={darkMode ? 'bg-[#0d1117]' : undefined}
+          className="bg-[#0d1117]"
           value={editorValue}
           language="yaml"
           theme={editorTheme}
@@ -301,6 +287,7 @@ export function SettingDefineSurface({
   ) : (
     <div className="p-3">
       <HzCodeEditor
+        key={`${selectedApp || 'new-template'}:${yamlLabel}`}
         data-hz-ui="yaml-editor"
         data-setting-define-editor-field="hz-code-editor"
         data-setting-define-code-editor="monitor-template-yaml"
@@ -309,7 +296,7 @@ export function SettingDefineSurface({
         data-setting-define-editor-folding="true"
         data-setting-define-editor-automatic-layout="true"
         data-setting-define-editor-loading={editorLoading ? 'true' : 'false'}
-        className={darkMode ? 'bg-[#0d1117]' : undefined}
+        className="bg-[#0d1117]"
         value={editorValue}
         language="yaml"
         theme={editorTheme}
@@ -331,11 +318,11 @@ export function SettingDefineSurface({
       data-setting-define-surface="otlp-hertzbeat-ui-define-console"
       data-setting-define-style-baseline={coldDefineVisual.canvasName}
       data-setting-define-route-state="angular-current-app-url-retained"
-      data-setting-define-theme-contract="angular-theme-service-initial"
-      data-setting-define-theme-owner="angular-theme-service"
-      data-setting-define-theme-mode={darkMode ? 'dark-ops' : 'light-ops'}
-      data-setting-define-theme-switch-contract="angular-nz-switch-code-editor-theme"
-      data-setting-define-theme-switch-owner="hertzbeat-ui-switch"
+      data-setting-define-theme-contract="dark-ops-fixed-yaml-workbench"
+      data-setting-define-theme-owner="setting-define-surface"
+      data-setting-define-theme-mode="dark-ops"
+      data-setting-define-theme-switch-contract="removed-redundant-local-toggle"
+      data-setting-define-theme-switch-owner="setting-define-surface"
       data-setting-define-theme-switch-state={editorTheme}
       data-setting-define-menu-filter-contract="angular-monitor-select-list-label-only"
       data-setting-define-menu-filter-owner="hertzbeat-ui-template-picker"
@@ -355,7 +342,7 @@ export function SettingDefineSurface({
       data-setting-define-new-action-state={hasSelectedApp ? 'available' : 'hidden'}
       data-setting-define-menu-select-contract="angular-router-navigate-app-query"
       data-setting-define-menu-select-owner="hertzbeat-ui-template-picker"
-      data-setting-define-menu-select-query-contract="angular-replace-with-app-only"
+      data-setting-define-menu-select-query-contract="retain-context-while-updating-app"
       data-setting-define-menu-select-query-owner="setting-define-page-router"
       data-setting-define-confirm-closable-contract="angular-nz-closable-false"
       data-setting-define-confirm-ok-contract="angular-nz-ok-danger-primary"
@@ -383,14 +370,16 @@ export function SettingDefineSurface({
     >
       <section className={coldDefineVisual.layout.pageSection}>
         <div className="mx-auto max-w-[1480px]">
-          <div className="mb-5">
-            <div data-setting-define-header="hertzbeat-ui-compact-header" className={coldDefineVisual.panel.hero}>
-              <div className="max-w-[920px]">
-                <h1 className="text-[30px] font-semibold leading-tight text-[#f5f7fb]">{defineTitle}</h1>
-                <p className="mt-4 max-w-[780px] text-[13px] leading-6 text-[#a9b0bb]">
-                  {t('setting.define.subtitle')}
-                </p>
-                <div data-setting-define-command-row="standard-equal-buttons" className={coldDefineVisual.button.row}>
+          <div className="mb-3">
+            <div
+              data-setting-define-header="hertzbeat-ui-compact-toolbar"
+              data-setting-define-header-density="reduced-invalid-summary"
+              data-setting-define-header-nesting-contract="flat-page-toolbar"
+              className="p-0"
+            >
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <h1 className="text-[20px] font-semibold leading-7 text-[#f5f7fb]">{defineTitle}</h1>
+                <div data-setting-define-command-row="standard-equal-buttons" className="flex flex-wrap items-center gap-2">
                   {hasSelectedApp ? (
                     <Button
                       size="sm"
@@ -412,7 +401,7 @@ export function SettingDefineSurface({
                       data-setting-define-monitor-link-contract="angular-routerlink-monitors-app"
                       data-setting-define-monitor-link-owner="hertzbeat-ui-button-link"
                       data-setting-define-monitor-link-app={selectedApp || undefined}
-                      href={`/monitors?app=${encodeURIComponent(selectedApp || '')}`}
+                      href={monitorHref || `/monitors?app=${encodeURIComponent(selectedApp || '')}`}
                       className={`${coldButtonClassName} inline-flex items-center justify-center gap-2`}
                     >
                       <FileText className="h-3.5 w-3.5" aria-hidden="true" />
@@ -425,8 +414,15 @@ export function SettingDefineSurface({
                       {t('common.button.edit')}
                     </Button>
                   ) : null}
-                  {isEditing && hasSelectedApp ? (
-                    <Button size="sm" variant="default" className={coldButtonClassName} onClick={onCancel}>
+                  {isEditing ? (
+                    <Button
+                      size="sm"
+                      variant="default"
+                      data-setting-define-cancel-action={hasSelectedApp ? 'existing-template-edit' : 'new-template-draft'}
+                      data-setting-define-cancel-owner="setting-define-controller"
+                      className={coldButtonClassName}
+                      onClick={handleCancel}
+                    >
                       <X className="h-3.5 w-3.5" aria-hidden="true" />
                       {t('common.button.cancel')}
                     </Button>
@@ -465,14 +461,6 @@ export function SettingDefineSurface({
                   ) : null}
                 </div>
               </div>
-              <div className="mt-4 grid gap-2 sm:grid-cols-4">
-                {facts.map(fact => (
-                  <div key={fact.label} className="rounded-[3px] border border-[#2b3039] bg-[#101217] px-3 py-2">
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#858d9a]">{fact.label}</div>
-                    <div className="mt-1 truncate text-[13px] font-semibold text-[#eef2f7]">{fact.value}</div>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
 
@@ -496,6 +484,7 @@ export function SettingDefineSurface({
                 templatePickerLabels={{
                   defaultTitle: t('menu.advanced.define'),
                   itemCount: total => String(total),
+                  showCounts: false,
                   searchPlaceholder: t('common.search'),
                   empty: emptyStateTitle
                 }}

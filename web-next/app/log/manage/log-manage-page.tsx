@@ -239,8 +239,10 @@ const EMPTY_LOG_MANAGE_ROUTE_STATE: LogManageRouteState = {
 const quickSeverityFilters = ['ERROR', 'WARN', 'INFO', 'DEBUG'];
 const maxStreamEntries = 10000;
 const maxPendingStreamEntries = 1000;
+const LOG_STREAM_CONNECT_TIMEOUT_MS = 12_000;
 const LOG_MANAGE_SETTLED_CACHE_TTL_MS = 10_000;
 const LOG_MANAGE_API_TIMEOUT_MS = 20_000;
+const BACKEND_UNAVAILABLE_MESSAGE = 'Backend service unavailable. Please retry after the backend service is restored.';
 const LOG_SAVED_QUERY_VIEW_STORAGE_KEY = 'hertzbeat.log-manage.saved-query-views';
 const LOG_SAVED_QUERY_VIEW_LIMIT = 5;
 const LOG_SAVED_QUERY_VIEW_PERSISTENCE_OWNER: Record<SignalSavedQueryViewPersistenceMode, string> = {
@@ -1197,8 +1199,14 @@ function emptyLogManageData(query: LogQueryState, message: string): LogManageDat
   };
 }
 
-function describeLogManageLoadFailure(error: unknown) {
-  return error instanceof Error && error.message ? error.message : 'Log API request failed';
+function describeLogManageLoadFailure(error: unknown, t?: LogManageTranslate) {
+  if (error instanceof Error && error.message) {
+    if (error.message.includes(BACKEND_UNAVAILABLE_MESSAGE)) {
+      return t ? t('log.manage.api.degraded.backend-unavailable') : error.message;
+    }
+    return error.message;
+  }
+  return t ? t('log.manage.api.degraded.generic') : 'Log API request failed';
 }
 
 async function apiMessageGetWithTimeout<T>(path: string, timeoutMs = LOG_MANAGE_API_TIMEOUT_MS): Promise<T> {
@@ -1433,16 +1441,20 @@ function hasExactLogEntity(entry: LogEntry | null, routeContext: SignalRouteCont
 
 function LogEntityDetailAction({
   href,
+  discoveryHref,
   canOpen,
   missingEntityHandoffTitle,
   label,
+  discoveryLabel,
   actionScope = 'detail',
   showIcon = false
 }: {
   href: string;
+  discoveryHref: string;
   canOpen: boolean;
   missingEntityHandoffTitle: string;
   label: string;
+  discoveryLabel: string;
   actionScope?: 'header' | 'stream-detail' | 'detail';
   showIcon?: boolean;
 }) {
@@ -1470,20 +1482,19 @@ function LogEntityDetailAction({
   }
 
   return (
-    <span className="inline-flex" title={missingEntityHandoffTitle}>
-      <HzButton
-        data-log-manage-entity-action="true"
-        data-log-manage-entity-action-disabled="missing-entity-id"
-        size="md"
-        disabled
-        title={missingEntityHandoffTitle}
-        aria-label={missingEntityHandoffTitle}
-        {...actionScopeProps}
-      >
-        {icon}
-        {label}
-      </HzButton>
-    </span>
+    <HzButtonLink
+      component={Link}
+      data-log-manage-entity-action="true"
+      data-log-manage-entity-discovery-action="missing-entity-id"
+      href={discoveryHref}
+      size="md"
+      title={missingEntityHandoffTitle}
+      aria-label={missingEntityHandoffTitle}
+      {...actionScopeProps}
+    >
+      {icon}
+      {discoveryLabel}
+    </HzButtonLink>
   );
 }
 
@@ -1562,8 +1573,7 @@ function resolveLogDetailTitle(entry: LogEntry | null, t: LogManageTranslate) {
 function resolveLogDetailSubtitle(entry: LogEntry | null, t: LogManageTranslate) {
   if (!entry) return t('log.manage.stream.selected.none');
   return (
-    readLogAttribute(entry.resource, 'service.name') ||
-    readLogAttribute(entry.attributes, 'service.name') ||
+    readFirstLogAttribute(entry, ['service.name', 'service_name']) ||
     entry.severityText ||
     'HertzBeat Logs'
   );
@@ -1573,6 +1583,39 @@ function streamStatusCopy(status: 'connecting' | 'connected' | 'disconnected', t
   if (status === 'connected') return t('log.manage.stream.status.connected');
   if (status === 'connecting') return t('log.manage.stream.status.connecting');
   return t('log.manage.stream.status.disconnected');
+}
+
+function resolveStreamEmptyState(
+  status: 'connecting' | 'connected' | 'disconnected',
+  isPaused: boolean,
+  t: LogManageTranslate
+) {
+  if (isPaused) {
+    return {
+      reason: 'paused',
+      title: t('log.manage.stream.empty.paused.title'),
+      description: t('log.manage.stream.empty.paused.copy')
+    };
+  }
+  if (status === 'connecting') {
+    return {
+      reason: 'connecting',
+      title: t('log.manage.stream.empty.connecting.title'),
+      description: t('log.manage.stream.empty.connecting.copy')
+    };
+  }
+  if (status === 'disconnected') {
+    return {
+      reason: 'disconnected',
+      title: t('log.manage.stream.empty.disconnected.title'),
+      description: t('log.manage.stream.empty.disconnected.copy')
+    };
+  }
+  return {
+    reason: 'connected-empty',
+    title: t('log.manage.stream.empty.title'),
+    description: t('log.manage.stream.empty.copy')
+  };
 }
 
 function formatTraceDurationNanos(value?: number | null) {
@@ -1692,8 +1735,9 @@ function LogManageExplorer({
   const visibleLogColumnSet = useMemo(() => new Set(visibleLogColumns), [visibleLogColumns]);
   const displayFormat = normalizeLogDisplayFormat(draft.displayFormat || DEFAULT_LOG_DISPLAY_FORMAT);
   const maxLines = normalizeLogMaxLines(draft.maxLines || DEFAULT_LOG_MAX_LINES);
-  const activeRow = rows[0];
-  const activeEntry = data.list.content?.[0] ?? null;
+  const [activeHistoryRowKey, setActiveHistoryRowKey] = useState<string | null>(rows[0]?.key ?? null);
+  const activeRow = rows.find(row => row.key === activeHistoryRowKey) ?? rows[0];
+  const activeEntry = activeRow ? logEntryByRowKey.get(activeRow.key) ?? null : null;
   const alertDraft = buildLogAlertRuleDraft(query, routeContext);
   const handoffLinks = buildLogHandoffLinks(activeEntry, routeContext, {
     intakeReturnTo: currentLogReturnHref,
@@ -1716,8 +1760,10 @@ function LogManageExplorer({
     serviceName: activeServiceName,
     serviceNamespace: activeServiceNamespace,
     environment: activeEnvironment,
+    traceId: query.traceId || draft.traceId,
+    spanId: query.spanId || draft.spanId,
     source: routeContext.source || 'OTLP'
-  });
+  }, t);
   const initialStreamItems = useMemo(() => buildInitialStreamItems(data.list.content || []), [data.list.content]);
   const [streamItems, setStreamItems] = useState<StreamLogItem[]>(() => (currentView === 'stream' ? initialStreamItems : []));
   const [streamStatus, setStreamStatus] = useState<'connecting' | 'connected' | 'disconnected'>('disconnected');
@@ -1736,6 +1782,19 @@ function LogManageExplorer({
     error: null,
     data: null
   });
+
+  useEffect(() => {
+    if (rows.length === 0) {
+      if (activeHistoryRowKey !== null) {
+        setActiveHistoryRowKey(null);
+      }
+      return;
+    }
+    if (activeHistoryRowKey && rows.some(row => row.key === activeHistoryRowKey)) {
+      return;
+    }
+    setActiveHistoryRowKey(rows[0].key);
+  }, [activeHistoryRowKey, rows]);
   const [detailContextFilters, setDetailContextFilters] = useState<LogDetailContextFilters>({});
   const [detailContextLimit, setDetailContextLimit] = useState(LOG_DETAIL_CONTEXT_DEFAULT_LIMIT);
   const [detailContextLoadRequest, setDetailContextLoadRequest] = useState<LogDetailContextLoadRequest | null>(null);
@@ -1895,6 +1954,7 @@ function LogManageExplorer({
   const missingTraceHandoffTitle = t('log.manage.handoff.trace-disabled');
   const missingFullTraceHandoffTitle = t('log.manage.handoff.full-trace-disabled');
   const missingEntityHandoffTitle = t('log.manage.handoff.entity-disabled');
+  const entityDiscoveryHandoffTitle = t('log.manage.handoff.entity-discovery');
   const canOpenActiveEntity = hasExactLogEntity(activeEntry, routeContext);
   const canOpenStreamEntity = hasExactLogEntity(selectedStreamEntry, routeContext);
   const canOpenDetailEntity = hasExactLogEntity(detailLog, routeContext);
@@ -1916,6 +1976,7 @@ function LogManageExplorer({
     routeContext.environment,
     ...data.list.content.map(entry => readFirstLogAttribute(entry, ['deployment.environment.name', 'deployment_environment_name', 'environment']))
   ]);
+  const showSourceContextPanel = sourceContextKind !== 'direct' || requestedTraceId || routeContext.entityId || routeContext.serviceName;
 
   useEffect(() => {
     setIsStreamPaused(routeContext.live === 'false');
@@ -2111,10 +2172,17 @@ function LogManageExplorer({
 
     setStreamStatus('connecting');
     const eventSource = new EventSource(streamUrl);
+    const streamConnectTimeout = window.setTimeout(() => {
+      if (eventSource.readyState !== EventSource.OPEN) {
+        setStreamStatus('disconnected');
+      }
+    }, LOG_STREAM_CONNECT_TIMEOUT_MS);
     eventSource.onopen = () => {
+      window.clearTimeout(streamConnectTimeout);
       setStreamStatus('connected');
     };
     eventSource.onerror = () => {
+      window.clearTimeout(streamConnectTimeout);
       setStreamStatus('disconnected');
     };
     const handleLogEvent = (event: MessageEvent<string>) => {
@@ -2137,6 +2205,7 @@ function LogManageExplorer({
 
     eventSource.addEventListener('LOG_EVENT', handleLogEvent);
     return () => {
+      window.clearTimeout(streamConnectTimeout);
       eventSource.removeEventListener('LOG_EVENT', handleLogEvent);
       eventSource.close();
       pendingStreamItemsRef.current = [];
@@ -2651,6 +2720,11 @@ function LogManageExplorer({
     setDetailSelection({ entry, source, selectionState });
   };
 
+  const openHistoryLogDetails = (row: LogExplorerRow) => {
+    setActiveHistoryRowKey(row.key);
+    openLogDetails(logEntryByRowKey.get(row.key) ?? null, 'history');
+  };
+
   useEffect(() => {
     const requestedLogLine = {
       traceId: requestedTraceId,
@@ -2672,6 +2746,7 @@ function LogManageExplorer({
         return;
       }
       autoOpenedTraceDetailKeyRef.current = key;
+      setActiveHistoryRowKey(rows[matchIndex]?.key ?? null);
       setDetailSelection({ entry, source: 'history', selectionState: 'attached' });
       return;
     }
@@ -2690,7 +2765,7 @@ function LogManageExplorer({
       setPersistedStreamItem(item);
       setDetailSelection({ entry: item.entry, source: 'stream', selectionState: 'attached' });
     }
-  }, [data.list.content, detailSelection, isStreamView, requestedLogTimeUnixNano, requestedSpanId, requestedTraceId, showsLogTable, visibleStreamItems]);
+  }, [data.list.content, detailSelection, isStreamView, requestedLogTimeUnixNano, requestedSpanId, requestedTraceId, rows, showsLogTable, visibleStreamItems]);
 
   const openTraceDrilldownFromLog = (
     entry: LogEntry | null,
@@ -2775,6 +2850,25 @@ function LogManageExplorer({
     if (streamViewportRef.current) {
       streamViewportRef.current.scrollTop = 0;
     }
+  };
+
+  const handleStreamViewportKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!['PageDown', 'PageUp', 'Home', 'End'].includes(event.key)) {
+      return;
+    }
+    event.preventDefault();
+    const viewport = event.currentTarget;
+    const pageDelta = Math.max(STREAM_VIEWPORT_ROW_HEIGHT, Math.floor(viewport.clientHeight * 0.85));
+    const maxScrollTop = Math.max(0, viewport.scrollHeight - viewport.clientHeight);
+    const nextScrollTop = event.key === 'Home'
+      ? 0
+      : event.key === 'End'
+        ? maxScrollTop
+        : event.key === 'PageDown'
+          ? Math.min(maxScrollTop, viewport.scrollTop + pageDelta)
+          : Math.max(0, viewport.scrollTop - pageDelta);
+    viewport.scrollTop = nextScrollTop;
+    setStreamViewport(readStreamViewportState(viewport));
   };
 
   const saveCurrentLogQueryView = () => {
@@ -3250,9 +3344,11 @@ function LogManageExplorer({
           </HzButtonLink>
           <LogEntityDetailAction
             href={detailHandoffLinks.entityHref}
+            discoveryHref={detailHandoffLinks.entityDiscoveryHref}
             canOpen={canOpenDetailEntity}
-            missingEntityHandoffTitle={missingEntityHandoffTitle}
+            missingEntityHandoffTitle={canOpenDetailEntity ? missingEntityHandoffTitle : entityDiscoveryHandoffTitle}
             label={t('log.manage.route.action.entity')}
+            discoveryLabel={t('log.manage.route.action.entity-discovery')}
           />
           {detailCodeHref ? (
             <HzButtonLink data-log-manage-detail-dialog-action="code" href={detailCodeHref} target="_blank" rel="noreferrer" size="md">
@@ -3372,6 +3468,21 @@ function LogManageExplorer({
       ? buildSelectedLogRows(selectedStreamEntry, t, bodyText, formatTime, severityLabel)
       : [];
     const pauseVisible = shouldShowStreamPauseOverlay({ isPaused: isStreamPaused, itemCount: streamItems.length });
+    const streamTraceActionDisabledReason = !selectedStreamEntry
+      ? 'no-selected-log'
+      : !selectedStreamEntry.traceId
+        ? 'missing-trace-id'
+        : undefined;
+    const streamTraceActionDisabledTitle = streamTraceActionDisabledReason === 'no-selected-log'
+      ? t('log.manage.stream.selected.action-disabled')
+      : streamTraceActionDisabledReason === 'missing-trace-id'
+        ? missingTraceHandoffTitle
+        : undefined;
+    const streamEmptyState = resolveStreamEmptyState(streamStatus, isStreamPaused, t);
+    const streamPauseDisabled = streamStatus !== 'connected' && !isStreamPaused;
+    const streamPauseDisabledTitle = streamPauseDisabled ? t('log.manage.stream.action.pause-disabled') : undefined;
+    const streamClearDisabled = streamItems.length === 0;
+    const streamClearDisabledTitle = streamClearDisabled ? t('log.manage.stream.action.clear-disabled') : undefined;
     const streamStageHeaderActions = (
       <>
         <HzStatusBadge
@@ -3403,11 +3514,27 @@ function LogManageExplorer({
           <RotateCcw className="h-4 w-4" aria-hidden="true" />
           {t('log.manage.stream.action.reconnect')}
         </HzButton>
-        <HzButton data-log-manage-stream-control="pause-toggle" size="md" onClick={() => setIsStreamPaused(value => !value)}>
+        <HzButton
+          data-log-manage-stream-control="pause-toggle"
+          data-log-manage-stream-control-disabled={streamPauseDisabled ? 'stream-disconnected' : undefined}
+          size="md"
+          disabled={streamPauseDisabled}
+          title={streamPauseDisabledTitle}
+          aria-label={streamPauseDisabledTitle}
+          onClick={() => setIsStreamPaused(value => !value)}
+        >
           {isStreamPaused ? <PlayCircle className="h-4 w-4" aria-hidden="true" /> : <PauseCircle className="h-4 w-4" aria-hidden="true" />}
           {isStreamPaused ? t('log.manage.stream.action.resume') : t('log.manage.stream.action.pause')}
         </HzButton>
-        <HzButton data-log-manage-stream-control="clear" size="md" onClick={clearStream}>
+        <HzButton
+          data-log-manage-stream-control="clear"
+          data-log-manage-stream-control-disabled={streamClearDisabled ? 'empty-buffer' : undefined}
+          size="md"
+          disabled={streamClearDisabled}
+          title={streamClearDisabledTitle}
+          aria-label={streamClearDisabledTitle}
+          onClick={clearStream}
+        >
           <Trash2 className="h-4 w-4" aria-hidden="true" />
           {t('log.manage.stream.action.clear')}
         </HzButton>
@@ -3447,12 +3574,16 @@ function LogManageExplorer({
           <HzScrollViewport
             ref={streamViewportRef}
             variant="log-stream"
+            role="region"
+            tabIndex={0}
+            aria-label={t('log.manage.stream.stage.title')}
             data-log-manage-stream-viewport="virtualized-log-stream"
             data-log-manage-stream-viewport-owner="hertzbeat-ui-scroll-viewport"
             data-log-manage-stream-window={`${streamWindow.startIndex}:${streamWindow.endIndex}`}
             data-log-manage-stream-row-height={STREAM_VIEWPORT_ROW_HEIGHT}
             data-log-manage-stream-retention={`${streamItems.length}/${maxStreamEntries}`}
             onScroll={event => setStreamViewport(readStreamViewportState(event.currentTarget))}
+            onKeyDown={handleStreamViewportKeyDown}
           >
             {streamItems.length > 0 ? (
               <div className="divide-y divide-[#252b35]">
@@ -3489,7 +3620,7 @@ function LogManageExplorer({
                       </span>
                       <span className="min-w-0 truncate font-mono text-[12px] text-[#e8edf5]">{bodyText(entry.body)}</span>
                       <span className="hidden min-w-0 items-center gap-2 text-[11px] text-[#7f8a9d] sm:flex">
-                        <span className="truncate">{readLogAttribute(entry.resource, 'service.name') || 'unknown-service'}</span>
+                        <span className="truncate">{readFirstLogAttribute(entry, ['service.name', 'service_name']) || 'unknown-service'}</span>
                         <span className="min-w-[72px] truncate font-mono">traceId · {entryTraceId}</span>
                       </span>
                     </HzLogStreamLiveRow>
@@ -3501,9 +3632,10 @@ function LogManageExplorer({
               <HzEmptyState
                 data-log-manage-stream-empty-state="true"
                 data-log-manage-stream-empty-owner="hertzbeat-ui-empty-state"
-                title={t('log.manage.stream.empty.title')}
-                description={t('log.manage.stream.empty.copy')}
-                className="h-[520px] border-y-0 text-left"
+                data-log-manage-stream-empty-reason={streamEmptyState.reason}
+                title={streamEmptyState.title}
+                description={streamEmptyState.description}
+                className="min-h-[180px] border-y-0 text-left sm:items-start sm:justify-start"
               />
             )}
           </HzScrollViewport>
@@ -3565,19 +3697,21 @@ function LogManageExplorer({
                 data-log-manage-open-log-detail-before-trace="true"
                 data-log-manage-stream-detail-action="view-trace"
                 size="md"
-                disabled={!selectedStreamEntry?.traceId}
-                title={!selectedStreamEntry?.traceId ? missingTraceHandoffTitle : undefined}
-                aria-label={!selectedStreamEntry?.traceId ? missingTraceHandoffTitle : undefined}
-                data-log-manage-results-open-trace-action-disabled={!selectedStreamEntry?.traceId ? 'missing-trace-id' : undefined}
+                disabled={streamTraceActionDisabledReason != null}
+                title={streamTraceActionDisabledTitle}
+                aria-label={streamTraceActionDisabledTitle}
+                data-log-manage-results-open-trace-action-disabled={streamTraceActionDisabledReason}
                 onClick={() => openTraceDrilldownFromLog(selectedStreamEntry, 'stream', streamSelection.detached ? 'detached' : 'attached')}
               >
                 {t('log.manage.stream.action.view-trace')}
               </HzButton>
               <LogEntityDetailAction
                 href={streamHandoffLinks.entityHref}
+                discoveryHref={streamHandoffLinks.entityDiscoveryHref}
                 canOpen={canOpenStreamEntity}
-                missingEntityHandoffTitle={missingEntityHandoffTitle}
+                missingEntityHandoffTitle={canOpenStreamEntity ? missingEntityHandoffTitle : entityDiscoveryHandoffTitle}
                 label={t('log.manage.route.action.entity')}
+                discoveryLabel={t('log.manage.route.action.entity-discovery')}
                 actionScope="stream-detail"
               />
             </HzControlStack>
@@ -3611,7 +3745,7 @@ function LogManageExplorer({
           data-log-manage-header-padding-owner="hertzbeat-ui-panel-surface"
           padding="header"
         >
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
+          <div className="grid gap-4 2xl:grid-cols-[minmax(280px,1fr)_auto] 2xl:items-start">
             <div className="min-w-0">
               <p className="mb-2 text-[12px] font-semibold tracking-[0.08em] text-[#8792a5]">{t('log.manage.route.kicker')}</p>
               <h1 className="text-[30px] font-semibold tracking-normal text-[#f4f7fb]">{t('log.manage.route.title')}</h1>
@@ -3684,9 +3818,11 @@ function LogManageExplorer({
                 </HzButtonLink>
                 <LogEntityDetailAction
                   href={handoffLinks.entityHref}
+                  discoveryHref={handoffLinks.entityDiscoveryHref}
                   canOpen={canOpenActiveEntity}
-                  missingEntityHandoffTitle={missingEntityHandoffTitle}
+                  missingEntityHandoffTitle={canOpenActiveEntity ? missingEntityHandoffTitle : entityDiscoveryHandoffTitle}
                   label={t('log.manage.route.action.entity')}
+                  discoveryLabel={t('log.manage.route.action.entity-discovery')}
                   actionScope="header"
                   showIcon
                 />
@@ -3726,6 +3862,36 @@ function LogManageExplorer({
             </div>
           </div>
         </HzPanelSurface>
+
+        {showSourceContextPanel ? (
+          <HzPanelSurface
+            data-log-manage-source-context-panel="trace-log-evidence-chain"
+            data-log-manage-source-context-panel-owner="hertzbeat-ui-panel-surface"
+            data-log-manage-source-context-panel-kind={sourceContextKind}
+            padding="query"
+          >
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1">
+                <div className="text-[12px] font-semibold text-[#dbe4f0]">{t('log.manage.source-context.title')}</div>
+                <div className="text-[11px] leading-5 text-[#8f99ab]">{t('log.manage.source-context.description')}</div>
+              </div>
+              <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+                {entityContextRows.map(row => (
+                  <div
+                    key={row.label}
+                    data-log-manage-source-context-row={row.label}
+                    data-log-manage-source-context-row-owner="hertzbeat-ui-route-context"
+                    className="min-w-0 rounded-[4px] border border-[#252b34] bg-[#0b0c0e] px-3 py-2"
+                  >
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#7e8494]">{row.label}</div>
+                    <div className="mt-1 truncate font-mono text-[12px] text-[#eef2f7]" title={row.value}>{row.value}</div>
+                    <div className="mt-1 truncate text-[11px] text-[#8f99ab]" title={row.meta}>{row.meta}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </HzPanelSurface>
+        ) : null}
 
         {renderViewSwitch()}
 
@@ -4160,7 +4326,9 @@ function LogManageExplorer({
               rows={rows}
               getRowKey={row => row.key}
               selectedRowKey={activeRow?.key}
-              onRowClick={row => openLogDetails(logEntryByRowKey.get(row.key) ?? null, 'history')}
+              onRowClick={row => {
+                openHistoryLogDetails(row);
+              }}
               getRowProps={() => ({ 'data-log-manage-row-detail-action': 'true' })}
               emptyLabel={(
               <HzEmptyState
@@ -4268,10 +4436,26 @@ function LogManageExplorer({
                         data-log-manage-table-body-actions="view-filter"
                         data-log-manage-table-body-actions-owner="hertzbeat-ui-action-group"
                       >
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#7f8a9d]">
-                          <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+                        <HzButton
+                          type="button"
+                          size="xs"
+                          intent="ghost"
+                          data-log-manage-row-view-log-action="true"
+                          data-log-manage-row-view-log-owner="hertzbeat-ui-button"
+                          aria-label={t('log.manage.stream.action.view-log')}
+                          onClick={event => {
+                            event.stopPropagation();
+                            openHistoryLogDetails(row);
+                          }}
+                          className="min-w-0 justify-start"
+                        >
+                          <HzButtonIcon
+                            icon={Eye}
+                            data-log-manage-row-view-log-action-icon="view-log"
+                            data-log-manage-row-view-log-action-icon-owner="hertzbeat-ui-button-icon"
+                          />
                           {t('log.manage.stream.action.view-log')}
-                        </span>
+                        </HzButton>
                         {bodySearchTerm ? (
                           <HzButton
                             type="button"
@@ -4341,7 +4525,10 @@ function LogManageExplorer({
                         title={row.traceId === '-' ? missingTraceHandoffTitle : undefined}
                         aria-label={row.traceId === '-' ? missingTraceHandoffTitle : undefined}
                         data-log-manage-row-trace-detail-action-disabled={row.traceId === '-' ? 'missing-trace-id' : undefined}
-                        onClick={() => openLogDetails(logEntryByRowKey.get(row.key) ?? null, 'history')}
+                        onClick={event => {
+                          event.stopPropagation();
+                          openHistoryLogDetails(row);
+                        }}
                         className="max-w-[180px] justify-start truncate font-mono"
                       >
                         {row.traceId}
@@ -4566,9 +4753,11 @@ function LogManageExplorer({
                 />
                 <LogEntityDetailAction
                   href={handoffLinks.entityHref}
+                  discoveryHref={handoffLinks.entityDiscoveryHref}
                   canOpen={canOpenActiveEntity}
-                  missingEntityHandoffTitle={missingEntityHandoffTitle}
+                  missingEntityHandoffTitle={canOpenActiveEntity ? missingEntityHandoffTitle : entityDiscoveryHandoffTitle}
                   label={t('log.manage.route.action.entity')}
+                  discoveryLabel={t('log.manage.route.action.entity-discovery')}
                 />
                 <HzButtonLink component={Link} data-log-manage-history-detail-action="alerts" href={handoffLinks.alertHandlingHref} size="md">
                   {t('log.manage.handoff.alerts')}
@@ -4673,10 +4862,10 @@ export default function LogManagePage({
     ]);
     const rejectedMessages = [overviewResult, listResult, trendResult, coverageResult, groupResult]
       .filter((result): result is PromiseRejectedResult => result.status === 'rejected')
-      .map(result => describeLogManageLoadFailure(result.reason));
+      .map(result => describeLogManageLoadFailure(result.reason, t));
 
     if (listResult.status === 'rejected') {
-      return emptyLogManageData(query, describeLogManageLoadFailure(listResult.reason));
+      return emptyLogManageData(query, describeLogManageLoadFailure(listResult.reason, t));
     }
 
     return {
@@ -4690,7 +4879,7 @@ export default function LogManagePage({
         ? { loadStatus: { state: 'degraded' as const, message: rejectedMessages.join('; ') } }
         : {})
     };
-  }, [logUrls, query]);
+  }, [logUrls, query, t]);
 
   return (
     <ClientWorkbench

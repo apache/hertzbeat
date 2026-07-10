@@ -241,7 +241,7 @@ export function BulletinCenterSurface({
                     className="flex w-full items-center rounded-[2px] px-3 py-2 text-left text-[12px] text-[var(--ops-text-primary)] transition hover:bg-[var(--ops-surface-raised)]"
                     onClick={openEditDialog}
                   >
-                    {t('common.edit')}
+                    {t('common.button.edit')}
                   </button>
                   <button
                     type="button"
@@ -339,6 +339,7 @@ export function BulletinCenterSurface({
       <OverlayDialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
+        closeLabel={t('common.dialog.close')}
         kicker={t('menu.monitor.bulletin')}
         title={t('bulletin.delete.title')}
         maxWidthClassName="max-w-xl"
@@ -364,6 +365,7 @@ export function BulletinCenterSurface({
       <OverlayDialog
         open={batchDeleteOpen}
         onClose={() => setBatchDeleteOpen(false)}
+        closeLabel={t('common.dialog.close')}
         kicker={t('menu.monitor.bulletin')}
         title={t('bulletin.batch.delete')}
         maxWidthClassName="max-w-2xl"

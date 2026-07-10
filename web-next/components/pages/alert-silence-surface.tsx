@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ArrowLeft, Clock, Inbox, Network, Pencil, Plus, RefreshCw, Trash2, VolumeX } from 'lucide-react';
+import { ArrowLeft, CircleHelp, Clock, Inbox, Network, Pencil, Plus, RefreshCw, Trash2, VolumeX } from 'lucide-react';
 import { HzInlineFeedback, HzPaginationBar } from '@hertzbeat/ui';
 import { Button } from '../ui/button';
 import { Checkbox } from '../ui/checkbox';
@@ -22,6 +22,12 @@ import type { AlertSilence, PageResult } from '../../lib/types';
 import { cn } from '../../lib/utils';
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
+
+type AlertSilenceActionHelpCopy = {
+  label: string;
+  body: string;
+  impact?: string;
+};
 
 type AlertSilenceSurfaceProps = {
   t: Translator;
@@ -54,6 +60,7 @@ type AlertSilenceSurfaceProps = {
   onSelect: (nextId: number | null) => void;
   onCheckedIdsChange: (nextIds: number[]) => void;
   pageSizeOptions?: number[];
+  requestedPageSize?: number;
   onPageIndexChange?: (nextPageIndex: number) => void;
   onPageSizeChange?: (nextPageSize: number) => void;
   onViewAllRules?: () => void;
@@ -78,6 +85,55 @@ const coldPrimaryButtonClassName =
 
 const coldIconButtonClassName =
   'h-8 w-8 min-w-0 rounded-[3px] border-[#2b3039] bg-[#101217] text-[#dbe4f0] hover:border-[#4e74f8] hover:bg-[#151b28] hover:text-white';
+
+function alertSilenceActionHelp(t: Translator, id: string): AlertSilenceActionHelpCopy {
+  const impactKey = `alert.silence.action.${id}.impact`;
+  const impact = t(impactKey);
+  return {
+    label: t('alert.silence.action.help-aria', { action: t(`alert.silence.action.${id}.label`) }),
+    body: t(`alert.silence.action.${id}.help`),
+    impact: impact === impactKey ? undefined : impact
+  };
+}
+
+function AlertSilenceActionHelp({
+  id,
+  label,
+  body,
+  impact
+}: AlertSilenceActionHelpCopy & {
+  id: string;
+}) {
+  return (
+    <span
+      data-alert-silence-action-help={id}
+      className="group/help relative inline-flex h-5 w-5 shrink-0 items-center justify-center"
+    >
+      <button
+        type="button"
+        aria-label={label}
+        data-alert-silence-action-help-trigger="hertzbeat-ui-action-help"
+        data-alert-silence-action-help-style="icon-after-action"
+        data-alert-silence-action-help-visual="circle-help-icon"
+        className="inline-flex h-5 w-5 items-center justify-center rounded-none border-0 bg-transparent p-0 text-[#d8e4ff] transition hover:text-[#f5f7fb] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4e74f8]"
+        onClick={event => {
+          event.preventDefault();
+          event.stopPropagation();
+        }}
+      >
+        <CircleHelp size={13} strokeWidth={2} aria-hidden="true" data-alert-silence-action-help-icon="lucide-circle-help" />
+      </button>
+      <span
+        role="tooltip"
+        data-alert-silence-action-help-tooltip={id}
+        className="pointer-events-none absolute left-0 top-6 z-30 hidden w-[300px] rounded-[3px] border border-[#2b3039] bg-[#101217] p-3 text-left shadow-[0_16px_40px_rgba(0,0,0,0.42)] group-hover/help:block group-focus-within/help:block"
+      >
+        <span className="block text-[11px] leading-4 text-[#dbe4f0]">{body}</span>
+        {impact ? <span className="mt-2 block border-t border-[#2b3039] pt-2 text-[11px] leading-4 text-[#98a2b3]">{impact}</span> : null}
+      </span>
+    </span>
+  );
+}
 
 function getSilenceTypeLabel(item: AlertSilence, t: Translator) {
   return Number(item.type ?? 0) === 0 ? t('alert.silence.type.once') : t('alert.silence.type.cyc');
@@ -122,6 +178,7 @@ export function AlertSilenceSurface({
   onSelect,
   onCheckedIdsChange,
   pageSizeOptions = [8, 15, 25],
+  requestedPageSize,
   onPageIndexChange,
   onPageSizeChange,
   onViewAllRules,
@@ -147,7 +204,7 @@ export function AlertSilenceSurface({
   const managementReturnHref = resolveAlertInternalReturnHref(managementContext?.returnTo);
   const emptyValue = t('common.none');
   const currentPageIndex = Math.max(0, data.list.pageIndex ?? 0);
-  const currentPageSize = Math.max(1, data.list.pageSize ?? pageSizeOptions[0] ?? 8);
+  const currentPageSize = Math.max(1, requestedPageSize ?? data.list.pageSize ?? pageSizeOptions[0] ?? 8);
   const totalElements = data.list.totalElements || 0;
   const totalPages = Math.max(1, Math.ceil(totalElements / currentPageSize));
   const currentPage = Math.min(currentPageIndex + 1, totalPages);
@@ -180,7 +237,11 @@ export function AlertSilenceSurface({
         <section className={coldSilenceVisual.layout.pageSection}>
           <div className="mx-auto max-w-[1480px]">
             <div className="mb-5">
-              <div data-alert-silence-header="hertzbeat-ui-compact-header" className={coldSilenceVisual.panel.hero}>
+              <div
+                data-alert-silence-header="hertzbeat-ui-compact-header"
+                data-alert-silence-header-nesting-contract="flat-page-introduction"
+                className="p-0"
+              >
                 <div className="max-w-[840px]">
                   <h1 className="text-[30px] font-semibold leading-tight text-[#f5f7fb]">
                     {t('menu.alert.silence')}
@@ -312,25 +373,34 @@ export function AlertSilenceSurface({
                     </div>
                   ) : null}
                   <div data-alert-silence-command-row="standard-equal-buttons" className={coldSilenceVisual.button.row}>
-                    <Button size="sm" variant="default" className={coldButtonClassName} onClick={onRefresh}>
-                      <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
-                      {t('common.refresh')}
-                    </Button>
-                    <Button size="sm" variant="primary" className={coldPrimaryButtonClassName} onClick={onNew}>
-                      <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-                      {t('alert.silence.action.new')}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="default"
-                      className={coldButtonClassName}
-                      onClick={onDeleteSelected}
-                      data-alert-silence-delete-selected="toolbar"
-                      data-alert-silence-delete-selected-owner="route-no-select-warning"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                      {t('common.button.delete-batch')}
-                    </Button>
+                    <span className="inline-flex items-center gap-1">
+                      <Button size="sm" variant="default" className={coldButtonClassName} onClick={onRefresh}>
+                        <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+                        {t('common.refresh')}
+                      </Button>
+                      <AlertSilenceActionHelp id="refresh" {...alertSilenceActionHelp(t, 'refresh')} />
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <Button size="sm" variant="primary" className={coldPrimaryButtonClassName} onClick={onNew}>
+                        <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                        {t('alert.silence.action.new')}
+                      </Button>
+                      <AlertSilenceActionHelp id="new" {...alertSilenceActionHelp(t, 'new')} />
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <Button
+                        size="sm"
+                        variant="default"
+                        className={coldButtonClassName}
+                        onClick={onDeleteSelected}
+                        data-alert-silence-delete-selected="toolbar"
+                        data-alert-silence-delete-selected-owner="route-no-select-warning"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                        {t('common.button.delete-batch')}
+                      </Button>
+                      <AlertSilenceActionHelp id="delete-selected" {...alertSilenceActionHelp(t, 'delete-selected')} />
+                    </span>
                   </div>
                 </div>
               </div>
@@ -362,9 +432,10 @@ export function AlertSilenceSurface({
               {evidenceContext ? (
                 <section
                   data-alert-silence-evidence-context="signal-route"
+                  data-alert-silence-evidence-layering="flat-context-band"
                   data-alert-silence-evidence-signal={evidenceContext.signal}
                   data-alert-silence-prefill-labels={evidenceContext.labelsText}
-                  className="rounded-[4px] border border-[#27303c] bg-[#0b0f15] px-4 py-3 shadow-[0_18px_48px_rgba(0,0,0,0.24)]"
+                  className="border-y border-[#27303c] bg-[#0b0f15]/80 px-3 py-3"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -434,7 +505,7 @@ export function AlertSilenceSurface({
                           <th className="w-[14%] px-3 py-2.5">{t('alert.silence.times')}</th>
                           <th className="w-[10%] px-3 py-2.5">{t('common.enable')}</th>
                           <th className="w-[20%] px-3 py-2.5">{t('common.edit-time')}</th>
-                          <th className="w-[72px] px-3 py-2.5">{t('common.edit')}</th>
+                          <th className="w-[168px] px-3 py-2.5">{t('common.edit')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -480,25 +551,34 @@ export function AlertSilenceSurface({
                                 </span>
                               </td>
                               <td className="px-3 py-2.5" onClick={event => event.stopPropagation()}>
-                                <Checkbox
-                                  data-alert-silence-enable-checkbox="hertzbeat-ui-checkbox"
-                                  checked={item.enable ?? true}
-                                  containerClassName="min-h-0"
-                                  onChange={() => onToggleEnabled(item)}
-                                  label={<span className="sr-only">{item.enable ? t('common.enabled') : t('common.disabled')}</span>}
-                                />
+                                <span className="inline-flex items-center gap-1">
+                                  <Checkbox
+                                    data-alert-silence-enable-checkbox="hertzbeat-ui-checkbox"
+                                    checked={item.enable ?? true}
+                                    containerClassName="min-h-0"
+                                    onChange={() => onToggleEnabled(item)}
+                                    label={<span className="sr-only">{item.enable ? t('common.enabled') : t('common.disabled')}</span>}
+                                  />
+                                  <AlertSilenceActionHelp id="row-enable" {...alertSilenceActionHelp(t, 'row-enable')} />
+                                </span>
                               </td>
                               <td className="px-3 py-2.5 text-[#858d9a]">{formatTime(item.gmtUpdate || item.gmtCreate || null)}</td>
                               <td className="px-3 py-2.5" onClick={event => event.stopPropagation()}>
                                 <div className="flex gap-1.5">
-                                  <Button size="icon" variant="default" className={coldIconButtonClassName} onClick={() => onEdit(item.id)} disabled={editorLoading} title={t('alert.silence.edit')}>
-                                    <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-                                    <span className="sr-only">{editorLoading && rowSelected ? t('common.loading') : t('alert.silence.edit')}</span>
-                                  </Button>
-                                  <Button size="icon" variant="default" className={coldIconButtonClassName} onClick={() => onDelete(item.id)} title={t('alert.silence.delete')}>
-                                    <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                                    <span className="sr-only">{t('alert.silence.delete')}</span>
-                                  </Button>
+                                  <span className="inline-flex items-center gap-1">
+                                    <Button size="icon" variant="default" className={coldIconButtonClassName} onClick={() => onEdit(item.id)} disabled={editorLoading} title={t('alert.silence.edit')}>
+                                      <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                                      <span className="sr-only">{editorLoading && rowSelected ? t('common.loading') : t('alert.silence.edit')}</span>
+                                    </Button>
+                                    <AlertSilenceActionHelp id="row-edit" {...alertSilenceActionHelp(t, 'row-edit')} />
+                                  </span>
+                                  <span className="inline-flex items-center gap-1">
+                                    <Button size="icon" variant="default" className={coldIconButtonClassName} onClick={() => onDelete(item.id)} title={t('alert.silence.delete')}>
+                                      <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                                      <span className="sr-only">{t('alert.silence.delete')}</span>
+                                    </Button>
+                                    <AlertSilenceActionHelp id="row-delete" {...alertSilenceActionHelp(t, 'row-delete')} />
+                                  </span>
                                 </div>
                               </td>
                             </tr>
@@ -514,6 +594,17 @@ export function AlertSilenceSurface({
                                   <Inbox className="h-5 w-5" aria-hidden="true" />
                                 </span>
                                 <div data-alert-silence-empty-copy="true" className="text-[13px] font-semibold">{t('alert.silence.empty.title')}</div>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="primary"
+                                  data-alert-silence-empty-action="new"
+                                  className={coldPrimaryButtonClassName}
+                                  onClick={onNew}
+                                >
+                                  <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                                  {t('alert.silence.action.new')}
+                                </Button>
                               </div>
                             </td>
                           </tr>
@@ -569,7 +660,7 @@ export function AlertSilenceSurface({
         onClose={onCloseEditor}
         maxWidthClassName="max-w-4xl"
         footer={
-          <div className="flex flex-wrap justify-end gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             {evidenceContext?.returnHref ? (
               <a
                 data-alert-silence-editor-return="evidence-context"
@@ -580,12 +671,18 @@ export function AlertSilenceSurface({
                 {t('alert.rule.evidence.return')}
               </a>
             ) : null}
-            <Button size="sm" variant="subtle" onClick={onCloseEditor}>
-              {t('common.cancel')}
-            </Button>
-            <Button size="sm" variant="primary" onClick={onSave} disabled={editorSaving}>
-              {editorSaving ? t('common.saving') : t('common.save')}
-            </Button>
+            <span className="inline-flex items-center gap-1">
+              <Button size="sm" variant="subtle" onClick={onCloseEditor}>
+                {t('common.cancel')}
+              </Button>
+              <AlertSilenceActionHelp id="cancel" {...alertSilenceActionHelp(t, 'cancel')} />
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <Button size="sm" variant="primary" onClick={onSave} disabled={editorSaving}>
+                {editorSaving ? t('common.saving') : t('common.save')}
+              </Button>
+              <AlertSilenceActionHelp id="save" {...alertSilenceActionHelp(t, 'save')} />
+            </span>
           </div>
         }
       >

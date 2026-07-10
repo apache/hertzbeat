@@ -1,18 +1,26 @@
+// @vitest-environment jsdom
 import React from 'react';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { act } from 'react';
+import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
-import { MonitorEditorSurface } from './monitor-editor-surface';
+import { createMonitorFromFacade, detectMonitorFromFacade } from '@/lib/monitor-editor/controller';
+import { MonitorEditorSurface, normalizeMonitorEditorNameInput, validateMonitorEditorMetadataRows } from './monitor-editor-surface';
 import { createTranslatorMock } from '../../test/i18n-test-helper';
 
 const i18nMockState = vi.hoisted(() => ({
   locale: 'en-US' as 'en-US' | 'zh-CN'
 }));
 
+const navigationMockState = vi.hoisted(() => ({
+  push: vi.fn()
+}));
+
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
-    push: vi.fn()
+    push: navigationMockState.push
   })
 }));
 
@@ -166,9 +174,19 @@ vi.mock('@/lib/monitor-api-facade', () => ({
 
 vi.mock('@/lib/monitor-editor/controller', () => ({
   applyMonitorHostNameAutofill: (draft: any) => draft,
+  buildMonitorSavePayload: (draft: any) => ({
+    monitor: draft.monitor,
+    collector: draft.collector,
+    params: draft.params,
+    advancedParams: draft.advancedParams,
+    scrapeParams: draft.scrapeParams,
+    grafanaDashboard: draft.grafanaDashboard
+  }),
+  buildMonitorDetectSuccessDetail: vi.fn(() => 'Detect verified host example.com'),
   createMonitorFromFacade: vi.fn(),
   detectMonitorFromFacade: vi.fn(),
   loadMonitorScrapeDraftFromFacade: vi.fn(async () => ({ scrapeParams: [], scrapeParamDefines: [] })),
+  resolveMonitorEditorParamChangeNotice: vi.fn(() => null),
   shouldPreserveMonitorScrapeParamsForLoad: (previousScrape: string | null | undefined, nextScrape: string) =>
     !previousScrape && nextScrape !== 'static',
   syncMonitorDependentDisplay: (draft: any) => draft,
@@ -177,7 +195,7 @@ vi.mock('@/lib/monitor-editor/controller', () => ({
     ...draft,
     [kind]: draft[kind].map((row: any, rowIndex: number) => (rowIndex === index ? { ...row, paramValue: value } : row))
   }),
-  validateMonitorEditorDraft: vi.fn(() => null)
+  validateMonitorEditorDraftResult: vi.fn(() => null)
 }));
 
 vi.mock('@/lib/monitor-editor/navigation', () => ({
@@ -217,6 +235,7 @@ vi.mock('@/lib/utils', () => ({
 }));
 
 describe('MonitorEditorSurface', () => {
+  const t = createTranslatorMock({ locale: 'en-US' });
   const zhT = createTranslatorMock({ locale: 'zh-CN' });
 
   it('renders structured label and annotation rows instead of raw JSON textareas', () => {
@@ -239,8 +258,8 @@ describe('MonitorEditorSurface', () => {
           grafanaDashboard: { enabled: false },
           params: [{ field: 'host', paramValue: 'example.com' }],
           paramDefines: [{ field: 'host', type: 'text', name: 'Host', required: true }],
-          advancedParams: [],
-          advancedParamDefines: [],
+          advancedParams: [{ field: 'headers', paramValue: '{}' }],
+          advancedParamDefines: [{ field: 'headers', type: 'key-value', name: 'Headers' }],
           scrapeParams: [],
           scrapeParamDefines: [],
           collectors: []
@@ -312,6 +331,27 @@ describe('MonitorEditorSurface', () => {
     } finally {
       i18nMockState.locale = 'en-US';
     }
+  });
+
+  it('localizes monitor label and annotation validation instead of composing English strings', () => {
+    const source = readFileSync(resolve(process.cwd(), 'components/pages/monitor-editor-surface.tsx'), 'utf8');
+
+    expect(validateMonitorEditorMetadataRows([{ key: 'team', value: '' }], t('label.bind'), t)).toBe(
+      t('monitor.editor.validation.metadata-complete', { section: t('label.bind') })
+    );
+    expect(validateMonitorEditorMetadataRows([
+      { key: 'team', value: 'platform' },
+      { key: 'team', value: 'sre' }
+    ], t('label.bind'), t)).toBe(
+      t('monitor.editor.validation.metadata-unique', { section: t('label.bind') })
+    );
+    expect(validateMonitorEditorMetadataRows([{ key: 'owner', value: '' }], zhT('common.annotation.bind'), zhT)).toBe(
+      zhT('monitor.editor.validation.metadata-complete', { section: zhT('common.annotation.bind') })
+    );
+    expect(source).toContain("t('monitor.editor.validation.metadata-complete'");
+    expect(source).toContain("t('monitor.editor.validation.metadata-unique'");
+    expect(source).not.toContain('entries require both key and value');
+    expect(source).not.toContain('keys must be unique');
   });
 
   it('renders the system default collector option instead of treating it as none', () => {
@@ -456,8 +496,23 @@ describe('MonitorEditorSurface', () => {
     expect(html).toContain('data-monitor-editor-advanced-visible-contract="angular-visible-param-only"');
     expect(html).toContain('data-monitor-editor-advanced-collapse-state="collapsed"');
     expect(html).toContain('data-monitor-editor-advanced-toggle="angular-dashed-collapse-trigger"');
+    expect(html).toContain('data-monitor-editor-section-help-placement="inline-title"');
+    expect(html).toContain('data-monitor-editor-section-help-trigger="hertzbeat-ui-section-help"');
+    expect(html).toContain('data-monitor-editor-section-help-style="icon-after-title"');
+    expect(html).toContain('data-monitor-editor-section-help-visual="circle-help-icon"');
+    expect(html).toContain('data-monitor-editor-section-help-icon="lucide-circle-help"');
+    expect(html).toContain('data-monitor-editor-section-help="hertzbeat-ui-section-tooltip"');
+    expect(html).not.toContain('data-monitor-editor-section-help-style="literal-question-after-title"');
+    expect(html).toContain('data-monitor-editor-field-meta-value="template"');
+    expect(html).toContain(t('monitor.editor.field.input-mode.template'));
+    expect(html).toContain(t('monitor.editor.field.advanced.help', { field: t('monitor.advanced') }));
+    expect(html).toContain(t('monitor.editor.field.advanced.impact'));
     expect(html).toContain('data-monitor-editor-detect-cron-validation="angular-detect-skips-cron-format"');
     expect(html).toContain('data-monitor-editor-cron-required="angular-required-before-detect-save"');
+    expect(html).toContain('data-monitor-editor-host-name-autofill-target="monitor-name"');
+    expect(html).toContain('data-monitor-editor-host-name-autofill-replace="select-generated-name-on-focus"');
+    expect(html).toContain('name="monitor_name"');
+    expect(html).toContain(`aria-label="${t('monitor.name')}"`);
     expect(html).not.toContain('data-monitor-editor-advanced-fields="expanded"');
     expect(baseIndex).toBeGreaterThan(-1);
     expect(baseIndex).toBeLessThan(paramsIndex);
@@ -476,10 +531,21 @@ describe('MonitorEditorSurface', () => {
     expect(source).toContain('HzMonitorEditorHeader');
     expect(source).toContain('HzMonitorEditorFieldGrid');
     expect(source).toContain('validateBeforeSubmit(nextDraft, { validateCronFormat: false })');
+    expect(source).toContain('isMonitorEditorAutofilledName(draft.monitor.name)');
+    expect(source).toContain('event.currentTarget.select()');
+    expect(source).toContain('normalizeMonitorEditorNameInput(prev.monitor.name, nextName)');
     expect(source).not.toContain('className="mx-auto w-full max-w-[980px] space-y-3"');
     expect(source).not.toContain('className="grid gap-3 md:grid-cols-2"');
     expect(source).not.toContain('<div className="space-y-3" data-monitor-editor-linear-shell="true">');
     expect(source).not.toContain('<header\n          className="border-b border-[var(--hz-ui-line-soft)] px-3 pb-3 pt-2"');
+  });
+
+  it('replaces a generated monitor name on first edit even when the browser appends typed text', () => {
+    expect(normalizeMonitorEditorNameInput('Quick_Node_43ax', 'Quick_Node_43axCodex PD 1517 Replace Probe')).toBe(
+      'Codex PD 1517 Replace Probe'
+    );
+    expect(normalizeMonitorEditorNameInput('operator-name', 'operator-name edited')).toBe('operator-name edited');
+    expect(normalizeMonitorEditorNameInput('Quick_Node_43ax', 'Manual Name')).toBe('Manual Name');
   });
 
   it('keeps the embedded editor action posture inside one form', () => {
@@ -502,8 +568,8 @@ describe('MonitorEditorSurface', () => {
           grafanaDashboard: { enabled: false },
           params: [{ field: 'host', paramValue: 'example.com' }],
           paramDefines: [{ field: 'host', type: 'text', name: 'Host', required: true }],
-          advancedParams: [],
-          advancedParamDefines: [],
+          advancedParams: [{ field: 'headers', paramValue: '{}' }],
+          advancedParamDefines: [{ field: 'headers', type: 'key-value', name: 'Headers' }],
           scrapeParams: [],
           scrapeParamDefines: [],
           collectors: []
@@ -522,7 +588,57 @@ describe('MonitorEditorSurface', () => {
     expect(cancelIndex).toBeGreaterThan(-1);
     expect(detectIndex).toBeLessThan(okIndex);
     expect(okIndex).toBeLessThan(cancelIndex);
+    const detectCommandIndex = html.indexOf('data-monitor-editor-command-action="detect"');
+    const submitCommandIndex = html.indexOf('data-monitor-editor-command-action="submit"');
+    const cancelCommandIndex = html.indexOf('data-monitor-editor-command-action="cancel"');
+
+    expect(detectCommandIndex).toBeGreaterThan(-1);
+    expect(submitCommandIndex).toBeGreaterThan(-1);
+    expect(cancelCommandIndex).toBeGreaterThan(-1);
+    expect(detectCommandIndex).toBeLessThan(submitCommandIndex);
+    expect(submitCommandIndex).toBeLessThan(cancelCommandIndex);
     expect(html).toContain('data-monitor-editor-cancel-action="true"');
+    expect(html).toContain('data-monitor-editor-unsaved-return-guard="clean"');
+    expect(html).toContain('data-monitor-editor-unsaved-cancel="hertzbeat-ui-confirm-dialog"');
+    expect(html).toContain('data-monitor-editor-unsaved-cancel-state="closed"');
+  });
+
+  it('blocks unchanged edit saves so opening an existing monitor does not write backend state', () => {
+    const html = renderToStaticMarkup(
+      <MonitorEditorSurface
+        initial={{
+          monitor: {
+            id: 42,
+            app: 'website',
+            name: 'checkout',
+            instance: 'checkout.internal',
+            scrape: 'static',
+            intervals: 60,
+            scheduleType: 'interval',
+            status: 1,
+            labels: { team: 'checkout' },
+            annotations: { owner: 'sre' }
+          },
+          collectors: [],
+          collector: '',
+          params: [],
+          paramDefines: [],
+          advancedParams: [],
+          advancedParamDefines: [],
+          scrapeParams: [],
+          scrapeParamDefines: [],
+          grafanaDashboard: { enabled: false }
+        }}
+        mode="edit"
+      />
+    );
+
+    expect(html).toContain('data-monitor-editor-change-state="unchanged"');
+    expect(html).toContain('data-monitor-editor-save-dirty="unchanged"');
+    expect(html).toContain('data-monitor-editor-save-disabled-reason="unchanged-edit"');
+    expect(html).toContain('data-monitor-editor-submit-action="true"');
+    expect(html).toContain('disabled=""');
+    expect(html).toContain(t('monitor.edit.no-changes'));
   });
 
   it('uses the shared mutation bar for monitor editor actions and feedback instead of page-local action chrome', () => {
@@ -582,7 +698,10 @@ describe('MonitorEditorSurface', () => {
     expect(html).toContain('data-monitor-editor-static-host-position="angular-before-name"');
     expect(html).toContain('data-monitor-editor-static-host-field="angular-before-name"');
     expect(html).toContain('data-monitor-editor-input="name"');
+    expect(html).toContain('name="monitor_name"');
+    expect(html).toContain(`aria-label="${t('monitor.name')}"`);
     expect(html).toContain('data-monitor-param-input="host"');
+    expect(html).toContain('aria-label="Host"');
     expect(html.indexOf('data-monitor-editor-static-host-field="angular-before-name"')).toBeLessThan(
       html.indexOf('data-monitor-editor-input="name"')
     );
@@ -603,6 +722,9 @@ describe('MonitorEditorSurface', () => {
     expect(html).toContain('data-monitor-editor-action="submit"');
     expect(html).toContain('data-monitor-editor-action="cancel"');
     expect(html).toContain('data-monitor-editor-action-owner="hertzbeat-ui-button"');
+    expect(html).toContain('data-monitor-editor-command-action="detect"');
+    expect(html).toContain('data-monitor-editor-command-action="submit"');
+    expect(html).toContain('data-monitor-editor-command-action="cancel"');
     expect(html).toContain('data-monitor-editor-detect-action="true"');
     expect(html).toContain('data-monitor-editor-submit-action="true"');
     expect(html).toContain('data-monitor-editor-detect-busy-label="Available Detecting"');
@@ -611,8 +733,11 @@ describe('MonitorEditorSurface', () => {
     expect(html).toContain('data-monitor-editor-save-return-target="/monitors?app=website"');
     expect(html).toContain('data-monitor-editor-save-notification-contract="angular-success-before-return"');
     expect(html).toContain('data-monitor-editor-cancel-action="true"');
+    expect(html).toContain('data-monitor-editor-unsaved-return-guard="clean"');
     expect(html).toContain('data-monitor-editor-cancel-return="safe-return-context-or-list-root"');
     expect(html).toContain('data-monitor-editor-cancel-return-target="/monitors"');
+    expect(html).toContain('data-monitor-editor-unsaved-cancel="hertzbeat-ui-confirm-dialog"');
+    expect(html).toContain('data-monitor-editor-unsaved-cancel-state="closed"');
     expect(html.indexOf('data-monitor-editor-section-owner="hertzbeat-ui-editor-section"')).toBeLessThan(
       html.indexOf('data-monitor-editor-action-dock="bottom"')
     );
@@ -625,8 +750,12 @@ describe('MonitorEditorSurface', () => {
     expect(source).toContain('variant="embedded"');
     expect(source).toContain('data-monitor-editor-feedback-owner="hertzbeat-ui-inline-feedback"');
     expect(source).toContain("useState<'idle' | 'detecting' | 'saving'>('idle')");
+    expect(source).toContain("const [actionMessageAction, setActionMessageAction] = useState<'detect' | 'save' | null>(null);");
     expect(source).toContain("useState<'validation' | 'api' | null>(null)");
     expect(source).toContain("useState<'detect' | 'save' | null>(null)");
+    expect(source).toContain("const [validationFocusTarget, setValidationFocusTarget] = useState<string | null>(null);");
+    expect(source).toContain('validateMonitorEditorDraftResult');
+    expect(source).toContain('focusMonitorEditorValidationTarget');
     expect(source).toContain("actionPhase === 'detecting' ? t('monitor.spinning-tip.detecting') : t('common.loading')");
     expect(source).toContain('data-monitor-editor-feedback="busy"');
     expect(source).toContain('data-monitor-editor-busy-contract="angular-spin-tip"');
@@ -635,11 +764,37 @@ describe('MonitorEditorSurface', () => {
     expect(source).toContain('data-monitor-editor-api-error-contract');
     expect(source).toContain('data-monitor-editor-blocked-action');
     expect(source).toContain('data-monitor-editor-blocked-before-api');
+    expect(source).toContain('data-monitor-editor-validation-focus-target');
+    expect(source).toContain('const [validationFocusTargets, setValidationFocusTargets] = useState<string[]>([]);');
+    expect(source).toContain('const activeValidationTargets = new Set(');
+    expect(source).toContain('function isValidationTargetInvalid(target: string)');
+    expect(source).toContain('validationError.focusTargets || (validationError.focusTarget ? [validationError.focusTarget] : [])');
+    expect(source).toContain('aria-invalid={isValidationTargetInvalid');
+    expect(source).toContain("data-monitor-editor-validation-state={isValidationTargetInvalid('monitor-name') ? 'invalid' : undefined}");
+    expect(source).toContain("data-monitor-editor-validation-state={invalid ? 'invalid' : undefined}");
+    expect(html).toContain('data-monitor-editor-validation-focus-target="param:host"');
+    expect(html).toContain('data-monitor-editor-validation-focus-target="monitor-name"');
+    expect(source).toContain("function applyValidationError(validationError: MonitorEditorValidationResult, action: 'detect' | 'save')");
+    expect(source).toContain('focusMonitorEditorValidationTarget(validationError.focusTarget)');
     expect(source).toContain("setActionErrorSource('validation')");
     expect(source).toContain("setActionErrorSource('api')");
     expect(source).toContain("setActionErrorAction('detect')");
     expect(source).toContain("setActionErrorAction('save')");
-    expect(source).toContain("setActionError(error instanceof Error ? error.message : t('monitor.detect.failed'))");
+    expect(source).toContain('function clearValidationFeedback()');
+    expect(source).toContain("if (actionErrorSource !== 'validation') return;");
+    expect(source).toContain("const errorMessage = error instanceof Error ? error.message : t('monitor.detect.failed');");
+    expect(source).toContain("setActionError(t('monitor.detect.failed-guidance', { error: errorMessage }))");
+    expect(source).toContain('buildMonitorDetectSuccessDetail(nextDraft, t)');
+    expect(source).toContain('description={actionMessageDetail || undefined}');
+    expect(source).toContain("t('monitor.editor.detect.return-context')");
+    expect(source).toContain("actionMessageAction === 'detect' && Boolean(returnContext?.returnTo)");
+    expect(source).toContain("setActionMessageAction('detect')");
+    expect(source).toContain("setActionMessageAction('save')");
+    expect(source).toContain('data-monitor-editor-detect-return-action="context"');
+    expect(source).toContain('data-monitor-editor-detect-return-target={detectReturnUrl}');
+    expect(source).toContain("data-monitor-editor-detect-return-context={hasDetectReturnContext ? 'available' : undefined}");
+    expect(source).toContain('onClick={() => router.push(detectReturnUrl)}');
+    expect(source).toContain('data-monitor-editor-detect-evidence');
     expect(source).toContain(
       "setActionError(error instanceof Error ? error.message : mode === 'new' ? t('monitor.new.failed') : t('monitor.edit.failed'))"
     );
@@ -647,10 +802,19 @@ describe('MonitorEditorSurface', () => {
     expect(source).toContain('data-monitor-editor-submit-busy-label');
     expect(source).toContain('saveReturnUrl');
     expect(source).toContain('cancelReturnUrl');
+    expect(source).toContain('detectReturnUrl');
+    expect(source).toContain('hasDetectReturnContext');
     expect(source).toContain('data-monitor-editor-save-return');
     expect(source).toContain('data-monitor-editor-save-return-target');
     expect(source).toContain('data-monitor-editor-save-notification-contract');
     expect(source).toContain('data-monitor-editor-cancel-return-target');
+    expect(source).toContain("const [discardDialogOpen, setDiscardDialogOpen] = useState(false);");
+    expect(source).toContain('const hasUnsavedCancelChanges =');
+    expect(source).toContain('if (hasUnsavedCancelChanges)');
+    expect(source).toContain('data-monitor-editor-unsaved-return-guard');
+    expect(source).toContain('data-monitor-editor-unsaved-cancel="hertzbeat-ui-confirm-dialog"');
+    expect(source).toContain('data-monitor-editor-unsaved-cancel-confirm');
+    expect(source).toContain('monitor.editor.unsaved-cancel.title');
     expect(source).toContain('data-monitor-editor-feedback="error"');
     expect(source).toContain('data-monitor-editor-feedback="success"');
     expect(source).not.toContain('className="border-0"');
@@ -663,6 +827,7 @@ describe('MonitorEditorSurface', () => {
     expect(source).toContain('data-monitor-editor-key-value="annotations"');
     expect(source).toContain('HzField');
     expect(source).toContain('applyMonitorHostNameAutofill');
+    expect(source).toContain('clearValidationFeedback();');
     expect(source).toContain("field: defines[index]?.field");
     expect(source).toContain('HzInput');
     expect(source).toContain('data-monitor-editor-input-owner="hertzbeat-ui-input"');
@@ -704,6 +869,399 @@ describe('MonitorEditorSurface', () => {
     expect(source).not.toContain('const fieldLabelClassName');
     expect(source).not.toContain('text-emerald-300');
     expect(source).not.toContain('text-rose-300');
+  });
+
+  it('limits inline help to ambiguous monitor fields instead of every input', () => {
+    const source = readFileSync(resolve(process.cwd(), 'components/pages/monitor-editor-surface.tsx'), 'utf8');
+    const html = renderToStaticMarkup(
+      <MonitorEditorSurface
+        initial={{
+          monitor: {
+            id: 42,
+            app: 'website',
+            name: '',
+            instance: '',
+            scrape: 'static',
+            scheduleType: 'interval',
+            intervals: 60,
+            status: 1,
+            labels: { team: 'platform' },
+            annotations: { owner: 'sre' }
+          } as any,
+          collector: '',
+          grafanaDashboard: { enabled: false },
+          params: [
+            { field: 'host', paramValue: 'example.com' },
+            { field: 'port', paramValue: 80 },
+            { field: 'uri', paramValue: '/health' },
+            { field: 'ssl', paramValue: false }
+          ],
+          paramDefines: [
+            { field: 'host', type: 'text', name: 'Host', required: true },
+            { field: 'port', type: 'number', name: 'Port', required: true },
+            { field: 'uri', type: 'text', name: 'Path', required: false },
+            { field: 'ssl', type: 'boolean', name: 'HTTPS', required: false }
+          ],
+          advancedParams: [{ field: 'headers', paramValue: '{}' }],
+          advancedParamDefines: [{ field: 'headers', type: 'key-value', name: 'Headers' }],
+          scrapeParams: [],
+          scrapeParamDefines: [],
+          collectors: ['edge-a']
+        }}
+        mode="new"
+        returnContext={{ returnTo: '/monitors?app=website' }}
+      />
+    );
+
+    const helpTriggerCount = (html.match(/data-hz-field-help-trigger="hertzbeat-ui-field-help"/g) ?? []).length;
+
+    expect(helpTriggerCount).toBe(4);
+    expect(html).toContain('data-hz-field-help-placement="inline-label"');
+    expect(html).toContain('data-hz-field-help-visual="circle-help-icon"');
+    expect((html.match(/data-hz-field-help-icon="lucide-circle-help"/g) ?? []).length).toBe(4);
+    expect(html).not.toContain('data-hz-field-help-visual="borderless-question"');
+    expect(html).toContain('data-hz-field-help="hertzbeat-ui-field-tooltip"');
+    expect(html).toContain('data-monitor-editor-field-meta="requirement"');
+    expect(html).toContain('data-monitor-editor-field-meta="input-mode"');
+    expect(html).toContain('data-monitor-editor-field-meta-value="required"');
+    expect(html).toContain('data-monitor-editor-field-meta-value="optional"');
+    expect(html).toContain('data-monitor-editor-field-meta-value="manual"');
+    expect(html).toContain('data-monitor-editor-field-meta-value="selection"');
+    expect(html).toContain('data-monitor-editor-field-meta-value="template"');
+    expect(html).toContain(t('monitor.editor.field.requirement.required'));
+    expect(html).toContain(t('monitor.editor.field.requirement.optional'));
+    expect(html).toContain(t('monitor.editor.field.input-mode.manual'));
+    expect(html).toContain(t('monitor.editor.field.input-mode.selection'));
+    expect(html).toContain(t('monitor.editor.field.input-mode.template'));
+    expect(html).toContain(t('monitor.editor.field.path.help', { field: 'Path' }));
+    expect(html).toContain(t('monitor.editor.field.ssl.help', { field: 'HTTPS' }));
+    expect(html).toContain(t('monitor.editor.field.collector.help'));
+    expect(html).toContain(t('monitor.editor.field.interval.help'));
+    expect(html).toContain(t('monitor.editor.field.advanced.help', { field: t('monitor.advanced') }));
+    expect(html).not.toContain(t('monitor.editor.field.scrape.help'));
+    expect(html).not.toContain(t('monitor.editor.field.name.help'));
+    expect(html).not.toContain(t('monitor.editor.field.host.help', { field: 'Host' }));
+    expect(html).not.toContain(t('monitor.editor.field.port.help', { field: 'Port' }));
+    expect(html).not.toContain(t('monitor.editor.field.labels.help'));
+    expect(html).not.toContain(t('monitor.editor.field.annotations.help'));
+    expect(html).not.toContain(t('monitor.editor.field.description.help'));
+    expect(html).not.toContain('data-hz-field-help-placement="row-end"');
+    expect(source).toContain("'enablesshtunnel'");
+    expect(source).not.toContain("'sshpassword'");
+    expect(source).not.toContain("'sshprivatekeypassphrase'");
+  });
+
+  it('lets a novice return to the originating context after a successful detect action', async () => {
+    (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+    vi.mocked(detectMonitorFromFacade).mockResolvedValueOnce(undefined as never);
+    navigationMockState.push.mockClear();
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const root = createRoot(host);
+
+    try {
+      await act(async () => {
+        root.render(
+          <MonitorEditorSurface
+            initial={{
+              monitor: {
+                id: 42,
+                app: 'website',
+                name: 'checkout',
+                instance: 'example.com:80',
+                scrape: 'static',
+                scheduleType: 'interval',
+                intervals: 60,
+                status: 1,
+                labels: {},
+                annotations: {}
+              } as any,
+              collector: '',
+              grafanaDashboard: { enabled: false },
+              params: [{ field: 'host', paramValue: 'example.com' }],
+              paramDefines: [{ field: 'host', type: 'text', name: 'Host', required: true }],
+              advancedParams: [],
+              advancedParamDefines: [],
+              scrapeParams: [],
+              scrapeParamDefines: [],
+              collectors: []
+            }}
+            mode="new"
+            returnContext={{ returnTo: '/entities/659278015225088?stage=signals' }}
+          />
+        );
+      });
+
+      const detectButton = host.querySelector<HTMLButtonElement>('[data-monitor-editor-detect-action="true"]');
+      expect(detectButton).not.toBeNull();
+
+      await act(async () => {
+        detectButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      });
+
+      const returnButton = host.querySelector<HTMLButtonElement>('[data-monitor-editor-detect-return-action="context"]');
+      expect(detectMonitorFromFacade).toHaveBeenCalledTimes(1);
+      expect(host.innerHTML).toContain('data-monitor-editor-feedback="success"');
+      expect(host.innerHTML).toContain('data-monitor-editor-detect-return-context="available"');
+      expect(returnButton?.textContent).toContain(t('monitor.editor.detect.return-context'));
+      expect(returnButton?.getAttribute('data-monitor-editor-detect-return-target')).toBe('/monitors');
+
+      await act(async () => {
+        returnButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      });
+
+      expect(navigationMockState.push).toHaveBeenCalledWith('/monitors');
+    } finally {
+      await act(async () => {
+        root.unmount();
+      });
+      host.remove();
+    }
+  });
+
+  it('protects a changed new monitor draft from accidental cancel navigation', async () => {
+    (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+    navigationMockState.push.mockClear();
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const root = createRoot(host);
+
+    try {
+      await act(async () => {
+        root.render(
+          <MonitorEditorSurface
+            initial={{
+              monitor: {
+                id: 0,
+                app: 'website',
+                name: '',
+                instance: '',
+                scrape: 'static',
+                scheduleType: 'interval',
+                intervals: 60,
+                status: 1,
+                labels: {},
+                annotations: {}
+              } as any,
+              collector: '',
+              grafanaDashboard: { enabled: false },
+              params: [{ field: 'host', paramValue: '' }],
+              paramDefines: [{ field: 'host', type: 'text', name: 'Host', required: true }],
+              advancedParams: [],
+              advancedParamDefines: [],
+              scrapeParams: [],
+              scrapeParamDefines: [],
+              collectors: []
+            }}
+            mode="new"
+            returnContext={{ returnTo: '/monitors?source=product-design-1824-monitor-create' }}
+          />
+        );
+      });
+
+      expect(host.innerHTML).toContain('data-monitor-editor-unsaved-return-guard="clean"');
+
+      const hostInput = host.querySelector<HTMLInputElement>('input[data-monitor-param-input="host"]');
+      const cancelButton = host.querySelector<HTMLButtonElement>('[data-monitor-editor-cancel-action="true"]');
+      expect(hostInput).not.toBeNull();
+      expect(cancelButton).not.toBeNull();
+
+      await act(async () => {
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(hostInput, '127.0.0.1');
+        hostInput!.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+
+      expect(host.innerHTML).toContain('data-monitor-editor-unsaved-return-guard="dirty"');
+
+      await act(async () => {
+        cancelButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      });
+
+      expect(navigationMockState.push).not.toHaveBeenCalled();
+      expect(host.innerHTML).toContain('data-monitor-editor-unsaved-cancel-state="open"');
+      expect(host.innerHTML).toContain(t('monitor.editor.unsaved-cancel.title'));
+    } finally {
+      await act(async () => {
+        root.unmount();
+      });
+      host.remove();
+    }
+  });
+
+  it('keeps the monitor draft recoverable with concrete guidance when detect fails', async () => {
+    (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+    vi.mocked(detectMonitorFromFacade).mockClear();
+    vi.mocked(detectMonitorFromFacade).mockRejectedValueOnce(new Error('collector unreachable'));
+    navigationMockState.push.mockClear();
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const root = createRoot(host);
+
+    try {
+      await act(async () => {
+        root.render(
+          <MonitorEditorSurface
+            initial={{
+              monitor: {
+                id: 42,
+                app: 'website',
+                name: 'checkout',
+                instance: 'example.com:80',
+                scrape: 'static',
+                scheduleType: 'interval',
+                intervals: 60,
+                status: 1,
+                labels: {},
+                annotations: {}
+              } as any,
+              collector: '',
+              grafanaDashboard: { enabled: false },
+              params: [{ field: 'host', paramValue: 'example.com' }],
+              paramDefines: [{ field: 'host', type: 'text', name: 'Host', required: true }],
+              advancedParams: [],
+              advancedParamDefines: [],
+              scrapeParams: [],
+              scrapeParamDefines: [],
+              collectors: []
+            }}
+            mode="new"
+            returnContext={{ returnTo: '/entities/659278015225088?stage=signals' }}
+          />
+        );
+      });
+
+      const detectButton = host.querySelector<HTMLButtonElement>('[data-monitor-editor-detect-action="true"]');
+      expect(detectButton).not.toBeNull();
+
+      await act(async () => {
+        detectButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      });
+
+      expect(detectMonitorFromFacade).toHaveBeenCalledTimes(1);
+      expect(host.innerHTML).toContain('data-monitor-editor-feedback="error"');
+      expect(host.innerHTML).toContain('data-monitor-editor-api-error-contract="angular-message-msg"');
+      expect(host.innerHTML).toContain('data-monitor-editor-blocked-action="detect"');
+      expect(host.textContent).toContain(
+        t('monitor.detect.failed-guidance', { error: 'collector unreachable' })
+      );
+      expect(host.querySelector<HTMLInputElement>('input[name="monitor_name"]')?.value).toBe('checkout');
+      expect(host.querySelector<HTMLInputElement>('input[data-monitor-param-input="host"]')?.value).toBe('example.com');
+      expect(host.querySelector('[data-monitor-editor-detect-return-action="context"]')).toBeNull();
+      expect(navigationMockState.push).not.toHaveBeenCalled();
+    } finally {
+      await act(async () => {
+        root.unmount();
+      });
+      host.remove();
+    }
+  });
+
+  it('keeps the monitor draft recoverable and on-page when create save fails', async () => {
+    (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+    vi.mocked(createMonitorFromFacade).mockClear();
+    vi.mocked(createMonitorFromFacade).mockRejectedValueOnce(new Error('duplicate monitor instance'));
+    navigationMockState.push.mockClear();
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const root = createRoot(host);
+
+    try {
+      await act(async () => {
+        root.render(
+          <MonitorEditorSurface
+            initial={{
+              monitor: {
+                app: 'website',
+                name: 'checkout',
+                instance: 'example.com:80',
+                scrape: 'static',
+                scheduleType: 'interval',
+                intervals: 60,
+                status: 1,
+                labels: {},
+                annotations: {}
+              } as any,
+              collector: '',
+              grafanaDashboard: { enabled: false },
+              params: [{ field: 'host', paramValue: 'example.com' }],
+              paramDefines: [{ field: 'host', type: 'text', name: 'Host', required: true }],
+              advancedParams: [],
+              advancedParamDefines: [],
+              scrapeParams: [],
+              scrapeParamDefines: [],
+              collectors: []
+            }}
+            mode="new"
+            returnContext={{ returnTo: '/entities/659278015225088?stage=signals' }}
+          />
+        );
+      });
+
+      const submitButton = host.querySelector<HTMLButtonElement>('[data-monitor-editor-submit-action="true"]');
+      expect(submitButton).not.toBeNull();
+
+      await act(async () => {
+        submitButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      });
+
+      expect(createMonitorFromFacade).toHaveBeenCalledTimes(1);
+      expect(host.innerHTML).toContain('data-monitor-editor-feedback="error"');
+      expect(host.innerHTML).toContain('data-monitor-editor-api-error-contract="angular-message-msg"');
+      expect(host.innerHTML).toContain('data-monitor-editor-blocked-action="save"');
+      expect(host.textContent).toContain('duplicate monitor instance');
+      expect(host.querySelector<HTMLInputElement>('input[name="monitor_name"]')?.value).toBe('checkout');
+      expect(host.querySelector<HTMLInputElement>('input[data-monitor-param-input="host"]')?.value).toBe('example.com');
+      expect(navigationMockState.push).not.toHaveBeenCalled();
+    } finally {
+      await act(async () => {
+        root.unmount();
+      });
+      host.remove();
+    }
+  });
+
+  it('explains only side-effecting detect and save actions instead of every footer button', () => {
+    const html = renderToStaticMarkup(
+      <MonitorEditorSurface
+        initial={{
+          monitor: {
+            id: 42,
+            app: 'website',
+            name: 'checkout',
+            instance: 'example.com:80',
+            scrape: 'static',
+            scheduleType: 'interval',
+            intervals: 60,
+            status: 1,
+            labels: {},
+            annotations: {}
+          } as any,
+          collector: '',
+          grafanaDashboard: { enabled: false },
+          params: [{ field: 'host', paramValue: 'example.com' }],
+          paramDefines: [{ field: 'host', type: 'text', name: 'Host', required: true }],
+          advancedParams: [],
+          advancedParamDefines: [],
+          scrapeParams: [],
+          scrapeParamDefines: [],
+          collectors: []
+        }}
+        mode="new"
+        returnContext={{ returnTo: '/monitors?app=website' }}
+      />
+    );
+
+    expect((html.match(/data-monitor-editor-action-help-trigger="hertzbeat-ui-action-help"/g) ?? []).length).toBe(2);
+    expect((html.match(/data-monitor-editor-action-help-style="icon-after-action"/g) ?? []).length).toBe(2);
+    expect((html.match(/data-monitor-editor-action-help-visual="circle-help-icon"/g) ?? []).length).toBe(2);
+    expect((html.match(/data-monitor-editor-action-help-icon="lucide-circle-help"/g) ?? []).length).toBe(2);
+    expect(html).toContain('data-monitor-editor-action-help-placement="inline-action"');
+    expect(html).toContain('data-monitor-editor-action-help="hertzbeat-ui-action-tooltip"');
+    expect(html).not.toContain('data-monitor-editor-action-help-style="literal-question-after-action"');
+    expect(html).not.toContain('data-monitor-editor-action-help-visual="borderless-question"');
+    expect(html).toContain(t('monitor.editor.field.action-detect.help', { field: t('common.button.detect') }));
+    expect(html).toContain(t('monitor.editor.field.action-save.help', { field: t('common.button.ok') }));
+    expect(html).not.toContain(t('monitor.editor.field.action-cancel.help', { field: t('common.button.cancel') }));
   });
 
   it('keeps scrape loading feedback owned by @hertzbeat/ui instead of page-local text chrome', () => {
@@ -770,6 +1328,12 @@ describe('MonitorEditorSurface', () => {
     expect(html).toContain('data-monitor-param-switch="ssl"');
     expect(html).toContain('data-monitor-param-boolean-contract="angular-nz-switch"');
     expect(html).toContain('data-monitor-param-number-stepper="port"');
+    expect(html).toContain('aria-label="Port"');
+    expect(html).toContain('Decrease Port');
+    expect(html).toContain('Increase Port');
+    expect(html).toContain(`aria-label="${t('monitor.intervals')}"`);
+    expect(html).toContain(`${t('common.decrement')} ${t('monitor.intervals')}`);
+    expect(html).toContain(`${t('common.increment')} ${t('monitor.intervals')}`);
   });
 
   it('submits monitor editor mutations through the monitor domain facade instead of raw API writers', () => {
@@ -783,6 +1347,17 @@ describe('MonitorEditorSurface', () => {
     expect(source).not.toContain('detectMonitor(apiMessagePost');
     expect(source).not.toContain('createMonitor(apiMessagePost');
     expect(source).not.toContain('updateMonitor(apiMessagePut');
+  });
+
+  it('routes save through the form submit handler so one click cannot double-write the backend', () => {
+    const source = readFileSync(resolve(process.cwd(), 'components/pages/monitor-editor-surface.tsx'), 'utf8');
+
+    expect(source).toContain("id: 'submit'");
+    expect(source).toContain('onSubmit={event => {');
+    expect(source).toContain('event.preventDefault();');
+    expect(source).toContain('void handleSave();');
+    expect(source).not.toContain("id: 'submit',\n          label: t('common.button.ok'),\n          help: maybeMonitorFieldHelp(t, 'action-save', t('common.button.ok')),\n          type: 'submit',\n          intent: 'primary',\n          disabled: actionBusy || saveBlockedByNoChanges,\n          onSelect:");
+    expect(source).toContain('data-monitor-editor-save-return-target');
   });
 
   it('keeps Angular monitor form field order for service-discovery params and runtime controls', () => {
@@ -957,6 +1532,9 @@ describe('MonitorEditorSurface', () => {
     expect(dockHtml).toContain('data-monitor-editor-action="detect"');
     expect(dockHtml).toContain('data-monitor-editor-action="submit"');
     expect(dockHtml).toContain('data-monitor-editor-action="cancel"');
+    expect(dockHtml).toContain('data-monitor-editor-command-action="detect"');
+    expect(dockHtml).toContain('data-monitor-editor-command-action="submit"');
+    expect(dockHtml).toContain('data-monitor-editor-command-action="cancel"');
     expect(dockHtml).toContain('data-monitor-editor-detect-action="true"');
     expect(dockHtml).toContain('data-monitor-editor-submit-action="true"');
     expect(dockHtml).toContain('Detect');

@@ -39,6 +39,7 @@ export type IncidentWorkbenchData = {
     id: string;
     title: string;
     severity: IncidentWorkbenchTone;
+    severityLabel: string;
     stage: string;
     service: string;
     owner: string;
@@ -78,6 +79,58 @@ function incidentComparableTime(value: unknown) {
   return 0;
 }
 
+function incidentComparableTimeOrNull(value: unknown) {
+  const comparable = incidentComparableTime(value);
+  return comparable > 0 ? comparable : null;
+}
+
+function pickEarliestIncidentTime(...values: Array<number | string | null | undefined>) {
+  return values.reduce<number | string | null>((earliest, value) => {
+    const earliestTime = incidentComparableTimeOrNull(earliest);
+    const nextTime = incidentComparableTimeOrNull(value);
+    if (nextTime == null) return earliest;
+    if (earliestTime == null || nextTime < earliestTime) {
+      return value ?? null;
+    }
+    return earliest;
+  }, null);
+}
+
+function pickLatestIncidentTime(...values: Array<number | string | null | undefined>) {
+  return values.reduce<number | string | null>((latest, value) => {
+    const latestTime = incidentComparableTimeOrNull(latest);
+    const nextTime = incidentComparableTimeOrNull(value);
+    if (nextTime == null) return latest;
+    if (latestTime == null || nextTime > latestTime) {
+      return value ?? null;
+    }
+    return latest;
+  }, null);
+}
+
+function normalizeIncidentTimeline(incident: StatusPageIncident): StatusPageIncident {
+  const contents = [...(incident.contents || [])].sort((left, right) => {
+    return incidentComparableTime(left.timestamp) - incidentComparableTime(right.timestamp);
+  });
+  const earliestContentTime = pickEarliestIncidentTime(...contents.map(item => item.timestamp));
+  const latestContentTime = pickLatestIncidentTime(...contents.map(item => item.timestamp));
+  let createTime = incident.createTime ?? incident.startTime ?? incident.gmtCreate ?? incident.gmtUpdate ?? earliestContentTime ?? latestContentTime;
+  const updateTime = incident.updateTime ?? latestContentTime ?? incident.endTime ?? incident.gmtUpdate ?? incident.startTime ?? incident.gmtCreate;
+  const createComparable = incidentComparableTimeOrNull(createTime);
+  const updateComparable = incidentComparableTimeOrNull(updateTime);
+
+  if (createComparable != null && updateComparable != null && createComparable > updateComparable && earliestContentTime != null) {
+    createTime = earliestContentTime;
+  }
+
+  return {
+    ...incident,
+    ...(contents.length > 0 ? { contents } : {}),
+    ...(createTime != null ? { createTime } : {}),
+    ...(updateTime != null ? { updateTime } : {})
+  };
+}
+
 function incidentTitle(incident: StatusPageIncident, t: Translator) {
   const incidentId = incident.id ?? readStatusCopy(t, 'common.none', '-');
   return incident.name || incident.title || `${readStatusCopy(t, 'status.incident.default-title', 'Incident')} ${incidentId}`;
@@ -109,6 +162,10 @@ function incidentTone(value: unknown): IncidentWorkbenchTone {
     default:
       return 'neutral';
   }
+}
+
+function incidentToneLabel(tone: IncidentWorkbenchTone, t: Translator) {
+  return t(`incidents.severity.${tone}`);
 }
 
 function incidentKey(incident: StatusPageIncident, index = 0) {
@@ -150,18 +207,18 @@ function mergeSelectedIncidentDetail(incidents: StatusPageIncident[], detail?: S
   const merged = incidents.map(incident => {
     const isMatch = (detailId && String(incident.id) === detailId) || (detailName && incident.name === detailName);
     if (!isMatch) {
-      return incident;
+      return normalizeIncidentTimeline(incident);
     }
     replaced = true;
-    return {
+    return normalizeIncidentTimeline({
       ...incident,
       ...detail,
       components: detail.components ?? incident.components,
       contents: detail.contents ?? incident.contents
-    };
+    });
   });
 
-  return replaced ? merged : [detail, ...merged];
+  return replaced ? merged : [normalizeIncidentTimeline(detail), ...merged];
 }
 
 export function buildIncidentWorkbenchData(
@@ -172,7 +229,7 @@ export function buildIncidentWorkbenchData(
   selectedDetail?: StatusPageIncident | null
 ): IncidentWorkbenchData {
   const surface = buildIncidentsSurfaceViewModel(t);
-  const listIncidents = page.content || [];
+  const listIncidents = (page.content || []).map(normalizeIncidentTimeline);
   const incidents = mergeSelectedIncidentDetail(listIncidents, selectedDetail);
   const statusComponentLabel = statusComponentsLabel(t);
   const totalElements = page.totalElements || listIncidents.length;
@@ -180,14 +237,16 @@ export function buildIncidentWorkbenchData(
   const mappedIncidents = incidents.map((incident, index) => {
     const state = incident.state ?? incident.status ?? null;
     const components = incident.components || [];
+    const severity = incidentTone(state);
     return {
       id: incidentKey(incident, index),
       title: incidentTitle(incident, t),
-      severity: incidentTone(state),
+      severity,
+      severityLabel: incidentToneLabel(severity, t),
       stage: incidentStateLabel(state, t),
       service: incidentService(incident, t),
       owner: incidentOwner(incident),
-      openedAt: formatTime(incident.startTime || incident.createTime || incident.gmtCreate || null),
+      openedAt: formatTime(incident.createTime || incident.startTime || incident.gmtCreate || null),
       blastRadius: `${components.length} ${statusComponentLabel}`
     };
   });

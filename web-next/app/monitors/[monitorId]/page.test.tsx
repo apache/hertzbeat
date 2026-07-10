@@ -27,6 +27,10 @@ describe('MonitorDetailPage route contract', () => {
     expect(source).toContain('historyChartPayloads');
     expect(source).toContain('historyChartLoadingKeys');
     expect(source).toContain('historyChartErrors');
+    expect(chartGridSource).toContain("data-monitor-history-panel-state': hasHistorySeries ? 'series-ready' : 'history-store-empty'");
+    expect(chartGridSource).toContain("emptyTitle={t('monitor.detail.history.blocker.title')}");
+    expect(chartGridSource).toContain("emptyDescription={t('monitor.detail.history.blocker.copy')}");
+    expect(uiSource).toContain('data-hz-metric-timeseries-state="empty"');
     expect(source).toContain('const displayedHistoryChartItems = useMemo(');
     expect(source).toContain('filteredHistoryMetrics.slice(0, visibleHistoryChartCount)');
     expect(source).toContain('start: historyTimeContext.start');
@@ -408,6 +412,36 @@ describe('MonitorDetailPage route contract', () => {
     expect(consoleSource).toContain('data-monitor-detail-help-owner="hertzbeat-ui-icon-link"');
   });
 
+  it('exposes a monitor-to-entity draft action without showing it inside entity context', () => {
+    expect(source).toContain('function buildMonitorEntityDraftHref(monitorId: string | number, currentHref: string)');
+    expect(source).toContain('function buildMonitorBoundEntityHref(entityId: string | number, monitorId: string | number, currentHref: string)');
+    expect(source).toContain('function findAlreadyBoundEntityCandidate(candidates: EntityMonitorBindingCandidate[] | null)');
+    expect(source).toContain("params.set('source', 'telemetry');");
+    expect(source).toContain("params.set('monitorId', String(monitorId));");
+    expect(source).toContain("params.set('returnTo', currentHref);");
+    expect(source).toContain('const currentMonitorHref = searchParamString');
+    expect(source).toContain('api.entities.monitorCandidates(monitor.id)');
+    expect(source).toContain('const alreadyBoundEntity = findAlreadyBoundEntityCandidate(entityBindingCandidates);');
+    expect(source).toContain('const entityBindingLoading = !navigationContext.entityId && entityBindingCandidates == null;');
+    expect(source).toContain('const navigationEntityHref = navigationContext.entityId != null');
+    expect(source).toContain('const entityBoundHref = alreadyBoundEntity?.entityId != null');
+    expect(source).toContain('const entityBoundName = alreadyBoundEntity?.entityName ?? navigationEntityName;');
+    expect(source).toContain('const monitorEntityDraftHref = navigationContext.entityId || entityBindingLoading || entityBoundHref');
+    expect(source).toContain('entityDraftHref={monitorEntityDraftHref}');
+    expect(source).toContain('entityBoundHref={entityBoundHref}');
+    expect(source).toContain('entityBoundName={entityBoundName}');
+    expect(consoleSource).toContain('entityDraftHref?: string | null;');
+    expect(consoleSource).toContain('entityBoundHref?: string | null;');
+    expect(consoleSource).toContain('entityId?: string | number | null;');
+    expect(consoleSource).toContain('entityName?: string | null;');
+    expect(consoleSource).toContain('data-monitor-detail-entity-context-mark="breadcrumb"');
+    expect(consoleSource).toContain("t('monitor.detail.entity-context', { entity: breadcrumbEntityLabel })");
+    expect(consoleSource).toContain('data-monitor-detail-entity-bound-action="open-bound-entity"');
+    expect(consoleSource).toContain('data-monitor-detail-entity-draft-action="telemetry-monitor-seed"');
+    expect(consoleSource).toContain('data-monitor-detail-entity-draft-owner="hertzbeat-ui-labeled-action-link"');
+    expect(consoleSource).toContain('data-monitor-detail-entity-draft-visibility="visible-label"');
+  });
+
   it('keeps monitor detail breadcrumb context owned by shared underline text instead of chip chrome', () => {
     expect(consoleSource).toContain('HzInlineContextMark');
     expect(consoleSource).toContain('data-monitor-detail-context-mark="breadcrumb"');
@@ -464,9 +498,13 @@ describe('MonitorDetailPage route contract', () => {
     expect(source).toContain('data-monitor-detail-route-state-owner="hertzbeat-ui-inline-feedback"');
     expect(source).toContain('data-monitor-detail-route-state-feedback="error"');
     expect(source).toContain('data-monitor-detail-route-state-retry-owner="hertzbeat-ui-button"');
+    expect(source).toContain('data-monitor-detail-route-state-list-return-owner="hertzbeat-ui-button"');
+    expect(source).toContain('data-monitor-detail-route-state-list-return-target={routeListReturnHref}');
+    expect(source).toContain('onClick={() => router.push(routeListReturnHref)}');
     expect(source).toContain("t('monitor.route-state.loading.title')");
     expect(source).toContain("t('monitor.route-state.error.title')");
     expect(source).toContain("t('monitor.route-state.action.retry')");
+    expect(source).toContain("t('monitor.detail.back')");
   });
 
   it('keeps monitor detail refresh interval selection on shared @hertzbeat/ui chrome', () => {

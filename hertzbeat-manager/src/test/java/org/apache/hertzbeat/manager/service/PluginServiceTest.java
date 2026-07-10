@@ -20,6 +20,7 @@ package org.apache.hertzbeat.manager.service;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -27,6 +28,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -57,6 +59,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -91,7 +95,7 @@ class PluginServiceTest {
     }
 
     @Test
-    void testSavePlugin() {
+    void testSavePlugin(@TempDir File tempDir) throws IOException {
 
         List<PluginItem> pluginItems = Collections.singletonList(new PluginItem("org.apache.hertzbeat.PluginTest", PluginType.POST_ALERT));
         PluginMetadata metadata = new PluginMetadata();
@@ -99,6 +103,9 @@ class PluginServiceTest {
         metadata.setParamCount(0);
         PluginServiceImpl service = spy(pluginService);
         doReturn(metadata).when(service).validateJarFile(any());
+        File pluginLibDir = new File(tempDir, "plugin-lib");
+        String previousPluginLib = System.getProperty("hertzbeat.plugin.lib.dir");
+        System.setProperty("hertzbeat.plugin.lib.dir", pluginLibDir.getAbsolutePath());
 
         MockMultipartFile mockFile = new MockMultipartFile(
                 "file", "test-plugin.jar", "application/java-archive",
@@ -108,9 +115,23 @@ class PluginServiceTest {
         when(metadataDao.save(any(PluginMetadata.class))).thenReturn(new PluginMetadata());
         when(itemDao.saveAll(anyList())).thenReturn(Collections.emptyList());
 
-        service.savePlugin(pluginUpload);
-        verify(metadataDao, times(1)).save(any(PluginMetadata.class));
+        try {
+            service.savePlugin(pluginUpload);
+        } finally {
+            if (previousPluginLib == null) {
+                System.clearProperty("hertzbeat.plugin.lib.dir");
+            } else {
+                System.setProperty("hertzbeat.plugin.lib.dir", previousPluginLib);
+            }
+        }
+        ArgumentCaptor<File> uploadedJarCaptor = ArgumentCaptor.forClass(File.class);
+        ArgumentCaptor<PluginMetadata> metadataCaptor = ArgumentCaptor.forClass(PluginMetadata.class);
+        verify(service).validateJarFile(uploadedJarCaptor.capture());
+        verify(metadataDao, times(1)).save(metadataCaptor.capture());
         verify(itemDao, times(1)).saveAll(anyList());
+        assertTrue(uploadedJarCaptor.getValue().getCanonicalPath().startsWith(pluginLibDir.getCanonicalPath() + File.separator));
+        assertNotNull(metadataCaptor.getValue().getJarFilePath());
+        assertTrue(new File(metadataCaptor.getValue().getJarFilePath()).getCanonicalPath().startsWith(pluginLibDir.getCanonicalPath() + File.separator));
 
     }
 
@@ -166,6 +187,31 @@ class PluginServiceTest {
         Page<PluginMetadata> result = pluginService.getPlugins(null, 0, 10);
         assertFalse(result.isEmpty());
         verify(metadataDao, times(1)).findAll(any(Specification.class), any(PageRequest.class));
+    }
+
+    @Test
+    void testSavePluginParamFlushesDeleteBeforeInsert() {
+        List<org.apache.hertzbeat.manager.pojo.dto.PluginParam> params = List.of(
+            org.apache.hertzbeat.manager.pojo.dto.PluginParam.builder()
+                .pluginMetadataId(1L)
+                .field("endpoint")
+                .paramValue("https://example.invalid/hertzbeat-plugin-audit")
+                .type((byte) 1)
+                .build(),
+            org.apache.hertzbeat.manager.pojo.dto.PluginParam.builder()
+                .pluginMetadataId(1L)
+                .field("mode")
+                .paramValue("audit-only")
+                .type((byte) 1)
+                .build()
+        );
+
+        pluginService.savePluginParam(params);
+
+        InOrder inOrder = inOrder(pluginParamDao);
+        inOrder.verify(pluginParamDao).deletePluginParamsByPluginMetadataId(1L);
+        inOrder.verify(pluginParamDao).flush();
+        inOrder.verify(pluginParamDao).saveAll(params);
     }
 
     @Test

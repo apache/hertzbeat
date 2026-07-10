@@ -6,6 +6,7 @@ import {
   buildNewTemplateYaml,
   deleteTemplateDefine,
   loadDefineCenterData,
+  readTemplateAppFromYaml,
   reloadTemplateDefinitionStartupContext,
   saveTemplateDefine,
   updateTemplateVisibility
@@ -123,6 +124,12 @@ describe('setting define controller', () => {
     expect(apiMessagePut).toHaveBeenNthCalledWith(1, '/apps/define/yml', { define: 'app: mysql' });
     expect(apiMessageDelete).toHaveBeenCalledWith('/apps/mysql/define/yml');
     expect(apiMessagePut).toHaveBeenNthCalledWith(2, '/config/template/mysql', { hide: true });
+  });
+
+  it('reads the saved app id from monitor-template YAML', () => {
+    expect(readTemplateAppFromYaml('category: custom\napp: codex_pd_1346\nname: test')).toBe('codex_pd_1346');
+    expect(readTemplateAppFromYaml('app: "quoted-template"\ncategory: custom')).toBe('quoted-template');
+    expect(readTemplateAppFromYaml('category: custom')).toBeNull();
   });
 
   it('reloads the old startup config resource context after YML mutations', async () => {

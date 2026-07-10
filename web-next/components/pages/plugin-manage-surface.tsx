@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Inbox, MoreHorizontal, Pencil, RefreshCw, Trash2, Upload, X } from 'lucide-react';
+import { CircleHelp, Inbox, MoreHorizontal, Pencil, RefreshCw, Trash2, Upload, X } from 'lucide-react';
 import { HzConfigurableFieldEditor, HzConfirmDialog, HzFileInput, HzInlineFeedback, HzInput, HzKeyValueEditor, HzMonitorEditorFieldGrid, HzPaginationBar, HzRadioButtonGroup, HzSwitch, HzTableRowActionButton, HzTextarea } from '@hertzbeat/ui';
 import { OverlayDialog } from '../workbench/overlay-dialog';
 import { Button } from '../ui/button';
@@ -92,6 +92,144 @@ function pluginTypeLabel(t: Translator, type?: string) {
 
 function pluginStatusLabel(enabled: boolean, t: Translator): string {
   return enabled ? t('common.enabled') : t('common.disabled');
+}
+
+function PluginInlineHelp({
+  id,
+  label,
+  copy,
+  scope
+}: {
+  id: string;
+  label: string;
+  copy: string;
+  scope: 'action' | 'upload-field' | 'param-field' | 'row-action';
+}) {
+  const tooltipId = `plugin-${scope}-help-${id}`;
+  const rootData =
+    scope === 'action'
+      ? { 'data-plugin-action-help': id }
+      : scope === 'upload-field'
+        ? { 'data-plugin-upload-field-help': id }
+        : scope === 'param-field'
+          ? { 'data-plugin-param-field-help': id }
+          : { 'data-plugin-row-action-help': id };
+  const tooltipData =
+    scope === 'action'
+      ? { 'data-plugin-action-help-tooltip': id }
+      : scope === 'upload-field'
+        ? { 'data-plugin-upload-field-help-tooltip': id }
+        : scope === 'param-field'
+          ? { 'data-plugin-param-field-help-tooltip': id }
+          : { 'data-plugin-row-action-help-tooltip': id };
+  const isActionHelp = scope === 'action' || scope === 'row-action';
+  const helpStyle = isActionHelp ? 'icon-after-action' : 'icon-after-label';
+  const helpVisual = 'circle-help-icon';
+  const styleData =
+    scope === 'action'
+      ? { 'data-plugin-action-help-style': helpStyle }
+      : scope === 'upload-field'
+        ? { 'data-plugin-upload-field-help-style': helpStyle }
+        : scope === 'param-field'
+          ? { 'data-plugin-param-field-help-style': helpStyle }
+          : { 'data-plugin-row-action-help-style': helpStyle };
+
+  return (
+    <span {...rootData} {...styleData} className="group relative inline-flex">
+      <button
+        type="button"
+        aria-label={label}
+        aria-describedby={tooltipId}
+        data-plugin-help-style={helpStyle}
+        data-plugin-help-visual={helpVisual}
+        onMouseDown={event => {
+          event.stopPropagation();
+        }}
+        onClick={event => {
+          event.preventDefault();
+          event.stopPropagation();
+        }}
+        className="inline-flex h-5 w-5 items-center justify-center rounded-none border-0 bg-transparent p-0 text-[#8d95a5] transition hover:text-[#d8e4ff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4e74f8]"
+      >
+        <CircleHelp size={isActionHelp ? 13 : 12} strokeWidth={2} aria-hidden="true" data-plugin-help-icon="lucide-circle-help" />
+      </button>
+      <span
+        id={tooltipId}
+        role="tooltip"
+        {...tooltipData}
+        className="pointer-events-none absolute left-0 top-6 z-50 hidden w-[280px] rounded-[3px] border border-[#2b3039] bg-[#101217] p-3 text-left text-[11px] leading-4 text-[#dbe4f0] shadow-[0_16px_40px_rgba(0,0,0,0.42)] group-hover:block group-focus-within:block"
+      >
+        {copy}
+      </span>
+    </span>
+  );
+}
+
+function PluginFieldTitle({
+  id,
+  children,
+  helpLabel,
+  help,
+  mode,
+  modeLabel,
+  inputMode,
+  inputModeLabel,
+  requirement,
+  requirementLabel,
+  scope,
+  required
+}: {
+  id: string;
+  children: React.ReactNode;
+  helpLabel: string;
+  help: string;
+  mode: string;
+  modeLabel: string;
+  inputMode?: string;
+  inputModeLabel?: string;
+  requirement?: string;
+  requirementLabel?: string;
+  scope: 'upload-field' | 'param-field';
+  required?: boolean;
+}) {
+  const modeData =
+    scope === 'upload-field'
+      ? { 'data-plugin-upload-field-mode': mode }
+      : { 'data-plugin-param-field-mode': mode };
+
+  return (
+    <span className="inline-flex items-center justify-end gap-1.5">
+      <span>{children}</span>
+      {scope === 'upload-field' && requirement && inputMode ? (
+        <>
+          <span
+            data-plugin-upload-field-meta="requirement-and-input-mode"
+            data-plugin-upload-field-requirement={requirement}
+            {...modeData}
+            className="rounded-[3px] border border-[#2b3039] bg-[#101217] px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#ffb4a8]"
+          >
+            {requirementLabel}
+          </span>
+          <span
+            data-plugin-upload-field-meta="requirement-and-input-mode"
+            data-plugin-upload-field-input-mode={inputMode}
+            className="rounded-[3px] border border-[#2b3039] bg-[#101217] px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#8f99ab]"
+          >
+            {inputModeLabel}
+          </span>
+        </>
+      ) : (
+        <span
+          {...modeData}
+          className="rounded-[3px] border border-[#2b3039] bg-[#101217] px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#8f99ab]"
+        >
+          {modeLabel}
+        </span>
+      )}
+      <PluginInlineHelp id={id} label={helpLabel} copy={help} scope={scope} />
+      {required ? <span className="text-[#ffb4a8]">*</span> : null}
+    </span>
+  );
 }
 
 function stringifyPluginParamValue(value: unknown): string {
@@ -230,11 +368,13 @@ function buildPluginParamRadioOptions(define: ParamDefine) {
 function PluginSwitch({
   checked,
   label,
-  onChange
+  onChange,
+  commandAction
 }: {
   checked: boolean;
   label: string;
   onChange: () => void;
+  commandAction?: string;
 }) {
   return (
     <button
@@ -243,6 +383,7 @@ function PluginSwitch({
       aria-checked={checked}
       title={label}
       onClick={onChange}
+      data-plugin-command-action={commandAction}
       className={`relative inline-flex h-6 w-11 items-center rounded-[3px] border transition ${
         checked ? 'border-[#31405c] bg-[#182238]' : 'border-[#2b3039] bg-[#101217]'
       }`}
@@ -312,6 +453,7 @@ export function PluginManageSurface({
   const pageStart = totalElements === 0 || rows.length === 0 ? 0 : currentPageIndex * currentPageSize + 1;
   const pageEnd = totalElements === 0 ? 0 : Math.min(totalElements, currentPageIndex * currentPageSize + rows.length);
   const allSelected = plugins.length > 0 && plugins.every(plugin => resolvedSelectedIds.includes(plugin.id));
+  const isFilteredEmpty = rows.length === 0 && search.trim().length > 0;
   const resolvedActionTone = actionTone ?? (actionError ? 'critical' : 'success');
   const isUploadFailure = actionKind === 'upload' && Boolean(actionError);
   const isParamFailure = actionKind === 'params' && Boolean(actionError);
@@ -364,8 +506,9 @@ export function PluginManageSurface({
             <div className="mb-5">
               <div
                 data-plugin-header="hertzbeat-ui-compact-header"
+                data-plugin-header-nesting-contract="flat-page-introduction"
                 data-plugin-action-menu-clipping="none"
-                className={`${coldPluginVisual.panel.hero} z-[80] overflow-visible`}
+                className="z-[80] overflow-visible p-0"
                 style={{ overflow: 'visible' }}
               >
                 <div className="max-w-[820px]">
@@ -376,65 +519,83 @@ export function PluginManageSurface({
                     {t('setting.plugins.copy')}
                   </p>
                   <div data-plugin-command-row="standard-equal-buttons" className={coldPluginVisual.button.row}>
-                    <Button size="sm" variant="default" className={coldButtonClassName} onClick={onRefresh}>
-                      <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
-                      {t('common.refresh')}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="default"
-                      className={coldPrimaryButtonClassName}
-                      onClick={onNew}
-                      data-plugin-upload-open="angular-upload-modal"
-                    >
-                      <Upload className="h-3.5 w-3.5" aria-hidden="true" />
-                      {t('plugin.upload')}
-                    </Button>
-                    <div
-                      className={pluginActionMenuRootClassName}
-                      data-plugin-toolbar-delete-menu="angular-toolbar-ellipsis-delete"
-                      data-plugin-toolbar-delete-menu-contract="angular-toolbar-ellipsis-delete"
-                      data-plugin-toolbar-delete-menu-layer="overlay-visible-above-panel"
-                      data-plugin-toolbar-delete-menu-clearance="floating-overlay-no-panel-crop"
-                      data-plugin-toolbar-delete-menu-open={isToolbarActionMenuOpen ? 'true' : 'false'}
-                    >
-                      <button
-                        type="button"
-                        aria-expanded={isToolbarActionMenuOpen}
-                        aria-label={t('common.edit')}
-                        title={t('common.edit')}
-                        className={`${coldIconButtonClassName} inline-flex cursor-pointer list-none items-center justify-center [&::-webkit-details-marker]:hidden`}
-                        onClick={() => setToolbarActionMenuOpen(open => !open)}
-                        data-plugin-toolbar-delete-menu-trigger="angular-toolbar-ellipsis-delete"
+                    <span className="inline-flex items-center gap-1">
+                      <Button
+                        size="sm"
+                        variant="default"
+                        className={coldButtonClassName}
+                        onClick={onRefresh}
+                        data-plugin-command-action="refresh"
                       >
-                        <MoreHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
-                        <span className="sr-only">{t('common.edit')}</span>
-                      </button>
+                        <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+                        {t('common.refresh')}
+                      </Button>
+                      <PluginInlineHelp id="refresh" label={t('setting.plugins.action.refresh.help-label')} copy={t('setting.plugins.action.refresh.help')} scope="action" />
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <Button
+                        size="sm"
+                        variant="default"
+                        className={coldPrimaryButtonClassName}
+                        onClick={onNew}
+                        data-plugin-upload-open="angular-upload-modal"
+                        data-plugin-command-action="upload-open"
+                      >
+                        <Upload className="h-3.5 w-3.5" aria-hidden="true" />
+                        {t('plugin.upload')}
+                      </Button>
+                      <PluginInlineHelp id="upload" label={t('setting.plugins.action.upload.help-label')} copy={t('setting.plugins.action.upload.help')} scope="action" />
+                    </span>
+                    <span className="inline-flex items-center gap-1">
                       <div
-                        role="menu"
-                        hidden={!isToolbarActionMenuOpen}
-                        className={`${pluginActionMenuPanelBaseClassName} left-0`}
-                        data-plugin-toolbar-delete-menu-panel="angular-toolbar-ellipsis-delete"
-                        data-plugin-toolbar-delete-menu-layer-panel="overlay-visible-above-panel"
-                        data-plugin-toolbar-delete-menu-clearance-panel="floating-overlay-no-panel-crop"
-                        data-plugin-toolbar-delete-menu-owner="hertzbeat-ui-table-row-action-button"
+                        className={pluginActionMenuRootClassName}
+                        data-plugin-toolbar-delete-menu="angular-toolbar-ellipsis-delete"
+                        data-plugin-toolbar-delete-menu-contract="angular-toolbar-ellipsis-delete"
+                        data-plugin-toolbar-delete-menu-layer="overlay-visible-above-panel"
+                        data-plugin-toolbar-delete-menu-clearance="floating-overlay-no-panel-crop"
+                        data-plugin-toolbar-delete-menu-open={isToolbarActionMenuOpen ? 'true' : 'false'}
                       >
-                        <HzTableRowActionButton
-                          width="root-span"
-                          intent="ghost"
-                          onClick={() => {
-                            setToolbarActionMenuOpen(false);
-                            onDeleteSelected();
-                          }}
-                          data-plugin-delete-selected="angular-batch-delete-entry"
-                          data-plugin-delete-selected-owner="hertzbeat-ui-table-row-action-button"
-                          className="w-full text-[#fecaca] hover:text-white"
+                        <button
+                          type="button"
+                          aria-expanded={isToolbarActionMenuOpen}
+                          aria-label={t('common.edit')}
+                          title={t('common.edit')}
+                          className={`${coldIconButtonClassName} inline-flex cursor-pointer list-none items-center justify-center [&::-webkit-details-marker]:hidden`}
+                          onClick={() => setToolbarActionMenuOpen(open => !open)}
+                          data-plugin-toolbar-delete-menu-trigger="angular-toolbar-ellipsis-delete"
+                          data-plugin-command-action="bulk-menu"
                         >
-                          <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                          <span className="truncate">{t('plugin.delete')}</span>
-                        </HzTableRowActionButton>
+                          <MoreHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
+                          <span className="sr-only">{t('common.edit')}</span>
+                        </button>
+                        <div
+                          role="menu"
+                          hidden={!isToolbarActionMenuOpen}
+                          className={`${pluginActionMenuPanelBaseClassName} left-0`}
+                          data-plugin-toolbar-delete-menu-panel="angular-toolbar-ellipsis-delete"
+                          data-plugin-toolbar-delete-menu-layer-panel="overlay-visible-above-panel"
+                          data-plugin-toolbar-delete-menu-clearance-panel="floating-overlay-no-panel-crop"
+                          data-plugin-toolbar-delete-menu-owner="hertzbeat-ui-table-row-action-button"
+                        >
+                          <HzTableRowActionButton
+                            width="root-span"
+                            intent="ghost"
+                            onClick={() => {
+                              setToolbarActionMenuOpen(false);
+                              onDeleteSelected();
+                            }}
+                            data-plugin-delete-selected="angular-batch-delete-entry"
+                            data-plugin-delete-selected-owner="hertzbeat-ui-table-row-action-button"
+                            data-plugin-command-action="bulk-delete"
+                            className="w-full text-[#fecaca] hover:text-white"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                            <span className="truncate">{t('plugin.delete')}</span>
+                          </HzTableRowActionButton>
+                        </div>
                       </div>
-                    </div>
+                      <PluginInlineHelp id="bulk-delete" label={t('setting.plugins.action.bulk-delete.help-label')} copy={t('setting.plugins.action.bulk-delete.help')} scope="action" />
+                    </span>
                   </div>
                 </div>
               </div>
@@ -743,33 +904,49 @@ export function PluginManageSurface({
                                     checked={displayEnableStatus}
                                     label={pluginStatusLabel(displayEnableStatus, t)}
                                     onChange={() => onToggleEnabled(original)}
+                                    commandAction="row-toggle-enable"
                                   />
                                   <span className="text-[11px] font-semibold text-[#cbd5e1]">
                                     {pluginStatusLabel(displayEnableStatus, t)}
                                   </span>
+                                  <PluginInlineHelp
+                                    id="row-enable"
+                                    label={t('setting.plugins.action.row-enable.help-label')}
+                                    copy={t('setting.plugins.action.row-enable.help')}
+                                    scope="row-action"
+                                  />
                                 </div>
                               </td>
                               <td className="px-3 py-2.5">
                                 <div data-plugin-row-actions="angular-row-actions-contextual" data-plugin-row-actions-owner="hertzbeat-ui-icon-actions" className="flex gap-1.5">
                                   {row.canEditParams ? (
-                                    <Button
-                                      size="icon"
-                                      variant="default"
-                                      className={coldIconButtonClassName}
-                                      onClick={() => {
-                                        setOpenRowActionMenuId(null);
-                                        onEditParams(original);
-                                      }}
-                                      aria-label={editParamsLabel}
-                                      title={editParamsLabel}
-                                      data-plugin-param-edit-open={String(original.id)}
-                                      data-plugin-row-action="params"
-                                      data-plugin-row-action-owner="row-contextual-icon-button"
-                                      data-plugin-row-action-label={row.name}
-                                    >
-                                      <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-                                      <span className="sr-only">{editParamsLabel}</span>
-                                    </Button>
+                                    <span className="inline-flex items-center gap-1">
+                                      <Button
+                                        size="icon"
+                                        variant="default"
+                                        className={coldIconButtonClassName}
+                                        onClick={() => {
+                                          setOpenRowActionMenuId(null);
+                                          onEditParams(original);
+                                        }}
+                                        aria-label={editParamsLabel}
+                                        title={editParamsLabel}
+                                        data-plugin-param-edit-open={String(original.id)}
+                                        data-plugin-command-action="row-edit-params"
+                                        data-plugin-row-action="params"
+                                        data-plugin-row-action-owner="row-contextual-icon-button"
+                                        data-plugin-row-action-label={row.name}
+                                      >
+                                        <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                                        <span className="sr-only">{editParamsLabel}</span>
+                                      </Button>
+                                      <PluginInlineHelp
+                                        id="row-params"
+                                        label={t('setting.plugins.action.row-params.help-label')}
+                                        copy={t('setting.plugins.action.row-params.help')}
+                                        scope="row-action"
+                                      />
+                                    </span>
                                   ) : null}
                                   <div
                                     className={pluginActionMenuRootClassName}
@@ -787,6 +964,7 @@ export function PluginManageSurface({
                                       className={`${coldIconButtonClassName} inline-flex cursor-pointer list-none items-center justify-center [&::-webkit-details-marker]:hidden`}
                                       onClick={() => setOpenRowActionMenuId(current => (current === rowActionMenuId ? null : rowActionMenuId))}
                                       data-plugin-row-delete-menu-trigger={rowActionMenuId}
+                                      data-plugin-command-action="row-more"
                                       data-plugin-row-action-label={row.name}
                                     >
                                       <MoreHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
@@ -802,22 +980,31 @@ export function PluginManageSurface({
                                       data-plugin-row-delete-menu-owner="hertzbeat-ui-table-row-action-button"
                                       data-plugin-row-delete-menu-panel-open={isRowActionMenuOpen ? 'true' : 'false'}
                                     >
-                                      <HzTableRowActionButton
-                                        width="root-span"
-                                        intent="ghost"
-                                        onClick={() => {
-                                          setOpenRowActionMenuId(null);
-                                          onDeleteOne(original);
-                                        }}
-                                        data-plugin-delete-one={String(original.id)}
-                                        data-plugin-delete-one-owner="hertzbeat-ui-table-row-action-button"
-                                        data-plugin-row-action="delete"
-                                        data-plugin-row-action-label={row.name}
-                                        className="w-full text-[#fecaca] hover:text-white"
-                                      >
-                                        <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                                        <span className="truncate">{t('plugin.delete')}</span>
-                                      </HzTableRowActionButton>
+                                      <span className="flex items-center gap-1">
+                                        <HzTableRowActionButton
+                                          width="root-span"
+                                          intent="ghost"
+                                          onClick={() => {
+                                            setOpenRowActionMenuId(null);
+                                            onDeleteOne(original);
+                                          }}
+                                          data-plugin-delete-one={String(original.id)}
+                                          data-plugin-delete-one-owner="hertzbeat-ui-table-row-action-button"
+                                          data-plugin-command-action="row-delete"
+                                          data-plugin-row-action="delete"
+                                          data-plugin-row-action-label={row.name}
+                                          className="w-full text-[#fecaca] hover:text-white"
+                                        >
+                                          <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                                          <span className="truncate">{t('plugin.delete')}</span>
+                                        </HzTableRowActionButton>
+                                        <PluginInlineHelp
+                                          id="row-delete"
+                                          label={t('setting.plugins.action.row-delete.help-label')}
+                                          copy={t('setting.plugins.action.row-delete.help')}
+                                          scope="row-action"
+                                        />
+                                      </span>
                                     </div>
                                   </div>
                                 </div>
@@ -834,7 +1021,20 @@ export function PluginManageSurface({
                                 >
                                   <Inbox className="h-5 w-5" aria-hidden="true" />
                                 </span>
-                                <div className="text-[13px] font-semibold text-[#eef2f7]">{t('common.no-data')}</div>
+                                <div
+                                  data-plugin-manage-empty-title={isFilteredEmpty ? 'filtered' : 'plain'}
+                                  className="text-[13px] font-semibold text-[#eef2f7]"
+                                >
+                                  {isFilteredEmpty ? t('setting.plugins.empty.filtered.title') : t('common.no-data')}
+                                </div>
+                                {isFilteredEmpty ? (
+                                  <div
+                                    data-plugin-manage-empty-copy="filtered-search"
+                                    className="max-w-[360px] text-[12px] leading-5 text-[#858d9a]"
+                                  >
+                                    {t('setting.plugins.empty.filtered.copy')}
+                                  </div>
+                                ) : null}
                               </div>
                             </td>
                           </tr>
@@ -904,6 +1104,7 @@ export function PluginManageSurface({
               data-plugin-upload-cancel="angular-cancel-preserves-form"
               data-plugin-upload-cancel-pending="angular-cancel-allowed-during-ok-loading"
               data-plugin-upload-cancel-pending-owner="angular-nz-modal"
+              data-plugin-command-action="upload-cancel"
             >
               {t('common.button.cancel')}
             </Button>
@@ -914,6 +1115,7 @@ export function PluginManageSurface({
               onClick={onSaveDialog}
               disabled={Boolean(isUploadPending)}
               data-plugin-upload-save="angular-form-data"
+              data-plugin-command-action="upload-save"
               data-plugin-upload-ok-loading={isUploadPending ? 'true' : 'false'}
               data-plugin-upload-ok-loading-owner="angular-nz-ok-loading"
               data-plugin-upload-save-lifecycle="angular-close-success-keep-open-fail"
@@ -933,12 +1135,34 @@ export function PluginManageSurface({
             data-plugin-upload-invalid-submit={uploadValidation?.name || uploadValidation?.jarFile ? 'angular-mark-dirty-keep-open' : undefined}
             data-plugin-upload-invalid-submit-owner={uploadValidation?.name || uploadValidation?.jarFile ? 'route-validation-contract' : undefined}
           >
+            <div
+              data-plugin-upload-guidance="jar-runtime-risk"
+              className="rounded-[4px] border border-[#553d1f] bg-[#241711] px-3 py-2 text-[12px] leading-5 text-[#fed7aa]"
+            >
+              {t('setting.plugins.upload.guidance')}
+            </div>
             <label
               className="grid gap-2 text-[12px] font-semibold text-[#a9b0bb] sm:grid-cols-[minmax(96px,8fr)_minmax(0,14fr)] sm:items-start"
               data-plugin-upload-field="name"
               data-plugin-upload-field-layout="angular-label-8-control-14"
             >
-              <span className="pt-2 text-right max-sm:text-left" data-plugin-upload-label-span="8">{t('plugin.name')}</span>
+              <span className="pt-2 text-right max-sm:text-left" data-plugin-upload-label-span="8">
+                <PluginFieldTitle
+                  id="name"
+                  helpLabel={t('setting.plugins.field.name.help-label')}
+                  help={t('setting.plugins.field.name.help')}
+                  mode="required"
+                  modeLabel={t('setting.plugins.field.mode.required')}
+                  requirement="required"
+                  requirementLabel={t('settings.form.field.requirement.required')}
+                  inputMode="manual"
+                  inputModeLabel={t('settings.form.field.input-mode.manual')}
+                  scope="upload-field"
+                  required
+                >
+                  {t('plugin.name')}
+                </PluginFieldTitle>
+              </span>
               <span className="min-w-0" data-plugin-upload-control-span="14">
                 <Input
                   className={coldDialogInputClassName}
@@ -960,7 +1184,23 @@ export function PluginManageSurface({
               data-plugin-upload-field="jarFile"
               data-plugin-upload-field-layout="angular-label-8-control-14"
             >
-              <span className="pt-2 text-right max-sm:text-left" data-plugin-upload-label-span="8">{t('plugin.jar.file')}</span>
+              <span className="pt-2 text-right max-sm:text-left" data-plugin-upload-label-span="8">
+                <PluginFieldTitle
+                  id="jarFile"
+                  helpLabel={t('setting.plugins.field.jar.help-label')}
+                  help={t('setting.plugins.field.jar.help')}
+                  mode="required"
+                  modeLabel={t('setting.plugins.field.mode.required')}
+                  requirement="required"
+                  requirementLabel={t('settings.form.field.requirement.required')}
+                  inputMode="selection"
+                  inputModeLabel={t('settings.form.field.input-mode.selection')}
+                  scope="upload-field"
+                  required
+                >
+                  {t('plugin.jar.file')}
+                </PluginFieldTitle>
+              </span>
               <span className="flex min-w-0 flex-wrap items-center gap-2" data-plugin-upload-control-span="14">
                 <HzFileInput
                   ref={pluginJarInputRef}
@@ -991,6 +1231,7 @@ export function PluginManageSurface({
                   className={coldButtonClassName}
                   type="button"
                   data-plugin-upload-file-trigger="angular-jar-before-upload"
+                  data-plugin-command-action="upload-file-select"
                   onClick={() => pluginJarInputRef.current?.click()}
                 >
                   <Upload className="h-3.5 w-3.5" aria-hidden="true" />
@@ -1006,6 +1247,7 @@ export function PluginManageSurface({
                   data-plugin-upload-file-remove="angular-nz-remove-clears-jar"
                   data-plugin-upload-file-remove-owner="hertzbeat-ui-file-input"
                   data-plugin-upload-file-remove-state={draftPlugin.jarFileName ? 'selected' : 'empty'}
+                  data-plugin-command-action="upload-file-remove"
                   onClick={() => {
                     if (pluginJarInputRef.current) {
                       pluginJarInputRef.current.value = '';
@@ -1031,7 +1273,22 @@ export function PluginManageSurface({
               data-plugin-upload-field-layout="angular-label-8-control-14"
               data-plugin-upload-status-field="angular-nz-switch"
             >
-              <span className="text-right max-sm:text-left" data-plugin-upload-label-span="8">{t('plugin.status')}</span>
+              <span className="text-right max-sm:text-left" data-plugin-upload-label-span="8">
+                <PluginFieldTitle
+                  id="enableStatus"
+                  helpLabel={t('setting.plugins.field.status.help-label')}
+                  help={t('setting.plugins.field.status.help')}
+                  mode="side-effect"
+                  modeLabel={t('setting.plugins.field.mode.side-effect')}
+                  requirement="required"
+                  requirementLabel={t('settings.form.field.requirement.required')}
+                  inputMode="selection"
+                  inputModeLabel={t('settings.form.field.input-mode.selection')}
+                  scope="upload-field"
+                >
+                  {t('plugin.status')}
+                </PluginFieldTitle>
+              </span>
               <span className="min-w-0" data-plugin-upload-control-span="14">
                 <HzSwitch
                   checked={draftPlugin.enableStatus}
@@ -1076,6 +1333,7 @@ export function PluginManageSurface({
               className={coldButtonClassName}
               onClick={onCloseParamDialog}
               data-plugin-param-cancel-loading="angular-no-ok-loading"
+              data-plugin-command-action="param-cancel"
             >
               {t('common.button.cancel')}
             </Button>
@@ -1085,6 +1343,7 @@ export function PluginManageSurface({
               className={coldPrimaryButtonClassName}
               onClick={onSaveParamDialog}
               data-plugin-param-save="angular-params-post"
+              data-plugin-command-action="param-save"
               data-plugin-param-save-loading="angular-no-ok-loading"
               data-plugin-param-save-loading-owner="angular-modal-ok-contract"
             >
@@ -1099,6 +1358,12 @@ export function PluginManageSurface({
             data-plugin-param-dialog="angular-params-define-modal"
             data-plugin-param-dialog-plugin={paramDraft.plugin.name}
           >
+            <div
+              data-plugin-param-guidance="runtime-param-risk"
+              className="rounded-[4px] border border-[#553d1f] bg-[#241711] px-3 py-2 text-[12px] leading-5 text-[#fed7aa]"
+            >
+              {t('setting.plugins.param.guidance')}
+            </div>
             <HzMonitorEditorFieldGrid
               columns={1}
               data-plugin-param-form="angular-dynamic-form-field"
@@ -1122,8 +1387,17 @@ export function PluginManageSurface({
                     data-plugin-param-field-required={define.required ? 'true' : 'false'}
                   >
                     <span className="pt-2 text-right max-sm:text-left" data-plugin-param-label-span="7">
-                      {label}
-                      {define.required ? <span className="ml-1 text-[#ffb4a8]">*</span> : null}
+                      <PluginFieldTitle
+                        id={define.field}
+                        helpLabel={t('setting.plugins.param.field.help-label', { field: label })}
+                        help={t('setting.plugins.param.field.help', { field: label, type: define.type ?? 'text' })}
+                        mode={define.required ? 'required' : 'optional'}
+                        modeLabel={define.required ? t('setting.plugins.field.mode.required') : t('setting.plugins.field.mode.optional')}
+                        scope="param-field"
+                        required={define.required}
+                      >
+                        {label}
+                      </PluginFieldTitle>
                     </span>
                     <span className="min-w-0" data-plugin-param-control-span="8">
                       {define.type === 'radio' && (define.options ?? []).length > 0 ? (
@@ -1298,11 +1572,21 @@ export function PluginManageSurface({
         data-plugin-delete-confirm="angular-modal-confirm"
         data-plugin-delete-confirm-owner="hertzbeat-ui-confirm-dialog"
         confirmButtonProps={{
+          'data-plugin-command-action': 'delete-confirm',
           'data-plugin-delete-confirm-submit': 'angular-modal-confirm'
         } as React.ComponentProps<typeof HzConfirmDialog>['confirmButtonProps']}
+        cancelButtonProps={{
+          'data-plugin-command-action': 'delete-cancel'
+        } as React.ComponentProps<typeof HzConfirmDialog>['cancelButtonProps']}
       >
         <div data-plugin-delete-confirm-target={deleteTarget?.label ?? ''}>
           {deleteTarget?.label ?? t('common.none')}
+        </div>
+        <div
+          data-plugin-delete-guidance="runtime-dispatch-risk"
+          className="rounded-[4px] border border-[#553d1f] bg-[#241711] px-3 py-2 text-[12px] leading-5 text-[#fed7aa]"
+        >
+          {t('setting.plugins.delete.guidance')}
         </div>
       </HzConfirmDialog>
     </>

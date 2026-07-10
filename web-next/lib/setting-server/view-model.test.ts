@@ -3,14 +3,20 @@ import {
   SMS_PROVIDER_OPTIONS,
   UNISMS_AUTH_MODE_OPTIONS,
   buildMessageServerSummaryItems,
+  buildEmailSenderMissingFields,
+  buildSmsSenderMissingFields,
   canSaveEmailSender,
   canSaveSmsSender,
   cloneSmsSender,
   isUniSmsAccessKeySecretRequired,
+  isEmailSenderDirty,
+  isSmsSenderDirty,
   normalizeEmailSender,
   normalizeSmsProviderType,
   normalizeSmsSender,
   resolveBooleanText,
+  serializeEmailSender,
+  serializeSmsSender,
   resolveSmsTypeLabel,
   resolveUniSmsAuthModeLabel,
   updateSmsProviderField,
@@ -136,6 +142,60 @@ describe('setting server view model', () => {
     expect((current.tencent as Record<string, unknown>).appId).toBe('old');
   });
 
+  it('serializes email and sms configs for no-change save detection', () => {
+    expect(
+      serializeEmailSender({
+        id: 7,
+        emailHost: ' smtp.example.com ',
+        emailPort: 587,
+        emailUsername: ' ops ',
+        emailPassword: 'secret',
+        emailSsl: true,
+        emailStarttls: false,
+        enable: true
+      } as any)
+    ).toBe(
+      serializeEmailSender({
+        emailHost: 'smtp.example.com',
+        emailPort: 587,
+        emailUsername: 'ops',
+        emailPassword: 'secret',
+        emailSsl: true,
+        emailStarttls: false,
+        enable: true,
+        type: null
+      } as any)
+    );
+    expect(isEmailSenderDirty({ emailHost: 'smtp.changed.example.com' } as any, { emailHost: 'smtp.example.com' } as any)).toBe(true);
+
+    const baselineSms = {
+      id: 9,
+      type: 'tencent',
+      enable: false,
+      tencent: {
+        secretId: 'id',
+        secretKey: 'key',
+        signName: ' ops ',
+        appId: '10001',
+        templateId: 'tpl'
+      }
+    } as any;
+    const sameSms = {
+      type: 'tencent',
+      enable: false,
+      tencent: {
+        secretId: 'id',
+        secretKey: 'key',
+        signName: 'ops',
+        appId: '10001',
+        templateId: 'tpl'
+      }
+    } as any;
+
+    expect(serializeSmsSender(baselineSms)).toBe(serializeSmsSender(sameSms));
+    expect(isSmsSenderDirty({ ...sameSms, tencent: { ...sameSms.tencent, templateId: 'tpl-next' } }, baselineSms)).toBe(true);
+  });
+
   it('applies provider-specific validation for email and sms dialogs', () => {
     expect(
       canSaveEmailSender({
@@ -165,6 +225,46 @@ describe('setting server view model', () => {
         twilio: { accountSid: 'sid', authToken: 'token' }
       } as any)
     ).toBe(false);
+  });
+
+  it('lists the exact missing fields that block message sender saves', () => {
+    expect(buildEmailSenderMissingFields({ emailHost: 'smtp.example.com' } as any, zhT)).toEqual([
+      zhT('alert.notice.sender.mail.port'),
+      zhT('alert.notice.sender.mail.username'),
+      zhT('alert.notice.sender.mail.password')
+    ]);
+
+    expect(
+      buildSmsSenderMissingFields({
+        type: 'tencent',
+        tencent: {
+          secretId: 'id',
+          secretKey: '',
+          signName: '',
+          appId: '10001',
+          templateId: ''
+        }
+      } as any, zhT)
+    ).toEqual([
+      zhT('alert.notice.sender.sms.tencent.secretKey'),
+      zhT('alert.notice.sender.sms.tencent.signName'),
+      zhT('alert.notice.sender.sms.tencent.templateId')
+    ]);
+
+    expect(
+      buildSmsSenderMissingFields({
+        type: 'unisms',
+        unisms: {
+          accessKeyId: 'ak',
+          authMode: 'simple',
+          signature: '',
+          templateId: ''
+        }
+      } as any, zhT)
+    ).toEqual([
+      zhT('alert.notice.sender.sms.unisms.signature'),
+      zhT('alert.notice.sender.sms.unisms.templateId')
+    ]);
   });
 
   it('resolves provider labels and auth-mode gating', () => {

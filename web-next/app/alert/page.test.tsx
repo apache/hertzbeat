@@ -301,6 +301,8 @@ describe('alert center page', () => {
 
     expect(source).toContain('if (alertCenterRouteState.shouldCleanUrl)');
     expect(source).toContain('router.replace(alertCenterRouteState.cleanUrl)');
+    expect(source).toContain('buildAlertCenterRouteUrl(cleared)');
+    expect(source).toContain('router.replace(buildAlertCenterRouteUrl(cleared))');
     expect(source).not.toContain("searchParams.has('returnLabel')");
     expect(source).not.toContain("searchParams.get('returnTo')?.includes('returnLabel')");
   });
@@ -361,9 +363,36 @@ describe('alert center page', () => {
     expect(source).toContain('buildAlertClosureOperationFeedback(action, t)');
     expect(source).toContain("return action === 'close' || action === 'delete'");
     expect(source).toContain('clampAlertCenterPageIndexAfterDelete(nextQuery, totalElements, affectedCount)');
+    expect(source).toContain('const nextRouteQuery = buildPostActionQuery(query)');
     expect(source).toContain('setDraft(current => buildPostActionQuery(current))');
     expect(source).toContain('setQuery(current => buildPostActionQuery(current))');
+    expect(source).toContain('router.replace(buildAlertCenterRouteUrl(nextRouteQuery))');
     expect(source).toContain('handleClosureAction(action, groupId, data.groupAlerts.totalElements)');
+  });
+
+  it('keeps alert center pagination and page-size changes reflected in the route url', async () => {
+    await renderAlertCenterPage(
+      buildAlertCenterRouteState({
+        search: 'checkout',
+        status: 'firing',
+        severity: 'critical',
+        pageIndex: 0,
+        pageSize: 25,
+        source: 'alert-center-route-1513'
+      })
+    );
+
+    mockState.lastSurfaceProps?.onPageIndexChange(1);
+
+    expect(mockState.replace).toHaveBeenLastCalledWith(
+      '/alert?search=checkout&status=firing&severity=critical&pageIndex=1&pageSize=25&source=alert-center-route-1513'
+    );
+
+    mockState.lastSurfaceProps?.onPageSizeChange(15);
+
+    expect(mockState.replace).toHaveBeenLastCalledWith(
+      '/alert?search=checkout&status=firing&severity=critical&pageIndex=0&pageSize=15&source=alert-center-route-1513'
+    );
   });
 
   it('wires alert-center quick rule dialogs to create APIs and refreshes the workbench', async () => {

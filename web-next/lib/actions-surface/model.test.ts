@@ -249,6 +249,16 @@ describe('actions domain model', () => {
     expect(draft.disabledReason).toBe(t('actions.approval-draft.disabled'));
   });
 
+  it('does not treat source-only tracking params as actionable evidence context', () => {
+    const suggestions = buildSuggestedRemediationActions({ source: 'product-design-1590-default' }, t);
+    const draft = buildActionApprovalDraft({ source: 'product-design-1590-default' }, t);
+
+    expect(suggestions).toEqual([]);
+    expect(draft.state).toBe('awaiting-context');
+    expect(draft.request).toBeUndefined();
+    expect(draft.requestPreview).toBe('{}');
+  });
+
   it('builds a non-executing action catalog read adapter contract', () => {
     const adapter = buildActionCatalogReadAdapter(t);
 
@@ -277,7 +287,7 @@ describe('actions domain model', () => {
       executionAllowed: false,
       title: t('actions.approval-decision.title')
     });
-    expect(decision.requestPreview).toContain('"decision":"approved"');
+    expect(decision.requestPreview).toContain('"decision":"manual-choice-required"');
     expect(decision.requestPreview).toContain('"executionAllowed":false');
   });
 

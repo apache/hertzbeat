@@ -22,6 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
 import org.apache.hertzbeat.manager.dao.EntityIdentityDao;
@@ -69,6 +70,16 @@ class EntityIdentityQueryServiceTest {
 
         assertEquals(2L, count);
         verify(entityIdentityDao).countByEntityId(801L);
+    }
+
+    @Test
+    void countIdentitiesByEntityIdsBatchesCurrentPageRows() {
+        List<Long> entityIds = List.of(801L, 802L);
+        when(entityIdentityDao.countByEntityIdInGroupByEntityId(entityIds))
+                .thenReturn(List.<Object[]>of(new Object[] {801L, 2L}, new Object[] {802L, 1L}));
+
+        assertEquals(Map.of(801L, 2L, 802L, 1L), entityIdentityQueryService.countIdentitiesByEntityIds(entityIds));
+        verify(entityIdentityDao).countByEntityIdInGroupByEntityId(entityIds);
     }
 
     @Test

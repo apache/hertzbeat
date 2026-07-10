@@ -18,12 +18,20 @@
 package org.apache.hertzbeat.manager.service.entity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
 import org.apache.hertzbeat.common.entity.manager.EntityMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.EntityRelation;
@@ -36,6 +44,8 @@ import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * Contract for entity mutation workflow ordering across create, edit, and definition import paths.
@@ -193,6 +203,132 @@ class EntityMutationWorkflowServiceTest {
         inOrder.verify(entityStatusRefreshService).refreshEntityStatus(secondSaved);
         inOrder.verify(entityActivityWriteModelService)
                 .recordDefinitionActivity(102L, "definition_import", "yaml", secondSaved);
+    }
+
+    @Test
+    void addEntityByDefinitionRejectsExistingEntityReferenceBeforeWrite() {
+        EntityDefinitionRequest request = new EntityDefinitionRequest();
+        EntityDto entityDto = new EntityDto();
+        ObserveEntity input = ObserveEntity.builder()
+                .type("service")
+                .namespace("product-design")
+                .name("checkout")
+                .build();
+        entityDto.setEntity(input);
+        when(entityDefinitionDraftService.parseEntityDefinition(request, null)).thenReturn(entityDto);
+        when(entityWorkspaceAccessService.findAccessibleEntityByReferenceForRequestWorkspace(
+                "service", "product-design", "checkout"))
+                .thenReturn(Optional.of(ObserveEntity.builder().id(44L).build()));
+
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class,
+                () -> entityMutationWorkflowService.addEntityByDefinition(request));
+
+        assertEquals("Entity already exists: service product-design/checkout.", thrown.getMessage());
+        verify(entityCoreWriteModelService, never()).createEntity(input, "manual");
+    }
+
+    @Test
+    void addEntityRejectsExistingEntityReferenceBeforeWrite() {
+        EntityDto entityDto = new EntityDto();
+        ObserveEntity input = ObserveEntity.builder()
+                .type("service")
+                .namespace("product-design")
+                .name("checkout")
+                .build();
+        entityDto.setEntity(input);
+        when(entityWorkspaceAccessService.findAccessibleEntityByNameForRequestWorkspace("checkout"))
+                .thenReturn(Optional.of(ObserveEntity.builder()
+                        .id(44L)
+                        .type("endpoint")
+                        .name("checkout")
+                        .build()));
+
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class,
+                () -> entityMutationWorkflowService.addEntity(entityDto));
+
+        assertEquals("Entity already exists: checkout.", thrown.getMessage());
+        verify(entityCoreWriteModelService, never()).createEntity(input, "manual");
+    }
+
+    @Test
+    void addEntitiesByDefinitionBundleRejectsDuplicateSubmittedReferenceBeforeWrite() {
+        EntityDefinitionRequest request = new EntityDefinitionRequest();
+        EntityDto firstDto = new EntityDto();
+        ObserveEntity firstInput = ObserveEntity.builder()
+                .type("service")
+                .namespace("product-design")
+                .name("checkout")
+                .build();
+        firstDto.setEntity(firstInput);
+        EntityDto secondDto = new EntityDto();
+        ObserveEntity secondInput = ObserveEntity.builder()
+                .type("service")
+                .namespace("product-design")
+                .name("checkout")
+                .build();
+        secondDto.setEntity(secondInput);
+        when(entityDefinitionDraftService.parseEntityDefinitionBundle(request))
+                .thenReturn(List.of(firstDto, secondDto));
+
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class,
+                () -> entityMutationWorkflowService.addEntitiesByDefinitionBundle(request));
+
+        assertEquals("Entity already exists in definition bundle: checkout.", thrown.getMessage());
+        verify(entityCoreWriteModelService, never()).createEntities(List.of(firstInput, secondInput), "manual");
+    }
+
+    @Test
+    void addEntitiesByDefinitionBundleHoldsSameReferenceLockUntilTransactionCompletion() throws Exception {
+        EntityDefinitionRequest request = new EntityDefinitionRequest();
+        request.setFormat("yaml");
+        EntityDto firstDto = new EntityDto();
+        ObserveEntity firstInput = ObserveEntity.builder()
+                .type("service")
+                .namespace("product-design")
+                .name("checkout")
+                .build();
+        firstDto.setEntity(firstInput);
+        EntityDto secondDto = new EntityDto();
+        ObserveEntity secondInput = ObserveEntity.builder()
+                .type("service")
+                .namespace("product-design")
+                .name("payments")
+                .build();
+        secondDto.setEntity(secondInput);
+        ObserveEntity firstSaved = ObserveEntity.builder().id(101L).name("checkout").build();
+        ObserveEntity secondSaved = ObserveEntity.builder().id(102L).name("payments").build();
+        when(entityDefinitionDraftService.parseEntityDefinitionBundle(request))
+                .thenReturn(List.of(firstDto, secondDto));
+        when(entityWorkspaceAccessService.findAccessibleEntityByReferenceForRequestWorkspace(
+                "service", "product-design", "checkout"))
+                .thenReturn(Optional.empty());
+        when(entityWorkspaceAccessService.findAccessibleEntityByReferenceForRequestWorkspace(
+                "service", "product-design", "payments"))
+                .thenReturn(Optional.empty());
+        when(entityCoreWriteModelService.createEntities(List.of(firstInput, secondInput), "manual"))
+                .thenReturn(List.of(firstSaved, secondSaved));
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            assertEquals(List.of(101L, 102L), entityMutationWorkflowService.addEntitiesByDefinitionBundle(request));
+            Future<List<Long>> blockedImport = executor.submit(
+                    () -> entityMutationWorkflowService.addEntitiesByDefinitionBundle(request));
+
+            TimeUnit.MILLISECONDS.sleep(150);
+            assertFalse(blockedImport.isDone());
+
+            TransactionSynchronizationManager.getSynchronizations()
+                    .forEach(synchronization -> synchronization.afterCompletion(TransactionSynchronization.STATUS_COMMITTED));
+            TransactionSynchronizationManager.clearSynchronization();
+
+            assertEquals(List.of(101L, 102L), blockedImport.get(2, TimeUnit.SECONDS));
+        } finally {
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                TransactionSynchronizationManager.clearSynchronization();
+            }
+            executor.shutdownNow();
+        }
     }
 
     @Test

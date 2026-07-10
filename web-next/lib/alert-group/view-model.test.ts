@@ -1,5 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
-import { buildAlertGroupEvidenceContext, buildAlertGroupFacts, buildAlertGroupFormDraft, buildAlertGroupMetrics, buildAlertGroupNoteRows, buildAlertGroupRows, buildAlertGroupSelectedRows, validateAlertGroupForm } from './view-model';
+import {
+  buildAlertGroupEvidenceContext,
+  buildAlertGroupFacts,
+  buildAlertGroupFormDraft,
+  buildAlertGroupMetrics,
+  buildAlertGroupNoteRows,
+  buildAlertGroupRows,
+  buildAlertGroupSelectedRows,
+  getAlertGroupValidationField,
+  validateAlertGroupForm
+} from './view-model';
 import { createTranslatorMock } from '../../test/i18n-test-helper';
 
 const t = createTranslatorMock({ locale: 'zh-CN' });
@@ -219,6 +229,18 @@ describe('alert group view model', () => {
     expect(validateAlertGroupForm({ ...buildAlertGroupFormDraft(null), name: 'cpu', groupLabelsText: 'service', groupInterval: '-300' }, t)).toBe(t('alert.group.validation.group-interval-non-negative'));
     expect(validateAlertGroupForm({ ...buildAlertGroupFormDraft(null), name: 'cpu', groupLabelsText: 'service', repeatInterval: 'abc' }, t)).toBe(t('alert.group.validation.repeat-interval-non-negative'));
     expect(validateAlertGroupForm({ ...buildAlertGroupFormDraft(null), name: 'cpu', groupLabelsText: 'service' }, t)).toBeNull();
+  });
+
+  it('returns the first invalid field so the editor can focus novice validation recovery', () => {
+    expect(getAlertGroupValidationField(buildAlertGroupFormDraft(null))).toBe('name');
+    expect(getAlertGroupValidationField({ ...buildAlertGroupFormDraft(null), name: 'cpu' })).toBe('group-labels');
+    expect(getAlertGroupValidationField({ ...buildAlertGroupFormDraft(null), name: 'cpu', groupLabelsText: 'service', groupWait: '' })).toBe('group-wait');
+    expect(getAlertGroupValidationField({ ...buildAlertGroupFormDraft(null), name: 'cpu', groupLabelsText: 'service', groupInterval: '' })).toBe('group-interval');
+    expect(getAlertGroupValidationField({ ...buildAlertGroupFormDraft(null), name: 'cpu', groupLabelsText: 'service', repeatInterval: '' })).toBe('repeat-interval');
+    expect(getAlertGroupValidationField({ ...buildAlertGroupFormDraft(null), name: 'cpu', groupLabelsText: 'service', groupWait: '-1' })).toBe('group-wait');
+    expect(getAlertGroupValidationField({ ...buildAlertGroupFormDraft(null), name: 'cpu', groupLabelsText: 'service', groupInterval: '-300' })).toBe('group-interval');
+    expect(getAlertGroupValidationField({ ...buildAlertGroupFormDraft(null), name: 'cpu', groupLabelsText: 'service', repeatInterval: 'abc' })).toBe('repeat-interval');
+    expect(getAlertGroupValidationField({ ...buildAlertGroupFormDraft(null), name: 'cpu', groupLabelsText: 'service' })).toBeNull();
   });
 
   it('applies new group fallback context without changing edit behavior', () => {

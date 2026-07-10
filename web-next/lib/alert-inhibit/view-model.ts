@@ -16,6 +16,8 @@ import {
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
 
+export type AlertInhibitValidationField = 'name' | 'source-labels' | 'target-labels' | 'equal-labels';
+
 export type AlertInhibitEvidenceContext = {
   signal: string;
   title: string;
@@ -56,12 +58,34 @@ function buildAlertInhibitEqualLabels(context: SignalRouteContext) {
     .join(', ');
 }
 
+function hasActionableInhibitContext(context: SignalRouteContext) {
+  return Boolean(firstText(
+    context.entityId,
+    context.entityType,
+    context.serviceName,
+    context.serviceNamespace,
+    context.operationName,
+    context.environment,
+    context.traceId,
+    context.spanId,
+    context.monitorId,
+    context.monitorApp,
+    context.monitorInstance,
+    context.alertDatasource,
+    context.alertQueryType,
+    context.alertTemplate
+  ));
+}
+
 export function buildAlertInhibitEvidenceContext(
   signal: string | null | undefined,
   context: SignalRouteContext,
   t: Translator
 ): AlertInhibitEvidenceContext | null {
   const normalizedSignal = normalizeSignal(signal);
+  if (!normalizedSignal && !hasActionableInhibitContext(context)) {
+    return null;
+  }
   const targetName = firstText(context.serviceName, context.entityName, context.entityId) || buildAlertRuleEvidenceFallbackTarget(t);
   const labelsText = buildSignalAlertMatchLabels(normalizedSignal, context);
   const equalLabelsText = buildAlertInhibitEqualLabels(context);
@@ -142,17 +166,37 @@ export function buildAlertInhibitNoteRows(t: Translator) {
 }
 
 export function validateAlertInhibitForm(draft: AlertInhibitFormDraft, t: Translator) {
+  const field = getAlertInhibitValidationField(draft);
+  if (!field) {
+    return null;
+  }
+
+  switch (field) {
+    case 'name':
+      return t('alert.inhibit.validation.name');
+    case 'source-labels':
+      return t('alert.inhibit.validation.source');
+    case 'target-labels':
+      return t('alert.inhibit.validation.target');
+    case 'equal-labels':
+      return t('alert.inhibit.validation.equal');
+    default:
+      return null;
+  }
+}
+
+export function getAlertInhibitValidationField(draft: AlertInhibitFormDraft): AlertInhibitValidationField | null {
   if (!draft.name.trim()) {
-    return t('alert.inhibit.validation.name');
+    return 'name';
   }
   if (!draft.sourceLabelsText.trim()) {
-    return t('alert.inhibit.validation.source');
+    return 'source-labels';
   }
   if (!draft.targetLabelsText.trim()) {
-    return t('alert.inhibit.validation.target');
+    return 'target-labels';
   }
   if (!draft.equalLabelsText.trim()) {
-    return t('alert.inhibit.validation.equal');
+    return 'equal-labels';
   }
   return null;
 }

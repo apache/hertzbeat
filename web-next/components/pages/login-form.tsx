@@ -19,7 +19,7 @@ import {
   type LoginMessage,
   type PassportLoginRouteState
 } from '../../lib/passport-login/controller';
-import { buildLoginNotice, shouldBlockDefaultPasswordSubmit, shouldWarnDefaultPassword, validateCredentialLoginDraft } from '../../lib/passport-login/view-model';
+import { buildLoginNotice, normalizeCredentialLoginError, resolveLoginReturnTargetLabel, shouldBlockDefaultPasswordSubmit, shouldWarnDefaultPassword, validateCredentialLoginDraft } from '../../lib/passport-login/view-model';
 import { writeClientSessionUserSnapshot } from '../../lib/session-client';
 import { markAboutAutoShowAfterLogin } from '../../lib/shell/about';
 import { resetWorkbenchLoadCache } from '../../lib/workbench-load-cache';
@@ -29,10 +29,21 @@ const EMPTY_PASSPORT_LOGIN_ROUTE_STATE: PassportLoginRouteState = {
   redirectTarget: '/'
 };
 
+async function readLoginMessage(response: Response): Promise<LoginMessage> {
+  try {
+    return (await response.json()) as LoginMessage;
+  } catch {
+    return { code: response.status || -1 };
+  }
+}
+
 export function LoginForm({ initialRouteState }: { initialRouteState?: PassportLoginRouteState } = {}) {
   const { t } = useI18n();
   const router = useRouter();
   const passportLoginRouteState = initialRouteState ?? EMPTY_PASSPORT_LOGIN_ROUTE_STATE;
+  const loginRedirectTarget = passportLoginRouteState.redirectTarget?.trim() || '/';
+  const showReturnNotice = loginRedirectTarget !== '/';
+  const loginReturnTargetLabel = showReturnNotice ? resolveLoginReturnTargetLabel(loginRedirectTarget, t) : '';
   const [identifier, setIdentifier] = useState('');
   const [credential, setCredential] = useState('');
   const [showCredential, setShowCredential] = useState(false);
@@ -69,7 +80,7 @@ export function LoginForm({ initialRouteState }: { initialRouteState?: PassportL
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(buildLoginRequestBody(identifier, credential))
       });
-      const message = (await response.json()) as LoginMessage;
+      const message = await readLoginMessage(response);
       assertSessionLoginSuccess(
         response.status,
         message,
@@ -83,10 +94,12 @@ export function LoginForm({ initialRouteState }: { initialRouteState?: PassportL
         router.replace(resolvePostLoginStartupFailureTarget());
         return;
       }
-      markAboutAutoShowAfterLogin();
+      if (passportLoginRouteState.redirectTarget === '/') {
+        markAboutAutoShowAfterLogin();
+      }
       router.replace(passportLoginRouteState.redirectTarget);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('passport.login.error.generic'));
+      setError(err instanceof Error ? normalizeCredentialLoginError(err.message, t) : t('passport.login.error.generic'));
     } finally {
       setLoading(false);
     }
@@ -96,6 +109,7 @@ export function LoginForm({ initialRouteState }: { initialRouteState?: PassportL
     <PassportShell panelClassName="max-w-[368px] self-start">
       <div
         data-passport-login-panel="angular-gray-card"
+        data-passport-login-panel-visual="ops-dark-card"
         data-passport-login-panel-align="angular-top"
         data-passport-login-submit-lifecycle-contract="angular-required-default-warning-session-bootstrap-redirect"
         data-passport-login-default-password-lifecycle-contract="angular-sticky-until-submit"
@@ -104,7 +118,7 @@ export function LoginForm({ initialRouteState }: { initialRouteState?: PassportL
         data-passport-login-submit-lifecycle-owner="hertzbeat-ui-passport-login-action"
       >
         <PassportPanel
-          className="rounded-none border border-[rgba(33,35,42,0.68)] border-b-[var(--ops-primary)] border-r-[var(--ops-primary)] bg-[#5f5f66] px-5 py-9 shadow-none"
+          className="rounded-none border border-[var(--ops-border-color)] border-b-[var(--ops-primary)] border-r-[var(--ops-primary)] bg-[rgba(14,18,24,0.94)] px-5 py-9 shadow-[0_18px_42px_rgba(0,0,0,0.34)]"
           header={(
             <div className="text-left">
               <h1 className="text-[16px] font-semibold leading-6 text-white">
@@ -117,6 +131,23 @@ export function LoginForm({ initialRouteState }: { initialRouteState?: PassportL
             </div>
           )}
         >
+        {showReturnNotice ? (
+          <div
+            className="mt-4 rounded-[3px] border border-[rgba(255,255,255,0.18)] bg-[rgba(13,18,28,0.28)] px-3 py-2 text-[12px] leading-5 text-white"
+            data-passport-login-return-notice="guarded-deep-link"
+          >
+            <div className="font-semibold">
+              {t('passport.login.return-notice.title')}
+            </div>
+            <p className="mt-1 text-[rgba(255,255,255,0.78)]">
+              {t('passport.login.return-notice.copy', { target: loginReturnTargetLabel })}
+            </p>
+            <code className="mt-2 block max-w-full truncate rounded-[2px] bg-[rgba(0,0,0,0.2)] px-2 py-1 font-mono text-[11px] text-[rgba(255,255,255,0.88)]">
+              {loginRedirectTarget}
+            </code>
+          </div>
+        ) : null}
+
         <HzPassportLoginActionFrame
           className="mt-4"
           data-passport-login-submit-lifecycle="angular-required-default-warning-session-bootstrap-redirect"
@@ -127,13 +158,16 @@ export function LoginForm({ initialRouteState }: { initialRouteState?: PassportL
           data-passport-login-session-user-name-owner="hertzbeat-ui-passport-login-action"
         >
           <form onSubmit={handleSubmit} className="space-y-4">
-            <label className="block space-y-2">
+            <label className="block space-y-2" htmlFor="passport-login-identifier">
               <span className={fieldLabelClassName}>
                 {t('app.login.message-need-identifier')}
               </span>
               <div className="relative">
                 <UserRound size={16} className={fieldIconClassName} />
                 <Input
+                  autoComplete="username"
+                  id="passport-login-identifier"
+                  name="identifier"
                   value={identifier}
                   onChange={e => {
                     setIdentifier(e.target.value);
@@ -146,13 +180,16 @@ export function LoginForm({ initialRouteState }: { initialRouteState?: PassportL
                 />
               </div>
             </label>
-            <label className="block space-y-2">
+            <label className="block space-y-2" htmlFor="passport-login-credential">
               <span className={fieldLabelClassName}>
                 {t('app.login.message-need-credential')}
               </span>
               <div className="relative">
                 <LockKeyhole size={16} className={fieldIconClassName} />
                 <Input
+                  autoComplete="current-password"
+                  id="passport-login-credential"
+                  name="credential"
                   value={credential}
                   onChange={e => {
                     const nextValue = e.target.value;
@@ -181,7 +218,7 @@ export function LoginForm({ initialRouteState }: { initialRouteState?: PassportL
               <Checkbox
                 data-passport-login-remember-checkbox="hertzbeat-ui-checkbox"
                 defaultChecked
-                containerClassName="min-h-4 gap-2 text-[13px] font-medium text-[#17181c]"
+                containerClassName="min-h-4 gap-2 text-[13px] font-medium text-[var(--ops-text-secondary)]"
                 label={t('app.login.remember-me')}
               />
             </div>

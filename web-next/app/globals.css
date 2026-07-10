@@ -91,9 +91,7 @@
 }
 
 html[data-theme='light-ops'],
-body[data-theme='light-ops'],
-html[data-theme='compact'],
-body[data-theme='compact'] {
+body[data-theme='light-ops'] {
   --background: 210 20% 98%;
   --foreground: 222 47% 11%;
   --card: 0 0% 100%;

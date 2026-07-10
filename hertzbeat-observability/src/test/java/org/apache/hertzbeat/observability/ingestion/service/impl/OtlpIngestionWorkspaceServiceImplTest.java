@@ -1333,6 +1333,91 @@ class OtlpIngestionWorkspaceServiceImplTest {
     }
 
     @Test
+    void relatedMetricsFallsBackToServiceAvailabilityWhenOperationLabelsAreAbsent() {
+        observabilitySignalIntakeGateway.recordOtlpMetricIntake(
+                Map.of(
+                        "service.name", "checkout",
+                        "service.namespace", "commerce",
+                        "deployment.environment.name", "prod"
+                ),
+                2_000L,
+                "http.server.duration",
+                "histogram",
+                "ms",
+                14.0,
+                Map.of()
+        );
+        when(workspaceQueryGateway.findEntityById(42L)).thenReturn(java.util.Optional.empty());
+        when(workspaceQueryGateway.findIdentitiesByEntityId(42L)).thenReturn(List.of());
+        when(metricQueryRepository.hasPromqlExecutor()).thenReturn(true);
+        when(metricQueryRepository.queryPromqlRange(
+                anyString(),
+                anyString(),
+                anyLong(),
+                anyLong(),
+                anyString()
+        )).thenAnswer(invocation -> {
+            String refId = invocation.getArgument(0);
+            String query = invocation.getArgument(1);
+            if ("otlp-related-metrics-inventory".equals(refId)) {
+                return promqlSuccess(new DatasourceQueryData("otlp-related-metrics-inventory", 200, null, List.of()));
+            }
+            if (query.contains("__name__=\"http_server_duration\"")
+                    && query.contains("service_name=\"checkout\"")
+                    && query.contains("service_namespace=\"commerce\"")
+                    && query.contains("deployment_environment_name=\"prod\"")
+                    && !query.contains("operation_name=")
+                    && !query.contains("http_route=")) {
+                return promqlSuccess(new DatasourceQueryData(
+                        "otlp-related-metrics",
+                        200,
+                        null,
+                        List.of(new DatasourceQueryData.SchemaData(
+                                new DatasourceQueryData.MetricSchema(
+                                        List.of(
+                                                new DatasourceQueryData.MetricField("__ts__", "time", null),
+                                                new DatasourceQueryData.MetricField("__value__", "number", null)
+                                        ),
+                                        Map.of("__name__", "http_server_duration"),
+                                        Map.of()
+                                ),
+                                Collections.singletonList(new Object[] {2_000L, 14.0})
+                        ))
+                ));
+            }
+            return promqlSuccess(new DatasourceQueryData("otlp-related-metrics", 200, null, List.of()));
+        });
+
+        OtlpRelatedMetricsDto related = otlpIngestionWorkspaceService.getRelatedMetrics(
+                42L,
+                "service",
+                1_000L,
+                2_000L,
+                "checkout",
+                "commerce",
+                "prod",
+                null,
+                "POST /checkout",
+                "8"
+        );
+
+        assertFalse(related.getCandidates().isEmpty());
+        OtlpRelatedMetricsDto.Candidate candidate = related.getCandidates().getFirst();
+        assertEquals("http_server_duration", candidate.getQuery());
+        assertEquals("promql-series", candidate.getReason());
+        assertTrue(candidate.getMatchedLabels().contains("service_name"));
+        assertTrue(candidate.getMatchedLabels().contains("service_namespace"));
+        assertTrue(candidate.getMatchedLabels().contains("deployment_environment_name"));
+        assertFalse(candidate.getMatchedLabels().contains("operation_name"));
+        assertFalse(candidate.getMatchedLabels().contains("http_route"));
+        assertEquals("checkout", candidate.getResourceMatch().get("service_name"));
+        assertEquals("commerce", candidate.getResourceMatch().get("service_namespace"));
+        assertEquals("prod", candidate.getResourceMatch().get("deployment_environment_name"));
+        assertFalse(candidate.getResourceMatch().containsKey("operation_name"));
+        assertFalse(candidate.getResourceMatch().containsKey("http_route"));
+    }
+
+    @Test
     void relatedMetricsPrefersPromqlAvailableCandidatesWhenExecutorExists() {
         observabilitySignalIntakeGateway.recordOtlpMetricIntake(
                 Map.of(

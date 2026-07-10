@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Inbox, RefreshCw } from 'lucide-react';
-import { HzBatchToolbar, HzCheckbox, HzConfirmDialog, HzPaginationBar, HzStatCell, HzStatStrip, HzStatusBadge } from '@hertzbeat/ui';
+import { HzBatchToolbar, HzCheckbox, HzConfirmDialog, HzPaginationBar, HzSignalSummaryStrip, HzStatusBadge } from '@hertzbeat/ui';
 import { Button } from '../ui/button';
 import { Select } from '../ui/select';
 import { SearchRow } from '../ui/search-row';
@@ -65,6 +65,11 @@ type PendingBatchStatusAction = {
   ids: number[];
   title: string;
   tone: 'info' | 'critical';
+};
+
+type PendingDeleteGroup = {
+  id: number;
+  target: string;
 };
 
 const coldCenterVisual = hzOpsCatalogVisual;
@@ -178,6 +183,21 @@ function resolveBatchStatusConfirmTitle(action: PendingBatchStatusAction['action
 function resolveNumericGroupId(groupKey: string) {
   const groupId = Number(groupKey);
   return Number.isFinite(groupId) && groupId > 0 ? groupId : null;
+}
+
+function resolveAlertGroupContextValue(group: GroupAlert, key: string): string {
+  return group.groupLabels?.[key]
+    || group.commonLabels?.[key]
+    || group.alerts?.find(alert => alert.labels?.[key])?.labels?.[key]
+    || '';
+}
+
+function buildDeleteGroupTarget(group: GroupAlert, t: Translator): string {
+  const service = resolveAlertGroupContextValue(group, 'service');
+  const alertName = resolveAlertGroupContextValue(group, 'alertname');
+  const instance = resolveAlertGroupContextValue(group, 'instance');
+  const target = [service, alertName, instance].filter(Boolean).join(' / ');
+  return target || t('alert.center.confirm.delete-group-target-fallback', { groupId: group.id });
 }
 
 function buildSharedGroupLabels(groups: GroupAlert[]): Record<string, string> {
@@ -343,6 +363,7 @@ export function AlertCenterSurface({
   const selectedAcknowledgedIds = data.groupAlerts.content
     .filter(group => group.status === 'acknowledged' && selectedGroupIdSet.has(Number(group.id)))
     .map(group => Number(group.id));
+  const selectedRecoverableIds = Array.from(new Set([...selectedFiringIds, ...selectedAcknowledgedIds]));
   const selectedResolvedIds = data.groupAlerts.content
     .filter(group => group.status === 'resolved' && selectedGroupIdSet.has(Number(group.id)))
     .map(group => Number(group.id));
@@ -353,7 +374,7 @@ export function AlertCenterSurface({
   const selectedBatchRuleGroup = React.useMemo(() => buildSelectedBatchRuleGroup(selectedGroups), [selectedGroups]);
   const [dialogState, setDialogState] = React.useState<{ groupKey: string; mode: AlertRuleDialogMode } | null>(initialDialogState);
   const [pendingBatchStatusAction, setPendingBatchStatusAction] = React.useState<PendingBatchStatusAction | null>(null);
-  const [pendingDeleteGroupId, setPendingDeleteGroupId] = React.useState<number | null>(null);
+  const [pendingDeleteGroup, setPendingDeleteGroup] = React.useState<PendingDeleteGroup | null>(null);
   const activeDialogGroup = React.useMemo(
     () => {
       if (!dialogState) return null;
@@ -415,9 +436,9 @@ export function AlertCenterSurface({
   }
 
   function confirmPendingDeleteGroup() {
-    if (!pendingDeleteGroupId) return;
-    onClosureAction?.('delete', pendingDeleteGroupId);
-    setPendingDeleteGroupId(null);
+    if (!pendingDeleteGroup) return;
+    onClosureAction?.('delete', pendingDeleteGroup.id);
+    setPendingDeleteGroup(null);
   }
 
   function openSelectedRuleDialog(mode: AlertRuleDialogMode) {
@@ -452,13 +473,18 @@ export function AlertCenterSurface({
         data-alert-noise-control-action-label-owner="route-state-contract"
         data-alert-center-acknowledged-actions-contract="angular-unacknowledge-resolve"
         data-alert-center-acknowledged-actions-owner="route-alert-card"
+        data-alert-center-layout="flat-operations-ledger"
         className={coldCenterVisual.canvas.root}
         style={coldCenterVisual.canvas.backgroundStyle}
       >
         <section className={coldCenterVisual.layout.pageSection}>
           <div className="mx-auto max-w-[1480px]">
             <div className="mb-5">
-              <div data-alert-center-header="hertzbeat-ui-compact-header" className={coldCenterVisual.panel.hero}>
+              <div
+                data-alert-center-header="hertzbeat-ui-compact-header"
+                data-alert-center-header-frame="flat-divider"
+                className="border-b border-[#252b34] pb-5"
+              >
                 <div className="max-w-[860px]">
                   <h1 className="text-[30px] font-semibold leading-tight text-[#f5f7fb]">
                     {t('alert.workbench.kicker')}
@@ -469,39 +495,38 @@ export function AlertCenterSurface({
                     {entityContextActive ? t('alert.workbench.copy.entity') : t('alert.workbench.copy')}
                   </p>
                   <div data-alert-center-command-row="standard-equal-buttons" className={coldCenterVisual.button.row}>
-                    <Button size="sm" variant="default" className={coldButtonClassName} onClick={onRefresh}>
+                    <Button
+                      size="sm"
+                      variant="default"
+                      className={coldButtonClassName}
+                      onClick={onRefresh}
+                      data-alert-center-command-action="refresh"
+                    >
                       <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
                       {t('alert.workbench.action.refresh')}
                     </Button>
                     {activeFilters ? (
-                      <Button size="sm" variant="default" className={coldButtonClassName} onClick={onClearFilters}>
+                      <Button
+                        size="sm"
+                        variant="default"
+                        className={coldButtonClassName}
+                        onClick={onClearFilters}
+                        data-alert-center-command-action="clear-filters"
+                      >
                         {t('alert.workbench.action.clear-filters')}
                       </Button>
                     ) : null}
                   </div>
                 </div>
-                <HzStatStrip
-                  columns={4}
-                  frame="panel-inset"
-                  spacing="compact"
-                  className="mt-5"
+                <HzSignalSummaryStrip
+                  items={alertFacts}
+                  layout="panel"
+                  density="compact"
+                  className="mt-5 border-t border-[#252b34] pt-4"
                   data-alert-center-facts-strip="angular-platform-facts-strip"
-                  data-alert-center-facts-strip-owner="hertzbeat-ui-stat-strip"
-                >
-                  {alertFacts.map(fact => (
-                    <HzStatCell
-                      key={fact.id}
-                      label={fact.label}
-                      value={fact.value}
-                      tone={fact.tone}
-                      variant="tile"
-                      density="compact"
-                      frame="inset"
-                      data-alert-center-fact={fact.id}
-                      data-alert-center-fact-owner="hertzbeat-ui-stat-cell"
-                    />
-                  ))}
-                </HzStatStrip>
+                  data-alert-center-facts-strip-owner="hertzbeat-ui-signal-summary-strip"
+                  data-alert-center-facts-frame="flat-summary"
+                />
               </div>
             </div>
 
@@ -649,9 +674,9 @@ export function AlertCenterSurface({
                         },
                         {
                           id: 'resolve-selected',
-                          label: t('alert.center.batch.resolve-selected', { count: selectedFiringIds.length }),
-                          disabled: selectedFiringIds.length === 0,
-                          onSelect: () => requestBatchStatusAction('resolve', selectedFiringIds),
+                          label: t('alert.center.batch.resolve-selected', { count: selectedRecoverableIds.length }),
+                          disabled: selectedRecoverableIds.length === 0,
+                          onSelect: () => requestBatchStatusAction('resolve', selectedRecoverableIds),
                           buttonProps: {
                             'data-alert-center-batch-action': 'resolve-selected',
                             'data-alert-center-batch-action-owner': 'hertzbeat-ui-batch-toolbar'
@@ -694,7 +719,11 @@ export function AlertCenterSurface({
                   </div>
                 ) : null}
 
-                <div data-alert-evidence-closure="otlp-alert-evidence-workbench" className={coldPanelClassName}>
+                <div
+                  data-alert-evidence-closure="otlp-alert-evidence-workbench"
+                  data-alert-evidence-closure-frame="flat-ledger"
+                  className="border-y border-[#252b34] py-4"
+                >
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div className="min-w-0">
                       <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e8494]">
@@ -710,11 +739,11 @@ export function AlertCenterSurface({
                         data-alert-operation-summary={closureOperationRows.map(row => row.key).join(',')}
                         className="mt-3 grid max-w-[860px] gap-2 text-[12px] md:grid-cols-2"
                       >
-                        <div className="rounded-[3px] border border-[#252b34] bg-[#101217] px-3 py-2">
+                        <div className="border-l border-[#303743] py-1 pl-3">
                           <span className="font-semibold text-[#7e8494]">{t('alert.center.evidence.closure.summary.evidence')}</span>
                           <span className="ml-2 text-[#dbe4f0]">{evidenceSummary}</span>
                         </div>
-                        <div className="rounded-[3px] border border-[#252b34] bg-[#101217] px-3 py-2">
+                        <div className="border-l border-[#303743] py-1 pl-3">
                           <span className="font-semibold text-[#7e8494]">{t('alert.center.evidence.closure.summary.operations')}</span>
                           <span className="ml-2 text-[#dbe4f0]">{operationSummary}</span>
                         </div>
@@ -728,7 +757,7 @@ export function AlertCenterSurface({
                             <div
                               key={row.key}
                               data-alert-evidence-context-row={row.key}
-                              className="rounded-[3px] border border-[#252b34] bg-[#101217] px-3 py-2"
+                              className="border-l border-[#303743] py-1 pl-3"
                             >
                               <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#7e8494]">{row.title}</div>
                               <div className="mt-1 truncate font-semibold text-[#dbe4f0]">{row.copy}</div>
@@ -739,13 +768,13 @@ export function AlertCenterSurface({
                       ) : null}
                     </div>
                   </div>
-                  <div className="mt-4 grid gap-2 md:grid-cols-5">
+                  <div className="mt-4 grid border-y border-[#252b34] md:grid-cols-5">
                     {evidenceClosureRows.map(row => (
                       <a
                         key={row.key}
                         data-alert-evidence-link={row.key}
                         href={row.href}
-                        className="rounded-[4px] border border-[#252b34] bg-[#101217] px-3 py-3 transition hover:border-[#4e74f8] hover:bg-[#151b28]"
+                        className="border-l border-[#252b34] px-3 py-3 transition first:border-l-0 hover:bg-[#10141b]"
                       >
                         <div className="text-[12px] font-semibold text-[#eef2f7]">{row.title}</div>
                         <div className="mt-1 truncate text-[11px] text-[#cbd5e1]">{row.copy}</div>
@@ -753,14 +782,14 @@ export function AlertCenterSurface({
                       </a>
                     ))}
                   </div>
-                  <div className="mt-4 grid gap-2 md:grid-cols-5">
+                  <div className="mt-3 grid border-y border-[#252b34] md:grid-cols-5">
                     {closureOperationRows.map(row =>
                       row.href ? (
                         <a
                           key={row.key}
                           data-alert-closure-action={row.key}
                           href={row.href}
-                          className="rounded-[4px] border border-[#303743] bg-[#0f141d] px-3 py-3 text-left transition hover:border-[#4e74f8] hover:bg-[#151b28]"
+                          className="border-l border-[#252b34] px-3 py-3 text-left transition first:border-l-0 hover:bg-[#10141b]"
                         >
                           <span className="block text-[12px] font-semibold text-[#eef2f7]">{row.label}</span>
                           <span className="mt-1 block text-[11px] leading-4 text-[#8f99ab]">{row.copy}</span>
@@ -779,7 +808,7 @@ export function AlertCenterSurface({
                               onClosureAction?.(row.key, primaryGroupId);
                             }
                           }}
-                          className="rounded-[4px] border border-[#303743] bg-[#0f141d] px-3 py-3 text-left transition hover:border-[#4e74f8] hover:bg-[#151b28]"
+                          className="border-l border-[#252b34] px-3 py-3 text-left transition first:border-l-0 hover:bg-[#10141b] disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           <span className="block text-[12px] font-semibold text-[#eef2f7]">{row.label}</span>
                           <span className="mt-1 block text-[11px] leading-4 text-[#8f99ab]">{row.copy}</span>
@@ -937,6 +966,8 @@ export function AlertCenterSurface({
                                   variant="default"
                                   className={coldMutedButtonClassName}
                                   data-alert-group-action={action.key}
+                                  data-alert-center-command-action={`group-${action.key}`}
+                                  data-alert-group-command-action={action.key}
                                   onClick={() => {
                                     if (action.dialogMode) {
                                       setDialogState({ groupKey: group.key, mode: action.dialogMode });
@@ -946,7 +977,13 @@ export function AlertCenterSurface({
                                     const groupId = resolveNumericGroupId(group.key);
                                     if (closureAction && groupId) {
                                       if (closureAction === 'delete') {
-                                        setPendingDeleteGroupId(groupId);
+                                        const sourceGroup = data.groupAlerts.content.find(item => Number(item.id) === groupId);
+                                        setPendingDeleteGroup({
+                                          id: groupId,
+                                          target: sourceGroup
+                                            ? buildDeleteGroupTarget(sourceGroup, t)
+                                            : t('alert.center.confirm.delete-group-target-fallback', { groupId })
+                                        });
                                       } else {
                                         onClosureAction?.(closureAction, groupId);
                                       }
@@ -1120,16 +1157,17 @@ export function AlertCenterSurface({
         }
       />
       <HzConfirmDialog
-        open={pendingDeleteGroupId != null}
+        open={pendingDeleteGroup != null}
         tone="critical"
         kicker={t('alert.workbench.kicker')}
-        title={t('common.confirm.delete')}
+        title={t('alert.center.confirm.delete-group-title', { groupId: pendingDeleteGroup?.id ?? '-' })}
+        bodyRhythm="stack"
         cancelLabel={t('common.button.cancel')}
         confirmLabel={t('common.button.ok')}
-        onClose={() => setPendingDeleteGroupId(null)}
+        onClose={() => setPendingDeleteGroup(null)}
         onConfirm={confirmPendingDeleteGroup}
         data-alert-center-row-delete-confirm-dialog="angular-single-delete-confirm"
-        data-alert-center-row-delete-confirm-group-id={pendingDeleteGroupId ?? undefined}
+        data-alert-center-row-delete-confirm-group-id={pendingDeleteGroup?.id ?? undefined}
         confirmButtonProps={
           {
             'data-alert-center-row-delete-confirm-ok': 'angular-single-delete-confirm'
@@ -1140,7 +1178,16 @@ export function AlertCenterSurface({
             'data-alert-center-row-delete-confirm-cancel': 'angular-single-delete-confirm'
           } as React.ComponentProps<typeof HzConfirmDialog>['cancelButtonProps']
         }
-      />
+      >
+        {pendingDeleteGroup?.target ? (
+          <p data-alert-center-row-delete-confirm-target="alert-context">
+            {t('alert.center.confirm.delete-group-target', { target: pendingDeleteGroup.target })}
+          </p>
+        ) : null}
+        <p data-alert-center-row-delete-confirm-copy="operation-impact">
+          {t('alert.center.confirm.delete-group-copy')}
+        </p>
+      </HzConfirmDialog>
       {dialogState && activeDialogGroup ? (
         <AlertRuleQuickDialog
           t={t}

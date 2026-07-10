@@ -673,7 +673,9 @@ describe('monitors page', () => {
 
     expect(apiMessageDelete).not.toHaveBeenCalledWith('/monitors/manage?ids=501&type=JSON');
     expect(interactionContainer.querySelector('[data-monitor-row-response-confirm="angular-modal-confirm"]')).not.toBeNull();
-    expect(interactionContainer.textContent).toContain('Please confirm whether to cancel monitor!');
+    expect(interactionContainer.textContent).toContain('Pause monitor');
+    expect(interactionContainer.textContent).toContain('The selected monitor stops collection until you enable it again.');
+    expect(interactionContainer.textContent).toContain('mysql-production');
 
     const rowConfirmButton = interactionContainer.querySelector(
       '[data-monitor-row-response-confirm="angular-modal-confirm"] button[data-hz-confirm-action="confirm"]'
@@ -992,6 +994,9 @@ describe('monitors page', () => {
       resolveCopy?.({ id: 777 });
       await Promise.resolve();
     });
+
+    expect(interactionContainer.querySelector('[data-monitor-row-optimistic-copy="true"]')).toBeNull();
+    expect(interactionContainer.textContent).not.toContain('mysql-production_copy');
   }, 15000);
 
   it('copies the static monitor host from the row-level Angular host affordance', async () => {
@@ -1201,6 +1206,19 @@ describe('monitors page', () => {
       expect(interactionContainer.textContent).toContain(message);
       expect(interactionContainer.querySelector('[data-overlay-dialog="true"]')).toBeNull();
     }
+
+    const rowCheckbox = interactionContainer.querySelector('input[data-monitors-row-select="501"]') as HTMLInputElement | null;
+    expect(rowCheckbox).not.toBeNull();
+
+    await act(async () => {
+      rowCheckbox?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    expect(rowCheckbox?.checked).toBe(true);
+    expect(interactionContainer.textContent).toContain('1 Selected / 1');
+    expect(interactionContainer.querySelector('[data-monitor-action-feedback]')).toBeNull();
+    expect(interactionContainer.textContent).not.toContain('Select monitors before deleting');
   }, 15000);
 
   it('routes selected batch enable and pause through the Angular modal confirmation contract', async () => {
@@ -1260,8 +1278,17 @@ describe('monitors page', () => {
     expect(batchDialog?.getAttribute('data-hz-confirm-closable')).toBe('false');
     expect(batchDialog?.getAttribute('data-hz-confirm-ok-danger')).toBe('true');
     expect(batchDialog?.getAttribute('data-hz-confirm-ok-type')).toBe('primary');
-    expect(interactionContainer.textContent).toContain('Please confirm whether to cancel monitor in batches!');
+    expect(interactionContainer.textContent).toContain('Pause selected monitors');
+    expect(interactionContainer.textContent).toContain('Selected monitors stop collection until you enable them again.');
     expect(interactionContainer.textContent).toContain('1 monitors selected');
+    expect(interactionContainer.textContent).toContain('Monitors to update');
+    expect(interactionContainer.textContent).toContain('mysql-production');
+    expect(
+      interactionContainer.querySelector('[data-monitor-batch-response-confirm-target-list="selected-monitor-names"]')
+    ).not.toBeNull();
+    expect(
+      interactionContainer.querySelector('[data-monitor-batch-response-confirm-target-name="501"]')
+    ).not.toBeNull();
 
     const batchConfirmButton = interactionContainer.querySelector(
       '[data-monitor-batch-response-confirm="angular-modal-confirm"] button[data-hz-confirm-action="confirm"]'
@@ -1917,7 +1944,7 @@ describe('monitors page', () => {
       await Promise.resolve();
     });
 
-    const importFile = new File(['name: mysql-production'], 'monitors-prod.yml', { type: 'application/x-yaml' });
+    const importFile = new File(['name: mysql-production'], 'monitors-prod.yaml', { type: 'application/x-yaml' });
     Object.defineProperty(importInput, 'files', { value: [importFile], configurable: true });
     await act(async () => {
       importInput?.dispatchEvent(new Event('change', { bubbles: true }));
@@ -1928,7 +1955,7 @@ describe('monitors page', () => {
     expect(apiMessagePost).toHaveBeenCalledWith('/monitors/import', expect.any(FormData));
     expect(importButton?.getAttribute('aria-busy')).toBe('true');
     expect(interactionContainer.querySelector('[data-monitor-action-feedback="info"]')).not.toBeNull();
-    expect(interactionContainer.textContent).toContain('Import [monitors-prod.yml] submitted');
+    expect(interactionContainer.textContent).toContain('Import [monitors-prod.yaml] submitted');
 
     await act(async () => {
       resolveImport(undefined);
@@ -1937,7 +1964,7 @@ describe('monitors page', () => {
     });
 
     expect(interactionContainer.querySelector('[data-monitor-action-feedback="success"]')).not.toBeNull();
-    expect(interactionContainer.textContent).toContain('Import [monitors-prod.yml] Success!');
+    expect(interactionContainer.textContent).toContain('Import [monitors-prod.yaml] Success!');
     expect(interactionContainer.textContent).toContain('0 Selected / 1');
   }, 15000);
 
@@ -1996,7 +2023,7 @@ describe('monitors page', () => {
     ) as HTMLInputElement | null;
     expect(importInput).not.toBeNull();
 
-    const importFile = new File(['invalid: true'], 'bad-monitors.yml', { type: 'application/x-yaml' });
+    const importFile = new File(['invalid: true'], 'bad-monitors.yaml', { type: 'application/x-yaml' });
     Object.defineProperty(importInput, 'files', { value: [importFile], configurable: true });
     await act(async () => {
       importInput?.dispatchEvent(new Event('change', { bubbles: true }));
@@ -2005,7 +2032,7 @@ describe('monitors page', () => {
 
     expect(controller.buildImportMonitorsUrl).toHaveBeenCalled();
     expect(apiMessagePost).toHaveBeenCalledWith('/monitors/import', expect.any(FormData));
-    expect(interactionContainer.textContent).toContain('Import [bad-monitors.yml] submitted');
+    expect(interactionContainer.textContent).toContain('Import [bad-monitors.yaml] submitted');
 
     await act(async () => {
       rejectImport(new Error('invalid yaml'));
@@ -2014,11 +2041,60 @@ describe('monitors page', () => {
     });
 
     expect(interactionContainer.querySelector('[data-monitor-action-feedback="critical"]')).not.toBeNull();
-    expect(interactionContainer.textContent).toContain('Import [bad-monitors.yml] Failed: Import failed');
+    expect(interactionContainer.textContent).toContain('Import [bad-monitors.yaml] Failed: Import failed');
+    expect(interactionContainer.textContent).toContain('Check that this file was exported from Monitor Center and is valid JSON, YAML, or Excel.');
+    expect(interactionContainer.textContent).toContain('Backend detail: invalid yaml');
     expect(interactionContainer.textContent).toContain('invalid yaml');
     expect(interactionContainer.textContent).toContain('1 Selected / 1');
     expect(interactionContainer.querySelector('[data-monitor-manage-auto-refresh-tick="0"]')).not.toBeNull();
     expect(mockState.replace).not.toHaveBeenCalled();
+  }, 15000);
+
+  it('keeps monitor import available on an empty list and blocks unsupported files before the backend call', async () => {
+    mockState.renderData = {
+      list: {
+        content: [],
+        pageIndex: 0,
+        pageSize: 15,
+        totalElements: 0
+      },
+      query: { ...EMPTY_MONITOR_TEST_QUERY, pageSize: '15' },
+      entityWorkbenchFallback: false
+    };
+    const controller = await import('@/lib/monitor-manage/controller');
+    vi.mocked(controller.importMonitorsFromFacade).mockClear();
+    const { default: MonitorsPage } = await import('./monitor-manage-page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<MonitorsPage initialQuery={{ ...EMPTY_MONITOR_TEST_QUERY, pageSize: '15' }} />);
+      await Promise.resolve();
+    });
+
+    expect(interactionContainer.querySelector('[data-monitor-manage-empty-owner="hertzbeat-ui-empty-state"]')).not.toBeNull();
+    const topImportButton = interactionContainer.querySelector(
+      'button[data-monitor-manage-primary-action="import"]'
+    ) as HTMLButtonElement | null;
+    const importInput = interactionContainer.querySelector(
+      'input[data-monitors-import-file-input="true"]'
+    ) as HTMLInputElement | null;
+    expect(topImportButton).not.toBeNull();
+    expect(topImportButton?.getAttribute('data-monitor-manage-import-empty-state-action')).toBe('available');
+    expect(importInput).not.toBeNull();
+
+    const invalidFile = new File(['not a monitor export'], 'monitor-notes.txt', { type: 'text/plain' });
+    Object.defineProperty(importInput, 'files', { value: [invalidFile], configurable: true });
+    await act(async () => {
+      importInput?.dispatchEvent(new Event('change', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    expect(controller.importMonitorsFromFacade).not.toHaveBeenCalled();
+    expect(apiMessagePost).not.toHaveBeenCalled();
+    expect(interactionContainer.querySelector('[data-monitor-action-feedback="warning"]')).not.toBeNull();
+    expect(interactionContainer.textContent).toContain('Select a JSON, YAML, or Excel monitor export file.');
   }, 15000);
 
   it('applies the Angular status filter immediately when the operator changes the select value', async () => {
@@ -2579,6 +2655,8 @@ describe('monitors page', () => {
     expect(html).toContain('data-monitors-row-select="42"');
     expect(html).toContain('data-monitor-row-type="http"');
     expect(html).toContain('data-monitor-row-name-owner="hertzbeat-ui-data-cell-text"');
+    expect(html).toContain('data-monitor-row-name-detail-link="true"');
+    expect(html).toContain('href="/monitors/42');
     expect(html).toContain('data-monitor-row-copy-owner="hertzbeat-ui-data-cell-text"');
     expect(html).toContain('data-monitor-row-type-owner="hertzbeat-ui-data-cell-text"');
     expect(html).toContain('data-monitor-row-updated-owner="hertzbeat-ui-data-cell-text"');
@@ -2748,6 +2826,8 @@ describe('monitors page', () => {
     expect(html).toContain('data-hz-ui="empty-state"');
     expect(html).toContain('data-monitor-manage-empty-owner="hertzbeat-ui-empty-state"');
     expect(html).toContain('No Matching Monitors');
+    expect(html).toContain('Create your first monitor to generate collection evidence');
+    expect(html).toContain('then use entity discovery to bind it to services or resources');
     expect(html).not.toContain('data-observability-status-state="true"');
   }, 15000);
 
@@ -2771,10 +2851,11 @@ describe('monitors page', () => {
     expect(source).toContain("import { api } from '@/lib/monitor-api-facade';");
     expect(source).toContain('queryClient.fetchQuery');
     expect(source).toContain('queryKeys.monitors.list');
-    expect(source).toContain('queryFn: () => loadMonitorListFromFacade(api.monitors.page, nextQuery)');
+    expect(source).toContain('api.monitors.selectionPage : api.monitors.page');
+    expect(source).toContain('allowUnsupportedPageSize: options?.selectionPage');
     expect(source).toContain('readMonitorListWithQuery(query)');
     expect(source).toContain('readMonitorListWithQuery(fallbackQuery)');
-    expect(source).toContain('readMonitorListWithQuery(selectAllQuery)');
+    expect(source).toContain('readMonitorListWithQuery(selectAllQuery, { selectionPage: true })');
     expect(source).not.toContain('apiMessageGet<PageResult<Monitor>>(monitorListUrl)');
     expect(source).not.toContain('apiMessageGet<PageResult<Monitor>>(buildMonitorUrl(fallbackQuery))');
     expect(source).not.toContain('apiMessageGet<PageResult<Monitor>>(buildMonitorUrl(selectAllQuery))');
@@ -2813,6 +2894,7 @@ describe('monitors page', () => {
     const source = readFileSync(resolve(process.cwd(), 'app/monitors/monitor-manage-page.tsx'), 'utf8');
 
     expect(source).toContain('HzExplorerFrame');
+    expect(source).toContain("skipLinkLabel={t('app.frame.skip-to-workbench')}");
     expect(source).toContain('HzMonitorFilterBar');
     expect(source).toContain('HzBatchToolbar');
     expect(source).toContain('HzPaginationBar');
@@ -2844,6 +2926,8 @@ describe('monitors page', () => {
     expect(source).not.toContain("nextLabel={t('common.next')}");
     expect(source).not.toContain('flex flex-wrap items-center justify-between gap-3 border-t border-[var(--hz-ui-line-soft)] px-3 py-2.5');
     expect(source).toContain('data-monitor-manage-primary-action-owner="hertzbeat-ui-button"');
+    expect(source).toContain('data-monitor-manage-primary-action="import"');
+    expect(source).toContain('data-monitor-manage-import-empty-state-action="available"');
     expect(source).toContain('data-monitor-manage-primary-action="new-monitor-link"');
     expect(source).toContain('data-monitor-manage-primary-action="new-monitor-picker"');
     expect(source).toContain('data-monitor-manage-primary-action="entity-return"');
@@ -2859,6 +2943,8 @@ describe('monitors page', () => {
     expect(source).toContain("'data-monitor-app-picker-search-owner': 'hertzbeat-ui-input'");
     expect(source).toContain("'data-monitor-app-picker-search-action': 'filter'");
     expect(source).toContain("'data-monitors-app-picker-search-input': 'true'");
+    expect(source).toContain("itemCount: total => t('monitors.app-picker.item-count', { count: total })");
+    expect(source).not.toContain("`${total} ${t('monitors.app-picker.item-count')}`");
     expect(source).toContain('handleStatusFilterChange');
     expect(source).toContain("'data-monitors-status-filter-autosubmit': 'true'");
     expect(source).toContain("appPickerMode === 'filter'");
@@ -2933,6 +3019,12 @@ describe('monitors page', () => {
     expect(source).not.toContain(expectedT('monitor.scrape'));
     expect(source).toContain("id: 'import'");
     expect(source).toContain('onSelect: handleImportClick');
+    expect(source).toContain("const MONITOR_IMPORT_FILE_ACCEPT = '.json,.yaml,.yml,.xlsx';");
+    expect(source).toContain('accept={MONITOR_IMPORT_FILE_ACCEPT}');
+    expect(source).toContain('function isMonitorImportFile(file: File)');
+    expect(source).toContain("file.name.trim().toLowerCase()");
+    expect(source).toContain("name.endsWith('.yml')");
+    expect(source).toContain("t('monitor.manage.import.invalid-file')");
     expect(source).toContain('importMonitorsFromFacade(api.monitors.import, file)');
     expect(source).toContain("t('common.notify.import-submitted', { taskName: file.name })");
     expect(source).toContain("t('common.notify.import-success-detail', { taskName: file.name })");
@@ -2986,6 +3078,10 @@ describe('monitors page', () => {
     expect(source).toContain('data-monitor-row-action-menu-clearance="floating-overlay-no-table-crop"');
     expect(source).toContain('data-monitor-row-action-menu-trigger="angular-ellipsis-dropdown"');
     expect(source).toContain('data-monitor-row-action-menu-panel="angular-nz-dropdown-menu"');
+    expect(source).toContain('function MonitorRowActionItem');
+    expect(source).not.toContain('function MonitorRowActionHelpItem');
+    expect(source).not.toContain('data-monitor-row-action-help={help.id}');
+    expect(source).not.toContain('rowActionHelp');
     expect(source).toContain('HzButtonLink');
     expect(source).toContain('HzTableRowActionButton');
     expect(source).toContain('component={Link}');
@@ -3020,7 +3116,13 @@ describe('monitors page', () => {
     expect(source).toContain("onSelect: () => openBatchResponseConfirm('pause')");
     expect(source).toContain('data-monitor-batch-response-confirm="angular-modal-confirm"');
     expect(source).toContain('data-monitor-batch-response-confirm-owner="hertzbeat-ui-confirm-dialog"');
-    expect(source).toContain("title={batchResponseConfirm?.action === 'enable' ? t('common.confirm.enable-batch') : t('common.confirm.cancel-batch')}");
+    expect(source).toContain("t('monitors.response.enable-batch.title')");
+    expect(source).toContain("t('monitors.response.pause-batch.title')");
+    expect(source).toContain("t('monitors.response.enable-batch.copy')");
+    expect(source).toContain("t('monitors.response.pause-batch.copy')");
+    expect(source).toContain('data-monitor-batch-response-confirm-target-list="selected-monitor-names"');
+    expect(source).toContain('data-monitor-batch-response-confirm-target-name={String(item.id)}');
+    expect(source).not.toContain("t('common.confirm.cancel-batch')");
     expect(source).not.toContain('router.push(buildMonitorEditHref');
     expect(source).not.toContain("eyebrow={t('monitors.kicker')}");
     expect(source).toContain('data-monitors-open-detail-action="true"');
@@ -3055,14 +3157,22 @@ describe('monitors page', () => {
     const html = await renderMonitorsPage();
     const batchToolbar = html.match(/<div[^>]*data-hz-ui="batch-toolbar"[\s\S]*?<\/div><\/div>/)?.[0] ?? '';
     const batchButtons = html.match(/<button[^>]*data-hz-batch-action="[^"]+"[^>]*>/g) ?? [];
+    const batchHelpTriggers = html.match(/data-hz-batch-action-help-trigger="hertzbeat-ui-action-help"/g) ?? [];
     const source = readFileSync(resolve(process.cwd(), 'app/monitors/monitor-manage-page.tsx'), 'utf8');
 
+    expect(source).not.toContain('function monitorManageActionHelp');
+    expect(source).not.toContain('data-monitor-manage-action-help={id}');
+    expect(source).not.toContain("'data-monitor-manage-batch-action-help': id");
     expect(source).toContain('data-monitor-manage-batch-owner="hertzbeat-ui-batch-toolbar"');
     expect(source).toContain('variant="embedded"');
+    expect(source).not.toContain('monitorManageBatchHelp');
     expect(source).not.toContain('className="border-x-0 border-t-0"');
     expect(html).toContain('data-monitor-manage-batch-owner="hertzbeat-ui-batch-toolbar"');
     expect(html).toContain('data-hz-batch-toolbar-surface="transparent-lined"');
     expect(html).toContain('data-hz-batch-toolbar-variant="embedded"');
+    expect(html).not.toContain('data-monitor-manage-batch-action-help=');
+    expect(html).not.toContain('data-monitor-manage-batch-action-help-tooltip=');
+    expect(batchHelpTriggers.length).toBe(0);
     expect(source).not.toContain('flex items-center justify-between border-b border-[var(--hz-ui-line-soft)] px-3 py-2 text-[11px] uppercase tracking-[0.14em] text-[#727b8c]');
     expect(source).not.toContain("t('monitors.section.list.head')");
     expect(html).not.toContain('Current results');
@@ -3082,6 +3192,41 @@ describe('monitors page', () => {
     expect(html).toContain('data-monitor-manage-batch-action="export-selected"');
     expect(html).toContain('data-monitor-manage-batch-action="export-all"');
     expect(html).toContain('data-monitor-manage-batch-action="delete"');
+  });
+
+  it('does not add explanatory question marks to ordinary row monitor actions', async () => {
+    const html = await renderMonitorsPage();
+    const source = readFileSync(resolve(process.cwd(), 'app/monitors/monitor-manage-page.tsx'), 'utf8');
+
+    expect(source).not.toContain('CircleHelp');
+    expect(source).not.toContain('data-monitor-manage-action-help-style="icon-after-action"');
+    expect(source).not.toContain('data-monitor-manage-action-help-visual="circle-help-icon"');
+    expect(source).not.toContain('data-monitor-manage-action-help-icon="lucide-circle-help"');
+    expect(source).not.toContain('<span aria-hidden="true" className="text-[11px] font-semibold leading-none">');
+    expect(source).not.toContain('rounded-full text-[#b8c7df]');
+    expect(html).not.toContain('data-monitor-row-action-help=');
+    expect(html).not.toContain('data-monitor-manage-action-help-style="icon-after-action"');
+    expect(html).not.toContain('data-monitor-manage-action-help-visual="circle-help-icon"');
+    expect(html).not.toContain('data-monitor-manage-action-help-icon="lucide-circle-help"');
+    expect(html).not.toContain('lucide-circle-help');
+    expect(html).toContain('data-monitor-row-action="detail"');
+    expect(html).toContain('data-monitor-row-action="edit"');
+    expect(html).toContain('data-monitor-row-action="copy"');
+    expect(html).toContain('data-monitor-row-response-action="pause"');
+    expect(html).toContain('data-monitor-row-delete-action="single"');
+  });
+
+  it('keeps top-level monitor actions self-explanatory without extra question marks', async () => {
+    const html = await renderMonitorsPage();
+    const source = readFileSync(resolve(process.cwd(), 'app/monitors/monitor-manage-page.tsx'), 'utf8');
+
+    expect(source).not.toContain("monitorManageActionHelp(t, 'refresh')");
+    expect(source).not.toContain("monitorManageActionHelp(t, 'new')");
+    expect(html).not.toContain('data-monitor-manage-action-help=');
+    expect(html).not.toContain('data-monitor-manage-action-help-trigger="hertzbeat-ui-action-help"');
+    expect(html).not.toContain('data-monitor-manage-action-help-tooltip=');
+    expect(html).toContain('data-monitor-manage-manual-refresh-action="sync"');
+    expect(html).toContain('data-monitor-manage-primary-action="new-monitor-picker"');
   });
 
   it('routes the main monitor results through the shared HzDataTable instead of an evidence-list card surrogate', () => {
@@ -3256,9 +3401,34 @@ describe('monitors page', () => {
     expect(source).toContain("t('monitors.delete.copy')");
     expect(source).toContain("t('monitors.delete.confirm')");
     expect(source).toContain("t('monitors.delete.selected', { count: deleteDialogCount })");
+    expect(source).toContain('const deleteDialogTargets = deleteDialogIds');
+    expect(source).toContain('data-monitor-delete-confirm-target-list="selected-monitor-names"');
+    expect(source).toContain('data-monitor-delete-confirm-target-name={String(item.id)}');
+    expect(source).toContain("t('monitors.delete.targets')");
+    expect(source).toContain("t('monitors.delete.targets-more', { count: deleteDialogHiddenTargetCount })");
     expect(source).toContain("t('common.button.cancel')");
     expect(source).not.toContain('className="space-y-3"');
     expect(source).not.toContain('border border-[var(--hz-ui-line-soft)] bg-[var(--hz-ui-surface-soft)] px-3 py-2 font-semibold text-[#f3f6fb]');
+  });
+
+  it('removes explicitly deleted monitor ids from the local disappeared-row cache before refresh', () => {
+    const source = readFileSync(resolve(process.cwd(), 'app/monitors/monitor-manage-page.tsx'), 'utf8');
+
+    expect(source).toContain('const removeDeletedMonitorsFromPreviousState = useCallback(');
+    expect(source).toContain('previousMonitorsRef.current = previousMonitorsRef.current.filter(monitor => !deletedIdSet.has(monitor.id));');
+    expect(source).toContain('const refreshAfterDelete = (deletedIds: number[]) => {');
+    expect(source).toContain('removeDeletedMonitorsFromPreviousState(deletedIds);');
+    expect(source).toContain('refreshAfterDelete(targetIds);');
+    expect(source).not.toContain('refreshAfterDelete(targetIds.length);');
+  });
+
+  it('clears disappeared-row cache when the monitor query route changes', () => {
+    const source = readFileSync(resolve(process.cwd(), 'app/monitors/monitor-manage-page.tsx'), 'utf8');
+
+    expect(source).toContain('disappearedMonitorTimersRef.current.forEach(timerId => window.clearTimeout(timerId));');
+    expect(source).toContain('disappearedMonitorTimersRef.current.clear();');
+    expect(source).toContain('previousMonitorsRef.current = [];');
+    expect(source).toContain('}, [monitorListUrl]);');
   });
 
   it('routes single-row enable and pause through the Angular modal confirmation contract', () => {
@@ -3279,8 +3449,12 @@ describe('monitors page', () => {
     expect(source).toContain('data-monitor-row-response-confirm-ok="angular-nz-ok-danger-primary"');
     expect(source).toContain('data-monitor-batch-response-confirm-closable="angular-nz-closable-false"');
     expect(source).toContain('data-monitor-batch-response-confirm-ok="angular-nz-ok-danger-primary"');
-    expect(source).toContain("title={rowResponseConfirm?.action === 'enable' ? t('common.confirm.enable') : t('common.confirm.cancel')}");
-    expect(source).toContain("confirmLabel={t('common.button.ok')}");
+    expect(source).toContain("t('monitors.response.enable.title')");
+    expect(source).toContain("t('monitors.response.pause.title')");
+    expect(source).toContain("t('monitors.response.enable.copy')");
+    expect(source).toContain("t('monitors.response.pause.copy')");
+    expect(source).toContain("t('monitors.response.enable.confirm')");
+    expect(source).toContain("t('monitors.response.pause.confirm')");
     expect(source).toContain("cancelLabel={t('common.button.cancel')}");
     expect(source).toContain('data-monitor-row-response-confirm-selected-owner="hertzbeat-ui-inline-feedback"');
     expect(source).not.toContain('onClick={() => void handleEnableRow(item)}');

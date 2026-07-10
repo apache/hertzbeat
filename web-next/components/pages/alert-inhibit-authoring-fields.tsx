@@ -9,7 +9,9 @@ import {
   AlertAuthoringActionPill,
   AlertAuthoringCallout,
   AlertAuthoringFieldLabel,
+  AlertAuthoringInlineHelp,
   AlertAuthoringPanel,
+  AlertAuthoringRequiredMark,
   AlertAuthoringValuePill
 } from './alert-authoring-primitives';
 import type { AlertInhibitFormDraft } from '../../lib/alert-inhibit/controller';
@@ -35,6 +37,54 @@ type AlertInhibitAuthoringFieldsProps = {
   onClearEqual?: () => void;
   labelOptions?: AlertLabelOptions;
 };
+
+type AlertInhibitFieldRequirement = 'required' | 'optional';
+type AlertInhibitFieldInputMode = 'manual' | 'selection' | 'manual-or-selection';
+
+function AlertInhibitFieldTitle({
+  t,
+  field,
+  label,
+  requirement,
+  inputMode
+}: {
+  t: Translator;
+  field: string;
+  label: string;
+  requirement: AlertInhibitFieldRequirement;
+  inputMode: AlertInhibitFieldInputMode;
+}) {
+  return (
+    <span
+      data-alert-inhibit-authoring-field-title={field}
+      className="inline-flex min-w-0 flex-wrap items-center gap-1.5"
+    >
+      <span>
+        {label}
+        {requirement === 'required' ? <AlertAuthoringRequiredMark /> : null}
+      </span>
+      <AlertAuthoringInlineHelp
+        id={`alert-inhibit-authoring-${field}-help`}
+        label={t('alert.inhibit.field.help-aria', { field: label })}
+        body={t(`alert.inhibit.field.${field}.help`)}
+        impact={t(`alert.inhibit.field.${field}.impact`)}
+        data-alert-inhibit-authoring-field-help={field}
+      />
+      <span
+        data-alert-inhibit-authoring-field-requirement={requirement}
+        className="rounded-[4px] bg-[#182238] px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#c8d4ee]"
+      >
+        {t(`alert.inhibit.field.requirement.${requirement}`)}
+      </span>
+      <span
+        data-alert-inhibit-authoring-field-input-mode={inputMode}
+        className="rounded-[4px] bg-[#141922] px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#9ba7bc]"
+      >
+        {t(`alert.inhibit.field.input-mode.${inputMode}`)}
+      </span>
+    </span>
+  );
+}
 
 export function AlertInhibitAuthoringFields({
   t,
@@ -115,7 +165,13 @@ export function AlertInhibitAuthoringFields({
 
       <div data-alert-inhibit-authoring-form="single-column" className="space-y-3">
         <AlertAuthoringFieldLabel>
-          <span>{t('alert.inhibit.name')}</span>
+          <AlertInhibitFieldTitle
+            t={t}
+            field="name"
+            label={t('alert.inhibit.name')}
+            requirement="required"
+            inputMode="manual"
+          />
           <Input
             name="inhibit_name"
             value={draft.name}
@@ -129,12 +185,26 @@ export function AlertInhibitAuthoringFields({
           <Checkbox
             name="inhibit_enable"
             checked={draft.enable}
-            label={t('common.enable')}
+            label={(
+              <AlertInhibitFieldTitle
+                t={t}
+                field="enable"
+                label={t('common.enable')}
+                requirement="required"
+                inputMode="selection"
+              />
+            )}
             onChange={event => onDraftChange({ ...draft, enable: event.target.checked })}
           />
         </div>
         <AlertAuthoringFieldLabel>
-          <span>{t('alert.inhibit.source_labels')}</span>
+          <AlertInhibitFieldTitle
+            t={t}
+            field="source-labels"
+            label={t('alert.inhibit.source_labels')}
+            requirement="required"
+            inputMode="manual-or-selection"
+          />
           <div data-alert-inhibit-source-label-selector="searchable-label-record">
             <LabelRecordInput
               name="inhibit_source_labels"
@@ -147,7 +217,13 @@ export function AlertInhibitAuthoringFields({
           </div>
         </AlertAuthoringFieldLabel>
         <AlertAuthoringFieldLabel>
-          <span>{t('alert.inhibit.target_labels')}</span>
+          <AlertInhibitFieldTitle
+            t={t}
+            field="target-labels"
+            label={t('alert.inhibit.target_labels')}
+            requirement="required"
+            inputMode="manual-or-selection"
+          />
           <div data-alert-inhibit-target-label-selector="searchable-label-record">
             <LabelRecordInput
               name="inhibit_target_labels"
@@ -160,7 +236,13 @@ export function AlertInhibitAuthoringFields({
           </div>
         </AlertAuthoringFieldLabel>
         <AlertAuthoringFieldLabel>
-          <span>{t('alert.inhibit.equal_labels')}</span>
+          <AlertInhibitFieldTitle
+            t={t}
+            field="equal-labels"
+            label={t('alert.inhibit.equal_labels')}
+            requirement="required"
+            inputMode="manual-or-selection"
+          />
           <div data-alert-inhibit-equal-label-selector="searchable-tags">
             <TagInput
               name="inhibit_equal_labels"

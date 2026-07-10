@@ -106,7 +106,7 @@ describe('monitor view model', () => {
         },
         t
       )
-    ).toBe(t('entity.monitor.workbench.copy.healthy', { total: 3 }));
+    ).toBe(t('entity.monitor.workbench.copy.fallback', { total: 3 }));
   });
 
   it('falls back from down-only entity workbench mode only when the first abnormal pass is empty', () => {

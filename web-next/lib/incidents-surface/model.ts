@@ -135,9 +135,10 @@ export function buildIncidentsDomainModel(t: Translator): IncidentsDomainModel {
       { title: t('incidents.checklist.drilldown.title'), copy: t('incidents.checklist.drilldown.copy'), meta: t('incidents.checklist.drilldown.meta') }
     ],
     nextHops: [
+      { label: t('setting.status.title'), href: '/setting/status?tab=incident', variant: 'primary' },
       { label: t('menu.dashboard.back'), href: '/overview', variant: 'subtle' },
       { label: t('menu.log.manage'), href: '/log/manage', variant: 'default' },
-      { label: t('menu.trace.manage'), href: '/trace/manage', variant: 'primary' }
+      { label: t('menu.trace.manage'), href: '/trace/manage', variant: 'default' }
     ]
   };
 }

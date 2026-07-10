@@ -27,6 +27,24 @@ const baseDraft: EntityDto = {
   relations: []
 };
 
+function buildSaveActions(overrides: Partial<Parameters<typeof saveEntityPayload>[2]> = {}): Parameters<typeof saveEntityPayload>[2] {
+  return {
+    createEntity: async () => 42,
+    updateEntity: async () => undefined,
+    buildCreateSuccessMessage: id => `created:${id}`,
+    saveSuccessMessage: 'saved',
+    nameRequiredMessage: 'Entity name is required',
+    jsonObjectRequiredMessage: (label, index) => `${label} item ${index} must be an object`,
+    identityIncompleteMessage: index => `Identity item ${index} is incomplete`,
+    monitorBindIncompleteMessage: index => `Monitor bind item ${index} is incomplete`,
+    relationIncompleteMessage: index => `Relation item ${index} is incomplete`,
+    identityDuplicateMessage: index => `Identity item ${index} is duplicate`,
+    monitorBindDuplicateMessage: index => `Monitor bind item ${index} is duplicate`,
+    relationDuplicateMessage: index => `Relation item ${index} is duplicate`,
+    ...overrides
+  };
+}
+
 describe('entity editor controller', () => {
   it('exposes stable resource URLs for editor cache keys', () => {
     expect(buildEntityEditorCatalogSuggestionsUrl()).toBe('/entities/catalog-suggestions?limit=120');
@@ -202,6 +220,84 @@ describe('entity editor controller', () => {
     expect(readSeedMonitor).toHaveBeenCalledWith('42');
   });
 
+  it('builds a monitor-seeded draft for discovery candidate creation', async () => {
+    const readSeedMonitor = vi.fn(async (monitorId: string) => {
+      expect(monitorId).toBe('42');
+      return {
+        id: 42,
+        name: 'checkout-discovery-monitor',
+        app: 'website',
+        instance: 'checkout.example.com:443',
+        status: 1
+      };
+    });
+
+    await expect(
+      buildEntityEditorNewDraftFromFacade(readSeedMonitor as any, {
+        source: 'discovery-candidate',
+        monitorId: '42'
+      })
+    ).resolves.toEqual(
+      expect.objectContaining({
+        entity: expect.objectContaining({
+          type: 'endpoint',
+          name: 'checkout.example.com:443',
+          displayName: 'checkout-discovery-monitor',
+          system: 'website',
+          source: 'otel_resource'
+        }),
+        identities: expect.arrayContaining([
+          expect.objectContaining({ identityKey: 'endpoint.url', identityValue: 'checkout.example.com:443' })
+        ]),
+        monitorBinds: expect.arrayContaining([expect.objectContaining({ monitorId: 42, source: 'otel_resource' })])
+      })
+    );
+    expect(readSeedMonitor).toHaveBeenCalledWith('42');
+  });
+
+  it('does not invent an endpoint.url identity when a discovery candidate has no trustworthy host instance', async () => {
+    const readSeedMonitor = vi.fn(async (monitorId: string) => {
+      expect(monitorId).toBe('42');
+      return {
+        id: 42,
+        name: 'checkout-discovery-monitor',
+        app: 'website',
+        instance: 'null:4223',
+        status: 2
+      };
+    });
+
+    const draft = await buildEntityEditorNewDraftFromFacade(readSeedMonitor as any, {
+      source: 'discovery-candidate',
+      monitorId: '42'
+    });
+
+    expect(draft.entity).toEqual(
+      expect.objectContaining({
+        displayName: 'checkout-discovery-monitor',
+        system: 'website',
+        source: 'otel_resource'
+      })
+    );
+    expect(draft.identities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          identityKey: 'service.name',
+          identityValue: 'checkout-discovery-monitor'
+        })
+      ])
+    );
+    expect(draft.identities).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          identityKey: 'endpoint.url'
+        })
+      ])
+    );
+    expect(JSON.stringify(draft)).not.toContain('null:4223');
+    expect(readSeedMonitor).toHaveBeenCalledWith('42');
+  });
+
   it('keeps the reusable manual draft when the monitor facade seed endpoint is missing', async () => {
     const readSeedMonitor = async () => {
       throw new Error('GET /monitor/42 failed with 404');
@@ -259,7 +355,7 @@ describe('entity editor controller', () => {
       expect.objectContaining({
         entity: expect.objectContaining({
           type: 'service',
-          name: 'billing-api',
+          name: 'billing',
           displayName: 'billing-api',
           namespace: 'commerce',
           environment: 'prod',
@@ -291,26 +387,128 @@ describe('entity editor controller', () => {
     expect(apiGet).not.toHaveBeenCalled();
   });
 
-  it('creates new entities and returns the translated success message', async () => {
-    await expect(
-      saveEntityPayload('new', baseDraft, {
-        createEntity: async () => 42,
-        updateEntity: async () => undefined,
-        buildCreateSuccessMessage: id => `created:${id}`,
-        saveSuccessMessage: 'saved'
+  it('keeps OTLP service.name candidate drafts aligned with backend identity canonicalization', async () => {
+    const apiGet = vi.fn();
+
+    const draft = await buildEntityEditorNewDraft(apiGet as any, {
+      source: 'otlp-candidate',
+      identityKey: 'service.name',
+      identityValue: 'checkout-api',
+      serviceName: 'checkout-api-copy',
+      serviceNamespace: 'payments',
+      environment: 'prod'
+    } as any);
+
+    expect(draft.entity.name).toBe('checkout-api');
+    expect(draft.entity.displayName).toBe('checkout-api-copy');
+    expect(draft.identities[0]).toEqual(
+      expect.objectContaining({
+        identityKey: 'service.name',
+        identityValue: 'checkout-api',
+        primaryIdentity: true
       })
-    ).resolves.toBe('created:42');
+    );
+  });
+
+  it('creates new entities and returns the translated success message', async () => {
+    await expect(saveEntityPayload('new', baseDraft, buildSaveActions())).resolves.toBe('created:42');
+  });
+
+  it('blocks whitespace-only entity names before create requests', async () => {
+    const createEntity = vi.fn(async () => 42);
+
+    await expect(
+      saveEntityPayload('new', { ...baseDraft, entity: { ...baseDraft.entity, name: '   ' } }, buildSaveActions({ createEntity }))
+    ).rejects.toThrowError('Entity name is required');
+    expect(createEntity).not.toHaveBeenCalled();
+  });
+
+  it('blocks empty identity objects before create requests', async () => {
+    const createEntity = vi.fn(async () => 42);
+
+    await expect(
+      saveEntityPayload('new', { ...baseDraft, identities: [{}] }, buildSaveActions({ createEntity }))
+    ).rejects.toThrowError('Identities item 1 must be an object');
+    expect(createEntity).not.toHaveBeenCalled();
+  });
+
+  it('blocks incomplete monitor bindings before create requests', async () => {
+    const createEntity = vi.fn(async () => 42);
+
+    await expect(
+      saveEntityPayload('new', { ...baseDraft, monitorBinds: [{ bindType: 'manual' }] }, buildSaveActions({ createEntity }))
+    ).rejects.toThrowError('Monitor bind item 1 is incomplete');
+    expect(createEntity).not.toHaveBeenCalled();
+  });
+
+  it('blocks incomplete relations before create requests', async () => {
+    const createEntity = vi.fn(async () => 42);
+
+    await expect(
+      saveEntityPayload('new', { ...baseDraft, relations: [{ relationType: 'depends_on' }] }, buildSaveActions({ createEntity }))
+    ).rejects.toThrowError('Relation item 1 is incomplete');
+    expect(createEntity).not.toHaveBeenCalled();
+  });
+
+  it('blocks duplicate identities before create requests', async () => {
+    const createEntity = vi.fn(async () => 42);
+
+    await expect(
+      saveEntityPayload(
+        'new',
+        {
+          ...baseDraft,
+          identities: [
+            { identityKey: 'service.name', identityValue: 'checkout-api' },
+            { identityKey: 'service.name', identityValue: 'checkout-api' }
+          ]
+        },
+        buildSaveActions({ createEntity })
+      )
+    ).rejects.toThrowError('Identity item 2 is duplicate');
+    expect(createEntity).not.toHaveBeenCalled();
+  });
+
+  it('blocks duplicate monitor bindings before create requests', async () => {
+    const createEntity = vi.fn(async () => 42);
+
+    await expect(
+      saveEntityPayload(
+        'new',
+        {
+          ...baseDraft,
+          monitorBinds: [
+            { monitorId: 42, bindType: 'manual' },
+            { id: 42, bindType: 'manual' }
+          ]
+        },
+        buildSaveActions({ createEntity })
+      )
+    ).rejects.toThrowError('Monitor bind item 2 is duplicate');
+    expect(createEntity).not.toHaveBeenCalled();
+  });
+
+  it('blocks duplicate relations before create requests', async () => {
+    const createEntity = vi.fn(async () => 42);
+
+    await expect(
+      saveEntityPayload(
+        'new',
+        {
+          ...baseDraft,
+          relations: [
+            { relationType: 'depends_on', targetRef: 'service:checkout' },
+            { type: 'depends_on', target: 'service:checkout' }
+          ]
+        },
+        buildSaveActions({ createEntity })
+      )
+    ).rejects.toThrowError('Relation item 2 is duplicate');
+    expect(createEntity).not.toHaveBeenCalled();
   });
 
   it('updates existing entities and returns the save-success message', async () => {
-    await expect(
-      saveEntityPayload('edit', baseDraft, {
-        createEntity: async () => 42,
-        updateEntity: async () => undefined,
-        buildCreateSuccessMessage: id => `created:${id}`,
-        saveSuccessMessage: 'saved'
-      })
-    ).resolves.toBe('saved');
+    await expect(saveEntityPayload('edit', baseDraft, buildSaveActions())).resolves.toBe('saved');
   });
 });
 

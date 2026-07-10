@@ -69,6 +69,21 @@ class EntityListCatalogQuerySourceOwnershipTest {
         assertTrue(querySource.contains("entityWorkspaceQueryService.findEntityPage("));
         assertTrue(querySource.contains("buildEntitySpecification"));
         assertTrue(querySource.contains("buildSearchPredicates"));
+        assertTrue(querySource.contains("for (String normalizedSearch : normalizeSearchTextVariants(search))"),
+                "Catalog search should normalize exact copied endpoint names before predicate construction");
+        assertTrue(querySource.contains("URLDecoder.decode(trimmedSearch, StandardCharsets.UTF_8)"),
+                "Catalog search should tolerate URL-encoded copied endpoint names from the BFF boundary");
+        assertTrue(querySource.contains("normalizedSearch.replace(\"localhost\", \"127.0.0.1\")"),
+                "Catalog search should treat localhost and loopback endpoint names as equivalent");
+        assertTrue(querySource.contains("criteriaBuilder.equal(criteriaBuilder.lower(root.get(\"name\")), normalizedSearch)"),
+                "Catalog search should exact-match entity names such as copied endpoint IP:port values");
+        assertTrue(querySource.contains(
+                "criteriaBuilder.equal(criteriaBuilder.lower(root.get(\"displayName\")), normalizedSearch)"),
+                "Catalog search should exact-match display names before falling back to fuzzy LIKE");
+        assertTrue(querySource.contains("normalizedSearch.split(\"[^a-z0-9]+\")"),
+                "Catalog search should tokenize copied endpoint names such as 127.0.0.1:18608");
+        assertTrue(querySource.contains("criteriaBuilder.and(nameTokenPredicates.toArray(new Predicate[0]))"),
+                "Catalog search should require all copied endpoint name tokens to match the same field");
         assertTrue(querySource.contains("TYPE_API"));
         assertTrue(querySource.contains("TYPE_ENDPOINT"));
         assertTrue(querySource.contains("Longs.tryParse(search)"));

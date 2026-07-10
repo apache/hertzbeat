@@ -23,6 +23,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 import org.apache.hertzbeat.common.entity.manager.EntityMonitorBind;
 import org.apache.hertzbeat.manager.dao.EntityMonitorBindDao;
 import org.junit.jupiter.api.Test;
@@ -58,6 +59,30 @@ class EntityMonitorBindQueryServiceTest {
     }
 
     @Test
+    void findMonitorBindsByEntityIdsBatchesCurrentPageRows() {
+        List<Long> entityIds = List.of(301L, 302L);
+        EntityMonitorBind firstBind = EntityMonitorBind.builder()
+                .id(401L)
+                .entityId(301L)
+                .monitorId(501L)
+                .build();
+        EntityMonitorBind secondBind = EntityMonitorBind.builder()
+                .id(402L)
+                .entityId(302L)
+                .monitorId(502L)
+                .build();
+        when(entityMonitorBindDao.findAllByEntityIdInOrderByEntityIdAscIdAsc(entityIds))
+                .thenReturn(List.of(firstBind, secondBind));
+
+        Map<Long, List<EntityMonitorBind>> bindsByEntityId =
+                entityMonitorBindQueryService.findMonitorBindsByEntityIds(entityIds);
+
+        assertEquals(List.of(firstBind), bindsByEntityId.get(301L));
+        assertEquals(List.of(secondBind), bindsByEntityId.get(302L));
+        verify(entityMonitorBindDao).findAllByEntityIdInOrderByEntityIdAscIdAsc(entityIds);
+    }
+
+    @Test
     void findMonitorBindsByMonitorIdReturnsPersistedBinds() {
         EntityMonitorBind monitorBind = EntityMonitorBind.builder()
                 .id(402L)
@@ -83,5 +108,15 @@ class EntityMonitorBindQueryServiceTest {
 
         assertEquals(2L, entityMonitorBindQueryService.countMonitorBinds(301L));
         verify(entityMonitorBindDao).countByEntityId(301L);
+    }
+
+    @Test
+    void countMonitorBindsByEntityIdsBatchesCurrentPageRows() {
+        List<Long> entityIds = List.of(301L, 302L);
+        when(entityMonitorBindDao.countByEntityIdInGroupByEntityId(entityIds))
+                .thenReturn(List.<Object[]>of(new Object[] {301L, 2L}, new Object[] {302L, 1L}));
+
+        assertEquals(Map.of(301L, 2L, 302L, 1L), entityMonitorBindQueryService.countMonitorBindsByEntityIds(entityIds));
+        verify(entityMonitorBindDao).countByEntityIdInGroupByEntityId(entityIds);
     }
 }

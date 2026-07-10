@@ -48,6 +48,70 @@ describe('monitor manage controller', () => {
     expect(readMonitorList).toHaveBeenCalledWith(query);
   });
 
+  it('trims oversized monitor list payloads to the supported page size while preserving totals', async () => {
+    const content = Array.from({ length: 120 }, (_, index) => ({
+      id: index + 1,
+      name: `monitor-${index + 1}`
+    }));
+    const readMonitorList = vi.fn().mockResolvedValue({
+      content,
+      totalElements: 120,
+      pageIndex: 0,
+      pageSize: 120
+    });
+    const query = {
+      search: 'checkout',
+      app: 'website',
+      labels: '',
+      status: '',
+      pageIndex: '0',
+      pageSize: '50',
+      entityId: '',
+      entityName: '',
+      returnTo: ''
+    };
+
+    await expect(loadMonitorListFromFacade(readMonitorList as any, query)).resolves.toEqual({
+      content: content.slice(0, 50),
+      totalElements: 120,
+      pageIndex: 0,
+      pageSize: 50
+    });
+    expect(readMonitorList).toHaveBeenCalledWith(query);
+  });
+
+  it('allows internal bulk selection reads to use the requested total as page size', async () => {
+    const content = Array.from({ length: 26 }, (_, index) => ({
+      id: index + 1,
+      name: `monitor-${index + 1}`
+    }));
+    const readMonitorList = vi.fn().mockResolvedValue({
+      content,
+      totalElements: 26,
+      pageIndex: 0,
+      pageSize: 26
+    });
+    const query = {
+      search: '',
+      app: '',
+      labels: '',
+      status: '',
+      pageIndex: '0',
+      pageSize: '26',
+      entityId: '',
+      entityName: '',
+      returnTo: ''
+    };
+
+    await expect(loadMonitorListFromFacade(readMonitorList as any, query, { allowUnsupportedPageSize: true })).resolves.toEqual({
+      content,
+      totalElements: 26,
+      pageIndex: 0,
+      pageSize: 26
+    });
+    expect(readMonitorList).toHaveBeenCalledWith(query);
+  });
+
   it('builds copy url and posts null payload', async () => {
     const apiPost = vi.fn().mockResolvedValue({ id: 108 });
 

@@ -18,9 +18,14 @@
 package org.apache.hertzbeat.manager.service.entity;
 
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.apache.hertzbeat.common.entity.manager.EntityRelation;
 import org.apache.hertzbeat.manager.dao.EntityRelationDao;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 /**
  * Owns persisted relation evidence lookup for entity read-model boundaries.
@@ -38,7 +43,36 @@ public class EntityRelationQueryService {
         return entityRelationDao.findBySourceEntityIdOrTargetEntityId(entityId, entityId);
     }
 
+    public List<EntityRelation> findEntityRelations(Long entityId, int limit) {
+        if (limit <= 0) {
+            return List.of();
+        }
+        return entityRelationDao.findBySourceEntityIdOrTargetEntityId(
+                entityId, entityId, PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "id")));
+    }
+
     public long countEntityRelations(Long entityId) {
         return entityRelationDao.countBySourceEntityIdOrTargetEntityId(entityId, entityId);
+    }
+
+    public Map<Long, Long> countEntityRelationsByEntityIds(List<Long> entityIds) {
+        if (CollectionUtils.isEmpty(entityIds)) {
+            return Map.of();
+        }
+        Map<Long, Long> counts = new LinkedHashMap<>();
+        mergeCounts(counts, entityRelationDao.countBySourceEntityIdInGroupBySourceEntityId(entityIds));
+        mergeCounts(counts, entityRelationDao.countByTargetEntityIdInGroupByTargetEntityId(entityIds));
+        return counts;
+    }
+
+    private void mergeCounts(Map<Long, Long> counts, List<Object[]> rows) {
+        if (CollectionUtils.isEmpty(rows)) {
+            return;
+        }
+        for (Object[] row : rows) {
+            Long entityId = (Long) row[0];
+            long count = ((Number) row[1]).longValue();
+            counts.merge(entityId, count, Long::sum);
+        }
     }
 }

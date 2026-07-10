@@ -8,11 +8,16 @@ export type AlertNoticeRouteState = {
   signalContext: SignalRouteContext;
 };
 
+function normalizeSignal(value: string | null | undefined) {
+  return value === 'metrics' || value === 'logs' || value === 'traces' ? value : null;
+}
+
 export function readAlertNoticeRouteState(searchParams: AlertNoticeSearchParams = {}): AlertNoticeRouteState {
   const reader = createCompatSearchParamReader(searchParams);
+  const signal = normalizeSignal(reader.get('signal'));
 
   return {
-    signal: reader.get('signal'),
-    signalContext: readSignalRouteContext(reader)
+    signal,
+    signalContext: signal ? readSignalRouteContext(reader) : {}
   };
 }

@@ -301,6 +301,25 @@ class EntityWorkspaceAccessServiceTest {
     }
 
     @Test
+    void findAccessibleEntityByNameForRequestWorkspaceUsesCurrentRequestScope() {
+        ObserveEntity teamAlphaEntity = ObserveEntity.builder()
+                .id(433L)
+                .type("endpoint")
+                .name("checkout")
+                .workspaceId("team-a")
+                .build();
+        when(entityWorkspaceQueryService.findEntityByName("team-a", "checkout"))
+                .thenReturn(Optional.of(teamAlphaEntity));
+        AuthTokenRequestContext.bindWorkspaceId(" team-a ");
+
+        Optional<ObserveEntity> accessibleEntity =
+                workspaceAccessService.findAccessibleEntityByNameForRequestWorkspace("checkout");
+
+        assertTrue(accessibleEntity.isPresent());
+        assertSame(teamAlphaEntity, accessibleEntity.get());
+    }
+
+    @Test
     void resolveWriteWorkspaceIdPrefersRequestThenSourceThenCurrentThenDefault() {
         AuthTokenRequestContext.bindWorkspaceId(" team-a ");
         assertEquals("team-a", workspaceAccessService.resolveWriteWorkspaceId("team-b", "team-c"));

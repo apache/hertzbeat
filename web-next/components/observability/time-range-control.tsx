@@ -43,6 +43,7 @@ const DEFAULT_TIME_RANGE_PRESET_LABELS: Record<TimeContextPreset, string> = {
 export type TimeRangeControlLabels = {
   preset: string;
   presets: TimeRangePresetLabels;
+  customRange: string;
   relative: string;
   start: string;
   end: string;
@@ -64,6 +65,7 @@ export type TimeRangeControlLabels = {
 const DEFAULT_LABELS: TimeRangeControlLabels = {
   preset: 'Time range',
   presets: DEFAULT_TIME_RANGE_PRESET_LABELS,
+  customRange: 'Custom range',
   relative: 'Relative',
   start: 'Start',
   end: 'End',
@@ -96,6 +98,7 @@ export function buildTimeRangeControlLabels(t: TimeRangeControlTranslator): Time
   return {
     preset: t('time.range.preset'),
     presets: buildTimeRangePresetLabels(t),
+    customRange: t('time.range.custom-range'),
     relative: t('time.range.relative'),
     start: t('time.range.start'),
     end: t('time.range.end'),
@@ -198,7 +201,7 @@ function parseAbsoluteDraft(value: string | undefined) {
 
 function contextToDraft(value: TimeContext, options: { absolutePrecision?: AbsoluteDraftPrecision } = {}) {
   const sanitized = sanitizeTimeContext(value);
-  const customRelative = sanitized.timeRange && !TIME_CONTEXT_PRESETS.some(preset => preset.value === sanitized.timeRange)
+  const customRelative = sanitized.timeRange?.startsWith('last-') && !TIME_CONTEXT_PRESETS.some(preset => preset.value === sanitized.timeRange)
     ? sanitized.timeRange.replace(/^last-/, '')
     : '';
 
@@ -277,16 +280,20 @@ export function TimeRangeControl({
       ...labels?.presets
     }
   };
-  const resolvedPresets = (presets || buildTimeRangePresetOptions(mergedLabels.presets)).map(option => ({
+  const draftOptions = React.useMemo(
+    () => ({ absolutePrecision: variant === 'narrow-rail' ? 'seconds' as const : 'milliseconds' as const }),
+    [variant]
+  );
+  const [draft, setDraft] = React.useState(() => contextToDraft(value, draftOptions));
+  const basePresets = (presets || buildTimeRangePresetOptions(mergedLabels.presets)).map(option => ({
     ...option,
     label: mergedLabels.presets[option.value as TimeContextPreset] || option.label
   }));
+  const hasCustomAbsoluteRange = draft.timeRange === 'custom' && Boolean(draft.start && draft.end);
+  const resolvedPresets = hasCustomAbsoluteRange && !basePresets.some(option => option.value === 'custom')
+    ? [{ value: 'custom', label: mergedLabels.customRange }, ...basePresets]
+    : basePresets;
   const isNarrowRail = variant === 'narrow-rail';
-  const draftOptions = React.useMemo(
-    () => ({ absolutePrecision: isNarrowRail ? 'seconds' as const : 'milliseconds' as const }),
-    [isNarrowRail]
-  );
-  const [draft, setDraft] = React.useState(() => contextToDraft(value, draftOptions));
 
   React.useEffect(() => {
     setDraft(contextToDraft(value, draftOptions));
@@ -324,7 +331,7 @@ export function TimeRangeControl({
   const iconButtonClass =
     'inline-flex h-8 w-8 flex-none items-center justify-center rounded-[3px] border border-[var(--ops-border-color)] bg-transparent text-[var(--ops-text-secondary)] transition-colors hover:border-[var(--ops-border-strong)] hover:bg-[var(--ops-surface-panel)] hover:text-[var(--ops-text-primary)]';
   const rootClass = isNarrowRail
-    ? 'inline-flex max-w-full flex-nowrap items-center justify-end gap-px overflow-visible rounded-[3px] bg-transparent p-0'
+    ? 'inline-flex max-w-full flex-wrap items-center justify-end gap-1 overflow-hidden rounded-[3px] bg-transparent p-0'
     : 'inline-flex max-w-full flex-wrap items-center gap-1.5 rounded-[3px] border border-[var(--ops-border-color)] bg-[var(--ops-surface-panel)] px-2 py-1';
   const presetFrameClass = isNarrowRail ? 'w-[126px]' : 'w-[154px]';
   const presetSelectWidth = isNarrowRail ? 'w-[94px]' : 'w-[126px]';
@@ -351,11 +358,11 @@ export function TimeRangeControl({
       data-time-range-control-labels={labels ? 'localized' : 'default'}
       data-time-range-control-visual={isNarrowRail ? 'grafana-like-narrow-rail' : 'hertzbeat-ui-operator-toolbar'}
       data-time-range-control-density={isNarrowRail ? 'narrow' : 'compact'}
-      data-time-range-control-layout={isNarrowRail ? 'nowrap-top-right-rail' : 'single-row-rail'}
+      data-time-range-control-layout={isNarrowRail ? 'wrapping-top-right-rail' : 'single-row-rail'}
       data-time-range-control-align={isNarrowRail ? 'end' : 'natural'}
-      data-time-range-control-wrap={isNarrowRail ? 'nowrap' : 'wrap'}
+      data-time-range-control-wrap="wrap"
       data-time-range-control-card={isNarrowRail ? 'false' : 'true'}
-      data-time-range-control-overflow={isNarrowRail ? 'fit-without-scroll' : 'wrap'}
+      data-time-range-control-overflow="contained-wrap"
       data-time-range-control-absolute-display={isNarrowRail ? 'local-seconds' : 'local-milliseconds'}
       data-time-range-control-field-labels="sr-only"
       data-time-range-control-manual-entry={showAbsoluteFields ? 'visible' : 'draft-only'}

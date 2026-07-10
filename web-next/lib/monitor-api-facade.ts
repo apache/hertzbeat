@@ -24,8 +24,8 @@ import {
   buildImportMonitorsUrl,
   buildPauseMonitorsUrl
 } from './monitor-manage/controller';
-import { buildMonitorUrl, type MonitorQueryState } from './monitor-manage/query-state';
-import type { CollectorSummary, Monitor, MonitorHistoryData, PageResult, ParamDefine } from './types';
+import { buildMonitorSelectionUrl, buildMonitorUrl, type MonitorQueryState } from './monitor-manage/query-state';
+import type { CollectorSummary, EntityMonitorBindingCandidate, Monitor, MonitorHistoryData, PageResult, ParamDefine } from './types';
 
 type MonitorListQuery = string | URLSearchParams | Record<string, string | number | boolean | undefined | null>;
 
@@ -47,6 +47,7 @@ export const api = {
   monitors: {
     list: <T = PageResult<Monitor>>(query?: MonitorListQuery) => apiMessageGet<T>(appendQuery('/monitors/manage', query)),
     page: <T = PageResult<Monitor>>(query: MonitorQueryState) => apiMessageGet<T>(buildMonitorUrl(query)),
+    selectionPage: <T = PageResult<Monitor>>(query: MonitorQueryState) => apiMessageGet<T>(buildMonitorSelectionUrl(query)),
     detail: <T = Monitor>(monitorId: string | number) => apiMessageGet<T>(buildMonitorDetailUrl(String(monitorId))),
     editorDetail: <T = MonitorDetailResponse>(monitorId: string | number) =>
       apiMessageGet<T>(buildMonitorEditorMonitorUrl(String(monitorId))),
@@ -80,5 +81,9 @@ export const api = {
     exportAll: (type: 'JSON' | 'EXCEL') => apiMessageGet<Blob>(buildExportAllMonitorsUrl(type)),
     exportResponse: (ids: Array<string | number>, type: 'JSON' | 'EXCEL') => apiDownload(buildExportMonitorsUrl(ids, type)),
     exportAllResponse: (type: 'JSON' | 'EXCEL') => apiDownload(buildExportAllMonitorsUrl(type))
+  },
+  entities: {
+    monitorCandidates: <T = EntityMonitorBindingCandidate[]>(monitorId: string | number) =>
+      apiMessageGet<T>(`/entities/monitor/${encodeURIComponent(String(monitorId))}/candidates`)
   }
 };

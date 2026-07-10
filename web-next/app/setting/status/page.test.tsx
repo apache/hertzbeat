@@ -1,20 +1,31 @@
+// @vitest-environment jsdom
+
 import React from 'react';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { act } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTranslatorMock } from '../../../test/i18n-test-helper';
 
 const loadState = vi.hoisted(() => ({
-  lastLoad: null as null | (() => Promise<unknown>)
+  lastLoad: null as null | (() => Promise<unknown>),
+  lastSurfaceProps: null as null | Record<string, any>
 }));
 
 const apiMessageGet = vi.fn();
+const apiMessageDelete = vi.fn();
 const loadStatusManagementData = vi.fn(async () => ({
   org: { id: 1, name: 'HB Status', description: 'Service health', state: 0 },
   components: [{ id: 1, name: 'API' }],
   incidents: { content: [{ id: 2, name: 'Incident A' }], totalElements: 17, pageIndex: 0, pageSize: 8 }
 }));
+const deleteStatusPageIncident = vi.hoisted(() => vi.fn());
+const validateStatusComponentDraft = vi.hoisted(() => vi.fn(() => null as string | null));
+const validateStatusIncidentDraft = vi.hoisted(() => vi.fn(() => null as string | null));
+
+(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 vi.mock('@/components/providers/i18n-provider', () => ({
   useI18n: () => ({
@@ -44,16 +55,23 @@ vi.mock('@/components/workbench/client-workbench', () => ({
 }));
 
 vi.mock('@/components/pages/status-setting-surface', () => ({
-  StatusSettingSurface: ({ publicStatusHref, mode }: any) => (
-    <div data-status-setting-surface="otlp-cold-status-console" data-status-setting-style-baseline="hertzbeat-ui-matte">
-      <section data-status-admin-layout="full-width-admin-list">
-        <span>Status page table</span>
-      </section>
-      <span>{publicStatusHref}</span>
-      <span>{mode}</span>
-      <span>HB Status</span>
-    </div>
-  )
+  StatusSettingSurface: (props: any) => {
+    loadState.lastSurfaceProps = props;
+    const { publicStatusHref, mode, incidentMessage, incidentError, selectedIncidentId } = props;
+    return (
+      <div data-status-setting-surface="otlp-cold-status-console" data-status-setting-style-baseline="hertzbeat-ui-matte">
+        <section data-status-admin-layout="full-width-admin-list">
+          <span>Status page table</span>
+        </section>
+        <span>{publicStatusHref}</span>
+        <span>{mode}</span>
+        <span>HB Status</span>
+        <span>{incidentMessage ?? 'no-incident-message'}</span>
+        <span>{incidentError ?? 'no-incident-error'}</span>
+        <span>{selectedIncidentId ?? 'no-selected-incident'}</span>
+      </div>
+    );
+  }
 }));
 
 vi.mock('@/components/workbench/primitives', () => ({
@@ -138,13 +156,13 @@ vi.mock('@/lib/setting-status/view-model', () => ({
   buildStatusOrgOverviewRows: () => [{ title: 'Org', copy: 'copy', meta: 'meta' }],
   buildStatusOrgPayload: (draft: any) => draft,
   buildStatusRows: () => [{ title: 'Row', copy: 'copy', meta: 'meta' }],
-  validateStatusComponentDraft: () => null,
-  validateStatusIncidentDraft: () => null,
+  validateStatusComponentDraft,
+  validateStatusIncidentDraft,
   validateStatusOrgDraft: () => null
 }));
 
 vi.mock('@/lib/api-client', () => ({
-  apiMessageDelete: vi.fn(),
+  apiMessageDelete,
   apiMessageGet,
   apiMessagePost: vi.fn(),
   apiMessagePut: vi.fn()
@@ -155,7 +173,7 @@ vi.mock('@/lib/setting-status/controller', () => ({
   createStatusPageComponent: vi.fn(),
   createStatusPageIncident: vi.fn(),
   deleteStatusPageComponent: vi.fn(),
-  deleteStatusPageIncident: vi.fn(),
+  deleteStatusPageIncident,
   loadStatusManagementData,
   saveStatusPageOrg: vi.fn(),
   updateStatusPageComponent: vi.fn(),
@@ -163,13 +181,34 @@ vi.mock('@/lib/setting-status/controller', () => ({
 }));
 
 describe('setting status page', () => {
-  it('renders the management page and loads incidents with the default server-side query', async () => {
-    loadStatusManagementData.mockClear();
-    apiMessageGet.mockReset();
-    loadState.lastLoad = null;
+  let interactionContainer: HTMLDivElement | null = null;
+  let interactionRoot: Root | null = null;
 
+  beforeEach(() => {
+    loadState.lastLoad = null;
+    loadState.lastSurfaceProps = null;
+    apiMessageGet.mockReset();
+    apiMessageDelete.mockReset();
+    deleteStatusPageIncident.mockReset().mockResolvedValue(undefined);
+    validateStatusComponentDraft.mockReset().mockReturnValue(null);
+    validateStatusIncidentDraft.mockReset().mockReturnValue(null);
+    loadStatusManagementData.mockClear();
+  });
+
+  afterEach(async () => {
+    await act(async () => {
+      interactionRoot?.unmount();
+      await Promise.resolve();
+    });
+    interactionRoot = null;
+    interactionContainer?.remove();
+    interactionContainer = null;
+  });
+
+  it('renders the management page and loads incidents with the default server-side query', async () => {
     const { default: SettingStatusPage } = await import('./page');
-    const html = renderToStaticMarkup(<SettingStatusPage />);
+    const element = await SettingStatusPage({});
+    const html = renderToStaticMarkup(element);
     const lastLoad = loadState.lastLoad as (() => Promise<unknown>) | null;
     await lastLoad?.();
 
@@ -190,10 +229,118 @@ describe('setting status page', () => {
     });
   }, 15000);
 
+  it('opens the incident management tab from a tab search param', async () => {
+    const { readSettingStatusMode } = await import('@/lib/setting-status/query-state');
+    const { default: SettingStatusPage } = await import('./page');
+
+    const element = await SettingStatusPage({ searchParams: Promise.resolve({ tab: 'incident' }) });
+    const html = renderToStaticMarkup(element);
+
+    expect(readSettingStatusMode({ tab: ['incident'] })).toBe('incident');
+    expect(readSettingStatusMode({ tab: 'component' })).toBe('component');
+    expect(readSettingStatusMode({ tab: 'other' })).toBe('component');
+    expect(html).toContain('<span>incident</span>');
+  }, 15000);
+
+  it('deletes a confirmed status incident through the route API and exposes feedback', async () => {
+    const { default: SettingStatusPage } = await import('./setting-status-page');
+    const t = createTranslatorMock({ locale: 'en-US' });
+    const incident = {
+      id: 2,
+      name: 'Incident A',
+      state: 1,
+      components: [{ id: 1, name: 'API' }],
+      contents: []
+    };
+
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<SettingStatusPage initialMode="incident" />);
+      await Promise.resolve();
+    });
+
+    expect(loadState.lastSurfaceProps?.incidentMessage).toBeNull();
+    expect(loadState.lastSurfaceProps?.incidentError).toBeNull();
+
+    await act(async () => {
+      loadState.lastSurfaceProps?.onSelectIncident(2);
+      await Promise.resolve();
+    });
+    expect(loadState.lastSurfaceProps?.selectedIncidentId).toBe(2);
+    expect(deleteStatusPageIncident).not.toHaveBeenCalled();
+
+    await act(async () => {
+      loadState.lastSurfaceProps?.onDeleteIncident(incident);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(deleteStatusPageIncident).toHaveBeenCalledWith(apiMessageDelete, 2);
+    expect(loadState.lastSurfaceProps?.incidentMessage).toBe(t('common.notify.delete-success'));
+    expect(loadState.lastSurfaceProps?.incidentError).toBeNull();
+    expect(loadState.lastSurfaceProps?.editingIncident).toBe(false);
+  }, 15000);
+
+  it('clears dialog validation errors when component and incident drafts are canceled', async () => {
+    const { default: SettingStatusPage } = await import('./setting-status-page');
+    const t = createTranslatorMock({ locale: 'en-US' });
+
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<SettingStatusPage />);
+      await Promise.resolve();
+    });
+
+    validateStatusComponentDraft.mockReturnValueOnce(t('setting.status.validation.component-name'));
+    await act(async () => {
+      loadState.lastSurfaceProps?.onNewComponent();
+      await Promise.resolve();
+    });
+    await act(async () => {
+      loadState.lastSurfaceProps?.onSaveComponent();
+      await Promise.resolve();
+    });
+    expect(loadState.lastSurfaceProps?.componentError).toBe(t('setting.status.validation.component-name'));
+    expect(loadState.lastSurfaceProps?.editingComponent).toBe(true);
+
+    await act(async () => {
+      loadState.lastSurfaceProps?.onCancelComponent();
+      await Promise.resolve();
+    });
+    expect(loadState.lastSurfaceProps?.componentError).toBeNull();
+    expect(loadState.lastSurfaceProps?.editingComponent).toBe(false);
+
+    validateStatusIncidentDraft.mockReturnValueOnce(t('setting.status.validation.incident-name'));
+    await act(async () => {
+      loadState.lastSurfaceProps?.onNewIncident();
+      await Promise.resolve();
+    });
+    await act(async () => {
+      loadState.lastSurfaceProps?.onSaveIncident();
+      await Promise.resolve();
+    });
+    expect(loadState.lastSurfaceProps?.incidentError).toBe(t('setting.status.validation.incident-name'));
+    expect(loadState.lastSurfaceProps?.editingIncident).toBe(true);
+
+    await act(async () => {
+      loadState.lastSurfaceProps?.onCancelIncident();
+      await Promise.resolve();
+    });
+    expect(loadState.lastSurfaceProps?.incidentError).toBeNull();
+    expect(loadState.lastSurfaceProps?.editingIncident).toBe(false);
+  }, 15000);
+
   it('keeps the route as load composition and leaves visual ownership in the shared surface', () => {
     const source = readFileSync(resolve(process.cwd(), 'app/setting/status/setting-status-page.tsx'), 'utf8');
 
     expect(source).toContain('StatusSettingSurface');
+    expect(source).toContain('initialMode');
     expect(source).toContain("t('common.notify.apply-success')");
     expect(source).toContain("t('common.notify.apply-fail')");
     expect(source).toContain("t(isEdit ? 'common.notify.edit-success' : 'common.notify.new-success')");
@@ -201,6 +348,15 @@ describe('setting status page', () => {
     expect(source).toContain("t('common.notify.delete-success')");
     expect(source).toContain("t('common.notify.delete-fail')");
     expect(source).toContain("t('status.component.notify.need-org')");
+    expect(source).toContain('if (!data.org.id) {');
+    expect(source).toContain('setComponentError(t(\'status.component.notify.need-org\'));');
+    expect(source).toContain('setIncidentError(t(\'status.component.notify.need-org\'));');
+    expect(source).toContain('setComponentMessage(null);');
+    expect(source).toContain('setIncidentMessage(null);');
+    expect(source).toContain('function mergeStatusOrgDraft(draft: StatusOrgDraft, org: StatusPageOrg): StatusOrgDraft');
+    expect(source).toContain('const resolvedOrgDraft = mergeStatusOrgDraft(orgDraft, data.org);');
+    expect(source).toContain('buildStatusOrgPayload(resolvedOrgDraft)');
+    expect(source).toContain('onOrgDraftChange={patch => setOrgDraft(prev => ({ ...mergeStatusOrgDraft(prev, data.org), ...patch }))}');
     expect(source).not.toContain("t('common.save-success')");
     expect(source).not.toContain("t('common.save-failed')");
     expect(source).not.toContain("t('common.delete-success')");

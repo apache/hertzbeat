@@ -22,14 +22,24 @@ describe('entity detail controller', () => {
     expect(result).toEqual({ entity: { entity: { id: 123 } } });
   });
 
-  it('keeps recoverable fallback behavior when the facade reader fails', async () => {
+  it('keeps missing-entity fallback behavior when the facade reader reports a deleted entity', async () => {
     const readEntityDetail = vi.fn().mockRejectedValue(new Error('Entity not exist.'));
 
-    await expect(loadEntityDetailFromFacade(readEntityDetail as any, '123')).resolves.toEqual(buildFallbackEntityDetail('123'));
+    await expect(loadEntityDetailFromFacade(readEntityDetail as any, '123')).resolves.toEqual(
+      buildFallbackEntityDetail('123', undefined, 'entity-detail-missing')
+    );
   });
 
-  it('falls back to a generated detail workspace when the endpoint is unavailable', async () => {
+  it('falls back to a missing entity recovery state when the endpoint returns 404', async () => {
     const apiGet = vi.fn().mockRejectedValue(new Error('GET /entities/123/detail failed with 404'));
+
+    await expect(loadEntityDetail(apiGet as any, '123')).resolves.toEqual(
+      buildFallbackEntityDetail('123', undefined, 'entity-detail-missing')
+    );
+  });
+
+  it('keeps transient backend failures separate from deleted or missing entities', async () => {
+    const apiGet = vi.fn().mockRejectedValue(new Error('ECONNRESET'));
 
     await expect(loadEntityDetail(apiGet as any, '123')).resolves.toEqual(buildFallbackEntityDetail('123'));
   });
@@ -50,7 +60,7 @@ describe('entity detail controller', () => {
   it('treats the legacy Entity not exist response as a recoverable detail fallback', async () => {
     const apiGet = vi.fn().mockRejectedValue(new Error('Entity not exist.'));
 
-    await expect(loadEntityDetail(apiGet as any, '123')).resolves.toEqual(buildFallbackEntityDetail('123'));
+    await expect(loadEntityDetail(apiGet as any, '123')).resolves.toEqual(buildFallbackEntityDetail('123', undefined, 'entity-detail-missing'));
   });
 
   it('localizes recoverable fallback copy through runtime messages', () => {

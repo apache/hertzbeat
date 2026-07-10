@@ -41,4 +41,24 @@ describe('entity editor query state', () => {
       environment: 'prod'
     });
   });
+
+  it('preserves discovery candidate monitor labels and return context for the editor surface', () => {
+    expect(
+      readEntityNewDraftSeed({
+        source: ' discovery-candidate ',
+        monitorId: ' 42 ',
+        monitorName: ' checkout monitor ',
+        monitorApp: ' website ',
+        monitorInstance: ' example.com:443 ',
+        returnTo: ' /entities/discovery?search=checkout '
+      })
+    ).toEqual({
+      source: 'discovery-candidate',
+      monitorId: '42',
+      monitorName: 'checkout monitor',
+      monitorApp: 'website',
+      monitorInstance: 'example.com:443',
+      returnTo: '/entities/discovery?search=checkout'
+    });
+  });
 });

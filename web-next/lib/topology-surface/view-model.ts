@@ -958,6 +958,27 @@ function apiNodeLayout(index: number, total: number, focus: boolean) {
   };
 }
 
+function unresolvedTargetRefNodeId(targetRef: string) {
+  return `entity-ref-${encodeURIComponent(targetRef).replace(/%/g, '_')}`;
+}
+
+function entityTypeFromTargetRef(targetRef: string): TopologyServiceNodeBase['entityType'] {
+  const kind = targetRef.split(':')[0]?.toLowerCase();
+  if (kind?.includes('database') || kind === 'db') return 'database';
+  if (kind?.includes('middleware') || kind?.includes('redis') || kind?.includes('cache')) return 'middleware';
+  if (kind?.includes('k8s') || kind?.includes('workload')) return 'k8s-workload';
+  if (kind?.includes('monitor')) return 'monitor';
+  if (kind?.includes('application') || kind === 'app') return 'application';
+  return 'service';
+}
+
+function namespaceFromTargetRef(targetRef: string, fallback: string) {
+  const [, remainder = ''] = targetRef.split(':');
+  const separator = remainder.indexOf('/');
+  if (separator > 0) return remainder.slice(0, separator);
+  return fallback;
+}
+
 function buildApiTopologyEdgeId(edge: EntityTopologyApiEdge, from: string, to: string) {
   const relationId = normalizeApiText(edge.relationId);
   if (relationId) return `relation-${relationId}`;
@@ -1170,6 +1191,31 @@ export function buildTopologyServiceMapFromApiGraph(
       }, contextDefaults, {}, t);
     })
     .filter((node): node is TopologyServiceNode => Boolean(node));
+  const ensureTargetRefNode = (targetRef: string, sourceNode: TopologyServiceNode | undefined, edgeSource: TopologySourceKind) => {
+    const existing = nodes.find(node => topologyNodeMatchesTarget(node, undefined, targetRef));
+    if (existing) return existing.id;
+    const nodeId = unresolvedTargetRefNodeId(targetRef);
+    if (nodes.some(node => node.id === nodeId)) return nodeId;
+    const layout = apiNodeLayout(nodes.length, nodes.length + 1, false);
+    nodes.push(defineTopologyNode({
+      id: nodeId,
+      entityId: targetRef,
+      entityType: entityTypeFromTargetRef(targetRef),
+      label: targetRef,
+      namespace: namespaceFromTargetRef(targetRef, sourceNode?.namespace ?? 'default'),
+      environment: sourceNode?.environment ?? normalizeContextValue(incomingContext.environment) ?? TOPOLOGY_DEFAULT_ENVIRONMENT,
+      source: edgeSource,
+      signals: [],
+      health: 'warning',
+      evidenceBadges: ['entity-relation', 'unresolved-target-ref'],
+      redMetrics: {},
+      x: layout.x,
+      y: layout.y,
+      size: 38,
+      tone: 'warning'
+    }, contextDefaults, {}, t));
+    return nodeId;
+  };
   const activeNode =
     findIncomingNode(nodes, incomingContext)
     ?? nodes.find(node => focusEntityId && node.entityId === focusEntityId)
@@ -1185,9 +1231,13 @@ export function buildTopologyServiceMapFromApiGraph(
       const sourceKey = normalizeApiText(apiEdge.sourceNodeId) ?? normalizeApiText(apiEdge.sourceEntityId);
       const targetKey = normalizeApiText(apiEdge.targetNodeId) ?? normalizeApiText(apiEdge.targetEntityId);
       const from = nodeIdByApiNodeId.get(sourceKey ?? '') ?? nodeIdByEntityId.get(sourceKey ?? '');
-      const to = nodeIdByApiNodeId.get(targetKey ?? '') ?? nodeIdByEntityId.get(targetKey ?? '');
-      if (!from || !to) return undefined;
       const edgeSource = normalizeApiSourceKind(normalizeApiText(apiEdge.relationSource) ?? graph.sourceKinds?.[0]);
+      let to = nodeIdByApiNodeId.get(targetKey ?? '') ?? nodeIdByEntityId.get(targetKey ?? '');
+      if (!to) {
+        const targetRef = normalizeApiText(apiEdge.targetRef);
+        to = targetRef ? ensureTargetRefNode(targetRef, from ? findTopologyNode(nodes, from) : undefined, edgeSource) : undefined;
+      }
+      if (!from || !to) return undefined;
       const relationshipType = normalizeApiRelationshipType(apiEdge.relationType, edgeSource);
       const alertImpact = apiEdgeAlertImpact(apiEdge);
       const edge: TopologyServiceEdgeSeed = {
@@ -1210,7 +1260,9 @@ export function buildTopologyServiceMapFromApiGraph(
   const targetEdgeId = findTopologyTargetEdgeId(edgeBase, nodes, activeNodeId, incomingContext);
   const targetEdge = edgeBase.find(edge => edge.id === targetEdgeId);
   const requestedEdgeId = normalizeContextValue(incomingContext.edgeId);
-  const targetViewMode = targetEdge && edgeMatchesViewMode(targetEdge, 'resource-dependency') ? 'resource-dependency' : undefined;
+  const targetViewMode = targetEdge
+    ? edgeMatchesViewMode(targetEdge, 'resource-dependency') ? 'resource-dependency' : 'application'
+    : undefined;
   const resolvedViewMode = requestedViewMode ?? targetViewMode ?? viewMode;
   const selectedEdgeId =
     pickCompatibleEdgeId(edgeBase, requestedEdgeId, resolvedViewMode, sourceKind)

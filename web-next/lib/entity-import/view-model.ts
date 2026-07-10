@@ -8,9 +8,10 @@ import {
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
 
-const KNOWN_IMPORT_ENTITY_TYPES = new Set(['service', 'api', 'endpoint', 'database', 'queue', 'middleware', 'host', 'pod', 'container']);
+const KNOWN_IMPORT_ENTITY_TYPES = new Set(['system', 'service', 'api', 'endpoint', 'database', 'queue', 'middleware', 'host', 'pod', 'container']);
 const KNOWN_IMPORT_ENTITY_SOURCES = new Set(['manual', 'telemetry', 'otel_resource', 'workspace', 'discovery', 'template', 'import']);
 const KNOWN_IMPORT_FORMATS = new Set(['yaml', 'json', 'curl']);
+export const IMPORT_PREVIEW_VISIBLE_ROW_LIMIT = 100;
 
 export type ImportPreviewRow = {
   key: string;
@@ -37,6 +38,17 @@ export type ImportQueueGroup = {
   scope: 'ready' | 'attention' | 'telemetry';
   rows: ImportPreviewRow[];
 };
+
+export function buildImportPreviewViewport(rows: ImportPreviewRow[], limit = IMPORT_PREVIEW_VISIBLE_ROW_LIMIT) {
+  const normalizedLimit = Math.max(0, Math.floor(limit));
+  const visibleRows = rows.slice(0, normalizedLimit);
+
+  return {
+    visibleRows,
+    totalCount: rows.length,
+    overflowCount: Math.max(0, rows.length - visibleRows.length)
+  };
+}
 
 export function buildImportMetrics(
   input: { format: EntityDefinitionFormat; templateCount: number; activityCount: number },
@@ -71,8 +83,21 @@ export function buildImportPreviewRows(items: EntityDto[], t: Translator): Impor
     const entity = dto.entity || {};
     const gapKeys: ImportPreviewRow['gapKeys'] = [];
     const gaps: string[] = [];
-    const attributionRows = buildEntityEditorAttributionRows(dto, (key, params) =>
+    const rawAttributionRows = buildEntityEditorAttributionRows(dto, (key, params) =>
       translateOrFallback(t, key, translateEntityEditorViewModel(key, params), params)
+    );
+    const identities = dto.identities || [];
+    const monitorBinds = dto.monitorBinds || [];
+    const hasIdentityEvidence = identities.length > 0;
+    const hasMonitorBindEvidence = monitorBinds.length > 0;
+    const attributionRows = rawAttributionRows.map(row =>
+      row.key === 'monitor-binding' && !hasMonitorBindEvidence && hasIdentityEvidence
+        ? {
+            ...row,
+            meta: t('entity.definition.import.monitor-bind.optional-meta'),
+            state: 'review' as const
+          }
+        : row
     );
     const attributionState = resolveImportAttributionState(dto, attributionRows);
 
@@ -88,7 +113,7 @@ export function buildImportPreviewRows(items: EntityDto[], t: Translator): Impor
       gapKeys.push('implementedBy');
       gaps.push(t('entity.field.implemented-by'));
     }
-    if ((dto.identities || []).length === 0 && (dto.monitorBinds || []).length === 0) {
+    if (!hasIdentityEvidence && !hasMonitorBindEvidence) {
       gapKeys.push('telemetry');
       gaps.push(t('entity.definition.import.gap.telemetry'));
     }
@@ -105,7 +130,7 @@ export function buildImportPreviewRows(items: EntityDto[], t: Translator): Impor
       kindLabel: localizeImportEntityKind(entity.type, t),
       sourceLabel: localizeImportEntitySource(entity.source, t),
       telemetryLabel:
-        (dto.monitorBinds || []).length > 0 || (dto.identities || []).length > 0
+        hasMonitorBindEvidence || hasIdentityEvidence
           ? t('entity.definition.import.telemetry.ready')
           : t('entity.definition.import.telemetry.pending'),
       attributionLabel: localizeImportAttributionState(attributionState, t),
@@ -202,6 +227,16 @@ export function buildImportQueueGroups(rows: ImportPreviewRow[], t: Translator):
   }
 
   return groups;
+}
+
+export function formatImportPreviewRowCopy(row: ImportPreviewRow, t: Translator) {
+  const subtitle = trim(row.subtitle);
+  const gapSummary =
+    row.gaps.length > 0
+      ? t('entity.definition.import.validation.needs-attention-fields', { fields: row.gaps.join(' · ') })
+      : row.validationLabel;
+
+  return subtitle == null ? gapSummary : `${subtitle} · ${gapSummary}`;
 }
 
 function emptyImportValue(t: Translator) {

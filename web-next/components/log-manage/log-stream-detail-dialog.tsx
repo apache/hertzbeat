@@ -209,6 +209,7 @@ export function LogStreamDetailDialog({
       title={subtitle || title}
       placement="right"
       maxWidthClassName="max-w-[720px]"
+      closeLabel={t('common.dialog.close')}
       overlayProps={overlayProps}
     >
       <HzDialogBodyLayout

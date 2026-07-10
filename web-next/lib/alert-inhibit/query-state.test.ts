@@ -102,6 +102,42 @@ describe('alert inhibit query state', () => {
     });
   });
 
+  it('does not treat list metadata as alert inhibit evidence without an explicit signal', () => {
+    expect(
+      readAlertInhibitRouteState({
+        search: 'uv_alert_inhibit_required',
+        pageSize: '8',
+        source: 'alert-inhibit-required-proof',
+        probe: 'validation-loop',
+        returnTo: '/alert/inhibit?search=uv_alert_inhibit_required'
+      })
+    ).toEqual({
+      returnContext: {
+        search: 'uv_alert_inhibit_required',
+        status: 'firing',
+        severity: '',
+        pageIndex: 0,
+        pageSize: 8,
+        entityId: '',
+        entityName: '',
+        returnTo: '/alert/inhibit?search=uv_alert_inhibit_required',
+        source: 'alert-inhibit-required-proof'
+      },
+      signal: null,
+      signalContext: {},
+      managementContext: {
+        entityId: '',
+        entityName: '',
+        returnTo: '/alert/inhibit?search=uv_alert_inhibit_required',
+        returnLabel: '',
+        matchMode: '',
+        matchingRuleType: '',
+        matchingRuleIds: [],
+        matchedViewEnabled: false
+      }
+    });
+  });
+
   it('builds inhibit list url with search', () => {
     expect(buildAlertInhibitUrl('cpu')).toBe('/alert/inhibits?pageIndex=0&pageSize=8&sort=id&order=desc&search=cpu');
   });

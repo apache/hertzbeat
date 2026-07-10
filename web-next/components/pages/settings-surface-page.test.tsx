@@ -1,4 +1,6 @@
 import React from 'react';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { createTranslatorMock } from '../../test/i18n-test-helper';
@@ -21,13 +23,6 @@ vi.mock('@/components/workbench/workbench-page', () => ({
           <small>{row.meta}</small>
         </article>
       ))}
-    </div>
-  ),
-  WorkbenchPage: ({ title, subtitle, main }: any) => (
-    <div data-workbench-page="true">
-      <h1>{title}</h1>
-      <p>{subtitle}</p>
-      <main>{main}</main>
     </div>
   )
 }));
@@ -55,6 +50,10 @@ describe('SettingsSurfacePage', () => {
 
     expect(html).toContain(pageTitle);
     expect(html).toContain(pageSubtitle);
+    expect(html).toContain('data-settings-surface-page-frame="hertzbeat-ui-unframed-workspace"');
+    expect(html).toContain('data-settings-surface-page-header="hertzbeat-ui-compact-header"');
+    expect(html).toContain('data-settings-surface-page-visual-contract="flat-settings-entry"');
+    expect(html).toContain('data-settings-surface-page-facts="hertzbeat-ui-inline-facts"');
     expect(html).toContain(t('settings.surface.governance.title'));
     expect(html).toContain(t('settings.surface.title'));
     expect(html).toContain(t('settings.surface.copy'));
@@ -72,5 +71,15 @@ describe('SettingsSurfacePage', () => {
     expect(html).toContain(t('settings.surface.governance.future.security'));
     expect(html).toContain('/docs/roadmap/future-security');
     expect(html).not.toContain('href="/security"');
+    expect(html).not.toContain('data-workbench-page="true"');
+  });
+
+  it('keeps the settings entry off the legacy WorkbenchPage wrapper', () => {
+    const source = readFileSync(resolve(process.cwd(), 'components/pages/settings-surface-page.tsx'), 'utf8');
+
+    expect(source).toContain('data-settings-surface-page-frame="hertzbeat-ui-unframed-workspace"');
+    expect(source).toContain('data-settings-surface-page-header="hertzbeat-ui-compact-header"');
+    expect(source).toContain('data-settings-surface-page-visual-contract="flat-settings-entry"');
+    expect(source).not.toContain('WorkbenchPage');
   });
 });

@@ -50,6 +50,7 @@ describe('monitor detail console', () => {
     expect(html).toContain(zh('monitor.list'));
     expect(html).toContain(zh('monitor.detail'));
     expect(html).toContain(zh('monitor.detail.realtime'));
+    expect(html).toContain('<h1 class="sr-only" data-monitor-detail-screenreader-heading="monitor-name">checkout-core</h1>');
     expect(html).toContain('data-monitor-detail-header-mode="breadcrumb-only"');
     expect(html).toContain('data-monitor-detail-reference-source="apache-hertzbeat-master-monitor-detail"');
     expect(html).toContain('data-monitor-detail-context-mark="breadcrumb"');
@@ -81,6 +82,7 @@ describe('monitor detail console', () => {
         backHref="/monitors?app=http"
         editHref="/monitors/42/edit?app=http"
         helpHref="https://hertzbeat.apache.org/docs/help/http"
+        entityDraftHref="/entities/new?source=telemetry&monitorId=42"
         appHref="/setting/define?app=http"
         grafanaUrl="https://grafana.example/d/monitor"
         navigationContext={{ app: 'http' }}
@@ -99,7 +101,7 @@ describe('monitor detail console', () => {
     expect(html).toContain('Monitors');
     expect(html).toContain('Monitor detail');
     expect(html).not.toContain('Monitor Workbench');
-    expect(html).not.toContain('checkout-core');
+    expect(html).toContain('<h1 class="sr-only" data-monitor-detail-screenreader-heading="monitor-name">checkout-core</h1>');
     expect(html).not.toContain('Review real-time metrics, historical trends, and favorites around monitor instance 10.0.0.1 with the same observation workbench language.');
     expect(html).toContain('Monitor Real-Time Detail');
     expect(html).toContain('Monitor Historical Chart Detail');
@@ -145,9 +147,17 @@ describe('monitor detail console', () => {
     expect(html).toContain('Help');
     expect(html).toContain('data-monitor-detail-tab-extra-contract="angular-refresh-help"');
     expect(html).toContain('data-monitor-detail-tab-extra-owner="hertzbeat-ui-action-group"');
+    expect(html).toContain('data-monitor-refresh-command-action="refresh"');
+    expect(html).toContain('data-monitor-detail-command-action="open-help"');
     expect(html).toContain('data-monitor-detail-help-action="angular-docs-help"');
     expect(html).toContain('data-monitor-detail-help-owner="hertzbeat-ui-icon-link"');
     expect(html).toContain('data-monitor-detail-help-target="https://hertzbeat.apache.org/docs/help/http"');
+    expect(html).toContain('data-monitor-detail-command-action="create-entity-draft"');
+    expect(html).toContain('data-monitor-detail-entity-draft-action="telemetry-monitor-seed"');
+    expect(html).toContain('data-monitor-detail-entity-draft-owner="hertzbeat-ui-labeled-action-link"');
+    expect(html).toContain('data-monitor-detail-entity-draft-visibility="visible-label"');
+    expect(html).toContain('data-monitor-detail-entity-draft-target="/entities/new?source=telemetry&amp;monitorId=42"');
+    expect(html).toContain('Create entity from this monitor');
     expect(html).toContain('data-monitor-detail-list-return="angular-app-filter"');
     expect(html).toContain('data-monitor-detail-list-return-target="/monitors?app=http"');
     expect(html).toContain('data-hz-ui="icon-link"');
@@ -505,6 +515,11 @@ describe('monitor detail console', () => {
     expect(source).not.toContain('data-monitor-detail-return-action="true"');
     expect(source).toContain("t('common.button.help')");
     expect(source).toContain('data-monitor-detail-tab-extra-contract="angular-refresh-help"');
+    expect(source).toContain("t('monitor.detail.entity-draft')");
+    expect(source).toContain('data-monitor-detail-entity-draft-action="telemetry-monitor-seed"');
+    expect(source).toContain('data-monitor-detail-entity-draft-owner="hertzbeat-ui-labeled-action-link"');
+    expect(source).toContain('data-monitor-detail-entity-draft-visibility="visible-label"');
+    expect(source).toContain('data-monitor-detail-entity-draft-target={entityDraftHref}');
     expect(source).toContain('data-monitor-detail-help-action="angular-docs-help"');
     expect(source).toContain('data-monitor-detail-help-owner="hertzbeat-ui-icon-link"');
     expect(source).not.toContain("t('monitor.edit-monitor')");
@@ -624,6 +639,7 @@ describe('monitor detail console', () => {
     expect(uiSource).toContain('data-monitor-refresh-toolbar-owner="hertzbeat-ui-refresh-toolbar"');
     expect(uiSource).toContain('data-monitor-refresh-badge-owner="hertzbeat-ui-status-badge"');
     expect(uiSource).toContain('data-monitor-refresh-action-owner="hertzbeat-ui-button"');
+    expect(uiSource).toContain('data-monitor-refresh-command-action="refresh"');
     expect(uiSource).toContain('data-monitor-refresh-badge-variant="quiet"');
     expect(uiSource).toContain('data-monitor-refresh-select-density="quiet"');
     expect(uiSource).toContain('data-monitor-refresh-action-density="quiet"');
@@ -705,6 +721,7 @@ describe('monitor detail console', () => {
     expect(source).not.toContain("id: 'traces'");
     expect(source).toContain('HzIconLink');
     expect(source).toContain('data-monitor-detail-help-action="angular-docs-help"');
+    expect(source).toContain('data-monitor-detail-entity-draft-visibility="visible-label"');
   });
 
   it('does not render a pre-tab overview slot on monitor detail pages', () => {

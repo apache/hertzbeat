@@ -58,8 +58,14 @@ vi.mock('@/components/workbench/client-workbench', () => ({
 }));
 
 vi.mock('@/components/pages/entity-definition-workspace-surface', () => ({
-  EntityDefinitionWorkspaceSurface: ({ mode, entityId, initialContent, initialMessage, templates, activities }: any) => (
-    <div data-entity-definition-workspace={mode} data-entity-id={entityId}>
+  EntityDefinitionWorkspaceSurface: ({ mode, entityId, initialContent, initialMessage, routeContext, templates, activities }: any) => (
+    <div
+      data-entity-definition-workspace={mode}
+      data-entity-id={entityId}
+      data-definition-route-monitor-id={routeContext?.monitorId || ''}
+      data-definition-route-time-range={routeContext?.timeRange || ''}
+      data-definition-route-return-to={routeContext?.returnTo || ''}
+    >
       {initialContent} / {templates.length} templates / {activities.length} activities
       {initialMessage ? ` / ${initialMessage}` : ''}
     </div>
@@ -129,5 +135,22 @@ describe('EntityDefinitionPage', () => {
 
     expect(html).toContain('data-entity-definition-workspace="definition"');
     expect(html).toContain('Entity not exist.');
+  });
+
+  it('passes inherited investigation context into the definition workspace', () => {
+    const html = renderToStaticMarkup(
+      <EntityDefinitionPage
+        entityId="42"
+        routeContext={{
+          timeRange: 'last-45m',
+          monitorId: '632051474676992',
+          returnTo: '/entities/42'
+        }}
+      />
+    );
+
+    expect(html).toContain('data-definition-route-monitor-id="632051474676992"');
+    expect(html).toContain('data-definition-route-time-range="last-45m"');
+    expect(html).toContain('data-definition-route-return-to="/entities/42"');
   });
 });

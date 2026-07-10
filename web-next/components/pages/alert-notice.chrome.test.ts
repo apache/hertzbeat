@@ -36,11 +36,14 @@ describe('alert notice and quick-dialog cold-workbench chrome', () => {
     const quickDialogSource = readFileSync(resolve(process.cwd(), 'components/pages/alert-rule-quick-dialog.tsx'), 'utf8');
     const primitiveSource = readFileSync(resolve(process.cwd(), 'components/pages/alert-authoring-primitives.tsx'), 'utf8');
 
-    expect(ruleSource).not.toContain("from './alert-authoring-primitives'");
+    expect(ruleSource).toContain("from './alert-authoring-primitives'");
     expect(receiverSource).toContain("from './alert-authoring-primitives'");
     expect(quickDialogSource).toContain("from './alert-authoring-primitives'");
 
     expect(ruleSource).toContain('data-alert-notice-rule-form-row');
+    expect(ruleSource).toContain('AlertAuthoringInlineHelp');
+    expect(ruleSource).toContain('AlertAuthoringRequiredMark');
+    expect(ruleSource).toContain('data-alert-notice-rule-field-help={row}');
     expect(ruleSource).toContain("from '../ui/checkbox'");
     expect(ruleSource).toContain("from '../ui/date-time-range'");
     expect(ruleSource).not.toContain('AlertAuthoringFieldLabel');

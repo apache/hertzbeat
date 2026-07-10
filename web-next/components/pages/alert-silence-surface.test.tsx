@@ -171,7 +171,41 @@ describe('AlertSilenceSurface', () => {
     expect(html).toContain('data-alert-silence-surface="otlp-hertzbeat-ui-silence-console"');
     expect(html).toContain('data-alert-silence-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-alert-silence-header="hertzbeat-ui-compact-header"');
+    expect(html).toContain('data-alert-silence-header-nesting-contract="flat-page-introduction"');
+    expect(html).toContain('class="p-0"');
     expect(html).toContain('data-alert-silence-command-row="standard-equal-buttons"');
+    expect(html).toContain('data-alert-silence-action-help="refresh"');
+    expect(html).toContain('data-alert-silence-action-help="new"');
+    expect(html).toContain('data-alert-silence-action-help="delete-selected"');
+    expect(html).toContain('data-alert-silence-action-help="row-enable"');
+    expect(html).toContain('data-alert-silence-action-help="row-edit"');
+    expect(html).toContain('data-alert-silence-action-help="row-delete"');
+    expect(html).toContain('data-alert-silence-action-help-trigger="hertzbeat-ui-action-help"');
+    expect(html).toContain('data-alert-silence-action-help-style="icon-after-action"');
+    expect(html).toContain('data-alert-silence-action-help-visual="circle-help-icon"');
+    expect(html).toContain('data-alert-silence-action-help-icon="lucide-circle-help"');
+    expect(html).toContain('lucide-circle-help');
+    expect(html).not.toContain('<span aria-hidden="true">?</span>');
+    expect(html).toContain('data-alert-silence-action-help-tooltip="delete-selected"');
+    expect(html).toContain('data-alert-silence-action-help-tooltip="row-enable"');
+    expect(html).toContain('data-alert-silence-action-help-tooltip="row-edit"');
+    expect(html).toContain('data-alert-silence-action-help-tooltip="row-delete"');
+    expect(html).toContain('data-alert-silence-action-help="cancel"');
+    expect(html).toContain('data-alert-silence-action-help="save"');
+    expect(html).toContain('data-alert-silence-action-help-tooltip="cancel"');
+    expect(html).toContain('data-alert-silence-action-help-tooltip="save"');
+    expect(html).toContain(t('alert.silence.action.refresh.help'));
+    expect(html).toContain(t('alert.silence.action.new.help'));
+    expect(html).toContain(t('alert.silence.action.new.impact'));
+    expect(html).toContain(t('alert.silence.action.delete-selected.impact'));
+    expect(html).toContain(t('alert.silence.action.row-enable.help'));
+    expect(html).toContain(t('alert.silence.action.row-enable.impact'));
+    expect(html).toContain(t('alert.silence.action.row-edit.help'));
+    expect(html).toContain(t('alert.silence.action.row-edit.impact'));
+    expect(html).toContain(t('alert.silence.action.row-delete.help'));
+    expect(html).toContain(t('alert.silence.action.row-delete.impact'));
+    expect(html).toContain(t('alert.silence.action.cancel.help'));
+    expect(html).toContain(t('alert.silence.action.save.help'));
     expect(html).toContain('data-alert-silence-admin-layout="full-width-admin-list"');
     expect(html).toContain('data-alert-silence-delete-selected="toolbar"');
     expect(html).toContain('data-alert-silence-delete-selected-owner="route-no-select-warning"');
@@ -216,9 +250,32 @@ describe('AlertSilenceSurface', () => {
     expect(source).toContain("from '@hertzbeat/ui'");
     expect(source).toContain('HzInlineFeedback');
     expect(source).toContain('HzPaginationBar');
+    expect(source).toContain('data-alert-silence-header-nesting-contract="flat-page-introduction"');
+    expect(source).toContain('className="p-0"');
+    expect(source).not.toContain('className={coldSilenceVisual.panel.hero}');
+    expect(source).toContain('function alertSilenceActionHelp');
+    expect(source).toContain('function AlertSilenceActionHelp');
+    expect(source).toContain("alertSilenceActionHelp(t, 'refresh')");
+    expect(source).toContain("alertSilenceActionHelp(t, 'new')");
+    expect(source).toContain("alertSilenceActionHelp(t, 'delete-selected')");
+    expect(source).toContain("alertSilenceActionHelp(t, 'row-enable')");
+    expect(source).toContain("alertSilenceActionHelp(t, 'row-edit')");
+    expect(source).toContain("alertSilenceActionHelp(t, 'row-delete')");
+    expect(source).toContain("alertSilenceActionHelp(t, 'cancel')");
+    expect(source).toContain("alertSilenceActionHelp(t, 'save')");
+    expect(source).toContain('data-alert-silence-action-help={id}');
+    expect(source).toContain('CircleHelp');
+    expect(source).toContain('data-alert-silence-action-help-style="icon-after-action"');
+    expect(source).toContain('data-alert-silence-action-help-visual="circle-help-icon"');
+    expect(source).toContain('data-alert-silence-action-help-icon="lucide-circle-help"');
+    expect(source).toContain('data-alert-silence-action-help-tooltip={id}');
+    expect(source).not.toContain('data-alert-silence-action-help-style="literal-question-after-action"');
+    expect(source).not.toContain('data-alert-silence-action-help-visual="borderless-question"');
+    expect(source).not.toContain('<span aria-hidden="true">?</span>');
     expect(source).toContain("from '../ui/search-row'");
     expect(source).toContain("from '../ui/checkbox'");
     expect(source).toContain('pageSizeOptions?: number[]');
+    expect(source).toContain('requestedPageSize?: number');
     expect(source).toContain('onPageIndexChange?: (nextPageIndex: number) => void');
     expect(source).toContain('onPageSizeChange?: (nextPageSize: number) => void');
     expect(source).not.toContain('className={coldSilenceVisual.search.input}');
@@ -491,7 +548,64 @@ describe('AlertSilenceSurface', () => {
     expect(html).toContain('data-alert-silence-compact-canvas="content-height"');
     expect(html).toContain('min-height:auto');
     expect(html).toContain('data-alert-silence-empty-icon="hertzbeat-ui-empty-box"');
+    expect(html).toContain('data-alert-silence-empty-action="new"');
     expect(html).toContain(t('alert.silence.empty.title'));
+    expect(html).toContain(t('alert.silence.action.new'));
+  });
+
+  it('keeps the requested route page size visible when the empty backend page echoes the default', () => {
+    const html = renderToStaticMarkup(
+      <AlertSilenceSurface
+        t={t}
+        data={{ list: { content: [], totalElements: 0, pageIndex: 0, pageSize: 8 } } as any}
+        requestedPageSize={15}
+        search=""
+        selectedId={null}
+        checkedIds={[]}
+        editorOpen={false}
+        editorLoading={false}
+        editorSaving={false}
+        editorMessage={null}
+        editorError={null}
+        draft={{
+          name: '',
+          enable: true,
+          matchAll: false,
+          type: '0',
+          labelsText: '',
+          daysText: '',
+          periodStart: '',
+          periodEnd: ''
+        }}
+        formatTime={() => '-'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onSelect={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        onNew={vi.fn()}
+        onEdit={vi.fn()}
+        onSave={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onDelete={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onCloseEditor={vi.fn()}
+        onDraftChange={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-hz-pagination-summary');
+    expect(html).toContain(t('alert.silence.pagination.summary', {
+      page: 1,
+      totalPages: 1,
+      from: 0,
+      to: 0,
+      total: 0
+    }));
+    expect(html).toContain('data-alert-silence-pagination-page-size-owner="hertzbeat-ui-select"');
+    expect(html).toContain('data-hz-ui="select-trigger"');
+    expect(html).toContain('<span class="truncate">15</span>');
   });
 
   it('renders the topology return context when opened from alert impact silence closure', () => {
@@ -695,6 +809,7 @@ describe('AlertSilenceSurface', () => {
   });
 
   it('renders three-signal evidence context before silence authoring', () => {
+    const source = readFileSync(resolve(process.cwd(), 'components/pages/alert-silence-surface.tsx'), 'utf8');
     const html = renderToStaticMarkup(
       <AlertSilenceSurface
         t={t}
@@ -752,8 +867,11 @@ describe('AlertSilenceSurface', () => {
     );
 
     expect(html).toContain('data-alert-silence-evidence-context="signal-route"');
+    expect(html).toContain('data-alert-silence-evidence-layering="flat-context-band"');
     expect(html).toContain('data-alert-silence-evidence-signal="logs"');
     expect(html).toContain('data-alert-silence-prefill-labels="hertzbeat.signal:logs, service.name:checkout, trace_id:trace-123"');
+    expect(source).toContain('data-alert-silence-evidence-layering="flat-context-band"');
+    expect(source).not.toContain('data-alert-silence-evidence-context="signal-route"\n                  data-alert-silence-evidence-signal={evidenceContext.signal}\n                  data-alert-silence-prefill-labels={evidenceContext.labelsText}\n                  className="rounded-[4px] border border-[#27303c] bg-[#0b0f15] px-4 py-3 shadow-[0_18px_48px_rgba(0,0,0,0.24)]"');
     expect(html).toContain(silenceEvidenceTitle('logs'));
     expect(html).toContain(t('alert.rule.evidence.return'));
     expect(html).toContain('href="/log/manage?view=list&amp;traceId=trace-123"');
@@ -876,6 +994,7 @@ describe('AlertSilenceSurface', () => {
     );
 
     expect(html).toContain('data-alert-silence-evidence-context="signal-route"');
+    expect(html).toContain('data-alert-silence-evidence-layering="flat-context-band"');
     expect(html).toContain('data-alert-silence-evidence-labels="localized-fallback"');
     expect(html).toContain(t('common.none'));
   });

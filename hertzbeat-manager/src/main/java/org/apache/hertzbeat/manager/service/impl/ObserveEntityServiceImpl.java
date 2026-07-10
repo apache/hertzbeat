@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.manager.service.impl;
 
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
@@ -242,6 +243,12 @@ public class ObserveEntityServiceImpl implements ObserveEntityService {
     @Transactional(readOnly = true)
     public List<EntityMonitorBindingCandidate> getMonitorBindingCandidates(long monitorId) {
         return entityIntegrationHintService.getMonitorBindingCandidates(monitorId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<Long, List<EntityMonitorBindingCandidate>> getMonitorBindingCandidates(List<Long> monitorIds) {
+        return entityIntegrationHintService.getMonitorBindingCandidates(monitorIds);
     }
 
 }

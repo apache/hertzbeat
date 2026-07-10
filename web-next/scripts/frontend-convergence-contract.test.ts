@@ -28,9 +28,19 @@ describe('M10 frontend convergence contract', () => {
     const routeMatrixScript = readWebNext('scripts/route-matrix.mjs');
 
     expect(routeMatrixPaths).toEqual(expect.arrayContaining(['/actions', '/incidents', '/log/manage', '/trace/manage']));
-    expect(routeMatrixScript).toContain("'/actions'");
-    expect(routeMatrixScript).toContain("'/incidents'");
-    expect(routeMatrixScript).toContain("'/passport/login'");
+    [
+      '/actions',
+      '/incidents',
+      '/passport/login',
+      '/entities/discovery',
+      '/entities/import',
+      '/explorer',
+      '/setting/settings/mcp-server',
+      '/topology',
+      '/ui-lab'
+    ].forEach(routePath => {
+      expect(routeMatrixScript).toContain(`'${routePath}'`);
+    });
   });
 
   it('keeps core workbench loading and first-screen cache behavior centralized', () => {
@@ -44,7 +54,8 @@ describe('M10 frontend convergence contract', () => {
     expect(appFrameSource).toContain('app-frame:header-state:${locale}');
     expect(appFrameSource).not.toContain('app-frame:header-state:${locale}:${pathname}');
     expect(clientWorkbenchSource).toContain('cacheSettledTtlMs?: number');
-    expect(clientWorkbenchSource).toContain('consumeWorkbenchLoad(cacheKey, load, { settledTtlMs: cacheSettledTtlMs })');
+    expect(clientWorkbenchSource).toContain('const localizedCacheKey = cacheKey ? `${cacheKey}::locale:${locale}` : undefined;');
+    expect(clientWorkbenchSource).toContain('consumeWorkbenchLoad(localizedCacheKey, load, { settledTtlMs: cacheSettledTtlMs })');
   });
 
   it('keeps the migrated M10 workbenches on UI Lab backed shared components', () => {

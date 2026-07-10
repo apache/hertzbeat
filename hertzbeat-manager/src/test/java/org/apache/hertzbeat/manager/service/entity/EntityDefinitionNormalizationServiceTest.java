@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.manager.service.entity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -140,5 +141,18 @@ class EntityDefinitionNormalizationServiceTest {
         assertEquals("gold", ((Map<?, ?>) definition.getExtensions().get("scorecard")).get("level"));
         assertEquals("level:error", definition.getHertzbeat().getLogs().getFirst().getQuery());
         assertEquals(List.of("checkout", "api"), definition.getHertzbeat().getPerformanceData().getTags());
+    }
+
+    @Test
+    void normalizeDefinitionRejectsUnsupportedExplicitKindInsteadOfDefaultingToService() {
+        Map<String, Object> record = Map.of(
+                "apiVersion", "hertzbeat/v1",
+                "kind", "cache",
+                "metadata", Map.of("name", "redis-cache"));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> normalizationService.normalizeDefinition(record));
+
+        assertEquals("Unsupported entity definition kind: cache.", exception.getMessage());
     }
 }

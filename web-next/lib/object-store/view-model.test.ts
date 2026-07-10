@@ -2,10 +2,13 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   OBJECT_STORE_TYPE_OPTIONS,
   buildObjectStoreFacts,
+  buildObjectStoreMissingFields,
   canSaveObjectStore,
   isObsObjectStore,
+  isObjectStoreDraftDirty,
   normalizeObjectStoreType,
   resolveObjectStoreDraft,
+  serializeObjectStoreConfig,
   updateObjectStoreField,
   updateObjectStoreType
 } from './view-model';
@@ -99,6 +102,33 @@ describe('object store view model', () => {
     });
   });
 
+  it('serializes configs with stable nested key order for dirty checks', () => {
+    expect(serializeObjectStoreConfig({
+      type: 'OBS',
+      config: {
+        bucketName: 'hb',
+        endpoint: 'https://obs.example.com'
+      }
+    } as any)).toBe(serializeObjectStoreConfig({
+      type: 'OBS',
+      config: {
+        endpoint: 'https://obs.example.com',
+        bucketName: 'hb'
+      }
+    } as any));
+  });
+
+  it('detects whether an object-store draft changes persisted config', () => {
+    const current = {
+      type: 'DATABASE',
+      config: {}
+    } as any;
+
+    expect(isObjectStoreDraftDirty(null, current)).toBe(false);
+    expect(isObjectStoreDraftDirty({ type: 'DATABASE', config: {} } as any, current)).toBe(false);
+    expect(isObjectStoreDraftDirty({ type: 'FILE', config: {} } as any, current)).toBe(true);
+  });
+
   it('computes the OBS validation and type flags', () => {
     expect(isObsObjectStore({ type: 'OBS' } as any)).toBe(true);
     expect(isObsObjectStore({ type: 'FILE' } as any)).toBe(false);
@@ -114,8 +144,43 @@ describe('object store view model', () => {
         }
       } as any)
     ).toBe(true);
+    expect(
+      canSaveObjectStore({
+        type: 'OBS',
+        config: {
+          accessKey: 'ak',
+          secretKey: 'sk',
+          bucketName: 'bucket',
+          endpoint: 'https://obs.example.com',
+          savePath: ''
+        }
+      } as any)
+    ).toBe(true);
     expect(canSaveObjectStore({ type: 'OBS', config: { accessKey: 'ak' } } as any)).toBe(false);
     expect(canSaveObjectStore({ type: 'FILE', config: {} } as any)).toBe(true);
+  });
+
+  it('lists missing OBS required fields for disabled-save feedback', () => {
+    expect(
+      buildObjectStoreMissingFields({
+        type: 'OBS',
+        config: {}
+      } as any, t)
+    ).toEqual(['Access key', 'Secret key', 'Bucket', 'Endpoint']);
+
+    expect(
+      buildObjectStoreMissingFields({
+        type: 'OBS',
+        config: {
+          accessKey: 'ak',
+          secretKey: 'sk',
+          bucketName: '   ',
+          endpoint: ''
+        }
+      } as any, t)
+    ).toEqual(['Bucket', 'Endpoint']);
+
+    expect(buildObjectStoreMissingFields({ type: 'DATABASE', config: {} } as any, t)).toEqual([]);
   });
 
   it('keeps the provider options aligned with the current settings contract', () => {

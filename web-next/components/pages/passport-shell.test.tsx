@@ -58,6 +58,7 @@ describe('PassportShell', () => {
     );
 
     expect(html).toContain('data-passport-shell="true"');
+    expect(html).toContain('data-passport-shell-visual="ops-dark-entry"');
     expect(html).toContain('data-hz-ui="passport-session-clear-frame"');
     expect(html).toContain('data-passport-session-clear-contract="angular-token-service-clear-on-passport-entry"');
     expect(html).toContain('data-passport-session-clear-enabled="true"');
@@ -72,8 +73,10 @@ describe('PassportShell', () => {
     expect(html).toContain('data-passport-vertical-position="angular-upper-content"');
     expect(html).toContain('data-passport-hero-offset="angular-left-reference"');
     expect(html).toContain('data-passport-background-overlay="angular-light"');
+    expect(html).toContain('data-passport-background-tone="ops-dark"');
     expect(html).toContain('data-passport-locale-trigger="globe"');
     expect(html).toContain('data-passport-locale-tone="angular-magenta"');
+    expect(html).toContain('data-passport-locale-visual-tone="ops-primary"');
     expect(html).toContain('data-passport-intro-list="angular-single-column"');
     expect(html).toContain('data-passport-intro-bullet-tone="angular-cyan"');
     expect(html).toContain('data-passport-intro-separator="top"');
@@ -81,8 +84,9 @@ describe('PassportShell', () => {
     expect(html).toContain('data-passport-panel="true"');
     expect(html).toContain('data-passport-form="true"');
     expect(html).toContain('data-passport-footer-tone="angular-muted"');
+    expect(html).toContain('data-passport-footer-visual-tone="ops-muted"');
     expect(html).toContain('data-passport-footer-band="angular-raised"');
-    expect(html).toContain('/assets/bg.png');
+    expect(html).not.toContain('/assets/bg.png');
     expect(html).toContain('Apache HertzBeat™ v1.8.0');
     expect(html).toContain(t('app.passport.desc'));
     expect(html).toContain(t('app.passport.intro-1'));
@@ -136,6 +140,8 @@ describe('PassportShell', () => {
     expect(source).toContain('border-[var(--ops-border-color)]');
     expect(source).toContain('text-[var(--ops-text-secondary)]');
     expect(source).toContain('text-[var(--ops-primary)]');
+    expect(source).toContain('data-passport-shell-visual="ops-dark-entry"');
+    expect(source).toContain('data-passport-background-tone="ops-dark"');
     expect(source).toContain("from '../workbench/primitives'");
     expect(source).toContain("import { HzPassportSessionClearFrame } from '@hertzbeat/ui';");
     expect(source).toContain("import { clearClientSessionMarker, clearClientSessionUserSnapshot } from '../../lib/session-client';");
@@ -145,15 +151,18 @@ describe('PassportShell', () => {
     expect(source).toContain('WorkbenchPanel');
     expect(source).toContain('data-passport-locale-trigger="globe"');
     expect(source).toContain('data-passport-locale-tone="angular-magenta"');
+    expect(source).toContain('data-passport-locale-visual-tone="ops-primary"');
     expect(source).toContain("aria-label={t('app.passport.language-switch')}");
     expect(source).not.toContain('aria-label="Switch language"');
-    expect(source).toContain('text-[#d11ce6]');
+    expect(source).not.toContain('text-[#d11ce6]');
+    expect(source).not.toContain('/assets/bg.png');
     expect(source).toContain('data-passport-background-overlay="angular-light"');
     expect(source).toContain('data-passport-intro-list="angular-single-column"');
     expect(source).toContain('data-passport-intro-bullet-tone="angular-cyan"');
     expect(source).toContain('bg-[#13c8ff]');
     expect(source).toContain('version="v1.8.0"');
     expect(source).toContain('data-passport-footer-tone="angular-muted"');
+    expect(source).toContain('data-passport-footer-visual-tone="ops-muted"');
     expect(source).toContain('data-passport-shell-spacing="angular-reference"');
     expect(source).toContain('data-passport-brand-lockup="angular-lowered"');
     expect(source).toContain('data-passport-content-alignment="angular-centered"');
@@ -170,9 +179,12 @@ describe('PassportShell', () => {
     expect(source).not.toContain('pt-8 lg:gap-24 lg:grid-cols-[minmax(0,11fr)_minmax(0,10fr)]');
     expect(source).toContain('lg:pl-[15%]');
     expect(source).not.toContain('lg:pl-[10%]');
-    expect(source).toContain('headlineClassName="text-[rgba(74,54,70,0.84)]"');
-    expect(source).toContain('lineClassName="text-[rgba(74,54,70,0.82)]"');
-    expect(source).toContain('linkClassName="text-[#0097d7]"');
+    expect(source).toContain('headlineClassName="text-[var(--ops-text-tertiary)]"');
+    expect(source).toContain('lineClassName="text-[var(--ops-text-tertiary)]"');
+    expect(source).toContain('linkClassName="text-[var(--ops-primary)]"');
+    expect(source).not.toContain('headlineClassName="text-[rgba(74,54,70,0.84)]"');
+    expect(source).not.toContain('lineClassName="text-[rgba(74,54,70,0.82)]"');
+    expect(source).not.toContain('linkClassName="text-[#0097d7]"');
     expect(source).not.toContain('WorkbenchActionButton');
     expect(source).not.toContain('rgba(11,12,14,0.76)');
     expect(source).not.toContain('rgba(11,12,14,0.94)');

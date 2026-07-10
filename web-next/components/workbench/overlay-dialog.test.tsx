@@ -97,6 +97,38 @@ describe('overlay dialog', () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
+  it('keeps dialog headers and footers visible while the body owns scrolling', async () => {
+    const onClose = vi.fn();
+
+    await act(async () => {
+      root.render(
+        <OverlayDialog
+          open={true}
+          title="Configure threshold"
+          footer={<button type="button">Save</button>}
+          onClose={onClose}
+        >
+          <div style={{ height: 1200 }}>Long editor body</div>
+        </OverlayDialog>
+      );
+      await Promise.resolve();
+    });
+
+    const panel = container.querySelector('[data-overlay-dialog-panel="bounded"]') as HTMLElement | null;
+    const header = container.querySelector('[data-overlay-dialog-header="visible"]') as HTMLElement | null;
+    const body = container.querySelector('[data-overlay-dialog-content="scroll-region"]') as HTMLElement | null;
+    const footer = container.querySelector('[data-overlay-dialog-footer="visible-action-bar"]') as HTMLElement | null;
+
+    expect(panel?.getAttribute('data-overlay-dialog-panel-scroll-contract')).toBe('header-footer-visible-content-scroll');
+    expect(panel?.className).toContain('overflow-hidden');
+    expect(panel?.className).toContain('flex');
+    expect(header?.className).toContain('shrink-0');
+    expect(body?.className).toContain('overflow-auto');
+    expect(body?.className).toContain('flex-1');
+    expect(footer?.className).toContain('shrink-0');
+    expect(footer?.textContent).toContain('Save');
+  });
+
   it('allows centered dialogs to explicitly preserve non-click-away modal semantics with route markers', async () => {
     const onClose = vi.fn();
 

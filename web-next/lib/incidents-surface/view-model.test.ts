@@ -72,6 +72,11 @@ describe('incidents surface view model', () => {
       t('incidents.checklist.adapter.meta'),
       t('incidents.checklist.drilldown.meta')
     ]);
+    expect(viewModel.nextHops[0]).toEqual({
+      label: t('setting.status.title'),
+      href: '/setting/status?tab=incident',
+      variant: 'primary'
+    });
     expect(viewModel.handoffRows).toHaveLength(3);
   });
 });

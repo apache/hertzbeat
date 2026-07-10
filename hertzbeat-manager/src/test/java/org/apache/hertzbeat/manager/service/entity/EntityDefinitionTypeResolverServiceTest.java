@@ -19,6 +19,7 @@ package org.apache.hertzbeat.manager.service.entity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -56,5 +57,16 @@ class EntityDefinitionTypeResolverServiceTest {
                 Map.of(), Map.of("type", "graphql"), "api"));
         assertEquals("mysql", resolverService.resolveDefinitionSubtype(
                 Map.of("resourceType", "mysql"), Map.of("type", "database"), "database"));
+    }
+
+    @Test
+    void rejectsUnsupportedExplicitKindOrEntityTypeInsteadOfDefaultingToService() {
+        IllegalArgumentException kind = assertThrows(IllegalArgumentException.class,
+                () -> resolverService.resolveDefinitionEntityType(Map.of("kind", "cache"), Map.of()));
+        assertEquals("Unsupported entity definition kind: cache.", kind.getMessage());
+
+        IllegalArgumentException entityType = assertThrows(IllegalArgumentException.class,
+                () -> resolverService.resolveDefinitionEntityType(Map.of(), Map.of("entity_type", "cache")));
+        assertEquals("Unsupported entity definition entity type: cache.", entityType.getMessage());
     }
 }

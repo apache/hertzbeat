@@ -309,9 +309,12 @@ class ObserveEntityServiceTest {
         entityIdentityResolutionService = new EntityIdentityResolutionService(
                 entityIdentityReadModelService, entityMonitorBindService, entityWorkspaceAccessService);
         entityIdentityWriteModelService = new EntityIdentityWriteModelService(
-                entityIdentityDao, entityIdentityResolutionService);
+                entityIdentityDao, entityIdentityResolutionService, entityWorkspaceAccessService);
         entityIntegrationHintService = new EntityIntegrationHintService(
-                entityMonitorQueryService, entityIdentityResolutionService);
+                entityMonitorQueryService,
+                entityIdentityResolutionService,
+                entityMonitorBindService,
+                entityWorkspaceAccessService);
         ReflectionTestUtils.setField(
                 observeEntityService, "entityIntegrationHintService", entityIntegrationHintService);
         entityDeletionWriteModelService = new EntityDeletionWriteModelService(
@@ -352,7 +355,11 @@ class ObserveEntityServiceTest {
         entityDefinitionDraftService = new EntityDefinitionDraftService(
                 entityDefinitionDocumentParserService,
                 entityDefinitionNormalizationService,
-                entityDefinitionMappingService);
+                entityDefinitionMappingService,
+                entityIdentityDao,
+                entityIdentityResolutionService,
+                entityWorkspaceAccessService,
+                entityMonitorBindQueryService);
         ReflectionTestUtils.setField(
                 observeEntityService, "entityDefinitionDraftService", entityDefinitionDraftService);
         entityResponseHandoffReadModelService = new EntityResponseHandoffReadModelService(entityObservabilityGateway);
@@ -396,8 +403,8 @@ class ObserveEntityServiceTest {
                 entityStatusRefreshService,
                 entitySummaryReadModelService);
         ReflectionTestUtils.setField(observeEntityService, "entityListReadModelService", entityListReadModelService);
-        lenient().when(alertSilenceDao.findAll()).thenReturn(Collections.emptyList());
-        lenient().when(alertInhibitDao.findAll()).thenReturn(Collections.emptyList());
+        lenient().when(alertSilenceDao.findAlertSilencesByEnableTrue()).thenReturn(Collections.emptyList());
+        lenient().when(alertInhibitDao.findAlertInhibitsByEnableIsTrue()).thenReturn(Collections.emptyList());
         lenient().when(entityTraceQueryService.buildEntityTraceSummary(any()))
                 .thenReturn(new EntityTraceSummaryDto(0, 0, null, false, null));
         lenient().when(entityTraceQueryService.buildEntityTraceQueryHints(any()))
@@ -1330,9 +1337,9 @@ class ObserveEntityServiceTest {
         assertEquals(1, detail.getMonitorSummary().getAbnormalMonitors().size());
         assertEquals("otel-resource", detail.getLogSummary().getPreferredQueryType());
         assertNotNull(detail.getUnifiedEvidenceSummary());
-        assertEquals(2, detail.getUnifiedEvidenceSummary().getActiveSignalCount());
+        assertEquals(1, detail.getUnifiedEvidenceSummary().getActiveSignalCount());
         assertTrue(detail.getUnifiedEvidenceSummary().isMetricsActive());
-        assertTrue(detail.getUnifiedEvidenceSummary().isLogsActive());
+        assertFalse(detail.getUnifiedEvidenceSummary().isLogsActive());
         assertFalse(detail.getUnifiedEvidenceSummary().isTracesActive());
         assertNotNull(detail.getTriageRecommendation());
         assertEquals("metrics", detail.getTriageRecommendation().getRecommendedFocus());
@@ -1426,8 +1433,8 @@ class ObserveEntityServiceTest {
                 .equalLabels(List.of(CommonConstants.LABEL_INSTANCE))
                 .gmtUpdate(LocalDateTime.of(2026, 3, 20, 10, 5))
                 .build();
-        when(alertSilenceDao.findAll()).thenReturn(List.of(silence));
-        when(alertInhibitDao.findAll()).thenReturn(List.of(inhibit));
+        when(alertSilenceDao.findAlertSilencesByEnableTrue()).thenReturn(List.of(silence));
+        when(alertInhibitDao.findAlertInhibitsByEnableIsTrue()).thenReturn(List.of(inhibit));
 
         EntityDetailDto detail = observeEntityService.getEntityDetail(14L);
 
@@ -1540,8 +1547,8 @@ class ObserveEntityServiceTest {
                 .equalLabels(List.of(CommonConstants.LABEL_INSTANCE))
                 .gmtUpdate(LocalDateTime.of(2026, 4, 1, 10, 25))
                 .build();
-        when(alertSilenceDao.findAll()).thenReturn(List.of(globalMatchAll, teamBetaSilence, teamAlphaSilence));
-        when(alertInhibitDao.findAll()).thenReturn(List.of(genericInhibit, teamBetaInhibit, teamAlphaInhibit));
+        when(alertSilenceDao.findAlertSilencesByEnableTrue()).thenReturn(List.of(globalMatchAll, teamBetaSilence, teamAlphaSilence));
+        when(alertInhibitDao.findAlertInhibitsByEnableIsTrue()).thenReturn(List.of(genericInhibit, teamBetaInhibit, teamAlphaInhibit));
 
         EntityDetailDto detail = observeEntityService.getEntityDetail(141L);
 
@@ -2898,9 +2905,10 @@ class ObserveEntityServiceTest {
                 .build();
         when(observeEntityDao.findAll(any(Specification.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(entity)));
-        when(entityIdentityDao.countByEntityId(21L)).thenReturn(0L);
-        when(entityRelationDao.countBySourceEntityIdOrTargetEntityId(21L, 21L)).thenReturn(0L);
-        when(entityMonitorBindDao.findAllByEntityIdOrderByIdAsc(21L)).thenReturn(Collections.emptyList());
+        when(entityIdentityDao.countByEntityIdInGroupByEntityId(List.of(21L))).thenReturn(Collections.emptyList());
+        when(entityMonitorBindDao.countByEntityIdInGroupByEntityId(List.of(21L))).thenReturn(Collections.emptyList());
+        when(entityRelationDao.countBySourceEntityIdInGroupBySourceEntityId(List.of(21L))).thenReturn(Collections.emptyList());
+        when(entityRelationDao.countByTargetEntityIdInGroupByTargetEntityId(List.of(21L))).thenReturn(Collections.emptyList());
         EntityDefinitionActivity latestActivity = EntityDefinitionActivity.builder()
                 .id(101L)
                 .entityId(21L)
@@ -2933,9 +2941,10 @@ class ObserveEntityServiceTest {
                 .build();
         when(observeEntityDao.findAll(any(Specification.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(entity)));
-        when(entityIdentityDao.countByEntityId(23L)).thenReturn(0L);
-        when(entityRelationDao.countBySourceEntityIdOrTargetEntityId(23L, 23L)).thenReturn(0L);
-        when(entityMonitorBindDao.findAllByEntityIdOrderByIdAsc(23L)).thenReturn(Collections.emptyList());
+        when(entityIdentityDao.countByEntityIdInGroupByEntityId(List.of(23L))).thenReturn(Collections.emptyList());
+        when(entityMonitorBindDao.countByEntityIdInGroupByEntityId(List.of(23L))).thenReturn(Collections.emptyList());
+        when(entityRelationDao.countBySourceEntityIdInGroupBySourceEntityId(List.of(23L))).thenReturn(Collections.emptyList());
+        when(entityRelationDao.countByTargetEntityIdInGroupByTargetEntityId(List.of(23L))).thenReturn(Collections.emptyList());
         when(entityDefinitionActivityDao.findAllByEntityIdIn(any(), any(Sort.class))).thenReturn(Collections.emptyList());
 
         var page = observeEntityService.getEntities(null, null, null, null, null, null,
@@ -2970,9 +2979,10 @@ class ObserveEntityServiceTest {
                 .build();
         when(observeEntityDao.findAll(any(Specification.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(teamAlpha, teamBeta)));
-        when(entityIdentityDao.countByEntityId(anyLong())).thenReturn(0L);
-        when(entityRelationDao.countBySourceEntityIdOrTargetEntityId(anyLong(), anyLong())).thenReturn(0L);
-        when(entityMonitorBindDao.findAllByEntityIdOrderByIdAsc(anyLong())).thenReturn(Collections.emptyList());
+        when(entityIdentityDao.countByEntityIdInGroupByEntityId(List.of(31L))).thenReturn(Collections.emptyList());
+        when(entityMonitorBindDao.countByEntityIdInGroupByEntityId(List.of(31L))).thenReturn(Collections.emptyList());
+        when(entityRelationDao.countBySourceEntityIdInGroupBySourceEntityId(List.of(31L))).thenReturn(Collections.emptyList());
+        when(entityRelationDao.countByTargetEntityIdInGroupByTargetEntityId(List.of(31L))).thenReturn(Collections.emptyList());
         when(entityDefinitionActivityDao.findAllByEntityIdIn(any(), any(Sort.class))).thenReturn(Collections.emptyList());
         AuthTokenRequestContext.bindWorkspaceId("team-a");
 
@@ -2996,9 +3006,10 @@ class ObserveEntityServiceTest {
                 .build();
         when(observeEntityDao.findAll(any(Specification.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(entity)));
-        when(entityIdentityDao.countByEntityId(22L)).thenReturn(0L);
-        when(entityRelationDao.countBySourceEntityIdOrTargetEntityId(22L, 22L)).thenReturn(0L);
-        when(entityMonitorBindDao.findAllByEntityIdOrderByIdAsc(22L)).thenReturn(Collections.emptyList());
+        when(entityIdentityDao.countByEntityIdInGroupByEntityId(List.of(22L))).thenReturn(Collections.emptyList());
+        when(entityMonitorBindDao.countByEntityIdInGroupByEntityId(List.of(22L))).thenReturn(Collections.emptyList());
+        when(entityRelationDao.countBySourceEntityIdInGroupBySourceEntityId(List.of(22L))).thenReturn(Collections.emptyList());
+        when(entityRelationDao.countByTargetEntityIdInGroupByTargetEntityId(List.of(22L))).thenReturn(Collections.emptyList());
         EntityDefinitionActivity discoveryActivity = EntityDefinitionActivity.builder()
                 .id(202L)
                 .entityId(22L)

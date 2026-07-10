@@ -87,7 +87,7 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     @Resource
     private LabelDao labelDao;
 
-    @Resource
+    @Autowired(required = false)
     private List<HistoryDataReader> historyDataReaders = Collections.emptyList();
 
     private final DataSourceService dataSourceService;

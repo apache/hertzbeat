@@ -28,6 +28,9 @@ vi.mock('@codemirror/lang-html', () => ({ html: () => 'html-extension' }));
 vi.mock('@codemirror/lang-javascript', () => ({ javascript: () => 'javascript-extension' }));
 vi.mock('@codemirror/view', () => ({
   EditorView: {
+    contentAttributes: {
+      of: (attrs: Record<string, string>) => `content-attributes-${attrs['aria-label']}`
+    },
     lineWrapping: 'line-wrapping-extension',
     theme: () => 'theme-extension'
   }
@@ -53,6 +56,7 @@ describe('HzCodeEditor', () => {
     expect(source).toContain("from '@codemirror/lang-html'");
     expect(source).toContain('EditorView.lineWrapping');
     expect(source).toContain("theme={theme === 'vs-dark' ? oneDark : 'light'}");
+    expect(source).toContain("EditorView.contentAttributes.of({ 'aria-label': ariaLabel })");
     expect(source).toContain('data-hz-code-editor="codemirror"');
     expect(source).toContain('data-hz-code-editor-theme={theme}');
     expect(source).toContain("data-hz-code-editor-loading={loading ? 'true' : 'false'}");
@@ -81,6 +85,7 @@ describe('HzCodeEditor', () => {
     expect(html).toContain('data-hz-code-editor-folding="true"');
     expect(html).toContain('data-hz-code-editor-automatic-layout="true"');
     expect(html).toContain('data-hz-code-editor-readonly="true"');
+    expect(html).toContain('data-hz-code-editor-layout-stability="fixed-editor-height"');
     expect(html).toContain('data-hz-code-editor-license="codemirror-mit"');
     expect(html).toContain('data-mocked-codemirror="true"');
     expect(html).toContain('data-editable="false"');

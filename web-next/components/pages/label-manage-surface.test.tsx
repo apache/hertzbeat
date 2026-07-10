@@ -10,7 +10,7 @@ describe('label manage surface', () => {
   const zh = createTranslatorMock({ locale: 'zh-CN' });
   const han = (...codes: number[]) => String.fromCodePoint(...codes);
 
-  it('renders the OTLP cold-matte label console, Angular card grid, and authoring dialog shell', () => {
+  it('renders the OTLP cold-matte label console, flat label list, and authoring dialog shell', () => {
     const t = zh;
 
     const html = renderToStaticMarkup(
@@ -82,7 +82,21 @@ describe('label manage surface', () => {
     expect(html).toContain('data-label-manage-surface="otlp-hertzbeat-ui-label-console"');
     expect(html).toContain('data-label-manage-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-label-header="hertzbeat-ui-compact-header"');
+    expect(html).toContain('data-label-header-nesting-contract="flat-page-introduction"');
+    expect(html).toContain('class="p-0"');
     expect(html).toContain('data-label-command-row="standard-equal-buttons"');
+    expect(html).toContain('data-label-command-action="refresh"');
+    expect(html).toContain('data-label-command-action="new"');
+    expect(html).toContain('data-label-action-help="refresh"');
+    expect(html).toContain('data-label-action-help="new"');
+    expect(html).toContain('data-label-action-help-tooltip="refresh"');
+    expect(html).toContain('data-label-action-help-tooltip="new"');
+    expect(html).toContain('data-label-inline-help-visual="circle-help-icon"');
+    expect(html).toContain('data-label-inline-help-icon="lucide-circle-help"');
+    expect(html).not.toContain('data-label-inline-help-visual="borderless-question"');
+    expect(html).toContain('data-label-inline-help-focus-contract="click-focuses-tooltip"');
+    expect(html).toContain(t('setting.labels.action.refresh.help'));
+    expect(html).toContain(t('setting.labels.action.new.help'));
     expect(html).toContain('data-label-admin-layout="full-width-admin-list"');
     expect(html).toContain('data-label-save-feedback-contract="angular-new-edit-notify"');
     expect(html).toContain('data-label-save-feedback-contract-owner="hertzbeat-ui-inline-feedback"');
@@ -106,9 +120,9 @@ describe('label manage surface', () => {
     expect(html).toContain('data-label-delete-failure-owner="hertzbeat-ui-inline-feedback"');
     expect(html).toContain('data-label-delete-query-contract="angular-repeated-ids-query"');
     expect(html).toContain('data-label-delete-query-owner="route-mutation-contract"');
-    expect(html).toContain('data-label-card-loading-contract="angular-table-loading"');
-    expect(html).toContain('data-label-card-loading-owner="label-route-controller"');
-    expect(html).toContain('data-label-card-loading="false"');
+    expect(html).toContain('data-label-list-loading-contract="hertzbeat-ui-flat-list-loading"');
+    expect(html).toContain('data-label-list-loading-owner="label-route-controller"');
+    expect(html).toContain('data-label-list-loading="false"');
     expect(html).toContain('data-label-save-loading-contract="angular-nz-ok-loading"');
     expect(html).toContain('data-label-save-loading-contract-owner="angular-nz-ok-loading"');
     expect(html).toContain('data-label-dialog-mask-closable-contract="angular-mask-closable-false"');
@@ -123,19 +137,19 @@ describe('label manage surface', () => {
     expect(html).toContain('data-label-dialog-preview-frame-owner="route-form-field-grid"');
     expect(html).toContain('data-label-dialog-preview-chrome-contract="angular-tag-only-no-extra-frame"');
     expect(html).toContain('data-label-dialog-preview-chrome-owner="hertzbeat-ui-label-tag"');
-    expect(html).toContain('data-label-edit-reference-contract="angular-edit-direct-reference"');
+    expect(html).toContain('data-label-edit-reference-contract="isolated-edit-draft"');
     expect(html).toContain('data-label-edit-reference-owner="route-form-state"');
     expect(html).toContain('data-label-name-validation-contract="angular-required-before-submit"');
     expect(html).toContain('data-label-name-validation-trigger-contract="angular-ok-marks-dirty"');
     expect(html).toContain('data-label-name-validation-trigger-owner="route-form-contract"');
-    expect(html).toContain('data-label-name-validation-raw-contract="angular-required-before-trim"');
-    expect(html).toContain('data-label-name-validation-raw-owner="route-form-contract"');
+    expect(html).toContain('data-label-name-validation-trim-contract="local-trim-required-before-submit"');
+    expect(html).toContain('data-label-name-validation-trim-owner="route-form-contract"');
     expect(html).toContain('data-label-query-contract="angular-load-all-labels"');
     expect(html).toContain('data-label-query-owner="label-query-state"');
     expect(html).toContain('data-label-query-param-order-contract="angular-page-index-size-type-search"');
     expect(html).toContain('data-label-query-param-order-owner="label-query-state"');
-    expect(html).toContain('data-label-card-grid-contract="angular-card-grid"');
-    expect(html).toContain('data-label-card-grid-owner="hertzbeat-ui-label-tag"');
+    expect(html).toContain('data-label-list-contract="hertzbeat-ui-flat-list"');
+    expect(html).toContain('data-label-list-owner="hertzbeat-ui-label-tag"');
     expect(html).toContain('aria-busy="false"');
     expect(html).toContain('data-label-monitor-handoff-contract="angular-routerlink-monitors-labels"');
     expect(html).toContain('data-label-monitor-handoff-owner="next-monitor-query-link"');
@@ -187,27 +201,45 @@ describe('label manage surface', () => {
     expect(html).toContain('data-hz-search-chrome="no-extra-input-shell"');
     expect(html).toContain('data-hz-search-action="submit"');
     expect(html).toContain('data-hz-search-action="clear"');
-    expect(html).toContain('data-label-card-grid="angular-card-grid"');
-    expect(html).toContain('data-label-card-grid-owner="hertzbeat-ui-label-tag"');
-    expect(html).toContain('data-label-card-column-contract="nz-xs-12-sm-8-md-6-lg-4"');
+    expect(html).toContain('data-label-list="hertzbeat-ui-flat-list"');
+    expect(html).toContain('data-label-list-owner="hertzbeat-ui-label-tag"');
+    expect(html).toContain('data-label-list-column-contract="single-column-flat-row"');
     expect(html).toContain('data-label-row="1"');
-    expect(html).toContain('data-label-card-shell="angular-card"');
-    expect(html).toContain('data-label-card-size="small"');
-    expect(html).toContain('data-label-card-content="angular-label-content"');
-    expect(html).toContain('data-label-card-description="angular-description"');
-    expect(html).toContain('data-label-card-description-display="angular-truthy-description-raw"');
-    expect(html).toContain('data-label-card-description-display-owner="label-manage-surface"');
-    expect(html).toContain('data-label-card-actions="angular-card-actions"');
+    expect(html).toContain('data-label-row-shell="hertzbeat-ui-flat-row"');
+    expect(html).toContain('data-label-row-density="compact-list"');
+    expect(html).toContain('data-label-row-content="hertzbeat-ui-label-content"');
+    expect(html).toContain('data-label-row-description="angular-description"');
+    expect(html).toContain('data-label-row-description-display="angular-truthy-description-raw"');
+    expect(html).toContain('data-label-row-description-display-owner="label-manage-surface"');
+    expect(html).toContain('data-label-row-action-shell="hertzbeat-ui-inline-row-actions"');
     expect(html).toContain('data-label-monitor-handoff="angular-routerlink-monitors-labels"');
     expect(html).toContain('data-label-monitor-handoff-query="team:ops"');
     expect(html).toContain('data-label-monitor-handoff-owner="next-monitor-query-link"');
-    expect(html).toContain('data-label-row-actions="angular-card-actions-contextual"');
+    expect(html).toContain('data-label-row-actions="hertzbeat-ui-inline-actions"');
     expect(html).toContain('data-label-row-actions-owner="hertzbeat-ui-action-group"');
     expect(html).toContain('data-label-row-action="copy"');
     expect(html).toContain('data-label-row-action="edit"');
     expect(html).toContain('data-label-row-action="delete"');
+    expect(html).toContain('data-label-command-action="row-copy"');
+    expect(html).toContain('data-label-command-action="row-edit"');
+    expect(html).toContain('data-label-command-action="row-delete"');
     expect(html).toContain('data-label-row-action-owner="row-contextual-icon-button"');
     expect(html).toContain('data-label-row-action-label="team:ops"');
+    expect(html).toContain('data-label-copy-source="team:ops"');
+    expect(html).toContain('data-label-copy-source-fallback="select-on-copy-fail"');
+    expect(html).toContain('tabindex="-1"');
+    expect(html).toContain('data-label-action-help="row-copy-1"');
+    expect(html).toContain('data-label-action-help="row-edit-1"');
+    expect(html).toContain('data-label-action-help="row-delete-1"');
+    expect(html).toContain('data-label-action-help-tooltip="row-copy-1"');
+    expect(html).toContain('data-label-action-help-tooltip="row-edit-1"');
+    expect(html).toContain('data-label-action-help-tooltip="row-delete-1"');
+    expect(html.match(/data-label-action-help="row-copy-/g)?.length).toBe(3);
+    expect(html.match(/data-label-action-help="row-edit-/g)?.length).toBe(3);
+    expect(html.match(/data-label-action-help="row-delete-/g)?.length).toBe(3);
+    expect(html).toContain(t('setting.labels.action.copy.help', { name: 'team:ops' }));
+    expect(html).toContain(t('setting.labels.action.edit.help', { name: 'team:ops' }));
+    expect(html).toContain(t('setting.labels.action.delete.help', { name: 'team:ops' }));
     expect(html).not.toContain('data-label-summary-rail=');
     expect(html).not.toContain('data-hz-search-input-shell');
     expect(html).toContain(t('menu.advanced.labels'));
@@ -228,13 +260,59 @@ describe('label manage surface', () => {
     expect(html).toContain(t('label.value'));
     expect(html).toContain(t('label.description'));
     expect(html).toContain(t('label.display'));
+    expect(html).toContain('data-label-dialog-field-help="name"');
+    expect(html).toContain('data-label-dialog-field-help="value"');
+    expect(html).toContain('data-label-dialog-field-help="description"');
+    expect(html).toContain('data-label-dialog-field-help="display"');
+    expect(html).toContain('data-label-dialog-field-help-tooltip="name"');
+    expect(html).toContain('data-label-action-help="dialog-cancel"');
+    expect(html).toContain('data-label-action-help="dialog-save"');
+    expect(html).toContain('data-label-command-action="dialog-cancel"');
+    expect(html).toContain('data-label-command-action="dialog-save"');
+    expect(html).toContain('data-label-action-help-tooltip="dialog-cancel"');
+    expect(html).toContain('data-label-action-help-tooltip="dialog-save"');
+    expect(html).toContain(t('setting.labels.action.dialog-cancel.help'));
+    expect(html).toContain(t('setting.labels.action.dialog-save.help'));
+    expect(html).toContain('data-label-inline-help-button="icon-after-label"');
+    expect(html).toContain('data-label-inline-help-visual="circle-help-icon"');
+    expect(html).toContain('data-label-inline-help-icon="lucide-circle-help"');
+    expect(html).toContain('data-label-inline-help-focus-contract="click-focuses-tooltip"');
+    expect(html).not.toContain('data-label-inline-help-button="literal-question-after-label"');
+    expect(html).not.toContain('data-label-inline-help-visual="borderless-question"');
+    expect(html).not.toContain('>?</span>');
+    expect(html).toContain('data-label-dialog-field-mode="required"');
+    expect(html).toContain('data-label-dialog-field-mode="optional"');
+    expect(html).toContain('data-label-dialog-field-mode="generated"');
+    expect(html).toContain('data-label-dialog-field-meta="requirement-and-input-mode"');
+    expect(html.match(/data-label-dialog-field-requirement="required"/g)?.length).toBe(1);
+    expect(html.match(/data-label-dialog-field-requirement="optional"/g)?.length).toBe(3);
+    expect(html.match(/data-label-dialog-field-input-mode="manual"/g)?.length).toBe(3);
+    expect(html.match(/data-label-dialog-field-input-mode="generated"/g)?.length).toBe(1);
+    expect(html).toContain(t('settings.form.field.requirement.required'));
+    expect(html).toContain(t('settings.form.field.requirement.optional'));
+    expect(html).toContain(t('settings.form.field.input-mode.manual'));
+    expect(html).toContain(t('settings.form.field.input-mode.generated'));
+    expect(html).toContain(t('setting.labels.field.name.help'));
+    expect(html).toContain(t('setting.labels.field.value.help'));
+    expect(html).toContain(t('setting.labels.field.description.help'));
+    expect(html).toContain(t('setting.labels.field.display.help'));
     expect(html).toContain(t('common.button.cancel'));
     expect(html).toContain(t('common.button.save'));
     expect(html).not.toContain('data-label-table="cold-label-table"');
     expect(html).not.toContain('setting.labels.subtitle');
+
+    const source = readFileSync(resolve(process.cwd(), 'components/pages/label-manage-surface.tsx'), 'utf8');
+    expect(source).toContain('CircleHelp');
+    expect(source).toContain('data-label-inline-help-button="icon-after-label"');
+    expect(source).toContain('data-label-inline-help-visual="circle-help-icon"');
+    expect(source).toContain('data-label-inline-help-icon="lucide-circle-help"');
+    expect(source).not.toContain('literal-question-after-label');
+    expect(source).not.toContain('data-label-inline-help-visual="borderless-question"');
+    expect(source).not.toContain('rounded-full bg-[#182238]');
+    expect(source).not.toContain('hover:bg-[#223052]');
   }, 30000);
 
-  it('renders a cold card empty state with Chinese fallback copy when no labels exist', () => {
+  it('renders a flat empty state with Chinese fallback copy when no labels exist', () => {
     const t = zh;
 
     const html = renderToStaticMarkup(
@@ -270,7 +348,7 @@ describe('label manage surface', () => {
       />
     );
 
-    expect(html).toContain('data-label-empty-state="hertzbeat-ui-card-empty"');
+    expect(html).toContain('data-label-empty-state="hertzbeat-ui-flat-empty"');
     expect(html).toContain('data-label-empty-icon="hertzbeat-ui-empty-box"');
     expect(html).toContain(t('setting.labels.empty.title'));
     expect(html).toContain(t('setting.labels.empty.copy'));
@@ -376,9 +454,9 @@ describe('label manage surface', () => {
 
     expect(html).toContain('data-label-description-display-contract="angular-truthy-description-raw"');
     expect(html).toContain('data-label-description-display-owner="label-manage-surface"');
-    expect(html).toContain('data-label-card-description="angular-description"');
-    expect(html).toContain('data-label-card-description-display="angular-truthy-description-raw"');
-    expect(html).toContain('data-label-card-description-display-owner="label-manage-surface"');
+    expect(html).toContain('data-label-row-description="angular-description"');
+    expect(html).toContain('data-label-row-description-display="angular-truthy-description-raw"');
+    expect(html).toContain('data-label-row-description-display-owner="label-manage-surface"');
     expect(html).toContain('title="   "');
   });
 
@@ -524,7 +602,7 @@ describe('label manage surface', () => {
     expect(html).not.toContain('disabled=""');
   });
 
-  it('does not mark a whitespace-only label name invalid before Angular trim-before-save runs', () => {
+  it('marks a whitespace-only label name invalid after the required validation path runs', () => {
     const t = zh;
 
     const html = renderToStaticMarkup(
@@ -554,12 +632,14 @@ describe('label manage surface', () => {
       />
     );
 
-    expect(html).toContain('data-label-name-validation-raw-contract="angular-required-before-trim"');
-    expect(html).toContain('data-label-name-validation-raw-owner="route-form-contract"');
-    expect(html).toContain('data-label-dialog-name-state="pristine"');
-    expect(html).toContain('data-label-save-submit-state="pristine"');
-    expect(html).not.toContain('data-label-dialog-name-validation="validation.required"');
-    expect(html).not.toContain(t('validation.required'));
+    expect(html).toContain('data-label-name-validation-trim-contract="local-trim-required-before-submit"');
+    expect(html).toContain('data-label-name-validation-trim-owner="route-form-contract"');
+    expect(html).toContain('data-label-dialog-name-state="dirty-invalid"');
+    expect(html).toContain('data-label-save-submit-state="dirty-invalid"');
+    expect(html).toContain('data-label-dialog-name-validation="validation.required"');
+    expect(html).toContain(t('validation.required'));
+    expect(html).toContain('data-label-dialog-preview-visibility="hidden"');
+    expect(html).not.toContain('data-label-dialog-preview="hertzbeat-ui-preview"');
   });
 
   it('renders the shared Angular-style delete confirmation dialog when a label is targeted', () => {
@@ -614,9 +694,14 @@ describe('label manage surface', () => {
     expect(html).toContain('data-label-delete-confirm-submit="angular-modal-confirm"');
     expect(html).toContain('data-label-delete-confirm-close="angular-close-before-delete-result"');
     expect(html).toContain('data-label-delete-confirm-close-owner="route-state-contract"');
+    expect(html).toContain('data-label-command-action="delete-cancel"');
+    expect(html).toContain('data-label-command-action="delete-confirm"');
     expect(html).toContain('data-label-delete-confirm-target="team:ops"');
+    expect(html).toContain('data-label-delete-guidance="monitor-handoff-risk"');
+    expect(html).toContain(t('setting.labels.delete.guidance'));
     expect(html).toContain(t('common.confirm.delete'));
-    expect(html).toContain(t('common.button.ok'));
+    expect(html).toContain(t('setting.labels.delete-action'));
+    expect(html).not.toContain(t('common.button.ok'));
   });
 
   it('renders Angular label delete failure title with backend detail', () => {
@@ -746,7 +831,7 @@ describe('label manage surface', () => {
 
     expect(html).toContain('data-label-load-failure="angular-console-only-shell"');
     expect(html).toContain('data-label-load-failure-owner="label-route-controller"');
-    expect(html).toContain('data-label-card-loading="false"');
+    expect(html).toContain('data-label-list-loading="false"');
     expect(html).not.toContain('backend refused label load');
     expect(html).not.toContain('data-label-action-feedback="angular-action-error"');
   });
@@ -787,6 +872,9 @@ describe('label manage surface', () => {
     expect(source).toContain('data-label-manage-surface="otlp-hertzbeat-ui-label-console"');
     expect(source).toContain('data-label-manage-style-baseline={coldLabelVisual.canvasName}');
     expect(source).toContain('data-label-header="hertzbeat-ui-compact-header"');
+    expect(source).toContain('data-label-header-nesting-contract="flat-page-introduction"');
+    expect(source).toContain('className="p-0"');
+    expect(source).not.toContain('className={coldLabelVisual.panel.hero}');
     expect(source).toContain('data-label-command-row="standard-equal-buttons"');
     expect(source).toContain('data-label-admin-layout="full-width-admin-list"');
     expect(source).toContain('data-label-save-feedback-contract="angular-new-edit-notify"');
@@ -825,10 +913,10 @@ describe('label manage surface', () => {
     expect(source).toContain("data-label-delete-feedback-detail={isDeleteFailureFeedback && actionMeta ? 'backend-message' : undefined}");
     expect(source).toContain('data-label-delete-query-contract="angular-repeated-ids-query"');
     expect(source).toContain('data-label-delete-query-owner="route-mutation-contract"');
-    expect(source).toContain('data-label-card-loading-contract="angular-table-loading"');
-    expect(source).toContain('data-label-card-loading-owner="label-route-controller"');
-    expect(source).toContain("data-label-card-loading={isCardGridLoading ? 'true' : 'false'}");
-    expect(source).toContain("aria-busy={isCardGridLoading ? 'true' : 'false'}");
+    expect(source).toContain('data-label-list-loading-contract="hertzbeat-ui-flat-list-loading"');
+    expect(source).toContain('data-label-list-loading-owner="label-route-controller"');
+    expect(source).toContain("data-label-list-loading={isLabelListLoading ? 'true' : 'false'}");
+    expect(source).toContain("aria-busy={isLabelListLoading ? 'true' : 'false'}");
     expect(source).toContain('data-label-save-loading-contract="angular-nz-ok-loading"');
     expect(source).toContain('data-label-save-loading-contract-owner="angular-nz-ok-loading"');
     expect(source).toContain('data-label-dialog-mask-closable-contract="angular-mask-closable-false"');
@@ -841,19 +929,19 @@ describe('label manage surface', () => {
     expect(source).toContain('data-label-dialog-preview-frame-owner="route-form-field-grid"');
     expect(source).toContain('data-label-dialog-preview-chrome-contract="angular-tag-only-no-extra-frame"');
     expect(source).toContain('data-label-dialog-preview-chrome-owner="hertzbeat-ui-label-tag"');
-    expect(source).toContain('data-label-edit-reference-contract="angular-edit-direct-reference"');
+    expect(source).toContain('data-label-edit-reference-contract="isolated-edit-draft"');
     expect(source).toContain('data-label-edit-reference-owner="route-form-state"');
     expect(source).toContain('data-label-name-validation-contract="angular-required-before-submit"');
     expect(source).toContain('data-label-name-validation-trigger-contract="angular-ok-marks-dirty"');
     expect(source).toContain('data-label-name-validation-trigger-owner="route-form-contract"');
-    expect(source).toContain('data-label-name-validation-raw-contract="angular-required-before-trim"');
-    expect(source).toContain('data-label-name-validation-raw-owner="route-form-contract"');
+    expect(source).toContain('data-label-name-validation-trim-contract="local-trim-required-before-submit"');
+    expect(source).toContain('data-label-name-validation-trim-owner="route-form-contract"');
     expect(source).toContain('data-label-query-contract="angular-load-all-labels"');
     expect(source).toContain('data-label-query-owner="label-query-state"');
     expect(source).toContain('data-label-query-param-order-contract="angular-page-index-size-type-search"');
     expect(source).toContain('data-label-query-param-order-owner="label-query-state"');
-    expect(source).toContain('data-label-card-grid-contract="angular-card-grid"');
-    expect(source).toContain('data-label-card-grid-owner="hertzbeat-ui-label-tag"');
+    expect(source).toContain('data-label-list-contract="hertzbeat-ui-flat-list"');
+    expect(source).toContain('data-label-list-owner="hertzbeat-ui-label-tag"');
     expect(source).toContain('data-label-monitor-handoff-contract="angular-routerlink-monitors-labels"');
     expect(source).toContain('data-label-monitor-handoff-owner="next-monitor-query-link"');
     expect(source).toContain('data-label-dialog-name-input="angular-required-name"');
@@ -862,7 +950,7 @@ describe('label manage surface', () => {
     expect(source).toContain('data-label-dialog-control-span="12"');
     expect(source).toContain('sm:grid-cols-[minmax(96px,7fr)_minmax(0,12fr)]');
     expect(source).toContain('isLabelPreviewVisible');
-    expect(source).toContain("draftName !== undefined");
+    expect(source).toContain('!isDraftNameMissing');
     expect(source).toContain('data-label-dialog-preview-frame="angular-inline-tag-no-extra-frame"');
     expect(source).toContain('data-label-dialog-preview-chrome="angular-nz-tag-inline"');
     expect(source).toContain('data-label-dialog-preview-chrome-mode="angular-tag-only-no-extra-frame"');
@@ -882,26 +970,29 @@ describe('label manage surface', () => {
     expect(source).toContain('data-label-search-submit-owner="hertzbeat-ui-search-row"');
     expect(source).toContain("clearLabel={t('common.clear')}");
     expect(source).toContain('onClear={onSearchClear}');
-    expect(source).toContain('data-label-card-grid="angular-card-grid"');
-    expect(source).toContain('data-label-card-column-contract="nz-xs-12-sm-8-md-6-lg-4"');
-    expect(source).toContain('data-label-card-shell="angular-card"');
-    expect(source).toContain('data-label-card-size="small"');
-    expect(source).toContain('data-label-card-content="angular-label-content"');
-    expect(source).toContain('data-label-card-description="angular-description"');
-    expect(source).toContain('data-label-card-description-display="angular-truthy-description-raw"');
-    expect(source).toContain('data-label-card-description-display-owner="label-manage-surface"');
-    expect(source).toContain('data-label-card-actions="angular-card-actions"');
+    expect(source).toContain('data-label-list="hertzbeat-ui-flat-list"');
+    expect(source).toContain('data-label-list-column-contract="single-column-flat-row"');
+    expect(source).toContain('data-label-row-shell="hertzbeat-ui-flat-row"');
+    expect(source).toContain('data-label-row-density="compact-list"');
+    expect(source).toContain('data-label-row-content="hertzbeat-ui-label-content"');
+    expect(source).toContain('data-label-row-description="angular-description"');
+    expect(source).toContain('data-label-row-description-display="angular-truthy-description-raw"');
+    expect(source).toContain('data-label-row-description-display-owner="label-manage-surface"');
+    expect(source).toContain('data-label-row-action-shell="hertzbeat-ui-inline-row-actions"');
     expect(source).toContain('data-label-monitor-handoff="angular-routerlink-monitors-labels"');
     expect(source).toContain('data-label-monitor-handoff-query={labelText}');
     expect(source).toContain('data-label-monitor-handoff-owner="next-monitor-query-link"');
+    expect(source).toContain('data-label-copy-source={labelText}');
+    expect(source).toContain('data-label-copy-source-fallback="select-on-copy-fail"');
+    expect(source).toContain('tabIndex={-1}');
     expect(source).toContain("t('setting.labels.action.copy-aria', actionLabelParams)");
     expect(source).toContain("t('setting.labels.action.edit-aria', actionLabelParams)");
     expect(source).toContain("t('setting.labels.action.delete-aria', actionLabelParams)");
-    expect(source).toContain('data-label-row-actions="angular-card-actions-contextual"');
+    expect(source).toContain('data-label-row-actions="hertzbeat-ui-inline-actions"');
     expect(source).toContain('data-label-row-actions-owner="hertzbeat-ui-action-group"');
     expect(source).toContain('data-label-row-action-owner="row-contextual-icon-button"');
     expect(source).toContain('data-label-row-action-label={labelText}');
-    expect(source).toContain('data-label-empty-state="hertzbeat-ui-card-empty"');
+    expect(source).toContain('data-label-empty-state="hertzbeat-ui-flat-empty"');
     expect(source).not.toContain('data-label-summary-rail');
     expect(source).not.toContain('coldLabelVisual.search.row');
     expect(source).not.toContain('coldLabelVisual.search.input');

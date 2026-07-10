@@ -16,8 +16,8 @@ describe('compatibility entrypoint posture', () => {
     const logIntegrationSource = readFileSync(resolve(process.cwd(), 'app/log/integration/page.tsx'), 'utf8');
     const logIntegrationSourceAlias = readFileSync(resolve(process.cwd(), 'app/log/integration/[source]/page.tsx'), 'utf8');
 
-    expect(dashboardSource).toContain('buildDashboardCompatRouteUrl');
-    expect(dashboardSource).toContain('redirect(');
+    expect(dashboardSource).toContain('DashboardDraftWorkspace');
+    expect(dashboardSource).not.toContain('redirect(');
     expect(dashboardSource).not.toContain("from '../overview/page'");
     expect(alertsSource).toContain('buildAlertCompatRouteUrlFromSearchParams');
     expect(alertsSource).not.toContain('createCompatSearchParamReader');

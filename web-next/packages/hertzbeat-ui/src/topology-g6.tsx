@@ -332,10 +332,12 @@ export const HZ_TOPOLOGY_G6_COMPACT_INITIAL_ZOOM = 1;
 const HZ_TOPOLOGY_G6_POINTER_PAN_SELECTION_SUPPRESS_MS = 350;
 export const HZ_TOPOLOGY_G6_VIEWPORT_RUNTIME_VERSION = "compact-viewport-guard-v3";
 export const HZ_TOPOLOGY_G6_EDGE_LABEL_VISIBLE_EDGE_LIMIT = 120;
+export const HZ_TOPOLOGY_G6_EDGE_LABEL_STAR_EDGE_LIMIT = 24;
 export const HZ_TOPOLOGY_G6_EDGE_DENSITY_VISIBLE_EDGE_LIMIT = 180;
 export const HZ_TOPOLOGY_G6_EDGE_READABILITY_PROMINENT_EDGE_LIMIT = 72;
 export const HZ_TOPOLOGY_G6_EDGE_READABILITY_MIN_OPACITY = 0.2;
 export const HZ_TOPOLOGY_G6_WINDOWED_LANE_MAX_ROWS = 18;
+const HZ_TOPOLOGY_G6_NODE_LABEL_MAX_CHARS = 24;
 
 type HzTopologyG6ViewportSnapshot = {
   zoom: number;
@@ -413,6 +415,12 @@ function formatMetric(value: number | undefined, suffix = '') {
   const metric = finiteMetric(value);
   if (metric === undefined) return undefined;
   return `${String(metric)}${suffix}`;
+}
+
+function compactTopologyNodeLabel(label: string) {
+  const normalized = label.trim();
+  if (normalized.length <= HZ_TOPOLOGY_G6_NODE_LABEL_MAX_CHARS) return normalized;
+  return `${normalized.slice(0, HZ_TOPOLOGY_G6_NODE_LABEL_MAX_CHARS - 3)}...`;
 }
 
 function toneStroke(tone: HzTopologyG6Tone | undefined, health?: string) {
@@ -1084,7 +1092,9 @@ export function buildHzTopologyG6EdgeReadabilityProfile(
 ): HzTopologyG6EdgeReadabilityProfile {
   const maxProminentEdgeCount = options.maxProminentEdgeCount ?? HZ_TOPOLOGY_G6_EDGE_READABILITY_PROMINENT_EDGE_LIMIT;
   const minimumOpacity = options.minimumOpacity ?? HZ_TOPOLOGY_G6_EDGE_READABILITY_MIN_OPACITY;
-  const shouldAttenuate = densityPolicy === 'reduced-large-graph' && input.edges.length > maxProminentEdgeCount;
+  const shouldAttenuate =
+    input.edges.length > maxProminentEdgeCount &&
+    (densityPolicy === 'reduced-large-graph' || input.edges.length > HZ_TOPOLOGY_G6_EDGE_LABEL_VISIBLE_EDGE_LIMIT);
 
   if (!shouldAttenuate) {
     return {
@@ -1378,6 +1388,20 @@ export function buildHzTopologyG6ShapeProfile(input: HzTopologyG6GraphInput): Hz
   };
 }
 
+export function resolveHzTopologyG6EdgeLabelPolicy(
+  renderWindow: Pick<HzTopologyG6RenderWindow, 'mode' | 'renderedEdgeCount'>,
+  shapeProfile: HzTopologyG6ShapeProfile
+): HzTopologyG6EdgeLabelPolicy {
+  if (renderWindow.mode === 'windowed' || renderWindow.renderedEdgeCount > HZ_TOPOLOGY_G6_EDGE_LABEL_VISIBLE_EDGE_LIMIT) {
+    return 'hidden-large-graph';
+  }
+  const isStarLike = shapeProfile.shape === 'single-star' || shapeProfile.shape === 'mixed-star-mesh';
+  if (isStarLike && shapeProfile.starEdgeCount > HZ_TOPOLOGY_G6_EDGE_LABEL_STAR_EDGE_LIMIT) {
+    return 'hidden-large-graph';
+  }
+  return 'visible';
+}
+
 export function buildHzTopologyG6Graph(input: HzTopologyG6GraphInput, options: HzTopologyG6GraphBuildOptions = {}): HzTopologyG6GraphData {
   const showEdgeLabels = options.edgeLabelPolicy !== 'hidden-large-graph';
   const nodeLabelVisibility = buildHzTopologyG6NodeLabelVisibility(input, options.nodeLabelPolicy ?? 'visible');
@@ -1389,6 +1413,7 @@ export function buildHzTopologyG6Graph(input: HzTopologyG6GraphInput, options: H
       const stroke = toneStroke(node.tone, node.health);
       const icon = getHzTopologyG6NodeIcon(node.entityType);
       const showNodeLabel = nodeLabelVisibility.visibleNodeIds.has(node.id);
+      const displayLabel = compactTopologyNodeLabel(node.label);
       return {
         id: node.id,
         type: 'circle',
@@ -1397,6 +1422,8 @@ export function buildHzTopologyG6Graph(input: HzTopologyG6GraphInput, options: H
         ),
         data: {
           label: node.label,
+          displayLabel,
+          labelDisplayPolicy: 'tail-truncate-preserve-metadata',
           entityType: node.entityType,
           iconKind: icon.kind,
           iconLibrary: icon.iconLibrary,
@@ -1427,7 +1454,7 @@ export function buildHzTopologyG6Graph(input: HzTopologyG6GraphInput, options: H
           iconWidth: 18,
           iconHeight: 18,
           iconOpacity: node.focus === 'dimmed' ? 0.62 : 0.94,
-          labelText: showNodeLabel ? node.label : '',
+          labelText: showNodeLabel ? displayLabel : '',
           labelFill: '#e5edf8',
           labelFontFamily: 'Inter, ui-sans-serif, system-ui',
           labelFontSize: 12,
@@ -1658,6 +1685,7 @@ export type HzTopologyG6CanvasProps = React.HTMLAttributes<HTMLDivElement> & {
   resetViewLabel?: string;
   selectedFocusLabel?: string;
   searchFocusLabel?: string;
+  searchEmptyLabel?: string;
   zoomInLabel?: string;
   zoomOutLabel?: string;
   edgeDensityDrilldownLabel?: string;
@@ -1865,6 +1893,7 @@ export function HzTopologyG6Canvas({
   resetViewLabel = 'Reset view',
   selectedFocusLabel = 'Focus selected node',
   searchFocusLabel = 'Focus search result',
+  searchEmptyLabel = 'No matching nodes',
   zoomInLabel = 'Zoom in',
   zoomOutLabel = 'Zoom out',
   edgeDensityDrilldownLabel = 'Open edge table',
@@ -2050,10 +2079,7 @@ export function HzTopologyG6Canvas({
     [renderWindow]
   );
   const shapeProfile = React.useMemo(() => buildHzTopologyG6ShapeProfile(renderWindow.graph), [renderWindow.graph]);
-  const edgeLabelPolicy: HzTopologyG6EdgeLabelPolicy =
-    renderWindow.mode === 'windowed' || renderWindow.renderedEdgeCount > HZ_TOPOLOGY_G6_EDGE_LABEL_VISIBLE_EDGE_LIMIT
-      ? 'hidden-large-graph'
-      : 'visible';
+  const edgeLabelPolicy = resolveHzTopologyG6EdgeLabelPolicy(renderWindow, shapeProfile);
   const edgeDensityWindow = React.useMemo(
     () => buildHzTopologyG6EdgeDensityWindow(renderWindow.graph, { mode: renderWindow.mode }),
     [renderWindow.graph, renderWindow.mode]
@@ -2065,9 +2091,15 @@ export function HzTopologyG6Canvas({
     () => buildHzTopologyG6NodeLabelCounts(edgeDensityWindow.graph, nodeLabelPolicy),
     [edgeDensityWindow.graph, nodeLabelPolicy]
   );
+  const edgeReadabilityMaxProminentEdgeCount =
+    edgeDensityWindow.policy === 'all-visible' && edgeDensityWindow.renderedEdgeCount > HZ_TOPOLOGY_G6_EDGE_LABEL_VISIBLE_EDGE_LIMIT
+      ? Math.max(24, Math.floor(HZ_TOPOLOGY_G6_EDGE_READABILITY_PROMINENT_EDGE_LIMIT / 2))
+      : HZ_TOPOLOGY_G6_EDGE_READABILITY_PROMINENT_EDGE_LIMIT;
   const edgeReadabilityProfile = React.useMemo(
-    () => buildHzTopologyG6EdgeReadabilityProfile(edgeDensityWindow.graph, edgeDensityWindow.policy),
-    [edgeDensityWindow.graph, edgeDensityWindow.policy]
+    () => buildHzTopologyG6EdgeReadabilityProfile(edgeDensityWindow.graph, edgeDensityWindow.policy, {
+      maxProminentEdgeCount: edgeReadabilityMaxProminentEdgeCount
+    }),
+    [edgeDensityWindow.graph, edgeDensityWindow.policy, edgeReadabilityMaxProminentEdgeCount]
   );
   const edgeLabelVisibleCount = edgeLabelPolicy === 'visible' ? edgeDensityWindow.renderedEdgeCount : 0;
   const edgeLabelHiddenCount = edgeLabelPolicy === 'hidden-large-graph' ? edgeDensityWindow.renderedEdgeCount : 0;
@@ -2964,6 +2996,7 @@ export function HzTopologyG6Canvas({
       data-hz-topology-g6-edge-label-visible-count={edgeLabelVisibleCount}
       data-hz-topology-g6-edge-label-hidden-count={edgeLabelHiddenCount}
       data-hz-topology-g6-edge-label-large-graph-threshold={HZ_TOPOLOGY_G6_EDGE_LABEL_VISIBLE_EDGE_LIMIT}
+      data-hz-topology-g6-edge-label-star-threshold={HZ_TOPOLOGY_G6_EDGE_LABEL_STAR_EDGE_LIMIT}
       data-hz-topology-g6-node-label-owner="hertzbeat-ui-g6-node-label"
       data-hz-topology-g6-node-label-policy={nodeLabelPolicy}
       data-hz-topology-g6-node-label-visible-count={nodeLabelCounts.visibleCount}
@@ -3448,6 +3481,19 @@ export function HzTopologyG6Canvas({
         </button>
         </div>
       ) : null}
+      {hasViewportTarget && searchFocus.status === 'empty' ? (
+        <div
+          role="status"
+          aria-live="polite"
+          className="pointer-events-none absolute right-3 top-12 z-20 max-w-[min(320px,calc(100%-1.5rem))] rounded-[3px] border border-[#7c5d1f]/70 bg-[#1a1307]/92 px-2.5 py-1.5 text-[11px] font-medium text-[#f5d38a] shadow-[0_14px_40px_rgba(0,0,0,0.24)]"
+          data-hz-topology-g6-search-empty="visible"
+          data-hz-topology-g6-search-empty-owner="hertzbeat-ui-g6-search-empty"
+          data-hz-topology-g6-search-empty-query={searchFocus.query}
+          data-hz-topology-g6-search-empty-behavior="retain-graph-explain-no-match"
+        >
+          <span className="block">{searchEmptyLabel}</span>
+        </div>
+      ) : null}
       <div
         className="sr-only"
         data-hz-topology-g6-focus-toolbar-owner="hertzbeat-ui-g6-focus-toolbar"
@@ -3485,16 +3531,22 @@ export function HzTopologyG6Canvas({
           <Search size={14} aria-hidden="true" />
         </button>
       </div>
-      <div className="sr-only" data-hz-topology-g6-metadata-owner="hertzbeat-ui-g6-metadata">
+      <div
+        className="sr-only"
+        data-hz-topology-g6-metadata-owner="hertzbeat-ui-g6-metadata"
+        data-hz-topology-g6-metadata-tab-policy="excluded-from-sequential-focus"
+      >
         {selectedGraph.nodes.map(node => (
           <button
             key={node.id}
             type="button"
+            tabIndex={-1}
             onClick={event => handleMetadataNodeClick(event, node.id)}
             data-hz-ui="topology-node"
             data-hz-topology-primitive="node"
             data-hz-topology-node-owner="hertzbeat-ui-node"
             data-hz-topology-g6-metadata-role="selection-button"
+            data-hz-topology-g6-metadata-tab-policy="excluded-from-sequential-focus"
             data-hz-topology-g6-metadata-click-behavior="in-page-select"
             data-hz-topology-g6-metadata-click-target="node"
             data-hz-topology-g6-node-select-owner="hertzbeat-ui-g6-node-select"
@@ -3554,11 +3606,13 @@ export function HzTopologyG6Canvas({
           <button
             key={edge.id}
             type="button"
+            tabIndex={-1}
             onClick={event => handleMetadataEdgeClick(event, edge.id)}
             data-hz-ui="topology-edge"
             data-hz-topology-primitive="edge"
             data-hz-topology-edge-owner="hertzbeat-ui-edge"
             data-hz-topology-g6-metadata-role="selection-button"
+            data-hz-topology-g6-metadata-tab-policy="excluded-from-sequential-focus"
             data-hz-topology-g6-metadata-click-behavior="in-page-select"
             data-hz-topology-g6-metadata-click-target="edge"
             data-hz-topology-g6-edge-select-owner="hertzbeat-ui-g6-edge-select"

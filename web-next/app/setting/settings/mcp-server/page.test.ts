@@ -14,8 +14,8 @@ describe('setting MCP server alias route', () => {
 
     const { default: SettingMcpServerAliasPage } = await import('./page');
 
-    await expect(SettingMcpServerAliasPage({})).rejects.toThrow('redirect:/setting/settings/config');
-    expect(redirect).toHaveBeenCalledWith('/setting/settings/config');
+    await expect(SettingMcpServerAliasPage({})).rejects.toThrow('redirect:/setting/settings/config?focus=mcp');
+    expect(redirect).toHaveBeenCalledWith('/setting/settings/config?focus=mcp');
   });
 
   it('preserves incoming query context when redirecting legacy MCP settings traffic', async () => {

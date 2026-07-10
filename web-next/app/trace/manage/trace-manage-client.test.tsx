@@ -357,10 +357,187 @@ describe('TraceManagePage client loading', () => {
     expect(metricActionParams.get('relatedMetricReason')).toBe('resource-filter');
     expect(metricActionParams.get('relatedMetricMatchedLabels')).toBe('k8s_pod_name');
     expect(metricActionParams.get('relatedMetricResourceMatch')).toBe('{"k8s_pod_name":"checkout-7d9"}');
+    expect(metricActionParams.get('operationName')).toBeNull();
     const operationMetricAction = relatedMetrics?.querySelector('[data-trace-manage-drawer-related-metric-query="http.server.duration"]') as HTMLAnchorElement | null;
     expect(operationMetricAction?.getAttribute('data-trace-manage-drawer-related-metric-source')).toBe('operation');
     expect(operationMetricAction?.getAttribute('data-trace-manage-drawer-related-metric-reason')).toBe('operation-context');
     expect(new URL(operationMetricAction?.getAttribute('href') || '', 'http://localhost').searchParams.get('operationName')).toBe('POST /checkout');
+  });
+
+  it('explains trace detail load failures with trace, service, and time-window context', async () => {
+    apiMessageGet
+      .mockResolvedValueOnce({
+        totalTraceCount: 1,
+        errorTraceCount: 0,
+        latestObservedAt: 1713200000000,
+        hasActiveTrace: true
+      })
+      .mockResolvedValueOnce({
+        content: [
+          {
+            traceId: 'trace-detail-missing',
+            rootSpanId: 'span-root',
+            rootSpanName: 'POST /checkout',
+            serviceName: 'checkout',
+            serviceNamespace: 'payments',
+            durationNanos: 420_000_000,
+            status: 'OK',
+            startTime: 1713200000000
+          }
+        ],
+        totalElements: 1,
+        pageIndex: 0,
+        pageSize: 8
+      })
+      .mockRejectedValueOnce(new Error('trace detail unavailable'));
+    const routeState = monitorTraceRouteState();
+    routeState.routeContext = {
+      ...routeState.routeContext,
+      serviceName: 'checkout',
+      timeRange: 'custom',
+      start: '1713200000000',
+      end: '1713203600000'
+    };
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+
+    await act(async () => {
+      root?.render(<TraceManagePage initialRouteState={routeState} />);
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    const openDetailAction = container.querySelector('[data-trace-manage-open-detail-action="side-waterfall-modal"]') as HTMLButtonElement | null;
+    expect(openDetailAction).not.toBeNull();
+
+    await act(async () => {
+      openDetailAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    const drawerRoot = document.body.querySelector('[data-trace-manage-detail-drawer="waterfall-side-modal"]') as HTMLElement | null;
+    expect(drawerRoot).not.toBeNull();
+    expect(drawerRoot?.textContent).toContain('Trace detail unavailable');
+    expect(drawerRoot?.textContent).toContain('Trace trace-detail-missing was not found or could not be loaded for checkout');
+    expect(drawerRoot?.textContent).toContain('2024/04/16 00:53:20 -> 2024/04/16 01:53:20');
+    expect(drawerRoot?.textContent).toContain('widen the time range');
+    expect(drawerRoot?.textContent).toContain('clear the exact trace ID');
+    expect(drawerRoot?.textContent).toContain('open logs/metrics with the same context');
+  });
+
+  it('keeps related-log query URLs out of the empty-state visible copy', async () => {
+    apiMessageGet
+      .mockResolvedValueOnce({
+        totalTraceCount: 1,
+        errorTraceCount: 1,
+        latestObservedAt: 1713200000000,
+        hasActiveTrace: true
+      })
+      .mockResolvedValueOnce({
+        content: [
+          {
+            traceId: 'trace-empty-logs',
+            rootSpanId: 'span-root',
+            rootSpanName: 'POST /checkout',
+            serviceName: 'checkout',
+            serviceNamespace: 'payments',
+            durationNanos: 420_000_000,
+            status: 'error',
+            startTime: 1713200000000
+          }
+        ],
+        totalElements: 1,
+        pageIndex: 0,
+        pageSize: 8
+      })
+      .mockResolvedValueOnce({
+        traceId: 'trace-empty-logs',
+        rootSpanId: 'span-root',
+        serviceName: 'checkout',
+        serviceNamespace: 'payments',
+        rootSpanName: 'POST /checkout',
+        durationNanos: 420_000_000,
+        status: 'error',
+        startTime: 1713200000000,
+        resourceAttributes: {
+          'service.name': 'checkout'
+        },
+        spans: []
+      })
+      .mockResolvedValueOnce([
+        {
+          traceId: 'trace-empty-logs',
+          spanId: 'span-root',
+          spanName: 'POST /checkout',
+          serviceName: 'checkout',
+          status: 'error',
+          spanKind: 'SERVER',
+          durationNanos: 420_000_000,
+          startTime: 1713200000000,
+          resourceAttributes: {
+            'service.namespace': 'payments',
+            'deployment.environment.name': 'prod'
+          },
+          spanAttributes: {
+            'http.route': '/checkout'
+          },
+          events: [],
+          links: []
+        }
+      ])
+      .mockResolvedValueOnce({
+        source: 'backend-related-metrics',
+        operationName: 'POST /checkout',
+        candidateCount: 0,
+        candidates: []
+      })
+      .mockResolvedValueOnce({
+        content: [],
+        totalElements: 0,
+        pageIndex: 0,
+        pageSize: 3
+      });
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+
+    await act(async () => {
+      root?.render(<TraceManagePage initialRouteState={monitorTraceRouteState()} />);
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    const openDetailAction = container.querySelector('[data-trace-manage-open-detail-action="side-waterfall-modal"]') as HTMLButtonElement | null;
+    expect(openDetailAction).not.toBeNull();
+
+    await act(async () => {
+      openDetailAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    const relatedLogs = document.body.querySelector('[data-trace-manage-drawer-related-logs="backend-related-logs"]') as HTMLElement | null;
+    expect(relatedLogs?.getAttribute('data-trace-manage-drawer-related-logs-state')).toBe('empty');
+    expect(relatedLogs?.getAttribute('data-trace-manage-drawer-related-logs-url')).toContain('/logs/list?');
+    expect(relatedLogs?.textContent).toContain('No related logs');
+    expect(relatedLogs?.textContent).toContain('Open Logs to inspect the same trace and span filters.');
+    expect(relatedLogs?.textContent).not.toContain('/logs/list?');
+    expect(relatedLogs?.textContent).not.toContain('traceId=trace-empty-logs');
+    const emptyAction = relatedLogs?.querySelector('[data-trace-manage-drawer-related-logs-empty-action="open-logs"]') as HTMLAnchorElement | null;
+    expect(emptyAction?.getAttribute('href')).toContain('/log/manage?');
+    expect(emptyAction?.getAttribute('href')).toContain('traceId=trace-empty-logs');
+    expect(emptyAction?.getAttribute('href')).toContain('spanId=span-root');
+    expect(emptyAction?.getAttribute('data-trace-manage-drawer-related-logs-empty-trace')).toBe('trace-empty-logs');
+    expect(emptyAction?.getAttribute('data-trace-manage-drawer-related-logs-empty-span')).toBe('span-root');
   });
 
   it('narrows trace table rows by service from the row cell', async () => {

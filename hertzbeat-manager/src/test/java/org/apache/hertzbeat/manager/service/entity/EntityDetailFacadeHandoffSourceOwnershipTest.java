@@ -49,7 +49,12 @@ class EntityDetailFacadeHandoffSourceOwnershipTest {
                 "Detail observability read model should own the entity DTO loading handoff");
         assertTrue(detailObservabilitySource.contains("public EntityDetailDto buildEntityDetail(long entityId)"),
                 "Detail observability read model should expose an id-based detail assembly handoff");
-        assertTrue(detailObservabilitySource.contains("entityDetailReadModelService.loadEntityDto(entityId)"),
-                "Detail observability read model should load the entity DTO before runtime evidence assembly");
+        assertTrue(detailObservabilitySource.contains("ENTITY_DETAIL_RELATION_PREVIEW_LIMIT"),
+                "Detail observability read model should cap relation preview evidence for large graph payloads");
+        assertTrue(detailObservabilitySource.contains(
+                        "entityDetailReadModelService.loadEntityDto(\n                entityId, ENTITY_DETAIL_RELATION_PREVIEW_LIMIT)"),
+                "Detail observability read model should load a relation preview before runtime evidence assembly");
+        assertTrue(detailObservabilitySource.contains("entityDetailReadModelService.countEntityRelations(entityId)"),
+                "Detail observability read model should count full relations separately from preview rows");
     }
 }

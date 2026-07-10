@@ -4,7 +4,6 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
-const redirect = vi.fn();
 const headers = vi.fn();
 
 const mockLoadIntegrationDoc = vi.hoisted(() =>
@@ -36,10 +35,6 @@ vi.mock('next/link', () => ({
       {children}
     </a>
   )
-}));
-
-vi.mock('next/navigation', () => ({
-  redirect
 }));
 
 vi.mock('next/headers', () => ({
@@ -151,6 +146,7 @@ describe('alert integration page', () => {
     expect(html).toContain('data-alert-integration-token-action-owner="hertzbeat-ui-button-link"');
     expect(html).toContain('data-alert-integration-source-item="webhook"');
     expect(html).toContain('data-alert-integration-source-selected="true"');
+    expect(html).toContain('aria-current="page"');
     expect(html).toContain('data-alert-integration-source-icon="webhook"');
     expect(html).toContain('data-hz-source-doc-item-owner="hertzbeat-ui-source-doc-shell"');
     expect(html).toContain('data-hz-source-doc-item-icon-owner="hertzbeat-ui-source-doc-shell"');
@@ -160,7 +156,8 @@ describe('alert integration page', () => {
     expect(html).toContain('data-alert-integration-markdown="rendered"');
     expect(html).toContain('data-alert-integration-code-block="json"');
     expect(html).toContain('data-alert-integration-code-block="bash"');
-    expect(html).toContain('data-alert-integration-mermaid="pending"');
+    expect(html).toContain('data-alert-integration-mermaid="structured-flow"');
+    expect(html).toContain('data-alert-integration-diagram-runtime="semantic-html"');
     expect(html).toContain('Alert integration');
     expect(html).toContain('Integration alert sources');
     expect(html).toContain('Default Webhook');
@@ -194,6 +191,7 @@ describe('alert integration page', () => {
     expect(source).toContain('loadIntegrationDoc(baseDir, selectedSource.id, locale)');
     expect(source).toContain('data-alert-integration-surface="hertzbeat-ui-source-doc"');
     expect(source).toContain('data-alert-integration-shell-owner="hertzbeat-ui-source-doc-shell"');
+    expect(source).toContain("'aria-current': item.id === selectedSource.id ? ('page' as const) : undefined");
     expect(source).not.toContain('h-[calc(100vh-242px)]');
     expect(source).toContain("'data-alert-integration-source-icon': item.id");
     expect(source).toContain('AlertIntegrationMarkdown');
@@ -217,19 +215,24 @@ describe('alert integration page', () => {
     expect(source).not.toContain("from '@/components/observability/code-pane'");
   });
 
-  it('redirects unknown source params to the canonical default source route', async () => {
+  it('uses a client canonical redirect for unknown source params so production hydration does not strand an empty shell', async () => {
     headers.mockResolvedValue(new Headers({ 'accept-language': 'zh-CN' }));
-    redirect.mockImplementation((target: string) => {
-      throw new Error(`redirect:${target}`);
-    });
+    const source = readFileSync(resolve(process.cwd(), 'app/alert/integration/[source]/page.tsx'), 'utf8');
+    const redirectSource = readFileSync(resolve(process.cwd(), 'app/alert/integration/[source]/alert-integration-source-redirect.tsx'), 'utf8');
 
     const { default: AlertIntegrationPage } = await import('./page');
 
-    await expect(
-      AlertIntegrationPage({
+    const html = renderToStaticMarkup(
+      await AlertIntegrationPage({
         params: Promise.resolve({ source: 'unknown-provider' })
       })
-    ).rejects.toThrow('redirect:/alert/integration/webhook');
-    expect(redirect).toHaveBeenLastCalledWith('/alert/integration/webhook');
+    );
+
+    expect(html).toContain('data-alert-integration-canonical-redirect="pending"');
+    expect(source).toContain('AlertIntegrationSourceRedirect');
+    expect(source).toContain('return <AlertIntegrationSourceRedirect href={buildAlertIntegrationSourceHref(selectedSource)} />');
+    expect(source).not.toContain("from 'next/navigation'");
+    expect(redirectSource).toContain('window.location.replace(href)');
+    expect(redirectSource).toContain('data-alert-integration-canonical-redirect="pending"');
   });
 });

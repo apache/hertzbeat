@@ -37,6 +37,23 @@ describe('collector health evidence', () => {
     });
   });
 
+  it('keeps an empty collector cluster distinct from monitor binding health', () => {
+    expect(
+      buildCollectorHealthEvidence({
+        totalCollectorCount: 0,
+        onlineCollectorCount: 0,
+        offlineCollectorCount: 0,
+        taskCount: 0
+      })
+    ).toEqual({
+      title: 'Collection cluster health',
+      copy: 'No collectors in this view',
+      meta: 'Adjust filters or deploy a collector',
+      freshness: 'Last report -',
+      tone: 'neutral'
+    });
+  });
+
   it('uses the provided runtime translator for collector health evidence copy', () => {
     const t = createTranslatorMock({ locale: 'en-US' });
 

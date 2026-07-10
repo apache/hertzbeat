@@ -63,3 +63,7 @@ export function consumeWorkbenchLoad<T>(
 export function resetWorkbenchLoadCache() {
   workbenchLoadCache.clear();
 }
+
+export function forgetWorkbenchLoad(cacheKey: string) {
+  workbenchLoadCache.delete(cacheKey);
+}

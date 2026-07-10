@@ -72,6 +72,7 @@ describe('incidents surface controller', () => {
       id: '42',
       title: 'API latency incident detail',
       severity: 'warning',
+      severityLabel: 'Warning',
       stage: 'Identified',
       service: 'api-gateway',
       owner: 'detail-responder',
@@ -109,6 +110,56 @@ describe('incidents surface controller', () => {
     expect(result.timelineRows).toEqual([]);
     expect(result.ownershipRows).toEqual([]);
     expect(result.metrics.map(metric => metric.value)).toEqual(['0', '0', '0', '0']);
+  });
+
+  it('normalizes inverted incident timelines before building table and ownership timestamps', () => {
+    const result = buildIncidentWorkbenchData(
+      {
+        content: [
+          {
+            id: 12,
+            name: 'Archive incident',
+            state: 2,
+            startTime: new Date('2026-04-22T09:53:41.157Z').getTime(),
+            endTime: new Date('2025-02-12T02:45:00.000Z').getTime(),
+            gmtCreate: '2026-04-22T17:53:41.158081',
+            gmtUpdate: '2026-04-22T17:53:41.158081',
+            components: [{ id: 1, name: 'api-gateway' }],
+            contents: [
+              {
+                id: 25,
+                message: 'Historical latency spike was traced to a downstream dependency.',
+                state: 0,
+                timestamp: new Date('2025-02-12T01:35:00.000Z').getTime()
+              },
+              {
+                id: 26,
+                message: 'Service recovered after the retry policy was tuned.',
+                state: 3,
+                timestamp: new Date('2025-02-12T02:45:00.000Z').getTime()
+              }
+            ]
+          }
+        ],
+        totalElements: 1,
+        pageIndex: 0,
+        pageSize: 8
+      },
+      t,
+      formatTime
+    );
+
+    expect(result.incidents[0].openedAt).toBe(`time:${new Date('2025-02-12T01:35:00.000Z').getTime()}`);
+    expect(result.ownershipRows[0].meta).toContain(`time:${new Date('2025-02-12T01:35:00.000Z').getTime()}`);
+    expect(result.timelineRows.map(row => row.title)).toEqual([
+      `time:${new Date('2025-02-12T02:45:00.000Z').getTime()} · Resolved`,
+      `time:${new Date('2025-02-12T01:35:00.000Z').getTime()} · Investigating`
+    ]);
+    expect(result.selectedIncident).toMatchObject({
+      id: 12,
+      createTime: new Date('2025-02-12T01:35:00.000Z').getTime(),
+      updateTime: new Date('2025-02-12T02:45:00.000Z').getTime()
+    });
   });
 
   it('does not request detail when the incident list is empty', async () => {

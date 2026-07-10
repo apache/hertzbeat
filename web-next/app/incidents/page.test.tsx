@@ -43,12 +43,13 @@ vi.mock('../../components/workbench/client-workbench', () => ({
             { label: 'Ownership queues', value: '1', tone: 'info' }
           ],
           incidents: [
-            {
-              id: '42',
-              title: 'API latency incident',
-              severity: 'critical',
-              stage: 'Investigating',
-              service: 'api-gateway',
+          {
+            id: '42',
+            title: 'API latency incident',
+            severity: 'critical',
+            severityLabel: 'Critical',
+            stage: 'Investigating',
+            service: 'api-gateway',
               owner: 'platform-oncall',
               openedAt: '2026-04-10 18:00:00',
               blastRadius: '1 component'
@@ -195,6 +196,10 @@ describe('incidents page', () => {
     expect(source).toContain('apiMessageGet');
     expect(source).toContain('apiMessagePut');
     expect(source).toContain('transitionIncidentStatus');
+    expect(source).toContain("incident: t('incidents.table.incident')");
+    expect(source).toContain("severity: t('incidents.table.severity')");
+    expect(source).toContain("timeline: t('incidents.table.timeline')");
+    expect(source).toContain("emptyLabel={t('incidents.table.empty')}");
     expect(source).toContain('data-incidents-detail-source');
     expect(source).toContain('data-incidents-transition-source');
     expect(source).toContain('data-incidents-query-contract="angular-search-pagination"');

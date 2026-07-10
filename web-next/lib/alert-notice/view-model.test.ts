@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { buildAlertNoticeEvidenceContext, buildNoticeFacts, buildNoticeLaneRows, buildNoticeMetrics, buildNoticeReceiverDraft, buildNoticeReceiverRows, buildNoticeRuleRows, buildNoticeTemplateDraft, buildNoticeTemplateRows, getNoticeReceiverVisibleFieldKeys, validateNoticeReceiverDraft, validateNoticeRuleDraft, validateNoticeTemplateDraft } from './view-model';
+import { buildAlertNoticeEvidenceContext, buildNoticeFacts, buildNoticeLaneRows, buildNoticeMetrics, buildNoticeReceiverDraft, buildNoticeReceiverRows, buildNoticeReceiverValidationIssues, buildNoticeRuleRows, buildNoticeTemplateDraft, buildNoticeTemplateRows, buildNoticeTemplateValidationIssues, getNoticeReceiverVisibleFieldKeys, validateNoticeReceiverDraft, validateNoticeRuleDraft, validateNoticeTemplateDraft } from './view-model';
 import { createTranslatorMock } from '../../test/i18n-test-helper';
 
 const t = createTranslatorMock();
@@ -193,6 +193,10 @@ describe('alert notice view model', () => {
     expect(getNoticeReceiverVisibleFieldKeys({ ...buildNoticeReceiverDraft(null), type: '2', hookAuthType: 'Basic' })).toEqual(['hookUrl', 'hookAuthType', 'hookAuthToken']);
     expect(getNoticeReceiverVisibleFieldKeys({ ...buildNoticeReceiverDraft(null), type: '14', larkReceiveType: '1' })).toEqual(['appId', 'appSecret', 'larkReceiveType', 'chatId']);
 
+    expect(buildNoticeReceiverValidationIssues(buildNoticeReceiverDraft(null), t)).toEqual([
+      { field: 'name', message: 'Receiver name is required' },
+      { field: 'email', message: 'Email is required' }
+    ]);
     expect(validateNoticeReceiverDraft(buildNoticeReceiverDraft(null), t)).toBe('Receiver name is required');
     expect(validateNoticeReceiverDraft({ ...buildNoticeReceiverDraft(null), name: 'ops-email' }, t)).toBe('Email is required');
     expect(validateNoticeReceiverDraft({ ...buildNoticeReceiverDraft(null), name: 'ops-email', type: '2', hookAuthType: 'None', hookUrl: '' }, t)).toBe('Webhook URL is required');
@@ -235,6 +239,11 @@ describe('alert notice view model', () => {
 
     expect(validateNoticeTemplateDraft(buildNoticeTemplateDraft(null), t)).toBe('Template name is required');
     expect(buildNoticeTemplateDraft(null).type).toBe('');
+    expect(buildNoticeTemplateValidationIssues(buildNoticeTemplateDraft(null), t)).toEqual([
+      { field: 'name', message: 'Template name is required' },
+      { field: 'type', message: 'Notice type is required' },
+      { field: 'content', message: 'Template content is required' }
+    ]);
     expect(validateNoticeTemplateDraft({ ...buildNoticeTemplateDraft(null), name: 'Email default' }, t)).toBe('Notice type is required');
     expect(validateNoticeTemplateDraft({ ...buildNoticeTemplateDraft(null), name: 'Email default', type: '1' }, t)).toBe('Template content is required');
     expect(validateNoticeTemplateDraft({ ...buildNoticeTemplateDraft(null), name: 'Email default', type: '1', content: 'hello' }, t)).toBeNull();
@@ -306,6 +315,11 @@ describe('alert notice view model', () => {
     expect(validateNoticeRuleDraft({ name: '', receiverIdsText: '', templateId: '-1', enable: true, filterAll: true, labelsText: '', daysText: '', periodStart: '', periodEnd: '' }, t)).toBe('Rule name is required');
     expect(validateNoticeRuleDraft({ name: 'PagerDuty critical', receiverIdsText: '', templateId: '-1', enable: true, filterAll: true, labelsText: '', daysText: '', periodStart: '', periodEnd: '' }, t)).toBe('Receivers are required');
     expect(validateNoticeRuleDraft({ name: 'PagerDuty critical', receiverIdsText: '1', templateId: '-1', enable: true, filterAll: false, labelsText: '', daysText: '1,2,3,4,5', periodStart: '09:00', periodEnd: '18:00' }, t)).toBe('Labels are required');
+    expect(validateNoticeRuleDraft({ name: 'PagerDuty critical', receiverIdsText: '1', templateId: '-1', enable: true, filterAll: true, labelsText: '', daysText: '', periodLimit: true, periodStart: '', periodEnd: '' }, t)).toBe('Days are required');
+    expect(validateNoticeRuleDraft({ name: 'PagerDuty critical', receiverIdsText: '1', templateId: '-1', enable: true, filterAll: true, labelsText: '', daysText: '8, nope', periodLimit: true, periodStart: '', periodEnd: '' }, t)).toBe('Days are required');
+    expect(validateNoticeRuleDraft({ name: 'PagerDuty critical', receiverIdsText: '1', templateId: '-1', enable: true, filterAll: true, labelsText: '', daysText: '1,2,3,4,5', periodStart: '09:00', periodEnd: '' }, t)).toBe('Period is required');
+    expect(validateNoticeRuleDraft({ name: 'PagerDuty critical', receiverIdsText: '1', templateId: '-1', enable: true, filterAll: true, labelsText: '', daysText: '1,2,3,4,5', periodStart: '', periodEnd: '18:00' }, t)).toBe('Period is required');
+    expect(validateNoticeRuleDraft({ name: 'PagerDuty critical', receiverIdsText: '1', templateId: '-1', enable: true, filterAll: true, labelsText: '', daysText: '1,2,3,4,5', periodStart: '25:00', periodEnd: '18:00' }, t)).toBe('Period is required');
     expect(validateNoticeRuleDraft({ name: 'PagerDuty critical', receiverIdsText: '1', templateId: '-1', enable: true, filterAll: true, labelsText: '', daysText: '', periodStart: '', periodEnd: '' }, t)).toBeNull();
   });
 
@@ -329,6 +343,8 @@ describe('alert notice view model', () => {
     expect(validateNoticeRuleDraft({ name: '', receiverIdsText: '', templateId: '-1', enable: true, filterAll: true, labelsText: '', daysText: '', periodStart: '', periodEnd: '' }, zhT)).toBe(zhT('alert.notice.rule.validation.name'));
     expect(validateNoticeRuleDraft({ name: 'critical notice', receiverIdsText: '', templateId: '-1', enable: true, filterAll: true, labelsText: '', daysText: '', periodStart: '', periodEnd: '' }, zhT)).toBe(zhT('alert.notice.rule.validation.receivers'));
     expect(validateNoticeRuleDraft({ name: 'critical notice', receiverIdsText: '1', templateId: '-1', enable: true, filterAll: false, labelsText: '', daysText: '1,2,3,4,5', periodStart: '09:00', periodEnd: '18:00' }, zhT)).toBe(zhT('alert.notice.rule.validation.labels'));
+    expect(validateNoticeRuleDraft({ name: 'critical notice', receiverIdsText: '1', templateId: '-1', enable: true, filterAll: true, labelsText: '', daysText: '', periodLimit: true, periodStart: '', periodEnd: '' }, zhT)).toBe(zhT('alert.notice.rule.validation.days'));
+    expect(validateNoticeRuleDraft({ name: 'critical notice', receiverIdsText: '1', templateId: '-1', enable: true, filterAll: true, labelsText: '', daysText: '1,2,3,4,5', periodStart: '09:00', periodEnd: '' }, zhT)).toBe(zhT('alert.notice.rule.validation.period'));
     expect(validateNoticeRuleDraft({ name: 'critical notice', receiverIdsText: '1', templateId: '-1', enable: true, filterAll: true, labelsText: '', daysText: '', periodStart: '', periodEnd: '' }, zhT)).toBeNull();
 
     expect(buildNoticeReceiverRows([{ id: 8, name: '', type: 1, email: '', gmtUpdate: 1712730000000 }] as any, zhT, () => '2026-04-10 18:00:00', 'zh-CN')[0].title).toBe(zhT('alert.notice.receivers.default'));
@@ -375,6 +391,12 @@ describe('alert notice view model', () => {
         copy: zhT('alert.notice.receiver.test-preview.copy'),
         labelsText:
           'hertzbeat.signal:logs, hertzbeat.entity.id:7, service.name:checkout, service.namespace:payments, deployment.environment:prod, trace_id:trace-123, span_id:span-456, hertzbeat.source:otlp, hertzbeat.collector:collector-a, hertzbeat.template:spring-boot, hertzbeat.alert.datasource:sql, hertzbeat.alert.query_type:logs, hertzbeat.alert.template:OpsTemplate',
+        labelsPreviewText:
+          'hertzbeat.signal:logs, hertzbeat.entity.id:7, service.name:checkout, service.namespace:payments, deployment.environment:prod, trace_id:trace-123, span_id:span-456, hertzbeat.source:otlp',
+        labelsTotal: 13,
+        labelsRendered: 8,
+        labelsLimit: 8,
+        labelsOverflow: 5,
         payloadTitle: zhT('alert.notice.receiver.test-preview.payload.title'),
         payloadCopy: zhT('alert.notice.receiver.test-preview.payload.copy'),
         payloadMessage: zhT('alert.notice.receiver.test-preview.payload.message', {
@@ -416,6 +438,8 @@ describe('alert notice view model', () => {
         value: zhT('alert.notice.receiver.test-preview.payload.severity.sample')
       }
     ]);
+    expect(context?.ruleDraftPatch.labelsText).toContain('hertzbeat.alert.template:OpsTemplate');
+    expect(context?.receiverTestPreview?.labelsPreviewText).not.toContain('hertzbeat.alert.template:OpsTemplate');
     expect(context?.rows.map(row => row.label)).toContain(zhT('signal.context.trace.label'));
   });
 

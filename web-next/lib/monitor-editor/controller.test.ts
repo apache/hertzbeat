@@ -7,6 +7,7 @@ import {
   buildMonitorEditorMonitorUrl,
   buildMonitorEditorParamDefinesUrl,
   buildMonitorDetectPayload,
+  buildMonitorDetectSuccessDetail,
   buildMonitorSavePayload,
   createMonitor,
   createMonitorFromFacade,
@@ -24,7 +25,8 @@ import {
   updateMonitor,
   updateMonitorFromFacade,
   updateMonitorEditorParam,
-  validateMonitorEditorDraft
+  validateMonitorEditorDraft,
+  validateMonitorEditorDraftResult
 } from './controller';
 
 describe('monitor editor controller', () => {
@@ -176,6 +178,49 @@ describe('monitor editor controller', () => {
     expect(writeCreate).toHaveBeenCalledWith(buildMonitorSavePayload(draft));
     expect(writeUpdate).toHaveBeenCalledWith(buildMonitorSavePayload(draft));
     expect(writeDetect).toHaveBeenCalledWith(buildMonitorDetectPayload(draft));
+  });
+
+  it('summarizes detect success from the submitted draft instead of inventing response evidence', () => {
+    const t = createTranslatorMock({ locale: 'en-US' });
+    const draft = {
+      monitor: {
+        id: 0,
+        app: 'website',
+        name: 'checkout website',
+        instance: '',
+        scrape: 'static',
+        status: 0,
+        scheduleType: 'interval',
+        intervals: 60
+      },
+      collector: '',
+      grafanaDashboard: { enabled: false },
+      params: [
+        { field: 'host', paramValue: '127.0.0.1' },
+        { field: 'port', paramValue: 4223 }
+      ],
+      paramDefines: [
+        { field: 'host', type: 'text', name: 'Host' },
+        { field: 'port', type: 'number', name: 'Port' }
+      ],
+      advancedParams: [],
+      advancedParamDefines: [],
+      scrapeParams: [],
+      scrapeParamDefines: [],
+      collectors: []
+    } as any;
+
+    expect(buildMonitorDetectSuccessDetail(draft, t)).toBe(
+      t('monitor.detect.success-detail', {
+        name: 'checkout website',
+        target: '127.0.0.1',
+        scrape: 'static',
+        collector: t('monitor.collector.system.default'),
+        schedule: `60 ${t('common.time.unit.second')}`
+      })
+    );
+    expect(buildMonitorDetectSuccessDetail(draft, t)).not.toContain('status code');
+    expect(buildMonitorDetectSuccessDetail(draft, t)).not.toContain('response time');
   });
 
   it('matches Angular new-monitor host-change auto name behavior without touching edit mode', () => {
@@ -447,10 +492,16 @@ describe('monitor editor controller', () => {
       scrapeParamDefines: []
     } as any;
 
-    expect(validateMonitorEditorDraft(draft, t)).toBe('Monitor name is required');
+    expect(validateMonitorEditorDraft(draft, t)).toBe('Fix 3 required fields before continuing: Host, Monitor name, Cron expression');
+    expect(validateMonitorEditorDraftResult(draft, t)).toEqual({
+      message: 'Fix 3 required fields before continuing: Host, Monitor name, Cron expression',
+      focusTarget: 'param:host',
+      focusTargets: ['param:host', 'monitor-name', 'cron-expression']
+    });
 
     draft.monitor.name = 'demo';
-    expect(validateMonitorEditorDraft(draft, t)).toBe('Host is required');
+    expect(validateMonitorEditorDraft(draft, t)).toBe('Fix 2 required fields before continuing: Host, Cron expression');
+    expect(validateMonitorEditorDraftResult(draft, t)?.focusTarget).toBe('param:host');
 
     draft.params[0].paramValue = 'example.com';
     expect(validateMonitorEditorDraft(draft, t)).toBe('Cron expression is invalid');
@@ -462,6 +513,7 @@ describe('monitor editor controller', () => {
 
   it('localizes monitor editor validation copy in zh-CN', () => {
     const t = createTranslatorMock({ locale: 'zh-CN' });
+    const targetHost = `${String.fromCodePoint(0x76ee, 0x6807)}HOST`;
     const draft = {
       monitor: {
         id: 0,
@@ -478,7 +530,7 @@ describe('monitor editor controller', () => {
         { field: 'port', paramValue: 80, display: true }
       ],
       paramDefines: [
-        { field: 'host', type: 'text', required: true, name: 'Host' },
+        { field: 'host', type: 'text', required: true, name: { 'en-US': 'Target Host', 'zh-CN': targetHost } },
         { field: 'port', type: 'number', required: true, name: 'Port' }
       ],
       advancedParams: [],
@@ -487,13 +539,17 @@ describe('monitor editor controller', () => {
       scrapeParamDefines: []
     } as any;
 
-    expect(validateMonitorEditorDraft(draft, t)).toBe(t('monitor.editor.validation.name'));
+    expect(validateMonitorEditorDraft(draft, t, { locale: 'zh-CN' })).toBe(
+      t('monitor.editor.validation.summary', { count: 3, fields: `${targetHost}, ${t('monitor.name')}, ${t('monitor.cronExpression')}` })
+    );
 
     draft.monitor.name = 'demo';
-    expect(validateMonitorEditorDraft(draft, t)).toBe(t('monitor.editor.validation.param-required', { field: 'Host' }));
+    expect(validateMonitorEditorDraft(draft, t, { locale: 'zh-CN' })).toBe(
+      t('monitor.editor.validation.summary', { count: 2, fields: `${targetHost}, ${t('monitor.cronExpression')}` })
+    );
 
     draft.params[0].paramValue = 'example.com';
-    expect(validateMonitorEditorDraft(draft, t)).toBe(t('monitor.editor.validation.cron'));
+    expect(validateMonitorEditorDraft(draft, t, { locale: 'zh-CN' })).toBe(t('monitor.editor.validation.cron'));
   });
 
   it('accepts common five-field and six-field cron expressions', () => {

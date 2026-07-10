@@ -106,6 +106,48 @@ class EntityDefinitionDocumentParserServiceTest {
     }
 
     @Test
+    void parseDefinitionRecordsUnwrapsCurlEntityDefinitionRequestEnvelope() {
+        EntityDefinitionRequest request = new EntityDefinitionRequest();
+        request.setFormat("curl");
+        request.setContent("""
+                curl -X POST http://127.0.0.1:1157/api/entities/import -H 'Content-Type: application/json' -d '{"format":"yaml","content":"apiVersion: hertzbeat/v1\\nkind: service\\nmetadata:\\n  name: curl-envelope-checkout\\n  namespace: commerce"}'
+                """);
+
+        List<Map<String, Object>> records = documentParserService.parseDefinitionRecords(request);
+
+        assertEquals(1, records.size());
+        assertEquals("curl-envelope-checkout", metadataName(records.getFirst()));
+    }
+
+    @Test
+    void parseDefinitionRecordsUnwrapsCurlDataRawEnvelope() {
+        EntityDefinitionRequest request = new EntityDefinitionRequest();
+        request.setFormat("curl");
+        request.setContent("""
+                curl -X POST http://127.0.0.1:1157/api/entities/import -H 'Content-Type: application/json' --data-raw '{"format":"yaml","content":"apiVersion: hertzbeat/v1\\nkind: service\\nmetadata:\\n  name: curl-data-raw-checkout\\n  namespace: commerce"}'
+                """);
+
+        List<Map<String, Object>> records = documentParserService.parseDefinitionRecords(request);
+
+        assertEquals(1, records.size());
+        assertEquals("curl-data-raw-checkout", metadataName(records.getFirst()));
+    }
+
+    @Test
+    void parseDefinitionRecordsUnwrapsCurlDataRawEnvelopeWithEquals() {
+        EntityDefinitionRequest request = new EntityDefinitionRequest();
+        request.setFormat("curl");
+        request.setContent("""
+                curl -X POST http://127.0.0.1:1157/api/entities/import -H 'Content-Type: application/json' --data-raw='{"format":"yaml","content":"apiVersion: hertzbeat/v1\\nkind: service\\nmetadata:\\n  name: curl-data-raw-equals-checkout\\n  namespace: commerce"}'
+                """);
+
+        List<Map<String, Object>> records = documentParserService.parseDefinitionRecords(request);
+
+        assertEquals(1, records.size());
+        assertEquals("curl-data-raw-equals-checkout", metadataName(records.getFirst()));
+    }
+
+    @Test
     void parseDefinitionRecordsRejectsBlankContent() {
         EntityDefinitionRequest request = new EntityDefinitionRequest();
         request.setContent("   ");

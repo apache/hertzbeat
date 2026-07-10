@@ -103,6 +103,18 @@ function pickLatestTime(...values: Array<number | string | null | undefined>) {
   }, null);
 }
 
+function pickEarliestTime(...values: Array<number | string | null | undefined>) {
+  return values.reduce<number | string | null>((earliest, value) => {
+    const earliestTime = normalizeTime(earliest);
+    const nextTime = normalizeTime(value);
+    if (nextTime == null) return earliest;
+    if (earliestTime == null || nextTime < earliestTime) {
+      return value ?? null;
+    }
+    return earliest;
+  }, null);
+}
+
 function normalizeHistory(history: StatusPageHistory[] | undefined) {
   return [...(history || [])].sort((left, right) => {
     const leftTime = normalizeTime(left.timestamp) ?? 0;
@@ -131,11 +143,17 @@ function normalizePublicIncident(incident: StatusPageIncident): StatusPageIncide
     const rightTime = normalizeTime(right.timestamp) ?? 0;
     return leftTime - rightTime;
   });
+  const earliestContentTime = pickEarliestTime(...contents.map(item => item.timestamp));
   const latestContentTime = pickLatestTime(...contents.map(item => item.timestamp));
   const title = incident.title ?? incident.name;
   const status = incident.status ?? incident.state;
-  const createTime = incident.createTime ?? incident.startTime ?? incident.gmtCreate ?? incident.gmtUpdate ?? latestContentTime;
+  let createTime = incident.createTime ?? incident.startTime ?? incident.gmtCreate ?? incident.gmtUpdate ?? earliestContentTime ?? latestContentTime;
   const updateTime = incident.updateTime ?? latestContentTime ?? incident.endTime ?? incident.gmtUpdate ?? incident.startTime ?? incident.gmtCreate;
+  const normalizedCreateTime = normalizeTime(createTime);
+  const normalizedUpdateTime = normalizeTime(updateTime);
+  if (normalizedCreateTime != null && normalizedUpdateTime != null && normalizedCreateTime > normalizedUpdateTime && earliestContentTime != null) {
+    createTime = earliestContentTime;
+  }
 
   return {
     ...incident,

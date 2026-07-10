@@ -18,7 +18,7 @@ describe('setting index route', () => {
     expect(redirect).toHaveBeenCalledWith('/setting/settings/config');
   });
 
-  it('preserves incoming query context when redirecting the root setting route', async () => {
+  it('routes token query context directly to the token settings page', async () => {
     redirect.mockImplementation((target: string) => {
       throw new Error(`redirect:${target}`);
     });
@@ -33,7 +33,7 @@ describe('setting index route', () => {
           returnTo: '/entities/7'
         })
       })
-    ).rejects.toThrow('redirect:/setting/settings/config?tab=token&mode=audit&returnTo=%2Fentities%2F7');
-    expect(redirect).toHaveBeenLastCalledWith('/setting/settings/config?tab=token&mode=audit&returnTo=%2Fentities%2F7');
+    ).rejects.toThrow('redirect:/setting/settings/token?tab=token&mode=audit&returnTo=%2Fentities%2F7');
+    expect(redirect).toHaveBeenLastCalledWith('/setting/settings/token?tab=token&mode=audit&returnTo=%2Fentities%2F7');
   });
 });

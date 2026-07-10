@@ -27,9 +27,9 @@ vi.mock('../ui/hz-code-editor', () => ({
 }));
 
 vi.mock('../workbench/overlay-dialog', () => ({
-  OverlayDialog: ({ open, title, kicker, footer, children }: any) => (
+  OverlayDialog: ({ open, title, kicker, footer, children, closeLabel }: any) => (
     open ? (
-      <div data-overlay-dialog="true">
+      <div data-overlay-dialog="true" data-close-label={closeLabel}>
         <span>{kicker}</span>
         <h2>{title}</h2>
         {children}
@@ -51,6 +51,7 @@ describe('BulletinManageDialog', () => {
         'bulletin.monitor.type': 'Monitor type',
         'bulletin.monitor.name': 'Monitor object',
         'bulletin.monitor.metrics': 'Monitor metrics',
+        'common.dialog.close': 'Close dialog',
         'common.cancel': 'Cancel',
         'common.save': 'Save',
         'common.saving': 'Saving'
@@ -80,6 +81,10 @@ describe('BulletinManageDialog', () => {
     expect(html).toContain('data-hz-code-editor="codemirror"');
     expect(html).toContain('data-hz-code-editor-language="json"');
     expect(html).toContain('data-hz-code-editor-min-height="260px"');
+    expect(html).toContain('data-close-label="Close dialog"');
+    expect(html).toContain('aria-label="Bulletin name"');
+    expect(html).toContain('aria-label="Monitor type"');
+    expect(html).toContain('aria-label="Monitor object"');
     expect(html).toContain('&quot;cpu&quot;');
     expect(source).toContain("import { HzCodeEditor } from '../ui/hz-code-editor';");
     expect(source).toContain('data-bulletin-fields-code-editor="metrics-json"');

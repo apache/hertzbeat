@@ -93,11 +93,17 @@ export function AlertRuleQuickDialog({
       contentClassName="space-y-4"
       footer={
         <div className="flex flex-wrap justify-end gap-2">
-          <Button size="sm" variant="subtle" onClick={onClose}>
+          <Button
+            size="sm"
+            variant="subtle"
+            data-alert-rule-dialog-command-action="cancel"
+            onClick={onClose}
+          >
             {t('common.cancel')}
           </Button>
           <a
             href={workspaceHref}
+            data-alert-rule-dialog-command-action="full-workspace"
             data-alert-rule-dialog-full-workspace={mode}
             className="inline-flex h-8 items-center rounded-[2px] border border-[var(--ops-primary)] bg-[var(--ops-primary)] px-3 text-[12px] font-semibold text-white transition-colors hover:brightness-[1.04]"
           >
@@ -109,6 +115,7 @@ export function AlertRuleQuickDialog({
               variant="primary"
               onClick={() => void handleSubmit()}
               disabled={submitting}
+              data-alert-rule-dialog-command-action="submit"
               data-alert-rule-dialog-submit={mode}
               data-alert-rule-dialog-submit-owner="alert-center-quick-dialog"
             >
@@ -130,7 +137,12 @@ export function AlertRuleQuickDialog({
         ) : null}
 
         {submitError ? (
-          <AlertAuthoringCallout data-alert-rule-submit-error="true" warning={submitError} className="text-sm leading-6" />
+          <AlertAuthoringCallout
+            data-alert-rule-submit-error="true"
+            tone="error"
+            warning={submitError}
+            className="text-sm leading-6"
+          />
         ) : null}
 
         {mode === 'silence' ? (

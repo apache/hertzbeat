@@ -92,12 +92,12 @@ describe('alert notice controller', () => {
     expect(buildNoticeTemplateListUrl()).toBe('/notice/templates?pageIndex=0&pageSize=8&preset=true');
   });
 
-  it('keeps receiver and rule data when template loading fails', async () => {
+  it('keeps primary notice data when option loading fails', async () => {
     const apiGet = vi.fn()
       .mockResolvedValueOnce({ content: [{ id: 7, name: 'Receiver page' }], totalElements: 1 })
       .mockResolvedValueOnce({ content: [{ id: 5, name: 'Rule page' }], totalElements: 1 })
       .mockRejectedValueOnce(new Error('all receiver list failed'))
-      .mockRejectedValueOnce(new Error('template list failed'))
+      .mockResolvedValueOnce({ content: [{ id: 10, name: 'Custom template page', preset: false }], totalElements: 3, pageIndex: 4, pageSize: 15 })
       .mockResolvedValueOnce({ content: [{ id: 9, name: 'Preset template', preset: true }], totalElements: 1, pageIndex: 0, pageSize: 1000 })
       .mockRejectedValueOnce(new Error('template options custom list failed'));
 
@@ -106,8 +106,20 @@ describe('alert notice controller', () => {
     expect(result.receivers).toEqual({ content: [{ id: 7, name: 'Receiver page' }], totalElements: 1 });
     expect(result.receiverOptions).toEqual({ content: [{ id: 7, name: 'Receiver page' }], totalElements: 1 });
     expect(result.rules).toEqual({ content: [{ id: 5, name: 'Rule page' }], totalElements: 1 });
-    expect(result.templates).toEqual({ content: [], totalElements: 0, pageIndex: 0, pageSize: 0 });
-    expect(result.templateOptions).toEqual({ content: [], totalElements: 0, pageIndex: 0, pageSize: 0 });
+    expect(result.templates).toEqual({ content: [{ id: 10, name: 'Custom template page', preset: false }], totalElements: 3, pageIndex: 4, pageSize: 15 });
+    expect(result.templateOptions).toEqual({ content: [{ id: 10, name: 'Custom template page', preset: false }], totalElements: 3, pageIndex: 4, pageSize: 15 });
+  });
+
+  it('does not convert facade primary list failures into empty notice pages', async () => {
+    const readers = {
+      receivers: vi.fn().mockResolvedValue({ content: [{ id: 7, name: 'Receiver page' }], totalElements: 1 }),
+      rules: vi.fn().mockResolvedValue({ content: [{ id: 5, name: 'Rule page' }], totalElements: 1 }),
+      receiverOptions: vi.fn().mockResolvedValue({ content: [{ id: 9, name: 'Receiver option' }], totalElements: 1 }),
+      templates: vi.fn().mockRejectedValue(new Error('Backend service unavailable. Please retry after the backend service is restored.')),
+      templateOptions: vi.fn().mockResolvedValue([{ id: 8, name: 'Preset template', preset: true }])
+    };
+
+    await expect(loadAlertNoticeDataFromFacade(readers)).rejects.toThrow('Backend service unavailable');
   });
 
   it('builds notice list urls with normalized page params', () => {

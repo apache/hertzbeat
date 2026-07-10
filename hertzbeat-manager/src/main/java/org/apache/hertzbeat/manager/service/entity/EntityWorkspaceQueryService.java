@@ -84,4 +84,11 @@ public class EntityWorkspaceQueryService {
         }
         return observeEntityDao.findFirstByTypeAndName(type, name);
     }
+
+    public Optional<ObserveEntity> findEntityByName(String workspaceId, String name) {
+        if (StringUtils.hasText(workspaceId)) {
+            return observeEntityDao.findFirstByWorkspaceIdAndName(workspaceId, name);
+        }
+        return observeEntityDao.findFirstByName(name);
+    }
 }

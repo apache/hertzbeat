@@ -48,18 +48,19 @@ export function PassportShell({ children, panelClassName, sessionLifecycle = 'cl
 
   return (
     <HzPassportSessionClearFrame
-      className="relative min-h-screen overflow-hidden bg-[var(--ops-background)] bg-cover bg-center bg-no-repeat text-[var(--ops-text-primary)]"
+      className="relative min-h-screen overflow-hidden bg-[var(--ops-background)] text-[var(--ops-text-primary)]"
       lifecycle={sessionLifecycle}
       data-login-shell="passport"
       data-passport-shell="true"
+      data-passport-shell-visual="ops-dark-entry"
       data-passport-session-clear-contract={sessionContract}
       data-passport-session-clear-enabled={shouldClearSession ? 'true' : 'false'}
       data-passport-session-clear-owner="hertzbeat-ui-passport-session-clear"
-      style={{ backgroundImage: "url('/assets/bg.png')" }}
     >
       <div
-        className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))]"
+        className="absolute inset-0 bg-[radial-gradient(circle_at_18%_10%,rgba(79,107,220,0.2),transparent_34%),radial-gradient(circle_at_78%_12%,rgba(19,200,255,0.1),transparent_30%),linear-gradient(180deg,rgba(13,18,28,0.98),rgba(8,9,12,0.99))]"
         data-passport-background-overlay="angular-light"
+        data-passport-background-tone="ops-dark"
       />
       <div
         className="relative z-10 min-h-screen px-5 pt-10 pb-3 md:px-8"
@@ -71,9 +72,10 @@ export function PassportShell({ children, panelClassName, sessionLifecycle = 'cl
               <div className="relative">
                 <button
                   aria-label={t('app.passport.language-switch')}
-                  className="inline-flex h-9 w-9 items-center justify-center text-[#d11ce6] transition-colors hover:text-[#f149ff]"
+                  className="inline-flex h-9 w-9 items-center justify-center text-[var(--ops-primary)] transition-colors hover:text-[var(--ops-primary-hover)]"
                   data-passport-locale-trigger="globe"
                   data-passport-locale-tone="angular-magenta"
+                  data-passport-locale-visual-tone="ops-primary"
                   type="button"
                   onClick={() => setLocaleOpen(open => !open)}
                 >
@@ -158,10 +160,11 @@ export function PassportShell({ children, panelClassName, sessionLifecycle = 'cl
             className="mt-auto pt-4 text-center text-[13px] leading-6"
             data-passport-footer-band="angular-raised"
             data-passport-footer-tone="angular-muted"
-            headlineClassName="text-[rgba(74,54,70,0.84)]"
+            data-passport-footer-visual-tone="ops-muted"
+            headlineClassName="text-[var(--ops-text-tertiary)]"
             innerClassName="border-t border-[var(--ops-border-color)] pt-4"
-            lineClassName="text-[rgba(74,54,70,0.82)]"
-            linkClassName="text-[#0097d7]"
+            lineClassName="text-[var(--ops-text-tertiary)]"
+            linkClassName="text-[var(--ops-primary)]"
             version="v1.8.0"
           />
         </div>

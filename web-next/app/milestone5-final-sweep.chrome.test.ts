@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { basename, resolve, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { buildProductDesignValidationMatrix } from '../scripts/product-design-validation-matrix.mjs';
 
 const auditedRoots = [
   'components/pages',
@@ -94,15 +95,13 @@ describe('Milestone 5 final parity sweep', () => {
     expect(violations).toEqual([]);
   });
 
-  it('refreshes the migration ledger for the cold-workbench exactness wave and current verification counts', () => {
-    const ledger = readFileSync(resolve(process.cwd(), 'docs/migration-ledger.md'), 'utf8');
+  it('keeps the current route and adjacent-test inventory machine-verifiable', () => {
     const pageCount = collectFiles('app', pathName => basename(pathName) === 'page.tsx').length;
-    const testCount = collectFiles('.', pathName => /\.test\.tsx?$/.test(pathName)).length;
-    const routeTestCount = collectFiles('app', pathName => /\.test\.tsx?$/.test(pathName)).length;
+    const matrix = buildProductDesignValidationMatrix(process.cwd(), { freshBrowserAudit: false });
 
-    expect(ledger).toContain(`- \`web-next/app\`: ${pageCount} \`page.tsx\` routes`);
-    expect(ledger).toContain(`- \`web-next\` currently contains ${testCount} test files, including ${routeTestCount} route tests under \`app/\``);
-    expect(ledger).toContain('2026-04-20 cold-workbench exactness wave');
-    expect(ledger).toContain('Milestone 5 zero-residue audit');
+    expect(matrix.routeCount).toBe(pageCount);
+    expect(matrix.missingRouteTests).toEqual([]);
+    expect(matrix.uncategorizedRoutes).toEqual([]);
+    expect(matrix.contractValid).toBe(true);
   });
 });

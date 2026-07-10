@@ -1,5 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
-import { buildLoginFeatureCards, buildLoginNotice, shouldBlockDefaultPasswordSubmit, shouldWarnDefaultPassword, validateCredentialLoginDraft } from './view-model';
+import {
+  buildLoginFeatureCards,
+  buildLoginNotice,
+  normalizeCredentialLoginError,
+  resolveLoginReturnTargetLabel,
+  shouldBlockDefaultPasswordSubmit,
+  shouldWarnDefaultPassword,
+  validateCredentialLoginDraft
+} from './view-model';
 import { createTranslatorMock } from '../../test/i18n-test-helper';
 
 const t = createTranslatorMock({ locale: 'zh-CN' });
@@ -29,6 +37,29 @@ describe('passport login view model', () => {
     expect(validateCredentialLoginDraft(' ops-admin ', ' custom ', enT)).toBeNull();
     expect(validateCredentialLoginDraft('   ', 'custom', enT)).toBeNull();
     expect(validateCredentialLoginDraft('ops-admin', '   ', enT)).toBeNull();
+  });
+
+  it('localizes known backend credential failures without hiding unknown errors', () => {
+    expect(normalizeCredentialLoginError('Incorrect Account or Password', t)).toBe(t('passport.login.error.generic'));
+    expect(normalizeCredentialLoginError('Username or password is incorrect or token expired', t)).toBe(t('passport.login.error.generic'));
+    expect(normalizeCredentialLoginError('LDAP server unavailable', t)).toBe('LDAP server unavailable');
+  });
+
+  it('turns guarded entity return paths into novice-readable targets', () => {
+    expect(resolveLoginReturnTargetLabel('/entities', t)).toBe(t('passport.login.return-target.entities'));
+    expect(resolveLoginReturnTargetLabel('/entities/discovery?identityKey=service.name', t)).toBe(
+      t('passport.login.return-target.entity-discovery')
+    );
+    expect(resolveLoginReturnTargetLabel('/entities/new?returnTo=%2Fentities%2Fdiscovery', t)).toBe(
+      t('passport.login.return-target.entity-new')
+    );
+    expect(resolveLoginReturnTargetLabel('/entities/import', t)).toBe(t('passport.login.return-target.entity-import'));
+    expect(resolveLoginReturnTargetLabel('/entities/1', t)).toBe(t('passport.login.return-target.entity-detail'));
+    expect(resolveLoginReturnTargetLabel('/entities/1/edit', t)).toBe(t('passport.login.return-target.entity-edit'));
+    expect(resolveLoginReturnTargetLabel('/entities/1/definition', t)).toBe(
+      t('passport.login.return-target.entity-definition')
+    );
+    expect(resolveLoginReturnTargetLabel('/trace/manage', t)).toBe(t('passport.login.return-target.workbench'));
   });
 
   it('builds the login feature cards', () => {

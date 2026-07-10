@@ -17,7 +17,8 @@ describe('observability shared chrome', () => {
     const tabStripSource = readFileSync(resolve(process.cwd(), 'components/observability/tab-strip.tsx'), 'utf8');
     const searchInputSource = readFileSync(resolve(process.cwd(), 'components/observability/search-input.tsx'), 'utf8');
     const controlButtonSource = readFileSync(resolve(process.cwd(), 'components/observability/control-button.tsx'), 'utf8');
-    const echartsPanelSource = readFileSync(resolve(process.cwd(), 'components/observability/echarts-panel.tsx'), 'utf8');
+    const echartsPanelEntrypointSource = readFileSync(resolve(process.cwd(), 'components/observability/echarts-panel.tsx'), 'utf8');
+    const echartsPanelSource = readFileSync(resolve(process.cwd(), 'packages/hertzbeat-ui/src/index.tsx'), 'utf8');
     const statusStateSource = readFileSync(resolve(process.cwd(), 'components/observability/status-state.tsx'), 'utf8');
     const selectableRowsSource = readFileSync(resolve(process.cwd(), 'components/observability/selectable-rows.tsx'), 'utf8');
     const chipToggleSource = readFileSync(resolve(process.cwd(), 'components/observability/chip-toggle.tsx'), 'utf8');
@@ -105,7 +106,8 @@ describe('observability shared chrome', () => {
     const tabStripSource = readFileSync(resolve(process.cwd(), 'components/observability/tab-strip.tsx'), 'utf8');
     const searchInputSource = readFileSync(resolve(process.cwd(), 'components/observability/search-input.tsx'), 'utf8');
     const controlButtonSource = readFileSync(resolve(process.cwd(), 'components/observability/control-button.tsx'), 'utf8');
-    const echartsPanelSource = readFileSync(resolve(process.cwd(), 'components/observability/echarts-panel.tsx'), 'utf8');
+    const echartsPanelEntrypointSource = readFileSync(resolve(process.cwd(), 'components/observability/echarts-panel.tsx'), 'utf8');
+    const echartsPanelSource = readFileSync(resolve(process.cwd(), 'packages/hertzbeat-ui/src/index.tsx'), 'utf8');
     const statusStateSource = readFileSync(resolve(process.cwd(), 'components/observability/status-state.tsx'), 'utf8');
     const selectableRowsSource = readFileSync(resolve(process.cwd(), 'components/observability/selectable-rows.tsx'), 'utf8');
     const chipToggleSource = readFileSync(resolve(process.cwd(), 'components/observability/chip-toggle.tsx'), 'utf8');
@@ -142,6 +144,7 @@ describe('observability shared chrome', () => {
     expect(controlButtonSource).toContain('border-[var(--ops-primary)]');
     expect(controlButtonSource).toContain('text-[var(--ops-text-primary)]');
     expect(controlButtonSource).toContain('text-[var(--ops-text-secondary)]');
+    expect(echartsPanelEntrypointSource).toContain('HzEChartsPanel as EChartsPanel');
     expect(echartsPanelSource).toContain('border-[var(--ops-border-color)]');
     expect(echartsPanelSource).toContain('bg-[var(--ops-surface-panel)]');
     expect(echartsPanelSource).toContain('bg-[var(--ops-border-color)]');

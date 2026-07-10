@@ -27,9 +27,26 @@ function isRecoverableEntityDetailError(error: unknown) {
   );
 }
 
-export function buildFallbackEntityDetail(entityId: string, t: EntityDetailTranslator = defaultEntityDetailTranslator): EntityDetailDto {
+function resolveFallbackDetailReason(error?: unknown) {
+  if (!(error instanceof Error)) {
+    return 'recoverable-detail-load-failed';
+  }
+
+  if (error.message.includes('404') || error.message.includes('Entity not exist')) {
+    return 'entity-detail-missing';
+  }
+
+  return 'recoverable-detail-load-failed';
+}
+
+export function buildFallbackEntityDetail(
+  entityId: string,
+  t: EntityDetailTranslator = defaultEntityDetailTranslator,
+  reason = 'recoverable-detail-load-failed'
+): EntityDetailDto {
   const parsedId = Number.parseInt(entityId, 10);
   const normalizedId = Number.isFinite(parsedId) ? parsedId : undefined;
+  const missingEntity = reason === 'entity-detail-missing';
 
   return {
     entity: {
@@ -46,7 +63,7 @@ export function buildFallbackEntityDetail(entityId: string, t: EntityDetailTrans
         environment: undefined,
         system: 'catalog',
         source: 'unavailable',
-        description: t('entities.detail.fallback.description')
+        description: t(missingEntity ? 'entities.detail.state.missing.description' : 'entities.detail.fallback.description')
       },
       identities: [],
       monitorBinds: [],
@@ -54,8 +71,8 @@ export function buildFallbackEntityDetail(entityId: string, t: EntityDetailTrans
     },
     detailState: {
       state: 'unavailable',
-      message: t('entities.detail.state.unavailable.copy'),
-      reason: 'recoverable-detail-load-failed'
+      message: t(missingEntity ? 'entities.detail.state.missing.copy' : 'entities.detail.state.unavailable.copy'),
+      reason
     },
     evidenceSummary: {
       activeAlertCount: 0,
@@ -109,7 +126,7 @@ async function loadEntityDetailWithFallback(
     return await readDetail();
   } catch (error) {
     if (isRecoverableEntityDetailError(error)) {
-      return buildFallbackEntityDetail(entityId, t);
+      return buildFallbackEntityDetail(entityId, t, resolveFallbackDetailReason(error));
     }
     throw error;
   }

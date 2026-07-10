@@ -12,9 +12,9 @@ describe('settings family cold-matte chrome', () => {
 
     expect(combinedSource).toContain('hzOpsCatalogVisual');
     expect(combinedSource).toContain('data-settings-console-style-baseline');
-    expect(combinedSource).toContain('data-settings-form-owner="cold-settings-form-owner"');
-    expect(combinedSource).toContain('data-settings-summary-list-style="cold-dense-summary-list"');
-    expect(combinedSource).toContain('data-settings-dialog-control="cold-select-control"');
+    expect(combinedSource).toContain('data-settings-form-owner="hertzbeat-ui-settings-form-owner"');
+    expect(combinedSource).toContain('data-settings-summary-list-style="hertzbeat-ui-dense-summary-list"');
+    expect(combinedSource).toContain('data-settings-dialog-control="hertzbeat-ui-select-control"');
     expect(combinedSource).toContain('border-[#2b3039]');
     expect(combinedSource).toContain('bg-[#0b0c0e]');
     expect(combinedSource).toContain('bg-[#101217]');
@@ -53,11 +53,12 @@ describe('settings family cold-matte chrome', () => {
     expect(pluginSource).not.toContain('WorkbenchTableFrame');
 
     expect(labelSource).toContain('data-label-manage-style-baseline={coldLabelVisual.canvasName}');
-    expect(labelSource).toContain('data-label-card-grid-contract="angular-card-grid"');
-    expect(labelSource).toContain('data-label-card-grid-owner="hertzbeat-ui-label-tag"');
+    expect(labelSource).toContain('data-label-list-owner="hertzbeat-ui-label-tag"');
+    expect(labelSource).toContain('data-label-row-shell="hertzbeat-ui-flat-row"');
+    expect(labelSource).not.toContain('data-label-card-grid-contract=');
     expect(labelSource).not.toContain('data-label-table-shell="hertzbeat-ui-dense-table"');
     expect(defineSource).toContain('data-setting-define-style-baseline={coldDefineVisual.canvasName}');
-    expect(defineSource).toContain('data-setting-define-workspace="cold-define-workspace"');
+    expect(defineSource).toContain('data-setting-define-workspace="hertzbeat-ui-define-workspace"');
     expect(defineSource).toContain('HzYamlWorkspace');
     expect(defineSource).not.toContain("from '../ui/search-row'");
     expect(defineSource).not.toContain('data-setting-define-search-owner="shared-search-row"');

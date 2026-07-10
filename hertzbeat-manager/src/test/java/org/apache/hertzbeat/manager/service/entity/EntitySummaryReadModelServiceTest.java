@@ -164,4 +164,63 @@ class EntitySummaryReadModelServiceTest {
         assertEquals(Map.of(), latestActivities);
         verify(entityActivityReadModelService, never()).findLatestDefinitionActivities(any());
     }
+
+    @Test
+    void loadSummaryCountsBatchesCurrentPageCountEvidence() {
+        ObserveEntity firstEntity = ObserveEntity.builder().id(501L).name("checkout-api").build();
+        ObserveEntity secondEntity = ObserveEntity.builder().id(502L).name("billing-api").build();
+        List<Long> entityIds = List.of(501L, 502L);
+        when(entityIdentityReadModelService.countIdentitiesByEntityIds(entityIds))
+                .thenReturn(Map.of(501L, 2L, 502L, 1L));
+        when(entityMonitorBindService.countMonitorBindsByEntityIds(entityIds))
+                .thenReturn(Map.of(501L, 3L));
+        when(entityRelationService.countEntityRelationsByEntityIds(entityIds))
+                .thenReturn(Map.of(502L, 4L));
+
+        Map<Long, EntitySummaryReadModelService.EntitySummaryCounts> counts =
+                summaryReadModelService.loadSummaryCounts(List.of(firstEntity, secondEntity));
+
+        assertEquals(2, counts.size());
+        assertEquals(new EntitySummaryReadModelService.EntitySummaryCounts(2, 3, 0), counts.get(501L));
+        assertEquals(new EntitySummaryReadModelService.EntitySummaryCounts(1, 0, 4), counts.get(502L));
+        verify(entityIdentityReadModelService).countIdentitiesByEntityIds(entityIds);
+        verify(entityMonitorBindService).countMonitorBindsByEntityIds(entityIds);
+        verify(entityRelationService).countEntityRelationsByEntityIds(entityIds);
+    }
+
+    @Test
+    void buildEntitySummaryAcceptsPreloadedCountsForListPages() {
+        ObserveEntity entity = ObserveEntity.builder()
+                .id(601L)
+                .type("service")
+                .name("checkout-api")
+                .status("unknown")
+                .build();
+        EntityStatusInfo statusInfo = new EntityStatusInfo(
+                "unknown", "no live evidence", 0, 0, 0, 0, 0, LocalDateTime.now()
+        );
+        EntityEvidenceSummaryInfo evidenceSummary = new EntityEvidenceSummaryInfo(0, 0, 0, 5, 0, 1778340000000L);
+        when(entityObservabilityGateway.buildEntityEvidenceSummary(
+                eq(entity), eq(statusInfo), eq(5L), eq(0), eq(Collections.emptyList()), eq(Collections.emptyList())
+        )).thenReturn(evidenceSummary);
+        EntityOpsSummaryInfo opsSummary = new EntityOpsSummaryInfo(true, false, true, true, true, 80);
+        when(entityObservabilityGateway.buildEntityOpsSummary(entity, 7L, evidenceSummary)).thenReturn(opsSummary);
+        when(entityObservabilityGateway.buildEntityNextActions(entity, evidenceSummary, null, opsSummary))
+                .thenReturn(List.of());
+
+        EntitySummaryInfo summary = summaryReadModelService.buildEntitySummary(
+                entity,
+                null,
+                statusInfo,
+                List.of(),
+                new EntitySummaryReadModelService.EntitySummaryCounts(5, 6, 7)
+        );
+
+        assertEquals(5, summary.getIdentityCount());
+        assertEquals(6, summary.getMonitorCount());
+        assertEquals(7, summary.getRelationCount());
+        verify(entityIdentityReadModelService, never()).countIdentities(601L);
+        verify(entityMonitorBindService, never()).countMonitorBinds(601L);
+        verify(entityRelationService, never()).countEntityRelations(601L);
+    }
 }

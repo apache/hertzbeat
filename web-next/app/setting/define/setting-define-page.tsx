@@ -9,6 +9,7 @@ import {
   buildNewTemplateDraft,
   deleteTemplateDefine,
   loadDefineCenterData,
+  readTemplateAppFromYaml,
   reloadTemplateDefinitionStartupContext,
   saveTemplateDefine,
   updateTemplateVisibility,
@@ -26,8 +27,25 @@ function readInitialSelectedApp() {
 function writeSelectedAppToUrl(app: string | null) {
   if (typeof window === 'undefined') return;
   const url = new URL(window.location.href);
-  const nextSearch = app ? `?app=${encodeURIComponent(app)}` : '';
-  window.history.pushState({}, '', `${url.pathname}${nextSearch}`);
+  if (app) {
+    url.searchParams.set('app', app);
+  } else {
+    url.searchParams.delete('app');
+  }
+  window.history.pushState({}, '', `${url.pathname}${url.search}`);
+}
+
+function buildMonitorLinkHref(app: string | null) {
+  const params = typeof window === 'undefined'
+    ? new URLSearchParams()
+    : new URLSearchParams(window.location.search);
+  if (app) {
+    params.set('app', app);
+  } else {
+    params.delete('app');
+  }
+  const query = params.toString();
+  return query ? `/monitors?${query}` : '/monitors';
 }
 
 function buildYamlLabel(app: string | null, yaml: string) {
@@ -36,29 +54,9 @@ function buildYamlLabel(app: string | null, yaml: string) {
   return `app-${match?.[1]?.trim() || 'custom'}.yml`;
 }
 
-function resolveDefineWorkbenchTheme(theme: string | null | undefined): 'dark-ops' | 'light-ops' {
-  return theme === 'light-ops' || theme === 'default' || theme === 'compact' ? 'light-ops' : 'dark-ops';
-}
-
 function readMutationFailureDetail(error: unknown, fallback = '') {
   if (error instanceof Error) return error.message;
   return fallback;
-}
-
-function readStoredTheme() {
-  if (typeof window === 'undefined') return null;
-  try {
-    return window.localStorage.getItem('theme');
-  } catch {
-    return null;
-  }
-}
-
-function readInitialDefineDarkMode() {
-  if (typeof document === 'undefined') return false;
-  const domTheme = document.body?.getAttribute('data-theme') || document.documentElement?.getAttribute('data-theme');
-  const theme = resolveDefineWorkbenchTheme(domTheme || readStoredTheme() || 'dark-ops');
-  return theme === 'dark-ops';
 }
 
 export default function SettingDefinePage() {
@@ -70,9 +68,9 @@ export default function SettingDefinePage() {
   const [messageContract, setMessageContract] = useState<string | null>(null);
   const [editorValue, setEditorValue] = useState<string | null>(null);
   const [originalYaml, setOriginalYaml] = useState<string | null>(null);
-  const [darkMode, setDarkMode] = useState(() => readInitialDefineDarkMode());
   const [isEditing, setIsEditing] = useState(false);
   const [savePending, setSavePending] = useState(false);
+  const [newTemplateReturnApp, setNewTemplateReturnApp] = useState<string | null>(null);
   const [reloadVersion, setReloadVersion] = useState(0);
   const settingDefineCacheKey = useMemo(
     () => ['setting-define-yml', selectedApp || 'new', reloadVersion].join(':'),
@@ -109,22 +107,26 @@ export default function SettingDefinePage() {
     writeSelectedAppToUrl(app);
     setEditorValue(null);
     setOriginalYaml(null);
+    setNewTemplateReturnApp(null);
     clearMutationMessage();
     setIsEditing(false);
   }
 
   function startNewTemplate() {
     const draft = buildNewTemplateDraft(locale);
+    const returnApp = selectedApp ?? readInitialSelectedApp() ?? null;
     setSelectedApp(null);
+    writeSelectedAppToUrl(null);
     setEditorValue(draft.yaml);
     setOriginalYaml(draft.originalYaml);
+    setNewTemplateReturnApp(returnApp);
     clearMutationMessage();
     setIsEditing(true);
   }
 
   async function saveCurrent(currentApp: string | null, currentYaml: string, currentOriginalYaml: string) {
     if (currentYaml === currentOriginalYaml) return;
-    if (currentYaml === '') {
+    if (currentYaml.trim() === '') {
       setMessage(t('define.save-apply.no-code'));
       setMessageMeta(null);
       setMessageContract(null);
@@ -142,7 +144,17 @@ export default function SettingDefinePage() {
         setOriginalYaml(null);
         setIsEditing(false);
       } else {
-        setOriginalYaml(currentOriginalYaml);
+        const savedApp = readTemplateAppFromYaml(currentYaml);
+        if (savedApp) {
+          setSelectedApp(savedApp);
+          writeSelectedAppToUrl(savedApp);
+          setEditorValue(null);
+          setOriginalYaml(null);
+          setIsEditing(false);
+        } else {
+          setOriginalYaml(currentYaml);
+        }
+        setNewTemplateReturnApp(null);
       }
       setReloadVersion(version => version + 1);
       refreshStartupContextAfterMutation();
@@ -164,6 +176,7 @@ export default function SettingDefinePage() {
       setSelectedApp(null);
       setEditorValue(draft.yaml);
       setOriginalYaml(draft.originalYaml);
+      setNewTemplateReturnApp(null);
       setMessage(t('common.notify.delete-success'));
       setMessageMeta(null);
       setMessageContract(null);
@@ -209,7 +222,7 @@ export default function SettingDefinePage() {
         editorValue={resolvedEditorValue}
         originalYaml={resolvedOriginalYaml}
         yamlLabel={buildYamlLabel(activeApp, resolvedEditorValue)}
-        darkMode={darkMode}
+        monitorHref={buildMonitorLinkHref(activeApp)}
         isEditing={isEditing}
         menuLoading={false}
         editorLoading={false}
@@ -224,6 +237,16 @@ export default function SettingDefinePage() {
         onNew={startNewTemplate}
         onEdit={() => setIsEditing(true)}
         onCancel={() => {
+          if (!activeApp && newTemplateReturnApp) {
+            setSelectedApp(newTemplateReturnApp);
+            writeSelectedAppToUrl(newTemplateReturnApp);
+            setEditorValue(null);
+            setOriginalYaml(null);
+            setNewTemplateReturnApp(null);
+            clearMutationMessage();
+            setIsEditing(false);
+            return;
+          }
           setEditorValue(resolvedOriginalYaml);
           clearMutationMessage();
           setIsEditing(false);
@@ -231,7 +254,6 @@ export default function SettingDefinePage() {
         onSave={() => void saveCurrent(activeApp, resolvedEditorValue, resolvedOriginalYaml)}
         onDelete={() => void deleteCurrent(activeApp)}
         onToggleTemplateVisibility={(app, hide) => void toggleTemplateVisibility(app, hide)}
-        onToggleDarkMode={setDarkMode}
         onEditorValueChange={value => {
           setEditorValue(value);
           clearMutationMessage();

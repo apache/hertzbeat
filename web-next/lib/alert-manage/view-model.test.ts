@@ -588,6 +588,34 @@ describe('alert view model', () => {
     expect(automationHref).toContain('alertGroupId=7');
   });
 
+  it('uses disabled copy for direct closure operations when no alert group is visible', () => {
+    const operationRows = buildAlertClosureOperationRows(
+      {
+        search: 'codex-pd-empty',
+        status: 'firing',
+        severity: '',
+        source: 'product-design-1529'
+      } as const,
+      null,
+      t
+    );
+
+    const disabledCopy = t('alert.center.closure-action.disabled.no-group');
+
+    expect(operationRows.find(row => row.key === 'acknowledge')).toMatchObject({ copy: disabledCopy });
+    expect(operationRows.find(row => row.key === 'recover')).toMatchObject({ copy: disabledCopy });
+    expect(operationRows.find(row => row.key === 'close')).toMatchObject({ copy: disabledCopy });
+    expect(operationRows.find(row => row.key === 'acknowledge')?.copy).not.toBe(
+      t('alert.center.operation.acknowledge.copy', {
+        target: t('alert.center.operation.target.current-alert'),
+        count: 1
+      })
+    );
+    expect(operationRows.find(row => row.key === 'threshold')?.href).toContain('/alert/setting?');
+    expect(operationRows.find(row => row.key === 'silence')?.href).toContain('/alert/silence?');
+    expect(operationRows.find(row => row.key === 'inhibit')?.href).toContain('/alert/inhibit?');
+  });
+
   it('preserves full fault evidence context when opening topology from alert evidence', () => {
     const query = {
       search: 'checkout',
@@ -1021,6 +1049,31 @@ describe('alert view model', () => {
     }));
   });
 
+  it('keeps alert center cards actionable outside entity context instead of exposing delete only', () => {
+    expect(buildAlertGroupActionLabels({ status: 'firing' }, false, t)).toEqual([
+      t('entity.alert.workbench.action.acknowledge'),
+      t('entity.alert.workbench.action.resolve'),
+      t('entity.alert.workbench.action.silence'),
+      t('entity.alert.workbench.action.inhibit'),
+      t('alert.center.delete')
+    ]);
+
+    expect(buildAlertGroupActionLabels({ status: 'acknowledged' }, false, t)).toEqual([
+      t('entity.alert.workbench.action.unacknowledge'),
+      t('entity.alert.workbench.action.resolve'),
+      t('entity.alert.workbench.action.silence'),
+      t('entity.alert.workbench.action.inhibit'),
+      t('alert.center.delete')
+    ]);
+
+    expect(buildAlertGroupActionLabels({ status: 'resolved' }, false, t)).toEqual([
+      t('entity.alert.workbench.action.reopen'),
+      t('entity.alert.workbench.action.silence'),
+      t('entity.alert.workbench.action.inhibit'),
+      t('alert.center.delete')
+    ]);
+  });
+
   it('builds current silence and inhibit quick-dialog models from a grouped alert', () => {
     const group = {
       id: 7,
@@ -1092,6 +1145,53 @@ describe('alert view model', () => {
 
     expect(buildAlertRuleQuickDialogModel(selectedBatchGroup, 'silence', query, t)).toMatchObject({
       summary: t('entity.alert.workbench.silence.selection', { count: 2 })
+    });
+
+    const globalQuery = {
+      search: 'checkout',
+      status: 'firing',
+      severity: '',
+      entityId: '',
+      entityName: '',
+      returnTo: ''
+    } as const;
+
+    expect(buildAlertRuleQuickDialogModel(group, 'silence', globalQuery, t)).toMatchObject({
+      entityTitle: 'checkout',
+      warning: null,
+      silenceDraft: expect.objectContaining({
+        name: 'checkout silence'
+      })
+    });
+    expect(buildAlertRuleQuickDialogModel(group, 'inhibit', globalQuery, t)).toMatchObject({
+      entityTitle: 'checkout',
+      warning: null,
+      inhibitDraft: expect.objectContaining({
+        name: 'checkout inhibit'
+      })
+    });
+
+    const globalPriorityGroup = {
+      ...group,
+      groupLabels: {
+        instance: 'checkout-a',
+        service: 'checkout',
+        alertname: 'HighCPU',
+        severity: 'critical'
+      },
+      commonLabels: {
+        instance: 'checkout-a',
+        service: 'checkout',
+        alertname: 'HighCPU',
+        severity: 'critical'
+      }
+    } as any;
+
+    expect(buildAlertRuleQuickDialogModel(globalPriorityGroup, 'silence', globalQuery, t)).toMatchObject({
+      entityTitle: 'checkout',
+      silenceDraft: expect.objectContaining({
+        name: 'checkout silence'
+      })
     });
 
     const severityOnlyGroup = {

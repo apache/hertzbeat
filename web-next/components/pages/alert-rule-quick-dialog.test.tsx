@@ -92,9 +92,46 @@ describe('AlertRuleQuickDialog', () => {
     expect(html).toContain('Checkout API');
     expect(html).toContain('Warnings stay visible before entering the full workspace.');
     expect(html).toContain('href="/alert/silence?entityId=42&amp;groupId=7&amp;serviceName=checkout"');
+    expect(html).toContain('data-alert-rule-dialog-command-action="cancel"');
+    expect(html).toContain('data-alert-rule-dialog-command-action="full-workspace"');
     expect(html).toContain('data-alert-rule-dialog-full-workspace="silence"');
     expect(html).toContain('Open full workspace');
+    expect(html).not.toContain('data-alert-rule-dialog-command-action="submit"');
+    expect(html.indexOf('data-alert-rule-dialog-command-action="cancel"')).toBeLessThan(
+      html.indexOf('data-alert-rule-dialog-command-action="full-workspace"')
+    );
     expect(html).toContain('data-alert-silence-authoring-fields="dialog"');
     expect(buildAlertRuleWorkspaceHref).toHaveBeenCalledWith('silence', query, group);
+  });
+
+  it('keeps quick create footer commands stable when inline save is enabled', () => {
+    const group = {
+      id: 7,
+      commonLabels: { service: 'checkout' }
+    } as any;
+    const query = { entityId: '42' } as any;
+
+    const html = renderToStaticMarkup(
+      <AlertRuleQuickDialog
+        t={t}
+        mode="silence"
+        group={group}
+        query={query}
+        onClose={vi.fn()}
+        onSubmit={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-alert-rule-dialog-command-action="cancel"');
+    expect(html).toContain('data-alert-rule-dialog-command-action="full-workspace"');
+    expect(html).toContain('data-alert-rule-dialog-command-action="submit"');
+    expect(html).toContain('data-alert-rule-dialog-submit="silence"');
+    expect(html).toContain('data-alert-rule-dialog-submit-owner="alert-center-quick-dialog"');
+    expect(html.indexOf('data-alert-rule-dialog-command-action="cancel"')).toBeLessThan(
+      html.indexOf('data-alert-rule-dialog-command-action="full-workspace"')
+    );
+    expect(html.indexOf('data-alert-rule-dialog-command-action="full-workspace"')).toBeLessThan(
+      html.indexOf('data-alert-rule-dialog-command-action="submit"')
+    );
   });
 });

@@ -79,7 +79,7 @@ import {
   updateAiChatSchedule
 } from '@/lib/ai-chat/schedules';
 import { buildLoginRedirectHref } from '@/lib/passport-login/controller';
-import { clearClientSession, readClientSessionUserSnapshot } from '@/lib/session-client';
+import { clearClientSession, hasClientSessionMarker, readClientSessionUserSnapshot } from '@/lib/session-client';
 import { consumeAboutAutoShowAfterLogin, readAboutNotShowNextLogin, writeAboutNotShowNextLogin } from '@/lib/shell/about';
 import { loadHeaderMuteConfig, saveHeaderMuteConfig } from '@/lib/shell/header-mute';
 import { showHeaderLocaleReloadSpinner } from '@/lib/shell/locale-reload';
@@ -179,6 +179,15 @@ type HeaderRealtimeNotice = {
   title: string;
   description?: string;
   meta?: string;
+};
+
+const EMPTY_SETUP_SUMMARY_DATA: SetupSummaryData = {
+  monitorTotal: 0,
+  collectorTotal: 0,
+  entityTotal: 0,
+  hasEvidenceLinked: false,
+  definitionCount: 0,
+  governanceCount: 0,
 };
 
 function buildEmptySetupSummary(t: (key: string, params?: Record<string, string | number | null | undefined>) => string): SetupSummary {
@@ -368,10 +377,14 @@ function shouldKeepAngularSetupBaseline(pathname: string, data: SetupSummaryData
       pathname === '/dashboard' ||
       pathname === '/incidents' ||
       pathname === '/actions' ||
+      pathname === '/entities' ||
       pathname === '/entities/new' ||
       pathname === '/entities/import' ||
       /^\/entities\/[^/]+\/definition$/.test(pathname) ||
       pathname === '/entities/discovery' ||
+      pathname === '/alerts' ||
+      pathname === '/alert' ||
+      pathname.startsWith('/alert/') ||
       pathname === '/log/stream' ||
       pathname === '/ingestion/otlp'
     ) &&
@@ -450,6 +463,7 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
   const [notifyOpen, setNotifyOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [aboutNotShowNextLogin, setAboutNotShowNextLogin] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
@@ -531,6 +545,10 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
       document.removeEventListener('fullscreenchange', syncFullscreenStatus);
     };
   }, []);
+
+  useEffect(() => {
+    setMobileSidebarOpen(false);
+  }, [pathname]);
 
   function toggleMute() {
     const nextMuted = !notificationsMuted;
@@ -880,6 +898,10 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
+    if (!hasClientSessionMarker()) {
+      return undefined;
+    }
+
     let mounted = true;
 
     void loadHeaderMuteConfig().then(result => {
@@ -1054,6 +1076,7 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
     }
 
     let cancelled = false;
+    setSetupSummary(buildRouteSetupSummary(pathname, EMPTY_SETUP_SUMMARY_DATA, t));
 
     async function loadHeaderState() {
       try {
@@ -1112,14 +1135,7 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
         );
       } catch {
         if (cancelled) return;
-        setSetupSummary(buildRouteSetupSummary(pathname, {
-          monitorTotal: 0,
-          collectorTotal: 0,
-          entityTotal: 0,
-          hasEvidenceLinked: false,
-          definitionCount: 0,
-          governanceCount: 0,
-        }, t));
+        setSetupSummary(buildRouteSetupSummary(pathname, EMPTY_SETUP_SUMMARY_DATA, t));
         setAlertSummary(null);
         setAlertNotices([]);
       }
@@ -1236,6 +1252,13 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
   return (
     <AuthGate>
       <div className="min-h-screen bg-[hsl(var(--background))] text-[hsl(var(--foreground))]">
+        <a
+          href="#hertzbeat-workbench"
+          data-app-frame-skip-link="main-workbench"
+          className="fixed left-3 top-3 z-[60] -translate-y-16 rounded-[3px] border border-[hsl(var(--ring)/0.55)] bg-[hsl(var(--card))] px-3 py-2 text-[12px] font-semibold text-[hsl(var(--foreground))] shadow-[0_12px_32px_rgba(0,0,0,0.34)] transition focus:translate-y-0 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+        >
+          {t('app.frame.skip-to-workbench')}
+        </a>
         {headerRealtimeNotice ? (
           <div
             className="fixed right-4 top-20 z-40 w-[320px]"
@@ -1250,11 +1273,13 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
             />
           </div>
         ) : null}
-        <div className="grid min-h-screen lg:grid-cols-[164px_minmax(0,1fr)] lg:grid-rows-[64px_minmax(0,1fr)]">
+        <div className="grid min-h-screen md:grid-cols-[164px_minmax(0,1fr)] md:grid-rows-[64px_minmax(0,1fr)]">
           <header className="sticky top-0 z-20 col-span-full border-b border-[hsl(var(--border))] bg-[hsl(var(--background))]">
-            <div className="grid h-16 lg:grid-cols-[164px_minmax(0,1fr)]">
+            <div className="grid h-16 md:grid-cols-[164px_minmax(0,1fr)]">
               <Link
                 href="/overview"
+                aria-label={t('app.frame.brand-home')}
+                data-app-frame-brand-home="overview"
                 className="flex items-center px-3 text-[hsl(var(--foreground))]"
               >
                 <Image
@@ -1272,7 +1297,11 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
                   type="button"
                   className="inline-flex h-8 w-8 items-center justify-center rounded-[2px] text-[hsl(var(--muted-foreground))] transition hover:bg-[hsl(var(--accent)/0.35)] hover:text-[hsl(var(--foreground))]"
                   aria-label={t('app.frame.utility.menu')}
+                  aria-expanded={mobileSidebarOpen}
+                  aria-controls="app-frame-mobile-sidebar"
+                  onClick={() => setMobileSidebarOpen(open => !open)}
                   data-app-frame-icon-trigger="menu"
+                  data-app-frame-mobile-sidebar-trigger-state={mobileSidebarOpen ? 'open' : 'closed'}
                 >
                   <Menu size={17} />
                   <span className="sr-only">{t('app.frame.utility.menu')}</span>
@@ -1538,16 +1567,14 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
                       </div>
                     ) : null}
                   </div>
-                  <Link href="/passport/lock">
-                    <button
-                      type="button"
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-[2px] text-[hsl(var(--muted-foreground))] transition hover:bg-[hsl(var(--accent)/0.35)] hover:text-[hsl(var(--foreground))]"
-                      aria-label={t('common.lock')}
-                      data-app-frame-icon-trigger="lock"
-                    >
-                      <Lock size={16} />
-                      <span className="sr-only">{t('common.lock')}</span>
-                    </button>
+                  <Link
+                    href="/passport/lock"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-[2px] text-[hsl(var(--muted-foreground))] transition hover:bg-[hsl(var(--accent)/0.35)] hover:text-[hsl(var(--foreground))]"
+                    aria-label={t('common.lock')}
+                    data-app-frame-icon-trigger="lock"
+                  >
+                    <Lock size={16} />
+                    <span className="sr-only">{t('common.lock')}</span>
                   </Link>
                   <div className="relative" ref={settingsRef}>
                     <button
@@ -1668,11 +1695,35 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
             </div>
           </header>
 
-          <AppSidebar pathname={pathname} t={t} />
+          <div className="hidden md:contents" data-app-frame-sidebar-placement="desktop">
+            <AppSidebar pathname={pathname} t={t} />
+          </div>
+          {mobileSidebarOpen ? (
+            <div
+              id="app-frame-mobile-sidebar"
+              className="fixed inset-x-0 bottom-0 top-16 z-30 md:hidden"
+              data-app-frame-sidebar-placement="mobile-drawer"
+              data-app-frame-mobile-sidebar-state="open"
+            >
+              <button
+                type="button"
+                className="absolute inset-0 bg-black/60"
+                aria-label={t('app.frame.utility.menu')}
+                onClick={() => setMobileSidebarOpen(false)}
+                data-app-frame-mobile-sidebar-backdrop="close"
+              />
+              <div className="relative h-full w-[min(82vw,320px)] border-r border-[var(--ops-border-color)] bg-[var(--ops-background)] shadow-[18px_0_42px_rgba(0,0,0,.38)]">
+                <AppSidebar pathname={pathname} t={t} className="h-full border-b-0 border-r-0 md:h-full md:border-r-0" />
+              </div>
+            </div>
+          ) : null}
 
           <main
-            className="relative flex min-h-0 min-w-0 flex-col self-stretch"
+            id="hertzbeat-workbench"
+            tabIndex={-1}
+            className="relative flex min-h-0 min-w-0 flex-col self-stretch md:col-start-2 md:row-start-2"
             data-platform-main-scroll="content-flow"
+            data-app-frame-main-workbench="true"
           >
             <div data-app-frame-content-shell={buildContentFrameShellKind(pathname)} className={buildContentFrameClassName(pathname)}>
               {children}
@@ -1723,7 +1774,7 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
             <button
               type="button"
               aria-label={t('ai.chat.launch')}
-              className="fixed bottom-4 right-5 z-40 inline-flex h-12 w-12 items-center justify-center rounded-[6px] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-[0_14px_38px_rgba(67,97,238,0.34)] transition hover:brightness-110"
+              className="fixed bottom-4 right-5 z-40 hidden h-12 w-12 items-center justify-center rounded-[6px] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-[0_14px_38px_rgba(67,97,238,0.34)] transition hover:brightness-110 sm:inline-flex"
               data-shell-ai-chat-launcher="angular-ai-chat"
               data-app-frame-ai-chat-launcher-contract="angular-empty-modal"
               data-app-frame-ai-chat-config-save-lifecycle-contract="angular-validate-save-close-refresh"
@@ -1736,7 +1787,7 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
               data-app-frame-ai-chat-stream-history-lifecycle-owner="route-ai-chat-stream-contract"
               onClick={() => openAiChatModal()}
             >
-              <Bot size={28} strokeWidth={2.2} />
+              <Bot className="h-7 w-7" strokeWidth={2.2} />
               <span className="sr-only">{t('ai.chat.launch')}</span>
             </button>
             {aiChatOpen ? (

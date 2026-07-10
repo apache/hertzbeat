@@ -10,7 +10,7 @@ export const hzOpsCatalogVisual = {
     contract: 'panel-4-control-3'
   },
   layout: {
-    pageSection: 'relative bg-[#0b0c0e] px-8 py-6',
+    pageSection: 'relative bg-[#0b0c0e] px-4 py-6 sm:px-6 lg:px-8',
     pageDivider: 'hidden',
     railWidth: '340px',
     railGrid: 'grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_340px]',
@@ -26,14 +26,14 @@ export const hzOpsCatalogVisual = {
     panelMeshStyle: {}
   },
   stepper: {
-    shell: 'relative bg-[#0b0c0e] px-5 py-4',
+    shell: 'relative overflow-hidden bg-[#0b0c0e] px-5 py-4',
     divider: 'hidden',
-    grid: 'mx-auto flex max-w-[860px] items-center justify-center gap-3 text-[13px] text-[#939aa6]',
+    grid: 'mx-auto flex max-w-full flex-wrap items-center justify-center gap-3 text-[13px] text-[#939aa6] xl:max-w-[860px]',
     itemCompact: 'flex shrink-0 items-center gap-2 whitespace-nowrap',
     item: 'flex shrink-0 items-center gap-3 whitespace-nowrap',
     activeBadge: 'flex size-6 items-center justify-center rounded-full bg-[#e5e7eb] text-[12px] font-semibold text-[#06070a] shadow-[0_0_18px_rgba(255,255,255,0.14)]',
     idleBadge: 'flex size-6 items-center justify-center rounded-full border border-[#343a45] bg-[#111419] text-[12px] font-semibold text-[#858d9a]',
-    connector: 'h-px w-32 flex-none bg-[#252b34] md:w-40',
+    connector: 'hidden h-px w-12 flex-none bg-[#252b34] sm:block md:w-24 xl:w-40',
     activeLabel: 'font-semibold text-white'
   },
   panel: {

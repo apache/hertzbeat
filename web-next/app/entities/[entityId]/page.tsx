@@ -1,7 +1,12 @@
 import React from 'react';
 
 import EntityDetailPage from './entity-detail-page';
-import { readEntityDetailRouteContext, type EntityDetailSearchParams } from '../../../lib/entity-detail/query-state';
+import {
+  readEntityDetailCreatedResult,
+  readEntityDetailRouteContext,
+  readEntityDetailUpdatedResult,
+  type EntityDetailSearchParams
+} from '../../../lib/entity-detail/query-state';
 
 export default async function EntityDetailRoutePage({
   params,
@@ -13,5 +18,7 @@ export default async function EntityDetailRoutePage({
   const { entityId } = await params;
   const resolvedSearchParams = await searchParams;
   const routeContext = readEntityDetailRouteContext(resolvedSearchParams);
-  return <EntityDetailPage entityId={entityId} routeContext={routeContext} />;
+  const createdResult = readEntityDetailCreatedResult(resolvedSearchParams);
+  const updatedResult = readEntityDetailUpdatedResult(resolvedSearchParams);
+  return <EntityDetailPage entityId={entityId} routeContext={routeContext} createdResult={createdResult} updatedResult={updatedResult} />;
 }

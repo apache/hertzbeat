@@ -34,6 +34,7 @@ describe('ExceptionCenterSurface', () => {
     expect(html).toContain('data-exception-query-bar="hertzbeat-ui-error-query"');
     expect(html).toContain('data-exception-query-bar-owner="hertzbeat-ui-panel-surface"');
     expect(html).toContain('data-exception-query-input-owner="hertzbeat-ui-input"');
+    expect(html).toContain(t('app.frame.skip-to-workbench'));
     expect(html).toContain('data-exception-scope-select-owner="hertzbeat-ui-select"');
     expect(html).toContain('data-exception-sort-select-owner="hertzbeat-ui-select"');
     expect(html).toContain('data-exception-table="hertzbeat-ui-exception-list"');
@@ -68,6 +69,7 @@ describe('ExceptionCenterSurface', () => {
     expect(html).not.toContain('Last Seen');
     expect(html).not.toContain('Application');
     expect(html).not.toContain('Search and Filter based on resource attributes');
+    expect(html).not.toContain('Skip to workbench');
   });
 
   it('keeps exception handoffs without reverting to the old Workbench page shell', () => {

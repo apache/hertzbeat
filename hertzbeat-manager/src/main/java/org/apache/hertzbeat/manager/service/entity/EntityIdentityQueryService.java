@@ -18,10 +18,13 @@
 package org.apache.hertzbeat.manager.service.entity;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
 import org.apache.hertzbeat.manager.dao.EntityIdentityDao;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 /**
  * Query boundary for raw persisted entity identity rows, counts, and match lookups.
@@ -49,5 +52,17 @@ public class EntityIdentityQueryService {
 
     public long countIdentities(long entityId) {
         return entityIdentityDao.countByEntityId(entityId);
+    }
+
+    public Map<Long, Long> countIdentitiesByEntityIds(List<Long> entityIds) {
+        if (CollectionUtils.isEmpty(entityIds)) {
+            return Map.of();
+        }
+        return entityIdentityDao.countByEntityIdInGroupByEntityId(entityIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> ((Number) row[1]).longValue()
+                ));
     }
 }

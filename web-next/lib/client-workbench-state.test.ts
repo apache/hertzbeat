@@ -4,7 +4,8 @@ import { createTranslatorMock } from '../test/i18n-test-helper';
 
 const t = createTranslatorMock({
   overrides: {
-    'common.error.unknown': 'Unknown error'
+    'common.error.unknown': 'Unknown error',
+    'common.api.backend-unavailable': 'Backend unavailable localized'
   }
 });
 
@@ -34,6 +35,18 @@ describe('resolveWorkbenchError', () => {
     expect(resolveWorkbenchError(new Error('network down'), true, t)).toEqual({
       redirectToLogin: false,
       message: 'network down'
+    });
+  });
+
+  it('localizes backend unavailable proxy failures instead of leaking raw BFF copy', () => {
+    expect(resolveWorkbenchError(new Error('Backend service unavailable. Please retry after the backend service is restored.'), true, t)).toEqual({
+      redirectToLogin: false,
+      message: 'Backend unavailable localized'
+    });
+
+    expect(resolveWorkbenchError(new Error('API request failed: 503'), true, t)).toEqual({
+      redirectToLogin: false,
+      message: 'Backend unavailable localized'
     });
   });
 });

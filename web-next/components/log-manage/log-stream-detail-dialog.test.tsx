@@ -104,6 +104,7 @@ describe('log stream detail dialog', () => {
     expect(html).toContain('data-hz-dialog-body-layout-variant="stack"');
     expect(html).toContain('data-log-stream-detail-trace-id="trace-123"');
     expect(html).toContain('data-log-stream-detail-selection="attached"');
+    expect(html).toContain('aria-label="' + t('common.dialog.close') + '"');
     expect(html).toContain('data-log-stream-detail-section-nav="true"');
     expect(html).toContain('data-log-stream-detail-section-nav-owner="hertzbeat-ui-action-group"');
     expect(html).toContain('aria-label="' + t('log.manage.stream.detail.section.nav') + '"');

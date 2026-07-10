@@ -108,7 +108,7 @@ describe('navigation information architecture', () => {
 
   it('tracks the completed M10 cutover groups without stale hold or placeholder routes', () => {
     expect(cutoverCandidateRoutes.some(route => route.href === '/overview')).toBe(true);
-    expect(cutoverCandidateRoutes.some(route => route.href === '/dashboard')).toBe(false);
+    expect(cutoverCandidateRoutes.some(route => route.href === '/dashboard')).toBe(true);
     expect(cutoverCandidateRoutes.some(route => route.href === '/topology')).toBe(true);
     expect(cutoverCandidateRoutes.some(route => route.href === '/log/manage')).toBe(true);
     expect(cutoverCandidateRoutes.some(route => route.href === '/trace/manage')).toBe(true);
@@ -123,10 +123,10 @@ describe('navigation information architecture', () => {
 
   it('keeps legacy aliases and route-matrix targets in the route contract', () => {
     expect(legacyRouteAliases.map(route => route.href)).toEqual(
-      expect.arrayContaining(['/setting', '/setting/settings/mcp-server', '/dashboard', '/alerts', '/events', '/alert/center', '/log/stream', '/log/integration', '/status/public'])
+      expect.arrayContaining(['/', '/login', '/setting', '/setting/settings/mcp-server', '/alerts', '/events', '/alert/center', '/log/stream', '/log/integration', '/log/integration/[source]', '/status/public'])
     );
     expect(routeMatrixPaths).toEqual(
-      expect.arrayContaining(['/setting', '/alert/center', '/alerts', '/events', '/log/stream', '/incidents', '/actions', '/monitors/1', '/entities/1', '/status/public'])
+      expect.arrayContaining(['/dashboard', '/setting', '/alert/center', '/alerts', '/events', '/log/stream', '/incidents', '/actions', '/monitors/1', '/entities/1', '/status/public'])
     );
   });
 

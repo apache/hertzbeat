@@ -1,13 +1,14 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ClientWorkbench } from '@/components/workbench/client-workbench';
 import { LabelManageSurface } from '@/components/pages/label-manage-surface';
 import { useI18n } from '@/components/providers/i18n-provider';
 import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/lib/api-client';
 import { formatTime } from '@/lib/format';
 import { createEmptyLabelDraft, deleteLabel, loadLabelData, saveLabel } from '@/lib/label-manage/controller';
-import { buildLabelUrl, type LabelQueryState } from '@/lib/label-manage/query-state';
+import { buildLabelUrl, normalizeLabelQueryType, type LabelQueryState } from '@/lib/label-manage/query-state';
 import { buildLabelDisplayName } from '@/lib/label-manage/view-model';
 import type { Label } from '@/lib/types';
 
@@ -20,11 +21,27 @@ const EMPTY_LABEL_DATA = {
     pageSize: 9999
   }
 };
+const LABEL_MONITOR_HANDOFF_CONTEXT_KEYS = ['source', 'returnTo', 'pageSize', 'timeRange', 'live', 'probe'];
+
+function buildLabelMonitorHandoffHref(labelText: string, currentSearchParams: URLSearchParams) {
+  const params = new URLSearchParams();
+  params.set('labels', labelText);
+  for (const key of LABEL_MONITOR_HANDOFF_CONTEXT_KEYS) {
+    for (const value of currentSearchParams.getAll(key)) {
+      params.append(key, value);
+    }
+  }
+  return `/monitors?${params.toString()}`;
+}
 
 export default function SettingLabelsPage() {
   const { t } = useI18n();
-  const [search, setSearch] = useState('');
-  const [query, setQuery] = useState<LabelQueryState>({ search: '', type: '' });
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const routeSearch = searchParams.get('search') ?? '';
+  const routeType = normalizeLabelQueryType(searchParams.get('type') ?? '');
+  const [search, setSearch] = useState(routeSearch);
+  const [query, setQuery] = useState<LabelQueryState>({ search: routeSearch, type: routeType });
   const [draftLabel, setDraftLabel] = useState<Label | null>(null);
   const [isManageModalAdd, setIsManageModalAdd] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Label | null>(null);
@@ -51,6 +68,60 @@ export default function SettingLabelsPage() {
     }
   }, [query]);
 
+  useEffect(() => {
+    setSearch(routeSearch);
+    setQuery({ search: routeSearch, type: routeType });
+  }, [routeSearch, routeType]);
+
+  const replaceRouteQuery = useCallback(
+    (nextQuery: LabelQueryState) => {
+      const params = new URLSearchParams(searchParams.toString());
+      const nextSearch = nextQuery.search.trim();
+      const nextType = normalizeLabelQueryType(nextQuery.type);
+      if (nextSearch) {
+        params.set('search', nextSearch);
+      } else {
+        params.delete('search');
+      }
+      if (nextType) {
+        params.set('type', nextType);
+      } else {
+        params.delete('type');
+      }
+      const nextParamString = params.toString();
+      const nextUrl = nextParamString ? `/setting/labels?${nextParamString}` : '/setting/labels';
+      const currentParamString = searchParams.toString();
+      const currentUrl = currentParamString ? `/setting/labels?${currentParamString}` : '/setting/labels';
+      if (nextUrl !== currentUrl) {
+        router.replace(nextUrl, { scroll: false });
+      }
+    },
+    [router, searchParams]
+  );
+
+  const selectCopiedLabelText = useCallback((text: string) => {
+    if (typeof document === 'undefined' || typeof window === 'undefined') return false;
+    const source = Array.from(document.querySelectorAll<HTMLElement>('[data-label-copy-source]')).find(
+      element => element.dataset.labelCopySource === text
+    );
+    const selection = window.getSelection();
+    if (!source || !selection) return false;
+    const range = document.createRange();
+    range.selectNodeContents(source);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    source.focus({ preventScroll: true });
+    return true;
+  }, []);
+
+  const handleLabelCopyFailure = useCallback(
+    (text: string) => {
+      const didSelect = selectCopiedLabelText(text);
+      setActionError(t(didSelect ? 'setting.labels.copy-fallback' : 'common.notify.copy-fail'));
+    },
+    [selectCopiedLabelText, t]
+  );
+
   const renderSurface = useCallback(
     (data: Awaited<ReturnType<typeof loadLabelData>>, loadError: string | null = null, retry?: () => void) => (
       <LabelManageSurface
@@ -69,11 +140,18 @@ export default function SettingLabelsPage() {
         actionMeta={actionMeta}
         loadError={loadError}
         formatTime={formatTime}
+        buildMonitorHandoffHref={labelText => buildLabelMonitorHandoffHref(labelText, searchParams)}
         onSearchChange={setSearch}
-        onSearch={() => setQuery({ search, type: '' })}
+        onSearch={() => {
+          const nextQuery = { search, type: '' };
+          setQuery(nextQuery);
+          replaceRouteQuery(nextQuery);
+        }}
         onSearchClear={() => {
+          const nextQuery = { search: '', type: '' };
           setSearch('');
-          setQuery({ search: '', type: '' });
+          setQuery(nextQuery);
+          replaceRouteQuery(nextQuery);
         }}
         onRefresh={() => {
           if (retry) {
@@ -97,13 +175,13 @@ export default function SettingLabelsPage() {
           setActionError(null);
           setActionMeta(null);
           if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
-            setActionError(t('common.notify.copy-fail'));
+            handleLabelCopyFailure(text);
             return;
           }
           void navigator.clipboard
             .writeText(text)
             .then(() => setActionMessage(t('common.notify.copy-success')))
-            .catch(() => setActionError(t('common.notify.copy-fail')));
+            .catch(() => handleLabelCopyFailure(text));
         }}
         onEdit={label => {
           setActionMessage(null);
@@ -111,7 +189,7 @@ export default function SettingLabelsPage() {
           setActionMeta(null);
           setIsNameValidationVisible(false);
           setDeleteTarget(null);
-          setDraftLabel(label);
+          setDraftLabel({ ...label });
           setIsManageModalAdd(false);
         }}
         onDeleteRequest={label => {
@@ -144,31 +222,28 @@ export default function SettingLabelsPage() {
               setIsDeletePending(false);
             });
         }}
-        onDraftChange={patch => setDraftLabel(previous => {
-          if (!previous) return previous;
-          if (!isManageModalAdd && previous.id) {
-            const sourceLabel = data.list.content.find(label => label.id === previous.id);
-            if (sourceLabel) Object.assign(sourceLabel, patch);
-          }
-          return { ...previous, ...patch };
-        })}
+        onDraftChange={patch => setDraftLabel(previous => (previous ? { ...previous, ...patch } : previous))}
         onCloseDialog={() => {
           setIsNameValidationVisible(false);
           setDraftLabel(null);
         }}
-        onSaveDialog={() => {
-          if (!draftLabel) return;
-          if (draftLabel.name == undefined || draftLabel.name.length === 0) {
+        onSaveDialog={visibleDraft => {
+          const draftToSave = visibleDraft ?? draftLabel;
+          if (!draftToSave) return;
+          const trimmedLabelName = (draftToSave.name ?? '').trim();
+          if (trimmedLabelName.length === 0) {
+            setDraftLabel(draftToSave);
             setIsNameValidationVisible(true);
             return;
           }
-          const isEdit = !isManageModalAdd && Boolean(draftLabel.id);
+          const isEdit = !isManageModalAdd && Boolean(draftToSave.id);
+          setDraftLabel(draftToSave);
           setActionMessage(null);
           setActionError(null);
           setActionMeta(null);
           setIsNameValidationVisible(false);
           setIsSavePending(true);
-          void saveLabel(apiMessagePost, apiMessagePut, draftLabel, isManageModalAdd)
+          void saveLabel(apiMessagePost, apiMessagePut, draftToSave, isManageModalAdd)
             .then(() => {
               setIsNameValidationVisible(false);
               setDraftLabel(null);
@@ -191,12 +266,15 @@ export default function SettingLabelsPage() {
       actionMeta,
       deleteTarget,
       draftLabel,
+      handleLabelCopyFailure,
       isDeletePending,
       isLoadPending,
       isManageModalAdd,
       isNameValidationVisible,
       isSavePending,
+      replaceRouteQuery,
       search,
+      searchParams,
       t
     ]
   );

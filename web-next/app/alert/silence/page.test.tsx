@@ -1,13 +1,20 @@
+// @vitest-environment jsdom
+
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import React from 'react';
+import { act } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTranslatorMock } from '../../../test/i18n-test-helper';
 import type { AlertSilenceRouteState } from '../../../lib/alert-silence/query-state';
 
 const mockState = vi.hoisted(() => ({
   lastLoad: null as null | (() => Promise<unknown>),
+  lastSurfaceProps: null as null | Record<string, any>,
+  currentSearchParams: '',
+  routerReplace: vi.fn(),
   renderData: {
     list: {
       totalElements: 1,
@@ -30,6 +37,16 @@ const mockState = vi.hoisted(() => ({
 }));
 
 const apiMessageGet = vi.hoisted(() => vi.fn());
+
+(globalThis as { React?: typeof React }).React = React;
+(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    replace: mockState.routerReplace
+  }),
+  useSearchParams: () => new URLSearchParams(mockState.currentSearchParams)
+}));
 
 vi.mock('../../../components/providers/i18n-provider', () => ({
   useI18n: () => ({
@@ -57,50 +74,45 @@ vi.mock('../../../components/workbench/client-workbench', () => ({
 }));
 
 vi.mock('../../../components/pages/alert-silence-surface', () => ({
-  AlertSilenceSurface: ({
-    data,
-    returnContext,
-    managementContext,
-    matchedViewEnabled,
-    missingMatchedRuleCount,
-    createdOutsideMatchedViewNotice,
-    entityPrefillSource,
-    entityPrefillWarning,
-    evidenceContext,
-    draft,
-    pageSizeOptions
-  }: {
-    data: { list: { totalElements: number } };
-    returnContext?: Record<string, string>;
-    managementContext?: { matchMode?: string; matchingRuleIds?: number[] };
-    matchedViewEnabled?: boolean;
-    missingMatchedRuleCount?: number;
-    createdOutsideMatchedViewNotice?: boolean;
-    entityPrefillSource?: string;
-    entityPrefillWarning?: string | null;
-    evidenceContext?: { signal: string; labelsText: string; returnHref?: string } | null;
-    draft?: { labelsText?: string };
-    pageSizeOptions?: number[];
-  }) => (
-    <div
-      data-alert-silence-surface="true"
-      data-total={data.list.totalElements}
-      data-page-size-options={pageSizeOptions?.join('|')}
-      data-return-context={JSON.stringify(returnContext ?? {})}
-      data-alert-silence-match-mode={managementContext?.matchMode ?? ''}
-      data-alert-silence-match-view={matchedViewEnabled ? 'matched' : 'all'}
-      data-alert-silence-created-outside-matched={createdOutsideMatchedViewNotice ? 'true' : 'false'}
-      data-alert-silence-matching-rule-ids={managementContext?.matchingRuleIds?.join(',') ?? ''}
-      data-alert-silence-missing-rule-count={missingMatchedRuleCount ?? 0}
-      data-alert-silence-entity-prefill-source={entityPrefillSource ?? 'none'}
-      data-alert-silence-entity-prefill-warning={entityPrefillWarning ?? ''}
-      data-alert-silence-evidence-context={evidenceContext ? 'signal-route' : 'none'}
-      data-alert-silence-evidence-signal={evidenceContext?.signal ?? ''}
-      data-alert-silence-evidence-return={evidenceContext?.returnHref ?? ''}
-      data-alert-silence-prefill-labels={evidenceContext?.labelsText ?? ''}
-      data-alert-silence-draft-labels={draft?.labelsText ?? ''}
-    />
-  )
+  AlertSilenceSurface: (props: any) => {
+    const {
+      data,
+      returnContext,
+      managementContext,
+      matchedViewEnabled,
+      missingMatchedRuleCount,
+      createdOutsideMatchedViewNotice,
+      entityPrefillSource,
+      entityPrefillWarning,
+      evidenceContext,
+      draft,
+      pageSizeOptions,
+      search
+    } = props;
+    mockState.lastSurfaceProps = props;
+    return (
+      <div
+        data-alert-silence-surface="true"
+        data-total={data.list.totalElements}
+        data-page-size-options={pageSizeOptions?.join('|')}
+        data-requested-page-size={props.requestedPageSize}
+        data-search={search}
+        data-return-context={JSON.stringify(returnContext ?? {})}
+        data-alert-silence-match-mode={managementContext?.matchMode ?? ''}
+        data-alert-silence-match-view={matchedViewEnabled ? 'matched' : 'all'}
+        data-alert-silence-created-outside-matched={createdOutsideMatchedViewNotice ? 'true' : 'false'}
+        data-alert-silence-matching-rule-ids={managementContext?.matchingRuleIds?.join(',') ?? ''}
+        data-alert-silence-missing-rule-count={missingMatchedRuleCount ?? 0}
+        data-alert-silence-entity-prefill-source={entityPrefillSource ?? 'none'}
+        data-alert-silence-entity-prefill-warning={entityPrefillWarning ?? ''}
+        data-alert-silence-evidence-context={evidenceContext ? 'signal-route' : 'none'}
+        data-alert-silence-evidence-signal={evidenceContext?.signal ?? ''}
+        data-alert-silence-evidence-return={evidenceContext?.returnHref ?? ''}
+        data-alert-silence-prefill-labels={evidenceContext?.labelsText ?? ''}
+        data-alert-silence-draft-labels={draft?.labelsText ?? ''}
+      />
+    );
+  }
 }));
 
 vi.mock('../../../lib/api-client', () => ({
@@ -139,8 +151,25 @@ async function renderAlertSilencePage(initialRouteState: AlertSilenceRouteState 
 }
 
 describe('alert silence page', () => {
+  let interactionContainer: HTMLDivElement | null = null;
+  let interactionRoot: Root | null = null;
+
+  afterEach(() => {
+    if (interactionRoot) {
+      act(() => {
+        interactionRoot?.unmount();
+      });
+    }
+    interactionRoot = null;
+    interactionContainer?.remove();
+    interactionContainer = null;
+  });
+
   beforeEach(() => {
     mockState.lastLoad = null;
+    mockState.lastSurfaceProps = null;
+    mockState.currentSearchParams = '';
+    mockState.routerReplace.mockReset();
     apiMessageGet.mockClear().mockResolvedValue(mockState.renderData.list);
   });
 
@@ -149,6 +178,7 @@ describe('alert silence page', () => {
 
     expect(html).toContain('data-alert-silence-surface="true"');
     expect(html).toContain('data-page-size-options="8|15|25"');
+    expect(html).toContain('data-search=""');
     expect(html).toContain('data-loading-copy="Loading silence rules"');
 
     await mockState.lastLoad?.();
@@ -267,7 +297,7 @@ describe('alert silence page', () => {
     expect(html).toContain('data-alert-silence-draft-labels="hertzbeat.signal:logs');
     expect(html).not.toContain('returnLabel=');
     const source = readFileSync(resolve(process.cwd(), 'app/alert/silence/alert-silence-page.tsx'), 'utf8');
-    expect(source).not.toContain('useSearchParams');
+    expect(source).toContain("import { useRouter, useSearchParams } from 'next/navigation';");
     expect(source).not.toContain('queryStateFromParams(searchParams)');
     expect(source).not.toContain('readSignalRouteContext(searchParams)');
     expect(source).toContain('const alertSilenceRouteState = initialRouteState ?? EMPTY_ALERT_SILENCE_ROUTE_STATE');
@@ -331,8 +361,8 @@ describe('alert silence page', () => {
     expect(source).toContain('ALERT_SILENCE_LABEL_OPTIONS_TIMEOUT_MS = 2_500');
     expect(source).toContain('withTimeoutFallback(');
     expect(source).toContain('const [refreshTick, setRefreshTick] = useState(0)');
-    expect(source).toContain('const [pageIndex, setPageIndex] = useState(0)');
-    expect(source).toContain('const [pageSize, setPageSize] = useState<number>(ALERT_SILENCE_PAGE_SIZE_OPTIONS[0])');
+    expect(source).toContain('const [pageIndex, setPageIndex] = useState(routeListState.pageIndex)');
+    expect(source).toContain('const [pageSize, setPageSize] = useState<number>(routeListState.pageSize)');
     expect(source).toContain("['alert-silence', useMatchedView ? `matched:${matchedRuleIdsKey}` : alertSilenceListUrl, refreshTick].join('|')");
     expect(source).toContain('buildAlertSilenceUrl({ search: query, pageIndex, pageSize })');
     expect(source).toContain('[pageIndex, pageSize, query]');
@@ -350,6 +380,146 @@ describe('alert silence page', () => {
     expect(source).toContain('function handlePageIndexChange(nextPageIndex: number)');
     expect(source).toContain('function handlePageSizeChange(nextPageSize: number)');
     expect(source).toContain('setPageIndex(0);');
+  });
+
+  it('initializes alert silence list state from the route and preserves URL state during search and pagination', async () => {
+    mockState.currentSearchParams = 'search=ops&pageIndex=2&pageSize=15&signal=logs&entityId=7';
+    const { default: AlertSilencePage } = await import('./alert-silence-page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<AlertSilencePage />);
+      await Promise.resolve();
+    });
+
+    expect(mockState.lastSurfaceProps?.search).toBe('ops');
+    expect(mockState.lastSurfaceProps?.requestedPageSize).toBe(15);
+    await act(async () => {
+      await mockState.lastLoad?.();
+    });
+    expect(apiMessageGet).toHaveBeenCalledWith('/alert/silences?pageIndex=2&pageSize=15&sort=id&order=desc&search=ops');
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onSearchChange('checkout');
+      await Promise.resolve();
+    });
+    await act(async () => {
+      mockState.lastSurfaceProps?.onApplyFilter();
+      await Promise.resolve();
+    });
+
+    expect(mockState.routerReplace).toHaveBeenLastCalledWith('/alert/silence?search=checkout&pageSize=15&signal=logs&entityId=7', { scroll: false });
+
+    mockState.currentSearchParams = 'search=checkout&pageSize=15&signal=logs&entityId=7';
+    await act(async () => {
+      interactionRoot?.render(<AlertSilencePage />);
+      await Promise.resolve();
+    });
+    await act(async () => {
+      mockState.lastSurfaceProps?.onPageIndexChange(3);
+      await Promise.resolve();
+    });
+
+    expect(mockState.routerReplace).toHaveBeenLastCalledWith('/alert/silence?search=checkout&pageSize=15&signal=logs&entityId=7&pageIndex=3', { scroll: false });
+
+    mockState.currentSearchParams = 'search=checkout&pageSize=15&signal=logs&entityId=7';
+    await act(async () => {
+      interactionRoot?.render(<AlertSilencePage />);
+      await Promise.resolve();
+    });
+    await act(async () => {
+      mockState.lastSurfaceProps?.onPageSizeChange(8);
+      await Promise.resolve();
+    });
+
+    expect(mockState.routerReplace).toHaveBeenLastCalledWith('/alert/silence?search=checkout&signal=logs&entityId=7', { scroll: false });
+
+    mockState.currentSearchParams = 'search=checkout&pageSize=15&signal=logs&entityId=7';
+    await act(async () => {
+      interactionRoot?.render(<AlertSilencePage />);
+      await Promise.resolve();
+    });
+    await act(async () => {
+      mockState.lastSurfaceProps?.onClearFilter();
+      await Promise.resolve();
+    });
+
+    expect(mockState.routerReplace).toHaveBeenLastCalledWith('/alert/silence?signal=logs&entityId=7', { scroll: false });
+  });
+
+  it('clears local editor validation when canceling an empty new silence draft', async () => {
+    const { default: AlertSilencePage } = await import('./alert-silence-page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<AlertSilencePage />);
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onSave();
+      await Promise.resolve();
+    });
+
+    expect(mockState.lastSurfaceProps?.editorError).toBe(createTranslatorMock()('alert.silence.validation.name'));
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onCloseEditor();
+      await Promise.resolve();
+    });
+
+    expect(mockState.lastSurfaceProps?.editorOpen).toBe(false);
+    expect(mockState.lastSurfaceProps?.editorError).toBeNull();
+    expect(mockState.lastSurfaceProps?.editorErrorDetail).toBeNull();
+    expect(mockState.lastSurfaceProps?.editorErrorContract).toBeNull();
+  });
+
+  it('asks for confirmation before closing a dirty silence editor draft', async () => {
+    const { default: AlertSilencePage } = await import('./alert-silence-page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<AlertSilencePage />);
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onNew();
+      await Promise.resolve();
+    });
+
+    const draft = mockState.lastSurfaceProps?.draft;
+    expect(mockState.lastSurfaceProps?.editorOpen).toBe(true);
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onDraftChange({ ...draft, name: 'Unsaved silence draft' });
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onCloseEditor();
+      await Promise.resolve();
+    });
+
+    expect(mockState.lastSurfaceProps?.editorOpen).toBe(true);
+    expect(interactionContainer.innerHTML).toContain('data-alert-silence-unsaved-cancel-state="open"');
+    expect(interactionContainer.innerHTML).toContain('Discard unsaved silence changes?');
+  });
+
+  it('focuses the first invalid silence editor field after local validation fails', () => {
+    const source = readFileSync(resolve(process.cwd(), 'app/alert/silence/alert-silence-page.tsx'), 'utf8');
+
+    expect(source).toContain('function focusAlertSilenceEditorField(field: AlertSilenceValidationField)');
+    expect(source).toContain('const validationField = getAlertSilenceValidationField(draft)');
+    expect(source).toContain('focusAlertSilenceEditorField(validationField)');
+    expect(source).toContain('input[name="silence_name"]');
+    expect(source).toContain('[data-alert-silence-label-selector] [data-hz-label-selector-draft-row="true"] input[data-hz-label-selector-key-input="searchable-key"]');
   });
 
   it('keeps Angular no-selection batch delete warning before opening confirm', () => {
@@ -378,6 +548,16 @@ describe('alert silence page', () => {
     expect(source).not.toContain('apiMessageDelete');
     expect(source).not.toContain("setEditorMessage(t('common.delete-success'))");
     expect(source).not.toContain("t('common.delete-failed')");
+  });
+
+  it('names the target and destructive action in silence delete confirmation', () => {
+    const source = readFileSync(resolve(process.cwd(), 'app/alert/silence/alert-silence-page.tsx'), 'utf8');
+
+    expect(source).toContain('const deleteTargetNames = deleteRequest?.ids');
+    expect(source).toContain("t('alert.silence.delete.confirm.targets', { names: deleteTargetNames.join(', ') })");
+    expect(source).toContain("t('alert.silence.delete.confirm.targets-more', { count: missingDeleteTargetCount })");
+    expect(source).toContain("confirmLabel={t('alert.silence.delete.confirm.action')}");
+    expect(source).not.toContain("confirmLabel={t('common.button.ok')}");
   });
 
   it('uses Angular edit notifications for enable-toggle feedback', () => {

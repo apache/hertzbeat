@@ -177,9 +177,41 @@ describe('login form submit copy', () => {
     expect(window.sessionStorage.getItem('HB_UI_SESSION_USER')).toContain('"name":"ops-admin"');
     expect(window.sessionStorage.getItem('HB_UI_SESSION_USER')).toContain('"role":"ADMIN"');
     expect(window.sessionStorage.getItem('HB_UI_SESSION_USER')).not.toContain('token');
-    expect(window.sessionStorage.getItem('HB_ABOUT_AUTO_SHOW_AFTER_LOGIN')).toBe('true');
+    expect(window.sessionStorage.getItem('HB_ABOUT_AUTO_SHOW_AFTER_LOGIN')).toBeNull();
     expect(mockState.resetWorkbenchLoadCache).toHaveBeenCalledTimes(1);
     expect(mockState.routerReplace).toHaveBeenCalledWith('/monitors?app=website');
+  }, 60000);
+
+  it('keeps the About auto-show marker only for default workbench login', async () => {
+    const fetchMock = global.fetch as unknown as ReturnType<typeof vi.fn>;
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ code: 0, data: { authenticated: true, tokenBoundary: 'bff-cookie', role: 'ADMIN' } })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ code: 0, data: { locale: 'zh_CN' } })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ code: 0, data: [] })
+      });
+
+    await mountForm();
+
+    await act(async () => {
+      setInputValue(0, 'ops-admin');
+      setInputValue(1, 'custom-secret');
+      (container.querySelector('form') as HTMLFormElement).dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      await flushAsyncWork(12);
+    });
+
+    expect(window.sessionStorage.getItem('HB_ABOUT_AUTO_SHOW_AFTER_LOGIN')).toBe('true');
+    expect(mockState.routerReplace).toHaveBeenCalledWith('/');
   }, 60000);
 
   it('routes to the Angular startup failure page when post-login hierarchy bootstrap fails', async () => {
@@ -399,6 +431,30 @@ describe('login form submit copy', () => {
     });
 
     expect(container.textContent).toContain('Login failed: 503');
+    expect(mockState.routerReplace).not.toHaveBeenCalled();
+  }, 60000);
+
+  it('renders the status fallback when the login response body is empty', async () => {
+    const fetchMock = global.fetch as unknown as ReturnType<typeof vi.fn>;
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      json: async () => {
+        throw new SyntaxError('Unexpected end of JSON input');
+      }
+    });
+
+    await mountForm();
+
+    await act(async () => {
+      setInputValue(0, 'ops-admin');
+      setInputValue(1, 'custom-secret');
+      (container.querySelector('form') as HTMLFormElement).dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      await flushAsyncWork(12);
+    });
+
+    expect(container.textContent).toContain('Login failed: 500');
+    expect(container.textContent).not.toContain('Unexpected end of JSON input');
     expect(mockState.routerReplace).not.toHaveBeenCalled();
   }, 60000);
 

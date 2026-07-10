@@ -203,6 +203,63 @@ function readPanelDraftSourceSummary(draft: SignalDashboardPanelDraft) {
   }
 }
 
+const BUILTIN_SIGNAL_OVERVIEW_DASHBOARD_KEY = 'signals-overview';
+const BUILTIN_SIGNAL_OVERVIEW_DASHBOARD_TITLE = 'Signals overview';
+const BUILTIN_SIGNAL_OVERVIEW_DASHBOARD_DESCRIPTIONS = new Set([
+  'Dashboard composed from logs, traces, and metrics panel drafts.',
+  'Dashboard composed from signal panel drafts.'
+]);
+
+type DashboardExplorerHandoffScope = 'saved-views' | 'panel-drafts';
+
+function DashboardExplorerHandoffActions({
+  scope,
+  t
+}: {
+  scope: DashboardExplorerHandoffScope;
+  t: ReturnType<typeof useI18n>['t'];
+}) {
+  const actions = [
+    { key: 'logs', href: '/log/manage', label: t('dashboard.empty-action.logs') },
+    { key: 'traces', href: '/trace/manage', label: t('dashboard.empty-action.traces') },
+    { key: 'metrics', href: '/ingestion/otlp/metrics', label: t('dashboard.empty-action.metrics') }
+  ];
+
+  return (
+    <>
+      {actions.map(action => (
+        <HzButtonLink
+          key={`${scope}:${action.key}`}
+          href={action.href}
+          size="sm"
+          intent="secondary"
+          data-dashboard-empty-action={action.key}
+          data-dashboard-empty-action-scope={scope}
+        >
+          <ExternalLink size={13} />
+          {action.label}
+        </HzButtonLink>
+      ))}
+    </>
+  );
+}
+
+export function resolveDashboardDisplayText(
+  dashboard: Pick<SignalDashboard, 'dashboardKey' | 'title' | 'description'>,
+  defaults: { title: string; description: string }
+) {
+  const title = dashboard.title.trim();
+  const description = dashboard.description.trim();
+  const isBuiltinSignalOverview = dashboard.dashboardKey === BUILTIN_SIGNAL_OVERVIEW_DASHBOARD_KEY;
+  return {
+    title: isBuiltinSignalOverview && (!title || title === BUILTIN_SIGNAL_OVERVIEW_DASHBOARD_TITLE) ? defaults.title : title || defaults.title,
+    description:
+      isBuiltinSignalOverview && (!description || BUILTIN_SIGNAL_OVERVIEW_DASHBOARD_DESCRIPTIONS.has(description))
+        ? defaults.description
+        : description || defaults.description
+  };
+}
+
 function DashboardRuntimeStatePanel({
   runtimeRenderer
 }: {
@@ -897,12 +954,18 @@ export default function DashboardDraftWorkspace({
         const nextDashboardsWithUrlVariables = applyVariableUrlOverridesToDashboards(nextDashboards, initialVariableUrlOverrides);
         setDashboards(nextDashboardsWithUrlVariables);
         const firstDashboard = nextDashboardsWithUrlVariables[0];
-        if (firstDashboard) {
-          setDashboardKeyDraft(current => !hasRequestedDashboardKey && current === requestedDashboardKey ? firstDashboard.dashboardKey : current);
-          setDashboardTitleDraft(current => current === defaultDashboardTitle || current.length === 0 ? firstDashboard.title : current);
+        const requestedDashboard = nextDashboardsWithUrlVariables.find(dashboard => dashboard.dashboardKey === requestedDashboardKey);
+        const initialDashboard = requestedDashboard || firstDashboard;
+        if (initialDashboard) {
+          const initialDashboardText = resolveDashboardDisplayText(initialDashboard, {
+            title: defaultDashboardTitle,
+            description: defaultDashboardDescription
+          });
+          setDashboardKeyDraft(current => !hasRequestedDashboardKey && current === requestedDashboardKey ? initialDashboard.dashboardKey : current);
+          setDashboardTitleDraft(current => current === defaultDashboardTitle || current.length === 0 ? initialDashboardText.title : current);
           setDashboardDescriptionDraft(current =>
             current === defaultDashboardDescription || current.length === 0
-              ? firstDashboard.description || defaultDashboardDescription
+              ? initialDashboardText.description
               : current
           );
         }
@@ -935,6 +998,21 @@ export default function DashboardDraftWorkspace({
     () => dashboards.find(dashboard => dashboard.dashboardKey === dashboardKeyDraft) || null,
     [dashboardKeyDraft, dashboards]
   );
+  const selectedDashboardText = useMemo(
+    () => selectedDashboard ? resolveDashboardDisplayText(selectedDashboard, {
+      title: defaultDashboardTitle,
+      description: defaultDashboardDescription
+    }) : null,
+    [defaultDashboardDescription, defaultDashboardTitle, selectedDashboard]
+  );
+  const selectedDashboardKey = selectedDashboard?.dashboardKey || '';
+  const selectedDashboardTitle = selectedDashboardText?.title || '';
+  const selectedDashboardDescription = selectedDashboardText?.description || '';
+  useEffect(() => {
+    if (!selectedDashboardKey || !selectedDashboardTitle) return;
+    setDashboardTitleDraft(selectedDashboardTitle);
+    setDashboardDescriptionDraft(selectedDashboardDescription);
+  }, [selectedDashboardDescription, selectedDashboardKey, selectedDashboardTitle]);
   const dashboardTimeRange = useMemo<SignalDashboardTimeRange>(() => {
     const start = timeRangeStartDraft.trim();
     const end = timeRangeEndDraft.trim();
@@ -1102,9 +1180,13 @@ export default function DashboardDraftWorkspace({
         drafts
       });
       const saved = await saveSignalDashboard(dashboard);
+      const savedText = resolveDashboardDisplayText(saved, {
+        title: defaultDashboardTitle,
+        description: defaultDashboardDescription
+      });
       setDashboardKeyDraft(saved.dashboardKey);
-      setDashboardTitleDraft(saved.title);
-      setDashboardDescriptionDraft(saved.description || defaultDashboardDescription);
+      setDashboardTitleDraft(savedText.title);
+      setDashboardDescriptionDraft(savedText.description);
       replaceDashboardDeepLink(saved.dashboardKey);
       setDashboards(current => [saved, ...current.filter(item => item.dashboardKey !== saved.dashboardKey)]);
       setCompositionState('saved');
@@ -1148,9 +1230,13 @@ export default function DashboardDraftWorkspace({
         ...dashboardTimeRange
       });
       const saved = await saveSignalDashboard(dashboard);
+      const savedText = resolveDashboardDisplayText(saved, {
+        title: defaultDashboardTitle,
+        description: defaultDashboardDescription
+      });
       setDashboardKeyDraft(saved.dashboardKey);
-      setDashboardTitleDraft(saved.title);
-      setDashboardDescriptionDraft(saved.description || defaultDashboardDescription);
+      setDashboardTitleDraft(savedText.title);
+      setDashboardDescriptionDraft(savedText.description);
       replaceDashboardDeepLink(saved.dashboardKey);
       setDashboards(current => [saved, ...current.filter(item => item.dashboardKey !== saved.dashboardKey)]);
       setCompositionState('saved');
@@ -1171,9 +1257,13 @@ export default function DashboardDraftWorkspace({
         ...dashboardTimeRange
       });
       const saved = await saveSignalDashboard(dashboard);
+      const savedText = resolveDashboardDisplayText(saved, {
+        title: defaultDashboardTitle,
+        description: defaultDashboardDescription
+      });
       setDashboardKeyDraft(saved.dashboardKey);
-      setDashboardTitleDraft(saved.title);
-      setDashboardDescriptionDraft(saved.description || defaultDashboardDescription);
+      setDashboardTitleDraft(savedText.title);
+      setDashboardDescriptionDraft(savedText.description);
       replaceDashboardDeepLink(saved.dashboardKey);
       setDashboards(current => [saved, ...current.filter(item => item.dashboardKey !== saved.dashboardKey)]);
       setCompositionState('saved');
@@ -1331,9 +1421,13 @@ export default function DashboardDraftWorkspace({
       if (selectedDashboard) {
         const nextDashboard = mergeSignalDashboardDraftsIntoComposition(selectedDashboard, savedDrafts);
         const savedDashboard = await saveSignalDashboard(nextDashboard);
+        const savedDashboardText = resolveDashboardDisplayText(savedDashboard, {
+          title: defaultDashboardTitle,
+          description: defaultDashboardDescription
+        });
         setDashboards(current => [savedDashboard, ...current.filter(item => item.dashboardKey !== savedDashboard.dashboardKey)]);
-        setDashboardTitleDraft(savedDashboard.title);
-        setDashboardDescriptionDraft(savedDashboard.description || defaultDashboardDescription);
+        setDashboardTitleDraft(savedDashboardText.title);
+        setDashboardDescriptionDraft(savedDashboardText.description);
         setCompositionState('saved');
       }
     } catch {
@@ -1360,9 +1454,13 @@ export default function DashboardDraftWorkspace({
   };
 
   const selectDashboard = (dashboard: SignalDashboard) => {
+    const dashboardText = resolveDashboardDisplayText(dashboard, {
+      title: defaultDashboardTitle,
+      description: defaultDashboardDescription
+    });
     setDashboardKeyDraft(dashboard.dashboardKey);
-    setDashboardTitleDraft(dashboard.title);
-    setDashboardDescriptionDraft(dashboard.description || defaultDashboardDescription);
+    setDashboardTitleDraft(dashboardText.title);
+    setDashboardDescriptionDraft(dashboardText.description);
     replaceDashboardDeepLink(dashboard.dashboardKey);
   };
 
@@ -1375,9 +1473,15 @@ export default function DashboardDraftWorkspace({
         const nextSelected = nextDashboards[0];
         if (dashboardKeyDraft === dashboard.dashboardKey) {
           const nextDashboardKey = nextSelected?.dashboardKey || 'signals-overview';
+          const nextSelectedText = nextSelected
+            ? resolveDashboardDisplayText(nextSelected, {
+              title: defaultDashboardTitle,
+              description: defaultDashboardDescription
+            })
+            : null;
           setDashboardKeyDraft(nextDashboardKey);
-          setDashboardTitleDraft(nextSelected?.title || defaultDashboardTitle);
-          setDashboardDescriptionDraft(nextSelected?.description || defaultDashboardDescription);
+          setDashboardTitleDraft(nextSelectedText?.title || defaultDashboardTitle);
+          setDashboardDescriptionDraft(nextSelectedText?.description || defaultDashboardDescription);
           replaceDashboardDeepLink(nextDashboardKey);
         }
         setCompositionState(nextDashboards.length > 0 ? 'ready' : 'empty');
@@ -1726,6 +1830,7 @@ export default function DashboardDraftWorkspace({
         description={t('dashboard.add-panel.saved-description')}
         mainId="dashboard-panel-drafts-main"
         mainLabel={t('dashboard.panel-drafts.title')}
+        skipLinkLabel={t('app.frame.skip-to-workbench')}
         actions={
           <>
             <HzButton
@@ -2684,47 +2789,53 @@ export default function DashboardDraftWorkspace({
             </div>
             {dashboards.length > 0 ? (
               <div className="grid gap-0 divide-y divide-[#252b35]" data-dashboard-composition-list="true">
-                {dashboards.map(dashboard => (
-                  <div
-                    key={dashboard.dashboardKey}
-                    className="grid min-w-0 gap-3 px-4 py-3 lg:grid-cols-[minmax(0,1fr)_120px_160px_210px]"
-                    data-dashboard-composition-row={dashboard.dashboardKey}
-                    data-dashboard-composition-version={dashboard.version || 'v1'}
-                    data-dashboard-composition-selected={dashboard.dashboardKey === dashboardKeyDraft ? 'true' : 'false'}
-                  >
-                    <HzDataCellStack display="block">
-                      <HzDataCellText variant="title" display="block">{dashboard.title}</HzDataCellText>
-                      <HzDataCellText variant="copy" display="block" spacing="stack-tight">
-                        {dashboard.description || dashboard.dashboardKey}
-                      </HzDataCellText>
-                    </HzDataCellStack>
-                    <HzStatusBadge tone="info" label={t('dashboard.composition.widget-count')} value={parseWidgetCount(dashboard)} />
-                    <HzDataCellText variant="timestamp">{formatUpdatedAt(dashboard.updateTime || dashboard.createTime, locale)}</HzDataCellText>
-                    <div className="flex flex-wrap items-center justify-end gap-2">
-                      <HzButton
-                        type="button"
-                        size="sm"
-                        intent="ghost"
-                        onClick={() => selectDashboard(dashboard)}
-                        data-dashboard-composition-action="select"
-                      >
-                        <LayoutDashboard size={13} />
-                        {t('dashboard.composition.action.select-dashboard')}
-                      </HzButton>
-                      <HzButton
-                        type="button"
-                        size="sm"
-                        intent="ghost"
-                        disabled={deletingDashboardKey === dashboard.dashboardKey}
-                        onClick={() => void deleteDashboard(dashboard)}
-                        data-dashboard-composition-action="delete"
-                      >
-                        <Trash2 size={13} />
-                        {t('dashboard.composition.action.delete-dashboard')}
-                      </HzButton>
+                {dashboards.map(dashboard => {
+                  const dashboardText = resolveDashboardDisplayText(dashboard, {
+                    title: defaultDashboardTitle,
+                    description: defaultDashboardDescription
+                  });
+                  return (
+                    <div
+                      key={dashboard.dashboardKey}
+                      className="grid min-w-0 gap-3 px-4 py-3 lg:grid-cols-[minmax(0,1fr)_120px_160px_210px]"
+                      data-dashboard-composition-row={dashboard.dashboardKey}
+                      data-dashboard-composition-version={dashboard.version || 'v1'}
+                      data-dashboard-composition-selected={dashboard.dashboardKey === dashboardKeyDraft ? 'true' : 'false'}
+                    >
+                      <HzDataCellStack display="block">
+                        <HzDataCellText variant="title" display="block">{dashboardText.title}</HzDataCellText>
+                        <HzDataCellText variant="copy" display="block" spacing="stack-tight">
+                          {dashboardText.description || dashboard.dashboardKey}
+                        </HzDataCellText>
+                      </HzDataCellStack>
+                      <HzStatusBadge tone="info" label={t('dashboard.composition.widget-count')} value={parseWidgetCount(dashboard)} />
+                      <HzDataCellText variant="timestamp">{formatUpdatedAt(dashboard.updateTime || dashboard.createTime, locale)}</HzDataCellText>
+                      <div className="flex flex-wrap items-center justify-end gap-2">
+                        <HzButton
+                          type="button"
+                          size="sm"
+                          intent="ghost"
+                          onClick={() => selectDashboard(dashboard)}
+                          data-dashboard-composition-action="select"
+                        >
+                          <LayoutDashboard size={13} />
+                          {t('dashboard.composition.action.select-dashboard')}
+                        </HzButton>
+                        <HzButton
+                          type="button"
+                          size="sm"
+                          intent="ghost"
+                          disabled={deletingDashboardKey === dashboard.dashboardKey}
+                          onClick={() => void deleteDashboard(dashboard)}
+                          data-dashboard-composition-action="delete"
+                        >
+                          <Trash2 size={13} />
+                          {t('dashboard.composition.action.delete-dashboard')}
+                        </HzButton>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <HzEmptyState
@@ -2755,6 +2866,7 @@ export default function DashboardDraftWorkspace({
               <HzEmptyState
                 title={t(`dashboard.saved-views.empty-title.${savedViewLoadState}`)}
                 description={savedViewStatusCopy}
+                actions={savedViewLoadState === 'empty' ? <DashboardExplorerHandoffActions scope="saved-views" t={t} /> : undefined}
                 layout="table-panel"
                 data-dashboard-saved-views-empty-state={savedViewLoadState}
               />
@@ -2787,6 +2899,7 @@ export default function DashboardDraftWorkspace({
               <HzEmptyState
                 title={t(`dashboard.panel-drafts.empty-title.${loadState}`)}
                 description={statusCopy}
+                actions={loadState === 'empty' ? <DashboardExplorerHandoffActions scope="panel-drafts" t={t} /> : undefined}
                 layout="table-panel"
                 data-dashboard-panel-drafts-empty-state={loadState}
               />

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BarChart3, Copy as CopyIcon, FileCode2, FileText, GitBranch as GitBranchIcon, MoreHorizontal, Network, PauseCircle, Pencil, PlayCircle, RefreshCw, Trash2 } from 'lucide-react';
+import { BarChart3, Copy as CopyIcon, FileCode2, FileText, GitBranch as GitBranchIcon, MoreHorizontal, Network, PauseCircle, Pencil, PlayCircle, RefreshCw, Trash2, Upload } from 'lucide-react';
 import { ClientWorkbench } from '@/components/workbench/client-workbench';
 import { useI18n } from '@/components/providers/i18n-provider';
 import {
@@ -108,6 +108,7 @@ const EMPTY_MONITOR_QUERY: MonitorQueryState = {
   pageSize: '',
   entityId: '',
   entityName: '',
+  source: '',
   returnTo: ''
 };
 
@@ -184,6 +185,25 @@ function buildMonitorRowCodeHref(item: Monitor) {
   });
 }
 
+const MONITOR_IMPORT_FILE_ACCEPT = '.json,.yaml,.yml,.xlsx';
+
+function isMonitorImportFile(file: File) {
+  const name = file.name.trim().toLowerCase();
+  return name.endsWith('.json') || name.endsWith('.yaml') || name.endsWith('.yml') || name.endsWith('.xlsx');
+}
+
+function MonitorRowActionItem({
+  children
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-1">
+      <div className="min-w-0 flex-1">{children}</div>
+    </div>
+  );
+}
+
 export default function MonitorsPage({
   initialQuery,
   explicitStatus = ''
@@ -222,9 +242,14 @@ export default function MonitorsPage({
   const previousMonitorsRef = useRef<Monitor[]>([]);
   const disappearedMonitorTimersRef = useRef<Map<number, number>>(new Map());
   const setCheckedIdsImmediate = useCallback((nextOrUpdater: number[] | ((current: number[]) => number[])) => {
-    const next = typeof nextOrUpdater === 'function' ? nextOrUpdater(checkedIdsRef.current) : nextOrUpdater;
+    const current = checkedIdsRef.current;
+    const next = typeof nextOrUpdater === 'function' ? nextOrUpdater(current) : nextOrUpdater;
+    const selectionChanged = current.length !== next.length || current.some((id, index) => id !== next[index]);
     checkedIdsRef.current = next;
     setCheckedIds(next);
+    if (selectionChanged) {
+      setActionFeedback(null);
+    }
   }, []);
   const monitorListUrl = useMemo(() => buildMonitorUrl(query), [query]);
   const monitorManageCacheKey = useMemo(
@@ -240,14 +265,18 @@ export default function MonitorsPage({
     setReloadKey(prev => prev + 1);
   }, [invalidateMonitorQueries]);
   const readMonitorListWithQuery = useCallback(
-    (nextQuery: MonitorQueryState) =>
+    (nextQuery: MonitorQueryState, options?: { selectionPage?: boolean }) =>
       queryClient.fetchQuery({
         queryKey: queryKeys.monitors.list({
           ...nextQuery,
+          selectionPage: options?.selectionPage ? 'true' : '',
           explicitStatus: explicitStatus || 'implicit-status',
           reloadKey
         }),
-        queryFn: () => loadMonitorListFromFacade(api.monitors.page, nextQuery),
+        queryFn: () =>
+          loadMonitorListFromFacade(options?.selectionPage ? api.monitors.selectionPage : api.monitors.page, nextQuery, {
+            allowUnsupportedPageSize: options?.selectionPage
+          }),
         staleTime: 5000
       }),
     [explicitStatus, queryClient, reloadKey]
@@ -261,6 +290,9 @@ export default function MonitorsPage({
   useEffect(() => {
     setOptimisticCopies([]);
     setCopyingIds([]);
+    disappearedMonitorTimersRef.current.forEach(timerId => window.clearTimeout(timerId));
+    disappearedMonitorTimersRef.current.clear();
+    previousMonitorsRef.current = [];
   }, [monitorListUrl]);
 
   useEffect(() => {
@@ -292,6 +324,15 @@ export default function MonitorsPage({
     window.clearTimeout(timerId);
     disappearedMonitorTimersRef.current.delete(monitorId);
   }, []);
+
+  const removeDeletedMonitorsFromPreviousState = useCallback(
+    (deletedIds: number[]) => {
+      const deletedIdSet = new Set(deletedIds);
+      deletedIds.forEach(clearDisappearedMonitorTimer);
+      previousMonitorsRef.current = previousMonitorsRef.current.filter(monitor => !deletedIdSet.has(monitor.id));
+    },
+    [clearDisappearedMonitorTimer]
+  );
 
   const isMonitorDisabled = useCallback((monitor: Monitor) => monitor._displayStatus === 'DISAPPEARED', []);
 
@@ -515,6 +556,20 @@ export default function MonitorsPage({
         const checkedCount = checkedIds.length;
         const deleteDialogIds = deleteTargetIds ?? checkedIds;
         const deleteDialogCount = deleteDialogIds.length;
+        const deleteDialogTargets = deleteDialogIds
+          .map(id => selectableTableRows.find(item => item.id === id))
+          .filter((item): item is Monitor => Boolean(item))
+          .slice(0, 5);
+        const deleteDialogHiddenTargetCount = Math.max(0, deleteDialogCount - deleteDialogTargets.length);
+        const batchResponseConfirmIds = batchResponseConfirm?.ids ?? [];
+        const batchResponseConfirmTargets = batchResponseConfirmIds
+          .map(id => selectableTableRows.find(item => item.id === id))
+          .filter((item): item is Monitor => Boolean(item))
+          .slice(0, 5);
+        const batchResponseConfirmHiddenTargetCount = Math.max(
+          0,
+          batchResponseConfirmIds.length - batchResponseConfirmTargets.length
+        );
         const currentPageIds = selectableTableRows.map(item => item.id);
         const monitorBatchActionProps = (action: string) =>
           ({
@@ -686,6 +741,7 @@ export default function MonitorsPage({
           task: () => Promise<string>,
           fallbackErrorTitle: string,
           options?: {
+            formatErrorDescription?: (error: unknown) => string | undefined;
             refreshOnUnavailable?: boolean;
           }
         ): Promise<boolean> => {
@@ -706,7 +762,7 @@ export default function MonitorsPage({
             setActionFeedback({
               tone: 'critical',
               title: fallbackErrorTitle,
-              description: error instanceof Error ? error.message : undefined
+              description: options?.formatErrorDescription?.(error) ?? (error instanceof Error ? error.message : undefined)
             });
             return false;
           } finally {
@@ -728,6 +784,7 @@ export default function MonitorsPage({
           setOptimisticCopies(prev => [optimisticCopy, ...prev]);
           try {
             await api.monitors.copy(item.id);
+            setOptimisticCopies(prev => prev.filter(copy => copy.id !== optimisticId));
             setActionFeedback({ tone: 'success', title: t('monitor.copy.success') });
             refreshMonitorWorkbench();
           } catch (error) {
@@ -762,7 +819,9 @@ export default function MonitorsPage({
           }
         };
 
-        const refreshAfterDelete = (deletedCount: number) => {
+        const refreshAfterDelete = (deletedIds: number[]) => {
+          const deletedCount = deletedIds.length;
+          removeDeletedMonitorsFromPreviousState(deletedIds);
           setCheckedIdsImmediate([]);
           setSelectedId(null);
           setDeleteDialogOpen(false);
@@ -794,7 +853,7 @@ export default function MonitorsPage({
             const grafanaDeleteTask = Promise.allSettled(targetIds.map(id => api.monitors.deleteGrafanaDashboard(id)));
             await api.monitors.delete(targetIds);
             await grafanaDeleteTask;
-            refreshAfterDelete(targetIds.length);
+            refreshAfterDelete(targetIds);
             return t('common.delete-success');
           }, t('common.notify.delete-fail'));
           setDeleteDialogOpen(false);
@@ -822,7 +881,7 @@ export default function MonitorsPage({
               pageIndex: '0',
               pageSize: String(displayTotal)
             };
-            const allResults = await readMonitorListWithQuery(selectAllQuery);
+            const allResults = await readMonitorListWithQuery(selectAllQuery, { selectionPage: true });
             const allIds = Array.from(new Set([...visibleOptimisticCopies.map(item => item.id), ...allResults.content.map(item => item.id)]));
             setCheckedIdsImmediate(allIds);
           } catch (error) {
@@ -894,6 +953,13 @@ export default function MonitorsPage({
           const file = event.target.files?.[0];
           event.target.value = '';
           if (!file) return;
+          if (!isMonitorImportFile(file)) {
+            setActionFeedback({
+              tone: 'warning',
+              title: t('monitor.manage.import.invalid-file')
+            });
+            return;
+          }
           await runBatchAction(
             'import',
             t('common.notify.import-submitted', { taskName: file.name }),
@@ -907,7 +973,13 @@ export default function MonitorsPage({
             t('common.notify.import-fail-detail', {
               taskName: file.name,
               errMsg: t('common.notify.import-fail')
-            })
+            }),
+            {
+              formatErrorDescription: error =>
+                t('monitor.manage.import.failure-recovery', {
+                  details: error instanceof Error && error.message ? error.message : t('common.notify.import-fail')
+                })
+            }
           );
         };
 
@@ -1001,6 +1073,7 @@ export default function MonitorsPage({
               data-monitor-export-type-dialog-contract="angular-nz-modal-600-no-footer"
               data-monitor-export-type-dialog-flow="angular-trigger-type-modal-before-download"
               data-monitor-export-type-dialog-owner="hertzbeat-ui-export-type-dialog"
+              skipLinkLabel={t('app.frame.skip-to-workbench')}
               title={t('monitors.title')}
               description={
                 entityContextActive
@@ -1037,40 +1110,59 @@ export default function MonitorsPage({
                     <>
                       <HzFileInput
                         ref={importInputRef}
+                        accept={MONITOR_IMPORT_FILE_ACCEPT}
                         data-monitor-manage-import-input-owner="hertzbeat-ui-file-input"
                         data-monitors-import-file-input="true"
                         onChange={event => void handleImportChange(event)}
                       />
-                      <HzIconButton
-                        label={t('common.refresh')}
-                        intent="ghost"
-                        onClick={handleManualRefresh}
-                        data-monitor-manage-manual-refresh-owner="hertzbeat-ui-icon-button"
-                        data-monitor-manage-manual-refresh-action="sync"
-                        data-monitor-manage-manual-refresh-tick={String(reloadKey)}
-                      >
-                        <RefreshCw size={13} />
-                      </HzIconButton>
+                      <span className="inline-flex items-center gap-1">
+                        <HzIconButton
+                          label={t('common.refresh')}
+                          intent="ghost"
+                          onClick={handleManualRefresh}
+                          data-monitor-manage-manual-refresh-owner="hertzbeat-ui-icon-button"
+                          data-monitor-manage-manual-refresh-action="sync"
+                          data-monitor-manage-manual-refresh-tick={String(reloadKey)}
+                        >
+                          <RefreshCw size={13} />
+                        </HzIconButton>
+                      </span>
+                      <span className="inline-flex items-center gap-1">
+                        <HzButton
+                          size="sm"
+                          onClick={handleImportClick}
+                          data-monitor-manage-primary-action-owner="hertzbeat-ui-button"
+                          data-monitor-manage-primary-action="import"
+                          data-monitor-manage-import-empty-state-action="available"
+                        >
+                          <Upload size={13} />
+                          {t('common.import')}
+                        </HzButton>
+                      </span>
                       {data.query.app ? (
-                        <Link href={buildMonitorNewHref({ ...newMonitorBaseContext, app: data.query.app })}>
+                        <span className="inline-flex items-center gap-1">
+                          <Link href={buildMonitorNewHref({ ...newMonitorBaseContext, app: data.query.app })}>
+                            <HzButton
+                              size="sm"
+                              data-monitor-manage-primary-action-owner="hertzbeat-ui-button"
+                              data-monitor-manage-primary-action="new-monitor-link"
+                            >
+                              {t('monitor.new-monitor')}
+                            </HzButton>
+                          </Link>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1">
                           <HzButton
                             size="sm"
                             data-monitor-manage-primary-action-owner="hertzbeat-ui-button"
-                            data-monitor-manage-primary-action="new-monitor-link"
+                            data-monitor-manage-primary-action="new-monitor-picker"
+                            data-monitors-new-app-picker-trigger="true"
+                            onClick={() => void openAppPicker('new')}
                           >
                             {t('monitor.new-monitor')}
                           </HzButton>
-                        </Link>
-                      ) : (
-                        <HzButton
-                          size="sm"
-                          data-monitor-manage-primary-action-owner="hertzbeat-ui-button"
-                          data-monitor-manage-primary-action="new-monitor-picker"
-                          data-monitors-new-app-picker-trigger="true"
-                          onClick={() => void openAppPicker('new')}
-                        >
-                          {t('monitor.new-monitor')}
-                        </HzButton>
+                        </span>
                       )}
                     </>
                   ) : null}
@@ -1174,7 +1266,18 @@ export default function MonitorsPage({
               >
                 <section className="min-w-0">
                   {tableRows.length === 0 ? (
-                    <div className="p-3">
+                    <div className="space-y-3 p-3">
+                      {actionFeedback ? (
+                        <div data-monitor-action-feedback={actionFeedback.tone}>
+                          <HzInlineFeedback
+                            tone={actionFeedback.tone}
+                            title={actionFeedback.title}
+                            description={actionFeedback.description}
+                            meta={pendingActionId ? t('common.loading') : undefined}
+                            data-monitor-action-feedback-owner="hertzbeat-ui-inline-feedback"
+                          />
+                        </div>
+                      ) : null}
                       <HzEmptyState
                         title={t('monitors.empty-results.title')}
                         description={t('monitors.empty-results.copy')}
@@ -1402,6 +1505,11 @@ export default function MonitorsPage({
                                   const relatedTracesHref = buildMonitorRowSignalHref('traces', item, data.query);
                                   const codeHref = buildMonitorRowCodeHref(item);
                                   const labelEntries = Object.entries(item.labels || {}).slice(0, 3);
+                                  const rowNavigationContext = {
+                                    ...navigationContext,
+                                    app: data.query.app || item.app || navigationContext.app
+                                  };
+                                  const detailHref = buildMonitorDetailHref(item.id, rowNavigationContext);
                                   return (
                                     <div className="min-w-0">
                                       <HzDataCellText
@@ -1410,7 +1518,19 @@ export default function MonitorsPage({
                                         data-monitor-row-name-owner="hertzbeat-ui-data-cell-text"
                                         data-monitor-row-optimistic-copy={item.id < 0 ? 'true' : undefined}
                                       >
-                                        {item.name}
+                                        {isMonitorDisabled(item) ? (
+                                          item.name
+                                        ) : (
+                                          <Link
+                                            href={detailHref}
+                                            className="text-inherit underline-offset-2 hover:text-[var(--hz-ui-accent)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--hz-ui-active-soft)]"
+                                            onClick={event => event.stopPropagation()}
+                                            data-monitor-row-name-detail-link="true"
+                                            data-monitor-row-name-detail-link-owner="next-link"
+                                          >
+                                            {item.name}
+                                          </Link>
+                                        )}
                                       </HzDataCellText>
                                       <div
                                         className="mt-0.5 flex min-w-0 items-center gap-1"
@@ -1671,138 +1791,163 @@ export default function MonitorsPage({
                                       </HzIconButton>
                                       <div
                                         hidden={!rowActionMenuOpen}
-                                        className="absolute right-0 top-7 z-30 grid min-w-[176px] gap-1 border border-[var(--hz-ui-line-strong)] bg-[var(--hz-ui-surface-raised)] p-1 shadow-[0_18px_42px_rgba(0,0,0,0.42)]"
+                                        className={[
+                                          'absolute right-0 top-7 z-30 min-w-[240px] gap-1 border border-[var(--hz-ui-line-strong)] bg-[var(--hz-ui-surface-raised)] p-1 shadow-[0_18px_42px_rgba(0,0,0,0.42)]',
+                                          rowActionMenuOpen ? 'grid' : 'hidden'
+                                        ].join(' ')}
                                         data-monitor-row-action-menu-panel="angular-nz-dropdown-menu"
                                         data-monitor-row-action-menu-panel-open={rowActionMenuOpen ? 'true' : 'false'}
                                         data-monitor-row-action-menu-layer-panel="overlay-visible-above-table"
                                         data-monitor-row-action-menu-clearance-panel="floating-overlay-no-table-crop"
                                       >
                                         {rowDisabled ? (
-                                          <HzTableRowActionButton
-                                            disabled
-                                            width="root-span"
-                                            data-monitors-open-detail-action="true"
-                                            data-monitor-row-action-owner="hertzbeat-ui-table-row-action-button"
-                                            data-monitor-row-action="detail"
-                                            data-monitor-row-action-disabled="disappeared"
-                                          >
-                                            <BarChart3 size={13} />
-                                            {t('monitor.detail')}
-                                          </HzTableRowActionButton>
+                                          <MonitorRowActionItem>
+                                            <HzTableRowActionButton
+                                              disabled
+                                              width="root-span"
+                                              className="w-full"
+                                              data-monitors-open-detail-action="true"
+                                              data-monitor-row-action-owner="hertzbeat-ui-table-row-action-button"
+                                              data-monitor-row-action="detail"
+                                              data-monitor-row-action-disabled="disappeared"
+                                            >
+                                              <BarChart3 size={13} />
+                                              {t('monitor.detail')}
+                                            </HzTableRowActionButton>
+                                          </MonitorRowActionItem>
                                         ) : (
-                                          <HzButtonLink
-                                            component={Link}
-                                            href={detailHref}
-                                            size="xs"
-                                            intent="ghost"
-                                            layout="full"
-                                            onClick={() => setOpenRowActionMenuId(null)}
-                                            data-monitors-open-detail-action="true"
-                                            data-monitor-row-action-owner="hertzbeat-ui-button-link"
-                                            data-monitor-row-action="detail"
-                                          >
-                                            <BarChart3 size={13} />
-                                            {t('monitor.detail')}
-                                          </HzButtonLink>
+                                          <MonitorRowActionItem>
+                                            <HzButtonLink
+                                              component={Link}
+                                              href={detailHref}
+                                              size="xs"
+                                              intent="ghost"
+                                              layout="full"
+                                              onClick={() => setOpenRowActionMenuId(null)}
+                                              data-monitors-open-detail-action="true"
+                                              data-monitor-row-action-owner="hertzbeat-ui-button-link"
+                                              data-monitor-row-action="detail"
+                                            >
+                                              <BarChart3 size={13} />
+                                              {t('monitor.detail')}
+                                            </HzButtonLink>
+                                          </MonitorRowActionItem>
                                         )}
                                         {rowDisabled ? (
-                                          <HzTableRowActionButton
-                                            disabled
-                                            width="root-span"
-                                            data-monitors-edit-action="true"
-                                            data-monitor-row-action-owner="hertzbeat-ui-table-row-action-button"
-                                            data-monitor-row-action="edit"
-                                            data-monitor-row-action-disabled="disappeared"
-                                          >
-                                            <Pencil size={13} />
-                                            {t('monitor.edit-monitor')}
-                                          </HzTableRowActionButton>
+                                          <MonitorRowActionItem>
+                                            <HzTableRowActionButton
+                                              disabled
+                                              width="root-span"
+                                              className="w-full"
+                                              data-monitors-edit-action="true"
+                                              data-monitor-row-action-owner="hertzbeat-ui-table-row-action-button"
+                                              data-monitor-row-action="edit"
+                                              data-monitor-row-action-disabled="disappeared"
+                                            >
+                                              <Pencil size={13} />
+                                              {t('monitor.edit-monitor')}
+                                            </HzTableRowActionButton>
+                                          </MonitorRowActionItem>
                                         ) : (
-                                          <HzButtonLink
-                                            component={Link}
-                                            href={editHref}
-                                            size="xs"
-                                            intent="ghost"
-                                            layout="full"
-                                            onClick={() => setOpenRowActionMenuId(null)}
-                                            onFocus={() => warmMonitorEdit(item, editHref)}
-                                            onMouseEnter={() => warmMonitorEdit(item, editHref)}
-                                            onPointerDown={() => warmMonitorEdit(item, editHref)}
-                                            data-monitors-edit-action="true"
-                                            data-monitor-row-action-owner="hertzbeat-ui-button-link"
-                                            data-monitor-row-action="edit"
-                                          >
-                                            <Pencil size={13} />
-                                            {t('monitor.edit-monitor')}
-                                          </HzButtonLink>
+                                          <MonitorRowActionItem>
+                                            <HzButtonLink
+                                              component={Link}
+                                              href={editHref}
+                                              size="xs"
+                                              intent="ghost"
+                                              layout="full"
+                                              onClick={() => setOpenRowActionMenuId(null)}
+                                              onFocus={() => warmMonitorEdit(item, editHref)}
+                                              onMouseEnter={() => warmMonitorEdit(item, editHref)}
+                                              onPointerDown={() => warmMonitorEdit(item, editHref)}
+                                              data-monitors-edit-action="true"
+                                              data-monitor-row-action-owner="hertzbeat-ui-button-link"
+                                              data-monitor-row-action="edit"
+                                            >
+                                              <Pencil size={13} />
+                                              {t('monitor.edit-monitor')}
+                                            </HzButtonLink>
+                                          </MonitorRowActionItem>
                                         )}
-                                        <HzTableRowActionButton
-                                          width="root-span"
-                                          aria-busy={copying ? 'true' : undefined}
-                                          disabled={rowDisabled || copying || item.id < 0}
-                                          onClick={() => {
-                                            setOpenRowActionMenuId(null);
-                                            void handleCopyMonitor(item);
-                                          }}
-                                          data-monitors-copy-action="true"
-                                          data-monitor-row-copy-lifecycle="angular-copy-success-refresh-unavailable-refresh"
-                                          data-monitor-row-copy-lifecycle-owner="hertzbeat-ui-table-row-action-button"
-                                          data-monitor-row-action-owner="hertzbeat-ui-table-row-action-button"
-                                          data-monitor-row-action="copy"
-                                          data-monitor-row-action-disabled={rowDisabled ? 'disappeared' : undefined}
-                                        >
-                                          <CopyIcon size={13} />
-                                          {t('monitor.copy.action')}
-                                        </HzTableRowActionButton>
+                                        <MonitorRowActionItem>
+                                          <HzTableRowActionButton
+                                            width="root-span"
+                                            className="w-full"
+                                            aria-busy={copying ? 'true' : undefined}
+                                            disabled={rowDisabled || copying || item.id < 0}
+                                            onClick={() => {
+                                              setOpenRowActionMenuId(null);
+                                              void handleCopyMonitor(item);
+                                            }}
+                                            data-monitors-copy-action="true"
+                                            data-monitor-row-copy-lifecycle="angular-copy-success-refresh-unavailable-refresh"
+                                            data-monitor-row-copy-lifecycle-owner="hertzbeat-ui-table-row-action-button"
+                                            data-monitor-row-action-owner="hertzbeat-ui-table-row-action-button"
+                                            data-monitor-row-action="copy"
+                                            data-monitor-row-action-disabled={rowDisabled ? 'disappeared' : undefined}
+                                          >
+                                            <CopyIcon size={13} />
+                                            {t('monitor.copy.action')}
+                                          </HzTableRowActionButton>
+                                        </MonitorRowActionItem>
                                         {!entityContextActive && item.status === 0 ? (
-                                          <HzTableRowActionButton
-                                            width="root-span"
-                                            aria-busy={rowResponseBusy ? 'true' : undefined}
-                                            disabled={rowDisabled || rowResponseBusy || item.id < 0 || Boolean(pendingActionId && pendingActionId !== rowResponseActionId)}
-                                            onClick={() => {
-                                              setOpenRowActionMenuId(null);
-                                              openRowResponseConfirm(item, 'enable');
-                                            }}
-                                            data-monitor-row-response-action-owner="hertzbeat-ui-table-row-action-button"
-                                            data-monitor-row-response-action="enable"
-                                            data-monitor-row-action-disabled={rowDisabled ? 'disappeared' : undefined}
-                                          >
-                                            <PlayCircle size={13} />
-                                            {t('monitor.enable')}
-                                          </HzTableRowActionButton>
+                                          <MonitorRowActionItem>
+                                            <HzTableRowActionButton
+                                              width="root-span"
+                                              className="w-full"
+                                              aria-busy={rowResponseBusy ? 'true' : undefined}
+                                              disabled={rowDisabled || rowResponseBusy || item.id < 0 || Boolean(pendingActionId && pendingActionId !== rowResponseActionId)}
+                                              onClick={() => {
+                                                setOpenRowActionMenuId(null);
+                                                openRowResponseConfirm(item, 'enable');
+                                              }}
+                                              data-monitor-row-response-action-owner="hertzbeat-ui-table-row-action-button"
+                                              data-monitor-row-response-action="enable"
+                                              data-monitor-row-action-disabled={rowDisabled ? 'disappeared' : undefined}
+                                            >
+                                              <PlayCircle size={13} />
+                                              {t('monitor.enable')}
+                                            </HzTableRowActionButton>
+                                          </MonitorRowActionItem>
                                         ) : !entityContextActive ? (
-                                          <HzTableRowActionButton
-                                            width="root-span"
-                                            aria-busy={rowResponseBusy ? 'true' : undefined}
-                                            disabled={rowDisabled || rowResponseBusy || item.id < 0 || Boolean(pendingActionId && pendingActionId !== rowResponseActionId)}
-                                            onClick={() => {
-                                              setOpenRowActionMenuId(null);
-                                              openRowResponseConfirm(item, 'pause');
-                                            }}
-                                            data-monitor-row-response-action-owner="hertzbeat-ui-table-row-action-button"
-                                            data-monitor-row-response-action="pause"
-                                            data-monitor-row-action-disabled={rowDisabled ? 'disappeared' : undefined}
-                                          >
-                                            <PauseCircle size={13} />
-                                            {t('monitor.cancel')}
-                                          </HzTableRowActionButton>
+                                          <MonitorRowActionItem>
+                                            <HzTableRowActionButton
+                                              width="root-span"
+                                              className="w-full"
+                                              aria-busy={rowResponseBusy ? 'true' : undefined}
+                                              disabled={rowDisabled || rowResponseBusy || item.id < 0 || Boolean(pendingActionId && pendingActionId !== rowResponseActionId)}
+                                              onClick={() => {
+                                                setOpenRowActionMenuId(null);
+                                                openRowResponseConfirm(item, 'pause');
+                                              }}
+                                              data-monitor-row-response-action-owner="hertzbeat-ui-table-row-action-button"
+                                              data-monitor-row-response-action="pause"
+                                              data-monitor-row-action-disabled={rowDisabled ? 'disappeared' : undefined}
+                                            >
+                                              <PauseCircle size={13} />
+                                              {t('monitor.cancel')}
+                                            </HzTableRowActionButton>
+                                          </MonitorRowActionItem>
                                         ) : null}
                                         {!entityContextActive ? (
-                                          <HzTableRowActionButton
-                                            width="root-span"
-                                            intent="danger"
-                                            disabled={rowDisabled || item.id < 0 || Boolean(pendingActionId)}
-                                            onClick={() => {
-                                              setOpenRowActionMenuId(null);
-                                              openDeleteDialog([item.id]);
-                                            }}
-                                            data-monitor-row-delete-action-owner="hertzbeat-ui-table-row-action-button"
-                                            data-monitor-row-delete-action="single"
-                                            data-monitor-row-action-disabled={rowDisabled ? 'disappeared' : undefined}
-                                          >
-                                            <Trash2 size={13} />
-                                            {t('monitor.delete-monitor')}
-                                          </HzTableRowActionButton>
+                                          <MonitorRowActionItem>
+                                            <HzTableRowActionButton
+                                              width="root-span"
+                                              className="w-full"
+                                              intent="danger"
+                                              disabled={rowDisabled || item.id < 0 || Boolean(pendingActionId)}
+                                              onClick={() => {
+                                                setOpenRowActionMenuId(null);
+                                                openDeleteDialog([item.id]);
+                                              }}
+                                              data-monitor-row-delete-action-owner="hertzbeat-ui-table-row-action-button"
+                                              data-monitor-row-delete-action="single"
+                                              data-monitor-row-action-disabled={rowDisabled ? 'disappeared' : undefined}
+                                            >
+                                              <Trash2 size={13} />
+                                              {t('monitor.delete-monitor')}
+                                            </HzTableRowActionButton>
+                                          </MonitorRowActionItem>
                                         ) : null}
                                       </div>
                                     </div>
@@ -1917,7 +2062,7 @@ export default function MonitorsPage({
                   close: t('monitors.app-picker.close'),
                   catalogTitle: t('monitors.app-picker.catalog-title'),
                   templatePicker: {
-                    itemCount: total => `${total} ${t('monitors.app-picker.item-count')}`,
+                    itemCount: total => t('monitors.app-picker.item-count', { count: total }),
                     searchPlaceholder: t('monitors.app-picker.search-placeholder'),
                     empty: t('monitors.app-picker.empty')
                   }
@@ -1973,10 +2118,18 @@ export default function MonitorsPage({
                 setBatchResponseConfirm(null);
               }}
               kicker={t('menu.monitor.center')}
-              title={batchResponseConfirm?.action === 'enable' ? t('common.confirm.enable-batch') : t('common.confirm.cancel-batch')}
+              title={
+                batchResponseConfirm?.action === 'enable'
+                  ? t('monitors.response.enable-batch.title')
+                  : t('monitors.response.pause-batch.title')
+              }
               tone="critical"
               cancelLabel={t('common.button.cancel')}
-              confirmLabel={t('common.button.ok')}
+              confirmLabel={
+                batchResponseConfirm?.action === 'enable'
+                  ? t('monitors.response.enable.confirm')
+                  : t('monitors.response.pause.confirm')
+              }
               onConfirm={() => void handleConfirmBatchResponse()}
               confirmDisabled={!batchResponseConfirm || batchResponseConfirmBusy}
               bodyRhythm="stack"
@@ -1988,11 +2141,41 @@ export default function MonitorsPage({
               data-monitor-batch-response-confirm-ok="angular-nz-ok-danger-primary"
             >
               <div data-monitor-batch-response-confirm-body="angular-batch-confirm">
+                <p>
+                  {batchResponseConfirm?.action === 'enable'
+                    ? t('monitors.response.enable-batch.copy')
+                    : t('monitors.response.pause-batch.copy')}
+                </p>
                 <HzInlineFeedback
                   tone="critical"
                   title={t('monitors.selected-count', { count: batchResponseConfirm?.ids.length ?? 0 })}
                   data-monitor-batch-response-confirm-selected-owner="hertzbeat-ui-inline-feedback"
                 />
+                {batchResponseConfirmTargets.length > 0 ? (
+                  <div
+                    className="grid gap-1 border border-[var(--hz-ui-line-soft)] bg-[var(--hz-ui-surface-soft)] px-3 py-2 text-xs text-[var(--hz-ui-text-muted)]"
+                    data-monitor-batch-response-confirm-target-list="selected-monitor-names"
+                    data-monitor-batch-response-confirm-target-list-owner="hertzbeat-ui-confirm-dialog"
+                  >
+                    <p className="font-semibold text-[var(--hz-ui-text)]">{t('monitors.response.targets')}</p>
+                    <ul className="grid gap-1">
+                      {batchResponseConfirmTargets.map(item => (
+                        <li
+                          key={item.id}
+                          className="truncate"
+                          data-monitor-batch-response-confirm-target-name={String(item.id)}
+                        >
+                          {item.name || item.instance || String(item.id)}
+                        </li>
+                      ))}
+                    </ul>
+                    {batchResponseConfirmHiddenTargetCount > 0 ? (
+                      <p data-monitor-batch-response-confirm-target-more="true">
+                        {t('monitors.response.targets-more', { count: batchResponseConfirmHiddenTargetCount })}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
             </HzConfirmDialog>
             <HzConfirmDialog
@@ -2002,10 +2185,18 @@ export default function MonitorsPage({
                 setRowResponseConfirm(null);
               }}
               kicker={t('menu.monitor.center')}
-              title={rowResponseConfirm?.action === 'enable' ? t('common.confirm.enable') : t('common.confirm.cancel')}
+              title={
+                rowResponseConfirm?.action === 'enable'
+                  ? t('monitors.response.enable.title')
+                  : t('monitors.response.pause.title')
+              }
               tone="critical"
               cancelLabel={t('common.button.cancel')}
-              confirmLabel={t('common.button.ok')}
+              confirmLabel={
+                rowResponseConfirm?.action === 'enable'
+                  ? t('monitors.response.enable.confirm')
+                  : t('monitors.response.pause.confirm')
+              }
               onConfirm={() => void handleConfirmRowResponse()}
               confirmDisabled={!rowResponseConfirm || rowResponseConfirmBusy}
               bodyRhythm="stack"
@@ -2017,6 +2208,11 @@ export default function MonitorsPage({
               data-monitor-row-response-confirm-ok="angular-nz-ok-danger-primary"
             >
               <div data-monitor-row-response-confirm-body="angular-single-row-confirm">
+                <p>
+                  {rowResponseConfirm?.action === 'enable'
+                    ? t('monitors.response.enable.copy')
+                    : t('monitors.response.pause.copy')}
+                </p>
                 <HzInlineFeedback
                   tone="critical"
                   title={rowResponseConfirm?.monitor.name || rowResponseConfirm?.monitor.instance || t('monitors.title')}
@@ -2049,6 +2245,31 @@ export default function MonitorsPage({
                   title={t('monitors.delete.selected', { count: deleteDialogCount })}
                   data-monitor-delete-confirm-selected-owner="hertzbeat-ui-inline-feedback"
                 />
+                {deleteDialogTargets.length > 0 ? (
+                  <div
+                    className="grid gap-1 border border-[var(--hz-ui-line-soft)] bg-[var(--hz-ui-surface-soft)] px-3 py-2 text-xs text-[var(--hz-ui-text-muted)]"
+                    data-monitor-delete-confirm-target-list="selected-monitor-names"
+                    data-monitor-delete-confirm-target-list-owner="hertzbeat-ui-confirm-dialog"
+                  >
+                    <p className="font-semibold text-[var(--hz-ui-text)]">{t('monitors.delete.targets')}</p>
+                    <ul className="grid gap-1">
+                      {deleteDialogTargets.map(item => (
+                        <li
+                          key={item.id}
+                          className="truncate"
+                          data-monitor-delete-confirm-target-name={String(item.id)}
+                        >
+                          {item.name || item.instance || String(item.id)}
+                        </li>
+                      ))}
+                    </ul>
+                    {deleteDialogHiddenTargetCount > 0 ? (
+                      <p data-monitor-delete-confirm-target-more="true">
+                        {t('monitors.delete.targets-more', { count: deleteDialogHiddenTargetCount })}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
             </HzConfirmDialog>
           </>

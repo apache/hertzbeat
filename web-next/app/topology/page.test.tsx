@@ -240,6 +240,43 @@ describe('topology page', () => {
     };
   }
 
+  function buildEdgeDenseApiTopologyFixture() {
+    const nodes = Array.from({ length: 110 }, (_, index) => {
+      const padded = String(index).padStart(3, '0');
+      return {
+        id: `dense-svc-${padded}`,
+        entityId: `service:dense/${padded}`,
+        entityName: `Dense API ${padded}`,
+        entityType: 'service',
+        namespace: 'dense',
+        environment: 'prod',
+        health: index % 13 === 0 ? 'warning' : 'healthy',
+        evidenceBadges: ['entity-relation', 'otlp-trace-call']
+      };
+    });
+    const edges = Array.from({ length: 125 }, (_, index) => {
+      const from = String(index % nodes.length).padStart(3, '0');
+      const to = String((index + 7) % nodes.length).padStart(3, '0');
+      return {
+        sourceNodeId: `dense-svc-${from}`,
+        targetNodeId: `dense-svc-${to}`,
+        relationType: 'HTTP call',
+        relationSource: 'otlp-trace-call',
+        status: index % 11 === 0 ? 'warning' : 'active',
+        score: 82,
+        evidenceBadges: ['entity-relation', 'otlp-trace-call']
+      };
+    });
+
+    return {
+      apiBacked: true,
+      depth: 2,
+      sourceKinds: ['entity-relation', 'otlp-trace-call'],
+      nodes,
+      edges
+    };
+  }
+
   it('keeps topology on the HertzBeat entity relationship surface instead of copied service-map chrome', () => {
     const source = readFileSync(resolve(process.cwd(), 'app/topology/topology-page.tsx'), 'utf8');
     const controllerSource = readFileSync(resolve(process.cwd(), 'lib/topology-surface/controller.ts'), 'utf8');
@@ -271,6 +308,7 @@ describe('topology page', () => {
     expect(source).not.toContain("from '@hertzbeat/ui'");
     expect(source).toContain("from '@hertzbeat/ui/topology-g6'");
     expect(source).toContain("selectedFocusLabel={t('topology.view.focus-selected')}");
+    expect(source).toContain("searchFocusLabel={t('topology.view.focus-search-result')}");
     expect(source).toContain("edgeDensityDrilldownLabel={t('topology.edge-density.open-table')}");
     expect(source).toContain('edgeDensityDrilldownTargetId="topology-metric-table"');
     expect(source).toContain("nodeOnlyExplanationLabel={t('topology.node-only.explanation')}");
@@ -436,7 +474,9 @@ describe('topology page', () => {
     expect(source).toContain('HzTopologySectionLabel');
     expect(source).toContain('useI18n');
     expect(source).toContain("t('topology.search.placeholder')");
+    expect(source).toContain("searchEmptyLabel={t('topology.search.empty', { query: topologyG6SearchQuery ?? '' })}");
     expect(source).not.toContain(tZh('topology.search.placeholder'));
+    expect(source).not.toContain(tZh('topology.search.empty', { query: 'missing-service' }));
     expect(source).not.toContain('OpsSurfacePage');
     expect(source).not.toContain('buildTopologySurfaceConfig');
     expect(source).not.toContain('Monitor center');
@@ -497,10 +537,17 @@ describe('topology page', () => {
     expect(source).toContain("setTopologyLocalSelection({ nodeId, edgeId: undefined, source: 'node-click' })");
     expect(source).toContain("setTopologyLocalSelection({ nodeId: undefined, edgeId, source: 'edge-click' })");
     expect(source).toContain("setTopologyLocalSelection({ nodeId: undefined, edgeId: row.id, source: 'table-row-click' })");
-    expect(source).toContain('const topologyDetailEdge = topologyLocalSelection.nodeId ? undefined : topologyLocalSelectedEdge ?? pickTopologyDetailEdge(map, topologyCanvasEdges);');
+    expect(source).toContain('const topologySearchMatchedEdge =');
+    expect(source).toContain(
+      'topologyMetricSearchQuery && topologyMetricRows.length === 1 ? findEdge(topologySearchScopedCanvasGraph.edges, topologyMetricRows[0].id) : undefined;'
+    );
+    expect(source).toContain('const topologyDetailEdge = topologyLocalSelection.nodeId');
+    expect(source).toContain(': topologyLocalSelectedEdge ?? topologySearchMatchedEdge ?? pickTopologyDetailEdge(map, topologySearchScopedCanvasGraph.edges);');
     expect(source).toContain('const topologyCanvasSelectedEdgeId = topologyLocalSelection.nodeId');
     expect(source).toContain("? undefined");
     expect(source).toContain(': topologyLocalSelectedEdge?.id ?? map.selectedEdgeId;');
+    expect(source).toContain('const topologyActiveEdgeId = topologyLocalSelection.nodeId');
+    expect(source).toContain('data-topology-active-edge-id={topologyActiveEdgeId ?? \'none\'}');
     expect(source).toContain('const topologyMetricSelectedRowId = topologyLocalSelection.nodeId');
     expect(source).toContain('selectedRowId={topologyMetricSelectedRowId}');
     expect(source).toContain('data-topology-selection-behavior="in-page-drawer"');
@@ -520,8 +567,12 @@ describe('topology page', () => {
     expect(source).toContain('data-topology-focus-route-preservation-source="loaded-api-graph-state"');
     expect(source).toContain('buildTopologyServiceMapFromApiGraph(loadedApiGraph ?? apiOwnedEmptyGraph, routeContext, t)');
     expect(source).toContain('shouldPreservePreviousTopologyGraphDuringLoad(routeContext ?? {})');
+    expect(source).toContain('const topologyManualRefreshRouteKeyRef = React.useRef(routeContextKey);');
+    expect(source).toContain('topologyManualRefreshRouteKeyRef.current = routeContextKey;');
+    expect(source).toContain('const topologyIsManualRefreshForCurrentRoute =');
+    expect(source).toContain('topologyManualRefreshSequence > 0 && topologyManualRefreshRouteKeyRef.current === routeContextKey');
     expect(source).toContain('const topologyShouldPreservePreviousGraphDuringLoad =');
-    expect(source).toContain('topologyManualRefreshSequence === 0 && shouldPreservePreviousTopologyGraphDuringLoad(routeContext ?? {})');
+    expect(source).toContain('topologyIsManualRefreshForCurrentRoute || shouldPreservePreviousTopologyGraphDuringLoad(routeContext ?? {})');
     expect(source).toContain('if (!topologyShouldPreservePreviousGraphDuringLoad)');
     expect(source).toContain('setLoadedApiGraph(undefined);');
     expect(source).toContain('navigateTopologyFocus(topologyNodeFocusHrefById.get(nodeId), topologyRouter.push);');
@@ -562,6 +613,10 @@ describe('topology page', () => {
     expect(source).toContain('const topologyEffectiveSearchQuery = topologySearchQuery ?? map.filterContext.search;');
     expect(source).toContain("const topologyToolbarSearchQuery = topologySearchQuery ?? '';");
     expect(source).toContain('const topologyG6SearchQuery = topologyToolbarSearchQuery;');
+    expect(source).toContain('const topologySearchScopedCanvasGraph = React.useMemo');
+    expect(source).toContain('filterTopologyCanvasGraphBySearch(topologyCanvasNodes, topologyCanvasEdges, topologyG6SearchQuery)');
+    expect(source).toContain('nodes: topologySearchScopedCanvasGraph.nodes.map(node => ({');
+    expect(source).toContain('edges: topologySearchScopedCanvasGraph.edges.map(edge => ({');
     expect(source).toContain('const handleTopologySearchChange = React.useCallback');
     expect(source).toContain('setTopologySearchQuery(event.currentTarget.value);');
     expect(source).toContain('data-topology-layout-navigation="in-page-g6-layout"');
@@ -588,6 +643,7 @@ describe('topology page', () => {
     expect(source).toContain('data-topology-scope-navigation="explicit-soft-route"');
     expect(source).toContain('data-topology-scope-navigation-owner="hertzbeat-ui-toolbar-scope-controls"');
     expect(source).toContain('data-topology-scope-navigation-preservation="previous-graph-until-api-resolves"');
+    expect(source).toContain('data-topology-refresh-preservation="previous-graph-until-api-resolves"');
     expect(source).toContain('onEnvironmentChange={handleTopologyEnvironmentChange}');
     expect(source).toContain('onSourceKindChange={handleTopologySourceKindChange}');
     expect(source).toContain('onDepthChange={handleTopologyDepthChange}');
@@ -1894,6 +1950,15 @@ describe('topology page', () => {
     expect(html).toContain('data-topology-g6-render-window-rendered-edge-count="180"');
     expect(html).toContain('data-topology-g6-render-window-hidden-edge-count="49"');
     expect(html).toContain('data-topology-g6-summary-count-policy="windowed-rendered-vs-total"');
+    expect(html).toContain('data-topology-large-graph-guidance="render-window"');
+    expect(html).toContain('data-topology-large-graph-guidance-owner="hertzbeat-ui-topology-guidance"');
+    expect(html).toContain('data-topology-large-graph-guidance-node-count="230"');
+    expect(html).toContain('data-topology-large-graph-guidance-edge-count="229"');
+    expect(html).toContain('data-topology-large-graph-guidance-hidden-node-count="30"');
+    expect(html).toContain('data-topology-large-graph-guidance-hidden-edge-count="49"');
+    expect(html).toContain('data-topology-large-graph-guidance-action-policy="search-focus-depth-source"');
+    expect(html).toContain(tZh('topology.large-graph-guidance.title'));
+    expect(html).toContain(tZh('topology.large-graph-guidance.copy'));
     expect(html).toContain('data-hz-topology-g6-scale-performance-owner="hertzbeat-ui-g6-scale-performance"');
     expect(html).toContain('data-hz-topology-g6-scale-performance-policy="windowed-interactive-budget"');
     expect(html).toContain(
@@ -1979,6 +2044,61 @@ describe('topology page', () => {
     expect(html.indexOf('data-topology-g6-canvas-owner="hertzbeat-ui-g6-canvas"')).toBeLessThan(
       html.indexOf('data-topology-metric-table-placement="graph-bottom"')
     );
+  }, 60000);
+
+  it('guides novice operators when a graph is dense before render-windowing', async () => {
+    const routeContext = {
+      environment: 'prod',
+      timeRange: 'last-1h',
+      sourceKind: 'otlp-trace-call',
+      viewMode: 'service-call',
+      groupBy: 'source-kind',
+      depth: '2'
+    };
+    const { default: TopologyPage } = await import('./topology-page');
+    const html = renderToStaticMarkup(<TopologyPage routeContext={routeContext} apiGraph={buildEdgeDenseApiTopologyFixture()} />);
+
+    expect(html).toContain('data-topology-g6-render-window-mode="direct"');
+    expect(html).toContain('data-topology-large-graph-guidance="edge-density"');
+    expect(html).toContain('data-topology-large-graph-guidance-owner="hertzbeat-ui-topology-guidance"');
+    expect(html).toContain('data-topology-large-graph-guidance-node-count="110"');
+    expect(html).toContain('data-topology-large-graph-guidance-edge-count="125"');
+    expect(html).toContain('data-topology-large-graph-guidance-hidden-node-count="0"');
+    expect(html).toContain('data-topology-large-graph-guidance-hidden-edge-count="0"');
+    expect(html).toContain('data-topology-large-graph-guidance-action-policy="search-focus-depth-source"');
+    expect(html).toContain(tZh('topology.large-graph-guidance.title'));
+    expect(html).toContain(tZh('topology.large-graph-guidance.copy'));
+  }, 60000);
+
+  it('filters topology evidence rows with the same search query used by the G6 canvas', async () => {
+    const routeContext = {
+      environment: 'prod',
+      timeRange: 'last-1h',
+      sourceKind: 'otlp-trace-call',
+      viewMode: 'service-call',
+      groupBy: 'source-kind',
+      depth: '2',
+      search: 'Scale API 229'
+    };
+    const { default: TopologyPage } = await import('./topology-page');
+    const source = readFileSync(resolve(process.cwd(), 'app/topology/topology-page.tsx'), 'utf8');
+    const html = renderToStaticMarkup(<TopologyPage routeContext={routeContext} apiGraph={buildLargeApiTopologyFixture()} />);
+
+    expect(source).toContain('filterTopologyMetricRowsBySearch(topologyAllMetricRows, topologyG6SearchQuery)');
+    expect(source).toContain('data-topology-metric-table-search-behavior="filter-edge-evidence-rows"');
+    expect(source).toContain('withTopologySearchReturnContext(href, options.returnSearchQuery)');
+    expect(html).toContain('data-hz-topology-g6-search-query="Scale API 229"');
+    expect(html).toContain('data-hz-topology-g6-search-status="matched"');
+    expect(html).toContain('data-hz-topology-g6-search-match-count="1"');
+    expect(html).toContain('data-topology-metric-table-search-query="scale api 229"');
+    expect(html).toContain('data-topology-metric-table-search-row-count="1"');
+    expect(html).toContain('data-topology-metric-table-search-total-row-count="1"');
+    expect(html).toContain('data-hz-topology-metric-table-total-rows="1"');
+    expect(html).toContain('data-hz-topology-metric-table-filtered-row-count="1"');
+    expect(html).toContain('data-hz-topology-edge-row="scale-svc-228--scale-svc-229"');
+    expect(html).toContain('data-topology-edge-evidence-panel="scale-svc-228--scale-svc-229"');
+    expect(html).toContain('search%3DScale%2BAPI%2B229');
+    expect(html).not.toContain('data-hz-topology-edge-row="scale-svc-010--scale-svc-011"');
   }, 60000);
 
   it('explains selected table edges that are only partly present in the current G6 render window', async () => {
@@ -2132,9 +2252,14 @@ describe('topology page', () => {
     expect(html).toContain('sourceKind=otlp-trace-call');
     expect(html).toContain('viewMode=service-call');
     expect(html).toContain('relationType=trace-call');
+    expect(html).toContain('data-topology-relation-gap-action="entity-list"');
+    expect(html).toContain('data-topology-relation-gap-action-node-count="3"');
+    expect(html).toContain('source=topology-relation-gap');
+    expect(html).toContain('returnTo=%2Ftopology');
     expect(html).toContain('data-topology-empty-state="none"');
     expect(html).toContain(tZh('topology.relation-gap.title'));
     expect(html).toContain(tZh('topology.relation-gap.action.trace-call'));
+    expect(html).toContain(tZh('topology.relation-gap.action.entities'));
   }, 60000);
 
   it('renders API-backed impact timeline evidence when topology returns change events', async () => {
@@ -2449,7 +2574,7 @@ describe('topology page', () => {
 
     expect(html).toContain('data-topology-api-scope-owner="hertzbeat-ui-workbench-frame"');
     expect(html).toContain(
-      'data-topology-api-request-path="/topology?depth=2&amp;environment=prod&amp;relationType=trace-call&amp;start=1780218000000&amp;end=1780221600000"'
+      'data-topology-api-request-path="/topology?depth=2&amp;environment=prod&amp;sourceKind=otlp-trace-call&amp;relationType=trace-call&amp;start=1780218000000&amp;end=1780221600000"'
     );
     expect(html).toContain('data-topology-api-scope-source-kind="otlp-trace-call"');
     expect(html).toContain('data-topology-api-scope-relation-type="trace-call"');
@@ -2497,7 +2622,7 @@ describe('topology page', () => {
     expect(html).toContain('data-topology-scale-proof-window-start="1780344000000"');
     expect(html).toContain('data-topology-scale-proof-window-end="1780352700000"');
     expect(html).toContain(
-      'data-topology-api-request-path="/topology?focusEntityId=646562420231424&amp;depth=2&amp;environment=prod&amp;relationType=trace-call&amp;start=1780344000000&amp;end=1780352700000"'
+      'data-topology-api-request-path="/topology?focusEntityId=646562420231424&amp;depth=2&amp;environment=prod&amp;sourceKind=otlp-trace-call&amp;relationType=trace-call&amp;start=1780344000000&amp;end=1780352700000"'
     );
   }, 15000);
 
@@ -2540,7 +2665,7 @@ describe('topology page', () => {
     expect(html).toContain('data-topology-scale-proof-window-start="1780344000000"');
     expect(html).toContain('data-topology-scale-proof-window-end="1780352700000"');
     expect(html).toContain(
-      'data-topology-api-request-path="/topology?depth=2&amp;environment=prod&amp;relationType=trace-call&amp;start=1780344000000&amp;end=1780352700000"'
+      'data-topology-api-request-path="/topology?depth=2&amp;environment=prod&amp;sourceKind=otlp-trace-call&amp;relationType=trace-call&amp;start=1780344000000&amp;end=1780352700000"'
     );
   }, 15000);
 
@@ -2577,7 +2702,7 @@ describe('topology page', () => {
 
     expect(html).toContain('data-topology-scale-proof-time-policy="fixed-seeded-greptime-window"');
     expect(html).toContain(
-      'data-topology-api-request-path="/topology?depth=2&amp;environment=prod&amp;relationType=trace-call&amp;start=1780344000000&amp;end=1780352700000"'
+      'data-topology-api-request-path="/topology?depth=2&amp;environment=prod&amp;sourceKind=otlp-trace-call&amp;relationType=trace-call&amp;start=1780344000000&amp;end=1780352700000"'
     );
     expect(html).not.toContain('start=1779737400000');
   }, 15000);
@@ -2713,6 +2838,28 @@ describe('topology page', () => {
     expect(html).toContain(tZh('topology.view-scope.focused-adjacency.copy'));
     expect(html).not.toMatch(/data-topology-view-scope-global-href="[^"]*entityId=/);
     expect(html).not.toMatch(/data-topology-view-scope-global-href="[^"]*serviceName=/);
+  }, 15000);
+
+  it('narrows the G6 graph and evidence table to search matches plus direct topology context', async () => {
+    const routeContext = {
+      search: 'checkout-api',
+      environment: 'prod',
+      timeRange: 'last-1h'
+    };
+
+    const { default: TopologyPage } = await import('./topology-page');
+    const html = renderToStaticMarkup(<TopologyPage routeContext={routeContext} apiGraph={buildApiTopologyFixture()} />);
+
+    expect(html).toContain('data-hz-topology-g6-filter-search-query="checkout-api"');
+    expect(html).toContain('data-hz-topology-g6-node-count="7"');
+    expect(html).toContain('data-hz-topology-g6-edge-count="6"');
+    expect(html).toContain('data-topology-metric-table-search-row-count="6"');
+    expect(html).toContain('data-topology-metric-table-search-total-row-count="6"');
+    expect(html).toContain('data-hz-topology-metric-table-total-rows="6"');
+    expect(html).toContain('data-topology-node-id="svc-checkout"');
+    expect(html).toContain('data-topology-node-id="res-orders-db"');
+    expect(html).toContain('data-topology-edge-id="svc-checkout--res-orders-db"');
+    expect(html).not.toContain('data-topology-edge-id="app-commerce--svc-frontend"');
   }, 15000);
 
   it('uses view mode and source query params to narrow topology and expose alert-impact closure', async () => {

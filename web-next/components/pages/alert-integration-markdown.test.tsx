@@ -34,7 +34,11 @@ graph LR
     expect(html).toContain('data-alert-integration-code-block="json"');
     expect(html).toContain('data-alert-integration-code-block="bash"');
     expect(html).toContain('data-alert-integration-markdown-list="ordered"');
-    expect(html).toContain('data-alert-integration-mermaid="pending"');
+    expect(html).toContain('data-alert-integration-mermaid="structured-flow"');
+    expect(html).toContain('data-alert-integration-diagram-runtime="semantic-html"');
+    expect(html).toContain('data-alert-integration-mermaid-edge="1"');
+    expect(html).toContain('External alert');
+    expect(html).toContain('Webhook');
     expect(html).toContain('href="https://prometheus.io/docs/alerting/latest/configuration/"');
     expect(html).toContain('curl http://localhost:9090/api/v1/rules');
     expect(html).not.toContain('```json');
@@ -42,6 +46,7 @@ graph LR
     expect(html).not.toContain('```mermaid');
     expect(html).not.toContain('graph LR');
     expect(html).not.toContain('data-language="mermaid"');
+    expect(html).not.toContain('data-alert-integration-mermaid-canvas');
   });
 
   it('renders provider markdown headings, emphasis, blockquotes, and pipe tables instead of leaking raw syntax', () => {
@@ -74,6 +79,31 @@ graph LR
     expect(html).not.toContain('| Name | Value |');
     expect(html).not.toContain('|-----|-----|');
     expect(html).not.toContain('&gt;Send Zabbix');
+  });
+
+  it('keeps declared flow labels when later edges reference the same nodes by id', () => {
+    const html = renderToStaticMarkup(
+      <AlertIntegrationMarkdown
+        content={`## Data flow
+
+\`\`\`mermaid
+graph LR
+  A[External alert] --> B[Webhook]
+  B --> C[Alert platform]
+  C --> D[Alert center]
+  C --> E[Notification]
+\`\`\`
+`}
+      />
+    );
+
+    expect(html).toContain('External alert');
+    expect(html).toContain('Webhook');
+    expect(html).toContain('Alert platform');
+    expect(html).toContain('Alert center');
+    expect(html).toContain('Notification');
+    expect(html).not.toContain('>B<');
+    expect(html).not.toContain('>C<');
   });
 
   it('renders the real alert integration provider docs without leaking heading, emphasis, table, or fence syntax', () => {

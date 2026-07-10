@@ -20,5 +20,6 @@ export function buildTraceManageRoute(
 }
 
 export function buildResetTraceManageRoute(routeContext: SignalRouteContext, view?: TraceExplorerView) {
-  return buildTraceManageRoute(routeContext, { traceId: '', spanId: '', serviceName: '', errorOnly: false, spanScope: 'root' }, { view });
+  const { traceId: _traceId, spanId: _spanId, ...resetContext } = routeContext;
+  return buildTraceManageRoute(resetContext, { traceId: '', spanId: '', serviceName: '', errorOnly: false, spanScope: 'root' }, { view });
 }

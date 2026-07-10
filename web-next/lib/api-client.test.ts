@@ -91,6 +91,29 @@ describe('api client message helpers', () => {
     await expect(apiGet('/offline')).rejects.toThrow('API request failed: 503');
   });
 
+  it('preserves backend-provided message text for failed HTTP status responses', async () => {
+    vi.stubGlobal('fetch', fetchMock);
+    fetchMock.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          code: 2,
+          msg: "Query Error: Access denied for user 'admin'@'localhost' (using password: YES) Code: 1045",
+          data: null
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      )
+    );
+
+    await expect(apiMessagePost('/monitor/detect', { monitor: { app: 'mysql' } })).rejects.toMatchObject({
+      code: 2,
+      message: "Query Error: Access denied for user 'admin'@'localhost' (using password: YES) Code: 1045",
+      status: 400
+    });
+  });
+
   it('attaches HTTP status codes to thrown request errors', async () => {
     vi.stubGlobal('fetch', fetchMock);
     mockHttpStatus(404);

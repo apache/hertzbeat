@@ -2,7 +2,7 @@ import type { Entity, EntityDetailDto, EntityLinkRef, EntityResponseHandoffInfo 
 import { buildCollectorHealthEvidence } from '../collector-health-evidence';
 import { interpolate, type TranslationParams } from '../i18n';
 import { SUPPLEMENTAL_MESSAGES } from '../i18n-runtime-messages';
-import { buildSignalEntityContextRows, type SignalEntityContextRow, type SignalRouteContext } from '../signal-route-context';
+import { appendSignalRouteContext, buildSignalEntityContextRows, type SignalEntityContextRow, type SignalRouteContext } from '../signal-route-context';
 
 export type EntityDetailViewModelTranslator = (key: string, params?: TranslationParams) => string;
 export type EntityDetailRowTone = 'success' | 'warning' | 'danger' | 'neutral';
@@ -41,12 +41,17 @@ type HandoffRow = DetailRow & {
   key: string;
 };
 
+const TRACE_HANDOFF_EVIDENCE_WINDOW_MS = 30 * 60 * 1000;
+
 type SignalHandoffKind = 'metrics' | 'logs' | 'traces';
 
 type EntityResourceScope = {
   metricsFilter: string;
   resourceFilter: string;
 };
+
+const ENTITY_DETAIL_SAMPLE_ROW_LIMIT = 8;
+const ENTITY_DETAIL_COLLECTION_META_LIMIT = 2;
 
 type EvidenceHandoffRow = DetailRow & {
   key: 'alerts' | 'topology' | 'runbook';
@@ -117,12 +122,22 @@ function countEvidenceTone(count: number, healthyWhenZero = true): EntityDetailR
 }
 
 export function buildDetailFacts(
-  entity: { id?: number | string | null; type?: string | null; status?: string | null; owner?: string | null },
+  entity: {
+    displayName?: string | null;
+    id?: number | string | null;
+    name?: string | null;
+    type?: string | null;
+    status?: string | null;
+    owner?: string | null;
+    subtype?: string | null;
+  },
   t: EntityDetailViewModelTranslator = translateEntityDetailViewModel
 ) {
   return [
     { label: t('entities.detail.fact.id'), value: String(entity.id || '-') },
+    { label: t('entities.detail.fact.unique-name'), value: entity.name || entity.displayName || '-' },
     { label: t('entities.detail.fact.type'), value: entity.type || '-' },
+    { label: t('entities.detail.fact.subtype'), value: entity.subtype || '-' },
     { label: t('entities.detail.fact.status'), value: localizeStatus(entity.status, t) },
     { label: t('entities.detail.fact.owner'), value: entity.owner || '-' }
   ];
@@ -275,6 +290,35 @@ function formatPercent(value: number) {
   return `${Math.round(value * 100)}%`;
 }
 
+function padDatePart(value: number) {
+  return String(value).padStart(2, '0');
+}
+
+export function formatEntityDetailTimestamp(value: unknown) {
+  if (value == null) return null;
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    if (!/^\d+$/.test(trimmed)) return trimmed;
+    value = Number(trimmed);
+  }
+
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return String(value);
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return String(value);
+  }
+
+  return [
+    `${date.getFullYear()}/${padDatePart(date.getMonth() + 1)}/${padDatePart(date.getDate())}`,
+    `${padDatePart(date.getHours())}:${padDatePart(date.getMinutes())}:${padDatePart(date.getSeconds())}`
+  ].join(' ');
+}
+
 function formatEvidenceCount(count: number, key: string, t: EntityDetailViewModelTranslator) {
   return t(key, { count });
 }
@@ -409,14 +453,25 @@ export function buildEntityHealthModel(
     0
   );
   const logHintCount = finiteNumber(logSummary?.hintCount ?? detail.evidenceSummary?.logHintCount, 0);
+  const actualLogEvidenceCount = finiteNumber(
+    detail.signalEvidence?.logEvidence?.length ?? getSignalUnifiedEvidenceSummary(detail)?.logEvidenceCount,
+    0
+  );
   const availabilityRatio = totalBoundMonitors > 0 ? healthyMonitorCount / totalBoundMonitors : 0;
   const errorRate = recentTraceCount > 0 ? recentErrorTraceCount / recentTraceCount : 0;
-  const recentAnomalyCount = downMonitorCount + recentErrorTraceCount + logHintCount;
+  const recentAnomalyCount = downMonitorCount + recentErrorTraceCount + actualLogEvidenceCount;
   const latency = formatLatency(traceSummary, t);
+  const hasLiveHealthEvidence =
+    totalBoundMonitors > 0 ||
+    recentTraceCount > 0 ||
+    actualLogEvidenceCount > 0 ||
+    activeAlertCount > 0 ||
+    finiteNumber(detail.evidenceSummary?.collectorTotalCount, 0) > 0 ||
+    finiteNumber(detail.evidenceSummary?.collectorTaskCount, 0) > 0;
   const collectorEvidence = buildCollectorHealthEvidence({
     healthyMonitorCount,
-    lastEvidenceLabel: detail.evidenceSummary?.lastEvidenceAt == null ? null : String(detail.evidenceSummary.lastEvidenceAt),
-    lastSeenLabel: detail.evidenceSummary?.collectorLastSeenAt == null ? null : String(detail.evidenceSummary.collectorLastSeenAt),
+    lastEvidenceLabel: formatEntityDetailTimestamp(detail.evidenceSummary?.lastEvidenceAt),
+    lastSeenLabel: formatEntityDetailTimestamp(detail.evidenceSummary?.collectorLastSeenAt),
     offlineCollectorCount: detail.evidenceSummary?.collectorOfflineCount,
     onlineCollectorCount: detail.evidenceSummary?.collectorOnlineCount,
     taskCount: detail.evidenceSummary?.collectorTaskCount,
@@ -429,11 +484,16 @@ export function buildEntityHealthModel(
       (totalBoundMonitors > 0 ? (downMonitorCount / totalBoundMonitors) * 30 : 10) -
       errorRate * 20 -
       Math.min(activeAlertCount * 8, 24) -
-      Math.min(logHintCount * 2, 10)
+      Math.min(actualLogEvidenceCount * 2, 10)
   );
 
   return [
-    { title: t('entities.detail.health.score.title'), copy: `${score} / 100`, meta: t('entities.detail.health.score.meta'), tone: scoreTone(score) },
+    {
+      title: t('entities.detail.health.score.title'),
+      copy: hasLiveHealthEvidence ? `${score} / 100` : t('entities.detail.health.score.no-evidence'),
+      meta: hasLiveHealthEvidence ? t('entities.detail.health.score.meta') : t('entities.detail.health.score.no-evidence-meta'),
+      tone: hasLiveHealthEvidence ? scoreTone(score) : 'neutral'
+    },
     {
       title: t('entities.detail.health.availability.title'),
       copy: totalBoundMonitors > 0 ? formatPercent(availabilityRatio) : t('entities.detail.health.availability.waiting'),
@@ -463,11 +523,11 @@ export function buildEntityHealthModel(
       title: t('entities.detail.health.anomalies.title'),
       copy: t('entities.detail.health.anomalies.copy', { count: recentAnomalyCount }),
       meta: t('entities.detail.health.anomalies.meta', {
-        logs: logHintCount,
+        logs: actualLogEvidenceCount,
         monitors: downMonitorCount,
         traces: recentErrorTraceCount
       }),
-      tone: recentAnomalyCount > 0 ? 'warning' : 'success'
+      tone: recentAnomalyCount > 0 ? 'warning' : hasLiveHealthEvidence ? 'success' : 'neutral'
     },
     {
       title: t('entities.detail.health.collector.title'),
@@ -519,19 +579,19 @@ export function buildUnifiedEvidenceRows(
       title: t('entities.detail.evidence.coverage.title'),
       copy: t('entities.detail.evidence.coverage.copy', { count: activeSignalCount }),
       meta: signals.length > 0 ? signals.join(' · ') : t('entities.detail.evidence.coverage.no-signals'),
-      tone: activeSignalCount > 0 ? 'success' : 'neutral'
+      tone: 'neutral'
     },
     {
       title: t('entities.detail.evidence.metrics.title'),
       copy: formatEvidenceCount(metricEvidenceCount, 'entities.detail.evidence.metrics.copy', t),
       meta: t('entities.detail.evidence.metrics.meta'),
-      tone: summary.metricsActive || metricEvidenceCount > 0 ? 'success' : 'neutral'
+      tone: 'neutral'
     },
     {
       title: t('entities.detail.evidence.logs.title'),
       copy: formatEvidenceCount(logEvidenceCount, 'entities.detail.evidence.logs.copy', t),
       meta: t('entities.detail.evidence.logs.meta'),
-      tone: summary.logsActive || logEvidenceCount > 0 ? 'warning' : 'neutral'
+      tone: 'neutral'
     },
     {
       title: t('entities.detail.evidence.traces.title'),
@@ -540,14 +600,14 @@ export function buildUnifiedEvidenceRows(
         traceErrorCount > 0
           ? t('entities.detail.evidence.traces.errors', { count: traceErrorCount })
           : t('entities.detail.evidence.traces.meta'),
-      tone: traceErrorCount > 0 ? 'danger' : summary.tracesActive || traceEvidenceCount > 0 ? 'success' : 'neutral'
+      tone: traceErrorCount > 0 ? 'danger' : 'neutral'
     },
     {
       title: t('entities.detail.evidence.latest.title'),
       copy:
         summary.latestObservedAt == null
           ? t('entities.detail.evidence.latest.waiting')
-          : String(summary.latestObservedAt),
+          : formatEntityDetailTimestamp(summary.latestObservedAt) || t('entities.detail.evidence.latest.waiting'),
       meta: t('entities.detail.evidence.latest.meta'),
       tone: 'neutral'
     }
@@ -557,41 +617,103 @@ export function buildUnifiedEvidenceRows(
 export function buildNextActionRows(
   detail: Pick<EntityDetailDto, 'nextActions'>,
   entityId: string | number | null | undefined,
-  t: EntityDetailViewModelTranslator = translateEntityDetailViewModel
+  t: EntityDetailViewModelTranslator = translateEntityDetailViewModel,
+  routeContext?: SignalRouteContext
 ) {
   const actions = (detail.nextActions || [])
     .filter(action => action?.title || action?.summary || action?.actionLabel)
     .map(action => ({
       title: localizeActionText(action.title || action.actionLabel, t('entities.detail.action-text.next-action'), t),
       copy: localizeActionText(action.summary, '-', t),
-      meta: localizeActionText(action.actionLabel || action.actionType, t('entities.detail.action-text.server-guidance'), t)
+      meta: localizeActionText(action.actionLabel || action.actionType, t('entities.detail.action-text.server-guidance'), t),
+      href: buildNextActionHref(action, entityId, routeContext)
     }));
 
   return actions.length > 0 ? actions : buildDrilldownRows(entityId, t);
 }
 
+function normalizeSafeRelativeHref(value?: string | null) {
+  const href = value?.trim();
+  if (!href || !href.startsWith('/') || href.startsWith('//') || href.startsWith('/\\')) {
+    return undefined;
+  }
+  return href;
+}
+
+function normalizeNextActionType(actionType?: string | null) {
+  return actionType?.trim().toLowerCase().replace(/[\s-]+/g, '_') || '';
+}
+
+function buildNextActionRoute(path: string, entityId: string, routeContext?: SignalRouteContext, extras?: Record<string, string>) {
+  const params = new URLSearchParams();
+  Object.entries(extras || {}).forEach(([key, value]) => params.set(key, value));
+  params.set('entityId', entityId);
+  appendSignalRouteContext(params, routeContext || {});
+  const query = params.toString();
+  return query ? `${path}?${query}` : path;
+}
+
+function buildNextActionHref(
+  action: NonNullable<EntityDetailDto['nextActions']>[number],
+  entityId: string | number | null | undefined,
+  routeContext?: SignalRouteContext
+) {
+  const directHref = normalizeSafeRelativeHref(action.href || action.url || action.actionUrl || action.targetUrl);
+  if (directHref) return directHref;
+
+  const id = entityId ? String(entityId) : null;
+  if (!id) return undefined;
+
+  switch (normalizeNextActionType(action.actionType)) {
+    case 'review_alert':
+    case 'review_alerts':
+      return buildNextActionRoute('/alert', id, routeContext, { status: 'firing' });
+    case 'complete_owner':
+    case 'complete_runbook':
+      return buildNextActionRoute(`/entities/${encodeURIComponent(id)}/edit`, id, routeContext);
+    case 'bind_monitor':
+      return buildNextActionRoute(`/entities/${encodeURIComponent(id)}/edit`, id, routeContext, { stage: 'signals' });
+    case 'open_discovery':
+      return buildNextActionRoute('/entities/discovery', id, routeContext);
+    case 'inspect_logs':
+      return buildNextActionRoute('/log/manage', id, routeContext);
+    case 'review_relations':
+      return buildNextActionRoute('/topology', id, routeContext);
+    default:
+      return undefined;
+  }
+}
+
 export function buildDrilldownRows(
   entityId: string | number | null | undefined,
-  t: EntityDetailViewModelTranslator = translateEntityDetailViewModel
+  t: EntityDetailViewModelTranslator = translateEntityDetailViewModel,
+  routeContext?: SignalRouteContext
 ) {
   const id = entityId ? String(entityId) : null;
   return [
     {
       title: t('entities.detail.drilldown.definition.title'),
-      copy: id ? `/entities/${id}/definition` : '-',
+      copy: id ? buildEntityDetailRouteContextHref(`/entities/${id}/definition`, routeContext) : '-',
       meta: t('entities.detail.drilldown.next-route')
     },
     {
       title: t('entities.detail.drilldown.edit.title'),
-      copy: id ? `/entities/${id}/edit` : '-',
+      copy: id ? buildEntityDetailRouteContextHref(`/entities/${id}/edit`, routeContext) : '-',
       meta: t('entities.detail.drilldown.next-route')
     },
     {
       title: t('entities.detail.drilldown.discovery.title'),
-      copy: '/entities/discovery',
+      copy: buildEntityDetailRouteContextHref('/entities/discovery', routeContext),
       meta: t('entities.detail.drilldown.shared-route')
     }
   ];
+}
+
+function buildEntityDetailRouteContextHref(path: string, routeContext?: SignalRouteContext) {
+  const params = new URLSearchParams();
+  appendSignalRouteContext(params, routeContext || {});
+  const query = params.toString();
+  return query ? `${path}?${query}` : path;
 }
 
 function getEntityRecord(detail: EntityDetailDto) {
@@ -688,6 +810,32 @@ function buildResourceFilterExpression(pairs: Array<[string, string | undefined]
     .join(' and ');
 }
 
+function resolveK8sResourceIdentityPair(
+  type: string | undefined,
+  identityValues: Map<string, string>,
+  entity: Entity
+): [string, string | undefined] {
+  const podName = identityValues.get('k8s.pod.name');
+  if (podName || type === 'k8s_pod') {
+    return ['k8s.pod.name', podName || normalizeUnknownText(entity.name)];
+  }
+
+  const workloadIdentityKeys = [
+    'k8s.workload.name',
+    'k8s.deployment.name',
+    'k8s.statefulset.name',
+    'k8s.daemonset.name',
+    'k8s.job.name',
+    'k8s.cronjob.name'
+  ];
+  const matchedKey = workloadIdentityKeys.find(key => identityValues.get(key));
+  if (matchedKey) {
+    return [matchedKey, identityValues.get(matchedKey)];
+  }
+
+  return ['k8s.workload.name', normalizeUnknownText(entity.name)];
+}
+
 function buildEntityResourceScope(detail: EntityDetailDto): EntityResourceScope | null {
   const entity = getEntityRecord(detail);
   const type = normalizeEntityType(entity);
@@ -701,11 +849,11 @@ function buildEntityResourceScope(detail: EntityDetailDto): EntityResourceScope 
 
   if (type === 'k8s_workload' || type === 'k8s_pod' || type === 'kubernetes_workload') {
     const namespace = identityValues.get('k8s.namespace.name') || normalizeUnknownText(entity.namespace);
-    const pod = identityValues.get('k8s.pod.name') || normalizeUnknownText(entity.name);
     const container = identityValues.get('container.name');
+    const resourceIdentity = resolveK8sResourceIdentityPair(type, identityValues, entity);
     const filter = buildResourceFilterExpression([
       ['k8s.namespace.name', namespace],
-      ['k8s.pod.name', pod],
+      resourceIdentity,
       ['container.name', container]
     ]);
     return filter ? { metricsFilter: filter, resourceFilter: filter } : null;
@@ -751,11 +899,28 @@ function appendPreservedEntityContext(params: URLSearchParams, routeContext: Sig
   });
 }
 
+function resolveEntityHandoffTimeRange(routeContext: SignalRouteContext) {
+  return normalizeContextText(routeContext.timeRange) || (routeContext.start && routeContext.end ? 'custom' : 'last-1h');
+}
+
 function appendResponseHandoffContext(params: URLSearchParams, handoff: EntityResponseHandoffInfo | null) {
   if (!handoff) return;
   addContextParam(params, 'start', normalizeUnknownText(handoff.start));
   addContextParam(params, 'end', normalizeUnknownText(handoff.end));
   addContextParam(params, 'source', normalizeUnknownText(handoff.source));
+}
+
+function appendTraceEvidenceTimeContext(
+  params: URLSearchParams,
+  traceSummary: ReturnType<typeof getSignalTraceSummary>,
+  signal?: SignalHandoffKind
+) {
+  if (signal !== 'traces' || params.has('start') || params.has('end')) return;
+  const latestObservedAt = finiteNumber(traceSummary?.latestObservedAt, Number.NaN);
+  if (!Number.isFinite(latestObservedAt) || latestObservedAt <= 0) return;
+  const halfWindow = TRACE_HANDOFF_EVIDENCE_WINDOW_MS / 2;
+  params.set('start', String(Math.max(0, Math.floor(latestObservedAt - halfWindow))));
+  params.set('end', String(Math.floor(latestObservedAt + halfWindow)));
 }
 
 function buildContextParams(
@@ -779,7 +944,7 @@ function buildContextParams(
   const serviceNamespace = normalizeContextText(routeContext.serviceNamespace) || normalizeUnknownText(responseHandoff?.serviceNamespace);
   const environment = normalizeContextText(routeContext.environment) || normalizeUnknownText(responseHandoff?.environment) || entity.environment;
   const traceSummary = getSignalTraceSummary(detail);
-  const timeRange = normalizeContextText(routeContext.timeRange) || 'last-1h';
+  const timeRange = resolveEntityHandoffTimeRange(routeContext);
   const params = new URLSearchParams();
 
   addContextParam(params, 'entityId', entityId);
@@ -791,6 +956,7 @@ function buildContextParams(
   addContextParam(params, 'timeRange', timeRange);
   appendResponseHandoffContext(params, responseHandoff);
   appendPreservedEntityContext(params, routeContext);
+  appendTraceEvidenceTimeContext(params, traceSummary, options.signal);
   if (options.signal === 'metrics' && resourceScope?.metricsFilter) {
     addContextParam(params, 'filter', resourceScope.metricsFilter);
   }
@@ -802,7 +968,7 @@ function buildContextParams(
     addContextParam(params, 'spanId', normalizeContextText(routeContext.spanId) || normalizeUnknownText(responseHandoff?.spanId) || traceSummary?.latestSpanId);
   }
   if (options.includeReturnTo && entityId) {
-    params.set('returnTo', `/entities/${entityId}`);
+    params.set('returnTo', buildEntityDetailReturnTo(entityId, params, normalizeInternalReturnTo(routeContext.returnTo)));
   }
 
   return params.toString();
@@ -810,6 +976,65 @@ function buildContextParams(
 
 function withQuery(path: string, query: string) {
   return query ? `${path}?${query}` : path;
+}
+
+function buildEntityDetailReturnTo(entityId: string, params: URLSearchParams, inheritedReturnTo?: string) {
+  const returnParams = new URLSearchParams(params);
+  returnParams.delete('returnTo');
+  if (inheritedReturnTo) {
+    returnParams.set('returnTo', inheritedReturnTo);
+  }
+  return withQuery(`/entities/${encodeURIComponent(entityId)}`, returnParams.toString());
+}
+
+function normalizeInternalReturnTo(value: string | null | undefined) {
+  const normalized = normalizeContextText(value);
+  if (!normalized || !normalized.startsWith('/') || normalized.startsWith('//')) {
+    return undefined;
+  }
+
+  try {
+    const parsed = new URL(normalized, 'https://hertzbeat.local');
+    if (parsed.origin !== 'https://hertzbeat.local') {
+      return undefined;
+    }
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return undefined;
+  }
+}
+
+function buildTemplateDefinitionQuery(detail: EntityDetailDto, timeContext: EntityDetailTimeContext) {
+  const params = new URLSearchParams(buildContextParams(detail, timeContext));
+  const routeContext = resolveEntityTimeContext(timeContext);
+  const inheritedReturnTo = normalizeInternalReturnTo(routeContext.returnTo);
+  const entity = getEntityRecord(detail);
+  const entityId = entity.id != null ? String(entity.id) : '';
+
+  if (inheritedReturnTo) {
+    params.set('returnTo', inheritedReturnTo);
+  } else if (entityId) {
+    params.set('returnTo', buildEntityDetailReturnTo(entityId, params));
+  }
+
+  return params.toString();
+}
+
+function buildHandoffScopeSummary(query: string, t: EntityDetailViewModelTranslator) {
+  const params = new URLSearchParams(query);
+  const entityName = normalizeContextText(params.get('entityName'));
+  const serviceName = normalizeContextText(params.get('serviceName'));
+
+  if (entityName && serviceName) {
+    return t('entities.detail.handoff.scope.entity-service', { entity: entityName, service: serviceName });
+  }
+  if (entityName) {
+    return t('entities.detail.handoff.scope.entity', { entity: entityName });
+  }
+  if (serviceName) {
+    return t('entities.detail.handoff.scope.service', { service: serviceName });
+  }
+  return undefined;
 }
 
 export function buildEntityContextHandoffLinks(
@@ -820,52 +1045,60 @@ export function buildEntityContextHandoffLinks(
   const entity = getEntityRecord(detail);
   const entityId = entity.id != null ? String(entity.id) : '';
   const shared = buildContextParams(detail, timeContext);
-  const metricsQuery = buildContextParams(detail, timeContext, { signal: 'metrics' });
-  const logsQuery = buildContextParams(detail, timeContext, { includeTrace: true, signal: 'logs' });
-  const tracesQuery = buildContextParams(detail, timeContext, { includeTrace: true, signal: 'traces' });
+  const metricsQuery = buildContextParams(detail, timeContext, { includeReturnTo: true, signal: 'metrics' });
+  const logsQuery = buildContextParams(detail, timeContext, { includeReturnTo: true, includeTrace: true, signal: 'logs' });
+  const tracesQuery = buildContextParams(detail, timeContext, { includeReturnTo: true, includeTrace: true, signal: 'traces' });
   const monitorQuery = buildContextParams(detail, timeContext, { includeEntityName: true, includeReturnTo: true });
+  const templateQuery = buildTemplateDefinitionQuery(detail, timeContext);
 
   return [
     {
       key: 'metrics',
       title: t('entities.detail.handoff.metrics.title'),
       copy: withQuery('/ingestion/otlp/metrics', metricsQuery),
+      freshness: buildHandoffScopeSummary(metricsQuery, t),
       meta: t('entities.detail.handoff.metrics.meta')
     },
     {
       key: 'logs',
       title: t('entities.detail.handoff.logs.title'),
       copy: withQuery('/log/manage', logsQuery),
+      freshness: buildHandoffScopeSummary(logsQuery, t),
       meta: t('entities.detail.handoff.logs.meta')
     },
     {
       key: 'traces',
       title: t('entities.detail.handoff.traces.title'),
       copy: withQuery('/trace/manage', tracesQuery),
+      freshness: buildHandoffScopeSummary(tracesQuery, t),
       meta: t('entities.detail.handoff.traces.meta')
     },
     {
       key: 'alerts',
       title: t('entities.detail.handoff.alerts.title'),
       copy: withQuery('/alert/setting', shared),
+      freshness: buildHandoffScopeSummary(shared, t),
       meta: t('entities.detail.handoff.alerts.meta')
     },
     {
       key: 'monitors',
       title: t('entities.detail.handoff.monitors.title'),
       copy: withQuery('/monitors', monitorQuery),
+      freshness: buildHandoffScopeSummary(monitorQuery, t),
       meta: t('entities.detail.handoff.monitors.meta')
     },
     {
       key: 'topology',
       title: t('entities.detail.handoff.topology.title'),
       copy: withQuery('/topology', shared),
+      freshness: buildHandoffScopeSummary(shared, t),
       meta: t('entities.detail.handoff.topology.meta')
     },
     {
       key: 'template',
       title: t('entities.detail.handoff.template.title'),
-      copy: withQuery(entityId ? `/entities/${entityId}/definition` : '/entities', shared),
+      copy: withQuery(entityId ? `/entities/${entityId}/definition` : '/entities', templateQuery),
+      freshness: buildHandoffScopeSummary(templateQuery, t),
       meta: t('entities.detail.handoff.template.meta')
     }
   ];
@@ -894,6 +1127,91 @@ function findRunbookLink(entity: Entity): EntityLinkRef | null {
 function resolveTopologyRelationEvidence(detail: EntityDetailDto) {
   const topologyNeighbors = Array.isArray(detail.topologyNeighbors) ? detail.topologyNeighbors : [];
   return (topologyNeighbors.length > 0 ? topologyNeighbors : detail.entity?.relations || []) as Array<Record<string, unknown>>;
+}
+
+function resolveRelationshipTotal(detail: EntityDetailDto, previewCount: number) {
+  return Math.max(previewCount, finiteNumber(detail.opsSummary?.relationCount, previewCount));
+}
+
+function resolveBoundMonitorTotal(detail: EntityDetailDto, previewCount: number) {
+  return Math.max(
+    previewCount,
+    finiteNumber(detail.monitorSummary?.totalBoundMonitors ?? detail.entity?.monitorBinds?.length, previewCount)
+  );
+}
+
+function resolveMonitorBindRows(detail: EntityDetailDto, routeContext: SignalRouteContext, t: EntityDetailViewModelTranslator): DetailRow[] {
+  const entity = getEntityRecord(detail);
+  const entityId = normalizeUnknownText(entity.id);
+  const entityName = normalizeUnknownText(entity.displayName) || normalizeUnknownText(entity.name) || entityId;
+  const boundMonitors = Array.isArray(detail.boundMonitors) ? detail.boundMonitors : [];
+  const monitorBinds = Array.isArray(detail.entity?.monitorBinds) ? detail.entity.monitorBinds : [];
+  const candidates = boundMonitors.length > 0 ? boundMonitors : monitorBinds;
+  const routeMonitorId = normalizeContextText(routeContext.monitorId);
+  const routeMonitorName = normalizeContextText(routeContext.monitorName);
+  const timeRange = normalizeContextText(routeContext.timeRange) || 'last-1h';
+
+  if (candidates.length === 0 && !routeMonitorId) return [];
+
+  const first = (candidates[0] && typeof candidates[0] === 'object' ? candidates[0] : {}) as Record<string, unknown>;
+  const monitorId =
+    normalizeUnknownText(first.monitorId) ||
+    normalizeUnknownText(first.id) ||
+    routeMonitorId ||
+    '';
+  const monitorName =
+    normalizeUnknownText(first.name) ||
+    normalizeUnknownText(first.monitorName) ||
+    normalizeUnknownText(first.templateName) ||
+    normalizeUnknownText(first.template) ||
+    normalizeUnknownText(first.app) ||
+    routeMonitorName ||
+    monitorId ||
+    t('entities.detail.relationship-row.monitor-ownership.unknown-monitor');
+  const monitorApp = normalizeUnknownText(first.app) || normalizeContextText(routeContext.monitorApp);
+  const monitorInstance = normalizeUnknownText(first.instance) || normalizeContextText(routeContext.monitorInstance);
+  const params = new URLSearchParams();
+
+  addContextParam(params, 'entityId', entityId);
+  addContextParam(params, 'entityName', entityName);
+  addContextParam(params, 'serviceName', normalizeContextText(routeContext.serviceName) || normalizeUnknownText(entity.name));
+  addContextParam(params, 'environment', normalizeContextText(routeContext.environment) || normalizeUnknownText(entity.environment));
+  addContextParam(params, 'timeRange', timeRange);
+  appendPreservedEntityContext(params, routeContext);
+  params.set('sourceKind', 'monitor-ownership');
+  if (monitorId) {
+    params.set('topologyTargetId', monitorId);
+    params.set('monitorId', monitorId);
+  }
+  if (monitorName) {
+    params.set('topologyTargetName', monitorName);
+    params.set('monitorName', monitorName);
+  }
+  addContextParam(params, 'monitorApp', monitorApp);
+  addContextParam(params, 'monitorInstance', monitorInstance);
+
+  const rows: DetailRow[] = [
+    {
+      title: t('entities.detail.relationship-row.monitor-ownership.title'),
+      copy: monitorName,
+      meta: monitorId
+        ? t('entities.detail.relationship-row.monitor-ownership.meta', { monitorId })
+        : t('entities.detail.relationship-row.monitor-ownership.meta-no-id'),
+      href: withQuery('/topology', params.toString()),
+      tone: 'warning'
+    }
+  ];
+  const totalBoundMonitors = resolveBoundMonitorTotal(detail, candidates.length);
+  const remainingBoundMonitors = Math.max(0, totalBoundMonitors - 1);
+  if (remainingBoundMonitors > 0) {
+    rows.push({
+      title: t('entities.detail.relationship-row.monitor-ownership.overflow.title'),
+      copy: t('entities.detail.relationship-row.monitor-ownership.overflow.copy', { count: remainingBoundMonitors }),
+      meta: t('entities.detail.relationship-row.monitor-ownership.overflow.meta', { count: totalBoundMonitors }),
+      tone: 'warning'
+    });
+  }
+  return rows;
 }
 
 export function buildEntityEvidenceHandoffRows(
@@ -972,7 +1290,7 @@ export function buildEntityEvidenceHandoffRows(
       copy: normalizeUnknownText(runbookLink?.name) || resolvedRunbookUrl,
       meta: t('entities.detail.evidence-handoff.runbook.meta'),
       href: resolvedRunbookUrl,
-      tone: 'success'
+      tone: 'neutral'
     });
   }
 
@@ -1006,7 +1324,8 @@ export function buildCurrentAlertRows(
     ];
   }
 
-  return alerts.map((alert, index) => {
+  const visibleAlerts = alerts.slice(0, ENTITY_DETAIL_SAMPLE_ROW_LIMIT);
+  const rows: DetailRow[] = visibleAlerts.map((alert, index) => {
     const alertId = alert.id ?? index + 1;
     const status = String(alert.status || alert.state || 'firing');
     const labelSummary = recordLabelSummary(alert.labels);
@@ -1017,6 +1336,18 @@ export function buildCurrentAlertRows(
       tone: 'danger'
     };
   });
+
+  const remainingCount = Math.max(0, alerts.length - visibleAlerts.length);
+  if (remainingCount > 0) {
+    rows.push({
+      title: t('entities.detail.alert-row.overflow.title'),
+      copy: t('entities.detail.alert-row.overflow.copy', { count: remainingCount }),
+      meta: t('entities.detail.alert-row.overflow.meta', { count: detail.alertSummary?.totalActiveAlerts ?? alerts.length }),
+      tone: 'warning'
+    });
+  }
+
+  return rows;
 }
 
 export function buildRelationshipRows(
@@ -1025,8 +1356,12 @@ export function buildRelationshipRows(
   t: EntityDetailViewModelTranslator = translateEntityDetailViewModel
 ): DetailRow[] {
   const relations = resolveTopologyRelationEvidence(detail);
+  const routeContext = resolveEntityTimeContext(timeContext);
 
   if (relations.length === 0) {
+    const monitorOwnershipRows = resolveMonitorBindRows(detail, routeContext, t);
+    if (monitorOwnershipRows.length > 0) return monitorOwnershipRows;
+
     return [
       {
         title: t('entities.detail.relationship-row.empty.title'),
@@ -1038,10 +1373,10 @@ export function buildRelationshipRows(
 
   const sourceEntity = getEntityRecord(detail);
   const sourceEntityId = normalizeUnknownText(sourceEntity.id);
-  const routeContext = resolveEntityTimeContext(timeContext);
   const timeRange = normalizeContextText(routeContext.timeRange) || 'last-1h';
 
-  return relations.map(relation => {
+  const visibleRelations = relations.slice(0, ENTITY_DETAIL_SAMPLE_ROW_LIMIT);
+  const rows: DetailRow[] = visibleRelations.map(relation => {
     const targetEntityId =
       normalizeUnknownText(relation.entityId) ||
       normalizeUnknownText(relation.neighborEntityId) ||
@@ -1089,12 +1424,27 @@ export function buildRelationshipRows(
       href: targetEntityId ? withQuery(`/entities/${targetEntityId}`, params.toString()) : undefined
     };
   });
+
+  const relationshipTotal = resolveRelationshipTotal(detail, relations.length);
+  const remainingCount = Math.max(0, relationshipTotal - visibleRelations.length);
+  if (remainingCount > 0) {
+    rows.push({
+      title: t('entities.detail.relationship-row.overflow.title'),
+      copy: t('entities.detail.relationship-row.overflow.copy', { count: remainingCount }),
+      meta: t('entities.detail.relationship-row.overflow.meta', { count: relationshipTotal }),
+      tone: 'warning'
+    });
+  }
+
+  return rows;
 }
 
 function identitySummary(identities: unknown[]) {
   const first = identities.find(identity => identity && typeof identity === 'object') as Record<string, unknown> | undefined;
   if (!first) return '-';
-  if (first.key || first.value) return `${String(first.key || 'identity')}=${String(first.value || '-')}`;
+  const key = first.key || first.identityKey;
+  const value = first.value || first.identityValue;
+  if (key || value) return `${String(key || 'identity')}=${String(value || '-')}`;
   return String(first.name || first.id || '-');
 }
 
@@ -1102,6 +1452,61 @@ function templateSummary(monitorBinds: unknown[]) {
   const first = monitorBinds.find(bind => bind && typeof bind === 'object') as Record<string, unknown> | undefined;
   if (!first) return '-';
   return String(first.templateName || first.template || first.app || first.monitorId || first.id || '-');
+}
+
+function summarizeCollectionMeta(
+  items: unknown[],
+  formatter: (item: Record<string, unknown>) => string,
+  overflowKey: string,
+  t: EntityDetailViewModelTranslator = translateEntityDetailViewModel
+) {
+  const summaries = items
+    .filter(item => item && typeof item === 'object')
+    .map(item => formatter(item as Record<string, unknown>))
+    .filter(summary => summary && summary !== '-');
+  if (summaries.length === 0) return '-';
+
+  const visible = summaries.slice(0, ENTITY_DETAIL_COLLECTION_META_LIMIT);
+  const remainingCount = Math.max(0, summaries.length - visible.length);
+  if (remainingCount === 0) {
+    return visible.join(', ');
+  }
+
+  return `${visible.join(', ')} · ${t(overflowKey, { count: remainingCount })}`;
+}
+
+function collectionIdentitySummary(identities: unknown[], t: EntityDetailViewModelTranslator = translateEntityDetailViewModel) {
+  return summarizeCollectionMeta(
+    identities,
+    identity => {
+      const key = identity.key || identity.identityKey;
+      const value = identity.value || identity.identityValue;
+      if (key || value) return `${String(key || 'identity')}=${String(value || '-')}`;
+      return String(identity.name || identity.id || '-');
+    },
+    'entities.detail.collection.identity.more',
+    t
+  );
+}
+
+function collectionTemplateSummary(monitorBinds: unknown[], t: EntityDetailViewModelTranslator = translateEntityDetailViewModel) {
+  return summarizeCollectionMeta(
+    monitorBinds,
+    bind => String(bind.templateName || bind.template || bind.app || bind.monitorId || bind.id || '-'),
+    'entities.detail.collection.template.more',
+    t
+  );
+}
+
+function collectionLabelSummary(labels: Record<string, unknown>, t: EntityDetailViewModelTranslator = translateEntityDetailViewModel) {
+  const entries = Object.entries(labels);
+  if (entries.length === 0) return '-';
+  const visible = entries.slice(0, ENTITY_DETAIL_COLLECTION_META_LIMIT).map(([key, value]) => `${key}=${String(value)}`);
+  const remainingCount = Math.max(0, entries.length - visible.length);
+  if (remainingCount === 0) {
+    return visible.join(', ');
+  }
+  return `${visible.join(', ')} · ${t('entities.detail.collection.labels.more', { count: remainingCount })}`;
 }
 
 function entityDisplayName(detail: EntityDetailDto, t: EntityDetailViewModelTranslator = translateEntityDetailViewModel) {
@@ -1163,7 +1568,9 @@ export function buildEntityAttributionRows(
       meta:
         missingParts.length === 0
           ? t('entities.detail.attribution.diagnostic.complete-meta')
-          : t('entities.detail.attribution.diagnostic.missing-meta', { parts: missingParts.join('、') })
+          : t('entities.detail.attribution.diagnostic.missing-meta', {
+              parts: missingParts.join(t('entities.detail.attribution.diagnostic.missing-part.separator'))
+            })
     }
   ];
 }
@@ -1186,17 +1593,17 @@ export function buildCollectionSourceRows(
     {
       title: t('entities.detail.collection.identity.title'),
       copy: t('entities.detail.collection.identity.count', { count: identities.length }),
-      meta: identitySummary(identities)
+      meta: collectionIdentitySummary(identities, t)
     },
     {
       title: t('entities.detail.collection.template.title'),
       copy: t('entities.detail.collection.template.count', { count: monitorBinds.length }),
-      meta: templateSummary(monitorBinds)
+      meta: collectionTemplateSummary(monitorBinds, t)
     },
     {
       title: t('entities.detail.collection.labels.title'),
       copy: t('entities.detail.collection.labels.count', { count: Object.keys(labels).length }),
-      meta: recordLabelSummary(labels)
+      meta: collectionLabelSummary(labels, t)
     }
   ];
 }

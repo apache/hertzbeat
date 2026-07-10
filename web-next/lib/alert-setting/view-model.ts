@@ -47,6 +47,21 @@ function formatAlertSettingFact(value: string | null | undefined, emptyValue: st
   return text || emptyValue;
 }
 
+function formatAlertSettingRuntimeSummary(item: AlertDefine, t: Translator) {
+  const isPeriodic = String(item.type || '').startsWith('periodic_');
+  const parts: string[] = [];
+  if (isPeriodic && item.period != null) {
+    parts.push(t('alert.setting.runtime.period', { period: item.period }));
+  }
+  if (item.times != null) {
+    parts.push(t('alert.setting.runtime.times', { times: item.times }));
+  }
+  if (item.priority != null) {
+    parts.push(t('alert.setting.runtime.priority', { priority: item.priority }));
+  }
+  return parts.join(' · ');
+}
+
 function compactSourceQuery(value: string | null | undefined) {
   const normalized = firstText(value);
   if (!normalized) return undefined;
@@ -142,6 +157,7 @@ export function buildAlertSettingRows(
     key: String(item.id),
     name: item.name || t('setting.define.item.fallback'),
     type: formatAlertDefineType(item.type, t),
+    runtimeSummary: formatAlertSettingRuntimeSummary(item, t),
     expr: formatAlertSettingFact(item.expr, emptyValue),
     template: formatAlertSettingFact(item.template, emptyValue),
     labels: Object.entries(item.labels || {}).map(([key, value]) => `${key}:${value}`),

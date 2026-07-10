@@ -252,14 +252,20 @@ export function buildTraceRouteUrl(query: TraceQueryState, options?: { view?: Tr
   return queryString ? `/trace/manage?${queryString}` : '/trace/manage';
 }
 
-function appendTraceQueryContext(params: URLSearchParams, routeContext: SignalRouteContext = {}) {
-  const entityId = readEntityIdRouteParam(routeContext.entityId);
-  if (entityId) {
-    params.set('entityId', entityId);
-  }
-  const entityType = routeContext.entityType?.trim();
-  if (entityType && /^[A-Za-z0-9_.:-]+$/.test(entityType)) {
-    params.set('entityType', entityType);
+function appendTraceQueryContext(
+  params: URLSearchParams,
+  routeContext: SignalRouteContext = {},
+  options: { includeEntityContext?: boolean } = {}
+) {
+  if (options.includeEntityContext !== false) {
+    const entityId = readEntityIdRouteParam(routeContext.entityId);
+    if (entityId) {
+      params.set('entityId', entityId);
+    }
+    const entityType = routeContext.entityType?.trim();
+    if (entityType && /^[A-Za-z0-9_.:-]+$/.test(entityType)) {
+      params.set('entityType', entityType);
+    }
   }
 
   const contextKeys = ['serviceNamespace', 'environment', 'start', 'end'] as const;

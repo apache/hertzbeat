@@ -15,6 +15,7 @@ import {
 } from '../signal-route-context';
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
+export type AlertGroupValidationField = 'name' | 'group-labels' | 'group-wait' | 'group-interval' | 'repeat-interval';
 
 export type AlertGroupEvidenceContext = {
   signal: string;
@@ -161,34 +162,62 @@ export function buildAlertGroupFormDraft(group?: AlertGroupConverge | null, fall
 }
 
 export function validateAlertGroupForm(draft: AlertGroupFormDraft, t: Translator) {
+  const field = getAlertGroupValidationField(draft);
+  if (!field) {
+    return null;
+  }
+
+  switch (field) {
+    case 'name':
+      return t('alert.group.validation.name');
+    case 'group-labels':
+      return t('alert.group.validation.labels');
+    case 'group-wait':
+      return draft.groupWait.trim()
+        ? t('alert.group.validation.group-wait-non-negative')
+        : t('alert.group.validation.group-wait');
+    case 'group-interval':
+      return draft.groupInterval.trim()
+        ? t('alert.group.validation.group-interval-non-negative')
+        : t('alert.group.validation.group-interval');
+    case 'repeat-interval':
+      return draft.repeatInterval.trim()
+        ? t('alert.group.validation.repeat-interval-non-negative')
+        : t('alert.group.validation.repeat-interval');
+    default:
+      return null;
+  }
+}
+
+export function getAlertGroupValidationField(draft: AlertGroupFormDraft): AlertGroupValidationField | null {
   function isNonNegativeTimer(value: string) {
     const parsed = Number.parseInt(value, 10);
     return Number.isFinite(parsed) && parsed >= 0;
   }
 
   if (!draft.name.trim()) {
-    return t('alert.group.validation.name');
+    return 'name';
   }
   if (!draft.groupLabelsText.trim()) {
-    return t('alert.group.validation.labels');
+    return 'group-labels';
   }
   if (!draft.groupWait.trim()) {
-    return t('alert.group.validation.group-wait');
+    return 'group-wait';
   }
   if (!draft.groupInterval.trim()) {
-    return t('alert.group.validation.group-interval');
+    return 'group-interval';
   }
   if (!draft.repeatInterval.trim()) {
-    return t('alert.group.validation.repeat-interval');
+    return 'repeat-interval';
   }
   if (!isNonNegativeTimer(draft.groupWait)) {
-    return t('alert.group.validation.group-wait-non-negative');
+    return 'group-wait';
   }
   if (!isNonNegativeTimer(draft.groupInterval)) {
-    return t('alert.group.validation.group-interval-non-negative');
+    return 'group-interval';
   }
   if (!isNonNegativeTimer(draft.repeatInterval)) {
-    return t('alert.group.validation.repeat-interval-non-negative');
+    return 'repeat-interval';
   }
   return null;
 }

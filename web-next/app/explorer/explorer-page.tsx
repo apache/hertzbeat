@@ -28,10 +28,12 @@ import { buildExplorerFilters, type ExplorerResultRow, type ExplorerSignalTone }
 
 type Translator = ReturnType<typeof useI18n>['t'];
 
+const EXPLORER_WORKBENCH_LOAD_TIMEOUT_MS = 15_000;
+
 function signalToneClass(signalTone: ExplorerSignalTone) {
   if (signalTone === 'trace') return 'border-[#7a3f55] bg-[#241119] text-[#f18aa6]';
   if (signalTone === 'log') return 'border-[#3a5674] bg-[#101b29] text-[#9bc5ee]';
-  if (signalTone === 'metric') return 'border-[#315b49] bg-[#0f211b] text-[#8bd8ad]';
+  if (signalTone === 'metric') return 'border-[#394a78] bg-[#121a2a] text-[#c7d7ff]';
   return 'border-[#303642] bg-[#151821] text-[#d7dce6]';
 }
 
@@ -43,7 +45,12 @@ export default function ExplorerPage() {
   const cacheKey = `explorer:trace-log-read:${queryState.signal}:${queryState.q}`;
 
   return (
-    <ClientWorkbench load={load} loadingCopy={t('common.workbench.loading.copy')} cacheKey={cacheKey}>
+    <ClientWorkbench
+      load={load}
+      loadingCopy={t('common.workbench.loading.copy')}
+      cacheKey={cacheKey}
+      loadTimeoutMs={EXPLORER_WORKBENCH_LOAD_TIMEOUT_MS}
+    >
       {data => <ExplorerWorksurface data={data} t={t} />}
     </ClientWorkbench>
   );
@@ -53,11 +60,15 @@ function ExplorerWorksurface({ data, t }: { data: ExplorerReadData; t: Translato
   const router = useRouter();
   const filters = buildExplorerFilters(t);
   const rows = data.rows;
-  const activeRow = rows[0] || null;
+  const [activeRowKey, setActiveRowKey] = useState<string | null>(rows[0]?.key ?? null);
+  const activeRow = rows.find(row => row.key === activeRowKey) || rows[0] || null;
   const [draft, setDraft] = useState<ExplorerQueryState>(data.query);
   useEffect(() => {
     setDraft(data.query);
   }, [data.query]);
+  useEffect(() => {
+    setActiveRowKey(rows[0]?.key ?? null);
+  }, [rows]);
   const applyQuery = useCallback(() => {
     router.replace(buildExplorerRouteUrl(draft));
   }, [draft, router]);
@@ -132,6 +143,7 @@ function ExplorerWorksurface({ data, t }: { data: ExplorerReadData; t: Translato
         description={t('explorer.subtitle')}
         mainId="explorer-shared-main"
         mainLabel={t('explorer.title')}
+        skipLinkLabel={t('app.frame.skip-to-workbench')}
         filterRailLabel={t('explorer.filters.title')}
         actions={
           <>
@@ -153,6 +165,7 @@ function ExplorerWorksurface({ data, t }: { data: ExplorerReadData; t: Translato
           <div data-explorer-query-bar="hertzbeat-ui-query-row">
             <HzQueryBar
               query={draft.q}
+              queryLabel={t('explorer.query.label')}
               onQueryChange={q => setDraft(current => ({ ...current, q }))}
               inputProps={
                 {
@@ -263,32 +276,61 @@ function ExplorerWorksurface({ data, t }: { data: ExplorerReadData; t: Translato
               rows={rows}
               getRowKey={row => row.key}
               variant="embedded"
+              selectedRowKey={activeRow?.key}
+              onRowClick={row => setActiveRowKey(row.key)}
+              getRowProps={row => ({
+                'aria-label': t('explorer.result.row.aria', { signal: row.signal, service: row.service, operation: row.operation }),
+                'data-explorer-result-row': row.key,
+                'data-explorer-result-row-selected': activeRow?.key === row.key ? 'true' : 'false'
+              })}
+              emptyLabel={t('explorer.empty.table-label')}
               data-explorer-result-table-owner="hertzbeat-ui-data-table"
             />
             {rows.length === 0 ? (
-              <div data-explorer-api-empty-state="trace-log-bff-query-api" className="border-t border-[var(--hz-ui-line-soft)] px-4 py-8 text-[13px] text-[#8f9bad]">
-                {t('common.no-data')}
+              <div
+                data-explorer-api-empty-state="trace-log-bff-query-api"
+                className="border-t border-[var(--hz-ui-line-soft)] px-4 py-5 text-[13px] text-[#8f9bad]"
+              >
+                <p data-explorer-empty-title="query-no-results" className="font-semibold text-[#dbe5f3]">
+                  {t('explorer.empty.title')}
+                </p>
+                <p className="mt-1 max-w-[720px] leading-5">{t('explorer.empty.copy')}</p>
+                <div data-explorer-empty-next-steps="query-signal-ingest" className="mt-3 flex flex-wrap gap-2 text-[12px]">
+                  <span className="rounded-[3px] border border-[#2d3646] bg-[#121721] px-2 py-1 text-[#b9c4d5]">{t('explorer.empty.step.query')}</span>
+                  <span className="rounded-[3px] border border-[#2d3646] bg-[#121721] px-2 py-1 text-[#b9c4d5]">{t('explorer.empty.step.signal')}</span>
+                  <span className="rounded-[3px] border border-[#2d3646] bg-[#121721] px-2 py-1 text-[#b9c4d5]">{t('explorer.empty.step.ingest')}</span>
+                </div>
               </div>
             ) : null}
           </section>
 
-          <aside data-explorer-detail-panel="hertzbeat-ui-detail-panel" className="h-fit bg-[var(--hz-ui-surface)] px-4 py-4">
+          <aside
+            data-explorer-detail-panel="hertzbeat-ui-detail-panel"
+            data-explorer-detail-active-row={activeRow?.key || 'none'}
+            className="h-fit bg-[var(--hz-ui-surface)] px-4 py-4"
+          >
             <p className="text-[12px] font-semibold text-[#8d98aa]">{t('explorer.detail.title')}</p>
-            <h2 className="mt-2 text-[18px] font-semibold text-[#f0f4fa]">{activeRow?.service || t('common.no-data')}</h2>
-            <div className="mt-4 space-y-3 text-[12px] text-[#9aa6b8]">
-              <div className="flex items-center justify-between border-b border-dashed border-[#2c3441] pb-2">
-                <span>{t('explorer.detail.signal')}</span>
-                <span className="font-semibold text-[#dbe5f3]">{activeRow?.signal || '-'}</span>
+            <h2 className="mt-2 text-[18px] font-semibold text-[#f0f4fa]">{activeRow?.service || t('explorer.detail.empty-title')}</h2>
+            {activeRow ? (
+              <div className="mt-4 space-y-3 text-[12px] text-[#9aa6b8]">
+                <div className="flex items-center justify-between border-b border-dashed border-[#2c3441] pb-2">
+                  <span>{t('explorer.detail.signal')}</span>
+                  <span className="font-semibold text-[#dbe5f3]">{activeRow.signal}</span>
+                </div>
+                <div className="flex items-center justify-between border-b border-dashed border-[#2c3441] pb-2">
+                  <span>{t('explorer.detail.status')}</span>
+                  <span className="font-semibold text-[#dbe5f3]">{activeRow.status}</span>
+                </div>
+                <div className="flex items-center justify-between border-b border-dashed border-[#2c3441] pb-2">
+                  <span>{t('explorer.detail.duration')}</span>
+                  <span className="font-semibold text-[#dbe5f3]">{activeRow.duration}</span>
+                </div>
               </div>
-              <div className="flex items-center justify-between border-b border-dashed border-[#2c3441] pb-2">
-                <span>{t('explorer.detail.status')}</span>
-                <span className="font-semibold text-[#dbe5f3]">{activeRow?.status || '-'}</span>
-              </div>
-              <div className="flex items-center justify-between border-b border-dashed border-[#2c3441] pb-2">
-                <span>{t('explorer.detail.duration')}</span>
-                <span className="font-semibold text-[#dbe5f3]">{activeRow?.duration || '-'}</span>
-              </div>
-            </div>
+            ) : (
+              <p data-explorer-detail-empty-copy="select-or-broaden-query" className="mt-3 text-[12px] leading-5 text-[#9aa6b8]">
+                {t('explorer.detail.empty-copy')}
+              </p>
+            )}
             <div className="mt-4 flex flex-col gap-2">
               <HzButtonLink href="/trace/manage" intent="secondary">{t('explorer.handoff.trace')}</HzButtonLink>
               <HzButtonLink href="/log/manage" intent="secondary">{t('explorer.handoff.log')}</HzButtonLink>

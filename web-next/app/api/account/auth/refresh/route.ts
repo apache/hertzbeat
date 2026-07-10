@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
   const refreshToken = readSessionCookieValue(request, HB_UI_REFRESH_COOKIE);
   if (!refreshToken) {
     const response = NextResponse.json({ code: 401, msg: 'Missing refresh session', data: null }, { status: 401 });
-    clearSessionCookies(response);
+    clearSessionCookies(response, request);
     return response;
   }
 
@@ -35,9 +35,9 @@ export async function POST(request: NextRequest) {
     applySessionCookies(response, {
       token: typeof payload.data.token === 'string' ? payload.data.token : undefined,
       refreshToken: typeof payload.data.refreshToken === 'string' ? payload.data.refreshToken : refreshToken
-    });
+    }, request);
   } else {
-    clearSessionCookies(response);
+    clearSessionCookies(response, request);
   }
 
   return response;

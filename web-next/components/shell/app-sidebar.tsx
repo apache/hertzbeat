@@ -5,12 +5,23 @@ import { cn } from '../../lib/utils';
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
 
-export function AppSidebar({ pathname, t }: { pathname: string; t: Translator }) {
+export function AppSidebar({
+  pathname,
+  t,
+  className
+}: {
+  pathname: string;
+  t: Translator;
+  className?: string;
+}) {
   const sections = buildShellSidebarSections(pathname, t);
 
   return (
     <aside
-      className="flex h-full min-h-0 flex-col overflow-hidden border-b border-[var(--ops-border-color)] bg-[var(--ops-background)] py-0 lg:h-[calc(100vh-64px)] lg:border-b-0 lg:border-r"
+      className={cn(
+        'flex h-full min-h-0 flex-col overflow-hidden border-b border-[var(--ops-border-color)] bg-[var(--ops-background)] py-0 md:h-[calc(100vh-64px)] md:border-b-0 md:border-r',
+        className
+      )}
       data-app-sidebar="true"
       data-app-sidebar-scroll-owner="bounded-sidebar-nav"
       data-app-sidebar-visual="left-rail-primary-nav"

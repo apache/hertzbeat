@@ -51,15 +51,13 @@ public class EntityNoiseControlRuleQueryService {
     }
 
     public List<AlertSilence> findEnabledSilences(String requestWorkspaceId) {
-        return alertSilenceDao.findAll().stream()
-                .filter(rule -> Boolean.TRUE.equals(rule.isEnable()))
+        return alertSilenceDao.findAlertSilencesByEnableTrue().stream()
                 .filter(rule -> matchesSilenceRuleRequestWorkspace(rule, requestWorkspaceId))
                 .toList();
     }
 
     public List<AlertInhibit> findEnabledInhibits(String requestWorkspaceId) {
-        return alertInhibitDao.findAll().stream()
-                .filter(rule -> Boolean.TRUE.equals(rule.getEnable()))
+        return alertInhibitDao.findAlertInhibitsByEnableIsTrue().stream()
                 .filter(rule -> matchesInhibitRuleRequestWorkspace(rule, requestWorkspaceId))
                 .toList();
     }

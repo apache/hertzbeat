@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ArrowLeft, Inbox, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { ArrowLeft, CircleHelp, Inbox, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { HzCheckbox, HzInlineFeedback, HzPaginationBar } from '@hertzbeat/ui';
 import { Button } from '../ui/button';
 import { Checkbox } from '../ui/checkbox';
@@ -17,12 +17,19 @@ import { cn } from '../../lib/utils';
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
 
+type AlertGroupActionHelpCopy = {
+  label: string;
+  body: string;
+  impact?: string;
+};
+
 type AlertGroupSurfaceProps = {
   t: Translator;
   data: { list: PageResult<AlertGroupConverge> };
   search: string;
   selectedId: number | null;
   checkedIds: number[];
+  requestedPageSize?: number;
   editorOpen: boolean;
   editorLoading: boolean;
   editorSaving: boolean;
@@ -64,12 +71,62 @@ const coldPrimaryButtonClassName =
 const coldIconButtonClassName =
   'h-8 w-8 min-w-0 rounded-[3px] border-[#2b3039] bg-[#101217] text-[#dbe4f0] hover:border-[#4e74f8] hover:bg-[#151b28] hover:text-white';
 
+function alertGroupActionHelp(t: Translator, id: string): AlertGroupActionHelpCopy {
+  const impactKey = `alert.group.action.${id}.impact`;
+  const impact = t(impactKey);
+  return {
+    label: t('alert.group.action.help-aria', { action: t(`alert.group.action.${id}.label`) }),
+    body: t(`alert.group.action.${id}.help`),
+    impact: impact === impactKey ? undefined : impact
+  };
+}
+
+function AlertGroupActionHelp({
+  id,
+  label,
+  body,
+  impact
+}: AlertGroupActionHelpCopy & {
+  id: string;
+}) {
+  return (
+    <span
+      data-alert-group-action-help={id}
+      className="group/help relative inline-flex h-5 w-5 shrink-0 items-center justify-center"
+    >
+      <button
+        type="button"
+        aria-label={label}
+        data-alert-group-action-help-trigger="hertzbeat-ui-action-help"
+        data-alert-group-action-help-style="icon-after-action"
+        data-alert-group-action-help-visual="circle-help-icon"
+        className="inline-flex h-5 w-5 items-center justify-center rounded-none border-0 bg-transparent p-0 text-[#d8e4ff] transition hover:text-[#f5f7fb] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4e74f8]"
+        onClick={event => {
+          event.preventDefault();
+          event.stopPropagation();
+        }}
+      >
+        <CircleHelp size={13} strokeWidth={2} aria-hidden="true" data-alert-group-action-help-icon="lucide-circle-help" />
+      </button>
+      <span
+        role="tooltip"
+        data-alert-group-action-help-tooltip={id}
+        className="pointer-events-none absolute left-0 top-6 z-30 hidden w-[300px] rounded-[3px] border border-[#2b3039] bg-[#101217] p-3 text-left shadow-[0_16px_40px_rgba(0,0,0,0.42)] group-hover/help:block group-focus-within/help:block"
+      >
+        <span className="block text-[11px] leading-4 text-[#dbe4f0]">{body}</span>
+        {impact ? <span className="mt-2 block border-t border-[#2b3039] pt-2 text-[11px] leading-4 text-[#98a2b3]">{impact}</span> : null}
+      </span>
+    </span>
+  );
+}
+
 export function AlertGroupSurface({
   t,
   data,
   search,
   selectedId,
   checkedIds,
+  requestedPageSize,
   editorOpen,
   editorLoading,
   editorSaving,
@@ -103,7 +160,7 @@ export function AlertGroupSurface({
   const selectedCount = checkedIds.length;
   const emptyValue = t('common.none');
   const currentPageIndex = Math.max(0, data.list.pageIndex ?? 0);
-  const currentPageSize = Math.max(1, data.list.pageSize ?? pageSizeOptions[0] ?? 8);
+  const currentPageSize = Math.max(1, requestedPageSize ?? data.list.pageSize ?? pageSizeOptions[0] ?? 8);
   const totalElements = data.list.totalElements || 0;
   const totalPages = Math.max(1, Math.ceil(totalElements / currentPageSize));
   const currentPage = Math.min(currentPageIndex + 1, totalPages);
@@ -146,7 +203,11 @@ export function AlertGroupSurface({
         <section className={coldGroupVisual.layout.pageSection}>
           <div className="mx-auto max-w-[1480px]">
             <div className="mb-5">
-              <div data-alert-group-header="hertzbeat-ui-compact-header" className={coldGroupVisual.panel.hero}>
+              <div
+                data-alert-group-header="hertzbeat-ui-compact-header"
+                data-alert-group-header-nesting-contract="flat-page-introduction"
+                className="p-0"
+              >
                 <div className="max-w-[820px]">
                   <h1 className="text-[30px] font-semibold leading-tight text-[#f5f7fb]">
                     {t('alert.group.title')}
@@ -155,25 +216,34 @@ export function AlertGroupSurface({
                     {t('alert.group.copy')}
                   </p>
                   <div data-alert-group-command-row="standard-equal-buttons" className={coldGroupVisual.button.row}>
-                    <Button size="sm" variant="default" className={coldButtonClassName} onClick={onRefresh}>
-                      <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
-                      {t('common.refresh')}
-                    </Button>
-                    <Button size="sm" variant="primary" className={coldPrimaryButtonClassName} onClick={onNew}>
-                      <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-                      {t('alert.group.action.new')}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="default"
-                      className={coldButtonClassName}
-                      onClick={onDeleteSelected}
-                      data-alert-group-delete-selected="toolbar"
-                      data-alert-group-delete-selected-owner="route-no-select-warning"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                      {t('common.button.delete-batch')}
-                    </Button>
+                    <span className="inline-flex items-center gap-1">
+                      <Button size="sm" variant="default" className={coldButtonClassName} onClick={onRefresh}>
+                        <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+                        {t('common.refresh')}
+                      </Button>
+                      <AlertGroupActionHelp id="refresh" {...alertGroupActionHelp(t, 'refresh')} />
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <Button size="sm" variant="primary" className={coldPrimaryButtonClassName} onClick={onNew}>
+                        <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                        {t('alert.group.action.new')}
+                      </Button>
+                      <AlertGroupActionHelp id="new" {...alertGroupActionHelp(t, 'new')} />
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <Button
+                        size="sm"
+                        variant="default"
+                        className={coldButtonClassName}
+                        onClick={onDeleteSelected}
+                        data-alert-group-delete-selected="toolbar"
+                        data-alert-group-delete-selected-owner="route-no-select-warning"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                        {t('common.button.delete-batch')}
+                      </Button>
+                      <AlertGroupActionHelp id="delete-selected" {...alertGroupActionHelp(t, 'delete-selected')} />
+                    </span>
                   </div>
                 </div>
               </div>
@@ -359,6 +429,17 @@ export function AlertGroupSurface({
                                   <Inbox className="h-5 w-5" aria-hidden="true" />
                                 </span>
                                 <div data-alert-group-empty-copy="true" className="text-[13px] font-semibold">{t('alert.group.empty.title')}</div>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="primary"
+                                  data-alert-group-empty-action="new"
+                                  className={coldPrimaryButtonClassName}
+                                  onClick={onNew}
+                                >
+                                  <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                                  {t('alert.group.action.new')}
+                                </Button>
                               </div>
                             </td>
                           </tr>
@@ -412,7 +493,7 @@ export function AlertGroupSurface({
         onClose={onCloseEditor}
         maxWidthClassName="max-w-4xl"
         footer={
-          <div className="flex flex-wrap justify-end gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             {evidenceContext?.returnHref ? (
               <a
                 data-alert-group-editor-return="evidence-context"
@@ -423,12 +504,18 @@ export function AlertGroupSurface({
                 {t('alert.rule.evidence.return')}
               </a>
             ) : null}
-            <Button size="sm" variant="subtle" onClick={onCloseEditor}>
-              {t('common.cancel')}
-            </Button>
-            <Button size="sm" variant="primary" onClick={onSave} disabled={editorSaving}>
-              {editorSaving ? t('common.saving') : t('common.save')}
-            </Button>
+            <span className="inline-flex items-center gap-1">
+              <Button size="sm" variant="subtle" onClick={onCloseEditor}>
+                {t('common.cancel')}
+              </Button>
+              <AlertGroupActionHelp id="cancel" {...alertGroupActionHelp(t, 'cancel')} />
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <Button size="sm" variant="primary" onClick={onSave} disabled={editorSaving}>
+                {editorSaving ? t('common.saving') : t('common.save')}
+              </Button>
+              <AlertGroupActionHelp id="save" {...alertGroupActionHelp(t, 'save')} />
+            </span>
           </div>
         }
       >

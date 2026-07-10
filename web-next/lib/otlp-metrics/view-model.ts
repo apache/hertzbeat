@@ -3,6 +3,7 @@ import {
   buildSignalAlertHandlingHref,
   buildSignalAlertRulesHref,
   buildSignalDashboardHref,
+  buildSignalEntityDiscoveryHref,
   buildSignalEntityHref,
   readEntityIdRouteParam,
   stripReturnLabelFromHref,
@@ -645,7 +646,7 @@ export function buildMetricThresholdConfig(
   };
 }
 
-export function buildMetricSeriesRows(seriesList: OtlpMetricSeriesView[], t: Translator) {
+export function buildMetricSeriesRows(seriesList: OtlpMetricSeriesView[], t: Translator): OtlpMetricInventoryRow[] {
   return seriesList.map(series => {
     const context = buildMetricSeriesSignalContext(series);
     const entityId = readEntityIdRouteParam(context.entityId);
@@ -671,9 +672,9 @@ export function buildMetricInventorySourceRows(
   t: Translator
 ): OtlpMetricInventoryRow[] {
   return (inventory?.items || [])
-    .map(item => {
+    .flatMap(item => {
       const metricName = item.metricName?.trim();
-      if (!metricName) return null;
+      if (!metricName) return [];
       const labels = item.labels || {};
       const context = inventory?.context || {};
       const entityId = readEntityIdRouteParam(firstText(
@@ -683,7 +684,7 @@ export function buildMetricInventorySourceRows(
         labels.entity_id,
         context.entityId == null ? undefined : String(context.entityId)
       ));
-      return {
+      return [{
         title: metricName,
         copy: firstText(labels['service.name'], labels.service_name, labels.serviceName, context.serviceName)
           || t('otlp.metrics.series.unknown-service'),
@@ -708,9 +709,8 @@ export function buildMetricInventorySourceRows(
         inventorySource: inventory?.source || undefined,
         inventoryLabels: labels,
         series: null
-      } satisfies OtlpMetricInventoryRow;
-    })
-    .filter((row): row is OtlpMetricInventoryRow => row != null);
+      } satisfies OtlpMetricInventoryRow];
+    });
 }
 
 function buildMetricInventorySearchText(row: OtlpMetricInventoryRow) {
@@ -1069,6 +1069,7 @@ export function buildMetricsHandoffLinks(
     tracesHref: traceParams.toString() ? `/trace/manage?${traceParams.toString()}` : '/trace/manage',
     entitiesHref: entityParams.toString() ? `/entities?${entityParams.toString()}` : '/entities',
     entityHref: buildSignalEntityHref(signalContext, serviceName),
+    entityDiscoveryHref: buildSignalEntityDiscoveryHref(signalContext, serviceName),
     alertHandlingHref: buildSignalAlertHandlingHref('metrics', signalContext),
     alertRulesHref: buildSignalAlertRulesHref('metrics', signalContext, signalDraft),
     dashboardHref: buildSignalDashboardHref('metrics', signalContext, signalDraft)

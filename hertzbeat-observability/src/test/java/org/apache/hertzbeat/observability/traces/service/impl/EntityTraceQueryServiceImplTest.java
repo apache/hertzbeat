@@ -162,6 +162,49 @@ class EntityTraceQueryServiceImplTest {
     }
 
     @Test
+    void buildEntityTraceSummaryUsesResourceIdentityWhenEntityWasCreatedAfterOtlpTrace() {
+        long now = System.currentTimeMillis();
+        ObservedEntityContext entityContext = ObservedEntityContext.from(
+                ObserveEntity.builder().id(658273243069696L).type("service")
+                        .name("codex-pd-1369-novice-checkout").build(),
+                List.of(
+                        identity(658273243069696L, "service.name", "codex-pd-1369-novice-checkout", 90, true),
+                        identity(658273243069696L, "service.namespace", "product-design-1369", 30, false),
+                        identity(658273243069696L, "deployment.environment.name", "prod", 20, false)
+                ));
+        when(traceQueryRepository.supportsTraceSummaryRows()).thenReturn(true);
+        when(traceQueryRepository.queryTraceSummaryRows(
+                org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anyLong(),
+                eq("codex-pd-1369-novice-checkout"), eq("product-design-1369"), eq("prod"),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
+                eq(false)))
+                .thenReturn(Map.of(
+                        "total_trace_count", 1L,
+                        "error_trace_count", 0L,
+                        "latest_observed_at", now - 20_000,
+                        "latest_trace_id", "13691369136913691369136913691369"
+                ));
+
+        EntityTraceSummaryDto summary = entityTraceQueryService.buildEntityTraceSummary(entityContext);
+
+        assertEquals(1, summary.getRecentTraceCount());
+        assertEquals(0, summary.getRecentErrorTraceCount());
+        assertEquals("13691369136913691369136913691369", summary.getLatestTraceId());
+        ArgumentCaptor<Map<String, Set<String>>> identityFilterCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(traceQueryRepository).queryTraceSummaryRows(
+                org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anyLong(),
+                eq("codex-pd-1369-novice-checkout"), eq("product-design-1369"), eq("prod"),
+                org.mockito.ArgumentMatchers.isNull(), identityFilterCaptor.capture(), eq(false));
+        assertNull(identityFilterCaptor.getValue().get("hertzbeat.entity_id"));
+        assertEquals(Set.of("codex-pd-1369-novice-checkout"),
+                identityFilterCaptor.getValue().get("service.name"));
+        assertEquals(Set.of("product-design-1369"),
+                identityFilterCaptor.getValue().get("service.namespace"));
+        assertEquals(Set.of("prod"),
+                identityFilterCaptor.getValue().get("deployment.environment.name"));
+    }
+
+    @Test
     void getTraceGroupByStatsUsesStorageRowsAndMapsLatencyMetrics() {
         AuthTokenRequestContext.bindWorkspaceId("team-a");
         when(traceQueryRepository.supportsTraceGroupByRows()).thenReturn(true);

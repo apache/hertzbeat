@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager.dao;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import org.apache.hertzbeat.common.entity.manager.EntityMonitorBind;
@@ -33,6 +34,8 @@ public interface EntityMonitorBindDao extends JpaRepository<EntityMonitorBind, L
 
     List<EntityMonitorBind> findAllByEntityIdOrderByIdAsc(Long entityId);
 
+    List<EntityMonitorBind> findAllByEntityIdInOrderByEntityIdAscIdAsc(Collection<Long> entityIds);
+
     List<EntityMonitorBind> findAllByMonitorId(Long monitorId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
@@ -46,4 +49,7 @@ public interface EntityMonitorBindDao extends JpaRepository<EntityMonitorBind, L
     void deleteAllByMonitorIdIn(Set<Long> monitorIds);
 
     long countByEntityId(Long entityId);
+
+    @Query("SELECT bind.entityId, COUNT(bind) FROM EntityMonitorBind bind WHERE bind.entityId IN :entityIds GROUP BY bind.entityId")
+    List<Object[]> countByEntityIdInGroupByEntityId(@Param("entityIds") Collection<Long> entityIds);
 }

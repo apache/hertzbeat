@@ -2,7 +2,17 @@
 
 import * as React from 'react';
 import CodeMirror from '@uiw/react-codemirror';
-import * as echarts from 'echarts';
+import { LineChart } from 'echarts/charts';
+import {
+  DataZoomComponent,
+  GridComponent,
+  LegendComponent,
+  MarkAreaComponent,
+  MarkLineComponent,
+  TooltipComponent
+} from 'echarts/components';
+import * as echarts from 'echarts/core';
+import { CanvasRenderer } from 'echarts/renderers';
 import type { EChartsOption } from 'echarts';
 import { html } from '@codemirror/lang-html';
 import { javascript } from '@codemirror/lang-javascript';
@@ -21,6 +31,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  CircleHelp,
   Eye,
   EyeOff,
   ExternalLink,
@@ -39,6 +50,17 @@ import {
   X
 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
+
+echarts.use([
+  LineChart,
+  CanvasRenderer,
+  DataZoomComponent,
+  GridComponent,
+  LegendComponent,
+  MarkAreaComponent,
+  MarkLineComponent,
+  TooltipComponent
+]);
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -2784,11 +2806,11 @@ const workbenchLayoutVariantClassName: Record<NonNullable<HzWorkbenchLayoutProps
   'chart-stack': 'items-start gap-3',
   'detail-footer': 'gap-2 border-t border-[#252b35] px-4 py-4',
   'detail-stack': 'gap-3 px-4 py-4',
-  'header-actions': 'gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start',
+  'header-actions': 'gap-4 2xl:grid-cols-[minmax(280px,1fr)_auto] 2xl:items-start',
   'header-toolbar-slot': 'justify-end xl:justify-self-end',
   'metrics-chart-toolbar': 'mb-3 gap-2 text-[12px] text-[#8792a5] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center',
-  'metrics-header': 'gap-3 xl:grid-cols-[minmax(280px,1fr)_minmax(780px,auto)] xl:items-start',
-  'metrics-series-detail': 'items-start gap-4 xl:grid-cols-[minmax(0,1fr)_320px]',
+  'metrics-header': 'gap-3 2xl:grid-cols-[minmax(280px,1fr)_minmax(780px,auto)] 2xl:items-start',
+  'metrics-series-detail': 'items-start gap-4 xl:grid-cols-[minmax(0,1fr)_440px]',
   'metrics-series-only': 'items-start gap-4',
   'summary-trend': 'gap-3 lg:grid-cols-[repeat(4,minmax(0,160px))_minmax(0,1fr)]',
   stack: 'gap-4',
@@ -3411,7 +3433,7 @@ export function HzAttributeDiagnostics({
 }
 
 export type HzInputInset = 'none' | 'search-icon';
-export type HzInputWidth = 'default' | 'metrics-query-expression' | 'metrics-filter-expression' | 'metrics-query-step' | 'metrics-query-limit' | 'metrics-inventory-search' | 'log-query-expression' | 'log-query-token' | 'log-query-body' | 'metrics-context' | 'metrics-context-compact' | 'metrics-trace-id';
+export type HzInputWidth = 'default' | 'metrics-query-expression' | 'metrics-filter-expression' | 'metrics-query-step' | 'metrics-query-limit' | 'metrics-inventory-search' | 'log-query-expression' | 'log-query-token' | 'log-query-body' | 'log-query-filter' | 'metrics-context' | 'metrics-context-compact' | 'metrics-trace-id';
 
 export type HzInputProps = React.InputHTMLAttributes<HTMLInputElement> & {
   inset?: HzInputInset;
@@ -3433,6 +3455,7 @@ const hzInputWidthClassName: Record<HzInputWidth, string | null> = {
   'log-query-expression': 'w-full font-mono',
   'log-query-token': 'w-[220px] font-mono',
   'log-query-body': 'min-w-[280px] max-w-[520px] flex-1',
+  'log-query-filter': 'min-w-[220px] max-w-[420px] flex-1 font-mono',
   'metrics-context': 'w-[220px]',
   'metrics-context-compact': 'w-[160px]',
   'metrics-trace-id': 'min-w-[220px] max-w-[360px] flex-1 font-mono'
@@ -6845,7 +6868,13 @@ export function HzSelectMenu({
 
 export type HzFieldProps = {
   label: React.ReactNode;
+  labelMeta?: React.ReactNode;
   hint?: React.ReactNode;
+  help?: {
+    label: string;
+    body: React.ReactNode;
+    impact?: React.ReactNode;
+  };
   children: React.ReactNode;
   className?: string;
   as?: 'label' | 'div';
@@ -6855,7 +6884,9 @@ export type HzFieldProps = {
 
 export function HzField({
   label,
+  labelMeta,
   hint,
+  help,
   children,
   className,
   as = 'label',
@@ -6864,6 +6895,7 @@ export function HzField({
   ...props
 }: HzFieldProps) {
   const Component = as;
+  const helpId = React.useId();
   return (
     <Component
       {...props}
@@ -6872,7 +6904,46 @@ export function HzField({
       data-hz-field-span={span}
       data-hz-field-rhythm={rhythm}
     >
-      <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#7e8494]">{label}</span>
+      <span className="flex min-w-0 items-center gap-1.5">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#7e8494]">{label}</span>
+        {help ? (
+          <span
+            data-hz-field-help-placement="inline-label"
+            className="group relative inline-flex"
+          >
+            <span
+              aria-label={help.label}
+              aria-describedby={helpId}
+              data-hz-field-help-trigger="hertzbeat-ui-field-help"
+              data-hz-field-help-button="icon-after-label"
+              data-hz-field-help-visual="circle-help-icon"
+              className="inline-flex h-4 w-4 items-center justify-center rounded-[3px] border-0 bg-transparent text-[#8da2ff] transition hover:text-[#f5f7fb] focus:text-[#f5f7fb] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4e74f8]"
+              role="button"
+              tabIndex={0}
+              title={help.label}
+              onClick={event => {
+                event.preventDefault();
+                event.stopPropagation();
+              }}
+              onKeyDown={event => {
+                event.stopPropagation();
+              }}
+            >
+              <CircleHelp size={12} strokeWidth={2} aria-hidden="true" data-hz-field-help-icon="lucide-circle-help" />
+            </span>
+            <span
+              id={helpId}
+              role="tooltip"
+              data-hz-field-help="hertzbeat-ui-field-tooltip"
+              className="pointer-events-none absolute left-0 top-6 z-20 hidden w-[280px] rounded-[3px] border border-[#2b3039] bg-[#101217] p-3 text-left normal-case tracking-normal shadow-[0_16px_40px_rgba(0,0,0,0.42)] group-hover:block group-focus-within:block"
+            >
+              <span className="block text-[11px] leading-4 text-[#dbe4f0]">{help.body}</span>
+              {help.impact ? <span className="mt-2 block border-t border-[#2b3039] pt-2 text-[11px] leading-4 text-[#98a2b3]">{help.impact}</span> : null}
+            </span>
+          </span>
+        ) : null}
+        {labelMeta ? <span className="flex min-w-0 items-center gap-1.5">{labelMeta}</span> : null}
+      </span>
       {children}
       {hint ? <span className="text-[11px] leading-4 text-[#727b8c]">{hint}</span> : null}
     </Component>
@@ -7522,6 +7593,7 @@ export function HzMonitorRefreshToolbar({
           className="h-7 w-7 min-w-0 !rounded-none border-[var(--hz-ui-line-soft)] bg-transparent px-0 !shadow-none hover:border-[var(--hz-ui-accent-muted)] hover:bg-[var(--hz-ui-surface-soft)]"
           data-monitor-refresh-action-density="quiet"
           data-monitor-refresh-action-owner="hertzbeat-ui-button"
+          data-monitor-refresh-command-action="refresh"
           onClick={onRefresh}
         >
           {refreshIcon}
@@ -8022,7 +8094,7 @@ export function HzDataTable<Row>({
     <div
       {...props}
       className={cn(
-        'overflow-hidden bg-[var(--hz-ui-surface)]',
+        'overflow-x-auto overflow-y-hidden bg-[var(--hz-ui-surface)]',
         variant === 'embedded' ? 'border-0' : 'border-y border-[var(--hz-ui-line)]',
         className
       )}
@@ -8130,6 +8202,7 @@ export type HzIncidentWorkbenchIncident = {
   id: string;
   title: React.ReactNode;
   severity: HzIncidentWorkbenchTone;
+  severityLabel?: React.ReactNode;
   stage: React.ReactNode;
   service: React.ReactNode;
   owner: React.ReactNode;
@@ -8185,6 +8258,15 @@ export type HzIncidentWorkbenchProps = React.HTMLAttributes<HTMLElement> & {
   selectedIncidentId?: string;
   density?: 'operator-compact';
   emptyLabel?: React.ReactNode;
+  labels?: Partial<{
+    incident: React.ReactNode;
+    severity: React.ReactNode;
+    stage: React.ReactNode;
+    owner: React.ReactNode;
+    impact: React.ReactNode;
+    timeline: React.ReactNode;
+    ownership: React.ReactNode;
+  }>;
 };
 
 const incidentWorkbenchActionIntent: Record<NonNullable<HzIncidentWorkbenchAction['variant']>, HzButtonIntent> = {
@@ -8222,46 +8304,69 @@ export function HzIncidentWorkbench({
   selectedIncidentId,
   density = 'operator-compact',
   emptyLabel = 'No incidents',
+  labels,
   className,
   ...props
 }: HzIncidentWorkbenchProps) {
+  const resolvedLabels = {
+    incident: 'Incident',
+    severity: 'Severity',
+    stage: 'Stage',
+    owner: 'Owner',
+    impact: 'Impact',
+    timeline: 'Response timeline',
+    ownership: 'Ownership',
+    ...labels
+  };
   const columns: HzDataColumn<HzIncidentWorkbenchIncident>[] = [
     {
       key: 'incident',
-      header: 'Incident',
+      header: resolvedLabels.incident,
       render: incident => (
-        <div className="min-w-0">
-          <HzDataCellText>{incident.title}</HzDataCellText>
-          <HzDataMetaText>{incident.openedAt}</HzDataMetaText>
+        <div className="min-w-0 max-w-[320px]" data-hz-incident-cell="title-opened-at">
+          <HzDataCellText variant="title" display="block" title={typeof incident.title === 'string' ? incident.title : undefined}>
+            {incident.title}
+          </HzDataCellText>
+          <HzDataMetaText display="block" casing="plain">
+            {incident.openedAt}
+          </HzDataMetaText>
         </div>
       )
     },
     {
       key: 'severity',
-      header: 'Severity',
+      header: resolvedLabels.severity,
       width: '112px',
-      render: incident => <HzStatusBadge tone={incident.severity}>{incident.severity}</HzStatusBadge>
+      render: incident => <HzStatusBadge tone={incident.severity}>{incident.severityLabel || incident.severity}</HzStatusBadge>
     },
     {
       key: 'stage',
-      header: 'Stage',
+      header: resolvedLabels.stage,
       width: '132px',
       render: incident => <HzStatusBadge tone={mapIncidentStageTone(incident.stage)}>{incident.stage}</HzStatusBadge>
     },
     {
       key: 'owner',
-      header: 'Owner',
+      header: resolvedLabels.owner,
       render: incident => (
-        <div className="min-w-0">
-          <HzDataCellText>{incident.owner}</HzDataCellText>
-          <HzDataMetaText>{incident.service}</HzDataMetaText>
+        <div className="min-w-0 max-w-[160px]" data-hz-incident-cell="owner-service">
+          <HzDataCellText variant="value" display="block" tone="strong" title={typeof incident.owner === 'string' ? incident.owner : undefined}>
+            {incident.owner}
+          </HzDataCellText>
+          <HzDataMetaText display="block" casing="plain">
+            {incident.service}
+          </HzDataMetaText>
         </div>
       )
     },
     {
       key: 'blast-radius',
-      header: 'Impact',
-      render: incident => <HzDataMetaText>{incident.blastRadius}</HzDataMetaText>
+      header: resolvedLabels.impact,
+      render: incident => (
+        <HzDataMetaText display="block" casing="plain">
+          {incident.blastRadius}
+        </HzDataMetaText>
+      )
     }
   ];
 
@@ -8357,7 +8462,7 @@ export function HzIncidentWorkbench({
         </div>
         <aside className="min-w-0 bg-[var(--hz-ui-surface)]" data-hz-incident-workbench-rail="timeline-ownership">
           <div className="border-b border-[var(--hz-ui-line-soft)] px-3 py-2">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#727b8c]">Response timeline</div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#727b8c]">{resolvedLabels.timeline}</div>
             <div className="mt-2 space-y-2">
               {timeline.map(item => (
                 <div key={item.id} className="border-l border-[var(--hz-ui-line-strong)] pl-3" data-hz-incident-timeline-item={item.id}>
@@ -8372,7 +8477,7 @@ export function HzIncidentWorkbench({
             </div>
           </div>
           <div className="px-3 py-2">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#727b8c]">Ownership</div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#727b8c]">{resolvedLabels.ownership}</div>
             <div className="mt-2 space-y-2">
               {ownership.map(item => (
                 <div key={item.id} className="border border-[var(--hz-ui-line-soft)] bg-[#08090c] px-2 py-2" data-hz-incident-owner-item={item.id}>
@@ -8836,6 +8941,10 @@ export function HzActionWorkbench({
         ) : null}
 
         {approvalDecision ? (
+          (() => {
+            const approvalDecisionLocked = approvalDecision.status === 'submitting' || approvalDecision.status === 'decided' || Boolean(approvalDecision.result);
+
+            return (
           <section
             className="border-b border-[var(--hz-ui-line-soft)] bg-[var(--hz-ui-surface)] px-3 py-3 lg:col-span-2"
             data-actions-approval-decision="manual-approval-decision-api"
@@ -8856,7 +8965,7 @@ export function HzActionWorkbench({
               <div className="flex flex-wrap gap-2">
                 <HzButton
                   size="sm"
-                  disabled={!approvalDecision.onApprove || approvalDecision.status === 'submitting'}
+                  disabled={!approvalDecision.onApprove || approvalDecisionLocked}
                   onClick={approvalDecision.onApprove}
                   data-actions-approval-decision-approve={approvalDecision.status || approvalDecision.state}
                 >
@@ -8865,7 +8974,7 @@ export function HzActionWorkbench({
                 <HzButton
                   size="sm"
                   intent="secondary"
-                  disabled={!approvalDecision.onReject || approvalDecision.status === 'submitting'}
+                  disabled={!approvalDecision.onReject || approvalDecisionLocked}
                   onClick={approvalDecision.onReject}
                   data-actions-approval-decision-reject={approvalDecision.status || approvalDecision.state}
                 >
@@ -8900,6 +9009,8 @@ export function HzActionWorkbench({
               </div>
             </div>
           </section>
+            );
+          })()
         ) : null}
 
         <section className="flex min-h-[180px] items-center justify-center bg-[var(--hz-ui-canvas)] px-3 py-8 lg:col-span-2" data-actions-empty-state="hertzbeat-ui-ops-domain-adapter">
@@ -14349,9 +14460,10 @@ export function HzTopologyMetricTable({
       ) : (
         <>
         <div className="grid min-w-0 divide-y divide-[var(--hz-ui-line-faint)]">
-          {renderedRowsWithWindowVisibility.map(({ row, sourceVisible, targetVisible, rowWindowVisibility }) => {
+          {renderedRowsWithWindowVisibility.map(({ row, sourceVisible, targetVisible, rowWindowVisibility }, rowIndex) => {
             const tone = row.tone || (row.errorRate && row.errorRate > 0 ? 'warning' : 'neutral');
             const selected = selectedRowId === row.id;
+            const tabbable = selected || (!hasMetricTableSelection && rowIndex === 0);
             const rowActionLabel = labels?.rowAction;
             const rowWindowContextLabel =
               rowWindowVisibility === 'visible'
@@ -14388,8 +14500,11 @@ export function HzTopologyMetricTable({
                 )}
                 aria-label={labels?.rowAriaLabel?.(row) ?? `Open topology edge ${row.id}`}
                 aria-current={selected ? 'true' : undefined}
+                tabIndex={tabbable ? 0 : -1}
                 onClick={() => onRowSelect?.(row)}
                 data-hz-topology-edge-row={row.id}
+                data-hz-topology-edge-row-tabstop={tabbable ? 'true' : 'false'}
+                data-hz-topology-edge-row-tabstop-policy="single-active-row"
                 data-hz-topology-edge-row-render-window-visibility={rowWindowVisibility}
                 data-hz-topology-edge-row-source-node-id={row.sourceNodeId ?? 'unknown'}
                 data-hz-topology-edge-row-target-node-id={row.targetNodeId ?? 'unknown'}
@@ -15348,7 +15463,11 @@ export function HzMonitorFavoriteSurface({
         {children || empty}
       </div>
       {message ? (
-        <div className="border-t border-[var(--hz-ui-line-soft)] px-3 py-2 text-[12px] text-emerald-300" data-hz-monitor-favorite-message="true">
+        <div
+          role="status"
+          className="border-t border-[var(--hz-ui-line-soft)] px-3 py-2 text-[12px] text-[#b9c6d8]"
+          data-hz-monitor-favorite-message="true"
+        >
           {message}
         </div>
       ) : null}
@@ -16047,6 +16166,11 @@ export function HzMutationBar({
 export type HzMonitorEditorActionBarAction = {
   id: string;
   label: React.ReactNode;
+  help?: {
+    label: string;
+    body: React.ReactNode;
+    impact?: React.ReactNode;
+  };
   type?: HzButtonProps['type'];
   intent?: HzButtonIntent;
   size?: HzButtonSize;
@@ -16094,19 +16218,50 @@ export function HzMonitorEditorActionBar({
         actions={
           <>
             {actions.map(action => (
-              <HzButton
-                key={action.id}
-                {...action.buttonProps}
-                type={action.type || 'button'}
-                size={action.size || 'sm'}
-                intent={action.intent || 'ghost'}
-                disabled={action.disabled}
-                onClick={action.onSelect}
-                data-monitor-editor-action={action.id}
-                data-monitor-editor-action-owner="hertzbeat-ui-button"
-              >
-                {action.label}
-              </HzButton>
+              <span key={action.id} className="inline-flex items-center gap-1.5">
+                <HzButton
+                  {...action.buttonProps}
+                  type={action.type || 'button'}
+                  size={action.size || 'sm'}
+                  intent={action.intent || 'ghost'}
+                  disabled={action.disabled}
+                  onClick={action.onSelect}
+                  data-monitor-editor-action={action.id}
+                  data-monitor-editor-action-owner="hertzbeat-ui-button"
+                >
+                  {action.label}
+                </HzButton>
+                {action.help ? (
+                  <span
+                    data-monitor-editor-action-help-placement="inline-action"
+                    className="group/help relative inline-flex h-5 w-5 shrink-0 items-center justify-center"
+                  >
+                    <button
+                      type="button"
+                      aria-label={action.help.label}
+                      data-monitor-editor-action-help-trigger="hertzbeat-ui-action-help"
+                      data-monitor-editor-action-help-style="icon-after-action"
+                      data-monitor-editor-action-help-visual="circle-help-icon"
+                      className="inline-flex h-5 w-5 items-center justify-center rounded-none border-0 bg-transparent p-0 text-[#8da2ff] transition hover:text-[#d8e4ff] focus:text-[#d8e4ff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4e74f8]"
+                      title={action.help.label}
+                      onClick={event => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                      }}
+                    >
+                      <CircleHelp size={13} strokeWidth={2} aria-hidden="true" data-monitor-editor-action-help-icon="lucide-circle-help" />
+                    </button>
+                    <span
+                      role="tooltip"
+                      data-monitor-editor-action-help="hertzbeat-ui-action-tooltip"
+                      className="pointer-events-none absolute bottom-6 left-0 z-20 hidden w-[280px] rounded-[3px] border border-[#2b3039] bg-[#101217] p-3 text-left shadow-[0_16px_40px_rgba(0,0,0,0.42)] group-hover/help:block group-focus-within/help:block"
+                    >
+                      <span className="block text-[11px] leading-4 text-[#dbe4f0]">{action.help.body}</span>
+                      {action.help.impact ? <span className="mt-2 block border-t border-[#2b3039] pt-2 text-[11px] leading-4 text-[#98a2b3]">{action.help.impact}</span> : null}
+                    </span>
+                  </span>
+                ) : null}
+              </span>
             ))}
           </>
         }
@@ -16120,6 +16275,14 @@ export type HzBatchToolbarAction = {
   label: React.ReactNode;
   busy?: boolean;
   busyLabel?: React.ReactNode;
+  help?: {
+    label: string;
+    body: React.ReactNode;
+    impact?: React.ReactNode;
+    rootProps?: React.HTMLAttributes<HTMLSpanElement> & HzDataAttributeProps;
+    triggerProps?: React.ButtonHTMLAttributes<HTMLButtonElement> & HzDataAttributeProps;
+    tooltipProps?: React.HTMLAttributes<HTMLSpanElement> & HzDataAttributeProps;
+  };
   tone?: HzStatusTone;
   disabled?: boolean;
   onSelect?: () => void;
@@ -16149,29 +16312,74 @@ export function HzBatchToolbar({
   const [overflowOpen, setOverflowOpen] = React.useState(false);
   const inlineActions = actions.filter(action => action.presentation !== 'menu');
   const menuActions = actions.filter(action => action.presentation === 'menu');
-  const renderActionButton = (action: HzBatchToolbarAction, menu = false) => (
-    <HzButton
-      key={action.id}
-      {...action.buttonProps}
-      size="sm"
-      intent={action.tone === 'critical' ? 'danger' : 'ghost'}
-      aria-busy={action.busy ? 'true' : action.buttonProps?.['aria-busy']}
-      disabled={action.disabled || action.busy}
-      onClick={() => {
-        action.onSelect?.();
-        if (menu) {
-          setOverflowOpen(false);
-        }
-      }}
-      data-hz-batch-action={action.id}
-      data-hz-batch-action-owner="hertzbeat-ui-button"
-      data-hz-batch-action-busy={action.busy ? 'true' : undefined}
-      data-hz-batch-action-presentation={menu ? 'menu' : 'inline'}
-      className={cn(menu ? 'w-full justify-start' : undefined, action.buttonProps?.className)}
-    >
-      {action.busy ? action.busyLabel || action.label : action.label}
-    </HzButton>
-  );
+  const renderActionHelp = (action: HzBatchToolbarAction) =>
+    action.help ? (
+      <span
+        {...action.help.rootProps}
+        data-hz-batch-action-help={action.id}
+        data-hz-batch-action-help-owner="hertzbeat-ui-batch-toolbar"
+        className={cn('group/help relative inline-flex h-4 w-4 shrink-0 items-center justify-center', action.help.rootProps?.className)}
+      >
+        <button
+          {...action.help.triggerProps}
+          type="button"
+          aria-label={action.help.label}
+          data-hz-batch-action-help-trigger="hertzbeat-ui-action-help"
+          data-hz-batch-action-help-style="icon-after-action"
+          data-hz-batch-action-help-visual="circle-help-icon"
+          className={cn('inline-flex h-4 w-4 items-center justify-center rounded-none border-0 bg-transparent p-0 text-[#d8e4ff] transition hover:text-[#f5f7fb] focus:text-[#f5f7fb] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4e74f8]', action.help.triggerProps?.className)}
+          onClick={event => {
+            event.preventDefault();
+            event.stopPropagation();
+            action.help?.triggerProps?.onClick?.(event);
+          }}
+        >
+          <CircleHelp size={12} strokeWidth={2} aria-hidden="true" data-hz-batch-action-help-icon="lucide-circle-help" />
+        </button>
+        <span
+          {...action.help.tooltipProps}
+          role="tooltip"
+          data-hz-batch-action-help-tooltip="hertzbeat-ui-action-tooltip"
+          className={cn('pointer-events-none absolute right-0 top-5 z-30 hidden w-[280px] rounded-[3px] border border-[#2b3039] bg-[#101217] p-3 text-left shadow-[0_16px_40px_rgba(0,0,0,0.42)] group-hover/help:block group-focus-within/help:block', action.help.tooltipProps?.className)}
+        >
+          <span className="block text-[11px] leading-4 text-[#dbe4f0]">{action.help.body}</span>
+          {action.help.impact ? <span className="mt-2 block border-t border-[#2b3039] pt-2 text-[11px] leading-4 text-[#98a2b3]">{action.help.impact}</span> : null}
+        </span>
+      </span>
+    ) : null;
+  const renderActionButton = (action: HzBatchToolbarAction, menu = false) => {
+    const button = (
+      <HzButton
+        {...action.buttonProps}
+        size="sm"
+        intent={action.tone === 'critical' ? 'danger' : 'ghost'}
+        aria-busy={action.busy ? 'true' : action.buttonProps?.['aria-busy']}
+        disabled={action.disabled || action.busy}
+        onClick={() => {
+          action.onSelect?.();
+          if (menu) {
+            setOverflowOpen(false);
+          }
+        }}
+        data-hz-batch-action={action.id}
+        data-hz-batch-action-owner="hertzbeat-ui-button"
+        data-hz-batch-action-busy={action.busy ? 'true' : undefined}
+        data-hz-batch-action-presentation={menu ? 'menu' : 'inline'}
+        className={cn(menu ? 'w-full justify-start' : undefined, action.buttonProps?.className)}
+      >
+        <span className="truncate">{action.busy ? action.busyLabel || action.label : action.label}</span>
+      </HzButton>
+    );
+
+    return action.help ? (
+      <span key={action.id} className={cn('inline-flex min-w-0 items-center gap-1.5', menu ? 'w-full' : undefined)}>
+        {button}
+        {renderActionHelp(action)}
+      </span>
+    ) : (
+      React.cloneElement(button, { key: action.id })
+    );
+  };
 
   return (
     <div
@@ -16216,7 +16424,8 @@ export function HzBatchToolbar({
               role="menu"
               hidden={!overflowOpen}
               className={cn(
-                'absolute right-0 top-full z-40 mt-1 grid min-w-[190px] gap-1 rounded-[4px] border border-[var(--hz-ui-line-strong)] bg-[#101722] p-1 shadow-[0_18px_48px_rgba(0,0,0,0.45)]',
+                'absolute right-0 top-full z-40 mt-1 min-w-[190px] gap-1 rounded-[4px] border border-[var(--hz-ui-line-strong)] bg-[#101722] p-1 shadow-[0_18px_48px_rgba(0,0,0,0.45)]',
+                overflowOpen ? 'grid' : 'hidden',
                 overflowPanelProps?.className
               )}
               data-hz-batch-overflow-panel="angular-nz-dropdown-menu"
@@ -16444,6 +16653,7 @@ export function HzConfirmDialog({
             size="sm"
             intent="ghost"
             onClick={handleCancel}
+            className={cn('min-h-8 min-w-16', cancelButtonProps?.className)}
             data-hz-confirm-action="cancel"
           >
             {cancelLabel}
@@ -16454,6 +16664,7 @@ export function HzConfirmDialog({
             intent={danger ? 'danger' : 'primary'}
             onClick={onConfirm}
             disabled={confirmDisabled}
+            className={cn('min-h-8 min-w-16', confirmButtonProps?.className)}
             data-hz-confirm-action="confirm"
           >
             {confirmLabel}
@@ -16565,7 +16776,9 @@ export function HzExportTypeDialog({
 
 export function HzMonitorEditorSection({
   title,
+  titleMeta,
   copy,
+  help,
   children,
   action,
   className,
@@ -16573,11 +16786,19 @@ export function HzMonitorEditorSection({
   ...props
 }: {
   title: React.ReactNode;
+  titleMeta?: React.ReactNode;
   copy?: React.ReactNode;
+  help?: {
+    label: string;
+    body: React.ReactNode;
+    impact?: React.ReactNode;
+  };
   children?: React.ReactNode;
   action?: React.ReactNode;
   bodyClassName?: string;
 } & Omit<React.HTMLAttributes<HTMLElement>, 'children' | 'title'>) {
+  const helpTooltipId = React.useId();
+
   return (
     <section
       {...props}
@@ -16586,7 +16807,39 @@ export function HzMonitorEditorSection({
     >
       <header className="grid min-h-11 grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border-b border-[var(--hz-ui-line-faint)] px-3 py-2">
         <div className="min-w-0">
-          <h2 className="truncate text-[13px] font-semibold text-[#f3f6fb]">{title}</h2>
+          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+            <h2 className="truncate text-[13px] font-semibold text-[#f3f6fb]">{title}</h2>
+            {help ? (
+              <span
+                data-monitor-editor-section-help-placement="inline-title"
+                className="group relative inline-flex"
+              >
+                <button
+                  type="button"
+                  aria-label={help.label}
+                  aria-describedby={helpTooltipId}
+                  data-monitor-editor-section-help-trigger="hertzbeat-ui-section-help"
+                  data-monitor-editor-section-help-style="icon-after-title"
+                  data-monitor-editor-section-help-visual="circle-help-icon"
+                  data-monitor-editor-section-help-icon="lucide-circle-help"
+                  className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-[#2b3039] bg-[#101217] text-[11px] font-semibold leading-none text-[#8d95a5] transition hover:border-[#4e74f8] hover:text-[#d8e4ff] focus:text-[#d8e4ff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4e74f8]"
+                  title={help.label}
+                >
+                  <CircleHelp size={12} strokeWidth={2} aria-hidden="true" />
+                </button>
+                <span
+                  id={helpTooltipId}
+                  role="tooltip"
+                  data-monitor-editor-section-help="hertzbeat-ui-section-tooltip"
+                  className="pointer-events-none absolute left-0 top-6 z-20 hidden w-[280px] rounded-[3px] border border-[#2b3039] bg-[#101217] p-3 text-left normal-case tracking-normal shadow-[0_16px_40px_rgba(0,0,0,0.42)] group-hover:block group-focus-within:block"
+                >
+                  <span className="block text-[11px] leading-4 text-[#dbe4f0]">{help.body}</span>
+                  {help.impact ? <span className="mt-2 block border-t border-[#2b3039] pt-2 text-[11px] leading-4 text-[#98a2b3]">{help.impact}</span> : null}
+                </span>
+              </span>
+            ) : null}
+            {titleMeta ? <span className="flex min-w-0 items-center gap-1.5">{titleMeta}</span> : null}
+          </div>
           {copy ? <p className="mt-0.5 text-[11px] leading-5 text-[#727b8c]">{copy}</p> : null}
         </div>
         {action ? <div className="shrink-0">{action}</div> : null}
@@ -17933,6 +18186,7 @@ export type HzTemplatePickerLabels = {
   searchPlaceholder?: string;
   empty?: React.ReactNode;
   loading?: React.ReactNode;
+  showCounts?: boolean;
 };
 
 const DEFAULT_HZ_TEMPLATE_PICKER_LABELS: Required<HzTemplatePickerLabels> = {
@@ -17940,7 +18194,8 @@ const DEFAULT_HZ_TEMPLATE_PICKER_LABELS: Required<HzTemplatePickerLabels> = {
   itemCount: total => `${total} items`,
   searchPlaceholder: 'Search visible names',
   empty: 'No matches',
-  loading: 'Loading templates'
+  loading: 'Loading templates',
+  showCounts: true
 };
 
 export function HzTemplatePicker({
@@ -18000,7 +18255,11 @@ export function HzTemplatePicker({
       <div className="flex min-h-11 items-center justify-between gap-2 border-b border-[var(--hz-ui-line-soft)] px-3 py-2">
         <div className="min-w-0">
           <div className="text-[13px] font-semibold text-[#f3f6fb]">{title || resolvedLabels.defaultTitle}</div>
-          <div className="text-[11px] text-[#727b8c]">{resolvedLabels.itemCount(total)}</div>
+          {resolvedLabels.showCounts ? (
+            <div className="text-[11px] text-[#727b8c]" data-hz-template-total-count="visible">
+              {resolvedLabels.itemCount(total)}
+            </div>
+          ) : null}
         </div>
         {action ? <div className="shrink-0">{action}</div> : null}
       </div>
@@ -18034,7 +18293,7 @@ export function HzTemplatePicker({
             <div key={category.id} className="border-b border-[var(--hz-ui-line-soft)] last:border-b-0" data-hz-template-category={category.id}>
               <div className="flex h-8 items-center justify-between bg-[var(--hz-ui-surface-muted)] px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e8494]">
                 <span>{category.label}</span>
-                <span>{category.items.length}</span>
+                {resolvedLabels.showCounts ? <span data-hz-template-category-count="visible">{category.items.length}</span> : null}
               </div>
               <div
                 className={cn(useGridLayout ? 'grid grid-cols-5 gap-2 p-3' : 'grid min-w-0')}
@@ -18158,6 +18417,7 @@ export function HzTypePickerDialog({
   searchInputProps?: Omit<HzInputProps, 'onChange' | 'placeholder' | 'value'>;
   labels?: HzTypePickerDialogLabels;
 }) {
+  const dialogTitleId = React.useId();
   if (!open) return null;
   const resolvedLabels = { ...DEFAULT_HZ_TYPE_PICKER_DIALOG_LABELS, ...labels };
   return (
@@ -18166,10 +18426,15 @@ export function HzTypePickerDialog({
       data-hz-ui="type-picker-dialog"
       data-hz-type-picker-layout="legacy-angular-grid"
     >
-      <div className="w-full max-w-[980px] overflow-hidden border border-[var(--hz-ui-line-strong)] bg-[var(--hz-ui-surface)] shadow-[0_28px_90px_rgba(0,0,0,0.52)]">
+      <div
+        aria-labelledby={dialogTitleId}
+        aria-modal="true"
+        role="dialog"
+        className="w-full max-w-[980px] overflow-hidden border border-[var(--hz-ui-line-strong)] bg-[var(--hz-ui-surface)] shadow-[0_28px_90px_rgba(0,0,0,0.52)]"
+      >
         <header className="flex items-start justify-between gap-4 border-b border-[var(--hz-ui-line)] px-4 py-3">
           <div className="min-w-0">
-            <div className="text-[16px] font-semibold text-[#f5f7fb]">{title}</div>
+            <div id={dialogTitleId} className="text-[16px] font-semibold text-[#f5f7fb]">{title}</div>
             {description ? <div className="mt-1 text-[12px] leading-5 text-[#8f99ab]">{description}</div> : null}
           </div>
           <HzButton intent="ghost" size="sm" onClick={onClose}>
@@ -19115,19 +19380,21 @@ export function HzQueryBar({
   onQueryChange,
   actions,
   className,
-  inputProps
+  inputProps,
+  queryLabel = 'Filter'
 }: {
   query: string;
   onQueryChange?: (value: string) => void;
   actions?: React.ReactNode;
   className?: string;
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
+  queryLabel?: React.ReactNode;
 }) {
   return (
     <div className={cn('flex min-h-11 items-center gap-2 border-b border-[var(--hz-ui-line)] bg-[var(--hz-ui-surface)] px-3 py-2', className)} data-hz-ui="query-bar">
       <div className="grid min-w-0 flex-1 grid-cols-[78px_minmax(0,1fr)] items-center overflow-hidden border border-[var(--hz-ui-line-strong)] bg-[var(--hz-ui-control)]">
         <span className="border-r border-[var(--hz-ui-line-soft)] px-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#727b8c]">
-          Filter
+          {queryLabel}
         </span>
         <input
           {...inputProps}
@@ -19154,6 +19421,7 @@ export function HzExplorerFrame({
   children,
   mainId = 'hz-ui-main',
   mainLabel,
+  skipLinkLabel = 'Skip to workbench',
   filterRailLabel = 'Workbench filters',
   className,
   ...props
@@ -19169,6 +19437,7 @@ export function HzExplorerFrame({
   children: React.ReactNode;
   mainId?: string;
   mainLabel?: string;
+  skipLinkLabel?: React.ReactNode;
   filterRailLabel?: string;
   className?: string;
 }) {
@@ -19187,7 +19456,7 @@ export function HzExplorerFrame({
         data-hz-ui="skip-link"
         href={`#${mainId}`}
       >
-        Skip to workbench
+        {skipLinkLabel}
       </a>
       <header className="border-b border-[var(--hz-ui-line)] bg-[var(--hz-ui-surface)]">
         <div className="flex flex-col gap-3 px-4 py-3 xl:flex-row xl:items-start xl:justify-between">

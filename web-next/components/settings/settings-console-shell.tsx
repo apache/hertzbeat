@@ -43,13 +43,18 @@ export function SettingsConsoleShell({
       data-settings-console-menu-contract="angular-config-server-object-store-token"
       data-settings-console-menu-mode-contract="angular-inline-horizontal-responsive"
       data-settings-console-active-title-contract="angular-active-child-title"
-      className={cn(hzSettingsVisual.canvas.root, className)}
+      data-settings-console-visual-direction="flat-operations-canvas"
+      data-settings-console-card-contract="flat-no-outer-card"
+      className={cn(hzSettingsVisual.canvas.root, 'w-full min-w-0', className)}
       style={hzSettingsVisual.canvas.backgroundStyle}
     >
-      <section className={hzSettingsVisual.layout.pageSection}>
-        <div className="mx-auto max-w-[1480px]">
+      <section className={cn(hzSettingsVisual.layout.pageSection, 'w-full min-w-0')}>
+        <div className="mx-auto w-full max-w-[1480px] min-w-0">
           {kicker || title || subtitle ? (
-            <header data-settings-console-header="hertzbeat-ui-compact-header" className={cn(hzSettingsVisual.panel.hero, 'mb-5')}>
+            <header
+              data-settings-console-header="hertzbeat-ui-compact-header"
+              className="border-b border-[#2b3039] pb-6"
+            >
               {kicker ? <div className="text-[11px] font-semibold tracking-[0.12em] text-[#858d9a]">{kicker}</div> : null}
               {title ? (
                 <h1 className="mt-2 text-[30px] font-semibold leading-tight text-[#f5f7fb]">{title}</h1>
@@ -59,14 +64,16 @@ export function SettingsConsoleShell({
           ) : null}
           <div
             data-settings-console-main="hertzbeat-ui-settings-workspace"
-            className="grid min-h-[600px] gap-5 lg:grid-cols-[260px_minmax(0,1fr)]"
+            data-settings-console-stacked-density-contract="natural-height-before-two-column-layout"
+            className="grid lg:min-h-[600px] lg:grid-cols-[220px_minmax(0,1fr)]"
           >
             <aside
               data-settings-console-menu="hertzbeat-ui-static-list"
               data-settings-console-menu-mode="angular-responsive-inline-horizontal"
-              className="self-start overflow-x-auto rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] shadow-[0_20px_56px_rgba(0,0,0,0.32)] lg:overflow-hidden"
+              data-settings-console-menu-scroll-hint="horizontal-on-narrow-viewports"
+              className="self-start overflow-x-auto border-b border-[#2b3039] bg-transparent pb-1 lg:min-h-[600px] lg:overflow-hidden lg:border-b-0 lg:border-r lg:pb-0"
             >
-              <nav aria-label={navigationLabel} className="flex min-w-max flex-row gap-2 p-2 lg:min-w-0 lg:flex-col">
+              <nav aria-label={navigationLabel} className="flex min-w-max flex-row gap-1 py-2 lg:min-w-0 lg:flex-col lg:gap-1 lg:py-5 lg:pr-5">
                 {items.map(item => {
                   const active = item.href === activeHref;
 
@@ -79,10 +86,10 @@ export function SettingsConsoleShell({
                       data-settings-console-active={active ? 'true' : undefined}
                       data-settings-console-selected-contract={active ? 'angular-nz-selected' : undefined}
                       className={cn(
-                        'flex min-h-[36px] shrink-0 items-center rounded-[3px] border px-3 text-[12px] font-semibold leading-5 transition-colors duration-150 lg:shrink',
+                        'relative flex min-h-[40px] shrink-0 items-center border-0 bg-transparent px-3 text-[12px] font-semibold leading-5 transition-colors duration-150 before:absolute before:bg-[#4e74f8] before:opacity-0 lg:shrink',
                         active
-                          ? 'border-[#4e74f8] bg-[#121a2a] text-[#eef2f7]'
-                          : 'border-[#2b3039] bg-[#101217] text-[#a9b0bb] hover:border-[#3f4654] hover:bg-[#151820] hover:text-[#eef2f7]'
+                          ? 'text-[#6f8fff] before:inset-x-3 before:bottom-0 before:h-[2px] before:opacity-100 lg:before:inset-y-2 lg:before:left-0 lg:before:right-auto lg:before:h-auto lg:before:w-[2px]'
+                          : 'text-[#a9b0bb] hover:bg-[#101217] hover:text-[#eef2f7]'
                       )}
                     >
                       {item.label}
@@ -95,7 +102,7 @@ export function SettingsConsoleShell({
               data-settings-console-content="hertzbeat-ui-settings-content"
               data-settings-console-active-title={activeItem?.label ?? ''}
               aria-label={contentLabel}
-              className="min-w-0 rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] px-5 py-5 shadow-[0_20px_56px_rgba(0,0,0,0.32)] md:px-6"
+              className="min-w-0 bg-transparent py-5 lg:px-8 lg:py-8"
             >
               <div hidden data-settings-console-active-title-marker={activeItem?.label ?? ''} />
               {children}
@@ -114,5 +121,5 @@ export function SettingsConsoleTitle({
   children: React.ReactNode;
   className?: string;
 }) {
-  return <div className={cn('mb-4 text-[15px] font-semibold leading-6 text-[#eef2f7]', className)}>{children}</div>;
+  return <div className={cn('mb-5 text-[20px] font-semibold leading-7 text-[#eef2f7]', className)}>{children}</div>;
 }

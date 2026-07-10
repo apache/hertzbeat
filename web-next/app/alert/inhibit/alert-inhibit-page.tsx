@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ClientWorkbench } from '../../../components/workbench/client-workbench';
 import { useI18n } from '../../../components/providers/i18n-provider';
 import { AlertInhibitSurface } from '../../../components/pages/alert-inhibit-surface';
@@ -21,12 +22,18 @@ import {
   type AlertInhibitFormDraft
 } from '../../../lib/alert-inhibit/controller';
 import { ALERT_INHIBIT_PAGE_SIZE_OPTIONS, buildAlertInhibitUrl, type AlertInhibitRouteState } from '../../../lib/alert-inhibit/query-state';
-import { buildAlertInhibitEvidenceContext, validateAlertInhibitForm } from '../../../lib/alert-inhibit/view-model';
+import {
+  buildAlertInhibitEvidenceContext,
+  getAlertInhibitValidationField,
+  validateAlertInhibitForm,
+  type AlertInhibitValidationField
+} from '../../../lib/alert-inhibit/view-model';
 import { clearAlertInhibitEqualLabels, clearAlertInhibitTarget, copyAlertInhibitSourceToTarget, dropSeverityFromAlertInhibitTarget } from '../../../lib/alert-manage/view-model';
 import { DEFAULT_ALERT_LABEL_OPTIONS, loadAlertLabelOptionsFromFacade } from '../../../lib/alert-label-options';
 import { formatTime } from '../../../lib/format';
 import type { AlertInhibit, PageResult } from '../../../lib/types';
 import type { AlertInhibitManagementContext } from '../../../lib/alert-inhibit/query-state';
+import type { SignalRouteContext } from '../../../lib/signal-route-context';
 
 type InhibitDeleteRequest = {
   kind: 'single' | 'batch';
@@ -35,6 +42,21 @@ type InhibitDeleteRequest = {
 
 const ALERT_INHIBIT_SETTLED_CACHE_TTL_MS = 10_000;
 const ALERT_INHIBIT_LABEL_OPTIONS_TIMEOUT_MS = 2_500;
+const ALERT_INHIBIT_ROUTE_PATH = '/alert/inhibit';
+const ALERT_INHIBIT_EDITOR_FOCUS_SELECTORS: Record<AlertInhibitValidationField, string> = {
+  name: 'input[name="inhibit_name"]',
+  'source-labels': '[data-alert-inhibit-source-label-selector] [data-hz-label-selector-draft-row="true"] input[data-hz-label-selector-key-input="searchable-key"]',
+  'target-labels': '[data-alert-inhibit-target-label-selector] [data-hz-label-selector-draft-row="true"] input[data-hz-label-selector-key-input="searchable-key"]',
+  'equal-labels': '[data-alert-inhibit-equal-label-selector] input[data-hz-tag-input-control="draft"]'
+};
+const ALERT_INHIBIT_DRAFT_FINGERPRINT_FIELDS: Array<keyof AlertInhibitFormDraft> = [
+  'id',
+  'name',
+  'enable',
+  'sourceLabelsText',
+  'targetLabelsText',
+  'equalLabelsText'
+];
 const EMPTY_ALERT_INHIBIT_ROUTE_STATE: AlertInhibitRouteState = {
   returnContext: {
     search: '',
@@ -57,6 +79,18 @@ const EMPTY_ALERT_INHIBIT_ROUTE_STATE: AlertInhibitRouteState = {
     matchedViewEnabled: false
   }
 };
+
+type AlertInhibitListRouteState = {
+  search: string;
+  pageIndex: number;
+  pageSize: number;
+};
+
+function parseAlertInhibitRouteInteger(value: string | null, fallback: number, minimum = 0) {
+  if (!value) return fallback;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed >= minimum ? parsed : fallback;
+}
 
 function filterMatchedInhibitsBySearch(inhibits: AlertInhibit[], search: string): AlertInhibit[] {
   const keyword = search.trim().toLowerCase();
@@ -105,18 +139,75 @@ function withTimeoutFallback<T>(promise: Promise<T>, fallback: T, timeoutMs: num
   });
 }
 
+function focusAlertInhibitEditorField(field: AlertInhibitValidationField) {
+  if (typeof document === 'undefined') return;
+  const selector = ALERT_INHIBIT_EDITOR_FOCUS_SELECTORS[field];
+  window.requestAnimationFrame(() => {
+    const target = document.querySelector<HTMLInputElement>(selector);
+    target?.focus();
+    target?.scrollIntoView({ block: 'center', inline: 'nearest' });
+  });
+}
+
+function serializeAlertInhibitDraft(draft: AlertInhibitFormDraft) {
+  return JSON.stringify(
+    ALERT_INHIBIT_DRAFT_FINGERPRINT_FIELDS.map(field => [field, draft[field] == null ? '' : String(draft[field]).trim()])
+  );
+}
+
+function buildAlertInhibitReturnEvidenceContext(returnContext: AlertInhibitRouteState['returnContext']): SignalRouteContext {
+  return {
+    entityId: returnContext.entityId,
+    entityName: returnContext.entityName,
+    returnTo: returnContext.returnTo,
+    serviceName: returnContext.serviceName,
+    serviceNamespace: returnContext.serviceNamespace,
+    environment: returnContext.environment,
+    timeRange: returnContext.timeRange,
+    start: returnContext.start,
+    end: returnContext.end,
+    refresh: returnContext.refresh,
+    live: returnContext.live,
+    tz: returnContext.tz,
+    source: returnContext.source,
+    monitorId: returnContext.monitorId,
+    monitorName: returnContext.monitorName,
+    monitorApp: returnContext.monitorApp,
+    monitorInstance: returnContext.monitorInstance,
+    traceId: returnContext.traceId,
+    spanId: returnContext.spanId,
+    collector: returnContext.collector,
+    template: returnContext.template
+  };
+}
+
 export default function AlertInhibitPage({ initialRouteState }: { initialRouteState?: AlertInhibitRouteState } = {}) {
   const { t } = useI18n();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const routeSearchParamString = searchParams.toString();
+  const routeSearch = searchParams.get('search') ?? '';
+  const routePageIndex = parseAlertInhibitRouteInteger(searchParams.get('pageIndex'), 0);
+  const routePageSize = parseAlertInhibitRouteInteger(searchParams.get('pageSize'), ALERT_INHIBIT_PAGE_SIZE_OPTIONS[0], 1);
+  const routeListState = useMemo<AlertInhibitListRouteState>(() => ({
+    search: routeSearch,
+    pageIndex: routePageIndex,
+    pageSize: routePageSize
+  }), [routePageIndex, routePageSize, routeSearch]);
   const alertInhibitRouteState = initialRouteState ?? EMPTY_ALERT_INHIBIT_ROUTE_STATE;
   const { returnContext, signal, signalContext, managementContext } = alertInhibitRouteState;
-  const inhibitEvidenceContext = useMemo(
-    () => buildAlertInhibitEvidenceContext(signal, signalContext, t),
-    [signal, signalContext, t]
+  const inhibitEvidenceRouteContext = useMemo(
+    () => signal ? signalContext : buildAlertInhibitReturnEvidenceContext(returnContext),
+    [returnContext, signal, signalContext]
   );
-  const [search, setSearch] = useState('');
-  const [query, setQuery] = useState('');
-  const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState<number>(ALERT_INHIBIT_PAGE_SIZE_OPTIONS[0]);
+  const inhibitEvidenceContext = useMemo(
+    () => buildAlertInhibitEvidenceContext(signal, inhibitEvidenceRouteContext, t),
+    [signal, inhibitEvidenceRouteContext, t]
+  );
+  const [search, setSearch] = useState(routeListState.search);
+  const [query, setQuery] = useState(routeListState.search);
+  const [pageIndex, setPageIndex] = useState(routeListState.pageIndex);
+  const [pageSize, setPageSize] = useState<number>(routeListState.pageSize);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editorLoading, setEditorLoading] = useState(false);
@@ -126,6 +217,10 @@ export default function AlertInhibitPage({ initialRouteState }: { initialRouteSt
   const [editorErrorDetail, setEditorErrorDetail] = useState<string | null>(null);
   const [editorErrorContract, setEditorErrorContract] = useState<'save' | 'enable' | 'delete' | null>(null);
   const [draft, setDraft] = useState<AlertInhibitFormDraft>(() => buildAlertInhibitFormDraft(null, inhibitEvidenceContext?.draftPatch));
+  const [editorInitialFingerprint, setEditorInitialFingerprint] = useState(() => (
+    serializeAlertInhibitDraft(buildAlertInhibitFormDraft(null, inhibitEvidenceContext?.draftPatch))
+  ));
+  const [editorDiscardDialogOpen, setEditorDiscardDialogOpen] = useState(false);
   const [refreshTick, setRefreshTick] = useState(0);
   const [checkedIds, setCheckedIds] = useState<number[]>([]);
   const [deleteRequest, setDeleteRequest] = useState<InhibitDeleteRequest | null>(null);
@@ -141,6 +236,46 @@ export default function AlertInhibitPage({ initialRouteState }: { initialRouteSt
     () => ['alert-inhibit', useMatchedView ? `matched:${matchedRuleIdsKey}` : alertInhibitListUrl, refreshTick].join('|'),
     [alertInhibitListUrl, matchedRuleIdsKey, refreshTick, useMatchedView]
   );
+  const editorDraftFingerprint = useMemo(() => serializeAlertInhibitDraft(draft), [draft]);
+  const shouldConfirmEditorDiscard = Boolean(editorOpen && editorDraftFingerprint !== editorInitialFingerprint && !editorSaving);
+
+  useEffect(() => {
+    setSearch(routeListState.search);
+    setQuery(routeListState.search);
+    setPageIndex(routeListState.pageIndex);
+    setPageSize(routeListState.pageSize);
+    setSelectedId(null);
+    setCheckedIds([]);
+  }, [routeListState]);
+
+  const replaceRouteQuery = useCallback((nextState: AlertInhibitListRouteState) => {
+    const nextParams = new URLSearchParams(routeSearchParamString);
+    const cleanSearch = nextState.search.trim();
+    if (cleanSearch) {
+      nextParams.set('search', cleanSearch);
+    } else {
+      nextParams.delete('search');
+    }
+
+    if (nextState.pageIndex > 0) {
+      nextParams.set('pageIndex', String(nextState.pageIndex));
+    } else {
+      nextParams.delete('pageIndex');
+    }
+
+    if (nextState.pageSize !== ALERT_INHIBIT_PAGE_SIZE_OPTIONS[0]) {
+      nextParams.set('pageSize', String(nextState.pageSize));
+    } else {
+      nextParams.delete('pageSize');
+    }
+
+    const nextParamString = nextParams.toString();
+    const nextUrl = nextParamString ? `${ALERT_INHIBIT_ROUTE_PATH}?${nextParamString}` : ALERT_INHIBIT_ROUTE_PATH;
+    const currentUrl = routeSearchParamString ? `${ALERT_INHIBIT_ROUTE_PATH}?${routeSearchParamString}` : ALERT_INHIBIT_ROUTE_PATH;
+    if (nextUrl !== currentUrl) {
+      router.replace(nextUrl, { scroll: false });
+    }
+  }, [routeSearchParamString, router]);
 
   const load = useCallback(async () => {
     const labelOptionsPromise = withTimeoutFallback(
@@ -202,13 +337,18 @@ export default function AlertInhibitPage({ initialRouteState }: { initialRouteSt
               );
               setEntityPrefillSource(prefill.source);
               setEntityPrefillWarning(prefill.warning);
-              setDraft(buildAlertInhibitFormDraft(null, { ...baseDraftPatch, ...prefill.draftPatch }));
+              const nextDraft = buildAlertInhibitFormDraft(null, { ...baseDraftPatch, ...prefill.draftPatch });
+              setDraft(nextDraft);
+              setEditorInitialFingerprint(serializeAlertInhibitDraft(nextDraft));
             } finally {
               setEditorLoading(false);
             }
           } else {
-            setDraft(buildAlertInhibitFormDraft(null, baseDraftPatch));
+            const nextDraft = buildAlertInhibitFormDraft(null, baseDraftPatch);
+            setDraft(nextDraft);
+            setEditorInitialFingerprint(serializeAlertInhibitDraft(nextDraft));
           }
+          setEditorDiscardDialogOpen(false);
           setEditorError(null);
           setEditorErrorDetail(null);
           setEditorErrorContract(null);
@@ -227,7 +367,10 @@ export default function AlertInhibitPage({ initialRouteState }: { initialRouteSt
           setEditorMessage(null);
           try {
             const detail = await loadAlertInhibitDetailFromFacade(api.alertInhibits.detail, targetId);
-            setDraft(buildAlertInhibitFormDraft(detail));
+            const nextDraft = buildAlertInhibitFormDraft(detail);
+            setDraft(nextDraft);
+            setEditorInitialFingerprint(serializeAlertInhibitDraft(nextDraft));
+            setEditorDiscardDialogOpen(false);
             setEditorOpen(true);
           } catch (error) {
             setEditorError(error instanceof Error ? error.message : t('common.notify.edit-fail'));
@@ -241,9 +384,13 @@ export default function AlertInhibitPage({ initialRouteState }: { initialRouteSt
         async function handleSave() {
           const validationError = validateAlertInhibitForm(draft, t);
           if (validationError) {
+            const validationField = getAlertInhibitValidationField(draft);
             setEditorError(validationError);
             setEditorErrorDetail(null);
             setEditorErrorContract(null);
+            if (validationField) {
+              focusAlertInhibitEditorField(validationField);
+            }
             return;
           }
           setEditorSaving(true);
@@ -258,8 +405,10 @@ export default function AlertInhibitPage({ initialRouteState }: { initialRouteSt
             } else {
               await createAlertInhibitFromFacade(api.alertInhibits.create, draft);
             }
+            setEditorInitialFingerprint(serializeAlertInhibitDraft(draft));
             setEditorMessage(t(isEdit ? 'common.notify.edit-success' : 'common.notify.new-success'));
             setEditorOpen(false);
+            setEditorDiscardDialogOpen(false);
             setCreatedOutsideMatchedViewNotice(!isEdit && useMatchedView);
             setRefreshTick(value => value + 1);
           } catch (error) {
@@ -269,6 +418,22 @@ export default function AlertInhibitPage({ initialRouteState }: { initialRouteSt
           } finally {
             setEditorSaving(false);
           }
+        }
+
+        function handleCloseEditor() {
+          setEditorOpen(false);
+          setEditorError(null);
+          setEditorErrorDetail(null);
+          setEditorErrorContract(null);
+          setEditorDiscardDialogOpen(false);
+        }
+
+        function requestCloseEditor() {
+          if (shouldConfirmEditorDiscard) {
+            setEditorDiscardDialogOpen(true);
+            return;
+          }
+          handleCloseEditor();
         }
 
         async function handleToggleEnabled(inhibit?: AlertInhibit) {
@@ -344,35 +509,78 @@ export default function AlertInhibitPage({ initialRouteState }: { initialRouteSt
         }
 
         function handleApplyFilter() {
-          setQuery(search);
+          const nextSearch = search.trim();
+          const nextState = { search: nextSearch, pageIndex: 0, pageSize };
+          setSearch(nextSearch);
+          setQuery(nextSearch);
           setPageIndex(0);
           setSelectedId(null);
           setCheckedIds([]);
+          replaceRouteQuery(nextState);
         }
 
         function handleClearFilter() {
+          const nextState = { search: '', pageIndex: 0, pageSize };
           setSearch('');
           setQuery('');
           setPageIndex(0);
           setSelectedId(null);
           setCheckedIds([]);
+          replaceRouteQuery(nextState);
         }
 
         function handlePageIndexChange(nextPageIndex: number) {
           setPageIndex(nextPageIndex);
           setSelectedId(null);
           setCheckedIds([]);
+          replaceRouteQuery({ search: query, pageIndex: nextPageIndex, pageSize });
         }
 
         function handlePageSizeChange(nextPageSize: number) {
+          const nextState = { search: query, pageIndex: 0, pageSize: nextPageSize };
           setPageSize(nextPageSize);
           setPageIndex(0);
           setSelectedId(null);
           setCheckedIds([]);
+          replaceRouteQuery(nextState);
         }
 
         return (
           <>
+            {(() => {
+              const deleteTargetNames = deleteRequest?.ids
+                .map(id => data.list.content.find(item => item.id === id)?.name?.trim())
+                .filter((name): name is string => Boolean(name)) ?? [];
+              const missingDeleteTargetCount = deleteRequest
+                ? Math.max(deleteRequest.ids.length - deleteTargetNames.length, 0)
+                : 0;
+              const deleteConfirmCopy = [
+                deleteRequest?.kind === 'batch'
+                  ? t('alert.inhibit.delete.confirm.batch', { count: deleteRequest.ids.length })
+                  : t('alert.inhibit.delete.confirm.single'),
+                deleteTargetNames.length > 0
+                  ? t('alert.inhibit.delete.confirm.targets', { names: deleteTargetNames.join(', ') })
+                  : null,
+                missingDeleteTargetCount > 0
+                  ? t('alert.inhibit.delete.confirm.targets-more', { count: missingDeleteTargetCount })
+                  : null
+              ].filter(Boolean).join('\n');
+
+              return (
+                <div data-alert-delete-confirm={deleteRequest ? 'open' : 'closed'}>
+                  <HzConfirmDialog
+                    open={Boolean(deleteRequest)}
+                    title={deleteRequest?.kind === 'batch' ? t('common.confirm.delete-batch') : t('common.confirm.delete')}
+                    copy={deleteConfirmCopy}
+                    confirmLabel={t('alert.inhibit.delete.confirm.action')}
+                    cancelLabel={t('common.button.cancel')}
+                    pending={deletePending}
+                    onCancel={() => setDeleteRequest(null)}
+                    onConfirm={() => void handleConfirmedDelete()}
+                  />
+                </div>
+              );
+            })()}
             <AlertInhibitSurface
               t={t}
               data={data}
@@ -404,6 +612,7 @@ export default function AlertInhibitPage({ initialRouteState }: { initialRouteSt
               onSelect={setSelectedId}
               onCheckedIdsChange={setCheckedIds}
               pageSizeOptions={[...ALERT_INHIBIT_PAGE_SIZE_OPTIONS]}
+              requestedPageSize={pageSize}
               onPageIndexChange={handlePageIndexChange}
               onPageSizeChange={handlePageSizeChange}
               onViewAllRules={() => {
@@ -425,27 +634,26 @@ export default function AlertInhibitPage({ initialRouteState }: { initialRouteSt
               onToggleEnabled={inhibit => void handleToggleEnabled(inhibit)}
               onDelete={inhibitId => void handleDelete(inhibitId)}
               onDeleteSelected={() => void handleDeleteSelected()}
-              onCloseEditor={() => setEditorOpen(false)}
+              onCloseEditor={requestCloseEditor}
               onDraftChange={setDraft}
               onCopySourceToTarget={() => setDraft(prev => copyAlertInhibitSourceToTarget(prev))}
               onDropSeverity={() => setDraft(prev => dropSeverityFromAlertInhibitTarget(prev))}
               onClearTarget={() => setDraft(prev => clearAlertInhibitTarget(prev))}
               onClearEqual={() => setDraft(prev => clearAlertInhibitEqualLabels(prev))}
             />
-            <div data-alert-delete-confirm={deleteRequest ? 'open' : 'closed'}>
+            <div
+              data-alert-inhibit-unsaved-cancel="hertzbeat-ui-confirm-dialog"
+              data-alert-inhibit-unsaved-cancel-state={editorDiscardDialogOpen ? 'open' : 'closed'}
+            >
               <HzConfirmDialog
-                open={Boolean(deleteRequest)}
-                title={deleteRequest?.kind === 'batch' ? t('common.confirm.delete-batch') : t('common.confirm.delete')}
-                copy={
-                  deleteRequest?.kind === 'batch'
-                    ? t('alert.inhibit.delete.confirm.batch', { count: deleteRequest.ids.length })
-                    : t('alert.inhibit.delete.confirm.single')
-                }
-                confirmLabel={t('common.button.ok')}
-                cancelLabel={t('common.button.cancel')}
-                pending={deletePending}
-                onCancel={() => setDeleteRequest(null)}
-                onConfirm={() => void handleConfirmedDelete()}
+                open={editorDiscardDialogOpen}
+                title={t('alert.inhibit.unsaved-cancel.title')}
+                kicker={t('alert.inhibit.unsaved-cancel.kicker')}
+                copy={t('alert.inhibit.unsaved-cancel.copy')}
+                confirmLabel={t('alert.inhibit.unsaved-cancel.discard')}
+                cancelLabel={t('alert.inhibit.unsaved-cancel.keep-editing')}
+                onCancel={() => setEditorDiscardDialogOpen(false)}
+                onConfirm={handleCloseEditor}
               />
             </div>
           </>

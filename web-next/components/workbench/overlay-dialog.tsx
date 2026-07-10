@@ -71,13 +71,20 @@ export function OverlayDialog({
       <div
         className={cn(
           isSideDrawer
-            ? 'hb-scrollbar h-full max-h-screen w-full overflow-auto border-l border-[var(--ops-border-color)] bg-[var(--ops-surface-panel)] shadow-[0_24px_80px_rgba(0,0,0,0.45)]'
-            : 'hb-scrollbar max-h-[92vh] w-full overflow-auto rounded-[4px] border border-[var(--ops-border-color)] bg-[var(--ops-surface-panel)] shadow-[0_24px_80px_rgba(0,0,0,0.45)]',
+            ? 'h-full max-h-screen w-full overflow-hidden border-l border-[var(--ops-border-color)] bg-[var(--ops-surface-panel)] shadow-[0_24px_80px_rgba(0,0,0,0.45)]'
+            : 'max-h-[92vh] w-full overflow-hidden rounded-[4px] border border-[var(--ops-border-color)] bg-[var(--ops-surface-panel)] shadow-[0_24px_80px_rgba(0,0,0,0.45)]',
+          'flex flex-col',
           maxWidthClassName,
           className
         )}
+        data-overlay-dialog-panel="bounded"
+        data-overlay-dialog-panel-scroll-contract="header-footer-visible-content-scroll"
       >
-        <header className="flex items-start justify-between gap-4 border-b border-[var(--ops-border-color)] px-5 py-4">
+        <header
+          className="shrink-0 border-b border-[var(--ops-border-color)] bg-[var(--ops-surface-panel)] px-5 py-4"
+          data-overlay-dialog-header="visible"
+        >
+          <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             {kicker ? <div className="text-[11px] uppercase tracking-[0.16em] text-[var(--ops-text-tertiary)]">{kicker}</div> : null}
             <div className="mt-1 text-lg font-semibold text-[var(--ops-text-primary)]">{title}</div>
@@ -90,9 +97,22 @@ export function OverlayDialog({
           >
             <X size={16} />
           </button>
+          </div>
         </header>
-        <div className={cn('px-5 py-4', contentClassName)}>{children}</div>
-        {footer ? <footer className="border-t border-[var(--ops-border-color)] px-5 py-4">{footer}</footer> : null}
+        <div
+          className={cn('hb-scrollbar min-h-0 flex-1 overflow-auto px-5 py-4', contentClassName)}
+          data-overlay-dialog-content="scroll-region"
+        >
+          {children}
+        </div>
+        {footer ? (
+          <footer
+            className="shrink-0 border-t border-[var(--ops-border-color)] bg-[var(--ops-surface-panel)] px-5 py-4"
+            data-overlay-dialog-footer="visible-action-bar"
+          >
+            {footer}
+          </footer>
+        ) : null}
       </div>
     </div>
   );

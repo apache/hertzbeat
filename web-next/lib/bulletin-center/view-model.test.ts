@@ -9,7 +9,7 @@ const formatAt = () => formattedAt;
 describe('bulletin view model', () => {
   it('builds facts from list state and selection', () => {
     expect(buildBulletinFacts({ totalElements: 8, content: [1, 2] } as any, { name: 'Ops board' } as any, t)).toEqual([
-      { label: t('common.workspace'), value: 'bulletin' },
+      { label: t('common.workspace'), value: t('bulletin.facts.workspace') },
       { label: t('common.total'), value: '8' },
       { label: t('common.current-page-count'), value: '2' },
       { label: t('bulletin.facts.selected'), value: 'Ops board' }
@@ -222,6 +222,8 @@ describe('bulletin view model', () => {
     expect(validateBulletinForm({ name: 'Ops', app: '', monitorIdsText: '', fieldsJson: '{}' }, t)).toBe(t('bulletin.validation.app'));
     expect(validateBulletinForm({ name: 'Ops', app: 'mysql', monitorIdsText: '', fieldsJson: '{}' }, t)).toBe(t('bulletin.validation.monitors'));
     expect(validateBulletinForm({ name: 'Ops', app: 'mysql', monitorIdsText: '1,2', fieldsJson: '{oops' }, t)).toBe(t('bulletin.validation.fields'));
-    expect(validateBulletinForm({ name: 'Ops', app: 'mysql', monitorIdsText: '1,2', fieldsJson: '{}' }, t)).toBeNull();
+    expect(validateBulletinForm({ name: 'Ops', app: 'mysql', monitorIdsText: '1,2', fieldsJson: '[]' }, t)).toBe(t('bulletin.validation.fields'));
+    expect(validateBulletinForm({ name: 'Ops', app: 'mysql', monitorIdsText: '1,2', fieldsJson: '{}' }, t)).toBe(t('bulletin.validation.fields-empty'));
+    expect(validateBulletinForm({ name: 'Ops', app: 'mysql', monitorIdsText: '1,2', fieldsJson: '{"cpu":["usage"]}' }, t)).toBeNull();
   });
 });

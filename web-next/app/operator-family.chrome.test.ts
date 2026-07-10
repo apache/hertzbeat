@@ -32,7 +32,8 @@ describe('operator family cold-workbench chrome', () => {
     expect(metricsSource).toContain('ClientWorkbench');
     expect(metricsSource).toContain('buildConsoleFacts');
     expect(metricsSource).toContain('buildMetricsHandoffLinks');
-    expect(metricsSource).toContain('data-otlp-metrics-route="otlp-cold-metrics-workbench"');
+    expect(metricsSource).toContain('data-otlp-metrics-route="otlp-hertzbeat-ui-metrics-workbench"');
+    expect(metricsSource).toContain('data-otlp-metrics-shell-owner="hertzbeat-ui-signal-workbench-shell"');
     expect(metricsSource).not.toContain('components/workbench/primitives');
   });
 });

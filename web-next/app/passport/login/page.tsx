@@ -5,11 +5,10 @@ import {
   type PassportLoginSearchParams
 } from '@/lib/passport-login/controller';
 
-export default async function PassportLoginPage({
-  searchParams
-}: {
+export default async function PassportLoginPage(props: {
   searchParams?: Promise<PassportLoginSearchParams>;
 }) {
+  const { searchParams } = props ?? {};
   const resolvedSearchParams = await searchParams;
   const routeState = readPassportLoginRouteState(resolvedSearchParams);
 

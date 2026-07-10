@@ -6,6 +6,8 @@ import { startLocalReleaseServer } from './release-shell.mjs';
 const defaultRouteMatrix = [
   '/overview',
   '/entities',
+  '/entities/discovery',
+  '/entities/import',
   '/entities/new',
   '/entities/1',
   '/entities/1/edit',
@@ -23,6 +25,7 @@ const defaultRouteMatrix = [
   '/actions',
   '/dashboard',
   '/events',
+  '/explorer',
   '/log/manage',
   '/log/stream',
   '/log/integration',
@@ -39,6 +42,7 @@ const defaultRouteMatrix = [
   '/setting',
   '/setting/settings',
   '/setting/settings/config',
+  '/setting/settings/mcp-server',
   '/setting/settings/object-store',
   '/setting/settings/server',
   '/setting/settings/token',
@@ -49,8 +53,10 @@ const defaultRouteMatrix = [
   '/setting/status',
   '/status',
   '/status/public',
+  '/topology',
   '/passport/login',
   '/passport/lock',
+  '/ui-lab',
   '/',
   '/login'
 ];

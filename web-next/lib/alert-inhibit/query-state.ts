@@ -30,6 +30,10 @@ export type AlertInhibitListQuery = {
 
 export const ALERT_INHIBIT_PAGE_SIZE_OPTIONS = [8, 15, 25] as const;
 
+function normalizeSignal(value: string | null | undefined) {
+  return value === 'metrics' || value === 'logs' || value === 'traces' ? value : null;
+}
+
 function normalizePageIndex(value: number | null | undefined) {
   return Number.isFinite(value) && value != null && value >= 0 ? Math.floor(value) : 0;
 }
@@ -76,11 +80,12 @@ function readManagementContext(searchParams: ReturnType<typeof createCompatSearc
 
 export function readAlertInhibitRouteState(searchParams: AlertInhibitSearchParams = {}): AlertInhibitRouteState {
   const reader = createCompatSearchParamReader(searchParams);
+  const signal = normalizeSignal(reader.get('signal'));
 
   return {
     returnContext: queryStateFromParams(reader),
-    signal: reader.get('signal'),
-    signalContext: readSignalRouteContext(reader),
+    signal,
+    signalContext: signal ? readSignalRouteContext(reader) : {},
     managementContext: readManagementContext(reader)
   };
 }

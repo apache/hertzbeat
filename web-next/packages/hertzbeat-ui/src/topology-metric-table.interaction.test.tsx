@@ -97,6 +97,69 @@ describe('@hertzbeat/ui topology metric table interactions', () => {
     expect(onRowSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 'edge-120' }));
   });
 
+  it('keeps large edge tables to one ordinary Tab stop while preserving row click selection', async () => {
+    const rows: HzTopologyMetricRow[] = Array.from({ length: 3 }, (_, index) => ({
+      id: `edge-${index}`,
+      sourceNodeId: `source-${index}`,
+      targetNodeId: `target-${index}`,
+      source: `source-${index}`,
+      target: `target-${index}`,
+      relationType: 'trace-call',
+      sourceKind: 'otlp-trace-call',
+      requestRatePerSecond: index + 1,
+      requestCount: index + 10,
+      errorRate: 0,
+      latencyP95Ms: index + 40,
+      tone: 'neutral'
+    }));
+    const onRowSelect = vi.fn();
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+
+    await act(async () => {
+      root?.render(
+        <HzTopologyMetricTable
+          title="Topology edges"
+          rows={rows}
+          selectedRowId="edge-1"
+          selectionSource="table"
+          onRowSelect={onRowSelect}
+        />
+      );
+    });
+
+    const edge0 = container.querySelector('[data-hz-topology-edge-row="edge-0"]') as HTMLButtonElement;
+    const edge1 = container.querySelector('[data-hz-topology-edge-row="edge-1"]') as HTMLButtonElement;
+    const edge2 = container.querySelector('[data-hz-topology-edge-row="edge-2"]') as HTMLButtonElement;
+
+    expect(edge0.tabIndex).toBe(-1);
+    expect(edge0.getAttribute('data-hz-topology-edge-row-tabstop')).toBe('false');
+    expect(edge1.tabIndex).toBe(0);
+    expect(edge1.getAttribute('data-hz-topology-edge-row-tabstop')).toBe('true');
+    expect(edge2.tabIndex).toBe(-1);
+    expect(edge2.getAttribute('data-hz-topology-edge-row-tabstop')).toBe('false');
+
+    await act(async () => {
+      edge2.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+
+    expect(onRowSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 'edge-2' }));
+
+    await act(async () => {
+      root?.render(
+        <HzTopologyMetricTable
+          title="Topology edges"
+          rows={rows}
+          onRowSelect={onRowSelect}
+        />
+      );
+    });
+
+    expect((container.querySelector('[data-hz-topology-edge-row="edge-0"]') as HTMLButtonElement).tabIndex).toBe(0);
+    expect((container.querySelector('[data-hz-topology-edge-row="edge-1"]') as HTMLButtonElement).tabIndex).toBe(-1);
+  });
+
   it('resets the render budget predictably when filters change after an expanded-row selection', async () => {
     const rows: HzTopologyMetricRow[] = Array.from({ length: 130 }, (_, index) => ({
       id: `edge-${index}`,

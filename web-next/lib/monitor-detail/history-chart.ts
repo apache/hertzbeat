@@ -1,4 +1,5 @@
-import { graphic, type EChartsOption } from 'echarts';
+import type { EChartsOption } from 'echarts';
+import { graphic } from 'echarts/core';
 import { buildChartDataZoomTimeContext, sanitizeTimeContext, type ChartDataZoomRange, type TimeContext } from '@/lib/time-context';
 import type { MonitorHistoryValue } from '@/lib/types';
 

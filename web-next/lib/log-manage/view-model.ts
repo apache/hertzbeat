@@ -3,6 +3,7 @@ import {
   buildSignalAlertHandlingHref,
   buildSignalAlertRulesHref,
   buildSignalDashboardHref,
+  buildSignalEntityDiscoveryHref,
   buildSignalEntityHref,
   stripReturnLabelFromHref,
   type SignalAlertRuleDraftContext,
@@ -92,7 +93,12 @@ export function buildSelectedLogRows(
 
   return [
     {
-      title: selectedLog.resource?.['service.name']?.toString() || t('log.manage.unknown-service'),
+      title: firstText(
+        readAttribute(selectedLog.resource, 'service.name'),
+        readAttribute(selectedLog.resource, 'service_name'),
+        readAttribute(selectedLog.attributes, 'service.name'),
+        readAttribute(selectedLog.attributes, 'service_name')
+      ) || t('log.manage.unknown-service'),
       copy: bodyText(selectedLog.body),
       meta: selectedLog.traceId || t('log.manage.no-trace')
     },
@@ -267,7 +273,9 @@ export function buildLogExplorerRows(
   return entries.map((entry, index) => {
     const service =
       readAttribute(entry.resource, 'service.name') ||
+      readAttribute(entry.resource, 'service_name') ||
       readAttribute(entry.attributes, 'service.name') ||
+      readAttribute(entry.attributes, 'service_name') ||
       '-';
     return {
       key: `${entry.timeUnixNano ?? '0'}-${entry.traceId || 'none'}-${entry.spanId || 'none'}-${index}`,
@@ -794,6 +802,7 @@ export function buildLogHandoffLinks(
     metricsHref: `/ingestion/otlp/metrics?${metricsParams.toString()}`,
     entitiesHref: entityParams.toString() ? `/entities?${entityParams.toString()}` : '/entities',
     entityHref: buildSignalEntityHref(signalContext, serviceName),
+    entityDiscoveryHref: buildSignalEntityDiscoveryHref(signalContext, serviceName),
     alertHandlingHref: buildSignalAlertHandlingHref('logs', signalContext),
     alertRulesHref: buildSignalAlertRulesHref('logs', signalContext, signalDraft),
     dashboardHref: buildSignalDashboardHref('logs', signalContext, signalDraft)

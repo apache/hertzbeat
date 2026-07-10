@@ -21,6 +21,13 @@ const PASSWORD_PROMPT = zhT('app.login.message-need-credential');
 const PASSWORD_TOGGLE_LABEL = zhT('app.login.password-show');
 const REMEMBER_ME_LABEL = zhT('app.login.remember-me');
 const LOGIN_BUTTON = zhT('app.login.login');
+const RETURN_NOTICE_TITLE = zhT('passport.login.return-notice.title');
+const RETURN_NOTICE_TARGET = '/entities/discovery?identityKey=service.name&identityValue=billing-api';
+const RETURN_NOTICE_ROUTE = '/entities/discovery?identityKey=service.name&amp;identityValue=billing-api';
+const RETURN_NOTICE_LABEL = zhT('passport.login.return-target.entity-discovery');
+const RETURN_NOTICE_COPY = zhT('passport.login.return-notice.copy', {
+  target: RETURN_NOTICE_LABEL
+}).replaceAll('&', '&amp;');
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -66,6 +73,8 @@ vi.mock('../../lib/passport-login/view-model', () => ({
     kind: 'session',
     copy: LOGIN_NOTICE_COPY
   }),
+  normalizeCredentialLoginError: (message: string) => message,
+  resolveLoginReturnTargetLabel: (_target: string, t: (key: string) => string) => t('passport.login.return-target.entity-discovery'),
   shouldWarnDefaultPassword: vi.fn(() => false)
 }));
 
@@ -79,7 +88,9 @@ describe('LoginForm', () => {
     const html = renderToStaticMarkup(<LoginForm />);
 
     expect(html).toContain('data-login-shell="passport"');
-    expect(html).toContain("/assets/bg.png");
+    expect(html).toContain('data-passport-shell-visual="ops-dark-entry"');
+    expect(html).toContain('data-passport-background-tone="ops-dark"');
+    expect(html).not.toContain("/assets/bg.png");
     expect(html).toContain(HERO_TITLE);
     expect(html).toContain(HERO_LEAD);
     expect(html).toContain(HERO_FOCUS);
@@ -95,9 +106,16 @@ describe('LoginForm', () => {
     expect(html).toContain(LOGIN_BUTTON);
     expect(html).toContain(`placeholder="${USERNAME_PROMPT}"`);
     expect(html).toContain(`placeholder="${PASSWORD_PROMPT}"`);
+    expect(html).toContain('id="passport-login-identifier"');
+    expect(html).toContain('name="identifier"');
+    expect(html).toContain('autoComplete="username"');
+    expect(html).toContain('id="passport-login-credential"');
+    expect(html).toContain('name="credential"');
+    expect(html).toContain('autoComplete="current-password"');
     expect(html).toContain(`aria-label="${PASSWORD_TOGGLE_LABEL}"`);
     expect(html).toContain('data-passport-login-password-eye="true"');
     expect(html).toContain('data-passport-login-panel="angular-gray-card"');
+    expect(html).toContain('data-passport-login-panel-visual="ops-dark-card"');
     expect(html).toContain('data-passport-login-panel-align="angular-top"');
     expect(html).toContain('data-passport-login-submit-lifecycle-contract="angular-required-default-warning-session-bootstrap-redirect"');
     expect(html).toContain('data-passport-login-submit-lifecycle-owner="hertzbeat-ui-passport-login-action"');
@@ -138,6 +156,7 @@ describe('LoginForm', () => {
     expect(html).toContain(REMEMBER_ME_LABEL);
     expect(html).toContain('data-passport-locale-trigger="globe"');
     expect(html).toContain('data-passport-footer-tone="angular-muted"');
+    expect(html).toContain('data-passport-footer-visual-tone="ops-muted"');
     expect(html).toContain('data-passport-footer-band="angular-raised"');
     expect(html).not.toContain(ZH_CN_LABEL);
     expect(html).toContain('Apache HertzBeat™');
@@ -145,8 +164,27 @@ describe('LoginForm', () => {
     expect(html).toContain('Copyright ©');
     expect(html).not.toContain(zhT('platform.footer.license'));
     expect(html).not.toContain(LOGIN_NOTICE_COPY);
+    expect(html).not.toContain('data-passport-login-return-notice="guarded-deep-link"');
     expect(html).not.toContain('value="admin"');
     expect(html).not.toContain('value="hertzbeat"');
+  }, 60000);
+
+  it('explains the guarded deep-link return target before credential entry', async () => {
+    const { LoginForm } = await import('./login-form');
+    const html = renderToStaticMarkup(
+      <LoginForm
+        initialRouteState={{
+          redirectTarget: RETURN_NOTICE_TARGET
+        }}
+      />
+    );
+
+    expect(html).toContain('data-passport-login-return-notice="guarded-deep-link"');
+    expect(html).toContain(RETURN_NOTICE_TITLE);
+    expect(html).toContain(RETURN_NOTICE_COPY);
+    expect(html).toContain(RETURN_NOTICE_LABEL);
+    expect(html).toContain(RETURN_NOTICE_ROUTE);
+    expect(html).toContain('data-hz-ui="passport-login-action-frame"');
   }, 60000);
 
   it('removes the remaining bright auth-field residue and adopts shared ops form tokens', () => {
@@ -170,6 +208,11 @@ describe('LoginForm', () => {
     expect(source).toContain('text-[var(--ops-text-tertiary)]');
     expect(source).toContain('border-[var(--ops-border-color)]');
     expect(source).toContain('bg-[var(--ops-surface-panel)]');
+    expect(source).toContain('bg-[rgba(14,18,24,0.94)]');
+    expect(source).toContain('data-passport-login-panel-visual="ops-dark-card"');
+    expect(source).toContain('text-[var(--ops-text-secondary)]');
+    expect(source).not.toContain('bg-[#5f5f66]');
+    expect(source).not.toContain('text-[#17181c]');
     expect(uiSource).toContain('bg-[var(--ops-surface-elevated)]');
     expect(source).toContain("import { HzPassportLoginActionFrame, HzPassportLoginNotice, HzPassportLoginValidationNotice } from '@hertzbeat/ui';");
     expect(source).toContain('<HzPassportLoginActionFrame');

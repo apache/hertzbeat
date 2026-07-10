@@ -18,12 +18,16 @@
 package org.apache.hertzbeat.manager.service.entity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 import org.apache.hertzbeat.common.entity.manager.EntityRelation;
 import org.apache.hertzbeat.manager.dao.EntityRelationDao;
+import org.springframework.data.domain.PageRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -58,10 +62,45 @@ class EntityRelationQueryServiceTest {
     }
 
     @Test
+    void findEntityRelationsWithLimitReturnsStablePreviewRows() {
+        EntityRelation relation = EntityRelation.builder()
+                .id(31L)
+                .sourceEntityId(10L)
+                .targetEntityId(30L)
+                .relationType("calls")
+                .build();
+        when(entityRelationDao.findBySourceEntityIdOrTargetEntityId(eq(10L), eq(10L), any(PageRequest.class)))
+                .thenReturn(List.of(relation));
+
+        List<EntityRelation> relations = entityRelationQueryService.findEntityRelations(10L, 50);
+
+        assertEquals(List.of(relation), relations);
+        verify(entityRelationDao).findBySourceEntityIdOrTargetEntityId(eq(10L), eq(10L), any(PageRequest.class));
+    }
+
+    @Test
+    void findEntityRelationsWithNonPositiveLimitSkipsStorage() {
+        assertEquals(List.of(), entityRelationQueryService.findEntityRelations(10L, 0));
+    }
+
+    @Test
     void countEntityRelationsReturnsIncomingAndOutgoingCount() {
         when(entityRelationDao.countBySourceEntityIdOrTargetEntityId(10L, 10L)).thenReturn(3L);
 
         assertEquals(3L, entityRelationQueryService.countEntityRelations(10L));
         verify(entityRelationDao).countBySourceEntityIdOrTargetEntityId(10L, 10L);
+    }
+
+    @Test
+    void countEntityRelationsByEntityIdsMergesIncomingAndOutgoingCounts() {
+        List<Long> entityIds = List.of(10L, 20L);
+        when(entityRelationDao.countBySourceEntityIdInGroupBySourceEntityId(entityIds))
+                .thenReturn(List.<Object[]>of(new Object[] {10L, 2L}));
+        when(entityRelationDao.countByTargetEntityIdInGroupByTargetEntityId(entityIds))
+                .thenReturn(List.<Object[]>of(new Object[] {10L, 1L}, new Object[] {20L, 4L}));
+
+        assertEquals(Map.of(10L, 3L, 20L, 4L), entityRelationQueryService.countEntityRelationsByEntityIds(entityIds));
+        verify(entityRelationDao).countBySourceEntityIdInGroupBySourceEntityId(entityIds);
+        verify(entityRelationDao).countByTargetEntityIdInGroupByTargetEntityId(entityIds);
     }
 }

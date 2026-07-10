@@ -47,7 +47,8 @@ describe('release-shell smoke helpers', () => {
       '/log/manage',
       '/trace/manage',
       '/topology',
-      '/alert'
+      '/alert',
+      '/ui-lab'
     ].forEach(route => {
       expect(source).toContain(route);
     });

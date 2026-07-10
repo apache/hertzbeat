@@ -250,7 +250,8 @@ public class EntityObservabilityGatewayImpl implements EntityObservabilityGatewa
         readinessScore += relationReady ? 20 : 0;
         readinessScore += telemetryReady ? 20 : 0;
         readinessScore += statusReady ? 20 : 0;
-        return new EntityOpsSummaryInfo(ownerReady, runbookReady, relationReady, telemetryReady, statusReady, readinessScore);
+        return new EntityOpsSummaryInfo(ownerReady, runbookReady, relationReady, telemetryReady,
+                statusReady, readinessScore, Math.max(0L, relationCount));
     }
 
     @Override

@@ -276,16 +276,32 @@ vi.mock('@/lib/signal-route-context', () => ({
       returnLabel: mockState.searchParams.get('returnLabel') || undefined
     };
   },
-  buildSignalEntityContextRows: () => {
+  buildSignalEntityContextRows: (context: any = {}, fallback: any = {}) => {
     const t = createTranslatorMock({ locale: 'zh-CN' });
-
-    return [
-      { label: t('signal.context.entity.label'), value: 'checkout', meta: 'entityId 7' },
-      { label: t('signal.context.service.label'), value: 'checkout', meta: 'payments' },
-      { label: t('signal.context.environment.label'), value: 'prod', meta: t('signal.context.environment.meta') },
-      { label: t('signal.context.time.label'), value: 'last-1h', meta: t('signal.context.time.meta.default') },
-      { label: t('signal.context.source.label'), value: 'OTLP', meta: t('signal.context.source.otlp.meta') }
+    const traceId = context.traceId || fallback.traceId;
+    const spanId = context.spanId || fallback.spanId;
+    const collector = context.collector || fallback.collector;
+    const template = context.template || fallback.template;
+    const sourceMeta = [collector ? `${t('signal.context.collector.prefix')} ${collector}` : null, template ? `${t('signal.context.template.prefix')} ${template}` : null]
+      .filter(Boolean)
+      .join(' · ') || t('signal.context.source.otlp.meta');
+    const rows = [
+      { label: t('signal.context.entity.label'), value: context.entityName || 'checkout', meta: 'entityId 7' },
+      { label: t('signal.context.service.label'), value: context.serviceName || fallback.serviceName || 'checkout', meta: context.serviceNamespace || fallback.serviceNamespace || 'payments' },
+      { label: t('signal.context.environment.label'), value: context.environment || fallback.environment || 'prod', meta: t('signal.context.environment.meta') },
+      { label: t('signal.context.time.label'), value: context.timeRange || fallback.timeRange || 'last-1h', meta: t('signal.context.time.meta.default') },
+      { label: t('signal.context.source.label'), value: context.source || fallback.source || 'OTLP', meta: sourceMeta }
     ];
+
+    if (traceId || spanId) {
+      rows.splice(2, 0, {
+        label: t('signal.context.trace.label'),
+        value: traceId || '-',
+        meta: spanId ? `spanId ${spanId}` : 'traceId'
+      });
+    }
+
+    return rows;
   },
   readSignalRouteContext: () => ({
     entityId: mockState.searchParams.get('entityId') || undefined,
@@ -567,7 +583,9 @@ function buildLogManageRouteState(): LogManageRouteState {
       source: mockState.searchParams.get('source') || undefined,
       traceId: mockState.searchParams.get('traceId') || undefined,
       spanId: mockState.searchParams.get('spanId') || undefined,
-      operationName: mockState.searchParams.get('operationName') || undefined
+      operationName: mockState.searchParams.get('operationName') || undefined,
+      collector: mockState.searchParams.get('collector') || undefined,
+      template: mockState.searchParams.get('template') || undefined
     },
     shouldCleanUrl: Boolean(mockState.searchParams.get('returnLabel') || mockState.searchParams.get('returnTo')?.includes('returnLabel='))
   };
@@ -652,6 +670,8 @@ describe('log manage page', () => {
     expect(source).toContain('data-log-manage-api-degraded-owner="hertzbeat-ui-state-notice"');
     expect(messagesSource).toContain("'log.manage.api.degraded.title':");
     expect(messagesSource).toContain("'log.manage.api.degraded.copy':");
+    expect(messagesSource).toContain("'log.manage.api.degraded.backend-unavailable':");
+    expect(messagesSource).toContain("'log.manage.api.degraded.generic':");
     expect(source).toContain('data-log-manage-chart-band="hertzbeat-ui-chart-band"');
     expect(source).toContain('data-log-manage-chart-padding-owner="hertzbeat-ui-panel-surface"');
     expect(source).toContain('data-log-manage-explorer-view="time-series"');
@@ -739,6 +759,12 @@ describe('log manage page', () => {
     expect(source).toContain('data-log-manage-row-trace-detail-action="true"');
     expect(source).toContain('LogStreamDetailDialog');
     expect(source).toContain('overlayProps={{');
+    expect(source).toContain('const [activeHistoryRowKey, setActiveHistoryRowKey]');
+    expect(source).toContain('const activeRow = rows.find(row => row.key === activeHistoryRowKey) ?? rows[0]');
+    expect(source).toContain('const activeEntry = activeRow ? logEntryByRowKey.get(activeRow.key) ?? null : null');
+    expect(source).toContain('setActiveHistoryRowKey(rows[matchIndex]?.key ?? null)');
+    expect(source).toContain('selectedRowKey={activeRow?.key}');
+    expect(source).toContain('setActiveHistoryRowKey(row.key);');
     expect(source).toContain("'data-log-manage-detail-source-context': sourceContextKind");
     expect(source).toContain("'data-log-manage-detail-auto-open-key': autoOpenedTraceDetailKeyRef.current || ''");
     expect(source).toContain("'data-log-manage-detail-requested-trace': requestedTraceId");
@@ -876,6 +902,61 @@ describe('log manage page', () => {
     expect(html).toContain(tZh('log.manage.route.action.return-source'));
   });
 
+  it('keeps the trace return action clickable without rewriting the log investigation URL', async () => {
+    mockState.searchParams = new URLSearchParams(
+      'view=stream&traceId=trace-123&spanId=span-456&entityId=7&entityName=Checkout%20API&serviceName=checkout&serviceNamespace=payments&environment=prod&returnTo=%2Ftrace%2Fmanage%3FtraceId%3Dtrace-123%26spanId%3Dspan-456%26serviceName%3Dcheckout'
+    );
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      renderInteractiveLogManagePage();
+      await Promise.resolve();
+    });
+
+    const returnAction = interactionContainer.querySelector<HTMLAnchorElement>('[data-log-manage-return-action="true"][data-log-manage-header-action="return-source"]');
+    expect(returnAction).not.toBeNull();
+    expect(returnAction?.getAttribute('href')).toBe('/trace/manage?traceId=trace-123&spanId=span-456&serviceName=checkout');
+    expect(returnAction?.textContent).toContain(tZh('log.manage.route.action.return-source'));
+    expect(interactionContainer.querySelector('[data-log-manage-source-context-panel-kind="return-source"]')).not.toBeNull();
+
+    returnAction?.addEventListener('click', event => event.preventDefault(), { once: true });
+    await act(async () => {
+      returnAction?.click();
+      await Promise.resolve();
+    });
+
+    expect(mockState.replace).not.toHaveBeenCalled();
+  });
+
+  it('shows trace-to-log source context before the stream so a first-time user can keep the evidence chain', () => {
+    mockState.searchParams = new URLSearchParams(
+      'view=stream&traceId=trace-123&spanId=span-456&entityId=7&entityName=Checkout%20API&serviceName=checkout&serviceNamespace=payments&environment=prod&collector=collector-a&template=template-http&returnTo=%2Ftrace%2Fmanage%3FtraceId%3Dtrace-123%26spanId%3Dspan-456'
+    );
+
+    const html = renderLogManagePage();
+
+    expect(html).toContain('data-log-manage-source-context-panel="trace-log-evidence-chain"');
+    expect(html).toContain('data-log-manage-source-context-panel-owner="hertzbeat-ui-panel-surface"');
+    expect(html).toContain('data-log-manage-source-context-panel-kind="return-source"');
+    expect(html).toContain('data-log-manage-source-context-row-owner="hertzbeat-ui-route-context"');
+    expect(html).toContain(tZh('log.manage.source-context.title'));
+    expect(html).toContain(tZh('log.manage.source-context.description'));
+    expect(html).toContain(tZh('signal.context.entity.label'));
+    expect(html).toContain(tZh('signal.context.trace.label'));
+    expect(html).toContain(tZh('signal.context.service.label'));
+    expect(html).toContain(tZh('signal.context.source.label'));
+    expect(html).toContain('Checkout API');
+    expect(html).toContain('checkout');
+    expect(html).toContain('payments');
+    expect(html).toContain('trace-123');
+    expect(html).toContain('spanId span-456');
+    expect(html).toContain('prod');
+    expect(html).toContain(`${tZh('signal.context.collector.prefix')} collector-a`);
+    expect(html).toContain(`${tZh('signal.context.template.prefix')} template-http`);
+  });
+
   it('keeps the Angular log-to-trace drilldown contract as drawer preview before route navigation', () => {
     const source = readFileSync(resolve(process.cwd(), 'app/log/manage/log-manage-page.tsx'), 'utf8');
 
@@ -886,7 +967,10 @@ describe('log manage page', () => {
     expect(source).toContain('openTraceDrilldownFromLog');
     expect(source).toContain('data-log-manage-row-trace-detail-action="true"');
     expect(source).toContain('data-log-manage-open-log-detail-before-trace="true"');
-    expect(source).toContain("onRowClick={row => openLogDetails(logEntryByRowKey.get(row.key) ?? null, 'history')}");
+    expect(source).toContain('onRowClick={row => {');
+    expect(source).toContain('event.stopPropagation();');
+    expect(source).toContain('setActiveHistoryRowKey(row.key);');
+    expect(source).toContain("openLogDetails(logEntryByRowKey.get(row.key) ?? null, 'history');");
     expect(source).toContain('data-log-related-trace-open-workspace-action="true"');
     expect(source).toContain('data-log-manage-results-open-trace-action="true"');
     expect(source).toContain("t('log.manage.related-trace.open-workspace')");
@@ -942,13 +1026,15 @@ describe('log manage page', () => {
       const html = renderLogManagePage();
 
       expect(source).toContain("const missingEntityHandoffTitle = t('log.manage.handoff.entity-disabled')");
-      expect(source).toContain('data-log-manage-entity-action-disabled="missing-entity-id"');
+      expect(source).toContain("const entityDiscoveryHandoffTitle = t('log.manage.handoff.entity-discovery')");
+      expect(source).toContain('data-log-manage-entity-discovery-action="missing-entity-id"');
       expect(source).toContain('title={missingEntityHandoffTitle}');
       expect(messages).toContain("'log.manage.handoff.entity-disabled'");
+      expect(messages).toContain("'log.manage.handoff.entity-discovery'");
       expect(html).toContain('data-log-manage-entity-action="true"');
-      expect(html).toContain('data-log-manage-entity-action-disabled="missing-entity-id"');
-      expect(html).toContain(`title="${createTranslatorMock({ locale: 'zh-CN' })('log.manage.handoff.entity-disabled')}"`);
-      expect(html).toContain('disabled=""');
+      expect(html).toContain('data-log-manage-entity-discovery-action="missing-entity-id"');
+      expect(html).toContain(`title="${createTranslatorMock({ locale: 'zh-CN' })('log.manage.handoff.entity-discovery')}"`);
+      expect(html).not.toContain('data-log-manage-entity-action-disabled="missing-entity-id"');
     } finally {
       mockState.renderData.list.content = originalContent;
     }
@@ -1019,6 +1105,49 @@ describe('log manage page', () => {
     expect(source).not.toContain('Logs appear here in reverse chronological order after writes.');
   });
 
+  it('explains empty live stream state by connection state instead of leaving novices stuck on connecting', () => {
+    const source = readFileSync(resolve(process.cwd(), 'app/log/manage/log-manage-page.tsx'), 'utf8');
+    const messagesSource = readFileSync(resolve(process.cwd(), 'lib/i18n-runtime-messages.ts'), 'utf8');
+    const originalContent = mockState.renderData.list.content;
+    mockState.searchParams = new URLSearchParams('view=stream&traceId=trace-123&spanId=span-456&serviceName=checkout');
+    mockState.renderData.list.content = [];
+
+    try {
+      const html = renderLogManagePage();
+
+      expect(source).toContain('function resolveStreamEmptyState');
+      expect(source).toContain('const LOG_STREAM_CONNECT_TIMEOUT_MS = 12_000;');
+      expect(source).toContain('const streamConnectTimeout = window.setTimeout(() => {');
+      expect(source).toContain('if (eventSource.readyState !== EventSource.OPEN) {');
+      expect(source).toContain("setStreamStatus('disconnected');");
+      expect(source).toContain('window.clearTimeout(streamConnectTimeout);');
+      expect(source).toContain("reason: 'connecting'");
+      expect(source).toContain("reason: 'connected-empty'");
+      expect(source).toContain("reason: 'disconnected'");
+      expect(source).toContain("reason: 'paused'");
+      expect(source).toContain('data-log-manage-stream-empty-reason={streamEmptyState.reason}');
+      expect(messagesSource).toContain("'log.manage.stream.empty.connecting.copy':");
+      expect(messagesSource).toContain("'log.manage.stream.empty.disconnected.copy':");
+      expect(messagesSource).toContain("'log.manage.stream.empty.paused.copy':");
+      expect(source).toContain('className="min-h-[180px] border-y-0 text-left sm:items-start sm:justify-start"');
+      expect(source).not.toContain('className="h-[520px] border-y-0 text-left"');
+      expect(html).toContain('data-log-manage-stream-empty-state="true"');
+      expect(html).toContain('data-log-manage-stream-empty-reason="disconnected"');
+      expect(html).toContain(tZh('log.manage.stream.empty.disconnected.title'));
+      expect(html).toContain(tZh('log.manage.stream.empty.disconnected.copy'));
+      expect(html).not.toContain(tZh('log.manage.stream.empty.copy'));
+
+      mockState.searchParams = new URLSearchParams('view=stream&live=false&traceId=trace-123&spanId=span-456&serviceName=checkout');
+      const pausedHtml = renderLogManagePage();
+      expect(pausedHtml).toContain('data-log-manage-stream-live-state="paused"');
+      expect(pausedHtml).toContain('data-log-manage-stream-empty-reason="paused"');
+      expect(pausedHtml).toContain(tZh('log.manage.stream.empty.paused.title'));
+      expect(pausedHtml).toContain(tZh('log.manage.stream.empty.paused.copy'));
+    } finally {
+      mockState.renderData.list.content = originalContent;
+    }
+  });
+
   it('renders live log stream rows through a virtualized viewport backed by EventSource', () => {
     const source = readFileSync(resolve(process.cwd(), 'app/log/manage/log-manage-page.tsx'), 'utf8');
 
@@ -1033,6 +1162,8 @@ describe('log manage page', () => {
     expect(source).toContain('const { listUrl, overviewUrl, trendUrl, coverageUrl, groupByUrl } = logUrls;');
     expect(source).toContain('resolveStreamWindow');
     expect(source).toContain('readStreamViewportState');
+    expect(source).toContain('const handleStreamViewportKeyDown = (event: React.KeyboardEvent<HTMLDivElement>)');
+    expect(source).toContain("['PageDown', 'PageUp', 'Home', 'End']");
     expect(source).toContain('STREAM_VIEWPORT_ROW_HEIGHT');
     expect(source).toContain('anchorIndex: streamViewport.isPinnedToLatest ? null : selectedStreamIndex');
     expect(source).toContain('HzScrollViewport');
@@ -1041,11 +1172,16 @@ describe('log manage page', () => {
     expect(source).toContain('HzDetailBodyStack');
     expect(source).toContain('data-log-manage-stream-viewport="virtualized-log-stream"');
     expect(source).toContain('data-log-manage-stream-viewport-owner="hertzbeat-ui-scroll-viewport"');
+    expect(source).toContain('role="region"');
+    expect(source).toContain('tabIndex={0}');
+    expect(source).toContain("aria-label={t('log.manage.stream.stage.title')}");
+    expect(source).toContain('onKeyDown={handleStreamViewportKeyDown}');
     expect(source).toContain('variant="log-stream"');
     expect(source).not.toContain('className="hb-scrollbar max-h-[620px] overflow-auto"');
     expect(source).toContain('data-log-manage-stream-window');
     expect(source).toContain('data-log-manage-stream-row-owner="hertzbeat-ui-log-stream-row"');
     expect(source).toContain('data-log-manage-stream-row-style="compact-live-row"');
+    expect(source).toContain("readFirstLogAttribute(entry, ['service.name', 'service_name']) || 'unknown-service'");
     expect(source).toContain('data-log-manage-stream-selected-aside="shared-detail-aside"');
     expect(source).toContain('data-log-manage-stream-selected-aside-owner="hertzbeat-ui-detail-aside"');
     expect(source).toContain('data-log-manage-stream-selected-body="shared-detail-body-stack"');
@@ -1086,6 +1222,31 @@ describe('log manage page', () => {
     expect(html).toContain(tZh('log.manage.stream.action.resume'));
   }, 15000);
 
+  it('explains stream trace handoff as waiting for a selected log before blaming missing trace context', () => {
+    mockState.searchParams = new URLSearchParams('view=stream&traceId=trace-123&spanId=span-456&serviceName=checkout');
+    const originalContent = mockState.renderData.list.content;
+    mockState.renderData.list.content = [];
+
+    try {
+      const html = renderLogManagePage();
+
+      expect(html).toContain('data-log-manage-stream-empty-state="true"');
+      expect(html).toContain('data-log-manage-stream-detail-action="view-trace"');
+      expect(html).toContain('data-log-manage-results-open-trace-action-disabled="no-selected-log"');
+      expect(html).toContain(`aria-label="${tZh('log.manage.stream.selected.action-disabled')}"`);
+      expect(html).toContain('data-log-manage-stream-control="reconnect"');
+      expect(html).toContain('data-log-manage-stream-control="pause-toggle"');
+      expect(html).toContain('data-log-manage-stream-control-disabled="stream-disconnected"');
+      expect(html).toContain(`aria-label="${tZh('log.manage.stream.action.pause-disabled')}"`);
+      expect(html).toContain('data-log-manage-stream-control="clear"');
+      expect(html).toContain('data-log-manage-stream-control-disabled="empty-buffer"');
+      expect(html).toContain(`aria-label="${tZh('log.manage.stream.action.clear-disabled')}"`);
+      expect(html).not.toContain('data-log-manage-results-open-trace-action-disabled="missing-trace-id"');
+    } finally {
+      mockState.renderData.list.content = originalContent;
+    }
+  });
+
   it('uses the shared narrow time rail in the top-right page header instead of the log query row', async () => {
     mockState.searchParams = new URLSearchParams(
       'view=list&timeRange=last-1h&start=1713200000000&end=1713203600000&refresh=30&live=false&tz=Asia%2FShanghai&serviceName=checkout'
@@ -1101,7 +1262,9 @@ describe('log manage page', () => {
     expect(source).toContain('data-log-manage-time-control-placement="top-right"');
     expect(source).toContain('data-log-manage-time-control-visual="narrow-top-right-rail"');
     expect(source).toContain('data-log-manage-time-toolbar="top-right-corner"');
-    expect(source).toContain('className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start"');
+    expect(source).toContain('2xl:grid-cols-[minmax(280px,1fr)_auto]');
+    expect(source).not.toContain('xl:grid-cols-[minmax(0,1fr)_auto]');
+    expect(source).toContain('className="grid gap-4 2xl:grid-cols-[minmax(280px,1fr)_auto] 2xl:items-start"');
     expect(source).toContain('variant="narrow-rail"');
     expect(source).toContain('showAbsoluteFields');
     expect(source).toContain('data-log-manage-time-control-fit="no-clipping"');
@@ -1116,10 +1279,10 @@ describe('log manage page', () => {
     expect(html).toContain('data-log-manage-time-control-visual="narrow-top-right-rail"');
     expect(html).toContain('data-log-manage-time-toolbar="top-right-corner"');
     expect(html).toContain('data-log-manage-time-control-fit="no-clipping"');
-    expect(html).toContain('data-time-range-control-layout="nowrap-top-right-rail"');
+    expect(html).toContain('data-time-range-control-layout="wrapping-top-right-rail"');
     expect(html).toContain('data-time-range-control="hertzbeat-shared"');
     expect(html).toContain('data-time-range-control-visual="grafana-like-narrow-rail"');
-    expect(html).toContain('data-time-range-control-overflow="fit-without-scroll"');
+    expect(html).toContain('data-time-range-control-overflow="contained-wrap"');
     expect(html).toContain('data-time-range-control-absolute-draft="visible"');
     expect(html).toContain('data-time-range-live-toggle="paused"');
     expect(html).toContain('data-log-manage-time-refresh-action="true"');
@@ -4158,6 +4321,25 @@ describe('log manage page', () => {
     expect(result.overview.totalLogs).toBe(0);
     expect(result.trend.hourlyStats).toEqual({});
     expect(result.coverage.traceCoverage.withTrace).toBe(0);
+  });
+
+  it('localizes backend unavailable load failures instead of surfacing the raw proxy message', async () => {
+    const t = createTranslatorMock({ locale: 'zh-CN' });
+    mockState.searchParams = new URLSearchParams('view=stream');
+    apiMessageGet
+      .mockResolvedValueOnce(mockState.renderData.overview)
+      .mockRejectedValueOnce(new Error('Backend service unavailable. Please retry after the backend service is restored.'))
+      .mockResolvedValueOnce(mockState.renderData.trend)
+      .mockResolvedValueOnce(mockState.renderData.coverage);
+    renderLogManagePage();
+    const result = await mockState.lastLoad?.() as any;
+
+    expect(result.loadStatus).toEqual({
+      state: 'degraded',
+      message: t('log.manage.api.degraded.backend-unavailable')
+    });
+    expect(result.loadStatus.message).not.toContain('Backend service unavailable');
+    expect(result.list.content).toEqual([]);
   });
 
   it('keeps live log rows when non-list summary endpoints degrade', async () => {

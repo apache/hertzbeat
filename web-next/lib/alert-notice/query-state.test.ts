@@ -46,4 +46,19 @@ describe('alert notice query state', () => {
       signalContext: {}
     });
   });
+
+  it('does not treat list metadata as alert notice evidence without an explicit signal', () => {
+    expect(
+      readAlertNoticeRouteState({
+        search: 'uv_alert_notice_required',
+        pageSize: '8',
+        source: 'alert-notice-required-proof',
+        probe: 'validation-loop',
+        returnTo: '/alert/notice?search=uv_alert_notice_required'
+      })
+    ).toEqual({
+      signal: null,
+      signalContext: {}
+    });
+  });
 });

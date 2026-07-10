@@ -35,6 +35,7 @@ import org.apache.hertzbeat.base.service.LabelService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -104,6 +105,7 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         var exportMonitor = new ExportMonitorDTO();
         var monitor = new MonitorDTO();
         BeanUtils.copyProperties(dto.getMonitor(), monitor);
+        monitor.setHost(dto.getMonitor().getInstance());
         exportMonitor.setMonitor(monitor);
         exportMonitor.setParams(dto.getParams().stream().map(it -> {
             var param = new ParamDTO();
@@ -128,6 +130,9 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
             // Add one more null check
             BeanUtils.copyProperties(exportMonitor.monitor, monitor);
         }
+        if (!StringUtils.hasText(monitor.getInstance())) {
+            monitor.setInstance(resolveImportedInstance(exportMonitor));
+        }
         monitorDto.setMonitor(monitor);
         if (exportMonitor.getMonitor() != null) {
             monitorDto.setCollector(exportMonitor.getMonitor().getCollector());
@@ -144,6 +149,22 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
             monitorDto.setParams(Collections.emptyList());
         }
         return monitorDto;
+    }
+
+    private static String resolveImportedInstance(ExportMonitorDTO exportMonitor) {
+        if (exportMonitor.getMonitor() != null && StringUtils.hasText(exportMonitor.getMonitor().getHost())) {
+            return exportMonitor.getMonitor().getHost().trim();
+        }
+        if (exportMonitor.getParams() == null) {
+            return null;
+        }
+        return exportMonitor.getParams().stream()
+                .filter(param -> "host".equals(param.getField()))
+                .map(ParamDTO::getValue)
+                .filter(StringUtils::hasText)
+                .map(String::trim)
+                .findFirst()
+                .orElse(null);
     }
 
     protected String fileNamePrefix() {

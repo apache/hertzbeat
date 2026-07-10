@@ -16,6 +16,10 @@ export type AlertGroupListQuery = {
 
 export const ALERT_GROUP_PAGE_SIZE_OPTIONS = [8, 15, 25] as const;
 
+function normalizeSignal(value: string | null | undefined) {
+  return value === 'metrics' || value === 'logs' || value === 'traces' ? value : null;
+}
+
 function normalizePageIndex(value: number | null | undefined) {
   return Number.isFinite(value) && value != null && value >= 0 ? Math.floor(value) : 0;
 }
@@ -29,10 +33,11 @@ function normalizePageSize(value: number | null | undefined) {
 
 export function readAlertGroupRouteState(searchParams: AlertGroupSearchParams = {}): AlertGroupRouteState {
   const reader = createCompatSearchParamReader(searchParams);
+  const signal = normalizeSignal(reader.get('signal'));
 
   return {
-    signal: reader.get('signal'),
-    signalContext: readSignalRouteContext(reader)
+    signal,
+    signalContext: signal ? readSignalRouteContext(reader) : {}
   };
 }
 

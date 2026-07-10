@@ -23,10 +23,13 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.apache.hertzbeat.common.entity.manager.EntityMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
+import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
 import org.apache.hertzbeat.manager.pojo.dto.EntityMonitorBindingCandidate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,10 +52,19 @@ class EntityIntegrationHintServiceTest {
     @Mock
     private EntityIdentityResolutionService entityIdentityResolutionService;
 
+    @Mock
+    private EntityMonitorBindService entityMonitorBindService;
+
+    @Mock
+    private EntityWorkspaceAccessService entityWorkspaceAccessService;
+
     @BeforeEach
     void setUp() {
         integrationHintService = new EntityIntegrationHintService(
-                entityMonitorQueryService, entityIdentityResolutionService);
+                entityMonitorQueryService,
+                entityIdentityResolutionService,
+                entityMonitorBindService,
+                entityWorkspaceAccessService);
     }
 
     @Test
@@ -64,6 +76,8 @@ class EntityIntegrationHintServiceTest {
 
         assertTrue(candidates.isEmpty());
         verifyNoInteractions(entityIdentityResolutionService);
+        verifyNoInteractions(entityMonitorBindService);
+        verifyNoInteractions(entityWorkspaceAccessService);
     }
 
     @Test
@@ -84,13 +98,76 @@ class EntityIntegrationHintServiceTest {
         when(entityMonitorQueryService.findMonitor(502L)).thenReturn(Optional.of(monitor));
         when(entityIdentityResolutionService.resolveMonitorBindingCandidates(monitor))
                 .thenReturn(List.of(candidate));
+        when(entityMonitorBindService.findMonitorBindsByMonitorId(502L)).thenReturn(List.of());
 
         List<EntityMonitorBindingCandidate> candidates =
                 integrationHintService.getMonitorBindingCandidates(502L);
 
         assertEquals(List.of(candidate), candidates);
-        InOrder inOrder = inOrder(entityMonitorQueryService, entityIdentityResolutionService);
+        InOrder inOrder = inOrder(entityMonitorQueryService, entityIdentityResolutionService, entityMonitorBindService);
         inOrder.verify(entityMonitorQueryService).findMonitor(502L);
         inOrder.verify(entityIdentityResolutionService).resolveMonitorBindingCandidates(monitor);
+        inOrder.verify(entityMonitorBindService).findMonitorBindsByMonitorId(502L);
+    }
+
+    @Test
+    void getMonitorBindingCandidatesIncludesExistingBoundEntityWithoutIdentityMatch() {
+        Monitor monitor = new Monitor();
+        monitor.setId(503L);
+        monitor.setApp("website");
+        monitor.setName("checkout-probe");
+        when(entityMonitorQueryService.findMonitor(503L)).thenReturn(Optional.of(monitor));
+        when(entityIdentityResolutionService.resolveMonitorBindingCandidates(monitor)).thenReturn(List.of());
+        when(entityMonitorBindService.findMonitorBindsByMonitorId(503L)).thenReturn(List.of(
+                EntityMonitorBind.builder().entityId(91L).monitorId(503L).bindType("manual").build()
+        ));
+        when(entityWorkspaceAccessService.findAccessibleEntitiesByIdsForRequestWorkspace(java.util.Set.of(91L)))
+                .thenReturn(List.of(ObserveEntity.builder()
+                        .id(91L)
+                        .type("service")
+                        .name("checkout-api")
+                        .displayName("Checkout API")
+                        .build()));
+
+        List<EntityMonitorBindingCandidate> candidates =
+                integrationHintService.getMonitorBindingCandidates(503L);
+
+        assertEquals(1, candidates.size());
+        EntityMonitorBindingCandidate candidate = candidates.getFirst();
+        assertEquals(91L, candidate.getEntityId());
+        assertEquals("Checkout API", candidate.getEntityName());
+        assertEquals("service", candidate.getEntityType());
+        assertEquals(0, candidate.getScore());
+        assertEquals("already_bound", candidate.getRecommendation());
+        assertTrue(candidate.isAlreadyBound());
+        assertEquals(Map.of(), candidate.getMatchedIdentities());
+    }
+
+    @Test
+    void getMonitorBindingCandidatesBatchesDistinctMonitorIdsInOrder() {
+        Monitor monitor502 = new Monitor();
+        monitor502.setId(502L);
+        monitor502.setApp("springboot3");
+        monitor502.setName("checkout-api");
+        EntityMonitorBindingCandidate candidate = new EntityMonitorBindingCandidate(
+                90L,
+                "Checkout API",
+                "service",
+                120,
+                "direct",
+                false,
+                Map.of("service.name", List.of("checkout-api")));
+        when(entityMonitorQueryService.findMonitor(502L)).thenReturn(Optional.of(monitor502));
+        when(entityIdentityResolutionService.resolveMonitorBindingCandidates(monitor502))
+                .thenReturn(List.of(candidate));
+        when(entityMonitorBindService.findMonitorBindsByMonitorId(502L)).thenReturn(List.of());
+        when(entityMonitorQueryService.findMonitor(503L)).thenReturn(Optional.empty());
+
+        Map<Long, List<EntityMonitorBindingCandidate>> candidates =
+                integrationHintService.getMonitorBindingCandidates(Arrays.asList(502L, 503L, 502L, null, -1L));
+
+        assertEquals(List.of(502L, 503L), List.copyOf(candidates.keySet()));
+        assertEquals(List.of(candidate), candidates.get(502L));
+        assertTrue(candidates.get(503L).isEmpty());
     }
 }

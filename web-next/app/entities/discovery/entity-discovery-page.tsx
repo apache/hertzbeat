@@ -25,6 +25,14 @@ export default function EntityDiscoveryPage() {
   const entityDiscoveryActivitiesUrl = React.useMemo(() => buildDiscoveryGovernanceActivitiesUrl(), []);
   const entityDiscoveryCatalogUrl = React.useMemo(() => buildDiscoveryCatalogSuggestionsUrl(), []);
   const candidateContext = React.useMemo(() => resolveDiscoveryCandidateContext(searchParams), [searchParams]);
+  const initialSearch = React.useMemo(() => searchParams.get('search')?.trim() || null, [searchParams]);
+  const initialSource = React.useMemo(() => searchParams.get('source')?.trim() || null, [searchParams]);
+  const deleteSuccess = React.useMemo(() => searchParams.get('deleteResult')?.trim() === 'success', [searchParams]);
+  const deletedEntity = React.useMemo(() => searchParams.get('deletedEntity')?.trim() || null, [searchParams]);
+  const initialPageIndex = React.useMemo(() => {
+    const raw = Number(searchParams.get('pageIndex') || 0);
+    return Number.isFinite(raw) ? Math.max(0, Math.floor(raw)) : 0;
+  }, [searchParams]);
   const entityDiscoveryCacheKey = React.useMemo(
     () => ['entity-discovery', entityDiscoveryPresetsUrl, entityDiscoveryActivitiesUrl, entityDiscoveryCatalogUrl].join(':'),
     [entityDiscoveryActivitiesUrl, entityDiscoveryCatalogUrl, entityDiscoveryPresetsUrl]
@@ -52,6 +60,11 @@ export default function EntityDiscoveryPage() {
           activities={data.activities}
           catalog={data.catalog}
           candidateContext={candidateContext}
+          initialSearch={initialSearch}
+          initialSource={initialSource}
+          initialPageIndex={initialPageIndex}
+          deleteSuccess={deleteSuccess}
+          deletedEntity={deletedEntity}
         />
       )}
     </ClientWorkbench>

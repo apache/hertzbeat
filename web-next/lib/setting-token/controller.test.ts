@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { buildGenerateTokenUrl, deleteTokenById, generateTokenValue, loadTokenData } from './controller';
+import { buildGenerateTokenUrl, deleteTokenById, generateTokenValue, loadTokenData, normalizeTokenScope } from './controller';
 
 describe('setting token controller', () => {
   it('loads tokens from the auth token API', async () => {
@@ -16,15 +16,27 @@ describe('setting token controller', () => {
     expect(buildGenerateTokenUrl('OTLP', '-1')).toBe('/account/token/generate?name=OTLP&expireSeconds=-1');
   });
 
-  it('returns the token value from the generate endpoint', async () => {
-    const apiGet = vi.fn().mockResolvedValue({ code: 0, data: { token: 'hb_xxx' } });
+  it('builds generate url with token scope and workspace boundary', () => {
+    expect(buildGenerateTokenUrl('OTLP', '604800', { scope: 'otlp-ingest', workspaceId: 'prod-west' })).toBe(
+      '/account/token/generate?name=OTLP&expireSeconds=604800&scope=otlp-ingest&workspaceId=prod-west'
+    );
+    expect(normalizeTokenScope('OTLP-INGEST')).toBe('otlp-ingest');
+    expect(normalizeTokenScope('unknown')).toBe('api-admin');
+  });
 
-    await expect(generateTokenValue(apiGet as any, 'OTLP', '604800', 'Generate failed')).resolves.toBe('hb_xxx');
+  it('returns the token value from the generate endpoint', async () => {
+    const apiPost = vi.fn().mockResolvedValue({ code: 0, data: { token: 'hb_xxx' } });
+
+    await expect(generateTokenValue(apiPost as any, 'OTLP', '604800', 'Generate failed', {
+      scope: 'otlp-ingest',
+      workspaceId: 'default'
+    })).resolves.toBe('hb_xxx');
+    expect(apiPost).toHaveBeenCalledWith('/account/token/generate?name=OTLP&expireSeconds=604800&scope=otlp-ingest&workspaceId=default', {});
   });
 
   it('throws the backend or translated failure message when generation fails', async () => {
-    const apiGet = vi.fn().mockResolvedValue({ code: 1, msg: 'bad request' });
-    await expect(generateTokenValue(apiGet as any, 'OTLP', '604800', 'Generate failed')).rejects.toThrow('bad request');
+    const apiPost = vi.fn().mockResolvedValue({ code: 1, msg: 'bad request' });
+    await expect(generateTokenValue(apiPost as any, 'OTLP', '604800', 'Generate failed')).rejects.toThrow('bad request');
   });
 
   it('deletes tokens through the Angular account token delete endpoint', async () => {

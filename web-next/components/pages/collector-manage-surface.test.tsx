@@ -62,9 +62,11 @@ describe('collector manage surface', () => {
       />
     );
 
-    expect(html).toContain('data-collector-manage-surface="otlp-cold-collector-console"');
+    expect(html).toContain('data-collector-manage-surface="otlp-hertzbeat-ui-collector-console"');
     expect(html).toContain('data-collector-manage-style-baseline="hertzbeat-ui-matte"');
-    expect(html).toContain('data-collector-header="cold-compact-header"');
+    expect(html).toContain('data-collector-header="hertzbeat-ui-compact-header"');
+    expect(html).toContain('data-collector-header-nesting-contract="flat-page-introduction"');
+    expect(html).toContain('class="p-0"');
     expect(html).toContain('data-collector-command-row="standard-equal-buttons"');
     expect(html).toContain('data-collector-health-evidence="cluster-status"');
     expect(html).toContain('data-collector-health-tone="warning"');
@@ -92,8 +94,8 @@ describe('collector manage surface', () => {
     expect(html).toContain('data-collector-deploy-api-contract="angular-post-generate-identity"');
     expect(html).toContain('data-collector-deploy-failure-contract="angular-apply-fail-notification"');
     expect(html).toContain('data-collector-deploy-loading-contract="angular-nz-ok-loading"');
-    expect(html).toContain('data-collector-deploy-validation-raw-contract="angular-required-before-trim"');
-    expect(html).toContain('data-collector-deploy-validation-raw-owner="collector-route-controller"');
+    expect(html).toContain('data-collector-deploy-validation-trim-contract="hertzbeat-required-after-trim"');
+    expect(html).toContain('data-collector-deploy-validation-trim-owner="collector-route-controller"');
     expect(html).toContain('data-collector-deploy-mask-contract="angular-mask-closable-false"');
     expect(html).toContain('data-collector-deploy-width-contract="angular-width-45-percent"');
     expect(html).toContain('data-collector-deploy-field-layout-contract="angular-label-7-control-12"');
@@ -109,7 +111,7 @@ describe('collector manage surface', () => {
     expect(html).toContain('data-collector-deploy-close-reset-owner="collector-route-controller"');
     expect(html).toContain('data-collector-deploy-close-pending-result-contract="angular-close-ignores-late-generate"');
     expect(html).toContain('data-collector-deploy-close-pending-result-owner="collector-route-controller"');
-    expect(html).toContain('data-collector-pagination="cold-dense-pagination"');
+    expect(html).toContain('data-collector-pagination="hertzbeat-ui-dense-pagination"');
     expect(html).toContain('data-collector-pagination-owner="hertzbeat-ui-pagination-bar"');
     expect(html).toContain('data-collector-pagination-contract="angular-search-pagination"');
     expect(html).toContain('data-hz-ui="pagination-bar"');
@@ -118,33 +120,54 @@ describe('collector manage surface', () => {
     expect(html).toContain('data-collector-pagination-page-size-owner="hertzbeat-ui-select"');
     expect(html).toContain('data-collector-pagination-page-jump-owner="hertzbeat-ui-input"');
     expect(html).toContain('data-collector-deploy-open="angular-deploy-modal"');
+    expect(html).toContain('data-collector-command-action="refresh"');
+    expect(html).toContain('data-collector-command-action="deploy-open"');
+    expect(html).toContain('data-collector-command-action="selected-online"');
+    expect(html).toContain('data-collector-command-action="selected-offline"');
+    expect(html).toContain('data-collector-command-action="selected-delete"');
     expect(html).toContain('data-collector-online-selected="angular-batch-online-entry"');
     expect(html).toContain('data-collector-offline-selected="angular-batch-offline-entry"');
     expect(html).toContain('data-collector-delete-selected="angular-batch-delete-entry"');
-    expect(html).toContain('data-collector-toolbar="cold-table-toolbar"');
+    expect(html).toContain('data-collector-action-help="refresh"');
+    expect(html).toContain('data-collector-action-help="deploy"');
+    expect(html).toContain('data-collector-action-help="online"');
+    expect(html).toContain('data-collector-action-help="offline"');
+    expect(html).toContain('data-collector-action-help="delete"');
+    expect(html).toContain('data-collector-action-help-style="icon-after-action"');
+    expect(html).toContain('data-collector-action-help-visual="circle-help-icon"');
+    expect(html).toContain('data-collector-action-help-icon="lucide-circle-help"');
+    expect(html).not.toContain('<span aria-hidden="true">?</span>');
+    expect(html).toContain('data-collector-action-help-tooltip="refresh"');
+    expect(html).toContain('data-collector-action-help-tooltip="delete"');
+    expect(html).toContain(t('collector.action.refresh.help'));
+    expect(html).toContain(t('collector.action.deploy.help'));
+    expect(html).toContain(t('collector.action.online.help'));
+    expect(html).toContain(t('collector.action.offline.help'));
+    expect(html).toContain(t('collector.action.delete.help'));
+    expect(html).toContain('data-collector-toolbar="hertzbeat-ui-table-toolbar"');
     expect(html).toContain('data-collector-search-owner="shared-search-row"');
     expect(html).toContain('data-collector-search-submit-contract="angular-enter-and-clear"');
     expect(html).toContain('data-collector-search-clear-contract="angular-cleared-load"');
     expect(html).toContain('data-collector-search-clear-owner="shared-search-row"');
-    expect(html).toContain('data-cold-search-row-owner="cold-search-row"');
-    expect(html).toContain('data-cold-search-input="fixed-width-direct"');
-    expect(html).toContain('data-cold-search-control="direct-input"');
-    expect(html).toContain('data-cold-search-chrome="no-extra-input-shell"');
-    expect(html).toContain('data-cold-search-action="submit"');
-    expect(html).toContain('data-cold-search-action="clear"');
-    expect(html).toContain('data-collector-table-shell="cold-dense-table"');
+    expect(html).toContain('data-hz-search-row-owner="hertzbeat-ui-search-row"');
+    expect(html).toContain('data-hz-search-input="fixed-width-direct"');
+    expect(html).toContain('data-hz-search-control="direct-input"');
+    expect(html).toContain('data-hz-search-chrome="no-extra-input-shell"');
+    expect(html).toContain('data-hz-search-action="submit"');
+    expect(html).toContain('data-hz-search-action="clear"');
+    expect(html).toContain('data-collector-table-shell="hertzbeat-ui-dense-table"');
     expect(html).toContain('data-collector-table-loading="false"');
     expect(html).toContain('data-collector-table-loading-contract="angular-load-collectors-table"');
     expect(html).toContain('data-collector-table-loading-owner="angular-nz-table-loading"');
     expect(html).toContain('data-collector-table-loading-scope="load-search-refresh-pagination-mutation"');
     expect(html).toContain('data-collector-table-loading-source="idle"');
     expect(html).toContain('aria-busy="false"');
-    expect(html).toContain('data-collector-manage-table="cold-collector-table"');
+    expect(html).toContain('data-collector-manage-table="hertzbeat-ui-collector-table"');
     expect(html).toContain('data-collector-select-all="hertzbeat-ui-checkbox"');
     expect(html).toContain('data-collector-row-select="edge-a"');
     expect(html).toContain('data-collector-row-select="edge-b"');
     expect(html).toContain('data-collector-row-health="collector-status"');
-    expect(html).toContain('data-collector-row-actions="cold-icon-actions"');
+    expect(html).toContain('data-collector-row-actions="hertzbeat-ui-icon-actions"');
     expect(html).toContain('data-collector-row-delete-menu="edge-a"');
     expect(html).toContain('data-collector-row-delete-menu-contract="angular-ellipsis-dropdown-delete"');
     expect(html).toContain('data-collector-row-delete-menu-layer="overlay-visible-above-panel"');
@@ -158,9 +181,22 @@ describe('collector manage surface', () => {
     expect(html).toContain('data-collector-row-delete-menu-owner="hertzbeat-ui-table-row-action-button"');
     expect(html).toContain('data-collector-row-delete-menu-panel-open="false"');
     expect(html).toContain('data-collector-delete-one="edge-a"');
+    expect(html).toContain('data-collector-command-action="row-offline"');
+    expect(html).toContain('data-collector-command-action="row-online"');
+    expect(html).toContain('data-collector-command-action="row-more"');
+    expect(html).toContain('data-collector-command-action="row-delete"');
     expect(html).toContain('data-collector-delete-one-owner="hertzbeat-ui-table-row-action-button"');
     expect(html).toContain('data-collector-offline-one="edge-a"');
     expect(html).toContain('data-collector-online-one="edge-b"');
+    expect(html).toContain('data-collector-row-action-help="row-online"');
+    expect(html).toContain('data-collector-row-action-help="row-offline"');
+    expect(html).toContain('data-collector-row-action-help="row-delete"');
+    expect(html).toContain('data-collector-row-action-help-tooltip="row-online"');
+    expect(html).toContain('data-collector-row-action-help-tooltip="row-offline"');
+    expect(html).toContain('data-collector-row-action-help-tooltip="row-delete"');
+    expect(html).toContain(t('collector.action.row-online.help'));
+    expect(html).toContain(t('collector.action.row-offline.help'));
+    expect(html).toContain(t('collector.action.row-delete.help'));
     expect(html).toContain('data-collector-status-tone="success"');
     expect(html).toContain('data-collector-status-tone="danger"');
     expect(html).not.toContain('data-cold-search-input-shell');
@@ -202,8 +238,11 @@ describe('collector manage surface', () => {
     expect(source).toContain('hzOpsCatalogVisual');
     expect(source).toContain("from '../ui/search-row'");
     expect(source).toContain('inputWidthClassName="w-[360px]"');
-    expect(source).toContain('data-collector-manage-surface="otlp-cold-collector-console"');
+    expect(source).toContain('data-collector-manage-surface="otlp-hertzbeat-ui-collector-console"');
     expect(source).toContain('data-collector-manage-style-baseline={coldCollectorVisual.canvasName}');
+    expect(source).toContain('data-collector-header-nesting-contract="flat-page-introduction"');
+    expect(source).toContain('className="p-0"');
+    expect(source).not.toContain('className={coldCollectorVisual.panel.hero}');
     expect(source).toContain('data-collector-admin-layout="full-width-admin-list"');
     expect(source).toContain('data-collector-delete-warning-contract="angular-no-select-warning"');
     expect(source).toContain('data-collector-delete-confirm-contract="angular-modal-confirm"');
@@ -237,8 +276,8 @@ describe('collector manage surface', () => {
     expect(source).toContain('data-collector-deploy-api-contract="angular-post-generate-identity"');
     expect(source).toContain('data-collector-deploy-failure-contract="angular-apply-fail-notification"');
     expect(source).toContain('data-collector-deploy-validation-contract="angular-submit-marks-required"');
-    expect(source).toContain('data-collector-deploy-validation-raw-contract="angular-required-before-trim"');
-    expect(source).toContain('data-collector-deploy-validation-raw-owner="collector-route-controller"');
+    expect(source).toContain('data-collector-deploy-validation-trim-contract="hertzbeat-required-after-trim"');
+    expect(source).toContain('data-collector-deploy-validation-trim-owner="collector-route-controller"');
     expect(source).toContain('data-collector-deploy-command-contract="angular-docker-package-shells"');
     expect(source).toContain('data-collector-deploy-command-owner="hertzbeat-ui-code-editor"');
     expect(source).toContain('data-collector-deploy-package-link-contract="angular-github-releases-link"');
@@ -252,7 +291,9 @@ describe('collector manage surface', () => {
     expect(source).toContain('data-collector-deploy-feedback-detail="backend-message"');
     expect(source).toContain('data-collector-deploy-copy-contract="angular-copy-identity"');
     expect(source).toContain('data-collector-deploy-copy-feedback-contract="angular-copy-success-duration-800"');
-    expect(source).toContain('data-collector-deploy-copy-feedback-duration-ms="800"');
+    expect(source).toContain('data-collector-deploy-copy-feedback-duration-ms="3000"');
+    expect(source).toContain('localDeployCopyMessage');
+    expect(source).toContain('handleDeployCopy(resolvedDeployIdentity)');
     expect(source).toContain('data-collector-deploy-dialog="angular-generate-identity-modal"');
     expect(source).toContain('data-collector-deploy-mask-contract="angular-mask-closable-false"');
     expect(source).toContain('data-collector-deploy-mask-closable="angular-mask-closable-false"');
@@ -265,12 +306,15 @@ describe('collector manage surface', () => {
     expect(source).toContain('data-collector-deploy-field-layout-owner="route-form-field-grid"');
     expect(source).toContain('data-collector-deploy-field="name"');
     expect(source).toContain('data-collector-deploy-field-layout="angular-label-7-control-12"');
+    expect(source).toContain('data-collector-deploy-field-help="name"');
+    expect(source).toContain('data-collector-deploy-field-requirement="required"');
+    expect(source).toContain('data-collector-deploy-field-input-mode="manual"');
     expect(source).toContain('data-collector-deploy-label-span="7"');
     expect(source).toContain('data-collector-deploy-control-span="12"');
     expect(source).toContain('md:grid-cols-[7fr_12fr]');
     expect(source).toContain('data-collector-deploy-name-input="angular-required-name"');
-    expect(source).toContain('data-collector-deploy-name-validation-raw="angular-required-before-trim"');
-    expect(source).toContain('data-collector-deploy-name-validation-raw-owner="collector-route-controller"');
+    expect(source).toContain('data-collector-deploy-name-validation-trim="hertzbeat-required-after-trim"');
+    expect(source).toContain('data-collector-deploy-name-validation-trim-owner="collector-route-controller"');
     expect(source).toContain("data-collector-deploy-name-lock={resolvedDeployIdentity ? 'angular-disable-after-identity' : 'editable-before-identity'}");
     expect(source).toContain('data-collector-deploy-name-lock-owner="angular-ngmodel-input"');
     expect(source).toContain("data-collector-deploy-name-disabled={resolvedDeployIdentity ? 'true' : 'false'}");
@@ -278,6 +322,7 @@ describe('collector manage surface', () => {
     expect(source).toContain('data-collector-deploy-name-validation-contract="angular-submit-marks-required"');
     expect(source).toContain('data-collector-deploy-loading-contract="angular-nz-ok-loading"');
     expect(source).toContain('data-collector-deploy-generate="angular-generate-identity"');
+    expect(source).toContain('data-collector-command-action="deploy-generate"');
     expect(source).toContain('data-collector-deploy-generate-validation="angular-click-before-required"');
     expect(source).toContain("data-collector-deploy-ok-loading={isDeployPending ? 'true' : 'false'}");
     expect(source).toContain('data-collector-deploy-ok-loading-owner="angular-nz-ok-loading"');
@@ -292,14 +337,32 @@ describe('collector manage surface', () => {
     expect(source).toContain('data-collector-deploy-docker-shell="angular-docker-shell"');
     expect(source).toContain('data-collector-deploy-package-shell="angular-package-shell"');
     expect(source).toContain('data-collector-online-selected="angular-batch-online-entry"');
+    expect(source).toContain('data-collector-command-action="refresh"');
+    expect(source).toContain('data-collector-command-action="deploy-open"');
+    expect(source).toContain('data-collector-command-action="selected-online"');
+    expect(source).toContain('data-collector-command-action="selected-offline"');
+    expect(source).toContain('data-collector-command-action="selected-delete"');
+    expect(source).toContain('data-collector-command-action="row-online"');
+    expect(source).toContain('data-collector-command-action="row-offline"');
+    expect(source).toContain('data-collector-command-action="row-more"');
+    expect(source).toContain('data-collector-command-action="row-delete"');
+    expect(source).toContain("'data-collector-command-action': targetAction === 'online'");
+    expect(source).toContain("'data-collector-command-action': 'confirm-cancel'");
+    expect(source).toContain('data-collector-command-action="deploy-cancel"');
+    expect(source).toContain('data-collector-command-action="deploy-copy-identity"');
+    expect(source).toContain('data-collector-command-action="deploy-result-close"');
     expect(source).toContain('data-collector-offline-selected="angular-batch-offline-entry"');
     expect(source).toContain('data-collector-delete-selected="angular-batch-delete-entry"');
+    expect(source).toContain('CircleHelp');
+    expect(source).toContain('data-collector-action-help-style="icon-after-action"');
+    expect(source).toContain('data-collector-action-help-visual="circle-help-icon"');
+    expect(source).toContain('data-collector-action-help-icon="lucide-circle-help"');
     expect(source).toContain('HzConfirmDialog');
     expect(source).toContain('HzInlineFeedback');
     expect(source).toContain('HzPaginationBar');
     expect(source).toContain('HzTableRowActionButton');
     expect(source).toContain('pageSizeOptions = [8, 15, 25]');
-    expect(source).toContain('data-collector-pagination="cold-dense-pagination"');
+    expect(source).toContain('data-collector-pagination="hertzbeat-ui-dense-pagination"');
     expect(source).toContain('data-collector-pagination-owner="hertzbeat-ui-pagination-bar"');
     expect(source).toContain('data-collector-pagination-contract="angular-search-pagination"');
     expect(source).toContain('data-collector-pagination-page-size-owner');
@@ -341,13 +404,13 @@ describe('collector manage surface', () => {
     expect(source).toContain('data-collector-health-evidence="cluster-status"');
     expect(source).toContain('data-collector-health-freshness="last-seen"');
     expect(source).toContain('data-collector-row-health="collector-status"');
-    expect(source).toContain('data-collector-table-shell="cold-dense-table"');
+    expect(source).toContain('data-collector-table-shell="hertzbeat-ui-dense-table"');
     expect(source).toContain("data-collector-table-loading={tableLoading ? 'true' : 'false'}");
     expect(source).toContain('data-collector-table-loading-contract="angular-load-collectors-table"');
     expect(source).toContain('data-collector-table-loading-owner="angular-nz-table-loading"');
     expect(source).toContain('data-collector-table-loading-scope="load-search-refresh-pagination-mutation"');
     expect(source).toContain("data-collector-table-loading-source={tableLoading ? 'route-load-or-mutation' : 'idle'}");
-    expect(source).toContain('data-collector-manage-table="cold-collector-table"');
+    expect(source).toContain('data-collector-manage-table="hertzbeat-ui-collector-table"');
     expect(source).not.toContain('data-collector-summary-rail');
     expect(source).not.toContain('coldCollectorVisual.search.row');
     expect(source).not.toContain('coldCollectorVisual.search.input');
@@ -447,12 +510,12 @@ describe('collector manage surface', () => {
       />
     );
 
-    expect(html).toContain('data-collector-manage-surface="otlp-cold-collector-console"');
+    expect(html).toContain('data-collector-manage-surface="otlp-hertzbeat-ui-collector-console"');
     expect(html).toContain('data-collector-admin-layout="full-width-admin-list"');
     expect(html).toContain('data-collector-load-failure-contract="angular-console-only-shell"');
     expect(html).toContain('data-collector-load-failure-owner="collector-route-controller"');
     expect(html).toContain('data-collector-load-failure="angular-console-only-shell"');
-    expect(html).toContain('data-collector-table-shell="cold-dense-table"');
+    expect(html).toContain('data-collector-table-shell="hertzbeat-ui-dense-table"');
     expect(html).not.toContain('backend refused collector load');
   });
 
@@ -485,7 +548,7 @@ describe('collector manage surface', () => {
         }}
         search=""
         selectedCollectors={['edge-a']}
-        actionError={t('common.notify.no-select-delete')}
+        actionError={t('collector.notify.no-select-delete')}
         actionTone="warning"
         deleteTarget={{
           collectors: ['edge-a'],
@@ -525,6 +588,8 @@ describe('collector manage surface', () => {
     expect(html).toContain('data-collector-delete-confirm="angular-modal-confirm"');
     expect(html).toContain('data-collector-delete-confirm-owner="hertzbeat-ui-confirm-dialog"');
     expect(html).toContain('data-collector-delete-confirm-submit="angular-modal-confirm"');
+    expect(html).toContain('data-collector-command-action="delete-confirm"');
+    expect(html).toContain('data-collector-command-action="confirm-cancel"');
     expect(html).toContain('data-collector-table-loading="true"');
     expect(html).toContain('aria-busy="true"');
     expect(html).toContain('data-collector-delete-confirm-target="edge-a"');
@@ -535,7 +600,7 @@ describe('collector manage surface', () => {
     expect(html).toContain('data-collector-row-delete-menu-owner="hertzbeat-ui-table-row-action-button"');
     expect(html).toContain('data-collector-row-delete-menu-panel-open="false"');
     expect(html).toContain('data-collector-delete-one="edge-a"');
-    expect(html).toContain(t('common.notify.no-select-delete'));
+    expect(html).toContain(t('collector.notify.no-select-delete'));
     expect(html).toContain(t('common.confirm.delete'));
   });
 
@@ -686,6 +751,8 @@ describe('collector manage surface', () => {
     expect(html).toContain('data-collector-operate-confirm="angular-modal-confirm"');
     expect(html).toContain('data-collector-operate-confirm-owner="hertzbeat-ui-confirm-dialog"');
     expect(html).toContain('data-collector-operate-confirm-submit="angular-modal-confirm"');
+    expect(html).toContain('data-collector-command-action="offline-confirm"');
+    expect(html).toContain('data-collector-command-action="confirm-cancel"');
     expect(html).toContain('data-collector-table-loading="true"');
     expect(html).toContain('aria-busy="true"');
     expect(html).toContain('data-collector-delete-confirm-target="edge-a"');
@@ -760,6 +827,35 @@ describe('collector manage surface', () => {
     expect(html).toContain('data-collector-row-select-contract="angular-selectable"');
   });
 
+  it('distinguishes filtered-empty collector search from a plain empty list', () => {
+    const t = createTranslatorMock({ locale: 'zh-CN' });
+
+    const html = renderToStaticMarkup(
+      <CollectorManageSurface
+        t={t}
+        data={{ list: { content: [], totalElements: 0, pageIndex: 0, pageSize: 8 } }}
+        search="edge-missing"
+        formatTime={() => '2026-04-10 18:00:00'}
+        onSearchChange={() => {}}
+        onSearch={() => {}}
+        onSearchClear={() => {}}
+        onRefresh={() => {}}
+        onDeploy={() => {}}
+        onGoOnline={() => {}}
+        onGoOffline={() => {}}
+        onDelete={() => {}}
+        onRowGoOnline={() => {}}
+        onRowGoOffline={() => {}}
+        onRowDelete={() => {}}
+      />
+    );
+
+    expect(html).toContain('data-collector-empty-title="filtered"');
+    expect(html).toContain('data-collector-empty-copy="filtered"');
+    expect(html).toContain(t('collector.empty.filtered.title'));
+    expect(html).toContain(t('collector.empty.filtered.copy'));
+  });
+
   it('renders Angular collector deploy identity modal and code editor contracts', () => {
     const t = createTranslatorMock({ locale: 'zh-CN' });
 
@@ -795,6 +891,15 @@ describe('collector manage surface', () => {
     );
 
     expect(html).toContain('data-collector-deploy-dialog="angular-generate-identity-modal"');
+    expect(html).toContain('data-collector-deploy-guidance="identity-risk"');
+    expect(html).toContain('data-collector-deploy-field-help="name"');
+    expect(html).toContain('data-collector-action-help="deploy-name"');
+    expect(html).toContain('data-collector-action-help-style="icon-after-action"');
+    expect(html).toContain('data-collector-action-help-visual="circle-help-icon"');
+    expect(html).toContain('data-collector-action-help-icon="lucide-circle-help"');
+    expect(html).toContain('data-collector-action-help-tooltip="deploy-name"');
+    expect(html).toContain('data-collector-deploy-field-requirement="required"');
+    expect(html).toContain('data-collector-deploy-field-input-mode="manual"');
     expect(html).toContain('data-collector-deploy-mask-closable="angular-mask-closable-false"');
     expect(html).toContain('data-collector-deploy-mask-closable-owner="angular-nz-modal"');
     expect(html).toContain('data-collector-deploy-width="angular-width-45-percent"');
@@ -810,9 +915,11 @@ describe('collector manage surface', () => {
     expect(html).toContain('disabled=""');
     expect(html).toContain('data-collector-deploy-result="angular-identity-shells"');
     expect(html).toContain('data-collector-deploy-copy-identity="angular-copy-identity"');
+    expect(html).toContain('data-collector-command-action="deploy-copy-identity"');
     expect(html).toContain('data-collector-deploy-copy-feedback="angular-copy-success"');
     expect(html).toContain('data-collector-deploy-result-close-contract="angular-danger-close-after-identity"');
-    expect(html).toContain('data-collector-deploy-copy-feedback-duration-ms="800"');
+    expect(html).toContain('data-collector-command-action="deploy-result-close"');
+    expect(html).toContain('data-collector-deploy-copy-feedback-duration-ms="3000"');
     expect(html).toContain('data-collector-deploy-result-close-owner="hertzbeat-ui-button"');
     expect(html).toContain('data-collector-deploy-close-reset="angular-close-clears-name"');
     expect(html).toContain('data-collector-deploy-close-reset-owner="collector-route-controller"');
@@ -830,6 +937,10 @@ describe('collector manage surface', () => {
     expect(html).toContain('target="_blank"');
     expect(html).toContain('identity-123');
     expect(html).toContain('10.0.0.10');
+    expect(html).toContain(t('collector.deploy.guidance'));
+    expect(html).toContain(t('collector.deploy.name.help'));
+    expect(html).toContain(t('settings.form.field.requirement.required'));
+    expect(html).toContain(t('settings.form.field.input-mode.manual'));
     expect(html).toContain(t('collector.deploy.docker'));
     expect(html).toContain(t('collector.deploy.package'));
   });
@@ -889,9 +1000,9 @@ describe('collector manage surface', () => {
     );
 
     expect(pristineHtml).toContain('data-collector-deploy-validation-contract="angular-submit-marks-required"');
-    expect(pristineHtml).toContain('data-collector-deploy-validation-raw-contract="angular-required-before-trim"');
+    expect(pristineHtml).toContain('data-collector-deploy-validation-trim-contract="hertzbeat-required-after-trim"');
     expect(pristineHtml).toContain('data-collector-deploy-name-validation-state="pristine"');
-    expect(pristineHtml).toContain('data-collector-deploy-name-validation-raw="angular-required-before-trim"');
+    expect(pristineHtml).toContain('data-collector-deploy-name-validation-trim="hertzbeat-required-after-trim"');
     expect(pristineHtml).toContain('data-collector-deploy-name-lock="editable-before-identity"');
     expect(pristineHtml).toContain('data-collector-deploy-name-disabled="false"');
     expect(pristineHtml).toContain('data-collector-deploy-generate-validation="angular-click-before-required"');
@@ -934,6 +1045,7 @@ describe('collector manage surface', () => {
     expect(html).toContain('data-collector-deploy-loading-contract="angular-nz-ok-loading"');
     expect(html).toContain('data-collector-deploy-ok-loading="true"');
     expect(html).toContain('data-collector-deploy-ok-loading-owner="angular-nz-ok-loading"');
+    expect(html).toContain('data-collector-command-action="deploy-generate"');
     expect(html).toContain('aria-busy="true"');
     expect(html).toContain('disabled=""');
     expect(html).toContain(t('common.loading'));

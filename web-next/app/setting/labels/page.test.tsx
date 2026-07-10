@@ -17,6 +17,8 @@ const mockState = vi.hoisted(() => ({
   lastRetry: null as null | (() => void),
   renderErrorMessage: null as string | null,
   lastSurfaceProps: null as null | Record<string, any>,
+  currentSearchParams: '',
+  routerReplace: vi.fn(),
   renderData: {
     list: {
       content: [
@@ -50,6 +52,13 @@ vi.mock('@/components/providers/i18n-provider', () => ({
       locale: 'zh-CN'
     })
   })
+}));
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    replace: mockState.routerReplace
+  }),
+  useSearchParams: () => new URLSearchParams(mockState.currentSearchParams)
 }));
 
 vi.mock('@/components/workbench/client-workbench', () => ({
@@ -146,15 +155,15 @@ vi.mock('@/components/pages/label-manage-surface', () => ({
       data-label-dialog-preview-visibility-owner="route-form-state"
       data-label-dialog-preview-frame-contract="angular-inline-form-item"
       data-label-dialog-preview-frame-owner="route-form-field-grid"
-      data-label-edit-reference-contract="angular-edit-direct-reference"
+      data-label-edit-reference-contract="isolated-edit-draft"
       data-label-edit-reference-owner="route-form-state"
       data-label-save-ok-loading={isSavePending ? 'true' : 'false'}
       data-label-save-ok-loading-owner="angular-nz-ok-loading"
       data-label-name-validation-contract="angular-required-before-submit"
       data-label-name-validation-trigger="angular-ok-marks-dirty"
       data-label-name-validation-trigger-owner="route-form-contract"
-      data-label-name-validation-raw-contract="angular-required-before-trim"
-      data-label-name-validation-raw-owner="route-form-contract"
+      data-label-name-validation-trim-contract="local-trim-required-before-submit"
+      data-label-name-validation-trim-owner="route-form-contract"
       data-label-name-validation-visible={isNameValidationVisible ? 'true' : 'false'}
       data-label-query-contract="angular-load-all-labels"
       data-label-query-owner="label-query-state"
@@ -167,6 +176,7 @@ vi.mock('@/components/pages/label-manage-surface', () => ({
       data-label-card-grid-owner="hertzbeat-ui-label-tag"
       data-label-monitor-handoff-contract="angular-routerlink-monitors-labels"
       data-label-monitor-handoff-owner="next-monitor-query-link"
+      data-label-monitor-handoff-builder={typeof props.buildMonitorHandoffHref === 'function' ? 'true' : 'false'}
     >
       <section data-label-admin-layout="full-width-admin-list">
         <span>Label management</span>
@@ -217,6 +227,8 @@ describe('setting labels page', () => {
     mockState.lastRetry = null;
     mockState.renderErrorMessage = null;
     mockState.lastSurfaceProps = null;
+    mockState.currentSearchParams = '';
+    mockState.routerReplace.mockReset();
     mockState.renderData = {
       list: {
         content: [
@@ -288,7 +300,7 @@ describe('setting labels page', () => {
     expect(html).toContain('data-label-dialog-preview-visibility-owner="route-form-state"');
     expect(html).toContain('data-label-dialog-preview-frame-contract="angular-inline-form-item"');
     expect(html).toContain('data-label-dialog-preview-frame-owner="route-form-field-grid"');
-    expect(html).toContain('data-label-edit-reference-contract="angular-edit-direct-reference"');
+    expect(html).toContain('data-label-edit-reference-contract="isolated-edit-draft"');
     expect(html).toContain('data-label-edit-reference-owner="route-form-state"');
     expect(html).toContain('data-label-save-loading-contract="angular-nz-ok-loading"');
     expect(html).toContain('data-label-save-loading-contract-owner="angular-nz-ok-loading"');
@@ -307,8 +319,8 @@ describe('setting labels page', () => {
     expect(html).toContain('data-label-name-validation-contract="angular-required-before-submit"');
     expect(html).toContain('data-label-name-validation-trigger="angular-ok-marks-dirty"');
     expect(html).toContain('data-label-name-validation-trigger-owner="route-form-contract"');
-    expect(html).toContain('data-label-name-validation-raw-contract="angular-required-before-trim"');
-    expect(html).toContain('data-label-name-validation-raw-owner="route-form-contract"');
+    expect(html).toContain('data-label-name-validation-trim-contract="local-trim-required-before-submit"');
+    expect(html).toContain('data-label-name-validation-trim-owner="route-form-contract"');
     expect(html).toContain('data-label-name-validation-visible="false"');
     expect(html).toContain('data-label-query-contract="angular-load-all-labels"');
     expect(html).toContain('data-label-query-owner="label-query-state"');
@@ -350,7 +362,7 @@ describe('setting labels page', () => {
     expect(mockState.lastRetry).toBeTypeOf('function');
   });
 
-  it('keeps the Angular edit direct-reference behavior when canceling the label dialog', async () => {
+  it('keeps edits isolated from the list until the label dialog is saved', async () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
     const root = createRoot(container);
@@ -368,7 +380,7 @@ describe('setting labels page', () => {
       await Promise.resolve();
     });
 
-    expect(mockState.lastSurfaceProps?.draftLabel).toBe(mockState.renderData.list.content[0]);
+    expect(mockState.lastSurfaceProps?.draftLabel).not.toBe(mockState.renderData.list.content[0]);
     expect(mockState.lastSurfaceProps?.draftLabel?.name).toBe('team');
 
     await act(async () => {
@@ -376,8 +388,8 @@ describe('setting labels page', () => {
       await Promise.resolve();
     });
 
-    expect(mockState.renderData.list.content[0].name).toBe('platform');
-    expect(container.querySelector('[data-label-test-first-name="true"]')?.textContent).toBe('platform');
+    expect(mockState.renderData.list.content[0].name).toBe('team');
+    expect(container.querySelector('[data-label-test-first-name="true"]')?.textContent).toBe('team');
     expect(mockState.lastSurfaceProps?.draftLabel?.name).toBe('platform');
 
     await act(async () => {
@@ -386,8 +398,8 @@ describe('setting labels page', () => {
     });
 
     expect(mockState.lastSurfaceProps?.draftLabel).toBeNull();
-    expect(mockState.renderData.list.content[0].name).toBe('platform');
-    expect(container.querySelector('[data-label-test-first-name="true"]')?.textContent).toBe('platform');
+    expect(mockState.renderData.list.content[0].name).toBe('team');
+    expect(container.querySelector('[data-label-test-first-name="true"]')?.textContent).toBe('team');
 
     await act(async () => {
       root.unmount();
@@ -403,9 +415,8 @@ describe('setting labels page', () => {
     expect(source).toContain('EMPTY_LABEL_DATA');
     expect(source).toContain('renderError={(message, retry) => renderSurface(EMPTY_LABEL_DATA, message, retry)}');
     expect(source).toContain('buildLabelUrl(query)');
-    expect(source).toContain('setDraftLabel(label)');
-    expect(source).toContain('Object.assign(sourceLabel, patch)');
-    expect(source).not.toContain('cloneLabelDraft');
+    expect(source).toContain('setDraftLabel({ ...label })');
+    expect(source).not.toContain('Object.assign(sourceLabel, patch)');
     expect(source).not.toContain('WorkbenchPage');
     expect(source).not.toContain('SurfaceSection');
     expect(source).not.toContain('ToolbarRow');
@@ -437,11 +448,146 @@ describe('setting labels page', () => {
   it('resets the search draft and query when the Angular clear event fires', () => {
     const source = readFileSync(resolve(process.cwd(), 'app/setting/labels/setting-labels-page.tsx'), 'utf8');
 
-    expect(source).toContain("onSearch={() => setQuery({ search, type: '' })}");
+    expect(source).toContain("const routeSearch = searchParams.get('search') ?? '';");
+    expect(source).toContain("const routeType = normalizeLabelQueryType(searchParams.get('type') ?? '');");
+    expect(source).toContain('const replaceRouteQuery = useCallback(');
+    expect(source).toContain("const nextUrl = nextParamString ? `/setting/labels?${nextParamString}` : '/setting/labels';");
+    expect(source).toContain('if (nextUrl !== currentUrl) {');
+    expect(source).toContain('router.replace(nextUrl, { scroll: false });');
+    expect(source).toContain('onSearch={() => {');
+    expect(source).toContain("const nextQuery = { search, type: '' };");
+    expect(source).toContain('replaceRouteQuery(nextQuery);');
     expect(source).toContain('onSearchClear={() => {');
     expect(source).toContain("setSearch('');");
-    expect(source).toContain("setQuery({ search: '', type: '' });");
+    expect(source).toContain("const nextQuery = { search: '', type: '' };");
+    expect(source).toContain('setQuery(nextQuery);');
   });
+
+  it('initializes label search from the URL and preserves route state when search and clear run', async () => {
+    mockState.currentSearchParams = 'search=team&type=1&view=grid';
+    loadLabelData.mockImplementation(async (_apiGetFn, query) => {
+      return {
+        ...mockState.renderData,
+        query
+      };
+    });
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(<SettingLabelsPage />);
+      await Promise.resolve();
+    });
+
+    expect(mockState.lastSurfaceProps?.search).toBe('team');
+    await act(async () => {
+      await mockState.lastLoad?.();
+    });
+    expect(loadLabelData).toHaveBeenLastCalledWith(apiMessageGet, { search: 'team', type: '1' });
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onSearchChange('ops');
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onSearch();
+      await Promise.resolve();
+    });
+
+    expect(mockState.routerReplace).toHaveBeenLastCalledWith('/setting/labels?search=ops&view=grid', { scroll: false });
+    await act(async () => {
+      await mockState.lastLoad?.();
+    });
+    expect(loadLabelData).toHaveBeenLastCalledWith(apiMessageGet, { search: 'ops', type: '' });
+
+    mockState.currentSearchParams = 'search=ops&view=grid';
+    await act(async () => {
+      root.render(<SettingLabelsPage />);
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onSearchClear();
+      await Promise.resolve();
+    });
+
+    expect(mockState.routerReplace).toHaveBeenLastCalledWith('/setting/labels?view=grid', { scroll: false });
+    expect(mockState.lastSurfaceProps?.search).toBe('');
+    await act(async () => {
+      await mockState.lastLoad?.();
+    });
+    expect(loadLabelData).toHaveBeenLastCalledWith(apiMessageGet, { search: '', type: '' });
+
+    await act(async () => {
+      root.unmount();
+      await Promise.resolve();
+    });
+    container.remove();
+  }, 30000);
+
+  it('keeps unsupported route label types out of backend queries while preserving unrelated URL params', async () => {
+    mockState.currentSearchParams = 'search=codex-label&type=manual&view=grid';
+    loadLabelData.mockImplementation(async (_apiGetFn, query) => {
+      return {
+        ...mockState.renderData,
+        query
+      };
+    });
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(<SettingLabelsPage />);
+      await Promise.resolve();
+    });
+
+    expect(mockState.lastSurfaceProps?.search).toBe('codex-label');
+    await act(async () => {
+      await mockState.lastLoad?.();
+    });
+    expect(loadLabelData).toHaveBeenLastCalledWith(apiMessageGet, { search: 'codex-label', type: '' });
+
+    await act(async () => {
+      root.unmount();
+      await Promise.resolve();
+    });
+    container.remove();
+  }, 30000);
+
+  it('builds row monitor handoff links without dropping route context parameters', async () => {
+    mockState.currentSearchParams = 'search=team&type=1&source=label-monitor-link-test&returnTo=%2Fsetting%2Fdefine%3Fapp%3Dwebsite&pageSize=8&timeRange=last-30m&live=false&probe=label-monitor-link-test';
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(<SettingLabelsPage />);
+      await Promise.resolve();
+    });
+
+    const href = mockState.lastSurfaceProps?.buildMonitorHandoffHref?.('team:ops');
+    expect(href).toContain('/monitors?');
+    expect(href).toContain('labels=team%3Aops');
+    expect(href).toContain('source=label-monitor-link-test');
+    expect(href).toContain('returnTo=%2Fsetting%2Fdefine%3Fapp%3Dwebsite');
+    expect(href).toContain('pageSize=8');
+    expect(href).toContain('timeRange=last-30m');
+    expect(href).toContain('live=false');
+    expect(href).toContain('probe=label-monitor-link-test');
+    expect(href).not.toContain('search=team');
+    expect(href).not.toContain('type=1');
+
+    await act(async () => {
+      root.unmount();
+      await Promise.resolve();
+    });
+    container.remove();
+  }, 30000);
 
   it('routes label save feedback through Angular create/edit notification keys', () => {
     const source = readFileSync(resolve(process.cwd(), 'app/setting/labels/setting-labels-page.tsx'), 'utf8');
@@ -454,7 +600,10 @@ describe('setting labels page', () => {
     expect(source).toContain('actionError={actionError}');
     expect(source).toContain('actionMeta={actionMeta}');
     expect(source).toContain('isNameValidationVisible={isNameValidationVisible}');
-    expect(source).toContain('if (draftLabel.name == undefined || draftLabel.name.length === 0) {');
+    expect(source).toContain('const draftToSave = visibleDraft ?? draftLabel;');
+    expect(source).toContain("const trimmedLabelName = (draftToSave.name ?? '').trim();");
+    expect(source).toContain('if (trimmedLabelName.length === 0) {');
+    expect(source).toContain('setDraftLabel(draftToSave);');
     expect(source).toContain('setIsNameValidationVisible(true);');
     expect(source).toContain('return;');
     expect(source).toContain('setIsNameValidationVisible(false);');
@@ -465,7 +614,7 @@ describe('setting labels page', () => {
     expect(source).not.toContain("setActionError(t('common.save-failed'))");
   });
 
-  it('lets a whitespace-only label name follow Angular required-before-trim save behavior', async () => {
+  it('blocks a whitespace-only label name before save', async () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
     const root = createRoot(container);
@@ -491,13 +640,48 @@ describe('setting labels page', () => {
       await Promise.resolve();
     });
 
-    expect(saveLabel).toHaveBeenCalledWith(
-      apiMessagePost,
-      apiMessagePut,
-      expect.objectContaining({ name: '   ', tagValue: 'ops' }),
-      true
-    );
-    expect(mockState.lastSurfaceProps?.isNameValidationVisible).toBe(false);
+    expect(saveLabel).not.toHaveBeenCalled();
+    expect(mockState.lastSurfaceProps?.isNameValidationVisible).toBe(true);
+
+    await act(async () => {
+      root.unmount();
+      await Promise.resolve();
+    });
+    container.remove();
+  }, 30000);
+
+  it('blocks an edit save when the visible dialog name is cleared before React state settles', async () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(<SettingLabelsPage />);
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onEdit(mockState.renderData.list.content[0]);
+      await Promise.resolve();
+    });
+
+    const visibleDraft = {
+      ...(mockState.lastSurfaceProps?.draftLabel ?? mockState.renderData.list.content[0]),
+      name: '',
+      tagValue: 'ops',
+      description: 'ops team'
+    };
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onSaveDialog(visibleDraft);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(saveLabel).not.toHaveBeenCalled();
+    expect(mockState.lastSurfaceProps?.isNameValidationVisible).toBe(true);
+    expect(mockState.lastSurfaceProps?.draftLabel?.name).toBe('');
+    expect(mockState.renderData.list.content[0].name).toBe('team');
 
     await act(async () => {
       root.unmount();
@@ -592,9 +776,16 @@ describe('setting labels page', () => {
 
     expect(source).toContain("import { buildLabelDisplayName } from '@/lib/label-manage/view-model'");
     expect(source).toContain('const text = buildLabelDisplayName(label)');
-    expect(source).toContain("setActionError(t('common.notify.copy-fail'))");
+    expect(source).toContain('const selectCopiedLabelText = useCallback((text: string) => {');
+    expect(source).toContain("document.querySelectorAll<HTMLElement>('[data-label-copy-source]')");
+    expect(source).toContain('element.dataset.labelCopySource === text');
+    expect(source).toContain('document.createRange()');
+    expect(source).toContain('range.selectNodeContents(source)');
+    expect(source).toContain('selection.addRange(range)');
+    expect(source).toContain("setActionError(t(didSelect ? 'setting.labels.copy-fallback' : 'common.notify.copy-fail'))");
+    expect(source).toContain("'common.notify.copy-fail'");
     expect(source).toContain("then(() => setActionMessage(t('common.notify.copy-success')))");
-    expect(source).toContain("catch(() => setActionError(t('common.notify.copy-fail')))");
+    expect(source).toContain('catch(() => handleLabelCopyFailure(text))');
     expect(source).not.toContain('navigator.clipboard.writeText(text);');
   });
 
@@ -624,6 +815,43 @@ describe('setting labels page', () => {
     expect(deleteLabel).toHaveBeenCalledWith(apiMessageDelete, 1);
     expect(mockState.lastSurfaceProps?.deleteTarget).toBeNull();
     expect(mockState.lastSurfaceProps?.isDeletePending).toBe(true);
+
+    await act(async () => {
+      root.unmount();
+      await Promise.resolve();
+    });
+    container.remove();
+  }, 30000);
+
+  it('cancels label deletion without mutating backend state', async () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(<SettingLabelsPage />);
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onDeleteRequest(mockState.renderData.list.content[0]);
+      await Promise.resolve();
+    });
+
+    expect(mockState.lastSurfaceProps?.deleteTarget?.name).toBe('team');
+    expect(mockState.lastSurfaceProps?.actionMessage).toBeNull();
+    expect(mockState.lastSurfaceProps?.actionError).toBeNull();
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onDeleteCancel();
+      await Promise.resolve();
+    });
+
+    expect(deleteLabel).not.toHaveBeenCalled();
+    expect(mockState.lastSurfaceProps?.deleteTarget).toBeNull();
+    expect(mockState.lastSurfaceProps?.actionMessage).toBeNull();
+    expect(mockState.lastSurfaceProps?.actionError).toBeNull();
+    expect(mockState.renderData.list.content[0].name).toBe('team');
 
     await act(async () => {
       root.unmount();

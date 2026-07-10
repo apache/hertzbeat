@@ -58,6 +58,19 @@ describe('shared observability time context', () => {
     expect(sanitizeTimeContext({ timeRange: 'last-2q' })).toEqual({});
   });
 
+  it('preserves custom absolute route semantics while resolving bounds from explicit start and end', () => {
+    expect(sanitizeTimeContext({ timeRange: 'custom', start: '1712730000000', end: '1712733600000' })).toEqual({
+      timeRange: 'custom',
+      start: '1712730000000',
+      end: '1712733600000'
+    });
+    expect(resolveTimeContextBounds({ timeRange: 'custom', start: '1712730000000', end: '1712733600000' })).toEqual({
+      start: '1712730000000',
+      end: '1712733600000'
+    });
+    expect(resolveTimeContextBounds({ timeRange: 'custom' })).toBeNull();
+  });
+
   it('resolves date-math expressions without forcing every signal page to reimplement parser logic', () => {
     const now = Date.UTC(2026, 4, 17, 8, 12, 57);
 
@@ -138,8 +151,13 @@ describe('shared observability time context', () => {
     expect(resolveTimeContextRefreshInterval({ refresh: '10' })).toBe(10);
     expect(resolveTimeContextRefreshInterval({ refresh: '60' })).toBe(60);
     expect(resolveTimeContextRefreshInterval({ refresh: '60', live: 'false' })).toBe(-1);
+    expect(resolveTimeContextRefreshInterval({ refresh: 'off' })).toBe(-1);
+    expect(resolveTimeContextRefreshInterval({ refresh: 'manual' })).toBe(-1);
+    expect(resolveTimeContextRefreshInterval({ refresh: 'false' })).toBe(-1);
     expect(resolveTimeContextRefreshInterval({ refresh: '7' })).toBe(30);
     expect(resolveTimeContextRefreshInterval({})).toBe(30);
+    expect(parseTimeContextFromParams(new URLSearchParams('refresh=off'))).toEqual({ refresh: 'off' });
+    expect(parseTimeContextFromParams(new URLSearchParams('refresh=manual'))).toEqual({ refresh: 'manual' });
 
     expect(timeContextRefreshIntervalToContext(60)).toEqual({ refresh: '60', live: undefined });
     expect(timeContextRefreshIntervalToContext(-1)).toEqual({ refresh: undefined, live: 'false' });

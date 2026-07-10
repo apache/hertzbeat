@@ -47,12 +47,34 @@ public class EntityDetailReadModelService {
         return buildEntityDto(entityId, entityWorkspaceAccessService.findAccessibleEntityForRequestWorkspace(entityId));
     }
 
+    public EntityDto loadEntityDto(long entityId, int relationPreviewLimit) {
+        return buildEntityDto(
+                entityId,
+                entityWorkspaceAccessService.findAccessibleEntityForRequestWorkspace(entityId),
+                relationPreviewLimit);
+    }
+
     public EntityDto loadEntityDto(long entityId, String requestWorkspaceId) {
         return buildEntityDto(entityId, entityWorkspaceAccessService.findAccessibleEntityById(
                 entityId, requestWorkspaceId));
     }
 
+    public EntityDto loadEntityDto(long entityId, String requestWorkspaceId, int relationPreviewLimit) {
+        return buildEntityDto(
+                entityId,
+                entityWorkspaceAccessService.findAccessibleEntityById(entityId, requestWorkspaceId),
+                relationPreviewLimit);
+    }
+
+    public long countEntityRelations(long entityId) {
+        return entityRelationService.countEntityRelations(entityId);
+    }
+
     private EntityDto buildEntityDto(long entityId, Optional<ObserveEntity> optional) {
+        return buildEntityDto(entityId, optional, null);
+    }
+
+    private EntityDto buildEntityDto(long entityId, Optional<ObserveEntity> optional, Integer relationPreviewLimit) {
         if (optional.isEmpty()) {
             return null;
         }
@@ -61,7 +83,9 @@ public class EntityDetailReadModelService {
         dto.setEntity(entity);
         dto.setIdentities(entityIdentityReadModelService.findIdentities(entityId));
         dto.setMonitorBinds(entityMonitorBindService.findMonitorBinds(entityId));
-        dto.setRelations(entityRelationService.findEntityRelations(entityId));
+        dto.setRelations(relationPreviewLimit == null
+                ? entityRelationService.findEntityRelations(entityId)
+                : entityRelationService.findEntityRelations(entityId, relationPreviewLimit));
         return dto;
     }
 }

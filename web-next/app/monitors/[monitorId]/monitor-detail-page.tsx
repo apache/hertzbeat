@@ -61,7 +61,15 @@ import {
   timeWindowToTimeRange,
   type TimeContext
 } from '@/lib/time-context';
-import type { GrafanaDashboard, Monitor, MonitorDetailMetric, MonitorHistoryData, MonitorRealtimeMetricData, Param } from '@/lib/types';
+import type {
+  EntityMonitorBindingCandidate,
+  GrafanaDashboard,
+  Monitor,
+  MonitorDetailMetric,
+  MonitorHistoryData,
+  MonitorRealtimeMetricData,
+  Param
+} from '@/lib/types';
 
 type MonitorDetailData = {
   monitor: Monitor;
@@ -150,6 +158,25 @@ function buildMonitorHistoryTimeRoute(monitorId: string | number, searchParams: 
   return query ? `/monitors/${encodeURIComponent(String(monitorId))}?${query}` : `/monitors/${encodeURIComponent(String(monitorId))}`;
 }
 
+function buildMonitorEntityDraftHref(monitorId: string | number, currentHref: string) {
+  const params = new URLSearchParams();
+  params.set('source', 'telemetry');
+  params.set('monitorId', String(monitorId));
+  params.set('returnTo', currentHref);
+  return `/entities/new?${params.toString()}`;
+}
+
+function buildMonitorBoundEntityHref(entityId: string | number, monitorId: string | number, currentHref: string) {
+  const params = new URLSearchParams();
+  params.set('monitorId', String(monitorId));
+  params.set('returnTo', currentHref);
+  return `/entities/${encodeURIComponent(String(entityId))}?${params.toString()}`;
+}
+
+function findAlreadyBoundEntityCandidate(candidates: EntityMonitorBindingCandidate[] | null) {
+  return candidates?.find(candidate => candidate?.alreadyBound && candidate.entityId != null) ?? null;
+}
+
 function MonitorDetailWorkbench({ data }: { data: MonitorDetailData }) {
   const { t } = useI18n();
   const router = useRouter();
@@ -207,6 +234,7 @@ function MonitorDetailWorkbench({ data }: { data: MonitorDetailData }) {
   const [currentTab, setCurrentTab] = useState<MonitorDetailConsoleTabKey>('realtime');
   const [lastRefreshableTab, setLastRefreshableTab] = useState<MonitorDetailRefreshableTab>('realtime');
   const [favoriteSurfaceMode, setFavoriteSurfaceMode] = useState<'realtime' | 'history'>('realtime');
+  const [entityBindingCandidates, setEntityBindingCandidates] = useState<EntityMonitorBindingCandidate[] | null>(null);
   const [visibleRealtimeMetricCount, setVisibleRealtimeMetricCount] = useState(MONITOR_DETAIL_REALTIME_PAGE_SIZE);
   const [visibleFavoriteRealtimeMetricCount, setVisibleFavoriteRealtimeMetricCount] = useState(MONITOR_DETAIL_FAVORITE_REALTIME_PAGE_SIZE);
   const [visibleHistoryChartCount, setVisibleHistoryChartCount] = useState(MONITOR_DETAIL_HISTORY_CHART_PAGE_SIZE);
@@ -979,11 +1007,52 @@ function MonitorDetailWorkbench({ data }: { data: MonitorDetailData }) {
     }
   }
 
+  useEffect(() => {
+    let disposed = false;
+    if (navigationContext.entityId) {
+      setEntityBindingCandidates([]);
+      return () => {
+        disposed = true;
+      };
+    }
+    setEntityBindingCandidates(null);
+    api.entities.monitorCandidates(monitor.id)
+      .then(candidates => {
+        if (!disposed) {
+          setEntityBindingCandidates(Array.isArray(candidates) ? candidates : []);
+        }
+      })
+      .catch(() => {
+        if (!disposed) {
+          setEntityBindingCandidates([]);
+        }
+      });
+    return () => {
+      disposed = true;
+    };
+  }, [monitor.id, navigationContext.entityId]);
+
   const appDefinitionKey = resolveMonitorDetailAppContext(monitor, navigationContext);
   const detailNavigationContext = appDefinitionKey ? { ...navigationContext, app: appDefinitionKey } : navigationContext;
   const backHref = buildMonitorListReturnHref({ ...navigationContext, app: appDefinitionKey });
   const editHref = buildMonitorEditHref(monitor.id, navigationContext);
   const helpHref = appDefinitionKey ? `https://hertzbeat.apache.org/docs/help/${encodeURIComponent(appDefinitionKey)}` : null;
+  const currentMonitorHref = searchParamString
+    ? `/monitors/${encodeURIComponent(String(monitor.id))}?${searchParamString}`
+    : `/monitors/${encodeURIComponent(String(monitor.id))}`;
+  const alreadyBoundEntity = findAlreadyBoundEntityCandidate(entityBindingCandidates);
+  const entityBindingLoading = !navigationContext.entityId && entityBindingCandidates == null;
+  const navigationEntityHref = navigationContext.entityId != null
+    ? buildMonitorBoundEntityHref(navigationContext.entityId, monitor.id, currentMonitorHref)
+    : null;
+  const navigationEntityName = navigationContext.entityName ?? null;
+  const entityBoundHref = alreadyBoundEntity?.entityId != null
+    ? buildMonitorBoundEntityHref(alreadyBoundEntity.entityId, monitor.id, currentMonitorHref)
+    : navigationEntityHref;
+  const entityBoundName = alreadyBoundEntity?.entityName ?? navigationEntityName;
+  const monitorEntityDraftHref = navigationContext.entityId || entityBindingLoading || entityBoundHref
+    ? null
+    : buildMonitorEntityDraftHref(monitor.id, currentMonitorHref);
   const sections = MonitorDetailSections({
     monitor,
     editHref,
@@ -1092,6 +1161,9 @@ function MonitorDetailWorkbench({ data }: { data: MonitorDetailData }) {
       backHref={backHref}
       editHref={editHref}
       helpHref={helpHref}
+      entityDraftHref={monitorEntityDraftHref}
+      entityBoundHref={entityBoundHref}
+      entityBoundName={entityBoundName}
       appHref={appDefinitionKey ? `/setting/define?app=${encodeURIComponent(appDefinitionKey)}` : null}
       grafanaUrl={grafanaState.enabled ? grafanaState.url : null}
       navigationContext={detailNavigationContext}
@@ -1109,7 +1181,11 @@ function MonitorDetailWorkbench({ data }: { data: MonitorDetailData }) {
 
 export default function MonitorDetailPage({ monitorId }: { monitorId: string }) {
   const { t } = useI18n();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
+  const routeNavigationContext = useMemo(() => readMonitorDetailNavigationContext(searchParams), [searchParams]);
+  const routeListReturnHref = useMemo(() => buildMonitorListReturnHref(routeNavigationContext), [routeNavigationContext]);
   const monitorDetailUrl = useMemo(() => buildMonitorDetailUrl(monitorId), [monitorId]);
   const monitorDetailGrafanaUrl = useMemo(() => buildMonitorGrafanaUrl(monitorId), [monitorId]);
   const monitorDetailFavoriteUrl = useMemo(() => buildMonitorFavoriteUrl(monitorId), [monitorId]);
@@ -1173,7 +1249,7 @@ export default function MonitorDetailPage({ monitorId }: { monitorId: string }) 
             variant="embedded"
             data-monitor-detail-route-state-feedback="error"
           />
-          <div className="mt-3 flex justify-center">
+          <div className="mt-3 flex flex-wrap justify-center gap-2">
             <HzButton
               size="sm"
               intent="primary"
@@ -1182,6 +1258,16 @@ export default function MonitorDetailPage({ monitorId }: { monitorId: string }) 
               onClick={retry}
             >
               {t('monitor.route-state.action.retry')}
+            </HzButton>
+            <HzButton
+              size="sm"
+              intent="secondary"
+              data-monitor-detail-route-state-list-return="true"
+              data-monitor-detail-route-state-list-return-owner="hertzbeat-ui-button"
+              data-monitor-detail-route-state-list-return-target={routeListReturnHref}
+              onClick={() => router.push(routeListReturnHref)}
+            >
+              {t('monitor.detail.back')}
             </HzButton>
           </div>
         </section>

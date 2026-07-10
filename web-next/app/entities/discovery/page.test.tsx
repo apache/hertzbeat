@@ -31,7 +31,7 @@ const expectedT = createTranslatorMock({ locale: 'zh-CN' });
 vi.mock('next/navigation', () => ({
   useSearchParams: () =>
     new URLSearchParams(
-      'identityKey=service.name&identityValue=billing&serviceName=billing-api&serviceNamespace=commerce&environment=prod'
+      'search=Codex%20PD%201315&pageIndex=1&identityKey=service.name&identityValue=billing&serviceName=billing-api&serviceNamespace=commerce&environment=prod&source=product-design-1335'
     )
 }));
 
@@ -64,8 +64,15 @@ vi.mock('@/components/workbench/client-workbench', () => ({
 }));
 
 vi.mock('@/components/pages/entity-discovery-surface', () => ({
-  EntityDiscoverySurface: ({ presets, activities, catalog, candidateContext }: any) => (
-    <div data-entity-discovery-surface="otlp-hertzbeat-ui-discovery-console">
+  EntityDiscoverySurface: ({ presets, activities, catalog, candidateContext, initialSearch, initialSource, initialPageIndex, deleteSuccess, deletedEntity }: any) => (
+    <div
+      data-entity-discovery-surface="otlp-hertzbeat-ui-discovery-console"
+      data-page-initial-search={initialSearch}
+      data-page-initial-source={initialSource}
+      data-page-initial-page-index={initialPageIndex}
+      data-page-delete-success={deleteSuccess ? 'true' : 'false'}
+      data-page-deleted-entity={deletedEntity ?? ''}
+    >
       {candidateContext ? (
         <span
           data-page-candidate-source={candidateContext.source}
@@ -121,6 +128,10 @@ describe('EntityDiscoveryPage', () => {
     expect(html).toContain('data-page-candidate-service="billing-api"');
     expect(html).toContain('data-page-candidate-namespace="commerce"');
     expect(html).toContain('data-page-candidate-environment="prod"');
+    expect(html).toContain('data-page-initial-search="Codex PD 1315"');
+    expect(html).toContain('data-page-initial-source="product-design-1335"');
+    expect(html).toContain('data-page-delete-success="false"');
+    expect(html).toContain('data-page-initial-page-index="1"');
 
     await mockState.lastLoad?.();
 

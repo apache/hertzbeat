@@ -35,8 +35,10 @@ describe('three-signal family cold-workbench chrome', () => {
     expect(shellSource).toContain("bg-[var(--ops-surface-panel)] p-3");
     expect(shellSource).toContain("bg-[var(--ops-surface-elevated)] p-3");
     expect(overviewSource).toContain('components/observability');
-    expect(overviewSource).toContain('StageSection');
     expect(overviewSource).toContain('SupportPanel');
+    expect(overviewSource).toContain('OverviewProblemFocusPanel');
+    expect(overviewSource).toContain('data-overview-problem-focus-panel="hertzbeat-ui-flat-problem-focus"');
+    expect(overviewSource).not.toContain('StageSection');
     expect(overviewSource).not.toContain('components/workbench/primitives');
     expect(logSource).toContain('components/observability/time-range-control');
     expect(logSource).toContain('data-log-manage-time-toolbar="top-right-corner"');
@@ -45,7 +47,7 @@ describe('three-signal family cold-workbench chrome', () => {
     expect(logSource).toContain('variant="narrow-rail"');
     expect(logSource).toContain('showAbsoluteFields');
     expect(logSource.indexOf('data-log-manage-time-control="shared-time-context-control"')).toBeLessThan(
-      logSource.indexOf('data-log-manage-query-bar="cold-query-row"')
+      logSource.indexOf('data-log-manage-query-bar="hertzbeat-ui-query-row"')
     );
     expect(logSource).not.toContain('components/workbench/primitives');
     expect(logSource).not.toContain('ObservabilityPanelShell');
@@ -59,7 +61,7 @@ describe('three-signal family cold-workbench chrome', () => {
     expect(traceSource).toContain('variant="narrow-rail"');
     expect(traceSource).toContain('showAbsoluteFields');
     expect(traceSource.indexOf('data-trace-manage-time-control="shared-time-context-control"')).toBeLessThan(
-      traceSource.indexOf('data-trace-manage-query-bar="cold-query-row"')
+      traceSource.indexOf('data-trace-manage-query-bar="hertzbeat-ui-query-row"')
     );
     expect(traceSource).not.toContain('components/workbench/primitives');
     expect(metricsSource).toContain('components/observability/time-range-control');
@@ -69,7 +71,7 @@ describe('three-signal family cold-workbench chrome', () => {
     expect(metricsSource).toContain('variant="narrow-rail"');
     expect(metricsSource).toContain('showAbsoluteFields');
     expect(metricsSource.indexOf('data-otlp-metrics-time-control="shared-time-context-control"')).toBeLessThan(
-      metricsSource.indexOf('data-otlp-metrics-query-bar="cold-query-row"')
+      metricsSource.indexOf('data-otlp-metrics-query-bar="hertzbeat-ui-query-row"')
     );
     expect(metricsSource).not.toContain('components/workbench/primitives');
   });

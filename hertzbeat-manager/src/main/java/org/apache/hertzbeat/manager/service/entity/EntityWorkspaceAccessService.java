@@ -130,6 +130,16 @@ public class EntityWorkspaceAccessService {
         return findAccessibleEntityByReference(currentRequestWorkspaceId(), type, name);
     }
 
+    public Optional<ObserveEntity> findAccessibleEntityByName(String requestWorkspaceId, String name) {
+        String normalizedWorkspaceId = normalizeWorkspaceId(requestWorkspaceId);
+        Optional<ObserveEntity> entity = entityWorkspaceQueryService.findEntityByName(normalizedWorkspaceId, name);
+        return entity.filter(candidate -> matchesRequestWorkspace(candidate, normalizedWorkspaceId));
+    }
+
+    public Optional<ObserveEntity> findAccessibleEntityByNameForRequestWorkspace(String name) {
+        return findAccessibleEntityByName(currentRequestWorkspaceId(), name);
+    }
+
     public boolean matchesRequestWorkspace(ObserveEntity entity, String requestWorkspaceId) {
         if (!StringUtils.hasText(requestWorkspaceId)) {
             return true;

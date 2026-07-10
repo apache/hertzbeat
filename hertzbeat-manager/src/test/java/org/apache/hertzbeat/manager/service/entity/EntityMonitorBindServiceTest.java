@@ -18,6 +18,8 @@
 package org.apache.hertzbeat.manager.service.entity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -106,6 +108,7 @@ class EntityMonitorBindServiceTest {
         EntityMonitorBind missingMonitorId = EntityMonitorBind.builder().build();
         when(entityMonitorQueryService.monitorExists(501L)).thenReturn(true);
         when(entityMonitorQueryService.monitorExists(502L)).thenReturn(false);
+        when(entityMonitorBindQueryService.findMonitorBindsByMonitorId(501L)).thenReturn(List.of());
 
         monitorBindService.replaceMonitorBinds(301L, List.of(validBind, missingMonitorBind, missingMonitorId));
 
@@ -121,6 +124,25 @@ class EntityMonitorBindServiceTest {
         assertEquals("active", saved.getStatus());
         assertEquals(100, saved.getScore());
         assertEquals(Map.of("service.name", List.of("checkout-api")), saved.getMatchContext());
+    }
+
+    @Test
+    void replaceMonitorBindsRejectsMonitorAlreadyBoundToAnotherEntity() {
+        EntityMonitorBind input = EntityMonitorBind.builder()
+                .monitorId(501L)
+                .build();
+        EntityMonitorBind existing = EntityMonitorBind.builder()
+                .entityId(302L)
+                .monitorId(501L)
+                .build();
+        when(entityMonitorQueryService.monitorExists(501L)).thenReturn(true);
+        when(entityMonitorBindQueryService.findMonitorBindsByMonitorId(501L)).thenReturn(List.of(existing));
+
+        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+                () -> monitorBindService.replaceMonitorBinds(301L, List.of(input)));
+
+        assertEquals("Monitor already bound to another entity: 501.", error.getMessage());
+        verify(entityMonitorBindWriteModelService, never()).replaceMonitorBinds(eq(301L), org.mockito.ArgumentMatchers.anyList());
     }
 
     @Test
@@ -187,6 +209,33 @@ class EntityMonitorBindServiceTest {
         List<Monitor> monitors = monitorBindService.findEntityMonitors(301L);
 
         assertEquals(List.of(702L, 701L), monitors.stream().map(Monitor::getId).toList());
+    }
+
+    @Test
+    void findEntityMonitorsByEntityIdsBatchesBindAndMonitorLookupsForCurrentPage() {
+        EntityMonitorBind firstBind = EntityMonitorBind.builder()
+                .entityId(301L)
+                .monitorId(702L)
+                .build();
+        EntityMonitorBind secondBind = EntityMonitorBind.builder()
+                .entityId(302L)
+                .monitorId(701L)
+                .build();
+        when(entityMonitorBindQueryService.findMonitorBindsByEntityIds(List.of(301L, 302L, 303L)))
+                .thenReturn(Map.of(301L, List.of(firstBind), 302L, List.of(secondBind)));
+        Monitor firstMonitor = Monitor.builder().id(701L).name("first-returned").build();
+        Monitor secondMonitor = Monitor.builder().id(702L).name("second-returned").build();
+        when(entityMonitorQueryService.findMonitorsByIds(java.util.Set.of(701L, 702L)))
+                .thenReturn(List.of(firstMonitor, secondMonitor));
+
+        Map<Long, List<Monitor>> monitorsByEntityId =
+                monitorBindService.findEntityMonitorsByEntityIds(List.of(301L, 302L, 303L));
+
+        assertEquals(List.of(702L), monitorsByEntityId.get(301L).stream().map(Monitor::getId).toList());
+        assertEquals(List.of(701L), monitorsByEntityId.get(302L).stream().map(Monitor::getId).toList());
+        assertNull(monitorsByEntityId.get(303L));
+        verify(entityMonitorBindQueryService).findMonitorBindsByEntityIds(List.of(301L, 302L, 303L));
+        verify(entityMonitorQueryService).findMonitorsByIds(java.util.Set.of(701L, 702L));
     }
 
     @Test

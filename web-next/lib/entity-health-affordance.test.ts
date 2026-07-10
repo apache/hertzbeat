@@ -28,24 +28,44 @@ describe('lightweight entity health affordance', () => {
     const base = {
       activeAlertCount: 0,
       downMonitorCount: 0,
-      healthyMonitorCount: 0,
+      healthyMonitorCount: 1,
       logHintCount: 0,
-      monitorCount: 0,
+      monitorCount: 1,
       recentErrorTraceCount: 0,
       recentTraceCount: 0
     };
 
     expect(buildLightweightEntityHealthAffordance({ ...base, status: 'healthy' })).toMatchObject({
-      score: 92,
+      score: 100,
       tone: 'success'
     });
     expect(buildLightweightEntityHealthAffordance({ ...base, status: 'unknown' })).toMatchObject({
-      score: 80,
+      score: 88,
       tone: 'warning'
     });
     expect(buildLightweightEntityHealthAffordance({ ...base, status: 'down' })).toMatchObject({
-      score: 68,
+      score: 76,
       tone: 'warning'
+    });
+  });
+
+  it('does not display a numeric health score before live evidence exists', () => {
+    expect(
+      buildLightweightEntityHealthAffordance({
+        status: 'unknown',
+        monitorCount: 0,
+        activeAlertCount: 0,
+        recentTraceCount: 0,
+        recentErrorTraceCount: 0,
+        logHintCount: 0
+      })
+    ).toEqual({
+      score: 0,
+      scoreText: 'Waiting for live evidence',
+      label: 'Health not scored',
+      copy: 'Waiting for collection binding',
+      meta: 'Bind collection or OTLP evidence before scoring.',
+      tone: 'neutral'
     });
   });
 });

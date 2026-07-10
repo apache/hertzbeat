@@ -47,25 +47,39 @@ public class EntityDefinitionTypeResolverService {
     }
 
     public String resolveDefinitionEntityType(Map<String, Object> root, Map<String, Object> specMap) {
-        String normalizedKind = normalizeSupportedEntityType(asText(root.get("kind")));
+        String rawKind = asText(root.get("kind"));
+        String normalizedKind = normalizeSupportedEntityType(rawKind);
         if (StringUtils.hasText(normalizedKind)) {
             return normalizedKind;
         }
-        String normalizedEntityType = normalizeSupportedEntityType(defaultText(
+        if (isUnsupportedExplicitKind(rawKind)) {
+            throw new IllegalArgumentException("Unsupported entity definition kind: " + rawKind + ".");
+        }
+
+        String rawEntityType = defaultText(
                 asText(specMap.get("entityType")),
                 asText(specMap.get("entity_type")),
                 asText(root.get("entityType")),
                 asText(root.get("entity_type"))
-        ));
+        );
+        String normalizedEntityType = normalizeSupportedEntityType(rawEntityType);
         if (StringUtils.hasText(normalizedEntityType)) {
             return normalizedEntityType;
         }
+        if (StringUtils.hasText(rawEntityType)) {
+            throw new IllegalArgumentException("Unsupported entity definition entity type: " + rawEntityType + ".");
+        }
+
         return defaultText(
                 normalizeSupportedEntityType(asText(specMap.get("type"))),
                 normalizeSupportedEntityType(asText(root.get("type"))),
                 asText(root.get("dd-service")) != null || asText(root.get("dd_service")) != null ? "service" : null,
                 "service"
         );
+    }
+
+    private boolean isUnsupportedExplicitKind(String rawKind) {
+        return StringUtils.hasText(rawKind) && !LEGACY_ENTITY_DEFINITION_KIND.equalsIgnoreCase(rawKind.trim());
     }
 
     public String resolveDefinitionSubtype(Map<String, Object> root, Map<String, Object> specMap, String entityType) {

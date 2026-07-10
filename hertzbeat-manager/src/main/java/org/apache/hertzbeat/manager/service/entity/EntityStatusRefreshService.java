@@ -17,12 +17,17 @@
 
 package org.apache.hertzbeat.manager.service.entity;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityStatusInfo;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 /**
  * Refreshes entity runtime status from current monitor bindings and alert evidence.
@@ -54,18 +59,62 @@ public class EntityStatusRefreshService {
 
     public EntityRuntimeStatusEvidence refreshEntityStatusWithEvidence(ObserveEntity entity) {
         List<Monitor> monitors = entityMonitorBindService.findEntityMonitors(entity.getId());
-        List<SingleAlert> activeAlerts = entityAlertEvidenceReadModelService.queryActiveAlerts(
-                monitors, ACTIVE_ALERT_LIMIT);
-        EntityStatusInfo statusInfo = entityRuntimeHealthService.refreshEntityStatus(entity, monitors, activeAlerts);
-        return new EntityRuntimeStatusEvidence(monitors, activeAlerts, statusInfo);
+        return refreshEntityStatusWithEvidence(entity, monitors, null, false);
     }
 
     public EntityRuntimeStatusEvidence refreshEntityStatusWithEvidence(ObserveEntity entity, String requestWorkspaceId) {
         List<Monitor> monitors = entityMonitorBindService.findEntityMonitors(entity.getId());
-        List<SingleAlert> activeAlerts = entityAlertEvidenceReadModelService.queryActiveAlerts(
-                monitors, ACTIVE_ALERT_LIMIT, requestWorkspaceId);
+        return refreshEntityStatusWithEvidence(entity, monitors, requestWorkspaceId, true);
+    }
+
+    public Map<Long, EntityRuntimeStatusEvidence> refreshEntityStatusesWithEvidence(List<ObserveEntity> entities) {
+        return refreshEntityStatusesWithEvidence(entities, null, false);
+    }
+
+    public Map<Long, EntityRuntimeStatusEvidence> refreshEntityStatusesWithEvidence(List<ObserveEntity> entities,
+                                                                                    String requestWorkspaceId) {
+        return refreshEntityStatusesWithEvidence(entities, requestWorkspaceId, true);
+    }
+
+    private Map<Long, EntityRuntimeStatusEvidence> refreshEntityStatusesWithEvidence(List<ObserveEntity> entities,
+                                                                                    String requestWorkspaceId,
+                                                                                    boolean explicitWorkspace) {
+        if (CollectionUtils.isEmpty(entities)) {
+            return Collections.emptyMap();
+        }
+        List<Long> entityIds = entities.stream()
+                .map(ObserveEntity::getId)
+                .filter(Objects::nonNull)
+                .toList();
+        Map<Long, List<Monitor>> monitorsByEntityId = entityMonitorBindService.findEntityMonitorsByEntityIds(entityIds);
+        Map<Long, EntityRuntimeStatusEvidence> evidenceByEntityId = new LinkedHashMap<>();
+        for (ObserveEntity entity : entities) {
+            if (entity == null || entity.getId() == null) {
+                continue;
+            }
+            List<Monitor> monitors = monitorsByEntityId.getOrDefault(entity.getId(), Collections.emptyList());
+            evidenceByEntityId.put(entity.getId(),
+                    refreshEntityStatusWithEvidence(entity, monitors, requestWorkspaceId, explicitWorkspace));
+        }
+        return evidenceByEntityId;
+    }
+
+    private EntityRuntimeStatusEvidence refreshEntityStatusWithEvidence(ObserveEntity entity,
+                                                                        List<Monitor> monitors,
+                                                                        String requestWorkspaceId,
+                                                                        boolean explicitWorkspace) {
+        List<SingleAlert> activeAlerts = CollectionUtils.isEmpty(monitors)
+                ? Collections.emptyList()
+                : queryActiveAlerts(monitors, requestWorkspaceId, explicitWorkspace);
         EntityStatusInfo statusInfo = entityRuntimeHealthService.refreshEntityStatus(entity, monitors, activeAlerts);
         return new EntityRuntimeStatusEvidence(monitors, activeAlerts, statusInfo);
+    }
+
+    private List<SingleAlert> queryActiveAlerts(List<Monitor> monitors, String requestWorkspaceId,
+                                                boolean explicitWorkspace) {
+        return explicitWorkspace
+                ? entityAlertEvidenceReadModelService.queryActiveAlerts(monitors, ACTIVE_ALERT_LIMIT, requestWorkspaceId)
+                : entityAlertEvidenceReadModelService.queryActiveAlerts(monitors, ACTIVE_ALERT_LIMIT);
     }
 
     /**

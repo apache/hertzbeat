@@ -93,9 +93,10 @@ function normalizeTraceOverview(overview: TraceOverview | null | undefined): Tra
 }
 
 function normalizeTraceList(list: PageResult<TraceListItem> | null | undefined): PageResult<TraceListItem> {
+  const springPage = list as (PageResult<TraceListItem> & { number?: unknown; size?: unknown }) | null | undefined;
   const totalElements = list?.totalElements;
-  const pageIndex = list?.pageIndex;
-  const pageSize = list?.pageSize;
+  const pageIndex = list?.pageIndex ?? springPage?.number;
+  const pageSize = list?.pageSize ?? springPage?.size;
 
   return {
     content: Array.isArray(list?.content) ? list.content : [],
@@ -325,6 +326,24 @@ function traceRelatedLogSeverity(entry: LogEntry) {
   return entry.severityText?.trim() || (Number.isFinite(Number(entry.severityNumber)) ? String(entry.severityNumber) : 'LOG');
 }
 
+function buildTraceDetailLoadErrorCopy(
+  t: TraceTranslator,
+  row: Pick<TraceExplorerRow, 'traceId' | 'service'>,
+  routeContext: SignalRouteContext
+) {
+  const traceId = firstNavigationId(row.traceId, routeContext.traceId) || '-';
+  const serviceName = firstNavigationId(row.service, routeContext.serviceName) || '-';
+  const formatRouteTime = (value: string | undefined) => {
+    if (!value) return null;
+    const trimmed = value.trim();
+    return /^\d+$/.test(trimmed) ? formatTime(Number(trimmed)) : formatTime(trimmed);
+  };
+  const start = formatRouteTime(routeContext.start);
+  const end = formatRouteTime(routeContext.end);
+  const timeRange = start && end ? `${start} -> ${end}` : routeContext.timeRange || '-';
+  return t('trace.manage.drawer.error.copy', { traceId, serviceName, timeRange });
+}
+
 function buildTraceRelatedMetricHref(metricsHref: string | null | undefined, query: string | null | undefined) {
   const normalizedQuery = query?.trim();
   if (!metricsHref || !normalizedQuery) return undefined;
@@ -332,6 +351,8 @@ function buildTraceRelatedMetricHref(metricsHref: string | null | undefined, que
   href.searchParams.set('query', normalizedQuery);
   return `${href.pathname}?${href.searchParams.toString()}`;
 }
+
+const TRACE_RELATED_METRIC_OPERATION_LABELS = new Set(['operation_name', 'http_route']);
 
 function buildTraceRelatedMetricCandidateHref(
   metricsHref: string | null | undefined,
@@ -357,6 +378,12 @@ function buildTraceRelatedMetricCandidateHref(
   if (family) url.searchParams.set('relatedMetricFamily', family);
   if (reason) url.searchParams.set('relatedMetricReason', reason);
   if (matchedLabels) url.searchParams.set('relatedMetricMatchedLabels', matchedLabels);
+  const carriesOperationScope =
+    matchedLabels.split(',').some(label => TRACE_RELATED_METRIC_OPERATION_LABELS.has(label)) ||
+    Object.keys(resourceMatch).some(label => TRACE_RELATED_METRIC_OPERATION_LABELS.has(label));
+  if (!carriesOperationScope) {
+    url.searchParams.delete('operationName');
+  }
   if (Object.keys(resourceMatch).length) {
     url.searchParams.set('relatedMetricResourceMatch', JSON.stringify(resourceMatch));
   }
@@ -1098,7 +1125,11 @@ function TraceWaterfallDrawer({
     );
   }, [applyTraceAttributeOperator, t]);
   const selectedTraceEvent = findTraceWaterfallEvent(waterfallRows, state.selectedEventKey);
+  const requestedTraceId = firstNavigationId(query.traceId, routeContext.traceId) ?? undefined;
+  const requestedSpanId = firstNavigationId(query.spanId, routeContext.spanId) ?? undefined;
   const handoffLinks = buildTraceHandoffLinks(detail, selectedSpan, handoffRouteContext, {
+    traceId: requestedTraceId,
+    spanId: requestedSpanId,
     intakeReturnTo: currentTraceReturnHref,
     logsReturnTo: selectedTraceReturnHref,
     metricsReturnTo: selectedTraceReturnHref,
@@ -1169,11 +1200,10 @@ function TraceWaterfallDrawer({
   const traceEventCount = waterfallRows.reduce((count, row) => count + (row.events?.length || 0), 0);
   const missingTraceHandoffTitle = t('trace.manage.handoff.logs-disabled');
   const missingEntityHandoffTitle = t('trace.manage.handoff.entity-disabled');
-  const canOpenLogs = hasNavigationId(detail?.traceId);
+  const entityDiscoveryHandoffTitle = t('trace.manage.handoff.entity-discovery');
+  const canOpenLogs = hasNavigationId(detail?.traceId) || hasNavigationId(requestedTraceId);
   const canOpenEntity = handoffLinks.entityHref.startsWith('/entities/');
   const selectedSpanOperationName = selectedSpan?.spanName?.trim() || '';
-  const requestedTraceId = firstNavigationId(query.traceId, routeContext.traceId);
-  const requestedSpanId = firstNavigationId(query.spanId, routeContext.spanId);
   const drawerSourceContextKind = isDashboardReturnContext(routeContext.returnTo)
     ? 'dashboard-evidence'
     : routeContext.returnTo
@@ -1216,6 +1246,17 @@ function TraceWaterfallDrawer({
           data-trace-manage-drawer-action-group-layout-owner="hertzbeat-ui-action-group"
           layout="full-end"
         >
+          {routeContext.returnTo ? (
+            <HzButtonLink
+              component={Link}
+              data-trace-manage-drawer-return-action="true"
+              data-trace-manage-drawer-detail-action="return-source"
+              href={routeContext.returnTo}
+              size="md"
+            >
+              {t('trace.manage.route.action.return-source')}
+            </HzButtonLink>
+          ) : null}
           {selectedSpanOperationName ? (
             <HzButton
               type="button"
@@ -1273,23 +1314,17 @@ function TraceWaterfallDrawer({
               {t('trace.manage.drawer.action.entity')}
             </HzButtonLink>
           ) : (
-            <HzDisabledActionShell
-              title={missingEntityHandoffTitle}
-              data-trace-manage-disabled-action-owner="hertzbeat-ui-disabled-action-shell"
-              data-trace-manage-disabled-action="entity"
-              data-trace-manage-disabled-action-scope="drawer-footer"
+            <HzButtonLink
+              component={Link}
+              data-trace-manage-entity-discovery-action="missing-entity-id"
+              data-trace-manage-drawer-detail-action="entity-discovery"
+              href={handoffLinks.entityDiscoveryHref}
+              size="md"
+              title={entityDiscoveryHandoffTitle}
+              aria-label={entityDiscoveryHandoffTitle}
             >
-              <HzButton
-                data-trace-manage-entity-action-disabled="missing-entity-id"
-                data-trace-manage-drawer-detail-action="entity"
-                size="md"
-                disabled
-                title={missingEntityHandoffTitle}
-                aria-label={missingEntityHandoffTitle}
-              >
-                {t('trace.manage.drawer.action.entity')}
-              </HzButton>
-            </HzDisabledActionShell>
+              {t('trace.manage.drawer.action.entity-discovery')}
+            </HzButtonLink>
           )}
         </HzActionGroup>
       }
@@ -1396,7 +1431,7 @@ function TraceWaterfallDrawer({
                         key: 'loading',
                         title: t('trace.manage.drawer.related-logs.loading.title'),
                         copy: t('trace.manage.drawer.related-logs.loading.copy'),
-                        meta: relatedLogsUrl || '-'
+                        meta: t('trace.manage.drawer.related-logs.loading.meta')
                       }]
                       : relatedLogsState.error
                         ? [{
@@ -1434,7 +1469,20 @@ function TraceWaterfallDrawer({
                             key: 'empty',
                             title: t('trace.manage.drawer.related-logs.empty.title'),
                             copy: t('trace.manage.drawer.related-logs.empty.copy'),
-                            meta: relatedLogsUrl || '-'
+                            meta: t('trace.manage.drawer.related-logs.empty.meta'),
+                            action: canOpenLogs ? (
+                              <HzButtonLink
+                                component={Link}
+                                href={handoffLinks.logsHref}
+                                size="sm"
+                                data-trace-manage-drawer-related-logs-empty-action="open-logs"
+                                data-trace-manage-drawer-related-logs-empty-action-owner="hertzbeat-ui-button-link"
+                                data-trace-manage-drawer-related-logs-empty-trace={detail.traceId}
+                                data-trace-manage-drawer-related-logs-empty-span={selectedSpan?.spanId || ''}
+                              >
+                                {t('trace.manage.drawer.related-logs.action')}
+                              </HzButtonLink>
+                            ) : null
                           }]
                   }
                 />
@@ -1645,6 +1693,8 @@ function TraceExplorer({
   const listPageEnd = listTotalElements === 0 ? 0 : Math.min(listTotalElements, (listPageIndex + 1) * listPageSize);
   const hasPreviousListPage = listPageIndex > 0;
   const hasNextListPage = (listPageIndex + 1) * listPageSize < listTotalElements;
+  const canSaveTraceDashboardPanel = rows.length > 0 || listTotalElements > 0;
+  const traceDashboardPanelDisabledTitle = t('trace.manage.dashboard-panel-draft.empty-disabled');
   const selectedTrace = useMemo(
     () =>
       rows[0] ?? {
@@ -1683,6 +1733,7 @@ function TraceExplorer({
   });
   const missingTraceHandoffTitle = t('trace.manage.handoff.logs-disabled');
   const missingEntityHandoffTitle = t('trace.manage.handoff.entity-disabled');
+  const entityDiscoveryHandoffTitle = t('trace.manage.handoff.entity-discovery');
   const canOpenLogs = hasNavigationId(selectedTrace.traceId) || hasNavigationId(draft.traceId) || hasNavigationId(routeContext.traceId);
   const canOpenEntity = hasNavigationId(routeContext.entityId);
   const sourceContextKind = panelEditContext
@@ -1701,6 +1752,7 @@ function TraceExplorer({
     source: routeContext.source || 'OTLP'
   });
   const routeAttributionDiagnostics = buildTraceAttributionDiagnostics(null, null, routeContext, t);
+  const shouldShowRouteAttributionDiagnostics = routeAttributionDiagnostics.some(row => row.state === 'present');
   const latestObservedAt = data.overview.latestObservedAt ? formatTime(data.overview.latestObservedAt) : '-';
   const chartRows = rows.length ? rows.slice(0, 10) : [selectedTrace];
   const showsTraceTimeSeries = currentView === 'list' || currentView === 'time-series';
@@ -1798,13 +1850,13 @@ function TraceExplorer({
       setTraceDetailDrawer({
         open: true,
         loading: false,
-        error: t('trace.manage.drawer.error.copy'),
+        error: buildTraceDetailLoadErrorCopy(t, row, routeContext),
         detail: null,
         selectedSpanId: initialSelectedSpanId,
         selectedEventKey: null
       });
     }
-  }, [t]);
+  }, [routeContext, t]);
 
   const updateTraceColumns = useCallback((column: TraceTableColumnKey, checked: boolean) => {
     const nextColumns = resolveNextTraceColumns(draft.columns, column, checked);
@@ -1885,6 +1937,7 @@ function TraceExplorer({
   }, [currentTraceReturnHref]);
 
   const addCurrentTraceQueryToDashboard = useCallback(() => {
+    if (!canSaveTraceDashboardPanel) return;
     const snapshot = createTraceSavedQueryView(draft, routeContext, currentView, currentTraceReturnHref, t);
     const panelDraft = applySignalDashboardPanelEditContext(createSignalDashboardPanelDraft({
       signal: 'traces',
@@ -1902,7 +1955,7 @@ function TraceExplorer({
       .then(() => saveSignalDashboardPanelEditContext(panelEditContext, panelDraft))
       .then(() => setDashboardPanelDraftState('saved'))
       .catch(() => setDashboardPanelDraftState('failed'));
-  }, [currentTraceReturnHref, currentView, draft, panelEditContext, routeContext, t]);
+  }, [canSaveTraceDashboardPanel, currentTraceReturnHref, currentView, draft, panelEditContext, routeContext, t]);
 
   const deleteTraceSavedQueryView = useCallback((viewId: string) => {
     setSavedQueryViews(previous => {
@@ -2605,27 +2658,22 @@ function TraceExplorer({
                     {t('trace.manage.route.action.entity')}
                   </HzButtonLink>
                 ) : (
-                  <HzDisabledActionShell
-                    title={missingEntityHandoffTitle}
-                    data-trace-manage-disabled-action-owner="hertzbeat-ui-disabled-action-shell"
-                    data-trace-manage-disabled-action="entity"
-                    data-trace-manage-disabled-action-scope="header"
+                  <HzButtonLink
+                    component={Link}
+                    href={handoffLinks.entityDiscoveryHref}
+                    size="md"
+                    data-trace-manage-header-action="entity-discovery"
+                    data-trace-manage-entity-discovery-action="missing-entity-id"
+                    title={entityDiscoveryHandoffTitle}
+                    aria-label={entityDiscoveryHandoffTitle}
                   >
-                    <HzButton
-                      data-trace-manage-entity-action-disabled="missing-entity-id"
-                      size="md"
-                      disabled
-                      title={missingEntityHandoffTitle}
-                      aria-label={missingEntityHandoffTitle}
-                    >
-                      <HzButtonIcon
-                        icon={Workflow}
-                        data-trace-manage-header-action-icon="entity"
-                        data-trace-manage-header-action-icon-owner="hertzbeat-ui-button-icon"
-                      />
-                      {t('trace.manage.route.action.entity')}
-                    </HzButton>
-                  </HzDisabledActionShell>
+                    <HzButtonIcon
+                      icon={Workflow}
+                      data-trace-manage-header-action-icon="entity-discovery"
+                      data-trace-manage-header-action-icon-owner="hertzbeat-ui-button-icon"
+                    />
+                    {t('trace.manage.route.action.entity-discovery')}
+                  </HzButtonLink>
                 )}
                 <HzButtonLink component={Link} href={handoffLinks.alertHandlingHref} size="md" data-trace-manage-header-action="alerts">
                   <HzButtonIcon
@@ -2643,14 +2691,39 @@ function TraceExplorer({
                   />
                   {t('explorer.actions.create-alert')}
                 </HzButtonLink>
-                <HzButtonLink component={Link} href={handoffLinks.dashboardHref} size="md" data-trace-manage-header-action="add-dashboard">
-                  <HzButtonIcon
-                    icon={BarChart3}
-                    data-trace-manage-header-action-icon="add-dashboard"
-                    data-trace-manage-header-action-icon-owner="hertzbeat-ui-button-icon"
-                  />
-                  {t('explorer.actions.add-dashboard')}
-                </HzButtonLink>
+                {canSaveTraceDashboardPanel ? (
+                  <HzButtonLink component={Link} href={handoffLinks.dashboardHref} size="md" data-trace-manage-header-action="add-dashboard">
+                    <HzButtonIcon
+                      icon={BarChart3}
+                      data-trace-manage-header-action-icon="add-dashboard"
+                      data-trace-manage-header-action-icon-owner="hertzbeat-ui-button-icon"
+                    />
+                    {t('explorer.actions.add-dashboard')}
+                  </HzButtonLink>
+                ) : (
+                  <HzDisabledActionShell
+                    title={traceDashboardPanelDisabledTitle}
+                    data-trace-manage-disabled-action-owner="hertzbeat-ui-disabled-action-shell"
+                    data-trace-manage-disabled-action="add-dashboard"
+                    data-trace-manage-disabled-action-scope="header"
+                  >
+                    <HzButton
+                      data-trace-manage-header-action="add-dashboard"
+                      data-trace-manage-header-action-disabled="empty-trace-results"
+                      size="md"
+                      disabled
+                      title={traceDashboardPanelDisabledTitle}
+                      aria-label={traceDashboardPanelDisabledTitle}
+                    >
+                      <HzButtonIcon
+                        icon={BarChart3}
+                        data-trace-manage-header-action-icon="add-dashboard"
+                        data-trace-manage-header-action-icon-owner="hertzbeat-ui-button-icon"
+                      />
+                      {t('explorer.actions.add-dashboard')}
+                    </HzButton>
+                  </HzDisabledActionShell>
+                )}
                 <HzButtonLink component={Link} href="/setting/define" size="md" data-trace-manage-header-action="templates">
                   <HzButtonIcon
                     icon={ListChecks}
@@ -2849,7 +2922,9 @@ function TraceExplorer({
               size="sm"
               onClick={() => applyTraceQuickFilter('errorOnly')}
             >
-              {t('trace.manage.route.query.status')}: {t('trace.manage.route.query.status.error')}
+              {draft.errorOnly
+                ? `${t('trace.manage.route.query.status')}: ${t('trace.manage.route.query.status.error')}`
+                : t('trace.manage.route.quick-filter.errors-only')}
             </HzButton>
             {serviceQuickFilterValues.map(serviceName => (
               <HzButton
@@ -2862,7 +2937,9 @@ function TraceExplorer({
                 size="sm"
                 onClick={() => applyTraceQuickFilter('serviceName', serviceName)}
               >
-                {t('trace.manage.route.query.service')}: {serviceName}
+                {draft.serviceName === serviceName
+                  ? `${t('trace.manage.route.query.service')}: ${serviceName}`
+                  : t('trace.manage.route.quick-filter.service', { service: serviceName })}
               </HzButton>
             ))}
             {operationQuickFilterValues.map(operationName => (
@@ -2876,7 +2953,9 @@ function TraceExplorer({
                 size="sm"
                 onClick={() => applyTraceQuickFilter('operationName', operationName)}
               >
-                {t('trace.manage.route.query.operation')}: {operationName}
+                {draft.operationName === operationName
+                  ? `${t('trace.manage.route.query.operation')}: ${operationName}`
+                  : t('trace.manage.route.quick-filter.operation', { operation: operationName })}
               </HzButton>
             ))}
             {minDurationQuickFilterValues.map(durationMs => (
@@ -2890,7 +2969,9 @@ function TraceExplorer({
                 size="sm"
                 onClick={() => applyTraceQuickFilter('minDurationMs', durationMs)}
               >
-                {t('trace.manage.route.query.min-duration')}: {durationMs}ms
+                {draft.minDurationMs === durationMs
+                  ? `${t('trace.manage.route.query.min-duration')}: ${durationMs}ms`
+                  : t('trace.manage.route.quick-filter.min-duration', { duration: durationMs })}
               </HzButton>
             ))}
             {traceIdQuickFilterValues.map(traceId => (
@@ -2904,7 +2985,9 @@ function TraceExplorer({
                 size="sm"
                 onClick={() => applyTraceQuickFilter('traceId', traceId)}
               >
-                {t('trace.manage.route.query.trace-id')}: {traceId}
+                {draft.traceId === traceId
+                  ? `${t('trace.manage.route.query.trace-id')}: ${traceId}`
+                  : t('trace.manage.route.quick-filter.trace-id', { traceId })}
               </HzButton>
             ))}
           </HzControlStack>
@@ -3051,8 +3134,13 @@ function TraceExplorer({
                 type="button"
                 intent="secondary"
                 size="md"
-                title={t(panelEditContext ? 'trace.manage.dashboard-panel-draft.update-current' : 'trace.manage.dashboard-panel-draft.add-current')}
-                aria-label={t(panelEditContext ? 'trace.manage.dashboard-panel-draft.update-current' : 'trace.manage.dashboard-panel-draft.add-current')}
+                disabled={!canSaveTraceDashboardPanel}
+                title={canSaveTraceDashboardPanel
+                  ? t(panelEditContext ? 'trace.manage.dashboard-panel-draft.update-current' : 'trace.manage.dashboard-panel-draft.add-current')
+                  : traceDashboardPanelDisabledTitle}
+                aria-label={canSaveTraceDashboardPanel
+                  ? t(panelEditContext ? 'trace.manage.dashboard-panel-draft.update-current' : 'trace.manage.dashboard-panel-draft.add-current')
+                  : traceDashboardPanelDisabledTitle}
                 onClick={addCurrentTraceQueryToDashboard}
                 data-trace-manage-dashboard-panel-draft-action={panelEditContext ? 'update-current' : 'add-current'}
                 data-trace-manage-dashboard-panel-draft-action-owner="hertzbeat-ui-button"
@@ -3060,6 +3148,7 @@ function TraceExplorer({
                 data-trace-manage-dashboard-panel-draft-action-dashboard={panelEditContext?.dashboardKey || ''}
                 data-trace-manage-dashboard-panel-draft-action-panel={panelEditContext?.panelId || ''}
                 data-trace-manage-dashboard-panel-draft-action-draft={panelEditContext?.draftKey || ''}
+                data-trace-manage-dashboard-panel-draft-action-disabled={canSaveTraceDashboardPanel ? undefined : 'empty-trace-results'}
               >
                 <HzButtonIcon
                   icon={BarChart3}
@@ -3607,7 +3696,7 @@ function TraceExplorer({
                   meta: row.meta
                 }))}
               />
-              <TraceAttributionDiagnostics rows={routeAttributionDiagnostics} />
+              {shouldShowRouteAttributionDiagnostics ? <TraceAttributionDiagnostics rows={routeAttributionDiagnostics} /> : null}
             </HzWorkbenchLayout>
             <HzWorkbenchLayout
               as="div"
@@ -3637,28 +3726,22 @@ function TraceExplorer({
                   {t('trace.manage.route.action.entity')}
                 </HzButtonLink>
               ) : (
-                <HzDisabledActionShell
-                  title={missingEntityHandoffTitle}
-                  data-trace-manage-disabled-action-owner="hertzbeat-ui-disabled-action-shell"
-                  data-trace-manage-disabled-action="entity"
-                  data-trace-manage-disabled-action-scope="detail-footer"
+                <HzButtonLink
+                  component={Link}
+                  data-trace-manage-history-detail-action="entity-discovery"
+                  data-trace-manage-entity-discovery-action="missing-entity-id"
+                  href={handoffLinks.entityDiscoveryHref}
+                  size="md"
+                  title={entityDiscoveryHandoffTitle}
+                  aria-label={entityDiscoveryHandoffTitle}
                 >
-                  <HzButton
-                    data-trace-manage-entity-action-disabled="missing-entity-id"
-                    data-trace-manage-history-detail-action="entity"
-                    size="md"
-                    disabled
-                    title={missingEntityHandoffTitle}
-                    aria-label={missingEntityHandoffTitle}
-                  >
-                    <HzButtonIcon
-                      icon={Workflow}
-                      data-trace-manage-detail-footer-action-icon="entity"
-                      data-trace-manage-detail-footer-action-icon-owner="hertzbeat-ui-button-icon"
-                    />
-                    {t('trace.manage.route.action.entity')}
-                  </HzButton>
-                </HzDisabledActionShell>
+                  <HzButtonIcon
+                    icon={Workflow}
+                    data-trace-manage-detail-footer-action-icon="entity-discovery"
+                    data-trace-manage-detail-footer-action-icon-owner="hertzbeat-ui-button-icon"
+                  />
+                  {t('trace.manage.route.action.entity-discovery')}
+                </HzButtonLink>
               )}
               <HzButtonLink component={Link} data-trace-manage-history-detail-action="alerts" href={handoffLinks.alertHandlingHref} size="md">
                 <HzButtonIcon

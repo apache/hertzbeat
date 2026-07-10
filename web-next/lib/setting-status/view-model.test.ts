@@ -438,7 +438,10 @@ describe('setting status view model', () => {
 
     expect(validateStatusOrgDraft(buildStatusOrgDraft(null), t)).toBe(t('setting.status.validation.name'));
     expect(validateStatusOrgDraft({ ...buildStatusOrgDraft(null), name: 'HB' }, t)).toBe(t('setting.status.validation.description'));
-    expect(validateStatusOrgDraft({ ...buildStatusOrgDraft(null), name: 'HB', description: 'desc' }, t)).toBeNull();
+    expect(validateStatusOrgDraft({ ...buildStatusOrgDraft(null), name: 'HB', description: 'desc' }, t)).toBe(t('setting.status.validation.home'));
+    expect(validateStatusOrgDraft({ ...buildStatusOrgDraft(null), name: 'HB', description: 'desc', home: 'https://hb.dev' }, t)).toBe(t('setting.status.validation.logo'));
+    expect(validateStatusOrgDraft({ ...buildStatusOrgDraft(null), name: 'HB', description: 'desc', home: 'https://hb.dev', logo: 'https://hb.dev/logo.svg' }, t)).toBe(t('setting.status.validation.feedback'));
+    expect(validateStatusOrgDraft({ ...buildStatusOrgDraft(null), name: 'HB', description: 'desc', home: 'https://hb.dev', logo: 'https://hb.dev/logo.svg', feedback: 'mailto:ops@hb.dev' }, t)).toBeNull();
   });
 
   it('builds and validates the status component draft', () => {
@@ -461,6 +464,16 @@ describe('setting status view model', () => {
       labelsText: 'env:prod',
       method: '1',
       configState: '2',
+      state: '0'
+    });
+
+    expect(buildStatusComponentDraft(null)).toMatchObject({
+      method: '1',
+      state: '0'
+    });
+    expect(buildStatusComponentDraft({ orgId: 1 } as any)).toMatchObject({
+      orgId: 1,
+      method: '1',
       state: '0'
     });
 

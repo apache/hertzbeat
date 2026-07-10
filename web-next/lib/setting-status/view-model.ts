@@ -214,6 +214,9 @@ export function buildStatusOrgPayload(draft: StatusOrgDraft): StatusPageOrg {
 export function validateStatusOrgDraft(draft: StatusOrgDraft, t: Translator) {
   if (!draft.name.trim()) return t('setting.status.validation.name');
   if (!draft.description.trim()) return t('setting.status.validation.description');
+  if (!draft.home.trim()) return t('setting.status.validation.home');
+  if (!draft.logo.trim()) return t('setting.status.validation.logo');
+  if (!draft.feedback.trim()) return t('setting.status.validation.feedback');
   return null;
 }
 
@@ -237,13 +240,14 @@ function parseNumberString(value: string, fallback: number) {
 }
 
 export function buildStatusComponentDraft(component?: StatusPageComponent | null): StatusComponentDraft {
+  const isExistingComponent = component?.id != null;
   return {
     id: component?.id,
     orgId: component?.orgId,
     name: component?.name || '',
     description: component?.description || '',
     labelsText: Object.entries(component?.labels || {}).map(([key, value]) => `${key}:${value}`).join(', '),
-    method: String(component?.method ?? 0),
+    method: String(component?.method ?? (isExistingComponent ? 0 : 1)),
     configState: String(component?.configState ?? 0),
     state: String(component?.state ?? 0),
   };

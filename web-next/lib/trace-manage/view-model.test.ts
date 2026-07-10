@@ -412,6 +412,13 @@ describe('trace view model', () => {
     );
 
     expect(result.entitiesHref).toBe('/entities?search=checkout');
+    const entityDiscoveryHref = new URL(result.entityDiscoveryHref, 'https://example.com');
+    expect(entityDiscoveryHref.pathname).toBe('/entities/discovery');
+    expect(entityDiscoveryHref.searchParams.get('identityKey')).toBe('service.name');
+    expect(entityDiscoveryHref.searchParams.get('identityValue')).toBe('checkout');
+    expect(entityDiscoveryHref.searchParams.get('serviceName')).toBe('checkout');
+    expect(entityDiscoveryHref.searchParams.get('serviceNamespace')).toBe('payments');
+    expect(entityDiscoveryHref.searchParams.get('environment')).toBe('prod');
 
     const intakeParams = new URL(result.intakeHref, 'https://example.com').searchParams;
     expect(intakeParams.get('signal')).toBe('traces');

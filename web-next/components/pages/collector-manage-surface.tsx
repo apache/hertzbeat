@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Cloud, Copy, Inbox, MoreHorizontal, Power, PowerOff, RefreshCw, Trash2, UploadCloud, X } from 'lucide-react';
+import { CircleHelp, Cloud, Copy, Inbox, MoreHorizontal, Power, PowerOff, RefreshCw, Trash2, UploadCloud, X } from 'lucide-react';
 import { HzButton, HzCodeEditor, HzConfirmDialog, HzInlineFeedback, HzPaginationBar, HzTableRowActionButton } from '@hertzbeat/ui';
 import { Button } from '../ui/button';
 import { Checkbox } from '../ui/checkbox';
@@ -85,7 +85,7 @@ const collectorActionMenuPanelBaseClassName =
 
 function statusClassName(statusTone: 'success' | 'danger') {
   if (statusTone === 'success') {
-    return 'border-[#166534]/45 bg-[#0f2f23] text-[#86efac]';
+    return 'border-[#2f4a3b] bg-[#101217] text-[#9fd8b5]';
   }
   return 'border-[#7f1d1d]/55 bg-[#2a1214] text-[#fca5a5]';
 }
@@ -101,7 +101,59 @@ function resolveCollectorConfirmTitle(target: CollectorDeleteTarget | null | und
   return t(target?.mode === 'batch' ? 'common.confirm.delete-batch' : 'common.confirm.delete');
 }
 
-function EmptyTableRow({ colSpan, t }: { colSpan: number; t: Translator }) {
+function CollectorActionHelp({
+  id,
+  label,
+  copy,
+  scope = 'action'
+}: {
+  id: string;
+  label: string;
+  copy: string;
+  scope?: 'action' | 'row-action';
+}) {
+  const tooltipId = `collector-action-help-${id}`;
+  return (
+    <span {...(scope === 'row-action' ? { 'data-collector-row-action-help': id } : { 'data-collector-action-help': id })} className="group relative inline-flex">
+      <button
+        type="button"
+        aria-label={label}
+        aria-describedby={tooltipId}
+        onClick={event => {
+          event.preventDefault();
+          event.stopPropagation();
+        }}
+        data-collector-action-help-style="icon-after-action"
+        data-collector-action-help-visual="circle-help-icon"
+        className="inline-flex h-5 w-5 items-center justify-center rounded-none border-0 bg-transparent p-0 text-[#d8e4ff] transition hover:text-[#f5f7fb] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4e74f8]"
+      >
+        <CircleHelp size={13} strokeWidth={2} aria-hidden="true" data-collector-action-help-icon="lucide-circle-help" />
+      </button>
+      <span
+        id={tooltipId}
+        role="tooltip"
+        {...(scope === 'row-action' ? { 'data-collector-row-action-help-tooltip': id } : { 'data-collector-action-help-tooltip': id })}
+        className="pointer-events-none absolute left-0 top-6 z-50 hidden w-[280px] rounded-[3px] border border-[#2b3039] bg-[#101217] p-3 text-left text-[11px] leading-4 text-[#dbe4f0] shadow-[0_16px_40px_rgba(0,0,0,0.42)] group-hover:block group-focus-within:block"
+      >
+        {copy}
+      </span>
+    </span>
+  );
+}
+
+function EmptyTableRow({
+  colSpan,
+  copy,
+  state = 'plain',
+  t,
+  title
+}: {
+  colSpan: number;
+  copy?: string;
+  state?: 'plain' | 'filtered';
+  t: Translator;
+  title?: string;
+}) {
   return (
     <tr data-collector-empty-state="hertzbeat-ui-table-empty" className="bg-[#0b0c0e]">
       <td colSpan={colSpan} className="h-[240px] px-3 py-10 text-center text-[#858d9a]">
@@ -109,7 +161,14 @@ function EmptyTableRow({ colSpan, t }: { colSpan: number; t: Translator }) {
           <span className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-[#303743] bg-[#101217] text-[#cbd5e1]">
             <Inbox className="h-5 w-5" aria-hidden="true" />
           </span>
-          <div className="text-[13px] font-semibold text-[#dbe4f0]">{t('common.no-data')}</div>
+          <div data-collector-empty-title={state} className="text-[13px] font-semibold text-[#dbe4f0]">
+            {title || t('common.no-data')}
+          </div>
+          {copy ? (
+            <div data-collector-empty-copy={state} className="max-w-[360px] text-[12px] leading-5 text-[#858d9a]">
+              {copy}
+            </div>
+          ) : null}
         </div>
       </td>
     </tr>
@@ -186,9 +245,13 @@ export function CollectorManageSurface({
     actionFeedbackContract ??
     (resolvedActionTone === 'warning' ? 'angular-no-select-warning' : resolvedActionTone === 'critical' ? 'angular-delete-fail' : 'angular-delete-notify');
   const [openRowActionMenuId, setOpenRowActionMenuId] = React.useState<string | null>(null);
+  const [localDeployCopyMessage, setLocalDeployCopyMessage] = React.useState<string | null>(null);
+  const localDeployCopyTimerRef = React.useRef<number | null>(null);
   const trimmedDeployName = deployName?.trim() ?? '';
   const resolvedDeployIdentity = deployIdentity ?? '';
+  const visibleDeployCopyMessage = deployCopyMessage || localDeployCopyMessage;
   const showDeployNameValidation = Boolean(deployNameValidationVisible && !trimmedDeployName && !resolvedDeployIdentity);
+  const isFilteredEmpty = rows.length === 0 && search.trim().length > 0;
   const paginationSummary = t('collector.pagination.summary', {
     page: currentPage,
     totalPages,
@@ -204,6 +267,28 @@ export function CollectorManageSurface({
     onPageIndexChange?.(nextPageIndex);
   }
 
+  React.useEffect(() => () => {
+    if (localDeployCopyTimerRef.current) {
+      window.clearTimeout(localDeployCopyTimerRef.current);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    setLocalDeployCopyMessage(null);
+  }, [deployOpen, resolvedDeployIdentity]);
+
+  function handleDeployCopy(value: string) {
+    if (localDeployCopyTimerRef.current) {
+      window.clearTimeout(localDeployCopyTimerRef.current);
+    }
+    setLocalDeployCopyMessage(t('common.notify.copy-success'));
+    localDeployCopyTimerRef.current = window.setTimeout(() => {
+      setLocalDeployCopyMessage(null);
+      localDeployCopyTimerRef.current = null;
+    }, 3000);
+    onDeployCopy?.(value);
+  }
+
   return (
     <>
       <div
@@ -215,7 +300,11 @@ export function CollectorManageSurface({
         <section className={coldCollectorVisual.layout.pageSection}>
         <div className="mx-auto max-w-[1480px]">
           <div className="mb-5">
-            <div data-collector-header="hertzbeat-ui-compact-header" className={coldCollectorVisual.panel.hero}>
+            <div
+              data-collector-header="hertzbeat-ui-compact-header"
+              data-collector-header-nesting-contract="flat-page-introduction"
+              className="p-0"
+            >
               <div className="max-w-[840px]">
                 <h1 className="text-[30px] font-semibold leading-tight text-[#f5f7fb]">
                   {t('menu.advanced.collector')}
@@ -224,50 +313,69 @@ export function CollectorManageSurface({
                   {t('setting.collector.copy')}
                 </p>
                 <div data-collector-command-row="standard-equal-buttons" className={coldCollectorVisual.button.row}>
-                  <Button size="sm" variant="default" className={coldButtonClassName} onClick={onRefresh}>
-                    <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
-                    {t('common.refresh')}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="default"
-                    className={coldPrimaryButtonClassName}
-                    onClick={onDeploy}
-                    data-collector-deploy-open="angular-deploy-modal"
-                  >
-                    <UploadCloud className="h-3.5 w-3.5" aria-hidden="true" />
-                    {t('collector.deploy')}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="default"
-                    className={coldButtonClassName}
-                    onClick={onGoOnline}
-                    data-collector-online-selected="angular-batch-online-entry"
-                  >
-                    <Power className="h-3.5 w-3.5" aria-hidden="true" />
-                    {t('collector.online')}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="default"
-                    className={coldButtonClassName}
-                    onClick={onGoOffline}
-                    data-collector-offline-selected="angular-batch-offline-entry"
-                  >
-                    <PowerOff className="h-3.5 w-3.5" aria-hidden="true" />
-                    {t('collector.offline')}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="default"
-                    className={coldButtonClassName}
-                    onClick={onDelete}
-                    data-collector-delete-selected="angular-batch-delete-entry"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                    {t('collector.delete')}
-                  </Button>
+                  <span className="inline-flex items-center gap-1">
+                    <Button size="sm" variant="default" className={coldButtonClassName} onClick={onRefresh} data-collector-command-action="refresh">
+                      <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+                      {t('common.refresh')}
+                    </Button>
+                    <CollectorActionHelp id="refresh" label={t('collector.action.refresh.help-label')} copy={t('collector.action.refresh.help')} />
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      variant="default"
+                      className={coldPrimaryButtonClassName}
+                      onClick={onDeploy}
+                      data-collector-command-action="deploy-open"
+                      data-collector-deploy-open="angular-deploy-modal"
+                    >
+                      <UploadCloud className="h-3.5 w-3.5" aria-hidden="true" />
+                      {t('collector.deploy')}
+                    </Button>
+                    <CollectorActionHelp id="deploy" label={t('collector.action.deploy.help-label')} copy={t('collector.action.deploy.help')} />
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      variant="default"
+                      className={coldButtonClassName}
+                      onClick={onGoOnline}
+                      data-collector-command-action="selected-online"
+                      data-collector-online-selected="angular-batch-online-entry"
+                    >
+                      <Power className="h-3.5 w-3.5" aria-hidden="true" />
+                      {t('collector.online')}
+                    </Button>
+                    <CollectorActionHelp id="online" label={t('collector.action.online.help-label')} copy={t('collector.action.online.help')} />
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      variant="default"
+                      className={coldButtonClassName}
+                      onClick={onGoOffline}
+                      data-collector-command-action="selected-offline"
+                      data-collector-offline-selected="angular-batch-offline-entry"
+                    >
+                      <PowerOff className="h-3.5 w-3.5" aria-hidden="true" />
+                      {t('collector.offline')}
+                    </Button>
+                    <CollectorActionHelp id="offline" label={t('collector.action.offline.help-label')} copy={t('collector.action.offline.help')} />
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      variant="default"
+                      className={coldButtonClassName}
+                      onClick={onDelete}
+                      data-collector-command-action="selected-delete"
+                      data-collector-delete-selected="angular-batch-delete-entry"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                      {t('collector.delete')}
+                    </Button>
+                    <CollectorActionHelp id="delete" label={t('collector.action.delete.help-label')} copy={t('collector.action.delete.help')} />
+                  </span>
                 </div>
               </div>
             </div>
@@ -324,8 +432,8 @@ export function CollectorManageSurface({
             data-collector-deploy-api-contract="angular-post-generate-identity"
             data-collector-deploy-failure-contract="angular-apply-fail-notification"
             data-collector-deploy-validation-contract="angular-submit-marks-required"
-            data-collector-deploy-validation-raw-contract="angular-required-before-trim"
-            data-collector-deploy-validation-raw-owner="collector-route-controller"
+            data-collector-deploy-validation-trim-contract="hertzbeat-required-after-trim"
+            data-collector-deploy-validation-trim-owner="collector-route-controller"
             data-collector-deploy-loading-contract="angular-nz-ok-loading"
             data-collector-deploy-mask-contract="angular-mask-closable-false"
             data-collector-deploy-width-contract="angular-width-45-percent"
@@ -496,37 +604,55 @@ export function CollectorManageSurface({
                         <td className="px-3 py-2.5">
                           <div data-collector-row-actions="hertzbeat-ui-icon-actions" className="flex gap-1.5">
                             {row.nextAction === 'online' ? (
-                              <Button
-                                size="icon"
-                                variant="default"
-                                className={coldIconButtonClassName}
-                                title={t('collector.online')}
-                                onClick={() => {
-                                  setOpenRowActionMenuId(null);
-                                  onRowGoOnline(row.name);
-                                }}
-                                disabled={!row.canMutate}
-                                data-collector-online-one={row.name}
-                              >
-                                <Power className="h-3.5 w-3.5" aria-hidden="true" />
-                                <span className="sr-only">{t('collector.online')}</span>
-                              </Button>
+                              <span className="inline-flex items-center gap-1">
+                                <Button
+                                  size="icon"
+                                  variant="default"
+                                  className={coldIconButtonClassName}
+                                  title={t('collector.online')}
+                                  onClick={() => {
+                                    setOpenRowActionMenuId(null);
+                                    onRowGoOnline(row.name);
+                                  }}
+                                  disabled={!row.canMutate}
+                                  data-collector-command-action="row-online"
+                                  data-collector-online-one={row.name}
+                                >
+                                  <Power className="h-3.5 w-3.5" aria-hidden="true" />
+                                  <span className="sr-only">{t('collector.online')}</span>
+                                </Button>
+                                <CollectorActionHelp
+                                  id="row-online"
+                                  label={t('collector.action.row-online.help-label')}
+                                  copy={t('collector.action.row-online.help')}
+                                  scope="row-action"
+                                />
+                              </span>
                             ) : (
-                              <Button
-                                size="icon"
-                                variant="default"
-                                className={coldIconButtonClassName}
-                                title={t('collector.offline')}
-                                onClick={() => {
-                                  setOpenRowActionMenuId(null);
-                                  onRowGoOffline(row.name);
-                                }}
-                                disabled={!row.canMutate}
-                                data-collector-offline-one={row.name}
-                              >
-                                <PowerOff className="h-3.5 w-3.5" aria-hidden="true" />
-                                <span className="sr-only">{t('collector.offline')}</span>
-                              </Button>
+                              <span className="inline-flex items-center gap-1">
+                                <Button
+                                  size="icon"
+                                  variant="default"
+                                  className={coldIconButtonClassName}
+                                  title={t('collector.offline')}
+                                  onClick={() => {
+                                    setOpenRowActionMenuId(null);
+                                    onRowGoOffline(row.name);
+                                  }}
+                                  disabled={!row.canMutate}
+                                  data-collector-command-action="row-offline"
+                                  data-collector-offline-one={row.name}
+                                >
+                                  <PowerOff className="h-3.5 w-3.5" aria-hidden="true" />
+                                  <span className="sr-only">{t('collector.offline')}</span>
+                                </Button>
+                                <CollectorActionHelp
+                                  id="row-offline"
+                                  label={t('collector.action.row-offline.help-label')}
+                                  copy={t('collector.action.row-offline.help')}
+                                  scope="row-action"
+                                />
+                              </span>
                             )}
                             <div
                               className={collectorActionMenuRootClassName}
@@ -545,6 +671,7 @@ export function CollectorManageSurface({
                                 onClick={() => {
                                   setOpenRowActionMenuId(current => (current === rowActionMenuId ? null : rowActionMenuId));
                                 }}
+                                data-collector-command-action="row-more"
                                 data-collector-row-delete-menu-trigger={rowActionMenuId}
                               >
                                 <MoreHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
@@ -560,28 +687,45 @@ export function CollectorManageSurface({
                                 data-collector-row-delete-menu-owner="hertzbeat-ui-table-row-action-button"
                                 data-collector-row-delete-menu-panel-open={isRowActionMenuOpen ? 'true' : 'false'}
                               >
-                                <HzTableRowActionButton
-                                  width="root-span"
-                                  intent="ghost"
-                                  onClick={() => {
-                                    setOpenRowActionMenuId(null);
-                                    onRowDelete(row.name);
-                                  }}
-                                  disabled={!row.canMutate}
-                                  data-collector-delete-one={row.name}
-                                  data-collector-delete-one-owner="hertzbeat-ui-table-row-action-button"
-                                  className="w-full text-[#fecaca] hover:text-white"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                                  <span className="truncate">{t('collector.delete')}</span>
-                                </HzTableRowActionButton>
+                                <span className="flex items-center gap-1">
+                                  <HzTableRowActionButton
+                                    width="root-span"
+                                    intent="ghost"
+                                    onClick={() => {
+                                      setOpenRowActionMenuId(null);
+                                      onRowDelete(row.name);
+                                    }}
+                                    disabled={!row.canMutate}
+                                    data-collector-command-action="row-delete"
+                                    data-collector-delete-one={row.name}
+                                    data-collector-delete-one-owner="hertzbeat-ui-table-row-action-button"
+                                    className="w-full text-[#fecaca] hover:text-white"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                                    <span className="truncate">{t('collector.delete')}</span>
+                                  </HzTableRowActionButton>
+                                  <CollectorActionHelp
+                                    id="row-delete"
+                                    label={t('collector.action.row-delete.help-label')}
+                                    copy={t('collector.action.row-delete.help')}
+                                    scope="row-action"
+                                  />
+                                </span>
                               </div>
                             </div>
                           </div>
                         </td>
                       </tr>
                       );
-                    }) : <EmptyTableRow colSpan={11} t={t} />}
+                    }) : (
+                      <EmptyTableRow
+                        colSpan={11}
+                        t={t}
+                        state={isFilteredEmpty ? 'filtered' : 'plain'}
+                        title={isFilteredEmpty ? t('collector.empty.filtered.title') : undefined}
+                        copy={isFilteredEmpty ? t('collector.empty.filtered.copy') : undefined}
+                      />
+                    )}
                   </tbody>
                 </table>
                 <div
@@ -639,9 +783,13 @@ export function CollectorManageSurface({
         data-collector-operate-confirm={targetAction === 'online' || targetAction === 'offline' ? 'angular-modal-confirm' : undefined}
         data-collector-operate-confirm-owner="hertzbeat-ui-confirm-dialog"
         confirmButtonProps={{
+          'data-collector-command-action': targetAction === 'online' ? 'online-confirm' : targetAction === 'offline' ? 'offline-confirm' : 'delete-confirm',
           'data-collector-delete-confirm-submit': 'angular-modal-confirm',
           'data-collector-operate-confirm-submit': targetAction === 'online' || targetAction === 'offline' ? 'angular-modal-confirm' : undefined
         } as React.ComponentProps<typeof HzConfirmDialog>['confirmButtonProps']}
+        cancelButtonProps={{
+          'data-collector-command-action': 'confirm-cancel'
+        } as React.ComponentProps<typeof HzConfirmDialog>['cancelButtonProps']}
       >
         <div data-collector-delete-confirm-target={deleteTarget?.label ?? ''}>
           {deleteTarget?.label ?? t('common.none')}
@@ -673,6 +821,7 @@ export function CollectorManageSurface({
                 type="button"
                 className="inline-flex h-8 w-8 items-center justify-center rounded-[3px] border border-[#2b3039] bg-[#101217] text-[#dbe4f0] hover:border-[#4e74f8] hover:bg-[#151b28]"
                 onClick={onDeployClose}
+                data-collector-command-action="deploy-cancel"
                 data-collector-deploy-close="angular-modal-cancel"
                 data-collector-deploy-close-reset="angular-close-clears-name"
                 data-collector-deploy-close-reset-owner="collector-route-controller"
@@ -683,16 +832,35 @@ export function CollectorManageSurface({
             </header>
             <div className="min-h-0 overflow-y-auto p-5">
               <div
+                data-collector-deploy-guidance="identity-risk"
+                className="mb-4 rounded-[4px] border border-[#553d1f] bg-[#241711] px-3 py-2 text-[12px] leading-5 text-[#fed7aa]"
+              >
+                {t('collector.deploy.guidance')}
+              </div>
+              <div
                 className="grid gap-2 md:grid-cols-[7fr_12fr] md:items-start"
                 data-collector-deploy-field="name"
                 data-collector-deploy-field-layout="angular-label-7-control-12"
               >
-                <label
-                  htmlFor="collector-deploy-name"
-                  className="pt-2 text-[12px] font-semibold text-[#dbe4f0] md:text-right"
-                  data-collector-deploy-label-span="7"
-                >
-                  {t('collector.name')} <span className="text-[#f97316]">*</span>
+                <label htmlFor="collector-deploy-name" className="pt-2 md:text-right" data-collector-deploy-label-span="7">
+                  <span className="inline-flex flex-wrap items-center justify-end gap-1.5 text-[12px] font-semibold text-[#dbe4f0]">
+                    <span>{t('collector.name')}</span>
+                    <span data-collector-deploy-field-help="name">
+                      <CollectorActionHelp id="deploy-name" label={t('collector.deploy.name.help-label')} copy={t('collector.deploy.name.help')} />
+                    </span>
+                    <span
+                      className="rounded-[3px] border border-[#4e74f8]/40 bg-[#1a2440] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#c8d5ff]"
+                      data-collector-deploy-field-requirement="required"
+                    >
+                      {t('settings.form.field.requirement.required')}
+                    </span>
+                    <span
+                      className="rounded-[3px] border border-[#2b3039] bg-[#11151c] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9aa4b5]"
+                      data-collector-deploy-field-input-mode="manual"
+                    >
+                      {t('settings.form.field.input-mode.manual')}
+                    </span>
+                  </span>
                 </label>
                 <div className="min-w-0" data-collector-deploy-control-span="12">
                   <input
@@ -703,8 +871,8 @@ export function CollectorManageSurface({
                     placeholder={t('collector.name.placeholder')}
                     className="h-8 w-full rounded-[3px] border border-[#2b3039] bg-[#101217] px-3 text-[12px] text-[#dbe4f0] outline-none transition placeholder:text-[#6f7788] focus:border-[#4e74f8] focus:ring-2 focus:ring-[#4e74f8]/10 disabled:opacity-60"
                     data-collector-deploy-name-input="angular-required-name"
-                    data-collector-deploy-name-validation-raw="angular-required-before-trim"
-                    data-collector-deploy-name-validation-raw-owner="collector-route-controller"
+                    data-collector-deploy-name-validation-trim="hertzbeat-required-after-trim"
+                    data-collector-deploy-name-validation-trim-owner="collector-route-controller"
                     data-collector-deploy-name-validation-state={showDeployNameValidation ? 'dirty-invalid' : 'pristine'}
                     data-collector-deploy-name-lock={resolvedDeployIdentity ? 'angular-disable-after-identity' : 'editable-before-identity'}
                     data-collector-deploy-name-lock-owner="angular-ngmodel-input"
@@ -735,15 +903,15 @@ export function CollectorManageSurface({
                   />
                 </div>
               ) : null}
-              {deployCopyMessage ? (
+              {visibleDeployCopyMessage ? (
                 <div className="mt-4">
                   <HzInlineFeedback
                     tone="success"
-                    title={deployCopyMessage}
+                    title={visibleDeployCopyMessage}
                     variant="embedded"
                     data-collector-deploy-copy-feedback="angular-copy-success"
                     data-collector-deploy-copy-feedback-owner="hertzbeat-ui-inline-feedback"
-                    data-collector-deploy-copy-feedback-duration-ms="800"
+                    data-collector-deploy-copy-feedback-duration-ms="3000"
                   />
                 </div>
               ) : null}
@@ -755,7 +923,8 @@ export function CollectorManageSurface({
                     <button
                       type="button"
                       className="mx-auto inline-flex max-w-full items-center gap-2 rounded-[3px] border border-[#553d1f] bg-[#241711] px-3 py-2 font-mono text-[12px] font-semibold text-[#fed7aa] hover:border-[#f97316]"
-                      onClick={() => onDeployCopy?.(resolvedDeployIdentity)}
+                      onClick={() => handleDeployCopy(resolvedDeployIdentity)}
+                      data-collector-command-action="deploy-copy-identity"
                       data-collector-deploy-copy-identity="angular-copy-identity"
                       title={t('common.button.copy.tip')}
                     >
@@ -805,6 +974,7 @@ export function CollectorManageSurface({
                   size="md"
                   intent="danger"
                   onClick={onDeployClose}
+                  data-collector-command-action="deploy-result-close"
                   data-collector-deploy-result-close="angular-close-saved"
                   data-collector-deploy-result-close-contract="angular-danger-close-after-identity"
                   data-collector-deploy-result-close-owner="hertzbeat-ui-button"
@@ -820,6 +990,7 @@ export function CollectorManageSurface({
                   className={coldPrimaryButtonClassName}
                   onClick={onDeployGenerate}
                   disabled={Boolean(isDeployPending || resolvedDeployIdentity)}
+                  data-collector-command-action="deploy-generate"
                   data-collector-deploy-generate="angular-generate-identity"
                   data-collector-deploy-generate-validation="angular-click-before-required"
                   data-collector-deploy-ok-loading={isDeployPending ? 'true' : 'false'}

@@ -108,7 +108,72 @@ describe('AlertSettingSurface', () => {
     expect(html).toContain('data-alert-setting-surface="otlp-hertzbeat-ui-setting-console"');
     expect(html).toContain('data-alert-setting-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-alert-setting-header="hertzbeat-ui-compact-header"');
+    expect(html).toContain('data-alert-setting-capability-summary="realtime-ready-periodic-ready"');
+    expect(html).toContain('data-alert-setting-capability-owner="alert-threshold-create-entry"');
+    expect(html).toContain('data-alert-setting-capability-periodic="ready"');
+    expect(html).toContain('data-alert-setting-capability-item="realtime"');
+    expect(html).toContain('data-alert-setting-capability-item="periodic"');
+    expect(html).toContain(t('alert.setting.capability.realtime.ready'));
+    expect(html).toContain(t('alert.setting.capability.periodic.ready'));
+    expect(html).toContain('data-alert-setting-header-nesting-contract="flat-page-introduction"');
+    expect(html).toContain('class="p-0"');
     expect(html).toContain('data-alert-setting-command-row="standard-equal-buttons"');
+    [
+      'refresh',
+      'new',
+      'delete-selected',
+      'export',
+      'import',
+      'row-enable',
+      'row-edit',
+      'row-delete'
+    ].forEach(commandAction => {
+      expect(html).toContain(`data-alert-setting-command-action="${commandAction}"`);
+    });
+    expect(html.match(/data-alert-setting-action-help-trigger="hertzbeat-ui-action-help"/g)?.length).toBe(9);
+    expect(html.match(/data-alert-setting-action-help-style="icon-after-action"/g)?.length).toBe(9);
+    expect(html.match(/data-alert-setting-action-help-visual="circle-help-icon"/g)?.length).toBe(9);
+    expect(html.match(/data-alert-setting-action-help-icon="lucide-circle-help"/g)?.length).toBe(6);
+    expect(html.match(/data-alert-setting-action-help="hertzbeat-ui-action-tooltip"/g)?.length).toBe(9);
+    expect(html.match(/data-hz-batch-action-help-visual="circle-help-icon"/g)?.length).toBe(3);
+    expect(html.match(/data-hz-batch-action-help-icon="lucide-circle-help"/g)?.length).toBe(3);
+    expect(html).toContain('lucide-circle-help');
+    expect(html).not.toContain('<span aria-hidden="true">?</span>');
+    expect(html).toContain('rounded-none border-0 bg-transparent');
+    expect(html).not.toContain('rounded-full border border-[#2b3039] bg-[#101217]');
+    [
+      'refresh',
+      'new',
+      'delete',
+      'batch-export',
+      'batch-import',
+      'batch-delete',
+      'row-enable',
+      'row-edit',
+      'row-delete'
+    ].forEach(actionKey => {
+      expect(html).toContain(`data-alert-setting-action-help-key="${actionKey}"`);
+      expect(html).toContain('data-alert-setting-action-help-placement="inline-action"');
+    });
+    [
+      'row-enable',
+      'row-edit',
+      'row-delete'
+    ].forEach(actionKey => {
+      expect(html).toContain(`data-alert-setting-row-action-help="${actionKey}"`);
+      expect(html).toContain(t(`alert.setting.action.${actionKey}.help`));
+      expect(html).toContain(t(`alert.setting.action.${actionKey}.impact`));
+    });
+    expect(html).toContain(t('alert.setting.action.refresh.help'));
+    expect(html).toContain(t('alert.setting.action.refresh.impact'));
+    expect(html).toContain(t('alert.setting.action.new.help'));
+    expect(html).toContain(t('alert.setting.action.new.impact'));
+    expect(html).toContain(t('alert.setting.action.delete.help'));
+    expect(html).toContain(t('alert.setting.action.delete.impact'));
+    expect(html).toContain(t('alert.setting.action.export.help'));
+    expect(html).toContain(t('alert.setting.action.export.impact'));
+    expect(html).toContain(t('alert.setting.action.import.help'));
+    expect(html).toContain(t('alert.setting.action.import.impact'));
     expect(html).toContain('data-alert-setting-admin-layout="full-width-admin-list"');
     expect(html).toContain('data-alert-setting-toolbar="hertzbeat-ui-query-toolbar"');
     expect(html).toContain('data-hz-search-row-owner="hertzbeat-ui-search-row"');
@@ -122,8 +187,16 @@ describe('AlertSettingSurface', () => {
     expect(html).not.toContain('data-hz-search-input-shell');
     expect(html).toContain('data-hz-search-action="submit"');
     expect(html).toContain('data-alert-setting-table-shell="hertzbeat-ui-dense-table"');
+    expect(html).toContain('data-alert-setting-table-layout="fixed-truncate"');
+    expect(html).toContain('min-w-0 max-w-full overflow-hidden');
+    expect(html).not.toContain('min-w-[1040px]');
+    expect(html).toContain('class="block truncate"');
     expect(html).toContain('data-alert-setting-batch-owner="hertzbeat-ui-batch-toolbar"');
     expect(html).toContain('data-alert-setting-import-export-contract="angular-import-export"');
+    expect(html).not.toContain('data-alert-setting-batch-action-help-row="hertzbeat-ui-action-help"');
+    expect(html).toContain('data-hz-batch-action-help="export-type"');
+    expect(html).toContain('data-hz-batch-action-help="import"');
+    expect(html).toContain('data-hz-batch-action-help="delete"');
     expect(html).toContain('data-alert-setting-export-trigger-owner="hertzbeat-ui-batch-toolbar"');
     expect(html).toContain('data-alert-setting-import-trigger-owner="hertzbeat-ui-batch-toolbar"');
     expect(html).toContain('data-alert-setting-delete-trigger-owner="hertzbeat-ui-batch-toolbar"');
@@ -189,6 +262,137 @@ describe('AlertSettingSurface', () => {
     expect(source).not.toContain('ToolbarField');
     expect(source).not.toContain('buildAlertSettingFacts');
     expect(source).not.toContain('data-alert-setting-overflow-actions="true"');
+    expect(source).toContain('CircleHelp');
+    expect(source).toContain('data-alert-setting-action-help-style="icon-after-action"');
+    expect(source).toContain('data-alert-setting-action-help-visual="circle-help-icon"');
+    expect(source).toContain('data-alert-setting-action-help-icon="lucide-circle-help"');
+    expect(source).toContain('rounded-none border-0 bg-transparent');
+    expect(source).not.toContain('rounded-full border border-[#2b3039] bg-[#101217]');
+    expect(source).toContain('data-alert-setting-header-nesting-contract="flat-page-introduction"');
+    expect(source).toContain('className="p-0"');
+    expect(source).not.toContain('className={coldSettingVisual.panel.hero}');
+  });
+
+  it('keeps alert setting pagination aligned with visible rows when the server total is stale', () => {
+    const html = renderToStaticMarkup(
+      <AlertSettingSurface
+        t={t}
+        data={{
+          ...data,
+          list: {
+            ...data.list,
+            totalElements: 0
+          }
+        } as any}
+        search="cpu"
+        checkedIds={[]}
+        formatTime={() => '2026-04-20 00:20:00'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onNew={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onExport={vi.fn()}
+        onImport={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+      />
+    );
+
+    expect(html).toContain(t('common.pagination.summary', { page: 1, totalPages: 1, from: 1, to: 1, total: 1 }));
+    expect(html).not.toContain('· - / 1');
+    expect(html).not.toContain('· - / 0');
+  });
+
+  it('shows periodic runtime parameters in the dense rule list for load-aware scanning', () => {
+    const runtimeSummary = [
+      t('alert.setting.runtime.period', { period: 300 }),
+      t('alert.setting.runtime.times', { times: 3 }),
+      t('alert.setting.runtime.priority', { priority: 2 })
+    ].join(' · ');
+    const html = renderToStaticMarkup(
+      <AlertSettingSurface
+        t={t}
+        data={{
+          ...data,
+          list: {
+            content: [
+              {
+                id: 9,
+                name: 'periodic threshold',
+                type: 'periodic_metric',
+                datasource: 'promql',
+                expr: 'vector(0)',
+                template: 'PeriodicTemplate',
+                labels: {},
+                enable: true,
+                period: 300,
+                times: 3,
+                priority: 2,
+                gmtUpdate: 1713200000000
+              }
+            ],
+            totalElements: 1,
+            pageIndex: 0,
+            pageSize: 8
+          }
+        } as any}
+        search="periodic"
+        checkedIds={[]}
+        formatTime={() => '2026-04-20 00:20:00'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onNew={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onExport={vi.fn()}
+        onImport={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+      />
+    );
+
+    expect(html).toContain(t('alert.setting.type.periodic.metric'));
+    expect(html).toContain('data-alert-setting-runtime-summary="period-times-priority"');
+    expect(html).toContain(runtimeSummary);
+  });
+
+  it('surfaces blocked periodic authoring capability before opening the create dialog', () => {
+    const html = renderToStaticMarkup(
+      <AlertSettingSurface
+        t={t}
+        data={{
+          ...data,
+          datasourceStatus: { code: 1, msg: 'executor unavailable', data: {} }
+        } as any}
+        search=""
+        checkedIds={[]}
+        formatTime={() => '2026-04-20 00:20:00'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onNew={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onExport={vi.fn()}
+        onImport={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-alert-setting-capability-summary="realtime-ready-periodic-blocked"');
+    expect(html).toContain('data-alert-setting-capability-periodic="blocked"');
+    expect(html).toContain(t('alert.setting.capability.realtime.ready'));
+    expect(html).toContain(t('alert.setting.capability.periodic.blocked'));
   });
 
   it('renders shared inline feedback for alert setting import and export actions', () => {
@@ -221,6 +425,78 @@ describe('AlertSettingSurface', () => {
     expect(html).toContain('data-hz-ui="inline-feedback"');
     expect(html).toContain('data-hz-feedback-tone="info"');
     expect(html).toContain(t('common.notify.import-submitted', { taskName: 'rules.json' }));
+  });
+
+  it('marks successful enable toggles with inline feedback and the updated row state', () => {
+    const html = renderToStaticMarkup(
+      <AlertSettingSurface
+        t={t}
+        data={data as any}
+        search=""
+        checkedIds={[]}
+        formatTime={() => '2026-04-20 00:20:00'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onNew={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onExport={vi.fn()}
+        onImport={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        actionFeedback={{
+          tone: 'success',
+          title: t('alert.setting.enable.success.title', { name: 'cpu threshold' }),
+          description: t('alert.setting.enable.success.disabled'),
+          contract: 'enable-success',
+          toggledRule: {
+            id: 7,
+            name: 'cpu threshold',
+            enabled: false
+          }
+        }}
+      />
+    );
+
+    expect(html).toContain('data-alert-setting-enable-success="rule-enable-state-confirmed"');
+    expect(html).toContain('data-alert-setting-enable-success-owner="hertzbeat-ui-inline-feedback"');
+    expect(html).toContain('data-alert-setting-enable-success-state="disabled"');
+    expect(html).toContain('data-alert-setting-enabled-row="write-confirmed"');
+    expect(html).toContain('data-alert-setting-enabled-row-state="disabled"');
+    expect(html).toContain(t('alert.setting.enable.success.title', { name: 'cpu threshold' }));
+    expect(html).toContain(t('alert.setting.enable.success.disabled'));
+  });
+
+  it('keeps the route-requested page size visible when backend page metadata falls back', () => {
+    const html = renderToStaticMarkup(
+      <AlertSettingSurface
+        t={t}
+        data={data as any}
+        search=""
+        checkedIds={[]}
+        formatTime={() => '2026-04-20 00:20:00'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onNew={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onExport={vi.fn()}
+        onImport={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        requestedPageSize={15}
+      />
+    );
+
+    expect(html).toContain('data-alert-setting-pagination-contract="angular-page-index-size"');
+    expect(html).toContain(`aria-label="${t('common.page-size')}"`);
+    expect(html).toContain('>15</span>');
   });
 
   it('renders Angular import success and failure notification markers', () => {
@@ -463,6 +739,91 @@ describe('AlertSettingSurface', () => {
     expect(html).toContain('common.notify.no-select-export');
   });
 
+  it('renders save success confirmation and highlights the matching refreshed rule row', () => {
+    const html = renderToStaticMarkup(
+      <AlertSettingSurface
+        t={t}
+        data={data as any}
+        search=""
+        checkedIds={[]}
+        formatTime={() => '2026-04-20 00:20:00'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onNew={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onExport={vi.fn()}
+        onImport={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        actionFeedback={{
+          tone: 'success',
+          title: t('alert.setting.save.success.title', { name: 'cpu threshold' }),
+          description: t('alert.setting.save.success.enabled'),
+          contract: 'save-success',
+          savedRule: {
+            name: 'cpu threshold',
+            type: 'realtime_metric',
+            expr: 'cpu_usage > 80',
+            enabled: true,
+            intent: 'create'
+          }
+        }}
+      />
+    );
+
+    expect(html).toContain('data-alert-setting-action-feedback="success"');
+    expect(html).toContain('data-alert-setting-save-success="rule-write-confirmed"');
+    expect(html).toContain('data-alert-setting-save-success-owner="hertzbeat-ui-inline-feedback"');
+    expect(html).toContain('data-alert-setting-save-feedback-title="alert.setting.save.success.title"');
+    expect(html).toContain('data-alert-setting-save-feedback-detail="enabled"');
+    expect(html).toContain('data-alert-setting-saved-row="write-confirmed"');
+    expect(html).toContain('data-alert-setting-saved-row-enabled="true"');
+    expect(html).toContain(t('alert.setting.save.success.title', { name: 'cpu threshold' }));
+    expect(html).toContain(t('alert.setting.save.success.enabled'));
+  });
+
+  it('renders delete success confirmation with the deleted rule count', () => {
+    const html = renderToStaticMarkup(
+      <AlertSettingSurface
+        t={t}
+        data={data as any}
+        search=""
+        checkedIds={[]}
+        formatTime={() => '2026-04-20 00:20:00'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onNew={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onExport={vi.fn()}
+        onImport={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        actionFeedback={{
+          tone: 'success',
+          title: t('alert.setting.delete.success.title', { count: 2 }),
+          description: t('alert.setting.delete.success.description'),
+          contract: 'delete-success',
+          deletedCount: 2
+        }}
+      />
+    );
+
+    expect(html).toContain('data-alert-setting-action-feedback="success"');
+    expect(html).toContain('data-alert-setting-delete-success="rule-delete-confirmed"');
+    expect(html).toContain('data-alert-setting-delete-success-owner="hertzbeat-ui-inline-feedback"');
+    expect(html).toContain('data-alert-setting-delete-success-count="2"');
+    expect(html).toContain(t('alert.setting.delete.success.title', { count: 2 }));
+    expect(html).toContain(t('alert.setting.delete.success.description'));
+  });
+
   it('keeps the empty state inside the cold dense setting table body', () => {
     const html = renderToStaticMarkup(
       <AlertSettingSurface
@@ -491,8 +852,24 @@ describe('AlertSettingSurface', () => {
 
     expect(html).toContain('data-alert-setting-table-shell="hertzbeat-ui-dense-table"');
     expect(html).toContain('data-alert-setting-empty-state="hertzbeat-ui-table-empty"');
+    expect(html).toContain('data-alert-setting-empty-layout="visible-table-start"');
     expect(html).toContain('data-alert-setting-empty-icon="hertzbeat-ui-empty-box"');
+    expect(html).toContain('data-alert-setting-empty-risk-copy="connect-or-import-before-enable"');
+    expect(html).toContain('data-alert-setting-empty-actions="create-import-connect"');
+    expect(html).toContain('data-alert-setting-empty-action="create-realtime"');
+    expect(html).toContain('data-alert-setting-empty-action="import-rules"');
+    expect(html).toContain('data-alert-setting-empty-action="connect-data"');
+    expect(html).toContain('data-alert-setting-command-action="empty-create-realtime"');
+    expect(html).toContain('data-alert-setting-command-action="empty-import-rules"');
+    expect(html).toContain('data-alert-setting-command-action="empty-connect-data"');
+    expect(html).toContain('href="/monitors"');
     expect(html).toContain(t('alert.setting.empty.title'));
+    expect(html).toContain(t('alert.setting.empty.copy'));
+    expect(html).toContain(t('alert.setting.empty.action.create-realtime'));
+    expect(html).toContain(t('alert.setting.empty.action.import'));
+    expect(html).toContain(t('alert.setting.empty.action.connect-data'));
+    expect(html).toContain(t('common.pagination.summary', { page: 1, totalPages: 1, from: 0, to: 0, total: 0 }));
+    expect(html).not.toContain('· - / 0');
   });
 
   it('shows three-signal evidence context before alert-rule authoring', () => {
@@ -556,8 +933,17 @@ describe('AlertSettingSurface', () => {
     );
 
     expect(html).toContain('data-alert-setting-evidence-context="signal-route"');
+    expect(html).toContain('data-alert-setting-evidence-layering="flat-context-band"');
+    expect(html).toContain('data-alert-setting-evidence-density="compact-strip"');
     expect(html).toContain('data-alert-setting-evidence-signal="traces"');
     expect(html).toContain('data-alert-setting-prefill-labels="hertzbeat.signal:traces, service.name:checkout"');
+    expect(html).toContain('data-alert-setting-evidence-labels-layout="inline-strip"');
+    expect(html).toContain('data-alert-setting-evidence-facts-layout="inline-chips"');
+    expect(html).toContain('data-alert-setting-evidence-fact="compact-chip"');
+    expect(html).not.toContain('shadow-[0_18px_48px_rgba(0,0,0,0.24)]');
+    expect(html).not.toContain('rounded-[4px] border border-[#27303c] bg-[#0b0f15] px-4 py-3');
+    expect(html).not.toContain('mt-3 grid gap-2 md:grid-cols-3 xl:grid-cols-5');
+    expect(html).not.toContain('mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-4');
     expect(html).toContain(alertSettingEvidenceTitle('traces'));
     expect(html).toContain(t('alert.rule.evidence.setting.copy'));
     expect(html).toContain('data-alert-setting-evidence-return="true"');
@@ -566,6 +952,7 @@ describe('AlertSettingSurface', () => {
     expect(html).toContain(t('signal.context.trace.label'));
     expect(html).toContain('data-alert-setting-workflow-actions="signal-alert-next-steps"');
     expect(html).toContain('data-alert-setting-workflow-actions-owner="signal-alert-handoff"');
+    expect(html).toContain('data-alert-setting-workflow-actions-layout="secondary-inline-row"');
     expect(html).toContain('data-alert-setting-workflow-action="notice"');
     expect(html).toContain('data-alert-setting-workflow-action="group"');
     expect(html).toContain('data-alert-setting-workflow-action="silence"');

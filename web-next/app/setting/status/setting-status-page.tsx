@@ -8,6 +8,7 @@ import { useI18n } from '@/components/providers/i18n-provider';
 import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/lib/api-client';
 import { formatTime } from '@/lib/format';
 import { buildStatusIncidentListUrl, createStatusPageComponent, createStatusPageIncident, deleteStatusPageComponent, deleteStatusPageIncident, loadStatusManagementData, saveStatusPageOrg, updateStatusPageComponent, updateStatusPageIncident } from '@/lib/setting-status/controller';
+import type { SettingStatusMode } from '@/lib/setting-status/query-state';
 import { buildStatusComponentDraft, buildStatusComponentPayload, buildStatusIncidentDraft, buildStatusIncidentPayload, buildStatusOrgDraft, buildStatusOrgPayload, type StatusComponentDraft, type StatusIncidentDraft, type StatusOrgDraft, validateStatusComponentDraft, validateStatusIncidentDraft, validateStatusOrgDraft } from '@/lib/setting-status/view-model';
 import type { PageResult, StatusPageComponent, StatusPageIncident, StatusPageOrg } from '@/lib/types';
 
@@ -17,11 +18,35 @@ type StatusManagementData = {
   incidents: PageResult<StatusPageIncident>;
 };
 
+type SettingStatusPageProps = {
+  initialMode?: SettingStatusMode;
+};
+
 const SETTING_STATUS_SETTLED_CACHE_TTL_MS = 10_000;
 
-export default function SettingStatusPage() {
+function hasStatusOrgDraftValue(draft: StatusOrgDraft) {
+  return Boolean(
+    draft.id != null ||
+    draft.name.trim() ||
+    draft.description.trim() ||
+    draft.home.trim() ||
+    draft.feedback.trim() ||
+    draft.logo.trim() ||
+    draft.color.trim()
+  );
+}
+
+function mergeStatusOrgDraft(draft: StatusOrgDraft, org: StatusPageOrg): StatusOrgDraft {
+  const baseDraft = buildStatusOrgDraft(org);
+
+  return hasStatusOrgDraftValue(draft)
+    ? { ...baseDraft, ...draft }
+    : baseDraft;
+}
+
+export default function SettingStatusPage({ initialMode = 'component' }: SettingStatusPageProps) {
   const { t } = useI18n();
-  const [mode, setMode] = useState<'component' | 'incident'>('component');
+  const [mode, setMode] = useState<SettingStatusMode>(initialMode);
   const [editingOrg, setEditingOrg] = useState(false);
   const [orgDraft, setOrgDraft] = useState<StatusOrgDraft>(() => buildStatusOrgDraft(null));
   const [savingOrg, setSavingOrg] = useState(false);
@@ -98,7 +123,8 @@ export default function SettingStatusPage() {
         }
 
         async function handleSaveOrg() {
-          const validationError = validateStatusOrgDraft(orgDraft, t);
+          const resolvedOrgDraft = mergeStatusOrgDraft(orgDraft, data.org);
+          const validationError = validateStatusOrgDraft(resolvedOrgDraft, t);
           if (validationError) {
             setOrgError(validationError);
             return;
@@ -107,7 +133,7 @@ export default function SettingStatusPage() {
           setOrgMessage(null);
           setOrgError(null);
           try {
-            await saveStatusPageOrg(apiMessagePost as any, buildStatusOrgPayload(orgDraft));
+            await saveStatusPageOrg(apiMessagePost as any, buildStatusOrgPayload(resolvedOrgDraft));
             setOrgMessage(t('common.notify.apply-success'));
             setEditingOrg(false);
             setRefreshTick(value => value + 1);
@@ -119,6 +145,11 @@ export default function SettingStatusPage() {
         }
 
         async function handleNewComponent() {
+          if (!data.org.id) {
+            setComponentMessage(null);
+            setComponentError(t('status.component.notify.need-org'));
+            return;
+          }
           setComponentDraft(buildStatusComponentDraft({ orgId: data.org.id } as StatusPageComponent));
           setComponentMessage(null);
           setComponentError(null);
@@ -181,6 +212,11 @@ export default function SettingStatusPage() {
         }
 
         async function handleNewIncident() {
+          if (!data.org.id) {
+            setIncidentMessage(null);
+            setIncidentError(t('status.component.notify.need-org'));
+            return;
+          }
           setIncidentDraft(buildStatusIncidentDraft({ orgId: data.org.id } as StatusPageIncident));
           setIncidentMessage(null);
           setIncidentError(null);
@@ -276,16 +312,22 @@ export default function SettingStatusPage() {
             onNewIncident={() => void handleNewIncident()}
             onEditIncident={incident => void handleEditIncident(incident)}
             onDeleteIncident={incident => void handleDeleteIncident(incident)}
-            onOrgDraftChange={patch => setOrgDraft(prev => ({ ...prev, ...patch }))}
+            onOrgDraftChange={patch => setOrgDraft(prev => ({ ...mergeStatusOrgDraft(prev, data.org), ...patch }))}
             onSaveOrg={() => void handleSaveOrg()}
             onCancelOrg={() => setEditingOrg(false)}
             onComponentDraftChange={patch => setComponentDraft(prev => ({ ...prev, ...patch }))}
             onSaveComponent={() => void handleSaveComponent()}
-            onCancelComponent={() => setEditingComponent(false)}
+            onCancelComponent={() => {
+              setEditingComponent(false);
+              setComponentError(null);
+            }}
             onSelectComponent={setSelectedComponentId}
             onIncidentDraftChange={patch => setIncidentDraft(prev => ({ ...prev, ...patch }))}
             onSaveIncident={() => void handleSaveIncident()}
-            onCancelIncident={() => setEditingIncident(false)}
+            onCancelIncident={() => {
+              setEditingIncident(false);
+              setIncidentError(null);
+            }}
             onSelectIncident={setSelectedIncidentId}
             onIncidentSearchInputChange={setIncidentSearchInput}
             onCommitIncidentSearch={commitIncidentSearch}

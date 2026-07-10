@@ -379,7 +379,7 @@ describe('monitor history chart grid', () => {
         onToggleFavorite={() => {}}
         onSelectMetric={() => {}}
         formatTime={value => `full-${value}`}
-        t={t}
+        t={zhT}
       />
     );
 
@@ -387,8 +387,9 @@ describe('monitor history chart grid', () => {
     expect(html).toContain('data-monitor-history-card-action-owner="hertzbeat-ui-favorite-action"');
     expect(html).toContain('data-hz-ui="monitor-metric-favorite-action"');
     expect(html).toContain('data-hz-monitor-favorite-active="true"');
-    expect(html).toContain('aria-label="Remove favorite"');
-    expect(html).not.toMatch(/>Remove favorite<\/button>/);
+    expect(html).toContain(`aria-label="${zhT('monitor.detail.favorite.remove')}"`);
+    expect(html).not.toContain('aria-label="Remove favorite"');
+    expect(html).not.toMatch(new RegExp(`>${zhT('monitor.detail.favorite.remove')}<\\/button>`));
   });
 
   it('keeps chart dataZoom visible in the toolbar until the operator explicitly applies it as query time', () => {
@@ -563,6 +564,7 @@ describe('monitor history chart grid', () => {
     expect(chartHtml).not.toContain('monitor.detail.history-series.search.count');
     expect(emptyHtml).toContain(zhT('monitor.detail.history.blocker.title'));
     expect(emptyHtml).toContain(zhT('monitor.detail.history.blocker.copy'));
+    expect(emptyHtml).toContain('data-monitor-history-panel-state="history-store-empty"');
     expect(emptyHtml).not.toContain('History store has not returned series yet.');
   });
 });

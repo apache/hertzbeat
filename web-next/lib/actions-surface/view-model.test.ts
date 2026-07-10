@@ -191,6 +191,19 @@ describe('actions surface view model', () => {
     );
   });
 
+  it('keeps route tracking source params from enabling suggested actions', () => {
+    const state = buildActionsPlaceholderState(t, {
+      source: 'product-design-1590-default'
+    });
+
+    expect(state.suggestedActions).toEqual([]);
+    expect(state.approvalDraft).toMatchObject({
+      state: 'awaiting-context',
+      executionAllowed: false,
+      request: undefined
+    });
+  });
+
   it('keeps entity-id-only suggested action targets localized without changing handoff data', () => {
     const state = buildActionsPlaceholderState(t, {
       entityId: 'service:commerce/checkout',

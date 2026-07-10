@@ -14,8 +14,20 @@ import type { NoticeReceiverDraft, NoticeRuleDraft, NoticeTemplateDraft } from '
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
 const TEMPLATE_PREVIEW_MAX_LENGTH = 140;
+const RECEIVER_TEST_PREVIEW_LABEL_LIMIT = 8;
 const TEMPLATE_EXPRESSION_PATTERN = /\$\{([^}]*)\}|{{([\s\S]*?)}}|{%\s*([\s\S]*?)\s*%}/g;
 const TEMPLATE_SOURCE_PATTERN = /<!DOCTYPE|<!--|<\/?[a-z][^>]*>|<\/?#|<@|{{|{[%#]|\$\{/i;
+
+export type NoticeReceiverValidationField = keyof NoticeReceiverDraft;
+export type NoticeReceiverValidationIssue = {
+  field: NoticeReceiverValidationField;
+  message: string;
+};
+export type NoticeTemplateValidationField = keyof NoticeTemplateDraft;
+export type NoticeTemplateValidationIssue = {
+  field: NoticeTemplateValidationField;
+  message: string;
+};
 
 export type AlertNoticeEvidenceContext = {
   signal: string;
@@ -29,6 +41,11 @@ export type AlertNoticeEvidenceContext = {
     title: string;
     copy: string;
     labelsText: string;
+    labelsPreviewText: string;
+    labelsTotal: number;
+    labelsRendered: number;
+    labelsLimit: number;
+    labelsOverflow: number;
     payloadTitle: string;
     payloadCopy: string;
     payloadRows: Array<{
@@ -149,6 +166,22 @@ function parseNoticeLabelPairs(labelsText: string) {
   return labels;
 }
 
+function buildNoticeLabelsPreview(labelsText: string) {
+  const labelPairs = labelsText
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean);
+  const labelsTotal = labelPairs.length;
+  const labelsRendered = Math.min(labelsTotal, RECEIVER_TEST_PREVIEW_LABEL_LIMIT);
+  return {
+    labelsPreviewText: labelPairs.slice(0, RECEIVER_TEST_PREVIEW_LABEL_LIMIT).join(', '),
+    labelsTotal,
+    labelsRendered,
+    labelsLimit: RECEIVER_TEST_PREVIEW_LABEL_LIMIT,
+    labelsOverflow: Math.max(0, labelsTotal - RECEIVER_TEST_PREVIEW_LABEL_LIMIT)
+  };
+}
+
 function buildAlertNoticeReceiverTestPreview(
   signal: 'metrics' | 'logs' | 'traces' | undefined,
   context: SignalRouteContext,
@@ -156,6 +189,7 @@ function buildAlertNoticeReceiverTestPreview(
   t: Translator
 ) {
   const labels = parseNoticeLabelPairs(labelsText);
+  const labelsPreview = buildNoticeLabelsPreview(labelsText);
   const signalLabel = signal ? t(`alert.rule.signal.${signal}`) : t('common.none');
   const ruleName = firstText(context.alertTemplate, context.template, signal ? `${signalLabel} ${t('alert.notice.rules.default')}` : undefined) || t('alert.notice.rules.default');
   const serviceScope = firstText(
@@ -180,6 +214,7 @@ function buildAlertNoticeReceiverTestPreview(
     title: t('alert.notice.receiver.test-preview.title'),
     copy: t('alert.notice.receiver.test-preview.copy'),
     labelsText,
+    ...labelsPreview,
     payloadTitle: t('alert.notice.receiver.test-preview.payload.title'),
     payloadCopy: t('alert.notice.receiver.test-preview.payload.copy'),
     payloadRows: [
@@ -442,6 +477,67 @@ function getNoticeReceiverTypeRequiredFieldKeys(draft: NoticeReceiverDraft) {
   return getNoticeReceiverVisibleFieldKeys(draft).filter(field => isNoticeReceiverFieldRequired(draft, field));
 }
 
+function resolveNoticeReceiverValidationMessage(field: NoticeReceiverValidationField, t: Translator) {
+  switch (field) {
+    case 'name':
+      return t('alert.notice.validation.name');
+    case 'email':
+      return t('alert.notice.validation.email');
+    case 'phone':
+      return t('alert.notice.validation.phone');
+    case 'hookUrl':
+      return t('alert.notice.validation.hookUrl');
+    case 'hookAuthToken':
+      return t('alert.notice.validation.hookAuthToken');
+    case 'wechatId':
+      return t('alert.notice.validation.wechatId');
+    case 'accessToken':
+      return t('alert.notice.validation.accessToken');
+    case 'tgBotToken':
+      return t('alert.notice.validation.tgBotToken');
+    case 'tgUserId':
+      return t('alert.notice.validation.tgUserId');
+    case 'slackWebHookUrl':
+      return t('alert.notice.validation.slackWebHookUrl');
+    case 'discordChannelId':
+      return t('alert.notice.validation.discordChannelId');
+    case 'discordBotToken':
+      return t('alert.notice.validation.discordBotToken');
+    case 'corpId':
+      return t('alert.notice.validation.corpId');
+    case 'agentId':
+      return t('alert.notice.validation.agentId');
+    case 'appSecret':
+      return t('alert.notice.validation.appSecret');
+    case 'smnAk':
+      return t('alert.notice.validation.smnAk');
+    case 'smnSk':
+      return t('alert.notice.validation.smnSk');
+    case 'smnProjectId':
+      return t('alert.notice.validation.smnProjectId');
+    case 'smnRegion':
+      return t('alert.notice.validation.smnRegion');
+    case 'smnTopicUrn':
+      return t('alert.notice.validation.smnTopicUrn');
+    case 'serverChanToken':
+      return t('alert.notice.validation.serverChanToken');
+    case 'gotifyToken':
+      return t('alert.notice.validation.gotifyToken');
+    case 'appId':
+      return t('alert.notice.validation.appId');
+    case 'larkReceiveType':
+      return t('alert.notice.validation.larkReceiveType');
+    case 'userId':
+      return t('alert.notice.validation.userId');
+    case 'chatId':
+      return t('alert.notice.validation.chatId');
+    case 'partyId':
+      return t('alert.notice.validation.partyId');
+    default:
+      return t('alert.notice.validation.target');
+  }
+}
+
 function buildNoticeReceiverTargetCopy(receiver: NoticeReceiver, emptyValue: string) {
   const type = String(receiver.type ?? '');
   switch (type) {
@@ -577,74 +673,24 @@ export function buildNoticeReceiverDraft(receiver?: NoticeReceiver | null): Noti
 }
 
 export function validateNoticeReceiverDraft(draft: NoticeReceiverDraft, t: Translator) {
+  return buildNoticeReceiverValidationIssues(draft, t)[0]?.message ?? null;
+}
+
+export function buildNoticeReceiverValidationIssues(draft: NoticeReceiverDraft, t: Translator): NoticeReceiverValidationIssue[] {
+  const issues: NoticeReceiverValidationIssue[] = [];
   if (!draft.name.trim()) {
-    return t('alert.notice.validation.name');
+    issues.push({ field: 'name', message: resolveNoticeReceiverValidationMessage('name', t) });
   }
   const requiredFields = getNoticeReceiverTypeRequiredFieldKeys(draft);
   for (const field of requiredFields) {
     if (!String(draft[field] ?? '').trim()) {
-      switch (field) {
-        case 'email':
-          return t('alert.notice.validation.email');
-        case 'phone':
-          return t('alert.notice.validation.phone');
-        case 'hookUrl':
-          return t('alert.notice.validation.hookUrl');
-        case 'hookAuthToken':
-          return t('alert.notice.validation.hookAuthToken');
-        case 'wechatId':
-          return t('alert.notice.validation.wechatId');
-        case 'accessToken':
-          return t('alert.notice.validation.accessToken');
-        case 'tgBotToken':
-          return t('alert.notice.validation.tgBotToken');
-        case 'tgUserId':
-          return t('alert.notice.validation.tgUserId');
-        case 'slackWebHookUrl':
-          return t('alert.notice.validation.slackWebHookUrl');
-        case 'discordChannelId':
-          return t('alert.notice.validation.discordChannelId');
-        case 'discordBotToken':
-          return t('alert.notice.validation.discordBotToken');
-        case 'corpId':
-          return t('alert.notice.validation.corpId');
-        case 'agentId':
-          return t('alert.notice.validation.agentId');
-        case 'appSecret':
-          return t('alert.notice.validation.appSecret');
-        case 'smnAk':
-          return t('alert.notice.validation.smnAk');
-        case 'smnSk':
-          return t('alert.notice.validation.smnSk');
-        case 'smnProjectId':
-          return t('alert.notice.validation.smnProjectId');
-        case 'smnRegion':
-          return t('alert.notice.validation.smnRegion');
-        case 'smnTopicUrn':
-          return t('alert.notice.validation.smnTopicUrn');
-        case 'serverChanToken':
-          return t('alert.notice.validation.serverChanToken');
-        case 'gotifyToken':
-          return t('alert.notice.validation.gotifyToken');
-        case 'appId':
-          return t('alert.notice.validation.appId');
-        case 'larkReceiveType':
-          return t('alert.notice.validation.larkReceiveType');
-        case 'userId':
-          return t('alert.notice.validation.userId');
-        case 'chatId':
-          return t('alert.notice.validation.chatId');
-        case 'partyId':
-          return t('alert.notice.validation.partyId');
-        default:
-          break;
-      }
+      issues.push({ field, message: resolveNoticeReceiverValidationMessage(field, t) });
     }
   }
   if (draft.type === '2' && ['Basic', 'Bearer'].includes(draft.hookAuthType) && !draft.hookAuthToken.trim()) {
-    return t('alert.notice.validation.hookAuthToken');
+    issues.push({ field: 'hookAuthToken', message: resolveNoticeReceiverValidationMessage('hookAuthToken', t) });
   }
-  return null;
+  return issues.filter((issue, index) => issues.findIndex(candidate => candidate.field === issue.field) === index);
 }
 
 export function buildNoticeTemplateRows(
@@ -677,16 +723,34 @@ export function buildNoticeTemplateDraft(template?: NoticeTemplate | null): Noti
 }
 
 export function validateNoticeTemplateDraft(draft: NoticeTemplateDraft, t: Translator) {
+  return buildNoticeTemplateValidationIssues(draft, t)[0]?.message ?? null;
+}
+
+function resolveNoticeTemplateValidationMessage(field: NoticeTemplateValidationField, t: Translator) {
+  switch (field) {
+    case 'name':
+      return t('alert.notice.template.validation.name');
+    case 'type':
+      return t('alert.notice.template.validation.type');
+    case 'content':
+      return t('alert.notice.template.validation.content');
+    default:
+      return t('alert.notice.template.validation.content');
+  }
+}
+
+export function buildNoticeTemplateValidationIssues(draft: NoticeTemplateDraft, t: Translator): NoticeTemplateValidationIssue[] {
+  const issues: NoticeTemplateValidationIssue[] = [];
   if (!draft.name.trim()) {
-    return t('alert.notice.template.validation.name');
+    issues.push({ field: 'name', message: resolveNoticeTemplateValidationMessage('name', t) });
   }
   if (!draft.type.trim()) {
-    return t('alert.notice.template.validation.type');
+    issues.push({ field: 'type', message: resolveNoticeTemplateValidationMessage('type', t) });
   }
   if (!draft.content.trim()) {
-    return t('alert.notice.template.validation.content');
+    issues.push({ field: 'content', message: resolveNoticeTemplateValidationMessage('content', t) });
   }
-  return null;
+  return issues;
 }
 
 export function buildNoticeRuleRows(
@@ -733,9 +797,33 @@ export function buildNoticeLaneRows(
   ];
 }
 
+function hasValidNoticeRuleDay(text: string) {
+  return text
+    .split(',')
+    .some(item => {
+      const day = Number.parseInt(item.trim(), 10);
+      return Number.isFinite(day) && day >= 1 && day <= 7;
+    });
+}
+
+function isNoticeRuleTimeValue(value: string) {
+  const [hoursText, minutesText, extra] = value.split(':');
+  if (extra != null || !hoursText || !minutesText) return false;
+  const hours = Number.parseInt(hoursText, 10);
+  const minutes = Number.parseInt(minutesText, 10);
+  return Number.isFinite(hours) && Number.isFinite(minutes) && hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59;
+}
+
 export function validateNoticeRuleDraft(draft: NoticeRuleDraft, t: Translator) {
   if (!draft.name.trim()) return t('alert.notice.rule.validation.name');
   if (!draft.receiverIdsText.trim()) return t('alert.notice.rule.validation.receivers');
   if (!draft.filterAll && !draft.labelsText.trim()) return t('alert.notice.rule.validation.labels');
+  if (draft.periodLimit && !hasValidNoticeRuleDay(draft.daysText)) return t('alert.notice.rule.validation.days');
+  const hasPeriodStart = Boolean(draft.periodStart.trim());
+  const hasPeriodEnd = Boolean(draft.periodEnd.trim());
+  if (hasPeriodStart !== hasPeriodEnd) return t('alert.notice.rule.validation.period');
+  if ((hasPeriodStart && !isNoticeRuleTimeValue(draft.periodStart)) || (hasPeriodEnd && !isNoticeRuleTimeValue(draft.periodEnd))) {
+    return t('alert.notice.rule.validation.period');
+  }
   return null;
 }

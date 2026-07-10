@@ -690,6 +690,9 @@ describe('overview page', () => {
     const { default: OverviewPage } = await import('./page');
     const html = renderToStaticMarkup(<OverviewPage />);
 
+    expect(html).toContain('data-overview-problem-focus-panel="hertzbeat-ui-flat-problem-focus"');
+    expect(html).toContain('data-overview-problem-focus-owner="hertzbeat-ui-overview-console"');
+    expect(html).not.toContain('data-stage-section="true"');
     expect(html.split('<button type="button">Open context</button>').length - 1).toBe(2);
     expect(html).not.toContain('>Open context</a>');
   }, 60000);

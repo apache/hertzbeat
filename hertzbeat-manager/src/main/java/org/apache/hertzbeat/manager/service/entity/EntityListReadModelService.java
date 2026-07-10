@@ -34,6 +34,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class EntityListReadModelService {
 
+    static final int DEFAULT_ENTITY_LIST_PAGE_SIZE = 8;
+    static final int MAX_ENTITY_LIST_PAGE_SIZE = 50;
+
     private final EntityCatalogQueryService entityCatalogQueryService;
     private final EntityStatusRefreshService entityStatusRefreshService;
     private final EntitySummaryReadModelService entitySummaryReadModelService;
@@ -50,9 +53,11 @@ public class EntityListReadModelService {
                                                String owner, String source, String environment, String lifecycle,
                                                String tier, String system, String sort, String order,
                                                int pageIndex, int pageSize) {
+        int safePageIndex = normalizePageIndex(pageIndex);
+        int safePageSize = normalizePageSize(pageSize);
         Page<ObserveEntity> entityPage = entityCatalogQueryService.findEntityPage(
                 entityIds, type, status, search, owner, source, environment, lifecycle, tier, system,
-                sort, order, pageIndex, pageSize);
+                sort, order, safePageIndex, safePageSize);
         return buildEntitySummaryPage(entityPage, null, false);
     }
 
@@ -60,10 +65,23 @@ public class EntityListReadModelService {
                                                String owner, String source, String environment, String lifecycle,
                                                String tier, String system, String sort, String order,
                                                int pageIndex, int pageSize, String requestWorkspaceId) {
+        int safePageIndex = normalizePageIndex(pageIndex);
+        int safePageSize = normalizePageSize(pageSize);
         Page<ObserveEntity> entityPage = entityCatalogQueryService.findEntityPage(
                 entityIds, type, status, search, owner, source, environment, lifecycle, tier, system,
-                sort, order, pageIndex, pageSize, requestWorkspaceId);
+                sort, order, safePageIndex, safePageSize, requestWorkspaceId);
         return buildEntitySummaryPage(entityPage, requestWorkspaceId, true);
+    }
+
+    private int normalizePageIndex(int pageIndex) {
+        return Math.max(0, pageIndex);
+    }
+
+    private int normalizePageSize(int pageSize) {
+        if (pageSize <= 0) {
+            return DEFAULT_ENTITY_LIST_PAGE_SIZE;
+        }
+        return Math.min(pageSize, MAX_ENTITY_LIST_PAGE_SIZE);
     }
 
     private Page<EntitySummaryInfo> buildEntitySummaryPage(Page<ObserveEntity> entityPage,
@@ -72,30 +90,26 @@ public class EntityListReadModelService {
         List<ObserveEntity> scopedEntities = entityPage.getContent();
         Map<Long, EntityDefinitionActivity> latestActivityMap =
                 entitySummaryReadModelService.loadLatestDefinitionActivities(scopedEntities);
+        Map<Long, EntitySummaryReadModelService.EntitySummaryCounts> summaryCountsMap =
+                entitySummaryReadModelService.loadSummaryCounts(scopedEntities);
+        Map<Long, EntityStatusRefreshService.EntityRuntimeStatusEvidence> runtimeEvidenceMap =
+                explicitWorkspace
+                        ? entityStatusRefreshService.refreshEntityStatusesWithEvidence(scopedEntities, requestWorkspaceId)
+                        : entityStatusRefreshService.refreshEntityStatusesWithEvidence(scopedEntities);
         List<EntitySummaryInfo> summaries = scopedEntities.stream()
-                .map(entity -> explicitWorkspace
-                        ? buildSummary(entity, latestActivityMap.get(entity.getId()), requestWorkspaceId)
-                        : buildSummary(entity, latestActivityMap.get(entity.getId())))
+                .map(entity -> buildSummary(entity, latestActivityMap.get(entity.getId()),
+                        summaryCountsMap.get(entity.getId()), runtimeEvidenceMap.get(entity.getId())))
                 .toList();
         return new PageImpl<>(summaries, entityPage.getPageable(), entityPage.getTotalElements());
     }
 
     private EntitySummaryInfo buildSummary(ObserveEntity entity,
-                                           EntityDefinitionActivity latestActivity) {
-        EntityStatusRefreshService.EntityRuntimeStatusEvidence runtimeEvidence =
-                entityStatusRefreshService.refreshEntityStatusWithEvidence(entity);
-        List<Monitor> monitors = runtimeEvidence.monitors();
-        EntityStatusInfo statusInfo = runtimeEvidence.statusInfo();
-        return entitySummaryReadModelService.buildEntitySummary(entity, latestActivity, statusInfo, monitors);
-    }
-
-    private EntitySummaryInfo buildSummary(ObserveEntity entity,
                                            EntityDefinitionActivity latestActivity,
-                                           String requestWorkspaceId) {
-        EntityStatusRefreshService.EntityRuntimeStatusEvidence runtimeEvidence =
-                entityStatusRefreshService.refreshEntityStatusWithEvidence(entity, requestWorkspaceId);
+                                           EntitySummaryReadModelService.EntitySummaryCounts summaryCounts,
+                                           EntityStatusRefreshService.EntityRuntimeStatusEvidence runtimeEvidence) {
         List<Monitor> monitors = runtimeEvidence.monitors();
         EntityStatusInfo statusInfo = runtimeEvidence.statusInfo();
-        return entitySummaryReadModelService.buildEntitySummary(entity, latestActivity, statusInfo, monitors);
+        return entitySummaryReadModelService.buildEntitySummary(entity, latestActivity, statusInfo, monitors,
+                summaryCounts);
     }
 }

@@ -268,12 +268,15 @@ function normalizeText(value: string | null | undefined) {
 
 function hasSuggestionContext(context: ActionSuggestionContext = {}) {
   return Boolean(
-    normalizeText(context.source) ||
-      normalizeText(context.entityId) ||
+    normalizeText(context.entityId) ||
       normalizeText(context.entityName) ||
       normalizeText(context.serviceName) ||
       normalizeText(context.traceId) ||
-      normalizeText(context.alertGroupId)
+      normalizeText(context.spanId) ||
+      normalizeText(context.alertGroupId) ||
+      normalizeText(context.signal) ||
+      normalizeText(context.severity) ||
+      normalizeText(context.status)
   );
 }
 
@@ -464,7 +467,7 @@ export function buildActionApprovalDecision(t: Translator = catalogReviewTransla
     failedLabel: t('actions.approval-decision.failed'),
     disabledReason: t('actions.approval-decision.disabled'),
     requestPreview: JSON.stringify({
-      decision: 'approved',
+      decision: 'manual-choice-required',
       executionMode: 'manual-approval-draft-only',
       executionAllowed: false
     })

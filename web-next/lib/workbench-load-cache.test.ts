@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { consumeWorkbenchLoad, resetWorkbenchLoadCache } from './workbench-load-cache';
+import { consumeWorkbenchLoad, forgetWorkbenchLoad, resetWorkbenchLoadCache } from './workbench-load-cache';
 
 describe('workbench load cache', () => {
   afterEach(() => {
@@ -75,5 +75,16 @@ describe('workbench load cache', () => {
     await expect(consumeWorkbenchLoad('trace:list?traceId=demo', load)).resolves.toBe('recovered');
 
     expect(load).toHaveBeenCalledTimes(2);
+  });
+
+  it('can forget a single pending cache key so a timeout retry starts a fresh load', async () => {
+    const load = vi.fn(() => new Promise<string>(() => {}));
+
+    const first = consumeWorkbenchLoad('entity-detail:/entities/42/detail', load);
+    forgetWorkbenchLoad('entity-detail:/entities/42/detail');
+    const second = consumeWorkbenchLoad('entity-detail:/entities/42/detail', load);
+
+    expect(load).toHaveBeenCalledTimes(2);
+    expect(second).not.toBe(first);
   });
 });

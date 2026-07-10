@@ -191,7 +191,39 @@ describe('AlertInhibitSurface', () => {
     expect(html).toContain('data-alert-inhibit-surface="otlp-hertzbeat-ui-inhibit-console"');
     expect(html).toContain('data-alert-inhibit-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-alert-inhibit-header="hertzbeat-ui-compact-header"');
+    expect(html).toContain('data-alert-inhibit-header-nesting-contract="flat-page-introduction"');
+    expect(html).toContain('class="p-0"');
     expect(html).toContain('data-alert-inhibit-command-row="standard-equal-buttons"');
+    expect(html).toContain('data-alert-inhibit-action-help="refresh"');
+    expect(html).toContain('data-alert-inhibit-action-help="new"');
+    expect(html).toContain('data-alert-inhibit-action-help="delete-selected"');
+    expect(html).toContain('data-alert-inhibit-action-help="row-enable"');
+    expect(html).toContain('data-alert-inhibit-action-help="row-edit"');
+    expect(html).toContain('data-alert-inhibit-action-help="row-delete"');
+    expect(html).toContain('data-alert-inhibit-action-help="cancel"');
+    expect(html).toContain('data-alert-inhibit-action-help="save"');
+    expect(html).toContain('data-alert-inhibit-action-help-trigger="hertzbeat-ui-action-help"');
+    expect(html).toContain('data-alert-inhibit-action-help-style="icon-after-action"');
+    expect(html).toContain('data-alert-inhibit-action-help-visual="circle-help-icon"');
+    expect(html).toContain('data-alert-inhibit-action-help-icon="lucide-circle-help"');
+    expect(html).toContain('lucide-circle-help');
+    expect(html).not.toContain('<span aria-hidden="true">?</span>');
+    expect(html).toContain('data-alert-inhibit-action-help-tooltip="delete-selected"');
+    expect(html).toContain('data-alert-inhibit-action-help-tooltip="row-enable"');
+    expect(html).toContain('data-alert-inhibit-action-help-tooltip="row-edit"');
+    expect(html).toContain('data-alert-inhibit-action-help-tooltip="row-delete"');
+    expect(html).toContain(t('alert.inhibit.action.refresh.help'));
+    expect(html).toContain(t('alert.inhibit.action.new.help'));
+    expect(html).toContain(t('alert.inhibit.action.new.impact'));
+    expect(html).toContain(t('alert.inhibit.action.delete-selected.impact'));
+    expect(html).toContain(t('alert.inhibit.action.row-enable.help'));
+    expect(html).toContain(t('alert.inhibit.action.row-enable.impact'));
+    expect(html).toContain(t('alert.inhibit.action.row-edit.help'));
+    expect(html).toContain(t('alert.inhibit.action.row-edit.impact'));
+    expect(html).toContain(t('alert.inhibit.action.row-delete.help'));
+    expect(html).toContain(t('alert.inhibit.action.row-delete.impact'));
+    expect(html).toContain(t('alert.inhibit.action.cancel.help'));
+    expect(html).toContain(t('alert.inhibit.action.save.help'));
     expect(html).toContain('data-alert-inhibit-admin-layout="full-width-admin-list"');
     expect(html).toContain('data-alert-inhibit-toolbar="hertzbeat-ui-query-toolbar"');
     expect(html).toContain('data-hz-search-row-owner="hertzbeat-ui-search-row"');
@@ -238,6 +270,26 @@ describe('AlertInhibitSurface', () => {
     expect(source).toContain("from '@hertzbeat/ui'");
     expect(source).toContain('HzPaginationBar');
     expect(source).toContain('HzInlineFeedback');
+    expect(source).toContain('data-alert-inhibit-header-nesting-contract="flat-page-introduction"');
+    expect(source).toContain('className="p-0"');
+    expect(source).not.toContain('className={coldInhibitVisual.panel.hero}');
+    expect(source).toContain('function alertInhibitActionHelp');
+    expect(source).toContain('function AlertInhibitActionHelp');
+    expect(source).toContain("alertInhibitActionHelp(t, 'refresh')");
+    expect(source).toContain("alertInhibitActionHelp(t, 'new')");
+    expect(source).toContain("alertInhibitActionHelp(t, 'delete-selected')");
+    expect(source).toContain("alertInhibitActionHelp(t, 'row-enable')");
+    expect(source).toContain("alertInhibitActionHelp(t, 'row-edit')");
+    expect(source).toContain("alertInhibitActionHelp(t, 'row-delete')");
+    expect(source).toContain('data-alert-inhibit-action-help={id}');
+    expect(source).toContain('CircleHelp');
+    expect(source).toContain('data-alert-inhibit-action-help-style="icon-after-action"');
+    expect(source).toContain('data-alert-inhibit-action-help-visual="circle-help-icon"');
+    expect(source).toContain('data-alert-inhibit-action-help-icon="lucide-circle-help"');
+    expect(source).toContain('data-alert-inhibit-action-help-tooltip={id}');
+    expect(source).not.toContain('data-alert-inhibit-action-help-style="literal-question-after-action"');
+    expect(source).not.toContain('data-alert-inhibit-action-help-visual="borderless-question"');
+    expect(source).not.toContain('<span aria-hidden="true">?</span>');
     expect(source).toContain('data-alert-inhibit-action-feedback-owner="hertzbeat-ui-inline-feedback"');
     expect(source).not.toContain('disabled={selectedCount === 0}');
     expect(source).toContain("from '../ui/search-row'");
@@ -316,7 +368,65 @@ describe('AlertInhibitSurface', () => {
     expect(html).toContain('data-alert-inhibit-pagination="hertzbeat-ui-dense-pagination"');
     expect(html).toContain('data-alert-inhibit-empty-state="hertzbeat-ui-table-empty"');
     expect(html).toContain('data-alert-inhibit-empty-icon="hertzbeat-ui-empty-box"');
+    expect(html).toContain('data-alert-inhibit-empty-action="new"');
     expect(html).toContain(t('alert.inhibit.empty.title'));
+    expect(html).toContain(t('alert.inhibit.action.new'));
+  });
+
+  it('keeps the requested route page size visible when the empty backend page echoes the default', () => {
+    const html = renderToStaticMarkup(
+      <AlertInhibitSurface
+        t={t}
+        data={{ list: { content: [], totalElements: 0, pageIndex: 0, pageSize: 8 } } as any}
+        requestedPageSize={15}
+        search=""
+        selectedId={null}
+        checkedIds={[]}
+        editorOpen={false}
+        editorLoading={false}
+        editorSaving={false}
+        editorMessage={null}
+        editorError={null}
+        draft={{
+          name: '',
+          enable: true,
+          sourceLabelsText: '',
+          targetLabelsText: '',
+          equalLabelsText: ''
+        }}
+        formatTime={() => '-'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onSelect={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        onNew={vi.fn()}
+        onEdit={vi.fn()}
+        onSave={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onDelete={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onCloseEditor={vi.fn()}
+        onDraftChange={vi.fn()}
+        onCopySourceToTarget={vi.fn()}
+        onDropSeverity={vi.fn()}
+        onClearTarget={vi.fn()}
+        onClearEqual={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-hz-pagination-summary');
+    expect(html).toContain(t('alert.inhibit.pagination.summary', {
+      page: 1,
+      totalPages: 1,
+      from: 0,
+      to: 0,
+      total: 0
+    }));
+    expect(html).toContain('data-alert-inhibit-pagination-page-size-owner="hertzbeat-ui-select"');
+    expect(html).toContain('data-hz-ui="select-trigger"');
+    expect(html).toContain('<span class="truncate">15</span>');
   });
 
   it('renders the topology return context when opened from alert impact inhibit closure', () => {
@@ -522,6 +632,7 @@ describe('AlertInhibitSurface', () => {
   });
 
   it('renders three-signal evidence context before inhibit authoring', () => {
+    const source = readFileSync(resolve(process.cwd(), 'components/pages/alert-inhibit-surface.tsx'), 'utf8');
     const html = renderToStaticMarkup(
       <AlertInhibitSurface
         t={t}
@@ -583,10 +694,13 @@ describe('AlertInhibitSurface', () => {
     );
 
     expect(html).toContain('data-alert-inhibit-evidence-context="signal-route"');
+    expect(html).toContain('data-alert-inhibit-evidence-layering="flat-context-band"');
     expect(html).toContain('data-alert-inhibit-evidence-signal="traces"');
     expect(html).toContain('data-alert-inhibit-prefill-source-labels="hertzbeat.signal:traces, service.name:checkout, trace_id:trace-123"');
     expect(html).toContain('data-alert-inhibit-prefill-target-labels="hertzbeat.signal:traces, service.name:checkout, trace_id:trace-123"');
     expect(html).toContain('data-alert-inhibit-prefill-equal-labels="service.name, deployment.environment"');
+    expect(source).toContain('data-alert-inhibit-evidence-layering="flat-context-band"');
+    expect(source).not.toContain('data-alert-inhibit-evidence-context="signal-route"\n                  data-alert-inhibit-evidence-signal={evidenceContext.signal}\n                  data-alert-inhibit-prefill-source-labels={evidenceContext.sourceLabelsText}\n                  data-alert-inhibit-prefill-target-labels={evidenceContext.targetLabelsText}\n                  data-alert-inhibit-prefill-equal-labels={evidenceContext.equalLabelsText}\n                  className="rounded-[4px] border border-[#27303c] bg-[#0b0f15] px-4 py-3 shadow-[0_18px_48px_rgba(0,0,0,0.24)]"');
     expect(html).toContain(inhibitEvidenceTitle('traces'));
     expect(html).toContain(t('alert.rule.evidence.return'));
     expect(html).toContain('href="/trace/manage?traceId=trace-123"');
@@ -652,6 +766,7 @@ describe('AlertInhibitSurface', () => {
     );
 
     expect(html).toContain('data-alert-inhibit-evidence-context="signal-route"');
+    expect(html).toContain('data-alert-inhibit-evidence-layering="flat-context-band"');
     expect(html).toContain('data-alert-inhibit-source-labels="localized-fallback"');
     expect(html).toContain('data-alert-inhibit-target-labels="localized-fallback"');
     expect(html).toContain('data-alert-inhibit-equal-labels="localized-fallback"');

@@ -357,13 +357,13 @@ describe('api facade', () => {
     vi.stubGlobal('fetch', fetchMock);
     mockApiMessagePayload({ content: [], totalElements: 0 });
 
-    await expect(api.entities.list({ search: ' checkout ', type: 'service', status: 'healthy' })).resolves.toEqual({
+    await expect(api.entities.list({ search: ' checkout ', type: 'service', status: 'healthy', pageIndex: '2', pageSize: '20' })).resolves.toEqual({
       content: [],
       totalElements: 0
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/entities?pageIndex=0&pageSize=8&sort=gmtUpdate&order=desc&search=checkout&type=service&status=healthy',
+      '/api/entities?pageIndex=2&pageSize=20&sort=gmtUpdate&order=desc&search=checkout&type=service&status=healthy',
       expect.objectContaining({ credentials: 'same-origin', cache: 'no-store' })
     );
   });

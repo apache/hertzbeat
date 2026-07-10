@@ -36,6 +36,7 @@ import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
 import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityEvidenceSummaryInfo;
+import org.apache.hertzbeat.common.observability.dto.entity.EntityTriageRecommendation;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityUnifiedEvidenceSummary;
 import org.apache.hertzbeat.common.observability.dto.binding.TelemetryIdentitySnapshot;
 import org.apache.hertzbeat.common.observability.dto.evidence.LogEvidence;
@@ -377,6 +378,57 @@ class TelemetryIntakeServiceImplTest {
 
         assertFalse(summary.isLogsActive());
         assertEquals(0, summary.getActiveSignalCount());
+        assertEquals(0, summary.getLogEvidenceCount());
+    }
+
+    @Test
+    void buildLogEvidenceDoesNotConvertQueryHintsIntoFakeEvidence() {
+        ObservedEntityContext entityContext = ObservedEntityContext.from(
+                ObserveEntity.builder().id(88L).type("service").name("checkout").build(),
+                List.of(
+                        EntityIdentity.builder().entityId(88L).identityKey("service.name").identityValue("checkout").build(),
+                        EntityIdentity.builder().entityId(88L).identityKey("service.namespace").identityValue("commerce").build()
+                )
+        );
+        EntityLogQueryHint queryHint = new EntityLogQueryHint(
+                "otel-resource",
+                Map.of("service.name", "checkout", "service.namespace", "commerce"),
+                Collections.emptyList(),
+                null,
+                null,
+                "checkout",
+                "commerce",
+                null,
+                1000L,
+                2000L
+        );
+        EntityLogSummaryInfo summaryInfo = new EntityLogSummaryInfo(
+                1,
+                "otel-resource",
+                "otel-resource",
+                queryHint.getResourceFilters(),
+                Collections.emptyList(),
+                "otel-resource"
+        );
+        when(logQueryRepository.queryLogs(1000L, 2000L, null, null, 20)).thenReturn(Collections.emptyList());
+
+        List<LogEvidence> evidence = telemetryIntakeService.buildLogEvidence(
+                entityContext,
+                summaryInfo,
+                List.of(queryHint)
+        );
+        EntityTriageRecommendation recommendation = telemetryIntakeService.buildTriageRecommendation(
+                new EntityEvidenceSummaryInfo(0, 0, 0, 0L, 1, System.currentTimeMillis()),
+                null,
+                summaryInfo,
+                null,
+                Collections.emptyList(),
+                evidence,
+                Collections.emptyList()
+        );
+
+        assertTrue(evidence.isEmpty());
+        assertEquals("evidence", recommendation.getRecommendedFocus());
     }
 
     @Test
@@ -569,6 +621,57 @@ class TelemetryIntakeServiceImplTest {
         assertEquals(1, summary.getMetricEvidenceCount());
         assertEquals(1, summary.getLogEvidenceCount());
         assertEquals(1, summary.getTraceEvidenceCount());
+    }
+
+    @Test
+    void buildTraceSummaryTreatsOtelOkAndUnsetStatusCodesAsNonErrorEvidence() {
+        ObservedEntityContext entityContext = ObservedEntityContext.from(
+                ObserveEntity.builder().id(90L).type("service").name("checkout").build(),
+                List.of(
+                        EntityIdentity.builder().entityId(90L).identityKey("service.name").identityValue("checkout").build(),
+                        EntityIdentity.builder().entityId(90L).identityKey("service.namespace").identityValue("commerce").build(),
+                        EntityIdentity.builder().entityId(90L).identityKey("deployment.environment.name").identityValue("prod").build()
+                )
+        );
+        telemetryIntakeService.recordOtlpTraceIntake(
+                Map.of(
+                        "service.name", "checkout",
+                        "service.namespace", "commerce",
+                        "deployment.environment.name", "prod"
+                ),
+                1_710_000_001_000L,
+                "trace-ok",
+                "span-ok",
+                "GET /checkout",
+                "status_code_ok",
+                Map.of("http.status_code", "200")
+        );
+        telemetryIntakeService.recordOtlpTraceIntake(
+                Map.of(
+                        "service.name", "checkout",
+                        "service.namespace", "commerce",
+                        "deployment.environment.name", "prod"
+                ),
+                1_710_000_002_000L,
+                "trace-unset",
+                "span-unset",
+                "GET /checkout/cache",
+                "status_code_unset",
+                Map.of()
+        );
+
+        EntityTraceSummaryDto traceSummary = telemetryIntakeService.buildTraceSummary(entityContext);
+        List<TraceEvidence> traceEvidence = telemetryIntakeService.buildTraceEvidence(
+                entityContext,
+                traceSummary,
+                telemetryIntakeService.buildTraceQueryHints(entityContext)
+        );
+
+        assertEquals(2, traceSummary.getRecentTraceCount());
+        assertEquals(0, traceSummary.getRecentErrorTraceCount());
+        assertEquals(1, traceEvidence.size());
+        assertEquals("ok", traceEvidence.getFirst().getErrorState());
+        assertEquals("active", traceEvidence.getFirst().getSeverityOrHealth());
     }
 
     @Test

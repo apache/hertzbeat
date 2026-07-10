@@ -15,29 +15,72 @@ type SessionTokens = {
   refreshToken?: string;
 };
 
+type CookieSecurityContext = Pick<NextRequest, 'headers' | 'url'> | string | URL | undefined;
+
 const DEFAULT_BACKEND_ORIGIN = 'http://127.0.0.1:1157';
 const ACCESS_MAX_AGE_SECONDS = 60 * 60;
 const REFRESH_MAX_AGE_SECONDS = 7 * 24 * 60 * 60;
+const BACKEND_UNAVAILABLE_MESSAGE = 'Backend service unavailable. Please retry after the backend service is restored.';
 
-function baseCookieOptions(maxAge: number) {
+function normalizeCookieSecureOverride() {
+  const value = process.env.HB_UI_COOKIE_SECURE?.trim().toLowerCase();
+  if (value === 'true' || value === '1') return true;
+  if (value === 'false' || value === '0') return false;
+  return null;
+}
+
+function resolveCookieRequestUrl(context: CookieSecurityContext) {
+  if (!context) return null;
+  if (typeof context === 'string') return new URL(context);
+  if (context instanceof URL) return context;
+  return new URL(context.url);
+}
+
+function resolveCookieHost(context: CookieSecurityContext, requestUrl: URL | null) {
+  if (context && typeof context !== 'string' && !(context instanceof URL)) {
+    return context.headers.get('x-forwarded-host') || context.headers.get('host') || requestUrl?.host || '';
+  }
+  return requestUrl?.host || '';
+}
+
+function isLocalCookieHost(host: string) {
+  const hostname = host.split(':')[0]?.replace(/^\[|\]$/g, '').toLowerCase();
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
+}
+
+export function shouldUseSecureCookies(context?: CookieSecurityContext) {
+  const override = normalizeCookieSecureOverride();
+  if (override !== null) return override;
+
+  const requestUrl = resolveCookieRequestUrl(context);
+  const forwardedProto = context && typeof context !== 'string' && !(context instanceof URL)
+    ? context.headers.get('x-forwarded-proto')?.split(',')[0]?.trim().toLowerCase()
+    : null;
+  const protocol = forwardedProto || requestUrl?.protocol.replace(':', '') || '';
+  if (protocol === 'https') return true;
+  if (isLocalCookieHost(resolveCookieHost(context, requestUrl))) return false;
+  return process.env.NODE_ENV === 'production';
+}
+
+function baseCookieOptions(maxAge: number, context?: CookieSecurityContext) {
   return {
     sameSite: 'lax' as const,
-    secure: process.env.NODE_ENV === 'production',
+    secure: shouldUseSecureCookies(context),
     path: '/',
     maxAge
   };
 }
 
-function secretCookieOptions(maxAge: number) {
+function secretCookieOptions(maxAge: number, context?: CookieSecurityContext) {
   return {
-    ...baseCookieOptions(maxAge),
+    ...baseCookieOptions(maxAge, context),
     httpOnly: true
   };
 }
 
-function markerCookieOptions(maxAge: number) {
+function markerCookieOptions(maxAge: number, context?: CookieSecurityContext) {
   return {
-    ...baseCookieOptions(maxAge),
+    ...baseCookieOptions(maxAge, context),
     httpOnly: false
   };
 }
@@ -85,21 +128,21 @@ export function sanitizeSessionPayload(payload: ApiPayload): ApiPayload {
   };
 }
 
-export function applySessionCookies(response: NextResponse, tokens: SessionTokens) {
+export function applySessionCookies(response: NextResponse, tokens: SessionTokens, context?: CookieSecurityContext) {
   if (tokens.token) {
-    response.cookies.set(HB_UI_ACCESS_COOKIE, tokens.token, secretCookieOptions(ACCESS_MAX_AGE_SECONDS));
+    response.cookies.set(HB_UI_ACCESS_COOKIE, tokens.token, secretCookieOptions(ACCESS_MAX_AGE_SECONDS, context));
   }
   if (tokens.refreshToken) {
-    response.cookies.set(HB_UI_REFRESH_COOKIE, tokens.refreshToken, secretCookieOptions(REFRESH_MAX_AGE_SECONDS));
+    response.cookies.set(HB_UI_REFRESH_COOKIE, tokens.refreshToken, secretCookieOptions(REFRESH_MAX_AGE_SECONDS, context));
   }
   if (tokens.token || tokens.refreshToken) {
-    response.cookies.set(HB_UI_SESSION_MARKER_COOKIE, '1', markerCookieOptions(REFRESH_MAX_AGE_SECONDS));
+    response.cookies.set(HB_UI_SESSION_MARKER_COOKIE, '1', markerCookieOptions(REFRESH_MAX_AGE_SECONDS, context));
   }
 }
 
-export function clearSessionCookies(response: NextResponse) {
+export function clearSessionCookies(response: NextResponse, context?: CookieSecurityContext) {
   [HB_UI_ACCESS_COOKIE, HB_UI_REFRESH_COOKIE, HB_UI_SESSION_MARKER_COOKIE].forEach(name => {
-    const options = name === HB_UI_SESSION_MARKER_COOKIE ? markerCookieOptions(0) : secretCookieOptions(0);
+    const options = name === HB_UI_SESSION_MARKER_COOKIE ? markerCookieOptions(0, context) : secretCookieOptions(0, context);
     response.cookies.set(name, '', options);
   });
 }
@@ -175,26 +218,37 @@ export async function proxyBackendApiRequest(request: NextRequest, path: string)
     });
   };
 
-  let upstream = await fetchUpstream(accessToken);
-  let refreshedTokens: SessionTokens | null = null;
-  if (upstream.status === 401) {
-    refreshedTokens = await refreshSessionTokens(request);
-    if (refreshedTokens?.token) {
-      upstream = await fetchUpstream(refreshedTokens.token);
+  try {
+    let upstream = await fetchUpstream(accessToken);
+    let refreshedTokens: SessionTokens | null = null;
+    if (upstream.status === 401) {
+      refreshedTokens = await refreshSessionTokens(request);
+      if (refreshedTokens?.token) {
+        upstream = await fetchUpstream(refreshedTokens.token);
+      }
     }
-  }
 
-  const response = new NextResponse(upstream.body, {
-    status: upstream.status,
-    statusText: upstream.statusText,
-    headers: copyResponseHeaders(upstream.headers)
-  });
-  if (refreshedTokens?.token && upstream.ok) {
-    applySessionCookies(response, refreshedTokens);
-  } else if (upstream.status === 401 && readSessionCookieValue(request, HB_UI_REFRESH_COOKIE)) {
-    clearSessionCookies(response);
+    const response = new NextResponse(upstream.body, {
+      status: upstream.status,
+      statusText: upstream.statusText,
+      headers: copyResponseHeaders(upstream.headers)
+    });
+    if (refreshedTokens?.token && upstream.ok) {
+      applySessionCookies(response, refreshedTokens, request);
+    } else if (upstream.status === 401 && readSessionCookieValue(request, HB_UI_REFRESH_COOKIE)) {
+      clearSessionCookies(response, request);
+    }
+    return response;
+  } catch {
+    return NextResponse.json(
+      {
+        code: 503,
+        msg: BACKEND_UNAVAILABLE_MESSAGE,
+        data: null
+      },
+      { status: 503 }
+    );
   }
-  return response;
 }
 
 export async function readJsonPayload(response: Response): Promise<ApiPayload> {

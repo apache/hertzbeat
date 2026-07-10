@@ -690,19 +690,21 @@ export function buildAlertClosureOperationRows(
   group: GroupAlert | null | undefined,
   t: Translator
 ): AlertClosureOperationRow[] {
-  const activeCount = Math.max(group?.alerts?.length || 0, 1);
+  const hasActionableGroup = Boolean(group?.id);
+  const activeCount = hasActionableGroup ? Math.max(group?.alerts?.length || 0, 1) : 0;
+  const disabledDirectActionCopy = t('alert.center.closure-action.disabled.no-group');
   const target = query.entityName || query.entityId || resolveAlertClosureService(query, group) || t('alert.center.operation.target.current-alert');
 
   return [
     {
       key: 'acknowledge',
       label: t('alert.center.operation.acknowledge.label'),
-      copy: t('alert.center.operation.acknowledge.copy', { target, count: activeCount })
+      copy: hasActionableGroup ? t('alert.center.operation.acknowledge.copy', { target, count: activeCount }) : disabledDirectActionCopy
     },
     {
       key: 'recover',
       label: t('alert.center.operation.recover.label'),
-      copy: t('alert.center.operation.recover.copy')
+      copy: hasActionableGroup ? t('alert.center.operation.recover.copy') : disabledDirectActionCopy
     },
     {
       key: 'threshold',
@@ -743,7 +745,7 @@ export function buildAlertClosureOperationRows(
     {
       key: 'close',
       label: t('alert.center.operation.close.label'),
-      copy: t('alert.center.operation.close.copy')
+      copy: hasActionableGroup ? t('alert.center.operation.close.copy') : disabledDirectActionCopy
     }
   ];
 }
@@ -900,6 +902,13 @@ function buildAlertGroupClosureSummary(actionLabels: string[], t: Translator): s
   return t('alert.center.group.closure.next', { actions: actionLabels.join(' / ') });
 }
 
+function buildAlertGroupNoiseControlActions(t: Translator): AlertGroupAction[] {
+  return [
+    { key: 'silence', label: t('entity.alert.workbench.action.silence'), dialogMode: 'silence' },
+    { key: 'inhibit', label: t('entity.alert.workbench.action.inhibit'), dialogMode: 'inhibit' }
+  ];
+}
+
 function buildGroupPrimarySeverity(group: GroupAlert): string | undefined {
   return (group.alerts || [])
     .map(alert => alert.labels?.severity || alert.labels?.level || alert.labels?.priority || '')
@@ -926,30 +935,29 @@ function buildAlertGroupTriageReason(group: GroupAlert, total: number, t: Transl
 }
 
 export function buildAlertGroupActions(group: Pick<GroupAlert, 'status'>, entityContextActive: boolean, t: Translator): AlertGroupAction[] {
-  if (!entityContextActive) {
-    return [{ key: 'delete', label: t('alert.center.delete') }];
-  }
   const normalizedStatus = (group.status || '').toLowerCase();
+  const noiseControlActions = buildAlertGroupNoiseControlActions(t);
+  const contextualActions: AlertGroupAction[] = entityContextActive
+    ? noiseControlActions
+    : [...noiseControlActions, { key: 'delete', label: t('alert.center.delete') }];
+
   if (normalizedStatus === 'acknowledged') {
     return [
       { key: 'unacknowledge', label: t('entity.alert.workbench.action.unacknowledge') },
       { key: 'resolve', label: t('entity.alert.workbench.action.resolve') },
-      { key: 'silence', label: t('entity.alert.workbench.action.silence'), dialogMode: 'silence' },
-      { key: 'inhibit', label: t('entity.alert.workbench.action.inhibit'), dialogMode: 'inhibit' }
+      ...contextualActions
     ];
   }
   if (normalizedStatus === 'resolved') {
     return [
       { key: 'reopen', label: t('entity.alert.workbench.action.reopen') },
-      { key: 'silence', label: t('entity.alert.workbench.action.silence'), dialogMode: 'silence' },
-      { key: 'inhibit', label: t('entity.alert.workbench.action.inhibit'), dialogMode: 'inhibit' }
+      ...contextualActions
     ];
   }
   return [
     { key: 'acknowledge', label: t('entity.alert.workbench.action.acknowledge') },
     { key: 'resolve', label: t('entity.alert.workbench.action.resolve') },
-    { key: 'silence', label: t('entity.alert.workbench.action.silence'), dialogMode: 'silence' },
-    { key: 'inhibit', label: t('entity.alert.workbench.action.inhibit'), dialogMode: 'inhibit' }
+    ...contextualActions
   ];
 }
 
@@ -1001,6 +1009,11 @@ function resolveAlertRuleQuickDialogSelectionCount(group: GroupAlert): number {
   return 1;
 }
 
+function findAlertRulePreviewLabelValue(labels: AlertRulePreviewLabel[], keys: string[]): string | undefined {
+  const labelsByKey = new Map(labels.map(label => [label.key.toLowerCase(), label.value]));
+  return keys.map(key => labelsByKey.get(key.toLowerCase())).find((value): value is string => Boolean(value));
+}
+
 export function buildAlertRuleQuickDialogModel(
   group: GroupAlert,
   mode: AlertRuleDialogMode,
@@ -1009,8 +1022,14 @@ export function buildAlertRuleQuickDialogModel(
 ): AlertRuleQuickDialogModel {
   const previewLabels = buildAlertRulePreviewLabels(group);
   const previewLabelText = buildPreviewLabelText(previewLabels);
-  const entityTitle = query.entityName || query.entityId || t('common.none');
-  const ruleNameBase = query.entityName || query.serviceName || query.monitorName || query.entityId || 'entity';
+  const ruleNameBase =
+    query.entityName ||
+    query.serviceName ||
+    query.monitorName ||
+    query.entityId ||
+    findAlertRulePreviewLabelValue(previewLabels, ['service', 'service.name', 'alertname', 'instance', 'job', 'host']) ||
+    'entity';
+  const entityTitle = query.entityName || query.entityId || ruleNameBase || t('common.none');
   const selectionCount = resolveAlertRuleQuickDialogSelectionCount(group);
   const hasEntityId = typeof query.entityId === 'string' && query.entityId.trim().length > 0;
 
@@ -1030,11 +1049,11 @@ export function buildAlertRuleQuickDialogModel(
       authoringCopy: previewLabels.length > 0
         ? t('entity.noise-controls.authoring.silence.prefill-success')
         : t('entity.noise-controls.authoring.silence.prefill-warning'),
-      warning: !hasEntityId
-        ? t('entity.noise-controls.authoring.prefill-warning.no-entity-id')
-        : previewLabels.length === 0
+      warning: previewLabels.length === 0
+        ? hasEntityId
           ? t('entity.alert.workbench.silence.warning.empty-labels')
-          : null,
+          : t('entity.noise-controls.authoring.prefill-warning.no-entity-id')
+        : null,
       previewLabels,
       targetPreviewLabels: [],
       silenceDraft
@@ -1061,11 +1080,11 @@ export function buildAlertRuleQuickDialogModel(
     authoringCopy: previewLabels.length > 0
       ? t('entity.noise-controls.authoring.inhibit.prefill-success')
       : t('entity.noise-controls.authoring.inhibit.prefill-warning'),
-    warning: !hasEntityId
-      ? t('entity.noise-controls.authoring.prefill-warning.no-entity-id')
-      : hasInhibitPrefillWarning
-        ? t('entity.alert.workbench.inhibit.warning.empty-labels')
-        : null,
+    warning: hasInhibitPrefillWarning
+      ? previewLabels.length === 0 && !hasEntityId
+        ? t('entity.noise-controls.authoring.prefill-warning.no-entity-id')
+        : t('entity.alert.workbench.inhibit.warning.empty-labels')
+      : null,
     previewLabels,
     targetPreviewLabels: inhibitTargetPreviewLabels,
     inhibitDraft

@@ -116,6 +116,36 @@ function accentStyle(accent?: string | null) {
   };
 }
 
+function publicStatusBrandFallbackLabel(title: string) {
+  return title.trim().slice(0, 2).toUpperCase() || 'HB';
+}
+
+function PublicStatusBrandMark({ brand }: { brand: PublicStatusBrand }) {
+  const [logoFailed, setLogoFailed] = useState(false);
+
+  if (brand.logo && !logoFailed) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={brand.logo}
+        alt={brand.title}
+        className="h-full w-full object-contain"
+        data-public-status-logo="source"
+        onError={() => setLogoFailed(true)}
+      />
+    );
+  }
+
+  return (
+    <span
+      className={cn('text-[14px] font-semibold uppercase tracking-[0.18em]', shellTextSecondaryClass)}
+      data-public-status-logo-fallback="text"
+    >
+      {publicStatusBrandFallbackLabel(brand.title)}
+    </span>
+  );
+}
+
 function PublicStatusComponentRows({
   cards,
   emptyTitle,
@@ -201,6 +231,8 @@ function PublicStatusIncidentRows({
   onSelectedYearChange,
   onRefresh,
   yearLabel,
+  decrementYearLabel,
+  incrementYearLabel,
   refreshLabel,
   startLabel,
   updateLabel
@@ -218,6 +250,8 @@ function PublicStatusIncidentRows({
   onSelectedYearChange: (year: number) => void;
   onRefresh: () => void;
   yearLabel: string;
+  decrementYearLabel: string;
+  incrementYearLabel: string;
   refreshLabel: string;
   startLabel: string;
   updateLabel: string;
@@ -304,6 +338,8 @@ function PublicStatusIncidentRows({
               min="1970"
               max={String(currentYear)}
               value={String(selectedYear)}
+              decrementLabel={decrementYearLabel}
+              incrementLabel={incrementYearLabel}
               onValueChange={value => onSelectedYearChange(Number.parseInt(value, 10))}
               className="text-[13px]"
               containerClassName="h-9"
@@ -440,12 +476,7 @@ export function PublicStatusShell({
                 rel="noreferrer"
                 className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[6px] p-2"
               >
-                {brand.logo ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={brand.logo} alt={brand.title} className="h-full w-full object-contain" />
-                ) : (
-                  <span className={cn('text-[14px] font-semibold uppercase tracking-[0.18em]', shellTextSecondaryClass)}>{brand.title.slice(0, 2)}</span>
-                )}
+                <PublicStatusBrandMark brand={brand} />
               </WorkbenchPanel>
             ) : (
               <WorkbenchPanel
@@ -453,12 +484,7 @@ export function PublicStatusShell({
                 tone="elevated"
                 className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[6px] p-2"
               >
-                {brand.logo ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={brand.logo} alt={brand.title} className="h-full w-full object-contain" />
-                ) : (
-                  <span className={cn('text-[14px] font-semibold uppercase tracking-[0.18em]', shellTextSecondaryClass)}>{brand.title.slice(0, 2)}</span>
-                )}
+                <PublicStatusBrandMark brand={brand} />
               </WorkbenchPanel>
             )}
             <div className="min-w-0">
@@ -527,6 +553,8 @@ export function PublicStatusShell({
             onSelectedYearChange={onSelectedYearChange}
             onRefresh={onRefreshIncidents}
             yearLabel={yearLabel}
+            decrementYearLabel={`${t('common.decrement')} ${yearLabel}`}
+            incrementYearLabel={`${t('common.increment')} ${yearLabel}`}
             refreshLabel={refreshLabel}
             startLabel={incidentStartLabel}
             updateLabel={incidentUpdateLabel}

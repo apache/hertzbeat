@@ -102,6 +102,42 @@ describe('alert silence query state', () => {
     });
   });
 
+  it('does not treat list metadata as alert silence evidence without an explicit signal', () => {
+    expect(
+      readAlertSilenceRouteState({
+        search: 'uv_alert_silence_required',
+        pageSize: '8',
+        source: 'alert-silence-required-proof',
+        probe: 'validation-loop',
+        returnTo: '/alert/silence?search=uv_alert_silence_required'
+      })
+    ).toEqual({
+      returnContext: {
+        search: 'uv_alert_silence_required',
+        status: 'firing',
+        severity: '',
+        pageIndex: 0,
+        pageSize: 8,
+        entityId: '',
+        entityName: '',
+        returnTo: '/alert/silence?search=uv_alert_silence_required',
+        source: 'alert-silence-required-proof'
+      },
+      signal: null,
+      signalContext: {},
+      managementContext: {
+        entityId: '',
+        entityName: '',
+        returnTo: '/alert/silence?search=uv_alert_silence_required',
+        returnLabel: '',
+        matchMode: '',
+        matchingRuleType: '',
+        matchingRuleIds: [],
+        matchedViewEnabled: false
+      }
+    });
+  });
+
   it('builds silence list url with search', () => {
     expect(buildAlertSilenceUrl('cpu')).toBe('/alert/silences?pageIndex=0&pageSize=8&sort=id&order=desc&search=cpu');
   });

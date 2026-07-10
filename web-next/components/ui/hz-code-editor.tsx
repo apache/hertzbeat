@@ -49,13 +49,11 @@ const hzCodeEditorTheme = EditorView.theme({
   '.cm-scroller': {
     fontFamily:
       'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-    lineHeight: '1.6',
-    minHeight: 'inherit'
+    lineHeight: '1.6'
   },
   '.cm-content': {
     padding: '8px 0',
-    caretColor: '#f8fafc',
-    minHeight: 'inherit'
+    caretColor: '#f8fafc'
   },
   '.cm-line': {
     padding: '0 12px'
@@ -98,13 +96,11 @@ const hzCodeEditorLightTheme = EditorView.theme({
   '.cm-scroller': {
     fontFamily:
       'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-    lineHeight: '1.6',
-    minHeight: 'inherit'
+    lineHeight: '1.6'
   },
   '.cm-content': {
     padding: '8px 0',
-    caretColor: '#1f2937',
-    minHeight: 'inherit'
+    caretColor: '#1f2937'
   },
   '.cm-line': {
     padding: '0 12px'
@@ -167,6 +163,7 @@ export function HzCodeEditor({
   style,
   ...props
 }: HzCodeEditorProps) {
+  const editorHeight = height ?? minHeight;
   const extensions = useMemo(() => {
     const languageExtension = getLanguageExtension(language);
     const themeExtension = theme === 'vs-dark' ? hzCodeEditorTheme : hzCodeEditorLightTheme;
@@ -174,10 +171,11 @@ export function HzCodeEditor({
       basicSetup,
       themeExtension,
       EditorView.lineWrapping,
+      ...(ariaLabel ? [EditorView.contentAttributes.of({ 'aria-label': ariaLabel })] : []),
       ...(languageExtension ? [languageExtension] : []),
       ...(readOnly || loading ? [EditorState.readOnly.of(true)] : [])
     ];
-  }, [language, loading, readOnly, theme]);
+  }, [ariaLabel, language, loading, readOnly, theme]);
 
   return (
     <div
@@ -190,6 +188,7 @@ export function HzCodeEditor({
       data-hz-code-editor-folding={folding ? 'true' : 'false'}
       data-hz-code-editor-automatic-layout={automaticLayout ? 'true' : 'false'}
       data-hz-code-editor-readonly={readOnly || loading ? 'true' : undefined}
+      data-hz-code-editor-layout-stability="fixed-editor-height"
       data-hz-code-editor-license="codemirror-mit"
       aria-busy={loading ? 'true' : undefined}
       className={cn('relative min-w-0 overflow-hidden rounded-[3px]', className)}
@@ -198,7 +197,7 @@ export function HzCodeEditor({
       {name ? <HiddenInput name={name} value={value} data-hz-code-editor-value="hidden" /> : null}
       <CodeMirror
         value={value}
-        height={height}
+        height={editorHeight}
         minHeight={minHeight}
         placeholder={placeholder}
         basicSetup={false}

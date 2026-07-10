@@ -82,7 +82,14 @@ describe('AppSidebar', () => {
 
     expect(html).toContain('data-app-sidebar-scroll-owner="bounded-sidebar-nav"');
     expect(html).toContain('flex h-full min-h-0 flex-col overflow-hidden');
-    expect(html).toContain('lg:h-[calc(100vh-64px)]');
+    expect(html).toContain('md:h-[calc(100vh-64px)]');
     expect(html).toContain('mt-1 min-h-0 flex-1 space-y-1 overflow-y-auto overflow-x-hidden');
+  });
+
+  it('accepts shell placement classes for desktop and mobile drawer reuse', () => {
+    const html = renderToStaticMarkup(<AppSidebar pathname="/overview" t={t} className="mobile-drawer-proof" />);
+
+    expect(html).toContain('mobile-drawer-proof');
+    expect(html).toContain('data-app-sidebar="true"');
   });
 });

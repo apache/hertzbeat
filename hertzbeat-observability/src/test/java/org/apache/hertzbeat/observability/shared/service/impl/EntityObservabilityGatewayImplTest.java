@@ -405,6 +405,7 @@ class EntityObservabilityGatewayImplTest {
         assertTrue(summary.isTelemetryReady());
         assertTrue(summary.isStatusReady());
         assertEquals(100, summary.getReadinessScore());
+        assertEquals(2L, summary.getRelationCount());
 
         EntityOpsSummaryInfo emptySummary = gateway.buildEntityOpsSummary(
                 ObserveEntity.builder().name("empty").build(),
@@ -417,6 +418,7 @@ class EntityObservabilityGatewayImplTest {
         assertFalse(emptySummary.isTelemetryReady());
         assertFalse(emptySummary.isStatusReady());
         assertEquals(0, emptySummary.getReadinessScore());
+        assertEquals(0L, emptySummary.getRelationCount());
     }
 
     @Test

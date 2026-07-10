@@ -54,6 +54,7 @@ class EntityWorkspaceQuerySourceOwnershipTest {
         assertTrue(accessSource.contains("entityWorkspaceQueryService.findEntities(normalizedWorkspaceId, sort)"));
         assertTrue(accessSource.contains("entityWorkspaceQueryService.findEntityById(entityId)"));
         assertTrue(accessSource.contains("entityWorkspaceQueryService.findEntityByReference("));
+        assertTrue(accessSource.contains("entityWorkspaceQueryService.findEntityByName(normalizedWorkspaceId, name)"));
         assertTrue(accessSource.contains("normalizedWorkspaceId, type, namespace, name"));
         assertTrue(accessSource.contains("normalizedWorkspaceId, type, name"));
 
@@ -76,5 +77,8 @@ class EntityWorkspaceQuerySourceOwnershipTest {
         assertTrue(querySource.contains(
                 "observeEntityDao.findFirstByWorkspaceIdAndTypeAndName(workspaceId, type, name)"));
         assertTrue(querySource.contains("observeEntityDao.findFirstByTypeAndName(type, name)"));
+        assertTrue(querySource.contains("public Optional<ObserveEntity> findEntityByName(String workspaceId, String name)"));
+        assertTrue(querySource.contains("observeEntityDao.findFirstByWorkspaceIdAndName(workspaceId, name)"));
+        assertTrue(querySource.contains("observeEntityDao.findFirstByName(name)"));
     }
 }

@@ -61,6 +61,12 @@ class EntityNoiseControlRuleQuerySourceOwnershipTest {
         assertTrue(ruleQuerySource.contains("import org.apache.hertzbeat.alert.dao.AlertInhibitDao"));
         assertTrue(ruleQuerySource.contains("public List<AlertSilence> findEnabledSilences(String requestWorkspaceId)"));
         assertTrue(ruleQuerySource.contains("public List<AlertInhibit> findEnabledInhibits(String requestWorkspaceId)"));
+        assertFalse(ruleQuerySource.contains("alertSilenceDao.findAll()"),
+                "Entity detail should not scan every silence rule before workspace and enable filtering");
+        assertFalse(ruleQuerySource.contains("alertInhibitDao.findAll()"),
+                "Entity detail should not scan every inhibit rule before workspace and enable filtering");
+        assertTrue(ruleQuerySource.contains("alertSilenceDao.findAlertSilencesByEnableTrue()"));
+        assertTrue(ruleQuerySource.contains("alertInhibitDao.findAlertInhibitsByEnableIsTrue()"));
         assertTrue(ruleQuerySource.contains("matchesNoiseControlRuleRequestWorkspace("));
         assertTrue(ruleQuerySource.contains("AuthTokenScopes.DEFAULT_WORKSPACE_ID.equals(normalizedRequestWorkspaceId)"));
     }

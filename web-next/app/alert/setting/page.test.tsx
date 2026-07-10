@@ -1,20 +1,30 @@
+// @vitest-environment jsdom
+
 import React from 'react';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { act } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTranslatorMock } from '../../../test/i18n-test-helper';
 import type { AlertSettingRouteState } from '../../../lib/alert-setting/query-state';
 
 const mockState = vi.hoisted(() => ({
   lastLoad: null as null | (() => Promise<unknown>),
+  lastSurfaceProps: null as null | Record<string, any>,
   lastOnNew: null as null | (() => void),
+  lastOnNewRealtime: null as null | (() => void),
+  lastOnClose: null as null | (() => void),
   lastOnSubmit: null as null | ((payload: unknown) => Promise<void>),
   lastOnPreview: null as null | ((payload: unknown) => Promise<void>),
+  lastPreviewFeedback: null as null | Record<string, any>,
   lastOnToggleEnabled: null as null | ((defineId: number, enabled: boolean) => void),
   lastOnEdit: null as null | ((defineId: number) => Promise<void> | void),
   lastOnExport: null as null | (() => void),
   lastOnImport: null as null | (() => void),
+  currentSearchParams: '',
+  routerReplace: vi.fn(),
   push: vi.fn(),
   renderData: {
     list: {
@@ -46,6 +56,17 @@ const apiGet = vi.hoisted(() => vi.fn());
 const apiMessageGet = vi.hoisted(() => vi.fn());
 const apiMessageDelete = vi.hoisted(() => vi.fn());
 const apiMessagePut = vi.hoisted(() => vi.fn());
+const apiMessagePost = vi.hoisted(() => vi.fn());
+
+(globalThis as { React?: typeof React }).React = React;
+(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    replace: mockState.routerReplace
+  }),
+  useSearchParams: () => new URLSearchParams(mockState.currentSearchParams)
+}));
 
 vi.mock('../../../components/providers/i18n-provider', () => ({
   useI18n: () => ({
@@ -69,26 +90,21 @@ vi.mock('../../../components/workbench/client-workbench', () => ({
 }));
 
 vi.mock('../../../components/pages/alert-setting-surface', () => ({
-  AlertSettingSurface: ({
-    data,
-    search,
-    evidenceContext,
-    onNew,
-    onExport,
-    onImport,
-    onToggleEnabled,
-    onEdit
-  }: {
-    data: { list: { totalElements: number } };
-    search: string;
-    evidenceContext?: { signal: string; labelsText: string } | null;
-    onNew: () => void;
-    onExport: () => void;
-    onImport: () => void;
-    onToggleEnabled: (defineId: number, enabled: boolean) => void;
-    onEdit: (defineId: number) => Promise<void> | void;
-  }) => {
+  AlertSettingSurface: (props: any) => {
+    const {
+      data,
+      search,
+      evidenceContext,
+      onNew,
+      onNewRealtime,
+      onExport,
+      onImport,
+      onToggleEnabled,
+      onEdit
+    } = props;
+    mockState.lastSurfaceProps = props;
     mockState.lastOnNew = onNew;
+    mockState.lastOnNewRealtime = onNewRealtime;
     mockState.lastOnExport = onExport;
     mockState.lastOnImport = onImport;
     mockState.lastOnToggleEnabled = onToggleEnabled;
@@ -106,9 +122,11 @@ vi.mock('../../../components/pages/alert-setting-surface', () => ({
 }));
 
 vi.mock('../../../components/pages/alert-setting-create-dialog', () => ({
-  AlertSettingCreateDialog: ({ open, mode, draft, evidenceReturnHref, previewFeedback, previewing, onSubmit, onPreview }: any) => {
+  AlertSettingCreateDialog: ({ open, mode, draft, evidenceReturnHref, previewFeedback, previewing, saveFeedback, onClose, onSubmit, onPreview }: any) => {
+    mockState.lastOnClose = onClose;
     mockState.lastOnSubmit = onSubmit;
     mockState.lastOnPreview = onPreview;
+    mockState.lastPreviewFeedback = previewFeedback;
     return (
       <div
         data-alert-setting-create-dialog={open ? mode : 'closed'}
@@ -118,6 +136,12 @@ vi.mock('../../../components/pages/alert-setting-create-dialog', () => ({
         data-evidence-return-href={evidenceReturnHref || ''}
         data-previewing={String(Boolean(previewing))}
         data-preview-feedback={previewFeedback?.contract || ''}
+        data-preview-feedback-row-count={String(previewFeedback?.rows?.length ?? 0)}
+        data-preview-feedback-total-rows={String(previewFeedback?.totalRows ?? previewFeedback?.rows?.length ?? 0)}
+        data-preview-feedback-sample-limit={String(previewFeedback?.sampleLimit ?? '')}
+        data-save-feedback={saveFeedback?.contract || ''}
+        data-save-feedback-title={saveFeedback?.title || ''}
+        data-save-feedback-description={saveFeedback?.description || ''}
       />
     );
   },
@@ -157,7 +181,7 @@ vi.mock('../../../lib/api-client', () => ({
   apiMessageGet,
   apiMessageDelete,
   apiMessagePut,
-  apiMessagePost: vi.fn(),
+  apiMessagePost,
   getCurrentLocale: () => null
 }));
 
@@ -167,20 +191,40 @@ async function renderAlertSettingPage(initialRouteState?: AlertSettingRouteState
 }
 
 describe('alert setting page', () => {
+  let interactionContainer: HTMLDivElement | null = null;
+  let interactionRoot: Root | null = null;
+
+  afterEach(() => {
+    if (interactionRoot) {
+      act(() => {
+        interactionRoot?.unmount();
+      });
+    }
+    interactionRoot = null;
+    interactionContainer?.remove();
+    interactionContainer = null;
+  });
+
   beforeEach(() => {
     mockState.lastLoad = null;
+    mockState.lastSurfaceProps = null;
     mockState.lastOnNew = null;
+    mockState.lastOnNewRealtime = null;
     mockState.lastOnSubmit = null;
     mockState.lastOnPreview = null;
+    mockState.lastPreviewFeedback = null;
     mockState.lastOnToggleEnabled = null;
     mockState.lastOnEdit = null;
     mockState.lastOnExport = null;
     mockState.lastOnImport = null;
+    mockState.currentSearchParams = '';
+    mockState.routerReplace.mockReset();
     mockState.push.mockReset();
     apiGet.mockReset().mockResolvedValue(mockState.renderData.datasourceStatus);
     apiMessageGet.mockReset().mockResolvedValue(mockState.renderData.list);
     apiMessageDelete.mockReset().mockResolvedValue(undefined);
     apiMessagePut.mockReset().mockResolvedValue(undefined);
+    apiMessagePost.mockReset().mockResolvedValue(undefined);
   });
 
   it('loads the alert-define console through the shared route and surface contracts', async () => {
@@ -217,13 +261,80 @@ describe('alert setting page', () => {
   it('keeps alert setting list pagination on the Angular server-side page index and page size contract', () => {
     const source = readFileSync(resolve(process.cwd(), 'app/alert/setting/alert-setting-page.tsx'), 'utf8');
 
-    expect(source).toContain('const [pageIndex, setPageIndex] = useState(0)');
-    expect(source).toContain('const [pageSize, setPageSize] = useState(8)');
+    expect(source).toContain('const [pageIndex, setPageIndex] = useState(routeListState.pageIndex)');
+    expect(source).toContain('const [pageSize, setPageSize] = useState(routeListState.pageSize)');
     expect(source).toContain('buildDefineListUrl(query, pageIndex, pageSize)');
     expect(source).toContain('setPageIndex(0);');
     expect(source).toContain('onPageIndexChange={nextPageIndex =>');
     expect(source).toContain('onPageSizeChange={nextPageSize =>');
     expect(source).toContain('setPageSize(nextPageSize)');
+  });
+
+  it('initializes alert setting list state from the route and preserves URL state during search and pagination', async () => {
+    mockState.currentSearchParams = 'search=cpu&pageIndex=2&pageSize=15&signal=metrics&intent=create';
+    const { default: AlertSettingPage } = await import('./alert-setting-page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<AlertSettingPage />);
+      await Promise.resolve();
+    });
+
+    expect(mockState.lastSurfaceProps?.search).toBe('cpu');
+    expect(mockState.lastSurfaceProps?.requestedPageSize).toBe(15);
+    await act(async () => {
+      await mockState.lastLoad?.();
+    });
+    expect(apiMessageGet).toHaveBeenLastCalledWith('/alert/defines?pageIndex=2&pageSize=15&sort=id&order=desc&search=%5B%22cpu%22%5D');
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onSearchChange('memory');
+      await Promise.resolve();
+    });
+    await act(async () => {
+      mockState.lastSurfaceProps?.onApplyFilter();
+      await Promise.resolve();
+    });
+
+    expect(mockState.routerReplace).toHaveBeenLastCalledWith('/alert/setting?search=memory&pageSize=15&signal=metrics&intent=create', { scroll: false });
+
+    mockState.currentSearchParams = 'search=memory&pageSize=15&signal=metrics&intent=create';
+    await act(async () => {
+      interactionRoot?.render(<AlertSettingPage />);
+      await Promise.resolve();
+    });
+    await act(async () => {
+      mockState.lastSurfaceProps?.onPageIndexChange(3);
+      await Promise.resolve();
+    });
+
+    expect(mockState.routerReplace).toHaveBeenLastCalledWith('/alert/setting?search=memory&pageSize=15&signal=metrics&intent=create&pageIndex=3', { scroll: false });
+
+    mockState.currentSearchParams = 'search=memory&pageSize=15&signal=metrics&intent=create';
+    await act(async () => {
+      interactionRoot?.render(<AlertSettingPage />);
+      await Promise.resolve();
+    });
+    await act(async () => {
+      mockState.lastSurfaceProps?.onPageSizeChange(8);
+      await Promise.resolve();
+    });
+
+    expect(mockState.routerReplace).toHaveBeenLastCalledWith('/alert/setting?search=memory&signal=metrics&intent=create', { scroll: false });
+
+    mockState.currentSearchParams = 'search=memory&pageSize=15&signal=metrics&intent=create';
+    await act(async () => {
+      interactionRoot?.render(<AlertSettingPage />);
+      await Promise.resolve();
+    });
+    await act(async () => {
+      mockState.lastSurfaceProps?.onClearFilter();
+      await Promise.resolve();
+    });
+
+    expect(mockState.routerReplace).toHaveBeenLastCalledWith('/alert/setting?signal=metrics&intent=create', { scroll: false });
   });
 
   it('opens the local threshold create flow instead of routing to monitor define', async () => {
@@ -241,6 +352,135 @@ describe('alert setting page', () => {
     expect(source).toContain('updateAlertDefineFromFacade');
     expect(source).toContain('api.alertSettings.create');
     expect(source).toContain('api.alertSettings.update');
+  });
+
+  it('opens realtime authoring directly from the empty-state realtime create action', async () => {
+    const { default: AlertSettingPage } = await import('./alert-setting-page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<AlertSettingPage />);
+      await Promise.resolve();
+    });
+
+    expect(mockState.lastOnNewRealtime).toBeTypeOf('function');
+
+    await act(async () => {
+      mockState.lastOnNewRealtime?.();
+      await Promise.resolve();
+    });
+
+    expect(interactionContainer.querySelector('[data-alert-setting-create-dialog]')?.getAttribute('data-alert-setting-create-dialog')).toBe('authoring');
+  });
+
+  it('clears the one-shot create intent when users cancel the threshold handoff flow', async () => {
+    mockState.currentSearchParams = 'signal=metrics&intent=create&serviceName=checkout&environment=prod&returnTo=%2Fingestion%2Fotlp';
+    const { default: AlertSettingPage } = await import('./alert-setting-page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(
+        <AlertSettingPage
+          initialRouteState={{
+            signal: 'metrics',
+            createIntent: 'create',
+            signalContext: {
+              serviceName: 'checkout',
+              environment: 'prod',
+              returnTo: '/ingestion/otlp'
+            }
+          }}
+        />
+      );
+      await Promise.resolve();
+    });
+
+    expect(interactionContainer.querySelector('[data-alert-setting-create-dialog]')?.getAttribute('data-alert-setting-create-dialog')).not.toBe('closed');
+
+    await act(async () => {
+      mockState.lastOnClose?.();
+      await Promise.resolve();
+    });
+
+    expect(mockState.routerReplace).toHaveBeenLastCalledWith(
+      '/alert/setting?signal=metrics&serviceName=checkout&environment=prod&returnTo=%2Fingestion%2Fotlp',
+      { scroll: false }
+    );
+  });
+
+  it('announces a save success contract after create or edit writes complete', () => {
+    const source = readFileSync(resolve(process.cwd(), 'app/alert/setting/alert-setting-page.tsx'), 'utf8');
+
+    expect(source).toContain("contract: 'save-success'");
+    expect(source).toContain("title: t('alert.setting.save.success.title', { name: payload.name })");
+    expect(source).toContain("payload.enable ? 'alert.setting.save.success.enabled' : 'alert.setting.save.success.disabled'");
+    expect(source).toContain('savedRule: {');
+    expect(source).toContain("intent: isEdit ? 'edit' : 'create'");
+  });
+
+  it('keeps the create authoring draft open with backend detail when alert save fails', async () => {
+    apiMessagePost.mockRejectedValueOnce(new Error('backend refused alert expression'));
+    const { default: AlertSettingPage } = await import('./alert-setting-page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(
+        <AlertSettingPage
+          initialRouteState={{
+            signal: 'metrics',
+            createIntent: 'create',
+            signalContext: {
+              serviceName: 'checkout',
+              returnTo: '/ingestion/otlp/metrics?query=up',
+              alertName: 'checkout saturation',
+              alertExpression: 'rate(http_server_requests_seconds_count[5m]) > 10',
+              alertDatasource: 'promql',
+              alertTemplate: 'Checkout traffic is above threshold'
+            }
+          }}
+        />
+      );
+      await Promise.resolve();
+    });
+
+    expect(interactionContainer.querySelector('[data-alert-setting-create-dialog]')?.getAttribute('data-alert-setting-create-dialog')).toBe('authoring');
+
+    await act(async () => {
+      await mockState.lastOnSubmit?.({
+        name: 'checkout saturation',
+        type: 'realtime_metric',
+        datasource: 'promql',
+        expr: 'rate(http_server_requests_seconds_count[5m]) > 10',
+        template: 'Checkout traffic is above threshold',
+        labels: {},
+        annotations: {},
+        enable: true,
+        period: 300,
+        times: 3,
+        priority: 2
+      });
+      await Promise.resolve();
+    });
+
+    expect(apiMessagePost).toHaveBeenCalledWith('/alert/define', expect.objectContaining({
+      name: 'checkout saturation',
+      expr: 'rate(http_server_requests_seconds_count[5m]) > 10',
+      template: 'Checkout traffic is above threshold'
+    }));
+    expect(interactionContainer.querySelector('[data-alert-setting-create-dialog]')?.getAttribute('data-alert-setting-create-dialog')).toBe('authoring');
+    expect(interactionContainer.querySelector('[data-alert-setting-create-name]')?.getAttribute('data-alert-setting-create-name')).toBe('checkout saturation');
+    expect(interactionContainer.querySelector('[data-alert-setting-create-expr]')?.getAttribute('data-alert-setting-create-expr')).toBe('rate(http_server_requests_seconds_count[5m]) > 10');
+    expect(interactionContainer.querySelector('[data-alert-setting-create-template]')?.getAttribute('data-alert-setting-create-template')).toBe('Checkout traffic is above threshold');
+    expect(interactionContainer.querySelector('[data-save-feedback]')?.getAttribute('data-save-feedback')).toBe('create');
+    expect(interactionContainer.querySelector('[data-save-feedback-title]')?.getAttribute('data-save-feedback-title')).toBe('Add Failed!');
+    expect(interactionContainer.querySelector('[data-save-feedback-description]')?.getAttribute('data-save-feedback-description')).toBe('backend refused alert expression');
+    expect(mockState.routerReplace).not.toHaveBeenCalledWith('/alert/setting?signal=metrics&serviceName=checkout&returnTo=%2Fingestion%2Fotlp%2Fmetrics%3Fquery%3Dup', { scroll: false });
   });
 
   it('opens the threshold type choice when trace handoff carries create intent without a metrics expression', async () => {
@@ -333,12 +573,37 @@ describe('alert setting page', () => {
     expect(source).toContain('api.alertSettings.delete');
     expect(source).not.toContain('apiMessageDelete');
     expect(source).toContain('data-alert-delete-confirm');
+    expect(source).toContain("kicker={t('common.confirm.operation')}");
+    expect(source).toContain("t('alert.setting.delete.confirm.targets'");
+    expect(source).toContain("confirmLabel={t('alert.setting.delete.confirm.action')}");
+    expect(source).not.toContain("confirmLabel={t('common.button.ok')}");
     expect(source).not.toContain('onDeleteSelected={() => {}}');
     expect(source).not.toContain('onDelete={() => {}}');
     expect(source).not.toContain('window.confirm');
     expect(source).not.toContain('confirm(');
     expect(source).not.toContain('window.alert');
     expect(source).not.toContain('alert(');
+  });
+
+  it('names the selected threshold rule in the delete confirmation before destructive writes', async () => {
+    const { default: AlertSettingPage } = await import('./alert-setting-page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<AlertSettingPage />);
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onDelete(7);
+      await Promise.resolve();
+    });
+
+    expect(interactionContainer.textContent).toContain('Delete the selected threshold rule. This cannot be undone.');
+    expect(interactionContainer.textContent).toContain('Rules: cpu threshold.');
+    expect(interactionContainer.textContent).toContain('Delete threshold rule');
   });
 
   it('maps threshold delete failures to the Angular notify title plus backend detail', () => {
@@ -348,6 +613,16 @@ describe('alert setting page', () => {
     expect(source).toContain('description: error instanceof Error ? error.message : undefined');
     expect(source).toContain("contract: 'delete'");
     expect(source).not.toContain("t('common.delete-failed')");
+  });
+
+  it('maps successful threshold deletes to inline confirmation with the deleted rule count', () => {
+    const source = readFileSync(resolve(process.cwd(), 'app/alert/setting/alert-setting-page.tsx'), 'utf8');
+
+    expect(source).toContain('const deletedCount = request.ids.length');
+    expect(source).toContain("title: t('alert.setting.delete.success.title', { count: deletedCount })");
+    expect(source).toContain("description: t('alert.setting.delete.success.description')");
+    expect(source).toContain("contract: 'delete-success'");
+    expect(source).toContain('deletedCount');
   });
 
   it('maps threshold save failures to the Angular create/edit notify title plus backend detail', () => {
@@ -386,9 +661,27 @@ describe('alert setting page', () => {
       '/alert/define/preview/sql?type=periodic_trace&expr=SELECT%201%20AS%20__value__%20FROM%20hertzbeat_apm_red_1m'
     );
     expect(source).toContain('api.alertSettings.preview(payload.datasource, payload.type, payload.expr)');
-    expect(source).toContain('buildPreviewSuccessFeedback(rows)');
+    expect(source).toContain('buildAlertSettingPreviewSuccessFeedback(rows, t)');
     expect(source).toContain("t('alert.setting.preview.success.title'");
     expect(source).toContain("contract: 'success'");
+  });
+
+  it('keeps large alert preview responses bounded while preserving total evidence count', async () => {
+    const { buildAlertSettingPreviewSuccessFeedback, ALERT_SETTING_PREVIEW_SAMPLE_LIMIT } = await import('./alert-setting-page');
+    const t = createTranslatorMock();
+    const previewRows = Array.from({ length: 40 }, (_, index) => ({
+      __value__: index,
+      service_name: `checkout-${index}`
+    }));
+    const feedback = buildAlertSettingPreviewSuccessFeedback(previewRows, t);
+
+    expect(ALERT_SETTING_PREVIEW_SAMPLE_LIMIT).toBe(3);
+    expect(feedback.contract).toBe('success');
+    expect(feedback.rows).toHaveLength(3);
+    expect(feedback.rows?.[0]).toEqual({ __value__: 0, service_name: 'checkout-0' });
+    expect(feedback.rows?.[2]).toEqual({ __value__: 2, service_name: 'checkout-2' });
+    expect(feedback.totalRows).toBe(40);
+    expect(feedback.sampleLimit).toBe(3);
   });
 
   it('previews realtime log expressions through the alert define preview endpoint before save', async () => {
@@ -419,7 +712,7 @@ describe('alert setting page', () => {
       "/alert/define/preview/promql?type=realtime_log&expr=log.severityText%20%3D%3D%20'ERROR'"
     );
     expect(source).toContain("payload.type === 'realtime_log'");
-    expect(source).toContain('buildPreviewSuccessFeedback(rows)');
+    expect(source).toContain('buildAlertSettingPreviewSuccessFeedback(rows, t)');
   });
 
   it('keeps unsupported realtime metric preview honest instead of calling the preview endpoint', async () => {
@@ -458,20 +751,57 @@ describe('alert setting page', () => {
     expect(source).not.toContain("t('common.enable-failed')");
   });
 
+  it('announces successful threshold enable toggles with the updated rule state', async () => {
+    const { default: AlertSettingPage } = await import('./alert-setting-page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<AlertSettingPage />);
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      await mockState.lastSurfaceProps?.onToggleEnabled(7, false);
+      await Promise.resolve();
+    });
+
+    expect(apiMessagePut).toHaveBeenCalledWith(
+      '/alert/define',
+      expect.objectContaining({
+        id: 7,
+        name: 'cpu threshold',
+        enable: false
+      })
+    );
+    expect(mockState.lastSurfaceProps?.actionFeedback).toMatchObject({
+      tone: 'success',
+      title: 'Updated threshold rule cpu threshold',
+      description: 'The rule is disabled and will not create new alerts until enabled again.',
+      contract: 'enable-success',
+      toggledRule: {
+        id: 7,
+        name: 'cpu threshold',
+        enabled: false
+      }
+    });
+  });
+
   it('keeps threshold batch delete clickable and warns when no rows are selected', () => {
     const source = readFileSync(resolve(process.cwd(), 'app/alert/setting/alert-setting-page.tsx'), 'utf8');
 
-    expect(source).toContain("title: t('common.notify.no-select-delete')");
+    expect(source).toContain("title: t('alert.setting.notify.no-select-delete')");
     expect(source).toContain("contract: 'no-select-delete'");
     expect(source).not.toContain('if (checkedIds.length === 0) return;');
   });
 
-  it('keeps threshold export warning on the Angular common no-select key', () => {
+  it('uses threshold-specific copy for the no-select export warning', () => {
     const source = readFileSync(resolve(process.cwd(), 'app/alert/setting/alert-setting-page.tsx'), 'utf8');
 
-    expect(source).toContain("title: t('common.notify.no-select-export')");
+    expect(source).toContain("title: t('alert.setting.notify.no-select-export')");
     expect(source).toContain("contract: 'no-select-export'");
-    expect(source).not.toContain("t('alert.setting.notify.no-select-export')");
+    expect(source).not.toContain("t('common.notify.no-select-export')");
   });
 
   it('wires Angular-compatible threshold import and export actions instead of placeholders', async () => {
@@ -484,6 +814,8 @@ describe('alert setting page', () => {
     expect(source).toContain('buildAlertDefineImportUrl');
     expect(source).toContain('HzExportTypeDialog');
     expect(source).toContain('HzFileInput');
+    expect(source).toContain("const ALERT_DEFINE_IMPORT_FILE_ACCEPT = '.json,.yaml,.yml,.xlsx';");
+    expect(source).toContain('accept={ALERT_DEFINE_IMPORT_FILE_ACCEPT}');
     expect(source).toContain('data-alert-setting-import-file-input="true"');
     expect(source).toContain('data-alert-setting-import-input-owner="hertzbeat-ui-file-input"');
     expect(source).toContain('data-alert-setting-export-type-dialog-owner="hertzbeat-ui-export-type-dialog"');
@@ -508,6 +840,11 @@ describe('alert setting page', () => {
     const source = readFileSync(resolve(process.cwd(), 'app/alert/setting/alert-setting-page.tsx'), 'utf8');
 
     expect(source).toContain('if (pendingActionId) return;');
+    expect(source).toContain('isAlertDefineImportFile(file)');
+    expect(source).toContain("normalizedName.endsWith('.yaml')");
+    expect(source).toContain("normalizedName.endsWith('.yml')");
+    expect(source).toContain("description: t('common.notify.import-invalid-file')");
+    expect(source).toContain('return;');
     expect(source).toContain('multiple={false}');
     expect(source).toContain('data-alert-setting-import-upload-contract="angular-nz-upload-limit-one-no-list"');
     expect(source).toContain('data-alert-setting-import-show-list="false"');
@@ -619,7 +956,7 @@ describe('alert setting page', () => {
     expect(html).toContain('hertzbeat.entity.id:7');
     expect(html).toContain('service.name:checkout');
     expect(html).toContain('trace_id:trace-123');
-    expect(source).not.toContain('useSearchParams');
+    expect(source).toContain("import { useRouter, useSearchParams } from 'next/navigation';");
     expect(source).not.toContain('readSignalRouteContext');
     expect(source).toContain('buildAlertSettingEvidenceContext');
     expect(source).toContain('evidenceContext={evidenceContext}');

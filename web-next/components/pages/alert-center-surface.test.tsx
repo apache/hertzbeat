@@ -153,13 +153,13 @@ describe('AlertCenterSurface', () => {
     expect(html).toContain('data-alert-center-sse-highlight-ids=""');
     expect(html).toContain('data-alert-center-header="hertzbeat-ui-compact-header"');
     expect(html).toContain('data-alert-center-command-row="standard-equal-buttons"');
+    expect(html).toContain('data-alert-center-command-action="refresh"');
     expect(html).toContain('data-alert-center-facts-strip="angular-platform-facts-strip"');
-    expect(html).toContain('data-alert-center-facts-strip-owner="hertzbeat-ui-stat-strip"');
-    expect(html).toContain('data-alert-center-fact="total"');
-    expect(html).toContain('data-alert-center-fact="firing"');
-    expect(html).toContain('data-alert-center-fact="acknowledged"');
-    expect(html).toContain('data-alert-center-fact="resolved"');
-    expect(html).toContain('data-alert-center-fact-owner="hertzbeat-ui-stat-cell"');
+    expect(html).toContain('data-alert-center-facts-strip-owner="hertzbeat-ui-signal-summary-strip"');
+    expect(html).toContain('data-hz-signal-summary-item="total"');
+    expect(html).toContain('data-hz-signal-summary-item="firing"');
+    expect(html).toContain('data-hz-signal-summary-item="acknowledged"');
+    expect(html).toContain('data-hz-signal-summary-item="resolved"');
     expect(html).toContain('data-alert-center-admin-layout="full-width-admin-list"');
     expect(html).toContain('data-alert-center-toolbar="hertzbeat-ui-query-toolbar"');
     expect(html).toContain('data-alert-center-query-toolbar="single-query-form"');
@@ -262,6 +262,7 @@ describe('AlertCenterSurface', () => {
     expect(html).toContain('data-alert-center-select="status"');
     expect(html).toContain('data-alert-center-select="severity"');
     expect(html).toContain('data-alert-center-clear-filters="true"');
+    expect(html).toContain('data-alert-center-command-action="clear-filters"');
     expect(html.indexOf('data-hz-search-input="fixed-width-direct"')).toBeLessThan(
       html.indexOf('data-alert-center-select="status"')
     );
@@ -457,7 +458,7 @@ describe('AlertCenterSurface', () => {
     expect(html).toContain(zh('alert.center.batch.selection-label'));
     expect(html).toContain(zh('alert.center.batch.acknowledge-selected', { count: 1 }));
     expect(html).toContain(zh('alert.center.batch.unacknowledge-selected', { count: 1 }));
-    expect(html).toContain(zh('alert.center.batch.resolve-selected', { count: 1 }));
+    expect(html).toContain(zh('alert.center.batch.resolve-selected', { count: 2 }));
     expect(html).toContain(zh('alert.center.batch.silence-selected', { count: 2 }));
     expect(html).toContain(zh('alert.center.batch.inhibit-selected', { count: 2 }));
     expect(source).toContain('HzBatchToolbar');
@@ -631,6 +632,7 @@ describe('AlertCenterSurface', () => {
       resolve?.click();
     });
     expect(interactionContainer.querySelector('[data-alert-center-batch-status-confirm-action="resolve"]')).not.toBeNull();
+    expect(interactionContainer.querySelector('[data-alert-center-batch-status-confirm-count="2"]')).not.toBeNull();
     expect(interactionContainer.textContent).toContain(zh('alert.center.confirm.mark-done-batch'));
 
     await act(async () => {
@@ -659,7 +661,7 @@ describe('AlertCenterSurface', () => {
     expect(onSelectedGroupIdsChange).toHaveBeenNthCalledWith(2, [8, 9]);
     expect(onClosureAction).toHaveBeenNthCalledWith(1, 'acknowledge', [7]);
     expect(onClosureAction).toHaveBeenNthCalledWith(2, 'unacknowledge', [8]);
-    expect(onClosureAction).toHaveBeenNthCalledWith(3, 'resolve', [7]);
+    expect(onClosureAction).toHaveBeenNthCalledWith(3, 'resolve', [7, 8]);
     expect(onClosureAction).toHaveBeenNthCalledWith(4, 'reopen', [9]);
     expect(interactionContainer.querySelector('[data-alert-rule-dialog="silence"]')).not.toBeNull();
     expect(interactionContainer.querySelector('[data-alert-rule-dialog-submit="silence"]')).not.toBeNull();
@@ -816,7 +818,11 @@ describe('AlertCenterSurface', () => {
 
     expect(onRuleQuickCreate).not.toHaveBeenCalled();
     expect(interactionContainer.querySelector('[data-alert-rule-dialog="silence"]')).not.toBeNull();
-    expect(interactionContainer.querySelector('[data-alert-rule-submit-error="true"]')?.textContent).toContain(
+    const submitError = interactionContainer.querySelector('[data-alert-rule-submit-error="true"]');
+    expect(submitError?.getAttribute('data-alert-authoring-callout-tone')).toBe('error');
+    expect(submitError?.getAttribute('role')).toBe('alert');
+    expect(submitError?.getAttribute('aria-live')).toBe('assertive');
+    expect(submitError?.textContent).toContain(
       zh('alert.silence.validation.name')
     );
   });
@@ -1063,6 +1069,12 @@ describe('AlertCenterSurface', () => {
     expect(html).toContain('data-alert-closure-action="inhibit"');
     expect(html).toContain('data-alert-closure-action="automation"');
     expect(html).toContain('data-alert-closure-action="close"');
+    expect(html).toContain('data-alert-group-command-action="acknowledge"');
+    expect(html).toContain('data-alert-group-command-action="silence"');
+    expect(html).toContain('data-alert-group-command-action="inhibit"');
+    expect(html).toContain('data-alert-center-command-action="group-acknowledge"');
+    expect(html).toContain('data-alert-center-command-action="group-silence"');
+    expect(html).toContain('data-alert-center-command-action="group-inhibit"');
     expect(html).toContain(zh('alert.center.operation.acknowledge.label'));
     expect(html).toContain(zh('alert.center.operation.recover.label'));
     expect(html).toContain(zh('alert.center.operation.threshold.label'));
@@ -1167,6 +1179,13 @@ describe('AlertCenterSurface', () => {
     expect(html).toContain(`aria-label="${zh('alert.center.operation.acknowledge.label')}：${zh('alert.center.closure-action.disabled.no-group')}"`);
     expect(html).toContain(`aria-label="${zh('alert.center.operation.recover.label')}：${zh('alert.center.closure-action.disabled.no-group')}"`);
     expect(html).toContain(`aria-label="${zh('alert.center.operation.close.label')}：${zh('alert.center.closure-action.disabled.no-group')}"`);
+    expect(html).toContain(
+      `${zh('alert.center.operation.acknowledge.label')}</span><span class="mt-1 block text-[11px] leading-4 text-[#8f99ab]">${zh('alert.center.closure-action.disabled.no-group')}`
+    );
+    expect(html).not.toContain(zh('alert.center.operation.acknowledge.copy', {
+      target: zh('alert.center.operation.target.current-alert'),
+      count: 1
+    }));
     expect(html).not.toContain('missing-alert-group-id ');
   });
 
@@ -1286,6 +1305,77 @@ describe('AlertCenterSurface', () => {
     expect(onClosureAction).toHaveBeenNthCalledWith(2, 'recover', 7);
   });
 
+  it('opens row-level silence and inhibit quick dialogs outside entity context', async () => {
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(
+        <AlertCenterSurface
+          t={zh}
+          data={{ summary, groupAlerts } as any}
+          draft={{ search: 'checkout', status: 'firing', severity: '' }}
+          onDraftChange={vi.fn()}
+          onRefresh={vi.fn()}
+          onClearFilters={vi.fn()}
+          onRuleQuickCreate={vi.fn(async () => undefined)}
+        />
+      );
+      await Promise.resolve();
+    });
+
+    const silence = interactionContainer.querySelector('button[data-alert-group-action="silence"]') as HTMLButtonElement | null;
+    const inhibit = interactionContainer.querySelector('button[data-alert-group-action="inhibit"]') as HTMLButtonElement | null;
+    const deleteAction = interactionContainer.querySelector('button[data-alert-group-action="delete"]') as HTMLButtonElement | null;
+
+    expect(silence).not.toBeNull();
+    expect(inhibit).not.toBeNull();
+    expect(deleteAction).not.toBeNull();
+
+    await act(async () => {
+      silence?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    expect(interactionContainer.querySelector('[data-alert-rule-dialog="silence"]')).not.toBeNull();
+    expect((interactionContainer.querySelector('input[name="silence_name"]') as HTMLInputElement | null)?.value).toBe(
+      'checkout silence'
+    );
+
+    await act(async () => {
+      interactionRoot?.unmount();
+      interactionContainer?.remove();
+      interactionContainer = document.createElement('div');
+      document.body.appendChild(interactionContainer);
+      interactionRoot = createRoot(interactionContainer);
+      interactionRoot.render(
+        <AlertCenterSurface
+          t={zh}
+          data={{ summary, groupAlerts } as any}
+          draft={{ search: 'checkout', status: 'firing', severity: '' }}
+          onDraftChange={vi.fn()}
+          onRefresh={vi.fn()}
+          onClearFilters={vi.fn()}
+          onRuleQuickCreate={vi.fn(async () => undefined)}
+        />
+      );
+      await Promise.resolve();
+    });
+
+    const nextInhibit = interactionContainer.querySelector('button[data-alert-group-action="inhibit"]') as HTMLButtonElement | null;
+
+    await act(async () => {
+      nextInhibit?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    expect(interactionContainer.querySelector('[data-alert-rule-dialog="inhibit"]')).not.toBeNull();
+    expect((interactionContainer.querySelector('input[name="inhibit_name"]') as HTMLInputElement | null)?.value).toBe(
+      'checkout inhibit'
+    );
+  });
+
   it('keeps resolve available on acknowledged entity alert cards like Angular', async () => {
     const onClosureAction = vi.fn();
     interactionContainer = document.createElement('div');
@@ -1378,7 +1468,13 @@ describe('AlertCenterSurface', () => {
     expect(onClosureAction).not.toHaveBeenCalled();
     expect(interactionContainer.querySelector('[data-alert-center-row-delete-confirm-dialog="angular-single-delete-confirm"]')).not.toBeNull();
     expect(interactionContainer.querySelector('[data-alert-center-row-delete-confirm-group-id="7"]')).not.toBeNull();
-    expect(interactionContainer.textContent).toContain(zh('common.confirm.delete'));
+    expect(interactionContainer.textContent).toContain(zh('alert.center.confirm.delete-group-title', { groupId: 7 }));
+    expect(interactionContainer.textContent).toContain(
+      zh('alert.center.confirm.delete-group-target', { target: 'checkout / HighCPU' })
+    );
+    expect(interactionContainer.querySelector('[data-alert-center-row-delete-confirm-target="alert-context"]')).not.toBeNull();
+    expect(interactionContainer.textContent).toContain(zh('alert.center.confirm.delete-group-copy'));
+    expect(interactionContainer.querySelector('[data-alert-center-row-delete-confirm-copy="operation-impact"]')).not.toBeNull();
 
     await act(async () => {
       (interactionContainer.querySelector(
@@ -1523,5 +1619,17 @@ describe('AlertCenterSurface', () => {
     expect(source).not.toContain('StatusState');
     expect(source).not.toContain('angular-single-panel');
     expect(source).not.toContain('angular-density');
+  });
+
+  it('uses the selected flat operations ledger instead of nesting the header, facts, and evidence in cards', () => {
+    const source = readFileSync(resolve(process.cwd(), 'components/pages/alert-center-surface.tsx'), 'utf8');
+
+    expect(source).toContain('HzSignalSummaryStrip');
+    expect(source).toContain('data-alert-center-layout="flat-operations-ledger"');
+    expect(source).toContain('data-alert-center-header-frame="flat-divider"');
+    expect(source).toContain('data-alert-center-facts-frame="flat-summary"');
+    expect(source).toContain('data-alert-evidence-closure-frame="flat-ledger"');
+    expect(source).not.toContain('className={coldCenterVisual.panel.hero}');
+    expect(source).not.toContain('frame="panel-inset"');
   });
 });

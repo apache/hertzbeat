@@ -20,6 +20,7 @@ package org.apache.hertzbeat.manager.service.entity;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import org.apache.hertzbeat.common.entity.manager.EntityRelation;
@@ -71,8 +72,16 @@ public class EntityRelationService {
         return entityRelationQueryService.findEntityRelations(entityId);
     }
 
+    public List<EntityRelation> findEntityRelations(Long entityId, int limit) {
+        return entityRelationQueryService.findEntityRelations(entityId, limit);
+    }
+
     public long countEntityRelations(Long entityId) {
         return entityRelationQueryService.countEntityRelations(entityId);
+    }
+
+    public Map<Long, Long> countEntityRelationsByEntityIds(List<Long> entityIds) {
+        return entityRelationQueryService.countEntityRelationsByEntityIds(entityIds);
     }
 
     public void replaceRelations(Long entityId, List<EntityRelation> relations, String requestWorkspaceId) {

@@ -222,4 +222,31 @@ describe('entity editor view model', () => {
       }
     ]);
   });
+
+  it('prefers the inherited discovery search return over a monitor-id-only discovery link', () => {
+    const rows = buildEntityEditorAttributionRows(
+      {
+        entity: {
+          source: 'otel_resource',
+          owner: 'platform',
+          system: 'website',
+          environment: 'prod'
+        },
+        identities: [{ identityKey: 'service.name', identityValue: 'checkout' }],
+        monitorBinds: [{ monitorId: 42 }]
+      },
+      undefined,
+      {
+        returnTo:
+          '/entities?search=checkout-monitor&source=discovery-candidate&returnTo=%2Fentities%2Fdiscovery%3Fsearch%3Dcheckout'
+      }
+    );
+
+    expect(rows.find(row => row.key === 'discovery-return')).toEqual(
+      expect.objectContaining({
+        meta: '/entities/discovery?search=checkout',
+        href: '/entities/discovery?search=checkout'
+      })
+    );
+  });
 });

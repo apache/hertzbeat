@@ -988,6 +988,13 @@ describe('otlp metrics view model', () => {
     expect(traceParams.get('monitorApp')).toBe('website');
     expect(traceParams.get('monitorInstance')).toBe('example.com:443');
     expect(result.entitiesHref).toBe('/entities?search=checkout');
+    const entityDiscoveryHref = new URL(result.entityDiscoveryHref, 'https://example.com');
+    expect(entityDiscoveryHref.pathname).toBe('/entities/discovery');
+    expect(entityDiscoveryHref.searchParams.get('identityKey')).toBe('service.name');
+    expect(entityDiscoveryHref.searchParams.get('identityValue')).toBe('checkout');
+    expect(entityDiscoveryHref.searchParams.get('serviceName')).toBe('checkout');
+    expect(entityDiscoveryHref.searchParams.get('serviceNamespace')).toBe('payments');
+    expect(entityDiscoveryHref.searchParams.get('environment')).toBe('prod');
 
     const entityHref = new URL(result.entityHref, 'https://example.com');
     expect(entityHref.pathname).toBe('/entities/7');

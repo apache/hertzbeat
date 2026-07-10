@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager.dao;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
@@ -40,6 +41,9 @@ public interface EntityIdentityDao extends JpaRepository<EntityIdentity, Long>, 
 
     @Query("SELECT COUNT(DISTINCT identity.entityId) FROM EntityIdentity identity WHERE identity.identityKey IN :identityKeys")
     long countDistinctEntityIdsByIdentityKeyIn(@Param("identityKeys") Set<String> identityKeys);
+
+    @Query("SELECT identity.entityId, COUNT(identity) FROM EntityIdentity identity WHERE identity.entityId IN :entityIds GROUP BY identity.entityId")
+    List<Object[]> countByEntityIdInGroupByEntityId(@Param("entityIds") Collection<Long> entityIds);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM EntityIdentity identity WHERE identity.entityId = :entityId")

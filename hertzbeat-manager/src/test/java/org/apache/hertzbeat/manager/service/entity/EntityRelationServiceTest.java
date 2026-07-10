@@ -77,6 +77,21 @@ class EntityRelationServiceTest {
     }
 
     @Test
+    void findEntityRelationsWithLimitDelegatesToPreviewQuery() {
+        EntityRelation relation = EntityRelation.builder()
+                .id(31L)
+                .sourceEntityId(10L)
+                .targetEntityId(30L)
+                .relationType("calls")
+                .build();
+        when(entityRelationQueryService.findEntityRelations(10L, 50)).thenReturn(List.of(relation));
+
+        List<EntityRelation> relations = entityRelationService.findEntityRelations(10L, 50);
+
+        assertEquals(List.of(relation), relations);
+    }
+
+    @Test
     void countEntityRelationsReturnsIncomingAndOutgoingCount() {
         when(entityRelationQueryService.countEntityRelations(10L)).thenReturn(3L);
 

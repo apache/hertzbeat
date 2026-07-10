@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.IntStream;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
 import org.apache.hertzbeat.common.entity.manager.EntityRelation;
@@ -278,12 +279,100 @@ class EntityDetailObservabilityReadModelServiceTest {
     }
 
     @Test
+    void buildEntityDetailCapsBoundMonitorPreviewWithoutTruncatingEvidenceInputs() {
+        ObserveEntity entity = ObserveEntity.builder()
+                .id(502L)
+                .name("checkout-api")
+                .type("service")
+                .workspaceId("team-a")
+                .build();
+        EntityDto entityDto = new EntityDto();
+        entityDto.setEntity(entity);
+        entityDto.setIdentities(Collections.emptyList());
+        List<Monitor> monitors = IntStream.rangeClosed(1, 60)
+                .mapToObj(index -> Monitor.builder()
+                        .id(700L + index)
+                        .app("springboot3")
+                        .name("checkout monitor " + index)
+                        .status((byte) 2)
+                        .build())
+                .toList();
+        List<SingleAlert> activeAlerts = Collections.emptyList();
+        EntityStatusInfo statusInfo = new EntityStatusInfo(
+                "available", "all monitors are up", 60, 60, 0, 0, 0, LocalDateTime.now());
+        EntityEvidenceSummaryInfo evidenceSummary = new EntityEvidenceSummaryInfo(60, 0, 0, 0, 0, 123L);
+        EntityAlertSummaryInfo alertSummary = new EntityAlertSummaryInfo(
+                0, Collections.emptyList(), Collections.emptyMap(), 123L);
+        EntityMonitorSummaryInfo monitorSummary = new EntityMonitorSummaryInfo(
+                60, Map.of("springboot3", 60L), Map.of("up", 60L), Collections.emptyList(), 123L);
+        EntityLogSummaryInfo logSummary = new EntityLogSummaryInfo(
+                0, "none", null, Collections.emptyMap(), Collections.emptyList(), null);
+        EntityTraceSummaryDto traceSummary = new EntityTraceSummaryDto(0, 0, null, false, null);
+        EntityUnifiedEvidenceSummary unifiedSummary = new EntityUnifiedEvidenceSummary(
+                60, true, false, false, 60, 0, 0, 123L, Collections.emptyList());
+        EntityTriageRecommendation triage = new EntityTriageRecommendation(
+                "stable", "metrics", "Review monitors", "No active alert", null, "Open monitors", 123L);
+        EntityObservabilityDetailBundle detailBundle = new EntityObservabilityDetailBundle(
+                traceSummary, Collections.emptyList(), logSummary, Collections.emptyList(),
+                Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), unifiedSummary, triage);
+        EntityOpsSummaryInfo opsSummary = new EntityOpsSummaryInfo(true, true, false, false, true, 80);
+        EntityStatusPageSummaryInfo statusPageSummary = new EntityStatusPageSummaryInfo(true, 0, 123L, false);
+        EntityResponseHandoffsInfo handoffs = new EntityResponseHandoffsInfo();
+        EntityDetailDto.EntityNoiseControlSummaryInfo noiseSummary =
+                new EntityDetailDto.EntityNoiseControlSummaryInfo(0, 0, Collections.emptyList(),
+                        Collections.emptyList(), false);
+
+        EntityStatusRefreshService.EntityRuntimeStatusEvidence runtimeEvidence =
+                new EntityStatusRefreshService.EntityRuntimeStatusEvidence(monitors, activeAlerts, statusInfo);
+        when(entityStatusRefreshService.refreshEntityStatusWithEvidence(entity, "team-a")).thenReturn(runtimeEvidence);
+        when(entityObservabilityGateway.buildEntityLogQueryHints(Collections.emptyList(), monitors))
+                .thenReturn(Collections.emptyList());
+        when(entityObservabilityGateway.buildEntityEvidenceSummary(
+                entity, statusInfo, 0L, 0, monitors, activeAlerts)).thenReturn(evidenceSummary);
+        when(entityObservabilityGateway.buildEntityAlertSummary(activeAlerts)).thenReturn(alertSummary);
+        when(entityObservabilityGateway.buildEntityMonitorSummary(monitors)).thenReturn(monitorSummary);
+        when(entityObservabilityGateway.buildEntityLogSummary(Collections.emptyList())).thenReturn(logSummary);
+        when(entityObservabilityGateway.resolveEntityDetailBundle(
+                any(ObservedEntityContext.class), same(statusInfo), same(evidenceSummary), same(monitorSummary),
+                same(logSummary), same(monitors), eq(Collections.emptyList()))).thenReturn(detailBundle);
+        when(entityObservabilityGateway.buildEntityOpsSummary(entity, 0L, evidenceSummary)).thenReturn(opsSummary);
+        when(entityObservabilityGateway.buildEntityNextActions(entity, evidenceSummary, logSummary, opsSummary))
+                .thenReturn(Collections.emptyList());
+        when(entityObservabilityGateway.buildEntityStatusPageSummary(entity, opsSummary)).thenReturn(statusPageSummary);
+        when(entityResponseHandoffReadModelService.buildResponseHandoffs(
+                eq(502L), any(ObservedEntityContext.class), same(activeAlerts), same(monitors),
+                any(EntitySignalEvidenceBundle.class), same(opsSummary))).thenReturn(handoffs);
+        when(entityNoiseControlReadModelService.buildNoiseControlSummary(
+                entityDto, monitors, activeAlerts, "team-a")).thenReturn(noiseSummary);
+        when(entityActivityReadModelService.getDefinitionActivities(502L, 12, "team-a"))
+                .thenReturn(Collections.emptyList());
+
+        EntityDetailDto detail = entityDetailObservabilityReadModelService.buildEntityDetail(entityDto, "team-a");
+
+        assertEquals(EntityDetailObservabilityReadModelService.ENTITY_DETAIL_BOUND_MONITOR_PREVIEW_LIMIT,
+                detail.getBoundMonitors().size());
+        assertEquals(701L, detail.getBoundMonitors().getFirst().getId());
+        assertEquals(750L, detail.getBoundMonitors().getLast().getId());
+        assertSame(monitorSummary, detail.getMonitorSummary());
+        verify(entityObservabilityGateway).buildEntityMonitorSummary(same(monitors));
+        verify(entityObservabilityGateway).resolveEntityDetailBundle(
+                any(ObservedEntityContext.class), same(statusInfo), same(evidenceSummary), same(monitorSummary),
+                same(logSummary), same(monitors), eq(Collections.emptyList()));
+        verify(entityResponseHandoffReadModelService).buildResponseHandoffs(
+                eq(502L), any(ObservedEntityContext.class), same(activeAlerts), same(monitors),
+                any(EntitySignalEvidenceBundle.class), same(opsSummary));
+    }
+
+    @Test
     void buildEntityDetailByIdReturnsNullWhenEntityReadModelHasNoAccessibleEntity() {
-        when(entityDetailReadModelService.loadEntityDto(501L)).thenReturn(null);
+        when(entityDetailReadModelService.loadEntityDto(
+                501L, EntityDetailObservabilityReadModelService.ENTITY_DETAIL_RELATION_PREVIEW_LIMIT))
+                .thenReturn(null);
 
         assertNull(entityDetailObservabilityReadModelService.buildEntityDetail(501L));
 
-        verify(entityDetailReadModelService).loadEntityDto(501L);
+        verify(entityDetailReadModelService).loadEntityDto(
+                501L, EntityDetailObservabilityReadModelService.ENTITY_DETAIL_RELATION_PREVIEW_LIMIT);
         verifyNoInteractions(entityStatusRefreshService, entityObservabilityGateway,
                 entityResponseHandoffReadModelService, entityNoiseControlReadModelService,
                 entityActivityReadModelService, entityWorkspaceAccessService);

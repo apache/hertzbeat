@@ -1,4 +1,5 @@
 import type { CollectorSummary, GrafanaDashboard, Monitor, Param, ParamDefine } from '@/lib/types';
+import { resolveLocalizedText, type LocalizedText } from './localized-text';
 
 type ApiGetter = <T>(url: string) => Promise<T>;
 type ApiPoster = <T>(url: string, payload: unknown) => Promise<T>;
@@ -34,6 +35,19 @@ export type MonitorCollectorOption = {
 
 type ParamCollectionKind = 'params' | 'advancedParams' | 'scrapeParams';
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
+type MonitorEditorValidationOptions = { locale?: string; validateCronFormat?: boolean };
+
+export type MonitorEditorValidationIssue = {
+  message: string;
+  label: string;
+  focusTarget: string;
+};
+
+export type MonitorEditorValidationResult = {
+  message: string;
+  focusTarget: string | null;
+  focusTargets: string[];
+};
 
 export type MonitorDetailResponse = {
   monitor: Monitor;
@@ -180,9 +194,8 @@ function isParamValuePresent(value: unknown, define?: ParamDefine) {
   return typeof value === 'string' ? value.trim().length > 0 : value !== null && value !== undefined;
 }
 
-function resolveParamLabel(define: ParamDefine) {
-  if (typeof define.name === 'string' && define.name.trim()) return define.name.trim();
-  return define.field;
+function resolveParamLabel(define: ParamDefine, locale = 'en-US') {
+  return resolveLocalizedText(define.name as LocalizedText, locale, define.field);
 }
 
 export function isValidMonitorCronExpression(cronExpression: string): boolean {
@@ -196,41 +209,110 @@ export function isValidMonitorCronExpression(cronExpression: string): boolean {
   return cronRegex.test(cronExpression);
 }
 
-export function validateMonitorEditorDraft(draft: MonitorEditorDraft, t: Translator, options: { validateCronFormat?: boolean } = {}) {
+export function collectMonitorEditorValidationIssues(
+  draft: MonitorEditorDraft,
+  t: Translator,
+  options: MonitorEditorValidationOptions = {}
+): MonitorEditorValidationIssue[] {
+  const locale = options.locale || 'en-US';
   const validateCronFormat = options.validateCronFormat !== false;
   const normalizedMonitor = normalizeMonitorFields(draft.monitor);
-  if (!normalizedMonitor.app?.trim()) return t('monitor.editor.validation.app');
-  if (!normalizedMonitor.name?.trim()) return t('monitor.editor.validation.name');
+  const issues: MonitorEditorValidationIssue[] = [];
+  if (!normalizedMonitor.app?.trim()) {
+    issues.push({
+      message: t('monitor.editor.validation.app'),
+      label: t('common.app'),
+      focusTarget: 'app'
+    });
+  }
 
-  const collections: Array<{ params: Param[]; defines: ParamDefine[] }> = [
-    { params: draft.params, defines: draft.paramDefines },
-    { params: draft.advancedParams, defines: draft.advancedParamDefines },
-    { params: draft.scrapeParams, defines: draft.scrapeParamDefines }
-  ];
-
-  for (const collection of collections) {
-    for (const [index, define] of collection.defines.entries()) {
-      if (!define.required) continue;
-      const param = collection.params[index];
-      if (param?.display === false) continue;
-      if (!isParamValuePresent(param?.paramValue, define)) {
-        return t('monitor.editor.validation.param-required', {
-          field: resolveParamLabel(define)
-        });
+  const pushRequiredParamIssues = (collections: Array<{ params: Param[]; defines: ParamDefine[]; include?: (define: ParamDefine) => boolean }>) => {
+    for (const collection of collections) {
+      for (const [index, define] of collection.defines.entries()) {
+        if (collection.include && !collection.include(define)) continue;
+        if (!define.required) continue;
+        const param = collection.params[index];
+        if (param?.display === false) continue;
+        if (!isParamValuePresent(param?.paramValue, define)) {
+          const label = resolveParamLabel(define, locale);
+          issues.push({
+            message: t('monitor.editor.validation.param-required', {
+              field: label
+            }),
+            label,
+            focusTarget: `param:${define.field}`
+          });
+        }
       }
     }
+  };
+  const staticScrape = (draft.monitor.scrape || 'static') === 'static';
+
+  pushRequiredParamIssues([
+    ...(staticScrape
+      ? [{ params: draft.params, defines: draft.paramDefines, include: (define: ParamDefine) => define.field === 'host' }]
+      : [{ params: draft.scrapeParams, defines: draft.scrapeParamDefines }])
+  ]);
+
+  if (!normalizedMonitor.name?.trim()) {
+    issues.push({
+      message: t('monitor.editor.validation.name'),
+      label: t('monitor.name'),
+      focusTarget: 'monitor-name'
+    });
   }
+
+  pushRequiredParamIssues([
+    { params: draft.params, defines: draft.paramDefines, include: define => !staticScrape || define.field !== 'host' },
+    { params: draft.advancedParams, defines: draft.advancedParamDefines }
+  ]);
 
   if (normalizedMonitor.scheduleType === 'cron') {
     const cronExpression = normalizedMonitor.cronExpression || '';
     if (!cronExpression.trim() || (validateCronFormat && !isValidMonitorCronExpression(cronExpression))) {
-      return t('monitor.editor.validation.cron');
+      issues.push({
+        message: t('monitor.editor.validation.cron'),
+        label: t('monitor.cronExpression'),
+        focusTarget: 'cron-expression'
+      });
     }
   } else if (normalizedMonitor.intervals == null || !Number.isFinite(Number(normalizedMonitor.intervals)) || Number(normalizedMonitor.intervals) <= 0) {
-    return t('monitor.editor.validation.intervals');
+    issues.push({
+      message: t('monitor.editor.validation.intervals'),
+      label: t('monitor.intervals'),
+      focusTarget: 'intervals'
+    });
   }
 
-  return null;
+  return issues;
+}
+
+function formatMonitorEditorValidationIssues(issues: MonitorEditorValidationIssue[], t: Translator) {
+  if (issues.length === 0) return null;
+  if (issues.length === 1) return issues[0].message;
+  return t('monitor.editor.validation.summary', {
+    count: issues.length,
+    fields: issues.map(issue => issue.label).join(', ')
+  });
+}
+
+export function validateMonitorEditorDraftResult(
+  draft: MonitorEditorDraft,
+  t: Translator,
+  options: MonitorEditorValidationOptions = {}
+): MonitorEditorValidationResult | null {
+  const issues = collectMonitorEditorValidationIssues(draft, t, options);
+  const message = formatMonitorEditorValidationIssues(issues, t);
+  if (!message) return null;
+  return {
+    message,
+    focusTarget: issues[0]?.focusTarget || null,
+    focusTargets: issues.map(issue => issue.focusTarget)
+  };
+}
+
+export function validateMonitorEditorDraft(draft: MonitorEditorDraft, t: Translator, options: MonitorEditorValidationOptions = {}) {
+  return validateMonitorEditorDraftResult(draft, t, options)?.message ?? null;
 }
 
 function mergeParamDrafts(defines: ParamDefine[], paramMap: Map<string, Param>) {
@@ -511,6 +593,27 @@ export function buildMonitorDetectPayload(draft: MonitorEditorDraft) {
     collector: normalizeCollectorForPayload(draft.collector),
     params
   };
+}
+
+export function buildMonitorDetectSuccessDetail(draft: MonitorEditorDraft, t: Translator) {
+  const payload = buildMonitorDetectPayload(draft);
+  const monitor = payload.monitor;
+  const name = monitor.name || t('monitor.name');
+  const target = monitor.instance || t('common.unknown');
+  const scrape = monitor.scrape || 'static';
+  const collector = payload.collector || t('monitor.collector.system.default');
+  const schedule =
+    monitor.scheduleType === 'cron'
+      ? `${t('monitor.scheduleType.cron')} ${monitor.cronExpression || t('common.unknown')}`
+      : `${monitor.intervals ?? t('common.unknown')} ${t('common.time.unit.second')}`;
+
+  return t('monitor.detect.success-detail', {
+    name,
+    target,
+    scrape,
+    collector,
+    schedule
+  });
 }
 
 export async function createMonitor(apiPost: ApiPoster, draft: MonitorEditorDraft) {

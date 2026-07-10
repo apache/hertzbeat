@@ -47,6 +47,14 @@ type ApprovalDraftQueueResult = {
   drafts: ApprovalDraftResult[];
 };
 
+function buildApprovalDecisionRequestPreview(draftId: string, decision?: string) {
+  return JSON.stringify({
+    draftId,
+    decision: decision === 'approved' || decision === 'rejected' ? decision : 'manual-choice-required',
+    executionAllowed: false
+  });
+}
+
 export default function ActionsPage({ suggestionContext }: { suggestionContext?: ActionSuggestionContext } = {}) {
   const { t } = useI18n();
   const state = buildActionsPlaceholderState(t, suggestionContext);
@@ -209,6 +217,10 @@ export default function ActionsPage({ suggestionContext }: { suggestionContext?:
   const approvalDecisionEndpoint = approvalDraftResult?.draftId
     ? state.approvalDecision.endpointTemplate.replace(':draftId', encodeURIComponent(approvalDraftResult.draftId))
     : state.approvalDecision.endpointTemplate;
+  const approvalDecisionRequestPreview = approvalDraftResult?.draftId
+    ? buildApprovalDecisionRequestPreview(approvalDraftResult.draftId, approvalDecisionResult?.decision)
+    : state.approvalDecision.requestPreview;
+  const canDecideApprovalDraft = Boolean(approvalDraftResult?.draftId) && approvalDecisionStatus === 'ready';
 
   return (
     <main
@@ -273,14 +285,10 @@ export default function ActionsPage({ suggestionContext }: { suggestionContext?:
             endpoint: approvalDecisionEndpoint,
             managerBacked: Boolean(approvalDecisionResult?.managerBacked),
             requestPreview: approvalDraftResult?.draftId
-              ? JSON.stringify({
-                draftId: approvalDraftResult.draftId,
-                decision: 'approved',
-                executionAllowed: false
-              })
+              ? approvalDecisionRequestPreview
               : state.approvalDecision.requestPreview,
-            onApprove: approvalDraftResult?.draftId ? () => void decideApprovalDraft('approved') : undefined,
-            onReject: approvalDraftResult?.draftId ? () => void decideApprovalDraft('rejected') : undefined,
+            onApprove: canDecideApprovalDraft ? () => void decideApprovalDraft('approved') : undefined,
+            onReject: canDecideApprovalDraft ? () => void decideApprovalDraft('rejected') : undefined,
             result: approvalDecisionResult,
             error: approvalDecisionError
           }}

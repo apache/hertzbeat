@@ -129,18 +129,20 @@ public class LocalTopologyDemoRelationSeeder implements ApplicationRunner {
         List<ObserveEntity> missingEntities = new ArrayList<>();
         List<EntityIdentity> missingIdentities = new ArrayList<>();
         List<String> serviceNames = mixedScaleProofServiceNames();
+        Map<String, ObserveEntity> entitiesByName = new java.util.LinkedHashMap<>();
 
         for (int index = 0; index < serviceNames.size(); index += 1) {
             String serviceName = serviceNames.get(index);
             Optional<ObserveEntity> existingEntity = findMixedScaleProofEntity(serviceName);
             if (existingEntity.isPresent()) {
+                entitiesByName.put(serviceName, existingEntity.get());
                 if (!hasServiceNameIdentity(existingEntity.get().getId(), serviceName)) {
                     missingIdentities.add(serviceNameIdentity(existingEntity.get().getId(), serviceName));
                 }
                 continue;
             }
             long entityId = MIXED_PROOF_ENTITY_ID_BASE + index;
-            missingEntities.add(ObserveEntity.builder()
+            ObserveEntity entity = ObserveEntity.builder()
                     .id(entityId)
                     .workspaceId(WORKSPACE_ID)
                     .type("service")
@@ -148,11 +150,14 @@ public class LocalTopologyDemoRelationSeeder implements ApplicationRunner {
                     .name(serviceName)
                     .displayName(displayName(serviceName))
                     .environment(ENVIRONMENT)
+                    .source("local-scale-proof")
                     .status("unknown")
                     .criticality("medium")
                     .owner("local-scale-proof")
                     .lifecycle("local")
-                    .build());
+                    .build();
+            missingEntities.add(entity);
+            entitiesByName.put(serviceName, entity);
             missingIdentities.add(serviceNameIdentity(entityId, serviceName));
         }
 
@@ -164,6 +169,69 @@ public class LocalTopologyDemoRelationSeeder implements ApplicationRunner {
             entityIdentityDao.saveAll(missingIdentities);
             log.info("Seeded {} local mixed topology scale proof service.name identity row(s).",
                     missingIdentities.size());
+        }
+        seedMixedScaleProofRelations(entitiesByName);
+    }
+
+    void seedMixedScaleProofRelations(Map<String, ObserveEntity> entitiesByName) {
+        if (entitiesByName == null || entitiesByName.isEmpty()) {
+            return;
+        }
+        List<EntityRelation> missingRelations = new ArrayList<>();
+        String gatewayName = MIXED_PROOF_BATCH + "-edge-gateway";
+        ObserveEntity gateway = entitiesByName.get(gatewayName);
+        if (gateway == null || gateway.getId() == null) {
+            return;
+        }
+        Map<Long, List<EntityRelation>> relationCacheBySource = new java.util.LinkedHashMap<>();
+
+        for (int domainIndex = 0; domainIndex < 12; domainIndex += 1) {
+            String domainName = mixedScaleProofDomainName(domainIndex);
+            ObserveEntity domain = entitiesByName.get(domainName);
+            if (domain == null || domain.getId() == null) {
+                continue;
+            }
+            addMissingMixedScaleProofRelation(
+                    relationCacheBySource,
+                    missingRelations, gateway, domain, "trace-call", "otlp-trace-call",
+                    "local mixed topology scale proof gateway to domain call");
+            for (int serviceIndex = 0; serviceIndex < 165; serviceIndex += 1) {
+                ObserveEntity service = entitiesByName.get(mixedScaleProofServiceName(domainIndex, serviceIndex));
+                if (service == null || service.getId() == null) {
+                    continue;
+                }
+                addMissingMixedScaleProofRelation(
+                        relationCacheBySource,
+                        missingRelations, domain, service, "trace-call", "otlp-trace-call",
+                        "local mixed topology scale proof domain to service call");
+            }
+        }
+
+        if (!missingRelations.isEmpty()) {
+            entityRelationDao.saveAll(missingRelations);
+            log.info("Seeded {} local mixed topology scale proof relation row(s).", missingRelations.size());
+        }
+    }
+
+    private void addMissingMixedScaleProofRelation(Map<Long, List<EntityRelation>> relationCacheBySource,
+                                                   List<EntityRelation> missingRelations,
+                                                   ObserveEntity source,
+                                                   ObserveEntity target,
+                                                   String relationType,
+                                                   String relationSource,
+                                                   String description) {
+        if (!relationExists(relationCacheBySource, source.getId(), target.getId(), relationType)) {
+            missingRelations.add(EntityRelation.builder()
+                    .sourceEntityId(source.getId())
+                    .targetEntityId(target.getId())
+                    .targetRef("%s:%s/%s".formatted(target.getType(), target.getNamespace(), target.getName()))
+                    .relationType(relationType)
+                    .relationSource(relationSource)
+                    .status("confirmed")
+                    .score(92)
+                    .description(description)
+                    .attributes(seedAttributes("outbound"))
+                    .build());
         }
     }
 
@@ -201,14 +269,22 @@ public class LocalTopologyDemoRelationSeeder implements ApplicationRunner {
         List<String> serviceNames = new ArrayList<>();
         serviceNames.add(MIXED_PROOF_BATCH + "-edge-gateway");
         for (int domainIndex = 0; domainIndex < 12; domainIndex += 1) {
-            serviceNames.add("%s-domain-%02d".formatted(MIXED_PROOF_BATCH, domainIndex));
+            serviceNames.add(mixedScaleProofDomainName(domainIndex));
         }
         for (int domainIndex = 0; domainIndex < 12; domainIndex += 1) {
             for (int serviceIndex = 0; serviceIndex < 165; serviceIndex += 1) {
-                serviceNames.add("%s-svc-%02d-%03d".formatted(MIXED_PROOF_BATCH, domainIndex, serviceIndex));
+                serviceNames.add(mixedScaleProofServiceName(domainIndex, serviceIndex));
             }
         }
         return serviceNames;
+    }
+
+    private String mixedScaleProofDomainName(int domainIndex) {
+        return "%s-domain-%02d".formatted(MIXED_PROOF_BATCH, domainIndex);
+    }
+
+    private String mixedScaleProofServiceName(int domainIndex, int serviceIndex) {
+        return "%s-svc-%02d-%03d".formatted(MIXED_PROOF_BATCH, domainIndex, serviceIndex);
     }
 
     private String displayName(String serviceName) {
@@ -224,6 +300,18 @@ public class LocalTopologyDemoRelationSeeder implements ApplicationRunner {
     private boolean relationExists(Long sourceEntityId, Long targetEntityId, String relationType) {
         return entityRelationDao.findBySourceEntityIdOrTargetEntityId(sourceEntityId, sourceEntityId)
                 .stream()
+                .anyMatch(relation -> sourceEntityId.equals(relation.getSourceEntityId())
+                        && targetEntityId.equals(relation.getTargetEntityId())
+                        && relationType.equals(relation.getRelationType()));
+    }
+
+    private boolean relationExists(Map<Long, List<EntityRelation>> relationCacheBySource,
+                                   Long sourceEntityId,
+                                   Long targetEntityId,
+                                   String relationType) {
+        List<EntityRelation> sourceRelations = relationCacheBySource.computeIfAbsent(sourceEntityId,
+                source -> entityRelationDao.findBySourceEntityIdOrTargetEntityId(source, source));
+        return sourceRelations.stream()
                 .anyMatch(relation -> sourceEntityId.equals(relation.getSourceEntityId())
                         && targetEntityId.equals(relation.getTargetEntityId())
                         && relationType.equals(relation.getRelationType()));

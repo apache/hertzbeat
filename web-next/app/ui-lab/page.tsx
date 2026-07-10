@@ -2458,7 +2458,7 @@ export default function HertzBeatUiLabPage() {
                 </SettingsFormField>
                 <SettingsFormField label="System theme">
                   <SettingsFormSelect value="dark-ops" data-setting-config-select-kind="theme" onChange={() => undefined}>
-                    <option value="light-ops">Default theme</option>
+                    <option value="light-ops">Light theme</option>
                     <option value="dark-ops">Dark theme</option>
                     <option value="compact">Compact theme</option>
                   </SettingsFormSelect>

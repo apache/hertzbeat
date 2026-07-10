@@ -35,6 +35,8 @@ describe('dashboard panel draft workspace route', () => {
     expect(html).toContain('data-dashboard-panel-drafts-state="loading"');
     expect(html).toContain('data-dashboard-composition-state="loading"');
     expect(html).toContain('data-hz-ui="explorer-frame"');
+    expect(html).toContain('app.frame.skip-to-workbench');
+    expect(html).not.toContain('Skip to workbench');
     expect(html).toContain('data-hz-ui="data-table"');
     expect(html).toContain('data-dashboard-composition-target-owner="hertzbeat-ui-panel-surface"');
     expect(html).toContain('data-dashboard-composition-target-key="signals-overview"');
@@ -92,6 +94,28 @@ describe('dashboard panel draft workspace route', () => {
     expect(html).toContain('data-dashboard-composition-preview-key="checkout-latency"');
     expect(html).toContain('data-dashboard-composition-time-range-mode="relative"');
     expect(html).toContain('data-dashboard-composition-time-range-preset="last-1h"');
+  });
+
+  it('localizes only the built-in default dashboard display text', async () => {
+    const { resolveDashboardDisplayText } = await import('./dashboard-draft-workspace');
+    const localizedDefaults = {
+      title: 'Signal Uebersicht',
+      description: 'Lokalisierte Standardbeschreibung'
+    };
+
+    expect(resolveDashboardDisplayText({
+      dashboardKey: 'signals-overview',
+      title: 'Signals overview',
+      description: 'Dashboard composed from logs, traces, and metrics panel drafts.'
+    }, localizedDefaults)).toEqual(localizedDefaults);
+    expect(resolveDashboardDisplayText({
+      dashboardKey: 'signals-overview',
+      title: 'Checkout SLO dashboard',
+      description: 'Team-owned dashboard'
+    }, localizedDefaults)).toEqual({
+      title: 'Checkout SLO dashboard',
+      description: 'Team-owned dashboard'
+    });
   });
 
   it('keeps dashboard route ownership as a primary page in the route catalog', () => {
@@ -162,7 +186,12 @@ describe('dashboard panel draft workspace route', () => {
     expect(workspaceSource).toContain('applyVariableUrlOverridesToDashboards(nextDashboards, initialVariableUrlOverrides)');
     expect(workspaceSource).toContain('const requestedDashboardParam = firstParamValue(initialContext.dashboard)');
     expect(workspaceSource).toContain('const requestedDashboardKey = normalizeSignalDashboardKey(requestedDashboardParam || \'signals-overview\')');
-    expect(workspaceSource).toContain('!hasRequestedDashboardKey && current === requestedDashboardKey ? firstDashboard.dashboardKey : current');
+    expect(workspaceSource).toContain('const requestedDashboard = nextDashboardsWithUrlVariables.find(dashboard => dashboard.dashboardKey === requestedDashboardKey)');
+    expect(workspaceSource).toContain('const initialDashboard = requestedDashboard || firstDashboard');
+    expect(workspaceSource).toContain('!hasRequestedDashboardKey && current === requestedDashboardKey ? initialDashboard.dashboardKey : current');
+    expect(workspaceSource).toContain('const selectedDashboardKey = selectedDashboard?.dashboardKey || \'\'');
+    expect(workspaceSource).toContain('if (!selectedDashboardKey || !selectedDashboardTitle) return;');
+    expect(workspaceSource).toContain('setDashboardTitleDraft(selectedDashboardTitle)');
     expect(workspaceSource).toContain('buildDashboardReturnHref({');
     expect(workspaceSource).toContain('dashboardKey: selectedDashboard.dashboardKey');
     expect(workspaceSource).toContain('variables: dashboardVariables');
@@ -242,6 +271,14 @@ describe('dashboard panel draft workspace route', () => {
     expect(workspaceSource).toContain('dashboard.saved-views.action.update');
     expect(workspaceSource).toContain('dashboard.saved-views.action.add-panel');
     expect(workspaceSource).toContain('dashboard.saved-views.action.delete');
+    expect(workspaceSource).toContain('function DashboardExplorerHandoffActions');
+    expect(workspaceSource).toContain("actions={savedViewLoadState === 'empty'");
+    expect(workspaceSource).toContain("actions={loadState === 'empty'");
+    expect(workspaceSource).toContain("href: '/log/manage'");
+    expect(workspaceSource).toContain("href: '/trace/manage'");
+    expect(workspaceSource).toContain("href: '/ingestion/otlp/metrics'");
+    expect(workspaceSource).toContain('data-dashboard-empty-action={action.key}');
+    expect(workspaceSource).toContain('data-dashboard-empty-action-scope={scope}');
     expect(workspaceSource).toContain('data-dashboard-composition-row');
     expect(workspaceSource).toContain('data-dashboard-composition-action="select"');
     expect(workspaceSource).toContain('data-dashboard-composition-action="delete"');

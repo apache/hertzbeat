@@ -4018,9 +4018,10 @@ export function HzTopologyMetricTable({
       ) : (
         <>
         <div className="grid min-w-0 divide-y divide-[var(--hz-ui-line-faint)]">
-          {renderedRowsWithWindowVisibility.map(({ row, sourceVisible, targetVisible, rowWindowVisibility }) => {
+          {renderedRowsWithWindowVisibility.map(({ row, sourceVisible, targetVisible, rowWindowVisibility }, rowIndex) => {
             const tone = row.tone || (row.errorRate && row.errorRate > 0 ? 'warning' : 'neutral');
             const selected = selectedRowId === row.id;
+            const tabbable = selected || (!hasMetricTableSelection && rowIndex === 0);
             const rowActionLabel = labels?.rowAction;
             const rowWindowContextLabel =
               rowWindowVisibility === 'visible'
@@ -4057,8 +4058,11 @@ export function HzTopologyMetricTable({
                 )}
                 aria-label={labels?.rowAriaLabel?.(row) ?? `Open topology edge ${row.id}`}
                 aria-current={selected ? 'true' : undefined}
+                tabIndex={tabbable ? 0 : -1}
                 onClick={() => onRowSelect?.(row)}
                 data-hz-topology-edge-row={row.id}
+                data-hz-topology-edge-row-tabstop={tabbable ? 'true' : 'false'}
+                data-hz-topology-edge-row-tabstop-policy="single-active-row"
                 data-hz-topology-edge-row-render-window-visibility={rowWindowVisibility}
                 data-hz-topology-edge-row-source-node-id={row.sourceNodeId ?? 'unknown'}
                 data-hz-topology-edge-row-target-node-id={row.targetNodeId ?? 'unknown'}

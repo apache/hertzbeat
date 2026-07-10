@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { HzButton, HzInlineFeedback } from '@hertzbeat/ui';
 import { ClientWorkbench } from '@/components/workbench/client-workbench';
 import { MonitorEditorSurface } from '../../../../components/pages/monitor-editor-surface';
@@ -8,6 +9,7 @@ import { useI18n } from '@/components/providers/i18n-provider';
 import { api } from '@/lib/monitor-api-facade';
 import { buildMonitorEditCacheKey, loadMonitorEditorDraftFromFacade } from '@/lib/monitor-editor/controller';
 import type { MonitorEditRouteState } from '@/lib/monitor-editor/query-state';
+import { buildMonitorListReturnHref } from '@/lib/monitor-manage/navigation';
 
 const MONITOR_EDIT_SETTLED_CACHE_TTL_MS = 10_000;
 const EMPTY_MONITOR_EDIT_ROUTE_STATE: MonitorEditRouteState = {
@@ -22,9 +24,11 @@ export default function MonitorEditPage({
   initialRouteState?: MonitorEditRouteState;
 }) {
   const { t } = useI18n();
+  const router = useRouter();
   const monitorEditRouteState = initialRouteState ?? EMPTY_MONITOR_EDIT_ROUTE_STATE;
   const { returnContext } = monitorEditRouteState;
   const monitorEditCacheKey = React.useMemo(() => buildMonitorEditCacheKey(monitorId), [monitorId]);
+  const routeListReturnHref = React.useMemo(() => buildMonitorListReturnHref(returnContext), [returnContext]);
 
   const load = useCallback(async () => {
     return loadMonitorEditorDraftFromFacade(
@@ -76,7 +80,7 @@ export default function MonitorEditPage({
               variant="embedded"
               data-monitor-editor-route-state-feedback="error"
             />
-            <div className="mt-3 flex justify-center">
+            <div className="mt-3 flex flex-wrap justify-center gap-2">
               <HzButton
                 size="sm"
                 intent="primary"
@@ -85,6 +89,16 @@ export default function MonitorEditPage({
                 data-monitor-editor-route-state-retry-owner="hertzbeat-ui-button"
               >
                 {t('monitor.route-state.action.retry')}
+              </HzButton>
+              <HzButton
+                size="sm"
+                intent="secondary"
+                onClick={() => router.push(routeListReturnHref)}
+                data-monitor-editor-route-state-list-return="true"
+                data-monitor-editor-route-state-list-return-owner="hertzbeat-ui-button"
+                data-monitor-editor-route-state-list-return-target={routeListReturnHref}
+              >
+                {t('monitor.detail.back')}
               </HzButton>
             </div>
           </section>

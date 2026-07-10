@@ -1,13 +1,36 @@
 import type { Monitor, PageResult } from '@/lib/types';
-import type { MonitorQueryState } from './query-state';
+import { normalizeMonitorListPageSize, type MonitorQueryState } from './query-state';
 
 type ApiPost = <T>(url: string, payload: unknown) => Promise<T>;
 type ApiGet = <T>(url: string) => Promise<T>;
 type ApiDelete = <T>(url: string) => Promise<T>;
 type MonitorListReader = <T = PageResult<Monitor>>(query: MonitorQueryState) => Promise<T>;
+type MonitorListLoadOptions = {
+  allowUnsupportedPageSize?: boolean;
+};
 
-export async function loadMonitorListFromFacade(readMonitorList: MonitorListReader, query: MonitorQueryState) {
-  return readMonitorList<PageResult<Monitor>>(query);
+function resolveMonitorListLoadPageSize(query: MonitorQueryState, result: PageResult<Monitor>, options?: MonitorListLoadOptions) {
+  if (options?.allowUnsupportedPageSize) {
+    const parsed = Number.parseInt(String(query.pageSize || result.pageSize || ''), 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : Number.parseInt(normalizeMonitorListPageSize(result.pageSize), 10);
+  }
+
+  return Number.parseInt(normalizeMonitorListPageSize(query.pageSize || result.pageSize), 10);
+}
+
+export async function loadMonitorListFromFacade(
+  readMonitorList: MonitorListReader,
+  query: MonitorQueryState,
+  options?: MonitorListLoadOptions
+) {
+  const result = await readMonitorList<PageResult<Monitor>>(query);
+  const pageSize = resolveMonitorListLoadPageSize(query, result, options);
+  const content = (result.content || []).slice(0, pageSize);
+  return {
+    ...result,
+    content,
+    pageSize
+  };
 }
 
 export function buildCopyMonitorUrl(monitorId: number | string) {

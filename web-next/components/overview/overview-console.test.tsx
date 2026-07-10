@@ -212,6 +212,25 @@ describe('overview console primitives', () => {
     expect(checklistHtml).not.toContain('py-1.5');
   });
 
+  it('allows overview pages to localize checklist status labels', () => {
+    const checklistHtml = renderToStaticMarkup(
+      <OverviewChecklist
+        title="Setup checklist"
+        items={[
+          { key: 'logs', label: 'Logs available', ready: true },
+          { key: 'traces', label: 'Traces available', ready: false }
+        ]}
+        readyLabel="localized-ready"
+        pendingLabel="localized-pending"
+      />
+    );
+
+    expect(checklistHtml).toContain('>localized-ready<');
+    expect(checklistHtml).toContain('>localized-pending<');
+    expect(checklistHtml).not.toContain('>Ready<');
+    expect(checklistHtml).not.toContain('>Pending<');
+  });
+
   it('does not derive compact reason keys from translated label/value content', () => {
     const source = readFileSync(resolve(process.cwd(), 'components/overview/overview-console.tsx'), 'utf8');
 

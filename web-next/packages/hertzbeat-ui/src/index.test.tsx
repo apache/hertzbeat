@@ -1019,6 +1019,7 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('IBM Plex Mono');
     expect(html).toContain('data-hz-ui="data-table"');
     expect(html).toContain('data-hz-data-table-variant="embedded"');
+    expect(html).toContain('overflow-x-auto overflow-y-hidden bg-[var(--hz-ui-surface)]');
     expect(html).toContain('data-test-row="mysql-prod"');
     expect(html).toContain('data-hz-ui="template-picker"');
     expect(html).toContain('data-hz-template-selected="true"');
@@ -1247,6 +1248,65 @@ describe('@hertzbeat/ui', () => {
     expect(html).not.toContain('rounded-[12px]');
   });
 
+  it('locks action approval decision controls after the decision is recorded', () => {
+    const html = renderToStaticMarkup(
+      <HzActionWorkbench
+        title="Automation actions"
+        subtitle="Keep suggested remediations evidence-led and manually confirmed."
+        sourceLabel="Automation entry"
+        actions={[]}
+        shell={{
+          eyebrow: 'Shared action shell',
+          copy: 'Action surfaces stay compact while execution adapters are pending.',
+          chips: []
+        }}
+        adapterBoundary={{
+          state: 'adapter-pending',
+          label: 'Execution boundary',
+          copy: 'Roadmap automation snapshots stay separated from live operator actions.',
+          roadmapOnlyLabels: []
+        }}
+        checklistTitle="Launch checklist"
+        checklist={[]}
+        approvalDecision={{
+          state: 'ready',
+          status: 'decided',
+          adapterOwner: 'next-actions-approval-decision-bff',
+          endpoint: '/api/actions/approval-drafts/approval-draft-ui-lab-rejected/decision',
+          method: 'POST',
+          executionMode: 'manual-approval-draft-only',
+          executionAllowed: false,
+          managerBacked: false,
+          title: 'Approval decision adapter',
+          copy: 'Records approve or reject without action execution.',
+          approveLabel: 'Approve draft',
+          rejectLabel: 'Reject draft',
+          pendingLabel: 'Recording decision',
+          successLabel: 'Decision recorded',
+          failedLabel: 'Decision failed',
+          disabledReason: 'Create a draft before decision.',
+          requestPreview: '{"decision":"rejected","executionAllowed":false}',
+          result: {
+            draftId: 'approval-draft-ui-lab-rejected',
+            decision: 'rejected',
+            state: 'approval-draft-rejected',
+            executionState: 'not-executed'
+          },
+          onApprove: vi.fn(),
+          onReject: vi.fn()
+        }}
+        emptyTitle="Execution adapter pending"
+        emptyCopy="Live runs and approvals remain behind the adapter boundary."
+      />
+    );
+
+    expect(html).toContain('data-actions-approval-decision-status="decided"');
+    expect(html).toMatch(/<button(?=[^>]*disabled="")(?=[^>]*data-actions-approval-decision-approve="decided")/);
+    expect(html).toMatch(/<button(?=[^>]*disabled="")(?=[^>]*data-actions-approval-decision-reject="decided")/);
+    expect(html).toContain('data-actions-approval-decision-result="approval-draft-ui-lab-rejected"');
+    expect(html).toContain('not-executed');
+  });
+
   it('renders an incident workbench with shared table, timeline, and ownership density', () => {
     const html = renderToStaticMarkup(
       <HzIncidentWorkbench
@@ -1263,8 +1323,9 @@ describe('@hertzbeat/ui', () => {
         incidents={[
           {
             id: 'inc-204',
-            title: 'Checkout latency spike',
+            title: 'Checkout latency spike with a deliberately long incident title that must truncate inside the first table column',
             severity: 'critical',
+            severityLabel: 'Critical incident',
             stage: 'mitigating',
             service: 'checkout-api',
             owner: 'commerce-sre',
@@ -1297,6 +1358,15 @@ describe('@hertzbeat/ui', () => {
           { id: 'resolved', label: 'Resolve', state: 3, variant: 'primary', disabled: true }
         ]}
         transitionLabel="Incident status"
+        labels={{
+          incident: 'Incident label',
+          severity: 'Severity label',
+          stage: 'Stage label',
+          owner: 'Owner label',
+          impact: 'Impact label',
+          timeline: 'Timeline label',
+          ownership: 'Ownership label'
+        }}
         selectedIncidentId="inc-204"
       />
     );
@@ -1320,10 +1390,26 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-incident-transition-disabled="true"');
     expect(html).toContain('data-hz-ui="data-table"');
     expect(html).toContain('data-hz-row-selected="true"');
+    expect(html).toContain('Incident label');
+    expect(html).toContain('Severity label');
+    expect(html).toContain('Stage label');
+    expect(html).toContain('Owner label');
+    expect(html).toContain('Impact label');
+    expect(html).toContain('Timeline label');
+    expect(html).toContain('Ownership label');
+    expect(html).toContain('Critical incident');
+    expect(html).toContain('data-hz-incident-cell="title-opened-at"');
+    expect(html).toContain('data-hz-incident-cell="owner-service"');
+    expect(html).toContain('max-w-[320px]');
+    expect(html).toContain('max-w-[160px]');
+    expect(html).toContain('data-hz-data-cell-variant="title"');
+    expect(html).toContain('data-hz-data-cell-display="block"');
+    expect(html).toContain('data-hz-data-meta-display="block"');
+    expect(html).toContain('data-hz-data-meta-casing="plain"');
     expect(html).toContain('data-hz-incident-timeline-item="event-1"');
     expect(html).toContain('data-hz-incident-owner-item="owner-commerce"');
     expect(html).toContain('data-hz-incident-workbench-action="primary"');
-    expect(html).toContain('Checkout latency spike');
+    expect(html).toContain('Checkout latency spike with a deliberately long incident title');
     expect(html).not.toContain('rounded-[16px]');
     expect(html).not.toContain('rounded-[14px]');
     expect(html).not.toContain('rounded-[12px]');
@@ -2720,6 +2806,7 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-monitor-refresh-badge-owner="hertzbeat-ui-status-badge"');
     expect(html).toContain('data-monitor-refresh-select-owner="hertzbeat-ui-select"');
     expect(html).toContain('data-monitor-refresh-action-owner="hertzbeat-ui-button"');
+    expect(html).toContain('data-monitor-refresh-command-action="refresh"');
     expect(html).toContain('data-monitor-refresh-badge-variant="quiet"');
     expect(html).toContain('data-monitor-refresh-select-density="quiet"');
     expect(html).toContain('data-monitor-refresh-action-density="quiet"');
@@ -3415,7 +3502,11 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-ui="workbench-layout"');
     expect(html).toContain('data-hz-workbench-layout-owner="hertzbeat-ui-workbench-layout"');
     expect(html).toContain('data-hz-workbench-layout-variant="header-actions"');
+    expect(html).toContain('2xl:grid-cols-[minmax(280px,1fr)_auto]');
+    expect(html).not.toContain('xl:grid-cols-[minmax(0,1fr)_auto]');
     expect(html).toContain('data-hz-workbench-layout-variant="metrics-header"');
+    expect(html).toContain('2xl:grid-cols-[minmax(280px,1fr)_minmax(780px,auto)]');
+    expect(html).not.toContain('gap-3 xl:grid-cols-[minmax(280px,1fr)_minmax(780px,auto)] xl:items-start');
     expect(html).toContain('data-hz-workbench-layout-variant="header-toolbar-slot"');
     expect(html).toContain('data-hz-workbench-layout-variant="time-toolbar"');
     expect(html).toContain('data-hz-workbench-layout-variant="view-switch"');
@@ -3443,9 +3534,9 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-trace-manage-detail-body-layout-owner="hertzbeat-ui-workbench-layout"');
     expect(html).toContain('data-trace-manage-detail-footer-layout-owner="hertzbeat-ui-workbench-layout"');
     expect(html).toContain('data-trace-manage-table-detail-layout-owner="hertzbeat-ui-workbench-layout"');
-    expect(html).toContain('<div class="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start"');
-    expect(html).toContain('grid min-w-0 gap-3 xl:grid-cols-[minmax(280px,1fr)_minmax(780px,auto)] xl:items-start');
-    expect(html).toContain('grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_320px]');
+    expect(html).toContain('<div class="grid min-w-0 gap-4 2xl:grid-cols-[minmax(280px,1fr)_auto] 2xl:items-start"');
+    expect(html).toContain('grid min-w-0 gap-3 2xl:grid-cols-[minmax(280px,1fr)_minmax(780px,auto)] 2xl:items-start');
+    expect(html).toContain('grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_440px]');
     expect(html).toContain('grid min-w-0 items-start gap-4');
     expect(html).toContain('grid min-w-0 ml-auto w-full max-w-[1120px] justify-end gap-2 xl:w-auto');
     expect(html).toContain('grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center');
@@ -4696,13 +4787,16 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-topology-edge-row-selection-owner="hertzbeat-ui-metric-table-row-selection"');
     expect(html).toContain('data-hz-topology-edge-row-selection-mode="table-row-click-drawer"');
     expect(html).toContain('data-hz-topology-edge-row-selection-url-policy="preserve-current-url"');
+    expect(html).toContain('data-hz-topology-edge-row-tabstop-policy="single-active-row"');
     expect(html).toContain('data-hz-topology-edge-row="checkout-payment"');
+    expect(html).toContain('data-hz-topology-edge-row-tabstop="true"');
     expect(html).toContain('data-hz-topology-edge-row-render-window-visibility="visible"');
     expect(html).toContain('data-hz-topology-edge-row-source-node-id="checkout-api"');
     expect(html).toContain('data-hz-topology-edge-row-target-node-id="payment-api"');
     expect(html).toContain('data-hz-topology-edge-row-source-visible="true"');
     expect(html).toContain('data-hz-topology-edge-row-target-visible="true"');
     expect(html).toContain('data-hz-topology-edge-row="payment-db"');
+    expect(html).toContain('data-hz-topology-edge-row-tabstop="false"');
     expect(html).toContain('data-hz-topology-edge-row-render-window-visibility="partial"');
     expect(html).toContain('data-hz-topology-edge-row-source-visible="true"');
     expect(html).toContain('data-hz-topology-edge-row-target-visible="false"');
@@ -6749,8 +6843,11 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-monitor-detail-favorite-owner="hertzbeat-ui-favorite-surface"');
     expect(html).toContain('data-favorite-content="realtime"');
     expect(html).toContain('Favorite saved');
+    expect(html).toContain('role="status"');
+    expect(html).toContain('text-[#b9c6d8]');
     expect(html).toContain('Favorite sync failed');
     expect(html).not.toContain('<select');
+    expect(html).not.toContain('text-emerald-300');
     expect(html).not.toContain('rounded-[16px]');
     expect(html).not.toContain('rounded-[14px]');
     expect(html).not.toContain('rounded-[12px]');
@@ -7185,7 +7282,20 @@ describe('@hertzbeat/ui', () => {
           actions={[
             { id: 'hide', label: 'Hide', tone: 'neutral', onSelect: vi.fn() },
             { id: 'apply', label: 'Apply', busy: true, busyLabel: 'Applying', tone: 'info', onSelect: vi.fn() },
-            { id: 'delete', label: 'Delete', tone: 'critical', onSelect: vi.fn() }
+            {
+              id: 'delete',
+              label: 'Delete',
+              tone: 'critical',
+              onSelect: vi.fn(),
+              help: {
+                label: 'Explain delete',
+                body: 'Deletes selected records.',
+                impact: 'This cannot be undone.',
+                rootProps: { 'data-test-batch-help-root': 'delete' },
+                triggerProps: { 'data-test-batch-help-trigger': 'delete' },
+                tooltipProps: { 'data-test-batch-help-tooltip': 'delete' }
+              }
+            }
           ]}
         />
         <HzToastStack
@@ -7228,6 +7338,7 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('space-y-3');
     expect(html).toContain('data-hz-confirm-action="cancel"');
     expect(html).toContain('data-hz-confirm-action="confirm"');
+    expect(html).toContain('min-h-8 min-w-16');
     expect(html).toContain('data-monitor-delete-confirm-owner="hertzbeat-ui-confirm-dialog"');
     expect(html).toContain('data-monitors-delete-confirm="hertzbeat-ui-modal"');
     expect(html).toContain('role="dialog"');
@@ -7236,6 +7347,20 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-ui="batch-toolbar"');
     expect(html).toContain('data-hz-batch-selection-count="3"');
     expect(html).toContain('data-hz-batch-action="delete"');
+    expect(html).toContain('data-hz-batch-action-help="delete"');
+    expect(html).toContain('data-hz-batch-action-help-trigger="hertzbeat-ui-action-help"');
+    expect(html).toContain('data-hz-batch-action-help-style="icon-after-action"');
+    expect(html).toContain('data-hz-batch-action-help-visual="circle-help-icon"');
+    expect(html).toContain('data-hz-batch-action-help-icon="lucide-circle-help"');
+    expect(html).toContain('data-hz-batch-action-help-tooltip="hertzbeat-ui-action-tooltip"');
+    expect(html).toContain('data-test-batch-help-root="delete"');
+    expect(html).toContain('data-test-batch-help-trigger="delete"');
+    expect(html).toContain('data-test-batch-help-tooltip="delete"');
+    expect(html).toContain('rounded-none border-0 bg-transparent');
+    expect(html).not.toContain('rounded-full border border-[#2b3039] bg-[#101217]');
+    expect(html).not.toContain('<span aria-hidden="true">?</span>');
+    expect(html).toContain('Deletes selected records.');
+    expect(html).toContain('This cannot be undone.');
     expect(html).toContain('data-hz-batch-action-busy="true"');
     expect(html).toContain('aria-busy="true"');
     expect(html).toContain('Applying');
@@ -7334,6 +7459,9 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-batch-overflow-panel="angular-nz-dropdown-menu"');
     expect(html).toContain('data-hz-batch-overflow-panel-open="false"');
     expect(html).toContain('data-hz-batch-overflow-clearance="floating-overlay-no-table-crop"');
+    const overflowPanel = html.match(/<div[^>]*data-hz-batch-overflow-panel="angular-nz-dropdown-menu"[^>]*>/)?.[0] ?? '';
+    expect(overflowPanel).toContain('hidden');
+    expect(overflowPanel).not.toContain(' grid ');
     expect(html).toContain('data-hz-batch-action="select-page"');
     expect(html).toContain('data-hz-batch-action-presentation="inline"');
     expect(html).toContain('data-hz-batch-action="enable"');
@@ -7352,6 +7480,12 @@ describe('@hertzbeat/ui', () => {
       <HzMonitorEditorSection
         title="Base parameters"
         copy="Collector, scrape, schedule, and monitor identity."
+        titleMeta={<span data-test-section-meta="true">Optional</span>}
+        help={{
+          label: 'Explain base parameters',
+          body: 'Use these fields to define the target and schedule.',
+          impact: 'Changing them affects collection behavior.'
+        }}
         data-monitor-editor-section-owner="hertzbeat-ui-editor-section"
       >
         <label>
@@ -7364,6 +7498,21 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-ui="monitor-editor-section"');
     expect(html).toContain('data-hz-monitor-editor-section-body="true"');
     expect(html).toContain('data-monitor-editor-section-owner="hertzbeat-ui-editor-section"');
+    expect(html).toContain('data-monitor-editor-section-help-placement="inline-title"');
+    expect(html).toContain('data-monitor-editor-section-help-trigger="hertzbeat-ui-section-help"');
+    expect(html).toContain('type="button"');
+    expect(html).toContain('data-monitor-editor-section-help-style="icon-after-title"');
+    expect(html).toContain('data-monitor-editor-section-help-visual="circle-help-icon"');
+    expect(html).toContain('data-monitor-editor-section-help-icon="lucide-circle-help"');
+    expect(html).toContain('data-monitor-editor-section-help="hertzbeat-ui-section-tooltip"');
+    expect(html).toContain('aria-describedby=');
+    expect(html).not.toContain('data-monitor-editor-section-help-style="literal-question-after-title"');
+    expect(html).not.toContain('<span aria-hidden="true">?</span>');
+    expect(html).toContain('Explain base parameters');
+    expect(html).toContain('Use these fields to define the target and schedule.');
+    expect(html).toContain('Changing them affects collection behavior.');
+    expect(html).toContain('data-test-section-meta="true"');
+    expect(html).toContain('Optional');
     expect(html).toContain('Base parameters');
     expect(html).toContain('Collector, scrape, schedule, and monitor identity.');
     expect(html).toContain('127.0.0.1');
@@ -7535,6 +7684,75 @@ describe('@hertzbeat/ui', () => {
     expect(html).not.toContain('rounded-[16px]');
     expect(html).not.toContain('rounded-[14px]');
     expect(html).not.toContain('rounded-[12px]');
+  });
+
+  it('renders field help directly beside the label instead of at the far edge of the form row', () => {
+    const html = renderToStaticMarkup(
+      <HzField
+        label="Host"
+        labelMeta={<span data-test-field-meta="required-manual">Required Manual</span>}
+        help={{
+          label: 'Explain Host',
+          body: 'Target address collected by this monitor.',
+          impact: 'Required for static collection.'
+        }}
+      >
+        <HzInput value="127.0.0.1" readOnly />
+      </HzField>
+    );
+
+    expect(html).toContain('data-hz-field-help-placement="inline-label"');
+    expect(html).toContain('data-hz-field-help-trigger="hertzbeat-ui-field-help"');
+    expect(html).toContain('data-hz-field-help-button="icon-after-label"');
+    expect(html).toContain('data-hz-field-help-visual="circle-help-icon"');
+    expect(html).toContain('data-hz-field-help-icon="lucide-circle-help"');
+    expect(html).toContain('data-hz-field-help="hertzbeat-ui-field-tooltip"');
+    expect(html).toContain('aria-label="Explain Host"');
+    expect(html).toContain('aria-describedby="');
+    expect(html).toContain('role="button"');
+    expect(html).toContain('role="tooltip"');
+    expect(html).toContain('id="');
+    expect(html).toContain('tabindex="0"');
+    expect(html).not.toContain('>?</span>');
+    expect(html).not.toContain('data-hz-field-help-button="literal-question-after-label"');
+    expect(html).not.toContain('data-hz-field-help-visual="borderless-question"');
+    expect(html).toContain('Target address collected by this monitor.');
+    expect(html).toContain('Required for static collection.');
+    expect(html).toContain('Host');
+    expect(html).toContain('data-test-field-meta="required-manual"');
+    expect(html.indexOf('Host')).toBeLessThan(html.indexOf('data-hz-field-help-trigger="hertzbeat-ui-field-help"'));
+    expect(html.indexOf('data-hz-field-help-trigger="hertzbeat-ui-field-help"')).toBeLessThan(html.indexOf('data-test-field-meta="required-manual"'));
+    expect(html).not.toContain('justify-end');
+  });
+
+  it('renders monitor editor action help directly beside footer actions', () => {
+    const html = renderToStaticMarkup(
+      <HzMonitorEditorActionBar
+        title="New monitor"
+        actions={[
+          {
+            id: 'detect',
+            label: 'Detect',
+            help: {
+              label: 'Explain Detect',
+              body: 'Validate without saving.',
+              impact: 'Useful before changing collection behavior.'
+            }
+          }
+        ]}
+      />
+    );
+
+    expect(html).toContain('data-monitor-editor-action="detect"');
+    expect(html).toContain('data-monitor-editor-action-help-placement="inline-action"');
+    expect(html).toContain('data-monitor-editor-action-help-trigger="hertzbeat-ui-action-help"');
+    expect(html).toContain('data-monitor-editor-action-help-style="icon-after-action"');
+    expect(html).toContain('data-monitor-editor-action-help-visual="circle-help-icon"');
+    expect(html).toContain('data-monitor-editor-action-help-icon="lucide-circle-help"');
+    expect(html).toContain('data-monitor-editor-action-help="hertzbeat-ui-action-tooltip"');
+    expect(html).toContain('aria-label="Explain Detect"');
+    expect(html).toContain('Validate without saving.');
+    expect(html).toContain('Useful before changing collection behavior.');
   });
 
   it('renders monitor editor textarea controls with shared compact multiline chrome', () => {
@@ -8310,6 +8528,9 @@ describe('@hertzbeat/ui', () => {
     );
 
     expect(html).toContain('data-hz-ui="type-picker-dialog"');
+    expect(html).toContain('role="dialog"');
+    expect(html).toContain('aria-modal="true"');
+    expect(html).toContain('aria-labelledby=');
     expect(html).toContain('data-hz-template-search-input="true"');
     expect(html).toContain('data-hz-template-search-owner="hertzbeat-ui-input"');
     expect(html).toContain('data-monitor-app-picker-search-owner="hertzbeat-ui-input"');
@@ -8479,6 +8700,26 @@ describe('@hertzbeat/ui', () => {
     expect(html).not.toContain('data-hz-template-item="mysql"');
   });
 
+  it('can hide template picker counts for dense editor workspaces', () => {
+    const html = renderToStaticMarkup(
+      <HzTemplatePicker
+        categories={categories}
+        selectedId="mysql"
+        search=""
+        onSearchChange={vi.fn()}
+        labels={{
+          itemCount: localizedItemCount,
+          showCounts: false
+        }}
+      />
+    );
+
+    expect(html).toContain('data-hz-ui="template-picker"');
+    expect(html).not.toContain('data-hz-template-total-count="visible"');
+    expect(html).not.toContain('data-hz-template-category-count="visible"');
+    expect(html).not.toContain(localizedItemCount(3));
+  });
+
   it('renders the YML workspace as a split editor surface', () => {
     const html = renderToStaticMarkup(
       <HzYamlWorkspace
@@ -8618,6 +8859,7 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-density="operator-compact"');
     expect(html).toContain('data-hz-viewport-guard="single-column-first"');
     expect(html).toContain('data-hz-ui="skip-link"');
+    expect(html).toContain('Skip to workbench');
     expect(html).toContain('href="#hz-ui-main"');
     expect(html).toContain('id="hz-ui-main"');
     expect(html).toContain('aria-label="Explorer workbench"');
@@ -8631,5 +8873,26 @@ describe('@hertzbeat/ui', () => {
     expect(html).not.toContain('rounded-[16px]');
     expect(html).not.toContain('rounded-[14px]');
     expect(html).not.toContain('rounded-[12px]');
+  });
+
+  it('lets product surfaces localize the explorer frame skip link', () => {
+    const html = renderToStaticMarkup(
+      <HzExplorerFrame title="Explorer" skipLinkLabel="Zum Arbeitsbereich">
+        <div>Dense rows</div>
+      </HzExplorerFrame>
+    );
+
+    expect(html).toContain('data-hz-ui="skip-link"');
+    expect(html).toContain('Zum Arbeitsbereich');
+    expect(html).not.toContain('Skip to workbench');
+  });
+
+  it('lets product surfaces localize the query bar label without changing the compact chrome', () => {
+    const html = renderToStaticMarkup(<HzQueryBar query="service.name=checkout" queryLabel="Localized filter" />);
+
+    expect(html).toContain('data-hz-ui="query-bar"');
+    expect(html).toContain('Localized filter');
+    expect(html).not.toContain('Filter');
+    expect(html).toContain('grid-cols-[78px_minmax(0,1fr)]');
   });
 });

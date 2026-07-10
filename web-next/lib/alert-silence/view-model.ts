@@ -16,6 +16,8 @@ import {
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
 
+export type AlertSilenceValidationField = 'name' | 'labels' | 'days' | 'time';
+
 export type AlertSilenceEvidenceContext = {
   signal: string;
   title: string;
@@ -131,5 +133,55 @@ export function validateAlertSilenceForm(draft: AlertSilenceFormDraft, t: Transl
   if (!draft.matchAll && !draft.labelsText.trim()) {
     return t('alert.silence.validation.labels');
   }
+  if (draft.type === '1' && !hasValidAlertSilenceDay(draft.daysText)) {
+    return t('alert.silence.validation.days');
+  }
+  if (!hasValidAlertSilencePeriod(draft)) {
+    return t('alert.silence.validation.time');
+  }
   return null;
+}
+
+export function getAlertSilenceValidationField(draft: AlertSilenceFormDraft): AlertSilenceValidationField | null {
+  if (!draft.name.trim()) {
+    return 'name';
+  }
+  if (!draft.matchAll && !draft.labelsText.trim()) {
+    return 'labels';
+  }
+  if (draft.type === '1' && !hasValidAlertSilenceDay(draft.daysText)) {
+    return 'days';
+  }
+  if (!hasValidAlertSilencePeriod(draft)) {
+    return 'time';
+  }
+  return null;
+}
+
+function hasValidAlertSilenceDay(text: string) {
+  return text
+    .split(',')
+    .some(item => {
+      const day = Number.parseInt(item.trim(), 10);
+      return Number.isFinite(day) && day >= 1 && day <= 7;
+    });
+}
+
+function isValidAlertSilenceTimeValue(value: string) {
+  const [hoursText, minutesText, extra] = value.split(':');
+  if (extra != null || !hoursText || !minutesText) return false;
+  const hours = Number.parseInt(hoursText, 10);
+  const minutes = Number.parseInt(minutesText, 10);
+  return Number.isFinite(hours) && Number.isFinite(minutes) && hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59;
+}
+
+function isValidAlertSilenceDateTimeValue(value: string) {
+  return Boolean(value.trim()) && !Number.isNaN(new Date(value).getTime());
+}
+
+function hasValidAlertSilencePeriod(draft: AlertSilenceFormDraft) {
+  if (draft.type === '1') {
+    return isValidAlertSilenceTimeValue(draft.periodStart) && isValidAlertSilenceTimeValue(draft.periodEnd);
+  }
+  return isValidAlertSilenceDateTimeValue(draft.periodStart) && isValidAlertSilenceDateTimeValue(draft.periodEnd);
 }

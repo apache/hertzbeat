@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ClientWorkbench } from '@/components/workbench/client-workbench';
 import { PluginManageSurface, type PluginDeleteTarget } from '@/components/pages/plugin-manage-surface';
 import { useI18n } from '@/components/providers/i18n-provider';
@@ -11,10 +12,27 @@ import type { Plugin } from '@/lib/types';
 
 const SETTING_PLUGINS_SETTLED_CACHE_TTL_MS = 10_000;
 
+function parsePluginRouteInteger(value: string | null) {
+  if (!value) return undefined;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
+}
+
 export default function SettingPluginsPage() {
   const { t, locale } = useI18n();
-  const [search, setSearch] = useState('');
-  const [query, setQuery] = useState<PluginQueryState>({ search: '' });
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const routeSearchParamString = searchParams.toString();
+  const routeSearch = searchParams.get('search') ?? '';
+  const routePageIndex = parsePluginRouteInteger(searchParams.get('pageIndex'));
+  const routePageSize = parsePluginRouteInteger(searchParams.get('pageSize'));
+  const routeQuery = useMemo<PluginQueryState>(() => ({
+    search: routeSearch,
+    ...(routePageIndex == null ? {} : { pageIndex: routePageIndex }),
+    ...(routePageSize == null ? {} : { pageSize: routePageSize })
+  }), [routePageIndex, routePageSize, routeSearch]);
+  const [search, setSearch] = useState(routeQuery.search);
+  const [query, setQuery] = useState<PluginQueryState>(routeQuery);
   const [reloadVersion, setReloadVersion] = useState(0);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [draftPlugin, setDraftPlugin] = useState<PluginUploadDraft | null>(null);
@@ -38,6 +56,40 @@ export default function SettingPluginsPage() {
     () => ['setting-plugins', pluginListUrl, reloadVersion].join(':'),
     [pluginListUrl, reloadVersion]
   );
+
+  useEffect(() => {
+    setSearch(routeQuery.search);
+    setQuery(routeQuery);
+  }, [routeQuery]);
+
+  const replaceRouteQuery = useCallback((nextQuery: PluginQueryState) => {
+    const nextParams = new URLSearchParams(routeSearchParamString);
+    const cleanSearch = nextQuery.search.trim();
+    if (cleanSearch) {
+      nextParams.set('search', cleanSearch);
+    } else {
+      nextParams.delete('search');
+    }
+
+    if (nextQuery.pageIndex != null && nextQuery.pageIndex > 0) {
+      nextParams.set('pageIndex', String(nextQuery.pageIndex));
+    } else {
+      nextParams.delete('pageIndex');
+    }
+
+    if (nextQuery.pageSize != null && nextQuery.pageSize !== 8) {
+      nextParams.set('pageSize', String(nextQuery.pageSize));
+    } else {
+      nextParams.delete('pageSize');
+    }
+
+    const nextParamString = nextParams.toString();
+    const nextUrl = nextParamString ? `/setting/plugins?${nextParamString}` : '/setting/plugins';
+    const currentUrl = routeSearchParamString ? `/setting/plugins?${routeSearchParamString}` : '/setting/plugins';
+    if (nextUrl !== currentUrl) {
+      router.replace(nextUrl, { scroll: false });
+    }
+  }, [routeSearchParamString, router]);
 
   const load = useCallback(async () => {
     setIsLoadPending(true);
@@ -93,13 +145,17 @@ export default function SettingPluginsPage() {
         onSearch={() => {
           clearActionFeedback();
           setSelectedIds([]);
-          setQuery({ search, pageIndex: 0, pageSize: query.pageSize });
+          const nextQuery = { search, pageIndex: 0, pageSize: query.pageSize };
+          setQuery(nextQuery);
+          replaceRouteQuery(nextQuery);
         }}
         onSearchClear={() => {
           clearActionFeedback();
           setSelectedIds([]);
           setSearch('');
-          setQuery({ search: '', pageIndex: 0, pageSize: query.pageSize });
+          const nextQuery = { search: '', pageIndex: 0, pageSize: query.pageSize };
+          setQuery(nextQuery);
+          replaceRouteQuery(nextQuery);
         }}
         onRefresh={() => {
           clearActionFeedback();
@@ -125,7 +181,7 @@ export default function SettingPluginsPage() {
           if (selectedIds.length === 0) {
             setActionKind('delete');
             setActionTone('warning');
-            setActionError(t('common.notify.no-select-delete'));
+            setActionError(t('setting.plugins.notify.no-select-delete'));
             return;
           }
           setActionKind('delete');
@@ -178,12 +234,16 @@ export default function SettingPluginsPage() {
         onPageIndexChange={pageIndex => {
           clearActionFeedback();
           setSelectedIds([]);
-          setQuery(current => ({ ...current, pageIndex }));
+          const nextQuery = { ...query, pageIndex };
+          setQuery(nextQuery);
+          replaceRouteQuery(nextQuery);
         }}
         onPageSizeChange={pageSize => {
           clearActionFeedback();
           setSelectedIds([]);
-          setQuery(current => ({ ...current, pageIndex: 0, pageSize }));
+          const nextQuery = { ...query, pageIndex: 0, pageSize };
+          setQuery(nextQuery);
+          replaceRouteQuery(nextQuery);
         }}
         onEditParams={(plugin: Plugin) => {
           clearActionFeedback();

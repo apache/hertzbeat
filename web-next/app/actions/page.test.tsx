@@ -94,6 +94,9 @@ describe('actions page', () => {
     expect(source).toContain('fetch(state.approvalDraft.endpoint');
     expect(source).toContain('fetch(state.approvalDraftQueue.endpoint');
     expect(source).toContain('fetch(endpoint');
+    expect(source).toContain('buildApprovalDecisionRequestPreview');
+    expect(source).toContain("approvalDecisionResult?.decision");
+    expect(source).not.toContain("decision: 'approved',");
     expect(source).not.toContain('rounded-[16px]');
     expect(source).not.toContain('rounded-[14px]');
     expect(source).not.toContain('#4f6cff');
@@ -157,6 +160,23 @@ describe('actions page', () => {
     expect(html).toContain('traceId=trace-123');
     expect(html).not.toContain('data-actions-auto-execute');
     expect(html).not.toContain('/actions/run');
+  });
+
+  it('does not enable suggested actions from route tracking source params alone', async () => {
+    const { default: ActionsPage } = await import('./actions-page');
+    const html = renderToStaticMarkup(
+      <ActionsPage
+        suggestionContext={{
+          source: 'product-design-1590-default'
+        }}
+      />
+    );
+
+    expect(html).not.toContain('data-actions-suggested-remediation="alert-context-human-confirmation"');
+    expect(html).toContain('data-actions-approval-draft-state="awaiting-context"');
+    expect(html).toContain('data-actions-approval-draft-status="blocked"');
+    expect(html).toContain(t('actions.approval-draft.disabled'));
+    expect(html).not.toContain('&quot;actionId&quot;:&quot;suggest-restart-checkout&quot;');
   });
 
   it('renders entity-id-only suggested remediation targets with localized fallback copy', async () => {

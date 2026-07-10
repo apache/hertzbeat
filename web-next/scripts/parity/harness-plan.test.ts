@@ -25,7 +25,7 @@ describe('parity harness plan', () => {
         expect.objectContaining({
           familyKey: 'log-compatibility-family',
           routePairKey: 'log-integration-root-compat',
-          parityOwner: 'buildLogCompatRouteUrl',
+          parityOwner: 'buildLogIntegrationIngestionHref',
           nextPagePath: 'web-next/app/log/integration/page.tsx',
           routeTestPath: 'web-next/app/log/integration/page.test.tsx',
           nextUrl: 'http://127.0.0.1:4200/log/integration',
@@ -34,7 +34,7 @@ describe('parity harness plan', () => {
         expect.objectContaining({
           familyKey: 'log-compatibility-family',
           routePairKey: 'log-stream-compat',
-          parityOwner: 'buildLogCompatRouteUrl',
+          parityOwner: 'LogManagePage',
           nextPagePath: 'web-next/app/log/stream/page.tsx',
           routeTestPath: 'web-next/app/log/stream/page.test.tsx',
           nextUrl: 'http://127.0.0.1:4200/log/stream',
@@ -113,7 +113,11 @@ describe('parity harness plan', () => {
     });
 
     expect(plan.targets).toHaveLength(8);
-    expect(plan.parityOwners).toEqual(['ThreeSignalDeskShell', 'buildLogCompatRouteUrl']);
+    expect(plan.parityOwners).toEqual([
+      'ThreeSignalDeskShell',
+      'LogManagePage',
+      'buildLogIntegrationIngestionHref'
+    ]);
     expect(plan.verificationCommands).toEqual([
       'npm exec vitest run app/overview/page.test.tsx lib/overview/navigation.test.ts lib/overview/view-model.test.ts',
       'npm exec vitest run app/log/manage/page.test.tsx lib/log-manage/view-model.test.ts lib/parity/route-manifest.test.ts',

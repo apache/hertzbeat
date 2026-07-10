@@ -86,6 +86,7 @@ export function ExceptionCenterSurface({ type }: { type: string }) {
         description={copy.subtitle}
         mainId="exception-center-main"
         mainLabel={t('exception.chrome.title')}
+        skipLinkLabel={t('app.frame.skip-to-workbench')}
         filterRailLabel={t('exception.chrome.filter-title')}
         actions={
           <>

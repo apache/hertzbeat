@@ -112,13 +112,11 @@ function toPageResult<T>(items: T[] | PageResult<T>): PageResult<T> {
   return items;
 }
 
-function emptyPageResult<T>(): PageResult<T> {
-  return {
-    content: [],
-    totalElements: 0,
-    pageIndex: 0,
-    pageSize: 0
-  };
+function fulfilledOrThrow<T>(result: PromiseSettledResult<T>): T {
+  if (result.status === 'fulfilled') {
+    return result.value;
+  }
+  throw result.reason;
 }
 
 function normalizePageIndex(value?: number) {
@@ -195,13 +193,14 @@ export async function loadAlertNoticeData(apiGet: ApiGetter, query: NoticeLoadQu
     loadNoticeTemplates(apiGet, query.templates),
     loadNoticeTemplateOptions(apiGet)
   ]);
-  const receivers = receiversResult.status === 'fulfilled' ? receiversResult.value : emptyPageResult<NoticeReceiver>();
-  const templates = templatesResult.status === 'fulfilled' ? toPageResult(templatesResult.value) : emptyPageResult<NoticeTemplate>();
+  const receivers = fulfilledOrThrow(receiversResult);
+  const rules = fulfilledOrThrow(rulesResult);
+  const templates = toPageResult(fulfilledOrThrow(templatesResult));
 
   return {
     receivers,
     receiverOptions: receiverOptionsResult.status === 'fulfilled' ? receiverOptionsResult.value : receivers,
-    rules: rulesResult.status === 'fulfilled' ? rulesResult.value : emptyPageResult<NoticeRule>(),
+    rules,
     templates,
     templateOptions:
       templateOptionsResult.status === 'fulfilled'
@@ -227,8 +226,9 @@ export async function loadAlertNoticeDataFromFacade(
     readers.templates(query.templates),
     readers.templateOptions()
   ]);
-  const receivers = receiversResult.status === 'fulfilled' ? receiversResult.value : emptyPageResult<NoticeReceiver>();
-  const templates = templatesResult.status === 'fulfilled' ? toPageResult(templatesResult.value) : emptyPageResult<NoticeTemplate>();
+  const receivers = fulfilledOrThrow(receiversResult);
+  const rules = fulfilledOrThrow(rulesResult);
+  const templates = toPageResult(fulfilledOrThrow(templatesResult));
 
   return {
     receivers,
@@ -236,7 +236,7 @@ export async function loadAlertNoticeDataFromFacade(
       receiverOptionsResult.status === 'fulfilled'
         ? toPageResult(receiverOptionsResult.value)
         : receivers,
-    rules: rulesResult.status === 'fulfilled' ? rulesResult.value : emptyPageResult<NoticeRule>(),
+    rules,
     templates,
     templateOptions:
       templateOptionsResult.status === 'fulfilled'

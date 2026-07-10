@@ -89,7 +89,7 @@ describe('setting define monitor-template surface', () => {
         editorValue="app: mysql\ncategory: database\nmetrics:\n  - uptime"
         originalYaml="app: mysql\ncategory: database"
         yamlLabel="app-mysql.yml"
-        darkMode
+        monitorHref="/monitors?app=mysql&source=define-monitor-link-test&returnTo=%2Fsetting%2Flabels%3Fsource%3Dreturn&pageSize=8&timeRange=last-30m&live=false&probe=define-monitor-link-test"
         isEditing
         message={t('common.notify.apply-success')}
         onSearchChange={() => {}}
@@ -101,27 +101,22 @@ describe('setting define monitor-template surface', () => {
         onSave={() => {}}
         onDelete={() => {}}
         onToggleTemplateVisibility={() => {}}
-        onToggleDarkMode={() => {}}
         onEditorValueChange={() => {}}
       />
     );
 
-    expect(html).toContain('data-setting-define-surface="otlp-cold-define-console"');
+    expect(html).toContain('data-setting-define-surface="otlp-hertzbeat-ui-define-console"');
     expect(html).toContain('data-setting-define-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-setting-define-route-state="angular-current-app-url-retained"');
-    expect(html).toContain('data-setting-define-theme-contract="angular-theme-service-initial"');
-    expect(html).toContain('data-setting-define-theme-owner="angular-theme-service"');
+    expect(html).toContain('data-setting-define-theme-contract="dark-ops-fixed-yaml-workbench"');
+    expect(html).toContain('data-setting-define-theme-owner="setting-define-surface"');
     expect(html).toContain('data-setting-define-theme-mode="dark-ops"');
-    expect(html).toContain('data-setting-define-theme-switch-contract="angular-nz-switch-code-editor-theme"');
-    expect(html).toContain('data-setting-define-theme-switch-owner="hertzbeat-ui-switch"');
+    expect(html).toContain('data-setting-define-theme-switch-contract="removed-redundant-local-toggle"');
+    expect(html).toContain('data-setting-define-theme-switch-owner="setting-define-surface"');
     expect(html).toContain('data-setting-define-theme-switch-state="vs-dark"');
-    expect(html).toContain('data-setting-define-theme-toggle="angular-nz-switch"');
-    expect(html).toContain('data-setting-define-theme-toggle-owner="hertzbeat-ui-switch"');
-    expect(html).toContain('data-setting-define-theme-toggle-state="vs-dark"');
-    expect(html).toContain('data-hz-ui="switch"');
-    expect(html).toContain('data-hz-switch-owner="hertzbeat-ui-switch"');
-    expect(html).toContain('role="switch"');
-    expect(html).toContain('aria-checked="true"');
+    expect(html).not.toContain('data-setting-define-theme-toggle="angular-nz-switch"');
+    expect(html).not.toContain('data-hz-ui="switch"');
+    expect(html).not.toContain('role="switch"');
     expect(html).toContain('data-setting-define-menu-filter-contract="angular-monitor-select-list-label-only"');
     expect(html).toContain('data-setting-define-menu-filter-owner="hertzbeat-ui-template-picker"');
     expect(html).toContain('data-setting-define-menu-filtered-contract="angular-hide-prometheus-system"');
@@ -142,7 +137,7 @@ describe('setting define monitor-template surface', () => {
     expect(html).toContain('data-setting-define-new-action-state="available"');
     expect(html).toContain('data-setting-define-menu-select-contract="angular-router-navigate-app-query"');
     expect(html).toContain('data-setting-define-menu-select-owner="hertzbeat-ui-template-picker"');
-    expect(html).toContain('data-setting-define-menu-select-query-contract="angular-replace-with-app-only"');
+    expect(html).toContain('data-setting-define-menu-select-query-contract="retain-context-while-updating-app"');
     expect(html).toContain('data-setting-define-menu-select-query-owner="setting-define-page-router"');
     expect(html).toContain('data-setting-define-confirm-closable-contract="angular-nz-closable-false"');
     expect(html).toContain('data-setting-define-confirm-ok-contract="angular-nz-ok-danger-primary"');
@@ -165,15 +160,21 @@ describe('setting define monitor-template surface', () => {
     expect(html).toContain('data-setting-define-editor-loading-owner="hz-code-editor"');
     expect(html).toContain('data-setting-define-editor-loading="false"');
     expect(html).toContain('data-setting-define-editor-loading-save-contract="angular-save-hidden-while-editor-loading"');
-    expect(html).toContain('data-setting-define-header="cold-compact-header"');
+    expect(html).toContain('data-setting-define-header="hertzbeat-ui-compact-toolbar"');
+    expect(html).toContain('data-setting-define-header-density="reduced-invalid-summary"');
+    expect(html).toContain('data-setting-define-header-nesting-contract="flat-page-toolbar"');
+    expect(html).toContain('class="p-0"');
     expect(html).toContain('data-setting-define-command-row="standard-equal-buttons"');
-    expect(html).toContain('data-setting-define-workspace="cold-define-workspace"');
+    expect(html).toContain('data-setting-define-workspace="hertzbeat-ui-define-workspace"');
     expect(html).toContain('data-hz-ui="yaml-workspace"');
     expect(html).toContain('data-hz-ui="template-picker"');
     expect(html).toContain('data-hz-template-filter-contract="angular-monitor-select-list-label-only"');
     expect(html).toContain('data-hz-template-filter-owner="hertzbeat-ui-template-picker"');
     expect(html).toContain('data-hz-template-filter-match="label"');
     expect(html).toContain('data-hz-template-filter-state="matched-groups"');
+    expect(html).not.toContain('data-hz-template-total-count="visible"');
+    expect(html).not.toContain('data-hz-template-category-count="visible"');
+    expect(html).not.toContain(t('setting.define.summary.yaml-lines', { count: 4 }));
     expect(html).toContain('data-hz-yaml-editor-runtime="external"');
     expect(html).toContain('data-setting-define-editor-shell="shared-yaml-workspace"');
     expect(html).toContain('data-setting-define-editor-field="hz-code-editor"');
@@ -195,11 +196,15 @@ describe('setting define monitor-template surface', () => {
     expect(html).toContain('data-setting-define-template-visibility="mysql"');
     expect(html).toContain('data-setting-define-template-visibility-contract="angular-hide-true-or-undefined-contextual"');
     expect(html).toContain('data-setting-define-template-visibility-owner="hertzbeat-ui-button"');
+    expect(html).toContain('data-setting-define-template-visibility-density="icon-only-list-action"');
     expect(html).toContain('data-setting-define-template-visibility-label="MySQL"');
     expect(html).toContain('data-setting-define-template-visibility-action="hide"');
     expect(html).toContain('data-setting-define-template-visibility-next-hide="true"');
     expect(html).toContain(`aria-label="${t('setting.define.action.hide-aria', { app: 'MySQL' })}"`);
     expect(html).toContain(`title="${t('setting.define.action.hide-aria', { app: 'MySQL' })}"`);
+    expect(html).toContain('class="sr-only"');
+    expect(html).not.toContain(t('setting.define.template.visible'));
+    expect(html).not.toContain('border border-[#303743] bg-[#0b0c0e] px-1.5 py-0.5 text-[10px] text-[#858d9a]');
     expect(html).toContain('data-setting-define-new-action="angular-current-app-reset"');
     expect(html).toContain('data-setting-define-new-action-contract="angular-current-app-reset-url-retained"');
     expect(html).toContain('data-setting-define-new-action-owner="setting-define-controller"');
@@ -209,7 +214,7 @@ describe('setting define monitor-template surface', () => {
     expect(html).toContain('data-setting-define-monitor-link-owner="hertzbeat-ui-button-link"');
     expect(html).toContain('data-setting-define-monitor-link-app="mysql"');
     expect(html).toContain('data-hz-ui="button-link"');
-    expect(html).toContain('href="/monitors?app=mysql"');
+    expect(html).toContain('href="/monitors?app=mysql&amp;source=define-monitor-link-test&amp;returnTo=%2Fsetting%2Flabels%3Fsource%3Dreturn&amp;pageSize=8&amp;timeRange=last-30m&amp;live=false&amp;probe=define-monitor-link-test"');
     expect(html).toContain('data-setting-define-delete-action="angular-current-app-id"');
     expect(html).toContain('data-setting-define-delete-action-owner="hertzbeat-ui-button"');
     expect(html).toContain('data-setting-define-delete-action-label="mysql"');
@@ -228,20 +233,25 @@ describe('setting define monitor-template surface', () => {
     expect(html).toContain('data-setting-define-template-visibility-confirm="closed"');
     expect(html).toContain('data-setting-define-template-visibility-confirm-owner="hertzbeat-ui-confirm-dialog"');
     expect(html).toContain(t('setting.define.title'));
-    expect(html).toContain(t('setting.define.subtitle'));
+    expect(html).not.toContain(t('setting.define.subtitle'));
     expect(html).toContain(t('setting.define.action.new'));
     expect(html).toContain('app-mysql.yml');
     expect(html).toContain('MySQL');
     expect(html).toContain('DATABASE');
     expect(html).toContain(t('setting.define.action.save-apply'));
     expect(html).toContain(t('setting.define.action.delete', { app: 'mysql' }));
-    expect(html).toContain(t('common.dark-mode'));
+    expect(html).not.toContain(t('common.dark-mode'));
     expect(html).not.toContain('data-hz-checkbox-owner="hertzbeat-ui-checkbox"');
     expect(html).toContain(t('common.notify.apply-success'));
     expect(html).not.toContain('data-setting-define-preview-panel');
     expect(html).not.toContain('data-setting-define-datasource-panel');
     expect(html).not.toContain(han(0x9884, 0x89c8, 0x67e5, 0x8be2));
     expect(html).not.toContain(han(0x6570, 0x636e, 0x6e90, 0x72b6, 0x6001));
+
+    const source = readFileSync(resolve(process.cwd(), 'components/pages/setting-define-surface.tsx'), 'utf8');
+    expect(source).toContain('data-setting-define-header-nesting-contract="flat-page-toolbar"');
+    expect(source).toContain('className="p-0"');
+    expect(source).not.toContain('className="rounded-[4px] border border-[#2b3039] bg-[#101217] px-4 py-3 shadow-[0_16px_40px_rgba(0,0,0,0.24)]"');
   });
 
   it('hides edit and save-apply while editing an existing template until YAML differs from the original', async () => {
@@ -254,7 +264,6 @@ describe('setting define monitor-template surface', () => {
         editorValue="app: mysql\ncategory: database"
         originalYaml="app: mysql\ncategory: database"
         yamlLabel="app-mysql.yml"
-        darkMode={false}
         isEditing
         message={null}
         onSearchChange={() => {}}
@@ -266,13 +275,14 @@ describe('setting define monitor-template surface', () => {
         onSave={() => {}}
         onDelete={() => {}}
         onToggleTemplateVisibility={() => {}}
-        onToggleDarkMode={() => {}}
         onEditorValueChange={() => {}}
       />
     );
 
     expect(html).toContain('data-setting-define-diff-shell="monitor-template-diff"');
     expect(html).toContain(t('common.button.cancel'));
+    expect(html).toContain('data-setting-define-cancel-action="existing-template-edit"');
+    expect(html).toContain('data-setting-define-cancel-owner="setting-define-controller"');
     expect(html).toContain(t('setting.define.action.delete', { app: 'mysql' }));
     expect(html).not.toContain('lucide-pencil');
     expect(html).not.toContain(t('setting.define.action.save-apply'));
@@ -288,7 +298,6 @@ describe('setting define monitor-template surface', () => {
         editorValue="app: custom\ncategory: custom\nmetrics: []"
         originalYaml="app: custom\ncategory: custom"
         yamlLabel="app-custom.yml"
-        darkMode={false}
         isEditing
         message={null}
         onSearchChange={() => {}}
@@ -300,7 +309,6 @@ describe('setting define monitor-template surface', () => {
         onSave={() => {}}
         onDelete={() => {}}
         onToggleTemplateVisibility={() => {}}
-        onToggleDarkMode={() => {}}
         onEditorValueChange={() => {}}
       />
     );
@@ -308,26 +316,27 @@ describe('setting define monitor-template surface', () => {
     expect(html).toContain(t('setting.define.new-template'));
     expect(html).toContain('data-setting-define-code-editor="monitor-template-yaml"');
     expect(html).toContain(t('setting.define.action.save-apply'));
+    expect(html).toContain(t('common.button.cancel'));
+    expect(html).toContain('data-setting-define-cancel-action="new-template-draft"');
+    expect(html).toContain('data-setting-define-cancel-owner="setting-define-controller"');
     expect(html).toContain('data-setting-define-new-action-contract="angular-current-app-reset-url-retained"');
     expect(html).toContain('data-setting-define-new-action-state="hidden"');
     expect(html).not.toContain('data-setting-define-diff-shell="monitor-template-diff"');
     expect(html).not.toContain('data-setting-define-monitor-link=');
     expect(html).not.toContain(t('setting.define.action.new'));
-    expect(html).not.toContain(t('common.button.cancel'));
     expect(html).not.toContain(t('setting.define.action.delete', { app: '' }).trim());
   });
 
-  it('keeps the Angular save action visible for dirty code even when the editor is read-only', async () => {
+  it('keeps the Angular save action visible for meaningful dirty code even when the editor is read-only', async () => {
     const html = renderToStaticMarkup(
       <SettingDefineSurface
         t={t}
         data={data}
         search=""
         selectedApp={null}
-        editorValue="app: custom\n\n\n\n\n"
+        editorValue={'app: custom\ncategory: custom\n\n\n\n\n'}
         originalYaml="app: custom"
         yamlLabel="app-custom.yml"
-        darkMode={false}
         isEditing={false}
         message={null}
         onSearchChange={() => {}}
@@ -339,7 +348,6 @@ describe('setting define monitor-template surface', () => {
         onSave={() => {}}
         onDelete={() => {}}
         onToggleTemplateVisibility={() => {}}
-        onToggleDarkMode={() => {}}
         onEditorValueChange={() => {}}
       />
     );
@@ -349,6 +357,36 @@ describe('setting define monitor-template surface', () => {
     expect(html).toContain('data-setting-define-save-action="request"');
     expect(html).toContain(t('setting.define.action.save-apply'));
     expect(html).not.toContain('data-setting-define-diff-shell="monitor-template-diff"');
+  });
+
+  it('keeps the default new-template draft from looking dirty when only trailing blank lines differ', async () => {
+    const html = renderToStaticMarkup(
+      <SettingDefineSurface
+        t={t}
+        data={{ ...data, selectedApp: null }}
+        search=""
+        selectedApp={null}
+        editorValue={'app: custom\n\n\n\n\n'}
+        originalYaml="app: custom"
+        yamlLabel="app-custom.yml"
+        isEditing={false}
+        message={null}
+        onSearchChange={() => {}}
+        onSearch={() => {}}
+        onSelectApp={() => {}}
+        onNew={() => {}}
+        onEdit={() => {}}
+        onCancel={() => {}}
+        onSave={() => {}}
+        onDelete={() => {}}
+        onToggleTemplateVisibility={() => {}}
+        onEditorValueChange={() => {}}
+      />
+    );
+
+    expect(html).toContain('data-setting-define-new-draft-state="new-template"');
+    expect(html).not.toContain('data-setting-define-save-action="request"');
+    expect(html).not.toContain(t('setting.define.action.save-apply'));
   });
 
   it('shows the Angular editor loading state and hides save while template YAML is loading', async () => {
@@ -361,7 +399,6 @@ describe('setting define monitor-template surface', () => {
         editorValue="app: mysql\ncategory: database\n# changed"
         originalYaml="app: mysql\ncategory: database"
         yamlLabel="app-mysql.yml"
-        darkMode
         isEditing
         menuLoading={false}
         editorLoading
@@ -375,7 +412,6 @@ describe('setting define monitor-template surface', () => {
         onSave={() => {}}
         onDelete={() => {}}
         onToggleTemplateVisibility={() => {}}
-        onToggleDarkMode={() => {}}
         onEditorValueChange={() => {}}
       />
     );
@@ -402,7 +438,6 @@ describe('setting define monitor-template surface', () => {
         editorValue="app: custom"
         originalYaml="app: custom"
         yamlLabel="app-custom.yml"
-        darkMode={false}
         isEditing={false}
         message={null}
         onSearchChange={() => {}}
@@ -414,12 +449,11 @@ describe('setting define monitor-template surface', () => {
         onSave={() => {}}
         onDelete={() => {}}
         onToggleTemplateVisibility={() => {}}
-        onToggleDarkMode={() => {}}
         onEditorValueChange={() => {}}
       />
     );
 
-    expect(html).toContain('data-setting-define-empty-state="cold-list-empty"');
+    expect(html).toContain('data-setting-define-empty-state="hertzbeat-ui-list-empty"');
     expect(html).toContain('data-hz-ui="yaml-workspace"');
     expect(html).toContain('data-hz-ui="template-picker"');
     expect(html).toContain(t('setting.define.empty.title'));
@@ -436,7 +470,6 @@ describe('setting define monitor-template surface', () => {
         editorValue="app: custom\n\n\n\n\n"
         originalYaml="app: custom"
         yamlLabel="app-custom.yml"
-        darkMode={false}
         isEditing={false}
         message={null}
         loadError="backend refused define load"
@@ -449,12 +482,11 @@ describe('setting define monitor-template surface', () => {
         onSave={() => {}}
         onDelete={() => {}}
         onToggleTemplateVisibility={() => {}}
-        onToggleDarkMode={() => {}}
         onEditorValueChange={() => {}}
       />
     );
 
-    expect(html).toContain('data-setting-define-surface="otlp-cold-define-console"');
+    expect(html).toContain('data-setting-define-surface="otlp-hertzbeat-ui-define-console"');
     expect(html).toContain('data-setting-define-load-failure-contract="angular-console-only-shell"');
     expect(html).toContain('data-setting-define-load-failure-owner="setting-define-controller"');
     expect(html).toContain('data-setting-define-load-failure="angular-console-only-shell"');
@@ -477,7 +509,6 @@ describe('setting define monitor-template surface', () => {
         editorValue="app: mysql\ncategory: database"
         originalYaml="app: mysql\ncategory: database"
         yamlLabel="app-mysql.yml"
-        darkMode={false}
         isEditing={false}
         message={null}
         onSearchChange={() => {}}
@@ -489,12 +520,11 @@ describe('setting define monitor-template surface', () => {
         onSave={() => {}}
         onDelete={() => {}}
         onToggleTemplateVisibility={() => {}}
-        onToggleDarkMode={() => {}}
         onEditorValueChange={() => {}}
       />
     );
 
-    expect(html).toContain('data-setting-define-empty-state="cold-list-empty"');
+    expect(html).toContain('data-setting-define-empty-state="hertzbeat-ui-list-empty"');
     expect(html).toContain('data-hz-template-empty-state="angular-no-matched-children"');
     expect(html).toContain(t('setting.define.empty.search-title'));
     expect(html).toContain('data-hz-ui="template-picker"');
@@ -519,7 +549,6 @@ describe('setting define monitor-template surface', () => {
           editorValue="app: mysql\ncategory: database"
           originalYaml="app: mysql\ncategory: database"
           yamlLabel="app-mysql.yml"
-          darkMode={false}
           isEditing={false}
           message={null}
           onSearchChange={() => {}}
@@ -531,7 +560,6 @@ describe('setting define monitor-template surface', () => {
           onSave={() => {}}
           onDelete={() => {}}
           onToggleTemplateVisibility={onToggleTemplateVisibility}
-          onToggleDarkMode={() => {}}
           onEditorValueChange={() => {}}
         />
       );
@@ -545,6 +573,7 @@ describe('setting define monitor-template surface', () => {
     expect(showPostgresql?.getAttribute('aria-label')).toBe(t('setting.define.action.show-aria', { app: 'PostgreSQL' }));
     expect(showPostgresql?.getAttribute('title')).toBe(t('setting.define.action.show-aria', { app: 'PostgreSQL' }));
     expect(showPostgresql?.getAttribute('data-setting-define-template-visibility-owner')).toBe('hertzbeat-ui-button');
+    expect(showPostgresql?.getAttribute('data-setting-define-template-visibility-density')).toBe('icon-only-list-action');
     expect(showPostgresql?.getAttribute('data-setting-define-template-visibility-label')).toBe('PostgreSQL');
     expect(showPostgresql?.getAttribute('data-setting-define-template-visibility-action')).toBe('show');
     expect(showPostgresql?.getAttribute('data-setting-define-template-visibility-contract')).toBe(
@@ -598,10 +627,9 @@ describe('setting define monitor-template surface', () => {
           data={data}
           search=""
           selectedApp="mysql"
-          editorValue=""
+          editorValue={'   \n   '}
           originalYaml="app: mysql\ncategory: database"
           yamlLabel="app-mysql.yml"
-          darkMode={false}
           isEditing
           message={null}
           onSearchChange={() => {}}
@@ -613,7 +641,6 @@ describe('setting define monitor-template surface', () => {
           onSave={onSave}
           onDelete={() => {}}
           onToggleTemplateVisibility={() => {}}
-          onToggleDarkMode={() => {}}
           onEditorValueChange={() => {}}
         />
       );
@@ -634,6 +661,61 @@ describe('setting define monitor-template surface', () => {
     expect(interactionContainer.textContent).toContain(t('define.save-apply.no-code'));
   });
 
+  it('clears the local empty-YML warning when canceling a new template draft', async () => {
+    const onCancel = vi.fn();
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(
+        <SettingDefineSurface
+          t={t}
+          data={{ ...data, selectedApp: null }}
+          search=""
+          selectedApp={null}
+          editorValue=""
+          originalYaml="# draft"
+          yamlLabel="app-custom.yml"
+          isEditing
+          message={null}
+          onSearchChange={() => {}}
+          onSearch={() => {}}
+          onSelectApp={() => {}}
+          onNew={() => {}}
+          onEdit={() => {}}
+          onCancel={onCancel}
+          onSave={() => {}}
+          onDelete={() => {}}
+          onToggleTemplateVisibility={() => {}}
+          onEditorValueChange={() => {}}
+        />
+      );
+      await Promise.resolve();
+    });
+
+    const saveButton = interactionContainer.querySelector('[data-setting-define-save-action="request"]') as HTMLButtonElement | null;
+    const cancelButton = interactionContainer.querySelector('[data-setting-define-cancel-action="new-template-draft"]') as HTMLButtonElement | null;
+    expect(saveButton).not.toBeNull();
+    expect(cancelButton).not.toBeNull();
+
+    await act(async () => {
+      saveButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    expect(interactionContainer.textContent).toContain(t('define.save-apply.no-code'));
+
+    await act(async () => {
+      cancelButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(interactionContainer.textContent).not.toContain(t('define.save-apply.no-code'));
+    expect(interactionContainer.querySelector('[data-setting-define-action-feedback="angular-no-code-warning"]')).toBeNull();
+  });
+
   it('uses the Angular confirmation copy as save and delete modal titles', async () => {
     interactionContainer = document.createElement('div');
     document.body.appendChild(interactionContainer);
@@ -649,7 +731,6 @@ describe('setting define monitor-template surface', () => {
           editorValue="app: mysql\ncategory: database\nmetrics:\n  - uptime"
           originalYaml="app: mysql\ncategory: database"
           yamlLabel="app-mysql.yml"
-          darkMode={false}
           isEditing
           message={null}
           onSearchChange={() => {}}
@@ -661,7 +742,6 @@ describe('setting define monitor-template surface', () => {
           onSave={() => {}}
           onDelete={() => {}}
           onToggleTemplateVisibility={() => {}}
-          onToggleDarkMode={() => {}}
           onEditorValueChange={() => {}}
         />
       );
@@ -720,6 +800,79 @@ describe('setting define monitor-template surface', () => {
     expect(deleteDialog?.textContent).toContain(t('define.delete.confirm', { app: 'MySQL' }));
   });
 
+  it('keeps save and delete confirmation cancel as no-write paths', async () => {
+    const onSave = vi.fn();
+    const onDelete = vi.fn();
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(
+        <SettingDefineSurface
+          t={t}
+          data={data}
+          search=""
+          selectedApp="mysql"
+          editorValue="app: mysql\ncategory: database\nmetrics:\n  - uptime"
+          originalYaml="app: mysql\ncategory: database"
+          yamlLabel="app-mysql.yml"
+          isEditing
+          message={null}
+          onSearchChange={() => {}}
+          onSearch={() => {}}
+          onSelectApp={() => {}}
+          onNew={() => {}}
+          onEdit={() => {}}
+          onCancel={() => {}}
+          onSave={onSave}
+          onDelete={onDelete}
+          onToggleTemplateVisibility={() => {}}
+          onEditorValueChange={() => {}}
+        />
+      );
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      interactionContainer
+        ?.querySelector('[data-setting-define-save-action="request"]')
+        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    expect(interactionContainer.querySelector('[data-setting-define-save-confirm="open"]')).not.toBeNull();
+
+    await act(async () => {
+      interactionContainer
+        ?.querySelector('[data-setting-define-save-confirm-dialog="angular-modal-confirm"] [data-hz-confirm-action="cancel"]')
+        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    expect(interactionContainer.querySelector('[data-setting-define-save-confirm="closed"]')).not.toBeNull();
+    expect(onSave).not.toHaveBeenCalled();
+
+    await act(async () => {
+      interactionContainer
+        ?.querySelector('[data-setting-define-delete-action="angular-current-app-id"]')
+        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    expect(interactionContainer.querySelector('[data-setting-define-delete-confirm="open"]')).not.toBeNull();
+
+    await act(async () => {
+      interactionContainer
+        ?.querySelector('[data-setting-define-delete-confirm-dialog="angular-modal-confirm"] [data-hz-confirm-action="cancel"]')
+        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    expect(interactionContainer.querySelector('[data-setting-define-delete-confirm="closed"]')).not.toBeNull();
+    expect(onDelete).not.toHaveBeenCalled();
+  });
+
   it('keeps the save action in the old Angular loading state while applying YML', () => {
     const html = renderToStaticMarkup(
       <SettingDefineSurface
@@ -730,7 +883,6 @@ describe('setting define monitor-template surface', () => {
         editorValue="app: mysql\ncategory: database\nmetrics:\n  - uptime"
         originalYaml="app: mysql\ncategory: database"
         yamlLabel="app-mysql.yml"
-        darkMode={false}
         isEditing
         savePending
         message={null}
@@ -743,7 +895,6 @@ describe('setting define monitor-template surface', () => {
         onSave={() => {}}
         onDelete={() => {}}
         onToggleTemplateVisibility={() => {}}
-        onToggleDarkMode={() => {}}
         onEditorValueChange={() => {}}
       />
     );
@@ -767,7 +918,6 @@ describe('setting define monitor-template surface', () => {
         editorValue="app: mysql\ncategory: database\nmetrics:\n  - uptime"
         originalYaml="app: mysql\ncategory: database"
         yamlLabel="app-mysql.yml"
-        darkMode={false}
         isEditing
         message={t('common.notify.apply-fail')}
         messageMeta="schema invalid"
@@ -781,7 +931,6 @@ describe('setting define monitor-template surface', () => {
         onSave={() => {}}
         onDelete={() => {}}
         onToggleTemplateVisibility={() => {}}
-        onToggleDarkMode={() => {}}
         onEditorValueChange={() => {}}
       />
     );
@@ -808,7 +957,6 @@ describe('setting define monitor-template surface', () => {
         editorValue="app: mysql\ncategory: database"
         originalYaml="app: mysql\ncategory: database"
         yamlLabel="app-mysql.yml"
-        darkMode={false}
         isEditing={false}
         message={t('common.notify.delete-fail')}
         messageMeta="template is still in use"
@@ -822,7 +970,6 @@ describe('setting define monitor-template surface', () => {
         onSave={() => {}}
         onDelete={() => {}}
         onToggleTemplateVisibility={() => {}}
-        onToggleDarkMode={() => {}}
         onEditorValueChange={() => {}}
       />
     );
@@ -847,7 +994,6 @@ describe('setting define monitor-template surface', () => {
         editorValue="app: mysql"
         originalYaml="app: mysql"
         yamlLabel="app-mysql.yml"
-        darkMode
         isEditing={false}
         menuLoading
         onSearchChange={() => {}}
@@ -859,7 +1005,6 @@ describe('setting define monitor-template surface', () => {
         onSave={() => {}}
         onDelete={() => {}}
         onToggleTemplateVisibility={() => {}}
-        onToggleDarkMode={() => {}}
         onEditorValueChange={() => {}}
       />
     );
@@ -883,7 +1028,6 @@ describe('setting define monitor-template surface', () => {
         editorValue="app: mysql\ncategory: database\nmetrics:\n  - cpu"
         originalYaml="app: mysql\ncategory: database"
         yamlLabel="app-mysql.yml"
-        darkMode={false}
         isEditing
         message={null}
         onSearchChange={() => {}}
@@ -895,7 +1039,6 @@ describe('setting define monitor-template surface', () => {
         onSave={() => {}}
         onDelete={() => {}}
         onToggleTemplateVisibility={() => {}}
-        onToggleDarkMode={() => {}}
         onEditorValueChange={() => {}}
       />
     );
@@ -930,6 +1073,8 @@ describe('setting define monitor-template surface', () => {
     expect(source).toContain('data-setting-define-code-editor="monitor-template-yaml"');
     expect(source).toContain('data-setting-define-code-editor="monitor-template-yaml-original"');
     expect(source).toContain('data-setting-define-editor-shell="shared-yaml-workspace"');
+    expect(source).toContain("key={`${selectedApp || 'new-template'}:${yamlLabel}`}");
+    expect(source).toContain("key={`${selectedApp || 'new-template'}:current:${yamlLabel}`}");
     expect(source).toContain('data-setting-define-menu-filtered-contract="angular-hide-prometheus-system"');
     expect(source).toContain('data-setting-define-menu-filtered-owner="setting-define-controller"');
     expect(source).toContain('data-setting-define-menu-loading-contract="angular-monitor-select-list-loading"');
@@ -942,10 +1087,15 @@ describe('setting define monitor-template surface', () => {
     expect(source).toContain('data-setting-define-new-draft-contract="angular-locale-comment-five-newlines"');
     expect(source).toContain('data-setting-define-new-draft-owner="setting-define-controller"');
     expect(source).toContain("data-setting-define-new-draft-state={hasSelectedApp ? 'existing-template' : 'new-template'}");
+    expect(source).toContain("data-setting-define-cancel-action={hasSelectedApp ? 'existing-template-edit' : 'new-template-draft'}");
+    expect(source).toContain('data-setting-define-cancel-owner="setting-define-controller"');
     expect(source).toContain('data-setting-define-monitor-link-contract="angular-routerlink-monitors-app"');
     expect(source).toContain('data-setting-define-monitor-link-owner="hertzbeat-ui-button-link"');
     expect(source).toContain('data-setting-define-template-visibility=');
     expect(source).toContain('data-setting-define-template-visibility-contract="angular-hide-true-or-undefined-contextual"');
+    expect(source).toContain('data-setting-define-template-visibility-density="icon-only-list-action"');
+    expect(source).toContain('className="h-7 w-7 min-w-0 px-0"');
+    expect(source).toContain('className="sr-only"');
     expect(source).toContain('data-setting-define-template-visibility-next-hide={String(!row.hidden)}');
     expect(source).toContain('data-setting-define-confirm-closable-contract="angular-nz-closable-false"');
     expect(source).toContain('data-setting-define-confirm-ok-contract="angular-nz-ok-danger-primary"');

@@ -18,6 +18,8 @@
 package org.apache.hertzbeat.manager.service.entity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -82,7 +84,7 @@ class EntityNoiseControlRuleQueryServiceTest {
                         CommonConstants.LABEL_INSTANCE, "checkout-api.default.svc.cluster.local"
                 ))
                 .build();
-        when(alertSilenceDao.findAll()).thenReturn(List.of(disabled, globalMatchAll, teamBeta, teamAlpha));
+        when(alertSilenceDao.findAlertSilencesByEnableTrue()).thenReturn(List.of(globalMatchAll, teamBeta, teamAlpha));
 
         List<AlertSilence> scopedRules = entityNoiseControlRuleQueryService.findEnabledSilences("team-a");
         List<AlertSilence> defaultRules = entityNoiseControlRuleQueryService.findEnabledSilences(
@@ -90,6 +92,7 @@ class EntityNoiseControlRuleQueryServiceTest {
 
         assertEquals(List.of(teamAlpha), scopedRules);
         assertEquals(List.of(globalMatchAll), defaultRules);
+        verify(alertSilenceDao, never()).findAll();
     }
 
     @Test
@@ -122,7 +125,7 @@ class EntityNoiseControlRuleQueryServiceTest {
                         CommonConstants.LABEL_INSTANCE, "checkout-api.default.svc.cluster.local"
                 ))
                 .build();
-        when(alertInhibitDao.findAll()).thenReturn(List.of(disabled, generic, teamBeta, teamAlpha));
+        when(alertInhibitDao.findAlertInhibitsByEnableIsTrue()).thenReturn(List.of(generic, teamBeta, teamAlpha));
 
         List<AlertInhibit> scopedRules = entityNoiseControlRuleQueryService.findEnabledInhibits("team-a");
         List<AlertInhibit> defaultRules = entityNoiseControlRuleQueryService.findEnabledInhibits(
@@ -130,5 +133,6 @@ class EntityNoiseControlRuleQueryServiceTest {
 
         assertEquals(List.of(teamAlpha), scopedRules);
         assertEquals(List.of(generic), defaultRules);
+        verify(alertInhibitDao, never()).findAll();
     }
 }

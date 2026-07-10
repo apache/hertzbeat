@@ -26,6 +26,11 @@ import static org.mockito.Mockito.when;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
+import org.apache.hertzbeat.common.entity.manager.EntityMonitorBind;
+import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
+import org.apache.hertzbeat.manager.dao.EntityIdentityDao;
 import org.apache.hertzbeat.manager.pojo.dto.EntityDefinition;
 import org.apache.hertzbeat.manager.pojo.dto.EntityDefinitionRequest;
 import org.apache.hertzbeat.manager.pojo.dto.EntityDto;
@@ -53,6 +58,18 @@ class EntityDefinitionDraftServiceTest {
 
     @Mock
     private EntityDefinitionMappingService entityDefinitionMappingService;
+
+    @Mock
+    private EntityIdentityDao entityIdentityDao;
+
+    @Mock
+    private EntityIdentityResolutionService entityIdentityResolutionService;
+
+    @Mock
+    private EntityWorkspaceAccessService entityWorkspaceAccessService;
+
+    @Mock
+    private EntityMonitorBindQueryService entityMonitorBindQueryService;
 
     @Test
     void parseEntityDefinitionMapsSingleNormalizedDraftWithEntityAndWorkspaceContext() {
@@ -130,5 +147,101 @@ class EntityDefinitionDraftServiceTest {
         List<EntityDto> entityDtos = definitionDraftService.parseEntityDefinitionBundle(request, "team-b");
 
         assertEquals(List.of(firstDto, secondDto), entityDtos);
+    }
+
+    @Test
+    void parseEntityDefinitionBundleRejectsAccessiblePrimaryIdentityCollisionsBeforeWrite() {
+        EntityDefinitionRequest request = new EntityDefinitionRequest();
+        request.setContent("kind: service");
+        Map<String, Object> rawRecord = Map.of("kind", "service");
+        EntityDefinition normalizedDefinition = new EntityDefinition();
+        EntityDto dto = new EntityDto();
+        dto.setIdentities(List.of(EntityIdentity.builder()
+                .identityKey("service.name")
+                .identityValue("checkout-api")
+                .primaryIdentity(true)
+                .build()));
+        EntityIdentity persistedIdentity = EntityIdentity.builder()
+                .entityId(42L)
+                .identityKey("service.name")
+                .identityValue("checkout-api")
+                .normalizedValue("checkout-api")
+                .primaryIdentity(true)
+                .build();
+        ObserveEntity visibleEntity = ObserveEntity.builder()
+                .id(42L)
+                .name("checkout-api")
+                .type("service")
+                .build();
+        when(entityDefinitionDocumentParserService.parseDefinitionRecords(request)).thenReturn(List.of(rawRecord));
+        when(entityDefinitionNormalizationService.normalizeDefinition(rawRecord)).thenReturn(normalizedDefinition);
+        when(entityDefinitionMappingService.toEntityDto(normalizedDefinition, null, "team-a")).thenReturn(dto);
+        when(entityIdentityResolutionService.normalizeIdentityValue("service.name", "checkout-api"))
+                .thenReturn("checkout-api");
+        when(entityIdentityDao.findAllByIdentityKeyInAndNormalizedValueIn(
+                Set.of("service.name"), Set.of("checkout-api"))).thenReturn(List.of(persistedIdentity));
+        when(entityWorkspaceAccessService.findAccessibleEntitiesByIdsForRequestWorkspace(Set.of(42L)))
+                .thenReturn(List.of(visibleEntity));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> definitionDraftService.parseEntityDefinitionBundle(request, "team-a"));
+
+        assertEquals("Entity primary identity already exists: service.name=checkout-api.", exception.getMessage());
+    }
+
+    @Test
+    void parseEntityDefinitionAllowsCurrentEntityPrimaryIdentityWhenEditingDefinition() {
+        EntityDefinitionRequest request = new EntityDefinitionRequest();
+        request.setContent("kind: service");
+        Map<String, Object> rawRecord = Map.of("kind", "service");
+        EntityDefinition normalizedDefinition = new EntityDefinition();
+        EntityDto dto = new EntityDto();
+        dto.setIdentities(List.of(EntityIdentity.builder()
+                .identityKey("service.name")
+                .identityValue("checkout-api")
+                .primaryIdentity(true)
+                .build()));
+        EntityIdentity currentIdentity = EntityIdentity.builder()
+                .entityId(42L)
+                .identityKey("service.name")
+                .identityValue("checkout-api")
+                .normalizedValue("checkout-api")
+                .primaryIdentity(true)
+                .build();
+        when(entityDefinitionDocumentParserService.parseDefinitionRecords(request)).thenReturn(List.of(rawRecord));
+        when(entityDefinitionNormalizationService.normalizeDefinition(rawRecord)).thenReturn(normalizedDefinition);
+        when(entityDefinitionMappingService.toEntityDto(normalizedDefinition, 42L, "team-a")).thenReturn(dto);
+        when(entityIdentityResolutionService.normalizeIdentityValue("service.name", "checkout-api"))
+                .thenReturn("checkout-api");
+        when(entityIdentityDao.findAllByIdentityKeyInAndNormalizedValueIn(
+                Set.of("service.name"), Set.of("checkout-api"))).thenReturn(List.of(currentIdentity));
+
+        EntityDto actualDto = definitionDraftService.parseEntityDefinition(request, 42L, "team-a");
+
+        assertSame(dto, actualDto);
+    }
+
+    @Test
+    void parseEntityDefinitionBundleRejectsMonitorBindAlreadyAssignedBeforeWrite() {
+        EntityDefinitionRequest request = new EntityDefinitionRequest();
+        request.setContent("kind: service");
+        Map<String, Object> rawRecord = Map.of("kind", "service");
+        EntityDefinition normalizedDefinition = new EntityDefinition();
+        EntityDto dto = new EntityDto();
+        dto.setMonitorBinds(List.of(EntityMonitorBind.builder()
+                .monitorId(501L)
+                .build()));
+        when(entityDefinitionDocumentParserService.parseDefinitionRecords(request)).thenReturn(List.of(rawRecord));
+        when(entityDefinitionNormalizationService.normalizeDefinition(rawRecord)).thenReturn(normalizedDefinition);
+        when(entityDefinitionMappingService.toEntityDto(normalizedDefinition, null, "team-a")).thenReturn(dto);
+        when(entityMonitorBindQueryService.findMonitorBindsByMonitorId(501L)).thenReturn(List.of(EntityMonitorBind.builder()
+                .entityId(302L)
+                .monitorId(501L)
+                .build()));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> definitionDraftService.parseEntityDefinitionBundle(request, "team-a"));
+
+        assertEquals("Monitor already bound to another entity: 501.", exception.getMessage());
     }
 }

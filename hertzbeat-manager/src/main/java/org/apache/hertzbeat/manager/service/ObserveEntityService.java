@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.manager.service;
 
 import java.util.List;
+import java.util.Map;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.observability.dto.entity.MonitorInfo;
 import org.apache.hertzbeat.manager.pojo.dto.EntityCatalogSuggestionsInfo;
@@ -102,4 +103,6 @@ public interface ObserveEntityService {
                                         String sort, String order, int pageIndex, int pageSize);
 
     List<EntityMonitorBindingCandidate> getMonitorBindingCandidates(long monitorId);
+
+    Map<Long, List<EntityMonitorBindingCandidate>> getMonitorBindingCandidates(List<Long> monitorIds);
 }

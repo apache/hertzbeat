@@ -1,6 +1,13 @@
-import type { EntityDefinitionActivity, EntityDefinitionFormat, EntityDefinitionRequest, EntityDefinitionWorkspaceTemplate } from '@/lib/types';
+import type {
+  EntityDefinitionActivity,
+  EntityDefinitionFormat,
+  EntityDefinitionRequest,
+  EntityDefinitionWorkspaceTemplate,
+  EntityDto
+} from '@/lib/types';
 
 type ApiGetter = <T>(url: string) => Promise<T>;
+type ApiPoster = <T>(url: string, body: EntityDefinitionRequest) => Promise<T>;
 type EntityDefinitionReaders = {
   definition: (entityId: string, format: EntityDefinitionFormat) => Promise<string>;
   activities: (entityId: string, limit?: number) => Promise<EntityDefinitionActivity[]>;
@@ -9,6 +16,10 @@ type EntityDefinitionReaders = {
 
 export function buildEntityDefinitionUrl(entityId: string, format: EntityDefinitionFormat) {
   return `/entities/${entityId}/definition?format=${format}`;
+}
+
+export function buildEntityDefinitionParseUrl(entityId: string) {
+  return `/entities/${entityId}/definition/parse`;
 }
 
 export function buildEntityDefinitionActivitiesUrl(entityId: string, limit = 8) {
@@ -152,4 +163,8 @@ export async function loadEntityDefinitionPageDataFromFacade(
 
 export function updateDefinitionPayload(content: string, format: EntityDefinitionFormat): EntityDefinitionRequest {
   return { content, format };
+}
+
+export async function parseEntityDefinition(apiPost: ApiPoster, entityId: string, content: string, format: EntityDefinitionFormat) {
+  return apiPost<EntityDto>(buildEntityDefinitionParseUrl(entityId), updateDefinitionPayload(content, format));
 }

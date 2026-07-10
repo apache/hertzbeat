@@ -121,13 +121,173 @@ describe('entity discovery view model', () => {
         system: 'springboot3',
         environment: 'prod',
         activity: t('entities.discovery.row.activity.search-result'),
-        href: '/entities/discovery?source=telemetry&monitorId=9&action=merge',
+        href: '/entities?search=10.0.0.1&source=discovery-candidate&monitorId=9&monitorName=checkout-api&monitorApp=springboot3&monitorInstance=10.0.0.1',
         attributionState: 'merge',
         attributionLabel: t('entities.discovery.row.attribution.merge.label'),
         attributionCopy: t('entities.discovery.row.attribution.merge.copy', { candidate: 'spring catalog' }),
         primaryActionLabel: t('entities.discovery.row.attribution.merge.action')
       }
     ]);
+  });
+
+  it('keeps missing monitor host evidence readable in discovery table rows', () => {
+    const [row] = buildDiscoveryTableRows(
+      [{ id: 1370, name: 'import-export-source', app: 'website', instance: 'null:4223', status: 2 }] as any,
+      [{ id: 'preset-1', name: 'website service', owner: 'platform', system: 'website', environment: 'prod' }] as any,
+      { owners: ['ops'], systems: ['website'], environments: ['prod'] } as any,
+      t
+    );
+
+    expect(row.instance).toBe(t('entities.discovery.row.instance.missing-host-port', { port: '4223' }));
+    expect(row.instance).not.toContain('null');
+
+    const href = new URL(row.href, 'https://hertzbeat.local');
+    expect(href.pathname).toBe('/entities');
+    expect(href.searchParams.get('search')).toBe('import-export-source');
+    expect(href.searchParams.get('monitorApp')).toBe('website');
+    expect(href.searchParams.has('monitorInstance')).toBe(false);
+    expect(row.href).not.toContain('null%3A4223');
+    expect(row.href).not.toContain('null:4223');
+  });
+
+  it('omits dirty missing-host instances from resolved entity links', () => {
+    const [row] = buildDiscoveryTableRows(
+      [
+        {
+          id: 1370,
+          name: 'import-export-source',
+          app: 'website',
+          instance: 'undefined:4223',
+          status: 2,
+          entityBindingCandidates: [{ entityId: 42, entityName: 'import-export-entity', alreadyBound: true }]
+        }
+      ] as any,
+      [{ id: 'preset-1', name: 'website service', owner: 'platform', system: 'website', environment: 'prod' }] as any,
+      { owners: ['ops'], systems: ['website'], environments: ['prod'] } as any,
+      t
+    );
+
+    const href = new URL(row.href, 'https://hertzbeat.local');
+    expect(href.pathname).toBe('/entities/42');
+    expect(href.searchParams.get('monitorName')).toBe('import-export-source');
+    expect(href.searchParams.has('monitorInstance')).toBe(false);
+    expect(row.href).not.toContain('undefined%3A4223');
+    expect(row.href).not.toContain('undefined:4223');
+  });
+
+  it('marks searched monitors with existing entity bindings as resolved and opens the bound entity', () => {
+    expect(
+      buildDiscoveryTableRows(
+        [
+          {
+            id: 9,
+            name: 'checkout-api',
+            app: 'springboot3',
+            instance: '10.0.0.1',
+            status: 0,
+            entityBindingCandidates: [{ entityId: 42, entityName: 'checkout-entity', alreadyBound: true }]
+          }
+        ] as any,
+        [{ id: 'preset-1', name: 'spring catalog', owner: 'platform', system: 'springboot3', environment: 'prod' }] as any,
+        { owners: ['ops'], systems: ['checkout'], environments: ['prod'] } as any,
+        t
+      )
+    ).toEqual([
+      expect.objectContaining({
+        href: '/entities/42?source=discovery-candidate&monitorId=9&monitorName=checkout-api&monitorApp=springboot3&monitorInstance=10.0.0.1',
+        attributionState: 'resolved',
+        attributionLabel: t('entities.discovery.row.attribution.resolved.label'),
+        attributionCopy: t('entities.discovery.row.attribution.resolved.bound-copy', { entity: 'checkout-entity' }),
+        primaryActionLabel: t('entities.discovery.row.attribution.resolved.action')
+      })
+    ]);
+  });
+
+  it('keeps discovery search return context on resolved monitor entity links', () => {
+    const row = buildDiscoveryTableRows(
+      [
+        {
+          id: 9,
+          name: 'checkout-api',
+          app: 'springboot3',
+          instance: '10.0.0.1',
+          status: 0,
+          entityBindingCandidates: [{ entityId: 42, entityName: 'checkout-entity', alreadyBound: true }]
+        }
+      ] as any,
+      [] as any,
+      { owners: [], systems: [], environments: [] } as any,
+      t,
+      { returnTo: '/entities/discovery?search=checkout-api' }
+    )[0];
+
+    const href = new URL(row.href, 'https://hertzbeat.local');
+    expect(href.pathname).toBe('/entities/42');
+    expect(href.searchParams.get('returnTo')).toBe('/entities/discovery?search=checkout-api');
+  });
+
+  it('keeps discovery search return context on candidate search links', () => {
+    const row = buildDiscoveryTableRows(
+      [{ id: 9, name: 'checkout-api', app: 'springboot3', instance: '10.0.0.1', status: 0 }] as any,
+      [{ id: 'preset-1', name: 'spring catalog', owner: 'platform', system: 'springboot3', environment: 'prod' }] as any,
+      { owners: ['ops'], systems: ['checkout'], environments: ['prod'] } as any,
+      t,
+      { returnTo: '/entities/discovery?search=checkout-api' }
+    )[0];
+
+    const href = new URL(row.href, 'https://hertzbeat.local');
+    expect(href.pathname).toBe('/entities');
+    expect(href.searchParams.get('returnTo')).toBe('/entities/discovery?search=checkout-api');
+  });
+
+  it('keeps discovery search return context on suggested new entity draft links', () => {
+    const row = buildDiscoveryTableRows(
+      [{ id: 10, name: 'Codex Website Probe', app: 'website', instance: '127.0.0.1:4225', status: 0 }] as any,
+      [] as any,
+      { owners: ['platform'], systems: [], environments: ['prod'] } as any,
+      t,
+      { returnTo: '/entities/discovery?search=codex&pageIndex=1' }
+    )[0];
+
+    const href = new URL(row.href, 'https://hertzbeat.local');
+    expect(href.pathname).toBe('/entities/new');
+    expect(href.searchParams.get('source')).toBe('telemetry');
+    expect(href.searchParams.get('monitorId')).toBe('10');
+    expect(href.searchParams.get('monitorName')).toBe('Codex Website Probe');
+    expect(href.searchParams.get('monitorApp')).toBe('website');
+    expect(href.searchParams.get('monitorInstance')).toBe('127.0.0.1:4225');
+    expect(href.searchParams.get('returnTo')).toBe('/entities/discovery?search=codex&pageIndex=1');
+  });
+
+  it('searches discovery candidate lists by monitor instance before broad app name', () => {
+    const row = buildDiscoveryTableRows(
+      [{ id: 10, name: 'Codex Website Probe', app: 'website', instance: '127.0.0.1:4225', status: 0 }] as any,
+      [{ id: 'preset-1', name: 'website catalog', owner: 'platform', system: 'website', environment: 'prod' }] as any,
+      { owners: ['platform'], systems: ['website'], environments: ['prod'] } as any,
+      t
+    )[0];
+
+    const href = new URL(row.href, 'https://hertzbeat.local');
+    expect(href.pathname).toBe('/entities');
+    expect(href.searchParams.get('search')).toBe('127.0.0.1:4225');
+    expect(href.searchParams.get('monitorApp')).toBe('website');
+    expect(href.searchParams.get('monitorInstance')).toBe('127.0.0.1:4225');
+  });
+
+  it('keeps current monitor status 1 aligned with the monitor center healthy state', () => {
+    expect(
+      buildDiscoveryTableRows(
+        [{ id: 10, name: 'website-up', app: 'website', instance: '127.0.0.1:4223', status: 1 }] as any,
+        [] as any,
+        { owners: [], systems: [], environments: [] } as any,
+        t
+      )[0]
+    ).toEqual(
+      expect.objectContaining({
+        status: t('entities.discovery.row.status.normal'),
+        statusTone: 'success'
+      })
+    );
   });
 
   it('localizes fallback service names for discovered merge candidates and draft cards', () => {
@@ -183,13 +343,13 @@ describe('entity discovery view model', () => {
         key: 'monitor-10',
         name: 'anonymous-worker',
         instance: t('common.none'),
-        status: t('entities.discovery.row.status.review'),
-        statusTone: 'warning',
+        status: t('entities.discovery.row.status.abnormal'),
+        statusTone: 'critical',
         owner: t('common.none'),
         system: 'worker',
         environment: t('common.none'),
         activity: t('entities.discovery.row.activity.search-result'),
-        href: '/entities/discovery?source=telemetry&monitorId=10&action=enrich',
+        href: '/entities/new?source=telemetry&monitorId=10&monitorName=anonymous-worker&monitorApp=worker',
         attributionState: 'review',
         attributionLabel: t('entities.discovery.row.attribution.review.label'),
         attributionCopy: t('entities.discovery.row.missing.copy', {
@@ -258,10 +418,50 @@ describe('entity discovery view model', () => {
         nextActionLabel: t('entities.discovery.card.next.merge'),
         candidateLabel: t('entities.discovery.card.candidate-label', { candidate: 'checkout-catalog' }),
         actions: [
-          expect.objectContaining({ label: t('entities.discovery.card.action.merge-suggested'), kind: 'primary' }),
+          expect.objectContaining({
+            label: t('entities.discovery.card.action.merge-suggested'),
+            href: '/entities?search=10.0.0.1&source=discovery-candidate&monitorId=9&monitorName=checkout-api&monitorApp=checkout&monitorInstance=10.0.0.1',
+            kind: 'primary'
+          }),
           expect.objectContaining({ label: t('entities.discovery.card.action.open-definition'), kind: 'secondary' }),
           expect.objectContaining({ label: t('entities.discovery.card.action.open-suggested'), kind: 'secondary' }),
           expect.objectContaining({ label: t('entities.discovery.card.action.adopt-draft'), kind: 'link' })
+        ]
+      })
+    ]);
+  });
+
+  it('builds resolved governance cards when the telemetry monitor is already bound', () => {
+    expect(
+      buildDiscoveryGovernanceCards(
+        [
+          {
+            id: 9,
+            name: 'checkout-api',
+            app: 'checkout',
+            instance: '10.0.0.1',
+            status: 0,
+            entityBindingCandidates: [{ entityId: 42, entityName: 'checkout-entity', alreadyBound: true }]
+          }
+        ] as any,
+        [{ id: 'preset-1', name: 'checkout-catalog', owner: 'platform', system: 'checkout', environment: 'prod' }] as any,
+        { owners: ['platform'], systems: ['checkout'], environments: ['prod'] } as any,
+        t
+      )
+    ).toEqual([
+      expect.objectContaining({
+        title: 'checkout-api',
+        state: 'resolved',
+        riskLabel: t('entities.discovery.card.risk.low'),
+        nextActionLabel: t('entities.discovery.card.next.open'),
+        candidateLabel: t('entities.discovery.card.resolved-label', { entity: 'checkout-entity' }),
+        actions: [
+          expect.objectContaining({
+            label: t('entities.discovery.card.action.open-resolved'),
+            href: '/entities/42?source=discovery-candidate&monitorId=9&monitorName=checkout-api&monitorApp=checkout&monitorInstance=10.0.0.1',
+            kind: 'primary'
+          }),
+          expect.objectContaining({ label: t('entities.discovery.card.action.open-definition'), kind: 'secondary' })
         ]
       })
     ]);

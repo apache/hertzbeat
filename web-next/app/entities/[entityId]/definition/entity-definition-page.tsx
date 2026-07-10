@@ -11,12 +11,19 @@ import {
   buildEntityDefinitionUrl,
   loadEntityDefinitionPageDataFromFacade
 } from '@/lib/entity-definition/controller';
+import type { SignalRouteContext } from '@/lib/signal-route-context';
 
 type DefinitionPageData = Awaited<ReturnType<typeof loadEntityDefinitionPageDataFromFacade>>;
 
 const ENTITY_DEFINITION_SETTLED_CACHE_TTL_MS = 10_000;
 
-export default function EntityDefinitionPage({ entityId }: { entityId: string }) {
+export default function EntityDefinitionPage({
+  entityId,
+  routeContext
+}: {
+  entityId: string;
+  routeContext?: SignalRouteContext;
+}) {
   const { t } = useI18n();
   const entityDefinitionUrl = React.useMemo(() => buildEntityDefinitionUrl(entityId, 'yaml'), [entityId]);
   const entityDefinitionActivitiesUrl = React.useMemo(() => buildEntityDefinitionActivitiesUrl(entityId), [entityId]);
@@ -51,6 +58,7 @@ export default function EntityDefinitionPage({ entityId }: { entityId: string })
           initialContent={data.definition}
           initialFormat="yaml"
           initialMessage={data.loadMessage}
+          routeContext={routeContext}
           templates={data.templates}
           activities={data.activities}
         />

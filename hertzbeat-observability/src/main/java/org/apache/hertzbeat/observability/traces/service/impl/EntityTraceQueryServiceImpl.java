@@ -127,7 +127,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
 
     @Override
     public EntityTraceSummaryDto buildEntityTraceSummary(ObservedEntityContext entityContext) {
-        Map<String, Set<String>> identityValues = canonicalIdentityValues(entityContext);
+        Map<String, Set<String>> identityValues = traceQueryIdentityValues(entityContext);
         if (identityValues.isEmpty()) {
             return new EntityTraceSummaryDto(0, 0, null, false, null);
         }
@@ -171,7 +171,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
 
     @Override
     public List<EntityTraceQueryHintDto> buildEntityTraceQueryHints(ObservedEntityContext entityContext) {
-        Map<String, Set<String>> identityValues = canonicalIdentityValues(entityContext);
+        Map<String, Set<String>> identityValues = traceQueryIdentityValues(entityContext);
         if (identityValues.isEmpty()) {
             return Collections.emptyList();
         }
@@ -254,7 +254,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                                                  Long maxDurationMs, int pageIndex, int pageSize,
                                                  Boolean hideInternal, String spanScope, String attributeFilter) {
         ObservedEntityContext entityContext = entityId == null ? null : loadEntityContext(entityId);
-        Map<String, Set<String>> identityValues = canonicalIdentityValues(entityContext);
+        Map<String, Set<String>> identityValues = traceQueryIdentityValues(entityContext);
         TraceQueryScope queryScope = resolveTraceQueryScope(entityContext, identityValues, serviceName, serviceNamespace, environment);
         ResourceFilterSet resourceFilters = removeEntityScopeResourceFilters(
                 identityValues, parseResourceFilters(resourceFilter));
@@ -399,7 +399,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                                              String resourceFilter, String operationName, Long minDurationMs, Long maxDurationMs,
                                              Boolean hideInternal, String spanScope, String attributeFilter) {
         ObservedEntityContext entityContext = entityId == null ? null : loadEntityContext(entityId);
-        Map<String, Set<String>> identityValues = canonicalIdentityValues(entityContext);
+        Map<String, Set<String>> identityValues = traceQueryIdentityValues(entityContext);
         TraceQueryScope queryScope = resolveTraceQueryScope(entityContext, identityValues, serviceName, serviceNamespace, environment);
         ResourceFilterSet resourceFilters = removeEntityScopeResourceFilters(
                 identityValues, parseResourceFilters(resourceFilter));
@@ -541,7 +541,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
             return result;
         }
         ObservedEntityContext entityContext = entityId == null ? null : loadEntityContext(entityId);
-        Map<String, Set<String>> identityValues = canonicalIdentityValues(entityContext);
+        Map<String, Set<String>> identityValues = traceQueryIdentityValues(entityContext);
         TraceQueryScope queryScope = resolveTraceQueryScope(entityContext, identityValues, serviceName, serviceNamespace, environment);
         ResourceFilterSet resourceFilters = removeEntityScopeResourceFilters(
                 identityValues, parseResourceFilters(resourceFilter));
@@ -1672,6 +1672,27 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
             }
         }
         return values.isEmpty() ? Collections.emptyMap() : values;
+    }
+
+    private Map<String, Set<String>> traceQueryIdentityValues(ObservedEntityContext entityContext) {
+        Map<String, Set<String>> values = canonicalIdentityValues(entityContext);
+        if (values.size() <= 1
+                || !values.containsKey(OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_ID)
+                || hasExplicitEntityIdIdentity(entityContext)) {
+            return values;
+        }
+        Map<String, Set<String>> relaxedValues = new LinkedHashMap<>(values);
+        relaxedValues.remove(OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_ID);
+        return relaxedValues.isEmpty() ? values : relaxedValues;
+    }
+
+    private boolean hasExplicitEntityIdIdentity(ObservedEntityContext entityContext) {
+        if (entityContext == null || CollectionUtils.isEmpty(entityContext.getIdentities())) {
+            return false;
+        }
+        return entityContext.getIdentities().stream()
+                .anyMatch(identity -> OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_ID.equals(
+                        trimText(identity.getIdentityKey())));
     }
 
     private List<String> preferredSearchTerms(Map<String, Set<String>> identityValues) {

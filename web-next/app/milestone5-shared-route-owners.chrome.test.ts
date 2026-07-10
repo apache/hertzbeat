@@ -47,8 +47,10 @@ describe('Milestone 5 shared route owners', () => {
     const statusSource = readFileSync(resolve(process.cwd(), 'app/status/status-page.tsx'), 'utf8');
     const passportSource = readFileSync(resolve(process.cwd(), 'app/passport/login/page.tsx'), 'utf8');
 
-    expect(overviewSource).toContain('StageSection');
     expect(overviewSource).toContain('SupportPanel');
+    expect(overviewSource).toContain('OverviewProblemFocusPanel');
+    expect(overviewSource).toContain('data-overview-problem-focus-panel="hertzbeat-ui-flat-problem-focus"');
+    expect(overviewSource).not.toContain('StageSection');
     expect(overviewSource).not.toContain('components/workbench/primitives');
 
     expect(monitorsSource).toContain('HzExplorerFrame');
@@ -71,14 +73,16 @@ describe('Milestone 5 shared route owners', () => {
     expect(traceSource).not.toContain('components/workbench/primitives');
 
     expect(alertIntegrationSource).toContain('AlertIntegrationMarkdown');
-    expect(alertIntegrationSource).toContain('hzOpsCatalogVisual');
-    expect(alertIntegrationSource).toContain('data-alert-integration-surface="otlp-cold-source-doc"');
+    expect(alertIntegrationSource).toContain('HzSourceDocShell');
+    expect(alertIntegrationSource).toContain('data-alert-integration-surface="hertzbeat-ui-source-doc"');
+    expect(alertIntegrationSource).toContain('data-alert-integration-shell-owner="hertzbeat-ui-source-doc-shell"');
+    expect(alertIntegrationSource).not.toContain('hzOpsCatalogVisual');
     expect(alertIntegrationSource).not.toContain('components/workbench/primitives');
 
     expect(alertNoticeSource).toContain('AlertNoticeConsoleShell');
     expect(alertNoticeSource).toContain('ClientWorkbench');
     expect(alertNoticeSource).toContain('HzConfirmDialog');
-    expect(alertNoticeSource).toContain('data-alert-notice-surface="otlp-cold-notice-console"');
+    expect(alertNoticeSource).toContain('data-alert-notice-surface="otlp-hertzbeat-ui-notice-console"');
     expect(alertNoticeSource).not.toContain('components/workbench/primitives');
 
     expect(statusSource).toContain('PublicStatusShell');

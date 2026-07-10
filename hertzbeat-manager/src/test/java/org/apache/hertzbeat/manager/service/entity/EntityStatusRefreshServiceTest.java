@@ -17,11 +17,15 @@
 
 package org.apache.hertzbeat.manager.service.entity;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
@@ -112,5 +116,47 @@ class EntityStatusRefreshServiceTest {
         inOrder.verify(entityMonitorBindService).findEntityMonitors(42L);
         inOrder.verify(entityAlertEvidenceReadModelService).queryActiveAlerts(monitors, 20);
         inOrder.verify(entityRuntimeHealthService).refreshEntityStatus(entity, monitors, activeAlerts);
+    }
+
+    @Test
+    void refreshEntityStatusesWithEvidenceBatchesCurrentPageMonitorLookup() {
+        ObserveEntity checkout = ObserveEntity.builder()
+                .id(42L)
+                .type("service")
+                .name("checkout-api")
+                .workspaceId("team-a")
+                .build();
+        ObserveEntity payments = ObserveEntity.builder()
+                .id(43L)
+                .type("service")
+                .name("payments-api")
+                .workspaceId("team-a")
+                .build();
+        Monitor monitor = Monitor.builder().id(101L).name("checkout-instance").build();
+        List<SingleAlert> activeAlerts = List.of(SingleAlert.builder().id(201L).status("firing").build());
+        EntityStatusInfo checkoutStatus = new EntityStatusInfo(
+                "critical", "1 firing alerts", 1, 0, 1, 0, 1, null);
+        EntityStatusInfo paymentsStatus = new EntityStatusInfo(
+                "unknown", "no live evidence bound yet", 0, 0, 0, 0, 0, null);
+        when(entityMonitorBindService.findEntityMonitorsByEntityIds(List.of(42L, 43L)))
+                .thenReturn(Map.of(42L, List.of(monitor)));
+        when(entityAlertEvidenceReadModelService.queryActiveAlerts(List.of(monitor), 20, "team-a"))
+                .thenReturn(activeAlerts);
+        when(entityRuntimeHealthService.refreshEntityStatus(checkout, List.of(monitor), activeAlerts))
+                .thenReturn(checkoutStatus);
+        when(entityRuntimeHealthService.refreshEntityStatus(payments, List.of(), List.of()))
+                .thenReturn(paymentsStatus);
+
+        Map<Long, EntityStatusRefreshService.EntityRuntimeStatusEvidence> evidenceByEntity =
+                statusRefreshService.refreshEntityStatusesWithEvidence(List.of(checkout, payments), "team-a");
+
+        assertSame(checkoutStatus, evidenceByEntity.get(42L).statusInfo());
+        assertSame(paymentsStatus, evidenceByEntity.get(43L).statusInfo());
+        assertEquals(List.of(monitor), evidenceByEntity.get(42L).monitors());
+        assertEquals(List.of(), evidenceByEntity.get(43L).monitors());
+        verify(entityMonitorBindService).findEntityMonitorsByEntityIds(List.of(42L, 43L));
+        verify(entityMonitorBindService, never()).findEntityMonitors(42L);
+        verify(entityMonitorBindService, never()).findEntityMonitors(43L);
+        verify(entityAlertEvidenceReadModelService, never()).queryActiveAlerts(List.of(), 20, "team-a");
     }
 }

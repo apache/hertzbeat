@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
+  buildAlertCenterRouteUrl,
   buildAlertCompatRouteUrl,
   buildAlertCompatRouteUrlFromSearchParams,
   buildAlertListUrl,
@@ -341,6 +342,37 @@ describe('alert query state codec', () => {
     );
   });
 
+  it('builds alert center route urls from cleared in-memory query state', () => {
+    expect(
+      buildAlertCenterRouteUrl({
+        search: '',
+        status: '',
+        severity: '',
+        pageIndex: 0,
+        pageSize: 8,
+        entityId: '',
+        entityName: '',
+        returnTo: '',
+        source: 'alert-center-route-1213'
+      })
+    ).toBe('/alert?pageIndex=0&pageSize=8&source=alert-center-route-1213');
+
+    expect(
+      buildAlertCenterRouteUrl({
+        search: '',
+        status: 'firing',
+        severity: '',
+        pageIndex: 0,
+        pageSize: 15,
+        entityId: '42',
+        entityName: 'Checkout API',
+        returnTo: '/entities/42?returnLabel=Checkout',
+        signal: 'logs',
+        environment: 'prod'
+      })
+    ).toBe('/alert?status=firing&pageIndex=0&pageSize=15&entityId=42&entityName=Checkout+API&returnTo=%2Fentities%2F42&environment=prod&signal=logs');
+  });
+
   it('normalizes multi-value URL search params into the first alert center query value', () => {
     const routeState = readAlertCenterRouteState({
       search: [' checkout ', 'ignored'],
@@ -375,6 +407,28 @@ describe('alert query state codec', () => {
     expect(canonicalParams.get('returnTo')).toBe('/entities/42');
     expect(canonicalParams.get('signal')).toBe('logs');
     expect(canonicalParams.get('environment')).toBe('prod');
+  });
+
+  it('cleans legacy content and unsupported page-size alert center URLs', () => {
+    const routeState = readAlertCenterRouteState({
+      content: ' checkout ',
+      status: ' FIRING ',
+      pageIndex: '0',
+      pageSize: '1000',
+      source: 'product-design-alert-scale'
+    });
+
+    expect(routeState.initialQuery).toMatchObject({
+      search: 'checkout',
+      status: 'firing',
+      pageIndex: 0,
+      pageSize: 8,
+      source: 'product-design-alert-scale'
+    });
+    expect(routeState.shouldCleanUrl).toBe(true);
+    expect(routeState.cleanUrl).toBe('/alert?search=checkout&status=firing&pageIndex=0&pageSize=8&source=product-design-alert-scale');
+    expect(routeState.cleanUrl).not.toContain('content=');
+    expect(routeState.cleanUrl).not.toContain('pageSize=1000');
   });
 
   it('detects when the alert workbench is in entity context', () => {

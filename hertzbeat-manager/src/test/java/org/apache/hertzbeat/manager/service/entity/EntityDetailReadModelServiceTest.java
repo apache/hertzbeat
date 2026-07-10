@@ -19,6 +19,7 @@ package org.apache.hertzbeat.manager.service.entity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -121,6 +122,38 @@ class EntityDetailReadModelServiceTest {
         assertEquals(List.of(serviceIdentity), dto.getIdentities());
         assertEquals(List.of(), dto.getMonitorBinds());
         assertEquals(List.of(), dto.getRelations());
+    }
+
+    @Test
+    void loadEntityDtoWithRelationPreviewLimitKeepsDefinitionLoadsSeparateFromDetailPreviewLoads() {
+        ObserveEntity entity = ObserveEntity.builder()
+                .id(807L)
+                .name("checkout-graph")
+                .workspaceId("team-a")
+                .build();
+        EntityRelation relation = EntityRelation.builder()
+                .id(907L)
+                .sourceEntityId(807L)
+                .targetEntityId(808L)
+                .relationType("calls")
+                .build();
+        when(entityWorkspaceAccessService.findAccessibleEntityForRequestWorkspace(807L))
+                .thenReturn(Optional.of(entity));
+        when(entityIdentityReadModelService.findIdentities(807L)).thenReturn(List.of());
+        when(entityMonitorBindService.findMonitorBinds(807L)).thenReturn(List.of());
+        when(entityRelationService.findEntityRelations(807L, 50)).thenReturn(List.of(relation));
+
+        EntityDto dto = entityDetailReadModelService.loadEntityDto(807L, 50);
+
+        assertEquals(List.of(relation), dto.getRelations());
+        verify(entityRelationService).findEntityRelations(807L, 50);
+    }
+
+    @Test
+    void countEntityRelationsDelegatesToRelationBoundary() {
+        when(entityRelationService.countEntityRelations(807L)).thenReturn(99L);
+
+        assertEquals(99L, entityDetailReadModelService.countEntityRelations(807L));
     }
 
     @Test

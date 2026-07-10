@@ -62,29 +62,45 @@ public class EntitySummaryReadModelService {
                                                 EntityDefinitionActivity latestDefinitionActivity,
                                                 EntityStatusInfo statusInfo,
                                                 List<Monitor> monitors) {
+        return buildEntitySummary(
+                entity,
+                latestDefinitionActivity,
+                statusInfo,
+                monitors,
+                new EntitySummaryCounts(
+                        entityIdentityReadModelService.countIdentities(entity.getId()),
+                        entityMonitorBindService.countMonitorBinds(entity.getId()),
+                        entityRelationService.countEntityRelations(entity.getId())
+                )
+        );
+    }
+
+    public EntitySummaryInfo buildEntitySummary(ObserveEntity entity,
+                                                EntityDefinitionActivity latestDefinitionActivity,
+                                                EntityStatusInfo statusInfo,
+                                                List<Monitor> monitors,
+                                                EntitySummaryCounts counts) {
         List<Monitor> safeMonitors = CollectionUtils.isEmpty(monitors) ? Collections.emptyList() : monitors;
-        long monitorBindCount = entityMonitorBindService.countMonitorBinds(entity.getId());
-        long identityCount = entityIdentityReadModelService.countIdentities(entity.getId());
-        long relationCount = entityRelationService.countEntityRelations(entity.getId());
+        EntitySummaryCounts safeCounts = counts == null ? EntitySummaryCounts.empty() : counts;
         EntityEvidenceSummaryInfo evidenceSummary = entityObservabilityGateway.buildEntityEvidenceSummary(
                 entity,
                 statusInfo,
-                identityCount,
+                safeCounts.identityCount(),
                 0,
                 safeMonitors,
                 Collections.emptyList()
         );
         EntityOpsSummaryInfo opsSummary = entityObservabilityGateway.buildEntityOpsSummary(
-                entity, relationCount, evidenceSummary
+                entity, safeCounts.relationCount(), evidenceSummary
         );
         EntityNextActionInfo nextAction = entityObservabilityGateway.buildEntityNextActions(
                 entity, evidenceSummary, null, opsSummary
         ).stream().findFirst().orElse(null);
         return new EntitySummaryInfo(
                 EntityInfo.fromEntity(entity),
-                identityCount,
-                monitorBindCount,
-                relationCount,
+                safeCounts.identityCount(),
+                safeCounts.monitorBindCount(),
+                safeCounts.relationCount(),
                 statusInfo.getActiveAlertCount(),
                 statusInfo,
                 opsSummary,
@@ -96,6 +112,31 @@ public class EntitySummaryReadModelService {
                 latestDefinitionActivity == null ? null : latestDefinitionActivity.getFormat(),
                 latestDefinitionActivity == null ? null : latestDefinitionActivity.getGmtCreate()
         );
+    }
+
+    public Map<Long, EntitySummaryCounts> loadSummaryCounts(List<ObserveEntity> entities) {
+        if (CollectionUtils.isEmpty(entities)) {
+            return Collections.emptyMap();
+        }
+        List<Long> entityIds = entities.stream()
+                .map(ObserveEntity::getId)
+                .filter(Objects::nonNull)
+                .toList();
+        if (CollectionUtils.isEmpty(entityIds)) {
+            return Collections.emptyMap();
+        }
+        Map<Long, Long> identityCounts = entityIdentityReadModelService.countIdentitiesByEntityIds(entityIds);
+        Map<Long, Long> monitorBindCounts = entityMonitorBindService.countMonitorBindsByEntityIds(entityIds);
+        Map<Long, Long> relationCounts = entityRelationService.countEntityRelationsByEntityIds(entityIds);
+        return entityIds.stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        entityId -> entityId,
+                        entityId -> new EntitySummaryCounts(
+                                identityCounts.getOrDefault(entityId, 0L),
+                                monitorBindCounts.getOrDefault(entityId, 0L),
+                                relationCounts.getOrDefault(entityId, 0L)
+                        )
+                ));
     }
 
     public Map<Long, EntityDefinitionActivity> loadLatestDefinitionActivities(List<ObserveEntity> entities) {
@@ -110,5 +151,15 @@ public class EntitySummaryReadModelService {
             return Collections.emptyMap();
         }
         return entityActivityReadModelService.findLatestDefinitionActivities(entityIds);
+    }
+
+    /**
+     * Current-page count snapshot used to avoid per-row summary count queries.
+     */
+    public record EntitySummaryCounts(long identityCount, long monitorBindCount, long relationCount) {
+
+        public static EntitySummaryCounts empty() {
+            return new EntitySummaryCounts(0, 0, 0);
+        }
     }
 }

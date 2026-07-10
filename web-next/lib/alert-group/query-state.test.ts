@@ -48,6 +48,21 @@ describe('alert group query state', () => {
     });
   });
 
+  it('does not treat list metadata as alert group evidence without an explicit signal', () => {
+    expect(
+      readAlertGroupRouteState({
+        search: 'uv_alert_group_required',
+        pageSize: '8',
+        source: 'alert-group-required-proof',
+        probe: 'validation-loop',
+        returnTo: '/alert/group?search=uv_alert_group_required'
+      })
+    ).toEqual({
+      signal: null,
+      signalContext: {}
+    });
+  });
+
   it('builds group list url with search', () => {
     expect(buildAlertGroupUrl('cpu')).toBe('/alert/groups?pageIndex=0&pageSize=8&sort=id&order=desc&search=cpu');
   });

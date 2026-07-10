@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ClientWorkbench } from '@/components/workbench/client-workbench';
 import { useI18n } from '@/components/providers/i18n-provider';
 import { CollectorManageSurface, type CollectorDeleteTarget } from '@/components/pages/collector-manage-surface';
@@ -17,13 +18,30 @@ import {
 import { buildCollectorUrl, type CollectorQueryState } from '@/lib/collector-manage/query-state';
 
 const SETTING_COLLECTOR_SETTLED_CACHE_TTL_MS = 10_000;
-const COLLECTOR_DEPLOY_COPY_SUCCESS_DURATION_MS = 800;
+const COLLECTOR_DEPLOY_COPY_SUCCESS_DURATION_MS = 3000;
 type CollectorManagePageData = Awaited<ReturnType<typeof loadCollectorData>>;
+
+function parseCollectorRouteInteger(value: string | null, fallback: number, minimum = 0) {
+  if (!value) return fallback;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed >= minimum ? parsed : fallback;
+}
 
 export default function SettingCollectorPage() {
   const { t } = useI18n();
-  const [search, setSearch] = useState('');
-  const [query, setQuery] = useState<CollectorQueryState>({ pageIndex: 0, pageSize: 8, search: '' });
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const routeSearchParamString = searchParams.toString();
+  const routeSearch = searchParams.get('name') ?? searchParams.get('search') ?? '';
+  const routePageIndex = parseCollectorRouteInteger(searchParams.get('pageIndex'), 0);
+  const routePageSize = parseCollectorRouteInteger(searchParams.get('pageSize'), 8, 1);
+  const routeQuery = useMemo<CollectorQueryState>(() => ({
+    pageIndex: routePageIndex,
+    pageSize: routePageSize,
+    search: routeSearch
+  }), [routePageIndex, routePageSize, routeSearch]);
+  const [search, setSearch] = useState(routeQuery.search);
+  const [query, setQuery] = useState<CollectorQueryState>(routeQuery);
   const [reloadVersion, setReloadVersion] = useState(0);
   const [selectedCollectors, setSelectedCollectors] = useState<string[]>([]);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
@@ -51,6 +69,40 @@ export default function SettingCollectorPage() {
     () => ['setting-collector', collectorListUrl, reloadVersion].join(':'),
     [collectorListUrl, reloadVersion]
   );
+
+  useEffect(() => {
+    setSearch(routeQuery.search);
+    setQuery(routeQuery);
+  }, [routeQuery]);
+
+  const replaceRouteQuery = useCallback((nextQuery: CollectorQueryState) => {
+    const nextParams = new URLSearchParams(routeSearchParamString);
+    const cleanSearch = nextQuery.search.trim();
+    if (cleanSearch) {
+      nextParams.set('name', cleanSearch);
+    } else {
+      nextParams.delete('name');
+    }
+
+    if (nextQuery.pageIndex > 0) {
+      nextParams.set('pageIndex', String(nextQuery.pageIndex));
+    } else {
+      nextParams.delete('pageIndex');
+    }
+
+    if (nextQuery.pageSize !== 8) {
+      nextParams.set('pageSize', String(nextQuery.pageSize));
+    } else {
+      nextParams.delete('pageSize');
+    }
+
+    const nextParamString = nextParams.toString();
+    const nextUrl = nextParamString ? `/setting/collector?${nextParamString}` : '/setting/collector';
+    const currentUrl = routeSearchParamString ? `/setting/collector?${routeSearchParamString}` : '/setting/collector';
+    if (nextUrl !== currentUrl) {
+      router.replace(nextUrl, { scroll: false });
+    }
+  }, [routeSearchParamString, router]);
 
   const load = useCallback(async () => {
     setIsLoadPending(true);
@@ -148,13 +200,17 @@ export default function SettingCollectorPage() {
           onSearch={() => {
             clearActionFeedback();
             setSelectedCollectors([]);
-            setQuery(current => ({ ...current, pageIndex: 0, search }));
+            const nextQuery = { ...query, pageIndex: 0, search };
+            setQuery(nextQuery);
+            replaceRouteQuery(nextQuery);
           }}
           onSearchClear={() => {
             clearActionFeedback();
             setSelectedCollectors([]);
             setSearch('');
-            setQuery(current => ({ ...current, pageIndex: 0, search: '' }));
+            const nextQuery = { ...query, pageIndex: 0, search: '' };
+            setQuery(nextQuery);
+            replaceRouteQuery(nextQuery);
           }}
           onRefresh={() => {
             clearActionFeedback();
@@ -181,7 +237,7 @@ export default function SettingCollectorPage() {
             if (selectedCollectors.length === 0) {
               setActionTone('warning');
               setActionFeedbackContract('angular-no-select-warning');
-              setActionError(t('common.notify.no-select-delete'));
+              setActionError(t('collector.notify.no-select-delete'));
               return;
             }
             setDeleteTarget({
@@ -195,12 +251,16 @@ export default function SettingCollectorPage() {
           onPageIndexChange={pageIndex => {
             clearActionFeedback();
             setSelectedCollectors([]);
-            setQuery(current => ({ ...current, pageIndex }));
+            const nextQuery = { ...query, pageIndex };
+            setQuery(nextQuery);
+            replaceRouteQuery(nextQuery);
           }}
           onPageSizeChange={pageSize => {
             clearActionFeedback();
             setSelectedCollectors([]);
-            setQuery(current => ({ ...current, pageIndex: 0, pageSize }));
+            const nextQuery = { ...query, pageIndex: 0, pageSize };
+            setQuery(nextQuery);
+            replaceRouteQuery(nextQuery);
           }}
           onDeleteCancel={() => {
             if (!isDeletePending) setDeleteTarget(null);
@@ -253,7 +313,7 @@ export default function SettingCollectorPage() {
           onDeployGenerate={() => {
             const collector = deployName.trim();
             if (isDeployPending) return;
-            if (deployName.length === 0) {
+            if (collector.length === 0) {
               setDeployNameValidationVisible(true);
               return;
             }

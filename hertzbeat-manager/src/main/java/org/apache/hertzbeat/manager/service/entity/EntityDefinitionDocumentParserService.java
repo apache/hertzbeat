@@ -38,9 +38,9 @@ public class EntityDefinitionDocumentParserService {
     private static final String FORMAT_CURL = "curl";
 
     public List<Map<String, Object>> parseDefinitionRecords(EntityDefinitionRequest definitionRequest) {
-        String payload = extractDefinitionPayload(definitionRequest.getContent(), definitionRequest.getFormat());
-        String format = normalizeDefinitionFormat(definitionRequest.getFormat(), payload);
-        return parseDefinitionDocuments(payload, format);
+        DefinitionPayload payload = extractDefinitionPayload(definitionRequest.getContent(), definitionRequest.getFormat());
+        String format = normalizeDefinitionFormat(payload.format(), payload.content());
+        return parseDefinitionDocuments(payload.content(), format);
     }
 
     private List<Map<String, Object>> parseDefinitionDocuments(String payload, String format) {
@@ -74,35 +74,116 @@ public class EntityDefinitionDocumentParserService {
         return List.of(toDefinitionRecord(value));
     }
 
-    private String extractDefinitionPayload(String content, String format) {
+    private DefinitionPayload extractDefinitionPayload(String content, String format) {
         String trimmed = content == null ? null : content.trim();
         if (!StringUtils.hasText(trimmed)) {
             throw new IllegalArgumentException("Entity definition content can not be blank.");
         }
         if (!FORMAT_CURL.equalsIgnoreCase(defaultText(format, ""))) {
-            return trimmed;
+            return new DefinitionPayload(trimmed, format);
         }
-        int singleQuoteIndex = trimmed.indexOf("-d '");
-        if (singleQuoteIndex >= 0) {
-            int payloadStart = singleQuoteIndex + 4;
-            int payloadEnd = trimmed.lastIndexOf('\'');
-            if (payloadEnd > payloadStart) {
-                return trimmed.substring(payloadStart, payloadEnd)
-                        .replace("'\\\\''", "'")
-                        .replace("\\\\", "\\");
+        String payload = extractCurlDataPayload(trimmed);
+        if (payload != null) {
+            return unwrapCurlRequestEnvelope(payload, format);
+        }
+        return unwrapCurlRequestEnvelope(trimmed, format);
+    }
+
+    private String extractCurlDataPayload(String curlCommand) {
+        for (String flag : List.of("--data-urlencode", "--data-binary", "--data-raw", "--data", "-d")) {
+            int searchFrom = 0;
+            int flagIndex;
+            while ((flagIndex = curlCommand.indexOf(flag, searchFrom)) >= 0) {
+                int valueStart = flagIndex + flag.length();
+                if (valueStart < curlCommand.length() && curlCommand.charAt(valueStart) == '=') {
+                    valueStart++;
+                } else if (valueStart < curlCommand.length() && !Character.isWhitespace(curlCommand.charAt(valueStart))) {
+                    searchFrom = valueStart;
+                    continue;
+                }
+                while (valueStart < curlCommand.length() && Character.isWhitespace(curlCommand.charAt(valueStart))) {
+                    valueStart++;
+                }
+                if (valueStart >= curlCommand.length()) {
+                    return null;
+                }
+                return readCurlDataValue(curlCommand, valueStart);
             }
         }
-        int doubleQuoteIndex = trimmed.indexOf("-d \"");
-        if (doubleQuoteIndex >= 0) {
-            int payloadStart = doubleQuoteIndex + 4;
-            int payloadEnd = trimmed.lastIndexOf('"');
-            if (payloadEnd > payloadStart) {
-                return trimmed.substring(payloadStart, payloadEnd)
-                        .replace("\\\"", "\"")
-                        .replace("\\\\", "\\");
-            }
+        return null;
+    }
+
+    private String readCurlDataValue(String curlCommand, int valueStart) {
+        char first = curlCommand.charAt(valueStart);
+        if (first == '\'') {
+            return readSingleQuotedCurlValue(curlCommand, valueStart + 1)
+                    .replace("'\\\\''", "'")
+                    .replace("\\\\", "\\");
         }
-        return trimmed;
+        if (first == '"') {
+            return readDoubleQuotedCurlValue(curlCommand, valueStart + 1)
+                    .replace("\\\"", "\"")
+                    .replace("\\\\", "\\");
+        }
+        int valueEnd = valueStart;
+        while (valueEnd < curlCommand.length() && !Character.isWhitespace(curlCommand.charAt(valueEnd))) {
+            valueEnd++;
+        }
+        return curlCommand.substring(valueStart, valueEnd);
+    }
+
+    private String readSingleQuotedCurlValue(String curlCommand, int payloadStart) {
+        int index = payloadStart;
+        while (index < curlCommand.length()) {
+            if (curlCommand.charAt(index) == '\'') {
+                if (index + 3 < curlCommand.length()
+                        && curlCommand.charAt(index + 1) == '\\'
+                        && curlCommand.charAt(index + 2) == '\''
+                        && curlCommand.charAt(index + 3) == '\'') {
+                    index += 4;
+                    continue;
+                }
+                return curlCommand.substring(payloadStart, index);
+            }
+            index++;
+        }
+        return curlCommand.substring(payloadStart);
+    }
+
+    private String readDoubleQuotedCurlValue(String curlCommand, int payloadStart) {
+        int index = payloadStart;
+        boolean escaped = false;
+        while (index < curlCommand.length()) {
+            char current = curlCommand.charAt(index);
+            if (current == '"' && !escaped) {
+                return curlCommand.substring(payloadStart, index);
+            }
+            escaped = current == '\\' && !escaped;
+            if (current != '\\') {
+                escaped = false;
+            }
+            index++;
+        }
+        return curlCommand.substring(payloadStart);
+    }
+
+    private DefinitionPayload unwrapCurlRequestEnvelope(String payload, String format) {
+        if (!JsonUtil.isJsonStr(payload)) {
+            return new DefinitionPayload(payload, format);
+        }
+        Object parsed = JsonUtil.fromJson(payload, Object.class);
+        if (!(parsed instanceof Map<?, ?> rawMap)) {
+            return new DefinitionPayload(payload, format);
+        }
+        Object content = rawMap.get("content");
+        if (!(content instanceof String contentText) || !StringUtils.hasText(contentText)) {
+            return new DefinitionPayload(payload, format);
+        }
+        Object envelopeFormat = rawMap.get("format");
+        return new DefinitionPayload(
+                contentText.trim(),
+                defaultText(envelopeFormat == null ? null : String.valueOf(envelopeFormat), format)
+        );
     }
 
     private String normalizeDefinitionFormat(String format, String payload) {
@@ -140,5 +221,8 @@ public class EntityDefinitionDocumentParserService {
             }
         }
         return "";
+    }
+
+    private record DefinitionPayload(String content, String format) {
     }
 }

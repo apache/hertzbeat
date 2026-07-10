@@ -67,17 +67,16 @@ const sourceBrandMarks: Record<
     background: string;
     color: string;
     border?: string;
-    art?: 'ops-mesh' | 'grafana' | 'elk' | 'new-relic' | 'honeycomb' | 'self-hosted-pipeline' | 'java' | 'kubernetes' | 'docker';
   }
 > = {
   'open-telemetry': { label: 'OT', background: '#050816', color: '#f6c244', border: '#2d3445' },
-  grafana: { label: 'G', background: '#1f1309', color: '#ff8b2b', border: '#3f2611', art: 'grafana' },
-  elk: { label: 'EL', background: '#111318', color: '#2ec7c9', border: '#2b303a', art: 'elk' },
-  'new-relic': { label: 'NR', background: '#06241f', color: '#00e0a4', border: '#0f4c3f', art: 'new-relic' },
-  'commercial-observability': { label: 'OM', background: '#15171d', color: '#f8fafc', border: '#2d313c', art: 'ops-mesh' },
-  honeycomb: { label: 'HC', background: '#231807', color: '#ffbf3c', border: '#5c4110', art: 'honeycomb' },
-  'self-hosted-observability': { label: 'SH', background: '#2a130f', color: '#ff6b4a', border: '#5f271b', art: 'self-hosted-pipeline' },
-  java: { label: 'J', background: '#fff7ed', color: '#dc2626', border: '#fed7aa', art: 'java' },
+  grafana: { label: 'G', background: '#1f1309', color: '#ff8b2b', border: '#3f2611' },
+  elk: { label: 'EL', background: '#111318', color: '#2ec7c9', border: '#2b303a' },
+  'new-relic': { label: 'NR', background: '#06241f', color: '#00e0a4', border: '#0f4c3f' },
+  'commercial-observability': { label: 'OM', background: '#15171d', color: '#f8fafc', border: '#2d313c' },
+  honeycomb: { label: 'HC', background: '#231807', color: '#ffbf3c', border: '#5c4110' },
+  'self-hosted-observability': { label: 'SH', background: '#2a130f', color: '#ff6b4a', border: '#5f271b' },
+  java: { label: 'J', background: '#fff7ed', color: '#dc2626', border: '#fed7aa' },
   python: { label: 'Py', background: '#0f2137', color: '#ffd95a', border: '#264b74' },
   nodejs: { label: 'JS', background: '#2d2a08', color: '#f7df1e', border: '#5b5310' },
   golang: { label: 'Go', background: '#062735', color: '#67e8f9', border: '#155e75' },
@@ -86,118 +85,27 @@ const sourceBrandMarks: Record<
   php: { label: 'php', background: '#1e1f3d', color: '#a5b4fc', border: '#3730a3' },
   ruby: { label: 'Rb', background: '#351113', color: '#fb7185', border: '#7f1d1d' },
   rust: { label: 'Rs', background: '#2b1d12', color: '#fdba74', border: '#7c2d12' },
-  'kubernetes-pod-logs': { label: 'K8s', background: '#0b3b8d', color: '#dbeafe', border: '#2563eb', art: 'kubernetes' },
-  'docker-container-logs': { label: 'Dc', background: '#062840', color: '#38bdf8', border: '#075985', art: 'docker' },
+  'kubernetes-pod-logs': { label: 'K8s', background: '#0b3b8d', color: '#dbeafe', border: '#2563eb' },
+  'docker-container-logs': { label: 'Dc', background: '#062840', color: '#38bdf8', border: '#075985' },
   'cloudflare-logs': { label: 'CF', background: '#331707', color: '#fb923c', border: '#7c2d12' },
   'vercel-logs': { label: '▲', background: '#f8fafc', color: '#111827', border: '#e5e7eb' },
   prometheus: { label: 'Pr', background: '#33170b', color: '#ff7a45', border: '#7c2d12' }
 };
 
-function SourceBrandArt({ art }: { art: NonNullable<(typeof sourceBrandMarks)[string]['art']> }) {
-  if (art === 'ops-mesh') {
-    return (
-      <span className="relative block size-4" aria-hidden="true">
-        <span className="absolute left-[2px] top-[2px] size-[5px] rounded-[1px] border border-white/80" />
-        <span className="absolute right-[2px] top-[2px] size-[5px] rounded-[1px] border border-white/80" />
-        <span className="absolute bottom-[2px] left-[5px] size-[5px] rounded-[1px] border border-white/80" />
-        <span className="absolute left-[6px] top-[7px] h-px w-[5px] bg-white/80" />
-        <span className="absolute left-[4px] top-[7px] h-[5px] w-px rotate-45 bg-white/80" />
-      </span>
-    );
-  }
-
-  if (art === 'grafana') {
-    return (
-      <span className="relative block size-4" aria-hidden="true">
-        <span className="absolute inset-[2px] rounded-full border-2 border-[#ff7a1a]" />
-        <span className="absolute left-[5px] top-[5px] size-[5px] rounded-full bg-[#ff7a1a]" />
-        <span className="absolute right-[1px] top-[2px] size-[3px] rounded-full bg-[#ffb36b]" />
-      </span>
-    );
-  }
-
-  if (art === 'elk') {
-    return (
-      <span className="grid size-4 grid-cols-2 gap-[2px]" aria-hidden="true">
-        <span className="rounded-full bg-[#00bfb3]" />
-        <span className="rounded-full bg-[#f04e98]" />
-        <span className="rounded-full bg-[#f9c74f]" />
-        <span className="rounded-full bg-[#5b8def]" />
-      </span>
-    );
-  }
-
-  if (art === 'new-relic') {
-    return (
-      <span className="relative block size-4" aria-hidden="true">
-        <span className="absolute inset-[1px] bg-[#00d68f]" style={{ clipPath: 'polygon(50% 0, 95% 25%, 95% 75%, 50% 100%, 5% 75%, 5% 25%)' }} />
-        <span className="absolute inset-[5px] rounded-[2px] bg-[#06241f]" />
-      </span>
-    );
-  }
-
-  if (art === 'honeycomb') {
-    return (
-      <span className="relative block size-4" aria-hidden="true">
-        <span className="absolute left-[1px] top-[3px] size-[5px] rotate-45 rounded-[1px] bg-[#f59e0b]" />
-        <span className="absolute left-[6px] top-[1px] size-[5px] rotate-45 rounded-[1px] bg-[#fbbf24]" />
-        <span className="absolute left-[8px] top-[8px] size-[5px] rotate-45 rounded-[1px] bg-[#d97706]" />
-      </span>
-    );
-  }
-
-  if (art === 'self-hosted-pipeline') {
-    return (
-      <span className="relative block size-4" aria-hidden="true">
-        <span className="absolute left-[1px] top-[3px] h-[10px] w-[4px] rounded-[1px] border border-white/80" />
-        <span className="absolute left-[6px] top-[1px] h-[14px] w-[4px] rounded-[1px] border border-white/70" />
-        <span className="absolute right-[1px] top-[4px] h-[8px] w-[4px] rounded-[1px] border border-white/60" />
-        <span className="absolute left-[4px] top-[7px] h-px w-[8px] bg-white/70" />
-      </span>
-    );
-  }
-
-  if (art === 'java') {
-    return (
-      <span className="relative flex size-4 items-end justify-center text-[7px] font-black leading-none text-[#d71920]" aria-hidden="true">
-        <span className="absolute left-[5px] top-[1px] h-[5px] w-[5px] rounded-full border-t border-[#2b6cb0]" />
-        <span>Java</span>
-      </span>
-    );
-  }
-
-  if (art === 'kubernetes') {
-    return (
-      <span className="relative flex size-4 items-center justify-center" aria-hidden="true">
-        <span className="absolute inset-[1px] bg-[#326ce5]" style={{ clipPath: 'polygon(50% 0, 86% 14%, 100% 50%, 86% 86%, 50% 100%, 14% 86%, 0 50%, 14% 14%)' }} />
-        <span className="relative text-[9px] font-black leading-none text-white">✳</span>
-      </span>
-    );
-  }
-
-  return (
-    <span className="relative block size-4" aria-hidden="true">
-      <span className="absolute bottom-[4px] left-[2px] h-[4px] w-[11px] rounded-[1px] bg-[#1d9bf0]" />
-      <span className="absolute bottom-[8px] left-[3px] h-[3px] w-[3px] rounded-[1px] bg-[#38bdf8]" />
-      <span className="absolute bottom-[8px] left-[7px] h-[3px] w-[3px] rounded-[1px] bg-[#38bdf8]" />
-      <span className="absolute bottom-[11px] left-[5px] h-[2px] w-[5px] rounded-[1px] bg-[#7dd3fc]" />
-    </span>
-  );
-}
-
 function SourceBrandMark({ itemKey, brandMark }: { itemKey: string; brandMark: (typeof sourceBrandMarks)[string] }) {
   return (
     <span
       className={coldOpsVisual.sourceCard.mark}
+      aria-hidden="true"
       data-otlp-center-brand-logo={itemKey}
-      data-otlp-center-brand-art={brandMark.art ? itemKey : undefined}
+      data-otlp-center-brand-mark="text-monogram"
       style={{
         background: brandMark.background,
         borderColor: brandMark.border ?? 'transparent',
         color: brandMark.color
       }}
     >
-      {brandMark.art ? <SourceBrandArt art={brandMark.art} /> : brandMark.label}
+      {brandMark.label}
     </span>
   );
 }
@@ -205,11 +113,14 @@ function SourceBrandMark({ itemKey, brandMark }: { itemKey: string; brandMark: (
 function SourceCard({ item }: { item: SourceItem }) {
   const Icon = item.icon;
   const brandMark = sourceBrandMarks[item.key];
+  const sourceCardA11yLabel = `${item.label}: ${item.description}`;
 
   return (
     <Link
+      aria-label={sourceCardA11yLabel}
       className={sourceCardClass}
       data-otlp-center-source-card={item.key}
+      data-otlp-center-source-card-a11y-label={item.label}
       data-otlp-center-source-card-density="nav-scale-compact"
       href={item.href}
       title={item.description}
@@ -217,7 +128,7 @@ function SourceCard({ item }: { item: SourceItem }) {
       {brandMark ? (
         <SourceBrandMark itemKey={item.key} brandMark={brandMark} />
       ) : (
-        <span className={coldOpsVisual.sourceCard.icon}>
+        <span className={coldOpsVisual.sourceCard.icon} aria-hidden="true">
           <Icon className="size-3" aria-hidden="true" />
         </span>
       )}
@@ -491,7 +402,7 @@ export default function OtlpPage() {
                           </Button>
                         </Link>
                       ) : null}
-                      <Link href="/setting/settings/token">
+                      <Link href="/setting/settings/token?scope=otlp-ingest&source=otlp-intake">
                         <Button className={coldOpsVisual.button.compact} size="sm" variant="subtle">{t('otlp.manage-token')}</Button>
                       </Link>
                       <Link href="/entities">

@@ -60,8 +60,20 @@ vi.mock('@/components/workbench/client-workbench', () => ({
 }));
 
 vi.mock('@/components/pages/entity-editor-surface', () => ({
-  EntityEditorSurface: ({ mode, entityId, initial }: any) => (
-    <div data-entity-editor-surface={mode} data-entity-id={entityId ?? 'new'}>
+  EntityEditorSurface: ({ mode, entityId, initial, routeContext }: any) => (
+    <div
+      data-entity-editor-surface={mode}
+      data-entity-id={entityId ?? 'new'}
+      data-route-source={routeContext?.source ?? ''}
+      data-route-monitor-id={routeContext?.monitorId ?? ''}
+      data-route-monitor-name={routeContext?.monitorName ?? ''}
+      data-route-monitor-app={routeContext?.monitorApp ?? ''}
+      data-route-monitor-instance={routeContext?.monitorInstance ?? ''}
+      data-route-return-to={routeContext?.returnTo ?? ''}
+      data-route-service-name={routeContext?.serviceName ?? ''}
+      data-route-service-namespace={routeContext?.serviceNamespace ?? ''}
+      data-route-environment={routeContext?.environment ?? ''}
+    >
       {initial.entity.name}
     </div>
   )
@@ -153,12 +165,46 @@ describe('EntityNewPage', () => {
     const html = renderToStaticMarkup(<EntityNewPage initialSeed={initialSeed} />);
 
     expect(html).toContain('data-cache-key="entity-new:/monitor/42:/entities/catalog-suggestions?limit=120"');
+    expect(html).toContain('data-route-source="telemetry"');
+    expect(html).toContain('data-route-monitor-id="42"');
 
     await mockState.lastLoad?.();
 
     expect(buildEntityEditorNewDraftFromFacade).toHaveBeenCalledWith(readSeedMonitor, {
       source: 'telemetry',
       monitorId: '42'
+    });
+  });
+
+  it('passes discovery candidate monitor context into the shared new-draft loader', async () => {
+    const { default: EntityNewPage } = await import('./entity-new-page');
+    const initialSeed = {
+      source: 'discovery-candidate',
+      monitorId: '42',
+      monitorName: 'checkout-discovery-monitor',
+      monitorApp: 'website',
+      monitorInstance: 'checkout.example.com:443',
+      returnTo: '/entities/discovery?search=checkout'
+    };
+    const html = renderToStaticMarkup(<EntityNewPage initialSeed={initialSeed} />);
+
+    expect(html).toContain('data-cache-key="entity-new:/monitor/42:/entities/catalog-suggestions?limit=120"');
+    expect(html).toContain('data-route-source="discovery-candidate"');
+    expect(html).toContain('data-route-monitor-id="42"');
+    expect(html).toContain('data-route-monitor-name="checkout-discovery-monitor"');
+    expect(html).toContain('data-route-monitor-app="website"');
+    expect(html).toContain('data-route-monitor-instance="checkout.example.com:443"');
+    expect(html).toContain('data-route-return-to="/entities/discovery?search=checkout"');
+
+    await mockState.lastLoad?.();
+
+    expect(buildEntityEditorNewDraftFromFacade).toHaveBeenCalledWith(readSeedMonitor, {
+      source: 'discovery-candidate',
+      monitorId: '42',
+      monitorName: 'checkout-discovery-monitor',
+      monitorApp: 'website',
+      monitorInstance: 'checkout.example.com:443',
+      returnTo: '/entities/discovery?search=checkout'
     });
   });
 
@@ -171,13 +217,19 @@ describe('EntityNewPage', () => {
       identityValue: 'billing',
       serviceName: 'billing-api',
       serviceNamespace: 'commerce',
-      environment: 'prod'
+      environment: 'prod',
+      returnTo: '/trace/manage?traceId=trace-1227'
     };
     const html = renderToStaticMarkup(<EntityNewPage initialSeed={initialSeed as any} />);
 
     expect(html).toContain(
       'data-cache-key="entity-new:otlp-candidate:service.name:billing:billing-api:commerce:prod:/entities/catalog-suggestions?limit=120"'
     );
+    expect(html).toContain('data-route-source="otlp-candidate"');
+    expect(html).toContain('data-route-return-to="/trace/manage?traceId=trace-1227"');
+    expect(html).toContain('data-route-service-name="billing-api"');
+    expect(html).toContain('data-route-service-namespace="commerce"');
+    expect(html).toContain('data-route-environment="prod"');
 
     await mockState.lastLoad?.();
 
@@ -188,7 +240,8 @@ describe('EntityNewPage', () => {
       identityValue: 'billing',
       serviceName: 'billing-api',
       serviceNamespace: 'commerce',
-      environment: 'prod'
+      environment: 'prod',
+      returnTo: '/trace/manage?traceId=trace-1227'
     });
   });
 });

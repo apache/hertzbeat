@@ -10,7 +10,7 @@ describe('app frame state', () => {
     expect(isStandaloneRoute('/status/public')).toBe(true);
     expect(isStandaloneRoute('/exception/403')).toBe(true);
     expect(isStandaloneRoute('/exception/404')).toBe(true);
-    expect(isStandaloneRoute('/exception/500')).toBe(false);
+    expect(isStandaloneRoute('/exception/500')).toBe(true);
     expect(isStandaloneRoute('/overview')).toBe(false);
   });
 
@@ -19,6 +19,8 @@ describe('app frame state', () => {
     expect(isActiveRoute('/entities/123', '/entities')).toBe(true);
     expect(isActiveRoute('/alert/setting', '/alert')).toBe(true);
     expect(isActiveRoute('/log/manage', '/trace/manage')).toBe(false);
+    expect(isActiveRoute('/log/stream', '/log/manage')).toBe(true);
+    expect(isActiveRoute('/log/stream?traceId=trace-123', '/log/manage')).toBe(true);
   });
 
   it('skips header state loading on standalone routes', () => {
@@ -26,6 +28,7 @@ describe('app frame state', () => {
     expect(shouldLoadHeaderState('/passport/lock')).toBe(false);
     expect(shouldLoadHeaderState('/status')).toBe(false);
     expect(shouldLoadHeaderState('/exception/404')).toBe(false);
+    expect(shouldLoadHeaderState('/exception/500')).toBe(false);
     expect(shouldLoadHeaderState('/overview')).toBe(true);
   });
 

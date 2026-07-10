@@ -13,6 +13,50 @@ export type ApiClientError = Error & {
   status?: number;
 };
 
+type ApiErrorPayload = {
+  code?: number;
+  msg?: unknown;
+  message?: unknown;
+  error?: unknown;
+  data?: unknown;
+};
+
+function normalizeErrorMessage(value: unknown): string | null {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+}
+
+function readNestedErrorMessage(data: unknown): string | null {
+  if (!data || typeof data !== 'object') return null;
+  const nested = data as { msg?: unknown; message?: unknown; error?: unknown };
+  return normalizeErrorMessage(nested.msg) || normalizeErrorMessage(nested.message) || normalizeErrorMessage(nested.error);
+}
+
+function parseApiErrorPayload(text: string): { code?: number; message?: string } {
+  if (!text.trim()) return {};
+  try {
+    const payload = JSON.parse(text) as ApiErrorPayload;
+    return {
+      code: typeof payload.code === 'number' ? payload.code : undefined,
+      message:
+        normalizeErrorMessage(payload.msg)
+        || normalizeErrorMessage(payload.message)
+        || normalizeErrorMessage(payload.error)
+        || readNestedErrorMessage(payload.data)
+        || undefined
+    };
+  } catch {
+    return {};
+  }
+}
+
+async function readApiErrorResponse(response: Response): Promise<{ code?: number; message?: string }> {
+  try {
+    return parseApiErrorPayload(await response.clone().text());
+  } catch {
+    return {};
+  }
+}
+
 export function getAuthorizationToken(): string | null {
   return null;
 }
@@ -73,8 +117,12 @@ async function apiFetch(path: string, init: RequestInit = {}, retryOn401 = true)
   }
 
   if (!response.ok) {
-    const error = new Error(formatApiRequestFailedStatus(response.status)) as ApiClientError;
+    const apiError = await readApiErrorResponse(response);
+    const error = new Error(apiError.message || formatApiRequestFailedStatus(response.status)) as ApiClientError;
     error.status = response.status;
+    if (typeof apiError.code === 'number') {
+      error.code = apiError.code;
+    }
     throw error;
   }
   return response;

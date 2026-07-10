@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.common.observability.dto.entity;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -25,7 +24,6 @@ import lombok.NoArgsConstructor;
  * Operational readiness summary for entity workspace.
  */
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
 public class EntityOpsSummaryInfo {
 
@@ -40,4 +38,32 @@ public class EntityOpsSummaryInfo {
     private boolean statusReady;
 
     private int readinessScore;
+
+    private long relationCount;
+
+    public EntityOpsSummaryInfo(boolean ownerReady,
+                                boolean runbookReady,
+                                boolean relationReady,
+                                boolean telemetryReady,
+                                boolean statusReady,
+                                int readinessScore,
+                                long relationCount) {
+        this.ownerReady = ownerReady;
+        this.runbookReady = runbookReady;
+        this.relationReady = relationReady;
+        this.telemetryReady = telemetryReady;
+        this.statusReady = statusReady;
+        this.readinessScore = readinessScore;
+        this.relationCount = relationCount;
+    }
+
+    public EntityOpsSummaryInfo(boolean ownerReady,
+                                boolean runbookReady,
+                                boolean relationReady,
+                                boolean telemetryReady,
+                                boolean statusReady,
+                                int readinessScore) {
+        this(ownerReady, runbookReady, relationReady, telemetryReady, statusReady,
+                readinessScore, relationReady ? 1L : 0L);
+    }
 }

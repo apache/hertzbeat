@@ -104,6 +104,43 @@ describe('AlertNoticeRuleFields', () => {
     expect(html).not.toContain('alert.notice.rule.template');
     expect(html).not.toContain('alert.notice.rule.label');
     expect(html).toContain('data-alert-notice-rule-label-selector="searchable-label-record"');
+    expect(html).toContain('data-alert-notice-rule-field-title="name"');
+    expect(html).toContain('data-alert-notice-rule-field-title="receiver"');
+    expect(html).toContain('data-alert-notice-rule-field-title="template"');
+    expect(html).toContain('data-alert-notice-rule-field-title="filter-all"');
+    expect(html).toContain('data-alert-notice-rule-field-title="labels"');
+    expect(html).toContain('data-alert-notice-rule-field-title="period"');
+    expect(html).toContain('data-alert-notice-rule-field-title="days"');
+    expect(html).toContain('data-alert-notice-rule-field-title="time"');
+    expect(html).toContain('data-alert-notice-rule-field-title="enable"');
+    expect(html.match(/data-alert-authoring-field-help-trigger="hertzbeat-ui-field-help"/g)?.length).toBe(9);
+    expect(html.match(/data-alert-authoring-field-help="hertzbeat-ui-field-tooltip"/g)?.length).toBe(9);
+    expect(html.match(/data-alert-authoring-field-help-placement="inline-label"/g)?.length).toBe(9);
+    expect(html.match(/data-alert-notice-rule-field-requirement=/g)?.length).toBe(9);
+    expect(html.match(/data-alert-notice-rule-field-requirement="required"/g)?.length).toBe(4);
+    expect(html.match(/data-alert-notice-rule-field-requirement="conditional"/g)?.length).toBe(2);
+    expect(html.match(/data-alert-notice-rule-field-requirement="optional"/g)?.length).toBe(3);
+    expect(html.match(/data-alert-notice-rule-field-input-mode=/g)?.length).toBe(9);
+    expect(html.match(/data-alert-notice-rule-field-input-mode="manual"/g)?.length).toBe(1);
+    expect(html.match(/data-alert-notice-rule-field-input-mode="selection"/g)?.length).toBe(6);
+    expect(html.match(/data-alert-notice-rule-field-input-mode="manual-or-selection"/g)?.length).toBe(1);
+    expect(html.match(/data-alert-notice-rule-field-input-mode="time-range"/g)?.length).toBe(1);
+    expect(html).toContain(t('alert.notice.field.requirement.required'));
+    expect(html).toContain(t('alert.notice.field.requirement.conditional'));
+    expect(html).toContain(t('alert.notice.field.requirement.optional'));
+    expect(html).toContain(t('alert.notice.field.input-mode.manual'));
+    expect(html).toContain(t('alert.notice.field.input-mode.selection'));
+    expect(html).toContain(t('alert.notice.field.input-mode.manual-or-selection'));
+    expect(html).toContain(t('alert.notice.field.input-mode.time-range'));
+    expect(html).toContain('data-alert-notice-rule-field-help="receiver"');
+    expect(html).toContain('data-alert-notice-rule-field-help="filter-all"');
+    expect(html).toContain('data-alert-notice-rule-field-help="labels"');
+    expect(html.match(/data-alert-authoring-field-help-visual="circle-help-icon"/g)?.length).toBe(9);
+    expect(html.match(/data-alert-authoring-field-help-icon="lucide-circle-help"/g)?.length).toBe(9);
+    expect(html).not.toContain('data-alert-authoring-field-help-visual="borderless-question"');
+    expect(html).toContain(t('alert.notice.rule.field.receiver.help'));
+    expect(html).toContain(t('alert.notice.rule.field.filter-all.impact'));
+    expect(html).toContain(t('alert.notice.rule.field.labels.help'));
     expect(html).toContain('data-hz-label-selector-owner="hertzbeat-ui-label-selector"');
     expect(html).toContain('data-hz-label-selector-record-row="severity:critical"');
     expect(html).toContain('data-hz-label-selector-remove-row="severity:critical"');
@@ -121,6 +158,39 @@ describe('AlertNoticeRuleFields', () => {
     expect(html).toContain('data-hz-checkbox-box="indicator"');
     expect(html).not.toContain('type="time"');
     expect(html).not.toContain('accent-[var(--ops-primary)]');
+  });
+
+  it('binds validation errors to the matching notice rule fields', () => {
+    const html = renderToStaticMarkup(
+      <AlertNoticeRuleFields
+        t={t}
+        draft={{
+          name: '',
+          receiverIdsText: '',
+          templateId: '-1',
+          enable: true,
+          filterAll: true,
+          labelsText: '',
+          daysText: '',
+          periodStart: '',
+          periodEnd: ''
+        }}
+        receiverOptions={[{ value: '1', label: emailReceiverLabel }]}
+        templateOptions={[{ value: '-1', label: t('alert.notice.template.preset.true') }]}
+        receiverIdsPlaceholder={receiverIdsPlaceholder}
+        templateIdPlaceholder={templateIdPlaceholder}
+        labelsPlaceholder={labelsPlaceholder}
+        daysPlaceholder={daysPlaceholder}
+        validationIssues={[{ field: 'name', message: 'Rule name is required' }]}
+        onDraftChange={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-alert-notice-rule-field-error="name"');
+    expect(html).toContain('Rule name is required');
+    expect(html).toContain('data-alert-notice-rule-field-invalid="true"');
+    expect(html).toContain('aria-invalid="true"');
+    expect(html).toContain('aria-describedby="notice-rule-name-error"');
   });
 
   it('shows signal-route alert labels as a live notification match preview', () => {
@@ -169,6 +239,43 @@ describe('AlertNoticeRuleFields', () => {
     expect(source).toContain('periodLimit: checked');
     expect(source).toContain('daysText: checked ? prev.daysText || weekdayValues.join');
     expect(source).not.toContain("daysText: checked ? '1, 2, 3, 4, 5'");
+  });
+
+  it('keeps conditional label and weekday rows visible when their controls are inactive', () => {
+    const html = renderToStaticMarkup(
+      <AlertNoticeRuleFields
+        t={t}
+        draft={{
+          name: 'Default policy',
+          receiverIdsText: '1',
+          templateId: '-1',
+          enable: true,
+          filterAll: true,
+          labelsText: '',
+          daysText: '1, 2, 3, 4, 5, 6, 7',
+          periodStart: '',
+          periodEnd: ''
+        }}
+        receiverOptions={[{ value: '1', label: emailReceiverLabel, type: '1' }]}
+        templateOptions={[{ value: '-1', label: t('alert.notice.template.preset.true') }]}
+        receiverIdsPlaceholder={receiverIdsPlaceholder}
+        templateIdPlaceholder={templateIdPlaceholder}
+        labelsPlaceholder={labelsPlaceholder}
+        daysPlaceholder={daysPlaceholder}
+        onDraftChange={vi.fn()}
+      />
+    );
+
+    expect(html.match(/data-alert-notice-rule-field-help=/g)?.length).toBe(9);
+    expect(html.match(/data-alert-notice-rule-field-requirement=/g)?.length).toBe(9);
+    expect(html.match(/data-alert-notice-rule-field-requirement="conditional"/g)?.length).toBe(2);
+    expect(html.match(/data-alert-notice-rule-field-input-mode=/g)?.length).toBe(9);
+    expect(html).toContain('data-alert-notice-rule-labels-disabled="filter-all"');
+    expect(html).toContain('data-alert-notice-rule-days-disabled="unlimited"');
+    expect(html).toContain(t('alert.notice.rule.labels.disabled.filter-all'));
+    expect(html).toContain(t('alert.notice.rule.days.disabled.unlimited'));
+    expect(html).not.toContain('data-alert-notice-rule-label-selector="searchable-label-record"');
+    expect(html).not.toContain('data-alert-notice-rule-days-selector="hertzbeat-ui-weekday-checkboxes"');
   });
 
   it('shows the weekday selector when Angular isLimit is true even if all weekdays are selected', () => {
@@ -437,7 +544,10 @@ describe('AlertNoticeRuleFields', () => {
     expect(source).toContain('data-alert-notice-rule-time-default="angular-empty-new-rule"');
     expect(source).toContain('aria-label={label}');
     expect(source).toContain('hover:border-[#5f7df6]');
-    expect(source).toContain('data-alert-notice-rule-switch-label={row}');
+    expect(source).toContain('data-alert-notice-rule-field-title={row}');
+    expect(source).toContain('noticeRuleFieldHelp');
+    expect(source).toContain('AlertAuthoringInlineHelp');
+    expect(source).not.toContain('data-alert-notice-rule-switch-label={row}');
     expect(source).toContain('role="switch"');
     expect(source).not.toContain('hover:text-white');
     expect(source).not.toContain('inline-flex h-8 items-center gap-2 rounded-[3px] border border-[#2b3039] bg-[#101217] px-2');

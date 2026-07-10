@@ -56,13 +56,18 @@ class EntityDetailChildEvidenceSourceOwnershipTest {
         assertTrue(detailSource.contains("private final EntityRelationService entityRelationService"));
         assertTrue(detailSource.contains("entityMonitorBindService.findMonitorBinds(entityId)"));
         assertTrue(detailSource.contains("entityRelationService.findEntityRelations(entityId)"));
+        assertTrue(detailSource.contains("entityRelationService.findEntityRelations(entityId, relationPreviewLimit)"));
+        assertTrue(detailSource.contains("entityRelationService.countEntityRelations(entityId)"));
 
         assertTrue(monitorBindSource.contains("public List<EntityMonitorBind> findMonitorBinds(Long entityId)"));
         assertTrue(monitorBindSource.contains("entityMonitorBindQueryService.findMonitorBinds(entityId)"));
         assertTrue(monitorBindQuerySource.contains("entityMonitorBindDao.findAllByEntityIdOrderByIdAsc(entityId)"));
         assertTrue(relationSource.contains("public List<EntityRelation> findEntityRelations(Long entityId)"));
+        assertTrue(relationSource.contains("public List<EntityRelation> findEntityRelations(Long entityId, int limit)"));
         assertTrue(relationSource.contains("entityRelationQueryService.findEntityRelations(entityId)"));
+        assertTrue(relationSource.contains("entityRelationQueryService.findEntityRelations(entityId, limit)"));
         assertTrue(relationQuerySource.contains(
                 "entityRelationDao.findBySourceEntityIdOrTargetEntityId(entityId, entityId)"));
+        assertTrue(relationQuerySource.contains("PageRequest.of(0, limit"));
     }
 }

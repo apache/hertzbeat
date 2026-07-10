@@ -3,6 +3,7 @@ import {
   buildSignalAlertHandlingHref,
   buildSignalAlertRulesHref,
   buildSignalDashboardHref,
+  buildSignalEntityDiscoveryHref,
   buildSignalEntityHref,
   readEpochMillisRouteParam,
   stripReturnLabelFromHref,
@@ -509,7 +510,7 @@ function buildTraceLogsOperationAttributeFilter(
   if (traceId || spanId) return undefined;
   const httpRoute = readTraceSignalAttribute(detail, selectedSpan, 'http.route', 'http_route');
   if (httpRoute) return buildLogAttributeFilterExpression('http.route', httpRoute);
-  return buildLogAttributeFilterExpression('span.name', firstText(selectedSpan?.spanName, detail?.rootSpanName, operationName));
+  return buildLogAttributeFilterExpression('span.name', firstText(selectedSpan?.spanName ?? undefined, detail?.rootSpanName ?? undefined, operationName));
 }
 
 function durationNanosToWholeMillis(value?: number | null) {
@@ -873,7 +874,7 @@ export function buildTraceHandoffLinks(
     routeContext.template,
     readTraceSignalAttribute(detail, selectedSpan, 'template', 'hertzbeat.template', 'hertzbeat_template', 'hertzbeat.monitor_template', 'hertzbeat_monitor_template')
   );
-  const operationName = firstText(selectedSpan?.spanName, detail?.rootSpanName, routeContext.operationName);
+  const operationName = firstText(selectedSpan?.spanName ?? undefined, detail?.rootSpanName ?? undefined, routeContext.operationName);
   const metricsFilter = buildTraceMetricsResourceFilter(detail, selectedSpan);
   const routeStart = readEpochMillisRouteParam(routeContext.start);
   const routeEnd = readEpochMillisRouteParam(routeContext.end);
@@ -947,6 +948,7 @@ export function buildTraceHandoffLinks(
     metricsHref: metricsParams.toString() ? `/ingestion/otlp/metrics?${metricsParams.toString()}` : '/ingestion/otlp/metrics',
     entitiesHref: entityParams.toString() ? `/entities?${entityParams.toString()}` : '/entities',
     entityHref: buildSignalEntityHref(signalContext, serviceName),
+    entityDiscoveryHref: buildSignalEntityDiscoveryHref(signalContext, serviceName),
     alertHandlingHref: buildSignalAlertHandlingHref('traces', signalContext),
     alertRulesHref: buildSignalAlertRulesHref('traces', signalContext, signalDraft),
     dashboardHref: buildSignalDashboardHref('traces', signalContext, signalDraft)

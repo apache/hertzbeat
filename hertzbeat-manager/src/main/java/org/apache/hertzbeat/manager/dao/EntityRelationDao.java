@@ -17,8 +17,10 @@
 
 package org.apache.hertzbeat.manager.dao;
 
+import java.util.Collection;
 import java.util.List;
 import org.apache.hertzbeat.common.entity.manager.EntityRelation;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -32,6 +34,8 @@ public interface EntityRelationDao extends JpaRepository<EntityRelation, Long>, 
 
     List<EntityRelation> findBySourceEntityIdOrTargetEntityId(Long sourceEntityId, Long targetEntityId);
 
+    List<EntityRelation> findBySourceEntityIdOrTargetEntityId(Long sourceEntityId, Long targetEntityId, Pageable pageable);
+
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM EntityRelation relation WHERE relation.sourceEntityId = :sourceEntityId")
     void deleteAllBySourceEntityId(@Param("sourceEntityId") Long sourceEntityId);
@@ -42,4 +46,16 @@ public interface EntityRelationDao extends JpaRepository<EntityRelation, Long>, 
                                                    @Param("targetEntityId") Long targetEntityId);
 
     long countBySourceEntityIdOrTargetEntityId(Long sourceEntityId, Long targetEntityId);
+
+    @Query("SELECT relation.sourceEntityId, COUNT(relation) FROM EntityRelation relation WHERE relation.sourceEntityId IN :entityIds GROUP BY relation.sourceEntityId")
+    List<Object[]> countBySourceEntityIdInGroupBySourceEntityId(@Param("entityIds") Collection<Long> entityIds);
+
+    @Query("""
+            SELECT relation.targetEntityId, COUNT(relation)
+            FROM EntityRelation relation
+            WHERE relation.targetEntityId IN :entityIds
+              AND (relation.sourceEntityId IS NULL OR relation.sourceEntityId <> relation.targetEntityId)
+            GROUP BY relation.targetEntityId
+            """)
+    List<Object[]> countByTargetEntityIdInGroupByTargetEntityId(@Param("entityIds") Collection<Long> entityIds);
 }

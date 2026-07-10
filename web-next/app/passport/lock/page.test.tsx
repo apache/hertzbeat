@@ -35,7 +35,7 @@ vi.mock('../../../components/pages/passport-shell', () => ({
       data-passport-session-clear-enabled={sessionLifecycle === 'preserve-on-lock' ? 'false' : 'true'}
       data-hz-passport-session-clear-lifecycle={sessionLifecycle === 'preserve-on-lock' ? 'angular-lock-preserve-session' : 'angular-token-service-clear-on-passport-entry'}
       data-hz-passport-session-clear-scope={sessionLifecycle === 'preserve-on-lock' ? 'client-marker-user-snapshot-preserved' : 'client-marker-user-snapshot'}
-      style={{ backgroundImage: "url('/assets/bg.png')" }}
+      data-passport-shell-visual="ops-dark-entry"
     >
       <div>Apache HertzBeat™</div>
       {children}
@@ -98,7 +98,8 @@ describe('passport lock page', () => {
     expect(html).toContain('rounded-none');
     expect(html).toContain(expectedT('app.lock'));
     expect(html).toContain(expectedT('app.lock.placeholder'));
-    expect(html).toContain('/assets/bg.png');
+    expect(html).toContain('data-passport-shell-visual="ops-dark-entry"');
+    expect(html).not.toContain('/assets/bg.png');
     expect(html).toContain('Apache HertzBeat™');
   }, 30000);
 });

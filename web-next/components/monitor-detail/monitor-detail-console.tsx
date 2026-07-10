@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Activity, HelpCircle, LineChart, RefreshCw, Star } from 'lucide-react';
+import { Activity, Boxes, HelpCircle, LineChart, RefreshCw, Star } from 'lucide-react';
 import React from 'react';
 import {
   HzActionGroup,
@@ -29,6 +29,8 @@ type MonitorWorkbenchSummaryFact = {
 
 type NavigationContext = {
   app?: string | null;
+  entityId?: string | number | null;
+  entityName?: string | null;
 };
 
 const REFRESH_OPTIONS = [
@@ -39,6 +41,9 @@ const REFRESH_OPTIONS = [
   { value: -1 }
 ] as const;
 
+const entityActionLinkClassName =
+  'inline-flex h-7 max-w-[190px] items-center justify-center gap-1.5 whitespace-nowrap rounded-[3px] border border-[#31405c] bg-[#182238] px-2.5 text-[12px] font-semibold text-[#d8e4ff] transition-colors hover:border-[#4e74f8] hover:bg-[#202a42] hover:text-white focus-visible:border-[#4e74f8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(78,116,248,0.22)]';
+
 export function MonitorDetailConsole({
   monitor,
   currentTab,
@@ -46,6 +51,9 @@ export function MonitorDetailConsole({
   refreshCountdown,
   backHref,
   helpHref,
+  entityDraftHref,
+  entityBoundHref,
+  entityBoundName,
   appHref,
   grafanaUrl,
   navigationContext,
@@ -68,6 +76,9 @@ export function MonitorDetailConsole({
   backHref: string;
   editHref: string;
   helpHref?: string | null;
+  entityDraftHref?: string | null;
+  entityBoundHref?: string | null;
+  entityBoundName?: string | null;
   appHref?: string | null;
   grafanaUrl?: string | null;
   navigationContext?: NavigationContext;
@@ -139,6 +150,7 @@ export function MonitorDetailConsole({
     breadcrumbAppTranslation && breadcrumbAppTranslation !== `monitor.app.${breadcrumbApp}`
       ? breadcrumbAppTranslation
       : breadcrumbApp;
+  const breadcrumbEntityLabel = navigationContext?.entityName || navigationContext?.entityId || null;
 
   const detailTabExtra = (
     <HzActionGroup
@@ -167,12 +179,43 @@ export function MonitorDetailConsole({
         data-monitor-detail-refresh-target={refreshTarget}
         data-monitor-detail-grafana-refresh-target={currentTab === 'grafana' ? grafanaRefreshFallbackTab : undefined}
       />
+      {entityBoundHref ? (
+        <Link
+          href={entityBoundHref}
+          title={entityBoundName ? `${t('monitor.detail.entity-bound')}: ${entityBoundName}` : t('monitor.detail.entity-bound')}
+          data-monitor-detail-command-action="open-bound-entity"
+          data-monitor-detail-entity-bound-action="open-bound-entity"
+          data-monitor-detail-entity-bound-owner="hertzbeat-ui-labeled-action-link"
+          data-monitor-detail-entity-bound-visibility="visible-label"
+          data-monitor-detail-entity-bound-target={entityBoundHref}
+          data-monitor-detail-entity-bound-name={entityBoundName ?? undefined}
+          className={entityActionLinkClassName}
+        >
+          <Boxes aria-hidden="true" className="h-3.5 w-3.5 flex-none" />
+          <span className="truncate">{t('monitor.detail.entity-bound')}</span>
+        </Link>
+      ) : entityDraftHref ? (
+        <Link
+          href={entityDraftHref}
+          title={t('monitor.detail.entity-draft')}
+          data-monitor-detail-command-action="create-entity-draft"
+          data-monitor-detail-entity-draft-action="telemetry-monitor-seed"
+          data-monitor-detail-entity-draft-owner="hertzbeat-ui-labeled-action-link"
+          data-monitor-detail-entity-draft-visibility="visible-label"
+          data-monitor-detail-entity-draft-target={entityDraftHref}
+          className={entityActionLinkClassName}
+        >
+          <Boxes aria-hidden="true" className="h-3.5 w-3.5 flex-none" />
+          <span className="truncate">{t('monitor.detail.entity-draft')}</span>
+        </Link>
+      ) : null}
       {helpHref ? (
         <HzIconLink
           href={helpHref}
           label={t('common.button.help')}
           target="_blank"
           rel="noreferrer"
+          data-monitor-detail-command-action="open-help"
           data-monitor-detail-help-action="angular-docs-help"
           data-monitor-detail-help-owner="hertzbeat-ui-icon-link"
           data-monitor-detail-help-target={helpHref}
@@ -240,7 +283,22 @@ export function MonitorDetailConsole({
             </HzInlineContextMark>
           )
         ) : null}
+        {entityBoundHref && breadcrumbEntityLabel ? (
+          <HzInlineContextMark
+            component={Link}
+            href={entityBoundHref}
+            placement="breadcrumb"
+            data-monitor-detail-entity-context-mark="breadcrumb"
+            data-monitor-detail-entity-context-mark-owner="hertzbeat-ui-inline-context-mark"
+            data-monitor-detail-entity-context-target={entityBoundHref}
+          >
+            {t('monitor.detail.entity-context', { entity: breadcrumbEntityLabel })}
+          </HzInlineContextMark>
+        ) : null}
       </HzMonitorBreadcrumb>
+      <h1 className="sr-only" data-monitor-detail-screenreader-heading="monitor-name">
+        {monitor.name || t('monitor.detail')}
+      </h1>
 
       <HzMonitorDetailWorkbenchFrame
         data-monitor-workbench-stage="angular-layout"

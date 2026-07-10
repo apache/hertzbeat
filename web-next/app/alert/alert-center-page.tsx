@@ -17,6 +17,7 @@ import {
 } from '../../lib/alert-manage/controller';
 import {
   ALERT_CENTER_PAGE_SIZE_OPTIONS,
+  buildAlertCenterRouteUrl,
   buildAlertListUrl,
   hasAlertEntityContext,
   type AlertCenterRouteState,
@@ -149,19 +150,23 @@ export default function AlertCenterPage({ initialRouteState }: { initialRouteSta
 
   const handlePageIndexChange = useCallback((nextPageIndex: number) => {
     const normalizedPageIndex = Math.max(0, Math.floor(nextPageIndex));
+    const nextQuery = { ...query, pageIndex: normalizedPageIndex };
     setDraft(current => ({ ...current, pageIndex: normalizedPageIndex }));
-    setQuery(current => ({ ...current, pageIndex: normalizedPageIndex }));
+    setQuery(nextQuery);
+    router.replace(buildAlertCenterRouteUrl(nextQuery));
     setSelectedGroupIds([]);
-  }, []);
+  }, [query, router]);
 
   const handlePageSizeChange = useCallback((nextPageSize: number) => {
     const normalizedPageSize = ALERT_CENTER_PAGE_SIZE_OPTIONS.includes(nextPageSize as (typeof ALERT_CENTER_PAGE_SIZE_OPTIONS)[number])
       ? nextPageSize
       : ALERT_CENTER_PAGE_SIZE_OPTIONS[0];
+    const nextQuery = { ...query, pageIndex: 0, pageSize: normalizedPageSize };
     setDraft(current => ({ ...current, pageIndex: 0, pageSize: normalizedPageSize }));
-    setQuery(current => ({ ...current, pageIndex: 0, pageSize: normalizedPageSize }));
+    setQuery(nextQuery);
+    router.replace(buildAlertCenterRouteUrl(nextQuery));
     setSelectedGroupIds([]);
-  }, []);
+  }, [query, router]);
 
   const handleClosureAction = useCallback(async (action: AlertClosureOperationAction, groupId: number | number[], totalElements = 0) => {
     setOperationFeedback(null);
@@ -178,8 +183,10 @@ export default function AlertCenterPage({ initialRouteState }: { initialRouteSta
           ? clampAlertCenterPageIndexAfterDelete(nextQuery, totalElements, affectedCount)
           : nextQuery;
       };
+      const nextRouteQuery = buildPostActionQuery(query);
       setDraft(current => buildPostActionQuery(current));
       setQuery(current => buildPostActionQuery(current));
+      router.replace(buildAlertCenterRouteUrl(nextRouteQuery));
       setSelectedGroupIds([]);
       setRefreshNonce(current => current + 1);
     } catch (error) {
@@ -188,7 +195,7 @@ export default function AlertCenterPage({ initialRouteState }: { initialRouteSta
         copy: buildAlertClosureOperationFailureFeedback(action, t)
       });
     }
-  }, [query, t]);
+  }, [query, router, t]);
 
   const handleRuleQuickCreate = useCallback(async (
     mode: AlertRuleDialogMode,
@@ -244,6 +251,7 @@ export default function AlertCenterPage({ initialRouteState }: { initialRouteSta
             setQuery(cleared);
             setSelectedGroupIds([]);
             setEntityResponseResult(null);
+            router.replace(buildAlertCenterRouteUrl(cleared));
           }}
           operationFeedback={operationFeedback}
           entityResponseResult={entityResponseResult}

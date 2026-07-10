@@ -41,7 +41,15 @@ export function buildAlertQueryAfterClosureOperation(
   query: AlertQueryState,
   action: AlertClosureOperationAction
 ): AlertQueryState {
-  void action;
+  if (action === 'acknowledge') {
+    return { ...query, status: 'acknowledged', pageIndex: 0 };
+  }
+  if (action === 'recover' || action === 'resolve') {
+    return { ...query, status: 'resolved', pageIndex: 0 };
+  }
+  if (action === 'unacknowledge' || action === 'reopen') {
+    return { ...query, status: 'firing', pageIndex: 0 };
+  }
   return { ...query };
 }
 
@@ -63,6 +71,15 @@ export function clampAlertCenterPageIndexAfterDelete(
   };
 }
 
+function normalizeAlertGroupPageResult(alerts: PageResult<GroupAlert>, query: AlertQueryState): PageResult<GroupAlert> {
+  const pageSize = normalizeAlertPageSize(query.pageSize);
+  return {
+    ...alerts,
+    content: (alerts.content || []).slice(0, pageSize),
+    pageSize
+  };
+}
+
 export async function loadAlertCenterData(apiGet: ApiGetter, query: AlertQueryState): Promise<AlertPageData> {
   const [summary, alerts, entityDetail] = await Promise.all([
     apiGet<AlertSummary>('/alerts/summary'),
@@ -72,7 +89,7 @@ export async function loadAlertCenterData(apiGet: ApiGetter, query: AlertQuerySt
 
   return {
     summary,
-    groupAlerts: alerts,
+    groupAlerts: normalizeAlertGroupPageResult(alerts, query),
     noiseControlSummary: entityDetail?.noiseControlSummary
   };
 }
@@ -89,7 +106,7 @@ export async function loadAlertCenterDataFromFacade(
 
   return {
     summary,
-    groupAlerts: alerts,
+    groupAlerts: normalizeAlertGroupPageResult(alerts, query),
     noiseControlSummary: entityDetail?.noiseControlSummary
   };
 }

@@ -15,7 +15,7 @@ export function buildBulletinFacts(list: PageResult<Bulletin>, selected: Bulleti
   const emptyValue = t('common.none');
 
   return [
-    { label: t('common.workspace'), value: 'bulletin' },
+    { label: t('common.workspace'), value: t('bulletin.facts.workspace') },
     { label: t('common.total'), value: String(list.totalElements || 0) },
     { label: t('common.current-page-count'), value: String(list.content?.length || 0) },
     { label: t('bulletin.facts.selected'), value: formatBulletinFact(selected?.name, emptyValue) }
@@ -199,6 +199,10 @@ export function buildBulletinFormDraft(selected?: Bulletin | null): BulletinForm
   };
 }
 
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
 export function validateBulletinForm(draft: BulletinFormDraft, t: Translator) {
   if (!draft.name.trim()) {
     return t('bulletin.validation.name');
@@ -209,10 +213,17 @@ export function validateBulletinForm(draft: BulletinFormDraft, t: Translator) {
   if (!draft.monitorIdsText.trim()) {
     return t('bulletin.validation.monitors');
   }
+  let fields: unknown;
   try {
-    JSON.parse(draft.fieldsJson || '{}');
+    fields = JSON.parse(draft.fieldsJson || '{}');
   } catch {
     return t('bulletin.validation.fields');
+  }
+  if (!isPlainObject(fields)) {
+    return t('bulletin.validation.fields');
+  }
+  if (Object.keys(fields).length === 0) {
+    return t('bulletin.validation.fields-empty');
   }
   return null;
 }

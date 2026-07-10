@@ -43,6 +43,23 @@ describe('trace manage route state', () => {
     expect(route).not.toContain('returnLabel=');
   });
 
+  it('clears exact trace and span context when resetting a deep-linked empty trace result', () => {
+    const route = buildResetTraceManageRoute(
+      readSignalRouteContext(createSearchParams(
+        'traceId=trace-missing&spanId=span-missing&timeRange=last-1h&entityId=42&entityName=checkout&serviceName=checkout&returnTo=%2Flog%2Fmanage&serviceNamespace=payments&environment=prod'
+      ))
+    );
+
+    const url = new URL(route, 'http://hertzbeat.local');
+    expect(url.pathname).toBe('/trace/manage');
+    expect(url.searchParams.get('traceId')).toBeNull();
+    expect(url.searchParams.get('spanId')).toBeNull();
+    expect(url.searchParams.get('timeRange')).toBe('last-1h');
+    expect(url.searchParams.get('entityId')).toBe('42');
+    expect(url.searchParams.get('serviceName')).toBe('checkout');
+    expect(url.searchParams.get('returnTo')).toBe('/log/manage');
+  });
+
   it('keeps customized trace table columns in the shared route', () => {
     const route = buildTraceManageRoute(
       readSignalRouteContext(createSearchParams('timeRange=last-1h&entityId=42&serviceNamespace=payments')),

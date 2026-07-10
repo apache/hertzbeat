@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildCollectorFacts, buildCollectorRows, buildCollectorTableRows } from './view-model';
+import { buildCollectorClusterHealthEvidence, buildCollectorFacts, buildCollectorRows, buildCollectorTableRows } from './view-model';
 import { createTranslatorMock } from '../../test/i18n-test-helper';
 
 const t = createTranslatorMock({
@@ -44,6 +44,16 @@ describe('collector view model', () => {
       { label: 'Pinned', value: '2' },
       { label: 'Dispatched', value: '5' }
     ]);
+  });
+
+  it('uses collector-specific health copy when the current collector view is empty', () => {
+    expect(buildCollectorClusterHealthEvidence([], () => '-', t)).toEqual({
+      title: t('collector.health.cluster.title'),
+      copy: t('collector.health.cluster.empty-copy'),
+      meta: t('collector.health.cluster.empty-meta'),
+      freshness: t('collector.health.cluster.freshness', { time: '-' }),
+      tone: 'neutral'
+    });
   });
 
   it('builds collector rows', () => {

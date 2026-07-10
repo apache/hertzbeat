@@ -3,9 +3,11 @@ import {
   buildActivityRows,
   buildImportMetrics,
   buildImportPreviewRows,
+  buildImportPreviewViewport,
   buildImportQueueGroups,
   buildImportSummaryFacts,
-  buildTemplateRows
+  buildTemplateRows,
+  formatImportPreviewRowCopy
 } from './view-model';
 import { createTranslatorMock } from '../../test/i18n-test-helper';
 
@@ -240,6 +242,32 @@ describe('entity import view model', () => {
     );
   });
 
+  it('treats system definitions as known import entity types', () => {
+    expect(
+      buildImportPreviewRows(
+        [
+          {
+            entity: {
+              type: 'system',
+              name: 'commerce-platform',
+              source: 'manual',
+              owner: 'platform',
+              runbook: 'https://runbooks.example.com/commerce'
+            },
+            monitorBinds: [],
+            identities: [{ key: 'deployment.environment', value: 'prod' }]
+          }
+        ] as any,
+        t
+      )[0]
+    ).toEqual(
+      expect.objectContaining({
+        kindLabel: 'System',
+        sourceLabel: 'Manual'
+      })
+    );
+  });
+
   it('localizes unknown import definition format labels', () => {
     expect(buildImportMetrics({ format: 'toml' as any, templateCount: 1, activityCount: 0 }, zhT)).toEqual([
       { label: zhT('entity.definition.import.format'), value: zhT('entity.definition.import.format.unknown', { format: 'toml' }) },
@@ -378,6 +406,86 @@ describe('entity import view model', () => {
     ]);
   });
 
+  it('formats preview row copy with concrete missing fields for novice recovery', () => {
+    const [attentionRow, readyRow] = buildImportPreviewRows(
+      [
+        {
+          entity: {
+            type: 'service',
+            name: 'checkout-api',
+            displayName: 'Checkout API',
+            source: 'manual',
+            owner: 'platform',
+            system: 'commerce'
+          },
+          monitorBinds: [{ id: 7 }],
+          identities: [{ key: 'service.name', value: 'checkout-api' }]
+        },
+        {
+          entity: {
+            type: 'service',
+            name: 'billing-api',
+            displayName: 'Billing API',
+            source: 'manual',
+            owner: 'platform',
+            system: 'billing',
+            runbook: 'https://runbooks.example.com/billing'
+          },
+          monitorBinds: [{ id: 8 }],
+          identities: [{ key: 'service.name', value: 'billing-api' }]
+        }
+      ] as any,
+      zhT
+    );
+
+    expect(formatImportPreviewRowCopy(attentionRow, zhT)).toBe(
+      `checkout-api · ${zhT('entity.definition.import.validation.needs-attention-fields', {
+        fields: zhT('entity.field.runbook')
+      })}`
+    );
+    expect(formatImportPreviewRowCopy(readyRow, zhT)).toBe(
+      `billing-api · ${zhT('entity.definition.import.validation.ready')}`
+    );
+  });
+
+  it('does not mark monitor binding as a blocker when import already has identity evidence', () => {
+    const row = buildImportPreviewRows(
+      [
+        {
+          entity: {
+            type: 'service',
+            name: 'codex-import-service',
+            source: 'import',
+            owner: 'platform',
+            system: 'commerce',
+            environment: 'prod',
+            runbook: 'https://runbooks.example.com/codex'
+          },
+          monitorBinds: [],
+          identities: [{ identityKey: 'service.name', identityValue: 'codex-import-service' }]
+        }
+      ] as any,
+      zhT
+    )[0];
+
+    expect(row).toEqual(expect.objectContaining({
+      telemetryLabel: zhT('entity.definition.import.telemetry.ready'),
+      attributionLabel: zhT('entity.definition.import.attribution.review'),
+      attributionState: 'review',
+      gapKeys: [],
+      gaps: [],
+      validationLabel: zhT('entity.definition.import.validation.ready')
+    }));
+    expect(row.attributionRows).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        key: 'monitor-binding',
+        copy: zhT('entities.editor.attribution.monitor.count', { count: 0 }),
+        meta: zhT('entity.definition.import.monitor-bind.optional-meta'),
+        state: 'review'
+      })
+    ]));
+  });
+
   it('summarizes import preview facts for ready, attention, and telemetry pending groups', () => {
     const rows = buildImportPreviewRows(
       [
@@ -444,5 +552,25 @@ describe('entity import view model', () => {
         scope: 'telemetry'
       })
     ]);
+  });
+
+  it('caps large import preview viewports while preserving the total count for novice scale feedback', () => {
+    const rows = Array.from({ length: 250 }, (_, index) => ({
+      key: `entity-${index}`,
+      title: `Entity ${index}`,
+      gaps: [],
+      gapKeys: []
+    })) as any;
+
+    expect(buildImportPreviewViewport(rows)).toEqual({
+      visibleRows: rows.slice(0, 100),
+      totalCount: 250,
+      overflowCount: 150
+    });
+    expect(buildImportPreviewViewport(rows, 12)).toEqual({
+      visibleRows: rows.slice(0, 12),
+      totalCount: 250,
+      overflowCount: 238
+    });
   });
 });

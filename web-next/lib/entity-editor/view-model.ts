@@ -17,6 +17,10 @@ export type EntityEditorAttributionRow = {
   href?: string;
 };
 
+export type EntityEditorAttributionNavigationContext = {
+  returnTo?: string | null;
+};
+
 type EntityEditorFactCopy = {
   workspace: string;
   type: string;
@@ -107,7 +111,52 @@ function buildMonitorBindMeta(monitorBinds: unknown[], t: EntityEditorViewModelT
   return readRecordText(first, ['templateName', 'template', 'app', 'bindType']) || t('entities.editor.attribution.monitor.existing-meta');
 }
 
-function buildDiscoveryHref(monitorBinds: unknown[]) {
+function safeInternalHref(value?: string | null) {
+  const normalized = value?.trim();
+  if (!normalized || !normalized.startsWith('/') || normalized.startsWith('//')) {
+    return null;
+  }
+
+  try {
+    const parsed = new URL(normalized, 'https://hertzbeat.local');
+    if (parsed.origin !== 'https://hertzbeat.local') {
+      return null;
+    }
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return null;
+  }
+}
+
+export function resolveEntityEditorDiscoveryReturnHref(value?: string | null): string | null {
+  const safeHref = safeInternalHref(value);
+  if (safeHref == null) {
+    return null;
+  }
+
+  if (safeHref === '/entities/discovery' || safeHref.startsWith('/entities/discovery?')) {
+    return safeHref;
+  }
+
+  try {
+    const parsed = new URL(safeHref, 'https://hertzbeat.local');
+    const nestedReturnTo = parsed.searchParams.get('returnTo');
+    if (nestedReturnTo && nestedReturnTo !== value) {
+      return resolveEntityEditorDiscoveryReturnHref(nestedReturnTo);
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+function buildDiscoveryHref(monitorBinds: unknown[], navigationContext: EntityEditorAttributionNavigationContext = {}) {
+  const returnDiscoveryHref = resolveEntityEditorDiscoveryReturnHref(navigationContext.returnTo);
+  if (returnDiscoveryHref != null) {
+    return returnDiscoveryHref;
+  }
+
   const first = firstRecord(monitorBinds);
   const monitorId = first ? readRecordText(first, ['monitorId', 'id']) : undefined;
   if (!monitorId) {
@@ -210,7 +259,8 @@ export function buildEntityEditorNextStepRows(mode: 'new' | 'edit', entityId: st
 
 export function buildEntityEditorAttributionRows(
   payload: EntityDto,
-  t: EntityEditorViewModelTranslator = translateEntityEditorViewModel
+  t: EntityEditorViewModelTranslator = translateEntityEditorViewModel,
+  navigationContext: EntityEditorAttributionNavigationContext = {}
 ): EntityEditorAttributionRow[] {
   const entity = payload.entity || {};
   const identities = Array.isArray(payload.identities) ? payload.identities : [];
@@ -218,7 +268,7 @@ export function buildEntityEditorAttributionRows(
   const owner = readText(entity.owner);
   const system = readText(entity.system);
   const environment = readText(entity.environment);
-  const discoveryHref = buildDiscoveryHref(monitorBinds);
+  const discoveryHref = buildDiscoveryHref(monitorBinds, navigationContext);
 
   return [
     {

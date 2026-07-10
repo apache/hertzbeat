@@ -142,6 +142,8 @@ vi.mock('@/lib/monitor-api-facade', () => ({
 vi.mock('@/lib/monitor-editor/controller', () => ({
   buildMonitorEditorCollectorsUrl: () => '/collector',
   buildMonitorEditorParamDefinesUrl: (app: string) => `/apps/${app}/params`,
+  buildMonitorDetectSuccessDetail: () => 'detect-success-detail',
+  buildMonitorSavePayload: (draft: unknown) => draft,
   createMonitor: vi.fn(),
   detectMonitor: vi.fn(),
   loadMonitorEditorDraftFromFacade,
@@ -155,7 +157,8 @@ vi.mock('@/lib/monitor-editor/controller', () => ({
     ...draft,
     [kind]: draft[kind].map((row: any, rowIndex: number) => (rowIndex === index ? { ...row, paramValue: value } : row))
   }),
-  validateMonitorEditorDraft: vi.fn(() => null)
+  validateMonitorEditorDraft: vi.fn(() => null),
+  validateMonitorEditorDraftResult: vi.fn(() => null)
 }));
 
 vi.mock('@/lib/monitor-editor/navigation', () => ({

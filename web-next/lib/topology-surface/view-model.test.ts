@@ -324,6 +324,68 @@ describe('topology surface config', () => {
     });
   });
 
+  it('keeps targetRef-only manual relation handoffs visible as unresolved target evidence', () => {
+    const model = buildTopologyServiceMapFromApiGraph(
+      {
+        apiBacked: true,
+        focusEntityId: 658374663834880,
+        depth: 2,
+        sourceKinds: ['entity-relation'],
+        nodes: [
+          {
+            id: '658374663834880',
+            entityId: 658374663834880,
+            entityName: 'Codex PD 1403 Relation Source',
+            entityType: 'service',
+            namespace: 'product-design-1403',
+            environment: 'prod',
+            health: 'warning',
+            focus: true,
+            evidenceBadges: ['entity-relation']
+          }
+        ],
+        edges: [
+          {
+            id: 'manual-1403',
+            relationId: 1403,
+            sourceEntityId: 658374663834880,
+            targetRef: 'service:product-design-1403/codex-pd-1403-relation-target',
+            relationType: 'depends_on',
+            relationSource: 'manual',
+            status: 'confirmed',
+            score: 100,
+            evidenceBadges: ['entity-relation', 'manual']
+          }
+        ]
+      },
+      {
+        entityId: '658374663834880',
+        entityName: 'Codex PD 1403 Relation Source',
+        serviceName: 'codex-pd-1403-relation-source',
+        environment: 'prod',
+        timeRange: 'last-1h',
+        topologyTargetName: 'service:product-design-1403/codex-pd-1403-relation-target'
+      }
+    );
+
+    expect(model.filterContext.viewMode).toBe('application');
+    expect(model.selectedEdgeId).toBe('relation-1403');
+    expect(model.selectedEdge).toMatchObject({
+      from: 'entity-658374663834880',
+      relationshipType: 'manual-ownership',
+      source: 'cmdb-manual-label',
+      selected: true,
+      focus: 'active-path'
+    });
+    expect(model.nodes.find(node => node.entityId === 'service:product-design-1403/codex-pd-1403-relation-target')).toMatchObject({
+      label: 'service:product-design-1403/codex-pd-1403-relation-target',
+      namespace: 'product-design-1403',
+      source: 'cmdb-manual-label',
+      focus: 'related',
+      evidenceBadges: expect.arrayContaining(['entity-relation', 'unresolved-target-ref'])
+    });
+  });
+
   it('uses trace-call edge sample context for signal drilldowns and return links', () => {
     const model = buildTopologyServiceMapFromApiGraph(
       {

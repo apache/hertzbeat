@@ -229,8 +229,8 @@ export function buildStatusIncidentCards(
       stateLabel,
       stateColor,
       meta: `${stateLabel} · ${formatTime(incident.updateTime || incident.createTime || incident.endTime || incident.startTime || null)}`,
-      rangeLabel: `${statusPublicIncidentRangeLabel(t)} · ${formatTime(incident.startTime || incident.createTime || null)} → ${formatTime(incident.endTime || incident.updateTime || null)}`,
-      startAtLabel: formatTime(incident.startTime || incident.createTime || null),
+      rangeLabel: `${statusPublicIncidentRangeLabel(t)} · ${formatTime(incident.createTime || incident.startTime || null)} → ${formatTime(incident.endTime || incident.updateTime || null)}`,
+      startAtLabel: formatTime(incident.createTime || incident.startTime || null),
       updateAtLabel: formatTime(incident.endTime || incident.updateTime || incident.startTime || incident.createTime || null),
       contents: contents.map(content => ({
         timestampLabel: formatTime(content.timestamp || null),

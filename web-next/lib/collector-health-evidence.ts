@@ -59,9 +59,10 @@ export function buildCollectorHealthEvidence(
   input: CollectorHealthEvidenceInput,
   t: CollectorHealthTranslator = translateCollectorHealthEvidence
 ): CollectorHealthEvidence {
+  const hasCollectorClusterEvidence = input.totalCollectorCount != null;
   const totalCollectorCount = finiteNumber(input.totalCollectorCount, 0);
 
-  if (totalCollectorCount > 0) {
+  if (hasCollectorClusterEvidence) {
     const onlineCollectorCount = Math.max(
       0,
       Math.min(totalCollectorCount, finiteNumber(input.onlineCollectorCount, 0))
@@ -74,8 +75,14 @@ export function buildCollectorHealthEvidence(
 
     return {
       title: t('collector.health.cluster.title'),
-      copy: t('collector.health.cluster.copy', { online: onlineCollectorCount, total: totalCollectorCount }),
-      meta: t('collector.health.cluster.meta', { tasks: taskCount, offline: offlineCollectorCount }),
+      copy:
+        totalCollectorCount > 0
+          ? t('collector.health.cluster.copy', { online: onlineCollectorCount, total: totalCollectorCount })
+          : t('collector.health.cluster.empty-copy'),
+      meta:
+        totalCollectorCount > 0
+          ? t('collector.health.cluster.meta', { tasks: taskCount, offline: offlineCollectorCount })
+          : t('collector.health.cluster.empty-meta'),
       freshness: t('collector.health.cluster.freshness', { time: normalizeLabel(input.lastSeenLabel || input.lastEvidenceLabel) }),
       tone: toneForCollectorHealth(onlineCollectorCount, totalCollectorCount)
     };

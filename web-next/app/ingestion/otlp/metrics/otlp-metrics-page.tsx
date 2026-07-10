@@ -54,6 +54,7 @@ import {
   buildMetricsExplorerState,
   buildMetricsHandoffLinks,
   type OtlpMetricInventorySort,
+  type OtlpMetricInventoryRow,
   type OtlpMetricSeriesView
 } from '@/lib/otlp-metrics/view-model';
 import type { OtlpMetricsConsole, OtlpMetricsInventory } from '@/lib/types';
@@ -66,6 +67,10 @@ type MetricsDashboardPanelDraftState = 'idle' | 'saving' | 'saved' | 'failed';
 type MetricAttributeOperator = 'filter' | 'contains' | 'not-contains' | 'in' | 'not-in' | 'exclude' | 'exists' | 'not-exists' | 'replace' | 'group';
 type OtlpMetricsWorkbenchData = OtlpMetricsConsole & {
   inventory?: OtlpMetricsInventory | null;
+};
+type MetricInventoryTableRow = OtlpMetricInventoryRow & {
+  rowKey: string;
+  series?: OtlpMetricSeriesView | null;
 };
 
 const METRICS_SAVED_QUERY_VIEW_STORAGE_KEY = 'hertzbeat.otlp-metrics.saved-query-views';
@@ -545,6 +550,7 @@ export default function OtlpMetricsPage() {
   const [metricsChartZoomRange, setMetricsChartZoomRange] = useState<EChartsDataZoomRange | null>(null);
   const [metricsExportFormat, setMetricsExportFormat] = useState<OtlpMetricsExportFormat>('csv');
   const [metricsExportScope, setMetricsExportScope] = useState<OtlpMetricsExportScope>('all');
+  const [metricsExportFeedback, setMetricsExportFeedback] = useState<OtlpMetricsExportFormat | null>(null);
   const [dashboardPanelDraftState, setDashboardPanelDraftState] = useState<MetricsDashboardPanelDraftState>('idle');
 
   useEffect(() => {
@@ -696,6 +702,7 @@ export default function OtlpMetricsPage() {
     anchor.click();
     anchor.remove();
     window.URL.revokeObjectURL(href);
+    setMetricsExportFeedback(metricsExportFormat);
   }, [metricsExportFormat, metricsExportScope]);
 
   const deleteMetricsSavedQueryView = useCallback((viewId: string) => {
@@ -1092,7 +1099,7 @@ export default function OtlpMetricsPage() {
         const queryEnd = routeEpochMillisValue(query.end);
         const queryStartText = readEpochMillisRouteParam(query.start);
         const queryEndText = readEpochMillisRouteParam(query.end);
-        const mergedData: OtlpMetricsConsole = {
+        const mergedData: OtlpMetricsWorkbenchData = {
           ...data,
           context: {
             ...data.context,
@@ -1202,6 +1209,7 @@ export default function OtlpMetricsPage() {
           tone: row.key === 'alerts' ? ('critical' as const) : row.key === 'traces' ? ('info' as const) : ('neutral' as const)
         }));
         const missingEntityHandoffTitle = t('otlp.metrics.handoff.entity-disabled');
+        const entityDiscoveryHandoffTitle = t('otlp.metrics.handoff.entity-discovery');
         const canOpenEntity = handoffLinks.entityHref.startsWith('/entities/');
         const entityContextRows = buildSignalEntityContextRows(routeContext, {
           entityId: queryEntityIdText || (mergedData.context?.entityId != null ? String(mergedData.context.entityId) : undefined),
@@ -1267,13 +1275,13 @@ export default function OtlpMetricsPage() {
           { label: t('otlp.metrics.scope.series'), value: t('otlp.metrics.scope.series-count', { count: seriesRows.length }) }
         ];
         const latestObservedAt = latestSeriesTimestamp(mergedData);
-        const metricSeriesTableRows = seriesRows.map((row, index) => ({
+        const metricSeriesTableRows: MetricInventoryTableRow[] = seriesRows.map((row, index) => ({
           ...row,
           rowKey: metricSeries[index]?.key || `${row.title}-${index}`,
           pointCount: metricSeries[index]?.points.length ?? 0,
-          series: metricSeries[index]
+          series: metricSeries[index] || null
         }));
-        const sourceMetricInventoryRows = buildMetricInventorySourceRows(mergedData.inventory, t).map((row, index) => {
+        const sourceMetricInventoryRows: MetricInventoryTableRow[] = buildMetricInventorySourceRows(mergedData.inventory, t).map((row, index) => {
           const matchingSeriesRow = metricSeriesTableRows.find(seriesRow =>
             seriesRow.title === row.title || seriesRow.series?.name === row.title
           );
@@ -1288,7 +1296,7 @@ export default function OtlpMetricsPage() {
             timeSeriesCount: row.timeSeriesCount ?? matchingSeriesRow?.timeSeriesCount
           };
         });
-        const metricInventoryBaseRows = sourceMetricInventoryRows.length > 0 ? sourceMetricInventoryRows : metricSeriesTableRows;
+        const metricInventoryBaseRows: MetricInventoryTableRow[] = sourceMetricInventoryRows.length > 0 ? sourceMetricInventoryRows : metricSeriesTableRows;
         const metricInventoryRows = buildMetricInventoryRows(metricInventoryBaseRows, metricInventorySearch, metricInventorySort);
         const metricInventoryPageSizeNumber = Number(metricInventoryPageSize);
         const metricInventoryTotalPages = Math.max(1, Math.ceil(metricInventoryRows.length / metricInventoryPageSizeNumber));
@@ -2267,6 +2275,19 @@ export default function OtlpMetricsPage() {
                         {t('otlp.metrics.export.download')}
                       </HzButton>
                     </HzControlStack>
+                    {metricsExportFeedback ? (
+                      <HzStateNotice
+                        role="status"
+                        aria-live="polite"
+                        variant="hint"
+                        tone="success"
+                        title={t('common.notify.export-success')}
+                        meta={metricsExportFeedback.toUpperCase()}
+                        data-otlp-metrics-download-feedback="export-started"
+                        data-otlp-metrics-download-feedback-owner="hertzbeat-ui-state-notice"
+                        data-otlp-metrics-download-feedback-format={metricsExportFeedback}
+                      />
+                    ) : null}
                   </HzPanelSection>
                   <HzPanelSection
                     data-otlp-metrics-series-set-summary-section="shared-panel-section"
@@ -2703,22 +2724,18 @@ export default function OtlpMetricsPage() {
                           {t('topology.context-link.entity')}
                         </HzButtonLink>
                       ) : (
-                        <HzDisabledActionShell
-                          title={missingEntityHandoffTitle}
-                          data-otlp-metrics-entity-action-disabled-shell-owner="hertzbeat-ui-disabled-action-shell"
+                        <HzButtonLink
+                          component={Link}
+                          href={handoffLinks.entityDiscoveryHref}
+                          size="md"
                           layout="full"
+                          data-otlp-metrics-entity-action="true"
+                          data-otlp-metrics-entity-discovery-action="missing-entity-id"
+                          title={entityDiscoveryHandoffTitle}
+                          aria-label={entityDiscoveryHandoffTitle}
                         >
-                          <HzButton
-                            data-otlp-metrics-entity-action-disabled="missing-entity-id"
-                            size="md"
-                            layout="full"
-                            disabled
-                            title={missingEntityHandoffTitle}
-                            aria-label={missingEntityHandoffTitle}
-                          >
-                            {t('topology.context-link.entity')}
-                          </HzButton>
-                        </HzDisabledActionShell>
+                          {t('otlp.metrics.handoff.entity-discovery')}
+                        </HzButtonLink>
                       )}
                       <HzButtonLink component={Link} href={handoffLinks.alertHandlingHref} size="md" layout="full" data-otlp-metrics-alert-handling-action="true">
                         {t('otlp.metrics.handoff.alerts')}

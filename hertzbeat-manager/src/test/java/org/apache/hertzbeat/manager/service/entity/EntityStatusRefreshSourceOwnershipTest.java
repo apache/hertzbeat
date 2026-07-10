@@ -58,8 +58,7 @@ class EntityStatusRefreshSourceOwnershipTest {
         assertFalse(statusRefreshSource.contains("currentRequestWorkspaceId()"),
                 "Status refresh should delegate default active-alert workspace lookup to the alert query boundary");
         assertTrue(statusRefreshSource.contains("return refreshEntityStatusWithEvidence(entity).statusInfo()"));
-        assertTrue(statusRefreshSource.contains("entityAlertEvidenceReadModelService.queryActiveAlerts(\n"
-                + "                monitors, ACTIVE_ALERT_LIMIT)"));
+        assertTrue(statusRefreshSource.contains("entityAlertEvidenceReadModelService.queryActiveAlerts(monitors, ACTIVE_ALERT_LIMIT)"));
         assertTrue(alertEvidenceSource.contains("public List<SingleAlert> queryActiveAlerts(List<Monitor> monitors, "
                 + "int limit)"));
         assertTrue(alertQuerySource.contains("public List<SingleAlert> findActiveAlerts(List<Monitor> monitors, "

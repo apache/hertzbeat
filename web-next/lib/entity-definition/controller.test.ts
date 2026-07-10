@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { loadEntityDefinitionPageData, loadEntityDefinitionPageDataFromFacade, updateDefinitionPayload } from './controller';
+import {
+  buildEntityDefinitionParseUrl,
+  loadEntityDefinitionPageData,
+  loadEntityDefinitionPageDataFromFacade,
+  parseEntityDefinition,
+  updateDefinitionPayload
+} from './controller';
 
 describe('entity definition controller', () => {
   it('loads definition, activities and templates together', async () => {
@@ -133,6 +139,24 @@ describe('entity definition controller', () => {
     expect(updateDefinitionPayload('kind: service', 'curl')).toEqual({
       content: 'kind: service',
       format: 'curl'
+    });
+  });
+
+  it('parses a definition against the current entity so existing identities are allowed', async () => {
+    const apiPost = vi.fn(async () => ({
+      entity: { id: 42, name: 'checkout-api' },
+      identities: [{ key: 'service.name', value: 'checkout-api' }]
+    }));
+
+    await expect(parseEntityDefinition(apiPost as any, '42', 'kind: service', 'yaml')).resolves.toEqual({
+      entity: { id: 42, name: 'checkout-api' },
+      identities: [{ key: 'service.name', value: 'checkout-api' }]
+    });
+
+    expect(buildEntityDefinitionParseUrl('42')).toBe('/entities/42/definition/parse');
+    expect(apiPost).toHaveBeenCalledWith('/entities/42/definition/parse', {
+      content: 'kind: service',
+      format: 'yaml'
     });
   });
 });

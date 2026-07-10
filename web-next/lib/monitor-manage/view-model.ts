@@ -65,7 +65,7 @@ export function buildMonitorWorkbenchNarrative(
   }
 
   if (fellBackToAll) {
-    return t('entity.monitor.workbench.copy.healthy', { total });
+    return t('entity.monitor.workbench.copy.fallback', { total });
   }
 
   if (status === '2') {

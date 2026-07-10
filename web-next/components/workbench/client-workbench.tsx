@@ -7,9 +7,29 @@ import { useI18n } from '@/components/providers/i18n-provider';
 import { resolveWorkbenchError } from '@/lib/client-workbench-state';
 import { buildLoginRedirectHref, buildLoginReturnTo } from '@/lib/passport-login/controller';
 import { readClientSessionState } from '@/lib/session-client';
-import { consumeWorkbenchLoad } from '@/lib/workbench-load-cache';
+import { consumeWorkbenchLoad, forgetWorkbenchLoad } from '@/lib/workbench-load-cache';
 
 const CLIENT_WORKBENCH_LOADING_DELAY_MS = 650;
+
+function withWorkbenchLoadTimeout<T>(promise: Promise<T>, timeoutMs: number | undefined, message: string, onTimeout?: () => void) {
+  if (timeoutMs == null || timeoutMs <= 0) {
+    return promise;
+  }
+
+  let timeoutId: number | undefined;
+  const timeoutPromise = new Promise<T>((_, reject) => {
+    timeoutId = window.setTimeout(() => {
+      onTimeout?.();
+      reject(new Error(message));
+    }, timeoutMs);
+  });
+
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    if (timeoutId != null) {
+      window.clearTimeout(timeoutId);
+    }
+  });
+}
 
 export function ClientWorkbench<T>({
   load,
@@ -18,6 +38,7 @@ export function ClientWorkbench<T>({
   renderLoading,
   loadingTitle,
   loadingCopy,
+  loadTimeoutMs,
   cacheKey,
   cacheSettledTtlMs,
   loadingDelayMs = CLIENT_WORKBENCH_LOADING_DELAY_MS
@@ -28,24 +49,28 @@ export function ClientWorkbench<T>({
   renderLoading?: (visible: boolean) => React.ReactNode;
   loadingTitle?: string;
   loadingCopy?: string;
+  loadTimeoutMs?: number;
   cacheKey?: string;
   cacheSettledTtlMs?: number;
   loadingDelayMs?: number;
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showPendingState, setShowPendingState] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const loadRef = useRef<{
+    cacheKey: string | undefined;
     load: (() => Promise<T>) | null;
     promise: Promise<T> | null;
   }>({
+    cacheKey: undefined,
     load: null,
     promise: null
   });
   const retry = () => {
     loadRef.current = {
+      cacheKey: undefined,
       load: null,
       promise: null
     };
@@ -64,27 +89,39 @@ export function ClientWorkbench<T>({
         setShowPendingState(true);
       }
     }, pendingDelay);
-    if (loadRef.current.load !== load) {
+    const localizedCacheKey = cacheKey ? `${cacheKey}::locale:${locale}` : undefined;
+    if (loadRef.current.load !== load || loadRef.current.cacheKey !== localizedCacheKey) {
       loadRef.current = {
+        cacheKey: localizedCacheKey,
         load,
         promise: null
       };
     }
     if (!loadRef.current.promise) {
-      loadRef.current.promise = cacheKey
-        ? consumeWorkbenchLoad(cacheKey, load, { settledTtlMs: cacheSettledTtlMs })
+      loadRef.current.promise = localizedCacheKey
+        ? consumeWorkbenchLoad(localizedCacheKey, load, { settledTtlMs: cacheSettledTtlMs })
         : load().finally(() => {
             if (loadRef.current.load === load) {
               loadRef.current.promise = null;
             }
           });
     }
-    loadRef.current.promise
+    withWorkbenchLoadTimeout(
+      loadRef.current.promise,
+      loadTimeoutMs,
+      t('common.workbench.load-timeout'),
+      localizedCacheKey ? () => forgetWorkbenchLoad(localizedCacheKey) : undefined
+    )
       .then(result => {
         if (!cancelled) {
           window.clearTimeout(pendingTimer);
           setData(result);
           setError(null);
+          void readClientSessionState().then(session => {
+            if (cancelled || session.authenticated) return;
+            const returnTo = buildLoginReturnTo(window.location);
+            window.location.href = buildLoginRedirectHref(returnTo, process.env.NEXT_PUBLIC_LOGIN_PATH);
+          });
         }
       })
       .catch(err => {
@@ -98,14 +135,14 @@ export function ClientWorkbench<T>({
               window.location.href = buildLoginRedirectHref(returnTo, process.env.NEXT_PUBLIC_LOGIN_PATH);
             });
           }
-          setError(message);
+          setError(message ?? t('common.api.request-failed-status', { status: 401 }));
         }
       });
     return () => {
       cancelled = true;
       window.clearTimeout(pendingTimer);
     };
-  }, [cacheKey, cacheSettledTtlMs, load, loadingDelayMs, reloadKey, t]);
+  }, [cacheKey, cacheSettledTtlMs, load, loadTimeoutMs, loadingDelayMs, locale, reloadKey, t]);
 
   if (error) {
     if (renderError) {

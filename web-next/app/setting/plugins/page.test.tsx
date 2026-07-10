@@ -1,15 +1,23 @@
+// @vitest-environment jsdom
+
 import React from 'react';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { act } from 'react';
+import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTranslatorMock } from '../../../test/i18n-test-helper';
 
 (globalThis as { React?: typeof React }).React = React;
+(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const mockState = vi.hoisted(() => ({
   lastLoad: null as null | (() => Promise<unknown>),
   renderErrorMessage: null as string | null,
+  lastSurfaceProps: null as null | Record<string, any>,
+  currentSearchParams: '',
+  routerReplace: vi.fn(),
   renderData: {
     list: {
       content: [
@@ -33,6 +41,7 @@ const apiMessagePost = vi.hoisted(() => vi.fn());
 const apiMessagePut = vi.hoisted(() => vi.fn());
 const apiMessageDelete = vi.hoisted(() => vi.fn());
 const loadPluginData = vi.hoisted(() => vi.fn());
+const deletePlugins = vi.hoisted(() => vi.fn());
 
 vi.mock('@/components/providers/i18n-provider', () => ({
   useI18n: () => ({
@@ -41,6 +50,13 @@ vi.mock('@/components/providers/i18n-provider', () => ({
       locale: 'zh-CN'
     })
   })
+}));
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    replace: mockState.routerReplace
+  }),
+  useSearchParams: () => new URLSearchParams(mockState.currentSearchParams)
 }));
 
 vi.mock('@/components/workbench/client-workbench', () => ({
@@ -62,7 +78,10 @@ vi.mock('@/components/workbench/client-workbench', () => ({
 }));
 
 vi.mock('@/components/pages/plugin-manage-surface', () => ({
-  PluginManageSurface: ({ data, search, draftPlugin, isUploadDialogOpen, paramDraft, actionMessage, actionError, actionMeta, actionTone, actionKind, loadError, uploadValidation, isUploadPending, isParamPending, isLoadPending, isTogglePending, optimisticEnableStatus, deleteTarget }: any) => (
+  PluginManageSurface: (props: any) => {
+    mockState.lastSurfaceProps = props;
+    const { data, search, draftPlugin, isUploadDialogOpen, paramDraft, actionMessage, actionError, actionMeta, actionTone, actionKind, loadError, uploadValidation, isUploadPending, isParamPending, isLoadPending, isTogglePending, optimisticEnableStatus, deleteTarget } = props;
+    return (
     <div
       data-plugin-manage-surface="otlp-hertzbeat-ui-plugin-console"
       data-plugin-manage-style-baseline="hertzbeat-ui-matte"
@@ -202,7 +221,8 @@ vi.mock('@/components/pages/plugin-manage-surface', () => ({
       <span>{Object.keys(optimisticEnableStatus ?? {}).length === 0 ? 'no-optimistic-enable-status' : 'optimistic-enable-status'}</span>
       <span>{deleteTarget ? deleteTarget.label : 'no-delete-target'}</span>
     </div>
-  )
+  );
+  }
 }));
 
 vi.mock('@/lib/api-client', () => ({
@@ -230,7 +250,7 @@ vi.mock('@/lib/plugin-manage/controller', () => ({
   savePluginParams: vi.fn(),
   togglePluginStatus: vi.fn(),
   validatePluginUploadDraft: vi.fn(() => ({ name: true, jarFile: true })),
-  deletePlugins: vi.fn(),
+  deletePlugins,
   clampPluginPageIndexAfterDelete: vi.fn(() => 0)
 }));
 
@@ -238,10 +258,14 @@ describe('setting plugins page', () => {
   beforeEach(() => {
     mockState.lastLoad = null;
     mockState.renderErrorMessage = null;
+    mockState.lastSurfaceProps = null;
+    mockState.currentSearchParams = '';
+    mockState.routerReplace.mockReset();
     apiMessageGet.mockReset();
     apiMessagePost.mockReset();
     apiMessagePut.mockReset();
     apiMessageDelete.mockReset();
+    deletePlugins.mockReset().mockResolvedValue(undefined);
     loadPluginData.mockReset().mockImplementation(async (apiGetFn, query) => {
       await apiGetFn(`/plugin?pageIndex=0&pageSize=8${query.search ? `&search=${query.search}` : ''}`);
       return mockState.renderData;
@@ -408,10 +432,180 @@ describe('setting plugins page', () => {
     expect(html).not.toContain('data-observability-status');
   });
 
+  it('initializes plugin search from the URL and preserves route state when search, clear, and pagination run', async () => {
+    mockState.currentSearchParams = 'search=smtp&pageIndex=2&pageSize=16&view=grid';
+    loadPluginData.mockImplementation(async (_apiGetFn, query) => {
+      return {
+        ...mockState.renderData,
+        query
+      };
+    });
+
+    const { default: SettingPluginsPage } = await import('./page');
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(<SettingPluginsPage />);
+      await Promise.resolve();
+    });
+
+    expect(mockState.lastSurfaceProps?.search).toBe('smtp');
+    await act(async () => {
+      await mockState.lastLoad?.();
+    });
+    expect(loadPluginData).toHaveBeenLastCalledWith(apiMessageGet, { search: 'smtp', pageIndex: 2, pageSize: 16 });
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onSearchChange('mail');
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onSearch();
+      await Promise.resolve();
+    });
+
+    expect(mockState.routerReplace).toHaveBeenLastCalledWith('/setting/plugins?search=mail&pageSize=16&view=grid', { scroll: false });
+    await act(async () => {
+      await mockState.lastLoad?.();
+    });
+    expect(loadPluginData).toHaveBeenLastCalledWith(apiMessageGet, { search: 'mail', pageIndex: 0, pageSize: 16 });
+
+    mockState.currentSearchParams = 'search=mail&pageSize=16&view=grid';
+    await act(async () => {
+      root.render(<SettingPluginsPage />);
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onPageIndexChange(3);
+      await Promise.resolve();
+    });
+    expect(mockState.routerReplace).toHaveBeenLastCalledWith('/setting/plugins?search=mail&pageSize=16&view=grid&pageIndex=3', { scroll: false });
+
+    mockState.currentSearchParams = 'search=mail&pageSize=16&view=grid&pageIndex=3';
+    await act(async () => {
+      root.render(<SettingPluginsPage />);
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onPageSizeChange(8);
+      await Promise.resolve();
+    });
+    expect(mockState.routerReplace).toHaveBeenLastCalledWith('/setting/plugins?search=mail&view=grid', { scroll: false });
+
+    mockState.currentSearchParams = 'search=mail&pageSize=16&view=grid';
+    await act(async () => {
+      root.render(<SettingPluginsPage />);
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onSearchClear();
+      await Promise.resolve();
+    });
+
+    expect(mockState.routerReplace).toHaveBeenLastCalledWith('/setting/plugins?pageSize=16&view=grid', { scroll: false });
+    expect(mockState.lastSurfaceProps?.search).toBe('');
+    await act(async () => {
+      await mockState.lastLoad?.();
+    });
+    expect(loadPluginData).toHaveBeenLastCalledWith(apiMessageGet, { search: '', pageIndex: 0, pageSize: 16 });
+
+    await act(async () => {
+      root.unmount();
+      await Promise.resolve();
+    });
+    container.remove();
+  }, 30000);
+
+  it('keeps plugin deletion behind confirmation and cancel is a no-write path', async () => {
+    const { default: SettingPluginsPage } = await import('./page');
+    const t = createTranslatorMock({ locale: 'zh-CN' });
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(<SettingPluginsPage />);
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onDeleteSelected();
+      await Promise.resolve();
+    });
+
+    expect(mockState.lastSurfaceProps?.deleteTarget).toBeNull();
+    expect(mockState.lastSurfaceProps?.actionKind).toBe('delete');
+    expect(mockState.lastSurfaceProps?.actionTone).toBe('warning');
+    expect(mockState.lastSurfaceProps?.actionError).toBe(t('setting.plugins.notify.no-select-delete'));
+    expect(deletePlugins).not.toHaveBeenCalled();
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onSelectedIdsChange([1]);
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onDeleteSelected();
+      await Promise.resolve();
+    });
+
+    expect(mockState.lastSurfaceProps?.deleteTarget).toEqual({
+      ids: [1],
+      label: t('setting.plugins.selected-count', { count: 1 }),
+      mode: 'batch'
+    });
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onDeleteCancel();
+      await Promise.resolve();
+    });
+
+    expect(mockState.lastSurfaceProps?.deleteTarget).toBeNull();
+    expect(deletePlugins).not.toHaveBeenCalled();
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onDeleteSelected();
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onDeleteConfirm();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(deletePlugins).toHaveBeenCalledWith(apiMessageDelete, [1]);
+    expect(mockState.lastSurfaceProps?.deleteTarget).toBeNull();
+    expect(mockState.lastSurfaceProps?.selectedIds).toEqual([]);
+    expect(mockState.lastSurfaceProps?.actionKind).toBe('delete');
+    expect(mockState.lastSurfaceProps?.actionTone).toBe('success');
+    expect(mockState.lastSurfaceProps?.actionMessage).toBe(t('common.notify.delete-success'));
+
+    await act(async () => {
+      root.unmount();
+      await Promise.resolve();
+    });
+    container.remove();
+  }, 30000);
+
   it('keeps route composition out of the old observability/workbench visual owner', () => {
     const source = readFileSync(resolve(process.cwd(), 'app/setting/plugins/setting-plugins-page.tsx'), 'utf8');
 
     expect(source).toContain('PluginManageSurface');
+    expect(source).toContain('const router = useRouter();');
+    expect(source).toContain('const searchParams = useSearchParams();');
+    expect(source).toContain("const routeSearch = searchParams.get('search') ?? '';");
+    expect(source).toContain("const routePageIndex = parsePluginRouteInteger(searchParams.get('pageIndex'));");
+    expect(source).toContain("const routePageSize = parsePluginRouteInteger(searchParams.get('pageSize'));");
+    expect(source).toContain('const replaceRouteQuery = useCallback(');
+    expect(source).toContain("const nextUrl = nextParamString ? `/setting/plugins?${nextParamString}` : '/setting/plugins';");
+    expect(source).toContain('router.replace(nextUrl, { scroll: false });');
     expect(source).toContain('const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)');
     expect(source).toContain('const [actionMessage, setActionMessage] = useState<string | null>(null)');
     expect(source).toContain('const [actionError, setActionError] = useState<string | null>(null)');
@@ -432,7 +626,7 @@ describe('setting plugins page', () => {
     expect(source).toContain("setActionMessage(t('common.notify.edit-success'))");
     expect(source).toContain("setActionError(t('common.notify.edit-fail'))");
     expect(source).toContain('setActionMeta(error instanceof Error ? error.message : null)');
-    expect(source).toContain("setActionError(t('common.notify.no-select-delete'))");
+    expect(source).toContain("setActionError(t('setting.plugins.notify.no-select-delete'))");
     expect(source).toContain("setActionMessage(t('common.notify.delete-success'))");
     expect(source).toContain("setActionError(t('common.notify.delete-fail'))");
     expect(source).toContain('validatePluginUploadDraft(draftPlugin)');
@@ -468,11 +662,15 @@ describe('setting plugins page', () => {
     expect(source).toContain('onPageSizeChange={pageSize => {');
     expect(source.match(/setSelectedIds\(\[\]\)/g)?.length).toBeGreaterThanOrEqual(6);
     expect(source).toContain('onSearch={() => {');
+    expect(source).toContain("const nextQuery = { search, pageIndex: 0, pageSize: query.pageSize };");
+    expect(source).toContain('replaceRouteQuery(nextQuery);');
     expect(source).toContain('onSearchClear={() => {');
-    expect(source).toContain("setQuery({ search: '', pageIndex: 0, pageSize: query.pageSize });");
+    expect(source).toContain("const nextQuery = { search: '', pageIndex: 0, pageSize: query.pageSize };");
+    expect(source).toContain('onPageIndexChange={pageIndex => {');
+    expect(source).toContain('const nextQuery = { ...query, pageIndex };');
+    expect(source).toContain('onPageSizeChange={pageSize => {');
+    expect(source).toContain('const nextQuery = { ...query, pageIndex: 0, pageSize };');
     expect(source).toContain('onRefresh={() => {');
-    expect(source).toContain('setQuery(current => ({ ...current, pageIndex }))');
-    expect(source).toContain('setQuery(current => ({ ...current, pageIndex: 0, pageSize }))');
     expect(source).toContain('actionMessage={actionMessage}');
     expect(source).toContain('actionError={actionError}');
     expect(source).toContain('actionMeta={actionMeta}');

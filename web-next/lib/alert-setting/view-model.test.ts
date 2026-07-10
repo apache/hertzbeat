@@ -52,6 +52,7 @@ describe('alert setting view model', () => {
         template: 'OpsTemplate',
         labels: ['severity:warning', 'team:core'],
         enabledLabel: t('common.enabled'),
+        runtimeSummary: '',
         updatedAt: '2026-04-20 00:20:00'
       }
     ]);

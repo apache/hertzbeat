@@ -89,12 +89,22 @@ function IncidentWorkbenchSurface({
             tone: item.tone || (index === 0 ? 'info' : 'neutral')
           }))}
           selectedIncidentId={state.selectedIncidentId}
+          emptyLabel={t('incidents.table.empty')}
           actions={state.nextHops.map(action => ({
             label: action.label,
             href: action.href,
             variant: action.variant === 'default' ? 'default' : action.variant
           }))}
           transitionLabel={t('common.status')}
+          labels={{
+            incident: t('incidents.table.incident'),
+            severity: t('incidents.table.severity'),
+            stage: t('incidents.table.stage'),
+            owner: t('incidents.table.owner'),
+            impact: t('incidents.table.impact'),
+            timeline: t('incidents.table.timeline'),
+            ownership: t('incidents.table.ownership')
+          }}
           transitionActions={INCIDENT_TRANSITION_STATES.map(nextState => ({
             id: `state-${nextState}`,
             label: t(`status.incident.state.${nextState}`),

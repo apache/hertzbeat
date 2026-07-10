@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
-import { StageSection, SupportPanel } from '@/components/observability';
+import { SupportPanel } from '@/components/observability';
 import { ClientWorkbench } from '@/components/workbench/client-workbench';
 import { useI18n } from '@/components/providers/i18n-provider';
 import { Badge } from '@/components/ui/badge';
@@ -423,6 +423,35 @@ function problemFocusBadgeVariant(severityTone: 'default' | 'success' | 'warning
   return 'default' as const;
 }
 
+function OverviewProblemFocusPanel({
+  actions,
+  children,
+  description,
+  title
+}: {
+  actions: React.ReactNode;
+  children: React.ReactNode;
+  description: string;
+  title: string;
+}) {
+  return (
+    <section
+      data-overview-problem-focus-panel="hertzbeat-ui-flat-problem-focus"
+      data-overview-problem-focus-owner="hertzbeat-ui-overview-console"
+      className="rounded-[4px] border border-[var(--ops-border-color)] bg-[var(--ops-surface-panel)] p-4"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-[14px] font-semibold text-[var(--ops-text-primary)]">{title}</h2>
+          <p className="mt-1 max-w-3xl text-[12px] leading-5 text-[var(--ops-text-secondary)]">{description}</p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">{actions}</div>
+      </div>
+      <div className="mt-3">{children}</div>
+    </section>
+  );
+}
+
 export default function OverviewPage() {
   const { t } = useI18n();
   const searchParams = useSearchParams();
@@ -837,11 +866,9 @@ export default function OverviewPage() {
 
                     {!healthyOverviewPlaceholder ? (
                       <>
-                        <StageSection
+                        <OverviewProblemFocusPanel
                           title={viewModel.problemFocus.title}
                           description={viewModel.problemFocus.summary}
-                          chrome="plain"
-                          compact
                           actions={
                             <Badge
                               variant={problemFocusBadgeVariant(viewModel.problemFocus.severityTone)}
@@ -885,7 +912,7 @@ export default function OverviewPage() {
                               label={t('dashboard.problem-focus.review-alerts')}
                             />
                           </div>
-                        </StageSection>
+                        </OverviewProblemFocusPanel>
 
                         <OverviewSummaryGrid
                           items={viewModel.summaryCards}
@@ -961,6 +988,8 @@ export default function OverviewPage() {
                 <OverviewChecklist
                   title={t('dashboard.setup.checklist.title')}
                   items={railChecklistItems}
+                  readyLabel={t('overview.checklist.status.ready')}
+                  pendingLabel={t('overview.checklist.status.pending')}
                   density={healthyOverviewPlaceholder ? 'compact' : 'default'}
                 />
                 </div>

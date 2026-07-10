@@ -181,7 +181,29 @@ describe('AlertGroupSurface', () => {
     expect(html).toContain('data-alert-group-surface="otlp-hertzbeat-ui-group-console"');
     expect(html).toContain('data-alert-group-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-alert-group-header="hertzbeat-ui-compact-header"');
+    expect(html).toContain('data-alert-group-header-nesting-contract="flat-page-introduction"');
+    expect(html).toContain('class="p-0"');
     expect(html).toContain('data-alert-group-command-row="standard-equal-buttons"');
+    expect(html).toContain('data-alert-group-action-help="refresh"');
+    expect(html).toContain('data-alert-group-action-help="new"');
+    expect(html).toContain('data-alert-group-action-help="delete-selected"');
+    expect(html).toContain('data-alert-group-action-help-trigger="hertzbeat-ui-action-help"');
+    expect(html).toContain('data-alert-group-action-help-style="icon-after-action"');
+    expect(html).toContain('data-alert-group-action-help-visual="circle-help-icon"');
+    expect(html).toContain('data-alert-group-action-help-icon="lucide-circle-help"');
+    expect(html).toContain('lucide-circle-help');
+    expect(html).toContain('data-alert-group-action-help-tooltip="delete-selected"');
+    expect(html).toContain('data-alert-group-action-help="cancel"');
+    expect(html).toContain('data-alert-group-action-help="save"');
+    expect(html).toContain('data-alert-group-action-help-tooltip="cancel"');
+    expect(html).toContain('data-alert-group-action-help-tooltip="save"');
+    expect(html).not.toContain('<span aria-hidden="true">?</span>');
+    expect(html).toContain(t('alert.group.action.refresh.help'));
+    expect(html).toContain(t('alert.group.action.new.help'));
+    expect(html).toContain(t('alert.group.action.new.impact'));
+    expect(html).toContain(t('alert.group.action.delete-selected.impact'));
+    expect(html).toContain(t('alert.group.action.cancel.help'));
+    expect(html).toContain(t('alert.group.action.save.help'));
     expect(html).toContain('data-alert-group-admin-layout="full-width-admin-list"');
     expect(html).toContain('data-alert-group-toolbar="hertzbeat-ui-query-toolbar"');
     expect(html).toContain('data-hz-search-row-owner="hertzbeat-ui-search-row"');
@@ -233,6 +255,25 @@ describe('AlertGroupSurface', () => {
     expect(source).toContain('HzCheckbox');
     expect(source).toContain('HzInlineFeedback');
     expect(source).toContain('HzPaginationBar');
+    expect(source).toContain('data-alert-group-header-nesting-contract="flat-page-introduction"');
+    expect(source).toContain('className="p-0"');
+    expect(source).not.toContain('className={coldGroupVisual.panel.hero}');
+    expect(source).toContain('function alertGroupActionHelp');
+    expect(source).toContain('function AlertGroupActionHelp');
+    expect(source).toContain("alertGroupActionHelp(t, 'refresh')");
+    expect(source).toContain("alertGroupActionHelp(t, 'new')");
+    expect(source).toContain("alertGroupActionHelp(t, 'delete-selected')");
+    expect(source).toContain('data-alert-group-action-help={id}');
+    expect(source).toContain('CircleHelp');
+    expect(source).toContain('data-alert-group-action-help-style="icon-after-action"');
+    expect(source).toContain('data-alert-group-action-help-visual="circle-help-icon"');
+    expect(source).toContain('data-alert-group-action-help-icon="lucide-circle-help"');
+    expect(source).toContain('data-alert-group-action-help-tooltip={id}');
+    expect(source).toContain("alertGroupActionHelp(t, 'cancel')");
+    expect(source).toContain("alertGroupActionHelp(t, 'save')");
+    expect(source).not.toContain('data-alert-group-action-help-style="literal-question-after-action"');
+    expect(source).not.toContain('data-alert-group-action-help-visual="borderless-question"');
+    expect(source).not.toContain('<span aria-hidden="true">?</span>');
     expect(source).toContain('handleSelectCurrentPage');
     expect(source).toContain('onCheckedIdsChange(Array.from(new Set([...checkedIds, ...currentPageIds])))');
     expect(source).toContain('onCheckedIdsChange(checkedIds.filter(id => !currentPageIdSet.has(id)))');
@@ -315,9 +356,57 @@ describe('AlertGroupSurface', () => {
     expect(html).toContain('data-alert-group-empty-state="hertzbeat-ui-table-empty"');
     expect(html).toContain('data-alert-group-empty-icon="hertzbeat-ui-empty-box"');
     expect(html).toContain('data-alert-group-empty-copy="true"');
+    expect(html).toContain('data-alert-group-empty-action="new"');
     expect(html).not.toContain('align-top');
     expect(html).not.toContain('pt-[54px]');
     expect(html).toContain(t('alert.group.empty.title'));
+    expect(html).toContain(t('alert.group.action.new'));
+  });
+
+  it('keeps the requested route page size visible when the empty backend page echoes the default', () => {
+    const html = renderToStaticMarkup(
+      <AlertGroupSurface
+        t={t}
+        data={{ list: { content: [], totalElements: 0, pageIndex: 0, pageSize: 8 } } as any}
+        search="ops"
+        selectedId={null}
+        checkedIds={[]}
+        requestedPageSize={15}
+        editorOpen={false}
+        editorLoading={false}
+        editorSaving={false}
+        editorMessage={null}
+        editorError={null}
+        draft={{
+          name: '',
+          enable: true,
+          groupLabelsText: '',
+          groupWait: '30',
+          groupInterval: '300',
+          repeatInterval: '14400'
+        }}
+        formatTime={() => '-'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onSelect={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        onNew={vi.fn()}
+        onSave={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onCloseEditor={vi.fn()}
+        onDraftChange={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-hz-pagination-summary="true"');
+    expect(html).toContain(t('alert.group.pagination.summary', { page: 1, totalPages: 1, from: 0, to: 0, total: 0 }));
+    expect(html).toContain('data-hz-ui="select-trigger"');
+    expect(html).toContain('<span class="truncate">15</span>');
   });
 
   it('renders three-signal evidence context before group authoring', () => {

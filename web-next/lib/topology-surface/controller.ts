@@ -108,7 +108,7 @@ function resolveTopologyApiTimeBounds(context: TopologyRouteContext) {
 export function resolveTopologyRelationType(context: TopologyRouteContext) {
   const explicitRelationType = context.relationType?.trim();
   if (explicitRelationType) return explicitRelationType;
-  if (context.viewMode === 'service-call') return 'trace-call';
+  if (context.sourceKind === 'otlp-trace-call' || context.viewMode === 'service-call') return 'trace-call';
   return undefined;
 }
 
@@ -157,15 +157,7 @@ export function shouldPreservePreviousTopologyGraphDuringLoad(context: TopologyR
 }
 
 function shouldForwardTopologyApiSourceKind(context: TopologyRouteContext) {
-  const relationType = resolveTopologyRelationType(context);
-  if (context.sourceKind === 'otlp-trace-call' && relationType === 'trace-call') {
-    return false;
-  }
-  return !(
-    context.sourceKind === 'otlp-trace-call' &&
-    context.viewMode !== 'service-call' &&
-    !context.relationType?.trim()
-  );
+  return Boolean(context.sourceKind?.trim());
 }
 
 export function buildTopologyApiUrl(context: TopologyRouteContext = {}) {

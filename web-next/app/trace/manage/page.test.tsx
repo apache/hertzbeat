@@ -395,6 +395,7 @@ vi.mock('@/lib/trace-manage/view-model', () => ({
       metricsHref: `/ingestion/otlp/metrics?${sharedParams.toString()}`,
       entitiesHref: `/entities?search=${encodeURIComponent(options.serviceName || 'checkout')}`,
       entityHref: `/entities/7?entityId=7&serviceName=${encodeURIComponent(options.serviceName || 'checkout')}&environment=prod&timeRange=last-1h&source=otlp`,
+      entityDiscoveryHref: `/entities/discovery?identityKey=service.name&identityValue=${encodeURIComponent(options.serviceName || 'checkout')}&serviceName=${encodeURIComponent(options.serviceName || 'checkout')}&environment=prod`,
       alertHandlingHref: `/alert?status=firing&signal=traces&search=${encodeURIComponent(options.serviceName || 'checkout')}&entityId=7&serviceName=${encodeURIComponent(options.serviceName || 'checkout')}&environment=prod&timeRange=last-1h&source=otlp`,
       alertRulesHref: `/alert/setting?${alertRulesParams.toString()}`
     };
@@ -554,14 +555,12 @@ describe('trace manage page', () => {
     expect(html).toContain('data-hz-action-group-layout="full-end"');
     expect(html).toContain('data-trace-manage-header-action-icon="intake"');
     expect(html).toContain('data-trace-manage-header-action-icon="collector"');
-    expect(html).toContain('data-trace-manage-header-action-icon="entity"');
+    expect(html).toContain('data-trace-manage-header-action-icon="entity-discovery"');
     expect(html).toContain('data-trace-manage-header-action-icon="alerts"');
     expect(html).toContain('data-trace-manage-header-action-icon="templates"');
     expect(html).toContain('data-trace-manage-header-action-icon-owner="hertzbeat-ui-button-icon"');
-    expect(html).toContain('data-hz-ui="disabled-action-shell"');
-    expect(html).toContain('data-hz-disabled-action-shell-owner="hertzbeat-ui-disabled-action-shell"');
-    expect(html).toContain('data-trace-manage-disabled-action-owner="hertzbeat-ui-disabled-action-shell"');
-    expect(html).toContain('data-trace-manage-disabled-action-scope="header"');
+    expect(html).toContain('data-trace-manage-header-action="entity-discovery"');
+    expect(html).toContain('data-trace-manage-entity-discovery-action="missing-entity-id"');
     expect(html).toContain('data-trace-manage-query-bar="hertzbeat-ui-query-row"');
     expect(html).toContain('data-trace-manage-panel-surface="query"');
     expect(html).toContain('data-trace-manage-panel-surface-padding-owner="hertzbeat-ui-panel-surface"');
@@ -712,7 +711,7 @@ describe('trace manage page', () => {
     expect(html).toContain('Missing entity ID keeps entity detail disabled');
     expect(html).toContain('Current entity');
     expect(html).toContain('Collection source');
-    expect(html).toContain('Entity detail');
+    expect(html).toContain('Discover entity');
     expect(html).toContain('Alert handling');
     expect(html).toContain('Create alert');
     expect(html).toContain('/alert/setting?signal=traces');
@@ -737,6 +736,25 @@ describe('trace manage page', () => {
     expect(apiMessageGet.mock.calls).toEqual([
       ['/traces/stats/overview?traceId=trace-123&serviceName=checkout&resourceFilter=service.version%3D1.2.3&attributeFilter=http.route+CONTAINS+checkout&operationName=POST+%2Fcheckout&minDurationMs=100&maxDurationMs=500&errorOnly=true&spanScope=root', { signal: expect.any(AbortSignal) }],
       ['/traces/list?pageIndex=0&pageSize=8&traceId=trace-123&serviceName=checkout&resourceFilter=service.version%3D1.2.3&attributeFilter=http.route+CONTAINS+checkout&operationName=POST+%2Fcheckout&minDurationMs=100&maxDurationMs=500&errorOnly=true&spanScope=root', { signal: expect.any(AbortSignal) }]
+    ]);
+  }, 60000);
+
+  it('labels inactive trace quick filters as actions instead of active filter state', async () => {
+    mockState.searchParams = new URLSearchParams('serviceName=checkout&operationName=POST%20%2Fcheckout');
+    apiMessageGet
+      .mockResolvedValueOnce({ totalTraceCount: 8, errorTraceCount: 2, latestObservedAt: 1713200000000, hasActiveTrace: true })
+      .mockResolvedValueOnce({ content: [] });
+
+    const html = renderTraceManagePage();
+    await mockState.lastLoad?.();
+
+    expect(html).toContain('Only error traces');
+    expect(html).not.toContain('Trace status: Error traces');
+    expect(html).toContain('Service name: checkout');
+    expect(html).toContain('Operation: POST /checkout');
+    expect(apiMessageGet.mock.calls).toEqual([
+      ['/traces/stats/overview?serviceName=checkout&operationName=POST+%2Fcheckout&spanScope=root', { signal: expect.any(AbortSignal) }],
+      ['/traces/list?pageIndex=0&pageSize=8&serviceName=checkout&operationName=POST+%2Fcheckout&spanScope=root', { signal: expect.any(AbortSignal) }]
     ]);
   }, 60000);
 
@@ -1416,6 +1434,47 @@ describe('trace manage page', () => {
     ]);
   });
 
+  it('normalizes Spring trace page number and size for list pagination feedback', async () => {
+    mockState.searchParams = new URLSearchParams('view=table&serviceName=checkout&listPageSize=8&listPageIndex=1');
+    mockState.traceListOverride = { content: [], totalElements: 12, number: 1, size: 8 };
+
+    const html = renderTraceManagePage();
+
+    expect(html).toContain('data-trace-manage-list-pagination="shared-list-pagination"');
+    expect(html).toContain('data-trace-manage-list-page-index="1"');
+    expect(html).toContain('data-trace-manage-list-page-size="8"');
+    expect(html).toContain('data-trace-manage-list-total-elements="12"');
+    expect(html).toContain('9-12 of 12 traces');
+    expect(html).not.toContain('9-12 of 12 spans');
+  });
+
+  it('keeps missing exact trace detail copy honest instead of reporting a crash-like failure', () => {
+    const messages = readFileSync(resolve(process.cwd(), 'lib/i18n-runtime-messages.ts'), 'utf8');
+
+    expect(messages).toContain("'trace.manage.drawer.error.title': 'Trace detail unavailable'");
+    expect(messages).toContain('was not found or could not be loaded');
+    expect(messages).toContain('clear the exact trace ID');
+    expect(messages).not.toContain("'trace.manage.drawer.error.title': 'Failed to load trace detail'");
+  });
+
+  it('keeps dashboard panel actions honest when the trace query has no results', () => {
+    mockState.traceListOverride = { content: [], totalElements: 0, pageIndex: 0, pageSize: 8 };
+    mockState.searchParams = new URLSearchParams('traceId=missing-trace&serviceName=checkout');
+
+    const html = renderTraceManagePage();
+    const messages = readFileSync(resolve(process.cwd(), 'lib/i18n-runtime-messages.ts'), 'utf8');
+
+    expect(html).toContain('data-trace-manage-dashboard-panel-draft-action="add-current"');
+    expect(html).toContain('data-trace-manage-dashboard-panel-draft-action-disabled="empty-trace-results"');
+    expect(html).toContain('data-trace-manage-header-action="add-dashboard"');
+    expect(html).toContain('data-trace-manage-header-action-disabled="empty-trace-results"');
+    expect(html).toContain('data-trace-manage-disabled-action="add-dashboard"');
+    expect(html).toContain('data-trace-manage-disabled-action-scope="header"');
+    expect(html).toContain('disabled=""');
+    expect(html).toContain('Run a query with trace results before adding this view to a dashboard.');
+    expect(messages).toContain("'trace.manage.dashboard-panel-draft.empty-disabled': 'Run a query with trace results before adding this view to a dashboard.'");
+  });
+
   it('degrades failed trace API loads without dropping the topology-like workbench contract', async () => {
     const source = readFileSync(resolve(process.cwd(), 'app/trace/manage/trace-manage-page.tsx'), 'utf8');
     apiMessageGet.mockRejectedValueOnce(new Error('Trace API request failed'));
@@ -1493,7 +1552,7 @@ describe('trace manage page', () => {
     expect(html).toContain('data-trace-manage-detail-footer-layout="shared-detail-footer"');
     expect(html).toContain('data-trace-manage-detail-footer-layout-owner="hertzbeat-ui-workbench-layout"');
     expect(html).toContain('data-hz-workbench-layout-variant="detail-footer"');
-    expect(html).toContain('data-trace-manage-detail-footer-action-icon="entity"');
+    expect(html).toContain('data-trace-manage-detail-footer-action-icon="entity-discovery"');
     expect(html).toContain('data-trace-manage-detail-footer-action-icon="alerts"');
     expect(html).toContain('data-trace-manage-detail-footer-action-icon="logs"');
     expect(html).toContain('data-trace-manage-detail-footer-action-icon="metrics"');
@@ -1548,9 +1607,9 @@ describe('trace manage page', () => {
     expect(html).toContain('data-trace-manage-time-control-fit="no-clipping"');
     expect(html).toContain('data-time-range-control="hertzbeat-shared"');
     expect(html).toContain('data-time-range-control-visual="grafana-like-narrow-rail"');
-    expect(html).toContain('data-time-range-control-layout="nowrap-top-right-rail"');
+    expect(html).toContain('data-time-range-control-layout="wrapping-top-right-rail"');
     expect(html).toContain('data-time-range-control-align="end"');
-    expect(html).toContain('data-time-range-control-overflow="fit-without-scroll"');
+    expect(html).toContain('data-time-range-control-overflow="contained-wrap"');
     expect(html).toContain('data-trace-manage-time-range-control-owner="hertzbeat-shared-time-range-control"');
     expect(html).toContain('data-time-range-live-toggle="paused"');
     expect(html).toContain('data-trace-manage-time-refresh-action="true"');
@@ -1594,6 +1653,8 @@ describe('trace manage page', () => {
     expect(source).toContain('data-trace-manage-selected-evidence-owner="hertzbeat-ui-detail-rows"');
     expect(source).toContain('data-trace-manage-detail-facts-owner="hertzbeat-ui-detail-rows"');
     expect(source).toContain('buildTraceAttributionDiagnostics(null, null, routeContext, t)');
+    expect(source).toContain("const shouldShowRouteAttributionDiagnostics = routeAttributionDiagnostics.some(row => row.state === 'present')");
+    expect(source).toContain('{shouldShowRouteAttributionDiagnostics ? <TraceAttributionDiagnostics rows={routeAttributionDiagnostics} /> : null}');
     expect(source).toContain('buildTraceAttributionDiagnostics(detail, selectedSpan, handoffRouteContext, t)');
     expect(source).toContain('data-trace-manage-attribution-diagnostics="hertzbeat-attribute-diagnostics"');
     expect(source).toContain('HzAttributeDiagnostics');
@@ -1760,6 +1821,11 @@ describe('trace manage page', () => {
     expect(source).toContain(
       'const selectedTraceReturnHref = buildSelectedTraceReturnHref(currentTraceReturnHref, detail, selectedSpan, handoffRouteContext);'
     );
+    expect(source).toContain('const requestedTraceId = firstNavigationId(query.traceId, routeContext.traceId) ?? undefined;');
+    expect(source).toContain('const requestedSpanId = firstNavigationId(query.spanId, routeContext.spanId) ?? undefined;');
+    expect(source).toContain('traceId: requestedTraceId');
+    expect(source).toContain('spanId: requestedSpanId');
+    expect(source).toContain('const canOpenLogs = hasNavigationId(detail?.traceId) || hasNavigationId(requestedTraceId);');
     expect(source).toContain('logsReturnTo: selectedTraceReturnHref');
     expect(source).toContain('metricsReturnTo: selectedTraceReturnHref');
     expect(source).toContain('data-trace-manage-open-detail-action="side-waterfall-modal"');
@@ -1787,6 +1853,10 @@ describe('trace manage page', () => {
     expect(source).not.toContain('className="h-6 max-w-[160px] text-[11px]"');
     expect(source).toContain('data-trace-manage-drawer-action-group="handoff-actions"');
     expect(source).toContain('data-trace-manage-drawer-action-group-owner="hertzbeat-ui-action-group"');
+    expect(source).toContain('data-trace-manage-drawer-return-action="true"');
+    expect(source).toContain('data-trace-manage-drawer-detail-action="return-source"');
+    expect(source).toContain('href={routeContext.returnTo}');
+    expect(source).toContain("t('trace.manage.route.action.return-source')");
     expect(source).toContain('data-trace-manage-drawer-stage-stats="inline-signal-summary"');
     expect(source).toContain('data-trace-manage-drawer-stage-stats-owner="hertzbeat-ui-signal-summary-strip"');
     expect(source).toContain('HzSignalSummaryStrip');
@@ -1938,20 +2008,20 @@ describe('trace manage page', () => {
 
     expect(source).toContain("const missingTraceHandoffTitle = t('trace.manage.handoff.logs-disabled')");
     expect(source).toContain("const missingEntityHandoffTitle = t('trace.manage.handoff.entity-disabled')");
+    expect(source).toContain("const entityDiscoveryHandoffTitle = t('trace.manage.handoff.entity-discovery')");
     expect(source).toContain('data-trace-manage-open-logs-action-disabled="missing-trace-id"');
-    expect(source).toContain('data-trace-manage-entity-action-disabled="missing-entity-id"');
+    expect(source).toContain('data-trace-manage-entity-discovery-action="missing-entity-id"');
     expect(source).toContain("const canOpenEntity = handoffLinks.entityHref.startsWith('/entities/');");
     expect(source).toContain('HzDisabledActionShell');
     expect(source).toContain('data-trace-manage-disabled-action-owner="hertzbeat-ui-disabled-action-shell"');
-    expect(source).toContain('data-trace-manage-disabled-action-scope="header"');
     expect(source).toContain('data-trace-manage-disabled-action-scope="drawer-footer"');
-    expect(source).toContain('data-trace-manage-disabled-action-scope="detail-footer"');
     expect(source).toContain('title={missingTraceHandoffTitle}');
-    expect(source).toContain('title={missingEntityHandoffTitle}');
+    expect(source).toContain('title={entityDiscoveryHandoffTitle}');
     expect(source).not.toContain('<span className="inline-flex" title={missingTraceHandoffTitle}>');
     expect(source).not.toContain('<span className="inline-flex" title={missingEntityHandoffTitle}>');
     expect(messages).toContain("'trace.manage.handoff.logs-disabled'");
     expect(messages).toContain("'trace.manage.handoff.entity-disabled'");
+    expect(messages).toContain("'trace.manage.handoff.entity-discovery'");
   });
 
   it('keeps route-level actions on the cold-matte palette instead of bright blue demo buttons', () => {

@@ -77,7 +77,7 @@ function statusPenalty(status?: string | null) {
 }
 
 function toneForScore(score: number): LightweightEntityHealthTone {
-  if (score >= 88) return 'success';
+  if (score > 88) return 'success';
   if (score >= 60) return 'warning';
   if (score > 0) return 'danger';
   return 'neutral';
@@ -94,6 +94,19 @@ export function buildLightweightEntityHealthAffordance(input: LightweightEntityH
   const recentTraceCount = finiteNumber(input.recentTraceCount);
   const recentErrorTraceCount = finiteNumber(input.recentErrorTraceCount);
   const logHintCount = finiteNumber(input.logHintCount);
+  const hasLiveHealthEvidence = monitorCount > 0 || activeAlertCount > 0 || recentTraceCount > 0 || recentErrorTraceCount > 0 || logHintCount > 0;
+
+  if (!hasLiveHealthEvidence) {
+    return {
+      score: 0,
+      scoreText: translate(t, 'entity.health.score.waiting'),
+      label: translate(t, 'entity.health.label.waiting'),
+      copy: translate(t, 'entity.health.copy.waiting'),
+      meta: translate(t, 'entity.health.meta.waiting'),
+      tone: 'neutral'
+    };
+  }
+
   const errorRate = recentTraceCount > 0 ? recentErrorTraceCount / recentTraceCount : 0;
   const anomalyCount = downMonitorCount + recentErrorTraceCount + logHintCount;
   const score = clampScore(

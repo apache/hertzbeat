@@ -1092,7 +1092,7 @@ export function buildSignalDashboardPanelExecutionPlan(
     if (!url.pathname.startsWith('/ingestion/otlp/metrics')) return unsupportedExecutionPlan(panel, 'unsupported-route');
     const query = metricsQueryStateFromParams(reader);
     const scopedFilter = buildScopedMetricsFilter(query);
-    const apiUrls = query.template === 'service-apdex'
+    const apiUrls: Record<string, string> = query.template === 'service-apdex'
       ? {
           console: buildOtlpMetricsConsoleUrl({
             ...query,
@@ -1913,7 +1913,7 @@ function serviceOverviewRoute(input: BuildSignalServiceOverviewDashboardInput) {
   const url = new URL('/ingestion/otlp/metrics', 'http://hertzbeat.local');
   url.searchParams.set('query', 'http.server.duration');
   url.searchParams.set('serviceName', input.serviceName);
-  [
+  const routeContextParams: Array<[string, string | undefined]> = [
     ['serviceNamespace', input.serviceNamespace],
     ['environment', input.environment],
     ['entityId', input.entityId],
@@ -1927,7 +1927,8 @@ function serviceOverviewRoute(input: BuildSignalServiceOverviewDashboardInput) {
     ['end', input.end],
     ['refresh', input.refresh],
     ['live', input.live]
-  ].forEach(([key, value]) => {
+  ];
+  routeContextParams.forEach(([key, value]) => {
     if (value) url.searchParams.set(key, value);
   });
   return `${url.pathname}${url.search}${url.hash}`;

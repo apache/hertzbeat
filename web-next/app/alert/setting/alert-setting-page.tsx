@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   HzExportTypeDialog,
   HzFileInput,
@@ -52,7 +53,30 @@ type AlertSettingActionFeedback = {
   tone: HzStatusTone;
   title: string;
   description?: string;
-  contract?: 'delete' | 'enable' | 'export-fail' | 'no-select-delete' | 'no-select-export' | 'import-success' | 'import-fail';
+  contract?:
+    | 'delete'
+    | 'enable'
+    | 'export-fail'
+    | 'no-select-delete'
+    | 'no-select-export'
+    | 'import-success'
+    | 'import-fail'
+    | 'delete-success'
+    | 'enable-success'
+    | 'save-success';
+  deletedCount?: number;
+  toggledRule?: {
+    id: number;
+    name: string;
+    enabled: boolean;
+  };
+  savedRule?: {
+    name: string;
+    type: string;
+    expr: string;
+    enabled: boolean;
+    intent: 'create' | 'edit';
+  };
 };
 
 type AlertSettingSaveFeedback = {
@@ -63,11 +87,54 @@ type AlertSettingSaveFeedback = {
 };
 
 const ALERT_SETTING_SETTLED_CACHE_TTL_MS = 10_000;
+export const ALERT_SETTING_PREVIEW_SAMPLE_LIMIT = 3;
 const EMPTY_ALERT_SETTING_ROUTE_STATE: AlertSettingRouteState = {
   signal: null,
   createIntent: null,
   signalContext: {}
 };
+
+type AlertSettingPreviewTranslator = (key: string, values?: Record<string, string | number>) => string;
+
+export function buildAlertSettingPreviewSuccessFeedback(
+  rows: AlertDefinePreviewRow[],
+  t: AlertSettingPreviewTranslator
+): AlertSettingCreatePreviewFeedback {
+  const sampleRows = rows.slice(0, ALERT_SETTING_PREVIEW_SAMPLE_LIMIT);
+  if (rows.length === 0) {
+    return {
+      tone: 'warning',
+      title: t('alert.setting.preview.empty.title'),
+      description: t('alert.setting.preview.empty.description'),
+      rows: sampleRows,
+      totalRows: rows.length,
+      sampleLimit: ALERT_SETTING_PREVIEW_SAMPLE_LIMIT,
+      contract: 'empty'
+    };
+  }
+  return {
+    tone: 'success',
+    title: t('alert.setting.preview.success.title', { count: rows.length }),
+    description: t('alert.setting.preview.success.description'),
+    rows: sampleRows,
+    totalRows: rows.length,
+    sampleLimit: ALERT_SETTING_PREVIEW_SAMPLE_LIMIT,
+    contract: 'success'
+  };
+}
+const ALERT_SETTING_ROUTE_PATH = '/alert/setting';
+
+type AlertSettingListRouteState = {
+  search: string;
+  pageIndex: number;
+  pageSize: number;
+};
+
+function parseAlertSettingRouteInteger(value: string | null, fallback: number, minimum = 0) {
+  if (!value) return fallback;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed >= minimum ? parsed : fallback;
+}
 
 export function buildAlertSettingCreateDraftSeed(
   signal: string | null | undefined,
@@ -119,8 +186,31 @@ function resolveDownloadFilename(contentDisposition: string | null, fallbackName
   }
 }
 
+const ALERT_DEFINE_IMPORT_FILE_ACCEPT = '.json,.yaml,.yml,.xlsx';
+
+function isAlertDefineImportFile(file: File) {
+  const normalizedName = file.name.trim().toLowerCase();
+  return (
+    normalizedName.endsWith('.json') ||
+    normalizedName.endsWith('.yaml') ||
+    normalizedName.endsWith('.yml') ||
+    normalizedName.endsWith('.xlsx')
+  );
+}
+
 export default function AlertSettingPage({ initialRouteState }: { initialRouteState?: AlertSettingRouteState } = {}) {
   const { t } = useI18n();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const routeSearchParamString = searchParams.toString();
+  const routeSearch = searchParams.get('search') ?? '';
+  const routePageIndex = parseAlertSettingRouteInteger(searchParams.get('pageIndex'), 0);
+  const routePageSize = parseAlertSettingRouteInteger(searchParams.get('pageSize'), 8, 1);
+  const routeListState = useMemo<AlertSettingListRouteState>(() => ({
+    search: routeSearch,
+    pageIndex: routePageIndex,
+    pageSize: routePageSize
+  }), [routePageIndex, routePageSize, routeSearch]);
   const alertSettingRouteState = initialRouteState ?? EMPTY_ALERT_SETTING_ROUTE_STATE;
   const { signal, createIntent, signalContext } = alertSettingRouteState;
   const evidenceContext = useMemo(
@@ -131,10 +221,10 @@ export default function AlertSettingPage({ initialRouteState }: { initialRouteSt
     () => buildAlertSettingCreateDraftSeed(signal, evidenceContext?.labelsText || '', signalContext),
     [signal, evidenceContext, signalContext]
   );
-  const [search, setSearch] = useState('');
-  const [query, setQuery] = useState('');
-  const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(8);
+  const [search, setSearch] = useState(routeListState.search);
+  const [query, setQuery] = useState(routeListState.search);
+  const [pageIndex, setPageIndex] = useState(routeListState.pageIndex);
+  const [pageSize, setPageSize] = useState(routeListState.pageSize);
   const [refreshKey, setRefreshKey] = useState(0);
   const [checkedIds, setCheckedIds] = useState<number[]>([]);
   const [createMode, setCreateMode] = useState<AlertSettingCreateMode | 'closed'>(
@@ -158,6 +248,56 @@ export default function AlertSettingPage({ initialRouteState }: { initialRouteSt
     [alertSettingListUrl, refreshKey]
   );
 
+  useEffect(() => {
+    setSearch(routeListState.search);
+    setQuery(routeListState.search);
+    setPageIndex(routeListState.pageIndex);
+    setPageSize(routeListState.pageSize);
+    setCheckedIds([]);
+  }, [routeListState]);
+
+  const replaceRouteQuery = useCallback((nextState: AlertSettingListRouteState) => {
+    const nextParams = new URLSearchParams(routeSearchParamString);
+    const cleanSearch = nextState.search.trim();
+    if (cleanSearch) {
+      nextParams.set('search', cleanSearch);
+    } else {
+      nextParams.delete('search');
+    }
+
+    if (nextState.pageIndex > 0) {
+      nextParams.set('pageIndex', String(nextState.pageIndex));
+    } else {
+      nextParams.delete('pageIndex');
+    }
+
+    if (nextState.pageSize !== 8) {
+      nextParams.set('pageSize', String(nextState.pageSize));
+    } else {
+      nextParams.delete('pageSize');
+    }
+
+    const nextParamString = nextParams.toString();
+    const nextUrl = nextParamString ? `${ALERT_SETTING_ROUTE_PATH}?${nextParamString}` : ALERT_SETTING_ROUTE_PATH;
+    const currentUrl = routeSearchParamString ? `${ALERT_SETTING_ROUTE_PATH}?${routeSearchParamString}` : ALERT_SETTING_ROUTE_PATH;
+    if (nextUrl !== currentUrl) {
+      router.replace(nextUrl, { scroll: false });
+    }
+  }, [routeSearchParamString, router]);
+
+  const clearCreateIntentFromRoute = useCallback(() => {
+    if (!routeSearchParamString) return;
+    const nextParams = new URLSearchParams(routeSearchParamString);
+    if (nextParams.get('intent') !== 'create') return;
+    nextParams.delete('intent');
+    const nextParamString = nextParams.toString();
+    const nextUrl = nextParamString ? `${ALERT_SETTING_ROUTE_PATH}?${nextParamString}` : ALERT_SETTING_ROUTE_PATH;
+    const currentUrl = `${ALERT_SETTING_ROUTE_PATH}?${routeSearchParamString}`;
+    if (nextUrl !== currentUrl) {
+      router.replace(nextUrl, { scroll: false });
+    }
+  }, [routeSearchParamString, router]);
+
   const load = useCallback(async () => {
     void refreshKey;
     const appMap = await api.alertSettings.appDefines(getCurrentLocale()).catch(() => null);
@@ -177,9 +317,19 @@ export default function AlertSettingPage({ initialRouteState }: { initialRouteSt
   function openTypeSelection() {
     setSaveFeedback(null);
     setPreviewFeedback(null);
+    setActionFeedback(null);
     const draftSeed = buildAlertSettingCreateDraftSeed(signal, evidenceContext?.labelsText || '', signalContext);
     setCreateDraft(createDefaultAlertSettingDraft(draftSeed.kind || 'realtime', draftSeed));
     setCreateMode('type');
+  }
+
+  function openRealtimeAuthoring() {
+    setSaveFeedback(null);
+    setPreviewFeedback(null);
+    setActionFeedback(null);
+    const draftSeed = buildAlertSettingCreateDraftSeed(signal, evidenceContext?.labelsText || '', signalContext);
+    setCreateDraft(createDefaultAlertSettingDraft('realtime', { ...draftSeed, kind: 'realtime' }));
+    setCreateMode('authoring');
   }
 
   function closeCreateFlow() {
@@ -188,11 +338,13 @@ export default function AlertSettingPage({ initialRouteState }: { initialRouteSt
     setSaveFeedback(null);
     setPreviewing(false);
     setPreviewFeedback(null);
+    clearCreateIntentFromRoute();
   }
 
   function selectCreateType(kind: AlertSettingCreateKind) {
     setSaveFeedback(null);
     setPreviewFeedback(null);
+    setActionFeedback(null);
     setCreateDraft(current => createDefaultAlertSettingDraft(kind, current));
     setCreateMode('authoring');
   }
@@ -200,25 +352,6 @@ export default function AlertSettingPage({ initialRouteState }: { initialRouteSt
   function updateCreateDraft(nextDraft: AlertSettingCreateDraft) {
     setPreviewFeedback(null);
     setCreateDraft(nextDraft);
-  }
-
-  function buildPreviewSuccessFeedback(rows: AlertDefinePreviewRow[]): AlertSettingCreatePreviewFeedback {
-    if (rows.length === 0) {
-      return {
-        tone: 'warning',
-        title: t('alert.setting.preview.empty.title'),
-        description: t('alert.setting.preview.empty.description'),
-        rows,
-        contract: 'empty'
-      };
-    }
-    return {
-      tone: 'success',
-      title: t('alert.setting.preview.success.title', { count: rows.length }),
-      description: t('alert.setting.preview.success.description'),
-      rows,
-      contract: 'success'
-    };
   }
 
   async function previewCreate(payload: AlertSettingCreatePayload) {
@@ -237,7 +370,7 @@ export default function AlertSettingPage({ initialRouteState }: { initialRouteSt
     setPreviewFeedback(null);
     try {
       const rows = await api.alertSettings.preview(payload.datasource, payload.type, payload.expr);
-      setPreviewFeedback(buildPreviewSuccessFeedback(rows));
+      setPreviewFeedback(buildAlertSettingPreviewSuccessFeedback(rows, t));
     } catch (error) {
       setPreviewFeedback({
         tone: 'critical',
@@ -260,6 +393,19 @@ export default function AlertSettingPage({ initialRouteState }: { initialRouteSt
       } else {
         await createAlertDefineFromFacade(api.alertSettings.create, payload);
       }
+      setActionFeedback({
+        tone: 'success',
+        title: t('alert.setting.save.success.title', { name: payload.name }),
+        description: t(payload.enable ? 'alert.setting.save.success.enabled' : 'alert.setting.save.success.disabled'),
+        contract: 'save-success',
+        savedRule: {
+          name: payload.name,
+          type: payload.type,
+          expr: payload.expr,
+          enabled: payload.enable,
+          intent: isEdit ? 'edit' : 'create'
+        }
+      });
       closeCreateFlow();
       setCheckedIds([]);
       setRefreshKey(value => value + 1);
@@ -283,7 +429,7 @@ export default function AlertSettingPage({ initialRouteState }: { initialRouteSt
     if (checkedIds.length === 0) {
       setActionFeedback({
         tone: 'warning',
-        title: t('common.notify.no-select-delete'),
+        title: t('alert.setting.notify.no-select-delete'),
         contract: 'no-select-delete'
       });
       return;
@@ -303,9 +449,17 @@ export default function AlertSettingPage({ initialRouteState }: { initialRouteSt
       } else {
         await deleteAlertDefineFromFacade(api.alertSettings.delete, request.ids[0]);
       }
+      const deletedCount = request.ids.length;
       setCheckedIds([]);
       setDeleteRequest(null);
       setRefreshKey(value => value + 1);
+      setActionFeedback({
+        tone: 'success',
+        title: t('alert.setting.delete.success.title', { count: deletedCount }),
+        description: t('alert.setting.delete.success.description'),
+        contract: 'delete-success',
+        deletedCount
+      });
     } catch (error) {
       setActionFeedback({
         tone: 'critical',
@@ -394,7 +548,7 @@ export default function AlertSettingPage({ initialRouteState }: { initialRouteSt
     if (checkedIds.length === 0) {
       setActionFeedback({
         tone: 'warning',
-        title: t('common.notify.no-select-export'),
+        title: t('alert.setting.notify.no-select-export'),
         contract: 'no-select-export'
       });
       return;
@@ -407,7 +561,7 @@ export default function AlertSettingPage({ initialRouteState }: { initialRouteSt
     if (checkedIds.length === 0) {
       setActionFeedback({
         tone: 'warning',
-        title: t('common.notify.no-select-export'),
+        title: t('alert.setting.notify.no-select-export'),
         contract: 'no-select-export'
       });
       setExportDialogOpen(false);
@@ -442,6 +596,15 @@ export default function AlertSettingPage({ initialRouteState }: { initialRouteSt
     event.target.value = '';
     if (!file) return;
     if (pendingActionId) return;
+    if (!isAlertDefineImportFile(file)) {
+      setActionFeedback({
+        tone: 'warning',
+        title: t('common.notify.import-fail'),
+        description: t('common.notify.import-invalid-file'),
+        contract: 'import-fail'
+      });
+      return;
+    }
     await runSettingAction(
       'import',
       t('common.notify.import-submitted', { taskName: file.name }),
@@ -470,6 +633,18 @@ export default function AlertSettingPage({ initialRouteState }: { initialRouteSt
           setActionFeedback(null);
           try {
             await updateAlertDefineEnabledFromFacade(api.alertSettings.update, target, enabled);
+            const targetName = target.name || String(defineId);
+            setActionFeedback({
+              tone: 'success',
+              title: t('alert.setting.enable.success.title', { name: targetName }),
+              description: t(enabled ? 'alert.setting.enable.success.enabled' : 'alert.setting.enable.success.disabled'),
+              contract: 'enable-success',
+              toggledRule: {
+                id: defineId,
+                name: targetName,
+                enabled
+              }
+            });
             setRefreshKey(value => value + 1);
           } catch (error) {
             setActionFeedback({
@@ -489,6 +664,28 @@ export default function AlertSettingPage({ initialRouteState }: { initialRouteSt
           setCreateMode('authoring');
         }
 
+        const deleteTargetIds = deleteRequest?.ids ?? [];
+        const deleteTargetNames = deleteTargetIds
+          .map(id => {
+            const target = data.list.content.find(item => item.id === id);
+            return target ? target.name || String(id) : undefined;
+          })
+          .filter((name): name is string => Boolean(name))
+          .slice(0, 5);
+        const hiddenDeleteTargetCount = Math.max(deleteTargetIds.length - deleteTargetNames.length, 0);
+        const deleteBaseCopy = deleteRequest?.kind === 'batch'
+          ? t('alert.setting.delete.confirm.batch', { count: deleteTargetIds.length })
+          : t('alert.setting.delete.confirm.single');
+        const deleteConfirmCopy = [
+          deleteBaseCopy,
+          deleteTargetNames.length > 0
+            ? t('alert.setting.delete.confirm.targets', { names: deleteTargetNames.join(', ') })
+            : null,
+          hiddenDeleteTargetCount > 0
+            ? t('alert.setting.delete.confirm.targets-more', { count: hiddenDeleteTargetCount })
+            : null
+        ].filter(Boolean).join(' ');
+
         return (
           <>
             <AlertSettingSurface
@@ -500,21 +697,28 @@ export default function AlertSettingPage({ initialRouteState }: { initialRouteSt
               formatTime={formatTime}
               onSearchChange={setSearch}
               onApplyFilter={() => {
-                setQuery(search);
-                setPageIndex(0);
+                const nextSearch = search.trim();
+                const nextState = { search: nextSearch, pageIndex: 0, pageSize };
+                setSearch(nextSearch);
+                setQuery(nextSearch);
+                setPageIndex(nextState.pageIndex);
                 setCheckedIds([]);
+                replaceRouteQuery(nextState);
               }}
               onClearFilter={() => {
+                const nextState = { search: '', pageIndex: 0, pageSize };
                 setSearch('');
                 setQuery('');
-                setPageIndex(0);
+                setPageIndex(nextState.pageIndex);
                 setCheckedIds([]);
+                replaceRouteQuery(nextState);
               }}
               onRefresh={() => {
                 setRefreshKey(value => value + 1);
                 setCheckedIds([]);
               }}
               onNew={openTypeSelection}
+              onNewRealtime={openRealtimeAuthoring}
               onDeleteSelected={requestBatchDelete}
               onExport={openExportDialog}
               onImport={handleImportClick}
@@ -522,20 +726,25 @@ export default function AlertSettingPage({ initialRouteState }: { initialRouteSt
               onEdit={defineId => void handleEdit(defineId)}
               onDelete={requestSingleDelete}
               onCheckedIdsChange={setCheckedIds}
+              requestedPageSize={pageSize}
               onPageIndexChange={nextPageIndex => {
                 setPageIndex(nextPageIndex);
                 setCheckedIds([]);
+                replaceRouteQuery({ search: query, pageIndex: nextPageIndex, pageSize });
               }}
               onPageSizeChange={nextPageSize => {
+                const nextState = { search: query, pageIndex: 0, pageSize: nextPageSize };
                 setPageIndex(0);
                 setPageSize(nextPageSize);
                 setCheckedIds([]);
+                replaceRouteQuery(nextState);
               }}
               pendingActionId={pendingActionId}
               actionFeedback={actionFeedback}
             />
             <HzFileInput
               ref={importInputRef}
+              accept={ALERT_DEFINE_IMPORT_FILE_ACCEPT}
               aria-label={t('alert.setting.import.input')}
               multiple={false}
               data-alert-setting-import-input-owner="hertzbeat-ui-file-input"
@@ -571,13 +780,10 @@ export default function AlertSettingPage({ initialRouteState }: { initialRouteSt
             <div data-alert-delete-confirm={deleteRequest ? 'open' : 'closed'}>
               <HzConfirmDialog
                 open={Boolean(deleteRequest)}
+                kicker={t('common.confirm.operation')}
                 title={deleteRequest?.kind === 'batch' ? t('common.confirm.delete-batch') : t('common.confirm.delete')}
-                copy={
-                  deleteRequest?.kind === 'batch'
-                    ? t('alert.setting.delete.confirm.batch', { count: deleteRequest.ids.length })
-                    : t('alert.setting.delete.confirm.single')
-                }
-                confirmLabel={t('common.button.ok')}
+                copy={deleteConfirmCopy}
+                confirmLabel={t('alert.setting.delete.confirm.action')}
                 cancelLabel={t('common.button.cancel')}
                 pending={deletePending}
                 onCancel={() => setDeleteRequest(null)}

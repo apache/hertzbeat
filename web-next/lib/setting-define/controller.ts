@@ -67,6 +67,11 @@ export function buildNewTemplateYaml(lang = 'zh-CN') {
   return buildNewTemplateDraft(lang).yaml;
 }
 
+export function readTemplateAppFromYaml(yaml: string) {
+  const match = yaml.match(/^\s*app:\s*['"]?([^'"\s#]+)['"]?/m);
+  return match?.[1]?.trim() || null;
+}
+
 function normalizeTemplateItem(item: TemplateHierarchyItem): TemplateMenuItem | null {
   const value = (item.value || '').trim();
   const category = (item.category || '').trim();

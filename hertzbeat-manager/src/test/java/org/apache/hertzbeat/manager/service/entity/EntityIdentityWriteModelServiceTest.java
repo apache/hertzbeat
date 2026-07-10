@@ -18,8 +18,10 @@
 package org.apache.hertzbeat.manager.service.entity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
@@ -28,6 +30,7 @@ import static org.mockito.Mockito.when;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
 import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
 import org.apache.hertzbeat.manager.dao.EntityIdentityDao;
@@ -53,10 +56,14 @@ class EntityIdentityWriteModelServiceTest {
     @Mock
     private EntityIdentityResolutionService entityIdentityResolutionService;
 
+    @Mock
+    private EntityWorkspaceAccessService entityWorkspaceAccessService;
+
     @BeforeEach
     void setUp() {
         identityWriteModelService =
-                new EntityIdentityWriteModelService(entityIdentityDao, entityIdentityResolutionService);
+                new EntityIdentityWriteModelService(entityIdentityDao, entityIdentityResolutionService,
+                        entityWorkspaceAccessService);
         when(entityIdentityResolutionService.normalizeIdentityValue(anyString(), anyString()))
                 .thenAnswer(invocation -> invocation.getArgument(1, String.class).trim().toLowerCase(Locale.ROOT));
         when(entityIdentityResolutionService.defaultIdentityPriority(anyString())).thenReturn(40);
@@ -64,6 +71,8 @@ class EntityIdentityWriteModelServiceTest {
         lenient().when(entityIdentityResolutionService.defaultIdentityPriority("service.namespace")).thenReturn(30);
         lenient().when(entityIdentityResolutionService.defaultIdentityPriority("deployment.environment.name")).thenReturn(20);
         lenient().when(entityIdentityResolutionService.defaultIdentityPriority("messaging.destination.name")).thenReturn(120);
+        lenient().when(entityIdentityDao.findAllByIdentityKeyInAndNormalizedValueIn(anySet(), anySet()))
+                .thenReturn(Collections.emptyList());
     }
 
     @Test
@@ -103,6 +112,8 @@ class EntityIdentityWriteModelServiceTest {
         InOrder inOrder = inOrder(entityIdentityDao);
         inOrder.verify(entityIdentityDao).deleteAllByEntityId(7L);
         inOrder.verify(entityIdentityDao).flush();
+        inOrder.verify(entityIdentityDao).findAllByIdentityKeyInAndNormalizedValueIn(
+                Set.of("service.name"), Set.of("checkout-api"));
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<EntityIdentity>> identitiesCaptor = ArgumentCaptor.forClass(List.class);
@@ -198,5 +209,73 @@ class EntityIdentityWriteModelServiceTest {
         assertEquals("deployment.environment.name", environmentIdentity.getIdentityKey());
         assertEquals("prod", environmentIdentity.getIdentityValue());
         assertEquals(20, environmentIdentity.getPriority());
+    }
+
+    @Test
+    void replaceIdentitiesRejectsAccessiblePrimaryIdentityCollision() {
+        ObserveEntity entity = ObserveEntity.builder()
+                .id(9L)
+                .type("service")
+                .name("catalog-b")
+                .workspaceId("team-a")
+                .build();
+        EntityIdentity sharedPrimary = EntityIdentity.builder()
+                .identityType("manual")
+                .identityKey("service.name")
+                .identityValue("shared-checkout")
+                .primaryIdentity(true)
+                .build();
+        EntityIdentity existing = EntityIdentity.builder()
+                .entityId(8L)
+                .identityKey("service.name")
+                .identityValue("shared-checkout")
+                .normalizedValue("shared-checkout")
+                .primaryIdentity(true)
+                .build();
+        when(entityIdentityDao.findAllByIdentityKeyInAndNormalizedValueIn(
+                Set.of("service.name"), Set.of("shared-checkout")))
+                .thenReturn(List.of(existing));
+        when(entityWorkspaceAccessService.findAccessibleEntitiesByIdsForRequestWorkspace(Set.of(8L)))
+                .thenReturn(List.of(ObserveEntity.builder().id(8L).name("catalog-a").build()));
+
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class,
+                () -> identityWriteModelService.replaceIdentities(entity, List.of(sharedPrimary)));
+
+        assertEquals("Entity primary identity already exists: service.name=shared-checkout.", thrown.getMessage());
+    }
+
+    @Test
+    void replaceIdentitiesAllowsSharedNonPrimaryContextIdentities() {
+        ObserveEntity entity = ObserveEntity.builder()
+                .id(10L)
+                .type("service")
+                .name("catalog-c")
+                .workspaceId("team-a")
+                .build();
+        EntityIdentity primary = EntityIdentity.builder()
+                .identityType("manual")
+                .identityKey("service.name")
+                .identityValue("catalog-c")
+                .primaryIdentity(true)
+                .build();
+        EntityIdentity sharedNamespace = EntityIdentity.builder()
+                .identityType("manual")
+                .identityKey("service.namespace")
+                .identityValue("shared-namespace")
+                .primaryIdentity(false)
+                .build();
+        when(entityIdentityDao.findAllByIdentityKeyInAndNormalizedValueIn(
+                Set.of("service.name"), Set.of("catalog-c")))
+                .thenReturn(Collections.emptyList());
+
+        identityWriteModelService.replaceIdentities(entity, List.of(primary, sharedNamespace));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<EntityIdentity>> identitiesCaptor = ArgumentCaptor.forClass(List.class);
+        verify(entityIdentityDao).saveAll(identitiesCaptor.capture());
+        List<EntityIdentity> rows = identitiesCaptor.getValue();
+        assertEquals(2, rows.size());
+        assertEquals("service.namespace", rows.get(1).getIdentityKey());
+        assertEquals("shared-namespace", rows.get(1).getIdentityValue());
     }
 }

@@ -27,8 +27,6 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -84,6 +82,8 @@ import org.yaml.snakeyaml.error.YAMLException;
 @Service
 @RequiredArgsConstructor
 public class PluginServiceImpl implements PluginService {
+
+    private static final String PLUGIN_LIB_DIR_PROPERTY = "hertzbeat.plugin.lib.dir";
 
     private final PluginMetadataDao metadataDao;
 
@@ -196,6 +196,7 @@ public class PluginServiceImpl implements PluginService {
             return;
         }
         pluginParamDao.deletePluginParamsByPluginMetadataId(params.get(0).getPluginMetadataId());
+        pluginParamDao.flush();
         pluginParamDao.saveAll(params);
         syncPluginParamMap(params.get(0).getPluginMetadataId(), params, false);
     }
@@ -284,8 +285,8 @@ public class PluginServiceImpl implements PluginService {
     private void validateFilePath(File file) {
         try {
             String canonicalPath = file.getCanonicalPath();
-            String expectedDir = new File("plugin-lib").getCanonicalPath();
-            if (!canonicalPath.startsWith(expectedDir)) {
+            String expectedDir = resolvePluginLibDir().getCanonicalPath();
+            if (!canonicalPath.equals(expectedDir) && !canonicalPath.startsWith(expectedDir + File.separator)) {
                 throw new CommonException("File is outside the allowed directory: " + canonicalPath);
             }
         } catch (IOException e) {
@@ -315,9 +316,7 @@ public class PluginServiceImpl implements PluginService {
     @SneakyThrows
     @Transactional
     public void savePlugin(PluginUpload pluginUpload) {
-        String jarPath = new File(this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath()).getAbsolutePath();
-        Path extLibPath = Paths.get(new File(jarPath).getParent(), "plugin-lib");
-        File extLibDir = extLibPath.toFile();
+        File extLibDir = resolvePluginLibDir();
         String fileName = pluginUpload.getJarFile().getOriginalFilename();
         validateFileName(fileName);
         fileName = UUID.randomUUID().toString().replace("-", "") + "_" + fileName;
@@ -362,6 +361,15 @@ public class PluginServiceImpl implements PluginService {
         }
         if (fileName.matches(".*(\\.\\.|[\n\t\r/\\\\]).*")) {
             throw new CommonException("Invalid plugin file name: " + fileName);
+        }
+    }
+
+    private File resolvePluginLibDir() {
+        try {
+            return new File(System.getProperty(PLUGIN_LIB_DIR_PROPERTY, "plugin-lib")).getCanonicalFile();
+        } catch (IOException e) {
+            log.error("Error resolving plugin lib dir", e);
+            throw new CommonException("Error resolving plugin lib dir: " + e.getMessage());
         }
     }
 

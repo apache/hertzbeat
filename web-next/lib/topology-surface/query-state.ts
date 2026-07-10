@@ -9,8 +9,10 @@ function firstParam(value: string | string[] | undefined) {
 }
 
 export function readTopologyRouteContext(searchParams: TopologySearchParams = {}): TopologyRouteContext {
+  const signalContext = readSignalRouteContext(createCompatSearchParamReader(searchParams));
   return {
-    ...readSignalRouteContext(createCompatSearchParamReader(searchParams)),
+    ...signalContext,
+    entityId: signalContext.entityId ?? firstParam(searchParams.focusEntityId),
     depth: firstParam(searchParams.depth),
     relationType: firstParam(searchParams.relationType),
     hideInternal: firstParam(searchParams.hideInternal),

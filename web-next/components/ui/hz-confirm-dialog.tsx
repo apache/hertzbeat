@@ -12,6 +12,7 @@ function translateHzConfirm(key: string) {
 
 type HzConfirmDialogProps = {
   open: boolean;
+  kicker?: string;
   title: string;
   copy: string;
   confirmLabel: string;
@@ -23,6 +24,7 @@ type HzConfirmDialogProps = {
 
 export function HzConfirmDialog({
   open,
+  kicker,
   title,
   copy,
   confirmLabel,
@@ -35,7 +37,7 @@ export function HzConfirmDialog({
     <OverlayDialog
       open={open}
       title={title}
-      kicker={translateHzConfirm('common.confirm.operation')}
+      kicker={kicker ?? translateHzConfirm('common.confirm.operation')}
       onClose={pending ? () => undefined : onCancel}
       maxWidthClassName="max-w-md"
       contentClassName="py-4"

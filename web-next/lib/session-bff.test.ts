@@ -2,11 +2,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   buildBackendApiUrl,
   proxyBackendApiRequest,
-  sanitizeSessionPayload
+  sanitizeSessionPayload,
+  shouldUseSecureCookies
 } from './session-bff';
 
 describe('session BFF helpers', () => {
   const previousBackendOrigin = process.env.BACKEND_ORIGIN;
+  const previousCookieSecure = process.env.HB_UI_COOKIE_SECURE;
 
   afterEach(() => {
     if (previousBackendOrigin === undefined) {
@@ -14,6 +16,12 @@ describe('session BFF helpers', () => {
     } else {
       process.env.BACKEND_ORIGIN = previousBackendOrigin;
     }
+    if (previousCookieSecure === undefined) {
+      delete process.env.HB_UI_COOKIE_SECURE;
+    } else {
+      process.env.HB_UI_COOKIE_SECURE = previousCookieSecure;
+    }
+    vi.unstubAllEnvs();
     vi.unstubAllGlobals();
   });
 
@@ -44,6 +52,33 @@ describe('session BFF helpers', () => {
         tokenBoundary: 'bff-cookie'
       }
     });
+  });
+
+  it('does not mark localhost production smoke cookies as secure over http', () => {
+    vi.stubEnv('NODE_ENV', 'production');
+
+    expect(shouldUseSecureCookies('http://127.0.0.1:4200/api/account/auth/form')).toBe(false);
+    expect(shouldUseSecureCookies('http://localhost:4200/api/account/auth/form')).toBe(false);
+    expect(shouldUseSecureCookies('https://hertzbeat.example.com/api/account/auth/form')).toBe(true);
+  });
+
+  it('honors forwarded https and explicit secure-cookie overrides', () => {
+    vi.stubEnv('NODE_ENV', 'production');
+
+    expect(
+      shouldUseSecureCookies({
+        url: 'http://hertzbeat.internal/api/account/auth/form',
+        headers: new Headers({
+          host: 'hertzbeat.internal',
+          'x-forwarded-proto': 'https'
+        })
+      })
+    ).toBe(true);
+
+    process.env.HB_UI_COOKIE_SECURE = 'false';
+    expect(shouldUseSecureCookies('https://hertzbeat.example.com/api/account/auth/form')).toBe(false);
+    process.env.HB_UI_COOKIE_SECURE = 'true';
+    expect(shouldUseSecureCookies('http://127.0.0.1:4200/api/account/auth/form')).toBe(true);
   });
 
   it('forwards the BFF access cookie as backend authorization when the framework cookie reader misses it', async () => {
@@ -109,6 +144,36 @@ describe('session BFF helpers', () => {
     expect(response.status).toBe(401);
     expect(response.headers.get('WWW-Authenticate')).toBeNull();
     expect(response.headers.get('Content-Type')).toContain('text/plain');
+  });
+
+  it('returns an actionable service-unavailable payload when the backend cannot be reached', async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockRejectedValue(new TypeError('fetch failed'));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const request = {
+      url: 'http://127.0.0.1:4200/api/entities/definition/bundle/parse',
+      method: 'POST',
+      headers: new Headers({
+        cookie: 'hb_ui_session=1; hb_ui_access=session-access-token',
+        'accept-language': 'zh-CN'
+      }),
+      cookies: {
+        get: () => undefined
+      },
+      arrayBuffer: vi.fn().mockResolvedValue(new TextEncoder().encode('{}').buffer)
+    };
+
+    const response = await proxyBackendApiRequest(request as any, '/entities/definition/bundle/parse');
+    const payload = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(response.headers.get('Content-Type')).toContain('application/json');
+    expect(payload).toEqual({
+      code: 503,
+      msg: 'Backend service unavailable. Please retry after the backend service is restored.',
+      data: null
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('refreshes the BFF access cookie and retries protected API calls when only refresh session remains', async () => {

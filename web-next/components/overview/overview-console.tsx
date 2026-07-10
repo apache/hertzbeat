@@ -503,10 +503,14 @@ export function OverviewGuidancePanel({
 export function OverviewChecklist({
   title,
   items,
+  readyLabel = OVERVIEW_CHECKLIST_READY_LABEL,
+  pendingLabel = OVERVIEW_CHECKLIST_PENDING_LABEL,
   density = 'default'
 }: {
   title: string;
   items: OverviewChecklistItem[];
+  readyLabel?: string;
+  pendingLabel?: string;
   density?: 'default' | 'compact';
 }) {
   return (
@@ -542,7 +546,7 @@ export function OverviewChecklist({
                 density === 'compact' ? 'text-[9px] leading-[1.2]' : 'text-[11px] leading-[1.45]'
               )}
             >
-              {item.ready ? OVERVIEW_CHECKLIST_READY_LABEL : OVERVIEW_CHECKLIST_PENDING_LABEL}
+              {item.ready ? readyLabel : pendingLabel}
             </div>
           </div>
         ))}

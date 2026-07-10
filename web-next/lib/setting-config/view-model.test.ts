@@ -1,17 +1,22 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createTranslatorMock } from '../../test/i18n-test-helper';
 import {
+  SYSTEM_CONFIG_THEME_OPTIONS,
   buildConfigFacts,
   buildTimezoneOptionLabel,
   canSaveSystemConfig,
+  isSystemConfigDirty,
   normalizeSystemConfigLocale,
   normalizeSystemConfigTheme,
+  readAndClearSystemConfigApplyFeedback,
   resolveConfigSaveFeedback,
   resolveSystemConfigDraft,
   resolveSystemLocaleLabel,
   resolveSystemThemeLabel,
+  serializeSystemConfig,
   updateSystemConfigField,
-  updateSystemConfigTimezone
+  updateSystemConfigTimezone,
+  writeSystemConfigApplyFeedback
 } from './view-model';
 
 const t = createTranslatorMock();
@@ -84,6 +89,28 @@ describe('setting config view model', () => {
     expect(canSaveSystemConfig({ locale: '', theme: 'dark', timeZoneId: 'Asia/Shanghai' } as any)).toBe(false);
   });
 
+  it('serializes system config for no-change save detection', () => {
+    expect(
+      serializeSystemConfig({
+        locale: 'zh-CN',
+        theme: 'dark',
+        timeZoneId: ' Asia/Shanghai '
+      } as any)
+    ).toBe(
+      serializeSystemConfig({
+        locale: 'zh_CN',
+        theme: 'dark-ops',
+        timeZoneId: 'Asia/Shanghai',
+        ignored: 'server-only'
+      } as any)
+    );
+    expect(isSystemConfigDirty({ locale: 'zh_CN', theme: 'dark-ops', timeZoneId: 'UTC' } as any, {
+      locale: 'zh_CN',
+      theme: 'dark-ops',
+      timeZoneId: 'Asia/Shanghai'
+    } as any)).toBe(true);
+  });
+
   it('resolves save feedback presentation', () => {
     expect(resolveConfigSaveFeedback('Saved', 'success')).toEqual({
       message: 'Saved',
@@ -92,6 +119,10 @@ describe('setting config view model', () => {
     expect(resolveConfigSaveFeedback('Failed', 'error')).toEqual({
       message: 'Failed',
       className: 'text-rose-300'
+    });
+    expect(resolveConfigSaveFeedback('No changes', 'info')).toEqual({
+      message: 'No changes',
+      className: 'text-[#9fb0cc]'
     });
     expect(resolveConfigSaveFeedback(null, null)).toBeNull();
   });
@@ -107,5 +138,51 @@ describe('setting config view model', () => {
   it('resolves translated locale and theme labels for supported values', () => {
     expect(resolveSystemLocaleLabel('pt-BR', t)).toBe('Portuguese(pt_BR)');
     expect(resolveSystemThemeLabel('default', t)).toBe('Dark theme');
+  });
+
+  it('keeps dark operations as the first theme option and names light mode explicitly', () => {
+    expect(SYSTEM_CONFIG_THEME_OPTIONS.map(option => option.value)).toEqual(['dark-ops', 'light-ops', 'compact']);
+    expect(SYSTEM_CONFIG_THEME_OPTIONS.map(option => option.labelKey)).toEqual([
+      'settings.system-config.theme.dark',
+      'settings.system-config.theme.light',
+      'settings.system-config.theme.compact'
+    ]);
+    expect(resolveSystemThemeLabel('light-ops', t)).toBe('Light theme');
+  });
+
+  it('persists one-shot apply feedback across system config reloads', () => {
+    const store = new Map<string, string>();
+    const storage = {
+      getItem: vi.fn((key: string) => store.get(key) ?? null),
+      setItem: vi.fn((key: string, value: string) => {
+        store.set(key, value);
+      }),
+      removeItem: vi.fn((key: string) => {
+        store.delete(key);
+      })
+    };
+
+    writeSystemConfigApplyFeedback('Applied successfully', 'success', storage as any);
+
+    expect(readAndClearSystemConfigApplyFeedback(storage as any)).toEqual({
+      message: 'Applied successfully',
+      tone: 'success'
+    });
+    expect(readAndClearSystemConfigApplyFeedback(storage as any)).toBeNull();
+    expect(storage.removeItem).toHaveBeenCalled();
+  });
+
+  it('ignores malformed persisted system config feedback', () => {
+    const store = new Map<string, string>([['hertzbeat.setting-config.apply-feedback', '{bad-json']]);
+    const storage = {
+      getItem: vi.fn((key: string) => store.get(key) ?? null),
+      setItem: vi.fn(),
+      removeItem: vi.fn((key: string) => {
+        store.delete(key);
+      })
+    };
+
+    expect(readAndClearSystemConfigApplyFeedback(storage as any)).toBeNull();
+    expect(storage.removeItem).toHaveBeenCalledWith('hertzbeat.setting-config.apply-feedback');
   });
 });

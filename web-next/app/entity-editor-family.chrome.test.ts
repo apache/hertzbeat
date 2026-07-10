@@ -84,7 +84,9 @@ describe('entity editor family cold-workbench chrome', () => {
 
     expect(entityEditorSource).toContain('data-entity-editor-shell="otlp-hertzbeat-ui-entity-composer"');
     expect(entityEditorSource).toContain('data-entity-editor-style-baseline="hertzbeat-ui-matte"');
-    expect(entityEditorSource).toContain('data-entity-editor-frame="hertzbeat-ui-editor-frame"');
+    expect(entityEditorSource).toContain('data-entity-editor-frame="hertzbeat-ui-unframed-editor-band"');
+    expect(entityEditorSource).toContain('data-entity-editor-nested-card-policy="no-card-inside-card"');
+    expect(entityEditorSource).toContain('data-entity-editor-summary-card="hertzbeat-ui-unframed-editor-section"');
     expect(entityEditorSource).toContain('data-entity-editor-definition-footer="hertzbeat-ui-definition-footer"');
     expect(entityEditorSource).toContain('data-entity-editor-definition-tabs="hertzbeat-ui-bottom-tabs"');
 

@@ -20,7 +20,7 @@ describe('entity import controller', () => {
   it('falls back to an empty import workspace when helper endpoints are unavailable', async () => {
     const apiGet = vi.fn()
       .mockRejectedValueOnce(new Error('GET /entities/definition/templates failed with 404'))
-      .mockRejectedValueOnce(new Error('GET /entities/definition-activities failed with ECONNRESET'));
+      .mockRejectedValueOnce(new Error('Backend service unavailable. Please retry after the backend service is restored.'));
 
     const result = await loadImportData(apiGet as any);
 
@@ -48,7 +48,7 @@ describe('entity import controller', () => {
   it('preserves the empty import workspace fallback through the entity facade readers', async () => {
     const readers = {
       templates: vi.fn(async () => {
-        throw new Error('GET /entities/definition/templates failed with 404');
+        throw new Error('GET /entities/definition/templates failed with API request failed: 503');
       }),
       activities: vi.fn(async () => {
         throw new Error('GET /entities/definition-activities failed with ECONNRESET');

@@ -118,6 +118,36 @@ export function normalizeEmailSender(email?: EmailNoticeSender | null): EmailNot
   };
 }
 
+export function serializeEmailSender(email?: EmailNoticeSender | null) {
+  const resolved = normalizeEmailSender(email);
+
+  return JSON.stringify({
+    emailHost: String(resolved.emailHost || '').trim(),
+    emailPort: Number(resolved.emailPort) || null,
+    emailUsername: String(resolved.emailUsername || '').trim(),
+    emailPassword: String(resolved.emailPassword || ''),
+    emailSsl: Boolean(resolved.emailSsl),
+    emailStarttls: Boolean(resolved.emailStarttls),
+    enable: Boolean(resolved.enable)
+  });
+}
+
+export function isEmailSenderDirty(current?: EmailNoticeSender | null, baseline?: EmailNoticeSender | null) {
+  return serializeEmailSender(current) !== serializeEmailSender(baseline);
+}
+
+export function buildEmailSenderMissingFields(email: EmailNoticeSender, t: Translator) {
+  const resolved = normalizeEmailSender(email);
+  const fields: string[] = [];
+
+  if (!hasText(resolved.emailHost)) fields.push(t('alert.notice.sender.mail.host'));
+  if (!(Number(resolved.emailPort) > 0)) fields.push(t('alert.notice.sender.mail.port'));
+  if (!hasText(resolved.emailUsername)) fields.push(t('alert.notice.sender.mail.username'));
+  if (!hasText(resolved.emailPassword)) fields.push(t('alert.notice.sender.mail.password'));
+
+  return fields;
+}
+
 export function normalizeSmsSender(sms?: SmsNoticeSender | null): SmsNoticeSender {
   const base = createDefaultSmsSender();
   const next = {
@@ -135,6 +165,119 @@ export function normalizeSmsSender(sms?: SmsNoticeSender | null): SmsNoticeSende
     aws: mergeRecord(createAwsConfig(), next.aws),
     twilio: mergeRecord(createTwilioConfig(), next.twilio)
   };
+}
+
+export function serializeSmsSender(sms?: SmsNoticeSender | null) {
+  const resolved = normalizeSmsSender(sms);
+
+  return JSON.stringify({
+    type: normalizeSmsProviderType(resolved.type),
+    enable: Boolean(resolved.enable),
+    tencent: {
+      secretId: String((resolved.tencent as Record<string, unknown>)?.secretId || ''),
+      secretKey: String((resolved.tencent as Record<string, unknown>)?.secretKey || ''),
+      signName: String((resolved.tencent as Record<string, unknown>)?.signName || '').trim(),
+      appId: String((resolved.tencent as Record<string, unknown>)?.appId || '').trim(),
+      templateId: String((resolved.tencent as Record<string, unknown>)?.templateId || '').trim()
+    },
+    alibaba: {
+      accessKeyId: String((resolved.alibaba as Record<string, unknown>)?.accessKeyId || ''),
+      accessKeySecret: String((resolved.alibaba as Record<string, unknown>)?.accessKeySecret || ''),
+      signName: String((resolved.alibaba as Record<string, unknown>)?.signName || '').trim(),
+      templateCode: String((resolved.alibaba as Record<string, unknown>)?.templateCode || '').trim()
+    },
+    unisms: {
+      accessKeyId: String((resolved.unisms as Record<string, unknown>)?.accessKeyId || ''),
+      accessKeySecret: String((resolved.unisms as Record<string, unknown>)?.accessKeySecret || ''),
+      signature: String((resolved.unisms as Record<string, unknown>)?.signature || '').trim(),
+      authMode: String((resolved.unisms as Record<string, unknown>)?.authMode || 'hmac') === 'simple' ? 'simple' : 'hmac',
+      templateId: String((resolved.unisms as Record<string, unknown>)?.templateId || '').trim()
+    },
+    smslocal: {
+      apiKey: String((resolved.smslocal as Record<string, unknown>)?.apiKey || '')
+    },
+    aws: {
+      accessKeyId: String((resolved.aws as Record<string, unknown>)?.accessKeyId || ''),
+      accessKeySecret: String((resolved.aws as Record<string, unknown>)?.accessKeySecret || ''),
+      region: String((resolved.aws as Record<string, unknown>)?.region || '').trim()
+    },
+    twilio: {
+      accountSid: String((resolved.twilio as Record<string, unknown>)?.accountSid || ''),
+      authToken: String((resolved.twilio as Record<string, unknown>)?.authToken || ''),
+      twilioPhoneNumber: String((resolved.twilio as Record<string, unknown>)?.twilioPhoneNumber || '').trim()
+    }
+  });
+}
+
+export function isSmsSenderDirty(current?: SmsNoticeSender | null, baseline?: SmsNoticeSender | null) {
+  return serializeSmsSender(current) !== serializeSmsSender(baseline);
+}
+
+export function buildSmsSenderMissingFields(sms: SmsNoticeSender, t: Translator) {
+  const resolved = normalizeSmsSender(sms);
+  const fields: string[] = [];
+
+  const addMissing = (config: Record<string, unknown>, entries: Array<[string, string]>) => {
+    entries.forEach(([key, labelKey]) => {
+      if (!hasText(config[key])) fields.push(t(labelKey));
+    });
+  };
+
+  switch (normalizeSmsProviderType(resolved.type)) {
+    case 'tencent':
+      addMissing(resolved.tencent as Record<string, unknown>, [
+        ['secretId', 'alert.notice.sender.sms.tencent.secretId'],
+        ['secretKey', 'alert.notice.sender.sms.tencent.secretKey'],
+        ['signName', 'alert.notice.sender.sms.tencent.signName'],
+        ['appId', 'alert.notice.sender.sms.tencent.appId'],
+        ['templateId', 'alert.notice.sender.sms.tencent.templateId']
+      ]);
+      break;
+    case 'alibaba':
+      addMissing(resolved.alibaba as Record<string, unknown>, [
+        ['accessKeyId', 'alert.notice.sender.sms.alibaba.accessKeyId'],
+        ['accessKeySecret', 'alert.notice.sender.sms.alibaba.accessKeySecret'],
+        ['signName', 'alert.notice.sender.sms.alibaba.signName'],
+        ['templateCode', 'alert.notice.sender.sms.alibaba.templateCode']
+      ]);
+      break;
+    case 'unisms': {
+      const config = resolved.unisms as Record<string, unknown>;
+      addMissing(config, [
+        ['accessKeyId', 'alert.notice.sender.sms.unisms.accessKeyId'],
+        ['signature', 'alert.notice.sender.sms.unisms.signature'],
+        ['authMode', 'alert.notice.sender.sms.unisms.authMode'],
+        ['templateId', 'alert.notice.sender.sms.unisms.templateId']
+      ]);
+      if (String(config.authMode || 'hmac') === 'hmac' && !hasText(config.accessKeySecret)) {
+        fields.push(t('alert.notice.sender.sms.unisms.accessKeySecret'));
+      }
+      break;
+    }
+    case 'smslocal':
+      addMissing(resolved.smslocal as Record<string, unknown>, [
+        ['apiKey', 'alert.notice.sender.sms.smslocal.apiKey']
+      ]);
+      break;
+    case 'aws':
+      addMissing(resolved.aws as Record<string, unknown>, [
+        ['accessKeyId', 'alert.notice.sender.sms.aws.accessKeyId'],
+        ['accessKeySecret', 'alert.notice.sender.sms.aws.accessKeySecret'],
+        ['region', 'alert.notice.sender.sms.aws.region']
+      ]);
+      break;
+    case 'twilio':
+      addMissing(resolved.twilio as Record<string, unknown>, [
+        ['accountSid', 'alert.notice.sender.sms.twilio.accountSid'],
+        ['authToken', 'alert.notice.sender.sms.twilio.authToken'],
+        ['twilioPhoneNumber', 'alert.notice.sender.sms.twilio.twilioPhoneNumber']
+      ]);
+      break;
+    default:
+      break;
+  }
+
+  return fields;
 }
 
 export function cloneSmsSender(sms?: SmsNoticeSender | null) {

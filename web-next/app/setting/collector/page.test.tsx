@@ -16,6 +16,8 @@ const mockState = vi.hoisted(() => ({
   lastLoad: null as null | (() => Promise<unknown>),
   lastSurfaceProps: null as null | Record<string, any>,
   renderErrorMessage: null as string | null,
+  currentSearchParams: '',
+  routerReplace: vi.fn(),
   renderData: {
     list: {
       content: [
@@ -56,6 +58,13 @@ vi.mock('@/components/providers/i18n-provider', () => ({
       locale: 'zh-CN'
     })
   })
+}));
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    replace: mockState.routerReplace
+  }),
+  useSearchParams: () => new URLSearchParams(mockState.currentSearchParams)
 }));
 
 vi.mock('@/components/workbench/client-workbench', () => ({
@@ -102,7 +111,12 @@ vi.mock('@/components/pages/collector-manage-surface', () => ({
       onDeploy,
       onDeployNameChange,
       onDeployGenerate,
-      onDeployClose
+      onDeployClose,
+      onSearchChange,
+      onSearch,
+      onSearchClear,
+      onPageIndexChange,
+      onPageSizeChange
     } = props;
     return (
       <div
@@ -137,8 +151,8 @@ vi.mock('@/components/pages/collector-manage-surface', () => ({
         data-collector-deploy-api-contract="angular-post-generate-identity"
         data-collector-deploy-failure-contract="angular-apply-fail-notification"
         data-collector-deploy-validation-contract="angular-submit-marks-required"
-        data-collector-deploy-validation-raw-contract="angular-required-before-trim"
-        data-collector-deploy-validation-raw-owner="collector-route-controller"
+        data-collector-deploy-validation-trim-contract="hertzbeat-required-after-trim"
+        data-collector-deploy-validation-trim-owner="collector-route-controller"
         data-collector-deploy-loading-contract="angular-nz-ok-loading"
         data-collector-deploy-mask-contract="angular-mask-closable-false"
         data-collector-deploy-width-contract="angular-width-45-percent"
@@ -188,6 +202,11 @@ vi.mock('@/components/pages/collector-manage-surface', () => ({
           <button data-test-deploy-name-button="true" onClick={() => onDeployNameChange?.(' edge-b ')}>name</button>
           <button data-test-deploy-generate-button="true" onClick={onDeployGenerate}>generate</button>
           <button data-test-deploy-close-button="true" onClick={onDeployClose}>close</button>
+          <button data-test-search-change-button="true" onClick={() => onSearchChange?.('edge-b')}>search-change</button>
+          <button data-test-search-button="true" onClick={onSearch}>search-submit</button>
+          <button data-test-search-clear-button="true" onClick={onSearchClear}>search-clear</button>
+          <button data-test-page-index-button="true" onClick={() => onPageIndexChange?.(3)}>page-index</button>
+          <button data-test-page-size-button="true" onClick={() => onPageSizeChange?.(15)}>page-size</button>
         </section>
       </div>
     );
@@ -222,6 +241,8 @@ describe('setting collector page', () => {
     mockState.lastLoad = null;
     mockState.lastSurfaceProps = null;
     mockState.renderErrorMessage = null;
+    mockState.currentSearchParams = '';
+    mockState.routerReplace.mockReset();
     apiMessageGet.mockReset();
     apiMessageDelete.mockReset();
     apiMessagePost.mockReset();
@@ -283,8 +304,8 @@ describe('setting collector page', () => {
     expect(html).toContain('data-collector-deploy-api-contract="angular-post-generate-identity"');
     expect(html).toContain('data-collector-deploy-failure-contract="angular-apply-fail-notification"');
     expect(html).toContain('data-collector-deploy-validation-contract="angular-submit-marks-required"');
-    expect(html).toContain('data-collector-deploy-validation-raw-contract="angular-required-before-trim"');
-    expect(html).toContain('data-collector-deploy-validation-raw-owner="collector-route-controller"');
+    expect(html).toContain('data-collector-deploy-validation-trim-contract="hertzbeat-required-after-trim"');
+    expect(html).toContain('data-collector-deploy-validation-trim-owner="collector-route-controller"');
     expect(html).toContain('data-collector-deploy-loading-contract="angular-nz-ok-loading"');
     expect(html).toContain('data-collector-deploy-mask-contract="angular-mask-closable-false"');
     expect(html).toContain('data-collector-deploy-width-contract="angular-width-45-percent"');
@@ -323,10 +344,168 @@ describe('setting collector page', () => {
     expect(html).toContain('10.0.0.1');
     expect(html).toContain('collector-pagination');
 
-    await mockState.lastLoad?.();
+    await act(async () => {
+      await mockState.lastLoad?.();
+    });
 
     expect(apiMessageGet).toHaveBeenCalledWith('/collector?pageIndex=0&pageSize=8');
   });
+
+  it('initializes collector query from the route and preserves URL state during search and pagination', async () => {
+    mockState.currentSearchParams = 'name=edge-a&pageIndex=2&pageSize=15&view=grid';
+    const { default: SettingCollectorPage } = await import('./page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<SettingCollectorPage />);
+      await Promise.resolve();
+    });
+
+    expect(mockState.lastSurfaceProps?.search).toBe('edge-a');
+    await act(async () => {
+      await mockState.lastLoad?.();
+    });
+    expect(apiMessageGet).toHaveBeenLastCalledWith('/collector?pageIndex=2&pageSize=15&name=edge-a');
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onSearchChange('edge-b');
+      await Promise.resolve();
+    });
+    await act(async () => {
+      mockState.lastSurfaceProps?.onSearch();
+      await Promise.resolve();
+    });
+
+    expect(mockState.routerReplace).toHaveBeenLastCalledWith('/setting/collector?name=edge-b&pageSize=15&view=grid', { scroll: false });
+
+    mockState.currentSearchParams = 'name=edge-b&pageSize=15&view=grid';
+    await act(async () => {
+      interactionRoot?.render(<SettingCollectorPage />);
+      await Promise.resolve();
+    });
+    await act(async () => {
+      mockState.lastSurfaceProps?.onPageIndexChange(3);
+      await Promise.resolve();
+    });
+
+    expect(mockState.routerReplace).toHaveBeenLastCalledWith('/setting/collector?name=edge-b&pageSize=15&view=grid&pageIndex=3', { scroll: false });
+
+    mockState.currentSearchParams = 'name=edge-b&pageSize=15&view=grid';
+    await act(async () => {
+      interactionRoot?.render(<SettingCollectorPage />);
+      await Promise.resolve();
+    });
+    await act(async () => {
+      mockState.lastSurfaceProps?.onPageSizeChange(8);
+      await Promise.resolve();
+    });
+
+    expect(mockState.routerReplace).toHaveBeenLastCalledWith('/setting/collector?name=edge-b&view=grid', { scroll: false });
+
+    mockState.currentSearchParams = 'name=edge-b&pageSize=15&view=grid';
+    await act(async () => {
+      interactionRoot?.render(<SettingCollectorPage />);
+      await Promise.resolve();
+    });
+    await act(async () => {
+      mockState.lastSurfaceProps?.onSearchClear();
+      await Promise.resolve();
+    });
+
+    expect(mockState.routerReplace).toHaveBeenLastCalledWith('/setting/collector?view=grid', { scroll: false });
+  });
+
+  it('initializes collector search from the shared search query alias', async () => {
+    mockState.currentSearchParams = 'search=edge-alias&pageSize=8&source=collector-alias';
+    const { default: SettingCollectorPage } = await import('./page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<SettingCollectorPage />);
+      await Promise.resolve();
+    });
+
+    expect(mockState.lastSurfaceProps?.search).toBe('edge-alias');
+    await act(async () => {
+      await mockState.lastLoad?.();
+    });
+    expect(apiMessageGet).toHaveBeenLastCalledWith('/collector?pageIndex=0&pageSize=8&name=edge-alias');
+  });
+
+  it('keeps collector mutations behind confirmation and cancel is a no-write path', async () => {
+    const { default: SettingCollectorPage } = await import('./page');
+    const t = createTranslatorMock({ locale: 'zh-CN' });
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<SettingCollectorPage />);
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onGoOnline();
+      await Promise.resolve();
+    });
+
+    expect(mockState.lastSurfaceProps?.deleteTarget).toBeNull();
+    expect(mockState.lastSurfaceProps?.actionTone).toBe('warning');
+    expect(mockState.lastSurfaceProps?.actionFeedbackContract).toBe('angular-no-select-online');
+    expect(mockState.lastSurfaceProps?.actionError).toBe(t('collector.notify.no-select-online'));
+    expect(goOnlineCollectors).not.toHaveBeenCalled();
+    expect(goOfflineCollectors).not.toHaveBeenCalled();
+    expect(deleteCollectors).not.toHaveBeenCalled();
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onSelectedCollectorsChange(['edge-a']);
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onGoOffline();
+      await Promise.resolve();
+    });
+
+    expect(mockState.lastSurfaceProps?.deleteTarget).toEqual({
+      action: 'offline',
+      collectors: ['edge-a'],
+      label: t('setting.collector.selected-count', { count: 1 }),
+      mode: 'batch'
+    });
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onDeleteCancel();
+      await Promise.resolve();
+    });
+
+    expect(mockState.lastSurfaceProps?.deleteTarget).toBeNull();
+    expect(goOfflineCollectors).not.toHaveBeenCalled();
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onGoOffline();
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onDeleteConfirm();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(goOfflineCollectors).toHaveBeenCalledWith(apiMessagePut, ['edge-a']);
+    expect(goOnlineCollectors).not.toHaveBeenCalled();
+    expect(deleteCollectors).not.toHaveBeenCalled();
+    expect(mockState.lastSurfaceProps?.selectedCollectors).toEqual([]);
+    expect(mockState.lastSurfaceProps?.deleteTarget).toBeNull();
+    expect(mockState.lastSurfaceProps?.actionTone).toBe('success');
+    expect(mockState.lastSurfaceProps?.actionFeedbackContract).toBe('angular-operate-notify');
+    expect(mockState.lastSurfaceProps?.actionMessage).toBe(t('common.notify.operate-success'));
+  }, 30000);
 
   it('keeps the collector shell mounted on list load failure like Angular console-only handling', async () => {
     mockState.renderErrorMessage = 'backend refused collector load';
@@ -349,7 +528,10 @@ describe('setting collector page', () => {
     expect(source).toContain('SETTING_COLLECTOR_SETTLED_CACHE_TTL_MS = 10_000');
     expect(source).toContain("['setting-collector', collectorListUrl, reloadVersion].join(':')");
     expect(source).toContain('[collectorListUrl, reloadVersion]');
-    expect(source).toContain("const [query, setQuery] = useState<CollectorQueryState>({ pageIndex: 0, pageSize: 8, search: '' })");
+    expect(source).toContain("import { useRouter, useSearchParams } from 'next/navigation';");
+    expect(source).toContain("const routeSearch = searchParams.get('name') ?? searchParams.get('search') ?? ''");
+    expect(source).toContain('const [query, setQuery] = useState<CollectorQueryState>(routeQuery)');
+    expect(source).toContain('router.replace(nextUrl, { scroll: false });');
     expect(source).toContain('const [selectedCollectors, setSelectedCollectors] = useState<string[]>([])');
     expect(source).toContain('const [actionMessage, setActionMessage] = useState<string | null>(null)');
     expect(source).toContain('const [actionError, setActionError] = useState<string | null>(null)');
@@ -367,7 +549,7 @@ describe('setting collector page', () => {
     expect(source).toContain('const [deployDockerShell, setDeployDockerShell] = useState');
     expect(source).toContain('const [deployPackageShell, setDeployPackageShell] = useState');
     expect(source).toContain('const [deployNameValidationVisible, setDeployNameValidationVisible] = useState(false)');
-    expect(source).toContain("setActionError(t('common.notify.no-select-delete'))");
+    expect(source).toContain("setActionError(t('collector.notify.no-select-delete'))");
     expect(source).toContain("setActionError(t(action === 'online' ? 'collector.notify.no-select-online' : 'collector.notify.no-select-offline'))");
     expect(source).toContain("setActionMessage(t(deleteTarget.action === 'online' || deleteTarget.action === 'offline' ? 'common.notify.operate-success' : 'common.notify.delete-success'))");
     expect(source).toContain("setActionError(t(isOperateAction ? 'common.notify.operate-fail' : 'common.notify.delete-fail'))");
@@ -382,7 +564,7 @@ describe('setting collector page', () => {
     expect(source).toContain('goOfflineCollectors(apiMessagePut, targetCollectors)');
     expect(source).toContain('generateCollectorIdentity(apiMessagePost, collector)');
     expect(source).toContain('buildCollectorDeployCommands(t, identity, managerHost)');
-    expect(source).toContain('COLLECTOR_DEPLOY_COPY_SUCCESS_DURATION_MS = 800');
+    expect(source).toContain('COLLECTOR_DEPLOY_COPY_SUCCESS_DURATION_MS = 3000');
     expect(source).toContain('const deployCopyClearTimerRef = useRef');
     expect(source).toContain('const deployGenerationRequestRef = useRef(0);');
     expect(source).toContain('const clearDeployCopyTimer = useCallback');
@@ -413,17 +595,17 @@ describe('setting collector page', () => {
     expect(source).toContain('deployNameValidationVisible={deployNameValidationVisible}');
     expect(source).toContain('onSelectedCollectorsChange={setSelectedCollectors}');
     expect(source).toContain('onPageIndexChange={pageIndex => {');
-    expect(source).toContain('setQuery(current => ({ ...current, pageIndex }))');
+    expect(source).toContain('const nextQuery = { ...query, pageIndex };');
     expect(source).toContain('onPageSizeChange={pageSize => {');
-    expect(source).toContain('setQuery(current => ({ ...current, pageIndex: 0, pageSize }))');
-    expect(source).toContain('setQuery(current => ({ ...current, pageIndex: 0, search }))');
+    expect(source).toContain('const nextQuery = { ...query, pageIndex: 0, pageSize };');
+    expect(source).toContain('const nextQuery = { ...query, pageIndex: 0, search };');
     expect(source).toContain('onSearchClear={() => {');
     expect(source).toContain("setSearch('');");
-    expect(source).toContain("setQuery(current => ({ ...current, pageIndex: 0, search: '' }))");
+    expect(source).toContain("const nextQuery = { ...query, pageIndex: 0, search: '' };");
     expect(source).toContain('onDeployGenerate={() => {');
     expect(source).toContain('if (isDeployPending) return;');
     expect(source).toContain('const collector = deployName.trim();');
-    expect(source).toContain('if (deployName.length === 0) {');
+    expect(source).toContain('if (collector.length === 0) {');
     expect(source).toContain('const deployGenerationRequest = deployGenerationRequestRef.current + 1;');
     expect(source).toContain('deployGenerationRequestRef.current = deployGenerationRequest;');
     expect(source).toContain('if (deployGenerationRequestRef.current !== deployGenerationRequest) return;');
@@ -495,5 +677,37 @@ describe('setting collector page', () => {
     expect(mockState.lastSurfaceProps?.deployPackageShell).toBe('');
     expect(mockState.lastSurfaceProps?.isDeployPending).toBe(false);
     expect(buildCollectorDeployCommands).not.toHaveBeenCalled();
+  });
+
+  it('blocks whitespace-only collector deploy names before calling the backend', async () => {
+    const { default: SettingCollectorPage } = await import('./page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<SettingCollectorPage />);
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onDeploy();
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onDeployNameChange('   ');
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onDeployGenerate();
+      await Promise.resolve();
+    });
+
+    expect(generateCollectorIdentity).not.toHaveBeenCalled();
+    expect(mockState.lastSurfaceProps?.deployNameValidationVisible).toBe(true);
+    expect(mockState.lastSurfaceProps?.deployError).toBeNull();
+    expect(mockState.lastSurfaceProps?.isDeployPending).toBe(false);
   });
 });

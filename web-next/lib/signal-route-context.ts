@@ -21,6 +21,7 @@ export const SIGNAL_ROUTE_CONTEXT_PARAM_KEYS = [
   'entityId',
   'entityType',
   'entityName',
+  'pageSize',
   'filters',
   'returnTo',
   'serviceName',
@@ -34,6 +35,7 @@ export const SIGNAL_ROUTE_CONTEXT_PARAM_KEYS = [
   'spanId',
   'operationName',
   'source',
+  'probe',
   'collector',
   'template',
   'alertName',
@@ -425,6 +427,29 @@ export function buildSignalEntityHref(context: SignalRouteContext, fallbackSearc
   return withQuery('/entities', params);
 }
 
+export function buildSignalEntityDiscoveryHref(context: SignalRouteContext, fallbackServiceName?: string) {
+  const serviceName = normalizeValue(fallbackServiceName || context.serviceName || context.entityName);
+  if (!serviceName) {
+    return '/entities/discovery';
+  }
+
+  const params = new URLSearchParams();
+  params.set('identityKey', 'service.name');
+  params.set('identityValue', serviceName);
+  params.set('serviceName', serviceName);
+
+  const serviceNamespace = normalizeValue(context.serviceNamespace);
+  if (serviceNamespace) {
+    params.set('serviceNamespace', serviceNamespace);
+  }
+  const environment = normalizeValue(context.environment);
+  if (environment) {
+    params.set('environment', environment);
+  }
+
+  return withQuery('/entities/discovery', params);
+}
+
 export function buildSignalAlertRulesHref(
   signal: 'metrics' | 'logs' | 'traces',
   context: SignalRouteContext,
@@ -500,7 +525,7 @@ export type SignalEntityContextRow = {
 
 export function buildSignalEntityContextRows(
   context: SignalRouteContext,
-  fallback: Partial<Pick<SignalRouteContext, 'entityId' | 'entityName' | 'serviceName' | 'serviceNamespace' | 'environment' | 'timeRange' | 'start' | 'end' | 'refresh' | 'live' | 'tz' | 'traceId' | 'spanId' | 'monitorId' | 'monitorName' | 'monitorApp' | 'monitorInstance' | 'source' | 'collector' | 'template'>> = {},
+  fallback: Partial<Pick<SignalRouteContext, 'entityId' | 'entityType' | 'entityName' | 'serviceName' | 'serviceNamespace' | 'environment' | 'timeRange' | 'start' | 'end' | 'refresh' | 'live' | 'tz' | 'traceId' | 'spanId' | 'monitorId' | 'monitorName' | 'monitorApp' | 'monitorInstance' | 'source' | 'collector' | 'template'>> = {},
   t?: Translator
 ): SignalEntityContextRow[] {
   const entityId = readEntityIdRouteParam(firstText(context.entityId, fallback.entityId));

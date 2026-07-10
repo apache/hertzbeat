@@ -75,13 +75,22 @@ public class EntityMonitorBindService {
         return entityMonitorBindQueryService.countMonitorBinds(entityId);
     }
 
+    public Map<Long, Long> countMonitorBindsByEntityIds(List<Long> entityIds) {
+        return entityMonitorBindQueryService.countMonitorBindsByEntityIds(entityIds);
+    }
+
     public void replaceMonitorBinds(Long entityId, List<EntityMonitorBind> monitorBinds) {
         List<EntityMonitorBind> rows = new ArrayList<>();
+        Set<Long> acceptedMonitorIds = new LinkedHashSet<>();
         if (!CollectionUtils.isEmpty(monitorBinds)) {
             for (EntityMonitorBind bind : monitorBinds) {
                 if (bind == null || !entityMonitorQueryService.monitorExists(bind.getMonitorId())) {
                     continue;
                 }
+                if (!acceptedMonitorIds.add(bind.getMonitorId())) {
+                    continue;
+                }
+                requireMonitorAvailableForEntity(entityId, bind.getMonitorId());
                 rows.add(EntityMonitorBind.builder()
                         .entityId(entityId)
                         .monitorId(bind.getMonitorId())
@@ -94,6 +103,16 @@ public class EntityMonitorBindService {
             }
         }
         entityMonitorBindWriteModelService.replaceMonitorBinds(entityId, rows);
+    }
+
+    private void requireMonitorAvailableForEntity(Long entityId, Long monitorId) {
+        List<EntityMonitorBind> existingBinds = entityMonitorBindQueryService.findMonitorBindsByMonitorId(monitorId);
+        for (EntityMonitorBind existingBind : existingBinds) {
+            if (existingBind == null || Objects.equals(entityId, existingBind.getEntityId())) {
+                continue;
+            }
+            throw new IllegalArgumentException("Monitor already bound to another entity: " + monitorId + ".");
+        }
     }
 
     public void replaceAutoMonitorBinds(Long monitorId, List<EntityMonitorBindingCandidate> candidates) {
@@ -129,6 +148,47 @@ public class EntityMonitorBindService {
 
     public List<Monitor> findEntityMonitors(Long entityId) {
         List<EntityMonitorBind> binds = entityMonitorBindQueryService.findMonitorBinds(entityId);
+        return resolveMonitorsInBindOrder(binds);
+    }
+
+    public Map<Long, List<Monitor>> findEntityMonitorsByEntityIds(List<Long> entityIds) {
+        if (CollectionUtils.isEmpty(entityIds)) {
+            return Collections.emptyMap();
+        }
+        Map<Long, List<EntityMonitorBind>> bindsByEntityId =
+                entityMonitorBindQueryService.findMonitorBindsByEntityIds(entityIds);
+        Set<Long> monitorIds = bindsByEntityId.values()
+                .stream()
+                .flatMap(List::stream)
+                .map(EntityMonitorBind::getMonitorId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        if (monitorIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Map<Long, Monitor> monitorMap = entityMonitorQueryService.findMonitorsByIds(monitorIds).stream()
+                .collect(Collectors.toMap(Monitor::getId, item -> item, (left, right) -> left));
+        Map<Long, List<Monitor>> monitorsByEntityId = new java.util.LinkedHashMap<>();
+        for (Long entityId : entityIds) {
+            List<EntityMonitorBind> binds = bindsByEntityId.get(entityId);
+            if (CollectionUtils.isEmpty(binds)) {
+                continue;
+            }
+            List<Monitor> monitors = new ArrayList<>();
+            for (EntityMonitorBind bind : binds) {
+                Monitor monitor = monitorMap.get(bind.getMonitorId());
+                if (monitor != null) {
+                    monitors.add(monitor);
+                }
+            }
+            if (!monitors.isEmpty()) {
+                monitorsByEntityId.put(entityId, monitors);
+            }
+        }
+        return monitorsByEntityId;
+    }
+
+    private List<Monitor> resolveMonitorsInBindOrder(List<EntityMonitorBind> binds) {
         if (CollectionUtils.isEmpty(binds)) {
             return Collections.emptyList();
         }

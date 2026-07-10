@@ -15,12 +15,9 @@ vi.mock('../ui/select', () => ({
 }));
 
 vi.mock('@hertzbeat/ui', () => ({
-  HzCodeEditor: ({ value, readOnly, language, onChange: _onChange, name, ...props }: any) => (
+  HzCodeEditor: ({ value, readOnly, language, onChange: _onChange, name, ariaLabel: _ariaLabel, minHeight: _minHeight, placeholder: _placeholder, ...props }: any) => (
     <div
-      data-testid={props['data-testid']}
-      data-alert-notice-template-code-editor-owner={props['data-alert-notice-template-code-editor-owner']}
-      data-alert-notice-template-code-editor={props['data-alert-notice-template-code-editor']}
-      data-alert-notice-template-viewer-code-editor={props['data-alert-notice-template-viewer-code-editor']}
+      {...props}
       data-hz-ui="code-editor-frame"
       data-hz-code-editor-runtime="codemirror"
       data-hz-code-editor-language={language}
@@ -57,6 +54,30 @@ describe('AlertNoticeTemplateFields', () => {
     expect(html).toContain('data-alert-notice-template-form-row="type"');
     expect(html).toContain('data-alert-notice-template-form-row="preset"');
     expect(html).toContain('data-alert-notice-template-form-row="content"');
+    expect(html).toContain('data-alert-notice-template-field-title="name"');
+    expect(html).toContain('data-alert-notice-template-field-title="type"');
+    expect(html).toContain('data-alert-notice-template-field-title="preset"');
+    expect(html).toContain('data-alert-notice-template-field-title="content"');
+    expect(html.match(/data-alert-authoring-field-help-trigger="hertzbeat-ui-field-help"/g)?.length).toBe(4);
+    expect(html.match(/data-alert-authoring-field-help="hertzbeat-ui-field-tooltip"/g)?.length).toBe(4);
+    expect(html.match(/data-alert-authoring-field-help-placement="inline-label"/g)?.length).toBe(4);
+    expect(html.match(/data-alert-authoring-field-help-visual="circle-help-icon"/g)?.length).toBe(4);
+    expect(html.match(/data-alert-authoring-field-help-icon="lucide-circle-help"/g)?.length).toBe(4);
+    expect(html).not.toContain('data-alert-authoring-field-help-visual="borderless-question"');
+    expect(html.match(/data-alert-notice-template-field-requirement=/g)?.length).toBe(4);
+    expect(html.match(/data-alert-notice-template-field-requirement="required"/g)?.length).toBe(3);
+    expect(html.match(/data-alert-notice-template-field-requirement="optional"/g)?.length).toBe(1);
+    expect(html.match(/data-alert-notice-template-field-input-mode=/g)?.length).toBe(4);
+    expect(html.match(/data-alert-notice-template-field-input-mode="manual"/g)?.length).toBe(2);
+    expect(html.match(/data-alert-notice-template-field-input-mode="selection"/g)?.length).toBe(1);
+    expect(html.match(/data-alert-notice-template-field-input-mode="generated"/g)?.length).toBe(1);
+    expect(html).toContain(t('alert.notice.field.requirement.required'));
+    expect(html).toContain(t('alert.notice.field.requirement.optional'));
+    expect(html).toContain(t('alert.notice.field.input-mode.manual'));
+    expect(html).toContain(t('alert.notice.field.input-mode.selection'));
+    expect(html).toContain(t('alert.notice.field.input-mode.generated'));
+    expect(html).toContain('data-alert-notice-template-field-help="type"');
+    expect(html).toContain('data-alert-notice-template-field-help="content"');
     expect(html).toContain('grid-cols-[132px_minmax(0,1fr)]');
     expect(html).toContain('data-alert-notice-template-type-selector="hertzbeat-ui-select"');
     expect(html).toContain('data-alert-notice-template-type-required="angular-required-select"');
@@ -71,6 +92,8 @@ describe('AlertNoticeTemplateFields', () => {
     expect(html).toContain('name="template_content"');
     expect(html).not.toContain('data-alert-authoring-textarea="cold-textarea"');
     expect(html).toContain('alert.notice.template.name');
+    expect(html).toContain(t('alert.notice.template.field.type.help'));
+    expect(html).toContain(t('alert.notice.template.field.content.impact'));
     expect(html).toContain('data-testid="notice-template-field-name"');
     expect(html).toContain('data-testid="notice-template-field-type"');
     expect(html).toContain('data-testid="notice-template-field-preset"');
@@ -89,6 +112,8 @@ describe('AlertNoticeTemplateFields', () => {
     expect(html).not.toContain('md:col-span-2');
     expect(source).toContain("from '../ui/select'");
     expect(source).toContain("from '@hertzbeat/ui'");
+    expect(source).toContain('AlertAuthoringInlineHelp');
+    expect(source).toContain('noticeTemplateFieldHelp');
     expect(source).toContain('HzCodeEditor');
     expect(source).toContain('data-alert-notice-template-code-editor-owner="hertzbeat-ui-code-editor"');
     expect(source).toContain("['2', 'alert.notice.type.url']");
@@ -134,6 +159,38 @@ describe('AlertNoticeTemplateFields', () => {
     expect(html).toContain('value="" disabled=""');
     expect(html).toContain(t('alert.notice.receiver.type.placeholder'));
     expect(html).toContain('value="1"');
+  });
+
+  it('marks template validation issues on the exact fields that need input', () => {
+    const html = renderToStaticMarkup(
+      <AlertNoticeTemplateFields
+        t={t}
+        draft={{
+          name: '',
+          type: '',
+          preset: false,
+          content: ''
+        }}
+        onDraftChange={vi.fn()}
+        validationIssues={[
+          { field: 'name', message: t('alert.notice.template.validation.name') },
+          { field: 'type', message: t('alert.notice.template.validation.type') },
+          { field: 'content', message: t('alert.notice.template.validation.content') }
+        ]}
+      />
+    );
+
+    expect(html).toContain('data-alert-notice-template-field-error="name"');
+    expect(html).toContain('data-alert-notice-template-field-error="type"');
+    expect(html).toContain('data-alert-notice-template-field-error="content"');
+    expect(html).toContain('data-alert-notice-template-field-invalid="true"');
+    expect(html).toContain('aria-invalid="true"');
+    expect(html).toContain('aria-describedby="notice-template-name-error"');
+    expect(html).toContain('aria-describedby="notice-template-type-error"');
+    expect(html).toContain('aria-describedby="notice-template-content-error"');
+    expect(html).toContain(t('alert.notice.template.validation.name'));
+    expect(html).toContain(t('alert.notice.template.validation.type'));
+    expect(html).toContain(t('alert.notice.template.validation.content'));
   });
 
   it('renders a read-only template viewer without save-facing editable controls', () => {

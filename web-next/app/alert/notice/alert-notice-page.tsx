@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useCallback, useMemo, useState } from 'react';
-import { ArrowLeft, Eye, Inbox, MoreHorizontal, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { ArrowLeft, CircleHelp, Eye, Inbox, MoreHorizontal, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { HzConfirmDialog, HzPaginationBar } from '@hertzbeat/ui';
 import { AlertNoticeConsoleShell, type AlertNoticeConsoleTabKey } from '../../../components/pages/alert-notice-console-shell';
 import { ClientWorkbench } from '../../../components/workbench/client-workbench';
 import { useI18n } from '../../../components/providers/i18n-provider';
 import { AlertNoticeReceiverFields } from '../../../components/pages/alert-notice-receiver-fields';
-import { AlertNoticeRuleFields } from '../../../components/pages/alert-notice-rule-fields';
+import { AlertNoticeRuleFields, type NoticeRuleValidationIssue } from '../../../components/pages/alert-notice-rule-fields';
 import { AlertNoticeTemplateFields } from '../../../components/pages/alert-notice-template-fields';
 import { Button } from '../../../components/ui/button';
 import { SearchRow } from '../../../components/ui/search-row';
@@ -22,7 +23,7 @@ import {
 import { api } from '../../../lib/alert-api-facade';
 import { buildNoticeListUrl, buildNoticeRuleDisplayNames, buildNoticeRuleDraft, buildNoticeTemplateListUrl, loadAlertNoticeDataFromFacade, type NoticeReceiverDraft, type NoticeRuleDraft, type NoticeTemplateDraft } from '../../../lib/alert-notice/controller';
 import type { AlertNoticeRouteState } from '../../../lib/alert-notice/query-state';
-import { buildAlertNoticeEvidenceContext, buildNoticeReceiverDraft, buildNoticeTemplateDraft, getAlertNoticeProductCopy, validateNoticeReceiverDraft, validateNoticeRuleDraft, validateNoticeTemplateDraft } from '../../../lib/alert-notice/view-model';
+import { buildAlertNoticeEvidenceContext, buildNoticeReceiverDraft, buildNoticeReceiverValidationIssues, buildNoticeTemplateDraft, buildNoticeTemplateValidationIssues, getAlertNoticeProductCopy, validateNoticeRuleDraft, type NoticeReceiverValidationIssue, type NoticeTemplateValidationIssue } from '../../../lib/alert-notice/view-model';
 import { DEFAULT_ALERT_LABEL_OPTIONS, loadAlertLabelOptionsFromFacade, type AlertLabelOptions } from '../../../lib/alert-label-options';
 import { hzOpsCatalogVisual } from '../../../lib/hz-ops-visual';
 import { formatTime } from '../../../lib/format';
@@ -40,12 +41,49 @@ type NoticePageData = {
 type NoticeDeleteRequest = {
   kind: 'receiver' | 'rule' | 'template';
   id: number;
+  name?: string;
+};
+
+type AlertNoticeActionHelpCopy = {
+  label: string;
+  body: string;
+  impact?: string;
+};
+export type AlertNoticeRouteTab = 'receiver' | 'rule' | 'template';
+export type AlertNoticeListRouteState = {
+  selectedTab: AlertNoticeRouteTab;
+  receiverSearch: string;
+  receiverPageIndex: number;
+  receiverPageSize: number;
+  ruleSearch: string;
+  rulePageIndex: number;
+  rulePageSize: number;
+  templateSearch: string;
+  templatePresetFilter: boolean;
+  templatePageIndex: number;
+  templatePageSize: number;
 };
 
 const NOTICE_PAGE_SIZE_OPTIONS = [8, 15, 25];
 type Translator = ReturnType<typeof useI18n>['t'];
 const coldNoticeVisual = hzOpsCatalogVisual;
 const coldToolbarClass = 'flex flex-wrap items-center gap-2 border-b border-[#252b34] bg-[#0b0c0e] px-3 py-2';
+
+function resolveNoticeRuleValidationIssues(
+  validationError: string | null,
+  t: Translator
+): NoticeRuleValidationIssue[] {
+  if (!validationError) return [];
+  const validationMap: Array<{ field: NoticeRuleValidationIssue['field']; key: string }> = [
+    { field: 'name', key: 'alert.notice.rule.validation.name' },
+    { field: 'receiver', key: 'alert.notice.rule.validation.receivers' },
+    { field: 'labels', key: 'alert.notice.rule.validation.labels' },
+    { field: 'days', key: 'alert.notice.rule.validation.days' },
+    { field: 'time', key: 'alert.notice.rule.validation.period' }
+  ];
+  const matchedIssue = validationMap.find(issue => t(issue.key) === validationError);
+  return matchedIssue ? [{ field: matchedIssue.field, message: validationError }] : [];
+}
 const coldSelectClass =
   'h-8 w-[132px] rounded-[3px] border border-[#2b3039] bg-[#101217] px-2 text-[12px] font-semibold text-[#eef2f7] outline-none focus:border-[#4e74f8]';
 const coldTableShellClass = 'rounded-[4px] border border-[#252b34] bg-[#0b0c0e]';
@@ -58,11 +96,217 @@ const coldCommandButtonClass = `${coldButtonClassName} w-[124px] min-w-[124px]`;
 const coldPrimaryCommandButtonClass = `${coldPrimaryButtonClassName} w-[124px] min-w-[124px]`;
 const coldIconButtonClass =
   'h-8 w-8 min-w-0 rounded-[3px] border-[#2b3039] bg-[#101217] text-[#dbe4f0] hover:border-[#4e74f8] hover:bg-[#151b28] hover:text-white';
+const coldStickyActionHeaderClass =
+  'sticky right-0 z-10 w-[168px] border-l border-[#252b34] bg-[#101217] px-3 py-3 text-center shadow-[-12px_0_18px_rgba(0,0,0,0.28)]';
+const coldStickyActionCellClass =
+  'sticky right-0 z-10 border-l border-[#252b34] bg-[#0b0c0e] px-3 py-3 text-center shadow-[-12px_0_18px_rgba(0,0,0,0.28)]';
+const coldNoticeStatusMessageClass = 'px-3 py-2 text-sm text-[#b9c6d8]';
+const coldNoticeTestStatusMessageClass =
+  'rounded-[3px] border border-[#2f3a4a] bg-[#111722] px-3 py-2 text-[12px] font-semibold leading-5 text-[#c6d4e6]';
 const ALERT_NOTICE_SETTLED_CACHE_TTL_MS = 10_000;
+const RECEIVER_TEST_SEND_TIMEOUT_MS = 15_000;
+const NOTICE_RECEIVER_DRAFT_FINGERPRINT_FIELDS: Array<keyof NoticeReceiverDraft> = [
+  'id',
+  'name',
+  'type',
+  'email',
+  'phone',
+  'hookUrl',
+  'hookAuthType',
+  'hookAuthToken',
+  'wechatId',
+  'accessToken',
+  'tgBotToken',
+  'tgUserId',
+  'tgMessageThreadId',
+  'larkReceiveType',
+  'userId',
+  'chatId',
+  'slackWebHookUrl',
+  'corpId',
+  'agentId',
+  'appSecret',
+  'partyId',
+  'tagId',
+  'discordChannelId',
+  'discordBotToken',
+  'smnAk',
+  'smnSk',
+  'smnProjectId',
+  'smnRegion',
+  'smnTopicUrn',
+  'serverChanToken',
+  'gotifyToken',
+  'appId'
+];
+const NOTICE_RULE_DRAFT_FINGERPRINT_FIELDS: Array<keyof NoticeRuleDraft> = [
+  'id',
+  'name',
+  'receiverIdsText',
+  'templateId',
+  'enable',
+  'filterAll',
+  'labelsText',
+  'daysText',
+  'periodLimit',
+  'periodStart',
+  'periodEnd'
+];
+const NOTICE_TEMPLATE_DRAFT_FINGERPRINT_FIELDS: Array<keyof NoticeTemplateDraft> = [
+  'id',
+  'name',
+  'type',
+  'preset',
+  'content'
+];
 const EMPTY_ALERT_NOTICE_ROUTE_STATE: AlertNoticeRouteState = {
   signal: null,
   signalContext: {}
 };
+
+function serializeNoticeReceiverDraft(draft: NoticeReceiverDraft) {
+  return JSON.stringify(
+    NOTICE_RECEIVER_DRAFT_FINGERPRINT_FIELDS.map(field => [field, draft[field] == null ? '' : String(draft[field]).trim()])
+  );
+}
+
+function serializeNoticeRuleDraft(draft: NoticeRuleDraft) {
+  return JSON.stringify(
+    NOTICE_RULE_DRAFT_FINGERPRINT_FIELDS.map(field => [field, draft[field] == null ? '' : String(draft[field]).trim()])
+  );
+}
+
+function serializeNoticeTemplateDraft(draft: NoticeTemplateDraft) {
+  return JSON.stringify(
+    NOTICE_TEMPLATE_DRAFT_FINGERPRINT_FIELDS.map(field => [field, draft[field] == null ? '' : String(draft[field]).trim()])
+  );
+}
+
+async function withNoticeReceiverTestTimeout<T>(task: Promise<T>, error: Error) {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  try {
+    return await Promise.race([
+      task,
+      new Promise<T>((_, reject) => {
+        timeoutId = setTimeout(() => reject(error), RECEIVER_TEST_SEND_TIMEOUT_MS);
+      })
+    ]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+}
+
+function parseAlertNoticeRouteInteger(value: string | null, fallback: number, minimum = 0) {
+  if (!value) return fallback;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed >= minimum ? parsed : fallback;
+}
+
+function normalizeAlertNoticeTab(value: string | null, fallback: AlertNoticeRouteTab): AlertNoticeRouteTab {
+  return value === 'receiver' || value === 'rule' || value === 'template' ? value : fallback;
+}
+
+function writeAlertNoticeRouteParam(params: URLSearchParams, key: string, value: string) {
+  const cleanValue = value.trim();
+  if (cleanValue) {
+    params.set(key, cleanValue);
+  } else {
+    params.delete(key);
+  }
+}
+
+function writeAlertNoticeRouteIntegerParam(
+  params: URLSearchParams,
+  currentParams: URLSearchParams,
+  key: string,
+  value: number,
+  defaultValue: number
+) {
+  const nextValue = String(value);
+  if (value !== defaultValue || currentParams.get(key) === nextValue) {
+    params.set(key, nextValue);
+  } else {
+    params.delete(key);
+  }
+}
+
+export function buildAlertNoticeListRouteUrl(
+  routeSearchParamString: string,
+  defaultSelectedTab: AlertNoticeRouteTab,
+  nextState: AlertNoticeListRouteState
+) {
+  const currentParams = new URLSearchParams(routeSearchParamString);
+  const nextParams = new URLSearchParams(routeSearchParamString);
+  if (nextState.selectedTab !== defaultSelectedTab || currentParams.get('tab') === nextState.selectedTab) {
+    nextParams.set('tab', nextState.selectedTab);
+  } else {
+    nextParams.delete('tab');
+  }
+  writeAlertNoticeRouteParam(nextParams, 'receiverSearch', nextState.receiverSearch);
+  writeAlertNoticeRouteParam(nextParams, 'ruleSearch', nextState.ruleSearch);
+  writeAlertNoticeRouteParam(nextParams, 'templateSearch', nextState.templateSearch);
+
+  writeAlertNoticeRouteIntegerParam(nextParams, currentParams, 'receiverPageIndex', nextState.receiverPageIndex, 0);
+  writeAlertNoticeRouteIntegerParam(nextParams, currentParams, 'receiverPageSize', nextState.receiverPageSize, 8);
+  writeAlertNoticeRouteIntegerParam(nextParams, currentParams, 'rulePageIndex', nextState.rulePageIndex, 0);
+  writeAlertNoticeRouteIntegerParam(nextParams, currentParams, 'rulePageSize', nextState.rulePageSize, 8);
+  writeAlertNoticeRouteIntegerParam(nextParams, currentParams, 'templatePageIndex', nextState.templatePageIndex, 0);
+  writeAlertNoticeRouteIntegerParam(nextParams, currentParams, 'templatePageSize', nextState.templatePageSize, 8);
+  if (!nextState.templatePresetFilter || currentParams.get('templatePreset') === 'true') nextParams.set('templatePreset', String(nextState.templatePresetFilter));
+  else nextParams.delete('templatePreset');
+
+  const nextParamString = nextParams.toString();
+  return nextParamString ? `/alert/notice?${nextParamString}` : '/alert/notice';
+}
+
+function alertNoticeActionHelp(t: Translator, id: string): AlertNoticeActionHelpCopy {
+  const impactKey = `alert.notice.action.${id}.impact`;
+  const impact = t(impactKey);
+  return {
+    label: t('alert.notice.action.help-aria', { action: t(`alert.notice.action.${id}.label`) }),
+    body: t(`alert.notice.action.${id}.help`),
+    impact: impact === impactKey ? undefined : impact
+  };
+}
+
+function AlertNoticeActionHelp({
+  id,
+  label,
+  body,
+  impact
+}: AlertNoticeActionHelpCopy & {
+  id: string;
+}) {
+  return (
+    <span
+      data-alert-notice-action-help={id}
+      className="group/help relative inline-flex h-5 w-5 shrink-0 items-center justify-center"
+    >
+      <button
+        type="button"
+        aria-label={label}
+        data-alert-notice-action-help-trigger="hertzbeat-ui-action-help"
+        data-alert-notice-action-help-style="icon-after-action"
+        data-alert-notice-action-help-visual="circle-help-icon"
+        className="inline-flex h-5 w-5 items-center justify-center rounded-none border-0 bg-transparent p-0 text-[#d8e4ff] transition hover:text-[#f5f7fb] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4e74f8]"
+        onClick={event => {
+          event.preventDefault();
+          event.stopPropagation();
+        }}
+      >
+        <CircleHelp size={13} strokeWidth={2} aria-hidden="true" data-alert-notice-action-help-icon="lucide-circle-help" />
+      </button>
+      <span
+        role="tooltip"
+        data-alert-notice-action-help-tooltip={id}
+        className="pointer-events-none absolute left-0 top-6 z-30 hidden w-[300px] rounded-[3px] border border-[#2b3039] bg-[#101217] p-3 text-left shadow-[0_16px_40px_rgba(0,0,0,0.42)] group-hover/help:block group-focus-within/help:block"
+      >
+        <span className="block text-[11px] leading-4 text-[#dbe4f0]">{body}</span>
+        {impact ? <span className="mt-2 block border-t border-[#2b3039] pt-2 text-[11px] leading-4 text-[#98a2b3]">{impact}</span> : null}
+      </span>
+    </span>
+  );
+}
 
 function isApiMessageBusinessError(error: unknown) {
   return typeof error === 'object' && error !== null && typeof (error as { code?: unknown }).code === 'number';
@@ -248,19 +492,24 @@ function NoticePagination({
 function NoticeTableEmptyRow({
   t,
   colSpan,
-  prefix
+  prefix,
+  action
 }: {
   t: Translator;
   colSpan: number;
   prefix: 'receiver' | 'rule' | 'template';
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
 }) {
   return (
     <tr data-alert-notice-empty-row="true" data-alert-notice-receiver-empty-state={prefix === 'receiver' ? 'hertzbeat-ui-empty-state' : undefined} className="bg-[#0b0c0e]">
       <td
         colSpan={colSpan}
-        className="h-[360px] px-3 pt-[54px] text-center align-top text-[#8f99ab]"
+        className="h-[360px] px-3 pt-[54px] text-left align-top text-[#8f99ab]"
       >
-        <div className="inline-flex flex-col items-center gap-2.5">
+        <div className="flex w-[min(560px,70vw)] min-w-[220px] flex-col items-center gap-2.5">
           <span
             data-alert-notice-receiver-empty-icon={prefix === 'receiver' ? 'hertzbeat-ui-empty-icon' : undefined}
             className="inline-flex h-10 w-12 items-center justify-center rounded-[4px] border border-[#2b3039] bg-[#101217] text-[#7e8494]"
@@ -268,6 +517,21 @@ function NoticeTableEmptyRow({
             <Inbox className="h-7 w-7" aria-hidden="true" />
           </span>
           <div className="text-[14px]">{t('common.no-data')}</div>
+          {action ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="default"
+              data-alert-notice-receiver-empty-action={prefix === 'receiver' ? 'new' : undefined}
+              data-alert-notice-rule-empty-action={prefix === 'rule' ? 'new' : undefined}
+              data-alert-notice-template-empty-action={prefix === 'template' ? 'new' : undefined}
+              className={coldPrimaryCommandButtonClass}
+              onClick={action.onClick}
+            >
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              {action.label}
+            </Button>
+          ) : null}
         </div>
       </td>
     </tr>
@@ -279,12 +543,14 @@ function NoticeTableSwitch({
   field,
   label,
   pending,
+  commandAction,
   onChange
 }: {
   checked: boolean;
   field: 'filter-all' | 'enable';
   label: string;
   pending?: boolean;
+  commandAction?: string;
   onChange: (checked: boolean) => void;
 }) {
   return (
@@ -296,6 +562,7 @@ function NoticeTableSwitch({
       data-alert-notice-rule-table-switch={field}
       data-alert-notice-rule-table-switch-update="angular-edit-notify"
       data-alert-notice-rule-table-switch-update-owner="route-action-feedback-contract"
+      data-alert-notice-command-action={commandAction}
       data-state={checked ? 'checked' : 'unchecked'}
       disabled={pending}
       onClick={() => onChange(!checked)}
@@ -311,6 +578,9 @@ function NoticeTableSwitch({
 
 export default function AlertNoticePage({ initialRouteState }: { initialRouteState?: AlertNoticeRouteState } = {}) {
   const { t, locale } = useI18n();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const routeSearchParamString = searchParams.toString();
   const alertNoticeRouteState = initialRouteState ?? EMPTY_ALERT_NOTICE_ROUTE_STATE;
   const { signal, signalContext } = alertNoticeRouteState;
   const noticeEvidenceContext = useMemo(
@@ -319,37 +589,62 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
   );
   const [editingReceiver, setEditingReceiver] = useState(false);
   const [receiverDraft, setReceiverDraft] = useState<NoticeReceiverDraft>(() => buildNoticeReceiverDraft(null));
+  const [receiverInitialFingerprint, setReceiverInitialFingerprint] = useState(() => serializeNoticeReceiverDraft(buildNoticeReceiverDraft(null)));
+  const [receiverDiscardDialogOpen, setReceiverDiscardDialogOpen] = useState(false);
   const [selectedReceiverId, setSelectedReceiverId] = useState<number | null>(null);
-  const [receiverSearchDraft, setReceiverSearchDraft] = useState('');
-  const [receiverSearch, setReceiverSearch] = useState('');
-  const [receiverPageIndex, setReceiverPageIndex] = useState(0);
-  const [receiverPageSize, setReceiverPageSize] = useState(8);
+  const defaultSelectedTab: AlertNoticeRouteTab = noticeEvidenceContext ? 'rule' : 'receiver';
+  const routeListState = useMemo<AlertNoticeListRouteState>(() => {
+    const routeParams = new URLSearchParams(routeSearchParamString);
+    return {
+      selectedTab: normalizeAlertNoticeTab(routeParams.get('tab'), defaultSelectedTab),
+      receiverSearch: routeParams.get('receiverSearch') ?? '',
+      receiverPageIndex: parseAlertNoticeRouteInteger(routeParams.get('receiverPageIndex'), 0),
+      receiverPageSize: parseAlertNoticeRouteInteger(routeParams.get('receiverPageSize'), 8, 1),
+      ruleSearch: routeParams.get('ruleSearch') ?? '',
+      rulePageIndex: parseAlertNoticeRouteInteger(routeParams.get('rulePageIndex'), 0),
+      rulePageSize: parseAlertNoticeRouteInteger(routeParams.get('rulePageSize'), 8, 1),
+      templateSearch: routeParams.get('templateSearch') ?? '',
+      templatePresetFilter: routeParams.get('templatePreset') === 'false' ? false : true,
+      templatePageIndex: parseAlertNoticeRouteInteger(routeParams.get('templatePageIndex'), 0),
+      templatePageSize: parseAlertNoticeRouteInteger(routeParams.get('templatePageSize'), 8, 1)
+    };
+  }, [defaultSelectedTab, routeSearchParamString]);
+  const [receiverSearchDraft, setReceiverSearchDraft] = useState(routeListState.receiverSearch);
+  const [receiverSearch, setReceiverSearch] = useState(routeListState.receiverSearch);
+  const [receiverPageIndex, setReceiverPageIndex] = useState(routeListState.receiverPageIndex);
+  const [receiverPageSize, setReceiverPageSize] = useState(routeListState.receiverPageSize);
   const [savingReceiver, setSavingReceiver] = useState(false);
   const [testingReceiver, setTestingReceiver] = useState(false);
   const [receiverMessage, setReceiverMessage] = useState<string | null>(null);
   const [receiverError, setReceiverError] = useState<string | null>(null);
   const [receiverErrorDetail, setReceiverErrorDetail] = useState<string | null>(null);
+  const [receiverValidationIssues, setReceiverValidationIssues] = useState<NoticeReceiverValidationIssue[]>([]);
   const [editingTemplate, setEditingTemplate] = useState(false);
   const [templateDraft, setTemplateDraft] = useState<NoticeTemplateDraft>(() => buildNoticeTemplateDraft(null));
+  const [templateInitialFingerprint, setTemplateInitialFingerprint] = useState(() => serializeNoticeTemplateDraft(buildNoticeTemplateDraft(null)));
+  const [templateDiscardDialogOpen, setTemplateDiscardDialogOpen] = useState(false);
   const [templateReadOnly, setTemplateReadOnly] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [templateMessage, setTemplateMessage] = useState<string | null>(null);
   const [templateError, setTemplateError] = useState<string | null>(null);
   const [templateErrorDetail, setTemplateErrorDetail] = useState<string | null>(null);
-  const [templateSearchDraft, setTemplateSearchDraft] = useState('');
-  const [templateSearch, setTemplateSearch] = useState('');
-  const [templatePresetFilter, setTemplatePresetFilter] = useState(true);
-  const [templatePageIndex, setTemplatePageIndex] = useState(0);
-  const [templatePageSize, setTemplatePageSize] = useState(8);
-  const [selectedTab, setSelectedTab] = useState<AlertNoticeConsoleTabKey>(() => noticeEvidenceContext ? 'rule' : 'receiver');
+  const [templateValidationIssues, setTemplateValidationIssues] = useState<NoticeTemplateValidationIssue[]>([]);
+  const [templateSearchDraft, setTemplateSearchDraft] = useState(routeListState.templateSearch);
+  const [templateSearch, setTemplateSearch] = useState(routeListState.templateSearch);
+  const [templatePresetFilter, setTemplatePresetFilter] = useState(routeListState.templatePresetFilter);
+  const [templatePageIndex, setTemplatePageIndex] = useState(routeListState.templatePageIndex);
+  const [templatePageSize, setTemplatePageSize] = useState(routeListState.templatePageSize);
+  const [selectedTab, setSelectedTab] = useState<AlertNoticeConsoleTabKey>(() => routeListState.selectedTab);
   const [editingRule, setEditingRule] = useState(false);
   const [ruleDraft, setRuleDraft] = useState<NoticeRuleDraft>(() => buildNoticeRuleDraft(null));
+  const [ruleInitialFingerprint, setRuleInitialFingerprint] = useState(() => serializeNoticeRuleDraft(buildNoticeRuleDraft(null)));
+  const [ruleDiscardDialogOpen, setRuleDiscardDialogOpen] = useState(false);
   const [selectedRuleId, setSelectedRuleId] = useState<number | null>(null);
-  const [ruleSearchDraft, setRuleSearchDraft] = useState('');
-  const [ruleSearch, setRuleSearch] = useState('');
-  const [rulePageIndex, setRulePageIndex] = useState(0);
-  const [rulePageSize, setRulePageSize] = useState(8);
+  const [ruleSearchDraft, setRuleSearchDraft] = useState(routeListState.ruleSearch);
+  const [ruleSearch, setRuleSearch] = useState(routeListState.ruleSearch);
+  const [rulePageIndex, setRulePageIndex] = useState(routeListState.rulePageIndex);
+  const [rulePageSize, setRulePageSize] = useState(routeListState.rulePageSize);
   const [savingRule, setSavingRule] = useState(false);
   const [ruleMessage, setRuleMessage] = useState<string | null>(null);
   const [ruleError, setRuleError] = useState<string | null>(null);
@@ -363,6 +658,14 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
   const alertNoticeTemplateListUrl = useMemo(
     () => buildNoticeTemplateListUrl({ search: templateSearch, preset: templatePresetFilter, pageIndex: templatePageIndex, pageSize: templatePageSize }),
     [templatePageIndex, templatePageSize, templatePresetFilter, templateSearch]
+  );
+  const receiverDraftFingerprint = useMemo(() => serializeNoticeReceiverDraft(receiverDraft), [receiverDraft]);
+  const shouldConfirmReceiverDiscard = Boolean(editingReceiver && receiverDraftFingerprint !== receiverInitialFingerprint && !savingReceiver);
+  const ruleDraftFingerprint = useMemo(() => serializeNoticeRuleDraft(ruleDraft), [ruleDraft]);
+  const shouldConfirmRuleDiscard = Boolean(editingRule && ruleDraftFingerprint !== ruleInitialFingerprint && !savingRule);
+  const templateDraftFingerprint = useMemo(() => serializeNoticeTemplateDraft(templateDraft), [templateDraft]);
+  const shouldConfirmTemplateDiscard = Boolean(
+    editingTemplate && !templateReadOnly && templateDraftFingerprint !== templateInitialFingerprint && !savingTemplate
   );
   const alertNoticeLoadQuery = useMemo(
     () => ({
@@ -389,6 +692,44 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
     () => ['alert-notice', alertNoticeReceiverListUrl, alertNoticeRuleListUrl, alertNoticeTemplateListUrl, refreshTick].join('|'),
     [alertNoticeReceiverListUrl, alertNoticeRuleListUrl, alertNoticeTemplateListUrl, refreshTick]
   );
+  const currentListRouteState = useMemo<AlertNoticeListRouteState>(() => ({
+    selectedTab: selectedTab as AlertNoticeRouteTab,
+    receiverSearch,
+    receiverPageIndex,
+    receiverPageSize,
+    ruleSearch,
+    rulePageIndex,
+    rulePageSize,
+    templateSearch,
+    templatePresetFilter,
+    templatePageIndex,
+    templatePageSize
+  }), [receiverPageIndex, receiverPageSize, receiverSearch, rulePageIndex, rulePageSize, ruleSearch, selectedTab, templatePageIndex, templatePageSize, templatePresetFilter, templateSearch]);
+
+  useEffect(() => {
+    setSelectedTab(routeListState.selectedTab);
+    setReceiverSearchDraft(routeListState.receiverSearch);
+    setReceiverSearch(routeListState.receiverSearch);
+    setReceiverPageIndex(routeListState.receiverPageIndex);
+    setReceiverPageSize(routeListState.receiverPageSize);
+    setRuleSearchDraft(routeListState.ruleSearch);
+    setRuleSearch(routeListState.ruleSearch);
+    setRulePageIndex(routeListState.rulePageIndex);
+    setRulePageSize(routeListState.rulePageSize);
+    setTemplateSearchDraft(routeListState.templateSearch);
+    setTemplateSearch(routeListState.templateSearch);
+    setTemplatePresetFilter(routeListState.templatePresetFilter);
+    setTemplatePageIndex(routeListState.templatePageIndex);
+    setTemplatePageSize(routeListState.templatePageSize);
+  }, [routeListState]);
+
+  const replaceListRouteState = useCallback((nextState: AlertNoticeListRouteState) => {
+    const nextUrl = buildAlertNoticeListRouteUrl(routeSearchParamString, defaultSelectedTab, nextState);
+    const currentUrl = routeSearchParamString ? `/alert/notice?${routeSearchParamString}` : '/alert/notice';
+    if (nextUrl !== currentUrl) {
+      router.replace(nextUrl, { scroll: false });
+    }
+  }, [defaultSelectedTab, routeSearchParamString, router]);
 
   const load = useCallback(async (): Promise<NoticePageData> => {
     void refreshTick;
@@ -451,12 +792,66 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
         const ruleTotal = data.rules.totalElements ?? data.rules.content.length;
         const templateTotal = data.templates.totalElements ?? data.templates.content.length;
 
-        async function handleNewReceiver() {
-          setSelectedTab('receiver');
-          setReceiverDraft(buildNoticeReceiverDraft(null));
+        function closeReceiverEditor() {
+          setEditingReceiver(false);
+          setReceiverDiscardDialogOpen(false);
           setReceiverMessage(null);
           setReceiverError(null);
           setReceiverErrorDetail(null);
+          setReceiverValidationIssues([]);
+        }
+
+        function requestCloseReceiverEditor() {
+          if (shouldConfirmReceiverDiscard) {
+            setReceiverDiscardDialogOpen(true);
+            return;
+          }
+          closeReceiverEditor();
+        }
+
+        function closeTemplateEditor() {
+          setEditingTemplate(false);
+          setTemplateReadOnly(false);
+          setTemplateDiscardDialogOpen(false);
+          setTemplateMessage(null);
+          setTemplateError(null);
+          setTemplateErrorDetail(null);
+          setTemplateValidationIssues([]);
+        }
+
+        function requestCloseTemplateEditor() {
+          if (shouldConfirmTemplateDiscard) {
+            setTemplateDiscardDialogOpen(true);
+            return;
+          }
+          closeTemplateEditor();
+        }
+
+        function closeRuleEditor() {
+          setEditingRule(false);
+          setRuleDiscardDialogOpen(false);
+          setRuleMessage(null);
+          setRuleError(null);
+          setRuleErrorDetail(null);
+        }
+
+        function requestCloseRuleEditor() {
+          if (shouldConfirmRuleDiscard) {
+            setRuleDiscardDialogOpen(true);
+            return;
+          }
+          closeRuleEditor();
+        }
+
+        async function handleNewReceiver() {
+          setSelectedTab('receiver');
+          const nextDraft = buildNoticeReceiverDraft(null);
+          setReceiverDraft(nextDraft);
+          setReceiverInitialFingerprint(serializeNoticeReceiverDraft(nextDraft));
+          setReceiverMessage(null);
+          setReceiverError(null);
+          setReceiverErrorDetail(null);
+          setReceiverValidationIssues([]);
           setEditingReceiver(true);
         }
 
@@ -466,10 +861,13 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
             setSelectedTab('receiver');
             setSelectedReceiverId(receiver.id);
             const detail = await api.alertNotice.receivers.detail(receiver.id);
-            setReceiverDraft(buildNoticeReceiverDraft(detail));
+            const nextDraft = buildNoticeReceiverDraft(detail);
+            setReceiverDraft(nextDraft);
+            setReceiverInitialFingerprint(serializeNoticeReceiverDraft(nextDraft));
             setReceiverMessage(null);
             setReceiverError(null);
             setReceiverErrorDetail(null);
+            setReceiverValidationIssues([]);
             setEditingReceiver(true);
           } catch (error) {
             setReceiverError(error instanceof Error ? error.message : t('common.notify.edit-fail'));
@@ -477,15 +875,31 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
           }
         }
 
+        function focusReceiverValidationField(field: NoticeReceiverValidationIssue['field']) {
+          window.setTimeout(() => {
+            document.querySelector<HTMLElement>(`[data-testid="notice-receiver-field-${String(field)}"]`)?.focus();
+          }, 0);
+        }
+
+        function handleReceiverDraftChange(nextDraft: React.SetStateAction<NoticeReceiverDraft>) {
+          setReceiverDraft(nextDraft);
+          setReceiverValidationIssues([]);
+          setReceiverError(null);
+          setReceiverErrorDetail(null);
+        }
+
         async function handleSaveReceiver() {
           const isEdit = Boolean(receiverDraft.id);
-          const validationError = validateNoticeReceiverDraft(receiverDraft, t);
-          if (validationError) {
+          const validationIssues = buildNoticeReceiverValidationIssues(receiverDraft, t);
+          if (validationIssues.length > 0) {
+            setReceiverValidationIssues(validationIssues);
             setReceiverMessage(null);
-            setReceiverError(validationError);
+            setReceiverError(validationIssues.map(issue => issue.message).join(', '));
             setReceiverErrorDetail(null);
+            focusReceiverValidationField(validationIssues[0].field);
             return;
           }
+          setReceiverValidationIssues([]);
           setSavingReceiver(true);
           setReceiverMessage(null);
           setReceiverError(null);
@@ -496,6 +910,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
             } else {
               await api.alertNotice.receivers.create(receiverDraft);
             }
+            setReceiverInitialFingerprint(serializeNoticeReceiverDraft(receiverDraft));
             setReceiverMessage([t(isEdit ? 'common.notify.edit-success' : 'common.notify.new-success'), t('alert.notice.receiver.next')].join(' '));
             setEditingReceiver(false);
             setRefreshTick(value => value + 1);
@@ -512,11 +927,11 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
 
         async function handleDeleteReceiver() {
           if (!selectedReceiver?.id) return;
-          await handleDeleteReceiverById(selectedReceiver.id);
+          await handleDeleteReceiverById(selectedReceiver.id, selectedReceiver.name);
         }
 
-        async function handleDeleteReceiverById(receiverId: number) {
-          setDeleteRequest({ kind: 'receiver', id: receiverId });
+        async function handleDeleteReceiverById(receiverId: number, receiverName?: string | null) {
+          setDeleteRequest({ kind: 'receiver', id: receiverId, name: receiverName?.trim() || undefined });
         }
 
         async function handleConfirmedDelete() {
@@ -575,14 +990,17 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
           setReceiverError(null);
           setReceiverErrorDetail(null);
           try {
-            await api.alertNotice.receivers.sendTest(receiverDraft);
+            await withNoticeReceiverTestTimeout(
+              api.alertNotice.receivers.sendTest(receiverDraft),
+              new Error(t('alert.notice.send-test.timeout.detail'))
+            );
             setReceiverMessage(t('alert.notice.send-test.notify.success'));
             setReceiverError(null);
             setReceiverErrorDetail(null);
           } catch (error) {
             setReceiverMessage(null);
-            setReceiverError(error instanceof Error ? error.message : t('alert.notice.send-test.notify.failed'));
-            setReceiverErrorDetail(null);
+            setReceiverError(t('alert.notice.send-test.notify.failed'));
+            setReceiverErrorDetail(error instanceof Error ? error.message : null);
           } finally {
             setTestingReceiver(false);
           }
@@ -590,11 +1008,14 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
 
         async function handleNewTemplate() {
           setSelectedTab('template');
-          setTemplateDraft(buildNoticeTemplateDraft(null));
+          const nextDraft = buildNoticeTemplateDraft(null);
+          setTemplateDraft(nextDraft);
+          setTemplateInitialFingerprint(serializeNoticeTemplateDraft(nextDraft));
           setTemplateReadOnly(false);
           setTemplateMessage(null);
           setTemplateError(null);
           setTemplateErrorDetail(null);
+          setTemplateValidationIssues([]);
           setEditingTemplate(true);
         }
 
@@ -605,10 +1026,13 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
             setSelectedTemplateId(template.id);
             setTemplateReadOnly(false);
             const detail = await api.alertNotice.templates.detail(template.id);
-            setTemplateDraft(buildNoticeTemplateDraft(detail));
+            const nextDraft = buildNoticeTemplateDraft(detail);
+            setTemplateDraft(nextDraft);
+            setTemplateInitialFingerprint(serializeNoticeTemplateDraft(nextDraft));
             setTemplateMessage(null);
             setTemplateError(null);
             setTemplateErrorDetail(null);
+            setTemplateValidationIssues([]);
             setEditingTemplate(true);
           } catch (error) {
             setTemplateError(error instanceof Error ? error.message : t('common.notify.edit-fail'));
@@ -623,31 +1047,51 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
           setSelectedTemplateId(templateId);
           setTemplateReadOnly(true);
           setTemplateDraft(rowDraft);
+          setTemplateInitialFingerprint(serializeNoticeTemplateDraft(rowDraft));
           setTemplateMessage(null);
           setTemplateError(null);
           setTemplateErrorDetail(null);
+          setTemplateValidationIssues([]);
           setEditingTemplate(true);
 
           if (templateId == null) return;
 
           try {
             const detail = await api.alertNotice.templates.detail(templateId);
-            setTemplateDraft(buildNoticeTemplateDraft(detail));
+            const nextDraft = buildNoticeTemplateDraft(detail);
+            setTemplateDraft(nextDraft);
+            setTemplateInitialFingerprint(serializeNoticeTemplateDraft(nextDraft));
           } catch (error) {
             setTemplateError(null);
             setTemplateErrorDetail(null);
           }
         }
 
+        function focusTemplateValidationField(field: NoticeTemplateValidationIssue['field']) {
+          window.setTimeout(() => {
+            document.querySelector<HTMLElement>(`[data-testid="notice-template-field-${String(field)}"]`)?.focus();
+          }, 0);
+        }
+
+        function handleTemplateDraftChange(nextDraft: React.SetStateAction<NoticeTemplateDraft>) {
+          setTemplateDraft(nextDraft);
+          setTemplateValidationIssues([]);
+          setTemplateError(null);
+          setTemplateErrorDetail(null);
+        }
+
         async function handleSaveTemplate() {
           const isEdit = Boolean(templateDraft.id);
-          const validationError = validateNoticeTemplateDraft(templateDraft, t);
-          if (validationError) {
+          const validationIssues = buildNoticeTemplateValidationIssues(templateDraft, t);
+          if (validationIssues.length > 0) {
+            setTemplateValidationIssues(validationIssues);
             setTemplateMessage(null);
-            setTemplateError(validationError);
+            setTemplateError(validationIssues.map(issue => issue.message).join(', '));
             setTemplateErrorDetail(null);
+            focusTemplateValidationField(validationIssues[0].field);
             return;
           }
+          setTemplateValidationIssues([]);
           setSavingTemplate(true);
           setTemplateMessage(null);
           setTemplateError(null);
@@ -658,8 +1102,23 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
             } else {
               await api.alertNotice.templates.create(templateDraft);
             }
+            setTemplateInitialFingerprint(serializeNoticeTemplateDraft(templateDraft));
             setTemplateMessage(t(isEdit ? 'common.notify.edit-success' : 'common.notify.new-success'));
             setEditingTemplate(false);
+            if (!isEdit) {
+              const nextTemplateSearch = templateDraft.name.trim();
+              setTemplateSearchDraft(nextTemplateSearch);
+              setTemplateSearch(nextTemplateSearch);
+              setTemplatePresetFilter(false);
+              setTemplatePageIndex(0);
+              replaceListRouteState({
+                ...currentListRouteState,
+                selectedTab: 'template',
+                templateSearch: nextTemplateSearch,
+                templatePresetFilter: false,
+                templatePageIndex: 0
+              });
+            }
             setRefreshTick(value => value + 1);
           } catch (error) {
             setTemplateError(t(isEdit ? 'common.notify.edit-fail' : 'common.notify.new-fail'));
@@ -671,27 +1130,40 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
 
         async function handleDeleteTemplate() {
           if (!selectedTemplate?.id || selectedTemplate.preset) return;
-          await handleDeleteTemplateById(selectedTemplate.id);
+          await handleDeleteTemplateById(selectedTemplate.id, selectedTemplate.name);
         }
 
-        async function handleDeleteTemplateById(templateId: number) {
-          setDeleteRequest({ kind: 'template', id: templateId });
+        async function handleDeleteTemplateById(templateId: number, templateName?: string | null) {
+          setDeleteRequest({ kind: 'template', id: templateId, name: templateName?.trim() || undefined });
         }
 
         function commitTemplateSearch() {
-          setTemplateSearch(templateSearchDraft);
+          const nextSearch = templateSearchDraft.trim();
+          setTemplateSearch(nextSearch);
           setTemplatePageIndex(0);
+          replaceListRouteState({
+            ...currentListRouteState,
+            templateSearch: nextSearch,
+            templatePageIndex: 0
+          });
         }
 
         function resetTemplateSearch() {
           setTemplateSearchDraft('');
           setTemplateSearch('');
           setTemplatePageIndex(0);
+          replaceListRouteState({
+            ...currentListRouteState,
+            templateSearch: '',
+            templatePageIndex: 0
+          });
         }
 
         async function handleNewRule() {
           setSelectedTab('rule');
-          setRuleDraft(buildNoticeRuleDraft(null, noticeEvidenceContext?.ruleDraftPatch));
+          const nextDraft = buildNoticeRuleDraft(null, noticeEvidenceContext?.ruleDraftPatch);
+          setRuleDraft(nextDraft);
+          setRuleInitialFingerprint(serializeNoticeRuleDraft(nextDraft));
           setRuleMessage(null);
           setRuleError(null);
           setRuleErrorDetail(null);
@@ -705,7 +1177,9 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
             setSelectedTab('rule');
             setSelectedRuleId(ruleId);
             const detail = await api.alertNotice.rules.detail(ruleId);
-            setRuleDraft(buildNoticeRuleDraft(detail));
+            const nextDraft = buildNoticeRuleDraft(detail);
+            setRuleDraft(nextDraft);
+            setRuleInitialFingerprint(serializeNoticeRuleDraft(nextDraft));
             setRuleMessage(null);
             setRuleError(null);
             setRuleErrorDetail(null);
@@ -714,6 +1188,13 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
             setRuleError(error instanceof Error ? error.message : t('common.notify.edit-fail'));
             setRuleErrorDetail(null);
           }
+        }
+
+        function handleRuleDraftChange(nextDraft: React.SetStateAction<NoticeRuleDraft>) {
+          setRuleDraft(nextDraft);
+          setRuleMessage(null);
+          setRuleError(null);
+          setRuleErrorDetail(null);
         }
 
         async function handleSaveRule() {
@@ -736,6 +1217,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
             } else {
               await api.alertNotice.rules.create(ruleDraft, displayNames);
             }
+            setRuleInitialFingerprint(serializeNoticeRuleDraft(ruleDraft));
             setRuleMessage(t(isEdit ? 'common.notify.edit-success' : 'common.notify.new-success'));
             setEditingRule(false);
             setRefreshTick(value => value + 1);
@@ -749,11 +1231,11 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
 
         async function handleDeleteRule() {
           if (!selectedRule?.id) return;
-          await handleDeleteRuleById(selectedRule.id);
+          await handleDeleteRuleById(selectedRule.id, selectedRule.name);
         }
 
-        async function handleDeleteRuleById(ruleId: number) {
-          setDeleteRequest({ kind: 'rule', id: ruleId });
+        async function handleDeleteRuleById(ruleId: number, ruleName?: string | null) {
+          setDeleteRequest({ kind: 'rule', id: ruleId, name: ruleName?.trim() || undefined });
         }
 
         async function handleToggleRuleSwitch(rule: NoticeRule, field: 'filterAll' | 'enable', checked: boolean) {
@@ -782,25 +1264,47 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
         }
 
         function commitReceiverSearch() {
-          setReceiverSearch(receiverSearchDraft.trim());
+          const nextSearch = receiverSearchDraft.trim();
+          setReceiverSearch(nextSearch);
           setReceiverPageIndex(0);
+          replaceListRouteState({
+            ...currentListRouteState,
+            receiverSearch: nextSearch,
+            receiverPageIndex: 0
+          });
         }
 
         function resetReceiverSearch() {
           setReceiverSearchDraft('');
           setReceiverSearch('');
           setReceiverPageIndex(0);
+          replaceListRouteState({
+            ...currentListRouteState,
+            receiverSearch: '',
+            receiverPageIndex: 0
+          });
         }
 
         function commitRuleSearch() {
-          setRuleSearch(ruleSearchDraft.trim());
+          const nextSearch = ruleSearchDraft.trim();
+          setRuleSearch(nextSearch);
           setRulePageIndex(0);
+          replaceListRouteState({
+            ...currentListRouteState,
+            ruleSearch: nextSearch,
+            rulePageIndex: 0
+          });
         }
 
         function resetRuleSearch() {
           setRuleSearchDraft('');
           setRuleSearch('');
           setRulePageIndex(0);
+          replaceListRouteState({
+            ...currentListRouteState,
+            ruleSearch: '',
+            rulePageIndex: 0
+          });
         }
 
         const receiverPanel = (
@@ -811,35 +1315,46 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
               className={coldToolbarClass}
             >
               <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  data-alert-notice-receiver-sync="angular-load-table"
-                  data-alert-notice-receiver-sync-owner="route-refresh-contract"
-                  className={coldIconButtonClass}
-                  size="icon"
-                  variant="default"
-                  onClick={() => setRefreshTick(value => value + 1)}
-                  title={t('common.refresh')}
-                >
-                  <RefreshCw className="h-4 w-4" aria-hidden="true" />
-                  <span className="sr-only">{t('common.refresh')}</span>
-                </Button>
-                <Button data-testid="notice-receiver-new" className={coldPrimaryCommandButtonClass} size="sm" variant="default" onClick={() => void handleNewReceiver()}>
-                  <Plus className="h-4 w-4" aria-hidden="true" />
-                  {t('alert.notice.receiver.new')}
-                </Button>
-                <Button
-                  data-alert-notice-receiver-bulk-menu="hertzbeat-ui-more"
-                  data-testid="notice-receiver-delete"
-                  className={coldIconButtonClass}
-                  size="icon"
-                  variant="default"
-                  onClick={() => void handleDeleteReceiver()}
-                  disabled={!selectedReceiver}
-                  title={t('common.button.delete')}
-                >
-                  <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
-                  <span className="sr-only">{t('common.button.delete')}</span>
-                </Button>
+                <span className="inline-flex items-center gap-1">
+                  <Button
+                    data-alert-notice-receiver-sync="angular-load-table"
+                    data-alert-notice-receiver-sync-owner="route-refresh-contract"
+                    data-alert-notice-command-action="receiver-refresh"
+                    className={coldIconButtonClass}
+                    size="icon"
+                    variant="default"
+                    onClick={() => setRefreshTick(value => value + 1)}
+                    title={t('common.refresh')}
+                  >
+                    <RefreshCw className="h-4 w-4" aria-hidden="true" />
+                    <span className="sr-only">{t('common.refresh')}</span>
+                  </Button>
+                  <AlertNoticeActionHelp id="receiver-refresh" {...alertNoticeActionHelp(t, 'receiver-refresh')} />
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <Button data-testid="notice-receiver-new" data-alert-notice-command-action="receiver-new" className={coldPrimaryCommandButtonClass} size="sm" variant="default" onClick={() => void handleNewReceiver()}>
+                    <Plus className="h-4 w-4" aria-hidden="true" />
+                    {t('alert.notice.receiver.new')}
+                  </Button>
+                  <AlertNoticeActionHelp id="receiver-new" {...alertNoticeActionHelp(t, 'receiver-new')} />
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <Button
+                    data-alert-notice-receiver-bulk-menu="hertzbeat-ui-more"
+                    data-alert-notice-command-action="receiver-delete"
+                    data-testid="notice-receiver-delete"
+                    className={coldIconButtonClass}
+                    size="icon"
+                    variant="default"
+                    onClick={() => void handleDeleteReceiver()}
+                    disabled={!selectedReceiver}
+                    title={t('common.button.delete')}
+                  >
+                    <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+                    <span className="sr-only">{t('common.button.delete')}</span>
+                  </Button>
+                  <AlertNoticeActionHelp id="receiver-delete" {...alertNoticeActionHelp(t, 'receiver-delete')} />
+                </span>
               </div>
                 <SearchRow
                   data-alert-notice-receiver-search="shared-compact"
@@ -856,14 +1371,14 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
               />
             </div>
             <AlertSurfaceTableShell data-alert-notice-receiver-table-shell="hertzbeat-ui-dense-table" className={coldTableShellClass}>
-              <AlertSurfaceTable className="min-w-[1240px] text-center">
+              <AlertSurfaceTable data-alert-notice-receiver-table-layout="viewport-contained-visible-actions" className="w-full table-fixed text-center">
                 <AlertSurfaceTableHead className="text-center text-[13px] normal-case tracking-normal">
                   <tr>
-                    <th className="w-[15%] px-3 py-3 text-center">{t('alert.notice.receiver.people')}</th>
-                    <th className="w-[15%] px-3 py-3 text-center">{t('alert.notice.receiver.type')}</th>
-                    <th className="w-[25%] px-3 py-3 text-center">{t('alert.notice.receiver.setting')}</th>
-                    <th className="w-[15%] px-3 py-3 text-center">{t('common.edit-time')}</th>
-                    <th className="w-[15%] px-3 py-3 text-center">{t('common.edit')}</th>
+                    <th className="w-[26%] px-3 py-3 text-center">{t('alert.notice.receiver.people')}</th>
+                    <th className="w-[112px] px-3 py-3 text-center">{t('alert.notice.receiver.type')}</th>
+                    <th className="w-[26%] px-3 py-3 text-center">{t('alert.notice.receiver.setting')}</th>
+                    <th className="w-[148px] px-3 py-3 text-center">{t('common.edit-time')}</th>
+                    <th className="w-[132px] px-3 py-3 text-center">{t('common.edit')}</th>
                   </tr>
                 </AlertSurfaceTableHead>
                 <tbody>
@@ -874,43 +1389,61 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                       className="border-t border-[#252b34] hover:bg-[#101217]"
                       onClick={() => setSelectedReceiverId(receiver.id)}
                     >
-                      <td className={`px-3 py-3 text-center font-medium ${coldTextPrimaryClass}`}>{receiver.name || t('alert.notice.receiver.people')}</td>
+                      <td className={`truncate px-3 py-3 text-center font-medium ${coldTextPrimaryClass}`} title={receiver.name || t('alert.notice.receiver.people')}>
+                        {receiver.name || t('alert.notice.receiver.people')}
+                      </td>
                       <td className="px-3 py-3 text-center">
                         <div className="flex justify-center">
                           <AlertSurfaceValuePill>{getNoticeTypeLabel(receiver.type, t, emptyValue)}</AlertSurfaceValuePill>
                         </div>
                       </td>
-                      <td className="max-w-[340px] truncate px-3 py-3 text-center" title={getReceiverSetting(receiver, emptyValue)}>{getReceiverSetting(receiver, emptyValue)}</td>
-                      <td className="px-3 py-3 text-center">{formatTime(receiver.gmtUpdate || receiver.gmtCreate || null)}</td>
+                      <td className="truncate px-3 py-3 text-center" title={getReceiverSetting(receiver, emptyValue)}>{getReceiverSetting(receiver, emptyValue)}</td>
+                      <td className="whitespace-nowrap px-3 py-3 text-center">{formatTime(receiver.gmtUpdate || receiver.gmtCreate || null)}</td>
                       <td className="px-3 py-3 text-center" onClick={event => event.stopPropagation()}>
-                        <div className="flex justify-center gap-2">
-                          <Button
-                            data-alert-notice-receiver-edit-detail="angular-detail-fetch"
-                            data-alert-notice-receiver-edit-detail-owner="route-detail-fetch-contract"
-                            className={coldIconButtonClass}
-                            size="icon"
-                            variant="default"
-                            onClick={() => void handleEditReceiver(receiver)}
-                            title={t('alert.notice.receiver.edit')}
-                          >
-                            <Pencil className="h-4 w-4" aria-hidden="true" />
-                            <span className="sr-only">{t('alert.notice.receiver.edit')}</span>
-                          </Button>
-                          <Button
-                            className={coldIconButtonClass}
-                            size="icon"
-                            variant="default"
-                            onClick={() => void handleDeleteReceiverById(receiver.id)}
-                            title={t('alert.notice.receiver.delete')}
-                          >
-                            <Trash2 className="h-4 w-4" aria-hidden="true" />
-                            <span className="sr-only">{t('alert.notice.receiver.delete')}</span>
-                          </Button>
+                        <div className="flex justify-center gap-1.5">
+                          <span className="inline-flex items-center gap-1">
+                            <Button
+                              data-alert-notice-receiver-edit-detail="angular-detail-fetch"
+                              data-alert-notice-receiver-edit-detail-owner="route-detail-fetch-contract"
+                              data-alert-notice-command-action="receiver-row-edit"
+                              className={coldIconButtonClass}
+                              size="icon"
+                              variant="default"
+                              onClick={() => void handleEditReceiver(receiver)}
+                              title={t('alert.notice.receiver.edit')}
+                            >
+                              <Pencil className="h-4 w-4" aria-hidden="true" />
+                              <span className="sr-only">{t('alert.notice.receiver.edit')}</span>
+                            </Button>
+                            <AlertNoticeActionHelp id="receiver-row-edit" {...alertNoticeActionHelp(t, 'receiver-row-edit')} />
+                          </span>
+                          <span className="inline-flex items-center gap-1">
+                            <Button
+                              data-alert-notice-command-action="receiver-row-delete"
+                              className={coldIconButtonClass}
+                              size="icon"
+                              variant="default"
+                              onClick={() => void handleDeleteReceiverById(receiver.id, receiver.name)}
+                              title={t('alert.notice.receiver.delete')}
+                            >
+                              <Trash2 className="h-4 w-4" aria-hidden="true" />
+                              <span className="sr-only">{t('alert.notice.receiver.delete')}</span>
+                            </Button>
+                            <AlertNoticeActionHelp id="receiver-row-delete" {...alertNoticeActionHelp(t, 'receiver-row-delete')} />
+                          </span>
                         </div>
                       </td>
                     </tr>
                   )) : (
-                    <NoticeTableEmptyRow t={t} colSpan={5} prefix="receiver" />
+                    <NoticeTableEmptyRow
+                      t={t}
+                      colSpan={5}
+                      prefix="receiver"
+                      action={{
+                        label: t('alert.notice.receiver.new'),
+                        onClick: () => void handleNewReceiver()
+                      }}
+                    />
                   )}
                 </tbody>
               </AlertSurfaceTable>
@@ -923,14 +1456,25 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                 totalElements={data.receivers.totalElements || 0}
                 visibleCount={data.receivers.content.length}
                 testIdPrefix="notice-receiver"
-                onPageIndexChange={setReceiverPageIndex}
+                onPageIndexChange={nextPageIndex => {
+                  setReceiverPageIndex(nextPageIndex);
+                  replaceListRouteState({
+                    ...currentListRouteState,
+                    receiverPageIndex: nextPageIndex
+                  });
+                }}
                 onPageSizeChange={nextPageSize => {
                   setReceiverPageSize(nextPageSize);
                   setReceiverPageIndex(0);
+                  replaceListRouteState({
+                    ...currentListRouteState,
+                    receiverPageIndex: 0,
+                    receiverPageSize: nextPageSize
+                  });
                 }}
               />
             ) : null}
-            {!editingReceiver && receiverMessage ? <div className="px-3 py-2 text-sm text-emerald-300">{receiverMessage}</div> : null}
+            {!editingReceiver && receiverMessage ? <div role="status" className={coldNoticeStatusMessageClass}>{receiverMessage}</div> : null}
             {!editingReceiver && receiverError ? (
               <div
                 role="alert"
@@ -961,26 +1505,36 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
               className={coldToolbarClass}
             >
               <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  data-alert-notice-rule-sync="angular-load-table"
-                  data-alert-notice-rule-sync-owner="route-refresh-contract"
-                  className={coldIconButtonClass}
-                  size="icon"
-                  variant="default"
-                  onClick={() => setRefreshTick(value => value + 1)}
-                  title={t('common.refresh')}
-                >
-                  <RefreshCw className="h-4 w-4" aria-hidden="true" />
-                  <span className="sr-only">{t('common.refresh')}</span>
-                </Button>
-                <Button className={coldPrimaryCommandButtonClass} variant="default" size="sm" onClick={() => void handleNewRule()}>
-                  <Plus className="h-4 w-4" aria-hidden="true" />
-                  {t('alert.notice.rule.new')}
-                </Button>
-                <Button className={coldIconButtonClass} variant="default" size="icon" onClick={() => void handleDeleteRule()} disabled={!selectedRule} title={t('common.button.delete')}>
-                  <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
-                  <span className="sr-only">{t('common.button.delete')}</span>
-                </Button>
+                <span className="inline-flex items-center gap-1">
+                  <Button
+                    data-alert-notice-rule-sync="angular-load-table"
+                    data-alert-notice-rule-sync-owner="route-refresh-contract"
+                    data-alert-notice-command-action="rule-refresh"
+                    className={coldIconButtonClass}
+                    size="icon"
+                    variant="default"
+                    onClick={() => setRefreshTick(value => value + 1)}
+                    title={t('common.refresh')}
+                  >
+                    <RefreshCw className="h-4 w-4" aria-hidden="true" />
+                    <span className="sr-only">{t('common.refresh')}</span>
+                  </Button>
+                  <AlertNoticeActionHelp id="rule-refresh" {...alertNoticeActionHelp(t, 'rule-refresh')} />
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <Button data-alert-notice-command-action="rule-new" className={coldPrimaryCommandButtonClass} variant="default" size="sm" onClick={() => void handleNewRule()}>
+                    <Plus className="h-4 w-4" aria-hidden="true" />
+                    {t('alert.notice.rule.new')}
+                  </Button>
+                  <AlertNoticeActionHelp id="rule-new" {...alertNoticeActionHelp(t, 'rule-new')} />
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <Button data-alert-notice-command-action="rule-delete" className={coldIconButtonClass} variant="default" size="icon" onClick={() => void handleDeleteRule()} disabled={!selectedRule} title={t('common.button.delete')}>
+                    <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+                    <span className="sr-only">{t('common.button.delete')}</span>
+                  </Button>
+                  <AlertNoticeActionHelp id="rule-delete" {...alertNoticeActionHelp(t, 'rule-delete')} />
+                </span>
               </div>
                 <SearchRow
                   data-alert-notice-rule-search="shared-compact"
@@ -997,7 +1551,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
               />
             </div>
             <AlertSurfaceTableShell data-alert-notice-rule-table-shell="hertzbeat-ui-dense-table" className={coldTableShellClass}>
-              <AlertSurfaceTable className="min-w-[1240px] text-center">
+              <AlertSurfaceTable data-alert-notice-rule-table-actions="sticky-visible-actions" className="min-w-[1240px] text-center">
                 <AlertSurfaceTableHead className="text-center text-[13px] normal-case tracking-normal">
                   <tr>
                     <th className="px-3 py-3 text-center">{t('alert.notice.rule.name')}</th>
@@ -1006,7 +1560,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                     <th className="px-3 py-3 text-center">{t('alert.notice.rule.all')}</th>
                     <th className="px-3 py-3 text-center">{t('common.enable')}</th>
                     <th className="px-3 py-3 text-center">{t('common.edit-time')}</th>
-                    <th className="px-3 py-3 text-center">{t('common.edit')}</th>
+                    <th className={coldStickyActionHeaderClass}>{t('common.edit')}</th>
                   </tr>
                 </AlertSurfaceTableHead>
                 <tbody>
@@ -1021,47 +1575,70 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                       <td className="px-3 py-3 text-center">{formatNoticeRuleReceivers(rule.receiverName, productCopy.ruleNoReceiver)}</td>
                       <td className="px-3 py-3 text-center">{rule.templateId ? rule.templateName || t('alert.notice.template.preset.true') : t('alert.notice.template.preset.true')}</td>
                       <td className="px-3 py-3 text-center" onClick={event => event.stopPropagation()}>
-                        <NoticeTableSwitch
-                          field="filter-all"
-                          checked={Boolean(rule.filterAll)}
-                          pending={ruleSwitchPending === `${rule.id}:filterAll`}
-                          label={t('alert.notice.rule.all')}
-                          onChange={checked => void handleToggleRuleSwitch(rule, 'filterAll', checked)}
-                        />
+                        <span className="inline-flex items-center gap-1">
+                          <NoticeTableSwitch
+                            field="filter-all"
+                            commandAction="rule-row-filter-all"
+                            checked={Boolean(rule.filterAll)}
+                            pending={ruleSwitchPending === `${rule.id}:filterAll`}
+                            label={t('alert.notice.rule.all')}
+                            onChange={checked => void handleToggleRuleSwitch(rule, 'filterAll', checked)}
+                          />
+                          <AlertNoticeActionHelp id="rule-row-filter-all" {...alertNoticeActionHelp(t, 'rule-row-filter-all')} />
+                        </span>
                       </td>
                       <td className="px-3 py-3 text-center" onClick={event => event.stopPropagation()}>
-                        <NoticeTableSwitch
-                          field="enable"
-                          checked={Boolean(rule.enable)}
-                          pending={ruleSwitchPending === `${rule.id}:enable`}
-                          label={t('common.enable')}
-                          onChange={checked => void handleToggleRuleSwitch(rule, 'enable', checked)}
-                        />
+                        <span className="inline-flex items-center gap-1">
+                          <NoticeTableSwitch
+                            field="enable"
+                            commandAction="rule-row-enable"
+                            checked={Boolean(rule.enable)}
+                            pending={ruleSwitchPending === `${rule.id}:enable`}
+                            label={t('common.enable')}
+                            onChange={checked => void handleToggleRuleSwitch(rule, 'enable', checked)}
+                          />
+                          <AlertNoticeActionHelp id="rule-row-enable" {...alertNoticeActionHelp(t, 'rule-row-enable')} />
+                        </span>
                       </td>
                       <td className="px-3 py-3 text-center">{formatTime(rule.gmtUpdate || rule.gmtCreate || null)}</td>
-                      <td className="px-3 py-3 text-center" onClick={event => event.stopPropagation()}>
-                        <div className="flex justify-center gap-2">
-                          <Button
-                            className={coldIconButtonClass}
-                            size="icon"
-                            variant="default"
-                            data-alert-notice-rule-edit-detail="angular-detail-fetch"
-                            data-alert-notice-rule-edit-detail-owner="route-detail-fetch-contract"
-                            onClick={() => void handleEditRule(rule)}
-                            title={t('alert.notice.rule.edit')}
-                          >
-                            <Pencil className="h-4 w-4" aria-hidden="true" />
-                            <span className="sr-only">{t('alert.notice.rule.edit')}</span>
-                          </Button>
-                          <Button className={coldIconButtonClass} size="icon" variant="default" onClick={() => void handleDeleteRuleById(rule.id)} title={t('alert.notice.rule.delete')}>
-                            <Trash2 className="h-4 w-4" aria-hidden="true" />
-                            <span className="sr-only">{t('alert.notice.rule.delete')}</span>
-                          </Button>
+                      <td className={coldStickyActionCellClass} onClick={event => event.stopPropagation()}>
+                        <div className="flex justify-center gap-1.5">
+                          <span className="inline-flex items-center gap-1">
+                            <Button
+                              className={coldIconButtonClass}
+                              size="icon"
+                              variant="default"
+                              data-alert-notice-rule-edit-detail="angular-detail-fetch"
+                              data-alert-notice-rule-edit-detail-owner="route-detail-fetch-contract"
+                              data-alert-notice-command-action="rule-row-edit"
+                              onClick={() => void handleEditRule(rule)}
+                              title={t('alert.notice.rule.edit')}
+                            >
+                              <Pencil className="h-4 w-4" aria-hidden="true" />
+                              <span className="sr-only">{t('alert.notice.rule.edit')}</span>
+                            </Button>
+                            <AlertNoticeActionHelp id="rule-row-edit" {...alertNoticeActionHelp(t, 'rule-row-edit')} />
+                          </span>
+                          <span className="inline-flex items-center gap-1">
+                            <Button data-alert-notice-command-action="rule-row-delete" className={coldIconButtonClass} size="icon" variant="default" onClick={() => void handleDeleteRuleById(rule.id, rule.name)} title={t('alert.notice.rule.delete')}>
+                              <Trash2 className="h-4 w-4" aria-hidden="true" />
+                              <span className="sr-only">{t('alert.notice.rule.delete')}</span>
+                            </Button>
+                            <AlertNoticeActionHelp id="rule-row-delete" {...alertNoticeActionHelp(t, 'rule-row-delete')} />
+                          </span>
                         </div>
                       </td>
                     </tr>
                   )) : (
-                    <NoticeTableEmptyRow t={t} colSpan={7} prefix="rule" />
+                    <NoticeTableEmptyRow
+                      t={t}
+                      colSpan={7}
+                      prefix="rule"
+                      action={{
+                        label: t('alert.notice.rule.new'),
+                        onClick: () => void handleNewRule()
+                      }}
+                    />
                   )}
                 </tbody>
               </AlertSurfaceTable>
@@ -1074,14 +1651,25 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                 totalElements={data.rules.totalElements || 0}
                 visibleCount={data.rules.content.length}
                 testIdPrefix="notice-rule"
-                onPageIndexChange={setRulePageIndex}
+                onPageIndexChange={nextPageIndex => {
+                  setRulePageIndex(nextPageIndex);
+                  replaceListRouteState({
+                    ...currentListRouteState,
+                    rulePageIndex: nextPageIndex
+                  });
+                }}
                 onPageSizeChange={nextPageSize => {
                   setRulePageSize(nextPageSize);
                   setRulePageIndex(0);
+                  replaceListRouteState({
+                    ...currentListRouteState,
+                    rulePageIndex: 0,
+                    rulePageSize: nextPageSize
+                  });
                 }}
               />
             ) : null}
-            {ruleMessage ? <div className="px-3 py-2 text-sm text-emerald-300">{ruleMessage}</div> : null}
+            {ruleMessage ? <div role="status" className={coldNoticeStatusMessageClass}>{ruleMessage}</div> : null}
             {!editingRule && ruleError ? (
               <div role="alert" className="px-3 py-2 text-sm text-rose-300">{ruleError}</div>
             ) : null}
@@ -1102,36 +1690,53 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
               className={coldToolbarClass}
             >
               <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  data-alert-notice-template-sync="angular-load-table"
-                  data-alert-notice-template-sync-owner="route-refresh-contract"
-                  className={coldIconButtonClass}
-                  size="icon"
-                  variant="default"
-                  onClick={() => setRefreshTick(value => value + 1)}
-                  title={t('common.refresh')}
-                >
-                  <RefreshCw className="h-4 w-4" aria-hidden="true" />
-                  <span className="sr-only">{t('common.refresh')}</span>
-                </Button>
-                <Button className={coldPrimaryCommandButtonClass} variant="default" size="sm" onClick={() => void handleNewTemplate()}>
-                  <Plus className="h-4 w-4" aria-hidden="true" />
-                  {t('alert.notice.template.new')}
-                </Button>
-                <Button className={coldIconButtonClass} variant="default" size="icon" onClick={() => void handleDeleteTemplate()} disabled={!selectedTemplateIsCustom} title={t('common.button.delete')}>
-                  <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
-                  <span className="sr-only">{t('common.button.delete')}</span>
-                </Button>
+                <span className="inline-flex items-center gap-1">
+                  <Button
+                    data-alert-notice-template-sync="angular-load-table"
+                    data-alert-notice-template-sync-owner="route-refresh-contract"
+                    data-alert-notice-command-action="template-refresh"
+                    className={coldIconButtonClass}
+                    size="icon"
+                    variant="default"
+                    onClick={() => setRefreshTick(value => value + 1)}
+                    title={t('common.refresh')}
+                  >
+                    <RefreshCw className="h-4 w-4" aria-hidden="true" />
+                    <span className="sr-only">{t('common.refresh')}</span>
+                  </Button>
+                  <AlertNoticeActionHelp id="template-refresh" {...alertNoticeActionHelp(t, 'template-refresh')} />
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <Button data-alert-notice-command-action="template-new" className={coldPrimaryCommandButtonClass} variant="default" size="sm" onClick={() => void handleNewTemplate()}>
+                    <Plus className="h-4 w-4" aria-hidden="true" />
+                    {t('alert.notice.template.new')}
+                  </Button>
+                  <AlertNoticeActionHelp id="template-new" {...alertNoticeActionHelp(t, 'template-new')} />
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <Button data-alert-notice-command-action="template-delete" className={coldIconButtonClass} variant="default" size="icon" onClick={() => void handleDeleteTemplate()} disabled={!selectedTemplateIsCustom} title={t('common.button.delete')}>
+                    <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+                    <span className="sr-only">{t('common.button.delete')}</span>
+                  </Button>
+                  <AlertNoticeActionHelp id="template-delete" {...alertNoticeActionHelp(t, 'template-delete')} />
+                </span>
               </div>
               <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <Select
                   data-alert-notice-template-preset-filter="hertzbeat-ui-select"
                   data-alert-notice-template-preset-query="server-param"
+                  data-alert-notice-command-action="template-filter-preset"
                   aria-label={t('monitor.status')}
                   value={templatePresetFilter ? 'true' : 'false'}
                   onChange={event => {
-                    setTemplatePresetFilter(event.target.value === 'true');
+                    const nextPresetFilter = event.target.value === 'true';
+                    setTemplatePresetFilter(nextPresetFilter);
                     setTemplatePageIndex(0);
+                    replaceListRouteState({
+                      ...currentListRouteState,
+                      templatePresetFilter: nextPresetFilter,
+                      templatePageIndex: 0
+                    });
                   }}
                   containerClassName="w-[132px]"
                   className={coldSelectClass}
@@ -1155,14 +1760,14 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
               </div>
             </div>
             <AlertSurfaceTableShell data-alert-notice-template-table-shell="hertzbeat-ui-dense-table" className={coldTableShellClass}>
-              <AlertSurfaceTable className="min-w-[1240px] text-center">
+              <AlertSurfaceTable data-alert-notice-template-table-actions="sticky-visible-actions" className="min-w-[1240px] text-center">
                 <AlertSurfaceTableHead className="text-center text-[13px] normal-case tracking-normal">
                   <tr>
                     <th className="px-3 py-3 text-center">{t('alert.notice.template.name')}</th>
                     <th className="px-3 py-3 text-center">{t('alert.notice.template.type')}</th>
                     <th className="px-3 py-3 text-center">{t('alert.notice.template.preset')}</th>
                     <th className="px-3 py-3 text-center">{t('common.edit-time')}</th>
-                    <th className="px-3 py-3 text-center">{t('common.edit')}</th>
+                    <th className={coldStickyActionHeaderClass}>{t('common.edit')}</th>
                   </tr>
                 </AlertSurfaceTableHead>
                 <tbody>
@@ -1185,45 +1790,64 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                         </div>
                       </td>
                       <td className="px-3 py-3 text-center">{formatTime(template.gmtUpdate || template.gmtCreate || null)}</td>
-                      <td className="px-3 py-3 text-center" onClick={event => event.stopPropagation()}>
-                        <div className="flex justify-center gap-2">
+                      <td className={coldStickyActionCellClass} onClick={event => event.stopPropagation()}>
+                        <div className="flex justify-center gap-1.5">
                           {template.preset ? (
-                            <Button
-                              data-alert-notice-template-view-trigger="hertzbeat-ui-modal-viewer-trigger"
-                              className={coldIconButtonClass}
-                              size="icon"
-                              variant="default"
-                              onClick={() => void handleViewTemplate(template)}
-                              title={t('alert.notice.template.show')}
-                            >
-                              <Eye className="h-4 w-4" aria-hidden="true" />
-                              <span className="sr-only">{t('alert.notice.template.show')}</span>
-                            </Button>
-                          ) : (
-                            <>
+                            <span className="inline-flex items-center gap-1">
                               <Button
-                                data-alert-notice-template-edit-detail="angular-detail-fetch"
-                                data-alert-notice-template-edit-detail-owner="route-detail-fetch-contract"
+                                data-alert-notice-template-view-trigger="hertzbeat-ui-modal-viewer-trigger"
+                                data-alert-notice-command-action="template-row-view"
                                 className={coldIconButtonClass}
                                 size="icon"
                                 variant="default"
-                                onClick={() => void handleEditTemplate(template)}
-                                title={t('alert.notice.template.edit')}
+                                onClick={() => void handleViewTemplate(template)}
+                                title={t('alert.notice.template.show')}
                               >
-                                <Pencil className="h-4 w-4" aria-hidden="true" />
-                                <span className="sr-only">{t('alert.notice.template.edit')}</span>
+                                <Eye className="h-4 w-4" aria-hidden="true" />
+                                <span className="sr-only">{t('alert.notice.template.show')}</span>
                               </Button>
-                              <Button className={coldIconButtonClass} size="icon" variant="default" onClick={() => void handleDeleteTemplateById(template.id)} title={t('alert.notice.template.delete')}>
-                                <Trash2 className="h-4 w-4" aria-hidden="true" />
-                                <span className="sr-only">{t('alert.notice.template.delete')}</span>
-                              </Button>
+                              <AlertNoticeActionHelp id="template-row-view" {...alertNoticeActionHelp(t, 'template-row-view')} />
+                            </span>
+                          ) : (
+                            <>
+                              <span className="inline-flex items-center gap-1">
+                                <Button
+                                  data-alert-notice-template-edit-detail="angular-detail-fetch"
+                                  data-alert-notice-template-edit-detail-owner="route-detail-fetch-contract"
+                                  data-alert-notice-command-action="template-row-edit"
+                                  className={coldIconButtonClass}
+                                  size="icon"
+                                  variant="default"
+                                  onClick={() => void handleEditTemplate(template)}
+                                  title={t('alert.notice.template.edit')}
+                                >
+                                  <Pencil className="h-4 w-4" aria-hidden="true" />
+                                  <span className="sr-only">{t('alert.notice.template.edit')}</span>
+                                </Button>
+                                <AlertNoticeActionHelp id="template-row-edit" {...alertNoticeActionHelp(t, 'template-row-edit')} />
+                              </span>
+                              <span className="inline-flex items-center gap-1">
+                                <Button data-alert-notice-command-action="template-row-delete" className={coldIconButtonClass} size="icon" variant="default" onClick={() => void handleDeleteTemplateById(template.id, template.name)} title={t('alert.notice.template.delete')}>
+                                  <Trash2 className="h-4 w-4" aria-hidden="true" />
+                                  <span className="sr-only">{t('alert.notice.template.delete')}</span>
+                                </Button>
+                                <AlertNoticeActionHelp id="template-row-delete" {...alertNoticeActionHelp(t, 'template-row-delete')} />
+                              </span>
                             </>
                           )}
                         </div>
                       </td>
                     </tr>
                   )) : (
-                    <NoticeTableEmptyRow t={t} colSpan={5} prefix="template" />
+                    <NoticeTableEmptyRow
+                      t={t}
+                      colSpan={5}
+                      prefix="template"
+                      action={{
+                        label: t('alert.notice.template.new'),
+                        onClick: () => void handleNewTemplate()
+                      }}
+                    />
                   )}
                 </tbody>
               </AlertSurfaceTable>
@@ -1236,14 +1860,25 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                 totalElements={templateTotalElements}
                 visibleCount={templateVisibleRows.length}
                 testIdPrefix="notice-template"
-                onPageIndexChange={setTemplatePageIndex}
+                onPageIndexChange={nextPageIndex => {
+                  setTemplatePageIndex(nextPageIndex);
+                  replaceListRouteState({
+                    ...currentListRouteState,
+                    templatePageIndex: nextPageIndex
+                  });
+                }}
                 onPageSizeChange={nextPageSize => {
                   setTemplatePageSize(nextPageSize);
                   setTemplatePageIndex(0);
+                  replaceListRouteState({
+                    ...currentListRouteState,
+                    templatePageIndex: 0,
+                    templatePageSize: nextPageSize
+                  });
                 }}
               />
             ) : null}
-            {templateMessage ? <div className="px-3 py-2 text-sm text-emerald-300">{templateMessage}</div> : null}
+            {templateMessage ? <div role="status" className={coldNoticeStatusMessageClass}>{templateMessage}</div> : null}
             {!editingTemplate && templateError ? (
               <div role="alert" className="px-3 py-2 text-sm text-rose-300">{templateError}</div>
             ) : null}
@@ -1255,30 +1890,57 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
             open={editingReceiver}
             title={receiverDraft.id ? t('alert.notice.receiver.edit') : t('alert.notice.receiver.new')}
             kicker={t('menu.alert.dispatch')}
-            onClose={() => setEditingReceiver(false)}
+            onClose={requestCloseReceiverEditor}
             maxWidthClassName="max-w-4xl"
             footer={
               <div className="flex flex-wrap justify-end gap-2">
-                <Button data-testid="notice-receiver-cancel" className={coldButtonClassName} size="sm" variant="default" onClick={() => setEditingReceiver(false)}>
-                  {t('common.cancel')}
-                </Button>
-                <Button
-                  data-testid="notice-receiver-test"
-                  data-alert-notice-receiver-test-loading={testingReceiver ? 'true' : 'false'}
-                  data-alert-notice-receiver-test-validation="angular-backend-owned"
-                  data-alert-notice-receiver-test-validation-owner="route-mutation-contract"
-                  aria-busy={testingReceiver}
-                  className={coldButtonClassName}
-                  size="sm"
-                  variant="default"
-                  onClick={() => void handleTestSend()}
-                  disabled={testingReceiver || savingReceiver}
-                >
-                  {t('alert.notice.send-test')}
-                </Button>
-                <Button data-testid="notice-receiver-save" className={coldPrimaryButtonClassName} size="sm" variant="default" onClick={() => void handleSaveReceiver()} disabled={savingReceiver}>
-                  {savingReceiver ? t('common.saving') : t('common.save')}
-                </Button>
+                <span className="inline-flex items-center gap-1">
+                  <Button
+                    data-testid="notice-receiver-cancel"
+                    data-alert-notice-receiver-unsaved-cancel-trigger={shouldConfirmReceiverDiscard ? 'dirty' : 'clean'}
+                    data-alert-notice-command-action="receiver-cancel"
+                    className={coldButtonClassName}
+                    size="sm"
+                    variant="default"
+                    onClick={requestCloseReceiverEditor}
+                  >
+                    {t('common.cancel')}
+                  </Button>
+                  <AlertNoticeActionHelp id="receiver-cancel" {...alertNoticeActionHelp(t, 'receiver-cancel')} />
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <Button
+                    data-testid="notice-receiver-test"
+                    data-alert-notice-receiver-test-loading={testingReceiver ? 'true' : 'false'}
+                    data-alert-notice-receiver-test-validation="angular-backend-owned"
+                    data-alert-notice-receiver-test-validation-owner="route-mutation-contract"
+                    data-alert-notice-command-action="receiver-test"
+                    aria-busy={testingReceiver}
+                    className={coldButtonClassName}
+                    size="sm"
+                    variant="default"
+                    onClick={() => void handleTestSend()}
+                    disabled={testingReceiver || savingReceiver}
+                  >
+                    {t('alert.notice.send-test')}
+                  </Button>
+                  <AlertNoticeActionHelp id="receiver-test" {...alertNoticeActionHelp(t, 'receiver-test')} />
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <Button
+                    data-testid="notice-receiver-save"
+                    data-alert-notice-receiver-save-blocked-by-test={testingReceiver ? 'true' : undefined}
+                    data-alert-notice-command-action="receiver-save"
+                    className={coldPrimaryButtonClassName}
+                    size="sm"
+                    variant="default"
+                    onClick={() => void handleSaveReceiver()}
+                    disabled={savingReceiver || testingReceiver}
+                  >
+                    {savingReceiver ? t('common.saving') : t('common.save')}
+                  </Button>
+                  <AlertNoticeActionHelp id="receiver-save" {...alertNoticeActionHelp(t, 'receiver-save')} />
+                </span>
               </div>
             }
           >
@@ -1301,6 +1963,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                   data-alert-notice-receiver-save-failure-owner={receiverErrorDetail ? 'route-action-feedback-contract' : undefined}
                   data-alert-notice-receiver-save-failure-title={receiverErrorDetail ? receiverError : undefined}
                   data-alert-notice-receiver-save-failure-detail={receiverErrorDetail ?? undefined}
+                  data-alert-notice-receiver-validation-count={receiverValidationIssues.length > 0 ? String(receiverValidationIssues.length) : undefined}
                   className="rounded-[3px] border border-[#6f3141] bg-[#1b1014] px-3 py-2 text-[12px] font-semibold leading-5 text-[#ffb4c1]"
                 >
                   <span>{receiverError}</span>
@@ -1311,7 +1974,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                 <div
                   role="status"
                   data-alert-notice-receiver-test-feedback="hertzbeat-ui-test-feedback"
-                  className="rounded-[3px] border border-[#24563d] bg-[#0d1a14] px-3 py-2 text-[12px] font-semibold leading-5 text-[#9be8bd]"
+                  className={coldNoticeTestStatusMessageClass}
                 >
                   {receiverMessage}
                 </div>
@@ -1322,6 +1985,10 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                   data-alert-notice-receiver-test-preview-owner="signal-alert-handoff"
                   data-alert-notice-receiver-test-preview-signal={noticeEvidenceContext.signal}
                   data-alert-notice-receiver-test-preview-labels="provided-labels"
+                  data-alert-notice-receiver-test-preview-labels-total={noticeEvidenceContext.receiverTestPreview.labelsTotal}
+                  data-alert-notice-receiver-test-preview-labels-rendered={noticeEvidenceContext.receiverTestPreview.labelsRendered}
+                  data-alert-notice-receiver-test-preview-labels-limit={noticeEvidenceContext.receiverTestPreview.labelsLimit}
+                  data-alert-notice-receiver-test-preview-labels-overflow={noticeEvidenceContext.receiverTestPreview.labelsOverflow}
                   className="rounded-[3px] border border-[#26303d] bg-[#080a0e] px-3 py-2"
                 >
                   <p className="text-[12px] font-semibold text-[#eef2f7]">{noticeEvidenceContext.receiverTestPreview.title}</p>
@@ -1330,7 +1997,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                     data-alert-notice-receiver-test-preview-labels-text="signal-route"
                     className="mt-2 block whitespace-pre-wrap break-words font-mono text-[11px] leading-5 text-[#aab4c3]"
                   >
-                    {noticeEvidenceContext.receiverTestPreview.labelsText}
+                    {noticeEvidenceContext.receiverTestPreview.labelsPreviewText}
                   </code>
                   <div
                     data-alert-notice-receiver-test-preview-payload="sample-alert"
@@ -1368,7 +2035,8 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                 t={t}
                 draft={receiverDraft}
                 productCopy={productCopy}
-                onDraftChange={setReceiverDraft}
+                onDraftChange={handleReceiverDraftChange}
+                validationIssues={receiverValidationIssues}
               />
             </div>
           </OverlayDialog>
@@ -1379,13 +2047,14 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
             open={editingRule}
             title={ruleDraft.id ? t('alert.notice.rule.edit') : t('alert.notice.rule.new')}
             kicker={t('menu.alert.dispatch')}
-            onClose={() => setEditingRule(false)}
+            onClose={requestCloseRuleEditor}
             maxWidthClassName="max-w-4xl"
             footer={
               <div className="flex flex-wrap justify-end gap-2">
                 {noticeEvidenceContext?.returnHref ? (
                   <a
                     data-alert-notice-rule-editor-return="evidence-context"
+                    data-alert-notice-command-action="rule-return-to-evidence"
                     href={noticeEvidenceContext.returnHref}
                     className="inline-flex h-8 items-center gap-1 rounded-[3px] border border-[#2b3039] bg-[#101217] px-3 text-[12px] font-semibold text-[#dbe4f0] hover:border-[#4e74f8] hover:bg-[#151b28] hover:text-white"
                   >
@@ -1393,22 +2062,36 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                     {t('alert.rule.evidence.return')}
                   </a>
                 ) : null}
-                <Button className={coldButtonClassName} size="sm" variant="default" onClick={() => setEditingRule(false)}>
-                  {t('common.cancel')}
-                </Button>
-                <Button
-                  className={coldPrimaryButtonClassName}
-                  size="sm"
-                  variant="default"
-                  data-alert-notice-rule-save-loading="angular-nz-ok-loading"
-                  data-alert-notice-rule-save-loading-owner="route-modal-ok-contract"
-                  data-alert-notice-rule-save-loading-state={savingRule ? 'true' : 'false'}
-                  aria-busy={savingRule}
-                  onClick={() => void handleSaveRule()}
-                  disabled={savingRule}
-                >
-                  {savingRule ? t('common.saving') : t('common.save')}
-                </Button>
+                <span className="inline-flex items-center gap-1">
+                  <Button
+                    className={coldButtonClassName}
+                    size="sm"
+                    variant="default"
+                    data-alert-notice-rule-unsaved-cancel-trigger={shouldConfirmRuleDiscard ? 'dirty' : 'clean'}
+                    data-alert-notice-command-action="rule-cancel"
+                    onClick={requestCloseRuleEditor}
+                  >
+                    {t('common.cancel')}
+                  </Button>
+                  <AlertNoticeActionHelp id="rule-cancel" {...alertNoticeActionHelp(t, 'rule-cancel')} />
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <Button
+                    className={coldPrimaryButtonClassName}
+                    size="sm"
+                    variant="default"
+                    data-alert-notice-rule-save-loading="angular-nz-ok-loading"
+                    data-alert-notice-rule-save-loading-owner="route-modal-ok-contract"
+                    data-alert-notice-rule-save-loading-state={savingRule ? 'true' : 'false'}
+                    data-alert-notice-command-action="rule-save"
+                    aria-busy={savingRule}
+                    onClick={() => void handleSaveRule()}
+                    disabled={savingRule}
+                  >
+                    {savingRule ? t('common.saving') : t('common.save')}
+                  </Button>
+                  <AlertNoticeActionHelp id="rule-save" {...alertNoticeActionHelp(t, 'rule-save')} />
+                </span>
               </div>
             }
           >
@@ -1448,7 +2131,8 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                 labelOptions={labelOptions}
                 sourceLabelsText={noticeEvidenceContext?.labelsText}
                 sourceSignal={noticeEvidenceContext?.signal}
-                onDraftChange={setRuleDraft}
+                validationIssues={resolveNoticeRuleValidationIssues(ruleErrorDetail ? null : ruleError, t)}
+                onDraftChange={handleRuleDraftChange}
               />
             </div>
           </OverlayDialog>
@@ -1459,30 +2143,35 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
             open={editingTemplate}
             title={templateReadOnly ? t('alert.notice.template.content') : templateDraft.id ? t('alert.notice.template.edit') : t('alert.notice.template.new')}
             kicker={t('menu.alert.dispatch')}
-            onClose={() => {
-              setEditingTemplate(false);
-              setTemplateReadOnly(false);
-            }}
+            onClose={requestCloseTemplateEditor}
             maxWidthClassName="max-w-4xl"
             footer={
               <div className="flex flex-wrap justify-end gap-2">
-                <Button
-                  className={coldButtonClassName}
-                  size="sm"
-                  variant="default"
-                  data-alert-notice-template-viewer-return={templateReadOnly ? 'angular-cancel-return' : undefined}
-                  data-alert-notice-template-viewer-return-owner={templateReadOnly ? 'route-modal-footer-contract' : undefined}
-                  onClick={() => {
-                    setEditingTemplate(false);
-                    setTemplateReadOnly(false);
-                  }}
-                >
-                  {templateReadOnly ? t('common.button.return') : t('common.cancel')}
-                </Button>
-                {!templateReadOnly ? (
-                  <Button className={coldPrimaryButtonClassName} size="sm" variant="default" onClick={() => void handleSaveTemplate()} disabled={savingTemplate}>
-                    {savingTemplate ? t('common.saving') : t('common.save')}
+                <span className="inline-flex items-center gap-1">
+                  <Button
+                    className={coldButtonClassName}
+                    size="sm"
+                    variant="default"
+                    data-alert-notice-template-viewer-return={templateReadOnly ? 'angular-cancel-return' : undefined}
+                    data-alert-notice-template-viewer-return-owner={templateReadOnly ? 'route-modal-footer-contract' : undefined}
+                    data-alert-notice-template-unsaved-cancel-trigger={!templateReadOnly ? shouldConfirmTemplateDiscard ? 'dirty' : 'clean' : undefined}
+                    data-alert-notice-command-action={templateReadOnly ? 'template-return' : 'template-cancel'}
+                    onClick={requestCloseTemplateEditor}
+                  >
+                    {templateReadOnly ? t('common.button.return') : t('common.cancel')}
                   </Button>
+                  <AlertNoticeActionHelp
+                    id={templateReadOnly ? 'template-return' : 'template-cancel'}
+                    {...alertNoticeActionHelp(t, templateReadOnly ? 'template-return' : 'template-cancel')}
+                  />
+                </span>
+                {!templateReadOnly ? (
+                  <span className="inline-flex items-center gap-1">
+                    <Button data-alert-notice-command-action="template-save" className={coldPrimaryButtonClassName} size="sm" variant="default" onClick={() => void handleSaveTemplate()} disabled={savingTemplate}>
+                      {savingTemplate ? t('common.saving') : t('common.save')}
+                    </Button>
+                    <AlertNoticeActionHelp id="template-save" {...alertNoticeActionHelp(t, 'template-save')} />
+                  </span>
                 ) : null}
               </div>
             }
@@ -1511,26 +2200,48 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                   data-alert-notice-template-save-failure-owner={templateErrorDetail ? 'route-action-feedback-contract' : undefined}
                   data-alert-notice-template-save-failure-title={templateErrorDetail ? templateError : undefined}
                   data-alert-notice-template-save-failure-detail={templateErrorDetail ?? undefined}
+                  data-alert-notice-template-validation-count={templateValidationIssues.length > 0 ? String(templateValidationIssues.length) : undefined}
                   className="rounded-[3px] border border-[#6f3141] bg-[#1b1014] px-3 py-2 text-[12px] font-semibold leading-5 text-[#ffb4c1]"
                 >
                   <span>{templateError}</span>
                   {templateErrorDetail ? <span className="mt-1 block font-medium text-[#ffccd5]">{templateErrorDetail}</span> : null}
                 </div>
                 ) : null}
-                <AlertNoticeTemplateFields t={t} draft={templateDraft} readOnly={templateReadOnly} onDraftChange={setTemplateDraft} />
+                <AlertNoticeTemplateFields
+                  t={t}
+                  draft={templateDraft}
+                  readOnly={templateReadOnly}
+                  onDraftChange={handleTemplateDraftChange}
+                  validationIssues={templateValidationIssues}
+                />
               </div>
             )}
           </OverlayDialog>
         );
+        const deleteConfirmCopy = [
+          deleteRequest?.kind === 'receiver'
+            ? t('alert.notice.delete.confirm.receiver')
+            : deleteRequest?.kind === 'template'
+              ? t('alert.notice.delete.confirm.template')
+              : t('alert.notice.delete.confirm.rule'),
+          deleteRequest?.name ? t('alert.notice.delete.confirm.target', { name: deleteRequest.name }) : null
+        ].filter(Boolean).join(' ');
+        const deleteConfirmActionLabel =
+          deleteRequest?.kind === 'receiver'
+            ? t('alert.notice.delete.confirm.receiver-action')
+            : deleteRequest?.kind === 'template'
+              ? t('alert.notice.delete.confirm.template-action')
+              : t('alert.notice.delete.confirm.rule-action');
 
         return (
           <>
             <div
               data-alert-notice-surface="otlp-hertzbeat-ui-notice-console"
               data-alert-notice-style-baseline={coldNoticeVisual.canvasName}
+              data-alert-notice-page-overflow="route-contained-horizontal"
               data-alert-notice-edit-load-feedback="angular-edit-fail"
               data-alert-notice-edit-load-feedback-owner="route-action-feedback-contract"
-              className={coldNoticeVisual.canvas.root}
+              className={`${coldNoticeVisual.canvas.root} overflow-x-hidden`}
               style={coldNoticeVisual.canvas.backgroundStyle}
             >
               <section className={coldNoticeVisual.layout.pageSection}>
@@ -1538,8 +2249,9 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                   <div className="mb-5">
                     <section
                       data-alert-notice-header="hertzbeat-ui-compact-header"
+                      data-alert-notice-header-nesting-contract="flat-page-introduction"
                       data-alert-notice-admin-layout="full-width-admin-list"
-                      className={coldNoticeVisual.panel.hero}
+                      className="p-0"
                     >
                       <div className="flex flex-wrap items-start justify-between gap-5">
                         <div className="min-w-[260px] flex-1">
@@ -1547,7 +2259,11 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                           <p className="mt-4 max-w-[780px] text-[13px] leading-6 text-[#a9b0bb]">
                             {t('alert.notice.copy')}
                           </p>
-                          <div data-alert-notice-command-bar="standard-equal-buttons" className={coldNoticeVisual.button.row}>
+                          <div
+                            data-alert-notice-command-bar="standard-equal-buttons"
+                            data-alert-notice-command-bar-mobile="two-column-wrap"
+                            className="mt-6 grid grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap"
+                          >
                             <Button size="sm" className={coldCommandButtonClass} variant="default" onClick={() => setRefreshTick(value => value + 1)}>
                               {t('common.refresh')}
                             </Button>
@@ -1583,7 +2299,13 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                   <AlertNoticeConsoleShell
                     t={t}
                     selectedTab={selectedTab}
-                    onSelectTab={setSelectedTab}
+                    onSelectTab={nextTab => {
+                      setSelectedTab(nextTab);
+                      replaceListRouteState({
+                        ...currentListRouteState,
+                        selectedTab: nextTab
+                      });
+                    }}
                     receiverContent={receiverPanel}
                     ruleContent={rulePanel}
                     templateContent={templatePanel}
@@ -1591,9 +2313,10 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                   {noticeEvidenceContext ? (
                     <section
                       data-alert-notice-evidence-context="signal-route"
+                      data-alert-notice-evidence-layering="flat-context-band"
                       data-alert-notice-evidence-signal={noticeEvidenceContext.signal}
                       data-alert-notice-prefill-labels={noticeEvidenceContext.labelsText}
-                      className="mt-5 rounded-[4px] border border-[#27303c] bg-[#0b0f15] px-4 py-3 shadow-[0_18px_48px_rgba(0,0,0,0.24)]"
+                      className="mt-5 border-y border-[#27303c] bg-[#0b0f15]/80 px-3 py-3"
                     >
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="min-w-0">
@@ -1634,6 +2357,102 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
             {ruleEditorDialog}
             {templateEditorDialog}
             <div
+              data-alert-notice-template-unsaved-cancel="hertzbeat-ui-confirm-dialog"
+              data-alert-notice-template-unsaved-cancel-state={templateDiscardDialogOpen ? 'open' : 'closed'}
+            >
+              <HzConfirmDialog
+                open={templateDiscardDialogOpen}
+                tone="warning"
+                title={t('alert.notice.template.unsaved-cancel.title')}
+                kicker={t('alert.notice.template.unsaved-cancel.kicker')}
+                cancelLabel={t('alert.notice.template.unsaved-cancel.keep-editing')}
+                confirmLabel={t('alert.notice.template.unsaved-cancel.discard')}
+                onClose={() => setTemplateDiscardDialogOpen(false)}
+                onConfirm={closeTemplateEditor}
+                data-alert-notice-template-unsaved-cancel-dialog="hertzbeat-ui-confirm-dialog"
+                cancelButtonProps={
+                  {
+                    type: 'button',
+                    'data-alert-notice-template-unsaved-cancel-keep-editing': 'true'
+                  } as React.ComponentProps<typeof HzConfirmDialog>['cancelButtonProps']
+                }
+                confirmButtonProps={
+                  {
+                    type: 'button',
+                    'data-alert-notice-template-unsaved-cancel-confirm': 'true'
+                  } as React.ComponentProps<typeof HzConfirmDialog>['confirmButtonProps']
+                }
+              >
+                <p data-alert-notice-template-unsaved-cancel-copy="true">
+                  {t('alert.notice.template.unsaved-cancel.copy')}
+                </p>
+              </HzConfirmDialog>
+            </div>
+            <div
+              data-alert-notice-rule-unsaved-cancel="hertzbeat-ui-confirm-dialog"
+              data-alert-notice-rule-unsaved-cancel-state={ruleDiscardDialogOpen ? 'open' : 'closed'}
+            >
+              <HzConfirmDialog
+                open={ruleDiscardDialogOpen}
+                tone="warning"
+                title={t('alert.notice.rule.unsaved-cancel.title')}
+                kicker={t('alert.notice.rule.unsaved-cancel.kicker')}
+                cancelLabel={t('alert.notice.rule.unsaved-cancel.keep-editing')}
+                confirmLabel={t('alert.notice.rule.unsaved-cancel.discard')}
+                onClose={() => setRuleDiscardDialogOpen(false)}
+                onConfirm={closeRuleEditor}
+                data-alert-notice-rule-unsaved-cancel-dialog="hertzbeat-ui-confirm-dialog"
+                cancelButtonProps={
+                  {
+                    type: 'button',
+                    'data-alert-notice-rule-unsaved-cancel-keep-editing': 'true'
+                  } as React.ComponentProps<typeof HzConfirmDialog>['cancelButtonProps']
+                }
+                confirmButtonProps={
+                  {
+                    type: 'button',
+                    'data-alert-notice-rule-unsaved-cancel-confirm': 'true'
+                  } as React.ComponentProps<typeof HzConfirmDialog>['confirmButtonProps']
+                }
+              >
+                <p data-alert-notice-rule-unsaved-cancel-copy="true">
+                  {t('alert.notice.rule.unsaved-cancel.copy')}
+                </p>
+              </HzConfirmDialog>
+            </div>
+            <div
+              data-alert-notice-receiver-unsaved-cancel="hertzbeat-ui-confirm-dialog"
+              data-alert-notice-receiver-unsaved-cancel-state={receiverDiscardDialogOpen ? 'open' : 'closed'}
+            >
+              <HzConfirmDialog
+                open={receiverDiscardDialogOpen}
+                tone="warning"
+                title={t('alert.notice.receiver.unsaved-cancel.title')}
+                kicker={t('alert.notice.receiver.unsaved-cancel.kicker')}
+                cancelLabel={t('alert.notice.receiver.unsaved-cancel.keep-editing')}
+                confirmLabel={t('alert.notice.receiver.unsaved-cancel.discard')}
+                onClose={() => setReceiverDiscardDialogOpen(false)}
+                onConfirm={closeReceiverEditor}
+                data-alert-notice-receiver-unsaved-cancel-dialog="hertzbeat-ui-confirm-dialog"
+                cancelButtonProps={
+                  {
+                    type: 'button',
+                    'data-alert-notice-receiver-unsaved-cancel-keep-editing': 'true'
+                  } as React.ComponentProps<typeof HzConfirmDialog>['cancelButtonProps']
+                }
+                confirmButtonProps={
+                  {
+                    type: 'button',
+                    'data-alert-notice-receiver-unsaved-cancel-confirm': 'true'
+                  } as React.ComponentProps<typeof HzConfirmDialog>['confirmButtonProps']
+                }
+              >
+                <p data-alert-notice-receiver-unsaved-cancel-copy="true">
+                  {t('alert.notice.receiver.unsaved-cancel.copy')}
+                </p>
+              </HzConfirmDialog>
+            </div>
+            <div
               data-alert-delete-confirm={deleteRequest ? 'open' : 'closed'}
               data-alert-notice-delete-confirm="angular-modal-confirm"
               data-alert-notice-delete-confirm-owner="hertzbeat-ui-confirm-dialog"
@@ -1647,7 +2466,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                 tone="critical"
                 kicker={t('common.confirm.operation')}
                 title={t('common.confirm.delete')}
-                confirmLabel={t('common.button.ok')}
+                confirmLabel={deleteConfirmActionLabel}
                 cancelLabel={t('common.button.cancel')}
                 confirmDisabled={deletePending}
                 onClose={deletePending ? undefined : () => setDeleteRequest(null)}
@@ -1666,11 +2485,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                 }
               >
                 <p data-alert-notice-delete-confirm-copy="angular-modal-confirm">
-                  {deleteRequest?.kind === 'receiver'
-                    ? t('alert.notice.delete.confirm.receiver')
-                    : deleteRequest?.kind === 'template'
-                      ? t('alert.notice.delete.confirm.template')
-                      : t('alert.notice.delete.confirm.rule')}
+                  {deleteConfirmCopy}
                 </p>
               </HzConfirmDialog>
             </div>

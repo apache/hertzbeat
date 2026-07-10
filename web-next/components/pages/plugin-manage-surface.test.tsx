@@ -65,7 +65,29 @@ describe('plugin manage surface', () => {
     expect(html).toContain('data-plugin-manage-surface="otlp-hertzbeat-ui-plugin-console"');
     expect(html).toContain('data-plugin-manage-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-plugin-header="hertzbeat-ui-compact-header"');
+    expect(html).toContain('data-plugin-header-nesting-contract="flat-page-introduction"');
+    expect(html).toContain('class="z-[80] overflow-visible p-0"');
     expect(html).toContain('data-plugin-command-row="standard-equal-buttons"');
+    expect(html).toContain('data-plugin-command-action="refresh"');
+    expect(html).toContain('data-plugin-command-action="upload-open"');
+    expect(html).toContain('data-plugin-command-action="bulk-menu"');
+    expect(html).toContain('data-plugin-command-action="bulk-delete"');
+    expect(html).toContain('data-plugin-action-help="refresh"');
+    expect(html).toContain('data-plugin-action-help="upload"');
+    expect(html).toContain('data-plugin-action-help="bulk-delete"');
+    expect(html).toContain('data-plugin-action-help-tooltip="refresh"');
+    expect(html).toContain('data-plugin-action-help-tooltip="upload"');
+    expect(html).toContain('data-plugin-action-help-tooltip="bulk-delete"');
+    expect(html).toContain('data-plugin-help-style="icon-after-action"');
+    expect(html).toContain('data-plugin-help-visual="circle-help-icon"');
+    expect(html).toContain('data-plugin-help-icon="lucide-circle-help"');
+    expect(html).toContain('data-plugin-action-help-style="icon-after-action"');
+    expect((html.match(/data-plugin-action-help-style="icon-after-action"/g) || []).length).toBe(3);
+    expect((html.match(/data-plugin-action-help="(?:refresh|upload|bulk-delete)"/g) || []).length).toBe(3);
+    expect(html).not.toContain('data-plugin-action-help-style="literal-question-after-action"');
+    expect(html).toContain(t('setting.plugins.action.refresh.help'));
+    expect(html).toContain(t('setting.plugins.action.upload.help'));
+    expect(html).toContain(t('setting.plugins.action.bulk-delete.help'));
     expect(html).toContain('data-plugin-admin-layout="full-width-admin-list"');
     expect(html).toContain('data-plugin-enable-feedback-contract="angular-edit-notify"');
     expect(html).toContain('data-plugin-enable-feedback-contract-owner="hertzbeat-ui-inline-feedback"');
@@ -151,10 +173,25 @@ describe('plugin manage surface', () => {
     expect(html).toContain('data-plugin-row-delete-menu-owner="hertzbeat-ui-table-row-action-button"');
     expect(html).toContain('data-plugin-delete-one="1"');
     expect(html).toContain('data-plugin-delete-one-owner="hertzbeat-ui-table-row-action-button"');
+    expect(html).toContain('data-plugin-command-action="row-toggle-enable"');
+    expect(html).toContain('data-plugin-command-action="row-edit-params"');
+    expect(html).toContain('data-plugin-command-action="row-more"');
+    expect(html).toContain('data-plugin-command-action="row-delete"');
     expect(html).toContain('data-plugin-row-actions="angular-row-actions-contextual"');
     expect(html).toContain('data-plugin-row-actions-owner="hertzbeat-ui-icon-actions"');
     expect(html).toContain('data-plugin-row-action="params"');
     expect(html).toContain('data-plugin-row-action="delete"');
+    expect(html).toContain('data-plugin-row-action-help="row-enable"');
+    expect(html).toContain('data-plugin-row-action-help="row-params"');
+    expect(html).toContain('data-plugin-row-action-help="row-delete"');
+    expect(html).toContain('data-plugin-row-action-help-tooltip="row-enable"');
+    expect(html).toContain('data-plugin-row-action-help-tooltip="row-params"');
+    expect(html).toContain('data-plugin-row-action-help-tooltip="row-delete"');
+    expect(html).toContain('data-plugin-row-action-help-style="icon-after-action"');
+    expect(html).not.toContain('data-plugin-row-action-help-style="literal-question-after-action"');
+    expect(html).toContain(t('setting.plugins.action.row-enable.help'));
+    expect(html).toContain(t('setting.plugins.action.row-params.help'));
+    expect(html).toContain(t('setting.plugins.action.row-delete.help'));
     expect(html).toContain('data-plugin-row-action-owner="row-contextual-icon-button"');
     expect(html).toContain('data-plugin-row-action-label="smtp"');
     expect(html).not.toContain('data-plugin-summary-rail=');
@@ -189,6 +226,30 @@ describe('plugin manage surface', () => {
     expect(html).toContain('data-plugin-upload-field-layout="angular-label-8-control-14"');
     expect(html).toContain('data-plugin-upload-label-span="8"');
     expect(html).toContain('data-plugin-upload-control-span="14"');
+    expect(html).toContain('data-plugin-upload-guidance="jar-runtime-risk"');
+    expect(html).toContain('data-plugin-upload-field-help="name"');
+    expect(html).toContain('data-plugin-upload-field-help="jarFile"');
+    expect(html).toContain('data-plugin-upload-field-help="enableStatus"');
+    expect(html).toContain('data-plugin-upload-field-help-tooltip="name"');
+    expect(html).toContain('data-plugin-help-style="icon-after-label"');
+    expect(html).toContain('data-plugin-help-visual="circle-help-icon"');
+    expect(html).toContain('data-plugin-help-icon="lucide-circle-help"');
+    expect(html).toContain('data-plugin-upload-field-help-style="icon-after-label"');
+    expect(html).not.toContain('data-plugin-upload-field-help-style="literal-question-after-label"');
+    expect(html).not.toContain('data-plugin-help-visual="borderless-question"');
+    expect(html).toContain('data-plugin-upload-field-mode="required"');
+    expect(html).toContain('data-plugin-upload-field-mode="side-effect"');
+    expect(html.split('data-plugin-upload-field-meta="requirement-and-input-mode"').length - 1).toBe(6);
+    expect(html.split('data-plugin-upload-field-requirement="required"').length - 1).toBe(3);
+    expect(html.split('data-plugin-upload-field-input-mode="manual"').length - 1).toBe(1);
+    expect(html.split('data-plugin-upload-field-input-mode="selection"').length - 1).toBe(2);
+    expect(html).toContain(t('settings.form.field.requirement.required'));
+    expect(html).toContain(t('settings.form.field.input-mode.manual'));
+    expect(html).toContain(t('settings.form.field.input-mode.selection'));
+    expect(html).toContain(t('setting.plugins.upload.guidance'));
+    expect(html).toContain(t('setting.plugins.field.name.help'));
+    expect(html).toContain(t('setting.plugins.field.jar.help'));
+    expect(html).toContain(t('setting.plugins.field.status.help'));
     expect(html).toContain('data-plugin-upload-status-control="angular-nz-switch"');
     expect(html).toContain('data-plugin-upload-status-control-owner="hertzbeat-ui-switch"');
     expect(html).toContain('data-hz-ui="switch"');
@@ -242,7 +303,51 @@ describe('plugin manage surface', () => {
     expect(html).toContain('colSpan="5"');
     expect(html).toContain('data-plugin-manage-empty-state="hertzbeat-ui-table-empty"');
     expect(html).toContain('data-plugin-manage-empty-icon="hertzbeat-ui-empty-box"');
+    expect(html).toContain('data-plugin-manage-empty-title="plain"');
     expect(html).toContain(t('common.no-data'));
+    expect(html).not.toContain('data-plugin-manage-empty-copy="filtered-search"');
+    expect(html).not.toContain(t('setting.plugins.empty.filtered.title'));
+  });
+
+  it('explains filtered empty plugin results instead of showing a generic no-data state', async () => {
+    const { PluginManageSurface } = await import('./plugin-manage-surface');
+    const t = createTranslatorMock({ locale: 'zh-CN' });
+
+    const html = renderToStaticMarkup(
+      <PluginManageSurface
+        t={t}
+        data={{
+          list: {
+            content: [],
+            totalElements: 0,
+            pageIndex: 0,
+            pageSize: 8
+          }
+        }}
+        search="codex-no-plugin-1573"
+        selectedIds={[]}
+        draftPlugin={null}
+        onSearchChange={() => {}}
+        onSearch={() => {}}
+        onRefresh={() => {}}
+        onNew={() => {}}
+        onDeleteSelected={() => {}}
+        onSelectedIdsChange={() => {}}
+        onEditParams={() => {}}
+        onToggleEnabled={() => {}}
+        onDeleteOne={() => {}}
+        onDraftChange={() => {}}
+        onCloseDialog={() => {}}
+        onSaveDialog={() => {}}
+      />
+    );
+
+    expect(html).toContain('data-plugin-manage-empty-state="hertzbeat-ui-table-empty"');
+    expect(html).toContain('data-plugin-manage-empty-title="filtered"');
+    expect(html).toContain('data-plugin-manage-empty-copy="filtered-search"');
+    expect(html).toContain(t('setting.plugins.empty.filtered.title'));
+    expect(html).toContain(t('setting.plugins.empty.filtered.copy'));
+    expect(html).not.toContain(`>${t('common.no-data')}</div>`);
   });
 
   it('keeps the Angular plugin management shell mounted without showing backend load errors', async () => {
@@ -300,7 +405,22 @@ describe('plugin manage surface', () => {
     expect(source).toContain('data-plugin-manage-surface="otlp-hertzbeat-ui-plugin-console"');
     expect(source).toContain('data-plugin-manage-style-baseline={coldPluginVisual.canvasName}');
     expect(source).toContain('data-plugin-header="hertzbeat-ui-compact-header"');
+    expect(source).toContain('data-plugin-header-nesting-contract="flat-page-introduction"');
+    expect(source).toContain('className="z-[80] overflow-visible p-0"');
+    expect(source).not.toContain('className={`${coldPluginVisual.panel.hero} z-[80] overflow-visible`}');
     expect(source).toContain('data-plugin-command-row="standard-equal-buttons"');
+    expect(source).toContain('data-plugin-help-style={helpStyle}');
+    expect(source).toContain('data-plugin-help-visual={helpVisual}');
+    expect(source).toContain('data-plugin-help-icon="lucide-circle-help"');
+    expect(source).toContain('data-plugin-action-help-style');
+    expect(source).toContain('data-plugin-upload-field-help-style');
+    expect(source).toContain('data-plugin-param-field-help-style');
+    expect(source).toContain('data-plugin-row-action-help-style');
+    expect(source).toContain('CircleHelp');
+    expect(source).not.toContain('HelpCircle');
+    expect(source).not.toContain("scope === 'action' || scope === 'row-action' ? 'literal-question-after-action'");
+    expect(source).not.toContain('event.preventDefault();\n          }\n          event.stopPropagation();');
+    expect(source).toContain('onMouseDown={event => {\n          event.stopPropagation();\n        }}');
     expect(source).toContain('data-plugin-admin-layout="full-width-admin-list"');
     expect(source).toContain('data-plugin-enable-feedback-contract="angular-edit-notify"');
     expect(source).toContain('data-plugin-enable-feedback-contract-owner="hertzbeat-ui-inline-feedback"');
@@ -519,8 +639,10 @@ describe('plugin manage surface', () => {
     expect(source).toContain('mt-2 z-[9999] min-w-[132px]');
     expect(source).toContain('data-plugin-delete-selected="angular-batch-delete-entry"');
     expect(source).toContain('data-plugin-delete-selected-owner="hertzbeat-ui-table-row-action-button"');
+    expect(source).toContain('data-plugin-command-action="bulk-delete"');
     expect(source).toContain('data-plugin-delete-one={String(original.id)}');
     expect(source).toContain('data-plugin-delete-one-owner="hertzbeat-ui-table-row-action-button"');
+    expect(source).toContain('data-plugin-command-action="row-delete"');
     expect(source).toContain('HzConfirmDialog');
     expect(source).toContain('HzInlineFeedback');
     expect(source).toContain('data-plugin-manage-toolbar="hertzbeat-ui-table-toolbar"');
@@ -677,7 +799,7 @@ describe('plugin manage surface', () => {
         search=""
         selectedIds={[]}
         draftPlugin={null}
-        actionError={t('common.notify.no-select-delete')}
+        actionError={t('setting.plugins.notify.no-select-delete')}
         actionTone="warning"
         actionKind="delete"
         deleteTarget={{
@@ -720,8 +842,12 @@ describe('plugin manage surface', () => {
     expect(html).toContain('data-plugin-delete-confirm="angular-modal-confirm"');
     expect(html).toContain('data-plugin-delete-confirm-owner="hertzbeat-ui-confirm-dialog"');
     expect(html).toContain('data-plugin-delete-confirm-submit="angular-modal-confirm"');
+    expect(html).toContain('data-plugin-command-action="delete-confirm"');
+    expect(html).toContain('data-plugin-command-action="delete-cancel"');
     expect(html).toContain('data-plugin-delete-confirm-target="webhook"');
-    expect(html).toContain(t('common.notify.no-select-delete'));
+    expect(html).toContain('data-plugin-delete-guidance="runtime-dispatch-risk"');
+    expect(html).toContain(t('setting.plugins.delete.guidance'));
+    expect(html).toContain(t('setting.plugins.notify.no-select-delete'));
     expect(html).toContain(t('common.confirm.delete'));
   });
 
@@ -798,6 +924,10 @@ describe('plugin manage surface', () => {
     expect(html).toContain('data-plugin-upload-field-layout="angular-label-8-control-14"');
     expect(html).toContain('data-plugin-upload-label-span="8"');
     expect(html).toContain('data-plugin-upload-control-span="14"');
+    expect(html.split('data-plugin-upload-field-meta="requirement-and-input-mode"').length - 1).toBe(6);
+    expect(html.split('data-plugin-upload-field-requirement="required"').length - 1).toBe(3);
+    expect(html.split('data-plugin-upload-field-input-mode="manual"').length - 1).toBe(1);
+    expect(html.split('data-plugin-upload-field-input-mode="selection"').length - 1).toBe(2);
     expect(html).toContain('data-plugin-upload-feedback="angular-new-notify"');
     expect(html).toContain('data-plugin-upload-feedback-owner="hertzbeat-ui-inline-feedback"');
     expect(html).toContain('data-plugin-upload-name-input="angular-required"');
@@ -809,6 +939,10 @@ describe('plugin manage surface', () => {
     expect(html).toContain('data-plugin-upload-file-remove-contract="angular-nz-remove-clears-jar"');
     expect(html).toContain('data-plugin-upload-file-remove-owner="hertzbeat-ui-file-input"');
     expect(html).toContain('data-plugin-upload-file-remove="angular-nz-remove-clears-jar"');
+    expect(html).toContain('data-plugin-command-action="upload-file-select"');
+    expect(html).toContain('data-plugin-command-action="upload-file-remove"');
+    expect(html).toContain('data-plugin-command-action="upload-cancel"');
+    expect(html).toContain('data-plugin-command-action="upload-save"');
     expect(html).toContain('data-plugin-upload-file-remove-state="empty"');
     expect(html).toContain('data-plugin-upload-file-trigger="angular-jar-before-upload"');
     expect(html).toContain('data-plugin-upload-file-name="angular-jar-before-upload"');
@@ -1140,13 +1274,27 @@ describe('plugin manage surface', () => {
     expect(html).toContain('data-plugin-param-form-owner="hertzbeat-ui-monitor-editor-field-grid"');
     expect(html).toContain('data-plugin-param-feedback="angular-edit-notify"');
     expect(html).toContain('data-plugin-param-feedback-owner="hertzbeat-ui-inline-feedback"');
+    expect(html).toContain('data-plugin-command-action="param-cancel"');
+    expect(html).toContain('data-plugin-command-action="param-save"');
     expect(html).toContain('data-plugin-param-edit-open="31"');
     expect(html).toContain('data-plugin-param-dialog="angular-params-define-modal"');
     expect(html).toContain('data-plugin-param-dialog-plugin="webhook"');
+    expect(html).toContain('data-plugin-param-guidance="runtime-param-risk"');
+    expect(html).toContain(t('setting.plugins.param.guidance'));
     expect(html).toContain('data-plugin-param-form="angular-dynamic-form-field"');
     expect(html).toContain('data-plugin-param-field-layout="angular-label-7-control-8"');
     expect(html).toContain('data-hz-ui="monitor-editor-field-grid"');
     expect(html).toContain('data-plugin-param-field="endpoint"');
+    expect(html).toContain('data-plugin-param-field-help="endpoint"');
+    expect(html).toContain('data-plugin-param-field-help-tooltip="endpoint"');
+    expect(html).toContain('data-plugin-help-style="icon-after-label"');
+    expect(html).toContain('data-plugin-help-visual="circle-help-icon"');
+    expect(html).toContain('data-plugin-help-icon="lucide-circle-help"');
+    expect(html).toContain('data-plugin-param-field-help-style="icon-after-label"');
+    expect(html).not.toContain('data-plugin-param-field-help-style="literal-question-after-label"');
+    expect(html).not.toContain('data-plugin-help-visual="borderless-question"');
+    expect(html).toContain('data-plugin-param-field-mode="required"');
+    expect(html).toContain(t('setting.plugins.param.field.help', { field: 'Endpoint', type: 'text' }));
     expect(html).toContain('data-plugin-param-label-span="7"');
     expect(html).toContain('data-plugin-param-control-span="8"');
     expect(html).toContain('data-plugin-param-field-type="text"');
@@ -1159,6 +1307,7 @@ describe('plugin manage surface', () => {
     expect(html).toContain('data-plugin-param-multi-func-clear-field="endpoint"');
     expect(html).toContain('data-plugin-param-multi-func-clear-owner="hertzbeat-ui-input-affordance"');
     expect(html).toContain('data-plugin-param-field="authType"');
+    expect(html).toContain('data-plugin-param-field-help="authType"');
     expect(html).toContain('data-plugin-param-field-type="radio"');
     expect(html).toContain('data-plugin-param-radio="angular-nz-radio-group"');
     expect(html).toContain('data-plugin-param-radio-field="authType"');
@@ -1167,6 +1316,7 @@ describe('plugin manage surface', () => {
     expect(html).toContain('data-hz-radio-button-option="bearer"');
     expect(html).toContain('data-hz-radio-button-checked="true"');
     expect(html).toContain('data-plugin-param-field="script"');
+    expect(html).toContain('data-plugin-param-field-help="script"');
     expect(html).toContain('data-plugin-param-field-type="textarea"');
     expect(html).toContain('data-plugin-param-textarea="angular-textarea-rows-8"');
     expect(html).toContain('data-plugin-param-textarea-rows="8"');
@@ -1212,6 +1362,8 @@ describe('plugin manage surface', () => {
     expect(html).toContain('data-plugin-param-metrics-field-input="unit"');
     expect(html).toContain('data-plugin-param-metrics-field-input="type"');
     expect(html).toContain('data-plugin-param-field="recipients"');
+    expect(html).toContain('data-plugin-param-field-help="recipients"');
+    expect(html).toContain('data-plugin-param-field-mode="optional"');
     expect(html).toContain('data-plugin-param-field-type="array"');
     expect(html).toContain('data-plugin-param-input="recipients"');
     expect(html).toContain('data-plugin-param-array="angular-app-multi-func-input"');

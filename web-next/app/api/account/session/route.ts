@@ -17,8 +17,8 @@ export async function GET(request: NextRequest) {
   });
 }
 
-export async function DELETE() {
+export async function DELETE(request: NextRequest) {
   const response = NextResponse.json({ authenticated: false });
-  clearSessionCookies(response);
+  clearSessionCookies(response, request);
   return response;
 }

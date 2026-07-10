@@ -201,6 +201,50 @@ describe('status center controller', () => {
     );
   });
 
+  it('normalizes inverted public incident timelines from archival payloads', async () => {
+    const apiGet = vi.fn().mockResolvedValueOnce({
+      content: [
+        {
+          id: 12,
+          name: 'Archive incident',
+          state: 3,
+          startTime: new Date('2026-04-22T09:53:41.157Z').getTime(),
+          endTime: new Date('2025-02-12T02:45:00.000Z').getTime(),
+          gmtCreate: '2026-04-22T17:53:41.158081',
+          gmtUpdate: '2026-04-22T17:53:41.158081',
+          contents: [
+            {
+              message: 'Historical latency spike was traced to a downstream dependency.',
+              state: 0,
+              timestamp: new Date('2025-02-12T01:35:00.000Z').getTime()
+            },
+            {
+              message: 'Service recovered after the retry policy was tuned.',
+              state: 3,
+              timestamp: new Date('2025-02-12T02:45:00.000Z').getTime()
+            }
+          ]
+        }
+      ]
+    });
+
+    await expect(
+      loadStatusPageIncidentFeed(apiGet as any, {
+        selectedYear: 2026,
+        currentYear: 2026,
+        reloadToken: 1,
+        initialIncidents: []
+      })
+    ).resolves.toEqual([
+      expect.objectContaining({
+        id: 12,
+        title: 'Archive incident',
+        createTime: new Date('2025-02-12T01:35:00.000Z').getTime(),
+        updateTime: new Date('2025-02-12T02:45:00.000Z').getTime()
+      })
+    ]);
+  });
+
   it('surfaces incident load failures without failing the whole status page', async () => {
     const apiGet = vi
       .fn()

@@ -15,7 +15,7 @@ export interface SearchRowProps extends Omit<React.FormHTMLAttributes<HTMLFormEl
   showClearWhenEmpty?: boolean;
   trailingActions?: React.ReactNode;
   onValueChange: (value: string) => void;
-  onSearch: () => void;
+  onSearch: (value: string) => void;
   onClear?: () => void;
 }
 
@@ -40,6 +40,29 @@ export function SearchRow({
   className,
   ...props
 }: SearchRowProps) {
+  const latestSearchValueRef = React.useRef(value);
+
+  React.useEffect(() => {
+    latestSearchValueRef.current = value;
+  }, [value]);
+
+  const submitSearchValue = (candidateValue: string) => {
+    latestSearchValueRef.current = candidateValue;
+    onSearch(candidateValue);
+  };
+
+  const handleValueInput = (event: React.FormEvent<HTMLInputElement>) => {
+    const nextValue = event.currentTarget.value;
+    latestSearchValueRef.current = nextValue;
+    onValueChange(nextValue);
+  };
+
+  const handleInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key !== 'Enter' || event.nativeEvent.isComposing) return;
+    event.preventDefault();
+    submitSearchValue(event.currentTarget.value);
+  };
+
   return (
     <form
       data-hz-ui="search-row"
@@ -48,22 +71,27 @@ export function SearchRow({
       className={cn('mb-6 flex w-fit max-w-full min-w-0 flex-wrap items-center gap-2', className)}
       onSubmit={event => {
         event.preventDefault();
-        onSearch();
+        const formValue = new FormData(event.currentTarget).get('search');
+        const submittedValue = typeof formValue === 'string' && formValue !== value ? formValue : latestSearchValueRef.current;
+        submitSearchValue(submittedValue);
       }}
       {...props}
     >
       <input
+        name="search"
         type="search"
         data-hz-search-input="fixed-width-direct"
         data-hz-search-control="direct-input"
         data-hz-search-chrome="no-extra-input-shell"
+        data-hz-search-enter-submit="direct-input"
         className={cn(
           'h-8 max-w-full rounded-[3px] border border-[#282d36] bg-[#101217] px-3 text-[12px] font-semibold text-[#eef2f7] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] outline-none placeholder:text-[#6f7788] focus:border-[#4e74f8] focus:ring-2 focus:ring-[rgba(78,116,248,0.12)]',
           inputWidthClassName
         )}
         placeholder={placeholder}
         value={value}
-        onChange={event => onValueChange(event.target.value)}
+        onInput={handleValueInput}
+        onKeyDown={handleInputKeyDown}
       />
       {filters ? (
         <div data-hz-search-filter-slot="inline-before-submit" className="flex min-w-0 flex-wrap items-center gap-2">

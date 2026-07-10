@@ -99,6 +99,7 @@ public class MonitorServiceImpl implements MonitorService {
     public static final String PATTERN_HTTPS = "(?i)https://";
     private static final Long MONITOR_ID_TMP = 1000000000L;
     public static final String PARAM_FIELD_PORT = "port";
+    private static final String MONITOR_COPY_SUFFIX = "_copy";
 
     @Autowired
     private ParamValidatorManager paramValidatorManager;
@@ -760,7 +761,7 @@ public class MonitorServiceImpl implements MonitorService {
         // Copy basic properties, exclude ID, jobId and status
         BeanUtils.copyProperties(sourceMonitor, newMonitor, "id", "jobId", "status");
         // Set new name
-        newMonitor.setName(sourceMonitor.getName() + "_copy");
+        newMonitor.setName(buildCopyMonitorName(sourceMonitor.getName()));
         // Set initial status
         newMonitor.setStatus(CommonConstants.MONITOR_UP_CODE);
         // Set create and update time
@@ -777,6 +778,17 @@ public class MonitorServiceImpl implements MonitorService {
             }
         }
         addMonitor(newMonitor, newParams, null, null);
+    }
+
+    private String buildCopyMonitorName(String sourceName) {
+        String baseName = StringUtils.hasText(sourceName) ? sourceName.trim() : "monitor";
+        String candidate = baseName + MONITOR_COPY_SUFFIX;
+        int index = 2;
+        while (oldMonitorCatalogQueryService.findMonitorByName(candidate).isPresent()) {
+            candidate = baseName + MONITOR_COPY_SUFFIX + "_" + index;
+            index++;
+        }
+        return candidate;
     }
 
     private void detectSdMonitor(Monitor monitor, List<Param> params, String collector) {

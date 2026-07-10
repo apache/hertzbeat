@@ -34,6 +34,7 @@ export function BulletinManageDialog({
     <OverlayDialog
       open={open}
       onClose={onClose}
+      closeLabel={t('common.dialog.close')}
       kicker={t('menu.monitor.bulletin')}
       title={mode === 'new' ? t('bulletin.new') : t('bulletin.edit')}
       maxWidthClassName="max-w-4xl"
@@ -51,6 +52,7 @@ export function BulletinManageDialog({
       <div className="grid gap-4 md:grid-cols-[160px_minmax(0,1fr)]">
         <div className="pt-2 text-right text-[12px] font-medium text-[var(--ops-text-secondary)]">{t('bulletin.name')}</div>
         <Input
+          aria-label={t('bulletin.name')}
           value={draft.name}
           onChange={event => onDraftChange({ ...draft, name: event.target.value })}
           className="h-10 border-[var(--ops-border-color)] bg-[var(--ops-surface-panel)] text-[var(--ops-text-primary)]"
@@ -58,6 +60,7 @@ export function BulletinManageDialog({
 
         <div className="pt-2 text-right text-[12px] font-medium text-[var(--ops-text-secondary)]">{t('bulletin.monitor.type')}</div>
         <Input
+          aria-label={t('bulletin.monitor.type')}
           value={draft.app}
           onChange={event => onDraftChange({ ...draft, app: event.target.value })}
           className="h-10 border-[var(--ops-border-color)] bg-[var(--ops-surface-panel)] text-[var(--ops-text-primary)]"
@@ -65,6 +68,7 @@ export function BulletinManageDialog({
 
         <div className="pt-2 text-right text-[12px] font-medium text-[var(--ops-text-secondary)]">{t('bulletin.monitor.name')}</div>
         <Input
+          aria-label={t('bulletin.monitor.name')}
           value={draft.monitorIdsText}
           onChange={event => onDraftChange({ ...draft, monitorIdsText: event.target.value })}
           placeholder={t('bulletin.monitor.ids.placeholder')}

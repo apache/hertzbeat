@@ -37,6 +37,35 @@ describe('alert controller', () => {
     });
   });
 
+  it('trims oversized alert center payloads to the requested page size while preserving totals', async () => {
+    const alertRows = Array.from({ length: 40 }, (_, index) => ({
+      id: index + 1,
+      alertName: `checkout-alert-${index + 1}`
+    }));
+    const apiGet = vi.fn()
+      .mockResolvedValueOnce({ total: 40 })
+      .mockResolvedValueOnce({ content: alertRows, totalElements: 40, pageIndex: 0, pageSize: 40 })
+      .mockResolvedValueOnce(undefined);
+
+    const result = await loadAlertCenterData(apiGet, {
+      search: 'checkout',
+      status: 'firing',
+      severity: '',
+      pageIndex: 0,
+      pageSize: 15,
+      entityId: '',
+      entityName: '',
+      returnTo: ''
+    });
+
+    expect(result.groupAlerts).toEqual({
+      content: alertRows.slice(0, 15),
+      totalElements: 40,
+      pageIndex: 0,
+      pageSize: 15
+    });
+  });
+
   it('loads entity noise-control context when the alert workbench is scoped to one entity', async () => {
     const apiGet = vi.fn()
       .mockResolvedValueOnce({ total: 2 })
@@ -111,6 +140,42 @@ describe('alert controller', () => {
     });
   });
 
+  it('trims oversized alert center facade payloads to the supported page size', async () => {
+    const alertRows = Array.from({ length: 40 }, (_, index) => ({
+      id: index + 1,
+      alertName: `facade-alert-${index + 1}`
+    }));
+    const apiFacade = {
+      alerts: {
+        summary: vi.fn().mockResolvedValue({ total: 40 }),
+        groupAlerts: vi.fn().mockResolvedValue({ content: alertRows, totalElements: 40, pageIndex: 0, pageSize: 40 })
+      },
+      entities: {
+        detail: vi.fn()
+      }
+    };
+    const query = {
+      search: 'checkout',
+      status: 'firing',
+      severity: '',
+      pageIndex: 0,
+      pageSize: 25,
+      entityId: '',
+      entityName: '',
+      returnTo: ''
+    };
+
+    const result = await loadAlertCenterDataFromFacade(apiFacade, query);
+
+    expect(apiFacade.alerts.groupAlerts).toHaveBeenCalledWith(query);
+    expect(result.groupAlerts).toEqual({
+      content: alertRows.slice(0, 25),
+      totalElements: 40,
+      pageIndex: 0,
+      pageSize: 25
+    });
+  });
+
   it('maps OTLP alert closure operations to the existing group-alert mutation endpoints', async () => {
     const apiPut = vi.fn().mockResolvedValue(undefined);
     const apiDelete = vi.fn().mockResolvedValue(undefined);
@@ -160,11 +225,12 @@ describe('alert controller', () => {
     expect(() => buildAlertGroupCloseMutationUrl([])).toThrow('Alert group id is required');
   });
 
-  it('builds a post-closure reload query that preserves filters and evidence context like Angular reloads', () => {
+  it('builds a post-closure reload query that keeps the acted alert visible with its new status', () => {
     const evidenceQuery = {
       search: 'checkout',
       status: 'firing',
       severity: 'critical',
+      pageIndex: 2,
       entityId: '42',
       entityName: 'Checkout API',
       serviceName: 'checkout',
@@ -183,11 +249,31 @@ describe('alert controller', () => {
       returnTo: '/log/manage?traceId=trace-123'
     };
 
-    expect(buildAlertQueryAfterClosureOperation(evidenceQuery, 'acknowledge')).toEqual(evidenceQuery);
-    expect(buildAlertQueryAfterClosureOperation(evidenceQuery, 'recover')).toEqual(evidenceQuery);
-    expect(buildAlertQueryAfterClosureOperation(evidenceQuery, 'resolve')).toEqual(evidenceQuery);
-    expect(buildAlertQueryAfterClosureOperation(evidenceQuery, 'unacknowledge')).toEqual(evidenceQuery);
-    expect(buildAlertQueryAfterClosureOperation(evidenceQuery, 'reopen')).toEqual(evidenceQuery);
+    expect(buildAlertQueryAfterClosureOperation(evidenceQuery, 'acknowledge')).toEqual({
+      ...evidenceQuery,
+      status: 'acknowledged',
+      pageIndex: 0
+    });
+    expect(buildAlertQueryAfterClosureOperation(evidenceQuery, 'recover')).toEqual({
+      ...evidenceQuery,
+      status: 'resolved',
+      pageIndex: 0
+    });
+    expect(buildAlertQueryAfterClosureOperation(evidenceQuery, 'resolve')).toEqual({
+      ...evidenceQuery,
+      status: 'resolved',
+      pageIndex: 0
+    });
+    expect(buildAlertQueryAfterClosureOperation({ ...evidenceQuery, status: 'acknowledged' }, 'unacknowledge')).toEqual({
+      ...evidenceQuery,
+      status: 'firing',
+      pageIndex: 0
+    });
+    expect(buildAlertQueryAfterClosureOperation({ ...evidenceQuery, status: 'resolved' }, 'reopen')).toEqual({
+      ...evidenceQuery,
+      status: 'firing',
+      pageIndex: 0
+    });
     expect(buildAlertQueryAfterClosureOperation(evidenceQuery, 'close')).toEqual(evidenceQuery);
     expect(buildAlertQueryAfterClosureOperation(evidenceQuery, 'delete')).toEqual(evidenceQuery);
   });

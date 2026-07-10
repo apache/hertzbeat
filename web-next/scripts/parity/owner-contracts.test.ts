@@ -20,6 +20,13 @@ describe('milestone 2 parity owner contracts', () => {
 
   it('keeps three-signal desks and log compatibility aliases on their declared shared owners', () => {
     const plan = buildParityRunPlan(manifest, { milestone: 2 });
+    const threeSignalRouteOwners = {
+      'overview-desk': 'OverviewPage',
+      'log-manage-desk': 'LogManagePage',
+      'trace-manage-desk': 'TraceManagePage',
+      'otlp-center-desk': 'OtlpPage',
+      'otlp-metrics-console': 'OtlpMetricsPage'
+    } as const;
 
     for (const target of plan) {
       const pageSource = readFileSync(path.join(repoRoot, target.nextPagePath), 'utf8');
@@ -31,7 +38,9 @@ describe('milestone 2 parity owner contracts', () => {
         : pageSource;
 
       if (target.parityOwner === 'ThreeSignalDeskShell') {
-        expect(ownerSource).toContain('ThreeSignalDeskShell');
+        const routeOwner = threeSignalRouteOwners[target.routePairKey as keyof typeof threeSignalRouteOwners];
+        expect(routeOwner).toBeTruthy();
+        expect(pageSource).toContain(routeOwner);
       }
 
       if (target.parityOwner === 'LogManagePage') {
@@ -40,6 +49,10 @@ describe('milestone 2 parity owner contracts', () => {
 
       if (target.parityOwner === 'buildLogCompatRouteUrl') {
         expect(pageSource).toContain('buildLogCompatRouteUrl');
+      }
+
+      if (target.parityOwner === 'buildLogIntegrationIngestionHref') {
+        expect(pageSource).toContain('buildLogIntegrationIngestionHref');
       }
     }
   });

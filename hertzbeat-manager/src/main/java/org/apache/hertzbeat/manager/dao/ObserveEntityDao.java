@@ -34,10 +34,14 @@ public interface ObserveEntityDao extends JpaRepository<ObserveEntity, Long>, Jp
 
     Optional<ObserveEntity> findFirstByTypeAndName(String type, String name);
 
+    Optional<ObserveEntity> findFirstByName(String name);
+
     Optional<ObserveEntity> findFirstByWorkspaceIdAndTypeAndNamespaceAndName(
             String workspaceId, String type, String namespace, String name);
 
     Optional<ObserveEntity> findFirstByWorkspaceIdAndTypeAndName(String workspaceId, String type, String name);
+
+    Optional<ObserveEntity> findFirstByWorkspaceIdAndName(String workspaceId, String name);
 
     List<ObserveEntity> findAllByWorkspaceId(String workspaceId, Sort sort);
 

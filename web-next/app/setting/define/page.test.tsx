@@ -87,9 +87,9 @@ vi.mock('@/components/pages/setting-define-surface', () => ({
     const {
       selectedApp,
       yamlLabel,
+      monitorHref,
       editorValue,
       originalYaml,
-      darkMode,
       isEditing,
       menuLoading,
       editorLoading,
@@ -98,6 +98,7 @@ vi.mock('@/components/pages/setting-define-surface', () => ({
       messageMeta,
       messageContract,
       onNew,
+      onCancel,
       onSave,
       onDelete,
       onToggleTemplateVisibility
@@ -113,9 +114,9 @@ vi.mock('@/components/pages/setting-define-surface', () => ({
         data-setting-define-load-failure-contract="angular-console-only-shell"
         data-setting-define-load-failure-owner="setting-define-controller"
         data-setting-define-load-failure={loadError ? 'angular-console-only-shell' : 'none'}
-        data-setting-define-theme-switch-contract="angular-nz-switch-code-editor-theme"
-        data-setting-define-theme-switch-owner="hertzbeat-ui-switch"
-        data-setting-define-theme-switch-state={darkMode ? 'vs-dark' : 'vs'}
+        data-setting-define-theme-switch-contract="removed-redundant-local-toggle"
+        data-setting-define-theme-switch-owner="setting-define-surface"
+        data-setting-define-theme-switch-state="vs-dark"
         data-setting-define-save-reload-contract="angular-load-app-define-content-after-save"
         data-setting-define-save-reload-owner="setting-define-controller"
         data-setting-define-save-reload-scope={selectedApp ? 'existing-template' : 'new-template-draft'}
@@ -136,15 +137,15 @@ vi.mock('@/components/pages/setting-define-surface', () => ({
         data-setting-define-new-action-contract="angular-current-app-reset-url-retained"
         data-setting-define-new-action-owner="setting-define-controller"
         data-setting-define-new-action-state={selectedApp ? 'available' : 'hidden'}
-        data-setting-define-menu-select-query-contract="angular-replace-with-app-only"
+        data-setting-define-menu-select-query-contract="retain-context-while-updating-app"
         data-setting-define-menu-select-query-owner="setting-define-page-router"
+        data-setting-define-test-monitor-href={monitorHref || ''}
       >
         <span>Define</span>
         <span>{selectedApp}</span>
         <span>{yamlLabel}</span>
         <span>{editorValue}</span>
         <span data-setting-define-original-yaml="true">{originalYaml}</span>
-        <span>{String(darkMode)}</span>
         <span>{String(isEditing)}</span>
         <span data-setting-define-load-error={loadError ? 'present' : 'none'} />
         <span data-setting-define-test-save-pending="true">{String(props.savePending)}</span>
@@ -154,6 +155,7 @@ vi.mock('@/components/pages/setting-define-surface', () => ({
           data-setting-define-test-message-contract={messageContract || ''}
         />
         <button data-setting-define-test-new="true" onClick={onNew}>new</button>
+        <button data-setting-define-test-cancel="true" onClick={onCancel}>cancel</button>
         <button data-setting-define-test-save="true" onClick={onSave}>save</button>
         <button data-setting-define-test-delete="true" onClick={onDelete}>delete</button>
         <button data-setting-define-test-visibility="true" onClick={() => onToggleTemplateVisibility('mysql', true)}>visibility</button>
@@ -173,6 +175,10 @@ vi.mock('@/lib/setting-define/controller', () => ({
   loadDefineCenterData,
   buildNewTemplateYaml: () => 'app: custom',
   buildNewTemplateDraft: () => ({ yaml: 'app: custom\n\n\n\n\n', originalYaml: 'app: custom' }),
+  readTemplateAppFromYaml: (yaml: string) => {
+    const match = yaml.match(/^\s*app:\s*['"]?([^'"\s#]+)['"]?/m);
+    return match?.[1]?.trim() || null;
+  },
   saveTemplateDefine,
   deleteTemplateDefine,
   updateTemplateVisibility,
@@ -226,8 +232,8 @@ describe('setting define page', () => {
     expect(html).toContain('data-setting-define-load-failure-contract="angular-console-only-shell"');
     expect(html).toContain('data-setting-define-load-failure-owner="setting-define-controller"');
     expect(html).toContain('data-setting-define-load-failure="none"');
-    expect(html).toContain('data-setting-define-theme-switch-contract="angular-nz-switch-code-editor-theme"');
-    expect(html).toContain('data-setting-define-theme-switch-owner="hertzbeat-ui-switch"');
+    expect(html).toContain('data-setting-define-theme-switch-contract="removed-redundant-local-toggle"');
+    expect(html).toContain('data-setting-define-theme-switch-owner="setting-define-surface"');
     expect(html).toContain('data-setting-define-theme-switch-state="vs-dark"');
     expect(html).toContain('data-setting-define-save-reload-contract="angular-load-app-define-content-after-save"');
     expect(html).toContain('data-setting-define-save-reload-owner="setting-define-controller"');
@@ -249,13 +255,12 @@ describe('setting define page', () => {
     expect(html).toContain('data-setting-define-new-action-contract="angular-current-app-reset-url-retained"');
     expect(html).toContain('data-setting-define-new-action-owner="setting-define-controller"');
     expect(html).toContain('data-setting-define-new-action-state="hidden"');
-    expect(html).toContain('data-setting-define-menu-select-query-contract="angular-replace-with-app-only"');
+    expect(html).toContain('data-setting-define-menu-select-query-contract="retain-context-while-updating-app"');
     expect(html).toContain('data-setting-define-menu-select-query-owner="setting-define-page-router"');
     expect(html).toContain('mysql');
     expect(html).toContain('app-mysql.yml');
     expect(html).toContain('app: mysql');
     expect(html).toContain('data-setting-define-original-yaml="true"');
-    expect(html).toContain('true');
 
     await mockState.lastLoad?.();
 
@@ -281,16 +286,18 @@ describe('setting define page', () => {
     expect(mockState.lastSurfaceProps?.loadError).toBe('backend refused define load');
   });
 
-  it('initializes the YML editor dark toggle from the Angular theme service contract', async () => {
+  it('does not create a page-local YML editor theme toggle', async () => {
     const { default: SettingDefinePage } = await import('./page');
 
     window.localStorage.setItem('theme', 'light-ops');
     renderToStaticMarkup(<SettingDefinePage />);
-    expect(mockState.lastSurfaceProps?.darkMode).toBe(false);
+    expect(mockState.lastSurfaceProps).not.toHaveProperty('darkMode');
+    expect(mockState.lastSurfaceProps).not.toHaveProperty('onToggleDarkMode');
 
     document.body.setAttribute('data-theme', 'dark-ops');
     renderToStaticMarkup(<SettingDefinePage />);
-    expect(mockState.lastSurfaceProps?.darkMode).toBe(true);
+    expect(mockState.lastSurfaceProps).not.toHaveProperty('darkMode');
+    expect(mockState.lastSurfaceProps).not.toHaveProperty('onToggleDarkMode');
   });
 
   it('keeps setting define remounts keyed by selected app and reload version', () => {
@@ -308,16 +315,18 @@ describe('setting define page', () => {
     expect(source).toContain("if (typeof window === 'undefined') return undefined;");
     expect(source).toContain('useState<string | null | undefined>(() => readInitialSelectedApp())');
     expect(source).toContain('writeSelectedAppToUrl(app)');
-    expect(source).toContain("const nextSearch = app ? `?app=${encodeURIComponent(app)}` : '';");
-    expect(source).toContain("window.history.pushState({}, '', `${url.pathname}${nextSearch}`);");
-    expect(source).not.toContain("url.searchParams.set('app', app)");
+    expect(source).toContain("url.searchParams.set('app', app);");
+    expect(source).toContain("url.searchParams.delete('app');");
+    expect(source).toContain("window.history.pushState({}, '', `${url.pathname}${url.search}`);");
+    expect(source).not.toContain("const nextSearch = app ? `?app=${encodeURIComponent(app)}` : '';");
     expect(source).toContain('setEditorValue(null)');
     expect(source).toContain('setOriginalYaml(null)');
-    expect(source).toContain('resolveDefineWorkbenchTheme');
-    expect(source).toContain("window.localStorage.getItem('theme')");
-    expect(source).toContain("document.body?.getAttribute('data-theme')");
-    expect(source).toContain("document.documentElement?.getAttribute('data-theme')");
-    expect(source).toContain("const [darkMode, setDarkMode] = useState(() => readInitialDefineDarkMode());");
+    expect(source).not.toContain('resolveDefineWorkbenchTheme');
+    expect(source).not.toContain("window.localStorage.getItem('theme')");
+    expect(source).not.toContain("document.body?.getAttribute('data-theme')");
+    expect(source).not.toContain("document.documentElement?.getAttribute('data-theme')");
+    expect(source).not.toContain('readInitialDefineDarkMode');
+    expect(source).not.toContain('onToggleDarkMode');
     expect(source).toContain("['setting-define-yml', selectedApp || 'new', reloadVersion].join(':')");
     expect(source).toContain('[selectedApp, reloadVersion]');
     expect(source).toContain('[selectedApp, locale]');
@@ -326,8 +335,9 @@ describe('setting define page', () => {
     expect(source).toContain('const activeApp = selectedApp === undefined ? data.selectedApp : selectedApp;');
     expect(source).not.toContain('const activeApp = selectedApp ?? data.selectedApp;');
     expect(source).toContain('originalYaml={resolvedOriginalYaml}');
-    expect(source).not.toContain('const [darkMode, setDarkMode] = useState(false);');
+    expect(source).not.toContain('darkMode');
     expect(source).toContain('const [savePending, setSavePending] = useState(false);');
+    expect(source).toContain('const [newTemplateReturnApp, setNewTemplateReturnApp] = useState<string | null>(null);');
     expect(source).toContain('const [messageMeta, setMessageMeta] = useState<string | null>(null);');
     expect(source).toContain('const [messageContract, setMessageContract] = useState<string | null>(null);');
     expect(source).toContain('function readMutationFailureDetail(error: unknown, fallback = \'\')');
@@ -336,9 +346,14 @@ describe('setting define page', () => {
     expect(source).toContain('messageContract={messageContract}');
     expect(source).toContain('setEditorValue(draft.yaml)');
     expect(source).toContain('setOriginalYaml(draft.originalYaml)');
-    expect(source).not.toContain('writeSelectedAppToUrl(null);');
+    expect(source).toContain('const returnApp = selectedApp ?? readInitialSelectedApp() ?? null;');
+    expect(source).toContain('setNewTemplateReturnApp(returnApp);');
+    expect(source).toContain('if (!activeApp && newTemplateReturnApp) {');
+    expect(source).toContain('setSelectedApp(newTemplateReturnApp);');
+    expect(source).toContain('writeSelectedAppToUrl(newTemplateReturnApp);');
+    expect(source).toContain('writeSelectedAppToUrl(null);');
     expect(source).toContain('currentYaml === currentOriginalYaml');
-    expect(source).toContain("currentYaml === ''");
+    expect(source).toContain("currentYaml.trim() === ''");
     expect(source).toContain("t('define.save-apply.no-code')");
     expect(source).toContain("await saveTemplateDefine(apiMessagePost, apiMessagePut, currentYaml, !currentApp);");
     expect(source).toContain("setMessage(t('common.notify.apply-success'));");
@@ -408,6 +423,51 @@ describe('setting define page', () => {
     expect(mockState.lastSurfaceProps?.originalYaml).toBe('app: mysql\ncategory: database\n# backend canonical');
     expect(mockState.lastSurfaceProps?.isEditing).toBe(false);
     expect(reloadTemplateDefinitionStartupContext).toHaveBeenCalledWith(apiMessageGet, 'zh-CN');
+
+    await act(async () => {
+      root.unmount();
+      await Promise.resolve();
+    });
+    container.remove();
+  });
+
+  it('blocks whitespace-only YML before calling the save API', async () => {
+    window.history.pushState({}, '', '/setting/define?app=mysql');
+    mockState.renderData = {
+      menuGroups: [
+        {
+          key: 'database',
+          label: 'DATABASE',
+          items: [{ category: 'database', value: 'mysql', label: 'MySQL', hide: false }]
+        }
+      ],
+      appLabels: { mysql: 'MySQL' },
+      selectedApp: 'mysql',
+      yaml: '   \n   ',
+      originalYaml: 'app: mysql\ncategory: database'
+    };
+    const { default: SettingDefinePage } = await import('./page');
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(<SettingDefinePage />);
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onSave();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(saveTemplateDefine).not.toHaveBeenCalled();
+    expect(apiMessagePost).not.toHaveBeenCalled();
+    expect(apiMessagePut).not.toHaveBeenCalled();
+    expect(mockState.lastSurfaceProps?.message).toBe(createTranslatorMock({ locale: 'zh-CN' })('define.save-apply.no-code'));
+    expect(mockState.lastSurfaceProps?.messageContract).toBeNull();
+    expect(mockState.lastSurfaceProps?.savePending).toBe(false);
 
     await act(async () => {
       root.unmount();
@@ -513,7 +573,7 @@ describe('setting define page', () => {
     container.remove();
   });
 
-  it('keeps the Angular URL app parameter when starting a new draft or after delete success', async () => {
+  it('resets the URL app parameter when starting a new draft while retaining route context', async () => {
     window.history.pushState({}, '', '/setting/define?app=mysql&returnTo=%2Fsettings');
     mockState.renderData = {
       menuGroups: [
@@ -548,7 +608,7 @@ describe('setting define page', () => {
 
     expect(mockState.lastSurfaceProps?.selectedApp).toBeNull();
     expect(mockState.lastSurfaceProps?.editorValue).toBe('app: custom\n\n\n\n\n');
-    expect(window.location.search).toContain('app=mysql');
+    expect(window.location.search).not.toContain('app=mysql');
     expect(window.location.search).toContain('returnTo=%2Fsettings');
 
     await act(async () => {
@@ -556,6 +616,24 @@ describe('setting define page', () => {
       await Promise.resolve();
     });
     container.remove();
+  });
+
+  it('keeps the old Angular URL app parameter after delete success', async () => {
+    window.history.pushState({}, '', '/setting/define?app=mysql&returnTo=%2Fsettings');
+    mockState.renderData = {
+      menuGroups: [
+        {
+          key: 'database',
+          label: 'DATABASE',
+          items: [{ category: 'database', value: 'mysql', label: 'MySQL', hide: false }]
+        }
+      ],
+      appLabels: { mysql: 'MySQL' },
+      selectedApp: 'mysql',
+      yaml: 'app: mysql\ncategory: database',
+      originalYaml: 'app: mysql\ncategory: database'
+    };
+    const { default: SettingDefinePage } = await import('./page');
 
     window.history.pushState({}, '', '/setting/define?app=mysql&returnTo=%2Fsettings');
     const deleteContainer = document.createElement('div');
@@ -589,7 +667,72 @@ describe('setting define page', () => {
     deleteContainer.remove();
   });
 
-  it('navigates selected menu templates through the Angular app query contract', async () => {
+  it('cancels a new draft back to the retained URL app without saving', async () => {
+    window.history.pushState({}, '', '/setting/define?app=mysql&returnTo=%2Fsettings');
+    mockState.renderData = {
+      menuGroups: [
+        {
+          key: 'database',
+          label: 'DATABASE',
+          items: [{ category: 'database', value: 'mysql', label: 'MySQL', hide: false }]
+        }
+      ],
+      appLabels: { mysql: 'MySQL' },
+      selectedApp: 'mysql',
+      yaml: 'app: mysql\ncategory: database\n# backend canonical',
+      originalYaml: 'app: mysql\ncategory: database\n# backend canonical'
+    };
+    const { default: SettingDefinePage } = await import('./page');
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(<SettingDefinePage />);
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onNew();
+      await Promise.resolve();
+    });
+
+    expect(mockState.lastSurfaceProps?.selectedApp).toBeNull();
+    expect(mockState.lastSurfaceProps?.editorValue).toBe('app: custom\n\n\n\n\n');
+    expect(mockState.lastSurfaceProps?.isEditing).toBe(true);
+    expect(window.location.search).not.toContain('app=mysql');
+    expect(window.location.search).toContain('returnTo=%2Fsettings');
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onEditorValueChange('app: custom\ncategory: custom\n# local draft edit');
+      await Promise.resolve();
+    });
+
+    expect(mockState.lastSurfaceProps?.editorValue).toBe('app: custom\ncategory: custom\n# local draft edit');
+
+    await act(async () => {
+      mockState.lastSurfaceProps?.onCancel();
+      await Promise.resolve();
+    });
+
+    expect(mockState.lastSurfaceProps?.selectedApp).toBe('mysql');
+    expect(mockState.lastSurfaceProps?.editorValue).toBe('app: mysql\ncategory: database\n# backend canonical');
+    expect(mockState.lastSurfaceProps?.originalYaml).toBe('app: mysql\ncategory: database\n# backend canonical');
+    expect(mockState.lastSurfaceProps?.isEditing).toBe(false);
+    expect(window.location.search).toContain('app=mysql');
+    expect(window.location.search).toContain('returnTo=%2Fsettings');
+    expect(saveTemplateDefine).not.toHaveBeenCalled();
+    expect(apiMessagePost).not.toHaveBeenCalled();
+    expect(apiMessagePut).not.toHaveBeenCalled();
+
+    await act(async () => {
+      root.unmount();
+      await Promise.resolve();
+    });
+    container.remove();
+  });
+
+  it('navigates selected menu templates while retaining route context query parameters', async () => {
     window.history.pushState({}, '', '/setting/define?app=mysql&returnTo=%2Fsettings');
     const { default: SettingDefinePage } = await import('./page');
     const container = document.createElement('div');
@@ -609,13 +752,58 @@ describe('setting define page', () => {
     });
 
     expect(window.location.search).toContain('app=linux');
-    expect(window.location.search).toBe('?app=linux');
-    expect(window.location.search).not.toContain('returnTo=%2Fsettings');
+    expect(window.location.search).toContain('returnTo=%2Fsettings');
     expect(mockState.lastSurfaceProps?.selectedApp).toBe('linux');
     expect(mockState.lastSurfaceProps?.isEditing).toBe(false);
 
     await mockState.lastLoad?.();
     expect(loadDefineCenterData).toHaveBeenLastCalledWith(apiMessageGet, 'linux', 'zh-CN');
+
+    await act(async () => {
+      root.unmount();
+      await Promise.resolve();
+    });
+    container.remove();
+  });
+
+  it('builds the selected template monitor link without dropping route context query parameters', async () => {
+    window.history.pushState(
+      {},
+      '',
+      '/setting/define?app=website&source=define-monitor-link-test&returnTo=%2Fsetting%2Flabels%3Fsearch%3Duv_define_monitor_link_test%26source%3Dreturn&pageSize=8&timeRange=last-30m&live=false&probe=define-monitor-link-test'
+    );
+    mockState.renderData = {
+      menuGroups: [
+        {
+          key: 'network',
+          label: 'NETWORK',
+          items: [{ category: 'network', value: 'website', label: 'Website', hide: false }]
+        }
+      ],
+      appLabels: { website: 'Website' },
+      selectedApp: 'website',
+      yaml: 'app: website\ncategory: network',
+      originalYaml: 'app: website\ncategory: network'
+    };
+    const { default: SettingDefinePage } = await import('./page');
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(<SettingDefinePage />);
+      await Promise.resolve();
+    });
+
+    const monitorHref = mockState.lastSurfaceProps?.monitorHref;
+    expect(monitorHref).toContain('/monitors?');
+    expect(monitorHref).toContain('app=website');
+    expect(monitorHref).toContain('source=define-monitor-link-test');
+    expect(monitorHref).toContain('returnTo=%2Fsetting%2Flabels%3Fsearch%3Duv_define_monitor_link_test%26source%3Dreturn');
+    expect(monitorHref).toContain('pageSize=8');
+    expect(monitorHref).toContain('timeRange=last-30m');
+    expect(monitorHref).toContain('live=false');
+    expect(monitorHref).toContain('probe=define-monitor-link-test');
 
     await act(async () => {
       root.unmount();
@@ -697,9 +885,24 @@ describe('setting define page', () => {
     container.remove();
   });
 
-  it('preserves the old Angular edit flag when saving a direct new-template YML draft', async () => {
-    const draftYaml = 'app: custom\ncategory: custom\n# still drafting';
+  it('selects the saved app after saving a direct new-template YML draft', async () => {
+    const draftYaml = 'app: custom\ncategory: custom\n# saved draft';
     const draftOriginalYaml = '# Define a new monitoring type by editing YML content here';
+    saveTemplateDefine.mockImplementation(async () => {
+      mockState.renderData = {
+        menuGroups: [
+          {
+            key: 'custom',
+            label: 'CUSTOM',
+            items: [{ category: 'custom', value: 'custom', label: 'Custom', hide: false }]
+          }
+        ],
+        appLabels: { custom: 'Custom' },
+        selectedApp: 'custom',
+        yaml: draftYaml,
+        originalYaml: draftYaml
+      };
+    });
     mockState.renderData = {
       menuGroups: [
         {
@@ -735,10 +938,11 @@ describe('setting define page', () => {
     });
 
     expect(saveTemplateDefine).toHaveBeenCalledWith(apiMessagePost, apiMessagePut, draftYaml, true);
-    expect(mockState.lastSurfaceProps?.selectedApp).toBeNull();
+    expect(mockState.lastSurfaceProps?.selectedApp).toBe('custom');
     expect(mockState.lastSurfaceProps?.editorValue).toBe(draftYaml);
-    expect(mockState.lastSurfaceProps?.originalYaml).toBe(draftOriginalYaml);
+    expect(mockState.lastSurfaceProps?.originalYaml).toBe(draftYaml);
     expect(mockState.lastSurfaceProps?.isEditing).toBe(false);
+    expect(window.location.search).toContain('app=custom');
 
     await act(async () => {
       root.unmount();

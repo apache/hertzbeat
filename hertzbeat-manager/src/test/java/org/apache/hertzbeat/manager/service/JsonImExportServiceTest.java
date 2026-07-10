@@ -21,14 +21,23 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import org.apache.hertzbeat.common.entity.manager.Monitor;
+import org.apache.hertzbeat.common.entity.manager.Param;
+import org.apache.hertzbeat.manager.config.ManagerSseManager;
+import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.service.impl.AbstractImExportServiceImpl;
 import org.apache.hertzbeat.manager.service.impl.JsonImExportServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * Test case for {@link JsonImExportServiceImpl}
@@ -87,6 +96,69 @@ class JsonImExportServiceTest {
     @Test
     void testType() {
         assertEquals("JSON", jsonImExportService.type());
+    }
+
+    @Test
+    void importConfigRestoresInstanceFromLegacyHostParam() {
+        MonitorService monitorService = org.mockito.Mockito.mock(MonitorService.class);
+        ManagerSseManager managerSseManager = org.mockito.Mockito.mock(ManagerSseManager.class);
+        ReflectionTestUtils.setField(jsonImExportService, "monitorService", monitorService);
+        ReflectionTestUtils.setField(jsonImExportService, "managerSseManager", managerSseManager);
+        String json = """
+                [{
+                  "monitor": {
+                    "name": "Codex import monitor",
+                    "app": "website",
+                    "intervals": 60,
+                    "status": 1
+                  },
+                  "params": [
+                    {"field": "host", "type": 1, "value": "127.0.0.1"},
+                    {"field": "port", "type": 0, "value": "4223"}
+                  ]
+                }]
+                """;
+
+        jsonImExportService.importConfig("legacy-export.json", new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
+
+        ArgumentCaptor<MonitorDto> validateCaptor = ArgumentCaptor.forClass(MonitorDto.class);
+        ArgumentCaptor<Monitor> monitorCaptor = ArgumentCaptor.forClass(Monitor.class);
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<Param>> paramsCaptor = ArgumentCaptor.forClass(List.class);
+        verify(monitorService).validate(validateCaptor.capture(), org.mockito.Mockito.eq(false));
+        verify(monitorService).addMonitor(monitorCaptor.capture(), paramsCaptor.capture(), any(), any());
+        assertEquals("127.0.0.1", validateCaptor.getValue().getMonitor().getInstance());
+        assertEquals("127.0.0.1", monitorCaptor.getValue().getInstance());
+        assertEquals("4223", paramsCaptor.getValue().stream()
+                .filter(param -> "port".equals(param.getField()))
+                .findFirst()
+                .orElseThrow()
+                .getParamValue());
+    }
+
+    @Test
+    void exportConfigPreservesMonitorInstanceAsHost() {
+        MonitorService monitorService = org.mockito.Mockito.mock(MonitorService.class);
+        ReflectionTestUtils.setField(jsonImExportService, "monitorService", monitorService);
+        Monitor monitor = Monitor.builder()
+                .id(42L)
+                .name("Codex export monitor")
+                .app("website")
+                .instance("127.0.0.1:4223")
+                .intervals(60)
+                .status((byte) 1)
+                .build();
+        MonitorDto monitorDto = new MonitorDto();
+        monitorDto.setMonitor(monitor);
+        monitorDto.setParams(List.of(Param.builder().field("host").type((byte) 1).paramValue("127.0.0.1").build()));
+        when(monitorService.getMonitorDto(42L)).thenReturn(monitorDto);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+
+        jsonImExportService.exportConfig(bos, List.of(42L));
+
+        String result = bos.toString(StandardCharsets.UTF_8);
+        assertTrue(result.contains("\"host\":\"127.0.0.1:4223\""));
+        assertTrue(result.contains("\"name\":\"Codex export monitor\""));
     }
 
 }

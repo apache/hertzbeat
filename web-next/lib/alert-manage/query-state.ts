@@ -49,6 +49,33 @@ export const ALERT_CENTER_PAGE_SIZE_OPTIONS = [8, 15, 25] as const;
 type SearchParamReader = {
   get(name: string): string | null;
 };
+const ALERT_CONTEXT_PARAM_KEYS = [
+  'entityId',
+  'entityName',
+  'returnTo',
+  'serviceName',
+  'serviceNamespace',
+  'environment',
+  'timeRange',
+  'start',
+  'end',
+  'refresh',
+  'live',
+  'tz',
+  'source',
+  'signal',
+  'monitorId',
+  'monitorName',
+  'monitorApp',
+  'monitorInstance',
+  'traceId',
+  'spanId',
+  'collector',
+  'template',
+  'viewMode',
+  'sourceKind',
+  'edgeId'
+] as const;
 
 export function normalizeAlertSearch(search: string): string {
   return search.trim();
@@ -78,9 +105,9 @@ function readAlertParam(searchParams: SearchParamReader, key: string): string {
 function readFirstSearchParamValue(searchParams: AlertCenterSearchParams | undefined, key: string): string {
   const value = searchParams?.[key];
   if (Array.isArray(value)) {
-    return value[0] || '';
+    return value[0] == null ? '' : String(value[0]);
   }
-  return value || '';
+  return value == null ? '' : String(value);
 }
 
 function hasAlertCompatRouteDisplayLabels(searchParams?: AlertCenterSearchParams): boolean {
@@ -88,6 +115,15 @@ function hasAlertCompatRouteDisplayLabels(searchParams?: AlertCenterSearchParams
     readFirstSearchParamValue(searchParams, 'returnLabel') ||
       readFirstSearchParamValue(searchParams, 'returnTo').includes('returnLabel')
   );
+}
+
+function hasAlertLegacyContentParam(searchParams?: AlertCenterSearchParams): boolean {
+  return Boolean(readFirstSearchParamValue(searchParams, 'content'));
+}
+
+function hasUnsupportedAlertPageSizeParam(searchParams?: AlertCenterSearchParams): boolean {
+  const pageSize = readFirstSearchParamValue(searchParams, 'pageSize');
+  return Boolean(pageSize.trim() && normalizeAlertPageSize(pageSize) !== Number.parseInt(pageSize, 10));
 }
 
 export function hasAlertEntityContext(query: AlertQueryState): boolean {
@@ -196,6 +232,27 @@ export function buildAlertListUrl(query: AlertQueryState): string {
   return `/alerts/group?${params.toString()}`;
 }
 
+export function buildAlertCenterRouteUrl(query: AlertQueryState): string {
+  const params = new URLSearchParams();
+  const normalizedSearch = normalizeAlertSearch(query.search);
+  const normalizedStatus = normalizeAlertFilterValue(query.status);
+  const normalizedSeverity = normalizeAlertFilterValue(query.severity);
+  if (normalizedSearch) params.set('search', normalizedSearch);
+  if (normalizedStatus) params.set('status', normalizedStatus);
+  if (normalizedSeverity) params.set('severity', normalizedSeverity);
+  if (query.pageIndex != null) params.set('pageIndex', String(normalizeAlertPageIndex(query.pageIndex)));
+  if (query.pageSize != null) params.set('pageSize', String(normalizeAlertPageSize(query.pageSize)));
+  ALERT_CONTEXT_PARAM_KEYS.forEach(key => {
+    const value = query[key]?.trim();
+    if (value) {
+      params.set(key, value);
+    }
+  });
+  return buildAlertCompatRouteUrl({
+    get: (key: string) => params.get(key)
+  });
+}
+
 export function buildAlertCompatRouteUrl(searchParams: SearchParamReader): string {
   const query = queryStateFromParams(searchParams);
   const params = new URLSearchParams();
@@ -212,6 +269,9 @@ export function buildAlertCompatRouteUrl(searchParams: SearchParamReader): strin
     params.set('pageSize', String(normalizeAlertPageSize(query.pageSize)));
   }
   copySignalRouteContextParams(searchParams, params);
+  if (searchParams.get('pageSize') != null) {
+    params.set('pageSize', String(normalizeAlertPageSize(query.pageSize)));
+  }
   const signal = readAlertParam(searchParams, 'signal');
   const edgeId = readAlertParam(searchParams, 'edgeId');
   const viewMode = readAlertParam(searchParams, 'viewMode');
@@ -233,6 +293,9 @@ export function readAlertCenterRouteState(searchParams?: AlertCenterSearchParams
   return {
     initialQuery: queryStateFromParams(reader),
     cleanUrl: buildAlertCompatRouteUrl(reader),
-    shouldCleanUrl: hasAlertCompatRouteDisplayLabels(searchParams)
+    shouldCleanUrl:
+      hasAlertCompatRouteDisplayLabels(searchParams) ||
+      hasAlertLegacyContentParam(searchParams) ||
+      hasUnsupportedAlertPageSizeParam(searchParams)
   };
 }

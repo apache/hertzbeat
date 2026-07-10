@@ -1,7 +1,13 @@
 import type { SystemConfig, TimezoneOption } from '@/lib/types';
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
-export type SaveTone = 'success' | 'error' | null;
+export type SaveTone = 'success' | 'error' | 'info' | null;
+export type PersistedSystemConfigFeedback = {
+  message: string;
+  tone: Exclude<SaveTone, null>;
+};
+
+export const SYSTEM_CONFIG_APPLY_FEEDBACK_STORAGE_KEY = 'hertzbeat.setting-config.apply-feedback';
 
 export const SYSTEM_CONFIG_LOCALE_OPTIONS = [
   { value: 'en_US', labelKey: 'settings.system-config.locale.en_US' },
@@ -12,8 +18,8 @@ export const SYSTEM_CONFIG_LOCALE_OPTIONS = [
 ] as const;
 
 export const SYSTEM_CONFIG_THEME_OPTIONS = [
-  { value: 'light-ops', labelKey: 'settings.system-config.theme.default' },
   { value: 'dark-ops', labelKey: 'settings.system-config.theme.dark' },
+  { value: 'light-ops', labelKey: 'settings.system-config.theme.light' },
   { value: 'compact', labelKey: 'settings.system-config.theme.compact' }
 ] as const;
 
@@ -66,6 +72,20 @@ export function canSaveSystemConfig(config: SystemConfig) {
   return Boolean(normalizeSystemConfigLocale(config.locale) && normalizeSystemConfigTheme(config.theme) && config.timeZoneId);
 }
 
+export function serializeSystemConfig(config?: SystemConfig | null) {
+  const resolved = resolveSystemConfigDraft(config || {}, {});
+
+  return JSON.stringify({
+    locale: normalizeSystemConfigLocale(resolved.locale),
+    theme: normalizeSystemConfigTheme(resolved.theme),
+    timeZoneId: String(resolved.timeZoneId || '').trim()
+  });
+}
+
+export function isSystemConfigDirty(current?: SystemConfig | null, baseline?: SystemConfig | null) {
+  return serializeSystemConfig(current) !== serializeSystemConfig(baseline);
+}
+
 export function updateSystemConfigField(config: SystemConfig, key: keyof SystemConfig, value: string) {
   return {
     ...config,
@@ -97,6 +117,44 @@ export function resolveConfigSaveFeedback(message: string | null, tone: SaveTone
 
   return {
     message,
-    className: tone === 'success' ? 'text-emerald-300' : 'text-rose-300'
+    className: tone === 'success' ? 'text-emerald-300' : tone === 'info' ? 'text-[#9fb0cc]' : 'text-rose-300'
   };
+}
+
+function resolveSystemConfigFeedbackStorage(
+  storage: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'> | null | undefined =
+    typeof window !== 'undefined' ? window.sessionStorage : null
+) {
+  return storage ?? null;
+}
+
+export function writeSystemConfigApplyFeedback(
+  message: string,
+  tone: Exclude<SaveTone, null>,
+  storage?: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'> | null
+) {
+  const resolvedStorage = resolveSystemConfigFeedbackStorage(storage);
+  if (!resolvedStorage || !message.trim()) return;
+
+  resolvedStorage.setItem(SYSTEM_CONFIG_APPLY_FEEDBACK_STORAGE_KEY, JSON.stringify({ message, tone }));
+}
+
+export function readAndClearSystemConfigApplyFeedback(
+  storage?: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'> | null
+): PersistedSystemConfigFeedback | null {
+  const resolvedStorage = resolveSystemConfigFeedbackStorage(storage);
+  if (!resolvedStorage) return null;
+
+  const raw = resolvedStorage.getItem(SYSTEM_CONFIG_APPLY_FEEDBACK_STORAGE_KEY);
+  resolvedStorage.removeItem(SYSTEM_CONFIG_APPLY_FEEDBACK_STORAGE_KEY);
+  if (!raw) return null;
+
+  try {
+    const parsed = JSON.parse(raw) as Partial<PersistedSystemConfigFeedback>;
+    const message = typeof parsed.message === 'string' ? parsed.message.trim() : '';
+    const tone = parsed.tone === 'error' ? 'error' : parsed.tone === 'success' ? 'success' : parsed.tone === 'info' ? 'info' : null;
+    return message && tone ? { message, tone } : null;
+  } catch {
+    return null;
+  }
 }

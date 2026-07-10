@@ -51,11 +51,12 @@ class EntityListRuntimeEvidenceSourceOwnershipTest {
 
         assertTrue(listSource.contains("private final EntityStatusRefreshService entityStatusRefreshService"));
         assertTrue(listSource.contains("EntityStatusRefreshService.EntityRuntimeStatusEvidence runtimeEvidence"));
-        assertTrue(listSource.contains("entityStatusRefreshService.refreshEntityStatusWithEvidence(entity, requestWorkspaceId)"));
+        assertTrue(listSource.contains("entityStatusRefreshService.refreshEntityStatusesWithEvidence(scopedEntities, requestWorkspaceId)"));
         assertTrue(listSource.contains("runtimeEvidence.monitors()"));
         assertTrue(listSource.contains("runtimeEvidence.statusInfo()"));
 
         assertTrue(statusRefreshSource.contains("public EntityRuntimeStatusEvidence refreshEntityStatusWithEvidence("));
+        assertTrue(statusRefreshSource.contains("public Map<Long, EntityRuntimeStatusEvidence> refreshEntityStatusesWithEvidence("));
         assertTrue(statusRefreshSource.contains("public record EntityRuntimeStatusEvidence("));
         assertTrue(statusRefreshSource.contains("List<Monitor> monitors"));
         assertTrue(statusRefreshSource.contains("List<SingleAlert> activeAlerts"));
