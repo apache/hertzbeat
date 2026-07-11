@@ -39,7 +39,7 @@ public record VictoriaMetricsProperties(@DefaultValue("false") boolean enabled,
 
     record InsertConfig(@DefaultValue("100") int bufferSize,
                         @DefaultValue("3") int flushInterval,
-                        Compression compression) {
+                        @DefaultValue Compression compression) {
     }
 
     record Compression(@DefaultValue("false") boolean enabled) {
