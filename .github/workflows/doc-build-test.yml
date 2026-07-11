@@ -51,7 +51,7 @@ jobs:
           python-version: '3.8'
 
       - name: Check Markdown
-        uses: DavidAnson/markdownlint-cli2-action@07035fd053f7be764496c0f8d8f9f41f98305101
+        uses: DavidAnson/markdownlint-cli2-action@8de2aa07cae85fd17c0b35642db70cf5495f1d25  # v24.0.0
         with:
           globs: |
             ./home/README.md
