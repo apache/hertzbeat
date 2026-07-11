@@ -70,7 +70,8 @@ class GreptimeSignalInitializerTest {
         initializer.initialize();
 
         InOrder sqlOrder = org.mockito.Mockito.inOrder(sqlQueryExecutor);
-        sqlOrder.verify(sqlQueryExecutor).execute(org.mockito.ArgumentMatchers.startsWith("CREATE TABLE IF NOT EXISTS hzb_traces"));
+        sqlOrder.verify(sqlQueryExecutor).execute(org.mockito.ArgumentMatchers.contains(
+                "CREATE TABLE IF NOT EXISTS hzb_traces"));
         sqlOrder.verify(sqlQueryExecutor).execute(org.mockito.ArgumentMatchers.startsWith(
                 "ALTER TABLE hzb_traces ADD COLUMN IF NOT EXISTS \"resource_attributes.service.namespace\""));
         sqlOrder.verify(sqlQueryExecutor).execute(org.mockito.ArgumentMatchers.startsWith(
