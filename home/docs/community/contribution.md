@@ -95,7 +95,7 @@ Of course, if you have a good idea, you can also propose it directly on GitHub D
     git checkout -b a-feature-branch #Recommended
     ```
 
-5. Submit the coed as a commit, the commit message format specification required: [module name or type name]feature or bugfix or doc: custom message.
+5. Submit the code as a commit, the commit message format specification required: [module name or type name]feature or bugfix or doc: custom message.
 
     ```shell
     git add <modified file/path>

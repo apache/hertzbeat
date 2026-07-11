@@ -90,7 +90,7 @@
   [HuaweiSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-huawei_switch.yml), [TpLinkSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-tplink_switch.yml),
   [H3cSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-h3c_switch.yml)
 - その他、カスタマイズされたモニターテンプレート。
-- 通知利用可能 `Discord` `Slack` `Telegram` `Email` `Dingtalk` `WeChat` `FeiShu` `Webhook` `SMS` `ServerChan`。
+- 通知利用可能 `Discord` `Slack` `Telegram` `Email` `DingTalk` `WeChat` `FeiShu` `Webhook` `SMS` `ServerChan`。
 
 ## 🐕 クイックスタート
 
@@ -121,7 +121,7 @@
     - `-e MANAGER_PORT=1158` ：メインhertzbeatサーバポート。
 
 
-詳細ステップ [通过 Docker 方式安装 HertzBeat](https://hertzbeat.apache.org/docs/start/docker-deploy)
+詳細ステップ [Dockerで HertzBeat をインストール](https://hertzbeat.apache.org/docs/start/docker-deploy)
 
 ##### 方式２：インストールパッケージ
 
@@ -152,13 +152,13 @@
    - JVM コレクターのインストールパッケージは `$ ./bin/startup.sh` または `bin/startup.bat`、Linux/macOS の Native コレクターパッケージは `$ ./bin/startup.sh`、Windows の Native コレクターパッケージは `bin\\startup.bat` で起動します。
    - メインの HertzBeat サービス `http://localhost:1157` にアクセスすると、登録された新しいコレクターを確認できます。
 
-詳細ステップ [通过安装包安装HertzBeat](https://hertzbeat.apache.org/docs/start/package-deploy)
+詳細ステップ [インストールパッケージで HertzBeat をインストール](https://hertzbeat.apache.org/docs/start/package-deploy)
 
 ##### 方式３：ローカルの実行
 
 1. ローカルの実行には、バックエンドのプロジェクト`hertzbeat-startup`とフロントエンドのプロジェクト`web-app`を起動する必要があります。
 2. バックエンド：`maven3+`、`Java25`、`lombok` の環境が必要です。`YML` 設定を修正し、Java 仮想マシンパラメータに `--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED` を追加して `hertzbeat-startup` を起動します。
-3. フロントエンド：`nodejs npm angular-cli`の環境は必要です。ローカルのバックエンドが立ち上がったら、`web-app` ディレクトリで `ng serve --open` というコマンドを実行します。
+3. フロントエンド：`nodejs` と `pnpm` の環境が必要です。ローカルのバックエンドが立ち上がったら、`web-app` ディレクトリで `pnpm install` を実行し、続けて `pnpm start` を実行します。
 4. スタート：`http://localhost:4200`にアクセスします。デフォルトのアカウントとパスワード：`admin/hertzbeat`。
 
 詳細ステップ [貢献ガイド](CONTRIBUTING.md)
@@ -167,7 +167,7 @@
 
 [Docker-Compose 部署脚本](script/docker-compose)でpostgresql/mysqlデータベース、victoria-metrics、iotdb、またはtdengine時系列データベースとHertzBeat一括デプロイ。
 
-詳細ステップ [通过 Docker-Compose 安装 HertzBeat](script/docker-compose/README.md)
+詳細ステップ [Docker-Compose で HertzBeat をインストール](script/docker-compose/README.md)
 
 ##### 方式５：Kubernetes Helm Charts
 

@@ -1,6 +1,6 @@
 ---
 id: debian
-title: Monitoring Debian System Monitoring
+title: Monitoring Debian System
 sidebar_label: Debian
 keywords: [Open Source Monitoring System, Operating System Monitoring, Debian Monitoring]
 ---

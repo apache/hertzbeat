@@ -92,7 +92,7 @@
   [HuaweiSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-huawei_switch.yml), [TpLinkSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-tplink_switch.yml),
   [H3cSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-h3c_switch.yml)
 - And More Your Custom Template.
-- Notified Support `Discord` `Slack` `Telegram` `Email` `Dingtalk` `WeChat` `FeiShu` `Webhook` `SMS` `ServerChan`.
+- Notified Support `Discord` `Slack` `Telegram` `Email` `DingTalk` `WeChat` `FeiShu` `Webhook` `SMS` `ServerChan`.
 
 
 ## 🐕 Quick Start
@@ -158,7 +158,7 @@ Detailed config refer to [Install HertzBeat via Package](https://hertzbeat.apach
 
 1. Local source code debugging needs to start the back-end project `hertzbeat-startup` and the front-end project `web-app`.
 2. Backend：need `maven3+`, `java25`, `lombok`, add VM options in IDE: ` --add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED `, then start the `hertzbeat-startup` service.
-3. Web：need `nodejs npm angular-cli` environment, Run `ng serve --open` in `web-app` directory after backend startup.
+3. Web：need `nodejs` and `pnpm` environment, run `pnpm install` then `pnpm start` in `web-app` directory after backend startup.
 4. Access `http://localhost:4200` to start, default account: `admin/hertzbeat`
 
 Detailed steps refer to [CONTRIBUTING](CONTRIBUTING.md)
