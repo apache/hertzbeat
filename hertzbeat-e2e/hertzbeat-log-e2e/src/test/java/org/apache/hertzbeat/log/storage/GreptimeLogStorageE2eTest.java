@@ -52,7 +52,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @SpringBootTest(classes = org.apache.hertzbeat.startup.HertzBeatApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(properties = {
         "warehouse.store.duckdb.enabled=false",
-        "warehouse.store.greptime.enabled=true"
+        "warehouse.store.greptime.enabled=true",
+        "hertzbeat.otlp.grpc.enabled=false"
 })
 @Slf4j
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
