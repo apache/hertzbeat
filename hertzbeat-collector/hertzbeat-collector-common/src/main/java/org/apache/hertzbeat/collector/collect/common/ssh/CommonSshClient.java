@@ -17,12 +17,12 @@
 
 package org.apache.hertzbeat.collector.collect.common.ssh;
 
+import java.time.Duration;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.sshd.client.ClientBuilder;
 import org.apache.sshd.client.SshClient;
 import org.apache.sshd.client.keyverifier.AcceptAllServerKeyVerifier;
 import org.apache.sshd.common.NamedFactory;
-import org.apache.sshd.common.PropertyResolverUtils;
 import org.apache.sshd.common.kex.BuiltinDHFactories;
 import org.apache.sshd.core.CoreModuleProperties;
 import org.apache.sshd.server.forward.AcceptAllForwardingFilter;
@@ -34,19 +34,16 @@ import org.apache.sshd.server.forward.AcceptAllForwardingFilter;
 public class CommonSshClient {
 
     private static final SshClient SSH_CLIENT;
-    
+
     static {
         SSH_CLIENT = SshClient.setUpDefaultClient();
         // accept all server key verifier, will print warn log : Server at {} presented unverified {} key: {}
         AcceptAllServerKeyVerifier verifier = AcceptAllServerKeyVerifier.INSTANCE;
         SSH_CLIENT.setServerKeyVerifier(verifier);
-        // set connection heartbeat interval time 2000ms, wait for heartbeat response timeout 300_000ms
-        PropertyResolverUtils.updateProperty(
-                SSH_CLIENT, CoreModuleProperties.HEARTBEAT_INTERVAL.getName(), 2000);
-        PropertyResolverUtils.updateProperty(
-                SSH_CLIENT, CoreModuleProperties.HEARTBEAT_NO_REPLY_MAX.getName(), 30);
-        PropertyResolverUtils.updateProperty(
-                SSH_CLIENT, CoreModuleProperties.SOCKET_KEEPALIVE.getName(), true);
+        // Reduce heartbeat overhead while keeping unresponsive sessions bounded to about 90 seconds.
+        CoreModuleProperties.HEARTBEAT_INTERVAL.set(SSH_CLIENT, Duration.ofSeconds(30));
+        CoreModuleProperties.HEARTBEAT_NO_REPLY_MAX.set(SSH_CLIENT, 2);
+        CoreModuleProperties.SOCKET_KEEPALIVE.set(SSH_CLIENT, true);
         // set support all KeyExchange
         SSH_CLIENT.setKeyExchangeFactories(NamedFactory.setUpTransformedFactories(
                 false,
