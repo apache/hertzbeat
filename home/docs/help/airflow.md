@@ -1,6 +1,6 @@
 ---
 id: airflow  
-title: Monitoring Apache Airflow Monitoring  
+title: Monitoring Apache Airflow  
 sidebar_label: Apache Airflow
 keywords: [open source monitoring system, open source database monitoring, Apache Airflow monitoring]
 ---

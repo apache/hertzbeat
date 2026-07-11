@@ -1,8 +1,8 @@
 ---
 id: springboot3  
-Title: Monitoring SpringBoot 3.0      
+title: Monitoring SpringBoot 3.0      
 sidebar_label: SpringBoot 3.0
-keywords: [open source monitoring tool, open source monitoring tool, monitoring springboot3 metrics]
+keywords: [open source monitoring tool, open source springboot3 monitoring tool, monitoring springboot3 metrics]
 ---
 
 > Collect and monitor the general performance metrics exposed by the SpringBoot 3.0 actuator.

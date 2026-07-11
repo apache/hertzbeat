@@ -1,6 +1,6 @@
 ---
 id: kubernetes   
-Title: Monitoring Kubernetes
+title: Monitoring Kubernetes
 sidebar_label: Kubernetes Monitor
 keywords: [open source monitoring tool, open source kubernetes monitoring tool, monitoring kubernetes metrics]
 ---
