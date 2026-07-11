@@ -29,6 +29,7 @@ import org.apache.hertzbeat.common.entity.dto.observability.TraceOverview;
 import org.apache.hertzbeat.log.service.ThreeSignalQueryService;
 import org.apache.hertzbeat.log.service.SignalWorkloadGuard;
 import org.apache.hertzbeat.log.service.SignalWorkloadGuard.Workload;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,6 +38,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** Public entity-free query APIs for OTLP metrics and traces. */
 @RestController
+@ConditionalOnProperty(prefix = "warehouse.store.greptime", name = "enabled", havingValue = "true")
 @Tag(name = "Three Signal Query Controller")
 public class ThreeSignalQueryController {
 

@@ -23,6 +23,7 @@ import java.nio.charset.StandardCharsets;
 import org.apache.hertzbeat.log.service.OtlpSignalForwarder;
 import org.apache.hertzbeat.log.service.SignalWorkloadGuard;
 import org.apache.hertzbeat.log.service.SignalWorkloadGuard.Workload;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** Standard OTLP/HTTP gateway for all three signals. */
 @RestController
+@ConditionalOnProperty(prefix = "warehouse.store.greptime", name = "enabled", havingValue = "true")
 @RequestMapping("/api/otlp/v1")
 @Tag(name = "OTLP Signal Controller")
 public class OtlpSignalController {
