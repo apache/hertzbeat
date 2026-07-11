@@ -59,7 +59,7 @@ limitations under the License.
   后端运行 `mvn checkstyle:checkstyle`
 
 - 前端代码格式化插件 `eslint`
-  前端运行 `npm run lint:fix`
+  前端运行 `pnpm run lint:fix`
 
 ### 2.2 文档样式检查
 

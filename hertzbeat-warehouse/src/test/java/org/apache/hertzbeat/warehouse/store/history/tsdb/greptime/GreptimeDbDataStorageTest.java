@@ -38,12 +38,17 @@ import io.greptime.models.Err;
 import io.greptime.models.Result;
 import io.greptime.models.Table;
 import io.greptime.models.WriteOk;
+import io.greptime.v1.Common;
+import io.greptime.v1.RowData;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.arrow.ArrowCell;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
@@ -147,6 +152,55 @@ class GreptimeDbDataStorageTest {
             greptimeDbDataStorage.saveData(emptyMetricsData);
             // Verify write was not called again
             verify(greptimeDb, times(1)).write(any(Table.class));
+        }
+    }
+
+    @Test
+    void testSaveDataWithCustomLabels() throws Exception {
+        try (MockedStatic<GreptimeDB> mockedStatic = mockStatic(GreptimeDB.class)) {
+            mockedStatic.when(() -> GreptimeDB.create(any())).thenReturn(greptimeDb);
+
+            Result<WriteOk, Err> mockResult = mock(Result.class);
+            when(mockResult.isOk()).thenReturn(true);
+            CompletableFuture<Result<WriteOk, Err>> mockFuture = CompletableFuture.completedFuture(mockResult);
+            when(greptimeDb.write(any(Table.class))).thenReturn(mockFuture);
+
+            greptimeDbDataStorage = new GreptimeDbDataStorage(greptimeProperties, restTemplate, greptimeSqlQueryExecutor);
+
+            CollectRep.MetricsData metricsData = createMockMetricsData(true);
+            Map<String, String> customLabels = new LinkedHashMap<>();
+            customLabels.put("instance", "bad_instance");
+            customLabels.put("ts", "bad_ts");
+            customLabels.put("usage", "bad_usage");
+            customLabels.put("env", "prod");
+            when(metricsData.getLabels()).thenReturn(customLabels);
+            when(metricsData.getInstance()).thenReturn("server1");
+
+            ArgumentCaptor<Table> tableCaptor = ArgumentCaptor.forClass(Table.class);
+            greptimeDbDataStorage.saveData(metricsData);
+
+            verify(greptimeDb).write(tableCaptor.capture());
+            Table capturedTable = tableCaptor.getValue();
+
+            List<RowData.ColumnSchema> columnSchemas = getColumnSchemas(capturedTable);
+            List<String> columnNames = columnSchemas.stream()
+                    .map(RowData.ColumnSchema::getColumnName)
+                    .collect(Collectors.toList());
+            assertEquals(5, columnNames.size());
+            assertEquals(2, Collections.frequency(columnNames, "instance"));
+            assertEquals(1, Collections.frequency(columnNames, "ts"));
+            assertEquals(1, Collections.frequency(columnNames, "usage"));
+
+            List<RowData.ColumnSchema> envColumnSchemas = columnSchemas.stream()
+                    .filter(columnSchema -> "env".equals(columnSchema.getColumnName()))
+                    .collect(Collectors.toList());
+            assertEquals(1, envColumnSchemas.size());
+            assertEquals(Common.SemanticType.TAG, envColumnSchemas.get(0).getSemanticType());
+
+            List<RowData.Row> rows = getRows(capturedTable);
+            assertEquals(1, rows.size());
+            RowData.Row row = rows.get(0);
+            assertEquals("prod", row.getValuesList().get(4).getStringValue());
         }
     }
 
@@ -386,5 +440,21 @@ class GreptimeDbDataStorageTest {
         row.put("span_id", "span456");
 
         return List.of(row);
+    }
+
+    private List<RowData.ColumnSchema> getColumnSchemas(Table table) throws Exception {
+        Field columnSchemasField = table.getClass().getDeclaredField("columnSchemas");
+        columnSchemasField.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        List<RowData.ColumnSchema> columnSchemas = (List<RowData.ColumnSchema>) columnSchemasField.get(table);
+        return columnSchemas;
+    }
+
+    private List<RowData.Row> getRows(Table table) throws Exception {
+        Field rowsField = table.getClass().getDeclaredField("rows");
+        rowsField.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        List<RowData.Row> rows = (List<RowData.Row>) rowsField.get(table);
+        return rows;
     }
 }

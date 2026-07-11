@@ -1,8 +1,8 @@
 ---
 id: pulsar  
-title: Monitoring Pulsar Monitoring  
+title: Monitoring Pulsar  
 sidebar_label: Apache Pulsar
-keywords: [open-source monitoring system, open-source database monitoring, HbaseMaster monitoring]
+keywords: [open-source monitoring system, open-source database monitoring, Apache Pulsar monitoring]
 ---
 
 > Collecting and monitoring general performance metrics of Pulsar

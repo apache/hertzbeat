@@ -27,7 +27,6 @@ import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
-import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -101,21 +100,17 @@ public class LlmConfig {
             }
         }
 
-        OpenAiApi.Builder builder = new OpenAiApi.Builder();
-        builder.baseUrl(modelProviderConfig.getBaseUrl());
-        builder.apiKey(modelProviderConfig.getApiKey());
-        builder.completionsPath("/chat/completions");
-        
-        // Create Chat Options
+        // Create Chat Options with baseUrl and apiKey
         OpenAiChatOptions openAiChatOptions = OpenAiChatOptions.builder()
+                .baseUrl(modelProviderConfig.getBaseUrl())
+                .apiKey(modelProviderConfig.getApiKey())
                 .model(modelProviderConfig.getModel())
                 .temperature(0.3)
                 .build();
-        
+
         // Create Chat Model
         OpenAiChatModel openAiChatModel = OpenAiChatModel.builder()
-                .openAiApi(builder.build())
-                .defaultOptions(openAiChatOptions)
+                .options(openAiChatOptions)
                 .build();
         
         // Create and return ChatClient
