@@ -1,0 +1,56 @@
+version: 2
+processors:
+  - vrl:
+      source: |
+        .time_unix_nano = .Timestamp
+        .observed_time_unix_nano = .ObservedTimestamp
+        .trace_id = .TraceId
+        .span_id = .SpanId
+        .trace_flags = .TraceFlags
+        .severity_text = .SeverityText
+        .severity_number = .SeverityNumber
+        .body = .Body
+        .attributes = .LogAttributes
+        .resource = .ResourceAttributes
+        .instrumentation_scope = .InstrumentationScope
+        .dropped_attributes_count = .DroppedAttributesCount
+        .
+  - select:
+      fields:
+        - time_unix_nano
+        - observed_time_unix_nano
+        - trace_id
+        - span_id
+        - trace_flags
+        - severity_text
+        - severity_number
+        - body
+        - attributes
+        - resource
+        - instrumentation_scope
+        - dropped_attributes_count
+transform:
+  - field: time_unix_nano
+    type: epoch, ns
+    index: timestamp
+  - field: observed_time_unix_nano
+    type: epoch, ns
+  - fields:
+      - trace_id
+      - span_id
+    type: string
+    index: skipping
+  - fields:
+      - attributes
+      - resource
+      - instrumentation_scope
+    type: json
+  - field: body
+    type: string
+  - field: severity_text
+    type: string
+  - fields:
+      - severity_number
+      - trace_flags
+      - dropped_attributes_count
+    type: int32
