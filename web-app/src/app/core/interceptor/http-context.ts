@@ -17,21 +17,6 @@
  * under the License.
  */
 
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { HttpContextToken } from '@angular/common/http';
 
-import { LogIntegrationComponent } from './log-integration/log-integration.component';
-import { LogManageComponent } from './log-manage/log-manage.component';
-
-const routes: Routes = [
-  { path: '', component: LogIntegrationComponent },
-  { path: 'integration/:source', component: LogIntegrationComponent },
-  { path: 'stream', component: LogManageComponent, data: { logMode: 'stream' } },
-  { path: 'manage', component: LogManageComponent }
-];
-
-@NgModule({
-  imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule]
-})
-export class LogRoutingModule {}
+export const SILENT_HTTP_ERROR = new HttpContextToken<boolean>(() => false);

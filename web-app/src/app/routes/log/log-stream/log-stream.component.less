@@ -22,6 +22,17 @@
 .log-stream-container {
   background: @common-background-color;
 
+  &.embedded {
+    .header-card {
+      margin: 0;
+      background: transparent;
+    }
+
+    ::ng-deep .header-card > .ant-card-body {
+      padding: 16px 0 0;
+    }
+  }
+
   .header-card {
     margin-bottom: 16px;
 
@@ -434,4 +445,3 @@
     }
   }
 }
-
