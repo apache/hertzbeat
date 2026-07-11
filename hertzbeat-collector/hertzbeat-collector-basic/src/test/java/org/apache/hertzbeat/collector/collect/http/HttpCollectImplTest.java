@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.collector.collect.http;
 
 import com.google.common.collect.Lists;
+import com.sun.net.httpserver.HttpServer;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
@@ -28,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -188,6 +190,94 @@ class HttpCollectImplTest {
         assertEquals("Stopped", secondRow.getColumns(1), "Second server status should be Stopped");
         assertEquals("0.0", secondRow.getColumns(2), "Second server CPU should be 0.0");
         assertEquals("0", secondRow.getColumns(3), "Second server memory should be 0");
+    }
+
+    @Test
+    void parseResponseByXmlPathHonorsXmlEncodingDeclaration() throws Exception {
+        String xmlResponse = """
+                <?xml version="1.0" encoding="ISO-8859-1"?>
+                <root>
+                    <item>
+                        <name>café</name>
+                    </item>
+                </root>
+                """;
+        byte[] responseBytes = xmlResponse.getBytes(StandardCharsets.ISO_8859_1);
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/metrics", exchange -> {
+            exchange.getResponseHeaders().add("Content-Type", "application/xml");
+            exchange.sendResponseHeaders(200, responseBytes.length);
+            exchange.getResponseBody().write(responseBytes);
+            exchange.close();
+        });
+        server.start();
+
+        try {
+            HttpProtocol http = HttpProtocol.builder()
+                    .method("GET")
+                    .host("127.0.0.1")
+                    .port(String.valueOf(server.getAddress().getPort()))
+                    .url("/metrics")
+                    .parseType(DispatchConstants.PARSE_XML_PATH)
+                    .parseScript("//item")
+                    .build();
+            Metrics metrics = Metrics.builder()
+                    .http(http)
+                    .aliasFields(Lists.newArrayList("name"))
+                    .build();
+            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+
+            httpCollectImpl.collect(builder, metrics);
+
+            assertEquals(1, builder.getValuesCount());
+            assertEquals("café", builder.getValues(0).getColumns(0));
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void parseResponseByXmlPathFallsBackToUtf8ForUnsupportedXmlEncoding() throws Exception {
+        String xmlResponse = """
+                <?xml version="1.0" encoding="UNKNOWN-CHARSET"?>
+                <root>
+                    <item>
+                        <name>service</name>
+                    </item>
+                </root>
+                """;
+        byte[] responseBytes = xmlResponse.getBytes(StandardCharsets.UTF_8);
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/metrics", exchange -> {
+            exchange.getResponseHeaders().add("Content-Type", "application/xml");
+            exchange.sendResponseHeaders(200, responseBytes.length);
+            exchange.getResponseBody().write(responseBytes);
+            exchange.close();
+        });
+        server.start();
+
+        try {
+            HttpProtocol http = HttpProtocol.builder()
+                    .method("GET")
+                    .host("127.0.0.1")
+                    .port(String.valueOf(server.getAddress().getPort()))
+                    .url("/metrics")
+                    .parseType(DispatchConstants.PARSE_XML_PATH)
+                    .parseScript("//item")
+                    .build();
+            Metrics metrics = Metrics.builder()
+                    .http(http)
+                    .aliasFields(Lists.newArrayList("name"))
+                    .build();
+            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+
+            httpCollectImpl.collect(builder, metrics);
+
+            assertEquals(1, builder.getValuesCount());
+            assertEquals("service", builder.getValues(0).getColumns(0));
+        } finally {
+            server.stop(0);
+        }
     }
 
     @Test

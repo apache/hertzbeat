@@ -63,6 +63,8 @@ public class JdbcCommonCollect extends AbstractCollect {
     private static final String QUERY_TYPE_MULTI_ROW = "multiRow";
     private static final String QUERY_TYPE_COLUMNS = "columns";
     private static final String RUN_SCRIPT = "runScript";
+    private static final int CONNECTION_LOCK_STRIPES = 64;
+    private static final Object[] CONNECTION_LOCKS = createConnectionLocks();
 
     private static final String[] VULNERABLE_KEYWORDS = {"allowLoadLocalInfile", "allowLoadLocalInfileInPath", "useLocalInfile"};
 
@@ -317,6 +319,17 @@ public class JdbcCommonCollect extends AbstractCollect {
         CacheIdentifier identifier = CacheIdentifier.builder()
                 .ip(url)
                 .username(username).password(password).build();
+        if (!reuseConnection) {
+            return getConnection(username, password, url, timeout, false, identifier);
+        }
+        Object lock = CONNECTION_LOCKS[Math.floorMod(identifier.hashCode(), CONNECTION_LOCKS.length)];
+        synchronized (lock) {
+            return getConnection(username, password, url, timeout, true, identifier);
+        }
+    }
+
+    private Statement getConnection(String username, String password, String url, Integer timeout,
+                                    boolean reuseConnection, CacheIdentifier identifier) throws Exception {
         Statement statement = null;
         if (reuseConnection) {
             Optional<AbstractConnection<?>> cacheOption = connectionCommonCache.getCache(identifier, true);
@@ -348,19 +361,50 @@ public class JdbcCommonCollect extends AbstractCollect {
                 return statement;
             }
         }
-        // renew connection when failed
-        Connection connection = DriverManager.getConnection(url, username, password);
-        connection.setReadOnly(true);
-        statement = connection.createStatement();
-        int timeoutSecond = timeout / 1000;
-        timeoutSecond = timeoutSecond <= 0 ? 1 : timeoutSecond;
-        statement.setQueryTimeout(timeoutSecond);
-        statement.setMaxRows(1000);
-        if (reuseConnection) {
-            JdbcConnect jdbcConnect = new JdbcConnect(connection);
-            connectionCommonCache.addCache(identifier, jdbcConnect);
+        Connection connection = null;
+        try {
+            // renew connection when failed
+            connection = openConnection(url, username, password);
+            connection.setReadOnly(true);
+            statement = connection.createStatement();
+            int timeoutSecond = timeout / 1000;
+            timeoutSecond = timeoutSecond <= 0 ? 1 : timeoutSecond;
+            statement.setQueryTimeout(timeoutSecond);
+            statement.setMaxRows(1000);
+            if (reuseConnection) {
+                JdbcConnect jdbcConnect = new JdbcConnect(connection);
+                connectionCommonCache.addCache(identifier, jdbcConnect);
+            }
+        } catch (Exception exception) {
+            try {
+                if (statement != null) {
+                    statement.close();
+                }
+            } catch (Exception closeException) {
+                log.error("Jdbc close statement error: {}", closeException.getMessage());
+            }
+            try {
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (Exception closeException) {
+                log.error("Jdbc close connection error: {}", closeException.getMessage());
+            }
+            throw exception;
         }
         return statement;
+    }
+
+    private static Object[] createConnectionLocks() {
+        Object[] locks = new Object[CONNECTION_LOCK_STRIPES];
+        for (int i = 0; i < locks.length; i++) {
+            locks[i] = new Object();
+        }
+        return locks;
+    }
+
+    Connection openConnection(String url, String username, String password) throws SQLException {
+        return DriverManager.getConnection(url, username, password);
     }
 
     /**

@@ -1,6 +1,6 @@
 ---
 id: almalinux
-title: Monitoring AlmaLinux Operating System Monitoring
+title: Monitoring AlmaLinux Operating System
 sidebar_label: AlmaLinux Operating System
 keywords: [open-source monitoring system, open-source operating system monitoring, AlmaLinux operating system monitoring]
 ---
