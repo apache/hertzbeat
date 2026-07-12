@@ -142,11 +142,11 @@ class LogServiceTest {
         LogService service = new LogService(restClientBuilder, "http://localhost:4000", "public", "", "");
 
         assertThat(service.queryLogs("NOTICE", null, null, null, null))
-                .isEqualTo("查询参数无效：日志级别不受支持");
+                .isEqualTo("Invalid query parameters: Unsupported log severity");
 
         server.expect(requestTo("http://localhost:4000/v1/sql?db=public"))
                 .andRespond(withServerError());
-        assertThat(service.queryLogs(null, null, null, null, null)).isEqualTo("日志查询失败");
+        assertThat(service.queryLogs(null, null, null, null, null)).isEqualTo("Failed to query logs");
         server.verify();
     }
 

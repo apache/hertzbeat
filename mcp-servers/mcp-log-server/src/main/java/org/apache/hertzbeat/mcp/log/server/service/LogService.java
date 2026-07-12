@@ -84,7 +84,7 @@ public class LogService {
         boolean hasUsername = username != null && !username.isBlank();
         boolean hasPassword = password != null && !password.isBlank();
         if (hasUsername != hasPassword) {
-            throw new IllegalArgumentException("GreptimeDB 用户名和密码必须同时配置");
+            throw new IllegalArgumentException("GreptimeDB username and password must be configured together");
         }
 
         RestClient.Builder builder = restClientBuilder
@@ -108,52 +108,53 @@ public class LogService {
      * @param limit maximum number of records to return
      * @return formatted log query results
      */
-    @Tool(name = "query_logs", description = "使用结构化过滤条件只读查询 HertzBeat 系统日志")
+    @Tool(name = "query_logs", description = "Query HertzBeat system logs with structured read-only filters")
     public String queryLogs(
             @ToolParam(required = false,
-                    description = "日志级别，可选值为 TRACE、DEBUG、INFO、WARN、ERROR、FATAL")
+                    description = "Log severity; supported values: TRACE, DEBUG, INFO, WARN, ERROR, FATAL")
             String severity,
-            @ToolParam(required = false, description = "日志正文关键词，最长 256 个字符")
+            @ToolParam(required = false, description = "Keyword to search in the log body; maximum 256 characters")
             String keyword,
-            @ToolParam(required = false, description = "开始时间，Unix 毫秒时间戳")
+            @ToolParam(required = false, description = "Start time as a Unix timestamp in milliseconds")
             Long startTime,
-            @ToolParam(required = false, description = "结束时间，Unix 毫秒时间戳")
+            @ToolParam(required = false, description = "End time as a Unix timestamp in milliseconds")
             Long endTime,
-            @ToolParam(required = false, description = "最多返回条数，默认为 20，最大为 100")
+            @ToolParam(required = false,
+                    description = "Maximum number of records to return; defaults to 20 and cannot exceed 100")
             Integer limit) {
         try {
             String response = executeQuery(buildQuery(severity, keyword, startTime, endTime, limit));
             return formatQueryResults(response);
         } catch (IllegalArgumentException e) {
-            return "查询参数无效：" + e.getMessage();
+            return "Invalid query parameters: " + e.getMessage();
         } catch (Exception e) {
             log.error("Failed to query logs", e);
-            return "日志查询失败";
+            return "Failed to query logs";
         }
     }
 
     static String buildQuery(String severity, String keyword, Long startTime, Long endTime, Integer limit) {
         if (startTime != null && startTime < 0) {
-            throw new IllegalArgumentException("开始时间不能为负数");
+            throw new IllegalArgumentException("Start time must not be negative");
         }
         if (endTime != null && endTime < 0) {
-            throw new IllegalArgumentException("结束时间不能为负数");
+            throw new IllegalArgumentException("End time must not be negative");
         }
         if (startTime != null && endTime != null && startTime > endTime) {
-            throw new IllegalArgumentException("开始时间不能晚于结束时间");
+            throw new IllegalArgumentException("Start time must not be later than end time");
         }
 
         int queryLimit = limit == null ? DEFAULT_LIMIT : limit;
         if (queryLimit < 1 || queryLimit > MAX_LIMIT) {
-            throw new IllegalArgumentException("返回条数必须在 1 到 100 之间");
+            throw new IllegalArgumentException("Limit must be between 1 and 100");
         }
 
         List<String> conditions = new ArrayList<>(4);
         if (startTime != null) {
-            conditions.add("timestamp >= " + toNanoseconds(startTime, "开始时间"));
+            conditions.add("timestamp >= " + toNanoseconds(startTime, "Start time"));
         }
         if (endTime != null) {
-            conditions.add("timestamp <= " + toNanoseconds(endTime, "结束时间"));
+            conditions.add("timestamp <= " + toNanoseconds(endTime, "End time"));
         }
 
         String normalizedSeverity = normalizeSeverity(severity);
@@ -164,7 +165,7 @@ public class LogService {
         if (keyword != null && !keyword.isBlank()) {
             String normalizedKeyword = keyword.strip();
             if (normalizedKeyword.length() > MAX_KEYWORD_LENGTH) {
-                throw new IllegalArgumentException("日志关键词不能超过 256 个字符");
+                throw new IllegalArgumentException("Log keyword must not exceed 256 characters");
             }
             conditions.add("matches_term(body, '" + escapeSqlLiteral(normalizedKeyword) + "')");
         }
@@ -182,7 +183,7 @@ public class LogService {
         }
         String normalizedSeverity = severity.strip().toUpperCase(Locale.ROOT);
         if (!SUPPORTED_SEVERITIES.contains(normalizedSeverity)) {
-            throw new IllegalArgumentException("日志级别不受支持");
+            throw new IllegalArgumentException("Unsupported log severity");
         }
         return normalizedSeverity;
     }
@@ -191,7 +192,7 @@ public class LogService {
         try {
             return Math.multiplyExact(epochMilliseconds, NANOS_PER_MILLISECOND);
         } catch (ArithmeticException e) {
-            throw new IllegalArgumentException(fieldName + "超出支持范围", e);
+            throw new IllegalArgumentException(fieldName + " is out of the supported range", e);
         }
     }
 
