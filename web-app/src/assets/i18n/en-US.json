@@ -1,0 +1,8 @@
+{
+  "common": {
+    "notFound": {
+      "title": "Page not found",
+      "description": "The requested HertzBeat page does not exist."
+    }
+  }
+}

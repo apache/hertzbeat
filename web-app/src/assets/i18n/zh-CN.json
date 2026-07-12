@@ -1,0 +1,8 @@
+{
+  "common": {
+    "notFound": {
+      "title": "页面不存在",
+      "description": "请求的 HertzBeat 页面不存在。"
+    }
+  }
+}

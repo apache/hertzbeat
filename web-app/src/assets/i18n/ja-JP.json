@@ -1,0 +1,8 @@
+{
+  "common": {
+    "notFound": {
+      "title": "ページが見つかりません",
+      "description": "要求された HertzBeat ページは存在しません。"
+    }
+  }
+}

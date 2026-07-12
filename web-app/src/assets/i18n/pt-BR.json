@@ -1,0 +1,8 @@
+{
+  "common": {
+    "notFound": {
+      "title": "Página não encontrada",
+      "description": "A página HertzBeat solicitada não existe."
+    }
+  }
+}
