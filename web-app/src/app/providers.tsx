@@ -21,6 +21,7 @@ import type { PropsWithChildren } from 'react';
 import { I18nextProvider } from 'react-i18next';
 
 import { i18n } from '@/core/i18n/i18n';
+import { SessionProvider } from '@/core/auth/SessionProvider';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -50,7 +51,9 @@ export function AppProviders({ children }: PropsWithChildren) {
         }}
       >
         <AntApp>
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+          <QueryClientProvider client={queryClient}>
+            <SessionProvider>{children}</SessionProvider>
+          </QueryClientProvider>
         </AntApp>
       </ConfigProvider>
     </I18nextProvider>

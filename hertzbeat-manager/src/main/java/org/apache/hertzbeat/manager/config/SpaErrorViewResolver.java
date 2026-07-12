@@ -22,6 +22,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.template.TemplateAvailabilityProvider;
 import org.springframework.boot.autoconfigure.template.TemplateAvailabilityProviders;
@@ -31,6 +32,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.lang.NonNull;
@@ -40,14 +42,16 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.View;
 
 /**
- * Solve the front-end routing problem of angular static website resources with DefaultErrorViewResolver and route the 404 website request to the angular front-end
+ * Resolves registered browser routes to the React single-page application without masking API or asset 404s.
  */
 @Configuration
 @Slf4j
-public class AngularErrorViewResolver implements ErrorViewResolver, Ordered {
+public class SpaErrorViewResolver implements ErrorViewResolver, Ordered {
 
     private static final Map<HttpStatus.Series, String> SERIES_VIEWS;
-    private static final String NOT_FOUND_CODE = "404";
+    private static final Set<String> SPA_ROUTE_ROOTS = Set.of(
+            "/", "/account", "/alert", "/dashboard", "/entity", "/log", "/metrics", "/monitors",
+            "/observability", "/passport", "/setting", "/status", "/topology", "/trace");
 
     static {
         Map<HttpStatus.Series, String> views = new EnumMap<>(HttpStatus.Series.class);
@@ -57,14 +61,11 @@ public class AngularErrorViewResolver implements ErrorViewResolver, Ordered {
     }
 
     private final ApplicationContext applicationContext;
-
     private final WebProperties.Resources resources;
-
     private final TemplateAvailabilityProviders templateAvailabilityProviders;
-
     private int order = Ordered.LOWEST_PRECEDENCE;
 
-    public AngularErrorViewResolver(ApplicationContext applicationContext, WebProperties webProperties) {
+    public SpaErrorViewResolver(ApplicationContext applicationContext, WebProperties webProperties) {
         Assert.notNull(applicationContext, "ApplicationContext must not be null");
         Assert.notNull(webProperties.getResources(), "Resources must not be null");
         this.applicationContext = applicationContext;
@@ -74,36 +75,46 @@ public class AngularErrorViewResolver implements ErrorViewResolver, Ordered {
 
     @Override
     public ModelAndView resolveErrorView(HttpServletRequest request, HttpStatus status, Map<String, Object> model) {
-        ModelAndView modelAndView = resolve(String.valueOf(status.value()), model);
+        if (status == HttpStatus.NOT_FOUND && isSpaNavigation(request)) {
+            return resolve("index", model);
+        }
+        ModelAndView modelAndView = resolve("error/" + status.value(), model);
         if (modelAndView == null && SERIES_VIEWS.containsKey(status.series())) {
-            modelAndView = resolve(SERIES_VIEWS.get(status.series()), model);
+            modelAndView = resolve("error/" + SERIES_VIEWS.get(status.series()), model);
         }
         return modelAndView;
     }
 
-    private ModelAndView resolve(String viewName, Map<String, Object> model) {
-        String errorViewName = "error/" + viewName;
-        if (NOT_FOUND_CODE.equals(viewName)) {
-            errorViewName = "index";
+    static boolean isSpaNavigation(HttpServletRequest request) {
+        if (!HttpMethod.GET.matches(request.getMethod()) && !HttpMethod.HEAD.matches(request.getMethod())) {
+            return false;
         }
-        TemplateAvailabilityProvider provider = this.templateAvailabilityProviders.getProvider(errorViewName,
-                this.applicationContext);
-        if (provider != null) {
-            return new ModelAndView(errorViewName, model);
+        String accept = request.getHeader("Accept");
+        if (accept == null || !accept.contains(MediaType.TEXT_HTML_VALUE)) {
+            return false;
         }
-        return resolveResource(errorViewName, model);
+        String path = request.getRequestURI();
+        if (path == null || path.startsWith("/api/") || path.startsWith("/assets/") || path.contains(".")) {
+            return false;
+        }
+        return SPA_ROUTE_ROOTS.stream().anyMatch(root -> root.equals(path)
+                || (!"/".equals(root) && path.startsWith(root + "/")));
     }
 
-    private ModelAndView resolveResource(String viewName, Map<String, Object> model) {
-        for (String location : this.resources.getStaticLocations()) {
+    private ModelAndView resolve(String viewName, Map<String, Object> model) {
+        TemplateAvailabilityProvider provider = templateAvailabilityProviders.getProvider(viewName,
+                applicationContext);
+        if (provider != null) {
+            return new ModelAndView(viewName, model);
+        }
+        for (String location : resources.getStaticLocations()) {
             try {
-                Resource resource = this.applicationContext.getResource(location);
-                resource = resource.createRelative(viewName + ".html");
+                Resource resource = applicationContext.getResource(location).createRelative(viewName + ".html");
                 if (resource.exists()) {
                     return new ModelAndView(new HtmlResourceView(resource), model);
                 }
-            } catch (Exception ex) {
-                log.error("Error resolving resource", ex);
+            } catch (Exception exception) {
+                log.error("Error resolving resource", exception);
             }
         }
         return null;
@@ -111,7 +122,7 @@ public class AngularErrorViewResolver implements ErrorViewResolver, Ordered {
 
     @Override
     public int getOrder() {
-        return this.order;
+        return order;
     }
 
     public void setOrder(int order) {
@@ -138,8 +149,7 @@ public class AngularErrorViewResolver implements ErrorViewResolver, Ordered {
         public void render(Map<String, ?> model, @NonNull HttpServletRequest request, HttpServletResponse response)
                 throws Exception {
             response.setContentType(getContentType());
-            FileCopyUtils.copy(this.resource.getInputStream(), response.getOutputStream());
+            FileCopyUtils.copy(resource.getInputStream(), response.getOutputStream());
         }
-
     }
 }

@@ -46,4 +46,13 @@ public class SecurityCorsConfiguration {
         bean.addUrlPatterns("/*");
         return bean;
     }
+
+    @Bean
+    public FilterRegistrationBean<UiSessionCookieFilter> uiSessionCookieFilter() {
+        FilterRegistrationBean<UiSessionCookieFilter> bean = new FilterRegistrationBean<>();
+        bean.setOrder(Integer.MIN_VALUE + 1);
+        bean.setFilter(new UiSessionCookieFilter());
+        bean.addUrlPatterns("/*");
+        return bean;
+    }
 }

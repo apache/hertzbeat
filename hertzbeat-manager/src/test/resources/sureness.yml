@@ -99,6 +99,8 @@ excludedResource:
   - /api/alert/sse/**===*
   - /api/logs/sse/**===*
   - /api/account/auth/**===*
+  - /api/ui/session===*
+  - /api/ui/session/**===*
   - /api/i18n/**===get
   - /api/apps/hierarchy===get
   - /api/push/**===*
