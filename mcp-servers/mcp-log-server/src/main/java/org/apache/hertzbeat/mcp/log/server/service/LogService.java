@@ -22,7 +22,9 @@ import com.jayway.jsonpath.ReadContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -33,79 +35,177 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
- * Log query service
+ * 日志查询服务。
  */
 @Service
 @Slf4j
 public class LogService {
 
+    private static final String BASE_QUERY = "SELECT timestamp, severity_text, body FROM hzb_logs";
     private static final String TIMESTAMP_COLUMN = "timestamp";
     private static final String SEVERITY_TEXT_COLUMN = "severity_text";
     private static final String BODY_COLUMN = "body";
+    private static final int DEFAULT_LIMIT = 20;
+    private static final int MAX_LIMIT = 100;
+    private static final int MAX_KEYWORD_LENGTH = 256;
+    private static final long NANOS_PER_MILLISECOND = 1_000_000L;
+    private static final Set<String> SUPPORTED_SEVERITIES =
+            Set.of("TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL");
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    
-    private final RestClient restClient;
 
-    public LogService(@Value("${greptime.url}") String greptimeUrl) {
-        this.restClient = RestClient.builder()
-                .baseUrl(greptimeUrl)
-                .defaultHeader("Accept", "application/json")
-                .defaultHeader("Content-Type", "application/x-www-form-urlencoded")
-                .build();
+    private final RestClient restClient;
+    private final String database;
+
+    /**
+     * 创建日志查询服务。
+     *
+     * @param greptimeUrl GreptimeDB 地址
+     * @param database GreptimeDB 数据库名
+     * @param username GreptimeDB 用户名
+     * @param password GreptimeDB 密码
+     */
+    @Autowired
+    public LogService(@Value("${greptime.url}") String greptimeUrl,
+                      @Value("${greptime.database:public}") String database,
+                      @Value("${greptime.username:}") String username,
+                      @Value("${greptime.password:}") String password) {
+        this(RestClient.builder(), greptimeUrl, database, username, password);
     }
 
-    @Tool(description = "System log query tool that supports filtering by time, log level, and content")
-    public String getHertzbeatLog(
-            @ToolParam(description = """
-                Query system logs with support for filtering by time, log level, and content.
-                
-                Usage:
-                1. Table name: hzb_log
-                2. Common query examples:
-                   - Get latest 10 logs: SELECT * FROM hzb_log ORDER BY timestamp DESC LIMIT 10
-                   - Query ERROR level logs: SELECT * FROM hzb_log WHERE severity_number=17
-                   - Query specific time range: SELECT * FROM hzb_log WHERE timestamp > '2024-01-01 00:00:00'
-                   - Query last ten minutes: SELECT * FROM hzb_log WHERE  timestamp >= now() - Interval '10m' AND timestamp < now()
-                   - Query logs at or above the INFO level: SELECT * FROM hzb_log WHERE severity_number >= 9
-                
-                Field descriptions:
-                1. severity_number (log level):
-                   - 5: DEBUG
-                   - 9: INFO
-                   - 13: WARN
-                   - 17: ERROR
-                2. timestamp: log timestamp
-                3. body: log content
-                """) String querySql) {
-        
-        if (!isValidQuery(querySql)) {
-            return "Invalid query statement";
+    LogService(RestClient.Builder restClientBuilder, String greptimeUrl, String database,
+               String username, String password) {
+        boolean hasUsername = username != null && !username.isBlank();
+        boolean hasPassword = password != null && !password.isBlank();
+        if (hasUsername != hasPassword) {
+            throw new IllegalArgumentException("GreptimeDB 用户名和密码必须同时配置");
         }
 
+        RestClient.Builder builder = restClientBuilder
+                .baseUrl(greptimeUrl)
+                .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE);
+        if (hasUsername) {
+            builder.defaultHeaders(headers -> headers.setBasicAuth(username, password));
+        }
+        this.restClient = builder.build();
+        this.database = database == null || database.isBlank() ? "public" : database;
+    }
+
+    /**
+     * 使用结构化条件查询 HertzBeat 系统日志。
+     *
+     * @param severity 日志级别
+     * @param keyword 日志正文关键词
+     * @param startTime 开始时间，Unix 毫秒时间戳
+     * @param endTime 结束时间，Unix 毫秒时间戳
+     * @param limit 最大返回条数
+     * @return 格式化后的日志查询结果
+     */
+    @Tool(name = "query_logs", description = "使用结构化过滤条件只读查询 HertzBeat 系统日志")
+    public String queryLogs(
+            @ToolParam(required = false,
+                    description = "日志级别，可选值为 TRACE、DEBUG、INFO、WARN、ERROR、FATAL")
+            String severity,
+            @ToolParam(required = false, description = "日志正文关键词，最长 256 个字符")
+            String keyword,
+            @ToolParam(required = false, description = "开始时间，Unix 毫秒时间戳")
+            Long startTime,
+            @ToolParam(required = false, description = "结束时间，Unix 毫秒时间戳")
+            Long endTime,
+            @ToolParam(required = false, description = "最多返回条数，默认为 20，最大为 100")
+            Integer limit) {
         try {
-            String response = executeQuery(querySql);
+            String response = executeQuery(buildQuery(severity, keyword, startTime, endTime, limit));
             return formatQueryResults(response);
+        } catch (IllegalArgumentException e) {
+            return "查询参数无效：" + e.getMessage();
         } catch (Exception e) {
             log.error("Failed to query logs", e);
-            return "Failed to query logs: " + e.getMessage();
+            return "日志查询失败";
         }
     }
 
-    private boolean isValidQuery(String sql) {
-        return sql != null && sql.toLowerCase().contains("hzb_log");
+    static String buildQuery(String severity, String keyword, Long startTime, Long endTime, Integer limit) {
+        if (startTime != null && startTime < 0) {
+            throw new IllegalArgumentException("开始时间不能为负数");
+        }
+        if (endTime != null && endTime < 0) {
+            throw new IllegalArgumentException("结束时间不能为负数");
+        }
+        if (startTime != null && endTime != null && startTime > endTime) {
+            throw new IllegalArgumentException("开始时间不能晚于结束时间");
+        }
+
+        int queryLimit = limit == null ? DEFAULT_LIMIT : limit;
+        if (queryLimit < 1 || queryLimit > MAX_LIMIT) {
+            throw new IllegalArgumentException("返回条数必须在 1 到 100 之间");
+        }
+
+        List<String> conditions = new ArrayList<>(4);
+        if (startTime != null) {
+            conditions.add("timestamp >= " + toNanoseconds(startTime, "开始时间"));
+        }
+        if (endTime != null) {
+            conditions.add("timestamp <= " + toNanoseconds(endTime, "结束时间"));
+        }
+
+        String normalizedSeverity = normalizeSeverity(severity);
+        if (normalizedSeverity != null) {
+            conditions.add("severity_text = '" + normalizedSeverity + "'");
+        }
+
+        if (keyword != null && !keyword.isBlank()) {
+            String normalizedKeyword = keyword.strip();
+            if (normalizedKeyword.length() > MAX_KEYWORD_LENGTH) {
+                throw new IllegalArgumentException("日志关键词不能超过 256 个字符");
+            }
+            conditions.add("matches_term(body, '" + escapeSqlLiteral(normalizedKeyword) + "')");
+        }
+
+        StringBuilder query = new StringBuilder(BASE_QUERY);
+        if (!conditions.isEmpty()) {
+            query.append(" WHERE ").append(String.join(" AND ", conditions));
+        }
+        return query.append(" ORDER BY timestamp DESC LIMIT ").append(queryLimit).toString();
+    }
+
+    private static String normalizeSeverity(String severity) {
+        if (severity == null || severity.isBlank()) {
+            return null;
+        }
+        String normalizedSeverity = severity.strip().toUpperCase(Locale.ROOT);
+        if (!SUPPORTED_SEVERITIES.contains(normalizedSeverity)) {
+            throw new IllegalArgumentException("日志级别不受支持");
+        }
+        return normalizedSeverity;
+    }
+
+    private static long toNanoseconds(long epochMilliseconds, String fieldName) {
+        try {
+            return Math.multiplyExact(epochMilliseconds, NANOS_PER_MILLISECOND);
+        } catch (ArithmeticException e) {
+            throw new IllegalArgumentException(fieldName + "超出支持范围", e);
+        }
+    }
+
+    private static String escapeSqlLiteral(String value) {
+        return value.replace("'", "''");
     }
 
     private String executeQuery(String sql) {
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
         formData.add("sql", sql);
-        log.debug("Executing SQL query: {}", sql);
-        
+        log.debug("Executing structured log query");
+
         return restClient.post()
-                .uri("/v1/sql?db=public")
+                .uri(uriBuilder -> uriBuilder.path("/v1/sql").queryParam("db", database).build())
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(formData)
                 .retrieve()
