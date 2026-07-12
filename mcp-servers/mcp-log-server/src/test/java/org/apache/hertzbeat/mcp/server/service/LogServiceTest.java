@@ -41,7 +41,7 @@ import org.springframework.web.client.RestClient;
 import org.springframework.test.web.client.MockRestServiceServer;
 
 /**
- * {@link LogService} 安全查询测试。
+ * Security tests for {@link LogService} queries.
  */
 class LogServiceTest {
 

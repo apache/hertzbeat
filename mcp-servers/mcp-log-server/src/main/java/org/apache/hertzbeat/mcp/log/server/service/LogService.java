@@ -42,7 +42,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * 日志查询服务。
+ * Log query service.
  */
 @Service
 @Slf4j
@@ -64,12 +64,12 @@ public class LogService {
     private final String database;
 
     /**
-     * 创建日志查询服务。
+     * Creates a log query service.
      *
-     * @param greptimeUrl GreptimeDB 地址
-     * @param database GreptimeDB 数据库名
-     * @param username GreptimeDB 用户名
-     * @param password GreptimeDB 密码
+     * @param greptimeUrl GreptimeDB URL
+     * @param database GreptimeDB database name
+     * @param username GreptimeDB username
+     * @param password GreptimeDB password
      */
     @Autowired
     public LogService(@Value("${greptime.url}") String greptimeUrl,
@@ -99,14 +99,14 @@ public class LogService {
     }
 
     /**
-     * 使用结构化条件查询 HertzBeat 系统日志。
+     * Queries HertzBeat system logs using structured filters.
      *
-     * @param severity 日志级别
-     * @param keyword 日志正文关键词
-     * @param startTime 开始时间，Unix 毫秒时间戳
-     * @param endTime 结束时间，Unix 毫秒时间戳
-     * @param limit 最大返回条数
-     * @return 格式化后的日志查询结果
+     * @param severity log severity
+     * @param keyword log body keyword
+     * @param startTime start time as a Unix timestamp in milliseconds
+     * @param endTime end time as a Unix timestamp in milliseconds
+     * @param limit maximum number of records to return
+     * @return formatted log query results
      */
     @Tool(name = "query_logs", description = "使用结构化过滤条件只读查询 HertzBeat 系统日志")
     public String queryLogs(
