@@ -1,6 +1,6 @@
 ---
 id: opensuse
-title: Monitoring OpenSUSE Operating System Monitoring    
+title: Monitoring OpenSUSE Operating System    
 sidebar_label: OpenSUSE OS    
 keywords: [open source monitoring system, open source operating system monitoring, OpenSUSE OS monitoring]
 ---

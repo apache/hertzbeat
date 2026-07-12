@@ -1,6 +1,6 @@
 ---
 id: spring_gateway
-Title: Monitoring Spring Cloud Gateway
+title: Monitoring Spring Cloud Gateway
 sidebar_label: Spring Cloud Gateway
 keywords: [open source monitoring tool, open source Spring Cloud Gateway monitoring tool, monitoring Spring Cloud Gateway metrics]
 ---
@@ -55,7 +55,7 @@ management:
 |-------------|-------------|--------------------------|
 | status      | None        | Service health: UP, Down |
 
-#### metric Collection: enviroment
+#### metric Collection: environment
 
 | Metric Name | metric unit |             Metrics help describe             |
 |-------------|-------------|-----------------------------------------------|

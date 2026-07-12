@@ -118,14 +118,14 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
         if (addJob.isCyclic()) {
             Long nextExecutionTime = getNextExecutionInterval(addJob);
             Timeout timeout = wheelTimer.newTimeout(timerJob, nextExecutionTime, TimeUnit.SECONDS);
-            currentCyclicTaskMap.put(addJob.getId(), timeout);
+            cancelPreviousTimeout(currentCyclicTaskMap.put(addJob.getId(), timeout));
         } else {
             for (Metrics metric : addJob.getMetrics()) {
                 metric.setInterval(0L);
             }
             addJob.setIntervals(new ConcurrentLinkedDeque<>(List.of(0L)));
             Timeout timeout = wheelTimer.newTimeout(timerJob, addJob.getInterval(), TimeUnit.SECONDS);
-            currentTempTaskMap.put(addJob.getId(), timeout);
+            cancelPreviousTimeout(currentTempTaskMap.put(addJob.getId(), timeout));
             eventListeners.put(addJob.getId(), eventListener);
         }
     }
@@ -140,7 +140,7 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
         // whether is the job has been canceled
         if (currentCyclicTaskMap.containsKey(jobId)) {
             Timeout timeout = wheelTimer.newTimeout(timerTask, interval, TimeUnit.SECONDS);
-            currentCyclicTaskMap.put(timerTask.getJob().getId(), timeout);
+            cancelPreviousTimeout(currentCyclicTaskMap.put(timerTask.getJob().getId(), timeout));
         }
     }
 
@@ -197,6 +197,12 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
     @Override
     public void destroy() throws Exception {
         this.wheelTimer.stop();
+    }
+
+    private void cancelPreviousTimeout(Timeout previousTimeout) {
+        if (previousTimeout != null) {
+            previousTimeout.cancel();
+        }
     }
 
     public Long getNextExecutionInterval(Job job) {
