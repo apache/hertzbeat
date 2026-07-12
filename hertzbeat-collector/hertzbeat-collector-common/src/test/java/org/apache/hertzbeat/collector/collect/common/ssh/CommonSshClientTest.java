@@ -17,8 +17,12 @@
 
 package org.apache.hertzbeat.collector.collect.common.ssh;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.time.Duration;
+import org.apache.sshd.client.SshClient;
+import org.apache.sshd.core.CoreModuleProperties;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -26,15 +30,13 @@ import org.junit.jupiter.api.Test;
  */
 class CommonSshClientTest {
 
-    @BeforeEach
-    void setUp() {
-    }
-
-    @AfterEach
-    void tearDown() {
-    }
-
     @Test
     void getSshClient() {
+        SshClient sshClient = CommonSshClient.getSshClient();
+
+        assertTrue(sshClient.isStarted());
+        assertEquals(Duration.ofSeconds(30), CoreModuleProperties.HEARTBEAT_INTERVAL.getRequired(sshClient));
+        assertEquals(2, CoreModuleProperties.HEARTBEAT_NO_REPLY_MAX.getRequired(sshClient));
+        assertTrue(CoreModuleProperties.SOCKET_KEEPALIVE.getRequired(sshClient));
     }
 }
