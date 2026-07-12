@@ -220,9 +220,10 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
             .filter(rule -> {
                 if (!rule.isFilterAll()) {
                     // filter labels: a rule matches when ANY single alert in the group carries
-                    if (rule.getLabels() != null && !rule.getLabels().isEmpty()) {List<SingleAlert> singleAlerts = alert.getAlerts();
+                    if (rule.getLabels() != null && !rule.getLabels().isEmpty()) {
+                        List<SingleAlert> singleAlerts = alert.getAlerts();
                         boolean labelMatch = singleAlerts != null && singleAlerts.stream().anyMatch(singleAlert -> {
-                                Map<String, String> alertLabels = singleAlert.getLabels();
+                            Map<String, String> alertLabels = singleAlert.getLabels();
                             if (alertLabels == null) {
                                 return false;
                             }
