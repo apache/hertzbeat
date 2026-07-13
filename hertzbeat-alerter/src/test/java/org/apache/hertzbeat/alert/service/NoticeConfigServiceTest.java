@@ -41,7 +41,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -378,5 +381,47 @@ class NoticeConfigServiceTest {
 
         assertEquals(1, matched.size());
         assertEquals(4L, matched.get(0).getId());
+    }
+
+    @Test
+    void getReceiverFilterRuleMatchesPeriodContainingNow() {
+        ZonedDateTime now = ZonedDateTime.now();
+        List<NoticeRule> matched = filterWithPeriod(now.minusHours(6), now.plusHours(6));
+        assertEquals(1, matched.size());
+    }
+
+    @Test
+    void getReceiverFilterRuleFiltersPeriodExcludingNow() {
+        ZonedDateTime now = ZonedDateTime.now();
+        List<NoticeRule> matched = filterWithPeriod(now.plusHours(1), now.plusHours(2));
+        assertEquals(0, matched.size());
+    }
+
+    @Test
+    void getReceiverFilterRuleMatchesCrossMidnightPeriod() {
+        ZonedDateTime now = ZonedDateTime.now();
+        List<NoticeRule> matched = filterWithPeriod(now.minusHours(1), now.minusHours(2).plusDays(1));
+        assertEquals(1, matched.size());
+    }
+
+    @Test
+    void getReceiverFilterRuleNormalizesStoredOffsetToServerZone() {
+        ZonedDateTime now = ZonedDateTime.now();
+        List<NoticeRule> matched = filterWithPeriod(
+                now.minusHours(6).withZoneSameInstant(ZoneOffset.ofHours(-7)),
+                now.plusHours(6).withZoneSameInstant(ZoneOffset.ofHours(9)));
+        assertEquals(1, matched.size());
+    }
+
+    private List<NoticeRule> filterWithPeriod(ZonedDateTime periodStart, ZonedDateTime periodEnd) {
+        NoticeRule rule = new NoticeRule();
+        rule.setId(10L);
+        rule.setName("PeriodRule");
+        rule.setFilterAll(true);
+        rule.setPeriodStart(periodStart);
+        rule.setPeriodEnd(periodEnd);
+        CacheFactory.clearNoticeCache();
+        when(noticeRuleDao.findNoticeRulesByEnableTrue()).thenReturn(Collections.singletonList(rule));
+        return noticeConfigService.getReceiverFilterRule(new GroupAlert());
     }
 }
