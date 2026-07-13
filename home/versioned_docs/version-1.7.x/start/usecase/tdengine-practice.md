@@ -31,7 +31,7 @@ Recommended deployment method for production environments, reference: [https://h
 ## Enable TDengine monitoring
 
 :::tip
-TDengine TSDB integrates multiple monitoring metric collection mechanisms and aggregates them through taosKeeper. taosKeeper is a monitoring metric export tool for TDengine TSDB version 3.0. With just a few simple configurations, you can obtain the runtime status of TDengine TSDB. For reference: [https://docs.taosdata.com/reference/components/taoskeeper/](https://docs.taosdata.com/reference/components/taoskeeper/)
+TDengine TSDB integrates multiple monitoring metric collection mechanisms and aggregates them through taosKeeper. taosKeeper is a monitoring metric export tool for TDengine TSDB version 3.0. With just a few simple configurations, you can obtain the runtime status of TDengine TSDB. For reference: [https://docs.tdengine.com/reference/components/taoskeeper/](https://docs.tdengine.com/reference/components/taoskeeper/)
 :::
 
 ## Monitor TDengine(PromQL)
