@@ -26,6 +26,9 @@ import { BasicLayout } from '@/layout/basic/BasicLayout';
 const LoginPage = lazy(() => import('@/features/auth/LoginPage').then(module => ({ default: module.LoginPage })));
 const BulletinPage = lazy(() => import('@/features/bulletin/BulletinPage').then(module => ({ default: module.BulletinPage })));
 const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage').then(module => ({ default: module.DashboardPage })));
+const MonitorListPage = lazy(() => import('@/features/monitor/MonitorListPage').then(module => ({ default: module.MonitorListPage })));
+const MonitorEditorPage = lazy(() => import('@/features/monitor/MonitorEditorPage').then(module => ({ default: module.MonitorEditorPage })));
+const MonitorDetailPage = lazy(() => import('@/features/monitor/MonitorDetailPage').then(module => ({ default: module.MonitorDetailPage })));
 const PublicStatusPage = lazy(() => import('@/features/status/PublicStatusPage').then(module => ({ default: module.PublicStatusPage })));
 
 export function AppRouter() {
@@ -39,6 +42,10 @@ export function AppRouter() {
             <Route element={<BasicLayout />}>
               <Route index element={<Navigate replace to="/dashboard" />} />
               <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/monitors" element={<MonitorListPage />} />
+              <Route path="/monitors/new" element={<MonitorEditorPage mode="new" />} />
+              <Route path="/monitors/:monitorId/edit" element={<MonitorEditorPage mode="edit" />} />
+              <Route path="/monitors/:monitorId" element={<MonitorDetailPage />} />
               <Route path="/bulletin" element={<BulletinPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>

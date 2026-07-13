@@ -2,9 +2,16 @@
   "common": {
     "notFound": { "title": "Page not found", "description": "The requested HertzBeat page does not exist." },
     "query": "Query",
+    "refresh": "Refresh",
+    "actions": "Actions",
+    "view": "View",
+    "edit": "Edit",
+    "cancel": "Cancel",
+    "save": "Save",
+    "back": "Back",
     "unavailable": "The service is unavailable. Check the backend connection and try again."
   },
-  "menu": { "primary": "Primary navigation", "dashboard": "Dashboard", "bulletin": "Bulletin", "status": "Status" },
+  "menu": { "primary": "Primary navigation", "dashboard": "Dashboard", "monitors": "Monitors", "bulletin": "Bulletin", "status": "Status" },
   "auth": {
     "title": "Sign in to HertzBeat",
     "description": "Use your HertzBeat account to continue.",
@@ -40,6 +47,12 @@
     "monitors": "Monitors",
     "creator": "Creator",
     "updated": "Updated"
+  },
+  "monitor": {
+    "title": "Monitors", "description": "Inspect availability, endpoints, and monitor ownership.",
+    "search": "Search name or endpoint", "application": "Application", "empty": "No monitors match the current query.",
+    "name": "Monitor", "updated": "Updated", "detail": "Monitor detail", "status": { "label": "Status", "all": "All statuses", "available": "Available", "unavailable": "Unavailable", "paused": "Paused", "unknown": "Unknown" },
+    "editor": { "newTitle": "New monitor", "editTitle": "Edit monitor", "description": "Configure the monitor, test connectivity, then save.", "interval": "Interval (seconds)", "collector": "Collector", "collectorDefault": "Use default collector", "descriptionLabel": "Description", "connection": "Connection", "endpoint": "Endpoint", "detect": "Test connection", "validation": "Complete the required monitor fields.", "detectSuccess": "Connection test passed.", "detectFailed": "Connection test failed.", "saveSuccess": "Monitor saved.", "saveFailed": "Monitor could not be saved." }
   },
   "status": {
     "title": "Service status",

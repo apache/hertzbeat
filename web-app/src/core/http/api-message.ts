@@ -28,9 +28,30 @@ export type PageResult<T> = {
 type ApiMessage<T> = { code: number; msg?: string; data: T };
 
 export async function apiMessageGet<T>(path: string) {
-  const response = await apiFetch(path);
+  return apiMessageRequest<T>(path);
+}
+
+export function apiMessagePost<T>(path: string, data: unknown, options?: Pick<RequestInit, 'signal'>) {
+  return apiMessageRequest<T>(path, jsonRequest('POST', data, options));
+}
+
+export function apiMessagePut<T>(path: string, data: unknown, options?: Pick<RequestInit, 'signal'>) {
+  return apiMessageRequest<T>(path, jsonRequest('PUT', data, options));
+}
+
+async function apiMessageRequest<T>(path: string, init?: RequestInit) {
+  const response = await apiFetch(path, init);
   if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
   const message = (await response.json()) as ApiMessage<T>;
   if (message.code !== 0) throw new Error(message.msg ?? 'Request failed');
   return message.data;
+}
+
+function jsonRequest(method: 'POST' | 'PUT', data: unknown, options?: Pick<RequestInit, 'signal'>): RequestInit {
+  return {
+    ...options,
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  };
 }

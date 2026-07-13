@@ -26,6 +26,7 @@ export type AppRouteDefinition = {
 export const routeRegistry = [
   { id: 'root', path: '/', labelKey: 'menu.dashboard', layout: 'basic', navigation: false },
   { id: 'dashboard', path: '/dashboard', labelKey: 'menu.dashboard', layout: 'basic', navigation: true },
+  { id: 'monitors', path: '/monitors', labelKey: 'menu.monitors', layout: 'basic', navigation: true },
   { id: 'bulletin', path: '/bulletin', labelKey: 'menu.bulletin', layout: 'basic', navigation: true },
   { id: 'status', path: '/status', labelKey: 'menu.status', layout: 'blank', navigation: false },
   { id: 'login', path: '/passport/login', labelKey: 'auth.title', layout: 'passport', navigation: false },
