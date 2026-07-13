@@ -137,6 +137,14 @@ export const appRoutes: RouteObject[] = [
                 }
               },
               {
+                id: 'alert-inhibits',
+                path: '/alerts/inhibits',
+                lazy: async () => {
+                  const { AlertInhibitPage } = await import('@/features/alert/AlertInhibitPage');
+                  return { Component: AlertInhibitPage };
+                }
+              },
+              {
                 id: 'bulletin',
                 path: '/bulletin',
                 lazy: async () => {

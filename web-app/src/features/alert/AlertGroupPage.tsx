@@ -37,7 +37,7 @@ import {
   type AlertGroupDraft
 } from './alert-group-model';
 import { AlertManagementNav } from './AlertManagementNav';
-import styles from './AlertGroupPage.module.css';
+import styles from './AlertPolicyPage.module.css';
 
 type GroupOperation =
   | { type: 'toggle'; group: AlertGroupConverge; enabled: boolean }

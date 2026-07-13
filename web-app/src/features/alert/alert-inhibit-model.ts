@@ -1,0 +1,126 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+export const alertInhibitPageSizes = [8, 15, 25] as const;
+
+export type AlertInhibitQuery = { search: string; pageIndex: number; pageSize: number };
+
+export type AlertInhibitDraft = {
+  id?: number;
+  name: string;
+  sourceLabelsText: string;
+  targetLabelsText: string;
+  equalLabels: string[];
+  enable: boolean;
+};
+
+export type AlertInhibit = {
+  id: number;
+  name?: string;
+  sourceLabels?: Record<string, string>;
+  targetLabels?: Record<string, string>;
+  equalLabels?: string[];
+  enable?: boolean;
+  gmtCreate?: string | number | null;
+  gmtUpdate?: string | number | null;
+};
+
+export function readAlertInhibitQuery(params: URLSearchParams): AlertInhibitQuery {
+  const pageIndex = Number.parseInt(params.get('pageIndex') ?? '', 10);
+  const pageSize = Number.parseInt(params.get('pageSize') ?? '', 10);
+  return {
+    search: params.get('search')?.trim() ?? '',
+    pageIndex: Number.isFinite(pageIndex) && pageIndex >= 0 ? pageIndex : 0,
+    pageSize: alertInhibitPageSizes.includes(pageSize as typeof alertInhibitPageSizes[number]) ? pageSize : 8
+  };
+}
+
+export function writeAlertInhibitQuery(query: AlertInhibitQuery) {
+  const params = new URLSearchParams({ pageIndex: String(query.pageIndex), pageSize: String(query.pageSize) });
+  if (query.search) params.set('search', query.search);
+  return params;
+}
+
+export function buildAlertInhibitListPath(query: AlertInhibitQuery) {
+  const params = new URLSearchParams({
+    pageIndex: String(query.pageIndex),
+    pageSize: String(query.pageSize),
+    sort: 'id',
+    order: 'desc'
+  });
+  if (query.search) params.set('search', query.search);
+  return `/api/alert/inhibits?${params.toString()}`;
+}
+
+export function createAlertInhibitDraft(): AlertInhibitDraft {
+  return {
+    name: '',
+    sourceLabelsText: '',
+    targetLabelsText: '',
+    equalLabels: [],
+    enable: true
+  };
+}
+
+function parseLabelMatchers(value: string): Record<string, string> | null {
+  const result: Record<string, string> = {};
+  const matchers = value.split(/[\n,]+/).map(matcher => matcher.trim()).filter(Boolean);
+  if (matchers.length === 0) return null;
+  for (const matcher of matchers) {
+    const separator = matcher.search(/[:=]/);
+    const key = separator >= 0 ? matcher.slice(0, separator).trim() : '';
+    const matcherValue = separator >= 0 ? matcher.slice(separator + 1).trim() : '';
+    if (!key || !matcherValue) return null;
+    result[key] = matcherValue;
+  }
+  return result;
+}
+
+function formatLabelMatchers(labels?: Record<string, string>) {
+  return Object.entries(labels ?? {}).map(([key, value]) => `${key}:${value}`).join(', ');
+}
+
+export function buildAlertInhibitPayload(draft: AlertInhibitDraft) {
+  return {
+    ...(draft.id ? { id: draft.id } : {}),
+    name: draft.name.trim(),
+    sourceLabels: parseLabelMatchers(draft.sourceLabelsText) ?? {},
+    targetLabels: parseLabelMatchers(draft.targetLabelsText) ?? {},
+    equalLabels: [...new Set(draft.equalLabels.map(label => label.trim()).filter(Boolean))],
+    enable: draft.enable
+  };
+}
+
+export function validateAlertInhibitDraft(draft: AlertInhibitDraft) {
+  const invalid: Array<'name' | 'sourceLabels' | 'targetLabels' | 'equalLabels'> = [];
+  if (!draft.name.trim()) invalid.push('name');
+  if (!parseLabelMatchers(draft.sourceLabelsText)) invalid.push('sourceLabels');
+  if (!parseLabelMatchers(draft.targetLabelsText)) invalid.push('targetLabels');
+  if (draft.equalLabels.map(label => label.trim()).filter(Boolean).length === 0) invalid.push('equalLabels');
+  return invalid;
+}
+
+export function alertInhibitDraftFromDetail(inhibit: AlertInhibit): AlertInhibitDraft {
+  return {
+    id: inhibit.id,
+    name: inhibit.name ?? '',
+    sourceLabelsText: formatLabelMatchers(inhibit.sourceLabels),
+    targetLabelsText: formatLabelMatchers(inhibit.targetLabels),
+    equalLabels: inhibit.equalLabels ?? [],
+    enable: inhibit.enable ?? true
+  };
+}

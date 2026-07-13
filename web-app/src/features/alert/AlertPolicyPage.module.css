@@ -25,4 +25,5 @@
 .form > label { display: grid; gap: 7px; color: var(--ant-color-text-secondary); font-size: 13px; }
 .form > label :global(.ant-input-number), .form > label :global(.ant-select) { width: 100%; }
 .wide { grid-column: 1 / -1; }
+.hint { color: var(--ant-color-text-tertiary); font-size: 12px; }
 @media (max-width: 800px) { .form { grid-template-columns: 1fr; } .wide { grid-column: auto; } }
