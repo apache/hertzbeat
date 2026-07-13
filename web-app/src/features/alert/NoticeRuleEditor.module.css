@@ -1,0 +1,27 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.form, .advancedFields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, .45fr); gap: 16px; }
+.field, .wideField { display: grid; gap: 7px; color: var(--ant-color-text-secondary); font-size: 13px; }
+.field :global(.ant-picker), .wideField :global(.ant-select) { width: 100%; }
+.wideField, .advanced { grid-column: 1 / -1; }
+.switchField { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--ant-color-text-secondary); font-size: 13px; }
+.advanced { border-top: 1px solid var(--ant-color-border-secondary); }
+.advanced :global(.ant-collapse-header) { padding-inline: 0 !important; }
+.advanced :global(.ant-collapse-content-box) { padding-inline: 0 !important; }
+.hint { grid-column: 1 / -1; color: var(--ant-color-text-tertiary); font-size: 12px; }
+@media (max-width: 700px) { .form, .advancedFields { grid-template-columns: 1fr; } .wideField, .advanced, .hint { grid-column: auto; } }

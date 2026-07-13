@@ -1,0 +1,176 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { formatLabelMatchers, parseLabelMatchers } from './alert-label-matchers';
+import type { NoticeReceiver } from './notice-receiver-model';
+import type { NoticeTemplate } from './notice-template-model';
+
+export const noticeRulePageSizes = [8, 15, 25] as const;
+export const noticeRuleWeekdays = [7, 1, 2, 3, 4, 5, 6] as const;
+
+export type NoticeRuleQuery = { name: string; pageIndex: number; pageSize: number };
+export type NoticeRule = {
+  id: number;
+  name: string;
+  receiverId: number[];
+  receiverName: string[];
+  templateId: number | null;
+  templateName: string | null;
+  enable: boolean;
+  filterAll: boolean;
+  labels?: Record<string, string> | null;
+  days?: number[] | null;
+  periodStart?: string | number | null;
+  periodEnd?: string | number | null;
+  gmtCreate?: string | number | null;
+  gmtUpdate?: string | number | null;
+};
+
+export type NoticeRuleDraft = {
+  id?: number;
+  name: string;
+  receiverIds: number[];
+  receiverNames: string[];
+  templateId: number | null;
+  templateName: string | null;
+  enable: boolean;
+  filterAll: boolean;
+  labelsText: string;
+  limitDays: boolean;
+  days: number[];
+  periodStart: string;
+  periodEnd: string;
+};
+
+export function readNoticeRuleQuery(params: URLSearchParams): NoticeRuleQuery {
+  const pageIndex = Number.parseInt(params.get('pageIndex') ?? '', 10);
+  const pageSize = Number.parseInt(params.get('pageSize') ?? '', 10);
+  return {
+    name: params.get('name')?.trim() ?? '',
+    pageIndex: Number.isFinite(pageIndex) && pageIndex >= 0 ? pageIndex : 0,
+    pageSize: noticeRulePageSizes.includes(pageSize as typeof noticeRulePageSizes[number]) ? pageSize : 8
+  };
+}
+
+export function writeNoticeRuleQuery(query: NoticeRuleQuery) {
+  const params = new URLSearchParams({ pageIndex: String(query.pageIndex), pageSize: String(query.pageSize) });
+  if (query.name) params.set('name', query.name);
+  return params;
+}
+
+export function buildNoticeRuleListPath(query: NoticeRuleQuery) {
+  return `/api/notice/rules?${writeNoticeRuleQuery(query).toString()}`;
+}
+
+export function createNoticeRuleDraft(): NoticeRuleDraft {
+  return {
+    name: '', receiverIds: [], receiverNames: [], templateId: null, templateName: null,
+    enable: true, filterAll: true, labelsText: '', limitDays: false,
+    days: [1, 2, 3, 4, 5, 6, 7], periodStart: '', periodEnd: ''
+  };
+}
+
+function timeInput(value?: string | number | null) {
+  if (value == null || value === '') return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
+export function noticeRuleDraftFromDetail(rule: NoticeRule): NoticeRuleDraft {
+  const days = rule.days?.filter(day => day >= 1 && day <= 7) ?? [1, 2, 3, 4, 5, 6, 7];
+  return {
+    id: rule.id,
+    name: rule.name,
+    receiverIds: rule.receiverId ?? [],
+    receiverNames: rule.receiverName ?? [],
+    templateId: rule.templateId,
+    templateName: rule.templateName,
+    enable: rule.enable,
+    filterAll: rule.filterAll,
+    labelsText: formatLabelMatchers(rule.labels ?? undefined),
+    limitDays: days.length !== 7,
+    days,
+    periodStart: timeInput(rule.periodStart),
+    periodEnd: timeInput(rule.periodEnd)
+  };
+}
+
+export function compatibleNoticeRuleTemplates(receiverIds: number[], receivers: NoticeReceiver[], templates: NoticeTemplate[]) {
+  const selectedTypes = new Set(receivers.filter(receiver => receiverIds.includes(receiver.id)).map(receiver => receiver.type));
+  if (selectedTypes.size !== 1) return [];
+  const [selectedType] = selectedTypes;
+  return templates.filter(template => !template.preset && template.id != null && template.type === selectedType);
+}
+
+function timezoneOffset(offsetMinutes: number) {
+  const sign = offsetMinutes >= 0 ? '+' : '-';
+  const absolute = Math.abs(offsetMinutes);
+  return `${sign}${String(Math.trunc(absolute / 60)).padStart(2, '0')}:${String(absolute % 60).padStart(2, '0')}`;
+}
+
+function localIsoTime(value: string) {
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) return null;
+  const [hours = 0, minutes = 0] = value.split(':').map(Number);
+  const date = new Date();
+  date.setHours(hours, minutes, 0, 0);
+  const localDate = [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
+  return `${localDate}T${value}:00${timezoneOffset(-date.getTimezoneOffset())}`;
+}
+
+export function buildNoticeRulePayload(draft: NoticeRuleDraft, receivers: NoticeReceiver[] = [], templates: NoticeTemplate[] = []) {
+  const receiverNames = draft.receiverIds.map((id, index) => receivers.find(receiver => receiver.id === id)?.name ?? draft.receiverNames[index]).filter((name): name is string => Boolean(name));
+  const template = draft.templateId == null ? null : templates.find(item => item.id === draft.templateId);
+  return {
+    ...(draft.id ? { id: draft.id } : {}),
+    name: draft.name.trim(),
+    receiverId: draft.receiverIds,
+    receiverName: receiverNames,
+    templateId: draft.templateId,
+    templateName: template?.name ?? draft.templateName,
+    enable: draft.enable,
+    filterAll: draft.filterAll,
+    labels: draft.filterAll ? {} : (parseLabelMatchers(draft.labelsText) ?? {}),
+    days: draft.limitDays ? draft.days : [1, 2, 3, 4, 5, 6, 7],
+    periodStart: draft.periodStart ? localIsoTime(draft.periodStart) : null,
+    periodEnd: draft.periodEnd ? localIsoTime(draft.periodEnd) : null
+  };
+}
+
+type NoticeRuleInvalidField = 'name' | 'receiverIds' | 'labelsText' | 'days' | 'periodStart' | 'periodEnd';
+
+function requiredFieldErrors(draft: NoticeRuleDraft): NoticeRuleInvalidField[] {
+  const invalid: NoticeRuleInvalidField[] = [];
+  if (!draft.name.trim() || draft.name.trim().length > 100) invalid.push('name');
+  if (draft.receiverIds.length === 0) invalid.push('receiverIds');
+  if (!draft.filterAll && parseLabelMatchers(draft.labelsText) == null) invalid.push('labelsText');
+  if (draft.limitDays && draft.days.length === 0) invalid.push('days');
+  return invalid;
+}
+
+function scheduleErrors(draft: NoticeRuleDraft): NoticeRuleInvalidField[] {
+  const invalid: NoticeRuleInvalidField[] = [];
+  if (draft.periodStart && !draft.periodEnd) invalid.push('periodEnd');
+  if (!draft.periodStart && draft.periodEnd) invalid.push('periodStart');
+  if (draft.periodStart && localIsoTime(draft.periodStart) == null) invalid.push('periodStart');
+  if (draft.periodEnd && localIsoTime(draft.periodEnd) == null) invalid.push('periodEnd');
+  return invalid;
+}
+
+export function validateNoticeRuleDraft(draft: NoticeRuleDraft) {
+  return [...new Set([...requiredFieldErrors(draft), ...scheduleErrors(draft)])];
+}

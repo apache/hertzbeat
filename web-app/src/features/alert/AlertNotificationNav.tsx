@@ -21,6 +21,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 const notificationRoutes = [
   { value: '/alerts/notifications/receivers', labelKey: 'alertNavigation.receivers' },
+  { value: '/alerts/notifications/rules', labelKey: 'alertNavigation.notificationRules' },
   { value: '/alerts/notifications/templates', labelKey: 'alertNavigation.templates' }
 ] as const;
 

@@ -40,6 +40,7 @@ describe('application data router', () => {
         '/alerts/inhibits',
         '/alerts/silences',
         '/alerts/notifications/receivers',
+        '/alerts/notifications/rules',
         '/alerts/notifications/templates',
         '/bulletin',
         '*'

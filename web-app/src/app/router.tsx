@@ -169,6 +169,14 @@ export const appRoutes: RouteObject[] = [
                 }
               },
               {
+                id: 'notice-rules',
+                path: '/alerts/notifications/rules',
+                lazy: async () => {
+                  const { NoticeRulePage } = await import('@/features/alert/NoticeRulePage');
+                  return { Component: NoticeRulePage };
+                }
+              },
+              {
                 id: 'bulletin',
                 path: '/bulletin',
                 lazy: async () => {
