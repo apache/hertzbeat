@@ -15,16 +15,11 @@
  * limitations under the License.
  */
 
-.page { display: grid; min-width: 0; gap: 20px; }
-.page > * { min-width: 0; }
-.heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
-.heading :global(.ant-typography) { margin: 0; }
-.toolbar { display: grid; grid-template-columns: minmax(260px, 1fr) auto auto; gap: 8px; }
-.labels { display: flex; flex-wrap: wrap; gap: 4px; }
 .form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-.form > label { display: grid; gap: 7px; color: var(--ant-color-text-secondary); font-size: 13px; }
-.form > label :global(.ant-switch) { justify-self: start; }
-.form > label :global(.ant-input-number), .form > label :global(.ant-select) { width: 100%; }
+.field { display: grid; align-content: start; gap: 7px; color: var(--ant-color-text-secondary); font-size: 13px; }
+.field :global(.ant-switch) { justify-self: start; }
 .wide { grid-column: 1 / -1; }
 .hint { color: var(--ant-color-text-tertiary); font-size: 12px; }
-@media (max-width: 800px) { .form { grid-template-columns: 1fr; } .wide { grid-column: auto; } }
+.wide :global(.ant-picker), .field :global(.ant-picker) { width: 100%; }
+.weekdays :global(.ant-checkbox-group) { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+@media (max-width: 700px) { .form { grid-template-columns: 1fr; } .wide { grid-column: auto; } }

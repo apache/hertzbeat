@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import { formatLabelMatchers, parseLabelMatchers } from './alert-label-matchers';
+
 export const alertInhibitPageSizes = [8, 15, 25] as const;
 
 export type AlertInhibitQuery = { search: string; pageIndex: number; pageSize: number };
@@ -74,24 +76,6 @@ export function createAlertInhibitDraft(): AlertInhibitDraft {
     equalLabels: [],
     enable: true
   };
-}
-
-function parseLabelMatchers(value: string): Record<string, string> | null {
-  const result: Record<string, string> = {};
-  const matchers = value.split(/[\n,]+/).map(matcher => matcher.trim()).filter(Boolean);
-  if (matchers.length === 0) return null;
-  for (const matcher of matchers) {
-    const separator = matcher.search(/[:=]/);
-    const key = separator >= 0 ? matcher.slice(0, separator).trim() : '';
-    const matcherValue = separator >= 0 ? matcher.slice(separator + 1).trim() : '';
-    if (!key || !matcherValue) return null;
-    result[key] = matcherValue;
-  }
-  return result;
-}
-
-function formatLabelMatchers(labels?: Record<string, string>) {
-  return Object.entries(labels ?? {}).map(([key, value]) => `${key}:${value}`).join(', ');
 }
 
 export function buildAlertInhibitPayload(draft: AlertInhibitDraft) {

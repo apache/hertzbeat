@@ -14,6 +14,9 @@ importers:
       antd:
         specifier: 6.5.0
         version: 6.5.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      dayjs:
+        specifier: 1.11.21
+        version: 1.11.21
       i18next:
         specifier: 26.3.6
         version: 26.3.6(typescript@5.9.3)

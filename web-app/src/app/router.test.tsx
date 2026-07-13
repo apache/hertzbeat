@@ -38,6 +38,7 @@ describe('application data router', () => {
         '/alerts',
         '/alerts/groups',
         '/alerts/inhibits',
+        '/alerts/silences',
         '/bulletin',
         '*'
       ])

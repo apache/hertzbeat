@@ -23,13 +23,15 @@ const alertManagementRoutes = [
   { key: '/alerts', labelKey: 'alertNavigation.events' },
   { key: '/alerts/rules', labelKey: 'alertNavigation.rules' },
   { key: '/alerts/groups', labelKey: 'alertNavigation.groups' },
-  { key: '/alerts/inhibits', labelKey: 'alertNavigation.inhibits' }
+  { key: '/alerts/inhibits', labelKey: 'alertNavigation.inhibits' },
+  { key: '/alerts/silences', labelKey: 'alertNavigation.silences' }
 ] as const;
 
 function activeAlertRoute(pathname: string) {
   if (pathname.startsWith('/alerts/rules')) return '/alerts/rules';
   if (pathname.startsWith('/alerts/groups')) return '/alerts/groups';
   if (pathname.startsWith('/alerts/inhibits')) return '/alerts/inhibits';
+  if (pathname.startsWith('/alerts/silences')) return '/alerts/silences';
   return '/alerts';
 }
 
