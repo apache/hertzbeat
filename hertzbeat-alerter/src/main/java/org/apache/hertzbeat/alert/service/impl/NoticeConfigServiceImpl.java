@@ -69,18 +69,18 @@ import java.util.stream.Collectors;
 @Transactional(rollbackFor = Exception.class)
 @Slf4j
 public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLineRunner {
-    
+
     private static final Map<Byte, NoticeTemplate> PRESET_TEMPLATE = new HashMap<>(16);
-    
+
     @Autowired
     private NoticeReceiverDao noticeReceiverDao;
 
     @Autowired
     private NoticeRuleDao noticeRuleDao;
-    
+
     @Autowired
     private NoticeTemplateDao noticeTemplateDao;
-    
+
     @Autowired
     @Lazy
     private AlertNoticeDispatch dispatcherAlarm;
@@ -212,24 +212,30 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
         }
 
         // The temporary rule is to forward all, and then implement more matching rules: alarm status selection, monitoring type selection, etc.
+        // TODO: This matches an already-grouped alert against notice rules (group-then-route). It cannot fully
+        //  separate alerts that were grouped together but should reach different receivers, so a rule matched by
+        //  one alert still notifies the whole group. The ideal design is route-then-group (like Alertmanager):
+        //  route each single alert by its labels first, then group per receiver. Tracked as a follow-up to #3852.
         return rules.stream()
                 .filter(rule -> {
                     if (!rule.isFilterAll()) {
-                        // filter labels
+                        // filter labels: a rule matches when ANY single alert in the group carries
                         if (rule.getLabels() != null && !rule.getLabels().isEmpty()) {
-                            boolean labelMatch = rule.getLabels().entrySet().stream().allMatch(labelItem -> {
-                                if (!alert.getCommonLabels().containsKey(labelItem.getKey())) {
+                            List<SingleAlert> singleAlerts = alert.getAlerts();
+                            boolean labelMatch = singleAlerts != null && singleAlerts.stream().anyMatch(singleAlert -> {
+                                Map<String, String> alertLabels = singleAlert.getLabels();
+                                if (alertLabels == null) {
                                     return false;
                                 }
-                                String alertLabelValue = alert.getCommonLabels().get(labelItem.getKey());
-                                return Objects.equals(labelItem.getValue(), alertLabelValue);
+                                return rule.getLabels().entrySet().stream().allMatch(labelItem ->
+                                        Objects.equals(labelItem.getValue(), alertLabels.get(labelItem.getKey())));
                             });
                             if (!labelMatch) {
                                 return false;
                             }
                         }
                     }
-                    
+
                     LocalDateTime nowDate = LocalDateTime.now();
                     // filter day
                     int currentDayOfWeek = nowDate.toLocalDate().getDayOfWeek().getValue();
