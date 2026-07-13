@@ -29,6 +29,7 @@ export const routeRegistry = [
   { id: 'monitors', path: '/monitors', labelKey: 'menu.monitors', layout: 'basic', navigation: true },
   { id: 'alerts', path: '/alerts', labelKey: 'menu.alerts', layout: 'basic', navigation: true },
   { id: 'alert-rules', path: '/alerts/rules', labelKey: 'alertRules.title', layout: 'basic', navigation: false },
+  { id: 'alert-groups', path: '/alerts/groups', labelKey: 'alertGroups.title', layout: 'basic', navigation: false },
   { id: 'bulletin', path: '/bulletin', labelKey: 'menu.bulletin', layout: 'basic', navigation: true },
   { id: 'status', path: '/status', labelKey: 'menu.status', layout: 'blank', navigation: false },
   { id: 'login', path: '/passport/login', labelKey: 'auth.title', layout: 'passport', navigation: false },

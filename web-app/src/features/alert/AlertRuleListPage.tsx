@@ -26,6 +26,7 @@ import type { PageResult } from '@/core/http/api-message';
 
 import { deleteAlertRules, loadAlertRules, updateAlertRuleEnabled } from './alert-rule-api';
 import { alertRulePageSizes, readAlertRuleQuery, writeAlertRuleQuery, type AlertRule } from './alert-rule-model';
+import { AlertManagementNav } from './AlertManagementNav';
 import styles from './AlertRuleListPage.module.css';
 
 type Translator = (key: string) => string;
@@ -157,10 +158,10 @@ export function AlertRuleListPage() {
           <Typography.Text type="secondary">{t('alertRules.description')}</Typography.Text>
         </div>
         <Space>
-          <Button onClick={() => void navigate('/alerts')}>{t('common.back')}</Button>
           <Button type="primary" onClick={() => void navigate('/alerts/rules/new')}>{t('alertRules.new')}</Button>
         </Space>
       </header>
+      <AlertManagementNav />
       <div className={styles.toolbar}>
         <Input
           allowClear

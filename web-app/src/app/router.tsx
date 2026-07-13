@@ -129,6 +129,14 @@ export const appRoutes: RouteObject[] = [
                 }
               },
               {
+                id: 'alert-groups',
+                path: '/alerts/groups',
+                lazy: async () => {
+                  const { AlertGroupPage } = await import('@/features/alert/AlertGroupPage');
+                  return { Component: AlertGroupPage };
+                }
+              },
+              {
                 id: 'bulletin',
                 path: '/bulletin',
                 lazy: async () => {

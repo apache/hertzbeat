@@ -31,7 +31,7 @@ describe('route registry', () => {
 
   it('preserves the master entry routes', () => {
     expect(routeRegistry.map(route => route.path)).toEqual(
-      expect.arrayContaining(['/', '/dashboard', '/monitors', '/alerts', '/alerts/rules', '/bulletin', '/status', '/passport/login'])
+      expect.arrayContaining(['/', '/dashboard', '/monitors', '/alerts', '/alerts/rules', '/alerts/groups', '/bulletin', '/status', '/passport/login'])
     );
   });
 });

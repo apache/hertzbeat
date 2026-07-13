@@ -24,6 +24,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { loadAlertGroups, loadAlertSummary, type AlertGroup, type AlertPage, type AlertSummary } from './alert-api';
 import { alertPageSizes, alertStatusColor, readAlertQuery, writeAlertQuery } from './alert-model';
+import { AlertManagementNav } from './AlertManagementNav';
 import styles from './AlertCenterPage.module.css';
 
 type Translator = (key: string) => string;
@@ -145,6 +146,7 @@ export function AlertCenterPage() {
         </div>
         <Button onClick={() => void navigate('/alerts/rules')}>{t('alertRules.manage')}</Button>
       </header>
+      <AlertManagementNav />
       <div className={styles.toolbar}>
         <Input
           allowClear
