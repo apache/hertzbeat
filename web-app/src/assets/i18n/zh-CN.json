@@ -11,7 +11,7 @@
     "back": "返回",
     "unavailable": "服务暂不可用，请检查后端连接后重试。"
   },
-  "menu": { "primary": "主导航", "dashboard": "仪表盘", "monitors": "监控中心", "bulletin": "监控看板", "status": "状态页" },
+  "menu": { "primary": "主导航", "dashboard": "仪表盘", "monitors": "监控中心", "alerts": "告警中心", "bulletin": "监控看板", "status": "状态页" },
   "auth": {
     "title": "登录 HertzBeat",
     "description": "使用 HertzBeat 账号继续。",
@@ -39,6 +39,13 @@
     "search": "搜索名称或端点", "application": "应用类型", "empty": "当前条件下没有监控。",
     "name": "监控", "updated": "更新时间", "detail": "监控详情", "status": { "label": "状态", "all": "全部状态", "available": "可用", "unavailable": "不可用", "paused": "已暂停", "unknown": "未知" },
     "editor": { "newTitle": "新建监控", "editTitle": "编辑监控", "description": "配置监控并检测连通性，确认后保存。", "interval": "采集间隔（秒）", "collector": "采集器", "collectorDefault": "使用默认采集器", "descriptionLabel": "描述", "connection": "连接参数", "endpoint": "端点", "detect": "检测连接", "validation": "请完成监控必填项。", "detectSuccess": "连接检测通过。", "detectFailed": "连接检测失败。", "saveSuccess": "监控已保存。", "saveFailed": "监控保存失败。" }
+  },
+  "alert": {
+    "title": "告警中心", "description": "查看聚合告警与当前处理状态。", "search": "搜索告警", "empty": "当前条件下没有告警。",
+    "name": "告警", "labels": "标签", "updated": "更新时间", "summaryUnavailable": "告警概览暂不可用，仍可继续查询告警列表。",
+    "summary": { "total": "告警总数", "acknowledged": "已确认", "warning": "警告", "critical": "严重", "emergency": "紧急" },
+    "status": { "label": "状态", "all": "全部状态", "firing": "告警中", "acknowledged": "已确认", "resolved": "已恢复", "unknown": "未知" },
+    "severity": { "label": "级别", "all": "全部级别", "warning": "警告", "critical": "严重", "emergency": "紧急" }
   },
   "status": {
     "title": "服务状态", "description": "公开的组件健康状态与故障记录。", "operational": "所有系统运行正常",

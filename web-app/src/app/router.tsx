@@ -24,6 +24,7 @@ import { NotFoundPage } from '@/features/errors';
 import { BasicLayout } from '@/layout/basic/BasicLayout';
 
 const LoginPage = lazy(() => import('@/features/auth/LoginPage').then(module => ({ default: module.LoginPage })));
+const AlertCenterPage = lazy(() => import('@/features/alert/AlertCenterPage').then(module => ({ default: module.AlertCenterPage })));
 const BulletinPage = lazy(() => import('@/features/bulletin/BulletinPage').then(module => ({ default: module.BulletinPage })));
 const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage').then(module => ({ default: module.DashboardPage })));
 const MonitorListPage = lazy(() => import('@/features/monitor/MonitorListPage').then(module => ({ default: module.MonitorListPage })));
@@ -46,6 +47,7 @@ export function AppRouter() {
               <Route path="/monitors/new" element={<MonitorEditorPage mode="new" />} />
               <Route path="/monitors/:monitorId/edit" element={<MonitorEditorPage mode="edit" />} />
               <Route path="/monitors/:monitorId" element={<MonitorDetailPage />} />
+              <Route path="/alerts" element={<AlertCenterPage />} />
               <Route path="/bulletin" element={<BulletinPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>

@@ -15,23 +15,13 @@
  * limitations under the License.
  */
 
-import { describe, expect, it } from 'vitest';
-
-import { routeRegistry } from './route-registry';
-
-describe('route registry', () => {
-  it('keeps route ids and paths unique', () => {
-    expect(new Set(routeRegistry.map(route => route.id)).size).toBe(routeRegistry.length);
-    expect(new Set(routeRegistry.map(route => route.path)).size).toBe(routeRegistry.length);
-  });
-
-  it('keeps the wildcard route out of navigation', () => {
-    expect(routeRegistry.find(route => route.path === '*')?.navigation).toBe(false);
-  });
-
-  it('preserves the master entry routes', () => {
-    expect(routeRegistry.map(route => route.path)).toEqual(
-      expect.arrayContaining(['/', '/dashboard', '/monitors', '/alerts', '/bulletin', '/status', '/passport/login'])
-    );
-  });
-});
+.page { display: grid; gap: 20px; }
+.heading :global(.ant-typography) { margin: 0; }
+.toolbar { display: grid; grid-template-columns: minmax(220px, 1fr) 180px 180px auto auto; gap: 8px; }
+.summary { display: flex; flex-wrap: wrap; gap: 24px; padding-block: 4px; }
+.metric { min-width: 110px; }
+.metric span, .metric strong { display: block; }
+.metric span { color: var(--ant-color-text-secondary); font-size: 12px; }
+.metric strong { margin-top: 4px; font-size: 22px; }
+.labels { display: flex; flex-wrap: wrap; gap: 4px; }
+@media (max-width: 900px) { .toolbar { grid-template-columns: 1fr 1fr; } }

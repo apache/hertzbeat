@@ -11,7 +11,7 @@
     "back": "Back",
     "unavailable": "The service is unavailable. Check the backend connection and try again."
   },
-  "menu": { "primary": "Primary navigation", "dashboard": "Dashboard", "monitors": "Monitors", "bulletin": "Bulletin", "status": "Status" },
+  "menu": { "primary": "Primary navigation", "dashboard": "Dashboard", "monitors": "Monitors", "alerts": "Alerts", "bulletin": "Bulletin", "status": "Status" },
   "auth": {
     "title": "Sign in to HertzBeat",
     "description": "Use your HertzBeat account to continue.",
@@ -53,6 +53,13 @@
     "search": "Search name or endpoint", "application": "Application", "empty": "No monitors match the current query.",
     "name": "Monitor", "updated": "Updated", "detail": "Monitor detail", "status": { "label": "Status", "all": "All statuses", "available": "Available", "unavailable": "Unavailable", "paused": "Paused", "unknown": "Unknown" },
     "editor": { "newTitle": "New monitor", "editTitle": "Edit monitor", "description": "Configure the monitor, test connectivity, then save.", "interval": "Interval (seconds)", "collector": "Collector", "collectorDefault": "Use default collector", "descriptionLabel": "Description", "connection": "Connection", "endpoint": "Endpoint", "detect": "Test connection", "validation": "Complete the required monitor fields.", "detectSuccess": "Connection test passed.", "detectFailed": "Connection test failed.", "saveSuccess": "Monitor saved.", "saveFailed": "Monitor could not be saved." }
+  },
+  "alert": {
+    "title": "Alert center", "description": "Inspect grouped alerts and current handling state.", "search": "Search alerts", "empty": "No alerts match the current query.",
+    "name": "Alert", "labels": "Labels", "updated": "Updated", "summaryUnavailable": "Alert summary is unavailable; alert results remain queryable.",
+    "summary": { "total": "Total", "acknowledged": "Acknowledged", "warning": "Warning", "critical": "Critical", "emergency": "Emergency" },
+    "status": { "label": "Status", "all": "All statuses", "firing": "Firing", "acknowledged": "Acknowledged", "resolved": "Resolved", "unknown": "Unknown" },
+    "severity": { "label": "Severity", "all": "All severities", "warning": "Warning", "critical": "Critical", "emergency": "Emergency" }
   },
   "status": {
     "title": "Service status",

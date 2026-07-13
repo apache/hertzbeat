@@ -17,21 +17,18 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { routeRegistry } from './route-registry';
+import { buildAlertListPath, readAlertQuery } from './alert-model';
 
-describe('route registry', () => {
-  it('keeps route ids and paths unique', () => {
-    expect(new Set(routeRegistry.map(route => route.id)).size).toBe(routeRegistry.length);
-    expect(new Set(routeRegistry.map(route => route.path)).size).toBe(routeRegistry.length);
+describe('alert center model', () => {
+  it('normalizes URL-owned filters and pagination', () => {
+    const query = readAlertQuery(new URLSearchParams('search=checkout&status=FIRING&severity=critical&pageIndex=-1&pageSize=99'));
+
+    expect(query).toEqual({ search: 'checkout', status: 'firing', severity: 'critical', pageIndex: 0, pageSize: 8 });
+    expect(buildAlertListPath(query)).toBe('/api/alerts/group?pageIndex=0&pageSize=8&search=checkout&status=firing&severity=critical&sort=gmtUpdate&order=desc');
   });
 
-  it('keeps the wildcard route out of navigation', () => {
-    expect(routeRegistry.find(route => route.path === '*')?.navigation).toBe(false);
-  });
-
-  it('preserves the master entry routes', () => {
-    expect(routeRegistry.map(route => route.path)).toEqual(
-      expect.arrayContaining(['/', '/dashboard', '/monitors', '/alerts', '/bulletin', '/status', '/passport/login'])
-    );
+  it('does not send empty filters', () => {
+    expect(buildAlertListPath({ search: '', status: '', severity: '', pageIndex: 1, pageSize: 15 }))
+      .toBe('/api/alerts/group?pageIndex=1&pageSize=15&sort=gmtUpdate&order=desc');
   });
 });
