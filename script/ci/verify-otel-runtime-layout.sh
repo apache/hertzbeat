@@ -24,7 +24,9 @@ required_files="
 $runtime_dir/go.mod
 $runtime_dir/builder-config.yaml
 $runtime_dir/config/collector-config.test.yaml
+$runtime_dir/runtime-manifest.json
 $runtime_dir/Makefile
+$runtime_dir/README.md
 "
 
 for required_file in $required_files; do
