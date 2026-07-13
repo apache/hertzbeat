@@ -15,45 +15,145 @@
  * limitations under the License.
  */
 
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { lazy, Suspense } from 'react';
 import { Skeleton } from 'antd';
+import { Navigate, createBrowserRouter, RouterProvider, type RouteObject } from 'react-router-dom';
 
 import { AuthGate } from '@/core/auth/AuthGate';
-import { NotFoundPage } from '@/features/errors';
+import { RouteErrorBoundary } from '@/features/errors/RouteErrorBoundary';
 import { BasicLayout } from '@/layout/basic/BasicLayout';
 
-const LoginPage = lazy(() => import('@/features/auth/LoginPage').then(module => ({ default: module.LoginPage })));
-const AlertCenterPage = lazy(() => import('@/features/alert/AlertCenterPage').then(module => ({ default: module.AlertCenterPage })));
-const BulletinPage = lazy(() => import('@/features/bulletin/BulletinPage').then(module => ({ default: module.BulletinPage })));
-const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage').then(module => ({ default: module.DashboardPage })));
-const MonitorListPage = lazy(() => import('@/features/monitor/MonitorListPage').then(module => ({ default: module.MonitorListPage })));
-const MonitorEditorPage = lazy(() => import('@/features/monitor/MonitorEditorPage').then(module => ({ default: module.MonitorEditorPage })));
-const MonitorDetailPage = lazy(() => import('@/features/monitor/MonitorDetailPage').then(module => ({ default: module.MonitorDetailPage })));
-const PublicStatusPage = lazy(() => import('@/features/status/PublicStatusPage').then(module => ({ default: module.PublicStatusPage })));
+// Static route metadata is exported so architecture tests can inspect the data-router boundary.
+// eslint-disable-next-line react-refresh/only-export-components
+export const appRoutes: RouteObject[] = [
+  {
+    id: 'application',
+    path: '/',
+    errorElement: <RouteErrorBoundary />,
+    hydrateFallbackElement: <Skeleton active paragraph={{ rows: 6 }} />,
+    children: [
+      { index: true, element: <Navigate replace to="/dashboard" /> },
+      {
+        id: 'login',
+        path: '/passport/login',
+        lazy: async () => {
+          const { LoginPage } = await import('@/features/auth/LoginPage');
+          return { Component: LoginPage };
+        }
+      },
+      {
+        id: 'status',
+        path: '/status',
+        lazy: async () => {
+          const { PublicStatusPage } = await import('@/features/status/PublicStatusPage');
+          return { Component: PublicStatusPage };
+        }
+      },
+      {
+        id: 'authenticated',
+        element: <AuthGate />,
+        children: [
+          {
+            id: 'basic-layout',
+            element: <BasicLayout />,
+            children: [
+              {
+                id: 'dashboard',
+                path: '/dashboard',
+                lazy: async () => {
+                  const { DashboardPage } = await import('@/features/dashboard/DashboardPage');
+                  return { Component: DashboardPage };
+                }
+              },
+              {
+                id: 'monitors',
+                path: '/monitors',
+                lazy: async () => {
+                  const { MonitorListPage } = await import('@/features/monitor/MonitorListPage');
+                  return { Component: MonitorListPage };
+                }
+              },
+              {
+                id: 'monitor-new',
+                path: '/monitors/new',
+                lazy: async () => {
+                  const { MonitorEditorPage } = await import('@/features/monitor/MonitorEditorPage');
+                  return { Component: () => <MonitorEditorPage mode="new" /> };
+                }
+              },
+              {
+                id: 'monitor-edit',
+                path: '/monitors/:monitorId/edit',
+                lazy: async () => {
+                  const { MonitorEditorPage } = await import('@/features/monitor/MonitorEditorPage');
+                  return { Component: () => <MonitorEditorPage mode="edit" /> };
+                }
+              },
+              {
+                id: 'monitor-detail',
+                path: '/monitors/:monitorId',
+                lazy: async () => {
+                  const { MonitorDetailPage } = await import('@/features/monitor/MonitorDetailPage');
+                  return { Component: MonitorDetailPage };
+                }
+              },
+              {
+                id: 'alerts',
+                path: '/alerts',
+                lazy: async () => {
+                  const { AlertCenterPage } = await import('@/features/alert/AlertCenterPage');
+                  return { Component: AlertCenterPage };
+                }
+              },
+              {
+                id: 'alert-rules',
+                path: '/alerts/rules',
+                lazy: async () => {
+                  const { AlertRuleListPage } = await import('@/features/alert/AlertRuleListPage');
+                  return { Component: AlertRuleListPage };
+                }
+              },
+              {
+                id: 'alert-rule-new',
+                path: '/alerts/rules/new',
+                lazy: async () => {
+                  const { AlertRuleEditorPage } = await import('@/features/alert/AlertRuleEditorPage');
+                  return { Component: () => <AlertRuleEditorPage mode="new" /> };
+                }
+              },
+              {
+                id: 'alert-rule-edit',
+                path: '/alerts/rules/:ruleId/edit',
+                lazy: async () => {
+                  const { AlertRuleEditorPage } = await import('@/features/alert/AlertRuleEditorPage');
+                  return { Component: () => <AlertRuleEditorPage mode="edit" /> };
+                }
+              },
+              {
+                id: 'bulletin',
+                path: '/bulletin',
+                lazy: async () => {
+                  const { BulletinPage } = await import('@/features/bulletin/BulletinPage');
+                  return { Component: BulletinPage };
+                }
+              },
+              {
+                id: 'not-found',
+                path: '*',
+                lazy: async () => {
+                  const { NotFoundPage } = await import('@/features/errors/NotFoundPage');
+                  return { Component: NotFoundPage };
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+];
+
+const router = createBrowserRouter(appRoutes);
 
 export function AppRouter() {
-  return (
-    <BrowserRouter>
-      <Suspense fallback={<Skeleton active paragraph={{ rows: 6 }} />}>
-        <Routes>
-          <Route path="/passport/login" element={<LoginPage />} />
-          <Route path="/status" element={<PublicStatusPage />} />
-          <Route element={<AuthGate />}>
-            <Route element={<BasicLayout />}>
-              <Route index element={<Navigate replace to="/dashboard" />} />
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/monitors" element={<MonitorListPage />} />
-              <Route path="/monitors/new" element={<MonitorEditorPage mode="new" />} />
-              <Route path="/monitors/:monitorId/edit" element={<MonitorEditorPage mode="edit" />} />
-              <Route path="/monitors/:monitorId" element={<MonitorDetailPage />} />
-              <Route path="/alerts" element={<AlertCenterPage />} />
-              <Route path="/bulletin" element={<BulletinPage />} />
-              <Route path="*" element={<NotFoundPage />} />
-            </Route>
-          </Route>
-        </Routes>
-      </Suspense>
-    </BrowserRouter>
-  );
+  return <RouterProvider router={router} />;
 }

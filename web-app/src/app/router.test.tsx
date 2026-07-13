@@ -15,23 +15,35 @@
  * limitations under the License.
  */
 
+import type { RouteObject } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 
-import { routeRegistry } from './route-registry';
+import { appRoutes } from './router';
 
-describe('route registry', () => {
-  it('keeps route ids and paths unique', () => {
-    expect(new Set(routeRegistry.map(route => route.id)).size).toBe(routeRegistry.length);
-    expect(new Set(routeRegistry.map(route => route.path)).size).toBe(routeRegistry.length);
-  });
+function flattenRoutes(routes: RouteObject[]): RouteObject[] {
+  return routes.flatMap(route => [route, ...flattenRoutes(route.children ?? [])]);
+}
 
-  it('keeps the wildcard route out of navigation', () => {
-    expect(routeRegistry.find(route => route.path === '*')?.navigation).toBe(false);
-  });
+describe('application data router', () => {
+  it('keeps public and protected entry routes in one inspectable route tree', () => {
+    const routes = flattenRoutes(appRoutes);
+    const paths = routes.map(route => route.path).filter(Boolean);
 
-  it('preserves the master entry routes', () => {
-    expect(routeRegistry.map(route => route.path)).toEqual(
-      expect.arrayContaining(['/', '/dashboard', '/monitors', '/alerts', '/alerts/rules', '/bulletin', '/status', '/passport/login'])
+    expect(paths).toEqual(
+      expect.arrayContaining([
+        '/passport/login',
+        '/status',
+        '/dashboard',
+        '/monitors',
+        '/alerts',
+        '/bulletin',
+        '*'
+      ])
     );
+  });
+
+  it('provides a shared route error boundary', () => {
+    expect(appRoutes).toHaveLength(1);
+    expect(appRoutes[0]?.errorElement).toBeDefined();
   });
 });

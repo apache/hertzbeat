@@ -35,7 +35,7 @@ export type AlertGroup = {
   commonLabels?: Record<string, string>;
   commonAnnotations?: Record<string, string>;
   alertFingerprints?: string[];
-  gmtUpdate?: number | null;
+  gmtUpdate?: number | string | null;
 };
 
 export type AlertPage = {

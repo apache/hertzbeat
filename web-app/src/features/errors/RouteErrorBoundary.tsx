@@ -15,23 +15,22 @@
  * limitations under the License.
  */
 
-import { describe, expect, it } from 'vitest';
+import { Button, Result } from 'antd';
+import { useTranslation } from 'react-i18next';
+import { useRouteError } from 'react-router-dom';
 
-import { routeRegistry } from './route-registry';
+export function RouteErrorBoundary() {
+  const { t } = useTranslation();
+  const error = useRouteError();
 
-describe('route registry', () => {
-  it('keeps route ids and paths unique', () => {
-    expect(new Set(routeRegistry.map(route => route.id)).size).toBe(routeRegistry.length);
-    expect(new Set(routeRegistry.map(route => route.path)).size).toBe(routeRegistry.length);
-  });
+  if (import.meta.env.DEV) console.error('Route rendering failed', error);
 
-  it('keeps the wildcard route out of navigation', () => {
-    expect(routeRegistry.find(route => route.path === '*')?.navigation).toBe(false);
-  });
-
-  it('preserves the master entry routes', () => {
-    expect(routeRegistry.map(route => route.path)).toEqual(
-      expect.arrayContaining(['/', '/dashboard', '/monitors', '/alerts', '/alerts/rules', '/bulletin', '/status', '/passport/login'])
-    );
-  });
-});
+  return (
+    <Result
+      status="500"
+      title={t('common.routeError.title')}
+      subTitle={t('common.routeError.description')}
+      extra={<Button onClick={() => window.location.reload()}>{t('common.retry')}</Button>}
+    />
+  );
+}

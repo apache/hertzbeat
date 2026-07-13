@@ -1,6 +1,7 @@
 {
   "common": {
     "notFound": { "title": "页面不存在", "description": "请求的 HertzBeat 页面不存在。" },
+    "routeError": { "title": "页面暂不可用", "description": "页面加载失败，请重试或稍后返回。" },
     "query": "查询",
     "refresh": "刷新",
     "actions": "操作",
@@ -9,6 +10,7 @@
     "cancel": "取消",
     "save": "保存",
     "back": "返回",
+    "retry": "重试",
     "unavailable": "服务暂不可用，请检查后端连接后重试。"
   },
   "menu": { "primary": "主导航", "dashboard": "仪表盘", "monitors": "监控中心", "alerts": "告警中心", "bulletin": "监控看板", "status": "状态页" },
@@ -36,6 +38,7 @@
   },
   "monitorActions": { "copy": "复制", "enable": "启用", "pause": "暂停", "delete": "删除", "deleteConfirm": "确认删除所选监控数据？", "selected": "已选择 {{count}} 项", "success": "监控操作已完成。", "failed": "监控操作失败。" },
   "monitorMetrics": { "title": "指标检查", "description": "无需离开监控详情即可查看当前值与历史数据。", "realtime": "实时", "history": "历史", "favorite": "收藏", "unfavorite": "取消收藏", "favoriteSaved": "收藏指标已更新。", "favoriteFailed": "收藏指标更新失败。", "noCatalog": "该监控没有可用的数值指标目录。", "empty": "当前条件下没有指标数据。", "labels": "标签", "series": "序列", "time": "时间", "value": "值" },
+  "alertRules": { "title": "告警规则", "description": "管理告警计算规则及其启用状态。", "manage": "管理规则", "new": "新建规则", "edit": "编辑规则", "editorDescription": "配置触发条件，预览结果后保存规则。", "search": "搜索规则", "empty": "当前条件下没有告警规则。", "name": "规则", "type": "类型", "enabled": "启用", "updated": "更新时间", "delete": "删除", "deleteConfirm": "确认删除这条告警规则？", "operationSuccess": "告警规则已更新。", "operationFailed": "告警规则操作失败。", "saveSuccess": "告警规则已保存。", "saveFailed": "告警规则保存失败。", "validation": "请完成规则必填项。", "expressionRequired": "请先填写表达式再预览。", "expression": "表达式", "template": "消息模板", "labels": "标签", "labelsPlaceholder": "team:ops, severity:critical", "period": "计算周期（秒）", "times": "触发次数", "preview": "预览", "previewSuccess": "找到 {{count}} 条匹配序列。", "previewEmpty": "没有匹配序列。", "previewFailed": "表达式计算失败。", "kind": { "label": "计算方式", "realtime": "实时", "periodic": "周期" }, "dataType": { "label": "信号", "metric": "指标", "log": "日志", "trace": "链路" } },
   "monitor": {
     "title": "监控中心", "description": "查看监控可用性、端点与归属信息。",
     "search": "搜索名称或端点", "application": "应用类型", "empty": "当前条件下没有监控。",

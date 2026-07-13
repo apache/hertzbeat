@@ -15,23 +15,9 @@
  * limitations under the License.
  */
 
-import { describe, expect, it } from 'vitest';
-
-import { routeRegistry } from './route-registry';
-
-describe('route registry', () => {
-  it('keeps route ids and paths unique', () => {
-    expect(new Set(routeRegistry.map(route => route.id)).size).toBe(routeRegistry.length);
-    expect(new Set(routeRegistry.map(route => route.path)).size).toBe(routeRegistry.length);
-  });
-
-  it('keeps the wildcard route out of navigation', () => {
-    expect(routeRegistry.find(route => route.path === '*')?.navigation).toBe(false);
-  });
-
-  it('preserves the master entry routes', () => {
-    expect(routeRegistry.map(route => route.path)).toEqual(
-      expect.arrayContaining(['/', '/dashboard', '/monitors', '/alerts', '/alerts/rules', '/bulletin', '/status', '/passport/login'])
-    );
-  });
-});
+.page { display: grid; gap: 20px; }
+.heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.heading :global(.ant-typography) { margin: 0; }
+.toolbar { display: grid; grid-template-columns: minmax(260px, 1fr) auto auto; gap: 8px; }
+.name { display: grid; min-width: 0; }
+.name span { overflow: hidden; color: var(--ant-color-text-secondary); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }

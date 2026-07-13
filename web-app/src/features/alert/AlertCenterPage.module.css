@@ -16,6 +16,7 @@
  */
 
 .page { display: grid; gap: 20px; }
+.heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
 .heading :global(.ant-typography) { margin: 0; }
 .toolbar { display: grid; grid-template-columns: minmax(220px, 1fr) 180px 180px auto auto; gap: 8px; }
 .summary { display: flex; flex-wrap: wrap; gap: 24px; padding-block: 4px; }
