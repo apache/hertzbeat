@@ -57,6 +57,14 @@ collector:
   info:
     version: ${COLLECTOR_VERSION:1.8.0}
     ip: ${COLLECTOR_IP:}
+  otel-runtime:
+    enabled: ${HERTZBEAT_OTEL_RUNTIME_ENABLED:false}
+    home: ${HERTZBEAT_HOME:.}
+    binary: ${HERTZBEAT_OTEL_RUNTIME_BINARY:}
+    collector-id: ${IDENTITY:}
+    workspace-id: ${HERTZBEAT_WORKSPACE_ID:default}
+    export-endpoint: ${HERTZBEAT_OTLP_HTTP_ENDPOINT:http://127.0.0.1:1157/api/otlp}
+    token: ${HERTZBEAT_OTLP_TOKEN:}
   dispatch:
     entrance:
       netty:
