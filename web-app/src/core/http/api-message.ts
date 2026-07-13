@@ -39,6 +39,10 @@ export function apiMessagePut<T>(path: string, data: unknown, options?: Pick<Req
   return apiMessageRequest<T>(path, jsonRequest('PUT', data, options));
 }
 
+export function apiMessageDelete<T>(path: string) {
+  return apiMessageRequest<T>(path, { method: 'DELETE' });
+}
+
 async function apiMessageRequest<T>(path: string, init?: RequestInit) {
   const response = await apiFetch(path, init);
   if (!response.ok) throw new Error(`Request failed with status ${response.status}`);

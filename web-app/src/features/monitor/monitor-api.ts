@@ -15,9 +15,10 @@
  * limitations under the License.
  */
 
-import { apiMessageGet, apiMessagePost, apiMessagePut, type PageResult } from '@/core/http/api-message';
+import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut, type PageResult } from '@/core/http/api-message';
 
-import { buildMonitorListPath, type MonitorQuery } from './monitor-model';
+import { buildMonitorActionPath, buildMonitorListPath, type MonitorAction, type MonitorQuery } from './monitor-model';
+import { buildFavoriteMetricPath, buildHistoryMetricPath, buildMetricCatalogPath, buildRealtimeMetricPath, type MonitorMetricOption } from './monitor-detail-model';
 
 export type Monitor = {
   id: number;
@@ -31,11 +32,12 @@ export type Monitor = {
   description?: string;
   scrape?: string;
   labels?: Record<string, string>;
-  gmtCreate?: number;
-  gmtUpdate?: number;
+  gmtCreate?: number | string;
+  gmtUpdate?: number | string;
 };
 
 export type MonitorParam = { field: string; type?: number; paramValue?: unknown; display?: boolean };
+export type MonitorDetailMetric = { name: string; visible?: boolean; fields?: Array<{ type?: number; field?: string; unit?: string }> };
 export type MonitorParamDefine = {
   field: string;
   name?: string | Record<string, string>;
@@ -50,6 +52,7 @@ export type MonitorDetail = {
   params?: MonitorParam[];
   collector?: string | null;
   grafanaDashboard?: Record<string, unknown>;
+  metrics?: MonitorDetailMetric[];
 };
 
 export type MonitorApp = {
@@ -81,4 +84,32 @@ export function detectMonitor(payload: unknown) {
 
 export function saveMonitor(mode: 'new' | 'edit', payload: unknown) {
   return mode === 'new' ? apiMessagePost<unknown>('/api/monitor', payload) : apiMessagePut<unknown>('/api/monitor', payload);
+}
+
+export function mutateMonitors(action: MonitorAction, ids: number[]) {
+  const path = buildMonitorActionPath(action, ids);
+  if (action === 'copy') return apiMessagePost<unknown>(path, null);
+  if (action === 'enable') return apiMessageGet<unknown>(path);
+  return apiMessageDelete<unknown>(path);
+}
+
+export function loadFavoriteMetrics(monitorId: number) {
+  return apiMessageGet<string[]>(buildFavoriteMetricPath(monitorId));
+}
+
+export function loadMonitorMetricCatalog(monitor: Monitor) {
+  return apiMessageGet<{ metrics?: MonitorDetailMetric[] }>(buildMetricCatalogPath(monitor));
+}
+
+export function updateFavoriteMetric(monitorId: number, metricKey: string, favorite: boolean) {
+  const path = buildFavoriteMetricPath(monitorId, metricKey);
+  return favorite ? apiMessagePost<unknown>(path, null) : apiMessageDelete<unknown>(path);
+}
+
+export function loadRealtimeMetric(monitorId: number, metricKey: string) {
+  return apiMessageGet<{ valueRows?: Array<{ labels?: Record<string, string>; values?: Array<{ origin?: string; mean?: string; time?: number }> }> }>(buildRealtimeMetricPath(monitorId, metricKey));
+}
+
+export function loadHistoryMetric(monitor: Monitor, metric: MonitorMetricOption, history: string) {
+  return apiMessageGet<{ values?: Record<string, Array<{ origin?: string; mean?: string; time?: number }>> }>(buildHistoryMetricPath(monitor, metric, history));
 }

@@ -48,6 +48,8 @@
     "creator": "Creator",
     "updated": "Updated"
   },
+  "monitorActions": { "copy": "Copy", "enable": "Enable", "pause": "Pause", "delete": "Delete", "deleteConfirm": "Delete the selected monitor data?", "selected": "{{count}} selected", "success": "Monitor operation completed.", "failed": "Monitor operation failed." },
+  "monitorMetrics": { "title": "Metric inspection", "description": "Inspect current values and stored history without leaving the monitor.", "realtime": "Realtime", "history": "History", "favorite": "Favorite", "unfavorite": "Remove favorite", "favoriteSaved": "Favorite metrics updated.", "favoriteFailed": "Favorite metrics could not be updated.", "noCatalog": "This monitor exposes no numeric metric catalog.", "empty": "No metric values are available for this query.", "labels": "Labels", "series": "Series", "time": "Time", "value": "Value" },
   "monitor": {
     "title": "Monitors", "description": "Inspect availability, endpoints, and monitor ownership.",
     "search": "Search name or endpoint", "application": "Application", "empty": "No monitors match the current query.",

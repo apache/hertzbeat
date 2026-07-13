@@ -15,49 +15,14 @@
  * limitations under the License.
  */
 
-.page {
-  display: grid;
-  gap: 20px;
-}
+import enUS from 'antd/locale/en_US';
+import jaJP from 'antd/locale/ja_JP';
+import ptBR from 'antd/locale/pt_BR';
+import zhCN from 'antd/locale/zh_CN';
+import zhTW from 'antd/locale/zh_TW';
 
-.heading :global(.ant-typography) {
-  margin: 0;
-}
+const locales = { 'en-US': enUS, 'ja-JP': jaJP, 'pt-BR': ptBR, 'zh-CN': zhCN, 'zh-TW': zhTW } as const;
 
-.toolbar {
-  display: grid;
-  grid-template-columns: minmax(180px, 1fr) minmax(160px, 220px) 160px auto auto auto;
-  gap: 8px;
-}
-
-.name {
-  min-width: 0;
-}
-
-.name strong,
-.name span {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.bulk {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 40px;
-  border-block: 1px solid var(--ant-color-border-secondary);
-  padding-block: 8px;
-}
-
-.name span {
-  color: var(--ant-color-text-secondary);
-  font-size: 12px;
-}
-
-@media (max-width: 900px) {
-  .toolbar {
-    grid-template-columns: 1fr 1fr;
-  }
+export function resolveAntLocale(language?: string) {
+  return locales[language as keyof typeof locales] ?? enUS;
 }

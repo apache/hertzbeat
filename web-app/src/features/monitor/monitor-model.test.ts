@@ -17,7 +17,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { buildMonitorListPath, monitorAppOptions, monitorStatusKey, readMonitorQuery } from './monitor-model';
+import { buildMonitorActionPath, buildMonitorListPath, buildMonitorRoutePath, monitorAppOptions, monitorStatusKey, parseMonitorTimestamp, safeMonitorReturnTo, readMonitorQuery } from './monitor-model';
 
 describe('monitor list model', () => {
   it('normalizes unsupported pagination and keeps explicit filters', () => {
@@ -45,5 +45,29 @@ describe('monitor list model', () => {
       { category: 'auto', value: 'prometheus', label: 'Prometheus' },
       { category: '__system__', value: 'internal', label: 'Internal' }
     ])).toEqual([{ value: 'website', label: 'Website' }]);
+  });
+
+  it('builds established copy, enable, pause, and delete action paths', () => {
+    expect(buildMonitorActionPath('copy', [7])).toBe('/api/monitor/copy/7');
+    expect(buildMonitorActionPath('enable', [7, 8])).toBe('/api/monitors/manage?ids=7&ids=8');
+    expect(buildMonitorActionPath('pause', [7, 8])).toBe('/api/monitors/manage?ids=7&ids=8&type=JSON');
+    expect(buildMonitorActionPath('delete', [7, 8])).toBe('/api/monitors?ids=7&ids=8');
+  });
+
+  it('rejects copy without exactly one monitor id', () => {
+    expect(() => buildMonitorActionPath('copy', [])).toThrow();
+    expect(() => buildMonitorActionPath('copy', [7, 8])).toThrow();
+  });
+
+  it('accepts backend ISO timestamps without crashing table rendering', () => {
+    expect(parseMonitorTimestamp('2026-07-13T10:26:18.824226')).toBe(Date.parse('2026-07-13T10:26:18.824226'));
+    expect(parseMonitorTimestamp(null)).toBeUndefined();
+  });
+
+  it('preserves list query context for detail and edit navigation', () => {
+    expect(buildMonitorRoutePath(7, 'view', '/monitors?app=website&pageIndex=2')).toBe('/monitors/7?returnTo=%2Fmonitors%3Fapp%3Dwebsite%26pageIndex%3D2');
+    expect(buildMonitorRoutePath(7, 'edit', '/monitors?status=2')).toBe('/monitors/7/edit?returnTo=%2Fmonitors%3Fstatus%3D2');
+    expect(safeMonitorReturnTo('/monitors?app=website')).toBe('/monitors?app=website');
+    expect(safeMonitorReturnTo('https://example.com')).toBe('/monitors');
   });
 });

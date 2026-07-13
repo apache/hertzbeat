@@ -18,10 +18,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { App as AntApp, ConfigProvider, theme } from 'antd';
 import type { PropsWithChildren } from 'react';
-import { I18nextProvider } from 'react-i18next';
+import { I18nextProvider, useTranslation } from 'react-i18next';
 
 import { i18n } from '@/core/i18n/i18n';
 import { SessionProvider } from '@/core/auth/SessionProvider';
+import { resolveAntLocale } from '@/core/i18n/ant-locale';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -36,10 +37,11 @@ const queryClient = new QueryClient({
   }
 });
 
-export function AppProviders({ children }: PropsWithChildren) {
+function RuntimeProviders({ children }: PropsWithChildren) {
+  const { i18n: runtimeI18n } = useTranslation();
   return (
-    <I18nextProvider i18n={i18n}>
-      <ConfigProvider
+    <ConfigProvider
+        locale={resolveAntLocale(runtimeI18n.resolvedLanguage)}
         theme={{
           algorithm: theme.darkAlgorithm,
           token: {
@@ -49,13 +51,20 @@ export function AppProviders({ children }: PropsWithChildren) {
             colorBgBase: '#101114'
           }
         }}
-      >
+    >
         <AntApp>
           <QueryClientProvider client={queryClient}>
             <SessionProvider>{children}</SessionProvider>
           </QueryClientProvider>
         </AntApp>
-      </ConfigProvider>
+    </ConfigProvider>
+  );
+}
+
+export function AppProviders({ children }: PropsWithChildren) {
+  return (
+    <I18nextProvider i18n={i18n}>
+      <RuntimeProviders>{children}</RuntimeProviders>
     </I18nextProvider>
   );
 }

@@ -15,49 +15,14 @@
  * limitations under the License.
  */
 
-.page {
-  display: grid;
-  gap: 20px;
-}
+import { describe, expect, it } from 'vitest';
 
-.heading :global(.ant-typography) {
-  margin: 0;
-}
+import { resolveAntLocale } from './ant-locale';
 
-.toolbar {
-  display: grid;
-  grid-template-columns: minmax(180px, 1fr) minmax(160px, 220px) 160px auto auto auto;
-  gap: 8px;
-}
-
-.name {
-  min-width: 0;
-}
-
-.name strong,
-.name span {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.bulk {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 40px;
-  border-block: 1px solid var(--ant-color-border-secondary);
-  padding-block: 8px;
-}
-
-.name span {
-  color: var(--ant-color-text-secondary);
-  font-size: 12px;
-}
-
-@media (max-width: 900px) {
-  .toolbar {
-    grid-template-columns: 1fr 1fr;
-  }
-}
+describe('Ant Design locale bridge', () => {
+  it('resolves supported locales and falls back to English', () => {
+    expect(resolveAntLocale('zh-CN').locale).toBe('zh-cn');
+    expect(resolveAntLocale('ja-JP').locale).toBe('ja');
+    expect(resolveAntLocale('unsupported').locale).toBe('en');
+  });
+});

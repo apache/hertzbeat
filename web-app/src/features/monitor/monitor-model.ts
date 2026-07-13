@@ -54,6 +54,19 @@ export function buildMonitorListPath(query: MonitorQuery) {
   return `/api/monitors?${writeMonitorQuery(query).toString()}`;
 }
 
+export type MonitorAction = 'copy' | 'enable' | 'pause' | 'delete';
+
+export function buildMonitorActionPath(action: MonitorAction, ids: number[]) {
+  if (action === 'copy') {
+    if (ids.length !== 1) throw new Error('Copy requires one monitor id');
+    return `/api/monitor/copy/${ids[0]}`;
+  }
+  const params = new URLSearchParams();
+  ids.forEach(id => params.append('ids', String(id)));
+  if (action === 'pause') params.set('type', 'JSON');
+  return action === 'delete' ? `/api/monitors?${params.toString()}` : `/api/monitors/manage?${params.toString()}`;
+}
+
 export function writeMonitorQuery(query: MonitorQuery) {
   const params = new URLSearchParams({ pageIndex: String(query.pageIndex), pageSize: String(query.pageSize) });
   if (query.search) params.set('search', query.search);
@@ -73,4 +86,19 @@ export function monitorStatusColor(status: number) {
   if (status === 1) return 'green';
   if (status === 2) return 'red';
   return 'default';
+}
+
+export function parseMonitorTimestamp(value?: number | string | null) {
+  if (value == null || value === '') return undefined;
+  const timestamp = typeof value === 'number' ? value : Date.parse(value);
+  return Number.isFinite(timestamp) ? timestamp : undefined;
+}
+
+export function safeMonitorReturnTo(value?: string | null) {
+  return value?.startsWith('/monitors') && !value.startsWith('//') ? value : '/monitors';
+}
+
+export function buildMonitorRoutePath(monitorId: number, mode: 'view' | 'edit', returnTo: string) {
+  const suffix = mode === 'edit' ? '/edit' : '';
+  return `/monitors/${monitorId}${suffix}?returnTo=${encodeURIComponent(safeMonitorReturnTo(returnTo))}`;
 }
