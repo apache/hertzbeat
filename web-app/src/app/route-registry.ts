@@ -35,6 +35,7 @@ export const routeRegistry = [
   { id: 'notice-receivers', path: '/alerts/notifications/receivers', labelKey: 'noticeReceivers.title', layout: 'basic', navigation: false },
   { id: 'notice-rules', path: '/alerts/notifications/rules', labelKey: 'noticeRules.title', layout: 'basic', navigation: false },
   { id: 'notice-templates', path: '/alerts/notifications/templates', labelKey: 'noticeTemplates.title', layout: 'basic', navigation: false },
+  { id: 'message-server', path: '/setting/settings/server', labelKey: 'messageServer.title', layout: 'basic', navigation: false },
   { id: 'bulletin', path: '/bulletin', labelKey: 'menu.bulletin', layout: 'basic', navigation: true },
   { id: 'status', path: '/status', labelKey: 'menu.status', layout: 'blank', navigation: false },
   { id: 'login', path: '/passport/login', labelKey: 'auth.title', layout: 'passport', navigation: false },

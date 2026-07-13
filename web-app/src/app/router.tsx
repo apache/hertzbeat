@@ -177,6 +177,14 @@ export const appRoutes: RouteObject[] = [
                 }
               },
               {
+                id: 'message-server',
+                path: '/setting/settings/server',
+                lazy: async () => {
+                  const { MessageServerPage } = await import('@/features/settings/MessageServerPage');
+                  return { Component: MessageServerPage };
+                }
+              },
+              {
                 id: 'bulletin',
                 path: '/bulletin',
                 lazy: async () => {
