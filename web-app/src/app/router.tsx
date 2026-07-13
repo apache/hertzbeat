@@ -161,6 +161,14 @@ export const appRoutes: RouteObject[] = [
                 }
               },
               {
+                id: 'notice-templates',
+                path: '/alerts/notifications/templates',
+                lazy: async () => {
+                  const { NoticeTemplatePage } = await import('@/features/alert/NoticeTemplatePage');
+                  return { Component: NoticeTemplatePage };
+                }
+              },
+              {
                 id: 'bulletin',
                 path: '/bulletin',
                 lazy: async () => {

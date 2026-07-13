@@ -25,6 +25,7 @@ import { useSearchParams } from 'react-router-dom';
 
 import type { PageResult } from '@/core/http/api-message';
 
+import { AlertNotificationNav } from './AlertNotificationNav';
 import { deleteNoticeReceiver, loadNoticeReceiver, loadNoticeReceivers, saveNoticeReceiver, testNoticeReceiver } from './notice-receiver-api';
 import {
   createNoticeReceiverDraft,
@@ -124,6 +125,7 @@ export function NoticeReceiverPage() {
         <Button type="primary" onClick={() => setDraft(createNoticeReceiverDraft())}>{t('noticeReceivers.new')}</Button>
       </header>
       <AlertManagementNav />
+      <AlertNotificationNav />
       <div className={styles.toolbar}>
         <Input allowClear value={name} placeholder={t('noticeReceivers.search')} onChange={event => setName(event.target.value)} onPressEnter={() => updateQuery({ name: name.trim(), pageIndex: 0 })} />
         <Button type="primary" onClick={() => updateQuery({ name: name.trim(), pageIndex: 0 })}>{t('common.query')}</Button>
