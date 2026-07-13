@@ -28,4 +28,10 @@ describe('route registry', () => {
   it('keeps the wildcard route out of navigation', () => {
     expect(routeRegistry.find(route => route.path === '*')?.navigation).toBe(false);
   });
+
+  it('preserves the master entry routes', () => {
+    expect(routeRegistry.map(route => route.path)).toEqual(
+      expect.arrayContaining(['/', '/dashboard', '/bulletin', '/status', '/passport/login'])
+    );
+  });
 });

@@ -15,42 +15,22 @@
  * limitations under the License.
  */
 
-.root {
-  min-height: 100vh;
-}
+import { Alert, Skeleton } from 'antd';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
-.header {
-  display: flex;
-  align-items: center;
-  height: 56px;
-  padding: 0 24px;
-  border-bottom: 1px solid #2c2e33;
-  background: #17181c;
-}
+import { loginHref } from './navigation';
+import { useSession } from './session-context';
 
-.account {
-  margin-left: auto;
-}
+export function AuthGate() {
+  const { t } = useTranslation();
+  const location = useLocation();
+  const { loading, session, unavailable } = useSession();
 
-.brand {
-  color: #f4f5f7;
-  font-size: 20px;
-  letter-spacing: -0.02em;
-}
-
-.sider {
-  border-right: 1px solid #2c2e33;
-  background: #15161a;
-}
-
-.sider :global(.ant-menu) {
-  padding-top: 12px;
-  border-inline-end: 0;
-  background: transparent;
-}
-
-.content {
-  min-height: calc(100vh - 56px);
-  padding: 24px;
-  background: #101114;
+  if (loading) return <Skeleton active paragraph={{ rows: 4 }} />;
+  if (unavailable) return <Alert type="error" showIcon message={t('common.unavailable')} />;
+  if (!session?.authenticated) {
+    return <Navigate replace to={loginHref(`${location.pathname}${location.search}${location.hash}`)} />;
+  }
+  return <Outlet />;
 }

@@ -15,42 +15,19 @@
  * limitations under the License.
  */
 
-.root {
-  min-height: 100vh;
-}
+import { describe, expect, it } from 'vitest';
 
-.header {
-  display: flex;
-  align-items: center;
-  height: 56px;
-  padding: 0 24px;
-  border-bottom: 1px solid #2c2e33;
-  background: #17181c;
-}
+import { loginHref, safeRedirectTarget } from './navigation';
 
-.account {
-  margin-left: auto;
-}
+describe('authentication navigation', () => {
+  it('accepts only local non-passport redirect targets', () => {
+    expect(safeRedirectTarget('/bulletin?search=db')).toBe('/bulletin?search=db');
+    expect(safeRedirectTarget('//evil.example')).toBeNull();
+    expect(safeRedirectTarget('https://evil.example')).toBeNull();
+    expect(safeRedirectTarget('/passport/login')).toBeNull();
+  });
 
-.brand {
-  color: #f4f5f7;
-  font-size: 20px;
-  letter-spacing: -0.02em;
-}
-
-.sider {
-  border-right: 1px solid #2c2e33;
-  background: #15161a;
-}
-
-.sider :global(.ant-menu) {
-  padding-top: 12px;
-  border-inline-end: 0;
-  background: transparent;
-}
-
-.content {
-  min-height: calc(100vh - 56px);
-  padding: 24px;
-  background: #101114;
-}
+  it('encodes the requested route in the login URL', () => {
+    expect(loginHref('/bulletin?search=db')).toBe('/passport/login?redirect=%2Fbulletin%3Fsearch%3Ddb');
+  });
+});

@@ -15,42 +15,22 @@
  * limitations under the License.
  */
 
-.root {
-  min-height: 100vh;
-}
+import { describe, expect, it } from 'vitest';
 
-.header {
-  display: flex;
-  align-items: center;
-  height: 56px;
-  padding: 0 24px;
-  border-bottom: 1px solid #2c2e33;
-  background: #17181c;
-}
+import { hasMonitorData, monitorTotals } from './dashboard-model';
 
-.account {
-  margin-left: auto;
-}
+describe('dashboard model', () => {
+  it('derives honest monitor totals from the master summary response', () => {
+    expect(
+      monitorTotals([
+        { app: 'mysql', category: 'db', size: 5, availableSize: 3, unAvailableSize: 1, unManageSize: 1 },
+        { app: 'linux', category: 'os', size: 2, availableSize: 2, unAvailableSize: 0, unManageSize: 0 }
+      ])
+    ).toEqual({ total: 7, available: 5, unavailable: 1, unmanaged: 1 });
+  });
 
-.brand {
-  color: #f4f5f7;
-  font-size: 20px;
-  letter-spacing: -0.02em;
-}
-
-.sider {
-  border-right: 1px solid #2c2e33;
-  background: #15161a;
-}
-
-.sider :global(.ant-menu) {
-  padding-top: 12px;
-  border-inline-end: 0;
-  background: transparent;
-}
-
-.content {
-  min-height: calc(100vh - 56px);
-  padding: 24px;
-  background: #101114;
-}
+  it('does not turn a missing apps payload into zero counters', () => {
+    expect(hasMonitorData(null)).toBe(false);
+    expect(hasMonitorData([])).toBe(true);
+  });
+});

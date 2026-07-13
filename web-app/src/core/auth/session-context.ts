@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { createContext } from 'react';
+import { createContext, useContext } from 'react';
 
 import type { UiSession } from './session-api';
 
@@ -30,3 +30,7 @@ export const SessionContext = createContext<SessionState>({
   loading: true,
   unavailable: false
 });
+
+export function useSession() {
+  return useContext(SessionContext);
+}

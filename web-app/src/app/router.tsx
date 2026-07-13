@@ -15,19 +15,36 @@
  * limitations under the License.
  */
 
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
+import { Skeleton } from 'antd';
 
+import { AuthGate } from '@/core/auth/AuthGate';
 import { NotFoundPage } from '@/features/errors';
 import { BasicLayout } from '@/layout/basic/BasicLayout';
+
+const LoginPage = lazy(() => import('@/features/auth/LoginPage').then(module => ({ default: module.LoginPage })));
+const BulletinPage = lazy(() => import('@/features/bulletin/BulletinPage').then(module => ({ default: module.BulletinPage })));
+const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage').then(module => ({ default: module.DashboardPage })));
+const PublicStatusPage = lazy(() => import('@/features/status/PublicStatusPage').then(module => ({ default: module.PublicStatusPage })));
 
 export function AppRouter() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route element={<BasicLayout />}>
-          <Route path="*" element={<NotFoundPage />} />
-        </Route>
-      </Routes>
+      <Suspense fallback={<Skeleton active paragraph={{ rows: 6 }} />}>
+        <Routes>
+          <Route path="/passport/login" element={<LoginPage />} />
+          <Route path="/status" element={<PublicStatusPage />} />
+          <Route element={<AuthGate />}>
+            <Route element={<BasicLayout />}>
+              <Route index element={<Navigate replace to="/dashboard" />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/bulletin" element={<BulletinPage />} />
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
+          </Route>
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

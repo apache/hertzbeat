@@ -1,8 +1,62 @@
 {
   "common": {
-    "notFound": {
-      "title": "Page not found",
-      "description": "The requested HertzBeat page does not exist."
-    }
+    "notFound": { "title": "Page not found", "description": "The requested HertzBeat page does not exist." },
+    "query": "Query",
+    "unavailable": "The service is unavailable. Check the backend connection and try again."
+  },
+  "menu": { "primary": "Primary navigation", "dashboard": "Dashboard", "bulletin": "Bulletin", "status": "Status" },
+  "auth": {
+    "title": "Sign in to HertzBeat",
+    "description": "Use your HertzBeat account to continue.",
+    "username": "Username",
+    "password": "Password",
+    "submit": "Sign in",
+    "continue": "Continue anyway",
+    "logout": "Sign out",
+    "logoutFailed": "Unable to sign out. Try again.",
+    "defaultPassword": "This account is using the default password. Change it after signing in. Submit again to continue."
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "description": "Monitor availability and current alert posture.",
+    "monitorSummary": "Monitor summary",
+    "total": "Total monitors",
+    "available": "Available",
+    "unavailable": "Unavailable",
+    "alerts": "Active alerts",
+    "distribution": "Monitor distribution",
+    "application": "Application",
+    "category": "Category",
+    "empty": "No monitors are configured.",
+    "summaryUnavailable": "Monitor summary is unavailable. Counters are hidden."
+  },
+  "bulletin": {
+    "title": "Bulletin",
+    "description": "Review grouped monitor views configured by operators.",
+    "search": "Search bulletins",
+    "empty": "No bulletins match the current query.",
+    "name": "Name",
+    "application": "Application",
+    "monitors": "Monitors",
+    "creator": "Creator",
+    "updated": "Updated"
+  },
+  "status": {
+    "title": "Service status",
+    "description": "Public component health and incident history.",
+    "operational": "All systems operational",
+    "degraded": "Service degradation",
+    "components": "Components",
+    "component": "Component",
+    "descriptionLabel": "Description",
+    "state": "State",
+    "normal": "Normal",
+    "abnormal": "Abnormal",
+    "noComponents": "No public components are configured.",
+    "incidents": "Incidents",
+    "incident": "Incident",
+    "started": "Started",
+    "noIncidents": "No incidents in the selected period.",
+    "notConfigured": "The public status page has not been configured yet."
   }
 }

@@ -15,42 +15,22 @@
  * limitations under the License.
  */
 
-.root {
-  min-height: 100vh;
-}
+import { apiFetch } from './http-client';
 
-.header {
-  display: flex;
-  align-items: center;
-  height: 56px;
-  padding: 0 24px;
-  border-bottom: 1px solid #2c2e33;
-  background: #17181c;
-}
+export type PageResult<T> = {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+};
 
-.account {
-  margin-left: auto;
-}
+type ApiMessage<T> = { code: number; msg?: string; data: T };
 
-.brand {
-  color: #f4f5f7;
-  font-size: 20px;
-  letter-spacing: -0.02em;
-}
-
-.sider {
-  border-right: 1px solid #2c2e33;
-  background: #15161a;
-}
-
-.sider :global(.ant-menu) {
-  padding-top: 12px;
-  border-inline-end: 0;
-  background: transparent;
-}
-
-.content {
-  min-height: calc(100vh - 56px);
-  padding: 24px;
-  background: #101114;
+export async function apiMessageGet<T>(path: string) {
+  const response = await apiFetch(path);
+  if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
+  const message = (await response.json()) as ApiMessage<T>;
+  if (message.code !== 0) throw new Error(message.msg ?? 'Request failed');
+  return message.data;
 }

@@ -15,42 +15,21 @@
  * limitations under the License.
  */
 
-.root {
+.page {
+  display: grid;
   min-height: 100vh;
+  place-items: center;
+  padding: 32px;
+  background: #101114;
 }
 
-.header {
-  display: flex;
-  align-items: center;
-  height: 56px;
-  padding: 0 24px;
-  border-bottom: 1px solid #2c2e33;
+.panel {
+  width: min(400px, 100%);
+  padding: 32px;
+  border: 1px solid #2c2e33;
   background: #17181c;
 }
 
-.account {
-  margin-left: auto;
-}
-
-.brand {
-  color: #f4f5f7;
-  font-size: 20px;
-  letter-spacing: -0.02em;
-}
-
-.sider {
-  border-right: 1px solid #2c2e33;
-  background: #15161a;
-}
-
-.sider :global(.ant-menu) {
-  padding-top: 12px;
-  border-inline-end: 0;
-  background: transparent;
-}
-
-.content {
-  min-height: calc(100vh - 56px);
-  padding: 24px;
-  background: #101114;
+.panel :global(.ant-alert) {
+  margin-bottom: 20px;
 }

@@ -19,6 +19,15 @@ import react from '@vitejs/plugin-react';
 import { fileURLToPath, URL } from 'node:url';
 import { defineConfig } from 'vitest/config';
 
+const backendOrigin = process.env.BACKEND_ORIGIN || 'http://127.0.0.1:1157';
+const backendProxy = {
+  target: backendOrigin,
+  changeOrigin: true,
+  headers: {
+    Origin: backendOrigin
+  }
+};
+
 export default defineConfig({
   plugins: [react()],
   resolve: {
@@ -29,10 +38,13 @@ export default defineConfig({
   server: {
     port: 4200,
     proxy: {
-      '/api': {
-        target: process.env.BACKEND_ORIGIN || 'http://127.0.0.1:1157',
-        changeOrigin: true
-      }
+      '/api': backendProxy
+    }
+  },
+  preview: {
+    port: 4210,
+    proxy: {
+      '/api': backendProxy
     }
   },
   build: {

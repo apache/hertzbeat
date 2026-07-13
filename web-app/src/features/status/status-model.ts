@@ -15,42 +15,11 @@
  * limitations under the License.
  */
 
-.root {
-  min-height: 100vh;
-}
+export type PublicStatusState = 'ready' | 'unconfigured' | 'unavailable';
 
-.header {
-  display: flex;
-  align-items: center;
-  height: 56px;
-  padding: 0 24px;
-  border-bottom: 1px solid #2c2e33;
-  background: #17181c;
-}
-
-.account {
-  margin-left: auto;
-}
-
-.brand {
-  color: #f4f5f7;
-  font-size: 20px;
-  letter-spacing: -0.02em;
-}
-
-.sider {
-  border-right: 1px solid #2c2e33;
-  background: #15161a;
-}
-
-.sider :global(.ant-menu) {
-  padding-top: 12px;
-  border-inline-end: 0;
-  background: transparent;
-}
-
-.content {
-  min-height: calc(100vh - 56px);
-  padding: 24px;
-  background: #101114;
+export function publicStatusState(orgFailed: boolean, componentsFailed: boolean,
+                                  incidentsFailed: boolean): PublicStatusState {
+  if (orgFailed && !componentsFailed && !incidentsFailed) return 'unconfigured';
+  if (orgFailed || componentsFailed || incidentsFailed) return 'unavailable';
+  return 'ready';
 }

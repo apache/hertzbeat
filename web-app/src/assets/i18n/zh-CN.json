@@ -1,8 +1,37 @@
 {
   "common": {
-    "notFound": {
-      "title": "页面不存在",
-      "description": "请求的 HertzBeat 页面不存在。"
-    }
+    "notFound": { "title": "页面不存在", "description": "请求的 HertzBeat 页面不存在。" },
+    "query": "查询",
+    "unavailable": "服务暂不可用，请检查后端连接后重试。"
+  },
+  "menu": { "primary": "主导航", "dashboard": "仪表盘", "bulletin": "监控看板", "status": "状态页" },
+  "auth": {
+    "title": "登录 HertzBeat",
+    "description": "使用 HertzBeat 账号继续。",
+    "username": "用户名",
+    "password": "密码",
+    "submit": "登录",
+    "continue": "仍然继续",
+    "logout": "退出登录",
+    "logoutFailed": "退出失败，请重试。",
+    "defaultPassword": "当前账号仍在使用默认密码。登录后请立即修改；再次提交可继续。"
+  },
+  "dashboard": {
+    "title": "仪表盘", "description": "查看监控可用性与当前告警态势。", "monitorSummary": "监控概览",
+    "total": "监控总数", "available": "可用", "unavailable": "不可用", "alerts": "活动告警",
+    "distribution": "监控分布", "application": "应用", "category": "类别", "empty": "尚未配置监控。",
+    "summaryUnavailable": "监控概览暂不可用，计数已隐藏。"
+  },
+  "bulletin": {
+    "title": "监控看板", "description": "查看运维人员配置的分组监控视图。", "search": "搜索看板",
+    "empty": "当前条件下没有看板。", "name": "名称", "application": "应用", "monitors": "监控数",
+    "creator": "创建人", "updated": "更新时间"
+  },
+  "status": {
+    "title": "服务状态", "description": "公开的组件健康状态与故障记录。", "operational": "所有系统运行正常",
+    "degraded": "服务降级", "components": "组件", "component": "组件", "descriptionLabel": "描述",
+    "state": "状态", "normal": "正常", "abnormal": "异常", "noComponents": "尚未配置公开组件。",
+    "incidents": "故障", "incident": "故障", "started": "开始时间", "noIncidents": "所选时间内没有故障。",
+    "notConfigured": "公开状态页尚未配置。"
   }
 }

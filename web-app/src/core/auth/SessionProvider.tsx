@@ -19,10 +19,10 @@ import { useQuery } from '@tanstack/react-query';
 import type { PropsWithChildren } from 'react';
 
 import { SessionContext } from './session-context';
-import { getSession } from './session-api';
+import { getSession, sessionQueryKey } from './session-api';
 
 export function SessionProvider({ children }: PropsWithChildren) {
-  const query = useQuery({ queryKey: ['ui-session'], queryFn: getSession, retry: false });
+  const query = useQuery({ queryKey: sessionQueryKey, queryFn: getSession, retry: false });
   return (
     <SessionContext.Provider
       value={{ session: query.data, loading: query.isPending, unavailable: query.isError }}

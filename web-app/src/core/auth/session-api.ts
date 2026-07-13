@@ -25,6 +25,16 @@ export type UiSession = {
   expiresAt: string | null;
 };
 
+export const sessionQueryKey = ['ui-session'] as const;
+
+export const anonymousSession: UiSession = {
+  authenticated: false,
+  username: null,
+  roles: [],
+  workspaceId: null,
+  expiresAt: null
+};
+
 type ApiMessage<T> = {
   code: number;
   msg?: string;
@@ -33,6 +43,19 @@ type ApiMessage<T> = {
 
 export function getSession() {
   return sessionRequest('/api/ui/session');
+}
+
+export function loginSession(identifier: string, credential: string) {
+  return sessionRequest('/api/ui/session', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type: 0, identifier, credential })
+  });
+}
+
+export async function logoutSession() {
+  const response = await apiFetch('/api/ui/session', { method: 'DELETE' });
+  if (!response.ok) throw new Error(`Session logout failed with status ${response.status}`);
 }
 
 async function sessionRequest(path: string, init?: RequestInit) {

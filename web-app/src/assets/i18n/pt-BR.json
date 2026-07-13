@@ -1,8 +1,8 @@
 {
-  "common": {
-    "notFound": {
-      "title": "Página não encontrada",
-      "description": "A página HertzBeat solicitada não existe."
-    }
-  }
+  "common": { "notFound": { "title": "Página não encontrada", "description": "A página HertzBeat solicitada não existe." }, "query": "Consultar", "unavailable": "O serviço está indisponível. Verifique a conexão com o backend e tente novamente." },
+  "menu": { "primary": "Navegação principal", "dashboard": "Painel", "bulletin": "Quadros", "status": "Status" },
+  "auth": { "title": "Entrar no HertzBeat", "description": "Use sua conta HertzBeat para continuar.", "username": "Usuário", "password": "Senha", "submit": "Entrar", "continue": "Continuar mesmo assim", "logout": "Sair", "logoutFailed": "Não foi possível sair. Tente novamente.", "defaultPassword": "Esta conta usa a senha padrão. Altere-a após entrar; envie novamente para continuar." },
+  "dashboard": { "title": "Painel", "description": "Veja a disponibilidade dos monitores e os alertas atuais.", "monitorSummary": "Resumo de monitores", "total": "Total de monitores", "available": "Disponíveis", "unavailable": "Indisponíveis", "alerts": "Alertas ativos", "distribution": "Distribuição de monitores", "application": "Aplicação", "category": "Categoria", "empty": "Nenhum monitor configurado.", "summaryUnavailable": "O resumo de monitores está indisponível. Os contadores foram ocultados." },
+  "bulletin": { "title": "Quadros", "description": "Consulte visões agrupadas configuradas pelos operadores.", "search": "Pesquisar quadros", "empty": "Nenhum quadro corresponde à consulta.", "name": "Nome", "application": "Aplicação", "monitors": "Monitores", "creator": "Criador", "updated": "Atualizado" },
+  "status": { "title": "Status do serviço", "description": "Saúde pública dos componentes e histórico de incidentes.", "operational": "Todos os sistemas operacionais", "degraded": "Serviço degradado", "components": "Componentes", "component": "Componente", "descriptionLabel": "Descrição", "state": "Estado", "normal": "Normal", "abnormal": "Anormal", "noComponents": "Nenhum componente público configurado.", "incidents": "Incidentes", "incident": "Incidente", "started": "Início", "noIncidents": "Nenhum incidente no período selecionado.", "notConfigured": "A página pública de status ainda não foi configurada." }
 }
