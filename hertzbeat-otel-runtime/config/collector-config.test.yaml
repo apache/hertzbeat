@@ -1,0 +1,61 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements. See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0.
+
+receivers:
+  hostmetrics:
+    collection_interval: 10s
+    scrapers:
+      cpu:
+      disk:
+      filesystem:
+      load:
+      memory:
+      network:
+      paging:
+      processes:
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 256
+    spike_limit_mib: 64
+  resource:
+    attributes:
+      - key: service.name
+        value: hertzbeat-otel-runtime
+        action: upsert
+      - key: hertzbeat.collector.id
+        value: ${env:HERTZBEAT_COLLECTOR_ID}
+        action: upsert
+      - key: hertzbeat.runtime
+        value: otel
+        action: upsert
+      - key: hertzbeat.workspace_id
+        value: ${env:HERTZBEAT_WORKSPACE_ID}
+        action: upsert
+  batch:
+    send_batch_size: 1024
+    timeout: 5s
+
+exporters:
+  otlphttp:
+    endpoint: ${env:HERTZBEAT_OTLP_HTTP_ENDPOINT}
+    headers:
+      Authorization: Bearer ${env:HERTZBEAT_OTLP_TOKEN}
+    compression: gzip
+    retry_on_failure:
+      enabled: true
+
+extensions:
+  health_check:
+    endpoint: 127.0.0.1:${env:HERTZBEAT_OTEL_HEALTH_PORT}
+
+service:
+  extensions: [health_check]
+  pipelines:
+    metrics:
+      receivers: [hostmetrics]
+      processors: [memory_limiter, resource, batch]
+      exporters: [otlphttp]
