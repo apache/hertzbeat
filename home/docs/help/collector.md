@@ -54,7 +54,10 @@ Parameters explanation:
 - `-e MODE=public`: Set the running mode (public or private), for public cluster or private cloud-edge mode.
 - `-e MANAGER_HOST=192.168.1.100`: Important! Set the IP address of the main HertzBeat server. Replace with your actual server IP.
 - `-e MANAGER_PORT=1158`: (Optional) Set the port of the main HertzBeat server, default is 1158.
+- `-v $(pwd)/ext-lib:/opt/hertzbeat-collector/ext-lib`: (Optional) Mount external JDBC driver jars to the local collector.
 - `-v $(pwd)/logs:/opt/hertzbeat-collector/logs`: (Optional) Mount the log files to the local host.
+
+The collector image keeps `/opt/hertzbeat-collector` as a version-independent root path, so `logs` and `ext-lib` mounts remain stable across upgrades.
 
 ## Operating Modes
 
