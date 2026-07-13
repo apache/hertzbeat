@@ -17,6 +17,15 @@
 
 package org.apache.hertzbeat.collector.dispatch;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.List;
+import java.util.Map;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
 import org.apache.hertzbeat.collector.dispatch.unit.UnitConvert;
 import org.apache.hertzbeat.collector.timer.TimerDispatch;
@@ -28,19 +37,7 @@ import org.apache.hertzbeat.common.timer.Timeout;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.List;
-import java.util.Map;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 class CommonDispatcherTest {
 
@@ -74,7 +71,8 @@ class CommonDispatcherTest {
         MockitoAnnotations.openMocks(this);
         when(collectJobService.getCollectorIdentity()).thenReturn("test-collector");
         doNothing().when(workerPool).executeLongRunning(any());
-        dispatcher = new CommonDispatcher(jobRequestQueue, timerDispatch, commonDataQueue, workerPool, collectJobService, unitConvertList);
+        dispatcher = new CommonDispatcher(jobRequestQueue, timerDispatch, commonDataQueue, workerPool,
+            collectJobService, unitConvertList);
     }
 
     @Test
@@ -98,34 +96,6 @@ class CommonDispatcherTest {
         invokeMonitorCollectTaskTimeout();
 
         verify(commonDataQueue).sendMetricsData(any());
-    }
-
-    @Test
-    void dispatchCollectDataExecute_When_Priority_gt_0_MetricsTimeout() throws Exception {
-        Job job = buildCycleJobWithMetrics();
-        job.constructPriorMetrics();
-        Metrics availabilityMetrics = job.getMetrics().get(0);
-        Metrics cpu = job.getMetrics().get(1);
-        job.getNextCollectMetrics(availabilityMetrics, false);
-
-        when(timeout.task()).thenReturn(wheelTimerTask);
-        when(wheelTimerTask.getJob()).thenReturn(job);
-        when(timeout.isCancelled()).thenReturn(false);
-
-        Map<String, CommonDispatcher.MetricsTime> metricsTimeoutMonitorMap = getMetricsTimeoutMonitorMap();
-        CommonDispatcher.MetricsTime metricsTime = new CommonDispatcher.MetricsTime(
-            System.currentTimeMillis() - 300_000L,
-            cpu,
-            timeout
-        );
-        metricsTimeoutMonitorMap.put(job.getId() + "-" + cpu.getName(), metricsTime);
-
-        invokeMonitorCollectTaskTimeout();
-
-        verify(commonDataQueue, never()).sendMetricsData(any());
-
-        verify(commonDataQueue, Mockito.timeout(2000)).sendMetricsData(any());
-
     }
 
 
@@ -174,7 +144,7 @@ class CommonDispatcherTest {
 
         invokeMonitorCollectTaskTimeout();
 
-        verify(jobRequestQueue, Mockito.timeout(2000)).addJob(any(MetricsCollect.class));
+        verify(jobRequestQueue).addJob(any(MetricsCollect.class));
     }
 
     @SuppressWarnings("unchecked")

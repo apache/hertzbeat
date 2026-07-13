@@ -92,10 +92,6 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
 
     private final String collectorIdentity;
 
-    private final ScheduledThreadPoolExecutor dispatchDelayExecutor;
-
-    private static final long DELAY_PER_PRIORITY = 500L;
-
     @Autowired
     private HertzBeatMetricsCollector metricsCollector;
 
@@ -112,7 +108,6 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         this.workerPool = workerPool;
         this.collectorIdentity = collectJobService.getCollectorIdentity();
         this.metricsTimeoutMonitorMap = new ConcurrentHashMap<>(16);
-        this.dispatchDelayExecutor = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat("dispatch-delay-%d").setDaemon(true).build());
         this.start();
     }
 
@@ -185,13 +180,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                             .setTime(System.currentTimeMillis())
                             .setCode(CollectRep.Code.TIMEOUT).setMsg("collect timeout").build();
                     log.error("[Collect Timeout]: \n{}", metricsData);
-                    if (metricsData.getPriority() == 0) {
-                        dispatchCollectData(metricsTime.timeout, metricsTime.getMetrics(), metricsData);
-                    } else {
-                        long delay = (long) metricsData.getPriority() * DELAY_PER_PRIORITY;
-                        dispatchDelayExecutor.schedule(() -> dispatchCollectData(metricsTime.timeout, metricsTime.getMetrics(), metricsData),
-                            delay, TimeUnit.MILLISECONDS);
-                    }
+                    dispatchCollectData(metricsTime.timeout, metricsTime.getMetrics(), metricsData);
                 }
             }
         } catch (Exception e) {
