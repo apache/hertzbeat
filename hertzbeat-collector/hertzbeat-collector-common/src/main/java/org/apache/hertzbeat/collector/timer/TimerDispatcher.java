@@ -140,7 +140,7 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
         // whether is the job has been canceled
         if (currentCyclicTaskMap.containsKey(jobId)) {
             Timeout timeout = wheelTimer.newTimeout(timerTask, interval, TimeUnit.SECONDS);
-            currentCyclicTaskMap.put(timerTask.getJob().getId(), timeout);
+            cancelPreviousTimeout(currentCyclicTaskMap.put(timerTask.getJob().getId(), timeout));
         }
     }
 
