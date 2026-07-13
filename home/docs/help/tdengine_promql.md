@@ -13,7 +13,7 @@ keywords: [ Open Source Monitoring System, Open Source Middleware Monitoring, TD
 
 1. Deploy TDengine;
 2. Deploy taosKeeper; note that installing the official TDengine installation package will automatically install
-   taosKeeper. For details, please refer to: [taosKeeper](https://docs.taosdata.com/reference/components/taoskeeper/);
+   taosKeeper. For details, please refer to: [taosKeeper](https://docs.tdengine.com/reference/components/taoskeeper/);
 3. Collect monitoring metrics exposed by TDengine taosKeeper through prometheus;
 
 ### Configuration parameters

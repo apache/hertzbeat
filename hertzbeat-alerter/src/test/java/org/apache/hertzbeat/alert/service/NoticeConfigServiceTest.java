@@ -22,10 +22,13 @@ import org.apache.hertzbeat.alert.dao.NoticeRuleDao;
 import org.apache.hertzbeat.alert.dao.NoticeTemplateDao;
 import org.apache.hertzbeat.alert.notice.AlertNoticeDispatch;
 import org.apache.hertzbeat.alert.service.impl.NoticeConfigServiceImpl;
+import org.apache.hertzbeat.common.cache.CacheFactory;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeRule;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
+import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,9 +42,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -283,5 +289,94 @@ class NoticeConfigServiceTest {
         final NoticeTemplate noticeTemplate = null;
         noticeConfigService.sendTestMsg(noticeReceiver);
         verify(dispatcherAlarm, times(1)).sendNoticeMsg(eq(noticeReceiver), eq(noticeTemplate), any(GroupAlert.class));
+    }
+
+    @AfterEach
+    void tearDown() {
+        CacheFactory.clearNoticeCache();
+    }
+
+    private GroupAlert buildGroupAlertWithPartialLabel() {
+        SingleAlert alertA = SingleAlert.builder()
+                .labels(new HashMap<>(Map.of("alertname", "cpu", "instance", "s1", "department", "algorithm")))
+                .build();
+        SingleAlert alertB = SingleAlert.builder()
+                .labels(new HashMap<>(Map.of("alertname", "cpu", "instance", "s2")))
+                .build();
+        return GroupAlert.builder()
+                .commonLabels(new HashMap<>(Map.of("alertname", "cpu")))
+                .alerts(Arrays.asList(alertA, alertB))
+                .build();
+    }
+
+    /**
+     * A rule scoped to a label carried by only part of the group's alerts must still match,
+     * even though that label is absent from commonLabels. Regression test for issue #3852.
+     */
+    @Test
+    void getReceiverFilterRuleMatchesLabelOnPartialAlert() {
+        NoticeRule rule = new NoticeRule();
+        rule.setId(1L);
+        rule.setName("algorithm-team");
+        rule.setFilterAll(false);
+        rule.setLabels(new HashMap<>(Map.of("department", "algorithm")));
+        CacheFactory.setNoticeCache(List.of(rule));
+
+        List<NoticeRule> matched = noticeConfigService.getReceiverFilterRule(buildGroupAlertWithPartialLabel());
+
+        assertEquals(1, matched.size());
+        assertEquals(1L, matched.get(0).getId());
+    }
+
+    /**
+     * A rule whose label value is not present on any alert in the group must not match.
+     */
+    @Test
+    void getReceiverFilterRuleSkipsRuleWithUnmatchedLabel() {
+        NoticeRule rule = new NoticeRule();
+        rule.setId(2L);
+        rule.setName("infra-team");
+        rule.setFilterAll(false);
+        rule.setLabels(new HashMap<>(Map.of("department", "infra")));
+        CacheFactory.setNoticeCache(List.of(rule));
+
+        List<NoticeRule> matched = noticeConfigService.getReceiverFilterRule(buildGroupAlertWithPartialLabel());
+
+        assertTrue(matched.isEmpty());
+    }
+
+    /**
+     * A rule requiring several labels matches only when a single alert carries all of them,
+     * preventing false matches assembled across different alerts in the group.
+     */
+    @Test
+    void getReceiverFilterRuleRequiresAllLabelsOnSameAlert() {
+        NoticeRule rule = new NoticeRule();
+        rule.setId(3L);
+        rule.setName("algorithm-on-s2");
+        rule.setFilterAll(false);
+        rule.setLabels(new HashMap<>(Map.of("department", "algorithm", "instance", "s2")));
+        CacheFactory.setNoticeCache(List.of(rule));
+
+        List<NoticeRule> matched = noticeConfigService.getReceiverFilterRule(buildGroupAlertWithPartialLabel());
+
+        assertTrue(matched.isEmpty());
+    }
+
+    /**
+     * A forward-all rule keeps matching regardless of labels.
+     */
+    @Test
+    void getReceiverFilterRuleForwardAllAlwaysMatches() {
+        NoticeRule rule = new NoticeRule();
+        rule.setId(4L);
+        rule.setName("forward-all");
+        rule.setFilterAll(true);
+        CacheFactory.setNoticeCache(List.of(rule));
+
+        List<NoticeRule> matched = noticeConfigService.getReceiverFilterRule(buildGroupAlertWithPartialLabel());
+
+        assertEquals(1, matched.size());
+        assertEquals(4L, matched.get(0).getId());
     }
 }
