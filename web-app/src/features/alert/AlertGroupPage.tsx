@@ -37,6 +37,7 @@ import {
   type AlertGroupDraft
 } from './alert-group-model';
 import { AlertManagementNav } from './AlertManagementNav';
+import { AlertNoiseControlNav } from './AlertNoiseControlNav';
 import styles from './AlertPolicyPage.module.css';
 
 type GroupOperation =
@@ -228,6 +229,7 @@ export function AlertGroupPage() {
         <Button type="primary" onClick={() => setDraft(createAlertGroupDraft())}>{t('alertGroups.new')}</Button>
       </header>
       <AlertManagementNav />
+      <AlertNoiseControlNav />
       <div className={styles.toolbar}>
         <Input
           allowClear

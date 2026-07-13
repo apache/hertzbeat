@@ -37,6 +37,7 @@ import {
   type AlertInhibitDraft
 } from './alert-inhibit-model';
 import { AlertManagementNav } from './AlertManagementNav';
+import { AlertNoiseControlNav } from './AlertNoiseControlNav';
 import styles from './AlertPolicyPage.module.css';
 
 type InhibitOperation =
@@ -231,6 +232,7 @@ export function AlertInhibitPage() {
         <Button type="primary" onClick={() => setDraft(createAlertInhibitDraft())}>{t('alertInhibits.new')}</Button>
       </header>
       <AlertManagementNav />
+      <AlertNoiseControlNav />
       <div className={styles.toolbar}>
         <Input
           allowClear

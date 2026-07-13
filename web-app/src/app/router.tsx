@@ -153,6 +153,14 @@ export const appRoutes: RouteObject[] = [
                 }
               },
               {
+                id: 'notice-receivers',
+                path: '/alerts/notifications/receivers',
+                lazy: async () => {
+                  const { NoticeReceiverPage } = await import('@/features/alert/NoticeReceiverPage');
+                  return { Component: NoticeReceiverPage };
+                }
+              },
+              {
                 id: 'bulletin',
                 path: '/bulletin',
                 lazy: async () => {

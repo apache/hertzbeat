@@ -37,6 +37,7 @@ import {
   type AlertSilenceDraft
 } from './alert-silence-model';
 import { AlertManagementNav } from './AlertManagementNav';
+import { AlertNoiseControlNav } from './AlertNoiseControlNav';
 import styles from './AlertPolicyPage.module.css';
 import { AlertSilenceEditor } from './AlertSilenceEditor';
 
@@ -195,6 +196,7 @@ export function AlertSilencePage() {
         <Button type="primary" onClick={() => setDraft(createAlertSilenceDraft())}>{t('alertSilences.new')}</Button>
       </header>
       <AlertManagementNav />
+      <AlertNoiseControlNav />
       <div className={styles.toolbar}>
         <Input
           allowClear

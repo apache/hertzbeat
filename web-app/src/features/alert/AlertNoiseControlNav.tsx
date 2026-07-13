@@ -15,32 +15,28 @@
  * limitations under the License.
  */
 
-import { Tabs } from 'antd';
+import { Segmented } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-const alertManagementRoutes = [
-  { key: '/alerts', labelKey: 'alertNavigation.events' },
-  { key: '/alerts/rules', labelKey: 'alertNavigation.rules' },
-  { key: '/alerts/groups', labelKey: 'alertNavigation.noiseControl' },
-  { key: '/alerts/notifications/receivers', labelKey: 'alertNavigation.notifications' }
+const noiseControlRoutes = [
+  { value: '/alerts/groups', labelKey: 'alertNavigation.groups' },
+  { value: '/alerts/inhibits', labelKey: 'alertNavigation.inhibits' },
+  { value: '/alerts/silences', labelKey: 'alertNavigation.silences' }
 ] as const;
 
-function activeAlertRoute(pathname: string) {
-  if (pathname.startsWith('/alerts/rules')) return '/alerts/rules';
-  if (pathname.startsWith('/alerts/groups') || pathname.startsWith('/alerts/inhibits') || pathname.startsWith('/alerts/silences')) return '/alerts/groups';
-  if (pathname.startsWith('/alerts/notifications')) return '/alerts/notifications/receivers';
-  return '/alerts';
+function activeNoiseControlRoute(pathname: string) {
+  return noiseControlRoutes.find(route => pathname.startsWith(route.value))?.value ?? '/alerts/groups';
 }
 
-export function AlertManagementNav() {
+export function AlertNoiseControlNav() {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   return (
-    <Tabs
-      activeKey={activeAlertRoute(location.pathname)}
-      items={alertManagementRoutes.map(item => ({ key: item.key, label: t(item.labelKey) }))}
+    <Segmented
+      value={activeNoiseControlRoute(location.pathname)}
+      options={noiseControlRoutes.map(route => ({ value: route.value, label: t(route.labelKey) }))}
       onChange={path => void navigate(path)}
     />
   );
