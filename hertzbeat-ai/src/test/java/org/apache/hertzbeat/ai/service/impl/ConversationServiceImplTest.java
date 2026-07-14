@@ -43,7 +43,7 @@ import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
 
 /**
- * {@link ConversationServiceImpl} 多轮对话上下文测试。
+ * Tests multi-turn conversation context handling in {@link ConversationServiceImpl}.
  */
 @ExtendWith(MockitoExtension.class)
 class ConversationServiceImplTest {

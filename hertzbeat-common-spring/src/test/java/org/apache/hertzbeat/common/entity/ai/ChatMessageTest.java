@@ -25,7 +25,7 @@ import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.Test;
 
 /**
- * AI 会话消息序列化测试。
+ * Tests AI conversation message serialization.
  */
 class ChatMessageTest {
 

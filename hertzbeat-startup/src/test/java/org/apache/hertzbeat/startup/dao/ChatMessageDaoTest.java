@@ -32,7 +32,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * AI 会话消息持久化映射测试。
+ * Tests persistence mapping for AI conversation messages.
  */
 @Transactional
 class ChatMessageDaoTest extends AbstractSpringIntegrationTest {
