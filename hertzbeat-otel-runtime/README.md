@@ -113,8 +113,9 @@ collector:
   denied paths, and symlink escapes before runtime validation.
 - File offsets and the bounded downstream exporter queue use the same
   owner-only `file_storage` directory.
-- The local control surface is the versioned loopback health contract. Remote
-  configuration and OpAMP are not included.
+- The local control surface is the versioned loopback health contract. Managed
+  desired configuration uses the existing HertzBeat heartbeat channel; OpAMP
+  is not included.
 - The manual `Hybrid Collector Release Gate` workflow builds the Java Native
   Collector on Linux amd64/arm64, macOS amd64/arm64, and Windows amd64. Linux
   packages include the reviewed systemd unit; the multi-platform container uses

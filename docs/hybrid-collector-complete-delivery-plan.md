@@ -55,9 +55,9 @@ Hybrid Collector 必须同时具备两类能力：
 | `memorylimiterprocessor` | 有界内存和快速拒绝 | 已实现 |
 | `batchprocessor` | 三信号有界批处理 | 已实现 |
 | `resourceprocessor` | 写入 HertzBeat Collector/环境等固定资源属性 | 已实现 |
-| `resourcedetectionprocessor` | 检测 host、OS、process、container 和获准的云环境资源 | 待实现 |
-| `attributesprocessor` | 删除禁止属性并补充固定低基数属性 | 待实现 |
-| `filterprocessor` | 使用产品预置规则过滤健康探测等明确噪声；不开放任意远程 OTTL | 待实现 |
+| `resourcedetectionprocessor` | 检测 host、OS、process、container 和获准的云环境资源 | 已实现 |
+| `attributesprocessor` | 删除禁止属性并补充固定低基数属性 | 已实现 |
+| `filterprocessor` | 使用产品预置规则过滤健康探测等明确噪声；不开放任意远程 OTTL | 已实现 |
 
 ### 3.3 Exporter、Extension 和 Provider
 
@@ -128,7 +128,7 @@ Hybrid Collector 必须同时具备两类能力：
 
 ### M2：资源识别、归属和固定数据治理
 
-状态：**进行中**
+状态：**已完成**（`652f2a836`）
 
 交付内容：
 
@@ -150,7 +150,7 @@ Hybrid Collector 必须同时具备两类能力：
 
 ### M3：主动指标与日志采集闭环
 
-状态：**待完成产品闭环；底层 Receiver 已实现**
+状态：**进行中；底层 Receiver 已实现**
 
 交付内容：
 
