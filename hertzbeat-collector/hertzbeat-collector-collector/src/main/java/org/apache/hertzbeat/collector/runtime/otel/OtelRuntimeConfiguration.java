@@ -61,4 +61,10 @@ public class OtelRuntimeConfiguration {
                                                 OtelRuntimeHealthClient healthClient) {
         return new OtelRuntimeSupervisor(properties, resolver, configTransaction, launcher, healthClient);
     }
+
+    @Bean
+    OtelRuntimeStatusProvider otelRuntimeStatusProvider(OtelRuntimeProperties properties,
+                                                        OtelRuntimeSupervisor supervisor) {
+        return new OtelRuntimeStatusProvider(properties, supervisor);
+    }
 }

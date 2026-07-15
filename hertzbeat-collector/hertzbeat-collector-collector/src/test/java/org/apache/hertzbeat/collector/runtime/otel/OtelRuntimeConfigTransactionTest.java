@@ -73,6 +73,19 @@ class OtelRuntimeConfigTransactionTest {
     }
 
     @Test
+    void carriesDesiredAndPreviousActiveSemanticRevisions() throws Exception {
+        properties.setConfigRevision(7);
+        OtelRuntimeConfigTransaction.PreparedConfig first = transaction.prepare(properties);
+        transaction.commit(first);
+        properties.setConfigRevision(8);
+
+        OtelRuntimeConfigTransaction.PreparedConfig second = transaction.prepare(properties);
+
+        assertEquals(8, second.desiredRevision());
+        assertEquals(7, second.previousActiveRevision());
+    }
+
+    @Test
     void rollbackRestoresLastKnownGoodWithoutConsumingIt() throws Exception {
         Files.writeString(activeConfig, "current-config");
         OtelRuntimeConfigTransaction.PreparedConfig prepared = transaction.prepare(properties);

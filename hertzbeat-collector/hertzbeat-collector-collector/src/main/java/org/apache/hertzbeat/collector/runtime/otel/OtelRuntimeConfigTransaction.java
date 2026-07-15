@@ -22,6 +22,8 @@ import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Owns the candidate, active, and last-known-good runtime configuration files.
@@ -29,6 +31,8 @@ import java.nio.file.StandardCopyOption;
 public class OtelRuntimeConfigTransaction {
 
     private static final String LAST_KNOWN_GOOD_SUFFIX = ".last-known-good";
+    private static final Pattern CONFIG_REVISION = Pattern.compile(
+            "(?m)^\\s*- key: hertzbeat\\.config\\.revision\\R\\s*value: \\\"(\\d+)\\\"$");
 
     private final OtelRuntimeConfigRenderer renderer;
 
@@ -46,7 +50,8 @@ public class OtelRuntimeConfigTransaction {
     public PreparedConfig prepare(OtelRuntimeProperties properties) throws IOException {
         Path active = renderer.activePath(properties);
         Path lastKnownGood = active.resolveSibling(active.getFileName() + LAST_KNOWN_GOOD_SUFFIX);
-        return new PreparedConfig(renderer.renderCandidate(properties), active, lastKnownGood);
+        return new PreparedConfig(renderer.renderCandidate(properties), active, lastKnownGood,
+                properties.getConfigRevision(), readRevision(active));
     }
 
     /**
@@ -111,13 +116,24 @@ public class OtelRuntimeConfigTransaction {
         }
     }
 
+    private static long readRevision(Path configuration) throws IOException {
+        if (!Files.exists(configuration)) {
+            return 0;
+        }
+        Matcher matcher = CONFIG_REVISION.matcher(Files.readString(configuration));
+        return matcher.find() ? Long.parseLong(matcher.group(1)) : 0;
+    }
+
     /**
      * Files participating in one configuration transaction.
      *
      * @param candidate isolated, not-yet-active configuration
      * @param active active configuration used to start the runtime
      * @param lastKnownGood previously active configuration
+     * @param desiredRevision candidate semantic revision
+     * @param previousActiveRevision semantic revision active before this transaction, or zero when unknown
      */
-    public record PreparedConfig(Path candidate, Path active, Path lastKnownGood) {
+    public record PreparedConfig(Path candidate, Path active, Path lastKnownGood,
+                                 long desiredRevision, long previousActiveRevision) {
     }
 }

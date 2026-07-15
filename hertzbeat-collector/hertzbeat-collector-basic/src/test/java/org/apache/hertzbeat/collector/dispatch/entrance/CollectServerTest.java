@@ -17,20 +17,28 @@
 
 package org.apache.hertzbeat.collector.dispatch.entrance;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
 import io.netty.channel.Channel;
+import java.time.Instant;
+import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import org.apache.hertzbeat.collector.dispatch.CollectorInfoProperties;
+import org.apache.hertzbeat.collector.dispatch.CollectorRuntimeStatusProvider;
 import org.apache.hertzbeat.collector.dispatch.DispatchProperties;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
 import org.apache.hertzbeat.collector.timer.TimerDispatch;
+import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.support.CommonThreadPool;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.remoting.RemotingClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -67,6 +75,9 @@ class CollectServerTest {
     @Mock
     private CollectorInfoProperties infoProperties;
 
+    @Mock
+    private CollectorRuntimeStatusProvider runtimeStatusProvider;
+
     private CollectServer collectServer;
 
     private CollectServer.CollectNettyEventListener collectNettyEventListener;
@@ -79,7 +90,8 @@ class CollectServerTest {
         when(entranceProperties.getNetty()).thenReturn(nettyProperties);
         when(properties.getEntrance()).thenReturn(entranceProperties);
 
-        collectServer = new CollectServer(collectJobService, timerDispatch, properties, threadPool, infoProperties);
+        collectServer = new CollectServer(collectJobService, timerDispatch, properties, threadPool, infoProperties,
+                Optional.of(runtimeStatusProvider));
         collectNettyEventListener = collectServer.new CollectNettyEventListener();
     }
 
@@ -140,6 +152,40 @@ class CollectServerTest {
         ScheduledExecutorService scheduledExecutor =
                 (ScheduledExecutorService) ReflectionTestUtils.getField(collectServer, "scheduledExecutor");
         assertNotNull(scheduledExecutor);
+    }
+
+    @Test
+    void heartbeatCarriesCurrentRuntimeStatus() {
+        when(runtimeStatusProvider.status()).thenReturn(runtimeStatus());
+
+        ClusterMsg.Message heartbeat = collectServer.createHeartbeatMessage("collector1");
+
+        ManagedOtelRuntimeStatus status = JsonUtil.fromJson(
+                heartbeat.getMsg().toStringUtf8(), ManagedOtelRuntimeStatus.class);
+        assertEquals(11, status.activeRevision());
+    }
+
+    @Test
+    void runtimeStatusFailureDoesNotBreakCollectorHeartbeat() {
+        when(runtimeStatusProvider.status()).thenThrow(new IllegalStateException("runtime status unavailable"));
+
+        ClusterMsg.Message heartbeat = collectServer.createHeartbeatMessage("collector1");
+
+        assertTrue(heartbeat.getMsg().isEmpty());
+    }
+
+    private ManagedOtelRuntimeStatus runtimeStatus() {
+        return new ManagedOtelRuntimeStatus(
+                ManagedOtelRuntimeStatus.CURRENT_SCHEMA_VERSION,
+                true,
+                ManagedOtelRuntimeStatus.RuntimeState.RUNNING,
+                12,
+                11,
+                ManagedOtelRuntimeStatus.IntakeCredentialState.CONFIGURED,
+                0,
+                Instant.parse("2026-07-15T06:00:00Z"),
+                ""
+        );
     }
 
 }

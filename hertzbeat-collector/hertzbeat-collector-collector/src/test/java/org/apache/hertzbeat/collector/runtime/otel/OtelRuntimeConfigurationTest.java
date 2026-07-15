@@ -20,6 +20,7 @@ package org.apache.hertzbeat.collector.runtime.otel;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.apache.hertzbeat.collector.dispatch.CollectorRuntimeStatusProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
@@ -35,6 +36,7 @@ class OtelRuntimeConfigurationTest {
             assertTrue(context.isRunning());
             OtelRuntimeSupervisor supervisor = context.getBean(OtelRuntimeSupervisor.class);
             assertEquals(OtelRuntimeState.STOPPED, supervisor.snapshot().state());
+            assertTrue(context.getBean(CollectorRuntimeStatusProvider.class) instanceof OtelRuntimeStatusProvider);
         });
     }
 
@@ -44,6 +46,8 @@ class OtelRuntimeConfigurationTest {
                 .withPropertyValues(
                         "collector.otel-runtime.enabled=true",
                         "collector.otel-runtime.restart-delay=1h",
+                        "collector.otel-runtime.collector-id=edge-test",
+                        "collector.otel-runtime.token=test-intake-token",
                         "collector.otel-runtime.home=/path/that/does/not/exist"
                 )
                 .run(context -> {

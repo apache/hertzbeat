@@ -18,10 +18,12 @@
 package org.apache.hertzbeat.manager.pojo.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.time.Instant;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus;
 
 /**
  * Collector summary view.
@@ -41,4 +43,10 @@ public class CollectorSummary {
 
     @Schema(description = "the number of monitors dispatched in this collector")
     private int dispatchMonitorNum;
+
+    @Schema(description = "fresh status of the optional managed telemetry runtime")
+    private ManagedOtelRuntimeStatus runtimeStatus;
+
+    @Schema(description = "manager receive time of the runtime status")
+    private Instant runtimeStatusReportedAt;
 }

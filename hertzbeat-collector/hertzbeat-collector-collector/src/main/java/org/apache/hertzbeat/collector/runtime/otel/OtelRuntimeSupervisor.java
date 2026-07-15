@@ -50,6 +50,7 @@ public class OtelRuntimeSupervisor implements SmartLifecycle, AutoCloseable {
             OtelRuntimeState.STOPPED, -1, 0, Instant.now(), "");
     private Process process;
     private long generation;
+    private volatile long activeRevision;
     private boolean intentionalStop = true;
 
     public OtelRuntimeSupervisor(OtelRuntimeProperties properties, OtelRuntimeBinaryResolver resolver,
@@ -81,6 +82,7 @@ public class OtelRuntimeSupervisor implements SmartLifecycle, AutoCloseable {
         update(OtelRuntimeState.STARTING, -1, snapshot.restartCount(), snapshot.lastError());
         OtelRuntimeConfigTransaction.PreparedConfig prepared = null;
         try {
+            validateManagedIntakeIdentity();
             Path binary = resolver.resolve();
             prepared = configTransaction.prepare(properties);
             Path home = properties.getHome().toAbsolutePath().normalize();
@@ -90,7 +92,7 @@ public class OtelRuntimeSupervisor implements SmartLifecycle, AutoCloseable {
             Path config = configTransaction.commit(prepared);
             try {
                 Process launched = launchAndAwait(binary, config, home, logFile, environment);
-                markRunning(launched, snapshot.restartCount(), snapshot.lastError());
+                markRunning(launched, snapshot.restartCount(), snapshot.lastError(), prepared.desiredRevision());
             } catch (IOException | InterruptedException | RuntimeException candidateError) {
                 terminateFailedStartup();
                 if (!recoverLastKnownGood(prepared, binary, home, logFile, environment, candidateError)) {
@@ -101,6 +103,15 @@ public class OtelRuntimeSupervisor implements SmartLifecycle, AutoCloseable {
             discardCandidate(prepared);
             terminateFailedStartup();
             recordFailure(safeMessage(error));
+        }
+    }
+
+    private void validateManagedIntakeIdentity() {
+        if (properties.getCollectorId() == null || properties.getCollectorId().isBlank()) {
+            throw new IllegalStateException("Managed telemetry runtime requires a Collector identity");
+        }
+        if (properties.getToken() == null || properties.getToken().isBlank()) {
+            throw new IllegalStateException("Managed telemetry runtime requires an intake token");
         }
     }
 
@@ -128,11 +139,12 @@ public class OtelRuntimeSupervisor implements SmartLifecycle, AutoCloseable {
                 candidateMessage);
         validate(binary, prepared.active(), home, logFile, environment);
         Process recovered = launchAndAwait(binary, prepared.active(), home, logFile, environment);
-        markRunning(recovered, snapshot.restartCount() + 1, candidateMessage);
+        markRunning(recovered, snapshot.restartCount() + 1, candidateMessage, prepared.previousActiveRevision());
         return true;
     }
 
-    private void markRunning(Process launched, int restartCount, String lastError) {
+    private void markRunning(Process launched, int restartCount, String lastError, long appliedRevision) {
+        activeRevision = appliedRevision;
         update(OtelRuntimeState.RUNNING, launched.pid(), restartCount, lastError);
         log.info("HertzBeat telemetry runtime is ready, pid={}", launched.pid());
     }
@@ -283,6 +295,10 @@ public class OtelRuntimeSupervisor implements SmartLifecycle, AutoCloseable {
 
     public OtelRuntimeSnapshot snapshot() {
         return snapshot;
+    }
+
+    public long activeRevision() {
+        return activeRevision;
     }
 
     private void update(OtelRuntimeState state, long pid, int restartCount, String lastError) {

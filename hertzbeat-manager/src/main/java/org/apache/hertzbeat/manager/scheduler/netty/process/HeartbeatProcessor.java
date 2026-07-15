@@ -19,7 +19,9 @@ package org.apache.hertzbeat.manager.scheduler.netty.process;
 
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.scheduler.netty.ManageServer;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingProcessor;
 
@@ -52,8 +54,24 @@ public class HeartbeatProcessor implements NettyRemotingProcessor {
         if (log.isDebugEnabled()) {
             log.debug("server receive collector {} heartbeat", message.getIdentity());
         }
+        reportRuntimeStatus(identity, message);
         return ClusterMsg.Message.newBuilder()
                 .setType(ClusterMsg.MessageType.HEARTBEAT)
                 .build();
+    }
+
+    private void reportRuntimeStatus(String identity, ClusterMsg.Message message) {
+        if (message.getMsg().isEmpty()) {
+            return;
+        }
+        try {
+            ManagedOtelRuntimeStatus status = JsonUtil.fromJson(
+                    message.getMsg().toStringUtf8(), ManagedOtelRuntimeStatus.class);
+            if (status != null) {
+                manageServer.getRuntimeStatusRegistry().report(identity, status);
+            }
+        } catch (RuntimeException error) {
+            log.warn("Ignoring invalid telemetry runtime status from Collector {}: {}", identity, error.getMessage());
+        }
     }
 }

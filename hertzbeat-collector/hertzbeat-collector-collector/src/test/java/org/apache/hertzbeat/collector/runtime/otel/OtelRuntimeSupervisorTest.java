@@ -78,7 +78,7 @@ class OtelRuntimeSupervisorTest {
         Path config = tempDir.resolve("runtime.yaml");
         Path lastKnownGood = tempDir.resolve("runtime.yaml.last-known-good");
         OtelRuntimeConfigTransaction.PreparedConfig prepared =
-                new OtelRuntimeConfigTransaction.PreparedConfig(candidate, config, lastKnownGood);
+                new OtelRuntimeConfigTransaction.PreparedConfig(candidate, config, lastKnownGood, 1, 0);
         when(resolver.resolve()).thenReturn(binary);
         when(configTransaction.prepare(properties)).thenReturn(prepared);
         when(configTransaction.commit(prepared)).thenReturn(config);
@@ -104,6 +104,7 @@ class OtelRuntimeSupervisorTest {
 
         assertEquals(OtelRuntimeState.RUNNING, supervisor.snapshot().state());
         assertEquals(4201, supervisor.snapshot().pid());
+        assertEquals(1, supervisor.activeRevision());
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Map<String, String>> environment = ArgumentCaptor.forClass(Map.class);
         verify(launcher, atLeastOnce()).start(any(), any(), any(), any(), environment.capture(), anyBoolean());
@@ -154,6 +155,20 @@ class OtelRuntimeSupervisorTest {
         verify(healthClient, never()).isHealthy(any(), any());
         verify(configTransaction, never()).commit(any());
         verify(configTransaction).discard(any());
+    }
+
+    @Test
+    void missingManagedIntakeTokenDegradesWithoutLaunchingRuntime() throws Exception {
+        properties.setToken(" ");
+        properties.setRestartDelay(Duration.ofHours(1));
+        supervisor = new OtelRuntimeSupervisor(properties, resolver, configTransaction, launcher, healthClient);
+
+        supervisor.start();
+
+        assertEquals(OtelRuntimeState.DEGRADED, supervisor.snapshot().state());
+        assertTrue(supervisor.snapshot().lastError().contains("intake token"));
+        verify(resolver, never()).resolve();
+        verify(launcher, never()).start(any(), any(), any(), any(), anyMap(), anyBoolean());
     }
 
     @Test
@@ -210,6 +225,7 @@ class OtelRuntimeSupervisorTest {
         assertEquals(4202, supervisor.snapshot().pid());
         assertEquals(1, supervisor.snapshot().restartCount());
         assertTrue(supervisor.snapshot().lastError().contains("did not become ready"));
+        assertEquals(0, supervisor.activeRevision());
         verify(firstRuntime).destroy();
         verify(configTransaction).rollback(any());
     }

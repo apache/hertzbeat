@@ -38,6 +38,7 @@ import org.apache.hertzbeat.manager.scheduler.netty.process.CollectOneTimeDataRe
 import org.apache.hertzbeat.manager.scheduler.netty.process.CollectorOfflineProcessor;
 import org.apache.hertzbeat.manager.scheduler.netty.process.CollectorOnlineProcessor;
 import org.apache.hertzbeat.manager.scheduler.netty.process.HeartbeatProcessor;
+import org.apache.hertzbeat.manager.scheduler.runtime.CollectorRuntimeStatusRegistry;
 import org.apache.hertzbeat.remoting.RemotingServer;
 import org.apache.hertzbeat.remoting.event.NettyEventListener;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingServer;
@@ -65,6 +66,8 @@ public class ManageServer implements CommandLineRunner {
 
     private final CommonDataQueue commonDataQueue;
 
+    private final CollectorRuntimeStatusRegistry runtimeStatusRegistry;
+
     private ScheduledExecutorService channelSchedule;
 
     private final ExecutorService channelCheckExecutor;
@@ -88,17 +91,29 @@ public class ManageServer implements CommandLineRunner {
                 VirtualThreadProperties.defaults());
     }
 
-    @Autowired
     public ManageServer(final SchedulerProperties schedulerProperties,
                         final CollectorJobScheduler collectorJobScheduler,
                         final BackgroundTaskExecutor threadPool,
                         final CollectorAlertHandler collectorAlertHandler,
                         final CommonDataQueue commonDataQueue,
                         final VirtualThreadProperties virtualThreadProperties) {
+        this(schedulerProperties, collectorJobScheduler, threadPool, collectorAlertHandler, commonDataQueue,
+                virtualThreadProperties, new CollectorRuntimeStatusRegistry());
+    }
+
+    @Autowired
+    public ManageServer(final SchedulerProperties schedulerProperties,
+                        final CollectorJobScheduler collectorJobScheduler,
+                        final BackgroundTaskExecutor threadPool,
+                        final CollectorAlertHandler collectorAlertHandler,
+                        final CommonDataQueue commonDataQueue,
+                        final VirtualThreadProperties virtualThreadProperties,
+                        final CollectorRuntimeStatusRegistry runtimeStatusRegistry) {
         this.collectorJobScheduler = collectorJobScheduler;
         this.collectorJobScheduler.setManageServer(this);
         this.collectorAlertHandler = collectorAlertHandler;
         this.commonDataQueue = commonDataQueue;
+        this.runtimeStatusRegistry = runtimeStatusRegistry;
         this.channelCheckExecutor = createChannelCheckExecutor(virtualThreadProperties);
         this.init(schedulerProperties, threadPool);
     }
@@ -144,10 +159,15 @@ public class ManageServer implements CommandLineRunner {
         return collectorJobScheduler;
     }
 
+    public CollectorRuntimeStatusRegistry getRuntimeStatusRegistry() {
+        return runtimeStatusRegistry;
+    }
+
     public Channel getChannel(final String identity) {
         Channel channel = this.clientChannelTable.get(identity);
         if (channel == null || !channel.isActive()) {
             this.clientChannelTable.remove(identity);
+            this.runtimeStatusRegistry.remove(identity);
             log.error("client {} offline now", identity);
         }
         return channel;
@@ -163,6 +183,7 @@ public class ManageServer implements CommandLineRunner {
     }
 
     public void closeChannel(final String identity) {
+        this.runtimeStatusRegistry.remove(identity);
         Channel channel = this.getChannel(identity);
         if (channel != null) {
             this.collectorJobScheduler.collectorGoOffline(identity);
@@ -231,6 +252,7 @@ public class ManageServer implements CommandLineRunner {
             }
             if (identity != null) {
                 ManageServer.this.clientChannelTable.remove(identity);
+                ManageServer.this.runtimeStatusRegistry.remove(identity);
                 ManageServer.this.collectorJobScheduler.collectorGoOffline(identity);
                 channel.close();
                 log.info("handle idle event triggered. the client {} is going offline.", identity);
@@ -293,6 +315,7 @@ public class ManageServer implements CommandLineRunner {
                 if (!channel.isActive()) {
                     channel.closeFuture();
                     this.clientChannelTable.remove(collector);
+                    this.runtimeStatusRegistry.remove(collector);
                     this.collectorJobScheduler.collectorGoOffline(collector);
                     this.collectorAlertHandler.offline(collector);
                 }

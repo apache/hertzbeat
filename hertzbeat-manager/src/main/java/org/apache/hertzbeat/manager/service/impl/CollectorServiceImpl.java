@@ -35,6 +35,7 @@ import org.apache.hertzbeat.manager.pojo.dto.CollectorSummary;
 import org.apache.hertzbeat.manager.scheduler.AssignJobs;
 import org.apache.hertzbeat.manager.scheduler.ConsistentHash;
 import org.apache.hertzbeat.manager.scheduler.netty.ManageServer;
+import org.apache.hertzbeat.manager.scheduler.runtime.CollectorRuntimeStatusRegistry;
 import org.apache.hertzbeat.manager.service.CollectorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -63,6 +64,9 @@ public class CollectorServiceImpl implements CollectorService {
     @Autowired(required = false)
     private ManageServer manageServer;
 
+    @Autowired
+    private CollectorRuntimeStatusRegistry runtimeStatusRegistry;
+
     @Override
     @Transactional(readOnly = true)
     public Page<CollectorSummary> getCollectors(String name, int pageIndex, Integer pageSize) {
@@ -89,6 +93,9 @@ public class CollectorServiceImpl implements CollectorService {
                 summaryBuilder.pinMonitorNum(assignJobs.getPinnedJobs().size());
                 summaryBuilder.dispatchMonitorNum(assignJobs.getJobs().size());
             }
+            runtimeStatusRegistry.current(collector.getName()).ifPresent(reported -> summaryBuilder
+                    .runtimeStatus(reported.status())
+                    .runtimeStatusReportedAt(reported.receivedAt()));
             collectorSummaryList.add(summaryBuilder.build());
         }
         return new PageImpl<>(collectorSummaryList, pageRequest, collectors.getTotalElements());
