@@ -146,35 +146,8 @@ public class OtelRuntimeConfigRenderer {
         ));
         appendPrometheusReceivers(yaml, sources.prometheusTargets());
         appendFileLogReceivers(yaml, sources.fileLogSources());
+        OtelRuntimeGovernance.appendProcessors(yaml, desiredConfig);
         yaml.append("""
-                processors:
-                  memory_limiter:
-                    check_interval: 1s
-                    limit_mib: 256
-                    spike_limit_mib: 64
-                  resource:
-                    attributes:
-                      - key: service.name
-                        value: hertzbeat-otel-runtime
-                        action: insert
-                      - key: hertzbeat.collector.id
-                        value: ${env:HERTZBEAT_COLLECTOR_ID}
-                        action: upsert
-                      - key: hertzbeat.runtime
-                        value: otel
-                        action: upsert
-                      - key: hertzbeat.workspace_id
-                        value: ${env:HERTZBEAT_WORKSPACE_ID}
-                        action: upsert
-                      - key: hertzbeat.config.schema
-                        value: "%d"
-                        action: upsert
-                      - key: hertzbeat.config.revision
-                        value: "%d"
-                        action: upsert
-                  batch:
-                    send_batch_size: 1024
-                    timeout: 5s
                 exporters:
                   otlphttp:
                     endpoint: ${env:HERTZBEAT_OTLP_HTTP_ENDPOINT}
@@ -196,30 +169,30 @@ public class OtelRuntimeConfigRenderer {
                     endpoint: 127.0.0.1:%d
                   file_storage:
                     directory: ${env:HERTZBEAT_OTEL_FILE_STORAGE_DIR}
-                """.formatted(
-                desiredConfig.schemaVersion(),
-                desiredConfig.revision(),
-                properties.getHealthPort()
-        ));
+                """.formatted(properties.getHealthPort()));
+        String commonProcessors = OtelRuntimeGovernance.pipelineProcessors(desiredConfig, false);
         yaml.append("""
                 service:
                   extensions: [health_check, file_storage]
                   pipelines:
                     metrics:
                       receivers: [%s]
-                      processors: [memory_limiter, resource, batch]
+                      processors: [%s]
                       exporters: [otlphttp]
                     logs:
                       receivers: [%s]
-                      processors: [memory_limiter, resource, batch]
+                      processors: [%s]
                       exporters: [otlphttp]
                     traces:
                       receivers: [otlp]
-                      processors: [memory_limiter, resource, batch]
+                      processors: [%s]
                       exporters: [otlphttp]
                 """.formatted(
                 metricsReceivers(sources.prometheusTargets()),
-                logReceivers(sources.fileLogSources())
+                commonProcessors,
+                logReceivers(sources.fileLogSources()),
+                commonProcessors,
+                OtelRuntimeGovernance.pipelineProcessors(desiredConfig, true)
         ));
         return yaml.toString();
     }

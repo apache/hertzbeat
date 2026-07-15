@@ -78,6 +78,25 @@ class CollectorRuntimeConfigServiceTest {
         assertEquals(3, service.current("edge-shared").orElseThrow().revision());
     }
 
+    @Test
+    void readsLegacySchemaButOnlyPersistsCurrentSchema() {
+        CollectorDao collectorDao = mock(CollectorDao.class);
+        ManagedOtelRuntimeConfig schemaOne = new ManagedOtelRuntimeConfig(
+                1, 2, true, Duration.ofSeconds(30));
+        String schemaOneJson = JsonUtil.toJson(schemaOne);
+        String legacyJson = schemaOneJson.substring(0, schemaOneJson.indexOf(",\"environment\"")) + "}";
+        Collector collector = Collector.builder()
+                .name("edge-upgrade")
+                .runtimeConfig(legacyJson)
+                .build();
+        when(collectorDao.findCollectorByName("edge-upgrade")).thenReturn(Optional.of(collector));
+        CollectorRuntimeConfigService service = new CollectorRuntimeConfigService(collectorDao);
+
+        assertEquals(1, service.current("edge-upgrade").orElseThrow().schemaVersion());
+        assertThrows(CommonException.class, () -> service.update(
+                "edge-upgrade", new ManagedOtelRuntimeConfig(1, 3, true, Duration.ofSeconds(30))));
+    }
+
     private ManagedOtelRuntimeConfig config(long revision) {
         return new ManagedOtelRuntimeConfig(
                 ManagedOtelRuntimeConfig.CURRENT_SCHEMA_VERSION, revision, true, Duration.ofSeconds(30));

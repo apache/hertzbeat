@@ -19,6 +19,8 @@ package org.apache.hertzbeat.common.entity.dto;
 
 import java.net.URI;
 import java.time.Duration;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -32,22 +34,34 @@ import java.util.regex.Pattern;
  */
 public record ManagedOtelRuntimeConfig(int schemaVersion, long revision, boolean hostMetricsEnabled,
                                        Duration hostMetricsInterval, List<PrometheusTarget> prometheusTargets,
-                                       List<FileLogSource> fileLogSources) {
+                                       List<FileLogSource> fileLogSources, String environment,
+                                       Set<ResourceDetector> resourceDetectors,
+                                       Set<TelemetryFilterPreset> telemetryFilterPresets) {
 
-    public static final int CURRENT_SCHEMA_VERSION = 1;
+    public static final int CURRENT_SCHEMA_VERSION = 2;
+    private static final int LEGACY_SCHEMA_VERSION = 1;
     private static final int MAXIMUM_PROMETHEUS_TARGETS = 32;
     private static final int MAXIMUM_FILE_LOG_SOURCES = 16;
     private static final Duration MINIMUM_HOST_METRICS_INTERVAL = Duration.ofSeconds(10);
     private static final Duration MAXIMUM_HOST_METRICS_INTERVAL = Duration.ofMinutes(5);
     private static final Pattern SOURCE_NAME = Pattern.compile("[A-Za-z0-9][A-Za-z0-9._-]{0,63}");
+    private static final Set<ResourceDetector> DEFAULT_RESOURCE_DETECTORS =
+            Collections.unmodifiableSet(EnumSet.of(ResourceDetector.ENV, ResourceDetector.SYSTEM));
 
     public ManagedOtelRuntimeConfig(int schemaVersion, long revision, boolean hostMetricsEnabled,
                                     Duration hostMetricsInterval) {
         this(schemaVersion, revision, hostMetricsEnabled, hostMetricsInterval, List.of(), List.of());
     }
 
+    public ManagedOtelRuntimeConfig(int schemaVersion, long revision, boolean hostMetricsEnabled,
+                                    Duration hostMetricsInterval, List<PrometheusTarget> prometheusTargets,
+                                    List<FileLogSource> fileLogSources) {
+        this(schemaVersion, revision, hostMetricsEnabled, hostMetricsInterval, prometheusTargets, fileLogSources,
+                "", null, null);
+    }
+
     public ManagedOtelRuntimeConfig {
-        if (schemaVersion != CURRENT_SCHEMA_VERSION) {
+        if (schemaVersion < LEGACY_SCHEMA_VERSION || schemaVersion > CURRENT_SCHEMA_VERSION) {
             throw new IllegalArgumentException("Unsupported managed runtime config schema: " + schemaVersion);
         }
         if (revision < 1) {
@@ -63,6 +77,25 @@ public record ManagedOtelRuntimeConfig(int schemaVersion, long revision, boolean
         fileLogSources = immutableSources(fileLogSources, MAXIMUM_FILE_LOG_SOURCES, "file log source");
         requireUniqueNames(prometheusTargets.stream().map(PrometheusTarget::name).toList(), "Prometheus target");
         requireUniqueNames(fileLogSources.stream().map(FileLogSource::name).toList(), "file log source");
+        boolean governanceConfigured = environment != null && !environment.isBlank()
+                || resourceDetectors != null
+                || telemetryFilterPresets != null;
+        if (schemaVersion == LEGACY_SCHEMA_VERSION && governanceConfigured) {
+            throw new IllegalArgumentException("Resource governance requires managed runtime config schema 2");
+        }
+        environment = environment == null ? "" : environment.trim();
+        if (!environment.isEmpty()) {
+            requireSourceName(environment, "Environment");
+        }
+        resourceDetectors = immutableEnumSet(resourceDetectors, ResourceDetector.class, DEFAULT_RESOURCE_DETECTORS);
+        telemetryFilterPresets = immutableEnumSet(
+                telemetryFilterPresets, TelemetryFilterPreset.class, Set.of());
+    }
+
+    private static <E extends Enum<E>> Set<E> immutableEnumSet(Set<E> values, Class<E> type, Set<E> defaults) {
+        Set<E> source = values == null ? defaults : values;
+        EnumSet<E> copy = source.isEmpty() ? EnumSet.noneOf(type) : EnumSet.copyOf(source);
+        return Collections.unmodifiableSet(copy);
     }
 
     private static <T> List<T> immutableSources(List<T> sources, int maximum, String label) {
@@ -121,5 +154,37 @@ public record ManagedOtelRuntimeConfig(int schemaVersion, long revision, boolean
             name = requireSourceName(name, "File log source name");
             pathProfile = requireSourceName(pathProfile, "File log path profile");
         }
+    }
+
+    /**
+     * Supported upstream resource detectors. The enum prevents remote arbitrary detector configuration.
+     */
+    public enum ResourceDetector {
+        ENV("env"),
+        SYSTEM("system"),
+        DOCKER("docker"),
+        EC2("ec2"),
+        ECS("ecs"),
+        EKS("eks"),
+        GCP("gcp"),
+        AZURE("azure"),
+        AKS("aks");
+
+        private final String configName;
+
+        ResourceDetector(String configName) {
+            this.configName = configName;
+        }
+
+        public String configName() {
+            return configName;
+        }
+    }
+
+    /**
+     * Product-owned filtering presets. Raw OTTL is intentionally not part of the public contract.
+     */
+    public enum TelemetryFilterPreset {
+        HEALTH_CHECK_TRACES
     }
 }

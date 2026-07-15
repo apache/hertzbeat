@@ -6,8 +6,8 @@ not register a separate Collector identity.
 
 The managed runtime contains host metrics, explicitly managed Prometheus
 targets, locally approved file-log profiles with persistent offsets, memory
-protection, resource enrichment, batching, direct OTLP/HTTP export, and a
-loopback health endpoint.
+protection, resource detection, fixed attribute governance, batching, direct
+OTLP/HTTP export, and a loopback health endpoint.
 The Java process owns configuration, validation, lifecycle, recovery, and the
 single Collector identity. The Go process exports telemetry directly to the
 HertzBeat Server and never proxies data through Java.
@@ -25,6 +25,15 @@ All signals share the same bounded processors and direct exporter. Applications
 still need an OpenTelemetry SDK or agent to create traces. Bundled automatic
 instrumentation is a separate capability and is not represented as telemetry
 created by the Collector itself.
+
+Resource precedence is fixed and shared by all three signals. Incoming SDK or
+receiver attributes are preserved, enabled detectors fill missing values, and
+HertzBeat ownership fields are then applied authoritatively. Authentication
+headers, tokens, cookies, and API keys are removed from resource and signal
+attributes before batching. The default detectors are only `env` and `system`;
+Docker and cloud metadata detectors run only when the typed desired
+configuration explicitly enables them. Filtering is limited to product-owned
+presets such as health-check traces, and the server cannot send raw OTTL.
 
 The direct exporter uses a bounded 2,048-request persistent queue with four
 consumers. Failed deliveries back off without an elapsed-time cutoff, and queued
@@ -89,6 +98,12 @@ collector:
     file-log-sources:
       - name: payments
         path-profile: payments-logs
+    environment: staging
+    resource-detectors:
+      - ENV
+      - SYSTEM
+    telemetry-filter-presets:
+      - HEALTH_CHECK_TRACES
 ```
 
 ## Current limits
@@ -96,8 +111,8 @@ collector:
 - Prometheus supports bounded static HTTP(S) targets. File logs use local path
   profiles, start at the end by default, and reject traversal, recursive globs,
   denied paths, and symlink escapes before runtime validation.
-- File offsets use `file_storage`; downstream exporter persistence is not yet
-  enabled and belongs to the release-hardening milestone.
+- File offsets and the bounded downstream exporter queue use the same
+  owner-only `file_storage` directory.
 - The local control surface is the versioned loopback health contract. Remote
   configuration and OpAMP are not included.
 - The manual `Hybrid Collector Release Gate` workflow builds the Java Native

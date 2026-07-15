@@ -43,6 +43,12 @@ processors:
     check_interval: 1s
     limit_mib: 256
     spike_limit_mib: 64
+  resource_detection:
+    detectors: [env, system]
+    timeout: 2s
+    override: false
+    system:
+      hostname_sources: [os]
   resource:
     attributes:
       - key: service.name
@@ -57,6 +63,20 @@ processors:
       - key: hertzbeat.workspace_id
         value: ${env:HERTZBEAT_WORKSPACE_ID}
         action: upsert
+      - pattern: '(?i)^(authorization|proxy-authorization|cookie|set-cookie|x-api-key|api[-_]?key|access[-_]?token|refresh[-_]?token|http\.request\.header\.(authorization|cookie)|http\.response\.header\.set_cookie)$'
+        action: delete
+  attributes/sanitize:
+    actions:
+      - pattern: '(?i)^(authorization|proxy-authorization|cookie|set-cookie|x-api-key|api[-_]?key|access[-_]?token|refresh[-_]?token|http\.request\.header\.(authorization|cookie)|http\.response\.header\.set_cookie)$'
+        action: delete
+  filter/health_checks:
+    error_mode: ignore
+    traces:
+      span:
+        - 'attributes["http.route"] == "/health"'
+        - 'attributes["http.route"] == "/healthz"'
+        - 'attributes["http.route"] == "/readyz"'
+        - 'attributes["http.route"] == "/livez"'
   batch:
     send_batch_size: 1024
     timeout: 5s
@@ -89,13 +109,13 @@ service:
   pipelines:
     metrics:
       receivers: [hostmetrics, prometheus/validation, otlp]
-      processors: [memory_limiter, resource, batch]
+      processors: [memory_limiter, resource_detection, resource, attributes/sanitize, batch]
       exporters: [otlphttp]
     logs:
       receivers: [filelog/validation, otlp]
-      processors: [memory_limiter, resource, batch]
+      processors: [memory_limiter, resource_detection, resource, attributes/sanitize, batch]
       exporters: [otlphttp]
     traces:
       receivers: [otlp]
-      processors: [memory_limiter, resource, batch]
+      processors: [memory_limiter, resource_detection, resource, attributes/sanitize, filter/health_checks, batch]
       exporters: [otlphttp]

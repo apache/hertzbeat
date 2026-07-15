@@ -39,6 +39,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -191,6 +192,50 @@ class OtelRuntimeSupervisorIntegrationTest {
     }
 
     @Test
+    void governsResourceIdentityAndSensitiveAttributesAcrossThreeSignals() throws Exception {
+        String runtimeBinary = System.getenv(RUNTIME_BINARY_ENV);
+        Assumptions.assumeTrue(runtimeBinary != null && !runtimeBinary.isBlank(),
+                () -> RUNTIME_BINARY_ENV + " is required for the real runtime proof");
+        OtlpCapture capture = new OtlpCapture();
+        capture.start();
+        OtelRuntimeProperties properties = properties(runtimeBinary, capture.port());
+        properties.setEnvironment("staging");
+        properties.setTelemetryFilterPresets(Set.of(
+                ManagedOtelRuntimeConfig.TelemetryFilterPreset.HEALTH_CHECK_TRACES));
+        OtelRuntimeSupervisor supervisor = new OtelRuntimeSupervisor(
+                properties,
+                new OtelRuntimeBinaryResolver(properties),
+                new OtelRuntimeConfigTransaction(new OtelRuntimeConfigRenderer()),
+                new OtelRuntimeProcessLauncher(),
+                new OtelRuntimeHealthClient()
+        );
+        try {
+            supervisor.start();
+            assertEquals(OtelRuntimeState.RUNNING, supervisor.snapshot().state());
+            sendGovernedSignals(properties.getOtlpHttpEndpoint());
+
+            await(() -> capture.containsMetric("hertzbeat_governed_metric"), Duration.ofSeconds(15));
+            await(() -> capture.containsLog("hertzbeat governed log"), Duration.ofSeconds(15));
+            await(() -> capture.containsTrace("hertzbeat governed span"), Duration.ofSeconds(15));
+            Thread.sleep(Duration.ofSeconds(6));
+
+            assertTrue(capture.allSignalsContain("collector-phase0-integration"));
+            assertTrue(capture.allSignalsContain("deployment.environment.name"));
+            assertTrue(capture.allSignalsContain("staging"));
+            assertTrue(capture.allSignalsContain("host.name"));
+            assertTrue(capture.allSignalsContain("os.type"));
+            assertTrue(capture.allSignalsContain("process.pid"));
+            assertTrue(capture.allSignalsContain("container.id"));
+            assertFalse(capture.containsAnySignal("spoofed-collector"));
+            assertFalse(capture.containsAnySignal("forbidden-secret"));
+            assertFalse(capture.containsTrace("filtered health span"));
+        } finally {
+            supervisor.close();
+            capture.close();
+        }
+    }
+
+    @Test
     void persistsThreeSignalsAcrossBackendOutageAndRuntimeRestart() throws Exception {
         String runtimeBinary = System.getenv(RUNTIME_BINARY_ENV);
         Assumptions.assumeTrue(runtimeBinary != null && !runtimeBinary.isBlank(),
@@ -285,6 +330,57 @@ class OtelRuntimeSupervisorIntegrationTest {
                 """.formatted(traceId, spanId, scenario));
     }
 
+    private static void sendGovernedSignals(String endpoint) throws Exception {
+        String resource = """
+                "resource":{"attributes":[
+                  {"key":"service.name","value":{"stringValue":"payments"}},
+                  {"key":"process.pid","value":{"intValue":"42"}},
+                  {"key":"container.id","value":{"stringValue":"container-42"}},
+                  {"key":"hertzbeat.collector.id","value":{"stringValue":"spoofed-collector"}},
+                  {"key":"authorization","value":{"stringValue":"forbidden-secret"}}
+                ]}
+                """;
+        sendOtlpJson(endpoint, "metrics", """
+                {"resourceMetrics":[{%s,"scopeMetrics":[{"metrics":[{
+                  "name":"hertzbeat_governed_metric",
+                  "gauge":{"dataPoints":[{"asDouble":7.0,"attributes":[
+                    {"key":"api_key","value":{"stringValue":"forbidden-secret"}}
+                  ]}]}
+                }]}]}]}
+                """.formatted(resource));
+        sendOtlpJson(endpoint, "logs", """
+                {"resourceLogs":[{%s,"scopeLogs":[{"logRecords":[{
+                  "severityText":"INFO",
+                  "body":{"stringValue":"hertzbeat governed log"},
+                  "attributes":[
+                    {"key":"cookie","value":{"stringValue":"forbidden-secret"}}
+                  ]
+                }]}]}]}
+                """.formatted(resource));
+        sendOtlpJson(endpoint, "traces", """
+                {"resourceSpans":[{%s,"scopeSpans":[{"spans":[{
+                  "traceId":"200102030405060708090a0b0c0d0e0f",
+                  "spanId":"2001020304050607",
+                  "name":"hertzbeat governed span",
+                  "startTimeUnixNano":"1783757000000000000",
+                  "endTimeUnixNano":"1783757000010000000",
+                  "attributes":[
+                    {"key":"http.route","value":{"stringValue":"/checkout"}},
+                    {"key":"access_token","value":{"stringValue":"forbidden-secret"}}
+                  ]
+                },{
+                  "traceId":"210102030405060708090a0b0c0d0e0f",
+                  "spanId":"2101020304050607",
+                  "name":"filtered health span",
+                  "startTimeUnixNano":"1783757000000000000",
+                  "endTimeUnixNano":"1783757000010000000",
+                  "attributes":[
+                    {"key":"http.route","value":{"stringValue":"/health"}}
+                  ]
+                }]}]}]}
+                """.formatted(resource));
+    }
+
     private static int availablePort() throws IOException {
         try (ServerSocket socket = new ServerSocket(0)) {
             return socket.getLocalPort();
@@ -369,6 +465,18 @@ class OtelRuntimeSupervisorIntegrationTest {
 
         boolean containsTrace(String spanName) {
             return tracePayloads.stream().anyMatch(value -> value.contains(spanName));
+        }
+
+        boolean allSignalsContain(String value) {
+            return metricPayloads.stream().anyMatch(payloadValue -> payloadValue.contains(value))
+                    && logPayloads.stream().anyMatch(payloadValue -> payloadValue.contains(value))
+                    && tracePayloads.stream().anyMatch(payloadValue -> payloadValue.contains(value));
+        }
+
+        boolean containsAnySignal(String value) {
+            return metricPayloads.stream().anyMatch(payloadValue -> payloadValue.contains(value))
+                    || logPayloads.stream().anyMatch(payloadValue -> payloadValue.contains(value))
+                    || tracePayloads.stream().anyMatch(payloadValue -> payloadValue.contains(value));
         }
 
         int logOccurrences(String value) {

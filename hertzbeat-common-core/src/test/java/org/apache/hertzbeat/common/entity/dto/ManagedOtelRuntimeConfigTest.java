@@ -23,23 +23,30 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.net.URI;
 import java.time.Duration;
 import java.util.List;
+import java.util.Set;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.Test;
 
 class ManagedOtelRuntimeConfigTest {
 
     @Test
     void acceptsVersionedHostMetricsIntent() {
-        ManagedOtelRuntimeConfig config = new ManagedOtelRuntimeConfig(1, 7, true, Duration.ofSeconds(30));
+        ManagedOtelRuntimeConfig config = new ManagedOtelRuntimeConfig(
+                ManagedOtelRuntimeConfig.CURRENT_SCHEMA_VERSION, 7, true, Duration.ofSeconds(30));
 
-        assertEquals(1, config.schemaVersion());
+        assertEquals(2, config.schemaVersion());
         assertEquals(7, config.revision());
         assertEquals(Duration.ofSeconds(30), config.hostMetricsInterval());
+        assertEquals(Set.of(
+                ManagedOtelRuntimeConfig.ResourceDetector.ENV,
+                ManagedOtelRuntimeConfig.ResourceDetector.SYSTEM), config.resourceDetectors());
+        assertEquals(Set.of(), config.telemetryFilterPresets());
     }
 
     @Test
     void rejectsUnsupportedSchemaAndUnsafeIntervals() {
         assertThrows(IllegalArgumentException.class,
-                () -> new ManagedOtelRuntimeConfig(2, 1, true, Duration.ofSeconds(30)));
+                () -> new ManagedOtelRuntimeConfig(3, 1, true, Duration.ofSeconds(30)));
         assertThrows(IllegalArgumentException.class,
                 () -> new ManagedOtelRuntimeConfig(1, 1, true, Duration.ofSeconds(1)));
     }
@@ -47,7 +54,7 @@ class ManagedOtelRuntimeConfigTest {
     @Test
     void acceptsBoundedPrometheusAndFileLogSources() {
         ManagedOtelRuntimeConfig config = new ManagedOtelRuntimeConfig(
-                1,
+                ManagedOtelRuntimeConfig.CURRENT_SCHEMA_VERSION,
                 8,
                 true,
                 Duration.ofSeconds(30),
@@ -71,5 +78,77 @@ class ManagedOtelRuntimeConfigTest {
         assertThrows(IllegalArgumentException.class,
                 () -> new ManagedOtelRuntimeConfig(
                         1, 9, true, Duration.ofSeconds(30), List.of(duplicate, duplicate), List.of()));
+    }
+
+    @Test
+    void acceptsOnlyTypedResourceGovernanceIntent() {
+        ManagedOtelRuntimeConfig config = new ManagedOtelRuntimeConfig(
+                ManagedOtelRuntimeConfig.CURRENT_SCHEMA_VERSION,
+                10,
+                true,
+                Duration.ofSeconds(30),
+                List.of(),
+                List.of(),
+                "staging",
+                Set.of(
+                        ManagedOtelRuntimeConfig.ResourceDetector.SYSTEM,
+                        ManagedOtelRuntimeConfig.ResourceDetector.DOCKER,
+                        ManagedOtelRuntimeConfig.ResourceDetector.EC2),
+                Set.of(ManagedOtelRuntimeConfig.TelemetryFilterPreset.HEALTH_CHECK_TRACES)
+        );
+
+        assertEquals("staging", config.environment());
+        assertEquals(Set.of(
+                ManagedOtelRuntimeConfig.ResourceDetector.SYSTEM,
+                ManagedOtelRuntimeConfig.ResourceDetector.DOCKER,
+                ManagedOtelRuntimeConfig.ResourceDetector.EC2), config.resourceDetectors());
+        assertEquals(Set.of(ManagedOtelRuntimeConfig.TelemetryFilterPreset.HEALTH_CHECK_TRACES),
+                config.telemetryFilterPresets());
+    }
+
+    @Test
+    void rejectsUnsafeEnvironmentNames() {
+        assertThrows(IllegalArgumentException.class, () -> new ManagedOtelRuntimeConfig(
+                ManagedOtelRuntimeConfig.CURRENT_SCHEMA_VERSION,
+                11,
+                true,
+                Duration.ofSeconds(30),
+                List.of(),
+                List.of(),
+                "production\nprocessors: injected",
+                Set.of(),
+                Set.of()
+        ));
+    }
+
+    @Test
+    void rejectsGovernanceFieldsOnLegacySchema() {
+        assertThrows(IllegalArgumentException.class, () -> new ManagedOtelRuntimeConfig(
+                1,
+                13,
+                true,
+                Duration.ofSeconds(30),
+                List.of(),
+                List.of(),
+                "staging",
+                Set.of(ManagedOtelRuntimeConfig.ResourceDetector.EC2),
+                Set.of(ManagedOtelRuntimeConfig.TelemetryFilterPreset.HEALTH_CHECK_TRACES)
+        ));
+    }
+
+    @Test
+    void readsConfigurationStoredBeforeResourceGovernanceFieldsWereAdded() {
+        ManagedOtelRuntimeConfig original = new ManagedOtelRuntimeConfig(
+                1, 12, true, Duration.ofSeconds(30), List.of(), List.of());
+        String currentJson = JsonUtil.toJson(original);
+        String legacyJson = currentJson.substring(0, currentJson.indexOf(",\"environment\"")) + "}";
+
+        ManagedOtelRuntimeConfig restored = JsonUtil.fromJson(legacyJson, ManagedOtelRuntimeConfig.class);
+
+        assertEquals(original.revision(), restored.revision());
+        assertEquals(Set.of(
+                ManagedOtelRuntimeConfig.ResourceDetector.ENV,
+                ManagedOtelRuntimeConfig.ResourceDetector.SYSTEM), restored.resourceDetectors());
+        assertEquals(Set.of(), restored.telemetryFilterPresets());
     }
 }

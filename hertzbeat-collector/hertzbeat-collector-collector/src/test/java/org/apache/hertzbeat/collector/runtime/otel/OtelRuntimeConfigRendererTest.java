@@ -27,6 +27,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -43,7 +44,7 @@ class OtelRuntimeConfigRendererTest {
         properties.setConfig(tempDir.resolve("conf/runtime.yaml"));
         properties.setToken("secret-must-stay-in-environment");
         properties.setHealthPort(13247);
-        properties.setConfigSchema(1);
+        properties.setConfigSchema(ManagedOtelRuntimeConfig.CURRENT_SCHEMA_VERSION);
         properties.setConfigRevision(42);
         properties.setHostMetricsInterval(Duration.ofSeconds(30));
 
@@ -57,7 +58,15 @@ class OtelRuntimeConfigRendererTest {
         assertTrue(yaml.contains("max_recv_msg_size_mib: 4"));
         assertTrue(yaml.contains("max_request_body_size: 4194304"));
         assertTrue(yaml.contains("collection_interval: 30s"));
-        assertTrue(yaml.contains("processors: [memory_limiter, resource, batch]"));
+        assertTrue(yaml.contains("resource_detection:\n    detectors: [env, system]"));
+        assertTrue(yaml.contains("timeout: 2s"));
+        assertTrue(yaml.contains("override: false"));
+        assertTrue(yaml.contains("hostname_sources: [os]"));
+        assertFalse(yaml.contains("detectors: [docker"));
+        assertFalse(yaml.contains("filter/health_checks:"));
+        assertTrue(yaml.contains("attributes/sanitize:"));
+        assertTrue(yaml.contains("action: delete"));
+        assertTrue(yaml.contains("processors: [memory_limiter, resource_detection, resource, attributes/sanitize, batch]"));
         assertTrue(yaml.contains("endpoint: 127.0.0.1:13247"));
         assertTrue(yaml.contains("hertzbeat.config.schema"));
         assertTrue(yaml.contains("value: \"42\""));
@@ -76,6 +85,40 @@ class OtelRuntimeConfigRendererTest {
         assertTrue(yaml.contains("extensions: [health_check, file_storage]"));
         assertFalse(yaml.contains(properties.getToken()));
         assertTrue(Files.isDirectory(tempDir.resolve("data/otel-runtime")));
+    }
+
+    @Test
+    void rendersExplicitEnvironmentCloudDetectionAndFixedNoisePreset() throws Exception {
+        OtelRuntimeProperties properties = new OtelRuntimeProperties();
+        properties.setHome(tempDir);
+        properties.setConfig(tempDir.resolve("conf/runtime.yaml"));
+        properties.useDesiredConfig(new ManagedOtelRuntimeConfig(
+                ManagedOtelRuntimeConfig.CURRENT_SCHEMA_VERSION,
+                43,
+                true,
+                Duration.ofSeconds(30),
+                List.of(),
+                List.of(),
+                "staging",
+                Set.of(
+                        ManagedOtelRuntimeConfig.ResourceDetector.SYSTEM,
+                        ManagedOtelRuntimeConfig.ResourceDetector.DOCKER,
+                        ManagedOtelRuntimeConfig.ResourceDetector.EC2),
+                Set.of(ManagedOtelRuntimeConfig.TelemetryFilterPreset.HEALTH_CHECK_TRACES)
+        ));
+
+        String yaml = Files.readString(new OtelRuntimeConfigRenderer().render(properties));
+
+        assertTrue(yaml.contains("detectors: [system, docker, ec2]"));
+        assertTrue(yaml.contains("key: deployment.environment.name\n        value: 'staging'"));
+        assertTrue(yaml.contains("filter/health_checks:"));
+        assertTrue(yaml.contains("error_mode: ignore"));
+        assertTrue(yaml.contains("attributes[\"http.route\"] == \"/health\""));
+        String filteredProcessors = "memory_limiter, resource_detection, resource, attributes/sanitize, "
+                + "filter/health_checks, batch";
+        assertTrue(yaml.contains("traces:\n      receivers: [otlp]\n      processors: [" + filteredProcessors + "]"));
+        assertFalse(yaml.contains("metrics:\n      receivers: [hostmetrics, otlp]\n      processors: ["
+                + filteredProcessors + "]"));
     }
 
     @Test

@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeConfig;
@@ -65,6 +66,15 @@ public class OtelRuntimeProperties {
 
     private List<ManagedOtelRuntimeConfig.FileLogSource> fileLogSources = List.of();
 
+    private String environment = "";
+
+    private Set<ManagedOtelRuntimeConfig.ResourceDetector> resourceDetectors = Set.of(
+            ManagedOtelRuntimeConfig.ResourceDetector.ENV,
+            ManagedOtelRuntimeConfig.ResourceDetector.SYSTEM
+    );
+
+    private Set<ManagedOtelRuntimeConfig.TelemetryFilterPreset> telemetryFilterPresets = Set.of();
+
     private List<Path> fileLogAllowRoots = List.of(Path.of("logs"));
 
     private List<Path> fileLogDenyPaths = List.of();
@@ -107,7 +117,10 @@ public class OtelRuntimeProperties {
                 hostMetricsEnabled,
                 hostMetricsInterval,
                 prometheusTargets,
-                fileLogSources
+                fileLogSources,
+                environment,
+                resourceDetectors,
+                telemetryFilterPresets
         );
     }
 

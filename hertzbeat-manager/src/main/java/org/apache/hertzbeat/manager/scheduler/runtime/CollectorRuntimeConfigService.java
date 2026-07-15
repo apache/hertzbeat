@@ -50,6 +50,9 @@ public class CollectorRuntimeConfigService {
 
     @Transactional(rollbackFor = Exception.class)
     public ManagedOtelRuntimeConfig update(String collectorName, ManagedOtelRuntimeConfig config) {
+        if (config.schemaVersion() != ManagedOtelRuntimeConfig.CURRENT_SCHEMA_VERSION) {
+            throw new CommonException("Only the current runtime configuration schema can be persisted");
+        }
         Collector collector = collectorDao.findCollectorByName(collectorName)
                 .orElseThrow(() -> new CommonException("Collector not found: " + collectorName));
         ManagedOtelRuntimeConfig current = read(collector);
