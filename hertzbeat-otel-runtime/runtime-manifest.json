@@ -4,6 +4,6 @@
   "otelCoreVersion": "0.156.0",
   "otelContribVersion": "0.156.0",
   "controlProtocol": "loopback-health-v1",
-  "desiredConfigSchema": 2,
+  "desiredConfigSchema": 3,
   "componentInventorySha256": "7763b2ea15caa42ad0dd60eb121c31ecf385df9d068ba70af5abb67535d795c5"
 }

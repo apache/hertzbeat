@@ -39,6 +39,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeConfig;
+import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -264,12 +265,15 @@ class OtelRuntimeSupervisorTest {
         supervisor = new OtelRuntimeSupervisor(properties, resolver, configTransaction, launcher, healthClient);
         supervisor.start();
 
-        supervisor.apply(config(2));
+        supervisor.apply(config(2, Duration.ofSeconds(60)));
 
         await(() -> supervisor.snapshot().lastError().contains("validation"));
         assertEquals(OtelRuntimeState.RUNNING, supervisor.snapshot().state());
         assertEquals(4201, supervisor.snapshot().pid());
         assertEquals(1, supervisor.activeRevision());
+        assertEquals(1, supervisor.sourceStatuses().stream()
+                .filter(status -> status.state() == ManagedOtelRuntimeStatus.SourceState.REJECTED)
+                .count());
         verify(activeRuntime, never()).destroy();
         verify(configTransaction).discard(revisionTwo);
     }
@@ -289,16 +293,22 @@ class OtelRuntimeSupervisorTest {
         supervisor = new OtelRuntimeSupervisor(properties, resolver, configTransaction, launcher, healthClient);
         supervisor.start();
 
-        supervisor.apply(config(2));
+        supervisor.apply(config(2, Duration.ofSeconds(60)));
 
         await(() -> supervisor.activeRevision() == 2 && supervisor.snapshot().pid() == 4202);
         verify(activeRuntime).destroy();
         assertEquals(OtelRuntimeState.RUNNING, supervisor.snapshot().state());
+        assertEquals(1, supervisor.sourceStatuses().size());
+        assertEquals(2, supervisor.sourceStatuses().getFirst().revision());
     }
 
     private ManagedOtelRuntimeConfig config(long revision) {
+        return config(revision, Duration.ofSeconds(30));
+    }
+
+    private ManagedOtelRuntimeConfig config(long revision, Duration interval) {
         return new ManagedOtelRuntimeConfig(
-                ManagedOtelRuntimeConfig.CURRENT_SCHEMA_VERSION, revision, true, Duration.ofSeconds(30));
+                ManagedOtelRuntimeConfig.CURRENT_SCHEMA_VERSION, revision, true, interval);
     }
 
     private OtelRuntimeConfigTransaction.PreparedConfig preparedConfig(long desiredRevision, long activeRevision)

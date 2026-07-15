@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
@@ -31,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.dispatch.CollectorRuntimeConfigApplier;
 import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeConfig;
+import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus;
 import org.springframework.context.SmartLifecycle;
 
 /**
@@ -54,6 +56,9 @@ public class OtelRuntimeSupervisor implements SmartLifecycle, AutoCloseable, Col
     private Process process;
     private long generation;
     private volatile long activeRevision;
+    private volatile ManagedOtelRuntimeConfig activeConfig;
+    private volatile long rejectedRevision;
+    private volatile String rejectedError = "";
     private boolean intentionalStop = true;
 
     @Override
@@ -63,6 +68,8 @@ public class OtelRuntimeSupervisor implements SmartLifecycle, AutoCloseable, Col
                 return;
             }
             properties.useDesiredConfig(config);
+            rejectedRevision = 0;
+            rejectedError = "";
             if (!properties.isEnabled()) {
                 return;
             }
@@ -113,7 +120,8 @@ public class OtelRuntimeSupervisor implements SmartLifecycle, AutoCloseable, Col
             Path config = configTransaction.commit(prepared);
             try {
                 Process launched = launchAndAwait(binary, config, home, logFile, environment);
-                markRunning(launched, snapshot.restartCount(), snapshot.lastError(), prepared.desiredRevision());
+                markRunning(launched, snapshot.restartCount(), snapshot.lastError(),
+                        prepared.desiredRevision(), properties.desiredConfig());
             } catch (IOException | InterruptedException | RuntimeException candidateError) {
                 terminateFailedStartup();
                 if (!recoverLastKnownGood(prepared, binary, home, logFile, environment, candidateError)) {
@@ -123,6 +131,7 @@ public class OtelRuntimeSupervisor implements SmartLifecycle, AutoCloseable, Col
         } catch (Exception error) {
             discardCandidate(prepared);
             terminateFailedStartup();
+            rejectDesiredConfig(properties.desiredConfig().revision(), safeMessage(error));
             recordFailure(safeMessage(error));
         }
     }
@@ -150,7 +159,7 @@ public class OtelRuntimeSupervisor implements SmartLifecycle, AutoCloseable, Col
             update(OtelRuntimeState.STARTING, -1, snapshot.restartCount(), snapshot.lastError());
             try {
                 Process launched = launchAndAwait(binary, config, home, logFile, environment);
-                markRunning(launched, snapshot.restartCount(), "", prepared.desiredRevision());
+                markRunning(launched, snapshot.restartCount(), "", prepared.desiredRevision(), desiredConfig);
             } catch (IOException | InterruptedException | RuntimeException candidateError) {
                 terminateFailedStartup();
                 if (!recoverLastKnownGood(prepared, binary, home, logFile, environment, candidateError)) {
@@ -161,11 +170,13 @@ public class OtelRuntimeSupervisor implements SmartLifecycle, AutoCloseable, Col
             discardCandidate(prepared);
             if (!previousStopped && previous != null && previous.isAlive()) {
                 update(OtelRuntimeState.RUNNING, previous.pid(), snapshot.restartCount(), safeMessage(error));
+                rejectDesiredConfig(desiredConfig.revision(), safeMessage(error));
                 log.warn("Rejected telemetry runtime configuration revision {}: {}",
                         desiredConfig.revision(), safeMessage(error));
                 return;
             }
             terminateFailedStartup();
+            rejectDesiredConfig(desiredConfig.revision(), safeMessage(error));
             recordFailure(safeMessage(error));
         }
     }
@@ -220,12 +231,20 @@ public class OtelRuntimeSupervisor implements SmartLifecycle, AutoCloseable, Col
                 candidateMessage);
         validate(binary, prepared.active(), home, logFile, environment);
         Process recovered = launchAndAwait(binary, prepared.active(), home, logFile, environment);
-        markRunning(recovered, snapshot.restartCount() + 1, candidateMessage, prepared.previousActiveRevision());
+        markRunning(recovered, snapshot.restartCount() + 1, candidateMessage,
+                prepared.previousActiveRevision(), activeConfig);
+        rejectDesiredConfig(prepared.desiredRevision(), candidateMessage);
         return true;
     }
 
-    private void markRunning(Process launched, int restartCount, String lastError, long appliedRevision) {
+    private void markRunning(Process launched, int restartCount, String lastError, long appliedRevision,
+                             ManagedOtelRuntimeConfig appliedConfig) {
         activeRevision = appliedRevision;
+        activeConfig = appliedConfig;
+        if (appliedConfig != null && appliedConfig.revision() == properties.desiredConfig().revision()) {
+            rejectedRevision = 0;
+            rejectedError = "";
+        }
         update(OtelRuntimeState.RUNNING, launched.pid(), restartCount, lastError);
         log.info("HertzBeat telemetry runtime is ready, pid={}", launched.pid());
     }
@@ -292,6 +311,10 @@ public class OtelRuntimeSupervisor implements SmartLifecycle, AutoCloseable, Col
         environment.put("HERTZBEAT_OTEL_HEALTH_PORT", Integer.toString(properties.getHealthPort()));
         environment.put("HERTZBEAT_OTEL_FILE_STORAGE_DIR", OtelRuntimeConfigRenderer.resolve(
                 properties.getHome(), properties.getFileStorageDirectory()).toString());
+        if (properties.getPrometheusHeaderSecrets() != null) {
+            properties.getPrometheusHeaderSecrets().forEach((reference, secret) -> environment.put(
+                    OtelRuntimeSourcePolicy.prometheusSecretEnvironmentName(reference), secret));
+        }
         return environment;
     }
 
@@ -380,6 +403,16 @@ public class OtelRuntimeSupervisor implements SmartLifecycle, AutoCloseable, Col
 
     public long activeRevision() {
         return activeRevision;
+    }
+
+    public List<ManagedOtelRuntimeStatus.ManagedOtelSourceStatus> sourceStatuses() {
+        return OtelRuntimeSourceStatuses.build(
+                activeConfig, properties.desiredConfig(), activeRevision, rejectedRevision, rejectedError);
+    }
+
+    private void rejectDesiredConfig(long revision, String error) {
+        rejectedRevision = revision;
+        rejectedError = error;
     }
 
     private void update(OtelRuntimeState state, long pid, int restartCount, String lastError) {

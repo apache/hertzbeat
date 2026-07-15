@@ -23,8 +23,11 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.regex.Pattern;
 
 /**
@@ -36,17 +39,28 @@ public record ManagedOtelRuntimeConfig(int schemaVersion, long revision, boolean
                                        Duration hostMetricsInterval, List<PrometheusTarget> prometheusTargets,
                                        List<FileLogSource> fileLogSources, String environment,
                                        Set<ResourceDetector> resourceDetectors,
-                                       Set<TelemetryFilterPreset> telemetryFilterPresets) {
+                                       Set<TelemetryFilterPreset> telemetryFilterPresets,
+                                       Set<HostMetricsScraper> hostMetricsScrapers) {
 
-    public static final int CURRENT_SCHEMA_VERSION = 2;
+    public static final int CURRENT_SCHEMA_VERSION = 3;
     private static final int LEGACY_SCHEMA_VERSION = 1;
+    private static final int RESOURCE_GOVERNANCE_SCHEMA_VERSION = 2;
     private static final int MAXIMUM_PROMETHEUS_TARGETS = 32;
     private static final int MAXIMUM_FILE_LOG_SOURCES = 16;
     private static final Duration MINIMUM_HOST_METRICS_INTERVAL = Duration.ofSeconds(10);
     private static final Duration MAXIMUM_HOST_METRICS_INTERVAL = Duration.ofMinutes(5);
     private static final Pattern SOURCE_NAME = Pattern.compile("[A-Za-z0-9][A-Za-z0-9._-]{0,63}");
+    private static final Pattern HTTP_HEADER_NAME = Pattern.compile("[!#$%&'*+.^_`|~0-9A-Za-z-]+");
+    private static final Set<String> RESERVED_HTTP_HEADERS = Set.of(
+            "authorization", "host", "content-encoding", "content-length", "content-type", "user-agent",
+            "connection", "keep-alive", "proxy-authenticate", "proxy-authorization", "www-authenticate",
+            "accept-encoding", "x-prometheus-remote-write-version", "x-prometheus-remote-read-version",
+            "x-prometheus-scrape-timeout-seconds", "x-amz-date", "x-amz-security-token", "x-amz-content-sha256"
+    );
     private static final Set<ResourceDetector> DEFAULT_RESOURCE_DETECTORS =
             Collections.unmodifiableSet(EnumSet.of(ResourceDetector.ENV, ResourceDetector.SYSTEM));
+    private static final Set<HostMetricsScraper> DEFAULT_HOST_METRICS_SCRAPERS =
+            Collections.unmodifiableSet(EnumSet.allOf(HostMetricsScraper.class));
 
     public ManagedOtelRuntimeConfig(int schemaVersion, long revision, boolean hostMetricsEnabled,
                                     Duration hostMetricsInterval) {
@@ -57,7 +71,16 @@ public record ManagedOtelRuntimeConfig(int schemaVersion, long revision, boolean
                                     Duration hostMetricsInterval, List<PrometheusTarget> prometheusTargets,
                                     List<FileLogSource> fileLogSources) {
         this(schemaVersion, revision, hostMetricsEnabled, hostMetricsInterval, prometheusTargets, fileLogSources,
-                "", null, null);
+                "", null, null, null);
+    }
+
+    public ManagedOtelRuntimeConfig(int schemaVersion, long revision, boolean hostMetricsEnabled,
+                                    Duration hostMetricsInterval, List<PrometheusTarget> prometheusTargets,
+                                    List<FileLogSource> fileLogSources, String environment,
+                                    Set<ResourceDetector> resourceDetectors,
+                                    Set<TelemetryFilterPreset> telemetryFilterPresets) {
+        this(schemaVersion, revision, hostMetricsEnabled, hostMetricsInterval, prometheusTargets, fileLogSources,
+                environment, resourceDetectors, telemetryFilterPresets, null);
     }
 
     public ManagedOtelRuntimeConfig {
@@ -83,6 +106,12 @@ public record ManagedOtelRuntimeConfig(int schemaVersion, long revision, boolean
         if (schemaVersion == LEGACY_SCHEMA_VERSION && governanceConfigured) {
             throw new IllegalArgumentException("Resource governance requires managed runtime config schema 2");
         }
+        boolean sourcePolicyConfigured = (hostMetricsScrapers != null
+                && !DEFAULT_HOST_METRICS_SCRAPERS.equals(hostMetricsScrapers))
+                || prometheusTargets.stream().anyMatch(PrometheusTarget::usesAdvancedOptions);
+        if (schemaVersion < CURRENT_SCHEMA_VERSION && sourcePolicyConfigured) {
+            throw new IllegalArgumentException("Advanced source policy requires managed runtime config schema 3");
+        }
         environment = environment == null ? "" : environment.trim();
         if (!environment.isEmpty()) {
             requireSourceName(environment, "Environment");
@@ -90,6 +119,11 @@ public record ManagedOtelRuntimeConfig(int schemaVersion, long revision, boolean
         resourceDetectors = immutableEnumSet(resourceDetectors, ResourceDetector.class, DEFAULT_RESOURCE_DETECTORS);
         telemetryFilterPresets = immutableEnumSet(
                 telemetryFilterPresets, TelemetryFilterPreset.class, Set.of());
+        hostMetricsScrapers = immutableEnumSet(
+                hostMetricsScrapers, HostMetricsScraper.class, DEFAULT_HOST_METRICS_SCRAPERS);
+        if (hostMetricsEnabled && hostMetricsScrapers.isEmpty()) {
+            throw new IllegalArgumentException("Enabled host metrics require at least one scraper");
+        }
     }
 
     private static <E extends Enum<E>> Set<E> immutableEnumSet(Set<E> values, Class<E> type, Set<E> defaults) {
@@ -123,7 +157,16 @@ public record ManagedOtelRuntimeConfig(int schemaVersion, long revision, boolean
     /**
      * One explicitly managed Prometheus scrape endpoint.
      */
-    public record PrometheusTarget(String name, URI endpoint, Duration interval) {
+    public record PrometheusTarget(String name, URI endpoint, Duration interval, Duration timeout,
+                                   Map<String, String> headerSecretRefs, String tlsCaProfile) {
+
+        private static final int MAXIMUM_HEADER_SECRET_REFERENCES = 8;
+        private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(10);
+        private static final Duration MAXIMUM_TIMEOUT = Duration.ofMinutes(1);
+
+        public static PrometheusTarget basic(String name, URI endpoint, Duration interval) {
+            return new PrometheusTarget(name, endpoint, interval, DEFAULT_TIMEOUT, Map.of(), "");
+        }
 
         public PrometheusTarget {
             name = requireSourceName(name, "Prometheus target name");
@@ -142,6 +185,38 @@ public record ManagedOtelRuntimeConfig(int schemaVersion, long revision, boolean
                     || interval.getNano() != 0) {
                 throw new IllegalArgumentException("Prometheus interval must be between 10 seconds and 5 minutes");
             }
+            timeout = timeout == null ? DEFAULT_TIMEOUT : timeout;
+            if (timeout.compareTo(Duration.ofSeconds(1)) < 0
+                    || timeout.compareTo(MAXIMUM_TIMEOUT) > 0
+                    || timeout.compareTo(interval) > 0
+                    || timeout.getNano() != 0) {
+                throw new IllegalArgumentException("Prometheus timeout must be a whole second between 1 second and "
+                        + "the scrape interval, with a maximum of 1 minute");
+            }
+            Map<String, String> suppliedHeaders = headerSecretRefs == null ? Map.of() : headerSecretRefs;
+            if (suppliedHeaders.size() > MAXIMUM_HEADER_SECRET_REFERENCES) {
+                throw new IllegalArgumentException("Too many Prometheus header secret references; maximum is 8");
+            }
+            TreeMap<String, String> safeHeaders = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+            suppliedHeaders.forEach((header, secretRef) -> {
+                if (header == null || !HTTP_HEADER_NAME.matcher(header).matches()
+                        || RESERVED_HTTP_HEADERS.contains(header.toLowerCase(Locale.ROOT))) {
+                    throw new IllegalArgumentException("Prometheus header name is invalid or reserved");
+                }
+                if (safeHeaders.put(header, requireSourceName(secretRef, "Prometheus header secret reference"))
+                        != null) {
+                    throw new IllegalArgumentException("Duplicate Prometheus header name");
+                }
+            });
+            headerSecretRefs = Collections.unmodifiableMap(safeHeaders);
+            tlsCaProfile = tlsCaProfile == null ? "" : tlsCaProfile.trim();
+            if (!tlsCaProfile.isEmpty()) {
+                tlsCaProfile = requireSourceName(tlsCaProfile, "Prometheus TLS CA profile");
+            }
+        }
+
+        boolean usesAdvancedOptions() {
+            return !DEFAULT_TIMEOUT.equals(timeout) || !headerSecretRefs.isEmpty() || !tlsCaProfile.isEmpty();
         }
     }
 
@@ -186,5 +261,29 @@ public record ManagedOtelRuntimeConfig(int schemaVersion, long revision, boolean
      */
     public enum TelemetryFilterPreset {
         HEALTH_CHECK_TRACES
+    }
+
+    /**
+     * Supported host metrics scrapers. The allowlist keeps generated runtime configuration reviewable.
+     */
+    public enum HostMetricsScraper {
+        CPU("cpu"),
+        DISK("disk"),
+        FILESYSTEM("filesystem"),
+        LOAD("load"),
+        MEMORY("memory"),
+        NETWORK("network"),
+        PAGING("paging"),
+        PROCESSES("processes");
+
+        private final String configName;
+
+        HostMetricsScraper(String configName) {
+            this.configName = configName;
+        }
+
+        public String configName() {
+            return configName;
+        }
     }
 }

@@ -18,7 +18,9 @@
 package org.apache.hertzbeat.common.entity.dto;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 /**
  * Versioned status reported by the optional managed telemetry runtime.
@@ -29,13 +31,26 @@ import java.util.Objects;
 public record ManagedOtelRuntimeStatus(int schemaVersion, boolean enabled, RuntimeState state,
                                        long desiredRevision, long activeRevision,
                                        IntakeCredentialState intakeCredentialState,
-                                       int restartCount, Instant changedAt, String lastError) {
+                                       int restartCount, Instant changedAt, String lastError,
+                                       List<ManagedOtelSourceStatus> sources) {
 
-    public static final int CURRENT_SCHEMA_VERSION = 1;
+    public static final int CURRENT_SCHEMA_VERSION = 2;
+    private static final int LEGACY_SCHEMA_VERSION = 1;
     private static final int MAXIMUM_DIAGNOSTIC_LENGTH = 512;
+    // Active sources plus both sides of one pending/rejected replacement revision.
+    private static final int MAXIMUM_SOURCE_STATUSES = 147;
+    private static final Pattern SOURCE_NAME = Pattern.compile("[A-Za-z0-9][A-Za-z0-9._-]{0,63}");
+
+    public ManagedOtelRuntimeStatus(int schemaVersion, boolean enabled, RuntimeState state,
+                                    long desiredRevision, long activeRevision,
+                                    IntakeCredentialState intakeCredentialState,
+                                    int restartCount, Instant changedAt, String lastError) {
+        this(schemaVersion, enabled, state, desiredRevision, activeRevision, intakeCredentialState,
+                restartCount, changedAt, lastError, List.of());
+    }
 
     public ManagedOtelRuntimeStatus {
-        if (schemaVersion != CURRENT_SCHEMA_VERSION) {
+        if (schemaVersion < LEGACY_SCHEMA_VERSION || schemaVersion > CURRENT_SCHEMA_VERSION) {
             throw new IllegalArgumentException("Unsupported managed runtime status schema: " + schemaVersion);
         }
         state = Objects.requireNonNull(state, "state");
@@ -47,6 +62,13 @@ public record ManagedOtelRuntimeStatus(int schemaVersion, boolean enabled, Runti
         lastError = Objects.requireNonNullElse(lastError, "");
         if (lastError.length() > MAXIMUM_DIAGNOSTIC_LENGTH) {
             throw new IllegalArgumentException("Managed runtime diagnostic is too long");
+        }
+        sources = sources == null ? List.of() : List.copyOf(sources);
+        if (sources.size() > MAXIMUM_SOURCE_STATUSES) {
+            throw new IllegalArgumentException("Managed runtime has too many source status entries");
+        }
+        if (schemaVersion == LEGACY_SCHEMA_VERSION && !sources.isEmpty()) {
+            throw new IllegalArgumentException("Source status requires managed runtime status schema 2");
         }
     }
 
@@ -69,5 +91,45 @@ public record ManagedOtelRuntimeStatus(int schemaVersion, boolean enabled, Runti
         NOT_REQUIRED,
         MISSING,
         CONFIGURED
+    }
+
+    /**
+     * One bounded, payload-free source lifecycle entry.
+     */
+    public record ManagedOtelSourceStatus(SourceType type, String name, long revision,
+                                          SourceState state, String lastError) {
+
+        public ManagedOtelSourceStatus {
+            type = Objects.requireNonNull(type, "type");
+            state = Objects.requireNonNull(state, "state");
+            if (name == null || !SOURCE_NAME.matcher(name).matches()) {
+                throw new IllegalArgumentException("Managed runtime source name is invalid");
+            }
+            if (revision < 1) {
+                throw new IllegalArgumentException("Managed runtime source revision must be positive");
+            }
+            lastError = Objects.requireNonNullElse(lastError, "");
+            if (lastError.length() > MAXIMUM_DIAGNOSTIC_LENGTH) {
+                throw new IllegalArgumentException("Managed runtime source diagnostic is too long");
+            }
+        }
+    }
+
+    /**
+     * Supported managed source categories.
+     */
+    public enum SourceType {
+        HOST_METRICS,
+        PROMETHEUS,
+        FILE_LOG
+    }
+
+    /**
+     * Lifecycle of one semantic source revision.
+     */
+    public enum SourceState {
+        DESIRED,
+        ACTIVE,
+        REJECTED
     }
 }

@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.collector.runtime.otel;
 
+import java.util.List;
 import org.apache.hertzbeat.collector.dispatch.CollectorRuntimeStatusProvider;
 import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus;
 
@@ -45,7 +46,8 @@ public class OtelRuntimeStatusProvider implements CollectorRuntimeStatusProvider
                 credentialState(),
                 snapshot.restartCount(),
                 snapshot.changedAt(),
-                snapshot.lastError()
+                snapshot.lastError(),
+                properties.isEnabled() ? supervisor.sourceStatuses() : List.of()
         );
     }
 

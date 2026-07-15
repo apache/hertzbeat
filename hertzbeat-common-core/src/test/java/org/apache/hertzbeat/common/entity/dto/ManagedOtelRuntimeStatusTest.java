@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.Instant;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class ManagedOtelRuntimeStatusTest {
@@ -67,5 +68,56 @@ class ManagedOtelRuntimeStatusTest {
                 Instant.now(),
                 "x".repeat(513)
         ));
+    }
+
+    @Test
+    void carriesBoundedDesiredActiveAndRejectedSourceStates() {
+        ManagedOtelRuntimeStatus.ManagedOtelSourceStatus active = new ManagedOtelRuntimeStatus.ManagedOtelSourceStatus(
+                ManagedOtelRuntimeStatus.SourceType.PROMETHEUS,
+                "payments",
+                12,
+                ManagedOtelRuntimeStatus.SourceState.ACTIVE,
+                ""
+        );
+        ManagedOtelRuntimeStatus.ManagedOtelSourceStatus rejected =
+                new ManagedOtelRuntimeStatus.ManagedOtelSourceStatus(
+                        ManagedOtelRuntimeStatus.SourceType.FILE_LOG,
+                        "payments",
+                        13,
+                        ManagedOtelRuntimeStatus.SourceState.REJECTED,
+                        "Unknown local path profile"
+                );
+        ManagedOtelRuntimeStatus status = new ManagedOtelRuntimeStatus(
+                ManagedOtelRuntimeStatus.CURRENT_SCHEMA_VERSION,
+                true,
+                ManagedOtelRuntimeStatus.RuntimeState.RUNNING,
+                13,
+                12,
+                ManagedOtelRuntimeStatus.IntakeCredentialState.CONFIGURED,
+                0,
+                Instant.now(),
+                "",
+                List.of(active, rejected)
+        );
+
+        assertEquals(List.of(active, rejected), status.sources());
+    }
+
+    @Test
+    void readsLegacyStatusWithoutSourceStates() {
+        ManagedOtelRuntimeStatus status = new ManagedOtelRuntimeStatus(
+                1,
+                true,
+                ManagedOtelRuntimeStatus.RuntimeState.RUNNING,
+                1,
+                1,
+                ManagedOtelRuntimeStatus.IntakeCredentialState.CONFIGURED,
+                0,
+                Instant.now(),
+                "",
+                null
+        );
+
+        assertEquals(List.of(), status.sources());
     }
 }

@@ -63,7 +63,7 @@ collector:
     binary: ${HERTZBEAT_OTEL_RUNTIME_BINARY:}
     collector-id: ${IDENTITY:}
     workspace-id: ${HERTZBEAT_WORKSPACE_ID:default}
-    config-schema: ${HERTZBEAT_OTEL_CONFIG_SCHEMA:1}
+    config-schema: ${HERTZBEAT_OTEL_CONFIG_SCHEMA:3}
     config-revision: ${HERTZBEAT_OTEL_CONFIG_REVISION:1}
     host-metrics-enabled: ${HERTZBEAT_OTEL_HOST_METRICS_ENABLED:true}
     host-metrics-interval: ${HERTZBEAT_OTEL_HOST_METRICS_INTERVAL:10s}

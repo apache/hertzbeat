@@ -107,9 +107,6 @@ public class OtelRuntimeConfigRenderer {
 
     private static String template(OtelRuntimeProperties properties, ManagedOtelRuntimeConfig desiredConfig,
                                    OtelRuntimeSourcePolicy.ResolvedSources sources) {
-        if (!desiredConfig.hostMetricsEnabled()) {
-            throw new IllegalArgumentException("The current runtime requires the host metrics capability");
-        }
         String grpcEndpoint = receiverEndpoint(properties.getOtlpGrpcEndpoint(), "OTLP gRPC");
         String httpEndpoint = receiverEndpoint(properties.getOtlpHttpEndpoint(), "OTLP HTTP");
         int maxRequestMiB = properties.getOtlpMaxRequestMiB();
@@ -126,24 +123,13 @@ public class OtelRuntimeConfigRenderer {
                       http:
                         endpoint: %s
                         max_request_body_size: %d
-                  hostmetrics:
-                    collection_interval: %ds
-                    scrapers:
-                      cpu:
-                      disk:
-                      filesystem:
-                      load:
-                      memory:
-                      network:
-                      paging:
-                      processes:
                 """.formatted(
                 yamlScalar(grpcEndpoint),
                 maxRequestMiB,
                 yamlScalar(httpEndpoint),
-                maxRequestMiB * 1024 * 1024,
-                desiredConfig.hostMetricsInterval().toSeconds()
+                maxRequestMiB * 1024 * 1024
         ));
+        appendHostMetricsReceiver(yaml, desiredConfig);
         appendPrometheusReceivers(yaml, sources.prometheusTargets());
         appendFileLogReceivers(yaml, sources.fileLogSources());
         OtelRuntimeGovernance.appendProcessors(yaml, desiredConfig);
@@ -188,7 +174,7 @@ public class OtelRuntimeConfigRenderer {
                       processors: [%s]
                       exporters: [otlphttp]
                 """.formatted(
-                metricsReceivers(sources.prometheusTargets()),
+                metricsReceivers(desiredConfig.hostMetricsEnabled(), sources.prometheusTargets()),
                 commonProcessors,
                 logReceivers(sources.fileLogSources()),
                 commonProcessors,
@@ -197,9 +183,21 @@ public class OtelRuntimeConfigRenderer {
         return yaml.toString();
     }
 
+    private static void appendHostMetricsReceiver(StringBuilder yaml, ManagedOtelRuntimeConfig config) {
+        if (!config.hostMetricsEnabled()) {
+            return;
+        }
+        yaml.append("  hostmetrics:\n")
+                .append("    collection_interval: ").append(config.hostMetricsInterval().toSeconds()).append("s\n")
+                .append("    scrapers:\n");
+        config.hostMetricsScrapers().stream()
+                .sorted()
+                .forEach(scraper -> yaml.append("      ").append(scraper.configName()).append(":\n"));
+    }
+
     private static void appendPrometheusReceivers(
-            StringBuilder yaml, List<ManagedOtelRuntimeConfig.PrometheusTarget> targets) {
-        for (ManagedOtelRuntimeConfig.PrometheusTarget target : targets) {
+            StringBuilder yaml, List<OtelRuntimeSourcePolicy.ResolvedPrometheusTarget> targets) {
+        for (OtelRuntimeSourcePolicy.ResolvedPrometheusTarget target : targets) {
             URI endpoint = target.endpoint();
             String path = endpoint.getRawPath() == null || endpoint.getRawPath().isBlank()
                     ? "/metrics"
@@ -209,11 +207,30 @@ public class OtelRuntimeConfigRenderer {
                     .append("      scrape_configs:\n")
                     .append("        - job_name: ").append(yamlScalar(target.name())).append('\n')
                     .append("          scrape_interval: ").append(target.interval().toSeconds()).append("s\n")
+                    .append("          scrape_timeout: ").append(target.timeout().toSeconds()).append("s\n")
+                    .append("          sample_limit: 50000\n")
+                    .append("          label_limit: 64\n")
+                    .append("          label_name_length_limit: 256\n")
+                    .append("          label_value_length_limit: 1024\n")
+                    .append("          body_size_limit: 32MiB\n")
                     .append("          scheme: ").append(endpoint.getScheme().toLowerCase(Locale.ROOT)).append('\n')
                     .append("          metrics_path: ").append(yamlScalar(path)).append('\n')
                     .append("          static_configs:\n")
                     .append("            - targets: [")
                     .append(yamlScalar(endpoint.getRawAuthority())).append("]\n");
+            if (!target.headerSecretEnvironment().isEmpty()) {
+                yaml.append("          http_headers:\n");
+                target.headerSecretEnvironment().forEach((header, environment) -> yaml
+                        .append("            ").append(yamlScalar(header)).append(":\n")
+                        .append("              secrets: [")
+                        .append(yamlScalar("${env:" + environment + "}"))
+                        .append("]\n"));
+            }
+            if (target.tlsCaFile() != null) {
+                yaml.append("          tls_config:\n")
+                        .append("            ca_file: ").append(yamlScalar(target.tlsCaFile().toString())).append('\n')
+                        .append("            min_version: TLS12\n");
+            }
         }
     }
 
@@ -228,16 +245,22 @@ public class OtelRuntimeConfigRenderer {
             yaml.append("    start_at: end\n")
                     .append("    storage: file_storage\n")
                     .append("    include_file_path: true\n")
+                    .append("    poll_interval: 500ms\n")
                     .append("    max_log_size: 1MiB\n")
+                    .append("    max_log_size_behavior: truncate\n")
                     .append("    max_concurrent_files: 32\n")
+                    .append("    max_batches: 2\n")
                     .append("    resource:\n")
                     .append("      service.name: ").append(yamlScalar(source.name())).append('\n');
         }
     }
 
-    private static String metricsReceivers(List<ManagedOtelRuntimeConfig.PrometheusTarget> targets) {
+    private static String metricsReceivers(
+            boolean hostMetricsEnabled, List<OtelRuntimeSourcePolicy.ResolvedPrometheusTarget> targets) {
         List<String> receivers = new ArrayList<>(targets.size() + 2);
-        receivers.add("hostmetrics");
+        if (hostMetricsEnabled) {
+            receivers.add("hostmetrics");
+        }
         receivers.add("otlp");
         targets.forEach(target -> receivers.add("prometheus/" + target.name()));
         return String.join(", ", receivers);

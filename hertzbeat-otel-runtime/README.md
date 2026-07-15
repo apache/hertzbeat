@@ -86,8 +86,17 @@ collector:
   otel-runtime:
     prometheus-targets:
       - name: payments
-        endpoint: http://127.0.0.1:9464/metrics
+        endpoint: https://127.0.0.1:9464/metrics
         interval: 30s
+        timeout: 5s
+        header-secret-refs:
+          X-Scrape-Token: payments-token
+        tls-ca-profile: payments-ca
+    # Values and local certificate paths are never part of server-managed intent.
+    prometheus-header-secrets:
+      payments-token: ${PAYMENTS_PROMETHEUS_TOKEN}
+    prometheus-tls-ca-profiles:
+      payments-ca: /etc/hertzbeat/certs/payments-ca.pem
     file-log-allow-roots:
       - /var/log/payments
     file-log-deny-paths:
@@ -108,9 +117,15 @@ collector:
 
 ## Current limits
 
-- Prometheus supports bounded static HTTP(S) targets. File logs use local path
-  profiles, start at the end by default, and reject traversal, recursive globs,
-  denied paths, and symlink escapes before runtime validation.
+- Prometheus supports at most 32 bounded static HTTP(S) targets. Scrapes have
+  fixed sample, label and response-size ceilings; optional headers refer to
+  local secrets and HTTPS trust refers to a local CA profile. Neither value is
+  stored in server-managed intent.
+- File logs use local path profiles, start at the end by default, preserve
+  offsets across restart, and handle rename rotation and copytruncate. Policy
+  rejects traversal, recursive globs, denied paths, symlink escapes, more than
+  16 patterns, or more than 256 existing matches before runtime validation.
+  Runtime concurrency, polling batches and line size are also bounded.
 - File offsets and the bounded downstream exporter queue use the same
   owner-only `file_storage` directory.
 - The local control surface is the versioned loopback health contract. Managed

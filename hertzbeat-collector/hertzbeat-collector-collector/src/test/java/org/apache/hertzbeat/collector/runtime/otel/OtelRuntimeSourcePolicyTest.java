@@ -78,13 +78,66 @@ class OtelRuntimeSourcePolicyTest {
         Path link = allowed.resolve("linked");
         try {
             Files.createSymbolicLink(link, outside);
-        } catch (UnsupportedOperationException exception) {
+        } catch (java.io.IOException | UnsupportedOperationException exception) {
             return;
         }
         OtelRuntimeProperties symlink = propertiesFor(
                 Map.of("linked", List.of(link.resolve("*.log").toString())));
         assertThrows(IllegalArgumentException.class,
                 () -> new OtelRuntimeSourcePolicy().resolve(configWithProfile("linked"), symlink));
+    }
+
+    @Test
+    void resolvesOnlyKnownPrometheusSecretAndTlsProfiles() throws Exception {
+        Path caFile = Files.writeString(tempDir.resolve("internal-ca.pem"), "test-ca");
+        OtelRuntimeProperties properties = propertiesFor(Map.of());
+        properties.setPrometheusHeaderSecrets(Map.of("payments-token", "secret"));
+        properties.setPrometheusTlsCaProfiles(Map.of("internal-ca", caFile));
+        ManagedOtelRuntimeConfig config = configWithPrometheus("payments-token", "internal-ca");
+
+        OtelRuntimeSourcePolicy.ResolvedSources resolved = new OtelRuntimeSourcePolicy().resolve(config, properties);
+
+        OtelRuntimeSourcePolicy.ResolvedPrometheusTarget target = resolved.prometheusTargets().getFirst();
+        assertEquals(caFile.toRealPath(), target.tlsCaFile());
+        assertEquals(1, target.headerSecretEnvironment().size());
+    }
+
+    @Test
+    void rejectsUnknownPrometheusSecretAndTlsProfiles() throws Exception {
+        OtelRuntimeProperties properties = propertiesFor(Map.of());
+        assertThrows(IllegalArgumentException.class, () -> new OtelRuntimeSourcePolicy().resolve(
+                configWithPrometheus("missing-token", ""), properties));
+        properties.setPrometheusHeaderSecrets(Map.of("payments-token", "secret"));
+        assertThrows(IllegalArgumentException.class, () -> new OtelRuntimeSourcePolicy().resolve(
+                configWithPrometheus("payments-token", "missing-ca"), properties));
+    }
+
+    @Test
+    void rejectsProfilesThatAlreadyMatchMoreThanTheFileCeiling() throws Exception {
+        Path allowed = Files.createDirectories(tempDir.resolve("applications/many"));
+        for (int index = 0; index < 257; index++) {
+            Files.createFile(allowed.resolve("application-" + index + ".log"));
+        }
+        OtelRuntimeProperties properties = propertiesFor(
+                Map.of("many", List.of(allowed.resolve("*.log").toString())));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new OtelRuntimeSourcePolicy().resolve(configWithProfile("many"), properties));
+    }
+
+    @Test
+    void appliesTheFileCeilingAcrossAllPatternsInOneSource() throws Exception {
+        Path first = Files.createDirectories(tempDir.resolve("applications/first"));
+        Path second = Files.createDirectories(tempDir.resolve("applications/second"));
+        for (int index = 0; index < 130; index++) {
+            Files.createFile(first.resolve("first-" + index + ".log"));
+            Files.createFile(second.resolve("second-" + index + ".log"));
+        }
+        OtelRuntimeProperties properties = propertiesFor(Map.of(
+                "many", List.of(first.resolve("*.log").toString(), second.resolve("*.log").toString())));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new OtelRuntimeSourcePolicy().resolve(configWithProfile("many"), properties));
     }
 
     private OtelRuntimeProperties propertiesFor(Map<String, List<String>> profiles) throws Exception {
@@ -104,6 +157,27 @@ class OtelRuntimeSourcePolicyTest {
                 Duration.ofSeconds(30),
                 List.of(),
                 List.of(new ManagedOtelRuntimeConfig.FileLogSource("payments", profile))
+        );
+    }
+
+    private static ManagedOtelRuntimeConfig configWithPrometheus(String secretRef, String tlsProfile) {
+        return new ManagedOtelRuntimeConfig(
+                ManagedOtelRuntimeConfig.CURRENT_SCHEMA_VERSION,
+                1,
+                true,
+                Duration.ofSeconds(30),
+                List.of(new ManagedOtelRuntimeConfig.PrometheusTarget(
+                        "payments",
+                        java.net.URI.create("https://127.0.0.1:9464/metrics"),
+                        Duration.ofSeconds(30),
+                        Duration.ofSeconds(5),
+                        Map.of("X-Scrape-Token", secretRef),
+                        tlsProfile)),
+                List.of(),
+                "",
+                null,
+                null,
+                null
         );
     }
 }

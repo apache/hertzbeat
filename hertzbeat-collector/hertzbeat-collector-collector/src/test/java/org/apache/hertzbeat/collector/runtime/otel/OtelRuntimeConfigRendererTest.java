@@ -127,7 +127,7 @@ class OtelRuntimeConfigRendererTest {
         OtelRuntimeProperties properties = new OtelRuntimeProperties();
         properties.setHome(tempDir);
         properties.setConfig(Path.of("conf/runtime.yaml"));
-        properties.setPrometheusTargets(List.of(new ManagedOtelRuntimeConfig.PrometheusTarget(
+        properties.setPrometheusTargets(List.of(ManagedOtelRuntimeConfig.PrometheusTarget.basic(
                 "payments", URI.create("https://payments.internal:9464/metrics"), Duration.ofSeconds(30))));
         properties.setFileLogAllowRoots(List.of(tempDir.resolve("logs")));
         properties.setFileLogProfiles(Map.of("payments-logs", List.of(logs.resolve("*.log").toString())));
@@ -142,10 +142,66 @@ class OtelRuntimeConfigRendererTest {
         assertTrue(yaml.contains("filelog/payments:"));
         assertTrue(yaml.contains("start_at: end"));
         assertTrue(yaml.contains("storage: file_storage"));
+        assertTrue(yaml.contains("poll_interval: 500ms"));
+        assertTrue(yaml.contains("max_batches: 2"));
+        assertTrue(yaml.contains("max_log_size_behavior: truncate"));
         assertTrue(yaml.contains("max_concurrent_files: 32"));
         assertTrue(yaml.contains("directory: ${env:HERTZBEAT_OTEL_FILE_STORAGE_DIR}"));
         assertTrue(yaml.contains("    logs:\n      receivers: [otlp, filelog/payments]"));
         assertTrue(Files.isDirectory(tempDir.resolve("data/otel-runtime")));
+    }
+
+    @Test
+    void rendersOnlySelectedHostScrapersAndOmitsDisabledHostReceiver() throws Exception {
+        OtelRuntimeProperties properties = new OtelRuntimeProperties();
+        properties.setHome(tempDir);
+        properties.setConfig(Path.of("conf/runtime.yaml"));
+        properties.setHostMetricsScrapers(Set.of(
+                ManagedOtelRuntimeConfig.HostMetricsScraper.CPU,
+                ManagedOtelRuntimeConfig.HostMetricsScraper.MEMORY));
+
+        String selected = Files.readString(new OtelRuntimeConfigRenderer().render(properties));
+
+        assertTrue(selected.contains("      cpu:\n      memory:"));
+        assertFalse(selected.contains("      network:"));
+
+        properties.setHostMetricsEnabled(false);
+        properties.setHostMetricsScrapers(Set.of());
+        String disabled = Files.readString(new OtelRuntimeConfigRenderer().render(properties));
+
+        assertFalse(disabled.contains("  hostmetrics:"));
+        assertTrue(disabled.contains("metrics:\n      receivers: [otlp]"));
+    }
+
+    @Test
+    void rendersBoundedPrometheusTlsAndSecretReferencesWithoutSecretValues() throws Exception {
+        Path caFile = Files.writeString(tempDir.resolve("internal-ca.pem"), "test-ca");
+        OtelRuntimeProperties properties = new OtelRuntimeProperties();
+        properties.setHome(tempDir);
+        properties.setConfig(Path.of("conf/runtime.yaml"));
+        properties.setPrometheusHeaderSecrets(Map.of("payments-token", "must-not-enter-yaml"));
+        properties.setPrometheusTlsCaProfiles(Map.of("internal-ca", caFile));
+        properties.setPrometheusTargets(List.of(new ManagedOtelRuntimeConfig.PrometheusTarget(
+                "payments",
+                URI.create("https://payments.internal:9464/metrics"),
+                Duration.ofSeconds(30),
+                Duration.ofSeconds(5),
+                Map.of("X-Scrape-Token", "payments-token"),
+                "internal-ca")));
+
+        String yaml = Files.readString(new OtelRuntimeConfigRenderer().render(properties));
+
+        assertTrue(yaml.contains("scrape_timeout: 5s"));
+        assertTrue(yaml.contains("sample_limit: 50000"));
+        assertTrue(yaml.contains("label_limit: 64"));
+        assertTrue(yaml.contains("body_size_limit: 32MiB"));
+        assertTrue(yaml.contains("http_headers:"));
+        assertTrue(yaml.contains("'X-Scrape-Token':"));
+        assertTrue(yaml.contains("secrets: ['${env:HERTZBEAT_PROM_SECRET_"));
+        assertTrue(yaml.contains("tls_config:"));
+        assertTrue(yaml.contains("ca_file: '" + caFile.toRealPath() + "'"));
+        assertTrue(yaml.contains("min_version: TLS12"));
+        assertFalse(yaml.contains("must-not-enter-yaml"));
     }
 
     @Test
@@ -160,5 +216,30 @@ class OtelRuntimeConfigRendererTest {
         properties.setOtlpHttpEndpoint("127.0.0.1:4318");
         properties.setOtlpMaxRequestMiB(65);
         assertThrows(IllegalArgumentException.class, () -> new OtelRuntimeConfigRenderer().render(properties));
+    }
+
+    @Test
+    void replacingSourcesDoesNotLeaveStaleReceiverOrPipelineReferences() throws Exception {
+        Path logs = Files.createDirectories(tempDir.resolve("logs/payments"));
+        OtelRuntimeProperties properties = new OtelRuntimeProperties();
+        properties.setHome(tempDir);
+        properties.setConfig(Path.of("conf/runtime.yaml"));
+        properties.setPrometheusTargets(List.of(ManagedOtelRuntimeConfig.PrometheusTarget.basic(
+                "payments", URI.create("http://127.0.0.1:9464/metrics"), Duration.ofSeconds(30))));
+        properties.setFileLogAllowRoots(List.of(tempDir.resolve("logs")));
+        properties.setFileLogProfiles(Map.of("payments-logs", List.of(logs.resolve("*.log").toString())));
+        properties.setFileLogSources(List.of(
+                new ManagedOtelRuntimeConfig.FileLogSource("payments", "payments-logs")));
+        OtelRuntimeConfigRenderer renderer = new OtelRuntimeConfigRenderer();
+        assertTrue(Files.readString(renderer.render(properties)).contains("prometheus/payments"));
+
+        properties.setPrometheusTargets(List.of());
+        properties.setFileLogSources(List.of());
+        String replaced = Files.readString(renderer.render(properties));
+
+        assertFalse(replaced.contains("prometheus/payments"));
+        assertFalse(replaced.contains("filelog/payments"));
+        assertTrue(replaced.contains("metrics:\n      receivers: [hostmetrics, otlp]"));
+        assertTrue(replaced.contains("logs:\n      receivers: [otlp]"));
     }
 }

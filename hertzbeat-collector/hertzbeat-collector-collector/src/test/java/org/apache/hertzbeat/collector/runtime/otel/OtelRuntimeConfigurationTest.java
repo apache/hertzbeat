@@ -20,6 +20,7 @@ package org.apache.hertzbeat.collector.runtime.otel;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Duration;
 import org.apache.hertzbeat.collector.dispatch.CollectorRuntimeStatusProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
@@ -65,6 +66,13 @@ class OtelRuntimeConfigurationTest {
                         "collector.otel-runtime.prometheus-targets[0].name=payments",
                         "collector.otel-runtime.prometheus-targets[0].endpoint=http://127.0.0.1:9464/metrics",
                         "collector.otel-runtime.prometheus-targets[0].interval=30s",
+                        "collector.otel-runtime.prometheus-targets[0].timeout=5s",
+                        "collector.otel-runtime.prometheus-targets[0].header-secret-refs.X-Scrape-Token=payments-token",
+                        "collector.otel-runtime.prometheus-targets[0].tls-ca-profile=payments-ca",
+                        "collector.otel-runtime.prometheus-header-secrets.payments-token=local-secret",
+                        "collector.otel-runtime.prometheus-tls-ca-profiles.payments-ca=/etc/payments-ca.pem",
+                        "collector.otel-runtime.host-metrics-scrapers[0]=CPU",
+                        "collector.otel-runtime.host-metrics-scrapers[1]=MEMORY",
                         "collector.otel-runtime.file-log-sources[0].name=payments",
                         "collector.otel-runtime.file-log-sources[0].path-profile=payments-logs",
                         "collector.otel-runtime.file-log-allow-roots[0]=/var/log",
@@ -74,6 +82,12 @@ class OtelRuntimeConfigurationTest {
                     assertTrue(context.isRunning());
                     OtelRuntimeProperties properties = context.getBean(OtelRuntimeProperties.class);
                     assertEquals("payments", properties.getPrometheusTargets().getFirst().name());
+                    assertEquals(Duration.ofSeconds(5),
+                            properties.getPrometheusTargets().getFirst().timeout());
+                    assertEquals("payments-token",
+                            properties.getPrometheusTargets().getFirst().headerSecretRefs().get("X-Scrape-Token"));
+                    assertEquals("local-secret", properties.getPrometheusHeaderSecrets().get("payments-token"));
+                    assertEquals(2, properties.getHostMetricsScrapers().size());
                     assertEquals("payments-logs", properties.getFileLogSources().getFirst().pathProfile());
                     assertEquals("/var/log/payments/*.log",
                             properties.getFileLogProfiles().get("payments-logs").getFirst());

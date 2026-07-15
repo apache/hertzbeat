@@ -141,7 +141,13 @@ public class CollectorServiceTest {
                 ManagedOtelRuntimeStatus.IntakeCredentialState.CONFIGURED,
                 0,
                 Instant.parse("2026-07-15T06:00:00Z"),
-                ""
+                "",
+                List.of(new ManagedOtelRuntimeStatus.ManagedOtelSourceStatus(
+                        ManagedOtelRuntimeStatus.SourceType.PROMETHEUS,
+                        "payments",
+                        3,
+                        ManagedOtelRuntimeStatus.SourceState.ACTIVE,
+                        ""))
         );
     }
 }

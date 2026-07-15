@@ -66,6 +66,28 @@ jobs:
       - name: Verify Java runtime and Spring AOT
         run: ./script/ci/verify-hybrid-collector-java.sh
 
+  source-policy:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-24.04, macos-15, windows-2025]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: 25
+          distribution: graalvm
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          cache: maven
+      - name: Verify cross-platform source policy
+        shell: bash
+        run: |
+          ./mvnw -pl hertzbeat-collector/hertzbeat-collector-collector -am \
+            -Dtest='ManagedOtelRuntimeConfigTest,OtelRuntimeConfigRendererTest,OtelRuntimeSourcePolicyTest' \
+            test -DskipITs -Dsurefire.failIfNoSpecifiedTests=false -DfailIfNoTests=false
+
   native-release:
     if: github.event_name == 'workflow_dispatch'
     strategy:

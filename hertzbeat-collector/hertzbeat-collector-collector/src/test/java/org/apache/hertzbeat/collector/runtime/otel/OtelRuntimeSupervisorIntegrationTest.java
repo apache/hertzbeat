@@ -23,8 +23,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpsConfigurator;
+import com.sun.net.httpserver.HttpsServer;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.URI;
@@ -35,7 +38,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.security.KeyStore;
+import java.security.SecureRandom;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -45,6 +51,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.zip.GZIPInputStream;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
 import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeConfig;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
@@ -115,7 +123,7 @@ class OtelRuntimeSupervisorIntegrationTest {
         capture.start();
         prometheus.start();
         OtelRuntimeProperties properties = properties(runtimeBinary, capture.port());
-        properties.setPrometheusTargets(List.of(new ManagedOtelRuntimeConfig.PrometheusTarget(
+        properties.setPrometheusTargets(List.of(ManagedOtelRuntimeConfig.PrometheusTarget.basic(
                 "payments", URI.create("http://127.0.0.1:" + prometheus.port() + "/metrics"),
                 Duration.ofSeconds(10))));
         properties.setFileLogAllowRoots(List.of(logDirectory));
@@ -131,6 +139,9 @@ class OtelRuntimeSupervisorIntegrationTest {
         );
         String beforeRestart = "payment accepted before restart";
         String afterRotation = "payment accepted after rotation";
+        String afterCopyTruncate = "payment accepted after copytruncate";
+        String oversizedPrefix = "oversized-line-prefix";
+        String oversizedSuffix = "oversized-line-must-be-truncated";
         String duringRestart = "payment accepted during restart";
         try {
             supervisor.start();
@@ -144,6 +155,14 @@ class OtelRuntimeSupervisorIntegrationTest {
             Files.writeString(applicationLog, afterRotation + "\n", StandardOpenOption.APPEND);
             await(() -> capture.logOccurrences(afterRotation) == 1, Duration.ofSeconds(15));
 
+            Files.writeString(applicationLog, afterCopyTruncate + "\n", StandardOpenOption.TRUNCATE_EXISTING);
+            await(() -> capture.logOccurrences(afterCopyTruncate) == 1, Duration.ofSeconds(15));
+            Files.writeString(applicationLog,
+                    oversizedPrefix + "x".repeat(1_100_000) + oversizedSuffix + "\n",
+                    StandardOpenOption.APPEND);
+            await(() -> capture.logOccurrences(oversizedPrefix) == 1, Duration.ofSeconds(15));
+            assertEquals(0, capture.logOccurrences(oversizedSuffix));
+
             long initialPid = supervisor.snapshot().pid();
             ProcessHandle.of(initialPid).orElseThrow().destroyForcibly();
             Files.writeString(applicationLog, duringRestart + "\n", StandardOpenOption.APPEND);
@@ -153,7 +172,84 @@ class OtelRuntimeSupervisorIntegrationTest {
             await(() -> capture.logOccurrences(duringRestart) == 1, Duration.ofSeconds(15));
             assertEquals(1, capture.logOccurrences(beforeRestart));
             assertEquals(1, capture.logOccurrences(afterRotation));
+            assertEquals(1, capture.logOccurrences(afterCopyTruncate));
             assertEquals(0, capture.logOccurrences("historical-line"));
+        } finally {
+            supervisor.close();
+            prometheus.close();
+            capture.close();
+        }
+    }
+
+    @Test
+    void enforcesPrometheusTimeoutHeadersAndCardinalityBeforeRecovering() throws Exception {
+        String runtimeBinary = System.getenv(RUNTIME_BINARY_ENV);
+        Assumptions.assumeTrue(runtimeBinary != null && !runtimeBinary.isBlank(),
+                () -> RUNTIME_BINARY_ENV + " is required for the real runtime proof");
+        OtlpCapture capture = new OtlpCapture();
+        GuardedPrometheusFixture prometheus = new GuardedPrometheusFixture("integration-secret");
+        capture.start();
+        prometheus.start();
+        OtelRuntimeProperties properties = properties(runtimeBinary, capture.port());
+        properties.setPrometheusHeaderSecrets(Map.of("payments-token", "integration-secret"));
+        properties.setPrometheusTargets(List.of(new ManagedOtelRuntimeConfig.PrometheusTarget(
+                "guarded",
+                URI.create("http://127.0.0.1:" + prometheus.port() + "/metrics"),
+                Duration.ofSeconds(10),
+                Duration.ofSeconds(1),
+                Map.of("X-Scrape-Token", "payments-token"),
+                "")));
+        OtelRuntimeSupervisor supervisor = new OtelRuntimeSupervisor(
+                properties,
+                new OtelRuntimeBinaryResolver(properties),
+                new OtelRuntimeConfigTransaction(new OtelRuntimeConfigRenderer()),
+                new OtelRuntimeProcessLauncher(),
+                new OtelRuntimeHealthClient()
+        );
+        try {
+            supervisor.start();
+            assertEquals(OtelRuntimeState.RUNNING, supervisor.snapshot().state());
+            await(() -> capture.containsMetric("hertzbeat_prometheus_recovered"), Duration.ofSeconds(45));
+
+            assertTrue(prometheus.requestCount() >= 4);
+            assertEquals(0, prometheus.missingHeaderCount());
+            assertFalse(capture.containsMetric("hertzbeat_high_cardinality_overflow"));
+        } finally {
+            supervisor.close();
+            prometheus.close();
+            capture.close();
+        }
+    }
+
+    @Test
+    void scrapesPrometheusThroughAnApprovedTlsCaProfile() throws Exception {
+        String runtimeBinary = System.getenv(RUNTIME_BINARY_ENV);
+        Assumptions.assumeTrue(runtimeBinary != null && !runtimeBinary.isBlank(),
+                () -> RUNTIME_BINARY_ENV + " is required for the real runtime proof");
+        OtlpCapture capture = new OtlpCapture();
+        TlsPrometheusFixture prometheus = new TlsPrometheusFixture(tempDir.resolve("prometheus-tls"));
+        capture.start();
+        prometheus.start();
+        OtelRuntimeProperties properties = properties(runtimeBinary, capture.port());
+        properties.setPrometheusTlsCaProfiles(Map.of("integration-ca", prometheus.caFile()));
+        properties.setPrometheusTargets(List.of(new ManagedOtelRuntimeConfig.PrometheusTarget(
+                "tls",
+                URI.create("https://127.0.0.1:" + prometheus.port() + "/metrics"),
+                Duration.ofSeconds(10),
+                Duration.ofSeconds(5),
+                Map.of(),
+                "integration-ca")));
+        OtelRuntimeSupervisor supervisor = new OtelRuntimeSupervisor(
+                properties,
+                new OtelRuntimeBinaryResolver(properties),
+                new OtelRuntimeConfigTransaction(new OtelRuntimeConfigRenderer()),
+                new OtelRuntimeProcessLauncher(),
+                new OtelRuntimeHealthClient()
+        );
+        try {
+            supervisor.start();
+            assertEquals(OtelRuntimeState.RUNNING, supervisor.snapshot().state());
+            await(() -> capture.containsMetric("hertzbeat_tls_scrape"), Duration.ofSeconds(20));
         } finally {
             supervisor.close();
             prometheus.close();
@@ -276,6 +372,7 @@ class OtelRuntimeSupervisorIntegrationTest {
     }
 
     private OtelRuntimeProperties properties(String runtimeBinary, int exportPort) throws IOException {
+        List<Integer> runtimePorts = availablePortsExcluding(exportPort, 3);
         OtelRuntimeProperties properties = new OtelRuntimeProperties();
         properties.setEnabled(true);
         properties.setHome(tempDir);
@@ -284,9 +381,9 @@ class OtelRuntimeSupervisorIntegrationTest {
         properties.setWorkspaceId("workspace-phase0-integration");
         properties.setToken("phase0-direct-token");
         properties.setExportEndpoint(URI.create("http://127.0.0.1:" + exportPort + "/api/otlp"));
-        properties.setOtlpGrpcEndpoint("127.0.0.1:" + availablePort());
-        properties.setOtlpHttpEndpoint("127.0.0.1:" + availablePort());
-        properties.setHealthPort(availablePort());
+        properties.setOtlpGrpcEndpoint("127.0.0.1:" + runtimePorts.get(0));
+        properties.setOtlpHttpEndpoint("127.0.0.1:" + runtimePorts.get(1));
+        properties.setHealthPort(runtimePorts.get(2));
         properties.setHealthTimeout(Duration.ofMillis(200));
         properties.setValidateTimeout(Duration.ofSeconds(10));
         properties.setStartupTimeout(Duration.ofSeconds(10));
@@ -384,6 +481,35 @@ class OtelRuntimeSupervisorIntegrationTest {
     private static int availablePort() throws IOException {
         try (ServerSocket socket = new ServerSocket(0)) {
             return socket.getLocalPort();
+        }
+    }
+
+    private static List<Integer> availablePortsExcluding(int excludedPort, int count) throws IOException {
+        List<ServerSocket> reservations = new ArrayList<>(count);
+        ServerSocket excludedReservation = null;
+        try {
+            try {
+                excludedReservation = new ServerSocket();
+                excludedReservation.bind(new InetSocketAddress("127.0.0.1", excludedPort));
+            } catch (BindException alreadyReserved) {
+                if (excludedReservation != null) {
+                    excludedReservation.close();
+                    excludedReservation = null;
+                }
+            }
+            for (int index = 0; index < count; index++) {
+                ServerSocket reservation = new ServerSocket();
+                reservation.bind(new InetSocketAddress("127.0.0.1", 0));
+                reservations.add(reservation);
+            }
+            return reservations.stream().map(ServerSocket::getLocalPort).toList();
+        } finally {
+            for (ServerSocket reservation : reservations) {
+                reservation.close();
+            }
+            if (excludedReservation != null) {
+                excludedReservation.close();
+            }
         }
     }
 
@@ -536,6 +662,153 @@ class OtelRuntimeSupervisorIntegrationTest {
                 }
             });
             server.start();
+        }
+
+        int port() {
+            return server.getAddress().getPort();
+        }
+
+        @Override
+        public void close() {
+            if (server != null) {
+                server.stop(0);
+            }
+        }
+    }
+
+    private static final class GuardedPrometheusFixture implements AutoCloseable {
+
+        private final String expectedSecret;
+        private final AtomicInteger requests = new AtomicInteger();
+        private final AtomicInteger missingHeaders = new AtomicInteger();
+        private HttpServer server;
+
+        private GuardedPrometheusFixture(String expectedSecret) {
+            this.expectedSecret = expectedSecret;
+        }
+
+        void start() throws IOException {
+            server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+            server.createContext("/metrics", exchange -> {
+                try (exchange) {
+                    if (!expectedSecret.equals(exchange.getRequestHeaders().getFirst("X-Scrape-Token"))) {
+                        missingHeaders.incrementAndGet();
+                        exchange.sendResponseHeaders(401, -1);
+                        return;
+                    }
+                    int request = requests.incrementAndGet();
+                    if (request == 1) {
+                        Thread.sleep(1500);
+                        exchange.sendResponseHeaders(200, -1);
+                        return;
+                    }
+                    if (request == 2) {
+                        exchange.sendResponseHeaders(503, -1);
+                        return;
+                    }
+                    String body = request == 3 ? highCardinalityBody() : "hertzbeat_prometheus_recovered 1\n";
+                    byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
+                    exchange.getResponseHeaders().set("Content-Type", "text/plain; version=0.0.4");
+                    exchange.sendResponseHeaders(200, bytes.length);
+                    exchange.getResponseBody().write(bytes);
+                } catch (InterruptedException interrupted) {
+                    Thread.currentThread().interrupt();
+                }
+            });
+            server.start();
+        }
+
+        private String highCardinalityBody() {
+            StringBuilder body = new StringBuilder(3_000_000);
+            for (int index = 0; index < 50_000; index++) {
+                body.append("hertzbeat_cardinality_sample{id=\"")
+                        .append(index)
+                        .append("\"} ")
+                        .append(index)
+                        .append('\n');
+            }
+            body.append("hertzbeat_high_cardinality_overflow 1\n");
+            return body.toString();
+        }
+
+        int port() {
+            return server.getAddress().getPort();
+        }
+
+        int requestCount() {
+            return requests.get();
+        }
+
+        int missingHeaderCount() {
+            return missingHeaders.get();
+        }
+
+        @Override
+        public void close() {
+            if (server != null) {
+                server.stop(0);
+            }
+        }
+    }
+
+    private static final class TlsPrometheusFixture implements AutoCloseable {
+
+        private static final char[] STORE_PASSWORD = "changeit".toCharArray();
+        private final Path directory;
+        private Path caFile;
+        private HttpsServer server;
+
+        private TlsPrometheusFixture(Path directory) {
+            this.directory = directory;
+        }
+
+        void start() throws Exception {
+            Files.createDirectories(directory);
+            Path keyStoreFile = directory.resolve("server.p12");
+            caFile = directory.resolve("ca.pem");
+            runKeytool("-genkeypair", "-alias", "test", "-keyalg", "RSA", "-storetype", "PKCS12",
+                    "-keystore", keyStoreFile.toString(), "-storepass", String.valueOf(STORE_PASSWORD),
+                    "-keypass", String.valueOf(STORE_PASSWORD), "-dname", "CN=localhost",
+                    "-ext", "SAN=ip:127.0.0.1,dns:localhost", "-validity", "1", "-noprompt");
+            runKeytool("-exportcert", "-rfc", "-alias", "test", "-keystore", keyStoreFile.toString(),
+                    "-storepass", String.valueOf(STORE_PASSWORD), "-file", caFile.toString());
+            KeyStore keyStore = KeyStore.getInstance("PKCS12");
+            try (var input = Files.newInputStream(keyStoreFile)) {
+                keyStore.load(input, STORE_PASSWORD);
+            }
+            KeyManagerFactory keyManagers = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            keyManagers.init(keyStore, STORE_PASSWORD);
+            SSLContext context = SSLContext.getInstance("TLS");
+            context.init(keyManagers.getKeyManagers(), null, new SecureRandom());
+            server = HttpsServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+            server.setHttpsConfigurator(new HttpsConfigurator(context));
+            server.createContext("/metrics", exchange -> {
+                try (exchange) {
+                    byte[] body = "hertzbeat_tls_scrape 1\n".getBytes(StandardCharsets.UTF_8);
+                    exchange.getResponseHeaders().set("Content-Type", "text/plain; version=0.0.4");
+                    exchange.sendResponseHeaders(200, body.length);
+                    exchange.getResponseBody().write(body);
+                }
+            });
+            server.start();
+        }
+
+        private void runKeytool(String... arguments) throws Exception {
+            String executable = Path.of(System.getProperty("java.home"), "bin",
+                    System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win")
+                            ? "keytool.exe" : "keytool").toString();
+            List<String> command = new ArrayList<>(arguments.length + 1);
+            command.add(executable);
+            command.addAll(List.of(arguments));
+            Process process = new ProcessBuilder(command).redirectErrorStream(true).start();
+            String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            if (process.waitFor() != 0) {
+                throw new IllegalStateException("keytool failed: " + output);
+            }
+        }
+
+        Path caFile() {
+            return caFile;
         }
 
         int port() {

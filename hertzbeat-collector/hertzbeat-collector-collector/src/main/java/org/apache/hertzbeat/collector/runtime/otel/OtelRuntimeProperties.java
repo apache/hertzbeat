@@ -62,7 +62,22 @@ public class OtelRuntimeProperties {
 
     private Duration hostMetricsInterval = Duration.ofSeconds(10);
 
+    private Set<ManagedOtelRuntimeConfig.HostMetricsScraper> hostMetricsScrapers = Set.of(
+            ManagedOtelRuntimeConfig.HostMetricsScraper.CPU,
+            ManagedOtelRuntimeConfig.HostMetricsScraper.DISK,
+            ManagedOtelRuntimeConfig.HostMetricsScraper.FILESYSTEM,
+            ManagedOtelRuntimeConfig.HostMetricsScraper.LOAD,
+            ManagedOtelRuntimeConfig.HostMetricsScraper.MEMORY,
+            ManagedOtelRuntimeConfig.HostMetricsScraper.NETWORK,
+            ManagedOtelRuntimeConfig.HostMetricsScraper.PAGING,
+            ManagedOtelRuntimeConfig.HostMetricsScraper.PROCESSES
+    );
+
     private List<ManagedOtelRuntimeConfig.PrometheusTarget> prometheusTargets = List.of();
+
+    private Map<String, String> prometheusHeaderSecrets = Map.of();
+
+    private Map<String, Path> prometheusTlsCaProfiles = Map.of();
 
     private List<ManagedOtelRuntimeConfig.FileLogSource> fileLogSources = List.of();
 
@@ -120,7 +135,8 @@ public class OtelRuntimeProperties {
                 fileLogSources,
                 environment,
                 resourceDetectors,
-                telemetryFilterPresets
+                telemetryFilterPresets,
+                hostMetricsScrapers
         );
     }
 

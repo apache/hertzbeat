@@ -22,6 +22,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
+import java.util.List;
 import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus;
 import org.junit.jupiter.api.Test;
 
@@ -37,6 +38,14 @@ class OtelRuntimeStatusProviderTest {
         when(supervisor.snapshot()).thenReturn(new OtelRuntimeSnapshot(
                 OtelRuntimeState.RUNNING, 42, 2, Instant.parse("2026-07-15T06:00:00Z"), ""));
         when(supervisor.activeRevision()).thenReturn(11L);
+        ManagedOtelRuntimeStatus.ManagedOtelSourceStatus source =
+                new ManagedOtelRuntimeStatus.ManagedOtelSourceStatus(
+                        ManagedOtelRuntimeStatus.SourceType.HOST_METRICS,
+                        "host",
+                        11,
+                        ManagedOtelRuntimeStatus.SourceState.ACTIVE,
+                        "");
+        when(supervisor.sourceStatuses()).thenReturn(List.of(source));
         OtelRuntimeStatusProvider provider = new OtelRuntimeStatusProvider(properties, supervisor);
 
         ManagedOtelRuntimeStatus status = provider.status();
@@ -46,6 +55,7 @@ class OtelRuntimeStatusProviderTest {
         assertEquals(11, status.activeRevision());
         assertEquals(ManagedOtelRuntimeStatus.IntakeCredentialState.CONFIGURED,
                 status.intakeCredentialState());
+        assertEquals(List.of(source), status.sources());
     }
 
     @Test
