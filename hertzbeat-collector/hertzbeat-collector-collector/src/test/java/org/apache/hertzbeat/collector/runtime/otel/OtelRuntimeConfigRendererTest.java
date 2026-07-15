@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.collector.runtime.otel;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.URI;
@@ -50,12 +51,20 @@ class OtelRuntimeConfigRendererTest {
         String yaml = Files.readString(config);
 
         assertTrue(yaml.contains("hostmetrics:"));
+        assertTrue(yaml.contains("otlp:"));
+        assertTrue(yaml.contains("endpoint: '127.0.0.1:4317'"));
+        assertTrue(yaml.contains("endpoint: '127.0.0.1:4318'"));
+        assertTrue(yaml.contains("max_recv_msg_size_mib: 4"));
+        assertTrue(yaml.contains("max_request_body_size: 4194304"));
         assertTrue(yaml.contains("collection_interval: 30s"));
         assertTrue(yaml.contains("processors: [memory_limiter, resource, batch]"));
         assertTrue(yaml.contains("endpoint: 127.0.0.1:13247"));
         assertTrue(yaml.contains("hertzbeat.config.schema"));
         assertTrue(yaml.contains("value: \"42\""));
         assertTrue(yaml.contains("${env:HERTZBEAT_OTLP_TOKEN}"));
+        assertTrue(yaml.contains("    traces:\n      receivers: [otlp]"));
+        assertTrue(yaml.contains("receivers: [hostmetrics, otlp]"));
+        assertTrue(yaml.contains("    logs:\n      receivers: [otlp]"));
         assertFalse(yaml.contains(properties.getToken()));
     }
 
@@ -82,7 +91,21 @@ class OtelRuntimeConfigRendererTest {
         assertTrue(yaml.contains("storage: file_storage"));
         assertTrue(yaml.contains("max_concurrent_files: 32"));
         assertTrue(yaml.contains("directory: ${env:HERTZBEAT_OTEL_FILE_STORAGE_DIR}"));
-        assertTrue(yaml.contains("    logs:\n      receivers: [filelog/payments]"));
+        assertTrue(yaml.contains("    logs:\n      receivers: [otlp, filelog/payments]"));
         assertTrue(Files.isDirectory(tempDir.resolve("data/otel-runtime")));
+    }
+
+    @Test
+    void rejectsUnsafeOtlpListenerConfiguration() {
+        OtelRuntimeProperties properties = new OtelRuntimeProperties();
+        properties.setHome(tempDir);
+        properties.setConfig(Path.of("conf/runtime.yaml"));
+        properties.setOtlpHttpEndpoint("0.0.0.0:4318/injected");
+
+        assertThrows(IllegalArgumentException.class, () -> new OtelRuntimeConfigRenderer().render(properties));
+
+        properties.setOtlpHttpEndpoint("127.0.0.1:4318");
+        properties.setOtlpMaxRequestMiB(65);
+        assertThrows(IllegalArgumentException.class, () -> new OtelRuntimeConfigRenderer().render(properties));
     }
 }

@@ -4,6 +4,14 @@
 # The ASF licenses this file to You under the Apache License, Version 2.0.
 
 receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 127.0.0.1:14317
+        max_recv_msg_size_mib: 4
+      http:
+        endpoint: 127.0.0.1:14318
+        max_request_body_size: 4194304
   hostmetrics:
     collection_interval: 10s
     scrapers:
@@ -72,10 +80,14 @@ service:
   extensions: [health_check, file_storage]
   pipelines:
     metrics:
-      receivers: [hostmetrics, prometheus/validation]
+      receivers: [hostmetrics, prometheus/validation, otlp]
       processors: [memory_limiter, resource, batch]
       exporters: [otlphttp]
     logs:
-      receivers: [filelog/validation]
+      receivers: [filelog/validation, otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [otlphttp]
+    traces:
+      receivers: [otlp]
       processors: [memory_limiter, resource, batch]
       exporters: [otlphttp]

@@ -73,6 +73,12 @@ public class OtelRuntimeProperties {
 
     private Path fileStorageDirectory = Path.of("data", "otel-runtime");
 
+    private String otlpGrpcEndpoint = "127.0.0.1:4317";
+
+    private String otlpHttpEndpoint = "127.0.0.1:4318";
+
+    private int otlpMaxRequestMiB = 4;
+
     private int healthPort = 13133;
 
     private Duration healthTimeout = Duration.ofSeconds(2);

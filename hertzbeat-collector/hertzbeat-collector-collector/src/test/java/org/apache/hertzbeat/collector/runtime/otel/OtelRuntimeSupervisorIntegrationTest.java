@@ -28,6 +28,9 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -157,6 +160,55 @@ class OtelRuntimeSupervisorIntegrationTest {
         }
     }
 
+    @Test
+    void receivesAndForwardsOtlpHttpThreeSignals() throws Exception {
+        String runtimeBinary = System.getenv(RUNTIME_BINARY_ENV);
+        Assumptions.assumeTrue(runtimeBinary != null && !runtimeBinary.isBlank(),
+                () -> RUNTIME_BINARY_ENV + " is required for the real runtime proof");
+        OtlpCapture capture = new OtlpCapture();
+        capture.start();
+        OtelRuntimeProperties properties = properties(runtimeBinary, capture.port());
+        OtelRuntimeSupervisor supervisor = new OtelRuntimeSupervisor(
+                properties,
+                new OtelRuntimeBinaryResolver(properties),
+                new OtelRuntimeConfigTransaction(new OtelRuntimeConfigRenderer()),
+                new OtelRuntimeProcessLauncher(),
+                new OtelRuntimeHealthClient()
+        );
+        try {
+            supervisor.start();
+            assertEquals(OtelRuntimeState.RUNNING, supervisor.snapshot().state());
+            sendOtlpJson(properties.getOtlpHttpEndpoint(), "metrics", """
+                    {"resourceMetrics":[{"scopeMetrics":[{"metrics":[{
+                      "name":"hertzbeat_receiver_metric",
+                      "gauge":{"dataPoints":[{"asDouble":7.0}]}
+                    }]}]}]}
+                    """);
+            sendOtlpJson(properties.getOtlpHttpEndpoint(), "logs", """
+                    {"resourceLogs":[{"scopeLogs":[{"logRecords":[{
+                      "severityText":"INFO",
+                      "body":{"stringValue":"hertzbeat receiver log"}
+                    }]}]}]}
+                    """);
+            sendOtlpJson(properties.getOtlpHttpEndpoint(), "traces", """
+                    {"resourceSpans":[{"scopeSpans":[{"spans":[{
+                      "traceId":"000102030405060708090a0b0c0d0e0f",
+                      "spanId":"0001020304050607",
+                      "name":"hertzbeat receiver span",
+                      "startTimeUnixNano":"1783757000000000000",
+                      "endTimeUnixNano":"1783757000010000000"
+                    }]}]}]}
+                    """);
+
+            await(() -> capture.containsMetric("hertzbeat_receiver_metric"), Duration.ofSeconds(15));
+            await(() -> capture.containsLog("hertzbeat receiver log"), Duration.ofSeconds(15));
+            await(() -> capture.containsTrace("hertzbeat receiver span"), Duration.ofSeconds(15));
+        } finally {
+            supervisor.close();
+            capture.close();
+        }
+    }
+
     private OtelRuntimeProperties properties(String runtimeBinary, int exportPort) throws IOException {
         OtelRuntimeProperties properties = new OtelRuntimeProperties();
         properties.setEnabled(true);
@@ -166,6 +218,8 @@ class OtelRuntimeSupervisorIntegrationTest {
         properties.setWorkspaceId("workspace-phase0-integration");
         properties.setToken("phase0-direct-token");
         properties.setExportEndpoint(URI.create("http://127.0.0.1:" + exportPort + "/api/otlp"));
+        properties.setOtlpGrpcEndpoint("127.0.0.1:" + availablePort());
+        properties.setOtlpHttpEndpoint("127.0.0.1:" + availablePort());
         properties.setHealthPort(availablePort());
         properties.setHealthTimeout(Duration.ofMillis(200));
         properties.setValidateTimeout(Duration.ofSeconds(10));
@@ -173,6 +227,16 @@ class OtelRuntimeSupervisorIntegrationTest {
         properties.setShutdownTimeout(Duration.ofSeconds(5));
         properties.setRestartDelay(Duration.ofMillis(100));
         return properties;
+    }
+
+    private static void sendOtlpJson(String endpoint, String signal, String payload) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder(URI.create("http://" + endpoint + "/v1/" + signal))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(payload))
+                .build();
+        HttpResponse<String> response = HttpClient.newHttpClient()
+                .send(request, HttpResponse.BodyHandlers.ofString());
+        assertEquals(200, response.statusCode(), response.body());
     }
 
     private static int availablePort() throws IOException {
@@ -197,12 +261,14 @@ class OtelRuntimeSupervisorIntegrationTest {
         private final AtomicReference<String> payload = new AtomicReference<>("");
         private final List<String> metricPayloads = new CopyOnWriteArrayList<>();
         private final List<String> logPayloads = new CopyOnWriteArrayList<>();
+        private final List<String> tracePayloads = new CopyOnWriteArrayList<>();
         private HttpServer server;
 
         void start() throws IOException {
             server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
             server.createContext("/api/otlp/v1/metrics", exchange -> capture(exchange, metricPayloads));
             server.createContext("/api/otlp/v1/logs", exchange -> capture(exchange, logPayloads));
+            server.createContext("/api/otlp/v1/traces", exchange -> capture(exchange, tracePayloads));
             server.start();
         }
 
@@ -228,6 +294,14 @@ class OtelRuntimeSupervisorIntegrationTest {
 
         boolean containsMetric(String metricName) {
             return metricPayloads.stream().anyMatch(value -> value.contains(metricName));
+        }
+
+        boolean containsLog(String body) {
+            return logPayloads.stream().anyMatch(value -> value.contains(body));
+        }
+
+        boolean containsTrace(String spanName) {
+            return tracePayloads.stream().anyMatch(value -> value.contains(spanName));
         }
 
         int logOccurrences(String value) {

@@ -12,6 +12,20 @@ The Java process owns configuration, validation, lifecycle, recovery, and the
 single Collector identity. The Go process exports telemetry directly to the
 HertzBeat Server and never proxies data through Java.
 
+## Data acquisition model
+
+The runtime combines active collection with standard OTLP ingestion:
+
+- `hostmetrics`, `prometheus`, and `filelog` actively collect host metrics,
+  scrape endpoints, and approved local log files.
+- The upstream OTLP receiver accepts application metrics, logs, and traces over
+  loopback gRPC `4317` and HTTP `4318` by default.
+
+All signals share the same bounded processors and direct exporter. Applications
+still need an OpenTelemetry SDK or agent to create traces. Bundled automatic
+instrumentation is a separate capability and is not represented as telemetry
+created by the Collector itself.
+
 ## Build and validate
 
 Go 1.25 or newer is required.

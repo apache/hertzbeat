@@ -113,8 +113,22 @@ public class OtelRuntimeConfigRenderer {
         if (!desiredConfig.hostMetricsEnabled()) {
             throw new IllegalArgumentException("The current runtime requires the host metrics capability");
         }
+        String grpcEndpoint = receiverEndpoint(properties.getOtlpGrpcEndpoint(), "OTLP gRPC");
+        String httpEndpoint = receiverEndpoint(properties.getOtlpHttpEndpoint(), "OTLP HTTP");
+        int maxRequestMiB = properties.getOtlpMaxRequestMiB();
+        if (maxRequestMiB < 1 || maxRequestMiB > 64) {
+            throw new IllegalArgumentException("OTLP maximum request size must be between 1 and 64 MiB");
+        }
         StringBuilder yaml = new StringBuilder("""
                 receivers:
+                  otlp:
+                    protocols:
+                      grpc:
+                        endpoint: %s
+                        max_recv_msg_size_mib: %d
+                      http:
+                        endpoint: %s
+                        max_request_body_size: %d
                   hostmetrics:
                     collection_interval: %ds
                     scrapers:
@@ -126,7 +140,13 @@ public class OtelRuntimeConfigRenderer {
                       network:
                       paging:
                       processes:
-                """.formatted(desiredConfig.hostMetricsInterval().toSeconds()));
+                """.formatted(
+                yamlScalar(grpcEndpoint),
+                maxRequestMiB,
+                yamlScalar(httpEndpoint),
+                maxRequestMiB * 1024 * 1024,
+                desiredConfig.hostMetricsInterval().toSeconds()
+        ));
         appendPrometheusReceivers(yaml, sources.prometheusTargets());
         appendFileLogReceivers(yaml, sources.fileLogSources());
         yaml.append("""
@@ -188,17 +208,19 @@ public class OtelRuntimeConfigRenderer {
                       receivers: [%s]
                       processors: [memory_limiter, resource, batch]
                       exporters: [otlphttp]
+                    logs:
+                      receivers: [%s]
+                      processors: [memory_limiter, resource, batch]
+                      exporters: [otlphttp]
+                    traces:
+                      receivers: [otlp]
+                      processors: [memory_limiter, resource, batch]
+                      exporters: [otlphttp]
                 """.formatted(
                 sources.fileLogSources().isEmpty() ? "health_check" : "health_check, file_storage",
-                metricsReceivers(sources.prometheusTargets())
+                metricsReceivers(sources.prometheusTargets()),
+                logReceivers(sources.fileLogSources())
         ));
-        if (!sources.fileLogSources().isEmpty()) {
-            yaml.append("    logs:\n")
-                    .append("      receivers: [")
-                    .append(fileLogReceivers(sources.fileLogSources())).append("]\n")
-                    .append("      processors: [memory_limiter, resource, batch]\n")
-                    .append("      exporters: [otlphttp]\n");
-        }
         return yaml.toString();
     }
 
@@ -241,14 +263,33 @@ public class OtelRuntimeConfigRenderer {
     }
 
     private static String metricsReceivers(List<ManagedOtelRuntimeConfig.PrometheusTarget> targets) {
-        List<String> receivers = new ArrayList<>(targets.size() + 1);
+        List<String> receivers = new ArrayList<>(targets.size() + 2);
         receivers.add("hostmetrics");
+        receivers.add("otlp");
         targets.forEach(target -> receivers.add("prometheus/" + target.name()));
         return String.join(", ", receivers);
     }
 
-    private static String fileLogReceivers(List<OtelRuntimeSourcePolicy.ResolvedFileLogSource> sources) {
-        return String.join(", ", sources.stream().map(source -> "filelog/" + source.name()).toList());
+    private static String logReceivers(List<OtelRuntimeSourcePolicy.ResolvedFileLogSource> sources) {
+        List<String> receivers = new ArrayList<>(sources.size() + 1);
+        receivers.add("otlp");
+        sources.forEach(source -> receivers.add("filelog/" + source.name()));
+        return String.join(", ", receivers);
+    }
+
+    private static String receiverEndpoint(String value, String label) {
+        String endpoint = value == null ? "" : value.trim();
+        try {
+            URI uri = URI.create("tcp://" + endpoint);
+            if (uri.getHost() == null || uri.getPort() < 1 || uri.getPort() > 65535
+                    || uri.getUserInfo() != null || !uri.getRawPath().isEmpty()
+                    || uri.getRawQuery() != null || uri.getFragment() != null) {
+                throw new IllegalArgumentException();
+            }
+            return endpoint;
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalArgumentException(label + " endpoint must be a host and port", exception);
+        }
     }
 
     private static String yamlScalar(String value) {

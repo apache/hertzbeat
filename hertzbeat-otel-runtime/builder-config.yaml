@@ -12,6 +12,7 @@ dist:
   build_tags: remove_all_sd
 
 receivers:
+  - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.156.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver v0.156.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver v0.156.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/filelogreceiver v0.156.0

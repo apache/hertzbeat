@@ -41,14 +41,17 @@ if grep -R "hertzbeat-collector-go" "$runtime_dir" >/dev/null 2>&1; then
   exit 1
 fi
 
-for component in hostmetricsreceiver memorylimiterprocessor resourceprocessor batchprocessor otlphttpexporter healthcheckextension; do
+for component in hostmetricsreceiver prometheusreceiver filelogreceiver otlpreceiver \
+    memorylimiterprocessor resourceprocessor batchprocessor otlphttpexporter \
+    healthcheckextension filestorage; do
   if ! grep -q "$component" "$runtime_dir/builder-config.yaml"; then
     echo "missing required Phase 0 component: $component" >&2
     exit 1
   fi
 done
 
-for pipeline_component in hostmetrics memory_limiter resource batch otlphttp health_check; do
+for pipeline_component in hostmetrics prometheus filelog otlp memory_limiter resource \
+    batch otlphttp health_check file_storage traces; do
   if ! grep -q "$pipeline_component" "$runtime_dir/config/collector-config.test.yaml"; then
     echo "missing required Phase 0 pipeline configuration: $pipeline_component" >&2
     exit 1
