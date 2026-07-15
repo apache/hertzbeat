@@ -28,6 +28,35 @@ export type TraceRow = {
   resourceAttributes?: Record<string, string>;
 };
 
+type TraceEvent = {
+  timeUnixNano?: number;
+  name?: string;
+  attributes?: Record<string, unknown>;
+};
+
+export type TraceSpan = {
+  traceId?: string;
+  spanId?: string;
+  parentSpanId?: string;
+  spanName?: string;
+  serviceName?: string;
+  status?: string;
+  statusMessage?: string;
+  spanKind?: string;
+  scopeName?: string;
+  scopeVersion?: string;
+  durationNanos?: number;
+  startTime?: number;
+  highlighted?: boolean;
+  resourceAttributes?: Record<string, string>;
+  spanAttributes?: Record<string, string>;
+  events?: TraceEvent[];
+};
+
+export type TraceDetail = TraceRow & { spans?: TraceSpan[] };
+
+export type TraceSpanLayout = TraceSpan & { depth: number; offsetPercent: number; widthPercent: number };
+
 export type LogRow = {
   timeUnixNano?: number;
   observedTimeUnixNano?: number;
@@ -121,6 +150,26 @@ export function traceDurationMs(row: TraceRow) {
   return row.durationNanos == null ? undefined : row.durationNanos / 1_000_000;
 }
 
+export function traceSpanLayout(detail: TraceDetail): TraceSpanLayout[] {
+  const spans = [...(detail.spans ?? [])].sort((left, right) => (left.startTime ?? 0) - (right.startTime ?? 0));
+  const rootStart = detail.startTime ?? spans[0]?.startTime ?? 0;
+  const totalMs = Math.max(traceDurationMs(detail) ?? 0, 0.001);
+  const byId = new Map(spans.map(span => [span.spanId, span]));
+  const depthOf = (span: TraceSpan, visited = new Set<string>()): number => {
+    if (!span.parentSpanId || visited.has(span.parentSpanId)) return 0;
+    const parent = byId.get(span.parentSpanId);
+    if (!parent) return 0;
+    visited.add(span.parentSpanId);
+    return Math.min(depthOf(parent, visited) + 1, 8);
+  };
+  return spans.map(span => ({
+    ...span,
+    depth: depthOf(span),
+    offsetPercent: clamp((((span.startTime ?? rootStart) - rootStart) / totalMs) * 100, 0, 100),
+    widthPercent: clamp((((span.durationNanos ?? 0) / 1_000_000) / totalMs) * 100, 0.4, 100)
+  }));
+}
+
 export function logServiceName(row: LogRow) {
   const value = row.resource?.['service.name'] ?? row.resource?.service_name;
   return typeof value === 'string' ? value : undefined;
@@ -139,4 +188,8 @@ export function logBody(row: LogRow) {
 export function logTimestampMs(row: LogRow) {
   const timestamp = row.timeUnixNano ?? row.observedTimeUnixNano;
   return timestamp == null ? undefined : Math.floor(timestamp / 1_000_000);
+}
+
+function clamp(value: number, minimum: number, maximum: number) {
+  return Math.min(Math.max(value, minimum), maximum);
 }

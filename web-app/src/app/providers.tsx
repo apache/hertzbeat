@@ -23,6 +23,7 @@ import { I18nextProvider, useTranslation } from 'react-i18next';
 import { i18n } from '@/core/i18n/i18n';
 import { SessionProvider } from '@/core/auth/SessionProvider';
 import { resolveAntLocale } from '@/core/i18n/ant-locale';
+import { readRuntimeTheme } from '@/core/runtime-preferences';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,16 +40,22 @@ const queryClient = new QueryClient({
 
 function RuntimeProviders({ children }: PropsWithChildren) {
   const { i18n: runtimeI18n } = useTranslation();
+  const runtimeTheme = readRuntimeTheme();
+  const algorithm = runtimeTheme === 'default'
+    ? theme.defaultAlgorithm
+    : runtimeTheme === 'compact'
+      ? [theme.darkAlgorithm, theme.compactAlgorithm]
+      : theme.darkAlgorithm;
   return (
     <ConfigProvider
         locale={resolveAntLocale(runtimeI18n.resolvedLanguage)}
         theme={{
-          algorithm: theme.darkAlgorithm,
+          algorithm,
           token: {
             colorPrimary: '#5b6fd8',
             borderRadius: 4,
             fontSize: 14,
-            colorBgBase: '#101114'
+            ...(runtimeTheme === 'default' ? { colorBgBase: '#f6f7f9' } : { colorBgBase: '#101114' })
           }
         }}
     >

@@ -1,0 +1,79 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.form {
+  padding: 16px 0;
+  border-bottom: 1px solid #2a303b;
+}
+
+.primaryRow {
+  display: grid;
+  grid-template-columns: minmax(280px, 1.6fr) minmax(180px, 0.8fr) minmax(160px, 0.7fr) 88px;
+  gap: 8px;
+}
+
+.queryInput :global(input) {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.run {
+  font-weight: 600;
+}
+
+.advanced {
+  margin-top: 10px;
+}
+
+.advanced summary {
+  width: max-content;
+  color: #9da5b4;
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.advanced[open] summary {
+  margin-bottom: 10px;
+  color: #cbd0da;
+}
+
+.advancedFields {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  align-items: center;
+}
+
+.activeFilters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.activeFilters :global(.ant-tag) {
+  margin: 0;
+  border-color: #35405a;
+  background: #1c2230;
+}
+
+@media (max-width: 880px) {
+  .primaryRow,
+  .advancedFields {
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+  }
+}

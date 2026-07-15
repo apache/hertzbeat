@@ -20,7 +20,7 @@ import { Navigate, createBrowserRouter, RouterProvider, type RouteObject } from 
 
 import { AuthGate } from '@/core/auth/AuthGate';
 import { RouteErrorBoundary } from '@/features/errors/RouteErrorBoundary';
-import { BasicLayout } from '@/layout/basic/BasicLayout';
+import { BasicLayout } from '@/layout/basic/basic-layout';
 
 // Static route metadata is exported so architecture tests can inspect the data-router boundary.
 // eslint-disable-next-line react-refresh/only-export-components
@@ -76,7 +76,7 @@ export const appRoutes: RouteObject[] = [
                 id: 'explore',
                 path: '/explore',
                 lazy: async () => {
-                  const { ExplorePage } = await import('@/features/explore/ExplorePage');
+                  const { ExplorePage } = await import('@/features/explore/explore-page');
                   return { Component: ExplorePage };
                 }
               },

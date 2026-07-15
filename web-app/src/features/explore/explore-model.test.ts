@@ -17,17 +17,18 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { buildCrossSignalPath, buildExplorePath, buildLogStreamPath, buildSignalApiPath, parseExploreQuery, timeRangeMilliseconds } from './explore-model';
+import { buildCrossSignalPath, buildExplorePath, mergeExploreQuery, parseExploreQuery, timeRangeMilliseconds } from './explore-model';
 
 describe('explore query state', () => {
   it('keeps only supported values and trims empty context', () => {
-    expect(parseExploreQuery(new URLSearchParams('signal=logs&timeRange=last-1h&serviceName=%20checkout%20&query=timeout&errorOnly=true'))).toEqual({
+    const query = parseExploreQuery(new URLSearchParams('signal=logs&timeRange=last-1h&serviceName=%20checkout%20&query=timeout&errorOnly=true'));
+    expect(query).toMatchObject({
       signal: 'logs',
       timeRange: 'last-1h',
       serviceName: 'checkout',
-      query: 'timeout',
-      errorOnly: true
+      query: 'timeout'
     });
+    expect(query).not.toHaveProperty('errorOnly');
   });
 
   it('builds a reproducible path without internal entity context', () => {
@@ -36,26 +37,30 @@ describe('explore query state', () => {
     );
   });
 
-  it('maps the shared context to each existing query API', () => {
-    const base = { signal: 'logs' as const, timeRange: 'last-15m' as const, serviceName: 'checkout', environment: 'prod', query: 'timeout', traceId: 'trace-1' };
-    expect(buildSignalApiPath(base, 1_000_000)).toBe('/api/logs/list?serviceName=checkout&environment=prod&start=100000&end=1000000&pageIndex=0&pageSize=20&search=timeout&traceId=trace-1');
-    expect(buildSignalApiPath({ ...base, signal: 'traces' }, 1_000_000)).toBe('/api/traces/list?serviceName=checkout&environment=prod&start=100000&end=1000000&pageIndex=0&pageSize=20&operationName=timeout&traceId=trace-1');
-    expect(buildSignalApiPath({ ...base, signal: 'metrics' }, 1_000_000)).toBe('/api/ingestion/otlp/metrics/console?serviceName=checkout&environment=prod&start=100000&end=1000000&query=timeout');
-  });
-
   it('preserves trace context when moving from logs to traces', () => {
     expect(buildCrossSignalPath({ signal: 'logs', timeRange: 'last-30m', serviceName: 'checkout' }, 'traces', { traceId: 'trace-1' })).toBe(
       '/explore?signal=traces&timeRange=last-30m&serviceName=checkout&traceId=trace-1'
     );
   });
 
+  it('drops fields that do not belong to the selected signal', () => {
+    const metrics = mergeExploreQuery({ signal: 'logs', timeRange: 'last-30m', traceId: 'trace-1', severityText: 'ERROR', live: true }, { signal: 'metrics' });
+    expect(metrics).toEqual({
+      signal: 'metrics',
+      timeRange: 'last-30m',
+      serviceName: undefined,
+      environment: undefined,
+      query: undefined,
+      end: undefined,
+      metricFilter: undefined,
+      groupBy: undefined,
+      aggregation: undefined,
+      step: undefined
+    });
+  });
+
   it('uses bounded time presets', () => {
     expect(timeRangeMilliseconds('last-24h')).toBe(86_400_000);
   });
 
-  it('maps advanced log filters to history and stream contracts', () => {
-    const query = { signal: 'logs' as const, timeRange: 'last-30m' as const, serviceName: 'checkout', query: 'timeout', severityText: 'ERROR', traceId: 'trace-1', spanId: 'span-1', resourceFilter: 'service.version=1.2.3', attributeFilter: 'http.route:/checkout' };
-    expect(buildSignalApiPath(query, 2_000_000)).toContain('severityText=ERROR&resourceFilter=service.version%3D1.2.3&attributeFilter=http.route%3A%2Fcheckout');
-    expect(buildLogStreamPath(query)).toBe('/api/logs/sse/subscribe?serviceName=checkout&logContent=timeout&traceId=trace-1&spanId=span-1&severityText=ERROR&resourceFilter=service.version%3D1.2.3&attributeFilter=http.route%3A%2Fcheckout');
-  });
 });

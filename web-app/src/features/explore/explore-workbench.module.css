@@ -1,0 +1,102 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 18px;
+}
+
+.title {
+  margin: 0 0 4px !important;
+  font-size: 27px !important;
+  letter-spacing: -0.025em;
+}
+
+.scope {
+  display: flex;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+.timeRange {
+  width: 176px;
+}
+
+.navigationRow {
+  display: flex;
+  align-items: flex-end;
+  min-height: 43px;
+  border-bottom: 1px solid #2a303b;
+}
+
+.signalNavigation {
+  display: flex;
+  align-items: stretch;
+  gap: 26px;
+}
+
+.signal,
+.activeSignal {
+  position: relative;
+  height: 43px;
+  padding: 0;
+  border: 0;
+  color: #9299a8;
+  font: inherit;
+  font-weight: 550;
+  background: transparent;
+  cursor: pointer;
+}
+
+.signal:hover,
+.activeSignal {
+  color: #f1f3f7;
+}
+
+.activeSignal::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  background: #6f83f7;
+  content: '';
+}
+
+.logMode {
+  display: flex;
+  gap: 2px;
+  margin: 0 0 7px auto;
+  padding: 2px;
+  border: 1px solid #303744;
+  border-radius: 5px;
+  background: #171b23;
+}
+
+.logMode :global(.ant-btn) {
+  height: 28px;
+  padding-inline: 12px;
+}
+
+@media (max-width: 900px) {
+  .header {
+    flex-direction: column;
+  }
+}

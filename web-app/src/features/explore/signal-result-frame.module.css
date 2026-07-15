@@ -1,0 +1,111 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.frame {
+  min-width: 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 48px;
+  border-bottom: 1px solid #2a303b;
+}
+
+.identity {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.identity h3 {
+  margin: 0;
+  color: #e7eaf0;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.identity span,
+.meta dt {
+  color: #7f8797;
+  font-size: 12px;
+}
+
+.meta {
+  display: flex;
+  gap: 22px;
+  margin: 0;
+}
+
+.headerTools {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.meta div {
+  display: flex;
+  gap: 6px;
+}
+
+.meta dt,
+.meta dd {
+  margin: 0;
+}
+
+.meta dd {
+  color: #cbd0da;
+  font-size: 12px;
+  font-weight: 550;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 260px;
+  color: #8c94a3;
+}
+
+.empty strong {
+  margin-bottom: 5px;
+  color: #d6dae3;
+  font-weight: 550;
+}
+
+.empty span {
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .header {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 12px 0;
+  }
+
+  .meta {
+    flex-wrap: wrap;
+  }
+
+  .headerTools {
+    flex-wrap: wrap;
+  }
+}

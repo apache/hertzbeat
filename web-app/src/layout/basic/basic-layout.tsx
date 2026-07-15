@@ -16,7 +16,7 @@
  */
 
 import { useQueryClient } from '@tanstack/react-query';
-import { App, Button, Layout, Menu, Space, Typography } from 'antd';
+import { App, Avatar, Button, Layout, Menu, Typography } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
@@ -25,7 +25,7 @@ import { routeRegistry } from '@/app/route-registry';
 import { anonymousSession, logoutSession, sessionQueryKey } from '@/core/auth/session-api';
 import { useSession } from '@/core/auth/session-context';
 
-import styles from './BasicLayout.module.css';
+import styles from './basic-layout.module.css';
 
 const { Content, Header, Sider } = Layout;
 
@@ -38,6 +38,7 @@ export function BasicLayout() {
   const { message } = App.useApp();
   const [loggingOut, setLoggingOut] = useState(false);
   const navigation = routeRegistry.filter(route => route.navigation);
+  const accountName = session?.username ?? '';
 
   const logout = async () => {
     setLoggingOut(true);
@@ -55,14 +56,19 @@ export function BasicLayout() {
   return (
     <Layout className={styles.root}>
       <Header className={styles.header}>
-        <strong className={styles.brand}>HertzBeat</strong>
-        <Space className={styles.account ?? ''}>
-          <Typography.Text>{session?.username}</Typography.Text>
-          <Button type="text" loading={loggingOut} onClick={() => void logout()}>{t('auth.logout')}</Button>
-        </Space>
+        <div className={styles.brandBlock}>
+          <strong className={styles.brand}>HertzBeat</strong>
+          <span className={styles.productLabel}>{t('menu.operatorConsole')}</span>
+        </div>
+        <div className={styles.account}>
+          <Avatar size={28}>{accountName.slice(0, 1).toUpperCase()}</Avatar>
+          <Typography.Text className={styles.accountName ?? ''}>{accountName}</Typography.Text>
+          <Button className={styles.logout ?? ''} type="text" loading={loggingOut} onClick={() => void logout()}>{t('auth.logout')}</Button>
+        </div>
       </Header>
       <Layout>
         <Sider className={styles.sider} width={220} aria-label={t('menu.primary')}>
+          <div className={styles.navigationLabel}>{t('menu.workspace')}</div>
           <Menu
             mode="inline"
             selectedKeys={[navigation.find(route => location.pathname.startsWith(route.path))?.id ?? '']}

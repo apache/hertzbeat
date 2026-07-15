@@ -15,41 +15,45 @@
  * limitations under the License.
  */
 
-.page {
-  max-width: 1440px;
-  margin: 0 auto;
+.chartSection {
+  padding: 18px 0 12px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
 }
 
-.heading {
-  margin-bottom: 20px;
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  min-height: 28px;
+  font-size: 12px;
 }
 
-.toolbar {
-  display: grid;
-  grid-template-columns: 180px minmax(180px, 1fr) minmax(180px, 1fr) minmax(220px, 1.4fr) auto;
-  gap: 12px;
-  align-items: end;
-  margin-bottom: 16px;
+.legend span {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
 }
 
-.mode {
-  margin: 12px 0;
+.legend i {
+  width: 16px;
+  height: 3px;
 }
 
-.results {
-  min-height: 360px;
+.chart {
+  display: block;
+  width: 100%;
+  height: 240px;
+  overflow: visible;
 }
 
-.context {
-  margin-bottom: 16px;
+.chart line {
+  stroke: var(--ant-color-border-secondary);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
 }
 
-.tableLink {
-  padding: 0;
-}
-
-@media (max-width: 1100px) {
-  .toolbar {
-    grid-template-columns: repeat(2, minmax(180px, 1fr));
-  }
+.chart path {
+  fill: none;
+  stroke-width: 1.75;
+  vector-effect: non-scaling-stroke;
 }

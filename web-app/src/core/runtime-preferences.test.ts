@@ -15,31 +15,18 @@
  * limitations under the License.
  */
 
-import 'antd/dist/reset.css';
-import './styles.css';
+import { describe, expect, it } from 'vitest';
 
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
+import { persistSystemPreferences, readRuntimeLocale, readRuntimeTheme } from './runtime-preferences';
 
-import { initializeI18n } from '@/core/i18n/i18n';
-import { readRuntimeTheme } from '@/core/runtime-preferences';
-
-import { AppProviders } from './providers';
-import { AppRouter } from './router';
-
-async function bootstrap() {
-  document.documentElement.dataset.theme = readRuntimeTheme();
-  await initializeI18n();
-  const root = document.getElementById('root');
-  if (!root) throw new Error('The HertzBeat application root was not found.');
-
-  createRoot(root).render(
-    <StrictMode>
-      <AppProviders>
-        <AppRouter />
-      </AppProviders>
-    </StrictMode>
-  );
-}
-
-void bootstrap();
+describe('runtime preferences', () => {
+  it('uses stable dark defaults and persists only supported values', () => {
+    const values = new Map<string, string>();
+    const storage = { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => values.set(key, value) };
+    expect(readRuntimeTheme(storage)).toBe('dark');
+    expect(readRuntimeLocale(storage)).toBeNull();
+    persistSystemPreferences({ locale: 'pt_BR', theme: 'compact' }, storage);
+    expect(readRuntimeLocale(storage)).toBe('pt-BR');
+    expect(readRuntimeTheme(storage)).toBe('compact');
+  });
+});

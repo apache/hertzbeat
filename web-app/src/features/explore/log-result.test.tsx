@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { I18nextProvider, useTranslation } from 'react-i18next';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
-import { LogResult } from './LogResult';
+import { LogResult } from './log-result';
 
 describe('LogResult', () => {
   beforeAll(async () => {
@@ -30,12 +30,35 @@ describe('LogResult', () => {
     await loadLocale('en-US');
   });
 
+  beforeEach(() => {
+    EventSourceStub.instances = [];
+    Object.defineProperty(globalThis, 'EventSource', { value: EventSourceStub, configurable: true });
+  });
+
+  afterEach(() => cleanup());
+
   it('opens an inspectable OTLP log detail without leaving the workbench', () => {
     render(<I18nextProvider i18n={i18n}><Subject /></I18nextProvider>);
     fireEvent.click(screen.getByText('payment timeout'));
     expect(screen.getByRole('dialog', { name: 'Log detail' })).toBeInTheDocument();
     expect(screen.getByText(/service.version/)).toBeInTheDocument();
     expect(screen.getByText(/retry.count/)).toBeInTheDocument();
+  });
+
+  it('lets an operator pause, resume, and clear a live stream', () => {
+    render(<I18nextProvider i18n={i18n}><LiveSubject /></I18nextProvider>);
+    expect(EventSourceStub.instances).toHaveLength(1);
+
+    act(() => EventSourceStub.instances[0]?.emit({ body: 'live payment timeout', severityText: 'ERROR' }));
+    expect(screen.getByText('live payment timeout')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Pause' }));
+    expect(EventSourceStub.instances[0]?.close).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
+    expect(screen.queryByText('live payment timeout')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Resume' }));
+    expect(EventSourceStub.instances).toHaveLength(2);
   });
 });
 
@@ -57,8 +80,38 @@ function Subject() {
   />;
 }
 
+function LiveSubject() {
+  const { t } = useTranslation();
+  return <LogResult
+    query={{ signal: 'logs', timeRange: 'last-30m', live: true }}
+    t={t}
+    navigate={vi.fn()}
+  />;
+}
+
 class ResizeObserverStub {
   observe() {}
   unobserve() {}
   disconnect() {}
+}
+
+
+class EventSourceStub {
+  static instances: EventSourceStub[] = [];
+  onopen: (() => void) | null = null;
+  onerror: (() => void) | null = null;
+  close = vi.fn();
+  private listener?: (event: MessageEvent<string>) => void;
+
+  constructor(readonly url: string) {
+    EventSourceStub.instances.push(this);
+  }
+
+  addEventListener(_type: string, listener: EventListenerOrEventListenerObject) {
+    this.listener = listener as (event: MessageEvent<string>) => void;
+  }
+
+  emit(row: Record<string, unknown>) {
+    this.listener?.({ data: JSON.stringify(row) } as MessageEvent<string>);
+  }
 }

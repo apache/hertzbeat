@@ -1,0 +1,37 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.detailToolbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 52px; border-bottom: 1px solid var(--ant-color-border-secondary); }
+.clickableTable :global(.ant-table-row) { cursor: pointer; }
+.clickableTable :global(.ant-table-row:hover td) { background: #222a3a !important; }
+.actions { display: flex; gap: 8px; }
+.traceSummary { display: flex; gap: 24px; align-items: baseline; }
+.waterfall { margin-top: 16px; border-top: 1px solid var(--ant-color-border-secondary); }
+.spanRow { display: grid; grid-template-columns: minmax(220px, 32%) 1fr 90px; width: 100%; min-height: 52px; padding: 0; color: inherit; text-align: left; background: transparent; border: 0; border-bottom: 1px solid var(--ant-color-border-secondary); cursor: pointer; }
+.spanRow:hover, .spanRow[data-selected='true'] { background: var(--ant-color-fill-quaternary); }
+.spanName { display: flex; flex-direction: column; justify-content: center; min-width: 0; border-right: 1px solid var(--ant-color-border-secondary); }
+.spanName strong, .spanName small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.spanName small { color: var(--ant-color-text-secondary); }
+.track { position: relative; align-self: center; height: 16px; margin: 0 12px; background: var(--ant-color-fill-quaternary); }
+.track i { position: absolute; top: 2px; height: 12px; min-width: 2px; background: var(--ant-color-primary); }
+.track i[data-error='true'] { background: var(--ant-color-error); }
+.spanDuration { align-self: center; text-align: right; font-variant-numeric: tabular-nums; }
+.spanDetail { margin-top: 28px; }
+.events { margin-top: 20px; }
+.events > div { padding: 10px 0; border-top: 1px solid var(--ant-color-border-secondary); }
+
+@media (max-width: 760px) { .spanRow { grid-template-columns: 180px 1fr 72px; } }

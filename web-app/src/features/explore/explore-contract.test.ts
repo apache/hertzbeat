@@ -17,7 +17,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { logBody, logServiceName, logTimestampMs, metricPath, metricPoints, metricSeries, traceDurationMs } from './explore-contract';
+import { logBody, logServiceName, logTimestampMs, metricPath, metricPoints, metricSeries, traceDurationMs, traceSpanLayout } from './explore-contract';
 
 describe('explore API contracts', () => {
   it('normalizes datasource frames returned by the metrics console', () => {
@@ -42,6 +42,13 @@ describe('explore API contracts', () => {
 
   it('uses the established trace nanosecond duration contract', () => {
     expect(traceDurationMs({ durationNanos: 3_000_000_000 })).toBe(3000);
+    expect(traceSpanLayout({ startTime: 1000, durationNanos: 1_000_000_000, spans: [
+      { spanId: 'root', startTime: 1000, durationNanos: 1_000_000_000 },
+      { spanId: 'child', parentSpanId: 'root', startTime: 1250, durationNanos: 500_000_000 }
+    ] })).toMatchObject([
+      { spanId: 'root', depth: 0, offsetPercent: 0, widthPercent: 100 },
+      { spanId: 'child', depth: 1, offsetPercent: 25, widthPercent: 50 }
+    ]);
   });
 
   it('creates a bounded plot from numeric and numeric-string samples', () => {

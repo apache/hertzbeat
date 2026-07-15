@@ -17,8 +17,10 @@
 
 import i18next from 'i18next';
 
+import { readRuntimeLocale } from '@/core/runtime-preferences';
+
 const supportedLocales = ['en-US', 'zh-CN', 'zh-TW', 'ja-JP', 'pt-BR'] as const;
-type SupportedLocale = (typeof supportedLocales)[number];
+export type SupportedLocale = (typeof supportedLocales)[number];
 
 const localeLoaders: Record<SupportedLocale, () => Promise<{ default: Record<string, unknown> }>> = {
   'en-US': () => import('@/assets/i18n/en-US.json'),
@@ -52,6 +54,6 @@ export async function initializeI18n() {
       resources: {}
     });
   }
-  await loadLocale(resolveLocale(globalThis.navigator?.language));
+  await loadLocale(readRuntimeLocale() ?? resolveLocale(globalThis.navigator?.language));
   return i18n;
 }

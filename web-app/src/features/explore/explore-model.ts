@@ -19,20 +19,65 @@ export type ExploreSignal = 'metrics' | 'logs' | 'traces';
 
 export type ExploreTimeRange = 'last-15m' | 'last-30m' | 'last-1h' | 'last-6h' | 'last-24h';
 
-export type ExploreQuery = {
-  signal: ExploreSignal;
+type SharedExploreQuery = {
   timeRange: ExploreTimeRange;
   serviceName?: string | undefined;
   environment?: string | undefined;
   query?: string | undefined;
+  end?: number | undefined;
+};
+
+export type MetricExploreQuery = SharedExploreQuery & {
+  signal: 'metrics';
+  metricFilter?: string | undefined;
+  groupBy?: string | undefined;
+  aggregation?: string | undefined;
+  step?: string | undefined;
+};
+
+export type LogExploreQuery = SharedExploreQuery & {
+  signal: 'logs';
+  live?: boolean | undefined;
+  severityText?: string | undefined;
+  traceId?: string | undefined;
+  spanId?: string | undefined;
+  resourceFilter?: string | undefined;
+  attributeFilter?: string | undefined;
+  pageIndex?: number | undefined;
+};
+
+export type TraceExploreQuery = SharedExploreQuery & {
+  signal: 'traces';
   traceId?: string | undefined;
   errorOnly?: boolean | undefined;
+  resourceFilter?: string | undefined;
+  minDurationMs?: number | undefined;
+  maxDurationMs?: number | undefined;
+  pageIndex?: number | undefined;
+};
+
+export type ExploreQuery = MetricExploreQuery | LogExploreQuery | TraceExploreQuery;
+
+export type ExploreQueryPatch = {
+  signal?: ExploreSignal | undefined;
+  timeRange?: ExploreTimeRange | undefined;
+  serviceName?: string | undefined;
+  environment?: string | undefined;
+  query?: string | undefined;
   end?: number | undefined;
+  traceId?: string | undefined;
+  errorOnly?: boolean | undefined;
   live?: boolean | undefined;
   severityText?: string | undefined;
   spanId?: string | undefined;
   resourceFilter?: string | undefined;
   attributeFilter?: string | undefined;
+  metricFilter?: string | undefined;
+  groupBy?: string | undefined;
+  aggregation?: string | undefined;
+  step?: string | undefined;
+  minDurationMs?: number | undefined;
+  maxDurationMs?: number | undefined;
   pageIndex?: number | undefined;
 };
 
@@ -46,7 +91,7 @@ export const EXPLORE_TIME_RANGES: ExploreTimeRange[] = ['last-15m', 'last-30m', 
 export function parseExploreQuery(params: URLSearchParams): ExploreQuery {
   const signal = readSignal(params.get('signal'));
   const timeRange = readTimeRange(params.get('timeRange'));
-  return {
+  return normalizeExploreQuery({
     signal,
     timeRange,
     serviceName: readValue(params.get('serviceName')),
@@ -60,8 +105,14 @@ export function parseExploreQuery(params: URLSearchParams): ExploreQuery {
     spanId: readValue(params.get('spanId')),
     resourceFilter: readValue(params.get('resourceFilter')),
     attributeFilter: readValue(params.get('attributeFilter')),
+    metricFilter: readValue(params.get('metricFilter')),
+    groupBy: readValue(params.get('groupBy')),
+    aggregation: readValue(params.get('aggregation')),
+    step: readValue(params.get('step')),
+    minDurationMs: readPositiveNumber(params.get('minDurationMs')),
+    maxDurationMs: readPositiveNumber(params.get('maxDurationMs')),
     pageIndex: readPageIndex(params.get('page'))
-  };
+  });
 }
 
 export function buildExplorePath(query: ExploreQuery) {
@@ -69,70 +120,26 @@ export function buildExplorePath(query: ExploreQuery) {
   setValue(params, 'serviceName', query.serviceName);
   setValue(params, 'environment', query.environment);
   setValue(params, 'query', query.query);
-  setValue(params, 'traceId', query.traceId);
-  if (query.errorOnly) params.set('errorOnly', 'true');
+  appendSignalParams(params, query);
   if (query.end) params.set('end', String(query.end));
-  if (query.live) params.set('live', 'true');
-  setValue(params, 'severityText', query.severityText);
-  setValue(params, 'spanId', query.spanId);
-  setValue(params, 'resourceFilter', query.resourceFilter);
-  setValue(params, 'attributeFilter', query.attributeFilter);
-  if (query.pageIndex) params.set('page', String(query.pageIndex));
   return `/explore?${params.toString()}`;
 }
 
-export function buildSignalApiPath(query: ExploreQuery, now = Date.now()) {
-  const params = new URLSearchParams();
-  const end = query.end ?? now;
-  setValue(params, 'serviceName', query.serviceName);
-  setValue(params, 'environment', query.environment);
-  setValue(params, 'start', String(end - timeRangeMilliseconds(query.timeRange)));
-  setValue(params, 'end', String(end));
-
-  if (query.signal === 'metrics') {
-    setValue(params, 'query', query.query);
-    return `/api/ingestion/otlp/metrics/console?${params.toString()}`;
-  }
-
-  params.set('pageIndex', String(query.pageIndex ?? 0));
-  params.set('pageSize', '20');
-  if (query.signal === 'logs') {
-    setValue(params, 'search', query.query);
-    setValue(params, 'traceId', query.traceId);
-    setValue(params, 'spanId', query.spanId);
-    setValue(params, 'severityText', query.severityText);
-    setValue(params, 'resourceFilter', query.resourceFilter);
-    setValue(params, 'attributeFilter', query.attributeFilter);
-    return `/api/logs/list?${params.toString()}`;
-  }
-
-  setValue(params, 'operationName', query.query);
-  setValue(params, 'traceId', query.traceId);
-  if (query.errorOnly) params.set('errorOnly', 'true');
-  return `/api/traces/list?${params.toString()}`;
-}
-
-export function buildLogStreamPath(query: ExploreQuery) {
-  const params = new URLSearchParams();
-  setValue(params, 'serviceName', query.serviceName);
-  setValue(params, 'environment', query.environment);
-  setValue(params, 'logContent', query.query);
-  setValue(params, 'traceId', query.traceId);
-  setValue(params, 'spanId', query.spanId);
-  setValue(params, 'severityText', query.severityText);
-  setValue(params, 'resourceFilter', query.resourceFilter);
-  setValue(params, 'attributeFilter', query.attributeFilter);
-  const suffix = params.toString();
-  return suffix ? `/api/logs/sse/subscribe?${suffix}` : '/api/logs/sse/subscribe';
+export function mergeExploreQuery(query: ExploreQuery, changes: ExploreQueryPatch): ExploreQuery {
+  return normalizeExploreQuery({
+    ...query,
+    ...changes,
+    signal: changes.signal ?? query.signal,
+    timeRange: changes.timeRange ?? query.timeRange
+  });
 }
 
 export function buildCrossSignalPath(query: ExploreQuery, signal: ExploreSignal, context: { traceId?: string | undefined }) {
-  return buildExplorePath({
-    ...query,
+  return buildExplorePath(mergeExploreQuery(query, {
     signal,
-    traceId: context.traceId ?? query.traceId,
+    traceId: context.traceId ?? (query.signal === 'metrics' ? undefined : query.traceId),
     pageIndex: undefined
-  });
+  }));
 }
 
 export function timeRangeMilliseconds(timeRange: ExploreTimeRange) {
@@ -171,6 +178,74 @@ function readPageIndex(value: string | null) {
   return Number.isSafeInteger(pageIndex) && pageIndex > 0 ? pageIndex : undefined;
 }
 
+function readPositiveNumber(value: string | null) {
+  if (!value) return undefined;
+  const number = Number(value);
+  return Number.isFinite(number) && number >= 0 ? number : undefined;
+}
+
 function setValue(params: URLSearchParams, key: string, value: string | undefined) {
   if (value) params.set(key, value);
+}
+
+function appendSignalParams(params: URLSearchParams, query: ExploreQuery) {
+  if (query.signal === 'metrics') {
+    setValue(params, 'metricFilter', query.metricFilter);
+    setValue(params, 'groupBy', query.groupBy);
+    setValue(params, 'aggregation', query.aggregation);
+    setValue(params, 'step', query.step);
+    return;
+  }
+  setValue(params, 'traceId', query.traceId);
+  setValue(params, 'resourceFilter', query.resourceFilter);
+  if (query.pageIndex) params.set('page', String(query.pageIndex));
+  if (query.signal === 'logs') {
+    if (query.live) params.set('live', 'true');
+    setValue(params, 'severityText', query.severityText);
+    setValue(params, 'spanId', query.spanId);
+    setValue(params, 'attributeFilter', query.attributeFilter);
+    return;
+  }
+  if (query.errorOnly) params.set('errorOnly', 'true');
+  if (query.minDurationMs != null) params.set('minDurationMs', String(query.minDurationMs));
+  if (query.maxDurationMs != null) params.set('maxDurationMs', String(query.maxDurationMs));
+}
+
+function normalizeExploreQuery(query: ExploreQueryPatch & { signal: ExploreSignal; timeRange: ExploreTimeRange }): ExploreQuery {
+  const shared = {
+    timeRange: query.timeRange,
+    serviceName: query.serviceName,
+    environment: query.environment,
+    query: query.query,
+    end: query.end
+  };
+  if (query.signal === 'metrics') return {
+    ...shared,
+    signal: 'metrics',
+    metricFilter: query.metricFilter,
+    groupBy: query.groupBy,
+    aggregation: query.aggregation,
+    step: query.step
+  };
+  const traceContext = {
+    ...shared,
+    traceId: query.traceId,
+    resourceFilter: query.resourceFilter,
+    pageIndex: query.pageIndex
+  };
+  if (query.signal === 'logs') return {
+    ...traceContext,
+    signal: 'logs',
+    live: query.live,
+    severityText: query.severityText,
+    spanId: query.spanId,
+    attributeFilter: query.attributeFilter
+  };
+  return {
+    ...traceContext,
+    signal: 'traces',
+    errorOnly: query.errorOnly,
+    minDurationMs: query.minDurationMs,
+    maxDurationMs: query.maxDurationMs
+  };
 }

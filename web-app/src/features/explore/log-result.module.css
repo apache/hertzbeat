@@ -15,33 +15,38 @@
  * limitations under the License.
  */
 
-.workspace {
-  border-top: 1px solid var(--ant-color-border-secondary);
-}
-
-.streamStatus {
-  display: flex;
+.streamConnection {
+  display: inline-flex;
   gap: 8px;
   align-items: center;
-  height: 40px;
-  color: var(--ant-color-text-secondary);
-  border-bottom: 1px solid var(--ant-color-border-secondary);
 }
 
-.streamStatus i {
+.streamConnection i {
   width: 8px;
   height: 8px;
   background: var(--ant-color-warning);
   border-radius: 50%;
 }
 
-.streamStatus i[data-connected='true'] {
+.streamConnection i[data-connected='true'] {
   background: var(--ant-color-success);
 }
 
-.streamStatus span {
-  margin-left: auto;
-  font-variant-numeric: tabular-nums;
+.streamActions {
+  display: flex;
+  gap: 6px;
+}
+
+.paused {
+  color: var(--ant-color-warning);
+}
+
+.clickableTable :global(.ant-table-row) {
+  cursor: pointer;
+}
+
+.clickableTable :global(.ant-table-row:hover td) {
+  background: #222a3a !important;
 }
 
 .traceLink {
@@ -54,17 +59,5 @@
   padding: 12px;
   font-family: var(--ant-font-family-code);
   white-space: pre-wrap;
-  background: var(--ant-color-fill-quaternary);
-}
-
-.attributes {
-  margin-top: 24px;
-}
-
-.attributes pre {
-  max-height: 280px;
-  padding: 12px;
-  overflow: auto;
-  font-size: 12px;
   background: var(--ant-color-fill-quaternary);
 }
