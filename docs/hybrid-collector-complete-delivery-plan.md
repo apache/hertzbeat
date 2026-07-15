@@ -66,7 +66,7 @@ Hybrid Collector 必须同时具备两类能力：
 | `otlphttpexporter` | 直接发送 HertzBeat OTLP HTTP 接口 | 已实现 |
 | `filestorage` | 日志 offset 和三信号持久发送队列 | 已实现 |
 | `healthcheckextension` | Java Supervisor 的本地健康判断 | 已实现 |
-| `bearertokenauthextension` | 非 loopback OTLP Gateway 模式的入站认证 | 待实现 |
+| `bearertokenauthextension` | 非 loopback OTLP Gateway 模式的入站认证 | 已实现 |
 | `envprovider` / `fileprovider` / `yamlprovider` | 读取 Java 生成配置和环境 secret | 已实现 |
 
 ### 3.4 自动埋点
@@ -172,7 +172,7 @@ Hybrid Collector 必须同时具备两类能力：
 
 ### M4：安全 OTLP 接收和 Gateway 模式
 
-状态：**进行中；loopback 接收已实现**
+状态：**已完成**（`323f34b83`）
 
 交付内容：
 
@@ -194,7 +194,7 @@ Hybrid Collector 必须同时具备两类能力：
 
 ### M5：随包 Java 自动埋点
 
-状态：**待实现**
+状态：**进行中**
 
 交付内容：
 
