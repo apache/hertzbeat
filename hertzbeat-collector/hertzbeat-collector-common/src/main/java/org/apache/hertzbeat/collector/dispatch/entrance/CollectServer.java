@@ -27,6 +27,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.dispatch.CollectorInfoProperties;
+import org.apache.hertzbeat.collector.dispatch.CollectorRuntimeConfigApplier;
 import org.apache.hertzbeat.collector.dispatch.CollectorRuntimeStatusProvider;
 import org.apache.hertzbeat.collector.dispatch.DispatchProperties;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
@@ -70,6 +71,8 @@ public class CollectServer implements CommandLineRunner {
 
     private final Optional<CollectorRuntimeStatusProvider> runtimeStatusProvider;
 
+    private final Optional<CollectorRuntimeConfigApplier> runtimeConfigApplier;
+
     private RemotingClient remotingClient;
 
     private ScheduledExecutorService scheduledExecutor;
@@ -79,7 +82,8 @@ public class CollectServer implements CommandLineRunner {
                          final DispatchProperties properties,
                          final CommonThreadPool threadPool,
                          final CollectorInfoProperties infoProperties,
-                         final Optional<CollectorRuntimeStatusProvider> runtimeStatusProvider) {
+                         final Optional<CollectorRuntimeStatusProvider> runtimeStatusProvider,
+                         final Optional<CollectorRuntimeConfigApplier> runtimeConfigApplier) {
         if (properties == null || properties.getEntrance() == null || properties.getEntrance().getNetty() == null) {
             log.error("init error, please config dispatch entrance netty props in application.yml");
             throw new IllegalArgumentException("please config dispatch entrance netty props");
@@ -93,6 +97,7 @@ public class CollectServer implements CommandLineRunner {
         this.collectJobService.setCollectServer(this);
         this.infoProperties = infoProperties;
         this.runtimeStatusProvider = runtimeStatusProvider;
+        this.runtimeConfigApplier = runtimeConfigApplier;
         this.init(properties, threadPool);
     }
 
@@ -103,7 +108,8 @@ public class CollectServer implements CommandLineRunner {
         nettyClientConfig.setServerPort(nettyProperties.getManagerPort());
         this.remotingClient = new NettyRemotingClient(nettyClientConfig, new CollectNettyEventListener(), threadPool);
 
-        this.remotingClient.registerProcessor(ClusterMsg.MessageType.HEARTBEAT, new HeartbeatProcessor());
+        this.remotingClient.registerProcessor(
+                ClusterMsg.MessageType.HEARTBEAT, new HeartbeatProcessor(runtimeConfigApplier));
         this.remotingClient.registerProcessor(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK, new CollectCyclicDataProcessor(this));
         this.remotingClient.registerProcessor(ClusterMsg.MessageType.DELETE_CYCLIC_TASK, new DeleteCyclicTaskProcessor(this));
         this.remotingClient.registerProcessor(ClusterMsg.MessageType.ISSUE_ONE_TIME_TASK, new CollectOneTimeDataProcessor(this));

@@ -184,6 +184,22 @@ class ReleaseReadinessRuntimeAssemblyTest {
     }
 
     @Test
+    void collectorRuntimeConfigBoundaryCoversSupportedRelationalDatabases() throws IOException {
+        for (String database : List.of("mysql", "postgresql", "h2")) {
+            String migration = readRepoFile(
+                    "hertzbeat-startup/src/main/resources/db/migration/"
+                            + database
+                            + "/V202__add_collector_runtime_config.sql"
+            ).toLowerCase();
+
+            assertThat(migration)
+                    .as(database + " migration should persist semantic Collector runtime intent")
+                    .contains("hzb_collector")
+                    .contains("runtime_config");
+        }
+    }
+
+    @Test
     void entityGovernanceStateWorkspaceBoundaryLivesInV200Baseline() throws IOException {
         for (String database : List.of("mysql", "postgresql", "h2")) {
             String migration = readRepoFile(

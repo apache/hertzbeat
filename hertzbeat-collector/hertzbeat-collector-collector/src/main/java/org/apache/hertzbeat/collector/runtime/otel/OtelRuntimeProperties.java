@@ -95,7 +95,12 @@ public class OtelRuntimeProperties {
 
     private int maxRestarts = 5;
 
+    private volatile ManagedOtelRuntimeConfig managedDesiredConfig;
+
     public ManagedOtelRuntimeConfig desiredConfig() {
+        if (managedDesiredConfig != null) {
+            return managedDesiredConfig;
+        }
         return new ManagedOtelRuntimeConfig(
                 configSchema,
                 configRevision,
@@ -104,5 +109,9 @@ public class OtelRuntimeProperties {
                 prometheusTargets,
                 fileLogSources
         );
+    }
+
+    void useDesiredConfig(ManagedOtelRuntimeConfig config) {
+        managedDesiredConfig = config;
     }
 }

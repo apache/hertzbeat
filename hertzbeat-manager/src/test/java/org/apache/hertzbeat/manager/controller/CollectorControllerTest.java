@@ -17,14 +17,19 @@
 
 package org.apache.hertzbeat.manager.controller;
 
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeConfig;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.scheduler.netty.ManageServer;
+import org.apache.hertzbeat.manager.scheduler.runtime.CollectorRuntimeConfigService;
 import org.apache.hertzbeat.manager.service.impl.CollectorServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,6 +59,9 @@ public class CollectorControllerTest {
 
     @Mock
     private ManageServer manageServer;
+
+    @Mock
+    private CollectorRuntimeConfigService runtimeConfigService;
 
     @BeforeEach
     void setUp() {
@@ -118,6 +126,20 @@ public class CollectorControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();
+    }
+
+    @Test
+    public void updateRuntimeConfig() throws Exception {
+        ManagedOtelRuntimeConfig config = new ManagedOtelRuntimeConfig(
+                ManagedOtelRuntimeConfig.CURRENT_SCHEMA_VERSION, 2, true, Duration.ofSeconds(30));
+        when(runtimeConfigService.update("demo-collector", config)).thenReturn(config);
+
+        this.mockMvc.perform(MockMvcRequestBuilders.put(
+                                "/api/collector/{collector}/runtime-config", "demo-collector")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(config)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.revision").value(2));
     }
 
 

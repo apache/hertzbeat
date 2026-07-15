@@ -50,8 +50,9 @@ public class OtelRuntimeConfigTransaction {
     public PreparedConfig prepare(OtelRuntimeProperties properties) throws IOException {
         Path active = renderer.activePath(properties);
         Path lastKnownGood = active.resolveSibling(active.getFileName() + LAST_KNOWN_GOOD_SUFFIX);
+        long desiredRevision = properties.desiredConfig().revision();
         return new PreparedConfig(renderer.renderCandidate(properties), active, lastKnownGood,
-                properties.getConfigRevision(), readRevision(active));
+                desiredRevision, readRevision(active));
     }
 
     /**

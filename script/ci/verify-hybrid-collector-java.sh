@@ -21,7 +21,11 @@ repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 cd "$repo_root"
 
 ./mvnw -pl hertzbeat-manager,hertzbeat-collector/hertzbeat-collector-collector -am \
-  -Dtest='ManagedOtelRuntimeStatusTest,CollectServerTest,OtelRuntimeConfigTransactionTest,OtelRuntimeConfigurationTest,OtelRuntimeSupervisorTest,OtelRuntimeStatusProviderTest,CollectorRuntimeStatusRegistryTest,HeartbeatProcessorRuntimeStatusTest,CollectorServiceTest,ManageServerTest' \
+  -Dtest='ManagedOtelRuntimeStatusTest,CollectServerTest,HeartbeatProcessorRuntimeConfigTest,OtelRuntimeConfigTransactionTest,OtelRuntimeConfigurationTest,OtelRuntimeSupervisorTest,OtelRuntimeStatusProviderTest,CollectorControllerTest,CollectorRuntimeConfigServiceTest,CollectorRuntimeStatusRegistryTest,HeartbeatProcessorRuntimeStatusTest,CollectorServiceTest,ManageServerTest' \
+  test -DskipITs -Dsurefire.failIfNoSpecifiedTests=false -DfailIfNoTests=false
+
+./mvnw -pl hertzbeat-startup -am \
+  -Dtest='ReleaseReadinessRuntimeAssemblyTest#collectorRuntimeConfigBoundaryCoversSupportedRelationalDatabases' \
   test -DskipITs -Dsurefire.failIfNoSpecifiedTests=false -DfailIfNoTests=false
 
 ./mvnw -pl hertzbeat-collector/hertzbeat-collector-collector -am \

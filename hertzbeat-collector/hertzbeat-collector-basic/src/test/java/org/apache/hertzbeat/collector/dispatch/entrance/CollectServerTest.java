@@ -91,7 +91,7 @@ class CollectServerTest {
         when(properties.getEntrance()).thenReturn(entranceProperties);
 
         collectServer = new CollectServer(collectJobService, timerDispatch, properties, threadPool, infoProperties,
-                Optional.of(runtimeStatusProvider));
+                Optional.of(runtimeStatusProvider), Optional.empty());
         collectNettyEventListener = collectServer.new CollectNettyEventListener();
     }
 

@@ -25,16 +25,19 @@ import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.collector.dispatch.CollectorRuntimeConfigApplier;
+import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeConfig;
 import org.springframework.context.SmartLifecycle;
 
 /**
  * Supervises the optional OpenTelemetry data-plane process while keeping Java collection independent.
  */
 @Slf4j
-public class OtelRuntimeSupervisor implements SmartLifecycle, AutoCloseable {
+public class OtelRuntimeSupervisor implements SmartLifecycle, AutoCloseable, CollectorRuntimeConfigApplier {
 
     private static final long HEALTH_POLL_MILLIS = 100;
 
@@ -52,6 +55,24 @@ public class OtelRuntimeSupervisor implements SmartLifecycle, AutoCloseable {
     private long generation;
     private volatile long activeRevision;
     private boolean intentionalStop = true;
+
+    @Override
+    public void apply(ManagedOtelRuntimeConfig config) {
+        synchronized (this) {
+            if (config.revision() <= properties.desiredConfig().revision()) {
+                return;
+            }
+            properties.useDesiredConfig(config);
+            if (!properties.isEnabled()) {
+                return;
+            }
+        }
+        try {
+            executor.execute(this::applyDesiredConfig);
+        } catch (RejectedExecutionException ignored) {
+            log.debug("Telemetry runtime configuration arrived during shutdown");
+        }
+    }
 
     public OtelRuntimeSupervisor(OtelRuntimeProperties properties, OtelRuntimeBinaryResolver resolver,
                                  OtelRuntimeConfigTransaction configTransaction, OtelRuntimeProcessLauncher launcher,
@@ -103,6 +124,66 @@ public class OtelRuntimeSupervisor implements SmartLifecycle, AutoCloseable {
             discardCandidate(prepared);
             terminateFailedStartup();
             recordFailure(safeMessage(error));
+        }
+    }
+
+    private synchronized void applyDesiredConfig() {
+        ManagedOtelRuntimeConfig desiredConfig = properties.desiredConfig();
+        if (intentionalStop || snapshot.state() != OtelRuntimeState.RUNNING
+                || desiredConfig.revision() <= activeRevision) {
+            return;
+        }
+        Process previous = process;
+        OtelRuntimeConfigTransaction.PreparedConfig prepared = null;
+        boolean previousStopped = false;
+        try {
+            validateManagedIntakeIdentity();
+            Path binary = resolver.resolve();
+            prepared = configTransaction.prepare(properties);
+            Path home = properties.getHome().toAbsolutePath().normalize();
+            Path logFile = OtelRuntimeConfigRenderer.resolve(home, properties.getLog());
+            Map<String, String> environment = environment();
+            validate(binary, prepared.candidate(), home, logFile, environment);
+            Path config = configTransaction.commit(prepared);
+            terminateForReplacement(previous);
+            previousStopped = true;
+            update(OtelRuntimeState.STARTING, -1, snapshot.restartCount(), snapshot.lastError());
+            try {
+                Process launched = launchAndAwait(binary, config, home, logFile, environment);
+                markRunning(launched, snapshot.restartCount(), "", prepared.desiredRevision());
+            } catch (IOException | InterruptedException | RuntimeException candidateError) {
+                terminateFailedStartup();
+                if (!recoverLastKnownGood(prepared, binary, home, logFile, environment, candidateError)) {
+                    throw candidateError;
+                }
+            }
+        } catch (Exception error) {
+            discardCandidate(prepared);
+            if (!previousStopped && previous != null && previous.isAlive()) {
+                update(OtelRuntimeState.RUNNING, previous.pid(), snapshot.restartCount(), safeMessage(error));
+                log.warn("Rejected telemetry runtime configuration revision {}: {}",
+                        desiredConfig.revision(), safeMessage(error));
+                return;
+            }
+            terminateFailedStartup();
+            recordFailure(safeMessage(error));
+        }
+    }
+
+    private void terminateForReplacement(Process previous) {
+        process = null;
+        generation++;
+        if (previous == null || !previous.isAlive()) {
+            return;
+        }
+        previous.destroy();
+        try {
+            if (!previous.waitFor(properties.getShutdownTimeout().toMillis(), TimeUnit.MILLISECONDS)) {
+                previous.destroyForcibly();
+            }
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            previous.destroyForcibly();
         }
     }
 

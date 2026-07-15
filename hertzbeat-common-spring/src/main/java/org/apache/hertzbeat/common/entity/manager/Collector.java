@@ -18,11 +18,13 @@
 package org.apache.hertzbeat.common.entity.manager;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.Min;
@@ -73,6 +75,11 @@ public class Collector {
 
     @Schema(title = "collector mode: public or private")
     private String mode;
+
+    @Lob
+    @Column(name = "runtime_config", columnDefinition = "TEXT")
+    @Schema(title = "Versioned managed telemetry runtime configuration")
+    private String runtimeConfig;
 
     @Schema(title = "The creator of this record", example = "tom")
     @CreatedBy

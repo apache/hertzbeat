@@ -18,8 +18,12 @@
 package org.apache.hertzbeat.collector.dispatch.entrance.processor;
 
 import io.netty.channel.ChannelHandlerContext;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.collector.dispatch.CollectorRuntimeConfigApplier;
+import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeConfig;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingProcessor;
 
 /**
@@ -27,9 +31,28 @@ import org.apache.hertzbeat.remoting.netty.NettyRemotingProcessor;
  */
 @Slf4j
 public class HeartbeatProcessor implements NettyRemotingProcessor {
+
+    private final Optional<CollectorRuntimeConfigApplier> runtimeConfigApplier;
+
+    public HeartbeatProcessor(Optional<CollectorRuntimeConfigApplier> runtimeConfigApplier) {
+        this.runtimeConfigApplier = runtimeConfigApplier;
+    }
+
     @Override
     public ClusterMsg.Message handle(ChannelHandlerContext ctx, ClusterMsg.Message message) {
         log.info("collector receive manager server response heartbeat, time: {}. ", System.currentTimeMillis());
+        if (message.getMsg().isEmpty() || runtimeConfigApplier.isEmpty()) {
+            return null;
+        }
+        try {
+            ManagedOtelRuntimeConfig config = JsonUtil.fromJson(
+                    message.getMsg().toStringUtf8(), ManagedOtelRuntimeConfig.class);
+            if (config != null) {
+                runtimeConfigApplier.get().apply(config);
+            }
+        } catch (RuntimeException error) {
+            log.warn("Ignoring invalid optional telemetry runtime configuration: {}", error.getMessage());
+        }
         return null;
     }
 }

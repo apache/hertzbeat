@@ -24,8 +24,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.Map;
 import org.apache.hertzbeat.common.entity.dto.Message;
+import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeConfig;
+import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.common.util.ResponseUtil;
 import org.apache.hertzbeat.manager.pojo.dto.CollectorSummary;
+import org.apache.hertzbeat.manager.scheduler.runtime.CollectorRuntimeConfigService;
 import org.apache.hertzbeat.manager.service.CollectorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -35,6 +38,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -49,6 +53,9 @@ public class CollectorController {
 
     @Autowired
     private CollectorService collectorService;
+
+    @Autowired
+    private CollectorRuntimeConfigService runtimeConfigService;
 
     @GetMapping
     @Operation(summary = "Get a list of collectors based on query filter items",
@@ -93,6 +100,21 @@ public class CollectorController {
             @Parameter(description = "collector name", example = "demo-collector")
             @PathVariable() String collector) {
         return ResponseUtil.handle(() -> collectorService.generateCollectorDeployInfo(collector));
+    }
+
+    @GetMapping("/{collector}/runtime-config")
+    @Operation(summary = "Get Collector telemetry runtime configuration")
+    public ResponseEntity<Message<ManagedOtelRuntimeConfig>> getRuntimeConfig(
+            @PathVariable String collector) {
+        return ResponseUtil.handle(() -> runtimeConfigService.current(collector)
+                .orElseThrow(() -> new CommonException("Collector not found: " + collector)));
+    }
+
+    @PutMapping("/{collector}/runtime-config")
+    @Operation(summary = "Update Collector telemetry runtime configuration")
+    public ResponseEntity<Message<ManagedOtelRuntimeConfig>> updateRuntimeConfig(
+            @PathVariable String collector, @RequestBody ManagedOtelRuntimeConfig config) {
+        return ResponseUtil.handle(() -> runtimeConfigService.update(collector, config));
     }
 
 }

@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
+import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -247,6 +248,68 @@ class OtelRuntimeSupervisorTest {
         assertEquals(OtelRuntimeState.STOPPED, supervisor.snapshot().state());
         verify(runtime).destroy();
         assertEquals(0, supervisor.snapshot().restartCount());
+    }
+
+    @Test
+    void rejectsRemoteCandidateWithoutStoppingActiveRuntime() throws Exception {
+        Process initialValidation = successfulValidation();
+        Process activeRuntime = runningProcess(4201, new CompletableFuture<>());
+        Process rejectedValidation = mock(Process.class);
+        when(rejectedValidation.waitFor(anyLong(), any(TimeUnit.class))).thenReturn(true);
+        when(rejectedValidation.exitValue()).thenReturn(1);
+        OtelRuntimeConfigTransaction.PreparedConfig revisionTwo = preparedConfig(2, 1);
+        when(configTransaction.prepare(properties)).thenReturn(preparedConfig(1, 0), revisionTwo);
+        when(launcher.start(any(), any(), any(), any(), anyMap(), anyBoolean()))
+                .thenReturn(initialValidation, activeRuntime, rejectedValidation);
+        supervisor = new OtelRuntimeSupervisor(properties, resolver, configTransaction, launcher, healthClient);
+        supervisor.start();
+
+        supervisor.apply(config(2));
+
+        await(() -> supervisor.snapshot().lastError().contains("validation"));
+        assertEquals(OtelRuntimeState.RUNNING, supervisor.snapshot().state());
+        assertEquals(4201, supervisor.snapshot().pid());
+        assertEquals(1, supervisor.activeRevision());
+        verify(activeRuntime, never()).destroy();
+        verify(configTransaction).discard(revisionTwo);
+    }
+
+    @Test
+    void activatesNewerRemoteConfigAndStopsPreviousRuntime() throws Exception {
+        Process initialValidation = successfulValidation();
+        Process activeRuntime = runningProcess(4201, new CompletableFuture<>());
+        when(activeRuntime.waitFor(anyLong(), any(TimeUnit.class))).thenReturn(true);
+        Process updatedValidation = successfulValidation();
+        Process updatedRuntime = runningProcess(4202, new CompletableFuture<>());
+        OtelRuntimeConfigTransaction.PreparedConfig revisionTwo = preparedConfig(2, 1);
+        when(configTransaction.prepare(properties)).thenReturn(preparedConfig(1, 0), revisionTwo);
+        when(configTransaction.commit(any())).thenReturn(tempDir.resolve("runtime.yaml"));
+        when(launcher.start(any(), any(), any(), any(), anyMap(), anyBoolean()))
+                .thenReturn(initialValidation, activeRuntime, updatedValidation, updatedRuntime);
+        supervisor = new OtelRuntimeSupervisor(properties, resolver, configTransaction, launcher, healthClient);
+        supervisor.start();
+
+        supervisor.apply(config(2));
+
+        await(() -> supervisor.activeRevision() == 2 && supervisor.snapshot().pid() == 4202);
+        verify(activeRuntime).destroy();
+        assertEquals(OtelRuntimeState.RUNNING, supervisor.snapshot().state());
+    }
+
+    private ManagedOtelRuntimeConfig config(long revision) {
+        return new ManagedOtelRuntimeConfig(
+                ManagedOtelRuntimeConfig.CURRENT_SCHEMA_VERSION, revision, true, Duration.ofSeconds(30));
+    }
+
+    private OtelRuntimeConfigTransaction.PreparedConfig preparedConfig(long desiredRevision, long activeRevision)
+            throws Exception {
+        return new OtelRuntimeConfigTransaction.PreparedConfig(
+                Files.createTempFile(tempDir, "runtime-", ".candidate"),
+                tempDir.resolve("runtime.yaml"),
+                tempDir.resolve("runtime.yaml.last-known-good"),
+                desiredRevision,
+                activeRevision
+        );
     }
 
     private Process successfulValidation() throws Exception {

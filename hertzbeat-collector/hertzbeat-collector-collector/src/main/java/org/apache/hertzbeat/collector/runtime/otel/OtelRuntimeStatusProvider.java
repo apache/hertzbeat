@@ -40,7 +40,7 @@ public class OtelRuntimeStatusProvider implements CollectorRuntimeStatusProvider
                 ManagedOtelRuntimeStatus.CURRENT_SCHEMA_VERSION,
                 properties.isEnabled(),
                 ManagedOtelRuntimeStatus.RuntimeState.valueOf(snapshot.state().name()),
-                properties.getConfigRevision(),
+                properties.desiredConfig().revision(),
                 supervisor.activeRevision(),
                 credentialState(),
                 snapshot.restartCount(),
