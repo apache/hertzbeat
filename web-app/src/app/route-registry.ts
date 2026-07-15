@@ -40,6 +40,7 @@ export const routeRegistry = [
   { id: 'notice-rules', path: settingsPaths.rules, labelKey: 'noticeRules.title', layout: 'basic', navigation: false },
   { id: 'notice-templates', path: settingsPaths.templates, labelKey: 'noticeTemplates.title', layout: 'basic', navigation: false },
   { id: 'message-server', path: settingsPaths.channels, labelKey: 'messageServer.title', layout: 'basic', navigation: false },
+  { id: 'tokens', path: settingsPaths.tokens, labelKey: 'token.title', layout: 'basic', navigation: false },
   { id: 'bulletin', path: '/bulletin', labelKey: 'menu.bulletin', layout: 'basic', navigation: true },
   { id: 'status', path: '/status', labelKey: 'menu.status', layout: 'blank', navigation: false },
   { id: 'login', path: '/passport/login', labelKey: 'auth.title', layout: 'passport', navigation: false },

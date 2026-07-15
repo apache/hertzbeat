@@ -199,6 +199,14 @@ export const appRoutes: RouteObject[] = [
                 }
               },
               {
+                id: 'tokens',
+                path: settingsPaths.tokens,
+                lazy: async () => {
+                  const { TokenPage } = await import('@/features/settings/token-page');
+                  return { Component: TokenPage };
+                }
+              },
+              {
                 id: 'settings',
                 path: settingsPaths.root,
                 element: <Navigate replace to={settingsPaths.receivers} />

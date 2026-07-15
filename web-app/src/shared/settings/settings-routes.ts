@@ -10,6 +10,7 @@ export const settingsPaths = {
   rules: '/settings/notifications/rules',
   templates: '/settings/notifications/templates',
   channels: '/settings/notifications/channels',
+  tokens: '/settings/tokens',
 } as const;
 
 export const legacySettingsPaths = {
