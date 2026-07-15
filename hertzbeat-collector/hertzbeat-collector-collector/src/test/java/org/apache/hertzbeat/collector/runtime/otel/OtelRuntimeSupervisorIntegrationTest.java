@@ -58,7 +58,7 @@ class OtelRuntimeSupervisorIntegrationTest {
         OtelRuntimeSupervisor supervisor = new OtelRuntimeSupervisor(
                 properties,
                 new OtelRuntimeBinaryResolver(properties),
-                new OtelRuntimeConfigRenderer(),
+                new OtelRuntimeConfigTransaction(new OtelRuntimeConfigRenderer()),
                 new OtelRuntimeProcessLauncher(),
                 new OtelRuntimeHealthClient()
         );

@@ -18,7 +18,6 @@
 package org.apache.hertzbeat.collector.runtime.otel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -31,8 +30,12 @@ class OtelRuntimeConfigurationTest {
             .withConfiguration(AutoConfigurations.of(OtelRuntimeConfiguration.class));
 
     @Test
-    void remainsDisabledByDefault() {
-        contextRunner.run(context -> assertFalse(context.containsBean("otelRuntimeSupervisor")));
+    void remainsStoppedByDefaultWhileKeepingRuntimeEnablementAvailable() {
+        contextRunner.run(context -> {
+            assertTrue(context.isRunning());
+            OtelRuntimeSupervisor supervisor = context.getBean(OtelRuntimeSupervisor.class);
+            assertEquals(OtelRuntimeState.STOPPED, supervisor.snapshot().state());
+        });
     }
 
     @Test

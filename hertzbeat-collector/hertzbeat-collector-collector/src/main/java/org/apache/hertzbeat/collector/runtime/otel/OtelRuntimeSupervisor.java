@@ -40,7 +40,7 @@ public class OtelRuntimeSupervisor implements SmartLifecycle, AutoCloseable {
 
     private final OtelRuntimeProperties properties;
     private final OtelRuntimeBinaryResolver resolver;
-    private final OtelRuntimeConfigRenderer renderer;
+    private final OtelRuntimeConfigTransaction configTransaction;
     private final OtelRuntimeProcessLauncher launcher;
     private final OtelRuntimeHealthClient healthClient;
     private final ScheduledExecutorService executor;
@@ -53,11 +53,11 @@ public class OtelRuntimeSupervisor implements SmartLifecycle, AutoCloseable {
     private boolean intentionalStop = true;
 
     public OtelRuntimeSupervisor(OtelRuntimeProperties properties, OtelRuntimeBinaryResolver resolver,
-                                 OtelRuntimeConfigRenderer renderer, OtelRuntimeProcessLauncher launcher,
+                                 OtelRuntimeConfigTransaction configTransaction, OtelRuntimeProcessLauncher launcher,
                                  OtelRuntimeHealthClient healthClient) {
         this.properties = properties;
         this.resolver = resolver;
-        this.renderer = renderer;
+        this.configTransaction = configTransaction;
         this.launcher = launcher;
         this.healthClient = healthClient;
         this.executor = Executors.newSingleThreadScheduledExecutor(runnable -> {
@@ -79,26 +79,72 @@ public class OtelRuntimeSupervisor implements SmartLifecycle, AutoCloseable {
 
     private void startAttempt() {
         update(OtelRuntimeState.STARTING, -1, snapshot.restartCount(), snapshot.lastError());
+        OtelRuntimeConfigTransaction.PreparedConfig prepared = null;
         try {
             Path binary = resolver.resolve();
-            Path config = renderer.render(properties);
+            prepared = configTransaction.prepare(properties);
             Path home = properties.getHome().toAbsolutePath().normalize();
             Path logFile = OtelRuntimeConfigRenderer.resolve(home, properties.getLog());
             Map<String, String> environment = environment();
-            validate(binary, config, home, logFile, environment);
-            Process launched = launcher.start(binary, config, home, logFile, environment, false);
-            process = launched;
-            long launchedGeneration = ++generation;
-            launched.onExit().thenRun(() -> handleExit(launched, launchedGeneration));
-            awaitHealthy(launched);
-            if (!launched.isAlive()) {
-                throw new IllegalStateException("HertzBeat telemetry runtime exited during startup");
+            validate(binary, prepared.candidate(), home, logFile, environment);
+            Path config = configTransaction.commit(prepared);
+            try {
+                Process launched = launchAndAwait(binary, config, home, logFile, environment);
+                markRunning(launched, snapshot.restartCount(), snapshot.lastError());
+            } catch (IOException | InterruptedException | RuntimeException candidateError) {
+                terminateFailedStartup();
+                if (!recoverLastKnownGood(prepared, binary, home, logFile, environment, candidateError)) {
+                    throw candidateError;
+                }
             }
-            update(OtelRuntimeState.RUNNING, launched.pid(), snapshot.restartCount(), snapshot.lastError());
-            log.info("HertzBeat telemetry runtime is ready, pid={}", launched.pid());
         } catch (Exception error) {
+            discardCandidate(prepared);
             terminateFailedStartup();
             recordFailure(safeMessage(error));
+        }
+    }
+
+    private Process launchAndAwait(Path binary, Path config, Path home, Path logFile,
+                                   Map<String, String> environment) throws IOException, InterruptedException {
+        Process launched = launcher.start(binary, config, home, logFile, environment, false);
+        process = launched;
+        long launchedGeneration = ++generation;
+        launched.onExit().thenRun(() -> handleExit(launched, launchedGeneration));
+        awaitHealthy(launched);
+        if (!launched.isAlive()) {
+            throw new IllegalStateException("HertzBeat telemetry runtime exited during startup");
+        }
+        return launched;
+    }
+
+    private boolean recoverLastKnownGood(OtelRuntimeConfigTransaction.PreparedConfig prepared, Path binary,
+                                         Path home, Path logFile, Map<String, String> environment,
+                                         Exception candidateError) throws IOException, InterruptedException {
+        if (!configTransaction.rollback(prepared)) {
+            return false;
+        }
+        String candidateMessage = safeMessage(candidateError);
+        log.warn("HertzBeat telemetry runtime candidate failed readiness; restoring last-known-good: {}",
+                candidateMessage);
+        validate(binary, prepared.active(), home, logFile, environment);
+        Process recovered = launchAndAwait(binary, prepared.active(), home, logFile, environment);
+        markRunning(recovered, snapshot.restartCount() + 1, candidateMessage);
+        return true;
+    }
+
+    private void markRunning(Process launched, int restartCount, String lastError) {
+        update(OtelRuntimeState.RUNNING, launched.pid(), restartCount, lastError);
+        log.info("HertzBeat telemetry runtime is ready, pid={}", launched.pid());
+    }
+
+    private void discardCandidate(OtelRuntimeConfigTransaction.PreparedConfig prepared) {
+        if (prepared == null) {
+            return;
+        }
+        try {
+            configTransaction.discard(prepared);
+        } catch (IOException error) {
+            log.warn("Failed to remove rejected HertzBeat telemetry runtime configuration: {}", safeMessage(error));
         }
     }
 

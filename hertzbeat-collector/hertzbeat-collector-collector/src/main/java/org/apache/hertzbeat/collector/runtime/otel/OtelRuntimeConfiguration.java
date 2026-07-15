@@ -18,16 +18,14 @@
 package org.apache.hertzbeat.collector.runtime.otel;
 
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 
 /**
- * Opt-in wiring for the managed HertzBeat telemetry runtime.
+ * Wiring for the managed HertzBeat telemetry runtime. The supervisor stays inert unless explicitly enabled.
  */
 @AutoConfiguration
 @EnableConfigurationProperties(OtelRuntimeProperties.class)
-@ConditionalOnProperty(prefix = "collector.otel-runtime", name = "enabled", havingValue = "true")
 public class OtelRuntimeConfiguration {
 
     @Bean
@@ -38,6 +36,11 @@ public class OtelRuntimeConfiguration {
     @Bean
     OtelRuntimeConfigRenderer otelRuntimeConfigRenderer() {
         return new OtelRuntimeConfigRenderer();
+    }
+
+    @Bean
+    OtelRuntimeConfigTransaction otelRuntimeConfigTransaction(OtelRuntimeConfigRenderer renderer) {
+        return new OtelRuntimeConfigTransaction(renderer);
     }
 
     @Bean
@@ -53,9 +56,9 @@ public class OtelRuntimeConfiguration {
     @Bean(destroyMethod = "close")
     OtelRuntimeSupervisor otelRuntimeSupervisor(OtelRuntimeProperties properties,
                                                 OtelRuntimeBinaryResolver resolver,
-                                                OtelRuntimeConfigRenderer renderer,
+                                                OtelRuntimeConfigTransaction configTransaction,
                                                 OtelRuntimeProcessLauncher launcher,
                                                 OtelRuntimeHealthClient healthClient) {
-        return new OtelRuntimeSupervisor(properties, resolver, renderer, launcher, healthClient);
+        return new OtelRuntimeSupervisor(properties, resolver, configTransaction, launcher, healthClient);
     }
 }

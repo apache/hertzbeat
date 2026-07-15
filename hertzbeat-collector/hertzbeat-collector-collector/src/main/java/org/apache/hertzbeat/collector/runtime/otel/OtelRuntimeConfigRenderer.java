@@ -18,11 +18,13 @@
 package org.apache.hertzbeat.collector.runtime.otel;
 
 import java.io.IOException;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Set;
 
@@ -44,11 +46,8 @@ public class OtelRuntimeConfigRenderer {
      * @throws IOException when the configuration cannot be written
      */
     public Path render(OtelRuntimeProperties properties) throws IOException {
-        Path target = resolve(properties.getHome(), properties.getConfig());
-        Files.createDirectories(target.getParent());
-        Path temporary = Files.createTempFile(target.getParent(), "otel-runtime-", ".yaml.tmp");
-        Files.writeString(temporary, template(properties.getHealthPort()), StandardCharsets.UTF_8);
-        setOwnerOnlyWhenSupported(temporary);
+        Path target = activePath(properties);
+        Path temporary = renderCandidate(properties);
         try {
             Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
         } catch (AtomicMoveNotSupportedException ignored) {
@@ -58,12 +57,28 @@ public class OtelRuntimeConfigRenderer {
         return target;
     }
 
+    Path renderCandidate(OtelRuntimeProperties properties) throws IOException {
+        Path target = activePath(properties);
+        Files.createDirectories(target.getParent());
+        Path candidate = Files.createTempFile(target.getParent(), "otel-runtime-", ".yaml.candidate");
+        Files.writeString(candidate, template(properties.getHealthPort()), StandardCharsets.UTF_8);
+        try (FileChannel channel = FileChannel.open(candidate, StandardOpenOption.WRITE)) {
+            channel.force(true);
+        }
+        setOwnerOnlyWhenSupported(candidate);
+        return candidate;
+    }
+
+    Path activePath(OtelRuntimeProperties properties) {
+        return resolve(properties.getHome(), properties.getConfig());
+    }
+
     static Path resolve(Path home, Path path) {
         Path resolved = path.isAbsolute() ? path : home.resolve(path);
         return resolved.toAbsolutePath().normalize();
     }
 
-    private static void setOwnerOnlyWhenSupported(Path file) throws IOException {
+    static void setOwnerOnlyWhenSupported(Path file) throws IOException {
         if (Files.getFileStore(file).supportsFileAttributeView("posix")) {
             Files.setPosixFilePermissions(file, OWNER_ONLY);
         }

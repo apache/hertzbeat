@@ -24,6 +24,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -42,6 +43,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 
 class OtelRuntimeSupervisorTest {
 
@@ -50,7 +52,7 @@ class OtelRuntimeSupervisorTest {
 
     private OtelRuntimeProperties properties;
     private OtelRuntimeBinaryResolver resolver;
-    private OtelRuntimeConfigRenderer renderer;
+    private OtelRuntimeConfigTransaction configTransaction;
     private OtelRuntimeProcessLauncher launcher;
     private OtelRuntimeHealthClient healthClient;
     private OtelRuntimeSupervisor supervisor;
@@ -68,13 +70,18 @@ class OtelRuntimeSupervisorTest {
         properties.setStartupTimeout(Duration.ofMillis(200));
         properties.setHealthTimeout(Duration.ofMillis(50));
         resolver = mock(OtelRuntimeBinaryResolver.class);
-        renderer = mock(OtelRuntimeConfigRenderer.class);
+        configTransaction = mock(OtelRuntimeConfigTransaction.class);
         launcher = mock(OtelRuntimeProcessLauncher.class);
         healthClient = mock(OtelRuntimeHealthClient.class);
         Path binary = Files.createFile(tempDir.resolve("hertzbeat-otel-runtime"));
-        Path config = Files.createFile(tempDir.resolve("runtime.yaml"));
+        Path candidate = Files.createFile(tempDir.resolve("runtime.yaml.candidate"));
+        Path config = tempDir.resolve("runtime.yaml");
+        Path lastKnownGood = tempDir.resolve("runtime.yaml.last-known-good");
+        OtelRuntimeConfigTransaction.PreparedConfig prepared =
+                new OtelRuntimeConfigTransaction.PreparedConfig(candidate, config, lastKnownGood);
         when(resolver.resolve()).thenReturn(binary);
-        when(renderer.render(properties)).thenReturn(config);
+        when(configTransaction.prepare(properties)).thenReturn(prepared);
+        when(configTransaction.commit(prepared)).thenReturn(config);
         when(healthClient.isHealthy(any(), any())).thenReturn(true);
     }
 
@@ -91,7 +98,7 @@ class OtelRuntimeSupervisorTest {
         Process runtime = runningProcess(4201, new CompletableFuture<>());
         when(launcher.start(any(), any(), any(), any(), anyMap(), anyBoolean()))
                 .thenReturn(validation, runtime);
-        supervisor = new OtelRuntimeSupervisor(properties, resolver, renderer, launcher, healthClient);
+        supervisor = new OtelRuntimeSupervisor(properties, resolver, configTransaction, launcher, healthClient);
 
         supervisor.start();
 
@@ -103,6 +110,10 @@ class OtelRuntimeSupervisorTest {
         assertEquals("collector-phase0", environment.getValue().get("HERTZBEAT_COLLECTOR_ID"));
         assertEquals("workspace-phase0", environment.getValue().get("HERTZBEAT_WORKSPACE_ID"));
         assertEquals("token-phase0", environment.getValue().get("HERTZBEAT_OTLP_TOKEN"));
+        InOrder activationOrder = inOrder(launcher, configTransaction);
+        activationOrder.verify(launcher).start(any(), any(), any(), any(), anyMap(), anyBoolean());
+        activationOrder.verify(configTransaction).commit(any());
+        activationOrder.verify(launcher).start(any(), any(), any(), any(), anyMap(), anyBoolean());
     }
 
     @Test
@@ -115,7 +126,7 @@ class OtelRuntimeSupervisorTest {
         Process secondValidation = successfulValidation();
         when(launcher.start(any(), any(), any(), any(), anyMap(), anyBoolean()))
                 .thenReturn(firstValidation, firstRuntime, secondValidation, secondRuntime);
-        supervisor = new OtelRuntimeSupervisor(properties, resolver, renderer, launcher, healthClient);
+        supervisor = new OtelRuntimeSupervisor(properties, resolver, configTransaction, launcher, healthClient);
         supervisor.start();
 
         firstExit.complete(firstRuntime);
@@ -132,13 +143,15 @@ class OtelRuntimeSupervisorTest {
         when(validation.waitFor(anyLong(), any(TimeUnit.class))).thenReturn(true);
         when(validation.exitValue()).thenReturn(1);
         when(launcher.start(any(), any(), any(), any(), anyMap(), anyBoolean())).thenReturn(validation);
-        supervisor = new OtelRuntimeSupervisor(properties, resolver, renderer, launcher, healthClient);
+        supervisor = new OtelRuntimeSupervisor(properties, resolver, configTransaction, launcher, healthClient);
 
         supervisor.start();
 
         assertEquals(OtelRuntimeState.DEGRADED, supervisor.snapshot().state());
         assertTrue(supervisor.snapshot().lastError().contains("validation"));
         verify(healthClient, never()).isHealthy(any(), any());
+        verify(configTransaction, never()).commit(any());
+        verify(configTransaction).discard(any());
     }
 
     @Test
@@ -148,7 +161,7 @@ class OtelRuntimeSupervisorTest {
         when(validation.waitFor(anyLong(), any(TimeUnit.class))).thenReturn(true);
         when(validation.exitValue()).thenReturn(1);
         when(launcher.start(any(), any(), any(), any(), anyMap(), anyBoolean())).thenReturn(validation);
-        supervisor = new OtelRuntimeSupervisor(properties, resolver, renderer, launcher, healthClient);
+        supervisor = new OtelRuntimeSupervisor(properties, resolver, configTransaction, launcher, healthClient);
 
         supervisor.start();
 
@@ -166,12 +179,37 @@ class OtelRuntimeSupervisorTest {
         Process validation = successfulValidation();
         when(launcher.start(any(), any(), any(), any(), anyMap(), anyBoolean()))
                 .thenReturn(validation, runtime);
-        supervisor = new OtelRuntimeSupervisor(properties, resolver, renderer, launcher, healthClient);
+        supervisor = new OtelRuntimeSupervisor(properties, resolver, configTransaction, launcher, healthClient);
 
         supervisor.start();
 
         assertEquals(OtelRuntimeState.DEGRADED, supervisor.snapshot().state());
         verify(runtime).destroy();
+    }
+
+    @Test
+    void unhealthyActivatedCandidateRollsBackAndStartsLastKnownGoodOnce() throws Exception {
+        properties.setRestartDelay(Duration.ofHours(1));
+        properties.setStartupTimeout(Duration.ofMillis(50));
+        Process firstRuntime = runningProcess(4201, new CompletableFuture<>());
+        when(firstRuntime.waitFor(anyLong(), any(TimeUnit.class))).thenReturn(true);
+        Process recoveredRuntime = runningProcess(4202, new CompletableFuture<>());
+        Process firstValidation = successfulValidation();
+        Process recoveredValidation = successfulValidation();
+        when(healthClient.isHealthy(any(), any())).thenReturn(false, true);
+        when(configTransaction.rollback(any())).thenReturn(true);
+        when(launcher.start(any(), any(), any(), any(), anyMap(), anyBoolean()))
+                .thenReturn(firstValidation, firstRuntime, recoveredValidation, recoveredRuntime);
+        supervisor = new OtelRuntimeSupervisor(properties, resolver, configTransaction, launcher, healthClient);
+
+        supervisor.start();
+
+        assertEquals(OtelRuntimeState.RUNNING, supervisor.snapshot().state());
+        assertEquals(4202, supervisor.snapshot().pid());
+        assertEquals(1, supervisor.snapshot().restartCount());
+        assertTrue(supervisor.snapshot().lastError().contains("did not become ready"));
+        verify(firstRuntime).destroy();
+        verify(configTransaction).rollback(any());
     }
 
     @Test
@@ -182,7 +220,7 @@ class OtelRuntimeSupervisorTest {
         Process validation = successfulValidation();
         when(launcher.start(any(), any(), any(), any(), anyMap(), anyBoolean()))
                 .thenReturn(validation, runtime);
-        supervisor = new OtelRuntimeSupervisor(properties, resolver, renderer, launcher, healthClient);
+        supervisor = new OtelRuntimeSupervisor(properties, resolver, configTransaction, launcher, healthClient);
         supervisor.start();
 
         supervisor.stop();
