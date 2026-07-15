@@ -30,6 +30,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -76,10 +77,15 @@ final class OtelRuntimeFaultLoadSupport {
     }
 
     static OtelRuntimeSupervisor supervisor(OtelRuntimeProperties properties) {
+        return supervisor(properties, new OtelRuntimeConfigRenderer());
+    }
+
+    static OtelRuntimeSupervisor supervisor(
+            OtelRuntimeProperties properties, OtelRuntimeConfigRenderer renderer) {
         return new OtelRuntimeSupervisor(
                 properties,
                 new OtelRuntimeBinaryResolver(properties),
-                new OtelRuntimeConfigTransaction(new OtelRuntimeConfigRenderer()),
+                new OtelRuntimeConfigTransaction(renderer),
                 new OtelRuntimeProcessLauncher(),
                 new OtelRuntimeHealthClient());
     }
@@ -101,6 +107,14 @@ final class OtelRuntimeFaultLoadSupport {
 
     static LoadObservation sendPersistenceProbe(String endpoint, String marker) throws IOException {
         return send(endpoint, LoadProfile.MIXED, marker, 1);
+    }
+
+    static LoadObservation sendItems(
+            String endpoint, LoadProfile profile, String marker, int itemsPerSignal) throws IOException {
+        if (itemsPerSignal < 1 || itemsPerSignal > ITEMS_PER_SIGNAL) {
+            throw new IllegalArgumentException("bounded item count is outside the supported range");
+        }
+        return send(endpoint, profile, marker, itemsPerSignal);
     }
 
     private static LoadObservation send(
@@ -209,6 +223,24 @@ final class OtelRuntimeFaultLoadSupport {
         report.put("scope", "short deterministic local gate; not a production capacity claim");
         report.put("observations", observations);
         Files.writeString(directory.resolve(name), JsonUtil.toJson(report), StandardCharsets.UTF_8);
+    }
+
+    static void writeM7ThreeReport(String name, List<Map<String, Object>> observations) throws IOException {
+        Path directory = repositoryRoot().resolve(
+                Path.of(".tmp", "hybrid-collector", "m7-3")).toAbsolutePath().normalize();
+        Files.createDirectories(directory);
+        Map<String, Object> report = new LinkedHashMap<>();
+        report.put("observedAt", Instant.now().toString());
+        report.put("scope", "local configured-capacity or soak gate; not a production capacity claim");
+        report.put("observations", observations);
+        Path target = directory.resolve(name);
+        Path temporary = Files.createTempFile(directory, "m7-3-", ".json.tmp");
+        try {
+            Files.writeString(temporary, JsonUtil.toJson(report), StandardCharsets.UTF_8);
+            Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        } finally {
+            Files.deleteIfExists(temporary);
+        }
     }
 
     private static Path repositoryRoot() {

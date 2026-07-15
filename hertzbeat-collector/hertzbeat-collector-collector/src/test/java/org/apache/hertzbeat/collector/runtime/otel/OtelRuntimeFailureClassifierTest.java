@@ -43,6 +43,7 @@ class OtelRuntimeFailureClassifierTest {
                 Arguments.of("sending queue is full", failure("queue_full")),
                 Arguments.of("database reached maximum size", failure("storage_full")),
                 Arguments.of("failed to enqueue: database reached maximum size", failure("storage_full")),
+                Arguments.of("the storage extension has run out of available space", failure("storage_full")),
                 Arguments.of("write failed: no space left on device", failure("storage_full")),
                 Arguments.of("failed to open storage: checksum error", failure("storage_corrupted")),
                 Arguments.of("failed to open storage: invalid database", failure("storage_corrupted")),

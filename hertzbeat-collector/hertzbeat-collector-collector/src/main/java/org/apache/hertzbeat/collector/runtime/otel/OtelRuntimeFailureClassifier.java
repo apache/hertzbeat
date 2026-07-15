@@ -29,7 +29,8 @@ public class OtelRuntimeFailureClassifier {
         }
         String value = diagnostic.toLowerCase(Locale.ROOT);
         if (containsAny(value, "no space left on device", "disk quota exceeded",
-                "database reached maximum size", "database or disk is full")) {
+                "database reached maximum size", "database or disk is full",
+                "storage extension has run out of available space")) {
             return FailureCode.STORAGE_FULL;
         }
         if (containsAny(value, "checksum error", "invalid database", "database corruption detected",

@@ -150,6 +150,14 @@ final class OtelRuntimeFaultBackend implements AutoCloseable {
         return maximumTaskQueueDepth.get();
     }
 
+    int activeWorkerCount() {
+        return executor == null ? 0 : executor.getActiveCount();
+    }
+
+    int currentTaskQueueDepth() {
+        return executor == null ? 0 : executor.getQueue().size();
+    }
+
     boolean isStopped() {
         return stopped
                 && server == null
