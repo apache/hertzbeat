@@ -24,9 +24,8 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
 import type { PageResult } from '@/core/http/api-message';
+import { SettingsNav } from '@/shared/settings/settings-nav';
 
-import { AlertManagementNav } from './AlertManagementNav';
-import { AlertNotificationNav } from './AlertNotificationNav';
 import styles from './AlertPolicyPage.module.css';
 import editorStyles from './NoticeTemplateEditor.module.css';
 import { NoticeTemplateEditor } from './NoticeTemplateEditor';
@@ -123,8 +122,7 @@ export function NoticeTemplatePage() {
         <div><Typography.Title level={2}>{t('noticeTemplates.title')}</Typography.Title><Typography.Text type="secondary">{t('noticeTemplates.description')}</Typography.Text></div>
         <Button type="primary" onClick={() => setDraft(createNoticeTemplateDraft())}>{t('noticeTemplates.new')}</Button>
       </header>
-      <AlertManagementNav />
-      <AlertNotificationNav />
+      <SettingsNav />
       <div className={pageStyles.toolbar}>
         <Select aria-label={t('noticeTemplates.source')} value={query.preset ? 'preset' : 'custom'} options={[{ value: 'preset', label: t('noticeTemplates.preset') }, { value: 'custom', label: t('noticeTemplates.custom') }]} onChange={value => updateQuery({ preset: value === 'preset', pageIndex: 0 })} />
         <Input allowClear value={name} placeholder={t('noticeTemplates.search')} onChange={event => setName(event.target.value)} onPressEnter={() => updateQuery({ name: name.trim(), pageIndex: 0 })} />

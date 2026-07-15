@@ -20,7 +20,7 @@ import { Alert, App, Button, Skeleton, Tag, Typography } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { AlertNotificationNav } from '@/features/alert';
+import { SettingsNav } from '@/shared/settings/settings-nav';
 
 import { EmailServerEditor, SmsServerEditor } from './MessageServerEditors';
 import {
@@ -88,7 +88,7 @@ export function MessageServerPage() {
   return (
     <div className={styles.page}>
       <header className={styles.heading}><Typography.Title level={2}>{t('messageServer.title')}</Typography.Title><Typography.Text type="secondary">{t('messageServer.description')}</Typography.Text></header>
-      <AlertNotificationNav />
+      <SettingsNav />
       {(email.isError || sms.isError) && <Alert type="error" showIcon message={t('messageServer.unavailable')} />}
       {(email.isPending || sms.isPending) ? <Skeleton active /> : (
         <div className={styles.channels}>

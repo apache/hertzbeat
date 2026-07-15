@@ -16,11 +16,17 @@
  */
 
 import { Skeleton } from 'antd';
-import { Navigate, createBrowserRouter, RouterProvider, type RouteObject } from 'react-router-dom';
+import { Navigate, createBrowserRouter, RouterProvider, useLocation, type RouteObject } from 'react-router-dom';
 
 import { AuthGate } from '@/core/auth/AuthGate';
 import { RouteErrorBoundary } from '@/features/errors/RouteErrorBoundary';
 import { BasicLayout } from '@/layout/basic/basic-layout';
+import { legacySettingsPaths, settingsPaths } from '@/shared/settings/settings-routes';
+
+function LegacySettingsRedirect({ to }: { to: string }) {
+  const location = useLocation();
+  return <Navigate replace to={`${to}${location.search}${location.hash}`} />;
+}
 
 // Static route metadata is exported so architecture tests can inspect the data-router boundary.
 // eslint-disable-next-line react-refresh/only-export-components
@@ -162,7 +168,7 @@ export const appRoutes: RouteObject[] = [
               },
               {
                 id: 'notice-receivers',
-                path: '/alerts/notifications/receivers',
+                path: settingsPaths.receivers,
                 lazy: async () => {
                   const { NoticeReceiverPage } = await import('@/features/alert/NoticeReceiverPage');
                   return { Component: NoticeReceiverPage };
@@ -170,7 +176,7 @@ export const appRoutes: RouteObject[] = [
               },
               {
                 id: 'notice-templates',
-                path: '/alerts/notifications/templates',
+                path: settingsPaths.templates,
                 lazy: async () => {
                   const { NoticeTemplatePage } = await import('@/features/alert/NoticeTemplatePage');
                   return { Component: NoticeTemplatePage };
@@ -178,7 +184,7 @@ export const appRoutes: RouteObject[] = [
               },
               {
                 id: 'notice-rules',
-                path: '/alerts/notifications/rules',
+                path: settingsPaths.rules,
                 lazy: async () => {
                   const { NoticeRulePage } = await import('@/features/alert/NoticeRulePage');
                   return { Component: NoticeRulePage };
@@ -186,11 +192,36 @@ export const appRoutes: RouteObject[] = [
               },
               {
                 id: 'message-server',
-                path: '/setting/settings/server',
+                path: settingsPaths.channels,
                 lazy: async () => {
                   const { MessageServerPage } = await import('@/features/settings/MessageServerPage');
                   return { Component: MessageServerPage };
                 }
+              },
+              {
+                id: 'settings',
+                path: settingsPaths.root,
+                element: <Navigate replace to={settingsPaths.receivers} />
+              },
+              {
+                id: 'legacy-notice-receivers',
+                path: legacySettingsPaths.receivers,
+                element: <LegacySettingsRedirect to={settingsPaths.receivers} />
+              },
+              {
+                id: 'legacy-notice-templates',
+                path: legacySettingsPaths.templates,
+                element: <LegacySettingsRedirect to={settingsPaths.templates} />
+              },
+              {
+                id: 'legacy-notice-rules',
+                path: legacySettingsPaths.rules,
+                element: <LegacySettingsRedirect to={settingsPaths.rules} />
+              },
+              {
+                id: 'legacy-message-server',
+                path: legacySettingsPaths.channels,
+                element: <LegacySettingsRedirect to={settingsPaths.channels} />
               },
               {
                 id: 'bulletin',

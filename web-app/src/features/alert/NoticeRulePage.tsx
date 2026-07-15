@@ -24,9 +24,8 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
 import type { PageResult } from '@/core/http/api-message';
+import { SettingsNav } from '@/shared/settings/settings-nav';
 
-import { AlertManagementNav } from './AlertManagementNav';
-import { AlertNotificationNav } from './AlertNotificationNav';
 import styles from './AlertPolicyPage.module.css';
 import { NoticeRuleEditor } from './NoticeRuleEditor';
 import {
@@ -133,8 +132,7 @@ export function NoticeRulePage() {
         <div><Typography.Title level={2}>{t('noticeRules.title')}</Typography.Title><Typography.Text type="secondary">{t('noticeRules.description')}</Typography.Text></div>
         <Button type="primary" disabled={receivers.isError || templates.isError} onClick={() => setDraft(createNoticeRuleDraft())}>{t('noticeRules.new')}</Button>
       </header>
-      <AlertManagementNav />
-      <AlertNotificationNav />
+      <SettingsNav />
       {(receivers.isError || templates.isError) && <Alert type="warning" showIcon message={t('noticeRules.optionsUnavailable')} />}
       <div className={styles.toolbar}>
         <Input allowClear value={name} placeholder={t('noticeRules.search')} onChange={event => setName(event.target.value)} onPressEnter={() => updateQuery({ name: name.trim(), pageIndex: 0 })} />

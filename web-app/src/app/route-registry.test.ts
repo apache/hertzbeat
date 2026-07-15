@@ -29,9 +29,27 @@ describe('route registry', () => {
     expect(routeRegistry.find(route => route.path === '*')?.navigation).toBe(false);
   });
 
-  it('preserves the master entry routes', () => {
+  it('keeps notification configuration under one settings entry', () => {
     expect(routeRegistry.map(route => route.path)).toEqual(
-      expect.arrayContaining(['/', '/dashboard', '/monitors', '/alerts', '/alerts/rules', '/alerts/groups', '/alerts/inhibits', '/alerts/silences', '/alerts/notifications/receivers', '/alerts/notifications/rules', '/alerts/notifications/templates', '/setting/settings/server', '/bulletin', '/status', '/passport/login'])
+      expect.arrayContaining([
+        '/',
+        '/dashboard',
+        '/monitors',
+        '/alerts',
+        '/alerts/rules',
+        '/alerts/groups',
+        '/alerts/inhibits',
+        '/alerts/silences',
+        '/settings/notifications/receivers',
+        '/settings/notifications/rules',
+        '/settings/notifications/templates',
+        '/settings/notifications/channels',
+        '/bulletin',
+        '/status',
+        '/passport/login'
+      ])
     );
+
+    expect(routeRegistry.find(route => route.id === 'settings')?.navigation).toBe(true);
   });
 });

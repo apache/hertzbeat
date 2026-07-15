@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import { settingsPaths } from '@/shared/settings/settings-routes';
+
 export type AppRouteDefinition = {
   id: string;
   path: string;
@@ -33,10 +35,11 @@ export const routeRegistry = [
   { id: 'alert-groups', path: '/alerts/groups', labelKey: 'alertGroups.title', layout: 'basic', navigation: false },
   { id: 'alert-inhibits', path: '/alerts/inhibits', labelKey: 'alertInhibits.title', layout: 'basic', navigation: false },
   { id: 'alert-silences', path: '/alerts/silences', labelKey: 'alertSilences.title', layout: 'basic', navigation: false },
-  { id: 'notice-receivers', path: '/alerts/notifications/receivers', labelKey: 'noticeReceivers.title', layout: 'basic', navigation: false },
-  { id: 'notice-rules', path: '/alerts/notifications/rules', labelKey: 'noticeRules.title', layout: 'basic', navigation: false },
-  { id: 'notice-templates', path: '/alerts/notifications/templates', labelKey: 'noticeTemplates.title', layout: 'basic', navigation: false },
-  { id: 'message-server', path: '/setting/settings/server', labelKey: 'messageServer.title', layout: 'basic', navigation: false },
+  { id: 'settings', path: settingsPaths.root, labelKey: 'menu.settings', layout: 'basic', navigation: true },
+  { id: 'notice-receivers', path: settingsPaths.receivers, labelKey: 'noticeReceivers.title', layout: 'basic', navigation: false },
+  { id: 'notice-rules', path: settingsPaths.rules, labelKey: 'noticeRules.title', layout: 'basic', navigation: false },
+  { id: 'notice-templates', path: settingsPaths.templates, labelKey: 'noticeTemplates.title', layout: 'basic', navigation: false },
+  { id: 'message-server', path: settingsPaths.channels, labelKey: 'messageServer.title', layout: 'basic', navigation: false },
   { id: 'bulletin', path: '/bulletin', labelKey: 'menu.bulletin', layout: 'basic', navigation: true },
   { id: 'status', path: '/status', labelKey: 'menu.status', layout: 'blank', navigation: false },
   { id: 'login', path: '/passport/login', labelKey: 'auth.title', layout: 'passport', navigation: false },

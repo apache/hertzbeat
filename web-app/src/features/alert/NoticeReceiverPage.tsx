@@ -24,8 +24,8 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
 import type { PageResult } from '@/core/http/api-message';
+import { SettingsNav } from '@/shared/settings/settings-nav';
 
-import { AlertNotificationNav } from './AlertNotificationNav';
 import { deleteNoticeReceiver, loadNoticeReceiver, loadNoticeReceivers, saveNoticeReceiver, testNoticeReceiver } from './notice-receiver-api';
 import {
   createNoticeReceiverDraft,
@@ -39,7 +39,6 @@ import {
   type NoticeReceiver,
   type NoticeReceiverDraft
 } from './notice-receiver-model';
-import { AlertManagementNav } from './AlertManagementNav';
 import styles from './AlertPolicyPage.module.css';
 import { NoticeReceiverEditor } from './NoticeReceiverEditor';
 
@@ -124,8 +123,7 @@ export function NoticeReceiverPage() {
         <div><Typography.Title level={2}>{t('noticeReceivers.title')}</Typography.Title><Typography.Text type="secondary">{t('noticeReceivers.description')}</Typography.Text></div>
         <Button type="primary" onClick={() => setDraft(createNoticeReceiverDraft())}>{t('noticeReceivers.new')}</Button>
       </header>
-      <AlertManagementNav />
-      <AlertNotificationNav />
+      <SettingsNav />
       <div className={styles.toolbar}>
         <Input allowClear value={name} placeholder={t('noticeReceivers.search')} onChange={event => setName(event.target.value)} onPressEnter={() => updateQuery({ name: name.trim(), pageIndex: 0 })} />
         <Button type="primary" onClick={() => updateQuery({ name: name.trim(), pageIndex: 0 })}>{t('common.query')}</Button>

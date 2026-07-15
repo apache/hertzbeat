@@ -22,14 +22,12 @@ import { useLocation, useNavigate } from 'react-router-dom';
 const alertManagementRoutes = [
   { key: '/alerts', labelKey: 'alertNavigation.events' },
   { key: '/alerts/rules', labelKey: 'alertNavigation.rules' },
-  { key: '/alerts/groups', labelKey: 'alertNavigation.noiseControl' },
-  { key: '/alerts/notifications/receivers', labelKey: 'alertNavigation.notifications' }
+  { key: '/alerts/groups', labelKey: 'alertNavigation.noiseControl' }
 ] as const;
 
 function activeAlertRoute(pathname: string) {
   if (pathname.startsWith('/alerts/rules')) return '/alerts/rules';
   if (pathname.startsWith('/alerts/groups') || pathname.startsWith('/alerts/inhibits') || pathname.startsWith('/alerts/silences')) return '/alerts/groups';
-  if (pathname.startsWith('/alerts/notifications')) return '/alerts/notifications/receivers';
   return '/alerts';
 }
 
