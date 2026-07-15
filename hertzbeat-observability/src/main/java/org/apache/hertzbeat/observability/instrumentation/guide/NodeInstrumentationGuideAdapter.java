@@ -33,11 +33,13 @@ public class NodeInstrumentationGuideAdapter implements InstrumentationGuideAdap
 
     @Override
     public LanguageGuideSteps render(GuideRenderRequest request, MethodOption method) {
+        String apiVersion = GuideAdapterSupport.dependencyVersion(method, "@opentelemetry/api");
         return new LanguageGuideSteps(
                 GuideAdapterSupport.install(GuideAdapterSupport.snippet(
                         "install-command",
                         "bash",
-                        "npm install --save @opentelemetry/auto-instrumentations-node@"
+                        "npm install --save @opentelemetry/api@" + apiVersion
+                                + " @opentelemetry/auto-instrumentations-node@"
                                 + method.component().version())),
                 GuideAdapterSupport.start(GuideAdapterSupport.snippet(
                         "start-command",
@@ -46,7 +48,7 @@ public class NodeInstrumentationGuideAdapter implements InstrumentationGuideAdap
                 GuideAdapterSupport.container(GuideAdapterSupport.snippet(
                         "container-config",
                         "dockerfile",
-                        "ENV NODE_OPTIONS=--require\\ @opentelemetry/auto-instrumentations-node/register")),
+                        "ENV NODE_OPTIONS=\"--require @opentelemetry/auto-instrumentations-node/register\"")),
                 GuideAdapterSupport.disable(GuideAdapterSupport.snippet(
                         "disable-command",
                         "bash",

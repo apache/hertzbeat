@@ -28,16 +28,48 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Stream;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Capability;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.ComponentVersionPolicy;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Framework;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Language;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Method;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 class InstrumentationCatalogServiceTest {
 
     private final InstrumentationCatalogService service = new InstrumentationCatalogService();
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("officialSignalMatrix")
+    void publishesMethodSpecificSignalMaturityFromCurrentOfficialGuidance(SignalScenario scenario) {
+        var method = service.requireMethod(scenario.language(), scenario.framework(), scenario.method());
+
+        assertEquals(scenario.metrics(), method.signals().metrics());
+        assertEquals(scenario.logs(), method.signals().logs());
+        assertEquals(scenario.traces(), method.signals().traces());
+    }
+
+    @Test
+    void disclosesEveryAdditionalOfficialPackageRenderedByNodeAndPythonGuides() {
+        var node = service.requireMethod(Language.NODEJS, Framework.EXPRESS, Method.ZERO_CODE);
+        assertEquals(
+                List.of("@opentelemetry/api@1.9.1"),
+                node.component().dependencies().stream()
+                        .map(dependency -> dependency.name() + "@" + dependency.version())
+                        .toList());
+
+        var python = service.requireMethod(Language.PYTHON, Framework.DJANGO, Method.ZERO_CODE);
+        assertEquals(
+                List.of(
+                        "opentelemetry-exporter-otlp@1.43.0",
+                        "opentelemetry-instrumentation-logging@0.64b0"),
+                python.component().dependencies().stream()
+                        .map(dependency -> dependency.name() + "@" + dependency.version())
+                        .toList());
+    }
 
     @Test
     void exposesPinnedOfficialComponentsWithoutBundlingLanguageAgents() {
@@ -60,7 +92,7 @@ class InstrumentationCatalogServiceTest {
                 java.component().artifacts().getFirst().digest());
         assertTrue(java.component().artifacts().getFirst().provenanceUrl().contains("releases/tags/v2.27.0"));
         assertEquals(Capability.SUPPORTED, java.signals().metrics());
-        assertEquals(Capability.PREVIEW, java.signals().logs());
+        assertEquals(Capability.SUPPORTED, java.signals().logs());
         assertEquals(Capability.SUPPORTED, java.signals().traces());
 
         var dotnet = service.requireMethod(Language.DOTNET, Framework.ASPNET_CORE, Method.ZERO_CODE);
@@ -92,7 +124,7 @@ class InstrumentationCatalogServiceTest {
         assertEquals(Capability.PREVIEW, goSdk.signals().logs());
         assertEquals(Capability.SUPPORTED, goSdk.signals().traces());
         assertEquals(
-                List.of("0.65.0", "0.19.0"),
+                List.of("1.43.0", "0.65.0", "0.19.0"),
                 goSdk.component().dependencies().stream().map(dependency -> dependency.version()).toList());
 
         var goEbpf = service.requireMethod(Language.GO, Framework.GO_GENERIC, Method.EBPF);
@@ -128,5 +160,50 @@ class InstrumentationCatalogServiceTest {
             directory = directory.getParent();
         }
         throw new IllegalStateException("Repository file not found: " + relativePath);
+    }
+
+    private static Stream<SignalScenario> officialSignalMatrix() {
+        return Stream.of(
+                signal("java", Language.JAVA, Framework.SPRING_BOOT, Method.ZERO_CODE,
+                        Capability.SUPPORTED, Capability.SUPPORTED, Capability.SUPPORTED),
+                signal("dotnet", Language.DOTNET, Framework.ASPNET_CORE, Method.ZERO_CODE,
+                        Capability.SUPPORTED, Capability.SUPPORTED, Capability.SUPPORTED),
+                signal("node", Language.NODEJS, Framework.EXPRESS, Method.ZERO_CODE,
+                        Capability.SUPPORTED, Capability.UNSUPPORTED, Capability.SUPPORTED),
+                signal("python", Language.PYTHON, Framework.DJANGO, Method.ZERO_CODE,
+                        Capability.SUPPORTED, Capability.PREVIEW, Capability.SUPPORTED),
+                signal("php", Language.PHP, Framework.PHP_GENERIC, Method.ZERO_CODE,
+                        Capability.UNSUPPORTED, Capability.UNSUPPORTED, Capability.SUPPORTED),
+                signal("go-sdk", Language.GO, Framework.GO_GENERIC, Method.SDK,
+                        Capability.SUPPORTED, Capability.PREVIEW, Capability.SUPPORTED),
+                signal("go-ebpf-wip", Language.GO, Framework.GO_GENERIC, Method.EBPF,
+                        Capability.UNSUPPORTED, Capability.UNSUPPORTED, Capability.PREVIEW),
+                signal("generic-sdk-selection", Language.GENERIC, Framework.GENERIC, Method.SDK,
+                        Capability.PREVIEW, Capability.PREVIEW, Capability.PREVIEW));
+    }
+
+    private static SignalScenario signal(
+            String name,
+            Language language,
+            Framework framework,
+            Method method,
+            Capability metrics,
+            Capability logs,
+            Capability traces) {
+        return new SignalScenario(name, language, framework, method, metrics, logs, traces);
+    }
+
+    private record SignalScenario(
+            String name,
+            Language language,
+            Framework framework,
+            Method method,
+            Capability metrics,
+            Capability logs,
+            Capability traces) {
+        @Override
+        public String toString() {
+            return name;
+        }
     }
 }

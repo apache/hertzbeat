@@ -77,6 +77,11 @@ class InstrumentationGuideRendererTest {
         for (String expected : scenario.expectedContent()) {
             assertTrue(rendered.contains(expected), () -> scenario.name() + " missing: " + expected);
         }
+        for (String forbidden : scenario.forbiddenContent()) {
+            assertFalse(rendered.contains(forbidden), () -> scenario.name() + " must not contain: " + forbidden);
+        }
+        assertTrue(rendered.contains(TOKEN_PLACEHOLDER));
+        assertFalse(rendered.contains("Bearer secret"));
         assertFalse(rendered.contains(". ./otel-dotnet-auto-instrument.sh"));
     }
 
@@ -175,7 +180,9 @@ class InstrumentationGuideRendererTest {
                                 "releases/download/v2.27.0/opentelemetry-javaagent.jar",
                                 "bd01fea1304e8c8803fff827a0bdda02b2266742a85c62548053c6761474bb5b",
                                 "sha256sum -c -",
-                                "-javaagent:/opt/opentelemetry-javaagent.jar")),
+                                "-javaagent:/opt/opentelemetry-javaagent.jar",
+                                "OTEL_LOGS_EXPORTER=otlp"),
+                        List.of()),
                 new RenderScenario(
                         "dotnet zero-code",
                         Language.DOTNET,
@@ -186,7 +193,9 @@ class InstrumentationGuideRendererTest {
                         List.of(
                                 "releases/download/v1.15.0/otel-dotnet-auto-install.sh",
                                 "sh ./otel-dotnet-auto-install.sh",
-                                ". $HOME/.otel-dotnet-auto/instrument.sh")),
+                                ". $HOME/.otel-dotnet-auto/instrument.sh",
+                                "OTEL_LOGS_EXPORTER=otlp"),
+                        List.of()),
                 new RenderScenario(
                         "node zero-code",
                         Language.NODEJS,
@@ -195,9 +204,12 @@ class InstrumentationGuideRendererTest {
                         Environment.DOCKER,
                         Platform.LINUX_AMD64,
                         List.of(
+                                "@opentelemetry/api@1.9.1",
                                 "@opentelemetry/auto-instrumentations-node@0.78.0",
                                 "@opentelemetry/auto-instrumentations-node/register",
-                                "NODE_OPTIONS")),
+                                "NODE_OPTIONS",
+                                "OTEL_LOGS_EXPORTER=none"),
+                        List.of("OTEL_LOGS_EXPORTER=otlp")),
                 new RenderScenario(
                         "python zero-code",
                         Language.PYTHON,
@@ -206,9 +218,13 @@ class InstrumentationGuideRendererTest {
                         Environment.DOCKER,
                         Platform.LINUX_AMD64,
                         List.of(
-                                "opentelemetry-distro[otlp]==0.64b0",
+                                "opentelemetry-distro==0.64b0",
+                                "opentelemetry-exporter-otlp==1.43.0",
+                                "opentelemetry-instrumentation-logging==0.64b0",
                                 "opentelemetry-bootstrap -a install",
-                                "opentelemetry-instrument python app.py")),
+                                "opentelemetry-instrument --logs_exporter otlp python app.py",
+                                "OTEL_LOGS_EXPORTER=otlp"),
+                        List.of()),
                 new RenderScenario(
                         "php zero-code",
                         Language.PHP,
@@ -221,7 +237,10 @@ class InstrumentationGuideRendererTest {
                                 "open-telemetry/sdk:1.14.0",
                                 "open-telemetry/exporter-otlp:1.4.0",
                                 "open-telemetry/opentelemetry-auto-laravel:1.7.0",
-                                "OTEL_PHP_AUTOLOAD_ENABLED=true")),
+                                "OTEL_PHP_AUTOLOAD_ENABLED=true",
+                                "OTEL_METRICS_EXPORTER=none",
+                                "OTEL_LOGS_EXPORTER=none"),
+                        List.of("OTEL_METRICS_EXPORTER=otlp", "OTEL_LOGS_EXPORTER=otlp")),
                 new RenderScenario(
                         "go sdk",
                         Language.GO,
@@ -233,7 +252,13 @@ class InstrumentationGuideRendererTest {
                                 "go.opentelemetry.io/otel@v1.43.0",
                                 "go.opentelemetry.io/otel/sdk/log@v0.19.0",
                                 "go.opentelemetry.io/contrib/exporters/autoexport@v0.65.0",
-                                "go run ./cmd/application")),
+                                "autoexport.NewSpanExporter(ctx)",
+                                "autoexport.NewMetricReader(ctx)",
+                                "autoexport.NewLogExporter(ctx)",
+                                "func setupOpenTelemetry(ctx context.Context)",
+                                "shutdown, err := setupOpenTelemetry(context.Background())",
+                                "go run ./cmd/application"),
+                        List.of()),
                 new RenderScenario(
                         "go ebpf preview",
                         Language.GO,
@@ -245,8 +270,10 @@ class InstrumentationGuideRendererTest {
                                 "# Preview/WIP",
                                 "--branch v0.19.0",
                                 "make build",
-                                "sudo OTEL_GO_AUTO_TARGET_EXE=/absolute/path/to/application",
-                                "./otel-go-instrumentation")),
+                                "sudo --preserve-env=OTEL_SERVICE_NAME",
+                                "OTEL_GO_AUTO_TARGET_EXE=/absolute/path/to/application",
+                                "./otel-go-instrumentation"),
+                        List.of("OTEL_METRICS_EXPORTER=otlp", "OTEL_LOGS_EXPORTER=otlp")),
                 new RenderScenario(
                         "generic sdk selection gate",
                         Language.GENERIC,
@@ -254,7 +281,8 @@ class InstrumentationGuideRendererTest {
                         Method.SDK,
                         Environment.VM,
                         Platform.ANY,
-                        List.of("Select the concrete language adapter to receive pinned executable commands.")));
+                        List.of("Select the concrete language adapter to receive pinned executable commands."),
+                        List.of()));
     }
 
     private GuideRenderRequest request(
@@ -323,7 +351,8 @@ class InstrumentationGuideRendererTest {
             Method method,
             Environment environment,
             Platform platform,
-            List<String> expectedContent) {
+            List<String> expectedContent,
+            List<String> forbiddenContent) {
         @Override
         public String toString() {
             return name;

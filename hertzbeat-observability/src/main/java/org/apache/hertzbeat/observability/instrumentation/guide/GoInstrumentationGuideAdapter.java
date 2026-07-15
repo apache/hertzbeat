@@ -40,14 +40,22 @@ public class GoInstrumentationGuideAdapter implements InstrumentationGuideAdapte
 
     private LanguageGuideSteps sdk(MethodOption method) {
         String version = method.component().version();
+        String metricVersion = GuideAdapterSupport.dependencyVersion(
+                method, "go.opentelemetry.io/otel/sdk/metric");
+        String logVersion = GuideAdapterSupport.dependencyVersion(method, "go.opentelemetry.io/otel/sdk/log");
+        String autoexportVersion = GuideAdapterSupport.dependencyVersion(
+                method, "go.opentelemetry.io/contrib/exporters/autoexport");
         String install = "go get go.opentelemetry.io/otel@v" + version + " "
                 + "go.opentelemetry.io/otel/sdk@v" + version + " "
-                + "go.opentelemetry.io/otel/sdk/log@v0.19.0 "
-                + "go.opentelemetry.io/contrib/exporters/autoexport@v0.65.0";
+                + "go.opentelemetry.io/otel/sdk/metric@v" + metricVersion + " "
+                + "go.opentelemetry.io/otel/sdk/log@v" + logVersion + " "
+                + "go.opentelemetry.io/contrib/exporters/autoexport@v" + autoexportVersion;
         return new LanguageGuideSteps(
                 GuideAdapterSupport.install(GuideAdapterSupport.snippet("install-command", "bash", install)),
-                GuideAdapterSupport.start(GuideAdapterSupport.snippet(
-                        "start-command", "bash", "go run ./cmd/application")),
+                GuideAdapterSupport.start(
+                        GuideAdapterSupport.snippet("sdk-initialization", "go", sdkInitialization()),
+                        GuideAdapterSupport.snippet("application-startup", "go", sdkStartup()),
+                        GuideAdapterSupport.snippet("start-command", "bash", "go run ./cmd/application")),
                 GuideAdapterSupport.container(GuideAdapterSupport.snippet(
                         "container-config", "dockerfile", "RUN go build -o /application ./cmd/application")),
                 GuideAdapterSupport.disable(GuideAdapterSupport.snippet(
@@ -56,15 +64,80 @@ public class GoInstrumentationGuideAdapter implements InstrumentationGuideAdapte
                         "// Remove the Setup call and rebuild; the application retains normal behavior.")));
     }
 
+    private String sdkInitialization() {
+        return """
+                import (
+                    "context"
+                    "errors"
+                    "log"
+
+                    "go.opentelemetry.io/contrib/exporters/autoexport"
+                    "go.opentelemetry.io/otel"
+                    "go.opentelemetry.io/otel/log/global"
+                    sdklog "go.opentelemetry.io/otel/sdk/log"
+                    sdkmetric "go.opentelemetry.io/otel/sdk/metric"
+                    sdktrace "go.opentelemetry.io/otel/sdk/trace"
+                )
+
+                func setupOpenTelemetry(ctx context.Context) (func(context.Context) error, error) {
+                    spanExporter, err := autoexport.NewSpanExporter(ctx)
+                    if err != nil {
+                        return nil, err
+                    }
+                    tracerProvider := sdktrace.NewTracerProvider(sdktrace.WithBatcher(spanExporter))
+
+                    metricReader, err := autoexport.NewMetricReader(ctx)
+                    if err != nil {
+                        _ = tracerProvider.Shutdown(ctx)
+                        return nil, err
+                    }
+                    meterProvider := sdkmetric.NewMeterProvider(sdkmetric.WithReader(metricReader))
+
+                    logExporter, err := autoexport.NewLogExporter(ctx)
+                    if err != nil {
+                        _ = meterProvider.Shutdown(ctx)
+                        _ = tracerProvider.Shutdown(ctx)
+                        return nil, err
+                    }
+                    loggerProvider := sdklog.NewLoggerProvider(sdklog.WithProcessor(sdklog.NewBatchProcessor(logExporter)))
+
+                    otel.SetTracerProvider(tracerProvider)
+                    otel.SetMeterProvider(meterProvider)
+                    global.SetLoggerProvider(loggerProvider)
+                    return func(ctx context.Context) error {
+                        return errors.Join(
+                            loggerProvider.Shutdown(ctx),
+                            meterProvider.Shutdown(ctx),
+                            tracerProvider.Shutdown(ctx),
+                        )
+                    }, nil
+                }
+                """;
+    }
+
+    private String sdkStartup() {
+        return """
+                shutdown, err := setupOpenTelemetry(context.Background())
+                if err != nil {
+                    log.Fatal(err)
+                }
+                defer func() {
+                    if err := shutdown(context.Background()); err != nil {
+                        log.Printf("OpenTelemetry shutdown failed: %v", err)
+                    }
+                }()
+                """;
+    }
+
     private LanguageGuideSteps ebpf(GuideRenderRequest request, MethodOption method) {
         String version = method.component().version();
         String install = "git clone --branch v" + version
                 + " --depth 1 https://github.com/open-telemetry/opentelemetry-go-instrumentation.git\n"
                 + "cd opentelemetry-go-instrumentation && make build";
-        String start = "sudo OTEL_GO_AUTO_TARGET_EXE=/absolute/path/to/application "
-                + "OTEL_SERVICE_NAME=" + request.service().name() + " "
-                + "OTEL_EXPORTER_OTLP_ENDPOINT=" + request.collector().otlpHttpEndpoint() + " "
-                + "./otel-go-instrumentation";
+        String start = "sudo --preserve-env=OTEL_SERVICE_NAME,OTEL_RESOURCE_ATTRIBUTES,"
+                + "OTEL_EXPORTER_OTLP_ENDPOINT,OTEL_EXPORTER_OTLP_PROTOCOL,OTEL_EXPORTER_OTLP_HEADERS,"
+                + "OTEL_TRACES_EXPORTER,OTEL_METRICS_EXPORTER,OTEL_LOGS_EXPORTER "
+                + "OTEL_GO_AUTO_TARGET_EXE=/absolute/path/to/application ./otel-go-instrumentation";
         String container = request.environment() == Environment.KUBERNETES
                 ? "# Preview/WIP: use otel/autoinstrumentation-go as a privileged sidecar with shared process namespace"
                 : "# Preview/WIP: use otel/autoinstrumentation-go with privileged=true and pid=host";

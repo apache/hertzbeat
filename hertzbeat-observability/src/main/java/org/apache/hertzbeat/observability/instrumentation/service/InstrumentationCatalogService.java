@@ -88,7 +88,7 @@ public class InstrumentationCatalogService {
                 false,
                 DOTNET_ENVIRONMENTS,
                 PORTABLE_PLATFORMS,
-                capabilities(Capability.SUPPORTED, Capability.PREVIEW, Capability.SUPPORTED),
+                capabilities(Capability.SUPPORTED, Capability.SUPPORTED, Capability.SUPPORTED),
                 component(
                         "OpenTelemetry Java Agent",
                         "https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/tag/v2.27.0",
@@ -108,7 +108,7 @@ public class InstrumentationCatalogService {
                 false,
                 DOTNET_ENVIRONMENTS,
                 PORTABLE_PLATFORMS,
-                capabilities(Capability.SUPPORTED, Capability.PREVIEW, Capability.SUPPORTED),
+                capabilities(Capability.SUPPORTED, Capability.SUPPORTED, Capability.SUPPORTED),
                 component(
                         "OpenTelemetry .NET Automatic Instrumentation",
                         "https://github.com/open-telemetry/opentelemetry-dotnet-instrumentation/releases/tag/v1.15.0",
@@ -123,25 +123,43 @@ public class InstrumentationCatalogService {
                 component(
                         "@opentelemetry/auto-instrumentations-node",
                         "https://www.npmjs.com/package/@opentelemetry/auto-instrumentations-node/v/0.78.0",
-                        "0.78.0"));
+                        "0.78.0",
+                        List.of(dependency(
+                                "@opentelemetry/api",
+                                "https://www.npmjs.com/package/@opentelemetry/api/v/1.9.1",
+                                "1.9.1",
+                                "instrumentation.dependency.api")),
+                        List.of()));
         MethodOption python = method(
                 Method.ZERO_CODE,
                 "instrumentation.method.zero_code",
                 false,
                 PORTABLE_ENVIRONMENTS,
                 PORTABLE_PLATFORMS,
-                capabilities(Capability.PREVIEW, Capability.UNSUPPORTED, Capability.SUPPORTED),
+                capabilities(Capability.SUPPORTED, Capability.PREVIEW, Capability.SUPPORTED),
                 component(
                         "opentelemetry-distro",
                         "https://pypi.org/project/opentelemetry-distro/0.64b0/",
-                        "0.64b0"));
+                        "0.64b0",
+                        List.of(
+                                dependency(
+                                        "opentelemetry-exporter-otlp",
+                                        "https://pypi.org/project/opentelemetry-exporter-otlp/1.43.0/",
+                                        "1.43.0",
+                                        "instrumentation.dependency.exporter"),
+                                dependency(
+                                        "opentelemetry-instrumentation-logging",
+                                        "https://pypi.org/project/opentelemetry-instrumentation-logging/0.64b0/",
+                                        "0.64b0",
+                                        "instrumentation.dependency.framework_instrumentation")),
+                        List.of()));
         MethodOption phpGeneric = method(
                 Method.ZERO_CODE,
                 "instrumentation.method.zero_code",
                 false,
                 PORTABLE_ENVIRONMENTS,
                 UNIX_PLATFORMS,
-                capabilities(Capability.PREVIEW, Capability.UNSUPPORTED, Capability.SUPPORTED),
+                capabilities(Capability.UNSUPPORTED, Capability.UNSUPPORTED, Capability.SUPPORTED),
                 component(
                         "OpenTelemetry PHP extension",
                         "https://pecl.php.net/package/opentelemetry/1.2.1",
@@ -154,7 +172,7 @@ public class InstrumentationCatalogService {
                 false,
                 PORTABLE_ENVIRONMENTS,
                 UNIX_PLATFORMS,
-                capabilities(Capability.PREVIEW, Capability.UNSUPPORTED, Capability.SUPPORTED),
+                capabilities(Capability.UNSUPPORTED, Capability.UNSUPPORTED, Capability.SUPPORTED),
                 component(
                         "OpenTelemetry PHP extension",
                         "https://pecl.php.net/package/opentelemetry/1.2.1",
@@ -173,6 +191,11 @@ public class InstrumentationCatalogService {
                         "https://github.com/open-telemetry/opentelemetry-go/releases/tag/v1.43.0",
                         "1.43.0",
                         List.of(
+                                dependency(
+                                        "go.opentelemetry.io/otel/sdk/metric",
+                                        "https://pkg.go.dev/go.opentelemetry.io/otel/sdk/metric@v1.43.0",
+                                        "1.43.0",
+                                        "instrumentation.dependency.metrics_sdk"),
                                 dependency(
                                         "go.opentelemetry.io/contrib/exporters/autoexport",
                                         "https://pkg.go.dev/go.opentelemetry.io/contrib/exporters/autoexport@v0.65.0",

@@ -60,7 +60,7 @@ class InstrumentationControllerTest {
                 .andExpect(jsonPath("$.data.languages[0].frameworks[0].methods[0].signals.metrics")
                         .value("supported"))
                 .andExpect(jsonPath("$.data.languages[0].frameworks[0].methods[0].signals.logs")
-                        .value("preview"))
+                        .value("supported"))
                 .andExpect(jsonPath(
                         "$.data.languages[0].frameworks[0].methods[0].component.bundledWithHertzBeat")
                         .value(false));

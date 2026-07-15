@@ -32,6 +32,10 @@ contract.
 - Versions are pinned and reviewed compatibility inputs, not a claim that they are the newest
   upstream releases. `dependencies` discloses every additional fixed SDK, exporter, or framework
   package used by a guide; these entries are manifest metadata and never HertzBeat dependencies.
+- Signal maturity is method-specific rather than a language-wide SDK claim. It follows the selected
+  official automatic-instrumentation or SDK path: Java and .NET expose all three signals, Node.js
+  excludes application Logs, Python Logs remain preview, PHP automatic instrumentation exposes
+  Traces only, and Go eBPF remains preview/WIP while the official Go SDK is the default.
 - `artifacts` carries immutable verification metadata for downloads outside package managers. The
   Java 2.27.0 guide verifies the upstream GitHub release asset against the published SHA-256 digest
   before launch.
@@ -92,7 +96,7 @@ contract.
               "preview": false,
               "environments": ["vm", "docker", "kubernetes", "windows_service"],
               "platforms": ["linux_amd64", "linux_arm64", "macos_amd64", "macos_arm64", "windows_amd64"],
-              "signals": {"metrics": "supported", "logs": "preview", "traces": "supported"},
+              "signals": {"metrics": "supported", "logs": "supported", "traces": "supported"},
               "component": {
                 "name": "OpenTelemetry Java Agent",
                 "sourceUrl": "https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/tag/v2.27.0",
@@ -126,7 +130,7 @@ contract.
               "preview": false,
               "environments": ["vm", "docker", "kubernetes", "windows_service"],
               "platforms": ["linux_amd64", "linux_arm64", "macos_amd64", "macos_arm64", "windows_amd64"],
-              "signals": {"metrics": "supported", "logs": "preview", "traces": "supported"},
+              "signals": {"metrics": "supported", "logs": "supported", "traces": "supported"},
               "component": {
                 "name": "OpenTelemetry Java Agent",
                 "sourceUrl": "https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/tag/v2.27.0",
@@ -166,7 +170,7 @@ contract.
               "preview": false,
               "environments": ["vm", "docker", "kubernetes", "windows_service"],
               "platforms": ["linux_amd64", "linux_arm64", "macos_amd64", "macos_arm64", "windows_amd64"],
-              "signals": {"metrics": "supported", "logs": "preview", "traces": "supported"},
+              "signals": {"metrics": "supported", "logs": "supported", "traces": "supported"},
               "component": {
                 "name": "OpenTelemetry .NET Automatic Instrumentation",
                 "sourceUrl": "https://github.com/open-telemetry/opentelemetry-dotnet-instrumentation/releases/tag/v1.15.0",
@@ -208,7 +212,17 @@ contract.
                 "installationLocationKey": "instrumentation.location.application_host",
                 "official": true,
                 "bundledWithHertzBeat": false,
-                "dependencies": [],
+                "dependencies": [
+                  {
+                    "name": "@opentelemetry/api",
+                    "sourceUrl": "https://www.npmjs.com/package/@opentelemetry/api/v/1.9.1",
+                    "version": "1.9.1",
+                    "license": "Apache-2.0",
+                    "purposeKey": "instrumentation.dependency.api",
+                    "official": true,
+                    "bundledWithHertzBeat": false
+                  }
+                ],
                 "artifacts": []
               }
             }
@@ -234,7 +248,17 @@ contract.
                 "installationLocationKey": "instrumentation.location.application_host",
                 "official": true,
                 "bundledWithHertzBeat": false,
-                "dependencies": [],
+                "dependencies": [
+                  {
+                    "name": "@opentelemetry/api",
+                    "sourceUrl": "https://www.npmjs.com/package/@opentelemetry/api/v/1.9.1",
+                    "version": "1.9.1",
+                    "license": "Apache-2.0",
+                    "purposeKey": "instrumentation.dependency.api",
+                    "official": true,
+                    "bundledWithHertzBeat": false
+                  }
+                ],
                 "artifacts": []
               }
             }
@@ -256,7 +280,7 @@ contract.
               "preview": false,
               "environments": ["vm", "docker", "kubernetes"],
               "platforms": ["linux_amd64", "linux_arm64", "macos_amd64", "macos_arm64", "windows_amd64"],
-              "signals": {"metrics": "preview", "logs": "unsupported", "traces": "supported"},
+              "signals": {"metrics": "supported", "logs": "preview", "traces": "supported"},
               "component": {
                 "name": "opentelemetry-distro",
                 "sourceUrl": "https://pypi.org/project/opentelemetry-distro/0.64b0/",
@@ -266,7 +290,26 @@ contract.
                 "installationLocationKey": "instrumentation.location.application_host",
                 "official": true,
                 "bundledWithHertzBeat": false,
-                "dependencies": [],
+                "dependencies": [
+                  {
+                    "name": "opentelemetry-exporter-otlp",
+                    "sourceUrl": "https://pypi.org/project/opentelemetry-exporter-otlp/1.43.0/",
+                    "version": "1.43.0",
+                    "license": "Apache-2.0",
+                    "purposeKey": "instrumentation.dependency.exporter",
+                    "official": true,
+                    "bundledWithHertzBeat": false
+                  },
+                  {
+                    "name": "opentelemetry-instrumentation-logging",
+                    "sourceUrl": "https://pypi.org/project/opentelemetry-instrumentation-logging/0.64b0/",
+                    "version": "0.64b0",
+                    "license": "Apache-2.0",
+                    "purposeKey": "instrumentation.dependency.framework_instrumentation",
+                    "official": true,
+                    "bundledWithHertzBeat": false
+                  }
+                ],
                 "artifacts": []
               }
             }
@@ -282,7 +325,7 @@ contract.
               "preview": false,
               "environments": ["vm", "docker", "kubernetes"],
               "platforms": ["linux_amd64", "linux_arm64", "macos_amd64", "macos_arm64", "windows_amd64"],
-              "signals": {"metrics": "preview", "logs": "unsupported", "traces": "supported"},
+              "signals": {"metrics": "supported", "logs": "preview", "traces": "supported"},
               "component": {
                 "name": "opentelemetry-distro",
                 "sourceUrl": "https://pypi.org/project/opentelemetry-distro/0.64b0/",
@@ -292,7 +335,26 @@ contract.
                 "installationLocationKey": "instrumentation.location.application_host",
                 "official": true,
                 "bundledWithHertzBeat": false,
-                "dependencies": [],
+                "dependencies": [
+                  {
+                    "name": "opentelemetry-exporter-otlp",
+                    "sourceUrl": "https://pypi.org/project/opentelemetry-exporter-otlp/1.43.0/",
+                    "version": "1.43.0",
+                    "license": "Apache-2.0",
+                    "purposeKey": "instrumentation.dependency.exporter",
+                    "official": true,
+                    "bundledWithHertzBeat": false
+                  },
+                  {
+                    "name": "opentelemetry-instrumentation-logging",
+                    "sourceUrl": "https://pypi.org/project/opentelemetry-instrumentation-logging/0.64b0/",
+                    "version": "0.64b0",
+                    "license": "Apache-2.0",
+                    "purposeKey": "instrumentation.dependency.framework_instrumentation",
+                    "official": true,
+                    "bundledWithHertzBeat": false
+                  }
+                ],
                 "artifacts": []
               }
             }
@@ -314,7 +376,7 @@ contract.
               "preview": false,
               "environments": ["vm", "docker", "kubernetes"],
               "platforms": ["linux_amd64", "linux_arm64", "macos_amd64", "macos_arm64"],
-              "signals": {"metrics": "preview", "logs": "unsupported", "traces": "supported"},
+              "signals": {"metrics": "unsupported", "logs": "unsupported", "traces": "supported"},
               "component": {
                 "name": "OpenTelemetry PHP extension",
                 "sourceUrl": "https://pecl.php.net/package/opentelemetry/1.2.1",
@@ -368,7 +430,7 @@ contract.
               "preview": false,
               "environments": ["vm", "docker", "kubernetes"],
               "platforms": ["linux_amd64", "linux_arm64", "macos_amd64", "macos_arm64"],
-              "signals": {"metrics": "preview", "logs": "unsupported", "traces": "supported"},
+              "signals": {"metrics": "unsupported", "logs": "unsupported", "traces": "supported"},
               "component": {
                 "name": "OpenTelemetry PHP extension",
                 "sourceUrl": "https://pecl.php.net/package/opentelemetry/1.2.1",
@@ -439,6 +501,15 @@ contract.
                 "official": true,
                 "bundledWithHertzBeat": false,
                 "dependencies": [
+                  {
+                    "name": "go.opentelemetry.io/otel/sdk/metric",
+                    "sourceUrl": "https://pkg.go.dev/go.opentelemetry.io/otel/sdk/metric@v1.43.0",
+                    "version": "1.43.0",
+                    "license": "Apache-2.0",
+                    "purposeKey": "instrumentation.dependency.metrics_sdk",
+                    "official": true,
+                    "bundledWithHertzBeat": false
+                  },
                   {
                     "name": "go.opentelemetry.io/contrib/exporters/autoexport",
                     "sourceUrl": "https://pkg.go.dev/go.opentelemetry.io/contrib/exporters/autoexport@v0.65.0",
@@ -569,7 +640,17 @@ Response `data`:
     "installationLocationKey": "instrumentation.location.application_host",
     "official": true,
     "bundledWithHertzBeat": false,
-    "dependencies": [],
+    "dependencies": [
+      {
+        "name": "@opentelemetry/api",
+        "sourceUrl": "https://www.npmjs.com/package/@opentelemetry/api/v/1.9.1",
+        "version": "1.9.1",
+        "license": "Apache-2.0",
+        "purposeKey": "instrumentation.dependency.api",
+        "official": true,
+        "bundledWithHertzBeat": false
+      }
+    ],
     "artifacts": []
   },
   "secretPlaceholders": {
@@ -589,7 +670,7 @@ Response `data`:
         {
           "id": "install-command",
           "language": "bash",
-          "content": "npm install --save @opentelemetry/auto-instrumentations-node@0.78.0",
+          "content": "npm install --save @opentelemetry/api@1.9.1 @opentelemetry/auto-instrumentations-node@0.78.0",
           "secretPlaceholders": []
         }
       ]
@@ -603,7 +684,7 @@ Response `data`:
         {
           "id": "otel-environment",
           "language": "bash",
-          "content": "export OTEL_SERVICE_NAME=checkout-api\nexport OTEL_RESOURCE_ATTRIBUTES='service.namespace=commerce,deployment.environment.name=prod,hertzbeat.collector.id=collector-east'\nexport OTEL_EXPORTER_OTLP_ENDPOINT=http://collector.internal:4318\nexport OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf\nexport OTEL_EXPORTER_OTLP_HEADERS='Authorization=Bearer%20${HERTZBEAT_TOKEN}'",
+          "content": "export OTEL_SERVICE_NAME=checkout-api\nexport OTEL_RESOURCE_ATTRIBUTES='service.namespace=commerce,deployment.environment.name=prod,hertzbeat.collector.id=collector-east'\nexport OTEL_EXPORTER_OTLP_ENDPOINT=http://collector.internal:4318\nexport OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf\nexport OTEL_TRACES_EXPORTER=otlp\nexport OTEL_METRICS_EXPORTER=otlp\nexport OTEL_LOGS_EXPORTER=none\nexport OTEL_EXPORTER_OTLP_HEADERS='Authorization=Bearer%20${HERTZBEAT_TOKEN}'",
           "secretPlaceholders": ["authorizationToken"]
         }
       ]
@@ -631,7 +712,7 @@ Response `data`:
         {
           "id": "container-config",
           "language": "dockerfile",
-          "content": "ENV NODE_OPTIONS=--require\\ @opentelemetry/auto-instrumentations-node/register",
+          "content": "ENV NODE_OPTIONS=\"--require @opentelemetry/auto-instrumentations-node/register\"",
           "secretPlaceholders": []
         }
       ]

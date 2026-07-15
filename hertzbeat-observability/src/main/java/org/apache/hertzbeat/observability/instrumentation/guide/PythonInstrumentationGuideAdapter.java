@@ -33,20 +33,29 @@ public class PythonInstrumentationGuideAdapter implements InstrumentationGuideAd
 
     @Override
     public LanguageGuideSteps render(GuideRenderRequest request, MethodOption method) {
+        String packages = packages(method);
         return new LanguageGuideSteps(
                 GuideAdapterSupport.install(GuideAdapterSupport.snippet(
                         "install-command",
                         "bash",
-                        "python -m pip install 'opentelemetry-distro[otlp]=="
-                                + method.component().version() + "'\nopentelemetry-bootstrap -a install")),
+                        "python -m pip install " + packages + "\nopentelemetry-bootstrap -a install")),
                 GuideAdapterSupport.start(GuideAdapterSupport.snippet(
-                        "start-command", "bash", "opentelemetry-instrument python app.py")),
+                        "start-command",
+                        "bash",
+                        "opentelemetry-instrument --logs_exporter otlp python app.py")),
                 GuideAdapterSupport.container(GuideAdapterSupport.snippet(
                         "container-config",
                         "dockerfile",
-                        "RUN python -m pip install 'opentelemetry-distro[otlp]=="
-                                + method.component().version() + "' && opentelemetry-bootstrap -a install")),
+                        "RUN python -m pip install " + packages + " && opentelemetry-bootstrap -a install")),
                 GuideAdapterSupport.disable(GuideAdapterSupport.snippet(
                         "disable-command", "bash", "# Start python directly without opentelemetry-instrument")));
+    }
+
+    private String packages(MethodOption method) {
+        return "opentelemetry-distro==" + method.component().version()
+                + " opentelemetry-exporter-otlp=="
+                + GuideAdapterSupport.dependencyVersion(method, "opentelemetry-exporter-otlp")
+                + " opentelemetry-instrumentation-logging=="
+                + GuideAdapterSupport.dependencyVersion(method, "opentelemetry-instrumentation-logging");
     }
 }

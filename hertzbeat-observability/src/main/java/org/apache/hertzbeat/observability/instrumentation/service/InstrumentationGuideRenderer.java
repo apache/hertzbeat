@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Capability;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.CollectorTarget;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.GuideRenderRequest;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.GuideRenderResponse;
@@ -76,7 +77,7 @@ public class InstrumentationGuideRenderer {
         LanguageGuideSteps languageSteps = adapterRegistry.require(request.language()).render(request, method);
         List<GuideStep> steps = List.of(
                 languageSteps.install(),
-                configureStep(collector, service, request.platform()),
+                configureStep(collector, service, request.platform(), method),
                 languageSteps.start(),
                 languageSteps.container(),
                 languageSteps.disable());
@@ -153,10 +154,14 @@ public class InstrumentationGuideRenderer {
         }
     }
 
-    private GuideStep configureStep(CollectorTarget collector, ServiceIdentity service, Platform platform) {
+    private GuideStep configureStep(
+            CollectorTarget collector, ServiceIdentity service, Platform platform, MethodOption method) {
         String resourceAttributes = "service.namespace=" + service.namespace()
                 + ",deployment.environment.name=" + service.environment()
                 + ",hertzbeat.collector.id=" + collector.collectorId();
+        String tracesExporter = exporter(method.signals().traces());
+        String metricsExporter = exporter(method.signals().metrics());
+        String logsExporter = exporter(method.signals().logs());
         String content;
         String language;
         if (platform == Platform.WINDOWS_AMD64) {
@@ -165,6 +170,9 @@ public class InstrumentationGuideRenderer {
                     + "$env:OTEL_RESOURCE_ATTRIBUTES='" + resourceAttributes + "'\n"
                     + "$env:OTEL_EXPORTER_OTLP_ENDPOINT='" + collector.otlpHttpEndpoint() + "'\n"
                     + "$env:OTEL_EXPORTER_OTLP_PROTOCOL='http/protobuf'\n"
+                    + "$env:OTEL_TRACES_EXPORTER='" + tracesExporter + "'\n"
+                    + "$env:OTEL_METRICS_EXPORTER='" + metricsExporter + "'\n"
+                    + "$env:OTEL_LOGS_EXPORTER='" + logsExporter + "'\n"
                     + "$env:OTEL_EXPORTER_OTLP_HEADERS='Authorization=Bearer%20" + TOKEN_PLACEHOLDER + "'";
         } else {
             language = "bash";
@@ -172,6 +180,9 @@ public class InstrumentationGuideRenderer {
                     + "export OTEL_RESOURCE_ATTRIBUTES='" + resourceAttributes + "'\n"
                     + "export OTEL_EXPORTER_OTLP_ENDPOINT=" + collector.otlpHttpEndpoint() + "\n"
                     + "export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf\n"
+                    + "export OTEL_TRACES_EXPORTER=" + tracesExporter + "\n"
+                    + "export OTEL_METRICS_EXPORTER=" + metricsExporter + "\n"
+                    + "export OTEL_LOGS_EXPORTER=" + logsExporter + "\n"
                     + "export OTEL_EXPORTER_OTLP_HEADERS='Authorization=Bearer%20" + TOKEN_PLACEHOLDER + "'";
         }
         return step(
@@ -184,6 +195,10 @@ public class InstrumentationGuideRenderer {
                         language,
                         content,
                         List.of("authorizationToken")));
+    }
+
+    private String exporter(Capability capability) {
+        return capability == Capability.UNSUPPORTED ? "none" : "otlp";
     }
 
     private GuideStep step(String id, StepType type, String titleKey, String locationKey, GuideSnippet... snippets) {

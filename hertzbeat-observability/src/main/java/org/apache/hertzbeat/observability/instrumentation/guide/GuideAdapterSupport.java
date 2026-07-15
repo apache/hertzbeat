@@ -20,6 +20,7 @@ package org.apache.hertzbeat.observability.instrumentation.guide;
 import java.util.List;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.GuideSnippet;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.GuideStep;
+import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.MethodOption;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.StepType;
 
 /** Shared construction helpers for language adapters. */
@@ -50,6 +51,14 @@ final class GuideAdapterSupport {
 
     static GuideSnippet snippet(String id, String language, String content) {
         return new GuideSnippet(id, language, content, List.of());
+    }
+
+    static String dependencyVersion(MethodOption method, String name) {
+        return method.component().dependencies().stream()
+                .filter(dependency -> name.equals(dependency.name()))
+                .map(dependency -> dependency.version())
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Catalog dependency is missing: " + name));
     }
 
     private static GuideStep step(
