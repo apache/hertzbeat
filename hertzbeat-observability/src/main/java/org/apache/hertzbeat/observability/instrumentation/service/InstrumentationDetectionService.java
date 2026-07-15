@@ -44,6 +44,7 @@ import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationS
 import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationSignalDetectionStore.DetectionCriteria;
 import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationSignalDetectionStore.DetectionSnapshot;
 import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationSignalDetectionStore.SignalObservation;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
@@ -56,6 +57,7 @@ public class InstrumentationDetectionService {
     private final InstrumentationSignalDetectionStore detectionStore;
     private final LongSupplier clock;
 
+    @Autowired
     public InstrumentationDetectionService(
             InstrumentationCatalogService catalogService,
             InstrumentationSignalDetectionStore detectionStore) {

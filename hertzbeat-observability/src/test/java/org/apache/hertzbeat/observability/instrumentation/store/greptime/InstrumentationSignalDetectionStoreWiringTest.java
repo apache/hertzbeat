@@ -25,8 +25,8 @@ import org.apache.hertzbeat.observability.instrumentation.store.UnavailableInstr
 import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 
 class InstrumentationSignalDetectionStoreWiringTest {
 
@@ -40,7 +40,8 @@ class InstrumentationSignalDetectionStoreWiringTest {
                 .withBean(GreptimeSqlQueryExecutor.class, () -> mock(GreptimeSqlQueryExecutor.class))
                 .run(context -> {
                     assertThat(context).hasNotFailed();
-                    assertThat(context).hasSingleBean(InstrumentationSignalDetectionStore.class);
+                    assertThat(context).hasSingleBean(GreptimeInstrumentationSignalDetectionStore.class);
+                    assertThat(context).hasSingleBean(UnavailableInstrumentationSignalDetectionStore.class);
                     assertThat(context.getBean(InstrumentationSignalDetectionStore.class))
                             .isInstanceOf(GreptimeInstrumentationSignalDetectionStore.class);
                 });
@@ -69,8 +70,7 @@ class InstrumentationSignalDetectionStoreWiringTest {
     }
 
     @Configuration(proxyBeanMethods = false)
-    @Import({GreptimeInstrumentationSignalDetectionStore.class,
-            UnavailableInstrumentationSignalDetectionStore.class})
+    @ComponentScan("org.apache.hertzbeat.observability.instrumentation")
     static class DetectionStoreConfiguration {
     }
 }

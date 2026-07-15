@@ -20,14 +20,12 @@ package org.apache.hertzbeat.observability.instrumentation.store;
 import java.util.EnumMap;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.DetectionErrorCode;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Signal;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.stereotype.Component;
 
 /**
  * Honest fallback used until a production signal storage adapter is configured.
  */
 @Component
-@ConditionalOnMissingBean(InstrumentationSignalDetectionStore.class)
 public class UnavailableInstrumentationSignalDetectionStore implements InstrumentationSignalDetectionStore {
 
     @Override
