@@ -126,7 +126,7 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
             return chatClient.prompt()
                 .messages(messages)
                 .system(systemPrompt)
-                .toolCallbacks(toolCallbackProvider)
+                .tools(toolCallbackProvider)
                 .stream()
                 .content()
                 .doOnComplete(() -> log.info("Streaming completed for conversation: {}", context.getConversationId()))
