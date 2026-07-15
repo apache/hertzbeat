@@ -24,6 +24,7 @@ tools_dir="$runtime_dir/_build/tools"
 release_dir="$runtime_dir/_build/release"
 license_dir="$release_dir/runtime-licenses"
 build_tags=remove_all_sd
+go_fqdn_module=github.com/Showmax/go-fqdn
 tool_suffix=
 case "$(uname -s)" in
   CYGWIN*|MINGW*|MSYS*) tool_suffix=.exe ;;
@@ -40,13 +41,24 @@ GOBIN="$tools_dir" go install github.com/google/go-licenses/v2@v2.0.1
 GOBIN="$tools_dir" go install golang.org/x/vuln/cmd/govulncheck@v1.6.0
 
 (cd "$runtime_source" && GOFLAGS="-tags=$build_tags" \
-  "$tools_dir/go-licenses$tool_suffix" check . --ignore github.com/apache/hertzbeat)
+  "$tools_dir/go-licenses$tool_suffix" check . \
+  --ignore github.com/apache/hertzbeat --ignore "$go_fqdn_module")
 (cd "$runtime_source" && "$tools_dir/govulncheck$tool_suffix" -tags "$build_tags" ./...)
 
 rm -rf "$license_dir"
 (cd "$runtime_source" && GOFLAGS="-tags=$build_tags" \
-  "$tools_dir/go-licenses$tool_suffix" save . --ignore github.com/apache/hertzbeat \
+  "$tools_dir/go-licenses$tool_suffix" save . \
+  --ignore github.com/apache/hertzbeat --ignore "$go_fqdn_module" \
   --save_path="$license_dir")
+
+# go-licenses cannot classify this module's shortened Apache-2.0 text. The Go
+# checksum database pins its content; verify and package the upstream license
+# explicitly instead of silently omitting an unknown dependency.
+go_fqdn_dir=$(cd "$runtime_source" && go list -m -f '{{.Dir}}' "$go_fqdn_module")
+test -f "$go_fqdn_dir/LICENSE"
+grep -Fq 'Licensed under the Apache License, Version 2.0' "$go_fqdn_dir/LICENSE"
+mkdir -p "$license_dir/$go_fqdn_module"
+cp "$go_fqdn_dir/LICENSE" "$license_dir/$go_fqdn_module/LICENSE"
 
 runtime_version=$(sed -n 's/.*"runtimeVersion": "\([^"]*\)".*/\1/p' "$runtime_dir/runtime-manifest.json")
 if [ -z "$runtime_version" ]; then
