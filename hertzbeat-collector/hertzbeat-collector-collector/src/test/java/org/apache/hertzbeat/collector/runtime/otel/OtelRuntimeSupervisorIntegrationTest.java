@@ -54,6 +54,8 @@ import java.util.zip.GZIPInputStream;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeConfig;
+import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -98,7 +100,7 @@ class OtelRuntimeSupervisorIntegrationTest {
                     Duration.ofSeconds(15));
             restartedPid = supervisor.snapshot().pid();
             assertEquals(1, supervisor.snapshot().restartCount());
-            assertTrue(supervisor.snapshot().lastError().contains("exited unexpectedly"));
+            assertEquals("", supervisor.snapshot().lastError());
             await(() -> capture.requestCount() > requestsBeforeFailure, Duration.ofSeconds(25));
         } finally {
             supervisor.close();
@@ -109,6 +111,58 @@ class OtelRuntimeSupervisorIntegrationTest {
         await(() -> !ProcessHandle.of(terminatedPid).map(ProcessHandle::isAlive).orElse(false),
                 Duration.ofSeconds(5));
         assertFalse(ProcessHandle.of(terminatedPid).map(ProcessHandle::isAlive).orElse(false));
+    }
+
+    @Test
+    void backendOutageConvergesWithoutRestartAndRecoversAfterDrain() throws Exception {
+        String runtimeBinary = System.getenv(RUNTIME_BINARY_ENV);
+        Assumptions.assumeTrue(runtimeBinary != null && !runtimeBinary.isBlank(),
+                () -> RUNTIME_BINARY_ENV + " is required for the real runtime proof");
+        int exportPort = availablePort();
+        OtelRuntimeProperties properties = properties(runtimeBinary, exportPort);
+        OtelRuntimeSupervisor supervisor = new OtelRuntimeSupervisor(
+                properties,
+                new OtelRuntimeBinaryResolver(properties),
+                new OtelRuntimeConfigTransaction(new OtelRuntimeConfigRenderer()),
+                new OtelRuntimeProcessLauncher(),
+                new OtelRuntimeHealthClient());
+        OtelRuntimeFailureClassifier classifier = new OtelRuntimeFailureClassifier();
+        OtelRuntimeStatusProvider statusProvider = new OtelRuntimeStatusProvider(
+                properties,
+                supervisor,
+                new OtelRuntimeTelemetryClient(),
+                new OtelRuntimeDiagnosticsReader(classifier),
+                classifier);
+        OtlpCapture capture = new OtlpCapture();
+        try {
+            supervisor.start();
+            long initialPid = supervisor.snapshot().pid();
+            sendThreeSignals(properties.getOtlpHttpEndpoint(), "backend-recovery",
+                    "300102030405060708090a0b0c0d0e0f", "3001020304050607");
+
+            ManagedOtelRuntimeStatus unavailable = awaitFailureCode(
+                    statusProvider, ManagedOtelRuntimeStatus.FailureCode.BACKEND_UNAVAILABLE,
+                    Duration.ofSeconds(20));
+            assertEquals(initialPid, unavailable.pid());
+            assertEquals(0, unavailable.restartCount());
+            assertEquals(OtelRuntimeState.RUNNING.name(), unavailable.state().name());
+
+            capture.start(exportPort);
+            await(() -> capture.containsMetric("hertzbeat_backend-recovery_metric"), Duration.ofSeconds(30));
+            ManagedOtelRuntimeStatus recovered = awaitFailureCode(
+                    statusProvider, ManagedOtelRuntimeStatus.FailureCode.NONE, Duration.ofSeconds(30));
+            assertEquals(initialPid, recovered.pid());
+            assertEquals(0, recovered.restartCount());
+            assertEquals(0, recovered.telemetry().queueSize().value());
+            String heartbeatPayload = JsonUtil.toJson(recovered);
+            assertFalse(heartbeatPayload.contains("phase0-direct-token"));
+            assertFalse(heartbeatPayload.contains("Authorization"));
+            assertFalse(heartbeatPayload.contains("BEGIN CERTIFICATE"));
+            assertFalse(heartbeatPayload.contains("hertzbeat backend-recovery log"));
+        } finally {
+            supervisor.close();
+            capture.close();
+        }
     }
 
     @Test
@@ -519,6 +573,23 @@ class OtelRuntimeSupervisorIntegrationTest {
             Thread.sleep(50);
         }
         assertTrue(condition.getAsBoolean(), "condition did not become true before deadline");
+    }
+
+    private static ManagedOtelRuntimeStatus awaitFailureCode(
+            OtelRuntimeStatusProvider statusProvider,
+            ManagedOtelRuntimeStatus.FailureCode expected,
+            Duration timeout) throws InterruptedException {
+        long deadline = System.nanoTime() + timeout.toNanos();
+        ManagedOtelRuntimeStatus status;
+        do {
+            status = statusProvider.status();
+            if (status.failureCode() == expected) {
+                return status;
+            }
+            Thread.sleep(50);
+        } while (System.nanoTime() < deadline);
+        assertEquals(expected, status.failureCode(), JsonUtil.toJson(status));
+        return status;
     }
 
     private static boolean containsStoredData(Path storage) {

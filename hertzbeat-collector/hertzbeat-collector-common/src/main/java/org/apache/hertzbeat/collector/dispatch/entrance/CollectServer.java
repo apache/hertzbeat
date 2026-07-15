@@ -209,8 +209,8 @@ public class CollectServer implements CommandLineRunner {
     private ManagedOtelRuntimeStatus runtimeStatus() {
         try {
             return runtimeStatusProvider.map(CollectorRuntimeStatusProvider::status).orElse(null);
-        } catch (RuntimeException error) {
-            log.warn("Unable to report optional telemetry runtime status: {}", error.getMessage());
+        } catch (RuntimeException ignored) {
+            log.warn("Unable to report optional telemetry runtime status");
             return null;
         }
     }

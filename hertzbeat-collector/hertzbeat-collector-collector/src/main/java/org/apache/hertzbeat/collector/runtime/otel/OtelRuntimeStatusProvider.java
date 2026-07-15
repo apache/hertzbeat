@@ -94,7 +94,8 @@ public class OtelRuntimeStatusProvider implements CollectorRuntimeStatusProvider
         if (queueFull(telemetry)) {
             return FailureCode.QUEUE_FULL;
         }
-        if (positive(telemetry.queueSize()) && failed(telemetry)) {
+        if (positive(telemetry.queueSize())
+                && (failed(telemetry) || diagnosticFailure == FailureCode.BACKEND_UNAVAILABLE)) {
             return FailureCode.BACKEND_UNAVAILABLE;
         }
         // Historical startup failures can remain in the bounded log tail after recovery. Only

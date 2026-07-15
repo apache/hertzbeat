@@ -102,6 +102,9 @@ public class OtelRuntimeSupervisor implements SmartLifecycle, AutoCloseable, Col
                 || snapshot.state() == OtelRuntimeState.STARTING) {
             return;
         }
+        if (snapshot.state() == OtelRuntimeState.FAILED) {
+            recentFailures.clear();
+        }
         intentionalStop = false;
         startAttempt();
     }
@@ -120,7 +123,7 @@ public class OtelRuntimeSupervisor implements SmartLifecycle, AutoCloseable, Col
             Path config = configTransaction.commit(prepared);
             try {
                 Process launched = launchAndAwait(binary, config, home, logFile, environment);
-                markRunning(launched, snapshot.restartCount(), snapshot.lastError(),
+                markRunning(launched, snapshot.restartCount(), "",
                         prepared.desiredRevision(), properties.desiredConfig());
             } catch (IOException | InterruptedException | RuntimeException candidateError) {
                 terminateFailedStartup();

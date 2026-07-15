@@ -68,8 +68,8 @@ public class OtelRuntimeDiagnosticsReader {
         }
         String withoutCertificate = CERTIFICATE.matcher(diagnostic).replaceAll("[REDACTED_CERTIFICATE]");
         String sanitized = withoutCertificate.lines().findFirst().orElse("");
-        sanitized = AUTHORIZATION.matcher(sanitized).replaceAll("Authorization: [REDACTED]");
-        sanitized = BEARER.matcher(sanitized).replaceAll("Bearer [REDACTED]");
+        sanitized = AUTHORIZATION.matcher(sanitized).replaceAll("[REDACTED_CREDENTIAL]");
+        sanitized = BEARER.matcher(sanitized).replaceAll("[REDACTED_CREDENTIAL]");
         for (String secret : secrets(properties)) {
             sanitized = sanitized.replace(secret, "[REDACTED]");
         }

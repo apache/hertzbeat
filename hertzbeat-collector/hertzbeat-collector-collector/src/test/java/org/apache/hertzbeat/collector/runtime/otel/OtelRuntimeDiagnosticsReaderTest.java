@@ -51,6 +51,8 @@ class OtelRuntimeDiagnosticsReaderTest {
 
         assertEquals(ManagedOtelRuntimeStatus.FailureCode.AUTHENTICATION_FAILED, code);
         assertFalse(sanitized.contains("collector-secret-token"));
+        assertFalse(sanitized.contains("Authorization"));
+        assertFalse(sanitized.contains("Bearer"));
         assertFalse(sanitized.contains("certificate-content"));
         assertFalse(sanitized.contains("user log body"));
     }

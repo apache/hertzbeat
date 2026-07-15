@@ -138,7 +138,35 @@ class OtelRuntimeSupervisorTest {
 
         await(() -> supervisor.snapshot().pid() == 4202 && supervisor.snapshot().state() == OtelRuntimeState.RUNNING);
         assertEquals(1, supervisor.snapshot().restartCount());
-        assertTrue(supervisor.snapshot().lastError().contains("137"));
+        assertEquals("", supervisor.snapshot().lastError());
+    }
+
+    @Test
+    void manualRecoveryFromOpenCircuitStartsWithFreshFailureWindow() throws Exception {
+        properties.setMaxRestarts(2);
+        properties.setRestartDelay(Duration.ofHours(1));
+        Process firstFailure = failedValidation();
+        Process secondFailure = failedValidation();
+        Process recoveredValidation = successfulValidation();
+        CompletableFuture<Process> recoveredExit = new CompletableFuture<>();
+        Process recoveredRuntime = runningProcess(4203, recoveredExit);
+        when(recoveredRuntime.exitValue()).thenReturn(137);
+        when(launcher.start(any(), any(), any(), any(), anyMap(), anyBoolean()))
+                .thenReturn(firstFailure, secondFailure, recoveredValidation, recoveredRuntime);
+        supervisor = new OtelRuntimeSupervisor(properties, resolver, configTransaction, launcher, healthClient);
+
+        supervisor.start();
+        supervisor.start();
+        assertEquals(OtelRuntimeState.FAILED, supervisor.snapshot().state());
+
+        supervisor.start();
+        assertEquals(OtelRuntimeState.RUNNING, supervisor.snapshot().state());
+        assertEquals(4203, supervisor.snapshot().pid());
+        recoveredExit.complete(recoveredRuntime);
+
+        await(() -> supervisor.snapshot().state() != OtelRuntimeState.RUNNING);
+        assertEquals(OtelRuntimeState.DEGRADED, supervisor.snapshot().state());
+        assertEquals(3, supervisor.snapshot().restartCount());
     }
 
     @Test
@@ -326,6 +354,13 @@ class OtelRuntimeSupervisorTest {
         Process validation = mock(Process.class);
         when(validation.waitFor(anyLong(), any(TimeUnit.class))).thenReturn(true);
         when(validation.exitValue()).thenReturn(0);
+        return validation;
+    }
+
+    private Process failedValidation() throws Exception {
+        Process validation = mock(Process.class);
+        when(validation.waitFor(anyLong(), any(TimeUnit.class))).thenReturn(true);
+        when(validation.exitValue()).thenReturn(1);
         return validation;
     }
 

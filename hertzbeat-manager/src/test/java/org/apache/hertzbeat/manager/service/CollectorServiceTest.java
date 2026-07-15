@@ -20,6 +20,7 @@ package org.apache.hertzbeat.manager.service;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -97,6 +98,20 @@ public class CollectorServiceTest {
     }
 
     @Test
+    void expiredRuntimeHeartbeatIsUnavailableInsteadOfHealthyOrZero() {
+        Collector collector = Collector.builder().name("edge-stale").build();
+        PageRequest request = PageRequest.of(0, 1);
+        when(collectorDao.findAll(any(Specification.class), eq(request)))
+                .thenReturn(new PageImpl<>(List.of(collector), request, 1));
+        when(runtimeStatusRegistry.current("edge-stale")).thenReturn(Optional.empty());
+
+        var summary = collectorService.getCollectors("edge", 0, 1).getContent().getFirst();
+
+        assertNull(summary.getRuntimeStatus());
+        assertNull(summary.getRuntimeStatusReportedAt());
+    }
+
+    @Test
     public void deleteRegisteredCollector() {
         List<String> collectors = new ArrayList<>();
         collectors.add("test");
@@ -132,16 +147,30 @@ public class CollectorServiceTest {
     }
 
     private ManagedOtelRuntimeStatus runtimeStatus() {
+        ManagedOtelRuntimeStatus.SignalCounters accepted = new ManagedOtelRuntimeStatus.SignalCounters(
+                ManagedOtelRuntimeStatus.ObservedLong.available(11),
+                ManagedOtelRuntimeStatus.ObservedLong.available(7),
+                ManagedOtelRuntimeStatus.ObservedLong.available(5));
         return new ManagedOtelRuntimeStatus(
                 ManagedOtelRuntimeStatus.CURRENT_SCHEMA_VERSION,
                 true,
                 ManagedOtelRuntimeStatus.RuntimeState.RUNNING,
                 3,
                 3,
+                4242,
                 ManagedOtelRuntimeStatus.IntakeCredentialState.CONFIGURED,
                 0,
                 Instant.parse("2026-07-15T06:00:00Z"),
                 "",
+                ManagedOtelRuntimeStatus.FailureCode.NONE,
+                new ManagedOtelRuntimeStatus.RuntimeTelemetry(
+                        accepted,
+                        ManagedOtelRuntimeStatus.SignalCounters.unavailable(),
+                        accepted,
+                        ManagedOtelRuntimeStatus.SignalCounters.unavailable(),
+                        ManagedOtelRuntimeStatus.ObservedLong.available(0),
+                        ManagedOtelRuntimeStatus.ObservedLong.available(6144),
+                        ManagedOtelRuntimeStatus.FileConsumerStatus.notApplicable()),
                 List.of(new ManagedOtelRuntimeStatus.ManagedOtelSourceStatus(
                         ManagedOtelRuntimeStatus.SourceType.PROMETHEUS,
                         "payments",

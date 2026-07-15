@@ -24,9 +24,13 @@ import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.stream.Stream;
 import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 class OtelRuntimeStatusProviderTest {
 
@@ -97,21 +101,30 @@ class OtelRuntimeStatusProviderTest {
         properties.setToken("collector-secret-token");
         properties.setOtlpGatewayBearerToken("gateway-secret-token");
         OtelRuntimeSupervisor supervisor = mock(OtelRuntimeSupervisor.class);
-        when(supervisor.snapshot()).thenReturn(new OtelRuntimeSnapshot(
-                OtelRuntimeState.RUNNING,
-                42,
-                0,
-                Instant.parse("2026-07-15T06:00:00Z"),
-                "Authorization: Bearer collector-secret-token"));
+        when(supervisor.snapshot()).thenReturn(
+                new OtelRuntimeSnapshot(
+                        OtelRuntimeState.RUNNING,
+                        42,
+                        0,
+                        Instant.parse("2026-07-15T06:00:00Z"),
+                        "Authorization: Bearer collector-secret-token"),
+                new OtelRuntimeSnapshot(
+                        OtelRuntimeState.RUNNING,
+                        42,
+                        0,
+                        Instant.parse("2026-07-15T06:00:05Z"),
+                        ""));
         when(supervisor.activeRevision()).thenReturn(1L);
         when(supervisor.sourceStatuses()).thenReturn(List.of());
         OtelRuntimeTelemetryClient telemetryClient = mock(OtelRuntimeTelemetryClient.class);
-        when(telemetryClient.scrape(properties, false)).thenReturn(telemetry(7, 2048, 0));
+        when(telemetryClient.scrape(properties, false))
+                .thenReturn(telemetry(7, 2048, 0), telemetry(0, 2048, 0));
         OtelRuntimeDiagnosticsReader diagnosticsReader = mock(OtelRuntimeDiagnosticsReader.class);
         when(diagnosticsReader.latestFailure(properties))
                 .thenReturn(ManagedOtelRuntimeStatus.FailureCode.AUTHENTICATION_FAILED);
         when(diagnosticsReader.sanitize("Authorization: Bearer collector-secret-token", properties))
-                .thenReturn("Authorization: [REDACTED]");
+                .thenReturn("[REDACTED_CREDENTIAL]");
+        when(diagnosticsReader.sanitize("", properties)).thenReturn("");
         OtelRuntimeStatusProvider provider = new OtelRuntimeStatusProvider(
                 properties, supervisor, telemetryClient, diagnosticsReader, new OtelRuntimeFailureClassifier());
 
@@ -125,6 +138,11 @@ class OtelRuntimeStatusProviderTest {
         assertFalse(payload.contains("gateway-secret-token"));
         assertFalse(payload.contains("BEGIN CERTIFICATE"));
         assertFalse(payload.contains("user log body"));
+
+        ManagedOtelRuntimeStatus recovered = provider.status();
+        assertEquals(ManagedOtelRuntimeStatus.FailureCode.NONE, recovered.failureCode());
+        assertEquals(42, recovered.pid());
+        assertEquals(0, recovered.restartCount());
     }
 
     @Test
@@ -148,6 +166,8 @@ class OtelRuntimeStatusProviderTest {
         ManagedOtelRuntimeStatus backendUnavailable = provider.status();
         when(telemetryClient.scrape(properties, false)).thenReturn(telemetry(2048, 2048, 3));
         ManagedOtelRuntimeStatus queueFull = provider.status();
+        when(telemetryClient.scrape(properties, false)).thenReturn(telemetry(0, 2048, 3));
+        ManagedOtelRuntimeStatus recovered = provider.status();
 
         assertEquals(ManagedOtelRuntimeStatus.FailureCode.BACKEND_UNAVAILABLE,
                 backendUnavailable.failureCode());
@@ -155,6 +175,37 @@ class OtelRuntimeStatusProviderTest {
         assertEquals(ManagedOtelRuntimeStatus.RuntimeState.RUNNING, queueFull.state());
         assertEquals(0, queueFull.restartCount());
         assertEquals(42, queueFull.pid());
+        assertEquals(ManagedOtelRuntimeStatus.FailureCode.NONE, recovered.failureCode());
+        assertEquals(0, recovered.restartCount());
+        assertEquals(42, recovered.pid());
+    }
+
+    @ParameterizedTest
+    @MethodSource("lifecycleFailures")
+    void convergesCurrentLifecycleDiagnosticsToStableFailureCode(
+            OtelRuntimeState state, String diagnostic, ManagedOtelRuntimeStatus.FailureCode expected) {
+        OtelRuntimeProperties properties = new OtelRuntimeProperties();
+        properties.setEnabled(true);
+        OtelRuntimeSupervisor supervisor = mock(OtelRuntimeSupervisor.class);
+        when(supervisor.snapshot()).thenReturn(new OtelRuntimeSnapshot(
+                state, -1, 2, Instant.parse("2026-07-15T06:00:00Z"), diagnostic));
+        when(supervisor.activeRevision()).thenReturn(1L);
+        when(supervisor.sourceStatuses()).thenReturn(List.of());
+        OtelRuntimeDiagnosticsReader diagnosticsReader = mock(OtelRuntimeDiagnosticsReader.class);
+        when(diagnosticsReader.sanitize(diagnostic, properties)).thenReturn("operational diagnostic");
+        OtelRuntimeStatusProvider provider = new OtelRuntimeStatusProvider(
+                properties,
+                supervisor,
+                mock(OtelRuntimeTelemetryClient.class),
+                diagnosticsReader,
+                new OtelRuntimeFailureClassifier());
+
+        ManagedOtelRuntimeStatus status = provider.status();
+
+        assertEquals(expected, status.failureCode());
+        assertEquals(state.name(), status.state().name());
+        assertEquals(ManagedOtelRuntimeStatus.ValueState.UNAVAILABLE,
+                status.telemetry().queueSize().state());
     }
 
     @Test
@@ -176,6 +227,16 @@ class OtelRuntimeStatusProviderTest {
                 properties, supervisor, telemetryClient, diagnosticsReader, new OtelRuntimeFailureClassifier());
 
         assertEquals(ManagedOtelRuntimeStatus.FailureCode.NONE, provider.status().failureCode());
+    }
+
+    private static Stream<Arguments> lifecycleFailures() {
+        return Stream.of(
+                Arguments.of(OtelRuntimeState.DEGRADED, "configuration validation failed",
+                        ManagedOtelRuntimeStatus.FailureCode.CONFIGURATION_ERROR),
+                Arguments.of(OtelRuntimeState.DEGRADED, "listen tcp: bind: address already in use",
+                        ManagedOtelRuntimeStatus.FailureCode.PORT_CONFLICT),
+                Arguments.of(OtelRuntimeState.FAILED, "runtime exited unexpectedly with code 137",
+                        ManagedOtelRuntimeStatus.FailureCode.PROCESS_CRASH));
     }
 
     private ManagedOtelRuntimeStatus.RuntimeTelemetry telemetry(
