@@ -22,8 +22,12 @@ export type ExploreTimeRange = 'last-15m' | 'last-30m' | 'last-1h' | 'last-6h' |
 type SharedExploreQuery = {
   timeRange: ExploreTimeRange;
   serviceName?: string | undefined;
+  serviceNamespace?: string | undefined;
   environment?: string | undefined;
+  collectorId?: string | undefined;
   query?: string | undefined;
+  windowMode?: 'preset' | undefined;
+  start?: number | undefined;
   end?: number | undefined;
 };
 
@@ -62,8 +66,12 @@ export type ExploreQueryPatch = {
   signal?: ExploreSignal | undefined;
   timeRange?: ExploreTimeRange | undefined;
   serviceName?: string | undefined;
+  serviceNamespace?: string | undefined;
   environment?: string | undefined;
+  collectorId?: string | undefined;
   query?: string | undefined;
+  windowMode?: 'preset' | undefined;
+  start?: number | undefined;
   end?: number | undefined;
   traceId?: string | undefined;
   errorOnly?: boolean | undefined;
@@ -95,10 +103,14 @@ export function parseExploreQuery(params: URLSearchParams): ExploreQuery {
     signal,
     timeRange,
     serviceName: readValue(params.get('serviceName')),
+    serviceNamespace: readValue(params.get('serviceNamespace')),
     environment: readValue(params.get('environment')),
+    collectorId: readValue(params.get('collectorId')),
     query: readValue(params.get('query')),
+    windowMode: params.get('windowMode') === 'preset' ? 'preset' : undefined,
     traceId: readValue(params.get('traceId')),
     errorOnly: params.get('errorOnly') === 'true' ? true : undefined,
+    start: readTimestamp(params.get('start')),
     end: readTimestamp(params.get('end')),
     live: params.get('live') === 'true' ? true : undefined,
     severityText: readValue(params.get('severityText')),
@@ -118,9 +130,13 @@ export function parseExploreQuery(params: URLSearchParams): ExploreQuery {
 export function buildExplorePath(query: ExploreQuery) {
   const params = new URLSearchParams({ signal: query.signal, timeRange: query.timeRange });
   setValue(params, 'serviceName', query.serviceName);
+  setValue(params, 'serviceNamespace', query.serviceNamespace);
   setValue(params, 'environment', query.environment);
+  setValue(params, 'collectorId', query.collectorId);
   setValue(params, 'query', query.query);
   appendSignalParams(params, query);
+  if (query.windowMode === 'preset') params.set('windowMode', 'preset');
+  if (query.start) params.set('start', String(query.start));
   if (query.end) params.set('end', String(query.end));
   return `/explore?${params.toString()}`;
 }
@@ -151,6 +167,44 @@ export function timeRangeMilliseconds(timeRange: ExploreTimeRange) {
     'last-24h': 1440
   };
   return minutes[timeRange] * 60_000;
+}
+
+export function exploreHandoffState(query: ExploreQuery): 'none' | 'scoped' | 'invalid' {
+  if (![query.serviceNamespace, query.collectorId, query.start, query.windowMode].some(isPresent)) return 'none';
+  if (![query.serviceName, query.serviceNamespace, query.environment, query.collectorId].every(isPresent)) return 'invalid';
+  if (query.windowMode === 'preset') {
+    return !isPresent(query.start) && isPresent(query.end) ? 'scoped' : 'invalid';
+  }
+  return validExactWindow(query.start, query.end) ? 'scoped' : 'invalid';
+}
+
+export function exploreUsesExactWindow(query: ExploreQuery) {
+  return exploreHandoffState(query) === 'scoped' && query.windowMode !== 'preset';
+}
+
+export function querySubmissionTimePatch(query: ExploreQuery, now = Date.now()): ExploreQueryPatch {
+  return exploreUsesExactWindow(query) ? {} : { start: undefined, end: now };
+}
+
+export function presetTimeRangePatch(
+  query: ExploreQuery,
+  timeRange: ExploreTimeRange,
+  now = Date.now()
+): ExploreQueryPatch {
+  return {
+    timeRange,
+    windowMode: exploreHandoffState(query) === 'scoped' ? 'preset' : undefined,
+    start: undefined,
+    end: now
+  };
+}
+
+function isPresent(value: unknown) {
+  return value != null;
+}
+
+function validExactWindow(start: number | undefined, end: number | undefined) {
+  return start != null && end != null && start < end;
 }
 
 function readSignal(value: string | null): ExploreSignal {
@@ -215,8 +269,12 @@ function normalizeExploreQuery(query: ExploreQueryPatch & { signal: ExploreSigna
   const shared = {
     timeRange: query.timeRange,
     serviceName: query.serviceName,
+    serviceNamespace: query.serviceNamespace,
     environment: query.environment,
+    collectorId: query.collectorId,
     query: query.query,
+    windowMode: query.windowMode,
+    start: query.start,
     end: query.end
   };
   if (query.signal === 'metrics') return {

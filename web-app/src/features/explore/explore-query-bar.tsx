@@ -102,8 +102,8 @@ function LogFilters({ query, t, updateQuery }: FilterProps<LogExploreQuery>) {
         options={["TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL"].map((value) => ({ value, label: value }))}
         onChange={(severityText) => updateQuery({ severityText })}
       />
-      <Input name="traceId" defaultValue={query.traceId} placeholder="Trace ID" />
-      <Input name="spanId" defaultValue={query.spanId} placeholder="Span ID" />
+      <Input name="traceId" defaultValue={query.traceId} placeholder={t("explore.traceId")} />
+      <Input name="spanId" defaultValue={query.spanId} placeholder={t("explore.spanId")} />
       <Input name="resourceFilter" defaultValue={query.resourceFilter} placeholder={t("exploreLog.resourceFilter")} />
       <Input
         name="attributeFilter"
@@ -117,7 +117,7 @@ function LogFilters({ query, t, updateQuery }: FilterProps<LogExploreQuery>) {
 function TraceFilters({ query, t, updateQuery }: FilterProps<TraceExploreQuery>) {
   return (
     <>
-      <Input name="traceId" defaultValue={query.traceId} placeholder="Trace ID" />
+      <Input name="traceId" defaultValue={query.traceId} placeholder={t("explore.traceId")} />
       <Input
         name="minDurationMs"
         defaultValue={query.minDurationMs}
@@ -159,14 +159,12 @@ function hasAdvancedFilter(query: ExploreQuery) {
 
 function ActiveFilters({ query, t, updateQuery }: Omit<Props, "onSubmit">) {
   const filters = [
-    query.serviceName && { key: "serviceName", label: t("explore.serviceContext", { value: query.serviceName }) },
-    query.environment && { key: "environment", label: t("explore.environmentContext", { value: query.environment }) },
-    query.signal === "logs" &&
-      query.severityText && { key: "severityText", label: `${t("explore.severity")}: ${query.severityText}` },
-    query.signal !== "metrics" && query.traceId && { key: "traceId", label: `Trace ID: ${query.traceId}` },
-    query.signal === "logs" && query.spanId && { key: "spanId", label: `Span ID: ${query.spanId}` },
-    query.signal === "traces" && query.errorOnly && { key: "errorOnly", label: t("exploreTrace.errorOnly") },
-  ].filter(Boolean) as { key: keyof ExploreQueryPatch; label: string }[];
+    ...activeFilter(query.serviceName, "serviceName", t("explore.serviceContext", { value: query.serviceName })),
+    ...activeFilter(query.serviceNamespace, "serviceNamespace", t("explore.serviceNamespaceContext", { value: query.serviceNamespace })),
+    ...activeFilter(query.environment, "environment", t("explore.environmentContext", { value: query.environment })),
+    ...activeFilter(query.collectorId, "collectorId", t("explore.collectorContext", { value: query.collectorId })),
+    ...signalActiveFilters(query, t)
+  ];
   if (!filters.length) return null;
   return (
     <div className={styles.activeFilters} aria-label={t("explore.activeFilters")}>
@@ -177,4 +175,23 @@ function ActiveFilters({ query, t, updateQuery }: Omit<Props, "onSubmit">) {
       ))}
     </div>
   );
+}
+
+type ActiveFilter = { key: keyof ExploreQueryPatch; label: string };
+
+function activeFilter(value: unknown, key: keyof ExploreQueryPatch, label: string): ActiveFilter[] {
+  return value ? [{ key, label }] : [];
+}
+
+function signalActiveFilters(query: ExploreQuery, t: TFunction): ActiveFilter[] {
+  if (query.signal === "metrics") return [];
+  const trace = activeFilter(query.traceId, "traceId", t("explore.traceIdContext", { value: query.traceId }));
+  if (query.signal === "logs") {
+    return [
+      ...activeFilter(query.severityText, "severityText", `${t("explore.severity")}: ${query.severityText}`),
+      ...trace,
+      ...activeFilter(query.spanId, "spanId", t("explore.spanIdContext", { value: query.spanId }))
+    ];
+  }
+  return [...trace, ...activeFilter(query.errorOnly, "errorOnly", t("exploreTrace.errorOnly"))];
 }

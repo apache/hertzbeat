@@ -28,6 +28,7 @@ import {
   buildExplorePath,
   mergeExploreQuery,
   parseExploreQuery,
+  querySubmissionTimePatch,
   type ExploreQuery,
   type ExploreQueryPatch,
   type LogExploreQuery,
@@ -70,7 +71,7 @@ export function ExplorePage() {
       step: readFormValue(event.currentTarget, "step"),
       minDurationMs: readFormNumber(event.currentTarget, "minDurationMs"),
       maxDurationMs: readFormNumber(event.currentTarget, "maxDurationMs"),
-      end: Date.now(),
+      ...querySubmissionTimePatch(query),
       pageIndex: undefined,
     });
   };

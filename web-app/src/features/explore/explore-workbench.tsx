@@ -15,11 +15,14 @@
  * limitations under the License.
  */
 
-import { Button, Select, Typography } from 'antd';
+import { Alert, Button, Select, Typography } from 'antd';
 import type { TFunction } from 'i18next';
 
 import {
   EXPLORE_TIME_RANGES,
+  exploreHandoffState,
+  exploreUsesExactWindow,
+  presetTimeRangePatch,
   type ExploreQuery,
   type ExploreQueryPatch,
   type ExploreSignal,
@@ -36,6 +39,20 @@ type Props = {
 };
 
 export function ExploreWorkbench({ query, t, updateQuery }: Props) {
+  const handoffState = exploreHandoffState(query);
+  const exactWindow = exploreUsesExactWindow(query);
+  const updateTimeRange = (value: string) => {
+    if (!EXPLORE_TIME_RANGES.includes(value as ExploreTimeRange)) return;
+    const timeRange = value as ExploreTimeRange;
+    updateQuery(presetTimeRangePatch(query, timeRange));
+  };
+  const refresh = () => {
+    const end = Date.now();
+    const duration = exactWindow && query.start != null && query.end != null
+      ? query.end - query.start
+      : undefined;
+    updateQuery({ windowMode: exactWindow ? undefined : query.windowMode, start: duration == null ? undefined : end - duration, end });
+  };
   return <>
     <header className={styles.header}>
       <div>
@@ -43,16 +60,20 @@ export function ExploreWorkbench({ query, t, updateQuery }: Props) {
         <Typography.Text type="secondary">{t('explore.description')}</Typography.Text>
       </div>
       <div className={styles.scope} aria-label={t('explore.context')}>
-        <Select
+        <Select<string>
           className={styles.timeRange ?? ''}
           aria-label={t('explore.timeRange')}
-          value={query.timeRange}
-          options={EXPLORE_TIME_RANGES.map(value => ({ value, label: t(`explore.timeRanges.${value}`) }))}
-          onChange={(value: ExploreTimeRange) => updateQuery({ timeRange: value, end: Date.now() })}
+          value={exactWindow ? 'onboarding-exact' : query.timeRange}
+          options={[
+            ...(exactWindow ? [{ value: 'onboarding-exact', label: t('explore.exactWindow'), disabled: true }] : []),
+            ...EXPLORE_TIME_RANGES.map(value => ({ value, label: t(`explore.timeRanges.${value}`) }))
+          ]}
+          onChange={updateTimeRange}
         />
-        <Button onClick={() => updateQuery({ end: Date.now() })}>{t('common.refresh')}</Button>
+        <Button onClick={refresh}>{t('common.refresh')}</Button>
       </div>
     </header>
+    {handoffState === 'invalid' && <Alert type="warning" showIcon title={t('explore.handoffInvalid')} />}
     <div className={styles.navigationRow}>
       <nav className={styles.signalNavigation} aria-label={t('explore.signalsNavigation')}>
         {signalKeys.map(signal => <button

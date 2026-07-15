@@ -40,4 +40,29 @@ describe('explore API paths', () => {
     const tracePath = buildSignalApiPath({ signal: 'traces', timeRange: 'last-1h', resourceFilter: 'cloud.region=ap-southeast-1', minDurationMs: 100, maxDurationMs: 5000, errorOnly: true }, 4_000_000);
     expect(tracePath).toContain('resourceFilter=cloud.region%3Dap-southeast-1&minDurationMs=100&maxDurationMs=5000&errorOnly=true');
   });
+
+  it('uses the exact valid onboarding scope and fails closed to the preset window when it is invalid', () => {
+    const scoped = {
+      signal: 'logs' as const, timeRange: 'last-15m' as const, serviceName: 'checkout-api',
+      serviceNamespace: 'commerce', environment: 'prod', collectorId: 'collector-east',
+      start: 1_710_000_000_000, end: 1_710_000_005_000
+    };
+    expect(buildSignalApiPath(scoped)).toBe(
+      '/api/logs/list?serviceName=checkout-api&serviceNamespace=commerce&environment=prod&collectorId=collector-east'
+      + '&start=1710000000000&end=1710000005000&pageIndex=0&pageSize=20'
+    );
+    expect(buildLogStreamPath(scoped)).toBe(
+      '/api/logs/sse/subscribe?serviceName=checkout-api&serviceNamespace=commerce&environment=prod&collectorId=collector-east'
+    );
+
+    const invalid = { ...scoped, start: 2_000_000, end: 1_000_000 };
+    const path = buildSignalApiPath(invalid, 3_000_000);
+    expect(path).toContain('serviceName=checkout-api&environment=prod&start=100000&end=1000000');
+    expect(path).not.toContain('serviceNamespace');
+    expect(path).not.toContain('collectorId');
+
+    const preset = { ...scoped, windowMode: 'preset' as const, start: undefined, end: 3_000_000 };
+    expect(buildSignalApiPath(preset)).toContain('start=2100000&end=3000000');
+    expect(buildSignalApiPath(preset)).toContain('collectorId=collector-east');
+  });
 });

@@ -19,6 +19,8 @@ import { apiMessageGet, type PageResult } from '@/core/http/api-message';
 
 import type { LogRow, MetricConsole, TraceRow } from './explore-contract';
 import {
+  exploreHandoffState,
+  exploreUsesExactWindow,
   timeRangeMilliseconds,
   type ExploreQuery,
   type LogExploreQuery,
@@ -73,8 +75,11 @@ export function buildSignalApiPath(query: ExploreQuery, now = Date.now()) {
 
 export function buildLogStreamPath(query: LogExploreQuery) {
   const params = new URLSearchParams();
+  const scoped = exploreHandoffState(query) === 'scoped';
   setValue(params, 'serviceName', query.serviceName);
+  if (scoped) setValue(params, 'serviceNamespace', query.serviceNamespace);
   setValue(params, 'environment', query.environment);
+  if (scoped) setValue(params, 'collectorId', query.collectorId);
   setValue(params, 'logContent', query.query);
   setValue(params, 'traceId', query.traceId);
   setValue(params, 'spanId', query.spanId);
@@ -88,9 +93,13 @@ export function buildLogStreamPath(query: LogExploreQuery) {
 function sharedSignalParams(query: ExploreQuery, now: number) {
   const params = new URLSearchParams();
   const end = query.end ?? now;
+  const scoped = exploreHandoffState(query) === 'scoped';
+  const exact = exploreUsesExactWindow(query);
   setValue(params, 'serviceName', query.serviceName);
+  if (scoped) setValue(params, 'serviceNamespace', query.serviceNamespace);
   setValue(params, 'environment', query.environment);
-  params.set('start', String(end - timeRangeMilliseconds(query.timeRange)));
+  if (scoped) setValue(params, 'collectorId', query.collectorId);
+  params.set('start', String(exact ? query.start : end - timeRangeMilliseconds(query.timeRange)));
   params.set('end', String(end));
   return params;
 }

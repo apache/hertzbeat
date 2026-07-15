@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { I18nextProvider, useTranslation } from 'react-i18next';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
@@ -29,6 +29,11 @@ describe('Explore workbench', () => {
   beforeAll(async () => {
     await initializeI18n();
     await loadLocale('en-US');
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
   });
 
   it('keeps signal navigation and shared time scope visible', () => {
@@ -44,6 +49,33 @@ describe('Explore workbench', () => {
   it('keeps raw log attributes behind an advanced disclosure', () => {
     render(<I18nextProvider i18n={i18n}><QuerySubject /></I18nextProvider>);
     expect(screen.getByText('Advanced filters').closest('details')).not.toHaveAttribute('open');
+  });
+
+  it('keeps a scoped onboarding duration on refresh and exposes invalid handoffs', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1_710_000_020_000);
+    const updateQuery = vi.fn();
+    render(<I18nextProvider i18n={i18n}><ExploreWorkbench
+      query={{
+        signal: 'metrics', timeRange: 'last-30m', serviceName: 'checkout-api', serviceNamespace: 'commerce',
+        environment: 'prod', collectorId: 'collector-east', start: 1_710_000_000_000, end: 1_710_000_005_000
+      }}
+      t={i18n.t}
+      updateQuery={updateQuery}
+    /></I18nextProvider>);
+
+    expect(screen.getByText('Onboarding exact window')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+    expect(updateQuery).toHaveBeenCalledWith({
+      windowMode: undefined, start: 1_710_000_015_000, end: 1_710_000_020_000
+    });
+    cleanup();
+    render(<I18nextProvider i18n={i18n}><ExploreWorkbench
+      query={{ signal: 'metrics', timeRange: 'last-30m', collectorId: 'collector-east', start: 2_000, end: 1_000 }}
+      t={i18n.t}
+      updateQuery={vi.fn()}
+    /></I18nextProvider>);
+    expect(screen.getByText('The onboarding query context is incomplete or invalid. Using the standard Explore scope.')).toBeInTheDocument();
   });
 });
 

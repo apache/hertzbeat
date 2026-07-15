@@ -17,7 +17,17 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { buildCrossSignalPath, buildExplorePath, mergeExploreQuery, parseExploreQuery, timeRangeMilliseconds } from './explore-model';
+import {
+  buildCrossSignalPath,
+  buildExplorePath,
+  exploreHandoffState,
+  exploreUsesExactWindow,
+  mergeExploreQuery,
+  parseExploreQuery,
+  presetTimeRangePatch,
+  querySubmissionTimePatch,
+  timeRangeMilliseconds
+} from './explore-model';
 
 describe('explore query state', () => {
   it('keeps only supported values and trims empty context', () => {
@@ -43,14 +53,85 @@ describe('explore query state', () => {
     );
   });
 
+  it('parses and serializes the complete onboarding handoff without accepting a Token', () => {
+    const query = parseExploreQuery(new URLSearchParams(
+      'signal=metrics&serviceName=checkout-api&serviceNamespace=commerce&environment=prod&collectorId=collector-east'
+      + '&start=1710000000000&end=1710000005000&token=must-not-enter-explore'
+    ));
+
+    expect(query).toMatchObject({
+      signal: 'metrics', serviceName: 'checkout-api', serviceNamespace: 'commerce', environment: 'prod',
+      collectorId: 'collector-east', start: 1_710_000_000_000, end: 1_710_000_005_000
+    });
+    expect(exploreHandoffState(query)).toBe('scoped');
+    expect(exploreUsesExactWindow(query)).toBe(true);
+    expect(buildExplorePath(query)).toBe(
+      '/explore?signal=metrics&timeRange=last-30m&serviceName=checkout-api&serviceNamespace=commerce'
+      + '&environment=prod&collectorId=collector-east&start=1710000000000&end=1710000005000'
+    );
+    expect(buildExplorePath(query)).not.toContain('token');
+  });
+
+  it('switches an exact handoff to a preset without dropping identity context and keeps normal submit refresh behavior', () => {
+    const exact = parseExploreQuery(new URLSearchParams(
+      'signal=metrics&serviceName=checkout-api&serviceNamespace=commerce&environment=prod&collectorId=collector-east'
+      + '&start=1710000000000&end=1710000005000'
+    ));
+    const preset = mergeExploreQuery(exact, {
+      timeRange: 'last-1h', windowMode: 'preset', start: undefined, end: 1_710_000_020_000
+    });
+
+    expect(exploreHandoffState(preset)).toBe('scoped');
+    expect(exploreUsesExactWindow(preset)).toBe(false);
+    expect(buildExplorePath(preset)).toBe(
+      '/explore?signal=metrics&timeRange=last-1h&serviceName=checkout-api&serviceNamespace=commerce'
+      + '&environment=prod&collectorId=collector-east&windowMode=preset&end=1710000020000'
+    );
+    expect(querySubmissionTimePatch(exact, 1_710_000_030_000)).toEqual({});
+    expect(presetTimeRangePatch(exact, 'last-1h', 1_710_000_020_000)).toEqual({
+      timeRange: 'last-1h', windowMode: 'preset', start: undefined, end: 1_710_000_020_000
+    });
+    expect(querySubmissionTimePatch({ signal: 'logs', timeRange: 'last-30m' }, 1_710_000_030_000)).toEqual({
+      start: undefined, end: 1_710_000_030_000
+    });
+    const invalid = parseExploreQuery(new URLSearchParams(
+      'serviceName=checkout-api&collectorId=collector-east&start=2000&end=1000'
+    ));
+    expect(querySubmissionTimePatch(invalid, 1_710_000_030_000)).toEqual({
+      start: undefined, end: 1_710_000_030_000
+    });
+  });
+
+  it('preserves the complete scoped window across signals and marks partial or reversed handoffs invalid', () => {
+    const scoped = parseExploreQuery(new URLSearchParams(
+      'signal=logs&serviceName=checkout-api&serviceNamespace=commerce&environment=prod&collectorId=collector-east'
+      + '&start=1710000000000&end=1710000005000'
+    ));
+    expect(buildCrossSignalPath(scoped, 'traces', {})).toBe(
+      '/explore?signal=traces&timeRange=last-30m&serviceName=checkout-api&serviceNamespace=commerce'
+      + '&environment=prod&collectorId=collector-east&start=1710000000000&end=1710000005000'
+    );
+
+    expect(exploreHandoffState(parseExploreQuery(new URLSearchParams(
+      'serviceName=checkout-api&serviceNamespace=commerce&environment=prod&collectorId=collector-east&start=2000&end=1000'
+    )))).toBe('invalid');
+    expect(exploreHandoffState(parseExploreQuery(new URLSearchParams(
+      'serviceName=checkout-api&collectorId=collector-east&start=1000&end=2000'
+    )))).toBe('invalid');
+  });
+
   it('drops fields that do not belong to the selected signal', () => {
     const metrics = mergeExploreQuery({ signal: 'logs', timeRange: 'last-30m', traceId: 'trace-1', severityText: 'ERROR', live: true }, { signal: 'metrics' });
     expect(metrics).toEqual({
       signal: 'metrics',
       timeRange: 'last-30m',
       serviceName: undefined,
+      serviceNamespace: undefined,
       environment: undefined,
+      collectorId: undefined,
       query: undefined,
+      windowMode: undefined,
+      start: undefined,
       end: undefined,
       metricFilter: undefined,
       groupBy: undefined,
