@@ -45,6 +45,7 @@ class OtelRuntimeConfigRendererTest {
         properties.setConfig(tempDir.resolve("conf/runtime.yaml"));
         properties.setToken("secret-must-stay-in-environment");
         properties.setHealthPort(13247);
+        properties.setInternalTelemetryPort(18888);
         properties.setConfigSchema(ManagedOtelRuntimeConfig.CURRENT_SCHEMA_VERSION);
         properties.setConfigRevision(42);
         properties.setHostMetricsInterval(Duration.ofSeconds(30));
@@ -70,6 +71,11 @@ class OtelRuntimeConfigRendererTest {
         assertTrue(yaml.contains("action: delete"));
         assertTrue(yaml.contains("processors: [memory_limiter, resource_detection, resource, attributes/sanitize, batch]"));
         assertTrue(yaml.contains("endpoint: 127.0.0.1:13247"));
+        assertTrue(yaml.contains("level: basic"));
+        assertTrue(yaml.contains("host: '127.0.0.1'"));
+        assertTrue(yaml.contains("port: 18888"));
+        assertTrue(yaml.contains("without_type_suffix: true"));
+        assertTrue(yaml.contains("without_units: true"));
         assertTrue(yaml.contains("hertzbeat.config.schema"));
         assertTrue(yaml.contains("value: \"42\""));
         assertTrue(yaml.contains("${env:HERTZBEAT_OTLP_TOKEN}"));

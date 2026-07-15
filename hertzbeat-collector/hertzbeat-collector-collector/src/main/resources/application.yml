@@ -81,6 +81,8 @@ collector:
     runtime-memory-limit-mi-b: ${HERTZBEAT_OTEL_RUNTIME_MEMORY_LIMIT_MIB:256}
     runtime-memory-spike-limit-mi-b: ${HERTZBEAT_OTEL_RUNTIME_MEMORY_SPIKE_LIMIT_MIB:64}
     runtime-memory-check-interval: ${HERTZBEAT_OTEL_RUNTIME_MEMORY_CHECK_INTERVAL:1s}
+    internal-telemetry-port: ${HERTZBEAT_OTEL_INTERNAL_TELEMETRY_PORT:8888}
+    internal-telemetry-timeout: ${HERTZBEAT_OTEL_INTERNAL_TELEMETRY_TIMEOUT:500ms}
   dispatch:
     entrance:
       netty:

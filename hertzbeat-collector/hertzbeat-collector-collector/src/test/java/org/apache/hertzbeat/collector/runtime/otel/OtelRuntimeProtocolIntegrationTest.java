@@ -47,6 +47,7 @@ import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
+import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -104,6 +105,18 @@ class OtelRuntimeProtocolIntegrationTest {
                     () -> capture.contains("hertzbeat grpc log"), Duration.ofSeconds(20));
             OtelRuntimeTestSupport.await(
                     () -> capture.contains("hertzbeat grpc span"), Duration.ofSeconds(20));
+
+            OtelRuntimeTelemetryClient telemetryClient = new OtelRuntimeTelemetryClient();
+            OtelRuntimeTestSupport.await(() -> {
+                ManagedOtelRuntimeStatus.RuntimeTelemetry telemetry = telemetryClient.scrape(properties, false);
+                return positive(telemetry.accepted().metrics())
+                        && positive(telemetry.accepted().logs())
+                        && positive(telemetry.accepted().traces());
+            }, Duration.ofSeconds(10));
+            ManagedOtelRuntimeStatus.RuntimeTelemetry telemetry = telemetryClient.scrape(properties, false);
+            assertEquals(6144, telemetry.queueCapacity().value());
+            assertEquals(ManagedOtelRuntimeStatus.ValueState.NOT_APPLICABLE,
+                    telemetry.fileConsumer().openFiles().state());
         } finally {
             if (channel != null) {
                 channel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
@@ -111,6 +124,10 @@ class OtelRuntimeProtocolIntegrationTest {
             supervisor.close();
             capture.close();
         }
+    }
+
+    private static boolean positive(ManagedOtelRuntimeStatus.ObservedLong observed) {
+        return observed.state() == ManagedOtelRuntimeStatus.ValueState.AVAILABLE && observed.value() > 0;
     }
 
     private static void sendJsonSignals(String endpoint) throws Exception {

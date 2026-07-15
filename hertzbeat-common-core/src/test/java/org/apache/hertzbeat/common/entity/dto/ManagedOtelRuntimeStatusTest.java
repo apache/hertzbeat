@@ -18,13 +18,55 @@
 package org.apache.hertzbeat.common.entity.dto;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.Instant;
 import java.util.List;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.Test;
 
 class ManagedOtelRuntimeStatusTest {
+
+    @Test
+    void distinguishesUnavailableCountersFromObservedZeroWithoutPayloadContent() {
+        ManagedOtelRuntimeStatus.ObservedLong observedZero =
+                ManagedOtelRuntimeStatus.ObservedLong.available(0);
+        ManagedOtelRuntimeStatus.ObservedLong unavailable =
+                ManagedOtelRuntimeStatus.ObservedLong.unavailable();
+        ManagedOtelRuntimeStatus.RuntimeTelemetry telemetry = new ManagedOtelRuntimeStatus.RuntimeTelemetry(
+                new ManagedOtelRuntimeStatus.SignalCounters(observedZero, unavailable, observedZero),
+                ManagedOtelRuntimeStatus.SignalCounters.unavailable(),
+                ManagedOtelRuntimeStatus.SignalCounters.unavailable(),
+                ManagedOtelRuntimeStatus.SignalCounters.unavailable(),
+                observedZero,
+                ManagedOtelRuntimeStatus.ObservedLong.available(2048),
+                new ManagedOtelRuntimeStatus.FileConsumerStatus(
+                        ManagedOtelRuntimeStatus.ObservedLong.notApplicable(),
+                        ManagedOtelRuntimeStatus.ObservedLong.notApplicable()));
+        ManagedOtelRuntimeStatus status = new ManagedOtelRuntimeStatus(
+                ManagedOtelRuntimeStatus.CURRENT_SCHEMA_VERSION,
+                true,
+                ManagedOtelRuntimeStatus.RuntimeState.RUNNING,
+                12,
+                11,
+                4201,
+                ManagedOtelRuntimeStatus.IntakeCredentialState.CONFIGURED,
+                2,
+                Instant.parse("2026-07-15T06:00:00Z"),
+                "",
+                ManagedOtelRuntimeStatus.FailureCode.NONE,
+                telemetry,
+                List.of());
+
+        assertEquals(4201, status.pid());
+        assertEquals(ManagedOtelRuntimeStatus.ValueState.AVAILABLE,
+                status.telemetry().accepted().metrics().state());
+        assertEquals(0, status.telemetry().accepted().metrics().value());
+        assertEquals(ManagedOtelRuntimeStatus.ValueState.UNAVAILABLE,
+                status.telemetry().accepted().logs().state());
+        assertFalse(status.toString().contains("telemetry body"));
+    }
 
     @Test
     void acceptsBoundedVersionedRuntimeStatus() {
@@ -119,5 +161,30 @@ class ManagedOtelRuntimeStatusTest {
         );
 
         assertEquals(List.of(), status.sources());
+    }
+
+    @Test
+    void readsExistingSchemaTwoHeartbeatWithoutAdditiveRuntimeTelemetryFields() {
+        String payload = """
+                {
+                  "schemaVersion": 2,
+                  "enabled": true,
+                  "state": "RUNNING",
+                  "desiredRevision": 2,
+                  "activeRevision": 2,
+                  "intakeCredentialState": "CONFIGURED",
+                  "restartCount": 0,
+                  "changedAt": "2026-07-15T06:00:00Z",
+                  "lastError": "",
+                  "sources": []
+                }
+                """;
+
+        ManagedOtelRuntimeStatus status = JsonUtil.fromJson(payload, ManagedOtelRuntimeStatus.class);
+
+        assertEquals(-1, status.pid());
+        assertEquals(ManagedOtelRuntimeStatus.FailureCode.NONE, status.failureCode());
+        assertEquals(ManagedOtelRuntimeStatus.ValueState.UNAVAILABLE,
+                status.telemetry().queueSize().state());
     }
 }

@@ -164,16 +164,32 @@ class HeartbeatProcessorRuntimeStatusTest {
     }
 
     private ManagedOtelRuntimeStatus status(long desiredRevision) {
+        ManagedOtelRuntimeStatus.SignalCounters counters = new ManagedOtelRuntimeStatus.SignalCounters(
+                ManagedOtelRuntimeStatus.ObservedLong.available(7),
+                ManagedOtelRuntimeStatus.ObservedLong.available(5),
+                ManagedOtelRuntimeStatus.ObservedLong.available(3));
+        ManagedOtelRuntimeStatus.RuntimeTelemetry telemetry = new ManagedOtelRuntimeStatus.RuntimeTelemetry(
+                counters,
+                ManagedOtelRuntimeStatus.SignalCounters.unavailable(),
+                counters,
+                ManagedOtelRuntimeStatus.SignalCounters.unavailable(),
+                ManagedOtelRuntimeStatus.ObservedLong.available(2),
+                ManagedOtelRuntimeStatus.ObservedLong.available(6144),
+                ManagedOtelRuntimeStatus.FileConsumerStatus.notApplicable());
         return new ManagedOtelRuntimeStatus(
                 ManagedOtelRuntimeStatus.CURRENT_SCHEMA_VERSION,
                 true,
                 ManagedOtelRuntimeStatus.RuntimeState.DEGRADED,
                 desiredRevision,
                 2,
+                4242,
                 ManagedOtelRuntimeStatus.IntakeCredentialState.CONFIGURED,
                 1,
                 Instant.parse("2026-07-15T06:00:00Z"),
-                "runtime restarted"
+                "runtime restarted",
+                ManagedOtelRuntimeStatus.FailureCode.BACKEND_UNAVAILABLE,
+                telemetry,
+                java.util.List.of()
         );
     }
 }

@@ -114,6 +114,9 @@ public class OtelRuntimeConfigRenderer {
         if (maxRequestMiB < 1 || maxRequestMiB > 64) {
             throw new IllegalArgumentException("OTLP maximum request size must be between 1 and 64 MiB");
         }
+        if (properties.getInternalTelemetryPort() < 1 || properties.getInternalTelemetryPort() > 65535) {
+            throw new IllegalArgumentException("Runtime internal telemetry port is invalid");
+        }
         StringBuilder yaml = new StringBuilder("receivers:\n  otlp:\n    protocols:\n")
                 .append("      grpc:\n")
                 .append("        endpoint: ").append(yamlScalar(gateway.grpcEndpoint())).append('\n')
@@ -158,6 +161,17 @@ public class OtelRuntimeConfigRenderer {
         String commonProcessors = OtelRuntimeGovernance.pipelineProcessors(desiredConfig, false);
         yaml.append("""
                 service:
+                  telemetry:
+                    metrics:
+                      level: basic
+                      readers:
+                        - pull:
+                            exporter:
+                              prometheus:
+                                host: '127.0.0.1'
+                                port: %d
+                                without_type_suffix: true
+                                without_units: true
                   extensions: [%s]
                   pipelines:
                     metrics:
@@ -173,6 +187,7 @@ public class OtelRuntimeConfigRenderer {
                       processors: [%s]
                       exporters: [otlphttp]
                 """.formatted(
+                properties.getInternalTelemetryPort(),
                 gateway.enabled() ? "health_check, file_storage, bearertokenauth" : "health_check, file_storage",
                 metricsReceivers(desiredConfig.hostMetricsEnabled(), sources.prometheusTargets()),
                 commonProcessors,

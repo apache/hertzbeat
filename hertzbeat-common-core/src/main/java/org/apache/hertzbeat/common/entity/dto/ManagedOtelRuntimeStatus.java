@@ -25,13 +25,15 @@ import java.util.regex.Pattern;
 /**
  * Versioned status reported by the optional managed telemetry runtime.
  *
- * <p>The Java Collector remains online independently of this status. This contract contains no
- * credential value or process-local identifier.</p>
+ * <p>The Java Collector remains online independently of this status. The optional child PID is
+ * operational metadata; this contract contains no credential or telemetry payload value.</p>
  */
 public record ManagedOtelRuntimeStatus(int schemaVersion, boolean enabled, RuntimeState state,
                                        long desiredRevision, long activeRevision,
+                                       long pid,
                                        IntakeCredentialState intakeCredentialState,
                                        int restartCount, Instant changedAt, String lastError,
+                                       FailureCode failureCode, RuntimeTelemetry telemetry,
                                        List<ManagedOtelSourceStatus> sources) {
 
     public static final int CURRENT_SCHEMA_VERSION = 2;
@@ -45,8 +47,19 @@ public record ManagedOtelRuntimeStatus(int schemaVersion, boolean enabled, Runti
                                     long desiredRevision, long activeRevision,
                                     IntakeCredentialState intakeCredentialState,
                                     int restartCount, Instant changedAt, String lastError) {
-        this(schemaVersion, enabled, state, desiredRevision, activeRevision, intakeCredentialState,
-                restartCount, changedAt, lastError, List.of());
+        this(schemaVersion, enabled, state, desiredRevision, activeRevision, -1,
+                intakeCredentialState, restartCount, changedAt, lastError, FailureCode.NONE,
+                RuntimeTelemetry.unavailable(false), List.of());
+    }
+
+    public ManagedOtelRuntimeStatus(int schemaVersion, boolean enabled, RuntimeState state,
+                                    long desiredRevision, long activeRevision,
+                                    IntakeCredentialState intakeCredentialState,
+                                    int restartCount, Instant changedAt, String lastError,
+                                    List<ManagedOtelSourceStatus> sources) {
+        this(schemaVersion, enabled, state, desiredRevision, activeRevision, -1,
+                intakeCredentialState, restartCount, changedAt, lastError, FailureCode.NONE,
+                RuntimeTelemetry.unavailable(hasFileSource(sources)), sources);
     }
 
     public ManagedOtelRuntimeStatus {
@@ -59,6 +72,12 @@ public record ManagedOtelRuntimeStatus(int schemaVersion, boolean enabled, Runti
         if (desiredRevision < 1 || activeRevision < 0 || restartCount < 0) {
             throw new IllegalArgumentException("Managed runtime revisions and restart count are invalid");
         }
+        if (pid == 0) {
+            pid = -1;
+        }
+        if (pid < -1) {
+            throw new IllegalArgumentException("Managed runtime process identifier is invalid");
+        }
         lastError = Objects.requireNonNullElse(lastError, "");
         if (lastError.length() > MAXIMUM_DIAGNOSTIC_LENGTH) {
             throw new IllegalArgumentException("Managed runtime diagnostic is too long");
@@ -70,6 +89,12 @@ public record ManagedOtelRuntimeStatus(int schemaVersion, boolean enabled, Runti
         if (schemaVersion == LEGACY_SCHEMA_VERSION && !sources.isEmpty()) {
             throw new IllegalArgumentException("Source status requires managed runtime status schema 2");
         }
+        failureCode = Objects.requireNonNullElse(failureCode, FailureCode.NONE);
+        telemetry = telemetry == null ? RuntimeTelemetry.unavailable(hasFileSource(sources)) : telemetry;
+    }
+
+    private static boolean hasFileSource(List<ManagedOtelSourceStatus> sources) {
+        return sources != null && sources.stream().anyMatch(source -> source.type() == SourceType.FILE_LOG);
     }
 
     /**
@@ -91,6 +116,120 @@ public record ManagedOtelRuntimeStatus(int schemaVersion, boolean enabled, Runti
         NOT_REQUIRED,
         MISSING,
         CONFIGURED
+    }
+
+    /**
+     * Stable operational failure categories. Free-form diagnostics remain optional and bounded.
+     */
+    public enum FailureCode {
+        NONE,
+        CONFIGURATION_ERROR,
+        PORT_CONFLICT,
+        BACKEND_UNAVAILABLE,
+        AUTHENTICATION_FAILED,
+        QUEUE_FULL,
+        PROCESS_CRASH,
+        UNKNOWN
+    }
+
+    /**
+     * Availability of one numeric runtime metric. Zero is meaningful only when available.
+     */
+    public enum ValueState {
+        AVAILABLE,
+        UNAVAILABLE,
+        NOT_APPLICABLE
+    }
+
+    /**
+     * One non-negative operational value with explicit availability.
+     */
+    public record ObservedLong(ValueState state, long value) {
+
+        public ObservedLong {
+            state = Objects.requireNonNull(state, "state");
+            if (value < 0 || state != ValueState.AVAILABLE && value != 0) {
+                throw new IllegalArgumentException("Managed runtime metric value is invalid");
+            }
+        }
+
+        public static ObservedLong available(long value) {
+            return new ObservedLong(ValueState.AVAILABLE, value);
+        }
+
+        public static ObservedLong unavailable() {
+            return new ObservedLong(ValueState.UNAVAILABLE, 0);
+        }
+
+        public static ObservedLong notApplicable() {
+            return new ObservedLong(ValueState.NOT_APPLICABLE, 0);
+        }
+    }
+
+    /**
+     * Per-signal counters without telemetry payload content.
+     */
+    public record SignalCounters(ObservedLong metrics, ObservedLong logs, ObservedLong traces) {
+
+        public SignalCounters {
+            metrics = Objects.requireNonNull(metrics, "metrics");
+            logs = Objects.requireNonNull(logs, "logs");
+            traces = Objects.requireNonNull(traces, "traces");
+        }
+
+        public static SignalCounters unavailable() {
+            return new SignalCounters(
+                    ObservedLong.unavailable(), ObservedLong.unavailable(), ObservedLong.unavailable());
+        }
+    }
+
+    /**
+     * File consumer gauges without file paths or log records.
+     */
+    public record FileConsumerStatus(ObservedLong openFiles, ObservedLong readingFiles) {
+
+        public FileConsumerStatus {
+            openFiles = Objects.requireNonNull(openFiles, "openFiles");
+            readingFiles = Objects.requireNonNull(readingFiles, "readingFiles");
+        }
+
+        public static FileConsumerStatus unavailable() {
+            return new FileConsumerStatus(ObservedLong.unavailable(), ObservedLong.unavailable());
+        }
+
+        public static FileConsumerStatus notApplicable() {
+            return new FileConsumerStatus(ObservedLong.notApplicable(), ObservedLong.notApplicable());
+        }
+    }
+
+    /**
+     * Bounded internal telemetry carried by the existing heartbeat channel.
+     */
+    public record RuntimeTelemetry(SignalCounters accepted, SignalCounters refused,
+                                   SignalCounters sent, SignalCounters failed,
+                                   ObservedLong queueSize, ObservedLong queueCapacity,
+                                   FileConsumerStatus fileConsumer) {
+
+        public RuntimeTelemetry {
+            accepted = Objects.requireNonNull(accepted, "accepted");
+            refused = Objects.requireNonNull(refused, "refused");
+            sent = Objects.requireNonNull(sent, "sent");
+            failed = Objects.requireNonNull(failed, "failed");
+            queueSize = Objects.requireNonNull(queueSize, "queueSize");
+            queueCapacity = Objects.requireNonNull(queueCapacity, "queueCapacity");
+            fileConsumer = Objects.requireNonNull(fileConsumer, "fileConsumer");
+        }
+
+        public static RuntimeTelemetry unavailable(boolean fileConsumerConfigured) {
+            return new RuntimeTelemetry(
+                    SignalCounters.unavailable(),
+                    SignalCounters.unavailable(),
+                    SignalCounters.unavailable(),
+                    SignalCounters.unavailable(),
+                    ObservedLong.unavailable(),
+                    ObservedLong.unavailable(),
+                    fileConsumerConfigured ? FileConsumerStatus.unavailable() : FileConsumerStatus.notApplicable());
+        }
     }
 
     /**

@@ -53,6 +53,21 @@ public class OtelRuntimeConfiguration {
         return new OtelRuntimeHealthClient();
     }
 
+    @Bean
+    OtelRuntimeTelemetryClient otelRuntimeTelemetryClient() {
+        return new OtelRuntimeTelemetryClient();
+    }
+
+    @Bean
+    OtelRuntimeFailureClassifier otelRuntimeFailureClassifier() {
+        return new OtelRuntimeFailureClassifier();
+    }
+
+    @Bean
+    OtelRuntimeDiagnosticsReader otelRuntimeDiagnosticsReader(OtelRuntimeFailureClassifier failureClassifier) {
+        return new OtelRuntimeDiagnosticsReader(failureClassifier);
+    }
+
     @Bean(destroyMethod = "close")
     OtelRuntimeSupervisor otelRuntimeSupervisor(OtelRuntimeProperties properties,
                                                 OtelRuntimeBinaryResolver resolver,
@@ -64,7 +79,11 @@ public class OtelRuntimeConfiguration {
 
     @Bean
     OtelRuntimeStatusProvider otelRuntimeStatusProvider(OtelRuntimeProperties properties,
-                                                        OtelRuntimeSupervisor supervisor) {
-        return new OtelRuntimeStatusProvider(properties, supervisor);
+                                                        OtelRuntimeSupervisor supervisor,
+                                                        OtelRuntimeTelemetryClient telemetryClient,
+                                                        OtelRuntimeDiagnosticsReader diagnosticsReader,
+                                                        OtelRuntimeFailureClassifier failureClassifier) {
+        return new OtelRuntimeStatusProvider(
+                properties, supervisor, telemetryClient, diagnosticsReader, failureClassifier);
     }
 }

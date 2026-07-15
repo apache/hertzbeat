@@ -132,6 +132,10 @@ public class OtelRuntimeProperties {
 
     private Duration healthTimeout = Duration.ofSeconds(2);
 
+    private int internalTelemetryPort = 8888;
+
+    private Duration internalTelemetryTimeout = Duration.ofMillis(500);
+
     private Duration validateTimeout = Duration.ofSeconds(15);
 
     private Duration startupTimeout = Duration.ofSeconds(20);
