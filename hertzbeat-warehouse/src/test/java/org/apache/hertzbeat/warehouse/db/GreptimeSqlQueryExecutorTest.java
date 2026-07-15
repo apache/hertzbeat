@@ -21,7 +21,9 @@ package org.apache.hertzbeat.warehouse.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -108,6 +110,73 @@ class GreptimeSqlQueryExecutorTest {
 
         // Execute
         assertThrows(RuntimeException.class, () -> greptimeSqlQueryExecutor.execute("SELECT * FROM metrics"));
+    }
+
+    @Test
+    void testExecuteStrictRejectsGreptimeErrorCode() {
+        GreptimeSqlQueryContent response = new GreptimeSqlQueryContent();
+        response.setCode(1004);
+        ResponseEntity<GreptimeSqlQueryContent> responseEntity = new ResponseEntity<>(response, HttpStatus.OK);
+        when(restTemplate.exchange(
+                any(String.class),
+                eq(HttpMethod.POST),
+                any(HttpEntity.class),
+                eq(GreptimeSqlQueryContent.class)
+        )).thenReturn(responseEntity);
+
+        assertThrows(RuntimeException.class,
+                () -> greptimeSqlQueryExecutor.executeStrict("SELECT MAX(timestamp) FROM hertzbeat_logs"));
+    }
+
+    @Test
+    void testExecuteStrictRejectsMissingOutput() {
+        GreptimeSqlQueryContent response = new GreptimeSqlQueryContent();
+        response.setCode(0);
+        ResponseEntity<GreptimeSqlQueryContent> responseEntity = new ResponseEntity<>(response, HttpStatus.OK);
+        when(restTemplate.exchange(
+                any(String.class),
+                eq(HttpMethod.POST),
+                any(HttpEntity.class),
+                eq(GreptimeSqlQueryContent.class)
+        )).thenReturn(responseEntity);
+
+        assertThrows(RuntimeException.class,
+                () -> greptimeSqlQueryExecutor.executeStrict("SELECT MAX(timestamp) FROM hertzbeat_logs"));
+    }
+
+    @Test
+    void testExecuteStrictRejectsUnsuccessfulHttpResponse() {
+        GreptimeSqlQueryContent response = createMockResponse();
+        ResponseEntity<GreptimeSqlQueryContent> responseEntity =
+                new ResponseEntity<>(response, HttpStatus.SERVICE_UNAVAILABLE);
+        when(restTemplate.exchange(
+                any(String.class),
+                eq(HttpMethod.POST),
+                any(HttpEntity.class),
+                eq(GreptimeSqlQueryContent.class)
+        )).thenReturn(responseEntity);
+
+        assertThrows(RuntimeException.class,
+                () -> greptimeSqlQueryExecutor.executeStrict("SELECT MAX(timestamp) FROM hertzbeat_logs"));
+    }
+
+    @Test
+    void testExecuteStrictPreservesValidNullAggregate() {
+        ResponseEntity<GreptimeSqlQueryContent> responseEntity =
+                new ResponseEntity<>(createNullAggregateResponse(), HttpStatus.OK);
+        when(restTemplate.exchange(
+                any(String.class),
+                eq(HttpMethod.POST),
+                any(HttpEntity.class),
+                eq(GreptimeSqlQueryContent.class)
+        )).thenReturn(responseEntity);
+
+        List<Map<String, Object>> rows = greptimeSqlQueryExecutor.executeStrict(
+                "SELECT MAX(timestamp) AS last_received_at FROM hertzbeat_logs");
+
+        assertEquals(1, rows.size());
+        assertTrue(rows.getFirst().containsKey("last_received_at"));
+        assertNull(rows.getFirst().get("last_received_at"));
     }
 
     @Test
@@ -315,6 +384,28 @@ class GreptimeSqlQueryExecutorTest {
         GreptimeSqlQueryContent.Output output = new GreptimeSqlQueryContent.Output();
         output.setRecords(records);
 
+        response.setOutput(List.of(output));
+        return response;
+    }
+
+    private GreptimeSqlQueryContent createNullAggregateResponse() {
+        GreptimeSqlQueryContent response = new GreptimeSqlQueryContent();
+        response.setCode(0);
+
+        GreptimeSqlQueryContent.Output.Records.Schema schema =
+                new GreptimeSqlQueryContent.Output.Records.Schema();
+        schema.setColumnSchemas(List.of(
+                new GreptimeSqlQueryContent.Output.Records.Schema.ColumnSchema(
+                        "last_received_at", "TimestampMillisecond")));
+
+        List<Object> aggregateRow = new ArrayList<>();
+        aggregateRow.add(null);
+        GreptimeSqlQueryContent.Output.Records records = new GreptimeSqlQueryContent.Output.Records();
+        records.setSchema(schema);
+        records.setRows(List.of(aggregateRow));
+
+        GreptimeSqlQueryContent.Output output = new GreptimeSqlQueryContent.Output();
+        output.setRecords(records);
         response.setOutput(List.of(output));
         return response;
     }
