@@ -55,6 +55,12 @@ for package in $packages; do
     echo "$descriptor does not use the expected runtime layout" >&2
     exit 1
   fi
+  if ! grep -q '<include>hertzbeat-otel-runtime.cdx.json</include>' "$assembly_dir/$descriptor" \
+      || ! grep -q '<include>SHA512SUMS</include>' "$assembly_dir/$descriptor" \
+      || ! grep -q "dist/$platform/runtime-licenses" "$assembly_dir/$descriptor"; then
+    echo "$descriptor does not package runtime release metadata" >&2
+    exit 1
+  fi
   if [ ! -f "$runtime_dir/dist/$platform/$binary" ]; then
     echo "missing generated runtime artifact: $platform/$binary" >&2
     exit 1

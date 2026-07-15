@@ -92,7 +92,13 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
             <outputDirectory>runtime/macos-arm64</outputDirectory>
             <includes>
                 <include>runtime-manifest.json</include>
+                <include>hertzbeat-otel-runtime.cdx.json</include>
+                <include>SHA512SUMS</include>
             </includes>
+        </fileSet>
+        <fileSet>
+            <directory>../../hertzbeat-otel-runtime/dist/macos-arm64/runtime-licenses</directory>
+            <outputDirectory>runtime/macos-arm64/licenses</outputDirectory>
         </fileSet>
 
         <!-- external lib -->

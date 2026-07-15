@@ -19,11 +19,16 @@ Go 1.25 or newer is required.
 ```shell
 make validate
 make build-platforms
+make license-check
+make release-assets
 ../script/ci/verify-otel-runtime-package-layout.sh
 ```
 
 Generated sources, binaries, and release archives remain local under `_build`,
 `dist`, and the repository-level `dist` directory. They must not be committed.
+`release-assets` creates a per-platform CycloneDX SBOM, SHA-512 checksums, and
+the collected dependency license notices next to each Go runtime. It also runs
+the pinned license and source-call-graph vulnerability gates.
 
 ## Java supervisor configuration
 
@@ -75,6 +80,10 @@ collector:
   enabled and belongs to the release-hardening milestone.
 - The local control surface is the versioned loopback health contract. Remote
   configuration and OpAMP are not included.
-- Release publication still requires the Apache dependency license review,
-  NOTICE updates, SBOM generation, vulnerability scanning, checksums, signing,
-  and reproducibility checks for the final release environment.
+- The manual `Hybrid Collector Release Gate` workflow builds the Java Native
+  Collector on Linux amd64/arm64, macOS amd64/arm64, and Windows amd64. Linux
+  packages include the reviewed systemd unit; the multi-platform container uses
+  the native foreground launcher and runs as the `hertzbeat` user.
+- Automated license classification, SBOMs, vulnerability checks, checksums, and
+  Go binary reproducibility are release inputs, not a substitute for the Apache
+  release manager's LICENSE/NOTICE review, artifact signing, and vote.

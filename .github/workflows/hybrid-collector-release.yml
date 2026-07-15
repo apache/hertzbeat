@@ -1,0 +1,171 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+name: Hybrid Collector Release Gate
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/hybrid-collector-release.yml'
+      - 'hertzbeat-collector/**'
+      - 'hertzbeat-common-core/**'
+      - 'hertzbeat-manager/**'
+      - 'hertzbeat-otel-runtime/**'
+      - 'script/assembly/collector/**'
+      - 'script/ci/*hybrid-collector*'
+      - 'script/ci/*otel-runtime*'
+      - 'script/docker/collector/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hybrid-collector-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: hertzbeat-otel-runtime/go.mod
+          cache-dependency-path: hertzbeat-otel-runtime/go.mod
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: 25
+          distribution: graalvm
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          cache: maven
+      - name: Verify source and dependency contracts
+        run: |
+          ./script/ci/verify-hybrid-collector-release-layout.sh
+          ./script/ci/verify-otel-runtime-layout.sh
+          ./script/ci/verify-hybrid-collector-native-layout.sh
+          make -C hertzbeat-otel-runtime validate
+          make -C hertzbeat-otel-runtime license-check
+      - name: Verify Go binary reproducibility
+        run: ./script/ci/verify-otel-runtime-reproducibility.sh
+      - name: Verify Java runtime and Spring AOT
+        run: ./script/ci/verify-hybrid-collector-java.sh
+
+  native-release:
+    if: github.event_name == 'workflow_dispatch'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            platform: linux-amd64
+          - runner: ubuntu-24.04-arm
+            platform: linux-arm64
+          - runner: macos-15-intel
+            platform: macos-amd64
+          - runner: macos-15
+            platform: macos-arm64
+          - runner: windows-2025
+            platform: windows-amd64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: hertzbeat-otel-runtime/go.mod
+          cache-dependency-path: hertzbeat-otel-runtime/go.mod
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: 25
+          distribution: graalvm
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          cache: maven
+      - name: Install make on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: choco install make --no-progress -y
+      - name: Build release assets
+        shell: bash
+        run: make -C hertzbeat-otel-runtime release-assets
+      - name: Build native Collector
+        shell: bash
+        run: ./mvnw -pl hertzbeat-collector/hertzbeat-collector-collector -am -Pnative -DskipTests package
+      - name: Verify native package
+        shell: bash
+        run: |
+          archive=$(find dist -maxdepth 1 -type f -name "*-${{ matrix.platform }}-bin.*" -print -quit)
+          test -n "$archive"
+          ./script/ci/verify-hybrid-collector-native-package.sh "$archive" "${{ matrix.platform }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hybrid-collector-package-${{ matrix.platform }}
+          path: dist/*-${{ matrix.platform }}-bin.*
+          if-no-files-found: error
+
+  native-container:
+    if: github.event_name == 'workflow_dispatch'
+    needs: native-release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: hybrid-collector-package-linux-*
+          path: dist
+          merge-multiple: true
+      - name: Normalize native container inputs
+        run: |
+          mv dist/*-linux-amd64-bin.tar.gz dist/collector-native-linux-amd64.tar.gz
+          mv dist/*-linux-arm64-bin.tar.gz dist/collector-native-linux-arm64.tar.gz
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - name: Build multi-platform native image
+        uses: docker/build-push-action@v6
+        with:
+          context: dist
+          file: script/docker/collector/Dockerfile.native
+          platforms: linux/amd64,linux/arm64
+          push: false
+          outputs: type=oci,dest=/tmp/hybrid-collector.oci.tar
+          tags: apache/hertzbeat-collector:native-test
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hybrid-collector-native-oci
+          path: /tmp/hybrid-collector.oci.tar
+          if-no-files-found: error
+
+  native-checksums:
+    if: github.event_name == 'workflow_dispatch'
+    needs: native-release
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: hybrid-collector-package-*
+          path: release
+          merge-multiple: true
+      - name: Generate archive checksums
+        working-directory: release
+        run: find . -maxdepth 1 -type f -print0 | sort -z | xargs -0 sha512sum > SHA512SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hybrid-collector-native-checksums
+          path: release/SHA512SUMS
+          if-no-files-found: error
