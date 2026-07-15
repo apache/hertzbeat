@@ -41,7 +41,7 @@ esac
 runtime_binary="$repo_root/hertzbeat-otel-runtime/dist/$platform/hertzbeat-otel-runtime"
 HERTZBEAT_OTEL_RUNTIME_BINARY="$runtime_binary" \
   ./mvnw -pl hertzbeat-collector/hertzbeat-collector-collector -am \
-  -Dtest='*OtelRuntime*Test' test -DskipITs \
+  -Dtest='*OtelRuntime*Test,OtelJavaAgentIntegrationTest' test -DskipITs \
   -Dsurefire.failIfNoSpecifiedTests=false -DfailIfNoTests=false
 
 echo "Hybrid Collector Phase 0 focused verification passed"

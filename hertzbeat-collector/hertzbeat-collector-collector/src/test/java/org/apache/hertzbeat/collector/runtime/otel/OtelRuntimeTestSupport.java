@@ -116,6 +116,7 @@ final class OtelRuntimeTestSupport {
     static final class OtlpCapture implements AutoCloseable {
 
         private final List<String> payloads = new CopyOnWriteArrayList<>();
+        private final List<CapturedRequest> requests = new CopyOnWriteArrayList<>();
         private final boolean retainPayloads;
         private HttpServer server;
 
@@ -147,6 +148,14 @@ final class OtelRuntimeTestSupport {
             return payloads.stream().anyMatch(payload -> payload.contains(marker));
         }
 
+        List<byte[]> bodies(String signal) {
+            String path = "/api/otlp/v1/" + signal;
+            return requests.stream()
+                    .filter(request -> path.equals(request.path()))
+                    .map(request -> request.body().clone())
+                    .toList();
+        }
+
         private void capture(HttpExchange exchange) throws IOException {
             try (exchange) {
                 byte[] request = exchange.getRequestBody().readAllBytes();
@@ -158,6 +167,7 @@ final class OtelRuntimeTestSupport {
                 }
                 if (retainPayloads) {
                     payloads.add(new String(request, StandardCharsets.ISO_8859_1));
+                    requests.add(new CapturedRequest(exchange.getRequestURI().getPath(), request.clone()));
                 }
                 exchange.sendResponseHeaders(200, -1);
             }
@@ -168,6 +178,9 @@ final class OtelRuntimeTestSupport {
             if (server != null) {
                 server.stop(0);
             }
+        }
+
+        private record CapturedRequest(String path, byte[] body) {
         }
     }
 }
