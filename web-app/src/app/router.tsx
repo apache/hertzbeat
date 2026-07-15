@@ -73,6 +73,14 @@ export const appRoutes: RouteObject[] = [
                 }
               },
               {
+                id: 'explore',
+                path: '/explore',
+                lazy: async () => {
+                  const { ExplorePage } = await import('@/features/explore/ExplorePage');
+                  return { Component: ExplorePage };
+                }
+              },
+              {
                 id: 'monitor-new',
                 path: '/monitors/new',
                 lazy: async () => {

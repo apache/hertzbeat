@@ -1,0 +1,55 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { describe, expect, it } from 'vitest';
+
+import { buildCrossSignalPath, buildExplorePath, buildSignalApiPath, parseExploreQuery, timeRangeMilliseconds } from './explore-model';
+
+describe('explore query state', () => {
+  it('keeps only supported values and trims empty context', () => {
+    expect(parseExploreQuery(new URLSearchParams('signal=logs&timeRange=last-1h&serviceName=%20checkout%20&query=timeout&errorOnly=true'))).toEqual({
+      signal: 'logs',
+      timeRange: 'last-1h',
+      serviceName: 'checkout',
+      query: 'timeout',
+      errorOnly: true
+    });
+  });
+
+  it('builds a reproducible path without internal entity context', () => {
+    expect(buildExplorePath({ signal: 'traces', timeRange: 'last-30m', serviceName: 'checkout', environment: 'prod', query: 'POST /checkout', errorOnly: true })).toBe(
+      '/explore?signal=traces&timeRange=last-30m&serviceName=checkout&environment=prod&query=POST+%2Fcheckout&errorOnly=true'
+    );
+  });
+
+  it('maps the shared context to each existing query API', () => {
+    const base = { signal: 'logs' as const, timeRange: 'last-15m' as const, serviceName: 'checkout', environment: 'prod', query: 'timeout', traceId: 'trace-1' };
+    expect(buildSignalApiPath(base)).toMatch(/^\/api\/logs\/list\?serviceName=checkout&environment=prod&start=\d+&end=\d+&pageIndex=0&pageSize=20&search=timeout&traceId=trace-1$/);
+    expect(buildSignalApiPath({ ...base, signal: 'traces' })).toMatch(/^\/api\/traces\/list\?serviceName=checkout&environment=prod&start=\d+&end=\d+&pageIndex=0&pageSize=20&operationName=timeout&traceId=trace-1$/);
+    expect(buildSignalApiPath({ ...base, signal: 'metrics' })).toMatch(/^\/api\/ingestion\/otlp\/metrics\/console\?serviceName=checkout&environment=prod&start=\d+&end=\d+&query=timeout$/);
+  });
+
+  it('preserves trace context when moving from logs to traces', () => {
+    expect(buildCrossSignalPath({ signal: 'logs', timeRange: 'last-30m', serviceName: 'checkout' }, 'traces', { traceId: 'trace-1' })).toBe(
+      '/explore?signal=traces&timeRange=last-30m&serviceName=checkout&traceId=trace-1'
+    );
+  });
+
+  it('uses bounded time presets', () => {
+    expect(timeRangeMilliseconds('last-24h')).toBe(86_400_000);
+  });
+});

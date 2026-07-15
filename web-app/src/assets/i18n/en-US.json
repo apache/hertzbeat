@@ -13,7 +13,8 @@
     "retry": "Retry",
     "unavailable": "The service is unavailable. Check the backend connection and try again."
   },
-  "menu": { "primary": "Primary navigation", "dashboard": "Dashboard", "monitors": "Monitors", "alerts": "Alerts", "bulletin": "Bulletin", "status": "Status" },
+  "menu": { "primary": "Primary navigation", "dashboard": "Dashboard", "monitors": "Monitors", "explore": "Explore", "alerts": "Alerts", "bulletin": "Bulletin", "status": "Status" },
+  "explore": { "title": "Explore", "description": "Query metrics, logs, and traces with one shared context.", "context": "Investigation context", "timeRange": "Time range", "serviceName": "Service name", "environment": "Environment", "serviceContext": "Service: {{value}}", "environmentContext": "Environment: {{value}}", "metric": "Metric", "samples": "Samples", "labels": "Labels", "time": "Time", "severity": "Severity", "service": "Service", "message": "Message", "trace": "Trace", "operation": "Operation", "duration": "Duration", "relatedLogs": "Related logs", "open": "Open", "signals": { "metrics": "Metrics", "logs": "Logs", "traces": "Traces" }, "timeRanges": { "last-15m": "Last 15 minutes", "last-30m": "Last 30 minutes", "last-1h": "Last hour", "last-6h": "Last 6 hours", "last-24h": "Last 24 hours" }, "queryPlaceholders": { "metrics": "Metric name", "logs": "Search log content", "traces": "Operation name" }, "loadFailed": "The signal query failed.", "empty": { "metrics": "No metric series for this context.", "logs": "No logs for this context.", "traces": "No traces for this context." } },
   "auth": {
     "title": "Sign in to HertzBeat",
     "description": "Use your HertzBeat account to continue.",
