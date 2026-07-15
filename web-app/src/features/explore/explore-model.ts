@@ -27,6 +27,7 @@ export type ExploreQuery = {
   query?: string | undefined;
   traceId?: string | undefined;
   errorOnly?: boolean | undefined;
+  end?: number | undefined;
 };
 
 const DEFAULT_EXPLORE_QUERY: ExploreQuery = {
@@ -46,7 +47,8 @@ export function parseExploreQuery(params: URLSearchParams): ExploreQuery {
     environment: readValue(params.get('environment')),
     query: readValue(params.get('query')),
     traceId: readValue(params.get('traceId')),
-    errorOnly: params.get('errorOnly') === 'true' ? true : undefined
+    errorOnly: params.get('errorOnly') === 'true' ? true : undefined,
+    end: readTimestamp(params.get('end'))
   };
 }
 
@@ -57,15 +59,17 @@ export function buildExplorePath(query: ExploreQuery) {
   setValue(params, 'query', query.query);
   setValue(params, 'traceId', query.traceId);
   if (query.errorOnly) params.set('errorOnly', 'true');
+  if (query.end) params.set('end', String(query.end));
   return `/explore?${params.toString()}`;
 }
 
-export function buildSignalApiPath(query: ExploreQuery) {
+export function buildSignalApiPath(query: ExploreQuery, now = Date.now()) {
   const params = new URLSearchParams();
+  const end = query.end ?? now;
   setValue(params, 'serviceName', query.serviceName);
   setValue(params, 'environment', query.environment);
-  setValue(params, 'start', String(Date.now() - timeRangeMilliseconds(query.timeRange)));
-  setValue(params, 'end', String(Date.now()));
+  setValue(params, 'start', String(end - timeRangeMilliseconds(query.timeRange)));
+  setValue(params, 'end', String(end));
 
   if (query.signal === 'metrics') {
     setValue(params, 'query', query.query);
@@ -116,6 +120,12 @@ function readTimeRange(value: string | null): ExploreTimeRange {
 function readValue(value: string | null) {
   const normalized = value?.trim();
   return normalized ? normalized : undefined;
+}
+
+function readTimestamp(value: string | null) {
+  if (!value || !/^\d+$/.test(value)) return undefined;
+  const timestamp = Number(value);
+  return Number.isSafeInteger(timestamp) && timestamp > 0 ? timestamp : undefined;
 }
 
 function setValue(params: URLSearchParams, key: string, value: string | undefined) {

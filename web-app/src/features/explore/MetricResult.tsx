@@ -1,0 +1,95 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { Alert, Empty, Table, Tag, Typography } from 'antd';
+import type { TFunction } from 'i18next';
+
+import { metricPath, metricPoints, metricSeries, type MetricConsole, type MetricSeries } from './explore-contract';
+import styles from './MetricResult.module.css';
+
+const CHART_WIDTH = 1000;
+const CHART_HEIGHT = 220;
+const COLORS = ['#4f6bed', '#00a389', '#d97706', '#c24172', '#7c3aed', '#0891b2'];
+
+type SampleRow = { key: string; seriesKey: string; seriesName: string; timestamp: number; value: number; unit?: string | undefined };
+
+export function MetricResult({ data, t }: { data: MetricConsole; t: TFunction }) {
+  if (data.errorMessage) return <Alert type="error" showIcon message={data.errorMessage} />;
+  const series = metricSeries(data);
+  if (series.length === 0) return <Empty description={t('explore.empty.metrics')} />;
+  const samples = buildSampleRows(series);
+
+  return (
+    <div className={styles.workspace}>
+      <div className={styles.summary}>
+        <span><Typography.Text type="secondary">{t('exploreMetric.series')}</Typography.Text><strong>{data.stats?.totalSeries ?? series.length}</strong></span>
+        <span><Typography.Text type="secondary">{t('explore.samples')}</Typography.Text><strong>{samples.length}</strong></span>
+        <span><Typography.Text type="secondary">{t('exploreMetric.datasource')}</Typography.Text><strong>{data.datasource ?? '—'}</strong></span>
+        <span><Typography.Text type="secondary">{t('exploreMetric.queryMode')}</Typography.Text><strong>{data.queryMode ?? '—'}</strong></span>
+      </div>
+
+      <section className={styles.chartSection} aria-label={t('exploreMetric.trend')}>
+        <div className={styles.legend}>
+          {series.slice(0, COLORS.length).map((item, index) => (
+            <span key={item.key}><i style={{ backgroundColor: COLORS[index] }} />{seriesLabel(item)}</span>
+          ))}
+        </div>
+        <svg className={styles.chart} viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`} role="img" aria-label={t('exploreMetric.trend')} preserveAspectRatio="none">
+          <line x1="0" x2={CHART_WIDTH} y1="0" y2="0" />
+          <line x1="0" x2={CHART_WIDTH} y1={CHART_HEIGHT / 2} y2={CHART_HEIGHT / 2} />
+          <line x1="0" x2={CHART_WIDTH} y1={CHART_HEIGHT} y2={CHART_HEIGHT} />
+          {series.slice(0, COLORS.length).map((item, index) => (
+            <path key={item.key} d={metricPath(metricPoints(item), CHART_WIDTH, CHART_HEIGHT)} stroke={COLORS[index]} />
+          ))}
+        </svg>
+      </section>
+
+      <Table<SampleRow>
+        rowKey="key"
+        size="small"
+        dataSource={samples.slice(-100).reverse()}
+        pagination={false}
+        scroll={{ x: 760, y: 320 }}
+        columns={[
+          { title: t('explore.time'), dataIndex: 'timestamp', render: value => new Date(value as number).toLocaleString() },
+          { title: t('explore.metric'), dataIndex: 'seriesName' },
+          { title: t('exploreMetric.value'), dataIndex: 'value', render: (value, row) => `${String(value)}${row.unit ? ` ${row.unit}` : ''}` },
+          { title: t('explore.labels'), render: (_, row) => {
+            const item = series.find(candidate => candidate.key === row.seriesKey);
+            return item ? Object.entries(item.labels).filter(([key]) => key !== '__name__').map(([key, value]) => <Tag key={key}>{key}={value}</Tag>) : '—';
+          } }
+        ]}
+      />
+    </div>
+  );
+}
+
+function buildSampleRows(series: MetricSeries[]): SampleRow[] {
+  return series.flatMap(item => metricPoints(item).map((point, index) => ({
+    key: `${item.key}-${point.timestamp}-${index}`,
+    seriesKey: item.key,
+    seriesName: item.name,
+    timestamp: point.timestamp,
+    value: point.value,
+    unit: item.unit
+  })));
+}
+
+function seriesLabel(series: MetricSeries) {
+  const service = series.labels.service_name;
+  return service ? `${series.name} · ${service}` : series.name;
+}

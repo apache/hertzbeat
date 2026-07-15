@@ -18,13 +18,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { Alert, Button, Empty, Input, Select, Skeleton, Space, Table, Tag, Typography } from 'antd';
 import type { FormEvent } from 'react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { apiMessageGet, type PageResult } from '@/core/http/api-message';
 
+import { logBody, logServiceName, traceDurationMs, type LogRow, type MetricConsole, type TraceRow } from './explore-contract';
 import {
   buildCrossSignalPath,
   buildExplorePath,
@@ -36,30 +37,7 @@ import {
   type ExploreTimeRange
 } from './explore-model';
 import styles from './ExplorePage.module.css';
-
-type TraceRow = {
-  traceId?: string;
-  serviceName?: string;
-  operationName?: string;
-  durationMs?: number;
-  status?: string;
-  error?: boolean;
-};
-
-type LogRow = {
-  time?: number | string;
-  timestamp?: number | string;
-  severityText?: string;
-  serviceName?: string;
-  body?: string;
-  traceId?: string;
-};
-
-type MetricConsole = {
-  series?: MetricSeries[];
-};
-
-type MetricSeries = { name?: string; metric?: string; labels?: Record<string, string>; points?: unknown[] };
+import { MetricResult } from './MetricResult';
 
 type SignalData = PageResult<TraceRow | LogRow> | MetricConsole;
 
@@ -69,10 +47,14 @@ export function ExplorePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const query = useMemo(() => parseExploreQuery(searchParams), [searchParams]);
+  const [initialEnd] = useState(() => Date.now());
+  const query = useMemo(() => {
+    const parsed = parseExploreQuery(searchParams);
+    return parsed.end ? parsed : { ...parsed, end: initialEnd };
+  }, [initialEnd, searchParams]);
   const result = useQuery({
     queryKey: ['explore', query],
-    queryFn: () => apiMessageGet<SignalData>(buildSignalApiPath(query)),
+    queryFn: ({ signal }) => apiMessageGet<SignalData>(buildSignalApiPath(query), { signal }),
     staleTime: 5_000
   });
 
@@ -142,24 +124,14 @@ function renderResult(data: SignalData, query: ExploreQuery, t: TFunction, navig
   return <TraceResult data={data as PageResult<TraceRow>} query={query} t={t} navigate={navigate} />;
 }
 
-function MetricResult({ data, t }: { data: MetricConsole; t: TFunction }) {
-  const rows = data.series ?? [];
-  if (rows.length === 0) return <Empty description={t('explore.empty.metrics')} />;
-  return <Table rowKey={(row, index) => `${row.name ?? row.metric ?? 'series'}-${index}`} dataSource={rows} pagination={false} columns={[
-    { title: t('explore.metric'), render: (_: unknown, row: MetricSeries) => row.name ?? row.metric ?? '—' },
-    { title: t('explore.samples'), render: (_: unknown, row: MetricSeries) => row.points?.length ?? 0 },
-    { title: t('explore.labels'), render: (_: unknown, row: MetricSeries) => Object.entries(row.labels ?? {}).map(([key, value]) => `${key}=${value}`).join(', ') || '—' }
-  ]} />;
-}
-
 function LogResult({ data, query, t, navigate }: { data: PageResult<LogRow>; query: ExploreQuery; t: TFunction; navigate: ReturnType<typeof useNavigate> }) {
   const rows = data.content ?? [];
   if (rows.length === 0) return <Empty description={t('explore.empty.logs')} />;
   return <Table rowKey={(_, index) => String(index)} dataSource={rows} pagination={false} columns={[
-    { title: t('explore.time'), render: (_: unknown, row: LogRow) => row.time ?? row.timestamp ?? '—' },
+    { title: t('explore.time'), render: (_: unknown, row: LogRow) => row.timeUnixNano ?? row.observedTimeUnixNano ?? '—' },
     { title: t('explore.severity'), dataIndex: 'severityText' },
-    { title: t('explore.service'), dataIndex: 'serviceName' },
-    { title: t('explore.message'), dataIndex: 'body' },
+    { title: t('explore.service'), render: (_: unknown, row: LogRow) => logServiceName(row) ?? '—' },
+    { title: t('explore.message'), render: (_: unknown, row: LogRow) => logBody(row) ?? '—' },
     { title: t('explore.trace'), render: (_: unknown, row: LogRow) => row.traceId ? <Button className={styles.tableLink ?? ''} type="link" onClick={() => { void navigate(buildCrossSignalPath(query, 'traces', { traceId: row.traceId })); }}>{row.traceId}</Button> : '—' }
   ]} />;
 }
@@ -167,11 +139,11 @@ function LogResult({ data, query, t, navigate }: { data: PageResult<LogRow>; que
 function TraceResult({ data, query, t, navigate }: { data: PageResult<TraceRow>; query: ExploreQuery; t: TFunction; navigate: ReturnType<typeof useNavigate> }) {
   const rows = data.content ?? [];
   if (rows.length === 0) return <Empty description={t('explore.empty.traces')} />;
-  return <Table rowKey={row => row.traceId ?? row.operationName ?? Math.random()} dataSource={rows} pagination={false} columns={[
+  return <Table rowKey={row => row.traceId ?? row.rootSpanId ?? ''} dataSource={rows} pagination={false} columns={[
     { title: t('explore.trace'), render: (_: unknown, row: TraceRow) => row.traceId ?? '—' },
     { title: t('explore.service'), dataIndex: 'serviceName' },
-    { title: t('explore.operation'), dataIndex: 'operationName' },
-    { title: t('explore.duration'), render: (_: unknown, row: TraceRow) => row.durationMs == null ? '—' : `${row.durationMs} ms` },
+    { title: t('explore.operation'), dataIndex: 'rootSpanName' },
+    { title: t('explore.duration'), render: (_: unknown, row: TraceRow) => traceDurationMs(row) == null ? '—' : `${traceDurationMs(row)} ms` },
     { title: t('explore.relatedLogs'), render: (_: unknown, row: TraceRow) => row.traceId ? <Button className={styles.tableLink ?? ''} type="link" onClick={() => { void navigate(buildCrossSignalPath(query, 'logs', { traceId: row.traceId })); }}>{t('explore.open')}</Button> : '—' }
   ]} />;
 }

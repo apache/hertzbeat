@@ -31,16 +31,16 @@ describe('explore query state', () => {
   });
 
   it('builds a reproducible path without internal entity context', () => {
-    expect(buildExplorePath({ signal: 'traces', timeRange: 'last-30m', serviceName: 'checkout', environment: 'prod', query: 'POST /checkout', errorOnly: true })).toBe(
-      '/explore?signal=traces&timeRange=last-30m&serviceName=checkout&environment=prod&query=POST+%2Fcheckout&errorOnly=true'
+    expect(buildExplorePath({ signal: 'traces', timeRange: 'last-30m', serviceName: 'checkout', environment: 'prod', query: 'POST /checkout', errorOnly: true, end: 2000 })).toBe(
+      '/explore?signal=traces&timeRange=last-30m&serviceName=checkout&environment=prod&query=POST+%2Fcheckout&errorOnly=true&end=2000'
     );
   });
 
   it('maps the shared context to each existing query API', () => {
     const base = { signal: 'logs' as const, timeRange: 'last-15m' as const, serviceName: 'checkout', environment: 'prod', query: 'timeout', traceId: 'trace-1' };
-    expect(buildSignalApiPath(base)).toMatch(/^\/api\/logs\/list\?serviceName=checkout&environment=prod&start=\d+&end=\d+&pageIndex=0&pageSize=20&search=timeout&traceId=trace-1$/);
-    expect(buildSignalApiPath({ ...base, signal: 'traces' })).toMatch(/^\/api\/traces\/list\?serviceName=checkout&environment=prod&start=\d+&end=\d+&pageIndex=0&pageSize=20&operationName=timeout&traceId=trace-1$/);
-    expect(buildSignalApiPath({ ...base, signal: 'metrics' })).toMatch(/^\/api\/ingestion\/otlp\/metrics\/console\?serviceName=checkout&environment=prod&start=\d+&end=\d+&query=timeout$/);
+    expect(buildSignalApiPath(base, 1_000_000)).toBe('/api/logs/list?serviceName=checkout&environment=prod&start=100000&end=1000000&pageIndex=0&pageSize=20&search=timeout&traceId=trace-1');
+    expect(buildSignalApiPath({ ...base, signal: 'traces' }, 1_000_000)).toBe('/api/traces/list?serviceName=checkout&environment=prod&start=100000&end=1000000&pageIndex=0&pageSize=20&operationName=timeout&traceId=trace-1');
+    expect(buildSignalApiPath({ ...base, signal: 'metrics' }, 1_000_000)).toBe('/api/ingestion/otlp/metrics/console?serviceName=checkout&environment=prod&start=100000&end=1000000&query=timeout');
   });
 
   it('preserves trace context when moving from logs to traces', () => {

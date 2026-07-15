@@ -27,8 +27,8 @@ export type PageResult<T> = {
 
 type ApiMessage<T> = { code: number; msg?: string; data: T };
 
-export async function apiMessageGet<T>(path: string) {
-  return apiMessageRequest<T>(path);
+export async function apiMessageGet<T>(path: string, options?: Pick<RequestInit, 'signal'>) {
+  return apiMessageRequest<T>(path, options);
 }
 
 export function apiMessagePost<T>(path: string, data: unknown, options?: Pick<RequestInit, 'signal'>) {

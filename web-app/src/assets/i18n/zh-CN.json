@@ -14,6 +14,7 @@
     "unavailable": "服务暂不可用，请检查后端连接后重试。"
   },
   "menu": { "primary": "主导航", "dashboard": "仪表盘", "monitors": "监控中心", "explore": "信号查询", "alerts": "告警中心", "bulletin": "监控看板", "status": "状态页" },
+  "exploreMetric": { "series": "序列", "value": "数值", "datasource": "数据源", "queryMode": "查询模式", "trend": "指标趋势" },
   "explore": { "title": "信号查询", "description": "使用统一上下文查询指标、日志和链路。", "context": "排障上下文", "timeRange": "时间范围", "serviceName": "服务名称", "environment": "环境", "serviceContext": "服务：{{value}}", "environmentContext": "环境：{{value}}", "metric": "指标", "samples": "样本数", "labels": "标签", "time": "时间", "severity": "级别", "service": "服务", "message": "日志内容", "trace": "链路", "operation": "操作", "duration": "耗时", "relatedLogs": "相关日志", "open": "打开", "signals": { "metrics": "指标", "logs": "日志", "traces": "链路" }, "timeRanges": { "last-15m": "最近 15 分钟", "last-30m": "最近 30 分钟", "last-1h": "最近 1 小时", "last-6h": "最近 6 小时", "last-24h": "最近 24 小时" }, "queryPlaceholders": { "metrics": "指标名称", "logs": "搜索日志内容", "traces": "操作名称" }, "loadFailed": "信号查询失败。", "empty": { "metrics": "当前上下文没有指标序列。", "logs": "当前上下文没有日志。", "traces": "当前上下文没有链路。" } },
   "auth": {
     "title": "登录 HertzBeat",
