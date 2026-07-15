@@ -32,6 +32,10 @@
   margin-bottom: 16px;
 }
 
+.mode {
+  margin: 12px 0;
+}
+
 .results {
   min-height: 360px;
 }

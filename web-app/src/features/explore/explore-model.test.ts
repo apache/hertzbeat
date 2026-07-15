@@ -17,7 +17,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { buildCrossSignalPath, buildExplorePath, buildSignalApiPath, parseExploreQuery, timeRangeMilliseconds } from './explore-model';
+import { buildCrossSignalPath, buildExplorePath, buildLogStreamPath, buildSignalApiPath, parseExploreQuery, timeRangeMilliseconds } from './explore-model';
 
 describe('explore query state', () => {
   it('keeps only supported values and trims empty context', () => {
@@ -51,5 +51,11 @@ describe('explore query state', () => {
 
   it('uses bounded time presets', () => {
     expect(timeRangeMilliseconds('last-24h')).toBe(86_400_000);
+  });
+
+  it('maps advanced log filters to history and stream contracts', () => {
+    const query = { signal: 'logs' as const, timeRange: 'last-30m' as const, serviceName: 'checkout', query: 'timeout', severityText: 'ERROR', traceId: 'trace-1', spanId: 'span-1', resourceFilter: 'service.version=1.2.3', attributeFilter: 'http.route:/checkout' };
+    expect(buildSignalApiPath(query, 2_000_000)).toContain('severityText=ERROR&resourceFilter=service.version%3D1.2.3&attributeFilter=http.route%3A%2Fcheckout');
+    expect(buildLogStreamPath(query)).toBe('/api/logs/sse/subscribe?serviceName=checkout&logContent=timeout&traceId=trace-1&spanId=span-1&severityText=ERROR&resourceFilter=service.version%3D1.2.3&attributeFilter=http.route%3A%2Fcheckout');
   });
 });

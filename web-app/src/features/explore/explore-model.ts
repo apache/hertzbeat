@@ -28,6 +28,12 @@ export type ExploreQuery = {
   traceId?: string | undefined;
   errorOnly?: boolean | undefined;
   end?: number | undefined;
+  live?: boolean | undefined;
+  severityText?: string | undefined;
+  spanId?: string | undefined;
+  resourceFilter?: string | undefined;
+  attributeFilter?: string | undefined;
+  pageIndex?: number | undefined;
 };
 
 const DEFAULT_EXPLORE_QUERY: ExploreQuery = {
@@ -48,7 +54,13 @@ export function parseExploreQuery(params: URLSearchParams): ExploreQuery {
     query: readValue(params.get('query')),
     traceId: readValue(params.get('traceId')),
     errorOnly: params.get('errorOnly') === 'true' ? true : undefined,
-    end: readTimestamp(params.get('end'))
+    end: readTimestamp(params.get('end')),
+    live: params.get('live') === 'true' ? true : undefined,
+    severityText: readValue(params.get('severityText')),
+    spanId: readValue(params.get('spanId')),
+    resourceFilter: readValue(params.get('resourceFilter')),
+    attributeFilter: readValue(params.get('attributeFilter')),
+    pageIndex: readPageIndex(params.get('page'))
   };
 }
 
@@ -60,6 +72,12 @@ export function buildExplorePath(query: ExploreQuery) {
   setValue(params, 'traceId', query.traceId);
   if (query.errorOnly) params.set('errorOnly', 'true');
   if (query.end) params.set('end', String(query.end));
+  if (query.live) params.set('live', 'true');
+  setValue(params, 'severityText', query.severityText);
+  setValue(params, 'spanId', query.spanId);
+  setValue(params, 'resourceFilter', query.resourceFilter);
+  setValue(params, 'attributeFilter', query.attributeFilter);
+  if (query.pageIndex) params.set('page', String(query.pageIndex));
   return `/explore?${params.toString()}`;
 }
 
@@ -76,11 +94,15 @@ export function buildSignalApiPath(query: ExploreQuery, now = Date.now()) {
     return `/api/ingestion/otlp/metrics/console?${params.toString()}`;
   }
 
-  params.set('pageIndex', '0');
+  params.set('pageIndex', String(query.pageIndex ?? 0));
   params.set('pageSize', '20');
   if (query.signal === 'logs') {
     setValue(params, 'search', query.query);
     setValue(params, 'traceId', query.traceId);
+    setValue(params, 'spanId', query.spanId);
+    setValue(params, 'severityText', query.severityText);
+    setValue(params, 'resourceFilter', query.resourceFilter);
+    setValue(params, 'attributeFilter', query.attributeFilter);
     return `/api/logs/list?${params.toString()}`;
   }
 
@@ -90,11 +112,26 @@ export function buildSignalApiPath(query: ExploreQuery, now = Date.now()) {
   return `/api/traces/list?${params.toString()}`;
 }
 
+export function buildLogStreamPath(query: ExploreQuery) {
+  const params = new URLSearchParams();
+  setValue(params, 'serviceName', query.serviceName);
+  setValue(params, 'environment', query.environment);
+  setValue(params, 'logContent', query.query);
+  setValue(params, 'traceId', query.traceId);
+  setValue(params, 'spanId', query.spanId);
+  setValue(params, 'severityText', query.severityText);
+  setValue(params, 'resourceFilter', query.resourceFilter);
+  setValue(params, 'attributeFilter', query.attributeFilter);
+  const suffix = params.toString();
+  return suffix ? `/api/logs/sse/subscribe?${suffix}` : '/api/logs/sse/subscribe';
+}
+
 export function buildCrossSignalPath(query: ExploreQuery, signal: ExploreSignal, context: { traceId?: string | undefined }) {
   return buildExplorePath({
     ...query,
     signal,
-    traceId: context.traceId ?? query.traceId
+    traceId: context.traceId ?? query.traceId,
+    pageIndex: undefined
   });
 }
 
@@ -126,6 +163,12 @@ function readTimestamp(value: string | null) {
   if (!value || !/^\d+$/.test(value)) return undefined;
   const timestamp = Number(value);
   return Number.isSafeInteger(timestamp) && timestamp > 0 ? timestamp : undefined;
+}
+
+function readPageIndex(value: string | null) {
+  if (!value || !/^\d+$/.test(value)) return undefined;
+  const pageIndex = Number(value);
+  return Number.isSafeInteger(pageIndex) && pageIndex > 0 ? pageIndex : undefined;
 }
 
 function setValue(params: URLSearchParams, key: string, value: string | undefined) {

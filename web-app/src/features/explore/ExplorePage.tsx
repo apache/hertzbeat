@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { Alert, Button, Empty, Input, Select, Skeleton, Space, Table, Tag, Typography } from 'antd';
 import type { FormEvent } from 'react';
 import { useMemo, useState } from 'react';
@@ -25,7 +25,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { apiMessageGet, type PageResult } from '@/core/http/api-message';
 
-import { logBody, logServiceName, traceDurationMs, type LogRow, type MetricConsole, type TraceRow } from './explore-contract';
+import { traceDurationMs, type LogRow, type MetricConsole, type TraceRow } from './explore-contract';
 import {
   buildCrossSignalPath,
   buildExplorePath,
@@ -37,6 +37,7 @@ import {
   type ExploreTimeRange
 } from './explore-model';
 import styles from './ExplorePage.module.css';
+import { LogResult } from './LogResult';
 import { MetricResult } from './MetricResult';
 
 type SignalData = PageResult<TraceRow | LogRow> | MetricConsole;
@@ -55,7 +56,8 @@ export function ExplorePage() {
   const result = useQuery({
     queryKey: ['explore', query],
     queryFn: ({ signal }) => apiMessageGet<SignalData>(buildSignalApiPath(query), { signal }),
-    staleTime: 5_000
+    staleTime: 5_000,
+    enabled: !isLiveLogQuery(query)
   });
 
   const updateQuery = (changes: Partial<ExploreQuery>) => {
@@ -68,7 +70,13 @@ export function ExplorePage() {
     updateQuery({
       serviceName: readFormValue(event.currentTarget, 'serviceName'),
       environment: readFormValue(event.currentTarget, 'environment'),
-      query: readFormValue(event.currentTarget, 'query')
+      query: readFormValue(event.currentTarget, 'query'),
+      traceId: readFormValue(event.currentTarget, 'traceId'),
+      spanId: readFormValue(event.currentTarget, 'spanId'),
+      resourceFilter: readFormValue(event.currentTarget, 'resourceFilter'),
+      attributeFilter: readFormValue(event.currentTarget, 'attributeFilter'),
+      end: Date.now(),
+      pageIndex: undefined
     });
   };
 
@@ -79,61 +87,73 @@ export function ExplorePage() {
         <Typography.Text type="secondary">{t('explore.description')}</Typography.Text>
       </header>
 
-      <div className={styles.context} aria-label={t('explore.context')}>
-        <Space wrap>
-          <Tag color="blue">{t(`explore.signals.${query.signal}`)}</Tag>
-          {query.serviceName && <Tag>{t('explore.serviceContext', { value: query.serviceName })}</Tag>}
-          {query.environment && <Tag>{t('explore.environmentContext', { value: query.environment })}</Tag>}
-          <Tag>{t(`explore.timeRanges.${query.timeRange}`)}</Tag>
-        </Space>
-      </div>
-
-      <Space.Compact block>
-        {signalKeys.map(signal => (
-          <Button key={signal} type={query.signal === signal ? 'primary' : 'default'} onClick={() => updateQuery({ signal })}>
-            {t(`explore.signals.${signal}`)}
-          </Button>
-        ))}
-      </Space.Compact>
-
-      <form className={styles.toolbar} onSubmit={onSubmit}>
-        <Select
-          aria-label={t('explore.timeRange')}
-          value={query.timeRange}
-          options={EXPLORE_TIME_RANGES.map(value => ({ value, label: t(`explore.timeRanges.${value}`) }))}
-          onChange={(value: ExploreTimeRange) => updateQuery({ timeRange: value })}
-        />
-        <Input name="serviceName" defaultValue={query.serviceName} placeholder={t('explore.serviceName')} />
-        <Input name="environment" defaultValue={query.environment} placeholder={t('explore.environment')} />
-        <Input name="query" defaultValue={query.query} placeholder={t(`explore.queryPlaceholders.${query.signal}`)} />
-        <Button type="primary" htmlType="submit">{t('common.query')}</Button>
-      </form>
-
-      <section className={styles.results} aria-live="polite">
-        {result.isPending && <Skeleton active paragraph={{ rows: 8 }} />}
-        {result.isError && <Alert type="error" showIcon message={t('explore.loadFailed')} action={<Button onClick={() => void result.refetch()}>{t('common.retry')}</Button>} />}
-        {result.isSuccess && renderResult(result.data, query, t, navigate)}
-      </section>
+      <ExploreContext query={query} t={t} />
+      <SignalTabs query={query} t={t} updateQuery={updateQuery} />
+      <LogMode query={query} t={t} updateQuery={updateQuery} />
+      <QueryToolbar query={query} t={t} updateQuery={updateQuery} onSubmit={onSubmit} />
+      <ResultPanel result={result} query={query} t={t} navigate={navigate} />
     </div>
   );
+}
+
+function ExploreContext({ query, t }: { query: ExploreQuery; t: TFunction }) {
+  return <div className={styles.context} aria-label={t('explore.context')}><Space wrap>
+    <Tag color="blue">{t(`explore.signals.${query.signal}`)}</Tag>
+    {query.serviceName && <Tag>{t('explore.serviceContext', { value: query.serviceName })}</Tag>}
+    {query.environment && <Tag>{t('explore.environmentContext', { value: query.environment })}</Tag>}
+    <Tag>{t(`explore.timeRanges.${query.timeRange}`)}</Tag>
+  </Space></div>;
+}
+
+function SignalTabs({ query, t, updateQuery }: { query: ExploreQuery; t: TFunction; updateQuery: (changes: Partial<ExploreQuery>) => void }) {
+  return <Space.Compact block>{signalKeys.map(signal => <Button key={signal} type={query.signal === signal ? 'primary' : 'default'} onClick={() => updateQuery({ signal })}>{t(`explore.signals.${signal}`)}</Button>)}</Space.Compact>;
+}
+
+function LogMode({ query, t, updateQuery }: { query: ExploreQuery; t: TFunction; updateQuery: (changes: Partial<ExploreQuery>) => void }) {
+  if (query.signal !== 'logs') return null;
+  return <Space.Compact className={styles.mode}>
+    <Button type={query.live ? 'default' : 'primary'} onClick={() => updateQuery({ live: undefined })}>{t('exploreLog.query')}</Button>
+    <Button type={query.live ? 'primary' : 'default'} onClick={() => updateQuery({ live: true })}>{t('exploreLog.live')}</Button>
+  </Space.Compact>;
+}
+
+function QueryToolbar({ query, t, updateQuery, onSubmit }: { query: ExploreQuery; t: TFunction; updateQuery: (changes: Partial<ExploreQuery>) => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) {
+  return <form className={styles.toolbar} onSubmit={onSubmit}>
+    <Select aria-label={t('explore.timeRange')} value={query.timeRange} options={EXPLORE_TIME_RANGES.map(value => ({ value, label: t(`explore.timeRanges.${value}`) }))} onChange={(value: ExploreTimeRange) => updateQuery({ timeRange: value, end: Date.now() })} />
+    <Input name="serviceName" defaultValue={query.serviceName} placeholder={t('explore.serviceName')} />
+    <Input name="environment" defaultValue={query.environment} placeholder={t('explore.environment')} />
+    <Input name="query" defaultValue={query.query} placeholder={t(`explore.queryPlaceholders.${query.signal}`)} />
+    <LogFields query={query} t={t} updateQuery={updateQuery} />
+    <Button type="primary" htmlType="submit">{t('common.query')}</Button>
+  </form>;
+}
+
+function LogFields({ query, t, updateQuery }: { query: ExploreQuery; t: TFunction; updateQuery: (changes: Partial<ExploreQuery>) => void }) {
+  if (query.signal !== 'logs') return null;
+  return <>
+    <Select aria-label={t('explore.severity')} allowClear value={query.severityText} placeholder={t('explore.severity')} options={['TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'].map(value => ({ value, label: value }))} onChange={severityText => updateQuery({ severityText })} />
+    <Input name="traceId" defaultValue={query.traceId} placeholder="Trace ID" />
+    <Input name="spanId" defaultValue={query.spanId} placeholder="Span ID" />
+    <Input name="resourceFilter" defaultValue={query.resourceFilter} placeholder={t('exploreLog.resourceFilter')} />
+    <Input name="attributeFilter" defaultValue={query.attributeFilter} placeholder={t('exploreLog.attributeFilter')} />
+  </>;
+}
+
+function ResultPanel({ result, query, t, navigate }: { result: UseQueryResult<SignalData>; query: ExploreQuery; t: TFunction; navigate: ReturnType<typeof useNavigate> }) {
+  if (isLiveLogQuery(query)) return <section className={styles.results} aria-live="polite"><LogResult query={query} t={t} navigate={navigate} /></section>;
+  if (result.isPending) return <section className={styles.results} aria-live="polite"><Skeleton active paragraph={{ rows: 8 }} /></section>;
+  if (result.isError) return <section className={styles.results} aria-live="polite"><Alert type="error" showIcon title={t('explore.loadFailed')} action={<Button onClick={() => void result.refetch()}>{t('common.retry')}</Button>} /></section>;
+  return <section className={styles.results} aria-live="polite">{renderResult(result.data, query, t, navigate)}</section>;
+}
+
+function isLiveLogQuery(query: ExploreQuery) {
+  return query.signal === 'logs' && Boolean(query.live);
 }
 
 function renderResult(data: SignalData, query: ExploreQuery, t: TFunction, navigate: ReturnType<typeof useNavigate>) {
   if (query.signal === 'metrics') return <MetricResult data={data as MetricConsole} t={t} />;
   if (query.signal === 'logs') return <LogResult data={data as PageResult<LogRow>} query={query} t={t} navigate={navigate} />;
   return <TraceResult data={data as PageResult<TraceRow>} query={query} t={t} navigate={navigate} />;
-}
-
-function LogResult({ data, query, t, navigate }: { data: PageResult<LogRow>; query: ExploreQuery; t: TFunction; navigate: ReturnType<typeof useNavigate> }) {
-  const rows = data.content ?? [];
-  if (rows.length === 0) return <Empty description={t('explore.empty.logs')} />;
-  return <Table rowKey={(_, index) => String(index)} dataSource={rows} pagination={false} columns={[
-    { title: t('explore.time'), render: (_: unknown, row: LogRow) => row.timeUnixNano ?? row.observedTimeUnixNano ?? '—' },
-    { title: t('explore.severity'), dataIndex: 'severityText' },
-    { title: t('explore.service'), render: (_: unknown, row: LogRow) => logServiceName(row) ?? '—' },
-    { title: t('explore.message'), render: (_: unknown, row: LogRow) => logBody(row) ?? '—' },
-    { title: t('explore.trace'), render: (_: unknown, row: LogRow) => row.traceId ? <Button className={styles.tableLink ?? ''} type="link" onClick={() => { void navigate(buildCrossSignalPath(query, 'traces', { traceId: row.traceId })); }}>{row.traceId}</Button> : '—' }
-  ]} />;
 }
 
 function TraceResult({ data, query, t, navigate }: { data: PageResult<TraceRow>; query: ExploreQuery; t: TFunction; navigate: ReturnType<typeof useNavigate> }) {

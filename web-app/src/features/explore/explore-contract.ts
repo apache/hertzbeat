@@ -135,3 +135,8 @@ export function logBody(row: LogRow) {
     return undefined;
   }
 }
+
+export function logTimestampMs(row: LogRow) {
+  const timestamp = row.timeUnixNano ?? row.observedTimeUnixNano;
+  return timestamp == null ? undefined : Math.floor(timestamp / 1_000_000);
+}

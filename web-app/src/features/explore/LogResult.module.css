@@ -1,0 +1,70 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.workspace {
+  border-top: 1px solid var(--ant-color-border-secondary);
+}
+
+.streamStatus {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  height: 40px;
+  color: var(--ant-color-text-secondary);
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.streamStatus i {
+  width: 8px;
+  height: 8px;
+  background: var(--ant-color-warning);
+  border-radius: 50%;
+}
+
+.streamStatus i[data-connected='true'] {
+  background: var(--ant-color-success);
+}
+
+.streamStatus span {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.traceLink {
+  height: auto;
+  padding: 0;
+  font-family: var(--ant-font-family-code);
+}
+
+.body {
+  padding: 12px;
+  font-family: var(--ant-font-family-code);
+  white-space: pre-wrap;
+  background: var(--ant-color-fill-quaternary);
+}
+
+.attributes {
+  margin-top: 24px;
+}
+
+.attributes pre {
+  max-height: 280px;
+  padding: 12px;
+  overflow: auto;
+  font-size: 12px;
+  background: var(--ant-color-fill-quaternary);
+}

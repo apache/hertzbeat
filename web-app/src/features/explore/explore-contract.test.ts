@@ -17,7 +17,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { logBody, logServiceName, metricPath, metricPoints, metricSeries, traceDurationMs } from './explore-contract';
+import { logBody, logServiceName, logTimestampMs, metricPath, metricPoints, metricSeries, traceDurationMs } from './explore-contract';
 
 describe('explore API contracts', () => {
   it('normalizes datasource frames returned by the metrics console', () => {
@@ -54,5 +54,6 @@ describe('explore API contracts', () => {
     const row = { resource: { 'service.name': 'checkout' }, body: { event: 'paid' } };
     expect(logServiceName(row)).toBe('checkout');
     expect(logBody(row)).toBe('{"event":"paid"}');
+    expect(logTimestampMs({ timeUnixNano: 1_750_000_000_000_000_000 })).toBe(1_750_000_000_000);
   });
 });
