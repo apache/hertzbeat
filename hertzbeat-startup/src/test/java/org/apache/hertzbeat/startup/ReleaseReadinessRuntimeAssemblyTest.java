@@ -166,6 +166,24 @@ class ReleaseReadinessRuntimeAssemblyTest {
     }
 
     @Test
+    void collectorIntakeTokenBoundaryCoversSupportedRelationalDatabases() throws IOException {
+        for (String database : List.of("mysql", "postgresql", "h2")) {
+            String migration = readRepoFile(
+                    "hertzbeat-startup/src/main/resources/db/migration/"
+                            + database
+                            + "/V201__add_collector_intake_token_boundary.sql"
+            ).toLowerCase();
+
+            assertThat(migration)
+                    .as(database + " migration should persist the managed Collector token boundary")
+                    .contains("token_audience")
+                    .contains("collector_id")
+                    .contains("allowed_signals")
+                    .contains("idx_hzb_auth_token_collector");
+        }
+    }
+
+    @Test
     void entityGovernanceStateWorkspaceBoundaryLivesInV200Baseline() throws IOException {
         for (String database : List.of("mysql", "postgresql", "h2")) {
             String migration = readRepoFile(

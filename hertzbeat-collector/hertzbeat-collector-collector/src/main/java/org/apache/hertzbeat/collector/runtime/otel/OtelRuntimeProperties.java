@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeConfig;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
@@ -50,6 +51,14 @@ public class OtelRuntimeProperties {
 
     private String workspaceId = "default";
 
+    private int configSchema = ManagedOtelRuntimeConfig.CURRENT_SCHEMA_VERSION;
+
+    private long configRevision = 1;
+
+    private boolean hostMetricsEnabled = true;
+
+    private Duration hostMetricsInterval = Duration.ofSeconds(10);
+
     private int healthPort = 13133;
 
     private Duration healthTimeout = Duration.ofSeconds(2);
@@ -65,4 +74,13 @@ public class OtelRuntimeProperties {
     private Duration restartWindow = Duration.ofMinutes(10);
 
     private int maxRestarts = 5;
+
+    public ManagedOtelRuntimeConfig desiredConfig() {
+        return new ManagedOtelRuntimeConfig(
+                configSchema,
+                configRevision,
+                hostMetricsEnabled,
+                hostMetricsInterval
+        );
+    }
 }

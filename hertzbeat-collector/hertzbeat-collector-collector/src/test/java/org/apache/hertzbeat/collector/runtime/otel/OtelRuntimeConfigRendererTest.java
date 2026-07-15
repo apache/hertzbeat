@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -37,13 +38,19 @@ class OtelRuntimeConfigRendererTest {
         properties.setConfig(tempDir.resolve("conf/runtime.yaml"));
         properties.setToken("secret-must-stay-in-environment");
         properties.setHealthPort(13247);
+        properties.setConfigSchema(1);
+        properties.setConfigRevision(42);
+        properties.setHostMetricsInterval(Duration.ofSeconds(30));
 
         Path config = new OtelRuntimeConfigRenderer().render(properties);
         String yaml = Files.readString(config);
 
         assertTrue(yaml.contains("hostmetrics:"));
+        assertTrue(yaml.contains("collection_interval: 30s"));
         assertTrue(yaml.contains("processors: [memory_limiter, resource, batch]"));
         assertTrue(yaml.contains("endpoint: 127.0.0.1:13247"));
+        assertTrue(yaml.contains("hertzbeat.config.schema"));
+        assertTrue(yaml.contains("value: \"42\""));
         assertTrue(yaml.contains("${env:HERTZBEAT_OTLP_TOKEN}"));
         assertFalse(yaml.contains(properties.getToken()));
     }

@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.common.observability.gateway;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
@@ -28,12 +29,17 @@ public final class AuthTokenScopes {
 
     public static final String CLAIM_TOKEN_SCOPE = "token_scope";
     public static final String CLAIM_WORKSPACE_ID = "workspace_id";
+    public static final String CLAIM_TOKEN_AUDIENCE = "token_audience";
+    public static final String CLAIM_COLLECTOR_ID = "collector_id";
+    public static final String CLAIM_ALLOWED_SIGNALS = "allowed_signals";
     public static final String WORKSPACE_ID_HEADER = "X-HertzBeat-Workspace-Id";
     public static final String DEFAULT_WORKSPACE_ID = "default";
     public static final String UI_SESSION = "ui-session";
     public static final String API_ADMIN = "api-admin";
     public static final String READONLY_QUERY = "readonly-query";
     public static final String OTLP_INGEST = "otlp-ingest";
+    public static final String MANAGED_COLLECTOR_AUDIENCE = "managed-collector";
+    public static final List<String> OTLP_SIGNALS = List.of("metrics", "logs", "traces");
 
     private static final Set<String> API_TOKEN_SCOPES = Set.of(API_ADMIN, READONLY_QUERY, OTLP_INGEST);
     private static final Set<String> REQUIRED_SCOPES = Set.of(API_ADMIN, READONLY_QUERY, OTLP_INGEST, UI_SESSION);

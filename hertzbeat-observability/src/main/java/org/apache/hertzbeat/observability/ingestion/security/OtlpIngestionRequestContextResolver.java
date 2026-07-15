@@ -33,10 +33,11 @@ public class OtlpIngestionRequestContextResolver {
 
     public OtlpCorrelationContext currentCorrelationContext() {
         String workspaceId = AuthTokenRequestContext.currentWorkspaceId();
-        if (StringUtils.isBlank(workspaceId)) {
+        String collectorId = AuthTokenRequestContext.currentCollectorId();
+        if (StringUtils.isBlank(workspaceId) && StringUtils.isBlank(collectorId)) {
             return OtlpCorrelationContext.empty();
         }
-        return new OtlpCorrelationContext(null, null, workspaceId);
+        return new OtlpCorrelationContext(null, null, null, workspaceId, collectorId);
     }
 
     public Map<String, String> withWorkspaceResourceAttributes(Map<String, String> resourceAttributes) {
@@ -47,6 +48,10 @@ public class OtlpIngestionRequestContextResolver {
         String workspaceId = AuthTokenRequestContext.currentWorkspaceId();
         if (StringUtils.isNotBlank(workspaceId)) {
             resolved.put(OtlpResourceSemanticAttributes.HERTZBEAT_WORKSPACE_ID, workspaceId);
+        }
+        String collectorId = AuthTokenRequestContext.currentCollectorId();
+        if (StringUtils.isNotBlank(collectorId)) {
+            resolved.put(OtlpResourceSemanticAttributes.HERTZBEAT_COLLECTOR_ID, collectorId);
         }
         return resolved;
     }

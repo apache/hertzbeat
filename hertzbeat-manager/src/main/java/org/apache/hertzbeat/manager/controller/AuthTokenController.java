@@ -81,6 +81,31 @@ public class AuthTokenController {
         }
     }
 
+    @PostMapping("/collector-intake/generate")
+    @Operation(summary = "Generate a Collector intake token",
+            description = "Generate a managed OTLP token bound to one Collector identity")
+    public ResponseEntity<Message<Map<String, String>>> generateCollectorIntakeToken(
+            @RequestParam("collectorId") @Parameter(description = "Collector identity") String collectorId,
+            @RequestParam(value = "workspaceId", required = false)
+            @Parameter(description = "Token workspace boundary") String workspaceId,
+            @RequestParam(value = "expireSeconds", required = false)
+            @Parameter(description = "Expiration time in seconds") Long expireSeconds) {
+        SubjectSum subjectSum = SurenessContextHolder.getBindSubject();
+        if (subjectSum == null) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "No login user"));
+        }
+        if (!subjectSum.hasRole("admin")) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "No permission"));
+        }
+        try {
+            String token = accountService.generateCollectorIntakeToken(collectorId, workspaceId, expireSeconds);
+            return ResponseEntity.ok(Message.success(Collections.singletonMap("token", token)));
+        } catch (Exception e) {
+            log.error("generate collector intake token error", e);
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Generate collector intake token error"));
+        }
+    }
+
     @GetMapping
     @Operation(summary = "List all API tokens", description = "List all active non-expiring API tokens")
     public ResponseEntity<Message<List<AuthToken>>> listTokens() {

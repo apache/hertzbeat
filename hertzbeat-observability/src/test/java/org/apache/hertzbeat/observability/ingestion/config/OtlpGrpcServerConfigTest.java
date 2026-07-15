@@ -26,6 +26,7 @@ import static org.mockito.Mockito.when;
 
 import com.usthe.sureness.util.JsonWebTokenUtil;
 import io.grpc.Metadata;
+import io.grpc.MethodDescriptor;
 import io.grpc.ServerCall;
 import io.grpc.ServerCallHandler;
 import io.grpc.Status;
@@ -58,6 +59,9 @@ class OtlpGrpcServerConfigTest {
 
     @Mock
     private ServerCall<Object, Object> call;
+
+    @Mock
+    private MethodDescriptor<Object, Object> methodDescriptor;
 
     @Mock
     private ServerCallHandler<Object, Object> next;
@@ -124,6 +128,47 @@ class OtlpGrpcServerConfigTest {
         assertNull(AuthTokenRequestContext.currentWorkspaceId());
         listener.onComplete();
         assertNull(AuthTokenRequestContext.currentWorkspaceId());
+    }
+
+    @Test
+    void shouldBindManagedCollectorIdentityAcrossGrpcCallLifecycle() {
+        AuthTokenRequestContext.clear();
+        String token = issueManagedCollectorToken(List.of("metrics", "logs", "traces"));
+        Metadata headers = bearerHeaders(token);
+        when(call.getMethodDescriptor()).thenReturn(methodDescriptor);
+        when(methodDescriptor.getFullMethodName())
+                .thenReturn("opentelemetry.proto.collector.metrics.v1.MetricsService/Export");
+        when(accessTokenGateway.checkTokenStatus(token, AuthTokenScopes.OTLP_INGEST)).thenReturn(null);
+        when(accessTokenGateway.checkManagedTokenAccess("admin", List.of("admin"))).thenReturn(null);
+        when(next.startCall(any(), any())).thenAnswer(invocation -> {
+            assertEquals("edge-west", AuthTokenRequestContext.currentCollectorId());
+            return new ServerCall.Listener<>() {
+            };
+        });
+
+        ServerCall.Listener<Object> listener = interceptor.interceptCall(call, headers, next);
+
+        assertNull(AuthTokenRequestContext.currentCollectorId());
+        listener.onHalfClose();
+        assertNull(AuthTokenRequestContext.currentCollectorId());
+    }
+
+    @Test
+    void shouldRejectManagedCollectorTokenForUnallowedSignal() {
+        String token = issueManagedCollectorToken(List.of("metrics"));
+        Metadata headers = bearerHeaders(token);
+        when(call.getMethodDescriptor()).thenReturn(methodDescriptor);
+        when(methodDescriptor.getFullMethodName())
+                .thenReturn("opentelemetry.proto.collector.trace.v1.TraceService/Export");
+        when(accessTokenGateway.checkTokenStatus(token, AuthTokenScopes.OTLP_INGEST)).thenReturn(null);
+        when(accessTokenGateway.checkManagedTokenAccess("admin", List.of("admin"))).thenReturn(null);
+
+        interceptor.interceptCall(call, headers, next);
+
+        ArgumentCaptor<Status> statusCaptor = ArgumentCaptor.forClass(Status.class);
+        verify(call).close(statusCaptor.capture(), any(Metadata.class));
+        verify(next, never()).startCall(any(), any());
+        assertEquals(Status.Code.UNAUTHENTICATED, statusCaptor.getValue().getCode());
     }
 
     @Test
@@ -198,6 +243,15 @@ class OtlpGrpcServerConfigTest {
     private static String issueManagedToken() {
         Map<String, Object> customClaims = new HashMap<>(1);
         customClaims.put(ObservabilityAccessTokenGateway.CLAIM_MANAGED, true);
+        return JsonWebTokenUtil.issueJwt("admin", 3600L, List.of("admin"), customClaims);
+    }
+
+    private static String issueManagedCollectorToken(List<String> allowedSignals) {
+        Map<String, Object> customClaims = new HashMap<>();
+        customClaims.put(ObservabilityAccessTokenGateway.CLAIM_MANAGED, true);
+        customClaims.put(AuthTokenScopes.CLAIM_TOKEN_AUDIENCE, AuthTokenScopes.MANAGED_COLLECTOR_AUDIENCE);
+        customClaims.put(AuthTokenScopes.CLAIM_COLLECTOR_ID, "edge-west");
+        customClaims.put(AuthTokenScopes.CLAIM_ALLOWED_SIGNALS, allowedSignals);
         return JsonWebTokenUtil.issueJwt("admin", 3600L, List.of("admin"), customClaims);
     }
 }

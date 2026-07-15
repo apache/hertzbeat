@@ -142,6 +142,25 @@ class AuthTokenControllerTest {
     }
 
     @Test
+    void testGenerateCollectorIntakeToken() throws Exception {
+        SubjectSum subjectSum = mockAdminSubject();
+
+        try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
+            mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
+            when(accountService.generateCollectorIntakeToken(eq("edge-west"), eq("prod-west"), eq(3600L)))
+                    .thenReturn("collector-intake-token");
+
+            this.mockMvc.perform(MockMvcRequestBuilders.post("/api/account/token/collector-intake/generate")
+                            .param("collectorId", "edge-west")
+                            .param("workspaceId", "prod-west")
+                            .param("expireSeconds", "3600"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                    .andExpect(jsonPath("$.data.token").value("collector-intake-token"));
+        }
+    }
+
+    @Test
     void testGenerateTokenNoLogin() throws Exception {
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(null);

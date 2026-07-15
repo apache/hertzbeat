@@ -80,6 +80,17 @@ public interface AccountService extends ObservabilityAccessTokenGateway {
             throws AuthenticationException;
 
     /**
+     * Generate an OTLP intake token bound to one managed Collector.
+     *
+     * @param collectorId Collector identity
+     * @param workspaceId workspace boundary
+     * @param expireSeconds optional expiration time in seconds
+     * @return token string, shown only at creation time
+     */
+    String generateCollectorIntakeToken(String collectorId, String workspaceId, Long expireSeconds)
+            throws AuthenticationException;
+
+    /**
      * List all API tokens
      *
      * @return list of auth tokens

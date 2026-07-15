@@ -123,6 +123,7 @@ public class OtlpGrpcServerConfig {
             }
             String token = StringUtils.substringAfter(authorization, "Bearer ").trim();
             String workspaceId = null;
+            String collectorId = null;
             try {
                 Claims claims = JsonWebTokenUtil.parseJwt(token);
                 Boolean refresh = claims.get("refresh", Boolean.class);
@@ -154,6 +155,7 @@ public class OtlpGrpcServerConfig {
                     return new ServerCall.Listener<>() {
                     };
                 }
+                collectorId = resolveManagedCollectorId(call, claims);
                 accessTokenGateway.touchTokenLastUsedTime(token);
             } catch (Exception ex) {
                 AuthTokenRequestContext.clear();
@@ -161,7 +163,7 @@ public class OtlpGrpcServerConfig {
                 return new ServerCall.Listener<>() {
                 };
             }
-            return interceptWorkspaceBoundCall(workspaceId, call, headers, next);
+            return interceptBoundCall(workspaceId, collectorId, call, headers, next);
         }
 
         private String resolveWorkspaceId(Metadata headers, Claims claims) {
@@ -172,53 +174,53 @@ public class OtlpGrpcServerConfig {
             return workspaceId == null ? null : AuthTokenScopes.normalizeWorkspaceId(workspaceId);
         }
 
-        private <ReqT, RespT> ServerCall.Listener<ReqT> interceptWorkspaceBoundCall(
-                String workspaceId,
+        private <ReqT, RespT> ServerCall.Listener<ReqT> interceptBoundCall(
+                String workspaceId, String collectorId,
                 ServerCall<ReqT, RespT> call,
                 Metadata headers,
                 ServerCallHandler<ReqT, RespT> next) {
-            bindWorkspace(workspaceId);
+            bindRequestContext(workspaceId, collectorId);
             try {
                 ServerCall.Listener<ReqT> listener = Contexts.interceptCall(
                         io.grpc.Context.current(), call, headers, next);
-                return workspaceBoundListener(listener, workspaceId);
+                return contextBoundListener(listener, workspaceId, collectorId);
             } finally {
                 AuthTokenRequestContext.clear();
             }
         }
 
-        private <ReqT> ServerCall.Listener<ReqT> workspaceBoundListener(
-                ServerCall.Listener<ReqT> listener, String workspaceId) {
+        private <ReqT> ServerCall.Listener<ReqT> contextBoundListener(
+                ServerCall.Listener<ReqT> listener, String workspaceId, String collectorId) {
             return new ForwardingServerCallListener.SimpleForwardingServerCallListener<>(listener) {
                 @Override
                 public void onMessage(ReqT message) {
-                    withWorkspace(workspaceId, () -> super.onMessage(message));
+                    withRequestContext(workspaceId, collectorId, () -> super.onMessage(message));
                 }
 
                 @Override
                 public void onHalfClose() {
-                    withWorkspace(workspaceId, super::onHalfClose);
+                    withRequestContext(workspaceId, collectorId, super::onHalfClose);
                 }
 
                 @Override
                 public void onCancel() {
-                    withWorkspace(workspaceId, super::onCancel);
+                    withRequestContext(workspaceId, collectorId, super::onCancel);
                 }
 
                 @Override
                 public void onComplete() {
-                    withWorkspace(workspaceId, super::onComplete);
+                    withRequestContext(workspaceId, collectorId, super::onComplete);
                 }
 
                 @Override
                 public void onReady() {
-                    withWorkspace(workspaceId, super::onReady);
+                    withRequestContext(workspaceId, collectorId, super::onReady);
                 }
             };
         }
 
-        private void withWorkspace(String workspaceId, Runnable action) {
-            bindWorkspace(workspaceId);
+        private void withRequestContext(String workspaceId, String collectorId, Runnable action) {
+            bindRequestContext(workspaceId, collectorId);
             try {
                 action.run();
             } finally {
@@ -226,12 +228,49 @@ public class OtlpGrpcServerConfig {
             }
         }
 
-        private void bindWorkspace(String workspaceId) {
-            if (StringUtils.isBlank(workspaceId)) {
-                AuthTokenRequestContext.clear();
-                return;
+        private void bindRequestContext(String workspaceId, String collectorId) {
+            AuthTokenRequestContext.clear();
+            if (StringUtils.isNotBlank(workspaceId)) {
+                AuthTokenRequestContext.bindWorkspaceId(workspaceId);
             }
-            AuthTokenRequestContext.bindWorkspaceId(workspaceId);
+            if (StringUtils.isNotBlank(collectorId)) {
+                AuthTokenRequestContext.bindCollectorId(collectorId);
+            }
+        }
+
+        private <ReqT, RespT> String resolveManagedCollectorId(ServerCall<ReqT, RespT> call, Claims claims) {
+            if (!AuthTokenScopes.MANAGED_COLLECTOR_AUDIENCE.equals(
+                    claims.get(AuthTokenScopes.CLAIM_TOKEN_AUDIENCE, String.class))) {
+                return null;
+            }
+            String collectorId = StringUtils.trimToNull(
+                    claims.get(AuthTokenScopes.CLAIM_COLLECTOR_ID, String.class));
+            if (collectorId == null) {
+                throw new IllegalArgumentException("Collector intake token has no Collector identity.");
+            }
+            String signal = resolveGrpcSignal(call);
+            List<?> allowedSignals = claims.get(AuthTokenScopes.CLAIM_ALLOWED_SIGNALS, List.class);
+            if (signal == null || allowedSignals == null || !allowedSignals.contains(signal)) {
+                throw new IllegalArgumentException("Collector intake token does not allow this signal.");
+            }
+            return collectorId;
+        }
+
+        private <ReqT, RespT> String resolveGrpcSignal(ServerCall<ReqT, RespT> call) {
+            if (call.getMethodDescriptor() == null) {
+                return null;
+            }
+            String methodName = call.getMethodDescriptor().getFullMethodName();
+            if (StringUtils.contains(methodName, "MetricsService/")) {
+                return "metrics";
+            }
+            if (StringUtils.contains(methodName, "LogsService/")) {
+                return "logs";
+            }
+            if (StringUtils.contains(methodName, "TraceService/")) {
+                return "traces";
+            }
+            return null;
         }
     }
 }

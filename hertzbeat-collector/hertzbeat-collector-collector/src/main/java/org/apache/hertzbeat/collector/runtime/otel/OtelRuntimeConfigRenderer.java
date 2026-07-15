@@ -27,6 +27,7 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Set;
+import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeConfig;
 
 /**
  * Renders the version-bound Phase 0 runtime configuration without embedding credentials.
@@ -61,7 +62,7 @@ public class OtelRuntimeConfigRenderer {
         Path target = activePath(properties);
         Files.createDirectories(target.getParent());
         Path candidate = Files.createTempFile(target.getParent(), "otel-runtime-", ".yaml.candidate");
-        Files.writeString(candidate, template(properties.getHealthPort()), StandardCharsets.UTF_8);
+        Files.writeString(candidate, template(properties), StandardCharsets.UTF_8);
         try (FileChannel channel = FileChannel.open(candidate, StandardOpenOption.WRITE)) {
             channel.force(true);
         }
@@ -84,11 +85,15 @@ public class OtelRuntimeConfigRenderer {
         }
     }
 
-    private static String template(int healthPort) {
+    private static String template(OtelRuntimeProperties properties) {
+        ManagedOtelRuntimeConfig desiredConfig = properties.desiredConfig();
+        if (!desiredConfig.hostMetricsEnabled()) {
+            throw new IllegalArgumentException("The current runtime requires the host metrics capability");
+        }
         return """
                 receivers:
                   hostmetrics:
-                    collection_interval: 10s
+                    collection_interval: %ds
                     scrapers:
                       cpu:
                       disk:
@@ -117,6 +122,12 @@ public class OtelRuntimeConfigRenderer {
                       - key: hertzbeat.workspace_id
                         value: ${env:HERTZBEAT_WORKSPACE_ID}
                         action: upsert
+                      - key: hertzbeat.config.schema
+                        value: "%d"
+                        action: upsert
+                      - key: hertzbeat.config.revision
+                        value: "%d"
+                        action: upsert
                   batch:
                     send_batch_size: 1024
                     timeout: 5s
@@ -138,6 +149,11 @@ public class OtelRuntimeConfigRenderer {
                       receivers: [hostmetrics]
                       processors: [memory_limiter, resource, batch]
                       exporters: [otlphttp]
-                """.formatted(healthPort);
+                """.formatted(
+                desiredConfig.hostMetricsInterval().toSeconds(),
+                desiredConfig.schemaVersion(),
+                desiredConfig.revision(),
+                properties.getHealthPort()
+        );
     }
 }

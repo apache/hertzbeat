@@ -337,6 +337,34 @@ class AccountServiceTest {
     }
 
     @Test
+    void testGenerateCollectorIntakeTokenBindsCollectorAndSignals() throws Exception {
+        SurenessAccount account = buildActiveAccount();
+        when(accountProvider.loadAccount(identifier)).thenReturn(account);
+        when(authTokenDao.save(any(AuthToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        SubjectSum subjectSum = mockAdminSubject(identifier);
+
+        try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
+            mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
+
+            String token = accountService.generateCollectorIntakeToken("edge-west", "prod-west", 3600L);
+
+            Claims claims = JsonWebTokenUtil.parseJwt(token);
+            assertEquals(AuthTokenScopes.OTLP_INGEST,
+                    claims.get(AuthTokenScopes.CLAIM_TOKEN_SCOPE, String.class));
+            assertEquals(AuthTokenScopes.MANAGED_COLLECTOR_AUDIENCE,
+                    claims.get(AuthTokenScopes.CLAIM_TOKEN_AUDIENCE, String.class));
+            assertEquals("edge-west", claims.get(AuthTokenScopes.CLAIM_COLLECTOR_ID, String.class));
+            assertEquals(List.of("metrics", "logs", "traces"),
+                    claims.get(AuthTokenScopes.CLAIM_ALLOWED_SIGNALS, List.class));
+
+            ArgumentCaptor<AuthToken> captor = ArgumentCaptor.forClass(AuthToken.class);
+            verify(authTokenDao).save(captor.capture());
+            assertEquals("edge-west", captor.getValue().getCollectorId());
+            assertEquals(AuthTokenScopes.MANAGED_COLLECTOR_AUDIENCE, captor.getValue().getTokenAudience());
+        }
+    }
+
+    @Test
     void testGenerateTokenRejectsScopeQuotaExceeded() {
         SurenessAccount account = buildActiveAccount();
         when(accountProvider.loadAccount(identifier)).thenReturn(account);

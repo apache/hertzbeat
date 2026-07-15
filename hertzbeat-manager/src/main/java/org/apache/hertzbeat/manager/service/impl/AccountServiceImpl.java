@@ -187,6 +187,30 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public String generateToken(String tokenName, Long expireSeconds, String tokenScope, String workspaceId)
             throws AuthenticationException {
+        return generateManagedToken(tokenName, expireSeconds, tokenScope, workspaceId, null, null, List.of());
+    }
+
+    @Override
+    public String generateCollectorIntakeToken(String collectorId, String workspaceId, Long expireSeconds)
+            throws AuthenticationException {
+        String normalizedCollectorId = StringUtils.trimToNull(collectorId);
+        if (normalizedCollectorId == null || normalizedCollectorId.length() > 128) {
+            throw new IllegalArgumentException("Collector identity must contain 1 to 128 characters");
+        }
+        return generateManagedToken(
+                "Collector " + normalizedCollectorId,
+                expireSeconds,
+                AuthTokenScopes.OTLP_INGEST,
+                workspaceId,
+                AuthTokenScopes.MANAGED_COLLECTOR_AUDIENCE,
+                normalizedCollectorId,
+                AuthTokenScopes.OTLP_SIGNALS
+        );
+    }
+
+    private String generateManagedToken(String tokenName, Long expireSeconds, String tokenScope, String workspaceId,
+                                        String tokenAudience, String collectorId, List<String> allowedSignals)
+            throws AuthenticationException {
         SubjectSum subjectSum = requireCurrentSubject();
         String userId = getCurrentUserId(subjectSum);
         SurenessAccount account = accountProvider.loadAccount(userId);
@@ -204,7 +228,8 @@ public class AccountServiceImpl implements AccountService {
             throw new AuthenticationException("Token quota exceeded");
         }
         List<String> roles = account.getOwnRoles();
-        String token = issueApiToken(userId, roles, expireSeconds, normalizedScope, normalizedWorkspaceId);
+        String token = issueApiToken(userId, roles, expireSeconds, normalizedScope, normalizedWorkspaceId,
+                tokenAudience, collectorId, allowedSignals);
 
         // Persist token metadata for management
         String tokenHash = CryptoUtils.sha256Hex(token);
@@ -219,6 +244,9 @@ public class AccountServiceImpl implements AccountService {
             .tokenMask(tokenMask)
             .tokenScope(normalizedScope)
             .workspaceId(normalizedWorkspaceId)
+            .tokenAudience(tokenAudience)
+            .collectorId(collectorId)
+            .allowedSignals(String.join(",", allowedSignals))
             .status(TOKEN_STATUS_ACTIVE)
             .creator(userId)
             .expireTime(expireTime)
@@ -386,11 +414,23 @@ public class AccountServiceImpl implements AccountService {
                                  List<String> roles,
                                  Long expireSeconds,
                                  String tokenScope,
-                                 String workspaceId) {
-        Map<String, Object> customClaimMap = new HashMap<>(4);
+                                 String workspaceId,
+                                 String tokenAudience,
+                                 String collectorId,
+                                 List<String> allowedSignals) {
+        Map<String, Object> customClaimMap = new HashMap<>(7);
         customClaimMap.put(CLAIM_MANAGED, true);
         customClaimMap.put(AuthTokenScopes.CLAIM_TOKEN_SCOPE, tokenScope);
         customClaimMap.put(AuthTokenScopes.CLAIM_WORKSPACE_ID, workspaceId);
+        if (StringUtils.isNotBlank(tokenAudience)) {
+            customClaimMap.put(AuthTokenScopes.CLAIM_TOKEN_AUDIENCE, tokenAudience);
+        }
+        if (StringUtils.isNotBlank(collectorId)) {
+            customClaimMap.put(AuthTokenScopes.CLAIM_COLLECTOR_ID, collectorId);
+        }
+        if (allowedSignals != null && !allowedSignals.isEmpty()) {
+            customClaimMap.put(AuthTokenScopes.CLAIM_ALLOWED_SIGNALS, List.copyOf(allowedSignals));
+        }
         long effectiveExpire = (expireSeconds != null && expireSeconds > 0) ? expireSeconds : NON_EXPIRING_TOKEN_SECONDS;
         return JsonWebTokenUtil.issueJwt(userId, effectiveExpire, roles, customClaimMap);
     }

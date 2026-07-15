@@ -39,6 +39,7 @@ public final class OtlpResourceSemanticAttributes {
     public static final String HERTZBEAT_ENTITY_TYPE = "hertzbeat.entity_type";
     public static final String HERTZBEAT_ENTITY_NAME = "hertzbeat.entity_name";
     public static final String HERTZBEAT_WORKSPACE_ID = "hertzbeat.workspace_id";
+    public static final String HERTZBEAT_COLLECTOR_ID = "hertzbeat.collector.id";
 
     public static final List<String> PRIMARY_OTEL_IDENTITY_KEYS = List.of(
             SERVICE_NAME,
@@ -50,7 +51,8 @@ public final class OtlpResourceSemanticAttributes {
             HERTZBEAT_ENTITY_ID,
             HERTZBEAT_ENTITY_TYPE,
             HERTZBEAT_ENTITY_NAME,
-            HERTZBEAT_WORKSPACE_ID
+            HERTZBEAT_WORKSPACE_ID,
+            HERTZBEAT_COLLECTOR_ID
     );
 
     public static final List<String> GREPTIME_METRIC_PROMOTED_RESOURCE_KEYS = List.of(
@@ -68,7 +70,8 @@ public final class OtlpResourceSemanticAttributes {
             HERTZBEAT_ENTITY_ID,
             HERTZBEAT_ENTITY_TYPE,
             HERTZBEAT_ENTITY_NAME,
-            HERTZBEAT_WORKSPACE_ID
+            HERTZBEAT_WORKSPACE_ID,
+            HERTZBEAT_COLLECTOR_ID
     );
 
     private OtlpResourceSemanticAttributes() {
