@@ -65,7 +65,17 @@ class OtelRuntimeConfigRendererTest {
         assertTrue(yaml.contains("    traces:\n      receivers: [otlp]"));
         assertTrue(yaml.contains("receivers: [hostmetrics, otlp]"));
         assertTrue(yaml.contains("    logs:\n      receivers: [otlp]"));
+        assertTrue(yaml.contains("sending_queue:"));
+        assertTrue(yaml.contains("num_consumers: 4"));
+        assertTrue(yaml.contains("queue_size: 2048"));
+        assertTrue(yaml.contains("storage: file_storage"));
+        assertTrue(yaml.contains("initial_interval: 1s"));
+        assertTrue(yaml.contains("max_interval: 30s"));
+        assertTrue(yaml.contains("max_elapsed_time: 0s"));
+        assertTrue(yaml.contains("  file_storage:\n    directory: ${env:HERTZBEAT_OTEL_FILE_STORAGE_DIR}"));
+        assertTrue(yaml.contains("extensions: [health_check, file_storage]"));
         assertFalse(yaml.contains(properties.getToken()));
+        assertTrue(Files.isDirectory(tempDir.resolve("data/otel-runtime")));
     }
 
     @Test

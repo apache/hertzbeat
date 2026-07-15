@@ -51,7 +51,7 @@ for component in hostmetricsreceiver prometheusreceiver filelogreceiver otlprece
 done
 
 for pipeline_component in hostmetrics prometheus filelog otlp memory_limiter resource \
-    batch otlphttp health_check file_storage traces; do
+    batch otlphttp health_check file_storage sending_queue queue_size traces; do
   if ! grep -q "$pipeline_component" "$runtime_dir/config/collector-config.test.yaml"; then
     echo "missing required Phase 0 pipeline configuration: $pipeline_component" >&2
     exit 1

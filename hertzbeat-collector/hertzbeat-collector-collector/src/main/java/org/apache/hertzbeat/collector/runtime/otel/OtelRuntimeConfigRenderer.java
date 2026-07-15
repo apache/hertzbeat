@@ -73,7 +73,7 @@ public class OtelRuntimeConfigRenderer {
         Files.createDirectories(target.getParent());
         ManagedOtelRuntimeConfig desiredConfig = properties.desiredConfig();
         OtelRuntimeSourcePolicy.ResolvedSources sources = sourcePolicy.resolve(desiredConfig, properties);
-        prepareFileStorage(sources);
+        prepareFileStorage(sources.storageDirectory());
         Path candidate = Files.createTempFile(target.getParent(), "otel-runtime-", ".yaml.candidate");
         Files.writeString(candidate, template(properties, desiredConfig, sources), StandardCharsets.UTF_8);
         try (FileChannel channel = FileChannel.open(candidate, StandardOpenOption.WRITE)) {
@@ -98,13 +98,10 @@ public class OtelRuntimeConfigRenderer {
         }
     }
 
-    private static void prepareFileStorage(OtelRuntimeSourcePolicy.ResolvedSources sources) throws IOException {
-        if (sources.fileLogSources().isEmpty()) {
-            return;
-        }
-        Files.createDirectories(sources.storageDirectory());
-        if (Files.getFileStore(sources.storageDirectory()).supportsFileAttributeView("posix")) {
-            Files.setPosixFilePermissions(sources.storageDirectory(), OWNER_DIRECTORY_ONLY);
+    private static void prepareFileStorage(Path directory) throws IOException {
+        Files.createDirectories(directory);
+        if (Files.getFileStore(directory).supportsFileAttributeView("posix")) {
+            Files.setPosixFilePermissions(directory, OWNER_DIRECTORY_ONLY);
         }
     }
 
@@ -186,23 +183,27 @@ public class OtelRuntimeConfigRenderer {
                     compression: gzip
                     retry_on_failure:
                       enabled: true
+                      initial_interval: 1s
+                      max_interval: 30s
+                      max_elapsed_time: 0s
+                    sending_queue:
+                      enabled: true
+                      num_consumers: 4
+                      queue_size: 2048
+                      storage: file_storage
                 extensions:
                   health_check:
                     endpoint: 127.0.0.1:%d
+                  file_storage:
+                    directory: ${env:HERTZBEAT_OTEL_FILE_STORAGE_DIR}
                 """.formatted(
                 desiredConfig.schemaVersion(),
                 desiredConfig.revision(),
                 properties.getHealthPort()
         ));
-        if (!sources.fileLogSources().isEmpty()) {
-            yaml.append("""
-                  file_storage:
-                    directory: ${env:HERTZBEAT_OTEL_FILE_STORAGE_DIR}
-                """);
-        }
         yaml.append("""
                 service:
-                  extensions: [%s]
+                  extensions: [health_check, file_storage]
                   pipelines:
                     metrics:
                       receivers: [%s]
@@ -217,7 +218,6 @@ public class OtelRuntimeConfigRenderer {
                       processors: [memory_limiter, resource, batch]
                       exporters: [otlphttp]
                 """.formatted(
-                sources.fileLogSources().isEmpty() ? "health_check" : "health_check, file_storage",
                 metricsReceivers(sources.prometheusTargets()),
                 logReceivers(sources.fileLogSources())
         ));

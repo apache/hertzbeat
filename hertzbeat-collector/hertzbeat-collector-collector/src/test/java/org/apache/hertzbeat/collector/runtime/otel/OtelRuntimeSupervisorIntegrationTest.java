@@ -178,31 +178,52 @@ class OtelRuntimeSupervisorIntegrationTest {
         try {
             supervisor.start();
             assertEquals(OtelRuntimeState.RUNNING, supervisor.snapshot().state());
-            sendOtlpJson(properties.getOtlpHttpEndpoint(), "metrics", """
-                    {"resourceMetrics":[{"scopeMetrics":[{"metrics":[{
-                      "name":"hertzbeat_receiver_metric",
-                      "gauge":{"dataPoints":[{"asDouble":7.0}]}
-                    }]}]}]}
-                    """);
-            sendOtlpJson(properties.getOtlpHttpEndpoint(), "logs", """
-                    {"resourceLogs":[{"scopeLogs":[{"logRecords":[{
-                      "severityText":"INFO",
-                      "body":{"stringValue":"hertzbeat receiver log"}
-                    }]}]}]}
-                    """);
-            sendOtlpJson(properties.getOtlpHttpEndpoint(), "traces", """
-                    {"resourceSpans":[{"scopeSpans":[{"spans":[{
-                      "traceId":"000102030405060708090a0b0c0d0e0f",
-                      "spanId":"0001020304050607",
-                      "name":"hertzbeat receiver span",
-                      "startTimeUnixNano":"1783757000000000000",
-                      "endTimeUnixNano":"1783757000010000000"
-                    }]}]}]}
-                    """);
+            sendThreeSignals(properties.getOtlpHttpEndpoint(), "receiver",
+                    "000102030405060708090a0b0c0d0e0f", "0001020304050607");
 
             await(() -> capture.containsMetric("hertzbeat_receiver_metric"), Duration.ofSeconds(15));
             await(() -> capture.containsLog("hertzbeat receiver log"), Duration.ofSeconds(15));
             await(() -> capture.containsTrace("hertzbeat receiver span"), Duration.ofSeconds(15));
+        } finally {
+            supervisor.close();
+            capture.close();
+        }
+    }
+
+    @Test
+    void persistsThreeSignalsAcrossBackendOutageAndRuntimeRestart() throws Exception {
+        String runtimeBinary = System.getenv(RUNTIME_BINARY_ENV);
+        Assumptions.assumeTrue(runtimeBinary != null && !runtimeBinary.isBlank(),
+                () -> RUNTIME_BINARY_ENV + " is required for the real runtime proof");
+        int exportPort = availablePort();
+        OtelRuntimeProperties properties = properties(runtimeBinary, exportPort);
+        OtelRuntimeSupervisor supervisor = new OtelRuntimeSupervisor(
+                properties,
+                new OtelRuntimeBinaryResolver(properties),
+                new OtelRuntimeConfigTransaction(new OtelRuntimeConfigRenderer()),
+                new OtelRuntimeProcessLauncher(),
+                new OtelRuntimeHealthClient()
+        );
+        OtlpCapture capture = new OtlpCapture();
+        try {
+            supervisor.start();
+            assertEquals(OtelRuntimeState.RUNNING, supervisor.snapshot().state());
+            sendThreeSignals(properties.getOtlpHttpEndpoint(), "outage",
+                    "100102030405060708090a0b0c0d0e0f", "1001020304050607");
+
+            Path storage = OtelRuntimeConfigRenderer.resolve(
+                    properties.getHome(), properties.getFileStorageDirectory());
+            Thread.sleep(Duration.ofSeconds(6));
+            await(() -> containsStoredData(storage), Duration.ofSeconds(15));
+            long initialPid = supervisor.snapshot().pid();
+            ProcessHandle.of(initialPid).orElseThrow().destroyForcibly();
+            capture.start(exportPort);
+            await(() -> supervisor.snapshot().state() == OtelRuntimeState.RUNNING
+                            && supervisor.snapshot().pid() != initialPid,
+                    Duration.ofSeconds(15));
+            await(() -> capture.containsMetric("hertzbeat_outage_metric"), Duration.ofSeconds(30));
+            await(() -> capture.containsLog("hertzbeat outage log"), Duration.ofSeconds(30));
+            await(() -> capture.containsTrace("hertzbeat outage span"), Duration.ofSeconds(30));
         } finally {
             supervisor.close();
             capture.close();
@@ -239,6 +260,31 @@ class OtelRuntimeSupervisorIntegrationTest {
         assertEquals(200, response.statusCode(), response.body());
     }
 
+    private static void sendThreeSignals(String endpoint, String scenario, String traceId, String spanId)
+            throws Exception {
+        sendOtlpJson(endpoint, "metrics", """
+                {"resourceMetrics":[{"scopeMetrics":[{"metrics":[{
+                  "name":"hertzbeat_%s_metric",
+                  "gauge":{"dataPoints":[{"asDouble":7.0}]}
+                }]}]}]}
+                """.formatted(scenario));
+        sendOtlpJson(endpoint, "logs", """
+                {"resourceLogs":[{"scopeLogs":[{"logRecords":[{
+                  "severityText":"INFO",
+                  "body":{"stringValue":"hertzbeat %s log"}
+                }]}]}]}
+                """.formatted(scenario));
+        sendOtlpJson(endpoint, "traces", """
+                {"resourceSpans":[{"scopeSpans":[{"spans":[{
+                  "traceId":"%s",
+                  "spanId":"%s",
+                  "name":"hertzbeat %s span",
+                  "startTimeUnixNano":"1783757000000000000",
+                  "endTimeUnixNano":"1783757000010000000"
+                }]}]}]}
+                """.formatted(traceId, spanId, scenario));
+    }
+
     private static int availablePort() throws IOException {
         try (ServerSocket socket = new ServerSocket(0)) {
             return socket.getLocalPort();
@@ -253,6 +299,23 @@ class OtelRuntimeSupervisorIntegrationTest {
         assertTrue(condition.getAsBoolean(), "condition did not become true before deadline");
     }
 
+    private static boolean containsStoredData(Path storage) {
+        if (!Files.isDirectory(storage)) {
+            return false;
+        }
+        try (var paths = Files.walk(storage)) {
+            return paths.filter(Files::isRegularFile).anyMatch(path -> {
+                try {
+                    return Files.size(path) > 0;
+                } catch (IOException ignored) {
+                    return false;
+                }
+            });
+        } catch (IOException ignored) {
+            return false;
+        }
+    }
+
     private static final class OtlpCapture implements AutoCloseable {
 
         private final AtomicInteger requestCount = new AtomicInteger();
@@ -265,7 +328,11 @@ class OtelRuntimeSupervisorIntegrationTest {
         private HttpServer server;
 
         void start() throws IOException {
-            server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+            start(0);
+        }
+
+        void start(int port) throws IOException {
+            server = HttpServer.create(new InetSocketAddress("127.0.0.1", port), 0);
             server.createContext("/api/otlp/v1/metrics", exchange -> capture(exchange, metricPayloads));
             server.createContext("/api/otlp/v1/logs", exchange -> capture(exchange, logPayloads));
             server.createContext("/api/otlp/v1/traces", exchange -> capture(exchange, tracePayloads));

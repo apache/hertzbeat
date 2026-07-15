@@ -69,6 +69,14 @@ exporters:
     compression: gzip
     retry_on_failure:
       enabled: true
+      initial_interval: 1s
+      max_interval: 30s
+      max_elapsed_time: 0s
+    sending_queue:
+      enabled: true
+      num_consumers: 4
+      queue_size: 2048
+      storage: file_storage
 
 extensions:
   health_check:

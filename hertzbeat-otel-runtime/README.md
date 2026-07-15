@@ -26,6 +26,12 @@ still need an OpenTelemetry SDK or agent to create traces. Bundled automatic
 instrumentation is a separate capability and is not represented as telemetry
 created by the Collector itself.
 
+The direct exporter uses a bounded 2,048-request persistent queue with four
+consumers. Failed deliveries back off without an elapsed-time cutoff, and queued
+data resumes from the owner-only file-storage directory after a runtime restart.
+When the queue or storage is full, new input is rejected instead of growing
+memory or disk usage without a bound.
+
 ## Build and validate
 
 Go 1.25 or newer is required.
