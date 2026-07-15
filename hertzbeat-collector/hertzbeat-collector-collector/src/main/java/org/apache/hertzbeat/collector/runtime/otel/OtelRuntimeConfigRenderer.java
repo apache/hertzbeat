@@ -149,6 +149,8 @@ public class OtelRuntimeConfigRenderer {
                     sending_queue:
                       enabled: true
                       num_consumers: 4
+                      block_on_overflow: false
+                      sizer: requests
                       queue_size: 2048
                       storage: file_storage
                 extensions:
@@ -156,6 +158,11 @@ public class OtelRuntimeConfigRenderer {
                     endpoint: 127.0.0.1:%d
                   file_storage:
                     directory: ${env:HERTZBEAT_OTEL_FILE_STORAGE_DIR}
+                    timeout: 1s
+                    max_size: 67108864
+                    fsync: true
+                    create_directory: false
+                    recreate: false
                 """.formatted(properties.getHealthPort()));
         appendGatewayExtension(yaml, gateway);
         String commonProcessors = OtelRuntimeGovernance.pipelineProcessors(desiredConfig, false);

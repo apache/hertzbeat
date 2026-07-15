@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -83,16 +84,29 @@ class OtelRuntimeConfigRendererTest {
         assertTrue(yaml.contains("receivers: [hostmetrics, otlp]"));
         assertTrue(yaml.contains("    logs:\n      receivers: [otlp]"));
         assertTrue(yaml.contains("sending_queue:"));
+        assertEquals(1, occurrences(yaml, "sending_queue:"));
         assertTrue(yaml.contains("num_consumers: 4"));
+        assertEquals(1, occurrences(yaml, "num_consumers: 4"));
+        assertTrue(yaml.contains("block_on_overflow: false"));
+        assertTrue(yaml.contains("sizer: requests"));
         assertTrue(yaml.contains("queue_size: 2048"));
         assertTrue(yaml.contains("storage: file_storage"));
         assertTrue(yaml.contains("initial_interval: 1s"));
         assertTrue(yaml.contains("max_interval: 30s"));
         assertTrue(yaml.contains("max_elapsed_time: 0s"));
         assertTrue(yaml.contains("  file_storage:\n    directory: ${env:HERTZBEAT_OTEL_FILE_STORAGE_DIR}"));
+        assertTrue(yaml.contains("timeout: 1s"));
+        assertTrue(yaml.contains("max_size: 67108864"));
+        assertTrue(yaml.contains("fsync: true"));
+        assertTrue(yaml.contains("create_directory: false"));
+        assertTrue(yaml.contains("recreate: false"));
         assertTrue(yaml.contains("extensions: [health_check, file_storage]"));
         assertFalse(yaml.contains(properties.getToken()));
-        assertTrue(Files.isDirectory(tempDir.resolve("data/otel-runtime")));
+        Path storageDirectory = tempDir.resolve("data/otel-runtime");
+        assertTrue(Files.isDirectory(storageDirectory));
+        if (Files.getFileStore(storageDirectory).supportsFileAttributeView("posix")) {
+            assertEquals("rwx------", PosixFilePermissions.toString(Files.getPosixFilePermissions(storageDirectory)));
+        }
     }
 
     @Test

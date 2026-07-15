@@ -26,15 +26,20 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus.FileConsumerStatus;
 import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus.ObservedLong;
 import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus.RuntimeTelemetry;
 import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus.SignalCounters;
+import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus.SignalGauges;
 
 /** Reads the bounded loopback Prometheus view of the official Runtime's internal telemetry. */
 public class OtelRuntimeTelemetryClient {
 
     private static final int MAXIMUM_RESPONSE_BYTES = 1024 * 1024;
+    private static final Pattern DATA_TYPE = Pattern.compile(
+            "(?:^|,)\\s*data_type\\s*=\\s*\"(metrics|logs|traces)\"(?:\\s*,|$)");
     private final HttpClient client;
 
     public OtelRuntimeTelemetryClient() {
@@ -76,20 +81,25 @@ public class OtelRuntimeTelemetryClient {
     }
 
     RuntimeTelemetry parse(String payload, boolean fileConsumerConfigured) {
-        Map<String, Long> values = parseValues(payload);
-        SignalCounters accepted = signals(values, "otelcol_receiver_accepted_");
-        SignalCounters refused = signals(values, "otelcol_receiver_refused_");
-        SignalCounters sent = signals(values, "otelcol_exporter_sent_");
-        SignalCounters failed = failed(values);
-        ObservedLong queueSize = observed(values, "otelcol_exporter_queue_size");
-        ObservedLong queueCapacity = observed(values, "otelcol_exporter_queue_capacity");
+        ParsedValues values = parseValues(payload);
+        SignalCounters accepted = signals(values.aggregate(), "otelcol_receiver_accepted_");
+        SignalCounters refused = signals(values.aggregate(), "otelcol_receiver_refused_");
+        SignalCounters sent = signals(values.aggregate(), "otelcol_exporter_sent_");
+        SignalCounters enqueueFailed = signals(values.aggregate(), "otelcol_exporter_enqueue_failed_");
+        SignalCounters sendFailed = signals(values.aggregate(), "otelcol_exporter_send_failed_");
+        SignalCounters failed = failed(values.aggregate());
+        ObservedLong queueSize = observed(values.aggregate(), "otelcol_exporter_queue_size");
+        ObservedLong queueCapacity = observed(values.aggregate(), "otelcol_exporter_queue_capacity");
+        SignalGauges queueSizeBySignal = signalGauges(values, "otelcol_exporter_queue_size");
+        SignalGauges queueCapacityBySignal = signalGauges(values, "otelcol_exporter_queue_capacity");
         FileConsumerStatus fileConsumer = fileConsumerConfigured
                 ? new FileConsumerStatus(
-                        observed(values, "otelcol_fileconsumer_open_files"),
-                        observed(values, "otelcol_fileconsumer_reading_files"))
+                        observed(values.aggregate(), "otelcol_fileconsumer_open_files"),
+                        observed(values.aggregate(), "otelcol_fileconsumer_reading_files"))
                 : FileConsumerStatus.notApplicable();
         return new RuntimeTelemetry(
-                accepted, refused, sent, failed, queueSize, queueCapacity, fileConsumer);
+                accepted, refused, sent, failed, queueSize, queueCapacity, fileConsumer,
+                queueSizeBySignal, queueCapacityBySignal, enqueueFailed, sendFailed);
     }
 
     private SignalCounters signals(Map<String, Long> values, String prefix) {
@@ -131,12 +141,22 @@ public class OtelRuntimeTelemetryClient {
     }
 
     private ObservedLong observed(Map<String, Long> values, String name) {
+        if (values == null) {
+            return ObservedLong.unavailable();
+        }
         Long value = values.get(name);
         return value == null ? ObservedLong.unavailable() : ObservedLong.available(value);
     }
 
-    private Map<String, Long> parseValues(String payload) {
-        Map<String, Long> values = new HashMap<>();
+    private SignalGauges signalGauges(ParsedValues values, String name) {
+        return new SignalGauges(
+                observed(values.byDataType().get("metrics"), name),
+                observed(values.byDataType().get("logs"), name),
+                observed(values.byDataType().get("traces"), name));
+    }
+
+    private ParsedValues parseValues(String payload) {
+        ParsedValues values = new ParsedValues(new HashMap<>(), new HashMap<>());
         if (payload == null || payload.isBlank()) {
             return values;
         }
@@ -146,7 +166,7 @@ public class OtelRuntimeTelemetryClient {
         return values;
     }
 
-    private void parseLine(String line, Map<String, Long> values) {
+    private void parseLine(String line, ParsedValues values) {
         String trimmed = line.trim();
         if (trimmed.isEmpty() || trimmed.startsWith("#")) {
             return;
@@ -166,10 +186,24 @@ public class OtelRuntimeTelemetryClient {
             if (!Double.isFinite(parsed) || parsed < 0 || parsed != Math.rint(parsed) || parsed > Long.MAX_VALUE) {
                 return;
             }
-            values.merge(name, (long) parsed, Long::sum);
+            long value = (long) parsed;
+            values.aggregate().merge(name, value, Long::sum);
+            String dataType = dataType(nameAndLabels, labels);
+            if (dataType != null) {
+                values.byDataType().computeIfAbsent(dataType, ignored -> new HashMap<>())
+                        .merge(name, value, Long::sum);
+            }
         } catch (NumberFormatException ignored) {
             // A malformed or unsupported sample is absent, never an observed zero.
         }
+    }
+
+    private String dataType(String nameAndLabels, int labelsStart) {
+        if (labelsStart < 0 || !nameAndLabels.endsWith("}")) {
+            return null;
+        }
+        Matcher matcher = DATA_TYPE.matcher(nameAndLabels.substring(labelsStart + 1, nameAndLabels.length() - 1));
+        return matcher.find() ? matcher.group(1) : null;
     }
 
     private void close(InputStream body) {
@@ -178,5 +212,8 @@ public class OtelRuntimeTelemetryClient {
         } catch (IOException ignored) {
             // The response is already unavailable; closing it is best effort.
         }
+    }
+
+    private record ParsedValues(Map<String, Long> aggregate, Map<String, Map<String, Long>> byDataType) {
     }
 }

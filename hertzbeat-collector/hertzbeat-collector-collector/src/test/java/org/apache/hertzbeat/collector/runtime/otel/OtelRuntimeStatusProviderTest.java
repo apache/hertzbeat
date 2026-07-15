@@ -180,6 +180,32 @@ class OtelRuntimeStatusProviderTest {
         assertEquals(42, recovered.pid());
     }
 
+    @Test
+    void reportsQueueFullWhenOneSignalPipelineIsFullAndOtherPipelinesAreEmpty() {
+        OtelRuntimeProperties properties = new OtelRuntimeProperties();
+        properties.setEnabled(true);
+        OtelRuntimeSupervisor supervisor = mock(OtelRuntimeSupervisor.class);
+        when(supervisor.snapshot()).thenReturn(new OtelRuntimeSnapshot(
+                OtelRuntimeState.RUNNING, 42, 0, Instant.parse("2026-07-15T06:00:00Z"), ""));
+        when(supervisor.activeRevision()).thenReturn(1L);
+        when(supervisor.sourceStatuses()).thenReturn(List.of());
+        OtelRuntimeTelemetryClient telemetryClient = mock(OtelRuntimeTelemetryClient.class);
+        when(telemetryClient.scrape(properties, false)).thenReturn(telemetryWithSignalQueues(
+                2048, 0, 0, 2048, 2048, 2048));
+        OtelRuntimeDiagnosticsReader diagnosticsReader = mock(OtelRuntimeDiagnosticsReader.class);
+        when(diagnosticsReader.latestFailure(properties)).thenReturn(ManagedOtelRuntimeStatus.FailureCode.NONE);
+        when(diagnosticsReader.sanitize("", properties)).thenReturn("");
+        OtelRuntimeStatusProvider provider = new OtelRuntimeStatusProvider(
+                properties, supervisor, telemetryClient, diagnosticsReader, new OtelRuntimeFailureClassifier());
+
+        ManagedOtelRuntimeStatus status = provider.status();
+
+        assertEquals(ManagedOtelRuntimeStatus.FailureCode.QUEUE_FULL, status.failureCode());
+        assertEquals(ManagedOtelRuntimeStatus.RuntimeState.RUNNING, status.state());
+        assertEquals(0, status.restartCount());
+        assertEquals(42, status.pid());
+    }
+
     @ParameterizedTest
     @MethodSource("lifecycleFailures")
     void convergesCurrentLifecycleDiagnosticsToStableFailureCode(
@@ -239,18 +265,126 @@ class OtelRuntimeStatusProviderTest {
                         ManagedOtelRuntimeStatus.FailureCode.PROCESS_CRASH));
     }
 
+    @Test
+    void storageFullRequiresNewEnqueueFailureAndClearsWhenCounterStopsAdvancing() {
+        OtelRuntimeProperties properties = new OtelRuntimeProperties();
+        properties.setEnabled(true);
+        OtelRuntimeSupervisor supervisor = mock(OtelRuntimeSupervisor.class);
+        when(supervisor.snapshot()).thenReturn(new OtelRuntimeSnapshot(
+                OtelRuntimeState.RUNNING, 42, 0, Instant.parse("2026-07-15T06:00:00Z"), ""));
+        when(supervisor.activeRevision()).thenReturn(1L);
+        when(supervisor.sourceStatuses()).thenReturn(List.of());
+        OtelRuntimeTelemetryClient telemetryClient = mock(OtelRuntimeTelemetryClient.class);
+        when(telemetryClient.scrape(properties, false)).thenReturn(
+                telemetryWithEnqueueFailure(1), telemetryWithEnqueueFailure(1));
+        OtelRuntimeDiagnosticsReader diagnosticsReader = mock(OtelRuntimeDiagnosticsReader.class);
+        when(diagnosticsReader.latestFailure(properties))
+                .thenReturn(ManagedOtelRuntimeStatus.FailureCode.STORAGE_FULL);
+        OtelRuntimeStatusProvider provider = new OtelRuntimeStatusProvider(
+                properties, supervisor, telemetryClient, diagnosticsReader, new OtelRuntimeFailureClassifier());
+
+        ManagedOtelRuntimeStatus failed = provider.status();
+        ManagedOtelRuntimeStatus recovered = provider.status();
+
+        assertEquals(ManagedOtelRuntimeStatus.FailureCode.STORAGE_FULL, failed.failureCode());
+        assertEquals(ManagedOtelRuntimeStatus.FailureCode.NONE, recovered.failureCode());
+        assertEquals(42, recovered.pid());
+        assertEquals(0, recovered.restartCount());
+    }
+
+    @Test
+    void historicalCorruptionDiagnosticClearsAfterManualRuntimeRecovery() {
+        OtelRuntimeProperties properties = new OtelRuntimeProperties();
+        properties.setEnabled(true);
+        OtelRuntimeSupervisor supervisor = mock(OtelRuntimeSupervisor.class);
+        when(supervisor.snapshot()).thenReturn(
+                new OtelRuntimeSnapshot(
+                        OtelRuntimeState.FAILED, -1, 1, Instant.parse("2026-07-15T06:00:00Z"), ""),
+                new OtelRuntimeSnapshot(
+                        OtelRuntimeState.RUNNING, 43, 1, Instant.parse("2026-07-15T06:01:00Z"), ""));
+        when(supervisor.activeRevision()).thenReturn(1L);
+        when(supervisor.sourceStatuses()).thenReturn(List.of());
+        OtelRuntimeTelemetryClient telemetryClient = mock(OtelRuntimeTelemetryClient.class);
+        when(telemetryClient.scrape(properties, false)).thenReturn(telemetry(0, 6144, 0));
+        OtelRuntimeDiagnosticsReader diagnosticsReader = mock(OtelRuntimeDiagnosticsReader.class);
+        when(diagnosticsReader.latestFailure(properties))
+                .thenReturn(ManagedOtelRuntimeStatus.FailureCode.STORAGE_CORRUPTED);
+        OtelRuntimeStatusProvider provider = new OtelRuntimeStatusProvider(
+                properties, supervisor, telemetryClient, diagnosticsReader, new OtelRuntimeFailureClassifier());
+
+        ManagedOtelRuntimeStatus failed = provider.status();
+        ManagedOtelRuntimeStatus recovered = provider.status();
+
+        assertEquals(ManagedOtelRuntimeStatus.FailureCode.STORAGE_CORRUPTED, failed.failureCode());
+        assertEquals(ManagedOtelRuntimeStatus.FailureCode.NONE, recovered.failureCode());
+        assertEquals(43, recovered.pid());
+    }
+
     private ManagedOtelRuntimeStatus.RuntimeTelemetry telemetry(
             long queueSize, long queueCapacity, long failedMetrics) {
+        ManagedOtelRuntimeStatus.SignalCounters sendFailed = new ManagedOtelRuntimeStatus.SignalCounters(
+                ManagedOtelRuntimeStatus.ObservedLong.available(failedMetrics),
+                ManagedOtelRuntimeStatus.ObservedLong.unavailable(),
+                ManagedOtelRuntimeStatus.ObservedLong.unavailable());
         return new ManagedOtelRuntimeStatus.RuntimeTelemetry(
                 ManagedOtelRuntimeStatus.SignalCounters.unavailable(),
                 ManagedOtelRuntimeStatus.SignalCounters.unavailable(),
                 ManagedOtelRuntimeStatus.SignalCounters.unavailable(),
-                new ManagedOtelRuntimeStatus.SignalCounters(
-                        ManagedOtelRuntimeStatus.ObservedLong.available(failedMetrics),
-                        ManagedOtelRuntimeStatus.ObservedLong.unavailable(),
-                        ManagedOtelRuntimeStatus.ObservedLong.unavailable()),
+                sendFailed,
                 ManagedOtelRuntimeStatus.ObservedLong.available(queueSize),
                 ManagedOtelRuntimeStatus.ObservedLong.available(queueCapacity),
-                ManagedOtelRuntimeStatus.FileConsumerStatus.notApplicable());
+                ManagedOtelRuntimeStatus.FileConsumerStatus.notApplicable(),
+                ManagedOtelRuntimeStatus.SignalGauges.unavailable(),
+                ManagedOtelRuntimeStatus.SignalGauges.unavailable(),
+                ManagedOtelRuntimeStatus.SignalCounters.unavailable(),
+                sendFailed);
+    }
+
+    private ManagedOtelRuntimeStatus.RuntimeTelemetry telemetryWithEnqueueFailure(long enqueueFailures) {
+        ManagedOtelRuntimeStatus.SignalCounters enqueueFailed = new ManagedOtelRuntimeStatus.SignalCounters(
+                ManagedOtelRuntimeStatus.ObservedLong.available(enqueueFailures),
+                ManagedOtelRuntimeStatus.ObservedLong.available(0),
+                ManagedOtelRuntimeStatus.ObservedLong.available(0));
+        ManagedOtelRuntimeStatus.SignalCounters sendFailed = new ManagedOtelRuntimeStatus.SignalCounters(
+                ManagedOtelRuntimeStatus.ObservedLong.available(0),
+                ManagedOtelRuntimeStatus.ObservedLong.available(0),
+                ManagedOtelRuntimeStatus.ObservedLong.available(0));
+        return new ManagedOtelRuntimeStatus.RuntimeTelemetry(
+                ManagedOtelRuntimeStatus.SignalCounters.unavailable(),
+                ManagedOtelRuntimeStatus.SignalCounters.unavailable(),
+                ManagedOtelRuntimeStatus.SignalCounters.unavailable(),
+                enqueueFailed,
+                ManagedOtelRuntimeStatus.ObservedLong.available(1),
+                ManagedOtelRuntimeStatus.ObservedLong.available(2048),
+                ManagedOtelRuntimeStatus.FileConsumerStatus.notApplicable(),
+                ManagedOtelRuntimeStatus.SignalGauges.unavailable(),
+                ManagedOtelRuntimeStatus.SignalGauges.unavailable(),
+                enqueueFailed,
+                sendFailed);
+    }
+
+    private ManagedOtelRuntimeStatus.RuntimeTelemetry telemetryWithSignalQueues(
+            long metricsSize, long logsSize, long tracesSize,
+            long metricsCapacity, long logsCapacity, long tracesCapacity) {
+        ManagedOtelRuntimeStatus.SignalGauges queueSizes = new ManagedOtelRuntimeStatus.SignalGauges(
+                ManagedOtelRuntimeStatus.ObservedLong.available(metricsSize),
+                ManagedOtelRuntimeStatus.ObservedLong.available(logsSize),
+                ManagedOtelRuntimeStatus.ObservedLong.available(tracesSize));
+        ManagedOtelRuntimeStatus.SignalGauges queueCapacities = new ManagedOtelRuntimeStatus.SignalGauges(
+                ManagedOtelRuntimeStatus.ObservedLong.available(metricsCapacity),
+                ManagedOtelRuntimeStatus.ObservedLong.available(logsCapacity),
+                ManagedOtelRuntimeStatus.ObservedLong.available(tracesCapacity));
+        return new ManagedOtelRuntimeStatus.RuntimeTelemetry(
+                ManagedOtelRuntimeStatus.SignalCounters.unavailable(),
+                ManagedOtelRuntimeStatus.SignalCounters.unavailable(),
+                ManagedOtelRuntimeStatus.SignalCounters.unavailable(),
+                ManagedOtelRuntimeStatus.SignalCounters.unavailable(),
+                ManagedOtelRuntimeStatus.ObservedLong.available(metricsSize + logsSize + tracesSize),
+                ManagedOtelRuntimeStatus.ObservedLong.available(metricsCapacity + logsCapacity + tracesCapacity),
+                ManagedOtelRuntimeStatus.FileConsumerStatus.notApplicable(),
+                queueSizes,
+                queueCapacities,
+                ManagedOtelRuntimeStatus.SignalCounters.unavailable(),
+                ManagedOtelRuntimeStatus.SignalCounters.unavailable());
     }
 }

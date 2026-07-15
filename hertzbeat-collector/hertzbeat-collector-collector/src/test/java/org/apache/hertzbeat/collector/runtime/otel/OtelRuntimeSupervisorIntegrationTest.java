@@ -20,6 +20,7 @@ package org.apache.hertzbeat.collector.runtime.otel;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
@@ -37,6 +38,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.StandardOpenOption;
 import java.security.KeyStore;
 import java.security.SecureRandom;
@@ -143,9 +145,15 @@ class OtelRuntimeSupervisorIntegrationTest {
             ManagedOtelRuntimeStatus unavailable = awaitFailureCode(
                     statusProvider, ManagedOtelRuntimeStatus.FailureCode.BACKEND_UNAVAILABLE,
                     Duration.ofSeconds(20));
+            unavailable = awaitSignalQueues(statusProvider, Duration.ofSeconds(20));
             assertEquals(initialPid, unavailable.pid());
             assertEquals(0, unavailable.restartCount());
             assertEquals(OtelRuntimeState.RUNNING.name(), unavailable.state().name());
+            assertEquals(2048, unavailable.telemetry().queueCapacityBySignal().metrics().value());
+            assertEquals(2048, unavailable.telemetry().queueCapacityBySignal().logs().value());
+            assertEquals(2048, unavailable.telemetry().queueCapacityBySignal().traces().value());
+            assertOwnerOnlyStorage(OtelRuntimeConfigRenderer.resolve(
+                    properties.getHome(), properties.getFileStorageDirectory()));
 
             capture.start(exportPort);
             await(() -> capture.containsMetric("hertzbeat_backend-recovery_metric"), Duration.ofSeconds(30));
@@ -162,6 +170,48 @@ class OtelRuntimeSupervisorIntegrationTest {
         } finally {
             supervisor.close();
             capture.close();
+        }
+    }
+
+    @Test
+    void corruptedPersistentQueueConvergesToStableStorageFailure() throws Exception {
+        String runtimeBinary = System.getenv(RUNTIME_BINARY_ENV);
+        Assumptions.assumeTrue(runtimeBinary != null && !runtimeBinary.isBlank(),
+                () -> RUNTIME_BINARY_ENV + " is required for the real runtime proof");
+        int exportPort = availablePort();
+        OtelRuntimeProperties properties = properties(runtimeBinary, exportPort);
+        properties.setMaxRestarts(1);
+        properties.setRestartDelay(Duration.ofHours(1));
+        OtelRuntimeSupervisor supervisor = supervisor(properties);
+        try {
+            supervisor.start();
+            sendThreeSignals(properties.getOtlpHttpEndpoint(), "corrupt-queue",
+                    "310102030405060708090a0b0c0d0e0f", "3101020304050607");
+            Path storage = OtelRuntimeConfigRenderer.resolve(
+                    properties.getHome(), properties.getFileStorageDirectory());
+            Thread.sleep(Duration.ofSeconds(6));
+            await(() -> containsStoredData(storage), Duration.ofSeconds(15));
+            supervisor.close();
+            corruptStorageFiles(storage);
+
+            supervisor = supervisor(properties);
+            supervisor.start();
+            OtelRuntimeFailureClassifier classifier = new OtelRuntimeFailureClassifier();
+            OtelRuntimeStatusProvider statusProvider = new OtelRuntimeStatusProvider(
+                    properties,
+                    supervisor,
+                    new OtelRuntimeTelemetryClient(),
+                    new OtelRuntimeDiagnosticsReader(classifier),
+                    classifier);
+
+            ManagedOtelRuntimeStatus status = awaitFailureCode(
+                    statusProvider, ManagedOtelRuntimeStatus.FailureCode.STORAGE_CORRUPTED,
+                    Duration.ofSeconds(15));
+            assertEquals(ManagedOtelRuntimeStatus.RuntimeState.FAILED, status.state());
+            assertEquals(1, status.restartCount());
+            assertEquals(-1, status.pid());
+        } finally {
+            supervisor.close();
         }
     }
 
@@ -446,6 +496,15 @@ class OtelRuntimeSupervisorIntegrationTest {
         return properties;
     }
 
+    private OtelRuntimeSupervisor supervisor(OtelRuntimeProperties properties) {
+        return new OtelRuntimeSupervisor(
+                properties,
+                new OtelRuntimeBinaryResolver(properties),
+                new OtelRuntimeConfigTransaction(new OtelRuntimeConfigRenderer()),
+                new OtelRuntimeProcessLauncher(),
+                new OtelRuntimeHealthClient());
+    }
+
     private static void sendOtlpJson(String endpoint, String signal, String payload) throws Exception {
         HttpRequest request = HttpRequest.newBuilder(URI.create("http://" + endpoint + "/v1/" + signal))
                 .header("Content-Type", "application/json")
@@ -592,6 +651,43 @@ class OtelRuntimeSupervisorIntegrationTest {
         return status;
     }
 
+    private static ManagedOtelRuntimeStatus awaitSignalQueues(
+            OtelRuntimeStatusProvider statusProvider, Duration timeout) throws InterruptedException {
+        long deadline = System.nanoTime() + timeout.toNanos();
+        ManagedOtelRuntimeStatus status;
+        do {
+            status = statusProvider.status();
+            if (positive(status.telemetry().queueSizeBySignal().metrics())
+                    && positive(status.telemetry().queueSizeBySignal().logs())
+                    && positive(status.telemetry().queueSizeBySignal().traces())) {
+                return status;
+            }
+            Thread.sleep(50);
+        } while (System.nanoTime() < deadline);
+        return fail(JsonUtil.toJson(status));
+    }
+
+    private static boolean positive(ManagedOtelRuntimeStatus.ObservedLong value) {
+        return value.state() == ManagedOtelRuntimeStatus.ValueState.AVAILABLE && value.value() > 0;
+    }
+
+    private static void assertOwnerOnlyStorage(Path storage) throws IOException {
+        if (!Files.getFileStore(storage).supportsFileAttributeView("posix")) {
+            return;
+        }
+        assertEquals(Set.of(
+                PosixFilePermission.OWNER_READ,
+                PosixFilePermission.OWNER_WRITE,
+                PosixFilePermission.OWNER_EXECUTE), Files.getPosixFilePermissions(storage));
+        try (var files = Files.walk(storage)) {
+            for (Path file : files.filter(Files::isRegularFile).toList()) {
+                Set<PosixFilePermission> permissions = Files.getPosixFilePermissions(file);
+                assertTrue(permissions.stream().allMatch(permission -> permission.name().startsWith("OWNER_")),
+                        () -> file + " has non-owner permissions: " + permissions);
+            }
+        }
+    }
+
     private static boolean containsStoredData(Path storage) {
         if (!Files.isDirectory(storage)) {
             return false;
@@ -606,6 +702,14 @@ class OtelRuntimeSupervisorIntegrationTest {
             });
         } catch (IOException ignored) {
             return false;
+        }
+    }
+
+    private static void corruptStorageFiles(Path storage) throws IOException {
+        try (var files = Files.walk(storage)) {
+            for (Path file : files.filter(Files::isRegularFile).toList()) {
+                Files.writeString(file, "corrupted persistent queue", StandardOpenOption.TRUNCATE_EXISTING);
+            }
         }
     }
 

@@ -37,8 +37,12 @@ class OtelRuntimeTelemetryClientTest {
                 otelcol_exporter_sent_spans{exporter="otlphttp"} 3
                 otelcol_exporter_enqueue_failed_metric_points{exporter="otlphttp"} 2
                 otelcol_exporter_send_failed_metric_points{exporter="otlphttp"} 4
-                otelcol_exporter_queue_size{exporter="otlphttp"} 5
-                otelcol_exporter_queue_capacity{exporter="otlphttp"} 2048
+                otelcol_exporter_queue_size{data_type="metrics",exporter="otlphttp"} 1
+                otelcol_exporter_queue_size{data_type="logs",exporter="otlphttp"} 2
+                otelcol_exporter_queue_size{data_type="traces",exporter="otlphttp"} 3
+                otelcol_exporter_queue_capacity{data_type="metrics",exporter="otlphttp"} 2048
+                otelcol_exporter_queue_capacity{data_type="logs",exporter="otlphttp"} 2048
+                otelcol_exporter_queue_capacity{data_type="traces",exporter="otlphttp"} 2048
                 otelcol_fileconsumer_open_files{receiver="filelog/payments"} 2
                 otelcol_fileconsumer_reading_files{receiver="filelog/payments"} 1
                 """;
@@ -51,8 +55,16 @@ class OtelRuntimeTelemetryClientTest {
         assertEquals(ManagedOtelRuntimeStatus.ValueState.UNAVAILABLE,
                 telemetry.refused().traces().state());
         assertObserved(telemetry.failed().metrics(), 6);
-        assertObserved(telemetry.queueSize(), 5);
-        assertObserved(telemetry.queueCapacity(), 2048);
+        assertObserved(telemetry.enqueueFailed().metrics(), 2);
+        assertObserved(telemetry.sendFailed().metrics(), 4);
+        assertObserved(telemetry.queueSize(), 6);
+        assertObserved(telemetry.queueCapacity(), 6144);
+        assertObserved(telemetry.queueSizeBySignal().metrics(), 1);
+        assertObserved(telemetry.queueSizeBySignal().logs(), 2);
+        assertObserved(telemetry.queueSizeBySignal().traces(), 3);
+        assertObserved(telemetry.queueCapacityBySignal().metrics(), 2048);
+        assertObserved(telemetry.queueCapacityBySignal().logs(), 2048);
+        assertObserved(telemetry.queueCapacityBySignal().traces(), 2048);
         assertObserved(telemetry.fileConsumer().openFiles(), 2);
         assertObserved(telemetry.fileConsumer().readingFiles(), 1);
     }

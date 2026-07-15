@@ -128,6 +128,8 @@ public record ManagedOtelRuntimeStatus(int schemaVersion, boolean enabled, Runti
         BACKEND_UNAVAILABLE,
         AUTHENTICATION_FAILED,
         QUEUE_FULL,
+        STORAGE_FULL,
+        STORAGE_CORRUPTED,
         PROCESS_CRASH,
         UNKNOWN
     }
@@ -184,6 +186,23 @@ public record ManagedOtelRuntimeStatus(int schemaVersion, boolean enabled, Runti
     }
 
     /**
+     * Per-signal operational gauges. These values contain no telemetry payload content.
+     */
+    public record SignalGauges(ObservedLong metrics, ObservedLong logs, ObservedLong traces) {
+
+        public SignalGauges {
+            metrics = Objects.requireNonNull(metrics, "metrics");
+            logs = Objects.requireNonNull(logs, "logs");
+            traces = Objects.requireNonNull(traces, "traces");
+        }
+
+        public static SignalGauges unavailable() {
+            return new SignalGauges(
+                    ObservedLong.unavailable(), ObservedLong.unavailable(), ObservedLong.unavailable());
+        }
+    }
+
+    /**
      * File consumer gauges without file paths or log records.
      */
     public record FileConsumerStatus(ObservedLong openFiles, ObservedLong readingFiles) {
@@ -208,7 +227,20 @@ public record ManagedOtelRuntimeStatus(int schemaVersion, boolean enabled, Runti
     public record RuntimeTelemetry(SignalCounters accepted, SignalCounters refused,
                                    SignalCounters sent, SignalCounters failed,
                                    ObservedLong queueSize, ObservedLong queueCapacity,
-                                   FileConsumerStatus fileConsumer) {
+                                   FileConsumerStatus fileConsumer,
+                                   SignalGauges queueSizeBySignal,
+                                   SignalGauges queueCapacityBySignal,
+                                   SignalCounters enqueueFailed,
+                                   SignalCounters sendFailed) {
+
+        public RuntimeTelemetry(SignalCounters accepted, SignalCounters refused,
+                                SignalCounters sent, SignalCounters failed,
+                                ObservedLong queueSize, ObservedLong queueCapacity,
+                                FileConsumerStatus fileConsumer) {
+            this(accepted, refused, sent, failed, queueSize, queueCapacity, fileConsumer,
+                    SignalGauges.unavailable(), SignalGauges.unavailable(),
+                    SignalCounters.unavailable(), SignalCounters.unavailable());
+        }
 
         public RuntimeTelemetry {
             accepted = Objects.requireNonNull(accepted, "accepted");
@@ -218,6 +250,12 @@ public record ManagedOtelRuntimeStatus(int schemaVersion, boolean enabled, Runti
             queueSize = Objects.requireNonNull(queueSize, "queueSize");
             queueCapacity = Objects.requireNonNull(queueCapacity, "queueCapacity");
             fileConsumer = Objects.requireNonNull(fileConsumer, "fileConsumer");
+            queueSizeBySignal = queueSizeBySignal == null ? SignalGauges.unavailable() : queueSizeBySignal;
+            queueCapacityBySignal = queueCapacityBySignal == null
+                    ? SignalGauges.unavailable()
+                    : queueCapacityBySignal;
+            enqueueFailed = enqueueFailed == null ? SignalCounters.unavailable() : enqueueFailed;
+            sendFailed = sendFailed == null ? SignalCounters.unavailable() : sendFailed;
         }
 
         public static RuntimeTelemetry unavailable(boolean fileConsumerConfigured) {
@@ -228,7 +266,11 @@ public record ManagedOtelRuntimeStatus(int schemaVersion, boolean enabled, Runti
                     SignalCounters.unavailable(),
                     ObservedLong.unavailable(),
                     ObservedLong.unavailable(),
-                    fileConsumerConfigured ? FileConsumerStatus.unavailable() : FileConsumerStatus.notApplicable());
+                    fileConsumerConfigured ? FileConsumerStatus.unavailable() : FileConsumerStatus.notApplicable(),
+                    SignalGauges.unavailable(),
+                    SignalGauges.unavailable(),
+                    SignalCounters.unavailable(),
+                    SignalCounters.unavailable());
         }
     }
 

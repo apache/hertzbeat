@@ -41,6 +41,11 @@ class OtelRuntimeFailureClassifierTest {
                 Arguments.of("export failed: connection refused", failure("backend_unavailable")),
                 Arguments.of("export failed with HTTP 401 Unauthorized", failure("authentication_failed")),
                 Arguments.of("sending queue is full", failure("queue_full")),
+                Arguments.of("database reached maximum size", failure("storage_full")),
+                Arguments.of("failed to enqueue: database reached maximum size", failure("storage_full")),
+                Arguments.of("write failed: no space left on device", failure("storage_full")),
+                Arguments.of("failed to open storage: checksum error", failure("storage_corrupted")),
+                Arguments.of("failed to open storage: invalid database", failure("storage_corrupted")),
                 Arguments.of("runtime exited unexpectedly with code 137", failure("process_crash")));
     }
 

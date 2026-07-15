@@ -34,6 +34,10 @@ public class OtelRuntimeStatusProvider implements CollectorRuntimeStatusProvider
     private final OtelRuntimeTelemetryClient telemetryClient;
     private final OtelRuntimeDiagnosticsReader diagnosticsReader;
     private final OtelRuntimeFailureClassifier failureClassifier;
+    private long telemetryPid = -1;
+    private long enqueueFailedMetrics;
+    private long enqueueFailedLogs;
+    private long enqueueFailedTraces;
 
     public OtelRuntimeStatusProvider(
             OtelRuntimeProperties properties,
@@ -84,15 +88,23 @@ public class OtelRuntimeStatusProvider implements CollectorRuntimeStatusProvider
 
     private FailureCode failureCode(OtelRuntimeSnapshot snapshot, RuntimeTelemetry telemetry) {
         FailureCode supervisorFailure = failureClassifier.classify(snapshot.lastError());
+        FailureCode diagnosticFailure = diagnosticsReader.latestFailure(properties);
+        boolean enqueueFailureAdvanced = enqueueFailureAdvanced(snapshot.pid(), telemetry.enqueueFailed());
+        if (diagnosticFailure == FailureCode.STORAGE_CORRUPTED
+                && snapshot.state() != OtelRuntimeState.RUNNING) {
+            return diagnosticFailure;
+        }
         if (supervisorFailure != FailureCode.NONE && supervisorFailure != FailureCode.UNKNOWN) {
             return supervisorFailure;
         }
-        FailureCode diagnosticFailure = diagnosticsReader.latestFailure(properties);
         if (diagnosticFailure == FailureCode.AUTHENTICATION_FAILED && positive(telemetry.queueSize())) {
             return diagnosticFailure;
         }
         if (queueFull(telemetry)) {
             return FailureCode.QUEUE_FULL;
+        }
+        if (diagnosticFailure == FailureCode.STORAGE_FULL && enqueueFailureAdvanced) {
+            return FailureCode.STORAGE_FULL;
         }
         if (positive(telemetry.queueSize())
                 && (failed(telemetry) || diagnosticFailure == FailureCode.BACKEND_UNAVAILABLE)) {
@@ -103,17 +115,62 @@ public class OtelRuntimeStatusProvider implements CollectorRuntimeStatusProvider
         return supervisorFailure;
     }
 
+    private synchronized boolean enqueueFailureAdvanced(
+            long pid, ManagedOtelRuntimeStatus.SignalCounters current) {
+        if (pid != telemetryPid) {
+            telemetryPid = pid;
+            enqueueFailedMetrics = 0;
+            enqueueFailedLogs = 0;
+            enqueueFailedTraces = 0;
+        }
+        boolean advanced = advanced(current.metrics(), enqueueFailedMetrics)
+                || advanced(current.logs(), enqueueFailedLogs)
+                || advanced(current.traces(), enqueueFailedTraces);
+        enqueueFailedMetrics = observedOrPrevious(current.metrics(), enqueueFailedMetrics);
+        enqueueFailedLogs = observedOrPrevious(current.logs(), enqueueFailedLogs);
+        enqueueFailedTraces = observedOrPrevious(current.traces(), enqueueFailedTraces);
+        return advanced;
+    }
+
+    private boolean advanced(ObservedLong current, long previous) {
+        return available(current) && current.value() > previous;
+    }
+
+    private long observedOrPrevious(ObservedLong current, long previous) {
+        return available(current) ? current.value() : previous;
+    }
+
     private boolean queueFull(RuntimeTelemetry telemetry) {
+        ManagedOtelRuntimeStatus.SignalGauges sizes = telemetry.queueSizeBySignal();
+        ManagedOtelRuntimeStatus.SignalGauges capacities = telemetry.queueCapacityBySignal();
+        boolean perSignalAvailable = queueGaugeAvailable(sizes.metrics(), capacities.metrics())
+                || queueGaugeAvailable(sizes.logs(), capacities.logs())
+                || queueGaugeAvailable(sizes.traces(), capacities.traces());
+        if (perSignalAvailable) {
+            return queueGaugeFull(sizes.metrics(), capacities.metrics())
+                    || queueGaugeFull(sizes.logs(), capacities.logs())
+                    || queueGaugeFull(sizes.traces(), capacities.traces());
+        }
         return available(telemetry.queueSize())
                 && available(telemetry.queueCapacity())
                 && telemetry.queueCapacity().value() > 0
                 && telemetry.queueSize().value() >= telemetry.queueCapacity().value();
     }
 
+    private boolean queueGaugeAvailable(ObservedLong size, ObservedLong capacity) {
+        return available(size) && available(capacity);
+    }
+
+    private boolean queueGaugeFull(ObservedLong size, ObservedLong capacity) {
+        return queueGaugeAvailable(size, capacity)
+                && capacity.value() > 0
+                && size.value() >= capacity.value();
+    }
+
     private boolean failed(RuntimeTelemetry telemetry) {
-        return positive(telemetry.failed().metrics())
-                || positive(telemetry.failed().logs())
-                || positive(telemetry.failed().traces());
+        return positive(telemetry.sendFailed().metrics())
+                || positive(telemetry.sendFailed().logs())
+                || positive(telemetry.sendFailed().traces());
     }
 
     private boolean positive(ObservedLong value) {

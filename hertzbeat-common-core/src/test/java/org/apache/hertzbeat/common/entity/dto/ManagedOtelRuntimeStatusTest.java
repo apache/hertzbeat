@@ -65,6 +65,8 @@ class ManagedOtelRuntimeStatusTest {
         assertEquals(0, status.telemetry().accepted().metrics().value());
         assertEquals(ManagedOtelRuntimeStatus.ValueState.UNAVAILABLE,
                 status.telemetry().accepted().logs().state());
+        assertEquals(ManagedOtelRuntimeStatus.ValueState.UNAVAILABLE,
+                status.telemetry().queueSizeBySignal().metrics().state());
         assertFalse(status.toString().contains("telemetry body"));
     }
 
@@ -186,5 +188,7 @@ class ManagedOtelRuntimeStatusTest {
         assertEquals(ManagedOtelRuntimeStatus.FailureCode.NONE, status.failureCode());
         assertEquals(ManagedOtelRuntimeStatus.ValueState.UNAVAILABLE,
                 status.telemetry().queueSize().state());
+        assertEquals(ManagedOtelRuntimeStatus.ValueState.UNAVAILABLE,
+                status.telemetry().queueCapacityBySignal().traces().state());
     }
 }

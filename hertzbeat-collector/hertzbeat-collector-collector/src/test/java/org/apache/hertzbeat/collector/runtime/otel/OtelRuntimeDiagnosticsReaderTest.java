@@ -56,4 +56,21 @@ class OtelRuntimeDiagnosticsReaderTest {
         assertFalse(sanitized.contains("certificate-content"));
         assertFalse(sanitized.contains("user log body"));
     }
+
+    @Test
+    void classifiesBoundedStorageFailuresFromTheRuntimeLog() throws Exception {
+        OtelRuntimeProperties properties = new OtelRuntimeProperties();
+        properties.setHome(tempDir);
+        properties.setLog(Path.of("logs/runtime.log"));
+        Path log = tempDir.resolve("logs/runtime.log");
+        Files.createDirectories(log.getParent());
+        OtelRuntimeDiagnosticsReader reader =
+                new OtelRuntimeDiagnosticsReader(new OtelRuntimeFailureClassifier());
+
+        Files.writeString(log, "persistent queue write failed: database reached maximum size\n");
+        assertEquals(ManagedOtelRuntimeStatus.FailureCode.STORAGE_FULL, reader.latestFailure(properties));
+
+        Files.writeString(log, "failed to open persistent queue: checksum error\n");
+        assertEquals(ManagedOtelRuntimeStatus.FailureCode.STORAGE_CORRUPTED, reader.latestFailure(properties));
+    }
 }

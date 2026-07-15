@@ -28,6 +28,14 @@ public class OtelRuntimeFailureClassifier {
             return FailureCode.NONE;
         }
         String value = diagnostic.toLowerCase(Locale.ROOT);
+        if (containsAny(value, "no space left on device", "disk quota exceeded",
+                "database reached maximum size", "database or disk is full")) {
+            return FailureCode.STORAGE_FULL;
+        }
+        if (containsAny(value, "checksum error", "invalid database", "database corruption detected",
+                "corrupted database")) {
+            return FailureCode.STORAGE_CORRUPTED;
+        }
         if (containsAny(value, "queue is full", "failed to enqueue", "queue capacity reached")) {
             return FailureCode.QUEUE_FULL;
         }
