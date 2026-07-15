@@ -104,6 +104,30 @@ public class OtelRuntimeProperties {
 
     private int otlpMaxRequestMiB = 4;
 
+    private Duration otlpReadTimeout = Duration.ofSeconds(15);
+
+    private Duration otlpWriteTimeout = Duration.ofSeconds(15);
+
+    private Duration otlpIdleTimeout = Duration.ofSeconds(30);
+
+    private boolean otlpGatewayEnabled;
+
+    private Path otlpGatewayCertificateFile;
+
+    private Path otlpGatewayPrivateKeyFile;
+
+    private Path otlpGatewayClientCaFile;
+
+    private String otlpGatewayBearerToken = "";
+
+    private Path otlpGatewayBearerTokenFile;
+
+    private int runtimeMemoryLimitMiB = 256;
+
+    private int runtimeMemorySpikeLimitMiB = 64;
+
+    private Duration runtimeMemoryCheckInterval = Duration.ofSeconds(1);
+
     private int healthPort = 13133;
 
     private Duration healthTimeout = Duration.ofSeconds(2);

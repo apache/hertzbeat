@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.collector.runtime.otel;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -57,6 +58,7 @@ class OtelRuntimeConfigRendererTest {
         assertTrue(yaml.contains("endpoint: '127.0.0.1:4318'"));
         assertTrue(yaml.contains("max_recv_msg_size_mib: 4"));
         assertTrue(yaml.contains("max_request_body_size: 4194304"));
+        assertTrue(yaml.contains("check_interval: 1s\n    limit_mib: 256\n    spike_limit_mib: 64"));
         assertTrue(yaml.contains("collection_interval: 30s"));
         assertTrue(yaml.contains("resource_detection:\n    detectors: [env, system]"));
         assertTrue(yaml.contains("timeout: 2s"));
@@ -85,6 +87,27 @@ class OtelRuntimeConfigRendererTest {
         assertTrue(yaml.contains("extensions: [health_check, file_storage]"));
         assertFalse(yaml.contains(properties.getToken()));
         assertTrue(Files.isDirectory(tempDir.resolve("data/otel-runtime")));
+    }
+
+    @Test
+    void rendersOnlyBoundedSharedRuntimeMemoryBudget() throws Exception {
+        OtelRuntimeProperties properties = new OtelRuntimeProperties();
+        properties.setHome(tempDir);
+        properties.setConfig(Path.of("conf/runtime.yaml"));
+        properties.setRuntimeMemoryLimitMiB(64);
+        properties.setRuntimeMemorySpikeLimitMiB(16);
+        properties.setRuntimeMemoryCheckInterval(Duration.ofMillis(100));
+
+        String yaml = Files.readString(new OtelRuntimeConfigRenderer().render(properties));
+
+        assertTrue(yaml.contains("check_interval: 100ms\n    limit_mib: 64\n    spike_limit_mib: 16"));
+        assertEquals(3, occurrences(yaml, "processors: [memory_limiter,"));
+
+        properties.setRuntimeMemoryLimitMiB(63);
+        assertThrows(IllegalArgumentException.class, () -> new OtelRuntimeConfigRenderer().render(properties));
+        properties.setRuntimeMemoryLimitMiB(64);
+        properties.setRuntimeMemorySpikeLimitMiB(64);
+        assertThrows(IllegalArgumentException.class, () -> new OtelRuntimeConfigRenderer().render(properties));
     }
 
     @Test
@@ -209,13 +232,61 @@ class OtelRuntimeConfigRendererTest {
         OtelRuntimeProperties properties = new OtelRuntimeProperties();
         properties.setHome(tempDir);
         properties.setConfig(Path.of("conf/runtime.yaml"));
-        properties.setOtlpHttpEndpoint("0.0.0.0:4318/injected");
+        properties.setOtlpHttpEndpoint("0.0.0.0:4318");
 
+        assertThrows(IllegalArgumentException.class, () -> new OtelRuntimeConfigRenderer().render(properties));
+
+        properties.setOtlpHttpEndpoint("127.0.0.1:4318/injected");
         assertThrows(IllegalArgumentException.class, () -> new OtelRuntimeConfigRenderer().render(properties));
 
         properties.setOtlpHttpEndpoint("127.0.0.1:4318");
         properties.setOtlpMaxRequestMiB(65);
         assertThrows(IllegalArgumentException.class, () -> new OtelRuntimeConfigRenderer().render(properties));
+    }
+
+    @Test
+    void requiresTlsAndBearerAuthenticationForExplicitGatewayMode() throws Exception {
+        Path certificate = Files.writeString(tempDir.resolve("gateway-cert.pem"), "certificate");
+        Path privateKey = Files.writeString(tempDir.resolve("gateway-key.pem"), "private-key");
+        Path tokenFile = Files.writeString(tempDir.resolve("gateway.tokens"), "integration-secret-token");
+        Path clientCa = Files.writeString(tempDir.resolve("gateway-client-ca.pem"), "client-ca");
+        OtelRuntimeConfigRenderer.setOwnerOnlyWhenSupported(privateKey);
+        OtelRuntimeConfigRenderer.setOwnerOnlyWhenSupported(tokenFile);
+        OtelRuntimeProperties properties = new OtelRuntimeProperties();
+        properties.setHome(tempDir);
+        properties.setConfig(Path.of("conf/runtime.yaml"));
+        properties.setOtlpGatewayEnabled(true);
+        properties.setOtlpGrpcEndpoint("0.0.0.0:4317");
+        properties.setOtlpHttpEndpoint("0.0.0.0:4318");
+
+        assertThrows(IllegalArgumentException.class, () -> new OtelRuntimeConfigRenderer().render(properties));
+
+        properties.setOtlpGatewayCertificateFile(certificate);
+        properties.setOtlpGatewayPrivateKeyFile(privateKey);
+        properties.setOtlpGatewayBearerTokenFile(tokenFile);
+        properties.setOtlpGatewayClientCaFile(clientCa);
+        properties.setOtlpReadTimeout(Duration.ofSeconds(15));
+        properties.setOtlpWriteTimeout(Duration.ofSeconds(15));
+        properties.setOtlpIdleTimeout(Duration.ofSeconds(30));
+
+        String yaml = Files.readString(new OtelRuntimeConfigRenderer().render(properties));
+
+        assertTrue(yaml.contains("read_timeout: 15s"));
+        assertTrue(yaml.contains("write_timeout: 15s"));
+        assertTrue(yaml.contains("idle_timeout: 30s"));
+        assertEquals(2, occurrences(yaml, "auth:\n          authenticator: bearertokenauth"));
+        assertEquals(2, occurrences(yaml, "cert_file: '" + certificate.toRealPath() + "'"));
+        assertEquals(2, occurrences(yaml, "key_file: '" + privateKey.toRealPath() + "'"));
+        assertEquals(2, occurrences(yaml, "client_ca_file: '" + clientCa.toRealPath() + "'"));
+        assertTrue(yaml.contains("bearertokenauth:\n    filename: '" + tokenFile.toRealPath() + "'"));
+        assertTrue(yaml.contains("extensions: [health_check, file_storage, bearertokenauth]"));
+        assertFalse(yaml.contains("integration-secret-token"));
+
+        properties.setOtlpGatewayBearerTokenFile(null);
+        properties.setOtlpGatewayBearerToken("strong-inline-secret-token");
+        String inlineSecretYaml = Files.readString(new OtelRuntimeConfigRenderer().render(properties));
+        assertTrue(inlineSecretYaml.contains("token: ${env:HERTZBEAT_OTLP_GATEWAY_TOKEN}"));
+        assertFalse(inlineSecretYaml.contains("strong-inline-secret-token"));
     }
 
     @Test
@@ -241,5 +312,9 @@ class OtelRuntimeConfigRendererTest {
         assertFalse(replaced.contains("filelog/payments"));
         assertTrue(replaced.contains("metrics:\n      receivers: [hostmetrics, otlp]"));
         assertTrue(replaced.contains("logs:\n      receivers: [otlp]"));
+    }
+
+    private static int occurrences(String value, String target) {
+        return (value.length() - value.replace(target, "").length()) / target.length();
     }
 }

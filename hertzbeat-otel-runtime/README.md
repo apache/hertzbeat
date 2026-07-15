@@ -77,6 +77,38 @@ configuration without credentials, validates it, waits for loopback health,
 and then reports its own runtime state. A runtime failure degrades only this
 optional data plane; Java agentless collection continues.
 
+### OTLP Agent and Gateway modes
+
+Agent mode is the default. It listens only on `127.0.0.1:4317` and
+`127.0.0.1:4318`, caps each request at 4 MiB, and is intended for applications
+running on the same host. A non-loopback listener is rejected unless Gateway
+mode is explicitly enabled.
+
+Gateway mode requires a TLS certificate, its owner-only private key, and
+exactly one bearer-token source. The token can be passed through
+`HERTZBEAT_OTLP_GATEWAY_TOKEN`, or read from an owner-only local file so the
+official bearer-token extension can reload it without restarting the runtime.
+The certificate and secret file locations are local Collector configuration;
+they are never accepted as server-managed desired configuration. Spring's
+relaxed environment binding supports these local values:
+
+```shell
+export HERTZBEAT_OTLP_GATEWAY_ENABLED=true
+export HERTZBEAT_OTLP_GRPC_LISTEN_ENDPOINT=0.0.0.0:4317
+export HERTZBEAT_OTLP_HTTP_LISTEN_ENDPOINT=0.0.0.0:4318
+export COLLECTOR_OTEL_RUNTIME_OTLP_GATEWAY_CERTIFICATE_FILE=/etc/hertzbeat/gateway.crt
+export COLLECTOR_OTEL_RUNTIME_OTLP_GATEWAY_PRIVATE_KEY_FILE=/etc/hertzbeat/gateway.key
+export COLLECTOR_OTEL_RUNTIME_OTLP_GATEWAY_BEARER_TOKEN_FILE=/etc/hertzbeat/gateway.token
+```
+
+Set `COLLECTOR_OTEL_RUNTIME_OTLP_GATEWAY_CLIENT_CA_FILE` to a trusted client CA
+to require mTLS in addition to the bearer token. The private key and token file
+must not be readable or writable by group or other users on POSIX systems.
+Transport timeouts, the 4 MiB body limit, the persistent 2,048-request export
+queue, and the shared memory admission budget remain bounded in both modes.
+The default 256 MiB runtime memory budget can be locally tuned within enforced
+limits; all active sources and incoming OTLP pipelines use the same limiter.
+
 Prometheus targets are bounded server-managed intent. File-log paths are
 resolved from administrator-owned local profiles, so a remote configuration
 cannot expand the Collector host's filesystem access. For example:

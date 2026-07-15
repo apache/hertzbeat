@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.collector.runtime.otel;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeConfig;
@@ -34,15 +35,18 @@ final class OtelRuntimeGovernance {
     private OtelRuntimeGovernance() {
     }
 
-    static void appendProcessors(StringBuilder yaml, ManagedOtelRuntimeConfig desiredConfig) {
+    static void appendProcessors(
+            StringBuilder yaml, ManagedOtelRuntimeConfig desiredConfig, OtelRuntimeProperties properties) {
+        MemoryBudget memoryBudget = memoryBudget(properties);
         // Incoming attributes win detection; HertzBeat ownership is authoritative; secrets are removed last.
         yaml.append("processors:\n");
         yaml.append("""
                   memory_limiter:
-                    check_interval: 1s
-                    limit_mib: 256
-                    spike_limit_mib: 64
-                """);
+                    check_interval: %s
+                    limit_mib: %d
+                    spike_limit_mib: %d
+                """.formatted(
+                duration(memoryBudget.checkInterval()), memoryBudget.limitMiB(), memoryBudget.spikeLimitMiB()));
         appendResourceDetection(yaml, desiredConfig);
         appendResourceGovernance(yaml, desiredConfig);
         yaml.append("  attributes/sanitize:\n    actions:\n");
@@ -69,6 +73,28 @@ final class OtelRuntimeGovernance {
         }
         processors.add("batch");
         return String.join(", ", processors);
+    }
+
+    private static MemoryBudget memoryBudget(OtelRuntimeProperties properties) {
+        int limitMiB = properties.getRuntimeMemoryLimitMiB();
+        int spikeLimitMiB = properties.getRuntimeMemorySpikeLimitMiB();
+        Duration checkInterval = properties.getRuntimeMemoryCheckInterval();
+        if (limitMiB < 64 || limitMiB > 4096) {
+            throw new IllegalArgumentException("Runtime memory limit must be between 64 and 4096 MiB");
+        }
+        if (spikeLimitMiB < 1 || spikeLimitMiB >= limitMiB) {
+            throw new IllegalArgumentException("Runtime memory spike limit must be below the memory limit");
+        }
+        if (checkInterval == null || checkInterval.compareTo(Duration.ofMillis(100)) < 0
+                || checkInterval.compareTo(Duration.ofSeconds(10)) > 0
+                || checkInterval.toMillis() * 1_000_000 != checkInterval.toNanos()) {
+            throw new IllegalArgumentException("Runtime memory check interval must be 100ms to 10s in milliseconds");
+        }
+        return new MemoryBudget(limitMiB, spikeLimitMiB, checkInterval);
+    }
+
+    private static String duration(Duration value) {
+        return value.toMillis() % 1000 == 0 ? value.toSeconds() + "s" : value.toMillis() + "ms";
     }
 
     private static void appendResourceDetection(
@@ -154,5 +180,8 @@ final class OtelRuntimeGovernance {
 
     private static String yamlScalar(String value) {
         return "'" + value.replace("'", "''") + "'";
+    }
+
+    private record MemoryBudget(int limitMiB, int spikeLimitMiB, Duration checkInterval) {
     }
 }

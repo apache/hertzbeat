@@ -44,7 +44,7 @@ fi
 for component in hostmetricsreceiver prometheusreceiver filelogreceiver otlpreceiver \
     memorylimiterprocessor resourcedetectionprocessor resourceprocessor \
     attributesprocessor filterprocessor batchprocessor otlphttpexporter \
-    healthcheckextension filestorage; do
+    healthcheckextension filestorage bearertokenauthextension; do
   if ! grep -q "$component" "$runtime_dir/builder-config.yaml"; then
     echo "missing required Phase 0 component: $component" >&2
     exit 1

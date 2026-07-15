@@ -70,6 +70,17 @@ collector:
     file-storage-directory: ${HERTZBEAT_OTEL_FILE_STORAGE_DIRECTORY:data/otel-runtime}
     export-endpoint: ${HERTZBEAT_OTLP_HTTP_ENDPOINT:http://127.0.0.1:1157/api/otlp}
     token: ${HERTZBEAT_OTLP_TOKEN:}
+    otlp-grpc-endpoint: ${HERTZBEAT_OTLP_GRPC_LISTEN_ENDPOINT:127.0.0.1:4317}
+    otlp-http-endpoint: ${HERTZBEAT_OTLP_HTTP_LISTEN_ENDPOINT:127.0.0.1:4318}
+    otlp-max-request-mi-b: ${HERTZBEAT_OTLP_MAX_REQUEST_MIB:4}
+    otlp-read-timeout: ${HERTZBEAT_OTLP_READ_TIMEOUT:15s}
+    otlp-write-timeout: ${HERTZBEAT_OTLP_WRITE_TIMEOUT:15s}
+    otlp-idle-timeout: ${HERTZBEAT_OTLP_IDLE_TIMEOUT:30s}
+    otlp-gateway-enabled: ${HERTZBEAT_OTLP_GATEWAY_ENABLED:false}
+    otlp-gateway-bearer-token: ${HERTZBEAT_OTLP_GATEWAY_TOKEN:}
+    runtime-memory-limit-mi-b: ${HERTZBEAT_OTEL_RUNTIME_MEMORY_LIMIT_MIB:256}
+    runtime-memory-spike-limit-mi-b: ${HERTZBEAT_OTEL_RUNTIME_MEMORY_SPIKE_LIMIT_MIB:64}
+    runtime-memory-check-interval: ${HERTZBEAT_OTEL_RUNTIME_MEMORY_CHECK_INTERVAL:1s}
   dispatch:
     entrance:
       netty:

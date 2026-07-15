@@ -20,6 +20,7 @@ package org.apache.hertzbeat.collector.runtime.otel;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.file.Path;
 import java.time.Duration;
 import org.apache.hertzbeat.collector.dispatch.CollectorRuntimeStatusProvider;
 import org.junit.jupiter.api.Test;
@@ -91,6 +92,43 @@ class OtelRuntimeConfigurationTest {
                     assertEquals("payments-logs", properties.getFileLogSources().getFirst().pathProfile());
                     assertEquals("/var/log/payments/*.log",
                             properties.getFileLogProfiles().get("payments-logs").getFirst());
+                });
+    }
+
+    @Test
+    void bindsExplicitGatewaySecurityAndTransportBounds() {
+        contextRunner
+                .withPropertyValues(
+                        "collector.otel-runtime.otlp-gateway-enabled=true",
+                        "collector.otel-runtime.otlp-grpc-endpoint=0.0.0.0:4317",
+                        "collector.otel-runtime.otlp-http-endpoint=0.0.0.0:4318",
+                        "collector.otel-runtime.otlp-max-request-mi-b=8",
+                        "collector.otel-runtime.otlp-read-timeout=20s",
+                        "collector.otel-runtime.otlp-write-timeout=25s",
+                        "collector.otel-runtime.otlp-idle-timeout=45s",
+                        "collector.otel-runtime.runtime-memory-limit-mi-b=512",
+                        "collector.otel-runtime.runtime-memory-spike-limit-mi-b=128",
+                        "collector.otel-runtime.runtime-memory-check-interval=500ms",
+                        "collector.otel-runtime.otlp-gateway-certificate-file=/etc/hertzbeat/gateway.crt",
+                        "collector.otel-runtime.otlp-gateway-private-key-file=/etc/hertzbeat/gateway.key",
+                        "collector.otel-runtime.otlp-gateway-client-ca-file=/etc/hertzbeat/client-ca.crt",
+                        "collector.otel-runtime.otlp-gateway-bearer-token-file=/etc/hertzbeat/gateway.tokens"
+                )
+                .run(context -> {
+                    assertTrue(context.isRunning());
+                    OtelRuntimeProperties properties = context.getBean(OtelRuntimeProperties.class);
+                    assertTrue(properties.isOtlpGatewayEnabled());
+                    assertEquals("0.0.0.0:4317", properties.getOtlpGrpcEndpoint());
+                    assertEquals(8, properties.getOtlpMaxRequestMiB());
+                    assertEquals(Duration.ofSeconds(20), properties.getOtlpReadTimeout());
+                    assertEquals(512, properties.getRuntimeMemoryLimitMiB());
+                    assertEquals(128, properties.getRuntimeMemorySpikeLimitMiB());
+                    assertEquals(Duration.ofMillis(500), properties.getRuntimeMemoryCheckInterval());
+                    assertEquals(Path.of("/etc/hertzbeat/gateway.crt"),
+                            properties.getOtlpGatewayCertificateFile());
+                    assertEquals(Path.of("/etc/hertzbeat/gateway.tokens"),
+                            properties.getOtlpGatewayBearerTokenFile());
+                    assertTrue(properties.getOtlpGatewayBearerToken().isBlank());
                 });
     }
 }

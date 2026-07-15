@@ -315,6 +315,9 @@ public class OtelRuntimeSupervisor implements SmartLifecycle, AutoCloseable, Col
             properties.getPrometheusHeaderSecrets().forEach((reference, secret) -> environment.put(
                     OtelRuntimeSourcePolicy.prometheusSecretEnvironmentName(reference), secret));
         }
+        if (properties.isOtlpGatewayEnabled() && properties.getOtlpGatewayBearerTokenFile() == null) {
+            environment.put("HERTZBEAT_OTLP_GATEWAY_TOKEN", properties.getOtlpGatewayBearerToken());
+        }
         return environment;
     }
 

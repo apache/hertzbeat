@@ -10,6 +10,9 @@ TEST_CONFIG := config/collector-config.test.yaml
 PLATFORMS := macos-arm64 macos-amd64 linux-arm64 linux-amd64 windows-amd64
 GO_BUILD_TAGS := remove_all_sd
 GO_LDFLAGS := -s -w
+# go-licenses does not recognize this module's shortened Apache-2.0 text, so the
+# license target verifies the upstream file explicitly before excluding it.
+GO_FQDN_MODULE := github.com/Showmax/go-fqdn
 
 .PHONY: build build-platforms clean license-check release-assets validate
 
@@ -32,9 +35,13 @@ build-platforms: build
 	for platform in $(PLATFORMS); do cp runtime-manifest.json dist/$$platform/; done
 
 license-check: build
+	cd $(RUNTIME_SOURCE) && fqdn_dir=$$(go list -m -f '{{.Dir}}' $(GO_FQDN_MODULE)) && \
+		test -f "$$fqdn_dir/LICENSE" && \
+		grep -Fq 'Licensed under the Apache License, Version 2.0' "$$fqdn_dir/LICENSE"
 	cd $(RUNTIME_SOURCE) && GOFLAGS="-tags=$(GO_BUILD_TAGS)" \
 		go run github.com/google/go-licenses/v2@v2.0.1 check . \
-		--ignore github.com/apache/hertzbeat
+		--ignore github.com/apache/hertzbeat \
+		--ignore $(GO_FQDN_MODULE)
 
 release-assets: build-platforms
 	../script/ci/generate-hybrid-collector-release-assets.sh

@@ -48,6 +48,7 @@ public class OtelRuntimeConfigRenderer {
             PosixFilePermission.OWNER_EXECUTE
     );
     private final OtelRuntimeSourcePolicy sourcePolicy = new OtelRuntimeSourcePolicy();
+    private final OtelRuntimeGatewayPolicy gatewayPolicy = new OtelRuntimeGatewayPolicy();
 
     /**
      * Render and atomically publish the active runtime configuration.
@@ -73,9 +74,10 @@ public class OtelRuntimeConfigRenderer {
         Files.createDirectories(target.getParent());
         ManagedOtelRuntimeConfig desiredConfig = properties.desiredConfig();
         OtelRuntimeSourcePolicy.ResolvedSources sources = sourcePolicy.resolve(desiredConfig, properties);
+        OtelRuntimeGatewayPolicy.ResolvedGateway gateway = gatewayPolicy.resolve(properties);
         prepareFileStorage(sources.storageDirectory());
         Path candidate = Files.createTempFile(target.getParent(), "otel-runtime-", ".yaml.candidate");
-        Files.writeString(candidate, template(properties, desiredConfig, sources), StandardCharsets.UTF_8);
+        Files.writeString(candidate, template(properties, desiredConfig, sources, gateway), StandardCharsets.UTF_8);
         try (FileChannel channel = FileChannel.open(candidate, StandardOpenOption.WRITE)) {
             channel.force(true);
         }
@@ -106,33 +108,29 @@ public class OtelRuntimeConfigRenderer {
     }
 
     private static String template(OtelRuntimeProperties properties, ManagedOtelRuntimeConfig desiredConfig,
-                                   OtelRuntimeSourcePolicy.ResolvedSources sources) {
-        String grpcEndpoint = receiverEndpoint(properties.getOtlpGrpcEndpoint(), "OTLP gRPC");
-        String httpEndpoint = receiverEndpoint(properties.getOtlpHttpEndpoint(), "OTLP HTTP");
+                                   OtelRuntimeSourcePolicy.ResolvedSources sources,
+                                   OtelRuntimeGatewayPolicy.ResolvedGateway gateway) {
         int maxRequestMiB = properties.getOtlpMaxRequestMiB();
         if (maxRequestMiB < 1 || maxRequestMiB > 64) {
             throw new IllegalArgumentException("OTLP maximum request size must be between 1 and 64 MiB");
         }
-        StringBuilder yaml = new StringBuilder("""
-                receivers:
-                  otlp:
-                    protocols:
-                      grpc:
-                        endpoint: %s
-                        max_recv_msg_size_mib: %d
-                      http:
-                        endpoint: %s
-                        max_request_body_size: %d
-                """.formatted(
-                yamlScalar(grpcEndpoint),
-                maxRequestMiB,
-                yamlScalar(httpEndpoint),
-                maxRequestMiB * 1024 * 1024
-        ));
+        StringBuilder yaml = new StringBuilder("receivers:\n  otlp:\n    protocols:\n")
+                .append("      grpc:\n")
+                .append("        endpoint: ").append(yamlScalar(gateway.grpcEndpoint())).append('\n')
+                .append("        max_recv_msg_size_mib: ").append(maxRequestMiB).append('\n');
+        appendGatewayProtocolSecurity(yaml, gateway);
+        yaml.append("      http:\n")
+                .append("        endpoint: ").append(yamlScalar(gateway.httpEndpoint())).append('\n')
+                .append("        max_request_body_size: ").append(maxRequestMiB * 1024 * 1024).append('\n')
+                .append("        read_timeout: ").append(gateway.readTimeout().toSeconds()).append("s\n")
+                .append("        read_header_timeout: ").append(gateway.readTimeout().toSeconds()).append("s\n")
+                .append("        write_timeout: ").append(gateway.writeTimeout().toSeconds()).append("s\n")
+                .append("        idle_timeout: ").append(gateway.idleTimeout().toSeconds()).append("s\n");
+        appendGatewayProtocolSecurity(yaml, gateway);
         appendHostMetricsReceiver(yaml, desiredConfig);
         appendPrometheusReceivers(yaml, sources.prometheusTargets());
         appendFileLogReceivers(yaml, sources.fileLogSources());
-        OtelRuntimeGovernance.appendProcessors(yaml, desiredConfig);
+        OtelRuntimeGovernance.appendProcessors(yaml, desiredConfig, properties);
         yaml.append("""
                 exporters:
                   otlphttp:
@@ -156,10 +154,11 @@ public class OtelRuntimeConfigRenderer {
                   file_storage:
                     directory: ${env:HERTZBEAT_OTEL_FILE_STORAGE_DIR}
                 """.formatted(properties.getHealthPort()));
+        appendGatewayExtension(yaml, gateway);
         String commonProcessors = OtelRuntimeGovernance.pipelineProcessors(desiredConfig, false);
         yaml.append("""
                 service:
-                  extensions: [health_check, file_storage]
+                  extensions: [%s]
                   pipelines:
                     metrics:
                       receivers: [%s]
@@ -174,6 +173,7 @@ public class OtelRuntimeConfigRenderer {
                       processors: [%s]
                       exporters: [otlphttp]
                 """.formatted(
+                gateway.enabled() ? "health_check, file_storage, bearertokenauth" : "health_check, file_storage",
                 metricsReceivers(desiredConfig.hostMetricsEnabled(), sources.prometheusTargets()),
                 commonProcessors,
                 logReceivers(sources.fileLogSources()),
@@ -181,6 +181,38 @@ public class OtelRuntimeConfigRenderer {
                 OtelRuntimeGovernance.pipelineProcessors(desiredConfig, true)
         ));
         return yaml.toString();
+    }
+
+    private static void appendGatewayProtocolSecurity(
+            StringBuilder yaml, OtelRuntimeGatewayPolicy.ResolvedGateway gateway) {
+        if (!gateway.enabled()) {
+            return;
+        }
+        yaml.append("        tls:\n")
+                .append("          cert_file: ").append(yamlScalar(gateway.certificateFile().toString())).append('\n')
+                .append("          key_file: ").append(yamlScalar(gateway.privateKeyFile().toString())).append('\n')
+                .append("          min_version: '1.2'\n")
+                .append("          reload_interval: 1m\n");
+        if (gateway.clientCaFile() != null) {
+            yaml.append("          client_ca_file: ")
+                    .append(yamlScalar(gateway.clientCaFile().toString())).append('\n')
+                    .append("          client_ca_file_reload: true\n");
+        }
+        yaml.append("        auth:\n")
+                .append("          authenticator: bearertokenauth\n");
+    }
+
+    private static void appendGatewayExtension(
+            StringBuilder yaml, OtelRuntimeGatewayPolicy.ResolvedGateway gateway) {
+        if (!gateway.enabled()) {
+            return;
+        }
+        yaml.append("  bearertokenauth:\n");
+        if (gateway.bearerTokenFile() != null) {
+            yaml.append("    filename: ").append(yamlScalar(gateway.bearerTokenFile().toString())).append('\n');
+        } else {
+            yaml.append("    token: ${env:HERTZBEAT_OTLP_GATEWAY_TOKEN}\n");
+        }
     }
 
     private static void appendHostMetricsReceiver(StringBuilder yaml, ManagedOtelRuntimeConfig config) {
@@ -271,21 +303,6 @@ public class OtelRuntimeConfigRenderer {
         receivers.add("otlp");
         sources.forEach(source -> receivers.add("filelog/" + source.name()));
         return String.join(", ", receivers);
-    }
-
-    private static String receiverEndpoint(String value, String label) {
-        String endpoint = value == null ? "" : value.trim();
-        try {
-            URI uri = URI.create("tcp://" + endpoint);
-            if (uri.getHost() == null || uri.getPort() < 1 || uri.getPort() > 65535
-                    || uri.getUserInfo() != null || !uri.getRawPath().isEmpty()
-                    || uri.getRawQuery() != null || uri.getFragment() != null) {
-                throw new IllegalArgumentException();
-            }
-            return endpoint;
-        } catch (IllegalArgumentException exception) {
-            throw new IllegalArgumentException(label + " endpoint must be a host and port", exception);
-        }
     }
 
     private static String yamlScalar(String value) {
