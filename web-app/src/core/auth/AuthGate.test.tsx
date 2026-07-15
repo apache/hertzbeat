@@ -15,24 +15,25 @@
  * limitations under the License.
  */
 
-import { createContext, useContext } from 'react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import { describe, expect, it, vi } from 'vitest';
 
-import type { UiSession } from './session-api';
+import { SessionContext } from './session-context';
+import { AuthGate } from './AuthGate';
 
-export type SessionState = {
-  session: UiSession | undefined;
-  loading: boolean;
-  unavailable: boolean;
-  retry: () => void;
-};
+describe('AuthGate', () => {
+  it('lets the user retry a failed session request after the backend recovers', () => {
+    const retry = vi.fn();
+    render(
+      <MemoryRouter>
+        <SessionContext.Provider value={{ loading: false, retry, session: undefined, unavailable: true }}>
+          <AuthGate />
+        </SessionContext.Provider>
+      </MemoryRouter>
+    );
 
-export const SessionContext = createContext<SessionState>({
-  session: undefined,
-  loading: true,
-  unavailable: false,
-  retry: () => undefined
+    fireEvent.click(screen.getByRole('button'));
+    expect(retry).toHaveBeenCalledOnce();
+  });
 });
-
-export function useSession() {
-  return useContext(SessionContext);
-}

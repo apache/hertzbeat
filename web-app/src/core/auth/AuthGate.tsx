@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Alert, Skeleton } from 'antd';
+import { Alert, Button, Skeleton } from 'antd';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
@@ -25,10 +25,19 @@ import { useSession } from './session-context';
 export function AuthGate() {
   const { t } = useTranslation();
   const location = useLocation();
-  const { loading, session, unavailable } = useSession();
+  const { loading, retry, session, unavailable } = useSession();
 
   if (loading) return <Skeleton active paragraph={{ rows: 4 }} />;
-  if (unavailable) return <Alert type="error" showIcon message={t('common.unavailable')} />;
+  if (unavailable) {
+    return (
+      <Alert
+        type="error"
+        showIcon
+        message={t('common.unavailable')}
+        action={<Button onClick={retry}>{t('common.retry')}</Button>}
+      />
+    );
+  }
   if (!session?.authenticated) {
     return <Navigate replace to={loginHref(`${location.pathname}${location.search}${location.hash}`)} />;
   }

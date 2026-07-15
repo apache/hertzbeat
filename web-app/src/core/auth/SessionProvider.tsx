@@ -25,7 +25,12 @@ export function SessionProvider({ children }: PropsWithChildren) {
   const query = useQuery({ queryKey: sessionQueryKey, queryFn: getSession, retry: false });
   return (
     <SessionContext.Provider
-      value={{ session: query.data, loading: query.isPending, unavailable: query.isError }}
+      value={{
+        session: query.data,
+        loading: query.isPending,
+        unavailable: query.isError,
+        retry: () => { void query.refetch(); }
+      }}
     >
       {children}
     </SessionContext.Provider>
