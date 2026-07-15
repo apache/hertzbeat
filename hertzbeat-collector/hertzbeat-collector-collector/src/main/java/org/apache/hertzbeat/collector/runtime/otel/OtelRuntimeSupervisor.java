@@ -197,6 +197,8 @@ public class OtelRuntimeSupervisor implements SmartLifecycle, AutoCloseable {
         environment.put("HERTZBEAT_OTLP_HTTP_ENDPOINT", properties.getExportEndpoint().toString());
         environment.put("HERTZBEAT_OTLP_TOKEN", properties.getToken());
         environment.put("HERTZBEAT_OTEL_HEALTH_PORT", Integer.toString(properties.getHealthPort()));
+        environment.put("HERTZBEAT_OTEL_FILE_STORAGE_DIR", OtelRuntimeConfigRenderer.resolve(
+                properties.getHome(), properties.getFileStorageDirectory()).toString());
         return environment;
     }
 

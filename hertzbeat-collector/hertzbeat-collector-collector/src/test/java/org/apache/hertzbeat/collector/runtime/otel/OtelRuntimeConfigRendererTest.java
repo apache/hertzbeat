@@ -20,9 +20,13 @@ package org.apache.hertzbeat.collector.runtime.otel;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.List;
+import java.util.Map;
+import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -53,5 +57,32 @@ class OtelRuntimeConfigRendererTest {
         assertTrue(yaml.contains("value: \"42\""));
         assertTrue(yaml.contains("${env:HERTZBEAT_OTLP_TOKEN}"));
         assertFalse(yaml.contains(properties.getToken()));
+    }
+
+    @Test
+    void rendersPrometheusAndApprovedFileLogPipelinesWithPersistentOffsets() throws Exception {
+        Path logs = Files.createDirectories(tempDir.resolve("logs/payments"));
+        OtelRuntimeProperties properties = new OtelRuntimeProperties();
+        properties.setHome(tempDir);
+        properties.setConfig(Path.of("conf/runtime.yaml"));
+        properties.setPrometheusTargets(List.of(new ManagedOtelRuntimeConfig.PrometheusTarget(
+                "payments", URI.create("https://payments.internal:9464/metrics"), Duration.ofSeconds(30))));
+        properties.setFileLogAllowRoots(List.of(tempDir.resolve("logs")));
+        properties.setFileLogProfiles(Map.of("payments-logs", List.of(logs.resolve("*.log").toString())));
+        properties.setFileLogSources(List.of(
+                new ManagedOtelRuntimeConfig.FileLogSource("payments", "payments-logs")));
+
+        Path config = new OtelRuntimeConfigRenderer().render(properties);
+        String yaml = Files.readString(config);
+
+        assertTrue(yaml.contains("prometheus/payments:"));
+        assertTrue(yaml.contains("targets: ['payments.internal:9464']"));
+        assertTrue(yaml.contains("filelog/payments:"));
+        assertTrue(yaml.contains("start_at: end"));
+        assertTrue(yaml.contains("storage: file_storage"));
+        assertTrue(yaml.contains("max_concurrent_files: 32"));
+        assertTrue(yaml.contains("directory: ${env:HERTZBEAT_OTEL_FILE_STORAGE_DIR}"));
+        assertTrue(yaml.contains("    logs:\n      receivers: [filelog/payments]"));
+        assertTrue(Files.isDirectory(tempDir.resolve("data/otel-runtime")));
     }
 }

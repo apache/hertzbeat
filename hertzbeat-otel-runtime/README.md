@@ -4,8 +4,10 @@ This module builds the private OpenTelemetry data-plane process supervised by
 the Java HertzBeat Collector. It is not a second HertzBeat Collector and must
 not register a separate Collector identity.
 
-Phase 0 intentionally contains only host metrics, memory protection, resource
-enrichment, batching, direct OTLP/HTTP export, and a loopback health endpoint.
+The managed runtime contains host metrics, explicitly managed Prometheus
+targets, locally approved file-log profiles with persistent offsets, memory
+protection, resource enrichment, batching, direct OTLP/HTTP export, and a
+loopback health endpoint.
 The Java process owns configuration, validation, lifecycle, recovery, and the
 single Collector identity. The Go process exports telemetry directly to the
 HertzBeat Server and never proxies data through Java.
@@ -41,10 +43,36 @@ configuration without credentials, validates it, waits for loopback health,
 and then reports its own runtime state. A runtime failure degrades only this
 optional data plane; Java agentless collection continues.
 
-## Phase 0 limits
+Prometheus targets are bounded server-managed intent. File-log paths are
+resolved from administrator-owned local profiles, so a remote configuration
+cannot expand the Collector host's filesystem access. For example:
 
-- Only host metrics are enabled; Prometheus, file logs, and persisted queues
-  belong to later milestones.
+```yaml
+collector:
+  otel-runtime:
+    prometheus-targets:
+      - name: payments
+        endpoint: http://127.0.0.1:9464/metrics
+        interval: 30s
+    file-log-allow-roots:
+      - /var/log/payments
+    file-log-deny-paths:
+      - /var/log/payments/private
+    file-log-profiles:
+      payments-logs:
+        - /var/log/payments/*.log
+    file-log-sources:
+      - name: payments
+        path-profile: payments-logs
+```
+
+## Current limits
+
+- Prometheus supports bounded static HTTP(S) targets. File logs use local path
+  profiles, start at the end by default, and reject traversal, recursive globs,
+  denied paths, and symlink escapes before runtime validation.
+- File offsets use `file_storage`; downstream exporter persistence is not yet
+  enabled and belongs to the release-hardening milestone.
 - The local control surface is the versioned loopback health contract. Remote
   configuration and OpAMP are not included.
 - Release publication still requires the Apache dependency license review,

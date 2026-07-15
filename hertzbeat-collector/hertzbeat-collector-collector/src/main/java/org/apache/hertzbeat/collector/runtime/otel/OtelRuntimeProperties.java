@@ -20,6 +20,8 @@ package org.apache.hertzbeat.collector.runtime.otel;
 import java.net.URI;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.List;
+import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeConfig;
@@ -59,6 +61,18 @@ public class OtelRuntimeProperties {
 
     private Duration hostMetricsInterval = Duration.ofSeconds(10);
 
+    private List<ManagedOtelRuntimeConfig.PrometheusTarget> prometheusTargets = List.of();
+
+    private List<ManagedOtelRuntimeConfig.FileLogSource> fileLogSources = List.of();
+
+    private List<Path> fileLogAllowRoots = List.of(Path.of("logs"));
+
+    private List<Path> fileLogDenyPaths = List.of();
+
+    private Map<String, List<String>> fileLogProfiles = Map.of();
+
+    private Path fileStorageDirectory = Path.of("data", "otel-runtime");
+
     private int healthPort = 13133;
 
     private Duration healthTimeout = Duration.ofSeconds(2);
@@ -80,7 +94,9 @@ public class OtelRuntimeProperties {
                 configSchema,
                 configRevision,
                 hostMetricsEnabled,
-                hostMetricsInterval
+                hostMetricsInterval,
+                prometheusTargets,
+                fileLogSources
         );
     }
 }

@@ -53,4 +53,26 @@ class OtelRuntimeConfigurationTest {
                     assertEquals(OtelRuntimeState.DEGRADED, supervisor.snapshot().state());
                 });
     }
+
+    @Test
+    void bindsManagedPrometheusAndFileLogSourceIntent() {
+        contextRunner
+                .withPropertyValues(
+                        "collector.otel-runtime.prometheus-targets[0].name=payments",
+                        "collector.otel-runtime.prometheus-targets[0].endpoint=http://127.0.0.1:9464/metrics",
+                        "collector.otel-runtime.prometheus-targets[0].interval=30s",
+                        "collector.otel-runtime.file-log-sources[0].name=payments",
+                        "collector.otel-runtime.file-log-sources[0].path-profile=payments-logs",
+                        "collector.otel-runtime.file-log-allow-roots[0]=/var/log",
+                        "collector.otel-runtime.file-log-profiles.payments-logs[0]=/var/log/payments/*.log"
+                )
+                .run(context -> {
+                    assertTrue(context.isRunning());
+                    OtelRuntimeProperties properties = context.getBean(OtelRuntimeProperties.class);
+                    assertEquals("payments", properties.getPrometheusTargets().getFirst().name());
+                    assertEquals("payments-logs", properties.getFileLogSources().getFirst().pathProfile());
+                    assertEquals("/var/log/payments/*.log",
+                            properties.getFileLogProfiles().get("payments-logs").getFirst());
+                });
+    }
 }

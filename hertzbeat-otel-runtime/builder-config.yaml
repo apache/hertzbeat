@@ -8,10 +8,13 @@ dist:
   name: hertzbeat-otel-runtime
   description: HertzBeat managed OpenTelemetry runtime
   output_path: ./_build/otelcol-hertzbeat
-  version: 2.0.0-phase0
+  version: 2.0.0-phase1
+  build_tags: remove_all_sd
 
 receivers:
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver v0.156.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver v0.156.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/filelogreceiver v0.156.0
 
 processors:
   - gomod: go.opentelemetry.io/collector/processor/memorylimiterprocessor v0.156.0
@@ -23,6 +26,7 @@ exporters:
 
 extensions:
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension v0.156.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage/filestorage v0.156.0
 
 providers:
   - gomod: go.opentelemetry.io/collector/confmap/provider/envprovider v1.50.0

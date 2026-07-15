@@ -110,6 +110,8 @@ class OtelRuntimeSupervisorTest {
         assertEquals("collector-phase0", environment.getValue().get("HERTZBEAT_COLLECTOR_ID"));
         assertEquals("workspace-phase0", environment.getValue().get("HERTZBEAT_WORKSPACE_ID"));
         assertEquals("token-phase0", environment.getValue().get("HERTZBEAT_OTLP_TOKEN"));
+        assertEquals(tempDir.resolve("data/otel-runtime").toString(),
+                environment.getValue().get("HERTZBEAT_OTEL_FILE_STORAGE_DIR"));
         InOrder activationOrder = inOrder(launcher, configTransaction);
         activationOrder.verify(launcher).start(any(), any(), any(), any(), anyMap(), anyBoolean());
         activationOrder.verify(configTransaction).commit(any());

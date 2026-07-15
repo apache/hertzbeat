@@ -15,6 +15,20 @@ receivers:
       network:
       paging:
       processes:
+  prometheus/validation:
+    config:
+      scrape_configs:
+        - job_name: validation
+          scrape_interval: 30s
+          static_configs:
+            - targets: ['127.0.0.1:19464']
+  filelog/validation:
+    include:
+      - ${env:HERTZBEAT_OTEL_TEST_LOG}
+    start_at: end
+    storage: file_storage
+    max_log_size: 1MiB
+    max_concurrent_files: 32
 
 processors:
   memory_limiter:
@@ -51,11 +65,17 @@ exporters:
 extensions:
   health_check:
     endpoint: 127.0.0.1:${env:HERTZBEAT_OTEL_HEALTH_PORT}
+  file_storage:
+    directory: ${env:HERTZBEAT_OTEL_FILE_STORAGE_DIR}
 
 service:
-  extensions: [health_check]
+  extensions: [health_check, file_storage]
   pipelines:
     metrics:
-      receivers: [hostmetrics]
+      receivers: [hostmetrics, prometheus/validation]
+      processors: [memory_limiter, resource, batch]
+      exporters: [otlphttp]
+    logs:
+      receivers: [filelog/validation]
       processors: [memory_limiter, resource, batch]
       exporters: [otlphttp]

@@ -20,7 +20,9 @@ package org.apache.hertzbeat.common.entity.dto;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.net.URI;
 import java.time.Duration;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class ManagedOtelRuntimeConfigTest {
@@ -40,5 +42,34 @@ class ManagedOtelRuntimeConfigTest {
                 () -> new ManagedOtelRuntimeConfig(2, 1, true, Duration.ofSeconds(30)));
         assertThrows(IllegalArgumentException.class,
                 () -> new ManagedOtelRuntimeConfig(1, 1, true, Duration.ofSeconds(1)));
+    }
+
+    @Test
+    void acceptsBoundedPrometheusAndFileLogSources() {
+        ManagedOtelRuntimeConfig config = new ManagedOtelRuntimeConfig(
+                1,
+                8,
+                true,
+                Duration.ofSeconds(30),
+                List.of(new ManagedOtelRuntimeConfig.PrometheusTarget(
+                        "payments", URI.create("https://payments.internal:9464/metrics"), Duration.ofSeconds(30))),
+                List.of(new ManagedOtelRuntimeConfig.FileLogSource("payments", "payments-logs"))
+        );
+
+        assertEquals("payments", config.prometheusTargets().getFirst().name());
+        assertEquals("payments-logs", config.fileLogSources().getFirst().pathProfile());
+    }
+
+    @Test
+    void rejectsCredentialBearingPrometheusTargetsAndDuplicateSourceNames() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new ManagedOtelRuntimeConfig.PrometheusTarget(
+                        "unsafe", URI.create("https://user:secret@example.com/metrics"), Duration.ofSeconds(30)));
+
+        ManagedOtelRuntimeConfig.PrometheusTarget duplicate = new ManagedOtelRuntimeConfig.PrometheusTarget(
+                "payments", URI.create("http://127.0.0.1:9464/metrics"), Duration.ofSeconds(30));
+        assertThrows(IllegalArgumentException.class,
+                () -> new ManagedOtelRuntimeConfig(
+                        1, 9, true, Duration.ofSeconds(30), List.of(duplicate, duplicate), List.of()));
     }
 }

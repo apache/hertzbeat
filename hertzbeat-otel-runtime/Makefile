@@ -30,11 +30,15 @@ build-platforms: build
 	for platform in $(PLATFORMS); do cp runtime-manifest.json dist/$$platform/; done
 
 validate: build
+	mkdir -p _build/validation-storage
+	touch _build/validation.log
 	HERTZBEAT_COLLECTOR_ID=phase0-test \
 	HERTZBEAT_WORKSPACE_ID=default \
 	HERTZBEAT_OTLP_HTTP_ENDPOINT=http://127.0.0.1:1157/api/otlp \
 	HERTZBEAT_OTLP_TOKEN=phase0-test-token \
 	HERTZBEAT_OTEL_HEALTH_PORT=13133 \
+	HERTZBEAT_OTEL_TEST_LOG=$$(pwd)/_build/validation.log \
+	HERTZBEAT_OTEL_FILE_STORAGE_DIR=$$(pwd)/_build/validation-storage \
 	$(RUNTIME_BINARY) validate --config $(TEST_CONFIG)
 
 clean:
