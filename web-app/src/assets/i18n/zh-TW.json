@@ -7,6 +7,159 @@
   "exploreTrace": {"detail":"鏈路詳情","loadFailed":"鏈路詳情無法使用。","status":"狀態","kind":"類型","scope":"埋點範圍","spans":"個 Span","errors":"個錯誤","events":"事件","spanAttributes":"Span 屬性","resourceAttributes":"資源屬性","relatedMetrics":"相關指標","minDuration":"最短耗時（毫秒）","maxDuration":"最長耗時（毫秒）","errorOnly":"僅錯誤鏈路"},
   "settingsNavigation": {"receivers":"接收人","rules":"傳送規則","templates":"範本","channels":"渠道服務","tokens":"API Token"},
   "token": {"title":"API Token","description":"建立和撤銷整合及遙測用戶端使用的存取憑證。","generate":"產生 Token","generateTitle":"產生 API Token","generatedTitle":"Token 已產生","generatedNotice":"請立即複製，此 Token 不會再次顯示。","done":"完成","copy":"複製 Token","copySuccess":"Token 已複製。","copyFailed":"無法自動複製，請手動選取。","name":"名稱","namePlaceholder":"例如：生產環境 Collector","mask":"Token","creator":"建立人","created":"建立時間","expires":"到期時間","lastUsed":"最近使用","expired":"已到期","revoke":"撤銷","revokeConfirm":"撤銷這個 Token？","revokeConfirmDescription":"{{name}} 將立即失去存取權限。","revokeSuccess":"Token 已撤銷。","revokeFailed":"Token 撤銷失敗。","generateFailed":"Token 產生失敗。","validation":"請輸入 Token 名稱。","unavailable":"Token 資料無法使用。","empty":"尚未產生 API Token。","scope":{"label":"存取範圍","apiAdmin":"管理 API","otlpIngest":"OTLP 資料接入","readonlyQuery":"唯讀查詢"},"expiration":{"never":"永不到期","days7":"7 天","days30":"30 天","days90":"90 天","days180":"180 天","days365":"365 天"}},
+  "instrumentation": {
+    "title": "Instrument an application",
+    "menu": "Instrumentation",
+    "description": "Configure official OpenTelemetry, verify scoped signal reception, then investigate in Explore.",
+    "schemaVersion": "Contract v{{version}}",
+    "progress": "Instrumentation progress",
+    "scope": "SETUP SCOPE",
+    "scopeHelp": "This scope is reused for guide rendering, detection, and Explore handoff.",
+    "signalCapability": "Signal capability",
+    "preview": "Preview / WIP",
+    "official": "Official",
+    "online": "Online",
+    "offline": "Offline",
+    "catalogUnavailable": "The instrumentation catalog is unavailable.",
+    "catalogEmpty": "No instrumentation methods are available.",
+    "methodUnavailable": "No method supports this environment and platform.",
+    "collectorUnavailable": "Collector data is unavailable.",
+    "collectorEmpty": "No registered Collectors are available.",
+    "collectorOffline": "The selected Collector is offline.",
+    "renderUnavailable": "Installation guidance is unavailable for this selection.",
+    "componentInvalid": "The selected component is not an official external dependency.",
+    "tokenCopyNotice": "Add a token before copying a snippet that contains the authorization placeholder.",
+    "tokenRequired": "Token required",
+    "tokenInMemory": "In memory",
+    "tokenMissing": "Not provided",
+    "copySuccess": "Snippet copied.",
+    "copyFailed": "The snippet could not be copied.",
+    "queryUnavailable": "Query unavailable",
+    "stage": {
+      "environment": "Environment",
+      "environmentHelp": "Choose where the application runs and the target platform.",
+      "language": "Language and method",
+      "languageHelp": "Select only from methods returned by the versioned backend catalog.",
+      "context": "Service context",
+      "contextHelp": "Detection is limited to this Collector, service, namespace, environment, and setup window.",
+      "install": "Install and configure",
+      "installHelp": "Follow the structured steps rendered by the backend.",
+      "detect": "Verify signals",
+      "detectHelp": "Check scoped Metrics, Logs, and Traces without treating missing data as success."
+    },
+    "field": {
+      "deploymentEnvironment": "Deployment environment",
+      "platform": "Platform",
+      "language": "Language",
+      "languagePlaceholder": "Select a language",
+      "framework": "Framework",
+      "frameworkPlaceholder": "Select a framework",
+      "method": "Method",
+      "collector": "Collector",
+      "collectorPlaceholder": "Select a registered Collector",
+      "serviceName": "Service name",
+      "serviceNamespace": "Service namespace",
+      "serviceEnvironment": "Service environment",
+      "token": "API token",
+      "tokenMemory": "Memory only",
+      "tokenPlaceholder": "Paste the OTLP ingestion token"
+    },
+    "action": {
+      "continue": "Continue",
+      "render": "Render instructions",
+      "reviewContext": "Review context",
+      "startDetection": "Start signal check",
+      "retryDetection": "Retry detection",
+      "openExplore": "Open in Explore",
+      "copy": "Copy"
+    },
+    "environment": {
+      "vm": "Host / VM",
+      "docker": "Docker",
+      "kubernetes": "Kubernetes",
+      "windows_service": "Windows service"
+    },
+    "platform": {
+      "linux_amd64": "Linux AMD64",
+      "linux_arm64": "Linux ARM64",
+      "macos_amd64": "macOS AMD64",
+      "macos_arm64": "macOS ARM64",
+      "windows_amd64": "Windows AMD64",
+      "any": "Any supported platform"
+    },
+    "language": {
+      "java": "Java",
+      "dotnet": ".NET",
+      "nodejs": "Node.js",
+      "python": "Python",
+      "php": "PHP",
+      "go": "Go",
+      "generic": "Other language"
+    },
+    "framework": {
+      "spring_boot": "Spring Boot",
+      "java_jar": "Java JAR",
+      "aspnet_core": "ASP.NET Core",
+      "nodejs": "Node.js",
+      "express": "Express",
+      "django": "Django",
+      "flask": "Flask",
+      "php_generic": "PHP",
+      "laravel": "Laravel",
+      "go_generic": "Go",
+      "generic": "Generic"
+    },
+    "method": {
+      "zero_code": "Official zero-code",
+      "sdk": "Official SDK",
+      "ebpf": "eBPF zero-code"
+    },
+    "capability": {
+      "supported": "Supported",
+      "preview": "Preview",
+      "unsupported": "Unsupported"
+    },
+    "signal": {
+      "metrics": "Metrics",
+      "logs": "Logs",
+      "traces": "Traces"
+    },
+    "step": {
+      "install": "Install the official component",
+      "configure": "Configure OpenTelemetry",
+      "start": "Start the application",
+      "container": "Configure the container",
+      "disable": "Disable instrumentation"
+    },
+    "location": {
+      "application_host": "Application host",
+      "application_environment": "Application environment",
+      "application_process": "Application process",
+      "container_definition": "Container definition"
+    },
+    "detection": {
+      "unavailable": "Signal detection is unavailable.",
+      "checking": "Checking for scoped telemetry.",
+      "notStarted": "Signal detection has not started.",
+      "waiting": "Waiting for telemetry within the onboarding window.",
+      "status": {
+        "waiting": "Waiting",
+        "received": "Received",
+        "unsupported": "Unsupported",
+        "unavailable": "Storage unavailable",
+        "error": "Detection error"
+      },
+      "error": {
+        "signal_not_received": "No scoped signal received yet.",
+        "signal_not_supported": "The selected method does not support this signal.",
+        "storage_unavailable": "Telemetry storage is unavailable.",
+        "storage_query_failed": "Telemetry storage could not be queried.",
+        "collector_unavailable": "The selected Collector is unavailable.",
+        "authentication_failed": "Telemetry authentication failed.",
+        "invalid_context": "The detection context is invalid."
+      }
+    }
+  },
   "auth": { "title": "登入 HertzBeat", "description": "使用 HertzBeat 帳號繼續。", "username": "使用者名稱", "password": "密碼", "submit": "登入", "continue": "仍然繼續", "logout": "登出", "logoutFailed": "登出失敗，請重試。", "defaultPassword": "目前帳號仍使用預設密碼。登入後請立即修改；再次提交可繼續。" },
   "dashboard": { "title": "儀表板", "description": "查看監控可用性與目前告警狀態。", "monitorSummary": "監控摘要", "total": "監控總數", "available": "可用", "unavailable": "不可用", "alerts": "活動告警", "distribution": "監控分布", "application": "應用程式", "category": "類別", "empty": "尚未設定監控。", "summaryUnavailable": "監控摘要暫時無法使用，計數已隱藏。" },
   "bulletin": { "title": "監控看板", "description": "查看維運人員設定的群組監控視圖。", "search": "搜尋看板", "empty": "目前條件下沒有看板。", "name": "名稱", "application": "應用程式", "monitors": "監控數", "creator": "建立者", "updated": "更新時間" },

@@ -1,0 +1,149 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { describe, expect, it } from 'vitest';
+
+import type { CatalogResponse, GuideRenderResponse, OfficialComponent, QueryJumpContext } from './instrumentation-contract';
+import {
+  buildDetectionRequest,
+  buildExploreHandoff,
+  buildGuideRequest,
+  createFlowDraft,
+  materializeGuideSnippet,
+  selectCatalogLanguage,
+  updateFlowContext,
+  validateFlowContext,
+  type InstrumentationFlowDraft
+} from './instrumentation-flow-model';
+
+describe('instrumentation onboarding flow model', () => {
+  it('chooses the stable catalog method and never invents a language-specific method', () => {
+    const draft = selectCatalogLanguage(createFlowDraft(), catalog, 'go');
+
+    expect(draft.selection).toMatchObject({ language: 'go', framework: 'go_generic', method: 'sdk' });
+    expect(() => selectCatalogLanguage(draft, catalog, 'php')).toThrow(/php/);
+  });
+
+  it('builds allowlisted render and detection requests from the same scoped context', () => {
+    const draft = configuredDraft();
+    const render = buildGuideRequest(draft, collector);
+    const detection = buildDetectionRequest(draft, 1_710_000_000_000);
+
+    expect(render).toEqual(expect.objectContaining({
+      schemaVersion: 1,
+      collector: expect.objectContaining({ collectorId: 'collector-east' }),
+      service: { name: 'checkout-api', namespace: 'commerce', environment: 'prod' }
+    }));
+    expect(detection).toEqual(expect.objectContaining({
+      collectorId: 'collector-east',
+      startedAt: 1_710_000_000_000,
+      service: render.service
+    }));
+    expect(JSON.stringify(render)).not.toContain('hb_memory_only');
+    expect(JSON.stringify(detection)).not.toContain('hb_memory_only');
+  });
+
+  it('requires complete service and Collector context before rendering', () => {
+    expect(validateFlowContext(createFlowDraft())).toEqual(expect.arrayContaining([
+      'collectorId', 'serviceName', 'serviceNamespace', 'serviceEnvironment'
+    ]));
+  });
+
+  it('keeps the token copy-only and refuses a secret snippet while it is absent', () => {
+    const snippet = guide.steps[0]!.snippets[0]!;
+    expect(() => materializeGuideSnippet(snippet, guide, '')).toThrow(/token/i);
+    expect(materializeGuideSnippet(snippet, guide, 'hb_memory_only')).toContain('hb_memory_only');
+    expect(snippet.content).toContain('${HERTZBEAT_TOKEN}');
+  });
+
+  it('builds a received-only Explore handoff with the full scope and no token', () => {
+    const href = buildExploreHandoff('logs', jumpContext);
+    const url = new URL(href, 'http://localhost');
+
+    expect(url.pathname).toBe('/explore');
+    expect(Object.fromEntries(url.searchParams)).toEqual({
+      signal: 'logs',
+      serviceName: 'checkout-api',
+      serviceNamespace: 'commerce',
+      environment: 'prod',
+      collectorId: 'collector-east',
+      start: String(jumpContext.startedAt),
+      end: String(jumpContext.detectedAt)
+    });
+    expect(href).not.toContain('token');
+  });
+});
+
+const component: OfficialComponent = {
+  name: 'OpenTelemetry Go SDK', sourceUrl: 'https://opentelemetry.io/', version: '1.43.0',
+  versionPolicy: 'pinned', license: 'Apache-2.0', installationLocationKey: 'instrumentation.location.application_host',
+  official: true, bundledWithHertzBeat: false, dependencies: [], artifacts: []
+};
+
+const catalog: CatalogResponse = {
+  schemaVersion: 1,
+  languages: [{
+    language: 'go', labelKey: 'instrumentation.language.go', frameworks: [{
+      framework: 'go_generic', labelKey: 'instrumentation.framework.go_generic', methods: [
+        {
+          method: 'ebpf', labelKey: 'instrumentation.method.ebpf', preview: true,
+          environments: ['kubernetes'], platforms: ['linux_amd64'],
+          signals: { metrics: 'unsupported', logs: 'unsupported', traces: 'preview' }, component
+        },
+        {
+          method: 'sdk', labelKey: 'instrumentation.method.sdk', preview: false,
+          environments: ['vm', 'docker', 'kubernetes'], platforms: ['linux_amd64', 'any'],
+          signals: { metrics: 'supported', logs: 'preview', traces: 'supported' }, component
+        }
+      ]
+    }]
+  }]
+};
+
+const collector = {
+  collectorId: 'collector-east', name: 'collector-east', online: true, address: '10.0.0.8',
+  otlpHttpEndpoint: 'http://10.0.0.8:4318', otlpGrpcEndpoint: 'http://10.0.0.8:4317',
+  authorizationHeader: 'Authorization'
+};
+
+function configuredDraft() {
+  let draft: InstrumentationFlowDraft = selectCatalogLanguage(createFlowDraft(), catalog, 'go');
+  draft = updateFlowContext(draft, 'collectorId', collector.collectorId);
+  draft = updateFlowContext(draft, 'serviceName', 'checkout-api');
+  draft = updateFlowContext(draft, 'serviceNamespace', 'commerce');
+  return updateFlowContext(draft, 'serviceEnvironment', 'prod');
+}
+
+const guide: GuideRenderResponse = {
+  schemaVersion: 1,
+  selection: { language: 'go', framework: 'go_generic', method: 'sdk', environment: 'docker', platform: 'linux_amd64' },
+  signals: { metrics: 'supported', logs: 'preview', traces: 'supported' }, component,
+  secretPlaceholders: { authorizationToken: { marker: '${HERTZBEAT_TOKEN}', valueFormat: 'url_unreserved', replacement: 'raw' } },
+  steps: [{
+    id: 'configure', type: 'configure', titleKey: 'instrumentation.step.configure',
+    executionLocationKey: 'instrumentation.location.application_environment',
+    snippets: [{
+      id: 'otel-env', language: 'bash', content: 'Authorization=Bearer ${HERTZBEAT_TOKEN}',
+      secretPlaceholders: ['authorizationToken']
+    }]
+  }]
+};
+
+const jumpContext: QueryJumpContext = {
+  serviceName: 'checkout-api', serviceNamespace: 'commerce', environment: 'prod', collectorId: 'collector-east',
+  startedAt: 1_710_000_000_000, detectedAt: 1_710_000_005_000
+};

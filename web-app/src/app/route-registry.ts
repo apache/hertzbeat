@@ -30,6 +30,7 @@ export const routeRegistry = [
   { id: 'dashboard', path: '/dashboard', labelKey: 'menu.dashboard', layout: 'basic', navigation: true },
   { id: 'monitors', path: '/monitors', labelKey: 'menu.monitors', layout: 'basic', navigation: true },
   { id: 'explore', path: '/explore', labelKey: 'menu.explore', layout: 'basic', navigation: true },
+  { id: 'instrumentation', path: '/observability/integration', labelKey: 'instrumentation.menu', layout: 'basic', navigation: true },
   { id: 'alerts', path: '/alerts', labelKey: 'menu.alerts', layout: 'basic', navigation: true },
   { id: 'alert-rules', path: '/alerts/rules', labelKey: 'alertRules.title', layout: 'basic', navigation: false },
   { id: 'alert-groups', path: '/alerts/groups', labelKey: 'alertGroups.title', layout: 'basic', navigation: false },

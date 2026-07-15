@@ -20,6 +20,159 @@
   "exploreTrace": {"detail":"Trace detail","loadFailed":"The trace detail is unavailable.","status":"Status","kind":"Kind","scope":"Instrumentation scope","spans":"spans","errors":"errors","events":"Events","spanAttributes":"Span attributes","resourceAttributes":"Resource attributes","relatedMetrics":"Related metrics","minDuration":"Minimum duration (ms)","maxDuration":"Maximum duration (ms)","errorOnly":"Errors only"},
   "settingsNavigation": {"receivers":"Receivers","rules":"Delivery rules","templates":"Templates","channels":"Channel services","tokens":"API tokens"},
   "token": {"title":"API tokens","description":"Create and revoke credentials used by integrations and telemetry clients.","generate":"Generate token","generateTitle":"Generate API token","generatedTitle":"Token generated","generatedNotice":"Copy this token now. It will not be shown again.","done":"Done","copy":"Copy token","copySuccess":"Token copied.","copyFailed":"Token could not be copied. Select it manually.","name":"Name","namePlaceholder":"For example, production Collector","mask":"Token","creator":"Creator","created":"Created","expires":"Expires","lastUsed":"Last used","expired":"Expired","revoke":"Revoke","revokeConfirm":"Revoke this token?","revokeConfirmDescription":"{{name}} will immediately lose access.","revokeSuccess":"Token revoked.","revokeFailed":"Token could not be revoked.","generateFailed":"Token could not be generated.","validation":"Enter a token name.","unavailable":"Token data is unavailable.","empty":"No API tokens have been generated.","scope":{"label":"Access","apiAdmin":"Administration API","otlpIngest":"OTLP ingestion","readonlyQuery":"Read-only queries"},"expiration":{"never":"Never","days7":"7 days","days30":"30 days","days90":"90 days","days180":"180 days","days365":"365 days"}},
+  "instrumentation": {
+    "title": "Instrument an application",
+    "menu": "Instrumentation",
+    "description": "Configure official OpenTelemetry, verify scoped signal reception, then investigate in Explore.",
+    "schemaVersion": "Contract v{{version}}",
+    "progress": "Instrumentation progress",
+    "scope": "SETUP SCOPE",
+    "scopeHelp": "This scope is reused for guide rendering, detection, and Explore handoff.",
+    "signalCapability": "Signal capability",
+    "preview": "Preview / WIP",
+    "official": "Official",
+    "online": "Online",
+    "offline": "Offline",
+    "catalogUnavailable": "The instrumentation catalog is unavailable.",
+    "catalogEmpty": "No instrumentation methods are available.",
+    "methodUnavailable": "No method supports this environment and platform.",
+    "collectorUnavailable": "Collector data is unavailable.",
+    "collectorEmpty": "No registered Collectors are available.",
+    "collectorOffline": "The selected Collector is offline.",
+    "renderUnavailable": "Installation guidance is unavailable for this selection.",
+    "componentInvalid": "The selected component is not an official external dependency.",
+    "tokenCopyNotice": "Add a token before copying a snippet that contains the authorization placeholder.",
+    "tokenRequired": "Token required",
+    "tokenInMemory": "In memory",
+    "tokenMissing": "Not provided",
+    "copySuccess": "Snippet copied.",
+    "copyFailed": "The snippet could not be copied.",
+    "queryUnavailable": "Query unavailable",
+    "stage": {
+      "environment": "Environment",
+      "environmentHelp": "Choose where the application runs and the target platform.",
+      "language": "Language and method",
+      "languageHelp": "Select only from methods returned by the versioned backend catalog.",
+      "context": "Service context",
+      "contextHelp": "Detection is limited to this Collector, service, namespace, environment, and setup window.",
+      "install": "Install and configure",
+      "installHelp": "Follow the structured steps rendered by the backend.",
+      "detect": "Verify signals",
+      "detectHelp": "Check scoped Metrics, Logs, and Traces without treating missing data as success."
+    },
+    "field": {
+      "deploymentEnvironment": "Deployment environment",
+      "platform": "Platform",
+      "language": "Language",
+      "languagePlaceholder": "Select a language",
+      "framework": "Framework",
+      "frameworkPlaceholder": "Select a framework",
+      "method": "Method",
+      "collector": "Collector",
+      "collectorPlaceholder": "Select a registered Collector",
+      "serviceName": "Service name",
+      "serviceNamespace": "Service namespace",
+      "serviceEnvironment": "Service environment",
+      "token": "API token",
+      "tokenMemory": "Memory only",
+      "tokenPlaceholder": "Paste the OTLP ingestion token"
+    },
+    "action": {
+      "continue": "Continue",
+      "render": "Render instructions",
+      "reviewContext": "Review context",
+      "startDetection": "Start signal check",
+      "retryDetection": "Retry detection",
+      "openExplore": "Open in Explore",
+      "copy": "Copy"
+    },
+    "environment": {
+      "vm": "Host / VM",
+      "docker": "Docker",
+      "kubernetes": "Kubernetes",
+      "windows_service": "Windows service"
+    },
+    "platform": {
+      "linux_amd64": "Linux AMD64",
+      "linux_arm64": "Linux ARM64",
+      "macos_amd64": "macOS AMD64",
+      "macos_arm64": "macOS ARM64",
+      "windows_amd64": "Windows AMD64",
+      "any": "Any supported platform"
+    },
+    "language": {
+      "java": "Java",
+      "dotnet": ".NET",
+      "nodejs": "Node.js",
+      "python": "Python",
+      "php": "PHP",
+      "go": "Go",
+      "generic": "Other language"
+    },
+    "framework": {
+      "spring_boot": "Spring Boot",
+      "java_jar": "Java JAR",
+      "aspnet_core": "ASP.NET Core",
+      "nodejs": "Node.js",
+      "express": "Express",
+      "django": "Django",
+      "flask": "Flask",
+      "php_generic": "PHP",
+      "laravel": "Laravel",
+      "go_generic": "Go",
+      "generic": "Generic"
+    },
+    "method": {
+      "zero_code": "Official zero-code",
+      "sdk": "Official SDK",
+      "ebpf": "eBPF zero-code"
+    },
+    "capability": {
+      "supported": "Supported",
+      "preview": "Preview",
+      "unsupported": "Unsupported"
+    },
+    "signal": {
+      "metrics": "Metrics",
+      "logs": "Logs",
+      "traces": "Traces"
+    },
+    "step": {
+      "install": "Install the official component",
+      "configure": "Configure OpenTelemetry",
+      "start": "Start the application",
+      "container": "Configure the container",
+      "disable": "Disable instrumentation"
+    },
+    "location": {
+      "application_host": "Application host",
+      "application_environment": "Application environment",
+      "application_process": "Application process",
+      "container_definition": "Container definition"
+    },
+    "detection": {
+      "unavailable": "Signal detection is unavailable.",
+      "checking": "Checking for scoped telemetry.",
+      "notStarted": "Signal detection has not started.",
+      "waiting": "Waiting for telemetry within the onboarding window.",
+      "status": {
+        "waiting": "Waiting",
+        "received": "Received",
+        "unsupported": "Unsupported",
+        "unavailable": "Storage unavailable",
+        "error": "Detection error"
+      },
+      "error": {
+        "signal_not_received": "No scoped signal received yet.",
+        "signal_not_supported": "The selected method does not support this signal.",
+        "storage_unavailable": "Telemetry storage is unavailable.",
+        "storage_query_failed": "Telemetry storage could not be queried.",
+        "collector_unavailable": "The selected Collector is unavailable.",
+        "authentication_failed": "Telemetry authentication failed.",
+        "invalid_context": "The detection context is invalid."
+      }
+    }
+  },
   "auth": {
     "title": "Sign in to HertzBeat",
     "description": "Use your HertzBeat account to continue.",

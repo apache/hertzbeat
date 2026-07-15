@@ -7,6 +7,159 @@
   "exploreTrace": {"detail":"トレース詳細","loadFailed":"トレース詳細を利用できません。","status":"状態","kind":"種類","scope":"計装スコープ","spans":"スパン","errors":"エラー","events":"イベント","spanAttributes":"スパン属性","resourceAttributes":"リソース属性","relatedMetrics":"関連メトリクス","minDuration":"最小時間（ms）","maxDuration":"最大時間（ms）","errorOnly":"エラーのみ"},
   "settingsNavigation": {"receivers":"通知先","rules":"配信ルール","templates":"テンプレート","channels":"チャネルサービス","tokens":"API トークン"},
   "token": {"title":"API トークン","description":"連携とテレメトリクライアントが使用する認証情報を作成・失効します。","generate":"トークンを生成","generateTitle":"API トークンを生成","generatedTitle":"トークンを生成しました","generatedNotice":"今すぐコピーしてください。このトークンは再表示されません。","done":"完了","copy":"トークンをコピー","copySuccess":"トークンをコピーしました。","copyFailed":"コピーできませんでした。手動で選択してください。","name":"名前","namePlaceholder":"例: production Collector","mask":"トークン","creator":"作成者","created":"作成日時","expires":"有効期限","lastUsed":"最終使用","expired":"期限切れ","revoke":"失効","revokeConfirm":"このトークンを失効しますか？","revokeConfirmDescription":"{{name}} は直ちにアクセスできなくなります。","revokeSuccess":"トークンを失効しました。","revokeFailed":"トークンを失効できませんでした。","generateFailed":"トークンを生成できませんでした。","validation":"トークン名を入力してください。","unavailable":"トークンデータを取得できません。","empty":"API トークンはまだありません。","scope":{"label":"アクセス","apiAdmin":"管理 API","otlpIngest":"OTLP 取り込み","readonlyQuery":"読み取り専用クエリ"},"expiration":{"never":"無期限","days7":"7 日","days30":"30 日","days90":"90 日","days180":"180 日","days365":"365 日"}},
+  "instrumentation": {
+    "title": "Instrument an application",
+    "menu": "Instrumentation",
+    "description": "Configure official OpenTelemetry, verify scoped signal reception, then investigate in Explore.",
+    "schemaVersion": "Contract v{{version}}",
+    "progress": "Instrumentation progress",
+    "scope": "SETUP SCOPE",
+    "scopeHelp": "This scope is reused for guide rendering, detection, and Explore handoff.",
+    "signalCapability": "Signal capability",
+    "preview": "Preview / WIP",
+    "official": "Official",
+    "online": "Online",
+    "offline": "Offline",
+    "catalogUnavailable": "The instrumentation catalog is unavailable.",
+    "catalogEmpty": "No instrumentation methods are available.",
+    "methodUnavailable": "No method supports this environment and platform.",
+    "collectorUnavailable": "Collector data is unavailable.",
+    "collectorEmpty": "No registered Collectors are available.",
+    "collectorOffline": "The selected Collector is offline.",
+    "renderUnavailable": "Installation guidance is unavailable for this selection.",
+    "componentInvalid": "The selected component is not an official external dependency.",
+    "tokenCopyNotice": "Add a token before copying a snippet that contains the authorization placeholder.",
+    "tokenRequired": "Token required",
+    "tokenInMemory": "In memory",
+    "tokenMissing": "Not provided",
+    "copySuccess": "Snippet copied.",
+    "copyFailed": "The snippet could not be copied.",
+    "queryUnavailable": "Query unavailable",
+    "stage": {
+      "environment": "Environment",
+      "environmentHelp": "Choose where the application runs and the target platform.",
+      "language": "Language and method",
+      "languageHelp": "Select only from methods returned by the versioned backend catalog.",
+      "context": "Service context",
+      "contextHelp": "Detection is limited to this Collector, service, namespace, environment, and setup window.",
+      "install": "Install and configure",
+      "installHelp": "Follow the structured steps rendered by the backend.",
+      "detect": "Verify signals",
+      "detectHelp": "Check scoped Metrics, Logs, and Traces without treating missing data as success."
+    },
+    "field": {
+      "deploymentEnvironment": "Deployment environment",
+      "platform": "Platform",
+      "language": "Language",
+      "languagePlaceholder": "Select a language",
+      "framework": "Framework",
+      "frameworkPlaceholder": "Select a framework",
+      "method": "Method",
+      "collector": "Collector",
+      "collectorPlaceholder": "Select a registered Collector",
+      "serviceName": "Service name",
+      "serviceNamespace": "Service namespace",
+      "serviceEnvironment": "Service environment",
+      "token": "API token",
+      "tokenMemory": "Memory only",
+      "tokenPlaceholder": "Paste the OTLP ingestion token"
+    },
+    "action": {
+      "continue": "Continue",
+      "render": "Render instructions",
+      "reviewContext": "Review context",
+      "startDetection": "Start signal check",
+      "retryDetection": "Retry detection",
+      "openExplore": "Open in Explore",
+      "copy": "Copy"
+    },
+    "environment": {
+      "vm": "Host / VM",
+      "docker": "Docker",
+      "kubernetes": "Kubernetes",
+      "windows_service": "Windows service"
+    },
+    "platform": {
+      "linux_amd64": "Linux AMD64",
+      "linux_arm64": "Linux ARM64",
+      "macos_amd64": "macOS AMD64",
+      "macos_arm64": "macOS ARM64",
+      "windows_amd64": "Windows AMD64",
+      "any": "Any supported platform"
+    },
+    "language": {
+      "java": "Java",
+      "dotnet": ".NET",
+      "nodejs": "Node.js",
+      "python": "Python",
+      "php": "PHP",
+      "go": "Go",
+      "generic": "Other language"
+    },
+    "framework": {
+      "spring_boot": "Spring Boot",
+      "java_jar": "Java JAR",
+      "aspnet_core": "ASP.NET Core",
+      "nodejs": "Node.js",
+      "express": "Express",
+      "django": "Django",
+      "flask": "Flask",
+      "php_generic": "PHP",
+      "laravel": "Laravel",
+      "go_generic": "Go",
+      "generic": "Generic"
+    },
+    "method": {
+      "zero_code": "Official zero-code",
+      "sdk": "Official SDK",
+      "ebpf": "eBPF zero-code"
+    },
+    "capability": {
+      "supported": "Supported",
+      "preview": "Preview",
+      "unsupported": "Unsupported"
+    },
+    "signal": {
+      "metrics": "Metrics",
+      "logs": "Logs",
+      "traces": "Traces"
+    },
+    "step": {
+      "install": "Install the official component",
+      "configure": "Configure OpenTelemetry",
+      "start": "Start the application",
+      "container": "Configure the container",
+      "disable": "Disable instrumentation"
+    },
+    "location": {
+      "application_host": "Application host",
+      "application_environment": "Application environment",
+      "application_process": "Application process",
+      "container_definition": "Container definition"
+    },
+    "detection": {
+      "unavailable": "Signal detection is unavailable.",
+      "checking": "Checking for scoped telemetry.",
+      "notStarted": "Signal detection has not started.",
+      "waiting": "Waiting for telemetry within the onboarding window.",
+      "status": {
+        "waiting": "Waiting",
+        "received": "Received",
+        "unsupported": "Unsupported",
+        "unavailable": "Storage unavailable",
+        "error": "Detection error"
+      },
+      "error": {
+        "signal_not_received": "No scoped signal received yet.",
+        "signal_not_supported": "The selected method does not support this signal.",
+        "storage_unavailable": "Telemetry storage is unavailable.",
+        "storage_query_failed": "Telemetry storage could not be queried.",
+        "collector_unavailable": "The selected Collector is unavailable.",
+        "authentication_failed": "Telemetry authentication failed.",
+        "invalid_context": "The detection context is invalid."
+      }
+    }
+  },
   "auth": { "title": "HertzBeat にログイン", "description": "HertzBeat アカウントで続行します。", "username": "ユーザー名", "password": "パスワード", "submit": "ログイン", "continue": "続行する", "logout": "ログアウト", "logoutFailed": "ログアウトできませんでした。もう一度お試しください。", "defaultPassword": "このアカウントは初期パスワードを使用しています。ログイン後に変更してください。続行するには再度送信します。" },
   "dashboard": { "title": "ダッシュボード", "description": "監視の可用性と現在のアラート状況を確認します。", "monitorSummary": "監視概要", "total": "監視合計", "available": "利用可能", "unavailable": "利用不可", "alerts": "有効なアラート", "distribution": "監視分布", "application": "アプリケーション", "category": "カテゴリ", "empty": "監視が設定されていません。", "summaryUnavailable": "監視概要を利用できません。件数は非表示です。" },
   "bulletin": { "title": "監視ボード", "description": "運用担当者が設定したグループ監視ビューを確認します。", "search": "ボードを検索", "empty": "条件に一致するボードはありません。", "name": "名前", "application": "アプリケーション", "monitors": "監視数", "creator": "作成者", "updated": "更新日時" },

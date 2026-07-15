@@ -22,6 +22,7 @@
     "verify": "pnpm architecture && pnpm i18n:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm budget && pnpm dead-code"
   },
   "dependencies": {
+    "@ant-design/icons": "6.3.2",
     "@tanstack/react-query": "5.101.2",
     "antd": "6.5.0",
     "dayjs": "1.11.21",

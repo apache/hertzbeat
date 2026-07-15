@@ -35,6 +35,7 @@ describe('application data router', () => {
         '/status',
         '/dashboard',
         '/monitors',
+        '/observability/integration',
         '/alerts',
         '/alerts/groups',
         '/alerts/inhibits',

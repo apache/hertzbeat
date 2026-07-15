@@ -35,6 +35,7 @@ describe('route registry', () => {
         '/',
         '/dashboard',
         '/monitors',
+        '/observability/integration',
         '/alerts',
         '/alerts/rules',
         '/alerts/groups',
@@ -52,5 +53,9 @@ describe('route registry', () => {
     );
 
     expect(routeRegistry.find(route => route.id === 'settings')?.navigation).toBe(true);
+    expect(routeRegistry.find(route => route.id === 'instrumentation')).toMatchObject({
+      labelKey: 'instrumentation.menu',
+      navigation: true
+    });
   });
 });

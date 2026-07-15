@@ -1,0 +1,384 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0.
+ */
+
+.page {
+  max-width: 1320px;
+  margin: 0 auto;
+}
+
+.heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.heading h2 {
+  margin: 0 0 4px;
+}
+
+.stageRail {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--ant-color-border-secondary, #30343d);
+  border-radius: var(--ant-border-radius, 4px);
+  background: var(--ant-color-bg-container, #15171d);
+}
+
+.stageRail li + li {
+  border-left: 1px solid var(--ant-color-border-secondary, #30343d);
+}
+
+.stageRail button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 54px;
+  padding: 0 12px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+
+.stageRail button > span {
+  display: grid;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 1px solid var(--ant-color-border, #3b404c);
+  border-radius: 50%;
+  color: var(--ant-color-text-secondary, #969ba7);
+}
+
+.stageRail strong {
+  overflow: hidden;
+  color: var(--ant-color-text-secondary, #969ba7);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stageActive {
+  box-shadow: inset 0 -2px var(--ant-color-primary, #5b6fd8);
+}
+
+.stageActive button > span {
+  border-color: var(--ant-color-primary, #5b6fd8);
+  background: var(--ant-color-primary, #5b6fd8);
+  color: var(--ant-color-white, #fff);
+}
+
+.stageActive strong,
+.stageComplete strong {
+  color: var(--ant-color-text, #d9dbe3);
+}
+
+.stageComplete button > span {
+  border-color: var(--ant-color-primary-border, #48558f);
+  color: var(--ant-color-primary, #5b6fd8);
+}
+
+.stageLocked {
+  opacity: 0.58;
+}
+
+.workspaceGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 16px;
+  align-items: start;
+}
+
+.stageBody,
+.scopePanel {
+  border: 1px solid var(--ant-color-border-secondary, #30343d);
+  border-radius: var(--ant-border-radius, 4px);
+  background: var(--ant-color-bg-container, #15171d);
+}
+
+.stageHeader {
+  display: flex;
+  gap: 12px;
+  min-height: 72px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--ant-color-border-secondary, #30343d);
+}
+
+.stageHeader > span {
+  display: grid;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ant-color-primary, #5b6fd8);
+  color: var(--ant-color-white, #fff);
+  font-weight: 700;
+}
+
+.stageHeader h4 {
+  margin: 0 0 3px;
+}
+
+.stageContent {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.field,
+.fieldWide {
+  display: grid;
+  gap: 7px;
+}
+
+.fieldWide {
+  grid-column: 1 / -1;
+}
+
+.fieldLabel {
+  display: flex;
+  justify-content: space-between;
+  color: var(--ant-color-text-secondary, #969ba7);
+  font-size: 12px;
+}
+
+.fieldLabel small {
+  color: var(--ant-color-text-tertiary, #747985);
+}
+
+.methodList {
+  display: grid;
+  gap: 8px;
+}
+
+.method,
+.methodSelected {
+  display: grid;
+  gap: 7px;
+  padding: 12px;
+  border: 1px solid var(--ant-color-border-secondary, #30343d);
+  border-radius: var(--ant-border-radius-sm, 3px);
+  background: var(--ant-color-bg-container, #15171d);
+  color: var(--ant-color-text, #d9dbe3);
+  text-align: left;
+}
+
+.methodSelected {
+  border-color: var(--ant-color-primary-border, #48558f);
+  box-shadow: inset 2px 0 var(--ant-color-primary, #5b6fd8);
+}
+
+.methodHeading,
+.capabilityRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.capabilityRow {
+  justify-content: flex-start;
+}
+
+.stageActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.scopePanel {
+  position: sticky;
+  top: 74px;
+  overflow: hidden;
+}
+
+.scopeTitle {
+  display: block;
+  padding: 13px;
+  border-bottom: 1px solid var(--ant-color-border-secondary, #30343d);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.scopePanel dl {
+  margin: 0;
+  padding: 4px 13px;
+}
+
+.scopePanel dl > div {
+  display: grid;
+  gap: 3px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--ant-color-border-secondary, #30343d);
+}
+
+.scopePanel dt {
+  color: var(--ant-color-text-tertiary, #747985);
+  font-size: 10px;
+}
+
+.scopePanel dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 11px;
+}
+
+.scopeSignals {
+  display: grid;
+  gap: 7px;
+  padding: 12px 13px;
+}
+
+.scopeSignals span {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+}
+
+.scopeSignals em {
+  color: var(--ant-color-text-secondary, #969ba7);
+  font-style: normal;
+}
+
+.scopeNote {
+  display: block;
+  padding: 12px 13px;
+  border-top: 1px solid var(--ant-color-border-secondary, #30343d);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.componentLine {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-left: 2px solid var(--ant-color-primary, #5b6fd8);
+  background: var(--ant-color-fill-quaternary, #1b1e27);
+}
+
+.componentLine > div {
+  display: grid;
+  gap: 3px;
+}
+
+.guideSteps {
+  display: grid;
+}
+
+.guideStep {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 14px;
+  padding: 12px 0;
+  border-top: 1px solid var(--ant-color-border-secondary, #30343d);
+}
+
+.guideStep > header {
+  display: flex;
+  gap: 9px;
+}
+
+.guideStep > header > span {
+  color: var(--ant-color-primary, #5b6fd8);
+  font-family: var(--ant-font-family-code, ui-monospace, monospace);
+  font-size: 11px;
+}
+
+.guideStep > header div {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+}
+
+.guideStep > header small {
+  color: var(--ant-color-text-tertiary, #747985);
+}
+
+.snippet {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--ant-color-border-secondary, #30343d);
+  border-radius: var(--ant-border-radius-sm, 3px);
+  background: var(--ant-color-bg-layout, #101217);
+}
+
+.snippet > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 30px;
+  padding-left: 10px;
+  border-bottom: 1px solid var(--ant-color-border-secondary, #30343d);
+}
+
+.snippet > div > span {
+  color: var(--ant-color-text-tertiary, #747985);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.snippet pre {
+  max-height: 240px;
+  margin: 0;
+  padding: 11px;
+  overflow: auto;
+  color: var(--ant-color-text, #d9dbe3);
+  font: 11px/1.55 var(--ant-font-family-code, ui-monospace, monospace);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.signalTable {
+  overflow: hidden;
+  border: 1px solid var(--ant-color-border-secondary, #30343d);
+  border-radius: var(--ant-border-radius-sm, 3px);
+}
+
+.signalRow {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr) 150px;
+  gap: 12px;
+  align-items: center;
+  min-height: 64px;
+  padding: 10px 12px;
+}
+
+.signalRow + .signalRow {
+  border-top: 1px solid var(--ant-color-border-secondary, #30343d);
+}
+
+.signalRow > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 1100px) {
+  .workspaceGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .scopePanel {
+    position: static;
+  }
+}
