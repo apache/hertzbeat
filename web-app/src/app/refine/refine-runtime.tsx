@@ -16,6 +16,7 @@
  */
 
 import { Refine } from '@refinedev/core';
+import { useNotificationProvider } from '@refinedev/antd';
 import routerProvider from '@refinedev/react-router';
 import { QueryClient } from '@tanstack/react-query';
 import { Outlet } from 'react-router-dom';
@@ -49,9 +50,11 @@ const resources = [{
 }];
 
 export function RefineRuntime() {
+  const notificationProvider = useNotificationProvider();
   return (
     <Refine
       dataProvider={dataProviders}
+      notificationProvider={notificationProvider}
       resources={resources}
       routerProvider={routerProvider}
       options={{

@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import { useDataProvider, useParsed, useRefineContext, useResourceParams } from '@refinedev/core';
+import { useDataProvider, useNotification, useParsed, useRefineContext, useResourceParams } from '@refinedev/core';
 import { QueryClient, useQueryClient } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useEffect } from 'react';
 import { createMemoryRouter, RouterProvider, type RouteObject } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -63,6 +63,8 @@ describe('production Refine runtime', () => {
     expect(screen.getByTestId('mutation-mode')).toHaveTextContent('pessimistic');
     expect(screen.getByTestId('label-resource')).toHaveTextContent('labels|/settings/labels|labels');
     expect(screen.getByTestId('label-provider')).toHaveTextContent('shared');
+    fireEvent.click(screen.getByRole('button', { name: 'Open runtime notification' }));
+    expect(await screen.findByText('Runtime notification ready')).toBeInTheDocument();
     const mountedClients = mountSpy.mock.instances;
     expect(mountedClients).toHaveLength(1);
     const observedClient = observedClients.at(-1);
@@ -78,6 +80,7 @@ function RuntimeProbe({ onClient }: { onClient: (client: QueryClient) => void })
   const parsed = useParsed();
   const dataProvider = useDataProvider();
   const { resources } = useResourceParams();
+  const notification = useNotification();
   const { session } = useSession();
   useEffect(() => {
     onClient(queryClient);
@@ -102,6 +105,12 @@ function RuntimeProbe({ onClient }: { onClient: (client: QueryClient) => void })
         `${labelResource?.name ?? ''}|${String(labelResource?.list ?? '')}|${String(labelResource?.meta?.dataProviderName ?? '')}`
       }</output>
       <output data-testid="label-provider">{labelProvider}</output>
+      <button
+        type="button"
+        onClick={() => notification.open?.({ message: 'Runtime notification ready', type: 'success' })}
+      >
+        Open runtime notification
+      </button>
     </>
   );
 }

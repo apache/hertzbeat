@@ -15,7 +15,15 @@
  * limitations under the License.
  */
 
-import type { LabelRecord } from '../api/label-api';
+import type { LabelRecord as ApiLabelRecord } from '../api/label-api';
+
+export type LabelRecord = ApiLabelRecord;
+export type LabelListState =
+  | { kind: 'loading' }
+  | { kind: 'empty' }
+  | { kind: 'unavailable' }
+  | { kind: 'error' }
+  | { kind: 'ready'; records: LabelRecord[]; total: number };
 
 export function buildLabelDisplayName(label: Pick<LabelRecord, 'name' | 'tagValue'>) {
   const value = label.tagValue?.trim();

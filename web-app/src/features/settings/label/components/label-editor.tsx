@@ -18,12 +18,11 @@
 import { Form, Input, Modal } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { LabelRecord } from '../api/label-api';
+import type { LabelRecord } from '../model/label-model';
 
-export type LabelEditorState = {
-  value: Partial<LabelRecord>;
-  isNew: boolean;
-};
+export type LabelEditorState =
+  | { value: Partial<LabelRecord>; isNew: true }
+  | { value: LabelRecord; isNew: false };
 
 type LabelEditorProps = {
   editor: LabelEditorState;

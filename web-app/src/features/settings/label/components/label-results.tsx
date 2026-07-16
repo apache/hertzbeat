@@ -15,33 +15,31 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Empty, Popconfirm, Space, Table, Tag } from 'antd';
+import { Alert, Button, Empty, Popconfirm, Space, Spin, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 
-import type { LabelRecord } from '../api/label-api';
-import { buildLabelDisplayName, labelTypeKey } from '../model/label-model';
+import { buildLabelDisplayName, labelTypeKey, type LabelListState, type LabelRecord } from '../model/label-model';
 import { isLabelPageSize, labelPageSizes, type LabelPageSize } from '../model/label-query-model';
 import styles from './label.module.css';
 
 type LabelResultsProps = {
-  loading: boolean;
-  error: boolean;
-  records: LabelRecord[];
+  state: LabelListState;
   pageIndex: number;
   pageSize: LabelPageSize;
-  total: number;
   onPageChange: (pageIndex: number, pageSize: LabelPageSize) => void;
   onCopy: (label: LabelRecord) => void;
   onEdit: (label: LabelRecord) => void;
-  onRemove: (id: number) => void;
+  onRemove: (record: LabelRecord) => void;
   onInspect: (label: LabelRecord) => void;
 };
 
 export function LabelResults(props: LabelResultsProps) {
   const { t } = useTranslation();
-  if (props.error) return <Alert type="error" showIcon message={t('labels.unavailable')} />;
-  if (!props.loading && props.records.length === 0) return <Empty description={t('labels.empty')} />;
+  if (props.state.kind === 'loading') return <Spin data-testid="label-loading" />;
+  if (props.state.kind === 'unavailable') return <Alert type="error" showIcon message={t('labels.unavailable')} />;
+  if (props.state.kind === 'error') return <Alert type="error" showIcon message={t('common.routeError.description')} />;
+  if (props.state.kind === 'empty') return <Empty description={t('labels.empty')} />;
 
   const columns: ColumnsType<LabelRecord> = [
     {
@@ -76,7 +74,7 @@ export function LabelResults(props: LabelResultsProps) {
         <Space size={2}>
           <Button type="link" onClick={() => props.onCopy(row)}>{t('labels.copy')}</Button>
           <Button type="link" onClick={() => props.onEdit(row)}>{t('common.edit')}</Button>
-          <Popconfirm title={t('labels.deleteConfirm')} onConfirm={() => row.id && props.onRemove(row.id)}>
+          <Popconfirm title={t('labels.deleteConfirm')} onConfirm={() => props.onRemove(row)}>
             <Button type="link" danger>{t('labels.delete')}</Button>
           </Popconfirm>
         </Space>
@@ -88,15 +86,14 @@ export function LabelResults(props: LabelResultsProps) {
     <Table<LabelRecord>
       rowKey="id"
       size="small"
-      loading={props.loading}
       columns={columns}
-      dataSource={props.records}
+      dataSource={props.state.records}
       pagination={{
         current: props.pageIndex + 1,
         pageSize: props.pageSize,
         pageSizeOptions: [...labelPageSizes],
         showSizeChanger: true,
-        total: props.total,
+        total: props.state.total,
         onChange: (page, pageSize) => {
           if (isLabelPageSize(pageSize)) props.onPageChange(page - 1, pageSize);
         }

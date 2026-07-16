@@ -15,81 +15,130 @@
  * limitations under the License.
  */
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { App } from "antd";
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { I18nextProvider } from "react-i18next";
-import { MemoryRouter, useLocation, useNavigate } from "react-router-dom";
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { i18n, initializeI18n, loadLocale } from "@/core/i18n/i18n";
+import { App } from 'antd';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { I18nextProvider } from 'react-i18next';
+import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { deleteLabel, loadLabels, saveLabel } = vi.hoisted(() => ({
-  deleteLabel: vi.fn(),
-  loadLabels: vi.fn(),
-  saveLabel: vi.fn(),
-}));
-vi.mock('../api/label-api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../api/label-api')>()),
-  deleteLabel,
-  loadLabels,
-  saveLabel,
-}));
-import { LabelPage } from "./label-page";
+import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
-describe("LabelPage", () => {
+import { LabelPage } from './label-page';
+
+type TestListState = { kind: string; records?: unknown[]; total?: number };
+
+const resource = vi.hoisted(() => {
+  const listState: TestListState = { kind: 'loading' };
+  return {
+    copyLabel: vi.fn(),
+    createLabel: vi.fn(),
+    deleteLabel: vi.fn(),
+    inspectLabel: vi.fn(),
+    isSaving: false,
+    listState,
+    refresh: vi.fn(),
+    refreshing: false,
+    updateLabel: vi.fn()
+  };
+});
+
+vi.mock('../controller/label-resource-controller', () => ({
+  useLabelResourceController: () => resource
+}));
+
+const serverLabel = {
+  id: 7,
+  name: 'env',
+  tagValue: 'prod',
+  description: 'Production',
+  type: 1
+};
+
+describe('LabelPage', () => {
   beforeAll(async () => {
-    Object.defineProperty(globalThis, "ResizeObserver", { value: ResizeObserverStub, configurable: true });
+    Object.defineProperty(globalThis, 'ResizeObserver', { value: ResizeObserverStub, configurable: true });
     await initializeI18n();
-    await loadLocale("en-US");
+    await loadLocale('en-US');
   });
   beforeEach(() => {
-    loadLabels.mockResolvedValue({
-      content: [
-        {
-          id: 7,
-          name: "env",
-          tagValue: "prod",
-          description: "Production",
-          type: 1,
-        },
-      ],
-      totalElements: 1,
-    });
-    saveLabel.mockResolvedValue(undefined);
-    deleteLabel.mockResolvedValue(undefined);
-  });
-  afterEach(() => {
-    cleanup();
     vi.clearAllMocks();
+    resource.listState = { kind: 'ready', records: [serverLabel], total: 1 };
+    resource.createLabel.mockImplementation((_value, onSuccess: () => void) => onSuccess());
+    resource.updateLabel.mockImplementation((_record, _value, onSuccess: () => void) => onSuccess());
   });
+  afterEach(cleanup);
 
-  it("renders a flat result table and creates a user label", async () => {
+  it('validates input and closes create only after the resource success callback', async () => {
     renderLabelPage();
-    expect(await screen.findByText("env:prod")).toBeInTheDocument();
-    expect(screen.getByText("Production")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "New label" }));
-    const dialog = screen.getByRole("dialog");
-    fireEvent.change(within(dialog).getByLabelText("Name"), { target: { value: " team " } });
-    fireEvent.change(within(dialog).getByLabelText("Value"), { target: { value: " platform " } });
-    fireEvent.click(within(dialog).getByRole("button", { name: "OK" }));
-    await waitFor(() =>
-      expect(saveLabel.mock.calls[0]?.[0]).toEqual({
-        name: " team ",
-        tagValue: " platform ",
-      }),
-    );
-    expect(saveLabel.mock.calls[0]?.[1]).toBe(true);
+    expect(await screen.findByText('env:prod')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'New label' }));
+    const dialog = screen.getByRole('dialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'OK' }));
+    expect(await within(dialog).findByText('Enter a label name.')).toBeInTheDocument();
+    expect(resource.createLabel).not.toHaveBeenCalled();
+
+    fireEvent.change(within(dialog).getByLabelText('Name'), { target: { value: ' team ' } });
+    fireEvent.change(within(dialog).getByLabelText('Value'), { target: { value: ' platform ' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'OK' }));
+    await waitFor(() => expect(resource.createLabel).toHaveBeenCalledWith(
+      { name: ' team ', tagValue: ' platform ' },
+      expect.any(Function)
+    ));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   });
 
-  it("hands the selected label to the Monitor list query context", async () => {
+  it('keeps the editor open when the backend does not complete canonical reread', async () => {
+    resource.createLabel.mockImplementation(() => undefined);
+    renderLabelPage();
+    fireEvent.click(await screen.findByRole('button', { name: 'New label' }));
+    const dialog = screen.getByRole('dialog');
+    fireEvent.change(within(dialog).getByLabelText('Name'), { target: { value: 'team' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'OK' }));
+
+    await waitFor(() => expect(resource.createLabel).toHaveBeenCalled());
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('updates, deletes, copies, inspects, and refreshes through the resource controller', async () => {
+    renderLabelPage();
+    await screen.findByText('env:prod');
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    const dialog = screen.getByRole('dialog');
+    fireEvent.change(within(dialog).getByLabelText('Description'), { target: { value: 'Updated' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'OK' }));
+    await waitFor(() => expect(resource.updateLabel).toHaveBeenCalledWith(
+      serverLabel,
+      expect.objectContaining({ description: 'Updated' }),
+      expect.any(Function)
+    ));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
+    fireEvent.click(screen.getByRole('button', { name: 'env:prod' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'OK' }));
+
+    expect(resource.copyLabel).toHaveBeenCalledWith(serverLabel);
+    expect(resource.inspectLabel).toHaveBeenCalledWith(serverLabel);
+    expect(resource.refresh).toHaveBeenCalledTimes(1);
+    expect(resource.deleteLabel).toHaveBeenCalledWith(serverLabel);
+  });
+
+  it.each([
+    [{ kind: 'loading' }, 'label-loading'],
+    [{ kind: 'empty' }, 'No labels match the current query.'],
+    [{ kind: 'unavailable' }, 'Label data is unavailable.'],
+    [{ kind: 'error' }, 'This page could not be loaded. Retry or return to it later.']
+  ])('renders the distinct resource state %#', async (state, evidence) => {
+    resource.listState = state;
     renderLabelPage();
 
-    fireEvent.click(await screen.findByRole("button", { name: "env:prod" }));
-
-    expect(screen.getByTestId("location")).toHaveTextContent("/monitors|env:prod");
+    if (evidence === 'label-loading') expect(screen.getByTestId(evidence)).toBeInTheDocument();
+    else expect(await screen.findByText(evidence)).toBeInTheDocument();
+    expect(screen.queryByText('env:prod')).not.toBeInTheDocument();
   });
 
-  it("synchronizes the search draft when Back and Forward restore URL state", async () => {
+  it('synchronizes the search draft when Back and Forward restore URL state', async () => {
     renderLabelPage('/settings/labels?pageIndex=2&pageSize=50&search=env');
     const search = await screen.findByPlaceholderText('Search labels');
     expect(search).toHaveValue('env');
@@ -108,33 +157,23 @@ describe("LabelPage", () => {
 });
 
 function renderLabelPage(initialEntry = '/settings/labels') {
-  const client = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
-  });
   return render(
     <I18nextProvider i18n={i18n}>
-      <QueryClientProvider client={client}>
-        <MemoryRouter initialEntries={[initialEntry]}>
-          <App>
-            <LabelPage />
-            <LocationProbe />
-          </App>
-        </MemoryRouter>
-      </QueryClientProvider>
-    </I18nextProvider>,
+      <MemoryRouter initialEntries={[initialEntry]}>
+        <App>
+          <LabelPage />
+          <LocationProbe />
+        </App>
+      </MemoryRouter>
+    </I18nextProvider>
   );
 }
 
 function LocationProbe() {
   const location = useLocation();
   const navigate = useNavigate();
-  const label = new URLSearchParams(location.search).get("labels") ?? "";
   return (
     <>
-      <output data-testid="location">{`${location.pathname}|${label}`}</output>
       <output data-testid="route">{`${location.pathname}${location.search}`}</output>
       <button type="button" onClick={() => void navigate(-1)}>History back</button>
       <button type="button" onClick={() => void navigate(1)}>History forward</button>

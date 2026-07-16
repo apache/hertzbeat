@@ -75,6 +75,15 @@ describe('Settings domain boundaries', () => {
     expect(router).toMatch(publicEntry);
     expect(router).not.toContain(`@/features/settings/${domain.directory}/pages/`);
   });
+
+  it('keeps Label pages and components behind model and controller boundaries', () => {
+    const labelSources = Object.entries(productionSources)
+      .filter(([path]) => /^\.\/label\/(?:pages|components)\//.test(path) && !path.includes('.test.'));
+
+    expect(labelSources.flatMap(([path, source]) => (
+      source.includes("../api/") ? [path] : []
+    ))).toEqual([]);
+  });
 });
 
 function validateImports(path: string, source: string, root: string) {
