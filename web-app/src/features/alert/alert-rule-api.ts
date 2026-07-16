@@ -15,35 +15,81 @@
  * limitations under the License.
  */
 
-import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut, type PageResult } from '@/core/http/api-message';
+import { ApiMessageError, apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
 
-import { buildAlertRuleListPath, buildAlertRulePayload, type AlertRule, type AlertRuleDraft, type AlertRuleQuery } from './alert-rule-model';
+import {
+  AlertRuleContractError,
+  AlertRuleMissingError,
+  buildAlertRuleListPath,
+  buildAlertRulePayload,
+  buildAlertRulePreviewRequest,
+  buildAlertRuleTogglePayload,
+  parseAlertRuleDetail,
+  parseAlertRulePage,
+  type AlertRule,
+  type AlertRuleDraft,
+  type AlertRuleQuery
+} from './alert-rule-model';
 
-export function loadAlertRules(query: AlertRuleQuery) {
-  return apiMessageGet<PageResult<AlertRule>>(buildAlertRuleListPath(query));
+export async function loadAlertRules(query: AlertRuleQuery) {
+  const response = await apiMessageGet<unknown>(buildAlertRuleListPath(query));
+  return parseAlertRulePage(response, query);
 }
 
-export function loadAlertRule(id: string) {
-  return apiMessageGet<AlertRule>(`/api/alert/define/${encodeURIComponent(id)}`);
+export async function loadAlertRule(id: string | number) {
+  const normalizedId = normalizeId(id);
+  const response = await apiMessageGet<unknown>(`/api/alert/define/${normalizedId}`);
+  return parseAlertRuleDetail(response);
 }
 
-export function saveAlertRule(mode: 'new' | 'edit', draft: AlertRuleDraft) {
+export async function saveAlertRule(mode: 'new' | 'edit', draft: AlertRuleDraft): Promise<void> {
+  if (mode === 'new' && draft.id !== undefined) throw new AlertRuleContractError('create must not carry an id');
+  if (mode === 'edit' && draft.id === undefined) throw new AlertRuleContractError('update requires an id');
   const payload = buildAlertRulePayload(draft);
-  return mode === 'new' ? apiMessagePost<unknown>('/api/alert/define', payload) : apiMessagePut<unknown>('/api/alert/define', payload);
+  if (mode === 'new') await apiMessagePost<unknown>('/api/alert/define', payload);
+  else await apiMessagePut<unknown>('/api/alert/define', payload);
 }
 
-export function deleteAlertRules(ids: number[]) {
+export async function deleteAlertRules(ids: number[]): Promise<void> {
+  if (ids.length === 0) throw new AlertRuleContractError('delete requires at least one id');
+  const uniqueIds = [...new Set(ids.map(normalizeId))];
   const params = new URLSearchParams();
-  ids.forEach(id => params.append('ids', String(id)));
-  return apiMessageDelete<unknown>(`/api/alert/defines?${params.toString()}`);
+  uniqueIds.forEach(id => params.append('ids', String(id)));
+  await apiMessageDelete<unknown>(`/api/alert/defines?${params.toString()}`);
 }
 
-export function updateAlertRuleEnabled(rule: AlertRule, enable: boolean) {
-  return apiMessagePut<unknown>('/api/alert/define', { ...rule, enable });
+export async function updateAlertRuleEnabled(rule: AlertRule, enable: boolean): Promise<void> {
+  await apiMessagePut<unknown>('/api/alert/define', buildAlertRuleTogglePayload(rule, enable));
 }
 
-export function previewAlertRule(draft: AlertRuleDraft) {
-  const payload = buildAlertRulePayload(draft);
-  const params = new URLSearchParams({ type: payload.type, expr: payload.expr });
-  return apiMessageGet<Array<Record<string, unknown>>>(`/api/alert/define/preview/${encodeURIComponent(payload.datasource)}?${params.toString()}`);
+export async function previewAlertRule(draft: AlertRuleDraft) {
+  const request = buildAlertRulePreviewRequest(draft);
+  const params = new URLSearchParams({ type: request.type, expr: request.expr });
+  const response = await apiMessageGet<unknown>(
+    `/api/alert/define/preview/${encodeURIComponent(request.datasource)}?${params.toString()}`
+  );
+  if (!Array.isArray(response) || response.some(item => !item || typeof item !== 'object' || Array.isArray(item))) {
+    throw new AlertRuleContractError('preview must be an array of records');
+  }
+  return response as Array<Record<string, unknown>>;
+}
+
+export function classifyAlertRuleReadError(reason: unknown): 'missing' | 'unavailable' | 'error' {
+  if (reason instanceof AlertRuleMissingError) return 'missing';
+  if (reason instanceof ApiMessageError) {
+    if (reason.status === 404 || reason.status === 200 && reason.code === 3) return 'missing';
+    if (reason.cause !== undefined || reason.status === undefined || [0, 502, 503, 504].includes(reason.status)) {
+      return 'unavailable';
+    }
+  }
+  return 'error';
+}
+
+function normalizeId(value: string | number) {
+  if (typeof value === 'string' && !/^[1-9]\d*$/.test(value)) {
+    throw new AlertRuleContractError('id must use canonical positive decimal notation');
+  }
+  const id = typeof value === 'number' ? value : Number(value);
+  if (!Number.isSafeInteger(id) || id < 1) throw new AlertRuleContractError('id must be a positive integer');
+  return id;
 }
