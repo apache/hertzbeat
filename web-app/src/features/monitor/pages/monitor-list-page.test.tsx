@@ -30,7 +30,12 @@ const { loadMonitorApps, loadMonitors, mutateMonitors } = vi.hoisted(() => ({
   mutateMonitors: vi.fn()
 }));
 
-vi.mock('./monitor-api', () => ({ loadMonitorApps, loadMonitors, mutateMonitors }));
+vi.mock('../api/monitor-api', async importOriginal => ({
+  ...await importOriginal<typeof import('../api/monitor-api')>(),
+  loadMonitorApps,
+  loadMonitors,
+  mutateMonitors
+}));
 
 import { MonitorListPage } from './monitor-list-page';
 

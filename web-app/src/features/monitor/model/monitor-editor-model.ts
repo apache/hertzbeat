@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { Monitor, MonitorParam, MonitorParamDefine } from './monitor-api';
+import type { Monitor, MonitorParam, MonitorParamDefine } from '../api/monitor-api';
 
 function paramType(type?: string) {
   if (type === 'number') return 0;

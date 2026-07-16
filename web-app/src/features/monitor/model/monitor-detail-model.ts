@@ -15,14 +15,15 @@
  * limitations under the License.
  */
 
-import type { Monitor, MonitorDetailMetric } from './monitor-api';
+import type { MonitorDetailMetric } from '../api/monitor-api';
 
-export type MonitorMetricOption = {
-  key: string;
-  group: string;
-  field: string;
-  unit?: string;
-};
+export {
+  buildFavoriteMetricPath,
+  buildHistoryMetricPath,
+  buildMetricCatalogPath,
+  buildRealtimeMetricPath,
+  type MonitorMetricOption
+} from '../api/monitor-api';
 
 export function monitorMetricOptions(metrics: MonitorDetailMetric[]) {
   return metrics.flatMap(metric => {
@@ -34,31 +35,6 @@ export function monitorMetricOptions(metrics: MonitorDetailMetric[]) {
       ...(field.unit ? { unit: field.unit } : {})
     }] : []);
   });
-}
-
-export function buildRealtimeMetricPath(monitorId: number, metricKey: string) {
-  return `/api/monitor/${monitorId}/metrics/${encodeURIComponent(metricKey)}`;
-}
-
-export function buildMetricCatalogPath(monitor: Monitor) {
-  const app = monitor.scrape && monitor.scrape !== 'static' ? monitor.scrape : monitor.app;
-  if (app === 'push') return `/api/apps/${monitor.id}/pushdefine`;
-  if (app === 'prometheus') return `/api/apps/${monitor.id}/define/dynamic`;
-  return `/api/apps/${app}/define`;
-}
-
-export function buildFavoriteMetricPath(monitorId: number, metricKey?: string) {
-  return metricKey == null
-    ? `/api/metrics/favorite/${monitorId}`
-    : `/api/metrics/favorite/${monitorId}/${encodeURIComponent(metricKey)}`;
-}
-
-export function buildHistoryMetricPath(monitor: Monitor, metric: MonitorMetricOption, history: string) {
-  const sourceApp = monitor.scrape && monitor.scrape !== 'static' ? monitor.scrape : monitor.app;
-  const app = sourceApp === 'prometheus' ? `_prometheus_${monitor.name}` : sourceApp;
-  const fullMetric = `${app}.${metric.group}.${metric.field}`;
-  const params = new URLSearchParams({ history, interval: 'false' });
-  return `/api/monitor/${encodeURIComponent(monitor.instance)}/metric/${fullMetric}?${params.toString()}`;
 }
 
 type MetricValue = { origin?: string; mean?: string; median?: string; min?: string; max?: string; time?: number };

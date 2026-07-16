@@ -23,7 +23,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
-import { loadMonitorApps, loadMonitors, mutateMonitors, type Monitor } from './monitor-api';
+import { loadMonitorApps, loadMonitors, mutateMonitors, type Monitor } from '../api/monitor-api';
 import {
   buildMonitorRoutePath,
   monitorAppOptions,
@@ -34,7 +34,7 @@ import {
   readMonitorQuery,
   writeMonitorQuery,
   type MonitorAction
-} from './monitor-model';
+} from '../model/monitor-model';
 import styles from './monitor-list-page.module.css';
 
 type Translator = (key: string) => string;

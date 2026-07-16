@@ -15,16 +15,15 @@
  * limitations under the License.
  */
 
-export const monitorPageSizes = [10, 20, 50] as const;
-
-export type MonitorQuery = {
-  search: string;
-  app: string;
-  status: string;
-  labels: string;
-  pageIndex: number;
-  pageSize: number;
-};
+export {
+  buildMonitorActionPath,
+  buildMonitorListPath,
+  monitorPageSizes,
+  readMonitorQuery,
+  writeMonitorQuery,
+  type MonitorAction,
+  type MonitorQuery
+} from '../api/monitor-api';
 
 type MonitorAppItem = {
   category?: string | null;
@@ -36,53 +35,6 @@ export function monitorAppOptions(items: MonitorAppItem[]) {
   return items
     .filter(item => item.value && item.value !== 'prometheus' && item.category !== '__system__')
     .map(item => ({ value: item.value as string, label: item.label || item.value as string }));
-}
-
-function validPageIndex(value: string | null) {
-  const parsed = Number.parseInt(value ?? '', 10);
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
-}
-
-function validPageSize(value: string | null) {
-  const parsed = Number.parseInt(value ?? '', 10);
-  return monitorPageSizes.includes(parsed as typeof monitorPageSizes[number]) ? parsed : 10;
-}
-
-export function readMonitorQuery(params: URLSearchParams): MonitorQuery {
-  return {
-    search: params.get('search')?.trim() ?? '',
-    app: params.get('app')?.trim() ?? '',
-    status: params.get('status')?.trim() ?? '9',
-    labels: params.get('labels')?.trim() ?? '',
-    pageIndex: validPageIndex(params.get('pageIndex')),
-    pageSize: validPageSize(params.get('pageSize'))
-  };
-}
-
-export function buildMonitorListPath(query: MonitorQuery) {
-  return `/api/monitors?${writeMonitorQuery(query).toString()}`;
-}
-
-export type MonitorAction = 'copy' | 'enable' | 'pause' | 'delete';
-
-export function buildMonitorActionPath(action: MonitorAction, ids: number[]) {
-  if (action === 'copy') {
-    if (ids.length !== 1) throw new Error('Copy requires one monitor id');
-    return `/api/monitor/copy/${ids[0]}`;
-  }
-  const params = new URLSearchParams();
-  ids.forEach(id => params.append('ids', String(id)));
-  if (action === 'pause') params.set('type', 'JSON');
-  return action === 'delete' ? `/api/monitors?${params.toString()}` : `/api/monitors/manage?${params.toString()}`;
-}
-
-export function writeMonitorQuery(query: MonitorQuery) {
-  const params = new URLSearchParams({ pageIndex: String(query.pageIndex), pageSize: String(query.pageSize) });
-  if (query.search) params.set('search', query.search);
-  if (query.app) params.set('app', query.app);
-  if (query.status && query.status !== '9') params.set('status', query.status);
-  if (query.labels) params.set('labels', query.labels);
-  return params;
 }
 
 export function monitorStatusKey(status: number) {

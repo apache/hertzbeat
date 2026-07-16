@@ -17,9 +17,6 @@
 
 import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut, type PageResult } from '@/core/http/api-message';
 
-import { buildMonitorActionPath, buildMonitorListPath, type MonitorAction, type MonitorQuery } from './monitor-model';
-import { buildFavoriteMetricPath, buildHistoryMetricPath, buildMetricCatalogPath, buildRealtimeMetricPath, type MonitorMetricOption } from './monitor-detail-model';
-
 export type Monitor = {
   id: number;
   name: string;
@@ -55,12 +52,102 @@ export type MonitorDetail = {
   metrics?: MonitorDetailMetric[];
 };
 
+export type MonitorMetricOption = {
+  key: string;
+  group: string;
+  field: string;
+  unit?: string;
+};
+
 export type MonitorApp = {
   category?: string | null;
   value?: string | null;
   label?: string | null;
   hide?: boolean | null;
 };
+
+export const monitorPageSizes = [10, 20, 50] as const;
+
+export type MonitorQuery = {
+  search: string;
+  app: string;
+  status: string;
+  labels: string;
+  pageIndex: number;
+  pageSize: number;
+};
+
+export type MonitorAction = 'copy' | 'enable' | 'pause' | 'delete';
+
+function validPageIndex(value: string | null) {
+  const parsed = Number.parseInt(value ?? '', 10);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+}
+
+function validPageSize(value: string | null) {
+  const parsed = Number.parseInt(value ?? '', 10);
+  return monitorPageSizes.includes(parsed as typeof monitorPageSizes[number]) ? parsed : 10;
+}
+
+export function readMonitorQuery(params: URLSearchParams): MonitorQuery {
+  return {
+    search: params.get('search')?.trim() ?? '',
+    app: params.get('app')?.trim() ?? '',
+    status: params.get('status')?.trim() ?? '9',
+    labels: params.get('labels')?.trim() ?? '',
+    pageIndex: validPageIndex(params.get('pageIndex')),
+    pageSize: validPageSize(params.get('pageSize'))
+  };
+}
+
+export function writeMonitorQuery(query: MonitorQuery) {
+  const params = new URLSearchParams({ pageIndex: String(query.pageIndex), pageSize: String(query.pageSize) });
+  if (query.search) params.set('search', query.search);
+  if (query.app) params.set('app', query.app);
+  if (query.status && query.status !== '9') params.set('status', query.status);
+  if (query.labels) params.set('labels', query.labels);
+  return params;
+}
+
+export function buildMonitorListPath(query: MonitorQuery) {
+  return `/api/monitors?${writeMonitorQuery(query).toString()}`;
+}
+
+export function buildMonitorActionPath(action: MonitorAction, ids: number[]) {
+  if (action === 'copy') {
+    if (ids.length !== 1) throw new Error('Copy requires one monitor id');
+    return `/api/monitor/copy/${ids[0]}`;
+  }
+  const params = new URLSearchParams();
+  ids.forEach(id => params.append('ids', String(id)));
+  if (action === 'pause') params.set('type', 'JSON');
+  return action === 'delete' ? `/api/monitors?${params.toString()}` : `/api/monitors/manage?${params.toString()}`;
+}
+
+export function buildRealtimeMetricPath(monitorId: number, metricKey: string) {
+  return `/api/monitor/${monitorId}/metrics/${encodeURIComponent(metricKey)}`;
+}
+
+export function buildMetricCatalogPath(monitor: Monitor) {
+  const app = monitor.scrape && monitor.scrape !== 'static' ? monitor.scrape : monitor.app;
+  if (app === 'push') return `/api/apps/${monitor.id}/pushdefine`;
+  if (app === 'prometheus') return `/api/apps/${monitor.id}/define/dynamic`;
+  return `/api/apps/${app}/define`;
+}
+
+export function buildFavoriteMetricPath(monitorId: number, metricKey?: string) {
+  return metricKey == null
+    ? `/api/metrics/favorite/${monitorId}`
+    : `/api/metrics/favorite/${monitorId}/${encodeURIComponent(metricKey)}`;
+}
+
+export function buildHistoryMetricPath(monitor: Monitor, metric: MonitorMetricOption, history: string) {
+  const sourceApp = monitor.scrape && monitor.scrape !== 'static' ? monitor.scrape : monitor.app;
+  const app = sourceApp === 'prometheus' ? `_prometheus_${monitor.name}` : sourceApp;
+  const fullMetric = `${app}.${metric.group}.${metric.field}`;
+  const params = new URLSearchParams({ history, interval: 'false' });
+  return `/api/monitor/${encodeURIComponent(monitor.instance)}/metric/${fullMetric}?${params.toString()}`;
+}
 
 export function loadMonitors(query: MonitorQuery) {
   return apiMessageGet<PageResult<Monitor>>(buildMonitorListPath(query));

@@ -28,8 +28,8 @@ import {
   updateFavoriteMetric,
   type Monitor,
   type MonitorDetailMetric
-} from './monitor-api';
-import { monitorHistoryRows, monitorMetricOptions, monitorRealtimeRows } from './monitor-detail-model';
+} from '../api/monitor-api';
+import { monitorHistoryRows, monitorMetricOptions, monitorRealtimeRows } from '../model/monitor-detail-model';
 import styles from './monitor-metric-workbench.module.css';
 
 function formatMetricTime(value?: number) {

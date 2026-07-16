@@ -21,9 +21,9 @@ import type { DescriptionsProps } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
-import { loadMonitorDetail, type Monitor } from './monitor-api';
-import { monitorStatusColor, monitorStatusKey, safeMonitorReturnTo } from './monitor-model';
-import { MonitorMetricWorkbench } from './monitor-metric-workbench';
+import { loadMonitorDetail, type Monitor } from '../api/monitor-api';
+import { MonitorMetricWorkbench } from '../components/monitor-metric-workbench';
+import { monitorStatusColor, monitorStatusKey, safeMonitorReturnTo } from '../model/monitor-model';
 import styles from './monitor-detail-page.module.css';
 
 type Translator = (key: string) => string;

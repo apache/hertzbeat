@@ -22,7 +22,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
-import { buildMonitorParams, buildMonitorPayload, validateMonitorDraft } from './monitor-editor-model';
+import { buildMonitorParams, buildMonitorPayload, validateMonitorDraft } from '../model/monitor-editor-model';
 import {
   detectMonitor,
   loadMonitorApps,
@@ -34,8 +34,8 @@ import {
   type MonitorDetail,
   type MonitorParam,
   type MonitorParamDefine
-} from './monitor-api';
-import { monitorAppOptions, safeMonitorReturnTo } from './monitor-model';
+} from '../api/monitor-api';
+import { monitorAppOptions, safeMonitorReturnTo } from '../model/monitor-model';
 import styles from './monitor-editor-page.module.css';
 
 const emptyMonitor: Monitor = { id: 0, app: '', name: '', instance: '', status: 0, intervals: 60, scheduleType: 'interval', scrape: 'static' };
