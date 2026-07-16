@@ -25,9 +25,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Capability;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.ComponentVersionPolicy;
@@ -39,6 +41,16 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 class InstrumentationCatalogServiceTest {
+
+    private static final Set<String> OFFICIAL_SOURCE_HOSTS = Set.of(
+            "github.com",
+            "npmjs.com",
+            "www.npmjs.com",
+            "pypi.org",
+            "pecl.php.net",
+            "packagist.org",
+            "pkg.go.dev",
+            "opentelemetry.io");
 
     private final InstrumentationCatalogService service = new InstrumentationCatalogService();
 
@@ -136,6 +148,32 @@ class InstrumentationCatalogServiceTest {
         var generic = service.requireMethod(Language.GENERIC, Framework.GENERIC, Method.SDK);
         assertEquals(ComponentVersionPolicy.LANGUAGE_SPECIFIC, generic.component().versionPolicy());
         assertNull(generic.component().version());
+    }
+
+    @Test
+    void publishesOfficialSourceAndLicenseWithoutBundlingForEverySelectableMethod() {
+        service.catalog().languages().stream()
+                .flatMap(language -> language.frameworks().stream())
+                .flatMap(framework -> framework.methods().stream())
+                .forEach(method -> {
+                    var component = method.component();
+                    assertTrue(component.official(), component.name());
+                    assertOfficialSource(component.sourceUrl(), component.name());
+                    assertEquals("Apache-2.0", component.license(), component.name());
+                    assertFalse(component.bundledWithHertzBeat(), component.name());
+                    component.dependencies().forEach(dependency -> {
+                        assertTrue(dependency.official(), dependency.name());
+                        assertOfficialSource(dependency.sourceUrl(), dependency.name());
+                        assertEquals("Apache-2.0", dependency.license(), dependency.name());
+                        assertFalse(dependency.bundledWithHertzBeat(), dependency.name());
+                    });
+                });
+    }
+
+    private void assertOfficialSource(String sourceUrl, String name) {
+        URI source = URI.create(sourceUrl);
+        assertEquals("https", source.getScheme(), name);
+        assertTrue(OFFICIAL_SOURCE_HOSTS.contains(source.getHost()), sourceUrl);
     }
 
     @Test

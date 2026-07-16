@@ -21,6 +21,7 @@ import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApi
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.GuideRenderRequest;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Language;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.MethodOption;
+import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.OfficialDependency;
 import org.springframework.stereotype.Component;
 
 /** Official PHP extension, SDK, exporter, and framework instrumentation guidance. */
@@ -34,12 +35,13 @@ public class PhpInstrumentationGuideAdapter implements InstrumentationGuideAdapt
 
     @Override
     public LanguageGuideSteps render(GuideRenderRequest request, MethodOption method) {
-        String frameworkPackage = request.framework() == Framework.LARAVEL
-                ? "open-telemetry/opentelemetry-auto-laravel:1.7.0"
-                : "open-telemetry/opentelemetry-auto-psr18:1.2.0";
+        String frameworkPackageName = request.framework() == Framework.LARAVEL
+                ? "open-telemetry/opentelemetry-auto-laravel"
+                : "open-telemetry/opentelemetry-auto-psr18";
         String install = "pecl install opentelemetry-" + method.component().version() + "\n"
-                + "composer require open-telemetry/sdk:1.14.0 open-telemetry/exporter-otlp:1.4.0 "
-                + frameworkPackage;
+                + "composer require " + composerRequirement(method, "open-telemetry/sdk") + " "
+                + composerRequirement(method, "open-telemetry/exporter-otlp") + " "
+                + composerRequirement(method, frameworkPackageName);
         return new LanguageGuideSteps(
                 GuideAdapterSupport.install(
                         GuideAdapterSupport.snippet("install-command", "bash", install),
@@ -59,5 +61,13 @@ public class PhpInstrumentationGuideAdapter implements InstrumentationGuideAdapt
                         "disable-command",
                         "bash",
                         "OTEL_PHP_AUTOLOAD_ENABLED=false php application.php")));
+    }
+
+    private String composerRequirement(MethodOption method, String name) {
+        OfficialDependency dependency = method.component().dependencies().stream()
+                .filter(candidate -> name.equals(candidate.name()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Catalog dependency is missing: " + name));
+        return dependency.name() + ":" + dependency.version();
     }
 }
