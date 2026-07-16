@@ -23,7 +23,12 @@ import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
-import { loadLogSignal, loadMetricSignal, loadTraceSignal } from "./explore-api";
+import { loadLogSignal, loadMetricSignal, loadTraceSignal } from "../api/explore-api";
+import { ExploreQueryBar } from "../components/explore-query-bar";
+import { ExploreWorkbench } from "../components/explore-workbench";
+import { LogResult } from "../components/log-result";
+import { MetricResult } from "../components/metric-result";
+import { TraceResult } from "../components/trace-result";
 import {
   buildExplorePath,
   mergeExploreQuery,
@@ -34,13 +39,8 @@ import {
   type LogExploreQuery,
   type MetricExploreQuery,
   type TraceExploreQuery,
-} from "./explore-model";
+} from "../model/explore-model";
 import styles from "./explore-page.module.css";
-import { ExploreQueryBar } from "./explore-query-bar";
-import { ExploreWorkbench } from "./explore-workbench";
-import { LogResult } from "./log-result";
-import { MetricResult } from "./metric-result";
-import { TraceResult } from "./trace-result";
 
 export function ExplorePage() {
   const { t } = useTranslation();

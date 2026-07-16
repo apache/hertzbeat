@@ -18,7 +18,8 @@
 import { Alert, Table, Tag } from "antd";
 import type { TFunction } from "i18next";
 
-import { metricPath, metricPoints, metricSeries, type MetricConsole, type MetricSeries } from "./explore-contract";
+import type { MetricConsole } from "../api/explore-signal-contract";
+import { metricPath, metricPoints, metricSeries, type MetricSeries } from "../model/explore-signal-model";
 import styles from "./metric-result.module.css";
 import { SignalEmptyState, SignalResultFrame } from "./signal-result-frame";
 

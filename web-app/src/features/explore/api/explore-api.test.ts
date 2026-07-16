@@ -15,9 +15,12 @@
  * limitations under the License.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { buildLogStreamPath, buildSignalApiPath } from './explore-api';
+const { apiMessageGet } = vi.hoisted(() => ({ apiMessageGet: vi.fn() }));
+vi.mock('@/core/http/api-message', () => ({ apiMessageGet }));
+
+import { buildLogStreamPath, buildSignalApiPath, loadTraceDetail } from './explore-api';
 
 describe('explore API paths', () => {
   it('maps the shared context to each signal API', () => {
@@ -64,5 +67,13 @@ describe('explore API paths', () => {
     const preset = { ...scoped, windowMode: 'preset' as const, start: undefined, end: 3_000_000 };
     expect(buildSignalApiPath(preset)).toContain('start=2100000&end=3000000');
     expect(buildSignalApiPath(preset)).toContain('collectorId=collector-east');
+  });
+
+  it('loads trace detail through the feature API boundary', async () => {
+    const signal = new AbortController().signal;
+    apiMessageGet.mockResolvedValue({ traceId: 'trace-1' });
+
+    await expect(loadTraceDetail('trace-1', signal)).resolves.toEqual({ traceId: 'trace-1' });
+    expect(apiMessageGet).toHaveBeenCalledWith('/api/traces/trace-1', { signal });
   });
 });

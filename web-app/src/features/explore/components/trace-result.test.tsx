@@ -23,7 +23,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
-import type { TraceDetail } from './explore-contract';
+import type { TraceDetail } from '../api/explore-signal-contract';
 import { TraceResult } from './trace-result';
 
 describe('TraceResult', () => {

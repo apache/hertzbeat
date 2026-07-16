@@ -21,7 +21,7 @@ import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
-import type { MetricConsole } from './explore-contract';
+import type { MetricConsole } from '../api/explore-signal-contract';
 import { MetricResult } from './metric-result';
 
 describe('MetricResult', () => {

@@ -15,86 +15,9 @@
  * limitations under the License.
  */
 
-export type TraceRow = {
-  traceId?: string;
-  rootSpanId?: string;
-  serviceName?: string;
-  serviceNamespace?: string;
-  rootSpanName?: string;
-  durationNanos?: number;
-  status?: string;
-  startTime?: number;
-  errorSpanCount?: number;
-  resourceAttributes?: Record<string, string>;
-};
-
-type TraceEvent = {
-  timeUnixNano?: number;
-  name?: string;
-  attributes?: Record<string, unknown>;
-};
-
-export type TraceSpan = {
-  traceId?: string;
-  spanId?: string;
-  parentSpanId?: string;
-  spanName?: string;
-  serviceName?: string;
-  status?: string;
-  statusMessage?: string;
-  spanKind?: string;
-  scopeName?: string;
-  scopeVersion?: string;
-  durationNanos?: number;
-  startTime?: number;
-  highlighted?: boolean;
-  resourceAttributes?: Record<string, string>;
-  spanAttributes?: Record<string, string>;
-  events?: TraceEvent[];
-};
-
-export type TraceDetail = TraceRow & { spans?: TraceSpan[] };
+import type { LogRow, MetricConsole, TraceDetail, TraceRow, TraceSpan } from '../api/explore-signal-contract';
 
 export type TraceSpanLayout = TraceSpan & { depth: number; offsetPercent: number; widthPercent: number };
-
-export type LogRow = {
-  timeUnixNano?: number;
-  observedTimeUnixNano?: number;
-  severityNumber?: number;
-  severityText?: string;
-  body?: unknown;
-  attributes?: Record<string, unknown>;
-  traceId?: string;
-  spanId?: string;
-  resource?: Record<string, unknown>;
-};
-
-type MetricField = { name?: string; type?: string; unit?: string };
-type MetricFrame = {
-  schema?: {
-    fields?: MetricField[];
-    labels?: Record<string, string>;
-  };
-  data?: unknown[][];
-};
-
-export type MetricConsole = {
-  query?: string;
-  datasource?: string;
-  queryMode?: string;
-  results?: {
-    status?: number;
-    msg?: string;
-    frames?: MetricFrame[];
-  };
-  stats?: {
-    totalSeries?: number;
-    nonEmptySeries?: number;
-    latestObservedAt?: number;
-  };
-  emptyStateReason?: string;
-  errorMessage?: string;
-};
 
 export type MetricSeries = {
   key: string;

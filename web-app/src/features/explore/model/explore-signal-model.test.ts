@@ -17,7 +17,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { logBody, logServiceName, logTimestampMs, metricPath, metricPoints, metricSeries, traceDurationMs, traceSpanLayout } from './explore-contract';
+import { logBody, logServiceName, logTimestampMs, metricPath, metricPoints, metricSeries, traceDurationMs, traceSpanLayout } from './explore-signal-model';
 
 describe('explore API contracts', () => {
   it('normalizes datasource frames returned by the metrics console', () => {

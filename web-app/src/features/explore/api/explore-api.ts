@@ -17,7 +17,6 @@
 
 import { apiMessageGet, type PageResult } from '@/core/http/api-message';
 
-import type { LogRow, MetricConsole, TraceRow } from './explore-contract';
 import {
   exploreHandoffState,
   exploreUsesExactWindow,
@@ -26,7 +25,10 @@ import {
   type LogExploreQuery,
   type MetricExploreQuery,
   type TraceExploreQuery
-} from './explore-model';
+} from './explore-query';
+import type { LogRow, MetricConsole, TraceDetail, TraceRow } from './explore-signal-contract';
+
+export type ExplorePageResult<T> = PageResult<T>;
 
 export function loadMetricSignal(query: MetricExploreQuery, signal?: AbortSignal) {
   return apiMessageGet<MetricConsole>(buildSignalApiPath(query), requestSignal(signal));
@@ -38,6 +40,10 @@ export function loadLogSignal(query: LogExploreQuery, signal?: AbortSignal) {
 
 export function loadTraceSignal(query: TraceExploreQuery, signal?: AbortSignal) {
   return apiMessageGet<PageResult<TraceRow>>(buildSignalApiPath(query), requestSignal(signal));
+}
+
+export function loadTraceDetail(traceId: string, signal?: AbortSignal) {
+  return apiMessageGet<TraceDetail>(`/api/traces/${traceId}`, requestSignal(signal));
 }
 
 export function buildSignalApiPath(query: ExploreQuery, now = Date.now()) {
@@ -88,6 +94,10 @@ export function buildLogStreamPath(query: LogExploreQuery) {
   setValue(params, 'attributeFilter', query.attributeFilter);
   const suffix = params.toString();
   return suffix ? `/api/logs/sse/subscribe?${suffix}` : '/api/logs/sse/subscribe';
+}
+
+export function openLogStream(path: string) {
+  return new EventSource(path);
 }
 
 function sharedSignalParams(query: ExploreQuery, now: number) {

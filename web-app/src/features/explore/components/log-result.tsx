@@ -20,11 +20,10 @@ import type { TFunction } from "i18next";
 import { useEffect, useState, type ReactNode } from "react";
 import type { NavigateFunction } from "react-router-dom";
 
-import type { PageResult } from "@/core/http/api-message";
-
-import { buildLogStreamPath } from "./explore-api";
-import { logBody, logServiceName, logTimestampMs, type LogRow } from "./explore-contract";
-import { buildCrossSignalPath, buildExplorePath, type LogExploreQuery } from "./explore-model";
+import { buildLogStreamPath, openLogStream, type ExplorePageResult } from "../api/explore-api";
+import type { LogRow } from "../api/explore-signal-contract";
+import { buildCrossSignalPath, buildExplorePath, type LogExploreQuery } from "../model/explore-model";
+import { logBody, logServiceName, logTimestampMs } from "../model/explore-signal-model";
 import styles from "./log-result.module.css";
 import { OtlpAttributeSection } from "./otlp-attribute-list";
 import { SignalEmptyState, SignalResultFrame } from "./signal-result-frame";
@@ -37,7 +36,7 @@ export function LogResult({
   t,
   navigate,
 }: {
-  data?: PageResult<LogRow> | undefined;
+  data?: ExplorePageResult<LogRow> | undefined;
   query: LogExploreQuery;
   t: TFunction;
   navigate: NavigateFunction;
@@ -131,7 +130,7 @@ function LogRows({
   actions,
 }: {
   rows: LogRow[];
-  data?: PageResult<LogRow> | undefined;
+  data?: ExplorePageResult<LogRow> | undefined;
   query: LogExploreQuery;
   t: TFunction;
   navigate: NavigateFunction;
@@ -193,7 +192,7 @@ function LogRows({
   );
 }
 
-function logPagination(data: PageResult<LogRow> | undefined, query: LogExploreQuery, navigate: NavigateFunction) {
+function logPagination(data: ExplorePageResult<LogRow> | undefined, query: LogExploreQuery, navigate: NavigateFunction) {
   if (!data) return false as const;
   return {
     current: data.number + 1,
@@ -267,7 +266,7 @@ function useLogStream(streamPath: string, paused: boolean) {
 
   useEffect(() => {
     if (paused) return;
-    const source = new EventSource(streamPath);
+    const source = openLogStream(streamPath);
     source.onopen = () => {
       setConnected(true);
       setFailed(false);

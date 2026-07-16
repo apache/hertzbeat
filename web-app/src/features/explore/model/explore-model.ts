@@ -15,52 +15,25 @@
  * limitations under the License.
  */
 
-export type ExploreSignal = 'metrics' | 'logs' | 'traces';
+import {
+  exploreHandoffState,
+  exploreUsesExactWindow,
+  type ExploreQuery,
+  type ExploreSignal,
+  type ExploreTimeRange
+} from '../api/explore-query';
 
-export type ExploreTimeRange = 'last-15m' | 'last-30m' | 'last-1h' | 'last-6h' | 'last-24h';
-
-type SharedExploreQuery = {
-  timeRange: ExploreTimeRange;
-  serviceName?: string | undefined;
-  serviceNamespace?: string | undefined;
-  environment?: string | undefined;
-  collectorId?: string | undefined;
-  query?: string | undefined;
-  windowMode?: 'preset' | undefined;
-  start?: number | undefined;
-  end?: number | undefined;
-};
-
-export type MetricExploreQuery = SharedExploreQuery & {
-  signal: 'metrics';
-  metricFilter?: string | undefined;
-  groupBy?: string | undefined;
-  aggregation?: string | undefined;
-  step?: string | undefined;
-};
-
-export type LogExploreQuery = SharedExploreQuery & {
-  signal: 'logs';
-  live?: boolean | undefined;
-  severityText?: string | undefined;
-  traceId?: string | undefined;
-  spanId?: string | undefined;
-  resourceFilter?: string | undefined;
-  attributeFilter?: string | undefined;
-  pageIndex?: number | undefined;
-};
-
-export type TraceExploreQuery = SharedExploreQuery & {
-  signal: 'traces';
-  traceId?: string | undefined;
-  errorOnly?: boolean | undefined;
-  resourceFilter?: string | undefined;
-  minDurationMs?: number | undefined;
-  maxDurationMs?: number | undefined;
-  pageIndex?: number | undefined;
-};
-
-export type ExploreQuery = MetricExploreQuery | LogExploreQuery | TraceExploreQuery;
+export {
+  exploreHandoffState,
+  exploreUsesExactWindow,
+  timeRangeMilliseconds,
+  type ExploreQuery,
+  type ExploreSignal,
+  type ExploreTimeRange,
+  type LogExploreQuery,
+  type MetricExploreQuery,
+  type TraceExploreQuery
+} from '../api/explore-query';
 
 export type ExploreQueryPatch = {
   signal?: ExploreSignal | undefined;
@@ -158,30 +131,6 @@ export function buildCrossSignalPath(query: ExploreQuery, signal: ExploreSignal,
   }));
 }
 
-export function timeRangeMilliseconds(timeRange: ExploreTimeRange) {
-  const minutes: Record<ExploreTimeRange, number> = {
-    'last-15m': 15,
-    'last-30m': 30,
-    'last-1h': 60,
-    'last-6h': 360,
-    'last-24h': 1440
-  };
-  return minutes[timeRange] * 60_000;
-}
-
-export function exploreHandoffState(query: ExploreQuery): 'none' | 'scoped' | 'invalid' {
-  if (![query.serviceNamespace, query.collectorId, query.start, query.windowMode].some(isPresent)) return 'none';
-  if (![query.serviceName, query.serviceNamespace, query.environment, query.collectorId].every(isPresent)) return 'invalid';
-  if (query.windowMode === 'preset') {
-    return !isPresent(query.start) && isPresent(query.end) ? 'scoped' : 'invalid';
-  }
-  return validExactWindow(query.start, query.end) ? 'scoped' : 'invalid';
-}
-
-export function exploreUsesExactWindow(query: ExploreQuery) {
-  return exploreHandoffState(query) === 'scoped' && query.windowMode !== 'preset';
-}
-
 export function querySubmissionTimePatch(query: ExploreQuery, now = Date.now()): ExploreQueryPatch {
   return exploreUsesExactWindow(query) ? {} : { start: undefined, end: now };
 }
@@ -197,14 +146,6 @@ export function presetTimeRangePatch(
     start: undefined,
     end: now
   };
-}
-
-function isPresent(value: unknown) {
-  return value != null;
-}
-
-function validExactWindow(start: number | undefined, end: number | undefined) {
-  return start != null && end != null && start < end;
 }
 
 function readSignal(value: string | null): ExploreSignal {

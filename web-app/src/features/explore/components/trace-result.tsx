@@ -21,10 +21,10 @@ import type { TFunction } from "i18next";
 import { useState } from "react";
 import type { NavigateFunction } from "react-router-dom";
 
-import { apiMessageGet, type PageResult } from "@/core/http/api-message";
-
-import { traceDurationMs, traceSpanLayout, type TraceDetail, type TraceRow, type TraceSpan } from "./explore-contract";
-import { buildCrossSignalPath, buildExplorePath, mergeExploreQuery, type TraceExploreQuery } from "./explore-model";
+import { loadTraceDetail, type ExplorePageResult } from "../api/explore-api";
+import type { TraceDetail, TraceRow, TraceSpan } from "../api/explore-signal-contract";
+import { buildCrossSignalPath, buildExplorePath, mergeExploreQuery, type TraceExploreQuery } from "../model/explore-model";
+import { traceDurationMs, traceSpanLayout } from "../model/explore-signal-model";
 import { OtlpAttributeList, OtlpAttributeSection } from "./otlp-attribute-list";
 import { SignalEmptyState, SignalResultFrame } from "./signal-result-frame";
 import styles from "./trace-result.module.css";
@@ -35,7 +35,7 @@ export function TraceResult({
   t,
   navigate,
 }: {
-  data: PageResult<TraceRow>;
+  data: ExplorePageResult<TraceRow>;
   query: TraceExploreQuery;
   t: TFunction;
   navigate: NavigateFunction;
@@ -104,7 +104,7 @@ function TraceDrawer({
 }) {
   const detail = useQuery({
     queryKey: ["trace-detail", traceId],
-    queryFn: ({ signal }) => apiMessageGet<TraceDetail>(`/api/traces/${traceId}`, { signal }),
+    queryFn: ({ signal }) => loadTraceDetail(traceId ?? '', signal),
     enabled: Boolean(traceId),
   });
   return (

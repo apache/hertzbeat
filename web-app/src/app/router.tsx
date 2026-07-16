@@ -82,7 +82,7 @@ export const appRoutes: RouteObject[] = [
                 id: 'explore',
                 path: '/explore',
                 lazy: async () => {
-                  const { ExplorePage } = await import('@/features/explore/explore-page');
+                  const { ExplorePage } = await import('@/features/explore');
                   return { Component: ExplorePage };
                 }
               },

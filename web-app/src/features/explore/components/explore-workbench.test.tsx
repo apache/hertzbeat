@@ -23,7 +23,7 @@ import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
 import { ExploreQueryBar } from './explore-query-bar';
 import { ExploreWorkbench } from './explore-workbench';
-import type { ExploreQueryPatch } from './explore-model';
+import type { ExploreQueryPatch } from '../model/explore-model';
 
 describe('Explore workbench', () => {
   beforeAll(async () => {

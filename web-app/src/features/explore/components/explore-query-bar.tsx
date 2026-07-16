@@ -25,7 +25,7 @@ import type {
   LogExploreQuery,
   MetricExploreQuery,
   TraceExploreQuery,
-} from "./explore-model";
+} from "../model/explore-model";
 import styles from "./explore-query-bar.module.css";
 
 type Props = {

@@ -27,7 +27,7 @@ import {
   type ExploreQueryPatch,
   type ExploreSignal,
   type ExploreTimeRange
-} from './explore-model';
+} from '../model/explore-model';
 import styles from './explore-workbench.module.css';
 
 const signalKeys: ExploreSignal[] = ['metrics', 'logs', 'traces'];
