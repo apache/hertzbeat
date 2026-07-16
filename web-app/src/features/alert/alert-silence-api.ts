@@ -15,35 +15,45 @@
  * limitations under the License.
  */
 
-import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut, type PageResult } from '@/core/http/api-message';
+import { ApiMessageError, apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
 
 import {
   buildAlertSilenceListPath,
   buildAlertSilencePayload,
+  buildAlertSilenceTogglePayload,
+  AlertSilenceMissingError,
+  parseAlertSilenceDetail,
+  parseAlertSilencePage,
   type AlertSilence,
   type AlertSilenceDraft,
   type AlertSilenceQuery
 } from './alert-silence-model';
 
-export function loadAlertSilences(query: AlertSilenceQuery) {
-  return apiMessageGet<PageResult<AlertSilence>>(buildAlertSilenceListPath(query));
+export async function loadAlertSilences(query: AlertSilenceQuery) {
+  const response = await apiMessageGet<unknown>(buildAlertSilenceListPath(query));
+  return parseAlertSilencePage(response, query);
 }
 
-export function loadAlertSilence(id: number) {
-  return apiMessageGet<AlertSilence>(`/api/alert/silence/${id}`);
+export async function loadAlertSilence(id: number) {
+  const response = await apiMessageGet<unknown>(`/api/alert/silence/${id}`);
+  return parseAlertSilenceDetail(response);
 }
 
-export function saveAlertSilence(draft: AlertSilenceDraft) {
+export async function saveAlertSilence(draft: AlertSilenceDraft): Promise<void> {
   const payload = buildAlertSilencePayload(draft);
-  return draft.id
-    ? apiMessagePut<unknown>('/api/alert/silence', payload)
-    : apiMessagePost<unknown>('/api/alert/silence', payload);
+  if (draft.id) await apiMessagePut<unknown>('/api/alert/silence', payload);
+  else await apiMessagePost<unknown>('/api/alert/silence', payload);
 }
 
-export function deleteAlertSilence(id: number) {
-  return apiMessageDelete<unknown>(`/api/alert/silences?ids=${id}`);
+export async function deleteAlertSilence(id: number): Promise<void> {
+  await apiMessageDelete<unknown>(`/api/alert/silences?ids=${id}`);
 }
 
-export function updateAlertSilenceEnabled(silence: AlertSilence, enable: boolean) {
-  return apiMessagePut<unknown>('/api/alert/silence', { ...silence, enable });
+export async function updateAlertSilenceEnabled(silence: AlertSilence, enable: boolean): Promise<void> {
+  await apiMessagePut<unknown>('/api/alert/silence', buildAlertSilenceTogglePayload(silence, enable));
+}
+
+export function isAlertSilenceMissing(reason: unknown) {
+  return reason instanceof AlertSilenceMissingError
+    || reason instanceof ApiMessageError && (reason.status === 404 || reason.status === 200 && reason.code === 15);
 }

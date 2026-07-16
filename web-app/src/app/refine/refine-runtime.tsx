@@ -23,6 +23,7 @@ import { Outlet } from 'react-router-dom';
 
 import { SessionProvider } from '@/core/auth/session-provider';
 
+import { alertSilenceDataProvider } from './resources/alert-silence-data-provider';
 import { labelDataProvider } from './resources/label-data-provider';
 import { noticeTemplateDataProvider } from './resources/notice-template-data-provider';
 import { objectStoreDataProvider } from './resources/object-store-data-provider';
@@ -45,6 +46,7 @@ const appQueryClient = new QueryClient({
 const dataProviders = {
   default: labelDataProvider,
   labels: labelDataProvider,
+  'alert-silences': alertSilenceDataProvider,
   'notice-templates': noticeTemplateDataProvider,
   'object-store': objectStoreDataProvider,
   'system-config': systemConfigDataProvider,
@@ -52,6 +54,11 @@ const dataProviders = {
 };
 
 const resources = [
+  {
+    name: 'alert-silences',
+    list: '/alerts/silences',
+    meta: { dataProviderName: 'alert-silences' }
+  },
   {
     name: 'labels',
     list: '/settings/labels',

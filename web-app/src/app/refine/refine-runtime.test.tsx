@@ -35,6 +35,7 @@ import { initializeI18n } from '@/core/i18n/i18n';
 
 import { AppProviders } from '../providers';
 import { appRoutes } from '../router';
+import { alertSilenceDataProvider } from './resources/alert-silence-data-provider';
 import { labelDataProvider } from './resources/label-data-provider';
 import { noticeTemplateDataProvider } from './resources/notice-template-data-provider';
 import { objectStoreDataProvider } from './resources/object-store-data-provider';
@@ -85,6 +86,9 @@ describe('production Refine runtime', () => {
     expect(screen.getByTestId('notice-template-resource'))
       .toHaveTextContent('notice-templates|/settings/notice-templates|notice-templates');
     expect(screen.getByTestId('notice-template-provider')).toHaveTextContent('shared');
+    expect(screen.getByTestId('alert-silence-resource'))
+      .toHaveTextContent('alert-silences|/alerts/silences|alert-silences');
+    expect(screen.getByTestId('alert-silence-provider')).toHaveTextContent('shared');
     fireEvent.click(screen.getByRole('button', { name: 'Open runtime notification' }));
     expect(await screen.findByText('Runtime notification ready')).toBeInTheDocument();
     const mountedClients = mountSpy.mock.instances;
@@ -112,6 +116,7 @@ function RuntimeProbe({ onClient }: { onClient: (client: QueryClient) => void })
   const systemConfigResource = resources.find(resource => resource.name === 'system-config');
   const tokenResource = resources.find(resource => resource.name === 'tokens');
   const noticeTemplateResource = resources.find(resource => resource.name === 'notice-templates');
+  const alertSilenceResource = resources.find(resource => resource.name === 'alert-silences');
   const labelProvider = resolveProviderState(dataProvider, 'labels', labelDataProvider, true);
   const objectStoreProvider = resolveProviderState(
     dataProvider,
@@ -137,6 +142,13 @@ function RuntimeProbe({ onClient }: { onClient: (client: QueryClient) => void })
     false
   );
   const noticeTemplateResourceText = formatResource(noticeTemplateResource);
+  const alertSilenceProvider = resolveProviderState(
+    dataProvider,
+    'alert-silences',
+    alertSilenceDataProvider,
+    false
+  );
+  const alertSilenceResourceText = formatResource(alertSilenceResource);
 
   return (
     <>
@@ -154,6 +166,8 @@ function RuntimeProbe({ onClient }: { onClient: (client: QueryClient) => void })
       <output data-testid="token-provider">{tokenProvider}</output>
       <output data-testid="notice-template-resource">{noticeTemplateResourceText}</output>
       <output data-testid="notice-template-provider">{noticeTemplateProvider}</output>
+      <output data-testid="alert-silence-resource">{alertSilenceResourceText}</output>
+      <output data-testid="alert-silence-provider">{alertSilenceProvider}</output>
       <button
         type="button"
         onClick={() => notification.open?.({ message: 'Runtime notification ready', type: 'success' })}
