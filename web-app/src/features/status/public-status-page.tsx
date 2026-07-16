@@ -119,7 +119,7 @@ export function PublicStatusPage() {
   const components = useQuery({ queryKey: ['public-status-components'], queryFn: () => apiMessageGet<StatusComponent[]>('/api/status/page/public/component') });
   const incidents = useQuery({ queryKey: ['public-status-incidents'], queryFn: () => apiMessageGet<PageResult<StatusIncident>>('/api/status/page/public/incident?pageIndex=0&pageSize=20') });
   const queries = [org, components, incidents];
-  const state = publicStatusState(org.isError, components.isError, incidents.isError);
+  const state = publicStatusState(org.error, components.error, incidents.error);
 
   return (
     <main className={styles.page} style={{ '--status-accent': org.data?.color ?? '#5b6fd8' } as CSSProperties}>
