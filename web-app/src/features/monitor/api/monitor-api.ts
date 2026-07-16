@@ -26,6 +26,13 @@ export class MonitorContractError extends Error {
   }
 }
 
+export class MonitorMissingError extends Error {
+  constructor() {
+    super('Monitor detail is missing');
+    this.name = 'MonitorMissingError';
+  }
+}
+
 export function classifyMonitorReadError(error: unknown): 'unavailable' | 'error' {
   if (error instanceof MonitorContractError) return 'error';
   if (error instanceof ApiMessageError
@@ -35,24 +42,50 @@ export function classifyMonitorReadError(error: unknown): 'unavailable' | 'error
   return 'error';
 }
 
+export function classifyMonitorDetailReadError(error: unknown): 'missing' | 'unavailable' | 'error' {
+  if (error instanceof MonitorMissingError
+    || error instanceof ApiMessageError && (error.status === 404 || error.status === 200 && error.code === 15)) {
+    return 'missing';
+  }
+  return classifyMonitorReadError(error);
+}
+
 export type Monitor = {
   id: number;
+  jobId?: number | null;
   name: string;
   app: string;
   instance: string;
   status: number;
-  intervals?: number;
-  scheduleType?: string;
-  cronExpression?: string;
-  description?: string;
-  scrape?: string;
-  labels?: Record<string, string>;
-  gmtCreate?: number | string;
-  gmtUpdate?: number | string;
+  type?: number;
+  intervals?: number | null;
+  scheduleType?: string | null;
+  cronExpression?: string | null;
+  description?: string | null;
+  scrape?: string | null;
+  labels?: Record<string, string> | null;
+  annotations?: Record<string, string> | null;
+  creator?: string | null;
+  modifier?: string | null;
+  gmtCreate?: number | string | null;
+  gmtUpdate?: number | string | null;
 };
 
-export type MonitorParam = { field: string; type?: number; paramValue?: unknown; display?: boolean };
-export type MonitorDetailMetric = { name: string; visible?: boolean; fields?: Array<{ type?: number; field?: string; unit?: string }> };
+export type MonitorParam = {
+  id?: number | null;
+  monitorId?: number | null;
+  field: string;
+  type?: number;
+  paramValue?: unknown;
+  gmtCreate?: number | string | null;
+  gmtUpdate?: number | string | null;
+};
+export type MonitorDetailMetric = {
+  name: string;
+  favorited?: boolean | null;
+  visible?: boolean;
+  fields?: Array<{ type?: number; field?: string; unit?: string }>;
+};
 export type MonitorParamDefine = {
   field: string;
   name?: string | Record<string, string>;
@@ -66,8 +99,20 @@ export type MonitorDetail = {
   monitor: Monitor;
   params?: MonitorParam[];
   collector?: string | null;
-  grafanaDashboard?: Record<string, unknown>;
+  grafanaDashboard?: MonitorGrafanaDashboard | null;
   metrics?: MonitorDetailMetric[];
+};
+
+export type MonitorGrafanaDashboard = {
+  monitorId: number | null;
+  folderUid: string | null;
+  slug: string | null;
+  status: string | null;
+  uid: string | null;
+  url: string | null;
+  version: number | null;
+  enabled: boolean;
+  template: string | null;
 };
 
 export type MonitorMetricOption = {
@@ -179,8 +224,14 @@ export async function loadMonitorApps(signal?: AbortSignal) {
   return parseMonitorApps(value);
 }
 
-export function loadMonitorDetail(id: string) {
-  return apiMessageGet<MonitorDetail>(`/api/monitor/${encodeURIComponent(id)}`);
+export async function loadMonitorDetail(id: string | number, signal?: AbortSignal) {
+  const requestedId = monitorDetailId(id);
+  if (requestedId === undefined) throw new MonitorMissingError();
+  const path = `/api/monitor/${requestedId}`;
+  const value = signal
+    ? await apiMessageGet<unknown>(path, { signal })
+    : await apiMessageGet<unknown>(path);
+  return parseMonitorDetail(value, requestedId);
 }
 
 export function loadMonitorParamDefines(app: string) {
@@ -250,6 +301,102 @@ function parseMonitor(value: unknown, index: number): Monitor {
   };
 }
 
+function parseMonitorDetail(value: unknown, requestedId: number): MonitorDetail {
+  if (value === null || value === undefined) throw new MonitorMissingError();
+  const detail = record(value, 'monitor detail');
+  const monitor = parseDetailMonitor(detail.monitor);
+  if (monitor.id !== requestedId) throw new MonitorContractError('Monitor detail identity does not match request');
+  const params = array(detail.params, 'monitor params')
+    .map((item, index) => parseMonitorParam(item, index, requestedId));
+  const metrics = array(detail.metrics, 'monitor metrics').map((item, index) => parseEmbeddedMetric(item, index));
+  const collector = nullableString(detail.collector, 'monitor collector');
+  const grafanaDashboard = detail.grafanaDashboard === null
+    ? null
+    : parseGrafanaDashboard(detail.grafanaDashboard, requestedId);
+  return { monitor, params, metrics, collector, grafanaDashboard };
+}
+
+function parseDetailMonitor(value: unknown): Monitor {
+  const item = record(value, 'monitor detail monitor');
+  return {
+    id: positiveInteger(item.id, 'monitor id'),
+    jobId: nullablePositiveInteger(item.jobId, 'monitor jobId'),
+    name: nonemptyString(item.name, 'monitor name'),
+    app: nonemptyString(item.app, 'monitor app'),
+    scrape: nullableString(item.scrape, 'monitor scrape'),
+    instance: nonemptyString(item.instance, 'monitor instance'),
+    intervals: nullableNonnegativeInteger(item.intervals, 'monitor intervals'),
+    scheduleType: nullableString(item.scheduleType, 'monitor scheduleType'),
+    cronExpression: nullableString(item.cronExpression, 'monitor cronExpression'),
+    status: byte(item.status, 'monitor status'),
+    type: byte(item.type, 'monitor type'),
+    labels: nullableStringMap(item.labels, 'monitor labels'),
+    annotations: nullableStringMap(item.annotations, 'monitor annotations'),
+    description: nullableString(item.description, 'monitor description'),
+    creator: nullableString(item.creator, 'monitor creator'),
+    modifier: nullableString(item.modifier, 'monitor modifier'),
+    gmtCreate: nullableTimestamp(item.gmtCreate, 'monitor gmtCreate'),
+    gmtUpdate: nullableTimestamp(item.gmtUpdate, 'monitor gmtUpdate')
+  };
+}
+
+function parseMonitorParam(value: unknown, index: number, requestedMonitorId: number): MonitorParam {
+  const item = record(value, `monitor param[${index}]`);
+  const result: MonitorParam = {
+    field: nonemptyString(item.field, 'monitor param field'),
+    type: byte(item.type, 'monitor param type')
+  };
+  if (item.paramValue !== null && typeof item.paramValue !== 'string') {
+    throw new MonitorContractError('monitor param value must be a string or null');
+  }
+  result.paramValue = item.paramValue;
+  result.id = nullablePositiveInteger(item.id, 'monitor param id');
+  result.monitorId = nullablePositiveInteger(item.monitorId, 'monitor param monitorId');
+  if (result.monitorId !== null && result.monitorId !== requestedMonitorId) {
+    throw new MonitorContractError('Monitor param identity does not match request');
+  }
+  result.gmtCreate = nullableTimestamp(item.gmtCreate, 'monitor param gmtCreate');
+  result.gmtUpdate = nullableTimestamp(item.gmtUpdate, 'monitor param gmtUpdate');
+  return result;
+}
+
+function parseGrafanaDashboard(value: unknown, requestedMonitorId: number): MonitorGrafanaDashboard {
+  const item = record(value, 'monitor grafana dashboard');
+  if (typeof item.enabled !== 'boolean') throw new MonitorContractError('grafana enabled must be boolean');
+  const monitorId = nullablePositiveInteger(item.monitorId, 'grafana monitorId');
+  if (monitorId !== null && monitorId !== requestedMonitorId) {
+    throw new MonitorContractError('Grafana dashboard identity does not match request');
+  }
+  return {
+    monitorId,
+    folderUid: nullableString(item.folderUid, 'grafana folderUid'),
+    slug: nullableString(item.slug, 'grafana slug'),
+    status: nullableString(item.status, 'grafana status'),
+    uid: nullableString(item.uid, 'grafana uid'),
+    url: nullableString(item.url, 'grafana url'),
+    version: nullableNonnegativeInteger(item.version, 'grafana version'),
+    enabled: item.enabled,
+    template: nullableString(item.template, 'grafana template')
+  };
+}
+
+function parseEmbeddedMetric(value: unknown, index: number): MonitorDetailMetric {
+  const item = record(value, `monitor metric[${index}]`);
+  const result: MonitorDetailMetric = { name: nonemptyString(item.name, 'monitor metric name') };
+  if (!Object.hasOwn(item, 'favorited') || item.favorited !== null && typeof item.favorited !== 'boolean') {
+    throw new MonitorContractError('monitor metric favorited must be boolean or null');
+  }
+  result.favorited = item.favorited;
+  return result;
+}
+
+function monitorDetailId(value: string | number) {
+  if (typeof value === 'number') return Number.isSafeInteger(value) && value > 0 ? value : undefined;
+  if (!/^[1-9]\d*$/.test(value)) return undefined;
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) ? parsed : undefined;
+}
+
 function parseMonitorApps(value: unknown): MonitorApp[] {
   return array(value, 'monitor apps').map((entry, index) => {
     const item = record(entry, `monitor app[${index}]`);
@@ -291,9 +438,36 @@ function nullableString(value: unknown, label: string) {
   return value;
 }
 
+function nullableStringMap(value: unknown, label: string) {
+  if (value === null) return null;
+  const values = record(value, label);
+  for (const [entryKey, entryValue] of Object.entries(values)) {
+    if (typeof entryValue !== 'string') {
+      throw new MonitorContractError(`${label} ${entryKey} must be a string`);
+    }
+  }
+  return values as Record<string, string>;
+}
+
 function nonnegativeInteger(value: unknown, label: string) {
   if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 0) {
     throw new MonitorContractError(`${label} must be a nonnegative safe integer`);
+  }
+  return value;
+}
+
+function nullableNonnegativeInteger(value: unknown, label: string) {
+  return value === null ? null : nonnegativeInteger(value, label);
+}
+
+function nullablePositiveInteger(value: unknown, label: string) {
+  return value === null ? null : positiveInteger(value, label);
+}
+
+function nullableTimestamp(value: unknown, label: string) {
+  if (value === null) return null;
+  if ((typeof value !== 'number' || !Number.isFinite(value)) && typeof value !== 'string') {
+    throw new MonitorContractError(`${label} must be a finite number, string, or null`);
   }
   return value;
 }

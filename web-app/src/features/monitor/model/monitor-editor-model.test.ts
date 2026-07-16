@@ -43,4 +43,13 @@ describe('monitor editor model', () => {
     expect(payload.params).toHaveLength(1);
     expect(payload.collector).toBeNull();
   });
+
+  it('preserves safe detail identity and scheduling fields in the edit payload', () => {
+    const param = { id: 4, monitorId: 7, field: 'host', type: 1, paramValue: null,
+      gmtCreate: 0, gmtUpdate: null };
+    const payload = buildMonitorPayload({ id: 7, jobId: 9, app: 'push', scrape: 'push', name: 'orders',
+      instance: 'orders', status: 1, type: 2, annotations: { team: 'platform' } }, 'collector-a', [param]);
+    expect(payload.monitor).toMatchObject({ id: 7, jobId: 9, type: 2, annotations: { team: 'platform' } });
+    expect(payload.params).toEqual([param]);
+  });
 });

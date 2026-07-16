@@ -15,7 +15,23 @@
  * limitations under the License.
  */
 
-import type { MonitorDetailMetric } from '../api/monitor-api';
+import type { MonitorDetail, MonitorDetailMetric } from '../api/monitor-api';
+
+export type MonitorDetailEvidence =
+  | { kind: 'loading' }
+  | { kind: 'missing' }
+  | { kind: 'unavailable' }
+  | { kind: 'error' }
+  | { kind: 'ready'; detail: MonitorDetail };
+
+export type MonitorDetailViewState = { detail: MonitorDetailEvidence; returnTo: string };
+export type MonitorDetailViewActions = { back: () => void; edit: () => void };
+
+export function parseMonitorRouteId(value: string | undefined) {
+  if (!value || !/^[1-9]\d*$/.test(value)) return undefined;
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) ? parsed : undefined;
+}
 
 export {
   buildFavoriteMetricPath,

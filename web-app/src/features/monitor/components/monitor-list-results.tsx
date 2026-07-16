@@ -57,14 +57,14 @@ function columns(t: (key: string) => string, open: (id: number, mode: 'view' | '
     { title: t('monitor.application'), dataIndex: 'app', render: (value: string) => <Tag>{value}</Tag> },
     { title: t('monitor.status.label'), dataIndex: 'status', render: (value: number) =>
       <Tag color={monitorStatusColor(value)}>{t(monitorStatusKey(value))}</Tag> },
-    { title: t('monitor.updated'), dataIndex: 'gmtUpdate', render: (value: number | string | undefined, row) =>
+    { title: t('monitor.updated'), dataIndex: 'gmtUpdate', render: (value: number | string | null | undefined, row) =>
       formatMonitorTime(value ?? row.gmtCreate) },
     { title: t('common.actions'), width: 370, render: (_value: unknown, row) =>
       <MonitorRowActions monitor={row} open={open} run={run} disabled={operating} /> }
   ];
 }
 
-function formatMonitorTime(value?: number | string) {
+function formatMonitorTime(value?: number | string | null) {
   const timestamp = parseMonitorTimestamp(value);
   return timestamp === undefined ? '—'
     : new Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'medium' }).format(timestamp);

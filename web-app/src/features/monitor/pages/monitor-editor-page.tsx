@@ -144,7 +144,7 @@ function MonitorEditorForm({ mode, initial, defines, apps, changeApp, returnTo }
       /></label>
       <label className={styles.wide}>{t('monitor.editor.descriptionLabel')}<Input.TextArea
         rows={2}
-        value={monitor.description}
+        value={monitor.description ?? ''}
         onChange={event => setMonitor(current => ({ ...current, description: event.target.value }))}
       /></label>
       {defines.length > 0 && <Typography.Title className={styles.section ?? ''} level={4}>{t('monitor.editor.connection')}</Typography.Title>}

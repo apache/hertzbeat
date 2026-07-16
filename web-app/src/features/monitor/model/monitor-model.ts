@@ -74,7 +74,7 @@ export function parseMonitorTimestamp(value?: number | string | null) {
 }
 
 export function safeMonitorReturnTo(value?: string | null) {
-  return value?.startsWith('/monitors') && !value.startsWith('//') ? value : '/monitors';
+  return value && /^\/monitors(?:[?#]|$)/.test(value) ? value : '/monitors';
 }
 
 export function buildMonitorRoutePath(monitorId: number, mode: 'view' | 'edit', returnTo: string) {

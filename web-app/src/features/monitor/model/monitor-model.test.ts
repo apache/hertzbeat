@@ -75,6 +75,9 @@ describe('monitor list model', () => {
     expect(buildMonitorRoutePath(7, 'edit', '/monitors?status=2')).toBe('/monitors/7/edit?returnTo=%2Fmonitors%3Fstatus%3D2');
     expect(safeMonitorReturnTo('/monitors?app=website')).toBe('/monitors?app=website');
     expect(safeMonitorReturnTo('https://example.com')).toBe('/monitors');
+    expect(safeMonitorReturnTo('/monitors-evil')).toBe('/monitors');
+    expect(safeMonitorReturnTo('/monitors/7')).toBe('/monitors');
+    expect(safeMonitorReturnTo('/monitors#selection')).toBe('/monitors#selection');
   });
 
   it('keeps bulk selection inside one query scope and visible row set', () => {

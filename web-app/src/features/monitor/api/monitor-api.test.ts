@@ -22,11 +22,19 @@ vi.mock('@/core/http/api-message', async importOriginal => ({
   ...await importOriginal<typeof import('@/core/http/api-message')>(), apiMessageGet: http.apiMessageGet
 }));
 
-import { loadMonitorApps, loadMonitors, MonitorContractError, type MonitorQuery } from './monitor-api';
+import { ApiMessageError } from '@/core/http/api-message';
+
+import {
+  classifyMonitorDetailReadError, loadMonitorApps, loadMonitorDetail, loadMonitors,
+  MonitorContractError, MonitorMissingError, type MonitorQuery
+} from './monitor-api';
 import { monitorAppOptions } from '../model/monitor-model';
 
 const query: MonitorQuery = { search: '', app: '', status: '9', labels: '', pageIndex: 0, pageSize: 10 };
 const row = { id: 7, name: 'checkout', app: 'website', instance: 'prod', status: 1, gmtUpdate: 0, ignored: true };
+const detailRow = { ...row, jobId: 9, type: 2, scrape: null, intervals: null, scheduleType: null,
+  cronExpression: null, labels: null, annotations: { team: 'platform' }, description: null,
+  creator: 'alice', modifier: 'bob', gmtCreate: null };
 const page = { content: [row], totalElements: 1, totalPages: 1, number: 0, size: 10 };
 
 describe('monitor list API contracts', () => {
@@ -68,5 +76,73 @@ describe('monitor list API contracts', () => {
     const apps = await loadMonitorApps();
     expect(apps).toEqual([{ value: 'custom', category: null, label: null, hide: null }]);
     expect(monitorAppOptions(apps)).toEqual([{ value: 'custom', label: 'custom' }]);
+  });
+});
+
+describe('monitor detail API contracts', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('forwards AbortSignal and allowlists the full editor-compatible detail shape', async () => {
+    const signal = new AbortController().signal;
+    http.apiMessageGet.mockResolvedValue({
+      monitor: { ...detailRow, intervals: 60, scheduleType: 'interval', cronExpression: null,
+        description: 'Home page', scrape: 'static', labels: { env: 'prod' }, ignored: true },
+      params: [{ id: 4, monitorId: 7, field: 'host', type: 1, paramValue: null,
+        gmtCreate: 0, gmtUpdate: null, ignored: true }],
+      collector: null,
+      grafanaDashboard: { monitorId: 7, folderUid: null, slug: 'home', status: null, uid: 'abc',
+        url: null, version: 2, enabled: true, template: null, ignored: true },
+      metrics: [{ name: 'summary', favorited: false, fields: [{ type: 0 }], ignored: true }],
+      ignored: true
+    });
+
+    await expect(loadMonitorDetail('7', signal)).resolves.toEqual({
+      monitor: { id: 7, jobId: 9, name: 'checkout', app: 'website', instance: 'prod', status: 1, type: 2,
+        intervals: 60, scheduleType: 'interval', cronExpression: null, description: 'Home page', scrape: 'static',
+        labels: { env: 'prod' }, annotations: { team: 'platform' }, creator: 'alice', modifier: 'bob',
+        gmtCreate: null, gmtUpdate: 0 },
+      params: [{ id: 4, monitorId: 7, field: 'host', type: 1, paramValue: null,
+        gmtCreate: 0, gmtUpdate: null }],
+      collector: null,
+      grafanaDashboard: { monitorId: 7, folderUid: null, slug: 'home', status: null, uid: 'abc',
+        url: null, version: 2, enabled: true, template: null },
+      metrics: [{ name: 'summary', favorited: false }]
+    });
+    expect(http.apiMessageGet).toHaveBeenCalledWith('/api/monitor/7', { signal });
+  });
+
+  it('accepts nullable dashboard and collector values from the required envelope', async () => {
+    http.apiMessageGet.mockResolvedValue({
+      monitor: detailRow, params: [], collector: null, grafanaDashboard: null, metrics: []
+    });
+    await expect(loadMonitorDetail(7)).resolves.toMatchObject({
+      monitor: { id: 7 }, params: [], collector: null, grafanaDashboard: null, metrics: []
+    });
+  });
+
+  it.each([
+    null, {}, { monitor: null },
+    { monitor: { ...detailRow, id: 8 }, params: [], collector: null, grafanaDashboard: null, metrics: [] },
+    { monitor: { ...detailRow, intervals: '60' }, params: [], collector: null, grafanaDashboard: null, metrics: [] },
+    { monitor: detailRow, params: [{}], collector: null, grafanaDashboard: null, metrics: [] },
+    { monitor: detailRow, params: [], collector: 7, grafanaDashboard: null, metrics: [] },
+    { monitor: detailRow, params: [], collector: null, grafanaDashboard: [], metrics: [] },
+    { monitor: detailRow, params: [], collector: null,
+      grafanaDashboard: { monitorId: 8, folderUid: null, slug: null, status: null, uid: null,
+        url: null, version: null, enabled: true, template: null }, metrics: [] },
+    { monitor: detailRow, params: [], collector: null, grafanaDashboard: null, metrics: [{ name: '' }] },
+    { monitor: detailRow, params: [], collector: null, grafanaDashboard: null,
+      metrics: [{ name: 'summary', favorited: 'false' }] }
+  ])('rejects missing or malformed detail evidence %#', async value => {
+    http.apiMessageGet.mockResolvedValue(value);
+    const expected = value === null ? MonitorMissingError : MonitorContractError;
+    await expect(loadMonitorDetail(7)).rejects.toBeInstanceOf(expected);
+  });
+
+  it('classifies missing, unavailable, and contract detail reads separately', () => {
+    expect(classifyMonitorDetailReadError(new ApiMessageError('missing', { status: 404 }))).toBe('missing');
+    expect(classifyMonitorDetailReadError(new ApiMessageError('missing', { status: 200, code: 15 }))).toBe('missing');
+    expect(classifyMonitorDetailReadError(new ApiMessageError('offline', { status: 503 }))).toBe('unavailable');
+    expect(classifyMonitorDetailReadError(new MonitorContractError('bad'))).toBe('error');
   });
 });
