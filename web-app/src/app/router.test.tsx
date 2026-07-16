@@ -47,12 +47,14 @@ describe('application data router', () => {
         '/settings/tokens',
         '/settings/system',
         '/settings/labels',
+        '/settings/storage/object-store',
         '/alerts/notifications/receivers',
         '/alerts/notifications/rules',
         '/alerts/notifications/templates',
         '/setting/settings/server',
         '/setting/settings/config',
         '/setting/labels',
+        '/setting/settings/object-store',
         '/bulletin',
         '*'
       ])

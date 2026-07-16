@@ -44,6 +44,7 @@ export const routeRegistry = [
   { id: 'tokens', path: settingsPaths.tokens, labelKey: 'token.title', layout: 'basic', navigation: false },
   { id: 'system-settings', path: settingsPaths.system, labelKey: 'systemConfig.title', layout: 'basic', navigation: false },
   { id: 'labels', path: settingsPaths.labels, labelKey: 'labels.title', layout: 'basic', navigation: false },
+  { id: 'object-store', path: settingsPaths.objectStore, labelKey: 'objectStore.title', layout: 'basic', navigation: false },
   { id: 'bulletin', path: '/bulletin', labelKey: 'menu.bulletin', layout: 'basic', navigation: true },
   { id: 'status', path: '/status', labelKey: 'menu.status', layout: 'blank', navigation: false },
   { id: 'login', path: '/passport/login', labelKey: 'auth.title', layout: 'passport', navigation: false },

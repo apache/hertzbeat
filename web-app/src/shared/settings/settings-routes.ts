@@ -13,6 +13,7 @@ export const settingsPaths = {
   tokens: '/settings/tokens',
   system: '/settings/system',
   labels: '/settings/labels',
+  objectStore: '/settings/storage/object-store',
 } as const;
 
 export const legacySettingsPaths = {
@@ -22,4 +23,5 @@ export const legacySettingsPaths = {
   channels: '/setting/settings/server',
   system: '/setting/settings/config',
   labels: '/setting/labels',
+  objectStore: '/setting/settings/object-store',
 } as const;

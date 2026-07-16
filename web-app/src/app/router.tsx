@@ -231,6 +231,14 @@ export const appRoutes: RouteObject[] = [
                 }
               },
               {
+                id: 'object-store',
+                path: settingsPaths.objectStore,
+                lazy: async () => {
+                  const { ObjectStorePage } = await import('@/features/settings/object-store-page');
+                  return { Component: ObjectStorePage };
+                }
+              },
+              {
                 id: 'settings',
                 path: settingsPaths.root,
                 element: <Navigate replace to={settingsPaths.receivers} />
@@ -264,6 +272,11 @@ export const appRoutes: RouteObject[] = [
                 id: 'legacy-labels',
                 path: legacySettingsPaths.labels,
                 element: <LegacySettingsRedirect to={settingsPaths.labels} />
+              },
+              {
+                id: 'legacy-object-store',
+                path: legacySettingsPaths.objectStore,
+                element: <LegacySettingsRedirect to={settingsPaths.objectStore} />
               },
               {
                 id: 'bulletin',

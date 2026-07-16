@@ -48,6 +48,7 @@ describe('route registry', () => {
         '/settings/tokens',
         '/settings/system',
         '/settings/labels',
+        '/settings/storage/object-store',
         '/bulletin',
         '/status',
         '/passport/login'
