@@ -23,6 +23,9 @@ import {
   createNoticeTemplateDraft,
   isNoticeTemplateReadOnly,
   noticeTemplateDraftFromDetail,
+  noticeTemplateResourceRecord,
+  parseNoticeTemplateDetail,
+  parseNoticeTemplatePage,
   readNoticeTemplateQuery,
   validateNoticeTemplateDraft,
   writeNoticeTemplateQuery
@@ -67,7 +70,75 @@ describe('notice template model', () => {
   });
 
   it('keeps built-in templates read-only even though they do not have database ids', () => {
-    expect(isNoticeTemplateReadOnly({ name: 'EmailTemplate', type: 1, preset: true, content: '${content}' })).toBe(true);
-    expect(isNoticeTemplateReadOnly({ id: 42, name: 'Custom', type: 1, preset: false, content: '${content}' })).toBe(false);
+    expect(isNoticeTemplateReadOnly({ preset: true })).toBe(true);
+    expect(isNoticeTemplateReadOnly({ preset: false })).toBe(false);
+  });
+
+  it('maps backend identity into a separate namespaced UI identity', () => {
+    expect(noticeTemplateResourceRecord({
+      id: 42,
+      name: 'Built-in:Email',
+      type: 1,
+      preset: true,
+      content: '${content}'
+    })).toMatchObject({
+      id: 'notice-template:preset:1:Built-in%3AEmail',
+      backendId: null,
+      preset: true
+    });
+    expect(noticeTemplateResourceRecord({
+      id: 42,
+      name: 'Custom',
+      type: 1,
+      preset: false,
+      content: '${content}'
+    })).toMatchObject({
+      id: 'notice-template:custom:42',
+      backendId: 42,
+      preset: false
+    });
+  });
+
+  it('strictly parses list and detail responses without turning malformed data into empty state', () => {
+    const custom = { id: 42, name: 'Custom', type: 1, preset: false, content: '${content}' };
+    expect(parseNoticeTemplateDetail(custom)).toEqual(custom);
+    expect(parseNoticeTemplatePage({
+      content: [custom], totalElements: 1, totalPages: 1, number: 0, size: 8
+    })).toEqual({ content: [custom], totalElements: 1, totalPages: 1, number: 0, size: 8 });
+
+    expect(() => parseNoticeTemplatePage({ content: [], totalElements: '0' }))
+      .toThrowError('Notice Template response is invalid');
+    expect(() => parseNoticeTemplateDetail({ id: 42, name: 'Custom', type: 99, preset: false, content: '' }))
+      .toThrowError('Notice Template response is invalid');
+  });
+
+  it('requires a positive id for custom list records while allowing id-less presets', () => {
+    const preset = { name: 'Built-in', type: 1, preset: true, content: '${content}' };
+    expect(parseNoticeTemplatePage({
+      content: [preset], totalElements: 1, totalPages: 1, number: 0, size: 8
+    }).content).toEqual([preset]);
+
+    for (const id of [undefined, null, 0, -1]) {
+      expect(() => parseNoticeTemplatePage({
+        content: [{ id, name: 'Custom', type: 1, preset: false, content: '${content}' }],
+        totalElements: 1,
+        totalPages: 1,
+        number: 0,
+        size: 8
+      })).toThrowError('Notice Template response is invalid');
+    }
+  });
+
+  it('rejects page content that exceeds the declared page size', () => {
+    expect(() => parseNoticeTemplatePage({
+      content: [
+        { id: 41, name: 'One', type: 1, preset: false, content: '${one}' },
+        { id: 42, name: 'Two', type: 1, preset: false, content: '${two}' }
+      ],
+      totalElements: 2,
+      totalPages: 2,
+      number: 0,
+      size: 1
+    })).toThrowError('Notice Template response is invalid');
   });
 });

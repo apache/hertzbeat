@@ -15,31 +15,33 @@
  * limitations under the License.
  */
 
-import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut, type PageResult } from '@/core/http/api-message';
+import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
 
 import {
   buildNoticeTemplateListPath,
   buildNoticeTemplatePayload,
-  type NoticeTemplate,
+  parseNoticeTemplateDetail,
+  parseNoticeTemplatePage,
   type NoticeTemplateDraft,
   type NoticeTemplateQuery
 } from './notice-template-model';
 
-export function loadNoticeTemplates(query: NoticeTemplateQuery) {
-  return apiMessageGet<PageResult<NoticeTemplate>>(buildNoticeTemplateListPath(query));
+export async function loadNoticeTemplates(query: NoticeTemplateQuery) {
+  const response = await apiMessageGet<unknown>(buildNoticeTemplateListPath(query));
+  return parseNoticeTemplatePage(response);
 }
 
-export function loadNoticeTemplate(id: number) {
-  return apiMessageGet<NoticeTemplate>(`/api/notice/template/${id}`);
+export async function loadNoticeTemplate(id: number) {
+  const response = await apiMessageGet<unknown>(`/api/notice/template/${id}`);
+  return parseNoticeTemplateDetail(response);
 }
 
-export function saveNoticeTemplate(draft: NoticeTemplateDraft) {
+export async function saveNoticeTemplate(draft: NoticeTemplateDraft) {
   const payload = buildNoticeTemplatePayload(draft);
-  return draft.id
-    ? apiMessagePut<unknown>('/api/notice/template', payload)
-    : apiMessagePost<unknown>('/api/notice/template', payload);
+  if (draft.id) await apiMessagePut<unknown>('/api/notice/template', payload);
+  else await apiMessagePost<unknown>('/api/notice/template', payload);
 }
 
-export function deleteNoticeTemplate(id: number) {
-  return apiMessageDelete<unknown>(`/api/notice/template/${id}`);
+export async function deleteNoticeTemplate(id: number) {
+  await apiMessageDelete<unknown>(`/api/notice/template/${id}`);
 }

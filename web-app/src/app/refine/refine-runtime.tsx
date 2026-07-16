@@ -24,6 +24,7 @@ import { Outlet } from 'react-router-dom';
 import { SessionProvider } from '@/core/auth/session-provider';
 
 import { labelDataProvider } from './resources/label-data-provider';
+import { noticeTemplateDataProvider } from './resources/notice-template-data-provider';
 import { objectStoreDataProvider } from './resources/object-store-data-provider';
 import { systemConfigDataProvider } from './resources/system-config-data-provider';
 import { tokenDataProvider } from './resources/token-data-provider';
@@ -44,6 +45,7 @@ const appQueryClient = new QueryClient({
 const dataProviders = {
   default: labelDataProvider,
   labels: labelDataProvider,
+  'notice-templates': noticeTemplateDataProvider,
   'object-store': objectStoreDataProvider,
   'system-config': systemConfigDataProvider,
   tokens: tokenDataProvider
@@ -59,6 +61,11 @@ const resources = [
     name: 'object-store',
     list: '/settings/storage/object-store',
     meta: { dataProviderName: 'object-store' }
+  },
+  {
+    name: 'notice-templates',
+    list: '/settings/notice-templates',
+    meta: { dataProviderName: 'notice-templates' }
   },
   {
     name: 'system-config',

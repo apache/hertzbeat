@@ -1,0 +1,238 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { noticeTemplateCreateActionUrl } from '@/app/refine/resources/notice-template-data-provider';
+
+import { useNoticeTemplateController } from './notice-template-controller';
+import { noticeTemplateResourceRecord } from './notice-template-model';
+
+const refine = vi.hoisted(() => ({
+  notification: vi.fn(),
+  params: 'name=Mail&preset=false&pageIndex=1&pageSize=15',
+  provider: vi.fn(),
+  refetch: vi.fn(),
+  setParams: vi.fn(),
+  useDataProvider: vi.fn(),
+  useList: vi.fn(),
+  useNotification: vi.fn()
+}));
+
+vi.mock('@refinedev/core', () => ({
+  useDataProvider: refine.useDataProvider,
+  useList: refine.useList,
+  useNotification: refine.useNotification
+}));
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+vi.mock('react-router-dom', () => ({
+  useSearchParams: () => [new URLSearchParams(refine.params), refine.setParams]
+}));
+
+const record = noticeTemplateResourceRecord({
+  id: 42, name: 'Custom', type: 1, preset: false, content: '${content}'
+});
+const preset = noticeTemplateResourceRecord({
+  name: 'Built-in', type: 1, preset: true, content: '${content}'
+});
+
+describe('Notice Template controller', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    refine.params = 'name=Mail&preset=false&pageIndex=1&pageSize=15';
+    refine.provider.mockReturnValue({
+      custom: vi.fn().mockResolvedValue({ data: { acknowledged: true } }),
+      deleteOne: vi.fn().mockResolvedValue({ data: record }),
+      getOne: vi.fn().mockResolvedValue({ data: record }),
+      update: vi.fn().mockResolvedValue({ data: record })
+    });
+    refine.useDataProvider.mockReturnValue(refine.provider);
+    refine.useNotification.mockReturnValue({ open: refine.notification });
+    refine.useList.mockReturnValue(buildListResult());
+    refine.refetch.mockResolvedValue({ data: { data: [record], total: 1 }, isError: false });
+  });
+
+  it('maps URL query and pagination into the named Refine list', () => {
+    const { result } = renderHook(() => useNoticeTemplateController());
+
+    expect(refine.useList).toHaveBeenCalledWith(expect.objectContaining({
+      resource: 'notice-templates',
+      dataProviderName: 'notice-templates',
+      pagination: { currentPage: 2, pageSize: 15, mode: 'server' }
+    }));
+    expect(result.current.state.query).toEqual({ name: 'Mail', preset: false, pageIndex: 1, pageSize: 15 });
+    act(() => result.current.changePage(3, 25));
+    expect(refine.setParams).toHaveBeenCalledWith(expect.objectContaining({
+      get: expect.any(Function)
+    }));
+    expect((refine.setParams.mock.calls[0]?.[0] as URLSearchParams).toString())
+      .toBe('name=Mail&preset=false&pageIndex=2&pageSize=25');
+  });
+
+  it('discards a local search draft whenever Back or Forward restores URL search', () => {
+    refine.params = 'name=A&preset=false&pageIndex=0&pageSize=8';
+    const { result, rerender } = renderHook(() => useNoticeTemplateController());
+
+    act(() => result.current.setName('B'));
+    expect(result.current.state.name).toBe('B');
+
+    refine.params = 'name=C&preset=false&pageIndex=0&pageSize=8';
+    rerender();
+    expect(result.current.state.name).toBe('C');
+
+    refine.params = 'name=A&preset=false&pageIndex=0&pageSize=8';
+    rerender();
+    expect(result.current.state.name).toBe('A');
+  });
+
+  it('guards preset commands before any provider call', async () => {
+    const { result } = renderHook(() => useNoticeTemplateController());
+    const provider = refine.provider.mock.results[0]?.value;
+
+    await act(async () => result.current.edit(preset));
+    await act(async () => result.current.remove(preset));
+
+    expect(provider.getOne).not.toHaveBeenCalled();
+    expect(provider.deleteOne).not.toHaveBeenCalled();
+  });
+
+  it('keeps an out-of-range empty page honest when the query still has results', () => {
+    refine.useList.mockReturnValue(buildListResult({ data: [], total: 5 }));
+    const { result } = renderHook(() => useNoticeTemplateController());
+
+    expect(result.current.state.list).toEqual({ kind: 'ready', records: [], total: 5 });
+  });
+
+  it('creates through the exact custom ack and closes only after authoritative list refetch', async () => {
+    const { result } = renderHook(() => useNoticeTemplateController());
+    const provider = refine.provider.mock.results[0]?.value;
+    act(() => result.current.create());
+    act(() => result.current.updateDraft({ name: 'New', content: '${content}' }));
+    await act(async () => result.current.submit());
+
+    expect(provider.custom).toHaveBeenCalledWith({
+      url: noticeTemplateCreateActionUrl,
+      method: 'post',
+      payload: { name: 'New', type: 1, content: '${content}' }
+    });
+    expect(refine.refetch).toHaveBeenCalledTimes(1);
+    expect(result.current.state.draft).toBeNull();
+  });
+
+  it('updates and deletes only after provider proof plus authoritative list refetch', async () => {
+    const { result } = renderHook(() => useNoticeTemplateController());
+    const provider = refine.provider.mock.results[0]?.value;
+
+    await act(async () => result.current.edit(record));
+    act(() => result.current.updateDraft({ name: 'Updated' }));
+    await act(async () => result.current.submit());
+    await act(async () => result.current.remove(record));
+
+    expect(provider.update).toHaveBeenCalledWith(expect.objectContaining({
+      resource: 'notice-templates', id: 42
+    }));
+    expect(provider.deleteOne).toHaveBeenCalledWith(expect.objectContaining({
+      resource: 'notice-templates', id: 42
+    }));
+    expect(refine.refetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps a create draft and marks the list unavailable when authoritative refresh fails', async () => {
+    refine.refetch.mockResolvedValue({ isError: true, error: { statusCode: 503 } });
+    const { result } = renderHook(() => useNoticeTemplateController());
+
+    act(() => result.current.create());
+    act(() => result.current.updateDraft({ name: 'New', content: '${content}' }));
+    await act(async () => result.current.submit());
+
+    expect(result.current.state.draft).toMatchObject({ name: 'New' });
+    expect(result.current.state.list.kind).toBe('unavailable');
+    expect(refine.notification).not.toHaveBeenCalledWith(expect.objectContaining({
+      message: 'noticeTemplates.saveSuccess'
+    }));
+  });
+
+  it('keeps an update draft and marks contract refresh failure as error', async () => {
+    refine.refetch.mockResolvedValue({
+      isError: true,
+      error: { statusCode: 502, code: 'NOTICE_TEMPLATE_RESPONSE_INVALID' }
+    });
+    const { result } = renderHook(() => useNoticeTemplateController());
+
+    await act(async () => result.current.edit(record));
+    act(() => result.current.updateDraft({ name: 'Updated' }));
+    await act(async () => result.current.submit());
+
+    expect(result.current.state.draft).toMatchObject({ id: 42, name: 'Updated' });
+    expect(result.current.state.list.kind).toBe('error');
+    expect(refine.notification).not.toHaveBeenCalledWith(expect.objectContaining({
+      message: 'noticeTemplates.saveSuccess'
+    }));
+  });
+
+  it('does not report delete success when its authoritative refresh fails', async () => {
+    refine.refetch.mockResolvedValue({ isError: true, error: { statusCode: 503 } });
+    const { result } = renderHook(() => useNoticeTemplateController());
+
+    await act(async () => result.current.remove(record));
+
+    expect(result.current.state.list.kind).toBe('unavailable');
+    expect(refine.notification).not.toHaveBeenCalledWith(expect.objectContaining({
+      message: 'noticeTemplates.deleteSuccess'
+    }));
+  });
+
+  it('does not leak query A refresh failure into a successful query B', async () => {
+    refine.params = 'name=A&preset=false&pageIndex=0&pageSize=8';
+    refine.refetch.mockResolvedValue({ isError: true, error: { statusCode: 503 } });
+    const { result, rerender } = renderHook(() => useNoticeTemplateController());
+
+    act(() => result.current.create());
+    act(() => result.current.updateDraft({ name: 'New', content: '${content}' }));
+    await act(async () => result.current.submit());
+    expect(result.current.state.list.kind).toBe('unavailable');
+
+    refine.params = 'name=B&preset=false&pageIndex=0&pageSize=8';
+    rerender();
+    expect(result.current.state.list).toEqual({ kind: 'ready', records: [record], total: 1 });
+  });
+
+  it('clears refresh failure after an explicit retry succeeds in the same query', async () => {
+    refine.refetch.mockResolvedValueOnce({ isError: true, error: { statusCode: 503 } });
+    const { result } = renderHook(() => useNoticeTemplateController());
+
+    act(() => result.current.create());
+    act(() => result.current.updateDraft({ name: 'New', content: '${content}' }));
+    await act(async () => result.current.submit());
+    expect(result.current.state.list.kind).toBe('unavailable');
+
+    refine.refetch.mockResolvedValueOnce({ data: { data: [record], total: 1 }, isError: false });
+    act(() => result.current.refresh());
+    await waitFor(() => expect(result.current.state.list.kind).toBe('ready'));
+  });
+});
+
+function buildListResult(override: { data?: typeof record[]; total?: number } = {}) {
+  return {
+    query: { error: null, isError: false, isFetching: false, isPending: false, refetch: refine.refetch },
+    result: {
+      data: override.data ?? [record],
+      total: override.total ?? 1
+    }
+  };
+}
