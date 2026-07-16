@@ -23,7 +23,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
-import type { TraceDetail } from '../api/explore-signal-contract';
+import type { TraceDetail } from '../model/explore-signal-contract';
 import { TraceResult } from './trace-result';
 
 describe('TraceResult', () => {
@@ -50,11 +50,8 @@ describe('TraceResult', () => {
   });
 
   it('uses neutral status unless health or failure is explicit', () => {
-    const unknownRow: TraceDetail = { ...traceDetail, traceId: 'unknown' };
-    delete unknownRow.status;
-    delete unknownRow.errorSpanCount;
-    const countErrorRow: TraceDetail = { ...traceDetail, traceId: 'count-error', errorSpanCount: 1 };
-    delete countErrorRow.status;
+    const unknownRow: TraceDetail = { ...traceDetail, traceId: 'unknown', status: null, errorSpanCount: 0 };
+    const countErrorRow: TraceDetail = { ...traceDetail, traceId: 'count-error', status: null, errorSpanCount: 1 };
     const cases = [
       { row: unknownRow, text: '—', tone: 'neutral' },
       { row: { ...traceDetail, traceId: 'ok', status: 'OK', errorSpanCount: 0 }, text: 'OK', tone: 'green' },
@@ -76,11 +73,11 @@ describe('TraceResult', () => {
     }
   });
 
-  it('keeps missing detail counts and span durations unknown', async () => {
+  it('keeps nullable span durations unknown', async () => {
     const navigate = vi.fn() as unknown as NavigateFunction;
     const incompleteSpans = (traceDetail.spans ?? []).map((span) => {
       const incompleteSpan = { ...span };
-      delete incompleteSpan.durationNanos;
+      incompleteSpan.durationNanos = null;
       return incompleteSpan;
     });
     const incompleteDetail: TraceDetail = {
@@ -88,13 +85,11 @@ describe('TraceResult', () => {
       status: 'OK',
       spans: incompleteSpans
     };
-    delete incompleteDetail.errorSpanCount;
     render(<I18nextProvider i18n={i18n}><Subject navigate={navigate} row={incompleteDetail} detail={incompleteDetail} /></I18nextProvider>);
 
     fireEvent.click(screen.getByText('POST /checkout'));
 
-    await waitFor(() => expect(screen.getByText(/— errors/)).toBeInTheDocument());
-    expect(screen.queryByText(/0 errors/)).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText(/1 errors/)).toBeInTheDocument());
     expect(screen.queryByText('0.00 ms')).not.toBeInTheDocument();
 
     const spanButton = screen.getByText('checkout', { selector: 'strong' }).closest('button');
@@ -120,20 +115,32 @@ const traceDetail: TraceDetail = {
   rootSpanId: 'span-1',
   rootSpanName: 'POST /checkout',
   serviceName: 'checkout',
+  serviceNamespace: null,
   startTime: 1_750_000_000_000,
   durationNanos: 3_000_000_000,
   errorSpanCount: 1,
   status: 'ERROR',
+  resourceAttributes: null,
   spans: [{
     traceId: 'trace-1',
     spanId: 'span-1',
+    parentSpanId: null,
     spanName: 'POST /checkout',
     serviceName: 'checkout',
     startTime: 1_750_000_000_000,
     durationNanos: 3_000_000_000,
     status: 'error',
+    spanKind: null,
+    statusMessage: null,
+    traceState: null,
+    scopeName: null,
+    scopeVersion: null,
+    highlighted: false,
+    resourceAttributes: null,
     spanAttributes: { 'http.status_code': '504' },
-    events: [{ name: 'retry.scheduled', attributes: { 'retry.attempt': 2 } }]
+    events: [{ timeUnixNano: null, name: 'retry.scheduled', attributes: { 'retry.attempt': 2 }, droppedAttributesCount: null }],
+    links: null,
+    codeNavigationHint: null
   }]
 };
 

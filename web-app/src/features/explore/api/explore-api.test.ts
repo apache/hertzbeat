@@ -15,14 +15,23 @@
  * limitations under the License.
  */
 
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { ApiMessageError } from '@/core/http/api-message';
 
 const { apiMessageGet } = vi.hoisted(() => ({ apiMessageGet: vi.fn() }));
-vi.mock('@/core/http/api-message', () => ({ apiMessageGet }));
+vi.mock('@/core/http/api-message', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/core/http/api-message')>()), apiMessageGet
+}));
 
-import { buildLogStreamPath, buildSignalApiPath, loadTraceDetail } from './explore-api';
+import {
+  buildLogStreamPath, buildSignalApiPath, classifyExploreSignalError, loadLogSignal,
+  loadMetricSignal, loadTraceDetail, loadTraceSignal
+} from './explore-api';
+import { ExploreSignalContractError, ExploreSignalMissingError } from '../model/explore-signal-contract';
 
 describe('explore API paths', () => {
+  beforeEach(() => { vi.clearAllMocks(); });
   it('maps the shared context to each signal API', () => {
     const base = { signal: 'logs' as const, timeRange: 'last-15m' as const, serviceName: 'checkout', environment: 'prod', query: 'timeout', traceId: 'trace-1' };
     expect(buildSignalApiPath(base, 1_000_000)).toBe('/api/logs/list?serviceName=checkout&environment=prod&start=100000&end=1000000&pageIndex=0&pageSize=20&search=timeout&traceId=trace-1');
@@ -70,11 +79,40 @@ describe('explore API paths', () => {
     expect(buildSignalApiPath(preset)).toContain('collectorId=collector-east');
   });
 
-  it('loads trace detail through the feature API boundary', async () => {
+  it('loads encoded trace detail through the parser boundary', async () => {
     const signal = new AbortController().signal;
-    apiMessageGet.mockResolvedValue({ traceId: 'trace-1' });
+    apiMessageGet.mockResolvedValue({ ...traceRow('trace / 1'), spans: null });
 
-    await expect(loadTraceDetail('trace-1', signal)).resolves.toEqual({ traceId: 'trace-1' });
-    expect(apiMessageGet).toHaveBeenCalledWith('/api/traces/trace-1', { signal });
+    await expect(loadTraceDetail('trace / 1', signal)).resolves.toMatchObject({ traceId: 'trace / 1', spans: null });
+    expect(apiMessageGet).toHaveBeenCalledWith('/api/traces/trace%20%2F%201', { signal });
+  });
+
+  it('passes AbortSignal and parses every raw signal response', async () => {
+    const signal = new AbortController().signal;
+    apiMessageGet
+      .mockResolvedValueOnce({ context: null, query: null, datasource: null, queryMode: null, results: null, stats: null, emptyStateReason: null, errorMessage: null })
+      .mockResolvedValueOnce(springPage([]))
+      .mockResolvedValueOnce(springPage([traceRow('trace-1')]));
+    await loadMetricSignal({ signal: 'metrics', timeRange: 'last-15m' }, signal);
+    await loadLogSignal({ signal: 'logs', timeRange: 'last-15m', pageIndex: 0 }, signal);
+    await loadTraceSignal({ signal: 'traces', timeRange: 'last-15m', pageIndex: 0 }, signal);
+    expect(apiMessageGet).toHaveBeenCalledTimes(3);
+    expect(apiMessageGet.mock.calls.every((call: unknown[]) => (call[1] as { signal: AbortSignal }).signal === signal)).toBe(true);
+  });
+
+  it('keeps missing, unavailable, contract, and other failures distinct', () => {
+    expect(classifyExploreSignalError(new ExploreSignalMissingError())).toBe('missing');
+    expect(classifyExploreSignalError(new ApiMessageError('offline', { status: 503 }))).toBe('unavailable');
+    expect(classifyExploreSignalError(new ExploreSignalContractError('bad'))).toBe('contract');
+    expect(classifyExploreSignalError(new Error('bad'))).toBe('error');
   });
 });
+
+function springPage(content: unknown[]) {
+  return { content, totalElements: content.length, totalPages: content.length ? 1 : 0, number: 0, size: 20 };
+}
+
+function traceRow(traceId: string) {
+  return { traceId, rootSpanId: null, serviceName: null, serviceNamespace: null, rootSpanName: null,
+    durationNanos: null, status: null, startTime: null, errorSpanCount: 0, resourceAttributes: null };
+}

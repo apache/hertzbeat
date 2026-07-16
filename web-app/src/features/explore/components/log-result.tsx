@@ -21,7 +21,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import type { NavigateFunction } from "react-router-dom";
 
 import { buildLogStreamPath, openLogStream, type ExplorePageResult } from "../api/explore-api";
-import type { LogRow } from "../api/explore-signal-contract";
+import type { LogRow } from "../model/explore-signal-contract";
 import { buildCrossSignalPath, buildExplorePath, type LogExploreQuery } from "../model/explore-model";
 import { logBody, logServiceName, logTimestampMs } from "../model/explore-signal-model";
 import styles from "./log-result.module.css";
@@ -162,7 +162,7 @@ function LogRows({
           {
             title: t("explore.severity"),
             width: 100,
-            render: (_, row) => <Tag color={severityColor(row.severityText)}>{row.severityText ?? "—"}</Tag>,
+            render: (_, row) => <Tag color={severityColor(row.severityText ?? undefined)}>{row.severityText ?? "—"}</Tag>,
           },
           { title: t("explore.service"), width: 170, render: (_, row) => logServiceName(row) ?? "—" },
           { title: t("explore.message"), ellipsis: true, render: (_, row) => logBody(row) ?? "—" },
@@ -176,7 +176,7 @@ function LogRows({
                   type="link"
                   onClick={(event) => {
                     event.stopPropagation();
-                    void navigate(buildCrossSignalPath(query, "traces", { traceId: row.traceId }));
+                    void navigate(buildCrossSignalPath(query, "traces", { traceId: row.traceId ?? undefined }));
                   }}
                 >
                   {shortId(row.traceId)}
@@ -229,7 +229,7 @@ function LogDetail({
         row?.traceId ? (
           <Button
             onClick={() => {
-              void navigate(buildCrossSignalPath(query, "traces", { traceId: row.traceId }));
+              void navigate(buildCrossSignalPath(query, "traces", { traceId: row.traceId ?? undefined }));
             }}
           >
             {t("exploreLog.openTrace")}
@@ -251,8 +251,8 @@ function LogDetail({
               { key: "span", label: "Span ID", children: row.spanId ?? "—" },
             ]}
           />
-          <OtlpAttributeSection title={t("exploreLog.resourceAttributes")} value={row.resource} />
-          <OtlpAttributeSection title={t("exploreLog.logAttributes")} value={row.attributes} />
+          <OtlpAttributeSection title={t("exploreLog.resourceAttributes")} value={row.resource ?? undefined} />
+          <OtlpAttributeSection title={t("exploreLog.logAttributes")} value={row.attributes ?? undefined} />
         </>
       )}
     </Drawer>

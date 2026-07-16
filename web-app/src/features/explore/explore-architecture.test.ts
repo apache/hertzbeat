@@ -20,8 +20,8 @@ import { describe, expect, it } from 'vitest';
 const requiredDirectories = ['api', 'model', 'components', 'pages'] as const;
 const layerDirectories = [...requiredDirectories, 'hooks'] as const;
 const allowedDependencies: Record<(typeof layerDirectories)[number], readonly string[]> = {
-  api: ['api'],
-  model: ['api', 'model'],
+  api: ['api', 'model'],
+  model: ['model'],
   hooks: ['api', 'model', 'hooks'],
   components: ['api', 'model', 'hooks', 'components'],
   pages: ['api', 'model', 'hooks', 'components', 'pages']
@@ -40,7 +40,7 @@ describe('Explore feature boundaries', () => {
     expect(paths.filter(path => /^\.\/[^/]+$/.test(path) && path !== './index.ts')).toEqual([]);
   });
 
-  it('keeps API transport independent from UI models and prevents direct component transport', () => {
+  it('keeps domain models independent from API transport and prevents direct component transport', () => {
     const violations = Object.entries(productionSources)
       .filter(([path]) => !path.includes('.test.'))
       .flatMap(([path, source]) => validateImports(path, source));

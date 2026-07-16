@@ -21,7 +21,7 @@ import {
   type ExploreQuery,
   type ExploreSignal,
   type ExploreTimeRange
-} from '../api/explore-query';
+} from './explore-query';
 
 export {
   exploreHandoffState,
@@ -33,7 +33,7 @@ export {
   type LogExploreQuery,
   type MetricExploreQuery,
   type TraceExploreQuery
-} from '../api/explore-query';
+} from './explore-query';
 
 export type ExploreQueryPatch = {
   signal?: ExploreSignal | undefined;

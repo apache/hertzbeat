@@ -22,7 +22,7 @@ import { useState } from "react";
 import type { NavigateFunction } from "react-router-dom";
 
 import { loadTraceDetail, type ExplorePageResult } from "../api/explore-api";
-import type { TraceDetail, TraceRow, TraceSpan } from "../api/explore-signal-contract";
+import type { TraceDetail, TraceRow, TraceSpan } from "../model/explore-signal-contract";
 import { buildCrossSignalPath, buildExplorePath, mergeExploreQuery, type TraceExploreQuery } from "../model/explore-model";
 import { traceDurationMs, traceHealthState, traceSpanLayout } from "../model/explore-signal-model";
 import { OtlpAttributeList, OtlpAttributeSection } from "./otlp-attribute-list";
@@ -164,7 +164,7 @@ function TraceDetailView({
                 buildExplorePath(
                   mergeExploreQuery(query, {
                     signal: "metrics",
-                    serviceName: selected?.serviceName ?? detail.serviceName,
+                    serviceName: selected?.serviceName ?? detail.serviceName ?? undefined,
                     query: undefined,
                     traceId: undefined,
                     pageIndex: undefined,
@@ -184,7 +184,7 @@ function TraceDetailView({
             type="button"
             data-selected={span.spanId === selected?.spanId}
             className={styles.spanRow}
-            onClick={() => setSpanId(span.spanId)}
+            onClick={() => setSpanId(span.spanId ?? undefined)}
           >
             <span className={styles.spanName} style={{ paddingLeft: `${span.depth * 16 + 8}px` }}>
               <strong>{span.serviceName ?? "—"}</strong>
@@ -223,8 +223,8 @@ function SpanDetail({ span, t }: { span: TraceSpan; t: TFunction }) {
           { key: "scope", label: t("exploreTrace.scope"), children: span.scopeName ?? "—" },
         ]}
       />
-      <OtlpAttributeSection title={t("exploreTrace.spanAttributes")} value={span.spanAttributes} />
-      <OtlpAttributeSection title={t("exploreTrace.resourceAttributes")} value={span.resourceAttributes} />
+      <OtlpAttributeSection title={t("exploreTrace.spanAttributes")} value={span.spanAttributes ?? undefined} />
+      <OtlpAttributeSection title={t("exploreTrace.resourceAttributes")} value={span.resourceAttributes ?? undefined} />
       <section className={styles.events}>
         <Typography.Title level={5}>{t("exploreTrace.events")}</Typography.Title>
         {(span.events ?? []).length === 0 ? (
@@ -233,7 +233,7 @@ function SpanDetail({ span, t }: { span: TraceSpan; t: TFunction }) {
           span.events?.map((event, index) => (
             <div key={`${event.name ?? "event"}-${index}`}>
               <strong>{event.name ?? "—"}</strong>
-              <OtlpAttributeList value={event.attributes} />
+              <OtlpAttributeList value={event.attributes ?? undefined} />
             </div>
           ))
         )}

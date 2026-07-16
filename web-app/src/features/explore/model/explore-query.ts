@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+// Domain query contract shared by URL state and transport adapters.
 export type ExploreSignal = 'metrics' | 'logs' | 'traces';
 
 export type ExploreTimeRange = 'last-15m' | 'last-30m' | 'last-1h' | 'last-6h' | 'last-24h';

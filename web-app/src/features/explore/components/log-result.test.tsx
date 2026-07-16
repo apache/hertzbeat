@@ -67,12 +67,19 @@ function Subject() {
   return <LogResult
     data={{ content: [{
       timeUnixNano: 1_750_000_000_000_000_000,
+      observedTimeUnixNano: null,
+      severityNumber: null,
       severityText: 'ERROR',
       body: 'payment timeout',
+      droppedAttributesCount: null,
       traceId: 'trace-1',
       spanId: 'span-1',
+      traceFlags: null,
       resource: { 'service.name': 'checkout', 'service.version': '1.2.3' },
-      attributes: { 'retry.count': 2 }
+      attributes: { 'retry.count': 2 },
+      resourceSchemaUrl: null,
+      instrumentationScope: null,
+      scopeSchemaUrl: null
     }], totalElements: 1, totalPages: 1, number: 0, size: 20 }}
     query={{ signal: 'logs', timeRange: 'last-30m' }}
     t={t}

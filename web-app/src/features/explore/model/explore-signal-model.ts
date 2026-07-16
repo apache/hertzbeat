@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { LogRow, MetricConsole, TraceDetail, TraceRow, TraceSpan } from '../api/explore-signal-contract';
+import type { LogRow, MetricConsole, TraceDetail, TraceRow, TraceSpan } from './explore-signal-contract';
 
 export type TraceSpanLayout = TraceSpan & { depth: number; offsetPercent: number; widthPercent: number };
 
@@ -39,7 +39,7 @@ export function metricResultState(console: MetricConsole): MetricResultState {
   if (console.errorMessage != null) return metricErrorState(console.errorMessage);
   const results = console.results;
   if (!results || results.status == null) return { kind: 'unavailable' };
-  if (results.status !== 200) return metricErrorState(results.msg);
+  if (results.status !== 200) return metricErrorState(results.msg ?? undefined);
   if (!Array.isArray(results.frames)) return { kind: 'unavailable' };
   if (results.frames.length === 0) return { kind: 'empty' };
   if (results.frames.some(frame => !hasMetricFrameData(frame))) return { kind: 'unavailable' };
@@ -55,7 +55,7 @@ export function metricSeries(console: MetricConsole): MetricSeries[] {
     return {
       key: `${name}-${index}`,
       name,
-      unit: valueField?.unit,
+      unit: valueField?.unit ?? undefined,
       labels,
       points: frame.data ?? []
     };

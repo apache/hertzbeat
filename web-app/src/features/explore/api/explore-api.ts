@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { apiMessageGet, type PageResult } from '@/core/http/api-message';
+import { ApiMessageError, apiMessageGet } from '@/core/http/api-message';
 
 import {
   exploreHandoffState,
@@ -25,25 +25,46 @@ import {
   type LogExploreQuery,
   type MetricExploreQuery,
   type TraceExploreQuery
-} from './explore-query';
-import type { LogRow, MetricConsole, TraceDetail, TraceRow } from './explore-signal-contract';
+} from '../model/explore-query';
+import {
+  ExploreSignalContractError,
+  ExploreSignalMissingError,
+  parseLogPage,
+  parseMetricConsole,
+  parseTraceDetail,
+  parseTracePage
+} from '../model/explore-signal-contract';
 
-export type ExplorePageResult<T> = PageResult<T>;
+export type { ExplorePageResult } from '../model/explore-signal-contract';
 
-export function loadMetricSignal(query: MetricExploreQuery, signal?: AbortSignal) {
-  return apiMessageGet<MetricConsole>(buildSignalApiPath(query), requestSignal(signal));
+export async function loadMetricSignal(query: MetricExploreQuery, signal?: AbortSignal) {
+  return parseMetricConsole(await apiMessageGet<unknown>(buildSignalApiPath(query), requestSignal(signal)));
 }
 
-export function loadLogSignal(query: LogExploreQuery, signal?: AbortSignal) {
-  return apiMessageGet<PageResult<LogRow>>(buildSignalApiPath(query), requestSignal(signal));
+export async function loadLogSignal(query: LogExploreQuery, signal?: AbortSignal) {
+  const pageIndex = query.pageIndex ?? 0;
+  return parseLogPage(await apiMessageGet<unknown>(buildSignalApiPath(query), requestSignal(signal)), pageIndex, 20);
 }
 
-export function loadTraceSignal(query: TraceExploreQuery, signal?: AbortSignal) {
-  return apiMessageGet<PageResult<TraceRow>>(buildSignalApiPath(query), requestSignal(signal));
+export async function loadTraceSignal(query: TraceExploreQuery, signal?: AbortSignal) {
+  const pageIndex = query.pageIndex ?? 0;
+  return parseTracePage(await apiMessageGet<unknown>(buildSignalApiPath(query), requestSignal(signal)), pageIndex, 20);
 }
 
-export function loadTraceDetail(traceId: string, signal?: AbortSignal) {
-  return apiMessageGet<TraceDetail>(`/api/traces/${traceId}`, requestSignal(signal));
+export async function loadTraceDetail(traceId: string, signal?: AbortSignal) {
+  if (!traceId) throw new ExploreSignalContractError('traceId is required');
+  const raw = await apiMessageGet<unknown>(`/api/traces/${encodeURIComponent(traceId)}`, requestSignal(signal));
+  return parseTraceDetail(raw, traceId);
+}
+
+export function classifyExploreSignalError(reason: unknown): 'missing' | 'unavailable' | 'contract' | 'error' {
+  if (reason instanceof ExploreSignalMissingError) return 'missing';
+  if (reason instanceof ExploreSignalContractError) return 'contract';
+  if (reason instanceof ApiMessageError) {
+    if (reason.status === 404 || reason.status === 200 && reason.code === 3) return 'missing';
+    if (reason.cause !== undefined || reason.status === undefined || [0, 502, 503, 504].includes(reason.status)) return 'unavailable';
+  }
+  return 'error';
 }
 
 export function buildSignalApiPath(query: ExploreQuery, now = Date.now()) {
