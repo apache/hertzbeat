@@ -17,7 +17,7 @@
 
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import { Alert, Button, Skeleton } from "antd";
-import type { FormEvent, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
@@ -29,6 +29,7 @@ import { ExploreWorkbench } from "../components/explore-workbench";
 import { LogResult } from "../components/log-result";
 import { MetricResult } from "../components/metric-result";
 import { TraceResult } from "../components/trace-result";
+import { useExploreSubmission } from "../hooks/use-explore-submission";
 import {
   buildExplorePath,
   exploreHandoffState,
@@ -56,31 +57,16 @@ export function ExplorePage() {
     const next = mergeExploreQuery(query, changes);
     setSearchParams(new URL(buildExplorePath(next), window.location.origin).searchParams);
   };
-
-  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    updateQuery({
-      serviceName: readFormValue(event.currentTarget, "serviceName"),
-      environment: readFormValue(event.currentTarget, "environment"),
-      query: readFormValue(event.currentTarget, "query"),
-      traceId: readFormValue(event.currentTarget, "traceId"),
-      spanId: readFormValue(event.currentTarget, "spanId"),
-      resourceFilter: readFormValue(event.currentTarget, "resourceFilter"),
-      attributeFilter: readFormValue(event.currentTarget, "attributeFilter"),
-      metricFilter: readFormValue(event.currentTarget, "metricFilter"),
-      groupBy: readFormValue(event.currentTarget, "groupBy"),
-      step: readFormValue(event.currentTarget, "step"),
-      minDurationMs: readFormNumber(event.currentTarget, "minDurationMs"),
-      maxDurationMs: readFormNumber(event.currentTarget, "maxDurationMs"),
-      ...querySubmissionTimePatch(query),
-      pageIndex: undefined,
-    });
-  };
+  const submission = useExploreSubmission(query, (patch) => updateQuery({
+    ...patch,
+    ...querySubmissionTimePatch(query),
+    pageIndex: undefined,
+  }));
 
   return (
     <div className={styles.page}>
       <ExploreWorkbench query={query} t={t} updateQuery={updateQuery} />
-      <ExploreQueryBar query={query} t={t} updateQuery={updateQuery} onSubmit={onSubmit} />
+      <ExploreQueryBar query={query} t={t} updateQuery={updateQuery} submission={submission} />
       <ResultPanel query={query} t={t} navigate={navigate} />
     </div>
   );
@@ -194,16 +180,4 @@ function QueryResult<T>({
       {render(result.data)}
     </section>
   );
-}
-
-function readFormValue(form: HTMLFormElement, name: string) {
-  const value = new FormData(form).get(name);
-  return typeof value === "string" && value.trim() ? value.trim() : undefined;
-}
-
-function readFormNumber(form: HTMLFormElement, name: string) {
-  const value = readFormValue(form, name);
-  if (value == null) return undefined;
-  const number = Number(value);
-  return Number.isFinite(number) && number >= 0 ? number : undefined;
 }

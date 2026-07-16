@@ -58,6 +58,23 @@
   align-items: center;
 }
 
+.field {
+  min-width: 0;
+}
+
+.field > :global(.ant-select),
+.field > :global(.ant-input) {
+  width: 100%;
+}
+
+.fieldError {
+  display: block;
+  margin-top: 4px;
+  color: var(--ant-color-error);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
 .activeFilters {
   display: flex;
   flex-wrap: wrap;

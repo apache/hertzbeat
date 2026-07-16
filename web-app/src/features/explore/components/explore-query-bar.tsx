@@ -17,123 +17,159 @@
 
 import { Button, Checkbox, Input, Select, Tag } from "antd";
 import type { TFunction } from "i18next";
-import type { FormEvent } from "react";
+import type { ReactNode } from "react";
 
+import type { ExploreSubmissionController, ExploreSubmissionErrors } from "../hooks/use-explore-submission";
 import type {
   ExploreQuery,
   ExploreQueryPatch,
-  LogExploreQuery,
-  MetricExploreQuery,
-  TraceExploreQuery,
 } from "../model/explore-model";
+import type {
+  LogExploreSubmissionDraft,
+  MetricExploreSubmissionDraft,
+  TraceExploreSubmissionDraft,
+} from "../model/explore-submission-model";
 import styles from "./explore-query-bar.module.css";
 
 type Props = {
   query: ExploreQuery;
   t: TFunction;
   updateQuery: (changes: ExploreQueryPatch) => void;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  submission: ExploreSubmissionController;
 };
 
-export function ExploreQueryBar({ query, t, updateQuery, onSubmit }: Props) {
+export function ExploreQueryBar({ query, t, updateQuery, submission }: Props) {
+  const { draft, errors, updateField } = submission;
   return (
     <form
-      key={`${query.signal}-${query.signal === "logs" && query.live ? "live" : "query"}`}
       className={styles.form}
-      onSubmit={onSubmit}
+      onSubmit={(event) => { event.preventDefault(); submission.submit(); }}
     >
       <div className={styles.primaryRow}>
         <Input
           className={styles.queryInput ?? ""}
-          name="query"
-          defaultValue={query.query}
+          value={draft.query}
+          onChange={(event) => updateField({ field: "query", value: event.target.value })}
           placeholder={t(`explore.queryPlaceholders.${query.signal}`)}
         />
-        <Input name="serviceName" defaultValue={query.serviceName} placeholder={t("explore.serviceName")} />
-        <Input name="environment" defaultValue={query.environment} placeholder={t("explore.environment")} />
+        <Input
+          value={draft.serviceName}
+          onChange={(event) => updateField({ field: "serviceName", value: event.target.value })}
+          placeholder={t("explore.serviceName")}
+        />
+        <Input
+          value={draft.environment}
+          onChange={(event) => updateField({ field: "environment", value: event.target.value })}
+          placeholder={t("explore.environment")}
+        />
         <Button className={styles.run ?? ""} type="primary" htmlType="submit">
           {t("common.query")}
         </Button>
       </div>
-      <AdvancedFilters query={query} t={t} updateQuery={updateQuery} />
-      <ActiveFilters query={query} t={t} updateQuery={updateQuery} />
+      <AdvancedFilters draft={draft} errors={errors} t={t} updateField={updateField} />
+      <ActiveFilters query={query} t={t} updateQuery={updateQuery} submission={submission} />
     </form>
   );
 }
 
-function AdvancedFilters({ query, t, updateQuery }: Omit<Props, "onSubmit">) {
+function AdvancedFilters({ draft, errors, t, updateField }: AdvancedFilterProps) {
   return (
-    <details className={styles.advanced} open={hasAdvancedFilter(query) || undefined}>
+    <details className={styles.advanced} open={hasAdvancedFilter(draft) || undefined}>
       <summary>{t("explore.advancedFilters")}</summary>
       <div className={styles.advancedFields}>
-        {query.signal === "metrics" && <MetricFilters query={query} t={t} updateQuery={updateQuery} />}
-        {query.signal === "logs" && <LogFilters query={query} t={t} updateQuery={updateQuery} />}
-        {query.signal === "traces" && <TraceFilters query={query} t={t} updateQuery={updateQuery} />}
+        {draft.signal === "metrics" && <MetricFilters draft={draft} errors={errors} t={t} updateField={updateField} />}
+        {draft.signal === "logs" && <LogFilters draft={draft} t={t} updateField={updateField} />}
+        {draft.signal === "traces" && <TraceFilters draft={draft} errors={errors} t={t} updateField={updateField} />}
       </div>
     </details>
   );
 }
 
-function MetricFilters({ query, t, updateQuery }: FilterProps<MetricExploreQuery>) {
+function MetricFilters({ draft, errors, t, updateField }: ValidatedDraftFilterProps<MetricExploreSubmissionDraft>) {
   return (
     <>
-      <Input name="metricFilter" defaultValue={query.metricFilter} placeholder={t("exploreMetric.filter")} />
-      <Input name="groupBy" defaultValue={query.groupBy} placeholder={t("exploreMetric.groupBy")} />
-      <Select
-        allowClear
-        value={query.aggregation}
-        placeholder={t("exploreMetric.aggregation")}
-        options={["avg", "sum", "min", "max", "count"].map((value) => ({ value, label: value }))}
-        onChange={(aggregation) => updateQuery({ aggregation })}
-      />
-      <Input name="step" defaultValue={query.step} placeholder={t("exploreMetric.step")} />
+      <Input value={draft.metricFilter} onChange={(event) => updateField({ field: "metricFilter", value: event.target.value })} placeholder={t("exploreMetric.filter")} />
+      <Input value={draft.groupBy} onChange={(event) => updateField({ field: "groupBy", value: event.target.value })} placeholder={t("exploreMetric.groupBy")} />
+      <Field id="explore-aggregation" error={errors.aggregation} t={t}>
+        <Select
+          aria-invalid={Boolean(errors.aggregation)}
+          aria-describedby={errors.aggregation ? "explore-aggregation-error" : undefined}
+          aria-label={t("exploreMetric.aggregation")}
+          allowClear
+          status={errors.aggregation ? "error" : ""}
+          value={draft.aggregation || undefined}
+          placeholder={t("exploreMetric.aggregation")}
+          options={["avg", "sum", "min", "max", "count"].map((value) => ({ value, label: value }))}
+          onChange={(aggregation) => updateField({ field: "aggregation", value: aggregation ?? "" })}
+        />
+      </Field>
+      <Field id="explore-step" error={errors.stepSeconds} t={t}>
+        <Input
+          aria-invalid={Boolean(errors.stepSeconds)}
+          aria-describedby={errors.stepSeconds ? "explore-step-error" : undefined}
+          status={errors.stepSeconds ? "error" : ""}
+          value={draft.stepSeconds}
+          onChange={(event) => updateField({ field: "stepSeconds", value: event.target.value })}
+          placeholder={t("exploreMetric.step")}
+        />
+      </Field>
     </>
   );
 }
 
-function LogFilters({ query, t, updateQuery }: FilterProps<LogExploreQuery>) {
+function LogFilters({ draft, t, updateField }: DraftFilterProps<LogExploreSubmissionDraft>) {
   return (
     <>
       <Select
         aria-label={t("explore.severity")}
         allowClear
-        value={query.severityText}
+        value={draft.severityText || undefined}
         placeholder={t("explore.severity")}
         options={["TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL"].map((value) => ({ value, label: value }))}
-        onChange={(severityText) => updateQuery({ severityText })}
+        onChange={(severityText) => updateField({ field: "severityText", value: severityText ?? "" })}
       />
-      <Input name="traceId" defaultValue={query.traceId} placeholder={t("explore.traceId")} />
-      <Input name="spanId" defaultValue={query.spanId} placeholder={t("explore.spanId")} />
-      <Input name="resourceFilter" defaultValue={query.resourceFilter} placeholder={t("exploreLog.resourceFilter")} />
+      <Input value={draft.traceId} onChange={(event) => updateField({ field: "traceId", value: event.target.value })} placeholder={t("explore.traceId")} />
+      <Input value={draft.spanId} onChange={(event) => updateField({ field: "spanId", value: event.target.value })} placeholder={t("explore.spanId")} />
+      <Input value={draft.resourceFilter} onChange={(event) => updateField({ field: "resourceFilter", value: event.target.value })} placeholder={t("exploreLog.resourceFilter")} />
       <Input
-        name="attributeFilter"
-        defaultValue={query.attributeFilter}
+        value={draft.attributeFilter}
+        onChange={(event) => updateField({ field: "attributeFilter", value: event.target.value })}
         placeholder={t("exploreLog.attributeFilter")}
       />
     </>
   );
 }
 
-function TraceFilters({ query, t, updateQuery }: FilterProps<TraceExploreQuery>) {
+function TraceFilters({ draft, errors, t, updateField }: ValidatedDraftFilterProps<TraceExploreSubmissionDraft>) {
   return (
     <>
-      <Input name="traceId" defaultValue={query.traceId} placeholder={t("explore.traceId")} />
-      <Input
-        name="minDurationMs"
-        defaultValue={query.minDurationMs}
-        placeholder={t("exploreTrace.minDuration")}
-        inputMode="numeric"
-      />
-      <Input
-        name="maxDurationMs"
-        defaultValue={query.maxDurationMs}
-        placeholder={t("exploreTrace.maxDuration")}
-        inputMode="numeric"
-      />
-      <Input name="resourceFilter" defaultValue={query.resourceFilter} placeholder={t("exploreLog.resourceFilter")} />
+      <Input value={draft.traceId} onChange={(event) => updateField({ field: "traceId", value: event.target.value })} placeholder={t("explore.traceId")} />
+      <Field id="explore-min-duration" error={errors.minDurationMs} t={t}>
+        <Input
+          aria-invalid={Boolean(errors.minDurationMs)}
+          aria-describedby={errors.minDurationMs ? "explore-min-duration-error" : undefined}
+          status={errors.minDurationMs ? "error" : ""}
+          value={draft.minDurationMs}
+          onChange={(event) => updateField({ field: "minDurationMs", value: event.target.value })}
+          placeholder={t("exploreTrace.minDuration")}
+          inputMode="numeric"
+        />
+      </Field>
+      <Field id="explore-max-duration" error={errors.maxDurationMs} t={t}>
+        <Input
+          aria-invalid={Boolean(errors.maxDurationMs)}
+          aria-describedby={errors.maxDurationMs ? "explore-max-duration-error" : undefined}
+          status={errors.maxDurationMs ? "error" : ""}
+          value={draft.maxDurationMs}
+          onChange={(event) => updateField({ field: "maxDurationMs", value: event.target.value })}
+          placeholder={t("exploreTrace.maxDuration")}
+          inputMode="numeric"
+        />
+      </Field>
+      <Input value={draft.resourceFilter} onChange={(event) => updateField({ field: "resourceFilter", value: event.target.value })} placeholder={t("exploreLog.resourceFilter")} />
       <Checkbox
-        checked={Boolean(query.errorOnly)}
-        onChange={(event) => updateQuery({ errorOnly: event.target.checked || undefined })}
+        checked={draft.errorOnly}
+        onChange={(event) => updateField({ field: "errorOnly", value: event.target.checked })}
       >
         {t("exploreTrace.errorOnly")}
       </Checkbox>
@@ -141,23 +177,26 @@ function TraceFilters({ query, t, updateQuery }: FilterProps<TraceExploreQuery>)
   );
 }
 
-type FilterProps<T extends ExploreQuery> = {
-  query: T;
+type AdvancedFilterProps = Pick<ExploreSubmissionController, "draft" | "errors" | "updateField"> & { t: TFunction };
+
+type DraftFilterProps<T> = Pick<ExploreSubmissionController, "updateField"> & {
+  draft: T;
   t: TFunction;
-  updateQuery: (changes: ExploreQueryPatch) => void;
 };
 
-function hasAdvancedFilter(query: ExploreQuery) {
+type ValidatedDraftFilterProps<T> = DraftFilterProps<T> & Pick<ExploreSubmissionController, "errors">;
+
+function hasAdvancedFilter(draft: ExploreSubmissionController["draft"]) {
   const filters =
-    query.signal === "metrics"
-      ? [query.metricFilter, query.groupBy, query.aggregation, query.step]
-      : query.signal === "logs"
-        ? [query.severityText, query.traceId, query.spanId, query.resourceFilter, query.attributeFilter]
-        : [query.traceId, query.resourceFilter, query.minDurationMs, query.maxDurationMs, query.errorOnly];
+    draft.signal === "metrics"
+      ? [draft.metricFilter, draft.groupBy, draft.aggregation, draft.stepSeconds]
+      : draft.signal === "logs"
+        ? [draft.severityText, draft.traceId, draft.spanId, draft.resourceFilter, draft.attributeFilter]
+        : [draft.traceId, draft.resourceFilter, draft.minDurationMs, draft.maxDurationMs, draft.errorOnly];
   return filters.some((value) => value != null && value !== false && value !== "");
 }
 
-function ActiveFilters({ query, t, updateQuery }: Omit<Props, "onSubmit">) {
+function ActiveFilters({ query, t, updateQuery, submission }: Props) {
   const filters = [
     ...activeFilter(query.serviceName, "serviceName", t("explore.serviceContext", { value: query.serviceName })),
     ...activeFilter(query.serviceNamespace, "serviceNamespace", t("explore.serviceNamespaceContext", { value: query.serviceNamespace })),
@@ -169,12 +208,33 @@ function ActiveFilters({ query, t, updateQuery }: Omit<Props, "onSubmit">) {
   return (
     <div className={styles.activeFilters} aria-label={t("explore.activeFilters")}>
       {filters.map((filter) => (
-        <Tag key={filter.key} closable onClose={() => updateQuery({ [filter.key]: undefined })}>
+        <Tag key={filter.key} closable onClose={() => {
+          if (!submission.removeFilter(filter.key)) updateQuery({ [filter.key]: undefined });
+        }}>
           {filter.label}
         </Tag>
       ))}
     </div>
   );
+}
+
+function Field({ id, error, t, children }: {
+  id: string;
+  error: ExploreSubmissionErrors[keyof ExploreSubmissionErrors];
+  t: TFunction;
+  children: ReactNode;
+}) {
+  return <div className={styles.field}>
+    {children}
+    {error && <span id={`${id}-error`} className={styles.fieldError} role="alert">{t(submissionErrorKey(error))}</span>}
+  </div>;
+}
+
+function submissionErrorKey(error: NonNullable<ExploreSubmissionErrors[keyof ExploreSubmissionErrors]>) {
+  if (error === "unsupported_aggregation") return "explore.submissionErrors.unsupportedAggregation";
+  if (error === "invalid_step") return "explore.submissionErrors.invalidStep";
+  if (error === "min_exceeds_max") return "explore.submissionErrors.minExceedsMax";
+  return "explore.submissionErrors.invalidDuration";
 }
 
 type ActiveFilter = { key: keyof ExploreQueryPatch; label: string };

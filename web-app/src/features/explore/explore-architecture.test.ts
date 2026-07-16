@@ -46,6 +46,15 @@ describe('Explore feature boundaries', () => {
       .flatMap(([path, source]) => validateImports(path, source));
     expect(violations).toEqual([]);
   });
+
+  it('keeps DOM form parsing out of Explore pages', () => {
+    const pageSources = Object.entries(productionSources)
+      .filter(([path]) => path.startsWith('./pages/'))
+      .map(([, source]) => source);
+
+    expect(pageSources.filter(source => /\b(?:FormData|FormEvent|readFormValue|readFormNumber)\b/.test(source)))
+      .toEqual([]);
+  });
 });
 
 function validateImports(path: string, source: string) {

@@ -25,6 +25,7 @@ import en from '@/assets/i18n/en-us.json';
 import { ExploreQueryBar } from './explore-query-bar';
 import { ExploreWorkbench } from './explore-workbench';
 import type { ExploreQueryPatch } from '../model/explore-model';
+import { draftFromQuery } from '../model/explore-submission-model';
 
 describe('Explore workbench', () => {
   beforeAll(async () => {
@@ -87,10 +88,13 @@ function WorkbenchSubject({ updateQuery }: { updateQuery: (changes: ExploreQuery
 
 function QuerySubject() {
   const { t } = useTranslation();
+  const query = { signal: 'logs', timeRange: 'last-30m' } as const;
   return <ExploreQueryBar
-    query={{ signal: 'logs', timeRange: 'last-30m' }}
+    query={query}
     t={t}
     updateQuery={vi.fn()}
-    onSubmit={event => event.preventDefault()}
+    submission={{
+      draft: draftFromQuery(query), errors: {}, updateField: vi.fn(), submit: vi.fn(), removeFilter: vi.fn()
+    }}
   />;
 }
