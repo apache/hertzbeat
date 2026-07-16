@@ -25,7 +25,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { ApiMessageError } from '@/core/http/api-message';
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
-import type { StatusIncident } from '../api/status-management-api';
+import type { StatusIncident, StatusOrg } from '../api/status-management-api';
 
 const api = vi.hoisted(() => ({
   deleteStatusComponent: vi.fn(),
@@ -112,6 +112,59 @@ describe('StatusManagementPage', () => {
     await waitFor(() => expect(api.saveStatusOrg).toHaveBeenCalledWith(expect.objectContaining({ name: 'Updated' })));
   });
 
+  it('keeps the organization draft editable after failure and blocks duplicate pending saves', async () => {
+    const firstSave = deferred<StatusOrg>();
+    api.saveStatusOrg
+      .mockReturnValueOnce(firstSave.promise)
+      .mockResolvedValueOnce({ ...org, name: 'Draft organization' });
+    renderPage();
+
+    expect(await screen.findByDisplayValue('HertzBeat')).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    const name = await screen.findByLabelText('Name');
+    fireEvent.change(name, { target: { value: 'Draft organization' } });
+    const save = screen.getByRole('button', { name: 'Save' });
+    fireEvent.click(save);
+    fireEvent.click(save);
+    await waitFor(() => expect(api.saveStatusOrg).toHaveBeenCalledTimes(1));
+
+    expect(name).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled();
+    expect(save).toBeDisabled();
+
+    await act(async () => {
+      firstSave.reject(new Error('save failed'));
+      await Promise.resolve();
+    });
+    await waitFor(() => expect(name).toBeEnabled());
+    expect(name).toHaveValue('Draft organization');
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeEnabled();
+    expect(await screen.findByText(i18n.t('statusManagement.saveFailed'))).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
+
+    fireEvent.click(save);
+    await waitFor(() => expect(api.saveStatusOrg).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(name).toBeDisabled());
+  });
+
+  it('does not replace an organization draft during a background refresh', async () => {
+    const { client } = renderPage();
+
+    expect(await screen.findByDisplayValue('HertzBeat')).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    const name = await screen.findByLabelText('Name');
+    fireEvent.change(name, { target: { value: 'Local draft' } });
+
+    api.loadStatusOrg.mockResolvedValueOnce({ ...org, name: 'Server refresh' });
+    await act(async () => {
+      await client.invalidateQueries({ queryKey: ['status-page-org'] });
+    });
+
+    await waitFor(() => expect(api.loadStatusOrg).toHaveBeenCalledTimes(2));
+    expect(name).toHaveValue('Local draft');
+    expect(name).toBeEnabled();
+  });
+
   it('keeps a new incident open when an obsolete detail request finishes', async () => {
     const detail = deferred<StatusIncident>();
     api.loadStatusComponents.mockResolvedValue([statusComponent]);
@@ -152,7 +205,7 @@ function renderPage() {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } }
   });
-  return render(
+  const view = render(
     <I18nextProvider i18n={i18n}>
       <QueryClientProvider client={client}>
         <MemoryRouter initialEntries={['/settings/status-page']}>
@@ -161,6 +214,7 @@ function renderPage() {
       </QueryClientProvider>
     </I18nextProvider>
   );
+  return { ...view, client };
 }
 
 class ResizeObserverStub {
@@ -171,8 +225,10 @@ class ResizeObserverStub {
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
-  const promise = new Promise<T>(onResolve => {
+  let reject!: (reason: unknown) => void;
+  const promise = new Promise<T>((onResolve, onReject) => {
     resolve = onResolve;
+    reject = onReject;
   });
-  return { promise, resolve };
+  return { promise, resolve, reject };
 }

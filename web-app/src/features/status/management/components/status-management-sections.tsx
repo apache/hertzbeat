@@ -19,7 +19,7 @@ export function StatusOrgSection({ org, pending, error, saving, onSave }: {
   pending: boolean;
   error: Error | null;
   saving: boolean;
-  onSave: (org: StatusOrg) => void;
+  onSave: (org: StatusOrg) => Promise<void>;
 }) {
   const { t } = useTranslation();
   const missing = isMissingOrg(error);

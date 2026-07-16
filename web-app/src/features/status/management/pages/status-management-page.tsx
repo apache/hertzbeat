@@ -86,7 +86,7 @@ export function StatusManagementPage() {
         pending={org.isPending}
         error={org.error}
         saving={mutations.orgSave.isPending}
-        onSave={value => mutations.orgSave.mutate(value)}
+        onSave={async value => { await mutations.orgSave.mutateAsync(value); }}
       />
       <StatusComponentSection
         orgId={statusOrg?.id}
