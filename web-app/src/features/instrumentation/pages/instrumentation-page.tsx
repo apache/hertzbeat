@@ -32,7 +32,7 @@ export function InstrumentationPage() {
     (startedAt: number) => buildDetectionRequest(setup.draft, startedAt),
     [setup.draft]
   );
-  const detection = useInstrumentationDetection(createDetectionRequest);
+  const detection = useInstrumentationDetection(createDetectionRequest, setup.handleContractError);
   return (
     <div className={styles.page}>
       <header className={styles.heading}>

@@ -114,6 +114,16 @@ describe('InstrumentationPage', () => {
     expect(screen.getByText('Telemetry storage could not be queried.')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Open in Explore/ })).not.toBeInTheDocument();
   });
+
+  it('wires detection contract failures to the shared catalog refresh boundary', () => {
+    const handleContractError = vi.fn();
+    useInstrumentationSetup.mockReturnValue({ ...setupFixture(), handleContractError });
+    useInstrumentationDetection.mockReturnValue(detectionFixture());
+
+    renderPage();
+
+    expect(useInstrumentationDetection.mock.calls[0]?.[1]).toBe(handleContractError);
+  });
 });
 
 function renderPage() {
@@ -140,7 +150,8 @@ function setupFixture() {
     collectors: [], collectorsPending: false, collectorsError: false, retryCollectors: vi.fn(),
     token: '', setToken: vi.fn(), guide: undefined, guidePending: false, guideError: false,
     setEnvironment: vi.fn(), setPlatform: vi.fn(), setLanguage: vi.fn(), setFramework: vi.fn(), setMethod: vi.fn(),
-    setContext: vi.fn(), renderGuide: vi.fn(), copySnippet: vi.fn(), clearGuide: vi.fn()
+    setContext: vi.fn(), renderGuide: vi.fn(), copySnippet: vi.fn(), clearGuide: vi.fn(),
+    handleContractError: vi.fn()
   };
 }
 

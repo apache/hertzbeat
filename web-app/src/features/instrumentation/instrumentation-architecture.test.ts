@@ -17,13 +17,14 @@
 
 import { describe, expect, it } from 'vitest';
 
-const sourceDirectories = ['api', 'model', 'hooks', 'components', 'pages'] as const;
+const sourceDirectories = ['api', 'model', 'controller', 'hooks', 'components', 'pages'] as const;
 const allowedDependencies: Record<(typeof sourceDirectories)[number], readonly string[]> = {
   api: ['api'],
   model: ['api', 'model'],
-  hooks: ['api', 'model', 'hooks'],
+  controller: ['api', 'model', 'controller'],
+  hooks: ['api', 'model', 'controller', 'hooks'],
   components: ['api', 'model', 'hooks', 'components'],
-  pages: ['api', 'model', 'hooks', 'components', 'pages']
+  pages: ['model', 'hooks', 'components', 'pages']
 };
 const importPattern = /(?:from\s+|import\s*\()\s*['"]([^'"]+)['"]/g;
 const productionSources = import.meta.glob('./**/*.{ts,tsx}', {
@@ -43,6 +44,15 @@ describe('instrumentation feature boundaries', () => {
     const violations = Object.entries(productionSources)
       .filter(([path]) => !path.includes('.test.'))
       .flatMap(([path, source]) => validateImports(path, source));
+    expect(violations).toEqual([]);
+  });
+
+  it('keeps secret-bearing contract layers out of persistence, logging, and analytics', () => {
+    const forbidden = /\b(?:localStorage|sessionStorage|indexedDB|sendBeacon|analytics|console\.(?:log|info|warn|error))\b/;
+    const violations = Object.entries(productionSources)
+      .filter(([path]) => ['./api/', './model/', './controller/'].some(prefix => path.startsWith(prefix)))
+      .filter(([, source]) => forbidden.test(source))
+      .map(([path]) => path);
     expect(violations).toEqual([]);
   });
 });

@@ -25,6 +25,7 @@ import {
   createTransientCollectorTarget,
   createFlowDraft,
   materializeGuideSnippet,
+  reconcileFlowCatalog,
   selectCatalogLanguage,
   updateFlowContext,
   validateFlowContext,
@@ -37,6 +38,29 @@ describe('instrumentation onboarding flow model', () => {
 
     expect(draft.selection).toMatchObject({ language: 'go', framework: 'go_generic', method: 'sdk' });
     expect(() => selectCatalogLanguage(draft, catalog, 'php')).toThrow(/php/);
+  });
+
+  it('preserves a compatible selection and normalizes one removed by a refreshed catalog', () => {
+    const previewDraft = {
+      ...configuredDraft(),
+      environment: 'kubernetes' as const,
+      selection: {
+        ...configuredDraft().selection!, method: 'ebpf' as const, environment: 'kubernetes' as const
+      }
+    };
+    expect(reconcileFlowCatalog(previewDraft, catalog).selection?.method).toBe('ebpf');
+
+    const refreshedCatalog = {
+      ...catalog,
+      languages: catalog.languages.map(language => ({
+        ...language,
+        frameworks: language.frameworks.map(framework => ({
+          ...framework,
+          methods: framework.methods.filter(method => method.method !== 'ebpf')
+        }))
+      }))
+    };
+    expect(reconcileFlowCatalog(previewDraft, refreshedCatalog).selection?.method).toBe('sdk');
   });
 
   it('builds allowlisted render and detection requests from the same scoped context', () => {

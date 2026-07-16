@@ -114,6 +114,24 @@ export function updateFlowContext(draft: InstrumentationFlowDraft, field: FlowCo
   return { ...draft, [field]: value };
 }
 
+export function reconcileFlowCatalog(draft: InstrumentationFlowDraft, catalog: CatalogResponse) {
+  if (!draft.selection) return draft;
+  const methods = compatibleMethods(catalog, draft, draft.selection.language, draft.selection.framework);
+  if (methods.some(option => option.method === draft.selection?.method)) return draft;
+  try {
+    return reconcileSelection(draft, catalog, draft.selection.language, draft.selection.framework);
+  } catch {
+    return clearFlowSelection(draft);
+  }
+}
+
+export function clearFlowSelection(draft: InstrumentationFlowDraft): InstrumentationFlowDraft {
+  if (!draft.selection) return draft;
+  const next = { ...draft };
+  delete next.selection;
+  return next;
+}
+
 export function validateFlowContext(draft: InstrumentationFlowDraft) {
   const fields: FlowContextField[] = ['collectorId', 'serviceName', 'serviceNamespace', 'serviceEnvironment'];
   return fields.filter(field => !draft[field].trim());
@@ -232,9 +250,7 @@ function reconcileOrClear(
   try {
     return reconcileSelection(draft, catalog, language, framework);
   } catch {
-    const withoutSelection = { ...draft };
-    delete withoutSelection.selection;
-    return withoutSelection;
+    return clearFlowSelection(draft);
   }
 }
 
