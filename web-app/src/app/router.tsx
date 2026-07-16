@@ -74,7 +74,7 @@ export const appRoutes: RouteObject[] = [
                 id: 'monitors',
                 path: '/monitors',
                 lazy: async () => {
-                  const { MonitorListPage } = await import('@/features/monitor/MonitorListPage');
+                  const { MonitorListPage } = await import('@/features/monitor/monitor-list-page');
                   return { Component: MonitorListPage };
                 }
               },
@@ -98,7 +98,7 @@ export const appRoutes: RouteObject[] = [
                 id: 'monitor-new',
                 path: '/monitors/new',
                 lazy: async () => {
-                  const { MonitorEditorPage } = await import('@/features/monitor/MonitorEditorPage');
+                  const { MonitorEditorPage } = await import('@/features/monitor/monitor-editor-page');
                   return { Component: () => <MonitorEditorPage mode="new" /> };
                 }
               },
@@ -106,7 +106,7 @@ export const appRoutes: RouteObject[] = [
                 id: 'monitor-edit',
                 path: '/monitors/:monitorId/edit',
                 lazy: async () => {
-                  const { MonitorEditorPage } = await import('@/features/monitor/MonitorEditorPage');
+                  const { MonitorEditorPage } = await import('@/features/monitor/monitor-editor-page');
                   return { Component: () => <MonitorEditorPage mode="edit" /> };
                 }
               },
@@ -114,7 +114,7 @@ export const appRoutes: RouteObject[] = [
                 id: 'monitor-detail',
                 path: '/monitors/:monitorId',
                 lazy: async () => {
-                  const { MonitorDetailPage } = await import('@/features/monitor/MonitorDetailPage');
+                  const { MonitorDetailPage } = await import('@/features/monitor/monitor-detail-page');
                   return { Component: MonitorDetailPage };
                 }
               },

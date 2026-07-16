@@ -35,7 +35,7 @@ import {
   writeMonitorQuery,
   type MonitorAction
 } from './monitor-model';
-import styles from './MonitorListPage.module.css';
+import styles from './monitor-list-page.module.css';
 
 type Translator = (key: string) => string;
 

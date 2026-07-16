@@ -36,7 +36,7 @@ import {
   type MonitorParamDefine
 } from './monitor-api';
 import { monitorAppOptions, safeMonitorReturnTo } from './monitor-model';
-import styles from './MonitorEditorPage.module.css';
+import styles from './monitor-editor-page.module.css';
 
 const emptyMonitor: Monitor = { id: 0, app: '', name: '', instance: '', status: 0, intervals: 60, scheduleType: 'interval', scrape: 'static' };
 

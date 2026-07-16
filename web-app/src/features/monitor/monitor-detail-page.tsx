@@ -23,8 +23,8 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { loadMonitorDetail, type Monitor } from './monitor-api';
 import { monitorStatusColor, monitorStatusKey, safeMonitorReturnTo } from './monitor-model';
-import { MonitorMetricWorkbench } from './MonitorMetricWorkbench';
-import styles from './MonitorDetailPage.module.css';
+import { MonitorMetricWorkbench } from './monitor-metric-workbench';
+import styles from './monitor-detail-page.module.css';
 
 type Translator = (key: string) => string;
 

@@ -30,7 +30,7 @@ import {
   type MonitorDetailMetric
 } from './monitor-api';
 import { monitorHistoryRows, monitorMetricOptions, monitorRealtimeRows } from './monitor-detail-model';
-import styles from './MonitorMetricWorkbench.module.css';
+import styles from './monitor-metric-workbench.module.css';
 
 function formatMetricTime(value?: number) {
   return value ? new Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'medium' }).format(value) : '—';
