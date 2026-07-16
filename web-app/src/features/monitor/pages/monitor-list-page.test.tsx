@@ -47,8 +47,11 @@ describe('MonitorListPage label query', () => {
   });
 
   beforeEach(() => {
+    loadMonitorApps.mockReset();
+    loadMonitors.mockReset();
+    mutateMonitors.mockReset();
     loadMonitorApps.mockResolvedValue([]);
-    loadMonitors.mockResolvedValue({ content: [], totalElements: 0 });
+    loadMonitors.mockResolvedValue({ content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 });
     mutateMonitors.mockResolvedValue(undefined);
   });
 
@@ -64,7 +67,9 @@ describe('MonitorListPage label query', () => {
     expect(searchInput).toHaveValue('checkout');
     expect(labelInput).toHaveValue('env:prod');
     expect(labelInput).toHaveAttribute('placeholder', 'Labels, for example env:prod');
-    await waitFor(() => expect(loadMonitors).toHaveBeenCalledWith(expect.objectContaining({ labels: 'env:prod' })));
+    await waitFor(() => expect(loadMonitors).toHaveBeenCalledWith(
+      expect.objectContaining({ labels: 'env:prod' }), expect.any(AbortSignal)
+    ));
   });
 
   it('submits search and labels together from the Query button and omits cleared values', async () => {
@@ -82,7 +87,7 @@ describe('MonitorListPage label query', () => {
     });
     await waitFor(() => expect(loadMonitors).toHaveBeenCalledWith(expect.objectContaining({
       search: 'checkout', labels: 'team:core'
-    })));
+    }), expect.any(AbortSignal)));
 
     fireEvent.change(searchInput, { target: { value: '' } });
     fireEvent.change(labelInput, { target: { value: '' } });
@@ -95,7 +100,7 @@ describe('MonitorListPage label query', () => {
     });
   });
 
-  it('submits search and labels together when Enter is pressed in either filter input', async () => {
+  it('submits search alone from its Enter and both filters from label Enter', async () => {
     renderPage('/monitors');
     const [searchInput, labelInput] = filterInputs();
 
@@ -106,7 +111,7 @@ describe('MonitorListPage label query', () => {
     await waitFor(() => {
       const search = screen.getByTestId('location-search').textContent ?? '';
       expect(search).toContain('search=payments');
-      expect(search).toContain('labels=env%3Astaging');
+      expect(search).not.toContain('labels=env%3Astaging');
     });
 
     fireEvent.change(searchInput, { target: { value: 'orders' } });

@@ -49,6 +49,9 @@ describe('MonitorListPage scoped bulk selection', () => {
   });
 
   beforeEach(() => {
+    loadMonitorApps.mockReset();
+    loadMonitors.mockReset();
+    mutateMonitors.mockReset();
     loadMonitorApps.mockResolvedValue([]);
     mutateMonitors.mockResolvedValue(undefined);
   });
@@ -163,7 +166,7 @@ function ScopeControls() {
 }
 
 function page(content: Monitor[]) {
-  return { content, totalElements: content.length };
+  return { content, totalElements: content.length, totalPages: content.length === 0 ? 0 : 1, number: 0, size: 10 };
 }
 
 const checkoutMonitor: Monitor = { id: 7, name: 'checkout-monitor', app: 'website', instance: 'checkout', status: 1 };

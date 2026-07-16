@@ -15,7 +15,25 @@
  * limitations under the License.
  */
 
-import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut, type PageResult } from '@/core/http/api-message';
+import {
+  ApiMessageError, apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut, type PageResult
+} from '@/core/http/api-message';
+
+export class MonitorContractError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'MonitorContractError';
+  }
+}
+
+export function classifyMonitorReadError(error: unknown): 'unavailable' | 'error' {
+  if (error instanceof MonitorContractError) return 'error';
+  if (error instanceof ApiMessageError
+    && (error.cause !== undefined || error.status === undefined || [0, 502, 503, 504].includes(error.status))) {
+    return 'unavailable';
+  }
+  return 'error';
+}
 
 export type Monitor = {
   id: number;
@@ -149,12 +167,16 @@ export function buildHistoryMetricPath(monitor: Monitor, metric: MonitorMetricOp
   return `/api/monitor/${encodeURIComponent(monitor.instance)}/metric/${fullMetric}?${params.toString()}`;
 }
 
-export function loadMonitors(query: MonitorQuery) {
-  return apiMessageGet<PageResult<Monitor>>(buildMonitorListPath(query));
+export async function loadMonitors(query: MonitorQuery, signal?: AbortSignal) {
+  const value = await apiMessageGet<unknown>(buildMonitorListPath(query), signal ? { signal } : undefined);
+  return parseMonitorPage(value, query);
 }
 
-export function loadMonitorApps() {
-  return apiMessageGet<MonitorApp[]>('/api/apps/hierarchy');
+export function loadMonitorApps(): Promise<MonitorApp[]>;
+export function loadMonitorApps(signal: AbortSignal): Promise<MonitorApp[]>;
+export async function loadMonitorApps(signal?: AbortSignal) {
+  const value = await apiMessageGet<unknown>('/api/apps/hierarchy', signal ? { signal } : undefined);
+  return parseMonitorApps(value);
 }
 
 export function loadMonitorDetail(id: string) {
@@ -199,4 +221,100 @@ export function loadRealtimeMetric(monitorId: number, metricKey: string) {
 
 export function loadHistoryMetric(monitor: Monitor, metric: MonitorMetricOption, history: string) {
   return apiMessageGet<{ values?: Record<string, Array<{ origin?: string; mean?: string; time?: number }>> }>(buildHistoryMetricPath(monitor, metric, history));
+}
+
+function parseMonitorPage(value: unknown, query: MonitorQuery): PageResult<Monitor> {
+  const page = record(value, 'monitor page');
+  const content = array(page.content, 'monitor content').map((item, index) => parseMonitor(item, index));
+  const totalElements = nonnegativeInteger(page.totalElements, 'totalElements');
+  const totalPages = nonnegativeInteger(page.totalPages, 'totalPages');
+  const number = nonnegativeInteger(page.number, 'number');
+  const size = positiveInteger(page.size, 'size');
+  if (number !== query.pageIndex || size !== query.pageSize || content.length > size
+    || totalPages !== Math.ceil(totalElements / size)) {
+    throw new MonitorContractError('Monitor page identity is inconsistent with the request');
+  }
+  return { content, totalElements, totalPages, number, size };
+}
+
+function parseMonitor(value: unknown, index: number): Monitor {
+  const item = record(value, `monitor[${index}]`);
+  return {
+    id: positiveInteger(item.id, 'monitor id'),
+    name: nonemptyString(item.name, 'monitor name'),
+    app: nonemptyString(item.app, 'monitor app'),
+    instance: nonemptyString(item.instance, 'monitor instance'),
+    status: byte(item.status, 'monitor status'),
+    ...optionalTimestamp(item, 'gmtCreate'),
+    ...optionalTimestamp(item, 'gmtUpdate')
+  };
+}
+
+function parseMonitorApps(value: unknown): MonitorApp[] {
+  return array(value, 'monitor apps').map((entry, index) => {
+    const item = record(entry, `monitor app[${index}]`);
+    const hide = item.hide;
+    if (hide !== undefined && hide !== null && typeof hide !== 'boolean') {
+      throw new MonitorContractError('Monitor app hide must be boolean or null');
+    }
+    return {
+      category: nullableString(item.category, 'monitor app category'),
+      value: nonemptyString(item.value, 'monitor app value'),
+      label: nullableString(item.label, 'monitor app label'),
+      ...(hide === undefined ? {} : { hide })
+    };
+  });
+}
+
+function record(value: unknown, label: string): Record<string, unknown> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new MonitorContractError(`${label} must be an object`);
+  }
+  return value as Record<string, unknown>;
+}
+
+function array(value: unknown, label: string): unknown[] {
+  if (!Array.isArray(value)) throw new MonitorContractError(`${label} must be an array`);
+  return value;
+}
+
+function nonemptyString(value: unknown, label: string) {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    throw new MonitorContractError(`${label} must be a nonempty string`);
+  }
+  return value;
+}
+
+function nullableString(value: unknown, label: string) {
+  if (value === null) return null;
+  if (typeof value !== 'string') throw new MonitorContractError(`${label} must be a string or null`);
+  return value;
+}
+
+function nonnegativeInteger(value: unknown, label: string) {
+  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 0) {
+    throw new MonitorContractError(`${label} must be a nonnegative safe integer`);
+  }
+  return value;
+}
+
+function positiveInteger(value: unknown, label: string) {
+  const parsed = nonnegativeInteger(value, label);
+  if (parsed === 0) throw new MonitorContractError(`${label} must be positive`);
+  return parsed;
+}
+
+function byte(value: unknown, label: string) {
+  const parsed = nonnegativeInteger(value, label);
+  if (parsed > 255) throw new MonitorContractError(`${label} must fit a byte`);
+  return parsed;
+}
+
+function optionalTimestamp(item: Record<string, unknown>, key: 'gmtCreate' | 'gmtUpdate') {
+  const value = item[key];
+  if (value === undefined || value === null) return {};
+  if ((typeof value !== 'number' || !Number.isFinite(value)) && typeof value !== 'string') {
+    throw new MonitorContractError(`${key} must be a finite number, string, or null`);
+  }
+  return { [key]: value };
 }

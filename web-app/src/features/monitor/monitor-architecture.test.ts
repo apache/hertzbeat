@@ -17,14 +17,15 @@
 
 import { describe, expect, it } from 'vitest';
 
-const requiredDirectories = ['api', 'model', 'components', 'pages'] as const;
+const requiredDirectories = ['api', 'model', 'controller', 'components', 'pages'] as const;
 const layerDirectories = [...requiredDirectories, 'hooks'] as const;
 const allowedDependencies: Record<(typeof layerDirectories)[number], readonly string[]> = {
   api: ['api'],
   model: ['api', 'model'],
   hooks: ['api', 'model', 'hooks'],
+  controller: ['api', 'model', 'hooks', 'controller'],
   components: ['api', 'model', 'hooks', 'components'],
-  pages: ['api', 'model', 'hooks', 'components', 'pages']
+  pages: ['api', 'model', 'hooks', 'controller', 'components', 'pages']
 };
 const importPattern = /(?:from\s+|import\s*\()\s*['"]([^'"]+)['"]/g;
 const productionSources = import.meta.glob('./**/*.{ts,tsx}', {
