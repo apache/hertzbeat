@@ -17,12 +17,32 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { publicStatusState } from './status-model';
+import { ApiMessageError } from '@/core/http/api-message';
+
+import { isStatusOrgNotFound, publicStatusState } from './status-model';
 
 describe('public status state', () => {
   it('distinguishes missing configuration from backend failure', () => {
-    expect(publicStatusState(true, false, false)).toBe('unconfigured');
-    expect(publicStatusState(true, true, false)).toBe('unavailable');
-    expect(publicStatusState(false, false, false)).toBe('ready');
+    const notFound = new ApiMessageError('Status Page Organization Not Found', { code: 15, status: 200 });
+    expect(isStatusOrgNotFound(notFound)).toBe(true);
+    expect(publicStatusState(notFound, null, null)).toBe('unconfigured');
+    expect(publicStatusState(null, null, null)).toBe('ready');
+  });
+
+  it('keeps transport and partial-query failures unavailable', () => {
+    const serviceUnavailable = new ApiMessageError('Request failed with status 503', { status: 503 });
+    const networkFailure = new ApiMessageError('Failed to fetch');
+    const genericEnvelopeFailure = new ApiMessageError('Status Page Organization Not Found', { code: 15, status: 503 });
+
+    expect(publicStatusState(serviceUnavailable, null, null)).toBe('unavailable');
+    expect(publicStatusState(networkFailure, null, null)).toBe('unavailable');
+    expect(publicStatusState(genericEnvelopeFailure, null, null)).toBe('unavailable');
+    expect(publicStatusState(null, new Error('components unavailable'), null)).toBe('unavailable');
+    expect(publicStatusState(null, null, new Error('incidents unavailable'))).toBe('unavailable');
+    expect(publicStatusState(
+      new ApiMessageError('Status Page Organization Not Found', { code: 15, status: 200 }),
+      new Error('components unavailable'),
+      null
+    )).toBe('unavailable');
   });
 });
