@@ -15,21 +15,41 @@
  * limitations under the License.
  */
 
-import { useQuery } from '@tanstack/react-query';
 import { Alert, Empty, Skeleton, Table, Tag, Typography } from 'antd';
 import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { apiMessageGet, type PageResult } from '@/core/http/api-message';
+import type {
+  PublicStatusComponent,
+  PublicStatusIncident,
+  PublicStatusOrg
+} from '../api/public-status-api';
+import type { PublicStatusState } from '../model/public-status-model';
+import styles from './public-status.module.css';
 
-import styles from './public-status-page.module.css';
-import { publicStatusState, type PublicStatusState } from './status-model';
+type PublicStatusViewProps = {
+  org: PublicStatusOrg | undefined;
+  components: PublicStatusComponent[];
+  incidents: PublicStatusIncident[];
+  loading: boolean;
+  state: PublicStatusState;
+};
 
-type StatusOrg = { name: string; description: string; home?: string; state: number; color?: string };
-type StatusComponent = { id: number; name: string; description?: string; state: number; latestTime?: number };
-type StatusIncident = { id: number; name: string; state: number; startTime?: number; endTime?: number };
+export function PublicStatusView(props: PublicStatusViewProps) {
+  return (
+    <main className={styles.page} style={{ '--status-accent': props.org?.color ?? '#5b6fd8' } as CSSProperties}>
+      <StatusHeader org={props.org} />
+      <StatusBody
+        loading={props.loading}
+        state={props.state}
+        components={props.components}
+        incidents={props.incidents}
+      />
+    </main>
+  );
+}
 
-function StatusHeader({ org }: { org: StatusOrg | undefined }) {
+function StatusHeader({ org }: { org: PublicStatusOrg | undefined }) {
   const { t } = useTranslation();
   return (
     <header className={styles.header}>
@@ -46,9 +66,22 @@ function StatusHeader({ org }: { org: StatusOrg | undefined }) {
   );
 }
 
+function StatusBody({ loading, state, components, incidents }: {
+  loading: boolean;
+  state: PublicStatusState;
+  components: PublicStatusComponent[];
+  incidents: PublicStatusIncident[];
+}) {
+  const { t } = useTranslation();
+  if (loading) return <Skeleton active paragraph={{ rows: 8 }} />;
+  if (state === 'unconfigured') return <Alert type="info" showIcon title={t('status.notConfigured')} />;
+  if (state === 'unavailable') return <Alert type="error" showIcon title={t('common.unavailable')} />;
+  return <StatusContent components={components} incidents={incidents} />;
+}
+
 function StatusContent({ components, incidents }: {
-  components: StatusComponent[];
-  incidents: StatusIncident[];
+  components: PublicStatusComponent[];
+  incidents: PublicStatusIncident[];
 }) {
   const { t } = useTranslation();
   return (
@@ -56,7 +89,7 @@ function StatusContent({ components, incidents }: {
       <section className={styles.section}>
         <Typography.Title level={4}>{t('status.components')}</Typography.Title>
         {components.length ? (
-          <Table<StatusComponent>
+          <Table<PublicStatusComponent>
             rowKey="id"
             pagination={false}
             size="small"
@@ -80,7 +113,7 @@ function StatusContent({ components, incidents }: {
       <section className={styles.section}>
         <Typography.Title level={4}>{t('status.incidents')}</Typography.Title>
         {incidents.length ? (
-          <Table<StatusIncident>
+          <Table<PublicStatusIncident>
             rowKey="id"
             pagination={false}
             size="small"
@@ -98,38 +131,5 @@ function StatusContent({ components, incidents }: {
         ) : <Empty description={t('status.noIncidents')} />}
       </section>
     </>
-  );
-}
-
-function StatusBody({ loading, state, components, incidents }: {
-  loading: boolean;
-  state: PublicStatusState;
-  components: StatusComponent[];
-  incidents: StatusIncident[];
-}) {
-  const { t } = useTranslation();
-  if (loading) return <Skeleton active paragraph={{ rows: 8 }} />;
-  if (state === 'unconfigured') return <Alert type="info" showIcon message={t('status.notConfigured')} />;
-  if (state === 'unavailable') return <Alert type="error" showIcon message={t('common.unavailable')} />;
-  return <StatusContent components={components} incidents={incidents} />;
-}
-
-export function PublicStatusPage() {
-  const org = useQuery({ queryKey: ['public-status-org'], queryFn: () => apiMessageGet<StatusOrg>('/api/status/page/public/org') });
-  const components = useQuery({ queryKey: ['public-status-components'], queryFn: () => apiMessageGet<StatusComponent[]>('/api/status/page/public/component') });
-  const incidents = useQuery({ queryKey: ['public-status-incidents'], queryFn: () => apiMessageGet<PageResult<StatusIncident>>('/api/status/page/public/incident?pageIndex=0&pageSize=20') });
-  const queries = [org, components, incidents];
-  const state = publicStatusState(org.error, components.error, incidents.error);
-
-  return (
-    <main className={styles.page} style={{ '--status-accent': org.data?.color ?? '#5b6fd8' } as CSSProperties}>
-      <StatusHeader org={org.data} />
-      <StatusBody
-        loading={queries.some(query => query.isPending)}
-        state={state}
-        components={components.data ?? []}
-        incidents={incidents.data?.content ?? []}
-      />
-    </main>
   );
 }

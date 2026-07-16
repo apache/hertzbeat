@@ -19,7 +19,7 @@ import { describe, expect, it } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
 
-import { isStatusOrgNotFound, publicStatusState } from './status-model';
+import { isStatusOrgNotFound, publicStatusState } from './public-status-model';
 
 describe('public status state', () => {
   it('distinguishes missing configuration from backend failure', () => {
