@@ -42,7 +42,8 @@ describe('instrumentation detection controller', () => {
       .mockImplementationOnce((current: DetectionRequest) => Promise.resolve(response(current, 'continue_polling')))
       .mockImplementationOnce((current: DetectionRequest) => Promise.resolve(response(current, 'complete')));
     const createRequest = vi.fn(startedAt => ({ ...request, startedAt }));
-    const { result } = renderHook(() => useInstrumentationDetectionController(createRequest));
+    const openPath = vi.fn();
+    const { result } = renderHook(() => useInstrumentationDetectionController(createRequest, undefined, openPath));
 
     act(() => result.current.start());
     await act(async () => void await Promise.resolve());
@@ -60,6 +61,27 @@ describe('instrumentation detection controller', () => {
     expect(result.current.state.status).toBe('complete');
     expect(result.current.queryHandoff('metrics')).toContain('signal=metrics');
     expect(result.current.queryHandoff('logs')).toBeUndefined();
+    act(() => result.current.openQuery('metrics'));
+    expect(openPath).toHaveBeenCalledWith('/explore?signal=metrics&serviceName=checkout-api&serviceNamespace=commerce&environment=prod&collectorId=collector-east&start=1710000000000&end=1710000001000');
+    expect(openPath.mock.calls[0]?.[0]).not.toContain('token');
+    act(() => result.current.openQuery('logs'));
+    expect(openPath).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not navigate for disabled or non-received signal evidence', async () => {
+    const openPath = vi.fn();
+    detectInstrumentationSignals.mockImplementationOnce((current: DetectionRequest) =>
+      Promise.resolve(response(current, 'manual_retry')));
+    const { result } = renderHook(() => useInstrumentationDetectionController(
+      startedAt => ({ ...request, startedAt }), undefined, openPath
+    ));
+    act(() => result.current.start());
+    await act(async () => void await Promise.resolve());
+
+    for (const signal of ['logs', 'traces'] as const) act(() => result.current.openQuery(signal));
+    expect(openPath).not.toHaveBeenCalled();
+    act(() => result.current.openQuery('metrics'));
+    expect(openPath).toHaveBeenCalledOnce();
   });
 
   it('stops on unavailable/error and starts a new 120-second attempt on manual retry', async () => {

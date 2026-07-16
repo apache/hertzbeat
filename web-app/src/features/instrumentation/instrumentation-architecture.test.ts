@@ -93,6 +93,13 @@ describe('instrumentation feature boundaries', () => {
     expect(violations).toEqual([]);
   });
 
+  it('keeps query navigation out of detection presentation markup', () => {
+    const detection = productionSources['./components/instrumentation-detection.tsx'];
+    expect(detection).not.toMatch(/\bhref\s*=/);
+    expect(detection).toContain('detection.openQuery(signal)');
+    expect(detection).not.toMatch(/react-router|useNavigate/);
+  });
+
   it('keeps Collector inventory intake separate from the transient render target', () => {
     expect(productionSources['./api/collector-api.ts']).not.toContain('CollectorTarget');
     expect(productionSources['./controller/use-instrumentation-guide-controller.ts']).toContain('CollectorTarget');

@@ -38,7 +38,8 @@ export type InstrumentationDetectionState =
 
 export function useInstrumentationDetectionController(
   createRequest: RequestFactory,
-  onContractError?: ContractErrorHandler
+  onContractError?: ContractErrorHandler,
+  openPath?: (path: string) => void
 ) {
   const [response, setResponse] = useState<DetectionResponse>();
   const [error, setError] = useState<unknown>();
@@ -117,10 +118,7 @@ export function useInstrumentationDetectionController(
     setError(undefined);
     setChecking(false);
   }, [clearPending]);
-  const queryHandoff = useCallback((signal: InstrumentationSignal) => {
-    const jump = response?.queryJumps.find(item => item.signal === signal);
-    return jump?.enabled ? buildExploreHandoff(jump.signal, jump.context) : undefined;
-  }, [response]);
+  const { queryHandoff, openQuery } = useDetectionNavigation(response, openPath);
 
   useEffect(() => () => {
     generation.current += 1;
@@ -136,8 +134,22 @@ export function useInstrumentationDetectionController(
     start,
     retry: start,
     reset,
-    queryHandoff
+    queryHandoff,
+    openQuery
   };
+}
+
+function useDetectionNavigation(response: DetectionResponse | undefined, openPath: ((path: string) => void) | undefined) {
+  const queryHandoff = useCallback((signal: InstrumentationSignal) => {
+    if (response?.signals[signal].status !== 'received') return undefined;
+    const jump = response.queryJumps.find(item => item.signal === signal);
+    return jump?.enabled ? buildExploreHandoff(jump.signal, jump.context) : undefined;
+  }, [response]);
+  const openQuery = useCallback((signal: InstrumentationSignal) => {
+    const path = queryHandoff(signal);
+    if (path) openPath?.(path);
+  }, [openPath, queryHandoff]);
+  return { queryHandoff, openQuery };
 }
 
 function detectionState(

@@ -116,22 +116,22 @@ describe('InstrumentationPage', () => {
   });
 
   it('enables Explore only for received signals and renders waiting and unsupported honestly', () => {
-    const queryHandoff = vi.fn((signal: string) => signal === 'metrics'
-      ? '/explore?ownedBy=instrumentation-controller'
-      : undefined);
+    const openQuery = vi.fn();
     const response = detectionResponse({
       metrics: ['received', null], logs: ['waiting', 'signal_not_received'], traces: ['unsupported', 'signal_not_supported']
     });
     response.queryJumps.push({ ...response.queryJumps[0]!, signal: 'logs', enabled: true });
     useInstrumentationSetup.mockReturnValue({ ...setupFixture(), catalog });
-    useInstrumentationDetection.mockReturnValue({ ...detectionFixture(response), queryHandoff });
+    useInstrumentationDetection.mockReturnValue({
+      ...detectionFixture(response), openQuery,
+      queryHandoff: vi.fn((signal: string) => signal === 'metrics' ? '/explore?ownedBy=controller' : undefined)
+    });
     renderPage();
 
-    const explore = screen.getByRole('link', { name: /Open in Explore/ });
-    expect(explore).toHaveAttribute('href', '/explore?ownedBy=instrumentation-controller');
-    expect(queryHandoff).toHaveBeenCalledWith('metrics');
-    expect(queryHandoff).toHaveBeenCalledWith('logs');
-    expect(queryHandoff).toHaveBeenCalledWith('traces');
+    const explore = screen.getByRole('button', { name: /Open in Explore/ });
+    expect(explore).not.toHaveAttribute('href');
+    fireEvent.click(explore);
+    expect(openQuery).toHaveBeenCalledWith('metrics');
     expect(screen.getByText('Waiting')).toBeInTheDocument();
     expect(screen.getByText('Unsupported')).toBeInTheDocument();
     expect(screen.getAllByText('Query unavailable')).toHaveLength(2);
@@ -152,6 +152,25 @@ describe('InstrumentationPage', () => {
     expect(screen.queryByRole('link', { name: /Open in Explore/ })).not.toBeInTheDocument();
   });
 
+  it.each([
+    ['waiting', 'signal_not_received'],
+    ['received', null],
+    ['unsupported', 'signal_not_supported'],
+    ['unavailable', 'storage_unavailable'],
+    ['error', 'storage_query_failed']
+  ] as const)('renders %s as explicit signal evidence without a fake zero', (status, errorCode) => {
+    useInstrumentationSetup.mockReturnValue({ ...setupFixture(), catalog });
+    useInstrumentationDetection.mockReturnValue(detectionFixture(detectionResponse({
+      metrics: [status, errorCode], logs: ['unsupported', 'signal_not_supported'],
+      traces: ['unsupported', 'signal_not_supported']
+    })));
+    renderPage();
+
+    expect(screen.getAllByText(i18n.t(`instrumentation.detection.status.${status}`), { selector: '.ant-tag' }).length)
+      .toBeGreaterThan(0);
+    expect(screen.queryByText(/^0$/)).not.toBeInTheDocument();
+  });
+
   it('wires detection contract failures to the shared catalog refresh boundary', () => {
     const handleContractError = vi.fn();
     useInstrumentationSetup.mockReturnValue({ ...setupFixture(), handleContractError });
@@ -160,6 +179,7 @@ describe('InstrumentationPage', () => {
     renderPage();
 
     expect(useInstrumentationDetection.mock.calls[0]?.[1]).toBe(handleContractError);
+    expect(useInstrumentationDetection.mock.calls[0]?.[2]).toEqual(expect.any(Function));
   });
 });
 
@@ -197,7 +217,7 @@ function setupFixture() {
 function detectionFixture(response?: ReturnType<typeof detectionResponse>) {
   return {
     response, checking: false, error: undefined, start: vi.fn(), retry: vi.fn(), reset: vi.fn(),
-    signalNames: ['metrics', 'logs', 'traces'], queryHandoff: vi.fn()
+    signalNames: ['metrics', 'logs', 'traces'], queryHandoff: vi.fn(), openQuery: vi.fn()
   };
 }
 

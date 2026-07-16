@@ -18,6 +18,7 @@
 import { Typography } from 'antd';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { InstrumentationRunbook } from '../components/instrumentation-runbook';
 import styles from '../components/instrumentation.module.css';
@@ -27,12 +28,14 @@ import { buildDetectionRequest } from '../model/instrumentation-flow';
 
 export function InstrumentationPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const setup = useInstrumentationSetup();
   const createDetectionRequest = useCallback(
     (startedAt: number) => buildDetectionRequest(setup.draft, startedAt),
     [setup.draft]
   );
-  const detection = useInstrumentationDetection(createDetectionRequest, setup.handleContractError);
+  const openPath = useCallback((path: string) => { void navigate(path); }, [navigate]);
+  const detection = useInstrumentationDetection(createDetectionRequest, setup.handleContractError, openPath);
   return (
     <div className={styles.page}>
       <header className={styles.heading}>

@@ -46,7 +46,7 @@ export function InstrumentationDetection({ detection }: { detection: DetectionCo
         <div className={styles.signalTable}>
           {detection.signalNames.map(signal => {
             const result = response.signals[signal];
-            const queryHandoff = detection.queryHandoff(signal);
+            const queryAvailable = detection.queryHandoff(signal) !== undefined;
             return (
               <div className={styles.signalRow} key={signal}>
                 <strong>{t(`instrumentation.signal.${signal}`)}</strong>
@@ -56,8 +56,8 @@ export function InstrumentationDetection({ detection }: { detection: DetectionCo
                     {result.lastReceivedAt ? new Date(result.lastReceivedAt).toLocaleString() : errorText(result.errorCode, t)}
                   </Typography.Text>
                 </span>
-                {queryHandoff ? (
-                  <Button type="link" href={queryHandoff} icon={<ExportOutlined />} iconPosition="end">
+                {queryAvailable ? (
+                  <Button type="link" onClick={() => detection.openQuery(signal)} icon={<ExportOutlined />} iconPosition="end">
                     {t('instrumentation.action.openExplore')}
                   </Button>
                 ) : <Typography.Text type="secondary">{t('instrumentation.queryUnavailable')}</Typography.Text>}
