@@ -167,8 +167,15 @@ function parseCodeNavigationHint(value: unknown): CodeNavigationHint {
     defaultPath: nullableString(source.defaultPath, 'defaultPath'), searchQuery: nullableString(source.searchQuery, 'searchQuery'), label: nullableString(source.label, 'label') };
 }
 
-function parseLogRow(value: unknown): LogRow {
+const logRowKeys = [
+  'timeUnixNano', 'observedTimeUnixNano', 'severityNumber', 'severityText', 'body', 'attributes',
+  'droppedAttributesCount', 'traceId', 'spanId', 'traceFlags', 'resource', 'resourceSchemaUrl',
+  'instrumentationScope', 'scopeSchemaUrl'
+] as const;
+
+export function parseLogRow(value: unknown): LogRow {
   const source = record(value, 'log entry');
+  requireKeys(source, logRowKeys, 'log entry');
   return {
     timeUnixNano: nullableLong(source.timeUnixNano, 'timeUnixNano', 0), observedTimeUnixNano: nullableLong(source.observedTimeUnixNano, 'observedTimeUnixNano', 0),
     severityNumber: nullableInteger(source.severityNumber, 'severityNumber', 0), severityText: nullableString(source.severityText, 'severityText'),
@@ -178,6 +185,11 @@ function parseLogRow(value: unknown): LogRow {
     resource: nullableJsonMap(source.resource, 'resource'), resourceSchemaUrl: nullableString(source.resourceSchemaUrl, 'resourceSchemaUrl'),
     instrumentationScope: nullable(source.instrumentationScope, parseInstrumentationScope), scopeSchemaUrl: nullableString(source.scopeSchemaUrl, 'scopeSchemaUrl')
   };
+}
+
+function requireKeys(source: Record<string, unknown>, keys: readonly string[], label: string) {
+  const missing = keys.find(key => !Object.prototype.hasOwnProperty.call(source, key));
+  if (missing) fail(`${label}.${missing} is required`);
 }
 
 function parseInstrumentationScope(value: unknown) {

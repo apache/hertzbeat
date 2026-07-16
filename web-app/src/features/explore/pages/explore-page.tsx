@@ -25,7 +25,8 @@ import { LogResult } from '../components/log-result';
 import { MetricResult } from '../components/metric-result';
 import { TraceResult } from '../components/trace-result';
 import { useExplorePageController, type ExplorePageResultState } from '../controller/use-explore-page-controller';
-import type { ExploreQuery } from '../model/explore-model';
+import { useLiveLogController } from '../controller/use-live-log-controller';
+import type { ExploreQuery, LogExploreQuery } from '../model/explore-model';
 import styles from './explore-page.module.css';
 
 export function ExplorePage() {
@@ -52,8 +53,14 @@ function ResultPanel({ query, result, retry, openPath }: {
   if (result.kind === 'unavailable') return <FailureResult message={t('common.unavailable')} retry={retry} />;
   if (result.kind === 'error') return <FailureResult message={t('explore.loadFailed')} retry={retry} />;
   if (result.kind === 'live') return query.signal === 'logs'
-    ? <ResultFrame><LogResult query={query} t={t} navigate={openPath} /></ResultFrame> : null;
+    ? <LiveLogPanel query={query} openPath={openPath} /> : null;
   return <HistoricalResult query={query} result={result} openPath={openPath} />;
+}
+
+function LiveLogPanel({ query, openPath }: { query: LogExploreQuery; openPath: (path: string) => void }) {
+  const { t } = useTranslation();
+  const live = useLiveLogController(query);
+  return <ResultFrame><LogResult query={query} t={t} navigate={openPath} live={live} /></ResultFrame>;
 }
 
 function HistoricalResult({ query, result, openPath }: {

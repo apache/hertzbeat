@@ -17,34 +17,38 @@
 
 import { Alert, Button, Descriptions, Drawer, Table, Tag, Typography } from "antd";
 import type { TFunction } from "i18next";
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
-import { buildLogStreamPath, openLogStream, type ExplorePageResult } from "../api/explore-api";
-import type { LogRow } from "../model/explore-signal-contract";
+import type { ExplorePageResult, LogRow } from "../model/explore-signal-contract";
 import { buildCrossSignalPath, buildExplorePath, type LogExploreQuery } from "../model/explore-model";
-import { logBody, logServiceName, logTimestampMs } from "../model/explore-signal-model";
+import { logBody, logServiceName, logTimestampMs, type LiveLogStatus } from "../model/explore-signal-model";
 import styles from "./log-result.module.css";
 import { OtlpAttributeSection } from "./otlp-attribute-list";
 import { SignalEmptyState, SignalResultFrame } from "./signal-result-frame";
 
-const MAX_STREAM_ROWS = 500;
 type OpenPath = (path: string) => void;
+export type LiveLogView = {
+  rows: LogRow[];
+  status: LiveLogStatus;
+  togglePaused: () => void;
+  clear: () => void;
+};
 
 export function LogResult({
   data,
   query,
   t,
   navigate,
+  live,
 }: {
   data?: ExplorePageResult<LogRow> | undefined;
   query: LogExploreQuery;
   t: TFunction;
   navigate: OpenPath;
+  live?: LiveLogView | undefined;
 }) {
-  if (query.live) {
-    const streamPath = buildLogStreamPath(query);
-    return <LogStreamResult key={streamPath} streamPath={streamPath} query={query} t={t} navigate={navigate} />;
-  }
+  if (query.live && live) return <LogStreamResult stream={live} query={query} t={t} navigate={navigate} />;
+  if (query.live) return <Alert type="error" showIcon message={t("exploreLog.streamFailed")} />;
   const rows = data?.content ?? [];
   if (!data || data.totalElements === 0)
     return (
@@ -56,36 +60,32 @@ export function LogResult({
 }
 
 function LogStreamResult({
-  streamPath,
+  stream,
   query,
   t,
   navigate,
 }: {
-  streamPath: string;
+  stream: LiveLogView;
   query: LogExploreQuery;
   t: TFunction;
   navigate: OpenPath;
 }) {
-  const [paused, setPaused] = useState(false);
-  const stream = useLogStream(streamPath, paused);
   const actions = (
     <div className={styles.streamActions}>
-      <Button size="small" onClick={() => setPaused((current) => !current)}>
-        {t(paused ? "exploreLog.resume" : "exploreLog.pause")}
+      <Button size="small" onClick={stream.togglePaused}>
+        {t(stream.status === "paused" ? "exploreLog.resume" : "exploreLog.pause")}
       </Button>
       <Button size="small" disabled={stream.rows.length === 0} onClick={stream.clear}>
         {t("exploreLog.clear")}
       </Button>
     </div>
   );
-  const connection = paused ? (
-    <span className={styles.paused}>{t("exploreLog.paused")}</span>
-  ) : (
-    <StreamConnection connected={stream.connected} t={t} />
-  );
+  const connection = <StreamConnection status={stream.status} t={t} />;
   return (
     <div>
-      {stream.failed && <Alert type="error" showIcon message={t("exploreLog.streamFailed")} />}
+      {stream.status === "unavailable" && <Alert type="warning" showIcon message={t("common.unavailable")} />}
+      {stream.status === "error" && <Alert type="error" showIcon message={t("exploreLog.streamFailed")} />}
+      {stream.status === "contract" && <Alert type="error" showIcon message={t("explore.loadFailed")} />}
       {stream.rows.length === 0 ? (
         <SignalResultFrame
           title={t("exploreLog.live")}
@@ -110,11 +110,16 @@ function LogStreamResult({
   );
 }
 
-function StreamConnection({ connected, t }: { connected: boolean; t: TFunction }) {
+function StreamConnection({ status, t }: { status: LiveLogStatus; t: TFunction }) {
+  if (status === "paused") return <span className={styles.paused}>{t("exploreLog.paused")}</span>;
+  const statusKey = status === "unavailable" ? "common.unavailable"
+    : status === "error" ? "exploreLog.streamFailed"
+      : status === "contract" ? "explore.loadFailed"
+        : status === "connected" ? "exploreLog.connected" : "exploreLog.connecting";
   return (
     <span className={styles.streamConnection}>
-      <i data-connected={connected} />
-      {t(connected ? "exploreLog.connected" : "exploreLog.connecting")}
+      <i data-connected={status === "connected"} />
+      {t(statusKey)}
     </span>
   );
 }
@@ -247,8 +252,8 @@ function LogDetail({
             items={[
               { key: "time", label: t("explore.time"), children: formatLogTime(row) },
               { key: "severity", label: t("explore.severity"), children: row.severityText ?? "—" },
-              { key: "trace", label: "Trace ID", children: row.traceId ?? "—" },
-              { key: "span", label: "Span ID", children: row.spanId ?? "—" },
+              { key: "trace", label: t("explore.traceId"), children: row.traceId ?? "—" },
+              { key: "span", label: t("explore.spanId"), children: row.spanId ?? "—" },
             ]}
           />
           <OtlpAttributeSection title={t("exploreLog.resourceAttributes")} value={row.resource ?? undefined} />
@@ -257,36 +262,6 @@ function LogDetail({
       )}
     </Drawer>
   );
-}
-
-function useLogStream(streamPath: string, paused: boolean) {
-  const [rows, setRows] = useState<LogRow[]>([]);
-  const [connected, setConnected] = useState(false);
-  const [failed, setFailed] = useState(false);
-
-  useEffect(() => {
-    if (paused) return;
-    const source = openLogStream(streamPath);
-    source.onopen = () => {
-      setConnected(true);
-      setFailed(false);
-    };
-    source.onerror = () => {
-      setConnected(false);
-      setFailed(true);
-    };
-    source.addEventListener("LOG_EVENT", (event) => {
-      try {
-        const row = JSON.parse((event as MessageEvent<string>).data) as LogRow;
-        setRows((current) => [row, ...current].slice(0, MAX_STREAM_ROWS));
-      } catch {
-        setFailed(true);
-      }
-    });
-    return () => source.close();
-  }, [paused, streamPath]);
-
-  return { rows, connected: connected && !paused, failed, clear: () => setRows([]) };
 }
 
 function formatLogTime(row: LogRow) {

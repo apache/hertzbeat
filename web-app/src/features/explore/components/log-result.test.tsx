@@ -15,9 +15,10 @@
  * limitations under the License.
  */
 
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { useState } from 'react';
 import { I18nextProvider, useTranslation } from 'react-i18next';
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
@@ -28,11 +29,6 @@ describe('LogResult', () => {
     Object.defineProperty(globalThis, 'ResizeObserver', { value: ResizeObserverStub, configurable: true });
     await initializeI18n();
     await loadLocale('en-US');
-  });
-
-  beforeEach(() => {
-    EventSourceStub.instances = [];
-    Object.defineProperty(globalThis, 'EventSource', { value: EventSourceStub, configurable: true });
   });
 
   afterEach(() => cleanup());
@@ -58,18 +54,40 @@ describe('LogResult', () => {
 
   it('lets an operator pause, resume, and clear a live stream', () => {
     render(<I18nextProvider i18n={i18n}><LiveSubject /></I18nextProvider>);
-    expect(EventSourceStub.instances).toHaveLength(1);
-
-    act(() => EventSourceStub.instances[0]?.emit({ body: 'live payment timeout', severityText: 'ERROR' }));
     expect(screen.getByText('live payment timeout')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Pause' }));
-    expect(EventSourceStub.instances[0]?.close).toHaveBeenCalledOnce();
+    expect(screen.getByText('Paused')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
     expect(screen.queryByText('live payment timeout')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Resume' }));
-    expect(EventSourceStub.instances).toHaveLength(2);
+    expect(screen.getByText('Connecting to log stream')).toBeInTheDocument();
+  });
+
+  it('does not turn a missing live view into a historical empty result', () => {
+    render(<I18nextProvider i18n={i18n}><LogResult
+      query={{ signal: 'logs', timeRange: 'last-30m', live: true }}
+      t={i18n.t}
+      navigate={vi.fn()}
+    /></I18nextProvider>);
+    expect(screen.getByRole('alert')).toHaveTextContent(i18n.t('exploreLog.streamFailed'));
+    expect(screen.queryByText(i18n.t('explore.empty.logs'))).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ['unavailable', 'common.unavailable'],
+    ['error', 'exploreLog.streamFailed'],
+    ['contract', 'explore.loadFailed']
+  ] as const)('labels %s without claiming the stream is connecting', (status, messageKey) => {
+    render(<I18nextProvider i18n={i18n}><LogResult
+      query={{ signal: 'logs', timeRange: 'last-30m', live: true }}
+      t={i18n.t}
+      navigate={vi.fn()}
+      live={{ rows: [], status, togglePaused: vi.fn(), clear: vi.fn() }}
+    /></I18nextProvider>);
+    expect(screen.getAllByText(i18n.t(messageKey)).length).toBeGreaterThan(0);
+    expect(screen.queryByText(i18n.t('exploreLog.connecting'))).not.toBeInTheDocument();
   });
 });
 
@@ -100,36 +118,30 @@ function Subject() {
 
 function LiveSubject() {
   const { t } = useTranslation();
+  const [rows, setRows] = useState([liveLogRow]);
+  const [paused, setPaused] = useState(false);
   return <LogResult
     query={{ signal: 'logs', timeRange: 'last-30m', live: true }}
     t={t}
     navigate={vi.fn()}
+    live={{
+      rows,
+      status: paused ? 'paused' : 'waiting',
+      togglePaused: () => setPaused(current => !current),
+      clear: () => setRows([])
+    }}
   />;
 }
+
+const liveLogRow = {
+  timeUnixNano: 1_750_000_000_000_000_000, observedTimeUnixNano: null, severityNumber: 17,
+  severityText: 'ERROR', body: 'live payment timeout', attributes: null, droppedAttributesCount: null,
+  traceId: null, spanId: null, traceFlags: null, resource: null, resourceSchemaUrl: null,
+  instrumentationScope: null, scopeSchemaUrl: null
+};
 
 class ResizeObserverStub {
   observe() {}
   unobserve() {}
   disconnect() {}
-}
-
-
-class EventSourceStub {
-  static instances: EventSourceStub[] = [];
-  onopen: (() => void) | null = null;
-  onerror: (() => void) | null = null;
-  close = vi.fn();
-  private listener?: (event: MessageEvent<string>) => void;
-
-  constructor(readonly url: string) {
-    EventSourceStub.instances.push(this);
-  }
-
-  addEventListener(_type: string, listener: EventListenerOrEventListenerObject) {
-    this.listener = listener as (event: MessageEvent<string>) => void;
-  }
-
-  emit(row: Record<string, unknown>) {
-    this.listener?.({ data: JSON.stringify(row) } as MessageEvent<string>);
-  }
 }

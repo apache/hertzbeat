@@ -65,6 +65,11 @@ describe('Explore signal contracts', () => {
     }]), 0, 20).content[0]?.timeUnixNano).toBe(epochNanos);
   });
 
+  it('rejects log rows with missing nullable protocol keys', () => {
+    expect(() => parseLogPage(springPage([{ body: 'partial' }]), 0, 20))
+      .toThrow(ExploreSignalContractError);
+  });
+
   it.each([
     { ...springPage([]), number: 1 },
     { ...springPage([]), size: 19 },
