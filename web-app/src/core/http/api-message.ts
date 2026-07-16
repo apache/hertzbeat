@@ -27,6 +27,26 @@ export type PageResult<T> = {
 
 type ApiMessage<T> = { code: number; msg?: string; data: T };
 
+type ApiMessageErrorDetails = {
+  code?: number;
+  status?: number;
+  cause?: unknown;
+};
+
+export class ApiMessageError extends Error {
+  readonly code: number | undefined;
+  readonly status: number | undefined;
+  override readonly cause: unknown;
+
+  constructor(message: string, details: ApiMessageErrorDetails = {}) {
+    super(message);
+    this.name = 'ApiMessageError';
+    this.code = details.code;
+    this.status = details.status;
+    this.cause = details.cause;
+  }
+}
+
 export async function apiMessageGet<T>(path: string, options?: Pick<RequestInit, 'signal'>) {
   return apiMessageRequest<T>(path, options);
 }
@@ -44,10 +64,20 @@ export function apiMessageDelete<T>(path: string) {
 }
 
 async function apiMessageRequest<T>(path: string, init?: RequestInit) {
-  const response = await apiFetch(path, init);
-  if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
+  let response: Response;
+  try {
+    response = await apiFetch(path, init);
+  } catch (cause) {
+    const message = cause instanceof Error ? cause.message : 'Request failed';
+    throw new ApiMessageError(message, { cause });
+  }
+  if (!response.ok) {
+    throw new ApiMessageError(`Request failed with status ${response.status}`, { status: response.status });
+  }
   const message = (await response.json()) as ApiMessage<T>;
-  if (message.code !== 0) throw new Error(message.msg ?? 'Request failed');
+  if (message.code !== 0) {
+    throw new ApiMessageError(message.msg ?? 'Request failed', { code: message.code, status: response.status });
+  }
   return message.data;
 }
 
