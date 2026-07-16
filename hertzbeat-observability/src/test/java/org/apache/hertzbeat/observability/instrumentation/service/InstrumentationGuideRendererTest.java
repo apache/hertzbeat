@@ -28,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.CollectorTarget;
@@ -122,6 +123,32 @@ class InstrumentationGuideRendererTest {
         assertTrue(rendered.contains("http://collector.internal:4318"));
         assertTrue(rendered.contains(TOKEN_PLACEHOLDER));
         assertFalse(rendered.contains("Bearer secret"));
+    }
+
+    @Test
+    void rendersEveryCatalogSelectionWithStructurallyBoundSecretMetadata() {
+        InstrumentationCatalogService catalog = new InstrumentationCatalogService();
+        int renderedSelections = 0;
+        for (var language : catalog.catalog().languages()) {
+            for (var framework : language.frameworks()) {
+                for (var method : framework.methods()) {
+                    var guide = renderer.render(request(
+                            language.language(),
+                            framework.framework(),
+                            method.method(),
+                            method.environments().getFirst(),
+                            method.platforms().getFirst()));
+                    assertEquals(Set.of("authorizationToken"), guide.secretPlaceholders().keySet());
+                    guide.steps().stream()
+                            .flatMap(step -> step.snippets().stream())
+                            .forEach(snippet -> assertEquals(
+                                    snippet.content().contains(TOKEN_PLACEHOLDER),
+                                    snippet.secretPlaceholders().contains("authorizationToken")));
+                    renderedSelections++;
+                }
+            }
+        }
+        assertEquals(12, renderedSelections);
     }
 
     @Test

@@ -33,9 +33,11 @@ import java.util.Set;
 import java.util.stream.Stream;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Capability;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.ComponentVersionPolicy;
+import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Environment;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Framework;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Language;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Method;
+import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Platform;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -62,6 +64,15 @@ class InstrumentationCatalogServiceTest {
         assertEquals(scenario.metrics(), method.signals().metrics());
         assertEquals(scenario.logs(), method.signals().logs());
         assertEquals(scenario.traces(), method.signals().traces());
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("environmentAndPlatformMatrix")
+    void publishesExactEnvironmentAndPlatformMatrixForEverySelection(SupportScenario scenario) {
+        var method = service.requireMethod(scenario.language(), scenario.framework(), scenario.method());
+
+        assertEquals(scenario.environments(), method.environments());
+        assertEquals(scenario.platforms(), method.platforms());
     }
 
     @Test
@@ -220,6 +231,46 @@ class InstrumentationCatalogServiceTest {
                         Capability.PREVIEW, Capability.PREVIEW, Capability.PREVIEW));
     }
 
+    private static Stream<SupportScenario> environmentAndPlatformMatrix() {
+        List<Environment> portableEnvironments = List.of(
+                Environment.VM, Environment.DOCKER, Environment.KUBERNETES);
+        List<Environment> serviceEnvironments = List.of(
+                Environment.VM, Environment.DOCKER, Environment.KUBERNETES, Environment.WINDOWS_SERVICE);
+        List<Platform> portablePlatforms = List.of(
+                Platform.LINUX_AMD64,
+                Platform.LINUX_ARM64,
+                Platform.MACOS_AMD64,
+                Platform.MACOS_ARM64,
+                Platform.WINDOWS_AMD64);
+        List<Platform> unixPlatforms = List.of(
+                Platform.LINUX_AMD64, Platform.LINUX_ARM64, Platform.MACOS_AMD64, Platform.MACOS_ARM64);
+        return Stream.of(
+                support("java-spring", Language.JAVA, Framework.SPRING_BOOT, Method.ZERO_CODE,
+                        serviceEnvironments, portablePlatforms),
+                support("java-jar", Language.JAVA, Framework.JAVA_JAR, Method.ZERO_CODE,
+                        serviceEnvironments, portablePlatforms),
+                support("dotnet", Language.DOTNET, Framework.ASPNET_CORE, Method.ZERO_CODE,
+                        serviceEnvironments, portablePlatforms),
+                support("node", Language.NODEJS, Framework.NODEJS, Method.ZERO_CODE,
+                        portableEnvironments, portablePlatforms),
+                support("express", Language.NODEJS, Framework.EXPRESS, Method.ZERO_CODE,
+                        portableEnvironments, portablePlatforms),
+                support("django", Language.PYTHON, Framework.DJANGO, Method.ZERO_CODE,
+                        portableEnvironments, portablePlatforms),
+                support("flask", Language.PYTHON, Framework.FLASK, Method.ZERO_CODE,
+                        portableEnvironments, portablePlatforms),
+                support("php", Language.PHP, Framework.PHP_GENERIC, Method.ZERO_CODE,
+                        portableEnvironments, unixPlatforms),
+                support("laravel", Language.PHP, Framework.LARAVEL, Method.ZERO_CODE,
+                        portableEnvironments, unixPlatforms),
+                support("go-sdk", Language.GO, Framework.GO_GENERIC, Method.SDK,
+                        portableEnvironments, portablePlatforms),
+                support("go-ebpf", Language.GO, Framework.GO_GENERIC, Method.EBPF,
+                        portableEnvironments, List.of(Platform.LINUX_AMD64, Platform.LINUX_ARM64)),
+                support("generic", Language.GENERIC, Framework.GENERIC, Method.SDK,
+                        serviceEnvironments, List.of(Platform.ANY)));
+    }
+
     private static SignalScenario signal(
             String name,
             Language language,
@@ -231,6 +282,16 @@ class InstrumentationCatalogServiceTest {
         return new SignalScenario(name, language, framework, method, metrics, logs, traces);
     }
 
+    private static SupportScenario support(
+            String name,
+            Language language,
+            Framework framework,
+            Method method,
+            List<Environment> environments,
+            List<Platform> platforms) {
+        return new SupportScenario(name, language, framework, method, environments, platforms);
+    }
+
     private record SignalScenario(
             String name,
             Language language,
@@ -239,6 +300,19 @@ class InstrumentationCatalogServiceTest {
             Capability metrics,
             Capability logs,
             Capability traces) {
+        @Override
+        public String toString() {
+            return name;
+        }
+    }
+
+    private record SupportScenario(
+            String name,
+            Language language,
+            Framework framework,
+            Method method,
+            List<Environment> environments,
+            List<Platform> platforms) {
         @Override
         public String toString() {
             return name;

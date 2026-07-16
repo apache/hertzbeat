@@ -18,8 +18,10 @@
 package org.apache.hertzbeat.observability.instrumentation.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Version 1 wire contract for application instrumentation onboarding.
@@ -351,6 +353,48 @@ public final class InstrumentationApiContract {
         public GuideRenderResponse {
             secretPlaceholders = Map.copyOf(secretPlaceholders);
             steps = List.copyOf(steps);
+            validateSecretPlaceholders(secretPlaceholders, steps);
+        }
+
+        private static void validateSecretPlaceholders(
+                Map<String, SecretPlaceholder> placeholders, List<GuideStep> steps) {
+            Set<String> markers = new HashSet<>();
+            placeholders.forEach((name, placeholder) -> {
+                if (name.isBlank() || placeholder.marker() == null || placeholder.marker().isBlank()
+                        || !markers.add(placeholder.marker())) {
+                    throw new IllegalArgumentException("Secret placeholder names and markers must be unique");
+                }
+            });
+
+            Set<String> referenced = new HashSet<>();
+            for (GuideStep step : steps) {
+                for (GuideSnippet snippet : step.snippets()) {
+                    validateSecretReferences(placeholders, referenced, snippet);
+                }
+            }
+            if (!referenced.containsAll(placeholders.keySet())) {
+                throw new IllegalArgumentException("Every secret placeholder must be used by a snippet");
+            }
+        }
+
+        private static void validateSecretReferences(
+                Map<String, SecretPlaceholder> placeholders, Set<String> referenced, GuideSnippet snippet) {
+            if (snippet.content() == null) {
+                throw new IllegalArgumentException("Guide snippet content is required");
+            }
+            for (String name : snippet.secretPlaceholders()) {
+                SecretPlaceholder placeholder = placeholders.get(name);
+                if (placeholder == null || !snippet.content().contains(placeholder.marker())) {
+                    throw new IllegalArgumentException("Snippet secret reference must match a declared marker");
+                }
+                referenced.add(name);
+            }
+            placeholders.forEach((name, placeholder) -> {
+                if (snippet.content().contains(placeholder.marker())
+                        && !snippet.secretPlaceholders().contains(name)) {
+                    throw new IllegalArgumentException("Snippet secret marker must be declared");
+                }
+            });
         }
     }
 
