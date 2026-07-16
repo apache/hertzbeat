@@ -15,14 +15,15 @@
  * limitations under the License.
  */
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { useState } from 'react';
 import { I18nextProvider, useTranslation } from 'react-i18next';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
 import type { TraceDetail } from '../model/explore-signal-contract';
+import { traceSpanLayout, type TraceDetailState } from '../model/explore-signal-model';
 import { TraceResult } from './trace-result';
 
 describe('TraceResult', () => {
@@ -49,13 +50,11 @@ describe('TraceResult', () => {
   });
 
   it('keeps an out-of-range nonzero page ready with authoritative total', () => {
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    render(<I18nextProvider i18n={i18n}><QueryClientProvider client={client}><TraceResult
+    render(<I18nextProvider i18n={i18n}><TraceResult
       data={{ content: [], totalElements: 3, totalPages: 1, number: 3, size: 20 }}
-      query={{ signal: 'traces', timeRange: 'last-30m', pageIndex: 3 }}
       t={i18n.t}
-      navigate={vi.fn()}
-    /></QueryClientProvider></I18nextProvider>);
+      trace={closedTrace()}
+    /></I18nextProvider>);
     expect(screen.getByRole('heading', { name: 'Traces' }).parentElement).toHaveTextContent('3');
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
@@ -107,18 +106,69 @@ describe('TraceResult', () => {
     expect(spanButton).not.toBeNull();
     expect(within(spanButton!).getByText('—')).toBeInTheDocument();
   });
+
+  it('renders epoch startTime zero instead of treating it as absent', () => {
+    render(<I18nextProvider i18n={i18n}><Subject navigate={vi.fn()} row={{ ...traceDetail, startTime: 0 }} /></I18nextProvider>);
+    expect(screen.getByText(new Date(0).toLocaleString())).toBeInTheDocument();
+  });
+
+  it('renders loading without leaking old trace detail', () => {
+    renderState({ kind: 'loading', traceId: 'trace-2' });
+    expect(document.querySelector('.ant-skeleton')).not.toBeNull();
+    expect(screen.queryByText('http.status_code')).not.toBeInTheDocument();
+  });
+
+  it.each([
+    [{ kind: 'missing', traceId: 'trace-1' } as const, 'explore.empty.traces'],
+    [{ kind: 'unavailable', traceId: 'trace-1' } as const, 'common.unavailable'],
+    [{ kind: 'error', traceId: 'trace-1' } as const, 'exploreTrace.loadFailed']
+  ])('renders truthful detail state $state.kind', (state, messageKey) => {
+    renderState(state);
+    expect(screen.getByText(i18n.t(messageKey))).toBeInTheDocument();
+  });
+
+  it('keeps an open trace inspectable when a list refresh becomes empty', () => {
+    const spans = traceSpanLayout(traceDetail);
+    const state: TraceDetailState = { kind: 'ready', traceId: traceDetail.traceId, detail: traceDetail, spans, selected: spans[0] };
+    render(<I18nextProvider i18n={i18n}><TraceResult
+      data={{ content: [], totalElements: 0, totalPages: 0, number: 0, size: 20 }}
+      t={i18n.t}
+      trace={{ ...closedTrace(), state }}
+    /></I18nextProvider>);
+    expect(screen.getByRole('dialog', { name: 'POST /checkout' })).toBeInTheDocument();
+    expect(screen.getByText('http.status_code')).toBeInTheDocument();
+  });
 });
+
+function renderState(state: TraceDetailState) {
+  return render(<I18nextProvider i18n={i18n}><TraceResult
+    data={{ content: [traceDetail], totalElements: 1, totalPages: 1, number: 0, size: 20 }}
+    t={i18n.t}
+    trace={{ ...closedTrace(), state }}
+  /></I18nextProvider>);
+}
 
 function Subject({ navigate, row = traceDetail, detail = traceDetail }: { navigate: (path: string) => void; row?: TraceDetail; detail?: TraceDetail }) {
   const { t } = useTranslation();
-  const client = new QueryClient({ defaultOptions: { queries: { staleTime: Number.POSITIVE_INFINITY, retry: false } } });
-  client.setQueryData(['trace-detail', row.traceId], detail);
-  return <QueryClientProvider client={client}><TraceResult
+  const [state, setState] = useState<TraceDetailState>({ kind: 'closed' });
+  const showDetail = (selectedId?: string) => {
+    const spans = traceSpanLayout(detail);
+    setState({ kind: 'ready', traceId: detail.traceId, detail, spans,
+      selected: spans.find(span => span.spanId === selectedId) ?? spans[0] });
+  };
+  return <TraceResult
     data={{ content: [row], totalElements: 1, totalPages: 1, number: 0, size: 20 }}
-    query={{ signal: 'traces', timeRange: 'last-30m' }}
     t={t}
-    navigate={navigate}
-  /></QueryClientProvider>;
+    trace={{ state, openTrace: () => showDetail(), close: () => setState({ kind: 'closed' }), retry: () => Promise.resolve(),
+      selectSpan: showDetail, changePage: vi.fn(),
+      openRelatedLogs: () => navigate(`/explore?signal=logs&traceId=${detail.traceId}`),
+      openRelatedMetrics: () => navigate('/explore?signal=metrics') }}
+  />;
+}
+
+function closedTrace() {
+  return { state: { kind: 'closed' } as const, openTrace: vi.fn(), close: vi.fn(), selectSpan: vi.fn(),
+    retry: () => Promise.resolve(), changePage: vi.fn(), openRelatedLogs: vi.fn(), openRelatedMetrics: vi.fn() };
 }
 
 const traceDetail: TraceDetail = {

@@ -19,6 +19,10 @@ import type { LogRow, MetricConsole, TraceDetail, TraceRow, TraceSpan } from './
 
 export type LiveLogStatus = 'waiting' | 'connected' | 'paused' | 'unavailable' | 'error' | 'contract';
 export type TraceSpanLayout = TraceSpan & { depth: number; offsetPercent: number; widthPercent: number };
+export type TraceDetailState =
+  | { kind: 'closed' }
+  | { kind: 'loading' | 'missing' | 'unavailable' | 'error'; traceId: string }
+  | { kind: 'ready'; traceId: string; detail: TraceDetail; spans: TraceSpanLayout[]; selected: TraceSpanLayout | undefined };
 
 export type MetricSeries = {
   key: string;

@@ -15,39 +15,44 @@
  * limitations under the License.
  */
 
-import { useQuery } from "@tanstack/react-query";
 import { Alert, Button, Descriptions, Drawer, Empty, Skeleton, Table, Tag, Typography } from "antd";
 import type { TFunction } from "i18next";
-import { useState } from "react";
 
-import { loadTraceDetail, type ExplorePageResult } from "../api/explore-api";
-import type { TraceDetail, TraceRow, TraceSpan } from "../model/explore-signal-contract";
-import { buildCrossSignalPath, buildExplorePath, mergeExploreQuery, type TraceExploreQuery } from "../model/explore-model";
-import { traceDurationMs, traceHealthState, traceSpanLayout } from "../model/explore-signal-model";
+import type { ExplorePageResult, TraceRow, TraceSpan } from "../model/explore-signal-contract";
+import { traceDurationMs, traceHealthState, type TraceDetailState } from "../model/explore-signal-model";
 import { OtlpAttributeList, OtlpAttributeSection } from "./otlp-attribute-list";
 import { SignalEmptyState, SignalResultFrame } from "./signal-result-frame";
 import styles from "./trace-result.module.css";
 
-type OpenPath = (path: string) => void;
+export type TraceDetailView = {
+  state: TraceDetailState;
+  openTrace: (traceId: string) => void;
+  close: () => void;
+  selectSpan: (spanId: string) => void;
+  retry: () => Promise<void>;
+  changePage: (page: number) => void;
+  openRelatedLogs: () => void;
+  openRelatedMetrics: () => void;
+};
 
 export function TraceResult({
   data,
-  query,
   t,
-  navigate,
+  trace,
 }: {
   data: ExplorePageResult<TraceRow>;
-  query: TraceExploreQuery;
   t: TFunction;
-  navigate: OpenPath;
+  trace: TraceDetailView;
 }) {
-  const [traceId, setTraceId] = useState<string>();
   const rows = data.content ?? [];
   if (data.totalElements === 0)
     return (
-      <SignalResultFrame title={t("explore.signals.traces")} count={0}>
-        <SignalEmptyState title={t("explore.empty.traces")} hint={t("explore.description")} />
-      </SignalResultFrame>
+      <>
+        <SignalResultFrame title={t("explore.signals.traces")} count={0}>
+          <SignalEmptyState title={t("explore.empty.traces")} hint={t("explore.description")} />
+        </SignalResultFrame>
+        <TraceDrawer trace={trace} t={t} />
+      </>
     );
   return (
     <SignalResultFrame title={t("explore.signals.traces")} count={data.totalElements}>
@@ -57,22 +62,20 @@ export function TraceResult({
         size="small"
         dataSource={rows}
         scroll={{ x: 900, y: 520 }}
-        onRow={(row) => ({ onClick: () => setTraceId(row.traceId) })}
+        onRow={(row) => ({ onClick: () => trace.openTrace(row.traceId) })}
         pagination={{
           current: data.number + 1,
           pageSize: data.size,
           total: data.totalElements,
           showSizeChanger: false,
           hideOnSinglePage: true,
-          onChange: (page) => {
-            void navigate(buildExplorePath({ ...query, pageIndex: page - 1 || undefined }));
-          },
+          onChange: trace.changePage,
         }}
         columns={[
           {
             title: t("explore.time"),
             width: 190,
-            render: (_, row) => (row.startTime ? new Date(row.startTime).toLocaleString() : "—"),
+            render: (_, row) => (row.startTime != null ? new Date(row.startTime).toLocaleString() : "—"),
           },
           { title: t("explore.service"), width: 180, dataIndex: "serviceName" },
           { title: t("explore.operation"), dataIndex: "rootSpanName", ellipsis: true },
@@ -85,60 +88,58 @@ export function TraceResult({
               return <Tag color={health === "error" ? "red" : health === "ok" ? "green" : "default"}>{row.status ?? "—"}</Tag>;
             },
           },
-          { title: "Trace ID", width: 220, dataIndex: "traceId", ellipsis: true },
+          { title: t("explore.traceId"), width: 220, dataIndex: "traceId", ellipsis: true },
         ]}
       />
-      <TraceDrawer traceId={traceId} query={query} t={t} navigate={navigate} onClose={() => setTraceId(undefined)} />
+      <TraceDrawer trace={trace} t={t} />
     </SignalResultFrame>
   );
 }
 
 function TraceDrawer({
-  traceId,
-  query,
+  trace,
   t,
-  navigate,
-  onClose,
 }: {
-  traceId?: string | undefined;
-  query: TraceExploreQuery;
+  trace: TraceDetailView;
   t: TFunction;
-  navigate: OpenPath;
-  onClose: () => void;
 }) {
-  const detail = useQuery({
-    queryKey: ["trace-detail", traceId],
-    queryFn: ({ signal }) => loadTraceDetail(traceId ?? '', signal),
-    enabled: Boolean(traceId),
-  });
+  const state = trace.state;
   return (
     <Drawer
       size="large"
-      open={Boolean(traceId)}
-      title={detail.data?.rootSpanName ?? t("exploreTrace.detail")}
-      onClose={onClose}
+      open={state.kind !== "closed"}
+      title={state.kind === "ready" ? state.detail.rootSpanName ?? t("exploreTrace.detail") : t("exploreTrace.detail")}
+      onClose={trace.close}
     >
-      {detail.isPending && <Skeleton active paragraph={{ rows: 10 }} />}
-      {detail.isError && <Alert type="error" showIcon message={t("exploreTrace.loadFailed")} />}
-      {detail.data && <TraceDetailView detail={detail.data} query={query} t={t} navigate={navigate} />}
+      {state.kind === "loading" && <Skeleton active paragraph={{ rows: 10 }} />}
+      {state.kind === "missing" && <Empty description={t("explore.empty.traces")} />}
+      {state.kind === "unavailable" && <TraceFailure type="warning" message={t("common.unavailable")} retry={trace.retry} t={t} />}
+      {state.kind === "error" && <TraceFailure type="error" message={t("exploreTrace.loadFailed")} retry={trace.retry} t={t} />}
+      {state.kind === "ready" && <TraceDetailContent state={state} trace={trace} t={t} />}
     </Drawer>
   );
 }
 
-function TraceDetailView({
-  detail,
-  query,
-  t,
-  navigate,
-}: {
-  detail: TraceDetail;
-  query: TraceExploreQuery;
+function TraceFailure({ type, message, retry, t }: {
+  type: "warning" | "error";
+  message: string;
+  retry: () => Promise<void>;
   t: TFunction;
-  navigate: OpenPath;
 }) {
-  const spans = traceSpanLayout(detail);
-  const [spanId, setSpanId] = useState<string>();
-  const selected = spans.find((span) => span.spanId === spanId) ?? spans[0];
+  return <Alert type={type} showIcon message={message}
+    action={<Button onClick={() => { void retry(); }}>{t("common.retry")}</Button>} />;
+}
+
+function TraceDetailContent({
+  state,
+  trace,
+  t,
+}: {
+  state: Extract<TraceDetailState, { kind: "ready" }>;
+  trace: TraceDetailView;
+  t: TFunction;
+}) {
+  const { detail, spans, selected } = state;
   return (
     <>
       <div className={styles.detailToolbar}>
@@ -152,28 +153,10 @@ function TraceDetailView({
           </span>
         </div>
         <div className={styles.actions}>
-          <Button
-            onClick={() => {
-              void navigate(buildCrossSignalPath(query, "logs", { traceId: detail.traceId }));
-            }}
-          >
+          <Button onClick={trace.openRelatedLogs}>
             {t("explore.relatedLogs")}
           </Button>
-          <Button
-            onClick={() => {
-              void navigate(
-                buildExplorePath(
-                  mergeExploreQuery(query, {
-                    signal: "metrics",
-                    serviceName: selected?.serviceName ?? detail.serviceName ?? undefined,
-                    query: undefined,
-                    traceId: undefined,
-                    pageIndex: undefined,
-                  }),
-                ),
-              );
-            }}
-          >
+          <Button onClick={trace.openRelatedMetrics}>
             {t("exploreTrace.relatedMetrics")}
           </Button>
         </div>
@@ -185,7 +168,7 @@ function TraceDetailView({
             type="button"
             data-selected={span.spanId === selected?.spanId}
             className={styles.spanRow}
-            onClick={() => setSpanId(span.spanId ?? undefined)}
+            onClick={() => { if (span.spanId) trace.selectSpan(span.spanId); }}
           >
             <span className={styles.spanName} style={{ paddingLeft: `${span.depth * 16 + 8}px` }}>
               <strong>{span.serviceName ?? "—"}</strong>
@@ -218,7 +201,7 @@ function SpanDetail({ span, t }: { span: TraceSpan; t: TFunction }) {
         column={2}
         bordered
         items={[
-          { key: "span", label: "Span ID", children: span.spanId ?? "—" },
+          { key: "span", label: t("explore.spanId"), children: span.spanId ?? "—" },
           { key: "kind", label: t("exploreTrace.kind"), children: span.spanKind ?? "—" },
           { key: "status", label: t("exploreTrace.status"), children: span.status ?? "—" },
           { key: "scope", label: t("exploreTrace.scope"), children: span.scopeName ?? "—" },

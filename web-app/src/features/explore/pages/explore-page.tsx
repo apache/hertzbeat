@@ -26,7 +26,9 @@ import { MetricResult } from '../components/metric-result';
 import { TraceResult } from '../components/trace-result';
 import { useExplorePageController, type ExplorePageResultState } from '../controller/use-explore-page-controller';
 import { useLiveLogController } from '../controller/use-live-log-controller';
-import type { ExploreQuery, LogExploreQuery } from '../model/explore-model';
+import { useTraceDetailController } from '../controller/use-trace-detail-controller';
+import type { ExploreQuery, LogExploreQuery, TraceExploreQuery } from '../model/explore-model';
+import type { ExplorePageResult, TraceRow } from '../model/explore-signal-contract';
 import styles from './explore-page.module.css';
 
 export function ExplorePage() {
@@ -71,8 +73,18 @@ function HistoricalResult({ query, result, openPath }: {
   const { t } = useTranslation();
   if (result.signal === 'metrics' && query.signal === 'metrics') return <ResultFrame><MetricResult data={result.data} t={t} /></ResultFrame>;
   if (result.signal === 'logs' && query.signal === 'logs') return <ResultFrame><LogResult data={result.data} query={query} t={t} navigate={openPath} /></ResultFrame>;
-  if (result.signal === 'traces' && query.signal === 'traces') return <ResultFrame><TraceResult data={result.data} query={query} t={t} navigate={openPath} /></ResultFrame>;
+  if (result.signal === 'traces' && query.signal === 'traces') return <TracePanel data={result.data} query={query} openPath={openPath} />;
   return null;
+}
+
+function TracePanel({ data, query, openPath }: {
+  data: ExplorePageResult<TraceRow>;
+  query: TraceExploreQuery;
+  openPath: (path: string) => void;
+}) {
+  const { t } = useTranslation();
+  const trace = useTraceDetailController(query, openPath);
+  return <ResultFrame><TraceResult data={data} t={t} trace={trace} /></ResultFrame>;
 }
 
 function FailureResult({ message, retry }: { message: string; retry: () => Promise<void> }) {
