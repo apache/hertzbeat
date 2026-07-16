@@ -215,6 +215,14 @@ export const appRoutes: RouteObject[] = [
                 }
               },
               {
+                id: 'system-settings',
+                path: settingsPaths.system,
+                lazy: async () => {
+                  const { SystemConfigPage } = await import('@/features/settings/system-config-page');
+                  return { Component: SystemConfigPage };
+                }
+              },
+              {
                 id: 'settings',
                 path: settingsPaths.root,
                 element: <Navigate replace to={settingsPaths.receivers} />
@@ -238,6 +246,11 @@ export const appRoutes: RouteObject[] = [
                 id: 'legacy-message-server',
                 path: legacySettingsPaths.channels,
                 element: <LegacySettingsRedirect to={settingsPaths.channels} />
+              },
+              {
+                id: 'legacy-system-settings',
+                path: legacySettingsPaths.system,
+                element: <LegacySettingsRedirect to={settingsPaths.system} />
               },
               {
                 id: 'bulletin',

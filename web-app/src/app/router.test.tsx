@@ -45,10 +45,12 @@ describe('application data router', () => {
         '/settings/notifications/templates',
         '/settings/notifications/channels',
         '/settings/tokens',
+        '/settings/system',
         '/alerts/notifications/receivers',
         '/alerts/notifications/rules',
         '/alerts/notifications/templates',
         '/setting/settings/server',
+        '/setting/settings/config',
         '/bulletin',
         '*'
       ])
