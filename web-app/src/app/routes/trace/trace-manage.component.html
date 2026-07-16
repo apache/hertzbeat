@@ -1,0 +1,189 @@
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<section class="signal-page">
+  <header class="page-heading">
+    <div
+      ><h1>{{ 'observability.traces.title' | i18n }}</h1
+      ><p>{{ 'observability.traces.subtitle' | i18n }}</p></div
+    >
+    <app-signal-navigation active="traces" [context]="navigationContext()"></app-signal-navigation>
+  </header>
+  <div class="query-toolbar">
+    <app-signal-time-range
+      [(value)]="timeRange"
+      [(refreshSeconds)]="refreshSeconds"
+      (apply)="search()"
+      (refresh)="refreshToNow()"
+    ></app-signal-time-range>
+    <input nz-input [(ngModel)]="serviceName" [placeholder]="'observability.filter.service' | i18n" />
+    <input nz-input [(ngModel)]="environment" [placeholder]="'observability.filter.environment' | i18n" />
+    <input nz-input [(ngModel)]="operationName" [placeholder]="'observability.filter.operation' | i18n" />
+    <input nz-input [(ngModel)]="traceId" [placeholder]="'observability.filter.trace-id' | i18n" />
+    <input nz-input type="number" [(ngModel)]="minDurationMs" [placeholder]="'observability.filter.min-duration' | i18n" />
+    <input nz-input type="number" [(ngModel)]="maxDurationMs" [placeholder]="'observability.filter.max-duration' | i18n" />
+    <nz-select [(ngModel)]="errorOnly" [nzPlaceHolder]="'observability.filter.status' | i18n">
+      <nz-option [nzValue]="false" [nzLabel]="'observability.filter.all-statuses' | i18n"></nz-option>
+      <nz-option [nzValue]="true" [nzLabel]="'observability.filter.errors-only' | i18n"></nz-option>
+    </nz-select>
+    <button nz-button nzType="primary" [nzLoading]="loading" (click)="search()"
+      ><span nz-icon nzType="search"></span>{{ 'common.button.query' | i18n }}</button
+    >
+  </div>
+  <nz-alert *ngIf="error" nzType="error" nzShowIcon [nzMessage]="error"></nz-alert>
+  <div class="overview-strip">
+    <div
+      ><span>{{ 'observability.traces.total' | i18n }}</span
+      ><strong>{{ overview.totalCount }}</strong></div
+    >
+    <div
+      ><span>{{ 'observability.traces.errors' | i18n }}</span
+      ><strong>{{ overview.errorCount }}</strong></div
+    >
+    <div
+      ><span>{{ 'observability.traces.error-rate' | i18n }}</span
+      ><strong>{{ overview.errorRate | percent : '1.1-1' }}</strong></div
+    >
+    <div
+      ><span>{{ 'observability.traces.average' | i18n }}</span
+      ><strong>{{ overview.averageDurationMillis | number : '1.0-2' }} ms</strong></div
+    >
+    <div
+      ><span>P95</span><strong>{{ overview.p95DurationMillis | number : '1.0-2' }} ms</strong></div
+    >
+  </div>
+  <div class="section-title"
+    ><h2>{{ 'observability.traces.results' | i18n }}</h2
+    ><span>{{ total }}</span></div
+  >
+  <nz-table
+    #traceTable
+    [nzData]="traces"
+    nzSize="small"
+    [nzLoading]="loading"
+    [nzFrontPagination]="false"
+    [nzTotal]="total"
+    [nzPageIndex]="pageIndex"
+    [nzPageSize]="pageSize"
+    (nzPageIndexChange)="pageChanged($event)"
+  >
+    <thead
+      ><tr
+        ><th>{{ 'observability.column.start' | i18n }}</th
+        ><th>{{ 'observability.column.service' | i18n }}</th
+        ><th>{{ 'observability.column.operation' | i18n }}</th
+        ><th>{{ 'observability.column.duration' | i18n }}</th
+        ><th>{{ 'observability.column.status' | i18n }}</th
+        ><th>Trace ID</th></tr
+      ></thead
+    >
+    <tbody
+      ><tr *ngFor="let trace of traceTable.data" (click)="openTrace(trace)"
+        ><td>{{ trace.startTime | date : 'yyyy-MM-dd HH:mm:ss.SSS' }}</td
+        ><td>{{ trace.serviceName }}</td
+        ><td>{{ trace.rootSpanName }}</td
+        ><td>{{ trace.durationNanos / 1000000 | number : '1.0-2' }} ms</td
+        ><td
+          ><nz-tag [nzColor]="trace.errorSpanCount ? 'error' : 'success'">{{ trace.status }}</nz-tag></td
+        ><td class="mono">{{ trace.traceId }}</td></tr
+      ></tbody
+    >
+  </nz-table>
+  <nz-drawer
+    [nzVisible]="detailVisible"
+    nzPlacement="right"
+    [nzWidth]="760"
+    [nzTitle]="selected?.summary?.rootSpanName || ('observability.traces.detail' | i18n)"
+    (nzOnClose)="detailVisible = false"
+  >
+    <ng-container *nzDrawerContent>
+      <nz-spin [nzSpinning]="detailLoading">
+        <div class="drawer-actions"
+          ><button nz-button (click)="viewLogs()">{{ 'observability.action.view-logs' | i18n }}</button
+          ><button nz-button (click)="viewMetrics()">{{ 'observability.action.view-metrics' | i18n }}</button></div
+        >
+        <div class="waterfall" *ngIf="selected?.spans?.length; else noSpans">
+          <div class="waterfall-axis">
+            <span>Span</span>
+            <div class="time-ruler"
+              ><span>0 ms</span><span>{{ waterfallDurationMs() | number : '1.0-2' }} ms</span></div
+            >
+            <span>{{ 'observability.column.duration' | i18n }}</span>
+          </div>
+          <div
+            class="waterfall-row"
+            *ngFor="let span of selected?.spans"
+            [class.selected-row]="selectedSpan?.spanId === span.spanId"
+            (click)="selectSpan(span)"
+            ><div class="span-name" [style.padding-left.px]="spanDepth(span) * 14"
+              ><strong>{{ span.serviceName }}</strong
+              ><span>{{ span.spanName }}</span></div
+            ><div class="span-track"
+              ><span
+                class="span-bar"
+                [class.error-bar]="isErrorSpan(span)"
+                [style.left.%]="waterfallOffset(span)"
+                [style.width.%]="waterfallWidth(span)"
+              ></span></div
+            ><span>{{ span.durationNanos / 1000000 | number : '1.0-2' }} ms</span></div
+          >
+        </div>
+        <ng-template #noSpans><nz-empty [nzNotFoundContent]="'observability.empty.spans' | i18n"></nz-empty></ng-template>
+        <div class="attribute-section" *ngIf="selectedSpan">
+          <h3>{{ 'observability.traces.span-details' | i18n }}</h3>
+          <dl>
+            <dt>Span ID</dt><dd>{{ selectedSpan.spanId }}</dd> <dt>{{ 'observability.column.status' | i18n }}</dt
+            ><dd class="status-value"
+              ><nz-tag [nzColor]="isErrorSpan(selectedSpan) ? 'error' : 'success'">{{ spanStatus(selectedSpan) }}</nz-tag
+              ><span *ngIf="selectedSpan.statusMessage">{{ selectedSpan.statusMessage }}</span></dd
+            >
+            <ng-container *ngFor="let item of selectedSpan.spanAttributes | keyvalue"
+              ><dt>{{ item.key }}</dt
+              ><dd>{{ item.value }}</dd></ng-container
+            >
+          </dl>
+          <h4>{{ 'observability.traces.events' | i18n }}</h4>
+          <div class="event-list" *ngIf="selectedSpan.spanEvents?.length; else noEvents">
+            <article class="event-item" *ngFor="let event of selectedSpan.spanEvents">
+              <header
+                ><strong>{{ event.name }}</strong
+                ><time>{{ event.time }}</time></header
+              >
+              <dl *ngIf="event.attributes | keyvalue as attributes">
+                <ng-container *ngFor="let attribute of attributes"
+                  ><dt>{{ attribute.key }}</dt
+                  ><dd>{{ attribute.value }}</dd></ng-container
+                >
+              </dl>
+            </article>
+          </div>
+          <ng-template #noEvents
+            ><p class="inline-empty">{{ 'observability.empty.events' | i18n }}</p></ng-template
+          >
+        </div>
+        <div class="attribute-section" *ngIf="selected?.summary"
+          ><h3>{{ 'observability.traces.resource-attributes' | i18n }}</h3
+          ><dl
+            ><ng-container *ngFor="let item of selected?.summary?.resourceAttributes | keyvalue"
+              ><dt>{{ item.key }}</dt
+              ><dd>{{ item.value }}</dd></ng-container
+            ></dl
+          ></div
+        >
+      </nz-spin>
+    </ng-container>
+  </nz-drawer>
+</section>

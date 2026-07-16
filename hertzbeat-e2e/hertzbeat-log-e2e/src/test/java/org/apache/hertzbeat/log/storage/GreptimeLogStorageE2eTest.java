@@ -52,13 +52,14 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @SpringBootTest(classes = org.apache.hertzbeat.startup.HertzBeatApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(properties = {
         "warehouse.store.duckdb.enabled=false",
-        "warehouse.store.greptime.enabled=true"
+        "warehouse.store.greptime.enabled=true",
+        "hertzbeat.otlp.grpc.enabled=false"
 })
 @Slf4j
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class GreptimeLogStorageE2eTest {
 
-    private static final String VECTOR_IMAGE = "timberio/vector:latest-alpine";
+    private static final String VECTOR_IMAGE = "timberio/vector:0.56.0-alpine";
     private static final int VECTOR_PORT = 8686;
     private static final String VECTOR_CONFIG_PATH = "/etc/vector/vector.yml";
     private static final String ENV_HERTZBEAT_PORT = "HERTZBEAT_PORT";

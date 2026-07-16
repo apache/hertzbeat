@@ -1,0 +1,271 @@
+@import '~src/styles/theme';
+
+.signal-page {
+  min-height: 100%;
+}
+
+.page-heading {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding-bottom: 18px;
+  border-bottom: 1px solid @border-color-split;
+}
+
+.page-heading h1 {
+  margin: 0 0 5px;
+  font-weight: 600;
+  font-size: 24px;
+}
+
+.page-heading p {
+  margin: 0;
+  color: @text-color-secondary;
+}
+
+.query-toolbar {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 8px;
+  align-items: center;
+  padding: 16px 0;
+}
+
+.query-toolbar app-signal-time-range {
+  grid-column: 1 / -1;
+}
+
+.overview-strip {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  margin-bottom: 16px;
+  border: 1px solid @border-color-split;
+}
+
+.overview-strip div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 12px 16px;
+  border-right: 1px solid @border-color-split;
+}
+
+.overview-strip div:last-child {
+  border-right: 0;
+}
+
+.overview-strip span {
+  color: @text-color-secondary;
+  font-size: 12px;
+}
+
+.overview-strip strong {
+  font-weight: 600;
+  font-size: 20px;
+}
+
+.section-title {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 18px 0 10px;
+}
+
+.section-title h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.section-title span {
+  color: @text-color-secondary;
+}
+
+.mono {
+  max-width: 260px;
+  overflow: hidden;
+  font-family: SFMono-Regular, Consolas, monospace;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.drawer-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding-bottom: 14px;
+  border-bottom: 1px solid @border-color-split;
+}
+
+.waterfall-axis {
+  display: grid;
+  grid-template-columns: 210px minmax(220px, 1fr) 82px;
+  gap: 12px;
+  align-items: end;
+  min-height: 34px;
+  color: @text-color-secondary;
+  font-size: 11px;
+  border-bottom: 1px solid @border-color-split;
+}
+
+.time-ruler {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 24px;
+  padding-top: 7px;
+  background-image: linear-gradient(to right, @border-color-split 1px, transparent 1px);
+  background-repeat: repeat-x;
+  background-position: left bottom;
+  background-size: 25% 7px;
+}
+
+.waterfall-row {
+  display: grid;
+  grid-template-columns: 210px minmax(220px, 1fr) 82px;
+  gap: 12px;
+  align-items: center;
+  min-height: 46px;
+  border-bottom: 1px solid @border-color-split;
+  cursor: pointer;
+}
+
+.waterfall-row:hover,
+.selected-row {
+  background: fade(@primary-color, 5%);
+}
+
+.span-name {
+  min-width: 0;
+  border-left: 2px solid fade(@primary-color, 18%);
+}
+
+.span-name strong,
+.span-name span {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.span-name span {
+  color: @text-color-secondary;
+  font-size: 12px;
+}
+
+.span-track {
+  position: relative;
+  height: 18px;
+  background: fade(@primary-color, 6%);
+  background-image: linear-gradient(to right, @border-color-split 1px, transparent 1px);
+  background-size: 25% 100%;
+}
+
+.span-bar {
+  position: absolute;
+  top: 2px;
+  min-width: 3px;
+  height: 14px;
+  background: @primary-color;
+}
+
+.error-bar {
+  background: @error-color;
+}
+
+.attribute-section {
+  margin-top: 24px;
+}
+
+.attribute-section h3 {
+  font-size: 14px;
+}
+
+.attribute-section h4 {
+  margin: 20px 0 8px;
+  color: @text-color-secondary;
+  font-weight: 500;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.attribute-section dl {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.2fr);
+  column-gap: 24px;
+}
+
+.attribute-section dt,
+.attribute-section dd {
+  margin: 0;
+  padding: 8px 0;
+  border-bottom: 1px solid @border-color-split;
+}
+
+.attribute-section dt {
+  color: @text-color-secondary;
+  overflow-wrap: anywhere;
+}
+
+.attribute-section dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.status-value {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.event-list {
+  border-top: 1px solid @border-color-split;
+}
+
+.event-item {
+  padding: 12px 0;
+  border-bottom: 1px solid @border-color-split;
+}
+
+.event-item > header {
+  display: flex;
+  gap: 16px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.event-item time {
+  color: @text-color-secondary;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.event-item dl {
+  margin: 8px 0 0;
+  padding-left: 12px;
+  border-left: 2px solid fade(@primary-color, 18%);
+}
+
+.event-item dt,
+.event-item dd {
+  padding: 5px 0;
+  font-size: 12px;
+}
+
+.inline-empty {
+  margin: 0;
+  padding: 10px 0;
+  color: @text-color-secondary;
+}
+
+.attribute-section pre {
+  max-height: 180px;
+  margin: 0;
+  overflow: auto;
+  white-space: pre-wrap;
+}
+@media (max-width: 1300px) {
+  .query-toolbar {
+    grid-template-columns: repeat(4, minmax(150px, 1fr));
+  }
+}

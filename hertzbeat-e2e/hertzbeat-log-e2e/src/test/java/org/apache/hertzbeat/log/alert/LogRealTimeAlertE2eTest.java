@@ -60,7 +60,7 @@ import static org.mockito.Mockito.doAnswer;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class LogRealTimeAlertE2eTest {
 
-    private static final String VECTOR_IMAGE = "timberio/vector:latest-alpine";
+    private static final String VECTOR_IMAGE = "timberio/vector:0.56.0-alpine";
     private static final int VECTOR_PORT = 8686;
     private static final String VECTOR_CONFIG_PATH = "/etc/vector/vector.yml";
     private static final String ENV_HERTZBEAT_PORT = "HERTZBEAT_PORT";

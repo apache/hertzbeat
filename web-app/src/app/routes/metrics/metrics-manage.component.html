@@ -1,0 +1,127 @@
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<section class="signal-page">
+  <header class="page-heading">
+    <div>
+      <h1>{{ 'observability.metrics.title' | i18n }}</h1>
+      <p>{{ 'observability.metrics.subtitle' | i18n }}</p>
+    </div>
+    <div class="heading-actions">
+      <app-signal-navigation active="metrics" [context]="navigationContext()"></app-signal-navigation>
+      <span class="result-count">{{ series.length }} {{ 'observability.metrics.series' | i18n }}</span>
+    </div>
+  </header>
+
+  <div class="query-toolbar">
+    <app-signal-time-range
+      [(value)]="timeRange"
+      [(refreshSeconds)]="refreshSeconds"
+      (apply)="search()"
+      (refresh)="refreshToNow()"
+    ></app-signal-time-range>
+    <input
+      nz-input
+      class="promql-input mono"
+      [(ngModel)]="query"
+      [nzAutocomplete]="metricAuto"
+      [placeholder]="'observability.metrics.promql' | i18n"
+      (keyup.enter)="search()"
+    />
+    <nz-autocomplete #metricAuto>
+      <nz-auto-option *ngFor="let name of metricNames" [nzValue]="name">{{ name }}</nz-auto-option>
+    </nz-autocomplete>
+    <input nz-input type="number" min="1" max="3600" [(ngModel)]="step" [placeholder]="'observability.metrics.step' | i18n" />
+    <button nz-button nzType="primary" [nzLoading]="loading" (click)="search()">
+      <span nz-icon nzType="search"></span>{{ 'common.button.query' | i18n }}
+    </button>
+  </div>
+
+  <nz-alert *ngIf="error" nzType="error" nzShowIcon [nzMessage]="error"></nz-alert>
+
+  <div class="overview-strip">
+    <div
+      ><span>{{ 'observability.metrics.total-series' | i18n }}</span
+      ><strong>{{ series.length }}</strong></div
+    >
+    <div
+      ><span>{{ 'observability.metrics.total-samples' | i18n }}</span
+      ><strong>{{ summary.sampleCount }}</strong></div
+    >
+    <div
+      ><span>{{ 'observability.metrics.minimum' | i18n }}</span
+      ><strong>{{ summary.minimum | number : '1.0-2' }}</strong></div
+    >
+    <div
+      ><span>{{ 'observability.metrics.maximum' | i18n }}</span
+      ><strong>{{ summary.maximum | number : '1.0-2' }}</strong></div
+    >
+  </div>
+
+  <div class="section-title">
+    <h2>{{ 'observability.metrics.trend' | i18n }}</h2
+    ><span>{{ series.length }}</span>
+  </div>
+
+  <section class="chart-region" [class.loading-region]="loading">
+    <div *ngIf="series.length; else emptyChart" echarts [options]="chartOption" class="metric-chart"></div>
+    <ng-template #emptyChart><nz-empty [nzNotFoundContent]="'observability.empty.metrics' | i18n"></nz-empty></ng-template>
+  </section>
+
+  <div class="series-strip" *ngIf="series.length">
+    <button nz-button nzType="text" *ngFor="let item of series" (click)="showSeries(item)">
+      {{ labelText(item.labels) || query }}
+    </button>
+  </div>
+
+  <div class="section-title">
+    <h2>{{ 'observability.metrics.samples' | i18n }}</h2>
+    <span>{{ rows.length }}</span>
+  </div>
+  <nz-table #metricTable [nzData]="rows" nzSize="small" [nzPageSize]="20" [nzLoading]="loading">
+    <thead
+      ><tr
+        ><th>{{ 'observability.column.time' | i18n }}</th
+        ><th>{{ 'observability.column.value' | i18n }}</th
+        ><th>{{ 'observability.column.labels' | i18n }}</th></tr
+      ></thead
+    >
+    <tbody>
+      <tr *ngFor="let row of metricTable.data" (click)="showSeries({ labels: row.labels, points: [] })">
+        <td>{{ row.timestamp | date : 'yyyy-MM-dd HH:mm:ss' }}</td
+        ><td>{{ row.value }}</td
+        ><td class="mono">{{ labelText(row.labels) }}</td>
+      </tr>
+    </tbody>
+  </nz-table>
+
+  <nz-drawer
+    [nzVisible]="detailVisible"
+    nzPlacement="right"
+    [nzWidth]="480"
+    [nzTitle]="'observability.metrics.series-detail' | i18n"
+    (nzOnClose)="detailVisible = false"
+  >
+    <ng-container *nzDrawerContent>
+      <dl *ngIf="selectedSeries" class="detail-list">
+        <ng-container *ngFor="let label of selectedSeries.labels | keyvalue"
+          ><dt>{{ label.key }}</dt
+          ><dd>{{ label.value }}</dd></ng-container
+        >
+      </dl>
+    </ng-container>
+  </nz-drawer>
+</section>

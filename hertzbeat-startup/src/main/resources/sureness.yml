@@ -71,6 +71,10 @@ resourceRole:
   - /api/chat/**===get===[admin,user]
   - /api/chat/**===post===[admin]
   - /api/logs/ingest/**===post===[admin,user]
+  - /api/otlp/**===post===[admin,user]
+  - /api/ingestion/otlp/**===get===[admin,user,guest]
+  - /api/logs/**===get===[admin,user,guest]
+  - /api/traces/**===get===[admin,user,guest]
   - /api/account/token===get===[admin]
   - /api/account/token/**===post===[admin]
   - /api/account/token/**===delete===[admin]
@@ -98,6 +102,9 @@ excludedResource:
   - /passport/**===get
   - /status/**===get
   - /log/**===get
+  - /observability/**===get
+  - /metrics/**===get
+  - /trace/**===get
   - /**/*.html===get
   - /**/*.js===get
   - /**/*.css===get

@@ -18,35 +18,36 @@
  */
 
 import { CommonModule } from '@angular/common';
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { I18NService } from '@core';
-import { ALAIN_I18N_TOKEN } from '@delon/theme';
+import { ActivatedRoute, Router } from '@angular/router';
+import { I18nPipe } from '@delon/theme';
 import { SharedModule } from '@shared';
 import { EChartsOption } from 'echarts';
-import { NzAutocompleteModule } from 'ng-zorro-antd/auto-complete';
-import { NzButtonModule } from 'ng-zorro-antd/button';
-import { NzCardModule } from 'ng-zorro-antd/card';
-import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
-import { NzCollapseModule } from 'ng-zorro-antd/collapse';
-import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
-import { NzDividerModule } from 'ng-zorro-antd/divider';
+import { NzDrawerModule } from 'ng-zorro-antd/drawer';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
-import { NzIconModule } from 'ng-zorro-antd/icon';
-import { NzInputModule } from 'ng-zorro-antd/input';
-import { NzListModule } from 'ng-zorro-antd/list';
-import { NzMessageService } from 'ng-zorro-antd/message';
-import { NzModalService, NzModalModule } from 'ng-zorro-antd/modal';
-import { NzPopoverModule } from 'ng-zorro-antd/popover';
-import { NzSpaceModule } from 'ng-zorro-antd/space';
-import { NzStatisticModule } from 'ng-zorro-antd/statistic';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzTagModule } from 'ng-zorro-antd/tag';
-import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { NgxEchartsModule } from 'ngx-echarts';
+import { Subject, debounceTime, finalize, forkJoin, switchMap, takeUntil } from 'rxjs';
 
 import { LogEntry } from '../../../pojo/LogEntry';
-import { LogService } from '../../../service/log.service';
+import { LogOverviewStats, LogQueryOptions, LogService } from '../../../service/log.service';
+import { SignalContext } from '../../../service/observability.service';
+import { SignalNavigationComponent } from '../../observability/signal-navigation.component';
+import { moveSignalTimeRangeToNow, readSignalTimeRange, toSignalTimeContext } from '../../observability/signal-query-context';
+import { SignalTimeRangeComponent } from '../../observability/signal-time-range.component';
+import { LogStreamComponent } from '../log-stream/log-stream.component';
+
+type LogViewMode = 'query' | 'stream';
+
+export function trendBucketMillis(value: string): number {
+  const numeric = Number(value);
+  if (Number.isFinite(numeric)) {
+    return numeric > 10_000_000_000_000 ? numeric / 1_000_000 : numeric;
+  }
+  return Date.parse(value);
+}
 
 @Component({
   selector: 'app-log-manage',
@@ -54,518 +55,236 @@ import { LogService } from '../../../service/log.service';
   imports: [
     CommonModule,
     FormsModule,
+    I18nPipe,
     SharedModule,
-    NzCardModule,
-    NzTableModule,
-    NzDatePickerModule,
-    NzInputModule,
-    NzButtonModule,
-    NzTagModule,
-    NzToolTipModule,
-    NzEmptyModule,
     NgxEchartsModule,
-    NzStatisticModule,
-    NzSpaceModule,
-    NzIconModule,
-    NzDividerModule,
-    NzCollapseModule,
-    NzModalModule,
-    NzCheckboxModule,
-    NzPopoverModule,
-    NzListModule,
-    NzAutocompleteModule
+    NzDrawerModule,
+    NzEmptyModule,
+    NzTableModule,
+    NzTagModule,
+    SignalNavigationComponent,
+    SignalTimeRangeComponent,
+    LogStreamComponent
   ],
   templateUrl: './log-manage.component.html',
   styleUrl: './log-manage.component.less'
 })
-export class LogManageComponent implements OnInit {
-  constructor(
-    private logSvc: LogService,
-    private msg: NzMessageService,
-    private modal: NzModalService,
-    @Inject(ALAIN_I18N_TOKEN) private i18n: I18NService
-  ) {}
-
-  // filters
+export class LogManageComponent implements OnInit, OnDestroy {
+  readonly severityLevels = ['TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'];
+  mode: LogViewMode = 'query';
   timeRange: Date[] = [];
-  severityNumber?: number;
-  severityText?: string;
-  traceId: string = '';
-  spanId: string = '';
-  searchContent: string = '';
-
-  // table with pagination
-  loading = false;
-  data: LogEntry[] = [];
+  serviceName = '';
+  serviceNamespace = '';
+  environment = '';
+  traceId = '';
+  spanId = '';
+  severityText = '';
+  searchContent = '';
+  resource = '';
+  refreshSeconds = 0;
   pageIndex = 1;
   pageSize = 20;
-  totalElements = 0;
-  totalPages = 0;
+  total = 0;
+  logs: LogEntry[] = [];
+  overview: Partial<LogOverviewStats> = {};
+  chartOption: EChartsOption = {};
+  selected?: LogEntry;
+  detailVisible = false;
+  loading = false;
+  error = '';
+  private readonly queryChanges = new Subject<void>();
+  private readonly destroyed = new Subject<void>();
 
-  // charts
-  severityOption!: EChartsOption;
-  trendOption!: EChartsOption;
-  traceCoverageOption!: EChartsOption;
-  severityInstance: any;
-  trendInstance: any;
-  traceCoverageInstance: any;
-
-  // Modal state
-  isModalVisible: boolean = false;
-  selectedLogEntry: LogEntry | null = null;
-
-  // Statistics visibility control
-  showStatistics: boolean = false;
-
-  // Batch selection for table
-  checked = false;
-  indeterminate = false;
-  setOfCheckedId = new Set<string>();
-
-  // overview stats
-  overviewStats: any = {
-    totalCount: 0,
-    fatalCount: 0,
-    errorCount: 0,
-    warnCount: 0,
-    infoCount: 0,
-    debugCount: 0,
-    traceCount: 0
-  };
-
-  // column visibility
-  columnVisibility = {
-    time: { visible: true, label: this.i18n.fanyi('log.manage.table.column.time') },
-    observedTime: { visible: true, label: this.i18n.fanyi('log.manage.table.column.observed-time') },
-    severity: { visible: true, label: this.i18n.fanyi('log.manage.table.column.severity') },
-    body: { visible: true, label: this.i18n.fanyi('log.manage.table.column.body') },
-    attributes: { visible: true, label: this.i18n.fanyi('log.manage.table.column.attributes') },
-    resource: { visible: true, label: this.i18n.fanyi('log.manage.table.column.resource') },
-    traceId: { visible: true, label: this.i18n.fanyi('log.manage.table.column.trace-id') },
-    spanId: { visible: true, label: this.i18n.fanyi('log.manage.table.column.span-id') },
-    traceFlags: { visible: true, label: this.i18n.fanyi('log.manage.table.column.trace-flags') },
-    instrumentation: { visible: true, label: this.i18n.fanyi('log.manage.table.column.instrumentation') },
-    droppedCount: { visible: true, label: this.i18n.fanyi('log.manage.table.column.dropped-count') }
-  };
-
-  // column control visible
-  columnControlVisible = false;
+  constructor(private logsService: LogService, private route: ActivatedRoute, private router: Router) {}
 
   ngOnInit(): void {
-    this.initChartThemes();
-  }
-
-  initChartThemes() {
-    this.severityOption = {
-      tooltip: { trigger: 'axis' },
-      xAxis: { type: 'category', data: ['TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'] },
-      yAxis: { type: 'value' },
-      series: [
-        {
-          type: 'bar',
-          data: [0, 0, 0, 0, 0, 0],
-          itemStyle: {
-            color: function (params: any) {
-              const colors = ['#d9d9d9', '#52c41a', '#1890ff', '#faad14', '#ff4d4f', '#722ed1'];
-              return colors[params.dataIndex];
-            }
+    const params = this.route.snapshot.queryParamMap;
+    this.timeRange = readSignalTimeRange(params);
+    this.mode = params.get('view') === 'stream' || this.route.snapshot.data['logMode'] === 'stream' ? 'stream' : 'query';
+    this.traceId = params.get('traceId') || '';
+    this.spanId = params.get('spanId') || '';
+    this.serviceName = params.get('serviceName') || '';
+    this.serviceNamespace = params.get('serviceNamespace') || '';
+    this.environment = params.get('environment') || '';
+    this.severityText = params.get('severityText') || '';
+    this.searchContent = params.get('search') || '';
+    this.resource = params.get('resource') || '';
+    this.refreshSeconds = Math.max(0, Number(params.get('refresh')) || 0);
+    this.queryChanges
+      .pipe(
+        debounceTime(250),
+        switchMap(() => {
+          this.loading = true;
+          this.error = '';
+          const options = this.options();
+          return forkJoin({
+            list: this.logsService.list(options),
+            overview: this.logsService.overviewStats(options),
+            trend: this.logsService.trendStats(options)
+          }).pipe(finalize(() => (this.loading = false)));
+        }),
+        takeUntil(this.destroyed)
+      )
+      .subscribe({
+        next: result => {
+          if (result.list.code !== 0 || result.overview.code !== 0 || result.trend.code !== 0) {
+            this.error = result.list.msg || result.overview.msg || result.trend.msg;
+            return;
           }
-        }
-      ]
-    };
-
-    this.trendOption = {
-      tooltip: { trigger: 'axis' },
-      xAxis: { type: 'category', data: [] },
-      yAxis: { type: 'value' },
-      series: [
-        {
-          type: 'line',
-          data: [],
-          smooth: true,
-          areaStyle: { opacity: 0.3 }
-        }
-      ]
-    };
-
-    this.traceCoverageOption = {
-      tooltip: { trigger: 'item', formatter: '{b}: {c}' },
-      series: [
-        {
-          type: 'pie',
-          radius: ['40%', '70%'],
-          data: [
-            { name: this.i18n.fanyi('log.manage.chart.trace-coverage.with-trace'), value: 0, itemStyle: { color: '#52c41a' } },
-            { name: this.i18n.fanyi('log.manage.chart.trace-coverage.without-trace'), value: 0, itemStyle: { color: '#ff4d4f' } },
-            { name: this.i18n.fanyi('log.manage.chart.trace-coverage.with-span'), value: 0, itemStyle: { color: '#1890ff' } },
-            { name: this.i18n.fanyi('log.manage.chart.trace-coverage.complete-trace-info'), value: 0, itemStyle: { color: '#722ed1' } }
-          ],
-          emphasis: {
-            itemStyle: {
-              shadowBlur: 10,
-              shadowOffsetX: 0,
-              shadowColor: 'rgba(0, 0, 0, 0.5)'
-            }
-          }
-        }
-      ]
-    };
+          this.logs = result.list.data?.content || [];
+          this.total = result.list.data?.totalElements || 0;
+          this.overview = result.overview.data || {};
+          this.chartOption = this.trendChart(result.trend.data?.hourlyStats || {});
+          this.updateUrl(this.options());
+        },
+        error: error => (this.error = error?.error?.msg || error?.message || 'Storage unavailable')
+      });
+    if (this.mode === 'query') this.search();
   }
 
-  onSeverityChartInit(ec: any) {
-    this.severityInstance = ec;
-  }
-  onTrendChartInit(ec: any) {
-    this.trendInstance = ec;
-  }
-  onTraceCoverageChartInit(ec: any) {
-    this.traceCoverageInstance = ec;
+  ngOnDestroy(): void {
+    this.destroyed.next();
+    this.destroyed.complete();
   }
 
-  refreshSeverityChartFromOverview(overviewStats: any) {
-    const traceCount = overviewStats.traceCount || 0;
-    const debugCount = overviewStats.debugCount || 0;
-    const infoCount = overviewStats.infoCount || 0;
-    const warnCount = overviewStats.warnCount || 0;
-    const errorCount = overviewStats.errorCount || 0;
-    const fatalCount = overviewStats.fatalCount || 0;
-
-    const data = [traceCount, debugCount, infoCount, warnCount, errorCount, fatalCount];
-    const option: EChartsOption = {
-      ...this.severityOption,
-      series: [
-        {
-          ...(this.severityOption.series as any)?.[0],
-          data
-        }
-      ]
-    };
-    this.severityOption = option;
-    if (this.severityInstance) this.severityInstance.setOption(option);
+  search(): void {
+    this.queryChanges.next();
   }
 
-  refreshTrendChart(hourlyStats: Record<string, number>) {
-    const sortedHours = Object.keys(hourlyStats).sort();
-    const data = sortedHours.map(hour => hourlyStats[hour]);
-    const option: EChartsOption = {
-      ...this.trendOption,
-      xAxis: {
-        type: 'category',
-        data: sortedHours
-      },
-      series: [{ ...(this.trendOption.series as any)?.[0], data }]
-    };
-    this.trendOption = option;
-    if (this.trendInstance) this.trendInstance.setOption(option);
+  refreshToNow(): void {
+    this.timeRange = moveSignalTimeRangeToNow(this.timeRange);
+    this.search();
   }
 
-  refreshTraceCoverageChart(traceCoverageData: any) {
-    const coverage = traceCoverageData.traceCoverage || {};
-    const data = [
-      {
-        name: this.i18n.fanyi('log.manage.chart.trace-coverage.with-trace'),
-        value: coverage.withTrace || 0,
-        itemStyle: { color: '#52c41a' }
-      },
-      {
-        name: this.i18n.fanyi('log.manage.chart.trace-coverage.without-trace'),
-        value: coverage.withoutTrace || 0,
-        itemStyle: { color: '#ff4d4f' }
-      },
-      {
-        name: this.i18n.fanyi('log.manage.chart.trace-coverage.with-span'),
-        value: coverage.withSpan || 0,
-        itemStyle: { color: '#1890ff' }
-      },
-      {
-        name: this.i18n.fanyi('log.manage.chart.trace-coverage.complete-trace-info'),
-        value: coverage.withBothTraceAndSpan || 0,
-        itemStyle: { color: '#722ed1' }
-      }
-    ];
-    const option: EChartsOption = {
-      ...this.traceCoverageOption,
-      series: [{ ...(this.traceCoverageOption.series as any)?.[0], data }]
-    };
-    this.traceCoverageOption = option;
-    if (this.traceCoverageInstance) this.traceCoverageInstance.setOption(option);
+  setMode(mode: LogViewMode): void {
+    if (this.mode === mode) return;
+    this.mode = mode;
+    this.router.navigate(['/log/manage'], {
+      queryParams: { ...toSignalTimeContext(this.timeRange), ...this.signalFilters(), view: mode === 'stream' ? 'stream' : null }
+    });
+    if (mode === 'query') this.search();
   }
 
-  query() {
-    this.loading = true;
-    const start = this.timeRange?.[0]?.getTime();
-    const end = this.timeRange?.[1]?.getTime();
+  pageChanged(page: number): void {
+    this.pageIndex = page;
+    this.search();
+  }
 
-    const obs = this.logSvc.list(
-      start,
-      end,
-      this.traceId,
-      this.spanId,
-      this.severityNumber,
-      this.severityText,
-      this.searchContent,
-      this.pageIndex - 1,
-      this.pageSize
-    );
+  open(log: LogEntry): void {
+    this.selected = log;
+    this.detailVisible = true;
+  }
 
-    obs.subscribe({
-      next: message => {
-        if (message.code === 0) {
-          const pageData = message.data;
-          this.data = pageData.content;
-          this.totalElements = pageData.totalElements;
-          this.totalPages = pageData.totalPages;
-          this.pageIndex = pageData.number + 1;
-
-          // Clear selection when data changes
-          this.setOfCheckedId.clear();
-          this.refreshCheckedStatus();
-
-          this.loadStatsWithFilters();
-        } else {
-          this.msg.warning(this.i18n.fanyi('log.manage.error.unsupported-db'));
-        }
-        this.loading = false;
-      },
-      error: () => {
-        this.loading = false;
-        this.msg.error(this.i18n.fanyi('common.notify.query-fail'));
+  openTrace(log: LogEntry): void {
+    if (!log.traceId) return;
+    this.router.navigate(['/trace/manage'], {
+      queryParams: {
+        start: this.timeRange[0].getTime(),
+        end: this.timeRange[1].getTime(),
+        traceId: log.traceId,
+        serviceName: log.resource?.['service.name'],
+        serviceNamespace: log.resource?.['service.namespace'],
+        environment: log.resource?.['deployment.environment.name']
       }
     });
   }
 
-  loadStatsWithFilters() {
-    const start = this.timeRange?.[0]?.getTime();
-    const end = this.timeRange?.[1]?.getTime();
-    const traceId = this.traceId || undefined;
-    const spanId = this.spanId || undefined;
-    const severity = this.severityNumber || undefined;
-    const severityText = this.severityText || undefined;
-    const search = this.searchContent || undefined;
-
-    this.logSvc.overviewStats(start, end, traceId, spanId, severity, severityText, search).subscribe({
-      next: message => {
-        if (message.code === 0) {
-          this.overviewStats = message.data || {};
-          this.refreshSeverityChartFromOverview(this.overviewStats);
-        }
-      }
-    });
-
-    this.logSvc.traceCoverageStats(start, end, traceId, spanId, severity, severityText, search).subscribe({
-      next: message => {
-        if (message.code === 0) {
-          this.refreshTraceCoverageChart(message.data || {});
-        }
-      }
-    });
-
-    this.logSvc.trendStats(start, end, traceId, spanId, severity, severityText, search).subscribe({
-      next: message => {
-        if (message.code === 0) {
-          this.refreshTrendChart(message.data?.hourlyStats || {});
-        }
+  openMetrics(log: LogEntry): void {
+    this.router.navigate(['/metrics/manage'], {
+      queryParams: {
+        start: this.timeRange[0].getTime(),
+        end: this.timeRange[1].getTime(),
+        serviceName: log.resource?.['service.name'],
+        serviceNamespace: log.resource?.['service.namespace'],
+        environment: log.resource?.['deployment.environment.name']
       }
     });
   }
 
-  clearFilters() {
-    this.timeRange = [];
-    this.severityNumber = undefined;
-    this.traceId = '';
-    this.spanId = '';
-    this.severityText = '';
-    this.searchContent = '';
-    this.pageIndex = 1;
-    this.query();
+  navigationContext(): SignalContext & { refresh?: number } {
+    return {
+      ...toSignalTimeContext(this.timeRange),
+      serviceName: this.serviceName,
+      serviceNamespace: this.serviceNamespace,
+      environment: this.environment,
+      traceId: this.traceId,
+      spanId: this.spanId,
+      refresh: this.refreshSeconds || undefined
+    };
   }
 
-  toggleStatistics() {
-    this.showStatistics = !this.showStatistics;
+  bodyText(log: LogEntry): string {
+    return typeof log.body === 'string' ? log.body : JSON.stringify(log.body);
   }
 
-  // Batch selection methods
-  updateCheckedSet(id: string, checked: boolean): void {
-    if (checked) {
-      this.setOfCheckedId.add(id);
-    } else {
-      this.setOfCheckedId.delete(id);
-    }
+  service(log: LogEntry): string {
+    return String(log.resource?.['service.name'] || '-');
   }
 
-  onItemChecked(id: string, checked: boolean): void {
-    this.updateCheckedSet(id, checked);
-    this.refreshCheckedStatus();
+  detailJson(): string {
+    return JSON.stringify(this.selected, null, 2);
   }
 
-  onAllChecked(checked: boolean): void {
-    this.data.forEach(item => this.updateCheckedSet(this.getLogId(item), checked));
-    this.refreshCheckedStatus();
-  }
-
-  refreshCheckedStatus(): void {
-    this.checked = this.data.every(item => this.setOfCheckedId.has(this.getLogId(item)));
-    this.indeterminate = this.data.some(item => this.setOfCheckedId.has(this.getLogId(item))) && !this.checked;
-  }
-
-  getLogId(item: LogEntry): string {
-    return `${item.timeUnixNano}_${item.traceId || 'no-trace'}`;
-  }
-
-  batchDelete(): void {
-    if (this.setOfCheckedId.size === 0) {
-      this.msg.warning(this.i18n.fanyi('common.notify.no-select-delete'));
-      return;
-    }
-
-    const selectedItems = this.data.filter(item => this.setOfCheckedId.has(this.getLogId(item)));
-
-    this.modal.confirm({
-      nzTitle: this.i18n.fanyi('common.confirm.delete-batch'),
-      nzOkText: this.i18n.fanyi('common.button.delete'),
-      nzOkDanger: true,
-      nzCancelText: this.i18n.fanyi('common.button.cancel'),
-      nzOnOk: () => {
-        this.performBatchDelete(selectedItems);
-      }
-    });
-  }
-
-  performBatchDelete(selectedItems: LogEntry[]): void {
-    const timeUnixNanos = selectedItems.filter(item => item.timeUnixNano != null).map(item => item.timeUnixNano!);
-
-    if (timeUnixNanos.length === 0) {
-      this.msg.warning(this.i18n.fanyi('common.notify.no-select-delete'));
-      return;
-    }
-
-    this.logSvc.batchDelete(timeUnixNanos).subscribe({
-      next: message => {
-        if (message.code === 0) {
-          this.msg.success(this.i18n.fanyi('common.notify.delete-success'));
-          this.setOfCheckedId.clear();
-          this.refreshCheckedStatus();
-          this.query();
-        } else {
-          this.msg.error(message.msg || this.i18n.fanyi('common.notify.delete-fail'));
-        }
-      },
-      error: () => {
-        this.msg.error(this.i18n.fanyi('common.notify.delete-fail'));
-      }
-    });
-  }
-
-  onTablePageChange(params: { pageIndex: number; pageSize: number; sort: any; filter: any }) {
-    this.pageIndex = params.pageIndex;
-    this.pageSize = params.pageSize;
-    this.query();
-  }
-
-  getSeverityColor(severityNumber?: number): string {
-    if (!severityNumber) return 'default';
-    if (severityNumber >= 21 && severityNumber <= 24) return 'purple'; // FATAL
-    if (severityNumber >= 17 && severityNumber <= 20) return 'red'; // ERROR
-    if (severityNumber >= 13 && severityNumber <= 16) return 'orange'; // WARN
-    if (severityNumber >= 9 && severityNumber <= 12) return 'blue'; // INFO
-    if (severityNumber >= 5 && severityNumber <= 8) return 'green'; // DEBUG
-    if (severityNumber >= 1 && severityNumber <= 4) return 'default'; // TRACE
+  severityColor(value?: number): string {
+    if (!value) return 'default';
+    if (value >= 17) return 'error';
+    if (value >= 13) return 'warning';
+    if (value >= 9) return 'processing';
     return 'default';
   }
 
-  getBodyText(body: any): string {
-    if (!body) return '';
-    if (typeof body === 'string') return body.length > 100 ? `${body.substring(0, 100)}...` : body;
-    if (typeof body === 'object') {
-      const str = JSON.stringify(body);
-      return str.length > 100 ? `${str.substring(0, 100)}...` : str;
-    }
-    return String(body);
+  private options(): LogQueryOptions {
+    return {
+      ...toSignalTimeContext(this.timeRange),
+      traceId: this.traceId,
+      spanId: this.spanId,
+      severityText: this.severityText,
+      search: this.searchContent,
+      serviceName: this.serviceName,
+      serviceNamespace: this.serviceNamespace,
+      environment: this.environment,
+      resource: this.resource,
+      pageIndex: this.pageIndex - 1,
+      pageSize: this.pageSize
+    };
   }
 
-  getObjectText(obj: any): string {
-    if (!obj) return '';
-    if (typeof obj === 'object') {
-      const keys = Object.keys(obj);
-      if (keys.length === 0) return '';
-      if (keys.length === 1) {
-        return `${keys[0]}: ${obj[keys[0]]}`;
-      }
-      return `${keys[0]}: ${obj[keys[0]]} (+${keys.length - 1} more)`;
-    }
-    return String(obj);
-  }
-
-  getInstrumentationText(scope: any): string {
-    if (!scope) return '';
-    const parts = [];
-    if (scope.name) parts.push(`Name: ${scope.name}`);
-    if (scope.version) parts.push(`Version: ${scope.version}`);
-    if (scope.attributes && Object.keys(scope.attributes).length > 0) {
-      parts.push(`Attributes: ${Object.keys(scope.attributes).length} items`);
-    }
-    return parts.join('\n');
-  }
-
-  // Modal methods
-  showLogDetails(logEntry: LogEntry): void {
-    this.selectedLogEntry = logEntry;
-    this.isModalVisible = true;
-  }
-
-  handleModalCancel(): void {
-    this.isModalVisible = false;
-    this.selectedLogEntry = null;
-  }
-
-  getLogEntryJson(logEntry: LogEntry): string {
-    return JSON.stringify(logEntry, null, 2);
-  }
-
-  formatTimestamp(timeUnixNano: number | undefined): string {
-    if (!timeUnixNano) return '';
-    return new Date(timeUnixNano / 1000000).toLocaleString();
-  }
-
-  copyToClipboard(text: string): void {
-    navigator.clipboard
-      .writeText(text)
-      .then(() => {
-        this.msg.success(this.i18n.fanyi('common.notify.copy-success'));
-      })
-      .catch(err => {
-        console.error('Failed to copy: ', err);
-        this.msg.error(this.i18n.fanyi('common.notify.copy-fail'));
-      });
-  }
-
-  toggleColumnVisibility(column: string): void {
-    if (this.columnVisibility[column as keyof typeof this.columnVisibility]) {
-      this.columnVisibility[column as keyof typeof this.columnVisibility].visible =
-        !this.columnVisibility[column as keyof typeof this.columnVisibility].visible;
-    }
-  }
-
-  getVisibleColumnsCount(): number {
-    return Object.values(this.columnVisibility).filter(col => col.visible).length;
-  }
-
-  getColumnKeys(): string[] {
-    return Object.keys(this.columnVisibility);
-  }
-
-  getColumnVisibility(): any {
-    return this.columnVisibility;
-  }
-
-  resetColumns(): void {
-    Object.keys(this.columnVisibility).forEach(key => {
-      this.columnVisibility[key as keyof typeof this.columnVisibility].visible = true;
+  private updateUrl(options: LogQueryOptions): void {
+    const { pageIndex, pageSize, ...context } = options;
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { ...context, view: this.mode === 'stream' ? 'stream' : null, refresh: this.refreshSeconds || null },
+      replaceUrl: true
     });
-    this.msg.success(this.i18n.fanyi('common.notify.operate-success'));
   }
 
-  toggleColumnControl(): void {
-    this.columnControlVisible = !this.columnControlVisible;
+  private signalFilters(): Pick<LogQueryOptions, 'traceId' | 'spanId' | 'serviceName' | 'serviceNamespace' | 'environment'> {
+    return {
+      traceId: this.traceId,
+      spanId: this.spanId,
+      serviceName: this.serviceName,
+      serviceNamespace: this.serviceNamespace,
+      environment: this.environment
+    };
+  }
+
+  private trendChart(hourly: Record<string, number>): EChartsOption {
+    const times = Object.keys(hourly).sort();
+    return {
+      animation: false,
+      tooltip: { trigger: 'axis' },
+      grid: { left: 48, right: 20, top: 18, bottom: 36 },
+      xAxis: {
+        type: 'category',
+        data: times.map(time => {
+          const millis = trendBucketMillis(time);
+          return Number.isFinite(millis)
+            ? new Date(millis).toLocaleString([], { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+            : time;
+        })
+      },
+      yAxis: { type: 'value' },
+      series: [{ type: 'line', showSymbol: false, areaStyle: { opacity: 0.12 }, data: times.map(time => hourly[time]) }]
+    };
   }
 }

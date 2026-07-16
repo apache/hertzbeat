@@ -23,8 +23,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.util.Base64Util;
+import org.apache.hertzbeat.common.support.exception.StorageUnavailableException;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeSqlQueryContent;
+import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpEntity;
@@ -54,7 +57,9 @@ public class GreptimeSqlQueryExecutor extends SqlQueryExecutor {
     private final GreptimeProperties greptimeProperties;
 
 
-    public GreptimeSqlQueryExecutor(GreptimeProperties greptimeProperties, RestTemplate restTemplate) {
+    public GreptimeSqlQueryExecutor(GreptimeProperties greptimeProperties,
+                                    @Qualifier(WarehouseConstants.GREPTIME_QUERY_REST_TEMPLATE)
+                                    RestTemplate restTemplate) {
         super(restTemplate, new SqlQueryExecutor.HttpSqlProperties(greptimeProperties.httpEndpoint() + QUERY_PATH,
                 greptimeProperties.username(), greptimeProperties.password()));
         this.greptimeProperties = greptimeProperties;
@@ -88,7 +93,7 @@ public class GreptimeSqlQueryExecutor extends SqlQueryExecutor {
                     HttpMethod.POST, httpEntity, GreptimeSqlQueryContent.class);
         } catch (Exception e) {
             log.error("Exception occurred while querying GreptimeDB SQL: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to execute GreptimeDB SQL query", e);
+            throw new StorageUnavailableException("GreptimeDB storage is unavailable", e);
         }
 
         if (responseEntity.getStatusCode().is2xxSuccessful()) {

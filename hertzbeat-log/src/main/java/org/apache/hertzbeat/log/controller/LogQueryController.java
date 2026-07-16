@@ -21,14 +21,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader;
 import org.springframework.data.domain.Page;
@@ -38,7 +33,10 @@ import org.springframework.data.domain.Sort;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.dto.Message;
+import org.apache.hertzbeat.common.entity.dto.observability.LogQueryFilter;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
+import org.apache.hertzbeat.log.service.SignalWorkloadGuard;
+import org.apache.hertzbeat.log.service.SignalWorkloadGuard.Workload;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -54,10 +52,14 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class LogQueryController {
 
-    private final HistoryDataReader historyDataReader;
+    private static final int MAX_PAGE_SIZE = 200;
 
-    public LogQueryController(HistoryDataReader historyDataReader) {
+    private final HistoryDataReader historyDataReader;
+    private final SignalWorkloadGuard workloadGuard;
+
+    public LogQueryController(HistoryDataReader historyDataReader, SignalWorkloadGuard workloadGuard) {
         this.historyDataReader = historyDataReader;
+        this.workloadGuard = workloadGuard;
     }
 
     @GetMapping("/list")
@@ -78,12 +80,20 @@ public class LogQueryController {
             @RequestParam(value = "severityText", required = false) String severityText,
             @Parameter(description = "Log content search keyword", example = "error")
             @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "serviceName", required = false) String serviceName,
+            @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
+            @RequestParam(value = "environment", required = false) String environment,
+            @RequestParam(value = "resource", required = false) String resource,
             @Parameter(description = "Page index starting from 0", example = "0")
             @RequestParam(value = "pageIndex", required = false, defaultValue = "0") Integer pageIndex,
             @Parameter(description = "Number of items per page", example = "20")
             @RequestParam(value = "pageSize", required = false, defaultValue = "20") Integer pageSize) {
-        Page<LogEntry> result = getPagedLogs(start, end, traceId, spanId, severityNumber, severityText, search, pageIndex, pageSize);
-        return ResponseEntity.ok(Message.success(result));
+        return workloadGuard.execute(Workload.LOG_LIST, () -> {
+            LogQueryFilter filter = filter(start, end, traceId, spanId, severityNumber, severityText, search,
+                    serviceName, serviceNamespace, environment, resource);
+            Page<LogEntry> result = getPagedLogs(filter, pageIndex, pageSize);
+            return ResponseEntity.ok(Message.success(result));
+        });
     }
 
     @GetMapping("/stats/overview")
@@ -103,29 +113,18 @@ public class LogQueryController {
             @Parameter(description = "Log severity text (TRACE, DEBUG, INFO, WARN, ERROR, FATAL)", example = "INFO")
             @RequestParam(value = "severityText", required = false) String severityText,
             @Parameter(description = "Log content search keyword", example = "error")
-            @RequestParam(value = "search", required = false) String search) {
-        List<LogEntry> logs = getFilteredLogs(start, end, traceId, spanId, severityNumber, severityText, search);
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "serviceName", required = false) String serviceName,
+            @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
+            @RequestParam(value = "environment", required = false) String environment,
+            @RequestParam(value = "resource", required = false) String resource) {
+        return workloadGuard.execute(Workload.LOG_AGGREGATE,
+                () -> doOverviewStats(filter(start, end, traceId, spanId, severityNumber, severityText, search,
+                        serviceName, serviceNamespace, environment, resource)));
+    }
 
-        Map<String, Object> overview = new HashMap<>();
-        overview.put("totalCount", logs.size());
-
-        // Count by severity levels according to OpenTelemetry standard
-        // TRACE: 1-4, DEBUG: 5-8, INFO: 9-12, WARN: 13-16, ERROR: 17-20, FATAL: 21-24
-        long fatalCount = logs.stream().filter(log -> log.getSeverityNumber() != null && log.getSeverityNumber() >= 21 && log.getSeverityNumber() <= 24).count();
-        long errorCount = logs.stream().filter(log -> log.getSeverityNumber() != null && log.getSeverityNumber() >= 17 && log.getSeverityNumber() <= 20).count();
-        long warnCount = logs.stream().filter(log -> log.getSeverityNumber() != null && log.getSeverityNumber() >= 13 && log.getSeverityNumber() <= 16).count();
-        long infoCount = logs.stream().filter(log -> log.getSeverityNumber() != null && log.getSeverityNumber() >= 9 && log.getSeverityNumber() <= 12).count();
-        long debugCount = logs.stream().filter(log -> log.getSeverityNumber() != null && log.getSeverityNumber() >= 5 && log.getSeverityNumber() <= 8).count();
-        long traceCount = logs.stream().filter(log -> log.getSeverityNumber() != null && log.getSeverityNumber() >= 1 && log.getSeverityNumber() <= 4).count();
-
-        overview.put("fatalCount", fatalCount);
-        overview.put("errorCount", errorCount);
-        overview.put("warnCount", warnCount);
-        overview.put("infoCount", infoCount);
-        overview.put("debugCount", debugCount);
-        overview.put("traceCount", traceCount);
-
-        return ResponseEntity.ok(Message.success(overview));
+    private ResponseEntity<Message<Map<String, Object>>> doOverviewStats(LogQueryFilter filter) {
+        return ResponseEntity.ok(Message.success(historyDataReader.queryLogOverviewAggregate(filter)));
     }
 
     @GetMapping("/stats/trace-coverage")
@@ -145,26 +144,19 @@ public class LogQueryController {
             @Parameter(description = "Log severity text (TRACE, DEBUG, INFO, WARN, ERROR, FATAL)", example = "INFO")
             @RequestParam(value = "severityText", required = false) String severityText,
             @Parameter(description = "Log content search keyword", example = "error")
-            @RequestParam(value = "search", required = false) String search) {
-        List<LogEntry> logs = getFilteredLogs(start, end, traceId, spanId, severityNumber, severityText, search);
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "serviceName", required = false) String serviceName,
+            @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
+            @RequestParam(value = "environment", required = false) String environment,
+            @RequestParam(value = "resource", required = false) String resource) {
+        return workloadGuard.execute(Workload.LOG_AGGREGATE,
+                () -> doTraceCoverageStats(filter(start, end, traceId, spanId, severityNumber, severityText, search,
+                        serviceName, serviceNamespace, environment, resource)));
+    }
 
+    private ResponseEntity<Message<Map<String, Object>>> doTraceCoverageStats(LogQueryFilter filter) {
         Map<String, Object> result = new HashMap<>();
-
-        // Trace coverage statistics
-        long withTraceId = logs.stream().filter(log -> log.getTraceId() != null && !log.getTraceId().isEmpty()).count();
-        long withSpanId = logs.stream().filter(log -> log.getSpanId() != null && !log.getSpanId().isEmpty()).count();
-        long withBothTraceAndSpan = logs.stream().filter(log ->
-                log.getTraceId() != null && !log.getTraceId().isEmpty()
-                        && log.getSpanId() != null && !log.getSpanId().isEmpty()).count();
-        long withoutTrace = logs.size() - withTraceId;
-
-        Map<String, Long> traceCoverage = new HashMap<>();
-        traceCoverage.put("withTrace", withTraceId);
-        traceCoverage.put("withoutTrace", withoutTrace);
-        traceCoverage.put("withSpan", withSpanId);
-        traceCoverage.put("withBothTraceAndSpan", withBothTraceAndSpan);
-
-        result.put("traceCoverage", traceCoverage);
+        result.put("traceCoverage", historyDataReader.queryLogOverviewAggregate(filter).get("traceCoverage"));
         return ResponseEntity.ok(Message.success(result));
     }
 
@@ -185,49 +177,40 @@ public class LogQueryController {
             @Parameter(description = "Log severity text (TRACE, DEBUG, INFO, WARN, ERROR, FATAL)", example = "INFO")
             @RequestParam(value = "severityText", required = false) String severityText,
             @Parameter(description = "Log content search keyword", example = "error")
-            @RequestParam(value = "search", required = false) String search) {
-        List<LogEntry> logs = getFilteredLogs(start, end, traceId, spanId, severityNumber, severityText, search);
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "serviceName", required = false) String serviceName,
+            @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
+            @RequestParam(value = "environment", required = false) String environment,
+            @RequestParam(value = "resource", required = false) String resource) {
+        return workloadGuard.execute(Workload.LOG_AGGREGATE,
+                () -> doTrendStats(filter(start, end, traceId, spanId, severityNumber, severityText, search,
+                        serviceName, serviceNamespace, environment, resource)));
+    }
 
-        // Group by hour
-        Map<String, Long> hourlyStats = logs.stream()
-                .filter(log -> log.getTimeUnixNano() != null)
-                .collect(Collectors.groupingBy(
-                        log -> {
-                            long timestampMs = log.getTimeUnixNano() / 1_000_000L;
-                            LocalDateTime dateTime = LocalDateTime.ofInstant(
-                                    Instant.ofEpochMilli(timestampMs),
-                                    ZoneId.systemDefault());
-                            return dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:00"));
-                        },
-                        Collectors.counting()));
-
+    private ResponseEntity<Message<Map<String, Object>>> doTrendStats(LogQueryFilter filter) {
         Map<String, Object> result = new HashMap<>();
-        result.put("hourlyStats", hourlyStats);
+        result.put("hourlyStats", historyDataReader.queryLogTrendAggregate(filter));
         return ResponseEntity.ok(Message.success(result));
     }
 
-    private List<LogEntry> getFilteredLogs(Long start, Long end, String traceId, String spanId,
-                                           Integer severityNumber, String severityText, String search) {
-        // Use the new multi-condition query method
-        return historyDataReader.queryLogsByMultipleConditions(start, end, traceId, spanId, severityNumber, severityText, search);
+    private LogQueryFilter filter(Long start, Long end, String traceId, String spanId, Integer severityNumber,
+                                  String severityText, String search, String serviceName, String serviceNamespace,
+                                  String environment, String resource) {
+        return new LogQueryFilter(start, end, traceId, spanId, severityNumber, severityText, search, serviceName,
+                serviceNamespace, environment, resource);
     }
 
-    private Page<LogEntry> getPagedLogs(Long start, Long end, String traceId, String spanId,
-                                        Integer severityNumber, String severityText, String search,
-                                        Integer pageIndex, Integer pageSize) {
-        // Calculate pagination parameters
-        int offset = pageIndex * pageSize;
+    private Page<LogEntry> getPagedLogs(LogQueryFilter filter, Integer pageIndex, Integer pageSize) {
+        int effectivePage = Math.max(pageIndex == null ? 0 : pageIndex, 0);
+        int effectiveSize = Math.max(1, Math.min(pageSize == null ? 20 : pageSize, MAX_PAGE_SIZE));
+        int offset = effectivePage * effectiveSize;
 
-        // Get total count and paginated data
-        long totalElements = historyDataReader.countLogsByMultipleConditions(start, end, traceId, spanId, severityNumber, severityText, search);
-        List<LogEntry> pagedLogs = historyDataReader.queryLogsByMultipleConditionsWithPagination(
-                start, end, traceId, spanId, severityNumber, severityText, search, offset, pageSize);
+        long totalElements = historyDataReader.countObservabilityLogs(filter);
+        List<LogEntry> pagedLogs = historyDataReader.queryObservabilityLogs(filter, offset, effectiveSize);
 
-        // Create PageRequest (sorted by timestamp descending)
         Sort sort = Sort.by(Sort.Direction.DESC, "timeUnixNano");
-        PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sort);
+        PageRequest pageRequest = PageRequest.of(effectivePage, effectiveSize, sort);
 
-        // Return Spring Data Page object
         return new PageImpl<>(pagedLogs, pageRequest, totalElements);
     }
 }

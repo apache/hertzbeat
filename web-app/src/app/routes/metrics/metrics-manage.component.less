@@ -1,0 +1,160 @@
+@import '~src/styles/theme';
+
+.signal-page {
+  min-height: 100%;
+}
+
+.page-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding-bottom: 18px;
+  border-bottom: 1px solid @border-color-split;
+}
+
+.page-heading h1 {
+  margin: 0 0 5px;
+  font-weight: 600;
+  font-size: 24px;
+}
+
+.page-heading p,
+.result-count {
+  margin: 0;
+  color: @text-color-secondary;
+}
+
+.heading-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.query-toolbar {
+  display: grid;
+  grid-template-columns: minmax(400px, 1fr) 140px auto;
+  gap: 8px;
+  align-items: center;
+  padding: 16px 0;
+}
+
+.query-toolbar app-signal-time-range {
+  grid-column: 1 / -1;
+}
+
+.promql-input {
+  width: 100%;
+}
+
+.chart-region {
+  min-height: 240px;
+  background: @component-background;
+  border: 1px solid @border-color-split;
+}
+
+.metric-chart {
+  height: 240px;
+}
+
+.overview-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin-bottom: 0;
+  border: 1px solid @border-color-split;
+}
+
+.overview-strip div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px 16px;
+  border-right: 1px solid @border-color-split;
+}
+
+.overview-strip div:last-child {
+  border-right: 0;
+}
+
+.overview-strip span {
+  color: @text-color-secondary;
+  font-size: 12px;
+}
+
+.overview-strip strong {
+  font-size: 20px;
+}
+
+.series-strip {
+  display: flex;
+  gap: 6px;
+  padding: 8px 0;
+  overflow-x: auto;
+  border-bottom: 1px solid @border-color-split;
+}
+
+.series-strip button {
+  flex: 0 0 auto;
+  max-width: 360px;
+  overflow: hidden;
+  font-family: SFMono-Regular, Consolas, monospace;
+  text-overflow: ellipsis;
+}
+
+.chart-region nz-empty {
+  display: block;
+  padding-top: 60px;
+}
+
+.loading-region {
+  opacity: 0.55;
+}
+
+.section-title {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 18px 0 10px;
+}
+
+.section-title h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.section-title span {
+  color: @text-color-secondary;
+}
+
+.mono {
+  max-width: 640px;
+  overflow: hidden;
+  font-family: SFMono-Regular, Consolas, monospace;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.detail-list {
+  display: grid;
+  grid-template-columns: minmax(120px, auto) 1fr;
+  margin: 0;
+}
+
+.detail-list dt,
+.detail-list dd {
+  margin: 0;
+  padding: 9px 0;
+  border-bottom: 1px solid @border-color-split;
+}
+
+.detail-list dt {
+  color: @text-color-secondary;
+}
+@media (max-width: 1400px) {
+  .query-toolbar {
+    grid-template-columns: minmax(320px, 1fr) 130px auto;
+  }
+
+  .query-toolbar > button:last-child {
+    grid-column: -2 / -1;
+  }
+}

@@ -25,107 +25,60 @@ import { LogEntry } from '../pojo/LogEntry';
 import { Message } from '../pojo/Message';
 import { Page } from '../pojo/Page';
 
-// endpoints
-const logs_list_uri = '/logs/list';
-const logs_stats_overview_uri = '/logs/stats/overview';
-const logs_stats_trend_uri = '/logs/stats/trend';
-const logs_stats_trace_coverage_uri = '/logs/stats/trace-coverage';
-const logs_batch_delete_uri = '/logs';
+export interface LogQueryOptions {
+  start?: number;
+  end?: number;
+  traceId?: string;
+  spanId?: string;
+  severityNumber?: number;
+  severityText?: string;
+  search?: string;
+  serviceName?: string;
+  serviceNamespace?: string;
+  environment?: string;
+  resource?: string;
+  pageIndex?: number;
+  pageSize?: number;
+}
+
+export interface LogOverviewStats {
+  totalCount: number;
+  errorCount: number;
+  warnCount: number;
+  traceCoverage?: {
+    withTrace: number;
+  };
+}
 
 @Injectable({ providedIn: 'root' })
 export class LogService {
   constructor(private http: HttpClient) {}
 
-  public list(
-    start?: number,
-    end?: number,
-    traceId?: string,
-    spanId?: string,
-    severityNumber?: number,
-    severityText?: string,
-    search?: string,
-    pageIndex: number = 0,
-    pageSize: number = 20
-  ): Observable<Message<Page<LogEntry>>> {
-    let params = new HttpParams();
-    if (start != null) params = params.set('start', start);
-    if (end != null) params = params.set('end', end);
-    if (traceId) params = params.set('traceId', traceId);
-    if (spanId) params = params.set('spanId', spanId);
-    if (severityNumber != null) params = params.set('severityNumber', severityNumber);
-    if (severityText) params = params.set('severityText', severityText);
-    if (search) params = params.set('search', search);
-    params = params.set('pageIndex', pageIndex);
-    params = params.set('pageSize', pageSize);
-    return this.http.get<Message<any>>(logs_list_uri, { params });
+  list(options: LogQueryOptions): Observable<Message<Page<LogEntry>>> {
+    return this.http.get<Message<Page<LogEntry>>>('/logs/list', { params: this.params(options) });
   }
 
-  public overviewStats(
-    start?: number,
-    end?: number,
-    traceId?: string,
-    spanId?: string,
-    severityNumber?: number,
-    severityText?: string,
-    search?: string
-  ): Observable<Message<any>> {
-    let params = new HttpParams();
-    if (start != null) params = params.set('start', start);
-    if (end != null) params = params.set('end', end);
-    if (traceId) params = params.set('traceId', traceId);
-    if (spanId) params = params.set('spanId', spanId);
-    if (severityNumber != null) params = params.set('severityNumber', severityNumber);
-    if (severityText) params = params.set('severityText', severityText);
-    if (search) params = params.set('search', search);
-    return this.http.get<Message<any>>(logs_stats_overview_uri, { params });
+  overviewStats(options: LogQueryOptions): Observable<Message<LogOverviewStats>> {
+    return this.http.get<Message<LogOverviewStats>>('/logs/stats/overview', { params: this.params(options) });
   }
 
-  public trendStats(
-    start?: number,
-    end?: number,
-    traceId?: string,
-    spanId?: string,
-    severityNumber?: number,
-    severityText?: string,
-    search?: string
-  ): Observable<Message<any>> {
-    let params = new HttpParams();
-    if (start != null) params = params.set('start', start);
-    if (end != null) params = params.set('end', end);
-    if (traceId) params = params.set('traceId', traceId);
-    if (spanId) params = params.set('spanId', spanId);
-    if (severityNumber != null) params = params.set('severityNumber', severityNumber);
-    if (severityText) params = params.set('severityText', severityText);
-    if (search) params = params.set('search', search);
-    return this.http.get<Message<any>>(logs_stats_trend_uri, { params });
-  }
-
-  public traceCoverageStats(
-    start?: number,
-    end?: number,
-    traceId?: string,
-    spanId?: string,
-    severityNumber?: number,
-    severityText?: string,
-    search?: string
-  ): Observable<Message<any>> {
-    let params = new HttpParams();
-    if (start != null) params = params.set('start', start);
-    if (end != null) params = params.set('end', end);
-    if (traceId) params = params.set('traceId', traceId);
-    if (spanId) params = params.set('spanId', spanId);
-    if (severityNumber != null) params = params.set('severityNumber', severityNumber);
-    if (severityText) params = params.set('severityText', severityText);
-    if (search) params = params.set('search', search);
-    return this.http.get<Message<any>>(logs_stats_trace_coverage_uri, { params });
-  }
-
-  public batchDelete(timeUnixNanos: number[]): Observable<Message<string>> {
-    let httpParams = new HttpParams();
-    timeUnixNanos.forEach(timeUnixNano => {
-      httpParams = httpParams.append('timeUnixNanos', timeUnixNano);
+  trendStats(options: LogQueryOptions): Observable<Message<{ hourlyStats: Record<string, number> }>> {
+    return this.http.get<Message<{ hourlyStats: Record<string, number> }>>('/logs/stats/trend', {
+      params: this.params(options)
     });
-    const options = { params: httpParams };
-    return this.http.delete<Message<string>>(logs_batch_delete_uri, options);
+  }
+
+  batchDelete(timeUnixNanos: number[]): Observable<Message<string>> {
+    let params = new HttpParams();
+    timeUnixNanos.forEach(value => (params = params.append('timeUnixNanos', value)));
+    return this.http.delete<Message<string>>('/logs', { params });
+  }
+
+  private params(options: LogQueryOptions): HttpParams {
+    let params = new HttpParams();
+    Object.entries(options).forEach(([key, value]) => {
+      if (value != null && value !== '') params = params.set(key, value);
+    });
+    return params;
   }
 }

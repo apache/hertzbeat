@@ -18,20 +18,20 @@
 package org.apache.hertzbeat.log.controller;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
+import org.apache.hertzbeat.log.service.SignalWorkloadGuard;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -57,8 +57,10 @@ class LogQueryControllerTest {
 
     @BeforeEach
     void setUp() {
-        this.logQueryController = new LogQueryController(historyDataReader);
-        this.mockMvc = MockMvcBuilders.standaloneSetup(logQueryController).build();
+        this.logQueryController = new LogQueryController(historyDataReader, new SignalWorkloadGuard());
+        this.mockMvc = MockMvcBuilders.standaloneSetup(logQueryController)
+                .setControllerAdvice(new SignalWorkloadExceptionHandler())
+                .build();
     }
 
     @Test
@@ -86,11 +88,8 @@ class LogQueryControllerTest {
 
         List<LogEntry> mockLogs = Arrays.asList(logEntry1, logEntry2);
 
-        when(historyDataReader.countLogsByMultipleConditions(anyLong(), anyLong(), any(),
-                any(), any(), any(), any())).thenReturn(2L);
-        when(historyDataReader.queryLogsByMultipleConditionsWithPagination(anyLong(), anyLong(),
-                any(), any(), any(), any(), any(), anyInt(), anyInt()))
-                .thenReturn(mockLogs);
+        when(historyDataReader.countObservabilityLogs(any())).thenReturn(2L);
+        when(historyDataReader.queryObservabilityLogs(any(), any(), any())).thenReturn(mockLogs);
 
         mockMvc.perform(
                 MockMvcRequestBuilders
@@ -104,7 +103,6 @@ class LogQueryControllerTest {
                         .param("pageIndex", "0")
                         .param("pageSize", "20")
         )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.data.content").isArray())
@@ -126,11 +124,8 @@ class LogQueryControllerTest {
                         .build()
         );
 
-        when(historyDataReader.countLogsByMultipleConditions(any(), any(), any(),
-                any(), any(), any(), any())).thenReturn(1L);
-        when(historyDataReader.queryLogsByMultipleConditionsWithPagination(any(), any(),
-                any(), any(), any(), any(), any(), eq(0), eq(20)))
-                .thenReturn(mockLogs);
+        when(historyDataReader.countObservabilityLogs(any())).thenReturn(1L);
+        when(historyDataReader.queryObservabilityLogs(any(), any(), any())).thenReturn(mockLogs);
 
         mockMvc.perform(
                 MockMvcRequestBuilders
@@ -143,27 +138,36 @@ class LogQueryControllerTest {
     }
 
     @Test
-    void testOverviewStatsWithMixedSeverityLogs() throws Exception {
-        // Create logs with different severity levels according to OpenTelemetry standard
-        List<LogEntry> mockLogs = Arrays.asList(
-                // TRACE (1-4)
-                LogEntry.builder().severityNumber(2).build(),
-                // DEBUG (5-8)
-                LogEntry.builder().severityNumber(6).build(),
-                // INFO (9-12)
-                LogEntry.builder().severityNumber(9).build(),
-                LogEntry.builder().severityNumber(10).build(),
-                // WARN (13-16)
-                LogEntry.builder().severityNumber(14).build(),
-                // ERROR (17-20)
-                LogEntry.builder().severityNumber(17).build(),
-                LogEntry.builder().severityNumber(18).build(),
-                // FATAL (21-24)
-                LogEntry.builder().severityNumber(21).build()
-        );
+    void shouldBoundLogPaginationBeforeReadingStorage() throws Exception {
+        when(historyDataReader.countObservabilityLogs(any())).thenReturn(0L);
+        when(historyDataReader.queryObservabilityLogs(any(), any(), any())).thenReturn(List.of());
 
-        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
-                any(), any(), any(), any())).thenReturn(mockLogs);
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/list")
+                        .param("pageIndex", "-1")
+                        .param("pageSize", "1000"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.number").value(0))
+                .andExpect(jsonPath("$.data.size").value(200));
+
+        verify(historyDataReader).queryObservabilityLogs(any(), eq(0), eq(200));
+    }
+
+    @Test
+    void shouldReturnBadRequestForInvalidResourceExpression() throws Exception {
+        when(historyDataReader.countObservabilityLogs(any()))
+                .thenThrow(new IllegalArgumentException("Invalid resource filter expression"));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/list")
+                        .param("resource", "bad-expression"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE));
+    }
+
+    @Test
+    void testOverviewStatsWithMixedSeverityLogs() throws Exception {
+        when(historyDataReader.queryLogOverviewAggregate(any())).thenReturn(Map.of(
+                "totalCount", 8L, "traceCount", 1L, "debugCount", 1L, "infoCount", 2L,
+                "warnCount", 1L, "errorCount", 2L, "fatalCount", 1L));
 
         mockMvc.perform(
                 MockMvcRequestBuilders
@@ -182,13 +186,7 @@ class LogQueryControllerTest {
 
     @Test
     void testOverviewStatsWithTimeRange() throws Exception {
-        List<LogEntry> mockLogs = Arrays.asList(
-                LogEntry.builder().severityNumber(9).build(),
-                LogEntry.builder().severityNumber(17).build()
-        );
-
-        when(historyDataReader.queryLogsByMultipleConditions(eq(1734005477000L), eq(1734005478000L),
-                any(), any(), any(), any(), any())).thenReturn(mockLogs);
+        when(historyDataReader.queryLogOverviewAggregate(any())).thenReturn(Map.of("totalCount", 2L));
 
         mockMvc.perform(
                 MockMvcRequestBuilders
@@ -203,21 +201,8 @@ class LogQueryControllerTest {
 
     @Test
     void testTraceCoverageStats() throws Exception {
-        List<LogEntry> mockLogs = Arrays.asList(
-                // With both trace and span
-                LogEntry.builder().traceId("trace1").spanId("span1").build(),
-                LogEntry.builder().traceId("trace2").spanId("span2").build(),
-                // With trace only
-                LogEntry.builder().traceId("trace3").spanId("").build(),
-                // With span only
-                LogEntry.builder().traceId("").spanId("span4").build(),
-                // Without trace info
-                LogEntry.builder().traceId("").spanId("").build(),
-                LogEntry.builder().build() // null values
-        );
-
-        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
-                any(), any(), any(), any())).thenReturn(mockLogs);
+        when(historyDataReader.queryLogOverviewAggregate(any())).thenReturn(Map.of("traceCoverage", Map.of(
+                "withTrace", 3L, "withoutTrace", 3L, "withSpan", 3L, "withBothTraceAndSpan", 2L)));
 
         mockMvc.perform(
                 MockMvcRequestBuilders
@@ -233,18 +218,8 @@ class LogQueryControllerTest {
 
     @Test
     void testTrendStats() throws Exception {
-        // Create logs with timestamps that fall into different hours
-        List<LogEntry> mockLogs = Arrays.asList(
-                // 2023-12-12 10:00 (1734005477630000000L nano = 1734005477630L ms)
-                LogEntry.builder().timeUnixNano(1734005477630000000L).build(),
-                // Same hour
-                LogEntry.builder().timeUnixNano(1734005477640000000L).build(),
-                // Next hour: 2023-12-12 11:00 (1734009077630000000L nano = 1734009077630L ms)
-                LogEntry.builder().timeUnixNano(1734009077630000000L).build()
-        );
-
-        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
-                any(), any(), any(), any())).thenReturn(mockLogs);
+        when(historyDataReader.queryLogTrendAggregate(any())).thenReturn(Map.of(
+                "2023-12-12 10:00", 2L, "2023-12-12 11:00", 1L));
 
         mockMvc.perform(
                 MockMvcRequestBuilders
@@ -257,13 +232,7 @@ class LogQueryControllerTest {
 
     @Test
     void testTrendStatsWithNullTimestamp() throws Exception {
-        List<LogEntry> mockLogs = Arrays.asList(
-                LogEntry.builder().timeUnixNano(1734005477630000000L).build(),
-                LogEntry.builder().timeUnixNano(null).build() // This should be filtered out
-        );
-
-        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
-                any(), any(), any(), any())).thenReturn(mockLogs);
+        when(historyDataReader.queryLogTrendAggregate(any())).thenReturn(Map.of("2023-12-12 10:00", 1L));
 
         mockMvc.perform(
                 MockMvcRequestBuilders

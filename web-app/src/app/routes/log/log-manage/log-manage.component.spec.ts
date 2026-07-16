@@ -17,27 +17,24 @@
  * under the License.
  */
 
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, Router } from '@angular/router';
 
+import { LogService } from '../../../service/log.service';
 import { LogManageComponent } from './log-manage.component';
 
 describe('LogManageComponent', () => {
-  let component: LogManageComponent;
-  let fixture: ComponentFixture<LogManageComponent>;
+  it('switches query and live modes on the canonical log route', () => {
+    const logs = jasmine.createSpyObj<LogService>('LogService', ['list', 'overviewStats', 'trendStats']);
+    const route = { snapshot: { queryParamMap: { get: () => null }, data: {} } } as unknown as ActivatedRoute;
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    const component = new LogManageComponent(logs, route, router);
+    component.timeRange = [new Date(1_000), new Date(2_000)];
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [LogManageComponent]
-    }).compileComponents();
-  });
+    component.setMode('stream');
 
-  beforeEach(() => {
-    fixture = TestBed.createComponent(LogManageComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
-
-  it('should create', () => {
-    expect(component).toBeTruthy();
+    expect(component.mode).toBe('stream');
+    expect(router.navigate).toHaveBeenCalledWith(['/log/manage'], {
+      queryParams: jasmine.objectContaining({ start: 1_000, end: 2_000, view: 'stream' })
+    });
   });
 });
