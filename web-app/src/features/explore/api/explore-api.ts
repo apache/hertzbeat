@@ -47,6 +47,7 @@ export function loadTraceDetail(traceId: string, signal?: AbortSignal) {
 }
 
 export function buildSignalApiPath(query: ExploreQuery, now = Date.now()) {
+  requireQueryableScope(query);
   const params = sharedSignalParams(query, now);
 
   if (query.signal === 'metrics') {
@@ -80,6 +81,7 @@ export function buildSignalApiPath(query: ExploreQuery, now = Date.now()) {
 }
 
 export function buildLogStreamPath(query: LogExploreQuery) {
+  requireQueryableScope(query);
   const params = new URLSearchParams();
   const scoped = exploreHandoffState(query) === 'scoped';
   setValue(params, 'serviceName', query.serviceName);
@@ -116,6 +118,12 @@ function sharedSignalParams(query: ExploreQuery, now: number) {
 
 function setValue(params: URLSearchParams, key: string, value: string | undefined) {
   if (value) params.set(key, value);
+}
+
+function requireQueryableScope(query: ExploreQuery) {
+  if (exploreHandoffState(query) === 'invalid') {
+    throw new Error('Invalid instrumentation context');
+  }
 }
 
 function requestSignal(signal?: AbortSignal) {

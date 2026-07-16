@@ -31,6 +31,7 @@ import { MetricResult } from "../components/metric-result";
 import { TraceResult } from "../components/trace-result";
 import {
   buildExplorePath,
+  exploreHandoffState,
   mergeExploreQuery,
   parseExploreQuery,
   querySubmissionTimePatch,
@@ -94,6 +95,7 @@ function ResultPanel({
   t: TFunction;
   navigate: ReturnType<typeof useNavigate>;
 }) {
+  if (exploreHandoffState(query) === "invalid") return null;
   if (query.signal === "metrics") return <MetricResultPanel query={query} t={t} />;
   if (query.signal === "logs") return <LogResultPanel query={query} t={t} navigate={navigate} />;
   return <TraceResultPanel query={query} t={t} navigate={navigate} />;

@@ -44,7 +44,7 @@ describe('explore API paths', () => {
     expect(tracePath).toContain('resourceFilter=cloud.region%3Dap-southeast-1&minDurationMs=100&maxDurationMs=5000&errorOnly=true');
   });
 
-  it('uses the exact valid onboarding scope and fails closed to the preset window when it is invalid', () => {
+  it('uses the exact valid onboarding scope and refuses partial or reversed instrumentation context', () => {
     const scoped = {
       signal: 'logs' as const, timeRange: 'last-15m' as const, serviceName: 'checkout-api',
       serviceNamespace: 'commerce', environment: 'prod', collectorId: 'collector-east',
@@ -59,10 +59,11 @@ describe('explore API paths', () => {
     );
 
     const invalid = { ...scoped, start: 2_000_000, end: 1_000_000 };
-    const path = buildSignalApiPath(invalid, 3_000_000);
-    expect(path).toContain('serviceName=checkout-api&environment=prod&start=100000&end=1000000');
-    expect(path).not.toContain('serviceNamespace');
-    expect(path).not.toContain('collectorId');
+    expect(() => buildSignalApiPath(invalid, 3_000_000)).toThrow(/instrumentation context/i);
+    expect(() => buildLogStreamPath(invalid)).toThrow(/instrumentation context/i);
+
+    const partial = { signal: 'traces' as const, timeRange: 'last-15m' as const, collectorId: 'collector-east' };
+    expect(() => buildSignalApiPath(partial, 3_000_000)).toThrow(/instrumentation context/i);
 
     const preset = { ...scoped, windowMode: 'preset' as const, start: undefined, end: 3_000_000 };
     expect(buildSignalApiPath(preset)).toContain('start=2100000&end=3000000');

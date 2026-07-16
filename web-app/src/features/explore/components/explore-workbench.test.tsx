@@ -20,6 +20,7 @@ import { I18nextProvider, useTranslation } from 'react-i18next';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
+import en from '@/assets/i18n/en-us.json';
 
 import { ExploreQueryBar } from './explore-query-bar';
 import { ExploreWorkbench } from './explore-workbench';
@@ -75,7 +76,7 @@ describe('Explore workbench', () => {
       t={i18n.t}
       updateQuery={vi.fn()}
     /></I18nextProvider>);
-    expect(screen.getByText('The onboarding query context is incomplete or invalid. Using the standard Explore scope.')).toBeInTheDocument();
+    expect(screen.getByText(en.explore.handoffInvalid)).toBeInTheDocument();
   });
 });
 
