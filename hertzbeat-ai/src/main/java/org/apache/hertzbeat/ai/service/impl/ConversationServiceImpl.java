@@ -34,7 +34,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 import reactor.core.publisher.Flux;
 
 import java.util.Collections;
@@ -99,8 +98,7 @@ public class ConversationServiceImpl implements ConversationService {
         ChatRequestContext context = ChatRequestContext.builder()
             .message(message)
             .conversationId(conversationId)
-            .conversationHistory(CollectionUtils.isEmpty(conversation.getMessages()) ? null
-                : conversation.getMessages().subList(0, conversation.getMessages().size() - 1))
+            .conversationHistory(messages)
             .build();
 
         // Stream response from AI service

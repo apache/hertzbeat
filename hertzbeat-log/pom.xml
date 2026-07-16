@@ -30,6 +30,7 @@
 
     <properties>
         <awaitility.version>4.2.0</awaitility.version>
+        <grpc.version>1.56.1</grpc.version>
     </properties>
 
     <dependencies>
@@ -70,6 +71,22 @@
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java-util</artifactId>
+        </dependency>
+        <!-- OTLP gRPC server -->
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-netty-shaded</artifactId>
+            <version>${grpc.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-protobuf</artifactId>
+            <version>${grpc.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-stub</artifactId>
+            <version>${grpc.version}</version>
         </dependency>
         <!-- awaitility for async testing -->
         <dependency>

@@ -18,17 +18,18 @@
 -->
 
 <app-help-message-show
+  *ngIf="!embedded"
   [help_message_content]="'log.help.stream' | i18n"
   [guild_link]="'log.help.stream.link' | i18n"
   [module_name]="'menu.log.stream'"
   [icon_name]="'file-text'"
 ></app-help-message-show>
 
-<nz-divider></nz-divider>
+<nz-divider *ngIf="!embedded"></nz-divider>
 
-<div class="log-stream-container">
+<div class="log-stream-container" [class.embedded]="embedded">
   <!-- Header with Controls and Filters -->
-  <nz-card [nzTitle]="'log.stream.title' | i18n" class="header-card">
+  <nz-card [nzTitle]="embedded ? undefined : ('log.stream.title' | i18n)" [nzBordered]="!embedded" class="header-card">
     <!-- Main Control Row -->
     <div class="header-content">
       <!-- Connection Status -->

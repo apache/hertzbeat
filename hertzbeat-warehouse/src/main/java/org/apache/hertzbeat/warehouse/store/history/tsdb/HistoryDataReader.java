@@ -20,6 +20,7 @@ package org.apache.hertzbeat.warehouse.store.history.tsdb;
 import java.util.List;
 import java.util.Map;
 import org.apache.hertzbeat.common.entity.dto.Value;
+import org.apache.hertzbeat.common.entity.dto.observability.LogQueryFilter;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 
 /**
@@ -127,5 +128,27 @@ public interface HistoryDataReader {
                                                String spanId, Integer severityNumber,
                                                String severityText, String searchContent) {
         throw new UnsupportedOperationException("count logs by multiple conditions is not supported");
+    }
+
+    /** Query the transition workbench using OTLP resource semantics. */
+    default List<LogEntry> queryObservabilityLogs(LogQueryFilter filter, Integer offset, Integer limit) {
+        return queryLogsByMultipleConditionsWithPagination(filter.start(), filter.end(), filter.traceId(),
+                filter.spanId(), filter.severityNumber(), filter.severityText(), filter.search(), offset, limit);
+    }
+
+    /** Count the transition workbench result using OTLP resource semantics. */
+    default long countObservabilityLogs(LogQueryFilter filter) {
+        return countLogsByMultipleConditions(filter.start(), filter.end(), filter.traceId(), filter.spanId(),
+                filter.severityNumber(), filter.severityText(), filter.search());
+    }
+
+    /** Return severity and trace coverage in one storage aggregation. */
+    default Map<String, Object> queryLogOverviewAggregate(LogQueryFilter filter) {
+        throw new UnsupportedOperationException("query log overview aggregate is not supported");
+    }
+
+    /** Return log counts grouped by hour in one storage aggregation. */
+    default Map<String, Long> queryLogTrendAggregate(LogQueryFilter filter) {
+        throw new UnsupportedOperationException("query log trend aggregate is not supported");
     }
 }

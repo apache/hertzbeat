@@ -28,7 +28,8 @@ import {
   AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
-  NgZone
+  NgZone,
+  Input
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { I18NService } from '@core';
@@ -82,6 +83,7 @@ interface ExtendedLogEntry {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
+  @Input() embedded = false;
   // SSE connection and state
   private eventSource!: EventSource;
   isConnected: boolean = false;
@@ -95,10 +97,10 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
 
   // Filter properties
   filterSeverityNumber: string = '';
-  filterSeverityText: string = '';
+  @Input() filterSeverityText: string = '';
   filterLogContent: string = '';
-  filterTraceId: string = '';
-  filterSpanId: string = '';
+  @Input() filterTraceId: string = '';
+  @Input() filterSpanId: string = '';
 
   // UI state
   showFilters: boolean = true;

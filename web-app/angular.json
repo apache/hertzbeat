@@ -133,6 +133,11 @@
             "tsConfig": "tsconfig.spec.json",
             "scripts": [],
             "styles": [],
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "node_modules/"
+              ]
+            },
             "assets": [
               "src/assets"
             ]

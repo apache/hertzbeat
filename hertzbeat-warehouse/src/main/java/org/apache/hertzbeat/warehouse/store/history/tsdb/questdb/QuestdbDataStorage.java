@@ -102,13 +102,13 @@ public class QuestdbDataStorage extends AbstractHistoryDataStorage {
         this.queryBaseUrl = "http://" + host + ":" + queryPort + "/exec?query=";
 
         this.client = new OkHttpClient.Builder()
-                .readTimeout(NetworkConstants.HttpClientConstants.READ_TIME_OUT, TimeUnit.SECONDS)
-                .writeTimeout(NetworkConstants.HttpClientConstants.WRITE_TIME_OUT, TimeUnit.SECONDS)
-                .connectTimeout(NetworkConstants.HttpClientConstants.CONNECT_TIME_OUT, TimeUnit.SECONDS)
+                .readTimeout(NetworkConstants.HttpClientConstants.READ_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)
+                .writeTimeout(NetworkConstants.HttpClientConstants.WRITE_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)
+                .connectTimeout(NetworkConstants.HttpClientConstants.CONNECT_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)
                 .connectionPool(new ConnectionPool(
                         NetworkConstants.HttpClientConstants.MAX_IDLE_CONNECTIONS,
-                        NetworkConstants.HttpClientConstants.KEEP_ALIVE_TIMEOUT,
-                        TimeUnit.SECONDS)
+                        NetworkConstants.HttpClientConstants.KEEP_ALIVE_TIMEOUT.toMillis(),
+                        TimeUnit.MILLISECONDS)
                 ).sslSocketFactory(defaultSslSocketFactory(), defaultTrustManager())
                 .hostnameVerifier(noopHostnameVerifier())
                 .retryOnConnectionFailure(true)

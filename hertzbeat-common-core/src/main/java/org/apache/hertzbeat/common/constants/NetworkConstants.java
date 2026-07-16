@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.common.constants;
 
+import java.time.Duration;
+
 /**
  * Http Constants.
  */
@@ -56,11 +58,17 @@ public interface NetworkConstants {
      */
     interface HttpClientConstants {
 
-        int READ_TIME_OUT = 6 * 1000;
-        int WRITE_TIME_OUT = 6 * 1000;
-        int CONNECT_TIME_OUT = 6 * 1000;
+        Duration READ_TIMEOUT = Duration.ofSeconds(6);
+        Duration WRITE_TIMEOUT = Duration.ofSeconds(6);
+        Duration CONNECT_TIMEOUT = Duration.ofSeconds(6);
+        Duration GREPTIME_QUERY_READ_TIMEOUT = Duration.ofSeconds(5);
+        Duration GREPTIME_QUERY_CONNECT_TIMEOUT = Duration.ofSeconds(2);
+        Duration GREPTIME_WRITE_READ_TIMEOUT = Duration.ofSeconds(3);
+        Duration GREPTIME_WRITE_CONNECT_TIMEOUT = Duration.ofSeconds(2);
+        Duration GREPTIME_INIT_READ_TIMEOUT = Duration.ofSeconds(10);
+        Duration GREPTIME_INIT_CONNECT_TIMEOUT = Duration.ofSeconds(3);
         int MAX_IDLE_CONNECTIONS = 20;
-        int KEEP_ALIVE_TIMEOUT = 30 * 1000;
+        Duration KEEP_ALIVE_TIMEOUT = Duration.ofSeconds(30);
     }
 
 }
