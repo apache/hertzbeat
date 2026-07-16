@@ -55,6 +55,15 @@ describe('InstrumentationPage', () => {
     expect(screen.queryByText(/^0$/)).not.toBeInTheDocument();
   });
 
+  it('renders the schema version supplied by the validated catalog boundary', () => {
+    useInstrumentationSetup.mockReturnValue({ ...setupFixture(), schemaVersion: 7 });
+    useInstrumentationDetection.mockReturnValue(detectionFixture());
+    renderPage();
+
+    expect(screen.getByText(i18n.t('instrumentation.schemaVersion', { version: 7 }))).toBeInTheDocument();
+    expect(screen.queryByText(i18n.t('instrumentation.schemaVersion', { version: 1 }))).not.toBeInTheDocument();
+  });
+
   it('keeps catalog failure and Collector empty or offline states actionable and distinct', () => {
     const retryCatalog = vi.fn();
     useInstrumentationSetup.mockReturnValue({ ...setupFixture(), stage: 1, catalogError: true, retryCatalog });
@@ -168,6 +177,7 @@ function pageElement() {
 
 function setupFixture() {
   return {
+    schemaVersion: 1,
     stage: 5, setStage: vi.fn(), draft: {
       environment: 'docker', platform: 'linux_amd64', selection: {
         language: 'go', framework: 'go_generic', method: 'sdk', environment: 'docker', platform: 'linux_amd64'

@@ -73,6 +73,26 @@ describe('instrumentation feature boundaries', () => {
     expect(violations).toEqual([]);
   });
 
+  it('keeps token material out of every instrumentation persistence, log, and URL surface', () => {
+    const forbiddenSink = /\b(?:localStorage|sessionStorage|indexedDB|sendBeacon|analytics|console\.(?:log|info|warn|error))\b/;
+    const tokenUrl = /(?:URLSearchParams|searchParams|location|href)[\s\S]{0,120}\btoken\b|\btoken\b[\s\S]{0,120}(?:URLSearchParams|searchParams|location|href)/i;
+    const violations = Object.entries(productionSources)
+      .filter(([path]) => !path.includes('.test.'))
+      .filter(([, source]) => forbiddenSink.test(source) || tokenUrl.test(source))
+      .map(([path]) => path);
+    expect(violations).toEqual([]);
+  });
+
+  it('keeps language-specific installation recipes out of presentation source', () => {
+    const tutorialLiteral = /\b(?:spring_boot|go_generic|aspnet_core|zero_code|javaagent|opentelemetry-instrument)\b/i;
+    const violations = Object.entries(productionSources)
+      .filter(([path]) => !path.includes('.test.'))
+      .filter(([path]) => path.startsWith('./components/') || path.startsWith('./pages/'))
+      .filter(([, source]) => tutorialLiteral.test(source))
+      .map(([path]) => path);
+    expect(violations).toEqual([]);
+  });
+
   it('keeps Collector inventory intake separate from the transient render target', () => {
     expect(productionSources['./api/collector-api.ts']).not.toContain('CollectorTarget');
     expect(productionSources['./controller/use-instrumentation-guide-controller.ts']).toContain('CollectorTarget');

@@ -40,7 +40,7 @@ export function InstrumentationPage() {
           <Typography.Title level={2}>{t('instrumentation.title')}</Typography.Title>
           <Typography.Text type="secondary">{t('instrumentation.description')}</Typography.Text>
         </div>
-        <Typography.Text type="secondary">{t('instrumentation.schemaVersion', { version: 1 })}</Typography.Text>
+        <Typography.Text type="secondary">{t('instrumentation.schemaVersion', { version: setup.schemaVersion })}</Typography.Text>
       </header>
       <InstrumentationRunbook setup={setup} detection={detection} />
     </div>

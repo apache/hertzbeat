@@ -18,9 +18,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import type {
-  CollectorTarget,
-  GuideSnippet,
+import {
+  INSTRUMENTATION_SCHEMA_VERSION,
+  type CollectorTarget,
+  type GuideSnippet,
 } from '../api/instrumentation-contract';
 import { loadInstrumentationCollectors } from '../api/collector-api';
 import { useInstrumentationCatalogController } from '../controller/use-instrumentation-catalog-controller';
@@ -38,7 +39,8 @@ export function useInstrumentationSetup() {
   const guide = useInstrumentationGuideController(catalog.draft, collectorsQuery.data ?? []);
   const handleContractError = useInstrumentationContractRefresh({
     clearSelection: catalog.clearSelection,
-    clearGuide: guide.reset,
+    clearGuide: guide.clearContractState,
+    resetFlow: () => setStage(1),
     refreshCatalog: async () => void await catalog.retry()
   });
   const renderGuide = async () => {
@@ -57,6 +59,7 @@ export function useInstrumentationSetup() {
   const setTransientTarget = (target: CollectorTarget | undefined) => guide.setTransientTarget(target);
 
   return {
+    schemaVersion: INSTRUMENTATION_SCHEMA_VERSION,
     stage, setStage, draft: catalog.draft,
     catalog: catalog.catalog, catalogPending: catalog.state.status === 'loading',
     catalogError: catalog.state.status === 'error', retryCatalog: catalog.retry,
@@ -69,7 +72,7 @@ export function useInstrumentationSetup() {
     setEnvironment: catalog.setEnvironment, setPlatform: catalog.setPlatform,
     setLanguage: catalog.setLanguage, setFramework: catalog.setFramework,
     setMethod: catalog.setMethod, setContext: catalog.setContext,
-    renderGuide, copySnippet, clearGuide: guide.reset, handleContractError
+    renderGuide, copySnippet, clearGuide: guide.clearContractState, handleContractError
   };
 }
 

@@ -67,6 +67,20 @@ describe('instrumentation guide controller', () => {
     expect(JSON.stringify(log.mock.calls)).not.toContain('runtime_only_token');
   });
 
+  it('clears the token and rendered guide at the contract refresh boundary', async () => {
+    renderInstrumentationGuide.mockResolvedValue(guide);
+    const { result } = renderGuideController();
+    act(() => result.current.setTransientTarget(target));
+    act(() => result.current.setToken('stale_contract_token'));
+    await act(async () => void await result.current.render());
+    await waitFor(() => expect(result.current.state.status).toBe('ready'));
+
+    act(() => result.current.clearContractState());
+
+    expect(result.current.token).toBe('');
+    expect(result.current.guide).toBeUndefined();
+  });
+
   it('clears endpoint and token only when the selected Collector changes', async () => {
     renderInstrumentationGuide.mockResolvedValue(guide);
     const client = new QueryClient({ defaultOptions: { mutations: { retry: false } } });

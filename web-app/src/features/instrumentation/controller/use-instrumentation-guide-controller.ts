@@ -51,6 +51,10 @@ export function useInstrumentationGuideController(
     mutationFn: request => renderInstrumentationGuide(request)
   });
   const reset = mutation.reset;
+  const clearContractState = useCallback(() => {
+    reset();
+    setToken('');
+  }, [reset]);
   const setTransientTarget = useCallback((target: CollectorTarget | undefined) => {
     const nextTarget = target ? createTransientCollectorTarget(target) : undefined;
     if (sameCollectorTarget(targetRef.current, nextTarget)) return;
@@ -97,6 +101,7 @@ export function useInstrumentationGuideController(
     setTransientTarget,
     render,
     materializeSnippet,
+    clearContractState,
     reset
   };
 }

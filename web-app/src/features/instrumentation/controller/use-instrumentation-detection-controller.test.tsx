@@ -87,7 +87,7 @@ describe('instrumentation detection controller', () => {
   });
 
   it('delegates schema and selection errors to the catalog refresh boundary', async () => {
-    const refreshCatalog = vi.fn();
+    const refreshCatalog = vi.fn().mockResolvedValue(true);
     detectInstrumentationSignals.mockRejectedValue(
       new InstrumentationRequestError('instrumentation_selection_invalid')
     );
@@ -100,7 +100,8 @@ describe('instrumentation detection controller', () => {
     await act(async () => void await Promise.resolve());
 
     expect(refreshCatalog).toHaveBeenCalledOnce();
-    expect(result.current.state.status).toBe('error');
+    expect(result.current.state.status).toBe('idle');
+    expect(result.current.response).toBeUndefined();
   });
 });
 

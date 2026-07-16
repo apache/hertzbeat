@@ -22,18 +22,20 @@ import { InstrumentationRequestError } from '../api/instrumentation-api';
 type ContractRefreshActions = {
   clearSelection: () => void;
   clearGuide: () => void;
+  resetFlow: () => void;
   refreshCatalog: () => void | Promise<void>;
 };
 
 export function useInstrumentationContractRefresh(actions: ContractRefreshActions) {
-  const { clearSelection, clearGuide, refreshCatalog } = actions;
+  const { clearSelection, clearGuide, resetFlow, refreshCatalog } = actions;
   return useCallback(async (error: unknown) => {
     if (!requiresCatalogRefresh(error)) return false;
     clearSelection();
     clearGuide();
+    resetFlow();
     await refreshCatalog();
     return true;
-  }, [clearGuide, clearSelection, refreshCatalog]);
+  }, [clearGuide, clearSelection, refreshCatalog, resetFlow]);
 }
 
 function requiresCatalogRefresh(error: unknown) {

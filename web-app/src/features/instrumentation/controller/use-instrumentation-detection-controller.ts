@@ -73,10 +73,17 @@ export function useInstrumentationDetectionController(
       }
     } catch (reason: unknown) {
       if (controller.signal.aborted || generation.current !== runGeneration) return;
+      let contractRefreshed = false;
       try {
-        await onContractError?.(reason);
+        contractRefreshed = await onContractError?.(reason) ?? false;
       } catch {
         // Detection evidence stays authoritative even when a catalog refresh also fails.
+      }
+      if (contractRefreshed) {
+        setResponse(undefined);
+        setError(undefined);
+        setChecking(false);
+        return;
       }
       setError(reason);
       setChecking(false);

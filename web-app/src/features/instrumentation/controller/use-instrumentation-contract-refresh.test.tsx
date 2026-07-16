@@ -28,20 +28,22 @@ describe('instrumentation contract refresh controller', () => {
   ] as const)('clears stale state and refreshes catalog for %s', async machineCode => {
     const clearSelection = vi.fn();
     const clearGuide = vi.fn();
+    const resetFlow = vi.fn();
     const refreshCatalog = vi.fn().mockResolvedValue(undefined);
     const { result } = renderHook(() => useInstrumentationContractRefresh({
-      clearSelection, clearGuide, refreshCatalog
+      clearSelection, clearGuide, resetFlow, refreshCatalog
     }));
 
     await expect(result.current(new InstrumentationRequestError(machineCode))).resolves.toBe(true);
 
     expect(clearSelection).toHaveBeenCalledOnce();
     expect(clearGuide).toHaveBeenCalledOnce();
+    expect(resetFlow).toHaveBeenCalledOnce();
     expect(refreshCatalog).toHaveBeenCalledOnce();
   });
 
   it('does not refresh catalog for context errors', async () => {
-    const actions = { clearSelection: vi.fn(), clearGuide: vi.fn(), refreshCatalog: vi.fn() };
+    const actions = { clearSelection: vi.fn(), clearGuide: vi.fn(), resetFlow: vi.fn(), refreshCatalog: vi.fn() };
     const { result } = renderHook(() => useInstrumentationContractRefresh(actions));
 
     await expect(result.current(
@@ -50,5 +52,6 @@ describe('instrumentation contract refresh controller', () => {
     expect(actions.refreshCatalog).not.toHaveBeenCalled();
     expect(actions.clearSelection).not.toHaveBeenCalled();
     expect(actions.clearGuide).not.toHaveBeenCalled();
+    expect(actions.resetFlow).not.toHaveBeenCalled();
   });
 });
