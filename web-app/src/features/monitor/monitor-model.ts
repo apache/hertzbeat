@@ -21,6 +21,7 @@ export type MonitorQuery = {
   search: string;
   app: string;
   status: string;
+  labels: string;
   pageIndex: number;
   pageSize: number;
 };
@@ -37,16 +38,24 @@ export function monitorAppOptions(items: MonitorAppItem[]) {
     .map(item => ({ value: item.value as string, label: item.label || item.value as string }));
 }
 
+function validPageIndex(value: string | null) {
+  const parsed = Number.parseInt(value ?? '', 10);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+}
+
+function validPageSize(value: string | null) {
+  const parsed = Number.parseInt(value ?? '', 10);
+  return monitorPageSizes.includes(parsed as typeof monitorPageSizes[number]) ? parsed : 10;
+}
+
 export function readMonitorQuery(params: URLSearchParams): MonitorQuery {
-  const pageIndex = Number.parseInt(params.get('pageIndex') ?? '', 10);
-  const requestedSize = Number.parseInt(params.get('pageSize') ?? '', 10);
-  const pageSize = monitorPageSizes.includes(requestedSize as typeof monitorPageSizes[number]) ? requestedSize : 10;
   return {
     search: params.get('search')?.trim() ?? '',
     app: params.get('app')?.trim() ?? '',
     status: params.get('status')?.trim() ?? '9',
-    pageIndex: Number.isFinite(pageIndex) && pageIndex >= 0 ? pageIndex : 0,
-    pageSize
+    labels: params.get('labels')?.trim() ?? '',
+    pageIndex: validPageIndex(params.get('pageIndex')),
+    pageSize: validPageSize(params.get('pageSize'))
   };
 }
 
@@ -72,6 +81,7 @@ export function writeMonitorQuery(query: MonitorQuery) {
   if (query.search) params.set('search', query.search);
   if (query.app) params.set('app', query.app);
   if (query.status && query.status !== '9') params.set('status', query.status);
+  if (query.labels) params.set('labels', query.labels);
   return params;
 }
 

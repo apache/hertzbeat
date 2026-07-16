@@ -23,13 +23,19 @@ describe('monitor list model', () => {
   it('normalizes unsupported pagination and keeps explicit filters', () => {
     const query = readMonitorQuery(new URLSearchParams('search=mysql&app=mysql&status=2&pageIndex=-1&pageSize=99'));
 
-    expect(query).toEqual({ search: 'mysql', app: 'mysql', status: '2', pageIndex: 0, pageSize: 10 });
+    expect(query).toEqual({ search: 'mysql', app: 'mysql', status: '2', labels: '', pageIndex: 0, pageSize: 10 });
     expect(buildMonitorListPath(query)).toBe('/api/monitors?pageIndex=0&pageSize=10&search=mysql&app=mysql&status=2');
   });
 
   it('omits the all-status sentinel from backend requests', () => {
-    expect(buildMonitorListPath({ search: '', app: '', status: '9', pageIndex: 1, pageSize: 20 }))
+    expect(buildMonitorListPath({ search: '', app: '', status: '9', labels: '', pageIndex: 1, pageSize: 20 }))
       .toBe('/api/monitors?pageIndex=1&pageSize=20');
+  });
+
+  it('preserves label drilldown in monitor requests', () => {
+    const query = readMonitorQuery(new URLSearchParams('labels=env%3Aprod'));
+    expect(query.labels).toBe('env:prod');
+    expect(buildMonitorListPath(query)).toContain('labels=env%3Aprod');
   });
 
   it('maps established monitor states without inventing health', () => {
