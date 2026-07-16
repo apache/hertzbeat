@@ -18,8 +18,8 @@
 import { Skeleton } from 'antd';
 import { Navigate, createBrowserRouter, RouterProvider, useLocation, type RouteObject } from 'react-router-dom';
 
-import { AuthGate } from '@/core/auth/AuthGate';
-import { RouteErrorBoundary } from '@/features/errors/RouteErrorBoundary';
+import { AuthGate } from '@/core/auth/auth-gate';
+import { RouteErrorBoundary } from '@/features/errors/route-error-boundary';
 import { BasicLayout } from '@/layout/basic/basic-layout';
 import { legacySettingsPaths, settingsPaths } from '@/shared/settings/settings-routes';
 
@@ -42,7 +42,7 @@ export const appRoutes: RouteObject[] = [
         id: 'login',
         path: '/passport/login',
         lazy: async () => {
-          const { LoginPage } = await import('@/features/auth/LoginPage');
+          const { LoginPage } = await import('@/features/auth/login-page');
           return { Component: LoginPage };
         }
       },
@@ -66,7 +66,7 @@ export const appRoutes: RouteObject[] = [
                 id: 'dashboard',
                 path: '/dashboard',
                 lazy: async () => {
-                  const { DashboardPage } = await import('@/features/dashboard/DashboardPage');
+                  const { DashboardPage } = await import('@/features/dashboard/dashboard-page');
                   return { Component: DashboardPage };
                 }
               },
@@ -295,7 +295,7 @@ export const appRoutes: RouteObject[] = [
                 id: 'bulletin',
                 path: '/bulletin',
                 lazy: async () => {
-                  const { BulletinPage } = await import('@/features/bulletin/BulletinPage');
+                  const { BulletinPage } = await import('@/features/bulletin/bulletin-page');
                   return { Component: BulletinPage };
                 }
               },
@@ -303,7 +303,7 @@ export const appRoutes: RouteObject[] = [
                 id: 'not-found',
                 path: '*',
                 lazy: async () => {
-                  const { NotFoundPage } = await import('@/features/errors/NotFoundPage');
+                  const { NotFoundPage } = await import('@/features/errors/not-found-page');
                   return { Component: NotFoundPage };
                 }
               }

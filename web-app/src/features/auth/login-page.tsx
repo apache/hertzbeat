@@ -24,7 +24,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { safeRedirectTarget } from '@/core/auth/navigation';
 import { loginSession, sessionQueryKey } from '@/core/auth/session-api';
 
-import styles from './LoginPage.module.css';
+import styles from './login-page.module.css';
 
 type LoginValues = { identifier: string; credential: string };
 

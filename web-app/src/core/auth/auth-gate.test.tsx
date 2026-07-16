@@ -15,27 +15,25 @@
  * limitations under the License.
  */
 
-import { render, screen } from '@testing-library/react';
-import { I18nextProvider } from 'react-i18next';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import { describe, expect, it, vi } from 'vitest';
 
-import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
+import { SessionContext } from './session-context';
+import { AuthGate } from './auth-gate';
 
-import { NotFoundPage } from './NotFoundPage';
-
-describe('NotFoundPage', () => {
-  beforeAll(async () => {
-    await initializeI18n();
-    await loadLocale('en-US');
-  });
-
-  it('explains that the requested page is unavailable', () => {
+describe('AuthGate', () => {
+  it('lets the user retry a failed session request after the backend recovers', () => {
+    const retry = vi.fn();
     render(
-      <I18nextProvider i18n={i18n}>
-        <NotFoundPage />
-      </I18nextProvider>
+      <MemoryRouter>
+        <SessionContext.Provider value={{ loading: false, retry, session: undefined, unavailable: true }}>
+          <AuthGate />
+        </SessionContext.Provider>
+      </MemoryRouter>
     );
-    expect(screen.getByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
-    expect(screen.getByText('The requested HertzBeat page does not exist.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button'));
+    expect(retry).toHaveBeenCalledOnce();
   });
 });

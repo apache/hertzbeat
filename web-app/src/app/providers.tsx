@@ -21,7 +21,7 @@ import type { PropsWithChildren } from 'react';
 import { I18nextProvider, useTranslation } from 'react-i18next';
 
 import { i18n } from '@/core/i18n/i18n';
-import { SessionProvider } from '@/core/auth/SessionProvider';
+import { SessionProvider } from '@/core/auth/session-provider';
 import { resolveAntLocale } from '@/core/i18n/ant-locale';
 import { readRuntimeTheme } from '@/core/runtime-preferences';
 

@@ -22,7 +22,7 @@ import { useTranslation } from 'react-i18next';
 
 import { apiMessageGet, type PageResult } from '@/core/http/api-message';
 
-import styles from './BulletinPage.module.css';
+import styles from './bulletin-page.module.css';
 
 type Bulletin = {
   id: number;

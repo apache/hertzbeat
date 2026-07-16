@@ -22,7 +22,7 @@ import { useTranslation } from 'react-i18next';
 import { apiMessageGet } from '@/core/http/api-message';
 
 import { type AppCount, hasMonitorData, monitorTotals } from './dashboard-model';
-import styles from './DashboardPage.module.css';
+import styles from './dashboard-page.module.css';
 
 type DashboardSummary = { apps: AppCount[] | null };
 type AlertSummary = {
