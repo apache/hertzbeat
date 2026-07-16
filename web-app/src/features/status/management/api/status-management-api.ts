@@ -23,6 +23,8 @@ import {
   type PageResult
 } from '@/core/http/api-message';
 
+import type { StatusIncidentQuery } from '../model/status-incident-query';
+
 export type StatusOrg = {
   id?: number;
   name: string;
@@ -80,9 +82,6 @@ export type StatusIncident = {
   contents?: StatusIncidentContent[];
 };
 
-export type StatusIncidentQuery = { search: string; pageIndex: number; pageSize: number };
-export const statusIncidentPageSizes = [8, 20, 50] as const;
-
 const orgPath = '/api/status/page/org';
 const componentPath = '/api/status/page/component';
 const incidentPath = '/api/status/page/incident';
@@ -103,24 +102,6 @@ export const saveStatusIncident = (incident: StatusIncident, isNew: boolean) =>
   isNew ? apiMessagePost<void>(incidentPath, incident) : apiMessagePut<void>(incidentPath, incident);
 export const deleteStatusIncident = (id: number) => apiMessageDelete<void>(`${incidentPath}/${id}`);
 
-export function readStatusIncidentQuery(params: URLSearchParams): StatusIncidentQuery {
-  const pageIndex = readNonNegative(params.get('pageIndex'), 0);
-  const requestedSize = readNonNegative(params.get('pageSize'), 8);
-  return {
-    search: params.get('search')?.trim() ?? '',
-    pageIndex,
-    pageSize: statusIncidentPageSizes.includes(requestedSize as 8 | 20 | 50) ? requestedSize : 8
-  };
-}
-
-export function writeStatusIncidentQuery(query: StatusIncidentQuery) {
-  const params = new URLSearchParams();
-  if (query.search) params.set('search', query.search);
-  params.set('pageIndex', String(query.pageIndex));
-  params.set('pageSize', String(query.pageSize));
-  return params;
-}
-
 export function buildStatusIncidentPath(query: StatusIncidentQuery) {
   const params = new URLSearchParams({
     pageIndex: String(query.pageIndex),
@@ -128,9 +109,4 @@ export function buildStatusIncidentPath(query: StatusIncidentQuery) {
   });
   if (query.search) params.set('search', query.search);
   return `${incidentPath}?${params.toString()}`;
-}
-
-function readNonNegative(value: string | null, fallback: number) {
-  const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed >= 0 ? parsed : fallback;
 }

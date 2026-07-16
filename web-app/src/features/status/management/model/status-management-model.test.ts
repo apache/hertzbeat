@@ -16,21 +16,12 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { buildStatusIncidentPath, readStatusIncidentQuery } from '../api/status-management-api';
 import {
   buildIncidentPayload,
   incidentStateKey
 } from './status-management-model';
 
 describe('status page management model', () => {
-  it('keeps incident search and pagination in the URL contract', () => {
-    const query = readStatusIncidentQuery(new URLSearchParams('search= outage &pageIndex=2&pageSize=20'));
-    expect(query).toEqual({ search: 'outage', pageIndex: 2, pageSize: 20 });
-    expect(buildStatusIncidentPath(query)).toBe(
-      '/api/status/page/incident?pageIndex=2&pageSize=20&search=outage'
-    );
-  });
-
   it('appends one timestamped update and keeps selected component objects', () => {
     expect(buildIncidentPayload({
       incident: {

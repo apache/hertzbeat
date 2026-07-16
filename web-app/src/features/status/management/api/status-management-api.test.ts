@@ -83,4 +83,14 @@ describe('status page management API', () => {
 
     expect(apiMessageGet).toHaveBeenCalledWith('/api/status/page/incident/7', { signal: controller.signal });
   });
+
+  it('encodes incident search through URLSearchParams', async () => {
+    apiMessageGet.mockResolvedValue(undefined);
+
+    await loadStatusIncidents({ search: 'api & web?', pageIndex: 3, pageSize: 20 });
+
+    expect(apiMessageGet).toHaveBeenCalledWith(
+      '/api/status/page/incident?pageIndex=3&pageSize=20&search=api+%26+web%3F'
+    );
+  });
 });

@@ -8,11 +8,8 @@ import { Alert, Button, Empty, Popconfirm, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 
-import {
-  statusIncidentPageSizes,
-  type StatusComponent,
-  type StatusIncident
-} from '../api/status-management-api';
+import type { StatusComponent, StatusIncident } from '../api/status-management-api';
+import { statusIncidentPageSizes } from '../model/status-incident-query';
 import {
   incidentStateKey,
   latestIncidentMessage,

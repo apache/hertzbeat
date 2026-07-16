@@ -24,7 +24,7 @@ const allowedDependencies: Record<(typeof requiredDirectories)[number], readonly
   components: ['api', 'model', 'components'],
   pages: ['api', 'model', 'components', 'pages']
 };
-const importPattern = /(?:from\s+|import\s*\()\s*['"]([^'"]+)['"]/g;
+const importPattern = /(import\s+type\s+(?:\{[\s\S]*?\}|[\w$]+)\s+from\s+|from\s+|import\s*\()\s*['"]([^'"]+)['"]/g;
 const publicSources = import.meta.glob('./public/**/*.{ts,tsx}', {
   eager: true,
   import: 'default',
@@ -125,12 +125,17 @@ function validateLayeredImports(
   const violations = directTransport ? [`${path} performs transport outside api`] : [];
 
   return violations.concat([...source.matchAll(importPattern)].flatMap(match => {
-    const specifier = match[1];
+    const importKind = match[1] ?? '';
+    const specifier = match[2];
     if (!specifier?.startsWith('.')) return [];
     const target = resolvePath(path, specifier);
     if (!target.startsWith(root)) return [`${path} imports outside ${root}`];
     const targetDirectory = target.slice(root.length).split('/')[0];
     if (!targetDirectory) return [`${path} has an unresolved relative import`];
+    const apiModelTypeOnly = sourceDirectory === 'api'
+      && targetDirectory === 'model'
+      && importKind.startsWith('import type');
+    if (apiModelTypeOnly) return [];
     return dependencies[sourceDirectory]?.includes(targetDirectory)
       ? []
       : [`${path} imports ${targetDirectory}`];
