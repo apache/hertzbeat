@@ -13,11 +13,9 @@ import {
   deleteStatusIncident,
   saveStatusComponent,
   saveStatusIncident,
-  saveStatusOrg,
-  type StatusComponent,
-  type StatusIncident,
-  type StatusOrg
+  saveStatusOrg
 } from '../api/status-management-api';
+import type { StatusComponent, StatusIncident, StatusOrg } from '../model/status-management-contract';
 
 export function useStatusManagementMutations(
   org: StatusOrg | undefined,

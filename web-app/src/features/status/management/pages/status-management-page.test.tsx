@@ -25,7 +25,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { ApiMessageError } from '@/core/http/api-message';
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
-import type { StatusIncident, StatusOrg } from '../api/status-management-api';
+import type { StatusIncident, StatusOrg } from '../model/status-management-contract';
 
 const api = vi.hoisted(() => ({
   deleteStatusComponent: vi.fn(),

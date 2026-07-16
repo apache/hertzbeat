@@ -8,7 +8,7 @@ import { Alert, Button, Empty, Popconfirm, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 
-import type { StatusComponent, StatusIncident } from '../api/status-management-api';
+import type { StatusComponent, StatusIncident } from '../model/status-management-contract';
 import { statusIncidentPageSizes } from '../model/status-incident-query';
 import {
   incidentStateKey,
@@ -33,7 +33,7 @@ export function ComponentResults({ loading, error, records, onEdit, onDelete }: 
     {
       title: t('status.descriptionLabel'),
       dataIndex: 'description',
-      render: (value: string | undefined) => value || '—'
+      render: (value: string | null | undefined) => value || '—'
     },
     {
       title: t('statusManagement.method'),

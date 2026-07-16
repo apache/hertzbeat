@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { StatusComponent, StatusIncident } from '../api/status-management-api';
+import type { StatusComponent, StatusIncident } from './status-management-contract';
 
 export { isStatusOrgNotFound } from '@/features/status/shared/status-error-model';
 
@@ -26,7 +26,7 @@ export function parseLabels(value: string) {
   }));
 }
 
-export function formatLabels(labels?: Record<string, string>) {
+export function formatLabels(labels?: Record<string, string> | null) {
   return Object.entries(labels ?? {}).map(([key, value]) => `${key}=${value}`).join(', ');
 }
 

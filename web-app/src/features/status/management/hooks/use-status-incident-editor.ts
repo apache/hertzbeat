@@ -17,7 +17,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { loadStatusIncident, type StatusIncident } from '../api/status-management-api';
+import { loadStatusIncident } from '../api/status-management-api';
+import type { StatusIncident } from '../model/status-management-contract';
 
 export function useStatusIncidentEditor(reportLoadFailure: () => void) {
   const [incident, setIncident] = useState<StatusIncident>();

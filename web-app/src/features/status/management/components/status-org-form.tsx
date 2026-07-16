@@ -19,7 +19,7 @@ import { Button, Form, Input, Space } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { StatusOrg } from '../api/status-management-api';
+import type { StatusOrg } from '../model/status-management-contract';
 
 const emptyOrg: StatusOrg = { name: '', description: '', home: '', logo: '', feedback: '', color: '#5b6fd8', state: 0 };
 

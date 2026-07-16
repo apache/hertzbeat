@@ -32,12 +32,12 @@ import styles from '../components/status-management.module.css';
 import {
   loadStatusComponents,
   loadStatusIncidents,
-  loadStatusOrg,
-  type StatusComponent
+  loadStatusOrg
 } from '../api/status-management-api';
 import { useStatusManagementMutations } from '../hooks/use-status-management-mutations';
 import { useStatusIncidentEditor } from '../hooks/use-status-incident-editor';
 import { useStatusIncidentQuery } from '../hooks/use-status-incident-query';
+import type { StatusComponent } from '../model/status-management-contract';
 
 type ComponentEditorState = Partial<StatusComponent>;
 

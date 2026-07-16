@@ -32,6 +32,7 @@ vi.mock('@/core/http/api-message', () => ({
 import {
   deleteStatusComponent,
   deleteStatusIncident,
+  loadStatusComponent,
   loadStatusComponents,
   loadStatusIncident,
   loadStatusIncidents,
@@ -40,31 +41,70 @@ import {
   saveStatusIncident,
   saveStatusOrg
 } from './status-management-api';
+import { StatusManagementContractError } from '../model/status-management-contract';
+
+const org = {
+  id: 1, name: 'HertzBeat', description: 'Status', home: '/', logo: '/logo.svg', state: 0
+};
+const component = {
+  id: 3, orgId: 1, name: 'API', method: 0, configState: 0, state: 0
+};
+const incident = {
+  id: 7,
+  orgId: 1,
+  name: 'Outage',
+  state: 0,
+  startTime: 100,
+  components: [component],
+  contents: [{ id: 8, incidentId: 7, message: 'Investigating', state: 0, timestamp: 100 }]
+};
 
 describe('status page management API', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('uses the established status page endpoints and verbs', async () => {
-    apiMessageGet.mockResolvedValue(undefined);
-    apiMessagePost.mockResolvedValue(undefined);
-    apiMessagePut.mockResolvedValue(undefined);
-    apiMessageDelete.mockResolvedValue(undefined);
+    apiMessageGet.mockImplementation((path: string) => {
+      if (path === '/api/status/page/org') return Promise.resolve({ ...org, ignored: 'server-only' });
+      if (path === '/api/status/page/component') return Promise.resolve([component]);
+      if (path === '/api/status/page/component/3') return Promise.resolve(component);
+      if (path === '/api/status/page/incident/7') return Promise.resolve(incident);
+      return Promise.resolve({
+        content: [incident], totalElements: 1, totalPages: 1, number: 0, size: 8
+      });
+    });
+    apiMessagePost.mockImplementation((path: string) => Promise.resolve(
+      path === '/api/status/page/org' ? { ...org, ignored: 'server-only' } : { leaked: true }
+    ));
+    apiMessagePut.mockResolvedValue({ leaked: true });
+    apiMessageDelete.mockResolvedValue({ leaked: true });
 
-    await loadStatusOrg();
-    await saveStatusOrg({ name: 'HertzBeat', description: 'Status', home: '/', logo: '/logo.svg', state: 0 });
+    await expect(loadStatusOrg()).resolves.toEqual(org);
+    await expect(saveStatusOrg({
+      name: 'HertzBeat', description: 'Status', home: '/', logo: '/logo.svg', state: 0
+    })).resolves.toEqual(org);
     await loadStatusComponents();
-    await saveStatusComponent({ orgId: 1, name: 'API', method: 0, configState: 0, state: 0 }, true);
-    await saveStatusComponent({ id: 3, orgId: 1, name: 'API', method: 1, configState: 1, state: 0 }, false);
-    await deleteStatusComponent(3);
+    await loadStatusComponent(3);
+    await expect(saveStatusComponent({
+      orgId: 1, name: 'API', method: 0, configState: 0, state: 0
+    }, true)).resolves.toBeUndefined();
+    await expect(saveStatusComponent({
+      id: 3, orgId: 1, name: 'API', method: 1, configState: 1, state: 0
+    }, false)).resolves.toBeUndefined();
+    await expect(deleteStatusComponent(3)).resolves.toBeUndefined();
     await loadStatusIncidents({ search: '', pageIndex: 0, pageSize: 8 });
     await loadStatusIncident(7);
-    await saveStatusIncident({ orgId: 1, name: 'Outage', state: 0, components: [], contents: [] }, true);
-    await saveStatusIncident({ id: 7, orgId: 1, name: 'Outage', state: 3, components: [], contents: [] }, false);
-    await deleteStatusIncident(7);
+    await expect(saveStatusIncident({
+      orgId: 1, name: 'Outage', state: 0, components: [], contents: []
+    }, true)).resolves.toBeUndefined();
+    await expect(saveStatusIncident({
+      id: 7, orgId: 1, name: 'Outage', state: 3, components: [], contents: []
+    }, false)).resolves.toBeUndefined();
+    await expect(deleteStatusIncident(7)).resolves.toBeUndefined();
 
     expect(apiMessageGet).toHaveBeenCalledWith('/api/status/page/org');
     expect(apiMessagePost).toHaveBeenCalledWith('/api/status/page/org', expect.objectContaining({ name: 'HertzBeat' }));
     expect(apiMessageGet).toHaveBeenCalledWith('/api/status/page/component');
+    expect(apiMessageGet).toHaveBeenCalledWith('/api/status/page/component/3');
     expect(apiMessagePost).toHaveBeenCalledWith('/api/status/page/component', expect.objectContaining({ name: 'API' }));
     expect(apiMessagePut).toHaveBeenCalledWith('/api/status/page/component', expect.objectContaining({ id: 3 }));
     expect(apiMessageDelete).toHaveBeenCalledWith('/api/status/page/component/3');
@@ -75,8 +115,17 @@ describe('status page management API', () => {
     expect(apiMessageDelete).toHaveBeenCalledWith('/api/status/page/incident/7');
   });
 
+  it('rejects malformed GET data instead of returning an empty-looking result', async () => {
+    apiMessageGet.mockResolvedValue({
+      content: [], totalElements: 1, totalPages: 1, number: 1, size: 8
+    });
+
+    await expect(loadStatusIncidents({ search: '', pageIndex: 0, pageSize: 8 }))
+      .rejects.toBeInstanceOf(StatusManagementContractError);
+  });
+
   it('passes an abort signal to incident detail transport', async () => {
-    apiMessageGet.mockResolvedValue(undefined);
+    apiMessageGet.mockResolvedValue(incident);
     const controller = new AbortController();
 
     await loadStatusIncident(7, controller.signal);
@@ -85,7 +134,9 @@ describe('status page management API', () => {
   });
 
   it('encodes incident search through URLSearchParams', async () => {
-    apiMessageGet.mockResolvedValue(undefined);
+    apiMessageGet.mockResolvedValue({
+      content: [], totalElements: 0, totalPages: 0, number: 3, size: 20
+    });
 
     await loadStatusIncidents({ search: 'api & web?', pageIndex: 3, pageSize: 20 });
 

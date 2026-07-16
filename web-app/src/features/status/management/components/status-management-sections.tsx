@@ -8,8 +8,8 @@ import { Alert, Button, Input, Typography } from 'antd';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { StatusComponent, StatusIncident, StatusOrg } from '../api/status-management-api';
 import { isStatusOrgNotFound } from '../model/status-management-model';
+import type { StatusComponent, StatusIncident, StatusOrg } from '../model/status-management-contract';
 import styles from './status-management.module.css';
 import { ComponentResults, IncidentResults } from './status-management-results';
 import { StatusOrgForm } from './status-org-form';

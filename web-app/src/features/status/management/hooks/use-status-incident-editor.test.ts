@@ -18,7 +18,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { StatusIncident } from '../api/status-management-api';
+import type { StatusIncident } from '../model/status-management-contract';
 
 const { loadStatusIncident } = vi.hoisted(() => ({ loadStatusIncident: vi.fn() }));
 vi.mock('../api/status-management-api', async importOriginal => ({

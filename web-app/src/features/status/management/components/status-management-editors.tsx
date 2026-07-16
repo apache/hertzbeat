@@ -18,13 +18,13 @@
 import { Form, Input, List, Modal, Radio, Select, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { StatusComponent, StatusIncident } from '../api/status-management-api';
 import {
   buildIncidentPayload,
   formatLabels,
   incidentStateKey,
   parseLabels
 } from '../model/status-management-model';
+import type { StatusComponent, StatusIncident } from '../model/status-management-contract';
 
 type ComponentFormValue = StatusComponent & { labelText?: string };
 

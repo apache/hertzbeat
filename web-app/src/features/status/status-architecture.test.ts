@@ -69,8 +69,8 @@ describe('Public Status boundaries', () => {
 describe('Status Management boundaries', () => {
   const managementDirectories = [...requiredDirectories, 'hooks'] as const;
   const managementDependencies: Record<(typeof managementDirectories)[number], readonly string[]> = {
-    api: ['api'],
-    model: ['api', 'model'],
+    api: ['api', 'model'],
+    model: ['model'],
     hooks: ['api', 'model', 'hooks'],
     components: ['api', 'model', 'hooks', 'components'],
     pages: ['api', 'model', 'hooks', 'components', 'pages']
@@ -84,7 +84,7 @@ describe('Status Management boundaries', () => {
     expect(paths.filter(path => path.slice('./management/'.length).includes('/') === false)).toEqual([]);
   });
 
-  it('keeps transport in API and imports flowing inward', () => {
+  it('keeps transport in API and keeps the domain model independent from API', () => {
     const violations = Object.entries(managementSources)
       .filter(([path]) => !path.includes('.test.'))
       .flatMap(([path, source]) => validateLayeredImports(

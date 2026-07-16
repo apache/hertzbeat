@@ -19,88 +19,53 @@ import {
   apiMessageDelete,
   apiMessageGet,
   apiMessagePost,
-  apiMessagePut,
-  type PageResult
+  apiMessagePut
 } from '@/core/http/api-message';
 
 import type { StatusIncidentQuery } from '../model/status-incident-query';
-
-export type StatusOrg = {
-  id?: number;
-  name: string;
-  description: string;
-  home: string;
-  logo: string;
-  feedback?: string;
-  color?: string;
-  state: number;
-  creator?: string;
-  modifier?: string;
-  gmtCreate?: string;
-  gmtUpdate?: string;
-};
-
-export type StatusComponent = {
-  id?: number;
-  orgId: number;
-  name: string;
-  description?: string;
-  labels?: Record<string, string>;
-  method: number;
-  configState: number;
-  state: number;
-  creator?: string;
-  modifier?: string;
-  gmtCreate?: string;
-  gmtUpdate?: string;
-};
-
-export type StatusIncidentContent = {
-  id?: number;
-  incidentId?: number;
-  message: string;
-  state: number;
-  timestamp: number;
-  creator?: string;
-  modifier?: string;
-  gmtCreate?: string;
-  gmtUpdate?: string;
-};
-
-export type StatusIncident = {
-  id?: number;
-  orgId: number;
-  name: string;
-  state: number;
-  startTime?: number;
-  endTime?: number;
-  creator?: string;
-  modifier?: string;
-  gmtCreate?: string;
-  gmtUpdate?: string;
-  components?: StatusComponent[];
-  contents?: StatusIncidentContent[];
-};
+import {
+  parseStatusComponentDetail,
+  parseStatusComponents,
+  parseStatusIncidentDetail,
+  parseStatusIncidentPage,
+  parseStatusOrg,
+  type StatusComponent,
+  type StatusIncident,
+  type StatusOrg
+} from '../model/status-management-contract';
 
 const orgPath = '/api/status/page/org';
 const componentPath = '/api/status/page/component';
 const incidentPath = '/api/status/page/incident';
 
-export const loadStatusOrg = () => apiMessageGet<StatusOrg>(orgPath);
-export const saveStatusOrg = (org: StatusOrg) => apiMessagePost<StatusOrg>(orgPath, org);
-export const loadStatusComponents = () => apiMessageGet<StatusComponent[]>(componentPath);
-export const saveStatusComponent = (component: StatusComponent, isNew: boolean) =>
-  isNew ? apiMessagePost<void>(componentPath, component) : apiMessagePut<void>(componentPath, component);
-export const deleteStatusComponent = (id: number) => apiMessageDelete<void>(`${componentPath}/${id}`);
-export const loadStatusIncidents = (query: StatusIncidentQuery) =>
-  apiMessageGet<PageResult<StatusIncident>>(buildStatusIncidentPath(query));
-export const loadStatusIncident = (id: number, signal?: AbortSignal) =>
+export const loadStatusOrg = async () => parseStatusOrg(await apiMessageGet<unknown>(orgPath));
+export const saveStatusOrg = async (org: StatusOrg) =>
+  parseStatusOrg(await apiMessagePost<unknown>(orgPath, org));
+export const loadStatusComponents = async () =>
+  parseStatusComponents(await apiMessageGet<unknown>(componentPath));
+export const loadStatusComponent = async (id: number) =>
+  parseStatusComponentDetail(await apiMessageGet<unknown>(`${componentPath}/${id}`));
+export const saveStatusComponent = async (component: StatusComponent, isNew: boolean) => {
+  if (isNew) await apiMessagePost<unknown>(componentPath, component);
+  else await apiMessagePut<unknown>(componentPath, component);
+};
+export const deleteStatusComponent = async (id: number) => {
+  await apiMessageDelete<unknown>(`${componentPath}/${id}`);
+};
+export const loadStatusIncidents = async (query: StatusIncidentQuery) =>
+  parseStatusIncidentPage(await apiMessageGet<unknown>(buildStatusIncidentPath(query)), query);
+export const loadStatusIncident = async (id: number, signal?: AbortSignal) => parseStatusIncidentDetail(
   signal
-    ? apiMessageGet<StatusIncident>(`${incidentPath}/${id}`, { signal })
-    : apiMessageGet<StatusIncident>(`${incidentPath}/${id}`);
-export const saveStatusIncident = (incident: StatusIncident, isNew: boolean) =>
-  isNew ? apiMessagePost<void>(incidentPath, incident) : apiMessagePut<void>(incidentPath, incident);
-export const deleteStatusIncident = (id: number) => apiMessageDelete<void>(`${incidentPath}/${id}`);
+    ? await apiMessageGet<unknown>(`${incidentPath}/${id}`, { signal })
+    : await apiMessageGet<unknown>(`${incidentPath}/${id}`)
+);
+export const saveStatusIncident = async (incident: StatusIncident, isNew: boolean) => {
+  if (isNew) await apiMessagePost<unknown>(incidentPath, incident);
+  else await apiMessagePut<unknown>(incidentPath, incident);
+};
+export const deleteStatusIncident = async (id: number) => {
+  await apiMessageDelete<unknown>(`${incidentPath}/${id}`);
+};
 
 export function buildStatusIncidentPath(query: StatusIncidentQuery) {
   const params = new URLSearchParams({
