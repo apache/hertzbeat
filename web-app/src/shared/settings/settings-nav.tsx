@@ -19,6 +19,7 @@ const settingsRoutes = [
   { value: settingsPaths.system, labelKey: 'settingsNavigation.system' },
   { value: settingsPaths.labels, labelKey: 'settingsNavigation.labels' },
   { value: settingsPaths.objectStore, labelKey: 'settingsNavigation.objectStore' },
+  { value: settingsPaths.statusPage, labelKey: 'settingsNavigation.statusPage' }
 ] as const;
 
 function activeSettingsRoute(pathname: string) {

@@ -30,6 +30,11 @@ const publicSources = import.meta.glob('./public/**/*.{ts,tsx}', {
   import: 'default',
   query: '?raw'
 });
+const managementSources = import.meta.glob('./management/**/*.{ts,tsx}', {
+  eager: true,
+  import: 'default',
+  query: '?raw'
+});
 const entrySources = import.meta.glob('./index.ts', { eager: true, import: 'default', query: '?raw' });
 const routerSources = import.meta.glob('../../app/router.tsx', { eager: true, import: 'default', query: '?raw' });
 
@@ -61,9 +66,60 @@ describe('Public Status boundaries', () => {
   });
 });
 
+describe('Status Management boundaries', () => {
+  const managementDirectories = [...requiredDirectories, 'hooks'] as const;
+  const managementDependencies: Record<(typeof managementDirectories)[number], readonly string[]> = {
+    api: ['api'],
+    model: ['api', 'model'],
+    hooks: ['api', 'model', 'hooks'],
+    components: ['api', 'model', 'hooks', 'components'],
+    pages: ['api', 'model', 'hooks', 'components', 'pages']
+  };
+
+  it('uses explicit feature-local layers with a real mutation hook', () => {
+    const paths = Object.keys(managementSources).filter(path => !path.includes('.test.'));
+
+    expect(managementDirectories.filter(directory => !paths.some(path => path.startsWith(`./management/${directory}/`))))
+      .toEqual([]);
+    expect(paths.filter(path => path.slice('./management/'.length).includes('/') === false)).toEqual([]);
+  });
+
+  it('keeps transport in API and imports flowing inward', () => {
+    const violations = Object.entries(managementSources)
+      .filter(([path]) => !path.includes('.test.'))
+      .flatMap(([path, source]) => validateLayeredImports(
+        path,
+        source,
+        './management/',
+        managementDirectories,
+        managementDependencies
+      ));
+
+    expect(violations).toEqual([]);
+  });
+
+  it('exposes the management page through the Status root entry', () => {
+    const entry = Object.values(entrySources)[0] ?? '';
+    const router = Object.values(routerSources)[0] ?? '';
+
+    expect(entry).toContain("export { StatusManagementPage } from './management/pages/status-management-page'");
+    expect(router).not.toContain('@/features/status/management/');
+  });
+});
+
 function validateImports(path: string, source: string) {
-  const root = './public/';
-  const sourceDirectory = path.slice(root.length).split('/')[0] as (typeof requiredDirectories)[number];
+  return validateLayeredImports(path, source, './public/', requiredDirectories, allowedDependencies);
+}
+
+function validateLayeredImports(
+  path: string,
+  source: string,
+  root: string,
+  directories: readonly string[],
+  dependencies: Record<string, readonly string[]>
+) {
+  const sourceDirectory = path.slice(root.length).split('/')[0] ?? '';
+  if (!directories.includes(sourceDirectory)) return [`${path} has an unknown layer`];
   const directTransport = sourceDirectory !== 'api'
     && /\b(?:fetch|apiFetch|apiMessage(?:Get|Post|Put|Delete))\s*\(/.test(source);
   const violations = directTransport ? [`${path} performs transport outside api`] : [];
@@ -72,10 +128,10 @@ function validateImports(path: string, source: string) {
     const specifier = match[1];
     if (!specifier?.startsWith('.')) return [];
     const target = resolvePath(path, specifier);
-    if (!target.startsWith(root)) return [`${path} imports outside public`];
+    if (!target.startsWith(root)) return [`${path} imports outside ${root}`];
     const targetDirectory = target.slice(root.length).split('/')[0];
     if (!targetDirectory) return [`${path} has an unresolved relative import`];
-    return allowedDependencies[sourceDirectory].includes(targetDirectory)
+    return dependencies[sourceDirectory]?.includes(targetDirectory)
       ? []
       : [`${path} imports ${targetDirectory}`];
   }));

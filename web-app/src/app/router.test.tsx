@@ -48,6 +48,7 @@ describe('application data router', () => {
         '/settings/system',
         '/settings/labels',
         '/settings/storage/object-store',
+        '/settings/status-page',
         '/alerts/notifications/receivers',
         '/alerts/notifications/rules',
         '/alerts/notifications/templates',
@@ -55,6 +56,7 @@ describe('application data router', () => {
         '/setting/settings/config',
         '/setting/labels',
         '/setting/settings/object-store',
+        '/setting/status',
         '/bulletin',
         '*'
       ])

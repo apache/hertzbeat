@@ -16,3 +16,4 @@
  */
 
 export { PublicStatusPage } from './public/pages/public-status-page';
+export { StatusManagementPage } from './management/pages/status-management-page';

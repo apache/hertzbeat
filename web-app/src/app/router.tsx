@@ -239,6 +239,14 @@ export const appRoutes: RouteObject[] = [
                 }
               },
               {
+                id: 'status-management',
+                path: settingsPaths.statusPage,
+                lazy: async () => {
+                  const { StatusManagementPage } = await import('@/features/status');
+                  return { Component: StatusManagementPage };
+                }
+              },
+              {
                 id: 'settings',
                 path: settingsPaths.root,
                 element: <Navigate replace to={settingsPaths.receivers} />
@@ -277,6 +285,11 @@ export const appRoutes: RouteObject[] = [
                 id: 'legacy-object-store',
                 path: legacySettingsPaths.objectStore,
                 element: <LegacySettingsRedirect to={settingsPaths.objectStore} />
+              },
+              {
+                id: 'legacy-status-management',
+                path: legacySettingsPaths.statusPage,
+                element: <LegacySettingsRedirect to={settingsPaths.statusPage} />
               },
               {
                 id: 'bulletin',

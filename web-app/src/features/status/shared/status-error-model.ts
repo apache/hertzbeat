@@ -15,15 +15,14 @@
  * limitations under the License.
  */
 
-import { isStatusOrgNotFound } from '@/features/status/shared/status-error-model';
+import { ApiMessageError } from '@/core/http/api-message';
 
-export { isStatusOrgNotFound } from '@/features/status/shared/status-error-model';
+const STATUS_ORG_NOT_FOUND_CODE = 15;
+const STATUS_ORG_NOT_FOUND_MESSAGE = 'Status Page Organization Not Found';
 
-export type PublicStatusState = 'ready' | 'unconfigured' | 'unavailable';
-
-export function publicStatusState(orgError: unknown, componentsError: unknown,
-                                  incidentsError: unknown): PublicStatusState {
-  if (isStatusOrgNotFound(orgError) && !componentsError && !incidentsError) return 'unconfigured';
-  if (orgError || componentsError || incidentsError) return 'unavailable';
-  return 'ready';
+export function isStatusOrgNotFound(error: unknown) {
+  return error instanceof ApiMessageError
+    && error.code === STATUS_ORG_NOT_FOUND_CODE
+    && error.status === 200
+    && error.message === STATUS_ORG_NOT_FOUND_MESSAGE;
 }

@@ -17,6 +17,8 @@
 
 import type { StatusComponent, StatusIncident } from '../api/status-management-api';
 
+export { isStatusOrgNotFound } from '@/features/status/shared/status-error-model';
+
 export function parseLabels(value: string) {
   return Object.fromEntries(value.split(',').map(item => item.trim()).filter(Boolean).map(item => {
     const separator = item.indexOf('=');

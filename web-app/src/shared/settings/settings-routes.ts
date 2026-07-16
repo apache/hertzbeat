@@ -14,6 +14,7 @@ export const settingsPaths = {
   system: '/settings/system',
   labels: '/settings/labels',
   objectStore: '/settings/storage/object-store',
+  statusPage: '/settings/status-page'
 } as const;
 
 export const legacySettingsPaths = {
@@ -24,4 +25,5 @@ export const legacySettingsPaths = {
   system: '/setting/settings/config',
   labels: '/setting/labels',
   objectStore: '/setting/settings/object-store',
+  statusPage: '/setting/status'
 } as const;

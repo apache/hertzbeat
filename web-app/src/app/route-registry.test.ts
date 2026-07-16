@@ -49,6 +49,7 @@ describe('route registry', () => {
         '/settings/system',
         '/settings/labels',
         '/settings/storage/object-store',
+        '/settings/status-page',
         '/bulletin',
         '/status',
         '/passport/login'
