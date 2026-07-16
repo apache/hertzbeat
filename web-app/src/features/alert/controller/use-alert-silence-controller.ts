@@ -43,18 +43,18 @@ export function useAlertSilenceController() {
   const source = writeAlertSilenceQuery(query).toString();
   const [searchState, setSearchState] = useState({ source, value: query.search });
   const [draft, setDraft] = useState<AlertSilenceDraft | null>(null);
-  const [busy, setBusy] = useState(false);
   const intent = useRef(0);
   const editRequest = useRef<AbortController | null>(null);
-  const locked = useRef(false);
   const search = searchState.source === source ? searchState.value : query.search;
-  const { list, overflow } = useAlertSilenceList(query);
+  const { list, overflow } = useAlertSilenceList(query, setParams);
   useEditAbortCleanup(intent, editRequest);
   const updateQuery = (patch: Partial<AlertSilenceQuery>) => setParams(writeAlertSilenceQuery({ ...query, ...patch }));
   const rereadList = () => queryClient.fetchQuery({
     queryKey: listKey(query), queryFn: ({ signal }) => loadAlertSilences(query, signal), staleTime: 0
   });
+  const mutations = useAlertSilenceMutations(draft, setDraft, intent, rereadList);
   const edit = async (id: number) => {
+    if (mutations.isLocked()) return;
     editRequest.current?.abort();
     const request = new AbortController();
     editRequest.current = request;
@@ -66,6 +66,76 @@ export function useAlertSilenceController() {
       if (!request.signal.aborted && intent.current === token) void message.error(t('alertSilences.loadFailed'));
     }
   };
+  return {
+    state: { query, search, draft, busy: mutations.busy, refreshing: list.isFetching,
+      list: resolveListEvidence(list.isPending, list.error, list.data, Boolean(overflow)) },
+    actions: {
+      setSearch: (value: string) => setSearchState({ source, value }),
+      submitSearch: () => updateQuery({ search: search.trim(), pageIndex: 0 }),
+      changePage: (page: number, pageSize: number) => updateQuery({ pageIndex: page - 1, pageSize }),
+      refresh: () => rereadList().then(() => undefined).catch(() => undefined),
+      create: () => {
+        if (mutations.isLocked()) return;
+        editRequest.current?.abort();
+        intent.current += 1;
+        setDraft(createAlertSilenceDraft());
+      },
+      edit,
+      cancel: () => {
+        if (mutations.isLocked()) return;
+        editRequest.current?.abort();
+        intent.current += 1;
+        setDraft(null);
+      },
+      updateDraft: (patch: Partial<AlertSilenceDraft>) => {
+        if (mutations.isLocked()) return;
+        setDraft(current => current ? { ...current, ...patch } : current);
+      },
+      replaceDraft: (replacement: AlertSilenceDraft) => {
+        if (mutations.isLocked()) return;
+        setDraft(replacement);
+      },
+      save: mutations.save, toggle: mutations.toggle, remove: mutations.remove
+    }
+  };
+}
+
+function useAlertSilenceList(query: AlertSilenceQuery, setParams: ReturnType<typeof useSearchParams>[1]) {
+  const list = useQuery({
+    queryKey: listKey(query), queryFn: ({ signal }) => loadAlertSilences(query, signal), retry: false
+  });
+  const overflow = list.data && list.data.content.length === 0 && list.data.totalElements > 0
+    && query.pageIndex >= list.data.totalPages;
+  const totalPages = list.data?.totalPages;
+  useEffect(() => {
+    if (!overflow || totalPages === undefined) return;
+    setParams(writeAlertSilenceQuery({ search: query.search, pageSize: query.pageSize,
+      pageIndex: Math.max(0, totalPages - 1) }), { replace: true });
+  }, [overflow, query.pageSize, query.search, setParams, totalPages]);
+  return { list, overflow: Boolean(overflow) };
+}
+
+function useAlertSilenceMutations(draft: AlertSilenceDraft | null,
+  setDraft: (draft: AlertSilenceDraft | null) => void, intentRef: RefObject<number>,
+  rereadList: () => Promise<AlertSilencePage>) {
+  const { t } = useTranslation();
+  const { message } = App.useApp();
+  const [busy, setBusy] = useState(false);
+  const locked = useRef(false);
+  const operate = async (operation: () => Promise<void>) => {
+    if (locked.current) return;
+    locked.current = true;
+    setBusy(true);
+    try {
+      await operation();
+      void message.success(t('alertSilences.operationSuccess'));
+    } catch {
+      void message.error(t('alertSilences.operationFailed'));
+    } finally {
+      locked.current = false;
+      setBusy(false);
+    }
+  };
   const save = async () => {
     if (locked.current) return;
     const current = draft;
@@ -73,18 +143,20 @@ export function useAlertSilenceController() {
       void message.warning(t('alertSilences.validation'));
       return;
     }
-    locked.current = true; setBusy(true);
+    locked.current = true;
+    setBusy(true);
     try {
       await saveAlertSilence(current);
       if (current.id) requireDraftConvergence(await loadAlertSilence(current.id), current);
       await rereadList();
       setDraft(null);
-      intent.current += 1;
+      intentRef.current += 1;
       void message.success(t('alertSilences.saveSuccess'));
     } catch {
       void message.error(t('alertSilences.saveFailed'));
     } finally {
-      locked.current = false; setBusy(false);
+      locked.current = false;
+      setBusy(false);
     }
   };
   const toggle = (silence: AlertSilence, enabled: boolean) => operate(async () => {
@@ -105,50 +177,7 @@ export function useAlertSilenceController() {
     }
     throw new Error('Deleted silence still exists');
   });
-  const operate = async (operation: () => Promise<void>) => {
-    if (locked.current) return;
-    locked.current = true; setBusy(true);
-    try {
-      await operation();
-      void message.success(t('alertSilences.operationSuccess'));
-    } catch {
-      void message.error(t('alertSilences.operationFailed'));
-    } finally {
-      locked.current = false; setBusy(false);
-    }
-  };
-  return {
-    state: { query, search, draft, busy, refreshing: list.isFetching,
-      list: resolveListEvidence(list.isPending, list.error, list.data, Boolean(overflow)) },
-    actions: {
-      setSearch: (value: string) => setSearchState({ source, value }),
-      submitSearch: () => updateQuery({ search: search.trim(), pageIndex: 0 }),
-      changePage: (page: number, pageSize: number) => updateQuery({ pageIndex: page - 1, pageSize }),
-      refresh: () => rereadList().then(() => undefined).catch(() => undefined),
-      create: () => { editRequest.current?.abort(); intent.current += 1; setDraft(createAlertSilenceDraft()); },
-      edit,
-      cancel: () => { editRequest.current?.abort(); intent.current += 1; setDraft(null); },
-      updateDraft: (patch: Partial<AlertSilenceDraft>) => setDraft(current => current ? { ...current, ...patch } : current),
-      replaceDraft: (replacement: AlertSilenceDraft) => setDraft(replacement),
-      save, toggle, remove
-    }
-  };
-}
-
-function useAlertSilenceList(query: AlertSilenceQuery) {
-  const [, setParams] = useSearchParams();
-  const list = useQuery({
-    queryKey: listKey(query), queryFn: ({ signal }) => loadAlertSilences(query, signal), retry: false
-  });
-  const overflow = list.data && list.data.content.length === 0 && list.data.totalElements > 0
-    && query.pageIndex >= list.data.totalPages;
-  const totalPages = list.data?.totalPages;
-  useEffect(() => {
-    if (!overflow || totalPages === undefined) return;
-    setParams(writeAlertSilenceQuery({ search: query.search, pageSize: query.pageSize,
-      pageIndex: Math.max(0, totalPages - 1) }), { replace: true });
-  }, [overflow, query.pageSize, query.search, setParams, totalPages]);
-  return { list, overflow: Boolean(overflow) };
+  return { busy, isLocked: () => locked.current, save, toggle, remove };
 }
 
 function useEditAbortCleanup(intent: RefObject<number>, editRequest: RefObject<AbortController | null>) {

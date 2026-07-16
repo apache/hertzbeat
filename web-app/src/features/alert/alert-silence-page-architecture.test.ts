@@ -18,10 +18,16 @@
 import { describe, expect, it } from 'vitest';
 
 import pageSource from './alert-silence-page.tsx?raw';
+import controllerSource from './controller/use-alert-silence-controller.ts?raw';
 
 describe('AlertSilencePage architecture', () => {
   it('keeps TanStack, transport, Router state, and notifications in the controller', () => {
     expect(pageSource).not.toMatch(/@tanstack\/react-query|alert-silence-api|useSearchParams|App\.useApp/);
     expect(pageSource).toMatch(/useAlertSilenceController/);
+  });
+
+  it('owns Router state once and does not compress state transitions to meet line limits', () => {
+    expect(controllerSource.match(/useSearchParams\(/g)).toHaveLength(1);
+    expect(controllerSource).not.toMatch(/;[^\S\r\n]*setBusy\(/);
   });
 });

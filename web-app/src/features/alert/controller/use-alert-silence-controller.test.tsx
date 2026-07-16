@@ -167,6 +167,41 @@ describe('useAlertSilenceController', () => {
     await act(async () => { resolveSave(); await Promise.all([first, second]); });
   });
 
+  it('does not replace an in-flight save draft with a new draft', async () => {
+    let resolveSave!: () => void;
+    api.saveAlertSilence.mockReturnValue(new Promise<void>(resolve => { resolveSave = resolve; }));
+    const view = renderController(['/alerts/silences'], 0);
+    await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
+    act(() => view.result.current.controller.actions.create());
+    act(() => view.result.current.controller.actions.updateDraft({ name: 'Created' }));
+    let save!: Promise<void>;
+    act(() => { save = view.result.current.controller.actions.save(); });
+    await waitFor(() => expect(view.result.current.controller.state.busy).toBe(true));
+    act(() => view.result.current.controller.actions.create());
+    expect(view.result.current.controller.state.draft).toMatchObject({ name: 'Created' });
+    await act(async () => { resolveSave(); await save; });
+  });
+
+  it('does not update or replace controlled draft values while save is in flight', async () => {
+    let resolveSave!: () => void;
+    api.saveAlertSilence.mockReturnValue(new Promise<void>(resolve => { resolveSave = resolve; }));
+    const view = renderController(['/alerts/silences'], 0);
+    await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
+    act(() => view.result.current.controller.actions.create());
+    act(() => view.result.current.controller.actions.updateDraft({ name: 'Created' }));
+    let save!: Promise<void>;
+    act(() => { save = view.result.current.controller.actions.save(); });
+    await waitFor(() => expect(view.result.current.controller.state.busy).toBe(true));
+    act(() => {
+      view.result.current.controller.actions.updateDraft({ name: 'Late update' });
+      view.result.current.controller.actions.replaceDraft({
+        ...view.result.current.controller.state.draft!, name: 'Late replacement'
+      });
+    });
+    expect(view.result.current.controller.state.draft).toMatchObject({ name: 'Created' });
+    await act(async () => { resolveSave(); await save; });
+  });
+
   it('requires toggle convergence and delete missing proof before list reread', async () => {
     const view = renderController(['/alerts/silences'], 0);
     await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));

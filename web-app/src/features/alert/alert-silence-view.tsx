@@ -32,7 +32,7 @@ export function AlertSilenceView({ state, actions }: { state: AlertSilenceViewSt
     <header className={styles.heading}><div>
       <Typography.Title level={2}>{t('alertSilences.title')}</Typography.Title>
       <Typography.Text type="secondary">{t('alertSilences.description')}</Typography.Text>
-    </div><Button type="primary" onClick={actions.create}>{t('alertSilences.new')}</Button></header>
+    </div><Button type="primary" disabled={state.busy} onClick={actions.create}>{t('alertSilences.new')}</Button></header>
     <AlertManagementNav /><AlertNoiseControlNav />
     <AlertSilenceToolbar search={state.search} refreshing={state.refreshing} setSearch={actions.setSearch}
       submit={actions.submitSearch} refresh={actions.refresh} />

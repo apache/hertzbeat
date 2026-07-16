@@ -124,6 +124,23 @@ describe('AlertSilencePage', () => {
     ));
   });
 
+  it('disables New silence while a save is in flight', async () => {
+    let resolveSave!: () => void;
+    api.saveAlertSilence.mockReturnValue(new Promise<void>(resolve => { resolveSave = resolve; }));
+    renderPage();
+    await screen.findByText('Database maintenance');
+    const create = screen.getByRole('button', { name: 'New silence' });
+    fireEvent.click(create);
+    const dialog = screen.getByRole('dialog');
+    fireEvent.change(within(dialog).getByLabelText('Policy'), { target: { value: 'Planned maintenance' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(api.saveAlertSilence).toHaveBeenCalled());
+    expect(create).toBeDisabled();
+    resolveSave();
+    await waitFor(() => expect(create).toBeEnabled());
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
   it('loads an edit before saving and deletes through the batch endpoint', async () => {
     renderPage();
     const row = await screen.findByRole('row', { name: /Database maintenance/ });
