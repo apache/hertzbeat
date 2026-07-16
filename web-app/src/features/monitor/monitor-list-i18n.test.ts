@@ -15,49 +15,18 @@
  * limitations under the License.
  */
 
-.page {
-  display: grid;
-  gap: 20px;
-}
+import { describe, expect, it } from 'vitest';
 
-.heading :global(.ant-typography) {
-  margin: 0;
-}
+import en from '@/assets/i18n/en-us.json';
+import ja from '@/assets/i18n/ja-jp.json';
+import pt from '@/assets/i18n/pt-br.json';
+import zhCn from '@/assets/i18n/zh-cn.json';
+import zhTw from '@/assets/i18n/zh-tw.json';
 
-.toolbar {
-  display: grid;
-  grid-template-columns: minmax(160px, 1fr) minmax(150px, 200px) 140px minmax(150px, 200px) auto auto auto;
-  gap: 8px;
-}
-
-.name {
-  min-width: 0;
-}
-
-.name strong,
-.name span {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.bulk {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 40px;
-  border-block: 1px solid var(--ant-color-border-secondary);
-  padding-block: 8px;
-}
-
-.name span {
-  color: var(--ant-color-text-secondary);
-  font-size: 12px;
-}
-
-@media (max-width: 900px) {
-  .toolbar {
-    grid-template-columns: 1fr 1fr;
-  }
-}
+describe('Monitor list locale coverage', () => {
+  it('provides the label filter copy in every runtime locale', () => {
+    for (const locale of [en, ja, pt, zhCn, zhTw]) {
+      expect(locale.labels.filter).toBeTruthy();
+    }
+  });
+});

@@ -137,6 +137,7 @@ export function MonitorListPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryState = readMonitorQuery(searchParams);
   const [draftSearch, setDraftSearch] = useState(queryState.search);
+  const [draftLabels, setDraftLabels] = useState(queryState.labels);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const monitors = useQuery({ queryKey: ['monitors', queryState], queryFn: () => loadMonitors(queryState) });
   const apps = useQuery({ queryKey: ['monitor-apps'], queryFn: loadMonitorApps });
@@ -155,6 +156,7 @@ export function MonitorListPage() {
     const next = { ...queryState, ...patch };
     setSearchParams(writeMonitorQuery(next));
   };
+  const submitFilters = () => updateQuery({ search: draftSearch.trim(), labels: draftLabels.trim(), pageIndex: 0 });
   const runAction: ActionRunner = (action, ids) => mutation.mutate({ action, ids });
   const columns = buildMonitorColumns(t, path => void navigate(path), runAction, `${location.pathname}${location.search}`);
 
@@ -170,7 +172,7 @@ export function MonitorListPage() {
           allowClear
           placeholder={t('monitor.search')}
           onChange={event => setDraftSearch(event.target.value)}
-          onPressEnter={() => updateQuery({ search: draftSearch.trim(), pageIndex: 0 })}
+          onPressEnter={submitFilters}
         />
         <Select
           allowClear
@@ -187,7 +189,14 @@ export function MonitorListPage() {
           { value: '2', label: t('monitor.status.unavailable') },
           { value: '0', label: t('monitor.status.paused') }
         ]} />
-        <Button type="primary" onClick={() => updateQuery({ search: draftSearch.trim(), pageIndex: 0 })}>{t('common.query')}</Button>
+        <Input
+          value={draftLabels}
+          allowClear
+          placeholder={t('labels.filter')}
+          onChange={event => setDraftLabels(event.target.value)}
+          onPressEnter={submitFilters}
+        />
+        <Button type="primary" onClick={submitFilters}>{t('common.query')}</Button>
         <Button onClick={() => void monitors.refetch()}>{t('common.refresh')}</Button>
         <Button type="primary" onClick={() => void navigate('/monitors/new')}>{t('monitor.editor.newTitle')}</Button>
       </div>
