@@ -15,29 +15,43 @@
  * limitations under the License.
  */
 
-import { useQuery } from '@tanstack/react-query';
-import { Alert, Button, Empty, Input, Select, Table, Tag, Typography } from 'antd';
+import { Alert, Button, Empty, Input, Select, Skeleton, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { loadAlertGroups, loadAlertSummary, type AlertGroup, type AlertPage, type AlertSummary } from './alert-api';
-import { alertPageSizes, alertStatusColor, readAlertQuery, writeAlertQuery } from './alert-model';
+import {
+  alertPageSizes,
+  alertSeverities,
+  alertStatusColor,
+  alertStatusFilters,
+  type AlertGroup,
+  type AlertSeverity,
+  type AlertStatus,
+  type AlertStatusFilter,
+  type AlertSummary
+} from './alert-model';
 import { AlertManagementNav } from './alert-management-nav';
 import styles from './alert-center-page.module.css';
+import {
+  useAlertCenterController,
+  type AlertListState,
+  type AlertSummaryState
+} from './controller/use-alert-center-controller';
 
 type Translator = (key: string) => string;
 
-function formatTime(value?: number | string | null) {
-  if (value == null) return '—';
-  const timestamp = typeof value === 'number' ? value : Date.parse(value);
-  if (!Number.isFinite(timestamp)) return '—';
-  return new Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'medium' }).format(timestamp);
-}
-
 function alertName(row: AlertGroup) {
   return row.commonLabels?.alertname || row.groupLabels?.alertname || `#${row.id}`;
+}
+
+function statusLabel(t: Translator, status: AlertStatus) {
+  return t(`alert.status.${status}`);
+}
+
+function severityLabel(t: Translator, severity: string | undefined) {
+  return severity && alertSeverities.includes(severity as Exclude<AlertSeverity, ''>)
+    ? t(`alert.severity.${severity}`)
+    : t('alert.status.unknown');
 }
 
 function buildColumns(t: Translator): ColumnsType<AlertGroup> {
@@ -47,95 +61,114 @@ function buildColumns(t: Translator): ColumnsType<AlertGroup> {
       title: t('alert.status.label'),
       dataIndex: 'status',
       width: 150,
-      render: (value?: string) => <Tag color={alertStatusColor(value)}>{value || t('alert.status.unknown')}</Tag>
+      render: (value: AlertStatus) => <Tag color={alertStatusColor(value)}>{statusLabel(t, value)}</Tag>
     },
     {
       title: t('alert.severity.label'),
       width: 140,
-      render: (_value, row) => row.commonLabels?.severity || '—'
+      render: (_value, row) => severityLabel(t, row.commonLabels?.severity)
     },
     {
       title: t('alert.labels'),
       render: (_value, row) => (
         <div className={styles.labels}>
-          {Object.entries(row.commonLabels ?? {}).slice(0, 4).map(([key, value]) => (
+          {Object.entries(row.commonLabels ?? {}).filter(([key]) => key !== 'severity').slice(0, 4).map(([key, value]) => (
             <Tag key={key}>{key}={value}</Tag>
           ))}
         </div>
       )
     },
-    { title: t('alert.updated'), dataIndex: 'gmtUpdate', width: 190, render: formatTime }
+    {
+      title: t('alert.updated'),
+      dataIndex: 'gmtUpdate',
+      width: 190,
+      render: (value: AlertGroup['gmtUpdate']) => value ?? '—'
+    }
   ];
 }
 
-function SummaryStrip({ summary, failed }: { summary: AlertSummary | undefined; failed: boolean }) {
+function SummaryStrip({ state, retry }: { state: AlertSummaryState; retry: () => unknown }) {
   const { t } = useTranslation();
-  if (failed) return <Alert type="warning" showIcon message={t('alert.summaryUnavailable')} />;
-  if (!summary) return null;
+  if (state.kind === 'loading') return <Skeleton active paragraph={false} />;
+  if (state.kind === 'unavailable') {
+    return <Alert type="warning" showIcon message={t('alert.summaryUnavailable')} action={<Retry onClick={retry} />} />;
+  }
+  if (state.kind === 'error') {
+    return <Alert type="error" showIcon message={t('alert.summaryLoadFailed')} action={<Retry onClick={retry} />} />;
+  }
+  return <SummaryValues summary={state.summary} />;
+}
+
+function SummaryValues({ summary }: { summary: AlertSummary }) {
+  const { t } = useTranslation();
   const items = [
     ['alert.summary.total', summary.total],
-    ['alert.summary.acknowledged', summary.dealNum],
+    ['alert.summary.nonFiring', summary.dealNum],
     ['alert.summary.warning', summary.priorityWarningNum],
     ['alert.summary.critical', summary.priorityCriticalNum],
     ['alert.summary.emergency', summary.priorityEmergencyNum]
   ] as const;
   return (
-    <div className={styles.summary}>
-      {items.map(([key, value]) => (
-        <div className={styles.metric} key={key}>
-          <span>{t(key)}</span>
-          <strong>{value}</strong>
-        </div>
-      ))}
-    </div>
+    <section aria-label={t('alert.summary.scope')}>
+      <Typography.Text type="secondary">{t('alert.summary.scope')}</Typography.Text>
+      <div className={styles.summary}>
+        {items.map(([key, value]) => (
+          <div className={styles.metric} key={key}>
+            <span>{t(key)}</span>
+            <strong>{value}</strong>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
-function AlertResults({ data, pending, failed, columns, pageIndex, pageSize, onPageChange }: {
-  data: AlertPage | undefined;
-  pending: boolean;
-  failed: boolean;
+function AlertResults({ state, columns, pageIndex, pageSize, onPageChange, retry }: {
+  state: AlertListState;
   columns: ColumnsType<AlertGroup>;
   pageIndex: number;
   pageSize: number;
   onPageChange: (page: number, pageSize: number) => void;
+  retry: () => unknown;
 }) {
   const { t } = useTranslation();
-  if (failed) return <Alert type="error" showIcon message={t('common.unavailable')} />;
-  if (!pending && (data?.content.length ?? 0) === 0) return <Empty description={t('alert.empty')} />;
+  if (state.kind === 'unavailable') {
+    return <Alert type="warning" showIcon message={t('alert.listUnavailable')} action={<Retry onClick={retry} />} />;
+  }
+  if (state.kind === 'error') {
+    return <Alert type="error" showIcon message={t('alert.listLoadFailed')} action={<Retry onClick={retry} />} />;
+  }
+  if (state.kind === 'empty') return <Empty description={t('alert.empty')} />;
+  const records = state.kind === 'ready' ? state.records : [];
+  const total = state.kind === 'ready' ? state.total : 0;
   return (
     <Table<AlertGroup>
       rowKey="id"
       size="small"
-      loading={pending}
-      dataSource={data?.content ?? []}
+      loading={state.kind === 'loading'}
+      dataSource={records}
       columns={columns}
       pagination={{
         current: pageIndex + 1,
         pageSize,
         pageSizeOptions: [...alertPageSizes],
         showSizeChanger: true,
-        total: data?.totalElements ?? 0,
+        total,
         onChange: onPageChange
       }}
     />
   );
 }
 
+function Retry({ onClick }: { onClick: () => unknown }) {
+  const { t } = useTranslation();
+  return <Button size="small" onClick={() => { void onClick(); }}>{t('common.retry')}</Button>;
+}
+
 export function AlertCenterPage() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
-  const [params, setParams] = useSearchParams();
-  const query = readAlertQuery(params);
-  const [draftSearch, setDraftSearch] = useState(query.search);
-  const summary = useQuery({ queryKey: ['alert-summary'], queryFn: loadAlertSummary });
-  const groups = useQuery({ queryKey: ['alert-groups', query], queryFn: () => loadAlertGroups(query) });
-  const updateQuery = (patch: Partial<typeof query>) => setParams(writeAlertQuery({ ...query, ...patch }));
-  const runSearch = () => updateQuery({ search: draftSearch.trim(), pageIndex: 0 });
-  const refresh = () => {
-    void summary.refetch();
-    void groups.refetch();
-  };
+  const controller = useAlertCenterController();
+  const { draft, list, query, refreshing, summary } = controller.state;
 
   return (
     <div className={styles.page}>
@@ -144,46 +177,32 @@ export function AlertCenterPage() {
           <Typography.Title level={2}>{t('alert.title')}</Typography.Title>
           <Typography.Text type="secondary">{t('alert.description')}</Typography.Text>
         </div>
-        <Button onClick={() => void navigate('/alerts/rules')}>{t('alertRules.manage')}</Button>
+        <Button onClick={() => { void controller.manageRules(); }}>{t('alertRules.manage')}</Button>
       </header>
       <AlertManagementNav />
       <div className={styles.toolbar}>
-        <Input
-          allowClear
-          value={draftSearch}
-          placeholder={t('alert.search')}
-          onChange={event => setDraftSearch(event.target.value)}
-          onPressEnter={runSearch}
-        />
-        <Select
-          value={query.status}
-          onChange={status => updateQuery({ status, pageIndex: 0 })}
-          options={['', 'firing', 'acknowledged', 'resolved'].map(value => ({
-            value,
-            label: t(value ? `alert.status.${value}` : 'alert.status.all')
-          }))}
-        />
-        <Select
-          value={query.severity}
-          onChange={severity => updateQuery({ severity, pageIndex: 0 })}
-          options={['', 'warning', 'critical', 'emergency'].map(value => ({
-            value,
-            label: t(value ? `alert.severity.${value}` : 'alert.severity.all')
-          }))}
-        />
-        <Button type="primary" onClick={runSearch}>{t('common.query')}</Button>
-        <Button onClick={refresh}>{t('common.refresh')}</Button>
+        <Input allowClear value={draft.search} placeholder={t('alert.search')}
+          onChange={event => controller.setDraft('search', event.target.value)} onPressEnter={controller.submitFilters} />
+        <Input allowClear value={draft.serviceName} placeholder={t('instrumentation.field.serviceName')}
+          onChange={event => controller.setDraft('serviceName', event.target.value)} onPressEnter={controller.submitFilters} />
+        <Input allowClear value={draft.serviceNamespace} placeholder={t('instrumentation.field.serviceNamespace')}
+          onChange={event => controller.setDraft('serviceNamespace', event.target.value)} onPressEnter={controller.submitFilters} />
+        <Input allowClear value={draft.environment} placeholder={t('instrumentation.field.serviceEnvironment')}
+          onChange={event => controller.setDraft('environment', event.target.value)} onPressEnter={controller.submitFilters} />
+        <Select<AlertStatusFilter> value={query.status} onChange={controller.changeStatus}
+          options={['', ...alertStatusFilters].map(value => ({
+            value, label: t(value ? `alert.status.${value}` : 'alert.status.all')
+          }))} />
+        <Select<AlertSeverity> value={query.severity} onChange={controller.changeSeverity}
+          options={['', ...alertSeverities].map(value => ({
+            value, label: t(value ? `alert.severity.${value}` : 'alert.severity.all')
+          }))} />
+        <Button type="primary" onClick={controller.submitFilters}>{t('common.query')}</Button>
+        <Button loading={refreshing} onClick={() => { void controller.refresh(); }}>{t('common.refresh')}</Button>
       </div>
-      <SummaryStrip summary={summary.data} failed={summary.isError} />
-      <AlertResults
-        data={groups.data}
-        pending={groups.isPending}
-        failed={groups.isError}
-        columns={buildColumns(t)}
-        pageIndex={query.pageIndex}
-        pageSize={query.pageSize}
-        onPageChange={(page, pageSize) => updateQuery({ pageIndex: page - 1, pageSize })}
-      />
+      <SummaryStrip state={summary} retry={controller.retrySummary} />
+      <AlertResults state={list} columns={buildColumns(t)} pageIndex={query.pageIndex} pageSize={query.pageSize}
+        onPageChange={controller.changePage} retry={controller.retryList} />
     </div>
   );
 }
