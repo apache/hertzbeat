@@ -17,7 +17,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { logBody, logServiceName, logTimestampMs, metricPath, metricPoints, metricSeries, traceDurationMs, traceSpanLayout } from './explore-signal-model';
+import { logBody, logServiceName, logTimestampMs, metricPath, metricPoints, metricSeries, traceDurationMs, traceHealthState, traceSpanLayout } from './explore-signal-model';
 
 describe('explore API contracts', () => {
   it('normalizes datasource frames returned by the metrics console', () => {
@@ -49,6 +49,15 @@ describe('explore API contracts', () => {
       { spanId: 'root', depth: 0, offsetPercent: 0, widthPercent: 100 },
       { spanId: 'child', depth: 1, offsetPercent: 25, widthPercent: 50 }
     ]);
+  });
+
+  it('classifies trace health only from explicit evidence', () => {
+    expect(traceHealthState({})).toBe('unknown');
+    expect(traceHealthState({ status: 'OK' })).toBe('ok');
+    expect(traceHealthState({ status: 'ERROR' })).toBe('error');
+    expect(traceHealthState({ errorSpanCount: 1 })).toBe('error');
+    expect(traceHealthState({ status: 'OK', errorSpanCount: 1 })).toBe('error');
+    expect(traceHealthState({ status: 'UNSET', errorSpanCount: 0 })).toBe('unknown');
   });
 
   it('creates a bounded plot from numeric and numeric-string samples', () => {

@@ -69,8 +69,15 @@ export function metricPath(points: MetricPoint[], width: number, height: number)
   }).join(' ');
 }
 
-export function traceDurationMs(row: TraceRow) {
+export function traceDurationMs(row: Pick<TraceRow, 'durationNanos'>) {
   return row.durationNanos == null ? undefined : row.durationNanos / 1_000_000;
+}
+
+export function traceHealthState(row: Pick<TraceRow, 'status' | 'errorSpanCount'>): 'ok' | 'error' | 'unknown' {
+  const status = row.status?.trim().toUpperCase();
+  if (status === 'ERROR' || (row.errorSpanCount != null && row.errorSpanCount > 0)) return 'error';
+  if (status === 'OK') return 'ok';
+  return 'unknown';
 }
 
 export function traceSpanLayout(detail: TraceDetail): TraceSpanLayout[] {

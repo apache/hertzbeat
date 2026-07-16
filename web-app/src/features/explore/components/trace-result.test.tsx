@@ -16,7 +16,7 @@
  */
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { I18nextProvider, useTranslation } from 'react-i18next';
 import type { NavigateFunction } from 'react-router-dom';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -48,14 +48,67 @@ describe('TraceResult', () => {
     expect(navigate).toHaveBeenCalledWith(expect.stringContaining('signal=logs'));
     expect(navigate).toHaveBeenCalledWith(expect.stringContaining('traceId=trace-1'));
   });
+
+  it('uses neutral status unless health or failure is explicit', () => {
+    const unknownRow: TraceDetail = { ...traceDetail, traceId: 'unknown' };
+    delete unknownRow.status;
+    delete unknownRow.errorSpanCount;
+    const countErrorRow: TraceDetail = { ...traceDetail, traceId: 'count-error', errorSpanCount: 1 };
+    delete countErrorRow.status;
+    const cases = [
+      { row: unknownRow, text: '—', tone: 'neutral' },
+      { row: { ...traceDetail, traceId: 'ok', status: 'OK', errorSpanCount: 0 }, text: 'OK', tone: 'green' },
+      { row: { ...traceDetail, traceId: 'status-error', status: 'ERROR', errorSpanCount: 0 }, text: 'ERROR', tone: 'red' },
+      { row: countErrorRow, text: '—', tone: 'red' },
+    ] as const;
+
+    for (const testCase of cases) {
+      const navigate = vi.fn() as unknown as NavigateFunction;
+      render(<I18nextProvider i18n={i18n}><Subject navigate={navigate} row={testCase.row} detail={testCase.row} /></I18nextProvider>);
+      const tag = screen.getByText(testCase.text, { selector: '.ant-tag' });
+      if (testCase.tone === 'neutral') {
+        expect(tag).not.toHaveClass('ant-tag-green');
+        expect(tag).not.toHaveClass('ant-tag-red');
+      } else {
+        expect(tag).toHaveClass(`ant-tag-${testCase.tone}`);
+      }
+      cleanup();
+    }
+  });
+
+  it('keeps missing detail counts and span durations unknown', async () => {
+    const navigate = vi.fn() as unknown as NavigateFunction;
+    const incompleteSpans = (traceDetail.spans ?? []).map((span) => {
+      const incompleteSpan = { ...span };
+      delete incompleteSpan.durationNanos;
+      return incompleteSpan;
+    });
+    const incompleteDetail: TraceDetail = {
+      ...traceDetail,
+      status: 'OK',
+      spans: incompleteSpans
+    };
+    delete incompleteDetail.errorSpanCount;
+    render(<I18nextProvider i18n={i18n}><Subject navigate={navigate} row={incompleteDetail} detail={incompleteDetail} /></I18nextProvider>);
+
+    fireEvent.click(screen.getByText('POST /checkout'));
+
+    await waitFor(() => expect(screen.getByText(/— errors/)).toBeInTheDocument());
+    expect(screen.queryByText(/0 errors/)).not.toBeInTheDocument();
+    expect(screen.queryByText('0.00 ms')).not.toBeInTheDocument();
+
+    const spanButton = screen.getByText('checkout', { selector: 'strong' }).closest('button');
+    expect(spanButton).not.toBeNull();
+    expect(within(spanButton!).getByText('—')).toBeInTheDocument();
+  });
 });
 
-function Subject({ navigate }: { navigate: NavigateFunction }) {
+function Subject({ navigate, row = traceDetail, detail = traceDetail }: { navigate: NavigateFunction; row?: TraceDetail; detail?: TraceDetail }) {
   const { t } = useTranslation();
   const client = new QueryClient({ defaultOptions: { queries: { staleTime: Number.POSITIVE_INFINITY, retry: false } } });
-  client.setQueryData(['trace-detail', 'trace-1'], traceDetail);
+  client.setQueryData(['trace-detail', row.traceId], detail);
   return <QueryClientProvider client={client}><TraceResult
-    data={{ content: [traceDetail], totalElements: 1, totalPages: 1, number: 0, size: 20 }}
+    data={{ content: [row], totalElements: 1, totalPages: 1, number: 0, size: 20 }}
     query={{ signal: 'traces', timeRange: 'last-30m' }}
     t={t}
     navigate={navigate}

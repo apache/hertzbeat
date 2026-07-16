@@ -24,7 +24,7 @@ import type { NavigateFunction } from "react-router-dom";
 import { loadTraceDetail, type ExplorePageResult } from "../api/explore-api";
 import type { TraceDetail, TraceRow, TraceSpan } from "../api/explore-signal-contract";
 import { buildCrossSignalPath, buildExplorePath, mergeExploreQuery, type TraceExploreQuery } from "../model/explore-model";
-import { traceDurationMs, traceSpanLayout } from "../model/explore-signal-model";
+import { traceDurationMs, traceHealthState, traceSpanLayout } from "../model/explore-signal-model";
 import { OtlpAttributeList, OtlpAttributeSection } from "./otlp-attribute-list";
 import { SignalEmptyState, SignalResultFrame } from "./signal-result-frame";
 import styles from "./trace-result.module.css";
@@ -79,7 +79,10 @@ export function TraceResult({
           {
             title: t("exploreTrace.status"),
             width: 100,
-            render: (_, row) => <Tag color={row.errorSpanCount ? "red" : "green"}>{row.status ?? "—"}</Tag>,
+            render: (_, row) => {
+              const health = traceHealthState(row);
+              return <Tag color={health === "error" ? "red" : health === "ok" ? "green" : "default"}>{row.status ?? "—"}</Tag>;
+            },
           },
           { title: "Trace ID", width: 220, dataIndex: "traceId", ellipsis: true },
         ]}
@@ -144,7 +147,7 @@ function TraceDetailView({
             {spans.length} {t("exploreTrace.spans")}
           </span>
           <span>
-            {detail.errorSpanCount ?? 0} {t("exploreTrace.errors")}
+            {detail.errorSpanCount ?? "—"} {t("exploreTrace.errors")}
           </span>
         </div>
         <div className={styles.actions}>
@@ -196,7 +199,7 @@ function TraceDetailView({
                 }}
               />
             </span>
-            <span className={styles.spanDuration}>{formatDuration((span.durationNanos ?? 0) / 1_000_000)}</span>
+            <span className={styles.spanDuration}>{formatDuration(traceDurationMs(span))}</span>
           </button>
         ))}
       </div>
