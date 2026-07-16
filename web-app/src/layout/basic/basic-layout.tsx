@@ -28,6 +28,7 @@ import { useSession } from '@/core/auth/session-context';
 import styles from './basic-layout.module.css';
 
 const { Content, Header, Sider } = Layout;
+const brandName = 'HertzBeat';
 
 export function BasicLayout() {
   const { t } = useTranslation();
@@ -57,7 +58,16 @@ export function BasicLayout() {
     <Layout className={styles.root}>
       <Header className={styles.header}>
         <div className={styles.brandBlock}>
-          <strong className={styles.brand}>HertzBeat</strong>
+          <div className={styles.brandLockup}>
+            <img
+              className={styles.brandLogo}
+              src="/assets/logo.svg"
+              alt={brandName}
+              width={28}
+              height={27}
+            />
+            <strong className={styles.brand} aria-hidden="true">{brandName}</strong>
+          </div>
           <span className={styles.productLabel}>{t('menu.operatorConsole')}</span>
         </div>
         <div className={styles.account}>

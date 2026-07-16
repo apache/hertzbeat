@@ -45,14 +45,30 @@
 
 .brandBlock {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 12px;
+  height: 100%;
+}
+
+.brandLockup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brandLogo {
+  display: block;
+  flex: none;
+  width: 28px;
+  height: 27px;
 }
 
 .brand {
   color: var(--hb-text);
   font-size: 18px;
+  line-height: 1;
   letter-spacing: -0.025em;
+  white-space: nowrap;
 }
 
 .productLabel {
@@ -75,14 +91,40 @@
   height: 38px;
   margin: 2px 0;
   padding-inline: 12px !important;
-  border-radius: 4px;
+  border-radius: 1px;
   color: var(--hb-nav-text);
 }
 
 .sider :global(.ant-menu-item-selected) {
+  border-radius: 1px;
   color: var(--hb-text);
-  background: var(--hb-nav-selected);
-  box-shadow: inset 2px 0 #6f83f7;
+  background: var(--hb-nav-selected) !important;
+  box-shadow: inset 2px 0 var(--hb-nav-indicator);
+  font-weight: 600;
+}
+
+.sider :global(.ant-menu-item:not(.ant-menu-item-selected):hover) {
+  color: var(--hb-text);
+  background: var(--hb-nav-hover) !important;
+}
+
+.sider :global(.ant-menu:focus-visible) {
+  outline: none;
+}
+
+.sider :global(.ant-menu:focus-visible .ant-menu-item-active),
+.sider :global(.ant-menu:focus-visible:not(:has(.ant-menu-item-active)) .ant-menu-item-selected) {
+  outline: 2px solid var(--hb-focus-ring) !important;
+  outline-offset: -2px !important;
+}
+
+.sider :global(.ant-menu-item:focus-visible) {
+  outline: 2px solid var(--hb-focus-ring) !important;
+  outline-offset: -2px !important;
+}
+
+.sider :global(.ant-menu-item::after) {
+  display: none;
 }
 
 .navigationLabel {
