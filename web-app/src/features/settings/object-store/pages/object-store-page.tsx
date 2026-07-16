@@ -15,56 +15,19 @@
  * limitations under the License.
  */
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Alert, App, Button, Skeleton, Typography } from 'antd';
-import { useState } from 'react';
+import { Alert, Button, Skeleton, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import { SettingsNav } from '@/shared/settings/settings-nav';
 
-import { loadObjectStore, saveObjectStore } from '../api/object-store-api';
 import { ObjectStoreEditor } from '../components/object-store-editor';
 import styles from '../components/object-store.module.css';
-import {
-  createObjectStoreDraft,
-  isObjectStoreDirty,
-  validateObjectStoreDraft,
-  type ObjectStoreDraft
-} from '../model/object-store-model';
+import { useObjectStoreResourceController } from '../controller/object-store-resource-controller';
 
 export function ObjectStorePage() {
   const { t } = useTranslation();
-  const { message } = App.useApp();
-  const queryClient = useQueryClient();
-  const objectStore = useQuery({ queryKey: ['config', 'oss'], queryFn: loadObjectStore });
-  const [draft, setDraft] = useState<ObjectStoreDraft | null>(null);
-  const [showValidation, setShowValidation] = useState(false);
-  const baseline = createObjectStoreDraft(objectStore.data);
-  const current = draft ?? baseline;
-  const missingFields = validateObjectStoreDraft(current);
-  const dirty = draft != null && isObjectStoreDirty(draft, baseline);
-  const save = useMutation({
-    mutationFn: saveObjectStore,
-    onSuccess: () => {
-      setDraft(null);
-      setShowValidation(false);
-      void queryClient.invalidateQueries({ queryKey: ['config', 'oss'] });
-      void message.success(t('objectStore.saveSuccess'));
-    },
-    onError: () => void message.error(t('objectStore.saveFailed'))
-  });
-
-  const updateDraft = (next: ObjectStoreDraft) => {
-    setDraft(next);
-    setShowValidation(false);
-  };
-  const submit = () => {
-    if (missingFields.length > 0) {
-      setShowValidation(true);
-      return;
-    }
-    if (dirty) save.mutate(current);
-  };
+  const controller = useObjectStoreResourceController();
+  const { state } = controller;
 
   return (
     <div className={styles.page}>
@@ -73,28 +36,33 @@ export function ObjectStorePage() {
         <Typography.Text type="secondary">{t('objectStore.description')}</Typography.Text>
       </header>
       <SettingsNav />
-      {objectStore.isError && (
+      {state.kind === 'unavailable' && (
         <Alert
           type="error"
           showIcon
           message={t('objectStore.unavailable')}
-          action={<Button size="small" onClick={() => void objectStore.refetch()}>{t('common.retry')}</Button>}
+          action={<Button size="small" onClick={controller.retry}>{t('common.retry')}</Button>}
         />
       )}
-      {objectStore.isPending && <Skeleton active paragraph={{ rows: 6 }} />}
-      {objectStore.isSuccess && (
+      {state.kind === 'error' && (
+        <Alert
+          type="error"
+          showIcon
+          message={t('common.routeError.description')}
+          action={<Button size="small" onClick={controller.retry}>{t('common.retry')}</Button>}
+        />
+      )}
+      {state.kind === 'loading' && <Skeleton active paragraph={{ rows: 6 }} />}
+      {state.kind === 'ready' && (
         <ObjectStoreEditor
-          current={current}
-          missingFields={missingFields}
-          dirty={dirty}
-          showValidation={showValidation}
-          saving={save.isPending}
-          onUpdate={updateDraft}
-          onSubmit={submit}
-          onDiscard={() => {
-            setDraft(null);
-            setShowValidation(false);
-          }}
+          current={state.current}
+          missingFields={state.missingFields}
+          dirty={state.dirty}
+          showValidation={state.showValidation}
+          saving={state.saving}
+          onUpdate={controller.updateDraft}
+          onSubmit={controller.submit}
+          onDiscard={controller.discard}
         />
       )}
     </div>

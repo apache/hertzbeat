@@ -21,7 +21,9 @@ import { buildObjectStorePayload } from '../api/object-store-api';
 import {
   changeObjectStoreType,
   createObjectStoreDraft,
+  createObjectStoreResourceRecord,
   isObjectStoreDirty,
+  objectStoreResourceId,
   validateObjectStoreDraft
 } from './object-store-model';
 
@@ -53,5 +55,41 @@ describe('object store model', () => {
     const baseline = { type: 'FILE' as const, config: {} };
     expect(isObjectStoreDirty(createObjectStoreDraft(baseline), baseline)).toBe(false);
     expect(isObjectStoreDirty(changeObjectStoreType(baseline, 'DATABASE'), baseline)).toBe(true);
+  });
+
+  it('owns the stable singleton resource identity used by Refine', () => {
+    expect(objectStoreResourceId).toBe('current');
+    expect(createObjectStoreResourceRecord({
+      type: 'OBS',
+      config: { accessKey: 'ak', secretKey: 'sk', bucketName: 'bucket' }
+    })).toEqual({
+      id: 'current',
+      type: 'OBS',
+      config: { accessKey: 'ak', secretKey: 'sk', bucketName: 'bucket' }
+    });
+    expect(createObjectStoreResourceRecord(null)).toEqual({
+      id: 'current',
+      type: 'DATABASE',
+      config: {}
+    });
+  });
+
+  it('rejects malformed non-null wire records without echoing their contents', () => {
+    const malformed = [
+      { type: 'OTHER', config: { secretKey: 'private-unknown-type' } },
+      { type: 'OBS', config: ['private-array-config'] },
+      { type: 'FILE', config: 'private-string-config' }
+    ];
+
+    for (const value of malformed) {
+      let error: unknown;
+      try {
+        createObjectStoreResourceRecord(value as never);
+      } catch (reason) {
+        error = reason;
+      }
+      expect(error).toBeInstanceOf(Error);
+      expect(JSON.stringify(error)).not.toContain('private-');
+    }
   });
 });

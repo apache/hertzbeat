@@ -24,6 +24,7 @@ import { Outlet } from 'react-router-dom';
 import { SessionProvider } from '@/core/auth/session-provider';
 
 import { labelDataProvider } from './resources/label-data-provider';
+import { objectStoreDataProvider } from './resources/object-store-data-provider';
 
 const appQueryClient = new QueryClient({
   defaultOptions: {
@@ -40,14 +41,22 @@ const appQueryClient = new QueryClient({
 
 const dataProviders = {
   default: labelDataProvider,
-  labels: labelDataProvider
+  labels: labelDataProvider,
+  'object-store': objectStoreDataProvider
 };
 
-const resources = [{
-  name: 'labels',
-  list: '/settings/labels',
-  meta: { dataProviderName: 'labels' }
-}];
+const resources = [
+  {
+    name: 'labels',
+    list: '/settings/labels',
+    meta: { dataProviderName: 'labels' }
+  },
+  {
+    name: 'object-store',
+    list: '/settings/storage/object-store',
+    meta: { dataProviderName: 'object-store' }
+  }
+];
 
 export function RefineRuntime() {
   const notificationProvider = useNotificationProvider();

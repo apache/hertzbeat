@@ -27,6 +27,19 @@ export type ObjectStoreDraft = {
   config: ObjectStoreConfig;
 };
 
+export const objectStoreResourceId = 'current' as const;
+
+export type ObjectStoreResourceRecord = ObjectStoreDraft & {
+  id: typeof objectStoreResourceId;
+};
+
+export class ObjectStoreResourceContractError extends Error {
+  constructor() {
+    super('Object Store resource response is invalid');
+    this.name = 'ObjectStoreResourceContractError';
+  }
+}
+
 export type { ObjectStoreConfig, ObjectStoreType } from '../api/object-store-api';
 
 export const objectStoreTypeDefinitions = [
@@ -46,6 +59,34 @@ export function createObjectStoreDraft(config?: ObjectStoreWireConfig | null): O
     type: normalizeObjectStoreType(config?.type),
     config: { ...(config?.config ?? {}) }
   };
+}
+
+export function createObjectStoreResourceRecord(
+  config?: ObjectStoreWireConfig | null
+): ObjectStoreResourceRecord {
+  if (config == null) {
+    return { id: objectStoreResourceId, type: 'DATABASE', config: {} };
+  }
+  if (typeof config !== 'object' || Array.isArray(config)) {
+    throw new ObjectStoreResourceContractError();
+  }
+  if (config.type !== 'DATABASE' && config.type !== 'FILE' && config.type !== 'OBS') {
+    throw new ObjectStoreResourceContractError();
+  }
+  if (config.config != null && !isPlainRecord(config.config)) {
+    throw new ObjectStoreResourceContractError();
+  }
+  return {
+    id: objectStoreResourceId,
+    type: config.type,
+    config: { ...(config.config ?? {}) }
+  };
+}
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const prototype = Object.getPrototypeOf(value) as unknown;
+  return prototype === Object.prototype || prototype === null;
 }
 
 export function changeObjectStoreType(config: ObjectStoreDraft, type: ObjectStoreType): ObjectStoreDraft {

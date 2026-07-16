@@ -84,6 +84,15 @@ describe('Settings domain boundaries', () => {
       source.includes("../api/") ? [path] : []
     ))).toEqual([]);
   });
+
+  it('keeps Object Store pages behind its model and controller boundaries', () => {
+    const pageSources = Object.entries(productionSources)
+      .filter(([path]) => /^\.\/object-store\/pages\//.test(path) && !path.includes('.test.'));
+
+    expect(pageSources.flatMap(([path, source]) => (
+      source.includes('../api/') || source.includes('@tanstack/react-query') ? [path] : []
+    ))).toEqual([]);
+  });
 });
 
 function validateImports(path: string, source: string, root: string) {

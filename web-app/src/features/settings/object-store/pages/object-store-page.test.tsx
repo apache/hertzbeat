@@ -15,31 +15,37 @@
  * limitations under the License.
  */
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { App } from 'antd';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
-import { MemoryRouter, useLocation } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
-const { loadObjectStore, saveObjectStore } = vi.hoisted(() => ({
-  loadObjectStore: vi.fn(),
-  saveObjectStore: vi.fn()
+const controller = vi.hoisted(() => ({
+  discard: vi.fn(),
+  retry: vi.fn(),
+  submit: vi.fn(),
+  updateDraft: vi.fn(),
+  useObjectStoreResourceController: vi.fn()
 }));
 
-vi.mock('../api/object-store-api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../api/object-store-api')>()),
-  loadObjectStore,
-  saveObjectStore
+vi.mock('../controller/object-store-resource-controller', () => ({
+  useObjectStoreResourceController: controller.useObjectStoreResourceController
 }));
 
 import { ObjectStorePage } from './object-store-page';
 
 const configuredObs = {
-  type: 'OBS',
-  config: { accessKey: 'ak', secretKey: 'sk', bucketName: 'bucket', endpoint: 'https://obs.cn-north-4.myhuaweicloud.com', savePath: 'hertzbeat' }
+  type: 'OBS' as const,
+  config: {
+    accessKey: 'ak',
+    secretKey: 'sk',
+    bucketName: 'bucket',
+    endpoint: 'https://obs.cn-north-4.myhuaweicloud.com',
+    savePath: 'hertzbeat'
+  }
 };
 
 describe('ObjectStorePage', () => {
@@ -50,89 +56,87 @@ describe('ObjectStorePage', () => {
   });
 
   beforeEach(() => {
-    loadObjectStore.mockResolvedValue(configuredObs);
-    saveObjectStore.mockResolvedValue('success');
-  });
-
-  afterEach(() => {
-    cleanup();
     vi.clearAllMocks();
+    controller.useObjectStoreResourceController.mockReturnValue(buildController());
   });
 
-  it('discards local edits without writing backend configuration', async () => {
-    renderObjectStorePage();
-    const accessKey = await screen.findByPlaceholderText('OBS access key');
-    fireEvent.change(accessKey, { target: { value: 'changed-ak' } });
-    expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
+  afterEach(cleanup);
 
+  it('renders the ready controller state and forwards editor actions', async () => {
+    renderObjectStorePage();
+
+    fireEvent.change(await screen.findByPlaceholderText('OBS access key'), {
+      target: { value: 'changed-ak' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }));
 
-    expect(screen.getByPlaceholderText('OBS access key')).toHaveValue('ak');
-    expect(saveObjectStore).not.toHaveBeenCalled();
+    expect(controller.updateDraft).toHaveBeenCalledWith({
+      ...configuredObs,
+      config: { ...configuredObs.config, accessKey: 'changed-ak' }
+    });
+    expect(controller.submit).toHaveBeenCalledTimes(1);
+    expect(controller.discard).toHaveBeenCalledTimes(1);
   });
 
-  it('blocks incomplete OBS configuration and saves a complete draft', async () => {
-    loadObjectStore.mockResolvedValue({ type: 'OBS', config: {} });
+  it('renders unavailable evidence and delegates retry', async () => {
+    controller.useObjectStoreResourceController.mockReturnValue(buildController({ kind: 'unavailable' }));
     renderObjectStorePage();
-    const accessKey = await screen.findByPlaceholderText('OBS access key');
-    fireEvent.change(accessKey, { target: { value: ' ak ' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-    expect(await screen.findByText('Complete the required object storage fields.')).toBeInTheDocument();
-    expect(saveObjectStore).not.toHaveBeenCalled();
 
-    fireEvent.change(screen.getByPlaceholderText('OBS secret key'), { target: { value: ' sk ' } });
-    fireEvent.change(screen.getByPlaceholderText('OBS bucket name'), { target: { value: ' bucket ' } });
-    fireEvent.change(screen.getByPlaceholderText('For example, https://obs.cn-north-4.myhuaweicloud.com'), { target: { value: ' https://obs.cn-north-4.myhuaweicloud.com ' } });
-    fireEvent.change(screen.getByPlaceholderText('For example, hertzbeat'), { target: { value: ' data ' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-
-    await waitFor(() => expect(saveObjectStore.mock.calls[0]?.[0]).toEqual({
-      type: 'OBS',
-      config: { accessKey: ' ak ', secretKey: ' sk ', bucketName: ' bucket ', endpoint: ' https://obs.cn-north-4.myhuaweicloud.com ', savePath: ' data ' }
-    }));
+    expect(await screen.findByText('Object storage configuration is unavailable.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(controller.retry).toHaveBeenCalledTimes(1);
+    expect(screen.queryByPlaceholderText('OBS access key')).not.toBeInTheDocument();
   });
 
-  it('keeps the OBS secret in runtime memory and request body only', async () => {
-    const storageWrite = vi.spyOn(Storage.prototype, 'setItem');
-    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
-    const info = vi.spyOn(console, 'info').mockImplementation(() => undefined);
-    const debug = vi.spyOn(console, 'debug').mockImplementation(() => undefined);
+  it('renders non-availability failures as a distinct retryable error', async () => {
+    controller.useObjectStoreResourceController.mockReturnValue(buildController({ kind: 'error' }));
     renderObjectStorePage();
 
-    const secret = await screen.findByPlaceholderText('OBS secret key');
-    fireEvent.change(secret, { target: { value: 'runtime-only-secret' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    expect(await screen.findByText('This page could not be loaded. Retry or return to it later.'))
+      .toBeInTheDocument();
+    expect(screen.queryByText('Object storage configuration is unavailable.')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(controller.retry).toHaveBeenCalledTimes(1);
+  });
 
-    await waitFor(() => expect(saveObjectStore).toHaveBeenCalled());
-    expect(screen.getByTestId('location')).not.toHaveTextContent('runtime-only-secret');
-    expect(JSON.stringify(storageWrite.mock.calls)).not.toContain('runtime-only-secret');
-    expect(JSON.stringify([...log.mock.calls, ...info.mock.calls, ...debug.mock.calls])).not.toContain('runtime-only-secret');
-    storageWrite.mockRestore();
-    log.mockRestore();
-    info.mockRestore();
-    debug.mockRestore();
+  it('renders loading without exposing stale editor values', () => {
+    controller.useObjectStoreResourceController.mockReturnValue(buildController({ kind: 'loading' }));
+    const { container } = renderObjectStorePage();
+
+    expect(container.querySelector('.ant-skeleton')).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('OBS access key')).not.toBeInTheDocument();
   });
 });
 
-function renderObjectStorePage() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
-  return render(
-    <I18nextProvider i18n={i18n}>
-      <QueryClientProvider client={client}>
-        <MemoryRouter initialEntries={['/settings/storage/object-store']}>
-          <App>
-            <ObjectStorePage />
-            <LocationProbe />
-          </App>
-        </MemoryRouter>
-      </QueryClientProvider>
-    </I18nextProvider>
-  );
+function buildController(state: Record<string, unknown> = {}) {
+  return {
+    discard: controller.discard,
+    retry: controller.retry,
+    state: {
+      kind: 'ready',
+      current: configuredObs,
+      dirty: true,
+      missingFields: [],
+      saving: false,
+      showValidation: false,
+      ...state
+    },
+    submit: controller.submit,
+    updateDraft: controller.updateDraft
+  };
 }
 
-function LocationProbe() {
-  const location = useLocation();
-  return <output data-testid="location">{`${location.pathname}${location.search}${location.hash}`}</output>;
+function renderObjectStorePage() {
+  return render(
+    <I18nextProvider i18n={i18n}>
+      <MemoryRouter initialEntries={['/settings/storage/object-store']}>
+        <App>
+          <ObjectStorePage />
+        </App>
+      </MemoryRouter>
+    </I18nextProvider>
+  );
 }
 
 class ResizeObserverStub {

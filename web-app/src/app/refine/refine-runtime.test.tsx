@@ -15,7 +15,14 @@
  * limitations under the License.
  */
 
-import { useDataProvider, useNotification, useParsed, useRefineContext, useResourceParams } from '@refinedev/core';
+import {
+  useDataProvider,
+  useNotification,
+  useParsed,
+  useRefineContext,
+  useResourceParams,
+  type DataProvider
+} from '@refinedev/core';
 import { QueryClient, useQueryClient } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useEffect } from 'react';
@@ -29,6 +36,7 @@ import { initializeI18n } from '@/core/i18n/i18n';
 import { AppProviders } from '../providers';
 import { appRoutes } from '../router';
 import { labelDataProvider } from './resources/label-data-provider';
+import { objectStoreDataProvider } from './resources/object-store-data-provider';
 
 const { authenticatedSession } = vi.hoisted(() => ({
   authenticatedSession: {
@@ -63,6 +71,9 @@ describe('production Refine runtime', () => {
     expect(screen.getByTestId('mutation-mode')).toHaveTextContent('pessimistic');
     expect(screen.getByTestId('label-resource')).toHaveTextContent('labels|/settings/labels|labels');
     expect(screen.getByTestId('label-provider')).toHaveTextContent('shared');
+    expect(screen.getByTestId('object-store-resource'))
+      .toHaveTextContent('object-store|/settings/storage/object-store|object-store');
+    expect(screen.getByTestId('object-store-provider')).toHaveTextContent('shared');
     fireEvent.click(screen.getByRole('button', { name: 'Open runtime notification' }));
     expect(await screen.findByText('Runtime notification ready')).toBeInTheDocument();
     const mountedClients = mountSpy.mock.instances;
@@ -86,14 +97,16 @@ function RuntimeProbe({ onClient }: { onClient: (client: QueryClient) => void })
     onClient(queryClient);
   }, [onClient, queryClient]);
   const labelResource = resources.find(resource => resource.name === 'labels');
-  let labelProvider = 'missing';
-  try {
-    labelProvider = dataProvider('labels') === labelDataProvider && dataProvider() === labelDataProvider
-      ? 'shared'
-      : 'different';
-  } catch {
-    labelProvider = 'missing';
-  }
+  const objectStoreResource = resources.find(resource => resource.name === 'object-store');
+  const labelProvider = resolveProviderState(dataProvider, 'labels', labelDataProvider, true);
+  const objectStoreProvider = resolveProviderState(
+    dataProvider,
+    'object-store',
+    objectStoreDataProvider,
+    false
+  );
+  const labelResourceText = formatResource(labelResource);
+  const objectStoreResourceText = formatResource(objectStoreResource);
 
   return (
     <>
@@ -101,10 +114,10 @@ function RuntimeProbe({ onClient }: { onClient: (client: QueryClient) => void })
       <output data-testid="refine-initialized">{String(refine.__initialized)}</output>
       <output data-testid="parsed-path">{parsed.pathname}</output>
       <output data-testid="mutation-mode">{refine.mutationMode}</output>
-      <output data-testid="label-resource">{
-        `${labelResource?.name ?? ''}|${String(labelResource?.list ?? '')}|${String(labelResource?.meta?.dataProviderName ?? '')}`
-      }</output>
+      <output data-testid="label-resource">{labelResourceText}</output>
       <output data-testid="label-provider">{labelProvider}</output>
+      <output data-testid="object-store-resource">{objectStoreResourceText}</output>
+      <output data-testid="object-store-provider">{objectStoreProvider}</output>
       <button
         type="button"
         onClick={() => notification.open?.({ message: 'Runtime notification ready', type: 'success' })}
@@ -113,6 +126,26 @@ function RuntimeProbe({ onClient }: { onClient: (client: QueryClient) => void })
       </button>
     </>
   );
+}
+
+function formatResource(resource: ReturnType<typeof useResourceParams>['resources'][number] | undefined) {
+  if (!resource) return '||';
+  return `${resource.name}|${String(resource.list ?? '')}|${String(resource.meta?.dataProviderName ?? '')}`;
+}
+
+function resolveProviderState(
+  resolve: ReturnType<typeof useDataProvider>,
+  name: string,
+  expected: DataProvider,
+  alsoDefault: boolean
+) {
+  try {
+    const namedMatches = resolve(name) === expected;
+    const defaultMatches = !alsoDefault || resolve() === expected;
+    return namedMatches && defaultMatches ? 'shared' : 'different';
+  } catch {
+    return 'missing';
+  }
 }
 
 function withProbeRoute(routes: RouteObject[], onClient: (client: QueryClient) => void): RouteObject[] {
