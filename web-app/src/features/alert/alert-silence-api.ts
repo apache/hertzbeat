@@ -29,13 +29,19 @@ import {
   type AlertSilenceQuery
 } from './alert-silence-model';
 
-export async function loadAlertSilences(query: AlertSilenceQuery) {
-  const response = await apiMessageGet<unknown>(buildAlertSilenceListPath(query));
+export async function loadAlertSilences(query: AlertSilenceQuery, signal?: AbortSignal) {
+  const path = buildAlertSilenceListPath(query);
+  const response = signal
+    ? await apiMessageGet<unknown>(path, { signal })
+    : await apiMessageGet<unknown>(path);
   return parseAlertSilencePage(response, query);
 }
 
-export async function loadAlertSilence(id: number) {
-  const response = await apiMessageGet<unknown>(`/api/alert/silence/${id}`);
+export async function loadAlertSilence(id: number, signal?: AbortSignal) {
+  const path = `/api/alert/silence/${id}`;
+  const response = signal
+    ? await apiMessageGet<unknown>(path, { signal })
+    : await apiMessageGet<unknown>(path);
   return parseAlertSilenceDetail(response);
 }
 
@@ -56,4 +62,13 @@ export async function updateAlertSilenceEnabled(silence: AlertSilence, enable: b
 export function isAlertSilenceMissing(reason: unknown) {
   return reason instanceof AlertSilenceMissingError
     || reason instanceof ApiMessageError && (reason.status === 404 || reason.status === 200 && reason.code === 15);
+}
+
+export function classifyAlertSilenceReadError(reason: unknown): 'missing' | 'unavailable' | 'error' {
+  if (isAlertSilenceMissing(reason)) return 'missing';
+  if (reason instanceof ApiMessageError
+    && (reason.cause !== undefined || reason.status === undefined || [0, 502, 503, 504].includes(reason.status))) {
+    return 'unavailable';
+  }
+  return 'error';
 }

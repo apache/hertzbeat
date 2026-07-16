@@ -15,10 +15,13 @@
  * limitations under the License.
  */
 
-import { useAlertSilenceController } from './controller/use-alert-silence-controller';
-import { AlertSilenceView } from './alert-silence-view';
+import { describe, expect, it } from 'vitest';
 
-export function AlertSilencePage() {
-  const controller = useAlertSilenceController();
-  return <AlertSilenceView {...controller} />;
-}
+import pageSource from './alert-silence-page.tsx?raw';
+
+describe('AlertSilencePage architecture', () => {
+  it('keeps TanStack, transport, Router state, and notifications in the controller', () => {
+    expect(pageSource).not.toMatch(/@tanstack\/react-query|alert-silence-api|useSearchParams|App\.useApp/);
+    expect(pageSource).toMatch(/useAlertSilenceController/);
+  });
+});

@@ -18,12 +18,14 @@ vi.mock('@/core/http/api-message', async importOriginal => ({
 }));
 
 import {
+  classifyAlertSilenceReadError,
   deleteAlertSilence,
   loadAlertSilence,
   loadAlertSilences,
   saveAlertSilence,
   updateAlertSilenceEnabled
 } from './alert-silence-api';
+import { ApiMessageError } from '@/core/http/api-message';
 import { AlertSilenceContractError, AlertSilenceMissingError, createAlertSilenceDraft } from './alert-silence-model';
 
 const persisted = {
@@ -72,6 +74,20 @@ describe('alert silence API', () => {
 
     apiMessageGet.mockResolvedValueOnce(null);
     await expect(loadAlertSilence(7)).rejects.toBeInstanceOf(AlertSilenceMissingError);
+  });
+
+  it('forwards AbortSignal and distinguishes unavailable, contract, and missing reads', async () => {
+    const signal = new AbortController().signal;
+    apiMessageGet
+      .mockResolvedValueOnce({ content: [], totalElements: 0, totalPages: 0, number: 0, size: 8 })
+      .mockResolvedValueOnce(persisted);
+    await loadAlertSilences({ search: '', pageIndex: 0, pageSize: 8 }, signal);
+    expect(apiMessageGet).toHaveBeenCalledWith(expect.any(String), { signal });
+    await loadAlertSilence(7, signal);
+    expect(apiMessageGet).toHaveBeenCalledWith('/api/alert/silence/7', { signal });
+    expect(classifyAlertSilenceReadError(new ApiMessageError('offline', { status: 503 }))).toBe('unavailable');
+    expect(classifyAlertSilenceReadError(new AlertSilenceContractError('bad'))).toBe('error');
+    expect(classifyAlertSilenceReadError(new AlertSilenceMissingError())).toBe('missing');
   });
 
   it('returns void acknowledgements from every mutation', async () => {

@@ -15,10 +15,19 @@
  * limitations under the License.
  */
 
-import { useAlertSilenceController } from './controller/use-alert-silence-controller';
-import { AlertSilenceView } from './alert-silence-view';
+import { Button, Input } from 'antd';
+import { useTranslation } from 'react-i18next';
 
-export function AlertSilencePage() {
-  const controller = useAlertSilenceController();
-  return <AlertSilenceView {...controller} />;
+import styles from './alert-policy-page.module.css';
+
+export function AlertSilenceToolbar({ search, refreshing, setSearch, submit, refresh }: {
+  search: string; refreshing: boolean; setSearch: (value: string) => void; submit: () => void; refresh: () => void;
+}) {
+  const { t } = useTranslation();
+  return <div className={styles.toolbar}>
+    <Input allowClear value={search} placeholder={t('alertSilences.search')}
+      onChange={event => setSearch(event.target.value)} onPressEnter={submit} />
+    <Button type="primary" onClick={submit}>{t('common.query')}</Button>
+    <Button disabled={refreshing} onClick={refresh}>{t('common.refresh')}</Button>
+  </div>;
 }

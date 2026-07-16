@@ -1,0 +1,86 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { Alert, Empty, Space, Spin, Table, Tag, Typography } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
+
+import type { AlertSilenceListEvidence } from './alert-silence-list-model';
+import { alertSilencePageSizes, type AlertSilence, type AlertSilenceQuery } from './alert-silence-model';
+import { AlertSilenceActions } from './alert-silence-actions';
+import styles from './alert-policy-page.module.css';
+
+export function AlertSilenceResults({ evidence, query, busy, actions }: {
+  evidence: AlertSilenceListEvidence; query: AlertSilenceQuery; busy: boolean;
+  actions: { changePage: (page: number, size: number) => void; edit: (id: number) => void;
+    toggle: (silence: AlertSilence, enabled: boolean) => void; remove: (id: number) => void };
+}) {
+  const { t } = useTranslation();
+  if (evidence.kind === 'loading') return <div role="status"><Spin /></div>;
+  if (evidence.kind === 'empty') return <Empty description={t('alertSilences.empty')} />;
+  if (evidence.kind === 'unavailable') return <Alert type="warning" showIcon message={t('common.unavailable')} />;
+  if (evidence.kind === 'error') return <Alert type="error" showIcon message={t('common.routeError.description')} />;
+  return <Table<AlertSilence> rowKey="id" size="small" dataSource={evidence.records}
+    columns={columns(t, busy, actions)} scroll={{ x: 1310 }} pagination={{ current: query.pageIndex + 1,
+      pageSize: query.pageSize, pageSizeOptions: [...alertSilencePageSizes], showSizeChanger: true,
+      total: evidence.total, onChange: actions.changePage }} />;
+}
+
+function columns(t: TFunction, busy: boolean, actions: {
+  edit: (id: number) => void; toggle: (silence: AlertSilence, enabled: boolean) => void; remove: (id: number) => void;
+}): ColumnsType<AlertSilence> {
+  return [
+    { title: t('alertSilences.name'), dataIndex: 'name', width: 210 },
+    { title: t('alertSilences.scope'), width: 250, render: (_value, item) => scope(t, item) },
+    { title: t('alertSilences.schedule'), width: 330, render: (_value, item) => schedule(t, item) },
+    { title: t('alertSilences.times'), dataIndex: 'times', width: 100, render: (value?: number) => value ?? '—' },
+    { title: t('alertSilences.updated'), width: 180, render: (_value, item) => formatDate(item.gmtUpdate ?? item.gmtCreate) },
+    { title: t('common.actions'), width: 250, render: (_value, item) =>
+      <AlertSilenceActions silence={item} busy={busy} {...actions} /> }
+  ];
+}
+
+function scope(t: TFunction, silence: AlertSilence) {
+  if (silence.matchAll !== false) return <Tag>{t('alertSilences.allAlerts')}</Tag>;
+  return <div className={styles.labels}>{Object.entries(silence.labels ?? {}).map(([key, value]) =>
+    <Tag key={key}>{key}:{value}</Tag>)}</div>;
+}
+
+function schedule(t: TFunction, silence: AlertSilence) {
+  const recurring = silence.type === 1;
+  return <Space direction="vertical" size={0}>
+    <Tag color="processing">{t(recurring ? 'alertSilences.recurring' : 'alertSilences.once')}</Tag>
+    <Typography.Text type="secondary">{recurring
+      ? `${t('alertSilences.selectedDays', { count: silence.days?.length ?? 0 })} · ${formatClock(silence.periodStart)} – ${formatClock(silence.periodEnd)}`
+      : `${formatDate(silence.periodStart)} – ${formatDate(silence.periodEnd)}`}</Typography.Text>
+  </Space>;
+}
+
+function formatDate(value?: string | number | null) {
+  if (value == null) return '—';
+  const timestamp = typeof value === 'number' ? value : Date.parse(value);
+  return Number.isFinite(timestamp)
+    ? new Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'medium' }).format(timestamp) : '—';
+}
+
+function formatClock(value?: string | null) {
+  if (!value) return '—';
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp)
+    ? new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(timestamp) : '—';
+}
