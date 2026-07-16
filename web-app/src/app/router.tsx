@@ -50,7 +50,7 @@ export const appRoutes: RouteObject[] = [
         id: 'status',
         path: '/status',
         lazy: async () => {
-          const { PublicStatusPage } = await import('@/features/status/PublicStatusPage');
+          const { PublicStatusPage } = await import('@/features/status/public-status-page');
           return { Component: PublicStatusPage };
         }
       },

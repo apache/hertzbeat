@@ -22,7 +22,7 @@ import { useTranslation } from 'react-i18next';
 
 import { apiMessageGet, type PageResult } from '@/core/http/api-message';
 
-import styles from './PublicStatusPage.module.css';
+import styles from './public-status-page.module.css';
 import { publicStatusState, type PublicStatusState } from './status-model';
 
 type StatusOrg = { name: string; description: string; home?: string; state: number; color?: string };
