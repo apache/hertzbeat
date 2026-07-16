@@ -27,9 +27,9 @@ import type {
   InstrumentationLanguage,
   InstrumentationMethod,
   InstrumentationPlatform
-} from './instrumentation-contract';
-import { loadInstrumentationCatalog, renderInstrumentationGuide } from './instrumentation-api';
-import { loadInstrumentationCollectors } from './instrumentation-collector-api';
+} from '../api/instrumentation-contract';
+import { loadInstrumentationCatalog, renderInstrumentationGuide } from '../api/instrumentation-api';
+import { loadInstrumentationCollectors } from '../api/collector-api';
 import {
   buildGuideRequest,
   createFlowDraft,
@@ -42,7 +42,7 @@ import {
   updateFlowContext,
   type FlowContextField,
   type FlowStage
-} from './instrumentation-flow-model';
+} from '../model/instrumentation-flow';
 
 export function useInstrumentationSetup() {
   const catalogQuery = useQuery({

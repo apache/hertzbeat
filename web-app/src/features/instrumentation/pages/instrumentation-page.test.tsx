@@ -26,8 +26,8 @@ import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 const { useInstrumentationSetup, useInstrumentationDetection } = vi.hoisted(() => ({
   useInstrumentationSetup: vi.fn(), useInstrumentationDetection: vi.fn()
 }));
-vi.mock('./use-instrumentation-setup', () => ({ useInstrumentationSetup }));
-vi.mock('./use-instrumentation-detection', () => ({ useInstrumentationDetection }));
+vi.mock('../hooks/use-instrumentation-setup', () => ({ useInstrumentationSetup }));
+vi.mock('../hooks/use-instrumentation-detection', () => ({ useInstrumentationDetection }));
 
 import { InstrumentationPage } from './instrumentation-page';
 

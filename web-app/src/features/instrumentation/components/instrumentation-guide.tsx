@@ -19,10 +19,10 @@ import { CopyOutlined } from '@ant-design/icons';
 import { Alert, App, Button, Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { GuideSnippet } from './instrumentation-contract';
+import type { GuideSnippet } from '../api/instrumentation-contract';
+import type { InstrumentationSetupController } from '../hooks/use-instrumentation-setup';
 import { StageBody } from './instrumentation-stage-content';
-import type { InstrumentationSetupController } from './use-instrumentation-setup';
-import styles from './instrumentation-page.module.css';
+import styles from './instrumentation.module.css';
 
 export function InstrumentationGuide({
   setup,

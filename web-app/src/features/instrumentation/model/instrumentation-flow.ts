@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { InstrumentationCollector } from './instrumentation-collector-api';
+import type { InstrumentationCollector } from '../api/collector-api';
 import {
   INSTRUMENTATION_SCHEMA_VERSION,
   type CatalogResponse,
@@ -32,8 +32,8 @@ import {
   type MethodOption,
   type QueryJumpContext,
   type ServiceIdentity
-} from './instrumentation-contract';
-import { materializeSnippetForCopy } from './instrumentation-model';
+} from '../api/instrumentation-contract';
+import { materializeSnippetForCopy } from '../api/instrumentation-wire';
 
 export type FlowStage = 1 | 2 | 3 | 4 | 5;
 export type FlowContextField = 'collectorId' | 'serviceName' | 'serviceNamespace' | 'serviceEnvironment';

@@ -19,7 +19,7 @@ import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const { detectInstrumentationSignals } = vi.hoisted(() => ({ detectInstrumentationSignals: vi.fn() }));
-vi.mock('./instrumentation-api', () => ({ detectInstrumentationSignals }));
+vi.mock('../api/instrumentation-api', () => ({ detectInstrumentationSignals }));
 
 import { useInstrumentationDetection } from './use-instrumentation-detection';
 

@@ -90,7 +90,7 @@ export const appRoutes: RouteObject[] = [
                 id: 'instrumentation',
                 path: '/observability/integration',
                 lazy: async () => {
-                  const { InstrumentationPage } = await import('@/features/instrumentation/instrumentation-page');
+                  const { InstrumentationPage } = await import('@/features/instrumentation');
                   return { Component: InstrumentationPage };
                 }
               },

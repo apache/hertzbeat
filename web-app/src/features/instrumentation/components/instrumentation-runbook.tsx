@@ -19,12 +19,12 @@ import { CheckOutlined, LockOutlined } from '@ant-design/icons';
 import { Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
+import type { useInstrumentationDetection } from '../hooks/use-instrumentation-detection';
+import type { InstrumentationSetupController } from '../hooks/use-instrumentation-setup';
 import { InstrumentationDetection } from './instrumentation-detection';
 import { InstrumentationGuide } from './instrumentation-guide';
 import { SelectionStage } from './instrumentation-stage-content';
-import type { useInstrumentationDetection } from './use-instrumentation-detection';
-import type { InstrumentationSetupController } from './use-instrumentation-setup';
-import styles from './instrumentation-page.module.css';
+import styles from './instrumentation.module.css';
 
 const stages = [
   { id: 1, key: 'environment' },

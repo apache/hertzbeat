@@ -32,7 +32,7 @@ import {
   parseCatalogResponse,
   parseDetectionResponse,
   parseGuideRenderResponse
-} from './instrumentation-model';
+} from './instrumentation-wire';
 
 const INSTRUMENTATION_API_PATH = '/api/instrumentation/v1';
 

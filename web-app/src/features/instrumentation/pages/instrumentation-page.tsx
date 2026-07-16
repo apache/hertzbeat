@@ -19,11 +19,11 @@ import { Typography } from 'antd';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { buildDetectionRequest } from './instrumentation-flow-model';
-import { InstrumentationRunbook } from './instrumentation-runbook';
-import { useInstrumentationDetection } from './use-instrumentation-detection';
-import { useInstrumentationSetup } from './use-instrumentation-setup';
-import styles from './instrumentation-page.module.css';
+import { InstrumentationRunbook } from '../components/instrumentation-runbook';
+import styles from '../components/instrumentation.module.css';
+import { useInstrumentationDetection } from '../hooks/use-instrumentation-detection';
+import { useInstrumentationSetup } from '../hooks/use-instrumentation-setup';
+import { buildDetectionRequest } from '../model/instrumentation-flow';
 
 export function InstrumentationPage() {
   const { t } = useTranslation();

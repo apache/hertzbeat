@@ -20,7 +20,7 @@ import { describe, expect, it, vi } from 'vitest';
 const { apiMessageGet } = vi.hoisted(() => ({ apiMessageGet: vi.fn() }));
 vi.mock('@/core/http/api-message', () => ({ apiMessageGet }));
 
-import { loadInstrumentationCollectors } from './instrumentation-collector-api';
+import { loadInstrumentationCollectors } from './collector-api';
 
 describe('instrumentation Collector API', () => {
   it('loads registered Collectors and derives non-secret OTLP targets', async () => {

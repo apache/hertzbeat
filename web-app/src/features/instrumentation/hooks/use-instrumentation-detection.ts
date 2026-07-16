@@ -17,8 +17,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import type { DetectionRequest, DetectionResponse } from './instrumentation-contract';
-import { detectInstrumentationSignals } from './instrumentation-api';
+import { detectInstrumentationSignals } from '../api/instrumentation-api';
+import type { DetectionRequest, DetectionResponse } from '../api/instrumentation-contract';
 
 type RequestFactory = (startedAt: number) => DetectionRequest;
 

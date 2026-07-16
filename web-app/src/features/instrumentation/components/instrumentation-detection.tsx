@@ -19,11 +19,11 @@ import { ExportOutlined } from '@ant-design/icons';
 import { Alert, Button, Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { INSTRUMENTATION_SIGNALS } from './instrumentation-contract';
-import { buildExploreHandoff } from './instrumentation-flow-model';
+import { INSTRUMENTATION_SIGNALS } from '../api/instrumentation-contract';
+import type { useInstrumentationDetection } from '../hooks/use-instrumentation-detection';
+import { buildExploreHandoff } from '../model/instrumentation-flow';
 import { StageBody } from './instrumentation-stage-content';
-import type { useInstrumentationDetection } from './use-instrumentation-detection';
-import styles from './instrumentation-page.module.css';
+import styles from './instrumentation.module.css';
 
 type DetectionController = ReturnType<typeof useInstrumentationDetection>;
 

@@ -26,7 +26,7 @@ import {
   parseCatalogResponse,
   parseDetectionResponse,
   parseGuideRenderResponse
-} from './instrumentation-model';
+} from './instrumentation-wire';
 
 const component = {
   name: '@opentelemetry/auto-instrumentations-node',

@@ -16,26 +16,17 @@
  */
 
 import {
-  INSTRUMENTATION_AUTOMATIC_WINDOW_MS,
   INSTRUMENTATION_CAPABILITIES as capabilities,
-  INSTRUMENTATION_DETECTION_ERROR_CODES as detectionErrorCodes,
-  INSTRUMENTATION_DETECTION_STATUSES as detectionStatuses,
   INSTRUMENTATION_ENVIRONMENTS as environments,
   INSTRUMENTATION_FRAMEWORKS as frameworks,
   INSTRUMENTATION_LANGUAGES as languages,
   INSTRUMENTATION_METHODS as methods,
   INSTRUMENTATION_PLATFORMS as platforms,
-  INSTRUMENTATION_POLL_AFTER_MS,
-  INSTRUMENTATION_POLLING_DECISIONS as pollingDecisions,
-  INSTRUMENTATION_SCHEMA_VERSION,
-  INSTRUMENTATION_SIGNALS as signals,
   INSTRUMENTATION_STEP_TYPES as stepTypes,
   INSTRUMENTATION_VERSION_POLICIES as versionPolicies,
   type ArtifactVerification,
   type CatalogResponse,
-  type DetectionErrorCode,
   type DetectionRequest,
-  type DetectionResponse,
   type GuideRenderRequest,
   type GuideRenderResponse,
   type GuideSnippet,
@@ -43,20 +34,23 @@ import {
   type MethodOption,
   type OfficialComponent,
   type OfficialDependency,
-  type PollingDecision,
-  type QueryJumpContext,
   type SecretPlaceholder,
   type ServiceIdentity,
-  type SignalDetection,
   type SignalValues
 } from './instrumentation-contract';
+import {
+  array,
+  boolean,
+  enumValue,
+  InstrumentationContractError,
+  nullableString,
+  record,
+  schemaRecord,
+  string
+} from './instrumentation-wire-values';
 
-export class InstrumentationContractError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'InstrumentationContractError';
-  }
-}
+export { parseDetectionResponse } from './instrumentation-detection-wire';
+export { InstrumentationContractError } from './instrumentation-wire-values';
 
 export function parseCatalogResponse(value: unknown): CatalogResponse {
   const root = schemaRecord(value, 'catalog');
@@ -107,35 +101,6 @@ export function parseGuideRenderResponse(value: unknown): GuideRenderResponse {
       };
     })
   };
-}
-
-export function parseDetectionResponse(value: unknown): DetectionResponse {
-  const root = schemaRecord(value, 'detection');
-  const contextRecord = record(root.context, 'detection.context');
-  const parsedSignals = parseSignalValues(root.signals, parseSignalDetection, 'detection.signals');
-  const response: DetectionResponse = {
-    schemaVersion: 1,
-    detectedAt: positiveNumber(root.detectedAt, 'detection.detectedAt'),
-    context: {
-      ...parseSelection(contextRecord, 'detection.context'),
-      service: parseService(contextRecord.service),
-      collectorId: string(contextRecord.collectorId, 'detection collectorId'),
-      startedAt: positiveNumber(contextRecord.startedAt, 'detection startedAt')
-    },
-    signals: parsedSignals,
-    polling: parsePolling(root.polling),
-    queryJumpContext: parseQueryJumpContext(root.queryJumpContext),
-    queryJumps: array(root.queryJumps, 'detection.queryJumps').map((item, jumpIndex) => {
-      const jump = record(item, `detection.queryJumps[${jumpIndex}]`);
-      return {
-        signal: enumValue(jump.signal, signals, 'query jump signal'),
-        enabled: boolean(jump.enabled, 'query jump enabled'),
-        context: parseQueryJumpContext(jump.context)
-      };
-    })
-  };
-  validateDetectionResponse(response);
-  return response;
 }
 
 export function buildGuideRenderPayload(request: GuideRenderRequest): GuideRenderRequest {
@@ -251,112 +216,6 @@ function parseSnippet(value: unknown, index: number): GuideSnippet {
   };
 }
 
-function parseSignalDetection(value: unknown, label: string): SignalDetection {
-  const detection = record(value, label);
-  const parsed: SignalDetection = {
-    status: enumValue(detection.status, detectionStatuses, `${label}.status`),
-    lastReceivedAt: nullablePositiveNumber(detection.lastReceivedAt, `${label}.lastReceivedAt`),
-    errorCode: nullableEnumValue(detection.errorCode, detectionErrorCodes, `${label}.errorCode`)
-  };
-  const { status, lastReceivedAt, errorCode } = parsed;
-  if (status === 'received') validateReceivedSignal(lastReceivedAt, errorCode, label);
-  if (status === 'waiting') validateEmptySignal(lastReceivedAt, errorCode, 'signal_not_received', label);
-  if (status === 'unsupported') validateEmptySignal(lastReceivedAt, errorCode, 'signal_not_supported', label);
-  if (status === 'unavailable') validateUnavailableSignal(lastReceivedAt, errorCode, label);
-  if (status === 'error') validateErrorSignal(errorCode, label);
-  return parsed;
-}
-
-function validateReceivedSignal(lastReceivedAt: number | null, errorCode: DetectionErrorCode | null, label: string) {
-  if (lastReceivedAt == null || errorCode != null) contract(`${label} received invariant`);
-}
-
-function validateEmptySignal(
-  lastReceivedAt: number | null,
-  errorCode: DetectionErrorCode | null,
-  expectedError: DetectionErrorCode,
-  label: string
-) {
-  if (lastReceivedAt != null || errorCode !== expectedError) contract(`${label} empty signal invariant`);
-}
-
-function validateUnavailableSignal(
-  lastReceivedAt: number | null,
-  errorCode: DetectionErrorCode | null,
-  label: string
-) {
-  if (lastReceivedAt != null || errorCode == null) contract(`${label} unavailable invariant`);
-}
-
-function validateErrorSignal(errorCode: DetectionErrorCode | null, label: string) {
-  if (errorCode == null) contract(`${label} error invariant`);
-}
-
-function parsePolling(value: unknown): DetectionResponse['polling'] {
-  const polling = record(value, 'detection.polling');
-  const decision = enumValue(polling.decision, pollingDecisions, 'polling decision');
-  const pollAfterMs = nullablePositiveNumber(polling.pollAfterMs, 'pollAfterMs');
-  if (decision === 'continue_polling' && pollAfterMs !== INSTRUMENTATION_POLL_AFTER_MS) {
-    contract('Continue polling must use the v1 cadence');
-  }
-  if (decision !== 'continue_polling' && pollAfterMs != null) contract('Terminal polling cannot carry a delay');
-  return { decision, pollAfterMs, deadlineAt: positiveNumber(polling.deadlineAt, 'polling deadlineAt') };
-}
-
-function parseQueryJumpContext(value: unknown): QueryJumpContext {
-  const context = record(value, 'query jump context');
-  return {
-    serviceName: string(context.serviceName, 'query serviceName'),
-    serviceNamespace: string(context.serviceNamespace, 'query serviceNamespace'),
-    environment: string(context.environment, 'query environment'),
-    collectorId: string(context.collectorId, 'query collectorId'),
-    startedAt: positiveNumber(context.startedAt, 'query startedAt'),
-    detectedAt: positiveNumber(context.detectedAt, 'query detectedAt')
-  };
-}
-
-function validateDetectionResponse(response: DetectionResponse) {
-  if (response.polling.deadlineAt !== response.context.startedAt + INSTRUMENTATION_AUTOMATIC_WINDOW_MS) {
-    contract('Detection deadline does not match the v1 window');
-  }
-  const expectedQueryContext: QueryJumpContext = {
-    serviceName: response.context.service.name,
-    serviceNamespace: response.context.service.namespace,
-    environment: response.context.service.environment,
-    collectorId: response.context.collectorId,
-    startedAt: response.context.startedAt,
-    detectedAt: response.detectedAt
-  };
-  validateMatchingQueryContext(response.queryJumpContext, expectedQueryContext, 'queryJumpContext');
-  if (response.queryJumps.length !== signals.length) contract('Detection must return three query jumps');
-  for (const signal of signals) {
-    const jump = response.queryJumps.find(item => item.signal === signal);
-    if (!jump || jump.enabled !== (response.signals[signal].status === 'received')) {
-      contract(`Query jump state does not match ${signal}`);
-    }
-    validateMatchingQueryContext(jump.context, response.queryJumpContext, `${signal} query jump context`);
-  }
-  const states = Object.values(response.signals).map(item => item.status);
-  const expectedDecision: PollingDecision = states.some(status => status === 'unavailable' || status === 'error')
-    ? 'manual_retry'
-    : states.some(status => status === 'waiting')
-      ? response.detectedAt < response.polling.deadlineAt ? 'continue_polling' : 'manual_retry'
-      : 'complete';
-  if (response.polling.decision !== expectedDecision) contract('Polling decision does not match signal states');
-}
-
-function validateMatchingQueryContext(actual: QueryJumpContext, expected: QueryJumpContext, label: string) {
-  const keys = [
-    'serviceName',
-    'serviceNamespace',
-    'environment',
-    'collectorId',
-    'startedAt',
-    'detectedAt'
-  ] as const;
-  if (keys.some(key => actual[key] !== expected[key])) contract(`${label} does not match detection context`);
-}
-
 function parseSelection(value: unknown, label: string): InstrumentationSelection {
   const selection = record(value, label);
   return {
@@ -381,15 +240,6 @@ function parseSignalValues<T>(value: unknown, parser: (item: unknown, label: str
   };
 }
 
-function parseService(value: unknown): ServiceIdentity {
-  const service = record(value, 'service');
-  return {
-    name: string(service.name, 'service name'),
-    namespace: string(service.namespace, 'service namespace'),
-    environment: string(service.environment, 'service environment')
-  };
-}
-
 function copySelection(selection: InstrumentationSelection): InstrumentationSelection {
   return {
     language: selection.language,
@@ -402,61 +252,4 @@ function copySelection(selection: InstrumentationSelection): InstrumentationSele
 
 function copyService(service: ServiceIdentity): ServiceIdentity {
   return { name: service.name, namespace: service.namespace, environment: service.environment };
-}
-
-function schemaRecord(value: unknown, label: string) {
-  const parsed = record(value, label);
-  if (parsed.schemaVersion !== INSTRUMENTATION_SCHEMA_VERSION) contract(`${label} schemaVersion must be 1`);
-  return parsed;
-}
-
-function record(value: unknown, label: string): Record<string, unknown> {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) contract(`${label} must be an object`);
-  return value as Record<string, unknown>;
-}
-
-function array(value: unknown, label: string): unknown[] {
-  if (!Array.isArray(value)) contract(`${label} must be an array`);
-  return value;
-}
-
-function string(value: unknown, label: string) {
-  if (typeof value !== 'string' || !value) contract(`${label} must be a non-empty string`);
-  return value;
-}
-
-function nullableString(value: unknown, label: string) {
-  if (value === null) return null;
-  return string(value, label);
-}
-
-function boolean(value: unknown, label: string) {
-  if (typeof value !== 'boolean') contract(`${label} must be a boolean`);
-  return value;
-}
-
-function positiveNumber(value: unknown, label: string) {
-  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value <= 0) {
-    contract(`${label} must be a positive epoch millisecond integer`);
-  }
-  return value;
-}
-
-function nullablePositiveNumber(value: unknown, label: string) {
-  if (value === null) return null;
-  return positiveNumber(value, label);
-}
-
-function enumValue<const T extends readonly string[]>(value: unknown, allowed: T, label: string): T[number] {
-  if (typeof value !== 'string' || !allowed.includes(value)) contract(`${label} is unsupported`);
-  return value;
-}
-
-function nullableEnumValue<const T extends readonly string[]>(value: unknown, allowed: T, label: string): T[number] | null {
-  if (value === null) return null;
-  return enumValue(value, allowed, label);
-}
-
-function contract(message: string): never {
-  throw new InstrumentationContractError(message);
 }

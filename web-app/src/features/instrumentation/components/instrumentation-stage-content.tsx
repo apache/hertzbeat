@@ -25,9 +25,9 @@ import {
   availablePlatforms,
   validateFlowContext,
   type FlowStage
-} from './instrumentation-flow-model';
-import type { InstrumentationSetupController } from './use-instrumentation-setup';
-import styles from './instrumentation-page.module.css';
+} from '../model/instrumentation-flow';
+import type { InstrumentationSetupController } from '../hooks/use-instrumentation-setup';
+import styles from './instrumentation.module.css';
 
 export function SelectionStage({ setup }: { setup: InstrumentationSetupController }) {
   const { t } = useTranslation();
