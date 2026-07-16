@@ -72,6 +72,11 @@ describe('instrumentation feature boundaries', () => {
       .map(([path]) => path);
     expect(violations).toEqual([]);
   });
+
+  it('keeps Collector inventory intake separate from the transient render target', () => {
+    expect(productionSources['./api/collector-api.ts']).not.toContain('CollectorTarget');
+    expect(productionSources['./controller/use-instrumentation-guide-controller.ts']).toContain('CollectorTarget');
+  });
 });
 
 function validateImports(path: string, source: string) {

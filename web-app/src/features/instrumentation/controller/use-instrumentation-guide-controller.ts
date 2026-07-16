@@ -16,7 +16,7 @@
  */
 
 import { useMutation } from '@tanstack/react-query';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { InstrumentationCollector } from '../api/collector-api';
 import type {
@@ -51,6 +51,14 @@ export function useInstrumentationGuideController(
     mutationFn: request => renderInstrumentationGuide(request)
   });
   const reset = mutation.reset;
+  const setTransientTarget = useCallback((target: CollectorTarget | undefined) => {
+    const nextTarget = target ? createTransientCollectorTarget(target) : undefined;
+    if (sameCollectorTarget(targetRef.current, nextTarget)) return;
+    targetRef.current = nextTarget;
+    setTarget(nextTarget);
+    setToken('');
+    reset();
+  }, [reset]);
   const previousDraft = useRef(draft);
   useEffect(() => {
     if (previousDraft.current === draft) return;
@@ -63,15 +71,13 @@ export function useInstrumentationGuideController(
       setToken('');
     }
   }, [draft, reset]);
-
-  const setTransientTarget = useCallback((target: CollectorTarget | undefined) => {
-    const nextTarget = target ? createTransientCollectorTarget(target) : undefined;
-    if (sameCollectorTarget(targetRef.current, nextTarget)) return;
-    targetRef.current = nextTarget;
-    setTarget(nextTarget);
-    setToken('');
-    reset();
-  }, [reset]);
+  const advertisedTarget = useMemo(
+    () => collectorTargetFromInventory(draft.collectorId, collectors),
+    [collectors, draft.collectorId]
+  );
+  useEffect(() => {
+    setTransientTarget(advertisedTarget);
+  }, [advertisedTarget, setTransientTarget]);
   const render = useCallback(async () => {
     const collector = collectors.find(item => item.collectorId === draft.collectorId);
     if (!collector || !collector.online) throw new Error('Selected Collector is unavailable');
@@ -92,6 +98,20 @@ export function useInstrumentationGuideController(
     render,
     materializeSnippet,
     reset
+  };
+}
+
+function collectorTargetFromInventory(
+  collectorId: string,
+  collectors: InstrumentationCollector[]
+): CollectorTarget | undefined {
+  const intake = collectors.find(item => item.collectorId === collectorId)?.intake;
+  if (intake?.status !== 'available') return undefined;
+  return {
+    collectorId: intake.collectorId,
+    otlpHttpEndpoint: intake.otlpHttpEndpoint,
+    otlpGrpcEndpoint: intake.otlpGrpcEndpoint,
+    authorizationHeader: intake.authorizationHeader
   };
 }
 

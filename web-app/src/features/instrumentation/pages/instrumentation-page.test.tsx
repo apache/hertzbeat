@@ -231,7 +231,7 @@ const catalog = {
 
 const collector = {
   collectorId: 'collector-east', name: 'collector-east', online: true, address: '10.0.0.8',
-  intake: { status: 'unavailable' }
+  intake: { status: 'unavailable', errorCode: 'old_server' }
 };
 
 const guide = {

@@ -153,7 +153,7 @@ const catalog: CatalogResponse = {
 
 const collector = {
   collectorId: 'collector-east', name: 'collector-east', online: true, address: '10.0.0.8',
-  intake: { status: 'unavailable' as const }
+  intake: { status: 'unavailable' as const, errorCode: 'old_server' as const }
 };
 
 const transientTarget = createTransientCollectorTarget({

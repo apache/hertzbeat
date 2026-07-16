@@ -25,6 +25,7 @@ import type {
   InstrumentationSelection,
   OfficialComponent
 } from '../api/instrumentation-contract';
+import type { InstrumentationCollector } from '../api/collector-api';
 import type { InstrumentationFlowDraft } from '../model/instrumentation-flow';
 
 const { renderInstrumentationGuide } = vi.hoisted(() => ({ renderInstrumentationGuide: vi.fn() }));
@@ -106,6 +107,76 @@ describe('instrumentation guide controller', () => {
     expect(result.current.token).toBe('');
     expect(result.current.guide).toBeUndefined();
   });
+
+  it('automatically adopts only the selected available Collector advertisement', async () => {
+    const { result } = renderGuideLifecycle(draft, [availableCollector]);
+
+    await waitFor(() => expect(result.current.transientTarget).toEqual(target));
+    expect(result.current.state.status).toBe('idle');
+    expect(JSON.stringify(result.current.transientTarget)).not.toContain(collector.address);
+  });
+
+  it('preserves memory state across an identical inventory refresh and clears it on target identity change', async () => {
+    renderInstrumentationGuide.mockResolvedValue(guide);
+    const view = renderGuideLifecycle(draft, [availableCollector]);
+    await waitFor(() => expect(view.result.current.transientTarget).toEqual(target));
+    act(() => view.result.current.setToken('advertisement_scoped_token'));
+    await act(async () => void await view.result.current.render());
+    await waitFor(() => expect(view.result.current.guide).toEqual(guide));
+
+    view.rerender({
+      currentDraft: draft,
+      currentCollectors: [{ ...availableCollector, intake: { ...availableCollector.intake } }]
+    });
+    expect(view.result.current.token).toBe('advertisement_scoped_token');
+    expect(view.result.current.guide).toEqual(guide);
+
+    const changedTarget = { ...target, otlpHttpEndpoint: 'https://new.example.com:4318' };
+    view.rerender({
+      currentDraft: draft,
+      currentCollectors: [{
+        ...availableCollector,
+        intake: { ...availableCollector.intake, otlpHttpEndpoint: changedTarget.otlpHttpEndpoint }
+      }]
+    });
+    await waitFor(() => expect(view.result.current.transientTarget).toEqual(changedTarget));
+    expect(view.result.current.token).toBe('');
+    expect(view.result.current.guide).toBeUndefined();
+  });
+
+  it('clears target, token, and guide when selection is missing or unavailable and when Collector changes', async () => {
+    renderInstrumentationGuide.mockResolvedValue(guide);
+    const view = renderGuideLifecycle(draft, [availableCollector, availableCollectorWest]);
+    await waitFor(() => expect(view.result.current.transientTarget).toEqual(target));
+    act(() => view.result.current.setToken('collector_scoped_token'));
+    await act(async () => void await view.result.current.render());
+
+    view.rerender({ currentDraft: draft, currentCollectors: [collector] });
+    await waitFor(() => expect(view.result.current.transientTarget).toBeUndefined());
+    expect(view.result.current.token).toBe('');
+    expect(view.result.current.guide).toBeUndefined();
+
+    view.rerender({ currentDraft: draft, currentCollectors: [availableCollector] });
+    await waitFor(() => expect(view.result.current.transientTarget).toEqual(target));
+    act(() => view.result.current.setToken('second_token'));
+    await act(async () => void await view.result.current.render());
+
+    view.rerender({ currentDraft: draft, currentCollectors: [] });
+    await waitFor(() => expect(view.result.current.transientTarget).toBeUndefined());
+    expect(view.result.current.token).toBe('');
+    expect(view.result.current.guide).toBeUndefined();
+
+    view.rerender({ currentDraft: draft, currentCollectors: [availableCollector, availableCollectorWest] });
+    await waitFor(() => expect(view.result.current.transientTarget).toEqual(target));
+    act(() => view.result.current.setToken('third_token'));
+    view.rerender({
+      currentDraft: { ...draft, collectorId: 'collector-west' },
+      currentCollectors: [availableCollector, availableCollectorWest]
+    });
+    await waitFor(() => expect(view.result.current.transientTarget?.collectorId).toBe('collector-west'));
+    expect(view.result.current.token).toBe('');
+    expect(view.result.current.guide).toBeUndefined();
+  });
 });
 
 function renderGuideController(client = new QueryClient({ defaultOptions: { mutations: { retry: false } } })) {
@@ -113,6 +184,20 @@ function renderGuideController(client = new QueryClient({ defaultOptions: { muta
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
   );
   return renderHook(() => useInstrumentationGuideController(draft, [collector]), { wrapper });
+}
+
+function renderGuideLifecycle(
+  currentDraft: InstrumentationFlowDraft,
+  currentCollectors: InstrumentationCollector[]
+) {
+  const client = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  );
+  return renderHook(
+    props => useInstrumentationGuideController(props.currentDraft, props.currentCollectors),
+    { wrapper, initialProps: { currentDraft, currentCollectors } }
+  );
 }
 
 const selection: InstrumentationSelection = {
@@ -126,15 +211,33 @@ const draft: InstrumentationFlowDraft = {
 };
 const collector = {
   collectorId: 'collector-east', name: 'collector-east', address: '10.0.0.8', online: true,
-  intake: { status: 'unavailable' as const }
+  intake: { status: 'unavailable' as const, errorCode: 'old_server' as const }
 };
 const collectorWest = {
   ...collector, collectorId: 'collector-west', name: 'collector-west', address: '10.0.0.9'
 };
 const target = {
-  collectorId: 'collector-east', otlpHttpEndpoint: 'http://collector.internal:4318',
-  otlpGrpcEndpoint: 'http://collector.internal:4317', authorizationHeader: 'Authorization'
+  collectorId: 'collector-east', otlpHttpEndpoint: 'https://otel.example.com:4318',
+  otlpGrpcEndpoint: 'https://otel.example.com:4317', authorizationHeader: 'Authorization'
 } as const;
+const availableCollector = {
+  ...collector,
+  intake: {
+    status: 'available' as const, schemaVersion: 1 as const, collectorId: 'collector-east', gateway: 'collector' as const,
+    capabilities: ['otlp_http_protobuf', 'otlp_grpc'] as const,
+    otlpHttpEndpoint: target.otlpHttpEndpoint, otlpGrpcEndpoint: target.otlpGrpcEndpoint,
+    authorizationHeader: 'Authorization' as const
+  }
+};
+const availableCollectorWest = {
+  ...collectorWest,
+  intake: {
+    ...availableCollector.intake,
+    collectorId: 'collector-west',
+    otlpHttpEndpoint: 'https://west.example.com:4318',
+    otlpGrpcEndpoint: 'https://west.example.com:4317'
+  }
+};
 const component: OfficialComponent = {
   name: 'OpenTelemetry Go SDK', sourceUrl: 'https://opentelemetry.io/', version: '1.43.0',
   versionPolicy: 'pinned', license: 'Apache-2.0', installationLocationKey: 'instrumentation.location.application_host',
