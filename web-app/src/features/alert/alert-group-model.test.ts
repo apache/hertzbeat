@@ -17,7 +17,31 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { buildAlertGroupListPath, buildAlertGroupPayload, createAlertGroupDraft, validateAlertGroupDraft } from './alert-group-model';
+import {
+  AlertGroupContractError,
+  AlertGroupMissingError,
+  buildAlertGroupListPath,
+  buildAlertGroupPayload,
+  buildAlertGroupTogglePayload,
+  createAlertGroupDraft,
+  parseAlertGroupDetail,
+  parseAlertGroupPage,
+  validateAlertGroupDraft
+} from './alert-group-model';
+
+const persisted = {
+  id: 7,
+  name: 'By service',
+  groupLabels: ['service', 'severity'],
+  groupWait: 30,
+  groupInterval: 300,
+  repeatInterval: 0,
+  enable: true,
+  creator: 'operator',
+  modifier: null,
+  gmtCreate: '2026-07-17T08:00:00',
+  gmtUpdate: '2026-07-17T09:00:00'
+};
 
 describe('alert group model', () => {
   it('builds the master pagination and search contract', () => {
@@ -41,5 +65,74 @@ describe('alert group model', () => {
 
   it('requires a name and at least one grouping label', () => {
     expect(validateAlertGroupDraft(createAlertGroupDraft())).toEqual(['name', 'groupLabels']);
+  });
+
+  it('allowlists persisted fields and preserves nullable Java entity values', () => {
+    expect(parseAlertGroupDetail({ ...persisted, internal: 'do not expose' })).toEqual(persisted);
+    expect(parseAlertGroupDetail({
+      ...persisted,
+      groupLabels: null,
+      groupWait: null,
+      groupInterval: null,
+      repeatInterval: null,
+      enable: null,
+      gmtCreate: null,
+      gmtUpdate: null
+    })).toMatchObject({
+      groupLabels: null,
+      groupWait: null,
+      groupInterval: null,
+      repeatInterval: null,
+      enable: null,
+      gmtCreate: null,
+      gmtUpdate: null
+    });
+  });
+
+  it.each([
+    ['unsafe id', { ...persisted, id: Number.MAX_SAFE_INTEGER + 1 }],
+    ['blank name', { ...persisted, name: '  ' }],
+    ['duplicate grouping label', { ...persisted, groupLabels: ['service', 'service'] }],
+    ['negative interval', { ...persisted, groupInterval: -1 }],
+    ['string enablement', { ...persisted, enable: 'true' }],
+    ['numeric audit time', { ...persisted, gmtUpdate: Date.now() }],
+    ['invalid local audit time', { ...persisted, gmtUpdate: '2026-02-30T09:00:00' }]
+  ])('rejects malformed %s evidence', (_label, value) => {
+    expect(() => parseAlertGroupDetail(value)).toThrow(AlertGroupContractError);
+  });
+
+  it('validates exact Spring page evidence, including requested pagination and unique ids', () => {
+    const query = { search: '', pageIndex: 1, pageSize: 15 };
+    expect(parseAlertGroupPage({
+      content: [persisted], totalElements: 16, totalPages: 2, number: 1, size: 15, ignored: true
+    }, query)).toEqual({ content: [persisted], totalElements: 16, totalPages: 2, number: 1, size: 15 });
+
+    expect(() => parseAlertGroupPage({
+      content: [persisted], totalElements: 1, totalPages: 1, number: 0, size: 8
+    }, query)).toThrow(AlertGroupContractError);
+    expect(() => parseAlertGroupPage({
+      content: [persisted], totalElements: 16, totalPages: 1, number: 1, size: 15
+    }, query)).toThrow(AlertGroupContractError);
+    expect(() => parseAlertGroupPage({
+      content: [persisted, persisted], totalElements: 17, totalPages: 2, number: 1, size: 15
+    }, query)).toThrow(AlertGroupContractError);
+  });
+
+  it('keeps missing detail distinct from malformed detail', () => {
+    expect(() => parseAlertGroupDetail(null)).toThrow(AlertGroupMissingError);
+    expect(() => parseAlertGroupDetail({})).toThrow(AlertGroupContractError);
+  });
+
+  it('allowlists toggle writes without audit or response-only fields', () => {
+    const response = { ...persisted, responseOnly: 'ignored' };
+    expect(buildAlertGroupTogglePayload(response, false)).toEqual({
+      id: 7,
+      name: 'By service',
+      groupLabels: ['service', 'severity'],
+      groupWait: 30,
+      groupInterval: 300,
+      repeatInterval: 0,
+      enable: false
+    });
   });
 });
