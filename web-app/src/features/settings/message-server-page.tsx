@@ -22,7 +22,7 @@ import { useTranslation } from 'react-i18next';
 
 import { SettingsNav } from '@/shared/settings/settings-nav';
 
-import { EmailServerEditor, SmsServerEditor } from './MessageServerEditors';
+import { EmailServerEditor, SmsServerEditor } from './message-server-editors';
 import {
   loadEmailServerConfig,
   loadSmsServerConfig,
@@ -39,7 +39,7 @@ import {
   type EmailServerDraft,
   type SmsServerDraft
 } from './message-server-model';
-import styles from './MessageServerPage.module.css';
+import styles from './message-server-page.module.css';
 
 function StatusTag({ status }: { status: 'enabled' | 'disabled' | 'unconfigured' }) {
   const { t } = useTranslation();
