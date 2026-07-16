@@ -15,28 +15,19 @@
  * limitations under the License.
  */
 
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { Alert, App, Button, Empty, Input, InputNumber, Select, Spin, Switch, Typography } from 'antd';
-import { useState } from 'react';
+import { Alert, Button, Input, InputNumber, Select, Spin, Switch, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from 'react-router-dom';
 
-import { loadAlertRule, previewAlertRule, saveAlertRule } from './alert-rule-api';
-import {
-  alertRuleDraftFromDetail,
-  createAlertRuleDraft,
-  validateAlertRuleDraft,
-  type AlertRuleDataType,
-  type AlertRuleDraft,
-  type AlertRuleKind
-} from './alert-rule-model';
+import type { AlertRuleDataType, AlertRuleDraft, AlertRuleKind } from './alert-rule-model';
 import styles from './alert-rule-editor-page.module.css';
-
-type DraftUpdate = (patch: Partial<AlertRuleDraft>) => void;
+import {
+  useAlertRuleEditorController, type AlertRuleEditorDetailState, type AlertRuleEditorFailure,
+  type AlertRulePreviewState
+} from './controller/use-alert-rule-editor-controller';
 
 function AlertRuleFields({ draft, update, changeKind }: {
   draft: AlertRuleDraft;
-  update: DraftUpdate;
+  update: (patch: Partial<AlertRuleDraft>) => void;
   changeKind: (kind: AlertRuleKind) => void;
 }) {
   const { t } = useTranslation();
@@ -44,141 +35,89 @@ function AlertRuleFields({ draft, update, changeKind }: {
   const dataTypes: AlertRuleDataType[] = draft.kind === 'periodic' ? ['metric', 'log', 'trace'] : ['metric', 'log'];
   return (
     <div className={styles.form}>
-      <label>
-        {t('alertRules.name')}
+      <label>{t('alertRules.name')}
         <Input value={draft.name} onChange={event => update({ name: event.target.value })} />
       </label>
-      <label>
-        {t('alertRules.kind.label')}
-        <Select
-          value={draft.kind}
-          onChange={changeKind}
-          options={kinds.map(value => ({ value, label: t(`alertRules.kind.${value}`) }))}
-        />
+      <label>{t('alertRules.kind.label')}
+        <Select value={draft.kind} onChange={changeKind}
+          options={kinds.map(value => ({ value, label: t(`alertRules.kind.${value}`) }))} />
       </label>
-      <label>
-        {t('alertRules.dataType.label')}
-        <Select
-          value={draft.dataType}
-          onChange={dataType => update({ dataType })}
-          options={dataTypes.map(value => ({ value, label: t(`alertRules.dataType.${value}`) }))}
-        />
+      <label>{t('alertRules.dataType.label')}
+        <Select value={draft.dataType} onChange={dataType => update({ dataType })}
+          options={dataTypes.map(value => ({ value, label: t(`alertRules.dataType.${value}`) }))} />
       </label>
-      <label>
-        {t('alertRules.enabled')}
+      <label>{t('alertRules.enabled')}
         <Switch checked={draft.enable} onChange={enable => update({ enable })} />
       </label>
-      <label className={styles.wide}>
-        {t('alertRules.expression')}
+      <label className={styles.wide}>{t('alertRules.expression')}
         <Input.TextArea rows={5} value={draft.expr} onChange={event => update({ expr: event.target.value })} />
       </label>
-      <label className={styles.wide}>
-        {t('alertRules.template')}
+      <label className={styles.wide}>{t('alertRules.template')}
         <Input.TextArea rows={3} value={draft.template} onChange={event => update({ template: event.target.value })} />
       </label>
-      <label className={styles.wide}>
-        {t('alertRules.labels')}
-        <Input
-          value={draft.labelsText}
-          placeholder={t('alertRules.labelsPlaceholder')}
-          onChange={event => update({ labelsText: event.target.value })}
-        />
+      <label className={styles.wide}>{t('alertRules.labels')}
+        <Input value={draft.labelsText} placeholder={t('alertRules.labelsPlaceholder')}
+          onChange={event => update({ labelsText: event.target.value })} />
       </label>
-      {draft.kind === 'periodic' && (
-        <label>
-          {t('alertRules.period')}
-          <InputNumber min={10} value={draft.period} onChange={period => update({ period: period ?? 300 })} />
-        </label>
-      )}
-      <label>
-        {t('alertRules.times')}
-        <InputNumber min={1} value={draft.times} onChange={times => update({ times: times ?? 3 })} />
+      {draft.kind === 'periodic' && <label>{t('alertRules.period')}
+        <InputNumber min={1} value={draft.period} onChange={period => update({ period })} />
+      </label>}
+      <label>{t('alertRules.times')}
+        <InputNumber min={1} value={draft.times} onChange={times => update({ times })} />
       </label>
     </div>
   );
 }
 
-function PreviewResult({ pending, failed, count }: { pending: boolean; failed: boolean; count: number | undefined }) {
+function DetailEvidence({ state, retry }: { state: AlertRuleEditorDetailState; retry: () => unknown }) {
   const { t } = useTranslation();
-  if (pending) return null;
-  if (failed) return <Alert type="error" showIcon message={t('alertRules.previewFailed')} />;
-  if (count == null) return null;
-  return (
-    <Alert
-      type={count > 0 ? 'success' : 'warning'}
-      showIcon
-      message={t(count > 0 ? 'alertRules.previewSuccess' : 'alertRules.previewEmpty', { count })}
-    />
-  );
+  if (state.kind === 'ready') return null;
+  if (state.kind === 'loading') return <Spin />;
+  const message = state.kind === 'missing' ? t('common.notFound.description')
+    : state.kind === 'unavailable' ? t('common.unavailable') : t('common.routeError.description');
+  return <Alert type="error" showIcon message={message}
+    action={<Button size="small" onClick={() => { void retry(); }}>{t('common.retry')}</Button>} />;
 }
 
-function EditorForm({ mode, initial }: { mode: 'new' | 'edit'; initial: AlertRuleDraft }) {
+function PreviewEvidence({ state }: { state: AlertRulePreviewState }) {
   const { t } = useTranslation();
-  const { message } = App.useApp();
-  const navigate = useNavigate();
-  const [draft, setDraft] = useState(initial);
-  const save = useMutation({
-    mutationFn: () => saveAlertRule(mode, draft),
-    onSuccess: () => {
-      void message.success(t('alertRules.saveSuccess'));
-      void navigate('/alerts/rules');
-    },
-    onError: () => void message.error(t('alertRules.saveFailed'))
-  });
-  const preview = useMutation({ mutationFn: () => previewAlertRule(draft) });
-  const update: DraftUpdate = patch => setDraft(current => ({ ...current, ...patch }));
-  const changeKind = (kind: AlertRuleKind) => update({
-    kind,
-    dataType: kind === 'realtime' && draft.dataType === 'trace' ? 'metric' : draft.dataType
-  });
-  const submit = () => {
-    if (validateAlertRuleDraft(draft).length > 0) {
-      void message.warning(t('alertRules.validation'));
-      return;
-    }
-    save.mutate();
-  };
-  const runPreview = () => {
-    if (!draft.expr.trim()) {
-      void message.warning(t('alertRules.expressionRequired'));
-      return;
-    }
-    preview.mutate();
-  };
+  if (state.kind === 'idle' || state.kind === 'loading') return null;
+  if (state.kind === 'unavailable') return <Alert type="error" showIcon message={t('common.unavailable')} />;
+  if (state.kind === 'error') return <Alert type="error" showIcon message={t('alertRules.previewFailed')} />;
+  if (state.kind === 'empty') return <Alert type="warning" showIcon message={t('alertRules.previewEmpty')} />;
+  return <Alert type="success" showIcon message={t('alertRules.previewSuccess', { count: state.records.length })} />;
+}
 
-  return (
-    <>
-      <AlertRuleFields draft={draft} update={update} changeKind={changeKind} />
-      <PreviewResult pending={preview.isPending} failed={preview.isError} count={preview.data?.length} />
-      <div className={styles.actions}>
-        <Button onClick={() => void navigate('/alerts/rules')}>{t('common.cancel')}</Button>
-        <Button loading={preview.isPending} onClick={runPreview}>{t('alertRules.preview')}</Button>
-        <Button type="primary" loading={save.isPending} onClick={submit}>{t('common.save')}</Button>
-      </div>
-    </>
-  );
+function SaveEvidence({ failure }: { failure: AlertRuleEditorFailure | undefined }) {
+  const { t } = useTranslation();
+  if (!failure) return null;
+  return <Alert type="error" showIcon
+    message={failure === 'missing' ? t('common.notFound.description')
+      : failure === 'unavailable' ? t('common.unavailable') : t('alertRules.saveFailed')} />;
 }
 
 export function AlertRuleEditorPage({ mode }: { mode: 'new' | 'edit' }) {
   const { t } = useTranslation();
-  const { ruleId = '' } = useParams();
-  const detail = useQuery({
-    queryKey: ['alert-rule', ruleId],
-    queryFn: () => loadAlertRule(ruleId),
-    enabled: mode === 'edit' && Boolean(ruleId)
-  });
-  if (detail.isError) return <Alert type="error" showIcon message={t('common.unavailable')} />;
-  if (mode === 'edit' && detail.isPending) return <Spin />;
-  if (mode === 'edit' && !detail.data) return <Empty description={t('alertRules.empty')} />;
-
-  const initial = detail.data ? alertRuleDraftFromDetail(detail.data) : createAlertRuleDraft();
+  const controller = useAlertRuleEditorController(mode);
+  const { command, detail, draft, preview, saveFailure } = controller.state;
   return (
     <div className={styles.page}>
       <header className={styles.heading}>
         <Typography.Title level={2}>{t(mode === 'new' ? 'alertRules.new' : 'alertRules.edit')}</Typography.Title>
         <Typography.Text type="secondary">{t('alertRules.editorDescription')}</Typography.Text>
       </header>
-      <EditorForm key={`${mode}:${ruleId}`} mode={mode} initial={initial} />
+      <DetailEvidence state={detail} retry={controller.retryDetail} />
+      {detail.kind === 'ready' && draft && <>
+        <SaveEvidence failure={saveFailure} />
+        <AlertRuleFields draft={draft} update={controller.updateDraft} changeKind={controller.changeKind} />
+        <PreviewEvidence state={preview} />
+        <div className={styles.actions}>
+          <Button disabled={command === 'saving'} onClick={controller.cancel}>{t('common.cancel')}</Button>
+          <Button loading={preview.kind === 'loading'} disabled={command === 'saving'}
+            onClick={() => { void controller.preview(); }}>{t('alertRules.preview')}</Button>
+          <Button type="primary" loading={command === 'saving'} onClick={() => { void controller.save(); }}>{t('common.save')}</Button>
+        </div>
+      </>}
     </div>
   );
 }
