@@ -88,6 +88,11 @@ describe('Object Store resource controller', () => {
     ['loading', { isPending: true }],
     ['unavailable', { isError: true, error: { statusCode: 0 }, result: undefined }],
     ['unavailable', { isError: true, error: { statusCode: 502 }, result: undefined }],
+    ['error', {
+      isError: true,
+      error: { statusCode: 502, code: 'OBJECT_STORE_RESPONSE_INVALID' },
+      result: undefined
+    }],
     ['unavailable', { isError: true, error: { statusCode: 503 }, result: undefined }],
     ['unavailable', { isError: true, error: { statusCode: 504 }, result: undefined }],
     ['error', { isError: true, error: { statusCode: 400 }, result: undefined }],

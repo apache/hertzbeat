@@ -129,6 +129,8 @@ function resolveResourceKind(
 }
 
 function isUnavailable(error: HttpError | null) {
+  const code: unknown = error?.code;
+  if (code === 'OBJECT_STORE_RESPONSE_INVALID') return false;
   return error?.statusCode === 0 || [502, 503, 504].includes(error?.statusCode ?? -1);
 }
 
