@@ -17,12 +17,14 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { logBody, logServiceName, logTimestampMs, metricPath, metricPoints, metricSeries, traceDurationMs, traceHealthState, traceSpanLayout } from './explore-signal-model';
+import type { MetricConsole } from '../api/explore-signal-contract';
+import { logBody, logServiceName, logTimestampMs, metricPath, metricPoints, metricResultState, metricSeries, traceDurationMs, traceHealthState, traceSpanLayout } from './explore-signal-model';
 
 describe('explore API contracts', () => {
   it('normalizes datasource frames returned by the metrics console', () => {
     expect(metricSeries({
       results: {
+        status: 200,
         frames: [{
           schema: {
             fields: [{ name: '__ts__', type: 'time' }, { name: '__value__', type: 'number', unit: 'ms' }],
@@ -38,6 +40,39 @@ describe('explore API contracts', () => {
       labels: { __name__: 'http_server_duration', service_name: 'checkout' },
       points: [[1000, '12']]
     }]);
+  });
+
+  it('classifies metric results from explicit backend evidence', () => {
+    expect(metricResultState({ errorMessage: 'transport failed', results: { status: 200, frames: [] } })).toEqual({
+      kind: 'error',
+      message: 'transport failed'
+    });
+    expect(metricResultState({ results: { status: 503, msg: 'storage offline', frames: [] } })).toEqual({
+      kind: 'error',
+      message: 'storage offline'
+    });
+    expect(metricResultState({ results: { status: 500, frames: [] } })).toEqual({ kind: 'error' });
+    expect(metricResultState({})).toEqual({ kind: 'unavailable' });
+    expect(metricResultState({ results: { frames: [] } })).toEqual({ kind: 'unavailable' });
+    expect(metricResultState({ results: { status: 200 } })).toEqual({ kind: 'unavailable' });
+    expect(metricResultState({ results: { status: 200, frames: [] } })).toEqual({ kind: 'empty' });
+    expect(metricResultState({ results: { status: 200, frames: [{ data: [] }, {}] } })).toEqual({ kind: 'unavailable' });
+    expect(metricResultState({ results: { status: 200, frames: [null, 42] } } as unknown as MetricConsole)).toEqual({ kind: 'unavailable' });
+    expect(metricResultState({ results: { status: 200, frames: [{ data: [] }] } })).toEqual({ kind: 'empty' });
+    expect(metricResultState({ results: {
+      status: 200,
+      frames: [
+        { data: [[1000, 'not-a-number'], [1001, null], [1002, false], [1003, '  ']] },
+        { data: [['not-a-time', 1], [null, 2], [false, 3], ['', 4]] }
+      ]
+    } })).toEqual({ kind: 'empty' });
+
+    const ready = metricResultState({ results: {
+      status: 200,
+      frames: [{ schema: { fields: [{ name: 'value', type: 'number' }] }, data: [[1000, 0]] }]
+    } });
+    expect(ready).toMatchObject({ kind: 'ready' });
+    if (ready.kind === 'ready') expect(metricPoints(ready.series[0]!)).toEqual([{ timestamp: 1000, value: 0 }]);
   });
 
   it('uses the established trace nanosecond duration contract', () => {
@@ -61,9 +96,22 @@ describe('explore API contracts', () => {
   });
 
   it('creates a bounded plot from numeric and numeric-string samples', () => {
-    const points = metricPoints({ key: 'one', name: 'latency', labels: {}, points: [[1000, '12'], [2000, 22], [3000, 'invalid']] });
-    expect(points).toEqual([{ timestamp: 1000, value: 12 }, { timestamp: 2000, value: 22 }]);
-    expect(metricPath(points, 100, 40)).toBe('M0.00,40.00 L100.00,0.00');
+    const points = metricPoints({
+      key: 'one',
+      name: 'latency',
+      labels: {},
+      points: [
+        [1000, null], [1001, false], [1002, ''], [1003, '   '],
+        [null, 1], [false, 2], ['', 3], ['   ', 4],
+        [2000, 0], ['2001', '0'], [' 2002 ', '12.5'], [3000, 'invalid']
+      ]
+    });
+    expect(points).toEqual([
+      { timestamp: 2000, value: 0 },
+      { timestamp: 2001, value: 0 },
+      { timestamp: 2002, value: 12.5 }
+    ]);
+    expect(metricPath(points, 100, 40)).toBe('M0.00,40.00 L50.00,40.00 L100.00,0.00');
   });
 
   it('reads service context and structured bodies from OTLP logs', () => {

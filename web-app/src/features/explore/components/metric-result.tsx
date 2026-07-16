@@ -19,7 +19,7 @@ import { Alert, Table, Tag } from "antd";
 import type { TFunction } from "i18next";
 
 import type { MetricConsole } from "../api/explore-signal-contract";
-import { metricPath, metricPoints, metricSeries, type MetricSeries } from "../model/explore-signal-model";
+import { metricPath, metricPoints, metricResultState, type MetricSeries } from "../model/explore-signal-model";
 import styles from "./metric-result.module.css";
 import { SignalEmptyState, SignalResultFrame } from "./signal-result-frame";
 
@@ -37,14 +37,16 @@ type SampleRow = {
 };
 
 export function MetricResult({ data, t }: { data: MetricConsole; t: TFunction }) {
-  if (data.errorMessage) return <Alert type="error" showIcon message={data.errorMessage} />;
-  const series = metricSeries(data);
-  if (series.length === 0)
+  const state = metricResultState(data);
+  if (state.kind === "error") return <Alert type="error" showIcon title={state.message ?? t("explore.loadFailed")} />;
+  if (state.kind === "unavailable") return <Alert type="warning" showIcon title={t("common.unavailable")} />;
+  if (state.kind === "empty")
     return (
       <SignalResultFrame title={t("explore.signals.metrics")} count={0} unit={t("exploreMetric.series")}>
         <SignalEmptyState title={t("explore.empty.metrics")} hint={t("explore.description")} />
       </SignalResultFrame>
     );
+  const series = state.series;
   const samples = buildSampleRows(series);
 
   return (

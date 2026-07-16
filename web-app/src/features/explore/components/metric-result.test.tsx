@@ -42,8 +42,60 @@ describe('MetricResult', () => {
   });
 
   it('keeps a true empty response distinct from a zero-valued series', () => {
-    render(<I18nextProvider i18n={i18n}><Subject data={{ results: { frames: [] } }} /></I18nextProvider>);
+    render(<I18nextProvider i18n={i18n}><Subject data={{ results: { status: 200, frames: [] } }} /></I18nextProvider>);
     expect(screen.getByText('No metric series for this context.')).toBeInTheDocument();
+
+    cleanup();
+    render(<I18nextProvider i18n={i18n}><Subject data={{ results: {
+      status: 200,
+      frames: [{ schema: { fields: [{ name: 'value', type: 'number' }] }, data: [[1_750_000_000_000, 0]] }]
+    } }} /></I18nextProvider>);
+    expect(screen.getByText('0')).toBeInTheDocument();
+    expect(screen.queryByText('No metric series for this context.')).not.toBeInTheDocument();
+  });
+
+  it('treats explicit frames without numeric points as empty', () => {
+    render(<I18nextProvider i18n={i18n}><Subject data={{ results: {
+      status: 200,
+      frames: [{ data: [] }, { data: [
+        [1_750_000_000_000, 'not-a-number'],
+        [1_750_000_000_001, null],
+        [1_750_000_000_002, false],
+        [1_750_000_000_003, '   ']
+      ] }]
+    } }} /></I18nextProvider>);
+    expect(screen.getByText('No metric series for this context.')).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: 'Metric trend' })).not.toBeInTheDocument();
+  });
+
+  it('renders backend failures instead of empty results', () => {
+    render(<I18nextProvider i18n={i18n}><Subject data={{ results: { status: 503, msg: 'storage offline', frames: [] } }} /></I18nextProvider>);
+    expect(screen.getByText('storage offline')).toBeInTheDocument();
+    expect(screen.queryByText('No metric series for this context.')).not.toBeInTheDocument();
+
+    cleanup();
+    render(<I18nextProvider i18n={i18n}><Subject data={{ results: { status: 500, frames: [] } }} /></I18nextProvider>);
+    expect(screen.getByText('The signal query failed.')).toBeInTheDocument();
+
+    cleanup();
+    render(<I18nextProvider i18n={i18n}><Subject data={{ errorMessage: 'transport failed', results: { status: 200, frames: [] } }} /></I18nextProvider>);
+    expect(screen.getByText('transport failed')).toBeInTheDocument();
+  });
+
+  it('renders unavailable for malformed metric results', () => {
+    const malformed: MetricConsole[] = [
+      {},
+      { results: { frames: [] } },
+      { results: { status: 200 } },
+      { results: { status: 200, frames: [{ data: [[1_750_000_000_000, 1]] }, {}] } }
+    ];
+
+    for (const data of malformed) {
+      render(<I18nextProvider i18n={i18n}><Subject data={data} /></I18nextProvider>);
+      expect(screen.getByText('The service is unavailable. Check the backend connection and try again.')).toBeInTheDocument();
+      expect(screen.queryByText('No metric series for this context.')).not.toBeInTheDocument();
+      cleanup();
+    }
   });
 });
 
@@ -57,6 +109,7 @@ const metricData: MetricConsole = {
   queryMode: 'range',
   stats: { totalSeries: 1 },
   results: {
+    status: 200,
     frames: [{
       schema: { labels: { __name__: 'http.server.duration', service_name: 'checkout', method: 'POST' }, fields: [{ name: 'value', type: 'number', unit: 'ms' }] },
       data: [[1_750_000_000_000, 100], [1_750_000_060_000, 125]]
