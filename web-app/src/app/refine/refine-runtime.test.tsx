@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { useParsed, useRefineContext } from '@refinedev/core';
+import { useDataProvider, useParsed, useRefineContext, useResourceParams } from '@refinedev/core';
 import { QueryClient, useQueryClient } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import { useEffect } from 'react';
@@ -28,6 +28,7 @@ import { initializeI18n } from '@/core/i18n/i18n';
 
 import { AppProviders } from '../providers';
 import { appRoutes } from '../router';
+import { labelDataProvider } from './resources/label-data-provider';
 
 const { authenticatedSession } = vi.hoisted(() => ({
   authenticatedSession: {
@@ -59,6 +60,9 @@ describe('production Refine runtime', () => {
     await waitFor(() => expect(screen.getByTestId('session-user')).toHaveTextContent('operator'));
     expect(screen.getByTestId('refine-initialized')).toHaveTextContent('true');
     expect(screen.getByTestId('parsed-path')).toHaveTextContent('/runtime-probe');
+    expect(screen.getByTestId('mutation-mode')).toHaveTextContent('pessimistic');
+    expect(screen.getByTestId('label-resource')).toHaveTextContent('labels|/settings/labels|labels');
+    expect(screen.getByTestId('label-provider')).toHaveTextContent('shared');
     const mountedClients = mountSpy.mock.instances;
     expect(mountedClients).toHaveLength(1);
     const observedClient = observedClients.at(-1);
@@ -72,14 +76,32 @@ function RuntimeProbe({ onClient }: { onClient: (client: QueryClient) => void })
   const queryClient = useQueryClient();
   const refine = useRefineContext();
   const parsed = useParsed();
+  const dataProvider = useDataProvider();
+  const { resources } = useResourceParams();
   const { session } = useSession();
-  useEffect(() => onClient(queryClient), [onClient, queryClient]);
+  useEffect(() => {
+    onClient(queryClient);
+  }, [onClient, queryClient]);
+  const labelResource = resources.find(resource => resource.name === 'labels');
+  let labelProvider = 'missing';
+  try {
+    labelProvider = dataProvider('labels') === labelDataProvider && dataProvider() === labelDataProvider
+      ? 'shared'
+      : 'different';
+  } catch {
+    labelProvider = 'missing';
+  }
 
   return (
     <>
       <output data-testid="session-user">{session?.username}</output>
       <output data-testid="refine-initialized">{String(refine.__initialized)}</output>
       <output data-testid="parsed-path">{parsed.pathname}</output>
+      <output data-testid="mutation-mode">{refine.mutationMode}</output>
+      <output data-testid="label-resource">{
+        `${labelResource?.name ?? ''}|${String(labelResource?.list ?? '')}|${String(labelResource?.meta?.dataProviderName ?? '')}`
+      }</output>
+      <output data-testid="label-provider">{labelProvider}</output>
     </>
   );
 }

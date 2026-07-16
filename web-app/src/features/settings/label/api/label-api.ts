@@ -29,6 +29,7 @@ export type LabelRecord = {
 };
 
 export type LabelQuery = { search: string; pageIndex: number; pageSize: number };
+export type LabelIdentity = Pick<LabelRecord, 'name' | 'tagValue'> & { id?: number };
 export const labelPageSizes = [20, 50, 100] as const;
 
 export function loadLabels(query: LabelQuery) {
@@ -42,6 +43,27 @@ export function saveLabel(label: Partial<LabelRecord>, isNew: boolean) {
 
 export function deleteLabel(id: number) {
   return apiMessageDelete<void>(`/api/label?ids=${encodeURIComponent(id)}`);
+}
+
+export async function findCanonicalLabel(identity: LabelIdentity) {
+  const expectedName = identity.name.trim();
+  const expectedValue = normalizeLabelValue(identity.tagValue);
+  let pageIndex = 0;
+  let totalPages = 1;
+
+  do {
+    const page = await loadLabels({ search: expectedName, pageIndex, pageSize: 100 });
+    const match = page.content.find(label => (
+      (identity.id === undefined || label.id === identity.id)
+      && label.name.trim() === expectedName
+      && normalizeLabelValue(label.tagValue) === expectedValue
+    ));
+    if (match) return match;
+    totalPages = Number.isInteger(page.totalPages) && page.totalPages > 0 ? page.totalPages : 1;
+    pageIndex += 1;
+  } while (pageIndex < totalPages);
+
+  return undefined;
 }
 
 export function readLabelQuery(params: URLSearchParams): LabelQuery {
@@ -72,4 +94,8 @@ export function buildLabelPayload(label: Partial<LabelRecord>, isNew: boolean): 
     description: label.description?.trim() ?? '',
     type: isNew ? 1 : label.type ?? 1
   };
+}
+
+function normalizeLabelValue(value?: string) {
+  return value?.trim() ?? '';
 }

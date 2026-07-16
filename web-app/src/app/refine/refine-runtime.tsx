@@ -22,6 +22,8 @@ import { Outlet } from 'react-router-dom';
 
 import { SessionProvider } from '@/core/auth/session-provider';
 
+import { labelDataProvider } from './resources/label-data-provider';
+
 const appQueryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -35,13 +37,27 @@ const appQueryClient = new QueryClient({
   }
 });
 
+const dataProviders = {
+  default: labelDataProvider,
+  labels: labelDataProvider
+};
+
+const resources = [{
+  name: 'labels',
+  list: '/settings/labels',
+  meta: { dataProviderName: 'labels' }
+}];
+
 export function RefineRuntime() {
   return (
     <Refine
+      dataProvider={dataProviders}
+      resources={resources}
       routerProvider={routerProvider}
       options={{
         disableRouteChangeHandler: true,
         disableTelemetry: true,
+        mutationMode: 'pessimistic',
         syncWithLocation: false,
         reactQuery: { clientConfig: appQueryClient }
       }}

@@ -17,7 +17,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 const { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } = vi.hoisted(() => ({ apiMessageDelete: vi.fn(), apiMessageGet: vi.fn(), apiMessagePost: vi.fn(), apiMessagePut: vi.fn() }));
 vi.mock('@/core/http/api-message', () => ({ apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut }));
-import { deleteLabel, loadLabels, saveLabel } from './label-api';
+import { deleteLabel, findCanonicalLabel, loadLabels, saveLabel } from './label-api';
 
 describe('label API', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -34,5 +34,28 @@ describe('label API', () => {
     expect(apiMessagePost).toHaveBeenCalledWith('/api/label', { name: 'env', tagValue: '', description: '', type: 1 });
     expect(apiMessagePut).toHaveBeenCalledWith('/api/label', { id: 4, name: 'env', tagValue: '', description: '', type: 1 });
     expect(apiMessageDelete).toHaveBeenCalledWith('/api/label?ids=4');
+  });
+
+  it('finds only an exact server record across paginated fuzzy search results', async () => {
+    apiMessageGet
+      .mockResolvedValueOnce({
+        content: [{ id: 2, name: 'environment', tagValue: 'prod' }],
+        totalElements: 2,
+        totalPages: 2,
+        number: 0,
+        size: 100
+      })
+      .mockResolvedValueOnce({
+        content: [{ id: 7, name: 'env', tagValue: 'prod', creator: 'server' }],
+        totalElements: 2,
+        totalPages: 2,
+        number: 1,
+        size: 100
+      });
+
+    await expect(findCanonicalLabel({ id: 7, name: ' env ', tagValue: ' prod ' }))
+      .resolves.toMatchObject({ id: 7, name: 'env', tagValue: 'prod', creator: 'server' });
+    expect(apiMessageGet).toHaveBeenNthCalledWith(1, '/api/label?pageIndex=0&pageSize=100&search=env');
+    expect(apiMessageGet).toHaveBeenNthCalledWith(2, '/api/label?pageIndex=1&pageSize=100&search=env');
   });
 });
