@@ -15,28 +15,13 @@
  * limitations under the License.
  */
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { App as AntApp, ConfigProvider, theme } from 'antd';
 import type { PropsWithChildren } from 'react';
 import { I18nextProvider, useTranslation } from 'react-i18next';
 
 import { i18n } from '@/core/i18n/i18n';
-import { SessionProvider } from '@/core/auth/session-provider';
 import { resolveAntLocale } from '@/core/i18n/ant-locale';
 import { readRuntimeTheme } from '@/core/runtime-preferences';
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: false,
-      staleTime: 15_000
-    },
-    mutations: {
-      retry: false
-    }
-  }
-});
 
 function RuntimeProviders({ children }: PropsWithChildren) {
   const { i18n: runtimeI18n } = useTranslation();
@@ -59,11 +44,7 @@ function RuntimeProviders({ children }: PropsWithChildren) {
           }
         }}
     >
-        <AntApp>
-          <QueryClientProvider client={queryClient}>
-            <SessionProvider>{children}</SessionProvider>
-          </QueryClientProvider>
-        </AntApp>
+        <AntApp>{children}</AntApp>
     </ConfigProvider>
   );
 }

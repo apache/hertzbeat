@@ -23,6 +23,8 @@ import { RouteErrorBoundary } from '@/features/errors/route-error-boundary';
 import { BasicLayout } from '@/layout/basic/basic-layout';
 import { legacySettingsPaths, settingsPaths } from '@/shared/settings/settings-routes';
 
+import { RefineRuntime } from './refine/refine-runtime';
+
 function LegacySettingsRedirect({ to }: { to: string }) {
   const location = useLocation();
   return <Navigate replace to={`${to}${location.search}${location.hash}`} />;
@@ -34,6 +36,7 @@ export const appRoutes: RouteObject[] = [
   {
     id: 'application',
     path: '/',
+    element: <RefineRuntime />,
     errorElement: <RouteErrorBoundary />,
     hydrateFallbackElement: <Skeleton active paragraph={{ rows: 6 }} />,
     children: [
