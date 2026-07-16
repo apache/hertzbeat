@@ -17,38 +17,21 @@
 
 import { apiMessageGet } from '@/core/http/api-message';
 
-import { buildAlertListPath, type AlertQuery } from './alert-model';
+import {
+  buildAlertListPath,
+  parseAlertGroupPage,
+  parseAlertSummary,
+  type AlertQuery
+} from './alert-model';
 
-export type AlertSummary = {
-  total: number;
-  dealNum: number;
-  rate: number;
-  priorityWarningNum: number;
-  priorityCriticalNum: number;
-  priorityEmergencyNum: number;
-};
+export type { AlertGroup, AlertPage, AlertSummary } from './alert-model';
 
-export type AlertGroup = {
-  id: number;
-  status?: string;
-  groupLabels?: Record<string, string>;
-  commonLabels?: Record<string, string>;
-  commonAnnotations?: Record<string, string>;
-  alertFingerprints?: string[];
-  gmtUpdate?: number | string | null;
-};
-
-export type AlertPage = {
-  content: AlertGroup[];
-  totalElements: number;
-  pageIndex?: number;
-  pageSize?: number;
-};
-
-export function loadAlertSummary() {
-  return apiMessageGet<AlertSummary>('/api/alerts/summary');
+export async function loadAlertSummary() {
+  const response = await apiMessageGet<unknown>('/api/alerts/summary');
+  return parseAlertSummary(response);
 }
 
-export function loadAlertGroups(query: AlertQuery) {
-  return apiMessageGet<AlertPage>(buildAlertListPath(query));
+export async function loadAlertGroups(query: AlertQuery) {
+  const response = await apiMessageGet<unknown>(buildAlertListPath(query));
+  return parseAlertGroupPage(response, query);
 }
