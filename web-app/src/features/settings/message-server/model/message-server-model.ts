@@ -15,28 +15,10 @@
  * limitations under the License.
  */
 
-export type EmailServerDraft = {
-  type: number;
-  emailHost: string;
-  emailPort: number;
-  emailUsername: string;
-  emailPassword: string;
-  emailSsl: boolean;
-  emailStarttls: boolean;
-  enable: boolean;
-};
+import type { EmailServerDraft, SmsProviderType, SmsServerDraft } from '../api/message-server-api';
 
-export type SmsProviderType = 'tencent' | 'alibaba' | 'unisms' | 'smslocal' | 'aws' | 'twilio';
-export type SmsServerDraft = {
-  enable: boolean;
-  type: SmsProviderType;
-  tencent: { secretId: string; secretKey: string; appId: string; signName: string; templateId: string };
-  alibaba: { accessKeyId: string; accessKeySecret: string; signName: string; templateCode: string };
-  unisms: { accessKeyId: string; accessKeySecret: string; signature: string; templateId: string; authMode: 'simple' | 'hmac' };
-  smslocal: { apiKey: string };
-  aws: { accessKeyId: string; accessKeySecret: string; region: string };
-  twilio: { accountSid: string; authToken: string; twilioPhoneNumber: string };
-};
+export { buildEmailServerPayload, buildSmsServerPayload } from '../api/message-server-api';
+export type { EmailServerDraft, SmsProviderType, SmsServerDraft };
 
 type SmsProviderFieldDefinition = { key: string; labelKey: string; secret?: boolean; kind?: 'text' | 'authMode' };
 type SmsProviderDefinition = { type: SmsProviderType; labelKey: string; fields: SmsProviderFieldDefinition[] };
@@ -85,10 +67,6 @@ export function validateEmailServerDraft(draft: EmailServerDraft) {
   return invalid;
 }
 
-export function buildEmailServerPayload(draft: EmailServerDraft): EmailServerDraft {
-  return { ...draft, emailHost: draft.emailHost.trim(), emailUsername: draft.emailUsername.trim(), emailPassword: draft.emailPassword.trim() };
-}
-
 function activeSmsFields(draft: SmsServerDraft) {
   const provider = smsProviderDefinitions.find(definition => definition.type === draft.type)!;
   const values = draft[draft.type] as unknown as Record<string, string>;
@@ -101,23 +79,6 @@ export function validateSmsServerDraft(draft: SmsServerDraft) {
     .filter(field => !(draft.type === 'unisms' && field.key === 'accessKeySecret' && draft.unisms.authMode !== 'hmac'))
     .filter(field => !String(values[field.key] ?? '').trim())
     .map(field => field.key);
-}
-
-function trimObject<T extends Record<string, string>>(value: T): T {
-  return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, item.trim()])) as T;
-}
-
-export function buildSmsServerPayload(draft: SmsServerDraft): SmsServerDraft {
-  return {
-    enable: draft.enable,
-    type: draft.type,
-    tencent: trimObject(draft.tencent),
-    alibaba: trimObject(draft.alibaba),
-    unisms: trimObject(draft.unisms),
-    smslocal: trimObject(draft.smslocal),
-    aws: trimObject(draft.aws),
-    twilio: trimObject(draft.twilio)
-  };
 }
 
 export function updateSmsProviderField(draft: SmsServerDraft, key: string, value: string): SmsServerDraft {

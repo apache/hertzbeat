@@ -24,7 +24,7 @@ import {
   type EmailServerDraft,
   type SmsProviderType,
   type SmsServerDraft
-} from './message-server-model';
+} from '../model/message-server-model';
 import styles from './message-server-editors.module.css';
 
 export function EmailServerEditor({ draft, saving, update, close, submit }: {

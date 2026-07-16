@@ -15,27 +15,4 @@
  * limitations under the License.
  */
 
-import { apiMessageGet, apiMessagePost } from '@/core/http/api-message';
-
-import {
-  buildEmailServerPayload,
-  buildSmsServerPayload,
-  type EmailServerDraft,
-  type SmsServerDraft
-} from './message-server-model';
-
-export function loadEmailServerConfig() {
-  return apiMessageGet<EmailServerDraft | null>('/api/config/email');
-}
-
-export function loadSmsServerConfig() {
-  return apiMessageGet<SmsServerDraft | null>('/api/config/sms');
-}
-
-export function saveEmailServerConfig(draft: EmailServerDraft) {
-  return apiMessagePost<unknown>('/api/config/email', buildEmailServerPayload(draft));
-}
-
-export function saveSmsServerConfig(draft: SmsServerDraft) {
-  return apiMessagePost<unknown>('/api/config/sms', buildSmsServerPayload(draft));
-}
+export { MessageServerPage } from './pages/message-server-page';

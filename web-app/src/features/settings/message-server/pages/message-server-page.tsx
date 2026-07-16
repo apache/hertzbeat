@@ -22,13 +22,13 @@ import { useTranslation } from 'react-i18next';
 
 import { SettingsNav } from '@/shared/settings/settings-nav';
 
-import { EmailServerEditor, SmsServerEditor } from './message-server-editors';
+import { EmailServerEditor, SmsServerEditor } from '../components/message-server-editors';
 import {
   loadEmailServerConfig,
   loadSmsServerConfig,
   saveEmailServerConfig,
   saveSmsServerConfig
-} from './message-server-api';
+} from '../api/message-server-api';
 import {
   createEmailServerDraft,
   createSmsServerDraft,
@@ -38,7 +38,7 @@ import {
   validateSmsServerDraft,
   type EmailServerDraft,
   type SmsServerDraft
-} from './message-server-model';
+} from '../model/message-server-model';
 import styles from './message-server-page.module.css';
 
 function StatusTag({ status }: { status: 'enabled' | 'disabled' | 'unconfigured' }) {
