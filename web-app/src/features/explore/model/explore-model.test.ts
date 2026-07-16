@@ -77,28 +77,27 @@ describe('explore query state', () => {
       'signal=metrics&serviceName=checkout-api&serviceNamespace=commerce&environment=prod&collectorId=collector-east'
       + '&start=1710000000000&end=1710000005000'
     ));
-    const preset = mergeExploreQuery(exact, {
-      timeRange: 'last-1h', windowMode: 'preset', start: undefined, end: 1_710_000_020_000
-    });
+    const preset = mergeExploreQuery(exact, presetTimeRangePatch(exact, 'last-1h'));
 
     expect(exploreHandoffState(preset)).toBe('scoped');
     expect(exploreUsesExactWindow(preset)).toBe(false);
     expect(buildExplorePath(preset)).toBe(
       '/explore?signal=metrics&timeRange=last-1h&serviceName=checkout-api&serviceNamespace=commerce'
-      + '&environment=prod&collectorId=collector-east&windowMode=preset&end=1710000020000'
+      + '&environment=prod&collectorId=collector-east&windowMode=preset'
     );
-    expect(querySubmissionTimePatch(exact, 1_710_000_030_000)).toEqual({});
-    expect(presetTimeRangePatch(exact, 'last-1h', 1_710_000_020_000)).toEqual({
-      timeRange: 'last-1h', windowMode: 'preset', start: undefined, end: 1_710_000_020_000
+    expect(exploreHandoffState(parseExploreQuery(new URLSearchParams(buildExplorePath(preset).split('?')[1])))).toBe('scoped');
+    expect(querySubmissionTimePatch(exact)).toEqual({});
+    expect(presetTimeRangePatch(exact, 'last-1h')).toEqual({
+      timeRange: 'last-1h', windowMode: 'preset', start: undefined, end: undefined
     });
-    expect(querySubmissionTimePatch({ signal: 'logs', timeRange: 'last-30m' }, 1_710_000_030_000)).toEqual({
-      start: undefined, end: 1_710_000_030_000
+    expect(querySubmissionTimePatch({ signal: 'logs', timeRange: 'last-30m' })).toEqual({
+      start: undefined, end: undefined
     });
     const invalid = parseExploreQuery(new URLSearchParams(
       'serviceName=checkout-api&collectorId=collector-east&start=2000&end=1000'
     ));
-    expect(querySubmissionTimePatch(invalid, 1_710_000_030_000)).toEqual({
-      start: undefined, end: 1_710_000_030_000
+    expect(querySubmissionTimePatch(invalid)).toEqual({
+      start: undefined, end: undefined
     });
   });
 

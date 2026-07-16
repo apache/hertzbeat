@@ -19,7 +19,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Alert, Button, Descriptions, Drawer, Empty, Skeleton, Table, Tag, Typography } from "antd";
 import type { TFunction } from "i18next";
 import { useState } from "react";
-import type { NavigateFunction } from "react-router-dom";
 
 import { loadTraceDetail, type ExplorePageResult } from "../api/explore-api";
 import type { TraceDetail, TraceRow, TraceSpan } from "../model/explore-signal-contract";
@@ -28,6 +27,8 @@ import { traceDurationMs, traceHealthState, traceSpanLayout } from "../model/exp
 import { OtlpAttributeList, OtlpAttributeSection } from "./otlp-attribute-list";
 import { SignalEmptyState, SignalResultFrame } from "./signal-result-frame";
 import styles from "./trace-result.module.css";
+
+type OpenPath = (path: string) => void;
 
 export function TraceResult({
   data,
@@ -38,11 +39,11 @@ export function TraceResult({
   data: ExplorePageResult<TraceRow>;
   query: TraceExploreQuery;
   t: TFunction;
-  navigate: NavigateFunction;
+  navigate: OpenPath;
 }) {
   const [traceId, setTraceId] = useState<string>();
   const rows = data.content ?? [];
-  if (rows.length === 0)
+  if (data.totalElements === 0)
     return (
       <SignalResultFrame title={t("explore.signals.traces")} count={0}>
         <SignalEmptyState title={t("explore.empty.traces")} hint={t("explore.description")} />
@@ -102,7 +103,7 @@ function TraceDrawer({
   traceId?: string | undefined;
   query: TraceExploreQuery;
   t: TFunction;
-  navigate: NavigateFunction;
+  navigate: OpenPath;
   onClose: () => void;
 }) {
   const detail = useQuery({
@@ -133,7 +134,7 @@ function TraceDetailView({
   detail: TraceDetail;
   query: TraceExploreQuery;
   t: TFunction;
-  navigate: NavigateFunction;
+  navigate: OpenPath;
 }) {
   const spans = traceSpanLayout(detail);
   const [spanId, setSpanId] = useState<string>();

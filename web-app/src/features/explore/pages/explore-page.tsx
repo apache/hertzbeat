@@ -15,169 +15,65 @@
  * limitations under the License.
  */
 
-import { useQuery, type UseQueryResult } from "@tanstack/react-query";
-import { Alert, Button, Skeleton } from "antd";
-import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
-import type { TFunction } from "i18next";
-import { useTranslation } from "react-i18next";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Alert, Button, Skeleton } from 'antd';
+import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 
-import { loadLogSignal, loadMetricSignal, loadTraceSignal } from "../api/explore-api";
-import { ExploreQueryBar } from "../components/explore-query-bar";
-import { ExploreWorkbench } from "../components/explore-workbench";
-import { LogResult } from "../components/log-result";
-import { MetricResult } from "../components/metric-result";
-import { TraceResult } from "../components/trace-result";
-import { useExploreSubmission } from "../hooks/use-explore-submission";
-import {
-  buildExplorePath,
-  exploreHandoffState,
-  mergeExploreQuery,
-  parseExploreQuery,
-  querySubmissionTimePatch,
-  type ExploreQuery,
-  type ExploreQueryPatch,
-  type LogExploreQuery,
-  type MetricExploreQuery,
-  type TraceExploreQuery,
-} from "../model/explore-model";
-import styles from "./explore-page.module.css";
+import { ExploreQueryBar } from '../components/explore-query-bar';
+import { ExploreWorkbench } from '../components/explore-workbench';
+import { LogResult } from '../components/log-result';
+import { MetricResult } from '../components/metric-result';
+import { TraceResult } from '../components/trace-result';
+import { useExplorePageController, type ExplorePageResultState } from '../controller/use-explore-page-controller';
+import type { ExploreQuery } from '../model/explore-model';
+import styles from './explore-page.module.css';
 
 export function ExplorePage() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [initialEnd] = useState(() => Date.now());
-  const query = useMemo(() => {
-    const parsed = parseExploreQuery(searchParams);
-    return parsed.end ? parsed : { ...parsed, end: initialEnd };
-  }, [initialEnd, searchParams]);
-  const updateQuery = (changes: ExploreQueryPatch) => {
-    const next = mergeExploreQuery(query, changes);
-    setSearchParams(new URL(buildExplorePath(next), window.location.origin).searchParams);
-  };
-  const submission = useExploreSubmission(query, (patch) => updateQuery({
-    ...patch,
-    ...querySubmissionTimePatch(query),
-    pageIndex: undefined,
-  }));
-
+  const controller = useExplorePageController();
   return (
     <div className={styles.page}>
-      <ExploreWorkbench query={query} t={t} updateQuery={updateQuery} />
-      <ExploreQueryBar query={query} t={t} updateQuery={updateQuery} submission={submission} />
-      <ResultPanel query={query} t={t} navigate={navigate} />
+      <ExploreWorkbench query={controller.query} t={t} updateQuery={controller.updateQuery} refresh={controller.refresh} />
+      <ExploreQueryBar query={controller.query} t={t} updateQuery={controller.updateQuery} submission={controller.submission} />
+      <ResultPanel query={controller.query} result={controller.result} retry={controller.refresh} openPath={controller.openPath} />
     </div>
   );
 }
 
-function ResultPanel({
-  query,
-  t,
-  navigate,
-}: {
+function ResultPanel({ query, result, retry, openPath }: {
   query: ExploreQuery;
-  t: TFunction;
-  navigate: ReturnType<typeof useNavigate>;
+  result: ExplorePageResultState;
+  retry: () => Promise<void>;
+  openPath: (path: string) => void;
 }) {
-  if (exploreHandoffState(query) === "invalid") return null;
-  if (query.signal === "metrics") return <MetricResultPanel query={query} t={t} />;
-  if (query.signal === "logs") return <LogResultPanel query={query} t={t} navigate={navigate} />;
-  return <TraceResultPanel query={query} t={t} navigate={navigate} />;
+  const { t } = useTranslation();
+  if (result.kind === 'invalid') return null;
+  if (result.kind === 'loading') return <ResultFrame><Skeleton active paragraph={{ rows: 8 }} /></ResultFrame>;
+  if (result.kind === 'unavailable') return <FailureResult message={t('common.unavailable')} retry={retry} />;
+  if (result.kind === 'error') return <FailureResult message={t('explore.loadFailed')} retry={retry} />;
+  if (result.kind === 'live') return query.signal === 'logs'
+    ? <ResultFrame><LogResult query={query} t={t} navigate={openPath} /></ResultFrame> : null;
+  return <HistoricalResult query={query} result={result} openPath={openPath} />;
 }
 
-function MetricResultPanel({ query, t }: { query: MetricExploreQuery; t: TFunction }) {
-  const result = useQuery({
-    queryKey: ["explore", query],
-    queryFn: ({ signal }) => loadMetricSignal(query, signal),
-    staleTime: 5_000,
-  });
-  return <QueryResult result={result} t={t} render={(data) => <MetricResult data={data} t={t} />} />;
+function HistoricalResult({ query, result, openPath }: {
+  query: ExploreQuery;
+  result: Extract<ExplorePageResultState, { kind: 'ready' | 'empty' }>;
+  openPath: (path: string) => void;
+}) {
+  const { t } = useTranslation();
+  if (result.signal === 'metrics' && query.signal === 'metrics') return <ResultFrame><MetricResult data={result.data} t={t} /></ResultFrame>;
+  if (result.signal === 'logs' && query.signal === 'logs') return <ResultFrame><LogResult data={result.data} query={query} t={t} navigate={openPath} /></ResultFrame>;
+  if (result.signal === 'traces' && query.signal === 'traces') return <ResultFrame><TraceResult data={result.data} query={query} t={t} navigate={openPath} /></ResultFrame>;
+  return null;
 }
 
-function LogResultPanel({
-  query,
-  t,
-  navigate,
-}: {
-  query: LogExploreQuery;
-  t: TFunction;
-  navigate: ReturnType<typeof useNavigate>;
-}) {
-  const result = useQuery({
-    queryKey: ["explore", query],
-    queryFn: ({ signal }) => loadLogSignal(query, signal),
-    staleTime: 5_000,
-    enabled: !query.live,
-  });
-  if (query.live)
-    return (
-      <section className={styles.results} aria-live="polite">
-        <LogResult query={query} t={t} navigate={navigate} />
-      </section>
-    );
-  return (
-    <QueryResult
-      result={result}
-      t={t}
-      render={(data) => <LogResult data={data} query={query} t={t} navigate={navigate} />}
-    />
-  );
+function FailureResult({ message, retry }: { message: string; retry: () => Promise<void> }) {
+  const { t } = useTranslation();
+  return <ResultFrame><Alert type="error" showIcon message={message}
+    action={<Button onClick={() => { void retry(); }}>{t('common.retry')}</Button>} /></ResultFrame>;
 }
 
-function TraceResultPanel({
-  query,
-  t,
-  navigate,
-}: {
-  query: TraceExploreQuery;
-  t: TFunction;
-  navigate: ReturnType<typeof useNavigate>;
-}) {
-  const result = useQuery({
-    queryKey: ["explore", query],
-    queryFn: ({ signal }) => loadTraceSignal(query, signal),
-    staleTime: 5_000,
-  });
-  return (
-    <QueryResult
-      result={result}
-      t={t}
-      render={(data) => <TraceResult data={data} query={query} t={t} navigate={navigate} />}
-    />
-  );
-}
-
-function QueryResult<T>({
-  result,
-  t,
-  render,
-}: {
-  result: UseQueryResult<T>;
-  t: TFunction;
-  render: (data: T) => ReactNode;
-}) {
-  if (result.isPending)
-    return (
-      <section className={styles.results} aria-live="polite">
-        <Skeleton active paragraph={{ rows: 8 }} />
-      </section>
-    );
-  if (result.isError)
-    return (
-      <section className={styles.results} aria-live="polite">
-        <Alert
-          type="error"
-          showIcon
-          message={t("explore.loadFailed")}
-          action={<Button onClick={() => void result.refetch()}>{t("common.retry")}</Button>}
-        />
-      </section>
-    );
-  return (
-    <section className={styles.results} aria-live="polite">
-      {render(result.data)}
-    </section>
-  );
+function ResultFrame({ children }: { children: ReactNode }) {
+  return <section className={styles.results} aria-live="polite">{children}</section>;
 }

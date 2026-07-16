@@ -39,6 +39,13 @@ describe('explore API paths', () => {
     expect(buildSignalApiPath({ ...base, signal: 'metrics' }, 1_000_000)).toBe('/api/ingestion/otlp/metrics/console?serviceName=checkout&environment=prod&start=100000&end=1000000&query=timeout');
   });
 
+  it('slides an unanchored relative window but preserves an explicit shared URL end', () => {
+    const relative = { signal: 'metrics' as const, timeRange: 'last-15m' as const };
+    expect(buildSignalApiPath(relative, 1_000_000)).toContain('start=100000&end=1000000');
+    expect(buildSignalApiPath(relative, 2_000_000)).toContain('start=1100000&end=2000000');
+    expect(buildSignalApiPath({ ...relative, end: 1_500_000 }, 2_000_000)).toContain('start=600000&end=1500000');
+  });
+
   it('maps advanced log filters to history and stream contracts', () => {
     const query = { signal: 'logs' as const, timeRange: 'last-30m' as const, serviceName: 'checkout', query: 'timeout', severityText: 'ERROR', traceId: 'trace-1', spanId: 'span-1', resourceFilter: 'service.version=1.2.3', attributeFilter: 'http.route:/checkout' };
     expect(buildSignalApiPath(query, 2_000_000)).toContain('severityText=ERROR&resourceFilter=service.version%3D1.2.3&attributeFilter=http.route%3A%2Fcheckout');

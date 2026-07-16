@@ -45,6 +45,17 @@ describe('LogResult', () => {
     expect(screen.getByText(/retry.count/)).toBeInTheDocument();
   });
 
+  it('keeps an out-of-range nonzero page ready with authoritative total', () => {
+    render(<I18nextProvider i18n={i18n}><LogResult
+      data={{ content: [], totalElements: 3, totalPages: 1, number: 3, size: 20 }}
+      query={{ signal: 'logs', timeRange: 'last-30m', pageIndex: 3 }}
+      t={i18n.t}
+      navigate={vi.fn()}
+    /></I18nextProvider>);
+    expect(screen.getByRole('heading', { name: 'Logs' }).parentElement).toHaveTextContent('3');
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
   it('lets an operator pause, resume, and clear a live stream', () => {
     render(<I18nextProvider i18n={i18n}><LiveSubject /></I18nextProvider>);
     expect(EventSourceStub.instances).toHaveLength(1);

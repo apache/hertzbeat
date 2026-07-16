@@ -131,20 +131,19 @@ export function buildCrossSignalPath(query: ExploreQuery, signal: ExploreSignal,
   }));
 }
 
-export function querySubmissionTimePatch(query: ExploreQuery, now = Date.now()): ExploreQueryPatch {
-  return exploreUsesExactWindow(query) ? {} : { start: undefined, end: now };
+export function querySubmissionTimePatch(query: ExploreQuery): ExploreQueryPatch {
+  return exploreUsesExactWindow(query) ? {} : { start: undefined, end: undefined };
 }
 
 export function presetTimeRangePatch(
   query: ExploreQuery,
-  timeRange: ExploreTimeRange,
-  now = Date.now()
+  timeRange: ExploreTimeRange
 ): ExploreQueryPatch {
   return {
     timeRange,
     windowMode: exploreHandoffState(query) === 'scoped' ? 'preset' : undefined,
     start: undefined,
-    end: now
+    end: undefined
   };
 }
 

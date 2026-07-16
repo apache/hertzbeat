@@ -18,7 +18,6 @@
 import { Alert, Button, Descriptions, Drawer, Table, Tag, Typography } from "antd";
 import type { TFunction } from "i18next";
 import { useEffect, useState, type ReactNode } from "react";
-import type { NavigateFunction } from "react-router-dom";
 
 import { buildLogStreamPath, openLogStream, type ExplorePageResult } from "../api/explore-api";
 import type { LogRow } from "../model/explore-signal-contract";
@@ -29,6 +28,7 @@ import { OtlpAttributeSection } from "./otlp-attribute-list";
 import { SignalEmptyState, SignalResultFrame } from "./signal-result-frame";
 
 const MAX_STREAM_ROWS = 500;
+type OpenPath = (path: string) => void;
 
 export function LogResult({
   data,
@@ -39,14 +39,14 @@ export function LogResult({
   data?: ExplorePageResult<LogRow> | undefined;
   query: LogExploreQuery;
   t: TFunction;
-  navigate: NavigateFunction;
+  navigate: OpenPath;
 }) {
   if (query.live) {
     const streamPath = buildLogStreamPath(query);
     return <LogStreamResult key={streamPath} streamPath={streamPath} query={query} t={t} navigate={navigate} />;
   }
   const rows = data?.content ?? [];
-  if (rows.length === 0)
+  if (!data || data.totalElements === 0)
     return (
       <SignalResultFrame title={t("explore.signals.logs")} count={0}>
         <SignalEmptyState title={t("explore.empty.logs")} hint={t("explore.description")} />
@@ -64,7 +64,7 @@ function LogStreamResult({
   streamPath: string;
   query: LogExploreQuery;
   t: TFunction;
-  navigate: NavigateFunction;
+  navigate: OpenPath;
 }) {
   const [paused, setPaused] = useState(false);
   const stream = useLogStream(streamPath, paused);
@@ -133,7 +133,7 @@ function LogRows({
   data?: ExplorePageResult<LogRow> | undefined;
   query: LogExploreQuery;
   t: TFunction;
-  navigate: NavigateFunction;
+  navigate: OpenPath;
   live?: boolean | undefined;
   connection?: ReactNode | undefined;
   actions?: ReactNode | undefined;
@@ -192,7 +192,7 @@ function LogRows({
   );
 }
 
-function logPagination(data: ExplorePageResult<LogRow> | undefined, query: LogExploreQuery, navigate: NavigateFunction) {
+function logPagination(data: ExplorePageResult<LogRow> | undefined, query: LogExploreQuery, navigate: OpenPath) {
   if (!data) return false as const;
   return {
     current: data.number + 1,
@@ -216,7 +216,7 @@ function LogDetail({
   row?: LogRow | undefined;
   t: TFunction;
   query: LogExploreQuery;
-  navigate: NavigateFunction;
+  navigate: OpenPath;
   onClose: () => void;
 }) {
   return (

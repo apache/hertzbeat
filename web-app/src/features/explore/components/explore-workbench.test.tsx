@@ -53,10 +53,9 @@ describe('Explore workbench', () => {
     expect(screen.getByText('Advanced filters').closest('details')).not.toHaveAttribute('open');
   });
 
-  it('keeps a scoped onboarding duration on refresh and exposes invalid handoffs', () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(1_710_000_020_000);
+  it('delegates refresh without rewriting a scoped onboarding window and exposes invalid handoffs', () => {
     const updateQuery = vi.fn();
+    const refresh = vi.fn().mockResolvedValue(undefined);
     render(<I18nextProvider i18n={i18n}><ExploreWorkbench
       query={{
         signal: 'metrics', timeRange: 'last-30m', serviceName: 'checkout-api', serviceNamespace: 'commerce',
@@ -64,18 +63,19 @@ describe('Explore workbench', () => {
       }}
       t={i18n.t}
       updateQuery={updateQuery}
+      refresh={refresh}
     /></I18nextProvider>);
 
     expect(screen.getByText('Onboarding exact window')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
-    expect(updateQuery).toHaveBeenCalledWith({
-      windowMode: undefined, start: 1_710_000_015_000, end: 1_710_000_020_000
-    });
+    expect(refresh).toHaveBeenCalledOnce();
+    expect(updateQuery).not.toHaveBeenCalled();
     cleanup();
     render(<I18nextProvider i18n={i18n}><ExploreWorkbench
       query={{ signal: 'metrics', timeRange: 'last-30m', collectorId: 'collector-east', start: 2_000, end: 1_000 }}
       t={i18n.t}
       updateQuery={vi.fn()}
+      refresh={vi.fn().mockResolvedValue(undefined)}
     /></I18nextProvider>);
     expect(screen.getByText(en.explore.handoffInvalid)).toBeInTheDocument();
   });
@@ -83,7 +83,7 @@ describe('Explore workbench', () => {
 
 function WorkbenchSubject({ updateQuery }: { updateQuery: (changes: ExploreQueryPatch) => void }) {
   const { t } = useTranslation();
-  return <ExploreWorkbench query={{ signal: 'metrics', timeRange: 'last-30m' }} t={t} updateQuery={updateQuery} />;
+  return <ExploreWorkbench query={{ signal: 'metrics', timeRange: 'last-30m' }} t={t} updateQuery={updateQuery} refresh={vi.fn().mockResolvedValue(undefined)} />;
 }
 
 function QuerySubject() {

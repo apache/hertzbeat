@@ -36,22 +36,16 @@ type Props = {
   query: ExploreQuery;
   t: TFunction;
   updateQuery: (changes: ExploreQueryPatch) => void;
+  refresh: () => Promise<void>;
 };
 
-export function ExploreWorkbench({ query, t, updateQuery }: Props) {
+export function ExploreWorkbench({ query, t, updateQuery, refresh }: Props) {
   const handoffState = exploreHandoffState(query);
   const exactWindow = exploreUsesExactWindow(query);
   const updateTimeRange = (value: string) => {
     if (!EXPLORE_TIME_RANGES.includes(value as ExploreTimeRange)) return;
     const timeRange = value as ExploreTimeRange;
     updateQuery(presetTimeRangePatch(query, timeRange));
-  };
-  const refresh = () => {
-    const end = Date.now();
-    const duration = exactWindow && query.start != null && query.end != null
-      ? query.end - query.start
-      : undefined;
-    updateQuery({ windowMode: exactWindow ? undefined : query.windowMode, start: duration == null ? undefined : end - duration, end });
   };
   return <>
     <header className={styles.header}>
@@ -70,7 +64,7 @@ export function ExploreWorkbench({ query, t, updateQuery }: Props) {
           ]}
           onChange={updateTimeRange}
         />
-        <Button onClick={refresh}>{t('common.refresh')}</Button>
+        <Button onClick={() => { void refresh(); }}>{t('common.refresh')}</Button>
       </div>
     </header>
     {handoffState === 'invalid' && <Alert type="warning" showIcon message={t('explore.handoffInvalid')} />}

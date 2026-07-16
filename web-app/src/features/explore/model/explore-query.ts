@@ -78,7 +78,7 @@ export function exploreHandoffState(query: ExploreQuery): 'none' | 'scoped' | 'i
   if (![query.serviceNamespace, query.collectorId, query.start, query.windowMode].some(isPresent)) return 'none';
   if (![query.serviceName, query.serviceNamespace, query.environment, query.collectorId].every(isPresent)) return 'invalid';
   if (query.windowMode === 'preset') {
-    return !isPresent(query.start) && isPresent(query.end) ? 'scoped' : 'invalid';
+    return !isPresent(query.start) ? 'scoped' : 'invalid';
   }
   return validExactWindow(query.start, query.end) ? 'scoped' : 'invalid';
 }
