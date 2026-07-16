@@ -20,7 +20,7 @@ import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 
 import { changeAlertSilenceType, type AlertSilenceDraft, type AlertSilenceType } from './alert-silence-model';
-import styles from './AlertSilenceEditor.module.css';
+import styles from './alert-silence-editor.module.css';
 
 const weekdays = [7, 1, 2, 3, 4, 5, 6] as const;
 

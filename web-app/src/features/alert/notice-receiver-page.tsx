@@ -39,8 +39,8 @@ import {
   type NoticeReceiver,
   type NoticeReceiverDraft
 } from './notice-receiver-model';
-import styles from './AlertPolicyPage.module.css';
-import { NoticeReceiverEditor } from './NoticeReceiverEditor';
+import styles from './alert-policy-page.module.css';
+import { NoticeReceiverEditor } from './notice-receiver-editor';
 
 function formatReceiverTime(receiver: NoticeReceiver) {
   const value = receiver.gmtUpdate ?? receiver.gmtCreate;

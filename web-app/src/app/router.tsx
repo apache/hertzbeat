@@ -122,7 +122,7 @@ export const appRoutes: RouteObject[] = [
                 id: 'alerts',
                 path: '/alerts',
                 lazy: async () => {
-                  const { AlertCenterPage } = await import('@/features/alert/AlertCenterPage');
+                  const { AlertCenterPage } = await import('@/features/alert/alert-center-page');
                   return { Component: AlertCenterPage };
                 }
               },
@@ -130,7 +130,7 @@ export const appRoutes: RouteObject[] = [
                 id: 'alert-rules',
                 path: '/alerts/rules',
                 lazy: async () => {
-                  const { AlertRuleListPage } = await import('@/features/alert/AlertRuleListPage');
+                  const { AlertRuleListPage } = await import('@/features/alert/alert-rule-list-page');
                   return { Component: AlertRuleListPage };
                 }
               },
@@ -138,7 +138,7 @@ export const appRoutes: RouteObject[] = [
                 id: 'alert-rule-new',
                 path: '/alerts/rules/new',
                 lazy: async () => {
-                  const { AlertRuleEditorPage } = await import('@/features/alert/AlertRuleEditorPage');
+                  const { AlertRuleEditorPage } = await import('@/features/alert/alert-rule-editor-page');
                   return { Component: () => <AlertRuleEditorPage mode="new" /> };
                 }
               },
@@ -146,7 +146,7 @@ export const appRoutes: RouteObject[] = [
                 id: 'alert-rule-edit',
                 path: '/alerts/rules/:ruleId/edit',
                 lazy: async () => {
-                  const { AlertRuleEditorPage } = await import('@/features/alert/AlertRuleEditorPage');
+                  const { AlertRuleEditorPage } = await import('@/features/alert/alert-rule-editor-page');
                   return { Component: () => <AlertRuleEditorPage mode="edit" /> };
                 }
               },
@@ -154,7 +154,7 @@ export const appRoutes: RouteObject[] = [
                 id: 'alert-groups',
                 path: '/alerts/groups',
                 lazy: async () => {
-                  const { AlertGroupPage } = await import('@/features/alert/AlertGroupPage');
+                  const { AlertGroupPage } = await import('@/features/alert/alert-group-page');
                   return { Component: AlertGroupPage };
                 }
               },
@@ -162,7 +162,7 @@ export const appRoutes: RouteObject[] = [
                 id: 'alert-inhibits',
                 path: '/alerts/inhibits',
                 lazy: async () => {
-                  const { AlertInhibitPage } = await import('@/features/alert/AlertInhibitPage');
+                  const { AlertInhibitPage } = await import('@/features/alert/alert-inhibit-page');
                   return { Component: AlertInhibitPage };
                 }
               },
@@ -170,7 +170,7 @@ export const appRoutes: RouteObject[] = [
                 id: 'alert-silences',
                 path: '/alerts/silences',
                 lazy: async () => {
-                  const { AlertSilencePage } = await import('@/features/alert/AlertSilencePage');
+                  const { AlertSilencePage } = await import('@/features/alert/alert-silence-page');
                   return { Component: AlertSilencePage };
                 }
               },
@@ -178,7 +178,7 @@ export const appRoutes: RouteObject[] = [
                 id: 'notice-receivers',
                 path: settingsPaths.receivers,
                 lazy: async () => {
-                  const { NoticeReceiverPage } = await import('@/features/alert/NoticeReceiverPage');
+                  const { NoticeReceiverPage } = await import('@/features/alert/notice-receiver-page');
                   return { Component: NoticeReceiverPage };
                 }
               },
@@ -186,7 +186,7 @@ export const appRoutes: RouteObject[] = [
                 id: 'notice-templates',
                 path: settingsPaths.templates,
                 lazy: async () => {
-                  const { NoticeTemplatePage } = await import('@/features/alert/NoticeTemplatePage');
+                  const { NoticeTemplatePage } = await import('@/features/alert/notice-template-page');
                   return { Component: NoticeTemplatePage };
                 }
               },
@@ -194,7 +194,7 @@ export const appRoutes: RouteObject[] = [
                 id: 'notice-rules',
                 path: settingsPaths.rules,
                 lazy: async () => {
-                  const { NoticeRulePage } = await import('@/features/alert/NoticeRulePage');
+                  const { NoticeRulePage } = await import('@/features/alert/notice-rule-page');
                   return { Component: NoticeRulePage };
                 }
               },

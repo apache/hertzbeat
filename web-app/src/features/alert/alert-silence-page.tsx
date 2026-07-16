@@ -36,10 +36,10 @@ import {
   type AlertSilence,
   type AlertSilenceDraft
 } from './alert-silence-model';
-import { AlertManagementNav } from './AlertManagementNav';
-import { AlertNoiseControlNav } from './AlertNoiseControlNav';
-import styles from './AlertPolicyPage.module.css';
-import { AlertSilenceEditor } from './AlertSilenceEditor';
+import { AlertManagementNav } from './alert-management-nav';
+import { AlertNoiseControlNav } from './alert-noise-control-nav';
+import styles from './alert-policy-page.module.css';
+import { AlertSilenceEditor } from './alert-silence-editor';
 
 type SilenceOperation =
   | { type: 'toggle'; silence: AlertSilence; enabled: boolean }

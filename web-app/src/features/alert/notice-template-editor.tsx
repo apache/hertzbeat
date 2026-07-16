@@ -20,7 +20,7 @@ import { useTranslation } from 'react-i18next';
 
 import { receiverTypeDefinitions, type NoticeReceiverType } from './notice-receiver-model';
 import type { NoticeTemplateDraft } from './notice-template-model';
-import styles from './NoticeTemplateEditor.module.css';
+import styles from './notice-template-editor.module.css';
 
 export function NoticeTemplateEditor({ draft, saving, update, close, submit }: {
   draft: NoticeTemplateDraft;

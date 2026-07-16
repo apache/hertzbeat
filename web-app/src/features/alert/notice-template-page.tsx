@@ -26,10 +26,10 @@ import { useSearchParams } from 'react-router-dom';
 import type { PageResult } from '@/core/http/api-message';
 import { SettingsNav } from '@/shared/settings/settings-nav';
 
-import styles from './AlertPolicyPage.module.css';
-import editorStyles from './NoticeTemplateEditor.module.css';
-import { NoticeTemplateEditor } from './NoticeTemplateEditor';
-import pageStyles from './NoticeTemplatePage.module.css';
+import styles from './alert-policy-page.module.css';
+import editorStyles from './notice-template-editor.module.css';
+import { NoticeTemplateEditor } from './notice-template-editor';
+import pageStyles from './notice-template-page.module.css';
 import { receiverTypeDefinitions } from './notice-receiver-model';
 import { deleteNoticeTemplate, loadNoticeTemplate, loadNoticeTemplates, saveNoticeTemplate } from './notice-template-api';
 import {

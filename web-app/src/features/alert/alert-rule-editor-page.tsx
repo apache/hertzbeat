@@ -30,7 +30,7 @@ import {
   type AlertRuleDraft,
   type AlertRuleKind
 } from './alert-rule-model';
-import styles from './AlertRuleEditorPage.module.css';
+import styles from './alert-rule-editor-page.module.css';
 
 type DraftUpdate = (patch: Partial<AlertRuleDraft>) => void;
 

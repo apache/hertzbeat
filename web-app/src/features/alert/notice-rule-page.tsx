@@ -26,8 +26,8 @@ import { useSearchParams } from 'react-router-dom';
 import type { PageResult } from '@/core/http/api-message';
 import { SettingsNav } from '@/shared/settings/settings-nav';
 
-import styles from './AlertPolicyPage.module.css';
-import { NoticeRuleEditor } from './NoticeRuleEditor';
+import styles from './alert-policy-page.module.css';
+import { NoticeRuleEditor } from './notice-rule-editor';
 import {
   deleteNoticeRule,
   loadAllNoticeReceivers,

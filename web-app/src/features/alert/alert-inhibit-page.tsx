@@ -36,9 +36,9 @@ import {
   type AlertInhibit,
   type AlertInhibitDraft
 } from './alert-inhibit-model';
-import { AlertManagementNav } from './AlertManagementNav';
-import { AlertNoiseControlNav } from './AlertNoiseControlNav';
-import styles from './AlertPolicyPage.module.css';
+import { AlertManagementNav } from './alert-management-nav';
+import { AlertNoiseControlNav } from './alert-noise-control-nav';
+import styles from './alert-policy-page.module.css';
 
 type InhibitOperation =
   | { type: 'toggle'; inhibit: AlertInhibit; enabled: boolean }

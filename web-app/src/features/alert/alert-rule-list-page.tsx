@@ -26,8 +26,8 @@ import type { PageResult } from '@/core/http/api-message';
 
 import { deleteAlertRules, loadAlertRules, updateAlertRuleEnabled } from './alert-rule-api';
 import { alertRulePageSizes, readAlertRuleQuery, writeAlertRuleQuery, type AlertRule } from './alert-rule-model';
-import { AlertManagementNav } from './AlertManagementNav';
-import styles from './AlertRuleListPage.module.css';
+import { AlertManagementNav } from './alert-management-nav';
+import styles from './alert-rule-list-page.module.css';
 
 type Translator = (key: string) => string;
 type RuleOperation =

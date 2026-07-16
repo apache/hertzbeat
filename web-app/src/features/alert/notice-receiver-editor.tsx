@@ -25,7 +25,7 @@ import {
   type ReceiverFieldDefinition,
   type WebHookAuthType
 } from './notice-receiver-model';
-import styles from './NoticeReceiverEditor.module.css';
+import styles from './notice-receiver-editor.module.css';
 
 function fieldIsVisible(field: ReceiverFieldDefinition, draft: NoticeReceiverDraft) {
   if (field.key === 'hookAuthToken') return draft.hookAuthType !== 'None';

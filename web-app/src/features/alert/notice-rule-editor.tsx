@@ -26,7 +26,7 @@ import {
   type NoticeRuleDraft
 } from './notice-rule-model';
 import type { NoticeTemplate } from './notice-template-model';
-import styles from './NoticeRuleEditor.module.css';
+import styles from './notice-rule-editor.module.css';
 
 function timeValue(value: string) {
   if (!value) return null;
