@@ -22,6 +22,7 @@ import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApi
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Language;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Method;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.MethodOption;
+import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Platform;
 import org.springframework.stereotype.Component;
 
 /** Stable Go SDK guidance plus explicitly preview/WIP eBPF guidance. */
@@ -35,10 +36,10 @@ public class GoInstrumentationGuideAdapter implements InstrumentationGuideAdapte
 
     @Override
     public LanguageGuideSteps render(GuideRenderRequest request, MethodOption method) {
-        return request.method() == Method.EBPF ? ebpf(request, method) : sdk(method);
+        return request.method() == Method.EBPF ? ebpf(request, method) : sdk(request, method);
     }
 
-    private LanguageGuideSteps sdk(MethodOption method) {
+    private LanguageGuideSteps sdk(GuideRenderRequest request, MethodOption method) {
         String version = method.component().version();
         String metricVersion = GuideAdapterSupport.dependencyVersion(
                 method, "go.opentelemetry.io/otel/sdk/metric");
@@ -50,12 +51,17 @@ public class GoInstrumentationGuideAdapter implements InstrumentationGuideAdapte
                 + "go.opentelemetry.io/otel/sdk/metric@v" + metricVersion + " "
                 + "go.opentelemetry.io/otel/sdk/log@v" + logVersion + " "
                 + "go.opentelemetry.io/contrib/exporters/autoexport@v" + autoexportVersion;
+        String scriptLanguage = request.platform() == Platform.WINDOWS_AMD64
+                ? "powershell"
+                : "bash";
         return new LanguageGuideSteps(
-                GuideAdapterSupport.install(GuideAdapterSupport.snippet("install-command", "bash", install)),
+                GuideAdapterSupport.install(GuideAdapterSupport.snippet(
+                        "install-command", scriptLanguage, install)),
                 GuideAdapterSupport.start(
                         GuideAdapterSupport.snippet("sdk-initialization", "go", sdkInitialization()),
                         GuideAdapterSupport.snippet("application-startup", "go", sdkStartup()),
-                        GuideAdapterSupport.snippet("start-command", "bash", "go run ./cmd/application")),
+                        GuideAdapterSupport.snippet(
+                                "start-command", scriptLanguage, "go run ./cmd/application")),
                 GuideAdapterSupport.container(GuideAdapterSupport.snippet(
                         "container-config", "dockerfile", "RUN go build -o /application ./cmd/application")),
                 GuideAdapterSupport.disable(GuideAdapterSupport.snippet(

@@ -20,6 +20,7 @@ package org.apache.hertzbeat.observability.instrumentation.guide;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.GuideRenderRequest;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Language;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.MethodOption;
+import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Platform;
 import org.springframework.stereotype.Component;
 
 /** Official OpenTelemetry Python distro guidance. */
@@ -34,21 +35,22 @@ public class PythonInstrumentationGuideAdapter implements InstrumentationGuideAd
     @Override
     public LanguageGuideSteps render(GuideRenderRequest request, MethodOption method) {
         String packages = packages(method);
+        String scriptLanguage = request.platform() == Platform.WINDOWS_AMD64 ? "powershell" : "bash";
         return new LanguageGuideSteps(
                 GuideAdapterSupport.install(GuideAdapterSupport.snippet(
                         "install-command",
-                        "bash",
+                        scriptLanguage,
                         "python -m pip install " + packages + "\nopentelemetry-bootstrap -a install")),
                 GuideAdapterSupport.start(GuideAdapterSupport.snippet(
                         "start-command",
-                        "bash",
+                        scriptLanguage,
                         "opentelemetry-instrument --logs_exporter otlp python app.py")),
                 GuideAdapterSupport.container(GuideAdapterSupport.snippet(
                         "container-config",
                         "dockerfile",
                         "RUN python -m pip install " + packages + " && opentelemetry-bootstrap -a install")),
                 GuideAdapterSupport.disable(GuideAdapterSupport.snippet(
-                        "disable-command", "bash", "# Start python directly without opentelemetry-instrument")));
+                        "disable-command", scriptLanguage, "# Start python directly without opentelemetry-instrument")));
     }
 
     private String packages(MethodOption method) {

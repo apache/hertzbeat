@@ -20,6 +20,7 @@ package org.apache.hertzbeat.observability.instrumentation.guide;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.GuideRenderRequest;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Language;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.MethodOption;
+import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Platform;
 import org.springframework.stereotype.Component;
 
 /** Official Node.js automatic instrumentation guidance. */
@@ -34,24 +35,29 @@ public class NodeInstrumentationGuideAdapter implements InstrumentationGuideAdap
     @Override
     public LanguageGuideSteps render(GuideRenderRequest request, MethodOption method) {
         String apiVersion = GuideAdapterSupport.dependencyVersion(method, "@opentelemetry/api");
+        boolean windows = request.platform() == Platform.WINDOWS_AMD64;
+        String scriptLanguage = windows ? "powershell" : "bash";
+        String start = windows
+                ? "$env:NODE_OPTIONS='--require @opentelemetry/auto-instrumentations-node/register'\nnode app.js"
+                : "NODE_OPTIONS='--require @opentelemetry/auto-instrumentations-node/register' node app.js";
         return new LanguageGuideSteps(
                 GuideAdapterSupport.install(GuideAdapterSupport.snippet(
                         "install-command",
-                        "bash",
+                        scriptLanguage,
                         "npm install --save @opentelemetry/api@" + apiVersion
                                 + " @opentelemetry/auto-instrumentations-node@"
                                 + method.component().version())),
                 GuideAdapterSupport.start(GuideAdapterSupport.snippet(
                         "start-command",
-                        "bash",
-                        "NODE_OPTIONS='--require @opentelemetry/auto-instrumentations-node/register' node app.js")),
+                        scriptLanguage,
+                        start)),
                 GuideAdapterSupport.container(GuideAdapterSupport.snippet(
                         "container-config",
                         "dockerfile",
                         "ENV NODE_OPTIONS=\"--require @opentelemetry/auto-instrumentations-node/register\"")),
                 GuideAdapterSupport.disable(GuideAdapterSupport.snippet(
                         "disable-command",
-                        "bash",
+                        scriptLanguage,
                         "# Remove the OpenTelemetry entry from NODE_OPTIONS, then restart")));
     }
 }

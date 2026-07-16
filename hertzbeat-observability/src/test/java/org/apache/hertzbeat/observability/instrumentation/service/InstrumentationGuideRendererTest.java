@@ -29,6 +29,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.CollectorTarget;
@@ -50,6 +51,7 @@ import org.junit.jupiter.api.Test;
 class InstrumentationGuideRendererTest {
 
     private static final String TOKEN_PLACEHOLDER = "${HERTZBEAT_TOKEN}";
+    private static final Pattern POSIX_INLINE_ENVIRONMENT = Pattern.compile("(?m)^[A-Z][A-Z0-9_]*='");
 
     private final InstrumentationGuideRenderer renderer =
             new InstrumentationGuideRenderer(
@@ -149,6 +151,44 @@ class InstrumentationGuideRendererTest {
             }
         }
         assertEquals(12, renderedSelections);
+    }
+
+    @Test
+    void rendersEveryWindowsSelectionWithPowerShellCommands() {
+        InstrumentationCatalogService catalog = new InstrumentationCatalogService();
+        int renderedSelections = 0;
+        for (var language : catalog.catalog().languages()) {
+            for (var framework : language.frameworks()) {
+                for (var method : framework.methods()) {
+                    if (!method.platforms().contains(Platform.WINDOWS_AMD64)) {
+                        continue;
+                    }
+                    var guide = renderer.render(request(
+                            language.language(),
+                            framework.framework(),
+                            method.method(),
+                            method.environments().getFirst(),
+                            Platform.WINDOWS_AMD64));
+                    guide.steps().stream()
+                            .filter(step -> step.type() != StepType.CONTAINER)
+                            .flatMap(step -> step.snippets().stream())
+                            .filter(snippet -> !"go".equals(snippet.language()))
+                            .forEach(snippet -> {
+                                assertEquals("powershell", snippet.language());
+                                assertFalse(POSIX_INLINE_ENVIRONMENT.matcher(snippet.content()).find());
+                            });
+                    if (language.language() == Language.NODEJS) {
+                        String rendered = renderedContent(guide);
+                        assertTrue(rendered.contains(
+                                "$env:NODE_OPTIONS='--require @opentelemetry/auto-instrumentations-node/register'"));
+                        assertFalse(rendered.contains(
+                                "NODE_OPTIONS='--require @opentelemetry/auto-instrumentations-node/register' node"));
+                    }
+                    renderedSelections++;
+                }
+            }
+        }
+        assertEquals(8, renderedSelections);
     }
 
     @Test
