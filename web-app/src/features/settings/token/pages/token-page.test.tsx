@@ -30,7 +30,7 @@ const { generateToken, loadTokens, revokeToken } = vi.hoisted(() => ({
   revokeToken: vi.fn()
 }));
 
-vi.mock('./token-api', () => ({ generateToken, loadTokens, revokeToken }));
+vi.mock('../api/token-api', () => ({ generateToken, loadTokens, revokeToken }));
 
 import { TokenPage } from './token-page';
 

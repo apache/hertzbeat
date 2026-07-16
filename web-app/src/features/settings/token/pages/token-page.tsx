@@ -24,10 +24,10 @@ import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 
 import { SettingsNav } from '@/shared/settings/settings-nav';
-import styles from "./token-page.module.css";
-import { GeneratedTokenModal, TokenGeneratorModal } from "./token-modals";
-import { generateToken, loadTokens, revokeToken } from "./token-api";
-import { createTokenDraft, isTokenExpired, validateTokenDraft, type AuthToken, type TokenDraft } from "./token-model";
+import styles from "../components/token.module.css";
+import { GeneratedTokenModal, TokenGeneratorModal } from "../components/token-modals";
+import { generateToken, loadTokens, revokeToken } from "../api/token-api";
+import { createTokenDraft, isTokenExpired, validateTokenDraft, type AuthToken, type TokenDraft } from "../model/token-model";
 
 function formatTokenTime(value?: string | number | null) {
   if (value == null || value === "") return "—";

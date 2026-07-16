@@ -17,7 +17,24 @@
 
 import { apiMessageDelete, apiMessageGet, apiMessagePost } from '@/core/http/api-message';
 
-import { buildGenerateTokenPath, type AuthToken, type TokenDraft } from './token-model';
+export type TokenScope = 'api-admin' | 'otlp-ingest' | 'readonly-query';
+
+export type AuthToken = {
+  id: number;
+  name?: string | null;
+  tokenMask?: string | null;
+  tokenScope?: string | null;
+  creator?: string | null;
+  gmtCreate?: string | number | null;
+  expireTime?: string | number | null;
+  lastUsedTime?: string | number | null;
+};
+
+export type TokenDraft = {
+  name: string;
+  expireSeconds: number;
+  scope: TokenScope;
+};
 
 export function loadTokens() {
   return apiMessageGet<AuthToken[]>('/api/account/token');
@@ -30,4 +47,13 @@ export async function generateToken(draft: TokenDraft) {
 
 export function revokeToken(id: number) {
   return apiMessageDelete<unknown>(`/api/account/token/${id}`);
+}
+
+export function buildGenerateTokenPath(draft: TokenDraft) {
+  const params = new URLSearchParams({
+    name: draft.name.trim(),
+    expireSeconds: String(draft.expireSeconds),
+    scope: draft.scope
+  });
+  return `/api/account/token/generate?${params.toString()}`;
 }

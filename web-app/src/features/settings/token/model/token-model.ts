@@ -15,24 +15,10 @@
  * limitations under the License.
  */
 
-export type TokenScope = 'api-admin' | 'otlp-ingest' | 'readonly-query';
+import type { AuthToken, TokenDraft, TokenScope } from '../api/token-api';
 
-export type AuthToken = {
-  id: number;
-  name?: string | null;
-  tokenMask?: string | null;
-  tokenScope?: string | null;
-  creator?: string | null;
-  gmtCreate?: string | number | null;
-  expireTime?: string | number | null;
-  lastUsedTime?: string | number | null;
-};
-
-export type TokenDraft = {
-  name: string;
-  expireSeconds: number;
-  scope: TokenScope;
-};
+export { buildGenerateTokenPath } from '../api/token-api';
+export type { AuthToken, TokenDraft, TokenScope };
 
 export const tokenScopeDefinitions = [
   { value: 'api-admin', labelKey: 'token.scope.apiAdmin' },
@@ -62,15 +48,6 @@ export function createTokenDraft(scope?: string | null): TokenDraft {
 
 export function validateTokenDraft(draft: TokenDraft) {
   return draft.name.trim() ? [] : ['name'];
-}
-
-export function buildGenerateTokenPath(draft: TokenDraft) {
-  const params = new URLSearchParams({
-    name: draft.name.trim(),
-    expireSeconds: String(draft.expireSeconds),
-    scope: draft.scope
-  });
-  return `/api/account/token/generate?${params.toString()}`;
 }
 
 export function isTokenExpired(token: Pick<AuthToken, 'expireTime'>, now = Date.now()) {

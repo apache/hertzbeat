@@ -18,8 +18,8 @@
 import { Alert, Button, Input, Modal, Select } from "antd";
 import { useTranslation } from "react-i18next";
 
-import styles from "./token-page.module.css";
-import { tokenExpirationDefinitions, tokenScopeDefinitions, type TokenDraft } from "./token-model";
+import styles from "./token.module.css";
+import { tokenExpirationDefinitions, tokenScopeDefinitions, type TokenDraft } from "../model/token-model";
 
 type TokenGeneratorModalProps = {
   draft: TokenDraft;

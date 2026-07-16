@@ -26,7 +26,7 @@ const { apiMessageDelete, apiMessageGet, apiMessagePost } = vi.hoisted(() => ({
 vi.mock('@/core/http/api-message', () => ({ apiMessageDelete, apiMessageGet, apiMessagePost }));
 
 import { generateToken, loadTokens, revokeToken } from './token-api';
-import { createTokenDraft } from './token-model';
+import { createTokenDraft } from '../model/token-model';
 
 describe('token API', () => {
   beforeEach(() => vi.clearAllMocks());

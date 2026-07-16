@@ -17,7 +17,10 @@
 
 import { describe, expect, it } from 'vitest';
 
-const layeredDomains = [{ directory: 'message-server', page: 'MessageServerPage' }] as const;
+const layeredDomains = [
+  { directory: 'message-server', page: 'MessageServerPage' },
+  { directory: 'token', page: 'TokenPage' }
+] as const;
 const requiredDirectories = ['api', 'model', 'components', 'pages'] as const;
 const layerDirectories = [...requiredDirectories, 'hooks'] as const;
 const allowedDependencies: Record<(typeof layerDirectories)[number], readonly string[]> = {

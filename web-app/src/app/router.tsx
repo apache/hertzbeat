@@ -210,7 +210,7 @@ export const appRoutes: RouteObject[] = [
                 id: 'tokens',
                 path: settingsPaths.tokens,
                 lazy: async () => {
-                  const { TokenPage } = await import('@/features/settings/token-page');
+                  const { TokenPage } = await import('@/features/settings/token');
                   return { Component: TokenPage };
                 }
               },
