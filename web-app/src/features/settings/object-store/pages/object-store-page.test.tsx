@@ -19,7 +19,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { App } from 'antd';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
@@ -29,7 +29,11 @@ const { loadObjectStore, saveObjectStore } = vi.hoisted(() => ({
   saveObjectStore: vi.fn()
 }));
 
-vi.mock('./object-store-api', () => ({ loadObjectStore, saveObjectStore }));
+vi.mock('../api/object-store-api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../api/object-store-api')>()),
+  loadObjectStore,
+  saveObjectStore
+}));
 
 import { ObjectStorePage } from './object-store-page';
 
@@ -87,6 +91,27 @@ describe('ObjectStorePage', () => {
       config: { accessKey: ' ak ', secretKey: ' sk ', bucketName: ' bucket ', endpoint: ' https://obs.cn-north-4.myhuaweicloud.com ', savePath: ' data ' }
     }));
   });
+
+  it('keeps the OBS secret in runtime memory and request body only', async () => {
+    const storageWrite = vi.spyOn(Storage.prototype, 'setItem');
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const info = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    const debug = vi.spyOn(console, 'debug').mockImplementation(() => undefined);
+    renderObjectStorePage();
+
+    const secret = await screen.findByPlaceholderText('OBS secret key');
+    fireEvent.change(secret, { target: { value: 'runtime-only-secret' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => expect(saveObjectStore).toHaveBeenCalled());
+    expect(screen.getByTestId('location')).not.toHaveTextContent('runtime-only-secret');
+    expect(JSON.stringify(storageWrite.mock.calls)).not.toContain('runtime-only-secret');
+    expect(JSON.stringify([...log.mock.calls, ...info.mock.calls, ...debug.mock.calls])).not.toContain('runtime-only-secret');
+    storageWrite.mockRestore();
+    log.mockRestore();
+    info.mockRestore();
+    debug.mockRestore();
+  });
 });
 
 function renderObjectStorePage() {
@@ -95,11 +120,19 @@ function renderObjectStorePage() {
     <I18nextProvider i18n={i18n}>
       <QueryClientProvider client={client}>
         <MemoryRouter initialEntries={['/settings/storage/object-store']}>
-          <App><ObjectStorePage /></App>
+          <App>
+            <ObjectStorePage />
+            <LocationProbe />
+          </App>
         </MemoryRouter>
       </QueryClientProvider>
     </I18nextProvider>
   );
+}
+
+function LocationProbe() {
+  const location = useLocation();
+  return <output data-testid="location">{`${location.pathname}${location.search}${location.hash}`}</output>;
 }
 
 class ResizeObserverStub {

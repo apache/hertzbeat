@@ -17,12 +17,41 @@
 
 import { apiMessageGet, apiMessagePost } from '@/core/http/api-message';
 
-import { buildObjectStorePayload, type ObjectStoreDraft } from './object-store-model';
+export type ObjectStoreType = 'DATABASE' | 'FILE' | 'OBS';
+
+export type ObjectStoreConfig = {
+  accessKey?: string;
+  secretKey?: string;
+  bucketName?: string;
+  endpoint?: string;
+  savePath?: string;
+  [key: string]: unknown;
+};
+
+export type ObjectStoreWireConfig = {
+  type?: string | null;
+  config?: ObjectStoreConfig | null;
+};
+
+export type ObjectStorePayload = {
+  type: ObjectStoreType;
+  config: ObjectStoreConfig;
+};
+
+const obsFields = ['accessKey', 'secretKey', 'bucketName', 'endpoint', 'savePath'] as const;
 
 export function loadObjectStore() {
-  return apiMessageGet<ObjectStoreDraft | null>('/api/config/oss');
+  return apiMessageGet<ObjectStoreWireConfig | null>('/api/config/oss');
 }
 
-export function saveObjectStore(config: ObjectStoreDraft) {
+export function saveObjectStore(config: ObjectStorePayload) {
   return apiMessagePost<string>('/api/config/oss', buildObjectStorePayload(config));
+}
+
+export function buildObjectStorePayload(config: ObjectStorePayload): ObjectStorePayload {
+  if (config.type !== 'OBS') return { type: config.type, config: {} };
+  return {
+    type: 'OBS',
+    config: Object.fromEntries(obsFields.map(field => [field, String(config.config[field] ?? '').trim()]))
+  };
 }

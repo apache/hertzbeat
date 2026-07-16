@@ -17,8 +17,8 @@
 
 import { describe, expect, it } from 'vitest';
 
+import { buildObjectStorePayload } from '../api/object-store-api';
 import {
-  buildObjectStorePayload,
   changeObjectStoreType,
   createObjectStoreDraft,
   isObjectStoreDirty,

@@ -15,21 +15,19 @@
  * limitations under the License.
  */
 
-export type ObjectStoreType = 'DATABASE' | 'FILE' | 'OBS';
-
-export type ObjectStoreConfig = {
-  accessKey?: string;
-  secretKey?: string;
-  bucketName?: string;
-  endpoint?: string;
-  savePath?: string;
-  [key: string]: unknown;
-};
+import {
+  buildObjectStorePayload,
+  type ObjectStoreConfig,
+  type ObjectStoreType,
+  type ObjectStoreWireConfig
+} from '../api/object-store-api';
 
 export type ObjectStoreDraft = {
   type: ObjectStoreType;
   config: ObjectStoreConfig;
 };
+
+export type { ObjectStoreConfig, ObjectStoreType } from '../api/object-store-api';
 
 export const objectStoreTypeDefinitions = [
   { value: 'DATABASE', labelKey: 'objectStore.type.database' },
@@ -43,7 +41,7 @@ function normalizeObjectStoreType(type?: string | null): ObjectStoreType {
   return type === 'FILE' || type === 'OBS' ? type : 'DATABASE';
 }
 
-export function createObjectStoreDraft(config?: { type?: string | null; config?: ObjectStoreConfig | null } | null): ObjectStoreDraft {
+export function createObjectStoreDraft(config?: ObjectStoreWireConfig | null): ObjectStoreDraft {
   return {
     type: normalizeObjectStoreType(config?.type),
     config: { ...(config?.config ?? {}) }
@@ -79,14 +77,6 @@ function isSupportedObsEndpoint(endpoint: string) {
   } catch {
     return false;
   }
-}
-
-export function buildObjectStorePayload(config: ObjectStoreDraft): ObjectStoreDraft {
-  if (config.type !== 'OBS') return { type: config.type, config: {} };
-  return {
-    type: 'OBS',
-    config: Object.fromEntries(obsFields.map(field => [field, String(config.config[field] ?? '').trim()]))
-  };
 }
 
 export function isObjectStoreDirty(config: ObjectStoreDraft, baseline: ObjectStoreDraft) {

@@ -234,7 +234,7 @@ export const appRoutes: RouteObject[] = [
                 id: 'object-store',
                 path: settingsPaths.objectStore,
                 lazy: async () => {
-                  const { ObjectStorePage } = await import('@/features/settings/object-store-page');
+                  const { ObjectStorePage } = await import('@/features/settings/object-store');
                   return { Component: ObjectStorePage };
                 }
               },
