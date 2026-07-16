@@ -27,7 +27,6 @@ import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 const api = vi.hoisted(() => ({
   deleteStatusComponent: vi.fn(),
   deleteStatusIncident: vi.fn(),
-  loadStatusIncident: vi.fn(),
   saveStatusComponent: vi.fn(),
   saveStatusIncident: vi.fn(),
   saveStatusOrg: vi.fn()
@@ -76,14 +75,17 @@ describe('useStatusManagementMutations', () => {
     expect(context.invalidate).toHaveBeenCalledWith({ queryKey: ['status-page-components'] });
   });
 
-  it('orchestrates incident detail, create, update, delete, and refresh', async () => {
-    const open = vi.fn();
-    const context = renderMutations(undefined, open);
-    const incident = { orgId: 1, name: 'Outage', state: 0, components: [], contents: [] };
-    api.loadStatusIncident.mockResolvedValueOnce({ ...incident, id: 7 });
+  it('keeps incident detail loading out of the general mutation controller', () => {
+    const context = renderMutations();
 
-    act(() => context.result.current.incidentDetail.mutate(7));
-    await waitFor(() => expect(open).toHaveBeenCalledWith({ ...incident, id: 7 }));
+    expect(context.result.current).not.toHaveProperty('incidentDetail');
+  });
+
+  it('orchestrates incident create, update, delete, and refresh', async () => {
+    const closeIncident = vi.fn();
+    const context = renderMutations(undefined, closeIncident);
+    const incident = { orgId: 1, name: 'Outage', state: 0, components: [], contents: [] };
+
     act(() => context.result.current.incidentSave.mutate(incident));
     await waitFor(() => expect(api.saveStatusIncident).toHaveBeenCalledWith(incident, true));
     act(() => context.result.current.incidentSave.mutate({ ...incident, id: 7 }));
@@ -91,11 +93,12 @@ describe('useStatusManagementMutations', () => {
     act(() => context.result.current.incidentRemove.mutate(7));
     await waitFor(() => expect(api.deleteStatusIncident).toHaveBeenCalledWith(7));
 
+    expect(closeIncident).toHaveBeenCalledTimes(2);
     expect(context.invalidate).toHaveBeenCalledWith({ queryKey: ['status-page-incidents'] });
   });
 });
 
-function renderMutations(closeComponent = vi.fn(), openIncident = vi.fn()) {
+function renderMutations(closeComponent = vi.fn(), closeIncident = vi.fn()) {
   const client = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
   const invalidate = vi.spyOn(client, 'invalidateQueries');
   const wrapper = ({ children }: { children: ReactNode }) => (
@@ -105,6 +108,6 @@ function renderMutations(closeComponent = vi.fn(), openIncident = vi.fn()) {
       </QueryClientProvider>
     </I18nextProvider>
   );
-  const result = renderHook(() => useStatusManagementMutations(undefined, closeComponent, openIncident), { wrapper });
+  const result = renderHook(() => useStatusManagementMutations(undefined, closeComponent, closeIncident), { wrapper });
   return { ...result, invalidate };
 }

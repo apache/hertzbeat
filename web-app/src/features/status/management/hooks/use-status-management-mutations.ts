@@ -11,7 +11,6 @@ import { useTranslation } from 'react-i18next';
 import {
   deleteStatusComponent,
   deleteStatusIncident,
-  loadStatusIncident,
   saveStatusComponent,
   saveStatusIncident,
   saveStatusOrg,
@@ -23,7 +22,7 @@ import {
 export function useStatusManagementMutations(
   org: StatusOrg | undefined,
   closeComponentEditor: () => void,
-  openIncidentEditor: (incident: StatusIncident | undefined) => void
+  closeIncidentEditor: () => void
 ) {
   const { t } = useTranslation();
   const { message } = App.useApp();
@@ -56,7 +55,7 @@ export function useStatusManagementMutations(
   const incidentSave = useMutation({
     mutationFn: (value: StatusIncident) => saveStatusIncident(value, value.id == null),
     onSuccess: () => {
-      openIncidentEditor(undefined);
+      closeIncidentEditor();
       refresh('status-page-incidents');
       saveSucceeded();
     },
@@ -67,11 +66,5 @@ export function useStatusManagementMutations(
     onSuccess: () => { refresh('status-page-incidents'); deleteSucceeded(); },
     onError: deleteFailed
   });
-  const incidentDetail = useMutation({
-    mutationFn: (id: number) => loadStatusIncident(id),
-    onSuccess: incident => openIncidentEditor(incident),
-    onError: () => void message.error(t('statusManagement.loadIncidentFailed'))
-  });
-
-  return { orgSave, componentSave, componentRemove, incidentSave, incidentRemove, incidentDetail };
+  return { orgSave, componentSave, componentRemove, incidentSave, incidentRemove };
 }

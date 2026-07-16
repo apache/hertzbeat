@@ -95,7 +95,10 @@ export const saveStatusComponent = (component: StatusComponent, isNew: boolean) 
 export const deleteStatusComponent = (id: number) => apiMessageDelete<void>(`${componentPath}/${id}`);
 export const loadStatusIncidents = (query: StatusIncidentQuery) =>
   apiMessageGet<PageResult<StatusIncident>>(buildStatusIncidentPath(query));
-export const loadStatusIncident = (id: number) => apiMessageGet<StatusIncident>(`${incidentPath}/${id}`);
+export const loadStatusIncident = (id: number, signal?: AbortSignal) =>
+  signal
+    ? apiMessageGet<StatusIncident>(`${incidentPath}/${id}`, { signal })
+    : apiMessageGet<StatusIncident>(`${incidentPath}/${id}`);
 export const saveStatusIncident = (incident: StatusIncident, isNew: boolean) =>
   isNew ? apiMessagePost<void>(incidentPath, incident) : apiMessagePut<void>(incidentPath, incident);
 export const deleteStatusIncident = (id: number) => apiMessageDelete<void>(`${incidentPath}/${id}`);

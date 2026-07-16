@@ -17,13 +17,15 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { App } from 'antd';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
+
+import type { StatusIncident } from '../api/status-management-api';
 
 const api = vi.hoisted(() => ({
   deleteStatusComponent: vi.fn(),
@@ -109,7 +111,42 @@ describe('StatusManagementPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(api.saveStatusOrg).toHaveBeenCalledWith(expect.objectContaining({ name: 'Updated' })));
   });
+
+  it('keeps a new incident open when an obsolete detail request finishes', async () => {
+    const detail = deferred<StatusIncident>();
+    api.loadStatusComponents.mockResolvedValue([statusComponent]);
+    api.loadStatusIncidents.mockResolvedValue({
+      content: [incidentSummary], totalElements: 1, totalPages: 1, number: 0, size: 8
+    });
+    api.loadStatusIncident.mockReturnValue(detail.promise);
+    renderPage();
+
+    expect(await screen.findByText('Outage')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Update' }));
+    await waitFor(() => expect(api.loadStatusIncident).toHaveBeenCalledWith(7, expect.any(AbortSignal)));
+    fireEvent.click(screen.getByRole('button', { name: 'New incident' }));
+
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText('New incident')).toBeInTheDocument();
+    expect(dialog.querySelector('input[type="text"]')).toHaveValue('');
+
+    await act(async () => {
+      detail.resolve({ ...incidentSummary, name: 'Loaded outage' });
+      await Promise.resolve();
+    });
+
+    expect(within(dialog).getByText('New incident')).toBeInTheDocument();
+    expect(dialog.querySelector('input[type="text"]')).toHaveValue('');
+    expect(screen.queryByDisplayValue('Loaded outage')).not.toBeInTheDocument();
+  });
 });
+
+const statusComponent = {
+  id: 3, orgId: 1, name: 'API', method: 1, configState: 0, state: 0
+};
+const incidentSummary = {
+  id: 7, orgId: 1, name: 'Outage', state: 0, components: [statusComponent], contents: []
+};
 
 function renderPage() {
   const client = new QueryClient({
@@ -130,4 +167,12 @@ class ResizeObserverStub {
   observe() {}
   unobserve() {}
   disconnect() {}
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>(onResolve => {
+    resolve = onResolve;
+  });
+  return { promise, resolve };
 }

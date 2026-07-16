@@ -74,4 +74,13 @@ describe('status page management API', () => {
     expect(apiMessagePut).toHaveBeenCalledWith('/api/status/page/incident', expect.objectContaining({ id: 7 }));
     expect(apiMessageDelete).toHaveBeenCalledWith('/api/status/page/incident/7');
   });
+
+  it('passes an abort signal to incident detail transport', async () => {
+    apiMessageGet.mockResolvedValue(undefined);
+    const controller = new AbortController();
+
+    await loadStatusIncident(7, controller.signal);
+
+    expect(apiMessageGet).toHaveBeenCalledWith('/api/status/page/incident/7', { signal: controller.signal });
+  });
 });

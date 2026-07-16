@@ -1,0 +1,76 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+import { loadStatusIncident, type StatusIncident } from '../api/status-management-api';
+
+export function useStatusIncidentEditor(reportLoadFailure: () => void) {
+  const [incident, setIncident] = useState<StatusIncident>();
+  const [loading, setLoading] = useState(false);
+  const generation = useRef(0);
+  const request = useRef<AbortController | undefined>(undefined);
+
+  const invalidate = useCallback(() => {
+    generation.current += 1;
+    request.current?.abort();
+    request.current = undefined;
+    return generation.current;
+  }, []);
+
+  const edit = useCallback((id: number) => {
+    const runGeneration = invalidate();
+    const controller = new AbortController();
+    request.current = controller;
+    setIncident(undefined);
+    setLoading(true);
+
+    void (async () => {
+      try {
+        const next = await loadStatusIncident(id, controller.signal);
+        if (controller.signal.aborted || generation.current !== runGeneration) return;
+        request.current = undefined;
+        setIncident(next);
+        setLoading(false);
+      } catch {
+        if (controller.signal.aborted || generation.current !== runGeneration) return;
+        request.current = undefined;
+        setLoading(false);
+        reportLoadFailure();
+      }
+    })();
+  }, [invalidate, reportLoadFailure]);
+
+  const openNew = useCallback((orgId: number | undefined) => {
+    invalidate();
+    setLoading(false);
+    setIncident({ orgId: orgId ?? 0, name: '', state: 0, components: [], contents: [] });
+  }, [invalidate]);
+
+  const close = useCallback(() => {
+    invalidate();
+    setLoading(false);
+    setIncident(undefined);
+  }, [invalidate]);
+
+  useEffect(() => () => {
+    generation.current += 1;
+    request.current?.abort();
+  }, []);
+
+  return { incident, loading, edit, openNew, close };
+}

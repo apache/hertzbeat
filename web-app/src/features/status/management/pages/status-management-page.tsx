@@ -16,8 +16,8 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { Button, Typography } from 'antd';
-import { useState } from 'react';
+import { App, Button, Typography } from 'antd';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
@@ -36,28 +36,33 @@ import {
   loadStatusOrg,
   readStatusIncidentQuery,
   writeStatusIncidentQuery,
-  type StatusComponent,
-  type StatusIncident
+  type StatusComponent
 } from '../api/status-management-api';
 import { useStatusManagementMutations } from '../hooks/use-status-management-mutations';
+import { useStatusIncidentEditor } from '../hooks/use-status-incident-editor';
 
 type ComponentEditorState = Partial<StatusComponent>;
 
 export function StatusManagementPage() {
   const { t } = useTranslation();
+  const { message } = App.useApp();
+  const reportIncidentLoadFailure = useCallback(
+    () => void message.error(t('statusManagement.loadIncidentFailed')),
+    [message, t]
+  );
   const [searchParams, setSearchParams] = useSearchParams();
   const query = readStatusIncidentQuery(searchParams);
   const [draftSearch, setDraftSearch] = useState(query.search);
   const [componentEditor, setComponentEditor] = useState<ComponentEditorState>();
-  const [incidentEditor, setIncidentEditor] = useState<StatusIncident>();
 
   const org = useQuery({ queryKey: ['status-page-org'], queryFn: loadStatusOrg, retry: false });
   const components = useQuery({ queryKey: ['status-page-components'], queryFn: loadStatusComponents });
   const incidents = useQuery({ queryKey: ['status-page-incidents', query], queryFn: () => loadStatusIncidents(query) });
+  const incidentEditor = useStatusIncidentEditor(reportIncidentLoadFailure);
   const mutations = useStatusManagementMutations(
     org.data,
     () => setComponentEditor(undefined),
-    setIncidentEditor
+    incidentEditor.close
   );
 
   const statusOrg = org.data;
@@ -96,7 +101,7 @@ export function StatusManagementPage() {
         orgId={statusOrg?.id}
         componentCount={statusComponents.length}
         draftSearch={draftSearch}
-        loading={incidents.isPending || mutations.incidentDetail.isPending}
+        loading={incidents.isPending || incidentEditor.loading}
         error={incidents.isError}
         records={incidents.data?.content ?? []}
         pageIndex={query.pageIndex}
@@ -105,28 +110,24 @@ export function StatusManagementPage() {
         onDraftSearch={setDraftSearch}
         onQuery={() => updateQuery({ search: draftSearch.trim(), pageIndex: 0 })}
         onRefresh={() => void incidents.refetch()}
-        onNew={() => setIncidentEditor(emptyIncident(statusOrg?.id))}
+        onNew={() => incidentEditor.openNew(statusOrg?.id)}
         onPageChange={(pageIndex, pageSize) => updateQuery({ pageIndex, pageSize })}
-        onEdit={id => mutations.incidentDetail.mutate(id)}
+        onEdit={incidentEditor.edit}
         onDelete={id => mutations.incidentRemove.mutate(id)}
       />
 
       <StatusManagementEditors
         component={componentEditor}
-        incident={incidentEditor}
+        incident={incidentEditor.incident}
         orgId={statusOrg?.id}
         components={statusComponents}
         componentSaving={mutations.componentSave.isPending}
         incidentSaving={mutations.incidentSave.isPending}
         onCloseComponent={() => setComponentEditor(undefined)}
-        onCloseIncident={() => setIncidentEditor(undefined)}
+        onCloseIncident={incidentEditor.close}
         onSaveComponent={value => mutations.componentSave.mutate(value)}
         onSaveIncident={value => mutations.incidentSave.mutate(value)}
       />
     </div>
   );
-}
-
-function emptyIncident(orgId: number | undefined): StatusIncident {
-  return { orgId: orgId ?? 0, name: '', state: 0, components: [], contents: [] };
 }
