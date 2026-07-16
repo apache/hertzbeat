@@ -20,9 +20,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { loadStatusIncident } from '../api/status-management-api';
 import type { StatusIncident } from '../model/status-management-contract';
 
-export function useStatusIncidentEditor(reportLoadFailure: () => void) {
+export function useStatusIncidentEditor(reportLoadFailure?: (error: unknown) => void) {
   const [incident, setIncident] = useState<StatusIncident>();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<unknown>();
   const generation = useRef(0);
   const request = useRef<AbortController | undefined>(undefined);
 
@@ -38,6 +39,7 @@ export function useStatusIncidentEditor(reportLoadFailure: () => void) {
     const controller = new AbortController();
     request.current = controller;
     setIncident(undefined);
+    setError(undefined);
     setLoading(true);
 
     void (async () => {
@@ -46,12 +48,14 @@ export function useStatusIncidentEditor(reportLoadFailure: () => void) {
         if (controller.signal.aborted || generation.current !== runGeneration) return;
         request.current = undefined;
         setIncident(next);
+        setError(undefined);
         setLoading(false);
-      } catch {
+      } catch (reason) {
         if (controller.signal.aborted || generation.current !== runGeneration) return;
         request.current = undefined;
         setLoading(false);
-        reportLoadFailure();
+        setError(reason);
+        reportLoadFailure?.(reason);
       }
     })();
   }, [invalidate, reportLoadFailure]);
@@ -59,12 +63,14 @@ export function useStatusIncidentEditor(reportLoadFailure: () => void) {
   const openNew = useCallback((orgId: number | undefined) => {
     invalidate();
     setLoading(false);
+    setError(undefined);
     setIncident({ orgId: orgId ?? 0, name: '', state: 0, components: [], contents: [] });
   }, [invalidate]);
 
   const close = useCallback(() => {
     invalidate();
     setLoading(false);
+    setError(undefined);
     setIncident(undefined);
   }, [invalidate]);
 
@@ -73,5 +79,5 @@ export function useStatusIncidentEditor(reportLoadFailure: () => void) {
     request.current?.abort();
   }, []);
 
-  return { incident, loading, edit, openNew, close };
+  return { incident, loading, error, edit, openNew, close };
 }

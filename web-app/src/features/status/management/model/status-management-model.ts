@@ -17,6 +17,23 @@
 
 import type { StatusComponent, StatusIncident } from './status-management-contract';
 
+export type StatusRecordState<T> =
+  | { kind: 'loading' }
+  | { kind: 'missing' }
+  | { kind: 'unavailable' }
+  | { kind: 'error' }
+  | { kind: 'ready'; record: T };
+
+export type StatusCollectionState<T> =
+  | { kind: 'loading' }
+  | { kind: 'empty' }
+  | { kind: 'unavailable' }
+  | { kind: 'error' }
+  | { kind: 'ready'; records: T[] };
+
+export type StatusIncidentCollectionState<T> = Exclude<StatusCollectionState<T>, { kind: 'ready' }>
+  | { kind: 'ready'; records: T[]; total: number };
+
 export { isStatusOrgNotFound } from '@/features/status/shared/status-error-model';
 
 export function parseLabels(value: string) {

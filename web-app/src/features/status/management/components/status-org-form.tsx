@@ -19,14 +19,14 @@ import { Button, Form, Input, Space } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { StatusOrg } from '../model/status-management-contract';
+import type { StatusOrg, StatusOrgRecord } from '../model/status-management-contract';
 
 const emptyOrg: StatusOrg = { name: '', description: '', home: '', logo: '', feedback: '', color: '#5b6fd8', state: 0 };
 
 export function StatusOrgForm({ org, saving, onSubmit }: {
   org: StatusOrg | undefined;
   saving: boolean;
-  onSubmit: (org: StatusOrg) => Promise<void>;
+  onSubmit: (org: StatusOrg) => Promise<StatusOrgRecord>;
 }) {
   const { t } = useTranslation();
   const [editing, setEditing] = useState(!org);

@@ -67,16 +67,17 @@ describe('Public Status boundaries', () => {
 });
 
 describe('Status Management boundaries', () => {
-  const managementDirectories = [...requiredDirectories, 'hooks'] as const;
+  const managementDirectories = [...requiredDirectories, 'hooks', 'controller'] as const;
   const managementDependencies: Record<(typeof managementDirectories)[number], readonly string[]> = {
     api: ['api', 'model'],
     model: ['model'],
     hooks: ['api', 'model', 'hooks'],
-    components: ['api', 'model', 'hooks', 'components'],
-    pages: ['api', 'model', 'hooks', 'components', 'pages']
+    controller: ['api', 'model', 'hooks', 'controller'],
+    components: ['model', 'components'],
+    pages: ['model', 'controller', 'components', 'pages']
   };
 
-  it('uses explicit feature-local layers with a real mutation hook', () => {
+  it('uses explicit feature-local layers with a dedicated controller', () => {
     const paths = Object.keys(managementSources).filter(path => !path.includes('.test.'));
 
     expect(managementDirectories.filter(directory => !paths.some(path => path.startsWith(`./management/${directory}/`))))

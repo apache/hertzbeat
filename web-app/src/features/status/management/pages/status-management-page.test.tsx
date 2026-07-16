@@ -25,7 +25,11 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { ApiMessageError } from '@/core/http/api-message';
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
-import type { StatusIncident, StatusOrg } from '../model/status-management-contract';
+import {
+  StatusManagementMissingError,
+  type StatusIncident,
+  type StatusOrg
+} from '../model/status-management-contract';
 
 const api = vi.hoisted(() => ({
   deleteStatusComponent: vi.fn(),
@@ -74,6 +78,20 @@ describe('StatusManagementPage', () => {
     expect(await screen.findByDisplayValue('HertzBeat')).toBeDisabled();
     expect(screen.getByText('No public components are configured.')).toBeInTheDocument();
     expect(screen.getByText('No incidents in the selected period.')).toBeInTheDocument();
+  });
+
+  it('keeps an out-of-range empty incident page ready with pagination evidence', async () => {
+    api.loadStatusIncidents.mockResolvedValue({
+      content: [], totalElements: 17, totalPages: 3, number: 3, size: 8
+    });
+    const { container } = renderPage('/settings/status-page?pageIndex=3&pageSize=8');
+
+    await waitFor(() => expect(api.loadStatusIncidents).toHaveBeenCalledWith({
+      search: '', pageIndex: 3, pageSize: 8
+    }));
+    await waitFor(() => expect(container.querySelector('.ant-pagination')).not.toBeNull());
+    expect(screen.queryByText('No incidents in the selected period.')).not.toBeInTheDocument();
+    expect(container.querySelector('.ant-table')).not.toBeNull();
   });
 
   it('allows initial configuration only for exact organization not-found', async () => {
@@ -192,6 +210,21 @@ describe('StatusManagementPage', () => {
     expect(dialog.querySelector('input[type="text"]')).toHaveValue('');
     expect(screen.queryByDisplayValue('Loaded outage')).not.toBeInTheDocument();
   });
+
+  it('shows a distinct missing-detail state without presenting an editor', async () => {
+    api.loadStatusComponents.mockResolvedValue([statusComponent]);
+    api.loadStatusIncidents.mockResolvedValue({
+      content: [incidentSummary], totalElements: 1, totalPages: 1, number: 0, size: 8
+    });
+    api.loadStatusIncident.mockRejectedValue(new StatusManagementMissingError('incident'));
+    renderPage();
+
+    expect(await screen.findByText('Outage')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Update' }));
+
+    expect(await screen.findByText(i18n.t('statusManagement.loadIncidentFailed'))).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
 });
 
 const statusComponent = {
@@ -201,14 +234,14 @@ const incidentSummary = {
   id: 7, orgId: 1, name: 'Outage', state: 0, components: [statusComponent], contents: []
 };
 
-function renderPage() {
+function renderPage(entry = '/settings/status-page') {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } }
   });
   const view = render(
     <I18nextProvider i18n={i18n}>
       <QueryClientProvider client={client}>
-        <MemoryRouter initialEntries={['/settings/status-page']}>
+        <MemoryRouter initialEntries={[entry]}>
           <App><StatusManagementPage /></App>
         </MemoryRouter>
       </QueryClientProvider>

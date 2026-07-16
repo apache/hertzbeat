@@ -4,44 +4,54 @@
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
-import { Alert, Button, Input, Typography } from 'antd';
+import { Alert, Button, Input, Skeleton, Typography } from 'antd';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { isStatusOrgNotFound } from '../model/status-management-model';
-import type { StatusComponent, StatusIncident, StatusOrg } from '../model/status-management-contract';
+import type {
+  StatusCollectionState,
+  StatusIncidentCollectionState,
+  StatusRecordState
+} from '../model/status-management-model';
+import type {
+  StatusComponent,
+  StatusIncident,
+  StatusOrg,
+  StatusOrgRecord
+} from '../model/status-management-contract';
 import styles from './status-management.module.css';
 import { ComponentResults, IncidentResults } from './status-management-results';
 import { StatusOrgForm } from './status-org-form';
 
-export function StatusOrgSection({ org, pending, error, saving, onSave }: {
-  org: StatusOrg | undefined;
-  pending: boolean;
-  error: Error | null;
+export function StatusOrgSection({ state, saving, onSave }: {
+  state: StatusRecordState<StatusOrgRecord>;
   saving: boolean;
-  onSave: (org: StatusOrg) => Promise<void>;
+  onSave: (org: StatusOrg) => Promise<StatusOrgRecord>;
 }) {
   const { t } = useTranslation();
-  const missing = isMissingOrg(error);
-  const canAuthor = !pending && (!error || missing);
   return (
     <section className={styles.section}>
       <SectionHeading
         title={t('statusManagement.organization')}
         description={t('statusManagement.organizationDescription')}
       />
-      {error && !missing && <Alert type="error" showIcon message={t('common.unavailable')} />}
-      {missing && <Alert type="info" showIcon message={t('statusManagement.notConfigured')} />}
-      {canAuthor && <StatusOrgForm org={org} saving={saving} onSubmit={onSave} />}
+      {state.kind === 'loading' && <Skeleton active paragraph={{ rows: 3 }} />}
+      {state.kind === 'unavailable' && <Alert type="error" showIcon message={t('common.unavailable')} />}
+      {state.kind === 'error' && <Alert type="error" showIcon message={t('common.routeError.title')} />}
+      {state.kind === 'missing' && (
+        <>
+          <Alert type="info" showIcon message={t('statusManagement.notConfigured')} />
+          <StatusOrgForm org={undefined} saving={saving} onSubmit={onSave} />
+        </>
+      )}
+      {state.kind === 'ready' && <StatusOrgForm org={state.record} saving={saving} onSubmit={onSave} />}
     </section>
   );
 }
 
-export function StatusComponentSection({ orgId, records, loading, error, onNew, onEdit, onDelete }: {
+export function StatusComponentSection({ orgId, state, onNew, onEdit, onDelete }: {
   orgId: number | undefined;
-  records: StatusComponent[];
-  loading: boolean;
-  error: boolean;
+  state: StatusCollectionState<StatusComponent>;
   onNew: () => void;
   onEdit: (record: StatusComponent) => void;
   onDelete: (id: number) => void;
@@ -54,7 +64,7 @@ export function StatusComponentSection({ orgId, records, loading, error, onNew, 
         description={t('statusManagement.componentsDescription')}
         action={<Button type="primary" disabled={!orgId} onClick={onNew}>{t('statusManagement.newComponent')}</Button>}
       />
-      <ComponentResults loading={loading} error={error} records={records} onEdit={onEdit} onDelete={onDelete} />
+      <ComponentResults state={state} onEdit={onEdit} onDelete={onDelete} />
     </section>
   );
 }
@@ -63,8 +73,9 @@ type IncidentSectionProps = {
   orgId: number | undefined;
   componentCount: number;
   draftSearch: string;
-  loading: boolean;
-  error: boolean;
+  state: StatusIncidentCollectionState<StatusIncident>;
+  detailLoading: boolean;
+  detailState: 'missing' | 'unavailable' | 'error' | undefined;
   records: StatusIncident[];
   pageIndex: number;
   pageSize: number;
@@ -102,6 +113,13 @@ export function StatusIncidentSection(props: IncidentSectionProps) {
         <Button type="primary" onClick={props.onQuery}>{t('common.query')}</Button>
         <Button onClick={props.onRefresh}>{t('common.refresh')}</Button>
       </div>
+      {props.detailState && (
+        <Alert
+          type={props.detailState === 'missing' ? 'info' : 'error'}
+          showIcon
+          message={t(detailStateKey(props.detailState))}
+        />
+      )}
       <IncidentResults {...props} />
     </section>
   );
@@ -119,6 +137,6 @@ function SectionHeading({ title, description, action }: { title: string; descrip
   );
 }
 
-function isMissingOrg(error: Error | null) {
-  return isStatusOrgNotFound(error);
+function detailStateKey(state: 'missing' | 'unavailable' | 'error') {
+  return state === 'unavailable' ? 'common.unavailable' : 'statusManagement.loadIncidentFailed';
 }

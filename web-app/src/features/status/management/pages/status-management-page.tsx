@@ -15,9 +15,7 @@
  * limitations under the License.
  */
 
-import { useQuery } from '@tanstack/react-query';
-import { App, Button, Typography } from 'antd';
-import { useCallback, useState } from 'react';
+import { Button, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import { SettingsNav } from '@/shared/settings/settings-nav';
@@ -29,41 +27,16 @@ import {
   StatusOrgSection
 } from '../components/status-management-sections';
 import styles from '../components/status-management.module.css';
-import {
-  loadStatusComponents,
-  loadStatusIncidents,
-  loadStatusOrg
-} from '../api/status-management-api';
-import { useStatusManagementMutations } from '../hooks/use-status-management-mutations';
-import { useStatusIncidentEditor } from '../hooks/use-status-incident-editor';
-import { useStatusIncidentQuery } from '../hooks/use-status-incident-query';
-import type { StatusComponent } from '../model/status-management-contract';
-
-type ComponentEditorState = Partial<StatusComponent>;
+import { useStatusManagementController } from '../controller/use-status-management-controller';
 
 export function StatusManagementPage() {
   const { t } = useTranslation();
-  const { message } = App.useApp();
-  const reportIncidentLoadFailure = useCallback(
-    () => void message.error(t('statusManagement.loadIncidentFailed')),
-    [message, t]
-  );
-  const incidentQuery = useStatusIncidentQuery();
-  const { query } = incidentQuery;
-  const [componentEditor, setComponentEditor] = useState<ComponentEditorState>();
-
-  const org = useQuery({ queryKey: ['status-page-org'], queryFn: loadStatusOrg, retry: false });
-  const components = useQuery({ queryKey: ['status-page-components'], queryFn: loadStatusComponents });
-  const incidents = useQuery({ queryKey: ['status-page-incidents', query], queryFn: () => loadStatusIncidents(query) });
-  const incidentEditor = useStatusIncidentEditor(reportIncidentLoadFailure);
-  const mutations = useStatusManagementMutations(
-    org.data,
-    () => setComponentEditor(undefined),
-    incidentEditor.close
-  );
-
-  const statusOrg = org.data;
-  const statusComponents = components.data ?? [];
+  const controller = useStatusManagementController();
+  const statusOrg = controller.org.kind === 'ready' ? controller.org.record : undefined;
+  const statusComponents = controller.components.kind === 'ready' ? controller.components.records : [];
+  const statusIncidents = controller.incidents.kind === 'ready' ? controller.incidents.records : [];
+  const incidentTotal = controller.incidents.kind === 'ready' ? controller.incidents.total : 0;
+  const { query } = controller.incidentQuery;
   return (
     <div className={styles.page}>
       <header className={styles.heading}>
@@ -76,51 +49,48 @@ export function StatusManagementPage() {
       <SettingsNav />
 
       <StatusOrgSection
-        org={statusOrg}
-        pending={org.isPending}
-        error={org.error}
-        saving={mutations.orgSave.isPending}
-        onSave={async value => { await mutations.orgSave.mutateAsync(value); }}
+        state={controller.org}
+        saving={controller.orgSaving}
+        onSave={controller.saveOrg}
       />
       <StatusComponentSection
         orgId={statusOrg?.id}
-        records={statusComponents}
-        loading={components.isPending}
-        error={components.isError}
-        onNew={() => setComponentEditor({ orgId: statusOrg?.id ?? 0 })}
-        onEdit={setComponentEditor}
-        onDelete={id => mutations.componentRemove.mutate(id)}
+        state={controller.components}
+        onNew={controller.openNewComponent}
+        onEdit={controller.editComponent}
+        onDelete={controller.deleteComponent}
       />
       <StatusIncidentSection
         orgId={statusOrg?.id}
         componentCount={statusComponents.length}
-        draftSearch={incidentQuery.draftSearch}
-        loading={incidents.isPending || incidentEditor.loading}
-        error={incidents.isError}
-        records={incidents.data?.content ?? []}
+        draftSearch={controller.incidentQuery.draftSearch}
+        state={controller.incidents}
+        detailLoading={controller.incidentDetailLoading}
+        detailState={controller.incidentDetailState}
+        records={statusIncidents}
         pageIndex={query.pageIndex}
         pageSize={query.pageSize}
-        total={incidents.data?.totalElements ?? 0}
-        onDraftSearch={incidentQuery.setDraftSearch}
-        onQuery={incidentQuery.submit}
-        onRefresh={() => void incidents.refetch()}
-        onNew={() => incidentEditor.openNew(statusOrg?.id)}
-        onPageChange={incidentQuery.changePage}
-        onEdit={incidentEditor.edit}
-        onDelete={id => mutations.incidentRemove.mutate(id)}
+        total={incidentTotal}
+        onDraftSearch={controller.incidentQuery.setDraftSearch}
+        onQuery={controller.incidentQuery.submit}
+        onRefresh={controller.refreshIncidents}
+        onNew={controller.openNewIncident}
+        onPageChange={controller.incidentQuery.changePage}
+        onEdit={controller.openIncident}
+        onDelete={controller.deleteIncident}
       />
 
       <StatusManagementEditors
-        component={componentEditor}
-        incident={incidentEditor.incident}
+        component={controller.componentEditor}
+        incident={controller.incidentEditor}
         orgId={statusOrg?.id}
         components={statusComponents}
-        componentSaving={mutations.componentSave.isPending}
-        incidentSaving={mutations.incidentSave.isPending}
-        onCloseComponent={() => setComponentEditor(undefined)}
-        onCloseIncident={incidentEditor.close}
-        onSaveComponent={value => mutations.componentSave.mutate(value)}
-        onSaveIncident={value => mutations.incidentSave.mutate(value)}
+        componentSaving={controller.componentSaving}
+        incidentSaving={controller.incidentSaving}
+        onCloseComponent={controller.closeComponent}
+        onCloseIncident={controller.closeIncident}
+        onSaveComponent={controller.saveComponent}
+        onSaveIncident={controller.saveIncident}
       />
     </div>
   );

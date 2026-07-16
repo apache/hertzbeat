@@ -19,7 +19,8 @@ import {
   apiMessageDelete,
   apiMessageGet,
   apiMessagePost,
-  apiMessagePut
+  apiMessagePut,
+  ApiMessageError
 } from '@/core/http/api-message';
 
 import type { StatusIncidentQuery } from '../model/status-incident-query';
@@ -29,6 +30,7 @@ import {
   parseStatusIncidentDetail,
   parseStatusIncidentPage,
   parseStatusOrg,
+  StatusManagementMissingError,
   type StatusComponent,
   type StatusIncident,
   type StatusOrg
@@ -74,4 +76,23 @@ export function buildStatusIncidentPath(query: StatusIncidentQuery) {
   });
   if (query.search) params.set('search', query.search);
   return `${incidentPath}?${params.toString()}`;
+}
+
+export type StatusManagementFailureKind = 'missing' | 'unavailable' | 'error';
+
+export function statusManagementFailureKind(error: unknown): StatusManagementFailureKind {
+  if (isStatusManagementMissing(error)) return 'missing';
+  if (
+    error instanceof ApiMessageError
+    && (error.cause != null || [0, 502, 503, 504].includes(error.status ?? 0))
+  ) {
+    return 'unavailable';
+  }
+  return 'error';
+}
+
+export function isStatusManagementMissing(error: unknown) {
+  return error instanceof StatusManagementMissingError
+    || (error instanceof ApiMessageError
+      && (error.status === 404 || (error.status === 200 && error.code === 15)));
 }

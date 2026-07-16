@@ -4,10 +4,14 @@
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
-import { Alert, Button, Empty, Popconfirm, Space, Table, Tag } from 'antd';
+import { Alert, Button, Empty, Pagination, Popconfirm, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 
+import type {
+  StatusCollectionState,
+  StatusIncidentCollectionState
+} from '../model/status-management-model';
 import type { StatusComponent, StatusIncident } from '../model/status-management-contract';
 import { statusIncidentPageSizes } from '../model/status-incident-query';
 import {
@@ -17,17 +21,17 @@ import {
 } from '../model/status-management-model';
 
 type ComponentResultsProps = {
-  loading: boolean;
-  error: boolean;
-  records: StatusComponent[];
+  state: StatusCollectionState<StatusComponent>;
   onEdit: (record: StatusComponent) => void;
   onDelete: (id: number) => void;
 };
 
-export function ComponentResults({ loading, error, records, onEdit, onDelete }: ComponentResultsProps) {
+export function ComponentResults({ state, onEdit, onDelete }: ComponentResultsProps) {
   const { t } = useTranslation();
-  if (error) return <Alert type="error" showIcon message={t('common.unavailable')} />;
-  if (!loading && records.length === 0) return <Empty description={t('status.noComponents')} />;
+  if (state.kind === 'unavailable') return <Alert type="error" showIcon message={t('common.unavailable')} />;
+  if (state.kind === 'error') return <Alert type="error" showIcon message={t('common.routeError.title')} />;
+  if (state.kind === 'empty') return <Empty description={t('status.noComponents')} />;
+  const records = state.kind === 'ready' ? state.records : [];
   const columns: ColumnsType<StatusComponent> = [
     { title: t('status.component'), dataIndex: 'name' },
     {
@@ -64,12 +68,21 @@ export function ComponentResults({ loading, error, records, onEdit, onDelete }: 
       )
     }
   ];
-  return <Table rowKey="id" size="small" loading={loading} pagination={false} columns={columns} dataSource={records} />;
+  return (
+    <Table
+      rowKey="id"
+      size="small"
+      loading={state.kind === 'loading'}
+      pagination={false}
+      columns={columns}
+      dataSource={records}
+    />
+  );
 }
 
 type IncidentResultsProps = {
-  loading: boolean;
-  error: boolean;
+  state: StatusIncidentCollectionState<StatusIncident>;
+  detailLoading: boolean;
   records: StatusIncident[];
   pageIndex: number;
   pageSize: number;
@@ -80,10 +93,11 @@ type IncidentResultsProps = {
 };
 
 export function IncidentResults(props: IncidentResultsProps) {
-  const { loading, error, records, pageIndex, pageSize, total, onPageChange, onEdit, onDelete } = props;
+  const { state, detailLoading, records, pageIndex, pageSize, total, onPageChange, onEdit, onDelete } = props;
   const { t } = useTranslation();
-  if (error) return <Alert type="error" showIcon message={t('common.unavailable')} />;
-  if (!loading && records.length === 0) return <Empty description={t('status.noIncidents')} />;
+  if (state.kind === 'unavailable') return <Alert type="error" showIcon message={t('common.unavailable')} />;
+  if (state.kind === 'error') return <Alert type="error" showIcon message={t('common.routeError.title')} />;
+  if (state.kind === 'empty') return <Empty description={t('status.noIncidents')} />;
   const columns: ColumnsType<StatusIncident> = [
     { title: t('status.incident'), dataIndex: 'name' },
     {
@@ -110,21 +124,25 @@ export function IncidentResults(props: IncidentResultsProps) {
       )
     }
   ];
+  const pagination = {
+    current: pageIndex + 1,
+    pageSize,
+    pageSizeOptions: [...statusIncidentPageSizes],
+    showSizeChanger: true,
+    total,
+    onChange: (page: number, size: number) => onPageChange(page - 1, size)
+  };
   return (
-    <Table
-      rowKey="id"
-      size="small"
-      loading={loading}
-      columns={columns}
-      dataSource={records}
-      pagination={{
-        current: pageIndex + 1,
-        pageSize,
-        pageSizeOptions: [...statusIncidentPageSizes],
-        showSizeChanger: true,
-        total,
-        onChange: (page, size) => onPageChange(page - 1, size)
-      }}
-    />
+    <>
+      <Table
+        rowKey="id"
+        size="small"
+        loading={state.kind === 'loading' || detailLoading}
+        columns={columns}
+        dataSource={records}
+        pagination={records.length === 0 ? false : pagination}
+      />
+      {state.kind === 'ready' && records.length === 0 && total > 0 && <Pagination {...pagination} />}
+    </>
   );
 }
