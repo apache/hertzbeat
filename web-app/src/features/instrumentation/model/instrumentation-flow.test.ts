@@ -22,6 +22,7 @@ import {
   buildDetectionRequest,
   buildExploreHandoff,
   buildGuideRequest,
+  createTransientCollectorTarget,
   createFlowDraft,
   materializeGuideSnippet,
   selectCatalogLanguage,
@@ -40,7 +41,7 @@ describe('instrumentation onboarding flow model', () => {
 
   it('builds allowlisted render and detection requests from the same scoped context', () => {
     const draft = configuredDraft();
-    const render = buildGuideRequest(draft, collector);
+    const render = buildGuideRequest(draft, collector, transientTarget);
     const detection = buildDetectionRequest(draft, 1_710_000_000_000);
 
     expect(render).toEqual(expect.objectContaining({
@@ -55,6 +56,18 @@ describe('instrumentation onboarding flow model', () => {
     }));
     expect(JSON.stringify(render)).not.toContain('hb_memory_only');
     expect(JSON.stringify(detection)).not.toContain('hb_memory_only');
+  });
+
+  it('blocks rendering without an explicitly supplied transient intake target', () => {
+    const draft = configuredDraft();
+
+    expect(() => buildGuideRequest(draft, collector)).toThrow(/intake/i);
+    expect(() => createTransientCollectorTarget({
+      collectorId: 'collector-east',
+      otlpHttpEndpoint: 'http://token@collector.internal:4318',
+      otlpGrpcEndpoint: 'http://collector.internal:4317',
+      authorizationHeader: 'Authorization'
+    })).toThrow(/endpoint/i);
   });
 
   it('requires complete service and Collector context before rendering', () => {
@@ -116,9 +129,15 @@ const catalog: CatalogResponse = {
 
 const collector = {
   collectorId: 'collector-east', name: 'collector-east', online: true, address: '10.0.0.8',
-  otlpHttpEndpoint: 'http://10.0.0.8:4318', otlpGrpcEndpoint: 'http://10.0.0.8:4317',
-  authorizationHeader: 'Authorization'
+  intake: { status: 'unavailable' as const }
 };
+
+const transientTarget = createTransientCollectorTarget({
+  collectorId: 'collector-east',
+  otlpHttpEndpoint: 'http://collector.internal:4318',
+  otlpGrpcEndpoint: 'http://collector.internal:4317',
+  authorizationHeader: 'Authorization'
+});
 
 function configuredDraft() {
   let draft: InstrumentationFlowDraft = selectCatalogLanguage(createFlowDraft(), catalog, 'go');

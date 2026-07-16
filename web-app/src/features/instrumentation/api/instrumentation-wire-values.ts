@@ -63,7 +63,7 @@ export function positiveNumber(value: unknown, label: string) {
 }
 
 export function nullablePositiveNumber(value: unknown, label: string) {
-  if (value === null) return null;
+  if (value == null) return null;
   return positiveNumber(value, label);
 }
 
@@ -77,7 +77,7 @@ export function nullableEnumValue<const T extends readonly string[]>(
   allowed: T,
   label: string
 ): T[number] | null {
-  if (value === null) return null;
+  if (value == null) return null;
   return enumValue(value, allowed, label);
 }
 

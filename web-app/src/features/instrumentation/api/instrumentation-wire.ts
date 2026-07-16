@@ -77,7 +77,7 @@ export function parseCatalogResponse(value: unknown): CatalogResponse {
 export function parseGuideRenderResponse(value: unknown): GuideRenderResponse {
   const root = schemaRecord(value, 'guide');
   const placeholders = record(root.secretPlaceholders, 'guide.secretPlaceholders');
-  return {
+  const response: GuideRenderResponse = {
     schemaVersion: 1,
     selection: parseSelection(root.selection, 'guide.selection'),
     signals: parseCapabilities(root.signals, 'guide.signals'),
@@ -101,6 +101,8 @@ export function parseGuideRenderResponse(value: unknown): GuideRenderResponse {
       };
     })
   };
+  validateSecretPlaceholders(response);
+  return response;
 }
 
 export function buildGuideRenderPayload(request: GuideRenderRequest): GuideRenderRequest {
@@ -167,6 +169,9 @@ function parseMethodOption(value: unknown, index: number): MethodOption {
 
 function parseComponent(value: unknown): OfficialComponent {
   const component = record(value, 'component');
+  const official = boolean(component.official, 'component official');
+  const bundledWithHertzBeat = boolean(component.bundledWithHertzBeat, 'component bundled flag');
+  requireOfficialExternalPackage(official, bundledWithHertzBeat, 'component');
   return {
     name: string(component.name, 'component name'),
     sourceUrl: string(component.sourceUrl, 'component sourceUrl'),
@@ -174,8 +179,8 @@ function parseComponent(value: unknown): OfficialComponent {
     versionPolicy: enumValue(component.versionPolicy, versionPolicies, 'component versionPolicy'),
     license: string(component.license, 'component license'),
     installationLocationKey: string(component.installationLocationKey, 'component location key'),
-    official: boolean(component.official, 'component official'),
-    bundledWithHertzBeat: boolean(component.bundledWithHertzBeat, 'component bundled flag'),
+    official,
+    bundledWithHertzBeat,
     dependencies: array(component.dependencies, 'component dependencies').map(parseDependency),
     artifacts: array(component.artifacts, 'component artifacts').map(parseArtifact)
   };
@@ -183,15 +188,24 @@ function parseComponent(value: unknown): OfficialComponent {
 
 function parseDependency(value: unknown, index: number): OfficialDependency {
   const dependency = record(value, `component dependency[${index}]`);
+  const official = boolean(dependency.official, 'dependency official');
+  const bundledWithHertzBeat = boolean(dependency.bundledWithHertzBeat, 'dependency bundled flag');
+  requireOfficialExternalPackage(official, bundledWithHertzBeat, 'dependency');
   return {
     name: string(dependency.name, 'dependency name'),
     sourceUrl: string(dependency.sourceUrl, 'dependency sourceUrl'),
     version: string(dependency.version, 'dependency version'),
     license: string(dependency.license, 'dependency license'),
     purposeKey: string(dependency.purposeKey, 'dependency purposeKey'),
-    official: boolean(dependency.official, 'dependency official'),
-    bundledWithHertzBeat: boolean(dependency.bundledWithHertzBeat, 'dependency bundled flag')
+    official,
+    bundledWithHertzBeat
   };
+}
+
+function requireOfficialExternalPackage(official: boolean, bundledWithHertzBeat: boolean, label: string) {
+  if (!official || bundledWithHertzBeat) {
+    throw new InstrumentationContractError(`${label} must be official and external to HertzBeat`);
+  }
 }
 
 function parseArtifact(value: unknown, index: number): ArtifactVerification {
@@ -214,6 +228,47 @@ function parseSnippet(value: unknown, index: number): GuideSnippet {
     secretPlaceholders: array(snippet.secretPlaceholders, 'snippet placeholders').map((item, placeholderIndex) =>
       string(item, `snippet placeholder[${placeholderIndex}]`))
   };
+}
+
+function validateSecretPlaceholders(response: GuideRenderResponse) {
+  const placeholders = Object.entries(response.secretPlaceholders);
+  validateUniqueSecretMarkers(placeholders);
+  const referenced = new Set<string>();
+  for (const step of response.steps) {
+    for (const snippet of step.snippets) validateSnippetSecretReferences(snippet, placeholders, referenced);
+  }
+  if (placeholders.some(([name]) => !referenced.has(name))) {
+    throw new InstrumentationContractError('Guide secret placeholder was unused');
+  }
+}
+
+function validateUniqueSecretMarkers(placeholders: Array<[string, SecretPlaceholder]>) {
+  const markerOwners = new Set<string>();
+  for (const [name, placeholder] of placeholders) {
+    if (!name || markerOwners.has(placeholder.marker)) {
+      throw new InstrumentationContractError('Guide secret placeholder names and markers must be unique');
+    }
+    markerOwners.add(placeholder.marker);
+  }
+}
+
+function validateSnippetSecretReferences(
+  snippet: GuideSnippet,
+  placeholders: Array<[string, SecretPlaceholder]>,
+  referenced: Set<string>
+) {
+  for (const name of snippet.secretPlaceholders) {
+    const placeholder = placeholders.find(([candidate]) => candidate === name)?.[1];
+    if (!placeholder || !snippet.content.includes(placeholder.marker)) {
+      throw new InstrumentationContractError('Guide snippet secret reference was invalid');
+    }
+    referenced.add(name);
+  }
+  for (const [name, placeholder] of placeholders) {
+    if (snippet.content.includes(placeholder.marker) && !snippet.secretPlaceholders.includes(name)) {
+      throw new InstrumentationContractError('Guide snippet secret marker was undeclared');
+    }
+  }
 }
 
 function parseSelection(value: unknown, label: string): InstrumentationSelection {

@@ -33,6 +33,7 @@ import {
   parseDetectionResponse,
   parseGuideRenderResponse
 } from './instrumentation-wire';
+import { InstrumentationContractError } from './instrumentation-wire-values';
 
 const INSTRUMENTATION_API_PATH = '/api/instrumentation/v1';
 
@@ -68,7 +69,7 @@ export function renderInstrumentationGuide(request: GuideRenderRequest, signal?:
   return requestInstrumentation(
     `${INSTRUMENTATION_API_PATH}/render`,
     jsonRequest(buildGuideRenderPayload(request), signal),
-    parseGuideRenderResponse
+    value => validateGuideResponse(request, parseGuideRenderResponse(value))
   );
 }
 
@@ -76,7 +77,7 @@ export function detectInstrumentationSignals(request: DetectionRequest, signal?:
   return requestInstrumentation(
     `${INSTRUMENTATION_API_PATH}/detect`,
     jsonRequest(buildDetectionPayload(request), signal),
-    parseDetectionResponse
+    value => validateDetectionResponse(request, parseDetectionResponse(value))
   );
 }
 
@@ -108,7 +109,14 @@ async function requestInstrumentation<T>(
 
   const envelope = parseMessageEnvelope(rawEnvelope);
   if (envelope.code !== 0) throwMessageError(envelope);
-  return parse(envelope.data);
+  try {
+    return parse(envelope.data);
+  } catch (error) {
+    if (error instanceof InstrumentationContractError) {
+      throw new InstrumentationApiError('Instrumentation response contract was invalid');
+    }
+    throw error;
+  }
 }
 
 function parseMessageEnvelope(value: unknown): MessageEnvelope {
@@ -134,6 +142,34 @@ function throwMessageError(envelope: MessageEnvelope): never {
 
 function isRequestErrorCode(value: string | undefined): value is InstrumentationRequestErrorCode {
   return value !== undefined && INSTRUMENTATION_REQUEST_ERROR_CODES.some(code => code === value);
+}
+
+function validateGuideResponse(request: GuideRenderRequest, response: GuideRenderResponse) {
+  if (!sameSelection(request, response.selection)) {
+    throw new InstrumentationContractError('Guide response selection did not match the request');
+  }
+  return response;
+}
+
+function validateDetectionResponse(request: DetectionRequest, response: DetectionResponse) {
+  const context = response.context;
+  if (!sameSelection(request, context)
+    || context.service.name !== request.service.name
+    || context.service.namespace !== request.service.namespace
+    || context.service.environment !== request.service.environment
+    || context.collectorId !== request.collectorId
+    || context.startedAt !== request.startedAt) {
+    throw new InstrumentationContractError('Detection response context did not match the request');
+  }
+  return response;
+}
+
+function sameSelection(left: GuideRenderRequest | DetectionRequest, right: GuideRenderResponse['selection']) {
+  return left.language === right.language
+    && left.framework === right.framework
+    && left.method === right.method
+    && left.environment === right.environment
+    && left.platform === right.platform;
 }
 
 export type { CatalogResponse, DetectionResponse, GuideRenderResponse };

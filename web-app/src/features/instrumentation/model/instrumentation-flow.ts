@@ -19,6 +19,7 @@ import type { InstrumentationCollector } from '../api/collector-api';
 import {
   INSTRUMENTATION_SCHEMA_VERSION,
   type CatalogResponse,
+  type CollectorTarget,
   type DetectionRequest,
   type GuideRenderRequest,
   type GuideRenderResponse,
@@ -28,6 +29,7 @@ import {
   type InstrumentationLanguage,
   type InstrumentationMethod,
   type InstrumentationPlatform,
+  type InstrumentationSignal,
   type InstrumentationSelection,
   type MethodOption,
   type QueryJumpContext,
@@ -119,21 +121,34 @@ export function validateFlowContext(draft: InstrumentationFlowDraft) {
 
 export function buildGuideRequest(
   draft: InstrumentationFlowDraft,
-  collector: InstrumentationCollector
+  collector: InstrumentationCollector,
+  transientTarget?: CollectorTarget
 ): GuideRenderRequest {
   const selection = requireSelection(draft);
   requireContext(draft);
   if (collector.collectorId !== draft.collectorId || !collector.online) throw new Error('Selected Collector is unavailable');
+  if (!transientTarget) throw new Error('Collector intake endpoint is unavailable');
+  const target = createTransientCollectorTarget(transientTarget);
+  if (target.collectorId !== collector.collectorId) throw new Error('Collector intake endpoint does not match');
   return {
     schemaVersion: INSTRUMENTATION_SCHEMA_VERSION,
     ...selection,
-    collector: {
-      collectorId: collector.collectorId,
-      otlpHttpEndpoint: collector.otlpHttpEndpoint,
-      otlpGrpcEndpoint: collector.otlpGrpcEndpoint,
-      authorizationHeader: collector.authorizationHeader
-    },
+    collector: target,
     service: serviceIdentity(draft)
+  };
+}
+
+export function createTransientCollectorTarget(target: CollectorTarget): CollectorTarget {
+  if (!target.collectorId.trim() || target.authorizationHeader !== 'Authorization') {
+    throw new Error('Collector intake endpoint context is invalid');
+  }
+  requireSafeEndpoint(target.otlpHttpEndpoint);
+  requireSafeEndpoint(target.otlpGrpcEndpoint);
+  return {
+    collectorId: target.collectorId.trim(),
+    otlpHttpEndpoint: target.otlpHttpEndpoint,
+    otlpGrpcEndpoint: target.otlpGrpcEndpoint,
+    authorizationHeader: target.authorizationHeader
   };
 }
 
@@ -153,7 +168,7 @@ export function materializeGuideSnippet(snippet: GuideSnippet, guide: GuideRende
   return materializeSnippetForCopy(snippet, guide.secretPlaceholders, { authorizationToken: token });
 }
 
-export function buildExploreHandoff(signal: string, context: QueryJumpContext) {
+export function buildExploreHandoff(signal: InstrumentationSignal, context: QueryJumpContext) {
   const params = new URLSearchParams({
     signal,
     serviceName: context.serviceName,
@@ -242,4 +257,21 @@ function serviceIdentity(draft: InstrumentationFlowDraft): ServiceIdentity {
 
 function unique<T>(values: T[]) {
   return [...new Set(values)];
+}
+
+function requireSafeEndpoint(value: string) {
+  let endpoint: URL;
+  try {
+    endpoint = new URL(value);
+  } catch {
+    throw new Error('Collector intake endpoint is invalid');
+  }
+  if (!['http:', 'https:'].includes(endpoint.protocol)
+    || !endpoint.hostname
+    || endpoint.username
+    || endpoint.password
+    || endpoint.search
+    || endpoint.hash) {
+    throw new Error('Collector intake endpoint is invalid');
+  }
 }

@@ -23,7 +23,7 @@ vi.mock('@/core/http/api-message', () => ({ apiMessageGet }));
 import { loadInstrumentationCollectors } from './collector-api';
 
 describe('instrumentation Collector API', () => {
-  it('loads registered Collectors and derives non-secret OTLP targets', async () => {
+  it('loads registered Collectors without inventing OTLP intake endpoints', async () => {
     apiMessageGet.mockResolvedValue({
       content: [
         { collector: { name: 'collector-east', ip: '10.0.0.8', status: 0 } },
@@ -31,13 +31,14 @@ describe('instrumentation Collector API', () => {
       ]
     });
 
-    await expect(loadInstrumentationCollectors()).resolves.toEqual([
+    const collectors = await loadInstrumentationCollectors();
+    expect(collectors).toEqual([
       expect.objectContaining({
-        collectorId: 'collector-east', online: true,
-        otlpHttpEndpoint: 'http://10.0.0.8:4318', otlpGrpcEndpoint: 'http://10.0.0.8:4317'
+        collectorId: 'collector-east', online: true, intake: { status: 'unavailable' }
       }),
-      expect.objectContaining({ collectorId: 'collector-offline', online: false })
+      expect.objectContaining({ collectorId: 'collector-offline', online: false, intake: { status: 'unavailable' } })
     ]);
+    expect(JSON.stringify(collectors)).not.toMatch(/431[78]/);
     expect(apiMessageGet).toHaveBeenCalledWith('/api/collector?pageIndex=0&pageSize=200', undefined);
   });
 });

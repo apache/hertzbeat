@@ -22,6 +22,7 @@ vi.mock('@/core/http/http-client', () => ({ apiFetch }));
 
 import {
   detectInstrumentationSignals,
+  InstrumentationApiError,
   InstrumentationRequestError,
   loadInstrumentationCatalog,
   renderInstrumentationGuide
@@ -106,6 +107,27 @@ describe('instrumentation v1 API', () => {
     expect(JSON.parse(String(init.body))).toEqual(expect.not.objectContaining({ token: expect.anything() }));
   });
 
+  it('rejects a render response that echoes another selection', async () => {
+    apiFetch.mockResolvedValueOnce(messageResponse({
+      schemaVersion: 1,
+      selection: { ...selection, framework: 'nodejs' },
+      signals: { metrics: 'supported', logs: 'unsupported', traces: 'supported' },
+      component: componentFixture(),
+      secretPlaceholders: {},
+      steps: []
+    }));
+
+    await expect(renderInstrumentationGuide(renderRequest())).rejects.toBeInstanceOf(InstrumentationApiError);
+  });
+
+  it('rejects detection data scoped to another onboarding attempt', async () => {
+    const fixture = detectionFixture();
+    fixture.context.collectorId = 'collector-west';
+    apiFetch.mockResolvedValueOnce(messageResponse(fixture));
+
+    await expect(detectInstrumentationSignals(detectionRequest())).rejects.toBeInstanceOf(InstrumentationApiError);
+  });
+
   it('surfaces the three stable machine request errors', async () => {
     for (const code of [
       'instrumentation_schema_unsupported',
@@ -164,5 +186,29 @@ function detectionFixture() {
       { signal: 'logs', enabled: false, context },
       { signal: 'traces', enabled: true, context }
     ]
+  };
+}
+
+function renderRequest(): GuideRenderRequest {
+  return {
+    schemaVersion: 1,
+    ...selection,
+    collector: {
+      collectorId: context.collectorId,
+      otlpHttpEndpoint: 'http://collector.internal:4318',
+      otlpGrpcEndpoint: 'http://collector.internal:4317',
+      authorizationHeader: 'Authorization'
+    },
+    service
+  };
+}
+
+function detectionRequest(): DetectionRequest {
+  return {
+    schemaVersion: 1,
+    ...selection,
+    service,
+    collectorId: context.collectorId,
+    startedAt: context.startedAt
   };
 }

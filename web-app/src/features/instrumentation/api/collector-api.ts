@@ -17,12 +17,12 @@
 
 import { apiMessageGet } from '@/core/http/api-message';
 
-import type { CollectorTarget } from './instrumentation-contract';
-
-export type InstrumentationCollector = CollectorTarget & {
+export type InstrumentationCollector = {
   name: string;
+  collectorId: string;
   address: string;
   online: boolean;
+  intake: { status: 'unavailable' };
 };
 
 export async function loadInstrumentationCollectors(signal?: AbortSignal) {
@@ -43,21 +43,13 @@ function parseCollector(value: unknown, index: number): InstrumentationCollector
   const record = collector as Record<string, unknown>;
   const name = requiredString(record.name, `Collector ${index} name`);
   const address = requiredString(record.ip, `Collector ${index} address`);
-  const host = normalizeHost(address);
   return {
     collectorId: name,
     name,
     address,
     online: record.online === true || record.status === 0,
-    otlpHttpEndpoint: `http://${host}:4318`,
-    otlpGrpcEndpoint: `http://${host}:4317`,
-    authorizationHeader: 'Authorization'
+    intake: { status: 'unavailable' }
   };
-}
-
-function normalizeHost(value: string) {
-  if (/\s|[/?#@]/.test(value)) throw new Error('Collector address was invalid');
-  return value.includes(':') && !value.startsWith('[') ? `[${value}]` : value;
 }
 
 function requiredString(value: unknown, label: string) {

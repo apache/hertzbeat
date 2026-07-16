@@ -96,6 +96,20 @@ describe('instrumentation v1 model', () => {
     expect(() => parseCatalogResponse({ schemaVersion: 2, languages: [] })).toThrow(InstrumentationContractError);
   });
 
+  it('rejects any component or dependency represented as bundled by HertzBeat', () => {
+    const bundledComponent = guideFixture();
+    bundledComponent.component.bundledWithHertzBeat = true;
+    expect(() => parseGuideRenderResponse(bundledComponent)).toThrow(InstrumentationContractError);
+
+    const bundledDependency = guideFixture();
+    (bundledDependency.component.dependencies as unknown[]).push({
+      name: 'external-package', sourceUrl: 'https://example.test/package', version: '1.0.0',
+      license: 'Apache-2.0', purposeKey: 'instrumentation.dependency.sdk', official: true,
+      bundledWithHertzBeat: true
+    });
+    expect(() => parseGuideRenderResponse(bundledDependency)).toThrow(InstrumentationContractError);
+  });
+
   it('parses structured guide secrets and replaces them only in a copy value', () => {
     const guide = parseGuideRenderResponse({
       schemaVersion: 1,
@@ -137,6 +151,26 @@ describe('instrumentation v1 model', () => {
     expect(() => materializeSnippetForCopy(snippet, guide.secretPlaceholders, {
       authorizationToken: 'token with spaces'
     })).toThrow(InstrumentationContractError);
+  });
+
+  it('rejects secret markers that are undeclared, unused, or duplicated', () => {
+    const guide = guideFixture();
+    const undeclared = structuredClone(guide);
+    undeclared.steps[0]!.snippets[0]!.secretPlaceholders = [];
+    expect(() => parseGuideRenderResponse(undeclared)).toThrow(InstrumentationContractError);
+
+    const unused = structuredClone(guide);
+    unused.steps[0]!.snippets[0]!.content = 'start application';
+    expect(() => parseGuideRenderResponse(unused)).toThrow(InstrumentationContractError);
+
+    const duplicate = structuredClone(guide);
+    const duplicatePlaceholders = duplicate.secretPlaceholders as Record<
+      string,
+      (typeof duplicate.secretPlaceholders)['authorizationToken']
+    >;
+    duplicatePlaceholders.secondaryToken = duplicate.secretPlaceholders.authorizationToken!;
+    duplicate.steps[0]!.snippets[0]!.secretPlaceholders.push('secondaryToken');
+    expect(() => parseGuideRenderResponse(duplicate)).toThrow(InstrumentationContractError);
   });
 
   it('parses five-state detection, polling decisions, invariants, and typed jumps', () => {
@@ -186,6 +220,29 @@ describe('instrumentation v1 model', () => {
     expect(() => parseDetectionResponse(mismatchedSignal)).toThrow(InstrumentationContractError);
   });
 
+  it('normalizes omitted nullable detection fields from the Spring response', () => {
+    const response = detectionFixture();
+    response.signals.logs = { status: 'unsupported', lastReceivedAt: null, errorCode: 'signal_not_supported' };
+    response.signals.metrics = { status: 'received', lastReceivedAt: 1_710_000_004_200, errorCode: null };
+    response.signals.traces = { status: 'received', lastReceivedAt: 1_710_000_004_500, errorCode: null };
+    response.polling = { decision: 'complete', pollAfterMs: null, deadlineAt: 1_710_000_120_000 };
+    delete (response.signals.logs as Partial<typeof response.signals.logs>).lastReceivedAt;
+    delete (response.signals.metrics as Partial<typeof response.signals.metrics>).errorCode;
+    delete (response.signals.traces as Partial<typeof response.signals.traces>).errorCode;
+    delete (response.polling as Partial<typeof response.polling>).pollAfterMs;
+    response.queryJumps[1]!.enabled = false;
+    response.queryJumps[2]!.enabled = true;
+
+    expect(parseDetectionResponse(response)).toMatchObject({
+      signals: {
+        metrics: { errorCode: null },
+        logs: { lastReceivedAt: null },
+        traces: { errorCode: null }
+      },
+      polling: { decision: 'complete', pollAfterMs: null }
+    });
+  });
+
   it('serializes only v1 allowlisted request fields and drops injected secrets', () => {
     expect(buildGuideRenderPayload({ ...renderRequest, token: 'must-not-leave-memory' } as GuideRenderRequest & {
       token: string;
@@ -231,5 +288,27 @@ function detectionFixture() {
       { signal: 'logs', enabled: false, context },
       { signal: 'traces', enabled: false, context }
     ]
+  };
+}
+
+function guideFixture() {
+  return {
+    schemaVersion: 1,
+    selection: {
+      language: 'nodejs', framework: 'express', method: 'zero_code', environment: 'docker', platform: 'linux_amd64'
+    },
+    signals: { metrics: 'supported', logs: 'unsupported', traces: 'supported' },
+    component: structuredClone(component),
+    secretPlaceholders: {
+      authorizationToken: { marker: '${HERTZBEAT_TOKEN}', valueFormat: 'url_unreserved', replacement: 'raw' }
+    },
+    steps: [{
+      id: 'configure', type: 'configure', titleKey: 'instrumentation.step.configure',
+      executionLocationKey: 'instrumentation.location.application_environment',
+      snippets: [{
+        id: 'otel-environment', language: 'bash', content: 'Authorization=Bearer%20${HERTZBEAT_TOKEN}',
+        secretPlaceholders: ['authorizationToken']
+      }]
+    }]
   };
 }
