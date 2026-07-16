@@ -17,7 +17,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { buildMonitorActionPath, buildMonitorListPath, buildMonitorRoutePath, monitorAppOptions, monitorStatusKey, parseMonitorTimestamp, safeMonitorReturnTo, readMonitorQuery } from './monitor-model';
+import { buildMonitorActionPath, buildMonitorListPath, buildMonitorRoutePath, monitorAppOptions, monitorSelectionScope, monitorStatusKey, parseMonitorTimestamp, reconcileMonitorSelection, safeMonitorReturnTo, readMonitorQuery } from './monitor-model';
 
 describe('monitor list model', () => {
   it('normalizes unsupported pagination and keeps explicit filters', () => {
@@ -75,5 +75,27 @@ describe('monitor list model', () => {
     expect(buildMonitorRoutePath(7, 'edit', '/monitors?status=2')).toBe('/monitors/7/edit?returnTo=%2Fmonitors%3Fstatus%3D2');
     expect(safeMonitorReturnTo('/monitors?app=website')).toBe('/monitors?app=website');
     expect(safeMonitorReturnTo('https://example.com')).toBe('/monitors');
+  });
+
+  it('keeps bulk selection inside one query scope and visible row set', () => {
+    const base = readMonitorQuery(new URLSearchParams('search=checkout&pageIndex=0&pageSize=10'));
+    const filtered = readMonitorQuery(new URLSearchParams('search=orders&pageIndex=0&pageSize=10'));
+    const paged = readMonitorQuery(new URLSearchParams('search=checkout&pageIndex=1&pageSize=10'));
+    const scope = monitorSelectionScope(base);
+    const selection = { scope, ids: [7, 8, 7] };
+
+    expect(monitorSelectionScope(filtered)).not.toBe(scope);
+    expect(monitorSelectionScope(paged)).not.toBe(scope);
+    expect(reconcileMonitorSelection(selection, scope, [8, 9])).toEqual([8]);
+    expect(reconcileMonitorSelection(selection, monitorSelectionScope(filtered), [7, 8])).toEqual([]);
+    expect(reconcileMonitorSelection(selection, monitorSelectionScope(paged), [7, 8])).toEqual([]);
+  });
+
+  it('preserves the existing selection reference when reconciliation makes no change', () => {
+    const query = readMonitorQuery(new URLSearchParams('search=checkout&pageIndex=0&pageSize=10'));
+    const ids = [7, 8];
+    const selection = { scope: monitorSelectionScope(query), ids };
+
+    expect(reconcileMonitorSelection(selection, selection.scope, [7, 8, 9])).toBe(ids);
   });
 });

@@ -25,6 +25,23 @@ export {
   type MonitorQuery
 } from '../api/monitor-api';
 
+import { writeMonitorQuery, type MonitorQuery } from '../api/monitor-api';
+
+export type MonitorScopedSelection = { scope: string; ids: number[] };
+
+export function monitorSelectionScope(query: MonitorQuery) {
+  return writeMonitorQuery(query).toString();
+}
+
+export function reconcileMonitorSelection(selection: MonitorScopedSelection, scope: string, visibleIds: readonly number[]) {
+  if (selection.scope !== scope) return [];
+  const visible = new Set(visibleIds);
+  const reconciled = [...new Set(selection.ids)].filter(id => visible.has(id));
+  return reconciled.length === selection.ids.length && reconciled.every((id, index) => id === selection.ids[index])
+    ? selection.ids
+    : reconciled;
+}
+
 type MonitorAppItem = {
   category?: string | null;
   value?: string | null;

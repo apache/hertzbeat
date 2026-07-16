@@ -24,10 +24,12 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { loadMonitorApps, loadMonitors, mutateMonitors, type Monitor } from '../api/monitor-api';
+import { useMonitorSelection } from '../hooks/use-monitor-selection';
 import {
   buildMonitorRoutePath,
   monitorAppOptions,
   monitorPageSizes,
+  monitorSelectionScope,
   monitorStatusColor,
   monitorStatusKey,
   parseMonitorTimestamp,
@@ -138,14 +140,14 @@ export function MonitorListPage() {
   const queryState = readMonitorQuery(searchParams);
   const [draftSearch, setDraftSearch] = useState(queryState.search);
   const [draftLabels, setDraftLabels] = useState(queryState.labels);
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const monitors = useQuery({ queryKey: ['monitors', queryState], queryFn: () => loadMonitors(queryState) });
+  const { rows, ...selection } = useMonitorSelection(monitorSelectionScope(queryState), monitors.data?.content);
   const apps = useQuery({ queryKey: ['monitor-apps'], queryFn: loadMonitorApps });
   const appOptions = useMemo(() => monitorAppOptions(apps.data ?? []), [apps.data]);
   const mutation = useMutation({
     mutationFn: ({ action, ids }: { action: MonitorAction; ids: number[] }) => mutateMonitors(action, ids),
     onSuccess: () => {
-      setSelectedIds([]);
+      selection.clear();
       void queryClient.invalidateQueries({ queryKey: ['monitors'] });
       void message.success(t('monitorActions.success'));
     },
@@ -158,6 +160,10 @@ export function MonitorListPage() {
   };
   const submitFilters = () => updateQuery({ search: draftSearch.trim(), labels: draftLabels.trim(), pageIndex: 0 });
   const runAction: ActionRunner = (action, ids) => mutation.mutate({ action, ids });
+  const runBulkAction: ActionRunner = action => {
+    const ids = selection.validatedIds();
+    if (ids.length > 0) mutation.mutate({ action, ids });
+  };
   const columns = buildMonitorColumns(t, path => void navigate(path), runAction, `${location.pathname}${location.search}`);
 
   return (
@@ -200,17 +206,17 @@ export function MonitorListPage() {
         <Button onClick={() => void monitors.refetch()}>{t('common.refresh')}</Button>
         <Button type="primary" onClick={() => void navigate('/monitors/new')}>{t('monitor.editor.newTitle')}</Button>
       </div>
-      <BulkActions selectedIds={selectedIds} run={runAction} />
+      <BulkActions selectedIds={selection.selectedIds} run={runBulkAction} />
       <MonitorResults
         failed={monitors.isError}
         pending={monitors.isPending}
-        rows={monitors.data?.content ?? []}
+        rows={rows}
         total={monitors.data?.totalElements ?? 0}
         query={queryState}
         updateQuery={updateQuery}
         columns={columns}
-        selectedIds={selectedIds}
-        selectIds={setSelectedIds}
+        selectedIds={selection.selectedIds}
+        selectIds={selection.selectIds}
       />
     </div>
   );
