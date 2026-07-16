@@ -19,9 +19,7 @@ import { ExportOutlined } from '@ant-design/icons';
 import { Alert, Button, Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { INSTRUMENTATION_SIGNALS } from '../api/instrumentation-contract';
 import type { useInstrumentationDetection } from '../hooks/use-instrumentation-detection';
-import { buildExploreHandoff } from '../model/instrumentation-flow';
 import { StageBody } from './instrumentation-stage-content';
 import styles from './instrumentation.module.css';
 
@@ -46,9 +44,9 @@ export function InstrumentationDetection({ detection }: { detection: DetectionCo
       )}
       {response && (
         <div className={styles.signalTable}>
-          {INSTRUMENTATION_SIGNALS.map(signal => {
+          {detection.signalNames.map(signal => {
             const result = response.signals[signal];
-            const jump = response.queryJumps.find(item => item.signal === signal && item.enabled);
+            const queryHandoff = detection.queryHandoff(signal);
             return (
               <div className={styles.signalRow} key={signal}>
                 <strong>{t(`instrumentation.signal.${signal}`)}</strong>
@@ -58,8 +56,8 @@ export function InstrumentationDetection({ detection }: { detection: DetectionCo
                     {result.lastReceivedAt ? new Date(result.lastReceivedAt).toLocaleString() : errorText(result.errorCode, t)}
                   </Typography.Text>
                 </span>
-                {jump ? (
-                  <Button type="link" href={buildExploreHandoff(signal, jump.context)} icon={<ExportOutlined />} iconPosition="end">
+                {queryHandoff ? (
+                  <Button type="link" href={queryHandoff} icon={<ExportOutlined />} iconPosition="end">
                     {t('instrumentation.action.openExplore')}
                   </Button>
                 ) : <Typography.Text type="secondary">{t('instrumentation.queryUnavailable')}</Typography.Text>}

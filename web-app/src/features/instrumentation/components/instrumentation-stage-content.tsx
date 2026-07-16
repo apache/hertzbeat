@@ -136,6 +136,8 @@ function ContextStage({ setup }: { setup: InstrumentationSetupController }) {
   const { t } = useTranslation();
   const missing = validateFlowContext(setup.draft);
   const collector = setup.collectors.find(item => item.collectorId === setup.draft.collectorId);
+  const intakeUnavailable = isCollectorIntakeUnavailable(setup, collector);
+  const renderDisabled = missing.length > 0 || !collector?.online || intakeUnavailable;
   const handleRender = async () => {
     try {
       await setup.renderGuide();
@@ -145,13 +147,7 @@ function ContextStage({ setup }: { setup: InstrumentationSetupController }) {
   };
   return (
     <StageBody stage={3} title={t('instrumentation.stage.context')} description={t('instrumentation.stage.contextHelp')}>
-      {setup.collectorsPending && <Skeleton active paragraph={{ rows: 2 }} />}
-      {setup.collectorsError && (
-        <ResourceError title={t('instrumentation.collectorUnavailable')} onRetry={() => void setup.retryCollectors()} />
-      )}
-      {!setup.collectorsPending && !setup.collectorsError && setup.collectors.length === 0 && (
-        <Empty description={t('instrumentation.collectorEmpty')} />
-      )}
+      <CollectorAvailability setup={setup} collector={collector} intakeUnavailable={intakeUnavailable} />
       <div className={styles.formGrid}>
         <Field label={t('instrumentation.field.collector')}>
           <Select<string>
@@ -189,16 +185,48 @@ function ContextStage({ setup }: { setup: InstrumentationSetupController }) {
           />
         </Field>
       </div>
-      {collector && !collector.online && <Alert type="warning" showIcon message={t('instrumentation.collectorOffline')} />}
-      {setup.guideError && <Alert type="error" showIcon message={t('instrumentation.renderUnavailable')} />}
       <StageActions
-        disabled={missing.length > 0 || !collector?.online}
+        disabled={renderDisabled}
         loading={setup.guidePending}
         continueLabel={t('instrumentation.action.render')}
         onBack={() => setup.setStage(2)}
         onContinue={() => void handleRender()}
       />
     </StageBody>
+  );
+}
+
+type Collector = InstrumentationSetupController['collectors'][number];
+
+function isCollectorIntakeUnavailable(setup: InstrumentationSetupController, collector: Collector | undefined) {
+  return collector?.online === true
+    && setup.guideState.status === 'unavailable'
+    && setup.guideState.reason === 'collector_intake_unavailable';
+}
+
+function CollectorAvailability({
+  setup,
+  collector,
+  intakeUnavailable
+}: {
+  setup: InstrumentationSetupController;
+  collector: Collector | undefined;
+  intakeUnavailable: boolean;
+}) {
+  const { t } = useTranslation();
+  return (
+    <>
+      {setup.collectorsPending && <Skeleton active paragraph={{ rows: 2 }} />}
+      {setup.collectorsError && (
+        <ResourceError title={t('instrumentation.collectorUnavailable')} onRetry={() => void setup.retryCollectors()} />
+      )}
+      {!setup.collectorsPending && !setup.collectorsError && setup.collectors.length === 0 && (
+        <Empty description={t('instrumentation.collectorEmpty')} />
+      )}
+      {collector && !collector.online && <Alert type="warning" showIcon message={t('instrumentation.collectorOffline')} />}
+      {intakeUnavailable && <Alert type="warning" showIcon message={t('instrumentation.renderUnavailable')} />}
+      {setup.guideError && <Alert type="error" showIcon message={t('instrumentation.renderUnavailable')} />}
+    </>
   );
 }
 

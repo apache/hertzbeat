@@ -18,10 +18,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { detectInstrumentationSignals } from '../api/instrumentation-api';
-import type {
-  DetectionRequest,
-  DetectionResponse,
-  InstrumentationSignal
+import {
+  INSTRUMENTATION_SIGNALS,
+  type DetectionRequest,
+  type DetectionResponse,
+  type InstrumentationSignal
 } from '../api/instrumentation-contract';
 import { buildExploreHandoff } from '../model/instrumentation-flow';
 
@@ -124,6 +125,7 @@ export function useInstrumentationDetectionController(
     response,
     error,
     checking,
+    signalNames: INSTRUMENTATION_SIGNALS,
     start,
     retry: start,
     reset,

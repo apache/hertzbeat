@@ -68,13 +68,33 @@ describe('InstrumentationPage', () => {
     useInstrumentationSetup.mockReturnValue({ ...setupFixture(), stage: 3, catalog, collectors: [] });
     view.rerender(pageElement());
     expect(screen.getByText('No registered Collectors are available.')).toBeInTheDocument();
+    expect(screen.queryByText('Installation guidance is unavailable for this selection.')).not.toBeInTheDocument();
 
     useInstrumentationSetup.mockReturnValue({
-      ...setupFixture(), stage: 3, catalog, collectors: [{ ...collector, online: false }]
+      ...setupFixture(), stage: 3, catalog, collectors: [{ ...collector, online: false }],
+      guideState: { status: 'unavailable', reason: 'collector_unavailable' }
     });
     view.rerender(pageElement());
     expect(screen.getByText('The selected Collector is offline.')).toBeInTheDocument();
+    expect(screen.queryByText('Installation guidance is unavailable for this selection.')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Render instructions' })).toBeDisabled();
+  });
+
+  it('blocks guide rendering when the selected online Collector has no advertised intake', () => {
+    const renderGuide = vi.fn();
+    useInstrumentationSetup.mockReturnValue({
+      ...setupFixture(), stage: 3, catalog, collectors: [collector], renderGuide,
+      guideState: { status: 'unavailable', reason: 'collector_intake_unavailable' }
+    });
+    useInstrumentationDetection.mockReturnValue(detectionFixture());
+    renderPage();
+
+    expect(screen.getByText('Installation guidance is unavailable for this selection.')).toBeInTheDocument();
+    const renderAction = screen.getByRole('button', { name: 'Render instructions' });
+    expect(renderAction).toBeDisabled();
+    fireEvent.click(renderAction);
+    expect(renderGuide).not.toHaveBeenCalled();
+    expect(screen.queryByText(/4317|4318/)).not.toBeInTheDocument();
   });
 
   it('keeps a secret snippet copy action disabled until the memory-only Token is present', () => {
@@ -87,14 +107,22 @@ describe('InstrumentationPage', () => {
   });
 
   it('enables Explore only for received signals and renders waiting and unsupported honestly', () => {
-    useInstrumentationSetup.mockReturnValue({ ...setupFixture(), catalog });
-    useInstrumentationDetection.mockReturnValue(detectionFixture(detectionResponse({
+    const queryHandoff = vi.fn((signal: string) => signal === 'metrics'
+      ? '/explore?ownedBy=instrumentation-controller'
+      : undefined);
+    const response = detectionResponse({
       metrics: ['received', null], logs: ['waiting', 'signal_not_received'], traces: ['unsupported', 'signal_not_supported']
-    })));
+    });
+    response.queryJumps.push({ ...response.queryJumps[0]!, signal: 'logs', enabled: true });
+    useInstrumentationSetup.mockReturnValue({ ...setupFixture(), catalog });
+    useInstrumentationDetection.mockReturnValue({ ...detectionFixture(response), queryHandoff });
     renderPage();
 
     const explore = screen.getByRole('link', { name: /Open in Explore/ });
-    expect(explore).toHaveAttribute('href', expect.stringContaining('signal=metrics'));
+    expect(explore).toHaveAttribute('href', '/explore?ownedBy=instrumentation-controller');
+    expect(queryHandoff).toHaveBeenCalledWith('metrics');
+    expect(queryHandoff).toHaveBeenCalledWith('logs');
+    expect(queryHandoff).toHaveBeenCalledWith('traces');
     expect(screen.getByText('Waiting')).toBeInTheDocument();
     expect(screen.getByText('Unsupported')).toBeInTheDocument();
     expect(screen.getAllByText('Query unavailable')).toHaveLength(2);
@@ -149,6 +177,7 @@ function setupFixture() {
     catalog: undefined, catalogPending: false, catalogError: false, retryCatalog: vi.fn(),
     collectors: [], collectorsPending: false, collectorsError: false, retryCollectors: vi.fn(),
     token: '', setToken: vi.fn(), guide: undefined, guidePending: false, guideError: false,
+    guideState: { status: 'unavailable', reason: 'collector_unavailable' },
     setEnvironment: vi.fn(), setPlatform: vi.fn(), setLanguage: vi.fn(), setFramework: vi.fn(), setMethod: vi.fn(),
     setContext: vi.fn(), renderGuide: vi.fn(), copySnippet: vi.fn(), clearGuide: vi.fn(),
     handleContractError: vi.fn()
@@ -156,7 +185,10 @@ function setupFixture() {
 }
 
 function detectionFixture(response?: ReturnType<typeof detectionResponse>) {
-  return { response, checking: false, error: undefined, start: vi.fn(), retry: vi.fn(), reset: vi.fn() };
+  return {
+    response, checking: false, error: undefined, start: vi.fn(), retry: vi.fn(), reset: vi.fn(),
+    signalNames: ['metrics', 'logs', 'traces'], queryHandoff: vi.fn()
+  };
 }
 
 function detectionResponse(statuses: Record<'metrics' | 'logs' | 'traces', [string, string | null]>) {
@@ -199,8 +231,7 @@ const catalog = {
 
 const collector = {
   collectorId: 'collector-east', name: 'collector-east', online: true, address: '10.0.0.8',
-  otlpHttpEndpoint: 'http://10.0.0.8:4318', otlpGrpcEndpoint: 'http://10.0.0.8:4317',
-  authorizationHeader: 'Authorization'
+  intake: { status: 'unavailable' }
 };
 
 const guide = {

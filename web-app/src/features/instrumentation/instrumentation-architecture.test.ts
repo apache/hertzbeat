@@ -23,9 +23,14 @@ const allowedDependencies: Record<(typeof sourceDirectories)[number], readonly s
   model: ['api', 'model'],
   controller: ['api', 'model', 'controller'],
   hooks: ['api', 'model', 'controller', 'hooks'],
-  components: ['api', 'model', 'hooks', 'components'],
-  pages: ['model', 'hooks', 'components', 'pages']
+  components: ['hooks', 'components'],
+  pages: ['hooks', 'components', 'pages']
 };
+const presentationImportExceptions = new Set([
+  './components/instrumentation-guide.tsx|../api/instrumentation-contract',
+  './components/instrumentation-stage-content.tsx|../model/instrumentation-flow',
+  './pages/instrumentation-page.tsx|../model/instrumentation-flow'
+]);
 const importPattern = /(?:from\s+|import\s*\()\s*['"]([^'"]+)['"]/g;
 const productionSources = import.meta.glob('./**/*.{ts,tsx}', {
   eager: true,
@@ -47,6 +52,18 @@ describe('instrumentation feature boundaries', () => {
     expect(violations).toEqual([]);
   });
 
+  it('keeps detection presentation controller-owned and records the remaining narrow exceptions', () => {
+    const directPresentationImports = Object.entries(productionSources)
+      .filter(([path]) => path.startsWith('./components/') || path.startsWith('./pages/'))
+      .flatMap(([path, source]) => [...source.matchAll(importPattern)]
+        .map(match => match[1])
+        .filter(specifier => specifier?.startsWith('../api/') || specifier?.startsWith('../model/'))
+        .map(specifier => `${path}|${specifier}`));
+    expect(directPresentationImports.sort()).toEqual([...presentationImportExceptions].sort());
+    expect(productionSources['./components/instrumentation-guide.tsx'])
+      .toContain("import type { GuideSnippet } from '../api/instrumentation-contract'");
+  });
+
   it('keeps secret-bearing contract layers out of persistence, logging, and analytics', () => {
     const forbidden = /\b(?:localStorage|sessionStorage|indexedDB|sendBeacon|analytics|console\.(?:log|info|warn|error))\b/;
     const violations = Object.entries(productionSources)
@@ -63,6 +80,7 @@ function validateImports(path: string, source: string) {
   return [...source.matchAll(importPattern)].flatMap(match => {
     const specifier = match[1];
     if (!specifier) return [];
+    if (presentationImportExceptions.has(`${path}|${specifier}`)) return [];
     if (specifier.startsWith('@/core/http/')) return sourceDirectory === 'api' ? [] : [`${path} imports core transport`];
     if (!specifier.startsWith('.')) return [];
     const target = resolveFeaturePath(path, specifier);
