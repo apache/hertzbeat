@@ -28,7 +28,12 @@ const { deleteLabel, loadLabels, saveLabel } = vi.hoisted(() => ({
   loadLabels: vi.fn(),
   saveLabel: vi.fn(),
 }));
-vi.mock("./label-api", () => ({ deleteLabel, loadLabels, saveLabel }));
+vi.mock('../api/label-api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../api/label-api')>()),
+  deleteLabel,
+  loadLabels,
+  saveLabel,
+}));
 import { LabelPage } from "./label-page";
 
 describe("LabelPage", () => {

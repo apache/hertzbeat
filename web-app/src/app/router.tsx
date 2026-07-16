@@ -226,7 +226,7 @@ export const appRoutes: RouteObject[] = [
                 id: 'labels',
                 path: settingsPaths.labels,
                 lazy: async () => {
-                  const { LabelPage } = await import('@/features/settings/label-page');
+                  const { LabelPage } = await import('@/features/settings/label');
                   return { Component: LabelPage };
                 }
               },

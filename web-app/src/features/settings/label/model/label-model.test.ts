@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 import { describe, expect, it } from 'vitest';
-import { buildLabelDisplayName, buildLabelListPath, buildLabelPayload, readLabelQuery } from './label-model';
+import { buildLabelDisplayName, buildLabelListPath, buildLabelMonitorPath, buildLabelPayload, readLabelQuery } from './label-model';
 
 describe('label model', () => {
   it('keeps search and pagination in an inspectable query contract', () => {
@@ -31,5 +31,6 @@ describe('label model', () => {
       .toEqual({ name: 'env', tagValue: 'prod', description: 'primary', type: 1 });
     expect(buildLabelPayload({ id: 7, name: ' env ', tagValue: '', description: '', type: 2 }, false))
       .toEqual({ id: 7, name: 'env', tagValue: '', description: '', type: 2 });
+    expect(buildLabelMonitorPath({ name: 'env', tagValue: 'prod' })).toBe('/monitors?labels=env%3Aprod');
   });
 });

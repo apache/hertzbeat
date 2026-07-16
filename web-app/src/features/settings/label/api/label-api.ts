@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut, type PageResult } from '@/core/http/api-message';
+
 export type LabelRecord = {
   id?: number;
   name: string;
@@ -28,6 +30,19 @@ export type LabelRecord = {
 
 export type LabelQuery = { search: string; pageIndex: number; pageSize: number };
 export const labelPageSizes = [20, 50, 100] as const;
+
+export function loadLabels(query: LabelQuery) {
+  return apiMessageGet<PageResult<LabelRecord>>(buildLabelListPath(query));
+}
+
+export function saveLabel(label: Partial<LabelRecord>, isNew: boolean) {
+  const payload = buildLabelPayload(label, isNew);
+  return isNew ? apiMessagePost<void>('/api/label', payload) : apiMessagePut<void>('/api/label', payload);
+}
+
+export function deleteLabel(id: number) {
+  return apiMessageDelete<void>(`/api/label?ids=${encodeURIComponent(id)}`);
+}
 
 export function readLabelQuery(params: URLSearchParams): LabelQuery {
   const pageIndex = Number.parseInt(params.get('pageIndex') ?? '', 10);
@@ -49,11 +64,6 @@ export function buildLabelListPath(query: LabelQuery) {
   return `/api/label?${writeLabelQuery(query).toString()}`;
 }
 
-export function buildLabelDisplayName(label: Pick<LabelRecord, 'name' | 'tagValue'>) {
-  const value = label.tagValue?.trim();
-  return value ? `${label.name}:${value}` : label.name;
-}
-
 export function buildLabelPayload(label: Partial<LabelRecord>, isNew: boolean): LabelRecord {
   return {
     ...(!isNew && label.id ? { id: label.id } : {}),
@@ -62,10 +72,4 @@ export function buildLabelPayload(label: Partial<LabelRecord>, isNew: boolean): 
     description: label.description?.trim() ?? '',
     type: isNew ? 1 : label.type ?? 1
   };
-}
-
-export function labelTypeKey(type?: number) {
-  if (type === 0) return 'labels.type.auto';
-  if (type === 2) return 'labels.type.preset';
-  return 'labels.type.user';
 }

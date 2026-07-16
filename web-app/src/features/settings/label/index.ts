@@ -15,18 +15,4 @@
  * limitations under the License.
  */
 
-import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut, type PageResult } from '@/core/http/api-message';
-import { buildLabelListPath, buildLabelPayload, type LabelQuery, type LabelRecord } from './label-model';
-
-export function loadLabels(query: LabelQuery) {
-  return apiMessageGet<PageResult<LabelRecord>>(buildLabelListPath(query));
-}
-
-export function saveLabel(label: Partial<LabelRecord>, isNew: boolean) {
-  const payload = buildLabelPayload(label, isNew);
-  return isNew ? apiMessagePost<void>('/api/label', payload) : apiMessagePut<void>('/api/label', payload);
-}
-
-export function deleteLabel(id: number) {
-  return apiMessageDelete<void>(`/api/label?ids=${encodeURIComponent(id)}`);
-}
+export { LabelPage } from './pages/label-page';
