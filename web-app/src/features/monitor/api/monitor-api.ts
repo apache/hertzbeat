@@ -50,6 +50,12 @@ export function classifyMonitorDetailReadError(error: unknown): 'missing' | 'una
   return classifyMonitorReadError(error);
 }
 
+export function classifyMonitorMetricReadError(error: unknown): 'unavailable' | 'error' {
+  if (error instanceof MonitorContractError) return 'error';
+  if (error instanceof ApiMessageError && error.status === 200 && error.code === 15) return 'unavailable';
+  return classifyMonitorReadError(error);
+}
+
 export type Monitor = {
   id: number;
   jobId?: number | null;
@@ -84,7 +90,7 @@ export type MonitorDetailMetric = {
   name: string;
   favorited?: boolean | null;
   visible?: boolean;
-  fields?: Array<{ type?: number; field?: string; unit?: string }>;
+  fields?: Array<{ type?: number; field?: string; unit?: string; label?: boolean }>;
 };
 export type MonitorParamDefine = {
   field: string;
@@ -121,6 +127,22 @@ export type MonitorMetricOption = {
   field: string;
   unit?: string;
 };
+
+export type MonitorMetricValue = {
+  origin: string | null;
+  mean: string | null;
+  median: string | null;
+  min: string | null;
+  max: string | null;
+  time: number | null;
+};
+
+export type MonitorRealtimeMetric = {
+  fields: Array<{ name: string; type: number; unit: string | null; label: boolean }>;
+  valueRows: Array<{ labels: Record<string, string>; values: MonitorMetricValue[] }>;
+};
+
+export type MonitorHistoryMetric = { values: Record<string, MonitorMetricValue[]> };
 
 export type MonitorApp = {
   category?: string | null;
@@ -253,12 +275,15 @@ export function mutateMonitors(action: MonitorAction, ids: number[]) {
   return apiMessageDelete<unknown>(path);
 }
 
-export function loadFavoriteMetrics(monitorId: number) {
-  return apiMessageGet<string[]>(buildFavoriteMetricPath(monitorId));
+export async function loadFavoriteMetrics(monitorId: number, signal?: AbortSignal) {
+  const value = await apiMessageGet<unknown>(buildFavoriteMetricPath(monitorId), signal ? { signal } : undefined);
+  return array(value, 'favorite metrics').map((item, index) => nonemptyString(item, `favorite metric[${index}]`));
 }
 
-export function loadMonitorMetricCatalog(monitor: Monitor) {
-  return apiMessageGet<{ metrics?: MonitorDetailMetric[] }>(buildMetricCatalogPath(monitor));
+export async function loadMonitorMetricCatalog(monitor: Monitor, signal?: AbortSignal) {
+  const value = await apiMessageGet<unknown>(buildMetricCatalogPath(monitor), signal ? { signal } : undefined);
+  const catalog = record(value, 'monitor metric catalog');
+  return { metrics: array(catalog.metrics, 'monitor metric catalog metrics').map(parseCatalogMetric) };
 }
 
 export function updateFavoriteMetric(monitorId: number, metricKey: string, favorite: boolean) {
@@ -266,12 +291,47 @@ export function updateFavoriteMetric(monitorId: number, metricKey: string, favor
   return favorite ? apiMessagePost<unknown>(path, null) : apiMessageDelete<unknown>(path);
 }
 
-export function loadRealtimeMetric(monitorId: number, metricKey: string) {
-  return apiMessageGet<{ valueRows?: Array<{ labels?: Record<string, string>; values?: Array<{ origin?: string; mean?: string; time?: number }> }> }>(buildRealtimeMetricPath(monitorId, metricKey));
+export async function loadRealtimeMetric(monitorId: number, metric: MonitorMetricOption, signal?: AbortSignal): Promise<MonitorRealtimeMetric> {
+  const value = await apiMessageGet<unknown>(buildRealtimeMetricPath(monitorId, metric.group), signal ? { signal } : undefined);
+  if (value === null || value === undefined) return { fields: [], valueRows: [] };
+  const data = record(value, 'realtime metric');
+  if (positiveInteger(data.id, 'realtime monitor id') !== monitorId
+    || nonemptyString(data.metrics, 'realtime metric group') !== metric.group) {
+    throw new MonitorContractError('Realtime metric identity does not match request');
+  }
+  nullableString(data.app, 'realtime app');
+  nullableNonnegativeInteger(data.time, 'realtime time');
+  const fields = array(data.fields, 'realtime fields').map(parseRealtimeField);
+  if (new Set(fields.map(field => field.name)).size !== fields.length) {
+    throw new MonitorContractError('Realtime metric field names must be unique');
+  }
+  const valueRows = data.valueRows === null ? []
+    : array(data.valueRows, 'realtime value rows').map((item, index) => parseRealtimeRow(item, index, fields.length));
+  return { fields, valueRows };
 }
 
-export function loadHistoryMetric(monitor: Monitor, metric: MonitorMetricOption, history: string) {
-  return apiMessageGet<{ values?: Record<string, Array<{ origin?: string; mean?: string; time?: number }>> }>(buildHistoryMetricPath(monitor, metric, history));
+export async function loadHistoryMetric(monitor: Monitor, metric: MonitorMetricOption, history: string,
+  signal?: AbortSignal): Promise<MonitorHistoryMetric> {
+  const value = await apiMessageGet<unknown>(buildHistoryMetricPath(monitor, metric, history), signal ? { signal } : undefined);
+  const data = record(value, 'history metric');
+  const field = record(data.field, 'history metric field');
+  if (nonemptyString(data.instance, 'history instance') !== monitor.instance
+    || nonemptyString(data.metrics, 'history metric group') !== metric.group
+    || nonemptyString(field.name, 'history metric field name') !== metric.field) {
+    throw new MonitorContractError('History metric identity does not match request');
+  }
+  nullableString(data.app, 'history app');
+  if (byte(field.type, 'history metric field type') !== 0) {
+    throw new MonitorContractError('History metric field must be numeric');
+  }
+  nullableString(field.unit, 'history metric field unit');
+  if (field.label !== null && typeof field.label !== 'boolean') {
+    throw new MonitorContractError('history metric field label must be boolean or null');
+  }
+  const values = record(data.values, 'history metric values');
+  return { values: Object.fromEntries(Object.entries(values).map(([series, entries]) => [series,
+    array(entries, `history series ${series}`).map((entry, index) => parseMetricValue(entry, `history value ${series}[${index}]`))
+  ])) };
 }
 
 function parseMonitorPage(value: unknown, query: MonitorQuery): PageResult<Monitor> {
@@ -390,6 +450,63 @@ function parseEmbeddedMetric(value: unknown, index: number): MonitorDetailMetric
   return result;
 }
 
+function parseCatalogMetric(value: unknown, index: number): MonitorDetailMetric {
+  const item = record(value, `catalog metric[${index}]`);
+  if (typeof item.visible !== 'boolean') throw new MonitorContractError('catalog metric visible must be boolean');
+  return {
+    name: nonemptyString(item.name, 'catalog metric name'),
+    visible: item.visible,
+    fields: array(item.fields, 'catalog metric fields').map((entry, fieldIndex) => {
+      const field = record(entry, `catalog metric field[${fieldIndex}]`);
+      const unit = nullableString(field.unit, 'catalog metric field unit');
+      return {
+        type: byte(field.type, 'catalog metric field type'),
+        field: nonemptyString(field.field, 'catalog metric field name'),
+        label: boolean(field.label, 'catalog metric field label'),
+        ...(unit === null ? {} : { unit })
+      };
+    })
+  };
+}
+
+function parseRealtimeField(value: unknown, index: number) {
+  const field = record(value, `realtime field[${index}]`);
+  if (typeof field.label !== 'boolean') throw new MonitorContractError('metric field label must be boolean');
+  return {
+    name: nonemptyString(field.name, 'metric field name'),
+    type: byte(field.type, 'metric field type'),
+    unit: nullableString(field.unit, 'metric field unit'),
+    label: field.label
+  };
+}
+
+function parseRealtimeRow(value: unknown, index: number, fieldCount: number) {
+  const row = record(value, `realtime row[${index}]`);
+  const labels = record(row.labels, 'realtime labels');
+  for (const [key, entry] of Object.entries(labels)) {
+    if (typeof entry !== 'string') throw new MonitorContractError(`realtime label ${key} must be a string`);
+  }
+  const values = array(row.values, 'realtime values').map((entry, valueIndex) =>
+    parseMetricValue(entry, `realtime value[${valueIndex}]`));
+  if (values.length !== fieldCount) throw new MonitorContractError('Realtime row values must align with fields');
+  return {
+    labels: labels as Record<string, string>,
+    values
+  };
+}
+
+function parseMetricValue(value: unknown, label: string): MonitorMetricValue {
+  const item = record(value, label);
+  return {
+    origin: nullableString(item.origin, `${label} origin`),
+    mean: nullableString(item.mean, `${label} mean`),
+    median: nullableString(item.median, `${label} median`),
+    min: nullableString(item.min, `${label} min`),
+    max: nullableString(item.max, `${label} max`),
+    time: nullableNonnegativeInteger(item.time, `${label} time`)
+  };
+}
+
 function monitorDetailId(value: string | number) {
   if (typeof value === 'number') return Number.isSafeInteger(value) && value > 0 ? value : undefined;
   if (!/^[1-9]\d*$/.test(value)) return undefined;
@@ -482,6 +599,11 @@ function byte(value: unknown, label: string) {
   const parsed = nonnegativeInteger(value, label);
   if (parsed > 255) throw new MonitorContractError(`${label} must fit a byte`);
   return parsed;
+}
+
+function boolean(value: unknown, label: string) {
+  if (typeof value !== 'boolean') throw new MonitorContractError(`${label} must be a boolean`);
+  return value;
 }
 
 function optionalTimestamp(item: Record<string, unknown>, key: 'gmtCreate' | 'gmtUpdate') {

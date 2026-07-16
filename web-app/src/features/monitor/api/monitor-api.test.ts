@@ -25,7 +25,8 @@ vi.mock('@/core/http/api-message', async importOriginal => ({
 import { ApiMessageError } from '@/core/http/api-message';
 
 import {
-  classifyMonitorDetailReadError, loadMonitorApps, loadMonitorDetail, loadMonitors,
+  classifyMonitorDetailReadError, classifyMonitorMetricReadError, loadFavoriteMetrics, loadHistoryMetric,
+  loadMonitorApps, loadMonitorDetail, loadMonitorMetricCatalog, loadMonitors, loadRealtimeMetric,
   MonitorContractError, MonitorMissingError, type MonitorQuery
 } from './monitor-api';
 import { monitorAppOptions } from '../model/monitor-model';
@@ -144,5 +145,91 @@ describe('monitor detail API contracts', () => {
     expect(classifyMonitorDetailReadError(new ApiMessageError('missing', { status: 200, code: 15 }))).toBe('missing');
     expect(classifyMonitorDetailReadError(new ApiMessageError('offline', { status: 503 }))).toBe('unavailable');
     expect(classifyMonitorDetailReadError(new MonitorContractError('bad'))).toBe('error');
+  });
+});
+
+describe('monitor metric API contracts', () => {
+  const monitor = { id: 7, name: 'checkout', app: 'website', instance: 'prod', status: 1 };
+  const metric = { key: 'summary.responseTime', group: 'summary', field: 'responseTime', unit: 'ms' };
+  beforeEach(() => http.apiMessageGet.mockReset());
+
+  it('strictly parses catalog and favorites and forwards their signals', async () => {
+    const signal = new AbortController().signal;
+    http.apiMessageGet
+      .mockResolvedValueOnce({ metrics: [{ name: 'summary', visible: true,
+        fields: [{ type: 0, field: 'responseTime', unit: 'ms', label: false, ignored: true },
+          { type: 0, field: 'hostCode', unit: null, label: true }], ignored: true }], ignored: true })
+      .mockResolvedValueOnce(['summary.responseTime']);
+    await expect(loadMonitorMetricCatalog(monitor, signal)).resolves.toEqual({ metrics: [{ name: 'summary',
+      visible: true, fields: [{ type: 0, field: 'responseTime', unit: 'ms', label: false },
+        { type: 0, field: 'hostCode', label: true }] }] });
+    await expect(loadFavoriteMetrics(7, signal)).resolves.toEqual(['summary.responseTime']);
+    expect(http.apiMessageGet).toHaveBeenNthCalledWith(1, '/api/apps/website/define', { signal });
+    expect(http.apiMessageGet).toHaveBeenNthCalledWith(2, '/api/metrics/favorite/7', { signal });
+  });
+
+  it('strictly parses realtime and history while preserving epoch zero', async () => {
+    const signal = new AbortController().signal;
+    http.apiMessageGet
+      .mockResolvedValueOnce({ id: 7, app: 'website', metrics: 'summary', time: 0,
+        fields: [{ name: 'responseTime', type: 0, unit: 'ms', label: false }],
+        valueRows: [{ labels: { host: 'a' }, values: [{ origin: '12', mean: null,
+        median: null, min: null, max: null, time: 0, ignored: true }], ignored: true }], ignored: true })
+      .mockResolvedValueOnce({ instance: 'prod', app: null, metrics: 'summary',
+        field: { name: 'responseTime', type: 0, unit: null, label: null },
+        values: { 'host=a': [{ origin: null, mean: '11', median: null, min: null,
+        max: null, time: 0, ignored: true }] }, ignored: true });
+    await expect(loadRealtimeMetric(7, metric, signal)).resolves.toEqual({
+      fields: [{ name: 'responseTime', type: 0, unit: 'ms', label: false }], valueRows: [{
+      labels: { host: 'a' }, values: [{ origin: '12', mean: null, median: null, min: null, max: null, time: 0 }]
+    }] });
+    await expect(loadHistoryMetric(monitor, metric, '30m', signal)).resolves.toEqual({ values: {
+      'host=a': [{ origin: null, mean: '11', median: null, min: null, max: null, time: 0 }]
+    } });
+    expect(http.apiMessageGet).toHaveBeenNthCalledWith(1, '/api/monitor/7/metrics/summary', { signal });
+  });
+
+  it('maps a canonical realtime no-data response to empty evidence', async () => {
+    http.apiMessageGet.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      id: 7, app: 'website', metrics: 'summary', time: 0,
+      fields: [{ name: 'responseTime', type: 0, unit: 'ms', label: false }], valueRows: null
+    });
+    await expect(loadRealtimeMetric(7, metric)).resolves.toEqual({ fields: [], valueRows: [] });
+    await expect(loadRealtimeMetric(7, metric)).resolves.toEqual({
+      fields: [{ name: 'responseTime', type: 0, unit: 'ms', label: false }], valueRows: []
+    });
+  });
+
+  it.each([
+    ['catalog', null], ['catalog', { metrics: null }], ['favorites', {}], ['favorites', ['']],
+    ['catalog', { metrics: [{ name: 'summary', visible: true,
+      fields: [{ type: 0, field: 'value', unit: null }] }] }],
+    ['realtime', { id: 8, app: 'website', metrics: 'summary', time: 0, fields: [], valueRows: [] }],
+    ['realtime', { id: 7, app: 'website', metrics: 'other', time: 0, fields: [], valueRows: [] }],
+    ['realtime', { id: 7, app: 'website', metrics: 'summary', time: 0, fields: [],
+      valueRows: [{ labels: { host: 1 }, values: [] }] }],
+    ['realtime', { id: 7, app: 'website', metrics: 'summary', time: 0,
+      fields: [{ name: 'value', type: 0, unit: null, label: false },
+        { name: 'value', type: 0, unit: null, label: false }], valueRows: [] }],
+    ['realtime', { id: 7, app: 'website', metrics: 'summary', time: 0,
+      fields: [{ name: 'value', type: 0, unit: null, label: false }],
+      valueRows: [{ labels: {}, values: [] }] }],
+    ['realtime', { id: 7, app: 'website', metrics: 'summary', time: 0,
+      fields: [{ name: 'responseTime', type: 0, unit: 'ms', label: false }],
+      valueRows: [{ labels: {}, values: [{ time: '0' }] }] }],
+    ['history', { values: [] }], ['history', { values: { series: [{}] } }]
+  ] as const)('rejects malformed %s evidence %#', async (kind, value) => {
+    http.apiMessageGet.mockResolvedValue(value);
+    const promise = kind === 'catalog' ? loadMonitorMetricCatalog(monitor)
+      : kind === 'favorites' ? loadFavoriteMetrics(7)
+        : kind === 'realtime' ? loadRealtimeMetric(7, metric)
+          : loadHistoryMetric(monitor, metric, '30m');
+    await expect(promise).rejects.toBeInstanceOf(MonitorContractError);
+  });
+
+  it('classifies storage failure as unavailable and malformed evidence as error', () => {
+    expect(classifyMonitorMetricReadError(new ApiMessageError('storage', { status: 200, code: 15 })))
+      .toBe('unavailable');
+    expect(classifyMonitorMetricReadError(new MonitorContractError('bad'))).toBe('error');
   });
 });

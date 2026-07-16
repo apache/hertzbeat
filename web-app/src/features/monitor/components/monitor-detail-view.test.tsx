@@ -22,10 +22,6 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 import { MonitorDetailView } from './monitor-detail-view';
 
-vi.mock('./monitor-metric-workbench', () => ({
-  MonitorMetricWorkbench: ({ metrics }: { metrics: unknown[] }) => <output data-testid="metrics">{metrics.length}</output>
-}));
-
 const ready = { kind: 'ready' as const, detail: {
   monitor: { id: 7, name: 'checkout', app: 'website', instance: 'prod', status: 1, intervals: 0 },
   params: [], collector: null, grafanaDashboard: null, metrics: [{ name: 'summary', favorited: false }]
@@ -60,5 +56,6 @@ describe('MonitorDetailView', () => {
 function renderView(detail: Parameters<typeof MonitorDetailView>[0]['state']['detail']) {
   return render(<I18nextProvider i18n={i18n}><MonitorDetailView
     state={{ detail, returnTo: '/monitors' }} actions={{ back: vi.fn(), edit: vi.fn() }}
+    metricWorkbench={detail.kind === 'ready' ? <output data-testid="metrics">{detail.detail.metrics?.length ?? 0}</output> : undefined}
   /></I18nextProvider>);
 }

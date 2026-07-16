@@ -17,27 +17,27 @@
 
 import { Alert, Button, Descriptions, Empty, Space, Spin, Tag, Typography } from 'antd';
 import type { DescriptionsProps } from 'antd';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type {
   MonitorDetailEvidence, MonitorDetailViewActions, MonitorDetailViewState
 } from '../model/monitor-detail-model';
 import { monitorStatusColor, monitorStatusKey } from '../model/monitor-model';
-import { MonitorMetricWorkbench } from './monitor-metric-workbench';
 import styles from './monitor-detail-view.module.css';
 
 type Translator = (key: string) => string;
 type DetailMonitor = Extract<MonitorDetailEvidence, { kind: 'ready' }>['detail']['monitor'];
 
-export function MonitorDetailView({ state, actions }: {
-  state: MonitorDetailViewState; actions: MonitorDetailViewActions;
+export function MonitorDetailView({ state, actions, metricWorkbench }: {
+  state: MonitorDetailViewState; actions: MonitorDetailViewActions; metricWorkbench?: ReactNode;
 }) {
   const { t } = useTranslation();
   if (state.detail.kind === 'loading') return <div role="status"><Spin /></div>;
   if (state.detail.kind === 'missing') return <Empty description={t('common.notFound.description')} />;
   if (state.detail.kind === 'unavailable') return <Alert type="warning" showIcon message={t('common.unavailable')} />;
   if (state.detail.kind === 'error') return <Alert type="error" showIcon message={t('common.routeError.description')} />;
-  const { monitor, metrics = [] } = state.detail.detail;
+  const { monitor } = state.detail.detail;
   return <div className={styles.page}>
     <header className={styles.heading}>
       <div>
@@ -50,7 +50,7 @@ export function MonitorDetailView({ state, actions }: {
       </Space>
     </header>
     <Descriptions size="small" column={2} items={monitorDescriptionItems(t, monitor)} />
-    <MonitorMetricWorkbench monitor={monitor} metrics={metrics} />
+    {metricWorkbench}
   </div>;
 }
 

@@ -19,15 +19,20 @@ import { describe, expect, it } from 'vitest';
 
 import pageSource from './monitor-detail-page.tsx?raw';
 import viewSource from '../components/monitor-detail-view.tsx?raw';
+import workbenchSource from '../components/monitor-metric-workbench.tsx?raw';
 
 describe('Monitor Detail page architecture', () => {
   it('keeps the page as controller and pure-view composition', () => {
     expect(pageSource).toMatch(/useMonitorDetailController/);
     expect(pageSource).toMatch(/MonitorDetailView/);
-    expect(pageSource).not.toMatch(/@tanstack|monitor-api|useParams|useSearchParams|useNavigate/);
+    expect(pageSource).not.toMatch(/@tanstack|monitor-api|react-router|useParams|useSearchParams|useNavigate/);
   });
 
   it('keeps transport, Router, and controller ownership out of the view', () => {
     expect(viewSource).not.toMatch(/@tanstack|monitor-api|react-router|useMonitorDetailController|\.\.\/pages\//);
+  });
+
+  it('keeps the metric workbench as a pure presentation boundary', () => {
+    expect(workbenchSource).not.toMatch(/@tanstack|monitor-api|react-router|useMonitorMetricWorkbenchController/);
   });
 });

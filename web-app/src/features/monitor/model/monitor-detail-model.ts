@@ -15,7 +15,10 @@
  * limitations under the License.
  */
 
-import type { MonitorDetail, MonitorDetailMetric } from '../api/monitor-api';
+import type {
+  MonitorDetail, MonitorDetailMetric, MonitorHistoryMetric, MonitorMetricOption, MonitorMetricValue,
+  MonitorRealtimeMetric
+} from '../api/monitor-api';
 
 export type MonitorDetailEvidence =
   | { kind: 'loading' }
@@ -41,10 +44,52 @@ export {
   type MonitorMetricOption
 } from '../api/monitor-api';
 
+export const monitorMetricHistoryRanges = ['30m', '1h', '6h', '24h'] as const;
+export type MonitorMetricHistory = typeof monitorMetricHistoryRanges[number];
+export type MonitorMetricCatalogEvidence =
+  | { kind: 'loading'; options: MonitorMetricOption[] }
+  | { kind: 'fallback'; options: MonitorMetricOption[]; references: string[] }
+  | { kind: 'empty'; options: MonitorMetricOption[] }
+  | { kind: 'unavailable'; options: MonitorMetricOption[] }
+  | { kind: 'error'; options: MonitorMetricOption[] }
+  | { kind: 'ready'; options: MonitorMetricOption[] };
+export type MonitorMetricFavoriteEvidence =
+  | { kind: 'loading' }
+  | { kind: 'unavailable' }
+  | { kind: 'error' }
+  | { kind: 'ready'; value: boolean };
+export type MonitorMetricRowsEvidence<T> =
+  | { kind: 'loading'; rows: T[] }
+  | { kind: 'empty'; rows: T[] }
+  | { kind: 'unavailable'; rows: T[] }
+  | { kind: 'error'; rows: T[] }
+  | { kind: 'ready'; rows: T[] };
+export type MonitorMetricWorkbenchController = {
+  state: {
+    catalog: MonitorMetricCatalogEvidence;
+    metricKey: string;
+    history: MonitorMetricHistory;
+    favorite: MonitorMetricFavoriteEvidence;
+    favoriteBusy: boolean;
+    realtime: MonitorMetricRowsEvidence<ReturnType<typeof monitorRealtimeRows>[number]>;
+    historical: MonitorMetricRowsEvidence<ReturnType<typeof monitorHistoryRows>[number]>;
+  };
+  actions: {
+    setMetric: (value: string) => void;
+    setHistory: (value: MonitorMetricHistory) => void;
+    toggleFavorite: () => Promise<void>;
+    refresh: () => void;
+  };
+};
+
+export function parseMonitorMetricHistory(value: string | null): MonitorMetricHistory {
+  return monitorMetricHistoryRanges.includes(value as MonitorMetricHistory) ? value as MonitorMetricHistory : '30m';
+}
+
 export function monitorMetricOptions(metrics: MonitorDetailMetric[]) {
   return metrics.flatMap(metric => {
     if (metric.visible === false) return [];
-    return (metric.fields ?? []).flatMap(field => field.type === 0 && field.field ? [{
+    return (metric.fields ?? []).flatMap(field => field.type === 0 && field.label !== true && field.field ? [{
       key: `${metric.name}.${field.field}`,
       group: metric.name,
       field: field.field,
@@ -53,23 +98,21 @@ export function monitorMetricOptions(metrics: MonitorDetailMetric[]) {
   });
 }
 
-type MetricValue = { origin?: string; mean?: string; median?: string; min?: string; max?: string; time?: number };
-
-function displayMetricValue(value: MetricValue) {
+function displayMetricValue(value: MonitorMetricValue) {
   return value.origin ?? value.mean ?? value.median ?? value.max ?? value.min ?? '—';
 }
 
-export function monitorRealtimeRows(data: { valueRows?: Array<{ labels?: Record<string, string>; values?: MetricValue[] }> }) {
-  return (data.valueRows ?? []).flatMap((row, rowIndex) => (row.values ?? []).map((value, valueIndex) => ({
-    key: `${rowIndex}:${valueIndex}`,
-    labels: row.labels ?? {},
-    value: displayMetricValue(value),
-    time: value.time
-  })));
+export function monitorRealtimeRows(data: MonitorRealtimeMetric, metric: MonitorMetricOption) {
+  const fieldIndex = data.fields.findIndex(field => field.name === metric.field && !field.label);
+  if (fieldIndex < 0) return [];
+  return data.valueRows.flatMap((row, rowIndex) => {
+    const value = row.values[fieldIndex];
+    return value ? [{ key: String(rowIndex), labels: row.labels, value: displayMetricValue(value), time: value.time }] : [];
+  });
 }
 
-export function monitorHistoryRows(data: { values?: Record<string, MetricValue[]> }) {
-  return Object.entries(data.values ?? {}).flatMap(([series, values]) => values.map((value, index) => ({
+export function monitorHistoryRows(data: MonitorHistoryMetric) {
+  return Object.entries(data.values).flatMap(([series, values]) => values.map((value, index) => ({
     key: `${series}:${index}`,
     series,
     value: displayMetricValue(value),

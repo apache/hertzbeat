@@ -15,44 +15,26 @@
  * limitations under the License.
  */
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Alert, App, Button, Empty, Select, Spin, Table, Tabs, Tag, Typography } from 'antd';
-import { useMemo, useState, type ReactNode } from 'react';
+import { Alert, Button, Empty, Select, Spin, Table, Tabs, Tag, Typography } from 'antd';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import {
-  loadFavoriteMetrics,
-  loadHistoryMetric,
-  loadMonitorMetricCatalog,
-  loadRealtimeMetric,
-  updateFavoriteMetric,
-  type Monitor,
-  type MonitorDetailMetric
-} from '../api/monitor-api';
-import { monitorHistoryRows, monitorMetricOptions, monitorRealtimeRows } from '../model/monitor-detail-model';
+import type {
+  MonitorMetricWorkbenchController, monitorHistoryRows, monitorRealtimeRows
+} from '../model/monitor-detail-model';
 import styles from './monitor-metric-workbench.module.css';
 
-function formatMetricTime(value?: number) {
-  return value ? new Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'medium' }).format(value) : '—';
+function formatMetricTime(value?: number | null) {
+  return value == null ? '—'
+    : new Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'medium' }).format(value);
 }
 
-function MetricState({ failed, pending, empty, children }: { failed: boolean; pending: boolean; empty: boolean; children: ReactNode }) {
+function MetricState({ kind, children }: { kind: 'loading' | 'empty' | 'unavailable' | 'error' | 'ready'; children: ReactNode }) {
   const { t } = useTranslation();
-  if (failed) return <Alert type="error" showIcon message={t('common.unavailable')} />;
-  if (!pending && empty) return <Empty description={t('monitorMetrics.empty')} />;
+  if (kind === 'unavailable') return <Alert type="warning" showIcon message={t('common.unavailable')} />;
+  if (kind === 'error') return <Alert type="error" showIcon message={t('common.routeError.description')} />;
+  if (kind === 'empty') return <Empty description={t('monitorMetrics.empty')} />;
   return children;
-}
-
-function resolveMetricOptions(catalogMetrics: MonitorDetailMetric[] | undefined, detailMetrics: MonitorDetailMetric[]) {
-  return monitorMetricOptions(catalogMetrics ?? detailMetrics);
-}
-
-function resolveMetricKey(selected: string, options: ReturnType<typeof monitorMetricOptions>) {
-  return selected || options[0]?.key || '';
-}
-
-function isFavoriteMetric(favorites: string[] | undefined, metricKey: string) {
-  return favorites?.includes(metricKey) ?? false;
 }
 
 function RealtimeTable({ rows, pending }: { rows: ReturnType<typeof monitorRealtimeRows>; pending: boolean }) {
@@ -81,49 +63,17 @@ function HistoryTable({ rows, pending }: { rows: ReturnType<typeof monitorHistor
   return <Table rowKey="key" size="small" loading={pending} dataSource={rows} columns={columns} pagination={{ pageSize: 20 }} />;
 }
 
-export function MonitorMetricWorkbench({ monitor, metrics }: { monitor: Monitor; metrics: MonitorDetailMetric[] }) {
+export function MonitorMetricWorkbench({ state, actions }: MonitorMetricWorkbenchController) {
   const { t } = useTranslation();
-  const { message } = App.useApp();
-  const queryClient = useQueryClient();
-  const catalog = useQuery({
-    queryKey: ['monitor-metric-catalog', monitor.id, monitor.app],
-    queryFn: () => loadMonitorMetricCatalog(monitor)
-  });
-  const options = useMemo(() => resolveMetricOptions(catalog.data?.metrics, metrics), [catalog.data?.metrics, metrics]);
-  const [metricKey, setMetricKey] = useState('');
-  const [history, setHistory] = useState('30m');
-  const activeMetricKey = resolveMetricKey(metricKey, options);
-  const metric = options.find(item => item.key === activeMetricKey);
-  const favorites = useQuery({
-    queryKey: ['monitor-favorites', monitor.id],
-    queryFn: () => loadFavoriteMetrics(monitor.id)
-  });
-  const realtime = useQuery({
-    queryKey: ['monitor-realtime', monitor.id, activeMetricKey],
-    queryFn: () => loadRealtimeMetric(monitor.id, activeMetricKey),
-    enabled: Boolean(activeMetricKey),
-    refetchInterval: 10_000
-  });
-  const historical = useQuery({
-    queryKey: ['monitor-history', monitor.id, activeMetricKey, history],
-    queryFn: () => loadHistoryMetric(monitor, metric!, history),
-    enabled: Boolean(metric)
-  });
-  const favorite = isFavoriteMetric(favorites.data, activeMetricKey);
-  const favoriteMutation = useMutation({
-    mutationFn: () => updateFavoriteMetric(monitor.id, activeMetricKey, !favorite),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['monitor-favorites', monitor.id] });
-      void message.success(t('monitorMetrics.favoriteSaved'));
-    },
-    onError: () => void message.error(t('monitorMetrics.favoriteFailed'))
-  });
-  const realtimeRows = monitorRealtimeRows(realtime.data ?? {});
-  const historyRows = monitorHistoryRows(historical.data ?? {});
+  const options = state.catalog.options;
 
-  if (catalog.isPending) return <div className={styles.workbench}><Spin /></div>;
-  if (catalog.isError && options.length === 0) return <div className={styles.workbench}><Alert type="error" showIcon message={t('common.unavailable')} /></div>;
-  if (options.length === 0) return <div className={styles.workbench}><Empty description={t('monitorMetrics.noCatalog')} /></div>;
+  if (state.catalog.kind === 'loading') return <div className={styles.workbench}><Spin /></div>;
+  if (state.catalog.kind === 'unavailable') return <div className={styles.workbench}><Alert type="warning" showIcon message={t('common.unavailable')} /></div>;
+  if (state.catalog.kind === 'error') return <div className={styles.workbench}><Alert type="error" showIcon message={t('common.routeError.description')} /></div>;
+  if (state.catalog.kind === 'fallback') return <section className={styles.workbench}>
+    <Alert type="warning" showIcon message={t('common.unavailable')} description={state.catalog.references.join(', ')} />
+  </section>;
+  if (state.catalog.kind === 'empty') return <div className={styles.workbench}><Empty description={t('monitorMetrics.noCatalog')} /></div>;
   return <section className={styles.workbench}>
     <header className={styles.heading}>
       <Typography.Title level={4}>{t('monitorMetrics.title')}</Typography.Title>
@@ -133,31 +83,34 @@ export function MonitorMetricWorkbench({ monitor, metrics }: { monitor: Monitor;
       <Select
         showSearch
         optionFilterProp="label"
-        value={activeMetricKey}
-        onChange={setMetricKey}
+        value={state.metricKey}
+        onChange={actions.setMetric}
         options={options.map(item => ({ value: item.key, label: item.unit ? `${item.key} (${item.unit})` : item.key }))}
       />
-      <Select value={history} onChange={setHistory} options={['30m', '1h', '6h', '24h'].map(value => ({ value, label: value }))} />
-      <Button loading={favoriteMutation.isPending} onClick={() => favoriteMutation.mutate()}>
-        {t(favorite ? 'monitorMetrics.unfavorite' : 'monitorMetrics.favorite')}
+      <Select value={state.history} onChange={actions.setHistory} options={['30m', '1h', '6h', '24h'].map(value => ({ value, label: value }))} />
+      <Button disabled={state.favorite.kind !== 'ready'} loading={state.favoriteBusy}
+        onClick={() => { void actions.toggleFavorite().catch(() => undefined); }}>
+        {t(state.favorite.kind === 'ready' && state.favorite.value ? 'monitorMetrics.unfavorite' : 'monitorMetrics.favorite')}
       </Button>
-      <Button onClick={() => { void realtime.refetch(); void historical.refetch(); }}>
+      <Button onClick={actions.refresh}>
         {t('common.refresh')}
       </Button>
     </div>
+    {state.favorite.kind === 'unavailable' && <Alert type="warning" showIcon message={t('common.unavailable')} />}
+    {state.favorite.kind === 'error' && <Alert type="error" showIcon message={t('common.routeError.description')} />}
     <Tabs items={[
       {
         key: 'realtime',
         label: t('monitorMetrics.realtime'),
-        children: <MetricState failed={realtime.isError} pending={realtime.isPending} empty={realtimeRows.length === 0}>
-          <RealtimeTable rows={realtimeRows} pending={realtime.isPending} />
+        children: <MetricState kind={state.realtime.kind}>
+          <RealtimeTable rows={state.realtime.rows} pending={state.realtime.kind === 'loading'} />
         </MetricState>
       },
       {
         key: 'history',
         label: t('monitorMetrics.history'),
-        children: <MetricState failed={historical.isError} pending={historical.isPending} empty={historyRows.length === 0}>
-          <HistoryTable rows={historyRows} pending={historical.isPending} />
+        children: <MetricState kind={state.historical.kind}>
+          <HistoryTable rows={state.historical.rows} pending={state.historical.kind === 'loading'} />
         </MetricState>
       }
     ]} />
