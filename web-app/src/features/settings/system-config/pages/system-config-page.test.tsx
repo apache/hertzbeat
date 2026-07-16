@@ -30,7 +30,7 @@ const { loadSystemConfig, loadTimezones, saveSystemConfig } = vi.hoisted(() => (
   saveSystemConfig: vi.fn()
 }));
 
-vi.mock('./system-config-api', () => ({ loadSystemConfig, loadTimezones, saveSystemConfig }));
+vi.mock('../api/system-config-api', () => ({ loadSystemConfig, loadTimezones, saveSystemConfig }));
 
 import { SystemConfigPage } from './system-config-page';
 

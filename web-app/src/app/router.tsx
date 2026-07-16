@@ -218,7 +218,7 @@ export const appRoutes: RouteObject[] = [
                 id: 'system-settings',
                 path: settingsPaths.system,
                 lazy: async () => {
-                  const { SystemConfigPage } = await import('@/features/settings/system-config-page');
+                  const { SystemConfigPage } = await import('@/features/settings/system-config');
                   return { Component: SystemConfigPage };
                 }
               },

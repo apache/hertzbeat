@@ -15,13 +15,19 @@
  * limitations under the License.
  */
 
-.page { display: grid; min-width: 0; gap: 20px; }
-.heading { display: grid; gap: 4px; }
-.heading :global(.ant-typography) { margin: 0; }
-.form { display: grid; max-width: 820px; border-block: 1px solid var(--ant-color-border-secondary); }
-.field { display: grid; grid-template-columns: 190px minmax(0, 1fr); align-items: start; gap: 24px; padding: 18px 4px; }
-.field + .field { border-top: 1px solid var(--ant-color-border-secondary); }
-.label { padding-top: 6px; font-weight: 600; }
-.control { display: grid; gap: 6px; min-width: 0; }
-.actions { display: flex; align-items: center; gap: 10px; padding-top: 2px; }
-@media (max-width: 700px) { .field { grid-template-columns: 1fr; gap: 8px; } .label { padding-top: 0; } }
+import { apiMessageGet, apiMessagePost } from '@/core/http/api-message';
+
+export type SystemConfigValue = { locale: string; timeZoneId: string; theme: string };
+export type TimezoneOption = { zoneId: string; offset: string; displayName: string };
+
+export function loadSystemConfig() {
+  return apiMessageGet<SystemConfigValue | null>('/api/config/system');
+}
+
+export function loadTimezones() {
+  return apiMessageGet<TimezoneOption[]>('/api/config/timezones');
+}
+
+export function saveSystemConfig(config: SystemConfigValue) {
+  return apiMessagePost<string>('/api/config/system', config);
+}

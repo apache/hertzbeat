@@ -15,18 +15,6 @@
  * limitations under the License.
  */
 
-import { apiMessageGet, apiMessagePost } from '@/core/http/api-message';
-
-import type { SystemConfigDraft, TimezoneOption } from './system-config-model';
-
-export function loadSystemConfig() {
-  return apiMessageGet<SystemConfigDraft | null>('/api/config/system');
-}
-
-export function loadTimezones() {
-  return apiMessageGet<TimezoneOption[]>('/api/config/timezones');
-}
-
-export function saveSystemConfig(config: SystemConfigDraft) {
-  return apiMessagePost<string>('/api/config/system', config);
-}
+.page { display: grid; min-width: 0; gap: 20px; }
+.heading { display: grid; gap: 4px; }
+.heading :global(.ant-typography) { margin: 0; }

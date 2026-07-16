@@ -16,27 +16,30 @@
  */
 
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Alert, App, Button, Select, Skeleton, Typography } from "antd";
-import { useState, type ReactNode } from "react";
+import { Alert, App, Button, Skeleton, Typography } from "antd";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { resolveLocale } from "@/core/i18n/i18n";
 import { persistSystemPreferences, readRuntimeTheme } from "@/core/runtime-preferences";
-
-import styles from "./system-config-page.module.css";
 import { SettingsNav } from '@/shared/settings/settings-nav';
-import { loadSystemConfig, loadTimezones, saveSystemConfig } from "./system-config-api";
+
+import { SystemConfigEditor } from "../components/system-config-editor";
+import styles from "./system-config-page.module.css";
+import {
+  loadSystemConfig,
+  loadTimezones,
+  saveSystemConfig,
+  type SystemConfigValue,
+  type TimezoneOption,
+} from "../api/system-config-api";
 import {
   createSystemConfigDraft,
   isSystemConfigDirty,
-  systemLocales,
-  systemThemes,
   validateSystemConfigDraft,
   type SystemConfigDraft,
-  type SystemLocale,
   type SystemTheme,
-  type TimezoneOption,
-} from "./system-config-model";
+} from "../model/system-config-model";
 
 function runtimeDefaults(language?: string) {
   return {
@@ -61,96 +64,8 @@ function hasSystemConfigChanges(draft: SystemConfigDraft | null, baseline: Syste
   return draft ? isSystemConfigDirty(draft, baseline) : false;
 }
 
-function withRuntimeTheme(config: SystemConfigDraft | null | undefined, theme: SystemTheme) {
+function withRuntimeTheme(config: SystemConfigValue | null | undefined, theme: SystemTheme) {
   return config ? { ...config, theme } : null;
-}
-
-type SystemConfigEditorProps = {
-  current: SystemConfigDraft;
-  timezoneOptions: Array<{ value: string; label: string }>;
-  timezonesPending: boolean;
-  timezonesFailed: boolean;
-  dirty: boolean;
-  valid: boolean;
-  saving: boolean;
-  onTimezoneRetry: () => void;
-  onUpdate: <K extends keyof SystemConfigDraft>(field: K, value: SystemConfigDraft[K]) => void;
-  onSave: () => void;
-  onDiscard: () => void;
-};
-
-function SystemConfigEditor(props: SystemConfigEditorProps) {
-  const { t } = useTranslation();
-  const { current } = props;
-  return (
-    <>
-      {props.timezonesFailed && (
-        <Alert
-          type="warning"
-          showIcon
-          title={t("systemConfig.timezonesUnavailable")}
-          action={
-            <Button size="small" onClick={props.onTimezoneRetry}>
-              {t("common.retry")}
-            </Button>
-          }
-        />
-      )}
-      <div className={styles.form}>
-        <SystemConfigField label={t("systemConfig.locale.label")} help={t("systemConfig.locale.help")}>
-          <Select<SystemLocale>
-            value={current.locale || null}
-            options={systemLocales.map((locale) => ({
-              value: locale,
-              label: t(`systemConfig.locale.${locale}`),
-            }))}
-            onChange={(value) => props.onUpdate("locale", value)}
-          />
-        </SystemConfigField>
-        <SystemConfigField label={t("systemConfig.timezone.label")} help={t("systemConfig.timezone.help")}>
-          <Select<string>
-            value={current.timeZoneId || null}
-            showSearch
-            optionFilterProp="label"
-            loading={props.timezonesPending}
-            options={props.timezoneOptions}
-            onChange={(value) => props.onUpdate("timeZoneId", value)}
-          />
-        </SystemConfigField>
-        <SystemConfigField label={t("systemConfig.theme.label")} help={t("systemConfig.theme.help")}>
-          <Select<SystemTheme>
-            value={current.theme || null}
-            options={systemThemes.map((theme) => ({
-              value: theme,
-              label: t(`systemConfig.theme.${theme}`),
-            }))}
-            onChange={(value) => props.onUpdate("theme", value)}
-          />
-        </SystemConfigField>
-      </div>
-      <div className={styles.actions}>
-        <Button type="primary" loading={props.saving} disabled={!props.dirty || !props.valid} onClick={props.onSave}>
-          {t("common.save")}
-        </Button>
-        <Button disabled={!props.dirty || props.saving} onClick={props.onDiscard}>
-          {t("systemConfig.discard")}
-        </Button>
-        {!props.dirty && <Typography.Text type="secondary">{t("systemConfig.noChanges")}</Typography.Text>}
-      </div>
-    </>
-  );
-}
-
-function SystemConfigField({ label, help, children }: { label: string; help: string; children: ReactNode }) {
-  return (
-    <label className={styles.field}>
-      <span className={styles.label}>{label}</span>
-      <span className={styles.control}>
-        {children}
-        <Typography.Text type="secondary">{help}</Typography.Text>
-      </span>
-    </label>
-  );
 }
 
 export function SystemConfigPage() {

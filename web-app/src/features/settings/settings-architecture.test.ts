@@ -19,7 +19,8 @@ import { describe, expect, it } from 'vitest';
 
 const layeredDomains = [
   { directory: 'message-server', page: 'MessageServerPage' },
-  { directory: 'token', page: 'TokenPage' }
+  { directory: 'token', page: 'TokenPage' },
+  { directory: 'system-config', page: 'SystemConfigPage' }
 ] as const;
 const requiredDirectories = ['api', 'model', 'components', 'pages'] as const;
 const layerDirectories = [...requiredDirectories, 'hooks'] as const;

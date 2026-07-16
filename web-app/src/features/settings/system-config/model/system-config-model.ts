@@ -23,7 +23,6 @@ export const systemThemes = ['default', 'dark', 'compact'] as const;
 export type SystemLocale = (typeof systemLocales)[number];
 export type SystemTheme = (typeof systemThemes)[number];
 export type SystemConfigDraft = { locale: SystemLocale | ''; timeZoneId: string; theme: SystemTheme | '' };
-export type TimezoneOption = { zoneId: string; offset: string; displayName: string };
 
 const runtimeToSystemLocale: Record<SupportedLocale, SystemLocale> = {
   'en-US': 'en_US',
