@@ -47,6 +47,7 @@ describe('route registry', () => {
         '/settings/notifications/channels',
         '/settings/tokens',
         '/settings/system',
+        '/settings/labels',
         '/bulletin',
         '/status',
         '/passport/login'

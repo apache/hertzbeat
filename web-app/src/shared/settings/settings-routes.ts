@@ -12,6 +12,7 @@ export const settingsPaths = {
   channels: '/settings/notifications/channels',
   tokens: '/settings/tokens',
   system: '/settings/system',
+  labels: '/settings/labels',
 } as const;
 
 export const legacySettingsPaths = {
@@ -20,4 +21,5 @@ export const legacySettingsPaths = {
   templates: '/alerts/notifications/templates',
   channels: '/setting/settings/server',
   system: '/setting/settings/config',
+  labels: '/setting/labels',
 } as const;

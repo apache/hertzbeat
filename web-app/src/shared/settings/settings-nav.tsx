@@ -17,6 +17,7 @@ const settingsRoutes = [
   { value: settingsPaths.channels, labelKey: 'settingsNavigation.channels' },
   { value: settingsPaths.tokens, labelKey: 'settingsNavigation.tokens' },
   { value: settingsPaths.system, labelKey: 'settingsNavigation.system' },
+  { value: settingsPaths.labels, labelKey: 'settingsNavigation.labels' },
 ] as const;
 
 function activeSettingsRoute(pathname: string) {

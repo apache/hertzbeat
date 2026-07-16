@@ -223,6 +223,14 @@ export const appRoutes: RouteObject[] = [
                 }
               },
               {
+                id: 'labels',
+                path: settingsPaths.labels,
+                lazy: async () => {
+                  const { LabelPage } = await import('@/features/settings/label-page');
+                  return { Component: LabelPage };
+                }
+              },
+              {
                 id: 'settings',
                 path: settingsPaths.root,
                 element: <Navigate replace to={settingsPaths.receivers} />
@@ -251,6 +259,11 @@ export const appRoutes: RouteObject[] = [
                 id: 'legacy-system-settings',
                 path: legacySettingsPaths.system,
                 element: <LegacySettingsRedirect to={settingsPaths.system} />
+              },
+              {
+                id: 'legacy-labels',
+                path: legacySettingsPaths.labels,
+                element: <LegacySettingsRedirect to={settingsPaths.labels} />
               },
               {
                 id: 'bulletin',
