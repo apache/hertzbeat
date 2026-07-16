@@ -17,12 +17,36 @@
 
 import type { SupportedLocale } from '@/core/i18n/i18n';
 
+import type { SystemConfigValue, TimezoneOption } from '../api/system-config-api';
+
 export const systemLocales = ['en_US', 'zh_CN', 'zh_TW', 'ja_JP', 'pt_BR'] as const;
 export const systemThemes = ['default', 'dark', 'compact'] as const;
 
 export type SystemLocale = (typeof systemLocales)[number];
 export type SystemTheme = (typeof systemThemes)[number];
 export type SystemConfigDraft = { locale: SystemLocale | ''; timeZoneId: string; theme: SystemTheme | '' };
+
+export const systemConfigResourceId = 'current' as const;
+export const systemTimezonesResourceId = 'timezones' as const;
+
+export type SystemConfigResourceRecord = {
+  id: typeof systemConfigResourceId;
+  locale: SystemLocale;
+  timeZoneId: string;
+  theme: SystemTheme;
+};
+
+export type SystemTimezoneResourceRecord = {
+  id: typeof systemTimezonesResourceId;
+  items: TimezoneOption[];
+};
+
+export class SystemConfigResourceContractError extends Error {
+  constructor() {
+    super('System Config resource response is invalid');
+    this.name = 'SystemConfigResourceContractError';
+  }
+}
 
 const runtimeToSystemLocale: Record<SupportedLocale, SystemLocale> = {
   'en-US': 'en_US',
@@ -46,6 +70,43 @@ export function createSystemConfigDraft(
     timeZoneId: config?.timeZoneId?.trim() || defaults.timeZoneId,
     theme: systemThemes.includes(config?.theme as SystemTheme) ? config?.theme as SystemTheme : defaults.theme
   };
+}
+
+export function createSystemConfigResourceRecord(
+  config: SystemConfigValue | null | undefined
+): SystemConfigResourceRecord {
+  if (!config || !systemLocales.includes(config.locale as SystemLocale)) {
+    throw new SystemConfigResourceContractError();
+  }
+  if (!systemThemes.includes(config.theme as SystemTheme) || !config.timeZoneId?.trim()) {
+    throw new SystemConfigResourceContractError();
+  }
+  return {
+    id: systemConfigResourceId,
+    locale: config.locale as SystemLocale,
+    timeZoneId: config.timeZoneId.trim(),
+    theme: config.theme as SystemTheme
+  };
+}
+
+export function createSystemTimezoneResourceRecord(
+  timezones: TimezoneOption[]
+): SystemTimezoneResourceRecord {
+  if (!Array.isArray(timezones) || !timezones.every(isTimezoneOption)) {
+    throw new SystemConfigResourceContractError();
+  }
+  return {
+    id: systemTimezonesResourceId,
+    items: timezones.map(timezone => ({ ...timezone }))
+  };
+}
+
+function isTimezoneOption(value: unknown): value is TimezoneOption {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const item = value as Partial<TimezoneOption>;
+  return typeof item.zoneId === 'string' && Boolean(item.zoneId.trim())
+    && typeof item.offset === 'string' && Boolean(item.offset.trim())
+    && typeof item.displayName === 'string' && Boolean(item.displayName.trim());
 }
 
 export function validateSystemConfigDraft(config: SystemConfigDraft) {

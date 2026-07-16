@@ -25,6 +25,7 @@ import { SessionProvider } from '@/core/auth/session-provider';
 
 import { labelDataProvider } from './resources/label-data-provider';
 import { objectStoreDataProvider } from './resources/object-store-data-provider';
+import { systemConfigDataProvider } from './resources/system-config-data-provider';
 
 const appQueryClient = new QueryClient({
   defaultOptions: {
@@ -42,7 +43,8 @@ const appQueryClient = new QueryClient({
 const dataProviders = {
   default: labelDataProvider,
   labels: labelDataProvider,
-  'object-store': objectStoreDataProvider
+  'object-store': objectStoreDataProvider,
+  'system-config': systemConfigDataProvider
 };
 
 const resources = [
@@ -55,6 +57,11 @@ const resources = [
     name: 'object-store',
     list: '/settings/storage/object-store',
     meta: { dataProviderName: 'object-store' }
+  },
+  {
+    name: 'system-config',
+    list: '/settings/system',
+    meta: { dataProviderName: 'system-config' }
   }
 ];
 

@@ -93,6 +93,15 @@ describe('Settings domain boundaries', () => {
       source.includes('../api/') || source.includes('@tanstack/react-query') ? [path] : []
     ))).toEqual([]);
   });
+
+  it('keeps System Config pages behind its model and controller boundaries', () => {
+    const pageSources = Object.entries(productionSources)
+      .filter(([path]) => /^\.\/system-config\/pages\//.test(path) && !path.includes('.test.'));
+
+    expect(pageSources.flatMap(([path, source]) => (
+      source.includes('../api/') || source.includes('@tanstack/react-query') ? [path] : []
+    ))).toEqual([]);
+  });
 });
 
 function validateImports(path: string, source: string, root: string) {

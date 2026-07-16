@@ -15,22 +15,25 @@
  * limitations under the License.
  */
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { App } from 'antd';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
-const { loadSystemConfig, loadTimezones, saveSystemConfig } = vi.hoisted(() => ({
-  loadSystemConfig: vi.fn(),
-  loadTimezones: vi.fn(),
-  saveSystemConfig: vi.fn()
+const controller = vi.hoisted(() => ({
+  discard: vi.fn(),
+  retry: vi.fn(),
+  retryTimezones: vi.fn(),
+  save: vi.fn(),
+  update: vi.fn(),
+  useSystemConfigResourceController: vi.fn()
 }));
-
-vi.mock('../api/system-config-api', () => ({ loadSystemConfig, loadTimezones, saveSystemConfig }));
+vi.mock('../controller/system-config-resource-controller', () => ({
+  useSystemConfigResourceController: controller.useSystemConfigResourceController
+}));
 
 import { SystemConfigPage } from './system-config-page';
 
@@ -42,42 +45,66 @@ describe('SystemConfigPage', () => {
   });
 
   beforeEach(() => {
-    loadSystemConfig.mockResolvedValue({ locale: 'en_US', timeZoneId: 'UTC', theme: 'default' });
-    loadTimezones.mockResolvedValue([{ zoneId: 'UTC', offset: 'UTC+00:00', displayName: 'Coordinated Universal Time' }]);
-    saveSystemConfig.mockResolvedValue('success');
-  });
-
-  afterEach(() => {
-    cleanup();
     vi.clearAllMocks();
+    controller.useSystemConfigResourceController.mockReturnValue(buildController());
   });
+  afterEach(cleanup);
 
-  it('shows the persisted language, timezone, and theme without creating a dirty form', async () => {
-    renderSystemConfigPage();
-    expect(await screen.findByText('UTC (UTC+00:00) Coordinated Universal Time')).toBeInTheDocument();
+  it('renders the ready controller state without owning server queries', async () => {
+    renderPage();
+    expect(await screen.findByText('UTC (UTC+00:00) UTC')).toBeInTheDocument();
     expect(screen.getByText('English')).toBeInTheDocument();
     expect(screen.getByText('Dark')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Discard changes' })).toBeDisabled();
   });
 
-  it('keeps configuration failure distinct from an empty form', async () => {
-    loadSystemConfig.mockRejectedValue(new Error('unavailable'));
-    renderSystemConfigPage();
-    expect(await screen.findByText('System settings are unavailable.')).toBeInTheDocument();
-    expect(screen.queryByText('No unsaved changes.')).not.toBeInTheDocument();
+  it.each([
+    ['unavailable', 'System settings are unavailable.'],
+    ['error', 'This page could not be loaded. Retry or return to it later.']
+  ])('renders %s distinctly and delegates retry', async (kind, message) => {
+    controller.useSystemConfigResourceController.mockReturnValue(buildController({ kind }));
+    renderPage();
+    expect(await screen.findByText(message)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(controller.retry).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps auxiliary timezone failure inside the ready editor', async () => {
+    controller.useSystemConfigResourceController.mockReturnValue(buildController({ timezonesFailed: true }));
+    renderPage();
+    expect(await screen.findByText('The time zone catalog is unavailable. The current value is still preserved.'))
+      .toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(controller.retryTimezones).toHaveBeenCalledTimes(1);
   });
 });
 
-function renderSystemConfigPage() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+function buildController(state: Record<string, unknown> = {}) {
+  return {
+    discard: controller.discard,
+    retry: controller.retry,
+    retryTimezones: controller.retryTimezones,
+    save: controller.save,
+    state: {
+      kind: 'ready',
+      current: { locale: 'en_US', timeZoneId: 'UTC', theme: 'dark' },
+      dirty: false,
+      saving: false,
+      timezoneOptions: [{ value: 'UTC', label: 'UTC (UTC+00:00) UTC' }],
+      timezonesFailed: false,
+      timezonesPending: false,
+      valid: true,
+      ...state
+    },
+    update: controller.update
+  };
+}
+
+function renderPage() {
   return render(
     <I18nextProvider i18n={i18n}>
-      <QueryClientProvider client={client}>
-        <MemoryRouter initialEntries={['/settings/system']}>
-          <App><SystemConfigPage /></App>
-        </MemoryRouter>
-      </QueryClientProvider>
+      <MemoryRouter initialEntries={['/settings/system']}>
+        <App><SystemConfigPage /></App>
+      </MemoryRouter>
     </I18nextProvider>
   );
 }

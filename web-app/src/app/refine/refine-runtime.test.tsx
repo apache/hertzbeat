@@ -37,6 +37,7 @@ import { AppProviders } from '../providers';
 import { appRoutes } from '../router';
 import { labelDataProvider } from './resources/label-data-provider';
 import { objectStoreDataProvider } from './resources/object-store-data-provider';
+import { systemConfigDataProvider } from './resources/system-config-data-provider';
 
 const { authenticatedSession } = vi.hoisted(() => ({
   authenticatedSession: {
@@ -74,6 +75,9 @@ describe('production Refine runtime', () => {
     expect(screen.getByTestId('object-store-resource'))
       .toHaveTextContent('object-store|/settings/storage/object-store|object-store');
     expect(screen.getByTestId('object-store-provider')).toHaveTextContent('shared');
+    expect(screen.getByTestId('system-config-resource'))
+      .toHaveTextContent('system-config|/settings/system|system-config');
+    expect(screen.getByTestId('system-config-provider')).toHaveTextContent('shared');
     fireEvent.click(screen.getByRole('button', { name: 'Open runtime notification' }));
     expect(await screen.findByText('Runtime notification ready')).toBeInTheDocument();
     const mountedClients = mountSpy.mock.instances;
@@ -98,6 +102,7 @@ function RuntimeProbe({ onClient }: { onClient: (client: QueryClient) => void })
   }, [onClient, queryClient]);
   const labelResource = resources.find(resource => resource.name === 'labels');
   const objectStoreResource = resources.find(resource => resource.name === 'object-store');
+  const systemConfigResource = resources.find(resource => resource.name === 'system-config');
   const labelProvider = resolveProviderState(dataProvider, 'labels', labelDataProvider, true);
   const objectStoreProvider = resolveProviderState(
     dataProvider,
@@ -107,6 +112,13 @@ function RuntimeProbe({ onClient }: { onClient: (client: QueryClient) => void })
   );
   const labelResourceText = formatResource(labelResource);
   const objectStoreResourceText = formatResource(objectStoreResource);
+  const systemConfigProvider = resolveProviderState(
+    dataProvider,
+    'system-config',
+    systemConfigDataProvider,
+    false
+  );
+  const systemConfigResourceText = formatResource(systemConfigResource);
 
   return (
     <>
@@ -118,6 +130,8 @@ function RuntimeProbe({ onClient }: { onClient: (client: QueryClient) => void })
       <output data-testid="label-provider">{labelProvider}</output>
       <output data-testid="object-store-resource">{objectStoreResourceText}</output>
       <output data-testid="object-store-provider">{objectStoreProvider}</output>
+      <output data-testid="system-config-resource">{systemConfigResourceText}</output>
+      <output data-testid="system-config-provider">{systemConfigProvider}</output>
       <button
         type="button"
         onClick={() => notification.open?.({ message: 'Runtime notification ready', type: 'success' })}

@@ -17,7 +17,16 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { createSystemConfigDraft, isSystemConfigDirty, localeToRuntime, validateSystemConfigDraft } from './system-config-model';
+import {
+  createSystemConfigDraft,
+  createSystemConfigResourceRecord,
+  createSystemTimezoneResourceRecord,
+  isSystemConfigDirty,
+  localeToRuntime,
+  systemConfigResourceId,
+  systemTimezonesResourceId,
+  validateSystemConfigDraft
+} from './system-config-model';
 
 describe('system configuration model', () => {
   it('normalizes unsupported backend values to explicit runtime defaults', () => {
@@ -37,5 +46,32 @@ describe('system configuration model', () => {
     const baseline = { locale: 'en_US' as const, timeZoneId: 'UTC', theme: 'dark' as const };
     expect(isSystemConfigDirty({ ...baseline }, baseline)).toBe(false);
     expect(isSystemConfigDirty({ ...baseline, timeZoneId: 'Asia/Shanghai' }, baseline)).toBe(true);
+  });
+
+  it('owns strict singleton and timezone resource identities', () => {
+    expect(systemConfigResourceId).toBe('current');
+    expect(createSystemConfigResourceRecord({ locale: 'en_US', timeZoneId: 'UTC', theme: 'dark' }))
+      .toEqual({ id: 'current', locale: 'en_US', timeZoneId: 'UTC', theme: 'dark' });
+    expect(systemTimezonesResourceId).toBe('timezones');
+    expect(createSystemTimezoneResourceRecord([
+      { zoneId: 'UTC', offset: 'UTC+00:00', displayName: 'UTC' }
+    ])).toEqual({
+      id: 'timezones',
+      items: [{ zoneId: 'UTC', offset: 'UTC+00:00', displayName: 'UTC' }]
+    });
+  });
+
+  it('rejects null or malformed authoritative records instead of applying runtime defaults', () => {
+    const malformed = [
+      null,
+      { locale: 'other', timeZoneId: 'UTC', theme: 'dark' },
+      { locale: 'en_US', timeZoneId: '', theme: 'dark' },
+      { locale: 'en_US', timeZoneId: 'UTC', theme: 'other' }
+    ];
+    for (const value of malformed) {
+      expect(() => createSystemConfigResourceRecord(value as never)).toThrow();
+    }
+    expect(() => createSystemTimezoneResourceRecord([{ zoneId: '', offset: 'private', displayName: 'private' }]))
+      .toThrow();
   });
 });
