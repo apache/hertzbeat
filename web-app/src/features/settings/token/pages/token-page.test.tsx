@@ -15,24 +15,43 @@
  * limitations under the License.
  */
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { App } from 'antd';
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
-const { generateToken, loadTokens, revokeToken } = vi.hoisted(() => ({
-  generateToken: vi.fn(),
-  loadTokens: vi.fn(),
-  revokeToken: vi.fn()
+const controller = vi.hoisted(() => ({
+  closeGeneratedToken: vi.fn(),
+  closeGenerator: vi.fn(),
+  copyGeneratedToken: vi.fn(),
+  generate: vi.fn(),
+  openGenerator: vi.fn(),
+  retry: vi.fn(),
+  revoke: vi.fn(),
+  updateDraft: vi.fn(),
+  useTokenResourceController: vi.fn()
 }));
 
-vi.mock('../api/token-api', () => ({ generateToken, loadTokens, revokeToken }));
+vi.mock('../controller/token-resource-controller', () => ({
+  useTokenResourceController: controller.useTokenResourceController
+}));
 
 import { TokenPage } from './token-page';
+
+const record = {
+  id: 7,
+  name: 'Collector',
+  tokenMask: 'eyJh****once',
+  tokenScope: 'otlp-ingest' as const,
+  workspaceId: 'default',
+  creator: 'admin',
+  gmtCreate: null,
+  expireTime: null,
+  lastUsedTime: null
+};
 
 describe('TokenPage', () => {
   beforeAll(async () => {
@@ -41,54 +60,110 @@ describe('TokenPage', () => {
     await loadLocale('en-US');
   });
 
-  beforeEach(() => {
-    loadTokens.mockResolvedValue([{ id: 7, name: 'Collector', tokenMask: 'hb_****_once', tokenScope: 'otlp-ingest', creator: 'admin' }]);
-    generateToken.mockResolvedValue('hb_generated_once');
-    revokeToken.mockResolvedValue(undefined);
-  });
+  beforeEach(() => controller.useTokenResourceController.mockReturnValue(buildController()));
 
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
   });
 
-  it('lists tokens and generates a scoped token that is shown once', async () => {
-    const client = renderTokenPage('/settings/tokens?scope=otlp-ingest');
+  it('renders authoritative metadata and does not relabel an unknown scope', () => {
+    controller.useTokenResourceController.mockReturnValue(buildController({
+      list: { kind: 'ready', records: [record, { ...record, id: 8, tokenMask: 'eyJh****ture', tokenScope: null }] }
+    }));
 
-    expect(await screen.findByText('hb_****_once')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Generate token' }));
-    const dialog = screen.getByRole('dialog', { name: 'Generate API token' });
-    fireEvent.change(within(dialog).getByPlaceholderText('For example, production Collector'), { target: { value: 'Production Collector' } });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Generate token' }));
+    renderTokenPage();
 
-    await waitFor(() => expect(generateToken.mock.calls[0]?.[0]).toEqual({ name: 'Production Collector', expireSeconds: -1, scope: 'otlp-ingest' }));
-    expect(await screen.findByText('hb_generated_once')).toBeInTheDocument();
-    expect(screen.getByText('Copy this token now. It will not be shown again.')).toBeInTheDocument();
-    expect(client.getMutationCache().getAll().some(mutation => mutation.state.data === 'hb_generated_once')).toBe(false);
+    expect(screen.getByText('eyJh****once')).toBeInTheDocument();
+    expect(screen.getByText('OTLP ingestion')).toBeInTheDocument();
+    const futureRow = screen.getByText('eyJh****ture').closest('tr');
+    expect(futureRow).not.toBeNull();
+    expect(within(futureRow as HTMLElement).getAllByText('—').length).toBeGreaterThan(0);
   });
 
-  it('requires confirmation before revoking a token', async () => {
-    renderTokenPage('/settings/tokens');
-    await screen.findByText('hb_****_once');
+  it.each([
+    ['unavailable', 'Token data is unavailable.'],
+    ['error', 'This page could not be loaded. Retry or return to it later.']
+  ] as const)('keeps the %s list state distinct and retryable', (kind, message) => {
+    controller.useTokenResourceController.mockReturnValue(buildController({ list: { kind } }));
+
+    renderTokenPage();
+
+    expect(screen.getByText(message)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(controller.retry).toHaveBeenCalledTimes(1);
+  });
+
+  it('delegates draft, one-time copy, and close actions to the controller', () => {
+    controller.useTokenResourceController.mockReturnValue(buildController({
+      draft: { name: 'Collector', expireSeconds: -1, scope: 'otlp-ingest' },
+      generatedToken: 'hb_generated_once'
+    }));
+
+    renderTokenPage();
+    const nameInputs = screen.getAllByPlaceholderText('For example, production Collector');
+    const nameInput = nameInputs.at(-1);
+    if (!nameInput) throw new Error('Token name input was not rendered.');
+    const generator = nameInput.closest('[role="dialog"]');
+    if (!(generator instanceof HTMLElement)) throw new Error('Token generator dialog was not rendered.');
+    fireEvent.change(nameInput, {
+      target: { value: 'Production Collector' }
+    });
+    expect(controller.updateDraft).toHaveBeenCalledWith({
+      name: 'Production Collector', expireSeconds: -1, scope: 'otlp-ingest'
+    });
+    fireEvent.click(within(generator).getByRole('button', { name: 'Generate token' }));
+    expect(controller.generate).toHaveBeenCalledTimes(1);
+
+    const generated = screen.getByText('hb_generated_once').closest('[role="dialog"]');
+    if (!(generated instanceof HTMLElement)) throw new Error('Generated Token dialog was not rendered.');
+    expect(within(generated).getByText('hb_generated_once')).toBeInTheDocument();
+    fireEvent.click(within(generated).getByRole('button', { name: 'Copy token' }));
+    fireEvent.click(within(generated).getByRole('button', { name: 'Done' }));
+    expect(controller.copyGeneratedToken).toHaveBeenCalledTimes(1);
+    expect(controller.closeGeneratedToken).toHaveBeenCalledTimes(1);
+  });
+
+  it('requires UI confirmation before delegating revocation', () => {
+    renderTokenPage();
+
     fireEvent.click(screen.getByRole('button', { name: 'Revoke' }));
     const dialog = screen.getByRole('dialog', { name: 'Revoke this token?' });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Revoke' }));
-    await waitFor(() => expect(revokeToken.mock.calls[0]?.[0]).toBe(7));
+    expect(controller.revoke).toHaveBeenCalledWith(7);
   });
 });
 
-function renderTokenPage(initialEntry: string) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+function buildController(state: Record<string, unknown> = {}) {
+  return {
+    closeGeneratedToken: controller.closeGeneratedToken,
+    closeGenerator: controller.closeGenerator,
+    copyGeneratedToken: controller.copyGeneratedToken,
+    generate: controller.generate,
+    openGenerator: controller.openGenerator,
+    retry: controller.retry,
+    revoke: controller.revoke,
+    state: {
+      draft: null,
+      generatedToken: null,
+      generating: false,
+      list: { kind: 'ready', records: [record] },
+      refreshing: false,
+      revokingId: null,
+      ...state
+    },
+    updateDraft: controller.updateDraft
+  };
+}
+
+function renderTokenPage() {
   render(
     <I18nextProvider i18n={i18n}>
-      <QueryClientProvider client={client}>
-        <MemoryRouter initialEntries={[initialEntry]}>
-          <App><TokenPage /></App>
-        </MemoryRouter>
-      </QueryClientProvider>
+      <MemoryRouter initialEntries={['/settings/tokens?scope=otlp-ingest']}>
+        <App><TokenPage /></App>
+      </MemoryRouter>
     </I18nextProvider>
   );
-  return client;
 }
 
 class ResizeObserverStub {

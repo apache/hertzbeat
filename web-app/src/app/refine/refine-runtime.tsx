@@ -26,6 +26,7 @@ import { SessionProvider } from '@/core/auth/session-provider';
 import { labelDataProvider } from './resources/label-data-provider';
 import { objectStoreDataProvider } from './resources/object-store-data-provider';
 import { systemConfigDataProvider } from './resources/system-config-data-provider';
+import { tokenDataProvider } from './resources/token-data-provider';
 
 const appQueryClient = new QueryClient({
   defaultOptions: {
@@ -44,7 +45,8 @@ const dataProviders = {
   default: labelDataProvider,
   labels: labelDataProvider,
   'object-store': objectStoreDataProvider,
-  'system-config': systemConfigDataProvider
+  'system-config': systemConfigDataProvider,
+  tokens: tokenDataProvider
 };
 
 const resources = [
@@ -62,6 +64,11 @@ const resources = [
     name: 'system-config',
     list: '/settings/system',
     meta: { dataProviderName: 'system-config' }
+  },
+  {
+    name: 'tokens',
+    list: '/settings/tokens',
+    meta: { dataProviderName: 'tokens' }
   }
 ];
 

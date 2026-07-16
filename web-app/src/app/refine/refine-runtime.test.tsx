@@ -38,6 +38,7 @@ import { appRoutes } from '../router';
 import { labelDataProvider } from './resources/label-data-provider';
 import { objectStoreDataProvider } from './resources/object-store-data-provider';
 import { systemConfigDataProvider } from './resources/system-config-data-provider';
+import { tokenDataProvider } from './resources/token-data-provider';
 
 const { authenticatedSession } = vi.hoisted(() => ({
   authenticatedSession: {
@@ -78,6 +79,8 @@ describe('production Refine runtime', () => {
     expect(screen.getByTestId('system-config-resource'))
       .toHaveTextContent('system-config|/settings/system|system-config');
     expect(screen.getByTestId('system-config-provider')).toHaveTextContent('shared');
+    expect(screen.getByTestId('token-resource')).toHaveTextContent('tokens|/settings/tokens|tokens');
+    expect(screen.getByTestId('token-provider')).toHaveTextContent('shared');
     fireEvent.click(screen.getByRole('button', { name: 'Open runtime notification' }));
     expect(await screen.findByText('Runtime notification ready')).toBeInTheDocument();
     const mountedClients = mountSpy.mock.instances;
@@ -103,6 +106,7 @@ function RuntimeProbe({ onClient }: { onClient: (client: QueryClient) => void })
   const labelResource = resources.find(resource => resource.name === 'labels');
   const objectStoreResource = resources.find(resource => resource.name === 'object-store');
   const systemConfigResource = resources.find(resource => resource.name === 'system-config');
+  const tokenResource = resources.find(resource => resource.name === 'tokens');
   const labelProvider = resolveProviderState(dataProvider, 'labels', labelDataProvider, true);
   const objectStoreProvider = resolveProviderState(
     dataProvider,
@@ -119,6 +123,8 @@ function RuntimeProbe({ onClient }: { onClient: (client: QueryClient) => void })
     false
   );
   const systemConfigResourceText = formatResource(systemConfigResource);
+  const tokenProvider = resolveProviderState(dataProvider, 'tokens', tokenDataProvider, false);
+  const tokenResourceText = formatResource(tokenResource);
 
   return (
     <>
@@ -132,6 +138,8 @@ function RuntimeProbe({ onClient }: { onClient: (client: QueryClient) => void })
       <output data-testid="object-store-provider">{objectStoreProvider}</output>
       <output data-testid="system-config-resource">{systemConfigResourceText}</output>
       <output data-testid="system-config-provider">{systemConfigProvider}</output>
+      <output data-testid="token-resource">{tokenResourceText}</output>
+      <output data-testid="token-provider">{tokenProvider}</output>
       <button
         type="button"
         onClick={() => notification.open?.({ message: 'Runtime notification ready', type: 'success' })}

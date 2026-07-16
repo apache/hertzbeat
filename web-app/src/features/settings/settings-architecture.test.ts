@@ -102,6 +102,24 @@ describe('Settings domain boundaries', () => {
       source.includes('../api/') || source.includes('@tanstack/react-query') ? [path] : []
     ))).toEqual([]);
   });
+
+  it('keeps Token pages behind its model and controller boundaries', () => {
+    const pageSources = Object.entries(productionSources)
+      .filter(([path]) => /^\.\/token\/pages\//.test(path) && !path.includes('.test.'));
+
+    expect(pageSources.flatMap(([path, source]) => (
+      source.includes('../api/') || source.includes('@tanstack/react-query') ? [path] : []
+    ))).toEqual([]);
+  });
+
+  it('keeps one-time Token plaintext out of Refine mutation hooks', () => {
+    const controllerSources = Object.entries(productionSources)
+      .filter(([path]) => /^\.\/token\/controller\//.test(path) && !path.includes('.test.'));
+
+    expect(controllerSources.flatMap(([path, source]) => (
+      /\buse(?:Create|Update|CustomMutation)\b/.test(source) ? [path] : []
+    ))).toEqual([]);
+  });
 });
 
 function validateImports(path: string, source: string, root: string) {
