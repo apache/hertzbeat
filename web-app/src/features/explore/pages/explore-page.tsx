@@ -170,7 +170,7 @@ function QueryResult<T>({
         <Alert
           type="error"
           showIcon
-          title={t("explore.loadFailed")}
+          message={t("explore.loadFailed")}
           action={<Button onClick={() => void result.refetch()}>{t("common.retry")}</Button>}
         />
       </section>

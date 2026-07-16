@@ -30,8 +30,8 @@ export function StatusOrgSection({ org, pending, error, saving, onSave }: {
         title={t('statusManagement.organization')}
         description={t('statusManagement.organizationDescription')}
       />
-      {error && !missing && <Alert type="error" showIcon title={t('common.unavailable')} />}
-      {missing && <Alert type="info" showIcon title={t('statusManagement.notConfigured')} />}
+      {error && !missing && <Alert type="error" showIcon message={t('common.unavailable')} />}
+      {missing && <Alert type="info" showIcon message={t('statusManagement.notConfigured')} />}
       {canAuthor && <StatusOrgForm org={org} saving={saving} onSubmit={onSave} />}
     </section>
   );

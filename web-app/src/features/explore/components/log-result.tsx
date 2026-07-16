@@ -85,7 +85,7 @@ function LogStreamResult({
   );
   return (
     <div>
-      {stream.failed && <Alert type="error" showIcon title={t("exploreLog.streamFailed")} />}
+      {stream.failed && <Alert type="error" showIcon message={t("exploreLog.streamFailed")} />}
       {stream.rows.length === 0 ? (
         <SignalResultFrame
           title={t("exploreLog.live")}

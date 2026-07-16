@@ -102,7 +102,7 @@ function LanguageStage({ setup }: { setup: InstrumentationSetupController }) {
         </Field>
       </div>
       {selectedFramework && methods.length === 0 && (
-        <Alert type="warning" showIcon title={t('instrumentation.methodUnavailable')} />
+        <Alert type="warning" showIcon message={t('instrumentation.methodUnavailable')} />
       )}
       <div className={styles.methodList}>
         {methods.map(method => (
@@ -189,8 +189,8 @@ function ContextStage({ setup }: { setup: InstrumentationSetupController }) {
           />
         </Field>
       </div>
-      {collector && !collector.online && <Alert type="warning" showIcon title={t('instrumentation.collectorOffline')} />}
-      {setup.guideError && <Alert type="error" showIcon title={t('instrumentation.renderUnavailable')} />}
+      {collector && !collector.online && <Alert type="warning" showIcon message={t('instrumentation.collectorOffline')} />}
+      {setup.guideError && <Alert type="error" showIcon message={t('instrumentation.renderUnavailable')} />}
       <StageActions
         disabled={missing.length > 0 || !collector?.online}
         loading={setup.guidePending}
@@ -240,7 +240,7 @@ function StageActions({
 
 function ResourceError({ title, onRetry }: { title: string; onRetry: () => void }) {
   const { t } = useTranslation();
-  return <Alert type="error" showIcon title={title} action={<Button size="small" onClick={onRetry}>{t('common.retry')}</Button>} />;
+  return <Alert type="error" showIcon message={title} action={<Button size="small" onClick={onRetry}>{t('common.retry')}</Button>} />;
 }
 
 function capabilityColor(capability: string) {

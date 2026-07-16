@@ -73,7 +73,7 @@ export function ExploreWorkbench({ query, t, updateQuery }: Props) {
         <Button onClick={refresh}>{t('common.refresh')}</Button>
       </div>
     </header>
-    {handoffState === 'invalid' && <Alert type="warning" showIcon title={t('explore.handoffInvalid')} />}
+    {handoffState === 'invalid' && <Alert type="warning" showIcon message={t('explore.handoffInvalid')} />}
     <div className={styles.navigationRow}>
       <nav className={styles.signalNavigation} aria-label={t('explore.signalsNavigation')}>
         {signalKeys.map(signal => <button

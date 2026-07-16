@@ -26,7 +26,7 @@ type ComponentResultsProps = {
 
 export function ComponentResults({ loading, error, records, onEdit, onDelete }: ComponentResultsProps) {
   const { t } = useTranslation();
-  if (error) return <Alert type="error" showIcon title={t('common.unavailable')} />;
+  if (error) return <Alert type="error" showIcon message={t('common.unavailable')} />;
   if (!loading && records.length === 0) return <Empty description={t('status.noComponents')} />;
   const columns: ColumnsType<StatusComponent> = [
     { title: t('status.component'), dataIndex: 'name' },
@@ -82,7 +82,7 @@ type IncidentResultsProps = {
 export function IncidentResults(props: IncidentResultsProps) {
   const { loading, error, records, pageIndex, pageSize, total, onPageChange, onEdit, onDelete } = props;
   const { t } = useTranslation();
-  if (error) return <Alert type="error" showIcon title={t('common.unavailable')} />;
+  if (error) return <Alert type="error" showIcon message={t('common.unavailable')} />;
   if (!loading && records.length === 0) return <Empty description={t('status.noIncidents')} />;
   const columns: ColumnsType<StatusIncident> = [
     { title: t('status.incident'), dataIndex: 'name' },

@@ -77,7 +77,7 @@ export function ObjectStorePage() {
         <Alert
           type="error"
           showIcon
-          title={t('objectStore.unavailable')}
+          message={t('objectStore.unavailable')}
           action={<Button size="small" onClick={() => void objectStore.refetch()}>{t('common.retry')}</Button>}
         />
       )}

@@ -105,7 +105,7 @@ export function SystemConfigPage() {
         <Alert
           type="error"
           showIcon
-          title={t("systemConfig.unavailable")}
+          message={t("systemConfig.unavailable")}
           action={
             <Button size="small" onClick={() => void config.refetch()}>
               {t("common.retry")}

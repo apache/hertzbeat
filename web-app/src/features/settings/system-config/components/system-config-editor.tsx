@@ -48,7 +48,7 @@ export function SystemConfigEditor(props: SystemConfigEditorProps) {
   return (
     <>
       {props.timezonesFailed && (
-        <Alert type="warning" showIcon title={t('systemConfig.timezonesUnavailable')} action={
+        <Alert type="warning" showIcon message={t('systemConfig.timezonesUnavailable')} action={
           <Button size="small" onClick={props.onTimezoneRetry}>{t('common.retry')}</Button>
         } />
       )}

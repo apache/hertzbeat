@@ -74,8 +74,8 @@ function StatusBody({ loading, state, components, incidents }: {
 }) {
   const { t } = useTranslation();
   if (loading) return <Skeleton active paragraph={{ rows: 8 }} />;
-  if (state === 'unconfigured') return <Alert type="info" showIcon title={t('status.notConfigured')} />;
-  if (state === 'unavailable') return <Alert type="error" showIcon title={t('common.unavailable')} />;
+  if (state === 'unconfigured') return <Alert type="info" showIcon message={t('status.notConfigured')} />;
+  if (state === 'unavailable') return <Alert type="error" showIcon message={t('common.unavailable')} />;
   return <StatusContent components={components} incidents={incidents} />;
 }
 

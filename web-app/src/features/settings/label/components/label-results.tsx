@@ -39,7 +39,7 @@ type LabelResultsProps = {
 
 export function LabelResults(props: LabelResultsProps) {
   const { t } = useTranslation();
-  if (props.error) return <Alert type="error" showIcon title={t('labels.unavailable')} />;
+  if (props.error) return <Alert type="error" showIcon message={t('labels.unavailable')} />;
   if (!props.loading && props.records.length === 0) return <Empty description={t('labels.empty')} />;
 
   const columns: ColumnsType<LabelRecord> = [

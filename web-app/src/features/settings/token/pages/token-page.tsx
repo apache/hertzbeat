@@ -125,7 +125,7 @@ function TokenTable({
       <Alert
         type="error"
         showIcon
-        title={t("token.unavailable")}
+        message={t("token.unavailable")}
         action={
           <Button size="small" onClick={onRetry}>
             {t("common.retry")}

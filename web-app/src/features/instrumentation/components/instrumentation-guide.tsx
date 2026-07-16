@@ -34,7 +34,7 @@ export function InstrumentationGuide({
   if (!guide) {
     return (
       <StageBody stage={4} title={t('instrumentation.stage.install')} description={t('instrumentation.stage.installHelp')}>
-        <Alert type="error" showIcon title={t('instrumentation.renderUnavailable')} />
+        <Alert type="error" showIcon message={t('instrumentation.renderUnavailable')} />
       </StageBody>
     );
   }
@@ -55,7 +55,7 @@ export function InstrumentationGuide({
         <span><Tag color={guide.component.official ? 'success' : 'error'}>{t('instrumentation.official')}</Tag><Tag>{guide.component.license}</Tag></span>
       </div>
       {!guide.component.official || guide.component.bundledWithHertzBeat ? (
-        <Alert type="error" showIcon title={t('instrumentation.componentInvalid')} />
+        <Alert type="error" showIcon message={t('instrumentation.componentInvalid')} />
       ) : null}
       <div className={styles.guideSteps}>
         {guide.steps.map((step, index) => (
@@ -84,7 +84,7 @@ export function InstrumentationGuide({
           </article>
         ))}
       </div>
-      {!setup.token && <Alert type="warning" showIcon title={t('instrumentation.tokenCopyNotice')} />}
+      {!setup.token && <Alert type="warning" showIcon message={t('instrumentation.tokenCopyNotice')} />}
       <div className={styles.stageActions}>
         <Button onClick={() => setup.setStage(3)}>{t('instrumentation.action.reviewContext')}</Button>
         <Button type="primary" onClick={onStartDetection}>{t('instrumentation.action.startDetection')}</Button>

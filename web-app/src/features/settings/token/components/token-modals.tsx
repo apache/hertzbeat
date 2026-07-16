@@ -92,12 +92,12 @@ export function GeneratedTokenModal(props: GeneratedTokenModalProps) {
       title={t("token.generatedTitle")}
       okText={t("token.done")}
       cancelButtonProps={{ style: { display: "none" } }}
-      mask={{ closable: false }}
+      maskClosable={false}
       onOk={props.onClose}
       onCancel={props.onClose}
     >
       <div className={styles.tokenResult}>
-        <Alert type="warning" showIcon title={t("token.generatedNotice")} />
+        <Alert type="warning" showIcon message={t("token.generatedNotice")} />
         <pre className={styles.tokenValue}>{props.token}</pre>
         <Button onClick={props.onCopy}>{t("token.copy")}</Button>
       </div>

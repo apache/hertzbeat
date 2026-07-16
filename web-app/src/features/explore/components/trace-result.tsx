@@ -118,7 +118,7 @@ function TraceDrawer({
       onClose={onClose}
     >
       {detail.isPending && <Skeleton active paragraph={{ rows: 10 }} />}
-      {detail.isError && <Alert type="error" showIcon title={t("exploreTrace.loadFailed")} />}
+      {detail.isError && <Alert type="error" showIcon message={t("exploreTrace.loadFailed")} />}
       {detail.data && <TraceDetailView detail={detail.data} query={query} t={t} navigate={navigate} />}
     </Drawer>
   );

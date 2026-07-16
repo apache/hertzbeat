@@ -36,13 +36,13 @@ export function InstrumentationDetection({ detection }: { detection: DetectionCo
         <Alert
           type="error"
           showIcon
-          title={t('instrumentation.detection.unavailable')}
+          message={t('instrumentation.detection.unavailable')}
           action={<Button size="small" onClick={detection.retry}>{t('common.retry')}</Button>}
         />
       )}
-      {detection.checking && !response && <Alert type="info" showIcon title={t('instrumentation.detection.checking')} />}
+      {detection.checking && !response && <Alert type="info" showIcon message={t('instrumentation.detection.checking')} />}
       {!detection.error && !detection.checking && !response && (
-        <Alert type="info" showIcon title={t('instrumentation.detection.notStarted')} />
+        <Alert type="info" showIcon message={t('instrumentation.detection.notStarted')} />
       )}
       {response && (
         <div className={styles.signalTable}>
@@ -59,7 +59,7 @@ export function InstrumentationDetection({ detection }: { detection: DetectionCo
                   </Typography.Text>
                 </span>
                 {jump ? (
-                  <Button type="link" href={buildExploreHandoff(signal, jump.context)} icon={<ExportOutlined />} iconPlacement="end">
+                  <Button type="link" href={buildExploreHandoff(signal, jump.context)} icon={<ExportOutlined />} iconPosition="end">
                     {t('instrumentation.action.openExplore')}
                   </Button>
                 ) : <Typography.Text type="secondary">{t('instrumentation.queryUnavailable')}</Typography.Text>}
@@ -68,7 +68,7 @@ export function InstrumentationDetection({ detection }: { detection: DetectionCo
           })}
         </div>
       )}
-      {response?.polling.decision === 'continue_polling' && <Alert type="info" showIcon title={t('instrumentation.detection.waiting')} />}
+      {response?.polling.decision === 'continue_polling' && <Alert type="info" showIcon message={t('instrumentation.detection.waiting')} />}
       {response?.polling.decision === 'manual_retry' && (
         <div className={styles.stageActions}><Button onClick={detection.retry}>{t('instrumentation.action.retryDetection')}</Button></div>
       )}

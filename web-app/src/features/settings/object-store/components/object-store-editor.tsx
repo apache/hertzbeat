@@ -55,7 +55,7 @@ export function ObjectStoreEditor(props: ObjectStoreEditorProps) {
         <Alert
           type="warning"
           showIcon
-          title={t('objectStore.validation')}
+          message={t('objectStore.validation')}
           description={props.missingFields.map((field) => t(`objectStore.obs.${field}`)).join(', ')}
         />
       )}
