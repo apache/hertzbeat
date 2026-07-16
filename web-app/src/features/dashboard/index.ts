@@ -15,22 +15,4 @@
  * limitations under the License.
  */
 
-import { describe, expect, it } from 'vitest';
-
-import { hasMonitorData, monitorTotals } from './dashboard-model';
-
-describe('dashboard model', () => {
-  it('derives honest monitor totals from the master summary response', () => {
-    expect(
-      monitorTotals([
-        { app: 'mysql', category: 'db', size: 5, availableSize: 3, unAvailableSize: 1, unManageSize: 1 },
-        { app: 'linux', category: 'os', size: 2, availableSize: 2, unAvailableSize: 0, unManageSize: 0 }
-      ])
-    ).toEqual({ total: 7, available: 5, unavailable: 1, unmanaged: 1 });
-  });
-
-  it('does not turn a missing apps payload into zero counters', () => {
-    expect(hasMonitorData(null)).toBe(false);
-    expect(hasMonitorData([])).toBe(true);
-  });
-});
+export { DashboardPage } from './pages/dashboard-page';

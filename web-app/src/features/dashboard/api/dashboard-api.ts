@@ -14,28 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { apiMessageGet } from '@/core/http/api-message';
+import { parseAlertSummary, parseDashboardSummary } from '../model/dashboard-model';
 
-export type AppCount = {
-  app: string;
-  category: string;
-  size: number;
-  availableSize: number;
-  unAvailableSize: number;
-  unManageSize: number;
-};
-
-export function hasMonitorData(apps: AppCount[] | null): apps is AppCount[] {
-  return Array.isArray(apps);
+export async function loadDashboardSummary(signal?: AbortSignal) {
+  return parseDashboardSummary(await apiMessageGet<unknown>('/api/summary', signal ? { signal } : undefined));
 }
-
-export function monitorTotals(apps: AppCount[]) {
-  return apps.reduce(
-    (total, app) => ({
-      total: total.total + app.size,
-      available: total.available + app.availableSize,
-      unavailable: total.unavailable + app.unAvailableSize,
-      unmanaged: total.unmanaged + app.unManageSize
-    }),
-    { total: 0, available: 0, unavailable: 0, unmanaged: 0 }
-  );
+export async function loadDashboardAlertSummary(signal?: AbortSignal) {
+  return parseAlertSummary(await apiMessageGet<unknown>('/api/alerts/summary', signal ? { signal } : undefined));
 }

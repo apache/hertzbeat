@@ -69,7 +69,7 @@ export const appRoutes: RouteObject[] = [
                 id: 'dashboard',
                 path: '/dashboard',
                 lazy: async () => {
-                  const { DashboardPage } = await import('@/features/dashboard/dashboard-page');
+                  const { DashboardPage } = await import('@/features/dashboard');
                   return { Component: DashboardPage };
                 }
               },
