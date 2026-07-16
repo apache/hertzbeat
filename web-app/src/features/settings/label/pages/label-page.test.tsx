@@ -19,7 +19,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { App } from "antd";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { I18nextProvider } from "react-i18next";
-import { MemoryRouter, useLocation } from "react-router-dom";
+import { MemoryRouter, useLocation, useNavigate } from "react-router-dom";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { i18n, initializeI18n, loadLocale } from "@/core/i18n/i18n";
 
@@ -88,9 +88,26 @@ describe("LabelPage", () => {
 
     expect(screen.getByTestId("location")).toHaveTextContent("/monitors|env:prod");
   });
+
+  it("synchronizes the search draft when Back and Forward restore URL state", async () => {
+    renderLabelPage('/settings/labels?pageIndex=2&pageSize=50&search=env');
+    const search = await screen.findByPlaceholderText('Search labels');
+    expect(search).toHaveValue('env');
+
+    fireEvent.change(search, { target: { value: 'production' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Query' }));
+    await waitFor(() => expect(screen.getByTestId('route')).toHaveTextContent(
+      '/settings/labels?pageIndex=0&pageSize=50&search=production'
+    ));
+
+    fireEvent.click(screen.getByRole('button', { name: 'History back' }));
+    await waitFor(() => expect(search).toHaveValue('env'));
+    fireEvent.click(screen.getByRole('button', { name: 'History forward' }));
+    await waitFor(() => expect(search).toHaveValue('production'));
+  });
 });
 
-function renderLabelPage() {
+function renderLabelPage(initialEntry = '/settings/labels') {
   const client = new QueryClient({
     defaultOptions: {
       queries: { retry: false },
@@ -100,7 +117,7 @@ function renderLabelPage() {
   return render(
     <I18nextProvider i18n={i18n}>
       <QueryClientProvider client={client}>
-        <MemoryRouter initialEntries={["/settings/labels"]}>
+        <MemoryRouter initialEntries={[initialEntry]}>
           <App>
             <LabelPage />
             <LocationProbe />
@@ -113,8 +130,16 @@ function renderLabelPage() {
 
 function LocationProbe() {
   const location = useLocation();
+  const navigate = useNavigate();
   const label = new URLSearchParams(location.search).get("labels") ?? "";
-  return <output data-testid="location">{`${location.pathname}|${label}`}</output>;
+  return (
+    <>
+      <output data-testid="location">{`${location.pathname}|${label}`}</output>
+      <output data-testid="route">{`${location.pathname}${location.search}`}</output>
+      <button type="button" onClick={() => void navigate(-1)}>History back</button>
+      <button type="button" onClick={() => void navigate(1)}>History forward</button>
+    </>
+  );
 }
 
 class ResizeObserverStub {

@@ -19,8 +19,9 @@ import { Alert, Button, Empty, Popconfirm, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 
-import { labelPageSizes, type LabelRecord } from '../api/label-api';
+import type { LabelRecord } from '../api/label-api';
 import { buildLabelDisplayName, labelTypeKey } from '../model/label-model';
+import { isLabelPageSize, labelPageSizes, type LabelPageSize } from '../model/label-query-model';
 import styles from './label.module.css';
 
 type LabelResultsProps = {
@@ -28,9 +29,9 @@ type LabelResultsProps = {
   error: boolean;
   records: LabelRecord[];
   pageIndex: number;
-  pageSize: number;
+  pageSize: LabelPageSize;
   total: number;
-  onPageChange: (pageIndex: number, pageSize: number) => void;
+  onPageChange: (pageIndex: number, pageSize: LabelPageSize) => void;
   onCopy: (label: LabelRecord) => void;
   onEdit: (label: LabelRecord) => void;
   onRemove: (id: number) => void;
@@ -96,7 +97,9 @@ export function LabelResults(props: LabelResultsProps) {
         pageSizeOptions: [...labelPageSizes],
         showSizeChanger: true,
         total: props.total,
-        onChange: (page, pageSize) => props.onPageChange(page - 1, pageSize)
+        onChange: (page, pageSize) => {
+          if (isLabelPageSize(pageSize)) props.onPageChange(page - 1, pageSize);
+        }
       }}
     />
   );

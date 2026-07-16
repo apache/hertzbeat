@@ -19,14 +19,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { App, Button, Input, Typography } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import { SettingsNav } from '@/shared/settings/settings-nav';
 
-import { deleteLabel, loadLabels, readLabelQuery, saveLabel, writeLabelQuery, type LabelRecord } from '../api/label-api';
+import { deleteLabel, loadLabels, saveLabel, type LabelRecord } from '../api/label-api';
 import { LabelEditor, type LabelEditorState } from '../components/label-editor';
 import { LabelResults } from '../components/label-results';
 import styles from '../components/label.module.css';
+import { useLabelQueryController } from '../controller/label-query-controller';
 import { buildLabelDisplayName, buildLabelMonitorPath } from '../model/label-model';
 
 export function LabelPage() {
@@ -34,9 +35,9 @@ export function LabelPage() {
   const { message } = App.useApp();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const query = readLabelQuery(searchParams);
-  const [draftSearch, setDraftSearch] = useState(query.search);
+  const { query, setPage, setSearch } = useLabelQueryController();
+  const [searchDraft, setSearchDraft] = useState({ source: query.search, value: query.search });
+  const draftSearch = searchDraft.source === query.search ? searchDraft.value : query.search;
   const [editor, setEditor] = useState<LabelEditorState>();
   const labels = useQuery({ queryKey: ['labels', query], queryFn: () => loadLabels(query) });
   const refresh = () => void queryClient.invalidateQueries({ queryKey: ['labels'] });
@@ -65,8 +66,11 @@ export function LabelPage() {
       void message.error(t('labels.copyFailed'));
     }
   };
-  const updateQuery = (patch: Partial<typeof query>) => setSearchParams(writeLabelQuery({ ...query, ...patch }));
-
+  const submitSearch = () => {
+    const search = draftSearch.trim();
+    setSearchDraft({ source: search, value: search });
+    setSearch(search);
+  };
   return (
     <div className={styles.page}>
       <header className={styles.heading}>
@@ -79,10 +83,10 @@ export function LabelPage() {
           allowClear
           value={draftSearch}
           placeholder={t('labels.search')}
-          onChange={(event) => setDraftSearch(event.target.value)}
-          onPressEnter={() => updateQuery({ search: draftSearch.trim(), pageIndex: 0 })}
+          onChange={(event) => setSearchDraft({ source: query.search, value: event.target.value })}
+          onPressEnter={submitSearch}
         />
-        <Button type="primary" onClick={() => updateQuery({ search: draftSearch.trim(), pageIndex: 0 })}>
+        <Button type="primary" onClick={submitSearch}>
           {t('common.query')}
         </Button>
         <Button onClick={() => void labels.refetch()}>{t('common.refresh')}</Button>
@@ -97,7 +101,7 @@ export function LabelPage() {
         pageIndex={query.pageIndex}
         pageSize={query.pageSize}
         total={labels.data?.totalElements ?? 0}
-        onPageChange={(pageIndex, pageSize) => updateQuery({ pageIndex, pageSize })}
+        onPageChange={setPage}
         onCopy={(label) => void copy(label)}
         onEdit={(label) => setEditor({ value: { ...label }, isNew: false })}
         onRemove={(id) => remove.mutate(id)}

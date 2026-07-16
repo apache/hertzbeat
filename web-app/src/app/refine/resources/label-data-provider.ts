@@ -28,12 +28,12 @@ import type {
 import {
   deleteLabel,
   findCanonicalLabel,
-  labelPageSizes,
   loadLabels,
   saveLabel,
   type LabelIdentity,
   type LabelRecord
 } from '@/features/settings/label/api/label-api';
+import { isLabelPageSize } from '@/features/settings/label/model/label-query-model';
 
 import { createRefineHttpError, toRefineHttpError } from '../refine-http-error';
 
@@ -140,7 +140,7 @@ function readPagination(pagination: GetListParams['pagination']) {
   }
   const currentPage = pagination?.currentPage ?? 1;
   const pageSize = pagination?.pageSize ?? 20;
-  if (!Number.isInteger(currentPage) || currentPage < 1 || !labelPageSizes.includes(pageSize as 20 | 50 | 100)) {
+  if (!Number.isInteger(currentPage) || currentPage < 1 || !isLabelPageSize(pageSize)) {
     throw createRefineHttpError('Label pagination is invalid', 400, 'LABEL_PAGINATION_INVALID');
   }
   return { currentPage, pageSize };

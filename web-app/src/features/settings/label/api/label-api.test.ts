@@ -17,7 +17,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 const { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } = vi.hoisted(() => ({ apiMessageDelete: vi.fn(), apiMessageGet: vi.fn(), apiMessagePost: vi.fn(), apiMessagePut: vi.fn() }));
 vi.mock('@/core/http/api-message', () => ({ apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut }));
-import { deleteLabel, findCanonicalLabel, loadLabels, saveLabel } from './label-api';
+import { buildLabelPayload, deleteLabel, findCanonicalLabel, loadLabels, saveLabel } from './label-api';
 
 describe('label API', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -34,6 +34,13 @@ describe('label API', () => {
     expect(apiMessagePost).toHaveBeenCalledWith('/api/label', { name: 'env', tagValue: '', description: '', type: 1 });
     expect(apiMessagePut).toHaveBeenCalledWith('/api/label', { id: 4, name: 'env', tagValue: '', description: '', type: 1 });
     expect(apiMessageDelete).toHaveBeenCalledWith('/api/label?ids=4');
+  });
+
+  it('trims the Label request payload at the transport boundary', () => {
+    expect(buildLabelPayload({ name: ' env ', tagValue: ' prod ', description: ' primary ' }, true))
+      .toEqual({ name: 'env', tagValue: 'prod', description: 'primary', type: 1 });
+    expect(buildLabelPayload({ id: 7, name: ' env ', tagValue: '', description: '', type: 2 }, false))
+      .toEqual({ id: 7, name: 'env', tagValue: '', description: '', type: 2 });
   });
 
   it('finds only an exact server record across paginated fuzzy search results', async () => {

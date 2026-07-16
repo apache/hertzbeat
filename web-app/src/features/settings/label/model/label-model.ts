@@ -17,15 +17,6 @@
 
 import type { LabelRecord } from '../api/label-api';
 
-export {
-  buildLabelListPath,
-  buildLabelPayload,
-  labelPageSizes,
-  readLabelQuery,
-  writeLabelQuery
-} from '../api/label-api';
-export type { LabelQuery, LabelRecord } from '../api/label-api';
-
 export function buildLabelDisplayName(label: Pick<LabelRecord, 'name' | 'tagValue'>) {
   const value = label.tagValue?.trim();
   return value ? `${label.name}:${value}` : label.name;

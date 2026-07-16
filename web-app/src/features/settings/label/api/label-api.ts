@@ -28,11 +28,10 @@ export type LabelRecord = {
   gmtUpdate?: number | string;
 };
 
-export type LabelQuery = { search: string; pageIndex: number; pageSize: number };
 export type LabelIdentity = Pick<LabelRecord, 'name' | 'tagValue'> & { id?: number };
-export const labelPageSizes = [20, 50, 100] as const;
+export type LabelListRequest = { search: string; pageIndex: number; pageSize: number };
 
-export function loadLabels(query: LabelQuery) {
+export function loadLabels(query: LabelListRequest) {
   return apiMessageGet<PageResult<LabelRecord>>(buildLabelListPath(query));
 }
 
@@ -66,24 +65,13 @@ export async function findCanonicalLabel(identity: LabelIdentity) {
   return undefined;
 }
 
-export function readLabelQuery(params: URLSearchParams): LabelQuery {
-  const pageIndex = Number.parseInt(params.get('pageIndex') ?? '', 10);
-  const requestedSize = Number.parseInt(params.get('pageSize') ?? '', 10);
-  return {
-    search: params.get('search')?.trim() ?? '',
-    pageIndex: Number.isFinite(pageIndex) && pageIndex >= 0 ? pageIndex : 0,
-    pageSize: labelPageSizes.includes(requestedSize as typeof labelPageSizes[number]) ? requestedSize : 20
-  };
-}
-
-export function writeLabelQuery(query: LabelQuery) {
-  const params = new URLSearchParams({ pageIndex: String(query.pageIndex), pageSize: String(query.pageSize) });
+export function buildLabelListPath(query: LabelListRequest) {
+  const params = new URLSearchParams({
+    pageIndex: String(query.pageIndex),
+    pageSize: String(query.pageSize)
+  });
   if (query.search) params.set('search', query.search);
-  return params;
-}
-
-export function buildLabelListPath(query: LabelQuery) {
-  return `/api/label?${writeLabelQuery(query).toString()}`;
+  return `/api/label?${params.toString()}`;
 }
 
 export function buildLabelPayload(label: Partial<LabelRecord>, isNew: boolean): LabelRecord {

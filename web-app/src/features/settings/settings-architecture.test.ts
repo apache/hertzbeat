@@ -25,13 +25,14 @@ const layeredDomains = [
   { directory: 'object-store', page: 'ObjectStorePage' }
 ] as const;
 const requiredDirectories = ['api', 'model', 'components', 'pages'] as const;
-const layerDirectories = [...requiredDirectories, 'hooks'] as const;
+const layerDirectories = [...requiredDirectories, 'controller', 'hooks'] as const;
 const allowedDependencies: Record<(typeof layerDirectories)[number], readonly string[]> = {
   api: ['api'],
   model: ['api', 'model'],
+  controller: ['api', 'model', 'controller'],
   hooks: ['api', 'model', 'hooks'],
   components: ['api', 'model', 'hooks', 'components'],
-  pages: ['api', 'model', 'hooks', 'components', 'pages']
+  pages: ['api', 'model', 'controller', 'hooks', 'components', 'pages']
 };
 const importPattern = /(?:from\s+|import\s*\()\s*['"]([^'"]+)['"]/g;
 const productionSources = import.meta.glob('./**/*.{ts,tsx}', {

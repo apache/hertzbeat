@@ -15,22 +15,12 @@
  * limitations under the License.
  */
 import { describe, expect, it } from 'vitest';
-import { buildLabelDisplayName, buildLabelListPath, buildLabelMonitorPath, buildLabelPayload, readLabelQuery } from './label-model';
+import { buildLabelDisplayName, buildLabelMonitorPath } from './label-model';
 
 describe('label model', () => {
-  it('keeps search and pagination in an inspectable query contract', () => {
-    const query = readLabelQuery(new URLSearchParams('search= env &pageIndex=2&pageSize=50'));
-    expect(query).toEqual({ search: 'env', pageIndex: 2, pageSize: 50 });
-    expect(buildLabelListPath(query)).toBe('/api/label?pageIndex=2&pageSize=50&search=env');
-  });
-
-  it('formats labels and trims writable values', () => {
+  it('formats labels and builds Monitor query context', () => {
     expect(buildLabelDisplayName({ name: 'env', tagValue: 'prod' })).toBe('env:prod');
     expect(buildLabelDisplayName({ name: 'team', tagValue: ' ' })).toBe('team');
-    expect(buildLabelPayload({ name: ' env ', tagValue: ' prod ', description: ' primary ' }, true))
-      .toEqual({ name: 'env', tagValue: 'prod', description: 'primary', type: 1 });
-    expect(buildLabelPayload({ id: 7, name: ' env ', tagValue: '', description: '', type: 2 }, false))
-      .toEqual({ id: 7, name: 'env', tagValue: '', description: '', type: 2 });
     expect(buildLabelMonitorPath({ name: 'env', tagValue: 'prod' })).toBe('/monitors?labels=env%3Aprod');
   });
 });
