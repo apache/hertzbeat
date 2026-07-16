@@ -23,11 +23,11 @@ const supportedLocales = ['en-US', 'zh-CN', 'zh-TW', 'ja-JP', 'pt-BR'] as const;
 export type SupportedLocale = (typeof supportedLocales)[number];
 
 const localeLoaders: Record<SupportedLocale, () => Promise<{ default: Record<string, unknown> }>> = {
-  'en-US': () => import('@/assets/i18n/en-US.json'),
-  'zh-CN': () => import('@/assets/i18n/zh-CN.json'),
-  'zh-TW': () => import('@/assets/i18n/zh-TW.json'),
-  'ja-JP': () => import('@/assets/i18n/ja-JP.json'),
-  'pt-BR': () => import('@/assets/i18n/pt-BR.json')
+  'en-US': () => import('@/assets/i18n/en-us.json'),
+  'zh-CN': () => import('@/assets/i18n/zh-cn.json'),
+  'zh-TW': () => import('@/assets/i18n/zh-tw.json'),
+  'ja-JP': () => import('@/assets/i18n/ja-jp.json'),
+  'pt-BR': () => import('@/assets/i18n/pt-br.json')
 };
 
 export const i18n = i18next.createInstance();
