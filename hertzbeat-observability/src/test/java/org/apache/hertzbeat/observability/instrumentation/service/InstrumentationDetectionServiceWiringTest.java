@@ -20,7 +20,9 @@ package org.apache.hertzbeat.observability.instrumentation.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
+import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationCollectorReadinessStore;
 import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationSignalDetectionStore;
+import org.apache.hertzbeat.observability.instrumentation.store.UnknownInstrumentationCollectorReadinessStore;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
@@ -30,6 +32,8 @@ class InstrumentationDetectionServiceWiringTest {
             .withBean(InstrumentationCatalogService.class)
             .withBean(InstrumentationSignalDetectionStore.class,
                     () -> mock(InstrumentationSignalDetectionStore.class))
+            .withBean(InstrumentationCollectorReadinessStore.class,
+                    UnknownInstrumentationCollectorReadinessStore::new)
             .withBean(InstrumentationDetectionService.class);
 
     @Test

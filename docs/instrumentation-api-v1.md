@@ -56,6 +56,12 @@ contract.
 - The initial v1 schema ships an explicit unavailable detection-store fallback. That fallback freezes
   the wire contract but is not production evidence of signal reception. M5 must replace it with the
   real Greptime adapter before onboarding can report `received`.
+- Fresh Collector heartbeat state refines only supported signals that are still `waiting`.
+  A missing/non-running Collector becomes `unavailable/collector_unavailable`, and a missing or
+  rejected intake credential becomes `error/authentication_failed`. Already `received`, catalog
+  `unsupported`, and storage `unavailable`/`error` results remain authoritative and are never hidden
+  by Collector readiness. If the optional heartbeat adapter itself is unavailable, detection keeps
+  the storage result instead of inventing Collector health.
 - Every timestamp (`startedAt`, `detectedAt`, `lastReceivedAt`, and `deadlineAt`) is Unix epoch time in
   milliseconds. Durations (`pollAfterMs`) are milliseconds.
 - Automatic detection polls every 3,000 ms for at most 120,000 ms from `startedAt`. `received` and

@@ -43,6 +43,8 @@ import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApi
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Signal;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.SignalDetection;
 import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationSignalDetectionStore;
+import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationCollectorReadinessStore;
+import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationCollectorReadinessStore.CollectorReadiness;
 import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationSignalDetectionStore.DetectionCriteria;
 import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationSignalDetectionStore.DetectionSnapshot;
 import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationSignalDetectionStore.SignalObservation;
@@ -164,6 +166,69 @@ class InstrumentationDetectionServiceTest {
 
         assertEquals(PollingDecision.MANUAL_RETRY, response.polling().decision());
         assertNull(response.polling().pollAfterMs());
+    }
+
+    @Test
+    void reportsFreshCollectorUnavailabilityOnlyForSignalsStillWaiting() {
+        InstrumentationSignalDetectionStore store = criteria -> new DetectionSnapshot(java.util.Map.of(
+                Signal.METRICS, SignalObservation.received(STARTED_AT + 1_000),
+                Signal.LOGS, SignalObservation.waiting(),
+                Signal.TRACES, SignalObservation.received(STARTED_AT - 1)));
+        InstrumentationCollectorReadinessStore readinessStore =
+                collectorId -> CollectorReadiness.unavailable();
+        InstrumentationDetectionService service = new InstrumentationDetectionService(
+                new InstrumentationCatalogService(), store, readinessStore, () -> STARTED_AT + 5_000);
+
+        var response = service.detect(javaRequest());
+
+        assertEquals(DetectionStatus.RECEIVED, response.signals().metrics().status());
+        assertEquals(DetectionStatus.UNAVAILABLE, response.signals().logs().status());
+        assertEquals(DetectionErrorCode.COLLECTOR_UNAVAILABLE, response.signals().logs().errorCode());
+        assertEquals(DetectionStatus.UNAVAILABLE, response.signals().traces().status());
+        assertEquals(DetectionErrorCode.COLLECTOR_UNAVAILABLE, response.signals().traces().errorCode());
+        assertEquals(PollingDecision.MANUAL_RETRY, response.polling().decision());
+    }
+
+    @Test
+    void reportsAuthenticationFailureWithoutOverridingReceivedOrUnsupportedSignals() {
+        InstrumentationSignalDetectionStore store = criteria -> new DetectionSnapshot(java.util.Map.of(
+                Signal.METRICS, SignalObservation.received(STARTED_AT + 1_000),
+                Signal.LOGS, SignalObservation.waiting(),
+                Signal.TRACES, SignalObservation.waiting()));
+        InstrumentationCollectorReadinessStore readinessStore =
+                collectorId -> CollectorReadiness.authenticationFailed();
+        InstrumentationDetectionService service = new InstrumentationDetectionService(
+                new InstrumentationCatalogService(), store, readinessStore, () -> STARTED_AT + 5_000);
+
+        var response = service.detect(nodeRequest());
+
+        assertEquals(DetectionStatus.RECEIVED, response.signals().metrics().status());
+        assertEquals(DetectionStatus.UNSUPPORTED, response.signals().logs().status());
+        assertEquals(DetectionErrorCode.SIGNAL_NOT_SUPPORTED, response.signals().logs().errorCode());
+        assertEquals(DetectionStatus.ERROR, response.signals().traces().status());
+        assertEquals(DetectionErrorCode.AUTHENTICATION_FAILED, response.signals().traces().errorCode());
+    }
+
+    @Test
+    void keepsStorageDetectionAuthoritativeWhenReadinessIsUnknownOrFails() {
+        InstrumentationSignalDetectionStore store = criteria -> new DetectionSnapshot(java.util.Map.of(
+                Signal.METRICS, SignalObservation.waiting(),
+                Signal.LOGS, SignalObservation.unavailable(DetectionErrorCode.STORAGE_UNAVAILABLE),
+                Signal.TRACES, SignalObservation.error(DetectionErrorCode.STORAGE_QUERY_FAILED, null)));
+        InstrumentationCollectorReadinessStore readinessStore = collectorId -> {
+            throw new IllegalStateException("readiness unavailable");
+        };
+        InstrumentationDetectionService service = new InstrumentationDetectionService(
+                new InstrumentationCatalogService(), store, readinessStore, () -> STARTED_AT + 5_000);
+
+        var response = service.detect(javaRequest());
+
+        assertEquals(DetectionStatus.WAITING, response.signals().metrics().status());
+        assertEquals(DetectionErrorCode.SIGNAL_NOT_RECEIVED, response.signals().metrics().errorCode());
+        assertEquals(DetectionStatus.UNAVAILABLE, response.signals().logs().status());
+        assertEquals(DetectionErrorCode.STORAGE_UNAVAILABLE, response.signals().logs().errorCode());
+        assertEquals(DetectionStatus.ERROR, response.signals().traces().status());
+        assertEquals(DetectionErrorCode.STORAGE_QUERY_FAILED, response.signals().traces().errorCode());
     }
 
     @Test

@@ -40,6 +40,9 @@ import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApi
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.SignalDetection;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.SignalDetections;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationRequestException;
+import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationCollectorReadinessStore;
+import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationCollectorReadinessStore.CollectorReadiness;
+import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationCollectorReadinessStore.ReadinessState;
 import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationSignalDetectionStore;
 import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationSignalDetectionStore.DetectionCriteria;
 import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationSignalDetectionStore.DetectionSnapshot;
@@ -55,21 +58,38 @@ public class InstrumentationDetectionService {
 
     private final InstrumentationCatalogService catalogService;
     private final InstrumentationSignalDetectionStore detectionStore;
+    private final InstrumentationCollectorReadinessStore readinessStore;
     private final LongSupplier clock;
 
     @Autowired
     public InstrumentationDetectionService(
             InstrumentationCatalogService catalogService,
+            InstrumentationSignalDetectionStore detectionStore,
+            InstrumentationCollectorReadinessStore readinessStore) {
+        this(catalogService, detectionStore, readinessStore, System::currentTimeMillis);
+    }
+
+    public InstrumentationDetectionService(
+            InstrumentationCatalogService catalogService,
             InstrumentationSignalDetectionStore detectionStore) {
-        this(catalogService, detectionStore, System::currentTimeMillis);
+        this(catalogService, detectionStore, ignored -> CollectorReadiness.unknown(), System::currentTimeMillis);
     }
 
     InstrumentationDetectionService(
             InstrumentationCatalogService catalogService,
             InstrumentationSignalDetectionStore detectionStore,
             LongSupplier clock) {
+        this(catalogService, detectionStore, ignored -> CollectorReadiness.unknown(), clock);
+    }
+
+    InstrumentationDetectionService(
+            InstrumentationCatalogService catalogService,
+            InstrumentationSignalDetectionStore detectionStore,
+            InstrumentationCollectorReadinessStore readinessStore,
+            LongSupplier clock) {
         this.catalogService = catalogService;
         this.detectionStore = detectionStore;
+        this.readinessStore = readinessStore;
         this.clock = clock;
     }
 
@@ -90,9 +110,10 @@ public class InstrumentationDetectionService {
                 request.collectorId(),
                 request.startedAt());
         DetectionSnapshot snapshot = safeDetect(criteria);
-        SignalDetection metrics = signal(method, snapshot, Signal.METRICS, request.startedAt());
-        SignalDetection logs = signal(method, snapshot, Signal.LOGS, request.startedAt());
-        SignalDetection traces = signal(method, snapshot, Signal.TRACES, request.startedAt());
+        CollectorReadiness readiness = safeReadiness(request.collectorId());
+        SignalDetection metrics = signal(method, snapshot, readiness, Signal.METRICS, request.startedAt());
+        SignalDetection logs = signal(method, snapshot, readiness, Signal.LOGS, request.startedAt());
+        SignalDetection traces = signal(method, snapshot, readiness, Signal.TRACES, request.startedAt());
         SignalDetections signals = new SignalDetections(metrics, logs, traces);
         long detectedAt = clock.getAsLong();
         PollingInstruction polling = polling(signals, request.startedAt(), detectedAt);
@@ -153,8 +174,21 @@ public class InstrumentationDetectionService {
         }
     }
 
+    private CollectorReadiness safeReadiness(String collectorId) {
+        try {
+            CollectorReadiness readiness = readinessStore.readiness(collectorId);
+            return readiness == null ? CollectorReadiness.unknown() : readiness;
+        } catch (RuntimeException exception) {
+            return CollectorReadiness.unknown();
+        }
+    }
+
     private SignalDetection signal(
-            MethodOption method, DetectionSnapshot snapshot, Signal signal, long startedAt) {
+            MethodOption method,
+            DetectionSnapshot snapshot,
+            CollectorReadiness readiness,
+            Signal signal,
+            long startedAt) {
         Capability capability = method.signals().capability(signal);
         if (capability == Capability.UNSUPPORTED) {
             return new SignalDetection(
@@ -165,13 +199,24 @@ public class InstrumentationDetectionService {
             return new SignalDetection(
                     DetectionStatus.UNAVAILABLE, null, DetectionErrorCode.STORAGE_UNAVAILABLE);
         }
-        if (observation.status() == DetectionStatus.RECEIVED
-                && (observation.lastReceivedAt() == null || observation.lastReceivedAt() < startedAt)) {
-            return new SignalDetection(
-                    DetectionStatus.WAITING, null, DetectionErrorCode.SIGNAL_NOT_RECEIVED);
+        SignalDetection detection = observation.status() == DetectionStatus.RECEIVED
+                        && (observation.lastReceivedAt() == null || observation.lastReceivedAt() < startedAt)
+                ? new SignalDetection(
+                        DetectionStatus.WAITING, null, DetectionErrorCode.SIGNAL_NOT_RECEIVED)
+                : new SignalDetection(
+                        observation.status(), observation.lastReceivedAt(), observation.errorCode());
+        if (detection.status() != DetectionStatus.WAITING) {
+            return detection;
         }
-        return new SignalDetection(
-                observation.status(), observation.lastReceivedAt(), observation.errorCode());
+        if (readiness.state() == ReadinessState.UNAVAILABLE) {
+            return new SignalDetection(
+                    DetectionStatus.UNAVAILABLE, null, DetectionErrorCode.COLLECTOR_UNAVAILABLE);
+        }
+        if (readiness.state() == ReadinessState.AUTHENTICATION_FAILED) {
+            return new SignalDetection(
+                    DetectionStatus.ERROR, null, DetectionErrorCode.AUTHENTICATION_FAILED);
+        }
+        return detection;
     }
 
     private DetectionSnapshot unavailableSnapshot() {
