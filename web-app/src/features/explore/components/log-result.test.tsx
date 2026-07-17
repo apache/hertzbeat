@@ -34,13 +34,20 @@ describe('LogResult', () => {
   afterEach(() => cleanup());
 
   it('opens an inspectable OTLP log detail without leaving the workbench', () => {
-    render(<I18nextProvider i18n={i18n}><Subject /></I18nextProvider>);
-    const logRow = screen.getByText('payment timeout').closest('tr');
+    const navigate = vi.fn();
+    render(<I18nextProvider i18n={i18n}><Subject navigate={navigate} /></I18nextProvider>);
+    const logRow = screen.getByRole('row', { name: /payment timeout/ });
+    expect(document.querySelector('.ant-table-tbody-virtual')).not.toBeNull();
     expect(logRow).toHaveAttribute('tabindex', '0');
-    fireEvent.keyDown(logRow!, { key: ' ' });
-    expect(screen.getByRole('dialog', { name: 'Log detail' })).toBeInTheDocument();
+    fireEvent.keyDown(logRow, { key: ' ' });
+    expect(screen.getByRole('dialog', { name: i18n.t('exploreLog.detail') })).toBeInTheDocument();
     expect(screen.getByText(/service.version/)).toBeInTheDocument();
     expect(screen.getByText(/retry.count/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('exploreLog.openTrace') }));
+    expect(navigate).toHaveBeenCalledWith(expect.stringContaining('signal=traces'));
+    expect(navigate).toHaveBeenCalledWith(expect.stringContaining('traceId=trace-1'));
+    expect(navigate).toHaveBeenCalledWith(expect.stringContaining('timeRange=last-30m'));
   });
 
   it('keeps an out-of-range nonzero page ready with authoritative total', () => {
@@ -93,7 +100,7 @@ describe('LogResult', () => {
   });
 });
 
-function Subject() {
+function Subject({ navigate = vi.fn() }: { navigate?: (path: string) => void }) {
   const { t } = useTranslation();
   return <LogResult
     data={{ content: [{
@@ -114,7 +121,7 @@ function Subject() {
     }], totalElements: 1, totalPages: 1, number: 0, size: 20 }}
     query={{ signal: 'logs', timeRange: 'last-30m' }}
     t={t}
-    navigate={vi.fn()}
+    navigate={navigate}
   />;
 }
 

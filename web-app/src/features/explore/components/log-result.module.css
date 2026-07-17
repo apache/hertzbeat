@@ -45,8 +45,8 @@
   cursor: pointer;
 }
 
-.clickableTable :global(.ant-table-row:hover td),
-.clickableTable :global(.ant-table-row:focus-visible td) {
+.clickableTable :global(.ant-table-row:hover .ant-table-cell),
+.clickableTable :global(.ant-table-row:focus-visible .ant-table-cell) {
   background: var(--ant-color-fill-secondary) !important;
 }
 

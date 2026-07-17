@@ -159,6 +159,7 @@ function LogRows({
           `${row.timeUnixNano ?? row.observedTimeUnixNano ?? "log"}-${row.traceId ?? ""}-${row.spanId ?? ""}`
         }
         size="small"
+        virtual
         dataSource={rows}
         pagination={logPagination(data, query, navigate)}
         scroll={{ x: 980, y: 520 }}

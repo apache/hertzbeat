@@ -19,6 +19,7 @@ import type { KeyboardEvent } from "react";
 
 export function interactiveTableRow(activate: () => void) {
   return {
+    role: "row" as const,
     tabIndex: 0,
     onClick: activate,
     onKeyDown: (event: KeyboardEvent<HTMLTableRowElement>) => {
