@@ -298,7 +298,7 @@ export const appRoutes: RouteObject[] = [
                 id: 'bulletin',
                 path: '/bulletin',
                 lazy: async () => {
-                  const { BulletinPage } = await import('@/features/bulletin/bulletin-page');
+                  const { BulletinPage } = await import('@/features/bulletin');
                   return { Component: BulletinPage };
                 }
               },

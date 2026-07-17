@@ -194,9 +194,25 @@
     "summaryUnavailable": "监控概览暂不可用，计数已隐藏。"
   },
   "bulletin": {
-    "title": "监控看板", "description": "查看运维人员配置的分组监控视图。", "search": "搜索看板",
-    "empty": "当前条件下没有看板。", "name": "名称", "application": "应用", "monitors": "监控数",
-    "creator": "创建人", "updated": "更新时间"
+    "title": "监控看板",
+    "description": "查看运维人员配置的分组监控视图。",
+    "search": "搜索看板",
+    "empty": "当前条件下没有看板。",
+    "name": "名称",
+    "application": "应用",
+    "monitors": "监控数",
+    "creator": "创建人",
+    "updated": "更新时间",
+    "create": "新建看板", "viewMetrics": "查看指标", "delete": "删除", "edit": "编辑看板", "fields": "指标字段",
+    "monitorsPlaceholder": "选择该应用下的监控", "selectMonitorFirst": "请先选择至少一个监控，再配置指标字段。",
+    "noMetrics": "该监控没有可选择的指标定义。", "validation": "保存前请完整配置应用、监控和指标字段关系。",
+    "saveSuccess": "看板已保存并验证。", "deleteSuccess": "看板已删除并验证。", "deleteConfirm": "确认删除此看板？",
+    "list": { "invalid": "看板列表响应无效。", "unavailable": "看板存储不可用。", "error": "无法加载看板。" },
+    "dependencies": { "invalid": "监控元数据无效。", "unavailable": "监控元数据不可用。", "error": "无法加载监控元数据。" },
+    "read": { "missing": "看板已不存在。", "invalid": "看板详情无效。", "unavailable": "看板存储不可用。", "error": "无法加载看板。" },
+    "save": { "missing": "看板已不存在。", "invalid": "无法验证保存结果。", "unavailable": "看板存储不可用。", "error": "无法保存看板。" },
+    "deleteError": { "missing": "看板已不存在。", "invalid": "无法验证删除结果。", "unavailable": "看板存储不可用。", "error": "无法删除看板。" },
+    "metrics": { "title": "实时指标", "select": "选择看板以检查指标。", "empty": "所选看板当前没有指标行。", "missing": "看板已不存在。", "invalid": "指标响应无效。", "unavailable": "实时指标存储不可用。", "error": "无法加载指标。", "monitor": "监控", "host": "主机", "metric": "指标", "field": "字段", "value": "值", "noData": "无数据" }
   },
   "monitorActions": { "copy": "复制", "enable": "启用", "pause": "暂停", "delete": "删除", "deleteConfirm": "确认删除所选监控数据？", "selected": "已选择 {{count}} 项", "success": "监控操作已完成。", "failed": "监控操作失败。" },
   "monitorMetrics": { "title": "指标检查", "description": "无需离开监控详情即可查看当前值与历史数据。", "realtime": "实时", "history": "历史", "favorite": "收藏", "unfavorite": "取消收藏", "favoriteSaved": "收藏指标已更新。", "favoriteFailed": "收藏指标更新失败。", "noCatalog": "该监控没有可用的数值指标目录。", "empty": "当前条件下没有指标数据。", "labels": "标签", "series": "序列", "time": "时间", "value": "值" },
