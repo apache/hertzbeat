@@ -4,16 +4,19 @@ import {
   ApiMessageError, apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut, type PageResult
 } from '@/core/http/api-message';
 import type {
-  Bulletin, BulletinDraft, BulletinFields, BulletinMetric, BulletinMetricField, BulletinMetrics,
-  BulletinMetricsRow, BulletinQuery
+  Bulletin, BulletinDraft, BulletinMetricField, BulletinMetrics, BulletinQuery
 } from '../model/bulletin-model';
 import { buildBulletinListPath, buildBulletinPayload } from '../model/bulletin-model';
 import { sameBulletin } from '../model/bulletin-model';
+import {
+  BulletinContractError,
+  parseBulletinPageWire,
+  parseBulletinWire,
+  parseMetricsWire,
+  type BulletinMetricFieldWire
+} from './bulletin-schema';
 
-export class BulletinContractError extends Error {
-  readonly code = 'BULLETIN_RESPONSE_INVALID';
-  constructor(message = 'Invalid bulletin response') { super(message); this.name = 'BulletinContractError'; }
-}
+export { BulletinContractError } from './bulletin-schema';
 
 export class BulletinMissingError extends Error {
   constructor() { super('Bulletin is missing'); this.name = 'BulletinMissingError'; }
@@ -31,19 +34,22 @@ export function classifyBulletinError(error: unknown, operation: BulletinOperati
 }
 
 export async function loadBulletins(query: BulletinQuery) {
-  return parsePage(await apiMessageGet<unknown>(buildBulletinListPath(query)), query);
+  return validatePageIdentity(
+    parseBulletinPageWire(await apiMessageGet<unknown>(buildBulletinListPath(query))),
+    query
+  );
 }
 
 export async function loadBulletin(id: number) {
   const value = await apiMessageGet<unknown>(`/api/bulletin/${id}`);
   if (value == null) throw new BulletinMissingError();
-  const bulletin = parseBulletin(value);
+  const bulletin = parseBulletinWire(value);
   if (bulletin.id !== id) throw new BulletinContractError('Bulletin identity mismatch');
   return bulletin;
 }
 
 export async function loadBulletinMetrics(id: number) {
-  return parseMetrics(await apiMessageGet<unknown>(`/api/bulletin/metrics?id=${id}`));
+  return mapMetrics(parseMetricsWire(await apiMessageGet<unknown>(`/api/bulletin/metrics?id=${id}`)));
 }
 
 export async function createBulletin(draft: BulletinDraft) {
@@ -99,70 +105,35 @@ async function loadExactNameBulletins(name: string) {
   return exact;
 }
 
-function object(value: unknown, label: string) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new BulletinContractError(`${label} must be an object`);
-  return value as Record<string, unknown>;
-}
-function integer(value: unknown, positive = false) {
-  if (!Number.isSafeInteger(value) || positive && Number(value) <= 0 || !positive && Number(value) < 0) throw new BulletinContractError();
-  return Number(value);
-}
-function text(value: unknown, nullable = false) {
-  if (nullable && value == null) return null;
-  if (typeof value !== 'string') throw new BulletinContractError();
-  return value;
-}
-function stringArray(value: unknown) {
-  if (!Array.isArray(value)) throw new BulletinContractError();
-  return value.map(item => text(item)!);
-}
-function parseFields(value: unknown): BulletinFields {
-  const source = object(value, 'fields');
-  return Object.fromEntries(Object.entries(source).map(([key, fields]) => [key, stringArray(fields)]));
-}
-function parseBulletin(value: unknown): Bulletin {
-  const item = object(value, 'bulletin');
-  if (!Array.isArray(item.monitorIds)) throw new BulletinContractError();
-  return {
-    id: integer(item.id, true), name: text(item.name)!, app: text(item.app)!,
-    monitorIds: item.monitorIds.map(id => integer(id, true)), fields: parseFields(item.fields),
-    creator: text(item.creator, true), modifier: text(item.modifier, true),
-    gmtCreate: text(item.gmtCreate, true), gmtUpdate: text(item.gmtUpdate, true)
-  };
-}
-function parsePage(value: unknown, query: BulletinQuery): PageResult<Bulletin> {
-  const page = object(value, 'page');
-  if (!Array.isArray(page.content)) throw new BulletinContractError();
-  const result = {
-    content: page.content.map(parseBulletin), totalElements: integer(page.totalElements), totalPages: integer(page.totalPages),
-    number: integer(page.number), size: integer(page.size, true)
-  };
-  if (result.number !== query.pageIndex || result.size !== query.pageSize
-    || result.totalPages !== Math.ceil(result.totalElements / result.size) || result.content.length > result.size) throw new BulletinContractError();
-  return result;
-}
-function parseMetricField(value: unknown): BulletinMetricField {
-  const item = object(value, 'metric field');
-  const rawValue = text(item.value)!;
-  const unit = text(item.unit)!;
-  if (rawValue === 'No Data') {
-    if (unit) throw new BulletinContractError('No-data field cannot expose a unit');
-    return { key: text(item.key)!, unit: '', value: null, status: 'no-data' };
+function validatePageIdentity(page: PageResult<Bulletin>, query: BulletinQuery) {
+  if (page.number !== query.pageIndex
+    || page.size !== query.pageSize
+    || page.totalPages !== Math.ceil(page.totalElements / page.size)
+    || page.content.length > page.size) {
+    throw new BulletinContractError('Bulletin page identity did not match the request');
   }
-  return { key: text(item.key)!, unit, value: rawValue, status: 'value' };
+  return page;
 }
-function parseMetric(value: unknown): BulletinMetric {
-  const item = object(value, 'metric');
-  if (!Array.isArray(item.fields)) throw new BulletinContractError();
-  return { name: text(item.name)!, fields: item.fields.map(group => Array.isArray(group) ? group.map(parseMetricField) : (() => { throw new BulletinContractError(); })()) };
+
+function mapMetrics(wire: ReturnType<typeof parseMetricsWire>): BulletinMetrics {
+  return {
+    name: wire.name,
+    content: wire.content.map(row => ({
+      monitorName: row.monitorName,
+      monitorId: row.monitorId,
+      host: row.host,
+      metrics: row.metrics.map(metric => ({
+        name: metric.name,
+        fields: metric.fields.map(group => group.map(mapMetricField))
+      }))
+    }))
+  };
 }
-function parseMetricsRow(value: unknown): BulletinMetricsRow {
-  const item = object(value, 'metrics row');
-  if (!Array.isArray(item.metrics)) throw new BulletinContractError();
-  return { monitorName: text(item.monitorName)!, monitorId: integer(item.monitorId, true), host: text(item.host)!, metrics: item.metrics.map(parseMetric) };
-}
-function parseMetrics(value: unknown): BulletinMetrics {
-  const item = object(value, 'metrics');
-  if (!Array.isArray(item.content)) throw new BulletinContractError();
-  return { name: text(item.name)!, content: item.content.map(parseMetricsRow) };
+
+function mapMetricField(field: BulletinMetricFieldWire): BulletinMetricField {
+  if (field.value === 'No Data') {
+    if (field.unit) throw new BulletinContractError('No-data field cannot expose a unit');
+    return { key: field.key, unit: '', value: null, status: 'no-data' };
+  }
+  return { key: field.key, unit: field.unit, value: field.value, status: 'value' };
 }
