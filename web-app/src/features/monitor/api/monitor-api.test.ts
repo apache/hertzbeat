@@ -17,16 +17,17 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const http = vi.hoisted(() => ({ apiMessageGet: vi.fn() }));
+const http = vi.hoisted(() => ({ apiMessageGet: vi.fn(), apiMessagePost: vi.fn(), apiMessagePut: vi.fn() }));
 vi.mock('@/core/http/api-message', async importOriginal => ({
-  ...await importOriginal<typeof import('@/core/http/api-message')>(), apiMessageGet: http.apiMessageGet
+  ...await importOriginal<typeof import('@/core/http/api-message')>(), ...http
 }));
 
 import { ApiMessageError } from '@/core/http/api-message';
 
 import {
-  classifyMonitorDetailReadError, classifyMonitorMetricReadError, loadFavoriteMetrics, loadHistoryMetric,
-  loadMonitorApps, loadMonitorDetail, loadMonitorMetricCatalog, loadMonitors, loadRealtimeMetric,
+  classifyMonitorDetailReadError, classifyMonitorMetricReadError, detectMonitor, loadFavoriteMetrics, loadHistoryMetric,
+  loadMonitorApps, loadMonitorCollectors, loadMonitorDetail, loadMonitorMetricCatalog, loadMonitorParamDefines,
+  loadMonitors, loadNewMonitorEvidence, loadRealtimeMetric, saveMonitor,
   MonitorContractError, MonitorMissingError, type MonitorQuery
 } from './monitor-api';
 import { monitorAppOptions } from '../model/monitor-model';
@@ -125,6 +126,8 @@ describe('monitor detail API contracts', () => {
     null, {}, { monitor: null },
     { monitor: { ...detailRow, id: 8 }, params: [], collector: null, grafanaDashboard: null, metrics: [] },
     { monitor: { ...detailRow, intervals: '60' }, params: [], collector: null, grafanaDashboard: null, metrics: [] },
+    { monitor: { ...detailRow, scrape: 'unknown_sd' }, params: [], collector: null, grafanaDashboard: null, metrics: [] },
+    { monitor: { ...detailRow, scheduleType: 'weekly' }, params: [], collector: null, grafanaDashboard: null, metrics: [] },
     { monitor: detailRow, params: [{}], collector: null, grafanaDashboard: null, metrics: [] },
     { monitor: detailRow, params: [], collector: 7, grafanaDashboard: null, metrics: [] },
     { monitor: detailRow, params: [], collector: null, grafanaDashboard: [], metrics: [] },
@@ -140,11 +143,145 @@ describe('monitor detail API contracts', () => {
     await expect(loadMonitorDetail(7)).rejects.toBeInstanceOf(expected);
   });
 
+  it('uses the established detect and create/update write endpoints with AbortSignals', async () => {
+    const controller = new AbortController();
+    const { signal } = controller;
+    const payload = { monitor: { name: 'home' } };
+    http.apiMessagePost.mockResolvedValue(undefined);
+    http.apiMessagePut.mockResolvedValue(undefined);
+    await detectMonitor(payload, signal);
+    await saveMonitor('new', payload, signal);
+    await saveMonitor('edit', payload, signal);
+    expect(http.apiMessagePost).toHaveBeenCalledWith('/api/monitor/detect', payload,
+      { signal: expect.any(AbortSignal) });
+    const detectSignal = http.apiMessagePost.mock.calls[0]?.[2]?.signal as AbortSignal;
+    expect(detectSignal.aborted).toBe(false);
+    controller.abort();
+    expect(detectSignal.aborted).toBe(true);
+    expect(http.apiMessagePost).toHaveBeenCalledWith('/api/monitor', payload, { signal });
+    expect(http.apiMessagePut).toHaveBeenCalledWith('/api/monitor', payload, { signal });
+  });
+
   it('classifies missing, unavailable, and contract detail reads separately', () => {
     expect(classifyMonitorDetailReadError(new ApiMessageError('missing', { status: 404 }))).toBe('missing');
     expect(classifyMonitorDetailReadError(new ApiMessageError('missing', { status: 200, code: 15 }))).toBe('missing');
     expect(classifyMonitorDetailReadError(new ApiMessageError('offline', { status: 503 }))).toBe('unavailable');
     expect(classifyMonitorDetailReadError(new MonitorContractError('bad'))).toBe('error');
+  });
+});
+
+describe('monitor editor API contracts', () => {
+  beforeEach(() => http.apiMessageGet.mockReset());
+
+  it('strictly allowlists parameter definitions, binds app, and forwards AbortSignal', async () => {
+    const signal = new AbortController().signal;
+    http.apiMessageGet.mockResolvedValue([{ id: null, app: 'website', name: { 'en-US': 'Host' }, field: 'host',
+      type: 'host', required: true, defaultValue: null, placeholder: 'example.com', options: null, hide: false,
+      range: null, limit: null, keyAlias: null, valueAlias: null, depend: null, ignored: true }]);
+    await expect(loadMonitorParamDefines('website', signal)).resolves.toEqual([{
+      id: null, app: 'website', name: { 'en-US': 'Host' }, field: 'host', type: 'host', required: true,
+      defaultValue: null, placeholder: 'example.com', range: null, limit: null, options: null,
+      keyAlias: null, valueAlias: null, depend: null, hide: false
+    }]);
+    expect(http.apiMessageGet).toHaveBeenCalledWith('/api/apps/website/params', { signal });
+  });
+
+  it('uses the requested app when canonical parameter evidence omits its redundant app identity', async () => {
+    const evidence = { id: null, name: { 'en-US': 'Host' }, field: 'host', type: 'host', required: true,
+      defaultValue: null, placeholder: null, range: null, limit: null, options: null, keyAlias: null,
+      valueAlias: null, depend: null, hide: false };
+    for (const value of [{ ...evidence, app: null }, evidence]) {
+      http.apiMessageGet.mockResolvedValueOnce([value]);
+      await expect(loadMonitorParamDefines('website')).resolves.toMatchObject([{ app: 'website', field: 'host' }]);
+    }
+  });
+
+  it('rejects a nonempty parameter app that conflicts with the requested app', async () => {
+    http.apiMessageGet.mockResolvedValue([{ id: null, app: 'other', name: {}, field: 'host', type: 'host',
+      required: true, defaultValue: null, placeholder: null, range: null, limit: null, options: null,
+      keyAlias: null, valueAlias: null, depend: null, hide: false }]);
+    await expect(loadMonitorParamDefines('website')).rejects.toBeInstanceOf(MonitorContractError);
+  });
+
+  it.each([
+    null, {},
+    [{ id: null, app: 'website', name: null, field: 'host', type: 'host', required: true,
+      defaultValue: null, placeholder: null, range: null, limit: null, options: null, keyAlias: null,
+      valueAlias: null, depend: null, hide: false }],
+    [{ id: null, app: 'website', name: {}, field: 'host', type: 'host', required: 'true',
+      defaultValue: null, placeholder: null, range: null, limit: null, options: null, keyAlias: null,
+      valueAlias: null, depend: null, hide: false }]
+  ])('rejects malformed parameter definition evidence %#', async value => {
+    http.apiMessageGet.mockResolvedValue(value);
+    await expect(loadMonitorParamDefines('website')).rejects.toBeInstanceOf(MonitorContractError);
+  });
+
+  it('loads a bounded collector selection and forwards AbortSignal', async () => {
+    const signal = new AbortController().signal;
+    http.apiMessageGet.mockResolvedValue({ content: [
+      { collector: { name: 'collector-a', status: 0, ignored: true }, ignored: true },
+      { collector: { name: 'collector-b', status: 1 } }
+    ], totalElements: 2, totalPages: 1, number: 0, size: 200 });
+    await expect(loadMonitorCollectors(signal)).resolves.toEqual([
+      { name: 'collector-a', online: true }, { name: 'collector-b', online: false }
+    ]);
+    expect(http.apiMessageGet).toHaveBeenCalledWith('/api/collector?pageIndex=0&pageSize=200', { signal });
+  });
+
+  it('reads all collector pages and rejects a duplicate identity across pages', async () => {
+    const firstPage = Array.from({ length: 200 }, (_, index) => ({
+      collector: { name: `collector-${index}`, status: 0 }
+    }));
+    http.apiMessageGet
+      .mockResolvedValueOnce({ content: firstPage, totalElements: 201, totalPages: 2, number: 0, size: 200 })
+      .mockResolvedValueOnce({ content: [{ collector: { name: 'collector-200', status: 1 } }],
+        totalElements: 201, totalPages: 2, number: 1, size: 200 });
+    await expect(loadMonitorCollectors()).resolves.toHaveLength(201);
+    expect(http.apiMessageGet).toHaveBeenNthCalledWith(2, '/api/collector?pageIndex=1&pageSize=200');
+
+    http.apiMessageGet.mockReset();
+    http.apiMessageGet
+      .mockResolvedValueOnce({ content: firstPage, totalElements: 201, totalPages: 2, number: 0, size: 200 })
+      .mockResolvedValueOnce({ content: [{ collector: { name: 'collector-0', status: 1 } }],
+        totalElements: 201, totalPages: 2, number: 1, size: 200 });
+    await expect(loadMonitorCollectors()).rejects.toBeInstanceOf(MonitorContractError);
+  });
+
+  it.each([null, {}, { content: null }, { content: [{}], totalElements: 1, totalPages: 1, number: 0, size: 200 },
+    { content: [{ collector: { name: '', status: 0 } }], totalElements: 1, totalPages: 1, number: 0, size: 200 },
+    { content: [{ collector: { name: 'collector-a', status: 2 } }], totalElements: 1, totalPages: 1, number: 0, size: 200 }
+  ])('rejects malformed collector evidence %#', async value => {
+    http.apiMessageGet.mockResolvedValue(value);
+    await expect(loadMonitorCollectors()).rejects.toBeInstanceOf(MonitorContractError);
+  });
+
+  it('proves a new save with one exact name/app match followed by exact-id detail', async () => {
+    const signal = new AbortController().signal;
+    http.apiMessageGet
+      .mockResolvedValueOnce({ content: [row, { ...row, id: 8, name: 'checkout-copy' }], totalElements: 2,
+        totalPages: 1, number: 0, size: 50 })
+      .mockResolvedValueOnce({ monitor: detailRow, params: [], collector: null, grafanaDashboard: null, metrics: [] });
+    await expect(loadNewMonitorEvidence(' checkout ', 'website', signal)).resolves.toMatchObject({ monitor: { id: 7 } });
+    expect(http.apiMessageGet).toHaveBeenNthCalledWith(1,
+      '/api/monitors?pageIndex=0&pageSize=50&search=checkout&app=website', { signal });
+    expect(http.apiMessageGet).toHaveBeenNthCalledWith(2, '/api/monitor/7', { signal });
+  });
+
+  it('rejects missing and duplicate exact new-save evidence without detail reread', async () => {
+    for (const content of [[], [row, { ...row, id: 8 }]]) {
+      http.apiMessageGet.mockReset();
+      http.apiMessageGet.mockResolvedValue({ content, totalElements: content.length,
+        totalPages: content.length ? 1 : 0, number: 0, size: 50 });
+      await expect(loadNewMonitorEvidence('checkout', 'website')).rejects.toBeInstanceOf(MonitorContractError);
+      expect(http.apiMessageGet).toHaveBeenCalledTimes(1);
+    }
+  });
+
+  it('fails fast when new-save evidence exceeds the explicit page safety bound', async () => {
+    http.apiMessageGet.mockResolvedValue({ content: [], totalElements: 1_001, totalPages: 21,
+      number: 0, size: 50 });
+    await expect(loadNewMonitorEvidence('checkout', 'website')).rejects.toBeInstanceOf(MonitorContractError);
+    expect(http.apiMessageGet).toHaveBeenCalledTimes(1);
   });
 });
 

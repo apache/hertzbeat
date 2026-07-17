@@ -45,12 +45,13 @@ describe('monitor list model', () => {
     expect(monitorStatusKey(8)).toBe('monitor.status.unknown');
   });
 
-  it('keeps monitor templates even when they are hidden from the settings menu', () => {
+  it('keeps supported Prometheus creation while excluding system and explicitly hidden apps', () => {
     expect(monitorAppOptions([
       { category: 'http', value: 'website', label: 'Website', },
       { category: 'auto', value: 'prometheus', label: 'Prometheus' },
-      { category: '__system__', value: 'internal', label: 'Internal' }
-    ])).toEqual([{ value: 'website', label: 'Website' }]);
+      { category: '__system__', value: 'internal', label: 'Internal' },
+      { category: 'http', value: 'hidden', label: 'Hidden', hide: true }
+    ])).toEqual([{ value: 'website', label: 'Website' }, { value: 'prometheus', label: 'Prometheus' }]);
   });
 
   it('builds established copy, enable, pause, and delete action paths', () => {

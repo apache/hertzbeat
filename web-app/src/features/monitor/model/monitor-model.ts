@@ -46,12 +46,17 @@ type MonitorAppItem = {
   category?: string | null;
   value?: string | null;
   label?: string | null;
+  hide?: boolean | null;
 };
 
 export function monitorAppOptions(items: MonitorAppItem[]) {
   return items
-    .filter(item => item.value && item.value !== 'prometheus' && item.category !== '__system__')
+    .filter(isSelectableMonitorApp)
     .map(item => ({ value: item.value as string, label: item.label || item.value as string }));
+}
+
+export function isSelectableMonitorApp(item: MonitorAppItem) {
+  return Boolean(item.value) && item.hide !== true && item.category !== '__system__';
 }
 
 export function monitorStatusKey(status: number) {
