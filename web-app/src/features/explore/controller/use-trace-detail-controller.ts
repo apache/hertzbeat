@@ -88,7 +88,9 @@ function resolveTraceDetailState(
   if (pending) return { kind: 'loading', traceId };
   if (error) {
     const kind = classifyExploreSignalError(error);
-    return { kind: kind === 'missing' || kind === 'unavailable' ? kind : 'error', traceId };
+    if (kind === 'missing') return { kind, traceId };
+    if (kind === 'transport_error') return { kind: 'unavailable', traceId };
+    return { kind: 'error', traceId };
   }
   if (!detail || detail.traceId !== traceId) return { kind: 'error', traceId };
   const spans = traceSpanLayout(detail);

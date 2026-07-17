@@ -120,12 +120,12 @@ describe('Explore page controller', () => {
     await waitFor(() => expect(routed.current().result.kind).toBe(kind));
   });
 
-  it('keeps unavailable, contract, and other failures distinct from empty', async () => {
+  it('keeps transport, contract, and other failures distinct from empty', async () => {
     const { ApiMessageError } = await import('@/core/http/api-message');
     const { ExploreSignalContractError } = await import('../model/explore-signal-contract');
     for (const [reason, kind] of [
-      [new ApiMessageError('offline', { status: 503 }), 'unavailable'],
-      [new ExploreSignalContractError('bad'), 'error'],
+      [new ApiMessageError('offline', { status: 503 }), 'transport_error'],
+      [new ExploreSignalContractError('bad'), 'contract_error'],
       [new Error('bad'), 'error']
     ] as const) {
       api.loadLogSignal.mockRejectedValue(reason);
@@ -133,6 +133,18 @@ describe('Explore page controller', () => {
       await waitFor(() => expect(routed.current().result.kind).toBe(kind));
       routed.unmount();
     }
+  });
+
+  it.each([
+    ['unsupported_query', 'unsupported_query'],
+    ['load_failed', 'storage_unavailable']
+  ] as const)('preserves the metric backend state %s', async (emptyStateReason, kind) => {
+    api.loadMetricSignal.mockResolvedValue({
+      ...metricConsole([]), results: null, emptyStateReason
+    });
+    const routed = renderController(['/explore?signal=metrics&collectorId=east&serviceName=checkout'
+      + '&serviceNamespace=commerce&environment=prod&query=sum%28rate%28http_requests_total%5B5m%5D%29%29']);
+    await waitFor(() => expect(routed.current().result.kind).toBe(kind));
   });
 
   it('does not let a stale previous-signal promise replace the current result', async () => {

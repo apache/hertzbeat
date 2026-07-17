@@ -41,6 +41,12 @@ describe('explore API contracts', () => {
   });
 
   it('classifies metric results from explicit backend evidence', () => {
+    expect(metricResultState(metricConsole(null, null, 'unsupported_query'))).toEqual({
+      kind: 'unsupported_query'
+    });
+    expect(metricResultState(metricConsole(null, null, 'load_failed'))).toEqual({
+      kind: 'storage_unavailable'
+    });
     expect(metricResultState(metricConsole({ status: 200, frames: [] }, 'transport failed'))).toEqual({
       kind: 'error',
       message: 'transport failed'
@@ -50,11 +56,11 @@ describe('explore API contracts', () => {
       message: 'storage offline'
     });
     expect(metricResultState(metricConsole({ status: 500, frames: [] }))).toEqual({ kind: 'error' });
-    expect(metricResultState(metricConsole(null))).toEqual({ kind: 'unavailable' });
-    expect(metricResultState(metricConsole({ status: null, frames: [] }))).toEqual({ kind: 'unavailable' });
-    expect(metricResultState(metricConsole({ status: 200, frames: null }))).toEqual({ kind: 'unavailable' });
+    expect(metricResultState(metricConsole(null))).toEqual({ kind: 'storage_unavailable' });
+    expect(metricResultState(metricConsole({ status: null, frames: [] }))).toEqual({ kind: 'storage_unavailable' });
+    expect(metricResultState(metricConsole({ status: 200, frames: null }))).toEqual({ kind: 'storage_unavailable' });
     expect(metricResultState(metricConsole({ status: 200, frames: [] }))).toEqual({ kind: 'empty' });
-    expect(metricResultState(metricConsole({ status: 200, frames: [{ schema: null, data: null }] }))).toEqual({ kind: 'unavailable' });
+    expect(metricResultState(metricConsole({ status: 200, frames: [{ schema: null, data: null }] }))).toEqual({ kind: 'storage_unavailable' });
     expect(metricResultState(metricConsole({ status: 200, frames: [{ schema: null, data: [] }] }))).toEqual({ kind: 'empty' });
     expect(metricResultState(metricConsole({
       status: 200,
@@ -121,10 +127,11 @@ describe('explore API contracts', () => {
 
 function metricConsole(
   results: { status: number | null; frames: NonNullable<MetricConsole['results']>['frames']; msg?: string | null } | null,
-  errorMessage: string | null = null
+  errorMessage: string | null = null,
+  emptyStateReason: string | null = null
 ): MetricConsole {
   return { context: null, query: null, datasource: null, queryMode: null,
-    results: results && { refId: null, msg: null, ...results }, stats: null, emptyStateReason: null, errorMessage };
+    results: results && { refId: null, msg: null, ...results }, stats: null, emptyStateReason, errorMessage };
 }
 
 function traceDetail(override: Partial<import('./explore-signal-contract').TraceDetail> = {}): import('./explore-signal-contract').TraceDetail {

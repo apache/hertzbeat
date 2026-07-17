@@ -1,0 +1,10 @@
+{
+  "explore": {
+    "states": {
+      "unsupportedQuery": "Collector-scoped metrics accept a metric name, not an arbitrary PromQL expression.",
+      "storageUnavailable": "Metric storage is unavailable for this query.",
+      "transportError": "The signal request could not reach the backend.",
+      "contractError": "The backend response did not match the Explore contract."
+    }
+  }
+}

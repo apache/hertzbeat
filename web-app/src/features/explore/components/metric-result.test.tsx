@@ -82,7 +82,7 @@ describe('MetricResult', () => {
     expect(screen.getByText('transport failed')).toBeInTheDocument();
   });
 
-  it('renders unavailable for malformed metric results', () => {
+  it('renders storage unavailable for malformed metric results', () => {
     const malformed: MetricConsole[] = [
       metricConsole(null),
       metricConsole({ status: null, frames: [] }),
@@ -92,7 +92,7 @@ describe('MetricResult', () => {
 
     for (const data of malformed) {
       render(<I18nextProvider i18n={i18n}><Subject data={data} /></I18nextProvider>);
-      expect(screen.getByText('The service is unavailable. Check the backend connection and try again.')).toBeInTheDocument();
+      expect(screen.getByText('Metric storage is unavailable for this query.')).toBeInTheDocument();
       expect(screen.queryByText('No metric series for this context.')).not.toBeInTheDocument();
       cleanup();
     }

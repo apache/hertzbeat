@@ -38,7 +38,10 @@ export type ExplorePageResultState =
   | { kind: 'invalid' }
   | { kind: 'live' }
   | { kind: 'loading' }
-  | { kind: 'unavailable' }
+  | { kind: 'transport_error' }
+  | { kind: 'contract_error' }
+  | { kind: 'storage_unavailable' }
+  | { kind: 'unsupported_query' }
   | { kind: 'error' }
   | { kind: 'empty' | 'ready'; signal: 'metrics'; data: MetricConsole }
   | { kind: 'empty' | 'ready'; signal: 'logs'; data: ExplorePageResult<LogRow> }
@@ -142,7 +145,10 @@ function resolveResult(
   if (handoff === 'invalid') return { kind: 'invalid' };
   if (query.signal === 'logs' && query.live) return { kind: 'live' };
   if (pending) return { kind: 'loading' };
-  if (error) return { kind: classifyExploreSignalError(error) === 'unavailable' ? 'unavailable' : 'error' };
+  if (error) {
+    const kind = classifyExploreSignalError(error);
+    return { kind: kind === 'transport_error' || kind === 'contract_error' ? kind : 'error' };
+  }
   if (!data) return { kind: 'error' };
   return resolveDataResult(query, data);
 }
@@ -150,7 +156,7 @@ function resolveResult(
 function resolveDataResult(query: ExploreQuery, data: HistoricalData): ExplorePageResultState {
   if (query.signal === 'metrics') {
     const metric = metricResultState(data as MetricConsole);
-    if (metric.kind === 'unavailable') return { kind: 'unavailable' };
+    if (metric.kind === 'storage_unavailable' || metric.kind === 'unsupported_query') return { kind: metric.kind };
     if (metric.kind === 'error') return { kind: 'error' };
     return { kind: metric.kind, signal: 'metrics', data: data as MetricConsole };
   }

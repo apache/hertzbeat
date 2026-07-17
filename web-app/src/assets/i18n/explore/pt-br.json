@@ -1,0 +1,10 @@
+{
+  "explore": {
+    "states": {
+      "unsupportedQuery": "Métricas com escopo de Collector aceitam um nome de métrica, não uma expressão PromQL arbitrária.",
+      "storageUnavailable": "O armazenamento de métricas não está disponível para esta consulta.",
+      "transportError": "A solicitação do sinal não conseguiu alcançar o backend.",
+      "contractError": "A resposta do backend não corresponde ao contrato do Explore."
+    }
+  }
+}

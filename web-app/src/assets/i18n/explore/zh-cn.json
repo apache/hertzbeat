@@ -1,0 +1,10 @@
+{
+  "explore": {
+    "states": {
+      "unsupportedQuery": "Collector 范围的指标查询仅支持指标名称，不支持任意 PromQL 表达式。",
+      "storageUnavailable": "当前查询无法使用指标存储。",
+      "transportError": "信号请求未能连接到后端。",
+      "contractError": "后端响应不符合 Explore 契约。"
+    }
+  }
+}

@@ -52,7 +52,12 @@ function ResultPanel({ query, result, retry, openPath }: {
   const { t } = useTranslation();
   if (result.kind === 'invalid') return null;
   if (result.kind === 'loading') return <ResultFrame><Skeleton active paragraph={{ rows: 8 }} /></ResultFrame>;
-  if (result.kind === 'unavailable') return <FailureResult message={t('common.unavailable')} retry={retry} />;
+  if (result.kind === 'transport_error') return <FailureResult message={t('explore.states.transportError')} retry={retry} />;
+  if (result.kind === 'contract_error') return <FailureResult message={t('explore.states.contractError')} retry={retry} />;
+  if (result.kind === 'storage_unavailable') return <FailureResult message={t('explore.states.storageUnavailable')} retry={retry} />;
+  if (result.kind === 'unsupported_query') {
+    return <ResultFrame><Alert type="warning" showIcon message={t('explore.states.unsupportedQuery')} /></ResultFrame>;
+  }
   if (result.kind === 'error') return <FailureResult message={t('explore.loadFailed')} retry={retry} />;
   if (result.kind === 'live') return query.signal === 'logs'
     ? <LiveLogPanel query={query} openPath={openPath} /> : null;

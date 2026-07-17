@@ -38,6 +38,14 @@ const shellLocaleLoaders: Record<SupportedLocale, () => Promise<{ default: Recor
   'pt-BR': () => import('@/assets/i18n/shell/pt-br.json')
 };
 
+const exploreLocaleLoaders: Record<SupportedLocale, () => Promise<{ default: Record<string, unknown> }>> = {
+  'en-US': () => import('@/assets/i18n/explore/en-us.json'),
+  'zh-CN': () => import('@/assets/i18n/explore/zh-cn.json'),
+  'zh-TW': () => import('@/assets/i18n/explore/zh-tw.json'),
+  'ja-JP': () => import('@/assets/i18n/explore/ja-jp.json'),
+  'pt-BR': () => import('@/assets/i18n/explore/pt-br.json')
+};
+
 export const i18n = i18next.createInstance();
 
 export function resolveLocale(value?: string | null): SupportedLocale {
@@ -48,16 +56,27 @@ export function resolveLocale(value?: string | null): SupportedLocale {
 
 export async function loadLocale(locale: SupportedLocale) {
   if (!i18n.hasResourceBundle(locale, 'translation')) {
-    const [messages, shellMessages] = await Promise.all([
+    const [messages, shellMessages, exploreMessages] = await Promise.all([
       localeLoaders[locale](),
-      shellLocaleLoaders[locale]()
+      shellLocaleLoaders[locale](),
+      exploreLocaleLoaders[locale]()
     ]);
     i18n.addResourceBundle(locale, 'translation', {
       ...messages.default,
-      ...shellMessages.default
+      ...shellMessages.default,
+      explore: {
+        ...messageGroup(messages.default.explore),
+        ...messageGroup(exploreMessages.default.explore)
+      }
     }, true, true);
   }
   await i18n.changeLanguage(locale);
+}
+
+function messageGroup(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
 }
 
 export async function initializeI18n() {

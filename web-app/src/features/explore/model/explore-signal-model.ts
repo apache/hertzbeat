@@ -36,20 +36,29 @@ export type MetricPoint = { timestamp: number; value: number };
 
 export type MetricResultState =
   | { kind: 'error'; message?: string }
-  | { kind: 'unavailable' }
+  | { kind: 'storage_unavailable' }
+  | { kind: 'unsupported_query' }
   | { kind: 'empty' }
   | { kind: 'ready'; series: MetricSeries[] };
 
 export function metricResultState(console: MetricConsole): MetricResultState {
+  const unavailable = metricUnavailableState(console);
+  if (unavailable) return unavailable;
   if (console.errorMessage != null) return metricErrorState(console.errorMessage);
   const results = console.results;
-  if (!results || results.status == null) return { kind: 'unavailable' };
+  if (!results || results.status == null) return { kind: 'storage_unavailable' };
   if (results.status !== 200) return metricErrorState(results.msg ?? undefined);
-  if (!Array.isArray(results.frames)) return { kind: 'unavailable' };
+  if (!Array.isArray(results.frames)) return { kind: 'storage_unavailable' };
   if (results.frames.length === 0) return { kind: 'empty' };
-  if (results.frames.some(frame => !hasMetricFrameData(frame))) return { kind: 'unavailable' };
+  if (results.frames.some(frame => !hasMetricFrameData(frame))) return { kind: 'storage_unavailable' };
   const series = metricSeries(console);
   return series.some(item => metricPoints(item).length > 0) ? { kind: 'ready', series } : { kind: 'empty' };
+}
+
+function metricUnavailableState(console: MetricConsole): MetricResultState | undefined {
+  if (console.emptyStateReason === 'unsupported_query') return { kind: 'unsupported_query' };
+  if (console.emptyStateReason === 'load_failed' && console.results == null) return { kind: 'storage_unavailable' };
+  return undefined;
 }
 
 export function metricSeries(console: MetricConsole): MetricSeries[] {

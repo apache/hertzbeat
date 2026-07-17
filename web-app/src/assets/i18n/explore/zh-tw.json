@@ -1,0 +1,10 @@
+{
+  "explore": {
+    "states": {
+      "unsupportedQuery": "Collector 範圍的指標查詢僅支援指標名稱，不支援任意 PromQL 表達式。",
+      "storageUnavailable": "目前查詢無法使用指標儲存。",
+      "transportError": "訊號請求未能連線至後端。",
+      "contractError": "後端回應不符合 Explore 契約。"
+    }
+  }
+}

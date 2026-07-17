@@ -39,7 +39,12 @@ type SampleRow = {
 export function MetricResult({ data, t }: { data: MetricConsole; t: TFunction }) {
   const state = metricResultState(data);
   if (state.kind === "error") return <Alert type="error" showIcon message={state.message ?? t("explore.loadFailed")} />;
-  if (state.kind === "unavailable") return <Alert type="warning" showIcon message={t("common.unavailable")} />;
+  if (state.kind === "storage_unavailable") {
+    return <Alert type="warning" showIcon message={t("explore.states.storageUnavailable")} />;
+  }
+  if (state.kind === "unsupported_query") {
+    return <Alert type="warning" showIcon message={t("explore.states.unsupportedQuery")} />;
+  }
   if (state.kind === "empty")
     return (
       <SignalResultFrame title={t("explore.signals.metrics")} count={0} unit={t("exploreMetric.series")}>

@@ -1,0 +1,10 @@
+{
+  "explore": {
+    "states": {
+      "unsupportedQuery": "Collector スコープのメトリクスでは、任意の PromQL 式ではなくメトリクス名を指定してください。",
+      "storageUnavailable": "このクエリではメトリクスストレージを利用できません。",
+      "transportError": "シグナル要求がバックエンドに到達できませんでした。",
+      "contractError": "バックエンドの応答が Explore コントラクトと一致しません。"
+    }
+  }
+}

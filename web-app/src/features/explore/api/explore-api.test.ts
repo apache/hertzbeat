@@ -107,10 +107,10 @@ describe('explore API paths', () => {
     expect(apiMessageGet.mock.calls.every((call: unknown[]) => (call[1] as { signal: AbortSignal }).signal === signal)).toBe(true);
   });
 
-  it('keeps missing, unavailable, contract, and other failures distinct', () => {
+  it('keeps missing, transport, contract, and other failures distinct', () => {
     expect(classifyExploreSignalError(new ExploreSignalMissingError())).toBe('missing');
-    expect(classifyExploreSignalError(new ApiMessageError('offline', { status: 503 }))).toBe('unavailable');
-    expect(classifyExploreSignalError(new ExploreSignalContractError('bad'))).toBe('contract');
+    expect(classifyExploreSignalError(new ApiMessageError('offline', { status: 503 }))).toBe('transport_error');
+    expect(classifyExploreSignalError(new ExploreSignalContractError('bad'))).toBe('contract_error');
     expect(classifyExploreSignalError(new Error('bad'))).toBe('error');
   });
 });

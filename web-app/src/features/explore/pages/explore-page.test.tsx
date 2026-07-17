@@ -24,6 +24,9 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 import en from '@/assets/i18n/en-us.json';
+import { ApiMessageError } from '@/core/http/api-message';
+
+import { ExploreSignalContractError, type MetricConsole } from '../model/explore-signal-contract';
 
 const api = vi.hoisted(() => ({
   loadMetricSignal: vi.fn(),
@@ -167,7 +170,32 @@ describe('ExplorePage instrumentation context boundary', () => {
     expect(max).toHaveAttribute('aria-invalid', 'true');
     expect(max).toHaveAttribute('aria-describedby', ordering.id);
   });
+
+  it.each([
+    ['unsupported_query', 'unsupportedQuery'],
+    ['load_failed', 'storageUnavailable']
+  ] as const)('renders the metric backend state %s without inventing empty data', async (reason, messageKey) => {
+    api.loadMetricSignal.mockResolvedValue(metricState(reason));
+    renderPage('/explore?signal=metrics');
+    expect(await screen.findByText(i18n.t(`explore.states.${messageKey}`))).toBeInTheDocument();
+    expect(screen.queryByText(en.explore.empty.metrics)).not.toBeInTheDocument();
+  });
+
+  it.each([
+    [new ApiMessageError('offline', { status: 503 }), 'transportError'],
+    [new ExploreSignalContractError('invalid payload'), 'contractError']
+  ] as const)('renders classified request failures without calling them empty', async (reason, messageKey) => {
+    api.loadLogSignal.mockRejectedValue(reason);
+    renderPage('/explore?signal=logs');
+    expect(await screen.findByText(i18n.t(`explore.states.${messageKey}`))).toBeInTheDocument();
+    expect(screen.queryByText(en.explore.empty.logs)).not.toBeInTheDocument();
+  });
 });
+
+function metricState(emptyStateReason: string): MetricConsole {
+  return { context: null, query: null, datasource: null, queryMode: null, results: null,
+    stats: { totalSeries: 0, nonEmptySeries: 0, latestObservedAt: null }, emptyStateReason, errorMessage: null };
+}
 
 function renderPage(initialEntry: string) {
   const client = new QueryClient({
