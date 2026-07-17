@@ -319,10 +319,52 @@ class MonitorServiceTest {
         when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
         when(collectJobScheduling.addAsyncCollectJob(job, null)).thenReturn(1L);
         when(monitorDao.save(monitor)).thenReturn(monitor);
-        List<Param> params = Collections.singletonList(new Param());
+        List<Param> params = Collections.singletonList(
+                Param.builder().field("host").paramValue("localhost").build());
         when(paramDao.saveAll(params)).thenReturn(params);
         assertDoesNotThrow(() -> monitorService.addMonitor(monitor, params, null, null));
         verify(entityIdentityResolutionService).refreshAutoMonitorBinds(monitor);
+    }
+
+    @Test
+    void addMonitorCanonicalizesStaticIpv6InstanceFromParams() {
+        Monitor monitor = Monitor.builder()
+                .intervals(10)
+                .name("ipv6")
+                .app("tcp")
+                .instance("client-controlled")
+                .build();
+        List<Param> params = List.of(
+                Param.builder().field("host").paramValue("::1").build(),
+                Param.builder().field("port").paramValue("443").build());
+        Job job = new Job();
+        when(appService.getAppDefine("tcp")).thenReturn(job);
+
+        monitorService.addMonitor(monitor, params, null, null);
+
+        assertEquals("[::1]:443", monitor.getInstance());
+        assertEquals("[::1]:443", job.getMetadata().get(CommonConstants.LABEL_INSTANCE));
+    }
+
+    @Test
+    void addMonitorCanonicalizesServiceDiscoveryParentToLegacyPlaceholder() {
+        Monitor monitor = Monitor.builder()
+                .intervals(10)
+                .name("discovery")
+                .app("mysql")
+                .scrape("kubernetes")
+                .instance("client-controlled:3306")
+                .build();
+        List<Param> params = List.of(
+                Param.builder().field("host").paramValue("db.example.com").build(),
+                Param.builder().field("port").paramValue("3306").build());
+        Job job = new Job();
+        when(appService.getAppDefine("kubernetes")).thenReturn(job, new Job());
+
+        monitorService.addMonitor(monitor, params, null, null);
+
+        assertEquals("unknow", monitor.getInstance());
+        assertEquals("unknow", job.getMetadata().get(CommonConstants.LABEL_INSTANCE));
     }
 
     @Test
@@ -336,7 +378,8 @@ class MonitorServiceTest {
         Job job = new Job();
         when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
         when(collectJobScheduling.addAsyncCollectJob(job, null)).thenReturn(1L);
-        List<Param> params = Collections.singletonList(new Param());
+        List<Param> params = Collections.singletonList(
+                Param.builder().field("host").paramValue("localhost").build());
         when(monitorDao.save(monitor)).thenThrow(RuntimeException.class);
         assertThrows(MonitorDatabaseException.class, () -> monitorService.addMonitor(monitor, params, null, null));
     }
@@ -725,7 +768,7 @@ class MonitorServiceTest {
 
         MonitorDto dto = new MonitorDto();
         List<Param> params = new ArrayList<>();
-        String field = "field";
+        String field = "host";
         Param param = Param.builder()
                 .field(field)
                 .paramValue(value)
@@ -802,6 +845,79 @@ class MonitorServiceTest {
         verify(monitorDao).save(any(Monitor.class));
         verify(paramDao).saveAll(params);
         verify(entityIdentityResolutionService).refreshAutoMonitorBinds(monitor);
+    }
+
+    @Test
+    void modifyMonitorCanonicalizesStaticUriWithoutDuplicatingExplicitPort() {
+        long monitorId = 2L;
+        Monitor monitor = Monitor.builder()
+                .id(monitorId)
+                .jobId(20L)
+                .intervals(10)
+                .app("website")
+                .name("site")
+                .instance("client-controlled")
+                .status(CommonConstants.MONITOR_UP_CODE)
+                .build();
+        Monitor existing = Monitor.builder()
+                .id(monitorId)
+                .jobId(20L)
+                .intervals(10)
+                .app("website")
+                .name("site")
+                .instance("old.example.com")
+                .status(CommonConstants.MONITOR_UP_CODE)
+                .build();
+        List<Param> params = List.of(
+                Param.builder().field("host").paramValue("https://example.com:8443/path").build(),
+                Param.builder().field("port").paramValue("443").build());
+        Job job = new Job();
+        when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existing));
+        when(appService.getAppDefine("website")).thenReturn(job);
+        when(collectJobScheduling.updateAsyncCollectJob(job)).thenReturn(21L);
+
+        monitorService.modifyMonitor(monitor, params, null, null);
+
+        assertEquals("https://example.com:8443/path", monitor.getInstance());
+        assertEquals("https://example.com:8443/path",
+                job.getMetadata().get(CommonConstants.LABEL_INSTANCE));
+    }
+
+    @Test
+    void modifyMonitorNormalizesServiceDiscoveryRoundTripWithoutPortAppend() {
+        long monitorId = 3L;
+        Monitor monitor = Monitor.builder()
+                .id(monitorId)
+                .jobId(30L)
+                .intervals(10)
+                .app("mysql")
+                .scrape("kubernetes")
+                .name("discovery")
+                .instance("unknow:3306")
+                .status(CommonConstants.MONITOR_UP_CODE)
+                .build();
+        Monitor existing = Monitor.builder()
+                .id(monitorId)
+                .jobId(30L)
+                .intervals(10)
+                .app("mysql")
+                .scrape("kubernetes")
+                .name("discovery")
+                .instance("unknow")
+                .status(CommonConstants.MONITOR_UP_CODE)
+                .build();
+        List<Param> params = List.of(
+                Param.builder().field("host").paramValue("db.example.com").build(),
+                Param.builder().field("port").paramValue("3306").build());
+        Job job = new Job();
+        when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existing));
+        when(appService.getAppDefine("kubernetes")).thenReturn(job);
+        when(collectJobScheduling.updateAsyncCollectJob(job)).thenReturn(31L);
+
+        monitorService.modifyMonitor(monitor, params, null, null);
+
+        assertEquals("unknow", monitor.getInstance());
+        assertEquals("unknow", job.getMetadata().get(CommonConstants.LABEL_INSTANCE));
     }
 
     @Test
@@ -1086,7 +1202,8 @@ class MonitorServiceTest {
                 .build();
         Job job = new Job();
         when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
-        List<Param> params = Collections.singletonList(new Param());
+        List<Param> params = Collections.singletonList(
+                Param.builder().field("host").paramValue("localhost").build());
         when(monitorDao.findById(1L)).thenReturn(Optional.of(monitor));
         when(paramDao.findParamsByMonitorId(1L)).thenReturn(params);
         assertDoesNotThrow(() -> monitorService.copyMonitor(1L));
@@ -1103,7 +1220,8 @@ class MonitorServiceTest {
         Job job = new Job();
         when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
         when(monitorDao.findById(1L)).thenReturn(Optional.of(monitor));
-        when(paramDao.findParamsByMonitorId(1L)).thenReturn(Collections.singletonList(new Param()));
+        when(paramDao.findParamsByMonitorId(1L)).thenReturn(Collections.singletonList(
+                Param.builder().field("host").paramValue("localhost").build()));
         when(monitorDao.findMonitorByNameEquals("memory_copy"))
                 .thenReturn(Optional.of(Monitor.builder().id(2L).name("memory_copy").build()));
         when(monitorDao.findMonitorByNameEquals("memory_copy_2"))

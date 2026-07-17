@@ -127,8 +127,8 @@ class JsonImExportServiceTest {
         ArgumentCaptor<List<Param>> paramsCaptor = ArgumentCaptor.forClass(List.class);
         verify(monitorService).validate(validateCaptor.capture(), org.mockito.Mockito.eq(false));
         verify(monitorService).addMonitor(monitorCaptor.capture(), paramsCaptor.capture(), any(), any());
-        assertEquals("127.0.0.1", validateCaptor.getValue().getMonitor().getInstance());
-        assertEquals("127.0.0.1", monitorCaptor.getValue().getInstance());
+        assertEquals("127.0.0.1:4223", validateCaptor.getValue().getMonitor().getInstance());
+        assertEquals("127.0.0.1:4223", monitorCaptor.getValue().getInstance());
         assertEquals("4223", paramsCaptor.getValue().stream()
                 .filter(param -> "port".equals(param.getField()))
                 .findFirst()

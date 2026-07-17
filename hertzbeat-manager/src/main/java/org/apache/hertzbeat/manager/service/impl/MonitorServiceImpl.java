@@ -24,7 +24,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.grafana.GrafanaDashboard;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
@@ -35,7 +34,6 @@ import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.support.event.MonitorDeletedEvent;
 
-import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.hertzbeat.common.util.JexlCheckerUtil;
 import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
 import org.apache.hertzbeat.grafana.service.DashboardService;
@@ -65,6 +63,7 @@ import org.apache.hertzbeat.manager.service.entity.OldMonitorServiceDiscoveryBin
 import org.apache.hertzbeat.manager.service.entity.OldMonitorServiceDiscoveryExpansionService;
 import org.apache.hertzbeat.manager.service.entity.OldMonitorStatusWriteModelService;
 import org.apache.hertzbeat.manager.service.helper.MonitorImExportHelper;
+import org.apache.hertzbeat.manager.service.helper.MonitorInstanceCanonicalizer;
 import org.apache.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDetectException;
 import org.apache.hertzbeat.warehouse.service.WarehouseService;
@@ -98,6 +97,7 @@ public class MonitorServiceImpl implements MonitorService {
     public static final String PATTERN_HTTP = "(?i)http://";
     public static final String PATTERN_HTTPS = "(?i)https://";
     private static final Long MONITOR_ID_TMP = 1000000000L;
+    public static final String PARAM_FIELD_HOST = "host";
     public static final String PARAM_FIELD_PORT = "port";
     private static final String MONITOR_COPY_SUFFIX = "_copy";
 
@@ -178,7 +178,6 @@ public class MonitorServiceImpl implements MonitorService {
         Job appDefine = appService.getAppDefine(app);
         if (!isStatic) {
             appDefine.setSd(true);
-            monitor.setInstance("unknow");
         }
         if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
             appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
@@ -188,18 +187,17 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setCyclic(true);
         appDefine.setTimestamp(System.currentTimeMillis());
 
-        String instance = monitor.getInstance();
-        // The port field may be null
+        Param hostParam = params.stream()
+                .filter(param -> PARAM_FIELD_HOST.equals(param.getField()))
+                .findFirst()
+                .orElse(null);
         Param portParam = params.stream()
                 .filter(param -> PARAM_FIELD_PORT.equals(param.getField()))
                 .findFirst()
                 .orElse(null);
-        String portWithMark = (Objects.isNull(portParam) || !StringUtils.hasText(portParam.getParamValue()))
-                ? ""
-                : SignConstants.DOUBLE_MARK + portParam.getParamValue();
-        if (!IpDomainUtil.isHasPortWithMark(instance)) {
-            instance = instance + portWithMark;
-        }
+        String instance = MonitorInstanceCanonicalizer.canonicalize(isStatic,
+                Objects.isNull(hostParam) ? null : hostParam.getParamValue(),
+                Objects.isNull(portParam) ? null : portParam.getParamValue());
         monitor.setInstance(instance);
 
         Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
@@ -375,22 +373,20 @@ public class MonitorServiceImpl implements MonitorService {
         }
         oldMonitorLabelWriteModelService.saveNewLabels(labels);
 
-        String instance = monitor.getInstance();
-        // The port field may be null
+        boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape())
+                || !StringUtils.hasText(monitor.getScrape());
+        Param hostParam = params.stream()
+                .filter(param -> PARAM_FIELD_HOST.equals(param.getField()))
+                .findFirst()
+                .orElse(null);
         Param portParam = params.stream()
                 .filter(param -> PARAM_FIELD_PORT.equals(param.getField()))
                 .findFirst()
                 .orElse(null);
-        String portWithMark = (Objects.isNull(portParam) || !StringUtils.hasText(portParam.getParamValue()))
-                ? ""
-                : SignConstants.DOUBLE_MARK + portParam.getParamValue();
-        if (Objects.nonNull(instance)) {
-            instance = instance + portWithMark;
-        }
+        String instance = MonitorInstanceCanonicalizer.canonicalize(isStatic,
+                Objects.isNull(hostParam) ? null : hostParam.getParamValue(),
+                Objects.isNull(portParam) ? null : portParam.getParamValue());
         monitor.setInstance(instance);
-
-        boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape())
-                || !StringUtils.hasText(monitor.getScrape());
         if (preMonitor.getStatus() != CommonConstants.MONITOR_PAUSED_CODE) {
             // Construct the collection task Job entity
             String app = isStatic ? monitor.getApp() : monitor.getScrape();

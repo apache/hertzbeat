@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.common.support.valid;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
@@ -28,36 +30,33 @@ import org.springframework.util.StringUtils;
 public class HostParamValidator implements ConstraintValidator<HostValid, String> {
     public static final String HTTP = "http://";
     public static final String HTTPS = "https://";
-    public static final String BLANK = "";
-    public static final String PATTERN_HTTP  = "(?i)http://";
-    public static final String PATTERN_HTTPS  = "(?i)https://";
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
         if (!StringUtils.hasText(value)) {
             return true;
         }
-        if (value.toLowerCase().contains(HTTP)){
-            value = value.replaceFirst(PATTERN_HTTP, BLANK);
-        }
-        if (value.toLowerCase().contains(HTTPS)){
-            value = value.replaceFirst(PATTERN_HTTPS, BLANK);
-        }
-
-        String hostPart = value;
-
-        if (value.contains(":")) {
-            // if contains multiple ":", it may be IPv6 with port
-            if (value.lastIndexOf(":") > value.indexOf(":") && value.contains("[")) {
-                int portIndex = value.lastIndexOf(":");
-                hostPart = value.substring(0, portIndex);
-            } else if (value.split(":").length == 2) {
-                // it is IPv4 or domain with port
-                String[] parts = value.split(":");
-                hostPart = parts[0];
+        String candidate = value.trim();
+        if (candidate.regionMatches(true, 0, HTTP, 0, HTTP.length())
+                || candidate.regionMatches(true, 0, HTTPS, 0, HTTPS.length())) {
+            try {
+                URI uri = new URI(candidate);
+                return uri.getHost() != null && IpDomainUtil.validateIpDomain(uri.getHost());
+            } catch (URISyntaxException exception) {
+                return false;
             }
         }
-
+        String hostPart = candidate;
+        if (candidate.startsWith("[")) {
+            int closingBracket = candidate.indexOf(']');
+            if (closingBracket < 0 || (closingBracket + 1 < candidate.length()
+                    && candidate.charAt(closingBracket + 1) != ':')) {
+                return false;
+            }
+            hostPart = candidate.substring(1, closingBracket);
+        } else if (candidate.chars().filter(character -> character == ':').count() == 1) {
+            hostPart = candidate.substring(0, candidate.indexOf(':'));
+        }
         return IpDomainUtil.validateIpDomain(hostPart);
     }
 
