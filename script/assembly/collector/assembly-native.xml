@@ -93,7 +93,9 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
             <fileMode>0644</fileMode>
             <includes>
                 <include>runtime-manifest.json</include>
+                <include>hertzbeat-collector.cdx.json</include>
                 <include>hertzbeat-otel-runtime.cdx.json</include>
+                <include>release-inventory.json</include>
                 <include>SHA512SUMS</include>
             </includes>
         </fileSet>

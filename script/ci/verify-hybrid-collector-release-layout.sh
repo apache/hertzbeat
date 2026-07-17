@@ -26,8 +26,12 @@ systemd_unit=script/assembly/collector/systemd/hertzbeat-collector.service
 native_assembly=script/assembly/collector/assembly-native.xml
 release_assets=script/ci/generate-hybrid-collector-release-assets.sh
 release_workflow=.github/workflows/hybrid-collector-release.yml
+release_scanner=script/ci/verify-hybrid-collector-release-content.py
+release_scanner_test=script/ci/test_verify_hybrid_collector_release_content.py
+native_package_verifier=script/ci/verify-hybrid-collector-native-package.sh
 
-for required in "$dockerfile" "$foreground" "$systemd_unit" "$release_assets" "$release_workflow"; do
+for required in "$dockerfile" "$foreground" "$systemd_unit" "$release_assets" "$release_workflow" \
+  "$release_scanner" "$release_scanner_test" "$native_package_verifier"; do
   if [ ! -f "$required" ]; then
     echo "missing Hybrid Collector release file: $required" >&2
     exit 1
@@ -47,6 +51,8 @@ grep -q 'ExecStart=/opt/hertzbeat-collector/bin/foreground.sh' "$systemd_unit"
 grep -q 'Restart=on-failure' "$systemd_unit"
 grep -q 'native.service.dir' "$native_assembly"
 grep -q 'hertzbeat-otel-runtime.cdx.json' "$native_assembly"
+grep -q 'hertzbeat-collector.cdx.json' "$native_assembly"
+grep -q 'release-inventory.json' "$native_assembly"
 grep -q 'runtime-licenses' "$native_assembly"
 grep -q '^release-assets:' hertzbeat-otel-runtime/Makefile
 tagged_builds=$(grep -c 'GOFLAGS=.*GO_BUILD_TAGS.*go build' hertzbeat-otel-runtime/Makefile)
@@ -62,6 +68,8 @@ fi
 grep -q 'cyclonedx-gomod@v1.10.0' "$release_assets"
 grep -q 'go-licenses/v2@v2.0.1' "$release_assets"
 grep -q 'govulncheck@v1.6.0' "$release_assets"
+grep -q 'cyclonedx-maven-plugin:2.9.1:makeBom' "$release_assets"
+grep -q -- '--collector-sbom' "$release_assets"
 grep -q 'govulncheck.*-tags.*build_tags' "$release_assets"
 if grep -q 'govulncheck.*-mode binary' "$release_assets"; then
   echo "stripped Go binaries must use source call-graph vulnerability evidence" >&2
@@ -73,5 +81,9 @@ grep -q 'ubuntu-24.04-arm' "$release_workflow"
 grep -q 'macos-15-intel' "$release_workflow"
 grep -q 'windows-2025' "$release_workflow"
 grep -q 'java-version: 25' "$release_workflow"
+grep -q 'test_verify_hybrid_collector_release_content.py' "$release_workflow"
+grep -q -- '--source' "$release_workflow"
+grep -q -- '--jvm' "$release_workflow"
+grep -q -- '--native' "$native_package_verifier"
 
 echo "Hybrid Collector release layout contract passed"

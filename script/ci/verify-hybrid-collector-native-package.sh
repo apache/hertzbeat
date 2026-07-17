@@ -17,6 +17,8 @@
 
 set -eu
 
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
+
 if [ "$#" -ne 2 ]; then
   echo "usage: $0 <native-archive> <platform>" >&2
   exit 2
@@ -46,7 +48,9 @@ require_path '/LICENSE$' 'the Apache LICENSE'
 require_path '/NOTICE$' 'the Apache NOTICE'
 require_path "/runtime/$platform/hertzbeat-otel-runtime(\.exe)?$" 'the platform Go runtime'
 require_path "/runtime/$platform/runtime-manifest\.json$" 'the runtime manifest'
+require_path "/runtime/$platform/hertzbeat-collector\.cdx\.json$" 'the Collector compile/runtime CycloneDX SBOM'
 require_path "/runtime/$platform/hertzbeat-otel-runtime\.cdx\.json$" 'the runtime CycloneDX SBOM'
+require_path "/runtime/$platform/release-inventory\.json$" 'the SBOM release inventory'
 require_path "/runtime/$platform/SHA512SUMS$" 'the runtime checksums'
 require_path "/runtime/$platform/licenses/" 'the runtime dependency licenses'
 
@@ -59,5 +63,7 @@ case "$platform" in
     fi
     ;;
 esac
+
+python3 "$repo_root/script/ci/verify-hybrid-collector-release-content.py" --native "$archive"
 
 echo "Hybrid Collector native package contract passed for $platform"

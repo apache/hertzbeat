@@ -56,6 +56,11 @@ jobs:
           cache: maven
       - name: Verify source and dependency contracts
         run: |
+          python3 script/ci/test_verify_hybrid_collector_release_content.py -v
+          mkdir -p target/release-policy
+          git archive --format=tar.gz --output target/release-policy/hertzbeat-source.tar.gz HEAD
+          python3 script/ci/verify-hybrid-collector-release-content.py \
+            --source target/release-policy/hertzbeat-source.tar.gz
           ./script/ci/verify-hybrid-collector-release-layout.sh
           ./script/ci/verify-otel-runtime-layout.sh
           ./script/ci/verify-hybrid-collector-native-layout.sh
@@ -64,7 +69,13 @@ jobs:
       - name: Verify Go binary reproducibility
         run: ./script/ci/verify-otel-runtime-reproducibility.sh
       - name: Verify Java runtime and Spring AOT
-        run: ./script/ci/verify-hybrid-collector-java.sh
+        run: |
+          ./script/ci/verify-hybrid-collector-java.sh
+          ./mvnw -pl hertzbeat-collector/hertzbeat-collector-collector -am \
+            -Pcluster -DskipTests package
+          archive=$(find dist -maxdepth 1 -type f -name 'apache-hertzbeat-collector-*-bin.tar.gz' -print -quit)
+          test -n "$archive"
+          python3 script/ci/verify-hybrid-collector-release-content.py --jvm "$archive"
 
   source-policy:
     strategy:

@@ -23,6 +23,7 @@ runtime_source="$runtime_dir/_build/otelcol-hertzbeat"
 tools_dir="$runtime_dir/_build/tools"
 release_dir="$runtime_dir/_build/release"
 license_dir="$release_dir/runtime-licenses"
+collector_sbom="$repo_root/hertzbeat-collector/hertzbeat-collector-collector/target/hertzbeat-collector.json"
 build_tags=remove_all_sd
 go_fqdn_module=github.com/Showmax/go-fqdn
 tool_suffix=
@@ -39,6 +40,14 @@ mkdir -p "$tools_dir" "$release_dir"
 GOBIN="$tools_dir" go install github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@v1.10.0
 GOBIN="$tools_dir" go install github.com/google/go-licenses/v2@v2.0.1
 GOBIN="$tools_dir" go install golang.org/x/vuln/cmd/govulncheck@v1.6.0
+
+"$repo_root/mvnw" -f "$repo_root/hertzbeat-collector/hertzbeat-collector-collector/pom.xml" \
+  org.cyclonedx:cyclonedx-maven-plugin:2.9.1:makeBom \
+  -DskipTests -DincludeCompileScope=true -DincludeRuntimeScope=true \
+  -DincludeProvidedScope=false -DincludeSystemScope=false -DincludeTestScope=false \
+  -DoutputFormat=json -DoutputName=hertzbeat-collector -DschemaVersion=1.6
+python3 "$repo_root/script/ci/verify-hybrid-collector-release-content.py" \
+  --collector-sbom "$collector_sbom"
 
 (cd "$runtime_source" && GOFLAGS="-tags=$build_tags" \
   "$tools_dir/go-licenses$tool_suffix" check . \
@@ -74,6 +83,10 @@ sha512_file() {
   fi
 }
 
+sha512_digest() {
+  sha512_file "$1" | awk '{print $1}'
+}
+
 platforms="macos-arm64 macos-amd64 linux-arm64 linux-amd64 windows-amd64"
 for platform in $platforms; do
   target_dir="$runtime_dir/dist/$platform"
@@ -89,12 +102,26 @@ for platform in $platforms; do
   "$tools_dir/cyclonedx-gomod$tool_suffix" bin -json \
     -output "$target_dir/hertzbeat-otel-runtime.cdx.json" \
     -version "v$runtime_version" "$target_dir/$binary"
+  cp "$collector_sbom" "$target_dir/hertzbeat-collector.cdx.json"
+
+  collector_sbom_sha512=$(sha512_digest "$target_dir/hertzbeat-collector.cdx.json")
+  runtime_sbom_sha512=$(sha512_digest "$target_dir/hertzbeat-otel-runtime.cdx.json")
+  cat > "$target_dir/release-inventory.json" <<EOF
+{
+  "schemaVersion": "1.0",
+  "artifacts": [
+    {"path": "hertzbeat-collector.cdx.json", "sha512": "$collector_sbom_sha512"},
+    {"path": "hertzbeat-otel-runtime.cdx.json", "sha512": "$runtime_sbom_sha512"}
+  ]
+}
+EOF
 
   rm -rf "$target_dir/runtime-licenses"
   mkdir -p "$target_dir/runtime-licenses"
   cp -R "$license_dir"/. "$target_dir/runtime-licenses/"
   (cd "$target_dir" && sha512_file "$binary" runtime-manifest.json \
-    hertzbeat-otel-runtime.cdx.json > SHA512SUMS)
+    hertzbeat-collector.cdx.json hertzbeat-otel-runtime.cdx.json \
+    release-inventory.json > SHA512SUMS)
 done
 
 echo "Hybrid Collector release assets generated"
