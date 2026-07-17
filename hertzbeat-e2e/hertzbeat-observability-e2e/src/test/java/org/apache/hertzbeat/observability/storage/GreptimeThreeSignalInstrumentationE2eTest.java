@@ -45,6 +45,9 @@ import io.opentelemetry.proto.trace.v1.Span;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import org.apache.hertzbeat.common.entity.log.LogEntry;
+import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsConsoleDto;
+import org.apache.hertzbeat.common.observability.dto.trace.TraceListItemDto;
 import org.apache.hertzbeat.observability.ingestion.service.OtlpGrpcIngestionService;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.DetectionRequest;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.DetectionResponse;
@@ -55,8 +58,13 @@ import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApi
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Platform;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.PollingDecision;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.QueryJump;
+import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.QueryJumpContext;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.ServiceIdentity;
+import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Signal;
 import org.apache.hertzbeat.observability.instrumentation.service.InstrumentationDetectionService;
+import org.apache.hertzbeat.observability.logs.service.LogQueryService;
+import org.apache.hertzbeat.observability.metrics.service.CollectorScopedMetricsQueryService;
+import org.apache.hertzbeat.observability.traces.service.EntityTraceQueryService;
 import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,6 +99,8 @@ class GreptimeThreeSignalInstrumentationE2eTest {
     private static final String SERVICE_NAMESPACE = "commerce";
     private static final String ENVIRONMENT = "proof";
     private static final String COLLECTOR_ID = "collector-e2e";
+    private static final String TRACE_ID = "0123456789abcdef0123456789abcdef";
+    private static final String SPAN_ID = "0123456789abcdef";
 
     @Container
     @SuppressWarnings("resource")
@@ -111,6 +121,15 @@ class GreptimeThreeSignalInstrumentationE2eTest {
 
     @Autowired
     private GreptimeSqlQueryExecutor queryExecutor;
+
+    @Autowired
+    private CollectorScopedMetricsQueryService metricsQueryService;
+
+    @Autowired
+    private LogQueryService logQueryService;
+
+    @Autowired
+    private EntityTraceQueryService traceQueryService;
 
     @DynamicPropertySource
     static void greptimeProperties(DynamicPropertyRegistry registry) {
@@ -180,6 +199,64 @@ class GreptimeThreeSignalInstrumentationE2eTest {
                 "other-collector", startedAt));
         assertNotReceived(requestWith(request, SERVICE_NAME, SERVICE_NAMESPACE, ENVIRONMENT,
                 COLLECTOR_ID, signalTimeNanos / 1_000_000L + 1));
+
+        DetectionResponse detected = detectionService.detect(request);
+        assertProductionQueries(
+                enabledJump(detected, METRICS).context(),
+                enabledJump(detected, LOGS).context(),
+                enabledJump(detected, TRACES).context());
+    }
+
+    private QueryJump enabledJump(DetectionResponse response, Signal signal) {
+        return response.queryJumps().stream()
+                .filter(jump -> jump.signal() == signal && jump.enabled())
+                .findFirst()
+                .orElseThrow();
+    }
+
+    private void assertProductionQueries(
+            QueryJumpContext metricsContext,
+            QueryJumpContext logsContext,
+            QueryJumpContext tracesContext) {
+        long end = metricsContext.detectedAt() + 60_000;
+        OtlpMetricsConsoleDto metrics = metricsQueryService.query(new CollectorScopedMetricsQueryService.Request(
+                null, null, metricsContext.startedAt(), end, metricsContext.serviceName(),
+                metricsContext.serviceNamespace(), metricsContext.environment(), metricsContext.collectorId(),
+                "hertzbeat_e2e_requests", null, null,
+                null, null, "1s", "20", null));
+        assertThat(metrics.getContext().getCollectorId()).isEqualTo(metricsContext.collectorId());
+        assertThat(metrics.getQuery())
+                .contains("hertzbeat_e2e_requests")
+                .contains("hertzbeat_collector_id=\"" + metricsContext.collectorId() + "\"");
+        assertThat(metrics.getStats().getNonEmptySeries()).isPositive();
+        assertThat(metrics.getResults().getFrames()).isNotEmpty();
+        assertThat(metrics.getResults().getFrames())
+                .flatExtracting(frame -> frame.getData())
+                .anySatisfy(row -> assertThat(Double.parseDouble(String.valueOf(row[1]))).isEqualTo(1.0));
+
+        org.springframework.data.domain.Page<LogEntry> logs = logQueryService.list(
+                logsContext.startedAt(), end, TRACE_ID, SPAN_ID, null, "INFO", "three-signal-e2e",
+                logsContext.serviceName(), logsContext.serviceNamespace(), logsContext.environment(),
+                "hertzbeat.collector.id=" + logsContext.collectorId(), null, 0, 20, false, false);
+        assertThat(logs.getContent()).singleElement().satisfies(log -> {
+            assertThat(log.getBody()).isEqualTo("three-signal-e2e");
+            assertThat(log.getTraceId()).isEqualTo(TRACE_ID);
+            assertThat(log.getSpanId()).isEqualTo(SPAN_ID);
+            assertThat(log.getResource()).containsEntry("hertzbeat.collector.id", logsContext.collectorId());
+        });
+
+        org.springframework.data.domain.Page<TraceListItemDto> traces = traceQueryService.queryTraceList(
+                null, tracesContext.startedAt(), end, TRACE_ID, false,
+                tracesContext.serviceName(), tracesContext.serviceNamespace(), tracesContext.environment(),
+                "hertzbeat.collector.id=" + tracesContext.collectorId(), "GET /checkout", null, null,
+                0, 20, false, null, null);
+        assertThat(traces.getContent()).singleElement().satisfies(trace -> {
+            assertThat(trace.getTraceId()).isEqualTo(TRACE_ID);
+            assertThat(trace.getRootSpanId()).isEqualTo(SPAN_ID);
+            assertThat(trace.getServiceName()).isEqualTo(tracesContext.serviceName());
+            assertThat(trace.getResourceAttributes())
+                    .containsEntry("hertzbeat.collector.id", tracesContext.collectorId());
+        });
     }
 
     private DetectionRequest requestWith(
@@ -233,8 +310,8 @@ class GreptimeThreeSignalInstrumentationE2eTest {
                 .setObservedTimeUnixNano(timeNanos)
                 .setSeverityText("INFO")
                 .setBody(AnyValue.newBuilder().setStringValue("three-signal-e2e"))
-                .setTraceId(ByteString.copyFrom(hex("0123456789abcdef0123456789abcdef")))
-                .setSpanId(ByteString.copyFrom(hex("0123456789abcdef")))
+                .setTraceId(ByteString.copyFrom(hex(TRACE_ID)))
+                .setSpanId(ByteString.copyFrom(hex(SPAN_ID)))
                 .build();
         return ExportLogsServiceRequest.newBuilder()
                 .addResourceLogs(ResourceLogs.newBuilder()
@@ -245,8 +322,8 @@ class GreptimeThreeSignalInstrumentationE2eTest {
 
     private ExportTraceServiceRequest traces(long timeNanos) {
         Span span = Span.newBuilder()
-                .setTraceId(ByteString.copyFrom(hex("0123456789abcdef0123456789abcdef")))
-                .setSpanId(ByteString.copyFrom(hex("0123456789abcdef")))
+                .setTraceId(ByteString.copyFrom(hex(TRACE_ID)))
+                .setSpanId(ByteString.copyFrom(hex(SPAN_ID)))
                 .setName("GET /checkout")
                 .setKind(Span.SpanKind.SPAN_KIND_SERVER)
                 .setStartTimeUnixNano(timeNanos)
