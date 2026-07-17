@@ -34,7 +34,7 @@ final class GreptimeInstrumentationDetectionQueryFactory {
         return switch (signal) {
             case METRICS -> metricsQuery(criteria);
             case LOGS -> jsonResourceQuery(LOGS_TABLE, criteria);
-            case TRACES -> jsonResourceQuery(TRACES_TABLE, criteria);
+            case TRACES -> flattenedTraceResourceQuery(criteria);
             default -> throw new IllegalArgumentException("Unsupported signal");
         };
     }
@@ -61,6 +61,20 @@ final class GreptimeInstrumentationDetectionQueryFactory {
                 + " WHERE " + String.join(" AND ", filters);
     }
 
+    private String flattenedTraceResourceQuery(DetectionCriteria criteria) {
+        List<String> filters = new ArrayList<>();
+        filters.add(equalsColumn("service_name", criteria.serviceName()));
+        filters.add(equalsColumn(quotedIdentifier("resource_attributes.service.namespace"),
+                criteria.serviceNamespace()));
+        filters.add(equalsColumn(quotedIdentifier("resource_attributes.deployment.environment.name"),
+                criteria.environment()));
+        filters.add(equalsColumn(quotedIdentifier("resource_attributes.hertzbeat.collector.id"),
+                criteria.collectorId()));
+        filters.add("timestamp >= to_timestamp_millis(" + criteria.startedAt() + ")");
+        return "SELECT MAX(timestamp) AS last_received_at FROM " + TRACES_TABLE
+                + " WHERE " + String.join(" AND ", filters);
+    }
+
     private String equalsColumn(String column, String value) {
         return column + " = '" + escapeSql(value) + "'";
     }
@@ -68,6 +82,10 @@ final class GreptimeInstrumentationDetectionQueryFactory {
     private String equalsResourceAttribute(String attribute, String value) {
         return "json_get_string(resource_attributes, '$[\"" + attribute + "\"]') = '"
                 + escapeSql(value) + "'";
+    }
+
+    private String quotedIdentifier(String identifier) {
+        return "\"" + identifier.replace("\"", "\"\"") + "\"";
     }
 
     private String escapeSql(String value) {

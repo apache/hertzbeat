@@ -97,7 +97,7 @@ class GreptimeInstrumentationSignalDetectionStoreTest {
         assertEquals(3, queries.size());
         assertMetricQuery(queries.get(0));
         assertJsonResourceQuery(queries.get(1), "hertzbeat_logs");
-        assertJsonResourceQuery(queries.get(2), "hzb_traces");
+        assertFlattenedTraceResourceQuery(queries.get(2));
         queries.forEach(sql -> {
             assertTrue(sql.startsWith("SELECT MAX("));
             assertTrue(sql.contains(" AS last_received_at FROM "));
@@ -225,6 +225,17 @@ class GreptimeInstrumentationSignalDetectionStoreTest {
         assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"deployment.environment.name\"]') = 'prod''s'"));
         assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"hertzbeat.collector.id\"]') = 'collector''s'"));
         assertTrue(sql.contains("timestamp >= to_timestamp_millis(" + STARTED_AT + ")"));
+    }
+
+    private void assertFlattenedTraceResourceQuery(String sql) {
+        assertTrue(sql.contains("MAX(timestamp)"));
+        assertTrue(sql.contains("FROM hzb_traces"));
+        assertTrue(sql.contains("service_name = 'checkout''s-api'"));
+        assertTrue(sql.contains("\"resource_attributes.service.namespace\" = 'commerce''s'"));
+        assertTrue(sql.contains("\"resource_attributes.deployment.environment.name\" = 'prod''s'"));
+        assertTrue(sql.contains("\"resource_attributes.hertzbeat.collector.id\" = 'collector''s'"));
+        assertTrue(sql.contains("timestamp >= to_timestamp_millis(" + STARTED_AT + ")"));
+        assertFalse(sql.contains("json_get_string(resource_attributes"));
     }
 
     private void assertReceived(SignalObservation observation, long expectedTimestamp) {
