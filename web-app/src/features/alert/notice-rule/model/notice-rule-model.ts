@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import { formatLabelMatchers, parseLabelMatchers } from './alert-label-matchers';
-import type { NoticeReceiverOption } from './notice-receiver/model/notice-receiver-model';
-import type { NoticeTemplate } from './notice-template-model';
+import { formatLabelMatchers, parseLabelMatchers } from '../../alert-label-matchers';
+import type { NoticeReceiverOption } from '../../notice-receiver/model/notice-receiver-model';
+import type { NoticeTemplate } from '../../notice-template-model';
 
 export const noticeRulePageSizes = [8, 15, 25] as const;
 export const noticeRuleWeekdays = [7, 1, 2, 3, 4, 5, 6] as const;
@@ -36,9 +36,17 @@ export type NoticeRule = {
   days?: number[] | null;
   periodStart?: string | number | null;
   periodEnd?: string | number | null;
+  creator?: string | null;
+  modifier?: string | null;
   gmtCreate?: string | number | null;
   gmtUpdate?: string | number | null;
 };
+
+export type NoticeRuleListState =
+  | { kind: 'loading' }
+  | { kind: 'ready'; records: NoticeRule[]; total: number }
+  | { kind: 'empty' }
+  | { kind: 'missing' | 'invalid' | 'unavailable' | 'error' };
 
 export type NoticeRuleDraft = {
   id?: number;
@@ -54,6 +62,12 @@ export type NoticeRuleDraft = {
   days: number[];
   periodStart: string;
   periodEnd: string;
+};
+
+export type NoticeRuleMutationVariables = {
+  draft: NoticeRuleDraft;
+  receivers: NoticeReceiverOption[];
+  templates: NoticeTemplate[];
 };
 
 export function readNoticeRuleQuery(params: URLSearchParams): NoticeRuleQuery {
@@ -133,7 +147,8 @@ function localIsoTime(value: string) {
 }
 
 export function buildNoticeRulePayload(draft: NoticeRuleDraft, receivers: NoticeReceiverOption[] = [], templates: NoticeTemplate[] = []) {
-  const receiverNames = draft.receiverIds.map((id, index) => receivers.find(receiver => receiver.id === id)?.name ?? draft.receiverNames[index]).filter((name): name is string => Boolean(name));
+  const receiverNames = draft.receiverIds.map(id => receivers.find(receiver => receiver.id === id)?.name)
+    .filter((name): name is string => Boolean(name));
   const template = draft.templateId == null ? null : templates.find(item => item.id === draft.templateId);
   return {
     ...(draft.id ? { id: draft.id } : {}),
@@ -141,7 +156,7 @@ export function buildNoticeRulePayload(draft: NoticeRuleDraft, receivers: Notice
     receiverId: draft.receiverIds,
     receiverName: receiverNames,
     templateId: draft.templateId,
-    templateName: template?.name ?? draft.templateName,
+    templateName: template?.name ?? null,
     enable: draft.enable,
     filterAll: draft.filterAll,
     labels: draft.filterAll ? {} : (parseLabelMatchers(draft.labelsText) ?? {}),
@@ -173,4 +188,64 @@ function scheduleErrors(draft: NoticeRuleDraft): NoticeRuleInvalidField[] {
 
 export function validateNoticeRuleDraft(draft: NoticeRuleDraft) {
   return [...new Set([...requiredFieldErrors(draft), ...scheduleErrors(draft)])];
+}
+
+export function validateNoticeRuleDependencies(
+  draft: NoticeRuleDraft,
+  receivers: NoticeReceiverOption[],
+  templates: NoticeTemplate[]
+) {
+  const invalid: Array<'receiverIds' | 'templateId'> = [];
+  const uniqueIds = new Set(draft.receiverIds);
+  const selectedReceivers = draft.receiverIds
+    .map(id => receivers.find(receiver => receiver.id === id))
+    .filter((receiver): receiver is NoticeReceiverOption => receiver !== undefined);
+  if (uniqueIds.size !== draft.receiverIds.length || selectedReceivers.length !== draft.receiverIds.length) {
+    invalid.push('receiverIds');
+  }
+  if (draft.templateId != null) {
+    const template = templates.find(item => item.id === draft.templateId && !item.preset);
+    if (!template || selectedReceivers.length !== draft.receiverIds.length
+      || selectedReceivers.some(receiver => receiver.type !== template.type)) {
+      invalid.push('templateId');
+    }
+  }
+  return invalid;
+}
+
+export function noticeRuleMatchesDraft(
+  rule: NoticeRule,
+  draft: NoticeRuleDraft,
+  receivers: NoticeReceiverOption[],
+  templates: NoticeTemplate[]
+) {
+  const expected = buildNoticeRulePayload(draft, receivers, templates);
+  const canonical = noticeRuleDraftFromDetail(rule);
+  return [
+    rule.name === expected.name,
+    sameNumbers(rule.receiverId, expected.receiverId),
+    sameStrings(rule.receiverName, expected.receiverName),
+    rule.templateId === expected.templateId,
+    rule.templateName === expected.templateName,
+    rule.enable === expected.enable,
+    rule.filterAll === expected.filterAll,
+    sameRecord(rule.labels ?? {}, expected.labels),
+    sameNumbers(rule.days ?? [], expected.days),
+    canonical.periodStart === draft.periodStart,
+    canonical.periodEnd === draft.periodEnd
+  ].every(Boolean);
+}
+
+function sameNumbers(actual: readonly number[], expected: readonly number[]) {
+  return actual.length === expected.length && actual.every((item, index) => item === expected[index]);
+}
+
+function sameStrings(actual: readonly string[], expected: readonly string[]) {
+  return actual.length === expected.length && actual.every((item, index) => item === expected[index]);
+}
+
+function sameRecord(actual: Record<string, string>, expected: Record<string, string>) {
+  const actualKeys = Object.keys(actual).sort();
+  const expectedKeys = Object.keys(expected).sort();
+  return sameStrings(actualKeys, expectedKeys) && actualKeys.every(key => actual[key] === expected[key]);
 }

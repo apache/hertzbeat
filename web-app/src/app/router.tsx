@@ -197,7 +197,7 @@ export const appRoutes: RouteObject[] = [
                 id: 'notice-rules',
                 path: settingsPaths.rules,
                 lazy: async () => {
-                  const { NoticeRulePage } = await import('@/features/alert/notice-rule-page');
+                  const { NoticeRulePage } = await import('@/features/alert/notice-rule');
                   return { Component: NoticeRulePage };
                 }
               },

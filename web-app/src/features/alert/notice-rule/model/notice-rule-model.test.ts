@@ -24,6 +24,7 @@ import {
   createNoticeRuleDraft,
   noticeRuleDraftFromDetail,
   readNoticeRuleQuery,
+  validateNoticeRuleDependencies,
   validateNoticeRuleDraft
 } from './notice-rule-model';
 
@@ -103,5 +104,18 @@ describe('notice rule model', () => {
     expect(validateNoticeRuleDraft({ ...draft, name: 'Filtered', receiverIds: [11], filterAll: false, labelsText: 'broken' })).toEqual(['labelsText']);
     expect(validateNoticeRuleDraft({ ...draft, name: 'Limited', receiverIds: [11], limitDays: true, days: [] })).toEqual(['days']);
     expect(validateNoticeRuleDraft({ ...draft, name: 'Timed', receiverIds: [11], periodStart: '22:00' })).toEqual(['periodEnd']);
+  });
+
+  it('rejects duplicate, stale, and template-incompatible dependency identities', () => {
+    const draft = { ...createNoticeRuleDraft(), name: 'Bound', receiverIds: [11], templateId: 21 };
+    expect(validateNoticeRuleDependencies(draft, receivers, templates)).toEqual([]);
+    expect(validateNoticeRuleDependencies({ ...draft, receiverIds: [11, 11] }, receivers, templates))
+      .toEqual(['receiverIds']);
+    expect(validateNoticeRuleDependencies({ ...draft, receiverIds: [999], receiverNames: ['stale'] }, receivers, templates))
+      .toEqual(['receiverIds', 'templateId']);
+    expect(validateNoticeRuleDependencies({ ...draft, receiverIds: [13] }, receivers, templates))
+      .toEqual(['templateId']);
+    expect(validateNoticeRuleDependencies({ ...draft, templateId: 999, templateName: 'stale' }, receivers, templates))
+      .toEqual(['templateId']);
   });
 });
