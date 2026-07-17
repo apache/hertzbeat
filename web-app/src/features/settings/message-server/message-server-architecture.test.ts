@@ -15,12 +15,18 @@
  * limitations under the License.
  */
 
-.page { display: grid; min-width: 0; gap: 20px; }
-.heading { display: grid; gap: 4px; }
-.heading :global(.ant-typography), .channelRow :global(.ant-typography) { margin: 0; }
-.channels { border-block: 1px solid var(--ant-color-border-secondary); }
-.channelRow { display: grid; grid-template-columns: minmax(260px, 1fr) minmax(240px, .7fr) auto; align-items: center; gap: 24px; padding: 20px 4px; }
-.channelRow + .channelRow { border-top: 1px solid var(--ant-color-border-secondary); }
-.summary { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.channelError { min-width: 0; }
-@media (max-width: 800px) { .channelRow { grid-template-columns: 1fr; gap: 12px; } .channelRow > :global(.ant-btn) { justify-self: start; } }
+import { describe, expect, it } from 'vitest';
+
+import controller from './controller/use-message-server-controller.ts?raw';
+import page from './pages/message-server-page.tsx?raw';
+
+describe('message server architecture', () => {
+  it('keeps query, mutation, transport, and payload ownership outside the page', () => {
+    expect(page).not.toMatch(/@tanstack\/react-query/);
+    expect(page).not.toMatch(/message-server-api/);
+    expect(page).not.toMatch(/\buse(Query|Mutation)\b/);
+    expect(page).not.toMatch(/build(Email|Sms)ServerPayload/);
+    expect(controller).toMatch(/buildEmailServerPayload/);
+    expect(controller).toMatch(/classifyMessageServerReadError/);
+  });
+});

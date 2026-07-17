@@ -23,16 +23,29 @@ import {
   createEmailServerDraft,
   createSmsServerDraft,
   messageServerStatus,
+  selectSmsProvider,
   smsProviderDefinitions,
   validateEmailServerDraft,
   validateSmsServerDraft
 } from './message-server-model';
 
 describe('message server model', () => {
-  it('builds an audit-free email payload and validates SMTP bounds', () => {
-    const draft = { ...createEmailServerDraft(), emailHost: ' smtp.example.test ', emailPort: 587, emailUsername: ' ops@example.test ', emailPassword: 'secret', emailSsl: false, emailStarttls: true };
+  it('builds retain, replace, and explicit-clear email secret mutations', () => {
+    const draft = { ...createEmailServerDraft({ status: 'configured', config: { type: 0,
+      emailHost: ' smtp.example.test ', emailPort: 587, emailUsername: ' ops@example.test ', emailSsl: false,
+      emailStarttls: true, enable: true, configuredSecrets: ['emailPassword'] } }), enable: false };
     expect(validateEmailServerDraft(draft)).toEqual([]);
-    expect(buildEmailServerPayload(draft)).toEqual({ type: 0, emailHost: 'smtp.example.test', emailPort: 587, emailUsername: 'ops@example.test', emailPassword: 'secret', emailSsl: false, emailStarttls: true, enable: false });
+    expect(buildEmailServerPayload(draft)).toEqual({ type: 0, emailHost: 'smtp.example.test', emailPort: 587,
+      emailUsername: 'ops@example.test', emailSsl: false, emailStarttls: true, enable: false });
+    const replacement = buildEmailServerPayload({ ...draft, emailPassword: ' replacement ' });
+    expect(replacement.emailPassword).toBe('replacement');
+    expect(replacement).not.toHaveProperty('clearSecrets');
+    const cleared = buildEmailServerPayload({ ...draft, clearSecrets: ['emailPassword'] });
+    expect(cleared.clearSecrets).toEqual(['emailPassword']);
+    expect(cleared).not.toHaveProperty('emailPassword');
+    expect(validateEmailServerDraft({ ...draft, enable: true, clearSecrets: ['emailPassword'] }))
+      .toContain('emailPassword');
+    expect(validateEmailServerDraft({ ...draft, enable: false, clearSecrets: ['emailPassword'] })).toEqual([]);
     expect(validateEmailServerDraft({ ...draft, emailPort: 0 })).toEqual(['emailPort']);
   });
 
@@ -41,18 +54,47 @@ describe('message server model', () => {
     expect(smsProviderDefinitions.find(definition => definition.type === 'twilio')?.fields.map(field => field.key)).toEqual(['accountSid', 'authToken', 'twilioPhoneNumber']);
   });
 
-  it('validates only the selected SMS provider and preserves the provider map payload', () => {
+  it('validates only the selected SMS provider and sends only its allowlisted options', () => {
     const draft = createSmsServerDraft();
     expect(validateSmsServerDraft(draft)).toEqual(['secretId', 'secretKey', 'appId', 'signName', 'templateId']);
-    const configured = { ...draft, type: 'smslocal' as const, smslocal: { apiKey: ' local-key ' } };
+    const configured = { ...draft, type: 'smslocal' as const, smslocal: { apiKey: ' local-key ' },
+      tencent: { secretId: 'leak', secretKey: 'leak', appId: 'leak', signName: 'leak', templateId: 'leak' } };
     expect(validateSmsServerDraft(configured)).toEqual([]);
-    expect(buildSmsServerPayload(configured)).toMatchObject({ enable: false, type: 'smslocal', smslocal: { apiKey: 'local-key' }, tencent: { secretId: '' } });
+    expect(buildSmsServerPayload(configured)).toEqual({ enable: false, type: 'smslocal',
+      options: { apiKey: 'local-key' } });
+  });
+
+  it('retains, replaces, and explicitly clears only active-provider SMS secrets', () => {
+    const draft = createSmsServerDraft({ status: 'configured', config: { enable: true, type: 'unisms',
+      options: { accessKeyId: 'id', signature: 'sig', templateId: 'tpl', authMode: 'hmac' },
+      configuredSecrets: ['accessKeySecret'] } });
+    expect(validateSmsServerDraft(draft)).toEqual([]);
+    expect(buildSmsServerPayload(draft)).toEqual({ enable: true, type: 'unisms',
+      options: { accessKeyId: 'id', authMode: 'hmac', signature: 'sig', templateId: 'tpl' } });
+    expect(buildSmsServerPayload({ ...draft, unisms: { ...draft.unisms, accessKeySecret: ' new-secret ' } }))
+      .toMatchObject({ options: { accessKeySecret: 'new-secret' } });
+    expect(validateSmsServerDraft({ ...draft, clearSecrets: ['accessKeySecret'] })).toContain('accessKeySecret');
+    expect(buildSmsServerPayload({ ...draft, enable: false, clearSecrets: ['accessKeySecret'] })).toMatchObject({
+      clearSecrets: ['accessKeySecret']
+    });
+  });
+
+  it('drops configured-secret ownership when the selected provider changes', () => {
+    const configured = createSmsServerDraft({ status: 'configured', config: { enable: true, type: 'tencent',
+      options: { appId: 'app', signName: 'sign', templateId: 'template' },
+      configuredSecrets: ['secretId', 'secretKey'] } });
+    const switched = selectSmsProvider(configured, 'twilio');
+    expect(switched.configuredSecrets).toEqual([]);
+    expect(switched.clearSecrets).toEqual([]);
+    expect(validateSmsServerDraft(switched)).toEqual(['accountSid', 'authToken', 'twilioPhoneNumber']);
   });
 
   it('requires the UniSMS secret only for HMAC and reports honest disabled/unconfigured states', () => {
-    const draft = { ...createSmsServerDraft(), type: 'unisms' as const, unisms: { accessKeyId: 'id', accessKeySecret: '', signature: 'sig', templateId: 'tpl', authMode: 'simple' as const } };
+    const draft = { ...createSmsServerDraft(), type: 'unisms' as const, unisms: { accessKeyId: 'id',
+      accessKeySecret: '', signature: 'sig', templateId: 'tpl', authMode: 'simple' as const } };
     expect(validateSmsServerDraft(draft)).toEqual([]);
-    expect(validateSmsServerDraft({ ...draft, unisms: { ...draft.unisms, authMode: 'hmac' } })).toEqual(['accessKeySecret']);
+    expect(validateSmsServerDraft({ ...draft, unisms: { ...draft.unisms, authMode: 'hmac' } }))
+      .toEqual(['accessKeySecret']);
     expect(messageServerStatus(false, [])).toBe('disabled');
     expect(messageServerStatus(true, ['emailHost'])).toBe('unconfigured');
   });

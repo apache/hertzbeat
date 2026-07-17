@@ -17,7 +17,9 @@
 
 .form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .field { display: grid; gap: 7px; color: var(--ant-color-text-secondary); font-size: 13px; }
+.field > label { display: grid; gap: 7px; }
 .field :global(.ant-input-number), .field :global(.ant-select) { width: 100%; }
 .switchField { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--ant-color-text-secondary); font-size: 13px; }
 .wide { grid-column: 1 / -1; }
+.secretControls { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: -4px; }
 @media (max-width: 700px) { .form { grid-template-columns: 1fr; } .wide { grid-column: auto; } }
