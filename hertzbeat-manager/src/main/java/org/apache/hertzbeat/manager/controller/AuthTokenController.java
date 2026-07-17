@@ -24,23 +24,25 @@ import com.usthe.sureness.util.SurenessContextHolder;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.entity.dto.Message;
-import org.apache.hertzbeat.common.entity.manager.AuthToken;
-import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
+import org.apache.hertzbeat.manager.pojo.dto.AuthTokenCreateRequest;
+import org.apache.hertzbeat.manager.pojo.dto.AuthTokenIssuedResponse;
+import org.apache.hertzbeat.manager.pojo.dto.AuthTokenMutationResponse;
+import org.apache.hertzbeat.manager.pojo.dto.AuthTokenSummary;
+import org.apache.hertzbeat.manager.pojo.dto.CollectorIntakeTokenCreateRequest;
 import org.apache.hertzbeat.manager.service.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -57,11 +59,8 @@ public class AuthTokenController {
 
     @PostMapping("/generate")
     @Operation(summary = "Generate a new API token", description = "Generate a new API token for integrations, optionally with expiration")
-    public ResponseEntity<Message<Map<String, String>>> generateToken(
-            @RequestParam(value = "name", required = false) @Parameter(description = "Token name/description") String name,
-            @RequestParam(value = "expireSeconds", required = false) @Parameter(description = "Expiration time in seconds, null means never expire") Long expireSeconds,
-            @RequestParam(value = "scope", required = false, defaultValue = AuthTokenScopes.API_ADMIN) @Parameter(description = "Token access scope") String scope,
-            @RequestParam(value = "workspaceId", required = false) @Parameter(description = "Token workspace boundary") String workspaceId) {
+    public ResponseEntity<Message<AuthTokenIssuedResponse>> generateToken(
+            @ModelAttribute AuthTokenCreateRequest request) {
         SubjectSum subjectSum = SurenessContextHolder.getBindSubject();
         if (subjectSum == null) {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "No login user"));
@@ -70,13 +69,13 @@ public class AuthTokenController {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "No permission"));
         }
         try {
-            String token = StringUtils.isBlank(workspaceId)
-                    ? accountService.generateToken(name, expireSeconds, scope)
-                    : accountService.generateToken(name, expireSeconds, scope, workspaceId);
-            Map<String, String> rep = Collections.singletonMap("token", token);
-            return ResponseEntity.ok(Message.success(rep));
+            String token = StringUtils.isBlank(request.getWorkspaceId())
+                    ? accountService.generateToken(request.getName(), request.getExpireSeconds(), request.getScope())
+                    : accountService.generateToken(request.getName(), request.getExpireSeconds(), request.getScope(),
+                            request.getWorkspaceId());
+            return ResponseEntity.ok(Message.success(new AuthTokenIssuedResponse(token)));
         } catch (Exception e) {
-            log.error("generate token error", e);
+            log.error("generate token error: {}", e.getClass().getSimpleName());
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "Generate token error"));
         }
     }
@@ -84,12 +83,8 @@ public class AuthTokenController {
     @PostMapping("/collector-intake/generate")
     @Operation(summary = "Generate a Collector intake token",
             description = "Generate a managed OTLP token bound to one Collector identity")
-    public ResponseEntity<Message<Map<String, String>>> generateCollectorIntakeToken(
-            @RequestParam("collectorId") @Parameter(description = "Collector identity") String collectorId,
-            @RequestParam(value = "workspaceId", required = false)
-            @Parameter(description = "Token workspace boundary") String workspaceId,
-            @RequestParam(value = "expireSeconds", required = false)
-            @Parameter(description = "Expiration time in seconds") Long expireSeconds) {
+    public ResponseEntity<Message<AuthTokenIssuedResponse>> generateCollectorIntakeToken(
+            @ModelAttribute CollectorIntakeTokenCreateRequest request) {
         SubjectSum subjectSum = SurenessContextHolder.getBindSubject();
         if (subjectSum == null) {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "No login user"));
@@ -98,17 +93,18 @@ public class AuthTokenController {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "No permission"));
         }
         try {
-            String token = accountService.generateCollectorIntakeToken(collectorId, workspaceId, expireSeconds);
-            return ResponseEntity.ok(Message.success(Collections.singletonMap("token", token)));
+            String token = accountService.generateCollectorIntakeToken(
+                    request.getCollectorId(), request.getWorkspaceId(), request.getExpireSeconds());
+            return ResponseEntity.ok(Message.success(new AuthTokenIssuedResponse(token)));
         } catch (Exception e) {
-            log.error("generate collector intake token error", e);
+            log.error("generate collector intake token error: {}", e.getClass().getSimpleName());
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "Generate collector intake token error"));
         }
     }
 
     @GetMapping
     @Operation(summary = "List all API tokens", description = "List all active non-expiring API tokens")
-    public ResponseEntity<Message<List<AuthToken>>> listTokens() {
+    public ResponseEntity<Message<List<AuthTokenSummary>>> listTokens() {
         SubjectSum subjectSum = SurenessContextHolder.getBindSubject();
         if (subjectSum == null) {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "No login user"));
@@ -117,17 +113,19 @@ public class AuthTokenController {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "No permission"));
         }
         try {
-            List<AuthToken> tokens = accountService.listTokens();
+            List<AuthTokenSummary> tokens = accountService.listTokens().stream()
+                    .map(AuthTokenSummary::fromEntity)
+                    .toList();
             return ResponseEntity.ok(Message.success(tokens));
         } catch (Exception e) {
-            log.error("list tokens error", e);
+            log.error("list tokens error: {}", e.getClass().getSimpleName());
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "List tokens error"));
         }
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete/revoke an API token", description = "Delete an API token to revoke its access")
-    public ResponseEntity<Message<Void>> deleteToken(
+    public ResponseEntity<Message<AuthTokenMutationResponse>> deleteToken(
             @PathVariable("id") @Parameter(description = "Token ID") Long id) {
         SubjectSum subjectSum = SurenessContextHolder.getBindSubject();
         if (subjectSum == null) {
@@ -137,12 +135,18 @@ public class AuthTokenController {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "No permission"));
         }
         try {
-            accountService.deleteToken(id);
-            return ResponseEntity.ok(Message.success(null));
+            boolean deleted = accountService.deleteToken(id);
+            AuthTokenMutationResponse response = deleted
+                    ? AuthTokenMutationResponse.deleted(id)
+                    : AuthTokenMutationResponse.missing(id);
+            return ResponseEntity.ok(Message.success(response));
         } catch (javax.naming.AuthenticationException e) {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "No permission"));
+        } catch (DataAccessException e) {
+            log.error("delete token storage unavailable: {}", e.getClass().getSimpleName());
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Token storage unavailable"));
         } catch (Exception e) {
-            log.error("delete token error", e);
+            log.error("delete token error: {}", e.getClass().getSimpleName());
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "Delete token error"));
         }
     }

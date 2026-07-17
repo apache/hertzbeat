@@ -287,12 +287,12 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public void deleteToken(Long id) throws AuthenticationException {
+    public boolean deleteToken(Long id) throws AuthenticationException {
         SubjectSum subjectSum = requireCurrentSubject();
         String userId = getCurrentUserId(subjectSum);
         AuthToken token = authTokenDao.findById(id).orElse(null);
         if (token == null) {
-            return;
+            return false;
         }
         if (!subjectSum.hasRole("admin") && !StringUtils.equals(userId, token.getCreator())) {
             throw new AuthenticationException("No permission");
@@ -305,7 +305,7 @@ public class AccountServiceImpl implements AccountService {
             throw new AuthenticationException("No workspace permission");
         }
         if (!Byte.valueOf(TOKEN_STATUS_ACTIVE).equals(token.getStatus())) {
-            return;
+            return false;
         }
         String tokenHash = token.getTokenHash();
         if (StringUtils.isNotBlank(tokenHash)) {
@@ -316,6 +316,12 @@ public class AccountServiceImpl implements AccountService {
         token.setRevokedBy(userId);
         token.setRevokedTime(LocalDateTime.now());
         authTokenDao.save(token);
+        AuthToken persistedToken = authTokenDao.findById(id)
+                .orElseThrow(() -> new IllegalStateException("Revoked token is unavailable after persistence"));
+        if (!Byte.valueOf(TOKEN_STATUS_REVOKED).equals(persistedToken.getStatus())) {
+            throw new IllegalStateException("Token revocation was not persisted");
+        }
+        return true;
     }
 
     @Override

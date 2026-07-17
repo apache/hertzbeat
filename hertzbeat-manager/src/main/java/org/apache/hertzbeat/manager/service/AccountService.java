@@ -101,7 +101,8 @@ public interface AccountService extends ObservabilityAccessTokenGateway {
      * Delete/revoke an API token by id
      *
      * @param id token id
+     * @return {@code true} only when the revoked state is confirmed by a database reread
      */
-    void deleteToken(Long id) throws AuthenticationException;
+    boolean deleteToken(Long id) throws AuthenticationException;
 
 }

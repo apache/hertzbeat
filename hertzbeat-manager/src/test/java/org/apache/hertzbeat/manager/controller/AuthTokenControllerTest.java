@@ -19,7 +19,6 @@ package org.apache.hertzbeat.manager.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -41,6 +40,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -190,9 +190,9 @@ class AuthTokenControllerTest {
     void testListTokensSuccess() throws Exception {
         SubjectSum subjectSum = mockAdminSubject();
         List<AuthToken> tokens = List.of(
-                AuthToken.builder().id(1L).name("Token1").tokenHash("hash1").tokenMask("mask1")
+                AuthToken.builder().id(1L).name("Token1").tokenHash("raw-secret-token-1").tokenMask("mask1")
                         .status((byte) 0).gmtCreate(LocalDateTime.now()).build(),
-                AuthToken.builder().id(2L).name("Token2").tokenHash("hash2").tokenMask("mask2")
+                AuthToken.builder().id(2L).name("Token2").tokenHash("raw-secret-token-2").tokenMask("mask2")
                         .status((byte) 0).gmtCreate(LocalDateTime.now()).build()
         );
 
@@ -205,7 +205,10 @@ class AuthTokenControllerTest {
                     .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                     .andExpect(jsonPath("$.data.length()").value(2))
                     .andExpect(jsonPath("$.data[0].name").value("Token1"))
-                    .andExpect(jsonPath("$.data[1].name").value("Token2"));
+                    .andExpect(jsonPath("$.data[1].name").value("Token2"))
+                    .andExpect(jsonPath("$.data[0].tokenMask").value("mask1"))
+                    .andExpect(jsonPath("$.data[0].tokenHash").doesNotExist())
+                    .andExpect(jsonPath("$.data[0].token").doesNotExist());
         }
     }
 
@@ -240,13 +243,47 @@ class AuthTokenControllerTest {
 
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
-            doNothing().when(accountService).deleteToken(1L);
+            when(accountService.deleteToken(1L)).thenReturn(true);
 
             this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/account/token/1"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
+                    .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                    .andExpect(jsonPath("$.data.id").value(1))
+                    .andExpect(jsonPath("$.data.status").value("deleted"));
 
             verify(accountService).deleteToken(1L);
+        }
+    }
+
+    @Test
+    void testDeleteTokenMissing() throws Exception {
+        SubjectSum subjectSum = mockAdminSubject();
+
+        try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
+            mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
+            when(accountService.deleteToken(1L)).thenReturn(false);
+
+            this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/account/token/1"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                    .andExpect(jsonPath("$.data.id").value(1))
+                    .andExpect(jsonPath("$.data.status").value("missing"));
+        }
+    }
+
+    @Test
+    void testDeleteTokenStorageUnavailable() throws Exception {
+        SubjectSum subjectSum = mockAdminSubject();
+
+        try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
+            mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
+            when(accountService.deleteToken(1L))
+                    .thenThrow(new DataAccessResourceFailureException("sensitive backend detail"));
+
+            this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/account/token/1"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                    .andExpect(jsonPath("$.msg").value("Token storage unavailable"));
         }
     }
 
