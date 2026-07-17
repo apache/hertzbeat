@@ -17,24 +17,10 @@
 
 package org.apache.hertzbeat.alert.service;
 
-import java.util.List;
-import java.util.Set;
-import org.apache.hertzbeat.alert.dto.AlertSilenceDeleteResponse;
-import org.apache.hertzbeat.alert.dto.AlertSilencePageResponse;
-import org.apache.hertzbeat.alert.dto.AlertSilenceRequest;
-import org.apache.hertzbeat.alert.dto.AlertSilenceResponse;
+/** Raised when an alert silence identity has no authoritative record. */
+public class AlertSilenceNotFoundException extends RuntimeException {
 
-/** Safe CRUD boundary for alert silences. */
-public interface AlertSilenceService {
-
-    AlertSilenceResponse create(AlertSilenceRequest request);
-
-    AlertSilenceResponse update(AlertSilenceRequest request);
-
-    AlertSilenceResponse get(long silenceId);
-
-    AlertSilenceDeleteResponse delete(Set<Long> silenceIds);
-
-    AlertSilencePageResponse list(List<Long> silenceIds, String search, String sort, String order,
-                                  int pageIndex, int pageSize);
+    public AlertSilenceNotFoundException() {
+        super("Alert Silence is missing");
+    }
 }

@@ -1,10 +1,10 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -17,111 +17,117 @@
 
 package org.apache.hertzbeat.alert.service;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.apache.hertzbeat.alert.dao.AlertSilenceDao;
+import org.apache.hertzbeat.alert.dto.AlertSilenceRequest;
 import org.apache.hertzbeat.alert.service.impl.AlertSilenceServiceImpl;
 import org.apache.hertzbeat.common.entity.alerter.AlertSilence;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.data.domain.Page;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 
-/**
- * test case for {@link AlertSilenceServiceImpl}
- */
-
+@ExtendWith(MockitoExtension.class)
 class AlertSilenceServiceTest {
 
     @Mock
-    private AlertSilenceDao alertSilenceDao;
-
-    @InjectMocks
-    private AlertSilenceServiceImpl alertSilenceService;
+    private AlertSilenceDao dao;
+    private AlertSilenceServiceImpl service;
 
     @BeforeEach
     void setUp() {
-
-        MockitoAnnotations.openMocks(this);
-
-        alertSilenceDao.save(AlertSilence
-                .builder()
-                .id(1L)
-                .type((byte) 1)
-                .build()
-        );
-
-        assertNotNull(alertSilenceDao.findAll());
+        service = new AlertSilenceServiceImpl(dao, new AlertSilenceContractMapper());
     }
 
     @Test
-    void testValidate() {
+    void createUsesAuthoritativeReread() {
+        AlertSilenceRequest request = onceRequest(null);
+        AlertSilence saved = entity(7L, "draft");
+        AlertSilence authoritative = entity(7L, "authoritative");
+        when(dao.save(any(AlertSilence.class))).thenReturn(saved);
+        when(dao.findById(7L)).thenReturn(Optional.of(authoritative));
 
-        AlertSilence alertSilence = new AlertSilence();
-        alertSilence.setType((byte) 1);
-
-        alertSilenceService.validate(alertSilence, false);
-
-        assertNotNull(alertSilence.getDays());
-        assertEquals(7, alertSilence.getDays().size());
+        assertEquals("authoritative", service.create(request).name());
+        InOrder order = inOrder(dao);
+        order.verify(dao).save(any(AlertSilence.class));
+        order.verify(dao).findById(7L);
     }
 
     @Test
-    void testAddAlertSilence() {
+    void updateRequiresExistingIdentityAndAuthoritativeReread() {
+        AlertSilenceRequest request = onceRequest(7L);
+        AlertSilence existing = entity(7L, "existing");
+        AlertSilence authoritative = entity(7L, "updated");
+        when(dao.findById(7L)).thenReturn(Optional.of(existing), Optional.of(authoritative));
+        when(dao.save(any(AlertSilence.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        AlertSilence alertSilence = new AlertSilence();
-        when(alertSilenceDao.save(any(AlertSilence.class))).thenReturn(alertSilence);
-
-        assertDoesNotThrow(() -> alertSilenceService.addAlertSilence(alertSilence));
-        verify(alertSilenceDao, times(1)).save(alertSilence);
+        assertEquals("updated", service.update(request).name());
+        verify(dao).save(any(AlertSilence.class));
     }
 
     @Test
-    void testModifyAlertSilence() {
-        AlertSilence alertSilence = new AlertSilence();
-        when(alertSilenceDao.save(any(AlertSilence.class))).thenReturn(alertSilence);
-
-        assertDoesNotThrow(() -> alertSilenceService.modifyAlertSilence(alertSilence));
-        verify(alertSilenceDao, times(1)).save(alertSilence);
+    void missingUpdateAndDetailAreDistinct() {
+        AlertSilenceRequest request = onceRequest(7L);
+        when(dao.findById(7L)).thenReturn(Optional.empty());
+        assertThrows(AlertSilenceNotFoundException.class, () -> service.update(request));
+        assertThrows(AlertSilenceNotFoundException.class, () -> service.get(7L));
     }
 
     @Test
-    void testGetAlertSilence() {
-        AlertSilence alertSilence = new AlertSilence();
-        when(alertSilenceDao.findById(anyLong())).thenReturn(Optional.of(alertSilence));
-
-        AlertSilence result = alertSilenceService.getAlertSilence(1L);
-        assertNotNull(result);
-        verify(alertSilenceDao, times(1)).findById(1L);
+    void deleteRereadsAndReportsMissingIds() {
+        when(dao.findAllById(Set.of(7L, 8L))).thenReturn(List.of(entity(7L, "existing")), List.of());
+        var result = service.delete(Set.of(7L, 8L));
+        assertEquals("partial", result.status());
+        assertEquals(Set.of(7L), result.deletedIds());
+        assertEquals(Set.of(8L), result.missingIds());
+        verify(dao).deleteAlertSilencesByIdIn(Set.of(7L));
     }
 
     @Test
-    void testGetAlertSilences() {
-        when(alertSilenceDao.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(Page.empty());
-        assertDoesNotThrow(() -> alertSilenceService.getAlertSilences(null, null, "id", "desc", 1, 10));
-        verify(alertSilenceDao, times(1)).findAll(any(Specification.class), any(PageRequest.class));
-
-        assertNotNull(alertSilenceService.getAlertSilences(null, null, "id", "desc", 1, 10));
+    void listMapsExplicitPageAndRejectsUnsafeQueryControls() {
+        AlertSilence entity = entity(7L, "listed");
+        when(dao.findAll(any(Specification.class), any(PageRequest.class)))
+                .thenReturn(new PageImpl<>(List.of(entity), PageRequest.of(0, 8), 1));
+        var result = service.list(null, " listed ", "id", "desc", 0, 8);
+        assertEquals(1, result.totalElements());
+        assertEquals("listed", result.content().getFirst().name());
+        assertThrows(IllegalArgumentException.class,
+                () -> service.list(null, null, "labels", "desc", 0, 8));
+        assertThrows(IllegalArgumentException.class,
+                () -> service.list(null, null, "id", "desc", -1, 8));
     }
 
-    @Test
-    void testDeleteAlertSilences() {
-
-        alertSilenceDao.deleteAlertSilencesByIdIn(Set.of(1L));
-
-        verify(alertSilenceDao, times(1)).deleteAlertSilencesByIdIn(Set.of(1L));
+    private AlertSilenceRequest onceRequest(Long id) {
+        AlertSilenceRequest request = new AlertSilenceRequest();
+        request.setId(id);
+        request.setName("Maintenance");
+        request.setEnable(true);
+        request.setMatchAll(true);
+        request.setType((byte) 0);
+        request.setLabels(java.util.Map.of());
+        request.setDays(List.of());
+        request.setPeriodStart(java.time.ZonedDateTime.parse("2026-07-17T10:00:00Z"));
+        request.setPeriodEnd(java.time.ZonedDateTime.parse("2026-07-17T11:00:00Z"));
+        return request;
     }
 
+    private AlertSilence entity(Long id, String name) {
+        return AlertSilence.builder().id(id).name(name).enable(true).matchAll(true).type((byte) 0)
+                .periodStart(java.time.ZonedDateTime.parse("2026-07-17T10:00:00Z"))
+                .periodEnd(java.time.ZonedDateTime.parse("2026-07-17T11:00:00Z")).build();
+    }
 }

@@ -15,26 +15,30 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.alert.service;
+package org.apache.hertzbeat.alert.dto;
 
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Set;
-import org.apache.hertzbeat.alert.dto.AlertSilenceDeleteResponse;
-import org.apache.hertzbeat.alert.dto.AlertSilencePageResponse;
-import org.apache.hertzbeat.alert.dto.AlertSilenceRequest;
-import org.apache.hertzbeat.alert.dto.AlertSilenceResponse;
+import java.util.Map;
+import lombok.Data;
 
-/** Safe CRUD boundary for alert silences. */
-public interface AlertSilenceService {
+/** Persistence-safe create/update input for an alert silence. */
+@Data
+public class AlertSilenceRequest {
 
-    AlertSilenceResponse create(AlertSilenceRequest request);
+    private Long id;
+    private String name;
+    private Boolean enable;
+    private Boolean matchAll;
+    private Byte type;
+    private Map<String, String> labels;
+    private List<Byte> days;
+    private ZonedDateTime periodStart;
+    private ZonedDateTime periodEnd;
 
-    AlertSilenceResponse update(AlertSilenceRequest request);
-
-    AlertSilenceResponse get(long silenceId);
-
-    AlertSilenceDeleteResponse delete(Set<Long> silenceIds);
-
-    AlertSilencePageResponse list(List<Long> silenceIds, String search, String sort, String order,
-                                  int pageIndex, int pageSize);
+    @JsonAnySetter
+    public void rejectUnknownField(String name, Object value) {
+        throw new IllegalArgumentException("Unsupported alert silence field: " + name);
+    }
 }

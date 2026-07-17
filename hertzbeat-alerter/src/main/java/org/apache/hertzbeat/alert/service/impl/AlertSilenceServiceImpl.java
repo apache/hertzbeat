@@ -1,10 +1,10 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -20,92 +20,145 @@ package org.apache.hertzbeat.alert.service.impl;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
-import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.alert.dao.AlertSilenceDao;
+import org.apache.hertzbeat.alert.dto.AlertSilenceDeleteResponse;
+import org.apache.hertzbeat.alert.dto.AlertSilencePageResponse;
+import org.apache.hertzbeat.alert.dto.AlertSilenceRequest;
+import org.apache.hertzbeat.alert.dto.AlertSilenceResponse;
+import org.apache.hertzbeat.alert.service.AlertSilenceContractMapper;
+import org.apache.hertzbeat.alert.service.AlertSilenceNotFoundException;
+import org.apache.hertzbeat.alert.service.AlertSilenceOperationException;
 import org.apache.hertzbeat.alert.service.AlertSilenceService;
 import org.apache.hertzbeat.common.cache.CacheFactory;
 import org.apache.hertzbeat.common.entity.alerter.AlertSilence;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
-/**
- * management interface service implement for alert silence
- */
+/** Persistence implementation of the safe alert-silence CRUD contract. */
 @Service
 @Transactional(rollbackFor = Exception.class)
-@Slf4j
 public class AlertSilenceServiceImpl implements AlertSilenceService {
 
-    @Autowired
-    private AlertSilenceDao alertSilenceDao;
+    private static final Set<String> SORT_FIELDS = Set.of("id", "name", "enable", "type", "gmtCreate", "gmtUpdate");
+    private static final int MAX_PAGE_SIZE = 100;
+
+    private final AlertSilenceDao alertSilenceDao;
+    private final AlertSilenceContractMapper mapper;
+
+    public AlertSilenceServiceImpl(AlertSilenceDao alertSilenceDao, AlertSilenceContractMapper mapper) {
+        this.alertSilenceDao = alertSilenceDao;
+        this.mapper = mapper;
+    }
 
     @Override
-    public void validate(AlertSilence alertSilence, boolean isModify) throws IllegalArgumentException {
-        // todo
-        // if the alarm silent selection date set in periodic situations is empty, it will be deemed to be all checked.
-        if (alertSilence.getType() == 1 && alertSilence.getDays() == null) {
-            alertSilence.setDays(Arrays.asList((byte) 7, (byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5, (byte) 6));
+    public AlertSilenceResponse create(AlertSilenceRequest request) {
+        AlertSilence saved = alertSilenceDao.save(mapper.toNewEntity(request));
+        if (saved == null || saved.getId() == null) {
+            throw new AlertSilenceOperationException("Alert silence create did not return an identity");
         }
-    }
-
-    @Override
-    public void addAlertSilence(AlertSilence alertSilence) throws RuntimeException {
-        alertSilenceDao.save(alertSilence);
+        AlertSilence authoritative = alertSilenceDao.findById(saved.getId())
+                .orElseThrow(() -> new AlertSilenceOperationException("Alert silence create did not converge"));
         clearAlertSilencesCache();
+        return mapper.toResponse(authoritative);
     }
 
     @Override
-    public void modifyAlertSilence(AlertSilence alertSilence) throws RuntimeException {
-        alertSilenceDao.save(alertSilence);
+    public AlertSilenceResponse update(AlertSilenceRequest request) {
+        Long id = mapper.requirePositiveId(request.getId());
+        AlertSilence existing = alertSilenceDao.findById(id).orElseThrow(AlertSilenceNotFoundException::new);
+        alertSilenceDao.save(mapper.toExistingEntity(request, existing));
+        AlertSilence authoritative = alertSilenceDao.findById(id)
+                .orElseThrow(() -> new AlertSilenceOperationException("Alert silence update did not converge"));
         clearAlertSilencesCache();
+        return mapper.toResponse(authoritative);
     }
 
     @Override
-    public AlertSilence getAlertSilence(long silenceId) throws RuntimeException {
-        return alertSilenceDao.findById(silenceId).orElse(null);
+    @Transactional(readOnly = true)
+    public AlertSilenceResponse get(long silenceId) {
+        mapper.requirePositiveId(silenceId);
+        return alertSilenceDao.findById(silenceId).map(mapper::toResponse)
+                .orElseThrow(AlertSilenceNotFoundException::new);
     }
 
     @Override
-    public void deleteAlertSilences(Set<Long> silenceIds) throws RuntimeException {
-        alertSilenceDao.deleteAlertSilencesByIdIn(silenceIds);
+    public AlertSilenceDeleteResponse delete(Set<Long> silenceIds) {
+        Set<Long> requested = validateIds(silenceIds);
+        Set<Long> existing = ids(alertSilenceDao.findAllById(requested));
+        Set<Long> missing = new LinkedHashSet<>(requested);
+        missing.removeAll(existing);
+        if (!existing.isEmpty()) {
+            alertSilenceDao.deleteAlertSilencesByIdIn(existing);
+        }
+        Set<Long> remaining = ids(alertSilenceDao.findAllById(requested));
+        if (!remaining.isEmpty()) {
+            throw new AlertSilenceOperationException("Alert silence delete did not converge");
+        }
         clearAlertSilencesCache();
+        String status = existing.isEmpty() ? "missing" : missing.isEmpty() ? "deleted" : "partial";
+        return new AlertSilenceDeleteResponse(status, Set.copyOf(existing), Set.copyOf(missing));
     }
 
     @Override
-    public Page<AlertSilence> getAlertSilences(List<Long> silenceIds, String search, String sort, String order, int pageIndex, int pageSize) {
-        Specification<AlertSilence> specification = (root, query, criteriaBuilder) -> {
-            List<Predicate> andList = new ArrayList<>();
+    @Transactional(readOnly = true)
+    public AlertSilencePageResponse list(List<Long> silenceIds, String search, String sort, String order,
+                                         int pageIndex, int pageSize) {
+        List<Long> ids = silenceIds == null ? null : List.copyOf(validateIds(new LinkedHashSet<>(silenceIds)));
+        String query = StringUtils.trimToNull(search);
+        if (query != null && query.length() > 100) {
+            throw new IllegalArgumentException("Alert silence search is too long");
+        }
+        if (!SORT_FIELDS.contains(sort) || !("asc".equalsIgnoreCase(order) || "desc".equalsIgnoreCase(order))) {
+            throw new IllegalArgumentException("Alert silence sort is invalid");
+        }
+        if (pageIndex < 0 || pageSize < 1 || pageSize > MAX_PAGE_SIZE) {
+            throw new IllegalArgumentException("Alert silence page is invalid");
+        }
+        Page<AlertSilence> page = alertSilenceDao.findAll(specification(ids, query),
+                PageRequest.of(pageIndex, pageSize, Sort.by(Sort.Direction.fromString(order), sort)));
+        List<AlertSilenceResponse> content = page.getContent().stream().map(mapper::toResponse).toList();
+        return new AlertSilencePageResponse(content, page.getTotalElements(), page.getTotalPages(),
+                page.getNumber(), page.getSize());
+    }
+
+    private Specification<AlertSilence> specification(List<Long> silenceIds, String search) {
+        return (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
             if (silenceIds != null && !silenceIds.isEmpty()) {
-                CriteriaBuilder.In<Long> inPredicate = criteriaBuilder.in(root.get("id"));
-                for (long id : silenceIds) {
-                    inPredicate.value(id);
-                }
-                andList.add(inPredicate);
+                CriteriaBuilder.In<Long> idPredicate = criteriaBuilder.in(root.get("id"));
+                silenceIds.forEach(idPredicate::value);
+                predicates.add(idPredicate);
             }
-            if (StringUtils.hasText(search)) {
-                Predicate predicate = criteriaBuilder.or(
-                        criteriaBuilder.like(
-                                criteriaBuilder.lower(root.get("name")),
-                                "%" + search.toLowerCase() + "%"
-                        )
-                );
-                andList.add(predicate);
+            if (search != null) {
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("name")),
+                        "%" + search.toLowerCase(Locale.ROOT) + "%"));
             }
-            Predicate[] predicates = new Predicate[andList.size()];
-            return criteriaBuilder.and(andList.toArray(predicates));
+            return criteriaBuilder.and(predicates.toArray(Predicate[]::new));
         };
-        Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
-        PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
-        return alertSilenceDao.findAll(specification, pageRequest);
+    }
+
+    private Set<Long> validateIds(Set<Long> silenceIds) {
+        if (silenceIds == null || silenceIds.isEmpty()) {
+            throw new IllegalArgumentException("Alert silence ids are required");
+        }
+        LinkedHashSet<Long> result = new LinkedHashSet<>();
+        silenceIds.forEach(id -> result.add(mapper.requirePositiveId(id)));
+        return result;
+    }
+
+    private Set<Long> ids(Iterable<AlertSilence> silences) {
+        Set<Long> ids = new LinkedHashSet<>();
+        silences.forEach(silence -> ids.add(silence.getId()));
+        return ids;
     }
 
     private void clearAlertSilencesCache() {
