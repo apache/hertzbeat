@@ -53,7 +53,6 @@ public class MonitorInfo {
     @HostValid
     private String instance;
 
-    @Min(10)
     private Integer intervals;
 
     @Size(max = 20)

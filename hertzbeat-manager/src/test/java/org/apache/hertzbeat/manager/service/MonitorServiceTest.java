@@ -264,7 +264,7 @@ class MonitorServiceTest {
     void detectMonitorEmpty() {
         Monitor monitor = Monitor.builder()
                 .id(1L)
-                .intervals(1)
+                .intervals(10)
                 .name("memory")
                 .app("demoApp")
                 .instance("localhost")
@@ -287,7 +287,7 @@ class MonitorServiceTest {
     void detectMonitorFail() {
         Monitor monitor = Monitor.builder()
                 .id(1L)
-                .intervals(1)
+                .intervals(10)
                 .name("memory")
                 .app("demoApp")
                 .instance("localhost")
@@ -310,7 +310,7 @@ class MonitorServiceTest {
     @Test
     void addMonitorSuccess() {
         Monitor monitor = Monitor.builder()
-                .intervals(1)
+                .intervals(10)
                 .name("memory")
                 .app("demoApp")
                 .instance("localhost")
@@ -370,7 +370,7 @@ class MonitorServiceTest {
     @Test
     void addMonitorException() {
         Monitor monitor = Monitor.builder()
-                .intervals(1)
+                .intervals(10)
                 .name("memory")
                 .instance("localhost")
                 .app("demoApp")
@@ -762,6 +762,81 @@ class MonitorServiceTest {
         }
     }
 
+    @ParameterizedTest
+    @CsvSource({
+            "push, 1, true",
+            "push, 604800, true",
+            "push, 604801, false",
+            "linux, 1, false",
+            "linux, 9, false",
+            "linux, 10, true",
+            "linux, 604800, true",
+            "linux, 604801, false"
+    })
+    void validateIntervalScheduleBoundariesForNewAndModify(String app, int interval, boolean valid) {
+        for (boolean isModify : List.of(false, true)) {
+            MonitorDto dto = new MonitorDto();
+            dto.setMonitor(Monitor.builder()
+                    .id(isModify ? 1L : null)
+                    .name("schedule-boundary")
+                    .app(app)
+                    .scheduleType("interval")
+                    .cronExpression("0 0 * * * ?")
+                    .intervals(interval)
+                    .build());
+            dto.setParams(Collections.emptyList());
+
+            if (valid) {
+                assertDoesNotThrow(() -> monitorService.validate(dto, isModify));
+                assertEquals("interval", dto.getMonitor().getScheduleType());
+                assertEquals(null, dto.getMonitor().getCronExpression());
+            } else {
+                assertThrows(IllegalArgumentException.class, () -> monitorService.validate(dto, isModify));
+            }
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', textBlock = """
+            0 0 * * * ? | true
+            0 0 * * * | false
+            invalid | false
+            """)
+    void validateCronScheduleUsesSpringSixFieldParserForNewAndModify(String expression, boolean valid) {
+        for (boolean isModify : List.of(false, true)) {
+            MonitorDto dto = new MonitorDto();
+            dto.setMonitor(Monitor.builder()
+                    .id(isModify ? 1L : null)
+                    .name("cron-boundary")
+                    .app("linux")
+                    .scheduleType("cron")
+                    .cronExpression(expression)
+                    .build());
+            dto.setParams(Collections.emptyList());
+
+            if (valid) {
+                assertDoesNotThrow(() -> monitorService.validate(dto, isModify));
+                assertEquals(10, dto.getMonitor().getIntervals());
+            } else {
+                assertThrows(IllegalArgumentException.class, () -> monitorService.validate(dto, isModify));
+            }
+        }
+    }
+
+    @Test
+    void validateRejectsUnsupportedScheduleType() {
+        MonitorDto dto = new MonitorDto();
+        dto.setMonitor(Monitor.builder()
+                .name("unsupported-schedule")
+                .app("linux")
+                .scheduleType("calendar")
+                .intervals(10)
+                .build());
+        dto.setParams(Collections.emptyList());
+
+        assertThrows(IllegalArgumentException.class, () -> monitorService.validate(dto, false));
+    }
+
     @Test
     void modifyMonitor() {
         String value = "value";
@@ -776,7 +851,7 @@ class MonitorServiceTest {
         params.add(param);
         dto.setParams(params);
         long monitorId = 1L;
-        Monitor monitor = Monitor.builder().jobId(1L).intervals(1).app("app").name("memory").instance("host")
+        Monitor monitor = Monitor.builder().jobId(1L).intervals(10).app("app").name("memory").instance("host")
                 .id(monitorId).build();
         dto.setMonitor(monitor);
         when(monitorDao.findById(monitorId)).thenReturn(Optional.empty());
@@ -797,7 +872,7 @@ class MonitorServiceTest {
             assertEquals("Can not modify monitor's app type", e.getMessage());
         }
         reset();
-        Monitor existOkMonitor = Monitor.builder().jobId(1L).intervals(1).app("app").name("memory").instance("host")
+        Monitor existOkMonitor = Monitor.builder().jobId(1L).intervals(10).app("app").name("memory").instance("host")
                 .id(monitorId).build();
         when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existOkMonitor));
         when(monitorDao.save(any(Monitor.class))).thenThrow(RuntimeException.class);
@@ -926,7 +1001,7 @@ class MonitorServiceTest {
         ids.add(1L);
         List<Monitor> monitors = new ArrayList<>();
         for (Long id : ids) {
-            Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").instance("host").id(id)
+            Monitor monitor = Monitor.builder().jobId(id).intervals(10).app("app").name("memory").instance("host").id(id)
                     .build();
             monitors.add(monitor);
         }
@@ -943,7 +1018,7 @@ class MonitorServiceTest {
 
         List<Monitor> monitors = new ArrayList<>();
         for (Long id : ids) {
-            Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").instance("host").id(id)
+            Monitor monitor = Monitor.builder().jobId(id).intervals(10).app("app").name("memory").instance("host").id(id)
                     .build();
             monitors.add(monitor);
         }
@@ -963,9 +1038,9 @@ class MonitorServiceTest {
                 .monitorId(3L)
                 .build()));
         when(monitorDao.findMonitorsByIdIn(expandedIds)).thenReturn(List.of(
-                Monitor.builder().jobId(1L).intervals(1).app("app").name("memory").instance("host").id(1L).build(),
-                Monitor.builder().jobId(2L).intervals(1).app("app").name("disk").instance("host").id(2L).build(),
-                Monitor.builder().jobId(3L).intervals(1).app("app").name("child").instance("host").id(3L).build()));
+                Monitor.builder().jobId(1L).intervals(10).app("app").name("memory").instance("host").id(1L).build(),
+                Monitor.builder().jobId(2L).intervals(10).app("app").name("disk").instance("host").id(2L).build(),
+                Monitor.builder().jobId(3L).intervals(10).app("app").name("child").instance("host").id(3L).build()));
 
         assertDoesNotThrow(() -> monitorService.deleteMonitors(ids));
 
@@ -989,9 +1064,9 @@ class MonitorServiceTest {
                         .monitorId(3L)
                         .build()));
         when(monitorDao.findMonitorsByIdIn(expandedIds)).thenReturn(List.of(
-                Monitor.builder().jobId(1L).intervals(1).app("app").name("memory").instance("host").id(1L).build(),
-                Monitor.builder().jobId(2L).intervals(1).app("app").name("disk").instance("host").id(2L).build(),
-                Monitor.builder().jobId(3L).intervals(1).app("app").name("child").instance("host").id(3L).build()));
+                Monitor.builder().jobId(1L).intervals(10).app("app").name("memory").instance("host").id(1L).build(),
+                Monitor.builder().jobId(2L).intervals(10).app("app").name("disk").instance("host").id(2L).build(),
+                Monitor.builder().jobId(3L).intervals(10).app("app").name("child").instance("host").id(3L).build()));
 
         assertDoesNotThrow(() -> monitorService.deleteMonitors(ids));
 
@@ -1012,8 +1087,8 @@ class MonitorServiceTest {
                 .monitorId(3L)
                 .build()));
         when(monitorDao.findMonitorsByIdIn(expandedIds)).thenReturn(List.of(
-                Monitor.builder().jobId(1L).intervals(1).app("app").name("memory").instance("host").id(1L).build(),
-                Monitor.builder().jobId(3L).intervals(1).app("app").name("child").instance("host").id(3L).build()));
+                Monitor.builder().jobId(1L).intervals(10).app("app").name("memory").instance("host").id(1L).build(),
+                Monitor.builder().jobId(3L).intervals(10).app("app").name("child").instance("host").id(3L).build()));
 
         assertDoesNotThrow(() -> monitorService.deleteMonitors(submittedIds));
 
@@ -1026,7 +1101,7 @@ class MonitorServiceTest {
     @Test
     void getMonitorDto() {
         long id = 1L;
-        Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").instance("host").id(id)
+        Monitor monitor = Monitor.builder().jobId(id).intervals(10).app("app").name("memory").instance("host").id(id)
                 .build();
         when(monitorDao.findById(id)).thenReturn(Optional.of(monitor));
         List<Param> params = Collections.singletonList(new Param());
@@ -1082,7 +1157,7 @@ class MonitorServiceTest {
 
         List<Monitor> monitors = new ArrayList<>();
         for (Long id : ids) {
-            Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").instance("host").id(id)
+            Monitor monitor = Monitor.builder().jobId(id).intervals(10).app("app").name("memory").instance("host").id(id)
                     .build();
             monitors.add(monitor);
         }
@@ -1117,7 +1192,7 @@ class MonitorServiceTest {
 
         List<Monitor> monitors = new ArrayList<>();
         for (Long id : ids) {
-            Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").instance("host").id(id)
+            Monitor monitor = Monitor.builder().jobId(id).intervals(10).app("app").name("memory").instance("host").id(id)
                     .build();
             monitor.setStatus(CommonConstants.MONITOR_PAUSED_CODE);
             monitors.add(monitor);
@@ -1195,7 +1270,7 @@ class MonitorServiceTest {
     @Test
     void copyMonitors() {
         Monitor monitor = Monitor.builder()
-                .intervals(1)
+                .intervals(10)
                 .name("memory")
                 .app("demoApp")
                 .instance("localhost")
@@ -1212,7 +1287,7 @@ class MonitorServiceTest {
     @Test
     void copyMonitorUsesNextAvailableCopyName() {
         Monitor monitor = Monitor.builder()
-                .intervals(1)
+                .intervals(10)
                 .name("memory")
                 .app("demoApp")
                 .instance("localhost")
@@ -1264,7 +1339,7 @@ class MonitorServiceTest {
         Job job = new Job();
         job.setApp("testJob");
         job.setMetrics(metrics);
-        Monitor monitor = Monitor.builder().jobId(1L).intervals(1).app(job.getApp()).name(job.getApp()).instance("host")
+        Monitor monitor = Monitor.builder().jobId(1L).intervals(10).app(job.getApp()).name(job.getApp()).instance("host")
                 .build();
 
         List<Param> params = new ArrayList<>();

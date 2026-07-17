@@ -71,6 +71,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
+import org.springframework.scheduling.support.CronExpression;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -100,6 +101,12 @@ public class MonitorServiceImpl implements MonitorService {
     public static final String PARAM_FIELD_HOST = "host";
     public static final String PARAM_FIELD_PORT = "port";
     private static final String MONITOR_COPY_SUFFIX = "_copy";
+    private static final String SCHEDULE_INTERVAL = "interval";
+    private static final String SCHEDULE_CRON = "cron";
+    private static final String PUSH_APP = "push";
+    private static final int PUSH_MIN_INTERVAL_SECONDS = 1;
+    private static final int DEFAULT_MIN_INTERVAL_SECONDS = 10;
+    private static final int MAX_INTERVAL_SECONDS = 604800;
 
     @Autowired
     private ParamValidatorManager paramValidatorManager;
@@ -162,6 +169,7 @@ public class MonitorServiceImpl implements MonitorService {
     @Transactional(rollbackFor = Exception.class)
     public void addMonitor(Monitor monitor, List<Param> params, String collector, GrafanaDashboard grafanaDashboard)
             throws RuntimeException {
+        applyScheduleContract(monitor);
         // Apply for monitor id
         long monitorId = SnowFlakeIdGenerator.generateId();
         Map<String, String> labels = monitor.getLabels();
@@ -264,6 +272,11 @@ public class MonitorServiceImpl implements MonitorService {
         var monitorInfo = monitorDto.getMonitorInfo();
         monitorInfo.setInstance(StringUtils.hasText(monitorInfo.getInstance()) ? monitorInfo.getInstance().trim() : null);
         monitorInfo.setName(monitorInfo.getName().trim());
+        ScheduleValues schedule = validateSchedule(monitorInfo.getApp(), monitorInfo.getScheduleType(),
+                monitorInfo.getCronExpression(), monitorInfo.getIntervals());
+        monitorInfo.setScheduleType(schedule.type());
+        monitorInfo.setCronExpression(schedule.cronExpression());
+        monitorInfo.setIntervals(schedule.intervalSeconds());
         Monitor monitor = monitorInfo.toEntity();
         Map<String, MonitorParam> paramMap = monitorDto.getParamInfos()
                 .stream()
@@ -322,6 +335,44 @@ public class MonitorServiceImpl implements MonitorService {
         checkJobFields(monitorDto.getMonitor().getApp());
     }
 
+    private static void applyScheduleContract(Monitor monitor) {
+        ScheduleValues schedule = validateSchedule(monitor.getApp(), monitor.getScheduleType(),
+                monitor.getCronExpression(), monitor.getIntervals());
+        monitor.setScheduleType(schedule.type());
+        monitor.setCronExpression(schedule.cronExpression());
+        monitor.setIntervals(schedule.intervalSeconds());
+    }
+
+    private static ScheduleValues validateSchedule(
+            String app, String scheduleType, String cronExpression, Integer intervalSeconds) {
+        String type = StringUtils.hasText(scheduleType) ? scheduleType.trim() : SCHEDULE_INTERVAL;
+        int minimum = PUSH_APP.equals(app) ? PUSH_MIN_INTERVAL_SECONDS : DEFAULT_MIN_INTERVAL_SECONDS;
+        if (SCHEDULE_INTERVAL.equals(type)) {
+            int normalizedInterval = intervalSeconds == null ? minimum : intervalSeconds;
+            if (normalizedInterval < minimum || normalizedInterval > MAX_INTERVAL_SECONDS) {
+                throw new IllegalArgumentException(
+                        "Interval must be between " + minimum + " and " + MAX_INTERVAL_SECONDS + " seconds");
+            }
+            return new ScheduleValues(type, null, normalizedInterval);
+        }
+        if (SCHEDULE_CRON.equals(type)) {
+            if (!StringUtils.hasText(cronExpression)) {
+                throw new IllegalArgumentException("Cron expression is required");
+            }
+            String expression = cronExpression.trim();
+            try {
+                CronExpression.parse(expression);
+            } catch (IllegalArgumentException exception) {
+                throw new IllegalArgumentException("Invalid cron expression", exception);
+            }
+            return new ScheduleValues(type, expression, minimum);
+        }
+        throw new IllegalArgumentException("Schedule type must be interval or cron");
+    }
+
+    private record ScheduleValues(String type, String cronExpression, int intervalSeconds) {
+    }
+
     private void checkJobFields(String app) {
         if (null == app || app.trim().isEmpty()) {
             return;
@@ -366,6 +417,7 @@ public class MonitorServiceImpl implements MonitorService {
             // The type of monitoring cannot be modified
             throw new IllegalArgumentException("Can not modify monitor's app type");
         }
+        applyScheduleContract(monitor);
         Map<String, String> labels = monitor.getLabels();
         if (labels == null) {
             labels = new HashMap<>(8);
