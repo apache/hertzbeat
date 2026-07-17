@@ -17,10 +17,18 @@
 
 import { describe, expect, it } from 'vitest';
 
+import api from './api/message-server-api.ts?raw';
 import controller from './controller/use-message-server-controller.ts?raw';
+import model from './model/message-server-model.ts?raw';
 import page from './pages/message-server-page.tsx?raw';
 
 describe('message server architecture', () => {
+  it('keeps response schemas in the API boundary and domain contracts out of transport', () => {
+    expect(api).toContain("from './message-server-schema'");
+    expect(api).not.toMatch(/function\s+(?:array|boolean|integer|number|object|record|stringArray|text)\s*\(/);
+    expect(model).not.toMatch(/api\/message-server-api/);
+  });
+
   it('keeps query, mutation, transport, and payload ownership outside the page', () => {
     expect(page).not.toMatch(/@tanstack\/react-query/);
     expect(page).not.toMatch(/message-server-api/);

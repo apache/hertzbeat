@@ -24,9 +24,9 @@ import {
   type SmsSecret,
   type SmsServerEvidence,
   type SmsServerPayload
-} from '../api/message-server-api';
+} from './message-server-contract';
 
-export type { EmailSecret, SmsProviderType, SmsSecret } from '../api/message-server-api';
+export type { EmailSecret, SmsProviderType, SmsSecret } from './message-server-contract';
 
 export type EmailServerDraft = Omit<EmailServerPayload, 'emailPassword' | 'clearSecrets'> & {
   emailPassword: string;
