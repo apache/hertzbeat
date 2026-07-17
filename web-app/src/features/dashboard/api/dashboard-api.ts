@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 import { apiMessageGet } from '@/core/http/api-message';
-import { parseAlertSummary, parseDashboardSummary } from '../model/dashboard-model';
+import { parseAlertSummary, parseDashboardSummary } from './dashboard-schema';
 
 export async function loadDashboardSummary(signal?: AbortSignal) {
   return parseDashboardSummary(await apiMessageGet<unknown>('/api/summary', signal ? { signal } : undefined));

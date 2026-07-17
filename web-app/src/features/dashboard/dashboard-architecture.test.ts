@@ -17,6 +17,13 @@
 import { describe, expect, it } from 'vitest';
 const sources = import.meta.glob('./**/*.{ts,tsx}', { eager: true, import: 'default', query: '?raw' });
 describe('dashboard architecture', () => {
+  it('keeps wire parsing in the API schema boundary', () => {
+    expect(sources['./api/dashboard-api.ts']).toContain("from './dashboard-schema'");
+    expect(sources['./model/dashboard-model.ts']).not.toMatch(/parseDashboard|parseAlertSummary/);
+    expect(sources['./model/dashboard-model.ts'])
+      .not.toMatch(/function\s+(?:array|boolean|integer|number|object|record|stringArray|text)\s*\(/);
+  });
+
   it('uses explicit api/model/controller/components/pages layers', () => {
     const production = Object.keys(sources).filter(path => !path.includes('.test.'));
     for (const layer of ['api', 'model', 'controller', 'components', 'pages']) {
