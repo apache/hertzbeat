@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { receiverTypeDefinitions, type NoticeReceiverType } from './notice-receiver-model';
+import { receiverTypeDefinitions, type NoticeReceiverType } from './notice-receiver/model/notice-receiver-model';
 
 export const noticeTemplatePageSizes = [8, 15, 25] as const;
 

@@ -18,7 +18,7 @@
 import { Input, Modal, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { receiverTypeDefinitions, type NoticeReceiverType } from './notice-receiver-model';
+import { receiverTypeDefinitions, type NoticeReceiverType } from './notice-receiver/model/notice-receiver-model';
 import type { NoticeTemplateDraft } from './notice-template-model';
 import styles from './notice-template-editor.module.css';
 

@@ -25,6 +25,7 @@ import { SessionProvider } from '@/core/auth/session-provider';
 
 import { alertSilenceDataProvider } from './resources/alert-silence-data-provider';
 import { labelDataProvider } from './resources/label-data-provider';
+import { noticeReceiverDataProvider } from './resources/notice-receiver-data-provider';
 import { noticeTemplateDataProvider } from './resources/notice-template-data-provider';
 import { objectStoreDataProvider } from './resources/object-store-data-provider';
 import { systemConfigDataProvider } from './resources/system-config-data-provider';
@@ -47,6 +48,7 @@ const dataProviders = {
   default: labelDataProvider,
   labels: labelDataProvider,
   'alert-silences': alertSilenceDataProvider,
+  'notice-receivers': noticeReceiverDataProvider,
   'notice-templates': noticeTemplateDataProvider,
   'object-store': objectStoreDataProvider,
   'system-config': systemConfigDataProvider,
@@ -73,6 +75,11 @@ const resources = [
     name: 'notice-templates',
     list: '/settings/notice-templates',
     meta: { dataProviderName: 'notice-templates' }
+  },
+  {
+    name: 'notice-receivers',
+    list: '/settings/notifications/receivers',
+    meta: { dataProviderName: 'notice-receivers' }
   },
   {
     name: 'system-config',

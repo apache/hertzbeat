@@ -16,7 +16,7 @@
  */
 
 import { formatLabelMatchers, parseLabelMatchers } from './alert-label-matchers';
-import type { NoticeReceiver } from './notice-receiver-model';
+import type { NoticeReceiverOption } from './notice-receiver/model/notice-receiver-model';
 import type { NoticeTemplate } from './notice-template-model';
 
 export const noticeRulePageSizes = [8, 15, 25] as const;
@@ -110,7 +110,7 @@ export function noticeRuleDraftFromDetail(rule: NoticeRule): NoticeRuleDraft {
   };
 }
 
-export function compatibleNoticeRuleTemplates(receiverIds: number[], receivers: NoticeReceiver[], templates: NoticeTemplate[]) {
+export function compatibleNoticeRuleTemplates(receiverIds: number[], receivers: NoticeReceiverOption[], templates: NoticeTemplate[]) {
   const selectedTypes = new Set(receivers.filter(receiver => receiverIds.includes(receiver.id)).map(receiver => receiver.type));
   if (selectedTypes.size !== 1) return [];
   const [selectedType] = selectedTypes;
@@ -132,7 +132,7 @@ function localIsoTime(value: string) {
   return `${localDate}T${value}:00${timezoneOffset(-date.getTimezoneOffset())}`;
 }
 
-export function buildNoticeRulePayload(draft: NoticeRuleDraft, receivers: NoticeReceiver[] = [], templates: NoticeTemplate[] = []) {
+export function buildNoticeRulePayload(draft: NoticeRuleDraft, receivers: NoticeReceiverOption[] = [], templates: NoticeTemplate[] = []) {
   const receiverNames = draft.receiverIds.map((id, index) => receivers.find(receiver => receiver.id === id)?.name ?? draft.receiverNames[index]).filter((name): name is string => Boolean(name));
   const template = draft.templateId == null ? null : templates.find(item => item.id === draft.templateId);
   return {

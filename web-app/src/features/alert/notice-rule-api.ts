@@ -17,7 +17,8 @@
 
 import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut, type PageResult } from '@/core/http/api-message';
 
-import type { NoticeReceiver } from './notice-receiver-model';
+import { loadAllNoticeReceiverOptions } from './notice-receiver/api/notice-receiver-api';
+import type { NoticeReceiverOption } from './notice-receiver/model/notice-receiver-model';
 import {
   buildNoticeRuleListPath,
   buildNoticeRulePayload,
@@ -36,14 +37,14 @@ export function loadNoticeRule(id: number) {
 }
 
 export function loadAllNoticeReceivers() {
-  return apiMessageGet<NoticeReceiver[]>('/api/notice/receivers/all');
+  return loadAllNoticeReceiverOptions();
 }
 
 export function loadAllNoticeTemplates() {
   return apiMessageGet<NoticeTemplate[]>('/api/notice/templates/all');
 }
 
-export function saveNoticeRule(draft: NoticeRuleDraft, receivers: NoticeReceiver[], templates: NoticeTemplate[]) {
+export function saveNoticeRule(draft: NoticeRuleDraft, receivers: NoticeReceiverOption[], templates: NoticeTemplate[]) {
   const payload = buildNoticeRulePayload(draft, receivers, templates);
   return draft.id
     ? apiMessagePut<unknown>('/api/notice/rule', payload)

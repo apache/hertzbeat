@@ -19,7 +19,7 @@ import { Checkbox, Collapse, Input, Modal, Select, Switch, TimePicker } from 'an
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 
-import { receiverTypeDefinitions, type NoticeReceiver } from './notice-receiver-model';
+import { receiverTypeDefinitions, type NoticeReceiverOption } from './notice-receiver/model/notice-receiver-model';
 import {
   compatibleNoticeRuleTemplates,
   noticeRuleWeekdays,
@@ -34,7 +34,7 @@ function timeValue(value: string) {
   return dayjs().hour(hours!).minute(minutes!).second(0).millisecond(0);
 }
 
-function receiverLabel(receiver: NoticeReceiver, t: (key: string) => string) {
+function receiverLabel(receiver: NoticeReceiverOption, t: (key: string) => string) {
   const type = receiverTypeDefinitions.find(definition => definition.type === receiver.type);
   return `${receiver.name} · ${t(type?.labelKey ?? 'noticeReceivers.types.unknown')}`;
 }
@@ -86,7 +86,7 @@ function NoticeRuleAdvancedFields({ draft, update }: {
 
 export function NoticeRuleEditor({ draft, receivers, templates, saving, update, close, submit }: {
   draft: NoticeRuleDraft;
-  receivers: NoticeReceiver[];
+  receivers: NoticeReceiverOption[];
   templates: NoticeTemplate[];
   saving: boolean;
   update: (patch: Partial<NoticeRuleDraft>) => void;

@@ -65,7 +65,7 @@ describe('notice template model', () => {
   it('validates required content and all backend channel types', () => {
     const draft = createNoticeTemplateDraft();
     expect(validateNoticeTemplateDraft(draft)).toEqual(['name', 'content']);
-    expect(validateNoticeTemplateDraft({ ...draft, name: 'Ntfy', type: 15, content: '${content}' })).toEqual([]);
+    expect(validateNoticeTemplateDraft({ ...draft, name: 'Ntfy', type: 15 as never, content: '${content}' })).toEqual(['type']);
     expect(validateNoticeTemplateDraft({ ...draft, name: 'Invalid', type: 16 as never, content: '${content}' })).toEqual(['type']);
   });
 

@@ -27,7 +27,7 @@ import { useNoticeTemplateController } from "./notice-template-controller";
 import editorStyles from "./notice-template-editor.module.css";
 import { NoticeTemplateEditor } from "./notice-template-editor";
 import pageStyles from "./notice-template-page.module.css";
-import { receiverTypeDefinitions } from "./notice-receiver-model";
+import { receiverTypeDefinitions } from "./notice-receiver/model/notice-receiver-model";
 import {
   isNoticeTemplateReadOnly,
   noticeTemplatePageSizes,

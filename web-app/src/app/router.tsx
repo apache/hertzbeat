@@ -181,7 +181,7 @@ export const appRoutes: RouteObject[] = [
                 id: 'notice-receivers',
                 path: settingsPaths.receivers,
                 lazy: async () => {
-                  const { NoticeReceiverPage } = await import('@/features/alert/notice-receiver-page');
+                  const { NoticeReceiverPage } = await import('@/features/alert/notice-receiver');
                   return { Component: NoticeReceiverPage };
                 }
               },

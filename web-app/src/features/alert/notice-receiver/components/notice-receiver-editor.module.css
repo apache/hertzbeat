@@ -20,4 +20,5 @@
 .field :global(.ant-select), .field :global(.ant-input-number) { width: 100%; }
 .wide { grid-column: 1 / -1; }
 .test { justify-self: start; }
+.secretState { display: grid; gap: 5px; }
 @media (max-width: 700px) { .form { grid-template-columns: 1fr; } .wide { grid-column: auto; } }
