@@ -24,6 +24,7 @@ import hashlib
 import io
 import json
 import re
+import stat
 import sys
 import tarfile
 import zipfile
@@ -88,6 +89,16 @@ def normalized_name(name: str) -> str:
     return str(PurePosixPath(name.replace("\\", "/"))).lower()
 
 
+def reject_unsafe_archive_member(name: str, logical_path: str) -> None:
+    normalized = name.replace("\\", "/")
+    if (not normalized
+            or "\x00" in normalized
+            or normalized.startswith("/")
+            or re.match(r"^[a-zA-Z]:/", normalized)
+            or ".." in PurePosixPath(normalized).parts):
+        raise ReleasePolicyError(f"unsafe archive member path: {logical_path}")
+
+
 def looks_like_archive(name: str) -> bool:
     lowered = normalized_name(name)
     return lowered.endswith((".jar", ".zip", ".war", ".ear", ".nupkg", ".whl", ".tar", ".tar.gz", ".tgz"))
@@ -137,6 +148,7 @@ def inspect_zip(payload: bytes, logical_path: str, depth: int) -> None:
         name_by_normalized = {normalized_name(name): name for name in names}
         for name in names:
             member_path = f"{logical_path}!/{name}"
+            reject_unsafe_archive_member(name, member_path)
             reject_distribution_name(member_path)
             normalized = normalized_name(name)
             if (normalized.endswith(".dist-info/metadata")
@@ -151,6 +163,8 @@ def inspect_zip(payload: bytes, logical_path: str, depth: int) -> None:
                 )
         inspect_java_agent_signature(archive, logical_path, names)
         for info in archive.infolist():
+            if stat.S_ISLNK(info.external_attr >> 16):
+                raise ReleasePolicyError(f"archive symbolic link is not allowed: {logical_path}!/{info.filename}")
             if info.is_dir():
                 continue
             member_path = f"{logical_path}!/{info.filename}"
@@ -184,6 +198,9 @@ def inspect_tar(payload: bytes, logical_path: str, depth: int) -> None:
         member_by_normalized = {normalized_name(member.name): member for member in members if member.isfile()}
         for member in members:
             member_path = f"{logical_path}!/{member.name}"
+            reject_unsafe_archive_member(member.name, member_path)
+            if member.issym() or member.islnk():
+                raise ReleasePolicyError(f"archive link is not allowed: {member_path}")
             reject_distribution_name(member_path)
             if not member.isfile():
                 continue

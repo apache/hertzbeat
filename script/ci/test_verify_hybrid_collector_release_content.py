@@ -266,6 +266,16 @@ class ReleaseContentPolicyTest(unittest.TestCase):
         with self.assertRaises(release_content.ReleasePolicyError):
             release_content.inspect_release_archive(release)
 
+    def test_archive_rejects_parent_and_absolute_member_paths(self) -> None:
+        for index, member_path in enumerate(("../../escape", "/absolute/escape", "C:\\escape")):
+            with self.subTest(member_path=member_path):
+                release = self.write(
+                    f"unsafe-path-{index}.tar.gz",
+                    tar_bytes({member_path: b"must-not-extract"}),
+                )
+                with self.assertRaises(release_content.ReleasePolicyError):
+                    release_content.inspect_release_archive(release)
+
 
 if __name__ == "__main__":
     unittest.main()

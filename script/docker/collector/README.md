@@ -18,13 +18,13 @@ $ docker buildx use mybuilder
 ## Native Hybrid Collector image
 
 The Native image has no JVM layer. Build the Linux amd64 and arm64 Native
-Collector archives first, then normalize their names in the Docker context:
+Collector archives first, then prepare a verified Docker context:
 
 ```shell
-cp dist/apache-hertzbeat-collector-native-*-linux-amd64-bin.tar.gz dist/collector-native-linux-amd64.tar.gz
-cp dist/apache-hertzbeat-collector-native-*-linux-arm64-bin.tar.gz dist/collector-native-linux-arm64.tar.gz
+./script/ci/prepare-hybrid-collector-native-container-context.sh \
+  dist target/native-container-context
 docker buildx build --platform linux/amd64,linux/arm64 \
-  -f script/docker/collector/Dockerfile.native dist
+  -f script/docker/collector/Dockerfile.native target/native-container-context
 ```
 
 The image starts `bin/foreground.sh` directly as the non-root `hertzbeat` user,

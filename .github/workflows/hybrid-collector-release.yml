@@ -57,6 +57,7 @@ jobs:
       - name: Verify source and dependency contracts
         run: |
           python3 script/ci/test_verify_hybrid_collector_release_content.py -v
+          python3 script/ci/test_prepare_hybrid_collector_native_container_context.py -v
           mkdir -p target/release-policy
           git archive --format=tar.gz --output target/release-policy/hertzbeat-source.tar.gz HEAD
           python3 script/ci/verify-hybrid-collector-release-content.py \
@@ -163,16 +164,14 @@ jobs:
           pattern: hybrid-collector-package-linux-*
           path: dist
           merge-multiple: true
-      - name: Normalize native container inputs
-        run: |
-          mv dist/*-linux-amd64-bin.tar.gz dist/collector-native-linux-amd64.tar.gz
-          mv dist/*-linux-arm64-bin.tar.gz dist/collector-native-linux-arm64.tar.gz
+      - name: Prepare verified native container inputs
+        run: ./script/ci/prepare-hybrid-collector-native-container-context.sh dist target/native-container-context
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
       - name: Build runnable amd64 native image
         uses: docker/build-push-action@v6
         with:
-          context: dist
+          context: target/native-container-context
           file: script/docker/collector/Dockerfile.native
           platforms: linux/amd64
           load: true
@@ -182,7 +181,7 @@ jobs:
       - name: Build multi-platform native image
         uses: docker/build-push-action@v6
         with:
-          context: dist
+          context: target/native-container-context
           file: script/docker/collector/Dockerfile.native
           platforms: linux/amd64,linux/arm64
           push: false

@@ -30,9 +30,11 @@ release_scanner=script/ci/verify-hybrid-collector-release-content.py
 release_scanner_test=script/ci/test_verify_hybrid_collector_release_content.py
 native_package_verifier=script/ci/verify-hybrid-collector-native-package.sh
 native_image_verifier=script/ci/verify-hybrid-collector-native-image.sh
+native_container_context=script/ci/prepare-hybrid-collector-native-container-context.sh
 
 for required in "$dockerfile" "$foreground" "$systemd_unit" "$release_assets" "$release_workflow" \
-  "$release_scanner" "$release_scanner_test" "$native_package_verifier" "$native_image_verifier"; do
+  "$release_scanner" "$release_scanner_test" "$native_package_verifier" "$native_image_verifier" \
+  "$native_container_context"; do
   if [ ! -f "$required" ]; then
     echo "missing Hybrid Collector release file: $required" >&2
     exit 1
@@ -83,9 +85,24 @@ grep -q 'macos-15-intel' "$release_workflow"
 grep -q 'windows-2025' "$release_workflow"
 grep -q 'java-version: 25' "$release_workflow"
 grep -q 'test_verify_hybrid_collector_release_content.py' "$release_workflow"
+grep -q 'test_prepare_hybrid_collector_native_container_context.py' "$release_workflow"
 grep -q -- '--source' "$release_workflow"
 grep -q -- '--jvm' "$release_workflow"
 grep -q -- '--native' "$native_package_verifier"
 grep -q 'verify-hybrid-collector-native-image.sh' "$release_workflow"
+grep -q 'prepare-hybrid-collector-native-container-context.sh' "$release_workflow"
+grep -q 'context: target/native-container-context' "$release_workflow"
+grep -q '^COPY collector-native-linux-${TARGETARCH}\.tar\.gz ' "$dockerfile"
+grep -q 'verify-hybrid-collector-release-content.py' "$dockerfile"
+if grep -q '^ADD ' "$dockerfile"; then
+  echo "native image must not auto-extract an unverified archive with ADD" >&2
+  exit 1
+fi
+verify_line=$(grep -n 'sh ./script/ci/verify-hybrid-collector-native-package.sh' "$dockerfile" | head -1 | cut -d: -f1)
+extract_line=$(grep -n 'tar -xzf' "$dockerfile" | head -1 | cut -d: -f1)
+if [ -z "$verify_line" ] || [ -z "$extract_line" ] || [ "$verify_line" -ge "$extract_line" ]; then
+  echo "native image must verify its archive before explicit extraction" >&2
+  exit 1
+fi
 
 echo "Hybrid Collector release layout contract passed"

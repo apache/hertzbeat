@@ -15,9 +15,28 @@
 # specific language governing permissions and limitations
 # under the License.
 
-FROM debian:bookworm-slim@sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818
+FROM debian:bookworm-slim@sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818 AS archive-verifier
 
 ARG TARGETARCH
+
+RUN DEBIAN_FRONTEND=noninteractive apt-get update \
+    && apt-get install --no-install-recommends -y python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace
+COPY script/ci/verify-hybrid-collector-native-package.sh script/ci/verify-hybrid-collector-release-content.py \
+    /workspace/script/ci/
+COPY collector-native-linux-${TARGETARCH}.tar.gz /input/collector-native-linux-${TARGETARCH}.tar.gz
+
+RUN sh ./script/ci/verify-hybrid-collector-native-package.sh \
+        /input/collector-native-linux-${TARGETARCH}.tar.gz linux-${TARGETARCH} \
+    && mkdir -p /verified \
+    && tar -xzf /input/collector-native-linux-${TARGETARCH}.tar.gz -C /verified \
+    && package_dir="$(find /verified -mindepth 1 -maxdepth 1 -type d -name 'apache-hertzbeat-collector-native-*-linux-*-bin' -print -quit)" \
+    && test -n "$package_dir" \
+    && mv "$package_dir" /verified/hertzbeat-collector
+
+FROM debian:bookworm-slim@sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get update \
     && apt-get install --no-install-recommends -y ca-certificates libstdc++6 tzdata zlib1g \
@@ -25,12 +44,10 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update \
     && groupadd --system hertzbeat \
     && useradd --system --gid hertzbeat --home-dir /opt/hertzbeat-collector hertzbeat
 
-ADD collector-native-linux-${TARGETARCH}.tar.gz /opt/
+COPY --from=archive-verifier --chown=hertzbeat:hertzbeat \
+    /verified/hertzbeat-collector /opt/hertzbeat-collector
 
-RUN package_dir="$(find /opt -mindepth 1 -maxdepth 1 -type d -name 'apache-hertzbeat-collector-native-*-linux-*-bin' -print -quit)" \
-    && test -n "$package_dir" \
-    && mv "$package_dir" /opt/hertzbeat-collector \
-    && mkdir -p /opt/hertzbeat-collector/data /opt/hertzbeat-collector/logs \
+RUN mkdir -p /opt/hertzbeat-collector/data /opt/hertzbeat-collector/logs \
     && chown -R hertzbeat:hertzbeat /opt/hertzbeat-collector
 
 ENV LANG=C.UTF-8
