@@ -68,7 +68,7 @@ class TraceQueryControllerTest {
         );
         when(entityTraceQueryService.queryTraceList(
                 1L, 100L, 200L, "trace-1", true, "checkout", "commerce", "prod",
-                "service.version=1.2.3 and hertzbeat.entity_type=\"service\"", "GET /checkout",
+                "service.version=1.2.3 and hertzbeat.entity_type=\"service\" and hertzbeat.collector.id=\"collector-a\"", "GET /checkout",
                 100L, 500L, 2, 50, true, null, "http.route CONTAINS checkout"))
                 .thenReturn(new PageImpl<>(List.of(item), PageRequest.of(2, 50), 1));
 
@@ -82,6 +82,7 @@ class TraceQueryControllerTest {
                         .param("serviceName", "checkout")
                         .param("serviceNamespace", "commerce")
                         .param("environment", "prod")
+                        .param("collectorId", "collector-a")
                         .param("resourceFilter", "service.version=1.2.3")
                         .param("attributeFilter", "http.route CONTAINS checkout")
                         .param("operationName", "GET /checkout")
@@ -97,7 +98,7 @@ class TraceQueryControllerTest {
 
         verify(entityTraceQueryService).queryTraceList(
                 1L, 100L, 200L, "trace-1", true, "checkout", "commerce", "prod",
-                "service.version=1.2.3 and hertzbeat.entity_type=\"service\"", "GET /checkout",
+                "service.version=1.2.3 and hertzbeat.entity_type=\"service\" and hertzbeat.collector.id=\"collector-a\"", "GET /checkout",
                 100L, 500L, 2, 50, true, null, "http.route CONTAINS checkout");
     }
 

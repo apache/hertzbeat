@@ -36,6 +36,7 @@ import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsInventor
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpRelatedMetricsDto;
 import org.apache.hertzbeat.observability.ingestion.red.OtlpIngestionRedSummaryService;
 import org.apache.hertzbeat.observability.ingestion.service.OtlpIngestionWorkspaceService;
+import org.apache.hertzbeat.observability.metrics.service.CollectorScopedMetricsQueryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -55,10 +56,13 @@ class OtlpIngestionControllerTest {
     @Mock
     private OtlpIngestionRedSummaryService otlpIngestionRedSummaryService;
 
+    @Mock
+    private CollectorScopedMetricsQueryService collectorScopedMetricsQueryService;
+
     @BeforeEach
     void setUp() {
         OtlpIngestionController controller = new OtlpIngestionController(
-                otlpIngestionWorkspaceService, otlpIngestionRedSummaryService);
+                otlpIngestionWorkspaceService, otlpIngestionRedSummaryService, collectorScopedMetricsQueryService);
         this.mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 
@@ -205,7 +209,7 @@ class OtlpIngestionControllerTest {
     void shouldReturnWrappedMetricsConsolePayload() throws Exception {
         OtlpMetricsConsoleDto console = new OtlpMetricsConsoleDto(
                 new OtlpMetricsConsoleDto.Context(42L, "service", "Checkout API", "checkout", "commerce", "prod",
-                        "POST /checkout", 1000L, 2000L),
+                        "collector-a", "POST /checkout", 1000L, 2000L),
                 "sum by (__name__) ({service_name=\"checkout\"})",
                 "Greptime-promql",
                 "promql",
@@ -231,8 +235,8 @@ class OtlpIngestionControllerTest {
                 null,
                 null
         );
-        when(otlpIngestionWorkspaceService.getMetricsConsole(42L, "service", 1000L, 2000L, "checkout", "commerce", "prod",
-                null, "span.kind=\"server\"", null, null, "rate", "60", "1", "POST /checkout"))
+        when(collectorScopedMetricsQueryService.query(argThat(request ->
+                "collector-a".equals(request.collectorId()) && "checkout".equals(request.serviceName()))))
                 .thenReturn(console);
 
         mockMvc.perform(get("/api/ingestion/otlp/metrics/console")
@@ -243,6 +247,7 @@ class OtlpIngestionControllerTest {
                         .param("serviceName", "checkout")
                         .param("serviceNamespace", "commerce")
                         .param("environment", "prod")
+                        .param("collectorId", "collector-a")
                         .param("filter", "span.kind=\"server\"")
                         .param("temporalAggregation", "rate")
                         .param("step", "60")
@@ -253,21 +258,23 @@ class OtlpIngestionControllerTest {
                 .andExpect(jsonPath("$.data.context.entityId").value(42))
                 .andExpect(jsonPath("$.data.context.entityType").value("service"))
                 .andExpect(jsonPath("$.data.context.operationName").value("POST /checkout"))
+                .andExpect(jsonPath("$.data.context.collectorId").value("collector-a"))
                 .andExpect(jsonPath("$.data.query").value("sum by (__name__) ({service_name=\"checkout\"})"))
                 .andExpect(jsonPath("$.data.datasource").value("Greptime-promql"))
                 .andExpect(jsonPath("$.data.stats.totalSeries").value(1))
                 .andExpect(jsonPath("$.data.results.frames[0].schema.labels.__name__").value("http_server_requests_seconds_count"));
 
-        verify(otlpIngestionWorkspaceService)
-                .getMetricsConsole(42L, "service", 1000L, 2000L, "checkout", "commerce", "prod",
-                        null, "span.kind=\"server\"", null, null, "rate", "60", "1", "POST /checkout");
+        verify(collectorScopedMetricsQueryService).query(argThat(request ->
+                "collector-a".equals(request.collectorId())
+                        && "span.kind=\"server\"".equals(request.filter())
+                        && "POST /checkout".equals(request.operationName())));
     }
 
     @Test
     void shouldReturnWrappedMetricsInventoryPayload() throws Exception {
         OtlpMetricsInventoryDto inventory = new OtlpMetricsInventoryDto(
                 new OtlpMetricsConsoleDto.Context(42L, "service", "Checkout API", "checkout", "commerce", "prod",
-                        null, 1000L, 2000L),
+                        null, null, 1000L, 2000L),
                 "promql-inventory",
                 1,
                 List.of(new OtlpMetricsInventoryDto.Item(
@@ -308,7 +315,7 @@ class OtlpIngestionControllerTest {
     void shouldReturnWrappedRelatedMetricsPayload() throws Exception {
         OtlpRelatedMetricsDto related = new OtlpRelatedMetricsDto(
                 new OtlpMetricsConsoleDto.Context(42L, "service", "Checkout API", "checkout", "commerce", "prod",
-                        "POST /checkout", 1000L, 2000L),
+                        null, "POST /checkout", 1000L, 2000L),
                 "k8s.pod.name=\"checkout-7d9\"",
                 "POST /checkout",
                 "backend-related-metrics",

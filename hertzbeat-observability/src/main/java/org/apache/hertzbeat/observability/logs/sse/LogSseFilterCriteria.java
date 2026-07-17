@@ -122,6 +122,9 @@ public class LogSseFilterCriteria {
     @Schema(description = "HertzBeat entity type resource attribute.", example = "service", accessMode = READ_WRITE)
     private String entityType;
 
+    @Schema(description = "HertzBeat Collector resource identity.", example = "collector-a", accessMode = READ_WRITE)
+    private String collectorId;
+
     @Schema(description = "Resource attribute filter expression, for example service.version=1.2.3", accessMode = READ_WRITE)
     private String resourceFilter;
 
@@ -203,7 +206,8 @@ public class LogSseFilterCriteria {
                 && matchesOptionalValue(resolveValue(log,
                         "deployment.environment.name", "deployment_environment_name", "environment"), environment)
                 && matchesOptionalValue(resolveValue(log, "hertzbeat.entity_id", "hertzbeat_entity_id"), entityId)
-                && matchesOptionalValue(resolveValue(log, "hertzbeat.entity_type", "hertzbeat_entity_type"), entityType);
+                && matchesOptionalValue(resolveValue(log, "hertzbeat.entity_type", "hertzbeat_entity_type"), entityType)
+                && matchesOptionalValue(resolveValue(log, "hertzbeat.collector.id"), collectorId);
     }
 
     private boolean matchesOptionalValue(String actualValue, String expectedValue) {

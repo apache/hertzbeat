@@ -830,6 +830,7 @@ class LogQueryControllerTest {
                         "service.version", "1.2.3",
                         "hertzbeat.entity_id", "42",
                         "hertzbeat.entity_type", "service",
+                        "hertzbeat.collector.id", "collector-a",
                         "hertzbeat.workspace_id", "team-a")))
                 .attributes(new HashMap<>(java.util.Map.of("http.route", "/checkout")))
                 .build();
@@ -837,7 +838,8 @@ class LogQueryControllerTest {
         Map<String, String> expectedResourceFilters = Map.of(
                 "service.version", "1.2.3",
                 "hertzbeat.entity_id", "42",
-                "hertzbeat.entity_type", "service"
+                "hertzbeat.entity_type", "service",
+                "hertzbeat.collector.id", "collector-a"
         );
         AuthTokenRequestContext.bindWorkspaceId("team-a");
         when(historyDataReader.countLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any(),
@@ -852,6 +854,7 @@ class LogQueryControllerTest {
         mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/list")
                         .param("entityId", "42")
                         .param("entityType", "service")
+                        .param("collectorId", "collector-a")
                         .param("resourceFilter", "service.version=1.2.3")
                         .param("attributeFilter", "http.route:/checkout"))
                 .andExpect(status().isOk())

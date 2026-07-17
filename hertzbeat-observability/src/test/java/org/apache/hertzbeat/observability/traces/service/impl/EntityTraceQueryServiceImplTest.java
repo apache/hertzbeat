@@ -1337,11 +1337,13 @@ class EntityTraceQueryServiceImplTest {
                         "service.version", "1.2.3",
                         "http.route", "/checkout",
                         "deployment.environment.name", "prod",
+                        "hertzbeat.collector.id", "collector-a",
                         "hertzbeat.workspace_id", "team-a"))));
 
         var page = entityTraceQueryService.queryTraceList(null, start, end, null,
                 false, "checkout-service", null, "prod",
-                "service.version=1.2.3,http.route:/checkout", null, null, null, 0, 20, false);
+                "service.version=1.2.3,http.route:/checkout,hertzbeat.collector.id=collector-a",
+                null, null, null, 0, 20, false);
 
         assertEquals(1, page.getTotalElements());
         assertEquals("trace-resource", page.getContent().getFirst().getTraceId());
@@ -1355,6 +1357,7 @@ class EntityTraceQueryServiceImplTest {
         Map<String, Set<String>> filters = filtersCaptor.getValue();
         assertEquals(Set.of("1.2.3"), filters.get("service.version"));
         assertEquals(Set.of("/checkout"), filters.get("http.route"));
+        assertEquals(Set.of("collector-a"), filters.get("hertzbeat.collector.id"));
     }
 
     @Test

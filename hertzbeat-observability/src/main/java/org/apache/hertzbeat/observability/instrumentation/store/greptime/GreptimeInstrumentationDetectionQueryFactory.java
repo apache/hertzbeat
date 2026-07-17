@@ -19,6 +19,7 @@ package org.apache.hertzbeat.observability.instrumentation.store.greptime;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.hertzbeat.observability.ingestion.semantic.OtlpMetricSemanticLabels;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Signal;
 import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationSignalDetectionStore.DetectionCriteria;
 
@@ -43,7 +44,7 @@ final class GreptimeInstrumentationDetectionQueryFactory {
         filters.add(equalsColumn("service_name", criteria.serviceName()));
         filters.add(equalsColumn("service_namespace", criteria.serviceNamespace()));
         filters.add(equalsColumn("deployment_environment_name", criteria.environment()));
-        filters.add(equalsColumn("hertzbeat_collector_id", criteria.collectorId()));
+        filters.add(equalsColumn(OtlpMetricSemanticLabels.HERTZBEAT_COLLECTOR_ID, criteria.collectorId()));
         filters.add("greptime_timestamp >= to_timestamp_millis(" + criteria.startedAt() + ")");
         return "SELECT MAX(greptime_timestamp) AS last_received_at FROM " + METRICS_TABLE
                 + " WHERE " + String.join(" AND ", filters);

@@ -66,11 +66,19 @@ public class OtlpMetricsConsoleDto {
 
         private String environment;
 
+        private String collectorId;
+
         private String operationName;
 
         private Long start;
 
         private Long end;
+
+        public Context(Long entityId, String entityType, String entityName, String serviceName,
+                       String serviceNamespace, String environment, String operationName, Long start, Long end) {
+            this(entityId, entityType, entityName, serviceName, serviceNamespace, environment, null,
+                    operationName, start, end);
+        }
     }
 
     /**

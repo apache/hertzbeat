@@ -103,6 +103,7 @@ class LogSseControllerTest {
         String spanId = "abcdef1234567890";
         String entityId = "42";
         String entityType = "service";
+        String collectorId = "collector-a";
         String resourceFilter = "service.version=1.2.3";
         String attributeFilter = "http.route:/checkout";
 
@@ -114,6 +115,7 @@ class LogSseControllerTest {
                         .param("spanId", spanId)
                         .param("entityId", entityId)
                         .param("entityType", entityType)
+                        .param("collectorId", collectorId)
                         .param("resourceFilter", resourceFilter)
                         .param("attributeFilter", attributeFilter)
                         .accept(MediaType.TEXT_EVENT_STREAM_VALUE))
@@ -129,6 +131,7 @@ class LogSseControllerTest {
         Assertions.assertEquals(capturedCriteria.getSpanId(), spanId);
         Assertions.assertEquals(capturedCriteria.getEntityId(), entityId);
         Assertions.assertEquals(capturedCriteria.getEntityType(), entityType);
+        Assertions.assertEquals(capturedCriteria.getCollectorId(), collectorId);
         Assertions.assertEquals(capturedCriteria.getResourceFilter(), resourceFilter);
         Assertions.assertEquals(capturedCriteria.getAttributeFilter(), attributeFilter);
     }

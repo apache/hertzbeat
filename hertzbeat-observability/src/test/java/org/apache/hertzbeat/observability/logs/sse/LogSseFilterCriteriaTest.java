@@ -191,6 +191,23 @@ class LogSseFilterCriteriaTest {
     }
 
     @Test
+    void matchesOnlyCanonicalCollectorResourceContext() {
+        LogEntry selectedCollectorLog = LogEntry.builder()
+                .resource(java.util.Map.of("hertzbeat.collector.id", "collector-a"))
+                .build();
+        LogEntry otherCollectorLog = LogEntry.builder()
+                .resource(java.util.Map.of("hertzbeat.collector.id", "collector-b"))
+                .build();
+        LogEntry unscopedLog = LogEntry.builder().resource(java.util.Map.of()).build();
+
+        filterCriteria.setCollectorId("collector-a");
+
+        assertTrue(filterCriteria.matches(selectedCollectorLog));
+        assertFalse(filterCriteria.matches(otherCollectorLog));
+        assertFalse(filterCriteria.matches(unscopedLog));
+    }
+
+    @Test
     void testMatchesWithResourceAndAttributeFilters() {
         LogEntry checkoutLog = LogEntry.builder()
                 .severityText("INFO")

@@ -29,6 +29,7 @@ import org.apache.hertzbeat.common.observability.dto.trace.TraceOverviewDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceSpanNodeDto;
 import org.apache.hertzbeat.observability.ingestion.semantic.OtlpResourceSemanticAttributes;
 import org.apache.hertzbeat.observability.traces.service.EntityTraceQueryService;
+import org.apache.hertzbeat.observability.shared.query.CollectorResourceScope;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
@@ -61,6 +62,7 @@ public class TraceQueryController {
             @RequestParam(value = "serviceName", required = false) String serviceName,
             @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
             @RequestParam(value = "environment", required = false) String environment,
+            @RequestParam(value = "collectorId", required = false) String collectorId,
             @RequestParam(value = "resourceFilter", required = false) String resourceFilter,
             @RequestParam(value = "attributeFilter", required = false) String attributeFilter,
             @RequestParam(value = "operationName", required = false) String operationName,
@@ -70,7 +72,8 @@ public class TraceQueryController {
             @RequestParam(value = "hideInternal", required = false) Boolean hideInternal,
             @RequestParam(value = "pageIndex", defaultValue = "0") Integer pageIndex,
             @RequestParam(value = "pageSize", defaultValue = "20") Integer pageSize) {
-        String scopedResourceFilter = mergeEntityContextResourceFilter(entityId, entityType, resourceFilter);
+        String scopedResourceFilter = CollectorResourceScope.apply(
+                mergeEntityContextResourceFilter(entityId, entityType, resourceFilter), collectorId);
         Page<TraceListItemDto> page = entityTraceQueryService.queryTraceList(
                 entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
                 scopedResourceFilter, operationName, minDurationMs, maxDurationMs, pageIndex, pageSize, hideInternal,
@@ -90,6 +93,7 @@ public class TraceQueryController {
             @RequestParam(value = "serviceName", required = false) String serviceName,
             @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
             @RequestParam(value = "environment", required = false) String environment,
+            @RequestParam(value = "collectorId", required = false) String collectorId,
             @RequestParam(value = "resourceFilter", required = false) String resourceFilter,
             @RequestParam(value = "attributeFilter", required = false) String attributeFilter,
             @RequestParam(value = "operationName", required = false) String operationName,
@@ -97,7 +101,8 @@ public class TraceQueryController {
             @RequestParam(value = "maxDurationMs", required = false) Long maxDurationMs,
             @RequestParam(value = "spanScope", required = false) String spanScope,
             @RequestParam(value = "hideInternal", required = false) Boolean hideInternal) {
-        String scopedResourceFilter = mergeEntityContextResourceFilter(entityId, entityType, resourceFilter);
+        String scopedResourceFilter = CollectorResourceScope.apply(
+                mergeEntityContextResourceFilter(entityId, entityType, resourceFilter), collectorId);
         return ResponseEntity.ok(Message.success(entityTraceQueryService.getTraceOverview(
                 entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
                 scopedResourceFilter, operationName, minDurationMs, maxDurationMs, hideInternal, spanScope,
@@ -116,6 +121,7 @@ public class TraceQueryController {
             @RequestParam(value = "serviceName", required = false) String serviceName,
             @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
             @RequestParam(value = "environment", required = false) String environment,
+            @RequestParam(value = "collectorId", required = false) String collectorId,
             @RequestParam(value = "resourceFilter", required = false) String resourceFilter,
             @RequestParam(value = "attributeFilter", required = false) String attributeFilter,
             @RequestParam(value = "operationName", required = false) String operationName,
@@ -127,7 +133,8 @@ public class TraceQueryController {
             @RequestParam(value = "minCount", required = false) Integer minCount,
             @RequestParam(value = "spanScope", required = false) String spanScope,
             @RequestParam(value = "hideInternal", required = false) Boolean hideInternal) {
-        String scopedResourceFilter = mergeEntityContextResourceFilter(entityId, entityType, resourceFilter);
+        String scopedResourceFilter = CollectorResourceScope.apply(
+                mergeEntityContextResourceFilter(entityId, entityType, resourceFilter), collectorId);
         return ResponseEntity.ok(Message.success(entityTraceQueryService.getTraceGroupByStats(
                 entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
                 scopedResourceFilter, operationName, minDurationMs, maxDurationMs, groupBy, limit, orderBy, minCount,
