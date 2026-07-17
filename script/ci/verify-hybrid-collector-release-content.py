@@ -33,6 +33,7 @@ from xml.etree import ElementTree
 
 MAX_NESTED_DEPTH = 6
 MAX_ARCHIVE_MEMBER_BYTES = 512 * 1024 * 1024
+MAX_PACKAGE_METADATA_BYTES = 4 * 1024 * 1024
 JAVA_AGENT_GROUP = "io.opentelemetry.javaagent"
 JAVA_AGENT_ARTIFACT = "opentelemetry-javaagent"
 
@@ -51,6 +52,21 @@ FORBIDDEN_LANGUAGE_SDK_COMPONENT = re.compile(
     r"(?:opentelemetry-sdk-(?:node|python|php|dotnet)|"
     r"openTelemetry\.extensions\.hosting|"
     r"openTelemetry\.instrumentation\.(?:aspnetcore|http))",
+    re.IGNORECASE,
+)
+FORBIDDEN_ECOSYSTEM_PACKAGE_PATH = re.compile(
+    r"(?:^|/)(?:"
+    r"node_modules/@opentelemetry/(?:sdk-node|sdk-trace-node|sdk-metrics|sdk-logs)(?:/|$)|"
+    r"(?:site-packages/)?opentelemetry/sdk(?:/|$)|"
+    r"opentelemetry_sdk(?:[-_.]|$)|"
+    r"vendor/open-telemetry/sdk(?:/|$)|"
+    r"opentelemetry\.[0-9][^/]*\.nupkg$"
+    r")",
+    re.IGNORECASE,
+)
+FORBIDDEN_LANGUAGE_SDK_PURL = re.compile(
+    r"pkg:(?:npm/%40opentelemetry/sdk-(?:node|trace-node|metrics|logs)|"
+    r"pypi/opentelemetry-sdk|composer/open-telemetry/sdk|nuget/opentelemetry)(?:@|\?|$)",
     re.IGNORECASE,
 )
 KNOWN_AGENT_CLASS = "io/opentelemetry/javaagent/OpenTelemetryAgent.class"
@@ -82,8 +98,34 @@ def has_archive_signature(payload: bytes) -> bool:
 
 def reject_distribution_name(path: str) -> None:
     normalized = normalized_name(path)
-    if FORBIDDEN_DISTRIBUTION_NAME.search(normalized) or FORBIDDEN_LANGUAGE_SDK_COMPONENT.search(normalized):
+    if (FORBIDDEN_DISTRIBUTION_NAME.search(normalized)
+            or FORBIDDEN_LANGUAGE_SDK_COMPONENT.search(normalized)
+            or FORBIDDEN_ECOSYSTEM_PACKAGE_PATH.search(normalized)):
         raise ReleasePolicyError(f"forbidden application instrumentation distribution: {path}")
+
+
+def inspect_ecosystem_package_metadata(name: str, payload: bytes, logical_path: str) -> None:
+    normalized = normalized_name(name)
+    if len(payload) > MAX_PACKAGE_METADATA_BYTES:
+        raise ReleasePolicyError(f"package metadata exceeds safety limit: {logical_path}")
+    text = payload.decode("utf-8", errors="replace")
+    if normalized.endswith(".dist-info/metadata"):
+        if re.search(r"(?im)^Name:\s*opentelemetry-sdk\s*$", text):
+            raise ReleasePolicyError(f"forbidden Python OpenTelemetry SDK package metadata: {logical_path}")
+    if normalized.endswith(".nuspec"):
+        if re.search(r"(?is)<(?:[a-z0-9_-]+:)?id>\s*OpenTelemetry\s*</(?:[a-z0-9_-]+:)?id>", text):
+            raise ReleasePolicyError(f"forbidden .NET OpenTelemetry SDK package metadata: {logical_path}")
+    if normalized.endswith("package.json"):
+        try:
+            package_name = json.loads(text).get("name")
+        except (AttributeError, json.JSONDecodeError):
+            return
+        if package_name in {
+                "@opentelemetry/sdk-node",
+                "@opentelemetry/sdk-trace-node",
+                "@opentelemetry/sdk-metrics",
+                "@opentelemetry/sdk-logs"}:
+            raise ReleasePolicyError(f"forbidden Node.js OpenTelemetry SDK package metadata: {logical_path}")
 
 
 def inspect_zip(payload: bytes, logical_path: str, depth: int) -> None:
@@ -93,7 +135,12 @@ def inspect_zip(payload: bytes, logical_path: str, depth: int) -> None:
         for name in names:
             member_path = f"{logical_path}!/{name}"
             reject_distribution_name(member_path)
-            if normalized_name(name).endswith("release-inventory.json"):
+            normalized = normalized_name(name)
+            if (normalized.endswith(".dist-info/metadata")
+                    or normalized.endswith(".nuspec")
+                    or normalized.endswith("package.json")):
+                inspect_ecosystem_package_metadata(name, archive.read(name), member_path)
+            if normalized.endswith("release-inventory.json"):
                 verify_release_inventory_payload(
                     archive.read(name),
                     member_path,
@@ -141,7 +188,14 @@ def inspect_tar(payload: bytes, logical_path: str, depth: int) -> None:
             if extracted is None:
                 continue
             prefix = extracted.read(512)
-            if normalized_name(member.name).endswith("release-inventory.json"):
+            normalized = normalized_name(member.name)
+            if (normalized.endswith(".dist-info/metadata")
+                    or normalized.endswith(".nuspec")
+                    or normalized.endswith("package.json")):
+                metadata_payload = prefix + extracted.read(MAX_PACKAGE_METADATA_BYTES + 1 - len(prefix))
+                inspect_ecosystem_package_metadata(member.name, metadata_payload, member_path)
+                continue
+            if normalized.endswith("release-inventory.json"):
                 inventory_payload = prefix + extracted.read()
                 verify_release_inventory_payload(
                     inventory_payload,
@@ -269,7 +323,10 @@ def verify_collector_sbom_payload(payload: bytes, logical_path: str) -> None:
         value = component_values(component)
         if (JAVA_AGENT_GROUP in value and JAVA_AGENT_ARTIFACT in value
                 or FORBIDDEN_DISTRIBUTION_NAME.search(value)
-                or FORBIDDEN_LANGUAGE_SDK_COMPONENT.search(value)):
+                or FORBIDDEN_LANGUAGE_SDK_COMPONENT.search(value)
+                or FORBIDDEN_LANGUAGE_SDK_PURL.search(value)
+                or "@opentelemetry sdk-node" in value
+                or "open-telemetry sdk" in value):
             raise ReleasePolicyError(f"forbidden release SBOM component: {value}")
 
 

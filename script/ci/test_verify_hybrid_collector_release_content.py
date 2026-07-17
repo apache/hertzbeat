@@ -174,6 +174,60 @@ class ReleaseContentPolicyTest(unittest.TestCase):
 
         release_content.verify_collector_sbom(sbom)
 
+    def test_collector_sbom_rejects_ecosystem_specific_sdk_purls(self) -> None:
+        purls = [
+            "pkg:npm/%40opentelemetry/sdk-node@0.204.0",
+            "pkg:pypi/opentelemetry-sdk@1.43.0",
+            "pkg:composer/open-telemetry/sdk@1.14.0",
+            "pkg:nuget/OpenTelemetry@1.12.0",
+        ]
+        for index, purl in enumerate(purls):
+            with self.subTest(purl=purl):
+                sbom = self.write(f"ecosystem-{index}.cdx.json", json.dumps({
+                    "bomFormat": "CycloneDX",
+                    "components": [{"purl": purl}],
+                }).encode())
+                with self.assertRaises(release_content.ReleasePolicyError):
+                    release_content.verify_collector_sbom(sbom)
+
+    def test_node_sdk_is_rejected_by_real_node_modules_path(self) -> None:
+        release = self.write("node-release.zip", zip_bytes({
+            "app/node_modules/@opentelemetry/sdk-node/package.json": '{"name":"@opentelemetry/sdk-node"}',
+        }))
+
+        with self.assertRaises(release_content.ReleasePolicyError):
+            release_content.inspect_release_archive(release)
+
+    def test_python_sdk_is_rejected_by_wheel_metadata(self) -> None:
+        renamed_wheel = zip_bytes({
+            "runtime-1.43.0.dist-info/METADATA": "Name: opentelemetry-sdk\nVersion: 1.43.0\n",
+        })
+        release = self.write("python-release.tar.gz", tar_bytes({"deps/runtime.bin": renamed_wheel}))
+
+        with self.assertRaises(release_content.ReleasePolicyError):
+            release_content.inspect_release_archive(release)
+
+    def test_php_sdk_is_rejected_by_composer_vendor_path(self) -> None:
+        release = self.write("php-release.tar.gz", tar_bytes({
+            "app/vendor/open-telemetry/sdk/src/Sdk.php": b"<?php",
+        }))
+
+        with self.assertRaises(release_content.ReleasePolicyError):
+            release_content.inspect_release_archive(release)
+
+    def test_dotnet_sdk_is_rejected_by_real_nuget_package(self) -> None:
+        package = zip_bytes({
+            "OpenTelemetry.nuspec": (
+                "<package><metadata><id>OpenTelemetry</id><version>1.12.0</version></metadata></package>"
+            ),
+        })
+        release = self.write("dotnet-release.zip", zip_bytes({
+            "packages/OpenTelemetry.1.12.0.nupkg": package,
+        }))
+
+        with self.assertRaises(release_content.ReleasePolicyError):
+            release_content.inspect_release_archive(release)
+
 
 if __name__ == "__main__":
     unittest.main()
