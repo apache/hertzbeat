@@ -9,6 +9,11 @@ import model from './model/notice-receiver-model.ts?raw';
 import page from './pages/notice-receiver-page.tsx?raw';
 
 describe('notice receiver architecture', () => {
+  it('keeps response shape validation in a named schema boundary', () => {
+    expect(api).toContain("from './notice-receiver-schema'");
+    expect(api).not.toMatch(/function\s+(?:array|boolean|integer|number|object|record|stringArray|text)\s*\(/);
+  });
+
   it('keeps transport and resource hooks out of the page and editor', () => {
     expect(page).not.toMatch(/@tanstack\/react-query|@refinedev\/core|notice-receiver-api|apiMessage/);
     expect(editor).not.toMatch(/@tanstack\/react-query|@refinedev\/core|notice-receiver-api|apiMessage/);
