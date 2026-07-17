@@ -24,7 +24,7 @@ module.exports = {
   },
   i18n: {
     defaultLocale: 'en',
-    locales: ['zh-cn', 'en'],
+    locales: ['zh-cn', 'en', 'ko'],
   },
   themeConfig: {
     matomo: {
