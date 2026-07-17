@@ -64,6 +64,10 @@ export async function loadLocale(locale: SupportedLocale) {
     i18n.addResourceBundle(locale, 'translation', {
       ...messages.default,
       ...shellMessages.default,
+      exploreTrace: {
+        ...messageGroup(messages.default.exploreTrace),
+        ...messageGroup(exploreMessages.default.exploreTrace)
+      },
       explore: {
         ...messageGroup(messages.default.explore),
         ...messageGroup(exploreMessages.default.explore)

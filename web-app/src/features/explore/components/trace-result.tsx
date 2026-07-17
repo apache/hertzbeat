@@ -15,11 +15,12 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Descriptions, Drawer, Empty, Skeleton, Table, Tag, Typography } from "antd";
+import { Alert, Button, Descriptions, Empty, Skeleton, Table, Tag, Typography } from "antd";
 import type { TFunction } from "i18next";
 
 import type { ExplorePageResult, TraceRow, TraceSpan } from "../model/explore-signal-contract";
 import { traceDurationMs, traceHealthState, type TraceDetailState } from "../model/explore-signal-model";
+import { interactiveTableRow } from "./interactive-table-row";
 import { OtlpAttributeList, OtlpAttributeSection } from "./otlp-attribute-list";
 import { SignalEmptyState, SignalResultFrame } from "./signal-result-frame";
 import styles from "./trace-result.module.css";
@@ -45,24 +46,22 @@ export function TraceResult({
   trace: TraceDetailView;
 }) {
   const rows = data.content ?? [];
-  if (data.totalElements === 0)
-    return (
-      <>
-        <SignalResultFrame title={t("explore.signals.traces")} count={0}>
-          <SignalEmptyState title={t("explore.empty.traces")} hint={t("explore.description")} />
-        </SignalResultFrame>
-        <TraceDrawer trace={trace} t={t} />
-      </>
-    );
+  const detailOpen = trace.state.kind !== "closed";
   return (
     <SignalResultFrame title={t("explore.signals.traces")} count={data.totalElements}>
-      <Table<TraceRow>
+      <div className={styles.workspace} data-detail-open={detailOpen}>
+        <div className={styles.resultPane}>
+          {data.totalElements === 0 ? (
+          <SignalEmptyState title={t("explore.empty.traces")} hint={t("explore.description")} />
+          ) : (
+            <Table<TraceRow>
         className={styles.clickableTable ?? ""}
         rowKey={(row) => row.traceId ?? row.rootSpanId ?? ""}
         size="small"
         dataSource={rows}
         scroll={{ x: 900, y: 520 }}
-        onRow={(row) => ({ onClick: () => trace.openTrace(row.traceId) })}
+        onRow={(row) => interactiveTableRow(() => trace.openTrace(row.traceId))}
+        rowClassName={(row) => trace.state.kind !== "closed" && trace.state.traceId === row.traceId ? styles.selectedRow ?? "" : ""}
         pagination={{
           current: data.number + 1,
           pageSize: data.size,
@@ -88,15 +87,18 @@ export function TraceResult({
               return <Tag color={health === "error" ? "red" : health === "ok" ? "green" : "default"}>{row.status ?? "—"}</Tag>;
             },
           },
-          { title: t("explore.traceId"), width: 220, dataIndex: "traceId", ellipsis: true },
+          ...(detailOpen ? [] : [{ title: t("explore.traceId"), width: 220, dataIndex: "traceId", ellipsis: true }]),
         ]}
       />
-      <TraceDrawer trace={trace} t={t} />
+          )}
+        </div>
+        {detailOpen && <TraceDetailPanel trace={trace} t={t} />}
+      </div>
     </SignalResultFrame>
   );
 }
 
-function TraceDrawer({
+function TraceDetailPanel({
   trace,
   t,
 }: {
@@ -104,19 +106,21 @@ function TraceDrawer({
   t: TFunction;
 }) {
   const state = trace.state;
+  const title = state.kind === "ready" ? state.detail.rootSpanName ?? t("exploreTrace.detail") : t("exploreTrace.detail");
   return (
-    <Drawer
-      size="large"
-      open={state.kind !== "closed"}
-      title={state.kind === "ready" ? state.detail.rootSpanName ?? t("exploreTrace.detail") : t("exploreTrace.detail")}
-      onClose={trace.close}
-    >
-      {state.kind === "loading" && <Skeleton active paragraph={{ rows: 10 }} />}
-      {state.kind === "missing" && <Empty description={t("explore.empty.traces")} />}
-      {state.kind === "unavailable" && <TraceFailure type="warning" message={t("common.unavailable")} retry={trace.retry} t={t} />}
-      {state.kind === "error" && <TraceFailure type="error" message={t("exploreTrace.loadFailed")} retry={trace.retry} t={t} />}
-      {state.kind === "ready" && <TraceDetailContent state={state} trace={trace} t={t} />}
-    </Drawer>
+    <aside className={styles.detailPane} aria-label={title}>
+      <div className={styles.detailHeader}>
+        <Typography.Title level={4}>{title}</Typography.Title>
+        <Button size="small" onClick={trace.close}>{t("exploreTrace.closeDetail")}</Button>
+      </div>
+      <div className={styles.detailBody}>
+        {state.kind === "loading" && <Skeleton active paragraph={{ rows: 10 }} />}
+        {state.kind === "missing" && <Empty description={t("explore.empty.traces")} />}
+        {state.kind === "unavailable" && <TraceFailure type="warning" message={t("common.unavailable")} retry={trace.retry} t={t} />}
+        {state.kind === "error" && <TraceFailure type="error" message={t("exploreTrace.loadFailed")} retry={trace.retry} t={t} />}
+        {state.kind === "ready" && <TraceDetailContent state={state} trace={trace} t={t} />}
+      </div>
+    </aside>
   );
 }
 

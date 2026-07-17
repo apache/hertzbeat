@@ -1,4 +1,7 @@
 {
+  "exploreTrace": {
+    "closeDetail": "Fechar detalhes"
+  },
   "explore": {
     "states": {
       "unsupportedQuery": "Métricas com escopo de Collector aceitam um nome de métrica, não uma expressão PromQL arbitrária.",

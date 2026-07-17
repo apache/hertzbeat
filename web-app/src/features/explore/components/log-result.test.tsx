@@ -35,7 +35,9 @@ describe('LogResult', () => {
 
   it('opens an inspectable OTLP log detail without leaving the workbench', () => {
     render(<I18nextProvider i18n={i18n}><Subject /></I18nextProvider>);
-    fireEvent.click(screen.getByText('payment timeout'));
+    const logRow = screen.getByText('payment timeout').closest('tr');
+    expect(logRow).toHaveAttribute('tabindex', '0');
+    fireEvent.keyDown(logRow!, { key: ' ' });
     expect(screen.getByRole('dialog', { name: 'Log detail' })).toBeInTheDocument();
     expect(screen.getByText(/service.version/)).toBeInTheDocument();
     expect(screen.getByText(/retry.count/)).toBeInTheDocument();

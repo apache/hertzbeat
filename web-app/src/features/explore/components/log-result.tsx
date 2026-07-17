@@ -22,6 +22,7 @@ import { useState, type ReactNode } from "react";
 import type { ExplorePageResult, LogRow } from "../model/explore-signal-contract";
 import { buildCrossSignalPath, buildExplorePath, type LogExploreQuery } from "../model/explore-model";
 import { logBody, logServiceName, logTimestampMs, type LiveLogStatus } from "../model/explore-signal-model";
+import { interactiveTableRow } from "./interactive-table-row";
 import styles from "./log-result.module.css";
 import { OtlpAttributeSection } from "./otlp-attribute-list";
 import { SignalEmptyState, SignalResultFrame } from "./signal-result-frame";
@@ -161,7 +162,7 @@ function LogRows({
         dataSource={rows}
         pagination={logPagination(data, query, navigate)}
         scroll={{ x: 980, y: 520 }}
-        onRow={(row) => ({ onClick: () => setSelected(row) })}
+        onRow={(row) => interactiveTableRow(() => setSelected(row))}
         columns={[
           { title: t("explore.time"), width: 190, render: (_, row) => formatLogTime(row) },
           {

@@ -1,4 +1,7 @@
 {
+  "exploreTrace": {
+    "closeDetail": "關閉詳情"
+  },
   "explore": {
     "states": {
       "unsupportedQuery": "Collector 範圍的指標查詢僅支援指標名稱，不支援任意 PromQL 表達式。",

@@ -15,9 +15,17 @@
  * limitations under the License.
  */
 
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr); min-height: 560px; }
+.workspace[data-detail-open='true'] { grid-template-columns: minmax(360px, 38%) minmax(560px, 62%); }
+.resultPane { min-width: 0; overflow: hidden; }
+.detailPane { min-width: 0; border-left: 1px solid var(--ant-color-border-secondary); background: var(--ant-color-bg-container); }
+.detailHeader { display: flex; align-items: center; justify-content: space-between; min-height: 48px; padding: 0 16px; border-bottom: 1px solid var(--ant-color-border-secondary); }
+.detailHeader :global(.ant-typography) { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.detailBody { max-height: 720px; padding: 0 16px 20px; overflow: auto; }
 .detailToolbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 52px; border-bottom: 1px solid var(--ant-color-border-secondary); }
 .clickableTable :global(.ant-table-row) { cursor: pointer; }
-.clickableTable :global(.ant-table-row:hover td) { background: #222a3a !important; }
+.clickableTable :global(.ant-table-row:hover td), .clickableTable :global(.ant-table-row:focus-visible td), .clickableTable :global(.ant-table-row).selectedRow :global(td) { background: var(--ant-color-fill-secondary) !important; }
+.clickableTable :global(.ant-table-row:focus-visible) { outline: 2px solid var(--ant-color-primary); outline-offset: -2px; }
 .actions { display: flex; gap: 8px; }
 .traceSummary { display: flex; gap: 24px; align-items: baseline; }
 .waterfall { margin-top: 16px; border-top: 1px solid var(--ant-color-border-secondary); }
@@ -34,4 +42,5 @@
 .events { margin-top: 20px; }
 .events > div { padding: 10px 0; border-top: 1px solid var(--ant-color-border-secondary); }
 
-@media (max-width: 760px) { .spanRow { grid-template-columns: 180px 1fr 72px; } }
+@media (max-width: 1100px) { .workspace[data-detail-open='true'] { grid-template-columns: minmax(320px, 42%) minmax(480px, 58%); overflow-x: auto; } }
+@media (max-width: 760px) { .workspace[data-detail-open='true'] { display: block; } .detailPane { border-top: 1px solid var(--ant-color-border-secondary); border-left: 0; } .spanRow { grid-template-columns: 180px 1fr 72px; } }

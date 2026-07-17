@@ -1,4 +1,7 @@
 {
+  "exploreTrace": {
+    "closeDetail": "Close detail"
+  },
   "explore": {
     "states": {
       "unsupportedQuery": "Collector-scoped metrics accept a metric name, not an arbitrary PromQL expression.",

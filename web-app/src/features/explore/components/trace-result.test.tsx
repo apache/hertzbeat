@@ -39,8 +39,11 @@ describe('TraceResult', () => {
     const navigate = vi.fn();
     render(<I18nextProvider i18n={i18n}><Subject navigate={navigate} /></I18nextProvider>);
 
-    fireEvent.click(screen.getByText('POST /checkout'));
-    expect(screen.getByRole('dialog', { name: 'POST /checkout' })).toBeInTheDocument();
+    const traceRow = screen.getByText('POST /checkout').closest('tr');
+    expect(traceRow).toHaveAttribute('tabindex', '0');
+    fireEvent.keyDown(traceRow!, { key: 'Enter' });
+    expect(screen.getByRole('complementary', { name: 'POST /checkout' })).toBeInTheDocument();
+    expect(traceRow).toBeInTheDocument();
     expect(screen.getByText('http.status_code')).toBeInTheDocument();
     expect(screen.getByText('retry.scheduled')).toBeInTheDocument();
 
@@ -135,7 +138,7 @@ describe('TraceResult', () => {
       t={i18n.t}
       trace={{ ...closedTrace(), state }}
     /></I18nextProvider>);
-    expect(screen.getByRole('dialog', { name: 'POST /checkout' })).toBeInTheDocument();
+    expect(screen.getByRole('complementary', { name: 'POST /checkout' })).toBeInTheDocument();
     expect(screen.getByText('http.status_code')).toBeInTheDocument();
   });
 });

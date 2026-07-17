@@ -1,4 +1,7 @@
 {
+  "exploreTrace": {
+    "closeDetail": "关闭详情"
+  },
   "explore": {
     "states": {
       "unsupportedQuery": "Collector 范围的指标查询仅支持指标名称，不支持任意 PromQL 表达式。",

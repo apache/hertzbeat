@@ -45,8 +45,14 @@
   cursor: pointer;
 }
 
-.clickableTable :global(.ant-table-row:hover td) {
-  background: #222a3a !important;
+.clickableTable :global(.ant-table-row:hover td),
+.clickableTable :global(.ant-table-row:focus-visible td) {
+  background: var(--ant-color-fill-secondary) !important;
+}
+
+.clickableTable :global(.ant-table-row:focus-visible) {
+  outline: 2px solid var(--ant-color-primary);
+  outline-offset: -2px;
 }
 
 .traceLink {
