@@ -22,12 +22,11 @@ import {
   buildAlertGroupPayload,
   buildAlertGroupTogglePayload,
   AlertGroupMissingError,
-  parseAlertGroupDetail,
-  parseAlertGroupPage,
   type AlertGroupConverge,
   type AlertGroupDraft,
   type AlertGroupQuery
 } from './alert-group-model';
+import { parseAlertGroupDetail, parseAlertGroupPage } from './alert-group-schema';
 
 export async function loadAlertGroups(query: AlertGroupQuery) {
   const response = await apiMessageGet<unknown>(buildAlertGroupListPath(query));

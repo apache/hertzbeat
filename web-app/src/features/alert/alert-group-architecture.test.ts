@@ -17,10 +17,19 @@
 
 import { describe, expect, it } from 'vitest';
 
+import api from './alert-group-api.ts?raw';
+import model from './alert-group-model.ts?raw';
+
 const modules = import.meta.glob('./alert-group-page.tsx', { eager: true, import: 'default', query: '?raw' });
 const source = Object.values(modules)[0] as string;
 
 describe('Alert Group architecture', () => {
+  it('keeps response parsing in a named schema boundary', () => {
+    expect(api).toContain("from './alert-group-schema'");
+    expect(model).not.toMatch(/export function parseAlertGroup/);
+    expect(model).not.toMatch(/function\s+(?:array|boolean|integer|number|object|record|stringArray|text)\s*\(/);
+  });
+
   it('keeps TanStack, API, Router, App, and browser date ownership out of the page', () => {
     expect(source).not.toMatch(/@tanstack\/react-query|alert-group-api|react-router|App\.useApp|Date\.parse|Intl\.DateTimeFormat/);
     expect(source).toContain("./controller/use-alert-group-controller");

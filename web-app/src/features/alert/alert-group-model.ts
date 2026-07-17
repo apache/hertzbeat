@@ -52,8 +52,8 @@ export type AlertGroupPage = {
 };
 
 export class AlertGroupContractError extends Error {
-  constructor(message: string) {
-    super(message);
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = 'AlertGroupContractError';
   }
 }
@@ -63,41 +63,6 @@ export class AlertGroupMissingError extends Error {
     super('Alert Group detail is missing');
     this.name = 'AlertGroupMissingError';
   }
-}
-
-export function parseAlertGroupDetail(value: unknown): AlertGroupConverge {
-  if (value === null || value === undefined) throw new AlertGroupMissingError();
-  const source = record(value, 'detail');
-  const result: AlertGroupConverge = {
-    id: positiveInteger(source.id, 'id'),
-    name: nonBlankString(source.name, 'name'),
-    groupLabels: nullableUniqueStrings(source.groupLabels, 'groupLabels'),
-    groupWait: nullableNonNegativeInteger(source.groupWait, 'groupWait'),
-    groupInterval: nullableNonNegativeInteger(source.groupInterval, 'groupInterval'),
-    repeatInterval: nullableNonNegativeInteger(source.repeatInterval, 'repeatInterval'),
-    enable: nullableBoolean(source.enable, 'enable')
-  };
-  copyOptionalNullableString(source, result, 'creator');
-  copyOptionalNullableString(source, result, 'modifier');
-  copyOptionalNullableString(source, result, 'gmtCreate');
-  copyOptionalNullableString(source, result, 'gmtUpdate');
-  return result;
-}
-
-export function parseAlertGroupPage(value: unknown, query: AlertGroupQuery): AlertGroupPage {
-  const source = record(value, 'page');
-  if (!Array.isArray(source.content)) throw contract('content must be an array');
-  const totalElements = nonNegativeInteger(source.totalElements, 'totalElements');
-  const totalPages = nonNegativeInteger(source.totalPages, 'totalPages');
-  const number = nonNegativeInteger(source.number, 'number');
-  const size = positiveInteger(source.size, 'size');
-  if (number !== query.pageIndex || size !== query.pageSize) throw contract('page does not match the request');
-  if (totalPages !== Math.ceil(totalElements / size)) throw contract('totalPages is inconsistent');
-  const availableContent = Math.max(0, totalElements - number * size);
-  if (source.content.length > Math.min(size, availableContent)) throw contract('page content is inconsistent');
-  const content = (source.content as unknown[]).map(parseAlertGroupDetail);
-  if (new Set(content.map(item => item.id)).size !== content.length) throw contract('duplicate ids are not allowed');
-  return { content, totalElements, totalPages, number, size };
 }
 
 export function readAlertGroupQuery(params: URLSearchParams): AlertGroupQuery {
@@ -180,84 +145,4 @@ export function alertGroupDraftFromDetail(group: AlertGroupConverge): AlertGroup
     repeatInterval: group.repeatInterval ?? 14400,
     enable: group.enable ?? true
   };
-}
-
-function record(value: unknown, field: string): Record<string, unknown> {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) throw contract(`${field} must be an object`);
-  return value as Record<string, unknown>;
-}
-
-function positiveInteger(value: unknown, field: string) {
-  if (!Number.isSafeInteger(value) || (value as number) < 1) throw contract(`${field} must be a positive integer`);
-  return value as number;
-}
-
-function nonNegativeInteger(value: unknown, field: string) {
-  if (!Number.isSafeInteger(value) || (value as number) < 0) throw contract(`${field} must be a non-negative integer`);
-  return value as number;
-}
-
-function nullableNonNegativeInteger(value: unknown, field: string) {
-  return value === null ? null : nonNegativeInteger(value, field);
-}
-
-function nonBlankString(value: unknown, field: string) {
-  if (typeof value !== 'string' || !value.trim()) throw contract(`${field} must be a non-blank string`);
-  if (field === 'name' && value.length > 100) throw contract('name exceeds the Java entity limit');
-  return value;
-}
-
-function nullableUniqueStrings(value: unknown, field: string): string[] | null {
-  if (value === null) return null;
-  if (!Array.isArray(value)) throw contract(`${field} must be an array or null`);
-  const result = (value as unknown[]).map(item => nonBlankString(item, `${field} item`));
-  if (new Set(result).size !== result.length) throw contract(`${field} must contain unique entries`);
-  return result;
-}
-
-function nullableBoolean(value: unknown, field: string) {
-  if (value === null) return null;
-  if (typeof value !== 'boolean') throw contract(`${field} must be a boolean or null`);
-  return value;
-}
-
-function copyOptionalNullableString(
-  source: Record<string, unknown>,
-  target: AlertGroupConverge,
-  field: 'creator' | 'modifier' | 'gmtCreate' | 'gmtUpdate'
-) {
-  if (!(field in source)) return;
-  const value = source[field];
-  if (value !== null && typeof value !== 'string') throw contract(`${field} must be a string or null`);
-  if (field.startsWith('gmt') && typeof value === 'string' && !isLocalDateTime(value)) {
-    throw contract(`${field} must be a Java local date-time`);
-  }
-  target[field] = value;
-}
-
-function isLocalDateTime(value: string) {
-  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,9})?$/.exec(value);
-  if (!match) return false;
-  const [, yearText, monthText, dayText, hourText, minuteText, secondText] = match;
-  const year = Number(yearText);
-  const month = Number(monthText);
-  const day = Number(dayText);
-  return month >= 1 && month <= 12
-    && day >= 1 && day <= daysInMonth(year, month)
-    && Number(hourText) <= 23
-    && Number(minuteText) <= 59
-    && Number(secondText) <= 59;
-}
-
-function daysInMonth(year: number, month: number) {
-  if (month === 2) return isLeapYear(year) ? 29 : 28;
-  return [4, 6, 9, 11].includes(month) ? 30 : 31;
-}
-
-function isLeapYear(year: number) {
-  return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
-}
-
-function contract(message: string) {
-  return new AlertGroupContractError(message);
 }
