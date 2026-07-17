@@ -80,6 +80,8 @@ class NativeContainerContextTest(unittest.TestCase):
             f"{runtime_root}/SHA512SUMS": b"checksums\n",
             f"{runtime_root}/licenses/LICENSE-dependency.txt": b"license\n",
             f"{package_root}/service/hertzbeat-collector.service": b"[Service]\n",
+            f"{package_root}/service/install-systemd.sh": b"#!/bin/sh\n",
+            f"{package_root}/service/README-systemd.md": b"# systemd lifecycle\n",
         }
         if missing is not None:
             entries.pop(f"{package_root}/{missing}")
@@ -94,7 +96,7 @@ class NativeContainerContextTest(unittest.TestCase):
 
     def run_prepare(self) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
-            [SCRIPT, self.release_dir, self.root / "context"],
+            ["sh", SCRIPT, self.release_dir, self.root / "context"],
             text=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -117,6 +119,15 @@ class NativeContainerContextTest(unittest.TestCase):
     def test_missing_required_layout_never_enters_context(self) -> None:
         self.write_archive("linux-amd64")
         self.write_archive("linux-arm64", missing="config/application.yml")
+
+        result = self.run_prepare()
+
+        self.assertNotEqual(0, result.returncode)
+        self.assertFalse((self.root / "context/collector-native-linux-amd64.tar.gz").exists())
+
+    def test_missing_systemd_installer_never_enters_context(self) -> None:
+        self.write_archive("linux-amd64")
+        self.write_archive("linux-arm64", missing="service/install-systemd.sh")
 
         result = self.run_prepare()
 

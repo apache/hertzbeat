@@ -46,6 +46,24 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
         </fileSet>
 
         <fileSet>
+            <directory>${native.service.dir}</directory>
+            <includes>
+                <include>${native.service.installer.include}</include>
+            </includes>
+            <outputDirectory>service</outputDirectory>
+            <fileMode>0755</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>${native.service.dir}</directory>
+            <includes>
+                <include>${native.service.readme.include}</include>
+            </includes>
+            <outputDirectory>service</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <fileSet>
             <directory>src/main/resources</directory>
             <includes>
                 <include>application.yml</include>

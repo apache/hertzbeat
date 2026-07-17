@@ -23,7 +23,10 @@ cd "$repo_root"
 dockerfile=script/docker/collector/Dockerfile.native
 foreground=script/assembly/collector/bin-native/foreground.sh
 systemd_unit=script/assembly/collector/systemd/hertzbeat-collector.service
+systemd_installer=script/assembly/collector/systemd/install-systemd.sh
+systemd_readme=script/assembly/collector/systemd/README-systemd.md
 native_assembly=script/assembly/collector/assembly-native.xml
+collector_pom=hertzbeat-collector/hertzbeat-collector-collector/pom.xml
 release_assets=script/ci/generate-hybrid-collector-release-assets.sh
 release_workflow=.github/workflows/hybrid-collector-release.yml
 release_scanner=script/ci/verify-hybrid-collector-release-content.py
@@ -32,7 +35,8 @@ native_package_verifier=script/ci/verify-hybrid-collector-native-package.sh
 native_image_verifier=script/ci/verify-hybrid-collector-native-image.sh
 native_container_context=script/ci/prepare-hybrid-collector-native-container-context.sh
 
-for required in "$dockerfile" "$foreground" "$systemd_unit" "$release_assets" "$release_workflow" \
+for required in "$dockerfile" "$foreground" "$systemd_unit" "$systemd_installer" "$systemd_readme" \
+  "$release_assets" "$release_workflow" \
   "$release_scanner" "$release_scanner_test" "$native_package_verifier" "$native_image_verifier" \
   "$native_container_context"; do
   if [ ! -f "$required" ]; then
@@ -50,8 +54,15 @@ if grep -Eq 'temurin|openjdk|JAVA_HOME|java-version: 21' "$dockerfile" "$release
 fi
 
 grep -q 'exec "$APP_PATH"' "$foreground"
-grep -q 'ExecStart=/opt/hertzbeat-collector/bin/foreground.sh' "$systemd_unit"
+grep -q 'ExecStart=/opt/hertzbeat-collector/current/bin/foreground.sh' "$systemd_unit"
+grep -q 'WorkingDirectory=/opt/hertzbeat-collector/current' "$systemd_unit"
+grep -q 'ReadWritePaths=/etc/hertzbeat /var/lib/hertzbeat-collector /var/log/hertzbeat-collector' "$systemd_unit"
 grep -q 'Restart=on-failure' "$systemd_unit"
+grep -q 'native.service.installer.include' "$native_assembly"
+grep -q 'native.service.readme.include' "$native_assembly"
+grep -q '<native.service.installer.include>install-systemd.sh' "$collector_pom"
+grep -q '<native.service.readme.include>README-systemd.md' "$collector_pom"
+grep -q 'test_hybrid_collector_systemd_install.py' "$release_workflow"
 grep -q 'native.service.dir' "$native_assembly"
 grep -q 'hertzbeat-otel-runtime.cdx.json' "$native_assembly"
 grep -q 'hertzbeat-collector.cdx.json' "$native_assembly"

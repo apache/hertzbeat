@@ -24,8 +24,8 @@ Type=simple
 User=hertzbeat
 Group=hertzbeat
 EnvironmentFile=-/etc/hertzbeat/collector.env
-WorkingDirectory=/opt/hertzbeat-collector
-ExecStart=/opt/hertzbeat-collector/bin/foreground.sh
+WorkingDirectory=/opt/hertzbeat-collector/current
+ExecStart=/opt/hertzbeat-collector/current/bin/foreground.sh
 Restart=on-failure
 RestartSec=5s
 TimeoutStopSec=35s
@@ -36,7 +36,7 @@ PrivateTmp=true
 ProtectControlGroups=true
 ProtectKernelTunables=true
 ProtectSystem=strict
-ReadWritePaths=/opt/hertzbeat-collector/config /opt/hertzbeat-collector/data /opt/hertzbeat-collector/logs
+ReadWritePaths=/etc/hertzbeat /var/lib/hertzbeat-collector /var/log/hertzbeat-collector
 RestrictSUIDSGID=true
 
 [Install]

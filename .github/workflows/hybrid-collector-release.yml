@@ -58,6 +58,7 @@ jobs:
         run: |
           python3 script/ci/test_verify_hybrid_collector_release_content.py -v
           python3 script/ci/test_prepare_hybrid_collector_native_container_context.py -v
+          python3 script/ci/test_hybrid_collector_systemd_install.py -v
           mkdir -p target/release-policy
           git archive --format=tar.gz --output target/release-policy/hertzbeat-source.tar.gz HEAD
           python3 script/ci/verify-hybrid-collector-release-content.py \

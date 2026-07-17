@@ -53,8 +53,8 @@ amd64_archive=$(find_archive linux-amd64)
 arm64_archive=$(find_archive linux-arm64)
 
 # Verify before creating the build context so rejected inputs can never be copied into it.
-"$repo_root/script/ci/verify-hybrid-collector-native-package.sh" "$amd64_archive" linux-amd64
-"$repo_root/script/ci/verify-hybrid-collector-native-package.sh" "$arm64_archive" linux-arm64
+sh "$repo_root/script/ci/verify-hybrid-collector-native-package.sh" "$amd64_archive" linux-amd64
+sh "$repo_root/script/ci/verify-hybrid-collector-native-package.sh" "$arm64_archive" linux-arm64
 
 mkdir -p "$context_dir/script/ci"
 cp "$amd64_archive" "$context_dir/collector-native-linux-amd64.tar.gz"

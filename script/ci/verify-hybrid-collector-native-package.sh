@@ -55,10 +55,14 @@ require_path "/runtime/$platform/SHA512SUMS$" 'the runtime checksums'
 require_path "/runtime/$platform/licenses/" 'the runtime dependency licenses'
 
 case "$platform" in
-  linux-*) require_path '/service/hertzbeat-collector\.service$' 'the systemd unit' ;;
+  linux-*)
+    require_path '/service/hertzbeat-collector\.service$' 'the systemd unit'
+    require_path '/service/install-systemd\.sh$' 'the systemd lifecycle installer'
+    require_path '/service/README-systemd\.md$' 'the systemd lifecycle documentation'
+    ;;
   *)
-    if grep -q '/service/hertzbeat-collector\.service$' "$listing"; then
-      echo "non-Linux native archive must not contain a systemd unit" >&2
+    if grep -Eq '/service/(hertzbeat-collector\.service|install-systemd\.sh|README-systemd\.md)$' "$listing"; then
+      echo "non-Linux native archive must not contain systemd integration" >&2
       exit 1
     fi
     ;;

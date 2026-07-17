@@ -392,6 +392,8 @@
                 <native.launcher.dir>../../script/assembly/collector/bin-native</native.launcher.dir>
                 <native.service.dir>../../script/assembly/collector/systemd</native.service.dir>
                 <native.service.include>__none__</native.service.include>
+                <native.service.installer.include>__none__</native.service.installer.include>
+                <native.service.readme.include>__none__</native.service.readme.include>
                 <native.package.format>tar.gz</native.package.format>
                 <native.target.platform>unsupported</native.target.platform>
                 <native.package.id>${native.target.platform}-bin</native.package.id>
@@ -506,6 +508,8 @@
             <properties>
                 <native.target.platform>linux-amd64</native.target.platform>
                 <native.service.include>hertzbeat-collector.service</native.service.include>
+                <native.service.installer.include>install-systemd.sh</native.service.installer.include>
+                <native.service.readme.include>README-systemd.md</native.service.readme.include>
             </properties>
         </profile>
         <profile>
@@ -519,6 +523,8 @@
             <properties>
                 <native.target.platform>linux-amd64</native.target.platform>
                 <native.service.include>hertzbeat-collector.service</native.service.include>
+                <native.service.installer.include>install-systemd.sh</native.service.installer.include>
+                <native.service.readme.include>README-systemd.md</native.service.readme.include>
             </properties>
         </profile>
         <profile>
@@ -532,6 +538,8 @@
             <properties>
                 <native.target.platform>linux-arm64</native.target.platform>
                 <native.service.include>hertzbeat-collector.service</native.service.include>
+                <native.service.installer.include>install-systemd.sh</native.service.installer.include>
+                <native.service.readme.include>README-systemd.md</native.service.readme.include>
             </properties>
         </profile>
         <profile>
