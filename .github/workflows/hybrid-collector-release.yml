@@ -169,6 +169,16 @@ jobs:
           mv dist/*-linux-arm64-bin.tar.gz dist/collector-native-linux-arm64.tar.gz
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
+      - name: Build runnable amd64 native image
+        uses: docker/build-push-action@v6
+        with:
+          context: dist
+          file: script/docker/collector/Dockerfile.native
+          platforms: linux/amd64
+          load: true
+          tags: apache/hertzbeat-collector:native-test
+      - name: Verify native image runtime
+        run: ./script/ci/verify-hybrid-collector-native-image.sh apache/hertzbeat-collector:native-test linux/amd64
       - name: Build multi-platform native image
         uses: docker/build-push-action@v6
         with:

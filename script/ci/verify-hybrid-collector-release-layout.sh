@@ -29,9 +29,10 @@ release_workflow=.github/workflows/hybrid-collector-release.yml
 release_scanner=script/ci/verify-hybrid-collector-release-content.py
 release_scanner_test=script/ci/test_verify_hybrid_collector_release_content.py
 native_package_verifier=script/ci/verify-hybrid-collector-native-package.sh
+native_image_verifier=script/ci/verify-hybrid-collector-native-image.sh
 
 for required in "$dockerfile" "$foreground" "$systemd_unit" "$release_assets" "$release_workflow" \
-  "$release_scanner" "$release_scanner_test" "$native_package_verifier"; do
+  "$release_scanner" "$release_scanner_test" "$native_package_verifier" "$native_image_verifier"; do
   if [ ! -f "$required" ]; then
     echo "missing Hybrid Collector release file: $required" >&2
     exit 1
@@ -85,5 +86,6 @@ grep -q 'test_verify_hybrid_collector_release_content.py' "$release_workflow"
 grep -q -- '--source' "$release_workflow"
 grep -q -- '--jvm' "$release_workflow"
 grep -q -- '--native' "$native_package_verifier"
+grep -q 'verify-hybrid-collector-native-image.sh' "$release_workflow"
 
 echo "Hybrid Collector release layout contract passed"
