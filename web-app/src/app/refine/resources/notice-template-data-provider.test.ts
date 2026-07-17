@@ -34,10 +34,9 @@ vi.mock('@/features/alert/notice-template-api', async importOriginal => ({
   ...api
 }));
 
-import {
-  noticeTemplateCreateActionUrl,
-  noticeTemplateDataProvider
-} from './notice-template-data-provider';
+import { noticeTemplateCreateActionUrl } from '@/features/alert/notice-template-resource';
+
+import { noticeTemplateDataProvider } from './notice-template-data-provider';
 
 const record: NoticeTemplate = {
   id: 42, name: 'Canonical', type: 1, preset: false, content: '${server}'

@@ -51,8 +51,6 @@ import {
 
 import { createRefineHttpError, toRefineHttpError } from '../refine-http-error';
 
-export { noticeTemplateCreateActionUrl, noticeTemplateResourceName } from '@/features/alert/notice-template-resource';
-
 type DeleteVariables = { record: NoticeTemplateResourceRecord; query: NoticeTemplateQuery };
 
 export const noticeTemplateDataProvider: DataProvider = {
