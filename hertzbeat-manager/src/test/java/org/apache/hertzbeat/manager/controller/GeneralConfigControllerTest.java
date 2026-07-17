@@ -28,7 +28,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import java.util.Set;
+import org.apache.hertzbeat.manager.pojo.dto.EmailServerConfigResponse;
+import org.apache.hertzbeat.manager.pojo.dto.MessageServerConfigResult;
+import org.apache.hertzbeat.manager.pojo.dto.SmsServerConfigOptions;
+import org.apache.hertzbeat.manager.pojo.dto.SmsServerConfigResponse;
 import org.apache.hertzbeat.manager.pojo.dto.TemplateConfig;
+import org.apache.hertzbeat.manager.service.MessageServerConfigService;
 import org.apache.hertzbeat.manager.service.impl.ConfigServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,6 +43,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.test.web.servlet.MockMvc;
 
 /**
@@ -50,6 +57,9 @@ class GeneralConfigControllerTest {
 
     @Mock
     private ConfigServiceImpl configService;
+
+    @Mock
+    private MessageServerConfigService messageServerConfigService;
 
     @InjectMocks
     private GeneralConfigController generalConfigController;
@@ -65,7 +75,7 @@ class GeneralConfigControllerTest {
 
         doNothing().when(configService).saveConfig(anyString(), any());
 
-        mockMvc.perform(post("/api/config/email")
+        mockMvc.perform(post("/api/config/system")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"key\":\"value\"}"))
                 .andExpect(status().isOk())
@@ -78,10 +88,62 @@ class GeneralConfigControllerTest {
 
         when(configService.getConfig(anyString())).thenReturn(any());
 
-        mockMvc.perform(get("/api/config/email")
+        mockMvc.perform(get("/api/config/system")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
+    }
+
+    @Test
+    void emailConfigReadMustNotExposePassword() throws Exception {
+        EmailServerConfigResponse response = new EmailServerConfigResponse(
+                0, "smtp.example.test", "ops@example.test", 465, true, false, true,
+                Set.of("emailPassword"));
+        when(messageServerConfigService.getEmailConfig()).thenReturn(MessageServerConfigResult.configured(response));
+
+        mockMvc.perform(get("/api/config/email").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("configured"))
+                .andExpect(jsonPath("$.data.config.emailPassword").doesNotExist())
+                .andExpect(jsonPath("$.data.config.configuredSecrets[0]").value("emailPassword"))
+                .andExpect(jsonPath("$").value(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("plaintext-sentinel"))));
+    }
+
+    @Test
+    void smsConfigReadMustNotExposeToken() throws Exception {
+        SmsServerConfigOptions options = new SmsServerConfigOptions();
+        options.setAccountSid("account-sid");
+        options.setAuthToken("plaintext-token-sentinel");
+        options.setTwilioPhoneNumber("+12025550123");
+        SmsServerConfigResponse response = new SmsServerConfigResponse(
+                true, "twilio", options, Set.of("authToken"));
+        when(messageServerConfigService.getSmsConfig()).thenReturn(MessageServerConfigResult.configured(response));
+
+        mockMvc.perform(get("/api/config/sms").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.config.options.authToken").doesNotExist())
+                .andExpect(jsonPath("$.data.config.configuredSecrets[0]").value("authToken"))
+                .andExpect(jsonPath("$").value(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("plaintext-token-sentinel"))));
+    }
+
+    @Test
+    void messageServerStorageUnavailableIsDistinctFromGenericError() throws Exception {
+        when(messageServerConfigService.getEmailConfig())
+                .thenThrow(new DataAccessResourceFailureException("db-sentinel"));
+        when(messageServerConfigService.getSmsConfig()).thenThrow(new IllegalStateException("error-sentinel"));
+
+        mockMvc.perform(get("/api/config/email").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.msg").value("Message server storage unavailable"))
+                .andExpect(jsonPath("$").value(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("db-sentinel"))));
+        mockMvc.perform(get("/api/config/sms").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.msg").value("Message server config error"))
+                .andExpect(jsonPath("$").value(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("error-sentinel"))));
     }
 
     @Test
