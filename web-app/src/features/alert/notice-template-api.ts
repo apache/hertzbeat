@@ -25,9 +25,7 @@ import {
   type NoticeTemplateDraft,
   type NoticeTemplateQuery
 } from './notice-template-model';
-
-export const noticeTemplateResourceName = 'notice-templates';
-export const noticeTemplateCreateActionUrl = '/api/notice/template';
+import { noticeTemplateCreateActionUrl } from './notice-template-resource';
 
 export async function loadNoticeTemplates(query: NoticeTemplateQuery) {
   const response = await apiMessageGet<unknown>(buildNoticeTemplateListPath(query));

@@ -21,7 +21,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
-import { noticeTemplateCreateActionUrl, noticeTemplateResourceName } from './notice-template-api';
+import { noticeTemplateCreateActionUrl, noticeTemplateResourceName } from './notice-template-resource';
 
 import {
   createNoticeTemplateDraft,

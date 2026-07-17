@@ -32,8 +32,6 @@ import {
   deleteNoticeTemplate,
   loadNoticeTemplate,
   loadNoticeTemplates,
-  noticeTemplateCreateActionUrl,
-  noticeTemplateResourceName,
   saveNoticeTemplate
 } from '@/features/alert/notice-template-api';
 import {
@@ -46,10 +44,14 @@ import {
   type NoticeTemplateQuery,
   type NoticeTemplateResourceRecord
 } from '@/features/alert/notice-template-model';
+import {
+  noticeTemplateCreateActionUrl,
+  noticeTemplateResourceName
+} from '@/features/alert/notice-template-resource';
 
 import { createRefineHttpError, toRefineHttpError } from '../refine-http-error';
 
-export { noticeTemplateCreateActionUrl, noticeTemplateResourceName } from '@/features/alert/notice-template-api';
+export { noticeTemplateCreateActionUrl, noticeTemplateResourceName } from '@/features/alert/notice-template-resource';
 
 type DeleteVariables = { record: NoticeTemplateResourceRecord; query: NoticeTemplateQuery };
 
