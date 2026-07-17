@@ -108,9 +108,11 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
                     log.info("client shutdown now!");
                     Thread.currentThread().interrupt();
                 } catch (Exception e2) {
-                    log.error("client connect to server error: {}. try after 10s.", e2.getMessage());
+                    int reconnectDelayMillis = Math.max(1, nettyClientConfig.getReconnectDelayMillis());
+                    log.error("client connect to server error: {}. try after {}ms.",
+                            e2.getMessage(), reconnectDelayMillis);
                     try {
-                        Thread.sleep(10000);
+                        Thread.sleep(reconnectDelayMillis);
                     } catch (InterruptedException ignored) {
                         Thread.currentThread().interrupt();
                     }
