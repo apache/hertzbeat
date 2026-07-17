@@ -52,6 +52,30 @@ runtime contract validation that TypeScript interfaces alone cannot provide.
 - No language SDK or Agent binary is bundled into HertzBeat. Instrumentation is
   an onboarding workflow that renders backend-provided guidance.
 
+## Evidence-first work contract
+
+The current code and the running product are the sources of truth. Before a
+non-trivial edit, read the complete path that will change: route and page,
+controller, model and API, backend contract, then every rendered consumer. A
+plan, issue, comment, screenshot, Angular implementation, or Horizon reference
+can explain intent, but it cannot override the code or wire behavior currently
+on disk.
+
+The required loop is:
+
+1. read the end-to-end path and the closest established feature pattern;
+2. write the smallest failing proof at the owning boundary;
+3. implement without inventing a parallel pattern;
+4. run focused checks, then the full gate when shared code is affected;
+5. validate actual requests, responses, navigation, and visible states against
+   a real HertzBeat backend in the production frontend;
+6. record honest limitations when backend access or representative data is
+   unavailable.
+
+Types and unit tests prove code contracts, not operator behavior. Mock data may
+support a test, but it is never release evidence and may not be used to claim a
+wire integration, health state, query result, or workflow complete.
+
 ## Source map
 
 ```text
@@ -162,6 +186,13 @@ import an adapter back out of `app`.
   serialization of their query context. Pages and components do not concatenate
   navigation strings.
 - Token and secret values are explicitly excluded from route/query models.
+- An upstream context change clears its dependent result before the next
+  request begins. The new scope shows an explicit loading state; stale values
+  never remain visible under a spinner where an operator could trust them as
+  current evidence.
+- Every navigation target is declared in the central route registry. Tests
+  cover both in-app navigation and direct entry for query/path parameters that
+  trigger initial loading.
 
 ## Presentation and design tokens
 
@@ -180,6 +211,13 @@ import an adapter back out of `app`.
   healthy state.
 - User-facing copy is referenced through i18n keys. CJK text is permitted only
   in locale resources and documentation.
+- The rendered HertzBeat shell is the visual source of truth. Horizon provides
+  reference behavior for dense operations layouts, evidence hierarchy,
+  cascade-clear loading, and template-driven dashboards; its branding,
+  framework structure, and OAP-specific behavior are not copied.
+- Comments are reserved for exported contracts and non-obvious invariants such
+  as security, timing, scope, or upstream compatibility. Comments do not
+  narrate obvious control flow or preserve refactoring history.
 
 ## Size and readability limits
 
