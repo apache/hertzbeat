@@ -15,57 +15,62 @@
  * limitations under the License.
  */
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Alert, Button, Form, Input, Typography } from 'antd';
-import { useState } from 'react';
+import { Alert, Button, Form, Input, Skeleton, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-
-import { safeRedirectTarget } from '@/core/auth/navigation';
-import { loginSession, sessionQueryKey } from '@/core/auth/session-api';
 
 import styles from './login-page.module.css';
+import { useLoginController } from './use-login-controller';
 
 type LoginValues = { identifier: string; credential: string };
 
 export function LoginPage() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const [searchParams] = useSearchParams();
-  const [defaultPasswordConfirmed, setDefaultPasswordConfirmed] = useState(false);
-  const login = useMutation({
-    mutationFn: ({ identifier, credential }: LoginValues) => loginSession(identifier, credential),
-    onSuccess: session => {
-      queryClient.setQueryData(sessionQueryKey, session);
-      void navigate(safeRedirectTarget(searchParams.get('redirect')) ?? '/dashboard', { replace: true });
-    }
-  });
+  const controller = useLoginController();
 
-  const submit = (values: LoginValues) => {
-    if (values.credential === 'hertzbeat' && !defaultPasswordConfirmed) {
-      setDefaultPasswordConfirmed(true);
-      return;
-    }
-    login.mutate(values);
-  };
+  if (controller.sessionState === 'checking') {
+    return (
+      <main className={styles.page}>
+        <section className={styles.panel} aria-label={t('auth.checkingSession')}>
+          <Skeleton active paragraph={{ rows: 4 }} />
+        </section>
+      </main>
+    );
+  }
+  if (controller.sessionState === 'unavailable') {
+    return (
+      <main className={styles.page}>
+        <section className={styles.panel}>
+          <Alert
+            type="error"
+            showIcon
+            message={t('common.unavailable')}
+            action={<Button onClick={controller.retrySession}>{t('common.retry')}</Button>}
+          />
+        </section>
+      </main>
+    );
+  }
+  if (controller.sessionState === 'authenticated') return null;
 
   return (
     <main className={styles.page}>
       <section className={styles.panel} aria-labelledby="login-title">
         <Typography.Title id="login-title" level={2}>{t('auth.title')}</Typography.Title>
         <Typography.Paragraph type="secondary">{t('auth.description')}</Typography.Paragraph>
-        {defaultPasswordConfirmed && <Alert type="warning" showIcon message={t('auth.defaultPassword')} />}
-        {login.error && <Alert type="error" showIcon message={login.error.message} />}
-        <Form<LoginValues> layout="vertical" onFinish={submit} requiredMark={false}>
+        {controller.errorKey && <Alert type="error" showIcon message={t(controller.errorKey)} />}
+        <Form<LoginValues>
+          layout="vertical"
+          onFinish={values => { void controller.submit(values); }}
+          requiredMark={false}
+        >
           <Form.Item name="identifier" label={t('auth.username')} rules={[{ required: true }]}>
             <Input autoComplete="username" autoFocus />
           </Form.Item>
           <Form.Item name="credential" label={t('auth.password')} rules={[{ required: true }]}>
             <Input.Password autoComplete="current-password" />
           </Form.Item>
-          <Button block type="primary" htmlType="submit" loading={login.isPending}>
-            {defaultPasswordConfirmed ? t('auth.continue') : t('auth.submit')}
+          <Button block type="primary" htmlType="submit" loading={controller.pending}>
+            {t('auth.submit')}
           </Button>
         </Form>
       </section>

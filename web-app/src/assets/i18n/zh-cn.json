@@ -177,8 +177,10 @@
   "auth": {
     "title": "登录 HertzBeat",
     "description": "使用 HertzBeat 账号继续。",
+    "checkingSession": "正在检查当前会话",
     "username": "用户名",
     "password": "密码",
+    "invalidCredentials": "用户名或密码不正确。",
     "submit": "登录",
     "continue": "仍然继续",
     "logout": "退出登录",

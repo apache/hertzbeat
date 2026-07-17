@@ -161,7 +161,7 @@
       }
     }
   },
-  "auth": { "title": "HertzBeat にログイン", "description": "HertzBeat アカウントで続行します。", "username": "ユーザー名", "password": "パスワード", "submit": "ログイン", "continue": "続行する", "logout": "ログアウト", "logoutFailed": "ログアウトできませんでした。もう一度お試しください。", "defaultPassword": "このアカウントは初期パスワードを使用しています。ログイン後に変更してください。続行するには再度送信します。" },
+  "auth": { "title": "HertzBeat にログイン", "description": "HertzBeat アカウントで続行します。", "checkingSession": "現在のセッションを確認しています", "username": "ユーザー名", "password": "パスワード", "invalidCredentials": "ユーザー名またはパスワードが正しくありません。", "submit": "ログイン", "continue": "続行する", "logout": "ログアウト", "logoutFailed": "ログアウトできませんでした。もう一度お試しください。", "defaultPassword": "このアカウントは初期パスワードを使用しています。ログイン後に変更してください。続行するには再度送信します。" },
   "dashboard": { "title": "ダッシュボード", "description": "監視の可用性と現在のアラート状況を確認します。", "monitorSummary": "監視概要", "total": "監視合計", "available": "利用可能", "unavailable": "利用不可", "alerts": "有効なアラート", "distribution": "監視分布", "application": "アプリケーション", "category": "カテゴリ", "empty": "監視が設定されていません。", "summaryUnavailable": "監視概要を利用できません。件数は非表示です。" },
   "bulletin": { "title": "監視ボード", "description": "運用担当者が設定したグループ監視ビューを確認します。", "search": "ボードを検索", "empty": "条件に一致するボードはありません。", "name": "名前", "application": "アプリケーション", "monitors": "監視数", "creator": "作成者", "updated": "更新日時" },
   "monitorActions": { "copy": "コピー", "enable": "有効化", "pause": "一時停止", "delete": "削除", "deleteConfirm": "選択した監視データを削除しますか？", "selected": "{{count}} 件を選択", "success": "監視操作が完了しました。", "failed": "監視操作に失敗しました。" },

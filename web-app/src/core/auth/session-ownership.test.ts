@@ -15,28 +15,15 @@
  * limitations under the License.
  */
 
-import { useQuery } from '@tanstack/react-query';
-import type { PropsWithChildren } from 'react';
+import { describe, expect, it } from 'vitest';
 
-import { SessionContext } from './session-context';
-import { getSession, sessionQueryKey } from './session-api';
+import runtime from '@/app/refine/refine-runtime.tsx?raw';
+import router from '@/app/router.tsx?raw';
 
-export function SessionProvider({ children }: PropsWithChildren) {
-  const query = useQuery({
-    queryKey: sessionQueryKey,
-    queryFn: ({ signal }) => getSession({ signal }),
-    retry: false
+describe('session ownership', () => {
+  it('keeps SessionProvider and AuthGate as the only authentication owner', () => {
+    expect(runtime.match(/<SessionProvider>/g)).toHaveLength(1);
+    expect(runtime).not.toMatch(/authProvider\s*=/);
+    expect(router.match(/<AuthGate\s*\/>/g)).toHaveLength(1);
   });
-  return (
-    <SessionContext.Provider
-      value={{
-        session: query.data,
-        loading: query.isPending,
-        unavailable: query.isError,
-        retry: () => { void query.refetch(); }
-      }}
-    >
-      {children}
-    </SessionContext.Provider>
-  );
-}
+});

@@ -15,28 +15,11 @@
  * limitations under the License.
  */
 
-import { useQuery } from '@tanstack/react-query';
-import type { PropsWithChildren } from 'react';
+import { SessionRequestError } from '@/core/auth/session-api';
 
-import { SessionContext } from './session-context';
-import { getSession, sessionQueryKey } from './session-api';
-
-export function SessionProvider({ children }: PropsWithChildren) {
-  const query = useQuery({
-    queryKey: sessionQueryKey,
-    queryFn: ({ signal }) => getSession({ signal }),
-    retry: false
-  });
-  return (
-    <SessionContext.Provider
-      value={{
-        session: query.data,
-        loading: query.isPending,
-        unavailable: query.isError,
-        retry: () => { void query.refetch(); }
-      }}
-    >
-      {children}
-    </SessionContext.Provider>
-  );
+export function loginErrorMessageKey(error: unknown) {
+  if (!(error instanceof SessionRequestError)) return 'common.routeError.description';
+  if (error.kind === 'invalid-credentials') return 'auth.invalidCredentials';
+  if (error.kind === 'unavailable') return 'common.unavailable';
+  return 'common.routeError.description';
 }

@@ -177,8 +177,10 @@
   "auth": {
     "title": "Sign in to HertzBeat",
     "description": "Use your HertzBeat account to continue.",
+    "checkingSession": "Checking the current session",
     "username": "Username",
     "password": "Password",
+    "invalidCredentials": "The username or password is incorrect.",
     "submit": "Sign in",
     "continue": "Continue anyway",
     "logout": "Sign out",

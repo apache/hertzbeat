@@ -15,28 +15,19 @@
  * limitations under the License.
  */
 
-import { useQuery } from '@tanstack/react-query';
-import type { PropsWithChildren } from 'react';
+import { describe, expect, it } from 'vitest';
 
-import { SessionContext } from './session-context';
-import { getSession, sessionQueryKey } from './session-api';
+import page from './login-page.tsx?raw';
+import controller from './use-login-controller.ts?raw';
 
-export function SessionProvider({ children }: PropsWithChildren) {
-  const query = useQuery({
-    queryKey: sessionQueryKey,
-    queryFn: ({ signal }) => getSession({ signal }),
-    retry: false
+describe('login architecture', () => {
+  it('keeps transport, cache, session, and navigation ownership out of the page', () => {
+    expect(page).not.toMatch(/@tanstack\/react-query/);
+    expect(page).not.toMatch(/react-router/);
+    expect(page).not.toMatch(/session-api/);
+    expect(page).not.toMatch(/session-context/);
+    expect(page).not.toMatch(/\bfetch\s*\(/);
+    expect(page).not.toContain('hertzbeat');
+    expect(controller.match(/\bnavigate\s*\(/g)).toHaveLength(1);
   });
-  return (
-    <SessionContext.Provider
-      value={{
-        session: query.data,
-        loading: query.isPending,
-        unavailable: query.isError,
-        retry: () => { void query.refetch(); }
-      }}
-    >
-      {children}
-    </SessionContext.Provider>
-  );
-}
+});
