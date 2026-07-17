@@ -17,7 +17,7 @@
 
 import { useCallback } from 'react';
 
-import { InstrumentationRequestError } from '../api/instrumentation-api';
+import { InstrumentationContractError, InstrumentationRequestError } from '../api/instrumentation-api';
 
 type ContractRefreshActions = {
   clearSelection: () => void;
@@ -39,6 +39,7 @@ export function useInstrumentationContractRefresh(actions: ContractRefreshAction
 }
 
 function requiresCatalogRefresh(error: unknown) {
-  return error instanceof InstrumentationRequestError
+  return error instanceof InstrumentationContractError
+    || error instanceof InstrumentationRequestError
     && error.machineCode !== 'instrumentation_context_invalid';
 }

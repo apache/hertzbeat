@@ -18,6 +18,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { InstrumentationRequestError } from '../api/instrumentation-api';
@@ -48,14 +49,16 @@ describe('instrumentation setup contract convergence', () => {
         serviceNamespace: '', serviceEnvironment: '' },
       state: { status: 'ready' }, catalog: { schemaVersion: 1, languages: [] }, retry, clearSelection,
       setEnvironment: vi.fn(), setPlatform: vi.fn(), setLanguage: vi.fn(), setFramework: vi.fn(),
-      setMethod: vi.fn(), setContext: vi.fn()
+      setMethod: vi.fn(), setContext: vi.fn(), restoreDraft: vi.fn()
     });
     dependencies.guide.mockReturnValue({
       state: { status: 'idle' }, guide: undefined, token: 'memory_only', setToken: vi.fn(), transientTarget: undefined,
       setTransientTarget: vi.fn(), render: vi.fn(), materializeSnippet: vi.fn(), reset: vi.fn(), clearContractState
     });
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    const wrapper = ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <MemoryRouter><QueryClientProvider client={client}>{children}</QueryClientProvider></MemoryRouter>
+    );
     const { result } = renderHook(() => useInstrumentationSetup(), { wrapper });
     act(() => result.current.setStage(5));
     expect(result.current.stage).toBe(5);

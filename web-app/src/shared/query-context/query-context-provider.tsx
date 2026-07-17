@@ -34,7 +34,7 @@ export function QueryContextProvider({ children }: PropsWithChildren) {
     context,
     scopeKey: queryContextScopeKey(context),
     update: patch => setParams(writeQueryContext(params, mergeQueryContext(context, patch))),
-    replace: next => setParams(writeQueryContext(params, next)),
+    replace: next => setParams(writeQueryContext(params, next), { replace: true }),
     clearFrom: field => setParams(writeQueryContext(params, clearQueryContext(context, field)))
   }), [context, params, setParams]);
 

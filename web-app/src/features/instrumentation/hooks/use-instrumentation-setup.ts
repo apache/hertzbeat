@@ -16,9 +16,13 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
-import { useQueryContextOptional, type QueryContext } from '@/shared/query-context';
+import {
+  mergeQueryContext,
+  useQueryContextOptional,
+  type QueryContext
+} from '@/shared/query-context';
 
 import {
   INSTRUMENTATION_SCHEMA_VERSION,
@@ -29,23 +33,45 @@ import { loadInstrumentationCollectors } from '../api/collector-api';
 import { useInstrumentationCatalogController } from '../controller/use-instrumentation-catalog-controller';
 import { useInstrumentationContractRefresh } from '../controller/use-instrumentation-contract-refresh';
 import { useInstrumentationGuideController } from '../controller/use-instrumentation-guide-controller';
+import { useInstrumentationProgressController } from '../controller/use-instrumentation-progress-controller';
 import type { FlowStage } from '../model/instrumentation-flow';
 
 export function useInstrumentationSetup() {
   const sharedContext = useQueryContextOptional();
-  const catalog = useInstrumentationCatalogController();
+  const progress = useInstrumentationProgressController(sharedContext?.context ?? {});
+  const catalog = useInstrumentationCatalogController(progress.restored.draft);
   const collectorsQuery = useQuery({
     queryKey: ['instrumentation', 'collectors'],
     queryFn: ({ signal }) => loadInstrumentationCollectors(signal)
   });
-  const [stage, setStage] = useState<FlowStage>(1);
   const guide = useInstrumentationGuideController(catalog.draft, collectorsQuery.data ?? []);
+  const setStage = useCallback((stage: FlowStage) => {
+    progress.setStage(stage, catalog.draft);
+  }, [catalog.draft, progress]);
   const handleContractError = useInstrumentationContractRefresh({
     clearSelection: catalog.clearSelection,
     clearGuide: guide.clearContractState,
-    resetFlow: () => setStage(1),
+    resetFlow: () => progress.clearMismatch(catalog.draft),
     refreshCatalog: async () => void await catalog.retry()
   });
+  const handledMismatch = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    catalog.restoreDraft(progress.restored.draft);
+  }, [catalog, progress.restored.draft]);
+  const persistedDraft = useRef<typeof catalog.draft | undefined>(undefined);
+  useEffect(() => {
+    if (persistedDraft.current === catalog.draft) return;
+    persistedDraft.current = catalog.draft;
+    progress.persistDraft(catalog.draft);
+  }, [catalog.draft, progress]);
+  useEffect(() => {
+    if (!progress.restored.mismatch || handledMismatch.current === progress.search) return;
+    handledMismatch.current = progress.search;
+    catalog.clearSelection();
+    guide.clearContractState();
+    progress.clearMismatch(catalog.draft);
+    void catalog.retry();
+  }, [catalog, guide, progress]);
   const renderGuide = async () => {
     try {
       const rendered = await guide.render();
@@ -63,12 +89,14 @@ export function useInstrumentationSetup() {
   const setContext = (field: Parameters<typeof catalog.setContext>[0], value: string) => {
     catalog.setContext(field, value);
     const sharedField = instrumentationContextField(field);
-    if (sharedField) sharedContext?.update({ [sharedField]: value });
+    if (sharedField && sharedContext) {
+      sharedContext.replace(mergeQueryContext(sharedContext.context, { [sharedField]: value }));
+    }
   };
 
   return {
     schemaVersion: INSTRUMENTATION_SCHEMA_VERSION,
-    stage, setStage, draft: catalog.draft,
+    stage: progress.stage, setStage, draft: catalog.draft,
     catalog: catalog.catalog, catalogPending: catalog.state.status === 'loading',
     catalogError: catalog.state.status === 'error', retryCatalog: catalog.retry,
     collectors: collectorsQuery.data ?? [], collectorsPending: collectorsQuery.isPending,

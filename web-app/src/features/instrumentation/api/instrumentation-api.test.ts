@@ -22,7 +22,7 @@ vi.mock('@/core/http/http-client', () => ({ apiFetch }));
 
 import {
   detectInstrumentationSignals,
-  InstrumentationApiError,
+  InstrumentationContractError,
   InstrumentationRequestError,
   loadInstrumentationCatalog,
   renderInstrumentationGuide
@@ -117,7 +117,7 @@ describe('instrumentation v1 API', () => {
       steps: []
     }));
 
-    await expect(renderInstrumentationGuide(renderRequest())).rejects.toBeInstanceOf(InstrumentationApiError);
+    await expect(renderInstrumentationGuide(renderRequest())).rejects.toBeInstanceOf(InstrumentationContractError);
   });
 
   it('rejects detection data scoped to another onboarding attempt', async () => {
@@ -125,7 +125,7 @@ describe('instrumentation v1 API', () => {
     fixture.context.collectorId = 'collector-west';
     apiFetch.mockResolvedValueOnce(messageResponse(fixture));
 
-    await expect(detectInstrumentationSignals(detectionRequest())).rejects.toBeInstanceOf(InstrumentationApiError);
+    await expect(detectInstrumentationSignals(detectionRequest())).rejects.toBeInstanceOf(InstrumentationContractError);
   });
 
   it('surfaces the three stable machine request errors', async () => {

@@ -46,12 +46,12 @@ export type InstrumentationCatalogState =
   | { status: 'error'; error: Error }
   | { status: 'ready'; catalog: CatalogResponse };
 
-export function useInstrumentationCatalogController() {
+export function useInstrumentationCatalogController(initialDraft: InstrumentationFlowDraft = createFlowDraft()) {
   const query = useQuery({
     queryKey: ['instrumentation', 'catalog', 1],
     queryFn: ({ signal }) => loadInstrumentationCatalog(signal)
   });
-  const [draft, setDraft] = useState(createFlowDraft);
+  const [draft, setDraft] = useState(initialDraft);
   const previousCatalog = useRef<CatalogResponse | undefined>(undefined);
   useEffect(() => {
     const refreshedCatalog = query.data;
@@ -83,6 +83,9 @@ export function useInstrumentationCatalogController() {
     setDraft(current => updateFlowContext(current, field, value));
   }, []);
   const clearSelection = useCallback(() => setDraft(clearFlowSelection), []);
+  const restoreDraft = useCallback((restored: InstrumentationFlowDraft) => {
+    setDraft(current => JSON.stringify(current) === JSON.stringify(restored) ? current : restored);
+  }, []);
 
   return {
     state: catalogState(query.data, query.error, query.isPending),
@@ -95,7 +98,8 @@ export function useInstrumentationCatalogController() {
     setFramework,
     setMethod,
     setContext,
-    clearSelection
+    clearSelection,
+    restoreDraft
   };
 }
 

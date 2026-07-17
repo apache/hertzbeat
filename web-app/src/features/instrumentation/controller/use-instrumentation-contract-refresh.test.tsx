@@ -18,7 +18,7 @@
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { InstrumentationRequestError } from '../api/instrumentation-api';
+import { InstrumentationContractError, InstrumentationRequestError } from '../api/instrumentation-api';
 import { useInstrumentationContractRefresh } from './use-instrumentation-contract-refresh';
 
 describe('instrumentation contract refresh controller', () => {
@@ -53,5 +53,19 @@ describe('instrumentation contract refresh controller', () => {
     expect(actions.clearSelection).not.toHaveBeenCalled();
     expect(actions.clearGuide).not.toHaveBeenCalled();
     expect(actions.resetFlow).not.toHaveBeenCalled();
+  });
+
+  it('clears stale state when a successful response violates the frozen contract', async () => {
+    const actions = {
+      clearSelection: vi.fn(), clearGuide: vi.fn(), resetFlow: vi.fn(), refreshCatalog: vi.fn()
+    };
+    const { result } = renderHook(() => useInstrumentationContractRefresh(actions));
+
+    await expect(result.current(new InstrumentationContractError('selection mismatch'))).resolves.toBe(true);
+
+    expect(actions.clearSelection).toHaveBeenCalledOnce();
+    expect(actions.clearGuide).toHaveBeenCalledOnce();
+    expect(actions.resetFlow).toHaveBeenCalledOnce();
+    expect(actions.refreshCatalog).toHaveBeenCalledOnce();
   });
 });

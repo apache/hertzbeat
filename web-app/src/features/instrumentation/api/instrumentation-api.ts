@@ -35,6 +35,8 @@ import {
 } from './instrumentation-wire';
 import { InstrumentationContractError } from './instrumentation-wire-values';
 
+export { InstrumentationContractError } from './instrumentation-wire-values';
+
 const INSTRUMENTATION_API_PATH = '/api/instrumentation/v1';
 
 type MessageEnvelope = {
@@ -112,9 +114,7 @@ async function requestInstrumentation<T>(
   try {
     return parse(envelope.data);
   } catch (error) {
-    if (error instanceof InstrumentationContractError) {
-      throw new InstrumentationApiError('Instrumentation response contract was invalid');
-    }
+    if (error instanceof InstrumentationContractError) throw error;
     throw error;
   }
 }
