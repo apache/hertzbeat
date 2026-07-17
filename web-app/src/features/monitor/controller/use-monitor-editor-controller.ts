@@ -27,8 +27,9 @@ import {
   type MonitorParamDefine
 } from '../api/monitor-api';
 import { monitorScrapeValues, type MonitorScrape } from '../api/monitor-contract';
+import { monitorWritableConverged } from '../model/monitor-editor-convergence';
 import {
-  buildMonitorPayload, createMonitorEditorDraft, MonitorParamDraftError, monitorWritableConverged,
+  buildMonitorPayload, createMonitorEditorDraft, MonitorParamDraftError,
   transitionMonitorEditorDraft, validateMonitorEditorDraft, type MonitorEditorDraft, type MonitorParamFormValue
 } from '../model/monitor-editor-model';
 import { parseMonitorRouteId } from '../model/monitor-detail-model';

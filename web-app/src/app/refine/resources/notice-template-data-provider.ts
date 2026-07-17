@@ -32,6 +32,8 @@ import {
   deleteNoticeTemplate,
   loadNoticeTemplate,
   loadNoticeTemplates,
+  noticeTemplateCreateActionUrl,
+  noticeTemplateResourceName,
   saveNoticeTemplate
 } from '@/features/alert/notice-template-api';
 import {
@@ -47,8 +49,7 @@ import {
 
 import { createRefineHttpError, toRefineHttpError } from '../refine-http-error';
 
-export const noticeTemplateResourceName = 'notice-templates';
-export const noticeTemplateCreateActionUrl = '/api/notice/template';
+export { noticeTemplateCreateActionUrl, noticeTemplateResourceName } from '@/features/alert/notice-template-api';
 
 type DeleteVariables = { record: NoticeTemplateResourceRecord; query: NoticeTemplateQuery };
 

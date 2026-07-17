@@ -356,8 +356,6 @@ function serializeParamDraft(param: MonitorParamDraft, define: MonitorParamDefin
 
 export type MonitorMutationPayload = ReturnType<typeof buildMonitorPayload>;
 
-export { monitorWritableConverged } from './monitor-editor-convergence';
-
 function isUnknownRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

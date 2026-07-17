@@ -19,8 +19,9 @@ import i18next from 'i18next';
 
 import { readRuntimeLocale } from '@/core/runtime-preferences';
 
-const supportedLocales = ['en-US', 'zh-CN', 'zh-TW', 'ja-JP', 'pt-BR'] as const;
-export type SupportedLocale = (typeof supportedLocales)[number];
+import { supportedLocales, type SupportedLocale } from './locale';
+
+export type { SupportedLocale } from './locale';
 
 const localeLoaders: Record<SupportedLocale, () => Promise<{ default: Record<string, unknown> }>> = {
   'en-US': () => import('@/assets/i18n/en-us.json'),

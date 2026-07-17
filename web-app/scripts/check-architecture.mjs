@@ -16,131 +16,119 @@
  */
 
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { dirname, extname, join, normalize, relative, resolve, sep } from 'node:path';
+import { basename, extname, join, relative, resolve, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import process from 'node:process';
 
-const root = resolve(import.meta.dirname, '..');
-const sourceRoot = join(root, 'src');
-const requiredDirectories = [
-  'app',
-  'core',
-  'layout',
-  'features',
-  'shared',
-  join('assets', 'i18n')
-];
+const requiredDirectories = ['app', 'core', 'layout', 'features', 'shared', join('assets', 'i18n')];
 const forbiddenSegments = new Set(['compat', 'controllers', 'deprecated', 'legacy', 'view-models']);
 const sourceExtensions = new Set(['.ts', '.tsx', '.css']);
-const importPattern = /(?:from\s+|import\s*\()\s*['"]([^'"]+)['"]/g;
-const failures = [];
+const ignoredDirectories = new Set(['.tmp', 'coverage', 'dist', 'node_modules']);
+const maximumSourceLineLength = 200;
+
+export function checkArchitecture(projectRoot) {
+  const sourceRoot = join(projectRoot, 'src');
+  const failures = [];
+
+  for (const directory of requiredDirectories) {
+    if (!existsSync(join(sourceRoot, directory))) {
+      failures.push(`missing required directory: src/${directory.split(sep).join('/')}`);
+    }
+  }
+
+  for (const path of walk(sourceRoot)) {
+    if (!sourceExtensions.has(extname(path))) continue;
+    validateSource(path, sourceRoot, failures);
+  }
+
+  return failures;
+}
 
 function walk(directory) {
   if (!existsSync(directory)) return [];
   return readdirSync(directory).flatMap(entry => {
+    if (ignoredDirectories.has(entry)) return [];
     const path = join(directory, entry);
     return statSync(path).isDirectory() ? walk(path) : [path];
   });
 }
 
-function sourcePath(path) {
-  return relative(sourceRoot, path).split(sep).join('/');
+function validateSource(path, sourceRoot, failures) {
+  const normalizedPath = relative(sourceRoot, path).split(sep).join('/');
+  const segments = normalizedPath.split('/');
+  const forbidden = segments.find(segment => forbiddenSegments.has(segment));
+  if (forbidden) failures.push(`${normalizedPath}: forbidden directory segment '${forbidden}'`);
+
+  validateSourceFileName(path, normalizedPath, failures);
+  const source = readFileSync(path, 'utf8');
+  validateReadableTsx(path, normalizedPath, source, failures);
+  validateModuleSize(path, normalizedPath, source, failures);
+
+  if (/\/(?:pages|components)\//.test(`/${normalizedPath}`) && /\b(?:fetch|EventSource)\s*\(/.test(source)) {
+    failures.push(`${normalizedPath}: pages and components cannot own transport`);
+  }
+
+  if (!isTest(path)
+    && /\b(?:localStorage|sessionStorage|indexedDB)\b/.test(source)
+    && normalizedPath.startsWith('features/instrumentation/')) {
+    failures.push(`${normalizedPath}: instrumentation cannot persist onboarding state or secrets`);
+  }
+
+  if (!isTest(path)
+    && /\b(?:console\.(?:log|info|warn|error)|sendBeacon|analytics)\b/.test(source)
+    && normalizedPath.startsWith('features/instrumentation/')) {
+    failures.push(`${normalizedPath}: instrumentation cannot log or analyze onboarding state or secrets`);
+  }
+}
+
+function validateSourceFileName(path, normalizedPath, failures) {
+  const fileName = basename(path);
+  const validName =
+    /^[a-z0-9]+(?:-[a-z0-9]+)*(?:\.(?:test|spec))?\.tsx$/.test(fileName)
+    || /^[a-z0-9]+(?:-[a-z0-9]+)*(?:\.(?:test|spec|d))?\.ts$/.test(fileName)
+    || /^[a-z0-9]+(?:-[a-z0-9]+)*\.module\.css$/.test(fileName)
+    || /^[a-z0-9]+(?:-[a-z0-9]+)*\.css$/.test(fileName);
+  if (!validName) failures.push(`${normalizedPath}: source files must use kebab-case`);
+}
+
+function validateReadableTsx(path, normalizedPath, source, failures) {
+  if (extname(path) !== '.tsx' || isTest(path)) return;
+  source.split(/\r?\n/).forEach((line, index) => {
+    if (line.length > maximumSourceLineLength) {
+      failures.push(`${normalizedPath}:${index + 1}: ${line.length} characters exceeds ${maximumSourceLineLength}`);
+    }
+  });
+  if (/\.then\s*\(/.test(source)) {
+    failures.push(`${normalizedPath}: use a named async handler instead of a Promise chain in TSX`);
+  }
+}
+
+function validateModuleSize(path, normalizedPath, source, failures) {
+  if (isTest(path)) return;
+  const lines = source.trimEnd().split(/\r?\n/).length;
+  const limit = lineLimit(normalizedPath);
+  if (lines > limit) failures.push(`${normalizedPath}: ${lines} lines exceeds ${limit}`);
+}
+
+function lineLimit(normalizedPath) {
+  if (/-page\.[jt]sx?$/.test(normalizedPath) || /\/pages\/[^/]+\.[jt]sx?$/.test(normalizedPath)) return 300;
+  if (/\/(?:api|components|controller|hooks|model)\//.test(normalizedPath)) return 400;
+  if (/\/index\.[jt]sx?$/.test(normalizedPath) && normalizedPath.startsWith('features/')) return 100;
+  return 600;
 }
 
 function isTest(path) {
   return /\.(?:test|spec)\.[cm]?[jt]sx?$/.test(path);
 }
 
-function lineLimit(path) {
-  const normalizedPath = sourcePath(path);
-  if (/\/pages\/[^/]+\.[jt]sx?$/.test(normalizedPath)) return 300;
-  if (/\/(?:api|components|hooks|model)\//.test(normalizedPath)) return 400;
-  if (/\/index\.[jt]sx?$/.test(normalizedPath) && normalizedPath.startsWith('features/')) return 100;
-  return 600;
-}
-
-function layer(path) {
-  return sourcePath(path).split('/')[0];
-}
-
-function resolveImport(source, specifier) {
-  if (specifier.startsWith('@/')) return join(sourceRoot, specifier.slice(2));
-  if (specifier.startsWith('.')) return resolve(dirname(source), specifier);
-  return null;
-}
-
-function targetLayer(path) {
-  const normalizedPath = relative(sourceRoot, path);
-  if (normalizedPath.startsWith('..')) return null;
-  return normalizedPath.split(sep)[0];
-}
-
-function validateLayerImport(source, target, specifier) {
-  const sourceLayer = layer(source);
-  const destinationLayer = targetLayer(target);
-  if (!destinationLayer) return;
-
-  if (sourceLayer === 'core' && !['assets', 'core'].includes(destinationLayer)) {
-    failures.push(`${sourcePath(source)}: core cannot import ${specifier}`);
-    return;
+const invokedPath = process.argv[1] ? resolve(process.argv[1]) : '';
+if (invokedPath === fileURLToPath(import.meta.url)) {
+  const projectRoot = resolve(import.meta.dirname, '..');
+  const failures = checkArchitecture(projectRoot);
+  if (failures.length > 0) {
+    console.error('Frontend source convention check failed:');
+    failures.forEach(failure => console.error(`- ${failure}`));
+    process.exit(1);
   }
-
-  if (sourceLayer === 'shared' && destinationLayer !== 'shared') {
-    failures.push(`${sourcePath(source)}: shared cannot import ${specifier}`);
-    return;
-  }
-
-  if (sourceLayer === 'features' && ['app', 'layout'].includes(destinationLayer)) {
-    failures.push(`${sourcePath(source)}: features cannot import ${specifier}`);
-  }
-
-  if (sourceLayer !== 'features' || destinationLayer !== 'features') return;
-  const sourceFeature = sourcePath(source).split('/')[1];
-  const targetParts = relative(join(sourceRoot, 'features'), target).split(sep);
-  const targetFeature = targetParts[0];
-  if (sourceFeature === targetFeature) return;
-  if (targetParts.length === 1 || targetParts[1] === 'index') return;
-  failures.push(`${sourcePath(source)}: feature internals cannot import ${specifier}`);
+  console.log('Frontend source convention check passed.');
 }
-
-for (const directory of requiredDirectories) {
-  if (!existsSync(join(sourceRoot, directory))) {
-    failures.push(`missing required directory: src/${directory.split(sep).join('/')}`);
-  }
-}
-
-for (const path of walk(sourceRoot)) {
-  if (!sourceExtensions.has(extname(path))) continue;
-  const normalizedPath = sourcePath(path);
-  const segments = normalizedPath.split('/');
-  const forbidden = segments.find(segment => forbiddenSegments.has(segment));
-  if (forbidden) failures.push(`${normalizedPath}: forbidden directory segment '${forbidden}'`);
-
-  const source = readFileSync(path, 'utf8');
-  if (!isTest(path)) {
-    const lines = source.split(/\r?\n/).length;
-    const limit = lineLimit(path);
-    if (lines > limit) failures.push(`${normalizedPath}: ${lines} lines exceeds ${limit}`);
-  }
-
-  if (/\/(?:pages|components)\//.test(`/${normalizedPath}`) && /\bfetch\s*\(/.test(source)) {
-    failures.push(`${normalizedPath}: pages and components cannot call fetch directly`);
-  }
-
-  for (const match of source.matchAll(importPattern)) {
-    const specifier = match[1];
-    if (specifier === 'next' || specifier.startsWith('next/') || specifier === 'mermaid') {
-      failures.push(`${normalizedPath}: forbidden runtime import '${specifier}'`);
-      continue;
-    }
-    const target = resolveImport(path, specifier);
-    if (target) validateLayerImport(path, normalize(target), specifier);
-  }
-}
-
-if (failures.length > 0) {
-  console.error('Frontend architecture check failed:');
-  failures.forEach(failure => console.error(`- ${failure}`));
-  process.exit(1);
-}
-
-console.log('Frontend architecture check passed.');

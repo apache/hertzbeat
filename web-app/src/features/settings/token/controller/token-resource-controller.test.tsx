@@ -18,8 +18,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { tokenGenerateActionUrl, tokenRevokeActionUrl } from '@/app/refine/resources/token-data-provider';
-
+import { tokenGenerateActionUrl, tokenRevokeActionUrl } from '../model/token-model';
 import { useTokenResourceController } from './token-resource-controller';
 
 const refine = vi.hoisted(() => ({

@@ -26,6 +26,9 @@ import {
   type NoticeTemplateQuery
 } from './notice-template-model';
 
+export const noticeTemplateResourceName = 'notice-templates';
+export const noticeTemplateCreateActionUrl = '/api/notice/template';
+
 export async function loadNoticeTemplates(query: NoticeTemplateQuery) {
   const response = await apiMessageGet<unknown>(buildNoticeTemplateListPath(query));
   return parseNoticeTemplatePage(response);
@@ -38,8 +41,8 @@ export async function loadNoticeTemplate(id: number) {
 
 export async function saveNoticeTemplate(draft: NoticeTemplateDraft) {
   const payload = buildNoticeTemplatePayload(draft);
-  if (draft.id) await apiMessagePut<unknown>('/api/notice/template', payload);
-  else await apiMessagePost<unknown>('/api/notice/template', payload);
+  if (draft.id) await apiMessagePut<unknown>(noticeTemplateCreateActionUrl, payload);
+  else await apiMessagePost<unknown>(noticeTemplateCreateActionUrl, payload);
 }
 
 export async function deleteNoticeTemplate(id: number) {

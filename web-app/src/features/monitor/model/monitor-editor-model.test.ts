@@ -18,10 +18,10 @@
 import { describe, expect, it } from 'vitest';
 
 import type { Monitor, MonitorDetail, MonitorParamDefine } from '../api/monitor-api';
+import { monitorWritableConverged } from './monitor-editor-convergence';
 import {
   buildMonitorParams, buildMonitorPayload, groupMonitorParamDefines, isValidCronExpression, monitorIntervalBounds,
-  numberDefineRange,
-  MonitorParamDraftError, monitorParamFormValue, monitorWritableConverged, serializeMonitorParamValue,
+  numberDefineRange, MonitorParamDraftError, monitorParamFormValue, serializeMonitorParamValue,
   createMonitorEditorDraft, transitionMonitorEditorDraft, validateMonitorDraft, validateMonitorEditorDraft
 } from './monitor-editor-model';
 

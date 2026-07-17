@@ -15,14 +15,13 @@
  * limitations under the License.
  */
 
-import type { SupportedLocale } from './i18n/i18n';
+import { supportedLocales, type SupportedLocale } from './i18n/locale';
 
 type PreferenceStorage = Pick<Storage, 'getItem' | 'setItem'>;
 export type RuntimeTheme = 'default' | 'dark' | 'compact';
 
 const localeKey = 'hertzbeat.locale';
 const themeKey = 'hertzbeat.theme';
-const locales = ['en-US', 'zh-CN', 'zh-TW', 'ja-JP', 'pt-BR'] as const;
 const themes = ['default', 'dark', 'compact'] as const;
 
 function browserStorage(): PreferenceStorage | undefined {
@@ -35,7 +34,7 @@ function browserStorage(): PreferenceStorage | undefined {
 
 export function readRuntimeLocale(storage: Pick<PreferenceStorage, 'getItem'> | undefined = browserStorage()): SupportedLocale | null {
   const locale = storage?.getItem(localeKey);
-  return locales.includes(locale as SupportedLocale) ? locale as SupportedLocale : null;
+  return supportedLocales.includes(locale as SupportedLocale) ? locale as SupportedLocale : null;
 }
 
 export function readRuntimeTheme(storage: Pick<PreferenceStorage, 'getItem'> | undefined = browserStorage()): RuntimeTheme {
@@ -46,6 +45,6 @@ export function readRuntimeTheme(storage: Pick<PreferenceStorage, 'getItem'> | u
 export function persistSystemPreferences(config: { locale: string; theme: string }, storage: PreferenceStorage | undefined = browserStorage()) {
   if (!storage) return;
   const locale = config.locale.replace('_', '-');
-  if (locales.includes(locale as SupportedLocale)) storage.setItem(localeKey, locale);
+  if (supportedLocales.includes(locale as SupportedLocale)) storage.setItem(localeKey, locale);
   if (themes.includes(config.theme as RuntimeTheme)) storage.setItem(themeKey, config.theme);
 }
