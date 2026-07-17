@@ -71,20 +71,20 @@ final class DingTalkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandl
             if (responseEntity.getStatusCode() == HttpStatus.OK) {
                 assert responseEntity.getBody() != null;
                 if (responseEntity.getBody().getErrCode() == 0) {
-                    log.debug("Send dingTalk webHook: {} Success", webHookUrl);
+                    log.debug("Send DingTalk webhook success");
                     DingTalkWebHookDto dingTalkWebHookTextDto = checkNeedAtNominator(receiver);
                     if (dingTalkWebHookTextDto != null) {
                         HttpEntity<DingTalkWebHookDto> httpEntityText = new HttpEntity<>(dingTalkWebHookTextDto, headers);
                         restTemplate.postForEntity(webHookUrl,
                                 httpEntityText, CommonRobotNotifyResp.class);
                     }
-                    log.debug("Send dingTalk @ message webHook: {} Success", webHookUrl);
+                    log.debug("Send DingTalk mention webhook success");
                 } else {
-                    log.warn("Send dingTalk webHook: {} Failed: {}", webHookUrl, responseEntity.getBody().getErrMsg());
+                    log.warn("Send DingTalk webhook failed with code {}", responseEntity.getBody().getErrCode());
                     throw new AlertNoticeException(responseEntity.getBody().getErrMsg());
                 }
             } else {
-                log.warn("Send dingTalk webHook: {} Failed: {}", webHookUrl, responseEntity.getBody());
+                log.warn("Send DingTalk webhook failed with status {}", responseEntity.getStatusCode());
                 throw new AlertNoticeException("Http StatusCode " + responseEntity.getStatusCode());
             }
         } catch (Exception e) {

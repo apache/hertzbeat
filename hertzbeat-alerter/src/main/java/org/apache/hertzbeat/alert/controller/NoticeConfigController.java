@@ -25,12 +25,18 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.alert.dto.NoticeReceiverMutationResponse;
+import org.apache.hertzbeat.alert.dto.NoticeReceiverOptionResponse;
+import org.apache.hertzbeat.alert.dto.NoticeReceiverRequest;
+import org.apache.hertzbeat.alert.dto.NoticeReceiverResponse;
+import org.apache.hertzbeat.alert.service.NoticeReceiverContractService;
 import org.apache.hertzbeat.common.entity.dto.Message;
-import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeRule;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
 import org.apache.hertzbeat.alert.service.NoticeConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -49,64 +55,99 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Notification Config API")
 @RestController()
 @RequestMapping(value = "/api/notice", produces = {APPLICATION_JSON_VALUE})
+@Slf4j
 public class NoticeConfigController {
 
     @Autowired
     private NoticeConfigService noticeConfigService;
 
+    @Autowired
+    private NoticeReceiverContractService noticeReceiverService;
+
     @PostMapping(path = "/receiver")
     @Operation(summary = "Add a recipient", description = "Add a recipient")
-    public ResponseEntity<Message<Void>> addNewNoticeReceiver(@Valid @RequestBody NoticeReceiver noticeReceiver) {
-        noticeConfigService.addReceiver(noticeReceiver);
-        return ResponseEntity.ok(Message.success("Add success"));
+    public ResponseEntity<Message<NoticeReceiverMutationResponse>> addNewNoticeReceiver(
+            @Valid @RequestBody NoticeReceiverRequest request) {
+        try {
+            return ResponseEntity.ok(Message.success(noticeReceiverService.create(request)));
+        } catch (DataAccessException e) {
+            return receiverStorageUnavailable("create", e);
+        } catch (Exception e) {
+            return receiverError("create", e);
+        }
     }
 
     @PutMapping(path = "/receiver")
     @Operation(summary = "Modify existing recipient information", description = "Modify existing recipient information")
-    public ResponseEntity<Message<Void>> editNoticeReceiver(@Valid @RequestBody NoticeReceiver noticeReceiver) {
-        noticeConfigService.editReceiver(noticeReceiver);
-        return ResponseEntity.ok(Message.success("Edit success"));
+    public ResponseEntity<Message<NoticeReceiverMutationResponse>> editNoticeReceiver(
+            @Valid @RequestBody NoticeReceiverRequest request) {
+        try {
+            return ResponseEntity.ok(Message.success(noticeReceiverService.update(request)));
+        } catch (DataAccessException e) {
+            return receiverStorageUnavailable("update", e);
+        } catch (Exception e) {
+            return receiverError("update", e);
+        }
     }
 
     @DeleteMapping(path = "/receiver/{id}")
     @Operation(summary = "Delete existing recipient information", description = "Delete existing recipient information")
-    public ResponseEntity<Message<Void>> deleteNoticeReceiver(
+    public ResponseEntity<Message<NoticeReceiverMutationResponse>> deleteNoticeReceiver(
             @Parameter(description = "en: Recipient ID", example = "6565463543") @PathVariable("id") final Long receiverId) {
-        NoticeReceiver noticeReceiver = noticeConfigService.getReceiverById(receiverId);
-        if (noticeReceiver == null) {
-            return ResponseEntity.ok(Message.success("The relevant information of the recipient could not be found, please check whether the parameters are correct"));
+        try {
+            return ResponseEntity.ok(Message.success(noticeReceiverService.delete(receiverId)));
+        } catch (DataAccessException e) {
+            return receiverStorageUnavailable("delete", e);
+        } catch (Exception e) {
+            return receiverError("delete", e);
         }
-        noticeConfigService.deleteReceiver(receiverId);
-        return ResponseEntity.ok(Message.success("Delete success"));
     }
 
     @GetMapping(path = "/receivers")
     @Operation(summary = "Get a list of message notification recipients based on query filter items",
             description = "Get a list of message notification recipients based on query filter items")
-    public ResponseEntity<Message<Page<NoticeReceiver>>> getReceivers(
+    public ResponseEntity<Message<Page<NoticeReceiverResponse>>> getReceivers(
             @Parameter(description = "en: Recipient name,support fuzzy query", example = "tom") @RequestParam(required = false) final String name,
             @Parameter(description = "en: List current page", example = "0") @RequestParam(defaultValue = "0") final int pageIndex,
             @Parameter(description = "en: Number of list pages", example = "8") @RequestParam(defaultValue = "8") final int pageSize) {
-        return ResponseEntity.ok(Message.success(noticeConfigService.getNoticeReceivers(name, pageIndex, pageSize)));
+        try {
+            return ResponseEntity.ok(Message.success(noticeReceiverService.page(name, pageIndex, pageSize)));
+        } catch (DataAccessException e) {
+            return receiverStorageUnavailable("list", e);
+        } catch (Exception e) {
+            return receiverError("list", e);
+        }
     }
 
     @GetMapping(path = "/receivers/all")
     @Operation(summary = "Get a list of all message notification recipients",
             description = "Get a list of all message notification recipients")
-    public ResponseEntity<Message<List<NoticeReceiver>>> getAllReceivers() {
-        return ResponseEntity.ok(Message.success(noticeConfigService.getAllNoticeReceivers()));
+    public ResponseEntity<Message<List<NoticeReceiverOptionResponse>>> getAllReceivers() {
+        try {
+            return ResponseEntity.ok(Message.success(noticeReceiverService.options()));
+        } catch (DataAccessException e) {
+            return receiverStorageUnavailable("options", e);
+        } catch (Exception e) {
+            return receiverError("options", e);
+        }
     }
 
     @GetMapping(path = "/receiver/{id}")
     @Operation(summary = "Get the recipient information based on the recipient ID",
             description = "Get the recipient information based on the recipient ID")
-    public ResponseEntity<Message<NoticeReceiver>> getReceiverById(
+    public ResponseEntity<Message<NoticeReceiverResponse>> getReceiverById(
             @Parameter(description = "en: Recipient ID", example = "6565463543") @PathVariable("id") final Long receiverId) {
-        NoticeReceiver noticeReceiver = noticeConfigService.getReceiverById(receiverId);
-        if (noticeReceiver == null) {
-            return ResponseEntity.ok(Message.fail(FAIL_CODE, "The relevant information of the recipient could not be found, please check whether the parameters are correct or refresh the page"));
+        try {
+            NoticeReceiverResponse receiver = noticeReceiverService.get(receiverId);
+            if (receiver == null) {
+                return ResponseEntity.ok(Message.fail(FAIL_CODE, "Receiver missing"));
+            }
+            return ResponseEntity.ok(Message.success(receiver));
+        } catch (DataAccessException e) {
+            return receiverStorageUnavailable("detail", e);
+        } catch (Exception e) {
+            return receiverError("detail", e);
         }
-        return ResponseEntity.ok(Message.success(noticeReceiver));
     }
 
     @PostMapping(path = "/rule")
@@ -218,11 +259,27 @@ public class NoticeConfigController {
 
     @PostMapping(path = "/receiver/send-test-msg")
     @Operation(summary = "Send test msg to receiver", description = "Send test msg to receiver")
-    public ResponseEntity<Message<Void>> sendTestMsg(@Valid @RequestBody NoticeReceiver noticeReceiver) {
-        boolean sendFlag = noticeConfigService.sendTestMsg(noticeReceiver);
-        if (sendFlag) {
-            return ResponseEntity.ok(Message.success());
+    public ResponseEntity<Message<Void>> sendTestMsg(@Valid @RequestBody NoticeReceiverRequest request) {
+        try {
+            boolean sendFlag = noticeReceiverService.sendTest(request);
+            if (sendFlag) {
+                return ResponseEntity.ok(Message.success());
+            }
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Notify service not available, please check config!"));
+        } catch (DataAccessException e) {
+            return receiverStorageUnavailable("test", e);
+        } catch (Exception e) {
+            return receiverError("test", e);
         }
-        return ResponseEntity.ok(Message.fail(FAIL_CODE, "Notify service not available, please check config!"));
+    }
+
+    private <T> ResponseEntity<Message<T>> receiverStorageUnavailable(String operation, Exception exception) {
+        log.error("receiver {} storage unavailable: {}", operation, exception.getClass().getSimpleName());
+        return ResponseEntity.ok(Message.fail(FAIL_CODE, "Receiver storage unavailable"));
+    }
+
+    private <T> ResponseEntity<Message<T>> receiverError(String operation, Exception exception) {
+        log.error("receiver {} error: {}", operation, exception.getClass().getSimpleName());
+        return ResponseEntity.ok(Message.fail(FAIL_CODE, "Receiver operation error"));
     }
 }

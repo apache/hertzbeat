@@ -72,7 +72,7 @@ public class AlertNoticeDispatch {
      */
     public boolean sendNoticeMsg(NoticeReceiver receiver, NoticeTemplate noticeTemplate, GroupAlert alert) {
         if (receiver == null || receiver.getType() == null) {
-            log.warn("DispatcherAlarm-sendNoticeMsg params is empty alert:[{}], receiver:[{}]", alert, receiver);
+            log.warn("Skip notice with missing alert or receiver type");
             return false;
         }
         byte type = receiver.getType();
@@ -135,7 +135,7 @@ public class AlertNoticeDispatch {
                         try {
                             sendNoticeMsg(receiver, noticeTemplate, alert);
                         } catch (AlertNoticeException e) {
-                            log.warn("DispatchTask sendNoticeMsg error, message: {}", e.getMessage());
+                            log.warn("DispatchTask sendNoticeMsg error: {}", e.getClass().getSimpleName());
                         }
                     });
                 } catch (RejectedExecutionException e) {
