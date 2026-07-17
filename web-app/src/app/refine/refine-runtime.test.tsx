@@ -84,7 +84,7 @@ describe('production Refine runtime', () => {
     expect(screen.getByTestId('token-resource')).toHaveTextContent('tokens|/settings/tokens|tokens');
     expect(screen.getByTestId('token-provider')).toHaveTextContent('shared');
     expect(screen.getByTestId('notice-template-resource'))
-      .toHaveTextContent('notice-templates|/settings/notice-templates|notice-templates');
+      .toHaveTextContent('notice-templates|/settings/notifications/templates|notice-templates');
     expect(screen.getByTestId('notice-template-provider')).toHaveTextContent('shared');
     expect(screen.getByTestId('alert-silence-resource'))
       .toHaveTextContent('alert-silences|/alerts/silences|alert-silences');

@@ -17,7 +17,7 @@
 
 import react from '@vitejs/plugin-react';
 import { fileURLToPath, URL } from 'node:url';
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 
 const backendOrigin = process.env.BACKEND_ORIGIN || 'http://127.0.0.1:1157';
 const backendProxy = {
@@ -55,6 +55,7 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    exclude: [...configDefaults.exclude, '.tmp/**'],
     setupFiles: ['./src/test/setup.ts'],
     css: true,
     restoreMocks: true,

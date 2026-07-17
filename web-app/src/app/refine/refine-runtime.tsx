@@ -31,6 +31,7 @@ import { noticeTemplateDataProvider } from './resources/notice-template-data-pro
 import { objectStoreDataProvider } from './resources/object-store-data-provider';
 import { systemConfigDataProvider } from './resources/system-config-data-provider';
 import { tokenDataProvider } from './resources/token-data-provider';
+import { refineResources, shellAccessControlProvider } from './refine-resource-registry';
 
 const appQueryClient = new QueryClient({
   defaultOptions: {
@@ -57,56 +58,14 @@ const dataProviders = {
   tokens: tokenDataProvider
 };
 
-const resources = [
-  {
-    name: 'alert-silences',
-    list: '/alerts/silences',
-    meta: { dataProviderName: 'alert-silences' }
-  },
-  {
-    name: 'labels',
-    list: '/settings/labels',
-    meta: { dataProviderName: 'labels' }
-  },
-  {
-    name: 'object-store',
-    list: '/settings/storage/object-store',
-    meta: { dataProviderName: 'object-store' }
-  },
-  {
-    name: 'notice-templates',
-    list: '/settings/notice-templates',
-    meta: { dataProviderName: 'notice-templates' }
-  },
-  {
-    name: 'notice-receivers',
-    list: '/settings/notifications/receivers',
-    meta: { dataProviderName: 'notice-receivers' }
-  },
-  {
-    name: 'notice-rules',
-    list: '/settings/notifications/rules',
-    meta: { dataProviderName: 'notice-rules' }
-  },
-  {
-    name: 'system-config',
-    list: '/settings/system',
-    meta: { dataProviderName: 'system-config' }
-  },
-  {
-    name: 'tokens',
-    list: '/settings/tokens',
-    meta: { dataProviderName: 'tokens' }
-  }
-];
-
 export function RefineRuntime() {
   const notificationProvider = useNotificationProvider();
   return (
     <Refine
       dataProvider={dataProviders}
+      accessControlProvider={shellAccessControlProvider}
       notificationProvider={notificationProvider}
-      resources={resources}
+      resources={refineResources}
       routerProvider={routerProvider}
       options={{
         disableRouteChangeHandler: true,

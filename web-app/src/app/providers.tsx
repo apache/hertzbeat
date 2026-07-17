@@ -15,37 +15,34 @@
  * limitations under the License.
  */
 
-import { App as AntApp, ConfigProvider, theme } from 'antd';
-import type { PropsWithChildren } from 'react';
+import { App as AntApp, ConfigProvider } from 'antd';
+import { useCallback, useState, type PropsWithChildren } from 'react';
 import { I18nextProvider, useTranslation } from 'react-i18next';
 
 import { i18n } from '@/core/i18n/i18n';
 import { resolveAntLocale } from '@/core/i18n/ant-locale';
-import { readRuntimeTheme } from '@/core/runtime-preferences';
+import { persistSystemPreferences, readRuntimeLocale, readRuntimeTheme, type RuntimeTheme } from '@/core/runtime-preferences';
+import { RuntimeThemeContext } from '@/core/runtime-theme-context';
+
+import { createHertzBeatTheme } from './theme/hertzbeat-theme';
 
 function RuntimeProviders({ children }: PropsWithChildren) {
   const { i18n: runtimeI18n } = useTranslation();
-  const runtimeTheme = readRuntimeTheme();
-  const algorithm = runtimeTheme === 'default'
-    ? theme.defaultAlgorithm
-    : runtimeTheme === 'compact'
-      ? [theme.darkAlgorithm, theme.compactAlgorithm]
-      : theme.darkAlgorithm;
+  const [runtimeTheme, setRuntimeTheme] = useState(readRuntimeTheme);
+  const updateTheme = useCallback((next: RuntimeTheme) => {
+    document.documentElement.dataset.theme = next;
+    persistSystemPreferences({ locale: readRuntimeLocale() ?? runtimeI18n.resolvedLanguage ?? 'en-US', theme: next });
+    setRuntimeTheme(next);
+  }, [runtimeI18n.resolvedLanguage]);
   return (
-    <ConfigProvider
+    <RuntimeThemeContext.Provider value={{ theme: runtimeTheme, setTheme: updateTheme }}>
+      <ConfigProvider
         locale={resolveAntLocale(runtimeI18n.resolvedLanguage)}
-        theme={{
-          algorithm,
-          token: {
-            colorPrimary: '#5b6fd8',
-            borderRadius: 4,
-            fontSize: 14,
-            ...(runtimeTheme === 'default' ? { colorBgBase: '#f6f7f9' } : { colorBgBase: '#101114' })
-          }
-        }}
-    >
+        theme={createHertzBeatTheme(runtimeTheme)}
+      >
         <AntApp>{children}</AntApp>
-    </ConfigProvider>
+      </ConfigProvider>
+    </RuntimeThemeContext.Provider>
   );
 }
 

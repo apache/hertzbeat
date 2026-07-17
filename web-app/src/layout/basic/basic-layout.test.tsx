@@ -15,17 +15,19 @@
  * limitations under the License.
  */
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { Refine } from '@refinedev/core';
+import routerProvider from '@refinedev/react-router';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 import { AppProviders } from '@/app/providers';
+import { refineResources, shellAccessControlProvider } from '@/app/refine/refine-resource-registry';
 import { SessionContext } from '@/core/auth/session-context';
 import { initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
 import { BasicLayout } from './basic-layout';
-import stylesheet from './basic-layout.module.css?raw';
+import stylesheet from '../shell/hertzbeat-shell.module.css?raw';
 
 
 describe('BasicLayout shell', () => {
@@ -34,39 +36,61 @@ describe('BasicLayout shell', () => {
     await loadLocale('en-US');
   });
 
+  afterEach(cleanup);
+
   it('renders the official logo as one constrained accessible brand identity', () => {
     renderLayout();
 
     const logo = screen.getByRole('img', { name: 'HertzBeat' });
     expect(logo).toHaveAttribute('src', '/assets/logo.svg');
-    expect(logo).toHaveAttribute('width', '28');
-    expect(logo).toHaveAttribute('height', '27');
+    expect(logo).toHaveAttribute('width', '24');
+    expect(logo).toHaveAttribute('height', '23');
     expect(screen.getByText('HertzBeat')).toHaveAttribute('aria-hidden', 'true');
   });
 
-  it('keeps selected, hover, and keyboard focus navigation states visually distinct', () => {
-    const selected = cssRule('.sider :global(.ant-menu-item-selected)');
-    const hover = cssRule('.sider :global(.ant-menu-item:not(.ant-menu-item-selected):hover)');
-    const menuFocus = cssRule('.sider :global(.ant-menu:focus-visible)');
-    const activeFocus = cssRuleContaining('.sider :global(.ant-menu:focus-visible .ant-menu-item-active)');
-    const selectedFocus = cssRuleContaining(
-      '.sider :global(.ant-menu:focus-visible:not(:has(.ant-menu-item-active)) .ant-menu-item-selected)'
-    );
-    const itemFocus = cssRule('.sider :global(.ant-menu-item:focus-visible)');
-    const antSelectedBorder = cssRule('.sider :global(.ant-menu-item::after)');
+  it('renders an honest status and time spine without fake health', () => {
+    renderLayout();
 
-    expect(selected).toContain('border-radius: 1px');
-    expect(selected).toContain('background: var(--hb-nav-selected)');
-    expect(selected).toContain('var(--hb-nav-indicator)');
-    expect(selected).not.toContain('#6f83f7');
+    expect(screen.getByTestId('shell-status-server')).toHaveTextContent('Unknown');
+    expect(screen.getByTestId('shell-status-greptime')).toHaveTextContent('Unknown');
+    expect(screen.getByTestId('shell-status-collector')).toHaveTextContent('Unknown');
+    expect(screen.getByTestId('shell-time-policy')).toHaveTextContent('Global time');
+  });
+
+  it('selects the longest Refine route and supports the 220 to 48 pixel rail', () => {
+    renderLayout('/settings/notifications/templates');
+
+    expect(screen.getByRole('link', { name: 'Templates' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByTestId('shell-navigation')).toHaveAttribute('data-collapsed', 'false');
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse navigation' }));
+    expect(screen.getByTestId('shell-navigation')).toHaveAttribute('data-collapsed', 'true');
+
+    const expanded = cssRule('.shell');
+    const collapsed = cssRule('.shellCollapsed');
+    expect(expanded).toContain('--hb-shell-sidebar-width: 220px');
+    expect(collapsed).toContain('--hb-shell-sidebar-width: 48px');
+  });
+
+  it('keeps active, hover, and keyboard navigation states visually distinct', () => {
+    const active = cssRule('.navigationLinkActive');
+    const hover = cssRule('.navigationLink:hover');
+    const focus = cssRule('.navigationLink:focus-visible');
+
+    expect(active).toContain('background: var(--hb-nav-selected)');
+    expect(active).toContain('inset 2px 0 var(--hb-brand-accent)');
+    expect(active).not.toContain('#6f83f7');
     expect(hover).toContain('background: var(--hb-nav-hover)');
-    expect(menuFocus).toContain('outline: none');
-    expect(activeFocus).toContain('outline: 2px solid var(--hb-focus-ring) !important');
-    expect(activeFocus).toContain('outline-offset: -2px !important');
-    expect(selectedFocus).toContain('outline: 2px solid var(--hb-focus-ring) !important');
-    expect(itemFocus).toContain('outline: 2px solid var(--hb-focus-ring) !important');
-    expect(itemFocus).toContain('outline-offset: -2px !important');
-    expect(antSelectedBorder).toContain('display: none');
+    expect(focus).toContain('outline: 2px solid var(--hb-focus-ring)');
+  });
+
+  it('contains wide route content inside the work surface without pushing global chrome', () => {
+    expect(cssRule('.shell')).toContain('max-width: 100vw');
+    expect(cssRule('.shell')).toContain('overflow-x: hidden');
+    expect(cssRule('.shellBody')).toContain('min-width: 0');
+    expect(cssRule('.shellBody')).toContain('overflow: hidden');
+    expect(cssRule('.content')).toContain('min-width: 0');
+    expect(cssRule('.content')).toContain('max-width: 100%');
+    expect(cssRule('.content')).toContain('overflow-x: auto');
   });
 });
 
@@ -77,21 +101,17 @@ function cssRule(selector: string) {
   return match[1];
 }
 
-function cssRuleContaining(selector: string) {
-  const selectorOffset = stylesheet.indexOf(selector);
-  if (selectorOffset < 0) throw new Error(`Missing CSS selector: ${selector}`);
-  const blockStart = stylesheet.indexOf('{', selectorOffset);
-  const blockEnd = stylesheet.indexOf('}', blockStart);
-  if (blockStart < 0 || blockEnd < 0) throw new Error(`Missing CSS block: ${selector}`);
-  return stylesheet.slice(blockStart + 1, blockEnd);
-}
-
-function renderLayout() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+function renderLayout(path = '/alerts') {
   return render(
-    <QueryClientProvider client={client}>
-      <AppProviders>
-        <SessionContext.Provider value={{
+    <AppProviders>
+      <MemoryRouter initialEntries={[path]}>
+        <Refine
+          accessControlProvider={shellAccessControlProvider}
+          resources={refineResources}
+          routerProvider={routerProvider}
+          options={{ disableTelemetry: true }}
+        >
+          <SessionContext.Provider value={{
           loading: false,
           retry: () => undefined,
           session: {
@@ -103,15 +123,15 @@ function renderLayout() {
           },
           unavailable: false
         }}>
-          <MemoryRouter initialEntries={['/alerts']}>
             <Routes>
               <Route element={<BasicLayout />}>
                 <Route path="/alerts" element={<div>Alerts route</div>} />
+                <Route path="/settings/notifications/templates" element={<div>Templates route</div>} />
               </Route>
             </Routes>
-          </MemoryRouter>
-        </SessionContext.Provider>
-      </AppProviders>
-    </QueryClientProvider>
+          </SessionContext.Provider>
+        </Refine>
+      </MemoryRouter>
+    </AppProviders>
   );
 }

@@ -1,0 +1,33 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0.
+ */
+
+import { describe, expect, it } from 'vitest';
+
+import { createHertzBeatTheme } from './hertzbeat-theme';
+
+describe('HertzBeat semantic theme', () => {
+  it('maps the dense purple operator tokens into Ant Design', () => {
+    const theme = createHertzBeatTheme('dark');
+
+    expect(theme.token).toMatchObject({
+      colorPrimary: '#9b5bb3',
+      borderRadius: 2,
+      controlHeight: 28,
+      fontSize: 13
+    });
+    expect(theme.components?.Menu).toMatchObject({
+      itemBorderRadius: 2,
+      itemHeight: 32,
+      itemSelectedBg: '#211a26'
+    });
+    expect(theme.components?.Layout).toMatchObject({
+      bodyBg: '#0d0f14',
+      headerBg: '#101218',
+      siderBg: '#101218'
+    });
+  });
+});

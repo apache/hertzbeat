@@ -1,0 +1,38 @@
+{
+  "shell": {
+    "navigation": {
+      "workspace": "Workspace",
+      "operations": "Operations",
+      "administration": "Administration",
+      "collapse": "Collapse navigation",
+      "expand": "Expand navigation",
+      "toggleGroup": "Toggle {{label}}"
+    },
+    "status": {
+      "summary": "Runtime status",
+      "server": "Server",
+      "greptime": "GreptimeDB",
+      "collector": "Collector",
+      "unknown": "Unknown",
+      "unavailable": "Unavailable"
+    },
+    "time": {
+      "global": "Global time",
+      "route_owned": "Page time",
+      "none": "No shared time",
+      "unknown": "Time policy unknown"
+    },
+    "actions": {
+      "refresh": "Refresh active data",
+      "alerts": "Open alerts",
+      "theme": "Switch theme",
+      "language": "Switch language",
+      "user": "User actions"
+    },
+    "capability": {
+      "supported": "Available",
+      "unknown": "Capability unknown",
+      "unsupported": "Unsupported"
+    }
+  }
+}

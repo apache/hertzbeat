@@ -1,0 +1,38 @@
+{
+  "shell": {
+    "navigation": {
+      "workspace": "Espaço de trabalho",
+      "operations": "Operações",
+      "administration": "Administração",
+      "collapse": "Recolher navegação",
+      "expand": "Expandir navegação",
+      "toggleGroup": "Alternar {{label}}"
+    },
+    "status": {
+      "summary": "Status de execução",
+      "server": "Servidor",
+      "greptime": "GreptimeDB",
+      "collector": "Coletor",
+      "unknown": "Desconhecido",
+      "unavailable": "Indisponível"
+    },
+    "time": {
+      "global": "Tempo global",
+      "route_owned": "Tempo da página",
+      "none": "Sem tempo compartilhado",
+      "unknown": "Política de tempo desconhecida"
+    },
+    "actions": {
+      "refresh": "Atualizar dados ativos",
+      "alerts": "Abrir alertas",
+      "theme": "Alternar tema",
+      "language": "Alternar idioma",
+      "user": "Ações do usuário"
+    },
+    "capability": {
+      "supported": "Disponível",
+      "unknown": "Capacidade desconhecida",
+      "unsupported": "Não suportado"
+    }
+  }
+}

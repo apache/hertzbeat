@@ -16,38 +16,54 @@
  */
 
 :root {
-  --hb-page-bg: #101114;
-  --hb-content-bg: #0e1117;
-  --hb-chrome-bg: #111318;
-  --hb-sider-bg: #12151b;
-  --hb-border: #262b35;
-  --hb-text: #e8e9ed;
-  --hb-muted: #949baa;
-  --hb-nav-text: #aeb4c0;
-  --hb-nav-selected: #1b1f27;
-  --hb-nav-hover: #171a20;
-  --hb-nav-indicator: #a45cb0;
-  --hb-focus-ring: #8090e6;
-  color: var(--hb-text);
-  background: var(--hb-page-bg);
+  --hb-brand-accent: #9b5bb3;
+  --hb-bg-canvas: #0d0f14;
+  --hb-bg-chrome: #101218;
+  --hb-bg-navigation: #101218;
+  --hb-bg-raised: #14171e;
+  --hb-bg-hover: #181b22;
+  --hb-border-subtle: #282d38;
+  --hb-text-primary: #eceef3;
+  --hb-text-secondary: #b8bec9;
+  --hb-text-muted: #929aaa;
+  --hb-text-disabled: #626a78;
+  --hb-nav-text: #adb4c0;
+  --hb-nav-selected: #211a26;
+  --hb-nav-hover: #181b22;
+  --hb-focus-ring: #bd7bd0;
+  --hb-status-unknown: #7d8593;
+  --hb-radius-control: 2px;
+  --hb-page-bg: var(--hb-bg-canvas);
+  --hb-content-bg: var(--hb-bg-canvas);
+  --hb-chrome-bg: var(--hb-bg-chrome);
+  --hb-sider-bg: var(--hb-bg-navigation);
+  --hb-border: var(--hb-border-subtle);
+  --hb-text: var(--hb-text-primary);
+  --hb-muted: var(--hb-text-muted);
+  --hb-nav-indicator: var(--hb-brand-accent);
+  color: var(--hb-text-primary);
+  background: var(--hb-bg-canvas);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
 
 :root[data-theme='default'] {
-  --hb-page-bg: #f6f7f9;
-  --hb-content-bg: #f6f7f9;
-  --hb-chrome-bg: #ffffff;
-  --hb-sider-bg: #ffffff;
-  --hb-border: #e3e6eb;
-  --hb-text: #20242c;
-  --hb-muted: #697180;
+  --hb-bg-canvas: #f5f6f8;
+  --hb-bg-chrome: #ffffff;
+  --hb-bg-navigation: #ffffff;
+  --hb-bg-raised: #ffffff;
+  --hb-bg-hover: #f1f2f5;
+  --hb-border-subtle: #dfe3e8;
+  --hb-text-primary: #20242c;
+  --hb-text-secondary: #4d5563;
+  --hb-text-muted: #697180;
+  --hb-text-disabled: #9ca3af;
   --hb-nav-text: #4d5563;
-  --hb-nav-selected: #eff1f4;
-  --hb-nav-hover: #f6f7f9;
-  --hb-nav-indicator: #8c3e9a;
-  --hb-focus-ring: #4d60c4;
+  --hb-nav-selected: #f7f0f8;
+  --hb-nav-hover: #f1f2f5;
+  --hb-focus-ring: #71357f;
+  --hb-status-unknown: #7a8290;
 }
 
 * {
@@ -63,4 +79,5 @@ body,
 
 body {
   min-width: 1024px;
+  font-size: 13px;
 }

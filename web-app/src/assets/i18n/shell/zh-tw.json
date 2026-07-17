@@ -1,0 +1,38 @@
+{
+  "shell": {
+    "navigation": {
+      "workspace": "工作區",
+      "operations": "維運",
+      "administration": "管理",
+      "collapse": "收合導覽",
+      "expand": "展開導覽",
+      "toggleGroup": "展開或收合{{label}}"
+    },
+    "status": {
+      "summary": "執行狀態",
+      "server": "伺服器",
+      "greptime": "GreptimeDB",
+      "collector": "採集器",
+      "unknown": "未知",
+      "unavailable": "無法使用"
+    },
+    "time": {
+      "global": "全域時間",
+      "route_owned": "頁面時間",
+      "none": "無共用時間",
+      "unknown": "時間策略未知"
+    },
+    "actions": {
+      "refresh": "重新整理目前資料",
+      "alerts": "開啟告警",
+      "theme": "切換主題",
+      "language": "切換語言",
+      "user": "使用者操作"
+    },
+    "capability": {
+      "supported": "可用",
+      "unknown": "能力未知",
+      "unsupported": "不支援"
+    }
+  }
+}

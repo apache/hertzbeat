@@ -1,0 +1,38 @@
+{
+  "shell": {
+    "navigation": {
+      "workspace": "ワークスペース",
+      "operations": "運用",
+      "administration": "管理",
+      "collapse": "ナビゲーションを折りたたむ",
+      "expand": "ナビゲーションを展開",
+      "toggleGroup": "{{label}}を展開または折りたたむ"
+    },
+    "status": {
+      "summary": "実行状態",
+      "server": "サーバー",
+      "greptime": "GreptimeDB",
+      "collector": "コレクター",
+      "unknown": "不明",
+      "unavailable": "利用不可"
+    },
+    "time": {
+      "global": "グローバル時間",
+      "route_owned": "ページ時間",
+      "none": "共有時間なし",
+      "unknown": "時間ポリシー不明"
+    },
+    "actions": {
+      "refresh": "現在のデータを更新",
+      "alerts": "アラートを開く",
+      "theme": "テーマを切り替える",
+      "language": "言語を切り替える",
+      "user": "ユーザー操作"
+    },
+    "capability": {
+      "supported": "利用可能",
+      "unknown": "機能不明",
+      "unsupported": "未対応"
+    }
+  }
+}

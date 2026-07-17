@@ -1,0 +1,38 @@
+{
+  "shell": {
+    "navigation": {
+      "workspace": "工作区",
+      "operations": "运维",
+      "administration": "管理",
+      "collapse": "收起导航",
+      "expand": "展开导航",
+      "toggleGroup": "展开或收起{{label}}"
+    },
+    "status": {
+      "summary": "运行状态",
+      "server": "服务端",
+      "greptime": "GreptimeDB",
+      "collector": "采集器",
+      "unknown": "未知",
+      "unavailable": "不可用"
+    },
+    "time": {
+      "global": "全局时间",
+      "route_owned": "页面时间",
+      "none": "无共享时间",
+      "unknown": "时间策略未知"
+    },
+    "actions": {
+      "refresh": "刷新当前数据",
+      "alerts": "打开告警",
+      "theme": "切换主题",
+      "language": "切换语言",
+      "user": "用户操作"
+    },
+    "capability": {
+      "supported": "可用",
+      "unknown": "能力未知",
+      "unsupported": "不支持"
+    }
+  }
+}
