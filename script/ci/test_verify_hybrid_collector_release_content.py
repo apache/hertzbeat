@@ -174,6 +174,17 @@ class ReleaseContentPolicyTest(unittest.TestCase):
 
         release_content.verify_collector_sbom(sbom)
 
+    def test_jvm_release_allows_internal_java_telemetry_library(self) -> None:
+        java_sdk = zip_bytes({
+            "META-INF/MANIFEST.MF": "Manifest-Version: 1.0\n",
+            "io/opentelemetry/sdk/OpenTelemetrySdk.class": b"class",
+        })
+        startup = self.write("startup.jar", zip_bytes({
+            "BOOT-INF/lib/opentelemetry-sdk.jar": java_sdk,
+        }))
+
+        release_content.inspect_release_archive(startup)
+
     def test_collector_sbom_rejects_ecosystem_specific_sdk_purls(self) -> None:
         purls = [
             "pkg:npm/%40opentelemetry/sdk-node@0.204.0",
@@ -207,6 +218,14 @@ class ReleaseContentPolicyTest(unittest.TestCase):
         with self.assertRaises(release_content.ReleasePolicyError):
             release_content.inspect_release_archive(release)
 
+    def test_python_sdk_is_rejected_from_virtual_environment(self) -> None:
+        release = self.write("python-venv.zip", zip_bytes({
+            "app/.venv/lib/python3.13/site-packages/opentelemetry/sdk/__init__.py": "",
+        }))
+
+        with self.assertRaises(release_content.ReleasePolicyError):
+            release_content.inspect_release_archive(release)
+
     def test_php_sdk_is_rejected_by_composer_vendor_path(self) -> None:
         release = self.write("php-release.tar.gz", tar_bytes({
             "app/vendor/open-telemetry/sdk/src/Sdk.php": b"<?php",
@@ -214,6 +233,25 @@ class ReleaseContentPolicyTest(unittest.TestCase):
 
         with self.assertRaises(release_content.ReleasePolicyError):
             release_content.inspect_release_archive(release)
+
+    def test_php_instrumentation_extension_is_rejected(self) -> None:
+        release = self.write("php-extension.tar.gz", tar_bytes({
+            "app/extensions/opentelemetry.so": b"binary",
+        }))
+
+        with self.assertRaises(release_content.ReleasePolicyError):
+            release_content.inspect_release_archive(release)
+
+    def test_go_sdk_and_ebpf_packages_are_rejected_from_vendor_trees(self) -> None:
+        package_paths = [
+            "app/vendor/go.opentelemetry.io/otel/sdk/trace/provider.go",
+            "app/vendor/go.opentelemetry.io/auto/sdk/autoinstrumentation.go",
+        ]
+        for index, package_path in enumerate(package_paths):
+            with self.subTest(package_path=package_path):
+                release = self.write(f"go-release-{index}.zip", zip_bytes({package_path: "package sdk"}))
+                with self.assertRaises(release_content.ReleasePolicyError):
+                    release_content.inspect_release_archive(release)
 
     def test_dotnet_sdk_is_rejected_by_real_nuget_package(self) -> None:
         package = zip_bytes({

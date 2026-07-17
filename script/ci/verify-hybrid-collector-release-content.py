@@ -57,9 +57,12 @@ FORBIDDEN_LANGUAGE_SDK_COMPONENT = re.compile(
 FORBIDDEN_ECOSYSTEM_PACKAGE_PATH = re.compile(
     r"(?:^|/)(?:"
     r"node_modules/@opentelemetry/(?:sdk-node|sdk-trace-node|sdk-metrics|sdk-logs)(?:/|$)|"
-    r"(?:site-packages/)?opentelemetry/sdk(?:/|$)|"
+    r"(?:site-packages|dist-packages)/opentelemetry/sdk(?:/|$)|"
     r"opentelemetry_sdk(?:[-_.]|$)|"
     r"vendor/open-telemetry/sdk(?:/|$)|"
+    r"vendor/go\.opentelemetry\.io/(?:otel/sdk|auto)(?:/|$)|"
+    r"pkg/mod/go\.opentelemetry\.io/(?:otel/sdk|auto)(?:@[^/]+)?(?:/|$)|"
+    r"(?:extensions?|lib)/opentelemetry\.(?:so|dll|dylib)$|"
     r"opentelemetry\.[0-9][^/]*\.nupkg$"
     r")",
     re.IGNORECASE,
