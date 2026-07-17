@@ -75,6 +75,22 @@ test('rejects instrumentation persistence and logging sinks', () => {
   assert.match(failures, /cannot log or analyze onboarding state or secrets/);
 });
 
+test('rejects instrumentation primitive wire parsers and inline Query Keys', () => {
+  const project = createProject({
+    'src/app/main.ts': 'export {};',
+    'src/core/http/client.ts': 'export {};',
+    'src/layout/shell/shell.tsx': 'export const Shell = () => null;',
+    'src/features/instrumentation/api/unsafe-parser.ts': 'function text(value) { return String(value); }',
+    'src/features/instrumentation/controller/unsafe-query.ts': "export const query = { queryKey: ['instrumentation'] };",
+    'src/shared/time/time.ts': 'export {};',
+    'src/assets/i18n/en-us.json': '{}'
+  });
+
+  const failures = checkArchitecture(project).join('\n');
+  assert.match(failures, /use runtime schemas instead of local primitive wire parsers/);
+  assert.match(failures, /use the instrumentation Query Key factory/);
+});
+
 function createProject(files) {
   const directory = mkdtempSync(join(tmpdir(), 'hertzbeat-source-rules-'));
   temporaryProjects.push(directory);

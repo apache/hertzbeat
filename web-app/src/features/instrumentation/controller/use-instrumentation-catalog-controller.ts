@@ -27,6 +27,7 @@ import type {
   InstrumentationPlatform
 } from '../api/instrumentation-contract';
 import { loadInstrumentationCatalog } from '../api/instrumentation-api';
+import { instrumentationQueryKeys } from '../api/instrumentation-query-keys';
 import {
   createFlowDraft,
   clearFlowSelection,
@@ -48,7 +49,7 @@ export type InstrumentationCatalogState =
 
 export function useInstrumentationCatalogController(initialDraft: InstrumentationFlowDraft = createFlowDraft()) {
   const query = useQuery({
-    queryKey: ['instrumentation', 'catalog', 1],
+    queryKey: instrumentationQueryKeys.catalog(),
     queryFn: ({ signal }) => loadInstrumentationCatalog(signal)
   });
   const [draft, setDraft] = useState(initialDraft);

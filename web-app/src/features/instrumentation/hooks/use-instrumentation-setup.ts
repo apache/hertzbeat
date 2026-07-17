@@ -30,6 +30,7 @@ import {
   type GuideSnippet,
 } from '../api/instrumentation-contract';
 import { loadInstrumentationCollectors } from '../api/collector-api';
+import { instrumentationQueryKeys } from '../api/instrumentation-query-keys';
 import { useInstrumentationCatalogController } from '../controller/use-instrumentation-catalog-controller';
 import { useInstrumentationContractRefresh } from '../controller/use-instrumentation-contract-refresh';
 import { useInstrumentationGuideController } from '../controller/use-instrumentation-guide-controller';
@@ -41,7 +42,7 @@ export function useInstrumentationSetup() {
   const progress = useInstrumentationProgressController(sharedContext?.context ?? {});
   const catalog = useInstrumentationCatalogController(progress.restored.draft);
   const collectorsQuery = useQuery({
-    queryKey: ['instrumentation', 'collectors'],
+    queryKey: instrumentationQueryKeys.collectors(),
     queryFn: ({ signal }) => loadInstrumentationCollectors(signal)
   });
   const guide = useInstrumentationGuideController(catalog.draft, collectorsQuery.data ?? []);

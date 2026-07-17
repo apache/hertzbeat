@@ -79,6 +79,18 @@ function validateSource(path, sourceRoot, failures) {
     && normalizedPath.startsWith('features/instrumentation/')) {
     failures.push(`${normalizedPath}: instrumentation cannot log or analyze onboarding state or secrets`);
   }
+
+  if (!isTest(path)
+    && normalizedPath.startsWith('features/instrumentation/api/')
+    && /\bfunction\s+(?:array|boolean|enumValue|integer|number|object|record|string|stringArray|text)\s*\(/.test(source)) {
+    failures.push(`${normalizedPath}: use runtime schemas instead of local primitive wire parsers`);
+  }
+
+  if (!isTest(path)
+    && normalizedPath.startsWith('features/instrumentation/')
+    && /\bqueryKey\s*:\s*\[/.test(source)) {
+    failures.push(`${normalizedPath}: use the instrumentation Query Key factory`);
+  }
 }
 
 function validateSourceFileName(path, normalizedPath, failures) {

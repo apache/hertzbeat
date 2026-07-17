@@ -33,9 +33,9 @@ import {
   parseDetectionResponse,
   parseGuideRenderResponse
 } from './instrumentation-wire';
-import { InstrumentationContractError } from './instrumentation-wire-values';
+import { InstrumentationContractError } from './instrumentation-schema';
 
-export { InstrumentationContractError } from './instrumentation-wire-values';
+export { InstrumentationContractError } from './instrumentation-schema';
 
 const INSTRUMENTATION_API_PATH = '/api/instrumentation/v1';
 
