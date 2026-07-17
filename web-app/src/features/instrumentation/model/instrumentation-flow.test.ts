@@ -19,18 +19,20 @@ import { describe, expect, it } from 'vitest';
 
 import type { CatalogResponse, GuideRenderResponse, OfficialComponent, QueryJumpContext } from '../api/instrumentation-contract';
 import {
-  buildDetectionRequest,
-  buildExploreHandoff,
-  buildGuideRequest,
-  createTransientCollectorTarget,
   createFlowDraft,
-  materializeGuideSnippet,
   reconcileFlowCatalog,
   selectCatalogLanguage,
   updateFlowContext,
   validateFlowContext,
   type InstrumentationFlowDraft
 } from './instrumentation-flow';
+import {
+  buildDetectionRequest,
+  buildExploreHandoff,
+  buildGuideRequest,
+  createTransientCollectorTarget,
+  materializeGuideSnippet
+} from './instrumentation-requests';
 
 describe('instrumentation onboarding flow model', () => {
   it('chooses the stable catalog method and never invents a language-specific method', () => {

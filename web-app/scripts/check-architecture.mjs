@@ -91,6 +91,13 @@ function validateSource(path, sourceRoot, failures) {
     && /\bqueryKey\s*:\s*\[/.test(source)) {
     failures.push(`${normalizedPath}: use the instrumentation Query Key factory`);
   }
+
+  if (!isTest(path)
+    && normalizedPath.startsWith('features/instrumentation/')
+    && extname(path) === '.css'
+    && /#[0-9a-f]{3,8}\b|rgba?\s*\(/i.test(source)) {
+    failures.push(`${normalizedPath}: use shared semantic color tokens`);
+  }
 }
 
 function validateSourceFileName(path, normalizedPath, failures) {
@@ -123,6 +130,11 @@ function validateModuleSize(path, normalizedPath, source, failures) {
 }
 
 function lineLimit(normalizedPath) {
+  if (normalizedPath.startsWith('features/instrumentation/')) {
+    if (/-page\.[jt]sx?$/.test(normalizedPath) || /\/pages\/[^/]+\.[jt]sx?$/.test(normalizedPath)) return 150;
+    if (/\/(?:components|controller)\//.test(normalizedPath)) return 200;
+    if (/\/(?:api|model)\//.test(normalizedPath)) return 250;
+  }
   if (/-page\.[jt]sx?$/.test(normalizedPath) || /\/pages\/[^/]+\.[jt]sx?$/.test(normalizedPath)) return 300;
   if (/\/(?:api|components|controller|hooks|model)\//.test(normalizedPath)) return 400;
   if (/\/index\.[jt]sx?$/.test(normalizedPath) && normalizedPath.startsWith('features/')) return 100;

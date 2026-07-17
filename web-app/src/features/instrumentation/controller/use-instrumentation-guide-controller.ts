@@ -29,9 +29,9 @@ import { renderInstrumentationGuide } from '../api/instrumentation-api';
 import {
   buildGuideRequest,
   createTransientCollectorTarget,
-  materializeGuideSnippet,
-  type InstrumentationFlowDraft
-} from '../model/instrumentation-flow';
+  materializeGuideSnippet
+} from '../model/instrumentation-requests';
+import type { InstrumentationFlowDraft } from '../model/instrumentation-flow';
 
 export type InstrumentationGuideState =
   | { status: 'unavailable'; reason: 'collector_unavailable' | 'collector_intake_unavailable' }

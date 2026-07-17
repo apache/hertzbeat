@@ -23,11 +23,10 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
-const { useInstrumentationSetup, useInstrumentationDetection } = vi.hoisted(() => ({
-  useInstrumentationSetup: vi.fn(), useInstrumentationDetection: vi.fn()
+const { useInstrumentationPageController, useInstrumentationSetup, useInstrumentationDetection } = vi.hoisted(() => ({
+  useInstrumentationPageController: vi.fn(), useInstrumentationSetup: vi.fn(), useInstrumentationDetection: vi.fn()
 }));
-vi.mock('../hooks/use-instrumentation-setup', () => ({ useInstrumentationSetup }));
-vi.mock('../hooks/use-instrumentation-detection', () => ({ useInstrumentationDetection }));
+vi.mock('../controller/use-instrumentation-page-controller', () => ({ useInstrumentationPageController }));
 
 import { InstrumentationPage } from './instrumentation-page';
 
@@ -40,6 +39,13 @@ describe('InstrumentationPage', () => {
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
+  });
+
+  beforeAll(() => {
+    useInstrumentationPageController.mockImplementation(() => ({
+      setup: useInstrumentationSetup(),
+      detection: useInstrumentationDetection()
+    }));
   });
 
   it('renders the continuous runbook and does not turn unavailable data into a zero or success state', () => {
@@ -171,15 +177,13 @@ describe('InstrumentationPage', () => {
     expect(screen.queryByText(/^0$/)).not.toBeInTheDocument();
   });
 
-  it('wires detection contract failures to the shared catalog refresh boundary', () => {
-    const handleContractError = vi.fn();
-    useInstrumentationSetup.mockReturnValue({ ...setupFixture(), handleContractError });
+  it('renders only the state exposed by the page controller boundary', () => {
+    useInstrumentationSetup.mockReturnValue(setupFixture());
     useInstrumentationDetection.mockReturnValue(detectionFixture());
 
     renderPage();
 
-    expect(useInstrumentationDetection.mock.calls[0]?.[1]).toBe(handleContractError);
-    expect(useInstrumentationDetection.mock.calls[0]?.[2]).toEqual(expect.any(Function));
+    expect(useInstrumentationPageController).toHaveBeenCalledOnce();
   });
 });
 
@@ -204,6 +208,12 @@ function setupFixture() {
       }, collectorId: 'collector-east', serviceName: 'checkout-api', serviceNamespace: 'commerce',
       serviceEnvironment: 'prod'
     },
+    selectionOptions: {
+      environments: ['docker'], platforms: ['linux_amd64'], languages: catalog.languages,
+      frameworks: catalog.languages[0]!.frameworks, methods: catalog.languages[0]!.frameworks[0]!.methods,
+      frameworkSelected: true
+    },
+    contextMissing: [],
     catalog: undefined, catalogPending: false, catalogError: false, retryCatalog: vi.fn(),
     collectors: [], collectorsPending: false, collectorsError: false, retryCollectors: vi.fn(),
     token: '', setToken: vi.fn(), guide: undefined, guidePending: false, guideError: false,

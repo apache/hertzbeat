@@ -24,7 +24,7 @@ import {
   type DetectionResponse,
   type InstrumentationSignal
 } from '../api/instrumentation-contract';
-import { buildExploreHandoff } from '../model/instrumentation-flow';
+import { buildExploreHandoff } from '../model/instrumentation-requests';
 
 type RequestFactory = (startedAt: number) => DetectionRequest;
 type ContractErrorHandler = (error: unknown) => Promise<boolean>;
@@ -164,3 +164,5 @@ function detectionState(
     ? { status: 'complete', response }
     : { status: 'manual_retry', response };
 }
+
+export type InstrumentationDetectionController = ReturnType<typeof useInstrumentationDetectionController>;

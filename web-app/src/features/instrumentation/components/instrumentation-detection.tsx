@@ -19,13 +19,12 @@ import { ExportOutlined } from '@ant-design/icons';
 import { Alert, Button, Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { useInstrumentationDetection } from '../hooks/use-instrumentation-detection';
-import { StageBody } from './instrumentation-stage-content';
-import styles from './instrumentation.module.css';
+import type { InstrumentationDetectionController } from '../controller/use-instrumentation-detection-controller';
+import { StageBody } from './instrumentation-stage';
+import styles from './instrumentation-guide.module.css';
+import stageStyles from './instrumentation-stage.module.css';
 
-type DetectionController = ReturnType<typeof useInstrumentationDetection>;
-
-export function InstrumentationDetection({ detection }: { detection: DetectionController }) {
+export function InstrumentationDetection({ detection }: { detection: InstrumentationDetectionController }) {
   const { t } = useTranslation();
   const response = detection.response;
   return (
@@ -68,7 +67,9 @@ export function InstrumentationDetection({ detection }: { detection: DetectionCo
       )}
       {response?.polling.decision === 'continue_polling' && <Alert type="info" showIcon message={t('instrumentation.detection.waiting')} />}
       {response?.polling.decision === 'manual_retry' && (
-        <div className={styles.stageActions}><Button onClick={detection.retry}>{t('instrumentation.action.retryDetection')}</Button></div>
+        <div className={stageStyles.stageActions}>
+          <Button onClick={detection.retry}>{t('instrumentation.action.retryDetection')}</Button>
+        </div>
       )}
     </StageBody>
   );

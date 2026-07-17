@@ -91,6 +91,25 @@ test('rejects instrumentation primitive wire parsers and inline Query Keys', () 
   assert.match(failures, /use the instrumentation Query Key factory/);
 });
 
+test('rejects oversized instrumentation modules and route-local color literals', () => {
+  const project = createProject({
+    'src/app/main.ts': 'export {};',
+    'src/core/http/client.ts': 'export {};',
+    'src/layout/shell/shell.tsx': 'export const Shell = () => null;',
+    'src/features/instrumentation/pages/oversized-page.tsx': Array.from(
+      { length: 151 },
+      (_, index) => `export const line${index} = ${index};`
+    ).join('\n'),
+    'src/features/instrumentation/components/local-palette.module.css': '.panel { color: #ffffff; }',
+    'src/shared/time/time.ts': 'export {};',
+    'src/assets/i18n/en-us.json': '{}'
+  });
+
+  const failures = checkArchitecture(project).join('\n');
+  assert.match(failures, /151 lines exceeds 150/);
+  assert.match(failures, /use shared semantic color tokens/);
+});
+
 function createProject(files) {
   const directory = mkdtempSync(join(tmpdir(), 'hertzbeat-source-rules-'));
   temporaryProjects.push(directory);

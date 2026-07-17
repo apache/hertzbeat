@@ -15,28 +15,16 @@
  * limitations under the License.
  */
 
-import type { InstrumentationCollector } from '../api/collector-api';
-import { buildSignalHandoffPath } from '@/shared/query-context';
 import {
-  INSTRUMENTATION_SCHEMA_VERSION,
   type CatalogResponse,
-  type CollectorTarget,
-  type DetectionRequest,
-  type GuideRenderRequest,
-  type GuideRenderResponse,
-  type GuideSnippet,
   type InstrumentationEnvironment,
   type InstrumentationFramework,
   type InstrumentationLanguage,
   type InstrumentationMethod,
   type InstrumentationPlatform,
-  type InstrumentationSignal,
   type InstrumentationSelection,
-  type MethodOption,
-  type QueryJumpContext,
-  type ServiceIdentity
+  type MethodOption
 } from '../api/instrumentation-contract';
-import { materializeSnippetForCopy } from '../api/instrumentation-wire';
 
 export type FlowStage = 1 | 2 | 3 | 4 | 5;
 export type FlowContextField = 'collectorId' | 'serviceName' | 'serviceNamespace' | 'serviceEnvironment';
@@ -138,64 +126,6 @@ export function validateFlowContext(draft: InstrumentationFlowDraft) {
   return fields.filter(field => !draft[field].trim());
 }
 
-export function buildGuideRequest(
-  draft: InstrumentationFlowDraft,
-  collector: InstrumentationCollector,
-  transientTarget?: CollectorTarget
-): GuideRenderRequest {
-  const selection = requireSelection(draft);
-  requireContext(draft);
-  if (collector.collectorId !== draft.collectorId || !collector.online) throw new Error('Selected Collector is unavailable');
-  if (!transientTarget) throw new Error('Collector intake endpoint is unavailable');
-  const target = createTransientCollectorTarget(transientTarget);
-  if (target.collectorId !== collector.collectorId) throw new Error('Collector intake endpoint does not match');
-  return {
-    schemaVersion: INSTRUMENTATION_SCHEMA_VERSION,
-    ...selection,
-    collector: target,
-    service: serviceIdentity(draft)
-  };
-}
-
-export function createTransientCollectorTarget(target: CollectorTarget): CollectorTarget {
-  if (!target.collectorId.trim() || target.authorizationHeader !== 'Authorization') {
-    throw new Error('Collector intake endpoint context is invalid');
-  }
-  requireSafeEndpoint(target.otlpHttpEndpoint);
-  requireSafeEndpoint(target.otlpGrpcEndpoint);
-  return {
-    collectorId: target.collectorId.trim(),
-    otlpHttpEndpoint: target.otlpHttpEndpoint,
-    otlpGrpcEndpoint: target.otlpGrpcEndpoint,
-    authorizationHeader: target.authorizationHeader
-  };
-}
-
-export function buildDetectionRequest(draft: InstrumentationFlowDraft, startedAt: number): DetectionRequest {
-  const selection = requireSelection(draft);
-  requireContext(draft);
-  return {
-    schemaVersion: INSTRUMENTATION_SCHEMA_VERSION,
-    ...selection,
-    service: serviceIdentity(draft),
-    collectorId: draft.collectorId,
-    startedAt
-  };
-}
-
-export function materializeGuideSnippet(snippet: GuideSnippet, guide: GuideRenderResponse, token: string) {
-  return materializeSnippetForCopy(snippet, guide.secretPlaceholders, { authorizationToken: token });
-}
-
-export function buildExploreHandoff(signal: InstrumentationSignal, context: QueryJumpContext) {
-  return buildSignalHandoffPath(signal, {
-    collectorId: context.collectorId,
-    serviceName: context.serviceName,
-    serviceNamespace: context.serviceNamespace,
-    environment: context.environment
-  }, { from: context.startedAt, to: context.detectedAt });
-}
-
 export function compatibleMethods(
   catalog: CatalogResponse,
   draft: Pick<InstrumentationFlowDraft, 'environment' | 'platform'>,
@@ -251,40 +181,6 @@ function reconcileOrClear(
   }
 }
 
-function requireSelection(draft: InstrumentationFlowDraft) {
-  if (!draft.selection) throw new Error('Instrumentation selection is incomplete');
-  return { ...draft.selection, environment: draft.environment, platform: draft.platform };
-}
-
-function requireContext(draft: InstrumentationFlowDraft) {
-  if (validateFlowContext(draft).length > 0) throw new Error('Instrumentation context is incomplete');
-}
-
-function serviceIdentity(draft: InstrumentationFlowDraft): ServiceIdentity {
-  return {
-    name: draft.serviceName.trim(),
-    namespace: draft.serviceNamespace.trim(),
-    environment: draft.serviceEnvironment.trim()
-  };
-}
-
 function unique<T>(values: T[]) {
   return [...new Set(values)];
-}
-
-function requireSafeEndpoint(value: string) {
-  let endpoint: URL;
-  try {
-    endpoint = new URL(value);
-  } catch {
-    throw new Error('Collector intake endpoint is invalid');
-  }
-  if (!['http:', 'https:'].includes(endpoint.protocol)
-    || !endpoint.hostname
-    || endpoint.username
-    || endpoint.password
-    || endpoint.search
-    || endpoint.hash) {
-    throw new Error('Collector intake endpoint is invalid');
-  }
 }

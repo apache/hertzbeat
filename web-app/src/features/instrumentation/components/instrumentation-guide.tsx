@@ -19,10 +19,12 @@ import { CopyOutlined } from '@ant-design/icons';
 import { Alert, App, Button, Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { GuideSnippet } from '../api/instrumentation-contract';
-import type { InstrumentationSetupController } from '../hooks/use-instrumentation-setup';
-import { StageBody } from './instrumentation-stage-content';
-import styles from './instrumentation.module.css';
+import type { InstrumentationSetupController } from '../controller/use-instrumentation-page-controller';
+import { StageBody } from './instrumentation-stage';
+import styles from './instrumentation-guide.module.css';
+import stageStyles from './instrumentation-stage.module.css';
+
+type GuideSnippet = NonNullable<InstrumentationSetupController['guide']>['steps'][number]['snippets'][number];
 
 export function InstrumentationGuide({
   setup,
@@ -85,7 +87,7 @@ export function InstrumentationGuide({
         ))}
       </div>
       {!setup.token && <Alert type="warning" showIcon message={t('instrumentation.tokenCopyNotice')} />}
-      <div className={styles.stageActions}>
+      <div className={stageStyles.stageActions}>
         <Button onClick={() => setup.setStage(3)}>{t('instrumentation.action.reviewContext')}</Button>
         <Button type="primary" onClick={onStartDetection}>{t('instrumentation.action.startDetection')}</Button>
       </div>

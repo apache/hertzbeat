@@ -1,0 +1,112 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0.
+ */
+
+.componentLine {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-left: 2px solid var(--hb-brand-accent);
+  background: var(--hb-bg-hover);
+}
+
+.componentLine > div {
+  display: grid;
+  gap: 3px;
+}
+
+.guideSteps {
+  display: grid;
+}
+
+.guideStep {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 14px;
+  padding: 12px 0;
+  border-top: 1px solid var(--hb-border-subtle);
+}
+
+.guideStep > header {
+  display: flex;
+  gap: 9px;
+}
+
+.guideStep > header > span {
+  color: var(--hb-brand-accent);
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+}
+
+.guideStep > header div {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+}
+
+.guideStep > header small {
+  color: var(--hb-text-muted);
+}
+
+.snippet {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-control);
+  background: var(--hb-bg-canvas);
+}
+
+.snippet > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 30px;
+  padding-left: 10px;
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+
+.snippet > div > span {
+  color: var(--hb-text-muted);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.snippet pre {
+  max-height: 240px;
+  margin: 0;
+  padding: 11px;
+  overflow: auto;
+  color: var(--hb-text-primary);
+  font: 11px/1.55 ui-monospace, monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.signalTable {
+  overflow: hidden;
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-control);
+}
+
+.signalRow {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr) 150px;
+  gap: 12px;
+  align-items: center;
+  min-height: 64px;
+  padding: 10px 12px;
+}
+
+.signalRow + .signalRow {
+  border-top: 1px solid var(--hb-border-subtle);
+}
+
+.signalRow > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

@@ -17,20 +17,15 @@
 
 import { describe, expect, it } from 'vitest';
 
-const sourceDirectories = ['api', 'model', 'controller', 'hooks', 'components', 'pages'] as const;
+const sourceDirectories = ['api', 'model', 'controller', 'components', 'pages'] as const;
 const allowedDependencies: Record<(typeof sourceDirectories)[number], readonly string[]> = {
   api: ['api'],
   model: ['api', 'model'],
   controller: ['api', 'model', 'controller'],
-  hooks: ['api', 'model', 'controller', 'hooks'],
-  components: ['hooks', 'components'],
-  pages: ['hooks', 'components', 'pages']
+  components: ['model', 'controller', 'components'],
+  pages: ['controller', 'components', 'pages']
 };
-const presentationImportExceptions = new Set([
-  './components/instrumentation-guide.tsx|../api/instrumentation-contract',
-  './components/instrumentation-stage-content.tsx|../model/instrumentation-flow',
-  './pages/instrumentation-page.tsx|../model/instrumentation-flow'
-]);
+const presentationImportExceptions = new Set<string>();
 const importPattern = /(?:from\s+|import\s*\()\s*['"]([^'"]+)['"]/g;
 const productionSources = import.meta.glob('./**/*.{ts,tsx}', {
   eager: true,
@@ -39,6 +34,14 @@ const productionSources = import.meta.glob('./**/*.{ts,tsx}', {
 });
 
 describe('instrumentation feature boundaries', () => {
+  it('uses one controller-owned page boundary and has no generic hooks layer', () => {
+    const paths = Object.keys(productionSources).filter(path => !path.includes('.test.'));
+    expect(paths.filter(path => path.startsWith('./hooks/'))).toEqual([]);
+    expect(productionSources['./pages/instrumentation-page.tsx'])
+      .toContain("from '../controller/use-instrumentation-page-controller'");
+    expect(productionSources['./pages/instrumentation-page.tsx']).not.toMatch(/useNavigate|\.\.\/model\//);
+  });
+
   it('keeps production source in explicit feature-local layers', () => {
     const paths = Object.keys(productionSources).filter(path => !path.includes('.test.'));
     expect(sourceDirectories.filter(directory => !paths.some(path => path.startsWith(`./${directory}/`)))).toEqual([]);
@@ -52,7 +55,7 @@ describe('instrumentation feature boundaries', () => {
     expect(violations).toEqual([]);
   });
 
-  it('keeps detection presentation controller-owned and records the remaining narrow exceptions', () => {
+  it('keeps presentation controller-owned without API or model imports', () => {
     const directPresentationImports = Object.entries(productionSources)
       .filter(([path]) => path.startsWith('./components/') || path.startsWith('./pages/'))
       .flatMap(([path, source]) => [...source.matchAll(importPattern)]
@@ -60,8 +63,6 @@ describe('instrumentation feature boundaries', () => {
         .filter(specifier => specifier?.startsWith('../api/') || specifier?.startsWith('../model/'))
         .map(specifier => `${path}|${specifier}`));
     expect(directPresentationImports.sort()).toEqual([...presentationImportExceptions].sort());
-    expect(productionSources['./components/instrumentation-guide.tsx'])
-      .toContain("import type { GuideSnippet } from '../api/instrumentation-contract'");
   });
 
   it('keeps secret-bearing contract layers out of persistence, logging, and analytics', () => {

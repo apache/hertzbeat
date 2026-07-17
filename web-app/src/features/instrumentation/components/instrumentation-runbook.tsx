@@ -19,12 +19,12 @@ import { CheckOutlined, LockOutlined } from '@ant-design/icons';
 import { Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { useInstrumentationDetection } from '../hooks/use-instrumentation-detection';
-import type { InstrumentationSetupController } from '../hooks/use-instrumentation-setup';
+import type { InstrumentationDetectionController } from '../controller/use-instrumentation-detection-controller';
+import type { InstrumentationSetupController } from '../controller/use-instrumentation-page-controller';
 import { InstrumentationDetection } from './instrumentation-detection';
 import { InstrumentationGuide } from './instrumentation-guide';
-import { SelectionStage } from './instrumentation-stage-content';
-import styles from './instrumentation.module.css';
+import { InstrumentationStageContent } from './instrumentation-stage-content';
+import styles from './instrumentation-shell.module.css';
 
 const stages = [
   { id: 1, key: 'environment' },
@@ -39,7 +39,7 @@ export function InstrumentationRunbook({
   detection
 }: {
   setup: InstrumentationSetupController;
-  detection: ReturnType<typeof useInstrumentationDetection>;
+  detection: InstrumentationDetectionController;
 }) {
   const { t } = useTranslation();
   const startDetection = () => {
@@ -68,7 +68,7 @@ export function InstrumentationRunbook({
       </ol>
       <div className={styles.workspaceGrid}>
         <div>
-          {setup.stage <= 3 && <SelectionStage setup={setup} />}
+          {setup.stage <= 3 && <InstrumentationStageContent setup={setup} />}
           {setup.stage === 4 && <InstrumentationGuide setup={setup} onStartDetection={startDetection} />}
           {setup.stage === 5 && <InstrumentationDetection detection={detection} />}
         </div>

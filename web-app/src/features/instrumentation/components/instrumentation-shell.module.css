@@ -1,0 +1,175 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0.
+ */
+
+.page {
+  max-width: 1320px;
+  margin: 0 auto;
+}
+
+.heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.heading h2 {
+  margin: 0 0 4px;
+}
+
+.stageRail {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-control);
+  background: var(--hb-bg-raised);
+}
+
+.stageRail li + li {
+  border-left: 1px solid var(--hb-border-subtle);
+}
+
+.stageRail button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 54px;
+  padding: 0 12px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+
+.stageRail button > span {
+  display: grid;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: 50%;
+  color: var(--hb-text-secondary);
+}
+
+.stageRail strong {
+  overflow: hidden;
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stageActive {
+  box-shadow: inset 0 -2px var(--hb-brand-accent);
+}
+
+.stageActive button > span {
+  border-color: var(--hb-brand-accent);
+  background: var(--hb-brand-accent);
+  color: var(--hb-text-on-accent);
+}
+
+.stageActive strong,
+.stageComplete strong {
+  color: var(--hb-text-primary);
+}
+
+.stageComplete button > span {
+  border-color: var(--hb-brand-accent);
+  color: var(--hb-brand-accent);
+}
+
+.stageLocked {
+  opacity: 0.58;
+}
+
+.workspaceGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 16px;
+  align-items: start;
+}
+
+.scopePanel {
+  position: sticky;
+  top: 74px;
+  overflow: hidden;
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-control);
+  background: var(--hb-bg-raised);
+}
+
+.scopeTitle {
+  display: block;
+  padding: 13px;
+  border-bottom: 1px solid var(--hb-border-subtle);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.scopePanel dl {
+  margin: 0;
+  padding: 4px 13px;
+}
+
+.scopePanel dl > div {
+  display: grid;
+  gap: 3px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+
+.scopePanel dt {
+  color: var(--hb-text-muted);
+  font-size: 10px;
+}
+
+.scopePanel dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 11px;
+}
+
+.scopeSignals {
+  display: grid;
+  gap: 7px;
+  padding: 12px 13px;
+}
+
+.scopeSignals span {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+}
+
+.scopeSignals em {
+  color: var(--hb-text-secondary);
+  font-style: normal;
+}
+
+.scopeNote {
+  display: block;
+  padding: 12px 13px;
+  border-top: 1px solid var(--hb-border-subtle);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+@media (max-width: 1100px) {
+  .workspaceGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .scopePanel {
+    position: static;
+  }
+}
