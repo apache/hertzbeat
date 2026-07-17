@@ -20,7 +20,13 @@
       "global": "全域時間",
       "route_owned": "頁面時間",
       "none": "無共用時間",
-      "unknown": "時間策略未知"
+      "unknown": "時間策略未知",
+      "globalLabel": "{{range}} · {{refresh}}",
+      "off": "關閉",
+      "remaining": "{{seconds}} 秒",
+      "rangeOption": "範圍 {{range}}",
+      "autoRefreshOff": "關閉自動重新整理",
+      "autoRefreshSeconds": "每 {{seconds}} 秒自動重新整理"
     },
     "actions": {
       "refresh": "重新整理目前資料",

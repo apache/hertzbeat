@@ -66,8 +66,8 @@ describe('explore query state', () => {
     expect(exploreHandoffState(query)).toBe('scoped');
     expect(exploreUsesExactWindow(query)).toBe(true);
     expect(buildExplorePath(query)).toBe(
-      '/explore?signal=metrics&timeRange=last-30m&serviceName=checkout-api&serviceNamespace=commerce'
-      + '&environment=prod&collectorId=collector-east&start=1710000000000&end=1710000005000'
+      '/explore?signal=metrics&timeRange=last-30m&collectorId=collector-east&serviceName=checkout-api'
+      + '&serviceNamespace=commerce&environment=prod&start=1710000000000&end=1710000005000'
     );
     expect(buildExplorePath(query)).not.toContain('token');
   });
@@ -82,8 +82,8 @@ describe('explore query state', () => {
     expect(exploreHandoffState(preset)).toBe('scoped');
     expect(exploreUsesExactWindow(preset)).toBe(false);
     expect(buildExplorePath(preset)).toBe(
-      '/explore?signal=metrics&timeRange=last-1h&serviceName=checkout-api&serviceNamespace=commerce'
-      + '&environment=prod&collectorId=collector-east&windowMode=preset'
+      '/explore?signal=metrics&timeRange=last-1h&collectorId=collector-east&serviceName=checkout-api'
+      + '&serviceNamespace=commerce&environment=prod&windowMode=preset'
     );
     expect(exploreHandoffState(parseExploreQuery(new URLSearchParams(buildExplorePath(preset).split('?')[1])))).toBe('scoped');
     expect(querySubmissionTimePatch(exact)).toEqual({});
@@ -107,8 +107,8 @@ describe('explore query state', () => {
       + '&start=1710000000000&end=1710000005000'
     ));
     expect(buildCrossSignalPath(scoped, 'traces', {})).toBe(
-      '/explore?signal=traces&timeRange=last-30m&serviceName=checkout-api&serviceNamespace=commerce'
-      + '&environment=prod&collectorId=collector-east&start=1710000000000&end=1710000005000'
+      '/explore?signal=traces&timeRange=last-30m&collectorId=collector-east&serviceName=checkout-api'
+      + '&serviceNamespace=commerce&environment=prod&start=1710000000000&end=1710000005000'
     );
 
     expect(exploreHandoffState(parseExploreQuery(new URLSearchParams(

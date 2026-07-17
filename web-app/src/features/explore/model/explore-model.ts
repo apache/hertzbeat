@@ -23,6 +23,8 @@ import {
   type ExploreTimeRange
 } from './explore-query';
 
+import { parseQueryContext, writeQueryContext, type ExactTimeWindow } from '@/shared/query-context';
+
 export {
   exploreHandoffState,
   exploreUsesExactWindow,
@@ -42,6 +44,8 @@ export type ExploreQueryPatch = {
   serviceNamespace?: string | undefined;
   environment?: string | undefined;
   collectorId?: string | undefined;
+  instance?: string | undefined;
+  endpoint?: string | undefined;
   query?: string | undefined;
   windowMode?: 'preset' | undefined;
   start?: number | undefined;
@@ -72,13 +76,11 @@ export const EXPLORE_TIME_RANGES: ExploreTimeRange[] = ['last-15m', 'last-30m', 
 export function parseExploreQuery(params: URLSearchParams): ExploreQuery {
   const signal = readSignal(params.get('signal'));
   const timeRange = readTimeRange(params.get('timeRange'));
+  const context = parseQueryContext(params);
   return normalizeExploreQuery({
     signal,
     timeRange,
-    serviceName: readValue(params.get('serviceName')),
-    serviceNamespace: readValue(params.get('serviceNamespace')),
-    environment: readValue(params.get('environment')),
-    collectorId: readValue(params.get('collectorId')),
+    ...context,
     query: readValue(params.get('query')),
     windowMode: params.get('windowMode') === 'preset' ? 'preset' : undefined,
     traceId: readValue(params.get('traceId')),
@@ -101,11 +103,7 @@ export function parseExploreQuery(params: URLSearchParams): ExploreQuery {
 }
 
 export function buildExplorePath(query: ExploreQuery) {
-  const params = new URLSearchParams({ signal: query.signal, timeRange: query.timeRange });
-  setValue(params, 'serviceName', query.serviceName);
-  setValue(params, 'serviceNamespace', query.serviceNamespace);
-  setValue(params, 'environment', query.environment);
-  setValue(params, 'collectorId', query.collectorId);
+  const params = writeQueryContext(new URLSearchParams({ signal: query.signal, timeRange: query.timeRange }), query);
   setValue(params, 'query', query.query);
   appendSignalParams(params, query);
   if (query.windowMode === 'preset') params.set('windowMode', 'preset');
@@ -131,8 +129,14 @@ export function buildCrossSignalPath(query: ExploreQuery, signal: ExploreSignal,
   }));
 }
 
-export function querySubmissionTimePatch(query: ExploreQuery): ExploreQueryPatch {
-  return exploreUsesExactWindow(query) ? {} : { start: undefined, end: undefined };
+export function querySubmissionTimePatch(
+  query: ExploreQuery,
+  routeWindow?: ExactTimeWindow
+): ExploreQueryPatch {
+  if (exploreUsesExactWindow(query)) return {};
+  return routeWindow
+    ? { start: routeWindow.from, end: routeWindow.to, windowMode: undefined }
+    : { start: undefined, end: undefined };
 }
 
 export function presetTimeRangePatch(
@@ -212,6 +216,8 @@ function normalizeExploreQuery(query: ExploreQueryPatch & { signal: ExploreSigna
     serviceNamespace: query.serviceNamespace,
     environment: query.environment,
     collectorId: query.collectorId,
+    instance: query.instance,
+    endpoint: query.endpoint,
     query: query.query,
     windowMode: query.windowMode,
     start: query.start,

@@ -26,6 +26,8 @@ type SharedExploreQuery = {
   serviceNamespace?: string | undefined;
   environment?: string | undefined;
   collectorId?: string | undefined;
+  instance?: string | undefined;
+  endpoint?: string | undefined;
   query?: string | undefined;
   windowMode?: 'preset' | undefined;
   start?: number | undefined;
@@ -75,7 +77,9 @@ export function timeRangeMilliseconds(timeRange: ExploreTimeRange) {
 }
 
 export function exploreHandoffState(query: ExploreQuery): 'none' | 'scoped' | 'invalid' {
-  if (![query.serviceNamespace, query.collectorId, query.start, query.windowMode].some(isPresent)) return 'none';
+  if (![query.serviceNamespace, query.collectorId, query.windowMode].some(isPresent)) {
+    return 'none';
+  }
   if (![query.serviceName, query.serviceNamespace, query.environment, query.collectorId].every(isPresent)) return 'invalid';
   if (query.windowMode === 'preset') {
     return !isPresent(query.start) ? 'scoped' : 'invalid';
@@ -84,7 +88,9 @@ export function exploreHandoffState(query: ExploreQuery): 'none' | 'scoped' | 'i
 }
 
 export function exploreUsesExactWindow(query: ExploreQuery) {
-  return exploreHandoffState(query) === 'scoped' && query.windowMode !== 'preset';
+  return exploreHandoffState(query) !== 'invalid'
+    && query.windowMode !== 'preset'
+    && validExactWindow(query.start, query.end);
 }
 
 function isPresent(value: unknown) {

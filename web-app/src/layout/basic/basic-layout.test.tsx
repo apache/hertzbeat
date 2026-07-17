@@ -54,7 +54,15 @@ describe('BasicLayout shell', () => {
     expect(screen.getByTestId('shell-status-server')).toHaveTextContent('Unknown');
     expect(screen.getByTestId('shell-status-greptime')).toHaveTextContent('Unknown');
     expect(screen.getByTestId('shell-status-collector')).toHaveTextContent('Unknown');
-    expect(screen.getByTestId('shell-time-policy')).toHaveTextContent('Global time');
+    expect(screen.getByTestId('shell-time-policy')).toHaveTextContent('30m');
+    expect(screen.getByRole('button', { name: 'Refresh active data' })).toBeEnabled();
+  });
+
+  it('does not render fake shared time or refresh ownership for settings routes', () => {
+    renderLayout('/settings/notifications/templates');
+
+    expect(screen.queryByTestId('shell-time-policy')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Refresh active data' })).not.toBeInTheDocument();
   });
 
   it('selects the longest Refine route and supports the 220 to 48 pixel rail', () => {

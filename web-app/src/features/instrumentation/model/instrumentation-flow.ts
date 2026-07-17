@@ -16,6 +16,7 @@
  */
 
 import type { InstrumentationCollector } from '../api/collector-api';
+import { buildSignalHandoffPath } from '@/shared/query-context';
 import {
   INSTRUMENTATION_SCHEMA_VERSION,
   type CatalogResponse,
@@ -187,16 +188,12 @@ export function materializeGuideSnippet(snippet: GuideSnippet, guide: GuideRende
 }
 
 export function buildExploreHandoff(signal: InstrumentationSignal, context: QueryJumpContext) {
-  const params = new URLSearchParams({
-    signal,
+  return buildSignalHandoffPath(signal, {
+    collectorId: context.collectorId,
     serviceName: context.serviceName,
     serviceNamespace: context.serviceNamespace,
-    environment: context.environment,
-    collectorId: context.collectorId,
-    start: String(context.startedAt),
-    end: String(context.detectedAt)
-  });
-  return `/explore?${params.toString()}`;
+    environment: context.environment
+  }, { from: context.startedAt, to: context.detectedAt });
 }
 
 export function compatibleMethods(

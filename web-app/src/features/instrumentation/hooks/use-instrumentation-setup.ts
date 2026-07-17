@@ -18,6 +18,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { useQueryContextOptional, type QueryContext } from '@/shared/query-context';
+
 import {
   INSTRUMENTATION_SCHEMA_VERSION,
   type CollectorTarget,
@@ -30,6 +32,7 @@ import { useInstrumentationGuideController } from '../controller/use-instrumenta
 import type { FlowStage } from '../model/instrumentation-flow';
 
 export function useInstrumentationSetup() {
+  const sharedContext = useQueryContextOptional();
   const catalog = useInstrumentationCatalogController();
   const collectorsQuery = useQuery({
     queryKey: ['instrumentation', 'collectors'],
@@ -57,6 +60,11 @@ export function useInstrumentationSetup() {
     await navigator.clipboard.writeText(guide.materializeSnippet(snippet));
   };
   const setTransientTarget = (target: CollectorTarget | undefined) => guide.setTransientTarget(target);
+  const setContext = (field: Parameters<typeof catalog.setContext>[0], value: string) => {
+    catalog.setContext(field, value);
+    const sharedField = instrumentationContextField(field);
+    if (sharedField) sharedContext?.update({ [sharedField]: value });
+  };
 
   return {
     schemaVersion: INSTRUMENTATION_SCHEMA_VERSION,
@@ -71,9 +79,14 @@ export function useInstrumentationSetup() {
     guidePending: guide.state.status === 'rendering', guideError: guide.state.status === 'error',
     setEnvironment: catalog.setEnvironment, setPlatform: catalog.setPlatform,
     setLanguage: catalog.setLanguage, setFramework: catalog.setFramework,
-    setMethod: catalog.setMethod, setContext: catalog.setContext,
+    setMethod: catalog.setMethod, setContext,
     renderGuide, copySnippet, clearGuide: guide.clearContractState, handleContractError
   };
+}
+
+function instrumentationContextField(field: string): keyof QueryContext | undefined {
+  if (field === 'collectorId' || field === 'serviceName' || field === 'serviceNamespace') return field;
+  return field === 'serviceEnvironment' ? 'environment' : undefined;
 }
 
 export type InstrumentationSetupController = ReturnType<typeof useInstrumentationSetup>;

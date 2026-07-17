@@ -112,6 +112,16 @@
   white-space: nowrap;
 }
 
+button.timePolicy {
+  color: var(--hb-text-secondary);
+  background: transparent;
+}
+
+button.timePolicy:hover {
+  color: var(--hb-text-primary) !important;
+  background: var(--hb-bg-hover) !important;
+}
+
 .headerActions {
   display: flex;
   align-items: center;

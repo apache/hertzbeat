@@ -1,0 +1,149 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0.
+ */
+
+export type QueryContext = {
+  collectorId?: string | undefined;
+  serviceName?: string | undefined;
+  serviceNamespace?: string | undefined;
+  environment?: string | undefined;
+  instance?: string | undefined;
+  endpoint?: string | undefined;
+};
+
+export type QueryContextField = keyof QueryContext;
+export type SignalKind = 'metrics' | 'logs' | 'traces';
+export type ExactTimeWindow = { from: number; to: number };
+
+const contextFields: QueryContextField[] = [
+  'collectorId', 'serviceName', 'serviceNamespace', 'environment', 'instance', 'endpoint'
+];
+const sensitiveFragments = [
+  'token', 'secret', 'password', 'authorization', 'credential', 'installlog', 'telemetrybody'
+];
+
+export function parseQueryContext(params: URLSearchParams): QueryContext {
+  return Object.fromEntries(contextFields.flatMap(field => {
+    const value = normalizeValue(params.get(field));
+    return value ? [[field, value]] : [];
+  }));
+}
+
+export function writeQueryContext(source: URLSearchParams, context: QueryContext): URLSearchParams {
+  rejectSensitiveRecord(context);
+  const params = new URLSearchParams(source);
+  for (const key of [...params.keys()]) {
+    if (contextFields.includes(key as QueryContextField) || isSensitiveKey(key)) params.delete(key);
+  }
+  for (const field of contextFields) {
+    const value = normalizeValue(context[field]);
+    if (value) params.set(field, value);
+  }
+  return params;
+}
+
+export function mergeQueryContext(current: QueryContext, patch: Partial<QueryContext>): QueryContext {
+  rejectSensitiveRecord(patch);
+  const normalizedPatch = normalizeContext(patch);
+  const firstChanged = contextFields.findIndex(field => (
+    Object.hasOwn(patch, field) && normalizedPatch[field] !== normalizeValue(current[field])
+  ));
+  const next = normalizeContext(current);
+  if (firstChanged >= 0) {
+    for (const field of contextFields.slice(firstChanged)) delete next[field];
+  }
+  for (const field of contextFields) {
+    if (!Object.hasOwn(patch, field)) continue;
+    const value = normalizedPatch[field];
+    if (value) next[field] = value;
+    else delete next[field];
+  }
+  return next;
+}
+
+export function clearQueryContext(context: QueryContext, from: QueryContextField): QueryContext {
+  const start = contextFields.indexOf(from);
+  if (start < 0) return normalizeContext(context);
+  const next = normalizeContext(context);
+  for (const field of contextFields.slice(start)) delete next[field];
+  return next;
+}
+
+export function queryContextScopeKey(context: QueryContext) {
+  const normalized = normalizeContext(context);
+  return contextFields.map(field => normalized[field] ?? '').join('\u001f');
+}
+
+export function queryContextEquals(left: QueryContext, right: QueryContext) {
+  return queryContextScopeKey(left) === queryContextScopeKey(right);
+}
+
+export function buildSignalHandoffPath(
+  signal: SignalKind,
+  context: QueryContext,
+  window: ExactTimeWindow
+) {
+  requireExactWindow(window);
+  rejectSensitiveRecord(context);
+  const params = new URLSearchParams({ signal });
+  append(params, 'serviceName', context.serviceName);
+  append(params, 'serviceNamespace', context.serviceNamespace);
+  append(params, 'environment', context.environment);
+  append(params, 'collectorId', context.collectorId);
+  append(params, 'instance', context.instance);
+  append(params, 'endpoint', context.endpoint);
+  params.set('start', String(window.from));
+  params.set('end', String(window.to));
+  return `/explore?${params.toString()}`;
+}
+
+export function scopedQueryKey(
+  prefix: readonly unknown[],
+  context: QueryContext,
+  window: ExactTimeWindow | undefined,
+  refreshRevision: number
+) {
+  return [...prefix, {
+    context: queryContextScopeKey(context),
+    window: window ? `${window.from}:${window.to}` : 'none',
+    refreshRevision
+  }] as const;
+}
+
+export function isSensitiveKey(key: string) {
+  const normalized = key.replace(/[^a-z0-9]/giu, '').toLowerCase();
+  return sensitiveFragments.some(fragment => normalized.includes(fragment));
+}
+
+function normalizeContext(context: Partial<QueryContext>): QueryContext {
+  return Object.fromEntries(contextFields.flatMap(field => {
+    const value = normalizeValue(context[field]);
+    return value ? [[field, value]] : [];
+  }));
+}
+
+function normalizeValue(value: unknown) {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+}
+
+function rejectSensitiveRecord(record: Record<string, unknown>) {
+  const sensitive = Object.keys(record).find(isSensitiveKey);
+  if (sensitive) throw new Error(`Sensitive query context field is forbidden: ${sensitive}`);
+}
+
+function append(params: URLSearchParams, field: QueryContextField, value: string | undefined) {
+  const normalized = normalizeValue(value);
+  if (normalized) params.set(field, normalized);
+}
+
+function requireExactWindow(window: ExactTimeWindow) {
+  if (!Number.isSafeInteger(window.from) || !Number.isSafeInteger(window.to)
+    || window.from <= 0 || window.from >= window.to) {
+    throw new Error('Cross-signal handoff requires an exact time window');
+  }
+}

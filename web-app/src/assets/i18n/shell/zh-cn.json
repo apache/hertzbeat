@@ -20,7 +20,13 @@
       "global": "全局时间",
       "route_owned": "页面时间",
       "none": "无共享时间",
-      "unknown": "时间策略未知"
+      "unknown": "时间策略未知",
+      "globalLabel": "{{range}} · {{refresh}}",
+      "off": "关闭",
+      "remaining": "{{seconds}} 秒",
+      "rangeOption": "范围 {{range}}",
+      "autoRefreshOff": "关闭自动刷新",
+      "autoRefreshSeconds": "每 {{seconds}} 秒自动刷新"
     },
     "actions": {
       "refresh": "刷新当前数据",

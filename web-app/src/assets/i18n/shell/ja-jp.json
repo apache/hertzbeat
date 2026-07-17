@@ -20,7 +20,13 @@
       "global": "グローバル時間",
       "route_owned": "ページ時間",
       "none": "共有時間なし",
-      "unknown": "時間ポリシー不明"
+      "unknown": "時間ポリシー不明",
+      "globalLabel": "{{range}} · {{refresh}}",
+      "off": "オフ",
+      "remaining": "{{seconds}}秒",
+      "rangeOption": "範囲 {{range}}",
+      "autoRefreshOff": "自動更新オフ",
+      "autoRefreshSeconds": "{{seconds}}秒ごとに自動更新"
     },
     "actions": {
       "refresh": "現在のデータを更新",

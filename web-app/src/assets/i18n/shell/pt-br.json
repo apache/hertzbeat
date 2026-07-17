@@ -20,7 +20,13 @@
       "global": "Tempo global",
       "route_owned": "Tempo da página",
       "none": "Sem tempo compartilhado",
-      "unknown": "Política de tempo desconhecida"
+      "unknown": "Política de tempo desconhecida",
+      "globalLabel": "{{range}} · {{refresh}}",
+      "off": "Desligado",
+      "remaining": "{{seconds}}s",
+      "rangeOption": "Intervalo {{range}}",
+      "autoRefreshOff": "Atualização automática desligada",
+      "autoRefreshSeconds": "Atualização automática a cada {{seconds}}s"
     },
     "actions": {
       "refresh": "Atualizar dados ativos",

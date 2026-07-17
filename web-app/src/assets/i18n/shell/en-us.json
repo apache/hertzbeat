@@ -20,7 +20,13 @@
       "global": "Global time",
       "route_owned": "Page time",
       "none": "No shared time",
-      "unknown": "Time policy unknown"
+      "unknown": "Time policy unknown",
+      "globalLabel": "{{range}} · {{refresh}}",
+      "off": "Off",
+      "remaining": "{{seconds}}s",
+      "rangeOption": "Range {{range}}",
+      "autoRefreshOff": "Auto refresh off",
+      "autoRefreshSeconds": "Auto refresh {{seconds}}s"
     },
     "actions": {
       "refresh": "Refresh active data",

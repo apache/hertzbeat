@@ -8,8 +8,10 @@
 import type { IResourceItem } from '@refinedev/core';
 import type { ReactNode } from 'react';
 
+import type { TimeOwnership } from '@/shared/time';
+
 export type ShellCapability = 'supported' | 'unknown' | 'unsupported';
-export type ShellTimePolicy = 'global' | 'route_owned' | 'none' | 'unknown';
+export type ShellTimePolicy = TimeOwnership;
 
 export type ShellResourceMeta = {
   capability: ShellCapability;

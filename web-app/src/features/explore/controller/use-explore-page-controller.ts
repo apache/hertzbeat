@@ -19,6 +19,11 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import {
+  mergeQueryContext, scopedQueryKey, useQueryContextOptional, type QueryContext
+} from '@/shared/query-context';
+import { useSharedTimeOptional } from '@/shared/time';
+
 import { classifyExploreSignalError, loadLogSignal, loadMetricSignal, loadTraceSignal } from '../api/explore-api';
 import { useExploreSubmission } from '../hooks/use-explore-submission';
 import {
@@ -42,11 +47,18 @@ export type ExplorePageResultState =
 export function useExplorePageController() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const query = useMemo(() => parseExploreQuery(searchParams), [searchParams]);
+  const parsedQuery = useMemo(() => parseExploreQuery(searchParams), [searchParams]);
+  const sharedContext = useQueryContextOptional();
+  const sharedTime = useSharedTimeOptional();
+  const effectiveWindow = exactWindow(parsedQuery) ?? sharedTime?.window;
+  const query = withExactWindow(parsedQuery, effectiveWindow);
   const handoff = exploreHandoffState(query);
+  const context = sharedContext?.context ?? contextFromQuery(query);
   const historical = handoff !== 'invalid' && !(query.signal === 'logs' && query.live);
   const queryResult = useQuery({
-    queryKey: ['explore-history', query],
+    queryKey: [
+      ...scopedQueryKey(['explore-history'], context, effectiveWindow, sharedTime?.refreshRevision ?? 0), query
+    ],
     queryFn: ({ signal }) => loadHistorical(query, signal),
     enabled: historical,
     retry: false,
@@ -54,12 +66,12 @@ export function useExplorePageController() {
     refetchInterval: historical ? 30_000 : false
   });
   const updateQuery = (changes: ExploreQueryPatch) => {
-    const next = mergeExploreQuery(query, changes);
+    const next = mergeExploreQuery(query, mergeContextChanges(context, changes));
     setSearchParams(searchFromPath(buildExplorePath(next)));
   };
   const submission = useExploreSubmission(query, patch => updateQuery({
     ...patch,
-    ...querySubmissionTimePatch(query),
+    ...querySubmissionTimePatch(query, effectiveWindow),
     pageIndex: undefined
   }));
   return {
@@ -71,6 +83,47 @@ export function useExplorePageController() {
     refresh: () => historical ? queryResult.refetch().then(() => undefined) : Promise.resolve(),
     openPath: (path: string) => { void navigate(path); }
   };
+}
+
+const contextFields = [
+  'collectorId', 'serviceName', 'serviceNamespace', 'environment', 'instance', 'endpoint'
+] as const;
+
+function mergeContextChanges(context: QueryContext, changes: ExploreQueryPatch): ExploreQueryPatch {
+  if (!contextFields.some(field => Object.hasOwn(changes, field))) return changes;
+  const patch = Object.fromEntries(contextFields.flatMap(field => (
+    Object.hasOwn(changes, field) ? [[field, changes[field]]] : []
+  ))) as Partial<QueryContext>;
+  const next = mergeQueryContext(context, patch);
+  return {
+    ...changes,
+    collectorId: next.collectorId,
+    serviceName: next.serviceName,
+    serviceNamespace: next.serviceNamespace,
+    environment: next.environment,
+    instance: next.instance,
+    endpoint: next.endpoint
+  };
+}
+
+function contextFromQuery(query: ExploreQuery): QueryContext {
+  return {
+    collectorId: query.collectorId,
+    serviceName: query.serviceName,
+    serviceNamespace: query.serviceNamespace,
+    environment: query.environment,
+    instance: query.instance,
+    endpoint: query.endpoint
+  };
+}
+
+function exactWindow(query: ExploreQuery) {
+  return query.start != null && query.end != null && query.start < query.end
+    ? { from: query.start, to: query.end } : undefined;
+}
+
+function withExactWindow(query: ExploreQuery, window: { from: number; to: number } | undefined) {
+  return window ? mergeExploreQuery(query, { start: window.from, end: window.to, windowMode: undefined }) : query;
 }
 
 function loadHistorical(query: ExploreQuery, signal: AbortSignal): Promise<HistoricalData> {

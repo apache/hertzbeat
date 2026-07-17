@@ -20,6 +20,9 @@ import { act, render, waitFor } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { QueryContextProvider } from '@/shared/query-context';
+import { GlobalTimeProvider, RouteTimeProvider } from '@/shared/time';
+
 import type { MetricConsole } from '../model/explore-signal-contract';
 import { useExplorePageController } from './use-explore-page-controller';
 
@@ -47,6 +50,22 @@ describe('Explore page controller', () => {
     await waitFor(() => expect(routed.current().query.query).toBe('current'));
   });
 
+  it('clears downstream scope and old-service identity on service and Collector switches', async () => {
+    const routed = renderController([
+      '/explore?signal=metrics&collectorId=east&serviceName=checkout&serviceNamespace=commerce'
+      + '&environment=prod&instance=checkout-1&endpoint=POST%20%2Fcheckout'
+    ]);
+    await waitFor(() => expect(routed.current().query.serviceName).toBe('checkout'));
+    act(() => routed.current().updateQuery({ serviceName: 'payments' }));
+    await waitFor(() => expect(routed.router.state.location.search).toContain('serviceName=payments'));
+    expect(routed.router.state.location.search).toContain('collectorId=east');
+    expect(routed.router.state.location.search).not.toMatch(/serviceNamespace|environment|instance|endpoint/u);
+
+    act(() => routed.current().updateQuery({ collectorId: 'west' }));
+    await waitFor(() => expect(routed.router.state.location.search).toContain('collectorId=west'));
+    expect(routed.router.state.location.search).not.toMatch(/serviceName|serviceNamespace|environment|instance|endpoint/u);
+  });
+
   it('never requests an invalid handoff or live log history', async () => {
     const invalid = renderController(['/explore?signal=traces&collectorId=east']);
     await waitFor(() => expect(invalid.current().handoff).toBe('invalid'));
@@ -60,12 +79,14 @@ describe('Explore page controller', () => {
     expect(api.loadLogSignal).not.toHaveBeenCalled();
   });
 
-  it('keeps exact onboarding windows fixed and ordinary relative queries unfrozen', async () => {
+  it('freezes the inherited route window and keeps exact onboarding windows fixed', async () => {
     const relative = renderController(['/explore?signal=metrics']);
     await waitFor(() => expect(api.loadMetricSignal).toHaveBeenCalled());
-    expect(api.loadMetricSignal.mock.calls[0]?.[0]).toHaveProperty('end', undefined);
+    const inherited = api.loadMetricSignal.mock.calls[0]?.[0];
+    expect(inherited.start).toEqual(expect.any(Number));
+    expect(inherited.end).toEqual(expect.any(Number));
     await act(async () => relative.current().refresh());
-    expect(api.loadMetricSignal.mock.calls[1]?.[0]).toHaveProperty('end', undefined);
+    expect(api.loadMetricSignal.mock.calls[1]?.[0]).toMatchObject({ start: inherited.start, end: inherited.end });
     relative.unmount();
 
     const exact = renderController(['/explore?signal=metrics&serviceName=checkout&serviceNamespace=shop&environment=prod&collectorId=east&start=1000&end=2000']);
@@ -132,7 +153,13 @@ function renderController(entries: string[], initialIndex = 0) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   let controller: ReturnType<typeof useExplorePageController> | undefined;
   function Probe() { controller = useExplorePageController(); return null; }
-  const router = createMemoryRouter([{ path: '/explore', element: <QueryClientProvider client={client}><Probe /></QueryClientProvider> }], {
+  const router = createMemoryRouter([{ path: '/explore', element: (
+    <QueryClientProvider client={client}>
+      <QueryContextProvider>
+        <GlobalTimeProvider><RouteTimeProvider policy="route_owned"><Probe /></RouteTimeProvider></GlobalTimeProvider>
+      </QueryContextProvider>
+    </QueryClientProvider>
+  ) }], {
     initialEntries: entries, initialIndex
   });
   const view = render(<RouterProvider router={router} />);
