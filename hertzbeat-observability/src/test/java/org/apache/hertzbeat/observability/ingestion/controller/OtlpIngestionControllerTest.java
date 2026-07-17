@@ -236,7 +236,8 @@ class OtlpIngestionControllerTest {
                 null
         );
         when(collectorScopedMetricsQueryService.query(argThat(request ->
-                "collector-a".equals(request.collectorId()) && "checkout".equals(request.serviceName()))))
+                "collector-a".equals(request.collectorId()) && "checkout".equals(request.serviceName())
+                        && "checkout-7d9".equals(request.instance()) && "/checkout".equals(request.endpoint()))))
                 .thenReturn(console);
 
         mockMvc.perform(get("/api/ingestion/otlp/metrics/console")
@@ -248,6 +249,8 @@ class OtlpIngestionControllerTest {
                         .param("serviceNamespace", "commerce")
                         .param("environment", "prod")
                         .param("collectorId", "collector-a")
+                        .param("instance", "checkout-7d9")
+                        .param("endpoint", "/checkout")
                         .param("filter", "span.kind=\"server\"")
                         .param("temporalAggregation", "rate")
                         .param("step", "60")
@@ -266,6 +269,8 @@ class OtlpIngestionControllerTest {
 
         verify(collectorScopedMetricsQueryService).query(argThat(request ->
                 "collector-a".equals(request.collectorId())
+                        && "checkout-7d9".equals(request.instance())
+                        && "/checkout".equals(request.endpoint())
                         && "span.kind=\"server\"".equals(request.filter())
                         && "POST /checkout".equals(request.operationName())));
     }

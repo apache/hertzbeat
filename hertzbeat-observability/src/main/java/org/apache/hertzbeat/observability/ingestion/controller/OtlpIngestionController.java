@@ -88,6 +88,8 @@ public class OtlpIngestionController {
             @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
             @RequestParam(value = "environment", required = false) String environment,
             @RequestParam(value = "collectorId", required = false) String collectorId,
+            @RequestParam(value = "instance", required = false) String instance,
+            @RequestParam(value = "endpoint", required = false) String endpoint,
             @RequestParam(value = "query", required = false) String query,
             @RequestParam(value = "filter", required = false) String filter,
             @RequestParam(value = "groupBy", required = false) String groupBy,
@@ -99,7 +101,8 @@ public class OtlpIngestionController {
         return ResponseEntity.ok(Message.success(collectorScopedMetricsQueryService.query(
                 new CollectorScopedMetricsQueryService.Request(
                         entityId, entityType, start, end, serviceName, serviceNamespace, environment, collectorId,
-                        query, filter, groupBy, aggregation, temporalAggregation, step, limit, operationName))));
+                        instance, endpoint, query, filter, groupBy, aggregation, temporalAggregation, step, limit,
+                        operationName))));
     }
 
     @GetMapping("/metrics/inventory")

@@ -141,6 +141,31 @@ class TraceQueryControllerTest {
     }
 
     @Test
+    void shouldMapInstanceAndHttpRouteToStrictTraceFilters() throws Exception {
+        when(entityTraceQueryService.queryTraceList(
+                null, 100L, 200L, null, false, "checkout", "commerce", "prod",
+                "service.instance.id=\"checkout-7d9\"", null, null, null, 0, 20, null, null,
+                "http.route=\"/checkout\""))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
+
+        mockMvc.perform(get("/api/traces/list")
+                        .param("start", "100")
+                        .param("end", "200")
+                        .param("errorOnly", "false")
+                        .param("serviceName", "checkout")
+                        .param("serviceNamespace", "commerce")
+                        .param("environment", "prod")
+                        .param("instance", "checkout-7d9")
+                        .param("endpoint", "/checkout"))
+                .andExpect(status().isOk());
+
+        verify(entityTraceQueryService).queryTraceList(
+                null, 100L, 200L, null, false, "checkout", "commerce", "prod",
+                "service.instance.id=\"checkout-7d9\"", null, null, null, 0, 20, null, null,
+                "http.route=\"/checkout\"");
+    }
+
+    @Test
     void shouldForwardHideInternalFilterToTraceOverviewQuery() throws Exception {
         TraceOverviewDto overview = new TraceOverviewDto(2, 1, 1_710_000_000_000L, true);
         when(entityTraceQueryService.getTraceOverview(

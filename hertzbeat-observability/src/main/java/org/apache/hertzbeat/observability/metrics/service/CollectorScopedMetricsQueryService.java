@@ -38,6 +38,8 @@ public interface CollectorScopedMetricsQueryService {
             String serviceNamespace,
             String environment,
             String collectorId,
+            String instance,
+            String endpoint,
             String query,
             String filter,
             String groupBy,

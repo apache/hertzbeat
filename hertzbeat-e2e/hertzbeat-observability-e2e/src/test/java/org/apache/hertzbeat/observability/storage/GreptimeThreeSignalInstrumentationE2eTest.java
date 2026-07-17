@@ -99,6 +99,8 @@ class GreptimeThreeSignalInstrumentationE2eTest {
     private static final String SERVICE_NAMESPACE = "commerce";
     private static final String ENVIRONMENT = "proof";
     private static final String COLLECTOR_ID = "collector-e2e";
+    private static final String INSTANCE_ID = "checkout-e2e-7d9";
+    private static final String ENDPOINT = "/checkout";
     private static final String TRACE_ID = "0123456789abcdef0123456789abcdef";
     private static final String SPAN_ID = "0123456789abcdef";
 
@@ -222,41 +224,70 @@ class GreptimeThreeSignalInstrumentationE2eTest {
         OtlpMetricsConsoleDto metrics = metricsQueryService.query(new CollectorScopedMetricsQueryService.Request(
                 null, null, metricsContext.startedAt(), end, metricsContext.serviceName(),
                 metricsContext.serviceNamespace(), metricsContext.environment(), metricsContext.collectorId(),
-                "hertzbeat_e2e_requests", null, null,
+                INSTANCE_ID, ENDPOINT, "hertzbeat_e2e_requests", null, null,
                 null, null, "1s", "20", null));
         assertThat(metrics.getContext().getCollectorId()).isEqualTo(metricsContext.collectorId());
+        assertThat(metrics.getContext().getInstance()).isEqualTo(INSTANCE_ID);
+        assertThat(metrics.getContext().getEndpoint()).isEqualTo(ENDPOINT);
         assertThat(metrics.getQuery())
                 .contains("hertzbeat_e2e_requests")
-                .contains("hertzbeat_collector_id=\"" + metricsContext.collectorId() + "\"");
+                .contains("hertzbeat_collector_id=\"" + metricsContext.collectorId() + "\"")
+                .contains("service_instance_id=\"" + INSTANCE_ID + "\"")
+                .contains("http_route=\"" + ENDPOINT + "\"");
         assertThat(metrics.getStats().getNonEmptySeries()).isPositive();
         assertThat(metrics.getResults().getFrames()).isNotEmpty();
         assertThat(metrics.getResults().getFrames())
                 .flatExtracting(frame -> frame.getData())
                 .anySatisfy(row -> assertThat(Double.parseDouble(String.valueOf(row[1]))).isEqualTo(1.0));
+        OtlpMetricsConsoleDto missingInstanceMetrics = metricsQueryService.query(
+                new CollectorScopedMetricsQueryService.Request(
+                        null, null, metricsContext.startedAt(), end, metricsContext.serviceName(),
+                        metricsContext.serviceNamespace(), metricsContext.environment(), metricsContext.collectorId(),
+                        "other-instance", ENDPOINT, "hertzbeat_e2e_requests", null, null,
+                        null, null, "1s", "20", null));
+        assertThat(missingInstanceMetrics.getStats().getNonEmptySeries()).isZero();
 
         org.springframework.data.domain.Page<LogEntry> logs = logQueryService.list(
                 logsContext.startedAt(), end, TRACE_ID, SPAN_ID, null, "INFO", "three-signal-e2e",
                 logsContext.serviceName(), logsContext.serviceNamespace(), logsContext.environment(),
-                "hertzbeat.collector.id=" + logsContext.collectorId(), null, 0, 20, false, false);
+                "hertzbeat.collector.id=" + logsContext.collectorId()
+                        + " and service.instance.id=" + INSTANCE_ID,
+                "http.route=" + ENDPOINT, 0, 20, false, false);
         assertThat(logs.getContent()).singleElement().satisfies(log -> {
             assertThat(log.getBody()).isEqualTo("three-signal-e2e");
             assertThat(log.getTraceId()).isEqualTo(TRACE_ID);
             assertThat(log.getSpanId()).isEqualTo(SPAN_ID);
             assertThat(log.getResource()).containsEntry("hertzbeat.collector.id", logsContext.collectorId());
+            assertThat(log.getResource()).containsEntry("service.instance.id", INSTANCE_ID);
+            assertThat(log.getAttributes()).containsEntry("http.route", ENDPOINT);
         });
 
         org.springframework.data.domain.Page<TraceListItemDto> traces = traceQueryService.queryTraceList(
                 null, tracesContext.startedAt(), end, TRACE_ID, false,
                 tracesContext.serviceName(), tracesContext.serviceNamespace(), tracesContext.environment(),
-                "hertzbeat.collector.id=" + tracesContext.collectorId(), "GET /checkout", null, null,
-                0, 20, false, null, null);
+                "hertzbeat.collector.id=" + tracesContext.collectorId()
+                        + " and service.instance.id=" + INSTANCE_ID,
+                "GET /checkout", null, null, 0, 20, false, null, "http.route=" + ENDPOINT);
         assertThat(traces.getContent()).singleElement().satisfies(trace -> {
             assertThat(trace.getTraceId()).isEqualTo(TRACE_ID);
             assertThat(trace.getRootSpanId()).isEqualTo(SPAN_ID);
             assertThat(trace.getServiceName()).isEqualTo(tracesContext.serviceName());
             assertThat(trace.getResourceAttributes())
-                    .containsEntry("hertzbeat.collector.id", tracesContext.collectorId());
+                    .containsEntry("hertzbeat.collector.id", tracesContext.collectorId())
+                    .containsEntry("service.instance.id", INSTANCE_ID);
         });
+
+        assertThat(logQueryService.list(
+                logsContext.startedAt(), end, null, null, null, null, null,
+                logsContext.serviceName(), logsContext.serviceNamespace(), logsContext.environment(),
+                "service.instance.id=other-instance", "http.route=" + ENDPOINT, 0, 20, false, false))
+                .isEmpty();
+        assertThat(traceQueryService.queryTraceList(
+                null, tracesContext.startedAt(), end, null, false,
+                tracesContext.serviceName(), tracesContext.serviceNamespace(), tracesContext.environment(),
+                "service.instance.id=other-instance", null, null, null,
+                0, 20, false, null, "http.route=" + ENDPOINT))
+                .isEmpty();
     }
 
     private DetectionRequest requestWith(
@@ -292,6 +323,7 @@ class GreptimeThreeSignalInstrumentationE2eTest {
         NumberDataPoint point = NumberDataPoint.newBuilder()
                 .setTimeUnixNano(timeNanos)
                 .setAsInt(1)
+                .addAttributes(attribute("http.route", ENDPOINT))
                 .build();
         Metric metric = Metric.newBuilder()
                 .setName("hertzbeat.e2e.requests")
@@ -312,6 +344,7 @@ class GreptimeThreeSignalInstrumentationE2eTest {
                 .setBody(AnyValue.newBuilder().setStringValue("three-signal-e2e"))
                 .setTraceId(ByteString.copyFrom(hex(TRACE_ID)))
                 .setSpanId(ByteString.copyFrom(hex(SPAN_ID)))
+                .addAttributes(attribute("http.route", ENDPOINT))
                 .build();
         return ExportLogsServiceRequest.newBuilder()
                 .addResourceLogs(ResourceLogs.newBuilder()
@@ -328,6 +361,7 @@ class GreptimeThreeSignalInstrumentationE2eTest {
                 .setKind(Span.SpanKind.SPAN_KIND_SERVER)
                 .setStartTimeUnixNano(timeNanos)
                 .setEndTimeUnixNano(timeNanos + 10_000_000L)
+                .addAttributes(attribute("http.route", ENDPOINT))
                 .build();
         return ExportTraceServiceRequest.newBuilder()
                 .addResourceSpans(ResourceSpans.newBuilder()
@@ -341,6 +375,7 @@ class GreptimeThreeSignalInstrumentationE2eTest {
                 attribute("service.name", SERVICE_NAME),
                 attribute("service.namespace", SERVICE_NAMESPACE),
                 attribute("deployment.environment.name", ENVIRONMENT),
+                attribute("service.instance.id", INSTANCE_ID),
                 attribute("hertzbeat.collector.id", COLLECTOR_ID))).build();
     }
 

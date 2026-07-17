@@ -26,6 +26,7 @@ import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.observability.ingestion.semantic.OtlpResourceSemanticAttributes;
 import org.apache.hertzbeat.observability.logs.service.LogQueryService;
 import org.apache.hertzbeat.observability.shared.query.CollectorResourceScope;
+import org.apache.hertzbeat.observability.shared.query.TelemetryQueryContextScope;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -79,6 +80,8 @@ public class LogQueryController {
             @Parameter(description = "OTel deployment.environment.name resource attribute", example = "prod")
             @RequestParam(value = "environment", required = false) String environment,
             @RequestParam(value = "collectorId", required = false) String collectorId,
+            @RequestParam(value = "instance", required = false) String instance,
+            @RequestParam(value = "endpoint", required = false) String endpoint,
             @Parameter(description = "Resource attribute filter expression, for example service.version=1.2.3")
             @RequestParam(value = "resourceFilter", required = false) String resourceFilter,
             @Parameter(description = "Log attribute filter expression, for example http.route:/checkout")
@@ -91,10 +94,10 @@ public class LogQueryController {
             @RequestParam(value = "hideInternal", required = false, defaultValue = "false") boolean hideInternal,
             @Parameter(description = "Hide demo infrastructure noise logs such as kafka/load-generator when focusing on business requests", example = "true")
             @RequestParam(value = "hideNoise", required = false, defaultValue = "false") boolean hideNoise) {
-        String scopedResourceFilter = CollectorResourceScope.apply(
-                mergeEntityContextResourceFilter(entityId, entityType, resourceFilter), collectorId);
+        ScopedFilters scopedFilters = scopeFilters(
+                entityId, entityType, collectorId, instance, endpoint, resourceFilter, attributeFilter);
         Page<LogEntry> result = logQueryService.list(entityId, start, end, traceId, spanId, severityNumber, severityText, search,
-                serviceName, serviceNamespace, environment, scopedResourceFilter, attributeFilter,
+                serviceName, serviceNamespace, environment, scopedFilters.resourceFilter(), scopedFilters.attributeFilter(),
                 pageIndex, pageSize, hideInternal, hideNoise);
         return ResponseEntity.ok(Message.success(result));
     }
@@ -120,6 +123,8 @@ public class LogQueryController {
             @Parameter(description = "OTel deployment.environment.name resource attribute", example = "prod")
             @RequestParam(value = "environment", required = false) String environment,
             @RequestParam(value = "collectorId", required = false) String collectorId,
+            @RequestParam(value = "instance", required = false) String instance,
+            @RequestParam(value = "endpoint", required = false) String endpoint,
             @Parameter(description = "Resource attribute filter expression, for example service.version=1.2.3")
             @RequestParam(value = "resourceFilter", required = false) String resourceFilter,
             @Parameter(description = "Log attribute filter expression, for example http.route:/checkout")
@@ -134,11 +139,12 @@ public class LogQueryController {
             @RequestParam(value = "hideInternal", required = false, defaultValue = "false") boolean hideInternal,
             @Parameter(description = "Hide demo infrastructure noise logs such as kafka/load-generator when focusing on business requests", example = "true")
             @RequestParam(value = "hideNoise", required = false, defaultValue = "false") boolean hideNoise) {
-        String scopedResourceFilter = CollectorResourceScope.apply(
-                mergeEntityContextResourceFilter(entityId, entityType, resourceFilter), collectorId);
+        ScopedFilters scopedFilters = scopeFilters(
+                entityId, entityType, collectorId, instance, endpoint, resourceFilter, attributeFilter);
         return ResponseEntity.ok(Message.success(logQueryService.context(
                 entityId, logTimeUnixNano, start, end, serviceName, serviceNamespace, environment,
-                scopedResourceFilter, attributeFilter, limit, direction, cursorLogTimeUnixNano, hideInternal, hideNoise)));
+                scopedFilters.resourceFilter(), scopedFilters.attributeFilter(), limit, direction,
+                cursorLogTimeUnixNano, hideInternal, hideNoise)));
     }
 
     @GetMapping("/stats/overview")
@@ -170,6 +176,8 @@ public class LogQueryController {
             @Parameter(description = "OTel deployment.environment.name resource attribute", example = "prod")
             @RequestParam(value = "environment", required = false) String environment,
             @RequestParam(value = "collectorId", required = false) String collectorId,
+            @RequestParam(value = "instance", required = false) String instance,
+            @RequestParam(value = "endpoint", required = false) String endpoint,
             @Parameter(description = "Resource attribute filter expression, for example service.version=1.2.3")
             @RequestParam(value = "resourceFilter", required = false) String resourceFilter,
             @Parameter(description = "Log attribute filter expression, for example http.route:/checkout")
@@ -178,11 +186,11 @@ public class LogQueryController {
             @RequestParam(value = "hideInternal", required = false, defaultValue = "false") boolean hideInternal,
             @Parameter(description = "Hide demo infrastructure noise logs such as kafka/load-generator when focusing on business requests", example = "true")
             @RequestParam(value = "hideNoise", required = false, defaultValue = "false") boolean hideNoise) {
-        String scopedResourceFilter = CollectorResourceScope.apply(
-                mergeEntityContextResourceFilter(entityId, entityType, resourceFilter), collectorId);
+        ScopedFilters scopedFilters = scopeFilters(
+                entityId, entityType, collectorId, instance, endpoint, resourceFilter, attributeFilter);
         return ResponseEntity.ok(Message.success(logQueryService.overviewStats(
                 entityId, start, end, traceId, spanId, severityNumber, severityText, search,
-                serviceName, serviceNamespace, environment, scopedResourceFilter, attributeFilter,
+                serviceName, serviceNamespace, environment, scopedFilters.resourceFilter(), scopedFilters.attributeFilter(),
                 hideInternal, hideNoise)));
     }
 
@@ -215,6 +223,8 @@ public class LogQueryController {
             @Parameter(description = "OTel deployment.environment.name resource attribute", example = "prod")
             @RequestParam(value = "environment", required = false) String environment,
             @RequestParam(value = "collectorId", required = false) String collectorId,
+            @RequestParam(value = "instance", required = false) String instance,
+            @RequestParam(value = "endpoint", required = false) String endpoint,
             @Parameter(description = "Resource attribute filter expression, for example service.version=1.2.3")
             @RequestParam(value = "resourceFilter", required = false) String resourceFilter,
             @Parameter(description = "Log attribute filter expression, for example http.route:/checkout")
@@ -223,11 +233,11 @@ public class LogQueryController {
             @RequestParam(value = "hideInternal", required = false, defaultValue = "false") boolean hideInternal,
             @Parameter(description = "Hide demo infrastructure noise logs such as kafka/load-generator when focusing on business requests", example = "true")
             @RequestParam(value = "hideNoise", required = false, defaultValue = "false") boolean hideNoise) {
-        String scopedResourceFilter = CollectorResourceScope.apply(
-                mergeEntityContextResourceFilter(entityId, entityType, resourceFilter), collectorId);
+        ScopedFilters scopedFilters = scopeFilters(
+                entityId, entityType, collectorId, instance, endpoint, resourceFilter, attributeFilter);
         return ResponseEntity.ok(Message.success(logQueryService.traceCoverageStats(
                 entityId, start, end, traceId, spanId, severityNumber, severityText, search,
-                serviceName, serviceNamespace, environment, scopedResourceFilter, attributeFilter,
+                serviceName, serviceNamespace, environment, scopedFilters.resourceFilter(), scopedFilters.attributeFilter(),
                 hideInternal, hideNoise)));
     }
 
@@ -260,6 +270,8 @@ public class LogQueryController {
             @Parameter(description = "OTel deployment.environment.name resource attribute", example = "prod")
             @RequestParam(value = "environment", required = false) String environment,
             @RequestParam(value = "collectorId", required = false) String collectorId,
+            @RequestParam(value = "instance", required = false) String instance,
+            @RequestParam(value = "endpoint", required = false) String endpoint,
             @Parameter(description = "Resource attribute filter expression, for example service.version=1.2.3")
             @RequestParam(value = "resourceFilter", required = false) String resourceFilter,
             @Parameter(description = "Log attribute filter expression, for example http.route:/checkout")
@@ -268,11 +280,11 @@ public class LogQueryController {
             @RequestParam(value = "hideInternal", required = false, defaultValue = "false") boolean hideInternal,
             @Parameter(description = "Hide demo infrastructure noise logs such as kafka/load-generator when focusing on business requests", example = "true")
             @RequestParam(value = "hideNoise", required = false, defaultValue = "false") boolean hideNoise) {
-        String scopedResourceFilter = CollectorResourceScope.apply(
-                mergeEntityContextResourceFilter(entityId, entityType, resourceFilter), collectorId);
+        ScopedFilters scopedFilters = scopeFilters(
+                entityId, entityType, collectorId, instance, endpoint, resourceFilter, attributeFilter);
         return ResponseEntity.ok(Message.success(logQueryService.trendStats(
                 entityId, start, end, traceId, spanId, severityNumber, severityText, search,
-                serviceName, serviceNamespace, environment, scopedResourceFilter, attributeFilter,
+                serviceName, serviceNamespace, environment, scopedFilters.resourceFilter(), scopedFilters.attributeFilter(),
                 hideInternal, hideNoise)));
     }
 
@@ -305,6 +317,8 @@ public class LogQueryController {
             @Parameter(description = "OTel deployment.environment.name resource attribute", example = "prod")
             @RequestParam(value = "environment", required = false) String environment,
             @RequestParam(value = "collectorId", required = false) String collectorId,
+            @RequestParam(value = "instance", required = false) String instance,
+            @RequestParam(value = "endpoint", required = false) String endpoint,
             @Parameter(description = "Resource attribute filter expression, for example service.version=1.2.3")
             @RequestParam(value = "resourceFilter", required = false) String resourceFilter,
             @Parameter(description = "Log attribute filter expression, for example http.route:/checkout")
@@ -321,11 +335,12 @@ public class LogQueryController {
             @RequestParam(value = "hideInternal", required = false, defaultValue = "false") boolean hideInternal,
             @Parameter(description = "Hide demo infrastructure noise logs such as kafka/load-generator when focusing on business requests", example = "true")
             @RequestParam(value = "hideNoise", required = false, defaultValue = "false") boolean hideNoise) {
-        String scopedResourceFilter = CollectorResourceScope.apply(
-                mergeEntityContextResourceFilter(entityId, entityType, resourceFilter), collectorId);
+        ScopedFilters scopedFilters = scopeFilters(
+                entityId, entityType, collectorId, instance, endpoint, resourceFilter, attributeFilter);
         return ResponseEntity.ok(Message.success(logQueryService.groupByStats(
                 entityId, start, end, traceId, spanId, severityNumber, severityText, search,
-                serviceName, serviceNamespace, environment, scopedResourceFilter, attributeFilter, groupBy,
+                serviceName, serviceNamespace, environment, scopedFilters.resourceFilter(),
+                scopedFilters.attributeFilter(), groupBy,
                 limit, orderBy, minCount, hideInternal, hideNoise)));
     }
 
@@ -352,5 +367,18 @@ public class LogQueryController {
         return StringUtils.hasText(scopedResourceFilter)
                 ? scopedResourceFilter + " and " + entityTypeFilter
                 : entityTypeFilter;
+    }
+
+    private ScopedFilters scopeFilters(Long entityId, String entityType, String collectorId, String instance,
+                                       String endpoint, String resourceFilter, String attributeFilter) {
+        TelemetryQueryContextScope queryContextScope = new TelemetryQueryContextScope(instance, endpoint);
+        String collectorScopedResourceFilter = CollectorResourceScope.apply(
+                mergeEntityContextResourceFilter(entityId, entityType, resourceFilter), collectorId);
+        return new ScopedFilters(
+                queryContextScope.applyResourceFilter(collectorScopedResourceFilter),
+                queryContextScope.applyAttributeFilter(attributeFilter));
+    }
+
+    private record ScopedFilters(String resourceFilter, String attributeFilter) {
     }
 }

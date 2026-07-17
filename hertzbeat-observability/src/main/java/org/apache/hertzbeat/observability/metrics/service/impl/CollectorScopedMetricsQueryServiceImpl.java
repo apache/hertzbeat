@@ -23,6 +23,7 @@ import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsConsoleD
 import org.apache.hertzbeat.observability.ingestion.semantic.OtlpMetricSemanticLabels;
 import org.apache.hertzbeat.observability.ingestion.service.OtlpIngestionWorkspaceService;
 import org.apache.hertzbeat.observability.metrics.service.CollectorScopedMetricsQueryService;
+import org.apache.hertzbeat.observability.shared.query.TelemetryQueryContextScope;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -41,12 +42,15 @@ public class CollectorScopedMetricsQueryServiceImpl implements CollectorScopedMe
     @Override
     public OtlpMetricsConsoleDto query(Request request) {
         String collectorId = normalizeCollectorId(request.collectorId());
+        TelemetryQueryContextScope queryContextScope = new TelemetryQueryContextScope(
+                request.instance(), request.endpoint());
         String query = StringUtils.trimWhitespace(request.query());
         if (StringUtils.hasText(collectorId) && StringUtils.hasText(query)
                 && !SIMPLE_METRIC_NAME.matcher(query).matches()) {
-            return unsupportedQuery(request, collectorId);
+            return unsupportedQuery(request, collectorId, queryContextScope);
         }
-        String scopedFilter = applyCollectorFilter(request.filter(), collectorId);
+        String scopedFilter = queryContextScope.applyMetricFilter(
+                applyCollectorFilter(request.filter(), collectorId));
         OtlpMetricsConsoleDto result = workspaceService.getMetricsConsole(
                 request.entityId(), request.entityType(), request.start(), request.end(), request.serviceName(),
                 request.serviceNamespace(), request.environment(), request.query(), scopedFilter, request.groupBy(),
@@ -54,6 +58,8 @@ public class CollectorScopedMetricsQueryServiceImpl implements CollectorScopedMe
                 request.operationName());
         if (result != null && result.getContext() != null) {
             result.getContext().setCollectorId(collectorId);
+            result.getContext().setInstance(queryContextScope.instance());
+            result.getContext().setEndpoint(queryContextScope.endpoint());
         }
         return result;
     }
@@ -84,10 +90,12 @@ public class CollectorScopedMetricsQueryServiceImpl implements CollectorScopedMe
                 : collectorFilter;
     }
 
-    private OtlpMetricsConsoleDto unsupportedQuery(Request request, String collectorId) {
+    private OtlpMetricsConsoleDto unsupportedQuery(Request request, String collectorId,
+                                                   TelemetryQueryContextScope queryContextScope) {
         OtlpMetricsConsoleDto.Context context = new OtlpMetricsConsoleDto.Context(
                 request.entityId(), request.entityType(), null, request.serviceName(), request.serviceNamespace(),
-                request.environment(), collectorId, request.operationName(), request.start(), request.end());
+                request.environment(), collectorId, queryContextScope.instance(), queryContextScope.endpoint(),
+                request.operationName(), request.start(), request.end());
         return new OtlpMetricsConsoleDto(
                 context, request.query(), null, "promql", null,
                 new OtlpMetricsConsoleDto.Stats(0, 0, null), "unsupported_query", null);

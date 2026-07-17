@@ -28,8 +28,9 @@ import org.apache.hertzbeat.common.observability.dto.trace.TraceListItemDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceOverviewDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceSpanNodeDto;
 import org.apache.hertzbeat.observability.ingestion.semantic.OtlpResourceSemanticAttributes;
-import org.apache.hertzbeat.observability.traces.service.EntityTraceQueryService;
 import org.apache.hertzbeat.observability.shared.query.CollectorResourceScope;
+import org.apache.hertzbeat.observability.shared.query.TelemetryQueryContextScope;
+import org.apache.hertzbeat.observability.traces.service.EntityTraceQueryService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
@@ -63,6 +64,8 @@ public class TraceQueryController {
             @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
             @RequestParam(value = "environment", required = false) String environment,
             @RequestParam(value = "collectorId", required = false) String collectorId,
+            @RequestParam(value = "instance", required = false) String instance,
+            @RequestParam(value = "endpoint", required = false) String endpoint,
             @RequestParam(value = "resourceFilter", required = false) String resourceFilter,
             @RequestParam(value = "attributeFilter", required = false) String attributeFilter,
             @RequestParam(value = "operationName", required = false) String operationName,
@@ -72,12 +75,12 @@ public class TraceQueryController {
             @RequestParam(value = "hideInternal", required = false) Boolean hideInternal,
             @RequestParam(value = "pageIndex", defaultValue = "0") Integer pageIndex,
             @RequestParam(value = "pageSize", defaultValue = "20") Integer pageSize) {
-        String scopedResourceFilter = CollectorResourceScope.apply(
-                mergeEntityContextResourceFilter(entityId, entityType, resourceFilter), collectorId);
+        ScopedFilters scopedFilters = scopeFilters(
+                entityId, entityType, collectorId, instance, endpoint, resourceFilter, attributeFilter);
         Page<TraceListItemDto> page = entityTraceQueryService.queryTraceList(
                 entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
-                scopedResourceFilter, operationName, minDurationMs, maxDurationMs, pageIndex, pageSize, hideInternal,
-                spanScope, attributeFilter);
+                scopedFilters.resourceFilter(), operationName, minDurationMs, maxDurationMs, pageIndex, pageSize,
+                hideInternal, spanScope, scopedFilters.attributeFilter());
         return ResponseEntity.ok(Message.success(page));
     }
 
@@ -94,6 +97,8 @@ public class TraceQueryController {
             @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
             @RequestParam(value = "environment", required = false) String environment,
             @RequestParam(value = "collectorId", required = false) String collectorId,
+            @RequestParam(value = "instance", required = false) String instance,
+            @RequestParam(value = "endpoint", required = false) String endpoint,
             @RequestParam(value = "resourceFilter", required = false) String resourceFilter,
             @RequestParam(value = "attributeFilter", required = false) String attributeFilter,
             @RequestParam(value = "operationName", required = false) String operationName,
@@ -101,12 +106,12 @@ public class TraceQueryController {
             @RequestParam(value = "maxDurationMs", required = false) Long maxDurationMs,
             @RequestParam(value = "spanScope", required = false) String spanScope,
             @RequestParam(value = "hideInternal", required = false) Boolean hideInternal) {
-        String scopedResourceFilter = CollectorResourceScope.apply(
-                mergeEntityContextResourceFilter(entityId, entityType, resourceFilter), collectorId);
+        ScopedFilters scopedFilters = scopeFilters(
+                entityId, entityType, collectorId, instance, endpoint, resourceFilter, attributeFilter);
         return ResponseEntity.ok(Message.success(entityTraceQueryService.getTraceOverview(
                 entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
-                scopedResourceFilter, operationName, minDurationMs, maxDurationMs, hideInternal, spanScope,
-                attributeFilter)));
+                scopedFilters.resourceFilter(), operationName, minDurationMs, maxDurationMs, hideInternal, spanScope,
+                scopedFilters.attributeFilter())));
     }
 
     @GetMapping("/stats/group-by")
@@ -122,6 +127,8 @@ public class TraceQueryController {
             @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
             @RequestParam(value = "environment", required = false) String environment,
             @RequestParam(value = "collectorId", required = false) String collectorId,
+            @RequestParam(value = "instance", required = false) String instance,
+            @RequestParam(value = "endpoint", required = false) String endpoint,
             @RequestParam(value = "resourceFilter", required = false) String resourceFilter,
             @RequestParam(value = "attributeFilter", required = false) String attributeFilter,
             @RequestParam(value = "operationName", required = false) String operationName,
@@ -133,12 +140,12 @@ public class TraceQueryController {
             @RequestParam(value = "minCount", required = false) Integer minCount,
             @RequestParam(value = "spanScope", required = false) String spanScope,
             @RequestParam(value = "hideInternal", required = false) Boolean hideInternal) {
-        String scopedResourceFilter = CollectorResourceScope.apply(
-                mergeEntityContextResourceFilter(entityId, entityType, resourceFilter), collectorId);
+        ScopedFilters scopedFilters = scopeFilters(
+                entityId, entityType, collectorId, instance, endpoint, resourceFilter, attributeFilter);
         return ResponseEntity.ok(Message.success(entityTraceQueryService.getTraceGroupByStats(
                 entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
-                scopedResourceFilter, operationName, minDurationMs, maxDurationMs, groupBy, limit, orderBy, minCount,
-                hideInternal, spanScope, attributeFilter)));
+                scopedFilters.resourceFilter(), operationName, minDurationMs, maxDurationMs, groupBy, limit, orderBy,
+                minCount, hideInternal, spanScope, scopedFilters.attributeFilter())));
     }
 
     @GetMapping("/{traceId}")
@@ -170,5 +177,18 @@ public class TraceQueryController {
         return StringUtils.hasText(scopedResourceFilter)
                 ? scopedResourceFilter + " and " + entityTypeFilter
                 : entityTypeFilter;
+    }
+
+    private ScopedFilters scopeFilters(Long entityId, String entityType, String collectorId, String instance,
+                                       String endpoint, String resourceFilter, String attributeFilter) {
+        TelemetryQueryContextScope queryContextScope = new TelemetryQueryContextScope(instance, endpoint);
+        String collectorScopedResourceFilter = CollectorResourceScope.apply(
+                mergeEntityContextResourceFilter(entityId, entityType, resourceFilter), collectorId);
+        return new ScopedFilters(
+                queryContextScope.applyResourceFilter(collectorScopedResourceFilter),
+                queryContextScope.applyAttributeFilter(attributeFilter));
+    }
+
+    private record ScopedFilters(String resourceFilter, String attributeFilter) {
     }
 }

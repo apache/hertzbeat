@@ -208,6 +208,28 @@ class LogSseFilterCriteriaTest {
     }
 
     @Test
+    void matchesOnlyCanonicalInstanceAndHttpRouteContext() {
+        LogEntry selectedLog = LogEntry.builder()
+                .resource(java.util.Map.of("service.instance.id", "checkout-7d9"))
+                .attributes(java.util.Map.of("http.route", "/checkout"))
+                .build();
+        LogEntry otherInstance = LogEntry.builder()
+                .resource(java.util.Map.of("service.instance.id", "checkout-other"))
+                .attributes(java.util.Map.of("http.route", "/checkout"))
+                .build();
+        LogEntry missingRoute = LogEntry.builder()
+                .resource(java.util.Map.of("service.instance.id", "checkout-7d9"))
+                .build();
+
+        filterCriteria.setInstance("checkout-7d9");
+        filterCriteria.setEndpoint("/checkout");
+
+        assertTrue(filterCriteria.matches(selectedLog));
+        assertFalse(filterCriteria.matches(otherInstance));
+        assertFalse(filterCriteria.matches(missingRoute));
+    }
+
+    @Test
     void testMatchesWithResourceAndAttributeFilters() {
         LogEntry checkoutLog = LogEntry.builder()
                 .severityText("INFO")

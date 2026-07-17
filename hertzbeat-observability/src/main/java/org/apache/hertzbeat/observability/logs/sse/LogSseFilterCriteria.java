@@ -19,6 +19,10 @@
 
 package org.apache.hertzbeat.observability.logs.sse;
 
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -28,15 +32,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import lombok.Data;
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
+import org.apache.hertzbeat.observability.shared.query.TelemetryQueryContextScope;
 import org.springframework.util.StringUtils;
-import io.swagger.v3.oas.annotations.media.Schema;
-import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
-import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 
 /**
  * Log filtering criteria for SSE (Server-Sent Events) log streaming
@@ -125,6 +127,14 @@ public class LogSseFilterCriteria {
     @Schema(description = "HertzBeat Collector resource identity.", example = "collector-a", accessMode = READ_WRITE)
     private String collectorId;
 
+    @Schema(description = "OTel service.instance.id resource attribute.", example = "checkout-7d9",
+            accessMode = READ_WRITE)
+    private String instance;
+
+    @Schema(description = "Low-cardinality HTTP route template from the http.route log attribute.",
+            example = "/checkout", accessMode = READ_WRITE)
+    private String endpoint;
+
     @Schema(description = "Resource attribute filter expression, for example service.version=1.2.3", accessMode = READ_WRITE)
     private String resourceFilter;
 
@@ -197,7 +207,7 @@ public class LogSseFilterCriteria {
         if (!matchesAttributes(log.getAttributes(), parseLogAttributeFilter(attributeFilter))) {
             return false;
         }
-        return true;
+        return matchesOptionalValue(resolveValue(log.getAttributes(), "http.route"), endpoint);
     }
 
     private boolean matchesServiceContext(LogEntry log) {
@@ -207,7 +217,16 @@ public class LogSseFilterCriteria {
                         "deployment.environment.name", "deployment_environment_name", "environment"), environment)
                 && matchesOptionalValue(resolveValue(log, "hertzbeat.entity_id", "hertzbeat_entity_id"), entityId)
                 && matchesOptionalValue(resolveValue(log, "hertzbeat.entity_type", "hertzbeat_entity_type"), entityType)
-                && matchesOptionalValue(resolveValue(log, "hertzbeat.collector.id"), collectorId);
+                && matchesOptionalValue(resolveValue(log, "hertzbeat.collector.id"), collectorId)
+                && matchesOptionalValue(resolveValue(log, "service.instance.id", "service_instance_id"), instance);
+    }
+
+    public void normalizeQueryContext() {
+        TelemetryQueryContextScope scope = new TelemetryQueryContextScope(instance, endpoint);
+        instance = scope.instance();
+        endpoint = scope.endpoint();
+        resourceFilter = scope.applyResourceFilter(resourceFilter);
+        attributeFilter = scope.applyAttributeFilter(attributeFilter);
     }
 
     private boolean matchesOptionalValue(String actualValue, String expectedValue) {
