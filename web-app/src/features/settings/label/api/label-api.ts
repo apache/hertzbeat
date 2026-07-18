@@ -15,24 +15,40 @@
  * limitations under the License.
  */
 
-import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut, type PageResult } from '@/core/http/api-message';
+import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
 
-export type LabelRecord = {
-  id?: number;
-  name: string;
-  tagValue?: string;
-  description?: string;
-  type?: number;
-  creator?: string;
-  gmtCreate?: number | string;
-  gmtUpdate?: number | string;
-};
+import {
+  LabelContractError,
+  type LabelIdentity,
+  type LabelPage,
+  type LabelRecord
+} from '../model/label-model';
+import { parseLabelPage } from './label-schema';
 
-export type LabelIdentity = Pick<LabelRecord, 'name' | 'tagValue'> & { id?: number };
 export type LabelListRequest = { search: string; pageIndex: number; pageSize: number };
 
-export function loadLabels(query: LabelListRequest) {
-  return apiMessageGet<PageResult<LabelRecord>>(buildLabelListPath(query));
+export type LabelPayload = {
+  id?: number;
+  name: string;
+  tagValue: string;
+  description: string;
+  type: number;
+};
+
+export const maximumLabelCanonicalProofPages = 10;
+
+export class LabelCanonicalProofLimitError extends LabelContractError {
+  override readonly code = 'LABEL_CANONICAL_PROOF_LIMIT';
+
+  constructor() {
+    super(`Label canonical proof exceeds ${maximumLabelCanonicalProofPages} pages`);
+    this.name = 'LabelCanonicalProofLimitError';
+  }
+}
+
+export async function loadLabels(query: LabelListRequest) {
+  const response = await apiMessageGet<unknown>(buildLabelListPath(query));
+  return parseLabelPage(response, query);
 }
 
 export function saveLabel(label: Partial<LabelRecord>, isNew: boolean) {
@@ -47,22 +63,27 @@ export function deleteLabel(id: number) {
 export async function findCanonicalLabel(identity: LabelIdentity) {
   const expectedName = identity.name.trim();
   const expectedValue = normalizeLabelValue(identity.tagValue);
-  let pageIndex = 0;
-  let totalPages = 1;
+  if (!expectedName) throw new LabelContractError('Label canonical identity is invalid');
 
-  do {
+  const first = await loadLabels({ search: expectedName, pageIndex: 0, pageSize: 100 });
+  assertBoundedProof(first.totalPages);
+  const pages: LabelPage[] = [first];
+
+  // POST and PUT return no entity. This bounded scan is compatibility proof,
+  // not permission to follow arbitrary pagination supplied by the server.
+  for (let pageIndex = 1; pageIndex < first.totalPages; pageIndex += 1) {
     const page = await loadLabels({ search: expectedName, pageIndex, pageSize: 100 });
-    const match = page.content.find(label => (
-      (identity.id === undefined || label.id === identity.id)
-      && label.name.trim() === expectedName
-      && normalizeLabelValue(label.tagValue) === expectedValue
-    ));
-    if (match) return match;
-    totalPages = Number.isInteger(page.totalPages) && page.totalPages > 0 ? page.totalPages : 1;
-    pageIndex += 1;
-  } while (pageIndex < totalPages);
+    assertStableProofPage(page, first, pageIndex);
+    pages.push(page);
+  }
 
-  return undefined;
+  const matches = pages.flatMap(page => page.content).filter(label => (
+    (identity.id === undefined || label.id === identity.id)
+    && label.name.trim() === expectedName
+    && normalizeLabelValue(label.tagValue) === expectedValue
+  ));
+  if (matches.length > 1) throw new LabelContractError('Label canonical proof is ambiguous');
+  return matches[0];
 }
 
 export function buildLabelListPath(query: LabelListRequest) {
@@ -74,7 +95,7 @@ export function buildLabelListPath(query: LabelListRequest) {
   return `/api/label?${params.toString()}`;
 }
 
-export function buildLabelPayload(label: Partial<LabelRecord>, isNew: boolean): LabelRecord {
+export function buildLabelPayload(label: Partial<LabelRecord>, isNew: boolean): LabelPayload {
   return {
     ...(!isNew && label.id ? { id: label.id } : {}),
     name: label.name?.trim() ?? '',
@@ -82,6 +103,23 @@ export function buildLabelPayload(label: Partial<LabelRecord>, isNew: boolean): 
     description: label.description?.trim() ?? '',
     type: isNew ? 1 : label.type ?? 1
   };
+}
+
+function assertBoundedProof(totalPages: number) {
+  if (!Number.isSafeInteger(totalPages) || totalPages < 0
+    || totalPages > maximumLabelCanonicalProofPages) {
+    throw new LabelCanonicalProofLimitError();
+  }
+}
+
+function assertStableProofPage(page: LabelPage, first: LabelPage, expectedPage: number) {
+  assertBoundedProof(page.totalPages);
+  if (page.number !== expectedPage
+    || page.totalElements !== first.totalElements
+    || page.totalPages !== first.totalPages
+    || page.size !== first.size) {
+    throw new LabelContractError('Label canonical page set changed during proof');
+  }
 }
 
 function normalizeLabelValue(value?: string) {

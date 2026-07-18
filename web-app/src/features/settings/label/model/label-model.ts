@@ -15,9 +15,38 @@
  * limitations under the License.
  */
 
-import type { LabelRecord as ApiLabelRecord } from '../api/label-api';
+export type LabelRecord = {
+  id: number;
+  name: string;
+  tagValue?: string;
+  description?: string;
+  type?: number;
+  creator?: string;
+  modifier?: string;
+  gmtCreate?: number | string;
+  gmtUpdate?: number | string;
+};
 
-export type LabelRecord = ApiLabelRecord;
+export type LabelIdentity = Pick<LabelRecord, 'name'>
+  & Partial<Pick<LabelRecord, 'id' | 'tagValue'>>;
+
+export type LabelPage = {
+  content: LabelRecord[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+};
+
+export class LabelContractError extends Error {
+  readonly code: string = 'LABEL_RESPONSE_INVALID';
+
+  constructor(message = 'Label response is invalid') {
+    super(message);
+    this.name = 'LabelContractError';
+  }
+}
+
 export type LabelListState =
   | { kind: 'loading' }
   | { kind: 'empty' }

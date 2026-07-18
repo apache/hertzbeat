@@ -148,7 +148,7 @@ describe('Label resource controller', () => {
   });
 
   it('fails closed without provider transport when a selected server record has no id', () => {
-    const invalidRecord: LabelRecord = { name: 'env', tagValue: 'prod' };
+    const invalidRecord = { name: 'env', tagValue: 'prod' } as unknown as LabelRecord;
     const { result } = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
 
     act(() => result.current.updateLabel(invalidRecord, { description: 'Updated' }, vi.fn()));

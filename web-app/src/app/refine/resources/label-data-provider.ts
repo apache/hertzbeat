@@ -29,10 +29,13 @@ import {
   deleteLabel,
   findCanonicalLabel,
   loadLabels,
-  saveLabel,
+  saveLabel
+} from '@/features/settings/label/api/label-api';
+import {
+  LabelContractError,
   type LabelIdentity,
   type LabelRecord
-} from '@/features/settings/label/api/label-api';
+} from '@/features/settings/label/model/label-model';
 import { isLabelPageSize } from '@/features/settings/label/model/label-query-model';
 
 import { createRefineHttpError, toRefineHttpError } from '../refine-http-error';
@@ -112,6 +115,9 @@ async function protect<T>(operation: () => Promise<T>): Promise<T> {
   try {
     return await operation();
   } catch (reason) {
+    if (reason instanceof LabelContractError) {
+      throw createRefineHttpError('Label response is invalid', 502, reason.code);
+    }
     throw toRefineHttpError(reason);
   }
 }
@@ -183,7 +189,7 @@ function readLabelId(value: string | number) {
   return value;
 }
 
-function toIdentity(label: Pick<LabelRecord, 'id' | 'name' | 'tagValue'>, id?: number): LabelIdentity {
+function toIdentity(label: LabelIdentity, id?: number): LabelIdentity {
   const canonicalId = id ?? label.id;
   return {
     ...(canonicalId === undefined ? {} : { id: canonicalId }),

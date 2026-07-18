@@ -18,7 +18,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
-import type { LabelRecord } from '@/features/settings/label/api/label-api';
+import {
+  LabelContractError,
+  type LabelRecord
+} from '@/features/settings/label/model/label-model';
 
 type LabelApi = typeof import('@/features/settings/label/api/label-api');
 const labelApi = vi.hoisted(() => ({
@@ -198,5 +201,15 @@ describe('Label Refine data provider', () => {
       code: 'NETWORK_REQUEST_FAILED'
     });
     expect(JSON.stringify(error)).not.toContain('private-provider');
+  });
+
+  it('maps malformed read contracts to a stable sanitized provider error', async () => {
+    labelApi.loadLabels.mockRejectedValue(new LabelContractError());
+
+    await expect(labelDataProvider.getList({ resource: 'labels' })).rejects.toMatchObject({
+      message: 'Label response is invalid',
+      statusCode: 502,
+      code: 'LABEL_RESPONSE_INVALID'
+    });
   });
 });
