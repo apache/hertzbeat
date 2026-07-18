@@ -10,7 +10,7 @@ export type BulletinDraft = { id?: number; name: string; app: string; monitorIds
 export type Bulletin = BulletinDraft & {
   id: number; creator: string | null; modifier: string | null; gmtCreate: string | null; gmtUpdate: string | null;
 };
-export type BulletinMonitor = { id: number; name: string; app: string };
+export type BulletinMonitor = { id: number; name: string; app: string; labels: Record<string, string> };
 export type BulletinMetricDefinition = { name: string; fields: string[] };
 export type BulletinMetricField = { key: string; unit: string; value: string | null; status: 'value' | 'no-data' };
 type BulletinMetric = { name: string; fields: BulletinMetricField[][] };
@@ -63,6 +63,13 @@ export function buildBulletinPayload(draft: BulletinDraft): BulletinDraft {
     ...(draft.id == null ? {} : { id: draft.id }), name: draft.name.trim(), app: draft.app.trim(),
     monitorIds: [...new Set(draft.monitorIds)].sort((a, b) => a - b), fields
   };
+}
+
+export function bulletinMonitorMatchesSearch(monitor: BulletinMonitor, query: string) {
+  const term = query.trim().toLocaleLowerCase();
+  if (!term) return true;
+  return [monitor.name, ...Object.entries(monitor.labels).flatMap(([key, value]) => [key, value])]
+    .some(value => value.toLocaleLowerCase().includes(term));
 }
 
 export function validateBulletinDraft(draft: BulletinDraft, monitors: BulletinMonitor[], metrics: BulletinMetricDefinition[]) {

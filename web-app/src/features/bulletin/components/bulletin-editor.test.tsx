@@ -47,6 +47,17 @@ describe('Bulletin editor metric Tree', () => {
     expect(onChange).toHaveBeenCalledWith({ app: 'redis', monitorIds: [], fields: {} });
   });
 
+  it('filters monitor options by names and labels instead of numeric ids', () => {
+    renderEditor({ monitorIds: [] });
+
+    const monitorSearch = screen.getAllByRole('combobox')[1]!;
+    fireEvent.mouseDown(monitorSearch);
+    fireEvent.change(monitorSearch, { target: { value: 'payments' } });
+
+    expect(screen.getByText('prod')).toBeInTheDocument();
+    expect(screen.queryByText('backup')).not.toBeInTheDocument();
+  });
+
   it('uses real cascading Tree checkboxes for select-all, partial selection, and uncheck-all', () => {
     const onChange = vi.fn();
     const { rerender } = renderEditor({ onChange });
@@ -83,15 +94,18 @@ function renderEditor(options: Partial<Parameters<typeof editor>[0]> = {}) {
 }
 
 function editor({ onChange = vi.fn(), onSave = vi.fn(), fieldSelection = 'valid',
-  fields = { summary: ['status'] }, editing = true }: {
+  fields = { summary: ['status'] }, editing = true, monitorIds = [1] }: {
   onChange?: (patch: Partial<BulletinDraft>) => void; onSave?: () => void;
-  fieldSelection?: 'valid' | 'stale'; fields?: Record<string, string[]>; editing?: boolean;
+  fieldSelection?: 'valid' | 'stale'; fields?: Record<string, string[]>; editing?: boolean; monitorIds?: number[];
 }) {
   return <BulletinEditor
-    draft={{ ...(editing ? { id: 7 } : {}), name: 'Ops', app: 'website', monitorIds: [1], fields }} saving={false}
+    draft={{ ...(editing ? { id: 7 } : {}), name: 'Ops', app: 'website', monitorIds, fields }} saving={false}
     dependencies={{ kind: 'ready', fieldSelection, apps: [
       { value: 'website', label: 'Website', hide: false }, { value: 'redis', label: 'Redis', hide: false }],
-      monitors: [{ id: 1, name: 'prod', app: 'website' }, { id: 2, name: 'backup', app: 'website' }],
+      monitors: [
+        { id: 1, name: 'prod', app: 'website', labels: { team: 'payments' } },
+        { id: 2, name: 'backup', app: 'website', labels: { team: 'platform' } }
+      ],
       metrics: [{ name: 'summary', fields: ['status', 'responseTime'] }], metricTree: tree }}
     onClose={vi.fn()} onSave={onSave} onChange={onChange}
   />;

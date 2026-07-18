@@ -35,6 +35,7 @@ describe('Monitor primary read schemas', () => {
         app: 'website',
         instance: 'prod',
         status: 1,
+        labels: { environment: 'production', team: 'payments' },
         gmtCreate: '2026-07-18T10:30:00',
         gmtUpdate: 1_650_000_000_000
       }],
@@ -45,6 +46,7 @@ describe('Monitor primary read schemas', () => {
     }, query);
 
     expect(page.content[0]).toMatchObject({
+      labels: { environment: 'production', team: 'payments' },
       gmtCreate: '2026-07-18T10:30:00',
       gmtUpdate: 1_650_000_000_000
     });

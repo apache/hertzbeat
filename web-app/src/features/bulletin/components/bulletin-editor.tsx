@@ -3,7 +3,7 @@
 import { Alert, Button, Drawer, Form, Input, Select, Space, Spin, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import type { BulletinDependencies } from '../controller/bulletin-dependencies-controller';
-import type { BulletinDraft } from '../model/bulletin-model';
+import { bulletinMonitorMatchesSearch, type BulletinDraft } from '../model/bulletin-model';
 import { BulletinMetricTree } from './bulletin-metric-tree';
 
 export function BulletinEditor({ draft, dependencies, saving, onClose, onSave, onChange }: {
@@ -12,6 +12,8 @@ export function BulletinEditor({ draft, dependencies, saving, onClose, onSave, o
 }) {
   const { t } = useTranslation();
   const canSave = dependencies.kind === 'ready' && dependencies.fieldSelection === 'valid';
+  const monitorById = new Map(dependencies.monitors.map(monitor => [monitor.id, monitor]));
+  const monitorOptions = dependencies.monitors.map(monitor => ({ value: monitor.id, label: monitor.name }));
   return <Drawer
     open={draft != null} width={640} title={t(draft?.id == null ? 'bulletin.create' : 'bulletin.edit')}
     onClose={onClose} destroyOnHidden
@@ -29,8 +31,13 @@ export function BulletinEditor({ draft, dependencies, saving, onClose, onSave, o
       {dependencies.kind !== 'loading' && dependencies.kind !== 'ready' && <Alert type="error" showIcon message={t(`bulletin.dependencies.${dependencies.kind}`)} />}
       {dependencies.kind === 'ready' && draft.app && <>
         <Form.Item label={t('bulletin.monitors')} required>
-          <Select mode="multiple" value={draft.monitorIds} options={dependencies.monitors.map(item => ({ value: item.id, label: item.name }))}
-            placeholder={t('bulletin.monitorsPlaceholder')} onChange={monitorIds => onChange({ monitorIds })} />
+          <Select mode="multiple" value={draft.monitorIds} options={monitorOptions}
+            placeholder={t('bulletin.monitorsPlaceholder')}
+            filterOption={(input, option) => {
+              const monitor = typeof option?.value === 'number' ? monitorById.get(option.value) : undefined;
+              return monitor ? bulletinMonitorMatchesSearch(monitor, input) : false;
+            }}
+            onChange={monitorIds => onChange({ monitorIds })} />
         </Form.Item>
         <Form.Item label={t('bulletin.fields')} required>
           <BulletinFieldSelection draft={draft} dependencies={dependencies} onChange={onChange} t={t} />

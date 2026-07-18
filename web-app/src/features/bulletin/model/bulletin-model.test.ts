@@ -3,7 +3,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  buildBulletinPayload, formatBulletinTime, readBulletinQuery, validateBulletinDraft, writeBulletinQuery
+  buildBulletinPayload, bulletinMonitorMatchesSearch, formatBulletinTime, readBulletinQuery,
+  validateBulletinDraft, writeBulletinQuery
 } from './bulletin-model';
 
 describe('bulletin model', () => {
@@ -17,14 +18,14 @@ describe('bulletin model', () => {
   it('rejects monitor/app mismatches and invalid metric fields', () => {
     const draft = { name: 'Ops', app: 'website', monitorIds: [1, 2], fields: { responseTime: ['duration'] } };
     expect(validateBulletinDraft(draft, [
-      { id: 1, name: 'one', app: 'website' }, { id: 2, name: 'two', app: 'mysql' }
+      monitor(1, 'one', 'website'), monitor(2, 'two', 'mysql')
     ], [{ name: 'responseTime', fields: ['duration'] }])).toContain('monitorIds');
-    expect(validateBulletinDraft(draft, [{ id: 1, name: 'one', app: 'website' }], [{ name: 'availability', fields: ['status'] }]))
+    expect(validateBulletinDraft(draft, [monitor(1, 'one', 'website')], [{ name: 'availability', fields: ['status'] }]))
       .toContain('fields');
-    expect(validateBulletinDraft({ ...draft, monitorIds: [99] }, [{ id: 1, name: 'one', app: 'website' }], [{ name: 'responseTime', fields: ['duration'] }]))
+    expect(validateBulletinDraft({ ...draft, monitorIds: [99] }, [monitor(1, 'one', 'website')], [{ name: 'responseTime', fields: ['duration'] }]))
       .toContain('monitorIds');
     expect(validateBulletinDraft({ ...draft, fields: { responseTime: ['stale'] } },
-      [{ id: 1, name: 'one', app: 'website' }, { id: 2, name: 'two', app: 'website' }],
+      [monitor(1, 'one', 'website'), monitor(2, 'two', 'website')],
       [{ name: 'responseTime', fields: ['duration'] }])).toContain('fields');
   });
 
@@ -34,9 +35,25 @@ describe('bulletin model', () => {
     })).toEqual({ id: 7, name: 'Ops', app: 'website', monitorIds: [1, 2], fields: { responseTime: ['duration'] } });
   });
 
+  it('matches monitor choices by name, label key, or label value', () => {
+    const monitor = {
+      id: 1, name: 'checkout-api', app: 'website', labels: { environment: 'production', team: 'payments' }
+    };
+
+    expect(bulletinMonitorMatchesSearch(monitor, 'CHECKOUT')).toBe(true);
+    expect(bulletinMonitorMatchesSearch(monitor, 'environment')).toBe(true);
+    expect(bulletinMonitorMatchesSearch(monitor, 'PAYMENTS')).toBe(true);
+    expect(bulletinMonitorMatchesSearch(monitor, 'staging')).toBe(false);
+    expect(bulletinMonitorMatchesSearch(monitor, '  ')).toBe(true);
+  });
+
   it('formats valid timestamps and safely hides empty or invalid values', () => {
     expect(formatBulletinTime(null, 'en-US')).toBe('—');
     expect(formatBulletinTime('not-a-date', 'en-US')).toBe('—');
     expect(formatBulletinTime('2026-07-17T16:41:46Z', 'en-US')).not.toContain('T16:41:46');
   });
 });
+
+function monitor(id: number, name: string, app: string) {
+  return { id, name, app, labels: {} };
+}

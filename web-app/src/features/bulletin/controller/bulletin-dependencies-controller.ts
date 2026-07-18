@@ -97,7 +97,12 @@ export function buildBulletinDependencyRecords(
     apps: (apps ?? []).filter(item => (
       Boolean(item.value) && item.value !== 'prometheus' && item.value !== '__system__'
     )),
-    monitors: (monitors ?? []).map(item => ({ id: item.id, name: item.name, app: item.app })),
+    monitors: (monitors ?? []).map(item => ({
+      id: item.id,
+      name: item.name,
+      app: item.app,
+      labels: item.labels ?? {}
+    })),
     metrics: (metricTree ?? []).map(item => ({
       name: item.metric,
       fields: item.children.map(field => field.field)
