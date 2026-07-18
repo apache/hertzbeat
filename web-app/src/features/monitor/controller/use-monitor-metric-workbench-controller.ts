@@ -14,14 +14,15 @@ import { useSearchParams } from 'react-router-dom';
 import { useSharedTimeOptional } from '@/shared/time';
 
 import {
-  classifyMonitorMetricReadError, loadFavoriteMetrics, loadHistoryMetric, loadMonitorMetricCatalog,
+  loadFavoriteMetrics, loadHistoryMetric, loadMonitorMetricCatalog,
   loadRealtimeMetric, updateFavoriteMetric, type Monitor, type MonitorDetailMetric,
 } from '../api/monitor-api';
 import {
-  monitorHistoryRows, monitorMetricHistoryRanges, monitorMetricOptions, monitorRealtimeRows,
+  monitorHistoryRows, monitorMetricHistoryRanges, monitorRealtimeRows,
   parseMonitorMetricHistory, type MonitorMetricCatalogEvidence, type MonitorMetricFavoriteEvidence, type MonitorMetricHistory,
-  type MonitorMetricRowsEvidence, type MonitorMetricWorkbenchController
+  type MonitorMetricWorkbenchController
 } from '../model/monitor-detail-model';
+import { catalogEvidence, favoriteEvidence, metricEvidence } from './monitor-metric-query-evidence';
 import { monitorQueryKeys } from './monitor-query-keys';
 
 export function useMonitorMetricWorkbenchController(monitor: Monitor | undefined,
@@ -80,7 +81,6 @@ export function useMonitorMetricWorkbenchController(monitor: Monitor | undefined
 }
 
 type Notifications = { success: (text: string) => unknown; error: (text: string) => unknown };
-type QueryEvidence<T> = { isPending: boolean; isError: boolean; error: unknown; data: T | undefined };
 
 function monitorSource(monitor: Monitor | undefined) {
   return monitor ? { id: monitor.id, app: monitor.app, scrape: monitor.scrape } : {};
@@ -89,24 +89,6 @@ function monitorSource(monitor: Monitor | undefined) {
 function selectedMetricKey(catalog: MonitorMetricCatalogEvidence, requested: string) {
   if (catalog.options.some(option => option.key === requested)) return requested;
   return catalog.options[0]?.key ?? '';
-}
-
-function catalogEvidence(query: QueryEvidence<{ metrics: MonitorDetailMetric[] }>,
-  embedded: MonitorDetailMetric[]): MonitorMetricCatalogEvidence {
-  if (query.isPending) return { kind: 'loading', options: [] };
-  if (query.isError) {
-    const references = embedded.map(item => item.name);
-    return references.length > 0 ? { kind: 'fallback', options: [], references }
-      : { kind: classifyMonitorMetricReadError(query.error), options: [] };
-  }
-  const options = monitorMetricOptions(query.data!.metrics);
-  return options.length > 0 ? { kind: 'ready', options } : { kind: 'empty', options: [] };
-}
-
-function favoriteEvidence(query: QueryEvidence<string[]>, metricKey: string): MonitorMetricFavoriteEvidence {
-  if (query.isPending) return { kind: 'loading' };
-  if (query.isError) return { kind: classifyMonitorMetricReadError(query.error) };
-  return { kind: 'ready', value: Boolean(metricKey && query.data!.includes(metricKey)) };
 }
 
 function useCanonicalMetricParams(input: {
@@ -208,14 +190,4 @@ function useFavoriteMutation(input: {
 
 function operationIsLocked(operation: { monitorId: number } | undefined, monitorId: number) {
   return operation?.monitorId === monitorId;
-}
-
-function metricEvidence<T, R>(query: {
-  isPending: boolean; isError: boolean; error: unknown; data: T | undefined;
-}, rows: (data: T) => R[]): MonitorMetricRowsEvidence<R> {
-  if (query.isPending) return { kind: 'loading', rows: [] };
-  if (query.isError) return { kind: classifyMonitorMetricReadError(query.error), rows: [] };
-  if (query.data === undefined) return { kind: 'empty', rows: [] };
-  const result = rows(query.data);
-  return result.length > 0 ? { kind: 'ready', rows: result } : { kind: 'empty', rows: [] };
 }

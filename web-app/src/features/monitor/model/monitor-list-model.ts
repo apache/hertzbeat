@@ -15,18 +15,17 @@
  * limitations under the License.
  */
 
-import type { RemotePageState } from '@/shared/remote-state';
+import type { RemotePageState, RemotePayloadState } from '@/shared/remote-state';
 
 import type { Monitor, MonitorAction } from '../api/monitor-api';
 import type { MonitorQuery } from './monitor-model';
 
 export type MonitorListEvidence = RemotePageState<Monitor, 'unavailable' | 'error'>;
 
-export type MonitorAppsEvidence =
-  | { kind: 'loading' }
-  | { kind: 'unavailable' }
-  | { kind: 'error' }
-  | { kind: 'ready'; options: Array<{ value: string; label: string }> };
+export type MonitorAppsEvidence = RemotePayloadState<
+  { options: Array<{ value: string; label: string }> },
+  'unavailable' | 'error'
+>;
 
 export type MonitorListViewState = {
   query: MonitorQuery;

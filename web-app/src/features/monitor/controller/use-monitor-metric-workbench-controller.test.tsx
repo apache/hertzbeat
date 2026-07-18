@@ -80,6 +80,16 @@ describe('useMonitorMetricWorkbenchController', () => {
     expect(api.loadRealtimeMetric).not.toHaveBeenCalled();
   });
 
+  it('treats a successful query without its required payload as invalid evidence', async () => {
+    api.loadMonitorMetricCatalog.mockResolvedValue(undefined);
+    api.loadFavoriteMetrics.mockResolvedValue(undefined);
+
+    const view = renderController(monitor(), [], '/monitors/7');
+
+    await waitFor(() => expect(view.result.current.controller.state.catalog.kind).toBe('error'));
+    await waitFor(() => expect(view.result.current.controller.state.favorite.kind).toBe('error'));
+  });
+
   it.each([
     [new ApiMessageError('storage', { status: 200, code: 15 }), 'unavailable'],
     [new MonitorContractError('bad'), 'error']

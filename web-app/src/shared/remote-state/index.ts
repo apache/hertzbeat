@@ -4,5 +4,6 @@ export type {
   OptionalRemoteValueState,
   RemoteCollectionState,
   RemotePageState,
+  RemotePayloadState,
   RemoteRecordState
 } from './remote-state-model';

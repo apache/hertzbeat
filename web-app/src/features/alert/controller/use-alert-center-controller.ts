@@ -20,7 +20,7 @@ import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { ApiMessageError } from '@/core/http/api-message';
-import type { RemotePageState } from '@/shared/remote-state';
+import type { RemotePageState, RemotePayloadState } from '@/shared/remote-state';
 
 import { loadAlertGroups, loadAlertSummary } from '../alert-api';
 import {
@@ -40,11 +40,10 @@ type DraftField = keyof AlertFilterDraft;
 
 export type AlertListState = RemotePageState<AlertGroup, 'unavailable' | 'error'>;
 
-export type AlertSummaryState =
-  | { kind: 'loading' }
-  | { kind: 'ready'; summary: AlertSummary }
-  | { kind: 'unavailable' }
-  | { kind: 'error' };
+export type AlertSummaryState = RemotePayloadState<
+  { summary: AlertSummary },
+  'unavailable' | 'error'
+>;
 
 type AlertCenterState = {
   draft: AlertFilterDraft;

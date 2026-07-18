@@ -10,6 +10,8 @@ import { useCreate, useDataProvider, useDelete, useList, useNotification, useUpd
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import type { RemotePayloadState } from '@/shared/remote-state';
+
 import { classifyNoticeReceiverError, testNoticeReceiver } from '../api/notice-receiver-api';
 import { createNoticeReceiverDraft, noticeReceiverDraftFromDetail,
   selectNoticeReceiverType, setNoticeReceiverSecretCleared, updateNoticeReceiverDraft,
@@ -21,10 +23,10 @@ import { useNoticeReceiverQueryController } from './notice-receiver-query-contro
 const resource = 'notice-receivers';
 const dataProviderName = 'notice-receivers';
 type FailureKind = 'missing' | 'invalid' | 'unavailable' | 'error';
-export type NoticeReceiverListState =
-  | { kind: 'loading' }
-  | { kind: 'ready'; records: NoticeReceiver[]; total: number }
-  | { kind: FailureKind };
+export type NoticeReceiverListState = RemotePayloadState<
+  { records: NoticeReceiver[]; total: number },
+  FailureKind
+>;
 
 export function useNoticeReceiverController() {
   const { t } = useTranslation();

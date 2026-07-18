@@ -20,7 +20,8 @@ import { describe, expect, it } from 'vitest';
 import type {
   OptionalRemoteValueState,
   RemoteCollectionState,
-  RemotePageState
+  RemotePageState,
+  RemotePayloadState
 } from './remote-state-model';
 
 describe('remote state model', () => {
@@ -42,6 +43,15 @@ describe('remote state model', () => {
     expect(readPageTotal({ kind: 'unavailable' })).toBeNull();
   });
 
+  it('supports a readable feature-specific payload name', () => {
+    const state: RemotePayloadState<{ summary: { total: number } }, 'unavailable' | 'error'> = {
+      kind: 'ready',
+      summary: { total: 3 }
+    };
+
+    expect(state.summary.total).toBe(3);
+  });
+
   it('rejects impossible success and failure shapes during typecheck', () => {
     // @ts-expect-error A ready value must carry its data.
     const missingData: OptionalRemoteValueState<string> = { kind: 'ready' };
@@ -49,8 +59,10 @@ describe('remote state model', () => {
     const failedWithData: OptionalRemoteValueState<string> = { kind: 'error', data: 'stale' };
     // @ts-expect-error A ready page must carry its total.
     const missingTotal: RemotePageState<string> = { kind: 'ready', records: [] };
+    // @ts-expect-error A ready named payload must carry the feature payload.
+    const missingPayload: RemotePayloadState<{ summary: string }> = { kind: 'ready' };
 
-    expect([missingData, failedWithData, missingTotal]).toHaveLength(3);
+    expect([missingData, failedWithData, missingTotal, missingPayload]).toHaveLength(4);
   });
 });
 

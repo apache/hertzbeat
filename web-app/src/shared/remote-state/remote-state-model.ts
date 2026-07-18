@@ -24,12 +24,17 @@ type IdleState = { kind: 'idle' };
 // Distribute a failure union so ordinary kind checks narrow to one branch.
 type FailureState<Failure extends RemoteFailureKind> =
   Failure extends RemoteFailureKind ? { kind: Failure } : never;
+type ReadyState<Payload extends object> = { kind: 'ready' } & Payload;
+
+/** A remote read whose ready branch keeps a feature-specific payload name. */
+export type RemotePayloadState<
+  Payload extends object,
+  Failure extends RemoteFailureKind = RemoteFailureKind
+> = LoadingState | FailureState<Failure> | ReadyState<Payload>;
 
 /** A single remote value. Successful data exists only in the ready branch. */
 type RemoteValueState<Data, Failure extends RemoteFailureKind = RemoteFailureKind> =
-  | LoadingState
-  | FailureState<Failure>
-  | { kind: 'ready'; data: Data };
+  RemotePayloadState<{ data: Data }, Failure>;
 
 /** A value that is not requested until the user selects its parent resource. */
 export type OptionalRemoteValueState<Data, Failure extends RemoteFailureKind = RemoteFailureKind> =
@@ -39,20 +44,14 @@ export type OptionalRemoteValueState<Data, Failure extends RemoteFailureKind = R
 
 /** A non-paginated collection with an explicit empty state. */
 export type RemoteCollectionState<Item, Failure extends RemoteFailureKind = RemoteFailureKind> =
-  | LoadingState
   | EmptyState
-  | FailureState<Failure>
-  | { kind: 'ready'; records: Item[] };
+  | RemotePayloadState<{ records: Item[] }, Failure>;
 
 /** A backend page whose total is meaningful only after a successful read. */
 export type RemotePageState<Item, Failure extends RemoteFailureKind = RemoteFailureKind> =
-  | LoadingState
   | EmptyState
-  | FailureState<Failure>
-  | { kind: 'ready'; records: Item[]; total: number };
+  | RemotePayloadState<{ records: Item[]; total: number }, Failure>;
 
 /** A named record payload for features that do not use the generic data field. */
 export type RemoteRecordState<Item, Failure extends RemoteFailureKind = RemoteFailureKind> =
-  | LoadingState
-  | FailureState<Failure>
-  | { kind: 'ready'; record: Item };
+  RemotePayloadState<{ record: Item }, Failure>;

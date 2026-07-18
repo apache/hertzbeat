@@ -22,6 +22,7 @@ import appsSchemaSource from './api/monitor-apps-schema.ts?raw';
 import detailSchemaSource from './api/monitor-detail-schema.ts?raw';
 import pageSchemaSource from './api/monitor-page-schema.ts?raw';
 import primitiveSchemaSource from './api/monitor-read-schema-primitives.ts?raw';
+import metricWorkbenchControllerSource from './controller/use-monitor-metric-workbench-controller.ts?raw';
 
 const requiredDirectories = ['api', 'model', 'controller', 'components', 'pages'] as const;
 const layerDirectories = [...requiredDirectories, 'hooks'] as const;
@@ -66,6 +67,10 @@ describe('Monitor feature boundaries', () => {
       expect(sourceLineCount(schema)).toBeLessThanOrEqual(250);
       expect(schema).not.toMatch(/export function\s+(?:record|text|integer)\b/);
     }
+  });
+
+  it('does not hide missing query payloads with non-null assertions', () => {
+    expect(metricWorkbenchControllerSource).not.toMatch(/query\.data!/);
   });
 });
 

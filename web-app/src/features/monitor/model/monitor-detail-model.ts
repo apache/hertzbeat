@@ -15,17 +15,17 @@
  * limitations under the License.
  */
 
+import type { RemotePayloadState } from '@/shared/remote-state';
+
 import type {
   MonitorDetail, MonitorDetailMetric, MonitorHistoryMetric, MonitorMetricOption, MonitorMetricValue,
   MonitorRealtimeMetric
 } from '../api/monitor-api';
 
-export type MonitorDetailEvidence =
-  | { kind: 'loading' }
-  | { kind: 'missing' }
-  | { kind: 'unavailable' }
-  | { kind: 'error' }
-  | { kind: 'ready'; detail: MonitorDetail };
+export type MonitorDetailEvidence = RemotePayloadState<
+  { detail: MonitorDetail },
+  'missing' | 'unavailable' | 'error'
+>;
 
 export type MonitorDetailViewState = { detail: MonitorDetailEvidence; returnTo: string };
 export type MonitorDetailViewActions = { back: () => void; edit: () => void };
@@ -53,11 +53,10 @@ export type MonitorMetricCatalogEvidence =
   | { kind: 'unavailable'; options: MonitorMetricOption[] }
   | { kind: 'error'; options: MonitorMetricOption[] }
   | { kind: 'ready'; options: MonitorMetricOption[] };
-export type MonitorMetricFavoriteEvidence =
-  | { kind: 'loading' }
-  | { kind: 'unavailable' }
-  | { kind: 'error' }
-  | { kind: 'ready'; value: boolean };
+export type MonitorMetricFavoriteEvidence = RemotePayloadState<
+  { value: boolean },
+  'unavailable' | 'error'
+>;
 export type MonitorMetricRowsEvidence<T> =
   | { kind: 'loading'; rows: T[] }
   | { kind: 'empty'; rows: T[] }
