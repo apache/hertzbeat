@@ -21,11 +21,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
-import { classifyAlertRuleReadError, loadAlertRule, loadAlertRules, previewAlertRule, saveAlertRule } from '../alert-rule-api';
+import { classifyAlertRuleReadError, loadAlertRule, previewAlertRule, saveAlertRule } from '../alert-rule-api';
 import {
-  AlertRuleContractError, alertRuleDraftFromDetail, buildAlertRulePayload, createAlertRuleDraft,
-  validateAlertRuleDraft, type AlertRule, type AlertRuleDraft, type AlertRuleKind, type AlertRulePage
+  alertRuleDraftFromDetail, buildAlertRulePayload, createAlertRuleDraft,
+  validateAlertRuleDraft, type AlertRuleDraft, type AlertRuleKind
 } from '../alert-rule-model';
+import { proveCreatedAlertRule, proveUpdatedAlertRule } from '../alert-rule-write-proof';
 
 export type AlertRuleEditorFailure = 'missing' | 'unavailable' | 'error';
 export type AlertRuleEditorDetailState =
@@ -114,8 +115,8 @@ export function useAlertRuleEditorController(mode: 'new' | 'edit') {
       await saveAlertRule(mode, draft);
       if (sourceRef.current !== source) return;
       const expected = buildAlertRulePayload(draft);
-      if (mode === 'edit') await proveUpdated(draft, expected);
-      else await proveCreated(expected);
+      if (mode === 'edit') await proveUpdatedAlertRule(draft, expected);
+      else await proveCreatedAlertRule(expected);
       if (sourceRef.current !== source) return;
       void message.success(t('alertRules.saveSuccess'));
       void navigate('/alerts/rules');
@@ -175,44 +176,4 @@ function canonicalId(value: string) {
   if (!/^[1-9]\d*$/.test(value)) return null;
   const id = Number(value);
   return Number.isSafeInteger(id) ? id : null;
-}
-
-async function proveUpdated(draft: AlertRuleDraft, expected: ReturnType<typeof buildAlertRulePayload>) {
-  if (draft.id === undefined) throw new AlertRuleContractError('update proof requires id');
-  const canonical = await loadAlertRule(draft.id);
-  requireConvergence(canonical, expected, draft.id);
-}
-
-async function proveCreated(expected: ReturnType<typeof buildAlertRulePayload>) {
-  const first = await loadAlertRules({ search: expected.name, pageIndex: 0, pageSize: 25 });
-  const pages: AlertRulePage[] = [first];
-  for (let pageIndex = 1; pageIndex < first.totalPages; pageIndex += 1) {
-    const page = await loadAlertRules({ search: expected.name, pageIndex, pageSize: 25 });
-    if (page.totalElements !== first.totalElements || page.totalPages !== first.totalPages) {
-      throw new AlertRuleContractError('create proof page changed while traversing');
-    }
-    pages.push(page);
-  }
-  const matches = pages.flatMap(page => page.content).filter(rule => rule.name === expected.name);
-  if (matches.length !== 1) throw new AlertRuleContractError('create proof requires one exact-name rule');
-  requireConvergence(matches[0] as AlertRule, expected);
-}
-
-function requireConvergence(actual: AlertRule, expected: ReturnType<typeof buildAlertRulePayload>, expectedId?: number) {
-  if (expectedId !== undefined && actual.id !== expectedId) throw new AlertRuleContractError('canonical id drifted');
-  const scalarFieldsMatch = [
-    actual.name === expected.name, actual.type === expected.type, actual.datasource === expected.datasource,
-    actual.expr === expected.expr, actual.period === expected.period, actual.times === expected.times,
-    actual.template === expected.template, actual.enable === expected.enable
-  ].every(Boolean);
-  if (!scalarFieldsMatch || !mapsEqual(actual.labels, expected.labels) || !mapsEqual(actual.annotations, expected.annotations)) {
-    throw new AlertRuleContractError('canonical writable fields did not converge');
-  }
-}
-
-function mapsEqual(actual: Record<string, string> | null, expected: Record<string, string> | null) {
-  if (actual === null || expected === null) return actual === expected;
-  const left = Object.keys(actual).sort();
-  const right = Object.keys(expected).sort();
-  return left.length === right.length && left.every((key, index) => key === right[index] && actual[key] === expected[key]);
 }

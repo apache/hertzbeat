@@ -17,12 +17,28 @@
 
 import { describe, expect, it } from 'vitest';
 
+import controllerSource from './controller/use-alert-rule-editor-controller.ts?raw';
+import proofSource from './alert-rule-write-proof.ts?raw';
+
 const modules = import.meta.glob('./alert-rule-editor-page.tsx', { eager: true, import: 'default', query: '?raw' });
 const source = Object.values(modules)[0] as string;
+
+function sourceLineCount(value: string) {
+  return value.replace(/\/\*[\s\S]*?\*\//g, '').split('\n')
+    .filter(line => line.trim() && !line.trim().startsWith('//')).length;
+}
 
 describe('Alert Rule editor architecture', () => {
   it('keeps TanStack, API, Router, and notification ownership out of the page', () => {
     expect(source).not.toMatch(/@tanstack\/react-query|alert-rule-api|react-router|App\.useApp/);
     expect(source).toContain('./controller/use-alert-rule-editor-controller');
+  });
+
+  it('keeps bounded write proof outside the route controller', () => {
+    expect(controllerSource).toContain("from '../alert-rule-write-proof'");
+    expect(controllerSource).not.toContain('loadAlertRules');
+    expect(proofSource).toContain('maximumAlertRuleCreateProofPages');
+    expect(sourceLineCount(controllerSource)).toBeLessThanOrEqual(200);
+    expect(sourceLineCount(proofSource)).toBeLessThanOrEqual(200);
   });
 });

@@ -118,6 +118,36 @@ describe('Alert Rule editor controller', () => {
     expect(routed.router.state.location.pathname).toBe('/alerts/rules');
   });
 
+  it.each([
+    ['non-finite', Number.NaN],
+    ['over-limit', 1_000_000]
+  ])('rejects %s create-proof page counts without starting an unbounded scan', async (_label, totalPages) => {
+    const routed = renderRouted(['/alerts/rules/new']);
+    act(() => routed.current().updateDraft(validDraft()));
+    const matching = {
+      ...persisted,
+      id: 9,
+      name: 'New Rule',
+      expr: 'usage > 90',
+      period: 300,
+      times: 3,
+      labels: {},
+      annotations: {},
+      template: 'Alert'
+    };
+    api.loadAlertRules
+      .mockResolvedValueOnce({ ...page({ search: 'New Rule', pageIndex: 0, pageSize: 25 }, [matching]),
+        totalElements: 25_000_000, totalPages })
+      .mockRejectedValueOnce(new Error('proof scan escaped its first page'));
+
+    await act(async () => routed.current().save());
+
+    expect(api.loadAlertRules).toHaveBeenCalledTimes(1);
+    expect(routed.router.state.location.pathname).toBe('/alerts/rules/new');
+    expect(routed.current().state.saveFailure).toBe('error');
+    expect(notify.success).not.toHaveBeenCalled();
+  });
+
   it('keeps create draft when canonical name is missing, duplicate, or drifting', async () => {
     for (const records of [[], [{ ...persisted, name: 'New Rule' }, { ...persisted, id: 8, name: 'New Rule' }],
       [{ ...persisted, name: 'New Rule', annotations: { drift: 'yes' } }]]) {
