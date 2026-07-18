@@ -33,6 +33,10 @@ const productionSources = import.meta.glob('./**/*.{ts,tsx}', {
   import: 'default',
   query: '?raw'
 });
+const exploreShellStyles = import.meta.glob(
+  './components/{explore-query-bar,explore-workbench,signal-result-frame}.module.css',
+  { eager: true, import: 'default', query: '?raw' }
+);
 
 describe('Explore feature boundaries', () => {
   it('keeps production source in explicit feature-local layers', () => {
@@ -62,6 +66,20 @@ describe('Explore feature boundaries', () => {
     expect(productionSources['./api/explore-api.ts']).toContain("from './explore-metric-schema'");
     expect(productionSources['./api/explore-api.ts']).toContain("from './explore-log-schema'");
     expect(productionSources['./api/explore-api.ts']).toContain("from './explore-trace-schema'");
+  });
+
+  it('keeps Explore shell colors on shared semantic tokens', () => {
+    const rawColors = Object.entries(exploreShellStyles).flatMap(([path, source]) =>
+      [...source.matchAll(/#[\da-f]{3,8}\b|\b(?:rgb|hsl)a?\s*\(/gi)].map(match => `${path}: ${match[0]}`)
+    );
+
+    expect(rawColors).toEqual([]);
+    expect(exploreShellStyles['./components/explore-query-bar.module.css']).toMatch(
+      /\.activeFilters[^}]*\{[^}]*background:\s*var\(--hb-bg-selected\)/s
+    );
+    expect(exploreShellStyles['./components/explore-workbench.module.css']).toMatch(
+      /\.logMode\s*\{[^}]*background:\s*var\(--hb-bg-raised\)/s
+    );
   });
 });
 

@@ -43,7 +43,7 @@
   display: flex;
   align-items: flex-end;
   min-height: 43px;
-  border-bottom: 1px solid #2a303b;
+  border-bottom: 1px solid var(--hb-border-subtle);
 }
 
 .signalNavigation {
@@ -58,7 +58,7 @@
   height: 43px;
   padding: 0;
   border: 0;
-  color: #9299a8;
+  color: var(--hb-text-muted);
   font: inherit;
   font-weight: 550;
   background: transparent;
@@ -67,7 +67,7 @@
 
 .signal:hover,
 .activeSignal {
-  color: #f1f3f7;
+  color: var(--hb-text-primary);
 }
 
 .activeSignal::after {
@@ -76,7 +76,7 @@
   bottom: -1px;
   left: 0;
   height: 2px;
-  background: #6f83f7;
+  background: var(--hb-brand-accent);
   content: '';
 }
 
@@ -85,9 +85,9 @@
   gap: 2px;
   margin: 0 0 7px auto;
   padding: 2px;
-  border: 1px solid #303744;
+  border: 1px solid var(--hb-border-subtle);
   border-radius: 5px;
-  background: #171b23;
+  background: var(--hb-bg-raised);
 }
 
 .logMode :global(.ant-btn) {

@@ -25,7 +25,7 @@
   justify-content: space-between;
   gap: 24px;
   min-height: 48px;
-  border-bottom: 1px solid #2a303b;
+  border-bottom: 1px solid var(--hb-border-subtle);
 }
 
 .identity {
@@ -36,14 +36,14 @@
 
 .identity h3 {
   margin: 0;
-  color: #e7eaf0;
+  color: var(--hb-text-primary);
   font-size: 14px;
   font-weight: 650;
 }
 
 .identity span,
 .meta dt {
-  color: #7f8797;
+  color: var(--hb-text-muted);
   font-size: 12px;
 }
 
@@ -70,7 +70,7 @@
 }
 
 .meta dd {
-  color: #cbd0da;
+  color: var(--hb-text-secondary);
   font-size: 12px;
   font-weight: 550;
 }
@@ -81,12 +81,12 @@
   align-items: center;
   justify-content: center;
   min-height: 260px;
-  color: #8c94a3;
+  color: var(--hb-text-muted);
 }
 
 .empty strong {
   margin-bottom: 5px;
-  color: #d6dae3;
+  color: var(--hb-text-primary);
   font-weight: 550;
 }
 

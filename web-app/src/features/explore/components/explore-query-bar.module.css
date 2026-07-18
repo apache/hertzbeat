@@ -17,7 +17,7 @@
 
 .form {
   padding: 16px 0;
-  border-bottom: 1px solid #2a303b;
+  border-bottom: 1px solid var(--hb-border-subtle);
 }
 
 .primaryRow {
@@ -40,7 +40,7 @@
 
 .advanced summary {
   width: max-content;
-  color: #9da5b4;
+  color: var(--hb-text-muted);
   font-size: 13px;
   cursor: pointer;
   user-select: none;
@@ -48,7 +48,7 @@
 
 .advanced[open] summary {
   margin-bottom: 10px;
-  color: #cbd0da;
+  color: var(--hb-text-secondary);
 }
 
 .advancedFields {
@@ -84,8 +84,8 @@
 
 .activeFilters :global(.ant-tag) {
   margin: 0;
-  border-color: #35405a;
-  background: #1c2230;
+  border-color: var(--hb-border-subtle);
+  background: var(--hb-bg-selected);
 }
 
 @media (max-width: 880px) {

@@ -1,20 +1,4 @@
 {
   "version": 1,
-  "entries": [
-    {
-      "rule": "feature-css-raw-color",
-      "path": "features/explore/components/explore-query-bar.module.css",
-      "allowedMax": 5
-    },
-    {
-      "rule": "feature-css-raw-color",
-      "path": "features/explore/components/explore-workbench.module.css",
-      "allowedMax": 6
-    },
-    {
-      "rule": "feature-css-raw-color",
-      "path": "features/explore/components/signal-result-frame.module.css",
-      "allowedMax": 6
-    }
-  ]
+  "entries": []
 }

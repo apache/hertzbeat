@@ -7,6 +7,7 @@
 
 import { describe, expect, it } from 'vitest';
 
+import globalStyles from '../styles.css?raw';
 import { createHertzBeatTheme } from './hertzbeat-theme';
 
 describe('HertzBeat semantic theme', () => {
@@ -29,5 +30,11 @@ describe('HertzBeat semantic theme', () => {
       headerBg: '#101218',
       siderBg: '#101218'
     });
+  });
+
+  it('defines selected surfaces independently from transient hover state', () => {
+    expect(globalStyles).toMatch(/:root\s*\{[^}]*--hb-bg-selected:\s*#211a26;/s);
+    expect(globalStyles).toMatch(/:root\[data-theme='default'\]\s*\{[^}]*--hb-bg-selected:\s*#f7f0f8;/s);
+    expect(globalStyles.match(/--hb-nav-selected:\s*var\(--hb-bg-selected\);/g)).toHaveLength(1);
   });
 });
