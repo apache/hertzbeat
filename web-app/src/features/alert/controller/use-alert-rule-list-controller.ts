@@ -30,10 +30,9 @@ import {
   AlertRuleContractError, buildAlertRuleTogglePayload, readAlertRuleQuery, writeAlertRuleQuery,
   type AlertRule, type AlertRulePage, type AlertRuleQuery
 } from '../alert-rule-model';
+import { alertRuleQueryKeys } from './alert-rule-query-keys';
 
 export type AlertRuleListState = RemotePageState<AlertRule, 'unavailable' | 'error'>;
-
-const listKey = (query: AlertRuleQuery) => ['alert-rules', query] as const;
 
 export function useAlertRuleListController() {
   const { t } = useTranslation();
@@ -48,10 +47,12 @@ export function useAlertRuleListController() {
   const queryChanged = searchState.source !== source;
   if (queryChanged) setSearchState({ source, value: query.search });
   const search = queryChanged ? query.search : searchState.value;
-  const listQuery = useQuery({ queryKey: listKey(query), queryFn: () => loadAlertRules(query), retry: false });
+  const listQuery = useQuery({
+    queryKey: alertRuleQueryKeys.list(query), queryFn: () => loadAlertRules(query), retry: false
+  });
   const updateQuery = (patch: Partial<AlertRuleQuery>) => setParams(writeAlertRuleQuery({ ...query, ...patch }));
   const rereadList = () => queryClient.fetchQuery({
-    queryKey: listKey(query), queryFn: () => loadAlertRules(query), staleTime: 0
+    queryKey: alertRuleQueryKeys.list(query), queryFn: () => loadAlertRules(query), staleTime: 0
   });
   const operate = async (operation: () => Promise<void>) => {
     setCommand('operating');

@@ -27,6 +27,7 @@ import {
   validateAlertRuleDraft, type AlertRuleDraft, type AlertRuleKind
 } from '../alert-rule-model';
 import { proveCreatedAlertRule, proveUpdatedAlertRule } from '../alert-rule-write-proof';
+import { alertRuleQueryKeys } from './alert-rule-query-keys';
 
 export type AlertRuleEditorFailure = 'missing' | 'unavailable' | 'error';
 export type AlertRuleEditorDetailState =
@@ -63,7 +64,7 @@ export function useAlertRuleEditorController(mode: 'new' | 'edit') {
   const initialDraft = useMemo(() => mode === 'new' ? createAlertRuleDraft() : null, [mode]);
   const [routeState, setRouteState] = useState<RouteState>(() => freshRouteState(routeSource, routeToken, initialDraft));
   const detailQuery = useQuery({
-    queryKey: ['alert-rule-editor', mode === 'edit' ? ruleId : 'new'],
+    queryKey: alertRuleQueryKeys.detail(validId),
     queryFn: () => loadAlertRule(validId as number),
     enabled: mode === 'edit' && validId !== null,
     retry: false

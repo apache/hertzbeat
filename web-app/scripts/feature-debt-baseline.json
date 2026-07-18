@@ -7,11 +7,6 @@
       "allowedMax": 210
     },
     {
-      "rule": "inline-query-key",
-      "path": "features/alert/controller/use-alert-rule-editor-controller.ts",
-      "allowedMax": 1
-    },
-    {
       "rule": "feature-module-size",
       "path": "features/alert/notice-template-page.tsx",
       "allowedMax": 235

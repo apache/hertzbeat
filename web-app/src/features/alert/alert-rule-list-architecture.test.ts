@@ -20,6 +20,7 @@ import { describe, expect, it } from 'vitest';
 import apiSource from './alert-rule-api.ts?raw';
 import modelSource from './alert-rule-model.ts?raw';
 import schemaSource from './alert-rule-schema.ts?raw';
+import controllerSource from './controller/use-alert-rule-list-controller.ts?raw';
 
 const modules = import.meta.glob('./alert-rule-list-page.tsx', { eager: true, import: 'default', query: '?raw' });
 const source = Object.values(modules)[0] as string;
@@ -45,5 +46,11 @@ describe('Alert Rule list architecture', () => {
   it('keeps query, API, Router, notification, and browser date ownership out of the page', () => {
     expect(source).not.toMatch(/@tanstack\/react-query|alert-rule-api|react-router|App\.useApp|Date\.parse|Intl\.DateTimeFormat/);
     expect(source).toContain('./controller/use-alert-rule-list-controller');
+  });
+
+  it('delegates list cache identity to the Alert Rule feature Query Key factory', () => {
+    expect(controllerSource).toContain('alertRuleQueryKeys.list(query)');
+    expect(controllerSource).not.toMatch(/const\s+listKey\s*=/);
+    expect(controllerSource).not.toMatch(/queryKey:\s*\[/);
   });
 });

@@ -41,4 +41,9 @@ describe('Alert Rule editor architecture', () => {
     expect(sourceLineCount(controllerSource)).toBeLessThanOrEqual(200);
     expect(sourceLineCount(proofSource)).toBeLessThanOrEqual(200);
   });
+
+  it('delegates detail cache identity to the Alert Rule feature Query Key factory', () => {
+    expect(controllerSource).toContain('alertRuleQueryKeys.detail(validId)');
+    expect(controllerSource).not.toMatch(/queryKey:\s*\[/);
+  });
 });
