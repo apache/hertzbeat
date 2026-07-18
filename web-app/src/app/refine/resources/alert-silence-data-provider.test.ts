@@ -87,7 +87,7 @@ describe('Alert Silence Refine data provider', () => {
   it('requires missing detail and authoritative list evidence after delete', async () => {
     api.loadAlertSilence
       .mockResolvedValueOnce(record)
-      .mockRejectedValueOnce(new ApiMessageError('missing', { code: 15, status: 200 }));
+      .mockRejectedValueOnce(new ApiMessageError('missing', { code: 3, status: 200 }));
     api.deleteAlertSilence.mockResolvedValue(undefined);
     api.loadAlertSilences.mockResolvedValue({ ...page, content: [], totalElements: 0, totalPages: 0 });
     await expect(alertSilenceDataProvider.deleteOne<AlertSilence>({
@@ -101,7 +101,7 @@ describe('Alert Silence Refine data provider', () => {
   });
 
   it('keeps missing, unavailable, and invalid-contract failures distinguishable', async () => {
-    api.loadAlertSilence.mockRejectedValueOnce(new ApiMessageError('missing', { code: 15, status: 200 }));
+    api.loadAlertSilence.mockRejectedValueOnce(new ApiMessageError('missing', { code: 3, status: 200 }));
     await expect(alertSilenceDataProvider.getOne({ resource: 'alert-silences', id: 7 }))
       .rejects.toMatchObject({ code: 'ALERT_SILENCE_MISSING', statusCode: 404 });
     api.loadAlertSilence.mockRejectedValueOnce(new ApiMessageError('gateway', { status: 503 }));

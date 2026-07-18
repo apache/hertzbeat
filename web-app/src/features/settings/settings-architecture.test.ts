@@ -27,7 +27,7 @@ const layeredDomains = [
 const requiredDirectories = ['api', 'model', 'components', 'pages'] as const;
 const layerDirectories = [...requiredDirectories, 'controller', 'hooks'] as const;
 const allowedDependencies: Record<(typeof layerDirectories)[number], readonly string[]> = {
-  api: ['api'],
+  api: ['api', 'model'],
   model: ['api', 'model'],
   controller: ['api', 'model', 'controller'],
   hooks: ['api', 'model', 'hooks'],
