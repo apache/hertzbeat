@@ -234,6 +234,22 @@ If a module reaches a limit, split it by responsibility. Do not evade a limit
 with compressed one-line JSX, chained ternaries, anonymous Promise chains, or a
 new catch-all utility file.
 
+`scripts/check-architecture.mjs` enforces the module limits above for every
+production file under `features/**`: pages use 150, components and controllers
+use 200, API and model modules use 250, and a feature-root `index.ts` uses 100.
+It counts non-empty, non-comment lines using lexical comment scanning for
+TypeScript/TSX and block-comment removal for CSS. Test and spec files are not
+production debt. The same gate rejects primitive wire-parser families in
+feature API modules, inline Query Key arrays anywhere in a feature, and raw
+hex/RGB/HSL colors in feature CSS. TypeScript rules inspect function and
+property AST nodes rather than matching source text; CSS colors are checked
+only after block comments are removed with line boundaries preserved.
+
+The 60-line function limit remains a required review constraint, but it is not
+yet machine-enforced. A later milestone must implement it with an AST-backed
+function identity and an exact-function baseline; regex-based function sizing
+is explicitly out of scope for the current gate.
+
 ## Testing contract
 
 Every behavior change starts with the smallest failing proof at the owning
@@ -265,3 +281,12 @@ is underway. It must obey all of these rules:
 
 The instrumentation pilot is the reference slice. It receives no debt
 exemptions when the pilot is declared complete.
+
+The repository baseline is `scripts/feature-debt-baseline.json`. Every entry is
+an exact `{ rule, path, allowedMax }` tuple: paths must name an existing file
+under `features/` and may not contain wildcards, parent traversal, backslashes,
+or absolute paths. `allowedMax` is the current violation count or module size,
+not a tolerance target. New paths and new rules fail, growth beyond the exact
+ceiling fails, and a fully repaired entry becomes stale and fails until it is
+removed. Partial reductions pass without changing the entry, but review must
+only lower or remove ceilings; baseline values must never increase.

@@ -1,0 +1,160 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "rule": "feature-module-size",
+      "path": "features/alert/alert-center-page.tsx",
+      "allowedMax": 179
+    },
+    {
+      "rule": "inline-query-key",
+      "path": "features/alert/controller/use-alert-center-controller.ts",
+      "allowedMax": 2
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/alert/controller/use-alert-group-controller.ts",
+      "allowedMax": 210
+    },
+    {
+      "rule": "inline-query-key",
+      "path": "features/alert/controller/use-alert-rule-editor-controller.ts",
+      "allowedMax": 1
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/alert/notice-rule/controller/notice-rule-controller.ts",
+      "allowedMax": 239
+    },
+    {
+      "rule": "inline-query-key",
+      "path": "features/alert/notice-rule/controller/notice-rule-controller.ts",
+      "allowedMax": 2
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/alert/notice-template-page.tsx",
+      "allowedMax": 235
+    },
+    {
+      "rule": "feature-css-raw-color",
+      "path": "features/auth/login-page.module.css",
+      "allowedMax": 3
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/bulletin/controller/bulletin-controller.ts",
+      "allowedMax": 211
+    },
+    {
+      "rule": "inline-query-key",
+      "path": "features/bulletin/controller/bulletin-controller.ts",
+      "allowedMax": 7
+    },
+    {
+      "rule": "inline-query-key",
+      "path": "features/dashboard/controller/use-dashboard-controller.ts",
+      "allowedMax": 1
+    },
+    {
+      "rule": "feature-css-raw-color",
+      "path": "features/explore/components/explore-query-bar.module.css",
+      "allowedMax": 5
+    },
+    {
+      "rule": "feature-css-raw-color",
+      "path": "features/explore/components/explore-workbench.module.css",
+      "allowedMax": 6
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/explore/components/log-result.tsx",
+      "allowedMax": 255
+    },
+    {
+      "rule": "feature-css-raw-color",
+      "path": "features/explore/components/signal-result-frame.module.css",
+      "allowedMax": 6
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/explore/components/trace-result.tsx",
+      "allowedMax": 211
+    },
+    {
+      "rule": "inline-query-key",
+      "path": "features/explore/controller/use-explore-page-controller.ts",
+      "allowedMax": 1
+    },
+    {
+      "rule": "inline-query-key",
+      "path": "features/explore/controller/use-trace-detail-controller.ts",
+      "allowedMax": 2
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/explore/model/explore-signal-contract.ts",
+      "allowedMax": 260
+    },
+    {
+      "rule": "primitive-wire-parser",
+      "path": "features/monitor/api/monitor-contract-parser.ts",
+      "allowedMax": 3
+    },
+    {
+      "rule": "inline-query-key",
+      "path": "features/monitor/controller/use-monitor-detail-controller.ts",
+      "allowedMax": 1
+    },
+    {
+      "rule": "inline-query-key",
+      "path": "features/monitor/controller/use-monitor-list-controller.ts",
+      "allowedMax": 1
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/monitor/controller/use-monitor-metric-workbench-controller.ts",
+      "allowedMax": 202
+    },
+    {
+      "rule": "inline-query-key",
+      "path": "features/monitor/controller/use-monitor-metric-workbench-controller.ts",
+      "allowedMax": 4
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/monitor/model/monitor-editor-model.ts",
+      "allowedMax": 305
+    },
+    {
+      "rule": "inline-query-key",
+      "path": "features/settings/message-server/controller/use-message-server-controller.ts",
+      "allowedMax": 2
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/settings/token/controller/token-resource-controller.ts",
+      "allowedMax": 207
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/settings/token/pages/token-page.tsx",
+      "allowedMax": 182
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/status/management/controller/use-status-management-controller.ts",
+      "allowedMax": 252
+    },
+    {
+      "rule": "feature-module-size",
+      "path": "features/status/management/model/status-management-contract.ts",
+      "allowedMax": 258
+    },
+    {
+      "rule": "inline-query-key",
+      "path": "features/status/public/pages/public-status-page.tsx",
+      "allowedMax": 3
+    }
+  ]
+}

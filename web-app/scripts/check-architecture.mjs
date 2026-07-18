@@ -20,6 +20,8 @@ import { basename, extname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import process from 'node:process';
 
+import { checkFeatureConventions } from './feature-conventions.mjs';
+
 const requiredDirectories = ['app', 'core', 'layout', 'features', 'shared', join('assets', 'i18n')];
 const forbiddenSegments = new Set(['compat', 'controllers', 'deprecated', 'legacy', 'view-models']);
 const sourceExtensions = new Set(['.ts', '.tsx', '.css']);
@@ -40,6 +42,8 @@ export function checkArchitecture(projectRoot) {
     if (!sourceExtensions.has(extname(path))) continue;
     validateSource(path, sourceRoot, failures);
   }
+
+  failures.push(...checkFeatureConventions(projectRoot));
 
   return failures;
 }
@@ -80,24 +84,6 @@ function validateSource(path, sourceRoot, failures) {
     failures.push(`${normalizedPath}: instrumentation cannot log or analyze onboarding state or secrets`);
   }
 
-  if (!isTest(path)
-    && normalizedPath.startsWith('features/instrumentation/api/')
-    && /\bfunction\s+(?:array|boolean|enumValue|integer|number|object|record|string|stringArray|text)\s*\(/.test(source)) {
-    failures.push(`${normalizedPath}: use runtime schemas instead of local primitive wire parsers`);
-  }
-
-  if (!isTest(path)
-    && normalizedPath.startsWith('features/instrumentation/')
-    && /\bqueryKey\s*:\s*\[/.test(source)) {
-    failures.push(`${normalizedPath}: use the instrumentation Query Key factory`);
-  }
-
-  if (!isTest(path)
-    && normalizedPath.startsWith('features/instrumentation/')
-    && extname(path) === '.css'
-    && /#[0-9a-f]{3,8}\b|rgba?\s*\(/i.test(source)) {
-    failures.push(`${normalizedPath}: use shared semantic color tokens`);
-  }
 }
 
 function validateSourceFileName(path, normalizedPath, failures) {
@@ -123,18 +109,13 @@ function validateReadableTsx(path, normalizedPath, source, failures) {
 }
 
 function validateModuleSize(path, normalizedPath, source, failures) {
-  if (isTest(path)) return;
+  if (isTest(path) || normalizedPath.startsWith('features/')) return;
   const lines = source.trimEnd().split(/\r?\n/).length;
   const limit = lineLimit(normalizedPath);
   if (lines > limit) failures.push(`${normalizedPath}: ${lines} lines exceeds ${limit}`);
 }
 
 function lineLimit(normalizedPath) {
-  if (normalizedPath.startsWith('features/instrumentation/')) {
-    if (/-page\.[jt]sx?$/.test(normalizedPath) || /\/pages\/[^/]+\.[jt]sx?$/.test(normalizedPath)) return 150;
-    if (/\/(?:components|controller)\//.test(normalizedPath)) return 200;
-    if (/\/(?:api|model)\//.test(normalizedPath)) return 250;
-  }
   if (/-page\.[jt]sx?$/.test(normalizedPath) || /\/pages\/[^/]+\.[jt]sx?$/.test(normalizedPath)) return 300;
   if (/\/(?:api|components|controller|hooks|model)\//.test(normalizedPath)) return 400;
   if (/\/index\.[jt]sx?$/.test(normalizedPath) && normalizedPath.startsWith('features/')) return 100;
