@@ -21,6 +21,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
+import type { RemotePageState } from '@/shared/remote-state';
+
 import {
   classifyAlertInhibitReadError, deleteAlertInhibit, loadAlertInhibit, loadAlertInhibits,
   saveAlertInhibit, updateAlertInhibitEnabled
@@ -33,12 +35,7 @@ import {
 } from '../alert-inhibit-model';
 
 export type AlertInhibitFailure = 'missing' | 'unavailable' | 'error';
-export type AlertInhibitListState =
-  | { kind: 'loading' }
-  | { kind: 'empty' }
-  | { kind: 'unavailable' }
-  | { kind: 'error' }
-  | { kind: 'ready'; records: AlertInhibit[]; total: number };
+export type AlertInhibitListState = RemotePageState<AlertInhibit, 'unavailable' | 'error'>;
 export type AlertInhibitDetailState =
   | { kind: 'idle' }
   | { kind: 'loading'; id: number }

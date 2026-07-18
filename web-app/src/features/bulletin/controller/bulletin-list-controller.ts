@@ -3,16 +3,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, type Dispatch, type SetStateAction } from 'react';
 
+import type { RemotePageState } from '@/shared/remote-state';
+
 import { classifyBulletinError, loadBulletins } from '../api/bulletin-api';
 import type { Bulletin, BulletinQuery } from '../model/bulletin-model';
 import { bulletinQueryKeys } from './bulletin-query-keys';
 
 type BulletinListFailure = 'invalid' | 'unavailable' | 'error';
-export type BulletinListState =
-  | { kind: 'loading' }
-  | { kind: BulletinListFailure }
-  | { kind: 'empty' }
-  | { kind: 'ready'; records: Bulletin[]; total: number };
+export type BulletinListState = RemotePageState<Bulletin, BulletinListFailure>;
 
 export function useBulletinListController(query: BulletinQuery) {
   const queryKey = bulletinQueryKeys.list(query);

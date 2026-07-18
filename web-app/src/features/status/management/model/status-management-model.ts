@@ -15,24 +15,13 @@
  * limitations under the License.
  */
 
+import type { RemoteCollectionState, RemotePageState, RemoteRecordState } from '@/shared/remote-state';
+
 import type { StatusComponent, StatusIncident } from './status-management-contract';
 
-export type StatusRecordState<T> =
-  | { kind: 'loading' }
-  | { kind: 'missing' }
-  | { kind: 'unavailable' }
-  | { kind: 'error' }
-  | { kind: 'ready'; record: T };
-
-export type StatusCollectionState<T> =
-  | { kind: 'loading' }
-  | { kind: 'empty' }
-  | { kind: 'unavailable' }
-  | { kind: 'error' }
-  | { kind: 'ready'; records: T[] };
-
-export type StatusIncidentCollectionState<T> = Exclude<StatusCollectionState<T>, { kind: 'ready' }>
-  | { kind: 'ready'; records: T[]; total: number };
+export type StatusRecordState<T> = RemoteRecordState<T, 'missing' | 'unavailable' | 'error'>;
+export type StatusCollectionState<T> = RemoteCollectionState<T, 'unavailable' | 'error'>;
+export type StatusIncidentCollectionState<T> = RemotePageState<T, 'unavailable' | 'error'>;
 
 export { isStatusOrgNotFound } from '@/features/status/shared/status-error-model';
 

@@ -21,6 +21,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
+import type { RemotePageState } from '@/shared/remote-state';
+
 import {
   classifyAlertGroupReadError,
   deleteAlertGroup,
@@ -45,12 +47,7 @@ import {
 } from '../alert-group-model';
 
 export type AlertGroupFailure = 'missing' | 'unavailable' | 'error';
-export type AlertGroupListState =
-  | { kind: 'loading' }
-  | { kind: 'empty' }
-  | { kind: 'unavailable' }
-  | { kind: 'error' }
-  | { kind: 'ready'; records: AlertGroupConverge[]; total: number };
+export type AlertGroupListState = RemotePageState<AlertGroupConverge, 'unavailable' | 'error'>;
 export type AlertGroupDetailState =
   | { kind: 'idle' }
   | { kind: 'loading'; id: number }

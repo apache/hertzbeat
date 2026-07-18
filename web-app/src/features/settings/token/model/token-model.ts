@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import type { RemoteCollectionState } from '@/shared/remote-state';
+
 export const tokenResourceName = 'tokens';
 
 export type TokenScope = 'api-admin' | 'otlp-ingest' | 'readonly-query';
@@ -44,12 +46,7 @@ export type GeneratedTokenReceipt = {
   token: string;
 };
 
-export type TokenListState =
-  | { kind: 'loading' }
-  | { kind: 'unavailable' }
-  | { kind: 'error' }
-  | { kind: 'empty' }
-  | { kind: 'ready'; records: TokenResourceRecord[] };
+export type TokenListState = RemoteCollectionState<TokenResourceRecord, 'unavailable' | 'error'>;
 
 export const tokenScopeDefinitions = [
   { value: 'api-admin', labelKey: 'token.scope.apiAdmin' },

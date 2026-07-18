@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import type { RemotePageState } from '@/shared/remote-state';
+
 import { formatLabelMatchers, parseLabelMatchers } from '../../alert-label-matchers';
 import type { NoticeReceiverOption } from '../../notice-receiver/model/notice-receiver-model';
 import type { NoticeTemplate } from '../../notice-template-model';
@@ -42,11 +44,7 @@ export type NoticeRule = {
   gmtUpdate?: string | number | null;
 };
 
-export type NoticeRuleListState =
-  | { kind: 'loading' }
-  | { kind: 'ready'; records: NoticeRule[]; total: number }
-  | { kind: 'empty' }
-  | { kind: 'missing' | 'invalid' | 'unavailable' | 'error' };
+export type NoticeRuleListState = RemotePageState<NoticeRule>;
 
 export type NoticeRuleDraft = {
   id?: number;

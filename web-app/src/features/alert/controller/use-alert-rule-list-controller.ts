@@ -21,6 +21,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import type { RemotePageState } from '@/shared/remote-state';
+
 import {
   classifyAlertRuleReadError, deleteAlertRules, loadAlertRule, loadAlertRules, updateAlertRuleEnabled
 } from '../alert-rule-api';
@@ -29,12 +31,7 @@ import {
   type AlertRule, type AlertRulePage, type AlertRuleQuery
 } from '../alert-rule-model';
 
-export type AlertRuleListState =
-  | { kind: 'loading' }
-  | { kind: 'empty' }
-  | { kind: 'unavailable' }
-  | { kind: 'error' }
-  | { kind: 'ready'; records: AlertRule[]; total: number };
+export type AlertRuleListState = RemotePageState<AlertRule, 'unavailable' | 'error'>;
 
 const listKey = (query: AlertRuleQuery) => ['alert-rules', query] as const;
 

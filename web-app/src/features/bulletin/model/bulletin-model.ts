@@ -1,5 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
+import type { OptionalRemoteValueState } from '@/shared/remote-state';
+
 export const bulletinPageSizes = [8, 15, 25] as const;
 
 export type BulletinQuery = { search: string; pageIndex: number; pageSize: number };
@@ -14,6 +16,10 @@ export type BulletinMetricField = { key: string; unit: string; value: string | n
 export type BulletinMetric = { name: string; fields: BulletinMetricField[][] };
 export type BulletinMetricsRow = { monitorName: string; monitorId: number; host: string; metrics: BulletinMetric[] };
 export type BulletinMetrics = { name: string; content: BulletinMetricsRow[] };
+export type BulletinMetricsState = OptionalRemoteValueState<
+  BulletinMetrics,
+  'missing' | 'invalid' | 'unavailable' | 'error'
+>;
 
 export function readBulletinQuery(params: URLSearchParams): BulletinQuery {
   const pageIndex = Number.parseInt(params.get('pageIndex') ?? '', 10);

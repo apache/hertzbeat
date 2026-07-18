@@ -2,17 +2,15 @@
 
 import { Alert, Empty, Spin, Table, Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
-import type { BulletinMetrics } from '../model/bulletin-model';
+import type { BulletinMetricsState } from '../model/bulletin-model';
 
-type State = { kind: 'idle' | 'loading' | 'empty' | 'ready' | 'missing' | 'invalid' | 'unavailable' | 'error'; data?: BulletinMetrics };
-
-export function BulletinMetricsPanel({ state }: { state: State }) {
+export function BulletinMetricsPanel({ state }: { state: BulletinMetricsState }) {
   const { t } = useTranslation();
   if (state.kind === 'idle') return <Empty description={t('bulletin.metrics.select')} />;
   if (state.kind === 'loading') return <Spin />;
   if (state.kind === 'empty') return <Empty description={t('bulletin.metrics.empty')} />;
-  if (state.kind !== 'ready' && !state.data) return <Alert type="error" showIcon message={t(`bulletin.metrics.${state.kind}`)} />;
-  const data = state.data!;
+  if (state.kind !== 'ready') return <Alert type="error" showIcon message={t(`bulletin.metrics.${state.kind}`)} />;
+  const data = state.data;
   const cells = data.content.flatMap(row => row.metrics.flatMap(metric => metric.fields.flatMap(group =>
     group.map(field => ({
       key: `${row.monitorId}-${row.host}-${metric.name}-${field.key}`, monitor: row.monitorName, host: row.host,

@@ -15,14 +15,11 @@
  * limitations under the License.
  */
 
+import type { RemotePageState } from '@/shared/remote-state';
+
 import type { AlertSilence, AlertSilenceDraft, AlertSilenceQuery } from './alert-silence-model';
 
-export type AlertSilenceListEvidence =
-  | { kind: 'loading' }
-  | { kind: 'empty' }
-  | { kind: 'unavailable' }
-  | { kind: 'error' }
-  | { kind: 'ready'; records: AlertSilence[]; total: number };
+export type AlertSilenceListEvidence = RemotePageState<AlertSilence, 'unavailable' | 'error'>;
 
 export type AlertSilenceDetailFailure = 'missing' | 'unavailable' | 'error';
 export type AlertSilenceDetailState =

@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import type { RemotePageState } from '@/shared/remote-state';
+
 import { receiverTypeDefinitions, type NoticeReceiverType } from './notice-receiver/model/notice-receiver-model';
 
 export const noticeTemplatePageSizes = [8, 15, 25] as const;
@@ -43,12 +45,10 @@ export type NoticeTemplatePage = {
   number: number;
   size: number;
 };
-export type NoticeTemplateListState =
-  | { kind: 'loading' }
-  | { kind: 'empty' }
-  | { kind: 'unavailable' }
-  | { kind: 'error' }
-  | { kind: 'ready'; records: NoticeTemplateResourceRecord[]; total: number };
+export type NoticeTemplateListState = RemotePageState<
+  NoticeTemplateResourceRecord,
+  'unavailable' | 'error'
+>;
 
 export class NoticeTemplateContractError extends Error {
   constructor() {

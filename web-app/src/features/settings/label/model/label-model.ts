@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import type { RemotePageState } from '@/shared/remote-state';
+
 export type LabelRecord = {
   id: number;
   name: string;
@@ -47,12 +49,7 @@ export class LabelContractError extends Error {
   }
 }
 
-export type LabelListState =
-  | { kind: 'loading' }
-  | { kind: 'empty' }
-  | { kind: 'unavailable' }
-  | { kind: 'error' }
-  | { kind: 'ready'; records: LabelRecord[]; total: number };
+export type LabelListState = RemotePageState<LabelRecord, 'unavailable' | 'error'>;
 
 export function buildLabelDisplayName(label: Pick<LabelRecord, 'name' | 'tagValue'>) {
   const value = label.tagValue?.trim();

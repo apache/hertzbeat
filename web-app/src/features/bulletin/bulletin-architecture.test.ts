@@ -2,6 +2,7 @@
 
 import { describe, expect, it } from 'vitest';
 import apiSource from './api/bulletin-api.ts?raw';
+import metricsSource from './components/bulletin-metrics.tsx?raw';
 import controllerSource from './controller/bulletin-controller.ts?raw';
 import queryControllerSource from './controller/bulletin-query-controller.ts?raw';
 import baselineSource from '../../../scripts/feature-debt-baseline.json?raw';
@@ -56,6 +57,12 @@ describe('bulletin architecture', () => {
   it('keeps the query controller in ordinary readable statements', () => {
     expect(queryControllerSource).not.toMatch(/useEffect\(\(\) => \{[^\n]+\}/);
     expect(queryControllerSource).not.toMatch(/return \{[^\n]+query[^\n]+search[^\n]+\}/);
+  });
+
+  it('uses the shared strict remote state instead of a component-local shape', () => {
+    expect(metricsSource).toContain('BulletinMetricsState');
+    expect(metricsSource).not.toMatch(/type\s+State\s*=/);
+    expect(metricsSource).not.toMatch(/state\.data!/);
   });
 });
 

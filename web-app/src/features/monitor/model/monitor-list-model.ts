@@ -15,15 +15,12 @@
  * limitations under the License.
  */
 
+import type { RemotePageState } from '@/shared/remote-state';
+
 import type { Monitor, MonitorAction } from '../api/monitor-api';
 import type { MonitorQuery } from './monitor-model';
 
-export type MonitorListEvidence =
-  | { kind: 'loading' }
-  | { kind: 'empty' }
-  | { kind: 'unavailable' }
-  | { kind: 'error' }
-  | { kind: 'ready'; records: Monitor[]; total: number };
+export type MonitorListEvidence = RemotePageState<Monitor, 'unavailable' | 'error'>;
 
 export type MonitorAppsEvidence =
   | { kind: 'loading' }
