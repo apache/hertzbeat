@@ -3,16 +3,6 @@
   "entries": [
     {
       "rule": "feature-module-size",
-      "path": "features/alert/alert-center-page.tsx",
-      "allowedMax": 179
-    },
-    {
-      "rule": "inline-query-key",
-      "path": "features/alert/controller/use-alert-center-controller.ts",
-      "allowedMax": 2
-    },
-    {
-      "rule": "feature-module-size",
       "path": "features/alert/controller/use-alert-group-controller.ts",
       "allowedMax": 210
     },

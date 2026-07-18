@@ -20,38 +20,26 @@ import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { ApiMessageError } from '@/core/http/api-message';
-import type { RemotePageState, RemotePayloadState } from '@/shared/remote-state';
 
 import { loadAlertGroups, loadAlertSummary } from '../alert-api';
 import {
   AlertContractError,
   readAlertQuery,
   writeAlertQuery,
-  type AlertGroup,
   type AlertPage,
   type AlertQuery,
   type AlertSeverity,
   type AlertStatusFilter,
   type AlertSummary
 } from '../alert-model';
-
-type AlertFilterDraft = Pick<AlertQuery, 'search' | 'serviceName' | 'serviceNamespace' | 'environment'>;
-type DraftField = keyof AlertFilterDraft;
-
-export type AlertListState = RemotePageState<AlertGroup, 'unavailable' | 'error'>;
-
-export type AlertSummaryState = RemotePayloadState<
-  { summary: AlertSummary },
-  'unavailable' | 'error'
->;
-
-type AlertCenterState = {
-  draft: AlertFilterDraft;
-  list: AlertListState;
-  query: AlertQuery;
-  refreshing: boolean;
-  summary: AlertSummaryState;
-};
+import type {
+  AlertCenterState,
+  AlertDraftField,
+  AlertFilterDraft,
+  AlertListState,
+  AlertSummaryState
+} from '../model/alert-center-view-model';
+import { alertCenterQueryKeys } from './alert-center-query-keys';
 
 export function useAlertCenterController() {
   const navigate = useNavigate();
@@ -65,18 +53,18 @@ export function useAlertCenterController() {
   const draft = queryChanged ? queryDraft : draftState.value;
 
   const summaryQuery = useQuery({
-    queryKey: ['alert-summary'],
+    queryKey: alertCenterQueryKeys.summary(),
     queryFn: loadAlertSummary
   });
   const listQuery = useQuery({
-    queryKey: ['alert-groups', query],
+    queryKey: alertCenterQueryKeys.groups(query),
     queryFn: () => loadAlertGroups(query)
   });
 
   const updateQuery = (patch: Partial<AlertQuery>) => {
     setParams(writeAlertQuery({ ...query, ...patch }));
   };
-  const setDraft = (field: DraftField, value: string) => {
+  const setDraft = (field: AlertDraftField, value: string) => {
     setDraftState(current => ({ ...current, value: { ...draft, [field]: value } }));
   };
   const submitFilters = () => {

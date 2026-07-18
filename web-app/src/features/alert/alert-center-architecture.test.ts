@@ -18,6 +18,7 @@
 import { describe, expect, it } from 'vitest';
 
 import apiSource from './alert-api.ts?raw';
+import controllerSource from './controller/use-alert-center-controller.ts?raw';
 import modelSource from './alert-model.ts?raw';
 
 const page = import.meta.glob('./alert-center-page.tsx', { eager: true, import: 'default', query: '?raw' });
@@ -37,12 +38,24 @@ describe('Alert Center architecture', () => {
     expect(source).toContain("./controller/use-alert-center-controller");
   });
 
+  it('keeps page presentation and Query Key identity in their owning modules', () => {
+    expect(source).not.toMatch(/function (?:buildColumns|SummaryStrip|AlertResults)\b/);
+    expect(source).toContain("./components/alert-center-toolbar");
+    expect(source).toContain("./components/alert-center-summary");
+    expect(source).toContain("./components/alert-center-results");
+    expect(controllerSource).toContain('alertCenterQueryKeys.summary()');
+    expect(controllerSource).toContain('alertCenterQueryKeys.groups(query)');
+    expect(controllerSource).not.toMatch(/queryKey:\s*\[/);
+  });
+
   it('keeps the page dependency surface limited to presentation, controller, and model modules', () => {
     const localImports = [...source.matchAll(/from\s+['"](\.\/[^'"]+)['"]/g)].map(match => match[1]);
     expect(localImports.filter(path => ![
       './alert-center-page.module.css',
       './alert-management-nav',
-      './alert-model',
+      './components/alert-center-results',
+      './components/alert-center-summary',
+      './components/alert-center-toolbar',
       './controller/use-alert-center-controller'
     ].includes(path ?? ''))).toEqual([]);
   });
