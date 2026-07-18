@@ -39,27 +39,27 @@ function buildAlertInhibitListPath(query: AlertInhibitQuery) {
 }
 
 export async function loadAlertInhibits(query: AlertInhibitQuery) {
-  const response = await apiMessageGet<unknown>(buildAlertInhibitListPath(query));
+  const response = await apiMessageGet(buildAlertInhibitListPath(query));
   return parseAlertInhibitPage(response, query);
 }
 
 export async function loadAlertInhibit(id: number) {
-  const response = await apiMessageGet<unknown>(`/api/alert/inhibit/${id}`);
+  const response = await apiMessageGet(`/api/alert/inhibit/${id}`);
   return parseAlertInhibitDetail(response);
 }
 
 export async function saveAlertInhibit(draft: AlertInhibitDraft): Promise<void> {
   const payload = buildAlertInhibitPayload(draft);
-  if (draft.id) await apiMessagePut<unknown>('/api/alert/inhibit', payload);
-  else await apiMessagePost<unknown>('/api/alert/inhibit', payload);
+  if (draft.id) await apiMessagePut('/api/alert/inhibit', payload);
+  else await apiMessagePost('/api/alert/inhibit', payload);
 }
 
 export async function deleteAlertInhibit(id: number): Promise<void> {
-  await apiMessageDelete<unknown>(`/api/alert/inhibits?ids=${id}`);
+  await apiMessageDelete(`/api/alert/inhibits?ids=${id}`);
 }
 
 export async function updateAlertInhibitEnabled(inhibit: AlertInhibit, enable: boolean): Promise<void> {
-  await apiMessagePut<unknown>('/api/alert/inhibit', buildAlertInhibitTogglePayload(inhibit, enable));
+  await apiMessagePut('/api/alert/inhibit', buildAlertInhibitTogglePayload(inhibit, enable));
 }
 
 export function classifyAlertInhibitReadError(reason: unknown): 'missing' | 'unavailable' | 'error' {

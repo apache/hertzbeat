@@ -17,17 +17,23 @@
 
 import { apiMessageGet, apiMessagePost } from '@/core/http/api-message';
 
-export type SystemConfigValue = { locale: string; timeZoneId: string; theme: string };
-export type TimezoneOption = { zoneId: string; offset: string; displayName: string };
+import {
+  parseSystemConfig,
+  parseSystemConfigMutationResult,
+  parseTimezoneOptions
+} from './system-config-schema';
 
-export function loadSystemConfig() {
-  return apiMessageGet<SystemConfigValue | null>('/api/config/system');
+export type { SystemConfigValue, TimezoneOption } from './system-config-schema';
+import type { SystemConfigValue } from './system-config-schema';
+
+export async function loadSystemConfig() {
+  return parseSystemConfig(await apiMessageGet('/api/config/system'));
 }
 
-export function loadTimezones() {
-  return apiMessageGet<TimezoneOption[]>('/api/config/timezones');
+export async function loadTimezones() {
+  return parseTimezoneOptions(await apiMessageGet('/api/config/timezones'));
 }
 
-export function saveSystemConfig(config: SystemConfigValue) {
-  return apiMessagePost<string>('/api/config/system', config);
+export async function saveSystemConfig(config: SystemConfigValue) {
+  return parseSystemConfigMutationResult(await apiMessagePost('/api/config/system', config));
 }

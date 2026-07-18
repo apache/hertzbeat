@@ -21,6 +21,6 @@ export function buildMonitorAppHierarchyPath(app: string, locale: string) {
 export async function loadMonitorAppHierarchy(app: string, locale: string, signal?: AbortSignal) {
   const requestedApp = normalizeHierarchyInput(app);
   const path = buildMonitorAppHierarchyPath(requestedApp, locale);
-  const value = await apiMessageGet<unknown>(path, signal ? { signal } : undefined);
+  const value = await apiMessageGet(path, signal ? { signal } : undefined);
   return parseMonitorAppHierarchy(value, requestedApp);
 }

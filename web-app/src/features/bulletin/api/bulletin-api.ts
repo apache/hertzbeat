@@ -35,13 +35,13 @@ export function classifyBulletinError(error: unknown, operation: BulletinOperati
 
 export async function loadBulletins(query: BulletinQuery) {
   return validatePageIdentity(
-    parseBulletinPageWire(await apiMessageGet<unknown>(buildBulletinListPath(query))),
+    parseBulletinPageWire(await apiMessageGet(buildBulletinListPath(query))),
     query
   );
 }
 
 export async function loadBulletin(id: number) {
-  const value = await apiMessageGet<unknown>(`/api/bulletin/${id}`);
+  const value = await apiMessageGet(`/api/bulletin/${id}`);
   if (value == null) throw new BulletinMissingError();
   const bulletin = parseBulletinWire(value);
   if (bulletin.id !== id) throw new BulletinContractError('Bulletin identity mismatch');
@@ -49,17 +49,17 @@ export async function loadBulletin(id: number) {
 }
 
 export async function loadBulletinMetrics(id: number) {
-  return mapMetrics(parseMetricsWire(await apiMessageGet<unknown>(`/api/bulletin/metrics?id=${id}`)));
+  return mapMetrics(parseMetricsWire(await apiMessageGet(`/api/bulletin/metrics?id=${id}`)));
 }
 
 export async function createBulletin(draft: BulletinDraft) {
-  await apiMessagePost<unknown>('/api/bulletin', buildBulletinPayload(draft));
+  await apiMessagePost('/api/bulletin', buildBulletinPayload(draft));
 }
 export async function updateBulletin(draft: BulletinDraft) {
-  await apiMessagePut<unknown>('/api/bulletin', buildBulletinPayload(draft));
+  await apiMessagePut('/api/bulletin', buildBulletinPayload(draft));
 }
 export async function deleteBulletin(id: number) {
-  await apiMessageDelete<unknown>(`/api/bulletin?ids=${id}`);
+  await apiMessageDelete(`/api/bulletin?ids=${id}`);
 }
 
 export async function createBulletinAndRead(draft: BulletinDraft) {

@@ -14,7 +14,12 @@ vi.mock('../../notice-receiver/api/notice-receiver-api', () => ({ loadAllNoticeR
 
 import { ApiMessageError } from '@/core/http/api-message';
 
-import { isNoticeRuleMissing, loadAllNoticeRulesByName, loadNoticeRules } from './notice-rule-api';
+import {
+  isNoticeRuleMissing,
+  loadAllNoticeRulesByName,
+  loadNoticeRule,
+  loadNoticeRules
+} from './notice-rule-api';
 
 const rule = (id: number) => ({
   id, name: 'Night', receiverId: [11], receiverName: ['Email'], templateId: null, templateName: null,
@@ -40,6 +45,12 @@ describe('notice rule API', () => {
     http.get.mockResolvedValue({ content: [rule(1)], totalElements: 1, totalPages: 1, number: 2, size: 8 });
     await expect(loadNoticeRules({ name: '', pageIndex: 0, pageSize: 8 }))
       .rejects.toMatchObject({ code: 'NOTICE_RULE_PAGE_INVALID' });
+  });
+
+  it('rejects extra resource fields at the notice rule contract boundary', async () => {
+    http.get.mockResolvedValue({ ...rule(1), token: 'secret' });
+
+    await expect(loadNoticeRule(1)).rejects.toMatchObject({ code: 'NOTICE_RULE_DETAIL_INVALID' });
   });
 
   it('classifies detail missing by the frozen backend failure code without depending on English copy', () => {

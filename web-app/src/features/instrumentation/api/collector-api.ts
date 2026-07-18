@@ -36,7 +36,7 @@ export type {
 } from './collector-contract';
 
 export async function loadInstrumentationCollectors(signal?: AbortSignal) {
-  const page = await apiMessageGet<unknown>('/api/collector?pageIndex=0&pageSize=200', signal ? { signal } : undefined);
+  const page = await apiMessageGet('/api/collector?pageIndex=0&pageSize=200', signal ? { signal } : undefined);
   return parseCollectors(page);
 }
 

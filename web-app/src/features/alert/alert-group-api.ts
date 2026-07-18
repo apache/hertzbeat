@@ -29,27 +29,27 @@ import {
 import { parseAlertGroupDetail, parseAlertGroupPage } from './alert-group-schema';
 
 export async function loadAlertGroups(query: AlertGroupQuery) {
-  const response = await apiMessageGet<unknown>(buildAlertGroupListPath(query));
+  const response = await apiMessageGet(buildAlertGroupListPath(query));
   return parseAlertGroupPage(response, query);
 }
 
 export async function loadAlertGroup(id: number) {
-  const response = await apiMessageGet<unknown>(`/api/alert/group/${id}`);
+  const response = await apiMessageGet(`/api/alert/group/${id}`);
   return parseAlertGroupDetail(response);
 }
 
 export async function saveAlertGroup(draft: AlertGroupDraft): Promise<void> {
   const payload = buildAlertGroupPayload(draft);
-  if (draft.id) await apiMessagePut<unknown>('/api/alert/group', payload);
-  else await apiMessagePost<unknown>('/api/alert/group', payload);
+  if (draft.id) await apiMessagePut('/api/alert/group', payload);
+  else await apiMessagePost('/api/alert/group', payload);
 }
 
 export async function deleteAlertGroup(id: number): Promise<void> {
-  await apiMessageDelete<unknown>(`/api/alert/groups?ids=${id}`);
+  await apiMessageDelete(`/api/alert/groups?ids=${id}`);
 }
 
 export async function updateAlertGroupEnabled(group: AlertGroupConverge, enable: boolean): Promise<void> {
-  await apiMessagePut<unknown>('/api/alert/group', buildAlertGroupTogglePayload(group, enable));
+  await apiMessagePut('/api/alert/group', buildAlertGroupTogglePayload(group, enable));
 }
 
 export function classifyAlertGroupReadError(reason: unknown): 'missing' | 'unavailable' | 'error' {

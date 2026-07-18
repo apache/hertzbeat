@@ -21,6 +21,7 @@ const { apiMessageGet, apiMessagePost } = vi.hoisted(() => ({ apiMessageGet: vi.
 vi.mock('@/core/http/api-message', () => ({ apiMessageGet, apiMessagePost }));
 
 import { loadSystemConfig, loadTimezones, saveSystemConfig } from './system-config-api';
+import { SystemConfigContractError } from './system-config-schema';
 
 describe('system configuration API', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -36,5 +37,16 @@ describe('system configuration API', () => {
     expect(apiMessageGet).toHaveBeenNthCalledWith(1, '/api/config/system');
     expect(apiMessageGet).toHaveBeenNthCalledWith(2, '/api/config/timezones');
     expect(apiMessagePost).toHaveBeenCalledWith('/api/config/system', config);
+  });
+
+  it('rejects malformed configuration responses at the domain boundary', async () => {
+    apiMessageGet.mockResolvedValueOnce({ locale: 'en_US', timeZoneId: 'UTC', theme: 'dark', token: 'secret' });
+    apiMessageGet.mockResolvedValueOnce([{ zoneId: 'UTC', offset: 0, displayName: 'UTC' }]);
+    apiMessagePost.mockResolvedValueOnce({ message: 'not a string' });
+
+    await expect(loadSystemConfig()).rejects.toBeInstanceOf(SystemConfigContractError);
+    await expect(loadTimezones()).rejects.toBeInstanceOf(SystemConfigContractError);
+    await expect(saveSystemConfig({ locale: 'en_US', timeZoneId: 'UTC', theme: 'dark' }))
+      .rejects.toBeInstanceOf(SystemConfigContractError);
   });
 });

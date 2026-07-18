@@ -29,17 +29,17 @@ export const tokenApiUrl = '/api/account/token';
 export const tokenGenerateActionUrl = `${tokenApiUrl}/generate`;
 
 export async function loadTokens() {
-  const response = await apiMessageGet<unknown>(tokenApiUrl);
+  const response = await apiMessageGet(tokenApiUrl);
   return parseTokenResourceRecords(response);
 }
 
 export async function generateToken(draft: TokenDraft) {
-  const response = await apiMessagePost<unknown>(buildGenerateTokenPath(draft), {});
+  const response = await apiMessagePost(buildGenerateTokenPath(draft), {});
   return parseGeneratedTokenReceipt(response);
 }
 
 export function revokeToken(id: number) {
-  return apiMessageDelete<unknown>(tokenRevokeActionUrl(id));
+  return apiMessageDelete(tokenRevokeActionUrl(id));
 }
 
 export function buildGenerateTokenPath(draft: TokenDraft) {

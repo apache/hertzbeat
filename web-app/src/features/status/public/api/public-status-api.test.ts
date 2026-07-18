@@ -25,14 +25,18 @@ import {
   loadPublicStatusIncidents,
   loadPublicStatusOrg
 } from './public-status-api';
+import { PublicStatusContractError } from './public-status-schema';
 
 describe('public status API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    apiMessageGet.mockResolvedValue(undefined);
   });
 
   it('uses the established public status queries', async () => {
+    apiMessageGet
+      .mockResolvedValueOnce({ name: 'HertzBeat', description: 'Status', state: 0 })
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce({ content: [], totalElements: 0, totalPages: 0, number: 0, size: 20 });
     await loadPublicStatusOrg();
     await loadPublicStatusComponents();
     await loadPublicStatusIncidents();
@@ -43,5 +47,25 @@ describe('public status API', () => {
       3,
       '/api/status/page/public/incident?pageIndex=0&pageSize=20'
     );
+  });
+
+  it('maps the backend component wrapper into the public view contract', async () => {
+    apiMessageGet.mockResolvedValueOnce([{
+      info: { id: 1, name: 'API', description: 'Public API', state: 0 },
+      history: []
+    }]);
+
+    await expect(loadPublicStatusComponents()).resolves.toEqual([{
+      id: 1,
+      name: 'API',
+      description: 'Public API',
+      state: 0
+    }]);
+  });
+
+  it('rejects malformed public status resources', async () => {
+    apiMessageGet.mockResolvedValueOnce({ name: 'HertzBeat', description: 'Status', state: 0, token: 'secret' });
+
+    await expect(loadPublicStatusOrg()).rejects.toBeInstanceOf(PublicStatusContractError);
   });
 });

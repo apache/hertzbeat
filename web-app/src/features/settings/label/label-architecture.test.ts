@@ -28,7 +28,7 @@ function sourceLineCount(value: string) {
 
 describe('Label architecture', () => {
   it('keeps response parsing at the API boundary and domain types in the model', () => {
-    expect(apiSource).toContain('apiMessageGet<unknown>');
+    expect(apiSource).toContain('apiMessageGet');
     expect(apiSource).toContain("from './label-schema'");
     expect(apiSource).toContain("from '../model/label-model'");
     expect(modelSource).not.toMatch(/api\/label-api|core\/http/);

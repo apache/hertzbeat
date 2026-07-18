@@ -39,22 +39,22 @@ import { parseTraceDetail, parseTracePage } from './explore-trace-schema';
 export type { ExplorePageResult } from '../model/explore-signal-contract';
 
 export async function loadMetricSignal(query: MetricExploreQuery, signal?: AbortSignal) {
-  return parseMetricConsole(await apiMessageGet<unknown>(buildSignalApiPath(query), requestSignal(signal)));
+  return parseMetricConsole(await apiMessageGet(buildSignalApiPath(query), requestSignal(signal)));
 }
 
 export async function loadLogSignal(query: LogExploreQuery, signal?: AbortSignal) {
   const pageIndex = query.pageIndex ?? 0;
-  return parseLogPage(await apiMessageGet<unknown>(buildSignalApiPath(query), requestSignal(signal)), pageIndex, 20);
+  return parseLogPage(await apiMessageGet(buildSignalApiPath(query), requestSignal(signal)), pageIndex, 20);
 }
 
 export async function loadTraceSignal(query: TraceExploreQuery, signal?: AbortSignal) {
   const pageIndex = query.pageIndex ?? 0;
-  return parseTracePage(await apiMessageGet<unknown>(buildSignalApiPath(query), requestSignal(signal)), pageIndex, 20);
+  return parseTracePage(await apiMessageGet(buildSignalApiPath(query), requestSignal(signal)), pageIndex, 20);
 }
 
 export async function loadTraceDetail(traceId: string, signal?: AbortSignal) {
   if (!traceId) throw new ExploreSignalContractError('traceId is required');
-  const raw = await apiMessageGet<unknown>(`/api/traces/${encodeURIComponent(traceId)}`, requestSignal(signal));
+  const raw = await apiMessageGet(`/api/traces/${encodeURIComponent(traceId)}`, requestSignal(signal));
   return parseTraceDetail(raw, traceId);
 }
 

@@ -107,14 +107,14 @@ export function buildMonitorActionPath(action: MonitorAction, ids: number[]) {
 }
 
 export async function loadMonitors(query: MonitorQuery, signal?: AbortSignal) {
-  const value = await apiMessageGet<unknown>(buildMonitorListPath(query), signal ? { signal } : undefined);
+  const value = await apiMessageGet(buildMonitorListPath(query), signal ? { signal } : undefined);
   return parseMonitorPage(value, query);
 }
 
 export function loadMonitorApps(): Promise<MonitorApp[]>;
 export function loadMonitorApps(signal: AbortSignal): Promise<MonitorApp[]>;
 export async function loadMonitorApps(signal?: AbortSignal) {
-  const value = await apiMessageGet<unknown>('/api/apps/hierarchy', signal ? { signal } : undefined);
+  const value = await apiMessageGet('/api/apps/hierarchy', signal ? { signal } : undefined);
   return parseMonitorApps(value);
 }
 
@@ -123,8 +123,8 @@ export async function loadMonitorDetail(id: string | number, signal?: AbortSigna
   if (requestedId === undefined) throw new MonitorMissingError();
   const path = `/api/monitor/${requestedId}`;
   const value = signal
-    ? await apiMessageGet<unknown>(path, { signal })
-    : await apiMessageGet<unknown>(path);
+    ? await apiMessageGet(path, { signal })
+    : await apiMessageGet(path);
   if (value === null || value === undefined) throw new MonitorMissingError();
   return parseMonitorDetail(value, requestedId);
 }
@@ -152,9 +152,9 @@ export async function loadNewMonitorEvidence(name: string, app: string, signal?:
 
 export function mutateMonitors(action: MonitorAction, ids: number[]) {
   const path = buildMonitorActionPath(action, ids);
-  if (action === 'copy') return apiMessagePost<unknown>(path, null);
-  if (action === 'enable') return apiMessageGet<unknown>(path);
-  return apiMessageDelete<unknown>(path);
+  if (action === 'copy') return apiMessagePost(path, null);
+  if (action === 'enable') return apiMessageGet(path);
+  return apiMessageDelete(path);
 }
 
 function monitorDetailId(value: string | number) {

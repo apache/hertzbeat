@@ -42,31 +42,31 @@ function buildAlertSilenceListPath(query: AlertSilenceQuery) {
 export async function loadAlertSilences(query: AlertSilenceQuery, signal?: AbortSignal) {
   const path = buildAlertSilenceListPath(query);
   const response = signal
-    ? await apiMessageGet<unknown>(path, { signal })
-    : await apiMessageGet<unknown>(path);
+    ? await apiMessageGet(path, { signal })
+    : await apiMessageGet(path);
   return parseAlertSilencePage(response, query);
 }
 
 export async function loadAlertSilence(id: number, signal?: AbortSignal) {
   const path = `/api/alert/silence/${canonicalAlertSilenceId(id)}`;
   const response = signal
-    ? await apiMessageGet<unknown>(path, { signal })
-    : await apiMessageGet<unknown>(path);
+    ? await apiMessageGet(path, { signal })
+    : await apiMessageGet(path);
   return parseAlertSilenceDetail(response);
 }
 
 export async function saveAlertSilence(draft: AlertSilenceDraft): Promise<void> {
   const payload = buildAlertSilencePayload(draft);
-  if (draft.id !== undefined) await apiMessagePut<unknown>('/api/alert/silence', payload);
-  else await apiMessagePost<unknown>('/api/alert/silence', payload);
+  if (draft.id !== undefined) await apiMessagePut('/api/alert/silence', payload);
+  else await apiMessagePost('/api/alert/silence', payload);
 }
 
 export async function deleteAlertSilence(id: number): Promise<void> {
-  await apiMessageDelete<unknown>(`/api/alert/silences?ids=${canonicalAlertSilenceId(id)}`);
+  await apiMessageDelete(`/api/alert/silences?ids=${canonicalAlertSilenceId(id)}`);
 }
 
 export async function updateAlertSilenceEnabled(silence: AlertSilence, enable: boolean): Promise<void> {
-  await apiMessagePut<unknown>('/api/alert/silence', buildAlertSilenceTogglePayload(silence, enable));
+  await apiMessagePut('/api/alert/silence', buildAlertSilenceTogglePayload(silence, enable));
 }
 
 // AlertSilenceController reports a missing detail with the backend's shared

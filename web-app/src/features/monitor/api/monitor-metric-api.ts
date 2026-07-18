@@ -49,28 +49,28 @@ export function buildHistoryMetricPath(monitor: Monitor, metric: MonitorMetricOp
 }
 
 export async function loadFavoriteMetrics(monitorId: number, signal?: AbortSignal) {
-  const value = await apiMessageGet<unknown>(buildFavoriteMetricPath(monitorId), signal ? { signal } : undefined);
+  const value = await apiMessageGet(buildFavoriteMetricPath(monitorId), signal ? { signal } : undefined);
   return parseFavoriteMetrics(value);
 }
 
 export async function loadMonitorMetricCatalog(monitor: Monitor, signal?: AbortSignal) {
-  const value = await apiMessageGet<unknown>(buildMetricCatalogPath(monitor), signal ? { signal } : undefined);
+  const value = await apiMessageGet(buildMetricCatalogPath(monitor), signal ? { signal } : undefined);
   return parseMonitorMetricCatalog(value);
 }
 
 export function updateFavoriteMetric(monitorId: number, metricKey: string, favorite: boolean) {
   const path = buildFavoriteMetricPath(monitorId, metricKey);
-  return favorite ? apiMessagePost<unknown>(path, null) : apiMessageDelete<unknown>(path);
+  return favorite ? apiMessagePost(path, null) : apiMessageDelete(path);
 }
 
 export async function loadRealtimeMetric(monitorId: number, metric: MonitorMetricOption,
   signal?: AbortSignal) {
-  const value = await apiMessageGet<unknown>(buildRealtimeMetricPath(monitorId, metric.group), signal ? { signal } : undefined);
+  const value = await apiMessageGet(buildRealtimeMetricPath(monitorId, metric.group), signal ? { signal } : undefined);
   return parseRealtimeMetric(value, monitorId, metric.group);
 }
 
 export async function loadHistoryMetric(monitor: Monitor, metric: MonitorMetricOption, history: string,
   signal?: AbortSignal) {
-  const value = await apiMessageGet<unknown>(buildHistoryMetricPath(monitor, metric, history), signal ? { signal } : undefined);
+  const value = await apiMessageGet(buildHistoryMetricPath(monitor, metric, history), signal ? { signal } : undefined);
   return parseHistoryMetric(value, monitor.instance, metric.group, metric.field);
 }

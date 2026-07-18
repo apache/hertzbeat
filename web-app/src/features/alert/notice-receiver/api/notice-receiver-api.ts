@@ -50,33 +50,33 @@ export function classifyNoticeReceiverError(error: unknown): NoticeReceiverFailu
 }
 
 export async function loadNoticeReceivers(query: NoticeReceiverQuery) {
-  const page = parseNoticeReceiverPageWire(await apiMessageGet<unknown>(buildNoticeReceiverListPath(query)));
+  const page = parseNoticeReceiverPageWire(await apiMessageGet(buildNoticeReceiverListPath(query)));
   return { ...page, content: page.content.map(mapNoticeReceiver) };
 }
 
 export async function loadNoticeReceiver(id: number) {
-  return mapNoticeReceiver(parseNoticeReceiverWire(await apiMessageGet<unknown>(`/api/notice/receiver/${id}`)));
+  return mapNoticeReceiver(parseNoticeReceiverWire(await apiMessageGet(`/api/notice/receiver/${id}`)));
 }
 
 export async function loadAllNoticeReceiverOptions() {
-  return parseNoticeReceiverOptionsWire(await apiMessageGet<unknown>('/api/notice/receivers/all'));
+  return parseNoticeReceiverOptionsWire(await apiMessageGet('/api/notice/receivers/all'));
 }
 
 export async function saveNoticeReceiver(draft: NoticeReceiverDraft) {
   const payload = buildNoticeReceiverPayload(draft);
   const value = draft.id == null
-    ? await apiMessagePost<unknown>('/api/notice/receiver', payload)
-    : await apiMessagePut<unknown>('/api/notice/receiver', payload);
+    ? await apiMessagePost('/api/notice/receiver', payload)
+    : await apiMessagePut('/api/notice/receiver', payload);
   return mapNoticeReceiverMutation(parseNoticeReceiverMutationWire(value));
 }
 
 export async function testNoticeReceiver(draft: NoticeReceiverDraft) {
-  await apiMessagePost<unknown>('/api/notice/receiver/send-test-msg', buildNoticeReceiverPayload(draft));
+  await apiMessagePost('/api/notice/receiver/send-test-msg', buildNoticeReceiverPayload(draft));
 }
 
 export async function deleteNoticeReceiver(id: number) {
   return mapNoticeReceiverMutation(parseNoticeReceiverMutationWire(
-    await apiMessageDelete<unknown>(`/api/notice/receiver/${id}`)
+    await apiMessageDelete(`/api/notice/receiver/${id}`)
   ));
 }
 

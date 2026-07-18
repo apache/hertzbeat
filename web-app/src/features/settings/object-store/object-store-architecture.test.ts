@@ -24,7 +24,7 @@ import pageSource from './pages/object-store-page.tsx?raw';
 
 describe('object store architecture', () => {
   it('owns unknown response parsing and secret removal at the API boundary', () => {
-    expect(apiSource).toContain('apiMessageGet<unknown>');
+    expect(apiSource).toContain('apiMessageGet');
     expect(apiSource).toContain("from './object-store-schema'");
     expect(schemaSource).toContain("from 'zod'");
     expect(schemaSource).toContain('secretConfigured');

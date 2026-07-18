@@ -50,23 +50,23 @@ export type {
 export { MessageServerContractError } from './message-server-schema';
 
 export async function loadEmailServerConfig(signal?: AbortSignal) {
-  const value = signal ? await apiMessageGet<unknown>('/api/config/email', { signal })
-    : await apiMessageGet<unknown>('/api/config/email');
+  const value = signal ? await apiMessageGet('/api/config/email', { signal })
+    : await apiMessageGet('/api/config/email');
   return parseEmailEvidenceWire(value);
 }
 
 export async function loadSmsServerConfig(signal?: AbortSignal) {
-  const value = signal ? await apiMessageGet<unknown>('/api/config/sms', { signal })
-    : await apiMessageGet<unknown>('/api/config/sms');
+  const value = signal ? await apiMessageGet('/api/config/sms', { signal })
+    : await apiMessageGet('/api/config/sms');
   return mapSmsEvidence(parseSmsEvidenceWire(value));
 }
 
 export async function saveEmailServerConfig(payload: EmailServerPayload) {
-  return parseEmailEvidenceWire(await apiMessagePost<unknown>('/api/config/email', payload));
+  return parseEmailEvidenceWire(await apiMessagePost('/api/config/email', payload));
 }
 
 export async function saveSmsServerConfig(payload: SmsServerPayload) {
-  return mapSmsEvidence(parseSmsEvidenceWire(await apiMessagePost<unknown>('/api/config/sms', payload)));
+  return mapSmsEvidence(parseSmsEvidenceWire(await apiMessagePost('/api/config/sms', payload)));
 }
 
 export function classifyMessageServerReadError(error: unknown): MessageServerReadFailure {

@@ -28,11 +28,11 @@ export function buildAlertListPath(query: AlertQuery) {
 }
 
 export async function loadAlertSummary() {
-  const response = await apiMessageGet<unknown>('/api/alerts/summary');
+  const response = await apiMessageGet('/api/alerts/summary');
   return parseAlertSummary(response);
 }
 
 export async function loadAlertGroups(query: AlertQuery) {
-  const response = await apiMessageGet<unknown>(buildAlertListPath(query));
+  const response = await apiMessageGet(buildAlertListPath(query));
   return parseAlertGroupPage(response, query);
 }

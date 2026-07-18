@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import { z } from 'zod';
+
 import { apiFetch } from './http-client';
 
 export type PageResult<T> = {
@@ -25,7 +27,11 @@ export type PageResult<T> = {
   size: number;
 };
 
-type ApiMessage<T> = { code: number; msg?: string; data: T };
+const apiEnvelopeSchema = z.object({
+  code: z.number().int(),
+  msg: z.string().nullable().optional(),
+  data: z.unknown()
+}).strict();
 
 type ApiMessageErrorDetails = {
   code?: number;
@@ -47,23 +53,23 @@ export class ApiMessageError extends Error {
   }
 }
 
-export async function apiMessageGet<T>(path: string, options?: Pick<RequestInit, 'signal'>) {
-  return apiMessageRequest<T>(path, options);
+export async function apiMessageGet(path: string, options?: Pick<RequestInit, 'signal'>): Promise<unknown> {
+  return apiMessageRequest(path, options);
 }
 
-export function apiMessagePost<T>(path: string, data: unknown, options?: Pick<RequestInit, 'signal'>) {
-  return apiMessageRequest<T>(path, jsonRequest('POST', data, options));
+export function apiMessagePost(path: string, data: unknown, options?: Pick<RequestInit, 'signal'>): Promise<unknown> {
+  return apiMessageRequest(path, jsonRequest('POST', data, options));
 }
 
-export function apiMessagePut<T>(path: string, data: unknown, options?: Pick<RequestInit, 'signal'>) {
-  return apiMessageRequest<T>(path, jsonRequest('PUT', data, options));
+export function apiMessagePut(path: string, data: unknown, options?: Pick<RequestInit, 'signal'>): Promise<unknown> {
+  return apiMessageRequest(path, jsonRequest('PUT', data, options));
 }
 
-export function apiMessageDelete<T>(path: string) {
-  return apiMessageRequest<T>(path, { method: 'DELETE' });
+export function apiMessageDelete(path: string): Promise<unknown> {
+  return apiMessageRequest(path, { method: 'DELETE' });
 }
 
-async function apiMessageRequest<T>(path: string, init?: RequestInit) {
+async function apiMessageRequest(path: string, init?: RequestInit): Promise<unknown> {
   let response: Response;
   try {
     response = await apiFetch(path, init);
@@ -74,11 +80,21 @@ async function apiMessageRequest<T>(path: string, init?: RequestInit) {
   if (!response.ok) {
     throw new ApiMessageError(`Request failed with status ${response.status}`, { status: response.status });
   }
-  const message = (await response.json()) as ApiMessage<T>;
+  const message = await parseApiEnvelope(response);
   if (message.code !== 0) {
     throw new ApiMessageError(message.msg ?? 'Request failed', { code: message.code, status: response.status });
   }
   return message.data;
+}
+
+async function parseApiEnvelope(response: Response) {
+  try {
+    const result = apiEnvelopeSchema.safeParse(await response.json());
+    if (result.success) return result.data;
+  } catch {
+    // Invalid JSON and invalid envelopes share one redacted public failure.
+  }
+  throw new ApiMessageError('Invalid API response', { status: response.status });
 }
 
 function jsonRequest(method: 'POST' | 'PUT', data: unknown, options?: Pick<RequestInit, 'signal'>): RequestInit {

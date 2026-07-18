@@ -62,4 +62,46 @@ describe('api message errors', () => {
       message: 'Failed to fetch'
     });
   });
+
+  it('preserves abort failures as the request error cause', async () => {
+    const abort = new DOMException('The operation was aborted', 'AbortError');
+    apiFetch.mockRejectedValueOnce(abort);
+
+    await expect(apiMessageGet('/api/status/page/org')).rejects.toMatchObject({
+      name: 'ApiMessageError',
+      message: 'Request failed',
+      cause: abort
+    });
+  });
+
+  it.each([
+    ['invalid JSON', new Response('{"code":', { status: 200 })],
+    ['non-object envelope', jsonResponse([])],
+    ['missing data', jsonResponse({ code: 0, msg: null })],
+    ['non-integer code', jsonResponse({ code: 0.5, msg: null, data: null })],
+    ['invalid message', jsonResponse({ code: 0, msg: { token: 'secret' }, data: null })],
+    ['extra sensitive field', jsonResponse({ code: 0, msg: null, data: null, token: 'secret' })]
+  ])('maps %s to a redacted contract error', async (_label, response) => {
+    apiFetch.mockResolvedValueOnce(response);
+
+    let error: unknown;
+    try {
+      await apiMessageGet('/api/status/page/org');
+    } catch (reason) {
+      error = reason;
+    }
+
+    expect(error).toBeInstanceOf(ApiMessageError);
+    expect(error).toMatchObject({
+      code: undefined,
+      status: 200,
+      message: 'Invalid API response'
+    });
+    expect(String(error)).not.toContain('secret');
+    expect((error as ApiMessageError).cause).toBeUndefined();
+  });
 });
+
+function jsonResponse(value: unknown) {
+  return new Response(JSON.stringify(value), { status: 200 });
+}

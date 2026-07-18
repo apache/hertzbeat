@@ -37,6 +37,7 @@ const wireObjectStoreSchema = z.object({
   // Normalize that wire-only variation here so the domain always sees an object.
   config: wireConfigSchema.nullish().transform(config => config ?? {})
 }).nullable();
+const mutationResultSchema = z.string();
 
 export function parseObjectStoreReadModel(value: unknown): ObjectStoreReadModel | null {
   const result = wireObjectStoreSchema.safeParse(value);
@@ -49,6 +50,12 @@ export function parseObjectStoreReadModel(value: unknown): ObjectStoreReadModel 
     ? { ...visible, secretConfigured: Boolean(secretKey?.trim()) }
     : visible;
   return { type: result.data.type, config };
+}
+
+export function parseObjectStoreMutationResult(value: unknown): string {
+  const result = mutationResultSchema.safeParse(value);
+  if (!result.success) throw new ObjectStoreResourceContractError();
+  return result.data;
 }
 
 function copyVisibleConfig(config: z.infer<typeof wireConfigSchema>): ObjectStoreReadConfig {

@@ -47,17 +47,17 @@ export class LabelCanonicalProofLimitError extends LabelContractError {
 }
 
 export async function loadLabels(query: LabelListRequest) {
-  const response = await apiMessageGet<unknown>(buildLabelListPath(query));
+  const response = await apiMessageGet(buildLabelListPath(query));
   return parseLabelPage(response, query);
 }
 
 export function saveLabel(label: Partial<LabelRecord>, isNew: boolean) {
   const payload = buildLabelPayload(label, isNew);
-  return isNew ? apiMessagePost<void>('/api/label', payload) : apiMessagePut<void>('/api/label', payload);
+  return isNew ? apiMessagePost('/api/label', payload) : apiMessagePut('/api/label', payload);
 }
 
 export function deleteLabel(id: number) {
-  return apiMessageDelete<void>(`/api/label?ids=${encodeURIComponent(id)}`);
+  return apiMessageDelete(`/api/label?ids=${encodeURIComponent(id)}`);
 }
 
 export async function findCanonicalLabel(identity: LabelIdentity) {

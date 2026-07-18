@@ -24,7 +24,7 @@ import {
 } from './monitor-editor-schema';
 
 export async function loadMonitorParamDefines(app: string, signal?: AbortSignal) {
-  const value = await apiMessageGet<unknown>(`/api/apps/${encodeURIComponent(app)}/params`, signal ? { signal } : undefined);
+  const value = await apiMessageGet(`/api/apps/${encodeURIComponent(app)}/params`, signal ? { signal } : undefined);
   return parseMonitorParamDefines(value, app);
 }
 
@@ -34,7 +34,7 @@ export async function loadMonitorCollectors(signal?: AbortSignal) {
   let totalPages = 1;
   do {
     const path = `/api/collector?pageIndex=${pageIndex}&pageSize=200`;
-    const value = signal ? await apiMessageGet<unknown>(path, { signal }) : await apiMessageGet<unknown>(path);
+    const value = signal ? await apiMessageGet(path, { signal }) : await apiMessageGet(path);
     const page = parseMonitorCollectorPage(value, pageIndex);
     collectors.push(...page.collectors);
     totalPages = page.totalPages;
@@ -45,12 +45,12 @@ export async function loadMonitorCollectors(signal?: AbortSignal) {
 }
 
 export function detectMonitor(payload: unknown, signal?: AbortSignal) {
-  return apiMessagePost<unknown>('/api/monitor/detect', payload,
+  return apiMessagePost('/api/monitor/detect', payload,
     { signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(15_000)]) : AbortSignal.timeout(15_000) });
 }
 
 export function saveMonitor(mode: 'new' | 'edit', payload: unknown, signal?: AbortSignal) {
   const options = signal ? { signal } : undefined;
-  return mode === 'new' ? apiMessagePost<unknown>('/api/monitor', payload, options)
-    : apiMessagePut<unknown>('/api/monitor', payload, options);
+  return mode === 'new' ? apiMessagePost('/api/monitor', payload, options)
+    : apiMessagePut('/api/monitor', payload, options);
 }

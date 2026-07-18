@@ -102,6 +102,13 @@ describe('object store API', () => {
     expect(JSON.stringify(error)).not.toContain('private-');
   });
 
+  it('rejects malformed mutation responses', async () => {
+    apiMessagePost.mockResolvedValue({ message: 'Update config success' });
+
+    await expect(saveObjectStore({ type: 'FILE', config: {} }))
+      .rejects.toBeInstanceOf(ObjectStoreResourceContractError);
+  });
+
   it.each(['', '   ', '******', '••••••', '__KEEP__', '<masked>', '[REDACTED]'])(
     'rejects OBS writes without a newly entered secret: %j',
     async secretKey => {

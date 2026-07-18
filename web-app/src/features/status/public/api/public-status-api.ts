@@ -15,37 +15,26 @@
  * limitations under the License.
  */
 
-import { apiMessageGet, type PageResult } from '@/core/http/api-message';
+import { apiMessageGet } from '@/core/http/api-message';
 
-export type PublicStatusOrg = {
-  name: string;
-  description: string;
-  home?: string;
-  state: number;
-  color?: string;
-};
+import {
+  parsePublicStatusComponents,
+  parsePublicStatusIncidents,
+  parsePublicStatusOrg
+} from './public-status-schema';
 
-export type PublicStatusComponent = {
-  id: number;
-  name: string;
-  description?: string;
-  state: number;
-  latestTime?: number;
-};
+export type {
+  PublicStatusComponent,
+  PublicStatusIncident,
+  PublicStatusOrg
+} from './public-status-schema';
 
-export type PublicStatusIncident = {
-  id: number;
-  name: string;
-  state: number;
-  startTime?: number;
-  endTime?: number;
-};
+export const loadPublicStatusOrg = async () =>
+  parsePublicStatusOrg(await apiMessageGet('/api/status/page/public/org'));
 
-export const loadPublicStatusOrg = () =>
-  apiMessageGet<PublicStatusOrg>('/api/status/page/public/org');
+export const loadPublicStatusComponents = async () =>
+  parsePublicStatusComponents(await apiMessageGet('/api/status/page/public/component'));
 
-export const loadPublicStatusComponents = () =>
-  apiMessageGet<PublicStatusComponent[]>('/api/status/page/public/component');
-
-export const loadPublicStatusIncidents = () =>
-  apiMessageGet<PageResult<PublicStatusIncident>>('/api/status/page/public/incident?pageIndex=0&pageSize=20');
+export const loadPublicStatusIncidents = async () => parsePublicStatusIncidents(
+  await apiMessageGet('/api/status/page/public/incident?pageIndex=0&pageSize=20')
+);

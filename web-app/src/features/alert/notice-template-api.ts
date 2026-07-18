@@ -28,21 +28,21 @@ import {
 import { noticeTemplateCreateActionUrl } from './notice-template-resource';
 
 export async function loadNoticeTemplates(query: NoticeTemplateQuery) {
-  const response = await apiMessageGet<unknown>(buildNoticeTemplateListPath(query));
+  const response = await apiMessageGet(buildNoticeTemplateListPath(query));
   return parseNoticeTemplatePage(response);
 }
 
 export async function loadNoticeTemplate(id: number) {
-  const response = await apiMessageGet<unknown>(`/api/notice/template/${id}`);
+  const response = await apiMessageGet(`/api/notice/template/${id}`);
   return parseNoticeTemplateDetail(response);
 }
 
 export async function saveNoticeTemplate(draft: NoticeTemplateDraft) {
   const payload = buildNoticeTemplatePayload(draft);
-  if (draft.id) await apiMessagePut<unknown>(noticeTemplateCreateActionUrl, payload);
-  else await apiMessagePost<unknown>(noticeTemplateCreateActionUrl, payload);
+  if (draft.id) await apiMessagePut(noticeTemplateCreateActionUrl, payload);
+  else await apiMessagePost(noticeTemplateCreateActionUrl, payload);
 }
 
 export async function deleteNoticeTemplate(id: number) {
-  await apiMessageDelete<unknown>(`/api/notice/template/${id}`);
+  await apiMessageDelete(`/api/notice/template/${id}`);
 }
