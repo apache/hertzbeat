@@ -18,16 +18,25 @@
 import { ApiMessageError, apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
 
 import {
-  buildAlertInhibitListPath,
   buildAlertInhibitPayload,
   buildAlertInhibitTogglePayload,
   AlertInhibitMissingError,
-  parseAlertInhibitDetail,
-  parseAlertInhibitPage,
   type AlertInhibit,
   type AlertInhibitDraft,
   type AlertInhibitQuery
 } from './alert-inhibit-model';
+import { parseAlertInhibitDetail, parseAlertInhibitPage } from './alert-inhibit-schema';
+
+export function buildAlertInhibitListPath(query: AlertInhibitQuery) {
+  const params = new URLSearchParams({
+    pageIndex: String(query.pageIndex),
+    pageSize: String(query.pageSize),
+    sort: 'id',
+    order: 'desc'
+  });
+  if (query.search) params.set('search', query.search);
+  return `/api/alert/inhibits?${params.toString()}`;
+}
 
 export async function loadAlertInhibits(query: AlertInhibitQuery) {
   const response = await apiMessageGet<unknown>(buildAlertInhibitListPath(query));

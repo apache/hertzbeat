@@ -65,11 +65,11 @@ describe('alert inhibit API', () => {
     transport.apiMessageGet
       .mockResolvedValueOnce({ content: [persisted], totalElements: 1, totalPages: 1, number: 0, size: 8 })
       .mockResolvedValueOnce({ ...persisted, transportOnly: true });
-    await expect(loadAlertInhibits({ search: '', pageIndex: 0, pageSize: 8 }))
+    await expect(loadAlertInhibits({ search: 'critical', pageIndex: 0, pageSize: 8 }))
       .resolves.toMatchObject({ content: [persisted], totalElements: 1 });
     await expect(loadAlertInhibit(9)).resolves.toEqual(persisted);
     expect(transport.apiMessageGet).toHaveBeenNthCalledWith(
-      1, '/api/alert/inhibits?pageIndex=0&pageSize=8&sort=id&order=desc'
+      1, '/api/alert/inhibits?pageIndex=0&pageSize=8&sort=id&order=desc&search=critical'
     );
     expect(transport.apiMessageGet).toHaveBeenNthCalledWith(2, '/api/alert/inhibit/9');
   });

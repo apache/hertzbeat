@@ -17,10 +17,21 @@
 
 import { describe, expect, it } from 'vitest';
 
+import api from './alert-inhibit-api.ts?raw';
+import model from './alert-inhibit-model.ts?raw';
+
 const modules = import.meta.glob('./alert-inhibit-page.tsx', { eager: true, import: 'default', query: '?raw' });
 const source = Object.values(modules)[0] as string;
 
 describe('Alert Inhibit architecture', () => {
+  it('keeps response parsing in a named schema boundary', () => {
+    expect(api).toContain("from './alert-inhibit-schema'");
+    expect(api).toContain('export function buildAlertInhibitListPath');
+    expect(model).not.toMatch(/export function parseAlertInhibit/);
+    expect(model).not.toMatch(/function\s+(?:array|boolean|integer|number|object|record|stringArray|text)\s*\(/);
+    expect(model).not.toContain('/api/alert/inhibits');
+  });
+
   it('keeps query, transport, routing, notification, and date ownership out of the page', () => {
     expect(source).not.toMatch(/@tanstack\/react-query|alert-inhibit-api|react-router|App\.useApp|Date\.parse|Intl\.DateTimeFormat/);
     expect(source).toContain('./controller/use-alert-inhibit-controller');
