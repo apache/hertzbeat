@@ -68,9 +68,9 @@ export function NoticeTemplateResults({
     <Table<NoticeTemplateResourceRecord>
       rowKey="id"
       size="small"
+      tableLayout="fixed"
       dataSource={state.records}
       columns={templateColumns(t, onView, onEdit, onRemove)}
-      scroll={{ x: 940 }}
       pagination={{
         current: pageIndex + 1,
         pageSize,
@@ -106,23 +106,43 @@ function templateColumns(
   remove: (template: NoticeTemplateResourceRecord) => void | Promise<void>,
 ): ColumnsType<NoticeTemplateResourceRecord> {
   return [
-    { title: t('noticeTemplates.name'), dataIndex: 'name', width: 260 },
+    {
+      title: t('noticeTemplates.name'),
+      dataIndex: 'name',
+      width: 230,
+      ellipsis: true,
+      render: (name: string) => <span title={name}>{name}</span>,
+    },
     {
       title: t('noticeTemplates.type'),
-      width: 180,
-      render: (_value, template) => <Tag color="processing">{t(noticeTemplateTypeLabelKey(template.type))}</Tag>,
+      width: 150,
+      ellipsis: true,
+      render: (_value, template) => {
+        const label = t(noticeTemplateTypeLabelKey(template.type));
+        return <Tag color="processing" title={label}>{label}</Tag>;
+      },
     },
     {
       title: t('noticeTemplates.source'),
-      width: 150,
-      render: (_value, template) => (
-        <Tag>{t(template.preset ? 'noticeTemplates.preset' : 'noticeTemplates.custom')}</Tag>
-      ),
+      width: 100,
+      ellipsis: true,
+      render: (_value, template) => {
+        const label = t(template.preset ? 'noticeTemplates.preset' : 'noticeTemplates.custom');
+        return <Tag title={label}>{label}</Tag>;
+      },
     },
-    { title: t('noticeTemplates.updated'), width: 190, render: (_value, template) => formatTemplateTime(template) },
+    {
+      title: t('noticeTemplates.updated'),
+      width: 170,
+      ellipsis: true,
+      render: (_value, template) => {
+        const value = formatTemplateTime(template);
+        return <span title={value}>{value}</span>;
+      },
+    },
     {
       title: t('common.actions'),
-      width: 160,
+      width: 140,
       render: (_value, template) => isNoticeTemplateReadOnly(template)
         ? <Button type="link" onClick={() => view(template)}>{t('common.view')}</Button>
         : (

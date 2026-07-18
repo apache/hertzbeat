@@ -97,6 +97,13 @@ describe('NoticeTemplatePage', () => {
     expect(screen.queryByText('Custom')).not.toBeInTheDocument();
   });
 
+  it('keeps source visible in both the query scope and result evidence', () => {
+    renderPage();
+
+    expect(screen.getByRole('combobox', { name: 'noticeTemplates.source' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'noticeTemplates.source' })).toBeInTheDocument();
+  });
+
   it('submits and closes the controller-owned draft', async () => {
     controller.state = {
       ...buildState({ kind: 'ready', records: [custom], total: 1 }),

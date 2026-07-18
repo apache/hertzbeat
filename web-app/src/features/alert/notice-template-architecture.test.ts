@@ -60,4 +60,12 @@ describe('Notice Template architecture', () => {
     expect(page).toContain('busy={state.command !== "idle"}');
     expect(page).toContain('saving={state.command === "saving"}');
   });
+
+  it('keeps the results table responsive without hiding source evidence', () => {
+    const results = String(sources['./components/notice-template-results.tsx'] ?? '');
+
+    expect(results).toContain('tableLayout="fixed"');
+    expect(results).not.toMatch(/scroll=\{\{\s*x:/);
+    expect(results).toContain("title: t('noticeTemplates.source')");
+  });
 });
