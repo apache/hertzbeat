@@ -20,14 +20,14 @@
   min-height: 100vh;
   place-items: center;
   padding: 32px;
-  background: #101114;
+  background: var(--hb-bg-canvas);
 }
 
 .panel {
   width: min(400px, 100%);
   padding: 32px;
-  border: 1px solid #2c2e33;
-  background: #17181c;
+  border: 1px solid var(--hb-border-subtle);
+  background: var(--hb-bg-raised);
 }
 
 .panel :global(.ant-alert) {

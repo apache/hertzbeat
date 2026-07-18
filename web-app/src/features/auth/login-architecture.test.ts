@@ -18,6 +18,7 @@
 import { describe, expect, it } from 'vitest';
 
 import page from './login-page.tsx?raw';
+import styles from './login-page.module.css?raw';
 import controller from './use-login-controller.ts?raw';
 
 describe('login architecture', () => {
@@ -29,5 +30,12 @@ describe('login architecture', () => {
     expect(page).not.toMatch(/\bfetch\s*\(/);
     expect(page).not.toContain('hertzbeat');
     expect(controller.match(/\bnavigate\s*\(/g)).toHaveLength(1);
+  });
+
+  it('uses the shared semantic surfaces instead of a route-local palette', () => {
+    expect(styles).toContain('background: var(--hb-bg-canvas)');
+    expect(styles).toContain('border: 1px solid var(--hb-border-subtle)');
+    expect(styles).toContain('background: var(--hb-bg-raised)');
+    expect(styles).not.toMatch(/#[0-9a-f]{3,8}\b|\b(?:rgb|hsl)a?\s*\(/i);
   });
 });

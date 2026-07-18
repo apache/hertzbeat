@@ -3,11 +3,6 @@
   "entries": [
     {
       "rule": "feature-css-raw-color",
-      "path": "features/auth/login-page.module.css",
-      "allowedMax": 3
-    },
-    {
-      "rule": "feature-css-raw-color",
       "path": "features/explore/components/explore-query-bar.module.css",
       "allowedMax": 5
     },
