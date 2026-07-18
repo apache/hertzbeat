@@ -104,6 +104,15 @@ describe('NoticeTemplatePage', () => {
     expect(screen.getByRole('columnheader', { name: 'noticeTemplates.source' })).toBeInTheDocument();
   });
 
+  it('keeps filtering and result evidence in one labeled workspace', () => {
+    controller.state = buildState({ kind: 'empty' });
+    renderPage();
+
+    const workspace = screen.getByRole('region', { name: 'noticeTemplates.title' });
+    expect(workspace).toContainElement(screen.getByRole('combobox', { name: 'noticeTemplates.source' }));
+    expect(workspace).toContainElement(screen.getByText('noticeTemplates.empty'));
+  });
+
   it('submits and closes the controller-owned draft', async () => {
     controller.state = {
       ...buildState({ kind: 'ready', records: [custom], total: 1 }),

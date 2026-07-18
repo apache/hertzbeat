@@ -20,6 +20,9 @@ import { NoticeTemplateOverlays } from "./components/notice-template-overlays";
 import { NoticeTemplateResults } from "./components/notice-template-results";
 import { NoticeTemplateToolbar } from "./components/notice-template-toolbar";
 import { useNoticeTemplateController } from "./notice-template-controller";
+import pageStyles from "./notice-template-page.module.css";
+
+const NOTICE_TEMPLATE_HEADING_ID = 'notice-template-heading';
 
 export function NoticeTemplatePage() {
   const controller = useNoticeTemplateController();
@@ -27,25 +30,30 @@ export function NoticeTemplatePage() {
 
   return (
     <div className={styles.page}>
-      <NoticeTemplateToolbar
-        name={state.name}
-        preset={state.query.preset}
-        onNameChange={controller.setName}
-        onPresetChange={controller.changePreset}
-        onQuery={controller.query}
-        onRefresh={controller.refresh}
-        onCreate={controller.create}
-      />
-      <NoticeTemplateResults
-        state={state.list}
-        pageIndex={state.query.pageIndex}
-        pageSize={state.query.pageSize}
-        onPageChange={controller.changePage}
-        onRetry={controller.refresh}
-        onView={controller.setPreview}
-        onEdit={controller.edit}
-        onRemove={controller.remove}
-      />
+      <section className={pageStyles.workspace} aria-labelledby={NOTICE_TEMPLATE_HEADING_ID}>
+        <NoticeTemplateToolbar
+          headingId={NOTICE_TEMPLATE_HEADING_ID}
+          name={state.name}
+          preset={state.query.preset}
+          onNameChange={controller.setName}
+          onPresetChange={controller.changePreset}
+          onQuery={controller.query}
+          onRefresh={controller.refresh}
+          onCreate={controller.create}
+        />
+        <div className={pageStyles.results}>
+          <NoticeTemplateResults
+            state={state.list}
+            pageIndex={state.query.pageIndex}
+            pageSize={state.query.pageSize}
+            onPageChange={controller.changePage}
+            onRetry={controller.refresh}
+            onView={controller.setPreview}
+            onEdit={controller.edit}
+            onRemove={controller.remove}
+          />
+        </div>
+      </section>
       <NoticeTemplateOverlays
         busy={state.command !== "idle"}
         saving={state.command === "saving"}

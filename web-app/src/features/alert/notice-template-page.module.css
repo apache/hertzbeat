@@ -15,5 +15,48 @@
  * limitations under the License.
  */
 
-.toolbar { display: grid; grid-template-columns: 180px minmax(260px, 1fr) auto auto; gap: 8px; }
-@media (max-width: 800px) { .toolbar { grid-template-columns: 1fr 1fr; } }
+.workspace {
+  /* Keep loading, empty, and populated states on the same visual baseline. */
+  --notice-template-results-min-height: 320px;
+  display: grid;
+  min-width: 0;
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-control);
+  background: var(--hb-bg-raised);
+  overflow: hidden;
+}
+
+.heading {
+  padding: 16px;
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+
+.toolbar {
+  display: grid;
+  grid-template-columns: 180px minmax(260px, 1fr) auto auto;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+
+.results {
+  min-width: 0;
+  min-height: var(--notice-template-results-min-height);
+}
+
+.results > :global(.ant-empty) {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: var(--notice-template-results-min-height);
+  margin: 0;
+}
+
+.results > :global(.ant-alert),
+.loading {
+  margin: 16px;
+}
+
+@media (max-width: 800px) {
+  .toolbar { grid-template-columns: 1fr 1fr; }
+}

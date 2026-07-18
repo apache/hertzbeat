@@ -22,6 +22,7 @@ import styles from '../alert-policy-page.module.css';
 import pageStyles from '../notice-template-page.module.css';
 
 type NoticeTemplateToolbarProps = {
+  headingId: string;
   name: string;
   preset: boolean;
   onNameChange: (value: string) => void;
@@ -32,6 +33,7 @@ type NoticeTemplateToolbarProps = {
 };
 
 export function NoticeTemplateToolbar({
+  headingId,
   name,
   preset,
   onNameChange,
@@ -44,9 +46,9 @@ export function NoticeTemplateToolbar({
 
   return (
     <>
-      <header className={styles.heading}>
+      <header className={`${styles.heading} ${pageStyles.heading}`}>
         <div>
-          <Typography.Title level={2}>{t('noticeTemplates.title')}</Typography.Title>
+          <Typography.Title id={headingId} level={2}>{t('noticeTemplates.title')}</Typography.Title>
           <Typography.Text type="secondary">{t('noticeTemplates.description')}</Typography.Text>
         </div>
         <Button type="primary" onClick={onCreate}>

@@ -21,6 +21,7 @@ import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import { noticeTemplateTime, noticeTemplateTypeLabelKey } from '../model/notice-template-view-model';
+import pageStyles from '../notice-template-page.module.css';
 import {
   isNoticeTemplateReadOnly,
   noticeTemplatePageSizes,
@@ -53,7 +54,7 @@ export function NoticeTemplateResults({
 
   if (state.kind === 'loading') {
     return (
-      <div data-testid="notice-template-loading">
+      <div className={pageStyles.loading} data-testid="notice-template-loading">
         <Skeleton active paragraph={{ rows: 6 }} />
       </div>
     );
