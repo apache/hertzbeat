@@ -17,6 +17,7 @@ describe('HertzBeat semantic theme', () => {
 
     expect(theme.token).toMatchObject({
       colorPrimary: '#9b5bb3',
+      colorBgElevated: '#14171e',
       borderRadius: 2,
       controlHeight: 28,
       fontSize: 13
@@ -31,6 +32,12 @@ describe('HertzBeat semantic theme', () => {
       headerBg: '#101218',
       siderBg: '#101218'
     });
+  });
+
+  it('keeps overlay surfaces in the same neutral hierarchy as the application shell', () => {
+    expect(createHertzBeatTheme('dark').token).toMatchObject({ colorBgElevated: '#14171e' });
+    expect(createHertzBeatTheme('compact').token).toMatchObject({ colorBgElevated: '#14171e' });
+    expect(createHertzBeatTheme('default').token).toMatchObject({ colorBgElevated: '#ffffff' });
   });
 
   it('defines selected surfaces independently from transient hover state', () => {

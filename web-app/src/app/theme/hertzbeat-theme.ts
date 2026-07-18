@@ -18,6 +18,7 @@ export function createHertzBeatTheme(runtimeTheme: RuntimeTheme): ThemeConfig {
       borderRadius: 2,
       colorBgBase: palette.canvas,
       colorBgContainer: palette.chrome,
+      colorBgElevated: palette.raised,
       colorBorder: palette.border,
       colorPrimary: '#9b5bb3',
       colorText: palette.text,
@@ -47,12 +48,12 @@ export function createHertzBeatTheme(runtimeTheme: RuntimeTheme): ThemeConfig {
 
 const darkPalette = {
   border: '#282d38', canvas: '#0d0f14', chrome: '#101218', muted: '#929aaa',
-  selected: '#211a26', selectedText: '#f4edf6', text: '#eceef3'
+  raised: '#14171e', selected: '#211a26', selectedText: '#f4edf6', text: '#eceef3'
 };
 
 const lightPalette = {
   border: '#dfe3e8', canvas: '#f5f6f8', chrome: '#ffffff', muted: '#697180',
-  selected: '#f7f0f8', selectedText: '#71357f', text: '#20242c'
+  raised: '#ffffff', selected: '#f7f0f8', selectedText: '#71357f', text: '#20242c'
 };
 
 function themeAlgorithm(runtimeTheme: RuntimeTheme) {
