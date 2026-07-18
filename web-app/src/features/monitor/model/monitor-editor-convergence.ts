@@ -16,7 +16,7 @@
  */
 
 import type { MonitorDetail, MonitorParam, MonitorParamDefine } from '../api/monitor-api';
-import type { MonitorMutationPayload } from './monitor-editor-model';
+import type { MonitorMutationPayload } from './monitor-editor-payload';
 
 const monitorWritableKeys = [
   'name', 'app', 'scrape', 'intervals', 'scheduleType', 'cronExpression', 'labels', 'annotations', 'description'

@@ -19,7 +19,7 @@ import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { MonitorParamDefine } from '../api/monitor-contract';
-import { createMonitorEditorDraft } from '../model/monitor-editor-model';
+import { createMonitorEditorDraft } from '../model/monitor-editor-draft';
 import { MonitorEditorFormView } from './monitor-editor-form-view';
 
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en-US' } }) }));

@@ -28,12 +28,12 @@ import {
 } from '../api/monitor-api';
 import type { MonitorEditorMode } from '../api/monitor-contract';
 import { monitorWritableConverged } from '../model/monitor-editor-convergence';
+import { buildMonitorPayload } from '../model/monitor-editor-payload';
 import {
-  buildMonitorPayload,
   MonitorParamDraftError,
-  validateMonitorEditorDraft,
   type MonitorEditorDraft
 } from '../model/monitor-editor-model';
+import { validateMonitorEditorDraft } from '../model/monitor-editor-validation';
 import {
   createMonitorEditorOperation,
   isCurrentMonitorEditorOperation,

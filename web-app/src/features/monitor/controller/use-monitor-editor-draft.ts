@@ -18,10 +18,8 @@
 import { useState } from 'react';
 
 import type { MonitorParamDefine, MonitorScrape } from '../api/monitor-api';
-import {
-  transitionMonitorEditorDraft,
-  type MonitorEditorDraft
-} from '../model/monitor-editor-model';
+import { transitionMonitorEditorDraft } from '../model/monitor-editor-draft';
+import type { MonitorEditorDraft } from '../model/monitor-editor-model';
 
 type CarryDraft = {
   source: string;

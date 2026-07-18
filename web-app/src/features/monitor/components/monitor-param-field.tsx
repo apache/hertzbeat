@@ -20,7 +20,8 @@ import { Button, Input, InputNumber, Radio, Select, Space, Switch, Typography } 
 import { useState } from 'react';
 
 import type { MonitorParamDefine } from '../api/monitor-api';
-import { numberDefineRange, type MonitorMetricField, type MonitorParamFormValue } from '../model/monitor-editor-model';
+import type { MonitorMetricField, MonitorParamFormValue } from '../model/monitor-editor-model';
+import { numberDefineRange } from '../model/monitor-param-codec';
 
 type RowEditorLabels = {
   add: string;

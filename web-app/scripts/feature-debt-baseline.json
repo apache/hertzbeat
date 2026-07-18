@@ -97,11 +97,6 @@
       "allowedMax": 260
     },
     {
-      "rule": "feature-module-size",
-      "path": "features/monitor/model/monitor-editor-model.ts",
-      "allowedMax": 305
-    },
-    {
       "rule": "inline-query-key",
       "path": "features/settings/message-server/controller/use-message-server-controller.ts",
       "allowedMax": 2

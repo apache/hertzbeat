@@ -20,8 +20,9 @@ import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import type { MonitorApp, MonitorCollector, MonitorParamDefine } from '../api/monitor-contract';
-import { groupMonitorParamDefines, isMonitorParamVisible, monitorIntervalBounds,
-  type MonitorEditorDraft, type MonitorParamFormValue } from '../model/monitor-editor-model';
+import { groupMonitorParamDefines, isMonitorParamVisible } from '../model/monitor-editor-draft';
+import type { MonitorEditorDraft, MonitorParamFormValue } from '../model/monitor-editor-model';
+import { monitorIntervalBounds } from '../model/monitor-editor-validation';
 import { monitorAppOptions } from '../model/monitor-model';
 import { MonitorParamField } from './monitor-param-field';
 import styles from './monitor-editor-form-view.module.css';

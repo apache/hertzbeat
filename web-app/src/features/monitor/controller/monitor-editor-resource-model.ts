@@ -23,10 +23,8 @@ import {
   type MonitorScrape
 } from '../api/monitor-api';
 import { normalizeMonitorScrape, type MonitorEditorMode } from '../api/monitor-contract';
-import {
-  createMonitorEditorDraft,
-  MonitorParamDraftError
-} from '../model/monitor-editor-model';
+import { createMonitorEditorDraft } from '../model/monitor-editor-draft';
+import { MonitorParamDraftError } from '../model/monitor-editor-model';
 import { isSelectableMonitorApp } from '../model/monitor-model';
 
 export type MonitorEditorCanonicalInput = {
