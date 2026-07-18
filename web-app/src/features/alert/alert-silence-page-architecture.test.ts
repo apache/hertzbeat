@@ -17,10 +17,22 @@
 
 import { describe, expect, it } from 'vitest';
 
+import apiSource from './alert-silence-api.ts?raw';
+import modelSource from './alert-silence-model.ts?raw';
 import pageSource from './alert-silence-page.tsx?raw';
+import schemaSource from './alert-silence-schema.ts?raw';
 import controllerSource from './controller/use-alert-silence-controller.ts?raw';
 
 describe('AlertSilencePage architecture', () => {
+  it('keeps transport paths and response parsing in the API boundary', () => {
+    expect(apiSource).toContain("from './alert-silence-schema'");
+    expect(apiSource).toContain('export function buildAlertSilenceListPath');
+    expect(modelSource).not.toMatch(/export function parseAlertSilence/);
+    expect(modelSource).not.toMatch(/function\s+(?:array|boolean|integer|number|object|record|stringArray|text)\s*\(/);
+    expect(modelSource).not.toContain('/api/alert/silences');
+    expect(schemaSource).not.toMatch(/Date\.parse\s*\(/);
+  });
+
   it('keeps TanStack, transport, Router state, and notifications in the controller', () => {
     expect(pageSource).not.toMatch(/@tanstack\/react-query|alert-silence-api|useSearchParams|App\.useApp/);
     expect(pageSource).toMatch(/useAlertSilenceController/);

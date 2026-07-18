@@ -60,8 +60,8 @@ export type AlertSilencePage = {
 };
 
 export class AlertSilenceContractError extends Error {
-  constructor(message: string) {
-    super(message);
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = 'AlertSilenceContractError';
   }
 }
@@ -71,129 +71,6 @@ export class AlertSilenceMissingError extends Error {
     super('Alert Silence detail is missing');
     this.name = 'AlertSilenceMissingError';
   }
-}
-
-export function parseAlertSilenceDetail(value: unknown): AlertSilence {
-  if (value === null || value === undefined) throw new AlertSilenceMissingError();
-  const source = record(value, 'detail');
-  const result: AlertSilence = {
-    id: positiveInteger(source.id, 'id'),
-    name: nonBlankString(source.name, 'name'),
-    enable: booleanValue(source.enable, 'enable'),
-    matchAll: booleanValue(source.matchAll, 'matchAll'),
-    type: silenceType(source.type),
-    times: nullableNonNegativeInteger(source.times, 'times'),
-    labels: nullableLabels(source.labels),
-    days: nullableDays(source.days),
-    periodStart: nullableOffsetDateTime(source.periodStart, 'periodStart'),
-    periodEnd: nullableOffsetDateTime(source.periodEnd, 'periodEnd')
-  };
-  copyOptionalNullableString(source, result, 'creator');
-  copyOptionalNullableString(source, result, 'modifier');
-  copyOptionalNullableString(source, result, 'gmtCreate');
-  copyOptionalNullableString(source, result, 'gmtUpdate');
-  return result;
-}
-
-export function parseAlertSilencePage(value: unknown, query: AlertSilenceQuery): AlertSilencePage {
-  const source = record(value, 'page');
-  if (!Array.isArray(source.content)) throw contract('content must be an array');
-  const totalElements = nonNegativeInteger(source.totalElements, 'totalElements');
-  const totalPages = nonNegativeInteger(source.totalPages, 'totalPages');
-  const number = nonNegativeInteger(source.number, 'number');
-  const size = positiveInteger(source.size, 'size');
-  if (number !== query.pageIndex || size !== query.pageSize) throw contract('page does not match the request');
-  if (totalPages !== Math.ceil(totalElements / size)) throw contract('totalPages is inconsistent');
-  const availableContent = Math.max(0, totalElements - number * size);
-  if (source.content.length > Math.min(size, availableContent)) throw contract('page content is inconsistent');
-  const content = source.content.map(parseAlertSilenceDetail);
-  if (new Set(content.map(item => item.id)).size !== content.length) throw contract('duplicate ids are not allowed');
-  return { content, totalElements, totalPages, number, size };
-}
-
-function record(value: unknown, field: string): Record<string, unknown> {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) throw contract(`${field} must be an object`);
-  return value as Record<string, unknown>;
-}
-
-function positiveInteger(value: unknown, field: string) {
-  if (!Number.isSafeInteger(value) || (value as number) < 1) throw contract(`${field} must be a positive integer`);
-  return value as number;
-}
-
-function nonNegativeInteger(value: unknown, field: string) {
-  if (!Number.isSafeInteger(value) || (value as number) < 0) throw contract(`${field} must be a non-negative integer`);
-  return value as number;
-}
-
-function nonBlankString(value: unknown, field: string) {
-  if (typeof value !== 'string' || !value.trim()) throw contract(`${field} must be a non-blank string`);
-  return value;
-}
-
-function booleanValue(value: unknown, field: string) {
-  if (typeof value !== 'boolean') throw contract(`${field} must be a boolean`);
-  return value;
-}
-
-function silenceType(value: unknown): AlertSilenceType {
-  if (value !== 0 && value !== 1) throw contract('type is unsupported');
-  return value;
-}
-
-function nullableNonNegativeInteger(value: unknown, field: string) {
-  return value === null ? null : nonNegativeInteger(value, field);
-}
-
-function nullableLabels(value: unknown): Record<string, string> | null {
-  if (value === null) return null;
-  const source = record(value, 'labels');
-  const labels: Record<string, string> = {};
-  for (const [key, item] of Object.entries(source)) {
-    if (!key.trim() || typeof item !== 'string') throw contract('labels must contain string entries');
-    labels[key] = item;
-  }
-  return labels;
-}
-
-function nullableDays(value: unknown): number[] | null {
-  if (value === null) return null;
-  if (!Array.isArray(value)) throw contract('days must be an array or null');
-  const days = (value as unknown[]).map((item): number => {
-    if (typeof item !== 'number' || !Number.isSafeInteger(item) || item < 1 || item > 7) {
-      throw contract('day is outside the supported range');
-    }
-    return item;
-  });
-  if (new Set(days).size !== days.length) throw contract('days must be unique');
-  return days;
-}
-
-function nullableOffsetDateTime(value: unknown, field: string): string | null {
-  if (value === null) return null;
-  if (
-    typeof value !== 'string'
-    || !/(?:Z|[+-]\d{2}:\d{2})$/.test(value)
-    || !Number.isFinite(Date.parse(value))
-  ) {
-    throw contract(`${field} must include an explicit offset`);
-  }
-  return value;
-}
-
-function copyOptionalNullableString(
-  source: Record<string, unknown>,
-  target: AlertSilence,
-  field: 'creator' | 'modifier' | 'gmtCreate' | 'gmtUpdate'
-) {
-  if (!(field in source)) return;
-  const value = source[field];
-  if (value !== null && typeof value !== 'string') throw contract(`${field} must be a string or null`);
-  target[field] = value;
-}
-
-function contract(message: string) {
-  return new AlertSilenceContractError(message);
 }
 
 export function readAlertSilenceQuery(params: URLSearchParams): AlertSilenceQuery {
@@ -210,17 +87,6 @@ export function writeAlertSilenceQuery(query: AlertSilenceQuery) {
   const params = new URLSearchParams({ pageIndex: String(query.pageIndex), pageSize: String(query.pageSize) });
   if (query.search) params.set('search', query.search);
   return params;
-}
-
-export function buildAlertSilenceListPath(query: AlertSilenceQuery) {
-  const params = new URLSearchParams({
-    pageIndex: String(query.pageIndex),
-    pageSize: String(query.pageSize),
-    sort: 'id',
-    order: 'desc'
-  });
-  if (query.search) params.set('search', query.search);
-  return `/api/alert/silences?${params.toString()}`;
 }
 
 function localDateTimeValue(date: Date) {

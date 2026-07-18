@@ -18,16 +18,25 @@
 import { ApiMessageError, apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
 
 import {
-  buildAlertSilenceListPath,
   buildAlertSilencePayload,
   buildAlertSilenceTogglePayload,
   AlertSilenceMissingError,
-  parseAlertSilenceDetail,
-  parseAlertSilencePage,
   type AlertSilence,
   type AlertSilenceDraft,
   type AlertSilenceQuery
 } from './alert-silence-model';
+import { parseAlertSilenceDetail, parseAlertSilencePage } from './alert-silence-schema';
+
+export function buildAlertSilenceListPath(query: AlertSilenceQuery) {
+  const params = new URLSearchParams({
+    pageIndex: String(query.pageIndex),
+    pageSize: String(query.pageSize),
+    sort: 'id',
+    order: 'desc'
+  });
+  if (query.search) params.set('search', query.search);
+  return `/api/alert/silences?${params.toString()}`;
+}
 
 export async function loadAlertSilences(query: AlertSilenceQuery, signal?: AbortSignal) {
   const path = buildAlertSilenceListPath(query);
