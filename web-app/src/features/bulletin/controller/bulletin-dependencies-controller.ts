@@ -1,16 +1,24 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
+import { resolveLocale } from '@/core/i18n/i18n';
 import {
   classifyMonitorReadError,
+  loadMonitorAppHierarchy,
   loadMonitorApps,
-  loadMonitorMetricCatalog,
   loadMonitors,
   MonitorContractError,
   type Monitor
 } from '@/features/monitor';
-import { validateBulletinDraft, type BulletinDraft } from '../model/bulletin-model';
+import {
+  BulletinMetricTreeError,
+  buildBulletinMetricTree,
+  resolveSavedMetricTreeSelection,
+  type BulletinMetricTreeMetricNode
+} from '../model/bulletin-metric-tree-model';
+import type { BulletinDraft } from '../model/bulletin-model';
 import { bulletinQueryKeys } from './bulletin-query-keys';
 
 const bulletinDependencyStaleTimeMs = 30_000;
@@ -25,7 +33,9 @@ export function useBulletinDependencies(draft: BulletinDraft | null) {
 }
 
 function useBulletinDependencyResources(draft: BulletinDraft | null) {
+  const { i18n } = useTranslation();
   const app = draft?.app ?? '';
+  const locale = resolveLocale(i18n.resolvedLanguage ?? i18n.language);
   const apps = useQuery({
     queryKey: bulletinQueryKeys.apps(),
     queryFn: loadBulletinApps,
@@ -38,42 +48,40 @@ function useBulletinDependencyResources(draft: BulletinDraft | null) {
     enabled: Boolean(draft && app),
     retry: false
   });
-  const catalogMonitor = monitors.data?.find(item => draft?.monitorIds.includes(item.id))
-    ?? monitors.data?.[0];
-  const catalog = useQuery({
-    queryKey: bulletinQueryKeys.catalog(catalogMonitor?.id ?? null),
-    queryFn: () => loadMonitorMetricCatalog(catalogMonitor!),
-    enabled: Boolean(draft && catalogMonitor),
+  const hierarchy = useQuery({
+    queryKey: bulletinQueryKeys.hierarchy(app, locale),
+    queryFn: ({ signal }) => loadBulletinMetricTree(app, locale, signal),
+    enabled: Boolean(draft && app),
     retry: false
   });
-  return { app, apps, catalog, catalogMonitor, monitors };
+  return { app, apps, hierarchy, locale, monitors };
 }
 
 function resolveBulletinDependencies(
   draft: BulletinDraft | null,
   resources: ReturnType<typeof useBulletinDependencyResources>
 ) {
-  const { app, apps, catalog, catalogMonitor, monitors } = resources;
-  const records = buildBulletinDependencyRecords(apps.data, monitors.data, catalog.data);
+  const { app, apps, hierarchy, monitors } = resources;
+  const metricTree = hierarchy.data ?? [];
+  const records = buildBulletinDependencyRecords(apps.data, monitors.data, metricTree);
   const failure = resolveDependencyFailure(
     apps.isError,
     apps.error,
     monitors.isError,
     monitors.error,
-    catalog.isError,
-    catalog.error
+    hierarchy.isError,
+    hierarchy.error
   );
   const loading = isDependencyLoading(
     apps.isPending,
     monitors.isPending,
-    catalog.isPending,
-    app,
-    catalogMonitor
+    hierarchy.isPending,
+    app
   );
-  const stale = hasStaleDependencies(draft, loading, records);
   const kind = loading ? 'loading' as const
-    : failure ?? (stale ? 'invalid' as const : 'ready' as const);
-  return { kind, ...records };
+    : failure ?? 'ready' as const;
+  const fieldSelection = hasUnknownSavedFields(draft, metricTree) ? 'stale' as const : 'valid' as const;
+  return { kind, fieldSelection, metricTree: kind === 'ready' ? metricTree : [], ...records };
 }
 
 export function loadBulletinApps({ signal }: { signal: AbortSignal }) {
@@ -83,22 +91,22 @@ export function loadBulletinApps({ signal }: { signal: AbortSignal }) {
 export function buildBulletinDependencyRecords(
   apps: Awaited<ReturnType<typeof loadMonitorApps>> | undefined,
   monitors: Monitor[] | undefined,
-  catalog: Awaited<ReturnType<typeof loadMonitorMetricCatalog>> | undefined
+  metricTree: BulletinMetricTreeMetricNode[] | undefined
 ) {
   return {
     apps: (apps ?? []).filter(item => (
       Boolean(item.value) && item.value !== 'prometheus' && item.value !== '__system__'
     )),
     monitors: (monitors ?? []).map(item => ({ id: item.id, name: item.name, app: item.app })),
-    metrics: (catalog?.metrics ?? []).filter(item => item.visible).map(item => ({
-      name: item.name,
-      fields: (item.fields ?? []).flatMap(field => field.field ? [field.field] : [])
+    metrics: (metricTree ?? []).map(item => ({
+      name: item.metric,
+      fields: item.children.map(field => field.field)
     }))
   };
 }
 
 export function classifyBulletinMonitorError(error: unknown): 'invalid' | 'unavailable' | 'error' {
-  if (error instanceof MonitorContractError) return 'invalid';
+  if (error instanceof MonitorContractError || error instanceof BulletinMetricTreeError) return 'invalid';
   return classifyMonitorReadError(error) === 'unavailable' ? 'unavailable' : 'error';
 }
 
@@ -107,11 +115,11 @@ function resolveDependencyFailure(
   appsReason: unknown,
   monitorsError: boolean,
   monitorsReason: unknown,
-  catalogError: boolean,
-  catalogReason: unknown
+  hierarchyError: boolean,
+  hierarchyReason: unknown
 ) {
   if (monitorsError) return classifyBulletinMonitorError(monitorsReason);
-  if (catalogError) return classifyBulletinMonitorError(catalogReason);
+  if (hierarchyError) return classifyBulletinMonitorError(hierarchyReason);
   if (appsError) return classifyBulletinMonitorError(appsReason);
   return null;
 }
@@ -119,20 +127,19 @@ function resolveDependencyFailure(
 function isDependencyLoading(
   appsPending: boolean,
   monitorsPending: boolean,
-  catalogPending: boolean,
-  app: string,
-  catalogMonitor: Monitor | undefined
+  hierarchyPending: boolean,
+  app: string
 ) {
-  return appsPending || Boolean(app && monitorsPending) || Boolean(catalogMonitor && catalogPending);
+  return appsPending || Boolean(app && (monitorsPending || hierarchyPending));
 }
 
-function hasStaleDependencies(
-  draft: BulletinDraft | null,
-  loading: boolean,
-  records: ReturnType<typeof buildBulletinDependencyRecords>
-) {
-  if (draft?.id == null || loading) return false;
-  return validateBulletinDraft(draft, records.monitors, records.metrics).length > 0;
+function hasUnknownSavedFields(draft: BulletinDraft | null, tree: BulletinMetricTreeMetricNode[]) {
+  if (draft?.id == null) return false;
+  return Object.keys(resolveSavedMetricTreeSelection(tree, draft.fields).unknownFields).length > 0;
+}
+
+async function loadBulletinMetricTree(app: string, locale: string, signal: AbortSignal) {
+  return buildBulletinMetricTree(await loadMonitorAppHierarchy(app, locale, signal));
 }
 
 async function loadAllMonitors(app: string): Promise<Monitor[]> {

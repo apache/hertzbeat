@@ -116,9 +116,11 @@ function createContext(options: { selectedId?: number } = {}) {
     command: 'idle',
     dependencies: {
       kind: 'ready',
+      fieldSelection: 'valid',
       apps: [{ value: 'website', label: 'Website', hide: false }],
       monitors: [{ id: 1, name: 'Gateway', app: 'website' }],
-      metrics: [{ name: 'responseTime', fields: ['duration'] }]
+      metrics: [{ name: 'responseTime', fields: ['duration'] }],
+      metricTree: []
     },
     draft: {
       name: 'Operations',

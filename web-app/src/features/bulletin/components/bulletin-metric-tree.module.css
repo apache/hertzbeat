@@ -1,0 +1,16 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+
+.metricTree {
+  box-sizing: border-box;
+  min-height: 32px;
+  max-height: 260px;
+  padding: 4px 8px;
+  overflow: auto;
+  border: 1px solid var(--ant-color-border);
+  border-radius: var(--ant-border-radius);
+  transition: border-color var(--ant-motion-duration-mid);
+}
+
+.metricTree:hover {
+  border-color: var(--ant-color-primary-hover);
+}

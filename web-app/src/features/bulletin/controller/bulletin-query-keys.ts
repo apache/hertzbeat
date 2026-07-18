@@ -17,11 +17,12 @@ export const bulletinQueryKeys = {
   dependencies: () => [...bulletinRootKey, 'dependencies'] as const,
   apps: () => [...bulletinRootKey, 'dependencies', 'apps'] as const,
   monitors: (app: string) => [...bulletinRootKey, 'dependencies', 'monitors', app] as const,
-  catalog: (monitorId: number | null) => [
+  hierarchy: (app: string, locale: string) => [
     ...bulletinRootKey,
     'dependencies',
-    'catalog',
-    monitorId
+    'hierarchy',
+    app,
+    locale
   ] as const,
   metrics: (bulletinId: number | null) => [...bulletinRootKey, 'metrics', bulletinId] as const
 };
