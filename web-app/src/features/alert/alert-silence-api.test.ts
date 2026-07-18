@@ -127,4 +127,19 @@ describe('alert silence API', () => {
       periodEnd: null
     });
   });
+
+  it('rejects non-canonical IDs before choosing a mutation or building a URL', async () => {
+    const draft = { ...createAlertSilenceDraft(), name: 'Maintenance' };
+
+    for (const id of [0, -1, Number.MAX_SAFE_INTEGER + 1]) {
+      await expect(loadAlertSilence(id)).rejects.toBeInstanceOf(AlertSilenceContractError);
+      await expect(deleteAlertSilence(id)).rejects.toBeInstanceOf(AlertSilenceContractError);
+      await expect(saveAlertSilence({ ...draft, id })).rejects.toBeInstanceOf(AlertSilenceContractError);
+    }
+
+    expect(apiMessageGet).not.toHaveBeenCalled();
+    expect(apiMessageDelete).not.toHaveBeenCalled();
+    expect(apiMessagePost).not.toHaveBeenCalled();
+    expect(apiMessagePut).not.toHaveBeenCalled();
+  });
 });

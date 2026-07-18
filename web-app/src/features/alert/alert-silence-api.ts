@@ -20,6 +20,7 @@ import { ApiMessageError, apiMessageDelete, apiMessageGet, apiMessagePost, apiMe
 import {
   buildAlertSilencePayload,
   buildAlertSilenceTogglePayload,
+  AlertSilenceContractError,
   AlertSilenceMissingError,
   type AlertSilence,
   type AlertSilenceDraft,
@@ -47,7 +48,7 @@ export async function loadAlertSilences(query: AlertSilenceQuery, signal?: Abort
 }
 
 export async function loadAlertSilence(id: number, signal?: AbortSignal) {
-  const path = `/api/alert/silence/${id}`;
+  const path = `/api/alert/silence/${canonicalAlertSilenceId(id)}`;
   const response = signal
     ? await apiMessageGet<unknown>(path, { signal })
     : await apiMessageGet<unknown>(path);
@@ -56,12 +57,12 @@ export async function loadAlertSilence(id: number, signal?: AbortSignal) {
 
 export async function saveAlertSilence(draft: AlertSilenceDraft): Promise<void> {
   const payload = buildAlertSilencePayload(draft);
-  if (draft.id) await apiMessagePut<unknown>('/api/alert/silence', payload);
+  if (draft.id !== undefined) await apiMessagePut<unknown>('/api/alert/silence', payload);
   else await apiMessagePost<unknown>('/api/alert/silence', payload);
 }
 
 export async function deleteAlertSilence(id: number): Promise<void> {
-  await apiMessageDelete<unknown>(`/api/alert/silences?ids=${id}`);
+  await apiMessageDelete<unknown>(`/api/alert/silences?ids=${canonicalAlertSilenceId(id)}`);
 }
 
 export async function updateAlertSilenceEnabled(silence: AlertSilence, enable: boolean): Promise<void> {
@@ -85,4 +86,11 @@ export function classifyAlertSilenceReadError(reason: unknown): 'missing' | 'una
     return 'unavailable';
   }
   return 'error';
+}
+
+function canonicalAlertSilenceId(value: unknown) {
+  if (!Number.isSafeInteger(value) || Number(value) <= 0) {
+    throw new AlertSilenceContractError('Alert Silence id must be a positive safe integer');
+  }
+  return Number(value);
 }

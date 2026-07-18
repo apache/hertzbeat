@@ -21,7 +21,13 @@ import apiSource from './alert-silence-api.ts?raw';
 import modelSource from './alert-silence-model.ts?raw';
 import pageSource from './alert-silence-page.tsx?raw';
 import schemaSource from './alert-silence-schema.ts?raw';
+import writeModelSource from './alert-silence-write-model.ts?raw';
 import controllerSource from './controller/use-alert-silence-controller.ts?raw';
+
+function sourceLineCount(value: string) {
+  return value.replace(/\/\*[\s\S]*?\*\//g, '').split('\n')
+    .filter(line => line.trim() && !line.trim().startsWith('//')).length;
+}
 
 describe('AlertSilencePage architecture', () => {
   it('keeps transport paths and response parsing in the API boundary', () => {
@@ -31,6 +37,9 @@ describe('AlertSilencePage architecture', () => {
     expect(modelSource).not.toMatch(/function\s+(?:array|boolean|integer|number|object|record|stringArray|text)\s*\(/);
     expect(modelSource).not.toContain('/api/alert/silences');
     expect(schemaSource).not.toMatch(/Date\.parse\s*\(/);
+    expect(modelSource).toContain("from './alert-silence-write-model'");
+    expect(sourceLineCount(modelSource)).toBeLessThanOrEqual(250);
+    expect(sourceLineCount(writeModelSource)).toBeLessThanOrEqual(250);
   });
 
   it('keeps TanStack, transport, Router state, and notifications in the controller', () => {
