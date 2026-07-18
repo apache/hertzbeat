@@ -20,7 +20,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { apiFetch } from './http-client';
 
 describe('apiFetch', () => {
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
 
   it('refreshes and retries a read once after an unauthorized response', async () => {
     const fetchMock = vi
@@ -50,4 +53,48 @@ describe('apiFetch', () => {
     expect(response.status).toBe(401);
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
+
+  it('aborts a stalled request instead of leaving consumers pending indefinitely', async () => {
+    const timeout = new AbortController();
+    const timeoutSpy = vi.spyOn(AbortSignal, 'timeout').mockReturnValue(timeout.signal);
+    const fetchMock = pendingFetchUntilAbort();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const request = apiFetch('/api/notice/templates?preset=false');
+
+    expect(timeoutSpy).toHaveBeenCalledWith(30_000);
+    expect(fetchMock.mock.calls[0]?.[1]?.signal).toBeDefined();
+    timeout.abort(new DOMException('Request timed out', 'TimeoutError'));
+    await expect(request).rejects.toMatchObject({ name: 'TimeoutError' });
+  });
+
+  it('preserves caller cancellation while adding the request timeout', async () => {
+    const caller = new AbortController();
+    const timeout = new AbortController();
+    vi.spyOn(AbortSignal, 'timeout').mockReturnValue(timeout.signal);
+    const fetchMock = pendingFetchUntilAbort();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const request = apiFetch('/api/monitor', { signal: caller.signal });
+    caller.abort(new DOMException('Caller cancelled', 'AbortError'));
+
+    await expect(request).rejects.toMatchObject({ name: 'AbortError' });
+  });
 });
+
+function pendingFetchUntilAbort() {
+  return vi.fn<typeof fetch>((_input, init) => new Promise((_resolve, reject) => {
+    init?.signal?.addEventListener('abort', () => {
+      reject(abortReason(init.signal?.reason));
+    }, { once: true });
+  }));
+}
+
+function abortReason(reason: unknown) {
+  if (reason instanceof Error) return reason;
+  const error = new Error('Request aborted');
+  if (reason && typeof reason === 'object' && 'name' in reason && typeof reason.name === 'string') {
+    error.name = reason.name;
+  }
+  return error;
+}

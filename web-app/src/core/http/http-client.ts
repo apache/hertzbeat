@@ -18,20 +18,21 @@
 const CSRF_COOKIE = 'hb_ui_csrf';
 const CSRF_HEADER = 'X-HertzBeat-CSRF';
 const SESSION_REFRESH_PATH = '/api/ui/session/refresh';
+const REQUEST_TIMEOUT_MS = 30_000;
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
 let refreshRequest: Promise<boolean> | undefined;
 
 export async function apiFetch(input: RequestInfo | URL, init: RequestInit = {}) {
   const request = withBrowserSession(init);
-  const response = await fetch(input, request);
+  const response = await fetchWithTimeout(input, request);
   const method = (request.method ?? 'GET').toUpperCase();
 
   if (response.status !== 401 || !SAFE_METHODS.has(method) || isSessionRefresh(input)) {
     return response;
   }
   if (!(await refreshBrowserSession())) return response;
-  return fetch(input, request);
+  return fetchWithTimeout(input, request);
 }
 
 function isSessionRefresh(input: RequestInfo | URL) {
@@ -51,13 +52,19 @@ function withBrowserSession(init: RequestInit): RequestInit {
 
 export function refreshBrowserSession() {
   if (!refreshRequest) {
-    refreshRequest = fetch(SESSION_REFRESH_PATH, withBrowserSession({ method: 'POST' }))
+    refreshRequest = fetchWithTimeout(SESSION_REFRESH_PATH, withBrowserSession({ method: 'POST' }))
       .then(response => response.ok)
       .finally(() => {
         refreshRequest = undefined;
       });
   }
   return refreshRequest;
+}
+
+function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit) {
+  const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
+  const signal = init.signal ? AbortSignal.any([init.signal, timeout]) : timeout;
+  return fetch(input, { ...init, signal });
 }
 
 function readCookie(name: string) {
