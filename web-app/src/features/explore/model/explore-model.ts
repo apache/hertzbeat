@@ -23,7 +23,12 @@ import {
   type ExploreTimeRange
 } from './explore-query';
 
-import { parseQueryContext, writeQueryContext, type ExactTimeWindow } from '@/shared/query-context';
+import {
+  parseQueryContext,
+  writeQueryContext,
+  type ExactTimeWindow,
+  type QueryContext
+} from '@/shared/query-context';
 
 export {
   exploreHandoffState,
@@ -110,6 +115,17 @@ export function buildExplorePath(query: ExploreQuery) {
   if (query.start) params.set('start', String(query.start));
   if (query.end) params.set('end', String(query.end));
   return `/explore?${params.toString()}`;
+}
+
+export function exploreQueryContext(query: ExploreQuery): QueryContext {
+  return {
+    collectorId: query.collectorId,
+    serviceName: query.serviceName,
+    serviceNamespace: query.serviceNamespace,
+    environment: query.environment,
+    instance: query.instance,
+    endpoint: query.endpoint
+  };
 }
 
 export function mergeExploreQuery(query: ExploreQuery, changes: ExploreQueryPatch): ExploreQuery {

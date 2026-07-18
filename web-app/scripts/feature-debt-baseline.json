@@ -33,11 +33,6 @@
     },
     {
       "rule": "inline-query-key",
-      "path": "features/explore/controller/use-explore-page-controller.ts",
-      "allowedMax": 1
-    },
-    {
-      "rule": "inline-query-key",
       "path": "features/explore/controller/use-trace-detail-controller.ts",
       "allowedMax": 2
     },

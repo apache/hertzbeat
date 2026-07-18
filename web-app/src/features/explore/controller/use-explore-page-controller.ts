@@ -20,18 +20,19 @@ import { useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
-  mergeQueryContext, scopedQueryKey, useQueryContextOptional, type QueryContext
+  mergeQueryContext, useQueryContextOptional, type QueryContext
 } from '@/shared/query-context';
 import { useSharedTimeOptional } from '@/shared/time';
 
 import { classifyExploreSignalError, loadLogSignal, loadMetricSignal, loadTraceSignal } from '../api/explore-api';
 import { useExploreSubmission } from '../hooks/use-explore-submission';
 import {
-  buildExplorePath, exploreHandoffState, mergeExploreQuery, parseExploreQuery, querySubmissionTimePatch,
+  buildExplorePath, exploreHandoffState, exploreQueryContext, mergeExploreQuery, parseExploreQuery, querySubmissionTimePatch,
   type ExploreQuery, type ExploreQueryPatch
 } from '../model/explore-model';
 import type { ExplorePageResult, LogRow, MetricConsole, TraceRow } from '../model/explore-signal-contract';
 import { metricResultState } from '../model/explore-signal-model';
+import { exploreQueryKeys } from './explore-query-keys';
 
 type HistoricalData = MetricConsole | ExplorePageResult<LogRow> | ExplorePageResult<TraceRow>;
 export type ExplorePageResultState =
@@ -56,12 +57,10 @@ export function useExplorePageController() {
   const effectiveWindow = exactWindow(parsedQuery) ?? sharedTime?.window;
   const query = withExactWindow(parsedQuery, effectiveWindow);
   const handoff = exploreHandoffState(query);
-  const context = sharedContext?.context ?? contextFromQuery(query);
+  const context = sharedContext?.context ?? exploreQueryContext(query);
   const historical = handoff !== 'invalid' && !(query.signal === 'logs' && query.live);
   const queryResult = useQuery({
-    queryKey: [
-      ...scopedQueryKey(['explore-history'], context, effectiveWindow, sharedTime?.refreshRevision ?? 0), query
-    ],
+    queryKey: exploreQueryKeys.history(query, effectiveWindow, sharedTime?.refreshRevision ?? 0),
     queryFn: ({ signal }) => loadHistorical(query, signal),
     enabled: historical,
     retry: false,
@@ -106,17 +105,6 @@ function mergeContextChanges(context: QueryContext, changes: ExploreQueryPatch):
     environment: next.environment,
     instance: next.instance,
     endpoint: next.endpoint
-  };
-}
-
-function contextFromQuery(query: ExploreQuery): QueryContext {
-  return {
-    collectorId: query.collectorId,
-    serviceName: query.serviceName,
-    serviceNamespace: query.serviceNamespace,
-    environment: query.environment,
-    instance: query.instance,
-    endpoint: query.endpoint
   };
 }
 
