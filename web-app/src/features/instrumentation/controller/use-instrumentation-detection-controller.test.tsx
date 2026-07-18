@@ -47,9 +47,11 @@ describe('instrumentation detection controller', () => {
 
     act(() => result.current.start());
     await act(async () => void await Promise.resolve());
-    expect(result.current.state.status).toBe('checking');
-    expect(result.current.response?.signals).toMatchObject({
-      metrics: { status: 'waiting' }, logs: { status: 'unsupported' }, traces: { status: 'received' }
+    expect(result.current.state).toMatchObject({
+      status: 'checking',
+      response: { signals: {
+        metrics: { status: 'waiting' }, logs: { status: 'unsupported' }, traces: { status: 'received' }
+      } }
     });
 
     await act(async () => void await vi.advanceTimersByTimeAsync(2_999));
@@ -95,11 +97,14 @@ describe('instrumentation detection controller', () => {
 
     act(() => result.current.start());
     await act(async () => void await Promise.resolve());
-    expect(result.current.state.status).toBe('manual_retry');
-    expect(result.current.response?.signals).toMatchObject({
-      metrics: { status: 'received' }, logs: { status: 'unavailable' }, traces: { status: 'error' }
+    expect(result.current.state).toMatchObject({
+      status: 'manual_retry',
+      response: { signals: {
+        metrics: { status: 'received' }, logs: { status: 'unavailable' }, traces: { status: 'error' }
+      } }
     });
-    expect(result.current.response?.polling.deadlineAt).toBe(STARTED_AT + 120_000);
+    expect(result.current.state.status === 'manual_retry' && result.current.state.response.polling.deadlineAt)
+      .toBe(STARTED_AT + 120_000);
 
     vi.setSystemTime(STARTED_AT + 10_000);
     act(() => result.current.retry());
@@ -123,7 +128,51 @@ describe('instrumentation detection controller', () => {
 
     expect(refreshCatalog).toHaveBeenCalledOnce();
     expect(result.current.state.status).toBe('idle');
-    expect(result.current.response).toBeUndefined();
+  });
+
+  it('exposes one discriminated state instead of contradictory raw flags', async () => {
+    let resolveDetection: ((value: ReturnType<typeof response>) => void) | undefined;
+    detectInstrumentationSignals.mockImplementationOnce(() => new Promise(resolve => {
+      resolveDetection = resolve;
+    }));
+    const { result } = renderHook(() => useInstrumentationDetectionController(
+      startedAt => ({ ...request, startedAt })
+    ));
+
+    expect(result.current.state).toEqual({ status: 'idle' });
+    expect(result.current).not.toHaveProperty('response');
+    expect(result.current).not.toHaveProperty('error');
+    expect(result.current).not.toHaveProperty('checking');
+
+    act(() => result.current.start());
+    expect(result.current.state).toEqual({ status: 'checking' });
+
+    act(() => resolveDetection?.(response({ ...request, startedAt: STARTED_AT }, 'complete')));
+    await act(async () => void await Promise.resolve());
+    expect(result.current.state.status).toBe('complete');
+
+    act(() => result.current.reset());
+    expect(result.current.state).toEqual({ status: 'idle' });
+  });
+
+  it('represents request and request-factory failures only as error states', async () => {
+    const requestFailure = new Error('storage unavailable');
+    detectInstrumentationSignals.mockRejectedValueOnce(requestFailure);
+    const remote = renderHook(() => useInstrumentationDetectionController(
+      startedAt => ({ ...request, startedAt })
+    ));
+
+    act(() => remote.result.current.start());
+    await act(async () => void await Promise.resolve());
+    expect(remote.result.current.state).toEqual({ status: 'error', error: requestFailure });
+    remote.unmount();
+
+    const factoryFailure = new Error('invalid context');
+    const local = renderHook(() => useInstrumentationDetectionController(() => {
+      throw factoryFailure;
+    }));
+    act(() => local.result.current.start());
+    expect(local.result.current.state).toEqual({ status: 'error', error: factoryFailure });
   });
 });
 

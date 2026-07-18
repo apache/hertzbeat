@@ -41,9 +41,9 @@ export function useInstrumentationDetectionController(
   onContractError?: ContractErrorHandler,
   openPath?: (path: string) => void
 ) {
-  const [response, setResponse] = useState<DetectionResponse>();
-  const [error, setError] = useState<unknown>();
-  const [checking, setChecking] = useState(false);
+  // One state value prevents consumers from observing combinations such as
+  // `checking + error` or a stale response beside a failed request.
+  const [state, setState] = useState<InstrumentationDetectionState>({ status: 'idle' });
   const generation = useRef(0);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const abort = useRef<AbortController | undefined>(undefined);
@@ -55,6 +55,22 @@ export function useInstrumentationDetectionController(
     abort.current?.abort();
     abort.current = undefined;
   }, []);
+  const handleRequestFailure = useCallback(async (
+    reason: unknown,
+    controller: AbortController,
+    runGeneration: number
+  ) => {
+    if (controller.signal.aborted || generation.current !== runGeneration) return;
+    let contractRefreshed = false;
+    try {
+      contractRefreshed = await onContractError?.(reason) ?? false;
+    } catch {
+      // Detection evidence stays authoritative even when a catalog refresh also fails.
+    }
+    // Refreshing the catalog is asynchronous, so a reset may have superseded this run.
+    if (controller.signal.aborted || generation.current !== runGeneration) return;
+    setState(contractRefreshed ? { status: 'idle' } : { status: 'error', error: reason });
+  }, [onContractError]);
   const run = useCallback(async (current: DetectionRequest, runGeneration: number) => {
     abort.current?.abort();
     const controller = new AbortController();
@@ -62,34 +78,20 @@ export function useInstrumentationDetectionController(
     try {
       const next = await detectInstrumentationSignals(current, controller.signal);
       if (generation.current !== runGeneration) return;
-      setResponse(next);
-      setError(undefined);
       if (next.polling.decision === 'continue_polling') {
-        setChecking(true);
+        setState({ status: 'checking', response: next });
         const delay = next.polling.pollAfterMs;
         if (delay == null) throw new Error('Detection polling delay was unavailable');
         timer.current = setTimeout(() => void runRef.current?.(current, runGeneration), delay);
       } else {
-        setChecking(false);
+        setState(next.polling.decision === 'complete'
+          ? { status: 'complete', response: next }
+          : { status: 'manual_retry', response: next });
       }
     } catch (reason: unknown) {
-      if (controller.signal.aborted || generation.current !== runGeneration) return;
-      let contractRefreshed = false;
-      try {
-        contractRefreshed = await onContractError?.(reason) ?? false;
-      } catch {
-        // Detection evidence stays authoritative even when a catalog refresh also fails.
-      }
-      if (contractRefreshed) {
-        setResponse(undefined);
-        setError(undefined);
-        setChecking(false);
-        return;
-      }
-      setError(reason);
-      setChecking(false);
+      await handleRequestFailure(reason, controller, runGeneration);
     }
-  }, [onContractError]);
+  }, [handleRequestFailure]);
   useEffect(() => {
     runRef.current = run;
   }, [run]);
@@ -98,15 +100,12 @@ export function useInstrumentationDetectionController(
     clearPending();
     const nextGeneration = generation.current + 1;
     generation.current = nextGeneration;
-    setResponse(undefined);
-    setError(undefined);
-    setChecking(true);
+    setState({ status: 'checking' });
     let request: DetectionRequest;
     try {
       request = createRequest(Date.now());
     } catch (reason: unknown) {
-      setError(reason);
-      setChecking(false);
+      setState({ status: 'error', error: reason });
       return;
     }
     void run(request, nextGeneration);
@@ -114,11 +113,9 @@ export function useInstrumentationDetectionController(
   const reset = useCallback(() => {
     generation.current += 1;
     clearPending();
-    setResponse(undefined);
-    setError(undefined);
-    setChecking(false);
+    setState({ status: 'idle' });
   }, [clearPending]);
-  const { queryHandoff, openQuery } = useDetectionNavigation(response, openPath);
+  const { queryHandoff, openQuery } = useDetectionNavigation(responseFromState(state), openPath);
 
   useEffect(() => () => {
     generation.current += 1;
@@ -126,10 +123,7 @@ export function useInstrumentationDetectionController(
   }, [clearPending]);
 
   return {
-    state: detectionState(response, error, checking),
-    response,
-    error,
-    checking,
+    state,
     signalNames: INSTRUMENTATION_SIGNALS,
     start,
     retry: start,
@@ -152,17 +146,8 @@ function useDetectionNavigation(response: DetectionResponse | undefined, openPat
   return { queryHandoff, openQuery };
 }
 
-function detectionState(
-  response: DetectionResponse | undefined,
-  error: unknown,
-  checking: boolean
-): InstrumentationDetectionState {
-  if (error !== undefined) return { status: 'error', error };
-  if (checking) return response ? { status: 'checking', response } : { status: 'checking' };
-  if (!response) return { status: 'idle' };
-  return response.polling.decision === 'complete'
-    ? { status: 'complete', response }
-    : { status: 'manual_retry', response };
+function responseFromState(state: InstrumentationDetectionState) {
+  return 'response' in state ? state.response : undefined;
 }
 
 export type InstrumentationDetectionController = ReturnType<typeof useInstrumentationDetectionController>;

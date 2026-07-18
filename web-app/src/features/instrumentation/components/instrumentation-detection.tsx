@@ -26,53 +26,87 @@ import stageStyles from './instrumentation-stage.module.css';
 
 export function InstrumentationDetection({ detection }: { detection: InstrumentationDetectionController }) {
   const { t } = useTranslation();
-  const response = detection.response;
   return (
     <StageBody stage={5} title={t('instrumentation.stage.detect')} description={t('instrumentation.stage.detectHelp')}>
-      {detection.error != null && (
+      <DetectionState detection={detection} t={t} />
+    </StageBody>
+  );
+}
+
+function DetectionState({ detection, t }: {
+  detection: InstrumentationDetectionController;
+  t: (key: string) => string;
+}) {
+  const { state } = detection;
+  switch (state.status) {
+    case 'idle':
+      return <Alert type="info" showIcon message={t('instrumentation.detection.notStarted')} />;
+    case 'checking':
+      return state.response ? (
+        <>
+          <SignalTable detection={detection} response={state.response} t={t} />
+          <Alert type="info" showIcon message={t('instrumentation.detection.waiting')} />
+        </>
+      ) : <Alert type="info" showIcon message={t('instrumentation.detection.checking')} />;
+    case 'complete':
+      return <SignalTable detection={detection} response={state.response} t={t} />;
+    case 'manual_retry':
+      return (
+        <>
+          <SignalTable detection={detection} response={state.response} t={t} />
+          <div className={stageStyles.stageActions}>
+            <Button onClick={detection.retry}>{t('instrumentation.action.retryDetection')}</Button>
+          </div>
+        </>
+      );
+    case 'error':
+      return (
         <Alert
           type="error"
           showIcon
           message={t('instrumentation.detection.unavailable')}
           action={<Button size="small" onClick={detection.retry}>{t('common.retry')}</Button>}
         />
-      )}
-      {detection.checking && !response && <Alert type="info" showIcon message={t('instrumentation.detection.checking')} />}
-      {!detection.error && !detection.checking && !response && (
-        <Alert type="info" showIcon message={t('instrumentation.detection.notStarted')} />
-      )}
-      {response && (
-        <div className={styles.signalTable}>
-          {detection.signalNames.map(signal => {
-            const result = response.signals[signal];
-            const queryAvailable = detection.queryHandoff(signal) !== undefined;
-            return (
-              <div className={styles.signalRow} key={signal}>
-                <strong>{t(`instrumentation.signal.${signal}`)}</strong>
-                <span>
-                  <Tag color={statusColor(result.status)}>{t(`instrumentation.detection.status.${result.status}`)}</Tag>
-                  <Typography.Text type="secondary">
-                    {result.lastReceivedAt ? new Date(result.lastReceivedAt).toLocaleString() : errorText(result.errorCode, t)}
-                  </Typography.Text>
-                </span>
-                {queryAvailable ? (
-                  <Button type="link" onClick={() => detection.openQuery(signal)} icon={<ExportOutlined />} iconPosition="end">
-                    {t('instrumentation.action.openExplore')}
-                  </Button>
-                ) : <Typography.Text type="secondary">{t('instrumentation.queryUnavailable')}</Typography.Text>}
-              </div>
-            );
-          })}
-        </div>
-      )}
-      {response?.polling.decision === 'continue_polling' && <Alert type="info" showIcon message={t('instrumentation.detection.waiting')} />}
-      {response?.polling.decision === 'manual_retry' && (
-        <div className={stageStyles.stageActions}>
-          <Button onClick={detection.retry}>{t('instrumentation.action.retryDetection')}</Button>
-        </div>
-      )}
-    </StageBody>
+      );
+    default:
+      return assertNever(state);
+  }
+}
+
+function SignalTable({ detection, response, t }: {
+  detection: InstrumentationDetectionController;
+  response: Extract<InstrumentationDetectionController['state'], { response: unknown }>['response'];
+  t: (key: string) => string;
+}) {
+  return (
+    <div className={styles.signalTable}>
+      {detection.signalNames.map(signal => {
+        const result = response.signals[signal];
+        const queryAvailable = detection.queryHandoff(signal) !== undefined;
+        return (
+          <div className={styles.signalRow} key={signal}>
+            <strong>{t(`instrumentation.signal.${signal}`)}</strong>
+            <span>
+              <Tag color={statusColor(result.status)}>{t(`instrumentation.detection.status.${result.status}`)}</Tag>
+              <Typography.Text type="secondary">
+                {result.lastReceivedAt ? new Date(result.lastReceivedAt).toLocaleString() : errorText(result.errorCode, t)}
+              </Typography.Text>
+            </span>
+            {queryAvailable ? (
+              <Button type="link" onClick={() => detection.openQuery(signal)} icon={<ExportOutlined />} iconPosition="end">
+                {t('instrumentation.action.openExplore')}
+              </Button>
+            ) : <Typography.Text type="secondary">{t('instrumentation.queryUnavailable')}</Typography.Text>}
+          </div>
+        );
+      })}
+    </div>
   );
+}
+
+function assertNever(value: never): never {
+  void value;
+  throw new Error('Unhandled instrumentation detection state');
 }
 
 function statusColor(status: string) {

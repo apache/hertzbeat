@@ -51,7 +51,7 @@ describe('InstrumentationPage', () => {
   it('renders the continuous runbook and does not turn unavailable data into a zero or success state', () => {
     useInstrumentationSetup.mockReturnValue(setupFixture());
     useInstrumentationDetection.mockReturnValue({
-      response: undefined, checking: false, error: new Error('storage unavailable'), start: vi.fn(), retry: vi.fn(), reset: vi.fn()
+      ...detectionFixture(), state: { status: 'error', error: new Error('storage unavailable') }
     });
     renderPage();
 
@@ -226,7 +226,8 @@ function setupFixture() {
 
 function detectionFixture(response?: ReturnType<typeof detectionResponse>) {
   return {
-    response, checking: false, error: undefined, start: vi.fn(), retry: vi.fn(), reset: vi.fn(),
+    state: response ? { status: 'complete', response } : { status: 'idle' },
+    start: vi.fn(), retry: vi.fn(), reset: vi.fn(),
     signalNames: ['metrics', 'logs', 'traces'], queryHandoff: vi.fn(), openQuery: vi.fn()
   };
 }
