@@ -240,7 +240,7 @@ button.timePolicy:hover {
   border-left-color: var(--hb-brand-accent);
   border-radius: 0;
   color: var(--hb-text-primary);
-  background: transparent;
+  background: var(--hb-nav-selected);
   font-weight: 600;
 }
 
