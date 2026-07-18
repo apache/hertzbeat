@@ -37,12 +37,8 @@ import {
 import {
   NoticeTemplateContractError,
   noticeTemplateResourceRecord,
-  noticeTemplatePageSizes,
-  validateNoticeTemplateDraft,
   type NoticeTemplate,
-  type NoticeTemplateDraft,
-  type NoticeTemplateQuery,
-  type NoticeTemplateResourceRecord
+  type NoticeTemplateQuery
 } from '@/features/alert/notice-template-model';
 import {
   noticeTemplateCreateActionUrl,
@@ -50,18 +46,22 @@ import {
 } from '@/features/alert/notice-template-resource';
 
 import { createRefineHttpError, toRefineHttpError } from '../refine-http-error';
-
-type DeleteVariables = { record: NoticeTemplateResourceRecord; query: NoticeTemplateQuery };
+import {
+  readNoticeTemplateDeleteVariables,
+  readNoticeTemplateDraft,
+  readNoticeTemplateId,
+  readNoticeTemplateListQuery
+} from './notice-template-data-provider-input';
 
 export const noticeTemplateDataProvider: DataProvider = {
   getList<TData extends BaseRecord = BaseRecord>(params: GetListParams): Promise<GetListResponse<TData>> {
     return protect(async () => {
       assertResource(params.resource);
-      const query = readListQuery(params);
+      const query = readNoticeTemplateListQuery(params);
       const page = await loadNoticeTemplates(query);
       assertPageEvidence(page, query);
       const records = mapResourceRecords(page.content);
-      return { data: records as unknown as TData[], total: page.totalElements };
+      return { data: exposeProviderData<TData[]>(records), total: page.totalElements };
     });
   },
 
@@ -71,10 +71,10 @@ export const noticeTemplateDataProvider: DataProvider = {
   }): Promise<GetOneResponse<TData>> {
     return protect(async () => {
       assertResource(params.resource);
-      const id = readId(params.id);
+      const id = readNoticeTemplateId(params.id);
       const record = await loadNoticeTemplate(id);
       assertCanonicalCustom(record, id);
-      return { data: noticeTemplateResourceRecord(record) as unknown as TData };
+      return { data: exposeProviderData<TData>(noticeTemplateResourceRecord(record)) };
     });
   },
 
@@ -89,12 +89,12 @@ export const noticeTemplateDataProvider: DataProvider = {
   }): Promise<UpdateResponse<TData>> {
     return protect(async () => {
       assertResource(params.resource);
-      const id = readId(params.id);
-      const draft = readDraft(params.variables, id);
+      const id = readNoticeTemplateId(params.id);
+      const draft = readNoticeTemplateDraft(params.variables, id);
       await saveNoticeTemplate(draft);
       const canonical = await loadNoticeTemplate(id);
       assertCanonicalCustom(canonical, id);
-      return { data: noticeTemplateResourceRecord(canonical) as unknown as TData };
+      return { data: exposeProviderData<TData>(noticeTemplateResourceRecord(canonical)) };
     });
   },
 
@@ -105,8 +105,8 @@ export const noticeTemplateDataProvider: DataProvider = {
   }): Promise<DeleteOneResponse<TData>> {
     return protect(async () => {
       assertResource(params.resource);
-      const id = readId(params.id);
-      const { query } = readDeleteVariables(params.variables, id);
+      const id = readNoticeTemplateId(params.id);
+      const { query } = readNoticeTemplateDeleteVariables(params.variables, id);
       const canonical = await loadNoticeTemplate(id);
       if (canonical.id !== id || canonical.preset) throw contractError('NOTICE_TEMPLATE_DELETE_FORBIDDEN', 400);
       await deleteNoticeTemplate(id);
@@ -115,7 +115,7 @@ export const noticeTemplateDataProvider: DataProvider = {
       if (proof.content.some(item => item.id === id)) {
         throw contractError('NOTICE_TEMPLATE_DELETE_NOT_CONFIRMED');
       }
-      return { data: noticeTemplateResourceRecord(canonical) as unknown as TData };
+      return { data: exposeProviderData<TData>(noticeTemplateResourceRecord(canonical)) };
     });
   },
 
@@ -126,10 +126,10 @@ export const noticeTemplateDataProvider: DataProvider = {
       if (params.url !== noticeTemplateCreateActionUrl || params.method !== 'post') {
         throw contractError('NOTICE_TEMPLATE_CUSTOM_ACTION_UNSUPPORTED', 405);
       }
-      const draft = readDraft(params.payload);
+      const draft = readNoticeTemplateDraft(params.payload);
       if (draft.id !== undefined) throw contractError('NOTICE_TEMPLATE_VARIABLES_INVALID', 400);
       await saveNoticeTemplate(draft);
-      return { data: { acknowledged: true } as unknown as TData };
+      return { data: exposeProviderData<TData>({ acknowledged: true }) };
     });
   },
 
@@ -153,100 +153,10 @@ function assertResource(resource: string) {
   }
 }
 
-function readListQuery(params: GetListParams): NoticeTemplateQuery {
-  assertNoSorters(params.sorters);
-  const pagination = readPagination(params.pagination);
-  return { ...readFilters(params.filters), ...pagination };
-}
-
-function assertNoSorters(sorters: GetListParams['sorters']) {
-  if (sorters && sorters.length > 0) throw contractError('NOTICE_TEMPLATE_SORT_UNSUPPORTED', 400);
-}
-
-function readPagination(pagination: GetListParams['pagination']) {
-  if (pagination?.mode && pagination.mode !== 'server') {
-    throw contractError('NOTICE_TEMPLATE_PAGINATION_UNSUPPORTED', 400);
-  }
-  const currentPage = pagination?.currentPage ?? 1;
-  const pageSize = pagination?.pageSize ?? 8;
-  if (
-    !Number.isSafeInteger(currentPage)
-    || currentPage < 1
-    || !noticeTemplatePageSizes.includes(pageSize as (typeof noticeTemplatePageSizes)[number])
-  ) {
-    throw contractError('NOTICE_TEMPLATE_PAGINATION_INVALID', 400);
-  }
-  return { pageIndex: currentPage - 1, pageSize };
-}
-
-function readFilters(filters: GetListParams['filters']): Pick<NoticeTemplateQuery, 'name' | 'preset'> {
-  let name = '';
-  let preset: boolean | undefined;
-  for (const filter of filters ?? []) {
-    if (!('field' in filter)) throw contractError('NOTICE_TEMPLATE_FILTER_UNSUPPORTED', 400);
-    if (filter.field === 'name' && filter.operator === 'contains' && typeof filter.value === 'string') {
-      name = filter.value.trim();
-    } else if (filter.field === 'preset' && filter.operator === 'eq' && typeof filter.value === 'boolean') {
-      preset = filter.value;
-    } else {
-      throw contractError('NOTICE_TEMPLATE_FILTER_UNSUPPORTED', 400);
-    }
-  }
-  if (preset === undefined) throw contractError('NOTICE_TEMPLATE_FILTER_UNSUPPORTED', 400);
-  return { name, preset };
-}
-
-function readId(value: string | number) {
-  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 1) {
-    throw contractError('NOTICE_TEMPLATE_ID_INVALID', 400);
-  }
-  return value;
-}
-
 function assertCanonicalCustom(record: NoticeTemplate, id: number) {
   if (record.id !== id || record.preset) {
     throw contractError('NOTICE_TEMPLATE_CANONICAL_IDENTITY_INVALID');
   }
-}
-
-function readDraft(value: unknown, id?: number): NoticeTemplateDraft {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    throw contractError('NOTICE_TEMPLATE_VARIABLES_INVALID', 400);
-  }
-  const candidate = value as Partial<NoticeTemplateDraft>;
-  const draft = {
-    ...(id === undefined ? {} : { id }),
-    name: candidate.name,
-    type: candidate.type,
-    content: candidate.content
-  } as NoticeTemplateDraft;
-  if (
-    typeof draft.name !== 'string'
-    || typeof draft.type !== 'number'
-    || typeof draft.content !== 'string'
-    || validateNoticeTemplateDraft(draft).length > 0
-    || (candidate.id !== undefined && candidate.id !== id)
-  ) {
-    throw contractError('NOTICE_TEMPLATE_VARIABLES_INVALID', 400);
-  }
-  return draft;
-}
-
-function readDeleteVariables(value: unknown, id: number): DeleteVariables {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    throw contractError('NOTICE_TEMPLATE_VARIABLES_INVALID', 400);
-  }
-  const candidate = value as Partial<DeleteVariables>;
-  if (
-    !candidate.record
-    || candidate.record.preset
-    || candidate.record.backendId !== id
-    || candidate.record.id !== `notice-template:custom:${id}`
-    || !candidate.query
-  ) {
-    throw contractError('NOTICE_TEMPLATE_DELETE_FORBIDDEN', 400);
-  }
-  return { record: candidate.record, query: readDeleteQuery(candidate.query) };
 }
 
 function mapResourceRecords(templates: NoticeTemplate[]) {
@@ -256,19 +166,6 @@ function mapResourceRecords(templates: NoticeTemplate[]) {
     throw contractError('NOTICE_TEMPLATE_RESOURCE_ID_COLLISION');
   }
   return records;
-}
-
-function readDeleteQuery(query: NoticeTemplateQuery): NoticeTemplateQuery {
-  if (
-    typeof query.name !== 'string'
-    || typeof query.preset !== 'boolean'
-    || !Number.isSafeInteger(query.pageIndex)
-    || query.pageIndex < 0
-    || !noticeTemplatePageSizes.includes(query.pageSize as (typeof noticeTemplatePageSizes)[number])
-  ) {
-    throw contractError('NOTICE_TEMPLATE_VARIABLES_INVALID', 400);
-  }
-  return { ...query };
 }
 
 function assertPageEvidence(
@@ -288,4 +185,10 @@ function assertPageEvidence(
 
 function contractError(code: string, status = 502) {
   return createRefineHttpError('Notice Template contract failed', status, code);
+}
+
+function exposeProviderData<TData>(value: unknown): TData {
+  // Refine lets each caller select TData, so the unavoidable adapter cast is
+  // isolated where validated domain values enter its generic provider API.
+  return value as TData;
 }

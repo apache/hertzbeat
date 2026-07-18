@@ -37,6 +37,14 @@ vi.mock('@/features/alert/notice-template-api', async importOriginal => ({
 import { noticeTemplateCreateActionUrl } from '@/features/alert/notice-template-resource';
 
 import { noticeTemplateDataProvider } from './notice-template-data-provider';
+import inputSource from './notice-template-data-provider-input.ts?raw';
+import {
+  readNoticeTemplateDeleteVariables,
+  readNoticeTemplateDraft,
+  readNoticeTemplateId,
+  readNoticeTemplateListQuery
+} from './notice-template-data-provider-input';
+import providerSource from './notice-template-data-provider.ts?raw';
 
 const record: NoticeTemplate = {
   id: 42, name: 'Canonical', type: 1, preset: false, content: '${server}'
@@ -211,5 +219,92 @@ describe('Notice Template Refine data provider', () => {
       id: 42,
       variables: { record: resourceRecord, query }
     })).rejects.toMatchObject({ code: 'NOTICE_TEMPLATE_PAGE_MISMATCH' });
+  });
+});
+
+describe('Notice Template provider input boundary', () => {
+  it('keeps Refine orchestration small and runtime parsing outside the provider', () => {
+    const sourceLines = providerSource.replace(/\/\*[\s\S]*?\*\//g, '').split('\n')
+      .filter(line => line.trim() && !line.trim().startsWith('//'));
+    expect(sourceLines.length).toBeLessThanOrEqual(200);
+    expect(providerSource).not.toMatch(/function read(?:Draft|DeleteVariables|DeleteQuery|Pagination|Filters)/);
+    expect(providerSource.match(/\bas TData\b/g)).toHaveLength(1);
+    expect(providerSource).not.toContain('as unknown as TData');
+    expect(inputSource).toContain("from 'zod'");
+    expect(inputSource).toContain('schema.safeParse(value)');
+  });
+
+  it('normalizes supported list input and rejects unsupported Refine controls', () => {
+    expect(readNoticeTemplateListQuery({
+      resource: 'notice-templates',
+      pagination: { currentPage: 2, pageSize: 15, mode: 'server' },
+      filters: [
+        { field: 'name', operator: 'contains', value: ' Canonical ' },
+        { field: 'preset', operator: 'eq', value: false }
+      ]
+    })).toEqual({ name: 'Canonical', preset: false, pageIndex: 1, pageSize: 15 });
+
+    expect(() => readNoticeTemplateListQuery({
+      resource: 'notice-templates',
+      sorters: [{ field: 'name', order: 'asc' }],
+      filters: [{ field: 'preset', operator: 'eq', value: false }]
+    })).toThrow(expect.objectContaining({
+      code: 'NOTICE_TEMPLATE_SORT_UNSUPPORTED', statusCode: 400
+    }));
+    expect(() => readNoticeTemplateListQuery({
+      resource: 'notice-templates',
+      filters: [{ field: 'preset', operator: 'ne', value: false }]
+    })).toThrow(expect.objectContaining({
+      code: 'NOTICE_TEMPLATE_FILTER_UNSUPPORTED', statusCode: 400
+    }));
+  });
+
+  it('strips unknown draft fields while preserving the established id contract', () => {
+    expect(readNoticeTemplateDraft({
+      id: 42,
+      name: 'Canonical',
+      type: 1,
+      content: '${server}',
+      ignored: 'transport-only'
+    }, 42)).toEqual({ id: 42, name: 'Canonical', type: 1, content: '${server}' });
+
+    expect(() => readNoticeTemplateDraft({
+      id: 43, name: 'Canonical', type: 1, content: '${server}'
+    }, 42)).toThrow(expect.objectContaining({
+      code: 'NOTICE_TEMPLATE_VARIABLES_INVALID', statusCode: 400
+    }));
+    expect(() => readNoticeTemplateDraft({
+      id: 42, name: 'Canonical', type: 1, content: '${server}'
+    })).toThrow(expect.objectContaining({
+      code: 'NOTICE_TEMPLATE_VARIABLES_INVALID', statusCode: 400
+    }));
+  });
+
+  it('preserves delete proof query evidence and distinguishes forbidden identity', () => {
+    const proofQuery = { ...query, futureEvidence: 'kept' };
+    expect(readNoticeTemplateDeleteVariables({
+      record: { ...resourceRecord, futureMetadata: 'ignored' },
+      query: proofQuery,
+      futureEnvelope: true
+    }, 42)).toEqual({ record: { ...resourceRecord, futureMetadata: 'ignored' }, query: proofQuery });
+
+    expect(() => readNoticeTemplateDeleteVariables({
+      record: { ...resourceRecord, id: 'notice-template:custom:43' }, query
+    }, 42)).toThrow(expect.objectContaining({
+      code: 'NOTICE_TEMPLATE_DELETE_FORBIDDEN', statusCode: 400
+    }));
+    expect(() => readNoticeTemplateDeleteVariables({
+      record: resourceRecord,
+      query: { ...query, pageIndex: -1 }
+    }, 42)).toThrow(expect.objectContaining({
+      code: 'NOTICE_TEMPLATE_VARIABLES_INVALID', statusCode: 400
+    }));
+  });
+
+  it('accepts only positive numeric backend ids', () => {
+    expect(readNoticeTemplateId(42)).toBe(42);
+    expect(() => readNoticeTemplateId('42')).toThrow(expect.objectContaining({
+      code: 'NOTICE_TEMPLATE_ID_INVALID', statusCode: 400
+    }));
   });
 });
