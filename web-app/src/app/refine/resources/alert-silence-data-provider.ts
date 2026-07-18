@@ -38,34 +38,28 @@ import {
 } from '@/features/alert/alert-silence-api';
 import {
   AlertSilenceContractError,
-  alertSilencePageSizes,
-  validateAlertSilenceDraft,
-  type AlertSilence,
-  type AlertSilenceDraft,
-  type AlertSilenceQuery
+  type AlertSilence
 } from '@/features/alert/alert-silence-model';
 
 import { createRefineHttpError, toRefineHttpError } from '../refine-http-error';
+import {
+  readAlertSilenceDeleteVariables,
+  readAlertSilenceDraft,
+  readAlertSilenceId,
+  readAlertSilenceListQuery,
+  readAlertSilenceUpdateVariables
+} from './alert-silence-data-provider-input';
 
 export const alertSilenceResourceName = 'alert-silences';
 export const alertSilenceCreateActionUrl = '/api/alert/silence';
-
-type UpdateVariables = {
-  draft: AlertSilenceDraft;
-  query: AlertSilenceQuery;
-} | {
-  operation: 'toggle';
-  enable: boolean;
-  query: AlertSilenceQuery;
-};
 
 export const alertSilenceDataProvider: DataProvider = {
   getList<TData extends BaseRecord = BaseRecord>(params: GetListParams): Promise<GetListResponse<TData>> {
     return protect(async () => {
       assertResource(params.resource);
-      const query = readListQuery(params);
+      const query = readAlertSilenceListQuery(params);
       const page = await loadAlertSilences(query);
-      return { data: page.content as unknown as TData[], total: page.totalElements };
+      return { data: exposeProviderData<TData[]>(page.content), total: page.totalElements };
     });
   },
 
@@ -75,10 +69,10 @@ export const alertSilenceDataProvider: DataProvider = {
   }): Promise<GetOneResponse<TData>> {
     return protect(async () => {
       assertResource(params.resource);
-      const id = readId(params.id);
+      const id = readAlertSilenceId(params.id);
       const record = await loadAlertSilence(id);
       assertCanonicalIdentity(record, id);
-      return { data: record as unknown as TData };
+      return { data: exposeProviderData<TData>(record) };
     });
   },
 
@@ -93,8 +87,8 @@ export const alertSilenceDataProvider: DataProvider = {
   }): Promise<UpdateResponse<TData>> {
     return protect(async () => {
       assertResource(params.resource);
-      const id = readId(params.id);
-      const variables = readUpdateVariables(params.variables, id);
+      const id = readAlertSilenceId(params.id);
+      const variables = readAlertSilenceUpdateVariables(params.variables, id);
       if ('operation' in variables) {
         const before = await loadAlertSilence(id);
         assertCanonicalIdentity(before, id);
@@ -105,7 +99,7 @@ export const alertSilenceDataProvider: DataProvider = {
       const canonical = await loadAlertSilence(id);
       assertCanonicalIdentity(canonical, id);
       await loadAlertSilences(variables.query);
-      return { data: canonical as unknown as TData };
+      return { data: exposeProviderData<TData>(canonical) };
     });
   },
 
@@ -116,8 +110,8 @@ export const alertSilenceDataProvider: DataProvider = {
   }): Promise<DeleteOneResponse<TData>> {
     return protect(async () => {
       assertResource(params.resource);
-      const id = readId(params.id);
-      const query = readDeleteVariables(params.variables);
+      const id = readAlertSilenceId(params.id);
+      const query = readAlertSilenceDeleteVariables(params.variables);
       const canonical = await loadAlertSilence(id);
       assertCanonicalIdentity(canonical, id);
       await deleteAlertSilence(id);
@@ -131,7 +125,7 @@ export const alertSilenceDataProvider: DataProvider = {
       if (proof.content.some(item => item.id === id)) {
         throw contractError('ALERT_SILENCE_DELETE_NOT_CONFIRMED');
       }
-      return { data: canonical as unknown as TData };
+      return { data: exposeProviderData<TData>(canonical) };
     });
   },
 
@@ -142,10 +136,9 @@ export const alertSilenceDataProvider: DataProvider = {
       if (params.url !== alertSilenceCreateActionUrl || params.method !== 'post') {
         throw contractError('ALERT_SILENCE_CUSTOM_ACTION_UNSUPPORTED', 405);
       }
-      const draft = readDraft(params.payload);
-      if (draft.id !== undefined) throw contractError('ALERT_SILENCE_VARIABLES_INVALID', 400);
+      const draft = readAlertSilenceDraft(params.payload);
       await saveAlertSilence(draft);
-      return { data: { acknowledged: true } as unknown as TData };
+      return { data: exposeProviderData<TData>({ acknowledged: true }) };
     });
   },
 
@@ -177,140 +170,23 @@ function assertResource(resource: string) {
   }
 }
 
-function readListQuery(params: GetListParams): AlertSilenceQuery {
-  if (params.sorters && params.sorters.length > 0) {
-    throw contractError('ALERT_SILENCE_SORT_UNSUPPORTED', 400);
-  }
-  const pagination = readPagination(params.pagination);
-  let search = '';
-  for (const filter of params.filters ?? []) {
-    if (
-      !('field' in filter)
-      || filter.field !== 'search'
-      || filter.operator !== 'contains'
-      || typeof filter.value !== 'string'
-    ) {
-      throw contractError('ALERT_SILENCE_FILTER_UNSUPPORTED', 400);
-    }
-    search = filter.value.trim();
-  }
-  return { search, ...pagination };
-}
-
-function readPagination(pagination: GetListParams['pagination']) {
-  if (pagination?.mode && pagination.mode !== 'server') {
-    throw contractError('ALERT_SILENCE_PAGINATION_UNSUPPORTED', 400);
-  }
-  const currentPage = pagination?.currentPage ?? 1;
-  const pageSize = pagination?.pageSize ?? 8;
-  if (
-    !Number.isSafeInteger(currentPage)
-    || currentPage < 1
-    || !alertSilencePageSizes.includes(pageSize as (typeof alertSilencePageSizes)[number])
-  ) {
-    throw contractError('ALERT_SILENCE_PAGINATION_INVALID', 400);
-  }
-  return { pageIndex: currentPage - 1, pageSize };
-}
-
-function readUpdateVariables(value: unknown, id: number): UpdateVariables {
-  const source = objectValue(value);
-  const query = readQuery(source.query);
-  if (source.operation === 'toggle') {
-    if (typeof source.enable !== 'boolean') throw contractError('ALERT_SILENCE_VARIABLES_INVALID', 400);
-    return { operation: 'toggle', enable: source.enable, query };
-  }
-  return { draft: readDraft(source.draft, id), query };
-}
-
-function readDeleteVariables(value: unknown) {
-  return readQuery(objectValue(value).query);
-}
-
-function readDraft(value: unknown, id?: number): AlertSilenceDraft {
-  const source = objectValue(value);
-  const draft = {
-    ...(id === undefined ? {} : { id }),
-    name: source.name,
-    enable: source.enable,
-    matchAll: source.matchAll,
-    type: source.type,
-    labelsText: source.labelsText,
-    days: source.days,
-    periodStart: source.periodStart,
-    periodEnd: source.periodEnd
-  } as AlertSilenceDraft;
-  if (
-    !hasValidDraftScalars(source)
-    || !hasValidDraftDays(source.days)
-    || !hasValidDraftPeriod(source)
-    || validateAlertSilenceDraft(draft).length > 0
-    || (source.id !== undefined && source.id !== id)
-  ) {
-    throw contractError('ALERT_SILENCE_VARIABLES_INVALID', 400);
-  }
-  return draft;
-}
-
-function hasValidDraftScalars(source: Record<string, unknown>) {
-  return typeof source.name === 'string'
-    && typeof source.enable === 'boolean'
-    && typeof source.matchAll === 'boolean'
-    && (source.type === 0 || source.type === 1)
-    && typeof source.labelsText === 'string';
-}
-
-function hasValidDraftDays(value: unknown) {
-  return Array.isArray(value)
-    && (value as unknown[]).every(day => Number.isSafeInteger(day) && (day as number) >= 1 && (day as number) <= 7);
-}
-
-function hasValidDraftPeriod(source: Record<string, unknown>) {
-  return typeof source.periodStart === 'string' && typeof source.periodEnd === 'string';
-}
-
-function readQuery(value: unknown): AlertSilenceQuery {
-  const source = objectValue(value);
-  if (
-    typeof source.search !== 'string'
-    || !Number.isSafeInteger(source.pageIndex)
-    || (source.pageIndex as number) < 0
-    || !alertSilencePageSizes.includes(source.pageSize as (typeof alertSilencePageSizes)[number])
-  ) {
-    throw contractError('ALERT_SILENCE_VARIABLES_INVALID', 400);
-  }
-  return {
-    search: source.search,
-    pageIndex: source.pageIndex as number,
-    pageSize: source.pageSize as AlertSilenceQuery['pageSize']
-  };
-}
-
-function objectValue(value: unknown): Record<string, unknown> {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    throw contractError('ALERT_SILENCE_VARIABLES_INVALID', 400);
-  }
-  return value as Record<string, unknown>;
-}
-
-function readId(value: string | number) {
-  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 1) {
-    throw contractError('ALERT_SILENCE_ID_INVALID', 400);
-  }
-  return value;
-}
-
 function assertCanonicalIdentity(record: AlertSilence, id: number) {
   if (record.id !== id) throw contractError('ALERT_SILENCE_CANONICAL_IDENTITY_INVALID');
 }
 
 function isUnavailable(reason: unknown): reason is { status?: number } {
   if (!reason || typeof reason !== 'object') return false;
-  const status = (reason as { status?: unknown }).status;
-  const cause = (reason as { cause?: unknown }).cause;
+  const status = 'status' in reason ? reason.status : undefined;
+  const cause = 'cause' in reason ? reason.cause : undefined;
   return status === 502 || status === 503 || status === 504 || status === undefined && cause !== undefined;
 }
 
 function contractError(code: string, status = 502) {
   return createRefineHttpError('Alert Silence contract failed', status, code);
+}
+
+function exposeProviderData<TData>(value: unknown): TData {
+  // Refine lets each caller select TData, so this unavoidable adapter cast is
+  // kept at the single boundary where domain records enter its generic API.
+  return value as TData;
 }
