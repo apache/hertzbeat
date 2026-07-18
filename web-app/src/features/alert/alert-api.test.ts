@@ -9,7 +9,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const { apiMessageGet } = vi.hoisted(() => ({ apiMessageGet: vi.fn() }));
 vi.mock('@/core/http/api-message', () => ({ apiMessageGet }));
 
-import { loadAlertGroups, loadAlertSummary } from './alert-api';
+import { buildAlertListPath, loadAlertGroups, loadAlertSummary } from './alert-api';
 import { AlertContractError } from './alert-model';
 
 const query = {
@@ -19,6 +19,20 @@ const query = {
 
 describe('alert API', () => {
   beforeEach(() => vi.resetAllMocks());
+
+  it('owns the backend list path and omits empty filters', () => {
+    expect(buildAlertListPath({
+      search: 'checkout', status: 'firing', severity: 'critical', serviceName: 'checkout-api',
+      serviceNamespace: 'payments', environment: 'prod', pageIndex: 0, pageSize: 8
+    })).toBe(
+      '/api/alerts/group?pageIndex=0&pageSize=8&search=checkout&status=firing&severity=critical'
+      + '&serviceName=checkout-api&serviceNamespace=payments&environment=prod&sort=gmtUpdate&order=desc'
+    );
+    expect(buildAlertListPath({
+      search: '', status: '', severity: '', serviceName: '', serviceNamespace: '', environment: '',
+      pageIndex: 1, pageSize: 15
+    })).toBe('/api/alerts/group?pageIndex=1&pageSize=15&sort=gmtUpdate&order=desc');
+  });
 
   it('parses and allowlists summary data on read', async () => {
     apiMessageGet.mockResolvedValue({

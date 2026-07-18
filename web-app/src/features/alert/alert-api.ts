@@ -17,14 +17,17 @@
 
 import { apiMessageGet } from '@/core/http/api-message';
 
-import {
-  buildAlertListPath,
-  parseAlertGroupPage,
-  parseAlertSummary,
-  type AlertQuery
-} from './alert-model';
+import { writeAlertQuery, type AlertQuery } from './alert-model';
+import { parseAlertGroupPage, parseAlertSummary } from './alert-schema';
 
 export type { AlertGroup, AlertPage, AlertSummary } from './alert-model';
+
+export function buildAlertListPath(query: AlertQuery) {
+  const params = writeAlertQuery(query);
+  params.set('sort', 'gmtUpdate');
+  params.set('order', 'desc');
+  return `/api/alerts/group?${params.toString()}`;
+}
 
 export async function loadAlertSummary() {
   const response = await apiMessageGet<unknown>('/api/alerts/summary');

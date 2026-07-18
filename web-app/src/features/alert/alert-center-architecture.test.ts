@@ -17,10 +17,21 @@
 
 import { describe, expect, it } from 'vitest';
 
+import apiSource from './alert-api.ts?raw';
+import modelSource from './alert-model.ts?raw';
+
 const page = import.meta.glob('./alert-center-page.tsx', { eager: true, import: 'default', query: '?raw' });
 const source = Object.values(page)[0] as string;
 
 describe('Alert Center architecture', () => {
+  it('keeps transport paths and response parsing in the API boundary', () => {
+    expect(apiSource).toContain("from './alert-schema'");
+    expect(apiSource).toContain('export function buildAlertListPath');
+    expect(modelSource).not.toMatch(/export function parseAlert/);
+    expect(modelSource).not.toMatch(/function\s+(?:array|boolean|integer|number|object|record|stringArray|text)\s*\(/);
+    expect(modelSource).not.toContain('/api/alerts/group');
+  });
+
   it('keeps transport, TanStack query, URL ownership, and date parsing out of the page', () => {
     expect(source).not.toMatch(/@tanstack\/react-query|alert-api|useSearchParams|Date\.parse|Intl\.DateTimeFormat/);
     expect(source).toContain("./controller/use-alert-center-controller");
