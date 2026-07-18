@@ -20,6 +20,9 @@ import { z } from 'zod';
 const safeIntegerSchema = z.number().refine(Number.isSafeInteger, 'Expected a safe integer');
 const nonNegativeIntegerSchema = safeIntegerSchema.refine(value => value >= 0, 'Expected a non-negative integer');
 const positiveIntegerSchema = safeIntegerSchema.refine(value => value > 0, 'Expected a positive integer');
+
+// Audit metadata is optional in older responses. Normalize both absence and null
+// so downstream view models do not need to distinguish two equivalent states.
 const nullableTextSchema = z.string().nullish().transform(value => value ?? null);
 
 const bulletinSchema = z.object({
@@ -50,6 +53,8 @@ const metricFieldSchema = z.object({
 
 const metricSchema = z.object({
   name: z.string(),
+  // Each inner array is one backend metric sample. Keeping this nesting intact
+  // prevents fields from different samples from being merged accidentally.
   fields: z.array(z.array(metricFieldSchema))
 });
 

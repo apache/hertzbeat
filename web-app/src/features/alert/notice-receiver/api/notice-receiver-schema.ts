@@ -17,11 +17,15 @@ const noticeReceiverTypeSchema = z.union([
   z.literal(10), z.literal(11), z.literal(12), z.literal(13), z.literal(14)
 ]);
 
+// Receiver responses are strict because an unexpected field may be an echoed
+// credential. Reject it before React Query or component state can retain it.
 const noticeReceiverSchema = z.object({
   id: nonNegativeIntegerSchema,
   name: z.string(),
   type: noticeReceiverTypeSchema,
   typeKey: z.string(),
+  // Option keys and values depend on the receiver type. The schema establishes
+  // the object boundary; the API mapper applies the type-specific allowlist.
   options: z.record(z.string(), z.unknown()),
   configuredSecrets: z.array(z.string()),
   creator: nullableTextSchema,

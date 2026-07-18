@@ -78,6 +78,8 @@ export function classifyMessageServerReadError(error: unknown): MessageServerRea
 function mapSmsEvidence(evidence: SmsEvidenceWire): SmsServerEvidence {
   if (evidence.status === 'missing') return evidence;
 
+  // The selected provider owns both the visible option set and secret set.
+  // Cross-provider fields are rejected instead of being silently discarded.
   const fields = smsProviderFieldContracts[evidence.config.type];
   return {
     status: 'configured',
@@ -120,6 +122,8 @@ function mapSmsSecrets(
   secrets: string[],
   fields: readonly SmsProviderFieldContract[]
 ): SmsSecret[] {
+  // Only secret names are returned; secret values are write-only and must never
+  // be reconstructed or cached from read evidence.
   const allowedSecrets = new Set(fields.filter(field => field.secret).map(field => field.key));
   return secrets.map(secret => {
     if (!allowedSecrets.has(secret)) {

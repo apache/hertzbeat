@@ -20,6 +20,8 @@ const nonemptyTextSchema = z.string()
   .refine(value => Boolean(value.trim()), 'Expected nonempty text')
   .transform(value => value.trim());
 
+// Dashboard summaries intentionally use Zod's default strip behavior. The
+// backend may add counters, but this view exposes only its canonical evidence.
 const appCountSchema = z.object({
   app: nonemptyTextSchema,
   category: nonemptyTextSchema,
@@ -30,6 +32,8 @@ const appCountSchema = z.object({
 });
 
 const dashboardSummarySchema = z.object({
+  // [] is authoritative empty data; null means the summary source is missing.
+  // The controller renders those states differently and must not coerce either.
   apps: z.array(appCountSchema).nullable()
 });
 

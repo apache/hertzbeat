@@ -82,6 +82,8 @@ export async function deleteNoticeReceiver(id: number) {
 
 function mapNoticeReceiver(source: NoticeReceiverWire): NoticeReceiver {
   const type = source.type;
+  // A valid numeric type paired with another type's key is crossed evidence,
+  // not a usable receiver. Keep both identifiers tied to the same catalog row.
   if (source.typeKey !== noticeReceiverTypeKeys[type]) throw new NoticeReceiverContractError();
 
   return {
@@ -99,6 +101,8 @@ function mapNoticeReceiver(source: NoticeReceiverWire): NoticeReceiver {
 }
 
 function mapNoticeReceiverOptions(options: Record<string, unknown>, type: NoticeReceiverType): NoticeReceiverOptions {
+  // Only non-secret fields may return in options. Secrets are represented by
+  // configuredSecrets metadata and must never enter ordinary frontend state.
   const allowedKeys = new Set(activeNoticeReceiverDefinition(type).fields
     .filter(field => !field.secret)
     .map(field => field.key));
@@ -127,6 +131,8 @@ function mapNoticeReceiverOptionValue(key: NoticeReceiverOptionKey, value: unkno
 }
 
 function mapConfiguredSecrets(secrets: string[], type: NoticeReceiverType): NoticeReceiverSecretKey[] {
+  // Treat configuredSecrets as capability metadata, not arbitrary field names.
+  // A crossed secret name often indicates a backend serialization regression.
   const allowedSecrets = noticeReceiverSecretKeys(type);
   return secrets.map(secret => {
     if (!allowedSecrets.includes(secret as NoticeReceiverSecretKey)) throw new NoticeReceiverContractError();
@@ -138,6 +144,8 @@ function mapNoticeReceiverMutation(
   source: ReturnType<typeof parseNoticeReceiverMutationWire>
 ): NoticeReceiverMutation {
   const receiver = source.receiver == null ? null : mapNoticeReceiver(source.receiver);
+  // Successful writes require matching authoritative evidence. Delete and
+  // missing acknowledgements must not smuggle a stale receiver back into state.
   if ((source.status === 'created' || source.status === 'updated') && (receiver == null || receiver.id !== source.id)) {
     throw new NoticeReceiverContractError();
   }

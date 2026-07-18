@@ -27,6 +27,8 @@ const nullableLocalDateTimeSchema = z.string()
   .nullable()
   .optional();
 
+// Unknown response fields are stripped deliberately. Alert Group reads expose
+// the Java entity allowlist without coupling the UI to backend-only metadata.
 const alertGroupSchema = z.object({
   id: positiveIntegerSchema,
   name: nonBlankTextSchema.max(100),
@@ -56,12 +58,16 @@ export function parseAlertGroupDetail(value: unknown): AlertGroupConverge {
 
 export function parseAlertGroupPage(value: unknown, query: AlertGroupQuery): AlertGroupPage {
   const page = parseSchema(alertGroupPageSchema, value, 'Alert group page');
+  // A structurally valid response for another request must not be rendered as
+  // the current page. Query identity is part of the response contract.
   if (page.number !== query.pageIndex || page.size !== query.pageSize) {
     throw new AlertGroupContractError('Page does not match the request');
   }
   if (page.totalPages !== Math.ceil(page.totalElements / page.size)) {
     throw new AlertGroupContractError('totalPages is inconsistent');
   }
+  // Bound content by the remaining authoritative row count, not only page size.
+  // This catches stale or combined pages that would otherwise look plausible.
   const availableContent = Math.max(0, page.totalElements - page.number * page.size);
   if (page.content.length > Math.min(page.size, availableContent)) {
     throw new AlertGroupContractError('Page content is inconsistent');
@@ -73,6 +79,8 @@ export function parseAlertGroupPage(value: unknown, query: AlertGroupQuery): Ale
 }
 
 function mapAlertGroup(source: z.output<typeof alertGroupSchema>): AlertGroupConverge {
+  // exactOptionalPropertyTypes distinguishes an absent audit field from a field
+  // explicitly set to undefined. Preserve absence while retaining authoritative null.
   return {
     id: source.id,
     name: source.name,
@@ -95,6 +103,8 @@ function parseSchema<T extends z.ZodType>(schema: T, value: unknown, label: stri
 }
 
 function isLocalDateTime(value: string) {
+  // Java LocalDateTime has no zone. Date.parse would apply browser timezone
+  // semantics and may normalize invalid dates, so validate calendar fields directly.
   const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,9})?$/.exec(value);
   if (!match) return false;
   const [, yearText, monthText, dayText, hourText, minuteText, secondText] = match;

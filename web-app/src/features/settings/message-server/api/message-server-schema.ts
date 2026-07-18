@@ -11,6 +11,8 @@ const nonemptyTextSchema = z.string().refine(value => Boolean(value.trim()), 'Ex
 const uniqueStringsSchema = z.array(z.string())
   .refine(values => new Set(values).size === values.length, 'Expected unique values');
 
+// These objects are strict because read responses must contain configuration
+// metadata only. A password echoed by the backend is a contract violation.
 const emailConfigSchema = z.object({
   type: z.number().int(),
   emailHost: nonemptyTextSchema,
@@ -31,6 +33,8 @@ const emailEvidenceSchema = z.discriminatedUnion('status', [
 const smsConfigSchema = z.object({
   enable: z.boolean(),
   type: z.enum(['tencent', 'alibaba', 'unisms', 'smslocal', 'aws', 'twilio']),
+  // Provider-specific option keys are validated after the provider is known.
+  // Keeping values unknown here avoids pretending every provider has one shape.
   options: z.record(z.string(), z.unknown()),
   configuredSecrets: uniqueStringsSchema
 }).strict();
