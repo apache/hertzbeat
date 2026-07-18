@@ -97,11 +97,6 @@
       "allowedMax": 260
     },
     {
-      "rule": "primitive-wire-parser",
-      "path": "features/monitor/api/monitor-contract-parser.ts",
-      "allowedMax": 3
-    },
-    {
       "rule": "inline-query-key",
       "path": "features/monitor/controller/use-monitor-detail-controller.ts",
       "allowedMax": 1
