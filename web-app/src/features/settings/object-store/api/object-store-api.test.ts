@@ -21,6 +21,7 @@ const { apiMessageGet, apiMessagePost } = vi.hoisted(() => ({ apiMessageGet: vi.
 vi.mock('@/core/http/api-message', () => ({ apiMessageGet, apiMessagePost }));
 
 import { loadObjectStore, saveObjectStore } from './object-store-api';
+import { ObjectStoreResourceContractError } from '../model/object-store-model';
 
 describe('object store API', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -54,4 +55,67 @@ describe('object store API', () => {
     });
     expect(apiMessagePost.mock.calls[1]?.[0]).not.toContain('secret');
   });
+
+  it('removes the server secret before returning the read model', async () => {
+    apiMessageGet.mockResolvedValueOnce({
+      type: 'OBS',
+      config: {
+        accessKey: 'ak',
+        secretKey: 'private-server-secret',
+        bucketName: 'bucket',
+        endpoint: 'https://obs.cn-north-4.myhuaweicloud.com',
+        savePath: 'hertzbeat'
+      }
+    });
+
+    const result = await loadObjectStore();
+
+    expect(result).toEqual({
+      type: 'OBS',
+      config: {
+        accessKey: 'ak',
+        secretConfigured: true,
+        bucketName: 'bucket',
+        endpoint: 'https://obs.cn-north-4.myhuaweicloud.com',
+        savePath: 'hertzbeat'
+      }
+    });
+    expect(JSON.stringify(result)).not.toContain('private-server-secret');
+    expect(JSON.stringify(result)).not.toContain('secretKey');
+  });
+
+  it.each([
+    { type: 'OTHER', config: { secretKey: 'private-type-secret' } },
+    { type: 'OBS', config: ['private-array-secret'] },
+    { type: 'OBS', config: { accessKey: 42, secretKey: 'private-field-secret' } }
+  ])('rejects malformed read contracts without echoing secret material', async wire => {
+    apiMessageGet.mockResolvedValueOnce(wire);
+
+    let error: unknown;
+    try {
+      await loadObjectStore();
+    } catch (reason) {
+      error = reason;
+    }
+
+    expect(error).toBeInstanceOf(ObjectStoreResourceContractError);
+    expect(JSON.stringify(error)).not.toContain('private-');
+  });
+
+  it.each(['', '   ', '******', '••••••', '__KEEP__', '<masked>', '[REDACTED]'])(
+    'rejects OBS writes without a newly entered secret: %j',
+    async secretKey => {
+      await expect(saveObjectStore({
+        type: 'OBS',
+        config: {
+          accessKey: 'ak',
+          secretKey,
+          bucketName: 'bucket',
+          endpoint: 'https://obs.cn-north-4.myhuaweicloud.com',
+          savePath: 'hertzbeat'
+        }
+      })).rejects.toBeInstanceOf(Error);
+      expect(apiMessagePost).not.toHaveBeenCalled();
+    }
+  );
 });

@@ -18,7 +18,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
-import type { ObjectStoreDraft } from '@/features/settings/object-store/model/object-store-model';
+import {
+  ObjectStoreResourceContractError,
+  type ObjectStoreDraft,
+  type ObjectStoreReadModel
+} from '@/features/settings/object-store/model/object-store-model';
 
 type ObjectStoreApi = typeof import('@/features/settings/object-store/api/object-store-api');
 const objectStoreApi = vi.hoisted(() => ({
@@ -32,7 +36,18 @@ vi.mock('@/features/settings/object-store/api/object-store-api', async importOri
 
 import { objectStoreDataProvider } from './object-store-data-provider';
 
-const configured: ObjectStoreDraft = {
+const configuredRead: ObjectStoreReadModel = {
+  type: 'OBS',
+  config: {
+    accessKey: 'ak',
+    secretConfigured: true,
+    bucketName: 'bucket',
+    endpoint: 'https://obs.cn-north-4.myhuaweicloud.com',
+    savePath: 'hertzbeat'
+  }
+};
+
+const configuredDraft: ObjectStoreDraft = {
   type: 'OBS',
   config: {
     accessKey: 'ak',
@@ -47,26 +62,32 @@ describe('Object Store Refine data provider', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('reads the named singleton into the model-owned stable record', async () => {
-    objectStoreApi.loadObjectStore.mockResolvedValue(configured);
+    objectStoreApi.loadObjectStore.mockResolvedValue(configuredRead);
 
-    await expect(objectStoreDataProvider.getOne({
+    const result = await objectStoreDataProvider.getOne({
       resource: 'object-store',
       id: 'current'
-    })).resolves.toEqual({ data: { id: 'current', ...configured } });
+    });
+
+    expect(result).toEqual({ data: { id: 'current', ...configuredRead } });
+    expect(JSON.stringify(result)).not.toContain('secretKey');
     expect(objectStoreApi.loadObjectStore).toHaveBeenCalledTimes(1);
   });
 
   it('rereads authoritative configuration after POST before resolving update', async () => {
-    const canonical: ObjectStoreDraft = { type: 'FILE', config: {} };
+    const canonical: ObjectStoreReadModel = { type: 'FILE', config: {} };
     objectStoreApi.saveObjectStore.mockResolvedValue('Update config success');
     objectStoreApi.loadObjectStore.mockResolvedValue(canonical);
 
-    await expect(objectStoreDataProvider.update({
+    const result = await objectStoreDataProvider.update({
       resource: 'object-store',
       id: 'current',
-      variables: configured
-    })).resolves.toEqual({ data: { id: 'current', ...canonical } });
-    expect(objectStoreApi.saveObjectStore).toHaveBeenCalledWith(configured);
+      variables: configuredDraft
+    });
+
+    expect(result).toEqual({ data: { id: 'current', ...canonical } });
+    expect(JSON.stringify(result)).not.toContain('secretKey');
+    expect(objectStoreApi.saveObjectStore).toHaveBeenCalledWith(configuredDraft);
     expect(objectStoreApi.saveObjectStore.mock.invocationCallOrder[0])
       .toBeLessThan(objectStoreApi.loadObjectStore.mock.invocationCallOrder[0] ?? 0);
   });
@@ -81,7 +102,7 @@ describe('Object Store Refine data provider', () => {
     await expect(objectStoreDataProvider.update({
       resource: 'object-store',
       id: 'current',
-      variables: configured
+      variables: configuredDraft
     })).rejects.toMatchObject({
       statusCode: 0,
       code: 'NETWORK_REQUEST_FAILED',
@@ -98,7 +119,7 @@ describe('Object Store Refine data provider', () => {
     await expect(objectStoreDataProvider.update({
       resource: 'object-store',
       id: 'current',
-      variables: configured
+      variables: configuredDraft
     })).rejects.toMatchObject({
       statusCode: 502,
       code: 'OBJECT_STORE_CANONICAL_REREAD_MISSING'
@@ -106,10 +127,7 @@ describe('Object Store Refine data provider', () => {
   });
 
   it('sanitizes malformed backend records at the model-owned resource boundary', async () => {
-    objectStoreApi.loadObjectStore.mockResolvedValue({
-      type: 'OTHER',
-      config: { secretKey: 'private-backend-secret' }
-    });
+    objectStoreApi.loadObjectStore.mockRejectedValue(new ObjectStoreResourceContractError());
 
     let error: unknown;
     try {
@@ -121,7 +139,7 @@ describe('Object Store Refine data provider', () => {
       statusCode: 502,
       code: 'OBJECT_STORE_RESPONSE_INVALID'
     });
-    expect(JSON.stringify(error)).not.toContain('private-backend-secret');
+    expect(JSON.stringify(error)).not.toContain('secretKey');
   });
 
   it('rejects unsupported resources, ids, and actions before transport', async () => {
@@ -131,7 +149,7 @@ describe('Object Store Refine data provider', () => {
       .rejects.toMatchObject({ code: 'OBJECT_STORE_ID_INVALID' });
     await expect(objectStoreDataProvider.getList({ resource: 'object-store' }))
       .rejects.toMatchObject({ statusCode: 405, code: 'OBJECT_STORE_LIST_UNSUPPORTED' });
-    await expect(objectStoreDataProvider.create({ resource: 'object-store', variables: configured }))
+    await expect(objectStoreDataProvider.create({ resource: 'object-store', variables: configuredDraft }))
       .rejects.toMatchObject({ statusCode: 405, code: 'OBJECT_STORE_CREATE_UNSUPPORTED' });
     await expect(objectStoreDataProvider.deleteOne({ resource: 'object-store', id: 'current' }))
       .rejects.toMatchObject({ statusCode: 405, code: 'OBJECT_STORE_DELETE_UNSUPPORTED' });

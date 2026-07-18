@@ -30,11 +30,12 @@ import {
 describe('object store model', () => {
   it('normalizes missing and unsupported configurations to database storage', () => {
     expect(createObjectStoreDraft()).toEqual({ type: 'DATABASE', config: {} });
-    expect(createObjectStoreDraft({ type: 'OTHER', config: { stale: true } })).toEqual({ type: 'DATABASE', config: { stale: true } });
+    expect(createObjectStoreDraft({ type: 'OTHER', config: { stale: true } } as never))
+      .toEqual({ type: 'DATABASE', config: {} });
   });
 
   it('resets provider-owned fields and supplies the master save path default', () => {
-    const obs = changeObjectStoreType({ type: 'FILE', config: { stale: true } }, 'OBS');
+    const obs = changeObjectStoreType({ type: 'FILE', config: { stale: true } } as never, 'OBS');
     expect(obs).toEqual({ type: 'OBS', config: { accessKey: '', secretKey: '', bucketName: '', endpoint: '', savePath: 'hertzbeat' } });
     expect(changeObjectStoreType(obs, 'FILE')).toEqual({ type: 'FILE', config: {} });
   });
@@ -61,17 +62,33 @@ describe('object store model', () => {
     expect(objectStoreResourceId).toBe('current');
     expect(createObjectStoreResourceRecord({
       type: 'OBS',
-      config: { accessKey: 'ak', secretKey: 'sk', bucketName: 'bucket' }
+      config: { accessKey: 'ak', secretConfigured: true, bucketName: 'bucket' }
     })).toEqual({
       id: 'current',
       type: 'OBS',
-      config: { accessKey: 'ak', secretKey: 'sk', bucketName: 'bucket' }
+      config: { accessKey: 'ak', secretConfigured: true, bucketName: 'bucket' }
     });
     expect(createObjectStoreResourceRecord(null)).toEqual({
       id: 'current',
       type: 'DATABASE',
       config: {}
     });
+  });
+
+  it('creates an editable OBS draft without copying a configured server secret', () => {
+    const record = createObjectStoreResourceRecord({
+      type: 'OBS',
+      config: {
+        accessKey: 'ak',
+        secretConfigured: true,
+        bucketName: 'bucket'
+      }
+    });
+
+    const draft = createObjectStoreDraft(record);
+
+    expect(draft.config.secretKey).toBe('');
+    expect(JSON.stringify(record)).not.toContain('secretKey');
   });
 
   it('rejects malformed non-null wire records without echoing their contents', () => {

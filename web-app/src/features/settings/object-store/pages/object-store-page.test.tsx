@@ -41,7 +41,7 @@ const configuredObs = {
   type: 'OBS' as const,
   config: {
     accessKey: 'ak',
-    secretKey: 'sk',
+    secretKey: '',
     bucketName: 'bucket',
     endpoint: 'https://obs.cn-north-4.myhuaweicloud.com',
     savePath: 'hertzbeat'
@@ -65,7 +65,9 @@ describe('ObjectStorePage', () => {
   it('renders the ready controller state and forwards editor actions', async () => {
     renderObjectStorePage();
 
-    fireEvent.change(await screen.findByPlaceholderText('OBS access key'), {
+    expect(await screen.findByPlaceholderText('OBS secret key')).toHaveValue('');
+
+    fireEvent.change(screen.getByPlaceholderText('OBS access key'), {
       target: { value: 'changed-ak' }
     });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));

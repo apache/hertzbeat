@@ -51,7 +51,7 @@ export const objectStoreDataProvider: DataProvider = {
   }): Promise<GetOneResponse<TData>> {
     return protect(async () => {
       assertResourceAndId(params.resource, params.id);
-      const config = await loadObjectStore();
+      const config = await readObjectStore();
       return { data: readResourceRecord(config) as unknown as TData };
     });
   },
@@ -68,7 +68,7 @@ export const objectStoreDataProvider: DataProvider = {
     return protect(async () => {
       assertResourceAndId(params.resource, params.id);
       await saveObjectStore(readDraft(params.variables));
-      const canonical = await loadObjectStore();
+      const canonical = await readObjectStore();
       if (canonical == null) {
         throw createRefineHttpError(
           'Object Store canonical reread returned no record',
@@ -124,6 +124,21 @@ function readDraft(value: unknown): ObjectStoreDraft {
     throw createRefineHttpError('Object Store variables are invalid', 400, 'OBJECT_STORE_VARIABLES_INVALID');
   }
   return { type: draft.type, config: draft.config };
+}
+
+async function readObjectStore() {
+  try {
+    return await loadObjectStore();
+  } catch (reason) {
+    if (reason instanceof ObjectStoreResourceContractError) {
+      throw createRefineHttpError(
+        'Object Store response is invalid',
+        502,
+        'OBJECT_STORE_RESPONSE_INVALID'
+      );
+    }
+    throw reason;
+  }
 }
 
 function readResourceRecord(value: Parameters<typeof createObjectStoreResourceRecord>[0]) {

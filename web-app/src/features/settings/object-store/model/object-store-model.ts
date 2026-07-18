@@ -15,21 +15,39 @@
  * limitations under the License.
  */
 
-import {
-  buildObjectStorePayload,
-  type ObjectStoreConfig,
-  type ObjectStoreType,
-  type ObjectStoreWireConfig
-} from '../api/object-store-api';
+export type ObjectStoreType = 'DATABASE' | 'FILE' | 'OBS';
+
+/** Safe configuration returned by reads. It must never represent secret plaintext. */
+export type ObjectStoreReadConfig = {
+  accessKey?: string;
+  bucketName?: string;
+  endpoint?: string;
+  savePath?: string;
+  secretConfigured?: boolean;
+};
+
+export type ObjectStoreReadModel = {
+  type: ObjectStoreType;
+  config: ObjectStoreReadConfig;
+};
+
+/** Editable configuration whose secret exists only in the current browser session. */
+export type ObjectStoreDraftConfig = {
+  accessKey?: string;
+  secretKey?: string;
+  bucketName?: string;
+  endpoint?: string;
+  savePath?: string;
+};
 
 export type ObjectStoreDraft = {
   type: ObjectStoreType;
-  config: ObjectStoreConfig;
+  config: ObjectStoreDraftConfig;
 };
 
 export const objectStoreResourceId = 'current' as const;
 
-export type ObjectStoreResourceRecord = ObjectStoreDraft & {
+export type ObjectStoreResourceRecord = ObjectStoreReadModel & {
   id: typeof objectStoreResourceId;
 };
 
@@ -40,7 +58,12 @@ export class ObjectStoreResourceContractError extends Error {
   }
 }
 
-export type { ObjectStoreConfig, ObjectStoreType } from '../api/object-store-api';
+export class ObjectStoreDraftContractError extends Error {
+  constructor() {
+    super('Object Store draft is invalid');
+    this.name = 'ObjectStoreDraftContractError';
+  }
+}
 
 export const objectStoreTypeDefinitions = [
   { value: 'DATABASE', labelKey: 'objectStore.type.database' },
@@ -48,21 +71,45 @@ export const objectStoreTypeDefinitions = [
   { value: 'OBS', labelKey: 'objectStore.type.obs' }
 ] as const satisfies readonly { value: ObjectStoreType; labelKey: string }[];
 
-const obsFields = ['accessKey', 'secretKey', 'bucketName', 'endpoint', 'savePath'] as const;
+export const objectStoreObsFieldNames = [
+  'accessKey',
+  'secretKey',
+  'bucketName',
+  'endpoint',
+  'savePath'
+] as const satisfies readonly (keyof ObjectStoreDraftConfig)[];
 
-function normalizeObjectStoreType(type?: string | null): ObjectStoreType {
+const secretPlaceholderSentinels = new Set([
+  '__keep__',
+  '<masked>',
+  '[masked]',
+  '<redacted>',
+  '[redacted]'
+]);
+
+function normalizeObjectStoreType(type?: ObjectStoreType | null): ObjectStoreType {
   return type === 'FILE' || type === 'OBS' ? type : 'DATABASE';
 }
 
-export function createObjectStoreDraft(config?: ObjectStoreWireConfig | null): ObjectStoreDraft {
+export function createObjectStoreDraft(config?: ObjectStoreReadModel | null): ObjectStoreDraft {
+  const type = normalizeObjectStoreType(config?.type);
+  if (type !== 'OBS') return { type, config: {} };
   return {
-    type: normalizeObjectStoreType(config?.type),
-    config: { ...(config?.config ?? {}) }
+    type,
+    config: {
+      accessKey: config?.config.accessKey ?? '',
+      // Read models deliberately carry only secretConfigured. A secret can enter
+      // the draft only through this browser session's password input.
+      secretKey: '',
+      bucketName: config?.config.bucketName ?? '',
+      endpoint: config?.config.endpoint ?? '',
+      savePath: config?.config.savePath ?? 'hertzbeat'
+    }
   };
 }
 
 export function createObjectStoreResourceRecord(
-  config?: ObjectStoreWireConfig | null
+  config?: ObjectStoreReadModel | null
 ): ObjectStoreResourceRecord {
   if (config == null) {
     return { id: objectStoreResourceId, type: 'DATABASE', config: {} };
@@ -73,13 +120,23 @@ export function createObjectStoreResourceRecord(
   if (config.type !== 'DATABASE' && config.type !== 'FILE' && config.type !== 'OBS') {
     throw new ObjectStoreResourceContractError();
   }
-  if (config.config != null && !isPlainRecord(config.config)) {
+  if (!isPlainRecord(config.config)) {
     throw new ObjectStoreResourceContractError();
   }
   return {
     id: objectStoreResourceId,
     type: config.type,
-    config: { ...(config.config ?? {}) }
+    config: copyReadConfig(config.config)
+  };
+}
+
+function copyReadConfig(value: ObjectStoreReadConfig): ObjectStoreReadConfig {
+  return {
+    ...(value.accessKey === undefined ? {} : { accessKey: value.accessKey }),
+    ...(value.bucketName === undefined ? {} : { bucketName: value.bucketName }),
+    ...(value.endpoint === undefined ? {} : { endpoint: value.endpoint }),
+    ...(value.savePath === undefined ? {} : { savePath: value.savePath }),
+    ...(value.secretConfigured === undefined ? {} : { secretConfigured: value.secretConfigured })
   };
 }
 
@@ -100,13 +157,17 @@ export function changeObjectStoreType(config: ObjectStoreDraft, type: ObjectStor
   };
 }
 
-export function updateObjectStoreField(config: ObjectStoreDraft, key: keyof ObjectStoreConfig, value: string): ObjectStoreDraft {
+export function updateObjectStoreField(config: ObjectStoreDraft, key: keyof ObjectStoreDraftConfig,
+  value: string): ObjectStoreDraft {
   return { ...config, config: { ...config.config, [key]: value } };
 }
 
 export function validateObjectStoreDraft(config: ObjectStoreDraft) {
   if (config.type !== 'OBS') return [];
-  const missing = obsFields.filter(field => !String(config.config[field] ?? '').trim());
+  const missing = objectStoreObsFieldNames.filter(field => !String(config.config[field] ?? '').trim());
+  if (!missing.includes('secretKey') && isSecretPlaceholder(String(config.config.secretKey))) {
+    missing.push('secretKey');
+  }
   const endpoint = String(config.config.endpoint ?? '').trim();
   if (endpoint && !isSupportedObsEndpoint(endpoint)) missing.push('endpoint');
   return missing;
@@ -121,5 +182,22 @@ function isSupportedObsEndpoint(endpoint: string) {
 }
 
 export function isObjectStoreDirty(config: ObjectStoreDraft, baseline: ObjectStoreDraft) {
-  return JSON.stringify(buildObjectStorePayload(config)) !== JSON.stringify(buildObjectStorePayload(baseline));
+  return JSON.stringify(normalizeObjectStoreDraft(config)) !== JSON.stringify(normalizeObjectStoreDraft(baseline));
+}
+
+export function normalizeObjectStoreDraft(config: ObjectStoreDraft): ObjectStoreDraft {
+  if (config.type !== 'OBS') return { type: config.type, config: {} };
+  return {
+    type: 'OBS',
+    config: Object.fromEntries(objectStoreObsFieldNames.map(field => [
+      field,
+      String(config.config[field] ?? '').trim()
+    ]))
+  };
+}
+
+function isSecretPlaceholder(value: string) {
+  const normalized = value.trim().toLowerCase();
+  return /^[*•]+$/.test(normalized)
+    || secretPlaceholderSentinels.has(normalized);
 }

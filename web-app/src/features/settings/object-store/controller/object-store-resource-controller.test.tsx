@@ -18,7 +18,10 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ObjectStoreResourceRecord } from '../model/object-store-model';
+import {
+  createObjectStoreDraft,
+  type ObjectStoreResourceRecord
+} from '../model/object-store-model';
 import { useObjectStoreResourceController } from './object-store-resource-controller';
 
 const refine = vi.hoisted(() => ({
@@ -39,7 +42,7 @@ const serverRecord: ObjectStoreResourceRecord = {
   type: 'OBS',
   config: {
     accessKey: 'ak',
-    secretKey: 'sk',
+    secretConfigured: true,
     bucketName: 'bucket',
     endpoint: 'https://obs.cn-north-4.myhuaweicloud.com',
     savePath: 'hertzbeat'
@@ -68,9 +71,14 @@ describe('Object Store resource controller', () => {
       invalidates: ['detail']
     }));
 
+    const editable = createObjectStoreDraft(serverRecord);
     act(() => result.current.updateDraft({
-      ...serverRecord,
-      config: { ...serverRecord.config, accessKey: 'changed-ak' }
+      ...editable,
+      config: {
+        ...editable.config,
+        accessKey: 'changed-ak',
+        secretKey: 'runtime-only-secret'
+      }
     }));
     act(() => result.current.submit());
 
@@ -110,6 +118,10 @@ describe('Object Store resource controller', () => {
   it('does not write for no-op, invalid, or discarded drafts', () => {
     const { result } = renderHook(() => useObjectStoreResourceController());
 
+    expect(result.current.state).toMatchObject({
+      kind: 'ready',
+      current: { config: { secretKey: '' } }
+    });
     act(() => result.current.submit());
     act(() => result.current.updateDraft({ type: 'OBS', config: {} }));
     act(() => result.current.submit());
@@ -122,9 +134,10 @@ describe('Object Store resource controller', () => {
 
   it('clears the draft only after the provider update succeeds', () => {
     const { result } = renderHook(() => useObjectStoreResourceController());
+    const editable = createObjectStoreDraft(serverRecord);
     act(() => result.current.updateDraft({
-      ...serverRecord,
-      config: { ...serverRecord.config, secretKey: 'runtime-only-secret' }
+      ...editable,
+      config: { ...editable.config, secretKey: 'runtime-only-secret' }
     }));
     act(() => result.current.submit());
     const callbacks = refine.updateMutate.mock.calls[0]?.[1];
@@ -150,10 +163,11 @@ describe('Object Store resource controller', () => {
     const info = vi.spyOn(console, 'info').mockImplementation(() => undefined);
     const debug = vi.spyOn(console, 'debug').mockImplementation(() => undefined);
     const { result } = renderHook(() => useObjectStoreResourceController());
+    const editable = createObjectStoreDraft(serverRecord);
 
     act(() => result.current.updateDraft({
-      ...serverRecord,
-      config: { ...serverRecord.config, secretKey: 'runtime-only-secret' }
+      ...editable,
+      config: { ...editable.config, secretKey: 'runtime-only-secret' }
     }));
     act(() => result.current.submit());
 

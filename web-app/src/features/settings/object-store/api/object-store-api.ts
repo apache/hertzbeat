@@ -17,41 +17,40 @@
 
 import { apiMessageGet, apiMessagePost } from '@/core/http/api-message';
 
-export type ObjectStoreType = 'DATABASE' | 'FILE' | 'OBS';
-
-export type ObjectStoreConfig = {
-  accessKey?: string;
-  secretKey?: string;
-  bucketName?: string;
-  endpoint?: string;
-  savePath?: string;
-  [key: string]: unknown;
-};
-
-export type ObjectStoreWireConfig = {
-  type?: string | null;
-  config?: ObjectStoreConfig | null;
-};
+import {
+  normalizeObjectStoreDraft,
+  ObjectStoreDraftContractError,
+  objectStoreObsFieldNames,
+  validateObjectStoreDraft,
+  type ObjectStoreDraft,
+  type ObjectStoreDraftConfig,
+  type ObjectStoreType
+} from '../model/object-store-model';
+import { parseObjectStoreReadModel } from './object-store-schema';
 
 export type ObjectStorePayload = {
   type: ObjectStoreType;
-  config: ObjectStoreConfig;
+  config: ObjectStoreDraftConfig;
 };
 
-const obsFields = ['accessKey', 'secretKey', 'bucketName', 'endpoint', 'savePath'] as const;
-
-export function loadObjectStore() {
-  return apiMessageGet<ObjectStoreWireConfig | null>('/api/config/oss');
+export async function loadObjectStore() {
+  const response = await apiMessageGet<unknown>('/api/config/oss');
+  return parseObjectStoreReadModel(response);
 }
 
-export function saveObjectStore(config: ObjectStorePayload) {
-  return apiMessagePost<string>('/api/config/oss', buildObjectStorePayload(config));
+export async function saveObjectStore(config: ObjectStoreDraft) {
+  const payload = buildObjectStorePayload(config);
+  return apiMessagePost<string>('/api/config/oss', payload);
 }
 
-export function buildObjectStorePayload(config: ObjectStorePayload): ObjectStorePayload {
-  if (config.type !== 'OBS') return { type: config.type, config: {} };
+export function buildObjectStorePayload(config: ObjectStoreDraft): ObjectStorePayload {
+  if (config.type !== 'OBS') return normalizeObjectStoreDraft(config);
+  // The backend replaces the full OBS config and has no keep/clear operation.
+  // Reject empty or placeholder secrets instead of overwriting with fake data.
+  if (validateObjectStoreDraft(config).length > 0) throw new ObjectStoreDraftContractError();
+  const normalized = normalizeObjectStoreDraft(config);
   return {
     type: 'OBS',
-    config: Object.fromEntries(obsFields.map(field => [field, String(config.config[field] ?? '').trim()]))
+    config: Object.fromEntries(objectStoreObsFieldNames.map(field => [field, normalized.config[field]]))
   };
 }
