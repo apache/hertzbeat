@@ -39,6 +39,9 @@ import { useMonitorMetricWorkbenchController } from './use-monitor-metric-workbe
 const monitor = (id = 7): Monitor => ({ id, name: `monitor-${id}`, app: 'website', instance: `host-${id}`, status: 1 });
 const catalog = (name = 'summary') => ({ metrics: [{ name, visible: true,
   fields: [{ type: 0, field: 'value', unit: 'ms', label: false }] }] });
+// URL convergence crosses both the router and asynchronous catalog query, so it
+// needs a wider deadline when the complete test suite is sharing worker CPU.
+const routeConvergenceWait = { timeout: 10_000 } as const;
 
 describe('useMonitorMetricWorkbenchController', () => {
   beforeEach(() => {
@@ -53,19 +56,19 @@ describe('useMonitorMetricWorkbenchController', () => {
 
   it('converges metric and history from URL Push, Back, and monitor changes', async () => {
     const view = renderController(monitor(), [], '/monitors/7?returnTo=%2Fmonitors%3FpageIndex%3D2&metric=bad.value&history=bad');
-    await waitFor(() => expect(view.result.current.controller.state.catalog.kind).toBe('ready'));
-    await waitFor(() => expect(view.result.current.controller.state).toMatchObject({ metricKey: 'summary.value', history: '30m' }));
+    await waitFor(() => expect(view.result.current.controller.state.catalog.kind).toBe('ready'), routeConvergenceWait);
+    await waitFor(() => expect(view.result.current.controller.state).toMatchObject({ metricKey: 'summary.value', history: '30m' }), routeConvergenceWait);
     expect(view.result.current.location.search).toContain('returnTo=%2Fmonitors%3FpageIndex%3D2');
     act(() => { void view.result.current.navigate('/monitors/7?metric=summary.value&history=1h'); });
-    await waitFor(() => expect(view.result.current.controller.state.history).toBe('1h'));
+    await waitFor(() => expect(view.result.current.controller.state.history).toBe('1h'), routeConvergenceWait);
     act(() => { void view.result.current.navigate('/monitors/7?metric=summary.value&history=30m'); });
-    await waitFor(() => expect(view.result.current.controller.state.history).toBe('30m'));
+    await waitFor(() => expect(view.result.current.controller.state.history).toBe('30m'), routeConvergenceWait);
     act(() => { void view.result.current.navigate(-1); });
-    await waitFor(() => expect(view.result.current.controller.state.history).toBe('1h'));
+    await waitFor(() => expect(view.result.current.controller.state.history).toBe('1h'), routeConvergenceWait);
 
     api.loadMonitorMetricCatalog.mockResolvedValue(catalog('other'));
     view.rerender({ monitor: monitor(8), embedded: [] });
-    await waitFor(() => expect(view.result.current.controller.state.metricKey).toBe('other.value'));
+    await waitFor(() => expect(view.result.current.controller.state.metricKey).toBe('other.value'), routeConvergenceWait);
     expect(view.result.current.location.search).toContain('metric=other.value');
   });
 
