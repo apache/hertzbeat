@@ -59,9 +59,14 @@ export async function updateAlertSilenceEnabled(silence: AlertSilence, enable: b
   await apiMessagePut<unknown>('/api/alert/silence', buildAlertSilenceTogglePayload(silence, enable));
 }
 
+// AlertSilenceController reports a missing detail with the backend's shared
+// MONITOR_NOT_EXIST_CODE (0x03), even though this resource is not a monitor.
+const alertSilenceMissingCode = 3;
+
 export function isAlertSilenceMissing(reason: unknown) {
   return reason instanceof AlertSilenceMissingError
-    || reason instanceof ApiMessageError && (reason.status === 404 || reason.status === 200 && reason.code === 15);
+    || reason instanceof ApiMessageError
+      && (reason.status === 404 || reason.status === 200 && reason.code === alertSilenceMissingCode);
 }
 
 export function classifyAlertSilenceReadError(reason: unknown): 'missing' | 'unavailable' | 'error' {

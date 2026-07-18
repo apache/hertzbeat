@@ -88,6 +88,8 @@ describe('alert silence API', () => {
     expect(classifyAlertSilenceReadError(new ApiMessageError('offline', { status: 503 }))).toBe('unavailable');
     expect(classifyAlertSilenceReadError(new AlertSilenceContractError('bad'))).toBe('error');
     expect(classifyAlertSilenceReadError(new AlertSilenceMissingError())).toBe('missing');
+    expect(classifyAlertSilenceReadError(new ApiMessageError('missing', { code: 3, status: 200 }))).toBe('missing');
+    expect(classifyAlertSilenceReadError(new ApiMessageError('unrelated', { code: 15, status: 200 }))).toBe('error');
   });
 
   it('returns void acknowledgements from every mutation', async () => {
