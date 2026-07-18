@@ -25,17 +25,17 @@ import {
   saveNoticeReceiver
 } from '@/features/alert/notice-receiver/api/notice-receiver-api';
 import {
-  noticeReceiverPageSizes,
-  createNoticeReceiverDraft,
   expectedNoticeReceiverEvidence,
-  receiverTypeDefinitions,
-  validateNoticeReceiverDraft,
-  type NoticeReceiver,
-  type NoticeReceiverDraft,
-  type NoticeReceiverQuery
+  type NoticeReceiverDraft
 } from '@/features/alert/notice-receiver/model/notice-receiver-model';
 
 import { createRefineHttpError, toRefineHttpError } from '../refine-http-error';
+import {
+  readNoticeReceiverDeleteRecord,
+  readNoticeReceiverDraft,
+  readNoticeReceiverId,
+  readNoticeReceiverListQuery
+} from './notice-receiver-data-provider-input';
 
 export const noticeReceiverResourceName = 'notice-receivers';
 
@@ -43,8 +43,8 @@ export const noticeReceiverDataProvider: DataProvider = {
   getList<TData extends BaseRecord = BaseRecord>(params: GetListParams): Promise<GetListResponse<TData>> {
     return protect(async () => {
       assertResource(params.resource);
-      const page = await loadNoticeReceivers(readListQuery(params));
-      return { data: page.content as unknown as TData[], total: page.totalElements };
+      const page = await loadNoticeReceivers(readNoticeReceiverListQuery(params));
+      return { data: exposeProviderData<TData[]>(page.content), total: page.totalElements };
     });
   },
 
@@ -54,10 +54,10 @@ export const noticeReceiverDataProvider: DataProvider = {
   }): Promise<GetOneResponse<TData>> {
     return protect(async () => {
       assertResource(params.resource);
-      const id = readId(params.id);
+      const id = readNoticeReceiverId(params.id);
       const receiver = await loadNoticeReceiver(id);
       if (receiver.id !== id) throw contractError('NOTICE_RECEIVER_REREAD_INVALID');
-      return { data: receiver as unknown as TData };
+      return { data: exposeProviderData<TData>(receiver) };
     });
   },
 
@@ -67,12 +67,11 @@ export const noticeReceiverDataProvider: DataProvider = {
   }): Promise<CreateResponse<TData>> {
     return protect(async () => {
       assertResource(params.resource);
-      const draft = readDraft(params.variables);
-      if (draft.id !== undefined) throw contractError('NOTICE_RECEIVER_VARIABLES_INVALID', 400);
+      const draft = readNoticeReceiverDraft(params.variables);
       const mutation = await saveNoticeReceiver(draft);
       assertMutation(mutation, 'created');
       const canonical = await requireCanonical(mutation.id, draft);
-      return { data: canonical as unknown as TData };
+      return { data: exposeProviderData<TData>(canonical) };
     });
   },
 
@@ -83,12 +82,12 @@ export const noticeReceiverDataProvider: DataProvider = {
   }): Promise<UpdateResponse<TData>> {
     return protect(async () => {
       assertResource(params.resource);
-      const id = readId(params.id);
-      const draft = readDraft(params.variables, id);
+      const id = readNoticeReceiverId(params.id);
+      const draft = readNoticeReceiverDraft(params.variables, id);
       const mutation = await saveNoticeReceiver(draft);
       assertMutation(mutation, 'updated', id);
       const canonical = await requireCanonical(id, draft);
-      return { data: canonical as unknown as TData };
+      return { data: exposeProviderData<TData>(canonical) };
     });
   },
 
@@ -99,8 +98,8 @@ export const noticeReceiverDataProvider: DataProvider = {
   }): Promise<DeleteOneResponse<TData>> {
     return protect(async () => {
       assertResource(params.resource);
-      const id = readId(params.id);
-      const canonical = readDeleteRecord(params.variables, id);
+      const id = readNoticeReceiverId(params.id);
+      const canonical = readNoticeReceiverDeleteRecord(params.variables, id);
       const mutation = await deleteNoticeReceiver(id);
       if (mutation.status === 'missing') throw contractError('NOTICE_RECEIVER_MISSING', 404);
       if (mutation.status !== 'deleted' || mutation.id !== id || mutation.receiver !== null) {
@@ -112,7 +111,7 @@ export const noticeReceiverDataProvider: DataProvider = {
       } catch (error) {
         if (classifyNoticeReceiverError(error) !== 'missing') throw error;
       }
-      return { data: canonical as unknown as TData };
+      return { data: exposeProviderData<TData>(canonical) };
     });
   },
 
@@ -132,71 +131,6 @@ async function protect<T>(operation: () => Promise<T>): Promise<T> {
 
 function assertResource(resource: string) {
   if (resource !== noticeReceiverResourceName) throw contractError('NOTICE_RECEIVER_RESOURCE_UNSUPPORTED', 400);
-}
-
-function readListQuery(params: GetListParams): NoticeReceiverQuery {
-  if (params.sorters?.length) throw contractError('NOTICE_RECEIVER_SORT_UNSUPPORTED', 400);
-  const { currentPage, pageSize } = readPagination(params.pagination);
-  return { name: readNameFilter(params.filters), pageIndex: currentPage - 1, pageSize };
-}
-
-function readPagination(pagination: GetListParams['pagination']) {
-  if (pagination?.mode && pagination.mode !== 'server') {
-    throw contractError('NOTICE_RECEIVER_PAGINATION_UNSUPPORTED', 400);
-  }
-  const currentPage = pagination?.currentPage ?? 1;
-  const pageSize = pagination?.pageSize ?? 8;
-  if (!Number.isSafeInteger(currentPage) || currentPage < 1) {
-    throw contractError('NOTICE_RECEIVER_PAGINATION_INVALID', 400);
-  }
-  if (!noticeReceiverPageSizes.includes(pageSize as (typeof noticeReceiverPageSizes)[number])) {
-    throw contractError('NOTICE_RECEIVER_PAGINATION_INVALID', 400);
-  }
-  return { currentPage, pageSize };
-}
-
-function readNameFilter(filters: GetListParams['filters']) {
-  if (!filters?.length) return '';
-  const [filter] = filters;
-  if (filters.length !== 1 || !filter || !('field' in filter) || filter.field !== 'name'
-    || filter.operator !== 'contains' || typeof filter.value !== 'string') {
-    throw contractError('NOTICE_RECEIVER_FILTER_UNSUPPORTED', 400);
-  }
-  return filter.value.trim();
-}
-
-function readId(value: string | number) {
-  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 1) {
-    throw contractError('NOTICE_RECEIVER_ID_INVALID', 400);
-  }
-  return value;
-}
-
-function readDraft(value: unknown, id?: number): NoticeReceiverDraft {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    throw contractError('NOTICE_RECEIVER_VARIABLES_INVALID', 400);
-  }
-  const draft = value as Partial<NoticeReceiverDraft>;
-  const baseline = createNoticeReceiverDraft();
-  const shapeValid = Object.entries(baseline).every(([key, expected]) => {
-    const actual = draft[key as keyof NoticeReceiverDraft];
-    if (Array.isArray(expected)) return Array.isArray(actual) && actual.every(item => typeof item === 'string');
-    if (expected === null) return actual === null || typeof actual === 'number';
-    return typeof actual === typeof expected;
-  });
-  if ((id === undefined && draft.id !== undefined) || (id !== undefined && draft.id !== id)
-    || !shapeValid || !receiverTypeDefinitions.some(item => item.type === draft.type)
-    || validateNoticeReceiverDraft(draft as NoticeReceiverDraft).length > 0) {
-    throw contractError('NOTICE_RECEIVER_VARIABLES_INVALID', 400);
-  }
-  return draft as NoticeReceiverDraft;
-}
-
-function readDeleteRecord(value: unknown, id: number): NoticeReceiver {
-  if (!value || typeof value !== 'object' || Array.isArray(value) || (value as Partial<NoticeReceiver>).id !== id) {
-    throw contractError('NOTICE_RECEIVER_VARIABLES_INVALID', 400);
-  }
-  return value as NoticeReceiver;
 }
 
 async function requireCanonical(id: number, draft: NoticeReceiverDraft) {
@@ -233,4 +167,10 @@ function assertMutation(
 
 function contractError(code: string, status = 502) {
   return createRefineHttpError('Notice receiver contract failed', status, code);
+}
+
+function exposeProviderData<TData>(value: unknown): TData {
+  // Refine lets each caller select TData, so this unavoidable adapter cast is
+  // kept at the single boundary where domain records enter its generic API.
+  return value as TData;
 }
