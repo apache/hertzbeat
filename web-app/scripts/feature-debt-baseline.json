@@ -7,11 +7,6 @@
       "allowedMax": 3
     },
     {
-      "rule": "inline-query-key",
-      "path": "features/dashboard/controller/use-dashboard-controller.ts",
-      "allowedMax": 1
-    },
-    {
       "rule": "feature-css-raw-color",
       "path": "features/explore/components/explore-query-bar.module.css",
       "allowedMax": 5

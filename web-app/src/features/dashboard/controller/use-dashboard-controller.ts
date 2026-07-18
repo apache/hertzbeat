@@ -18,6 +18,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ApiMessageError } from '@/core/http/api-message';
 import { loadDashboardAlertSummary, loadDashboardSummary } from '../api/dashboard-api';
 import { DashboardContractError, type DashboardData } from '../model/dashboard-model';
+import { dashboardQueryKeys } from './dashboard-query-keys';
 
 export type DashboardState =
   | { kind: 'loading' }
@@ -26,7 +27,7 @@ export type DashboardState =
 
 export function useDashboardController() {
   const query = useQuery({
-    queryKey: ['dashboard'],
+    queryKey: dashboardQueryKeys.summary(),
     queryFn: async ({ signal }) => {
       const [summary, alert] = await Promise.all([loadDashboardSummary(signal), loadDashboardAlertSummary(signal)]);
       return { summary, alert };
