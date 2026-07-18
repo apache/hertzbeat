@@ -22,7 +22,7 @@ const checkout = {
   serviceNamespace: 'commerce',
   environment: 'prod',
   instance: 'checkout-7d9',
-  endpoint: 'POST /checkout'
+  endpoint: '/checkout'
 };
 
 describe('shared query context model', () => {
@@ -32,7 +32,7 @@ describe('shared query context model', () => {
 
     expect(encoded.toString()).toBe(
       'signal=logs&query=timeout&collectorId=collector-east&serviceName=checkout'
-      + '&serviceNamespace=commerce&environment=prod&instance=checkout-7d9&endpoint=POST+%2Fcheckout'
+      + '&serviceNamespace=commerce&environment=prod&instance=checkout-7d9&endpoint=%2Fcheckout'
     );
     expect(parseQueryContext(encoded)).toEqual(checkout);
   });
@@ -58,7 +58,7 @@ describe('shared query context model', () => {
     const path = buildSignalHandoffPath('traces', checkout, { from: 1_000, to: 2_000 });
     expect(path).toBe(
       '/explore?signal=traces&serviceName=checkout&serviceNamespace=commerce&environment=prod'
-      + '&collectorId=collector-east&instance=checkout-7d9&endpoint=POST+%2Fcheckout&start=1000&end=2000'
+      + '&collectorId=collector-east&instance=checkout-7d9&endpoint=%2Fcheckout&start=1000&end=2000'
     );
     expect(path).not.toMatch(/token|secret|authorization|log|body/i);
   });
@@ -74,7 +74,7 @@ describe('shared query context model', () => {
     expect(first).not.toEqual(switched);
     expect(first).not.toEqual(refreshed);
     expect(queryContextScopeKey(checkout)).toBe(
-      'collector-east\u001fcheckout\u001fcommerce\u001fprod\u001fcheckout-7d9\u001fPOST /checkout'
+      'collector-east\u001fcheckout\u001fcommerce\u001fprod\u001fcheckout-7d9\u001f/checkout'
     );
   });
 });

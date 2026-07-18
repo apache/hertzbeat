@@ -33,10 +33,20 @@ import { ExploreSignalContractError, ExploreSignalMissingError } from '../model/
 describe('explore API paths', () => {
   beforeEach(() => { vi.clearAllMocks(); });
   it('maps the shared context to each signal API', () => {
-    const base = { signal: 'logs' as const, timeRange: 'last-15m' as const, serviceName: 'checkout', environment: 'prod', query: 'timeout', traceId: 'trace-1' };
-    expect(buildSignalApiPath(base, 1_000_000)).toBe('/api/logs/list?serviceName=checkout&environment=prod&start=100000&end=1000000&pageIndex=0&pageSize=20&search=timeout&traceId=trace-1');
-    expect(buildSignalApiPath({ ...base, signal: 'traces' }, 1_000_000)).toBe('/api/traces/list?serviceName=checkout&environment=prod&start=100000&end=1000000&pageIndex=0&pageSize=20&operationName=timeout&traceId=trace-1');
-    expect(buildSignalApiPath({ ...base, signal: 'metrics' }, 1_000_000)).toBe('/api/ingestion/otlp/metrics/console?serviceName=checkout&environment=prod&start=100000&end=1000000&query=timeout');
+    const base = {
+      signal: 'logs' as const,
+      timeRange: 'last-15m' as const,
+      serviceName: 'checkout',
+      environment: 'prod',
+      instance: 'checkout-7d9',
+      endpoint: '/checkout',
+      query: 'timeout',
+      traceId: 'trace-1'
+    };
+    expect(buildSignalApiPath(base, 1_000_000)).toBe('/api/logs/list?serviceName=checkout&environment=prod&instance=checkout-7d9&endpoint=%2Fcheckout&start=100000&end=1000000&pageIndex=0&pageSize=20&search=timeout&traceId=trace-1');
+    expect(buildSignalApiPath({ ...base, signal: 'traces' }, 1_000_000)).toBe('/api/traces/list?serviceName=checkout&environment=prod&instance=checkout-7d9&endpoint=%2Fcheckout&start=100000&end=1000000&pageIndex=0&pageSize=20&operationName=timeout&traceId=trace-1');
+    expect(buildSignalApiPath({ ...base, signal: 'metrics' }, 1_000_000)).toBe('/api/ingestion/otlp/metrics/console?serviceName=checkout&environment=prod&instance=checkout-7d9&endpoint=%2Fcheckout&start=100000&end=1000000&query=timeout');
+    expect(buildLogStreamPath(base)).toBe('/api/logs/sse/subscribe?serviceName=checkout&environment=prod&instance=checkout-7d9&endpoint=%2Fcheckout&logContent=timeout&traceId=trace-1');
   });
 
   it('slides an unanchored relative window but preserves an explicit shared URL end', () => {

@@ -16,6 +16,7 @@
  */
 
 import { ApiMessageError, apiMessageGet } from '@/core/http/api-message';
+import { QUERY_CONTEXT_FIELDS } from '@/shared/query-context';
 
 import {
   exploreHandoffState,
@@ -111,6 +112,7 @@ export function buildLogStreamPath(query: LogExploreQuery) {
   if (scoped) setValue(params, 'serviceNamespace', query.serviceNamespace);
   setValue(params, 'environment', query.environment);
   if (scoped) setValue(params, 'collectorId', query.collectorId);
+  appendOptionalDimensions(params, query);
   setValue(params, 'logContent', query.query);
   setValue(params, 'traceId', query.traceId);
   setValue(params, 'spanId', query.spanId);
@@ -134,6 +136,7 @@ function sharedSignalParams(query: ExploreQuery, now: number) {
   if (scoped) setValue(params, 'serviceNamespace', query.serviceNamespace);
   setValue(params, 'environment', query.environment);
   if (scoped) setValue(params, 'collectorId', query.collectorId);
+  appendOptionalDimensions(params, query);
   params.set('start', String(exact ? query.start : end - timeRangeMilliseconds(query.timeRange)));
   params.set('end', String(end));
   return params;
@@ -141,6 +144,11 @@ function sharedSignalParams(query: ExploreQuery, now: number) {
 
 function setValue(params: URLSearchParams, key: string, value: string | undefined) {
   if (value) params.set(key, value);
+}
+
+function appendOptionalDimensions(params: URLSearchParams, query: ExploreQuery) {
+  setValue(params, QUERY_CONTEXT_FIELDS.instance, query.instance);
+  setValue(params, QUERY_CONTEXT_FIELDS.endpoint, query.endpoint);
 }
 
 function requireQueryableScope(query: ExploreQuery) {

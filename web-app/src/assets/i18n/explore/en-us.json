@@ -3,6 +3,10 @@
     "closeDetail": "Close detail"
   },
   "explore": {
+    "instanceId": "Service instance ID",
+    "httpRouteTemplate": "HTTP route template, for example /checkout",
+    "instanceContext": "Instance: {{value}}",
+    "endpointContext": "HTTP route: {{value}}",
     "states": {
       "unsupportedQuery": "Collector-scoped metrics accept a metric name, not an arbitrary PromQL expression.",
       "storageUnavailable": "Metric storage is unavailable for this query.",

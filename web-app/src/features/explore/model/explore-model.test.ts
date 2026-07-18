@@ -56,18 +56,21 @@ describe('explore query state', () => {
   it('parses and serializes the complete onboarding handoff without accepting a Token', () => {
     const query = parseExploreQuery(new URLSearchParams(
       'signal=metrics&serviceName=checkout-api&serviceNamespace=commerce&environment=prod&collectorId=collector-east'
-      + '&start=1710000000000&end=1710000005000&token=must-not-enter-explore'
+      + '&instance=checkout-7d9&endpoint=%2Fcheckout&start=1710000000000&end=1710000005000'
+      + '&token=must-not-enter-explore'
     ));
 
     expect(query).toMatchObject({
       signal: 'metrics', serviceName: 'checkout-api', serviceNamespace: 'commerce', environment: 'prod',
-      collectorId: 'collector-east', start: 1_710_000_000_000, end: 1_710_000_005_000
+      collectorId: 'collector-east', instance: 'checkout-7d9', endpoint: '/checkout',
+      start: 1_710_000_000_000, end: 1_710_000_005_000
     });
     expect(exploreHandoffState(query)).toBe('scoped');
     expect(exploreUsesExactWindow(query)).toBe(true);
     expect(buildExplorePath(query)).toBe(
       '/explore?signal=metrics&timeRange=last-30m&collectorId=collector-east&serviceName=checkout-api'
-      + '&serviceNamespace=commerce&environment=prod&start=1710000000000&end=1710000005000'
+      + '&serviceNamespace=commerce&environment=prod&instance=checkout-7d9&endpoint=%2Fcheckout'
+      + '&start=1710000000000&end=1710000005000'
     );
     expect(buildExplorePath(query)).not.toContain('token');
   });

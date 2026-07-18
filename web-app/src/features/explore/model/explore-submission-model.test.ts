@@ -26,6 +26,8 @@ describe('explore submission model', () => {
       timeRange: 'last-30m',
       serviceName: 'checkout',
       environment: 'prod',
+      instance: 'checkout-7d9',
+      endpoint: '/checkout',
       query: 'latency',
       metricFilter: 'method=POST',
       groupBy: 'service_name',
@@ -35,6 +37,8 @@ describe('explore submission model', () => {
       signal: 'metrics',
       serviceName: 'checkout',
       environment: 'prod',
+      instance: 'checkout-7d9',
+      endpoint: '/checkout',
       query: 'latency',
       metricFilter: 'method=POST',
       groupBy: 'service_name',
@@ -53,6 +57,8 @@ describe('explore submission model', () => {
       signal: 'traces',
       serviceName: '',
       environment: '',
+      instance: '',
+      endpoint: '',
       query: '',
       traceId: 'trace-1',
       resourceFilter: '',
@@ -67,6 +73,8 @@ describe('explore submission model', () => {
       signal: 'metrics',
       serviceName: ' checkout ',
       environment: ' prod ',
+      instance: ' checkout-7d9 ',
+      endpoint: ' /checkout ',
       query: ' rate(http_requests_total[5m]) ',
       metricFilter: ' method=POST ',
       groupBy: ' service_name ',
@@ -77,6 +85,8 @@ describe('explore submission model', () => {
       patch: {
         serviceName: 'checkout',
         environment: 'prod',
+        instance: 'checkout-7d9',
+        endpoint: '/checkout',
         query: 'rate(http_requests_total[5m])',
         metricFilter: 'method=POST',
         groupBy: 'service_name',
@@ -88,7 +98,7 @@ describe('explore submission model', () => {
 
     for (const stepSeconds of ['0', '86401', '60s', '60 seconds']) {
       expect(buildSubmissionPatch({
-        signal: 'metrics', serviceName: '', environment: '', query: '', metricFilter: '', groupBy: '',
+        signal: 'metrics', serviceName: '', environment: '', instance: '', endpoint: '', query: '', metricFilter: '', groupBy: '',
         aggregation: 'p95', stepSeconds
       })).toEqual({
         valid: false,
@@ -105,6 +115,8 @@ describe('explore submission model', () => {
       signal: 'logs',
       serviceName: '',
       environment: ' prod ',
+      instance: '',
+      endpoint: '',
       query: ' timeout ',
       severityText: ' ERROR ',
       traceId: ' trace-1 ',
@@ -118,6 +130,8 @@ describe('explore submission model', () => {
       patch: {
         serviceName: undefined,
         environment: 'prod',
+        instance: undefined,
+        endpoint: undefined,
         query: 'timeout',
         severityText: 'ERROR',
         traceId: 'trace-1',
@@ -131,13 +145,15 @@ describe('explore submission model', () => {
 
   it('accepts only ordered safe-integer trace durations', () => {
     expect(buildSubmissionPatch({
-      signal: 'traces', serviceName: '', environment: '', query: '', traceId: '', resourceFilter: '',
+      signal: 'traces', serviceName: '', environment: '', instance: '', endpoint: '', query: '', traceId: '', resourceFilter: '',
       minDurationMs: ' 0 ', maxDurationMs: ' 9007199254740991 ', errorOnly: false
     })).toEqual({
       valid: true,
       patch: {
         serviceName: undefined,
         environment: undefined,
+        instance: undefined,
+        endpoint: undefined,
         query: undefined,
         traceId: undefined,
         resourceFilter: undefined,
@@ -155,7 +171,7 @@ describe('explore submission model', () => {
       ['200', '100', 'maxDurationMs', 'min_exceeds_max']
     ] as const) {
       const result = buildSubmissionPatch({
-        signal: 'traces', serviceName: '', environment: '', query: '', traceId: '', resourceFilter: '',
+        signal: 'traces', serviceName: '', environment: '', instance: '', endpoint: '', query: '', traceId: '', resourceFilter: '',
         minDurationMs, maxDurationMs, errorOnly: false
       });
       expect(result).toEqual({ valid: false, errors: [{ field, code }] });

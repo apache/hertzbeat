@@ -7,6 +7,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavigationType, useLocation, useNavigationType } from 'react-router-dom';
 
+import { QUERY_CONTEXT_FIELDS } from '@/shared/query-context';
+
 import { mergeExploreQuery, type ExploreQuery, type ExploreQueryPatch } from '../model/explore-model';
 import {
   buildSubmissionPatch,
@@ -129,6 +131,8 @@ function withoutUpdatedFieldErrors(errors: ExploreSubmissionErrors, field: Explo
 const sharedDraftFields: Partial<Record<keyof ExploreQueryPatch, ExploreDraftField>> = {
   serviceName: 'serviceName',
   environment: 'environment',
+  [QUERY_CONTEXT_FIELDS.instance]: QUERY_CONTEXT_FIELDS.instance,
+  [QUERY_CONTEXT_FIELDS.endpoint]: QUERY_CONTEXT_FIELDS.endpoint,
   query: 'query'
 };
 

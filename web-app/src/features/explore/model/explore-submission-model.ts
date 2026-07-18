@@ -20,6 +20,8 @@ import type { ExploreQuery, ExploreQueryPatch } from './explore-model';
 type SharedExploreSubmissionDraft = {
   serviceName: string;
   environment: string;
+  instance: string;
+  endpoint: string;
   query: string;
 };
 
@@ -119,6 +121,8 @@ function sharedDraftFromQuery(query: ExploreQuery): SharedExploreSubmissionDraft
   return {
     serviceName: query.serviceName ?? '',
     environment: query.environment ?? '',
+    instance: query.instance ?? '',
+    endpoint: query.endpoint ?? '',
     query: query.query ?? ''
   };
 }
@@ -190,6 +194,8 @@ function sharedSubmissionPatch(draft: SharedExploreSubmissionDraft): ExploreQuer
   return {
     serviceName: normalizedValue(draft.serviceName),
     environment: normalizedValue(draft.environment),
+    instance: normalizedValue(draft.instance),
+    endpoint: normalizedValue(draft.endpoint),
     query: normalizedValue(draft.query)
   };
 }

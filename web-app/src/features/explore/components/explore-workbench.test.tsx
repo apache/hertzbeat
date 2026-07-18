@@ -53,6 +53,25 @@ describe('Explore workbench', () => {
     expect(screen.getByText('Advanced filters').closest('details')).not.toHaveAttribute('open');
   });
 
+  it('edits optional QueryContext v1 dimensions as an instance and HTTP route template', () => {
+    const query = {
+      signal: 'logs', timeRange: 'last-30m', instance: 'checkout-7d9', endpoint: '/checkout'
+    } as const;
+    render(<I18nextProvider i18n={i18n}><ExploreQueryBar
+      query={query}
+      t={i18n.t}
+      updateQuery={vi.fn()}
+      submission={{
+        draft: draftFromQuery(query), errors: {}, updateField: vi.fn(), submit: vi.fn(), removeFilter: vi.fn()
+      }}
+    /></I18nextProvider>);
+
+    expect(screen.getByPlaceholderText('Service instance ID')).toHaveValue('checkout-7d9');
+    expect(screen.getByPlaceholderText('HTTP route template, for example /checkout')).toHaveValue('/checkout');
+    expect(screen.getByText('Instance: checkout-7d9')).toBeInTheDocument();
+    expect(screen.getByText('HTTP route: /checkout')).toBeInTheDocument();
+  });
+
   it('delegates refresh without rewriting a scoped onboarding window and exposes invalid handoffs', () => {
     const updateQuery = vi.fn();
     const refresh = vi.fn().mockResolvedValue(undefined);

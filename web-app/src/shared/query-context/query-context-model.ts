@@ -18,9 +18,16 @@ export type QueryContextField = keyof QueryContext;
 export type SignalKind = 'metrics' | 'logs' | 'traces';
 export type ExactTimeWindow = { from: number; to: number };
 
-const contextFields: QueryContextField[] = [
-  'collectorId', 'serviceName', 'serviceNamespace', 'environment', 'instance', 'endpoint'
-];
+export const QUERY_CONTEXT_FIELDS = {
+  collectorId: 'collectorId',
+  serviceName: 'serviceName',
+  serviceNamespace: 'serviceNamespace',
+  environment: 'environment',
+  instance: 'instance',
+  endpoint: 'endpoint'
+} as const satisfies Record<QueryContextField, QueryContextField>;
+
+const contextFields = Object.values(QUERY_CONTEXT_FIELDS);
 const sensitiveFragments = [
   'token', 'secret', 'password', 'authorization', 'credential', 'installlog', 'telemetrybody'
 ];

@@ -3,6 +3,10 @@
     "closeDetail": "關閉詳情"
   },
   "explore": {
+    "instanceId": "服務執行個體 ID",
+    "httpRouteTemplate": "HTTP 路由範本，例如 /checkout",
+    "instanceContext": "執行個體：{{value}}",
+    "endpointContext": "HTTP 路由：{{value}}",
     "states": {
       "unsupportedQuery": "Collector 範圍的指標查詢僅支援指標名稱，不支援任意 PromQL 表達式。",
       "storageUnavailable": "目前查詢無法使用指標儲存。",

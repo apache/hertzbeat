@@ -3,6 +3,10 @@
     "closeDetail": "关闭详情"
   },
   "explore": {
+    "instanceId": "服务实例 ID",
+    "httpRouteTemplate": "HTTP 路由模板，例如 /checkout",
+    "instanceContext": "实例：{{value}}",
+    "endpointContext": "HTTP 路由：{{value}}",
     "states": {
       "unsupportedQuery": "Collector 范围的指标查询仅支持指标名称，不支持任意 PromQL 表达式。",
       "storageUnavailable": "当前查询无法使用指标存储。",

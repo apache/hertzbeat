@@ -53,7 +53,7 @@ describe('Explore page controller', () => {
   it('clears downstream scope and old-service identity on service and Collector switches', async () => {
     const routed = renderController([
       '/explore?signal=metrics&collectorId=east&serviceName=checkout&serviceNamespace=commerce'
-      + '&environment=prod&instance=checkout-1&endpoint=POST%20%2Fcheckout'
+      + '&environment=prod&instance=checkout-1&endpoint=%2Fcheckout'
     ]);
     await waitFor(() => expect(routed.current().query.serviceName).toBe('checkout'));
     act(() => routed.current().updateQuery({ serviceName: 'payments' }));
