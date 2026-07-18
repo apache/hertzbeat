@@ -23,7 +23,7 @@ describe('Live Log controller', () => {
     vi.clearAllMocks();
     FakeSource.instances = [];
     api.buildLogStreamPath.mockImplementation((query: LogExploreQuery) => `/stream?query=${query.query ?? ''}`);
-    api.openLogStream.mockImplementation(() => new FakeSource());
+    api.openLogStream.mockImplementation((_path: string, handlers: FakeHandlers) => new FakeSource(handlers));
   });
 
   it('owns waiting, connected, paused, unavailable, and clear transitions', () => {
@@ -32,7 +32,7 @@ describe('Live Log controller', () => {
     const first = FakeSource.instances[0]!;
     act(() => first.open());
     expect(view.result.current.status).toBe('connected');
-    act(() => first.event(logJson('one')));
+    act(() => first.event(logRow('one')));
     expect(view.result.current.rows).toHaveLength(1);
     act(() => view.result.current.togglePaused());
     expect(view.result.current.status).toBe('paused');
@@ -48,14 +48,12 @@ describe('Live Log controller', () => {
     expect(view.result.current.status).toBe('unavailable');
   });
 
-  it('parses every LOG_EVENT through the strict LogRow contract', () => {
+  it('keeps contract failures distinct from canonical log rows', () => {
     const view = renderLive(query());
     const source = FakeSource.instances[0]!;
-    act(() => source.event(logJson('valid')));
+    act(() => source.event(logRow('valid')));
     expect(view.result.current.rows[0]).toMatchObject({ body: 'valid', severityText: 'INFO' });
-    act(() => source.event('{bad json'));
-    expect(view.result.current.status).toBe('contract');
-    act(() => source.event(JSON.stringify({ body: 'partial' })));
+    act(() => source.contractError());
     expect(view.result.current.status).toBe('contract');
     expect(view.result.current.rows).toHaveLength(1);
   });
@@ -69,24 +67,24 @@ describe('Live Log controller', () => {
   it('closes old paths and ignores late events after reroute or unmount', () => {
     const view = renderLive(query('first'));
     const first = FakeSource.instances[0]!;
-    act(() => first.event(logJson('first')));
+    act(() => first.event(logRow('first')));
     expect(view.result.current.rows[0]?.body).toBe('first');
     view.rerender({ query: query('second') });
     expect(first.close).toHaveBeenCalledOnce();
     expect(view.result.current.rows).toEqual([]);
-    act(() => first.event(logJson('stale')));
+    act(() => first.event(logRow('stale')));
     expect(view.result.current.rows).toEqual([]);
     const second = FakeSource.instances[1]!;
     view.unmount();
     expect(second.close).toHaveBeenCalledOnce();
-    act(() => second.event(logJson('late')));
+    act(() => second.event(logRow('late')));
   });
 
   it('keeps only the latest 500 canonical rows', () => {
     const view = renderLive(query());
     const source = FakeSource.instances[0]!;
     act(() => {
-      for (let index = 0; index < 501; index += 1) source.event(logJson(String(index)));
+      for (let index = 0; index < 501; index += 1) source.event(logRow(String(index)));
     });
     expect(view.result.current.rows).toHaveLength(500);
     expect(view.result.current.rows[0]?.body).toBe('500');
@@ -98,23 +96,25 @@ function renderLive(initialQuery: LogExploreQuery) {
   return renderHook(({ query: current }) => useLiveLogController(current), { initialProps: { query: initialQuery } });
 }
 function query(value = 'errors'): LogExploreQuery { return { signal: 'logs', timeRange: 'last-30m', live: true, query: value }; }
-function logJson(body: string) {
-  return JSON.stringify({ timeUnixNano: 1_750_000_000_000_000_000, observedTimeUnixNano: null, severityNumber: 9,
+function logRow(body: string) {
+  return { timeUnixNano: 1_750_000_000_000_000_000, observedTimeUnixNano: null, severityNumber: 9,
     severityText: 'INFO', body, attributes: null, droppedAttributesCount: null, traceId: null, spanId: null,
-    traceFlags: null, resource: null, resourceSchemaUrl: null, instrumentationScope: null, scopeSchemaUrl: null });
+    traceFlags: null, resource: null, resourceSchemaUrl: null, instrumentationScope: null, scopeSchemaUrl: null };
 }
+
+type FakeHandlers = {
+  onOpen: () => void;
+  onLog: (row: ReturnType<typeof logRow>) => void;
+  onUnavailable: () => void;
+  onContractError: () => void;
+};
 
 class FakeSource {
   static instances: FakeSource[] = [];
-  onopen: (() => void) | null = null;
-  onerror: (() => void) | null = null;
   close = vi.fn();
-  private listener: ((event: MessageEvent<string>) => void) | undefined;
-  constructor() { FakeSource.instances.push(this); }
-  addEventListener(name: string, listener: EventListenerOrEventListenerObject) {
-    if (name === 'LOG_EVENT') this.listener = listener as (event: MessageEvent<string>) => void;
-  }
-  open() { this.onopen?.(); }
-  error() { this.onerror?.(); }
-  event(data: string) { this.listener?.(new MessageEvent('LOG_EVENT', { data })); }
+  constructor(private readonly handlers: FakeHandlers) { FakeSource.instances.push(this); }
+  open() { this.handlers.onOpen(); }
+  error() { this.handlers.onUnavailable(); }
+  contractError() { this.handlers.onContractError(); }
+  event(row: ReturnType<typeof logRow>) { this.handlers.onLog(row); }
 }

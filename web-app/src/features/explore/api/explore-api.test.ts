@@ -19,14 +19,21 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
 
-const { apiMessageGet } = vi.hoisted(() => ({ apiMessageGet: vi.fn() }));
+const { apiMessageGet, openBrowserEventStream } = vi.hoisted(() => ({
+  apiMessageGet: vi.fn(), openBrowserEventStream: vi.fn((path: unknown, handlers: unknown) => {
+    void path;
+    void handlers;
+    return { close: vi.fn() };
+  })
+}));
 vi.mock('@/core/http/api-message', async importOriginal => ({
   ...(await importOriginal<typeof import('@/core/http/api-message')>()), apiMessageGet
 }));
+vi.mock('@/core/http/event-stream', () => ({ openBrowserEventStream }));
 
 import {
   buildLogStreamPath, buildSignalApiPath, classifyExploreSignalError, loadLogSignal,
-  loadMetricSignal, loadTraceDetail, loadTraceSignal
+  loadMetricSignal, loadTraceDetail, loadTraceSignal, openLogStream
 } from './explore-api';
 import { ExploreSignalContractError, ExploreSignalMissingError } from '../model/explore-signal-contract';
 
@@ -123,6 +130,23 @@ describe('explore API paths', () => {
     expect(classifyExploreSignalError(new ExploreSignalContractError('bad'))).toBe('contract_error');
     expect(classifyExploreSignalError(new Error('bad'))).toBe('error');
   });
+
+  it('parses stream events at the API boundary and reports malformed payloads without values', () => {
+    const onLog = vi.fn();
+    const onContractError = vi.fn();
+    openLogStream('/stream', {
+      onOpen: vi.fn(), onLog, onRetrying: vi.fn(), onUnavailable: vi.fn(), onContractError
+    });
+    const transportHandlers = openBrowserEventStream.mock.calls[0]?.[1] as {
+      onEvent: (name: string, data: string) => void;
+    } | undefined;
+
+    transportHandlers?.onEvent('LOG_EVENT', JSON.stringify(logRow('valid')));
+    transportHandlers?.onEvent('LOG_EVENT', '{private malformed body');
+
+    expect(onLog).toHaveBeenCalledWith(expect.objectContaining({ body: 'valid' }));
+    expect(onContractError).toHaveBeenCalledOnce();
+  });
 });
 
 function springPage(content: unknown[]) {
@@ -132,4 +156,10 @@ function springPage(content: unknown[]) {
 function traceRow(traceId: string) {
   return { traceId, rootSpanId: null, serviceName: null, serviceNamespace: null, rootSpanName: null,
     durationNanos: null, status: null, startTime: null, errorSpanCount: 0, resourceAttributes: null };
+}
+
+function logRow(body: string) {
+  return { timeUnixNano: 1_750_000_000_000_000_000, observedTimeUnixNano: null, severityNumber: 9,
+    severityText: 'INFO', body, attributes: null, droppedAttributesCount: null, traceId: null, spanId: null,
+    traceFlags: null, resource: null, resourceSchemaUrl: null, instrumentationScope: null, scopeSchemaUrl: null };
 }

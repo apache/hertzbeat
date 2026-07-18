@@ -16,6 +16,7 @@
  */
 
 import { ApiMessageError, apiMessageGet } from '@/core/http/api-message';
+import { openBrowserEventStream } from '@/core/http/event-stream';
 import { QUERY_CONTEXT_FIELDS } from '@/shared/query-context';
 
 import {
@@ -31,7 +32,7 @@ import {
   ExploreSignalContractError,
   ExploreSignalMissingError
 } from '../model/explore-signal-contract';
-import { parseLogPage } from './explore-log-schema';
+import { parseLogPage, parseLogRow } from './explore-log-schema';
 import { parseMetricConsole } from './explore-metric-schema';
 import { parseTraceDetail, parseTracePage } from './explore-trace-schema';
 
@@ -122,8 +123,30 @@ export function buildLogStreamPath(query: LogExploreQuery) {
   return suffix ? `/api/logs/sse/subscribe?${suffix}` : '/api/logs/sse/subscribe';
 }
 
-export function openLogStream(path: string) {
-  return new EventSource(path);
+export function openLogStream(path: string, handlers: {
+  onOpen: () => void;
+  onLog: (row: ReturnType<typeof parseLogRow>) => void;
+  onRetrying: () => void;
+  onUnavailable: () => void;
+  onContractError: () => void;
+}) {
+  return openBrowserEventStream(path, {
+    eventNames: ['LOG_EVENT'],
+    onOpen: handlers.onOpen,
+    onRetrying: handlers.onRetrying,
+    onUnavailable: handlers.onUnavailable,
+    onEvent: (_name, data) => {
+      try {
+        handlers.onLog(parseLogRow(JSON.parse(data) as unknown));
+      } catch (error) {
+        if (error instanceof ExploreSignalContractError || error instanceof SyntaxError) {
+          handlers.onContractError();
+          return;
+        }
+        throw error;
+      }
+    }
+  });
 }
 
 function sharedSignalParams(query: ExploreQuery, now: number) {

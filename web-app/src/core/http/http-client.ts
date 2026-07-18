@@ -30,7 +30,7 @@ export async function apiFetch(input: RequestInfo | URL, init: RequestInit = {})
   if (response.status !== 401 || !SAFE_METHODS.has(method) || isSessionRefresh(input)) {
     return response;
   }
-  if (!(await refreshSession())) return response;
+  if (!(await refreshBrowserSession())) return response;
   return fetch(input, request);
 }
 
@@ -49,7 +49,7 @@ function withBrowserSession(init: RequestInit): RequestInit {
   return { ...init, method, headers, credentials: 'same-origin' };
 }
 
-function refreshSession() {
+export function refreshBrowserSession() {
   if (!refreshRequest) {
     refreshRequest = fetch(SESSION_REFRESH_PATH, withBrowserSession({ method: 'POST' }))
       .then(response => response.ok)

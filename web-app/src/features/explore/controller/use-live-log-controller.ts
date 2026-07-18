@@ -18,8 +18,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { buildLogStreamPath, openLogStream } from '../api/explore-api';
-import { parseLogRow } from '../api/explore-log-schema';
-import { ExploreSignalContractError, type LogRow } from '../model/explore-signal-contract';
+import type { LogRow } from '../model/explore-signal-contract';
 import type { LogExploreQuery } from '../model/explore-model';
 import type { LiveLogStatus } from '../model/explore-signal-model';
 
@@ -40,27 +39,25 @@ export function useLiveLogController(query: LogExploreQuery) {
     const setStatus = (value: LiveLogStatus) => {
       if (active.current === token) setStatusState({ path, value });
     };
-    let source: EventSource;
+    let source: { close: () => void };
     try {
-      source = openLogStream(path);
+      source = openLogStream(path, {
+        onOpen: () => setStatus('connected'),
+        onRetrying: () => setStatus('waiting'),
+        onUnavailable: () => setStatus('unavailable'),
+        onContractError: () => setStatus('contract'),
+        onLog: row => {
+          if (active.current !== token) return;
+          setRowsState(current => ({
+            path,
+            value: [row, ...(current.path === path ? current.value : [])].slice(0, MAX_STREAM_ROWS)
+          }));
+        }
+      });
     } catch {
       setStatus('error');
       return;
     }
-    source.onopen = () => setStatus('connected');
-    source.onerror = () => setStatus('unavailable');
-    source.addEventListener('LOG_EVENT', event => {
-      if (active.current !== token) return;
-      try {
-        const row = parseLogRow(JSON.parse((event as MessageEvent<string>).data) as unknown);
-        setRowsState(current => ({
-          path,
-          value: [row, ...(current.path === path ? current.value : [])].slice(0, MAX_STREAM_ROWS)
-        }));
-      } catch (error) {
-        setStatus(error instanceof ExploreSignalContractError || error instanceof SyntaxError ? 'contract' : 'error');
-      }
-    });
     return () => {
       if (active.current === token) active.current = undefined;
       source.close();
