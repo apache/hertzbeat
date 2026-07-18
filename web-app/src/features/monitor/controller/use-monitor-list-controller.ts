@@ -60,6 +60,14 @@ export function useMonitorListController() {
   const reread = () => queryClient.fetchQuery({
     queryKey: monitorQueryKeys.list(query), queryFn: ({ signal }) => loadMonitors(query, signal), staleTime: 0
   });
+  const refresh = async () => {
+    try {
+      await reread();
+      return true;
+    } catch {
+      return false;
+    }
+  };
   const run = async (action: MonitorAction, ids: number[]) => {
     if (operating || ids.length === 0) return;
     setOperating(true);
@@ -91,7 +99,7 @@ export function useMonitorListController() {
       changeApp: (app: string) => updateQuery({ app, pageIndex: 0 }),
       changeStatus: (status: string) => updateQuery({ status, pageIndex: 0 }),
       changePage: (page: number, pageSize: number) => updateQuery({ pageIndex: page - 1, pageSize }),
-      refresh: () => reread().then(() => undefined).catch(() => undefined),
+      refresh,
       create: () => { void navigate('/monitors/new'); },
       open: (id: number, mode: 'view' | 'edit') => {
         void navigate(buildMonitorRoutePath(id, mode, `${location.pathname}${location.search}`));

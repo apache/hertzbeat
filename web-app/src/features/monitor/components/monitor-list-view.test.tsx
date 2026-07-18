@@ -64,7 +64,7 @@ function renderView(patch: Partial<MonitorListViewProps['state']>) {
   const actions: MonitorListViewProps['actions'] = {
     setSearch: () => undefined, setLabels: () => undefined, submitSearch: () => undefined,
     submitFilters: () => undefined, changeApp: () => undefined, changeStatus: () => undefined,
-    changePage: () => undefined, refresh: () => undefined, create: () => undefined,
+    changePage: () => undefined, refresh: () => Promise.resolve(true), create: () => undefined,
     open: () => undefined, run: () => undefined, runBulk: () => undefined, selectIds: () => undefined
   };
   return render(<I18nextProvider i18n={i18n}><MonitorListView state={state} actions={actions} /></I18nextProvider>);

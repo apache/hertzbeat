@@ -28,7 +28,7 @@ export function MonitorListToolbar({ query, draft, apps, refreshing, actions }: 
   actions: {
     setSearch: (value: string) => void; setLabels: (value: string) => void; submitSearch: () => void;
     submitFilters: () => void; changeApp: (value: string) => void; changeStatus: (value: string) => void;
-    refresh: () => void; create: () => void;
+    refresh: () => Promise<boolean>; create: () => void;
   };
 }) {
   const { t } = useTranslation();
@@ -43,7 +43,7 @@ export function MonitorListToolbar({ query, draft, apps, refreshing, actions }: 
     <Input value={draft.labels} allowClear placeholder={t('labels.filter')}
       onChange={event => actions.setLabels(event.target.value)} onPressEnter={actions.submitFilters} />
     <Button type="primary" onClick={actions.submitFilters}>{t('common.query')}</Button>
-    <Button disabled={refreshing} onClick={actions.refresh}>{t('common.refresh')}</Button>
+    <Button disabled={refreshing} onClick={() => { void actions.refresh(); }}>{t('common.refresh')}</Button>
     <Button type="primary" onClick={actions.create}>{t('monitor.editor.newTitle')}</Button>
   </div>;
 }

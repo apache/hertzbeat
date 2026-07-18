@@ -37,6 +37,7 @@ import { MonitorContractError } from '../api/monitor-api';
 describe('useMonitorListController URL evidence', () => {
   beforeAll(async () => { await initializeI18n(); await loadLocale('en-US'); });
   beforeEach(() => {
+    vi.resetAllMocks();
     api.loadMonitorApps.mockResolvedValue([]);
     api.loadMonitors.mockResolvedValue({ content: [{
       id: 7, name: 'epoch', app: 'website', instance: 'zero', status: 1, gmtUpdate: 0
@@ -84,6 +85,54 @@ describe('useMonitorListController URL evidence', () => {
     api.loadMonitors.mockResolvedValue({ content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 });
     const view = renderHook(() => useMonitorListController(), { wrapper: wrapper(['/monitors'], 0) });
     await waitFor(() => expect(view.result.current.state.monitors.kind).toBe('empty'));
+  });
+
+  it.each([
+    [new ApiMessageError('offline', { status: 503 }), 'unavailable'],
+    [new MonitorContractError('bad refresh'), 'error']
+  ] as const)('makes a failed %s refresh explicit and recovers with canonical data', async (reason, kind) => {
+    const initial = { content: [{ id: 7, name: 'old', app: 'website', instance: 'old', status: 1 }], totalElements: 1 };
+    const recovered = { content: [{ id: 8, name: 'new', app: 'website', instance: 'new', status: 1 }], totalElements: 1 };
+    api.loadMonitors.mockResolvedValueOnce(initial).mockRejectedValueOnce(reason).mockResolvedValueOnce(recovered);
+    const view = renderHook(() => useMonitorListController(), { wrapper: wrapper(['/monitors'], 0) });
+    await waitFor(() => expect(view.result.current.state.monitors).toMatchObject({
+      kind: 'ready', records: [{ id: 7 }]
+    }));
+
+    let failed: boolean | undefined;
+    await act(async () => { failed = await view.result.current.actions.refresh(); });
+    expect(failed).toBe(false);
+    await waitFor(() => expect(view.result.current.state.monitors.kind).toBe(kind));
+    expect(view.result.current.state.monitors).not.toHaveProperty('records');
+
+    let succeeded: boolean | undefined;
+    await act(async () => { succeeded = await view.result.current.actions.refresh(); });
+    expect(succeeded).toBe(true);
+    await waitFor(() => expect(view.result.current.state.monitors).toMatchObject({
+      kind: 'ready', records: [{ id: 8, name: 'new' }]
+    }));
+  });
+
+  it('deduplicates concurrent refreshes through the existing query fetch state', async () => {
+    let release!: (value: unknown) => void;
+    const refreshed = { content: [{ id: 8, name: 'new', app: 'website', instance: 'new', status: 1 }], totalElements: 1 };
+    api.loadMonitors.mockResolvedValueOnce({
+      content: [{ id: 7, name: 'old', app: 'website', instance: 'old', status: 1 }], totalElements: 1
+    }).mockImplementationOnce(() => new Promise(resolve => { release = resolve; }));
+    const view = renderHook(() => useMonitorListController(), { wrapper: wrapper(['/monitors'], 0) });
+    await waitFor(() => expect(view.result.current.state.monitors.kind).toBe('ready'));
+
+    let first!: Promise<boolean>;
+    let second!: Promise<boolean>;
+    act(() => {
+      first = view.result.current.actions.refresh();
+      second = view.result.current.actions.refresh();
+    });
+    await waitFor(() => expect(view.result.current.state.refreshing).toBe(true));
+    expect(api.loadMonitors).toHaveBeenCalledTimes(2);
+    release(refreshed);
+    await expect(Promise.all([first, second])).resolves.toEqual([true, true]);
+    await waitFor(() => expect(view.result.current.state.refreshing).toBe(false));
   });
 
   it('clears scoped selection only after mutation and authoritative reread converge', async () => {
