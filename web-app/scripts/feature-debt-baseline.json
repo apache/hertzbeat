@@ -3,11 +3,6 @@
   "entries": [
     {
       "rule": "feature-module-size",
-      "path": "features/alert/controller/use-alert-group-controller.ts",
-      "allowedMax": 210
-    },
-    {
-      "rule": "feature-module-size",
       "path": "features/alert/notice-template-page.tsx",
       "allowedMax": 235
     },
