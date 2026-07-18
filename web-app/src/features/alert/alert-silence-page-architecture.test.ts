@@ -34,7 +34,7 @@ function sourceLineCount(value: string) {
 describe('AlertSilencePage architecture', () => {
   it('keeps transport paths and response parsing in the API boundary', () => {
     expect(apiSource).toContain("from './alert-silence-schema'");
-    expect(apiSource).toContain('export function buildAlertSilenceListPath');
+    expect(apiSource).toContain('function buildAlertSilenceListPath');
     expect(modelSource).not.toMatch(/export function parseAlertSilence/);
     expect(modelSource).not.toMatch(/function\s+(?:array|boolean|integer|number|object|record|stringArray|text)\s*\(/);
     expect(modelSource).not.toContain('/api/alert/silences');

@@ -28,7 +28,7 @@ import {
 } from './alert-silence-model';
 import { parseAlertSilenceDetail, parseAlertSilencePage } from './alert-silence-schema';
 
-export function buildAlertSilenceListPath(query: AlertSilenceQuery) {
+function buildAlertSilenceListPath(query: AlertSilenceQuery) {
   const params = new URLSearchParams({
     pageIndex: String(query.pageIndex),
     pageSize: String(query.pageSize),

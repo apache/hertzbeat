@@ -108,12 +108,6 @@ export function commitRouteWindow(state: RouteTimeState, window: ExactTimeWindow
   return { ...state, window: { ...window } };
 }
 
-export function refreshRouteTime(state: RouteTimeState): RouteTimeState {
-  return state.policy === 'route_owned'
-    ? { ...state, refreshRevision: state.refreshRevision + 1 }
-    : state;
-}
-
 export function headerTimeMode(policy: TimeOwnership): HeaderTimeMode {
   if (policy === 'global') return 'global_controls';
   if (policy === 'route_owned') return 'exact_window';

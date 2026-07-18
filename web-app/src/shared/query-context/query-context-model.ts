@@ -84,10 +84,6 @@ export function queryContextScopeKey(context: QueryContext) {
   return contextFields.map(field => normalized[field] ?? '').join('\u001f');
 }
 
-export function queryContextEquals(left: QueryContext, right: QueryContext) {
-  return queryContextScopeKey(left) === queryContextScopeKey(right);
-}
-
 export function buildSignalHandoffPath(
   signal: SignalKind,
   context: QueryContext,
@@ -120,7 +116,7 @@ export function scopedQueryKey(
   }] as const;
 }
 
-export function isSensitiveKey(key: string) {
+function isSensitiveKey(key: string) {
   const normalized = key.replace(/[^a-z0-9]/giu, '').toLowerCase();
   return sensitiveFragments.some(fragment => normalized.includes(fragment));
 }

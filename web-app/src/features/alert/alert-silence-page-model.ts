@@ -21,7 +21,7 @@ import type { AlertSilence, AlertSilenceDraft, AlertSilenceQuery } from './alert
 
 export type AlertSilenceListEvidence = RemotePageState<AlertSilence, 'unavailable' | 'error'>;
 
-export type AlertSilenceDetailFailure = 'missing' | 'unavailable' | 'error';
+type AlertSilenceDetailFailure = 'missing' | 'unavailable' | 'error';
 export type AlertSilenceDetailState =
   | { kind: 'idle' }
   | { kind: 'loading'; id: number }

@@ -26,7 +26,7 @@ const source = Object.values(modules)[0] as string;
 describe('Alert Inhibit architecture', () => {
   it('keeps response parsing in a named schema boundary', () => {
     expect(api).toContain("from './alert-inhibit-schema'");
-    expect(api).toContain('export function buildAlertInhibitListPath');
+    expect(api).toContain('function buildAlertInhibitListPath');
     expect(model).not.toMatch(/export function parseAlertInhibit/);
     expect(model).not.toMatch(/function\s+(?:array|boolean|integer|number|object|record|stringArray|text)\s*\(/);
     expect(model).not.toContain('/api/alert/inhibits');

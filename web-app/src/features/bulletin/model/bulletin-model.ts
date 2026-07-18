@@ -2,7 +2,7 @@
 
 import type { OptionalRemoteValueState } from '@/shared/remote-state';
 
-export const bulletinPageSizes = [8, 15, 25] as const;
+const bulletinPageSizes = [8, 15, 25] as const;
 
 export type BulletinQuery = { search: string; pageIndex: number; pageSize: number };
 export type BulletinFields = Record<string, string[]>;
@@ -13,8 +13,8 @@ export type Bulletin = BulletinDraft & {
 export type BulletinMonitor = { id: number; name: string; app: string };
 export type BulletinMetricDefinition = { name: string; fields: string[] };
 export type BulletinMetricField = { key: string; unit: string; value: string | null; status: 'value' | 'no-data' };
-export type BulletinMetric = { name: string; fields: BulletinMetricField[][] };
-export type BulletinMetricsRow = { monitorName: string; monitorId: number; host: string; metrics: BulletinMetric[] };
+type BulletinMetric = { name: string; fields: BulletinMetricField[][] };
+type BulletinMetricsRow = { monitorName: string; monitorId: number; host: string; metrics: BulletinMetric[] };
 export type BulletinMetrics = { name: string; content: BulletinMetricsRow[] };
 export type BulletinMetricsState = OptionalRemoteValueState<
   BulletinMetrics,

@@ -27,7 +27,7 @@ import {
 } from './alert-inhibit-model';
 import { parseAlertInhibitDetail, parseAlertInhibitPage } from './alert-inhibit-schema';
 
-export function buildAlertInhibitListPath(query: AlertInhibitQuery) {
+function buildAlertInhibitListPath(query: AlertInhibitQuery) {
   const params = new URLSearchParams({
     pageIndex: String(query.pageIndex),
     pageSize: String(query.pageSize),

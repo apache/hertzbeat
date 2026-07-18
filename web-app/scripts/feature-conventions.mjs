@@ -19,7 +19,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { extname, isAbsolute, join, normalize, relative, sep } from 'node:path';
 import ts from 'typescript';
 
-export const featureDebtRules = Object.freeze({
+const featureDebtRules = Object.freeze({
   moduleSize: 'feature-module-size',
   primitiveParser: 'primitive-wire-parser',
   inlineQueryKey: 'inline-query-key',
@@ -55,7 +55,7 @@ export function checkFeatureConventions(projectRoot) {
   return failures;
 }
 
-export function collectFeatureViolations(projectRoot) {
+function collectFeatureViolations(projectRoot) {
   const featureRoot = join(projectRoot, 'src', 'features');
   if (!existsSync(featureRoot)) return [];
   return walk(featureRoot).flatMap(path => inspectFeatureFile(path, join(projectRoot, 'src')));
