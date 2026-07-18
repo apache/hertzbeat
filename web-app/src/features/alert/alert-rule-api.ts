@@ -20,16 +20,23 @@ import { ApiMessageError, apiMessageDelete, apiMessageGet, apiMessagePost, apiMe
 import {
   AlertRuleContractError,
   AlertRuleMissingError,
-  buildAlertRuleListPath,
   buildAlertRulePayload,
   buildAlertRulePreviewRequest,
   buildAlertRuleTogglePayload,
-  parseAlertRuleDetail,
-  parseAlertRulePage,
   type AlertRule,
   type AlertRuleDraft,
   type AlertRuleQuery
 } from './alert-rule-model';
+import { parseAlertRuleDetail, parseAlertRulePage, parseAlertRulePreview } from './alert-rule-schema';
+
+export function buildAlertRuleListPath(query: AlertRuleQuery) {
+  const params = new URLSearchParams({
+    pageIndex: String(query.pageIndex), pageSize: String(query.pageSize), sort: 'id', order: 'desc'
+  });
+  // Spring decodes the parameter before the service deliberately URL-decodes it again.
+  if (query.search.trim()) params.set('search', encodeURIComponent(JSON.stringify([query.search.trim()])));
+  return `/api/alert/defines?${params.toString()}`;
+}
 
 export async function loadAlertRules(query: AlertRuleQuery) {
   const response = await apiMessageGet<unknown>(buildAlertRuleListPath(query));
@@ -39,7 +46,9 @@ export async function loadAlertRules(query: AlertRuleQuery) {
 export async function loadAlertRule(id: string | number) {
   const normalizedId = normalizeId(id);
   const response = await apiMessageGet<unknown>(`/api/alert/define/${normalizedId}`);
-  return parseAlertRuleDetail(response);
+  const detail = parseAlertRuleDetail(response);
+  if (detail.id !== normalizedId) throw new AlertRuleContractError('detail id does not match the endpoint');
+  return detail;
 }
 
 export async function saveAlertRule(mode: 'new' | 'edit', draft: AlertRuleDraft): Promise<void> {
@@ -65,13 +74,12 @@ export async function updateAlertRuleEnabled(rule: AlertRule, enable: boolean): 
 export async function previewAlertRule(draft: AlertRuleDraft) {
   const request = buildAlertRulePreviewRequest(draft);
   const params = new URLSearchParams({ type: request.type, expr: request.expr });
+  // The backend currently exposes preview only as GET, so the expression
+  // remains in the URL until that contract supports a request body.
   const response = await apiMessageGet<unknown>(
     `/api/alert/define/preview/${encodeURIComponent(request.datasource)}?${params.toString()}`
   );
-  if (!Array.isArray(response) || response.some(item => !item || typeof item !== 'object' || Array.isArray(item))) {
-    throw new AlertRuleContractError('preview must be an array of records');
-  }
-  return response as Array<Record<string, unknown>>;
+  return parseAlertRulePreview(response);
 }
 
 export function classifyAlertRuleReadError(reason: unknown): 'missing' | 'unavailable' | 'error' {

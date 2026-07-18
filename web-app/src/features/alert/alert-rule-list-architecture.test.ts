@@ -17,10 +17,31 @@
 
 import { describe, expect, it } from 'vitest';
 
+import apiSource from './alert-rule-api.ts?raw';
+import modelSource from './alert-rule-model.ts?raw';
+import schemaSource from './alert-rule-schema.ts?raw';
+
 const modules = import.meta.glob('./alert-rule-list-page.tsx', { eager: true, import: 'default', query: '?raw' });
 const source = Object.values(modules)[0] as string;
 
+function sourceLineCount(value: string) {
+  return value.replace(/\/\*[\s\S]*?\*\//g, '').split('\n')
+    .filter(line => line.trim() && !line.trim().startsWith('//')).length;
+}
+
 describe('Alert Rule list architecture', () => {
+  it('keeps paths and detail/page/preview parsing in the API schema boundary', () => {
+    expect(apiSource).toContain("from './alert-rule-schema'");
+    expect(apiSource).toContain('export function buildAlertRuleListPath');
+    expect(apiSource).not.toMatch(/Array\.isArray\(response\)|typeof item/);
+    expect(modelSource).not.toMatch(/export function parseAlertRule/);
+    expect(modelSource).not.toMatch(/function\s+(?:array|boolean|integer|number|object|record|stringArray|text)\s*\(/);
+    expect(modelSource).not.toContain('/api/alert/defines');
+    expect(sourceLineCount(apiSource)).toBeLessThanOrEqual(250);
+    expect(sourceLineCount(modelSource)).toBeLessThanOrEqual(250);
+    expect(sourceLineCount(schemaSource)).toBeLessThanOrEqual(250);
+  });
+
   it('keeps query, API, Router, notification, and browser date ownership out of the page', () => {
     expect(source).not.toMatch(/@tanstack\/react-query|alert-rule-api|react-router|App\.useApp|Date\.parse|Intl\.DateTimeFormat/);
     expect(source).toContain('./controller/use-alert-rule-list-controller');

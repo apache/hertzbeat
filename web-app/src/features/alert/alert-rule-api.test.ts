@@ -20,8 +20,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiMessageError, apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
 
 import {
-  classifyAlertRuleReadError, deleteAlertRules, loadAlertRule, loadAlertRules, previewAlertRule, saveAlertRule,
-  updateAlertRuleEnabled
+  buildAlertRuleListPath, classifyAlertRuleReadError, deleteAlertRules, loadAlertRule, loadAlertRules,
+  previewAlertRule, saveAlertRule, updateAlertRuleEnabled
 } from './alert-rule-api';
 import {
   AlertRuleContractError, AlertRuleMissingError, alertRuleDraftFromDetail, createAlertRuleDraft,
@@ -43,12 +43,24 @@ const persisted: AlertRule = {
 describe('alert rule API', () => {
   beforeEach(() => vi.clearAllMocks());
 
+  it('owns the established double-decoded paged search path', () => {
+    expect(buildAlertRuleListPath({ search: '', pageIndex: 0, pageSize: 8 }))
+      .toBe('/api/alert/defines?pageIndex=0&pageSize=8&sort=id&order=desc');
+    expect(buildAlertRuleListPath({ search: 'cpu', pageIndex: 2, pageSize: 15 }))
+      .toBe('/api/alert/defines?pageIndex=2&pageSize=15&sort=id&order=desc&search=%255B%2522cpu%2522%255D');
+  });
+
   it('parses unknown list and detail responses through the strict boundary', async () => {
     vi.mocked(apiMessageGet)
       .mockResolvedValueOnce({ content: [{ ...persisted, ignored: true }], totalElements: 1, totalPages: 1, number: 0, size: 8 })
       .mockResolvedValueOnce({ ...persisted, ignored: true });
     await expect(loadAlertRules(query)).resolves.toEqual({ content: [persisted], totalElements: 1, totalPages: 1, number: 0, size: 8 });
     await expect(loadAlertRule('7')).resolves.toEqual(persisted);
+  });
+
+  it('rejects detail evidence whose id does not match the canonical endpoint', async () => {
+    vi.mocked(apiMessageGet).mockResolvedValue({ ...persisted, id: 8 });
+    await expect(loadAlertRule('7')).rejects.toThrow(AlertRuleContractError);
   });
 
   it('returns void from POST, PUT, toggle, and DELETE instead of leaking acknowledgements', async () => {
@@ -106,6 +118,12 @@ describe('alert rule API', () => {
     vi.mocked(apiMessageGet).mockResolvedValue([{ value: 1 }]);
     await expect(previewAlertRule({ ...createAlertRuleDraft(), expr: 'usage > 90' })).resolves.toEqual([{ value: 1 }]);
     expect(apiMessageGet).toHaveBeenCalledWith('/api/alert/define/preview/promql?type=realtime_metric&expr=usage+%3E+90');
+  });
+
+  it('rejects malformed preview rows at the response boundary', async () => {
+    vi.mocked(apiMessageGet).mockResolvedValue([[]]);
+    await expect(previewAlertRule({ ...createAlertRuleDraft(), expr: 'usage > 90' }))
+      .rejects.toThrow(AlertRuleContractError);
   });
 
   it.each([

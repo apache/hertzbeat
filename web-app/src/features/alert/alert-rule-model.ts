@@ -78,8 +78,8 @@ export type AlertRulePage = {
 };
 
 export class AlertRuleContractError extends Error {
-  constructor(message: string) {
-    super(message);
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = 'AlertRuleContractError';
   }
 }
@@ -89,45 +89,6 @@ export class AlertRuleMissingError extends Error {
     super('Alert Rule detail is missing');
     this.name = 'AlertRuleMissingError';
   }
-}
-
-export function parseAlertRuleDetail(value: unknown): AlertRule {
-  if (value === null || value === undefined) throw new AlertRuleMissingError();
-  const source = record(value, 'detail');
-  const result: AlertRule = {
-    id: positiveInteger(source.id, 'id'),
-    name: boundedString(source.name, 'name', 100),
-    type: nullableRuleType(source.type),
-    datasource: nullableDatasource(source.datasource),
-    expr: nullableBoundedText(source.expr, 'expr', 2048),
-    period: nullablePositiveJavaInteger(source.period, 'period'),
-    times: nullablePositiveJavaInteger(source.times, 'times'),
-    labels: nullableStringMap(source.labels, 'labels'),
-    annotations: nullableStringMap(source.annotations, 'annotations'),
-    template: nullableBoundedText(source.template, 'template', 2048),
-    enable: boolean(source.enable, 'enable')
-  };
-  copyAudit(source, result, 'creator');
-  copyAudit(source, result, 'modifier');
-  copyAudit(source, result, 'gmtCreate');
-  copyAudit(source, result, 'gmtUpdate');
-  return result;
-}
-
-export function parseAlertRulePage(value: unknown, query: AlertRuleQuery): AlertRulePage {
-  const source = record(value, 'page');
-  if (!Array.isArray(source.content)) throw contract('content must be an array');
-  const totalElements = nonNegativeInteger(source.totalElements, 'totalElements');
-  const totalPages = nonNegativeInteger(source.totalPages, 'totalPages');
-  const number = nonNegativeInteger(source.number, 'number');
-  const size = positiveInteger(source.size, 'size');
-  if (number !== query.pageIndex || size !== query.pageSize) throw contract('page does not match the request');
-  if (totalPages !== Math.ceil(totalElements / size)) throw contract('totalPages is inconsistent');
-  const availableContent = Math.max(0, totalElements - number * size);
-  if (source.content.length > Math.min(size, availableContent)) throw contract('page content is inconsistent');
-  const content = (source.content as unknown[]).map(parseAlertRuleDetail);
-  if (new Set(content.map(item => item.id)).size !== content.length) throw contract('duplicate ids are not allowed');
-  return { content, totalElements, totalPages, number, size };
 }
 
 export function readAlertRuleQuery(params: URLSearchParams): AlertRuleQuery {
@@ -144,15 +105,6 @@ export function writeAlertRuleQuery(query: AlertRuleQuery) {
   const params = new URLSearchParams({ pageIndex: String(query.pageIndex), pageSize: String(query.pageSize) });
   if (query.search) params.set('search', query.search);
   return params;
-}
-
-export function buildAlertRuleListPath(query: AlertRuleQuery) {
-  const params = new URLSearchParams({
-    pageIndex: String(query.pageIndex), pageSize: String(query.pageSize), sort: 'id', order: 'desc'
-  });
-  // Spring decodes the request parameter before the service deliberately URL-decodes it a second time.
-  if (query.search.trim()) params.set('search', encodeURIComponent(JSON.stringify([query.search.trim()])));
-  return `/api/alert/defines?${params.toString()}`;
 }
 
 export function createAlertRuleDraft(): AlertRuleDraft {
@@ -227,16 +179,22 @@ function datasourceFor(type: AlertRuleType): AlertRuleDatasource {
 }
 
 function preserveNullStrategy(draft: AlertRuleDraft, selected: AlertRuleType) {
+  // Legacy rows may have no strategy. Keep null during an unrelated edit so a
+  // save does not silently modernize persisted behavior the operator never changed.
   return draft.persisted?.type === null && selected === 'realtime_metric' ? null : selected;
 }
 
 function resolveDatasource(draft: AlertRuleDraft, selected: AlertRuleType) {
+  // Datasource is legacy persistence evidence. Recompute it only after the
+  // visible strategy changes; otherwise retain the canonical nullable value.
   const displayedOriginal = draft.persisted?.type ?? 'realtime_metric';
   if (draft.persisted && selected === displayedOriginal) return draft.persisted.datasource;
   return datasourceFor(selected);
 }
 
 function resolveNullableText(value: string, original: string | null | undefined) {
+  // The editor displays legacy null as an empty field. Preserve null until the
+  // operator supplies text instead of converting it to an authoritative empty string.
   return original === null && !value.trim() ? null : value.trim();
 }
 
@@ -266,45 +224,12 @@ function tryParseLabels(value: string) {
   try { parseLabels(value); return true; } catch { return false; }
 }
 
-function record(value: unknown, field: string): Record<string, unknown> {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) throw contract(`${field} must be an object`);
-  return value as Record<string, unknown>;
-}
-
-function nullableRuleType(value: unknown): AlertRuleType | null {
-  if (value === null) return null;
-  if (!alertRuleTypes.includes(value as AlertRuleType)) throw contract('type is unsupported');
-  return value as AlertRuleType;
-}
-
-function nullableDatasource(value: unknown): AlertRuleDatasource | null {
-  if (value === null) return null;
-  if (value !== 'promql' && value !== 'sql') throw contract('datasource is unsupported');
-  return value;
-}
-
-function boundedString(value: unknown, field: string, max: number) {
-  if (typeof value !== 'string' || value.length > max) throw contract(`${field} is invalid`);
-  return value;
-}
-
-function nullableBoundedText(value: unknown, field: string, max: number) {
-  if (value === null) return null;
-  return boundedString(value, field, max);
-}
-
 function validBoundedText(value: unknown, max: number): value is string {
   return typeof value === 'string' && Boolean(value.trim()) && value.length <= max;
 }
 
 function positiveInteger(value: unknown, field: string) {
   if (!isPositiveInteger(value)) throw contract(`${field} must be a positive integer`);
-  return value;
-}
-
-function nullablePositiveJavaInteger(value: unknown, field: string) {
-  if (value === null) return null;
-  if (!isPositiveJavaInteger(value)) throw contract(`${field} must be a positive Java integer`);
   return value;
 }
 
@@ -320,18 +245,6 @@ function isNullablePositiveJavaInteger(value: unknown): value is number | null {
   return value === null || isPositiveJavaInteger(value);
 }
 
-function nonNegativeInteger(value: unknown, field: string) {
-  if (!Number.isSafeInteger(value) || (value as number) < 0) throw contract(`${field} must be a non-negative integer`);
-  return value as number;
-}
-
-function nullableStringMap(value: unknown, field: string): Record<string, string> | null {
-  if (value === null) return null;
-  const source = record(value, field);
-  if (!validNullableMap(source)) throw contract(`${field} must contain non-blank string entries`);
-  return { ...source };
-}
-
 function validNullableMap(value: unknown): value is Record<string, string> | null {
   return value === null || Boolean(value) && typeof value === 'object' && !Array.isArray(value)
     && Object.entries(value).every(([key, item]) => Boolean(key.trim()) && typeof item === 'string');
@@ -339,39 +252,6 @@ function validNullableMap(value: unknown): value is Record<string, string> | nul
 
 function cloneNullableMap(value: Record<string, string> | null) {
   return value === null ? null : { ...value };
-}
-
-function boolean(value: unknown, field: string) {
-  if (typeof value !== 'boolean') throw contract(`${field} must be a boolean`);
-  return value;
-}
-
-function copyAudit(source: Record<string, unknown>, target: AlertRule,
-  field: 'creator' | 'modifier' | 'gmtCreate' | 'gmtUpdate') {
-  if (!(field in source)) return;
-  const value = source[field];
-  if (value !== null && typeof value !== 'string') throw contract(`${field} must be a string or null`);
-  if (field.startsWith('gmt') && typeof value === 'string' && !isLocalDateTime(value)) throw contract(`${field} is invalid`);
-  target[field] = value;
-}
-
-function isLocalDateTime(value: string) {
-  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,9})?$/.exec(value);
-  if (!match) return false;
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-  return month >= 1 && month <= 12 && day >= 1 && day <= daysInMonth(year, month)
-    && Number(match[4]) <= 23 && Number(match[5]) <= 59 && Number(match[6]) <= 59;
-}
-
-function daysInMonth(year: number, month: number) {
-  if (month === 2) return isLeapYear(year) ? 29 : 28;
-  return [4, 6, 9, 11].includes(month) ? 30 : 31;
-}
-
-function isLeapYear(year: number) {
-  return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
 }
 
 function validDraftType(draft: AlertRuleDraft) {
