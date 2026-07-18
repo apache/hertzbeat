@@ -25,6 +25,7 @@ import { exploreQueryContext, type ExploreQuery } from '../model/explore-model';
 const historyRootKey = ['explore-history'] as const;
 
 export const exploreQueryKeys = {
+  detail: (traceId: string | undefined) => ['trace-detail', traceId] as const,
   history: (
     query: ExploreQuery,
     window: ExactTimeWindow | undefined,

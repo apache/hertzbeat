@@ -32,11 +32,6 @@
       "allowedMax": 211
     },
     {
-      "rule": "inline-query-key",
-      "path": "features/explore/controller/use-trace-detail-controller.ts",
-      "allowedMax": 2
-    },
-    {
       "rule": "feature-module-size",
       "path": "features/settings/token/pages/token-page.tsx",
       "allowedMax": 182

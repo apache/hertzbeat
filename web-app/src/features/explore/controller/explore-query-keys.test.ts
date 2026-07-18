@@ -21,6 +21,7 @@ import type { QueryContext } from '@/shared/query-context';
 
 import type { ExploreQuery } from '../model/explore-model';
 import controllerSource from './use-explore-page-controller.ts?raw';
+import traceDetailControllerSource from './use-trace-detail-controller.ts?raw';
 import { exploreQueryKeys } from './explore-query-keys';
 
 const context: QueryContext = {
@@ -50,6 +51,12 @@ const metricQuery: ExploreQuery = {
 };
 
 describe('Explore Query Key factory', () => {
+  it('builds trace detail identity from only the requested trace id', () => {
+    expect(exploreQueryKeys.detail(undefined)).toEqual(['trace-detail', undefined]);
+    expect(exploreQueryKeys.detail('trace-1')).toEqual(['trace-detail', 'trace-1']);
+    expect(exploreQueryKeys.detail('trace-2')).not.toEqual(exploreQueryKeys.detail('trace-1'));
+  });
+
   it('builds one explicit metrics history identity', () => {
     expect(exploreQueryKeys.history(metricQuery, window, 3)).toEqual([
       'explore-history',
@@ -163,5 +170,12 @@ describe('Explore Query Key factory', () => {
     expect(controllerSource).toContain("from './explore-query-keys'");
     expect(controllerSource).toContain('queryKey: exploreQueryKeys.history(');
     expect(controllerSource).not.toMatch(/queryKey:\s*\[/);
+  });
+
+  it('keeps trace detail reads and exact cancellation on the same factory', () => {
+    expect(traceDetailControllerSource).toContain("from './explore-query-keys'");
+    expect(traceDetailControllerSource).toContain('queryKey: exploreQueryKeys.detail(traceId)');
+    expect(traceDetailControllerSource).toContain('queryKey: exploreQueryKeys.detail(id), exact: true');
+    expect(traceDetailControllerSource).not.toMatch(/queryKey:\s*\[/);
   });
 });

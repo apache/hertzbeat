@@ -21,6 +21,7 @@ import { useState } from 'react';
 import { classifyExploreSignalError, loadTraceDetail } from '../api/explore-api';
 import { buildCrossSignalPath, buildExplorePath, mergeExploreQuery, type TraceExploreQuery } from '../model/explore-model';
 import { traceSpanLayout, type TraceDetailState } from '../model/explore-signal-model';
+import { exploreQueryKeys } from './explore-query-keys';
 
 type Selection = { traceId: string; spanId: string };
 
@@ -29,7 +30,7 @@ export function useTraceDetailController(query: TraceExploreQuery, openPath: (pa
   const [traceId, setTraceId] = useState<string>();
   const [selection, setSelection] = useState<Selection>();
   const detailQuery = useQuery({
-    queryKey: ['trace-detail', traceId],
+    queryKey: exploreQueryKeys.detail(traceId),
     queryFn: ({ signal }) => loadTraceDetail(traceId ?? '', signal),
     enabled: Boolean(traceId),
     retry: false
@@ -37,7 +38,7 @@ export function useTraceDetailController(query: TraceExploreQuery, openPath: (pa
   const state = resolveTraceDetailState(traceId, selection, detailQuery.isPending, detailQuery.error, detailQuery.data);
 
   const cancel = (id: string | undefined) => {
-    if (id) void client.cancelQueries({ queryKey: ['trace-detail', id], exact: true });
+    if (id) void client.cancelQueries({ queryKey: exploreQueryKeys.detail(id), exact: true });
   };
   const openTrace = (nextTraceId: string) => {
     if (!nextTraceId || nextTraceId === traceId) return;
