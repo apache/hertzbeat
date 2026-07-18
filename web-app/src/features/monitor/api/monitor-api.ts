@@ -25,6 +25,7 @@ import { parseMonitorPage } from './monitor-page-schema';
 
 export * from './monitor-contract';
 export { detectMonitor, loadMonitorCollectors, loadMonitorParamDefines, saveMonitor } from './monitor-editor-api';
+export { buildMonitorAppHierarchyPath, loadMonitorAppHierarchy } from './monitor-hierarchy-api';
 export {
   buildFavoriteMetricPath, buildHistoryMetricPath, buildMetricCatalogPath, buildRealtimeMetricPath,
   loadFavoriteMetrics, loadHistoryMetric, loadMonitorMetricCatalog, loadRealtimeMetric, updateFavoriteMetric

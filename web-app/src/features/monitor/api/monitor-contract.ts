@@ -111,6 +111,16 @@ export type MonitorApp = {
   label?: string | null;
   hide?: boolean | null;
 };
+export type MonitorAppHierarchyNode = {
+  category: string | null;
+  value: string;
+  label: string | null;
+  isLeaf: boolean;
+  hide: boolean | null;
+  type: number | null;
+  unit: string | null;
+  children: MonitorAppHierarchyNode[];
+};
 export type MonitorCollector = {
   name: string;
   online: boolean;
