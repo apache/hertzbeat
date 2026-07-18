@@ -32,7 +32,7 @@ import {
   MonitorParamDraftError,
   type MonitorEditorDraft
 } from '../model/monitor-editor-model';
-import { monitorEditorQueryKeys } from './monitor-editor-query-keys';
+import { monitorQueryKeys } from './monitor-query-keys';
 import {
   combineMonitorEditorDefines,
   createMonitorEditorCanonicalDraft,
@@ -55,19 +55,19 @@ type ResourceInput = {
 
 export function useMonitorEditorResources(input: ResourceInput) {
   const apps = useQuery({
-    queryKey: monitorEditorQueryKeys.apps(),
+    queryKey: monitorQueryKeys.apps(),
     queryFn: ({ signal }) => loadMonitorApps(signal),
     enabled: input.validRoute,
     retry: false
   });
   const collectors = useQuery({
-    queryKey: monitorEditorQueryKeys.collectors(),
+    queryKey: monitorQueryKeys.collectors(),
     queryFn: ({ signal }) => loadMonitorCollectors(signal),
     enabled: input.validRoute,
     retry: false
   });
   const detail = useQuery({
-    queryKey: monitorEditorQueryKeys.detail(input.id),
+    queryKey: monitorQueryKeys.detail(input.id),
     queryFn: ({ signal }) => loadMonitorDetail(input.id!, signal),
     enabled: input.mode === 'edit' && input.id !== undefined,
     retry: false
@@ -78,13 +78,13 @@ export function useMonitorEditorResources(input: ResourceInput) {
     : input.requestedScrape;
   const source = `${input.mode}:${input.id ?? 'new'}:${app}:${scrape}`;
   const appDefines = useQuery({
-    queryKey: monitorEditorQueryKeys.appDefines(app),
+    queryKey: monitorQueryKeys.appDefines(app),
     queryFn: ({ signal }) => loadMonitorParamDefines(app, signal),
     enabled: input.validRoute && Boolean(app),
     retry: false
   });
   const sdDefines = useQuery({
-    queryKey: monitorEditorQueryKeys.sdDefines(scrape),
+    queryKey: monitorQueryKeys.sdDefines(scrape),
     queryFn: ({ signal }) => loadMonitorParamDefines(scrape, signal),
     enabled: input.validRoute && Boolean(app) && scrape !== 'static',
     retry: false

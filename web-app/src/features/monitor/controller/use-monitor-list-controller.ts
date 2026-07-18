@@ -31,8 +31,7 @@ import {
   type MonitorQuery
 } from '../model/monitor-model';
 import type { MonitorAppsEvidence, MonitorListEvidence } from '../model/monitor-list-model';
-
-const monitorKey = (query: MonitorQuery) => ['monitors', query] as const;
+import { monitorQueryKeys } from './monitor-query-keys';
 
 export function useMonitorListController() {
   const { t } = useTranslation();
@@ -50,16 +49,16 @@ export function useMonitorListController() {
     search: draftState.search, labels: draftState.labels
   };
   const monitors = useQuery({
-    queryKey: monitorKey(query), queryFn: ({ signal }) => loadMonitors(query, signal), retry: false
+    queryKey: monitorQueryKeys.list(query), queryFn: ({ signal }) => loadMonitors(query, signal), retry: false
   });
   const apps = useQuery({
-    queryKey: ['monitor-apps'], queryFn: ({ signal }) => loadMonitorApps(signal), retry: false
+    queryKey: monitorQueryKeys.apps(), queryFn: ({ signal }) => loadMonitorApps(signal), retry: false
   });
   const records = monitors.data?.content;
   const selection = useMonitorSelection(monitorSelectionScope(query), records);
   const updateQuery = (patch: Partial<MonitorQuery>) => setParams(writeMonitorQuery({ ...query, ...patch }));
   const reread = () => queryClient.fetchQuery({
-    queryKey: monitorKey(query), queryFn: ({ signal }) => loadMonitors(query, signal), staleTime: 0
+    queryKey: monitorQueryKeys.list(query), queryFn: ({ signal }) => loadMonitors(query, signal), staleTime: 0
   });
   const run = async (action: MonitorAction, ids: number[]) => {
     if (operating || ids.length === 0) return;

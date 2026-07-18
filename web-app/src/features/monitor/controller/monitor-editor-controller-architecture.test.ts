@@ -23,7 +23,7 @@ import actionsSource from './monitor-editor-actions.ts?raw';
 import commandsSource from './use-monitor-editor-commands.ts?raw';
 import commandOperationSource from './monitor-editor-command-operation.ts?raw';
 import draftSource from './use-monitor-editor-draft.ts?raw';
-import queryKeysSource from './monitor-editor-query-keys.ts?raw';
+import queryKeysSource from './monitor-query-keys.ts?raw';
 import resourceModelSource from './monitor-editor-resource-model.ts?raw';
 import resourcesSource from './use-monitor-editor-resources.ts?raw';
 import routeSource from './use-monitor-editor-route.ts?raw';
@@ -39,7 +39,7 @@ describe('Monitor editor controller architecture', () => {
   });
 
   it('owns all editor Query Keys in one factory', () => {
-    expect(resourcesSource).toContain('monitorEditorQueryKeys');
+    expect(resourcesSource).toContain('monitorQueryKeys');
     expect(resourcesSource).not.toMatch(/queryKey:\s*\[/);
     for (const key of ['apps', 'collectors', 'detail', 'appDefines', 'sdDefines']) {
       expect(queryKeysSource).toMatch(new RegExp(`\\b${key}\\b`));

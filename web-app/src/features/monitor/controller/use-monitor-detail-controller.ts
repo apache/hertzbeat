@@ -21,6 +21,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { classifyMonitorDetailReadError, loadMonitorDetail, type MonitorDetail } from '../api/monitor-api';
 import { parseMonitorRouteId, type MonitorDetailEvidence } from '../model/monitor-detail-model';
 import { buildMonitorRoutePath, safeMonitorReturnTo } from '../model/monitor-model';
+import { monitorQueryKeys } from './monitor-query-keys';
 
 export function useMonitorDetailController() {
   const navigate = useNavigate();
@@ -29,7 +30,7 @@ export function useMonitorDetailController() {
   const id = parseMonitorRouteId(monitorId);
   const returnTo = safeMonitorReturnTo(searchParams.get('returnTo'));
   const query = useQuery({
-    queryKey: ['monitor-detail', id],
+    queryKey: monitorQueryKeys.detail(id),
     queryFn: ({ signal }) => loadMonitorDetail(id!, signal),
     enabled: id !== undefined,
     retry: false

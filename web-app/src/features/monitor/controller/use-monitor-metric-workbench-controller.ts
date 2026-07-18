@@ -22,6 +22,7 @@ import {
   parseMonitorMetricHistory, type MonitorMetricCatalogEvidence, type MonitorMetricFavoriteEvidence, type MonitorMetricHistory,
   type MonitorMetricRowsEvidence, type MonitorMetricWorkbenchController
 } from '../model/monitor-detail-model';
+import { monitorQueryKeys } from './monitor-query-keys';
 
 export function useMonitorMetricWorkbenchController(monitor: Monitor | undefined,
   embedded: MonitorDetailMetric[], notificationOverride?: Notifications): MonitorMetricWorkbenchController {
@@ -31,10 +32,9 @@ export function useMonitorMetricWorkbenchController(monitor: Monitor | undefined
   const queryClient = useQueryClient();
   const [params, setParams] = useSearchParams();
   const sharedTime = useSharedTimeOptional();
-  const sharedTimeKey = monitorSharedTimeKey(sharedTime);
   const source = monitorSource(monitor);
   const catalogQuery = useQuery({
-    queryKey: ['monitor-metric-catalog', source.id, source.app, source.scrape],
+    queryKey: monitorQueryKeys.metricCatalog(source.id, source.app, source.scrape),
     queryFn: ({ signal }) => loadMonitorMetricCatalog(monitor!, signal),
     enabled: Boolean(monitor)
   });
@@ -48,19 +48,19 @@ export function useMonitorMetricWorkbenchController(monitor: Monitor | undefined
   useCanonicalMetricParams({ monitor, catalog, requestedHistory, requestedMetric, metricKey, history, params, setParams });
 
   const favoritesQuery = useQuery({
-    queryKey: ['monitor-favorites', source.id],
+    queryKey: monitorQueryKeys.favorites(source.id),
     queryFn: ({ signal }) => loadFavoriteMetrics(monitor!.id, signal),
     enabled: Boolean(monitor)
   });
   const favorite = favoriteEvidence(favoritesQuery, metricKey);
   const realtimeQuery = useQuery({
-    queryKey: ['monitor-realtime', source.id, metric?.group, metric?.field, ...sharedTimeKey],
+    queryKey: monitorQueryKeys.realtime(source.id, metric?.group, metric?.field, sharedTime),
     queryFn: ({ signal }) => loadRealtimeMetric(monitor!.id, metric!, signal),
     enabled: Boolean(monitor && metric),
     refetchInterval: 10_000
   });
   const historicalQuery = useQuery({
-    queryKey: ['monitor-history', source.id, metricKey, history, ...sharedTimeKey],
+    queryKey: monitorQueryKeys.history(source.id, metricKey, history, sharedTime),
     queryFn: ({ signal }) => loadHistoryMetric(monitor!, metric!, history, signal),
     enabled: Boolean(monitor && metric)
   });
@@ -77,10 +77,6 @@ export function useMonitorMetricWorkbenchController(monitor: Monitor | undefined
       refresh: () => { void realtimeQuery.refetch(); void historicalQuery.refetch(); }
     }
   };
-}
-
-function monitorSharedTimeKey(time: ReturnType<typeof useSharedTimeOptional>) {
-  return time ? [time.window, time.refreshRevision] as const : [undefined, 0] as const;
 }
 
 type Notifications = { success: (text: string) => unknown; error: (text: string) => unknown };
@@ -193,7 +189,7 @@ function useFavoriteMutation(input: {
       const canonical = await loadFavoriteMetrics(monitorId, reread.current.signal);
       if (currentSource.current !== monitorId) return;
       if (canonical.includes(metricKey) !== desired) throw new Error('Favorite metrics did not converge');
-      queryClient.setQueryData(['monitor-favorites', monitorId], canonical);
+      queryClient.setQueryData(monitorQueryKeys.favorites(monitorId), canonical);
       void message.success(t('monitorMetrics.favoriteSaved'));
     } catch (error) {
       if (currentSource.current !== monitorId) return;

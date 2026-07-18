@@ -97,26 +97,6 @@
       "allowedMax": 260
     },
     {
-      "rule": "inline-query-key",
-      "path": "features/monitor/controller/use-monitor-detail-controller.ts",
-      "allowedMax": 1
-    },
-    {
-      "rule": "inline-query-key",
-      "path": "features/monitor/controller/use-monitor-list-controller.ts",
-      "allowedMax": 1
-    },
-    {
-      "rule": "feature-module-size",
-      "path": "features/monitor/controller/use-monitor-metric-workbench-controller.ts",
-      "allowedMax": 202
-    },
-    {
-      "rule": "inline-query-key",
-      "path": "features/monitor/controller/use-monitor-metric-workbench-controller.ts",
-      "allowedMax": 4
-    },
-    {
       "rule": "feature-module-size",
       "path": "features/monitor/model/monitor-editor-model.ts",
       "allowedMax": 305
