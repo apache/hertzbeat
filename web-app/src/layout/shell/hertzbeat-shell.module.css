@@ -214,6 +214,7 @@ button.timePolicy:hover {
   height: 30px;
   padding: 0 8px;
   border: 0;
+  border-left: 2px solid transparent;
   border-radius: var(--hb-radius-control);
   color: var(--hb-nav-text);
   background: transparent;
@@ -236,9 +237,10 @@ button.timePolicy:hover {
 }
 
 .navigationLinkActive {
+  border-left-color: var(--hb-brand-accent);
+  border-radius: 0;
   color: var(--hb-text-primary);
-  background: var(--hb-nav-selected);
-  box-shadow: inset 2px 0 var(--hb-brand-accent);
+  background: transparent;
   font-weight: 600;
 }
 

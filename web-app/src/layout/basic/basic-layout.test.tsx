@@ -80,13 +80,16 @@ describe('BasicLayout shell', () => {
   });
 
   it('keeps active, hover, and keyboard navigation states visually distinct', () => {
+    const link = cssRule('.navigationLink');
     const active = cssRule('.navigationLinkActive');
     const hover = cssRule('.navigationLink:hover');
     const focus = cssRule('.navigationLink:focus-visible');
 
-    expect(active).toContain('background: var(--hb-nav-selected)');
-    expect(active).toContain('inset 2px 0 var(--hb-brand-accent)');
-    expect(active).not.toContain('#6f83f7');
+    expect(link).toContain('border-left: 2px solid transparent');
+    expect(active).toContain('border-left-color: var(--hb-brand-accent)');
+    expect(active).toContain('border-radius: 0');
+    expect(active).toContain('background: transparent');
+    expect(active).not.toContain('box-shadow');
     expect(hover).toContain('background: var(--hb-nav-hover)');
     expect(focus).toContain('outline: 2px solid var(--hb-focus-ring)');
   });
