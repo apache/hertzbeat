@@ -21,6 +21,8 @@ import { useEffect, useRef, useState, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
+import { useStringQueryDraft } from '@/shared/query-context';
+
 import {
   classifyAlertSilenceReadError, loadAlertSilence, loadAlertSilences
 } from '../alert-silence-api';
@@ -44,11 +46,10 @@ export function useAlertSilenceController() {
   const [params, setParams] = useSearchParams();
   const query = readAlertSilenceQuery(params);
   const source = writeAlertSilenceQuery(query).toString();
-  const [searchState, setSearchState] = useState({ source, value: query.search });
+  const { value: search, setValue: setSearch } = useStringQueryDraft(source, query.search);
   const [detail, setDetail] = useState<AlertSilenceDetailState>({ kind: 'idle' });
   const intent = useRef(0);
   const editRequest = useRef<AbortController | null>(null);
-  const search = searchState.source === source ? searchState.value : query.search;
   const draft = alertSilenceDetailDraft(detail);
   const { list, overflow } = useAlertSilenceList(query, setParams);
   useEditAbortCleanup(intent, editRequest);
@@ -88,7 +89,7 @@ export function useAlertSilenceController() {
     state: { query, search, detail, busy: mutations.busy, refreshing: list.isFetching,
       list: resolveListEvidence(list.isPending, list.error, list.data, Boolean(overflow)) },
     actions: {
-      setSearch: (value: string) => setSearchState({ source, value }),
+      setSearch,
       submitSearch: () => updateQuery({ search: search.trim(), pageIndex: 0 }),
       changePage: (page: number, pageSize: number) => updateQuery({ pageIndex: page - 1, pageSize }),
       refresh: () => rereadList().then(() => undefined).catch(() => undefined),

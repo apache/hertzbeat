@@ -19,6 +19,7 @@ import { Button, Input, Typography } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useStringQueryDraft } from '@/shared/query-context';
 import { SettingsNav } from '@/shared/settings/settings-nav';
 
 import { LabelEditor, type LabelEditorState } from '../components/label-editor';
@@ -31,12 +32,11 @@ export function LabelPage() {
   const { t } = useTranslation();
   const { query, setPage, setSearch } = useLabelQueryController();
   const resource = useLabelResourceController(query);
-  const [searchDraft, setSearchDraft] = useState({ source: query.search, value: query.search });
-  const draftSearch = searchDraft.source === query.search ? searchDraft.value : query.search;
+  const { value: draftSearch, setValue: setDraftSearch } = useStringQueryDraft(query.search, query.search);
   const [editor, setEditor] = useState<LabelEditorState>();
   const submitSearch = () => {
     const search = draftSearch.trim();
-    setSearchDraft({ source: search, value: search });
+    setDraftSearch(search);
     setSearch(search);
   };
   const saveLabel = (value: LabelEditorState['value']) => {
@@ -57,7 +57,7 @@ export function LabelPage() {
           allowClear
           value={draftSearch}
           placeholder={t('labels.search')}
-          onChange={(event) => setSearchDraft({ source: query.search, value: event.target.value })}
+          onChange={(event) => setDraftSearch(event.target.value)}
           onPressEnter={submitSearch}
         />
         <Button type="primary" onClick={submitSearch}>

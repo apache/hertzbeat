@@ -21,6 +21,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { useStringQueryDraft } from '@/shared/query-context';
 import type { RemotePageState } from '@/shared/remote-state';
 
 import {
@@ -42,11 +43,8 @@ export function useAlertRuleListController() {
   const [params, setParams] = useSearchParams();
   const query = readAlertRuleQuery(params);
   const source = writeAlertRuleQuery(query).toString();
-  const [searchState, setSearchState] = useState({ source, value: query.search });
+  const { value: search, setValue: setSearch } = useStringQueryDraft(source, query.search);
   const [command, setCommand] = useState<'idle' | 'operating'>('idle');
-  const queryChanged = searchState.source !== source;
-  if (queryChanged) setSearchState({ source, value: query.search });
-  const search = queryChanged ? query.search : searchState.value;
   const listQuery = useQuery({
     queryKey: alertRuleQueryKeys.list(query), queryFn: () => loadAlertRules(query), retry: false
   });
@@ -82,7 +80,7 @@ export function useAlertRuleListController() {
       command, list: resolveListState(listQuery.isPending, listQuery.error, listQuery.data), query,
       refreshing: listQuery.isFetching, search
     },
-    setSearch: (value: string) => setSearchState(current => ({ ...current, value })),
+    setSearch,
     submitSearch: () => updateQuery({ search: search.trim(), pageIndex: 0 }),
     changePage: (page: number, pageSize: number) => updateQuery({
       pageIndex: pageSize === query.pageSize ? page - 1 : 0, pageSize

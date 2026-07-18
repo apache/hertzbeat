@@ -5,8 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+
+import { useStringQueryDraft } from '@/shared/query-context';
 
 import {
   readAlertGroupQuery,
@@ -18,10 +19,7 @@ export function useAlertGroupQueryController() {
   const [params, setParams] = useSearchParams();
   const query = readAlertGroupQuery(params);
   const source = writeAlertGroupQuery(query).toString();
-  const [searchState, setSearchState] = useState({ source, value: query.search });
-  const queryChanged = searchState.source !== source;
-  if (queryChanged) setSearchState({ source, value: query.search });
-  const search = queryChanged ? query.search : searchState.value;
+  const { value: search, setValue: setSearch } = useStringQueryDraft(source, query.search);
   const updateQuery = (patch: Partial<AlertGroupQuery>) => {
     setParams(writeAlertGroupQuery({ ...query, ...patch }));
   };
@@ -29,7 +27,7 @@ export function useAlertGroupQueryController() {
   return {
     state: { query, search },
     actions: {
-      setSearch: (value: string) => setSearchState(current => ({ ...current, value })),
+      setSearch,
       submitSearch: () => updateQuery({ search: search.trim(), pageIndex: 0 }),
       changePage: (page: number, pageSize: number) => updateQuery({
         pageIndex: pageSize === query.pageSize ? page - 1 : 0,

@@ -8,3 +8,4 @@
 export * from './query-context-model';
 export * from './query-context-context';
 export * from './query-context-provider';
+export * from './use-string-query-draft';

@@ -21,6 +21,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
+import { useStringQueryDraft } from '@/shared/query-context';
 import type { RemotePageState } from '@/shared/remote-state';
 
 import {
@@ -48,10 +49,7 @@ export function useAlertInhibitController() {
   const [params, setParams] = useSearchParams();
   const query = readAlertInhibitQuery(params);
   const source = writeAlertInhibitQuery(query).toString();
-  const [searchState, setSearchState] = useState({ source, value: query.search });
-  const queryChanged = searchState.source !== source;
-  if (queryChanged) setSearchState({ source, value: query.search });
-  const search = queryChanged ? query.search : searchState.value;
+  const { value: search, setValue: setSearch } = useStringQueryDraft(source, query.search);
   const listQuery = useQuery({ queryKey: listKey(query), queryFn: () => loadAlertInhibits(query), retry: false });
   const updateQuery = (patch: Partial<AlertInhibitQuery>) => setParams(writeAlertInhibitQuery({ ...query, ...patch }));
   const rereadList = () => queryClient.fetchQuery({
@@ -63,7 +61,7 @@ export function useAlertInhibitController() {
       ...transactions.state, list: resolveListState(listQuery.isPending, listQuery.error, listQuery.data),
       query, refreshing: listQuery.isFetching, search
     },
-    setSearch: (value: string) => setSearchState(current => ({ ...current, value })),
+    setSearch,
     submitSearch: () => updateQuery({ search: search.trim(), pageIndex: 0 }),
     changePage: (page: number, pageSize: number) => updateQuery({
       pageIndex: pageSize === query.pageSize ? page - 1 : 0, pageSize

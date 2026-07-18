@@ -21,6 +21,8 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
+import { useStringQueryDraft } from '@/shared/query-context';
+
 import { noticeTemplateCreateActionUrl, noticeTemplateResourceName } from './notice-template-resource';
 
 import {
@@ -88,17 +90,10 @@ function useNoticeTemplateQuery() {
     () => readNoticeTemplateQuery(new URLSearchParams(serializedParams)),
     [serializedParams]
   );
-  const [nameDraft, setNameDraft] = useState({ source: query.name, value: query.name });
-  const queryChanged = nameDraft.source !== query.name;
-  if (queryChanged) setNameDraft({ source: query.name, value: query.name });
-  const name = queryChanged ? query.name : nameDraft.value;
+  const { value: name, setValue: setName } = useStringQueryDraft(query.name, query.name);
   const updateQuery = useCallback((patch: Partial<NoticeTemplateQuery>) => {
     setParams(writeNoticeTemplateQuery({ ...query, ...patch }));
   }, [query, setParams]);
-  const setName = useCallback((value: string) => {
-    setNameDraft({ source: query.name, value });
-  }, [query.name]);
-
   return {
     changePage: (page: number, pageSize: number) => updateQuery({ pageIndex: page - 1, pageSize }),
     changePreset: (preset: boolean) => updateQuery({ preset, pageIndex: 0 }),
