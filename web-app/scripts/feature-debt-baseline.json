@@ -30,11 +30,6 @@
       "rule": "feature-module-size",
       "path": "features/explore/components/trace-result.tsx",
       "allowedMax": 211
-    },
-    {
-      "rule": "feature-module-size",
-      "path": "features/settings/token/pages/token-page.tsx",
-      "allowedMax": 182
     }
   ]
 }
