@@ -91,6 +91,21 @@ test('rejects instrumentation primitive wire parsers and inline Query Keys', () 
   assert.match(failures, /use the feature Query Key factory/);
 });
 
+test('rejects hand-written primitive contract parsers in core auth', () => {
+  const project = createProject({
+    ...requiredProjectFiles(),
+    'src/features/orders/index.ts': 'export {};',
+    'src/core/auth/session-api.ts': [
+      'function isRecord(value) { return Boolean(value); }',
+      'const hasExactKeys = value => Boolean(value);',
+      'function text(value) { return String(value); }'
+    ].join('\n')
+  });
+
+  const failures = checkArchitecture(project).join('\n');
+  assert.match(failures, /core auth contracts must use runtime schemas instead of primitive parser helpers/);
+});
+
 test('rejects oversized instrumentation modules and route-local color literals', () => {
   const project = createProject({
     'src/app/main.ts': 'export {};',

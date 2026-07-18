@@ -106,7 +106,21 @@ function addCountObservation(observations, rule, path, actual) {
   if (actual > 0) observations.push(observation(rule, path, actual));
 }
 
-function countTypeScriptSyntax(source, path) {
+export function containsPrimitiveParserHelper(
+  source,
+  path,
+  parserNames = primitiveParserNames,
+  options = {}
+) {
+  return countTypeScriptSyntax(source, path, parserNames, options).primitiveParsers > 0;
+}
+
+function countTypeScriptSyntax(
+  source,
+  path,
+  parserNames = primitiveParserNames,
+  { includeVariableDeclarations = false } = {}
+) {
   const sourceFile = ts.createSourceFile(
     path,
     source,
@@ -116,7 +130,15 @@ function countTypeScriptSyntax(source, path) {
   );
   const counts = { primitiveParsers: 0, inlineQueryKeys: 0 };
   const visit = node => {
-    if (ts.isFunctionDeclaration(node) && node.name && primitiveParserNames.has(node.name.text)) {
+    if (ts.isFunctionDeclaration(node) && node.name && parserNames.has(node.name.text)) {
+      counts.primitiveParsers += 1;
+    }
+    if (includeVariableDeclarations
+      && ts.isVariableDeclaration(node)
+      && ts.isIdentifier(node.name)
+      && parserNames.has(node.name.text)
+      && node.initializer
+      && (ts.isArrowFunction(node.initializer) || ts.isFunctionExpression(node.initializer))) {
       counts.primitiveParsers += 1;
     }
     if (isInlineQueryKey(node)) counts.inlineQueryKeys += 1;

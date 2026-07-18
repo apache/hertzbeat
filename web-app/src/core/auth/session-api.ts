@@ -17,23 +17,17 @@
 
 import { apiFetch } from '@/core/http/http-client';
 
-export type UiSession = {
-  authenticated: boolean;
-  username: string | null;
-  roles: string[];
-  workspaceId: string | null;
-  expiresAt: string | null;
-};
+import {
+  sessionEnvelopeSchema,
+  uiSessionSchema,
+  type SessionEnvelope,
+  type UiSession
+} from './session-contract';
 
 export const sessionQueryKey = ['ui-session'] as const;
 
-export const anonymousSession: UiSession = {
-  authenticated: false,
-  username: null,
-  roles: [],
-  workspaceId: null,
-  expiresAt: null
-};
+export { anonymousSession } from './session-contract';
+export type { UiSession } from './session-contract';
 
 export type SessionFailureKind = 'invalid-credentials' | 'unavailable' | 'contract' | 'error';
 
@@ -117,97 +111,18 @@ async function readResponseJson(response: Response) {
 }
 
 function parseEnvelope(value: unknown, status: number, operation: SessionOperation): SessionEnvelope {
-  if (!isSessionEnvelope(value)) {
-    throw new SessionRequestError('contract', { status });
-  }
-  if (value.code !== 0) {
+  const result = sessionEnvelopeSchema.safeParse(value);
+  if (!result.success) throw new SessionRequestError('contract', { status });
+  if (result.data.code !== 0) {
     throw new SessionRequestError(operation === 'login' ? 'invalid-credentials' : 'error', {
       status
     });
   }
-  return value;
+  return result.data;
 }
 
 function parseSession(value: unknown): UiSession {
-  const keys = ['authenticated', 'username', 'roles', 'workspaceId', 'expiresAt'];
-  if (!isRecord(value) || !hasExactKeys(value, keys) || typeof value.authenticated !== 'boolean') {
-    throw new SessionRequestError('contract');
-  }
-  const roles = parseRoles(value.roles);
-  const username = parseNullableString(value.username);
-  const workspaceId = parseNullableString(value.workspaceId);
-  const expiresAt = parseExpiration(value.expiresAt);
-  assertSessionIdentity(value.authenticated, username, roles, workspaceId, expiresAt);
-  return {
-    authenticated: value.authenticated,
-    username,
-    roles,
-    workspaceId,
-    expiresAt
-  };
-}
-
-type SessionEnvelope = { code: number; data: unknown; msg?: string | null };
-
-function isSessionEnvelope(value: unknown): value is SessionEnvelope {
-  if (!isRecord(value) || !hasExactKeys(value, ['code', 'data'], ['msg'])) return false;
-  if (typeof value.code !== 'number' || !Number.isInteger(value.code)) return false;
-  return !('msg' in value) || value.msg === null || typeof value.msg === 'string';
-}
-
-function parseRoles(value: unknown): string[] {
-  if (!isStringArray(value) || new Set(value).size !== value.length) {
-    throw new SessionRequestError('contract');
-  }
-  return [...value];
-}
-
-function parseNullableString(value: unknown): string | null {
-  if (value === null || typeof value === 'string') return value;
-  throw new SessionRequestError('contract');
-}
-
-function parseExpiration(value: unknown): string | null {
-  const expiresAt = parseNullableString(value);
-  if (expiresAt !== null && !Number.isFinite(Date.parse(expiresAt))) {
-    throw new SessionRequestError('contract');
-  }
-  return expiresAt;
-}
-
-function assertSessionIdentity(
-  authenticated: boolean,
-  username: string | null,
-  roles: string[],
-  workspaceId: string | null,
-  expiresAt: string | null
-) {
-  if (authenticated && (!username?.trim() || !workspaceId?.trim())) {
-    throw new SessionRequestError('contract');
-  }
-  if (!authenticated && (username !== null || roles.length !== 0 || workspaceId !== null || expiresAt !== null)) {
-    throw new SessionRequestError('contract');
-  }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
-
-function isStringArray(value: unknown): value is string[] {
-  return isUnknownArray(value) && value.every(isString);
-}
-
-function isUnknownArray(value: unknown): value is unknown[] {
-  return Array.isArray(value);
-}
-
-function isString(value: unknown): value is string {
-  return typeof value === 'string';
-}
-
-function hasExactKeys(value: Record<string, unknown>, required: string[], optional: string[] = []) {
-  const keys = Object.keys(value);
-  return required.every(key => keys.includes(key))
-    && keys.every(key => required.includes(key) || optional.includes(key));
+  const result = uiSessionSchema.safeParse(value);
+  if (!result.success) throw new SessionRequestError('contract');
+  return result.data;
 }

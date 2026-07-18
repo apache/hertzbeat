@@ -20,13 +20,30 @@ import { basename, extname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import process from 'node:process';
 
-import { checkFeatureConventions } from './feature-conventions.mjs';
+import { checkFeatureConventions, containsPrimitiveParserHelper } from './feature-conventions.mjs';
 
 const requiredDirectories = ['app', 'core', 'layout', 'features', 'shared', join('assets', 'i18n')];
 const forbiddenSegments = new Set(['compat', 'controllers', 'deprecated', 'legacy', 'view-models']);
 const sourceExtensions = new Set(['.ts', '.tsx', '.css']);
 const ignoredDirectories = new Set(['.tmp', 'coverage', 'dist', 'node_modules']);
 const maximumSourceLineLength = 200;
+const authPrimitiveParserNames = new Set([
+  'array',
+  'boolean',
+  'enumValue',
+  'hasExactKeys',
+  'integer',
+  'isRecord',
+  'isString',
+  'isStringArray',
+  'isUnknownArray',
+  'number',
+  'object',
+  'record',
+  'string',
+  'stringArray',
+  'text'
+]);
 
 export function checkArchitecture(projectRoot) {
   const sourceRoot = join(projectRoot, 'src');
@@ -82,6 +99,14 @@ function validateSource(path, sourceRoot, failures) {
     && /\b(?:console\.(?:log|info|warn|error)|sendBeacon|analytics)\b/.test(source)
     && normalizedPath.startsWith('features/instrumentation/')) {
     failures.push(`${normalizedPath}: instrumentation cannot log or analyze onboarding state or secrets`);
+  }
+
+  if (!isTest(path)
+    && normalizedPath.startsWith('core/auth/')
+    && containsPrimitiveParserHelper(source, path, authPrimitiveParserNames, {
+      includeVariableDeclarations: true
+    })) {
+    failures.push(`${normalizedPath}: core auth contracts must use runtime schemas instead of primitive parser helpers`);
   }
 
 }

@@ -85,11 +85,46 @@ describe('UI session API contract', () => {
   it('rejects session payloads that expose tokens or violate authenticated identity', async () => {
     const fetchMock = vi.fn<typeof fetch>()
       .mockResolvedValueOnce(success({ ...authenticatedSession, token: 'must-not-cross-boundary' }))
-      .mockResolvedValueOnce(success({ ...authenticatedSession, username: null }));
+      .mockResolvedValueOnce(success({ ...authenticatedSession, username: null }))
+      .mockResolvedValueOnce(success({ ...authenticatedSession, roles: ['ADMIN', 'ADMIN'] }))
+      .mockResolvedValueOnce(success({ ...authenticatedSession, expiresAt: 'not-a-timestamp' }))
+      .mockResolvedValueOnce(success({
+        authenticated: false,
+        username: 'unexpected',
+        roles: [],
+        workspaceId: null,
+        expiresAt: null
+      }));
     vi.stubGlobal('fetch', fetchMock);
 
     await expect(getSession()).rejects.toMatchObject({ kind: 'contract' });
     await expect(getSession()).rejects.toMatchObject({ kind: 'contract' });
+    await expect(getSession()).rejects.toMatchObject({ kind: 'contract' });
+    await expect(getSession()).rejects.toMatchObject({ kind: 'contract' });
+    await expect(getSession()).rejects.toMatchObject({ kind: 'contract' });
+  });
+
+  it('rejects extra envelope fields without exposing backend payload details', async () => {
+    const fetchMock = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        code: 0,
+        msg: null,
+        data: authenticatedSession,
+        token: 'must-not-cross-boundary'
+      }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ code: 0, msg: null }), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    let error: unknown;
+    try {
+      await getSession();
+    } catch (reason) {
+      error = reason;
+    }
+    expect(error).toBeInstanceOf(SessionRequestError);
+    expect(error).toMatchObject({ kind: 'contract', status: 200, cause: undefined });
+    expect((error as Error).message).not.toContain('must-not-cross-boundary');
+    await expect(getSession()).rejects.toMatchObject({ kind: 'contract', status: 200 });
   });
 
   it('classifies login rejection without exposing the raw backend message', async () => {
