@@ -40,6 +40,7 @@ import {
   type EmailServerDraft,
   type SmsServerDraft
 } from '../model/message-server-model';
+import { messageServerQueryKeys } from './message-server-query-keys';
 
 export type MessageServerChannelState<T> =
   | { kind: 'loading' }
@@ -53,9 +54,9 @@ export function useMessageServerController() {
   const { t } = useTranslation();
   const { message } = App.useApp();
   const queryClient = useQueryClient();
-  const emailQuery = useQuery({ queryKey: ['config', 'email'],
+  const emailQuery = useQuery({ queryKey: messageServerQueryKeys.email(),
     queryFn: ({ signal }) => loadEmailServerConfig(signal), retry: false });
-  const smsQuery = useQuery({ queryKey: ['config', 'sms'],
+  const smsQuery = useQuery({ queryKey: messageServerQueryKeys.sms(),
     queryFn: ({ signal }) => loadSmsServerConfig(signal), retry: false });
   const [emailDraft, setEmailDraft] = useState<EmailServerDraft | null>(null);
   const [smsDraft, setSmsDraft] = useState<SmsServerDraft | null>(null);
@@ -69,7 +70,7 @@ export function useMessageServerController() {
       return proof.data;
     },
     onSuccess: evidence => {
-      queryClient.setQueryData(['config', 'email'], evidence);
+      queryClient.setQueryData(messageServerQueryKeys.email(), evidence);
       setEmailDraft(null);
       void message.success(t('messageServer.saveSuccess'));
     },
@@ -84,7 +85,7 @@ export function useMessageServerController() {
       return proof.data;
     },
     onSuccess: evidence => {
-      queryClient.setQueryData(['config', 'sms'], evidence);
+      queryClient.setQueryData(messageServerQueryKeys.sms(), evidence);
       setSmsDraft(null);
       void message.success(t('messageServer.saveSuccess'));
     },

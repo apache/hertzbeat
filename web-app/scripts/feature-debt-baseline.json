@@ -42,11 +42,6 @@
       "allowedMax": 2
     },
     {
-      "rule": "inline-query-key",
-      "path": "features/settings/message-server/controller/use-message-server-controller.ts",
-      "allowedMax": 2
-    },
-    {
       "rule": "feature-module-size",
       "path": "features/settings/token/pages/token-page.tsx",
       "allowedMax": 182
