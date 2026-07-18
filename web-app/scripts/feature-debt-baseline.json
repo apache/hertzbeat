@@ -112,11 +112,6 @@
       "allowedMax": 252
     },
     {
-      "rule": "feature-module-size",
-      "path": "features/status/management/model/status-management-contract.ts",
-      "allowedMax": 258
-    },
-    {
       "rule": "inline-query-key",
       "path": "features/status/public/pages/public-status-page.tsx",
       "allowedMax": 3

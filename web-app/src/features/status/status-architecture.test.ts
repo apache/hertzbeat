@@ -99,6 +99,26 @@ describe('Status Management boundaries', () => {
     expect(violations).toEqual([]);
   });
 
+  it('owns wire parsing in a named API schema instead of the domain model', () => {
+    const api = managementSources['./management/api/status-management-api.ts'] ?? '';
+    const schema = managementSources['./management/api/status-management-schema.ts'] ?? '';
+    const contract = managementSources['./management/model/status-management-contract.ts'] ?? '';
+
+    expect(api).toContain("from './status-management-schema'");
+    expect(schema).toContain("from 'zod'");
+    for (const parser of [
+      'readRecord',
+      'readRequiredString',
+      'readNonnegativeInteger',
+      'readPositiveInteger',
+      'readIntegerInRange',
+      'readOptionalNestedRecords'
+    ]) {
+      expect(contract).not.toContain(`function ${parser}`);
+    }
+    expect(contract).not.toContain('parseStatusOrg');
+  });
+
   it('exposes the management page through the Status root entry', () => {
     const entry = Object.values(entrySources)[0] ?? '';
     const router = Object.values(routerSources)[0] ?? '';

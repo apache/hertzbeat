@@ -25,16 +25,18 @@ import {
 
 import type { StatusIncidentQuery } from '../model/status-incident-query';
 import {
-  parseStatusComponentDetail,
-  parseStatusComponents,
-  parseStatusIncidentDetail,
-  parseStatusIncidentPage,
-  parseStatusOrg,
   StatusManagementMissingError,
   type StatusComponent,
   type StatusIncident,
   type StatusOrg
 } from '../model/status-management-contract';
+import {
+  parseStatusComponentDetail,
+  parseStatusComponents,
+  parseStatusIncidentDetail,
+  parseStatusIncidentPage,
+  parseStatusOrg
+} from './status-management-schema';
 
 const orgPath = '/api/status/page/org';
 const componentPath = '/api/status/page/component';

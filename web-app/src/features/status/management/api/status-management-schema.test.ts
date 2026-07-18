@@ -18,14 +18,16 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  StatusManagementContractError,
-  StatusManagementMissingError,
   parseStatusComponentDetail,
   parseStatusComponents,
   parseStatusIncidentDetail,
   parseStatusIncidentPage,
   parseStatusOrg
-} from './status-management-contract';
+} from './status-management-schema';
+import {
+  StatusManagementContractError,
+  StatusManagementMissingError
+} from '../model/status-management-contract';
 
 const component = {
   id: 4,
@@ -57,8 +59,8 @@ const incident = {
   contents: [content]
 };
 
-describe('status management response contract', () => {
-  it('parses an organization through an exact domain allowlist', () => {
+describe('Status Management wire schemas', () => {
+  it('maps organization evidence through the public allowlist', () => {
     expect(parseStatusOrg({
       id: 2,
       name: 'HertzBeat',
@@ -69,7 +71,7 @@ describe('status management response contract', () => {
       color: '#5b6fd8',
       state: 0,
       creator: 'admin',
-      ignored: 'unknown-sentinel'
+      ignored: 'server-only'
     })).toEqual({
       id: 2,
       name: 'HertzBeat',
@@ -90,12 +92,10 @@ describe('status management response contract', () => {
     }
   });
 
-  it('requires positive persisted component ids and valid method and state values', () => {
-    expect(parseStatusComponents([{ ...component, ignored: 'unknown-sentinel' }]))
-      .toEqual([component]);
+  it('distinguishes missing details from malformed component evidence', () => {
+    expect(parseStatusComponents([{ ...component, ignored: 'server-only' }])).toEqual([component]);
     expect(parseStatusComponentDetail(component)).toEqual(component);
     expect(() => parseStatusComponentDetail(null)).toThrow(StatusManagementMissingError);
-
     for (const value of [
       { ...component, id: -1 },
       { ...component, method: 2 },
@@ -103,17 +103,16 @@ describe('status management response contract', () => {
     ]) {
       expect(() => parseStatusComponentDetail(value)).toThrow(StatusManagementContractError);
     }
-
     expect(() => parseStatusComponents([component, { ...component }]))
       .toThrow(StatusManagementContractError);
   });
 
-  it('strictly parses nested incident components, contents, states, and timestamps', () => {
+  it('validates nested incident records, uniqueness, and parent identity', () => {
     expect(parseStatusIncidentDetail({
       ...incident,
-      ignored: 'unknown-sentinel',
-      components: [{ ...component, ignored: 'nested-sentinel' }],
-      contents: [{ ...content, ignored: 'nested-sentinel' }]
+      ignored: 'server-only',
+      components: [{ ...component, ignored: 'nested-server-only' }],
+      contents: [{ ...content, ignored: 'nested-server-only' }]
     })).toEqual(incident);
     expect(() => parseStatusIncidentDetail(null)).toThrow(StatusManagementMissingError);
 
@@ -130,7 +129,7 @@ describe('status management response contract', () => {
     }
   });
 
-  it('requires incident Page evidence to match the requested query', () => {
+  it('validates Spring Page identity, arithmetic, capacity, and unique ids', () => {
     const query = { search: 'outage', pageIndex: 1, pageSize: 8 };
     const page = {
       content: [incident],
@@ -151,5 +150,27 @@ describe('status management response contract', () => {
     ]) {
       expect(() => parseStatusIncidentPage(value, query)).toThrow(StatusManagementContractError);
     }
+  });
+
+  it('does not retain rejected wire values in public errors', () => {
+    const secret = 'must-not-survive-contract-error';
+    let rejected: unknown;
+
+    try {
+      parseStatusOrg({
+        id: secret,
+        name: 'Org',
+        description: 'Status',
+        home: '/',
+        logo: '/logo.svg',
+        state: 0
+      });
+    } catch (error) {
+      rejected = error;
+    }
+
+    expect(rejected).toBeInstanceOf(StatusManagementContractError);
+    expect(JSON.stringify(rejected)).not.toContain(secret);
+    expect((rejected as Error & { cause?: unknown }).cause).toBeUndefined();
   });
 });
