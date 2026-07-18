@@ -15,20 +15,14 @@
  * limitations under the License.
  */
 
+import { ApiMessageError, apiMessageDelete, apiMessageGet, apiMessagePost } from '@/core/http/api-message';
 import {
-  ApiMessageError, apiMessageDelete, apiMessageGet, apiMessagePost, type PageResult
-} from '@/core/http/api-message';
-import {
-  array, byte, MonitorContractError, nonemptyString, nonnegativeInteger, nullableNonnegativeInteger,
-  nullablePositiveInteger, nullableString, nullableStringMap, nullableTimestamp, optionalTimestamp, positiveInteger, record
-} from './monitor-contract-parser';
-import {
-  monitorPageSizes, monitorScheduleTypes, monitorScrapeValues, type Monitor, type MonitorAction, type MonitorApp,
-  type MonitorDetail, type MonitorDetailMetric,
-  type MonitorGrafanaDashboard, type MonitorParam, type MonitorQuery
+  MonitorContractError, monitorPageSizes, type Monitor, type MonitorAction, type MonitorApp, type MonitorQuery
 } from './monitor-contract';
+import { parseMonitorApps } from './monitor-apps-schema';
+import { parseMonitorDetail } from './monitor-detail-schema';
+import { parseMonitorPage } from './monitor-page-schema';
 
-export { MonitorContractError } from './monitor-contract-parser';
 export * from './monitor-contract';
 export { detectMonitor, loadMonitorCollectors, loadMonitorParamDefines, saveMonitor } from './monitor-editor-api';
 export {
@@ -130,6 +124,7 @@ export async function loadMonitorDetail(id: string | number, signal?: AbortSigna
   const value = signal
     ? await apiMessageGet<unknown>(path, { signal })
     : await apiMessageGet<unknown>(path);
+  if (value === null || value === undefined) throw new MonitorMissingError();
   return parseMonitorDetail(value, requestedId);
 }
 
@@ -161,149 +156,9 @@ export function mutateMonitors(action: MonitorAction, ids: number[]) {
   return apiMessageDelete<unknown>(path);
 }
 
-function parseMonitorPage(value: unknown, query: MonitorQuery): PageResult<Monitor> {
-  const page = record(value, 'monitor page');
-  const content = array(page.content, 'monitor content').map((item, index) => parseMonitor(item, index));
-  const totalElements = nonnegativeInteger(page.totalElements, 'totalElements');
-  const totalPages = nonnegativeInteger(page.totalPages, 'totalPages');
-  const number = nonnegativeInteger(page.number, 'number');
-  const size = positiveInteger(page.size, 'size');
-  if (number !== query.pageIndex || size !== query.pageSize || content.length > size
-    || totalPages !== Math.ceil(totalElements / size)) {
-    throw new MonitorContractError('Monitor page identity is inconsistent with the request');
-  }
-  return { content, totalElements, totalPages, number, size };
-}
-
-function parseMonitor(value: unknown, index: number): Monitor {
-  const item = record(value, `monitor[${index}]`);
-  return {
-    id: positiveInteger(item.id, 'monitor id'),
-    name: nonemptyString(item.name, 'monitor name'),
-    app: nonemptyString(item.app, 'monitor app'),
-    instance: nonemptyString(item.instance, 'monitor instance'),
-    status: byte(item.status, 'monitor status'),
-    ...optionalTimestamp(item, 'gmtCreate'),
-    ...optionalTimestamp(item, 'gmtUpdate')
-  };
-}
-
-function parseMonitorDetail(value: unknown, requestedId: number): MonitorDetail {
-  if (value === null || value === undefined) throw new MonitorMissingError();
-  const detail = record(value, 'monitor detail');
-  const monitor = parseDetailMonitor(detail.monitor);
-  if (monitor.id !== requestedId) throw new MonitorContractError('Monitor detail identity does not match request');
-  const params = array(detail.params, 'monitor params')
-    .map((item, index) => parseMonitorParam(item, index, requestedId));
-  const metrics = array(detail.metrics, 'monitor metrics').map((item, index) => parseEmbeddedMetric(item, index));
-  const collector = nullableString(detail.collector, 'monitor collector');
-  const grafanaDashboard = detail.grafanaDashboard === null
-    ? null
-    : parseGrafanaDashboard(detail.grafanaDashboard, requestedId);
-  return { monitor, params, metrics, collector, grafanaDashboard };
-}
-
-function parseDetailMonitor(value: unknown): Monitor {
-  const item = record(value, 'monitor detail monitor');
-  const scrape = nullableString(item.scrape, 'monitor scrape');
-  const scheduleType = nullableString(item.scheduleType, 'monitor scheduleType');
-  if (scrape !== null && !monitorScrapeValues.includes(scrape as typeof monitorScrapeValues[number])) {
-    throw new MonitorContractError('monitor scrape is unsupported');
-  }
-  if (scheduleType !== null && !monitorScheduleTypes.includes(scheduleType as typeof monitorScheduleTypes[number])) {
-    throw new MonitorContractError('monitor scheduleType is unsupported');
-  }
-  return {
-    id: positiveInteger(item.id, 'monitor id'),
-    jobId: nullablePositiveInteger(item.jobId, 'monitor jobId'),
-    name: nonemptyString(item.name, 'monitor name'),
-    app: nonemptyString(item.app, 'monitor app'),
-    scrape: scrape as typeof monitorScrapeValues[number] | null,
-    instance: nonemptyString(item.instance, 'monitor instance'),
-    intervals: nullableNonnegativeInteger(item.intervals, 'monitor intervals'),
-    scheduleType: scheduleType as typeof monitorScheduleTypes[number] | null,
-    cronExpression: nullableString(item.cronExpression, 'monitor cronExpression'),
-    status: byte(item.status, 'monitor status'),
-    type: byte(item.type, 'monitor type'),
-    labels: nullableStringMap(item.labels, 'monitor labels'),
-    annotations: nullableStringMap(item.annotations, 'monitor annotations'),
-    description: nullableString(item.description, 'monitor description'),
-    creator: nullableString(item.creator, 'monitor creator'),
-    modifier: nullableString(item.modifier, 'monitor modifier'),
-    gmtCreate: nullableTimestamp(item.gmtCreate, 'monitor gmtCreate'),
-    gmtUpdate: nullableTimestamp(item.gmtUpdate, 'monitor gmtUpdate')
-  };
-}
-
-function parseMonitorParam(value: unknown, index: number, requestedMonitorId: number): MonitorParam {
-  const item = record(value, `monitor param[${index}]`);
-  const result: MonitorParam = {
-    field: nonemptyString(item.field, 'monitor param field'),
-    type: byte(item.type, 'monitor param type')
-  };
-  if (item.paramValue !== null && typeof item.paramValue !== 'string') {
-    throw new MonitorContractError('monitor param value must be a string or null');
-  }
-  result.paramValue = item.paramValue;
-  result.id = nullablePositiveInteger(item.id, 'monitor param id');
-  result.monitorId = nullablePositiveInteger(item.monitorId, 'monitor param monitorId');
-  if (result.monitorId !== null && result.monitorId !== requestedMonitorId) {
-    throw new MonitorContractError('Monitor param identity does not match request');
-  }
-  result.gmtCreate = nullableTimestamp(item.gmtCreate, 'monitor param gmtCreate');
-  result.gmtUpdate = nullableTimestamp(item.gmtUpdate, 'monitor param gmtUpdate');
-  return result;
-}
-
-function parseGrafanaDashboard(value: unknown, requestedMonitorId: number): MonitorGrafanaDashboard {
-  const item = record(value, 'monitor grafana dashboard');
-  if (typeof item.enabled !== 'boolean') throw new MonitorContractError('grafana enabled must be boolean');
-  const monitorId = nullablePositiveInteger(item.monitorId, 'grafana monitorId');
-  if (monitorId !== null && monitorId !== requestedMonitorId) {
-    throw new MonitorContractError('Grafana dashboard identity does not match request');
-  }
-  return {
-    monitorId,
-    folderUid: nullableString(item.folderUid, 'grafana folderUid'),
-    slug: nullableString(item.slug, 'grafana slug'),
-    status: nullableString(item.status, 'grafana status'),
-    uid: nullableString(item.uid, 'grafana uid'),
-    url: nullableString(item.url, 'grafana url'),
-    version: nullableNonnegativeInteger(item.version, 'grafana version'),
-    enabled: item.enabled,
-    template: nullableString(item.template, 'grafana template')
-  };
-}
-
-function parseEmbeddedMetric(value: unknown, index: number): MonitorDetailMetric {
-  const item = record(value, `monitor metric[${index}]`);
-  const result: MonitorDetailMetric = { name: nonemptyString(item.name, 'monitor metric name') };
-  if (!Object.hasOwn(item, 'favorited') || item.favorited !== null && typeof item.favorited !== 'boolean') {
-    throw new MonitorContractError('monitor metric favorited must be boolean or null');
-  }
-  result.favorited = item.favorited;
-  return result;
-}
-
 function monitorDetailId(value: string | number) {
   if (typeof value === 'number') return Number.isSafeInteger(value) && value > 0 ? value : undefined;
   if (!/^[1-9]\d*$/.test(value)) return undefined;
   const parsed = Number(value);
   return Number.isSafeInteger(parsed) ? parsed : undefined;
-}
-
-function parseMonitorApps(value: unknown): MonitorApp[] {
-  return array(value, 'monitor apps').map((entry, index) => {
-    const item = record(entry, `monitor app[${index}]`);
-    const hide = item.hide;
-    if (hide !== undefined && hide !== null && typeof hide !== 'boolean') {
-      throw new MonitorContractError('Monitor app hide must be boolean or null');
-    }
-    return {
-      category: nullableString(item.category, 'monitor app category'),
-      value: nonemptyString(item.value, 'monitor app value'),
-      label: nullableString(item.label, 'monitor app label'),
-      ...(hide === undefined ? {} : { hide })
-    };
-  });
 }

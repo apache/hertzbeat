@@ -17,6 +17,12 @@
 
 import { describe, expect, it } from 'vitest';
 
+import apiSource from './api/monitor-api.ts?raw';
+import appsSchemaSource from './api/monitor-apps-schema.ts?raw';
+import detailSchemaSource from './api/monitor-detail-schema.ts?raw';
+import pageSchemaSource from './api/monitor-page-schema.ts?raw';
+import primitiveSchemaSource from './api/monitor-read-schema-primitives.ts?raw';
+
 const requiredDirectories = ['api', 'model', 'controller', 'components', 'pages'] as const;
 const layerDirectories = [...requiredDirectories, 'hooks'] as const;
 const allowedDependencies: Record<(typeof layerDirectories)[number], readonly string[]> = {
@@ -47,7 +53,26 @@ describe('Monitor feature boundaries', () => {
       .flatMap(([path, source]) => validateImports(path, source));
     expect(violations).toEqual([]);
   });
+
+  it('keeps primary response parsing out of the transport orchestrator', () => {
+    expect(apiSource).not.toContain("from './monitor-contract-parser'");
+    expect(apiSource).not.toMatch(/function\s+parse(?:MonitorPage|MonitorDetail|MonitorApps)/);
+    expect(apiSource).toContain("from './monitor-page-schema'");
+    expect(apiSource).toContain("from './monitor-detail-schema'");
+    expect(apiSource).toContain("from './monitor-apps-schema'");
+    expect(sourceLineCount(apiSource)).toBeLessThanOrEqual(250);
+    for (const schema of [appsSchemaSource, detailSchemaSource, pageSchemaSource, primitiveSchemaSource]) {
+      expect(schema).toContain("from 'zod'");
+      expect(sourceLineCount(schema)).toBeLessThanOrEqual(250);
+      expect(schema).not.toMatch(/export function\s+(?:record|text|integer)\b/);
+    }
+  });
 });
+
+function sourceLineCount(value: string) {
+  return value.replace(/\/\*[\s\S]*?\*\//g, '').split('\n')
+    .filter(line => line.trim() && !line.trim().startsWith('//')).length;
+}
 
 function validateImports(path: string, source: string) {
   const sourceDirectory = path.split('/')[1] as (typeof layerDirectories)[number];

@@ -22,6 +22,13 @@ export const monitorScheduleTypes = ['interval', 'cron'] as const;
 export type MonitorScrape = typeof monitorScrapeValues[number];
 export type MonitorScheduleType = typeof monitorScheduleTypes[number];
 
+export class MonitorContractError extends Error {
+  constructor(message = 'Monitor response is invalid') {
+    super(message);
+    this.name = 'MonitorContractError';
+  }
+}
+
 export type Monitor = {
   id: number;
   jobId?: number | null;
@@ -111,6 +118,13 @@ export type MonitorQuery = {
   labels: string;
   pageIndex: number;
   pageSize: number;
+};
+export type MonitorPage = {
+  content: Monitor[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
 };
 export type MonitorAction = 'copy' | 'enable' | 'pause' | 'delete';
 export type MonitorMetricOption = {

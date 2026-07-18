@@ -53,9 +53,9 @@ describe('monitor list API contracts', () => {
 
   it.each([
     null, {}, { ...page, content: null }, { ...page, totalElements: -1 }, { ...page, number: 1 },
-    { ...page, size: 20 }, { ...page, content: [{ ...row, id: 1.5 }] },
+    { ...page, size: 20 }, { ...page, totalPages: 2 }, { ...page, content: [{ ...row, id: 1.5 }] },
     { ...page, content: [{ ...row, name: '' }] }, { ...page, content: [{ ...row, status: '1' }] },
-    { ...page, content: [{ ...row, gmtUpdate: {} }] }
+    { ...page, content: [{ ...row, status: 5 }] }, { ...page, content: [{ ...row, gmtUpdate: {} }] }
   ])('rejects malformed page evidence %#', async value => {
     http.apiMessageGet.mockResolvedValue(value);
     await expect(loadMonitors(query)).rejects.toBeInstanceOf(MonitorContractError);
@@ -67,7 +67,8 @@ describe('monitor list API contracts', () => {
     await expect(loadMonitorApps(signal)).resolves.toEqual([{ category: 'http', value: 'website', label: 'Website', hide: false }]);
     expect(http.apiMessageGet).toHaveBeenCalledWith('/api/apps/hierarchy', { signal });
     for (const malformed of [null, {}, [{ category: 1, value: 'website', label: 'Website' }],
-      [{ category: 'http', value: '', label: 'Website' }], [{ category: 'http', value: 'website', label: 1 }]]) {
+      [{ category: 'http', value: '', label: 'Website' }], [{ category: 'http', value: 'website', label: 1 }],
+      [{ category: 'http', value: 'website', label: 'Website', hide: 'false' }]]) {
       http.apiMessageGet.mockResolvedValueOnce(malformed);
       await expect(loadMonitorApps()).rejects.toBeInstanceOf(MonitorContractError);
     }
@@ -126,21 +127,43 @@ describe('monitor detail API contracts', () => {
     null, {}, { monitor: null },
     { monitor: { ...detailRow, id: 8 }, params: [], collector: null, grafanaDashboard: null, metrics: [] },
     { monitor: { ...detailRow, intervals: '60' }, params: [], collector: null, grafanaDashboard: null, metrics: [] },
+    { monitor: { ...detailRow, intervals: 9 }, params: [], collector: null, grafanaDashboard: null, metrics: [] },
+    { monitor: { ...detailRow, type: 128 }, params: [], collector: null, grafanaDashboard: null, metrics: [] },
     { monitor: { ...detailRow, scrape: 'unknown_sd' }, params: [], collector: null, grafanaDashboard: null, metrics: [] },
     { monitor: { ...detailRow, scheduleType: 'weekly' }, params: [], collector: null, grafanaDashboard: null, metrics: [] },
     { monitor: detailRow, params: [{}], collector: null, grafanaDashboard: null, metrics: [] },
+    { monitor: detailRow, params: [{ id: 4, monitorId: 8, field: 'host', type: 1, paramValue: null,
+      gmtCreate: null, gmtUpdate: null }], collector: null, grafanaDashboard: null, metrics: [] },
     { monitor: detailRow, params: [], collector: 7, grafanaDashboard: null, metrics: [] },
     { monitor: detailRow, params: [], collector: null, grafanaDashboard: [], metrics: [] },
     { monitor: detailRow, params: [], collector: null,
       grafanaDashboard: { monitorId: 8, folderUid: null, slug: null, status: null, uid: null,
         url: null, version: null, enabled: true, template: null }, metrics: [] },
     { monitor: detailRow, params: [], collector: null, grafanaDashboard: null, metrics: [{ name: '' }] },
+    { monitor: detailRow, params: [], collector: null, grafanaDashboard: null, metrics: [{ name: 'summary' }] },
     { monitor: detailRow, params: [], collector: null, grafanaDashboard: null,
       metrics: [{ name: 'summary', favorited: 'false' }] }
   ])('rejects missing or malformed detail evidence %#', async value => {
     http.apiMessageGet.mockResolvedValue(value);
     const expected = value === null ? MonitorMissingError : MonitorContractError;
     await expect(loadMonitorDetail(7)).rejects.toBeInstanceOf(expected);
+  });
+
+  it('does not echo malformed wire values through contract errors', async () => {
+    http.apiMessageGet.mockResolvedValue({
+      monitor: { ...detailRow, labels: { env: 'private-monitor-wire', invalid: 42 } },
+      params: [], collector: null, grafanaDashboard: null, metrics: []
+    });
+
+    let error: unknown;
+    try {
+      await loadMonitorDetail(7);
+    } catch (reason) {
+      error = reason;
+    }
+
+    expect(error).toBeInstanceOf(MonitorContractError);
+    expect(JSON.stringify(error)).not.toContain('private-monitor-wire');
   });
 
   it('uses the established detect and create/update write endpoints with AbortSignals', async () => {

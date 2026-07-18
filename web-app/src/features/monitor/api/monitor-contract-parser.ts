@@ -15,12 +15,9 @@
  * limitations under the License.
  */
 
-export class MonitorContractError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'MonitorContractError';
-  }
-}
+import { MonitorContractError } from './monitor-contract';
+
+export { MonitorContractError } from './monitor-contract';
 
 export function record(value: unknown, label: string): Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
