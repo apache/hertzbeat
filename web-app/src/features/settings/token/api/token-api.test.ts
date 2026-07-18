@@ -25,7 +25,13 @@ const { apiMessageDelete, apiMessageGet, apiMessagePost } = vi.hoisted(() => ({
 
 vi.mock('@/core/http/api-message', () => ({ apiMessageDelete, apiMessageGet, apiMessagePost }));
 
-import { generateToken, loadTokens, revokeToken } from './token-api';
+import {
+  buildGenerateTokenPath,
+  generateToken,
+  loadTokens,
+  parseTokenRevokeActionUrl,
+  revokeToken
+} from './token-api';
 import { createTokenDraft } from '../model/token-model';
 
 describe('token API', () => {
@@ -37,11 +43,27 @@ describe('token API', () => {
     apiMessageDelete.mockResolvedValueOnce(undefined);
 
     await expect(loadTokens()).resolves.toEqual([]);
-    await expect(generateToken({ ...createTokenDraft(), name: 'collector' })).resolves.toBe('hb-once');
+    await expect(generateToken({ ...createTokenDraft(), name: 'collector' }))
+      .resolves.toEqual({ id: 'generated', token: 'hb-once' });
     await expect(revokeToken(7)).resolves.toBeUndefined();
 
     expect(apiMessageGet).toHaveBeenCalledWith('/api/account/token');
     expect(apiMessagePost).toHaveBeenCalledWith('/api/account/token/generate?name=collector&expireSeconds=-1&scope=api-admin', {});
     expect(apiMessageDelete).toHaveBeenCalledWith('/api/account/token/7');
+  });
+
+  it('owns generation serialization and exact revoke endpoint recognition', () => {
+    const draft = {
+      ...createTokenDraft(),
+      name: ' CI integration ',
+      expireSeconds: 2_592_000,
+      scope: 'readonly-query' as const
+    };
+
+    expect(buildGenerateTokenPath(draft))
+      .toBe('/api/account/token/generate?name=CI+integration&expireSeconds=2592000&scope=readonly-query');
+    expect(parseTokenRevokeActionUrl('/api/account/token/7')).toBe(7);
+    expect(parseTokenRevokeActionUrl('/api/account/token/0')).toBeNull();
+    expect(parseTokenRevokeActionUrl('/api/account/token/7?token=private')).toBeNull();
   });
 });

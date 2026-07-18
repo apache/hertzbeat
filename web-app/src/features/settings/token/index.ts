@@ -15,4 +15,11 @@
  * limitations under the License.
  */
 
-export { TokenPage } from './pages/token-page';
+import type { LazyRouteFunction, RouteObject } from 'react-router-dom';
+
+export { tokenDataProvider } from './provider/token-data-provider';
+
+export const loadTokenPageRoute: LazyRouteFunction<RouteObject> = async () => {
+  const { TokenPage } = await import('./pages/token-page');
+  return { Component: TokenPage };
+};

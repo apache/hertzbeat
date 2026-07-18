@@ -18,6 +18,8 @@
 import type { RouteObject } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 
+import { loadTokenPageRoute } from '@/features/settings/token';
+
 import { appRoutes } from './router';
 
 function flattenRoutes(routes: RouteObject[]): RouteObject[] {
@@ -66,5 +68,11 @@ describe('application data router', () => {
   it('provides a shared route error boundary', () => {
     expect(appRoutes).toHaveLength(1);
     expect(appRoutes[0]?.errorElement).toBeDefined();
+  });
+
+  it('delegates the Token route to its feature-owned lazy loader', () => {
+    const tokenRoute = flattenRoutes(appRoutes).find(route => route.id === 'tokens');
+
+    expect(tokenRoute?.lazy).toBe(loadTokenPageRoute);
   });
 });

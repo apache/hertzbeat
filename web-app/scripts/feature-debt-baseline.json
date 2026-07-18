@@ -98,11 +98,6 @@
     },
     {
       "rule": "feature-module-size",
-      "path": "features/settings/token/controller/token-resource-controller.ts",
-      "allowedMax": 207
-    },
-    {
-      "rule": "feature-module-size",
       "path": "features/settings/token/pages/token-page.tsx",
       "allowedMax": 182
     },

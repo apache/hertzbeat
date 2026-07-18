@@ -17,92 +17,55 @@
 
 import {
   useDataProvider,
-  useList,
   useNotification,
-  type DataProvider,
-  type HttpError
+  type DataProvider
 } from '@refinedev/core';
 import type { TFunction } from 'i18next';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
+import { tokenGenerateActionUrl, tokenRevokeActionUrl } from '../api/token-api';
 import {
   createTokenDraft,
-  tokenGenerateActionUrl,
   tokenResourceName,
-  tokenRevokeActionUrl,
   validateTokenDraft,
   type GeneratedTokenReceipt,
   type TokenDraft,
-  type TokenListState,
-  type TokenResourceRecord
 } from '../model/token-model';
+import {
+  tokenListFailureMessage,
+  useTokenListController,
+  type RefreshAuthoritativeTokenList
+} from './token-list-controller';
 
-type ListFailureKind = 'error' | 'unavailable';
-type TokenListQuery = ReturnType<typeof useList<TokenResourceRecord, HttpError>>;
 type Notification = ReturnType<typeof useNotification>;
-type RefreshAuthoritativeList = (expectedAbsentId?: number) => Promise<ListFailureKind | null>;
 
 export function useTokenResourceController() {
   const { t } = useTranslation();
   const notification = useNotification();
   const resolveDataProvider = useDataProvider();
   const provider = resolveDataProvider(tokenResourceName);
-  const list = useList<TokenResourceRecord, HttpError>({
-    resource: tokenResourceName,
-    dataProviderName: tokenResourceName,
-    pagination: { mode: 'off' },
-    errorNotification: false
-  });
-  const listRefresh = useTokenListRefresh(list);
-  const secret = useTokenSecretActions(provider, listRefresh.refresh, notification, t);
-  const revocation = useTokenRevocation(provider, listRefresh.refresh, notification, t);
+  const list = useTokenListController();
+  const secret = useTokenSecretActions(provider, list.refresh, notification, t);
+  const revocation = useTokenRevocation(provider, list.refresh, notification, t);
 
   return {
     ...secret.actions,
-    retry: listRefresh.retry,
+    retry: list.retry,
     revoke: revocation.revoke,
     state: {
       ...secret.state,
-      list: resolveListState(list, listRefresh.failure),
-      refreshing: list.query.isFetching,
+      list: list.list,
+      refreshing: list.refreshing,
       revokingId: revocation.revokingId
     }
   };
 }
 
-function useTokenListRefresh(list: TokenListQuery) {
-  const [failure, setFailure] = useState<ListFailureKind | null>(null);
-  const refresh = useCallback(async (expectedAbsentId?: number) => {
-    try {
-      const result = await list.query.refetch();
-      if (result.isError) {
-        const kind = resolveFailureKind(result.error);
-        setFailure(kind);
-        return kind;
-      }
-      if (expectedAbsentId !== undefined && !confirmsAbsentId(result.data?.data, expectedAbsentId)) {
-        setFailure('error');
-        return 'error';
-      }
-      setFailure(null);
-      return null;
-    } catch (reason) {
-      const kind = resolveFailureKind(reason);
-      setFailure(kind);
-      return kind;
-    }
-  }, [list.query]);
-  const retry = useCallback(async () => {
-    await refresh();
-  }, [refresh]);
-  return { failure, refresh, retry };
-}
-
 function useTokenSecretActions(
   provider: DataProvider,
-  refresh: RefreshAuthoritativeList,
+  refresh: RefreshAuthoritativeTokenList,
   notification: Notification,
   t: TFunction
 ) {
@@ -115,6 +78,7 @@ function useTokenSecretActions(
   }, [searchParams]);
   const closeGenerator = useCallback(() => setDraft(null), []);
   const closeGeneratedToken = useCallback(() => setGeneratedToken(null), []);
+  const copyGeneratedToken = useGeneratedTokenClipboard(generatedToken, notification, t);
 
   const generate = useCallback(async () => {
     if (!draft || validateTokenDraft(draft).length > 0) {
@@ -143,20 +107,10 @@ function useTokenSecretActions(
     setGeneratedToken(receipt.token);
     const refreshFailure = await refresh();
     if (refreshFailure) {
-      notification.open?.({ message: t(listFailureMessage(refreshFailure)), type: 'error' });
+      notification.open?.({ message: t(tokenListFailureMessage(refreshFailure)), type: 'error' });
     }
     setGenerating(false);
   }, [draft, notification, provider, refresh, t]);
-
-  const copyGeneratedToken = useCallback(async () => {
-    if (!generatedToken) return;
-    try {
-      await navigator.clipboard.writeText(generatedToken);
-      notification.open?.({ message: t('token.copySuccess'), type: 'success' });
-    } catch {
-      notification.open?.({ message: t('token.copyFailed'), type: 'error' });
-    }
-  }, [generatedToken, notification, t]);
 
   return {
     actions: {
@@ -171,9 +125,25 @@ function useTokenSecretActions(
   };
 }
 
+function useGeneratedTokenClipboard(
+  generatedToken: string | null,
+  notification: Notification,
+  t: TFunction
+) {
+  return useCallback(async () => {
+    if (!generatedToken) return;
+    try {
+      await navigator.clipboard.writeText(generatedToken);
+      notification.open?.({ message: t('token.copySuccess'), type: 'success' });
+    } catch {
+      notification.open?.({ message: t('token.copyFailed'), type: 'error' });
+    }
+  }, [generatedToken, notification, t]);
+}
+
 function useTokenRevocation(
   provider: DataProvider,
-  refresh: RefreshAuthoritativeList,
+  refresh: RefreshAuthoritativeTokenList,
   notification: Notification,
   t: TFunction
 ) {
@@ -190,7 +160,7 @@ function useTokenRevocation(
       if (!refreshFailure) {
         notification.open?.({ message: t('token.revokeSuccess'), type: 'success' });
       } else {
-        notification.open?.({ message: t(listFailureMessage(refreshFailure)), type: 'error' });
+        notification.open?.({ message: t(tokenListFailureMessage(refreshFailure)), type: 'error' });
       }
     } catch {
       notification.open?.({ message: t('token.revokeFailed'), type: 'error' });
@@ -199,40 +169,4 @@ function useTokenRevocation(
     }
   }, [notification, provider, refresh, t]);
   return { revoke, revokingId };
-}
-
-function resolveListState(
-  list: TokenListQuery,
-  refreshFailure: ListFailureKind | null
-): TokenListState {
-  if (refreshFailure) return { kind: refreshFailure };
-  if (list.query.isPending) return { kind: 'loading' };
-  if (list.query.isError) return { kind: resolveFailureKind(list.query.error) };
-  if (list.result.data.length === 0) return { kind: 'empty' };
-  if (list.result.total === undefined) return { kind: 'error' };
-  return { kind: 'ready', records: list.result.data };
-}
-
-function confirmsAbsentId(value: unknown, expectedAbsentId: number) {
-  return Array.isArray(value)
-    && value.every(record => (
-      !!record
-      && typeof record === 'object'
-      && typeof (record as { id?: unknown }).id === 'number'
-      && (record as { id: number }).id !== expectedAbsentId
-    ));
-}
-
-function listFailureMessage(kind: ListFailureKind) {
-  return kind === 'unavailable' ? 'token.unavailable' : 'common.routeError.description';
-}
-
-function resolveFailureKind(reason: unknown): ListFailureKind {
-  const error = reason && typeof reason === 'object' ? reason as Record<string, unknown> : null;
-  const code = error?.code;
-  if (code === 'TOKEN_RESPONSE_INVALID') return 'error';
-  const status = error?.statusCode;
-  return status === 0 || status === 502 || status === 503 || status === 504
-    ? 'unavailable'
-    : 'error';
 }

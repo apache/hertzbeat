@@ -27,24 +27,19 @@ import type {
   UpdateResponse
 } from '@refinedev/core';
 
+import { createRefineHttpError, toRefineHttpError } from '@/shared/refine/refine-http-error';
+
 import {
   generateToken,
   loadTokens,
-  revokeToken
-} from '@/features/settings/token/api/token-api';
-import {
-  createGeneratedTokenReceipt,
-  createTokenGenerationDraft,
-  createTokenResourceRecords,
+  parseTokenGenerationDraft,
+  parseTokenRevokeActionUrl,
+  revokeToken,
+  TokenApiContractError,
   tokenApiUrl,
-  tokenGenerateActionUrl,
-  tokenResourceName,
-  TokenResourceContractError
-} from '@/features/settings/token/model/token-model';
-
-import { createRefineHttpError, toRefineHttpError } from '../refine-http-error';
-
-export { tokenGenerateActionUrl, tokenRevokeActionUrl } from '@/features/settings/token/model/token-model';
+  tokenGenerateActionUrl
+} from '../api/token-api';
+import { tokenResourceName } from '../model/token-model';
 
 export const tokenDataProvider: DataProvider = {
   getList<TData extends BaseRecord = BaseRecord>(params: {
@@ -52,7 +47,7 @@ export const tokenDataProvider: DataProvider = {
   }): Promise<GetListResponse<TData>> {
     return protect(async () => {
       assertResource(params.resource);
-      const records = readList(await loadTokens());
+      const records = await loadTokens();
       return { data: records as unknown as TData[], total: records.length };
     });
   },
@@ -78,11 +73,10 @@ export const tokenDataProvider: DataProvider = {
   ): Promise<CustomResponse<TData>> {
     return protect(async () => {
       if (params.url === tokenGenerateActionUrl && params.method === 'post') {
-        const draft = readDraft(params.payload);
-        const receipt = readReceipt(await generateToken(draft));
-        return { data: receipt as unknown as TData };
+        const draft = readGenerationDraft(params.payload);
+        return { data: await generateToken(draft) as unknown as TData };
       }
-      const revokeId = readRevokeId(params.url, params.method);
+      const revokeId = params.method === 'delete' ? parseTokenRevokeActionUrl(params.url) : null;
       if (revokeId !== null) {
         await revokeToken(revokeId);
         return { data: { id: revokeId } as TData };
@@ -102,7 +96,21 @@ async function protect<T>(operation: () => Promise<T>): Promise<T> {
   try {
     return await operation();
   } catch (reason) {
+    if (reason instanceof TokenApiContractError) {
+      throw createRefineHttpError('Token response is invalid', 502, 'TOKEN_RESPONSE_INVALID');
+    }
     throw toRefineHttpError(reason);
+  }
+}
+
+function readGenerationDraft(value: unknown) {
+  try {
+    return parseTokenGenerationDraft(value);
+  } catch (reason) {
+    if (reason instanceof TokenApiContractError) {
+      throw createRefineHttpError('Token generation variables are invalid', 400, 'TOKEN_VARIABLES_INVALID');
+    }
+    throw reason;
   }
 }
 
@@ -114,42 +122,4 @@ function assertResource(resource: string) {
   if (resource !== tokenResourceName) {
     throw createRefineHttpError('Unsupported Token resource', 400, 'TOKEN_RESOURCE_UNSUPPORTED');
   }
-}
-
-function readList(value: unknown) {
-  try {
-    return createTokenResourceRecords(value);
-  } catch (reason) {
-    throw translateContractError(reason, 'Token list response is invalid', 'TOKEN_RESPONSE_INVALID', 502);
-  }
-}
-
-function readReceipt(value: unknown) {
-  try {
-    return createGeneratedTokenReceipt(value);
-  } catch (reason) {
-    throw translateContractError(reason, 'Generated Token response is invalid', 'TOKEN_RESPONSE_INVALID', 502);
-  }
-}
-
-function readDraft(value: unknown) {
-  try {
-    return createTokenGenerationDraft(value);
-  } catch (reason) {
-    throw translateContractError(reason, 'Token generation variables are invalid', 'TOKEN_VARIABLES_INVALID', 400);
-  }
-}
-
-function translateContractError(reason: unknown, message: string, code: string, status: number) {
-  return reason instanceof TokenResourceContractError
-    ? createRefineHttpError(message, status, code)
-    : reason;
-}
-
-function readRevokeId(url: string, method: CustomParams['method']) {
-  if (method !== 'delete') return null;
-  const match = /^\/api\/account\/token\/([1-9]\d*)$/.exec(url);
-  if (!match?.[1]) return null;
-  const id = Number(match[1]);
-  return Number.isSafeInteger(id) ? id : null;
 }

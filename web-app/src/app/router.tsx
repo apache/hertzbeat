@@ -20,6 +20,7 @@ import { Navigate, createBrowserRouter, RouterProvider, useLocation, type RouteO
 
 import { AuthGate } from '@/core/auth/auth-gate';
 import { RouteErrorBoundary } from '@/features/errors/route-error-boundary';
+import { loadTokenPageRoute } from '@/features/settings/token';
 import { BasicLayout } from '@/layout/basic/basic-layout';
 import { legacySettingsPaths, settingsPaths } from '@/shared/settings/settings-routes';
 
@@ -212,10 +213,7 @@ export const appRoutes: RouteObject[] = [
               {
                 id: 'tokens',
                 path: settingsPaths.tokens,
-                lazy: async () => {
-                  const { TokenPage } = await import('@/features/settings/token');
-                  return { Component: TokenPage };
-                }
+                lazy: loadTokenPageRoute
               },
               {
                 id: 'system-settings',

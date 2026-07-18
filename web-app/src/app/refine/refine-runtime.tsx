@@ -22,6 +22,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { Outlet } from 'react-router-dom';
 
 import { SessionProvider } from '@/core/auth/session-provider';
+import { tokenDataProvider } from '@/features/settings/token';
 
 import { alertSilenceDataProvider } from './resources/alert-silence-data-provider';
 import { labelDataProvider } from './resources/label-data-provider';
@@ -30,7 +31,6 @@ import { noticeRuleDataProvider } from './resources/notice-rule-data-provider';
 import { noticeTemplateDataProvider } from './resources/notice-template-data-provider';
 import { objectStoreDataProvider } from './resources/object-store-data-provider';
 import { systemConfigDataProvider } from './resources/system-config-data-provider';
-import { tokenDataProvider } from './resources/token-data-provider';
 import { refineResources, shellAccessControlProvider } from './refine-resource-registry';
 
 const appQueryClient = new QueryClient({

@@ -17,36 +17,29 @@
 
 import { apiMessageDelete, apiMessageGet, apiMessagePost } from '@/core/http/api-message';
 
-export type TokenScope = 'api-admin' | 'otlp-ingest' | 'readonly-query';
+import type { TokenDraft } from '../model/token-model';
+import {
+  parseGeneratedTokenReceipt,
+  parseTokenGenerationDraft,
+  parseTokenResourceRecords,
+  TokenApiContractError
+} from './token-schema';
 
-export type AuthToken = {
-  id: number;
-  name?: string | null;
-  tokenMask?: string | null;
-  tokenScope?: string | null;
-  creator?: string | null;
-  gmtCreate?: string | number | null;
-  expireTime?: string | number | null;
-  lastUsedTime?: string | number | null;
-};
+export const tokenApiUrl = '/api/account/token';
+export const tokenGenerateActionUrl = `${tokenApiUrl}/generate`;
 
-export type TokenDraft = {
-  name: string;
-  expireSeconds: number;
-  scope: TokenScope;
-};
-
-export function loadTokens() {
-  return apiMessageGet<AuthToken[]>('/api/account/token');
+export async function loadTokens() {
+  const response = await apiMessageGet<unknown>(tokenApiUrl);
+  return parseTokenResourceRecords(response);
 }
 
 export async function generateToken(draft: TokenDraft) {
-  const result = await apiMessagePost<{ token?: string }>(buildGenerateTokenPath(draft), {});
-  return result.token ?? '';
+  const response = await apiMessagePost<unknown>(buildGenerateTokenPath(draft), {});
+  return parseGeneratedTokenReceipt(response);
 }
 
 export function revokeToken(id: number) {
-  return apiMessageDelete<unknown>(`/api/account/token/${id}`);
+  return apiMessageDelete<unknown>(tokenRevokeActionUrl(id));
 }
 
 export function buildGenerateTokenPath(draft: TokenDraft) {
@@ -55,5 +48,18 @@ export function buildGenerateTokenPath(draft: TokenDraft) {
     expireSeconds: String(draft.expireSeconds),
     scope: draft.scope
   });
-  return `/api/account/token/generate?${params.toString()}`;
+  return `${tokenGenerateActionUrl}?${params.toString()}`;
 }
+
+export function tokenRevokeActionUrl(id: number) {
+  return `${tokenApiUrl}/${id}`;
+}
+
+export function parseTokenRevokeActionUrl(value: string) {
+  const match = /^\/api\/account\/token\/([1-9]\d*)$/.exec(value);
+  if (!match?.[1]) return null;
+  const id = Number(match[1]);
+  return Number.isSafeInteger(id) ? id : null;
+}
+
+export { parseTokenGenerationDraft, TokenApiContractError };

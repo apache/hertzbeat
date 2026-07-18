@@ -25,14 +25,15 @@ const layeredDomains = [
   { directory: 'object-store', page: 'ObjectStorePage' }
 ] as const;
 const requiredDirectories = ['api', 'model', 'components', 'pages'] as const;
-const layerDirectories = [...requiredDirectories, 'controller', 'hooks'] as const;
+const layerDirectories = [...requiredDirectories, 'controller', 'hooks', 'provider'] as const;
 const allowedDependencies: Record<(typeof layerDirectories)[number], readonly string[]> = {
   api: ['api', 'model'],
-  model: ['api', 'model'],
+  model: ['model'],
   controller: ['api', 'model', 'controller'],
   hooks: ['api', 'model', 'hooks'],
   components: ['api', 'model', 'hooks', 'components'],
-  pages: ['api', 'model', 'controller', 'hooks', 'components', 'pages']
+  pages: ['api', 'model', 'controller', 'hooks', 'components', 'pages'],
+  provider: ['api', 'model', 'provider']
 };
 const importPattern = /(?:from\s+|import\s*\()\s*['"]([^'"]+)['"]/g;
 const productionSources = import.meta.glob('./**/*.{ts,tsx}', {
@@ -45,6 +46,14 @@ const routerSources = import.meta.glob('../../app/router.tsx', {
   import: 'default',
   query: '?raw'
 });
+const appRefineSources = import.meta.glob('../../app/refine/**/*.{ts,tsx}', {
+  eager: true,
+  import: 'default',
+  query: '?raw'
+});
+const existingImportDebt = new Map([
+  ['./system-config/model/system-config-model.ts imports api', 1]
+]);
 
 describe('Settings domain boundaries', () => {
   it.each(layeredDomains)('keeps $directory in explicit feature-local layers', domain => {
@@ -56,7 +65,10 @@ describe('Settings domain boundaries', () => {
       .toEqual([]);
     expect(paths.filter(path => path.slice(root.length).includes('/') === false && path !== `${root}index.ts`))
       .toEqual([]);
-    expect(productionSources[`${root}index.ts`]).toContain(`export { ${domain.page} } from './pages/`);
+    const publicPageEntry = domain.directory === 'token'
+      ? "import('./pages/token-page')"
+      : `export { ${domain.page} } from './pages/`;
+    expect(productionSources[`${root}index.ts`]).toContain(publicPageEntry);
   });
 
   it.each(layeredDomains)('keeps $directory transport and imports flowing inward', domain => {
@@ -65,7 +77,17 @@ describe('Settings domain boundaries', () => {
       .filter(([path]) => path.startsWith(root) && !path.includes('.test.'))
       .flatMap(([path, source]) => validateImports(path, source, root));
 
-    expect(violations).toEqual([]);
+    const debt = [...existingImportDebt].filter(([violation]) => violation.startsWith(root));
+    const counts = new Map(violations.map(violation => [
+      violation,
+      violations.filter(candidate => candidate === violation).length
+    ]));
+    const unexpected = [...counts].filter(([violation, count]) => (
+      count > (existingImportDebt.get(violation) ?? 0)
+    ));
+    const stale = debt.filter(([violation, count]) => (counts.get(violation) ?? 0) < count);
+
+    expect({ unexpected, stale }).toEqual({ unexpected: [], stale: [] });
   });
 
   it.each(layeredDomains)('loads $directory through its public entry', domain => {
@@ -120,6 +142,50 @@ describe('Settings domain boundaries', () => {
       /\buse(?:Create|Update|CustomMutation)\b/.test(source) ? [path] : []
     ))).toEqual([]);
   });
+
+  it('registers the feature-owned Token provider through its public entry', () => {
+    const tokenIndex = productionSources['./token/index.ts'] ?? '';
+    const runtime = appRefineSources['../../app/refine/refine-runtime.tsx'] ?? '';
+    const internalImports = Object.entries(appRefineSources)
+      .filter(([path]) => !path.includes('.test.'))
+      .flatMap(([path, source]) => (
+        source.includes('/features/settings/token/') ? [path] : []
+      ));
+
+    expect(productionSources['./token/provider/token-data-provider.ts']).toBeDefined();
+    expect(tokenIndex).toContain("export { tokenDataProvider } from './provider/token-data-provider'");
+    expect(runtime).toContain("from '@/features/settings/token'");
+    expect(runtime).not.toContain("from './resources/token-data-provider'");
+    expect(internalImports).toEqual([]);
+  });
+
+  it('keeps the Token page lazy while its provider is registered eagerly', () => {
+    const tokenIndex = productionSources['./token/index.ts'] ?? '';
+    const router = Object.values(routerSources)[0] ?? '';
+
+    expect(tokenIndex).not.toContain("export { TokenPage } from './pages/token-page'");
+    expect(tokenIndex).toContain("import('./pages/token-page')");
+    expect(tokenIndex).toContain('LazyRouteFunction<RouteObject>');
+    expect(router).toContain("import { loadTokenPageRoute } from '@/features/settings/token'");
+    expect(router).toContain('lazy: loadTokenPageRoute');
+    expect(router).not.toContain("await import('@/features/settings/token')");
+  });
+
+  it('keeps the Token API, model, controller, and provider reviewable', () => {
+    const paths = [
+      './token/api/token-api.ts',
+      './token/api/token-schema.ts',
+      './token/model/token-model.ts',
+      './token/controller/token-resource-controller.ts',
+      './token/provider/token-data-provider.ts'
+    ];
+    const oversized = paths.flatMap(path => {
+      const source = productionSources[path] ?? '';
+      return sourceLineCount(source) > 200 ? [`${path}: ${sourceLineCount(source)}`] : [];
+    });
+
+    expect(oversized).toEqual([]);
+  });
 });
 
 function validateImports(path: string, source: string, root: string) {
@@ -154,4 +220,9 @@ function resolveDomainPath(sourcePath: string, specifier: string) {
     else if (segment !== '.') segments.push(segment);
   }
   return segments.join('/');
+}
+
+function sourceLineCount(value: string) {
+  return value.replace(/\/\*[\s\S]*?\*\//g, '').split('\n')
+    .filter(line => line.trim() && !line.trim().startsWith('//')).length;
 }
