@@ -29,12 +29,11 @@ import {
 } from '../model/explore-query';
 import {
   ExploreSignalContractError,
-  ExploreSignalMissingError,
-  parseLogPage,
-  parseMetricConsole,
-  parseTraceDetail,
-  parseTracePage
+  ExploreSignalMissingError
 } from '../model/explore-signal-contract';
+import { parseLogPage } from './explore-log-schema';
+import { parseMetricConsole } from './explore-metric-schema';
+import { parseTraceDetail, parseTracePage } from './explore-trace-schema';
 
 export type { ExplorePageResult } from '../model/explore-signal-contract';
 

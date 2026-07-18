@@ -56,6 +56,13 @@ describe('Explore feature boundaries', () => {
     expect(pageSources.filter(source => /\b(?:FormData|FormEvent|readFormValue|readFormNumber)\b/.test(source)))
       .toEqual([]);
   });
+
+  it('keeps wire schemas in API and domain contracts parser-free', () => {
+    expect(productionSources['./model/explore-signal-contract.ts']).not.toMatch(/function\s+(?:parse|record|integer|boolean)\b/);
+    expect(productionSources['./api/explore-api.ts']).toContain("from './explore-metric-schema'");
+    expect(productionSources['./api/explore-api.ts']).toContain("from './explore-log-schema'");
+    expect(productionSources['./api/explore-api.ts']).toContain("from './explore-trace-schema'");
+  });
 });
 
 function validateImports(path: string, source: string) {

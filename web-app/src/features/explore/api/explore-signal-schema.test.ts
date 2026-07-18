@@ -18,9 +18,11 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  ExploreSignalContractError, ExploreSignalMissingError, parseLogPage, parseMetricConsole,
-  parseTraceDetail, parseTracePage
-} from './explore-signal-contract';
+  ExploreSignalContractError, ExploreSignalMissingError
+} from '../model/explore-signal-contract';
+import { parseLogPage } from './explore-log-schema';
+import { parseMetricConsole } from './explore-metric-schema';
+import { parseTraceDetail, parseTracePage } from './explore-trace-schema';
 
 describe('Explore signal contracts', () => {
   it('strips unknown metric fields while retaining explicit console evidence', () => {
@@ -65,6 +67,22 @@ describe('Explore signal contracts', () => {
     }]), 0, 20).content[0]?.timeUnixNano).toBe(epochNanos);
   });
 
+  it.each([Number.NaN, Number.POSITIVE_INFINITY, -1, 1.5])('rejects invalid Java Long value %s', timeUnixNano => {
+    const value = {
+      timeUnixNano, observedTimeUnixNano: null, severityNumber: null, severityText: null,
+      body: null, attributes: null, droppedAttributesCount: null, traceId: null, spanId: null,
+      traceFlags: null, resource: null, resourceSchemaUrl: null, instrumentationScope: null, scopeSchemaUrl: null
+    };
+    let error: unknown;
+    try {
+      parseLogPage(springPage([value]), 0, 20);
+    } catch (reason) {
+      error = reason;
+    }
+    expect(error).toBeInstanceOf(ExploreSignalContractError);
+    expect(String(error)).not.toContain(String(timeUnixNano));
+  });
+
   it('rejects log rows with missing nullable protocol keys', () => {
     expect(() => parseLogPage(springPage([{ body: 'partial' }]), 0, 20))
       .toThrow(ExploreSignalContractError);
@@ -99,7 +117,8 @@ describe('Explore signal contracts', () => {
   it('requires unique authoritative trace identities', () => {
     const trace = traceRow('trace-1');
     expect(() => parseTracePage(springPage([trace, trace]), 0, 20)).toThrow(/duplicate traceId/);
-    expect(() => parseTracePage(springPage([{ ...trace, traceId: null }]), 0, 20)).toThrow(/traceId/);
+    expect(() => parseTracePage(springPage([{ ...trace, traceId: null }]), 0, 20))
+      .toThrow(ExploreSignalContractError);
   });
 
   it('treats null detail as missing and rejects identity drift', () => {

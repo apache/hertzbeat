@@ -18,7 +18,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { buildLogStreamPath, openLogStream } from '../api/explore-api';
-import { ExploreSignalContractError, parseLogRow, type LogRow } from '../model/explore-signal-contract';
+import { parseLogRow } from '../api/explore-log-schema';
+import { ExploreSignalContractError, type LogRow } from '../model/explore-signal-contract';
 import type { LogExploreQuery } from '../model/explore-model';
 import type { LiveLogStatus } from '../model/explore-signal-model';
 

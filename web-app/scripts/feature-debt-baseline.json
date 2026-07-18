@@ -92,11 +92,6 @@
       "allowedMax": 2
     },
     {
-      "rule": "feature-module-size",
-      "path": "features/explore/model/explore-signal-contract.ts",
-      "allowedMax": 260
-    },
-    {
       "rule": "inline-query-key",
       "path": "features/settings/message-server/controller/use-message-server-controller.ts",
       "allowedMax": 2
