@@ -45,11 +45,6 @@
       "rule": "feature-module-size",
       "path": "features/settings/token/pages/token-page.tsx",
       "allowedMax": 182
-    },
-    {
-      "rule": "inline-query-key",
-      "path": "features/status/public/pages/public-status-page.tsx",
-      "allowedMax": 3
     }
   ]
 }

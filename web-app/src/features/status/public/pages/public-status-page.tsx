@@ -22,13 +22,20 @@ import {
   loadPublicStatusIncidents,
   loadPublicStatusOrg
 } from '../api/public-status-api';
+import { publicStatusQueryKeys } from '../api/public-status-query-keys';
 import { PublicStatusView } from '../components/public-status-view';
 import { publicStatusState } from '../model/public-status-model';
 
 export function PublicStatusPage() {
-  const org = useQuery({ queryKey: ['public-status-org'], queryFn: loadPublicStatusOrg });
-  const components = useQuery({ queryKey: ['public-status-components'], queryFn: loadPublicStatusComponents });
-  const incidents = useQuery({ queryKey: ['public-status-incidents'], queryFn: loadPublicStatusIncidents });
+  const org = useQuery({ queryKey: publicStatusQueryKeys.org(), queryFn: loadPublicStatusOrg });
+  const components = useQuery({
+    queryKey: publicStatusQueryKeys.components(),
+    queryFn: loadPublicStatusComponents
+  });
+  const incidents = useQuery({
+    queryKey: publicStatusQueryKeys.incidents(),
+    queryFn: loadPublicStatusIncidents
+  });
   const queries = [org, components, incidents];
 
   return (

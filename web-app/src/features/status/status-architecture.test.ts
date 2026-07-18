@@ -64,6 +64,17 @@ describe('Public Status boundaries', () => {
     expect(router).toMatch(/['"]@\/features\/status['"]/);
     expect(router).not.toContain('@/features/status/public/');
   });
+
+  it('owns public server-cache identity in one named factory', () => {
+    const page = publicSources['./public/pages/public-status-page.tsx'] ?? '';
+    const queryKeys = publicSources['./public/api/public-status-query-keys.ts'] ?? '';
+
+    expect(queryKeys).toContain('publicStatusQueryKeys');
+    expect(page).toContain('publicStatusQueryKeys.org()');
+    expect(page).toContain('publicStatusQueryKeys.components()');
+    expect(page).toContain('publicStatusQueryKeys.incidents()');
+    expect(page).not.toMatch(/queryKey:\s*\[/);
+  });
 });
 
 describe('Status Management boundaries', () => {
