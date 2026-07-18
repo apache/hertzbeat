@@ -20,11 +20,6 @@
       "rule": "feature-css-raw-color",
       "path": "features/explore/components/signal-result-frame.module.css",
       "allowedMax": 6
-    },
-    {
-      "rule": "feature-module-size",
-      "path": "features/explore/components/trace-result.tsx",
-      "allowedMax": 211
     }
   ]
 }

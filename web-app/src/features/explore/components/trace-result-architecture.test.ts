@@ -16,10 +16,25 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import detailSource from './trace-detail.tsx?raw';
 import source from './trace-result.tsx?raw';
+import tableSource from './trace-table.tsx?raw';
 
 describe('Trace result architecture', () => {
   it('keeps queries, transport, routing, and controllers out of presentation', () => {
     expect(source).not.toMatch(/@tanstack\/react-query|useQuery|loadTraceDetail|\.\.\/api\/|\.\.\/controller\/|react-router/);
+  });
+
+  it('keeps result orchestration separate from table and detail presentation', () => {
+    expect(source).toContain("from './trace-table'");
+    expect(source).toContain("from './trace-detail'");
+    expect(source).not.toMatch(/\bTable\b|\bDescriptions\b|OtlpAttributeSection|traceHealthState/);
+
+    expect(tableSource).toMatch(/<Table<TraceRow>/);
+    expect(tableSource).toContain('interactiveTableRow');
+    expect(tableSource).not.toMatch(/<aside|<Descriptions|OtlpAttributeSection/);
+
+    expect(detailSource).toMatch(/<aside|<Descriptions|OtlpAttributeSection/);
+    expect(detailSource).not.toMatch(/<Table<TraceRow>|interactiveTableRow/);
   });
 });
