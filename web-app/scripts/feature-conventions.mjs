@@ -239,7 +239,7 @@ function isExactFeaturePath(path) {
     && !isAbsolute(path)
     && !path.includes('\\')
     && normalize(path).split(sep).join('/') === path
-    && !/[?*\[\]{}!]/.test(path);
+    && !/[?*[\]{}!]/.test(path);
 }
 
 function violationKey(value) {
