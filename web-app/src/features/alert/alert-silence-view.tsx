@@ -18,7 +18,11 @@
 import { Button, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { AlertSilenceViewActions, AlertSilenceViewState } from './alert-silence-list-model';
+import {
+  alertSilenceDetailDraft,
+  type AlertSilenceViewActions,
+  type AlertSilenceViewState
+} from './alert-silence-page-model';
 import { AlertManagementNav } from './alert-management-nav';
 import { AlertNoiseControlNav } from './alert-noise-control-nav';
 import { AlertSilenceEditor } from './alert-silence-editor';
@@ -28,6 +32,7 @@ import styles from './alert-policy-page.module.css';
 
 export function AlertSilenceView({ state, actions }: { state: AlertSilenceViewState; actions: AlertSilenceViewActions }) {
   const { t } = useTranslation();
+  const draft = alertSilenceDetailDraft(state.detail);
   return <div className={styles.page}>
     <header className={styles.heading}><div>
       <Typography.Title level={2}>{t('alertSilences.title')}</Typography.Title>
@@ -37,7 +42,7 @@ export function AlertSilenceView({ state, actions }: { state: AlertSilenceViewSt
     <AlertSilenceToolbar search={state.search} refreshing={state.refreshing} setSearch={actions.setSearch}
       submit={actions.submitSearch} refresh={actions.refresh} />
     <AlertSilenceResults evidence={state.list} query={state.query} busy={state.busy} actions={actions} />
-    {state.draft && <AlertSilenceEditor draft={state.draft} saving={state.busy} update={actions.updateDraft}
+    {draft && <AlertSilenceEditor draft={draft} saving={state.busy} update={actions.updateDraft}
       replace={actions.replaceDraft} close={actions.cancel} submit={() => void actions.save()} />}
   </div>;
 }

@@ -26,6 +26,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 import { ApiMessageError } from '@/core/http/api-message';
 import { AlertSilenceContractError, AlertSilenceMissingError } from '../alert-silence-model';
+import { alertSilenceDetailDraft } from '../alert-silence-page-model';
 
 const api = vi.hoisted(() => ({
   deleteAlertSilence: vi.fn(), loadAlertSilence: vi.fn(), loadAlertSilences: vi.fn(),
@@ -86,8 +87,43 @@ describe('useAlertSilenceController', () => {
     act(() => { void view.result.current.controller.actions.edit(7); });
     act(() => view.result.current.controller.actions.create());
     act(() => resolveDetail(record));
-    await waitFor(() => expect(view.result.current.controller.state.draft).toMatchObject({ name: '' }));
-    expect(view.result.current.controller.state.draft).not.toHaveProperty('id');
+    await waitFor(() => expect(alertSilenceDetailDraft(view.result.current.controller.state.detail))
+      .toMatchObject({ name: '' }));
+    expect(alertSilenceDetailDraft(view.result.current.controller.state.detail)).not.toHaveProperty('id');
+  });
+
+  it('removes a ready draft as soon as a different detail starts loading', async () => {
+    const next = deferred<typeof editable>();
+    api.loadAlertSilence.mockResolvedValueOnce(editable).mockReturnValueOnce(next.promise);
+    const view = renderController(['/alerts/silences'], 0);
+    await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
+    await act(() => view.result.current.controller.actions.edit(7));
+    expect(view.result.current.controller.state.detail).toMatchObject({
+      kind: 'ready', source: 'detail', id: 7, draft: { id: 7 }
+    });
+
+    let pending!: Promise<void>;
+    act(() => { pending = view.result.current.controller.actions.edit(8); });
+    expect(view.result.current.controller.state.detail).toEqual({ kind: 'loading', id: 8 });
+    expect(view.result.current.controller.state.detail).not.toHaveProperty('draft');
+
+    await act(async () => { next.reject(new AlertSilenceMissingError()); await pending; });
+    expect(view.result.current.controller.state.detail).toEqual({ kind: 'missing', id: 8 });
+    expect(view.result.current.controller.state.detail).not.toHaveProperty('draft');
+  });
+
+  it.each([
+    [new ApiMessageError('offline', { status: 503 }), 'unavailable'],
+    [new AlertSilenceContractError('bad detail'), 'error']
+  ] as const)('clears previous detail evidence when the next read becomes %s', async (reason, kind) => {
+    api.loadAlertSilence.mockResolvedValueOnce(editable).mockRejectedValueOnce(reason);
+    const view = renderController(['/alerts/silences'], 0);
+    await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
+    await act(() => view.result.current.controller.actions.edit(7));
+    await act(() => view.result.current.controller.actions.edit(8));
+
+    expect(view.result.current.controller.state.detail).toEqual({ kind, id: 8 });
+    expect(view.result.current.controller.state.detail).not.toHaveProperty('draft');
   });
 
   it('aborts stale detail for cancel and a newer edit', async () => {
@@ -130,7 +166,7 @@ describe('useAlertSilenceController', () => {
     act(() => view.result.current.controller.actions.updateDraft({ name: 'Created' }));
     await act(() => view.result.current.controller.actions.save());
     expect(api.loadAlertSilences).toHaveBeenCalledTimes(2);
-    expect(view.result.current.controller.state.draft).toMatchObject({ name: 'Created' });
+    expect(alertSilenceDetailDraft(view.result.current.controller.state.detail)).toMatchObject({ name: 'Created' });
   });
 
   it('keeps a create draft open until the awaited list reread succeeds', async () => {
@@ -145,9 +181,9 @@ describe('useAlertSilenceController', () => {
     let save!: Promise<void>;
     act(() => { save = view.result.current.controller.actions.save(); });
     await waitFor(() => expect(api.loadAlertSilences).toHaveBeenCalledTimes(2));
-    expect(view.result.current.controller.state.draft).toMatchObject({ name: 'Created' });
+    expect(alertSilenceDetailDraft(view.result.current.controller.state.detail)).toMatchObject({ name: 'Created' });
     await act(async () => { resolveReread(page()); await save; });
-    expect(view.result.current.controller.state.draft).toBeNull();
+    expect(view.result.current.controller.state.detail).toEqual({ kind: 'idle' });
   });
 
   it('uses a synchronous mutex for same-tick save attempts', async () => {
@@ -178,7 +214,7 @@ describe('useAlertSilenceController', () => {
     act(() => { save = view.result.current.controller.actions.save(); });
     await waitFor(() => expect(view.result.current.controller.state.busy).toBe(true));
     act(() => view.result.current.controller.actions.create());
-    expect(view.result.current.controller.state.draft).toMatchObject({ name: 'Created' });
+    expect(alertSilenceDetailDraft(view.result.current.controller.state.detail)).toMatchObject({ name: 'Created' });
     await act(async () => { resolveSave(); await save; });
   });
 
@@ -195,10 +231,10 @@ describe('useAlertSilenceController', () => {
     act(() => {
       view.result.current.controller.actions.updateDraft({ name: 'Late update' });
       view.result.current.controller.actions.replaceDraft({
-        ...view.result.current.controller.state.draft!, name: 'Late replacement'
+        ...alertSilenceDetailDraft(view.result.current.controller.state.detail)!, name: 'Late replacement'
       });
     });
-    expect(view.result.current.controller.state.draft).toMatchObject({ name: 'Created' });
+    expect(alertSilenceDetailDraft(view.result.current.controller.state.detail)).toMatchObject({ name: 'Created' });
     await act(async () => { resolveSave(); await save; });
   });
 
@@ -232,7 +268,7 @@ describe('useAlertSilenceController', () => {
     await act(() => view.result.current.controller.actions.save());
     expect(api.saveAlertSilence).toHaveBeenCalled();
     expect(api.loadAlertSilences).toHaveBeenCalledTimes(2);
-    expect(view.result.current.controller.state.draft).toBeNull();
+    expect(view.result.current.controller.state.detail).toEqual({ kind: 'idle' });
   });
 
   it('keeps the editor open when canonical edit fields do not converge', async () => {
@@ -244,7 +280,8 @@ describe('useAlertSilenceController', () => {
     api.loadAlertSilence.mockResolvedValue(editable);
     await act(() => view.result.current.controller.actions.save());
     expect(api.loadAlertSilences).toHaveBeenCalledTimes(1);
-    expect(view.result.current.controller.state.draft).toMatchObject({ id: 7, name: 'Updated' });
+    expect(alertSilenceDetailDraft(view.result.current.controller.state.detail))
+      .toMatchObject({ id: 7, name: 'Updated' });
   });
 });
 
@@ -257,4 +294,11 @@ function renderController(entries: string[], initialIndex: number) {
       </MemoryRouter></QueryClientProvider>
     </I18nextProvider>
   });
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason: unknown) => void;
+  const promise = new Promise<T>((done, fail) => { resolve = done; reject = fail; });
+  return { promise, resolve, reject };
 }

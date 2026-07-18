@@ -22,15 +22,18 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
 import {
-  classifyAlertSilenceReadError, deleteAlertSilence, loadAlertSilence, loadAlertSilences,
-  saveAlertSilence, updateAlertSilenceEnabled
+  classifyAlertSilenceReadError, loadAlertSilence, loadAlertSilences
 } from '../alert-silence-api';
-import type { AlertSilenceListEvidence } from '../alert-silence-list-model';
 import {
-  alertSilenceDraftFromDetail, buildAlertSilencePayload, createAlertSilenceDraft, readAlertSilenceQuery,
-  validateAlertSilenceDraft, writeAlertSilenceQuery, type AlertSilence, type AlertSilenceDraft,
-  type AlertSilencePage, type AlertSilenceQuery
+  alertSilenceDetailDraft,
+  type AlertSilenceDetailState,
+  type AlertSilenceListEvidence
+} from '../alert-silence-page-model';
+import {
+  AlertSilenceContractError, alertSilenceDraftFromDetail, createAlertSilenceDraft, readAlertSilenceQuery,
+  writeAlertSilenceQuery, type AlertSilenceDraft, type AlertSilencePage, type AlertSilenceQuery
 } from '../alert-silence-model';
+import { useAlertSilenceMutations } from './use-alert-silence-mutations';
 
 const listKey = (query: AlertSilenceQuery) => ['alert-silence-policies', query] as const;
 
@@ -42,32 +45,47 @@ export function useAlertSilenceController() {
   const query = readAlertSilenceQuery(params);
   const source = writeAlertSilenceQuery(query).toString();
   const [searchState, setSearchState] = useState({ source, value: query.search });
-  const [draft, setDraft] = useState<AlertSilenceDraft | null>(null);
+  const [detail, setDetail] = useState<AlertSilenceDetailState>({ kind: 'idle' });
   const intent = useRef(0);
   const editRequest = useRef<AbortController | null>(null);
   const search = searchState.source === source ? searchState.value : query.search;
+  const draft = alertSilenceDetailDraft(detail);
   const { list, overflow } = useAlertSilenceList(query, setParams);
   useEditAbortCleanup(intent, editRequest);
   const updateQuery = (patch: Partial<AlertSilenceQuery>) => setParams(writeAlertSilenceQuery({ ...query, ...patch }));
   const rereadList = () => queryClient.fetchQuery({
     queryKey: listKey(query), queryFn: ({ signal }) => loadAlertSilences(query, signal), staleTime: 0
   });
-  const mutations = useAlertSilenceMutations(draft, setDraft, intent, rereadList);
+  const closeDetail = () => {
+    intent.current += 1;
+    setDetail({ kind: 'idle' });
+  };
+  const mutations = useAlertSilenceMutations(draft, rereadList, closeDetail);
   const edit = async (id: number) => {
     if (mutations.isLocked()) return;
     editRequest.current?.abort();
     const request = new AbortController();
     editRequest.current = request;
     const token = ++intent.current;
+    // Loading owns no draft so evidence from another id cannot remain visible.
+    setDetail({ kind: 'loading', id });
     try {
-      const detail = await loadAlertSilence(id, request.signal);
-      if (intent.current === token) setDraft(alertSilenceDraftFromDetail(detail));
-    } catch {
-      if (!request.signal.aborted && intent.current === token) void message.error(t('alertSilences.loadFailed'));
+      const record = await loadAlertSilence(id, request.signal);
+      if (record.id !== id) throw new AlertSilenceContractError('detail id does not match the command');
+      if (intent.current === token) {
+        setDetail({ kind: 'ready', source: 'detail', id, draft: alertSilenceDraftFromDetail(record) });
+      }
+    } catch (reason) {
+      if (!request.signal.aborted && intent.current === token) {
+        setDetail({ kind: classifyAlertSilenceReadError(reason), id });
+        void message.error(t('alertSilences.loadFailed'));
+      }
+    } finally {
+      if (editRequest.current === request) editRequest.current = null;
     }
   };
   return {
-    state: { query, search, draft, busy: mutations.busy, refreshing: list.isFetching,
+    state: { query, search, detail, busy: mutations.busy, refreshing: list.isFetching,
       list: resolveListEvidence(list.isPending, list.error, list.data, Boolean(overflow)) },
     actions: {
       setSearch: (value: string) => setSearchState({ source, value }),
@@ -78,22 +96,23 @@ export function useAlertSilenceController() {
         if (mutations.isLocked()) return;
         editRequest.current?.abort();
         intent.current += 1;
-        setDraft(createAlertSilenceDraft());
+        setDetail({ kind: 'ready', source: 'create', draft: createAlertSilenceDraft() });
       },
       edit,
       cancel: () => {
         if (mutations.isLocked()) return;
         editRequest.current?.abort();
-        intent.current += 1;
-        setDraft(null);
+        closeDetail();
       },
       updateDraft: (patch: Partial<AlertSilenceDraft>) => {
         if (mutations.isLocked()) return;
-        setDraft(current => current ? { ...current, ...patch } : current);
+        setDetail(current => current.kind === 'ready'
+          ? { ...current, draft: { ...current.draft, ...patch } }
+          : current);
       },
       replaceDraft: (replacement: AlertSilenceDraft) => {
         if (mutations.isLocked()) return;
-        setDraft(replacement);
+        setDetail(current => current.kind === 'ready' ? { ...current, draft: replacement } : current);
       },
       save: mutations.save, toggle: mutations.toggle, remove: mutations.remove
     }
@@ -115,71 +134,6 @@ function useAlertSilenceList(query: AlertSilenceQuery, setParams: ReturnType<typ
   return { list, overflow: Boolean(overflow) };
 }
 
-function useAlertSilenceMutations(draft: AlertSilenceDraft | null,
-  setDraft: (draft: AlertSilenceDraft | null) => void, intentRef: RefObject<number>,
-  rereadList: () => Promise<AlertSilencePage>) {
-  const { t } = useTranslation();
-  const { message } = App.useApp();
-  const [busy, setBusy] = useState(false);
-  const locked = useRef(false);
-  const operate = async (operation: () => Promise<void>) => {
-    if (locked.current) return;
-    locked.current = true;
-    setBusy(true);
-    try {
-      await operation();
-      void message.success(t('alertSilences.operationSuccess'));
-    } catch {
-      void message.error(t('alertSilences.operationFailed'));
-    } finally {
-      locked.current = false;
-      setBusy(false);
-    }
-  };
-  const save = async () => {
-    if (locked.current) return;
-    const current = draft;
-    if (!current || validateAlertSilenceDraft(current).length > 0) {
-      void message.warning(t('alertSilences.validation'));
-      return;
-    }
-    locked.current = true;
-    setBusy(true);
-    try {
-      await saveAlertSilence(current);
-      if (current.id) requireDraftConvergence(await loadAlertSilence(current.id), current);
-      await rereadList();
-      setDraft(null);
-      intentRef.current += 1;
-      void message.success(t('alertSilences.saveSuccess'));
-    } catch {
-      void message.error(t('alertSilences.saveFailed'));
-    } finally {
-      locked.current = false;
-      setBusy(false);
-    }
-  };
-  const toggle = (silence: AlertSilence, enabled: boolean) => operate(async () => {
-    await updateAlertSilenceEnabled(silence, enabled);
-    requireSilenceConvergence(await loadAlertSilence(silence.id), { ...silence, enable: enabled });
-    await rereadList();
-  });
-  const remove = (id: number) => operate(async () => {
-    await deleteAlertSilence(id);
-    try {
-      await loadAlertSilence(id);
-    } catch (reason) {
-      if (classifyAlertSilenceReadError(reason) === 'missing') {
-        await rereadList();
-        return;
-      }
-      throw reason;
-    }
-    throw new Error('Deleted silence still exists');
-  });
-  return { busy, isLocked: () => locked.current, save, toggle, remove };
-}
-
 function useEditAbortCleanup(intent: RefObject<number>, editRequest: RefObject<AbortController | null>) {
   useEffect(() => () => {
     intent.current += 1;
@@ -195,34 +149,4 @@ function resolveListEvidence(pending: boolean, error: Error | null, page: AlertS
   if (page.content.length === 0 && page.totalElements === 0) return { kind: 'empty' };
   if (page.content.length === 0) return { kind: 'error' };
   return { kind: 'ready', records: page.content, total: page.totalElements };
-}
-
-function requireDraftConvergence(actual: AlertSilence, draft: AlertSilenceDraft) {
-  const payload = buildAlertSilencePayload(draft);
-  requireSilenceConvergence(actual, { ...actual, ...payload, id: draft.id! });
-}
-
-function requireSilenceConvergence(actual: AlertSilence, expected: AlertSilence) {
-  if (actual.id !== expected.id || actual.name !== expected.name || actual.enable !== expected.enable
-    || actual.matchAll !== expected.matchAll || actual.type !== expected.type
-    || !mapsEqual(actual.labels, expected.labels) || !arraysEqual(actual.days, expected.days)
-    || !timesEqual(actual.periodStart, expected.periodStart) || !timesEqual(actual.periodEnd, expected.periodEnd)) {
-    throw new Error('Alert Silence canonical fields did not converge');
-  }
-}
-
-function mapsEqual(left: Record<string, string> | null, right: Record<string, string> | null) {
-  if (left === null || right === null) return left === right;
-  const keys = Object.keys(left).sort();
-  return keys.length === Object.keys(right).length && keys.every(key => left[key] === right[key]);
-}
-
-function arraysEqual(left: number[] | null, right: number[] | null) {
-  if (left === null || right === null) return left === right;
-  return left.length === right.length && left.every((item, index) => item === right[index]);
-}
-
-function timesEqual(left: string | null, right: string | null) {
-  if (left === null || right === null) return left === right;
-  return Date.parse(left) === Date.parse(right);
 }

@@ -23,6 +23,8 @@ import pageSource from './alert-silence-page.tsx?raw';
 import schemaSource from './alert-silence-schema.ts?raw';
 import writeModelSource from './alert-silence-write-model.ts?raw';
 import controllerSource from './controller/use-alert-silence-controller.ts?raw';
+import pageModelSource from './alert-silence-page-model.ts?raw';
+import mutationsSource from './controller/use-alert-silence-mutations.ts?raw';
 
 function sourceLineCount(value: string) {
   return value.replace(/\/\*[\s\S]*?\*\//g, '').split('\n')
@@ -50,5 +52,11 @@ describe('AlertSilencePage architecture', () => {
   it('owns Router state once and does not compress state transitions to meet line limits', () => {
     expect(controllerSource.match(/useSearchParams\(/g)).toHaveLength(1);
     expect(controllerSource).not.toMatch(/;[^\S\r\n]*setBusy\(/);
+    expect(controllerSource).not.toMatch(/useState<AlertSilenceDraft/);
+    expect(controllerSource).toContain("from './use-alert-silence-mutations'");
+    expect(pageModelSource).toContain("| { kind: 'loading'; id: number }");
+    expect(pageModelSource).toContain("| { kind: AlertSilenceDetailFailure; id: number }");
+    expect(sourceLineCount(controllerSource)).toBeLessThanOrEqual(200);
+    expect(sourceLineCount(mutationsSource)).toBeLessThanOrEqual(200);
   });
 });

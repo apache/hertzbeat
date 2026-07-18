@@ -24,10 +24,18 @@ export type AlertSilenceListEvidence =
   | { kind: 'error' }
   | { kind: 'ready'; records: AlertSilence[]; total: number };
 
+export type AlertSilenceDetailFailure = 'missing' | 'unavailable' | 'error';
+export type AlertSilenceDetailState =
+  | { kind: 'idle' }
+  | { kind: 'loading'; id: number }
+  | { kind: 'ready'; source: 'create'; draft: AlertSilenceDraft }
+  | { kind: 'ready'; source: 'detail'; id: number; draft: AlertSilenceDraft }
+  | { kind: AlertSilenceDetailFailure; id: number };
+
 export type AlertSilenceViewState = {
   query: AlertSilenceQuery;
   search: string;
-  draft: AlertSilenceDraft | null;
+  detail: AlertSilenceDetailState;
   list: AlertSilenceListEvidence;
   busy: boolean;
   refreshing: boolean;
@@ -47,3 +55,7 @@ export type AlertSilenceViewActions = {
   toggle: (silence: AlertSilence, enabled: boolean) => Promise<void>;
   remove: (id: number) => Promise<void>;
 };
+
+export function alertSilenceDetailDraft(detail: AlertSilenceDetailState) {
+  return detail.kind === 'ready' ? detail.draft : null;
+}
