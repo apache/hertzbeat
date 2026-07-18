@@ -5,6 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
+import { theme } from 'antd';
 import { describe, expect, it } from 'vitest';
 
 import globalStyles from '../styles.css?raw';
@@ -36,5 +37,19 @@ describe('HertzBeat semantic theme', () => {
     expect(globalStyles).toMatch(/:root\s*\{[^}]*--hb-bg-selected:\s*#211a26;/s);
     expect(globalStyles).toMatch(/:root\[data-theme='default'\]\s*\{[^}]*--hb-bg-selected:\s*#f7f0f8;/s);
     expect(globalStyles.match(/--hb-nav-selected:\s*var\(--hb-bg-selected\);/g)).toHaveLength(1);
+  });
+
+  it.each(['dark', 'default', 'compact'] as const)('enables the Ant variable contract for the %s theme', runtimeTheme => {
+    const themeConfig = createHertzBeatTheme(runtimeTheme);
+    const tokens = theme.getDesignToken(themeConfig);
+
+    expect(themeConfig.cssVar).toBe(true);
+    expect(tokens).toMatchObject({
+      borderRadius: expect.any(Number),
+      colorBorderSecondary: expect.any(String),
+      colorError: expect.any(String),
+      colorFillQuaternary: expect.any(String),
+      colorTextSecondary: expect.any(String)
+    });
   });
 });

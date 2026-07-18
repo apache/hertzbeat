@@ -13,6 +13,7 @@ export function createHertzBeatTheme(runtimeTheme: RuntimeTheme): ThemeConfig {
   const palette = runtimeTheme === 'default' ? lightPalette : darkPalette;
   return {
     algorithm: themeAlgorithm(runtimeTheme),
+    cssVar: true,
     token: {
       borderRadius: 2,
       colorBgBase: palette.canvas,
