@@ -48,6 +48,10 @@ describe('Alert Center architecture', () => {
     expect(controllerSource).not.toMatch(/queryKey:\s*\[/);
   });
 
+  it('does not update query draft state while rendering a URL change', () => {
+    expect(controllerSource).not.toMatch(/if\s*\(queryChanged\)\s*setDraftState/);
+  });
+
   it('keeps the page dependency surface limited to presentation, controller, and model modules', () => {
     const localImports = [...source.matchAll(/from\s+['"](\.\/[^'"]+)['"]/g)].map(match => match[1]);
     expect(localImports.filter(path => ![

@@ -16,7 +16,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { ApiMessageError } from '@/core/http/api-message';
@@ -45,12 +45,20 @@ export function useAlertCenterController() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const query = readAlertQuery(params);
-  const queryDraft = draftFromQuery(query);
   const source = writeAlertQuery(query).toString();
-  const [draftState, setDraftState] = useState({ source, value: queryDraft });
+  const canonicalDraft = draftFromQuery(query);
+  const [draftState, setDraftState] = useState({ source, value: canonicalDraft });
   const queryChanged = draftState.source !== source;
-  if (queryChanged) setDraftState({ source, value: queryDraft });
-  const draft = queryChanged ? queryDraft : draftState.value;
+  const draft = queryChanged ? canonicalDraft : draftState.value;
+
+  useEffect(() => {
+    // The derived draft shows the URL immediately. Re-reading the canonical
+    // source here prevents an abandoned draft from reviving after Browser Back.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDraftState(current => current.source === source
+      ? current
+      : { source, value: draftFromSource(source) });
+  }, [source]);
 
   const summaryQuery = useQuery({
     queryKey: alertCenterQueryKeys.summary(),
@@ -65,7 +73,7 @@ export function useAlertCenterController() {
     setParams(writeAlertQuery({ ...query, ...patch }));
   };
   const setDraft = (field: AlertDraftField, value: string) => {
-    setDraftState(current => ({ ...current, value: { ...draft, [field]: value } }));
+    setDraftState({ source, value: { ...draft, [field]: value } });
   };
   const submitFilters = () => {
     updateQuery({
@@ -143,4 +151,8 @@ function draftFromQuery(query: AlertQuery): AlertFilterDraft {
     serviceNamespace: query.serviceNamespace,
     environment: query.environment
   };
+}
+
+function draftFromSource(source: string) {
+  return draftFromQuery(readAlertQuery(new URLSearchParams(source)));
 }

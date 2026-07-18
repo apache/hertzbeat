@@ -19,7 +19,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, render, renderHook, waitFor } from '@testing-library/react';
 import { StrictMode, type PropsWithChildren } from 'react';
 import { createMemoryRouter, MemoryRouter, RouterProvider } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
 
@@ -52,11 +52,14 @@ describe('Alert Center controller', () => {
     api.loadAlertGroups.mockImplementation((query: AlertQuery) => Promise.resolve(page(query)));
   });
 
+  afterEach(() => vi.restoreAllMocks());
+
   it('owns URL query, scoped drafts, and discards drafts after Back or Forward changes the URL', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const routed = renderRoutedController([
       '/alerts?search=A&serviceName=checkout&serviceNamespace=shop&environment=prod&pageIndex=1&pageSize=15',
       '/alerts?search=B&serviceName=billing&environment=stage&pageIndex=0&pageSize=8'
-    ]);
+    ], true);
     await waitFor(() => expect(routed.current().state.list.kind).toBe('empty'));
 
     expect(routed.current().state.query).toMatchObject({
@@ -68,11 +71,11 @@ describe('Alert Center controller', () => {
     await act(async () => routed.router.navigate(1));
     expect(routed.current().state.draft).toMatchObject({ search: 'B', serviceName: 'billing', environment: 'stage' });
 
-    act(() => routed.current().setDraft('search', 'second draft'));
     await act(async () => routed.router.navigate(-1));
     expect(routed.current().state.draft).toMatchObject({
       search: 'A', serviceName: 'checkout', serviceNamespace: 'shop', environment: 'prod'
     });
+    expect(consoleError).not.toHaveBeenCalled();
   });
 
   it('resets unsubmitted drafts when POP changes only status and page identity', async () => {
