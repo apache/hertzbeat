@@ -82,20 +82,51 @@ describe('useMonitorEditorController', () => {
     expect(api.loadMonitorParamDefines).toHaveBeenCalledWith('website', expect.any(AbortSignal));
   });
 
-  it('locks duplicate detect commands and only notifies for the active source', async () => {
+  it('locks detect and save commands, aborting without notifying when the source changes', async () => {
     const pending = deferred<void>();
     api.detectMonitor.mockReturnValue(pending.promise);
     const routed = renderController('new', '/monitors/new?app=website');
     await waitFor(() => expect(routed.current().state.draft).toBeDefined());
     act(() => routed.current().actions.updateMonitor({ name: 'home' }));
     let first!: Promise<void>;
-    act(() => { first = routed.current().actions.detect(); void routed.current().actions.detect(); });
+    act(() => {
+      first = routed.current().actions.detect();
+      void routed.current().actions.detect();
+      void routed.current().actions.save();
+    });
     expect(api.detectMonitor).toHaveBeenCalledTimes(1);
+    expect(api.saveMonitor).not.toHaveBeenCalled();
     expect(routed.current().state.command).toBe('detecting');
+    const signal = api.detectMonitor.mock.calls[0]?.[1] as AbortSignal;
+    expect(signal.aborted).toBe(false);
     await act(async () => routed.router.navigate('/monitors/new?app=website&scrape=http_sd'));
+    expect(signal.aborted).toBe(true);
     pending.resolve();
     await act(async () => first);
     expect(notify.success).not.toHaveBeenCalled();
+  });
+
+  it('keeps the active source when an older define request resolves last', async () => {
+    const httpDefines = deferred<unknown[]>();
+    const dnsDefines = deferred<unknown[]>();
+    api.loadMonitorParamDefines.mockImplementation((source: string) => {
+      if (source === 'http_sd') return httpDefines.promise;
+      if (source === 'dns_sd') return dnsDefines.promise;
+      return Promise.resolve([]);
+    });
+    const routed = renderController('new', '/monitors/new?app=website&scrape=http_sd');
+    await waitFor(() => expect(api.loadMonitorParamDefines).toHaveBeenCalledWith(
+      'http_sd', expect.any(AbortSignal)
+    ));
+
+    await act(async () => routed.router.navigate('/monitors/new?app=website&scrape=dns_sd'));
+    dnsDefines.resolve([{ ...headersDefine, app: 'dns_sd', field: 'dnsServer' }]);
+    await waitFor(() => expect(routed.current().state.draft?.params[0]?.field).toBe('dnsServer'));
+
+    httpDefines.resolve([{ ...headersDefine, app: 'http_sd', field: 'url' }]);
+    await act(async () => Promise.resolve());
+    expect(routed.current().state.sourceKey).toContain('dns_sd');
+    expect(routed.current().state.draft?.params.map(param => param.field)).toEqual(['dnsServer']);
   });
 
   it('retries only the active failed source and classifies it independently', async () => {
