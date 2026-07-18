@@ -2,11 +2,6 @@
   "version": 1,
   "entries": [
     {
-      "rule": "feature-module-size",
-      "path": "features/alert/notice-template-page.tsx",
-      "allowedMax": 235
-    },
-    {
       "rule": "feature-css-raw-color",
       "path": "features/auth/login-page.module.css",
       "allowedMax": 3

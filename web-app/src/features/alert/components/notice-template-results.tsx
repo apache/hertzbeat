@@ -1,0 +1,147 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { Alert, Button, Empty, Popconfirm, Skeleton, Space, Table, Tag } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
+
+import { noticeTemplateTime, noticeTemplateTypeLabelKey } from '../model/notice-template-view-model';
+import {
+  isNoticeTemplateReadOnly,
+  noticeTemplatePageSizes,
+  type NoticeTemplateListState,
+  type NoticeTemplateResourceRecord,
+} from '../notice-template-model';
+
+type NoticeTemplateResultsProps = {
+  state: NoticeTemplateListState;
+  pageIndex: number;
+  pageSize: number;
+  onPageChange: (page: number, pageSize: number) => void;
+  onRetry: () => void;
+  onView: (template: NoticeTemplateResourceRecord) => void;
+  onEdit: (template: NoticeTemplateResourceRecord) => void | Promise<void>;
+  onRemove: (template: NoticeTemplateResourceRecord) => void | Promise<void>;
+};
+
+export function NoticeTemplateResults({
+  state,
+  pageIndex,
+  pageSize,
+  onPageChange,
+  onRetry,
+  onView,
+  onEdit,
+  onRemove,
+}: NoticeTemplateResultsProps) {
+  const { t } = useTranslation();
+
+  if (state.kind === 'loading') {
+    return (
+      <div data-testid="notice-template-loading">
+        <Skeleton active paragraph={{ rows: 6 }} />
+      </div>
+    );
+  }
+  if (state.kind === 'unavailable') return <FailureState message={t('common.unavailable')} onRetry={onRetry} />;
+  if (state.kind === 'error') {
+    return <FailureState message={t('common.routeError.description')} onRetry={onRetry} />;
+  }
+  if (state.kind === 'empty') return <Empty description={t('noticeTemplates.empty')} />;
+
+  return (
+    <Table<NoticeTemplateResourceRecord>
+      rowKey="id"
+      size="small"
+      dataSource={state.records}
+      columns={templateColumns(t, onView, onEdit, onRemove)}
+      scroll={{ x: 940 }}
+      pagination={{
+        current: pageIndex + 1,
+        pageSize,
+        pageSizeOptions: [...noticeTemplatePageSizes],
+        showSizeChanger: true,
+        total: state.total,
+        onChange: onPageChange,
+      }}
+    />
+  );
+}
+
+function FailureState({ message, onRetry }: { message: string; onRetry: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <Alert
+      type="error"
+      showIcon
+      message={message}
+      action={(
+        <Button size="small" onClick={onRetry}>
+          {t('common.retry')}
+        </Button>
+      )}
+    />
+  );
+}
+
+function templateColumns(
+  t: TFunction,
+  view: (template: NoticeTemplateResourceRecord) => void,
+  edit: (template: NoticeTemplateResourceRecord) => void | Promise<void>,
+  remove: (template: NoticeTemplateResourceRecord) => void | Promise<void>,
+): ColumnsType<NoticeTemplateResourceRecord> {
+  return [
+    { title: t('noticeTemplates.name'), dataIndex: 'name', width: 260 },
+    {
+      title: t('noticeTemplates.type'),
+      width: 180,
+      render: (_value, template) => <Tag color="processing">{t(noticeTemplateTypeLabelKey(template.type))}</Tag>,
+    },
+    {
+      title: t('noticeTemplates.source'),
+      width: 150,
+      render: (_value, template) => (
+        <Tag>{t(template.preset ? 'noticeTemplates.preset' : 'noticeTemplates.custom')}</Tag>
+      ),
+    },
+    { title: t('noticeTemplates.updated'), width: 190, render: (_value, template) => formatTemplateTime(template) },
+    {
+      title: t('common.actions'),
+      width: 160,
+      render: (_value, template) => isNoticeTemplateReadOnly(template)
+        ? <Button type="link" onClick={() => view(template)}>{t('common.view')}</Button>
+        : (
+            <Space>
+              <Button type="link" onClick={() => void edit(template)}>{t('common.edit')}</Button>
+              <Popconfirm title={t('noticeTemplates.deleteConfirm')} onConfirm={() => void remove(template)}>
+                <Button type="link" danger>{t('noticeTemplates.delete')}</Button>
+              </Popconfirm>
+            </Space>
+          ),
+    },
+  ];
+}
+
+function formatTemplateTime(template: NoticeTemplateResourceRecord) {
+  const value = noticeTemplateTime(template);
+  if (value == null) return '—';
+  const timestamp = typeof value === 'number' ? value : Date.parse(value);
+  return Number.isFinite(timestamp)
+    ? new Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'medium' }).format(timestamp)
+    : '—';
+}

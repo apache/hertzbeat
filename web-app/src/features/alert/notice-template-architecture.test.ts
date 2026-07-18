@@ -17,7 +17,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-const sources = import.meta.glob('./notice-template-*.{ts,tsx}', {
+const sources = import.meta.glob('./**/notice-template-*.{ts,tsx}', {
   eager: true,
   import: 'default',
   query: '?raw'
@@ -28,10 +28,23 @@ describe('Notice Template architecture', () => {
     const page = String(sources['./notice-template-page.tsx'] ?? '');
     const controller = String(sources['./notice-template-controller.ts'] ?? '');
     const api = String(sources['./notice-template-api.ts'] ?? '');
+    const domainModel = String(sources['./notice-template-model.ts'] ?? '');
+    const viewModel = String(sources['./model/notice-template-view-model.ts'] ?? '');
+    const overlays = String(sources['./components/notice-template-overlays.tsx'] ?? '');
 
     expect(page).toContain("from \"./notice-template-controller\"");
     expect(page).not.toMatch(/@tanstack\/react-query|notice-template-api|useSearchParams|App\.useApp/);
+    expect(page).toContain('components/notice-template-toolbar');
+    expect(page).toContain('components/notice-template-results');
+    expect(page).toContain('components/notice-template-overlays');
+    expect(page).not.toMatch(/\b(?:Table|Drawer|Skeleton|SettingsNav)\b|templateColumns|formatTemplateTime/);
     expect(controller).not.toMatch(/@\/core\/http|apiMessage(?:Get|Post|Put|Delete)|notice-template-api/);
     expect(api).toMatch(/apiMessageGet|apiMessagePost|apiMessagePut|apiMessageDelete/);
+    expect(domainModel).not.toContain('NoticeTemplateCommand');
+    expect(viewModel).not.toContain('NoticeTemplateCommand');
+    expect(overlays).not.toContain('NoticeTemplateCommand');
+    expect(controller).toMatch(/type Command = 'idle' \| 'loading-detail' \| 'saving' \| 'deleting'/);
+    expect(page).toContain('busy={state.command !== "idle"}');
+    expect(page).toContain('saving={state.command === "saving"}');
   });
 });
