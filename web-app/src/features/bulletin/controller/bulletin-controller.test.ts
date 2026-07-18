@@ -7,9 +7,13 @@ import { MonitorContractError } from '@/features/monitor';
 import * as monitorApi from '@/features/monitor';
 import * as bulletinApi from '../api/bulletin-api';
 import {
-  buildBulletinDependencyRecords, classifyBulletinMonitorError, loadBulletinApps, reconcileBulletinSelection,
-  refreshSavedBulletinMetrics
-} from './bulletin-controller';
+  buildBulletinDependencyRecords,
+  classifyBulletinMonitorError,
+  loadBulletinApps
+} from './bulletin-dependencies-controller';
+import { reconcileBulletinSelection } from './bulletin-list-controller';
+import { refreshSavedBulletinMetrics } from './bulletin-metrics-controller';
+import { bulletinQueryKeys } from './bulletin-query-keys';
 
 describe('bulletin controller boundaries', () => {
   afterEach(() => vi.restoreAllMocks());
@@ -46,19 +50,19 @@ describe('bulletin controller boundaries', () => {
 
   it('replaces stale saved metrics before reporting save convergence', async () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    client.setQueryData(['bulletin-metrics', 7], { name: 'Old', content: [] });
+    client.setQueryData(bulletinQueryKeys.metrics(7), { name: 'Old', content: [] });
     const fresh = { name: 'Updated', content: [] };
     vi.spyOn(bulletinApi, 'loadBulletinMetrics').mockResolvedValue(fresh);
     await refreshSavedBulletinMetrics(client, 7);
-    expect(client.getQueryData(['bulletin-metrics', 7])).toEqual(fresh);
+    expect(client.getQueryData(bulletinQueryKeys.metrics(7))).toEqual(fresh);
   });
 
   it('keeps a failed saved-metrics reread in error state instead of presenting stale data', async () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    client.setQueryData(['bulletin-metrics', 7], { name: 'Old', content: [] });
+    client.setQueryData(bulletinQueryKeys.metrics(7), { name: 'Old', content: [] });
     vi.spyOn(bulletinApi, 'loadBulletinMetrics')
       .mockRejectedValue(new ApiMessageError('store unavailable', { code: 15, status: 200 }));
     await expect(refreshSavedBulletinMetrics(client, 7)).rejects.toBeInstanceOf(ApiMessageError);
-    expect(client.getQueryState(['bulletin-metrics', 7])?.status).toBe('error');
+    expect(client.getQueryState(bulletinQueryKeys.metrics(7))?.status).toBe('error');
   });
 });

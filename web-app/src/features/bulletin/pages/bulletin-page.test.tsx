@@ -7,10 +7,16 @@ const controller = vi.hoisted(() => ({ useBulletinController: vi.fn() }));
 vi.mock('../controller/bulletin-controller', () => controller);
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 import { BulletinPage } from './bulletin-page';
+import pageSource from './bulletin-page.tsx?raw';
 import { formatBulletinTime } from '../model/bulletin-model';
 
 describe('bulletin page', () => {
   afterEach(cleanup);
+  it('handles the asynchronous refresh action at an explicit event boundary', () => {
+    expect(pageSource).toContain('void actions.refresh();');
+    expect(pageSource).toContain('onClick={handleRefresh}');
+  });
+
   it('offers a visible keyboard-operable metrics action', () => {
     const select = vi.fn();
     controller.useBulletinController.mockReturnValue({

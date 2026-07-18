@@ -13,6 +13,9 @@ export function BulletinPage() {
   const { t } = useTranslation();
   const { state, actions } = useBulletinController();
   const records = state.list.kind === 'ready' ? state.list.records : [];
+  const handleRefresh = () => {
+    void actions.refresh();
+  };
   return <div className={styles.page}>
     <header className={styles.heading}>
       <div><Typography.Title level={2}>{t('bulletin.title')}</Typography.Title><Typography.Text type="secondary">{t('bulletin.description')}</Typography.Text></div>
@@ -21,7 +24,7 @@ export function BulletinPage() {
     <Space.Compact className={styles.toolbar}>
       <Input value={state.search} placeholder={t('bulletin.search')} onChange={event => actions.setSearch(event.target.value)} onPressEnter={actions.submitSearch} />
       <Button type="primary" onClick={actions.submitSearch}>{t('common.query')}</Button>
-      <Button loading={state.refreshing} onClick={actions.refresh}>{t('common.refresh')}</Button>
+      <Button loading={state.refreshing} onClick={handleRefresh}>{t('common.refresh')}</Button>
     </Space.Compact>
     {['invalid', 'unavailable', 'error'].includes(state.list.kind) && <Alert type="error" showIcon message={t(`bulletin.list.${state.list.kind}`)} />}
     {state.list.kind === 'empty' && <Empty description={t('bulletin.empty')} />}

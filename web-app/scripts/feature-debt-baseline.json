@@ -42,16 +42,6 @@
       "allowedMax": 3
     },
     {
-      "rule": "feature-module-size",
-      "path": "features/bulletin/controller/bulletin-controller.ts",
-      "allowedMax": 211
-    },
-    {
-      "rule": "inline-query-key",
-      "path": "features/bulletin/controller/bulletin-controller.ts",
-      "allowedMax": 7
-    },
-    {
       "rule": "inline-query-key",
       "path": "features/dashboard/controller/use-dashboard-controller.ts",
       "allowedMax": 1
