@@ -107,11 +107,6 @@
       "allowedMax": 182
     },
     {
-      "rule": "feature-module-size",
-      "path": "features/status/management/controller/use-status-management-controller.ts",
-      "allowedMax": 252
-    },
-    {
       "rule": "inline-query-key",
       "path": "features/status/public/pages/public-status-page.tsx",
       "allowedMax": 3

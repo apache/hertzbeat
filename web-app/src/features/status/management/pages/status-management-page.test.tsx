@@ -25,6 +25,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { ApiMessageError } from '@/core/http/api-message';
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
+import { statusManagementQueryKeys } from '../controller/status-management-query-keys';
 import {
   StatusManagementMissingError,
   type StatusIncident,
@@ -175,7 +176,7 @@ describe('StatusManagementPage', () => {
 
     api.loadStatusOrg.mockResolvedValueOnce({ ...org, name: 'Server refresh' });
     await act(async () => {
-      await client.invalidateQueries({ queryKey: ['status-page-org'] });
+      await client.invalidateQueries({ queryKey: statusManagementQueryKeys.org() });
     });
 
     await waitFor(() => expect(api.loadStatusOrg).toHaveBeenCalledTimes(2));

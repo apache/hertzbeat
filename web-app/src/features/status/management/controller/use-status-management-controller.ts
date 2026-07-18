@@ -4,83 +4,56 @@
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
-import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
-import { App } from 'antd';
-import { useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useState } from 'react';
 
 import {
-  deleteStatusComponent,
-  deleteStatusIncident,
-  isStatusManagementMissing,
-  loadStatusComponent,
-  loadStatusComponents,
-  loadStatusIncident,
-  loadStatusIncidents,
-  loadStatusOrg,
-  saveStatusComponent,
-  saveStatusIncident,
-  saveStatusOrg,
   statusManagementFailureKind,
   type StatusManagementFailureKind
 } from '../api/status-management-api';
 import { useStatusIncidentEditor } from '../hooks/use-status-incident-editor';
 import { useStatusIncidentQuery } from '../hooks/use-status-incident-query';
 import {
-  StatusManagementContractError,
   type StatusComponent,
   type StatusComponentRecord,
-  type StatusIncident,
   type StatusIncidentPage,
   type StatusIncidentRecord,
-  type StatusOrg,
   type StatusOrgRecord
 } from '../model/status-management-contract';
-import type { StatusIncidentQuery } from '../model/status-incident-query';
 import {
   isStatusOrgNotFound,
   type StatusCollectionState,
   type StatusIncidentCollectionState,
   type StatusRecordState
 } from '../model/status-management-model';
-
-const orgKey = ['status-page-org'] as const;
-const componentKey = ['status-page-components'] as const;
-type Notify = { saveSuccess: () => void; saveFailed: () => void; deleteSuccess: () => void; deleteFailed: () => void };
+import { useStatusComponentTransactions } from './use-status-component-transactions';
+import { useStatusIncidentTransactions } from './use-status-incident-transactions';
+import { useStatusManagementNotifications } from './use-status-management-notifications';
+import { useStatusManagementResources } from './use-status-management-resources';
+import { useStatusOrgSave } from './use-status-org-save';
 
 export function useStatusManagementController() {
-  const { t } = useTranslation();
-  const { message } = App.useApp();
-  const queryClient = useQueryClient();
   const incidentQuery = useStatusIncidentQuery();
-  const queries = useStatusQueries(incidentQuery.query);
+  const resources = useStatusManagementResources(incidentQuery.query);
   const [componentEditor, setComponentEditor] = useState<Partial<StatusComponent>>();
   const incidentEditor = useStatusIncidentEditor();
-  const notify: Notify = {
-    saveSuccess: () => void message.success(t('statusManagement.saveSuccess')),
-    saveFailed: () => void message.error(t('statusManagement.saveFailed')),
-    deleteSuccess: () => void message.success(t('statusManagement.deleteSuccess')),
-    deleteFailed: () => void message.error(t('statusManagement.deleteFailed'))
-  };
-  const orgSave = useOrgSave(queryClient, queries.org.data, notify);
-  const components = useComponentTransactions(queryClient, setComponentEditor, notify);
-  const incidents = useIncidentTransactions(
-    queryClient,
+  const notify = useStatusManagementNotifications();
+  const orgSave = useStatusOrgSave(resources.org.data, notify);
+  const components = useStatusComponentTransactions(setComponentEditor, notify);
+  const incidents = useStatusIncidentTransactions(
     incidentQuery.query,
-    queries.incidentKey,
     incidentEditor.close,
     notify
   );
-  const orgState = resolveOrgState(queries.org.isPending, queries.org.error, queries.org.data);
+  const orgState = resolveOrgState(resources.org.isPending, resources.org.error, resources.org.data);
   const componentState = resolveComponentState(
-    queries.components.isPending,
-    queries.components.error,
-    queries.components.data
+    resources.components.isPending,
+    resources.components.error,
+    resources.components.data
   );
   const incidentState = resolveIncidentState(
-    queries.incidents.isPending,
-    queries.incidents.error,
-    queries.incidents.data
+    resources.incidents.isPending,
+    resources.incidents.error,
+    resources.incidents.data
   );
 
   return {
@@ -109,108 +82,6 @@ export function useStatusManagementController() {
     refreshComponents: components.refresh,
     refreshIncidents: incidents.refresh
   };
-}
-
-function useStatusQueries(query: StatusIncidentQuery) {
-  const incidentKey = useMemo(() => ['status-page-incidents', query] as const, [query]);
-  return {
-    incidentKey,
-    org: useQuery({ queryKey: orgKey, queryFn: loadStatusOrg, retry: false }),
-    components: useQuery({ queryKey: componentKey, queryFn: loadStatusComponents, retry: false }),
-    incidents: useQuery({ queryKey: incidentKey, queryFn: () => loadStatusIncidents(query), retry: false })
-  };
-}
-
-function useOrgSave(queryClient: QueryClient, org: StatusOrgRecord | undefined, notify: Notify) {
-  return useMutation({
-    mutationFn: (value: StatusOrg) => saveStatusOrg({ ...org, ...value }),
-    onSuccess: canonical => {
-      queryClient.setQueryData(orgKey, canonical);
-      notify.saveSuccess();
-    },
-    onError: notify.saveFailed
-  });
-}
-
-function useComponentTransactions(
-  queryClient: QueryClient,
-  setEditor: (value: Partial<StatusComponent> | undefined) => void,
-  notify: Notify
-) {
-  const refresh = () => void queryClient.fetchQuery({
-    queryKey: componentKey,
-    queryFn: loadStatusComponents,
-    staleTime: 0
-  }).catch(() => undefined);
-  const save = useMutation({
-    mutationFn: async (value: StatusComponent) => {
-      const isNew = value.id == null;
-      await saveStatusComponent(value, isNew);
-      if (!isNew) {
-        const id = requireId(value.id);
-        requireExactId((await loadStatusComponent(id)).id, id);
-      }
-      await queryClient.fetchQuery({ queryKey: componentKey, queryFn: loadStatusComponents, staleTime: 0 });
-    },
-    onSuccess: () => {
-      setEditor(undefined);
-      notify.saveSuccess();
-    },
-    onError: notify.saveFailed
-  });
-  const remove = useMutation({
-    mutationFn: async (id: number) => {
-      const exactId = requireId(id);
-      await deleteStatusComponent(exactId);
-      await proveMissing(() => loadStatusComponent(exactId));
-      await queryClient.fetchQuery({ queryKey: componentKey, queryFn: loadStatusComponents, staleTime: 0 });
-    },
-    onSuccess: notify.deleteSuccess,
-    onError: notify.deleteFailed
-  });
-  return { save, remove, refresh };
-}
-
-function useIncidentTransactions(
-  queryClient: QueryClient,
-  query: StatusIncidentQuery,
-  incidentKey: readonly ['status-page-incidents', StatusIncidentQuery],
-  closeEditor: () => void,
-  notify: Notify
-) {
-  const refreshQuery = () => queryClient.fetchQuery({
-    queryKey: incidentKey,
-    queryFn: () => loadStatusIncidents(query),
-    staleTime: 0
-  });
-  const refresh = () => void refreshQuery().catch(() => undefined);
-  const save = useMutation({
-    mutationFn: async (value: StatusIncident) => {
-      const isNew = value.id == null;
-      await saveStatusIncident(value, isNew);
-      if (!isNew) {
-        const id = requireId(value.id);
-        requireExactId((await loadStatusIncident(id)).id, id);
-      }
-      await refreshQuery();
-    },
-    onSuccess: () => {
-      closeEditor();
-      notify.saveSuccess();
-    },
-    onError: notify.saveFailed
-  });
-  const remove = useMutation({
-    mutationFn: async (id: number) => {
-      const exactId = requireId(id);
-      await deleteStatusIncident(exactId);
-      await proveMissing(() => loadStatusIncident(exactId));
-      await refreshQuery();
-    },
-    onSuccess: notify.deleteSuccess,
-    onError: notify.deleteFailed
-  });
-  return { save, remove, refresh };
 }
 
 function resolveOrgState(
@@ -251,23 +122,4 @@ function resolveIncidentState(
 
 function failureCollectionState(kind: StatusManagementFailureKind): { kind: 'unavailable' | 'error' } {
   return { kind: kind === 'unavailable' ? 'unavailable' : 'error' };
-}
-
-function requireId(id: number | undefined) {
-  if (!Number.isSafeInteger(id) || (id ?? 0) < 1) throw new StatusManagementContractError();
-  return id as number;
-}
-
-function requireExactId(actual: number, expected: number) {
-  if (actual !== expected) throw new StatusManagementContractError();
-}
-
-async function proveMissing(load: () => Promise<unknown>) {
-  try {
-    await load();
-  } catch (error) {
-    if (isStatusManagementMissing(error)) return;
-    throw error;
-  }
-  throw new StatusManagementContractError();
 }

@@ -119,6 +119,25 @@ describe('Status Management boundaries', () => {
     expect(contract).not.toContain('parseStatusOrg');
   });
 
+  it('splits resource and transaction ownership behind one Query Key factory', () => {
+    const controller = managementSources[
+      './management/controller/use-status-management-controller.ts'
+    ] ?? '';
+    const requiredOwners = [
+      './management/controller/status-management-query-keys.ts',
+      './management/controller/use-status-management-resources.ts',
+      './management/controller/use-status-org-save.ts',
+      './management/controller/use-status-component-transactions.ts',
+      './management/controller/use-status-incident-transactions.ts'
+    ];
+
+    expect(requiredOwners.filter(path => !managementSources[path])).toEqual([]);
+    expect(controller).not.toContain('useMutation');
+    expect(controller).not.toContain('useQuery(');
+    expect(controller).not.toContain('fetchQuery');
+    expect(controller).not.toContain("['status-page-");
+  });
+
   it('exposes the management page through the Status root entry', () => {
     const entry = Object.values(entrySources)[0] ?? '';
     const router = Object.values(routerSources)[0] ?? '';

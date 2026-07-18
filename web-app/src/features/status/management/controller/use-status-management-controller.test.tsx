@@ -147,8 +147,37 @@ describe('useStatusManagementController', () => {
     expect(notification.success).not.toHaveBeenCalled();
 
     api.loadStatusComponents.mockResolvedValueOnce([component]);
-    act(() => result.current.refreshComponents());
+    let recovered: boolean | undefined;
+    await act(async () => {
+      recovered = await result.current.refreshComponents();
+    });
+    expect(recovered).toBe(true);
     await waitFor(() => expect(result.current.components).toEqual({ kind: 'ready', records: [component] }));
+  });
+
+  it('returns honest component refresh outcomes and hides stale records after failure', async () => {
+    api.loadStatusComponents
+      .mockResolvedValueOnce([component])
+      .mockRejectedValueOnce(new ApiMessageError('Request failed with status 503', { status: 503 }))
+      .mockResolvedValueOnce([{ ...component, name: 'Recovered' }]);
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.components.kind).toBe('ready'));
+
+    let failed: boolean | undefined;
+    await act(async () => {
+      failed = await result.current.refreshComponents();
+    });
+    expect(failed).toBe(false);
+    await waitFor(() => expect(result.current.components).toEqual({ kind: 'unavailable' }));
+
+    let recovered: boolean | undefined;
+    await act(async () => {
+      recovered = await result.current.refreshComponents();
+    });
+    expect(recovered).toBe(true);
+    await waitFor(() => expect(result.current.components).toEqual({
+      kind: 'ready', records: [{ ...component, name: 'Recovered' }]
+    }));
   });
 
   it('rejects mismatched canonical detail ids and keeps both editors open', async () => {
@@ -246,6 +275,34 @@ describe('useStatusManagementController', () => {
     act(() => result.current.incidentQuery.setDraftSearch('new'));
     act(() => result.current.incidentQuery.submit());
     await waitFor(() => expect(result.current.incidents.kind).toBe('empty'));
+  });
+
+  it('returns honest incident refresh outcomes and recovers with current-query evidence', async () => {
+    api.loadStatusIncidents
+      .mockResolvedValueOnce(incidentPage([incident], 1))
+      .mockRejectedValueOnce(new ApiMessageError('Request failed with status 503', { status: 503 }))
+      .mockResolvedValueOnce(incidentPage([], 0));
+    const { result } = renderController('/settings/status-page?search=current&pageIndex=0&pageSize=8');
+    await waitFor(() => expect(result.current.incidents.kind).toBe('ready'));
+
+    let failed: boolean | undefined;
+    await act(async () => {
+      failed = await result.current.refreshIncidents();
+    });
+    expect(failed).toBe(false);
+    await waitFor(() => expect(result.current.incidents).toEqual({ kind: 'unavailable' }));
+
+    let recovered: boolean | undefined;
+    await act(async () => {
+      recovered = await result.current.refreshIncidents();
+    });
+    expect(recovered).toBe(true);
+    await waitFor(() => expect(result.current.incidents).toEqual({ kind: 'empty' }));
+    expect(api.loadStatusIncidents).toHaveBeenLastCalledWith({
+      search: 'current',
+      pageIndex: 0,
+      pageSize: 8
+    });
   });
 });
 

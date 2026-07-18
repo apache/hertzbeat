@@ -82,7 +82,7 @@ type IncidentSectionProps = {
   total: number;
   onDraftSearch: (value: string) => void;
   onQuery: () => void;
-  onRefresh: () => void;
+  onRefresh: () => Promise<boolean>;
   onNew: () => void;
   onPageChange: (pageIndex: number, pageSize: number) => void;
   onEdit: (id: number) => void;
@@ -111,7 +111,7 @@ export function StatusIncidentSection(props: IncidentSectionProps) {
           onPressEnter={props.onQuery}
         />
         <Button type="primary" onClick={props.onQuery}>{t('common.query')}</Button>
-        <Button onClick={props.onRefresh}>{t('common.refresh')}</Button>
+        <Button onClick={() => void props.onRefresh()}>{t('common.refresh')}</Button>
       </div>
       {props.detailState && (
         <Alert
