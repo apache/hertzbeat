@@ -165,7 +165,7 @@ function propertyName(name) {
 
 function featureModuleLimit(path) {
   if (/-page\.[jt]sx?$/.test(path) || /\/pages\/[^/]+\.[jt]sx?$/.test(path)) return 150;
-  if (/\/(?:components|controller)\//.test(path)) return 200;
+  if (/\/(?:components|controller)\//.test(path) || /(?:^|\/)[^/]+-controller\.[jt]sx?$/.test(path)) return 200;
   if (/\/(?:api|model)\//.test(path)) return 250;
   if (/^features\/[^/]+\/index\.[jt]sx?$/.test(path)) return 100;
   return undefined;

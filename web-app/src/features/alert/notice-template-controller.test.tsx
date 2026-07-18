@@ -211,6 +211,31 @@ describe('Notice Template controller', () => {
     expect(result.current.state.list).toEqual({ kind: 'ready', records: [record], total: 1 });
   });
 
+  it('clears a refresh failure across URL navigation without render-phase updates or Back revival', async () => {
+    refine.params = 'name=A&preset=false&pageIndex=0&pageSize=8';
+    refine.refetch.mockResolvedValue({ isError: true, error: { statusCode: 503 } });
+    const { result, rerender } = renderHook(() => useNoticeTemplateController());
+
+    act(() => result.current.create());
+    act(() => result.current.updateDraft({ name: 'New', content: '${content}' }));
+    await act(async () => result.current.submit());
+    expect(result.current.state.list.kind).toBe('unavailable');
+
+    refine.params = 'name=B&preset=false&pageIndex=0&pageSize=8';
+    rerender();
+    expect(refine.useList).toHaveBeenLastCalledWith(expect.objectContaining({
+      filters: expect.arrayContaining([expect.objectContaining({ field: 'name', value: 'B' })])
+    }));
+    expect(result.current.state.list.kind).toBe('ready');
+
+    refine.params = 'name=A&preset=false&pageIndex=0&pageSize=8';
+    rerender();
+    expect(refine.useList).toHaveBeenLastCalledWith(expect.objectContaining({
+      filters: expect.arrayContaining([expect.objectContaining({ field: 'name', value: 'A' })])
+    }));
+    expect(result.current.state.list.kind).toBe('ready');
+  });
+
   it('clears refresh failure after an explicit retry succeeds in the same query', async () => {
     refine.refetch.mockResolvedValueOnce({ isError: true, error: { statusCode: 503 } });
     const { result } = renderHook(() => useNoticeTemplateController());

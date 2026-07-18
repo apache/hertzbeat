@@ -150,6 +150,18 @@ test('applies size, parser, Query Key, and raw-color rules to every feature', ()
   assert.match(failures, /use shared semantic color tokens/);
 });
 
+test('applies the controller limit to explicitly named feature-root controllers', () => {
+  const project = createProject({
+    ...requiredProjectFiles(),
+    'src/features/orders/orders-controller.ts': sourceLines(201),
+    'src/features/orders/orders-controller-adapter.ts': sourceLines(201)
+  });
+
+  const failures = checkArchitecture(project).join('\n');
+  assert.match(failures, /features\/orders\/orders-controller\.ts: 201 lines exceeds 200/);
+  assert.doesNotMatch(failures, /orders-controller-adapter\.ts/);
+});
+
 test('counts only non-empty non-comment module lines', () => {
   const project = createProject({
     ...requiredProjectFiles(),
