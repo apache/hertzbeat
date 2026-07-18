@@ -18,8 +18,6 @@
 import { Button, Input, Typography } from "antd";
 import { useTranslation } from "react-i18next";
 
-import { SettingsNav } from '@/shared/settings/settings-nav';
-
 import styles from "../../alert-policy-page.module.css";
 
 type NoticeRuleToolbarProps = {
@@ -44,7 +42,6 @@ export function NoticeRuleToolbar(props: NoticeRuleToolbarProps) {
           {t("noticeRules.new")}
         </Button>
       </header>
-      <SettingsNav />
       <div className={styles.toolbar}>
         <Input
           allowClear

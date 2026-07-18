@@ -15,8 +15,6 @@
  * limitations under the License.
  */
 
-import { SettingsNav } from '@/shared/settings/settings-nav';
-
 import { TokenList } from '../components/token-list';
 import { GeneratedTokenModal, TokenGeneratorModal } from '../components/token-modals';
 import { TokenPageHeader } from '../components/token-page-header';
@@ -32,7 +30,6 @@ export function TokenPage() {
         generating={controller.state.generating}
         onGenerate={controller.openGenerator}
       />
-      <SettingsNav />
       <TokenList
         list={controller.state.list}
         refreshing={controller.state.refreshing}

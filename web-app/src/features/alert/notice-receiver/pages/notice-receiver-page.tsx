@@ -10,8 +10,6 @@ import type { ColumnsType } from 'antd/es/table';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
-import { SettingsNav } from '@/shared/settings/settings-nav';
-
 import styles from '../../alert-policy-page.module.css';
 import { NoticeReceiverEditor } from '../components/notice-receiver-editor';
 import { useNoticeReceiverController, type NoticeReceiverListState } from '../controller/notice-receiver-controller';
@@ -90,7 +88,6 @@ export function NoticeReceiverPage() {
         </div>
         <Button type="primary" onClick={actions.create}>{t('noticeReceivers.new')}</Button>
       </header>
-      <SettingsNav />
       <div className={styles.toolbar}>
         <Input allowClear value={state.name} placeholder={t('noticeReceivers.search')}
           onChange={event => actions.setName(event.target.value)} onPressEnter={actions.search} />

@@ -6,7 +6,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const controller = vi.hoisted(() => ({ useNoticeRuleController: vi.fn() }));
 vi.mock('../controller/notice-rule-controller', () => controller);
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
-vi.mock('@/shared/settings/settings-nav', () => ({ SettingsNav: () => null }));
 
 import { NoticeRulePage } from './notice-rule-page';
 

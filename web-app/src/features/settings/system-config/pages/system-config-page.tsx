@@ -18,8 +18,6 @@
 import { Alert, Button, Skeleton, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { SettingsNav } from '@/shared/settings/settings-nav';
-
 import { SystemConfigEditor } from '../components/system-config-editor';
 import { useSystemConfigResourceController } from '../controller/system-config-resource-controller';
 import styles from './system-config-page.module.css';
@@ -35,7 +33,6 @@ export function SystemConfigPage() {
         <Typography.Title level={2}>{t('systemConfig.title')}</Typography.Title>
         <Typography.Text type="secondary">{t('systemConfig.description')}</Typography.Text>
       </header>
-      <SettingsNav />
       {state.kind === 'unavailable' && (
         <Alert
           type="error"

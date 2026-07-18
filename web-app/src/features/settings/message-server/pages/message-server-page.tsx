@@ -18,8 +18,6 @@
 import { Alert, Button, Skeleton, Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { SettingsNav } from '@/shared/settings/settings-nav';
-
 import { EmailServerEditor, SmsServerEditor } from '../components/message-server-editors';
 import { useMessageServerController } from '../controller/use-message-server-controller';
 import {
@@ -44,7 +42,6 @@ export function MessageServerPage() {
         <Typography.Title level={2}>{t('messageServer.title')}</Typography.Title>
         <Typography.Text type="secondary">{t('messageServer.description')}</Typography.Text>
       </header>
-      <SettingsNav />
       <div className={styles.channels}>
         <EmailChannel controller={controller} />
         <SmsChannel controller={controller} />

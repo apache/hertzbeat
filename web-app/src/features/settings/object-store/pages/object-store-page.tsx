@@ -18,8 +18,6 @@
 import { Alert, Button, Skeleton, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { SettingsNav } from '@/shared/settings/settings-nav';
-
 import { ObjectStoreEditor } from '../components/object-store-editor';
 import styles from '../components/object-store.module.css';
 import { useObjectStoreResourceController } from '../controller/object-store-resource-controller';
@@ -35,7 +33,6 @@ export function ObjectStorePage() {
         <Typography.Title level={2}>{t('objectStore.title')}</Typography.Title>
         <Typography.Text type="secondary">{t('objectStore.description')}</Typography.Text>
       </header>
-      <SettingsNav />
       {state.kind === 'unavailable' && (
         <Alert
           type="error"

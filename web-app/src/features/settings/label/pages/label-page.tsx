@@ -20,7 +20,6 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useStringQueryDraft } from '@/shared/query-context';
-import { SettingsNav } from '@/shared/settings/settings-nav';
 
 import { LabelEditor, type LabelEditorState } from '../components/label-editor';
 import { LabelResults } from '../components/label-results';
@@ -51,7 +50,6 @@ export function LabelPage() {
         <Typography.Title level={2}>{t('labels.title')}</Typography.Title>
         <Typography.Text type="secondary">{t('labels.description')}</Typography.Text>
       </header>
-      <SettingsNav />
       <div className={styles.toolbar}>
         <Input
           allowClear

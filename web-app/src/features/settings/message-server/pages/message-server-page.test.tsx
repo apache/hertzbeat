@@ -20,7 +20,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const controller = vi.hoisted<{ value: unknown }>(() => ({ value: undefined }));
 vi.mock('../controller/use-message-server-controller', () => ({ useMessageServerController: () => controller.value }));
-vi.mock('@/shared/settings/settings-nav', () => ({ SettingsNav: () => null }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 import { MessageServerPage } from './message-server-page';

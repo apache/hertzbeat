@@ -18,8 +18,6 @@
 import { Button, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { SettingsNav } from '@/shared/settings/settings-nav';
-
 import { StatusManagementEditors } from '../components/status-management-editors';
 import {
   StatusComponentSection,
@@ -46,8 +44,6 @@ export function StatusManagementPage() {
         </div>
         <Button href="/status" target="_blank">{t('statusManagement.openPublicPage')}</Button>
       </header>
-      <SettingsNav />
-
       <StatusOrgSection
         state={controller.org}
         saving={controller.orgSaving}

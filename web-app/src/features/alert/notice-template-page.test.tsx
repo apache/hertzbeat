@@ -43,7 +43,6 @@ const controller = vi.hoisted(() => ({
 vi.mock('./notice-template-controller', () => ({
   useNoticeTemplateController: () => controller
 }));
-vi.mock('@/shared/settings/settings-nav', () => ({ SettingsNav: () => <nav data-testid="settings-nav" /> }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 const custom = noticeTemplateResourceRecord({
