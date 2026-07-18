@@ -24,6 +24,7 @@ import {
   createNoticeRuleDraft,
   noticeRuleDraftFromDetail,
   readNoticeRuleQuery,
+  resolveNoticeRuleListState,
   validateNoticeRuleDependencies,
   validateNoticeRuleDraft
 } from './notice-rule-model';
@@ -41,6 +42,14 @@ const templates = [
 ];
 
 describe('notice rule model', () => {
+  it('keeps every list evidence state distinct', () => {
+    expect(resolveNoticeRuleListState(true, null, [], undefined)).toEqual({ kind: 'loading' });
+    expect(resolveNoticeRuleListState(false, 'unavailable', [], undefined)).toEqual({ kind: 'unavailable' });
+    expect(resolveNoticeRuleListState(false, null, [], undefined)).toEqual({ kind: 'invalid' });
+    expect(resolveNoticeRuleListState(false, null, [], 0)).toEqual({ kind: 'empty' });
+    expect(resolveNoticeRuleListState(false, null, [], 4)).toEqual({ kind: 'ready', records: [], total: 4 });
+  });
+
   it('normalizes the searchable zero-based list query', () => {
     const query = readNoticeRuleQuery(new URLSearchParams('name=Night&pageIndex=2&pageSize=15'));
     expect(query).toEqual({ name: 'Night', pageIndex: 2, pageSize: 15 });

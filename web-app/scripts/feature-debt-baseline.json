@@ -13,16 +13,6 @@
     },
     {
       "rule": "feature-module-size",
-      "path": "features/alert/notice-rule/controller/notice-rule-controller.ts",
-      "allowedMax": 239
-    },
-    {
-      "rule": "inline-query-key",
-      "path": "features/alert/notice-rule/controller/notice-rule-controller.ts",
-      "allowedMax": 2
-    },
-    {
-      "rule": "feature-module-size",
       "path": "features/alert/notice-template-page.tsx",
       "allowedMax": 235
     },

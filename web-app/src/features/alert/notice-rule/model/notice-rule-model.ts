@@ -45,6 +45,7 @@ export type NoticeRule = {
 };
 
 export type NoticeRuleListState = RemotePageState<NoticeRule>;
+export type NoticeRuleFailureKind = 'missing' | 'invalid' | 'unavailable' | 'error';
 
 export type NoticeRuleDraft = {
   id?: number;
@@ -67,6 +68,19 @@ export type NoticeRuleMutationVariables = {
   receivers: NoticeReceiverOption[];
   templates: NoticeTemplate[];
 };
+
+export function resolveNoticeRuleListState(
+  pending: boolean,
+  failure: NoticeRuleFailureKind | null,
+  records: NoticeRule[],
+  total?: number
+): NoticeRuleListState {
+  if (pending) return { kind: 'loading' };
+  if (failure) return { kind: failure };
+  if (total === undefined) return { kind: 'invalid' };
+  if (records.length === 0 && total === 0) return { kind: 'empty' };
+  return { kind: 'ready', records, total };
+}
 
 export function readNoticeRuleQuery(params: URLSearchParams): NoticeRuleQuery {
   const pageIndex = Number.parseInt(params.get('pageIndex') ?? '', 10);
