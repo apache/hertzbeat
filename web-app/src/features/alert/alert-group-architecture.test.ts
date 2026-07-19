@@ -19,6 +19,7 @@ import { describe, expect, it } from 'vitest';
 
 import api from './alert-group-api.ts?raw';
 import commandController from './controller/use-alert-group-command-controller.ts?raw';
+import submitCommand from './controller/alert-group-submit-command.ts?raw';
 import controller from './controller/use-alert-group-controller.ts?raw';
 import queryController from './controller/use-alert-group-query-controller.ts?raw';
 import queryKeys from './controller/alert-group-query-keys.ts?raw';
@@ -31,7 +32,9 @@ const modules = import.meta.glob('./alert-group-page.tsx', { eager: true, import
 const source = Object.values(modules)[0] as string;
 
 function sourceLineCount(value: string) {
-  return value.replace(/\/\*[\s\S]*?\*\//g, '').split('\n')
+  return value
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .split('\n')
     .filter(line => line.trim() && !line.trim().startsWith('//')).length;
 }
 
@@ -43,8 +46,10 @@ describe('Alert Group architecture', () => {
   });
 
   it('keeps TanStack, API, Router, App, and browser date ownership out of the page', () => {
-    expect(source).not.toMatch(/@tanstack\/react-query|alert-group-api|react-router|App\.useApp|Date\.parse|Intl\.DateTimeFormat/);
-    expect(source).toContain("./controller/use-alert-group-controller");
+    expect(source).not.toMatch(
+      /@tanstack\/react-query|alert-group-api|react-router|App\.useApp|Date\.parse|Intl\.DateTimeFormat/
+    );
+    expect(source).toContain('./controller/use-alert-group-controller');
   });
 
   it('keeps the route hook as composition over query, read, and command responsibilities', () => {
@@ -57,8 +62,11 @@ describe('Alert Group architecture', () => {
     expect(readController).toMatch(/useQuery|useQueryClient/);
     expect(readController).toContain('resolveAlertGroupListState');
     expect(readController).not.toMatch(/page\.content\.length/);
-    expect(readController).not.toMatch(/useSearchParams|App\.useApp|saveAlertGroup|deleteAlertGroup|updateAlertGroupEnabled/);
-    expect(commandController).toMatch(/App\.useApp|saveAlertGroup|deleteAlertGroup|updateAlertGroupEnabled/);
+    expect(readController).not.toMatch(
+      /useSearchParams|App\.useApp|saveAlertGroup|deleteAlertGroup|updateAlertGroupEnabled/
+    );
+    expect(commandController).toMatch(/App\.useApp|deleteAlertGroup|updateAlertGroupEnabled/);
+    expect(submitCommand).toMatch(/saveAlertGroup|prepareAlertGroupCreateProof|proveAlertGroupCreated/);
     expect(commandController).toContain("from '../alert-group-write-proof'");
     expect(commandController).not.toMatch(/function\s+(?:prove|require)/);
     expect(commandController).not.toMatch(/useQuery|useQueryClient|useSearchParams/);
@@ -74,7 +82,7 @@ describe('Alert Group architecture', () => {
   });
 
   it('keeps every controller responsibility below the production limit', () => {
-    for (const module of [controller, queryController, readController, commandController, queryKeys]) {
+    for (const module of [controller, queryController, readController, commandController, submitCommand, queryKeys]) {
       expect(sourceLineCount(module)).toBeLessThanOrEqual(200);
     }
   });

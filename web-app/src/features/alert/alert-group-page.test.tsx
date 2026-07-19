@@ -21,8 +21,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AlertGroupPage } from './alert-group-page';
 
 const controller = vi.hoisted(() => ({
-  changePage: vi.fn(), closeDraft: vi.fn(), create: vi.fn(), edit: vi.fn(), refresh: vi.fn(), remove: vi.fn(),
-  retryDetail: vi.fn(), setSearch: vi.fn(), state: {}, submit: vi.fn(), submitSearch: vi.fn(), toggle: vi.fn(), updateDraft: vi.fn()
+  changePage: vi.fn(),
+  closeDraft: vi.fn(),
+  create: vi.fn(),
+  edit: vi.fn(),
+  refresh: vi.fn(),
+  remove: vi.fn(),
+  retryDetail: vi.fn(),
+  setSearch: vi.fn(),
+  state: {},
+  submit: vi.fn(),
+  submitSearch: vi.fn(),
+  toggle: vi.fn(),
+  updateDraft: vi.fn()
 }));
 vi.mock('./controller/use-alert-group-controller', () => ({ useAlertGroupController: () => controller }));
 vi.mock('./alert-management-nav', () => ({ AlertManagementNav: () => <nav /> }));
@@ -30,12 +41,21 @@ vi.mock('./alert-noise-control-nav', () => ({ AlertNoiseControlNav: () => <nav /
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 const record = {
-  id: 7, name: 'By service', groupLabels: ['service'], groupWait: 30, groupInterval: 300,
-  repeatInterval: 0, enable: true, gmtUpdate: '2026-07-17T09:00:00'
+  id: 7,
+  name: 'By service',
+  groupLabels: ['service'],
+  groupWait: 30,
+  groupInterval: 300,
+  repeatInterval: 0,
+  enable: true,
+  gmtUpdate: '2026-07-17T09:00:00'
 };
 
 describe('AlertGroupPage', () => {
-  beforeEach(() => { vi.clearAllMocks(); controller.state = buildState(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    controller.state = buildState();
+  });
   afterEach(cleanup);
 
   it('renders server LocalDateTime verbatim without browser parsing', () => {
@@ -46,7 +66,9 @@ describe('AlertGroupPage', () => {
   });
 
   it.each([
-    ['empty', 'alertGroups.empty'], ['unavailable', 'common.unavailable'], ['error', 'common.routeError.description']
+    ['empty', 'alertGroups.empty'],
+    ['unavailable', 'common.unavailable'],
+    ['error', 'common.routeError.description']
   ])('renders list state %s honestly', (kind, evidence) => {
     controller.state = buildState({ list: { kind } });
     render(<AlertGroupPage />);
@@ -61,7 +83,9 @@ describe('AlertGroupPage', () => {
   });
 
   it.each([
-    ['missing', 'common.notFound.description'], ['unavailable', 'common.unavailable'], ['error', 'alertGroups.loadFailed']
+    ['missing', 'common.notFound.description'],
+    ['unavailable', 'common.unavailable'],
+    ['error', 'alertGroups.loadFailed']
   ])('renders retryable detail state %s distinctly', (kind, evidence) => {
     controller.state = buildState({ detail: { kind, id: 7 } });
     render(<AlertGroupPage />);
@@ -83,12 +107,85 @@ describe('AlertGroupPage', () => {
     expect(controller.create).toHaveBeenCalled();
     expect(controller.edit).toHaveBeenCalledWith(7);
   });
+
+  it('locks an acknowledged create draft and offers proof retry without claiming save failure', () => {
+    controller.state = buildState({
+      createAcknowledged: true,
+      createProofFailure: 'unavailable',
+      draft: {
+        name: 'New',
+        groupLabels: ['service'],
+        groupWait: 30,
+        groupInterval: 300,
+        repeatInterval: 14_400,
+        enable: true
+      }
+    });
+    render(<AlertGroupPage />);
+
+    expect(screen.getByDisplayValue('New')).toBeDisabled();
+    expect(screen.getByText('common.unavailable')).toBeInTheDocument();
+    expect(screen.queryByText('alertGroups.saveFailed')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+    expect(controller.submit).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole('button', { name: 'common.cancel' }));
+    expect(controller.closeDraft).toHaveBeenCalledOnce();
+  });
+
+  it('makes every editor command inert while another operation owns the gate', () => {
+    controller.state = buildState({
+      command: 'operating',
+      draft: {
+        name: 'New',
+        groupLabels: ['service'],
+        groupWait: 30,
+        groupInterval: 300,
+        repeatInterval: 14_400,
+        enable: true
+      }
+    });
+    render(<AlertGroupPage />);
+
+    expect(screen.getByDisplayValue('New')).toBeDisabled();
+    const save = screen.getByRole('button', { name: 'common.save' });
+    const cancel = screen.getByRole('button', { name: 'common.cancel' });
+    expect(save).toBeDisabled();
+    expect(cancel).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument();
+    fireEvent.click(save);
+    fireEvent.click(cancel);
+    fireEvent.keyDown(document, { key: 'Escape', code: 'Escape', keyCode: 27 });
+    expect(controller.submit).not.toHaveBeenCalled();
+    expect(controller.closeDraft).not.toHaveBeenCalled();
+  });
+
+  it('disables an already open delete confirmation when another command starts', () => {
+    const view = render(<AlertGroupPage />);
+    fireEvent.click(screen.getByRole('button', { name: 'alertGroups.delete' }));
+    const confirm = screen.getByRole('button', { name: 'OK' });
+    expect(confirm).toBeEnabled();
+
+    controller.state = buildState({ command: 'operating' });
+    view.rerender(<AlertGroupPage />);
+
+    expect(confirm).toBeDisabled();
+    fireEvent.click(confirm);
+    expect(controller.remove).not.toHaveBeenCalled();
+  });
 });
 
 function buildState(override: Record<string, unknown> = {}) {
   return {
-    command: 'idle', detail: { kind: 'idle' }, draft: null, editorFailure: undefined,
-    list: { kind: 'ready', records: [record], total: 1 }, query: { search: '', pageIndex: 0, pageSize: 8 },
-    refreshing: false, search: '', ...override
+    command: 'idle',
+    createAcknowledged: false,
+    createProofFailure: undefined,
+    detail: { kind: 'idle' },
+    draft: null,
+    editorFailure: undefined,
+    list: { kind: 'ready', records: [record], total: 1 },
+    query: { search: '', pageIndex: 0, pageSize: 8 },
+    refreshing: false,
+    search: '',
+    ...override
   };
 }

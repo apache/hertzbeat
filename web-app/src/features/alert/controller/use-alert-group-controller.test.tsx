@@ -63,7 +63,9 @@ const persisted: AlertGroupConverge = {
 
 describe('Alert Group controller', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    // Reset queued one-shot implementations as well as call history so a RED
+    // test cannot leak unused transport evidence into the next case.
+    vi.resetAllMocks();
     api.loadAlertGroups.mockImplementation((query: AlertGroupQuery) => Promise.resolve(page(query, [])));
     api.loadAlertGroup.mockResolvedValue(persisted);
     api.saveAlertGroup.mockResolvedValue(undefined);
@@ -124,26 +126,158 @@ describe('Alert Group controller', () => {
     expect(result.current.state.draft).toMatchObject({ id: 7, name: 'By service' });
   });
 
-  it('closes a create only after the void POST and authoritative list reread succeed', async () => {
-    const reread = deferred<ReturnType<typeof page>>();
+  it('does not repeat an acknowledged create while canonical proof is unavailable', async () => {
     const { result } = renderController();
     await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
-    api.loadAlertGroups.mockReturnValueOnce(reread.promise);
+    const created = { ...persisted, name: 'New', repeatInterval: 14_400 };
+    api.loadAlertGroups
+      .mockResolvedValueOnce(proofPage([], 0))
+      .mockRejectedValueOnce(new ApiMessageError('offline', { status: 503 }));
     act(() => result.current.create());
     act(() => result.current.updateDraft({ name: 'New', groupLabels: ['service'] }));
-    let submission!: Promise<void>;
-    act(() => {
-      submission = result.current.submit();
-    });
 
+    await act(async () => result.current.submit());
     await waitFor(() => expect(api.saveAlertGroup).toHaveBeenCalledTimes(1));
-    expect(result.current.state.draft).not.toBeNull();
+    expect(result.current.state).toMatchObject({ createAcknowledged: true });
+    expect(result.current.state.draft).toMatchObject({ name: 'New' });
     expect(notify.success).not.toHaveBeenCalled();
-    act(() => reread.resolve(page(result.current.state.query, [persisted])));
-    await act(async () => submission);
+
+    api.loadAlertGroups
+      .mockResolvedValueOnce(proofPage([created], 1))
+      .mockResolvedValueOnce(page(result.current.state.query, [created]));
+    await act(async () => result.current.submit());
+
+    expect(api.saveAlertGroup).toHaveBeenCalledTimes(1);
     expect(result.current.state.draft).toBeNull();
     expect(api.loadAlertGroup).not.toHaveBeenCalled();
     expect(notify.success).toHaveBeenCalledWith('alertGroups.saveSuccess');
+  });
+
+  it.each([
+    new ApiMessageError('offline', { status: 503 }),
+    new ApiMessageError('malformed success envelope', { status: 200 })
+  ])('does not repeat a POST whose %s response leaves commit status ambiguous', async reason => {
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
+    api.loadAlertGroups.mockResolvedValueOnce(proofPage([], 0));
+    api.saveAlertGroup.mockRejectedValueOnce(reason);
+    act(() => result.current.create());
+    act(() => result.current.updateDraft({ name: 'New', groupLabels: ['service'] }));
+
+    await act(async () => result.current.submit());
+    expect(result.current.state.createAcknowledged).toBe(true);
+    expect(api.saveAlertGroup).toHaveBeenCalledOnce();
+
+    api.loadAlertGroups.mockResolvedValueOnce(proofPage([], 0));
+    await act(async () => result.current.submit());
+
+    expect(api.saveAlertGroup).toHaveBeenCalledOnce();
+    expect(result.current.state.createAcknowledged).toBe(true);
+    expect(notify.success).not.toHaveBeenCalled();
+  });
+
+  it('does not report create success when a successful reread cannot prove the new record', async () => {
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
+    api.loadAlertGroups.mockImplementation((query: AlertGroupQuery) =>
+      Promise.resolve(query.pageSize === 25 ? proofPage([], 0) : page(query, []))
+    );
+    act(() => result.current.create());
+    act(() => result.current.updateDraft({ name: 'New', groupLabels: ['service'] }));
+
+    await act(async () => result.current.submit());
+
+    expect(api.saveAlertGroup).toHaveBeenCalledTimes(1);
+    expect(result.current.state).toMatchObject({ createAcknowledged: true });
+    expect(result.current.state.draft).toMatchObject({ name: 'New' });
+    expect(notify.success).not.toHaveBeenCalled();
+  });
+
+  it('does not mistake an older exact-name record beyond the proof page for a new create', async () => {
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
+    const newerPartialMatches = Array.from({ length: 25 }, (_, index) => ({
+      ...persisted,
+      id: 100 - index,
+      name: `New partial ${index}`
+    }));
+    const olderExactMatch = { ...persisted, id: 75, name: 'New', repeatInterval: 14_400 };
+    api.loadAlertGroups
+      .mockResolvedValueOnce(proofPage(newerPartialMatches, 26))
+      .mockResolvedValueOnce(proofPage([...newerPartialMatches.slice(0, 24), olderExactMatch], 26));
+    act(() => result.current.create());
+    act(() => result.current.updateDraft({ name: 'New', groupLabels: ['service'] }));
+
+    await act(async () => result.current.submit());
+
+    expect(api.saveAlertGroup).toHaveBeenCalledOnce();
+    expect(result.current.state).toMatchObject({ createAcknowledged: true });
+    expect(notify.success).not.toHaveBeenCalled();
+  });
+
+  it('proves a create from the descending head even when exact search has more than 25 results', async () => {
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
+    const previous = Array.from({ length: 25 }, (_, index) => ({
+      ...persisted,
+      id: 100 - index,
+      name: `New partial ${index}`
+    }));
+    const created = { ...persisted, id: 101, name: 'New', repeatInterval: 14_400 };
+    api.loadAlertGroups
+      .mockResolvedValueOnce(proofPage(previous, 40))
+      .mockResolvedValueOnce(proofPage([created, ...previous.slice(0, 24)], 41))
+      .mockResolvedValueOnce(page(result.current.state.query, [created]));
+    act(() => result.current.create());
+    act(() => result.current.updateDraft({ name: 'New', groupLabels: ['service'] }));
+
+    await act(async () => result.current.submit());
+
+    expect(api.saveAlertGroup).toHaveBeenCalledOnce();
+    expect(result.current.state.draft).toBeNull();
+    expect(notify.success).toHaveBeenCalledWith('alertGroups.saveSuccess');
+  });
+
+  it('fails closed when the first proof page is not a complete descending head', async () => {
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
+    api.loadAlertGroups.mockResolvedValueOnce(
+      proofPage(
+        [
+          { ...persisted, id: 99, name: 'New partial A' },
+          { ...persisted, id: 100, name: 'New partial B' }
+        ],
+        40
+      )
+    );
+    act(() => result.current.create());
+    act(() => result.current.updateDraft({ name: 'New', groupLabels: ['service'] }));
+
+    await act(async () => result.current.submit());
+
+    expect(api.saveAlertGroup).not.toHaveBeenCalled();
+    expect(result.current.state.editorFailure).toBe('error');
+    expect(notify.success).not.toHaveBeenCalled();
+  });
+
+  it('keeps a canonically proven create complete when the visible list projection fails', async () => {
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
+    const created = { ...persisted, name: 'New', repeatInterval: 14_400 };
+    api.loadAlertGroups
+      .mockResolvedValueOnce(proofPage([], 0))
+      .mockResolvedValueOnce(proofPage([created], 1))
+      .mockRejectedValueOnce(new ApiMessageError('offline', { status: 503 }));
+    act(() => result.current.create());
+    act(() => result.current.updateDraft({ name: 'New', groupLabels: ['service'] }));
+
+    await act(async () => result.current.submit());
+
+    expect(api.saveAlertGroup).toHaveBeenCalledTimes(1);
+    expect(result.current.state.draft).toBeNull();
+    expect(result.current.state).toMatchObject({ createAcknowledged: false });
+    expect(notify.success).toHaveBeenCalledWith('alertGroups.saveSuccess');
+    expect(notify.error).not.toHaveBeenCalledWith('alertGroups.saveFailed');
   });
 
   it('admits only one same-tick write and blocks draft commands until it settles', async () => {
@@ -167,7 +301,7 @@ describe('Alert Group controller', () => {
       void result.current.edit(7);
     });
 
-    expect(api.saveAlertGroup).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(api.saveAlertGroup).toHaveBeenCalledTimes(1));
     expect(api.updateAlertGroupEnabled).not.toHaveBeenCalled();
     expect(api.deleteAlertGroup).not.toHaveBeenCalled();
     expect(api.loadAlertGroup).not.toHaveBeenCalled();
@@ -231,6 +365,68 @@ describe('Alert Group controller', () => {
     await act(async () => closedEdit);
     expect(result.current.state.draft).toBeNull();
     expect(result.current.state.detail).toEqual({ kind: 'idle' });
+  });
+
+  it('retires a pending detail owner when the controller unmounts', async () => {
+    const detail = deferred<AlertGroupConverge>();
+    api.loadAlertGroup.mockReturnValueOnce(detail.promise);
+    const { result, unmount } = renderController();
+    await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
+    let edit!: Promise<void>;
+    act(() => {
+      edit = result.current.edit(7);
+    });
+
+    unmount();
+    detail.resolve(persisted);
+    await edit;
+
+    expect(notify.success).not.toHaveBeenCalled();
+    expect(notify.error).not.toHaveBeenCalled();
+    expect(notify.warning).not.toHaveBeenCalled();
+  });
+
+  it('does not publish or notify when an acknowledged create proof completes after unmount', async () => {
+    const proof = deferred<ReturnType<typeof proofPage>>();
+    const { result, unmount } = renderController();
+    await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
+    const created = { ...persisted, id: 8, name: 'New', repeatInterval: 14_400 };
+    api.loadAlertGroups.mockResolvedValueOnce(proofPage([], 0)).mockReturnValueOnce(proof.promise);
+    act(() => result.current.create());
+    act(() => result.current.updateDraft({ name: 'New', groupLabels: ['service'] }));
+    let submit!: Promise<void>;
+    act(() => {
+      submit = result.current.submit();
+    });
+    await waitFor(() => expect(api.saveAlertGroup).toHaveBeenCalledOnce());
+
+    unmount();
+    proof.resolve(proofPage([created], 1));
+    await submit;
+
+    expect(api.loadAlertGroups).toHaveBeenCalledTimes(3);
+    expect(notify.success).not.toHaveBeenCalled();
+    expect(notify.error).not.toHaveBeenCalled();
+    expect(notify.warning).not.toHaveBeenCalled();
+  });
+
+  it('lets the operator abandon acknowledged proof without repeating the POST', async () => {
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
+    api.loadAlertGroups
+      .mockResolvedValueOnce(proofPage([], 0))
+      .mockRejectedValueOnce(new ApiMessageError('offline', { status: 503 }));
+    act(() => result.current.create());
+    act(() => result.current.updateDraft({ name: 'New', groupLabels: ['service'] }));
+    await act(async () => result.current.submit());
+    expect(result.current.state.createAcknowledged).toBe(true);
+
+    act(() => result.current.closeDraft());
+    await act(async () => result.current.submit());
+
+    expect(result.current.state.draft).toBeNull();
+    expect(result.current.state.createAcknowledged).toBe(false);
+    expect(api.saveAlertGroup).toHaveBeenCalledOnce();
   });
 
   it('keeps the create draft and reports no success when authoritative reread fails', async () => {
@@ -445,6 +641,16 @@ function page(query: AlertGroupQuery, content: AlertGroupConverge[]) {
     totalPages: Math.ceil(totalElements / query.pageSize),
     number: query.pageIndex,
     size: query.pageSize
+  };
+}
+
+function proofPage(content: AlertGroupConverge[], totalElements: number) {
+  return {
+    content,
+    totalElements,
+    totalPages: Math.ceil(totalElements / 25),
+    number: 0,
+    size: 25
   };
 }
 

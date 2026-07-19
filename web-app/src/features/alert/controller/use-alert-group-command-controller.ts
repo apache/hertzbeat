@@ -8,17 +8,9 @@
 import { App } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import {
-  classifyAlertGroupReadError,
-  classifyAlertGroupWriteError,
-  deleteAlertGroup,
-  loadAlertGroup,
-  saveAlertGroup,
-  updateAlertGroupEnabled
-} from '../alert-group-api';
+import { deleteAlertGroup, loadAlertGroup, updateAlertGroupEnabled } from '../alert-group-api';
 import {
   AlertGroupContractError,
-  buildAlertGroupPayload,
   buildAlertGroupTogglePayload,
   validateAlertGroupDraft,
   type AlertGroupConverge,
@@ -29,6 +21,12 @@ import {
   requireAlertGroupConvergence,
   requireExactAlertGroupId
 } from '../alert-group-write-proof';
+import { submitAlertGroupCreate, submitAlertGroupUpdate } from './alert-group-submit-command';
+import {
+  reportAlertGroupSubmitFailure,
+  type AlertGroupNotifications,
+  type AlertGroupSubmitStage
+} from './alert-group-submit-failure';
 import {
   useAlertGroupCommandGate,
   useAlertGroupEditor,
@@ -45,6 +43,8 @@ export function useAlertGroupCommandController(rereadList: () => Promise<AlertGr
     validation: () => void message.warning(t('alertGroups.validation')),
     saveSuccess: () => void message.success(t('alertGroups.saveSuccess')),
     saveFailed: () => void message.error(t('alertGroups.saveFailed')),
+    proofUnavailable: () => void message.warning(t('common.unavailable')),
+    proofFailed: () => void message.error(t('common.routeError.description')),
     operationSuccess: () => void message.success(t('alertGroups.operationSuccess')),
     operationFailed: () => void message.error(t('alertGroups.operationFailed'))
   };
@@ -52,23 +52,16 @@ export function useAlertGroupCommandController(rereadList: () => Promise<AlertGr
   const operations = useAlertGroupOperations(rereadList, gate, editor, notifications);
 
   return {
-    state: { command: gate.command, detail: editor.detail, draft: editor.draft, editorFailure: editor.editorFailure },
+    state: {
+      command: gate.command,
+      detail: editor.detail,
+      draft: editor.draft,
+      editorFailure: editor.editorFailure,
+      createAcknowledged: editor.createAcknowledged,
+      createProofFailure: editor.createProofFailure
+    },
     actions: { ...editor.actions, submit, ...operations }
   };
-}
-
-type AlertGroupNotifications = {
-  validation: () => void;
-  saveSuccess: () => void;
-  saveFailed: () => void;
-  operationSuccess: () => void;
-  operationFailed: () => void;
-};
-type AlertGroupSubmitStage = 'write' | 'detail-proof' | 'list-proof';
-
-function classifyAlertGroupSubmitFailure(stage: AlertGroupSubmitStage, reason: unknown) {
-  if (stage === 'detail-proof') return classifyAlertGroupReadError(reason);
-  return classifyAlertGroupWriteError(reason);
 }
 
 function useAlertGroupSubmit(
@@ -86,26 +79,41 @@ function useAlertGroupSubmit(
     if (!gate.begin('saving')) return;
     editor.invalidateDetail();
     editor.setEditorFailure(undefined);
-    let stage: AlertGroupSubmitStage = 'write';
+    editor.setCreateProofFailure(undefined);
+    let stage: AlertGroupSubmitStage = draft.id === undefined ? 'preflight' : 'write';
+    let createAcknowledged = editor.createProof !== null;
+    const setStage = (next: AlertGroupSubmitStage) => {
+      stage = next;
+    };
+    const acknowledgeCreate = () => {
+      createAcknowledged = true;
+    };
     try {
-      await saveAlertGroup(draft);
       if (draft.id !== undefined) {
-        stage = 'detail-proof';
-        const canonical = await loadAlertGroup(draft.id);
-        requireAlertGroupConvergence(canonical, { ...buildAlertGroupPayload(draft), id: draft.id });
+        await submitAlertGroupUpdate({ ...draft, id: draft.id }, gate, setStage);
+      } else {
+        await submitAlertGroupCreate(draft, gate, editor, setStage, acknowledgeCreate);
       }
-      stage = 'list-proof';
-      await rereadList();
       editor.setDraft(null);
+      editor.clearCreateProof();
       notifications.saveSuccess();
+      await refreshAlertGroupProjection(rereadList);
     } catch (reason) {
-      editor.setEditorFailure(classifyAlertGroupSubmitFailure(stage, reason));
-      notifications.saveFailed();
+      if (!gate.isOwnerAlive()) return;
+      reportAlertGroupSubmitFailure(reason, stage, createAcknowledged, editor, notifications);
     } finally {
       gate.end();
     }
   };
   return submit;
+}
+
+async function refreshAlertGroupProjection(rereadList: () => Promise<AlertGroupPage>) {
+  try {
+    await rereadList();
+  } catch {
+    // Canonical proof already completed; the list query owns this projection failure.
+  }
 }
 
 function useAlertGroupOperations(
@@ -119,15 +127,19 @@ function useAlertGroupOperations(
     editor.invalidateDetail();
     try {
       const current = await loadAlertGroup(group.id);
+      if (!gate.isOwnerAlive()) return;
       requireExactAlertGroupId(current.id, group.id);
       await updateAlertGroupEnabled(current, enable);
+      if (!gate.isOwnerAlive()) return;
       const canonical = await loadAlertGroup(group.id);
+      if (!gate.isOwnerAlive()) return;
       requireExactAlertGroupId(canonical.id, group.id);
       requireAlertGroupConvergence(canonical, buildAlertGroupTogglePayload(current, enable));
       await rereadList();
+      if (!gate.isOwnerAlive()) return;
       notifications.operationSuccess();
     } catch {
-      notifications.operationFailed();
+      if (gate.isOwnerAlive()) notifications.operationFailed();
     } finally {
       gate.end();
     }
@@ -137,14 +149,17 @@ function useAlertGroupOperations(
     editor.invalidateDetail();
     try {
       await deleteAlertGroup(id);
+      if (!gate.isOwnerAlive()) return;
       await proveAlertGroupMissing(id);
+      if (!gate.isOwnerAlive()) return;
       const canonical = await rereadList();
+      if (!gate.isOwnerAlive()) return;
       if (canonical.content.some(record => record.id === id)) {
         throw new AlertGroupContractError('deleted id remains');
       }
       notifications.operationSuccess();
     } catch {
-      notifications.operationFailed();
+      if (gate.isOwnerAlive()) notifications.operationFailed();
     } finally {
       gate.end();
     }
