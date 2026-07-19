@@ -168,8 +168,7 @@ export async function loadNewMonitorEvidence(name: string, app: string, signal?:
 
 export function mutateMonitors(action: MonitorAction, ids: number[]) {
   const path = buildMonitorActionPath(action, ids);
-  if (action === 'copy') return apiMessagePost(path, null);
-  if (action === 'enable') return apiMessageGet(path);
+  if (action === 'copy' || action === 'enable') return apiMessagePost(path, null);
   return apiMessageDelete(path);
 }
 

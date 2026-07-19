@@ -21,6 +21,7 @@ import { apiFetch } from './http-client';
 
 describe('apiFetch', () => {
   afterEach(() => {
+    document.cookie = 'hb_ui_csrf=; Max-Age=0; path=/';
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
@@ -47,11 +48,14 @@ describe('apiFetch', () => {
   it('never replays a mutation', async () => {
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 401 }));
     vi.stubGlobal('fetch', fetchMock);
+    document.cookie = 'hb_ui_csrf=monitor-csrf-token; path=/';
 
     const response = await apiFetch('/api/monitor', { method: 'POST', body: '{}' });
 
     expect(response.status).toBe(401);
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    const request = fetchMock.mock.calls[0]?.[1];
+    expect(new Headers(request?.headers).get('X-HertzBeat-CSRF')).toBe('monitor-csrf-token');
   });
 
   it('aborts a stalled request instead of leaving consumers pending indefinitely', async () => {

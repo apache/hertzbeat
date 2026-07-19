@@ -18,6 +18,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const http = vi.hoisted(() => ({
+  apiMessageDelete: vi.fn(),
   apiMessageGet: vi.fn(),
   apiMessagePost: vi.fn(),
   apiMessagePut: vi.fn()
@@ -43,6 +44,7 @@ import {
   loadMonitors,
   loadNewMonitorEvidence,
   loadRealtimeMetric,
+  mutateMonitors,
   saveMonitor,
   MonitorContractError,
   MonitorMissingError,
@@ -136,6 +138,19 @@ describe('monitor list API contracts', () => {
     const apps = await loadMonitorApps();
     expect(apps).toEqual([{ value: 'custom', category: null, label: null, hide: null }]);
     expect(monitorAppOptions(apps)).toEqual([{ value: 'custom', label: 'custom' }]);
+  });
+
+  it('uses a non-replayable POST for enable while preserving the established mutation methods', async () => {
+    await mutateMonitors('enable', [7, 8]);
+    await mutateMonitors('pause', [7]);
+    await mutateMonitors('delete', [8]);
+    await mutateMonitors('copy', [9]);
+
+    expect(http.apiMessagePost).toHaveBeenNthCalledWith(1, '/api/monitors/manage?ids=7&ids=8', null);
+    expect(http.apiMessagePost).toHaveBeenNthCalledWith(2, '/api/monitor/copy/9', null);
+    expect(http.apiMessageDelete).toHaveBeenNthCalledWith(1, '/api/monitors/manage?ids=7&type=JSON');
+    expect(http.apiMessageDelete).toHaveBeenNthCalledWith(2, '/api/monitors?ids=8');
+    expect(http.apiMessageGet).not.toHaveBeenCalledWith('/api/monitors/manage?ids=7&ids=8');
   });
 });
 
