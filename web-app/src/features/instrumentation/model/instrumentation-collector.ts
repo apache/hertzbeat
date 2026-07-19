@@ -37,6 +37,13 @@ export type CollectorInstrumentationIntake =
     }
   | { status: 'unavailable'; errorCode: CollectorIntakeErrorCode };
 
+export type CollectorTarget = {
+  collectorId: string;
+  otlpHttpEndpoint: string;
+  otlpGrpcEndpoint: string;
+  authorizationHeader: string;
+};
+
 export type InstrumentationCollector = {
   name: string;
   collectorId: string;

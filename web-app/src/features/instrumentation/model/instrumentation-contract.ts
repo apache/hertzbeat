@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import type { CollectorTarget } from './instrumentation-collector';
+
 export const INSTRUMENTATION_SCHEMA_VERSION = 1 as const;
 export const INSTRUMENTATION_POLL_AFTER_MS = 3_000;
 export const INSTRUMENTATION_AUTOMATIC_WINDOW_MS = 120_000;
@@ -85,12 +87,6 @@ export type InstrumentationRequestErrorCode = (typeof INSTRUMENTATION_REQUEST_ER
 export type SignalValues<T> = { metrics: T; logs: T; traces: T };
 
 export type ServiceIdentity = { name: string; namespace: string; environment: string };
-export type CollectorTarget = {
-  collectorId: string;
-  otlpHttpEndpoint: string;
-  otlpGrpcEndpoint: string;
-  authorizationHeader: string;
-};
 export type InstrumentationSelection = {
   language: InstrumentationLanguage;
   framework: InstrumentationFramework;

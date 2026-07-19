@@ -6,6 +6,7 @@
  */
 
 import type { QueryContext } from '@/shared/query-context';
+import { isSensitiveFieldName } from '@/core/security/sensitive-field';
 
 import {
   INSTRUMENTATION_ENVIRONMENTS,
@@ -17,7 +18,7 @@ import {
   type InstrumentationEnvironment,
   type InstrumentationPlatform,
   type InstrumentationSelection
-} from '../api/instrumentation-contract';
+} from './instrumentation-contract';
 import { createFlowDraft, type FlowStage, type InstrumentationFlowDraft } from './instrumentation-flow';
 
 export type InstrumentationProgress = {
@@ -37,19 +38,14 @@ const keys = {
 } as const;
 const progressKeys = Object.values(keys);
 
-export function parseInstrumentationProgress(
-  params: URLSearchParams,
-  context: QueryContext
-): InstrumentationProgress {
+export function parseInstrumentationProgress(params: URLSearchParams, context: QueryContext): InstrumentationProgress {
   const persisted = progressKeys.some(key => params.has(key));
   const environmentValue = enumParam(params, keys.environment, INSTRUMENTATION_ENVIRONMENTS);
   const platformValue = enumParam(params, keys.platform, INSTRUMENTATION_PLATFORMS);
   const environment: InstrumentationEnvironment = environmentValue ?? 'docker';
   const platform: InstrumentationPlatform = platformValue ?? 'linux_amd64';
   const parsedSelection = parseSelection(params, environment, platform);
-  const mismatch = hasProgressMismatch(
-    params, persisted, environmentValue, platformValue, parsedSelection.mismatch
-  );
+  const mismatch = hasProgressMismatch(params, persisted, environmentValue, platformValue, parsedSelection.mismatch);
   const draft: InstrumentationFlowDraft = {
     ...createFlowDraft(),
     environment,
@@ -73,6 +69,11 @@ export function writeInstrumentationProgress(
   stage: FlowStage
 ) {
   const params = new URLSearchParams(source);
+  // Progress updates may reuse a URL created by another flow. Strip the shared
+  // sensitive vocabulary before preserving any non-instrumentation context.
+  for (const key of [...params.keys()]) {
+    if (isSensitiveFieldName(key)) params.delete(key);
+  }
   for (const key of progressKeys) params.delete(key);
   params.set(keys.schemaVersion, String(INSTRUMENTATION_SCHEMA_VERSION));
   params.set(keys.stage, String(Math.min(stage, 3)));
@@ -92,7 +93,7 @@ function readStage(value: string | null): Extract<FlowStage, 1 | 2 | 3> {
 
 function enumParam<const T extends readonly string[]>(params: URLSearchParams, key: string, values: T) {
   const value = params.get(key);
-  return values.includes(value as T[number]) ? value as T[number] : undefined;
+  return values.includes(value as T[number]) ? (value as T[number]) : undefined;
 }
 
 function parseSelection(
@@ -120,8 +121,10 @@ function hasProgressMismatch(
   platform: string | undefined,
   selectionMismatch: boolean
 ) {
-  return persisted && params.get(keys.schemaVersion) !== String(INSTRUMENTATION_SCHEMA_VERSION)
-    || invalidSpecifiedParam(params, keys.environment, environment)
-    || invalidSpecifiedParam(params, keys.platform, platform)
-    || selectionMismatch;
+  return (
+    (persisted && params.get(keys.schemaVersion) !== String(INSTRUMENTATION_SCHEMA_VERSION)) ||
+    invalidSpecifiedParam(params, keys.environment, environment) ||
+    invalidSpecifiedParam(params, keys.platform, platform) ||
+    selectionMismatch
+  );
 }

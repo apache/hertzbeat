@@ -37,7 +37,11 @@ describe('instrumentation catalog controller', () => {
 
     act(() => result.current.setLanguage('go'));
     expect(result.current.draft.selection).toMatchObject({
-      language: 'go', framework: 'go_generic', method: 'sdk', environment: 'docker', platform: 'linux_amd64'
+      language: 'go',
+      framework: 'go_generic',
+      method: 'sdk',
+      environment: 'docker',
+      platform: 'linux_amd64'
     });
 
     act(() => result.current.setMethod('ebpf'));
@@ -55,18 +59,43 @@ describe('instrumentation catalog controller', () => {
   });
 
   it('reconciles a stale selection after the catalog is refreshed', async () => {
-    loadInstrumentationCatalog
-      .mockResolvedValueOnce(catalog)
-      .mockResolvedValueOnce(catalogWithoutEbpf);
+    loadInstrumentationCatalog.mockResolvedValueOnce(catalog).mockResolvedValueOnce(catalogWithoutEbpf);
     const { result } = renderHook(() => useInstrumentationCatalogController(), { wrapper: queryWrapper() });
     await waitFor(() => expect(result.current.state.status).toBe('ready'));
     act(() => result.current.setLanguage('go'));
     act(() => result.current.setMethod('ebpf'));
     expect(result.current.draft.selection?.method).toBe('ebpf');
 
-    await act(async () => void await result.current.retry());
+    await act(async () => void (await result.current.retry()));
 
     await waitFor(() => expect(result.current.draft.selection?.method).toBe('sdk'));
+  });
+
+  it('preserves equal draft identity and restores differing context and selection fields', async () => {
+    loadInstrumentationCatalog.mockResolvedValue(catalog);
+    const { result } = renderHook(() => useInstrumentationCatalogController(), { wrapper: queryWrapper() });
+    await waitFor(() => expect(result.current.state.status).toBe('ready'));
+    const original = result.current.draft;
+
+    act(() => result.current.restoreDraft({ ...original }));
+    expect(result.current.draft).toBe(original);
+
+    const withContext = { ...original, serviceName: 'payments-api' };
+    act(() => result.current.restoreDraft(withContext));
+    expect(result.current.draft).toBe(withContext);
+
+    const withSelection = {
+      ...withContext,
+      selection: {
+        language: 'go',
+        framework: 'go_generic',
+        method: 'ebpf',
+        environment: 'docker',
+        platform: 'linux_amd64'
+      } as const
+    };
+    act(() => result.current.restoreDraft(withSelection));
+    expect(result.current.draft).toBe(withSelection);
   });
 });
 
@@ -78,27 +107,52 @@ function queryWrapper() {
 }
 
 const component = {
-  name: 'OpenTelemetry Go SDK', sourceUrl: 'https://opentelemetry.io/', version: '1.43.0',
-  versionPolicy: 'pinned', license: 'Apache-2.0', installationLocationKey: 'instrumentation.location.application_host',
-  official: true, bundledWithHertzBeat: false, dependencies: [], artifacts: []
+  name: 'OpenTelemetry Go SDK',
+  sourceUrl: 'https://opentelemetry.io/',
+  version: '1.43.0',
+  versionPolicy: 'pinned',
+  license: 'Apache-2.0',
+  installationLocationKey: 'instrumentation.location.application_host',
+  official: true,
+  bundledWithHertzBeat: false,
+  dependencies: [],
+  artifacts: []
 };
 
 const catalog = {
   schemaVersion: 1,
-  languages: [{ language: 'go', labelKey: 'instrumentation.language.go', frameworks: [{
-    framework: 'go_generic', labelKey: 'instrumentation.framework.go_generic', methods: [
-      {
-        method: 'ebpf', labelKey: 'instrumentation.method.ebpf', preview: true,
-        environments: ['docker'], platforms: ['linux_amd64'],
-        signals: { metrics: 'unsupported', logs: 'unsupported', traces: 'preview' }, component
-      },
-      {
-        method: 'sdk', labelKey: 'instrumentation.method.sdk', preview: false,
-        environments: ['docker'], platforms: ['linux_amd64'],
-        signals: { metrics: 'supported', logs: 'preview', traces: 'supported' }, component
-      }
-    ]
-  }] }]
+  languages: [
+    {
+      language: 'go',
+      labelKey: 'instrumentation.language.go',
+      frameworks: [
+        {
+          framework: 'go_generic',
+          labelKey: 'instrumentation.framework.go_generic',
+          methods: [
+            {
+              method: 'ebpf',
+              labelKey: 'instrumentation.method.ebpf',
+              preview: true,
+              environments: ['docker'],
+              platforms: ['linux_amd64'],
+              signals: { metrics: 'unsupported', logs: 'unsupported', traces: 'preview' },
+              component
+            },
+            {
+              method: 'sdk',
+              labelKey: 'instrumentation.method.sdk',
+              preview: false,
+              environments: ['docker'],
+              platforms: ['linux_amd64'],
+              signals: { metrics: 'supported', logs: 'preview', traces: 'supported' },
+              component
+            }
+          ]
+        }
+      ]
+    }
+  ]
 };
 
 const catalogWithoutEbpf = {

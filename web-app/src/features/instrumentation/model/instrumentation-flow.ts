@@ -24,7 +24,7 @@ import {
   type InstrumentationPlatform,
   type InstrumentationSelection,
   type MethodOption
-} from '../api/instrumentation-contract';
+} from './instrumentation-contract';
 
 export type FlowStage = 1 | 2 | 3 | 4 | 5;
 export type FlowContextField = 'collectorId' | 'serviceName' | 'serviceNamespace' | 'serviceEnvironment';
@@ -40,19 +40,33 @@ export type InstrumentationFlowDraft = {
 
 export function createFlowDraft(): InstrumentationFlowDraft {
   return {
-    environment: 'docker', platform: 'linux_amd64', collectorId: '', serviceName: '',
-    serviceNamespace: '', serviceEnvironment: ''
+    environment: 'docker',
+    platform: 'linux_amd64',
+    collectorId: '',
+    serviceName: '',
+    serviceNamespace: '',
+    serviceEnvironment: ''
   };
 }
 
 export function availableEnvironments(catalog: CatalogResponse) {
-  return unique(catalog.languages.flatMap(language => language.frameworks.flatMap(framework =>
-    framework.methods.flatMap(method => method.environments))));
+  return unique(
+    catalog.languages.flatMap(language =>
+      language.frameworks.flatMap(framework => framework.methods.flatMap(method => method.environments))
+    )
+  );
 }
 
 export function availablePlatforms(catalog: CatalogResponse, environment: InstrumentationEnvironment) {
-  return unique(catalog.languages.flatMap(language => language.frameworks.flatMap(framework =>
-    framework.methods.filter(method => method.environments.includes(environment)).flatMap(method => method.platforms))));
+  return unique(
+    catalog.languages.flatMap(language =>
+      language.frameworks.flatMap(framework =>
+        framework.methods
+          .filter(method => method.environments.includes(environment))
+          .flatMap(method => method.platforms)
+      )
+    )
+  );
 }
 
 export function selectFlowEnvironment(
@@ -62,11 +76,19 @@ export function selectFlowEnvironment(
   platform?: InstrumentationPlatform
 ) {
   const platforms = availablePlatforms(catalog, environment);
-  const next = { ...draft, environment, platform: platform && platforms.includes(platform) ? platform : platforms[0] ?? 'any' };
+  const next = {
+    ...draft,
+    environment,
+    platform: platform && platforms.includes(platform) ? platform : (platforms[0] ?? 'any')
+  };
   return next.selection ? reconcileOrClear(next, catalog, next.selection.language, next.selection.framework) : next;
 }
 
-export function selectFlowPlatform(draft: InstrumentationFlowDraft, catalog: CatalogResponse, platform: InstrumentationPlatform) {
+export function selectFlowPlatform(
+  draft: InstrumentationFlowDraft,
+  catalog: CatalogResponse,
+  platform: InstrumentationPlatform
+) {
   const next = { ...draft, platform };
   return next.selection ? reconcileOrClear(next, catalog, next.selection.language, next.selection.framework) : next;
 }
@@ -132,10 +154,16 @@ export function compatibleMethods(
   language: InstrumentationLanguage,
   framework: InstrumentationFramework
 ): MethodOption[] {
-  return catalog.languages.find(item => item.language === language)?.frameworks
-    .find(item => item.framework === framework)?.methods
-    .filter(method => method.environments.includes(draft.environment)
-      && (method.platforms.includes(draft.platform) || method.platforms.includes('any'))) ?? [];
+  return (
+    catalog.languages
+      .find(item => item.language === language)
+      ?.frameworks.find(item => item.framework === framework)
+      ?.methods.filter(
+        method =>
+          method.environments.includes(draft.environment) &&
+          (method.platforms.includes(draft.platform) || method.platforms.includes('any'))
+      ) ?? []
+  );
 }
 
 function reconcileSelection(

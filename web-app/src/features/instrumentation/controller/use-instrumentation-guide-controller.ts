@@ -18,19 +18,11 @@
 import { useMutation } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import type { InstrumentationCollector } from '../api/collector-api';
-import type {
-  CollectorTarget,
-  GuideRenderRequest,
-  GuideRenderResponse,
-  GuideSnippet
-} from '../api/instrumentation-contract';
+import type { CollectorTarget, InstrumentationCollector } from '../model/instrumentation-collector';
+import type { GuideRenderRequest, GuideRenderResponse, GuideSnippet } from '../model/instrumentation-contract';
 import { renderInstrumentationGuide } from '../api/instrumentation-api';
-import {
-  buildGuideRequest,
-  createTransientCollectorTarget,
-  materializeGuideSnippet
-} from '../model/instrumentation-requests';
+import { buildGuideRequest, createTransientCollectorTarget } from '../model/instrumentation-requests';
+import { materializeGuideSnippet } from '../model/instrumentation-snippet';
 import type { InstrumentationFlowDraft } from '../model/instrumentation-flow';
 
 export type InstrumentationGuideState =
@@ -44,25 +36,60 @@ export function useInstrumentationGuideController(
   draft: InstrumentationFlowDraft,
   collectors: InstrumentationCollector[]
 ) {
-  const [transientTarget, setTarget] = useState<CollectorTarget>();
-  const targetRef = useRef<CollectorTarget | undefined>(undefined);
-  const [token, setToken] = useState('');
   const mutation = useMutation<GuideRenderResponse, Error, GuideRenderRequest>({
     mutationFn: request => renderInstrumentationGuide(request)
   });
-  const reset = mutation.reset;
+  const advertisedTarget = useMemo(
+    () => collectorTargetFromInventory(draft.collectorId, collectors),
+    [collectors, draft.collectorId]
+  );
+  const contract = useGuideContractState(draft, advertisedTarget, mutation.reset);
+  const render = useCallback(async () => {
+    const collector = collectors.find(item => item.collectorId === draft.collectorId);
+    if (!collector || !collector.online) throw new Error('Selected Collector is unavailable');
+    return mutation.mutateAsync(buildGuideRequest(draft, collector, contract.transientTarget));
+  }, [collectors, contract.transientTarget, draft, mutation]);
+  const materializeSnippet = useCallback(
+    (snippet: GuideSnippet) => {
+      if (!mutation.data) throw new Error('Guide is unavailable');
+      return materializeGuideSnippet(snippet, mutation.data, contract.token);
+    },
+    [contract.token, mutation.data]
+  );
+
+  return {
+    state: guideState(draft, collectors, contract.transientTarget, mutation.data, mutation.error, mutation.isPending),
+    guide: mutation.data,
+    ...contract,
+    render,
+    materializeSnippet,
+    reset: mutation.reset
+  };
+}
+
+function useGuideContractState(
+  draft: InstrumentationFlowDraft,
+  advertisedTarget: CollectorTarget | undefined,
+  reset: () => void
+) {
+  const [transientTarget, setTarget] = useState<CollectorTarget>();
+  const targetRef = useRef<CollectorTarget | undefined>(undefined);
+  const [token, setToken] = useState('');
   const clearContractState = useCallback(() => {
     reset();
     setToken('');
   }, [reset]);
-  const setTransientTarget = useCallback((target: CollectorTarget | undefined) => {
-    const nextTarget = target ? createTransientCollectorTarget(target) : undefined;
-    if (sameCollectorTarget(targetRef.current, nextTarget)) return;
-    targetRef.current = nextTarget;
-    setTarget(nextTarget);
-    setToken('');
-    reset();
-  }, [reset]);
+  const setTransientTarget = useCallback(
+    (target: CollectorTarget | undefined) => {
+      const nextTarget = target ? createTransientCollectorTarget(target) : undefined;
+      if (sameCollectorTarget(targetRef.current, nextTarget)) return;
+      targetRef.current = nextTarget;
+      setTarget(nextTarget);
+      setToken('');
+      reset();
+    },
+    [reset]
+  );
   const previousDraft = useRef(draft);
   useEffect(() => {
     if (previousDraft.current === draft) return;
@@ -75,34 +102,16 @@ export function useInstrumentationGuideController(
       setToken('');
     }
   }, [draft, reset]);
-  const advertisedTarget = useMemo(
-    () => collectorTargetFromInventory(draft.collectorId, collectors),
-    [collectors, draft.collectorId]
-  );
   useEffect(() => {
     setTransientTarget(advertisedTarget);
   }, [advertisedTarget, setTransientTarget]);
-  const render = useCallback(async () => {
-    const collector = collectors.find(item => item.collectorId === draft.collectorId);
-    if (!collector || !collector.online) throw new Error('Selected Collector is unavailable');
-    return mutation.mutateAsync(buildGuideRequest(draft, collector, transientTarget));
-  }, [collectors, draft, mutation, transientTarget]);
-  const materializeSnippet = useCallback((snippet: GuideSnippet) => {
-    if (!mutation.data) throw new Error('Guide is unavailable');
-    return materializeGuideSnippet(snippet, mutation.data, token);
-  }, [mutation.data, token]);
 
   return {
-    state: guideState(draft, collectors, transientTarget, mutation.data, mutation.error, mutation.isPending),
-    guide: mutation.data,
     token,
     setToken,
     transientTarget,
     setTransientTarget,
-    render,
-    materializeSnippet,
-    clearContractState,
-    reset
+    clearContractState
   };
 }
 
@@ -121,10 +130,12 @@ function collectorTargetFromInventory(
 }
 
 function sameCollectorTarget(left: CollectorTarget | undefined, right: CollectorTarget | undefined) {
-  return left?.collectorId === right?.collectorId
-    && left?.otlpHttpEndpoint === right?.otlpHttpEndpoint
-    && left?.otlpGrpcEndpoint === right?.otlpGrpcEndpoint
-    && left?.authorizationHeader === right?.authorizationHeader;
+  return (
+    left?.collectorId === right?.collectorId &&
+    left?.otlpHttpEndpoint === right?.otlpHttpEndpoint &&
+    left?.otlpGrpcEndpoint === right?.otlpGrpcEndpoint &&
+    left?.authorizationHeader === right?.authorizationHeader
+  );
 }
 
 function guideState(

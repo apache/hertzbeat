@@ -17,12 +17,11 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type { DetectionRequest, GuideRenderRequest } from './instrumentation-contract';
+import type { DetectionRequest, GuideRenderRequest } from '../model/instrumentation-contract';
 import {
   buildDetectionPayload,
   buildGuideRenderPayload,
   InstrumentationContractError,
-  materializeSnippetForCopy,
   parseCatalogResponse,
   parseDetectionResponse,
   parseGuideRenderResponse
@@ -73,23 +72,29 @@ describe('instrumentation v1 model', () => {
   it('parses the nested catalog and rejects another schema version', () => {
     const catalog = parseCatalogResponse({
       schemaVersion: 1,
-      languages: [{
-        language: 'nodejs',
-        labelKey: 'instrumentation.language.nodejs',
-        frameworks: [{
-          framework: 'express',
-          labelKey: 'instrumentation.framework.express',
-          methods: [{
-            method: 'zero_code',
-            labelKey: 'instrumentation.method.zero_code',
-            preview: false,
-            environments: ['vm', 'docker'],
-            platforms: ['linux_amd64'],
-            signals: { metrics: 'supported', logs: 'unsupported', traces: 'supported' },
-            component
-          }]
-        }]
-      }]
+      languages: [
+        {
+          language: 'nodejs',
+          labelKey: 'instrumentation.language.nodejs',
+          frameworks: [
+            {
+              framework: 'express',
+              labelKey: 'instrumentation.framework.express',
+              methods: [
+                {
+                  method: 'zero_code',
+                  labelKey: 'instrumentation.method.zero_code',
+                  preview: false,
+                  environments: ['vm', 'docker'],
+                  platforms: ['linux_amd64'],
+                  signals: { metrics: 'supported', logs: 'unsupported', traces: 'supported' },
+                  component
+                }
+              ]
+            }
+          ]
+        }
+      ]
     });
 
     expect(catalog.languages[0]?.frameworks[0]?.methods[0]?.signals.logs).toBe('unsupported');
@@ -103,14 +108,18 @@ describe('instrumentation v1 model', () => {
 
     const bundledDependency = guideFixture();
     (bundledDependency.component.dependencies as unknown[]).push({
-      name: 'external-package', sourceUrl: 'https://example.test/package', version: '1.0.0',
-      license: 'Apache-2.0', purposeKey: 'instrumentation.dependency.sdk', official: true,
+      name: 'external-package',
+      sourceUrl: 'https://example.test/package',
+      version: '1.0.0',
+      license: 'Apache-2.0',
+      purposeKey: 'instrumentation.dependency.sdk',
+      official: true,
       bundledWithHertzBeat: true
     });
     expect(() => parseGuideRenderResponse(bundledDependency)).toThrow(InstrumentationContractError);
   });
 
-  it('parses structured guide secrets and replaces them only in a copy value', () => {
+  it('parses structured guide secret placeholders', () => {
     const guide = parseGuideRenderResponse({
       schemaVersion: 1,
       selection: {
@@ -129,28 +138,29 @@ describe('instrumentation v1 model', () => {
           replacement: 'raw'
         }
       },
-      steps: [{
-        id: 'configure',
-        type: 'configure',
-        titleKey: 'instrumentation.step.configure',
-        executionLocationKey: 'instrumentation.location.application_environment',
-        snippets: [{
-          id: 'otel-environment',
-          language: 'bash',
-          content: "export OTEL_EXPORTER_OTLP_HEADERS='Authorization=Bearer%20${HERTZBEAT_TOKEN}'",
-          secretPlaceholders: ['authorizationToken']
-        }]
-      }]
+      steps: [
+        {
+          id: 'configure',
+          type: 'configure',
+          titleKey: 'instrumentation.step.configure',
+          executionLocationKey: 'instrumentation.location.application_environment',
+          snippets: [
+            {
+              id: 'otel-environment',
+              language: 'bash',
+              content: "export OTEL_EXPORTER_OTLP_HEADERS='Authorization=Bearer%20${HERTZBEAT_TOKEN}'",
+              secretPlaceholders: ['authorizationToken']
+            }
+          ]
+        }
+      ]
     });
-    const snippet = guide.steps[0]!.snippets[0]!;
-
-    expect(materializeSnippetForCopy(snippet, guide.secretPlaceholders, {
-      authorizationToken: 'hb.token-1_~'
-    })).toContain('Bearer%20hb.token-1_~');
-    expect(snippet.content).toContain('${HERTZBEAT_TOKEN}');
-    expect(() => materializeSnippetForCopy(snippet, guide.secretPlaceholders, {
-      authorizationToken: 'token with spaces'
-    })).toThrow(InstrumentationContractError);
+    expect(guide.secretPlaceholders.authorizationToken).toEqual({
+      marker: '${HERTZBEAT_TOKEN}',
+      valueFormat: 'url_unreserved',
+      replacement: 'raw'
+    });
+    expect(guide.steps[0]!.snippets[0]!.secretPlaceholders).toEqual(['authorizationToken']);
   });
 
   it('rejects secret markers that are undeclared, unused, or duplicated', () => {
@@ -244,12 +254,16 @@ describe('instrumentation v1 model', () => {
   });
 
   it('serializes only v1 allowlisted request fields and drops injected secrets', () => {
-    expect(buildGuideRenderPayload({ ...renderRequest, token: 'must-not-leave-memory' } as GuideRenderRequest & {
-      token: string;
-    })).toEqual(renderRequest);
-    expect(buildDetectionPayload({ ...detectionRequest, token: 'must-not-leave-memory' } as DetectionRequest & {
-      token: string;
-    })).toEqual(detectionRequest);
+    const secrets = {
+      token: 'must-not-leave-memory',
+      access_token: 'must-not-leave-memory',
+      authorization: 'must-not-leave-memory',
+      clientSecret: 'must-not-leave-memory',
+      installLog: 'must-not-leave-memory',
+      telemetryBody: 'must-not-leave-memory'
+    };
+    expect(buildGuideRenderPayload({ ...renderRequest, ...secrets })).toEqual(renderRequest);
+    expect(buildDetectionPayload({ ...detectionRequest, ...secrets })).toEqual(detectionRequest);
   });
 });
 
@@ -295,20 +309,32 @@ function guideFixture() {
   return {
     schemaVersion: 1,
     selection: {
-      language: 'nodejs', framework: 'express', method: 'zero_code', environment: 'docker', platform: 'linux_amd64'
+      language: 'nodejs',
+      framework: 'express',
+      method: 'zero_code',
+      environment: 'docker',
+      platform: 'linux_amd64'
     },
     signals: { metrics: 'supported', logs: 'unsupported', traces: 'supported' },
     component: structuredClone(component),
     secretPlaceholders: {
       authorizationToken: { marker: '${HERTZBEAT_TOKEN}', valueFormat: 'url_unreserved', replacement: 'raw' }
     },
-    steps: [{
-      id: 'configure', type: 'configure', titleKey: 'instrumentation.step.configure',
-      executionLocationKey: 'instrumentation.location.application_environment',
-      snippets: [{
-        id: 'otel-environment', language: 'bash', content: 'Authorization=Bearer%20${HERTZBEAT_TOKEN}',
-        secretPlaceholders: ['authorizationToken']
-      }]
-    }]
+    steps: [
+      {
+        id: 'configure',
+        type: 'configure',
+        titleKey: 'instrumentation.step.configure',
+        executionLocationKey: 'instrumentation.location.application_environment',
+        snippets: [
+          {
+            id: 'otel-environment',
+            language: 'bash',
+            content: 'Authorization=Bearer%20${HERTZBEAT_TOKEN}',
+            secretPlaceholders: ['authorizationToken']
+          }
+        ]
+      }
+    ]
   };
 }

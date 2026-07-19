@@ -17,19 +17,15 @@
 
 import { buildSignalHandoffPath } from '@/shared/query-context';
 
-import type { InstrumentationCollector } from '../api/collector-api';
+import type { CollectorTarget, InstrumentationCollector } from './instrumentation-collector';
 import {
   INSTRUMENTATION_SCHEMA_VERSION,
-  type CollectorTarget,
   type DetectionRequest,
   type GuideRenderRequest,
-  type GuideRenderResponse,
-  type GuideSnippet,
   type InstrumentationSignal,
   type QueryJumpContext,
   type ServiceIdentity
-} from '../api/instrumentation-contract';
-import { materializeSnippetForCopy } from '../api/instrumentation-wire';
+} from './instrumentation-contract';
 import { validateFlowContext, type InstrumentationFlowDraft } from './instrumentation-flow';
 
 export function buildGuideRequest(
@@ -79,17 +75,17 @@ export function buildDetectionRequest(draft: InstrumentationFlowDraft, startedAt
   };
 }
 
-export function materializeGuideSnippet(snippet: GuideSnippet, guide: GuideRenderResponse, token: string) {
-  return materializeSnippetForCopy(snippet, guide.secretPlaceholders, { authorizationToken: token });
-}
-
 export function buildExploreHandoff(signal: InstrumentationSignal, context: QueryJumpContext) {
-  return buildSignalHandoffPath(signal, {
-    collectorId: context.collectorId,
-    serviceName: context.serviceName,
-    serviceNamespace: context.serviceNamespace,
-    environment: context.environment
-  }, { from: context.startedAt, to: context.detectedAt });
+  return buildSignalHandoffPath(
+    signal,
+    {
+      collectorId: context.collectorId,
+      serviceName: context.serviceName,
+      serviceNamespace: context.serviceNamespace,
+      environment: context.environment
+    },
+    { from: context.startedAt, to: context.detectedAt }
+  );
 }
 
 function requireSelection(draft: InstrumentationFlowDraft) {
@@ -116,12 +112,14 @@ function requireSafeEndpoint(value: string) {
   } catch {
     throw new Error('Collector intake endpoint is invalid');
   }
-  if (!['http:', 'https:'].includes(endpoint.protocol)
-    || !endpoint.hostname
-    || endpoint.username
-    || endpoint.password
-    || endpoint.search
-    || endpoint.hash) {
+  if (
+    !['http:', 'https:'].includes(endpoint.protocol) ||
+    !endpoint.hostname ||
+    endpoint.username ||
+    endpoint.password ||
+    endpoint.search ||
+    endpoint.hash
+  ) {
     throw new Error('Collector intake endpoint is invalid');
   }
 }

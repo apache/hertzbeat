@@ -19,8 +19,8 @@ import { describe, expect, it } from 'vitest';
 
 const sourceDirectories = ['api', 'model', 'controller', 'components', 'pages'] as const;
 const allowedDependencies: Record<(typeof sourceDirectories)[number], readonly string[]> = {
-  api: ['api'],
-  model: ['api', 'model'],
+  api: ['api', 'model'],
+  model: ['model'],
   controller: ['api', 'model', 'controller'],
   components: ['model', 'controller', 'components'],
   pages: ['controller', 'components', 'pages']
@@ -54,6 +54,18 @@ describe('instrumentation feature boundaries', () => {
       .filter(([path]) => !path.includes('.test.'))
       .flatMap(([path, source]) => validateImports(path, source));
     expect(violations).toEqual([]);
+  });
+
+  it('owns domain contracts in model without compatibility API entry points', () => {
+    expect(productionSources['./model/instrumentation-contract.ts']).toBeDefined();
+    expect(productionSources['./model/instrumentation-collector.ts']).toBeDefined();
+    expect(productionSources['./model/instrumentation-snippet.ts']).toBeDefined();
+    expect(productionSources['./api/instrumentation-contract.ts']).toBeUndefined();
+    expect(productionSources['./api/collector-contract.ts']).toBeUndefined();
+    expect(productionSources['./api/instrumentation-api.ts']).not.toMatch(/export\s+type\s*\{[^}]*CatalogResponse/);
+    expect(productionSources['./api/collector-api.ts']).not.toMatch(
+      /export\s+(?:type\s*)?\{[^}]*(?:InstrumentationCollector|COLLECTOR_INTAKE)/
+    );
   });
 
   it('keeps presentation controller-owned without API or model imports', () => {

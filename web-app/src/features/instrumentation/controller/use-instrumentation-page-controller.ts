@@ -22,21 +22,12 @@ import { useNavigate } from 'react-router-dom';
 import { mergeQueryContext, useQueryContextOptional, type QueryContext } from '@/shared/query-context';
 
 import { loadInstrumentationCollectors } from '../api/collector-api';
-import {
-  INSTRUMENTATION_SCHEMA_VERSION,
-  type CollectorTarget,
-  type GuideSnippet
-} from '../api/instrumentation-contract';
+import { INSTRUMENTATION_SCHEMA_VERSION, type GuideSnippet } from '../model/instrumentation-contract';
+import type { CollectorTarget } from '../model/instrumentation-collector';
 import { instrumentationQueryKeys } from '../api/instrumentation-query-keys';
-import {
-  availableEnvironments,
-  availablePlatforms,
-  compatibleMethods,
-  validateFlowContext,
-  type FlowStage,
-  type InstrumentationFlowDraft
-} from '../model/instrumentation-flow';
+import { validateFlowContext, type FlowStage, type InstrumentationFlowDraft } from '../model/instrumentation-flow';
 import { buildDetectionRequest } from '../model/instrumentation-requests';
+import { buildInstrumentationSelectionOptions } from './instrumentation-selection-options';
 import { useInstrumentationCatalogController } from './use-instrumentation-catalog-controller';
 import { useInstrumentationContractRefresh } from './use-instrumentation-contract-refresh';
 import { useInstrumentationDetectionController } from './use-instrumentation-detection-controller';
@@ -47,24 +38,59 @@ export function useInstrumentationPageController() {
   const sharedContext = useQueryContextOptional();
   const progress = useInstrumentationProgressController(sharedContext?.context ?? {});
   const catalog = useInstrumentationCatalogController(progress.restored.draft);
-  const collectorsQuery = useQuery({
-    queryKey: instrumentationQueryKeys.collectors(),
-    queryFn: ({ signal }) => loadInstrumentationCollectors(signal)
-  });
+  const collectorsQuery = useInstrumentationCollectors();
   const guide = useInstrumentationGuideController(catalog.draft, collectorsQuery.data ?? []);
-  const selectionOptions = buildSelectionOptions(catalog.catalog, catalog.draft);
-  const setStage = useCallback((stage: FlowStage) => {
-    progress.setStage(stage, catalog.draft);
-  }, [catalog.draft, progress]);
+  const selectionOptions = buildInstrumentationSelectionOptions(catalog.catalog, catalog.draft);
   const handleContractError = useInstrumentationContractRefresh({
     clearSelection: catalog.clearSelection,
     clearGuide: guide.clearContractState,
     resetFlow: () => progress.clearMismatch(catalog.draft),
-    refreshCatalog: async () => void await catalog.retry()
+    refreshCatalog: async () => void (await catalog.retry())
   });
 
-  useRestoredInstrumentationDraft(catalog, guide, progress);
+  useRestoreInstrumentationDraft(catalog.restoreDraft, progress.restored.draft);
+  usePersistInstrumentationDraft(catalog.draft, progress.persistDraft);
+  useInstrumentationMismatchRecovery(
+    progress.restored.mismatch,
+    progress.search,
+    catalog.draft,
+    catalog.clearSelection,
+    guide.clearContractState,
+    progress.clearMismatch,
+    catalog.retry
+  );
+  const actions = useInstrumentationSetupActions(catalog, guide, progress, sharedContext, handleContractError);
+  const setup = buildInstrumentationSetup(catalog, collectorsQuery, guide, progress, selectionOptions, actions);
+  const detection = usePageDetection(catalog.draft, handleContractError);
+  return { setup, detection };
+}
 
+function useInstrumentationCollectors() {
+  return useQuery({
+    queryKey: instrumentationQueryKeys.collectors(),
+    queryFn: ({ signal }) => loadInstrumentationCollectors(signal)
+  });
+}
+
+type CatalogController = ReturnType<typeof useInstrumentationCatalogController>;
+type GuideController = ReturnType<typeof useInstrumentationGuideController>;
+type ProgressController = ReturnType<typeof useInstrumentationProgressController>;
+type SharedContext = ReturnType<typeof useQueryContextOptional>;
+type ContractErrorHandler = ReturnType<typeof useInstrumentationContractRefresh>;
+
+function useInstrumentationSetupActions(
+  catalog: CatalogController,
+  guide: GuideController,
+  progress: ProgressController,
+  sharedContext: SharedContext,
+  handleContractError: ContractErrorHandler
+) {
+  const setStage = useCallback(
+    (stage: FlowStage) => {
+      progress.setStage(stage, catalog.draft);
+    },
+    [catalog.draft, progress]
+  );
   const renderGuide = async () => {
     try {
       const rendered = await guide.render();
@@ -85,10 +111,22 @@ export function useInstrumentationPageController() {
       sharedContext.replace(mergeQueryContext(sharedContext.context, { [sharedField]: value }));
     }
   };
-  const setup = {
+
+  return { setStage, setContext, renderGuide, copySnippet, handleContractError };
+}
+
+function buildInstrumentationSetup(
+  catalog: CatalogController,
+  collectorsQuery: ReturnType<typeof useInstrumentationCollectors>,
+  guide: GuideController,
+  progress: ProgressController,
+  selectionOptions: ReturnType<typeof buildInstrumentationSelectionOptions>,
+  actions: ReturnType<typeof useInstrumentationSetupActions>
+) {
+  return {
     schemaVersion: INSTRUMENTATION_SCHEMA_VERSION,
     stage: progress.stage,
-    setStage,
+    setStage: actions.setStage,
     draft: catalog.draft,
     selectionOptions,
     contextMissing: validateFlowContext(catalog.draft),
@@ -113,78 +151,70 @@ export function useInstrumentationPageController() {
     setLanguage: catalog.setLanguage,
     setFramework: catalog.setFramework,
     setMethod: catalog.setMethod,
-    setContext,
-    renderGuide,
-    copySnippet,
+    setContext: actions.setContext,
+    renderGuide: actions.renderGuide,
+    copySnippet: actions.copySnippet,
     clearGuide: guide.clearContractState,
-    handleContractError
+    handleContractError: actions.handleContractError
   };
-  const createDetectionRequest = useCallback(
-    (startedAt: number) => buildDetectionRequest(catalog.draft, startedAt),
-    [catalog.draft]
-  );
-  const navigate = useNavigate();
-  const openPath = useCallback((path: string) => { void navigate(path); }, [navigate]);
-  const detection = useInstrumentationDetectionController(createDetectionRequest, handleContractError, openPath);
-  return { setup, detection };
 }
 
-function useRestoredInstrumentationDraft(
-  catalog: ReturnType<typeof useInstrumentationCatalogController>,
-  guide: ReturnType<typeof useInstrumentationGuideController>,
-  progress: ReturnType<typeof useInstrumentationProgressController>
+function usePageDetection(draft: InstrumentationFlowDraft, handleContractError: ContractErrorHandler) {
+  const createDetectionRequest = useCallback((startedAt: number) => buildDetectionRequest(draft, startedAt), [draft]);
+  const navigate = useNavigate();
+  const openPath = useCallback(
+    (path: string) => {
+      void navigate(path);
+    },
+    [navigate]
+  );
+  return useInstrumentationDetectionController(createDetectionRequest, handleContractError, openPath);
+}
+
+function useRestoreInstrumentationDraft(
+  restoreDraft: CatalogController['restoreDraft'],
+  restoredDraft: ProgressController['restored']['draft']
+) {
+  useEffect(() => {
+    restoreDraft(restoredDraft);
+  }, [restoreDraft, restoredDraft]);
+}
+
+function usePersistInstrumentationDraft(
+  draft: CatalogController['draft'],
+  persistDraft: ProgressController['persistDraft']
+) {
+  const persistedDraft = useRef<typeof draft | undefined>(undefined);
+  useEffect(() => {
+    if (persistedDraft.current === draft) return;
+    persistedDraft.current = draft;
+    persistDraft(draft);
+  }, [draft, persistDraft]);
+}
+
+function useInstrumentationMismatchRecovery(
+  mismatch: boolean,
+  search: string,
+  draft: CatalogController['draft'],
+  clearSelection: CatalogController['clearSelection'],
+  clearContractState: GuideController['clearContractState'],
+  clearMismatch: ProgressController['clearMismatch'],
+  retry: CatalogController['retry']
 ) {
   const handledMismatch = useRef<string | undefined>(undefined);
   useEffect(() => {
-    catalog.restoreDraft(progress.restored.draft);
-  }, [catalog, progress.restored.draft]);
-  const persistedDraft = useRef<typeof catalog.draft | undefined>(undefined);
-  useEffect(() => {
-    if (persistedDraft.current === catalog.draft) return;
-    persistedDraft.current = catalog.draft;
-    progress.persistDraft(catalog.draft);
-  }, [catalog.draft, progress]);
-  useEffect(() => {
-    if (!progress.restored.mismatch || handledMismatch.current === progress.search) return;
-    handledMismatch.current = progress.search;
-    catalog.clearSelection();
-    guide.clearContractState();
-    progress.clearMismatch(catalog.draft);
-    void catalog.retry();
-  }, [catalog, guide, progress]);
+    if (!mismatch || handledMismatch.current === search) return;
+    handledMismatch.current = search;
+    clearSelection();
+    clearContractState();
+    clearMismatch(draft);
+    void retry();
+  }, [clearContractState, clearMismatch, clearSelection, draft, mismatch, retry, search]);
 }
 
 function instrumentationContextField(field: string): keyof QueryContext | undefined {
   if (field === 'collectorId' || field === 'serviceName' || field === 'serviceNamespace') return field;
   return field === 'serviceEnvironment' ? 'environment' : undefined;
-}
-
-function buildSelectionOptions(
-  catalog: ReturnType<typeof useInstrumentationCatalogController>['catalog'],
-  draft: InstrumentationFlowDraft
-) {
-  if (!catalog) {
-    return { environments: [], platforms: [], languages: [], frameworks: [], methods: [], frameworkSelected: false };
-  }
-  const selectedLanguage = catalog.languages.find(item => item.language === draft.selection?.language);
-  const selectedFramework = selectedLanguage?.frameworks.find(item => item.framework === draft.selection?.framework);
-  const languages = catalog.languages.filter(language => language.frameworks.some(framework => (
-    compatibleMethods(catalog, draft, language.language, framework.framework).length > 0
-  )));
-  const frameworks = selectedLanguage?.frameworks.filter(framework => (
-    compatibleMethods(catalog, draft, selectedLanguage.language, framework.framework).length > 0
-  )) ?? [];
-  const methods = draft.selection
-    ? compatibleMethods(catalog, draft, draft.selection.language, draft.selection.framework)
-    : [];
-  return {
-    environments: availableEnvironments(catalog),
-    platforms: availablePlatforms(catalog, draft.environment),
-    languages,
-    frameworks,
-    methods,
-    frameworkSelected: selectedFramework !== undefined
-  };
 }
 
 export type InstrumentationPageController = ReturnType<typeof useInstrumentationPageController>;

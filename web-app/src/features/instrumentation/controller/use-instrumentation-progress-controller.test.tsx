@@ -9,7 +9,7 @@ import { act, render, waitFor } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 
-import type { CatalogResponse, OfficialComponent } from '../api/instrumentation-contract';
+import type { CatalogResponse, OfficialComponent } from '../model/instrumentation-contract';
 import { createFlowDraft, selectCatalogLanguage } from '../model/instrumentation-flow';
 import { useInstrumentationProgressController } from './use-instrumentation-progress-controller';
 
@@ -33,8 +33,8 @@ describe('instrumentation progress controller', () => {
 
   it('clears a mismatched persisted selection without writing any secret state', async () => {
     const routed = renderProgress(
-      '/observability/integration?instrumentationSchemaVersion=2&instrumentationStage=3'
-      + '&instrumentationLanguage=go&instrumentationFramework=go_generic&instrumentationMethod=sdk'
+      '/observability/integration?instrumentationSchemaVersion=2&instrumentationStage=3' +
+        '&instrumentationLanguage=go&instrumentationFramework=go_generic&instrumentationMethod=sdk'
     );
     expect(routed.current().restored.mismatch).toBe(true);
 
@@ -49,14 +49,22 @@ function renderProgress(entry: string) {
   let value: ReturnType<typeof useInstrumentationProgressController> | undefined;
   function Probe() {
     value = useInstrumentationProgressController({
-      collectorId: 'collector-east', serviceName: 'checkout-api',
-      serviceNamespace: 'commerce', environment: 'prod'
+      collectorId: 'collector-east',
+      serviceName: 'checkout-api',
+      serviceNamespace: 'commerce',
+      environment: 'prod'
     });
     return null;
   }
-  const router = createMemoryRouter([{
-    path: '/observability/integration', element: <Probe />
-  }], { initialEntries: [entry] });
+  const router = createMemoryRouter(
+    [
+      {
+        path: '/observability/integration',
+        element: <Probe />
+      }
+    ],
+    { initialEntries: [entry] }
+  );
   render(<RouterProvider router={router} />);
   return {
     router,
@@ -68,16 +76,40 @@ function renderProgress(entry: string) {
 }
 
 const component: OfficialComponent = {
-  name: 'OpenTelemetry Go SDK', sourceUrl: 'https://opentelemetry.io/', version: '1.43.0',
-  versionPolicy: 'pinned', license: 'Apache-2.0', installationLocationKey: 'instrumentation.location.application_host',
-  official: true, bundledWithHertzBeat: false, dependencies: [], artifacts: []
+  name: 'OpenTelemetry Go SDK',
+  sourceUrl: 'https://opentelemetry.io/',
+  version: '1.43.0',
+  versionPolicy: 'pinned',
+  license: 'Apache-2.0',
+  installationLocationKey: 'instrumentation.location.application_host',
+  official: true,
+  bundledWithHertzBeat: false,
+  dependencies: [],
+  artifacts: []
 };
 const catalog: CatalogResponse = {
   schemaVersion: 1,
-  languages: [{ language: 'go', labelKey: 'instrumentation.language.go', frameworks: [{
-    framework: 'go_generic', labelKey: 'instrumentation.framework.go_generic', methods: [{
-      method: 'sdk', labelKey: 'instrumentation.method.sdk', preview: false, environments: ['docker'],
-      platforms: ['linux_amd64'], signals: { metrics: 'supported', logs: 'preview', traces: 'supported' }, component
-    }]
-  }] }]
+  languages: [
+    {
+      language: 'go',
+      labelKey: 'instrumentation.language.go',
+      frameworks: [
+        {
+          framework: 'go_generic',
+          labelKey: 'instrumentation.framework.go_generic',
+          methods: [
+            {
+              method: 'sdk',
+              labelKey: 'instrumentation.method.sdk',
+              preview: false,
+              environments: ['docker'],
+              platforms: ['linux_amd64'],
+              signals: { metrics: 'supported', logs: 'preview', traces: 'supported' },
+              component
+            }
+          ]
+        }
+      ]
+    }
+  ]
 };

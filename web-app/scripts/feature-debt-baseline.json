@@ -27,36 +27,6 @@
     },
     {
       "rule": "model-api-dependency",
-      "path": "features/instrumentation/model/instrumentation-flow.ts",
-      "identity": "features/instrumentation/api/instrumentation-contract",
-      "allowedMax": 1
-    },
-    {
-      "rule": "model-api-dependency",
-      "path": "features/instrumentation/model/instrumentation-progress.ts",
-      "identity": "features/instrumentation/api/instrumentation-contract",
-      "allowedMax": 1
-    },
-    {
-      "rule": "model-api-dependency",
-      "path": "features/instrumentation/model/instrumentation-requests.ts",
-      "identity": "features/instrumentation/api/collector-api",
-      "allowedMax": 1
-    },
-    {
-      "rule": "model-api-dependency",
-      "path": "features/instrumentation/model/instrumentation-requests.ts",
-      "identity": "features/instrumentation/api/instrumentation-contract",
-      "allowedMax": 1
-    },
-    {
-      "rule": "model-api-dependency",
-      "path": "features/instrumentation/model/instrumentation-requests.ts",
-      "identity": "features/instrumentation/api/instrumentation-wire",
-      "allowedMax": 1
-    },
-    {
-      "rule": "model-api-dependency",
       "path": "features/monitor/model/monitor-detail-model.ts",
       "identity": "features/monitor/api/monitor-api",
       "allowedMax": 2

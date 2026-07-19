@@ -24,8 +24,8 @@ import type {
   GuideRenderResponse,
   InstrumentationSelection,
   OfficialComponent
-} from '../api/instrumentation-contract';
-import type { InstrumentationCollector } from '../api/collector-api';
+} from '../model/instrumentation-contract';
+import type { InstrumentationCollector } from '../model/instrumentation-collector';
 import type { InstrumentationFlowDraft } from '../model/instrumentation-flow';
 
 const { renderInstrumentationGuide } = vi.hoisted(() => ({ renderInstrumentationGuide: vi.fn() }));
@@ -53,15 +53,21 @@ describe('instrumentation guide controller', () => {
 
     act(() => result.current.setTransientTarget(target));
     act(() => result.current.setToken('runtime_only_token'));
-    await act(async () => void await result.current.render());
+    await act(async () => void (await result.current.render()));
     await waitFor(() => expect(result.current.state.status).toBe('ready'));
 
     const request = renderInstrumentationGuide.mock.calls[0]?.[0];
     expect(JSON.stringify(request)).not.toContain('runtime_only_token');
     expect(result.current.materializeSnippet(guide.steps[0]!.snippets[0]!)).toContain('runtime_only_token');
     expect(result.current.guide?.steps.at(0)?.snippets.at(0)?.content).toContain('${HERTZBEAT_TOKEN}');
-    expect(JSON.stringify(client.getMutationCache().getAll().map(item => item.state.variables)))
-      .not.toContain('runtime_only_token');
+    expect(
+      JSON.stringify(
+        client
+          .getMutationCache()
+          .getAll()
+          .map(item => item.state.variables)
+      )
+    ).not.toContain('runtime_only_token');
     expect(window.location.href).not.toContain('runtime_only_token');
     expect(JSON.stringify(storageWrite.mock.calls)).not.toContain('runtime_only_token');
     expect(JSON.stringify(log.mock.calls)).not.toContain('runtime_only_token');
@@ -72,7 +78,7 @@ describe('instrumentation guide controller', () => {
     const { result } = renderGuideController();
     act(() => result.current.setTransientTarget(target));
     act(() => result.current.setToken('stale_contract_token'));
-    await act(async () => void await result.current.render());
+    await act(async () => void (await result.current.render()));
     await waitFor(() => expect(result.current.state.status).toBe('ready'));
 
     act(() => result.current.clearContractState());
@@ -93,7 +99,7 @@ describe('instrumentation guide controller', () => {
     );
     act(() => result.current.setTransientTarget(target));
     act(() => result.current.setToken('collector_scoped_token'));
-    await act(async () => void await result.current.render());
+    await act(async () => void (await result.current.render()));
     await waitFor(() => expect(result.current.state.status).toBe('ready'));
 
     rerender({ currentDraft: { ...draft, selection: { ...draft.selection!, method: 'ebpf' } } });
@@ -115,9 +121,12 @@ describe('instrumentation guide controller', () => {
     act(() => result.current.setTransientTarget({ ...target }));
     expect(result.current.token).toBe('endpoint_scoped_token');
 
-    act(() => result.current.setTransientTarget({
-      ...target, otlpHttpEndpoint: 'https://collector.internal:4318'
-    }));
+    act(() =>
+      result.current.setTransientTarget({
+        ...target,
+        otlpHttpEndpoint: 'https://collector.internal:4318'
+      })
+    );
     expect(result.current.token).toBe('');
     expect(result.current.guide).toBeUndefined();
   });
@@ -135,7 +144,7 @@ describe('instrumentation guide controller', () => {
     const view = renderGuideLifecycle(draft, [availableCollector]);
     await waitFor(() => expect(view.result.current.transientTarget).toEqual(target));
     act(() => view.result.current.setToken('advertisement_scoped_token'));
-    await act(async () => void await view.result.current.render());
+    await act(async () => void (await view.result.current.render()));
     await waitFor(() => expect(view.result.current.guide).toEqual(guide));
 
     view.rerender({
@@ -148,10 +157,12 @@ describe('instrumentation guide controller', () => {
     const changedTarget = { ...target, otlpHttpEndpoint: 'https://new.example.com:4318' };
     view.rerender({
       currentDraft: draft,
-      currentCollectors: [{
-        ...availableCollector,
-        intake: { ...availableCollector.intake, otlpHttpEndpoint: changedTarget.otlpHttpEndpoint }
-      }]
+      currentCollectors: [
+        {
+          ...availableCollector,
+          intake: { ...availableCollector.intake, otlpHttpEndpoint: changedTarget.otlpHttpEndpoint }
+        }
+      ]
     });
     await waitFor(() => expect(view.result.current.transientTarget).toEqual(changedTarget));
     expect(view.result.current.token).toBe('');
@@ -163,7 +174,7 @@ describe('instrumentation guide controller', () => {
     const view = renderGuideLifecycle(draft, [availableCollector, availableCollectorWest]);
     await waitFor(() => expect(view.result.current.transientTarget).toEqual(target));
     act(() => view.result.current.setToken('collector_scoped_token'));
-    await act(async () => void await view.result.current.render());
+    await act(async () => void (await view.result.current.render()));
 
     view.rerender({ currentDraft: draft, currentCollectors: [collector] });
     await waitFor(() => expect(view.result.current.transientTarget).toBeUndefined());
@@ -173,7 +184,7 @@ describe('instrumentation guide controller', () => {
     view.rerender({ currentDraft: draft, currentCollectors: [availableCollector] });
     await waitFor(() => expect(view.result.current.transientTarget).toEqual(target));
     act(() => view.result.current.setToken('second_token'));
-    await act(async () => void await view.result.current.render());
+    await act(async () => void (await view.result.current.render()));
 
     view.rerender({ currentDraft: draft, currentCollectors: [] });
     await waitFor(() => expect(view.result.current.transientTarget).toBeUndefined());
@@ -200,46 +211,62 @@ function renderGuideController(client = new QueryClient({ defaultOptions: { muta
   return renderHook(() => useInstrumentationGuideController(draft, [collector]), { wrapper });
 }
 
-function renderGuideLifecycle(
-  currentDraft: InstrumentationFlowDraft,
-  currentCollectors: InstrumentationCollector[]
-) {
+function renderGuideLifecycle(currentDraft: InstrumentationFlowDraft, currentCollectors: InstrumentationCollector[]) {
   const client = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
   );
-  return renderHook(
-    props => useInstrumentationGuideController(props.currentDraft, props.currentCollectors),
-    { wrapper, initialProps: { currentDraft, currentCollectors } }
-  );
+  return renderHook(props => useInstrumentationGuideController(props.currentDraft, props.currentCollectors), {
+    wrapper,
+    initialProps: { currentDraft, currentCollectors }
+  });
 }
 
 const selection: InstrumentationSelection = {
-  language: 'go', framework: 'go_generic', method: 'sdk', environment: 'docker', platform: 'linux_amd64'
+  language: 'go',
+  framework: 'go_generic',
+  method: 'sdk',
+  environment: 'docker',
+  platform: 'linux_amd64'
 };
 const draft: InstrumentationFlowDraft = {
-  environment: 'docker', platform: 'linux_amd64',
+  environment: 'docker',
+  platform: 'linux_amd64',
   selection,
-  collectorId: 'collector-east', serviceName: 'checkout-api', serviceNamespace: 'commerce',
+  collectorId: 'collector-east',
+  serviceName: 'checkout-api',
+  serviceNamespace: 'commerce',
   serviceEnvironment: 'prod'
 };
 const collector = {
-  collectorId: 'collector-east', name: 'collector-east', address: '10.0.0.8', online: true,
+  collectorId: 'collector-east',
+  name: 'collector-east',
+  address: '10.0.0.8',
+  online: true,
   intake: { status: 'unavailable' as const, errorCode: 'old_server' as const }
 };
 const collectorWest = {
-  ...collector, collectorId: 'collector-west', name: 'collector-west', address: '10.0.0.9'
+  ...collector,
+  collectorId: 'collector-west',
+  name: 'collector-west',
+  address: '10.0.0.9'
 };
 const target = {
-  collectorId: 'collector-east', otlpHttpEndpoint: 'https://otel.example.com:4318',
-  otlpGrpcEndpoint: 'https://otel.example.com:4317', authorizationHeader: 'Authorization'
+  collectorId: 'collector-east',
+  otlpHttpEndpoint: 'https://otel.example.com:4318',
+  otlpGrpcEndpoint: 'https://otel.example.com:4317',
+  authorizationHeader: 'Authorization'
 } as const;
 const availableCollector = {
   ...collector,
   intake: {
-    status: 'available' as const, schemaVersion: 1 as const, collectorId: 'collector-east', gateway: 'collector' as const,
+    status: 'available' as const,
+    schemaVersion: 1 as const,
+    collectorId: 'collector-east',
+    gateway: 'collector' as const,
     capabilities: ['otlp_http_protobuf', 'otlp_grpc'] as const,
-    otlpHttpEndpoint: target.otlpHttpEndpoint, otlpGrpcEndpoint: target.otlpGrpcEndpoint,
+    otlpHttpEndpoint: target.otlpHttpEndpoint,
+    otlpGrpcEndpoint: target.otlpGrpcEndpoint,
     authorizationHeader: 'Authorization' as const
   }
 };
@@ -253,9 +280,16 @@ const availableCollectorWest = {
   }
 };
 const component: OfficialComponent = {
-  name: 'OpenTelemetry Go SDK', sourceUrl: 'https://opentelemetry.io/', version: '1.43.0',
-  versionPolicy: 'pinned', license: 'Apache-2.0', installationLocationKey: 'instrumentation.location.application_host',
-  official: true, bundledWithHertzBeat: false, dependencies: [], artifacts: []
+  name: 'OpenTelemetry Go SDK',
+  sourceUrl: 'https://opentelemetry.io/',
+  version: '1.43.0',
+  versionPolicy: 'pinned',
+  license: 'Apache-2.0',
+  installationLocationKey: 'instrumentation.location.application_host',
+  official: true,
+  bundledWithHertzBeat: false,
+  dependencies: [],
+  artifacts: []
 };
 const guide: GuideRenderResponse = {
   schemaVersion: 1,
@@ -265,12 +299,20 @@ const guide: GuideRenderResponse = {
   secretPlaceholders: {
     authorizationToken: { marker: '${HERTZBEAT_TOKEN}', valueFormat: 'url_unreserved', replacement: 'raw' }
   },
-  steps: [{
-    id: 'configure', type: 'configure', titleKey: 'instrumentation.step.configure',
-    executionLocationKey: 'instrumentation.location.application_environment',
-    snippets: [{
-      id: 'otel-environment', language: 'bash', content: 'Authorization=Bearer%20${HERTZBEAT_TOKEN}',
-      secretPlaceholders: ['authorizationToken']
-    }]
-  }]
+  steps: [
+    {
+      id: 'configure',
+      type: 'configure',
+      titleKey: 'instrumentation.step.configure',
+      executionLocationKey: 'instrumentation.location.application_environment',
+      snippets: [
+        {
+          id: 'otel-environment',
+          language: 'bash',
+          content: 'Authorization=Bearer%20${HERTZBEAT_TOKEN}',
+          secretPlaceholders: ['authorizationToken']
+        }
+      ]
+    }
+  ]
 };

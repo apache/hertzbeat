@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { INSTRUMENTATION_SCHEMA_VERSION } from './instrumentation-contract';
+import { INSTRUMENTATION_SCHEMA_VERSION } from '../model/instrumentation-contract';
 
 const root = ['instrumentation'] as const;
 

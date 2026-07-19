@@ -17,7 +17,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type { CatalogResponse, GuideRenderResponse, OfficialComponent, QueryJumpContext } from '../api/instrumentation-contract';
+import type { CatalogResponse, OfficialComponent, QueryJumpContext } from './instrumentation-contract';
 import {
   createFlowDraft,
   reconcileFlowCatalog,
@@ -30,8 +30,7 @@ import {
   buildDetectionRequest,
   buildExploreHandoff,
   buildGuideRequest,
-  createTransientCollectorTarget,
-  materializeGuideSnippet
+  createTransientCollectorTarget
 } from './instrumentation-requests';
 
 describe('instrumentation onboarding flow model', () => {
@@ -47,7 +46,9 @@ describe('instrumentation onboarding flow model', () => {
       ...configuredDraft(),
       environment: 'kubernetes' as const,
       selection: {
-        ...configuredDraft().selection!, method: 'ebpf' as const, environment: 'kubernetes' as const
+        ...configuredDraft().selection!,
+        method: 'ebpf' as const,
+        environment: 'kubernetes' as const
       }
     };
     expect(reconcileFlowCatalog(previewDraft, catalog).selection?.method).toBe('ebpf');
@@ -70,16 +71,20 @@ describe('instrumentation onboarding flow model', () => {
     const render = buildGuideRequest(draft, collector, transientTarget);
     const detection = buildDetectionRequest(draft, 1_710_000_000_000);
 
-    expect(render).toEqual(expect.objectContaining({
-      schemaVersion: 1,
-      collector: expect.objectContaining({ collectorId: 'collector-east' }),
-      service: { name: 'checkout-api', namespace: 'commerce', environment: 'prod' }
-    }));
-    expect(detection).toEqual(expect.objectContaining({
-      collectorId: 'collector-east',
-      startedAt: 1_710_000_000_000,
-      service: render.service
-    }));
+    expect(render).toEqual(
+      expect.objectContaining({
+        schemaVersion: 1,
+        collector: expect.objectContaining({ collectorId: 'collector-east' }),
+        service: { name: 'checkout-api', namespace: 'commerce', environment: 'prod' }
+      })
+    );
+    expect(detection).toEqual(
+      expect.objectContaining({
+        collectorId: 'collector-east',
+        startedAt: 1_710_000_000_000,
+        service: render.service
+      })
+    );
     expect(JSON.stringify(render)).not.toContain('hb_memory_only');
     expect(JSON.stringify(detection)).not.toContain('hb_memory_only');
   });
@@ -88,25 +93,20 @@ describe('instrumentation onboarding flow model', () => {
     const draft = configuredDraft();
 
     expect(() => buildGuideRequest(draft, collector)).toThrow(/intake/i);
-    expect(() => createTransientCollectorTarget({
-      collectorId: 'collector-east',
-      otlpHttpEndpoint: 'http://token@collector.internal:4318',
-      otlpGrpcEndpoint: 'http://collector.internal:4317',
-      authorizationHeader: 'Authorization'
-    })).toThrow(/endpoint/i);
+    expect(() =>
+      createTransientCollectorTarget({
+        collectorId: 'collector-east',
+        otlpHttpEndpoint: 'http://token@collector.internal:4318',
+        otlpGrpcEndpoint: 'http://collector.internal:4317',
+        authorizationHeader: 'Authorization'
+      })
+    ).toThrow(/endpoint/i);
   });
 
   it('requires complete service and Collector context before rendering', () => {
-    expect(validateFlowContext(createFlowDraft())).toEqual(expect.arrayContaining([
-      'collectorId', 'serviceName', 'serviceNamespace', 'serviceEnvironment'
-    ]));
-  });
-
-  it('keeps the token copy-only and refuses a secret snippet while it is absent', () => {
-    const snippet = guide.steps[0]!.snippets[0]!;
-    expect(() => materializeGuideSnippet(snippet, guide, '')).toThrow(/token/i);
-    expect(materializeGuideSnippet(snippet, guide, 'hb_memory_only')).toContain('hb_memory_only');
-    expect(snippet.content).toContain('${HERTZBEAT_TOKEN}');
+    expect(validateFlowContext(createFlowDraft())).toEqual(
+      expect.arrayContaining(['collectorId', 'serviceName', 'serviceNamespace', 'serviceEnvironment'])
+    );
   });
 
   it('builds a received-only Explore handoff with the full scope and no token', () => {
@@ -128,33 +128,59 @@ describe('instrumentation onboarding flow model', () => {
 });
 
 const component: OfficialComponent = {
-  name: 'OpenTelemetry Go SDK', sourceUrl: 'https://opentelemetry.io/', version: '1.43.0',
-  versionPolicy: 'pinned', license: 'Apache-2.0', installationLocationKey: 'instrumentation.location.application_host',
-  official: true, bundledWithHertzBeat: false, dependencies: [], artifacts: []
+  name: 'OpenTelemetry Go SDK',
+  sourceUrl: 'https://opentelemetry.io/',
+  version: '1.43.0',
+  versionPolicy: 'pinned',
+  license: 'Apache-2.0',
+  installationLocationKey: 'instrumentation.location.application_host',
+  official: true,
+  bundledWithHertzBeat: false,
+  dependencies: [],
+  artifacts: []
 };
 
 const catalog: CatalogResponse = {
   schemaVersion: 1,
-  languages: [{
-    language: 'go', labelKey: 'instrumentation.language.go', frameworks: [{
-      framework: 'go_generic', labelKey: 'instrumentation.framework.go_generic', methods: [
+  languages: [
+    {
+      language: 'go',
+      labelKey: 'instrumentation.language.go',
+      frameworks: [
         {
-          method: 'ebpf', labelKey: 'instrumentation.method.ebpf', preview: true,
-          environments: ['kubernetes'], platforms: ['linux_amd64'],
-          signals: { metrics: 'unsupported', logs: 'unsupported', traces: 'preview' }, component
-        },
-        {
-          method: 'sdk', labelKey: 'instrumentation.method.sdk', preview: false,
-          environments: ['vm', 'docker', 'kubernetes'], platforms: ['linux_amd64', 'any'],
-          signals: { metrics: 'supported', logs: 'preview', traces: 'supported' }, component
+          framework: 'go_generic',
+          labelKey: 'instrumentation.framework.go_generic',
+          methods: [
+            {
+              method: 'ebpf',
+              labelKey: 'instrumentation.method.ebpf',
+              preview: true,
+              environments: ['kubernetes'],
+              platforms: ['linux_amd64'],
+              signals: { metrics: 'unsupported', logs: 'unsupported', traces: 'preview' },
+              component
+            },
+            {
+              method: 'sdk',
+              labelKey: 'instrumentation.method.sdk',
+              preview: false,
+              environments: ['vm', 'docker', 'kubernetes'],
+              platforms: ['linux_amd64', 'any'],
+              signals: { metrics: 'supported', logs: 'preview', traces: 'supported' },
+              component
+            }
+          ]
         }
       ]
-    }]
-  }]
+    }
+  ]
 };
 
 const collector = {
-  collectorId: 'collector-east', name: 'collector-east', online: true, address: '10.0.0.8',
+  collectorId: 'collector-east',
+  name: 'collector-east',
+  online: true,
+  address: '10.0.0.8',
   intake: { status: 'unavailable' as const, errorCode: 'old_server' as const }
 };
 
@@ -173,22 +199,11 @@ function configuredDraft() {
   return updateFlowContext(draft, 'serviceEnvironment', 'prod');
 }
 
-const guide: GuideRenderResponse = {
-  schemaVersion: 1,
-  selection: { language: 'go', framework: 'go_generic', method: 'sdk', environment: 'docker', platform: 'linux_amd64' },
-  signals: { metrics: 'supported', logs: 'preview', traces: 'supported' }, component,
-  secretPlaceholders: { authorizationToken: { marker: '${HERTZBEAT_TOKEN}', valueFormat: 'url_unreserved', replacement: 'raw' } },
-  steps: [{
-    id: 'configure', type: 'configure', titleKey: 'instrumentation.step.configure',
-    executionLocationKey: 'instrumentation.location.application_environment',
-    snippets: [{
-      id: 'otel-env', language: 'bash', content: 'Authorization=Bearer ${HERTZBEAT_TOKEN}',
-      secretPlaceholders: ['authorizationToken']
-    }]
-  }]
-};
-
 const jumpContext: QueryJumpContext = {
-  serviceName: 'checkout-api', serviceNamespace: 'commerce', environment: 'prod', collectorId: 'collector-east',
-  startedAt: 1_710_000_000_000, detectedAt: 1_710_000_005_000
+  serviceName: 'checkout-api',
+  serviceNamespace: 'commerce',
+  environment: 'prod',
+  collectorId: 'collector-east',
+  startedAt: 1_710_000_000_000,
+  detectedAt: 1_710_000_005_000
 };

@@ -24,12 +24,8 @@ import {
   type PollingDecision,
   type QueryJumpContext,
   type SignalDetection
-} from './instrumentation-contract';
-import {
-  contractViolation,
-  detectionResponseSchema,
-  parseInstrumentationSchema
-} from './instrumentation-schema';
+} from '../model/instrumentation-contract';
+import { contractViolation, detectionResponseSchema, parseInstrumentationSchema } from './instrumentation-schema';
 
 export function parseDetectionResponse(value: unknown): DetectionResponse {
   const response = parseInstrumentationSchema(detectionResponseSchema, value, 'detection');
@@ -76,13 +72,17 @@ function validatePolling(response: DetectionResponse) {
   if (deadlineAt !== response.context.startedAt + INSTRUMENTATION_AUTOMATIC_WINDOW_MS) {
     contractViolation('Detection deadline does not match the v1 window');
   }
+  if (decision !== expectedPollingDecision(response)) {
+    contractViolation('Polling decision does not match signal states');
+  }
+}
+
+function expectedPollingDecision(response: DetectionResponse): PollingDecision {
   const states = Object.values(response.signals).map(item => item.status);
-  const expectedDecision: PollingDecision = states.some(status => status === 'unavailable' || status === 'error')
-    ? 'manual_retry'
-    : states.some(status => status === 'waiting')
-      ? response.detectedAt < deadlineAt ? 'continue_polling' : 'manual_retry'
-      : 'complete';
-  if (decision !== expectedDecision) contractViolation('Polling decision does not match signal states');
+  if (states.some(status => status === 'unavailable' || status === 'error')) return 'manual_retry';
+  if (!states.some(status => status === 'waiting')) return 'complete';
+  if (response.detectedAt < response.polling.deadlineAt) return 'continue_polling';
+  return 'manual_retry';
 }
 
 function validateDetectionContext(response: DetectionResponse) {
@@ -109,7 +109,12 @@ function validateDetectionContext(response: DetectionResponse) {
 
 function validateMatchingContext(actual: QueryJumpContext, expected: QueryJumpContext, label: string) {
   const keys: Array<keyof QueryJumpContext> = [
-    'serviceName', 'serviceNamespace', 'environment', 'collectorId', 'startedAt', 'detectedAt'
+    'serviceName',
+    'serviceNamespace',
+    'environment',
+    'collectorId',
+    'startedAt',
+    'detectedAt'
   ];
   if (keys.some(key => actual[key] !== expected[key])) {
     contractViolation(`${label} does not match detection context`);

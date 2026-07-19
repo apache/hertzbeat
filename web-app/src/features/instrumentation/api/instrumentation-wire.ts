@@ -24,12 +24,11 @@ import type {
   InstrumentationSelection,
   SecretPlaceholder,
   ServiceIdentity
-} from './instrumentation-contract';
+} from '../model/instrumentation-contract';
 import {
   catalogResponseSchema,
   contractViolation,
   guideRenderResponseSchema,
-  InstrumentationContractError,
   parseInstrumentationSchema
 } from './instrumentation-schema';
 
@@ -68,29 +67,6 @@ export function buildDetectionPayload(request: DetectionRequest): DetectionReque
     collectorId: request.collectorId,
     startedAt: request.startedAt
   };
-}
-
-export function materializeSnippetForCopy(
-  snippet: GuideSnippet,
-  placeholders: Record<string, SecretPlaceholder>,
-  transientSecrets: Record<string, string | undefined>
-) {
-  let content = snippet.content;
-  for (const placeholderId of snippet.secretPlaceholders) {
-    const placeholder = placeholders[placeholderId];
-    const secret = transientSecrets[placeholderId];
-    if (!placeholder || placeholder.valueFormat !== 'url_unreserved' || placeholder.replacement !== 'raw') {
-      throw new InstrumentationContractError(`Unsupported secret placeholder: ${placeholderId}`);
-    }
-    if (!secret || !/^[A-Za-z0-9._~-]+$/.test(secret)) {
-      throw new InstrumentationContractError(`Invalid transient secret: ${placeholderId}`);
-    }
-    if (!content.includes(placeholder.marker)) {
-      throw new InstrumentationContractError(`Secret marker is missing: ${placeholderId}`);
-    }
-    content = content.replaceAll(placeholder.marker, secret);
-  }
-  return content;
 }
 
 function validateSecretPlaceholders(response: GuideRenderResponse) {

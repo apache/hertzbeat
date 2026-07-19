@@ -31,12 +31,13 @@ import {
   INSTRUMENTATION_SIGNALS,
   INSTRUMENTATION_STEP_TYPES,
   INSTRUMENTATION_VERSION_POLICIES
-} from './instrumentation-contract';
+} from '../model/instrumentation-contract';
 
 const textSchema = z.string().min(1);
 const positiveIntegerSchema = z.number().int().positive();
 const optionalNullableIntegerSchema = positiveIntegerSchema.nullish().transform(value => value ?? null);
-const optionalNullableErrorSchema = z.enum(INSTRUMENTATION_DETECTION_ERROR_CODES)
+const optionalNullableErrorSchema = z
+  .enum(INSTRUMENTATION_DETECTION_ERROR_CODES)
   .nullish()
   .transform(value => value ?? null);
 
@@ -56,15 +57,17 @@ export const serviceIdentitySchema = z.object({
 
 const capabilityValuesSchema = signalValues(z.enum(INSTRUMENTATION_CAPABILITIES));
 
-const dependencySchema = z.object({
-  name: textSchema,
-  sourceUrl: textSchema,
-  version: textSchema,
-  license: textSchema,
-  purposeKey: textSchema,
-  official: z.boolean(),
-  bundledWithHertzBeat: z.boolean()
-}).superRefine(requireOfficialExternalPackage);
+const dependencySchema = z
+  .object({
+    name: textSchema,
+    sourceUrl: textSchema,
+    version: textSchema,
+    license: textSchema,
+    purposeKey: textSchema,
+    official: z.boolean(),
+    bundledWithHertzBeat: z.boolean()
+  })
+  .superRefine(requireOfficialExternalPackage);
 
 const artifactSchema = z.object({
   name: textSchema,
@@ -74,18 +77,20 @@ const artifactSchema = z.object({
   provenanceUrl: textSchema
 });
 
-const componentSchema = z.object({
-  name: textSchema,
-  sourceUrl: textSchema,
-  version: textSchema.nullable(),
-  versionPolicy: z.enum(INSTRUMENTATION_VERSION_POLICIES),
-  license: textSchema,
-  installationLocationKey: textSchema,
-  official: z.boolean(),
-  bundledWithHertzBeat: z.boolean(),
-  dependencies: z.array(dependencySchema),
-  artifacts: z.array(artifactSchema)
-}).superRefine(requireOfficialExternalPackage);
+const componentSchema = z
+  .object({
+    name: textSchema,
+    sourceUrl: textSchema,
+    version: textSchema.nullable(),
+    versionPolicy: z.enum(INSTRUMENTATION_VERSION_POLICIES),
+    license: textSchema,
+    installationLocationKey: textSchema,
+    official: z.boolean(),
+    bundledWithHertzBeat: z.boolean(),
+    dependencies: z.array(dependencySchema),
+    artifacts: z.array(artifactSchema)
+  })
+  .superRefine(requireOfficialExternalPackage);
 
 const methodOptionSchema = z.object({
   method: z.enum(INSTRUMENTATION_METHODS),
@@ -99,15 +104,19 @@ const methodOptionSchema = z.object({
 
 export const catalogResponseSchema = z.object({
   schemaVersion: z.literal(INSTRUMENTATION_SCHEMA_VERSION),
-  languages: z.array(z.object({
-    language: z.enum(INSTRUMENTATION_LANGUAGES),
-    labelKey: textSchema,
-    frameworks: z.array(z.object({
-      framework: z.enum(INSTRUMENTATION_FRAMEWORKS),
+  languages: z.array(
+    z.object({
+      language: z.enum(INSTRUMENTATION_LANGUAGES),
       labelKey: textSchema,
-      methods: z.array(methodOptionSchema)
-    }))
-  }))
+      frameworks: z.array(
+        z.object({
+          framework: z.enum(INSTRUMENTATION_FRAMEWORKS),
+          labelKey: textSchema,
+          methods: z.array(methodOptionSchema)
+        })
+      )
+    })
+  )
 });
 
 const secretPlaceholderSchema = z.object({
@@ -129,13 +138,15 @@ export const guideRenderResponseSchema = z.object({
   signals: capabilityValuesSchema,
   component: componentSchema,
   secretPlaceholders: z.record(z.string(), secretPlaceholderSchema),
-  steps: z.array(z.object({
-    id: textSchema,
-    type: z.enum(INSTRUMENTATION_STEP_TYPES),
-    titleKey: textSchema,
-    executionLocationKey: textSchema,
-    snippets: z.array(guideSnippetSchema)
-  }))
+  steps: z.array(
+    z.object({
+      id: textSchema,
+      type: z.enum(INSTRUMENTATION_STEP_TYPES),
+      titleKey: textSchema,
+      executionLocationKey: textSchema,
+      snippets: z.array(guideSnippetSchema)
+    })
+  )
 });
 
 export const signalDetectionSchema = z.object({
@@ -168,11 +179,13 @@ export const detectionResponseSchema = z.object({
     deadlineAt: positiveIntegerSchema
   }),
   queryJumpContext: queryJumpContextSchema,
-  queryJumps: z.array(z.object({
-    signal: z.enum(INSTRUMENTATION_SIGNALS),
-    enabled: z.boolean(),
-    context: queryJumpContextSchema
-  }))
+  queryJumps: z.array(
+    z.object({
+      signal: z.enum(INSTRUMENTATION_SIGNALS),
+      enabled: z.boolean(),
+      context: queryJumpContextSchema
+    })
+  )
 });
 
 export class InstrumentationContractError extends Error {

@@ -7,32 +7,41 @@
 
 import { describe, expect, it } from 'vitest';
 
-import {
-  parseInstrumentationProgress,
-  writeInstrumentationProgress
-} from './instrumentation-progress';
+import { parseInstrumentationProgress, writeInstrumentationProgress } from './instrumentation-progress';
 
 describe('instrumentation progress URL contract', () => {
   it('restores the non-sensitive selection and shared service scope without restoring a token', () => {
-    const progress = parseInstrumentationProgress(new URLSearchParams(
-      'instrumentationSchemaVersion=1&instrumentationStage=3&instrumentationEnvironment=docker'
-      + '&instrumentationPlatform=linux_amd64&instrumentationLanguage=go'
-      + '&instrumentationFramework=go_generic&instrumentationMethod=sdk&token=must-not-survive'
-    ), {
-      collectorId: 'collector-east', serviceName: 'checkout-api', serviceNamespace: 'commerce', environment: 'prod'
-    });
+    const progress = parseInstrumentationProgress(
+      new URLSearchParams(
+        'instrumentationSchemaVersion=1&instrumentationStage=3&instrumentationEnvironment=docker' +
+          '&instrumentationPlatform=linux_amd64&instrumentationLanguage=go' +
+          '&instrumentationFramework=go_generic&instrumentationMethod=sdk&token=must-not-survive'
+      ),
+      {
+        collectorId: 'collector-east',
+        serviceName: 'checkout-api',
+        serviceNamespace: 'commerce',
+        environment: 'prod'
+      }
+    );
 
     expect(progress).toEqual({
       stage: 3,
       mismatch: false,
       draft: {
-        environment: 'docker', platform: 'linux_amd64',
+        environment: 'docker',
+        platform: 'linux_amd64',
         selection: {
-          language: 'go', framework: 'go_generic', method: 'sdk',
-          environment: 'docker', platform: 'linux_amd64'
+          language: 'go',
+          framework: 'go_generic',
+          method: 'sdk',
+          environment: 'docker',
+          platform: 'linux_amd64'
         },
-        collectorId: 'collector-east', serviceName: 'checkout-api',
-        serviceNamespace: 'commerce', serviceEnvironment: 'prod'
+        collectorId: 'collector-east',
+        serviceName: 'checkout-api',
+        serviceNamespace: 'commerce',
+        serviceEnvironment: 'prod'
       }
     });
     expect(JSON.stringify(progress)).not.toContain('must-not-survive');
@@ -41,8 +50,8 @@ describe('instrumentation progress URL contract', () => {
   it('fails a partial or unsupported persisted selection closed', () => {
     for (const query of [
       'instrumentationSchemaVersion=1&instrumentationLanguage=go&instrumentationFramework=go_generic',
-      'instrumentationSchemaVersion=2&instrumentationLanguage=go&instrumentationFramework=go_generic'
-        + '&instrumentationMethod=sdk'
+      'instrumentationSchemaVersion=2&instrumentationLanguage=go&instrumentationFramework=go_generic' +
+        '&instrumentationMethod=sdk'
     ]) {
       const progress = parseInstrumentationProgress(new URLSearchParams(query), {});
       expect(progress.stage).toBe(1);
@@ -51,23 +60,40 @@ describe('instrumentation progress URL contract', () => {
     }
   });
 
-  it('writes only the allowlisted recoverable fields and caps restored progress before guide rendering', () => {
-    const source = new URLSearchParams('signal=metrics&collectorId=collector-east&serviceName=checkout-api');
-    const next = writeInstrumentationProgress(source, {
-      environment: 'docker', platform: 'linux_amd64',
-      selection: {
-        language: 'go', framework: 'go_generic', method: 'sdk',
-        environment: 'docker', platform: 'linux_amd64'
+  it('preserves non-sensitive context while removing sensitive fields and caps restored progress', () => {
+    const sensitiveKeys = ['token', 'access_token', 'AUTHORIZATION', 'clientSecret', 'installLog', 'telemetryBody'];
+    const source = new URLSearchParams(
+      'signal=metrics&collectorId=collector-east&serviceName=checkout-api' +
+        '&environment=prod&token=plain&access_token=plain&AUTHORIZATION=plain' +
+        '&clientSecret=plain&installLog=plain&telemetryBody=plain'
+    );
+    const next = writeInstrumentationProgress(
+      source,
+      {
+        environment: 'docker',
+        platform: 'linux_amd64',
+        selection: {
+          language: 'go',
+          framework: 'go_generic',
+          method: 'sdk',
+          environment: 'docker',
+          platform: 'linux_amd64'
+        },
+        collectorId: 'collector-east',
+        serviceName: 'checkout-api',
+        serviceNamespace: 'commerce',
+        serviceEnvironment: 'prod'
       },
-      collectorId: 'collector-east', serviceName: 'checkout-api',
-      serviceNamespace: 'commerce', serviceEnvironment: 'prod'
-    }, 5);
+      5
+    );
 
     expect(next.get('instrumentationStage')).toBe('3');
     expect(next.get('instrumentationSchemaVersion')).toBe('1');
     expect(next.get('instrumentationLanguage')).toBe('go');
     expect(next.get('collectorId')).toBe('collector-east');
     expect(next.get('serviceName')).toBe('checkout-api');
-    expect(next.toString()).not.toMatch(/token|secret|authorization/i);
+    expect(next.get('environment')).toBe('prod');
+    for (const key of sensitiveKeys) expect(next.has(key)).toBe(false);
+    expect(next.toString()).not.toContain('plain');
   });
 });

@@ -22,18 +22,7 @@ import {
   collectorPageSchema,
   unavailableCollectorIntakeSchema
 } from './collector-schema';
-import type { CollectorInstrumentationIntake, InstrumentationCollector } from './collector-contract';
-
-export {
-  COLLECTOR_INTAKE_CAPABILITIES,
-  COLLECTOR_INTAKE_ERROR_CODES
-} from './collector-contract';
-export type {
-  CollectorInstrumentationIntake,
-  CollectorIntakeCapability,
-  CollectorIntakeErrorCode,
-  InstrumentationCollector
-} from './collector-contract';
+import type { CollectorInstrumentationIntake, InstrumentationCollector } from '../model/instrumentation-collector';
 
 export async function loadInstrumentationCollectors(signal?: AbortSignal) {
   const page = await apiMessageGet('/api/collector?pageIndex=0&pageSize=200', signal ? { signal } : undefined);

@@ -27,7 +27,7 @@ import {
   loadInstrumentationCatalog,
   renderInstrumentationGuide
 } from './instrumentation-api';
-import type { DetectionRequest, GuideRenderRequest } from './instrumentation-contract';
+import type { DetectionRequest, GuideRenderRequest } from '../model/instrumentation-contract';
 
 const selection = {
   language: 'nodejs',
@@ -53,18 +53,23 @@ describe('instrumentation v1 API', () => {
     apiFetch.mockResolvedValueOnce(messageResponse({ schemaVersion: 1, languages: [] }));
 
     await expect(loadInstrumentationCatalog()).resolves.toEqual({ schemaVersion: 1, languages: [] });
-    expect(apiFetch).toHaveBeenCalledWith('/api/instrumentation/v1/catalog', expect.objectContaining({ method: 'GET' }));
+    expect(apiFetch).toHaveBeenCalledWith(
+      '/api/instrumentation/v1/catalog',
+      expect.objectContaining({ method: 'GET' })
+    );
   });
 
   it('renders through an allowlisted body that cannot carry a token', async () => {
-    apiFetch.mockResolvedValueOnce(messageResponse({
-      schemaVersion: 1,
-      selection,
-      signals: { metrics: 'supported', logs: 'unsupported', traces: 'supported' },
-      component: componentFixture(),
-      secretPlaceholders: {},
-      steps: []
-    }));
+    apiFetch.mockResolvedValueOnce(
+      messageResponse({
+        schemaVersion: 1,
+        selection,
+        signals: { metrics: 'supported', logs: 'unsupported', traces: 'supported' },
+        component: componentFixture(),
+        secretPlaceholders: {},
+        steps: []
+      })
+    );
     const request = {
       schemaVersion: 1,
       ...selection,
@@ -108,14 +113,16 @@ describe('instrumentation v1 API', () => {
   });
 
   it('rejects a render response that echoes another selection', async () => {
-    apiFetch.mockResolvedValueOnce(messageResponse({
-      schemaVersion: 1,
-      selection: { ...selection, framework: 'nodejs' },
-      signals: { metrics: 'supported', logs: 'unsupported', traces: 'supported' },
-      component: componentFixture(),
-      secretPlaceholders: {},
-      steps: []
-    }));
+    apiFetch.mockResolvedValueOnce(
+      messageResponse({
+        schemaVersion: 1,
+        selection: { ...selection, framework: 'nodejs' },
+        signals: { metrics: 'supported', logs: 'unsupported', traces: 'supported' },
+        component: componentFixture(),
+        secretPlaceholders: {},
+        steps: []
+      })
+    );
 
     await expect(renderInstrumentationGuide(renderRequest())).rejects.toBeInstanceOf(InstrumentationContractError);
   });
@@ -173,7 +180,13 @@ function detectionFixture() {
   return {
     schemaVersion: 1,
     detectedAt: context.detectedAt,
-    context: { schemaVersion: 1, ...selection, service, collectorId: context.collectorId, startedAt: context.startedAt },
+    context: {
+      schemaVersion: 1,
+      ...selection,
+      service,
+      collectorId: context.collectorId,
+      startedAt: context.startedAt
+    },
     signals: {
       metrics: { status: 'received', lastReceivedAt: context.detectedAt, errorCode: null },
       logs: { status: 'unsupported', lastReceivedAt: null, errorCode: 'signal_not_supported' },

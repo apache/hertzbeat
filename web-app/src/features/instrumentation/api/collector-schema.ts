@@ -17,29 +17,42 @@
 
 import { z } from 'zod';
 
-import { COLLECTOR_INTAKE_CAPABILITIES, COLLECTOR_INTAKE_ERROR_CODES } from './collector-contract';
+import { COLLECTOR_INTAKE_CAPABILITIES, COLLECTOR_INTAKE_ERROR_CODES } from '../model/instrumentation-collector';
 
-const trimmedTextSchema = z.string().min(1).refine(value => value === value.trim());
+const trimmedTextSchema = z
+  .string()
+  .min(1)
+  .refine(value => value === value.trim());
 const publicHttpsEndpointSchema = trimmedTextSchema.refine(isPublicHttpsEndpoint);
-const capabilitySchema = z.array(z.enum(COLLECTOR_INTAKE_CAPABILITIES)).length(COLLECTOR_INTAKE_CAPABILITIES.length)
+const capabilitySchema = z
+  .array(z.enum(COLLECTOR_INTAKE_CAPABILITIES))
+  .length(COLLECTOR_INTAKE_CAPABILITIES.length)
   .superRefine((capabilities, context) => {
     const unique = new Set(capabilities);
-    if (unique.size !== COLLECTOR_INTAKE_CAPABILITIES.length
-      || !COLLECTOR_INTAKE_CAPABILITIES.every(capability => unique.has(capability))) {
+    if (
+      unique.size !== COLLECTOR_INTAKE_CAPABILITIES.length ||
+      !COLLECTOR_INTAKE_CAPABILITIES.every(capability => unique.has(capability))
+    ) {
       context.addIssue({ code: 'custom', message: 'Collector intake capabilities are incomplete' });
     }
   });
 
 export const collectorPageSchema = z.object({
-  content: z.array(z.object({
-    collector: z.object({
-      name: trimmedTextSchema,
-      ip: trimmedTextSchema,
-      online: z.boolean().optional(),
-      status: z.number().optional()
-    }).passthrough(),
-    instrumentationIntake: z.unknown().optional()
-  }).passthrough())
+  content: z.array(
+    z
+      .object({
+        collector: z
+          .object({
+            name: trimmedTextSchema,
+            ip: trimmedTextSchema,
+            online: z.boolean().optional(),
+            status: z.number().optional()
+          })
+          .passthrough(),
+        instrumentationIntake: z.unknown().optional()
+      })
+      .passthrough()
+  )
 });
 
 export const availableCollectorIntakeSchema = z.object({
@@ -69,12 +82,14 @@ export const unavailableCollectorIntakeSchema = z.object({
 function isPublicHttpsEndpoint(value: string) {
   try {
     const endpoint = new URL(value);
-    return endpoint.protocol === 'https:'
-      && Boolean(endpoint.hostname)
-      && !endpoint.username
-      && !endpoint.password
-      && !endpoint.search
-      && !endpoint.hash;
+    return (
+      endpoint.protocol === 'https:' &&
+      Boolean(endpoint.hostname) &&
+      !endpoint.username &&
+      !endpoint.password &&
+      !endpoint.search &&
+      !endpoint.hash
+    );
   } catch {
     return false;
   }

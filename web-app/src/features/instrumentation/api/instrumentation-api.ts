@@ -19,13 +19,12 @@ import { apiFetch } from '@/core/http/http-client';
 
 import {
   INSTRUMENTATION_REQUEST_ERROR_CODES,
-  type CatalogResponse,
   type DetectionRequest,
   type DetectionResponse,
   type GuideRenderRequest,
   type GuideRenderResponse,
   type InstrumentationRequestErrorCode
-} from './instrumentation-contract';
+} from '../model/instrumentation-contract';
 import {
   buildDetectionPayload,
   buildGuideRenderPayload,
@@ -53,7 +52,10 @@ export class InstrumentationRequestError extends Error {
 }
 
 export class InstrumentationApiError extends Error {
-  constructor(message: string, readonly httpStatus?: number) {
+  constructor(
+    message: string,
+    readonly httpStatus?: number
+  ) {
     super(message);
     this.name = 'InstrumentationApiError';
   }
@@ -92,11 +94,7 @@ function jsonRequest(body: GuideRenderRequest | DetectionRequest, signal?: Abort
   };
 }
 
-async function requestInstrumentation<T>(
-  path: string,
-  init: RequestInit,
-  parse: (value: unknown) => T
-): Promise<T> {
+async function requestInstrumentation<T>(path: string, init: RequestInit, parse: (value: unknown) => T): Promise<T> {
   const response = await apiFetch(path, init);
   if (!response.ok) {
     throw new InstrumentationApiError(`Instrumentation request failed with HTTP ${response.status}`, response.status);
@@ -111,12 +109,7 @@ async function requestInstrumentation<T>(
 
   const envelope = parseMessageEnvelope(rawEnvelope);
   if (envelope.code !== 0) throwMessageError(envelope);
-  try {
-    return parse(envelope.data);
-  } catch (error) {
-    if (error instanceof InstrumentationContractError) throw error;
-    throw error;
-  }
+  return parse(envelope.data);
 }
 
 function parseMessageEnvelope(value: unknown): MessageEnvelope {
@@ -153,23 +146,25 @@ function validateGuideResponse(request: GuideRenderRequest, response: GuideRende
 
 function validateDetectionResponse(request: DetectionRequest, response: DetectionResponse) {
   const context = response.context;
-  if (!sameSelection(request, context)
-    || context.service.name !== request.service.name
-    || context.service.namespace !== request.service.namespace
-    || context.service.environment !== request.service.environment
-    || context.collectorId !== request.collectorId
-    || context.startedAt !== request.startedAt) {
+  if (
+    !sameSelection(request, context) ||
+    context.service.name !== request.service.name ||
+    context.service.namespace !== request.service.namespace ||
+    context.service.environment !== request.service.environment ||
+    context.collectorId !== request.collectorId ||
+    context.startedAt !== request.startedAt
+  ) {
     throw new InstrumentationContractError('Detection response context did not match the request');
   }
   return response;
 }
 
 function sameSelection(left: GuideRenderRequest | DetectionRequest, right: GuideRenderResponse['selection']) {
-  return left.language === right.language
-    && left.framework === right.framework
-    && left.method === right.method
-    && left.environment === right.environment
-    && left.platform === right.platform;
+  return (
+    left.language === right.language &&
+    left.framework === right.framework &&
+    left.method === right.method &&
+    left.environment === right.environment &&
+    left.platform === right.platform
+  );
 }
-
-export type { CatalogResponse, DetectionResponse, GuideRenderResponse };
