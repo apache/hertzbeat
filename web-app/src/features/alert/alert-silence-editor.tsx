@@ -22,21 +22,17 @@ import type { AlertSilenceDraft } from './alert-silence-model';
 import styles from './alert-silence-editor.module.css';
 import { AlertSilenceScheduleFields } from './alert-silence-schedule-fields';
 
-export function AlertSilenceEditor({
-  draft,
-  saving,
-  update,
-  replace,
-  close,
-  submit
-}: {
+interface AlertSilenceEditorProps {
   draft: AlertSilenceDraft;
   saving: boolean;
   update: (patch: Partial<AlertSilenceDraft>) => void;
   replace: (draft: AlertSilenceDraft) => void;
   close: () => void;
   submit: () => void;
-}) {
+}
+
+export function AlertSilenceEditor(props: AlertSilenceEditorProps) {
+  const { draft, saving, update, replace, close, submit } = props;
   const { t } = useTranslation();
   return (
     <Modal
@@ -47,27 +43,30 @@ export function AlertSilenceEditor({
       okText={t('common.save')}
       cancelText={t('common.cancel')}
       confirmLoading={saving}
+      cancelButtonProps={{ disabled: saving }}
+      keyboard={!saving}
       onCancel={close}
       onOk={submit}
     >
       <div className={styles.form}>
         <label className={`${styles.field} ${styles.wide}`}>
           {t('alertSilences.name')}
-          <Input value={draft.name} onChange={event => update({ name: event.target.value })} />
+          <Input disabled={saving} value={draft.name} onChange={event => update({ name: event.target.value })} />
         </label>
         <label className={styles.field}>
           {t('alertSilences.matchAll')}
-          <Switch checked={draft.matchAll} onChange={matchAll => update({ matchAll })} />
+          <Switch disabled={saving} checked={draft.matchAll} onChange={matchAll => update({ matchAll })} />
         </label>
         <label className={styles.field}>
           {t('alertSilences.enabled')}
-          <Switch checked={draft.enable} onChange={enable => update({ enable })} />
+          <Switch disabled={saving} checked={draft.enable} onChange={enable => update({ enable })} />
         </label>
         {!draft.matchAll && (
           <label className={`${styles.field} ${styles.wide}`}>
             {t('alertSilences.labels')}
             <Input.TextArea
               rows={2}
+              disabled={saving}
               value={draft.labelsText}
               placeholder={t('alertSilences.matcherPlaceholder')}
               onChange={event => update({ labelsText: event.target.value })}
@@ -75,7 +74,7 @@ export function AlertSilenceEditor({
             <span className={styles.hint}>{t('alertSilences.labelsHelp')}</span>
           </label>
         )}
-        <AlertSilenceScheduleFields draft={draft} update={update} replace={replace} />
+        <AlertSilenceScheduleFields disabled={saving} draft={draft} update={update} replace={replace} />
       </div>
     </Modal>
   );

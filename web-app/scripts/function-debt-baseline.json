@@ -1,11 +1,4 @@
 {
   "version": 1,
-  "entries": [
-    {
-      "rule": "function-size",
-      "path": "features/alert/controller/use-alert-silence-controller.ts",
-      "identity": "function:useAlertSilenceController",
-      "allowedMax": 79
-    }
-  ]
+  "entries": []
 }

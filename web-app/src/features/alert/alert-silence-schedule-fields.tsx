@@ -26,6 +26,7 @@ const weekdayOrder = [7, 1, 2, 3, 4, 5, 6] as const;
 
 interface ScheduleWindowProps {
   draft: AlertSilenceDraft;
+  disabled: boolean;
   update: (patch: Partial<AlertSilenceDraft>) => void;
 }
 
@@ -34,7 +35,7 @@ interface AlertSilenceScheduleFieldsProps extends ScheduleWindowProps {
 }
 
 /** Owns schedule presentation while type normalization remains in the model. */
-export function AlertSilenceScheduleFields({ draft, update, replace }: AlertSilenceScheduleFieldsProps) {
+export function AlertSilenceScheduleFields({ draft, disabled, update, replace }: AlertSilenceScheduleFieldsProps) {
   const { t } = useTranslation();
   const changeType = (type: AlertSilenceType) => replace(changeAlertSilenceType(draft, type));
 
@@ -43,6 +44,7 @@ export function AlertSilenceScheduleFields({ draft, update, replace }: AlertSile
       <label className={`${styles.field} ${styles.wide}`}>
         {t('alertSilences.type')}
         <Radio.Group
+          disabled={disabled}
           optionType="button"
           buttonStyle="solid"
           value={draft.type}
@@ -54,21 +56,22 @@ export function AlertSilenceScheduleFields({ draft, update, replace }: AlertSile
         />
       </label>
       {draft.type === 0 ? (
-        <AlertSilenceOnceWindow draft={draft} update={update} />
+        <AlertSilenceOnceWindow draft={draft} disabled={disabled} update={update} />
       ) : (
-        <AlertSilenceRecurringWindow draft={draft} update={update} />
+        <AlertSilenceRecurringWindow draft={draft} disabled={disabled} update={update} />
       )}
     </>
   );
 }
 
-function AlertSilenceOnceWindow({ draft, update }: ScheduleWindowProps) {
+function AlertSilenceOnceWindow({ draft, disabled, update }: ScheduleWindowProps) {
   const { t } = useTranslation();
 
   return (
     <label className={`${styles.field} ${styles.wide}`}>
       {t('alertSilences.timeWindow')}
       <DatePicker.RangePicker
+        disabled={disabled}
         showTime={{ format: 'HH:mm' }}
         format="YYYY-MM-DD HH:mm"
         value={[dayjs(draft.periodStart), dayjs(draft.periodEnd)]}
@@ -84,7 +87,7 @@ function AlertSilenceOnceWindow({ draft, update }: ScheduleWindowProps) {
   );
 }
 
-function AlertSilenceRecurringWindow({ draft, update }: ScheduleWindowProps) {
+function AlertSilenceRecurringWindow({ draft, disabled, update }: ScheduleWindowProps) {
   const { t } = useTranslation();
 
   return (
@@ -92,6 +95,7 @@ function AlertSilenceRecurringWindow({ draft, update }: ScheduleWindowProps) {
       <label className={`${styles.field} ${styles.wide} ${styles.weekdays}`}>
         {t('alertSilences.days')}
         <Checkbox.Group
+          disabled={disabled}
           value={draft.days}
           options={weekdayOrder.map(day => ({ value: day, label: t(`alertSilences.week.${day}`) }))}
           onChange={days => update({ days })}
@@ -100,6 +104,7 @@ function AlertSilenceRecurringWindow({ draft, update }: ScheduleWindowProps) {
       <label className={styles.field}>
         {t('alertSilences.start')}
         <TimePicker
+          disabled={disabled}
           format="HH:mm"
           minuteStep={5}
           value={timePickerValue(draft.periodStart)}
@@ -109,6 +114,7 @@ function AlertSilenceRecurringWindow({ draft, update }: ScheduleWindowProps) {
       <label className={styles.field}>
         {t('alertSilences.end')}
         <TimePicker
+          disabled={disabled}
           format="HH:mm"
           minuteStep={5}
           value={timePickerValue(draft.periodEnd)}

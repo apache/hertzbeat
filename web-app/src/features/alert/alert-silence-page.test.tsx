@@ -31,12 +31,13 @@ const api = vi.hoisted(() => ({
   saveAlertSilence: vi.fn(),
   updateAlertSilenceEnabled: vi.fn()
 }));
-vi.mock('./alert-silence-api', async (importOriginal) => ({
+vi.mock('./alert-silence-api', async importOriginal => ({
   ...(await importOriginal<typeof import('./alert-silence-api')>()),
   ...api
 }));
 
 import { AlertSilencePage } from './alert-silence-page';
+import { AlertSilenceMissingError, buildAlertSilencePayload, type AlertSilenceDraft } from './alert-silence-model';
 
 const record = {
   id: 7,
@@ -48,6 +49,7 @@ const record = {
   periodStart: '2026-07-16T10:00:00Z',
   periodEnd: '2026-07-16T12:00:00Z'
 };
+const detailRecord = { ...record, enable: true, times: 2, labels: null, days: null };
 
 describe('AlertSilencePage', () => {
   beforeAll(async () => {
@@ -59,7 +61,7 @@ describe('AlertSilencePage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     api.loadAlertSilences.mockResolvedValue({ content: [record], totalElements: 1 });
-    api.loadAlertSilence.mockResolvedValue({ ...record, enable: true, times: 2 });
+    api.loadAlertSilence.mockResolvedValue(detailRecord);
     api.saveAlertSilence.mockResolvedValue(undefined);
     api.deleteAlertSilence.mockResolvedValue(undefined);
     api.updateAlertSilenceEnabled.mockResolvedValue(undefined);
@@ -70,9 +72,12 @@ describe('AlertSilencePage', () => {
   it('reads and writes the URL-backed search and pagination context', async () => {
     renderPage('/alerts/silences?search=prod&pageIndex=1&pageSize=15');
 
-    await waitFor(() => expect(api.loadAlertSilences).toHaveBeenCalledWith(
-      { search: 'prod', pageIndex: 1, pageSize: 15 }, expect.any(AbortSignal)
-    ));
+    await waitFor(() =>
+      expect(api.loadAlertSilences).toHaveBeenCalledWith(
+        { search: 'prod', pageIndex: 1, pageSize: 15 },
+        expect.any(AbortSignal)
+      )
+    );
     fireEvent.change(screen.getByPlaceholderText('Search silences'), { target: { value: ' database ' } });
     fireEvent.click(screen.getByRole('button', { name: 'Query' }));
 
@@ -84,8 +89,9 @@ describe('AlertSilencePage', () => {
   it('distinguishes unavailable and empty list states', async () => {
     api.loadAlertSilences.mockRejectedValueOnce(new ApiMessageError('offline', { status: 503 }));
     const unavailable = renderPage();
-    expect(await screen.findByText('The service is unavailable. Check the backend connection and try again.'))
-      .toBeInTheDocument();
+    expect(
+      await screen.findByText('The service is unavailable. Check the backend connection and try again.')
+    ).toBeInTheDocument();
     expect(screen.queryByText('No silence policies match the current query.')).not.toBeInTheDocument();
 
     unavailable.unmount();
@@ -95,18 +101,24 @@ describe('AlertSilencePage', () => {
   });
 
   it('normalizes nonzero out-of-range content without presenting an empty result', async () => {
-    api.loadAlertSilences.mockImplementation(query => Promise.resolve(query.pageIndex === 2
-      ? { content: [], totalElements: 9, totalPages: 2, number: 2, size: 8 }
-      : { content: [record], totalElements: 9, totalPages: 2, number: 1, size: 8 }));
+    api.loadAlertSilences.mockImplementation(query =>
+      Promise.resolve(
+        query.pageIndex === 2
+          ? { content: [], totalElements: 9, totalPages: 2, number: 2, size: 8 }
+          : { content: [record], totalElements: 9, totalPages: 2, number: 1, size: 8 }
+      )
+    );
     renderPage('/alerts/silences?pageIndex=2&pageSize=8');
 
     expect(screen.queryByText('No silence policies match the current query.')).not.toBeInTheDocument();
-    await waitFor(() => expect(screen.getByTestId('location'))
-      .toHaveTextContent('/alerts/silences?pageIndex=1&pageSize=8'));
+    await waitFor(() =>
+      expect(screen.getByTestId('location')).toHaveTextContent('/alerts/silences?pageIndex=1&pageSize=8')
+    );
     expect(await screen.findByText('Database maintenance')).toBeInTheDocument();
   });
 
   it('creates explicitly and cancels without writing', async () => {
+    api.loadAlertSilences.mockImplementation(() => Promise.resolve(createdPageFromLastWrite()));
     renderPage();
     await screen.findByText('Database maintenance');
 
@@ -119,14 +131,19 @@ describe('AlertSilencePage', () => {
     dialog = screen.getByRole('dialog');
     fireEvent.change(within(dialog).getByLabelText('Policy'), { target: { value: 'Planned maintenance' } });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
-    await waitFor(() => expect(api.saveAlertSilence).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'Planned maintenance' })
-    ));
+    await waitFor(() =>
+      expect(api.saveAlertSilence).toHaveBeenCalledWith(expect.objectContaining({ name: 'Planned maintenance' }))
+    );
   });
 
   it('disables New silence while a save is in flight', async () => {
     let resolveSave!: () => void;
-    api.saveAlertSilence.mockReturnValue(new Promise<void>(resolve => { resolveSave = resolve; }));
+    api.saveAlertSilence.mockReturnValue(
+      new Promise<void>(resolve => {
+        resolveSave = resolve;
+      })
+    );
+    api.loadAlertSilences.mockImplementation(() => Promise.resolve(createdPageFromLastWrite()));
     renderPage();
     await screen.findByText('Database maintenance');
     const create = screen.getByRole('button', { name: 'New silence' });
@@ -149,10 +166,13 @@ describe('AlertSilencePage', () => {
     const dialog = await screen.findByRole('dialog');
     await waitFor(() => expect(api.loadAlertSilence).toHaveBeenCalledWith(7, expect.any(AbortSignal)));
     fireEvent.change(within(dialog).getByLabelText('Policy'), { target: { value: 'Updated maintenance' } });
+    api.loadAlertSilence
+      .mockResolvedValueOnce({ ...detailRecord, name: 'Updated maintenance' })
+      .mockRejectedValueOnce(new AlertSilenceMissingError());
     fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
-    await waitFor(() => expect(api.saveAlertSilence).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 7, name: 'Updated maintenance' })
-    ));
+    await waitFor(() =>
+      expect(api.saveAlertSilence).toHaveBeenCalledWith(expect.objectContaining({ id: 7, name: 'Updated maintenance' }))
+    );
 
     fireEvent.click(within(row).getByRole('button', { name: 'Delete' }));
     fireEvent.click(await screen.findByRole('button', { name: 'OK' }));
@@ -168,6 +188,15 @@ describe('AlertSilencePage', () => {
     expect(within(row).getByRole('switch')).toBeDisabled();
   });
 });
+
+function createdPageFromLastWrite() {
+  const draft = api.saveAlertSilence.mock.calls[0]?.[0] as AlertSilenceDraft | undefined;
+  if (!draft) return { content: [record], totalElements: 1 };
+  return {
+    content: [{ id: 8, times: null, ...buildAlertSilencePayload(draft) }],
+    totalElements: 1
+  };
+}
 
 function renderPage(entry = '/alerts/silences') {
   const client = new QueryClient({

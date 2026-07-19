@@ -81,4 +81,48 @@ describe('AlertSilenceEditor schedule', () => {
     fireEvent.click(screen.getByRole('checkbox', { name: 'alertSilences.week.3' }));
     expect(update).toHaveBeenCalledWith({ days: [7, 1, 2, 4, 5, 6] });
   });
+
+  it('makes the entire one-time editor inert while a save is in flight', () => {
+    const close = vi.fn();
+    render(
+      <AlertSilenceEditor
+        draft={{ ...onceDraft, matchAll: false, labelsText: 'service=api' }}
+        saving
+        update={vi.fn()}
+        replace={vi.fn()}
+        close={close}
+        submit={vi.fn()}
+      />
+    );
+
+    expect(screen.getByDisplayValue('Maintenance')).toBeDisabled();
+    expect(screen.getByPlaceholderText('alertSilences.matcherPlaceholder')).toBeDisabled();
+    screen.getAllByRole('switch').forEach(control => expect(control).toBeDisabled());
+    screen.getAllByRole('radio').forEach(control => expect(control).toBeDisabled());
+    const onceInputs = document.querySelectorAll('.ant-picker input');
+    expect(onceInputs.length).toBeGreaterThan(0);
+    onceInputs.forEach(control => expect(control).toBeDisabled());
+    expect(screen.getByRole('button', { name: 'common.cancel' })).toBeDisabled();
+
+    fireEvent.keyDown(document, { key: 'Escape', code: 'Escape' });
+    expect(close).not.toHaveBeenCalled();
+  });
+
+  it('disables recurring weekday and clock controls while a save is in flight', () => {
+    render(
+      <AlertSilenceEditor
+        draft={{ ...onceDraft, type: 1, periodStart: '22:00', periodEnd: '02:00' }}
+        saving
+        update={vi.fn()}
+        replace={vi.fn()}
+        close={vi.fn()}
+        submit={vi.fn()}
+      />
+    );
+
+    screen.getAllByRole('checkbox').forEach(control => expect(control).toBeDisabled());
+    const recurringInputs = document.querySelectorAll('.ant-picker input');
+    expect(recurringInputs.length).toBeGreaterThan(0);
+    recurringInputs.forEach(control => expect(control).toBeDisabled());
+  });
 });

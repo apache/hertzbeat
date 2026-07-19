@@ -27,6 +27,7 @@ import writeModelSource from './alert-silence-write-model.ts?raw';
 import controllerSource from './controller/use-alert-silence-controller.ts?raw';
 import pageModelSource from './alert-silence-page-model.ts?raw';
 import mutationsSource from './controller/use-alert-silence-mutations.ts?raw';
+import operationGateSource from './controller/use-alert-silence-operation-gate.ts?raw';
 
 function sourceLineCount(value: string) {
   return value
@@ -65,23 +66,22 @@ describe('AlertSilencePage architecture', () => {
   });
 
   it('keeps the local operation gate separate from silence transactions', () => {
-    const gateStart = mutationsSource.indexOf('function useAlertSilenceOperationGate');
-    const convergenceStart = mutationsSource.indexOf('function requireDraftConvergence');
-    const transactions = mutationsSource.slice(0, gateStart);
-    const gate = mutationsSource.slice(gateStart, convergenceStart);
-
-    expect(gateStart).toBeGreaterThan(0);
-    expect(convergenceStart).toBeGreaterThan(gateStart);
-    expect(transactions).toContain('const gate = useAlertSilenceOperationGate(message, t)');
-    expect(transactions).toMatch(/saveAlertSilence[\s\S]*loadAlertSilence[\s\S]*rereadList\(\)[\s\S]*onSaved\(\)/);
-    expect(transactions).toMatch(/updateAlertSilenceEnabled[\s\S]*loadAlertSilence[\s\S]*rereadList\(\)/);
-    expect(transactions).toMatch(/deleteAlertSilence[\s\S]*classifyAlertSilenceReadError[\s\S]*rereadList\(\)/);
-    expect(gate).toContain('const locked = useRef(false)');
-    expect(gate).toContain('if (locked.current) return');
-    expect(gate).toMatch(/finally\s*{[\s\S]*locked\.current = false;[\s\S]*setBusy\(false\)/);
-    expect(gate).not.toMatch(
+    expect(mutationsSource).toContain('const gate = useAlertSilenceOperationGate()');
+    expect(mutationsSource).toMatch(/saveAlertSilence[\s\S]*onCommitted[\s\S]*loadAlertSilence[\s\S]*rereadList\(\)/);
+    expect(mutationsSource).toMatch(/updateAlertSilenceEnabled[\s\S]*loadAlertSilence[\s\S]*rereadList\(\)/);
+    expect(mutationsSource).toMatch(/deleteAlertSilence[\s\S]*requireMissingSilence[\s\S]*rereadList\(\)/);
+    expect(operationGateSource).toContain('const owner = useRef<number | null>(null)');
+    expect(operationGateSource).toContain(
+      'if (owner.current !== null || projectionFailureRef.current !== null) return'
+    );
+    expect(operationGateSource).toMatch(
+      /await operation\.write\(\)[\s\S]*operation\.onCommitted\?\.\(\)[\s\S]*await operation\.verify\(\)/
+    );
+    expect(operationGateSource).toContain('if (!owns(commandOwner, owner, mounted)) return');
+    expect(operationGateSource).not.toMatch(
       /saveAlertSilence|loadAlertSilence|updateAlertSilenceEnabled|deleteAlertSilence|rereadList/
     );
+    expect(sourceLineCount(operationGateSource)).toBeLessThanOrEqual(200);
   });
 
   it('keeps schedule normalization in the model and splits the two presentation windows', () => {

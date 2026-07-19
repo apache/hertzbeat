@@ -25,7 +25,12 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 import { ApiMessageError } from '@/core/http/api-message';
-import { AlertSilenceContractError, AlertSilenceMissingError } from '../alert-silence-model';
+import {
+  AlertSilenceContractError,
+  AlertSilenceMissingError,
+  buildAlertSilencePayload,
+  type AlertSilence
+} from '../alert-silence-model';
 import { alertSilenceDetailDraft } from '../alert-silence-page-model';
 
 const api = vi.hoisted(() => ({
@@ -61,7 +66,7 @@ const editable = {
   periodStart: '2026-07-16T10:00:00Z',
   periodEnd: '2026-07-16T12:00:00Z'
 };
-const page = (content = [record], number = 0, total = content.length) => ({
+const page = (content: AlertSilence[] = [record], number = 0, total = content.length) => ({
   content,
   totalElements: total,
   totalPages: total === 0 ? 0 : Math.ceil(total / 8),
@@ -221,7 +226,7 @@ describe('useAlertSilenceController', () => {
     await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('empty'));
   });
 
-  it('keeps a create draft open when its awaited list reread fails', async () => {
+  it('does not leave a committed create draft retryable when its projection read fails', async () => {
     api.loadAlertSilences.mockResolvedValueOnce(page()).mockRejectedValueOnce(new Error('reread failed'));
     const view = renderController(['/alerts/silences'], 0);
     await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
@@ -229,31 +234,60 @@ describe('useAlertSilenceController', () => {
     act(() => view.result.current.controller.actions.updateDraft({ name: 'Created' }));
     await act(() => view.result.current.controller.actions.save());
     expect(api.loadAlertSilences).toHaveBeenCalledTimes(2);
-    expect(alertSilenceDetailDraft(view.result.current.controller.state.detail)).toMatchObject({ name: 'Created' });
+    expect(view.result.current.controller.state.detail).toEqual({ kind: 'idle' });
+    expect(view.result.current.controller.state.list.kind).toBe('error');
+    expect(await screen.findByText(i18n.t('alertSilences.saveSuccess'))).toBeInTheDocument();
+    expect(screen.queryByText(i18n.t('alertSilences.saveFailed'))).not.toBeInTheDocument();
+
+    await act(() => view.result.current.controller.actions.save());
+    expect(api.saveAlertSilence).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps a create draft open until the awaited list reread succeeds', async () => {
-    let resolveReread!: (value: ReturnType<typeof page>) => void;
-    api.loadAlertSilences.mockResolvedValueOnce(page()).mockReturnValueOnce(
-      new Promise(resolve => {
-        resolveReread = resolve;
-      })
-    );
+  it('classifies an unavailable post-commit projection without making create retryable', async () => {
+    api.loadAlertSilences
+      .mockResolvedValueOnce(page())
+      .mockRejectedValueOnce(new ApiMessageError('offline', { status: 503 }));
     const view = renderController(['/alerts/silences'], 0);
     await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
     act(() => view.result.current.controller.actions.create());
     act(() => view.result.current.controller.actions.updateDraft({ name: 'Created' }));
+
+    await act(() => view.result.current.controller.actions.save());
+    expect(view.result.current.controller.state.detail).toEqual({ kind: 'idle' });
+    expect(view.result.current.controller.state.list.kind).toBe('unavailable');
+    expect(await screen.findByText(i18n.t('alertSilences.saveSuccess'))).toBeInTheDocument();
+    expect(screen.queryByText(i18n.t('alertSilences.saveFailed'))).not.toBeInTheDocument();
+
+    await act(() => view.result.current.controller.actions.refresh());
+    expect(view.result.current.controller.state.list.kind).toBe('ready');
+    expect(view.result.current.controller.state.busy).toBe(false);
+  });
+
+  it('closes a committed create before projection validation and displayed reread finish', async () => {
+    const proof = deferred<ReturnType<typeof page>>();
+    api.loadAlertSilences.mockResolvedValueOnce(page()).mockReturnValueOnce(proof.promise);
+    const view = renderController(['/alerts/silences'], 0);
+    await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
+    act(() => view.result.current.controller.actions.create());
+    act(() => view.result.current.controller.actions.updateDraft({ name: 'Created' }));
+    const draft = alertSilenceDetailDraft(view.result.current.controller.state.detail);
+    if (!draft) throw new Error('Create draft was not opened');
+    const created = { id: 8, times: null, ...buildAlertSilencePayload(draft) };
+    api.loadAlertSilences.mockResolvedValueOnce(page([created]));
     let save!: Promise<void>;
     act(() => {
       save = view.result.current.controller.actions.save();
     });
     await waitFor(() => expect(api.loadAlertSilences).toHaveBeenCalledTimes(2));
-    expect(alertSilenceDetailDraft(view.result.current.controller.state.detail)).toMatchObject({ name: 'Created' });
+    expect(view.result.current.controller.state.detail).toEqual({ kind: 'idle' });
+    expect(view.result.current.controller.state.busy).toBe(true);
     await act(async () => {
-      resolveReread(page());
+      proof.resolve(page([created]));
       await save;
     });
+    expect(api.loadAlertSilences).toHaveBeenCalledTimes(3);
     expect(view.result.current.controller.state.detail).toEqual({ kind: 'idle' });
+    expect(view.result.current.controller.state.busy).toBe(false);
   });
 
   it('uses a synchronous mutex for same-tick save attempts', async () => {
@@ -278,6 +312,69 @@ describe('useAlertSilenceController', () => {
       resolveSave();
       await Promise.all([first, second]);
     });
+  });
+
+  it('uses the same synchronous owner for same-tick toggle attempts', async () => {
+    const write = deferred<void>();
+    api.updateAlertSilenceEnabled.mockReturnValue(write.promise);
+    api.loadAlertSilence.mockResolvedValue({ ...record, enable: false });
+    const view = renderController(['/alerts/silences'], 0);
+    await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
+
+    let first!: Promise<void>;
+    let second!: Promise<void>;
+    act(() => {
+      first = view.result.current.controller.actions.toggle(record, false);
+      second = view.result.current.controller.actions.toggle(record, false);
+    });
+
+    expect(api.updateAlertSilenceEnabled).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      write.resolve();
+      await Promise.all([first, second]);
+    });
+  });
+
+  it('uses the same synchronous owner for same-tick delete attempts', async () => {
+    const write = deferred<void>();
+    api.deleteAlertSilence.mockReturnValue(write.promise);
+    api.loadAlertSilence.mockRejectedValue(new AlertSilenceMissingError());
+    const view = renderController(['/alerts/silences'], 0);
+    await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
+
+    let first!: Promise<void>;
+    let second!: Promise<void>;
+    act(() => {
+      first = view.result.current.controller.actions.remove(7);
+      second = view.result.current.controller.actions.remove(7);
+    });
+
+    expect(api.deleteAlertSilence).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      write.resolve();
+      await Promise.all([first, second]);
+    });
+  });
+
+  it('does not publish a stale write failure after controller unmount', async () => {
+    const write = deferred<void>();
+    api.saveAlertSilence.mockReturnValue(write.promise);
+    const view = renderController(['/alerts/silences'], 0);
+    await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
+    act(() => view.result.current.controller.actions.create());
+    act(() => view.result.current.controller.actions.updateDraft({ name: 'Created' }));
+
+    let save!: Promise<void>;
+    act(() => {
+      save = view.result.current.controller.actions.save();
+    });
+    view.unmount();
+    await act(async () => {
+      write.reject(new Error('late write failure'));
+      await save;
+    });
+
+    expect(screen.queryByText(i18n.t('alertSilences.saveFailed'))).not.toBeInTheDocument();
   });
 
   it('releases the save mutex after failure, retains the draft, and permits a retry', async () => {
@@ -352,16 +449,21 @@ describe('useAlertSilenceController', () => {
     });
   });
 
-  it('requires toggle convergence and delete missing proof before list reread', async () => {
+  it('requires explicit projection recovery after failed toggle proof before another write', async () => {
     const view = renderController(['/alerts/silences'], 0);
     await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
     api.loadAlertSilence.mockResolvedValue(record);
     await act(() => view.result.current.controller.actions.toggle(record, false));
     expect(api.loadAlertSilences).toHaveBeenCalledTimes(1);
+    expect(view.result.current.controller.state.list.kind).toBe('error');
+
+    await act(() => view.result.current.controller.actions.refresh());
+    expect(api.loadAlertSilences).toHaveBeenCalledTimes(2);
+    expect(view.result.current.controller.state.list.kind).toBe('ready');
 
     api.loadAlertSilence.mockRejectedValue(new AlertSilenceMissingError());
     await act(() => view.result.current.controller.actions.remove(7));
-    expect(api.loadAlertSilences).toHaveBeenCalledTimes(2);
+    expect(api.loadAlertSilences).toHaveBeenCalledTimes(3);
   });
 
   it('rereads the list after a canonical toggle converges', async () => {
@@ -370,6 +472,41 @@ describe('useAlertSilenceController', () => {
     api.loadAlertSilence.mockResolvedValue({ ...record, enable: false });
     await act(() => view.result.current.controller.actions.toggle(record, false));
     expect(api.loadAlertSilences).toHaveBeenCalledTimes(2);
+  });
+
+  it('rereads the latest route query when a pending operation outlives its original context', async () => {
+    const write = deferred<void>();
+    let oldReads = 0;
+    api.loadAlertSilences.mockImplementation(query => {
+      if (query.search === 'old' && oldReads++ > 0) return Promise.reject(new Error('stale query failed'));
+      return Promise.resolve(page());
+    });
+    api.updateAlertSilenceEnabled.mockReturnValue(write.promise);
+    api.loadAlertSilence.mockResolvedValue({ ...record, enable: false });
+    const view = renderController(['/alerts/silences?search=old'], 0);
+    await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
+
+    let operation!: Promise<void>;
+    act(() => {
+      operation = view.result.current.controller.actions.toggle(record, false);
+    });
+    act(() => {
+      void view.result.current.navigate('/alerts/silences?search=new');
+    });
+    await waitFor(() => expect(view.result.current.controller.state.query.search).toBe('new'));
+    await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
+
+    await act(async () => {
+      write.resolve();
+      await operation;
+    });
+
+    expect(api.loadAlertSilences).toHaveBeenLastCalledWith(
+      expect.objectContaining({ search: 'new' }),
+      expect.any(AbortSignal)
+    );
+    expect(view.result.current.controller.state.list.kind).toBe('ready');
+    expect(view.result.current.controller.state.busy).toBe(false);
   });
 
   it('closes an edit only after save, canonical detail convergence, and list reread', async () => {
@@ -385,7 +522,7 @@ describe('useAlertSilenceController', () => {
     expect(view.result.current.controller.state.detail).toEqual({ kind: 'idle' });
   });
 
-  it('keeps the editor open when canonical edit fields do not converge', async () => {
+  it('does not turn a committed edit into a retryable save when canonical proof fails', async () => {
     api.loadAlertSilence.mockResolvedValue(editable);
     const view = renderController(['/alerts/silences'], 0);
     await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
@@ -394,10 +531,10 @@ describe('useAlertSilenceController', () => {
     api.loadAlertSilence.mockResolvedValue(editable);
     await act(() => view.result.current.controller.actions.save());
     expect(api.loadAlertSilences).toHaveBeenCalledTimes(1);
-    expect(alertSilenceDetailDraft(view.result.current.controller.state.detail)).toMatchObject({
-      id: 7,
-      name: 'Updated'
-    });
+    expect(view.result.current.controller.state.detail).toEqual({ kind: 'idle' });
+    expect(view.result.current.controller.state.list.kind).toBe('error');
+    expect(await screen.findByText(i18n.t('alertSilences.saveSuccess'))).toBeInTheDocument();
+    expect(screen.queryByText(i18n.t('alertSilences.saveFailed'))).not.toBeInTheDocument();
   });
 });
 
