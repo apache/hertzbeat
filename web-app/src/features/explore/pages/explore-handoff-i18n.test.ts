@@ -22,9 +22,14 @@ import ja from '@/assets/i18n/ja-jp.json';
 import pt from '@/assets/i18n/pt-br.json';
 import zhCn from '@/assets/i18n/zh-cn.json';
 import zhTw from '@/assets/i18n/zh-tw.json';
+import exploreEn from '@/assets/i18n/explore/en-us.json';
+import exploreJa from '@/assets/i18n/explore/ja-jp.json';
+import explorePt from '@/assets/i18n/explore/pt-br.json';
+import exploreZhCn from '@/assets/i18n/explore/zh-cn.json';
+import exploreZhTw from '@/assets/i18n/explore/zh-tw.json';
 
 const handoffKeys = [
-  'serviceNamespaceContext', 'collectorContext', 'handoffInvalid', 'exactWindow',
+  'serviceNamespaceContext', 'collectorContext', 'handoffInvalid',
   'traceId', 'spanId', 'traceIdContext', 'spanIdContext'
 ] as const;
 
@@ -32,6 +37,12 @@ describe('Explore handoff locale contract', () => {
   it('keeps every visible handoff key available in all runtime locales', () => {
     for (const locale of [en, ja, pt, zhCn, zhTw] as LocaleRoot[]) {
       for (const key of handoffKeys) expect(locale.explore[key]).toEqual(expect.any(String));
+    }
+  });
+
+  it('owns fixed-window copy in the Explore locale bundle for every runtime locale', () => {
+    for (const locale of [exploreEn, exploreJa, explorePt, exploreZhCn, exploreZhTw]) {
+      expect(locale.explore.exactWindow).toEqual(expect.any(String));
     }
   });
 });

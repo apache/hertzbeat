@@ -3,6 +3,7 @@
     "closeDetail": "Close detail"
   },
   "explore": {
+    "exactWindow": "Fixed time window",
     "instanceId": "Service instance ID",
     "httpRouteTemplate": "HTTP route template, for example /checkout",
     "instanceContext": "Instance: {{value}}",

@@ -3,6 +3,7 @@
     "closeDetail": "Fechar detalhes"
   },
   "explore": {
+    "exactWindow": "Intervalo de tempo fixo",
     "instanceId": "ID da instância do serviço",
     "httpRouteTemplate": "Modelo de rota HTTP, por exemplo /checkout",
     "instanceContext": "Instância: {{value}}",

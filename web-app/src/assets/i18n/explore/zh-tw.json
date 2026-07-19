@@ -3,6 +3,7 @@
     "closeDetail": "關閉詳情"
   },
   "explore": {
+    "exactWindow": "固定時間範圍",
     "instanceId": "服務執行個體 ID",
     "httpRouteTemplate": "HTTP 路由範本，例如 /checkout",
     "instanceContext": "執行個體：{{value}}",

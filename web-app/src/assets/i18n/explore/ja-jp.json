@@ -3,6 +3,7 @@
     "closeDetail": "詳細を閉じる"
   },
   "explore": {
+    "exactWindow": "固定時間範囲",
     "instanceId": "サービスインスタンス ID",
     "httpRouteTemplate": "HTTP ルートテンプレート（例: /checkout）",
     "instanceContext": "インスタンス: {{value}}",

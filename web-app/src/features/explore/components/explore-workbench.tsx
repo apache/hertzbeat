@@ -32,6 +32,7 @@ import {
 import styles from './explore-workbench.module.css';
 
 const signalKeys: ExploreSignal[] = ['metrics', 'logs', 'traces'];
+const EXACT_WINDOW_OPTION = 'exact-window';
 
 type Props = {
   query: ExploreQuery;
@@ -62,9 +63,9 @@ export function ExploreWorkbench({ query, t, updateQuery, refresh }: Props) {
         <Select<string>
           className={styles.timeRange ?? ''}
           aria-label={t('explore.timeRange')}
-          value={exactWindow ? 'onboarding-exact' : query.timeRange}
+          value={exactWindow ? EXACT_WINDOW_OPTION : query.timeRange}
           options={[
-            ...(exactWindow ? [{ value: 'onboarding-exact', label: t('explore.exactWindow'), disabled: true }] : []),
+            ...(exactWindow ? [{ value: EXACT_WINDOW_OPTION, label: t('explore.exactWindow'), disabled: true }] : []),
             ...EXPLORE_TIME_RANGES.map(value => ({ value, label: t(`explore.timeRanges.${value}`) }))
           ]}
           onChange={updateTimeRange}

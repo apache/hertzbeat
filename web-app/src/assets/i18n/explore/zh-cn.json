@@ -3,6 +3,7 @@
     "closeDetail": "关闭详情"
   },
   "explore": {
+    "exactWindow": "固定时间范围",
     "instanceId": "服务实例 ID",
     "httpRouteTemplate": "HTTP 路由模板，例如 /checkout",
     "instanceContext": "实例：{{value}}",

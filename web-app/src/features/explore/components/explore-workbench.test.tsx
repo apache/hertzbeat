@@ -76,7 +76,7 @@ describe('Explore workbench', () => {
     expect(screen.getByText('HTTP route: /checkout')).toBeInTheDocument();
   });
 
-  it('delegates refresh without rewriting a scoped onboarding window and exposes invalid handoffs', () => {
+  it('delegates refresh without rewriting a scoped fixed window and exposes invalid handoffs', () => {
     const updateQuery = vi.fn();
     const refresh = vi.fn().mockResolvedValue(undefined);
     render(<I18nextProvider i18n={i18n}><ExploreWorkbench
@@ -89,7 +89,7 @@ describe('Explore workbench', () => {
       refresh={refresh}
     /></I18nextProvider>);
 
-    expect(screen.getByText('Onboarding exact window')).toBeInTheDocument();
+    expect(screen.getByText('Fixed time window')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
     expect(refresh).toHaveBeenCalledOnce();
     expect(updateQuery).not.toHaveBeenCalled();
