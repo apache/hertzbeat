@@ -3,7 +3,8 @@ title: 恭喜 HertzBeat 迎来了两位新晋社区Committer
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource]
+tags: [community]
+image: /img/blog/covers/new-committer-2022-12.jpg
 ---
 
 > 非常高兴 HertzBeat 迎来了两位新晋社区Committer, 两位都是来自互联网公司的开发工程师，让我们来了解下他们的开源经历吧！

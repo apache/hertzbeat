@@ -3,7 +3,9 @@ title: 恭喜 HertzBeat 又迎来了两位新晋社区 Committer
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource]
+tags: [community]
+description: 认识 HertzBeat 新晋 Committer 高晨和铁甲小宝，了解他们在告警通知、Redis、Docker 和数据库监控等方面的贡献经历。
+image: /img/blog/covers/new-committer-2023-02.jpg
 ---
 
 ![hertzBeat](/img/blog/new-committer.png)

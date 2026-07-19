@@ -1,10 +1,12 @@
 ---
 title: Welcome to HertzBeat Community Committer!
+description: CrossoverJie shares how his observability experience led him to improve HertzBeat unit tests, collection code quality, and community practices.
 author: crossoverJie
 author_title: crossoverJie
 author_url: https://github.com/crossoverjie
-tags: [opensource, practice]
+tags: [community]
 keywords: [open source monitoring system, alerting system]
+image: /img/blog/covers/new-committer-crossoverjie.jpg
 ---
 
 ![HertzBeat](/img/blog/new-committer.png)

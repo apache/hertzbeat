@@ -3,7 +3,8 @@ title: SSL证书过期监控最佳实践
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource, practice]
+tags: [tutorials]
+image: /img/blog/covers/monitor-ssl-cert.jpg
 ---
 
 先祝看到的同学中秋快乐，身体健康，在身体健康的基础上尽量暴富。

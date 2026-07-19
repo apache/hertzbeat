@@ -1,10 +1,12 @@
 ---
 title: "Behind the Scenes of HertzBeat: How Metric Collection Works"
+description: Follow a monitoring task through HertzBeat's manager, scheduler, collector, protocol handlers, and data pipeline to understand how metrics are collected.
 author: JuJinPark
 author_title: JuJin
 author_url: https://github.com/JuJinPark
-tags: [opensource, practice]
+tags: [engineering]
 keywords: [open source monitoring system]
+image: /img/blog/covers/metric-collection.jpg
 ---
 ## Behind the Scenes of HertzBeat: How Metric Collection Works
 

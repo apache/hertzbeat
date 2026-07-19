@@ -3,8 +3,10 @@ title: 热烈欢迎 HertzBeat 小伙伴新晋社区 Committer!
 author: zhangshenghang
 author_title: zhangshenghang
 author_url: https://github.com/zhangshenghang
-tags: [opensource, practice]
+tags: [community]
+description: zhangshenghang 回顾从补充 HBase 和大数据监控，到参与代码审查、技术讨论并帮助社区贡献者成长的经历。
 keywords: [open source monitoring system, alerting system]
+image: /img/blog/covers/new-committer-zhangshenghang.jpg
 ---
 
 ![hertzBeat](/img/blog/new-committer.png)

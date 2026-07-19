@@ -500,5 +500,29 @@
   },
   "team.thanks": {
     "message": "Thanks to these wonderful people, who already contributed to HertzBeat!"
+  },
+  "blog.page.title": {
+    "message": "Blog",
+    "description": "Heading shown at the top of the blog list page"
+  },
+  "blog.category.all": {
+    "message": "All",
+    "description": "Label of the category filter showing every blog post"
+  },
+  "blog.category.navigation": {
+    "message": "Blog categories",
+    "description": "Accessible label for the blog category navigation"
+  },
+  "blog.category.releases": {
+    "message": "Releases"
+  },
+  "blog.category.engineering": {
+    "message": "Engineering"
+  },
+  "blog.category.tutorials": {
+    "message": "Tutorials"
+  },
+  "blog.category.community": {
+    "message": "Community"
   }
 }

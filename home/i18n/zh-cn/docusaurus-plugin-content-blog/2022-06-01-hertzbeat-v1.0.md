@@ -3,7 +3,8 @@ title: 云监控系统 HertzBeat v1.0 正式发布啦
 author: tom
 author_title: tom
 author_url: https://github.com/tomsun28
-tags: [opensource]
+tags: [releases]
+image: /img/blog/covers/hertzbeat-v1-0.jpg
 ---
 
 [HertzBeat 赫兹跳动](https://github.com/apache/hertzbeat) 是由 [Dromara](https://dromara.org) 孵化，[TanCloud](https://tancloud.cn) 开源的一个支持网站，API，PING，端口，数据库，全站，操作系统，中间件等监控类型，支持阈值告警，告警通知 (邮箱，webhook，钉钉，企业微信，飞书机器人)，拥有易用友好的可视化操作界面的开源监控告警项目。

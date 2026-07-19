@@ -3,8 +3,10 @@ title: Apache HertzBeat™ 1.7.0 发布公告
 author: tomsun28
 author_title: tomsun28
 author_url: https://github.com/zhangshenghang
-tags: [opensource, release]
+tags: [releases]
+description: Apache HertzBeat 1.7.0 新增指标组独立刷新周期、HTTP 服务发现和全新告警模块，并使用 Apache Arrow 优化内存数据结构。
 keywords: [open source monitoring system, alerting system, HertzBeat, release]
+image: /img/blog/covers/hertzbeat-v1-7-0.jpg
 ---
 
 亲爱的社区小伙伴们，

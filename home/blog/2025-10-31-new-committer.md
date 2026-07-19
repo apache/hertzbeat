@@ -1,9 +1,10 @@
 ---
 title: Welcome HertzBeat's New Community Committer!
+description: Siguo Duan shares his path to Committer through extensive work on Prometheus parsing, alerting, monitoring integrations, performance, and stability.
 author: Duansg
 author_title: SiGuo Duan
 author_url: https://github.com/Duansg
-tags: [opensource, practice]
+tags: [community]
 keywords:
   [
     open source monitoring system,
@@ -12,6 +13,7 @@ keywords:
     Apache Committer,
     HertzBeat,
   ]
+image: /img/blog/covers/new-committer-duansg.jpg
 ---
 
 > Hello everyone, it's a great honor to be invited by the community to become Apache HertzBeat Committer.

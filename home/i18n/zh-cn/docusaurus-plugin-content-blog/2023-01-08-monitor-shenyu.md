@@ -3,7 +3,8 @@ title: 使用 HertzBeat 对 API 网关 Apache ShenYu 的监控实践
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource, practice]
+tags: [tutorials]
+image: /img/blog/covers/monitor-shenyu.jpg
 ---
 
 ## 使用 HertzBeat 对 API 网关 Apache ShenYu 进行监控实践，5分钟搞定

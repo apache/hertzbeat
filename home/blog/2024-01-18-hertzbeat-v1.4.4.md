@@ -1,10 +1,12 @@
 ---
-title: HertzBeat v1.4.4 released now! 
+title: HertzBeat v1.4.4 released now!
+description: HertzBeat 1.4.4 adds SNMP v3 and monitoring for NebulaGraph, Nginx, Hive, DNS, WebSocket, NTP, SMTP, POP3, and Memcached.
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource, practice]
+tags: [releases]
 keywords: [open source monitoring system, alerting system]
+image: /img/blog/covers/hertzbeat-v1-4-4.jpg
 ---
 
 ## What is HertzBeat?

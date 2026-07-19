@@ -1,10 +1,12 @@
 ---
-title: HertzBeat v1.4.2 released, custom notice template! 
+title: HertzBeat v1.4.2 released, custom notice template!
+description: HertzBeat 1.4.2 adds custom notification templates, push-based metrics, Huawei OBS template storage, and EMQX and UDP monitoring.
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource, practice]
+tags: [releases]
 keywords: [open source monitoring system, alerting system, Linux monitoring]
+image: /img/blog/covers/hertzbeat-v1-4-2.jpg
 ---
 
 ## What is HertzBeat?

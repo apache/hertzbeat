@@ -3,7 +3,8 @@ title: HertzBeat's Monitoring Practice for API Gateway Apache ShenYu
 author: tom
 author_title: tom
 author_url: https://github.com/tomsun28
-tags: [opensource, practice]
+tags: [tutorials]
+image: /img/blog/covers/monitor-shenyu.jpg
 ---
 
 ## Monitoring practice for API gateway Apache ShenYu using HertzBeat, 5 minutes

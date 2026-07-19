@@ -3,8 +3,9 @@ title: HertzBeat 的第一个 Apache 版本 v1.6.0 发布！
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource, practice]
+tags: [releases]
 keywords: [open source, monitoring, alerting]
+image: /img/blog/covers/hertzbeat-v1-6-0.jpg
 ---
 
 **Hi 朋友们，我们很高兴地宣布，Apache HertzBeat™ 的了第一个Apache版本 v1.6.0 发布啦！🎉.**

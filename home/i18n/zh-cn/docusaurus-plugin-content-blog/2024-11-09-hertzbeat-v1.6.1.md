@@ -3,8 +3,10 @@ title:  Apache HertzBeat™ 1.6.1 发布公告
 author: zhangshenghang
 author_title: zhangshenghang
 author_url: https://github.com/zhangshenghang
-tags: [opensource, practice]
+tags: [releases]
+description: Apache HertzBeat 1.6.1 扩展基础设施监控，新增 Prometheus 解析与推送、NGQL 查询、短信告警和 Docker Compose 部署。
 keywords: [open source monitoring system, alerting system]
+image: /img/blog/covers/hertzbeat-v1-6-1.jpg
 ---
 
 亲爱的社区小伙伴们，

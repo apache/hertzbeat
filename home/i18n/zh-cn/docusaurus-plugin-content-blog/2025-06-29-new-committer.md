@@ -3,7 +3,8 @@ title: 热烈欢迎 HertzBeat 小伙伴新晋社区 Committer!
 author: MasamiYui
 author_title: Yijun Yin
 author_url: https://github.com/MasamiYui
-tags: [opensource, practice]
+tags: [community]
+description: Yijun Yin 分享如何从使用 HertzBeat 进行轻量指标可视化，逐步走向持续代码贡献和深入社区协作。
 keywords:
   [
     open source monitoring system,
@@ -12,6 +13,7 @@ keywords:
     Apache Committer,
     HertzBeat,
   ]
+image: /img/blog/covers/new-committer-masamiyui.jpg
 ---
 
 > 大家好，非常荣幸收到社区邀请，成为 Apache HertzBeat™ Committer。

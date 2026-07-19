@@ -1,9 +1,11 @@
 ---
 title: Welcome two new Committers from HertzBeat   
+description: Meet new HertzBeat Committers Gao Chen and TJxiaobao and learn how they contributed alerting, notification, Redis, Docker, and database monitoring features.
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource]
+tags: [community]
+image: /img/blog/covers/new-committer-2023-02.jpg
 ---
 
 ![HertzBeat](/img/blog/new-committer.png)

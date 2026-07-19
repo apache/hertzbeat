@@ -3,8 +3,10 @@ title: 热烈欢迎 HertzBeat 小伙伴新晋社区 Committer!
 author: linDong
 author_title: linDong
 author_url: https://github.com/Yanshuming1
-tags: [opensource, practice]
+tags: [community]
+description: linDong 分享自己的开源入门过程，以及在企微通知、AI 集成、PrestoDB 监控、缺陷修复和文档方面的贡献。
 keywords: [open source monitoring system, alerting system]
+image: /img/blog/covers/new-committer-lindong.jpg
 ---
 
 ![hertzBeat](/img/blog/new-committer.png)

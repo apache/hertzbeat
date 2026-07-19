@@ -3,8 +3,10 @@ title: Apache HertzBeat™ 1.8.0 版本发布公告
 author: Apache HertzBeat Community
 author_title: Apache HertzBeat 社区
 author_url: https://github.com/apache/hertzbeat
-tags: [开源, 发布, v1.8.0]
+tags: [releases]
+description: Apache HertzBeat 1.8.0 引入 AI 对话和 MCP 工具，新增 QuestDB、iDRAC、Jenkins 与日志监控，并显著提升性能。
 keywords: [开源监控系统, 告警系统, HertzBeat, 发布, v1.8.0, Apache]
+image: /img/blog/covers/hertzbeat-v1-8-0.jpg
 ---
 
 亲爱的社区成员们，

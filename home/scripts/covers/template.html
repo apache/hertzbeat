@@ -1,0 +1,41 @@
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { width: 1800px; height: 766px; font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  .cover {
+    position: relative;
+    width: 1800px; height: 766px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 34px;
+    /* Keep text well inside the frame: cards crop this image with object-fit:cover. */
+    padding: 130px 240px;
+    background: linear-gradient(135deg, #f7f5fd 0%, #eef3fb 55%, #f4f1fb 100%);
+    overflow: hidden;
+  }
+  .glow { position: absolute; border-radius: 50%; filter: blur(110px); opacity: .5; }
+  .g1 { width: 780px; height: 780px; left: -220px; top: -300px; background: var(--accent); }
+  .g2 { width: 620px; height: 620px; right: -180px; bottom: -260px; background: var(--accent2); }
+  .brand { position: relative; width: 380px; height: 95px; }
+  .brand svg { width: 100%; height: 100%; }
+  .headline {
+    position: relative;
+    font-size: 76px; font-weight: 600; letter-spacing: -1px;
+    color: #24123a; text-align: center; line-height: 1.16;
+  }
+  .kicker {
+    position: relative;
+    display: inline-flex; align-items: center; gap: 22px;
+    padding: 14px 36px; border-radius: 999px;
+    background: rgba(255,255,255,.8);
+    border: 1px solid rgba(114,40,181,.2);
+    color: #6b4b8f; font-size: 32px; font-weight: 500; letter-spacing: .5px;
+  }
+  .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--accent); }
+</style>
+
+<div class="cover" style="--accent: #a86ee0; --accent2: #7fb5e8;">
+  <div class="glow g1"></div>
+  <div class="glow g2"></div>
+  <div class="brand">BRAND_SVG</div>
+  <div class="headline">HEADLINE</div>
+  <div class="kicker"><span class="dot"></span>KICKER</div>
+</div>

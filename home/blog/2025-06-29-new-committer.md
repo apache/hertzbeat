@@ -1,9 +1,10 @@
 ---
 title: Welcome HertzBeat's New Community Committer!
+description: Yijun Yin shares how using HertzBeat for lightweight metrics visualization grew into regular code contributions and deeper community participation.
 author: MasamiYui
 author_title: Yijun Yin
 author_url: https://github.com/MasamiYui
-tags: [opensource, practice]
+tags: [community]
 keywords:
   [
     open source monitoring system,
@@ -12,6 +13,7 @@ keywords:
     Apache Committer,
     HertzBeat,
   ]
+image: /img/blog/covers/new-committer-masamiyui.jpg
 ---
 
 > Hello everyone, it's a great honor to be invited by the community to become Apache HertzBeat™ Committer.

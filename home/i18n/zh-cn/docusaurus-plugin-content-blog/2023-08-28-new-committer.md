@@ -3,8 +3,10 @@ title: 热烈欢迎 HertzBeat 小伙伴新晋社区 Committer!
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource, practice]
+tags: [community]
+description: 赵青然分享从运维场景使用 HertzBeat，到贡献存储集成、配置导入导出、监控模板和告警渠道的开源历程。
 keywords: [open source monitoring system, alerting system]
+image: /img/blog/covers/new-committer-2023-08.jpg
 ---
 
 ![hertzBeat](/img/blog/new-committer.png)

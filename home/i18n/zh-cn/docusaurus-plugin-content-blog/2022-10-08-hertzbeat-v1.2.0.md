@@ -3,7 +3,9 @@ title: HertzBeat v1.2.0 发布！易用友好的开源实时监控工具
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource]
+tags: [releases]
+description: HertzBeat 1.2.0 带来更强的 JSONPath 采集、指标单位转换、界面升级，并将 Spring Boot 升级至 2.7。
+image: /img/blog/covers/hertzbeat-v1-2-0.jpg
 ---
 
 ## V1.2.0

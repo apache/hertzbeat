@@ -1,10 +1,12 @@
 ---
 title: Welcome to HertzBeat Community Committer!
+description: Le Zhang explains how his interface refinements, reusable components, and interaction improvements enhanced HertzBeat usability and maintainability.
 author: kerwin612
 author_title: Le Zhang
 author_url: https://github.com/kerwin612
-tags: [opensource, practice]
+tags: [community]
 keywords: [open source monitoring system, alerting system]
+image: /img/blog/covers/new-committer-kerwin612.jpg
 ---
 
 ![HertzBeat](/img/blog/new-committer.png)

@@ -1,9 +1,11 @@
 ---
-title: HertzBeat v1.2.0 Released! Easy-to-use and friendly open source real-time monitoring tool   
+title: HertzBeat v1.2.0 Released! Easy-to-use and friendly open source real-time monitoring tool
+description: HertzBeat 1.2.0 introduces more powerful JSONPath collection, metric unit conversion, a refreshed interface, and a Spring Boot 2.7 upgrade.
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource]
+tags: [releases]
+image: /img/blog/covers/hertzbeat-v1-2-0.jpg
 ---
 
 ## v1.2.0

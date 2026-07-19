@@ -503,5 +503,29 @@
   },
   "team.thanks": {
     "message": "感谢这些已经为 HertzBeat 做出贡献的非常棒的人们！"
+  },
+  "blog.page.title": {
+    "message": "博客",
+    "description": "Heading shown at the top of the blog list page"
+  },
+  "blog.category.all": {
+    "message": "全部",
+    "description": "Label of the category filter showing every blog post"
+  },
+  "blog.category.navigation": {
+    "message": "博客分类",
+    "description": "Accessible label for the blog category navigation"
+  },
+  "blog.category.releases": {
+    "message": "版本发布"
+  },
+  "blog.category.engineering": {
+    "message": "技术解析"
+  },
+  "blog.category.tutorials": {
+    "message": "教程实践"
+  },
+  "blog.category.community": {
+    "message": "社区动态"
   }
 }

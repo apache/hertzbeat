@@ -1,8 +1,10 @@
 ---
 title: Apache HertzBeat™ Graduates as an Apache Top-Level Project!
+description: Apache HertzBeat graduates as an Apache Top-Level Project after 17 months of incubation, marking major progress in governance, technology, and global collaboration.
 author: TJxiaobao
 author_url: https://github.com/TJxiaobao
-tags: [opensource, apache]
+tags: [community]
+image: /img/blog/covers/graduation.jpg
 ---
 
 > **A Milestone Moment for Our Open-Source Project**

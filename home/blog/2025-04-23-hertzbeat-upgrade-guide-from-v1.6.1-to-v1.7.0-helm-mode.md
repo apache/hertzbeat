@@ -1,3 +1,9 @@
+---
+tags: [tutorials]
+description: Upgrade HertzBeat from 1.6.1 to 1.7.0 with Helm, including prerequisites, database backup, chart configuration, deployment, and rollback considerations.
+image: /img/blog/covers/upgrade-guide-helm.jpg
+---
+
 # HertzBeat Upgrade Guide from v1.6.1 to v1.7.0 (Helm Mode)
 
 ## 1. Prerequisites

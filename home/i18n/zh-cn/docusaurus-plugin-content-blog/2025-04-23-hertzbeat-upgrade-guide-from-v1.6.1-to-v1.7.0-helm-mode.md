@@ -1,3 +1,9 @@
+---
+tags: [tutorials]
+description: 使用 Helm 将 HertzBeat 从 1.6.1 升级至 1.7.0，涵盖环境检查、数据库备份、Chart 配置、部署验证与回滚注意事项。
+image: /img/blog/covers/upgrade-guide-helm.jpg
+---
+
 # HertzBeat 从 1.6.1 版本升级到 1.7.0 版本指引-(Helm Mode)
 
 ## 1. 前置准备

@@ -3,8 +3,10 @@ title:  如何参与开发自定义Collector
 author: zhangshenghang
 author_title: zhangshenghang
 author_url: https://github.com/zhangshenghang
-tags: [opensource, practice]
+tags: [engineering, tutorials]
+description: 深入了解 HertzBeat 采集器架构，以及如何扩展协议、定义监控模板、采集指标并接入自定义采集器。
 keywords: [open source monitoring system, alerting system]
+image: /img/blog/covers/custom-collector.jpg
 ---
 
 ## Collector模块介绍

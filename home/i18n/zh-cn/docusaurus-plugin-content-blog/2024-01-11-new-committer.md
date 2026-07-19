@@ -3,8 +3,10 @@ title: 热烈欢迎 HertzBeat 三位小伙伴新晋社区 Committer!
 author: tom
 author_title: tom
 author_url: https://github.com/tomsun28
-tags: [opensource, practice]
+tags: [community]
+description: 认识新晋 Committer Leo、周书胜和张洋，了解他们在推送采集、服务监控模板、文档及社区项目中的贡献。
 keywords: [open source monitoring system, alerting system]
+image: /img/blog/covers/new-committer-2024-01.jpg
 ---
 
 ![hertzBeat](/img/blog/new-committer.png)
