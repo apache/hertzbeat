@@ -108,15 +108,65 @@ describe('Trace detail controller', () => {
     expect(view.result.current.state.kind).toBe('closed');
   });
 
-  it('closes selected trace evidence when the query scope changes', async () => {
+  it('permanently clears selected trace evidence and prevents stale pivots when scope changes A to B to A', async () => {
     api.loadTraceDetail.mockResolvedValue(traceDetail('trace-1'));
+    const openPath = vi.fn();
+    const view = renderController(openPath);
+    act(() => view.result.current.openTrace('trace-1'));
+    await waitFor(() => expect(view.result.current.state.kind).toBe('ready'));
+
+    view.rerender({ query: { ...defaultQuery, serviceName: 'payments' } });
+    expect(view.result.current.state.kind).toBe('closed');
+    view.rerender({ query: defaultQuery });
+    expect(view.result.current.state.kind).toBe('closed');
+
+    act(() => view.result.current.openRelatedLogs());
+    act(() => view.result.current.openRelatedMetrics());
+    expect(openPath).not.toHaveBeenCalled();
+  });
+
+  it('aborts pending detail work when its query scope changes', async () => {
+    const pending = deferred<TraceDetail>();
+    let signal: AbortSignal | undefined;
+    api.loadTraceDetail.mockImplementation((_traceId: string, requestSignal: AbortSignal) => {
+      signal = requestSignal;
+      return pending.promise;
+    });
+    const view = renderController(vi.fn());
+    act(() => view.result.current.openTrace('trace-1'));
+    await waitFor(() => expect(signal).toBeDefined());
+
+    view.rerender({ query: { ...defaultQuery, serviceName: 'payments' } });
+
+    expect(view.result.current.state.kind).toBe('closed');
+    await waitFor(() => expect(signal?.aborted).toBe(true));
+  });
+
+  it('allows an explicit detail open in the new scope without cleanup clearing it', async () => {
+    api.loadTraceDetail.mockImplementation((traceId: string) => Promise.resolve(traceDetail(traceId)));
     const view = renderController(vi.fn());
     act(() => view.result.current.openTrace('trace-1'));
     await waitFor(() => expect(view.result.current.state.kind).toBe('ready'));
 
     view.rerender({ query: { ...defaultQuery, serviceName: 'payments' } });
-
     expect(view.result.current.state.kind).toBe('closed');
+    act(() => view.result.current.openTrace('trace-2'));
+
+    await waitFor(() =>
+      expect(view.result.current.state).toMatchObject({ kind: 'ready', detail: { traceId: 'trace-2' } })
+    );
+  });
+
+  it('keeps an opened detail when the same scope rerenders without another open', async () => {
+    api.loadTraceDetail.mockResolvedValue(traceDetail('trace-1'));
+    const view = renderController(vi.fn());
+    act(() => view.result.current.openTrace('trace-1'));
+    await waitFor(() => expect(view.result.current.state.kind).toBe('ready'));
+
+    view.rerender({ query: { ...defaultQuery } });
+
+    expect(view.result.current.state).toMatchObject({ kind: 'ready', detail: { traceId: 'trace-1' } });
+    expect(api.loadTraceDetail).toHaveBeenCalledOnce();
   });
 });
 

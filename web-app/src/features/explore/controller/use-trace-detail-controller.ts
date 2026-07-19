@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useEffect, useRef, useState } from 'react';
 
 import { classifyExploreSignalError, loadTraceDetail } from '../api/explore-api';
 import {
@@ -30,48 +30,28 @@ import { traceSpanLayout, type TraceDetailState } from '../model/explore-signal-
 import { exploreQueryKeys } from './explore-query-keys';
 
 type OpenTrace = { scopeKey: string; traceId: string };
-type Selection = OpenTrace & { spanId: string };
+type ScopedTraceSelection = OpenTrace & { spanId?: string | undefined };
 
 export function useTraceDetailController(query: TraceExploreQuery, openPath: (path: string) => void) {
-  const client = useQueryClient();
   const scopeKey = exploreEvidenceScopeKey(query);
-  const [openTraceState, setOpenTraceState] = useState<OpenTrace>();
-  const [selection, setSelection] = useState<Selection>();
-  const traceId = openTraceState?.scopeKey === scopeKey ? openTraceState.traceId : undefined;
+  const selection = useScopedTraceSelection(scopeKey);
   const detailQuery = useQuery({
-    queryKey: exploreQueryKeys.detail(scopeKey, traceId),
-    queryFn: ({ signal }) => loadTraceDetail(traceId ?? '', signal),
-    enabled: Boolean(traceId),
+    queryKey: exploreQueryKeys.detail(scopeKey, selection.traceId),
+    queryFn: ({ signal }) => loadTraceDetail(selection.traceId ?? '', signal),
+    enabled: Boolean(selection.traceId),
     retry: false
   });
   const state = resolveTraceDetailState(
-    scopeKey,
-    traceId,
-    selection,
+    selection.traceId,
+    selection.spanId,
     detailQuery.isPending,
     detailQuery.error,
     detailQuery.data
   );
 
-  const cancel = (opened: OpenTrace | undefined) => {
-    if (opened) {
-      void client.cancelQueries({ queryKey: exploreQueryKeys.detail(opened.scopeKey, opened.traceId), exact: true });
-    }
-  };
-  const openTrace = (nextTraceId: string) => {
-    if (!nextTraceId || (nextTraceId === traceId && openTraceState?.scopeKey === scopeKey)) return;
-    cancel(openTraceState);
-    setSelection(undefined);
-    setOpenTraceState({ scopeKey, traceId: nextTraceId });
-  };
-  const close = () => {
-    cancel(openTraceState);
-    setSelection(undefined);
-    setOpenTraceState(undefined);
-  };
   const selectSpan = (spanId: string) => {
     if (state.kind === 'ready' && state.spans.some(span => span.spanId === spanId)) {
-      setSelection({ scopeKey, traceId: state.traceId, spanId });
+      selection.selectSpan(spanId);
     }
   };
   const openRelatedLogs = () => {
@@ -93,8 +73,8 @@ export function useTraceDetailController(query: TraceExploreQuery, openPath: (pa
   };
   return {
     state,
-    openTrace,
-    close,
+    openTrace: selection.openTrace,
+    close: selection.close,
     selectSpan,
     retry: () => detailQuery.refetch().then(() => undefined),
     changePage: (page: number) => openPath(buildExplorePath({ ...query, pageIndex: page - 1 || undefined })),
@@ -103,10 +83,56 @@ export function useTraceDetailController(query: TraceExploreQuery, openPath: (pa
   };
 }
 
+function useScopedTraceSelection(scopeKey: string) {
+  const client = useQueryClient();
+  const [stored, setStored] = useState<ScopedTraceSelection>();
+  const storedRef = useRef(stored);
+  const current = stored?.scopeKey === scopeKey ? stored : undefined;
+
+  useEffect(() => {
+    storedRef.current = stored;
+  }, [stored]);
+
+  useEffect(() => {
+    const stale = storedRef.current;
+    if (stale && stale.scopeKey !== scopeKey) {
+      cancelTraceDetail(client, stale);
+      setStored(value => (value?.scopeKey === scopeKey ? value : undefined));
+    }
+    return () => {
+      const opened = storedRef.current;
+      if (opened?.scopeKey === scopeKey) cancelTraceDetail(client, opened);
+    };
+  }, [client, scopeKey]);
+
+  const replace = (next: ScopedTraceSelection | undefined) => {
+    storedRef.current = next;
+    setStored(next);
+  };
+  const openTrace = (traceId: string) => {
+    if (!traceId || traceId === current?.traceId) return;
+    cancelTraceDetail(client, current);
+    replace({ scopeKey, traceId });
+  };
+  const close = () => {
+    cancelTraceDetail(client, current);
+    replace(undefined);
+  };
+  const selectSpan = (spanId: string) => {
+    if (current) replace({ ...current, spanId });
+  };
+  return { traceId: current?.traceId, spanId: current?.spanId, openTrace, close, selectSpan };
+}
+
+function cancelTraceDetail(client: QueryClient, opened: OpenTrace | undefined) {
+  if (!opened) return;
+  // Cancellation uses the exact scope and trace identity that started the request.
+  void client.cancelQueries({ queryKey: exploreQueryKeys.detail(opened.scopeKey, opened.traceId), exact: true });
+}
+
 function resolveTraceDetailState(
-  scopeKey: string,
   traceId: string | undefined,
-  selection: Selection | undefined,
+  selectedSpanId: string | undefined,
   pending: boolean,
   error: Error | null,
   detail: Awaited<ReturnType<typeof loadTraceDetail>> | undefined
@@ -121,9 +147,6 @@ function resolveTraceDetailState(
   }
   if (!detail || detail.traceId !== traceId) return { kind: 'error', traceId };
   const spans = traceSpanLayout(detail);
-  const selected =
-    selection?.scopeKey === scopeKey && selection.traceId === traceId
-      ? (spans.find(span => span.spanId === selection.spanId) ?? spans[0])
-      : spans[0];
+  const selected = selectedSpanId ? (spans.find(span => span.spanId === selectedSpanId) ?? spans[0]) : spans[0];
   return { kind: 'ready', traceId, detail, spans, selected };
 }

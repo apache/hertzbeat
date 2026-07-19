@@ -179,7 +179,7 @@ describe('Explore Query Key factory', () => {
 
   it('keeps trace detail reads and exact cancellation on the same factory', () => {
     expect(traceDetailControllerSource).toContain("from './explore-query-keys'");
-    expect(traceDetailControllerSource).toContain('queryKey: exploreQueryKeys.detail(scopeKey, traceId)');
+    expect(traceDetailControllerSource).toContain('queryKey: exploreQueryKeys.detail(scopeKey, selection.traceId)');
     expect(traceDetailControllerSource).toContain(
       'queryKey: exploreQueryKeys.detail(opened.scopeKey, opened.traceId), exact: true'
     );

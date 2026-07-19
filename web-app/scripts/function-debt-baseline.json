@@ -57,12 +57,6 @@
     },
     {
       "rule": "function-size",
-      "path": "features/explore/controller/use-trace-detail-controller.ts",
-      "identity": "function:useTraceDetailController",
-      "allowedMax": 69
-    },
-    {
-      "rule": "function-size",
       "path": "features/instrumentation/controller/use-instrumentation-detection-controller.ts",
       "identity": "function:useInstrumentationDetectionController",
       "allowedMax": 88
