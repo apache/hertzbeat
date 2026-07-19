@@ -15,12 +15,6 @@
     },
     {
       "rule": "function-size",
-      "path": "features/alert/components/alert-center-toolbar.tsx",
-      "identity": "function:AlertCenterToolbar",
-      "allowedMax": 62
-    },
-    {
-      "rule": "function-size",
       "path": "features/alert/controller/use-alert-group-command-controller.ts",
       "identity": "function:useAlertGroupCommandController",
       "allowedMax": 93

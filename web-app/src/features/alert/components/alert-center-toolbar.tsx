@@ -52,6 +52,48 @@ export function AlertCenterToolbar({
   const { t } = useTranslation();
   return (
     <div className={styles.toolbar}>
+      <AlertScopeFilterFields draft={draft} onDraftChange={onDraftChange} onSubmit={onSubmit} />
+      <Select<AlertStatusFilter>
+        value={query.status}
+        onChange={onStatusChange}
+        options={['', ...alertStatusFilters].map(value => ({
+          value,
+          label: t(value ? `alert.status.${value}` : 'alert.status.all')
+        }))}
+      />
+      <Select<AlertSeverity>
+        value={query.severity}
+        onChange={onSeverityChange}
+        options={['', ...alertSeverities].map(value => ({
+          value,
+          label: t(value ? `alert.severity.${value}` : 'alert.severity.all')
+        }))}
+      />
+      <Button type="primary" onClick={onSubmit}>
+        {t('common.query')}
+      </Button>
+      <Button
+        loading={refreshing}
+        onClick={() => {
+          void onRefresh();
+        }}
+      >
+        {t('common.refresh')}
+      </Button>
+    </div>
+  );
+}
+
+type AlertScopeFilterFieldsProps = {
+  draft: AlertFilterDraft;
+  onDraftChange: (field: AlertDraftField, value: string) => void;
+  onSubmit: () => void;
+};
+
+function AlertScopeFilterFields({ draft, onDraftChange, onSubmit }: AlertScopeFilterFieldsProps) {
+  const { t } = useTranslation();
+  return (
+    <>
       <Input
         allowClear
         value={draft.search}
@@ -80,24 +122,6 @@ export function AlertCenterToolbar({
         onChange={event => onDraftChange('environment', event.target.value)}
         onPressEnter={onSubmit}
       />
-      <Select<AlertStatusFilter>
-        value={query.status}
-        onChange={onStatusChange}
-        options={['', ...alertStatusFilters].map(value => ({
-          value,
-          label: t(value ? `alert.status.${value}` : 'alert.status.all')
-        }))}
-      />
-      <Select<AlertSeverity>
-        value={query.severity}
-        onChange={onSeverityChange}
-        options={['', ...alertSeverities].map(value => ({
-          value,
-          label: t(value ? `alert.severity.${value}` : 'alert.severity.all')
-        }))}
-      />
-      <Button type="primary" onClick={onSubmit}>{t('common.query')}</Button>
-      <Button loading={refreshing} onClick={() => { void onRefresh(); }}>{t('common.refresh')}</Button>
-    </div>
+    </>
   );
 }
