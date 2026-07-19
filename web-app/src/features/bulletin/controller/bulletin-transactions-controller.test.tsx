@@ -4,7 +4,9 @@ import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { bulletinQueryKeys } from './bulletin-query-keys';
+import { useBulletinEditorController, useBulletinOperationGate } from './bulletin-editor-controller';
 import { useBulletinTransactions } from './bulletin-transactions-controller';
+import type { BulletinDraft } from '../model/bulletin-model';
 
 const mocks = vi.hoisted(() => ({
   createBulletinAndRead: vi.fn(),
@@ -20,19 +22,19 @@ vi.mock('@refinedev/core', () => ({
 }));
 
 vi.mock('@tanstack/react-query', async importOriginal => ({
-  ...await importOriginal<typeof import('@tanstack/react-query')>(),
+  ...(await importOriginal<typeof import('@tanstack/react-query')>()),
   useQueryClient: () => ({ invalidateQueries: mocks.invalidateQueries })
 }));
 
 vi.mock('../api/bulletin-api', async importOriginal => ({
-  ...await importOriginal<typeof import('../api/bulletin-api')>(),
+  ...(await importOriginal<typeof import('../api/bulletin-api')>()),
   createBulletinAndRead: mocks.createBulletinAndRead,
   deleteBulletinAndConfirm: mocks.deleteBulletinAndConfirm,
   updateBulletinAndRead: mocks.updateBulletinAndRead
 }));
 
 vi.mock('./bulletin-metrics-controller', async importOriginal => ({
-  ...await importOriginal<typeof import('./bulletin-metrics-controller')>(),
+  ...(await importOriginal<typeof import('./bulletin-metrics-controller')>()),
   refreshSavedBulletinMetrics: mocks.refreshMetrics
 }));
 
@@ -54,7 +56,7 @@ describe('Bulletin transactions controller', () => {
       await expect(hook.result.current.save()).resolves.toBe(true);
     });
 
-    expect(mocks.createBulletinAndRead).toHaveBeenCalledWith(context.value.draft);
+    expect(mocks.createBulletinAndRead).toHaveBeenCalledWith(context.initialDraft);
     expect(mocks.invalidateQueries).toHaveBeenCalledWith({ queryKey: bulletinQueryKeys.lists() });
     expect(context.refresh).toHaveBeenCalledOnce();
     expect(context.setSelectedId).toHaveBeenCalledWith(saved.id);
@@ -66,23 +68,61 @@ describe('Bulletin transactions controller', () => {
     });
   });
 
-  it('does not report save success when the authoritative list reread fails', async () => {
+  it('retires a confirmed save even when the list projection refresh fails', async () => {
     const context = createContext();
     context.refresh.mockResolvedValue(false);
     mocks.createBulletinAndRead.mockResolvedValue(bulletin(7, 'Operations'));
     const hook = renderHook(() => useBulletinTransactions(context.value));
 
     await act(async () => {
+      await expect(hook.result.current.save()).resolves.toBe(true);
       await expect(hook.result.current.save()).resolves.toBe(false);
     });
 
-    expect(context.setSelectedId).not.toHaveBeenCalled();
-    expect(context.setDraft).not.toHaveBeenCalledWith(null);
-    expect(mocks.refreshMetrics).not.toHaveBeenCalled();
-    expect(mocks.notification).toHaveBeenLastCalledWith({
-      message: 'bulletin.save.error',
-      type: 'error'
+    expect(context.setSelectedId).toHaveBeenCalledWith(7);
+    expect(context.setDraft).toHaveBeenCalledWith(null);
+    expect(mocks.createBulletinAndRead).toHaveBeenCalledTimes(1);
+    expect(mocks.refreshMetrics).toHaveBeenCalledWith(expect.anything(), 7);
+    expect(mocks.notification).toHaveBeenCalledWith({ message: 'bulletin.saveSuccess', type: 'success' });
+    expect(mocks.notification).not.toHaveBeenCalledWith({ message: 'bulletin.save.error', type: 'error' });
+  });
+
+  it('admits only one same-tick save command', async () => {
+    const context = createContext();
+    const pending = deferred<ReturnType<typeof bulletin>>();
+    context.refresh.mockResolvedValue(true);
+    mocks.createBulletinAndRead.mockReturnValue(pending.promise);
+    const hook = renderHook(() => useBulletinTransactions(context.value));
+
+    let first!: Promise<boolean>;
+    act(() => {
+      first = hook.result.current.save();
+      void hook.result.current.save();
+      void hook.result.current.remove(bulletin(8, 'Other'));
     });
+
+    expect(mocks.createBulletinAndRead).toHaveBeenCalledTimes(1);
+    expect(mocks.deleteBulletinAndConfirm).not.toHaveBeenCalled();
+    act(() => pending.resolve(bulletin(7, 'Operations')));
+    await act(async () => first);
+  });
+
+  it('keeps a confirmed save successful when the post-write metrics refresh fails', async () => {
+    const context = createContext();
+    context.refresh.mockResolvedValue(true);
+    mocks.createBulletinAndRead.mockResolvedValue(bulletin(7, 'Operations'));
+    mocks.refreshMetrics.mockRejectedValue(new Error('metrics unavailable'));
+    const hook = renderHook(() => useBulletinTransactions(context.value));
+
+    await act(async () => {
+      await expect(hook.result.current.save()).resolves.toBe(true);
+      await expect(hook.result.current.save()).resolves.toBe(false);
+    });
+
+    expect(context.setDraft).toHaveBeenCalledWith(null);
+    expect(mocks.createBulletinAndRead).toHaveBeenCalledTimes(1);
+    expect(mocks.notification).toHaveBeenCalledWith({ message: 'bulletin.saveSuccess', type: 'success' });
+    expect(mocks.notification).not.toHaveBeenCalledWith({ message: 'bulletin.save.error', type: 'error' });
   });
 
   it('clears a deleted selection and reports success only after list convergence', async () => {
@@ -105,15 +145,71 @@ describe('Bulletin transactions controller', () => {
       type: 'success'
     });
   });
+
+  it('retires a confirmed delete even when the list projection refresh fails', async () => {
+    const context = createContext({ selectedId: 7 });
+    context.refresh.mockResolvedValue(false);
+    mocks.deleteBulletinAndConfirm.mockResolvedValue(undefined);
+    const hook = renderHook(() => useBulletinTransactions(context.value));
+    const record = bulletin(7, 'Operations');
+
+    await act(async () => {
+      await expect(hook.result.current.remove(record)).resolves.toBe(true);
+      await expect(hook.result.current.remove(record)).resolves.toBe(false);
+    });
+
+    expect(mocks.deleteBulletinAndConfirm).toHaveBeenCalledTimes(1);
+    expect(context.setSelectedId).toHaveBeenCalledWith(null);
+    expect(mocks.notification).toHaveBeenCalledWith({ message: 'bulletin.deleteSuccess', type: 'success' });
+    expect(mocks.notification).not.toHaveBeenCalledWith({ message: 'bulletin.deleteError.error', type: 'error' });
+  });
+
+  it('does not publish or notify after a pending save loses ownership on unmount', async () => {
+    const pending = deferred<ReturnType<typeof bulletin>>();
+    const setSelectedId = vi.fn();
+    mocks.createBulletinAndRead.mockReturnValue(pending.promise);
+    const hook = renderHook(() => {
+      const gate = useBulletinOperationGate();
+      const editor = useBulletinEditorController(gate, vi.fn());
+      const transactions = useBulletinTransactions({
+        ...createContext().value,
+        editor,
+        gate,
+        setSelectedId
+      });
+      return { editor, transactions };
+    });
+
+    act(() => hook.result.current.editor.controls.setDraft(createContext().initialDraft));
+    let saving!: Promise<boolean>;
+    act(() => {
+      saving = hook.result.current.transactions.save();
+    });
+    hook.unmount();
+    act(() => pending.resolve(bulletin(7, 'Operations')));
+    await expect(saving).resolves.toBe(false);
+
+    expect(setSelectedId).not.toHaveBeenCalled();
+    expect(mocks.notification).not.toHaveBeenCalled();
+    expect(mocks.invalidateQueries).not.toHaveBeenCalled();
+  });
 });
 
 function createContext(options: { selectedId?: number } = {}) {
   const refresh = vi.fn();
-  const setCommand = vi.fn();
-  const setDraft = vi.fn();
+  const initialDraft: BulletinDraft = {
+    name: 'Operations',
+    app: 'website',
+    monitorIds: [1],
+    fields: { responseTime: ['duration'] }
+  };
+  let draft: typeof initialDraft | null = initialDraft;
+  let owner: { command: 'saving' | 'deleting' } | undefined;
+  const setDraft = vi.fn((next: typeof initialDraft | null) => {
+    draft = next;
+  });
   const setSelectedId = vi.fn();
   const value: Parameters<typeof useBulletinTransactions>[0] = {
-    command: 'idle',
     dependencies: {
       kind: 'ready',
       fieldSelection: 'valid',
@@ -122,20 +218,30 @@ function createContext(options: { selectedId?: number } = {}) {
       metrics: [{ name: 'responseTime', fields: ['duration'] }],
       metricTree: []
     },
-    draft: {
-      name: 'Operations',
-      app: 'website',
-      monitorIds: [1],
-      fields: { responseTime: ['duration'] }
+    editor: {
+      state: { draft: initialDraft },
+      controls: { getDraft: () => draft, invalidateDetail: vi.fn(), setDraft },
+      actions: { close: vi.fn(), create: vi.fn(), edit: vi.fn(), update: vi.fn() }
+    },
+    gate: {
+      command: 'idle',
+      begin: next => {
+        if (owner) return undefined;
+        owner = { command: next };
+        return owner;
+      },
+      end: candidate => {
+        if (owner === candidate) owner = undefined;
+      },
+      isCurrent: candidate => owner === candidate,
+      isLocked: () => owner !== undefined
     },
     refresh,
     selectedId: options.selectedId ?? null,
-    setCommand,
-    setDraft,
     setSelectedId,
     t: key => key
   };
-  return { refresh, setCommand, setDraft, setSelectedId, value };
+  return { initialDraft, refresh, setDraft, setSelectedId, value };
 }
 
 function bulletin(id: number, name: string) {
@@ -150,4 +256,12 @@ function bulletin(id: number, name: string) {
     gmtCreate: null,
     gmtUpdate: null
   };
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>(done => {
+    resolve = done;
+  });
+  return { promise, resolve };
 }

@@ -11,9 +11,15 @@ import {
 import type { BulletinFields } from '../model/bulletin-model';
 import styles from './bulletin-metric-tree.module.css';
 
-export function BulletinMetricTree({ fields, tree, onChange }: {
+export function BulletinMetricTree({
+  fields,
+  tree,
+  disabled,
+  onChange
+}: {
   fields: BulletinFields;
   tree: BulletinMetricTreeMetricNode[];
+  disabled?: boolean;
   onChange: (fields: BulletinFields) => void;
 }) {
   const checkedKeys = resolveSavedMetricTreeSelection(tree, fields).checkedKeys;
@@ -22,14 +28,17 @@ export function BulletinMetricTree({ fields, tree, onChange }: {
     onChange(fieldsFromMetricTreeKeys(tree, checked.map(String)));
   };
 
-  return <div className={styles.metricTree}>
-    <Tree
-      blockNode
-      checkable
-      checkedKeys={checkedKeys}
-      defaultExpandAll
-      onCheck={handleCheck}
-      treeData={tree}
-    />
-  </div>;
+  return (
+    <div className={styles.metricTree}>
+      <Tree
+        blockNode
+        checkable
+        disabled={disabled ?? false}
+        checkedKeys={checkedKeys}
+        defaultExpandAll
+        onCheck={handleCheck}
+        treeData={tree}
+      />
+    </div>
+  );
 }

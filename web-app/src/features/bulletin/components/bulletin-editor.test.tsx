@@ -9,15 +9,30 @@ import metricTreeStyles from './bulletin-metric-tree.module.css?raw';
 
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
-const tree = [{
-  key: '["metric","summary"]', title: 'Summary', isLeaf: false as const, metric: 'summary',
-  children: [
-    { key: '["field","summary","status"]', title: 'Status', isLeaf: true as const,
-      metric: 'summary', field: 'status' },
-    { key: '["field","summary","responseTime"]', title: 'Response time', isLeaf: true as const,
-      metric: 'summary', field: 'responseTime' }
-  ]
-}];
+const tree = [
+  {
+    key: '["metric","summary"]',
+    title: 'Summary',
+    isLeaf: false as const,
+    metric: 'summary',
+    children: [
+      {
+        key: '["field","summary","status"]',
+        title: 'Status',
+        isLeaf: true as const,
+        metric: 'summary',
+        field: 'status'
+      },
+      {
+        key: '["field","summary","responseTime"]',
+        title: 'Response time',
+        isLeaf: true as const,
+        metric: 'summary',
+        field: 'responseTime'
+      }
+    ]
+  }
+];
 
 describe('Bulletin editor metric Tree', () => {
   afterEach(cleanup);
@@ -87,26 +102,63 @@ describe('Bulletin editor metric Tree', () => {
     fireEvent.click(document.querySelectorAll<HTMLElement>('.ant-tree-checkbox')[1]!);
     expect(onChange).toHaveBeenCalledWith({ fields: { summary: ['status'] } });
   });
+
+  it('locks every editor control while a write command is active', () => {
+    const onChange = vi.fn();
+    renderEditor({ busy: true, onChange });
+
+    expect(screen.getByRole('button', { name: 'common.cancel' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.save' })).toBeDisabled();
+    for (const input of screen.getAllByRole('textbox')) expect(input).toBeDisabled();
+    for (const select of screen.getAllByRole('combobox')) expect(select).toBeDisabled();
+    fireEvent.click(document.querySelectorAll<HTMLElement>('.ant-tree-checkbox')[0]!);
+    expect(onChange).not.toHaveBeenCalled();
+  });
 });
 
 function renderEditor(options: Partial<Parameters<typeof editor>[0]> = {}) {
   return render(editor(options));
 }
 
-function editor({ onChange = vi.fn(), onSave = vi.fn(), fieldSelection = 'valid',
-  fields = { summary: ['status'] }, editing = true, monitorIds = [1] }: {
-  onChange?: (patch: Partial<BulletinDraft>) => void; onSave?: () => void;
-  fieldSelection?: 'valid' | 'stale'; fields?: Record<string, string[]>; editing?: boolean; monitorIds?: number[];
+function editor({
+  onChange = vi.fn(),
+  onSave = vi.fn(),
+  fieldSelection = 'valid',
+  fields = { summary: ['status'] },
+  editing = true,
+  monitorIds = [1],
+  busy = false
+}: {
+  onChange?: (patch: Partial<BulletinDraft>) => void;
+  onSave?: () => void;
+  fieldSelection?: 'valid' | 'stale';
+  fields?: Record<string, string[]>;
+  editing?: boolean;
+  monitorIds?: number[];
+  busy?: boolean;
 }) {
-  return <BulletinEditor
-    draft={{ ...(editing ? { id: 7 } : {}), name: 'Ops', app: 'website', monitorIds, fields }} saving={false}
-    dependencies={{ kind: 'ready', fieldSelection, apps: [
-      { value: 'website', label: 'Website', hide: false }, { value: 'redis', label: 'Redis', hide: false }],
-      monitors: [
-        { id: 1, name: 'prod', app: 'website', labels: { team: 'payments' } },
-        { id: 2, name: 'backup', app: 'website', labels: { team: 'platform' } }
-      ],
-      metrics: [{ name: 'summary', fields: ['status', 'responseTime'] }], metricTree: tree }}
-    onClose={vi.fn()} onSave={onSave} onChange={onChange}
-  />;
+  return (
+    <BulletinEditor
+      draft={{ ...(editing ? { id: 7 } : {}), name: 'Ops', app: 'website', monitorIds, fields }}
+      saving={false}
+      busy={busy}
+      dependencies={{
+        kind: 'ready',
+        fieldSelection,
+        apps: [
+          { value: 'website', label: 'Website', hide: false },
+          { value: 'redis', label: 'Redis', hide: false }
+        ],
+        monitors: [
+          { id: 1, name: 'prod', app: 'website', labels: { team: 'payments' } },
+          { id: 2, name: 'backup', app: 'website', labels: { team: 'platform' } }
+        ],
+        metrics: [{ name: 'summary', fields: ['status', 'responseTime'] }],
+        metricTree: tree
+      }}
+      onClose={vi.fn()}
+      onSave={onSave}
+      onChange={onChange}
+    />
+  );
 }

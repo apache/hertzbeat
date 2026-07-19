@@ -2,36 +2,29 @@
 
 import { useNotification } from '@refinedev/core';
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, type Dispatch, type SetStateAction } from 'react';
+import { useCallback, useRef, type Dispatch, type SetStateAction } from 'react';
 
 import {
   classifyBulletinError,
   createBulletinAndRead,
   deleteBulletinAndConfirm,
-  loadBulletin,
   updateBulletinAndRead
 } from '../api/bulletin-api';
-import {
-  validateBulletinDraft,
-  type Bulletin,
-  type BulletinDraft
-} from '../model/bulletin-model';
+import { validateBulletinDraft, type Bulletin, type BulletinDraft } from '../model/bulletin-model';
 import type { BulletinDependencies } from './bulletin-dependencies-controller';
+import type { BulletinEditorController, BulletinOperationGate } from './bulletin-editor-controller';
 import { refreshSavedBulletinMetrics } from './bulletin-metrics-controller';
 import { bulletinQueryKeys } from './bulletin-query-keys';
 
 type BulletinFailure = 'missing' | 'invalid' | 'unavailable' | 'error';
-export type BulletinCommand = 'idle' | 'reading' | 'saving' | 'deleting';
 type StateSetter<T> = Dispatch<SetStateAction<T>>;
 
 type TransactionContext = {
-  command: BulletinCommand;
   dependencies: BulletinDependencies;
-  draft: BulletinDraft | null;
+  editor: BulletinEditorController;
+  gate: BulletinOperationGate;
   refresh: () => Promise<boolean>;
   selectedId: number | null;
-  setCommand: StateSetter<BulletinCommand>;
-  setDraft: StateSetter<BulletinDraft | null>;
   setSelectedId: StateSetter<number | null>;
   t: (key: string) => string;
 };
@@ -40,28 +33,9 @@ export function useBulletinTransactions(context: TransactionContext) {
   const client = useQueryClient();
   const notification = useNotification();
   return {
-    edit: useBulletinEdit(context, notification),
     remove: useBulletinRemove(context, client, notification),
     save: useBulletinSave(context, client, notification)
   };
-}
-
-function useBulletinEdit(
-  context: TransactionContext,
-  notification: ReturnType<typeof useNotification>
-) {
-  const { command, setCommand, setDraft, t } = context;
-  return useCallback(async (id: number) => {
-    if (command !== 'idle') return;
-    setCommand('reading');
-    try {
-      setDraft(await loadBulletin(id));
-    } catch (error) {
-      notify(notification, t, 'read', classifyBulletinError(error, 'read-detail'));
-    } finally {
-      setCommand('idle');
-    }
-  }, [command, notification, setCommand, setDraft, t]);
 }
 
 function useBulletinSave(
@@ -69,56 +43,58 @@ function useBulletinSave(
   client: ReturnType<typeof useQueryClient>,
   notification: ReturnType<typeof useNotification>
 ) {
-  const {
-    command,
-    dependencies,
-    draft,
-    refresh,
-    setCommand,
-    setDraft,
-    setSelectedId,
-    t
-  } = context;
+  const { dependencies, editor, gate, refresh, setSelectedId, t } = context;
   return useCallback(async () => {
-    if (!draft || command !== 'idle' || dependencies.kind !== 'ready') return false;
-    if (validateBulletinDraft(draft, dependencies.monitors, dependencies.metrics).length) {
-      notification.open?.({ message: t('bulletin.validation'), type: 'error' });
-      return false;
-    }
-    setCommand('saving');
+    const draft = getValidDraft(editor, dependencies, notification, t);
+    if (!draft) return false;
+    const owner = gate.begin('saving');
+    if (!owner) return false;
+    editor.controls.invalidateDetail();
+    let saved: Bulletin | undefined;
     try {
-      const saved = draft.id == null
-        ? await createBulletinAndRead(draft)
-        : await updateBulletinAndRead(draft);
-      await client.invalidateQueries({ queryKey: bulletinQueryKeys.lists() });
-      if (!await refresh()) {
-        notify(notification, t, 'save', 'error');
-        return false;
-      }
+      saved = await saveCanonicalBulletin(draft);
+      if (!gate.isCurrent(owner)) return false;
+      await refreshListProjection(client, refresh, () => gate.isCurrent(owner));
+      if (!gate.isCurrent(owner)) return false;
+
+      // Retire the submitted draft while this command still owns the editor.
       setSelectedId(saved.id);
-      await refreshSavedBulletinMetrics(client, saved.id);
-      setDraft(null);
+      editor.controls.setDraft(null);
       notification.open?.({ message: t('bulletin.saveSuccess'), type: 'success' });
-      return true;
     } catch (error) {
+      if (!gate.isCurrent(owner)) return false;
       const operation = draft.id == null ? 'create' : 'update';
       notify(notification, t, 'save', classifyBulletinError(error, operation));
       return false;
     } finally {
-      setCommand('idle');
+      gate.end(owner);
     }
-  }, [
-    client,
-    command,
-    dependencies,
-    draft,
-    notification,
-    refresh,
-    setCommand,
-    setDraft,
-    setSelectedId,
-    t
-  ]);
+    try {
+      await refreshSavedBulletinMetrics(client, saved.id);
+    } catch {
+      // The metrics query owns its unavailable/error state. The write is already confirmed.
+    }
+    return true;
+  }, [client, dependencies, editor, gate, notification, refresh, setSelectedId, t]);
+}
+
+function getValidDraft(
+  editor: BulletinEditorController,
+  dependencies: BulletinDependencies,
+  notification: ReturnType<typeof useNotification>,
+  t: (key: string) => string
+) {
+  const draft = editor.controls.getDraft();
+  if (!draft || dependencies.kind !== 'ready') return null;
+  if (validateBulletinDraft(draft, dependencies.monitors, dependencies.metrics).length) {
+    notification.open?.({ message: t('bulletin.validation'), type: 'error' });
+    return null;
+  }
+  return draft;
+}
+
+function saveCanonicalBulletin(draft: BulletinDraft) {
+  return draft.id == null ? createBulletinAndRead(draft) : updateBulletinAndRead(draft);
 }
 
 function useBulletinRemove(
@@ -126,33 +102,54 @@ function useBulletinRemove(
   client: ReturnType<typeof useQueryClient>,
   notification: ReturnType<typeof useNotification>
 ) {
-  const { command, refresh, selectedId, setCommand, setSelectedId, t } = context;
-  return useCallback(async (record: Bulletin) => {
-    if (command !== 'idle') return false;
-    setCommand('deleting');
-    try {
-      await deleteBulletinAndConfirm(record.id);
-      if (selectedId === record.id) setSelectedId(null);
-      await client.invalidateQueries({ queryKey: bulletinQueryKeys.lists() });
-      if (!await refresh()) {
-        notify(notification, t, 'deleteError', 'error');
+  const { editor, gate, refresh, selectedId, setSelectedId, t } = context;
+  const confirmedDeletedIdsRef = useRef(new Set<number>());
+  return useCallback(
+    async (record: Bulletin) => {
+      if (confirmedDeletedIdsRef.current.has(record.id)) return false;
+      const owner = gate.begin('deleting');
+      if (!owner) return false;
+      editor.controls.invalidateDetail();
+      try {
+        await deleteBulletinAndConfirm(record.id);
+        if (!gate.isCurrent(owner)) return false;
+        confirmedDeletedIdsRef.current.add(record.id);
+        await refreshListProjection(client, refresh, () => gate.isCurrent(owner));
+        if (!gate.isCurrent(owner)) return false;
+
+        // The delete proof is authoritative; a stale list projection must not make it repeatable.
+        if (selectedId === record.id) setSelectedId(null);
+        notification.open?.({ message: t('bulletin.deleteSuccess'), type: 'success' });
+        return true;
+      } catch (error) {
+        if (!gate.isCurrent(owner)) return false;
+        notify(notification, t, 'deleteError', classifyBulletinError(error, 'delete'));
         return false;
+      } finally {
+        gate.end(owner);
       }
-      notification.open?.({ message: t('bulletin.deleteSuccess'), type: 'success' });
-      return true;
-    } catch (error) {
-      notify(notification, t, 'deleteError', classifyBulletinError(error, 'delete'));
-      return false;
-    } finally {
-      setCommand('idle');
-    }
-  }, [client, command, notification, refresh, selectedId, setCommand, setSelectedId, t]);
+    },
+    [client, editor, gate, notification, refresh, selectedId, setSelectedId, t]
+  );
+}
+
+async function refreshListProjection(
+  client: ReturnType<typeof useQueryClient>,
+  refresh: () => Promise<boolean>,
+  isCurrent: () => boolean
+) {
+  try {
+    await client.invalidateQueries({ queryKey: bulletinQueryKeys.lists() });
+    if (isCurrent()) await refresh();
+  } catch {
+    // The canonical mutation helper already proved the write. Query state exposes projection failure.
+  }
 }
 
 function notify(
   notification: ReturnType<typeof useNotification>,
   t: (key: string) => string,
-  operation: 'read' | 'save' | 'deleteError',
+  operation: 'save' | 'deleteError',
   failure: BulletinFailure
 ) {
   notification.open?.({ message: t(`bulletin.${operation}.${failure}`), type: 'error' });
