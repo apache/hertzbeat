@@ -36,14 +36,34 @@ export function ExplorePage() {
   const controller = useExplorePageController();
   return (
     <div className={styles.page}>
-      <ExploreWorkbench query={controller.query} t={t} updateQuery={controller.updateQuery} refresh={controller.refresh} />
-      <ExploreQueryBar query={controller.query} t={t} updateQuery={controller.updateQuery} submission={controller.submission} />
-      <ResultPanel query={controller.query} result={controller.result} retry={controller.refresh} openPath={controller.openPath} />
+      <ExploreWorkbench
+        query={controller.query}
+        t={t}
+        updateQuery={controller.updateQuery}
+        refresh={controller.refresh}
+      />
+      <ExploreQueryBar
+        query={controller.query}
+        t={t}
+        updateQuery={controller.updateQuery}
+        submission={controller.submission}
+      />
+      <ResultPanel
+        query={controller.query}
+        result={controller.result}
+        retry={controller.refresh}
+        openPath={controller.openPath}
+      />
     </div>
   );
 }
 
-function ResultPanel({ query, result, retry, openPath }: {
+function ResultPanel({
+  query,
+  result,
+  retry,
+  openPath
+}: {
   query: ExploreQuery;
   result: ExplorePageResultState;
   retry: () => Promise<void>;
@@ -51,53 +71,119 @@ function ResultPanel({ query, result, retry, openPath }: {
 }) {
   const { t } = useTranslation();
   if (result.kind === 'invalid') return null;
-  if (result.kind === 'loading') return <ResultFrame><Skeleton active paragraph={{ rows: 8 }} /></ResultFrame>;
-  if (result.kind === 'transport_error') return <FailureResult message={t('explore.states.transportError')} retry={retry} />;
-  if (result.kind === 'contract_error') return <FailureResult message={t('explore.states.contractError')} retry={retry} />;
-  if (result.kind === 'storage_unavailable') return <FailureResult message={t('explore.states.storageUnavailable')} retry={retry} />;
+  if (result.kind === 'loading')
+    return (
+      <ResultFrame>
+        <Skeleton active paragraph={{ rows: 8 }} />
+      </ResultFrame>
+    );
+  if (result.kind === 'transport_error')
+    return <FailureResult message={t('explore.states.transportError')} retry={retry} />;
+  if (result.kind === 'contract_error')
+    return <FailureResult message={t('explore.states.contractError')} retry={retry} />;
+  if (result.kind === 'storage_unavailable')
+    return <FailureResult message={t('explore.states.storageUnavailable')} retry={retry} />;
+  if (result.kind === 'missing_context') {
+    return (
+      <ResultFrame>
+        <Alert type="info" showIcon message={t('explore.states.missingContext')} />
+      </ResultFrame>
+    );
+  }
   if (result.kind === 'unsupported_query') {
-    return <ResultFrame><Alert type="warning" showIcon message={t('explore.states.unsupportedQuery')} /></ResultFrame>;
+    return (
+      <ResultFrame>
+        <Alert type="warning" showIcon message={t('explore.states.unsupportedQuery')} />
+      </ResultFrame>
+    );
   }
   if (result.kind === 'error') return <FailureResult message={t('explore.loadFailed')} retry={retry} />;
-  if (result.kind === 'live') return query.signal === 'logs'
-    ? <LiveLogPanel query={query} openPath={openPath} /> : null;
+  if (result.kind === 'live')
+    return query.signal === 'logs' ? <LiveLogPanel query={query} openPath={openPath} /> : null;
   return <HistoricalResult query={query} result={result} openPath={openPath} />;
 }
 
 function LiveLogPanel({ query, openPath }: { query: LogExploreQuery; openPath: (path: string) => void }) {
   const { t } = useTranslation();
   const live = useLiveLogController(query);
-  return <ResultFrame><LogResult query={query} t={t} navigate={openPath} live={live} /></ResultFrame>;
+  return (
+    <ResultFrame>
+      <LogResult query={query} t={t} navigate={openPath} live={live} />
+    </ResultFrame>
+  );
 }
 
-function HistoricalResult({ query, result, openPath }: {
+function HistoricalResult({
+  query,
+  result,
+  openPath
+}: {
   query: ExploreQuery;
   result: Extract<ExplorePageResultState, { kind: 'ready' | 'empty' }>;
   openPath: (path: string) => void;
 }) {
   const { t } = useTranslation();
-  if (result.signal === 'metrics' && query.signal === 'metrics') return <ResultFrame><MetricResult data={result.data} t={t} /></ResultFrame>;
-  if (result.signal === 'logs' && query.signal === 'logs') return <ResultFrame><LogResult data={result.data} query={query} t={t} navigate={openPath} /></ResultFrame>;
-  if (result.signal === 'traces' && query.signal === 'traces') return <TracePanel data={result.data} query={query} openPath={openPath} />;
+  if (result.signal === 'metrics' && query.signal === 'metrics')
+    return (
+      <ResultFrame>
+        <MetricResult data={result.data} t={t} />
+      </ResultFrame>
+    );
+  if (result.signal === 'logs' && query.signal === 'logs')
+    return (
+      <ResultFrame>
+        <LogResult data={result.data} query={query} t={t} navigate={openPath} />
+      </ResultFrame>
+    );
+  if (result.signal === 'traces' && query.signal === 'traces')
+    return <TracePanel data={result.data} query={query} openPath={openPath} />;
   return null;
 }
 
-function TracePanel({ data, query, openPath }: {
+function TracePanel({
+  data,
+  query,
+  openPath
+}: {
   data: ExplorePageResult<TraceRow>;
   query: TraceExploreQuery;
   openPath: (path: string) => void;
 }) {
   const { t } = useTranslation();
   const trace = useTraceDetailController(query, openPath);
-  return <ResultFrame><TraceResult data={data} t={t} trace={trace} /></ResultFrame>;
+  return (
+    <ResultFrame>
+      <TraceResult data={data} t={t} trace={trace} />
+    </ResultFrame>
+  );
 }
 
 function FailureResult({ message, retry }: { message: string; retry: () => Promise<void> }) {
   const { t } = useTranslation();
-  return <ResultFrame><Alert type="error" showIcon message={message}
-    action={<Button onClick={() => { void retry(); }}>{t('common.retry')}</Button>} /></ResultFrame>;
+  return (
+    <ResultFrame>
+      <Alert
+        type="error"
+        showIcon
+        message={message}
+        action={
+          <Button
+            onClick={() => {
+              void retry();
+            }}
+          >
+            {t('common.retry')}
+          </Button>
+        }
+      />
+    </ResultFrame>
+  );
 }
 
 function ResultFrame({ children }: { children: ReactNode }) {
-  return <section className={styles.results} aria-live="polite">{children}</section>;
+  return (
+    <section className={styles.results} aria-live="polite">
+      {children}
+    </section>
+  );
 }

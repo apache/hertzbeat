@@ -22,7 +22,13 @@ export type TraceSpanLayout = TraceSpan & { depth: number; offsetPercent: number
 export type TraceDetailState =
   | { kind: 'closed' }
   | { kind: 'loading' | 'missing' | 'unavailable' | 'error'; traceId: string }
-  | { kind: 'ready'; traceId: string; detail: TraceDetail; spans: TraceSpanLayout[]; selected: TraceSpanLayout | undefined };
+  | {
+      kind: 'ready';
+      traceId: string;
+      detail: TraceDetail;
+      spans: TraceSpanLayout[];
+      selected: TraceSpanLayout | undefined;
+    };
 
 export type MetricSeries = {
   key: string;
@@ -37,6 +43,7 @@ export type MetricPoint = { timestamp: number; value: number };
 export type MetricResultState =
   | { kind: 'error'; message?: string }
   | { kind: 'storage_unavailable' }
+  | { kind: 'missing_context' }
   | { kind: 'unsupported_query' }
   | { kind: 'empty' }
   | { kind: 'ready'; series: MetricSeries[] };
@@ -56,6 +63,7 @@ export function metricResultState(console: MetricConsole): MetricResultState {
 }
 
 function metricUnavailableState(console: MetricConsole): MetricResultState | undefined {
+  if (console.emptyStateReason === 'no_context') return { kind: 'missing_context' };
   if (console.emptyStateReason === 'unsupported_query') return { kind: 'unsupported_query' };
   if (console.emptyStateReason === 'load_failed' && console.results == null) return { kind: 'storage_unavailable' };
   return undefined;
@@ -95,11 +103,13 @@ export function metricPath(points: MetricPoint[], width: number, height: number)
   const maxValue = Math.max(...values);
   const timestampRange = maxTimestamp - minTimestamp || 1;
   const valueRange = maxValue - minValue || 1;
-  return points.map((point, index) => {
-    const x = ((point.timestamp - minTimestamp) / timestampRange) * width;
-    const y = height - ((point.value - minValue) / valueRange) * height;
-    return `${index === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`;
-  }).join(' ');
+  return points
+    .map((point, index) => {
+      const x = ((point.timestamp - minTimestamp) / timestampRange) * width;
+      const y = height - ((point.value - minValue) / valueRange) * height;
+      return `${index === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`;
+    })
+    .join(' ');
 }
 
 export function traceDurationMs(row: Pick<TraceRow, 'durationNanos'>) {
@@ -129,7 +139,7 @@ export function traceSpanLayout(detail: TraceDetail): TraceSpanLayout[] {
     ...span,
     depth: depthOf(span),
     offsetPercent: clamp((((span.startTime ?? rootStart) - rootStart) / totalMs) * 100, 0, 100),
-    widthPercent: clamp((((span.durationNanos ?? 0) / 1_000_000) / totalMs) * 100, 0.4, 100)
+    widthPercent: clamp(((span.durationNanos ?? 0) / 1_000_000 / totalMs) * 100, 0.4, 100)
   }));
 }
 

@@ -18,29 +18,55 @@
 import { describe, expect, it } from 'vitest';
 
 import type { MetricConsole } from './explore-signal-contract';
-import { logBody, logServiceName, logTimestampMs, metricPath, metricPoints, metricResultState, metricSeries, traceDurationMs, traceHealthState, traceSpanLayout } from './explore-signal-model';
+import {
+  logBody,
+  logServiceName,
+  logTimestampMs,
+  metricPath,
+  metricPoints,
+  metricResultState,
+  metricSeries,
+  traceDurationMs,
+  traceHealthState,
+  traceSpanLayout
+} from './explore-signal-model';
 
 describe('explore API contracts', () => {
   it('normalizes datasource frames returned by the metrics console', () => {
-    expect(metricSeries(metricConsole({
-        status: 200,
-        frames: [{
-          schema: {
-            fields: [{ name: '__ts__', type: 'time', unit: null }, { name: '__value__', type: 'number', unit: 'ms' }],
-            labels: { __name__: 'http_server_duration', service_name: 'checkout' }, meta: null
-          },
-          data: [[1000, '12']]
-        }]
-    }))).toEqual([{
-      key: 'http_server_duration-0',
-      name: 'http_server_duration',
-      unit: 'ms',
-      labels: { __name__: 'http_server_duration', service_name: 'checkout' },
-      points: [[1000, '12']]
-    }]);
+    expect(
+      metricSeries(
+        metricConsole({
+          status: 200,
+          frames: [
+            {
+              schema: {
+                fields: [
+                  { name: '__ts__', type: 'time', unit: null },
+                  { name: '__value__', type: 'number', unit: 'ms' }
+                ],
+                labels: { __name__: 'http_server_duration', service_name: 'checkout' },
+                meta: null
+              },
+              data: [[1000, '12']]
+            }
+          ]
+        })
+      )
+    ).toEqual([
+      {
+        key: 'http_server_duration-0',
+        name: 'http_server_duration',
+        unit: 'ms',
+        labels: { __name__: 'http_server_duration', service_name: 'checkout' },
+        points: [[1000, '12']]
+      }
+    ]);
   });
 
   it('classifies metric results from explicit backend evidence', () => {
+    expect(metricResultState(metricConsole(null, 'Choose a metric or service context.', 'no_context'))).toEqual({
+      kind: 'missing_context'
+    });
     expect(metricResultState(metricConsole(null, null, 'unsupported_query'))).toEqual({
       kind: 'unsupported_query'
     });
@@ -60,30 +86,69 @@ describe('explore API contracts', () => {
     expect(metricResultState(metricConsole({ status: null, frames: [] }))).toEqual({ kind: 'storage_unavailable' });
     expect(metricResultState(metricConsole({ status: 200, frames: null }))).toEqual({ kind: 'storage_unavailable' });
     expect(metricResultState(metricConsole({ status: 200, frames: [] }))).toEqual({ kind: 'empty' });
-    expect(metricResultState(metricConsole({ status: 200, frames: [{ schema: null, data: null }] }))).toEqual({ kind: 'storage_unavailable' });
-    expect(metricResultState(metricConsole({ status: 200, frames: [{ schema: null, data: [] }] }))).toEqual({ kind: 'empty' });
-    expect(metricResultState(metricConsole({
-      status: 200,
-      frames: [
-        { schema: null, data: [[1000, 'not-a-number'], [1001, null], [1002, false], [1003, '  ']] },
-        { schema: null, data: [['not-a-time', 1], [null, 2], [false, 3], ['', 4]] }
-      ]
-    }))).toEqual({ kind: 'empty' });
+    expect(metricResultState(metricConsole({ status: 200, frames: [{ schema: null, data: null }] }))).toEqual({
+      kind: 'storage_unavailable'
+    });
+    expect(metricResultState(metricConsole({ status: 200, frames: [{ schema: null, data: [] }] }))).toEqual({
+      kind: 'empty'
+    });
+    expect(
+      metricResultState(
+        metricConsole({
+          status: 200,
+          frames: [
+            {
+              schema: null,
+              data: [
+                [1000, 'not-a-number'],
+                [1001, null],
+                [1002, false],
+                [1003, '  ']
+              ]
+            },
+            {
+              schema: null,
+              data: [
+                ['not-a-time', 1],
+                [null, 2],
+                [false, 3],
+                ['', 4]
+              ]
+            }
+          ]
+        })
+      )
+    ).toEqual({ kind: 'empty' });
 
-    const ready = metricResultState(metricConsole({
-      status: 200,
-      frames: [{ schema: { fields: [{ name: 'value', type: 'number', unit: null }], labels: null, meta: null }, data: [[1000, 0]] }]
-    }));
+    const ready = metricResultState(
+      metricConsole({
+        status: 200,
+        frames: [
+          {
+            schema: { fields: [{ name: 'value', type: 'number', unit: null }], labels: null, meta: null },
+            data: [[1000, 0]]
+          }
+        ]
+      })
+    );
     expect(ready).toMatchObject({ kind: 'ready' });
     if (ready.kind === 'ready') expect(metricPoints(ready.series[0]!)).toEqual([{ timestamp: 1000, value: 0 }]);
   });
 
   it('uses the established trace nanosecond duration contract', () => {
     expect(traceDurationMs({ durationNanos: 3_000_000_000 })).toBe(3000);
-    expect(traceSpanLayout(traceDetail({ startTime: 1000, durationNanos: 1_000_000_000, spans: [
-      traceSpan({ spanId: 'root', startTime: 1000, durationNanos: 1_000_000_000 }),
-      traceSpan({ spanId: 'child', parentSpanId: 'root', startTime: 1250, durationNanos: 500_000_000 })
-    ] }))).toMatchObject([
+    expect(
+      traceSpanLayout(
+        traceDetail({
+          startTime: 1000,
+          durationNanos: 1_000_000_000,
+          spans: [
+            traceSpan({ spanId: 'root', startTime: 1000, durationNanos: 1_000_000_000 }),
+            traceSpan({ spanId: 'child', parentSpanId: 'root', startTime: 1250, durationNanos: 500_000_000 })
+          ]
+        })
+      )
+    ).toMatchObject([
       { spanId: 'root', depth: 0, offsetPercent: 0, widthPercent: 100 },
       { spanId: 'child', depth: 1, offsetPercent: 25, widthPercent: 50 }
     ]);
@@ -104,9 +169,18 @@ describe('explore API contracts', () => {
       name: 'latency',
       labels: {},
       points: [
-        [1000, null], [1001, false], [1002, ''], [1003, '   '],
-        [null, 1], [false, 2], ['', 3], ['   ', 4],
-        [2000, 0], ['2001', '0'], [' 2002 ', '12.5'], [3000, 'invalid']
+        [1000, null],
+        [1001, false],
+        [1002, ''],
+        [1003, '   '],
+        [null, 1],
+        [false, 2],
+        ['', 3],
+        ['   ', 4],
+        [2000, 0],
+        ['2001', '0'],
+        [' 2002 ', '12.5'],
+        [3000, 'invalid']
       ]
     });
     expect(points).toEqual([
@@ -126,28 +200,90 @@ describe('explore API contracts', () => {
 });
 
 function metricConsole(
-  results: { status: number | null; frames: NonNullable<MetricConsole['results']>['frames']; msg?: string | null } | null,
+  results: {
+    status: number | null;
+    frames: NonNullable<MetricConsole['results']>['frames'];
+    msg?: string | null;
+  } | null,
   errorMessage: string | null = null,
   emptyStateReason: string | null = null
 ): MetricConsole {
-  return { context: null, query: null, datasource: null, queryMode: null,
-    results: results && { refId: null, msg: null, ...results }, stats: null, emptyStateReason, errorMessage };
+  return {
+    context: null,
+    query: null,
+    datasource: null,
+    queryMode: null,
+    results: results && { refId: null, msg: null, ...results },
+    stats: null,
+    emptyStateReason,
+    errorMessage
+  };
 }
 
-function traceDetail(override: Partial<import('./explore-signal-contract').TraceDetail> = {}): import('./explore-signal-contract').TraceDetail {
-  return { traceId: 'trace-1', rootSpanId: null, serviceName: null, serviceNamespace: null, rootSpanName: null,
-    durationNanos: null, status: null, startTime: null, errorSpanCount: 0, resourceAttributes: null, spans: null, ...override };
+function traceDetail(
+  override: Partial<import('./explore-signal-contract').TraceDetail> = {}
+): import('./explore-signal-contract').TraceDetail {
+  return {
+    traceId: 'trace-1',
+    rootSpanId: null,
+    serviceName: null,
+    serviceNamespace: null,
+    rootSpanName: null,
+    durationNanos: null,
+    status: null,
+    startTime: null,
+    errorSpanCount: 0,
+    resourceAttributes: null,
+    spans: null,
+    ...override
+  };
 }
 
-function traceSpan(override: Partial<import('./explore-signal-contract').TraceSpan> = {}): import('./explore-signal-contract').TraceSpan {
-  return { traceId: 'trace-1', spanId: 'span-1', parentSpanId: null, spanName: null, serviceName: null, status: null,
-    spanKind: null, statusMessage: null, traceState: null, scopeName: null, scopeVersion: null, durationNanos: null,
-    startTime: null, highlighted: false, resourceAttributes: null, spanAttributes: null, events: null, links: null,
-    codeNavigationHint: null, ...override };
+function traceSpan(
+  override: Partial<import('./explore-signal-contract').TraceSpan> = {}
+): import('./explore-signal-contract').TraceSpan {
+  return {
+    traceId: 'trace-1',
+    spanId: 'span-1',
+    parentSpanId: null,
+    spanName: null,
+    serviceName: null,
+    status: null,
+    spanKind: null,
+    statusMessage: null,
+    traceState: null,
+    scopeName: null,
+    scopeVersion: null,
+    durationNanos: null,
+    startTime: null,
+    highlighted: false,
+    resourceAttributes: null,
+    spanAttributes: null,
+    events: null,
+    links: null,
+    codeNavigationHint: null,
+    ...override
+  };
 }
 
-function logRow(override: Partial<import('./explore-signal-contract').LogRow> = {}): import('./explore-signal-contract').LogRow {
-  return { timeUnixNano: null, observedTimeUnixNano: null, severityNumber: null, severityText: null, body: null,
-    attributes: null, droppedAttributesCount: null, traceId: null, spanId: null, traceFlags: null, resource: null,
-    resourceSchemaUrl: null, instrumentationScope: null, scopeSchemaUrl: null, ...override };
+function logRow(
+  override: Partial<import('./explore-signal-contract').LogRow> = {}
+): import('./explore-signal-contract').LogRow {
+  return {
+    timeUnixNano: null,
+    observedTimeUnixNano: null,
+    severityNumber: null,
+    severityText: null,
+    body: null,
+    attributes: null,
+    droppedAttributesCount: null,
+    traceId: null,
+    spanId: null,
+    traceFlags: null,
+    resource: null,
+    resourceSchemaUrl: null,
+    instrumentationScope: null,
+    scopeSchemaUrl: null,
+    ...override
+  };
 }

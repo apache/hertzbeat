@@ -19,16 +19,20 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import {
-  mergeQueryContext, useQueryContextOptional, type QueryContext
-} from '@/shared/query-context';
+import { mergeQueryContext, useQueryContextOptional, type QueryContext } from '@/shared/query-context';
 import { useSharedTimeOptional } from '@/shared/time';
 
 import { classifyExploreSignalError, loadLogSignal, loadMetricSignal, loadTraceSignal } from '../api/explore-api';
 import { useExploreSubmission } from '../hooks/use-explore-submission';
 import {
-  buildExplorePath, exploreHandoffState, exploreQueryContext, mergeExploreQuery, parseExploreQuery, querySubmissionTimePatch,
-  type ExploreQuery, type ExploreQueryPatch
+  buildExplorePath,
+  exploreHandoffState,
+  exploreQueryContext,
+  mergeExploreQuery,
+  parseExploreQuery,
+  querySubmissionTimePatch,
+  type ExploreQuery,
+  type ExploreQueryPatch
 } from '../model/explore-model';
 import type { ExplorePageResult, LogRow, MetricConsole, TraceRow } from '../model/explore-signal-contract';
 import { metricResultState } from '../model/explore-signal-model';
@@ -42,6 +46,7 @@ export type ExplorePageResultState =
   | { kind: 'transport_error' }
   | { kind: 'contract_error' }
   | { kind: 'storage_unavailable' }
+  | { kind: 'missing_context' }
   | { kind: 'unsupported_query' }
   | { kind: 'error' }
   | { kind: 'empty' | 'ready'; signal: 'metrics'; data: MetricConsole }
@@ -71,31 +76,40 @@ export function useExplorePageController() {
     const next = mergeExploreQuery(query, mergeContextChanges(context, changes));
     setSearchParams(searchFromPath(buildExplorePath(next)));
   };
-  const submission = useExploreSubmission(query, patch => updateQuery({
-    ...patch,
-    ...querySubmissionTimePatch(query, effectiveWindow),
-    pageIndex: undefined
-  }));
+  const submission = useExploreSubmission(query, patch =>
+    updateQuery({
+      ...patch,
+      ...querySubmissionTimePatch(query, effectiveWindow),
+      pageIndex: undefined
+    })
+  );
   return {
     query,
     handoff,
     submission,
     result: resolveResult(query, handoff, queryResult.isPending, queryResult.error, queryResult.data),
     updateQuery,
-    refresh: () => historical ? queryResult.refetch().then(() => undefined) : Promise.resolve(),
-    openPath: (path: string) => { void navigate(path); }
+    refresh: () => (historical ? queryResult.refetch().then(() => undefined) : Promise.resolve()),
+    openPath: (path: string) => {
+      void navigate(path);
+    }
   };
 }
 
 const contextFields = [
-  'collectorId', 'serviceName', 'serviceNamespace', 'environment', 'instance', 'endpoint'
+  'collectorId',
+  'serviceName',
+  'serviceNamespace',
+  'environment',
+  'instance',
+  'endpoint'
 ] as const;
 
 function mergeContextChanges(context: QueryContext, changes: ExploreQueryPatch): ExploreQueryPatch {
   if (!contextFields.some(field => Object.hasOwn(changes, field))) return changes;
-  const patch = Object.fromEntries(contextFields.flatMap(field => (
-    Object.hasOwn(changes, field) ? [[field, changes[field]]] : []
-  ))) as Partial<QueryContext>;
+  const patch = Object.fromEntries(
+    contextFields.flatMap(field => (Object.hasOwn(changes, field) ? [[field, changes[field]]] : []))
+  ) as Partial<QueryContext>;
   const next = mergeQueryContext(context, patch);
   return {
     ...changes,
@@ -110,7 +124,8 @@ function mergeContextChanges(context: QueryContext, changes: ExploreQueryPatch):
 
 function exactWindow(query: ExploreQuery) {
   return query.start != null && query.end != null && query.start < query.end
-    ? { from: query.start, to: query.end } : undefined;
+    ? { from: query.start, to: query.end }
+    : undefined;
 }
 
 function withExactWindow(query: ExploreQuery, window: { from: number; to: number } | undefined) {
@@ -144,7 +159,13 @@ function resolveResult(
 function resolveDataResult(query: ExploreQuery, data: HistoricalData): ExplorePageResultState {
   if (query.signal === 'metrics') {
     const metric = metricResultState(data as MetricConsole);
-    if (metric.kind === 'storage_unavailable' || metric.kind === 'unsupported_query') return { kind: metric.kind };
+    if (
+      metric.kind === 'storage_unavailable' ||
+      metric.kind === 'missing_context' ||
+      metric.kind === 'unsupported_query'
+    ) {
+      return { kind: metric.kind };
+    }
     if (metric.kind === 'error') return { kind: 'error' };
     return { kind: metric.kind, signal: 'metrics', data: data as MetricConsole };
   }

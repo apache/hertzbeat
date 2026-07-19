@@ -9,6 +9,7 @@
     "instanceContext": "インスタンス: {{value}}",
     "endpointContext": "HTTP ルート: {{value}}",
     "states": {
+      "missingContext": "メトリクスを照会する前に、メトリクス名またはサービスコンテキストを選択してください。",
       "unsupportedQuery": "Collector スコープのメトリクスでは、任意の PromQL 式ではなくメトリクス名を指定してください。",
       "storageUnavailable": "このクエリではメトリクスストレージを利用できません。",
       "transportError": "シグナル要求がバックエンドに到達できませんでした。",

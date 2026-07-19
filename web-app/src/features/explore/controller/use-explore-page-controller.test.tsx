@@ -27,7 +27,10 @@ import type { MetricConsole } from '../model/explore-signal-contract';
 import { useExplorePageController } from './use-explore-page-controller';
 
 const api = vi.hoisted(() => ({ loadLogSignal: vi.fn(), loadMetricSignal: vi.fn(), loadTraceSignal: vi.fn() }));
-vi.mock('../api/explore-api', async importOriginal => ({ ...(await importOriginal<typeof import('../api/explore-api')>()), ...api }));
+vi.mock('../api/explore-api', async importOriginal => ({
+  ...(await importOriginal<typeof import('../api/explore-api')>()),
+  ...api
+}));
 
 describe('Explore page controller', () => {
   beforeEach(() => {
@@ -52,8 +55,8 @@ describe('Explore page controller', () => {
 
   it('clears downstream scope and old-service identity on service and Collector switches', async () => {
     const routed = renderController([
-      '/explore?signal=metrics&collectorId=east&serviceName=checkout&serviceNamespace=commerce'
-      + '&environment=prod&instance=checkout-1&endpoint=%2Fcheckout'
+      '/explore?signal=metrics&collectorId=east&serviceName=checkout&serviceNamespace=commerce' +
+        '&environment=prod&instance=checkout-1&endpoint=%2Fcheckout'
     ]);
     await waitFor(() => expect(routed.current().query.serviceName).toBe('checkout'));
     act(() => routed.current().updateQuery({ serviceName: 'payments' }));
@@ -63,7 +66,9 @@ describe('Explore page controller', () => {
 
     act(() => routed.current().updateQuery({ collectorId: 'west' }));
     await waitFor(() => expect(routed.router.state.location.search).toContain('collectorId=west'));
-    expect(routed.router.state.location.search).not.toMatch(/serviceName|serviceNamespace|environment|instance|endpoint/u);
+    expect(routed.router.state.location.search).not.toMatch(
+      /serviceName|serviceNamespace|environment|instance|endpoint/u
+    );
   });
 
   it('never requests an invalid handoff or live log history', async () => {
@@ -89,31 +94,42 @@ describe('Explore page controller', () => {
     expect(api.loadMetricSignal.mock.calls[1]?.[0]).toMatchObject({ start: inherited.start, end: inherited.end });
     relative.unmount();
 
-    const exact = renderController(['/explore?signal=metrics&serviceName=checkout&serviceNamespace=shop&environment=prod&collectorId=east&start=1000&end=2000']);
+    const exact = renderController([
+      '/explore?signal=metrics&serviceName=checkout&serviceNamespace=shop&environment=prod&collectorId=east&start=1000&end=2000'
+    ]);
     await waitFor(() => expect(api.loadMetricSignal).toHaveBeenCalledTimes(3));
     expect(api.loadMetricSignal.mock.calls[2]?.[0]).toMatchObject({ start: 1000, end: 2000 });
     await act(async () => exact.current().refresh());
     expect(api.loadMetricSignal.mock.calls[3]?.[0]).toMatchObject({ start: 1000, end: 2000 });
   });
 
-  it.each(['metrics', 'logs', 'traces'] as const)('auto-refetches %s every 30 seconds without changing history', async signal => {
-    vi.useFakeTimers();
-    try {
-      const routed = renderController([`/explore?signal=${signal}`]);
-      await act(async () => { await vi.advanceTimersByTimeAsync(0); });
-      const loader = signal === 'metrics' ? api.loadMetricSignal : signal === 'logs' ? api.loadLogSignal : api.loadTraceSignal;
-      expect(loader).toHaveBeenCalledTimes(1);
-      const key = routed.router.state.location.key;
-      await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
-      expect(loader).toHaveBeenCalledTimes(2);
-      expect(routed.router.state.location.key).toBe(key);
-    } finally {
-      vi.useRealTimers();
+  it.each(['metrics', 'logs', 'traces'] as const)(
+    'auto-refetches %s every 30 seconds without changing history',
+    async signal => {
+      vi.useFakeTimers();
+      try {
+        const routed = renderController([`/explore?signal=${signal}`]);
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(0);
+        });
+        const loader =
+          signal === 'metrics' ? api.loadMetricSignal : signal === 'logs' ? api.loadLogSignal : api.loadTraceSignal;
+        expect(loader).toHaveBeenCalledTimes(1);
+        const key = routed.router.state.location.key;
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(30_000);
+        });
+        expect(loader).toHaveBeenCalledTimes(2);
+        expect(routed.router.state.location.key).toBe(key);
+      } finally {
+        vi.useRealTimers();
+      }
     }
-  });
+  );
 
   it.each([
-    [page([]), 'empty'], [page([], 3, 3, 1), 'ready']
+    [page([]), 'empty'],
+    [page([], 3, 3, 1), 'ready']
   ])('classifies authoritative page evidence as %s', async (evidence, kind) => {
     api.loadTraceSignal.mockResolvedValue(evidence);
     const routed = renderController(['/explore?signal=traces']);
@@ -136,14 +152,20 @@ describe('Explore page controller', () => {
   });
 
   it.each([
+    ['no_context', 'missing_context'],
     ['unsupported_query', 'unsupported_query'],
     ['load_failed', 'storage_unavailable']
   ] as const)('preserves the metric backend state %s', async (emptyStateReason, kind) => {
     api.loadMetricSignal.mockResolvedValue({
-      ...metricConsole([]), results: null, emptyStateReason
+      ...metricConsole([]),
+      results: null,
+      emptyStateReason,
+      errorMessage: emptyStateReason === 'no_context' ? 'Choose a metric or service context.' : null
     });
-    const routed = renderController(['/explore?signal=metrics&collectorId=east&serviceName=checkout'
-      + '&serviceNamespace=commerce&environment=prod&query=sum%28rate%28http_requests_total%5B5m%5D%29%29']);
+    const routed = renderController([
+      '/explore?signal=metrics&collectorId=east&serviceName=checkout' +
+        '&serviceNamespace=commerce&environment=prod&query=sum%28rate%28http_requests_total%5B5m%5D%29%29'
+    ]);
     await waitFor(() => expect(routed.current().result.kind).toBe(kind));
   });
 
@@ -164,34 +186,83 @@ describe('Explore page controller', () => {
 function renderController(entries: string[], initialIndex = 0) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   let controller: ReturnType<typeof useExplorePageController> | undefined;
-  function Probe() { controller = useExplorePageController(); return null; }
-  const router = createMemoryRouter([{ path: '/explore', element: (
-    <QueryClientProvider client={client}>
-      <QueryContextProvider>
-        <GlobalTimeProvider><RouteTimeProvider policy="route_owned"><Probe /></RouteTimeProvider></GlobalTimeProvider>
-      </QueryContextProvider>
-    </QueryClientProvider>
-  ) }], {
-    initialEntries: entries, initialIndex
-  });
+  function Probe() {
+    controller = useExplorePageController();
+    return null;
+  }
+  const router = createMemoryRouter(
+    [
+      {
+        path: '/explore',
+        element: (
+          <QueryClientProvider client={client}>
+            <QueryContextProvider>
+              <GlobalTimeProvider>
+                <RouteTimeProvider policy="route_owned">
+                  <Probe />
+                </RouteTimeProvider>
+              </GlobalTimeProvider>
+            </QueryContextProvider>
+          </QueryClientProvider>
+        )
+      }
+    ],
+    {
+      initialEntries: entries,
+      initialIndex
+    }
+  );
   const view = render(<RouterProvider router={router} />);
-  return { router, unmount: view.unmount, current: () => { if (!controller) throw new Error('controller not mounted'); return controller; } };
+  return {
+    router,
+    unmount: view.unmount,
+    current: () => {
+      if (!controller) throw new Error('controller not mounted');
+      return controller;
+    }
+  };
 }
 
 function metricConsole(frames: NonNullable<NonNullable<MetricConsole['results']>['frames']>): MetricConsole {
-  return { context: null, query: null, datasource: null, queryMode: null,
-    results: { refId: null, status: 200, msg: null, frames }, stats: null, emptyStateReason: null, errorMessage: null };
+  return {
+    context: null,
+    query: null,
+    datasource: null,
+    queryMode: null,
+    results: { refId: null, status: 200, msg: null, frames },
+    stats: null,
+    emptyStateReason: null,
+    errorMessage: null
+  };
 }
 function page(content: unknown[], totalElements = content.length, number = 0, totalPages = totalElements ? 1 : 0) {
   return { content, totalElements, totalPages, number, size: 20 };
 }
-function logRow(override: Partial<import('../model/explore-signal-contract').LogRow> = {}): import('../model/explore-signal-contract').LogRow {
-  return { timeUnixNano: null, observedTimeUnixNano: null, severityNumber: null, severityText: null, body: null,
-    attributes: null, droppedAttributesCount: null, traceId: null, spanId: null, traceFlags: null, resource: null,
-    resourceSchemaUrl: null, instrumentationScope: null, scopeSchemaUrl: null, ...override };
+function logRow(
+  override: Partial<import('../model/explore-signal-contract').LogRow> = {}
+): import('../model/explore-signal-contract').LogRow {
+  return {
+    timeUnixNano: null,
+    observedTimeUnixNano: null,
+    severityNumber: null,
+    severityText: null,
+    body: null,
+    attributes: null,
+    droppedAttributesCount: null,
+    traceId: null,
+    spanId: null,
+    traceFlags: null,
+    resource: null,
+    resourceSchemaUrl: null,
+    instrumentationScope: null,
+    scopeSchemaUrl: null,
+    ...override
+  };
 }
 function deferred<T>() {
   let resolve!: (value: T) => void;
-  const promise = new Promise<T>(done => { resolve = done; });
+  const promise = new Promise<T>(done => {
+    resolve = done;
+  });
   return { promise, resolve };
 }

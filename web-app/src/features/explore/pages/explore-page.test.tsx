@@ -36,7 +36,7 @@ const api = vi.hoisted(() => ({
 }));
 
 vi.mock('../api/explore-api', async importOriginal => ({
-  ...await importOriginal<typeof import('../api/explore-api')>(),
+  ...(await importOriginal<typeof import('../api/explore-api')>()),
   ...api
 }));
 
@@ -75,8 +75,7 @@ describe('ExplorePage instrumentation context boundary', () => {
 
     for (const entry of invalidEntries) {
       renderPage(entry);
-      expect(await screen.findByText(en.explore.handoffInvalid))
-        .toBeInTheDocument();
+      expect(await screen.findByText(en.explore.handoffInvalid)).toBeInTheDocument();
       cleanup();
     }
 
@@ -89,23 +88,34 @@ describe('ExplorePage instrumentation context boundary', () => {
   it('continues to query ordinary Explore scope', async () => {
     renderPage('/explore?signal=metrics&serviceName=checkout&environment=prod');
 
-    await waitFor(() => expect(api.loadMetricSignal).toHaveBeenCalledWith(
-      expect.objectContaining({ signal: 'metrics', serviceName: 'checkout', environment: 'prod' }),
-      expect.any(AbortSignal)
-    ));
+    await waitFor(() =>
+      expect(api.loadMetricSignal).toHaveBeenCalledWith(
+        expect.objectContaining({ signal: 'metrics', serviceName: 'checkout', environment: 'prod' }),
+        expect.any(AbortSignal)
+      )
+    );
   });
 
   it('preserves a complete scoped instrumentation handoff', async () => {
-    renderPage('/explore?signal=logs&serviceName=checkout&serviceNamespace=commerce&environment=prod'
-      + '&collectorId=east&start=1710000000000&end=1710000005000');
+    renderPage(
+      '/explore?signal=logs&serviceName=checkout&serviceNamespace=commerce&environment=prod' +
+        '&collectorId=east&start=1710000000000&end=1710000005000'
+    );
 
-    await waitFor(() => expect(api.loadLogSignal).toHaveBeenCalledWith(
-      expect.objectContaining({
-        signal: 'logs', serviceName: 'checkout', serviceNamespace: 'commerce', environment: 'prod',
-        collectorId: 'east', start: 1_710_000_000_000, end: 1_710_000_005_000
-      }),
-      expect.any(AbortSignal)
-    ));
+    await waitFor(() =>
+      expect(api.loadLogSignal).toHaveBeenCalledWith(
+        expect.objectContaining({
+          signal: 'logs',
+          serviceName: 'checkout',
+          serviceNamespace: 'commerce',
+          environment: 'prod',
+          collectorId: 'east',
+          start: 1_710_000_000_000,
+          end: 1_710_000_005_000
+        }),
+        expect.any(AbortSignal)
+      )
+    );
   });
 
   it('keeps metric controls local until a valid typed submission updates the URL', async () => {
@@ -127,9 +137,15 @@ describe('ExplorePage instrumentation context boundary', () => {
     expect(screen.getByTestId('location')).toHaveTextContent(initialSearch ?? '');
     fireEvent.click(querySubmitButton());
 
-    await waitFor(() => expect(locationParams()).toEqual(expect.objectContaining({
-      signal: 'metrics', aggregation: 'sum', step: '60'
-    })));
+    await waitFor(() =>
+      expect(locationParams()).toEqual(
+        expect.objectContaining({
+          signal: 'metrics',
+          aggregation: 'sum',
+          step: '60'
+        })
+      )
+    );
     expect(locationParams()).not.toHaveProperty('page');
   });
 
@@ -172,14 +188,18 @@ describe('ExplorePage instrumentation context boundary', () => {
   });
 
   it.each([
-    ['unsupported_query', 'unsupportedQuery'],
-    ['load_failed', 'storageUnavailable']
-  ] as const)('renders the metric backend state %s without inventing empty data', async (reason, messageKey) => {
-    api.loadMetricSignal.mockResolvedValue(metricState(reason));
-    renderPage('/explore?signal=metrics');
-    expect(await screen.findByText(i18n.t(`explore.states.${messageKey}`))).toBeInTheDocument();
-    expect(screen.queryByText(en.explore.empty.metrics)).not.toBeInTheDocument();
-  });
+    ['no_context', 'missingContext', 'Choose a metric or service context.'],
+    ['unsupported_query', 'unsupportedQuery', null],
+    ['load_failed', 'storageUnavailable', null]
+  ] as const)(
+    'renders the metric backend state %s without inventing empty data',
+    async (reason, messageKey, errorMessage) => {
+      api.loadMetricSignal.mockResolvedValue(metricState(reason, errorMessage));
+      renderPage('/explore?signal=metrics');
+      expect(await screen.findByText(i18n.t(`explore.states.${messageKey}`))).toBeInTheDocument();
+      expect(screen.queryByText(en.explore.empty.metrics)).not.toBeInTheDocument();
+    }
+  );
 
   it.each([
     [new ApiMessageError('offline', { status: 503 }), 'transportError'],
@@ -192,9 +212,17 @@ describe('ExplorePage instrumentation context boundary', () => {
   });
 });
 
-function metricState(emptyStateReason: string): MetricConsole {
-  return { context: null, query: null, datasource: null, queryMode: null, results: null,
-    stats: { totalSeries: 0, nonEmptySeries: 0, latestObservedAt: null }, emptyStateReason, errorMessage: null };
+function metricState(emptyStateReason: string, errorMessage: string | null): MetricConsole {
+  return {
+    context: null,
+    query: null,
+    datasource: null,
+    queryMode: null,
+    results: null,
+    stats: { totalSeries: 0, nonEmptySeries: 0, latestObservedAt: null },
+    emptyStateReason,
+    errorMessage
+  };
 }
 
 function renderPage(initialEntry: string) {
@@ -205,7 +233,10 @@ function renderPage(initialEntry: string) {
     <I18nextProvider i18n={i18n}>
       <QueryClientProvider client={client}>
         <MemoryRouter initialEntries={[initialEntry]}>
-          <App><ExplorePage /><LocationProbe /></App>
+          <App>
+            <ExplorePage />
+            <LocationProbe />
+          </App>
         </MemoryRouter>
       </QueryClientProvider>
     </I18nextProvider>
@@ -222,7 +253,8 @@ function locationParams() {
 }
 
 function querySubmitButton() {
-  const button = screen.getAllByRole('button', { name: en.common.query })
+  const button = screen
+    .getAllByRole('button', { name: en.common.query })
     .find(candidate => candidate.getAttribute('type') === 'submit');
   if (!button) throw new Error('Explore query submit button is missing');
   return button;
