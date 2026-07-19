@@ -42,8 +42,9 @@ describe('Public Status boundaries', () => {
   it('uses explicit feature-local layers without empty hooks', () => {
     const paths = Object.keys(publicSources).filter(path => !path.includes('.test.'));
 
-    expect(requiredDirectories.filter(directory => !paths.some(path => path.startsWith(`./public/${directory}/`))))
-      .toEqual([]);
+    expect(
+      requiredDirectories.filter(directory => !paths.some(path => path.startsWith(`./public/${directory}/`)))
+    ).toEqual([]);
     expect(paths.filter(path => path.slice('./public/'.length).includes('/') === false)).toEqual([]);
     expect(paths.some(path => path.startsWith('./public/hooks/'))).toBe(false);
   });
@@ -91,21 +92,22 @@ describe('Status Management boundaries', () => {
   it('uses explicit feature-local layers with a dedicated controller', () => {
     const paths = Object.keys(managementSources).filter(path => !path.includes('.test.'));
 
-    expect(managementDirectories.filter(directory => !paths.some(path => path.startsWith(`./management/${directory}/`))))
-      .toEqual([]);
+    expect(
+      managementDirectories.filter(directory => !paths.some(path => path.startsWith(`./management/${directory}/`)))
+    ).toEqual([]);
     expect(paths.filter(path => path.slice('./management/'.length).includes('/') === false)).toEqual([]);
+    expect(paths).toContain('./management/controller/use-status-incident-editor.ts');
+    expect(paths.filter(path => path.startsWith('./management/hooks/'))).toEqual([
+      './management/hooks/use-status-incident-query.ts'
+    ]);
   });
 
   it('keeps transport in API and keeps the domain model independent from API', () => {
     const violations = Object.entries(managementSources)
       .filter(([path]) => !path.includes('.test.'))
-      .flatMap(([path, source]) => validateLayeredImports(
-        path,
-        source,
-        './management/',
-        managementDirectories,
-        managementDependencies
-      ));
+      .flatMap(([path, source]) =>
+        validateLayeredImports(path, source, './management/', managementDirectories, managementDependencies)
+      );
 
     expect(violations).toEqual([]);
   });
@@ -131,9 +133,7 @@ describe('Status Management boundaries', () => {
   });
 
   it('splits resource and transaction ownership behind one Query Key factory', () => {
-    const controller = managementSources[
-      './management/controller/use-status-management-controller.ts'
-    ] ?? '';
+    const controller = managementSources['./management/controller/use-status-management-controller.ts'] ?? '';
     const requiredOwners = [
       './management/controller/status-management-query-keys.ts',
       './management/controller/use-status-management-resources.ts',
@@ -171,26 +171,25 @@ function validateLayeredImports(
 ) {
   const sourceDirectory = path.slice(root.length).split('/')[0] ?? '';
   if (!directories.includes(sourceDirectory)) return [`${path} has an unknown layer`];
-  const directTransport = sourceDirectory !== 'api'
-    && /\b(?:fetch|apiFetch|apiMessage(?:Get|Post|Put|Delete))\s*\(/.test(source);
+  const directTransport =
+    sourceDirectory !== 'api' && /\b(?:fetch|apiFetch|apiMessage(?:Get|Post|Put|Delete))\s*\(/.test(source);
   const violations = directTransport ? [`${path} performs transport outside api`] : [];
 
-  return violations.concat([...source.matchAll(importPattern)].flatMap(match => {
-    const importKind = match[1] ?? '';
-    const specifier = match[2];
-    if (!specifier?.startsWith('.')) return [];
-    const target = resolvePath(path, specifier);
-    if (!target.startsWith(root)) return [`${path} imports outside ${root}`];
-    const targetDirectory = target.slice(root.length).split('/')[0];
-    if (!targetDirectory) return [`${path} has an unresolved relative import`];
-    const apiModelTypeOnly = sourceDirectory === 'api'
-      && targetDirectory === 'model'
-      && importKind.startsWith('import type');
-    if (apiModelTypeOnly) return [];
-    return dependencies[sourceDirectory]?.includes(targetDirectory)
-      ? []
-      : [`${path} imports ${targetDirectory}`];
-  }));
+  return violations.concat(
+    [...source.matchAll(importPattern)].flatMap(match => {
+      const importKind = match[1] ?? '';
+      const specifier = match[2];
+      if (!specifier?.startsWith('.')) return [];
+      const target = resolvePath(path, specifier);
+      if (!target.startsWith(root)) return [`${path} imports outside ${root}`];
+      const targetDirectory = target.slice(root.length).split('/')[0];
+      if (!targetDirectory) return [`${path} has an unresolved relative import`];
+      const apiModelTypeOnly =
+        sourceDirectory === 'api' && targetDirectory === 'model' && importKind.startsWith('import type');
+      if (apiModelTypeOnly) return [];
+      return dependencies[sourceDirectory]?.includes(targetDirectory) ? [] : [`${path} imports ${targetDirectory}`];
+    })
+  );
 }
 
 function resolvePath(sourcePath: string, specifier: string) {

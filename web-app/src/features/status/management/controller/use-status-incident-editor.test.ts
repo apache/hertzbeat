@@ -22,7 +22,7 @@ import type { StatusIncident } from '../model/status-management-contract';
 
 const { loadStatusIncident } = vi.hoisted(() => ({ loadStatusIncident: vi.fn() }));
 vi.mock('../api/status-management-api', async importOriginal => ({
-  ...await importOriginal<typeof import('../api/status-management-api')>(),
+  ...(await importOriginal<typeof import('../api/status-management-api')>()),
   loadStatusIncident
 }));
 
@@ -34,7 +34,7 @@ describe('useStatusIncidentEditor', () => {
   it('keeps the latest incident when a slower ignored-abort request completes last', async () => {
     const first = deferred<StatusIncident>();
     const second = deferred<StatusIncident>();
-    loadStatusIncident.mockImplementation((id: number) => id === 1 ? first.promise : second.promise);
+    loadStatusIncident.mockImplementation((id: number) => (id === 1 ? first.promise : second.promise));
     const failed = vi.fn();
     const { result } = renderHook(() => useStatusIncidentEditor(failed));
 
@@ -57,7 +57,7 @@ describe('useStatusIncidentEditor', () => {
   it('suppresses an obsolete failure after a newer request succeeds', async () => {
     const first = deferred<StatusIncident>();
     const second = deferred<StatusIncident>();
-    loadStatusIncident.mockImplementation((id: number) => id === 1 ? first.promise : second.promise);
+    loadStatusIncident.mockImplementation((id: number) => (id === 1 ? first.promise : second.promise));
     const failed = vi.fn();
     const { result } = renderHook(() => useStatusIncidentEditor(failed));
 

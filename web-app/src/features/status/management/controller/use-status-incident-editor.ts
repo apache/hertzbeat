@@ -24,48 +24,52 @@ export function useStatusIncidentEditor(reportLoadFailure?: (error: unknown) => 
   const [incident, setIncident] = useState<StatusIncident>();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<unknown>();
-  const generation = useRef(0);
   const request = useRef<AbortController | undefined>(undefined);
 
   const invalidate = useCallback(() => {
-    generation.current += 1;
     request.current?.abort();
     request.current = undefined;
-    return generation.current;
   }, []);
 
-  const edit = useCallback((id: number) => {
-    const runGeneration = invalidate();
-    const controller = new AbortController();
-    request.current = controller;
-    setIncident(undefined);
-    setError(undefined);
-    setLoading(true);
+  const edit = useCallback(
+    (id: number) => {
+      invalidate();
+      const controller = new AbortController();
+      request.current = controller;
+      setIncident(undefined);
+      setError(undefined);
+      setLoading(true);
 
-    void (async () => {
-      try {
-        const next = await loadStatusIncident(id, controller.signal);
-        if (controller.signal.aborted || generation.current !== runGeneration) return;
-        request.current = undefined;
-        setIncident(next);
-        setError(undefined);
-        setLoading(false);
-      } catch (reason) {
-        if (controller.signal.aborted || generation.current !== runGeneration) return;
-        request.current = undefined;
-        setLoading(false);
-        setError(reason);
-        reportLoadFailure?.(reason);
-      }
-    })();
-  }, [invalidate, reportLoadFailure]);
+      void (async () => {
+        try {
+          const next = await loadStatusIncident(id, controller.signal);
+          // Some transports still resolve after abort; controller identity keeps stale details closed.
+          if (controller.signal.aborted || request.current !== controller) return;
+          request.current = undefined;
+          setIncident(next);
+          setError(undefined);
+          setLoading(false);
+        } catch (reason) {
+          if (controller.signal.aborted || request.current !== controller) return;
+          request.current = undefined;
+          setLoading(false);
+          setError(reason);
+          reportLoadFailure?.(reason);
+        }
+      })();
+    },
+    [invalidate, reportLoadFailure]
+  );
 
-  const openNew = useCallback((orgId: number | undefined) => {
-    invalidate();
-    setLoading(false);
-    setError(undefined);
-    setIncident({ orgId: orgId ?? 0, name: '', state: 0, components: [], contents: [] });
-  }, [invalidate]);
+  const openNew = useCallback(
+    (orgId: number | undefined) => {
+      invalidate();
+      setLoading(false);
+      setError(undefined);
+      setIncident({ orgId: orgId ?? 0, name: '', state: 0, components: [], contents: [] });
+    },
+    [invalidate]
+  );
 
   const close = useCallback(() => {
     invalidate();
@@ -74,10 +78,7 @@ export function useStatusIncidentEditor(reportLoadFailure?: (error: unknown) => 
     setIncident(undefined);
   }, [invalidate]);
 
-  useEffect(() => () => {
-    generation.current += 1;
-    request.current?.abort();
-  }, []);
+  useEffect(() => invalidate, [invalidate]);
 
   return { incident, loading, error, edit, openNew, close };
 }

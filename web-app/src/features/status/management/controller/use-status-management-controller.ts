@@ -6,11 +6,7 @@
  */
 import { useState } from 'react';
 
-import {
-  statusManagementFailureKind,
-  type StatusManagementFailureKind
-} from '../api/status-management-api';
-import { useStatusIncidentEditor } from '../hooks/use-status-incident-editor';
+import { statusManagementFailureKind, type StatusManagementFailureKind } from '../api/status-management-api';
 import { useStatusIncidentQuery } from '../hooks/use-status-incident-query';
 import {
   type StatusComponent,
@@ -26,6 +22,7 @@ import {
   type StatusRecordState
 } from '../model/status-management-model';
 import { useStatusComponentTransactions } from './use-status-component-transactions';
+import { useStatusIncidentEditor } from './use-status-incident-editor';
 import { useStatusIncidentTransactions } from './use-status-incident-transactions';
 import { useStatusManagementNotifications } from './use-status-management-notifications';
 import { useStatusManagementResources } from './use-status-management-resources';
@@ -39,11 +36,7 @@ export function useStatusManagementController() {
   const notify = useStatusManagementNotifications();
   const orgSave = useStatusOrgSave(resources.org.data, notify);
   const components = useStatusComponentTransactions(setComponentEditor, notify);
-  const incidents = useStatusIncidentTransactions(
-    incidentQuery.query,
-    incidentEditor.close,
-    notify
-  );
+  const incidents = useStatusIncidentTransactions(incidentQuery.query, incidentEditor.close, notify);
   const orgState = resolveOrgState(resources.org.isPending, resources.org.error, resources.org.data);
   const componentState = resolveComponentState(
     resources.components.isPending,
