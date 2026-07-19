@@ -24,11 +24,11 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { AppProviders } from '@/app/providers';
 import { refineResources, shellAccessControlProvider } from '@/app/refine/refine-resource-registry';
 import { SessionContext } from '@/core/auth/session-context';
+import { SessionIdentityProvider } from '@/core/auth/session-identity-provider';
 import { initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
 import { BasicLayout } from './basic-layout';
 import stylesheet from '../shell/hertzbeat-shell.module.css?raw';
-
 
 describe('BasicLayout shell', () => {
   beforeAll(async () => {
@@ -122,25 +122,29 @@ function renderLayout(path = '/alerts') {
           routerProvider={routerProvider}
           options={{ disableTelemetry: true }}
         >
-          <SessionContext.Provider value={{
-          loading: false,
-          retry: () => undefined,
-          session: {
-            authenticated: true,
-            username: 'operator',
-            roles: ['ADMIN'],
-            workspaceId: 'default',
-            expiresAt: null
-          },
-          unavailable: false
-        }}>
-            <Routes>
-              <Route element={<BasicLayout />}>
-                <Route path="/alerts" element={<div>Alerts route</div>} />
-                <Route path="/settings/notifications/templates" element={<div>Templates route</div>} />
-              </Route>
-            </Routes>
-          </SessionContext.Provider>
+          <SessionIdentityProvider replaceIdentity={() => undefined}>
+            <SessionContext.Provider
+              value={{
+                loading: false,
+                retry: () => undefined,
+                session: {
+                  authenticated: true,
+                  username: 'operator',
+                  roles: ['ADMIN'],
+                  workspaceId: 'default',
+                  expiresAt: null
+                },
+                unavailable: false
+              }}
+            >
+              <Routes>
+                <Route element={<BasicLayout />}>
+                  <Route path="/alerts" element={<div>Alerts route</div>} />
+                  <Route path="/settings/notifications/templates" element={<div>Templates route</div>} />
+                </Route>
+              </Routes>
+            </SessionContext.Provider>
+          </SessionIdentityProvider>
         </Refine>
       </MemoryRouter>
     </AppProviders>

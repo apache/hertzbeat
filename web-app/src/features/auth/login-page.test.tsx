@@ -22,9 +22,11 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SessionProvider } from '@/core/auth/session-provider';
+import { SessionIdentityProvider } from '@/core/auth/session-identity-provider';
 import { anonymousSession, sessionQueryKey, type UiSession } from '@/core/auth/session-api';
 import { SessionContext, type SessionState } from '@/core/auth/session-context';
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
+import { SessionQueryRuntime } from '@/app/refine/session-query-runtime';
 
 const sessionApi = vi.hoisted(() => ({ loginSession: vi.fn() }));
 vi.mock('@/core/auth/session-api', async () => {
@@ -52,7 +54,11 @@ describe('LoginPage', () => {
 
   it('locks duplicate submissions until the first login settles', async () => {
     let resolveLogin: (value: typeof authenticated) => void = () => undefined;
-    sessionApi.loginSession.mockReturnValue(new Promise(resolve => { resolveLogin = resolve; }));
+    sessionApi.loginSession.mockReturnValue(
+      new Promise(resolve => {
+        resolveLogin = resolve;
+      })
+    );
     renderLogin();
 
     fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'operator' } });
@@ -67,6 +73,22 @@ describe('LoginPage', () => {
     resolveLogin(authenticated);
     await waitFor(() => expect(screen.getByTestId('route')).toHaveTextContent('/dashboard'));
     expect(sessionApi.loginSession).toHaveBeenCalledTimes(1);
+  });
+
+  it('publishes a successful login through a new QueryClient generation', async () => {
+    sessionApi.loginSession.mockResolvedValue(authenticated);
+    const { queryClients } = renderLogin();
+    queryClients[0]?.setQueryData(['protected', 'previous-user'], 'operator-a');
+
+    fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'operator' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'credential-value' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+
+    await waitFor(() => expect(screen.getByTestId('route')).toHaveTextContent('/dashboard'));
+    expect(queryClients).toHaveLength(2);
+    expect(queryClients[1]).not.toBe(queryClients[0]);
+    expect(queryClients[1]?.getQueryData(sessionQueryKey)).toEqual(authenticated);
+    expect(queryClients[1]?.getQueryData(['protected', 'previous-user'])).toBeUndefined();
   });
 
   it('redirects an existing authenticated session through a safe local target', async () => {
@@ -110,8 +132,9 @@ describe('LoginPage', () => {
       retry
     });
 
-    expect(screen.getByText('The service is unavailable. Check the backend connection and try again.'))
-      .toBeInTheDocument();
+    expect(
+      screen.getByText('The service is unavailable. Check the backend connection and try again.')
+    ).toBeInTheDocument();
     expect(screen.queryByLabelText('Username')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Password')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
@@ -119,31 +142,46 @@ describe('LoginPage', () => {
   });
 });
 
-function renderLogin(
-  initialEntry = '/passport/login',
-  initialSession: UiSession = anonymousSession
-) {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      mutations: { retry: false },
-      queries: { retry: false, staleTime: Number.POSITIVE_INFINITY }
-    }
-  });
-  queryClient.setQueryData(sessionQueryKey, initialSession);
-  return render(
+function renderLogin(initialEntry = '/passport/login', initialSession: UiSession = anonymousSession) {
+  const queryClients: QueryClient[] = [];
+  const createQueryClient = () => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        mutations: { retry: false },
+        queries: { retry: false, staleTime: Number.POSITIVE_INFINITY }
+      }
+    });
+    if (queryClients.length === 0) queryClient.setQueryData(sessionQueryKey, initialSession);
+    queryClients.push(queryClient);
+    return queryClient;
+  };
+  const result = render(
     <I18nextProvider i18n={i18n}>
-      <QueryClientProvider client={queryClient}>
-        <SessionProvider>
-          <MemoryRouter initialEntries={[initialEntry]}>
-            <Routes>
-              <Route path="/passport/login" element={<><LoginPage /><LocationProbe /></>} />
-              <Route path="/dashboard" element={<LocationProbe />} />
-            </Routes>
-          </MemoryRouter>
-        </SessionProvider>
-      </QueryClientProvider>
+      <SessionQueryRuntime createQueryClient={createQueryClient}>
+        {runtime => (
+          <QueryClientProvider key={runtime.generation} client={runtime.queryClient}>
+            <SessionProvider>
+              <MemoryRouter initialEntries={[initialEntry]}>
+                <Routes>
+                  <Route
+                    path="/passport/login"
+                    element={
+                      <>
+                        <LoginPage />
+                        <LocationProbe />
+                      </>
+                    }
+                  />
+                  <Route path="/dashboard" element={<LocationProbe />} />
+                </Routes>
+              </MemoryRouter>
+            </SessionProvider>
+          </QueryClientProvider>
+        )}
+      </SessionQueryRuntime>
     </I18nextProvider>
   );
+  return { ...result, queryClients };
 }
 
 function LocationProbe() {
@@ -156,11 +194,13 @@ function renderLoginWithSessionState(sessionState: SessionState) {
   return render(
     <I18nextProvider i18n={i18n}>
       <QueryClientProvider client={queryClient}>
-        <SessionContext.Provider value={sessionState}>
-          <MemoryRouter initialEntries={['/passport/login']}>
-            <LoginPage />
-          </MemoryRouter>
-        </SessionContext.Provider>
+        <SessionIdentityProvider replaceIdentity={vi.fn()}>
+          <SessionContext.Provider value={sessionState}>
+            <MemoryRouter initialEntries={['/passport/login']}>
+              <LoginPage />
+            </MemoryRouter>
+          </SessionContext.Provider>
+        </SessionIdentityProvider>
       </QueryClientProvider>
     </I18nextProvider>
   );

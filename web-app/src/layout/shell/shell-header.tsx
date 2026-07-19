@@ -6,8 +6,13 @@
  */
 
 import {
-  BellOutlined, BgColorsOutlined, ClockCircleOutlined, GlobalOutlined, LogoutOutlined,
-  ReloadOutlined, UserOutlined
+  BellOutlined,
+  BgColorsOutlined,
+  ClockCircleOutlined,
+  GlobalOutlined,
+  LogoutOutlined,
+  ReloadOutlined,
+  UserOutlined
 } from '@ant-design/icons';
 import { useGo } from '@refinedev/core';
 import { useQueryClient } from '@tanstack/react-query';
@@ -15,15 +20,19 @@ import { App, Avatar, Button, Dropdown, Tooltip, type MenuProps } from 'antd';
 import type { TFunction } from 'i18next';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 
-import { anonymousSession, logoutSession, sessionQueryKey } from '@/core/auth/session-api';
+import { anonymousSession, logoutSession } from '@/core/auth/session-api';
 import { useSession } from '@/core/auth/session-context';
+import { useSessionIdentityBoundary } from '@/core/auth/session-identity-context';
 import { loadLocale, resolveLocale, type SupportedLocale } from '@/core/i18n/i18n';
 import { persistSystemPreferences, readRuntimeLocale } from '@/core/runtime-preferences';
 import { useRuntimeTheme } from '@/core/runtime-theme-context';
 import {
-  globalAutoRefreshValues, globalTimeRanges, useSharedTime, type GlobalTimeRange, type SharedTimeValue
+  globalAutoRefreshValues,
+  globalTimeRanges,
+  useSharedTime,
+  type GlobalTimeRange,
+  type SharedTimeValue
 } from '@/shared/time';
 
 import styles from './hertzbeat-shell.module.css';
@@ -36,7 +45,7 @@ export function ShellHeader({ collapsed }: { collapsed: boolean }) {
   const { session } = useSession();
   const { theme, setTheme } = useRuntimeTheme();
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
+  const replaceSessionIdentity = useSessionIdentityBoundary();
   const go = useGo();
   const sharedTime = useSharedTime();
   const [loggingOut, setLoggingOut] = useState(false);
@@ -62,12 +71,10 @@ export function ShellHeader({ collapsed }: { collapsed: boolean }) {
     setLoggingOut(true);
     try {
       await logoutSession();
-      queryClient.setQueryData(sessionQueryKey, anonymousSession);
-      await navigate('/passport/login', { replace: true });
+      replaceSessionIdentity(anonymousSession);
     } catch {
-      void message.error(t('auth.logoutFailed'));
-    } finally {
       setLoggingOut(false);
+      void message.error(t('auth.logoutFailed'));
     }
   };
 
@@ -75,7 +82,11 @@ export function ShellHeader({ collapsed }: { collapsed: boolean }) {
     <header className={styles.header}>
       <div className={styles.brandSlot}>
         <img className={styles.brandLogo} src="/assets/logo.svg" alt="HertzBeat" width={24} height={23} />
-        {!collapsed && <strong className={styles.brandName} aria-hidden="true">HertzBeat</strong>}
+        {!collapsed && (
+          <strong className={styles.brandName} aria-hidden="true">
+            HertzBeat
+          </strong>
+        )}
       </div>
       <div className={styles.headerSpine}>
         <div className={styles.statusSpine} aria-label={t('shell.status.summary')}>
@@ -88,9 +99,17 @@ export function ShellHeader({ collapsed }: { collapsed: boolean }) {
           {sharedTime.headerMode !== 'hidden' && (
             <HeaderAction label={t('shell.actions.refresh')} icon={<ReloadOutlined />} onClick={() => void refresh()} />
           )}
-          <HeaderAction label={t('shell.actions.alerts')} icon={<BellOutlined />} onClick={() => go({ to: '/alerts', type: 'push' })} />
+          <HeaderAction
+            label={t('shell.actions.alerts')}
+            icon={<BellOutlined />}
+            onClick={() => go({ to: '/alerts', type: 'push' })}
+          />
           <HeaderAction label={t('shell.actions.theme')} icon={<BgColorsOutlined />} onClick={toggleTheme} />
-          <HeaderAction label={t('shell.actions.language')} icon={<GlobalOutlined />} onClick={() => void changeLanguage()} />
+          <HeaderAction
+            label={t('shell.actions.language')}
+            icon={<GlobalOutlined />}
+            onClick={() => void changeLanguage()}
+          />
           <Dropdown
             trigger={['click']}
             menu={{
@@ -111,11 +130,7 @@ export function ShellHeader({ collapsed }: { collapsed: boolean }) {
   );
 }
 
-function ShellTimeControl({ time, t, locale }: {
-  time: SharedTimeValue;
-  t: TFunction;
-  locale: string | undefined;
-}) {
+function ShellTimeControl({ time, t, locale }: { time: SharedTimeValue; t: TFunction; locale: string | undefined }) {
   if (time.headerMode === 'hidden' || !time.window) return null;
   if (time.headerMode === 'exact_window') {
     return (
@@ -139,13 +154,17 @@ function ShellTimeControl({ time, t, locale }: {
 function globalTimeMenuItems(time: SharedTimeValue, t: TFunction): NonNullable<MenuProps['items']> {
   return [
     ...globalTimeRanges.map(range => ({
-      key: `range:${range}`, label: t('shell.time.rangeOption', { range }), disabled: time.range === range
+      key: `range:${range}`,
+      label: t('shell.time.rangeOption', { range }),
+      disabled: time.range === range
     })),
     { type: 'divider' as const },
     ...globalAutoRefreshValues.map(interval => ({
       key: `refresh:${interval}`,
-      label: interval === 0 ? t('shell.time.autoRefreshOff')
-        : t('shell.time.autoRefreshSeconds', { seconds: interval / 1_000 }),
+      label:
+        interval === 0
+          ? t('shell.time.autoRefreshOff')
+          : t('shell.time.autoRefreshSeconds', { seconds: interval / 1_000 }),
       disabled: time.autoRefreshMs === interval
     }))
   ];

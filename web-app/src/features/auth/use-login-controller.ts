@@ -15,13 +15,14 @@
  * limitations under the License.
  */
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { safeRedirectTarget } from '@/core/auth/navigation';
-import { loginSession, sessionQueryKey } from '@/core/auth/session-api';
+import { loginSession } from '@/core/auth/session-api';
 import { useSession } from '@/core/auth/session-context';
+import { useSessionIdentityBoundary } from '@/core/auth/session-identity-context';
 
 import { loginErrorMessageKey } from './login-model';
 
@@ -29,7 +30,7 @@ type LoginValues = { identifier: string; credential: string };
 
 export function useLoginController() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const replaceSessionIdentity = useSessionIdentityBoundary();
   const [searchParams] = useSearchParams();
   const { loading, retry, session, unavailable } = useSession();
   const submitting = useRef(false);
@@ -49,7 +50,7 @@ export function useLoginController() {
     submitting.current = true;
     try {
       const authenticated = await login.mutateAsync(values);
-      queryClient.setQueryData(sessionQueryKey, authenticated);
+      replaceSessionIdentity(authenticated);
     } catch {
       // React Query retains the classified error for the presentation boundary.
       submitting.current = false;
@@ -61,12 +62,12 @@ export function useLoginController() {
     pending: login.isPending,
     retrySession: retry,
     sessionState: loading
-      ? 'checking' as const
+      ? ('checking' as const)
       : unavailable
-        ? 'unavailable' as const
+        ? ('unavailable' as const)
         : session?.authenticated
-          ? 'authenticated' as const
-          : 'anonymous' as const,
+          ? ('authenticated' as const)
+          : ('anonymous' as const),
     submit
   };
 }

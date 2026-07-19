@@ -32,19 +32,22 @@ import { noticeTemplateDataProvider } from './resources/notice-template-data-pro
 import { objectStoreDataProvider } from './resources/object-store-data-provider';
 import { systemConfigDataProvider } from './resources/system-config-data-provider';
 import { refineResources, shellAccessControlProvider } from './refine-resource-registry';
+import { SessionQueryRuntime } from './session-query-runtime';
 
-const appQueryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: false,
-      staleTime: 15_000
-    },
-    mutations: {
-      retry: false
+function createAppQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        refetchOnWindowFocus: false,
+        retry: false,
+        staleTime: 15_000
+      },
+      mutations: {
+        retry: false
+      }
     }
-  }
-});
+  });
+}
 
 const dataProviders = {
   default: labelDataProvider,
@@ -61,23 +64,28 @@ const dataProviders = {
 export function RefineRuntime() {
   const notificationProvider = useNotificationProvider();
   return (
-    <Refine
-      dataProvider={dataProviders}
-      accessControlProvider={shellAccessControlProvider}
-      notificationProvider={notificationProvider}
-      resources={refineResources}
-      routerProvider={routerProvider}
-      options={{
-        disableRouteChangeHandler: true,
-        disableTelemetry: true,
-        mutationMode: 'pessimistic',
-        syncWithLocation: false,
-        reactQuery: { clientConfig: appQueryClient }
-      }}
-    >
-      <SessionProvider>
-        <Outlet />
-      </SessionProvider>
-    </Refine>
+    <SessionQueryRuntime createQueryClient={createAppQueryClient}>
+      {({ generation, queryClient }) => (
+        <Refine
+          key={generation}
+          dataProvider={dataProviders}
+          accessControlProvider={shellAccessControlProvider}
+          notificationProvider={notificationProvider}
+          resources={refineResources}
+          routerProvider={routerProvider}
+          options={{
+            disableRouteChangeHandler: true,
+            disableTelemetry: true,
+            mutationMode: 'pessimistic',
+            syncWithLocation: false,
+            reactQuery: { clientConfig: queryClient }
+          }}
+        >
+          <SessionProvider>
+            <Outlet />
+          </SessionProvider>
+        </Refine>
+      )}
+    </SessionQueryRuntime>
   );
 }
