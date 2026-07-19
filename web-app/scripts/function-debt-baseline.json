@@ -123,12 +123,6 @@
     },
     {
       "rule": "function-size",
-      "path": "features/settings/label/components/label-results.tsx",
-      "identity": "function:LabelResults",
-      "allowedMax": 65
-    },
-    {
-      "rule": "function-size",
       "path": "features/settings/label/controller/label-mutation-controller.ts",
       "identity": "function:useLabelMutationController",
       "allowedMax": 64

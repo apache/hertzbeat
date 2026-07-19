@@ -17,21 +17,25 @@
 
 import { Alert, Button, Empty, Popconfirm, Space, Spin, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import { buildLabelDisplayName, labelTypeKey, type LabelListState, type LabelRecord } from '../model/label-model';
 import { isLabelPageSize, labelPageSizes, type LabelPageSize } from '../model/label-query-model';
 import styles from './label.module.css';
 
-type LabelResultsProps = {
-  state: LabelListState;
-  pageIndex: number;
-  pageSize: LabelPageSize;
-  onPageChange: (pageIndex: number, pageSize: LabelPageSize) => void;
+type LabelResultActions = {
   onCopy: (label: LabelRecord) => void;
   onEdit: (label: LabelRecord) => void;
   onRemove: (record: LabelRecord) => void;
   onInspect: (label: LabelRecord) => void;
+};
+
+type LabelResultsProps = LabelResultActions & {
+  state: LabelListState;
+  pageIndex: number;
+  pageSize: LabelPageSize;
+  onPageChange: (pageIndex: number, pageSize: LabelPageSize) => void;
 };
 
 export function LabelResults(props: LabelResultsProps) {
@@ -41,11 +45,32 @@ export function LabelResults(props: LabelResultsProps) {
   if (props.state.kind === 'error') return <Alert type="error" showIcon message={t('common.routeError.description')} />;
   if (props.state.kind === 'empty') return <Empty description={t('labels.empty')} />;
 
-  const columns: ColumnsType<LabelRecord> = [
+  return (
+    <Table<LabelRecord>
+      rowKey="id"
+      size="small"
+      columns={createLabelColumns(t, props)}
+      dataSource={props.state.records}
+      pagination={{
+        current: props.pageIndex + 1,
+        pageSize: props.pageSize,
+        pageSizeOptions: [...labelPageSizes],
+        showSizeChanger: true,
+        total: props.state.total,
+        onChange: (page, pageSize) => {
+          if (isLabelPageSize(pageSize)) props.onPageChange(page - 1, pageSize);
+        }
+      }}
+    />
+  );
+}
+
+function createLabelColumns(t: TFunction, actions: LabelResultActions): ColumnsType<LabelRecord> {
+  return [
     {
       title: t('labels.label'),
       render: (_value, row) => (
-        <Button type="link" className={styles.labelLink ?? ''} onClick={() => props.onInspect(row)}>
+        <Button type="link" className={styles.labelLink ?? ''} onClick={() => actions.onInspect(row)}>
           <Tag>{buildLabelDisplayName(row)}</Tag>
         </Button>
       )
@@ -72,34 +97,21 @@ export function LabelResults(props: LabelResultsProps) {
       width: 220,
       render: (_value, row) => (
         <Space size={2}>
-          <Button type="link" onClick={() => props.onCopy(row)}>{t('labels.copy')}</Button>
-          <Button type="link" onClick={() => props.onEdit(row)}>{t('common.edit')}</Button>
-          <Popconfirm title={t('labels.deleteConfirm')} onConfirm={() => props.onRemove(row)}>
-            <Button type="link" danger>{t('labels.delete')}</Button>
+          <Button type="link" onClick={() => actions.onCopy(row)}>
+            {t('labels.copy')}
+          </Button>
+          <Button type="link" onClick={() => actions.onEdit(row)}>
+            {t('common.edit')}
+          </Button>
+          <Popconfirm title={t('labels.deleteConfirm')} onConfirm={() => actions.onRemove(row)}>
+            <Button type="link" danger>
+              {t('labels.delete')}
+            </Button>
           </Popconfirm>
         </Space>
       )
     }
   ];
-
-  return (
-    <Table<LabelRecord>
-      rowKey="id"
-      size="small"
-      columns={columns}
-      dataSource={props.state.records}
-      pagination={{
-        current: props.pageIndex + 1,
-        pageSize: props.pageSize,
-        pageSizeOptions: [...labelPageSizes],
-        showSizeChanger: true,
-        total: props.state.total,
-        onChange: (page, pageSize) => {
-          if (isLabelPageSize(pageSize)) props.onPageChange(page - 1, pageSize);
-        }
-      }}
-    />
-  );
 }
 
 function formatTime(value?: number | string) {
