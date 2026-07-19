@@ -3,12 +3,6 @@
   "entries": [
     {
       "rule": "function-size",
-      "path": "core/http/event-stream.ts",
-      "identity": "function:openBrowserEventStream",
-      "allowedMax": 63
-    },
-    {
-      "rule": "function-size",
       "path": "features/alert/controller/use-alert-silence-controller.ts",
       "identity": "function:useAlertSilenceController",
       "allowedMax": 79

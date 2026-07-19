@@ -28,68 +28,88 @@ export type BrowserEventStreamHandlers = {
 };
 
 export function openBrowserEventStream(path: string, handlers: BrowserEventStreamHandlers) {
-  let source: EventSource | undefined;
-  let retryTimer: ReturnType<typeof setTimeout> | undefined;
-  let consecutiveFailures = 0;
-  let refreshAttempted = false;
-  let retryScheduled = false;
-  let closed = false;
+  const stream = new BrowserEventStream(path, handlers);
+  stream.open();
+  return { close: () => stream.close() };
+}
 
-  const connect = () => {
-    if (closed) return;
-    retryScheduled = false;
+class BrowserEventStream {
+  private source: EventSource | undefined;
+  private retryTimer: ReturnType<typeof setTimeout> | undefined;
+  private consecutiveFailures = 0;
+  private refreshAttempted = false;
+  private retryScheduled = false;
+  private closed = false;
+
+  constructor(
+    private readonly path: string,
+    private readonly handlers: BrowserEventStreamHandlers
+  ) {}
+
+  open() {
+    if (this.closed) return;
+    this.retryScheduled = false;
     let current: EventSource;
     try {
-      current = new EventSource(path);
-      source = current;
+      current = new EventSource(this.path);
+      this.source = current;
     } catch {
-      scheduleRetry();
+      this.scheduleRetry();
       return;
     }
     current.onopen = () => {
-      if (closed || source !== current) return;
-      consecutiveFailures = 0;
-      handlers.onOpen();
+      if (!this.owns(current)) return;
+      this.consecutiveFailures = 0;
+      this.handlers.onOpen();
     };
     current.onerror = () => {
-      if (closed || source !== current) return;
+      if (!this.owns(current)) return;
       current.close();
-      source = undefined;
-      scheduleRetry();
+      this.source = undefined;
+      this.scheduleRetry();
     };
-    for (const eventName of handlers.eventNames) {
+    for (const eventName of this.handlers.eventNames) {
       current.addEventListener(eventName, event => {
-        if (closed || source !== current) return;
-        handlers.onEvent(eventName, (event as MessageEvent<string>).data);
+        if (!this.owns(current)) return;
+        this.handlers.onEvent(eventName, (event as MessageEvent<string>).data);
       });
     }
-  };
+  }
 
-  const scheduleRetry = () => {
-    if (closed || retryScheduled) return;
-    retryScheduled = true;
-    const delay = RETRY_DELAYS_MS[consecutiveFailures];
+  close() {
+    this.closed = true;
+    if (this.retryTimer) clearTimeout(this.retryTimer);
+    this.source?.close();
+  }
+
+  private owns(candidate: EventSource) {
+    return !this.closed && this.source === candidate;
+  }
+
+  private scheduleRetry() {
+    if (this.closed || this.retryScheduled) return;
+    this.retryScheduled = true;
+    const delay = RETRY_DELAYS_MS[this.consecutiveFailures];
     if (delay === undefined) {
-      handlers.onUnavailable();
+      this.handlers.onUnavailable();
       return;
     }
-    consecutiveFailures += 1;
-    handlers.onRetrying();
-    const recover = refreshAttempted
-      ? Promise.resolve()
-      : refreshBrowserSession().then(() => undefined, () => undefined);
-    refreshAttempted = true;
-    void recover.then(() => {
-      if (!closed) retryTimer = setTimeout(connect, delay);
-    });
-  };
+    this.consecutiveFailures += 1;
+    this.handlers.onRetrying();
+    void this.recoverAndReconnect(delay);
+  }
 
-  connect();
-  return {
-    close() {
-      closed = true;
-      if (retryTimer) clearTimeout(retryTimer);
-      source?.close();
+  private async recoverAndReconnect(delay: number) {
+    // Refresh at most once per stream. Further retries only back off so an
+    // expired session cannot create a refresh storm.
+    if (!this.refreshAttempted) {
+      this.refreshAttempted = true;
+      try {
+        await refreshBrowserSession();
+      } catch {
+        // The bounded EventSource retry budget owns the unavailable outcome.
+      }
     }
-  };
+    if (!this.closed) this.retryTimer = setTimeout(() => this.open(), delay);
+  }
 }
