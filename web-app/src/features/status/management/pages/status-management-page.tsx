@@ -15,10 +15,8 @@
  * limitations under the License.
  */
 
-import { Button, Typography } from 'antd';
-import { useTranslation } from 'react-i18next';
-
 import { StatusManagementEditors } from '../components/status-management-editors';
+import { StatusManagementHeader } from '../components/status-management-header';
 import {
   StatusComponentSection,
   StatusIncidentSection,
@@ -28,7 +26,6 @@ import styles from '../components/status-management.module.css';
 import { useStatusManagementController } from '../controller/use-status-management-controller';
 
 export function StatusManagementPage() {
-  const { t } = useTranslation();
   const controller = useStatusManagementController();
   const statusOrg = controller.org.kind === 'ready' ? controller.org.record : undefined;
   const statusComponents = controller.components.kind === 'ready' ? controller.components.records : [];
@@ -37,18 +34,8 @@ export function StatusManagementPage() {
   const { query } = controller.incidentQuery;
   return (
     <div className={styles.page}>
-      <header className={styles.heading}>
-        <div>
-          <Typography.Title level={2}>{t('statusManagement.title')}</Typography.Title>
-          <Typography.Text type="secondary">{t('statusManagement.description')}</Typography.Text>
-        </div>
-        <Button href="/status" target="_blank">{t('statusManagement.openPublicPage')}</Button>
-      </header>
-      <StatusOrgSection
-        state={controller.org}
-        saving={controller.orgSaving}
-        onSave={controller.saveOrg}
-      />
+      <StatusManagementHeader publicStatusHref="/status" />
+      <StatusOrgSection state={controller.org} saving={controller.orgSaving} onSave={controller.saveOrg} />
       <StatusComponentSection
         orgId={statusOrg?.id}
         state={controller.components}

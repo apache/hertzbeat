@@ -165,12 +165,6 @@
     },
     {
       "rule": "function-size",
-      "path": "features/status/management/pages/status-management-page.tsx",
-      "identity": "function:StatusManagementPage",
-      "allowedMax": 63
-    },
-    {
-      "rule": "function-size",
       "path": "layout/shell/shell-header.tsx",
       "identity": "function:ShellHeader",
       "allowedMax": 85

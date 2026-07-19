@@ -26,11 +26,7 @@ import { ApiMessageError } from '@/core/http/api-message';
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
 import { statusManagementQueryKeys } from '../controller/status-management-query-keys';
-import {
-  StatusManagementMissingError,
-  type StatusIncident,
-  type StatusOrg
-} from '../model/status-management-contract';
+import { StatusManagementMissingError, type StatusIncident, type StatusOrg } from '../model/status-management-contract';
 
 const api = vi.hoisted(() => ({
   deleteStatusComponent: vi.fn(),
@@ -43,7 +39,7 @@ const api = vi.hoisted(() => ({
   saveStatusIncident: vi.fn(),
   saveStatusOrg: vi.fn()
 }));
-vi.mock('../api/status-management-api', async (importOriginal) => ({
+vi.mock('../api/status-management-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/status-management-api')>()),
   ...api
 }));
@@ -73,6 +69,16 @@ describe('StatusManagementPage', () => {
 
   afterEach(() => cleanup());
 
+  it('opens the public status page through the explicit route policy', async () => {
+    renderPage();
+
+    expect(await screen.findByRole('heading', { name: i18n.t('statusManagement.title') })).toBeInTheDocument();
+    expect(screen.getByText(i18n.t('statusManagement.description'))).toBeInTheDocument();
+    const publicStatusLink = screen.getByRole('link', { name: i18n.t('statusManagement.openPublicPage') });
+    expect(publicStatusLink).toHaveAttribute('href', '/status');
+    expect(publicStatusLink).toHaveAttribute('target', '_blank');
+  });
+
   it('renders explicit empty component and incident states after loading', async () => {
     renderPage();
 
@@ -83,13 +89,21 @@ describe('StatusManagementPage', () => {
 
   it('keeps an out-of-range empty incident page ready with pagination evidence', async () => {
     api.loadStatusIncidents.mockResolvedValue({
-      content: [], totalElements: 17, totalPages: 3, number: 3, size: 8
+      content: [],
+      totalElements: 17,
+      totalPages: 3,
+      number: 3,
+      size: 8
     });
     const { container } = renderPage('/settings/status-page?pageIndex=3&pageSize=8');
 
-    await waitFor(() => expect(api.loadStatusIncidents).toHaveBeenCalledWith({
-      search: '', pageIndex: 3, pageSize: 8
-    }));
+    await waitFor(() =>
+      expect(api.loadStatusIncidents).toHaveBeenCalledWith({
+        search: '',
+        pageIndex: 3,
+        pageSize: 8
+      })
+    );
     await waitFor(() => expect(container.querySelector('.ant-pagination')).not.toBeNull());
     expect(screen.queryByText('No incidents in the selected period.')).not.toBeInTheDocument();
     expect(container.querySelector('.ant-table')).not.toBeNull();
@@ -109,8 +123,9 @@ describe('StatusManagementPage', () => {
     api.loadStatusOrg.mockRejectedValue(new ApiMessageError('Request failed with status 503', { status: 503 }));
     renderPage();
 
-    expect(await screen.findByText('The service is unavailable. Check the backend connection and try again.'))
-      .toBeInTheDocument();
+    expect(
+      await screen.findByText('The service is unavailable. Check the backend connection and try again.')
+    ).toBeInTheDocument();
     expect(screen.queryByLabelText('Name')).not.toBeInTheDocument();
   });
 
@@ -188,7 +203,11 @@ describe('StatusManagementPage', () => {
     const detail = deferred<StatusIncident>();
     api.loadStatusComponents.mockResolvedValue([statusComponent]);
     api.loadStatusIncidents.mockResolvedValue({
-      content: [incidentSummary], totalElements: 1, totalPages: 1, number: 0, size: 8
+      content: [incidentSummary],
+      totalElements: 1,
+      totalPages: 1,
+      number: 0,
+      size: 8
     });
     api.loadStatusIncident.mockReturnValue(detail.promise);
     renderPage();
@@ -215,7 +234,11 @@ describe('StatusManagementPage', () => {
   it('shows a distinct missing-detail state without presenting an editor', async () => {
     api.loadStatusComponents.mockResolvedValue([statusComponent]);
     api.loadStatusIncidents.mockResolvedValue({
-      content: [incidentSummary], totalElements: 1, totalPages: 1, number: 0, size: 8
+      content: [incidentSummary],
+      totalElements: 1,
+      totalPages: 1,
+      number: 0,
+      size: 8
     });
     api.loadStatusIncident.mockRejectedValue(new StatusManagementMissingError('incident'));
     renderPage();
@@ -229,10 +252,20 @@ describe('StatusManagementPage', () => {
 });
 
 const statusComponent = {
-  id: 3, orgId: 1, name: 'API', method: 1, configState: 0, state: 0
+  id: 3,
+  orgId: 1,
+  name: 'API',
+  method: 1,
+  configState: 0,
+  state: 0
 };
 const incidentSummary = {
-  id: 7, orgId: 1, name: 'Outage', state: 0, components: [statusComponent], contents: []
+  id: 7,
+  orgId: 1,
+  name: 'Outage',
+  state: 0,
+  components: [statusComponent],
+  contents: []
 };
 
 function renderPage(entry = '/settings/status-page') {
@@ -243,7 +276,9 @@ function renderPage(entry = '/settings/status-page') {
     <I18nextProvider i18n={i18n}>
       <QueryClientProvider client={client}>
         <MemoryRouter initialEntries={[entry]}>
-          <App><StatusManagementPage /></App>
+          <App>
+            <StatusManagementPage />
+          </App>
         </MemoryRouter>
       </QueryClientProvider>
     </I18nextProvider>

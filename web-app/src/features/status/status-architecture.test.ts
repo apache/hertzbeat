@@ -156,6 +156,20 @@ describe('Status Management boundaries', () => {
     expect(controller).not.toContain("['status-page-");
   });
 
+  it('keeps the public status route explicit in the page and the heading presentational', () => {
+    const page = managementSources['./management/pages/status-management-page.tsx'] ?? '';
+    const header = managementSources['./management/components/status-management-header.tsx'] ?? '';
+    const controller = managementSources['./management/controller/use-status-management-controller.ts'] ?? '';
+
+    expect(page).toContain('<StatusManagementHeader publicStatusHref="/status" />');
+    expect(page).not.toContain('<header');
+    expect(page).not.toContain('Typography.');
+    expect(page).not.toContain('<Button');
+    expect(header).toContain('publicStatusHref');
+    expect(header).not.toMatch(/['"]\/status['"]/);
+    expect(controller).not.toMatch(/['"]\/status['"]/);
+  });
+
   it('exposes the management page through the Status root entry', () => {
     const entry = Object.values(entrySources)[0] ?? '';
     const router = Object.values(routerSources)[0] ?? '';
