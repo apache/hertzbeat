@@ -7,7 +7,6 @@
 import { useState } from 'react';
 
 import { statusManagementFailureKind, type StatusManagementFailureKind } from '../api/status-management-api';
-import { useStatusIncidentQuery } from '../hooks/use-status-incident-query';
 import {
   type StatusComponent,
   type StatusComponentRecord,
@@ -23,6 +22,7 @@ import {
 } from '../model/status-management-model';
 import { useStatusComponentTransactions } from './use-status-component-transactions';
 import { useStatusIncidentEditor } from './use-status-incident-editor';
+import { useStatusIncidentQuery } from './use-status-incident-query';
 import { useStatusIncidentTransactions } from './use-status-incident-transactions';
 import { useStatusManagementNotifications } from './use-status-management-notifications';
 import { useStatusManagementResources } from './use-status-management-resources';

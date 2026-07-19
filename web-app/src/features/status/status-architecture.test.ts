@@ -79,12 +79,11 @@ describe('Public Status boundaries', () => {
 });
 
 describe('Status Management boundaries', () => {
-  const managementDirectories = [...requiredDirectories, 'hooks', 'controller'] as const;
+  const managementDirectories = [...requiredDirectories, 'controller'] as const;
   const managementDependencies: Record<(typeof managementDirectories)[number], readonly string[]> = {
     api: ['api', 'model'],
     model: ['model'],
-    hooks: ['api', 'model', 'hooks'],
-    controller: ['api', 'model', 'hooks', 'controller'],
+    controller: ['api', 'model', 'controller'],
     components: ['model', 'components'],
     pages: ['model', 'controller', 'components', 'pages']
   };
@@ -97,9 +96,7 @@ describe('Status Management boundaries', () => {
     ).toEqual([]);
     expect(paths.filter(path => path.slice('./management/'.length).includes('/') === false)).toEqual([]);
     expect(paths).toContain('./management/controller/use-status-incident-editor.ts');
-    expect(paths.filter(path => path.startsWith('./management/hooks/'))).toEqual([
-      './management/hooks/use-status-incident-query.ts'
-    ]);
+    expect(paths.some(path => path.startsWith('./management/hooks/'))).toBe(false);
   });
 
   it('keeps transport in API and keeps the domain model independent from API', () => {

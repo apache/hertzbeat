@@ -9,15 +9,17 @@ import { useSearchParams } from 'react-router-dom';
 
 import {
   readStatusIncidentQuery,
+  type StatusIncidentQueryViewModel,
   writeStatusIncidentQuery
 } from '../model/status-incident-query';
 
-export function useStatusIncidentQuery() {
+export function useStatusIncidentQuery(): StatusIncidentQueryViewModel {
   const [searchParams, setSearchParams] = useSearchParams();
   const query = useMemo(() => readStatusIncidentQuery(searchParams), [searchParams]);
   const [draftSearch, setDraftSearch] = useState(query.search);
   const committedSearch = useRef(query.search);
 
+  // Preserve unsaved drafts across pagination history, but follow history when its committed search changes.
   useEffect(() => {
     if (committedSearch.current === query.search) return;
     committedSearch.current = query.search;

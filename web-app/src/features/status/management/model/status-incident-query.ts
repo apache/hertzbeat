@@ -7,6 +7,14 @@
 
 export type StatusIncidentQuery = { search: string; pageIndex: number; pageSize: number };
 
+export type StatusIncidentQueryViewModel = {
+  query: StatusIncidentQuery;
+  draftSearch: string;
+  setDraftSearch: (value: string) => void;
+  submit: () => void;
+  changePage: (pageIndex: number, pageSize: number) => void;
+};
+
 export const statusIncidentPageSizes = [8, 20, 50] as const;
 
 const defaultPageIndex = 0;
@@ -33,9 +41,7 @@ export function writeStatusIncidentQuery(query: StatusIncidentQuery) {
 export function normalizeStatusIncidentQuery(query: StatusIncidentQuery): StatusIncidentQuery {
   return {
     search: query.search.trim(),
-    pageIndex: Number.isSafeInteger(query.pageIndex) && query.pageIndex >= 0
-      ? query.pageIndex
-      : defaultPageIndex,
+    pageIndex: Number.isSafeInteger(query.pageIndex) && query.pageIndex >= 0 ? query.pageIndex : defaultPageIndex,
     pageSize: isPageSize(query.pageSize) ? query.pageSize : defaultPageSize
   };
 }

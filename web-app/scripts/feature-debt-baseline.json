@@ -2,11 +2,6 @@
   "version": 1,
   "entries": [
     {
-      "rule": "generic-hooks-file",
-      "path": "features/status/management/hooks/use-status-incident-query.ts",
-      "allowedMax": 1
-    },
-    {
       "rule": "presentation-api-dependency",
       "path": "features/monitor/components/monitor-editor-form-view.tsx",
       "identity": "features/monitor/api/monitor-contract",
