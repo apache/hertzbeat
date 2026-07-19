@@ -48,8 +48,6 @@ indent_size = 2
 indent_size = 4
 tab_width = 4
 
-[*.js]
+[*.{js,jsx,mjs,cjs,ts,tsx}]
 indent_size = 2
-
-[*.ts]
-indent_size = 2
+tab_width = 2

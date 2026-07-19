@@ -1,0 +1,7 @@
+dist/
+node_modules/
+coverage/
+.tmp/
+test-results/
+playwright-report/
+pnpm-lock.yaml
