@@ -15,82 +15,60 @@
  * limitations under the License.
  */
 
-import { CopyOutlined } from '@ant-design/icons';
-import { Alert, App, Button, Tag, Typography } from 'antd';
+import { Alert, App } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import type { InstrumentationSetupController } from '../controller/use-instrumentation-page-controller';
+import {
+  InstrumentationComponentSummary,
+  InstrumentationGuideActions,
+  InstrumentationGuideSteps
+} from './instrumentation-guide-presentation';
 import { StageBody } from './instrumentation-stage';
-import styles from './instrumentation-guide.module.css';
-import stageStyles from './instrumentation-stage.module.css';
 
 type GuideSnippet = NonNullable<InstrumentationSetupController['guide']>['steps'][number]['snippets'][number];
 
-export function InstrumentationGuide({
-  setup,
-  onStartDetection
-}: { setup: InstrumentationSetupController; onStartDetection: () => void }) {
+interface InstrumentationGuideProps {
+  setup: InstrumentationSetupController;
+  onStartDetection: () => void;
+}
+
+export function InstrumentationGuide({ setup, onStartDetection }: InstrumentationGuideProps) {
   const { t } = useTranslation();
   const { message } = App.useApp();
   const guide = setup.guide;
   if (!guide) {
     return (
-      <StageBody stage={4} title={t('instrumentation.stage.install')} description={t('instrumentation.stage.installHelp')}>
+      <StageBody
+        stage={4}
+        title={t('instrumentation.stage.install')}
+        description={t('instrumentation.stage.installHelp')}
+      >
         <Alert type="error" showIcon message={t('instrumentation.renderUnavailable')} />
       </StageBody>
     );
   }
+  const tokenAvailable = Boolean(setup.token);
   const copy = async (snippet: GuideSnippet) => {
     try {
       await setup.copySnippet(snippet);
       void message.success(t('instrumentation.copySuccess'));
     } catch {
-      void message.warning(t(snippet.secretPlaceholders.length > 0 && !setup.token
-        ? 'instrumentation.tokenRequired'
-        : 'instrumentation.copyFailed'));
+      // A Token may be cleared while the clipboard write is pending; only a secret snippet needs Token guidance.
+      const tokenRequired = snippet.secretPlaceholders.length > 0 && !setup.token;
+      void message.warning(t(tokenRequired ? 'instrumentation.tokenRequired' : 'instrumentation.copyFailed'));
     }
   };
   return (
-    <StageBody stage={4} title={t('instrumentation.stage.install')} description={t('instrumentation.stage.installHelp')}>
-      <div className={styles.componentLine}>
-        <div><strong>{guide.component.name}</strong><Typography.Text type="secondary">{guide.component.version ?? t('common.unavailable')}</Typography.Text></div>
-        <span><Tag color={guide.component.official ? 'success' : 'error'}>{t('instrumentation.official')}</Tag><Tag>{guide.component.license}</Tag></span>
-      </div>
-      {!guide.component.official || guide.component.bundledWithHertzBeat ? (
-        <Alert type="error" showIcon message={t('instrumentation.componentInvalid')} />
-      ) : null}
-      <div className={styles.guideSteps}>
-        {guide.steps.map((step, index) => (
-          <article key={step.id} className={styles.guideStep}>
-            <header><span>{String(index + 1).padStart(2, '0')}</span><div><strong>{t(step.titleKey)}</strong><small>{t(step.executionLocationKey)}</small></div></header>
-            {step.snippets.map(snippet => {
-              const tokenMissing = snippet.secretPlaceholders.length > 0 && !setup.token;
-              return (
-                <div className={styles.snippet} key={snippet.id}>
-                  <div>
-                    <span>{snippet.language}</span>
-                    <Button
-                      type="text"
-                      size="small"
-                      icon={<CopyOutlined />}
-                      disabled={tokenMissing}
-                      onClick={() => void copy(snippet)}
-                    >
-                      {t(tokenMissing ? 'instrumentation.tokenRequired' : 'instrumentation.action.copy')}
-                    </Button>
-                  </div>
-                  <pre><code>{snippet.content}</code></pre>
-                </div>
-              );
-            })}
-          </article>
-        ))}
-      </div>
-      {!setup.token && <Alert type="warning" showIcon message={t('instrumentation.tokenCopyNotice')} />}
-      <div className={stageStyles.stageActions}>
-        <Button onClick={() => setup.setStage(3)}>{t('instrumentation.action.reviewContext')}</Button>
-        <Button type="primary" onClick={onStartDetection}>{t('instrumentation.action.startDetection')}</Button>
-      </div>
+    <StageBody
+      stage={4}
+      title={t('instrumentation.stage.install')}
+      description={t('instrumentation.stage.installHelp')}
+    >
+      <InstrumentationComponentSummary component={guide.component} />
+      <InstrumentationGuideSteps steps={guide.steps} tokenAvailable={tokenAvailable} onCopy={copy} />
+      {!tokenAvailable && <Alert type="warning" showIcon message={t('instrumentation.tokenCopyNotice')} />}
+      <InstrumentationGuideActions onBack={() => setup.setStage(3)} onStartDetection={onStartDetection} />
     </StageBody>
   );
 }

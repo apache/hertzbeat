@@ -37,8 +37,9 @@ describe('instrumentation feature boundaries', () => {
   it('uses one controller-owned page boundary and has no generic hooks layer', () => {
     const paths = Object.keys(productionSources).filter(path => !path.includes('.test.'));
     expect(paths.filter(path => path.startsWith('./hooks/'))).toEqual([]);
-    expect(productionSources['./pages/instrumentation-page.tsx'])
-      .toContain("from '../controller/use-instrumentation-page-controller'");
+    expect(productionSources['./pages/instrumentation-page.tsx']).toContain(
+      "from '../controller/use-instrumentation-page-controller'"
+    );
     expect(productionSources['./pages/instrumentation-page.tsx']).not.toMatch(/useNavigate|\.\.\/model\//);
   });
 
@@ -58,15 +59,18 @@ describe('instrumentation feature boundaries', () => {
   it('keeps presentation controller-owned without API or model imports', () => {
     const directPresentationImports = Object.entries(productionSources)
       .filter(([path]) => path.startsWith('./components/') || path.startsWith('./pages/'))
-      .flatMap(([path, source]) => [...source.matchAll(importPattern)]
-        .map(match => match[1])
-        .filter(specifier => specifier?.startsWith('../api/') || specifier?.startsWith('../model/'))
-        .map(specifier => `${path}|${specifier}`));
+      .flatMap(([path, source]) =>
+        [...source.matchAll(importPattern)]
+          .map(match => match[1])
+          .filter(specifier => specifier?.startsWith('../api/') || specifier?.startsWith('../model/'))
+          .map(specifier => `${path}|${specifier}`)
+      );
     expect(directPresentationImports.sort()).toEqual([...presentationImportExceptions].sort());
   });
 
   it('keeps secret-bearing contract layers out of persistence, logging, and analytics', () => {
-    const forbidden = /\b(?:localStorage|sessionStorage|indexedDB|sendBeacon|analytics|console\.(?:log|info|warn|error))\b/;
+    const forbidden =
+      /\b(?:localStorage|sessionStorage|indexedDB|sendBeacon|analytics|console\.(?:log|info|warn|error))\b/;
     const violations = Object.entries(productionSources)
       .filter(([path]) => ['./api/', './model/', './controller/'].some(prefix => path.startsWith(prefix)))
       .filter(([, source]) => forbidden.test(source))
@@ -75,8 +79,10 @@ describe('instrumentation feature boundaries', () => {
   });
 
   it('keeps token material out of every instrumentation persistence, log, and URL surface', () => {
-    const forbiddenSink = /\b(?:localStorage|sessionStorage|indexedDB|sendBeacon|analytics|console\.(?:log|info|warn|error))\b/;
-    const tokenUrl = /(?:URLSearchParams|searchParams|location|href)[\s\S]{0,120}\btoken\b|\btoken\b[\s\S]{0,120}(?:URLSearchParams|searchParams|location|href)/i;
+    const forbiddenSink =
+      /\b(?:localStorage|sessionStorage|indexedDB|sendBeacon|analytics|console\.(?:log|info|warn|error))\b/;
+    const tokenUrl =
+      /(?:URLSearchParams|searchParams|location|href)[\s\S]{0,120}\btoken\b|\btoken\b[\s\S]{0,120}(?:URLSearchParams|searchParams|location|href)/i;
     const violations = Object.entries(productionSources)
       .filter(([path]) => !path.includes('.test.'))
       .filter(([, source]) => forbiddenSink.test(source) || tokenUrl.test(source))
@@ -101,6 +107,28 @@ describe('instrumentation feature boundaries', () => {
     expect(detection).not.toMatch(/react-router|useNavigate/);
   });
 
+  it('keeps guide copy transactions in the parent and rendering in pure presentation', () => {
+    const guide = productionSources['./components/instrumentation-guide.tsx'];
+    const presentation = productionSources['./components/instrumentation-guide-presentation.tsx'];
+
+    expect(guide).toContain("from './instrumentation-guide-presentation'");
+    expect(guide).toContain('App.useApp()');
+    expect(guide).toContain('await setup.copySnippet(snippet)');
+    expect(guide).toContain("message.success(t('instrumentation.copySuccess'))");
+    expect(guide).toContain("'instrumentation.tokenRequired' : 'instrumentation.copyFailed'");
+    expect(guide).toContain('const tokenAvailable = Boolean(setup.token)');
+    expect(guide).toContain('onBack={() => setup.setStage(3)}');
+    expect(guide).toContain('onStartDetection={onStartDetection}');
+    expect(presentation).toContain('export function InstrumentationComponentSummary');
+    expect(presentation).toContain('export function InstrumentationGuideSteps');
+    expect(presentation).toContain('function InstrumentationSnippet');
+    expect(presentation).toContain('export function InstrumentationGuideActions');
+    expect(presentation).toContain("String(index + 1).padStart(2, '0')");
+    expect(presentation).toContain('snippet.secretPlaceholders.length > 0 && !tokenAvailable');
+    expect(presentation).toContain('<code>{snippet.content}</code>');
+    expect(presentation).not.toMatch(/App\.useApp|setup\.|message\.|useEffect|useRef|useState/);
+  });
+
   it('keeps Collector inventory intake separate from the transient render target', () => {
     expect(productionSources['./api/collector-api.ts']).not.toContain('CollectorTarget');
     expect(productionSources['./controller/use-instrumentation-guide-controller.ts']).toContain('CollectorTarget');
@@ -114,14 +142,13 @@ function validateImports(path: string, source: string) {
     const specifier = match[1];
     if (!specifier) return [];
     if (presentationImportExceptions.has(`${path}|${specifier}`)) return [];
-    if (specifier.startsWith('@/core/http/')) return sourceDirectory === 'api' ? [] : [`${path} imports core transport`];
+    if (specifier.startsWith('@/core/http/'))
+      return sourceDirectory === 'api' ? [] : [`${path} imports core transport`];
     if (!specifier.startsWith('.')) return [];
     const target = resolveFeaturePath(path, specifier);
     const targetDirectory = target.split('/')[1];
     if (!target.startsWith('./') || !targetDirectory) return [`${path} imports outside the feature`];
-    return allowedDependencies[sourceDirectory].includes(targetDirectory)
-      ? []
-      : [`${path} imports ${targetDirectory}`];
+    return allowedDependencies[sourceDirectory].includes(targetDirectory) ? [] : [`${path} imports ${targetDirectory}`];
   });
 }
 

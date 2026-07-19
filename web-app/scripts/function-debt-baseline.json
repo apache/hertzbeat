@@ -75,12 +75,6 @@
     },
     {
       "rule": "function-size",
-      "path": "features/instrumentation/components/instrumentation-guide.tsx",
-      "identity": "function:InstrumentationGuide",
-      "allowedMax": 68
-    },
-    {
-      "rule": "function-size",
       "path": "features/instrumentation/controller/use-instrumentation-detection-controller.ts",
       "identity": "function:useInstrumentationDetectionController",
       "allowedMax": 88
