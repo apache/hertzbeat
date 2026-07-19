@@ -23,7 +23,7 @@ import { mergeQueryContext, useQueryContextOptional, type QueryContext } from '@
 import { useSharedTimeOptional } from '@/shared/time';
 
 import { classifyExploreSignalError, loadLogSignal, loadMetricSignal, loadTraceSignal } from '../api/explore-api';
-import { useExploreSubmission } from '../hooks/use-explore-submission';
+import { useExploreSubmission } from './use-explore-submission';
 import {
   buildExplorePath,
   exploreHandoffState,

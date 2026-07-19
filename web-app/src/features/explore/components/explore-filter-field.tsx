@@ -15,27 +15,38 @@
  * limitations under the License.
  */
 
-import type { TFunction } from "i18next";
-import type { ReactNode } from "react";
+import type { TFunction } from 'i18next';
+import type { ReactNode } from 'react';
 
-import type { ExploreSubmissionErrors } from "../hooks/use-explore-submission";
-import styles from "./explore-query-bar.module.css";
+import type { ExploreSubmissionErrors } from '../model/explore-submission-model';
+import styles from './explore-query-bar.module.css';
 
-export function ExploreFilterField({ id, error, t, children }: {
+export function ExploreFilterField({
+  id,
+  error,
+  t,
+  children
+}: {
   id: string;
   error: ExploreSubmissionErrors[keyof ExploreSubmissionErrors];
   t: TFunction;
   children: ReactNode;
 }) {
-  return <div className={styles.field}>
-    {children}
-    {error && <span id={`${id}-error`} className={styles.fieldError} role="alert">{t(submissionErrorKey(error))}</span>}
-  </div>;
+  return (
+    <div className={styles.field}>
+      {children}
+      {error && (
+        <span id={`${id}-error`} className={styles.fieldError} role="alert">
+          {t(submissionErrorKey(error))}
+        </span>
+      )}
+    </div>
+  );
 }
 
 function submissionErrorKey(error: NonNullable<ExploreSubmissionErrors[keyof ExploreSubmissionErrors]>) {
-  if (error === "unsupported_aggregation") return "explore.submissionErrors.unsupportedAggregation";
-  if (error === "invalid_step") return "explore.submissionErrors.invalidStep";
-  if (error === "min_exceeds_max") return "explore.submissionErrors.minExceedsMax";
-  return "explore.submissionErrors.invalidDuration";
+  if (error === 'unsupported_aggregation') return 'explore.submissionErrors.unsupportedAggregation';
+  if (error === 'invalid_step') return 'explore.submissionErrors.invalidStep';
+  if (error === 'min_exceeds_max') return 'explore.submissionErrors.minExceedsMax';
+  return 'explore.submissionErrors.invalidDuration';
 }

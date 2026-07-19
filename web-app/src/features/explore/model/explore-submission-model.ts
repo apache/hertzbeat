@@ -52,9 +52,7 @@ export type TraceExploreSubmissionDraft = SharedExploreSubmissionDraft & {
 };
 
 export type ExploreSubmissionDraft =
-  | MetricExploreSubmissionDraft
-  | LogExploreSubmissionDraft
-  | TraceExploreSubmissionDraft;
+  MetricExploreSubmissionDraft | LogExploreSubmissionDraft | TraceExploreSubmissionDraft;
 
 export type ExploreSubmissionError =
   | { field: 'aggregation'; code: 'unsupported_aggregation' }
@@ -62,9 +60,28 @@ export type ExploreSubmissionError =
   | { field: 'minDurationMs' | 'maxDurationMs'; code: 'invalid_duration' }
   | { field: 'maxDurationMs'; code: 'min_exceeds_max' };
 
+type KeysOfUnion<T> = T extends unknown ? keyof T : never;
+export type ExploreDraftField = Exclude<KeysOfUnion<ExploreSubmissionDraft>, 'signal'>;
+
+export type ExploreDraftFieldUpdate = {
+  [Field in ExploreDraftField]: {
+    field: Field;
+    value: Field extends 'errorOnly' ? boolean : string;
+  };
+}[ExploreDraftField];
+
+export type ExploreSubmissionErrors = Partial<Record<ExploreSubmissionError['field'], ExploreSubmissionError['code']>>;
+
+export type ExploreSubmissionViewModel = {
+  draft: ExploreSubmissionDraft;
+  errors: ExploreSubmissionErrors;
+  updateField: (update: ExploreDraftFieldUpdate) => void;
+  submit: () => void;
+  removeFilter: (key: keyof ExploreQueryPatch) => boolean;
+};
+
 export type ExploreSubmissionResult =
-  | { valid: true; patch: ExploreQueryPatch }
-  | { valid: false; errors: ExploreSubmissionError[] };
+  { valid: true; patch: ExploreQueryPatch } | { valid: false; errors: ExploreSubmissionError[] };
 
 export const EXPLORE_METRIC_AGGREGATIONS = ['avg', 'sum', 'min', 'max', 'count'] as const;
 
@@ -205,8 +222,8 @@ function normalizedValue(value: string) {
   return normalized || undefined;
 }
 
-function isMetricAggregation(value: string): value is typeof EXPLORE_METRIC_AGGREGATIONS[number] {
-  return EXPLORE_METRIC_AGGREGATIONS.includes(value as typeof EXPLORE_METRIC_AGGREGATIONS[number]);
+function isMetricAggregation(value: string): value is (typeof EXPLORE_METRIC_AGGREGATIONS)[number] {
+  return EXPLORE_METRIC_AGGREGATIONS.includes(value as (typeof EXPLORE_METRIC_AGGREGATIONS)[number]);
 }
 
 function isMetricStep(value: string) {
@@ -220,7 +237,5 @@ function parseDuration(value: string): { valid: true; value: number | undefined 
   if (!normalized) return { valid: true, value: undefined };
   if (!/^\d+$/.test(normalized)) return { valid: false };
   const duration = Number(normalized);
-  return Number.isSafeInteger(duration)
-    ? { valid: true, value: duration }
-    : { valid: false };
+  return Number.isSafeInteger(duration) ? { valid: true, value: duration } : { valid: false };
 }

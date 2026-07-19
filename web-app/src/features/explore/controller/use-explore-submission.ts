@@ -13,28 +13,17 @@ import { mergeExploreQuery, type ExploreQuery, type ExploreQueryPatch } from '..
 import {
   buildSubmissionPatch,
   draftFromQuery,
+  type ExploreDraftField,
+  type ExploreDraftFieldUpdate,
   type ExploreSubmissionDraft,
-  type ExploreSubmissionError
+  type ExploreSubmissionErrors,
+  type ExploreSubmissionViewModel
 } from '../model/explore-submission-model';
-
-type KeysOfUnion<T> = T extends unknown ? keyof T : never;
-type ExploreDraftField = Exclude<KeysOfUnion<ExploreSubmissionDraft>, 'signal'>;
-
-export type ExploreDraftFieldUpdate = {
-  [Field in ExploreDraftField]: {
-    field: Field;
-    value: Field extends 'errorOnly' ? boolean : string;
-  }
-}[ExploreDraftField];
-
-export type ExploreSubmissionErrors = Partial<Record<ExploreSubmissionError['field'], ExploreSubmissionError['code']>>;
-
-export type ExploreSubmissionController = ReturnType<typeof useExploreSubmission>;
 
 export function useExploreSubmission(
   query: ExploreQuery,
   onSubmitPatch: (patch: ExploreQueryPatch) => void
-) {
+): ExploreSubmissionViewModel {
   const location = useLocation();
   const navigationType = useNavigationType();
   const [draft, setDraft] = useState(() => draftFromQuery(query));
@@ -45,8 +34,9 @@ export function useExploreSubmission(
   useEffect(() => {
     const nextCommitted = draftFromQuery(query);
     const locationChanged = previousLocationKey.current !== location.key;
-    const reset = committedDraft.current.signal !== nextCommitted.signal
-      || (locationChanged && navigationType === NavigationType.Pop);
+    const reset =
+      committedDraft.current.signal !== nextCommitted.signal ||
+      (locationChanged && navigationType === NavigationType.Pop);
 
     if (reset) {
       setDraft(nextCommitted);
@@ -95,34 +85,32 @@ export function useExploreSubmission(
 
 function changedDraftFields(previous: ExploreSubmissionDraft, next: ExploreSubmissionDraft) {
   if (previous.signal !== next.signal) return Object.keys(next);
-  return Object.keys(next).filter(field => (
-    previous[field as keyof typeof previous] !== next[field as keyof typeof next]
-  ));
+  return Object.keys(next).filter(
+    field => previous[field as keyof typeof previous] !== next[field as keyof typeof next]
+  );
 }
 
-function mergeCommittedFields(
-  current: ExploreSubmissionDraft,
-  committed: ExploreSubmissionDraft,
-  fields: string[]
-) {
+function mergeCommittedFields(current: ExploreSubmissionDraft, committed: ExploreSubmissionDraft, fields: string[]) {
   if (current.signal !== committed.signal) return committed;
-  return fields.reduce<ExploreSubmissionDraft>((next, field) => ({
-    ...next,
-    [field]: committed[field as keyof typeof committed]
-  }), current);
+  return fields.reduce<ExploreSubmissionDraft>(
+    (next, field) => ({
+      ...next,
+      [field]: committed[field as keyof typeof committed]
+    }),
+    current
+  );
 }
 
 function withoutErrors(errors: ExploreSubmissionErrors, fields: string[]) {
   if (!fields.some(field => field in errors)) return errors;
-  return Object.fromEntries(Object.entries(errors).filter(([field]) => !fields.includes(field))) as ExploreSubmissionErrors;
+  return Object.fromEntries(
+    Object.entries(errors).filter(([field]) => !fields.includes(field))
+  ) as ExploreSubmissionErrors;
 }
 
 function withoutUpdatedFieldErrors(errors: ExploreSubmissionErrors, field: ExploreDraftField) {
   const fields = [field];
-  if (
-    (field === 'minDurationMs' || field === 'maxDurationMs')
-    && errors.maxDurationMs === 'min_exceeds_max'
-  ) {
+  if ((field === 'minDurationMs' || field === 'maxDurationMs') && errors.maxDurationMs === 'min_exceeds_max') {
     fields.push('maxDurationMs');
   }
   return withoutErrors(errors, fields);
@@ -136,15 +124,24 @@ const sharedDraftFields: Partial<Record<keyof ExploreQueryPatch, ExploreDraftFie
   query: 'query'
 };
 
-const signalDraftFields: Record<ExploreSubmissionDraft['signal'], Partial<Record<keyof ExploreQueryPatch, ExploreDraftField>>> = {
+const signalDraftFields: Record<
+  ExploreSubmissionDraft['signal'],
+  Partial<Record<keyof ExploreQueryPatch, ExploreDraftField>>
+> = {
   metrics: { metricFilter: 'metricFilter', groupBy: 'groupBy', aggregation: 'aggregation', step: 'stepSeconds' },
   logs: {
-    severityText: 'severityText', traceId: 'traceId', spanId: 'spanId',
-    resourceFilter: 'resourceFilter', attributeFilter: 'attributeFilter'
+    severityText: 'severityText',
+    traceId: 'traceId',
+    spanId: 'spanId',
+    resourceFilter: 'resourceFilter',
+    attributeFilter: 'attributeFilter'
   },
   traces: {
-    traceId: 'traceId', resourceFilter: 'resourceFilter', minDurationMs: 'minDurationMs',
-    maxDurationMs: 'maxDurationMs', errorOnly: 'errorOnly'
+    traceId: 'traceId',
+    resourceFilter: 'resourceFilter',
+    minDurationMs: 'minDurationMs',
+    maxDurationMs: 'maxDurationMs',
+    errorOnly: 'errorOnly'
   }
 };
 

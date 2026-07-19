@@ -20,8 +20,8 @@ import type { TFunction } from 'i18next';
 
 import { QUERY_CONTEXT_FIELDS } from '@/shared/query-context';
 
-import type { ExploreSubmissionController } from '../hooks/use-explore-submission';
 import type {
+  ExploreSubmissionViewModel,
   LogExploreSubmissionDraft,
   MetricExploreSubmissionDraft,
   TraceExploreSubmissionDraft
@@ -32,7 +32,7 @@ import styles from './explore-query-bar.module.css';
 const METRIC_AGGREGATIONS = ['avg', 'sum', 'min', 'max', 'count'];
 const LOG_SEVERITIES = ['TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'];
 
-type Props = Pick<ExploreSubmissionController, 'draft' | 'errors' | 'updateField'> & { t: TFunction };
+type Props = Pick<ExploreSubmissionViewModel, 'draft' | 'errors' | 'updateField'> & { t: TFunction };
 
 export function ExploreAdvancedFilters({ draft, errors, t, updateField }: Props) {
   return (
@@ -177,20 +177,20 @@ function TraceFilters({ draft, errors, t, updateField }: ValidatedDraftFilterPro
   );
 }
 
-type DraftFilterProps<T> = Pick<ExploreSubmissionController, 'updateField'> & {
+type DraftFilterProps<T> = Pick<ExploreSubmissionViewModel, 'updateField'> & {
   draft: T;
   t: TFunction;
 };
 
-type ValidatedDraftFilterProps<T> = DraftFilterProps<T> & Pick<ExploreSubmissionController, 'errors'>;
+type ValidatedDraftFilterProps<T> = DraftFilterProps<T> & Pick<ExploreSubmissionViewModel, 'errors'>;
 
-function hasAdvancedFilter(draft: ExploreSubmissionController['draft']) {
+function hasAdvancedFilter(draft: ExploreSubmissionViewModel['draft']) {
   return [draft.instance, draft.endpoint, ...signalFilters(draft)].some(
     value => value != null && value !== false && value !== ''
   );
 }
 
-function signalFilters(draft: ExploreSubmissionController['draft']) {
+function signalFilters(draft: ExploreSubmissionViewModel['draft']) {
   switch (draft.signal) {
     case 'metrics':
       return [draft.metricFilter, draft.groupBy, draft.aggregation, draft.stepSeconds];

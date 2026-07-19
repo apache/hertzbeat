@@ -18,8 +18,8 @@
 import { Button, Input } from 'antd';
 import type { TFunction } from 'i18next';
 
-import type { ExploreSubmissionController } from '../hooks/use-explore-submission';
 import type { ExploreQuery, ExploreQueryPatch } from '../model/explore-model';
+import type { ExploreSubmissionViewModel } from '../model/explore-submission-model';
 import { ExploreActiveFilters } from './explore-active-filters';
 import { ExploreAdvancedFilters } from './explore-advanced-filters';
 import styles from './explore-query-bar.module.css';
@@ -28,7 +28,7 @@ type Props = {
   query: ExploreQuery;
   t: TFunction;
   updateQuery: (changes: ExploreQueryPatch) => void;
-  submission: ExploreSubmissionController;
+  submission: ExploreSubmissionViewModel;
 };
 
 export function ExploreQueryBar({ query, t, updateQuery, submission }: Props) {

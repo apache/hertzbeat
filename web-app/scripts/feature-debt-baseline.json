@@ -3,11 +3,6 @@
   "entries": [
     {
       "rule": "generic-hooks-file",
-      "path": "features/explore/hooks/use-explore-submission.ts",
-      "allowedMax": 1
-    },
-    {
-      "rule": "generic-hooks-file",
       "path": "features/monitor/hooks/use-monitor-selection.ts",
       "allowedMax": 1
     },

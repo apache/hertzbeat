@@ -18,13 +18,12 @@
 import { describe, expect, it } from 'vitest';
 
 const requiredDirectories = ['api', 'model', 'controller', 'components', 'pages'] as const;
-const layerDirectories = [...requiredDirectories, 'hooks'] as const;
+const layerDirectories = requiredDirectories;
 const allowedDependencies: Record<(typeof layerDirectories)[number], readonly string[]> = {
   api: ['api', 'model'],
   model: ['model'],
-  hooks: ['api', 'model', 'hooks'],
-  controller: ['api', 'model', 'hooks', 'controller'],
-  components: ['api', 'model', 'hooks', 'components'],
+  controller: ['api', 'model', 'controller'],
+  components: ['model', 'components'],
   pages: ['model', 'controller', 'components', 'pages']
 };
 const importPattern = /(?:from\s+|import\s*\()\s*['"]([^'"]+)['"]/g;
@@ -41,7 +40,9 @@ const exploreShellStyles = import.meta.glob(
 describe('Explore feature boundaries', () => {
   it('keeps production source in explicit feature-local layers', () => {
     const paths = Object.keys(productionSources).filter(path => !path.includes('.test.'));
-    expect(requiredDirectories.filter(directory => !paths.some(path => path.startsWith(`./${directory}/`)))).toEqual([]);
+    expect(requiredDirectories.filter(directory => !paths.some(path => path.startsWith(`./${directory}/`)))).toEqual(
+      []
+    );
     expect(paths.filter(path => /^\.\/[^/]+$/.test(path) && path !== './index.ts')).toEqual([]);
   });
 
@@ -57,12 +58,15 @@ describe('Explore feature boundaries', () => {
       .filter(([path]) => path.startsWith('./pages/'))
       .map(([, source]) => source);
 
-    expect(pageSources.filter(source => /\b(?:FormData|FormEvent|readFormValue|readFormNumber)\b/.test(source)))
-      .toEqual([]);
+    expect(
+      pageSources.filter(source => /\b(?:FormData|FormEvent|readFormValue|readFormNumber)\b/.test(source))
+    ).toEqual([]);
   });
 
   it('keeps wire schemas in API and domain contracts parser-free', () => {
-    expect(productionSources['./model/explore-signal-contract.ts']).not.toMatch(/function\s+(?:parse|record|integer|boolean)\b/);
+    expect(productionSources['./model/explore-signal-contract.ts']).not.toMatch(
+      /function\s+(?:parse|record|integer|boolean)\b/
+    );
     expect(productionSources['./api/explore-api.ts']).toContain("from './explore-metric-schema'");
     expect(productionSources['./api/explore-api.ts']).toContain("from './explore-log-schema'");
     expect(productionSources['./api/explore-api.ts']).toContain("from './explore-trace-schema'");
@@ -86,21 +90,26 @@ describe('Explore feature boundaries', () => {
 function validateImports(path: string, source: string) {
   const sourceDirectory = path.split('/')[1] as (typeof layerDirectories)[number];
   if (!layerDirectories.includes(sourceDirectory)) return [];
-  const directTransport = sourceDirectory !== 'api'
-    && (/\b(?:fetch|apiFetch|apiMessage(?:Get|Post|Put|Delete))\s*\(/.test(source) || /new\s+EventSource\s*\(/.test(source));
+  const directTransport =
+    sourceDirectory !== 'api' &&
+    (/\b(?:fetch|apiFetch|apiMessage(?:Get|Post|Put|Delete))\s*\(/.test(source) ||
+      /new\s+EventSource\s*\(/.test(source));
   const violations = directTransport ? [`${path} performs transport outside api`] : [];
-  return violations.concat([...source.matchAll(importPattern)].flatMap(match => {
-    const specifier = match[1];
-    if (!specifier) return [];
-    if (specifier.startsWith('@/core/http/')) return sourceDirectory === 'api' ? [] : [`${path} imports core transport`];
-    if (!specifier.startsWith('.')) return [];
-    const target = resolveFeaturePath(path, specifier);
-    const targetDirectory = target.split('/')[1];
-    if (!target.startsWith('./') || !targetDirectory) return [`${path} imports outside the feature`];
-    return allowedDependencies[sourceDirectory].includes(targetDirectory)
-      ? []
-      : [`${path} imports ${targetDirectory}`];
-  }));
+  return violations.concat(
+    [...source.matchAll(importPattern)].flatMap(match => {
+      const specifier = match[1];
+      if (!specifier) return [];
+      if (specifier.startsWith('@/core/http/'))
+        return sourceDirectory === 'api' ? [] : [`${path} imports core transport`];
+      if (!specifier.startsWith('.')) return [];
+      const target = resolveFeaturePath(path, specifier);
+      const targetDirectory = target.split('/')[1];
+      if (!target.startsWith('./') || !targetDirectory) return [`${path} imports outside the feature`];
+      return allowedDependencies[sourceDirectory].includes(targetDirectory)
+        ? []
+        : [`${path} imports ${targetDirectory}`];
+    })
+  );
 }
 
 function resolveFeaturePath(sourcePath: string, specifier: string) {

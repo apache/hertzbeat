@@ -97,11 +97,18 @@ describe('useExploreSubmission', () => {
 
   it('clears an active form filter in both the draft and submitted patch', () => {
     const submit = vi.fn();
-    const { result } = renderSubmission({
-      signal: 'logs', timeRange: 'last-30m', severityText: 'ERROR'
-    }, submit);
+    const { result } = renderSubmission(
+      {
+        signal: 'logs',
+        timeRange: 'last-30m',
+        severityText: 'ERROR'
+      },
+      submit
+    );
 
-    act(() => { result.current.removeFilter('severityText'); });
+    act(() => {
+      result.current.removeFilter('severityText');
+    });
 
     expect(result.current.draft).toEqual(expect.objectContaining({ signal: 'logs', severityText: '' }));
     expect(submit).toHaveBeenCalledWith({ severityText: undefined, pageIndex: undefined });
@@ -110,7 +117,8 @@ describe('useExploreSubmission', () => {
   it('preserves dirty fields for unrelated query updates and resets on signal or POP history changes', async () => {
     const submit = vi.fn();
     const { result, rerender } = renderSubmission(
-      { signal: 'metrics', timeRange: 'last-30m', query: 'committed', end: 100 }, submit
+      { signal: 'metrics', timeRange: 'last-30m', query: 'committed', end: 100 },
+      submit
     );
     act(() => result.current.updateField({ field: 'query', value: 'local draft' }));
     rerender({ query: { signal: 'metrics', timeRange: 'last-30m', query: 'committed', end: 200 }, submit });
@@ -122,7 +130,9 @@ describe('useExploreSubmission', () => {
 
     const history = renderHistorySubmission();
     act(() => history.result.current.updateField({ field: 'query', value: 'history draft' }));
-    act(() => { void history.result.current.navigate(-1); });
+    act(() => {
+      void history.result.current.navigate(-1);
+    });
     await waitFor(() => expect(history.result.current.query.query).toBe('previous'));
     expect(history.result.current.draft.query).toBe('previous');
   });
@@ -130,27 +140,29 @@ describe('useExploreSubmission', () => {
 
 function renderSubmission(query: ExploreQuery, submit = vi.fn()) {
   const wrapper = ({ children }: { children: ReactNode }) => <MemoryRouter>{children}</MemoryRouter>;
-  return renderHook(
-    ({ query: current, submit: onSubmit }) => useExploreSubmission(current, onSubmit),
-    { initialProps: { query, submit }, wrapper }
-  );
+  return renderHook(({ query: current, submit: onSubmit }) => useExploreSubmission(current, onSubmit), {
+    initialProps: { query, submit },
+    wrapper
+  });
 }
 
 function renderHistorySubmission() {
   const wrapper = ({ children }: { children: ReactNode }) => (
     <MemoryRouter
-      initialEntries={[
-        '/explore?signal=metrics&query=previous',
-        '/explore?signal=metrics&query=current'
-      ]}
+      initialEntries={['/explore?signal=metrics&query=previous', '/explore?signal=metrics&query=current']}
       initialIndex={1}
-    >{children}</MemoryRouter>
+    >
+      {children}
+    </MemoryRouter>
   );
-  return renderHook(() => {
-    const [params] = useSearchParams();
-    const query = parseExploreQuery(params);
-    return { ...useExploreSubmission(query, vi.fn()), query, navigate: useNavigate() };
-  }, { wrapper });
+  return renderHook(
+    () => {
+      const [params] = useSearchParams();
+      const query = parseExploreQuery(params);
+      return { ...useExploreSubmission(query, vi.fn()), query, navigate: useNavigate() };
+    },
+    { wrapper }
+  );
 }
 
 function patchToDraft(patch: ExploreQueryPatch) {
