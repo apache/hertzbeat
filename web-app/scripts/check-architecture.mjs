@@ -21,6 +21,7 @@ import { fileURLToPath } from 'node:url';
 import process from 'node:process';
 
 import { checkFeatureConventions, containsPrimitiveParserHelper } from './feature-conventions.mjs';
+import { checkFunctionConventions } from './function-conventions.mjs';
 
 const requiredDirectories = ['app', 'core', 'layout', 'features', 'shared', join('assets', 'i18n')];
 const forbiddenSegments = new Set(['compat', 'controllers', 'deprecated', 'legacy', 'view-models']);
@@ -61,6 +62,7 @@ export function checkArchitecture(projectRoot) {
   }
 
   failures.push(...checkFeatureConventions(projectRoot));
+  failures.push(...checkFunctionConventions(projectRoot));
 
   return failures;
 }
@@ -89,35 +91,42 @@ function validateSource(path, sourceRoot, failures) {
     failures.push(`${normalizedPath}: pages and components cannot own transport`);
   }
 
-  if (!isTest(path)
-    && /\b(?:localStorage|sessionStorage|indexedDB)\b/.test(source)
-    && normalizedPath.startsWith('features/instrumentation/')) {
+  if (
+    !isTest(path) &&
+    /\b(?:localStorage|sessionStorage|indexedDB)\b/.test(source) &&
+    normalizedPath.startsWith('features/instrumentation/')
+  ) {
     failures.push(`${normalizedPath}: instrumentation cannot persist onboarding state or secrets`);
   }
 
-  if (!isTest(path)
-    && /\b(?:console\.(?:log|info|warn|error)|sendBeacon|analytics)\b/.test(source)
-    && normalizedPath.startsWith('features/instrumentation/')) {
+  if (
+    !isTest(path) &&
+    /\b(?:console\.(?:log|info|warn|error)|sendBeacon|analytics)\b/.test(source) &&
+    normalizedPath.startsWith('features/instrumentation/')
+  ) {
     failures.push(`${normalizedPath}: instrumentation cannot log or analyze onboarding state or secrets`);
   }
 
-  if (!isTest(path)
-    && normalizedPath.startsWith('core/auth/')
-    && containsPrimitiveParserHelper(source, path, authPrimitiveParserNames, {
+  if (
+    !isTest(path) &&
+    normalizedPath.startsWith('core/auth/') &&
+    containsPrimitiveParserHelper(source, path, authPrimitiveParserNames, {
       includeVariableDeclarations: true
-    })) {
-    failures.push(`${normalizedPath}: core auth contracts must use runtime schemas instead of primitive parser helpers`);
+    })
+  ) {
+    failures.push(
+      `${normalizedPath}: core auth contracts must use runtime schemas instead of primitive parser helpers`
+    );
   }
-
 }
 
 function validateSourceFileName(path, normalizedPath, failures) {
   const fileName = basename(path);
   const validName =
-    /^[a-z0-9]+(?:-[a-z0-9]+)*(?:\.(?:test|spec))?\.tsx$/.test(fileName)
-    || /^[a-z0-9]+(?:-[a-z0-9]+)*(?:\.(?:test|spec|d))?\.ts$/.test(fileName)
-    || /^[a-z0-9]+(?:-[a-z0-9]+)*\.module\.css$/.test(fileName)
-    || /^[a-z0-9]+(?:-[a-z0-9]+)*\.css$/.test(fileName);
+    /^[a-z0-9]+(?:-[a-z0-9]+)*(?:\.(?:test|spec))?\.tsx$/.test(fileName) ||
+    /^[a-z0-9]+(?:-[a-z0-9]+)*(?:\.(?:test|spec|d))?\.ts$/.test(fileName) ||
+    /^[a-z0-9]+(?:-[a-z0-9]+)*\.module\.css$/.test(fileName) ||
+    /^[a-z0-9]+(?:-[a-z0-9]+)*\.css$/.test(fileName);
   if (!validName) failures.push(`${normalizedPath}: source files must use kebab-case`);
 }
 

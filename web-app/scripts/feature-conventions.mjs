@@ -16,21 +16,39 @@
  */
 
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { extname, isAbsolute, join, normalize, relative, sep } from 'node:path';
+import { extname, isAbsolute, join, normalize, posix, relative, sep } from 'node:path';
 import ts from 'typescript';
 
 const featureDebtRules = Object.freeze({
   moduleSize: 'feature-module-size',
   primitiveParser: 'primitive-wire-parser',
   inlineQueryKey: 'inline-query-key',
-  rawCssColor: 'feature-css-raw-color'
+  rawCssColor: 'feature-css-raw-color',
+  genericHooksFile: 'generic-hooks-file',
+  presentationApiDependency: 'presentation-api-dependency',
+  modelApiDependency: 'model-api-dependency',
+  crossFeatureInternalDependency: 'cross-feature-internal-dependency'
 });
 
 const knownRules = new Set(Object.values(featureDebtRules));
+const identityRules = new Set([
+  featureDebtRules.presentationApiDependency,
+  featureDebtRules.modelApiDependency,
+  featureDebtRules.crossFeatureInternalDependency
+]);
 const baselinePath = join('scripts', 'feature-debt-baseline.json');
 const sourceExtensions = new Set(['.ts', '.tsx', '.css']);
 const primitiveParserNames = new Set([
-  'array', 'boolean', 'enumValue', 'integer', 'number', 'object', 'record', 'string', 'stringArray', 'text'
+  'array',
+  'boolean',
+  'enumValue',
+  'integer',
+  'number',
+  'object',
+  'record',
+  'string',
+  'stringArray',
+  'text'
 ]);
 
 export function checkFeatureConventions(projectRoot) {
@@ -46,7 +64,13 @@ export function checkFeatureConventions(projectRoot) {
       continue;
     }
     if (violation.actual > entry.allowedMax) {
-      failures.push(`baseline exceeded for ${entry.rule} at ${entry.path}: actual ${violation.actual} exceeds allowedMax ${entry.allowedMax}`);
+      failures.push(
+        `baseline exceeded for ${entry.rule} at ${entry.path}: actual ${violation.actual} exceeds allowedMax ${entry.allowedMax}`
+      );
+    } else if (violation.actual < entry.allowedMax) {
+      failures.push(
+        `stale baseline ceiling for ${entry.rule} at ${entry.path}: actual ${violation.actual} is below allowedMax ${entry.allowedMax}`
+      );
     }
     violationsByKey.delete(violationKey(entry));
   }
@@ -58,7 +82,14 @@ export function checkFeatureConventions(projectRoot) {
 function collectFeatureViolations(projectRoot) {
   const featureRoot = join(projectRoot, 'src', 'features');
   if (!existsSync(featureRoot)) return [];
-  return walk(featureRoot).flatMap(path => inspectFeatureFile(path, join(projectRoot, 'src')));
+  const observations = walk(featureRoot).flatMap(path => inspectFeatureFile(path, join(projectRoot, 'src')));
+  const byKey = new Map();
+  for (const item of observations) {
+    const key = violationKey(item);
+    const current = byKey.get(key);
+    byKey.set(key, current ? { ...current, actual: current.actual + item.actual } : item);
+  }
+  return [...byKey.values()];
 }
 
 function inspectFeatureFile(path, sourceRoot) {
@@ -67,6 +98,9 @@ function inspectFeatureFile(path, sourceRoot) {
   const source = readFileSync(path, 'utf8');
   const observations = [];
   const syntaxCounts = extname(path) === '.css' ? undefined : countTypeScriptSyntax(source, path);
+  if (normalizedPath.split('/').includes('hooks')) {
+    observations.push(observation(featureDebtRules.genericHooksFile, normalizedPath, 1));
+  }
   const limit = featureModuleLimit(normalizedPath);
   if (limit !== undefined) {
     const actual = countSourceLines(source, extname(path));
@@ -94,24 +128,21 @@ function inspectFeatureFile(path, sourceRoot) {
       normalizedPath,
       [...sourceWithoutComments.matchAll(/#[0-9a-f]{3,8}\b|\b(?:rgb|hsl)a?\s*\(/gi)].length
     );
+  } else {
+    observations.push(...collectDependencyObservations(source, path, normalizedPath));
   }
   return observations;
 }
 
-function observation(rule, path, actual, limit = 0) {
-  return { rule, path, actual, limit };
+function observation(rule, path, actual, limit = 0, identity) {
+  return { rule, path, actual, limit, ...(identity ? { identity } : {}) };
 }
 
 function addCountObservation(observations, rule, path, actual) {
   if (actual > 0) observations.push(observation(rule, path, actual));
 }
 
-export function containsPrimitiveParserHelper(
-  source,
-  path,
-  parserNames = primitiveParserNames,
-  options = {}
-) {
+export function containsPrimitiveParserHelper(source, path, parserNames = primitiveParserNames, options = {}) {
   return countTypeScriptSyntax(source, path, parserNames, options).primitiveParsers > 0;
 }
 
@@ -133,12 +164,14 @@ function countTypeScriptSyntax(
     if (ts.isFunctionDeclaration(node) && node.name && parserNames.has(node.name.text)) {
       counts.primitiveParsers += 1;
     }
-    if (includeVariableDeclarations
-      && ts.isVariableDeclaration(node)
-      && ts.isIdentifier(node.name)
-      && parserNames.has(node.name.text)
-      && node.initializer
-      && (ts.isArrowFunction(node.initializer) || ts.isFunctionExpression(node.initializer))) {
+    if (
+      includeVariableDeclarations &&
+      ts.isVariableDeclaration(node) &&
+      ts.isIdentifier(node.name) &&
+      parserNames.has(node.name.text) &&
+      node.initializer &&
+      (ts.isArrowFunction(node.initializer) || ts.isFunctionExpression(node.initializer))
+    ) {
       counts.primitiveParsers += 1;
     }
     if (isInlineQueryKey(node)) counts.inlineQueryKeys += 1;
@@ -150,9 +183,77 @@ function countTypeScriptSyntax(
 
 function isInlineQueryKey(node) {
   if (!ts.isPropertyAssignment(node) && !ts.isPropertyDeclaration(node)) return false;
-  return propertyName(node.name) === 'queryKey'
-    && node.initializer !== undefined
-    && ts.isArrayLiteralExpression(node.initializer);
+  return (
+    propertyName(node.name) === 'queryKey' &&
+    node.initializer !== undefined &&
+    ts.isArrayLiteralExpression(node.initializer)
+  );
+}
+
+function collectDependencyObservations(source, path, importerPath) {
+  const sourceFile = ts.createSourceFile(
+    path,
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    extname(path) === '.tsx' ? ts.ScriptKind.TSX : ts.ScriptKind.TS
+  );
+  const observations = [];
+  const importerSegments = importerPath.split('/');
+  const importerFeature = importerSegments[1];
+  const isPresentation = importerSegments.includes('components') || importerSegments.includes('pages');
+  const isModel = importerSegments.includes('model');
+
+  for (const specifier of collectModuleSpecifiers(sourceFile)) {
+    const target = resolveSourceImport(importerPath, specifier);
+    if (!target?.startsWith('features/')) continue;
+    const targetSegments = target.split('/');
+    const targetFeature = targetSegments[1];
+    const targetsApi = targetSegments.includes('api');
+    if (isPresentation && targetsApi) {
+      observations.push(observation(featureDebtRules.presentationApiDependency, importerPath, 1, 0, target));
+    }
+    if (isModel && targetsApi) {
+      observations.push(observation(featureDebtRules.modelApiDependency, importerPath, 1, 0, target));
+    }
+    if (targetFeature !== importerFeature && target !== `features/${targetFeature}`) {
+      observations.push(observation(featureDebtRules.crossFeatureInternalDependency, importerPath, 1, 0, target));
+    }
+  }
+  return observations;
+}
+
+function collectModuleSpecifiers(sourceFile) {
+  const specifiers = [];
+  const visit = node => {
+    if (
+      (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) &&
+      node.moduleSpecifier &&
+      ts.isStringLiteralLike(node.moduleSpecifier)
+    ) {
+      specifiers.push(node.moduleSpecifier.text);
+    }
+    if (
+      ts.isCallExpression(node) &&
+      node.arguments.length === 1 &&
+      ts.isStringLiteralLike(node.arguments[0]) &&
+      (node.expression.kind === ts.SyntaxKind.ImportKeyword ||
+        (ts.isIdentifier(node.expression) && node.expression.text === 'require'))
+    ) {
+      specifiers.push(node.arguments[0].text);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+  return specifiers;
+}
+
+function resolveSourceImport(importerPath, specifier) {
+  let target;
+  if (specifier.startsWith('@/')) target = specifier.slice(2);
+  else if (specifier.startsWith('.')) target = posix.normalize(posix.join(posix.dirname(importerPath), specifier));
+  else return undefined;
+  return target.replace(/\.(?:[cm]?[jt]sx?)$/, '').replace(/\/index$/, '');
 }
 
 function propertyName(name) {
@@ -172,9 +273,8 @@ function featureModuleLimit(path) {
 }
 
 function countSourceLines(source, extension) {
-  const withoutComments = extension === '.css'
-    ? stripCssComments(source)
-    : stripTypeScriptComments(source, extension === '.tsx');
+  const withoutComments =
+    extension === '.css' ? stripCssComments(source) : stripTypeScriptComments(source, extension === '.tsx');
   return withoutComments.split(/\r?\n/).filter(line => line.trim()).length;
 }
 
@@ -196,12 +296,16 @@ function stripTypeScriptComments(source, jsx) {
     }
   }
   let cursor = 0;
-  return ranges.map(([start, end]) => {
-    const unchanged = source.slice(cursor, start);
-    const comment = source.slice(start, end).replace(/[^\r\n]/g, ' ');
-    cursor = end;
-    return unchanged + comment;
-  }).join('') + source.slice(cursor);
+  return (
+    ranges
+      .map(([start, end]) => {
+        const unchanged = source.slice(cursor, start);
+        const comment = source.slice(start, end).replace(/[^\r\n]/g, ' ');
+        cursor = end;
+        return unchanged + comment;
+      })
+      .join('') + source.slice(cursor)
+  );
 }
 
 function readAndValidateBaseline(projectRoot) {
@@ -218,9 +322,9 @@ function readAndValidateBaseline(projectRoot) {
   }
   const failures = [];
   const seen = new Set();
-  const entries = baseline.entries.map((entry, index) => validateBaselineEntry(
-    projectRoot, entry, index, seen, failures
-  ));
+  const entries = baseline.entries.map((entry, index) =>
+    validateBaselineEntry(projectRoot, entry, index, seen, failures)
+  );
   return { entries, failures };
 }
 
@@ -246,6 +350,13 @@ function validateBaselineEntry(projectRoot, value, index, seen, failures) {
     failures.push(`${label}: allowedMax must be a positive safe integer`);
     entry.invalid = true;
   }
+  if (identityRules.has(entry.rule) && !isExactDependencyIdentity(entry.identity)) {
+    failures.push(`${label}: dependency identity must be exact: ${String(entry.identity)}`);
+    entry.invalid = true;
+  } else if (!identityRules.has(entry.rule) && entry.identity !== undefined) {
+    failures.push(`${label}: rule '${String(entry.rule)}' does not accept an identity`);
+    entry.invalid = true;
+  }
   const key = violationKey(entry);
   if (seen.has(key)) {
     failures.push(`${label}: duplicate baseline entry for ${entry.rule} at ${entry.path}`);
@@ -256,16 +367,29 @@ function validateBaselineEntry(projectRoot, value, index, seen, failures) {
 }
 
 function isExactFeaturePath(path) {
-  return typeof path === 'string'
-    && path.startsWith('features/')
-    && !isAbsolute(path)
-    && !path.includes('\\')
-    && normalize(path).split(sep).join('/') === path
-    && !/[?*[\]{}!]/.test(path);
+  return (
+    typeof path === 'string' &&
+    path.startsWith('features/') &&
+    !isAbsolute(path) &&
+    !path.includes('\\') &&
+    normalize(path).split(sep).join('/') === path &&
+    !/[?*[\]{}!]/.test(path)
+  );
 }
 
 function violationKey(value) {
-  return `${value.rule}:${value.path}`;
+  return `${value.rule}:${value.path}:${value.identity ?? ''}`;
+}
+
+function isExactDependencyIdentity(identity) {
+  return (
+    typeof identity === 'string' &&
+    identity.startsWith('features/') &&
+    !isAbsolute(identity) &&
+    !identity.includes('\\') &&
+    posix.normalize(identity) === identity &&
+    !/[?*[\]{}!]/.test(identity)
+  );
 }
 
 function formatViolation(violation) {
@@ -278,6 +402,14 @@ function formatViolation(violation) {
       return `${violation.path}: use the feature Query Key factory`;
     case featureDebtRules.rawCssColor:
       return `${violation.path}: use shared semantic color tokens`;
+    case featureDebtRules.genericHooksFile:
+      return `${violation.path}: generic feature hooks directories are forbidden; move orchestration to controller`;
+    case featureDebtRules.presentationApiDependency:
+      return `${violation.path}: presentation cannot depend on feature API ${violation.identity}`;
+    case featureDebtRules.modelApiDependency:
+      return `${violation.path}: model cannot depend on feature API ${violation.identity}`;
+    case featureDebtRules.crossFeatureInternalDependency:
+      return `${violation.path}: cross-feature imports must use the target public API instead of ${violation.identity}`;
     default:
       return `${violation.path}: unknown feature convention violation`;
   }

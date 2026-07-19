@@ -19,15 +19,15 @@ shared UI under `app/shared`, and localized text under `assets/i18n`. React keep
 that clarity with feature-local ownership instead of returning to one global
 folder per file type.
 
-| Angular responsibility | React destination |
-| --- | --- |
-| `app/service/*-service.ts` | `features/<domain>/api` transport and schemas |
-| `app/pojo/*` | `features/<domain>/model` or an explicitly shared model |
-| routing modules | `app/routes` and the central route registry |
-| component class orchestration | `features/<domain>/controller` |
-| component template | `features/<domain>/components` and a thin page |
-| `app/shared` | a named slice under `shared` |
-| `assets/i18n` | `assets/i18n` |
+| Angular responsibility        | React destination                                       |
+| ----------------------------- | ------------------------------------------------------- |
+| `app/service/*-service.ts`    | `features/<domain>/api` transport and schemas           |
+| `app/pojo/*`                  | `features/<domain>/model` or an explicitly shared model |
+| routing modules               | `app/routes` and the central route registry             |
+| component class orchestration | `features/<domain>/controller`                          |
+| component template            | `features/<domain>/components` and a thin page          |
+| `app/shared`                  | a named slice under `shared`                            |
+| `assets/i18n`                 | `assets/i18n`                                           |
 
 The React implementation does not copy the Angular frontend's known debt:
 global services that grow across unrelated workflows, `any` response bodies,
@@ -245,10 +245,21 @@ hex/RGB/HSL colors in feature CSS. TypeScript rules inspect function and
 property AST nodes rather than matching source text; CSS colors are checked
 only after block comments are removed with line boundaries preserved.
 
-The 60-line function limit remains a required review constraint, but it is not
-yet machine-enforced. A later milestone must implement it with an AST-backed
-function identity and an exact-function baseline; regex-based function sizing
-is explicitly out of scope for the current gate.
+The same gate enforces the 60-line function limit with TypeScript AST nodes and
+stable declaration identities. Existing function debt is recorded per exact
+source path and function identity in `scripts/function-debt-baseline.json`.
+Growth, reduction, removal, a new oversized sibling, wildcard identity, and a
+stale ceiling all fail; maintainers must lower or remove the exact entry as the
+owning function is repaired. Regex-based function sizing and file-wide function
+exemptions are forbidden.
+
+The same feature gate rejects new files under generic `hooks` directories,
+presentation or model imports from feature API internals, and cross-feature
+imports that bypass the target feature's `index.ts`. Existing exact dependency
+and hooks debt is listed in `scripts/feature-debt-baseline.json`; it cannot
+authorize a new path or target. Dependency Cruiser separately prevents React,
+Refine, and Ant Design runtime dependencies from API directories throughout the
+current feature tree.
 
 ## Testing contract
 
@@ -288,5 +299,10 @@ under `features/` and may not contain wildcards, parent traversal, backslashes,
 or absolute paths. `allowedMax` is the current violation count or module size,
 not a tolerance target. New paths and new rules fail, growth beyond the exact
 ceiling fails, and a fully repaired entry becomes stale and fails until it is
-removed. Partial reductions pass without changing the entry, but review must
-only lower or remove ceilings; baseline values must never increase.
+removed. Partial reductions also fail until the exact ceiling is lowered;
+baseline values must never increase.
+
+Generic feature `hooks` files and existing presentation/model dependencies on
+feature API modules use the same exact-path policy; dependency entries also name
+the exact resolved target as `identity`. New dependency targets and cross-feature
+internal imports fail instead of inheriting an exemption from another edge.

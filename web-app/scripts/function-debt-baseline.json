@@ -1,0 +1,197 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "rule": "function-size",
+      "path": "core/http/event-stream.ts",
+      "identity": "function:openBrowserEventStream",
+      "allowedMax": 63
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/alert-silence-editor.tsx",
+      "identity": "function:AlertSilenceScheduleFields",
+      "allowedMax": 65
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/components/alert-center-toolbar.tsx",
+      "identity": "function:AlertCenterToolbar",
+      "allowedMax": 62
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/controller/use-alert-group-command-controller.ts",
+      "identity": "function:useAlertGroupCommandController",
+      "allowedMax": 93
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/controller/use-alert-inhibit-controller.ts",
+      "identity": "function:useAlertInhibitTransactions",
+      "allowedMax": 83
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/controller/use-alert-rule-editor-controller.ts",
+      "identity": "function:useAlertRuleEditorController",
+      "allowedMax": 98
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/controller/use-alert-silence-controller.ts",
+      "identity": "function:useAlertSilenceController",
+      "allowedMax": 79
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/controller/use-alert-silence-mutations.ts",
+      "identity": "function:useAlertSilenceMutations",
+      "allowedMax": 62
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/controller/use-notice-template-command-controller.ts",
+      "identity": "function:useNoticeTemplateCommandController",
+      "allowedMax": 96
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/notice-receiver/controller/notice-receiver-controller.ts",
+      "identity": "function:useNoticeReceiverController",
+      "allowedMax": 61
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/notice-rule/components/notice-rule-editor.tsx",
+      "identity": "function:NoticeRuleAdvancedFields",
+      "allowedMax": 67
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/notice-rule/components/notice-rule-editor.tsx",
+      "identity": "function:NoticeRuleEditor",
+      "allowedMax": 93
+    },
+    {
+      "rule": "function-size",
+      "path": "features/alert/notice-rule/controller/notice-rule-controller.ts",
+      "identity": "function:useNoticeRuleController",
+      "allowedMax": 100
+    },
+    {
+      "rule": "function-size",
+      "path": "features/explore/components/metric-result.tsx",
+      "identity": "function:MetricResult",
+      "allowedMax": 97
+    },
+    {
+      "rule": "function-size",
+      "path": "features/explore/controller/use-trace-detail-controller.ts",
+      "identity": "function:useTraceDetailController",
+      "allowedMax": 69
+    },
+    {
+      "rule": "function-size",
+      "path": "features/instrumentation/components/instrumentation-guide.tsx",
+      "identity": "function:InstrumentationGuide",
+      "allowedMax": 68
+    },
+    {
+      "rule": "function-size",
+      "path": "features/instrumentation/controller/use-instrumentation-detection-controller.ts",
+      "identity": "function:useInstrumentationDetectionController",
+      "allowedMax": 88
+    },
+    {
+      "rule": "function-size",
+      "path": "features/instrumentation/controller/use-instrumentation-guide-controller.ts",
+      "identity": "function:useInstrumentationGuideController",
+      "allowedMax": 64
+    },
+    {
+      "rule": "function-size",
+      "path": "features/instrumentation/controller/use-instrumentation-page-controller.ts",
+      "identity": "function:useInstrumentationPageController",
+      "allowedMax": 83
+    },
+    {
+      "rule": "function-size",
+      "path": "features/monitor/controller/use-monitor-editor-controller.ts",
+      "identity": "function:useMonitorEditorController",
+      "allowedMax": 81
+    },
+    {
+      "rule": "function-size",
+      "path": "features/monitor/controller/use-monitor-editor-resources.ts",
+      "identity": "function:useMonitorEditorResources",
+      "allowedMax": 89
+    },
+    {
+      "rule": "function-size",
+      "path": "features/monitor/controller/use-monitor-list-controller.ts",
+      "identity": "function:useMonitorListController",
+      "allowedMax": 75
+    },
+    {
+      "rule": "function-size",
+      "path": "features/settings/label/components/label-results.tsx",
+      "identity": "function:LabelResults",
+      "allowedMax": 65
+    },
+    {
+      "rule": "function-size",
+      "path": "features/settings/label/controller/label-mutation-controller.ts",
+      "identity": "function:useLabelMutationController",
+      "allowedMax": 64
+    },
+    {
+      "rule": "function-size",
+      "path": "features/settings/message-server/components/message-server-editors.tsx",
+      "identity": "function:EmailServerEditor",
+      "allowedMax": 86
+    },
+    {
+      "rule": "function-size",
+      "path": "features/settings/message-server/controller/use-message-server-controller.ts",
+      "identity": "function:useMessageServerController",
+      "allowedMax": 87
+    },
+    {
+      "rule": "function-size",
+      "path": "features/settings/object-store/controller/object-store-resource-controller.ts",
+      "identity": "function:useObjectStoreResourceController",
+      "allowedMax": 76
+    },
+    {
+      "rule": "function-size",
+      "path": "features/settings/system-config/controller/system-config-resource-controller.ts",
+      "identity": "function:useSystemConfigResourceController",
+      "allowedMax": 75
+    },
+    {
+      "rule": "function-size",
+      "path": "features/status/management/components/status-management-editors.tsx",
+      "identity": "function:StatusIncidentEditor",
+      "allowedMax": 68
+    },
+    {
+      "rule": "function-size",
+      "path": "features/status/management/components/status-org-form.tsx",
+      "identity": "function:StatusOrgForm",
+      "allowedMax": 69
+    },
+    {
+      "rule": "function-size",
+      "path": "features/status/management/pages/status-management-page.tsx",
+      "identity": "function:StatusManagementPage",
+      "allowedMax": 63
+    },
+    {
+      "rule": "function-size",
+      "path": "layout/shell/shell-header.tsx",
+      "identity": "function:ShellHeader",
+      "allowedMax": 85
+    }
+  ]
+}

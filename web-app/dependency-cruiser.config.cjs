@@ -69,12 +69,12 @@ module.exports = {
       }
     },
     {
-      name: 'no-instrumentation-api-to-react-runtime',
+      name: 'no-feature-api-to-react-runtime',
       severity: 'error',
-      from: { path: '^src/features/instrumentation/api/', pathNot: productionSource },
+      from: { path: '^src/features/[^/]+/(?:api|[^/]+/api)/', pathNot: productionSource },
       to: {
-        dependencyTypes: ['npm', 'npm-peer'],
-        path: '^(?:react|react-dom|react-router|react-router-dom|antd|@refinedev/)'
+        dependencyTypes: ['npm', 'npm-dev', 'npm-optional', 'npm-peer', 'npm-bundled', 'npm-no-pkg', 'unknown'],
+        path: '^(?:node_modules/)?(?:react|react-dom|react-router|react-router-dom|antd|@refinedev/)'
       }
     }
   ],

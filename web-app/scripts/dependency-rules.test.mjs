@@ -34,11 +34,15 @@ afterEach(() => {
 test('accepts the documented inward dependency direction', () => {
   const fixture = createProject({
     'src/core/http/client.ts': 'export const client = true;',
-    'src/features/instrumentation/api/instrumentation-api.ts': "import { client } from '@/core/http/client'; export const load = () => client;",
+    'src/features/instrumentation/api/instrumentation-api.ts':
+      "import { client } from '@/core/http/client'; export const load = () => client;",
     'src/features/instrumentation/model/instrumentation-model.ts': 'export type Guide = { id: string };',
-    'src/features/instrumentation/controller/instrumentation-controller.ts': "import { load } from '../api/instrumentation-api'; export const useGuide = load;",
-    'src/features/instrumentation/components/instrumentation-guide.tsx': "import type { Guide } from '../model/instrumentation-model'; export const InstrumentationGuide = (_props: { guide: Guide }) => null;",
-    'src/features/instrumentation/pages/instrumentation-page.tsx': "import { InstrumentationGuide } from '../components/instrumentation-guide'; export const InstrumentationPage = () => <InstrumentationGuide guide={{ id: 'guide' }} />;"
+    'src/features/instrumentation/controller/instrumentation-controller.ts':
+      "import { load } from '../api/instrumentation-api'; export const useGuide = load;",
+    'src/features/instrumentation/components/instrumentation-guide.tsx':
+      "import type { Guide } from '../model/instrumentation-model'; export const InstrumentationGuide = (_props: { guide: Guide }) => null;",
+    'src/features/instrumentation/pages/instrumentation-page.tsx':
+      "import { InstrumentationGuide } from '../components/instrumentation-guide'; export const InstrumentationPage = () => <InstrumentationGuide guide={{ id: 'guide' }} />;"
   });
 
   const result = cruise(fixture);
@@ -51,8 +55,10 @@ test('rejects reverse layer dependencies and presentation transport access', () 
     'src/app/router.ts': 'export const router = true;',
     'src/shared/time/time.ts': 'export const now = 1;',
     'src/features/instrumentation/api/instrumentation-api.ts': 'export const load = true;',
-    'src/features/instrumentation/controller/instrumentation-controller.ts': "import { router } from '@/app/router'; export const invalid = router;",
-    'src/features/instrumentation/components/instrumentation-guide.tsx': "import { load } from '../api/instrumentation-api'; export const invalid = load;",
+    'src/features/instrumentation/controller/instrumentation-controller.ts':
+      "import { router } from '@/app/router'; export const invalid = router;",
+    'src/features/instrumentation/components/instrumentation-guide.tsx':
+      "import { load } from '../api/instrumentation-api'; export const invalid = load;",
     'src/core/http/client.ts': "import { now } from '@/shared/time/time'; export const invalid = now;"
   });
 
@@ -64,17 +70,34 @@ test('rejects reverse layer dependencies and presentation transport access', () 
   assert.match(result.output, /no-core-to-outer-layers/);
 });
 
+test('rejects React runtime dependencies from every feature API', () => {
+  const fixture = createProject({
+    'src/features/orders/api/orders-api.ts': "import { useMemo } from 'react'; export const invalid = useMemo;",
+    'src/features/status/public/api/status-api.ts':
+      "import { useCallback } from 'react'; export const nestedInvalid = useCallback;"
+  });
+
+  const result = cruise(fixture);
+
+  assert.notEqual(result.status, 0, result.output);
+  assert.match(result.output, /no-feature-api-to-react-runtime/);
+});
+
 function createProject(files) {
   const directory = mkdtempSync(join(tmpdir(), 'hertzbeat-architecture-'));
   temporaryProjects.push(directory);
-  writeFile(directory, 'tsconfig.app.json', JSON.stringify({
-    compilerOptions: {
-      baseUrl: '.',
-      jsx: 'react-jsx',
-      paths: { '@/*': ['src/*'] }
-    },
-    include: ['src']
-  }));
+  writeFile(
+    directory,
+    'tsconfig.app.json',
+    JSON.stringify({
+      compilerOptions: {
+        baseUrl: '.',
+        jsx: 'react-jsx',
+        paths: { '@/*': ['src/*'] }
+      },
+      include: ['src']
+    })
+  );
   Object.entries(files).forEach(([path, source]) => writeFile(directory, path, source));
   return directory;
 }

@@ -81,7 +81,8 @@ test('rejects instrumentation primitive wire parsers and inline Query Keys', () 
     'src/core/http/client.ts': 'export {};',
     'src/layout/shell/shell.tsx': 'export const Shell = () => null;',
     'src/features/instrumentation/api/unsafe-parser.ts': 'function text(value) { return String(value); }',
-    'src/features/instrumentation/controller/unsafe-query.ts': "export const query = { queryKey: ['instrumentation'] };",
+    'src/features/instrumentation/controller/unsafe-query.ts':
+      "export const query = { queryKey: ['instrumentation'] };",
     'src/shared/time/time.ts': 'export {};',
     'src/assets/i18n/en-us.json': '{}'
   });
@@ -260,6 +261,15 @@ test('allows an exact baseline ceiling but rejects debt growth and new paths', (
   });
   assert.match(checkArchitecture(growth).join('\n'), /baseline exceeded.*actual 152.*allowedMax 151/);
 
+  const reduced = createProject({
+    ...requiredProjectFiles(),
+    'src/features/orders/pages/orders-page.tsx': sourceLines(151),
+    'scripts/feature-debt-baseline.json': debtBaseline([
+      { rule: 'feature-module-size', path: 'features/orders/pages/orders-page.tsx', allowedMax: 152 }
+    ])
+  });
+  assert.match(checkArchitecture(reduced).join('\n'), /stale baseline ceiling.*actual 151.*allowedMax 152/);
+
   const newPath = createProject({
     ...requiredProjectFiles(),
     'src/features/orders/pages/orders-page.tsx': sourceLines(151),
@@ -311,9 +321,7 @@ test('reports malformed baseline JSON without throwing', () => {
   });
 
   assert.doesNotThrow(() => checkArchitecture(project));
-  assert.deepEqual(checkArchitecture(project), [
-    'scripts/feature-debt-baseline.json: baseline must be valid JSON'
-  ]);
+  assert.deepEqual(checkArchitecture(project), ['scripts/feature-debt-baseline.json: baseline must be valid JSON']);
 });
 
 test('rejects parent, absolute, backslash, and non-feature baseline paths', () => {
@@ -347,13 +355,159 @@ test('requires allowedMax to be a positive safe integer', () => {
       { rule: 'feature-module-size', path: 'features/orders/pages/orders-page.tsx', allowedMax: 0 },
       { rule: 'primitive-wire-parser', path: 'features/orders/pages/orders-page.tsx', allowedMax: -1 },
       { rule: 'inline-query-key', path: 'features/orders/pages/orders-page.tsx', allowedMax: 1.5 },
-      { rule: 'feature-css-raw-color', path: 'features/orders/pages/orders-page.tsx', allowedMax: 9_007_199_254_740_992 }
+      {
+        rule: 'feature-css-raw-color',
+        path: 'features/orders/pages/orders-page.tsx',
+        allowedMax: 9_007_199_254_740_992
+      }
     ])
   });
 
   const failures = checkArchitecture(project).filter(failure => failure.includes('allowedMax'));
   assert.equal(failures.length, 4);
   failures.forEach(failure => assert.match(failure, /allowedMax must be a positive safe integer/));
+});
+
+test('rejects oversized production functions by AST identity while ignoring comments and tests', () => {
+  const project = createProject({
+    ...requiredProjectFiles(),
+    'src/features/orders/model/orders.ts': oversizedFunction('loadOrders', 59),
+    'src/features/orders/model/orders.test.ts': oversizedFunction('testFixture', 80)
+  });
+
+  const failures = checkArchitecture(project).join('\n');
+  assert.match(failures, /features\/orders\/model\/orders\.ts.*function:loadOrders.*61 lines exceeds 60/);
+  assert.doesNotMatch(failures, /testFixture/);
+});
+
+test('uses an exact function baseline and rejects growth, reduction, and sibling debt', () => {
+  const entry = {
+    rule: 'function-size',
+    path: 'features/orders/model/orders.ts',
+    identity: 'function:loadOrders',
+    allowedMax: 62
+  };
+  const accepted = createProject({
+    ...requiredProjectFiles(),
+    'src/features/orders/model/orders.ts': oversizedFunction('loadOrders', 60),
+    'scripts/function-debt-baseline.json': functionDebtBaseline([entry])
+  });
+  assert.deepEqual(checkArchitecture(accepted), []);
+
+  const growth = createProject({
+    ...requiredProjectFiles(),
+    'src/features/orders/model/orders.ts': oversizedFunction('loadOrders', 61),
+    'scripts/function-debt-baseline.json': functionDebtBaseline([entry])
+  });
+  assert.match(checkArchitecture(growth).join('\n'), /function baseline exceeded.*actual 63.*allowedMax 62/);
+
+  const reduction = createProject({
+    ...requiredProjectFiles(),
+    'src/features/orders/model/orders.ts': oversizedFunction('loadOrders', 59),
+    'scripts/function-debt-baseline.json': functionDebtBaseline([entry])
+  });
+  assert.match(checkArchitecture(reduction).join('\n'), /stale function baseline.*actual 61.*allowedMax 62/);
+
+  const sibling = createProject({
+    ...requiredProjectFiles(),
+    'src/features/orders/model/orders.ts': [
+      oversizedFunction('loadOrders', 60),
+      oversizedFunction('loadMoreOrders', 59)
+    ].join('\n'),
+    'scripts/function-debt-baseline.json': functionDebtBaseline([entry])
+  });
+  assert.match(checkArchitecture(sibling).join('\n'), /function:loadMoreOrders.*61 lines exceeds 60/);
+});
+
+test('rejects malformed, wildcard, duplicate, declaration, and weak function baselines', () => {
+  const path = 'features/orders/model/orders.ts';
+  const identity = 'function:loadOrders';
+  const project = createProject({
+    ...requiredProjectFiles(),
+    [`src/${path}`]: oversizedFunction('loadOrders', 60),
+    'src/features/orders/model/generated.d.ts': 'export declare function generated(): void;',
+    'scripts/function-debt-baseline.json': functionDebtBaseline([
+      { rule: 'unknown', path, identity, allowedMax: 62 },
+      { rule: 'function-size', path, identity: 'function:*', allowedMax: 62 },
+      { rule: 'function-size', path, identity, allowedMax: 62 },
+      { rule: 'function-size', path, identity, allowedMax: 62 },
+      {
+        rule: 'function-size',
+        path: 'features/orders/model/generated.d.ts',
+        identity: 'function:generated',
+        allowedMax: 62
+      },
+      { rule: 'function-size', path, identity: 'function:weak', allowedMax: 60 }
+    ])
+  });
+
+  const failures = checkArchitecture(project).join('\n');
+  assert.match(failures, /unknown baseline rule 'unknown'/);
+  assert.match(failures, /function identity must be exact: function:\*/);
+  assert.match(failures, /duplicate function baseline/);
+  assert.match(failures, /must name an exact production TypeScript source.*generated\.d\.ts/);
+  assert.match(failures, /allowedMax must be a safe integer above 60/);
+});
+
+test('rejects generic feature hooks through exact production-file debt entries', () => {
+  const existingEntry = {
+    rule: 'generic-hooks-file',
+    path: 'features/orders/hooks/use-orders.ts',
+    allowedMax: 1
+  };
+  const accepted = createProject({
+    ...requiredProjectFiles(),
+    'src/features/orders/hooks/use-orders.ts': 'export const useOrders = () => null;',
+    'scripts/feature-debt-baseline.json': debtBaseline([existingEntry])
+  });
+  assert.deepEqual(checkArchitecture(accepted), []);
+
+  const newDebt = createProject({
+    ...requiredProjectFiles(),
+    'src/features/orders/hooks/use-orders.ts': 'export const useOrders = () => null;',
+    'src/features/orders/hooks/use-order-detail.ts': 'export const useOrderDetail = () => null;',
+    'scripts/feature-debt-baseline.json': debtBaseline([existingEntry])
+  });
+  assert.match(
+    checkArchitecture(newDebt).join('\n'),
+    /use-order-detail\.ts: generic feature hooks directories are forbidden/
+  );
+});
+
+test('enforces feature presentation, model, and public API dependency boundaries', () => {
+  const project = createProject({
+    ...requiredProjectFiles(),
+    'src/features/orders/api/orders-api.ts': 'export type OrderDto = { id: number };',
+    'src/features/orders/components/orders-table.tsx':
+      "import type { OrderDto } from '../api/orders-api'; export const OrdersTable = (_props: { order: OrderDto }) => null;",
+    'src/features/orders/model/orders.ts':
+      "import type { OrderDto } from '../api/orders-api'; export type Order = OrderDto;",
+    'src/features/billing/api/billing-api.ts': 'export const loadBilling = true;',
+    'src/features/billing/index.ts': "export { loadBilling } from './api/billing-api';",
+    'src/features/orders/controller/orders-controller.ts': [
+      "import { loadBilling } from '@/features/billing/api/billing-api';",
+      'export const useOrders = () => loadBilling;'
+    ].join('\n')
+  });
+
+  const failures = checkArchitecture(project).join('\n');
+  assert.match(
+    failures,
+    /orders-table\.tsx.*presentation cannot depend on feature API.*features\/orders\/api\/orders-api/
+  );
+  assert.match(failures, /model\/orders\.ts.*model cannot depend on feature API.*features\/orders\/api\/orders-api/);
+  assert.match(
+    failures,
+    /orders-controller\.ts.*cross-feature imports must use the target public API.*features\/billing\/api\/billing-api/
+  );
+
+  const publicApi = createProject({
+    ...requiredProjectFiles(),
+    'src/features/billing/index.ts': 'export const loadBilling = true;',
+    'src/features/orders/controller/orders-controller.ts':
+      "import { loadBilling } from '@/features/billing'; export const useOrders = () => loadBilling;"
+  });
+  assert.deepEqual(checkArchitecture(publicApi), []);
 });
 
 function createProject(files) {
@@ -379,6 +533,18 @@ function sourceLines(count) {
 
 function debtBaseline(entries) {
   return JSON.stringify({ version: 1, entries }, null, 2);
+}
+
+function functionDebtBaseline(entries) {
+  return JSON.stringify({ version: 1, entries }, null, 2);
+}
+
+function oversizedFunction(name, statementCount) {
+  return [
+    `export function ${name}() {`,
+    ...Array.from({ length: statementCount }, (_, index) => `  const value${index} = ${index};`),
+    '}'
+  ].join('\n');
 }
 
 function escapeRegExp(value) {
