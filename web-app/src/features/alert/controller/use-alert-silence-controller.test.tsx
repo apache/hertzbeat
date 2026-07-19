@@ -17,7 +17,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { App } from 'antd';
-import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
+import { act, cleanup, renderHook, screen, waitFor } from '@testing-library/react';
 import type { PropsWithChildren } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom';
@@ -29,25 +29,51 @@ import { AlertSilenceContractError, AlertSilenceMissingError } from '../alert-si
 import { alertSilenceDetailDraft } from '../alert-silence-page-model';
 
 const api = vi.hoisted(() => ({
-  deleteAlertSilence: vi.fn(), loadAlertSilence: vi.fn(), loadAlertSilences: vi.fn(),
-  saveAlertSilence: vi.fn(), updateAlertSilenceEnabled: vi.fn()
+  deleteAlertSilence: vi.fn(),
+  loadAlertSilence: vi.fn(),
+  loadAlertSilences: vi.fn(),
+  saveAlertSilence: vi.fn(),
+  updateAlertSilenceEnabled: vi.fn()
 }));
 vi.mock('../alert-silence-api', async importOriginal => ({
-  ...await importOriginal<typeof import('../alert-silence-api')>(), ...api
+  ...(await importOriginal<typeof import('../alert-silence-api')>()),
+  ...api
 }));
 
 import { useAlertSilenceController } from './use-alert-silence-controller';
 
-const record = { id: 7, name: 'Maintenance', enable: true, matchAll: true, type: 0 as const,
-  times: null, labels: null, days: null, periodStart: null, periodEnd: null };
-const editable = { ...record, labels: {}, days: [], periodStart: '2026-07-16T10:00:00Z',
-  periodEnd: '2026-07-16T12:00:00Z' };
+const record = {
+  id: 7,
+  name: 'Maintenance',
+  enable: true,
+  matchAll: true,
+  type: 0 as const,
+  times: null,
+  labels: null,
+  days: null,
+  periodStart: null,
+  periodEnd: null
+};
+const editable = {
+  ...record,
+  labels: {},
+  days: [],
+  periodStart: '2026-07-16T10:00:00Z',
+  periodEnd: '2026-07-16T12:00:00Z'
+};
 const page = (content = [record], number = 0, total = content.length) => ({
-  content, totalElements: total, totalPages: total === 0 ? 0 : Math.ceil(total / 8), number, size: 8
+  content,
+  totalElements: total,
+  totalPages: total === 0 ? 0 : Math.ceil(total / 8),
+  number,
+  size: 8
 });
 
 describe('useAlertSilenceController', () => {
-  beforeAll(async () => { await initializeI18n(); await loadLocale('en-US'); });
+  beforeAll(async () => {
+    await initializeI18n();
+    await loadLocale('en-US');
+  });
   beforeEach(() => {
     Object.values(api).forEach(mock => mock.mockReset());
     api.loadAlertSilences.mockResolvedValue(page());
@@ -55,40 +81,63 @@ describe('useAlertSilenceController', () => {
     api.updateAlertSilenceEnabled.mockResolvedValue(undefined);
     api.deleteAlertSilence.mockResolvedValue(undefined);
   });
-  afterEach(() => { cleanup(); vi.clearAllMocks(); });
+  afterEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+  });
 
   it('converges search draft on Push, Back, and Forward without render-phase updates', async () => {
     const view = renderController(['/alerts/silences?search=one', '/alerts/silences?search=two'], 1);
     await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
     expect(view.result.current.controller.state.search).toBe('two');
-    act(() => { void view.result.current.navigate('/alerts/silences?search=three'); });
+    act(() => {
+      void view.result.current.navigate('/alerts/silences?search=three');
+    });
     await waitFor(() => expect(view.result.current.controller.state.search).toBe('three'));
-    act(() => { void view.result.current.navigate(-1); });
+    act(() => {
+      void view.result.current.navigate(-1);
+    });
     await waitFor(() => expect(view.result.current.controller.state.search).toBe('two'));
-    act(() => { void view.result.current.navigate(1); });
+    act(() => {
+      void view.result.current.navigate(1);
+    });
     await waitFor(() => expect(view.result.current.controller.state.search).toBe('three'));
   });
 
   it('normalizes an out-of-range nonzero page and proves the follow-up read', async () => {
-    api.loadAlertSilences.mockImplementation(query => Promise.resolve(query.pageIndex === 2
-      ? { content: [], totalElements: 9, totalPages: 2, number: 2, size: 8 }
-      : { content: [record], totalElements: 9, totalPages: 2, number: 1, size: 8 }));
+    api.loadAlertSilences.mockImplementation(query =>
+      Promise.resolve(
+        query.pageIndex === 2
+          ? { content: [], totalElements: 9, totalPages: 2, number: 2, size: 8 }
+          : { content: [record], totalElements: 9, totalPages: 2, number: 1, size: 8 }
+      )
+    );
     const view = renderController(['/alerts/silences?pageIndex=2&pageSize=8'], 0);
     await waitFor(() => expect(view.result.current.location.search).toContain('pageIndex=1'));
     await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
-    expect(api.loadAlertSilences).toHaveBeenCalledWith(expect.objectContaining({ pageIndex: 1 }), expect.any(AbortSignal));
+    expect(api.loadAlertSilences).toHaveBeenCalledWith(
+      expect.objectContaining({ pageIndex: 1 }),
+      expect.any(AbortSignal)
+    );
   });
 
   it('does not let stale edit completion replace a newer create draft', async () => {
     let resolveDetail!: (value: typeof record) => void;
-    api.loadAlertSilence.mockReturnValue(new Promise(resolve => { resolveDetail = resolve; }));
+    api.loadAlertSilence.mockReturnValue(
+      new Promise(resolve => {
+        resolveDetail = resolve;
+      })
+    );
     const view = renderController(['/alerts/silences'], 0);
     await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
-    act(() => { void view.result.current.controller.actions.edit(7); });
+    act(() => {
+      void view.result.current.controller.actions.edit(7);
+    });
     act(() => view.result.current.controller.actions.create());
     act(() => resolveDetail(record));
-    await waitFor(() => expect(alertSilenceDetailDraft(view.result.current.controller.state.detail))
-      .toMatchObject({ name: '' }));
+    await waitFor(() =>
+      expect(alertSilenceDetailDraft(view.result.current.controller.state.detail)).toMatchObject({ name: '' })
+    );
     expect(alertSilenceDetailDraft(view.result.current.controller.state.detail)).not.toHaveProperty('id');
   });
 
@@ -99,15 +148,23 @@ describe('useAlertSilenceController', () => {
     await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
     await act(() => view.result.current.controller.actions.edit(7));
     expect(view.result.current.controller.state.detail).toMatchObject({
-      kind: 'ready', source: 'detail', id: 7, draft: { id: 7 }
+      kind: 'ready',
+      source: 'detail',
+      id: 7,
+      draft: { id: 7 }
     });
 
     let pending!: Promise<void>;
-    act(() => { pending = view.result.current.controller.actions.edit(8); });
+    act(() => {
+      pending = view.result.current.controller.actions.edit(8);
+    });
     expect(view.result.current.controller.state.detail).toEqual({ kind: 'loading', id: 8 });
     expect(view.result.current.controller.state.detail).not.toHaveProperty('draft');
 
-    await act(async () => { next.reject(new AlertSilenceMissingError()); await pending; });
+    await act(async () => {
+      next.reject(new AlertSilenceMissingError());
+      await pending;
+    });
     expect(view.result.current.controller.state.detail).toEqual({ kind: 'missing', id: 8 });
     expect(view.result.current.controller.state.detail).not.toHaveProperty('draft');
   });
@@ -134,11 +191,17 @@ describe('useAlertSilenceController', () => {
     });
     const view = renderController(['/alerts/silences'], 0);
     await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
-    act(() => { void view.result.current.controller.actions.edit(7); });
+    act(() => {
+      void view.result.current.controller.actions.edit(7);
+    });
     act(() => view.result.current.controller.actions.cancel());
     expect(requests[0]?.signal.aborted).toBe(true);
-    act(() => { void view.result.current.controller.actions.edit(7); });
-    act(() => { void view.result.current.controller.actions.edit(8); });
+    act(() => {
+      void view.result.current.controller.actions.edit(7);
+    });
+    act(() => {
+      void view.result.current.controller.actions.edit(8);
+    });
     expect(requests[1]?.signal.aborted).toBe(true);
     expect(requests[2]).toMatchObject({ id: 8 });
   });
@@ -171,24 +234,35 @@ describe('useAlertSilenceController', () => {
 
   it('keeps a create draft open until the awaited list reread succeeds', async () => {
     let resolveReread!: (value: ReturnType<typeof page>) => void;
-    api.loadAlertSilences
-      .mockResolvedValueOnce(page())
-      .mockReturnValueOnce(new Promise(resolve => { resolveReread = resolve; }));
+    api.loadAlertSilences.mockResolvedValueOnce(page()).mockReturnValueOnce(
+      new Promise(resolve => {
+        resolveReread = resolve;
+      })
+    );
     const view = renderController(['/alerts/silences'], 0);
     await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
     act(() => view.result.current.controller.actions.create());
     act(() => view.result.current.controller.actions.updateDraft({ name: 'Created' }));
     let save!: Promise<void>;
-    act(() => { save = view.result.current.controller.actions.save(); });
+    act(() => {
+      save = view.result.current.controller.actions.save();
+    });
     await waitFor(() => expect(api.loadAlertSilences).toHaveBeenCalledTimes(2));
     expect(alertSilenceDetailDraft(view.result.current.controller.state.detail)).toMatchObject({ name: 'Created' });
-    await act(async () => { resolveReread(page()); await save; });
+    await act(async () => {
+      resolveReread(page());
+      await save;
+    });
     expect(view.result.current.controller.state.detail).toEqual({ kind: 'idle' });
   });
 
   it('uses a synchronous mutex for same-tick save attempts', async () => {
     let resolveSave!: () => void;
-    api.saveAlertSilence.mockReturnValue(new Promise<void>(resolve => { resolveSave = resolve; }));
+    api.saveAlertSilence.mockReturnValue(
+      new Promise<void>(resolve => {
+        resolveSave = resolve;
+      })
+    );
     const view = renderController(['/alerts/silences'], 0);
     await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
     act(() => view.result.current.controller.actions.create());
@@ -200,42 +274,82 @@ describe('useAlertSilenceController', () => {
       second = view.result.current.controller.actions.save();
     });
     expect(api.saveAlertSilence).toHaveBeenCalledTimes(1);
-    await act(async () => { resolveSave(); await Promise.all([first, second]); });
+    await act(async () => {
+      resolveSave();
+      await Promise.all([first, second]);
+    });
+  });
+
+  it('releases the save mutex after failure, retains the draft, and permits a retry', async () => {
+    api.saveAlertSilence.mockRejectedValueOnce(new Error('private provider failure')).mockResolvedValueOnce(undefined);
+    const view = renderController(['/alerts/silences'], 0);
+    await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
+    act(() => view.result.current.controller.actions.create());
+    act(() => view.result.current.controller.actions.updateDraft({ name: 'Created' }));
+
+    await act(() => view.result.current.controller.actions.save());
+    expect(view.result.current.controller.state.busy).toBe(false);
+    expect(alertSilenceDetailDraft(view.result.current.controller.state.detail)).toMatchObject({ name: 'Created' });
+    expect(await screen.findByText(i18n.t('alertSilences.saveFailed'))).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent('private provider failure');
+
+    await act(() => view.result.current.controller.actions.save());
+    expect(api.saveAlertSilence).toHaveBeenCalledTimes(2);
+    expect(view.result.current.controller.state.detail).toEqual({ kind: 'idle' });
   });
 
   it('does not replace an in-flight save draft with a new draft', async () => {
     let resolveSave!: () => void;
-    api.saveAlertSilence.mockReturnValue(new Promise<void>(resolve => { resolveSave = resolve; }));
+    api.saveAlertSilence.mockReturnValue(
+      new Promise<void>(resolve => {
+        resolveSave = resolve;
+      })
+    );
     const view = renderController(['/alerts/silences'], 0);
     await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
     act(() => view.result.current.controller.actions.create());
     act(() => view.result.current.controller.actions.updateDraft({ name: 'Created' }));
     let save!: Promise<void>;
-    act(() => { save = view.result.current.controller.actions.save(); });
+    act(() => {
+      save = view.result.current.controller.actions.save();
+    });
     await waitFor(() => expect(view.result.current.controller.state.busy).toBe(true));
     act(() => view.result.current.controller.actions.create());
     expect(alertSilenceDetailDraft(view.result.current.controller.state.detail)).toMatchObject({ name: 'Created' });
-    await act(async () => { resolveSave(); await save; });
+    await act(async () => {
+      resolveSave();
+      await save;
+    });
   });
 
   it('does not update or replace controlled draft values while save is in flight', async () => {
     let resolveSave!: () => void;
-    api.saveAlertSilence.mockReturnValue(new Promise<void>(resolve => { resolveSave = resolve; }));
+    api.saveAlertSilence.mockReturnValue(
+      new Promise<void>(resolve => {
+        resolveSave = resolve;
+      })
+    );
     const view = renderController(['/alerts/silences'], 0);
     await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
     act(() => view.result.current.controller.actions.create());
     act(() => view.result.current.controller.actions.updateDraft({ name: 'Created' }));
     let save!: Promise<void>;
-    act(() => { save = view.result.current.controller.actions.save(); });
+    act(() => {
+      save = view.result.current.controller.actions.save();
+    });
     await waitFor(() => expect(view.result.current.controller.state.busy).toBe(true));
     act(() => {
       view.result.current.controller.actions.updateDraft({ name: 'Late update' });
       view.result.current.controller.actions.replaceDraft({
-        ...alertSilenceDetailDraft(view.result.current.controller.state.detail)!, name: 'Late replacement'
+        ...alertSilenceDetailDraft(view.result.current.controller.state.detail)!,
+        name: 'Late replacement'
       });
     });
     expect(alertSilenceDetailDraft(view.result.current.controller.state.detail)).toMatchObject({ name: 'Created' });
-    await act(async () => { resolveSave(); await save; });
+    await act(async () => {
+      resolveSave();
+      await save;
+    });
   });
 
   it('requires toggle convergence and delete missing proof before list reread', async () => {
@@ -280,25 +394,37 @@ describe('useAlertSilenceController', () => {
     api.loadAlertSilence.mockResolvedValue(editable);
     await act(() => view.result.current.controller.actions.save());
     expect(api.loadAlertSilences).toHaveBeenCalledTimes(1);
-    expect(alertSilenceDetailDraft(view.result.current.controller.state.detail))
-      .toMatchObject({ id: 7, name: 'Updated' });
+    expect(alertSilenceDetailDraft(view.result.current.controller.state.detail)).toMatchObject({
+      id: 7,
+      name: 'Updated'
+    });
   });
 });
 
 function renderController(entries: string[], initialIndex: number) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return renderHook(() => ({ controller: useAlertSilenceController(), navigate: useNavigate(), location: useLocation() }), {
-    wrapper: ({ children }: PropsWithChildren) => <I18nextProvider i18n={i18n}>
-      <QueryClientProvider client={client}><MemoryRouter initialEntries={entries} initialIndex={initialIndex}>
-        <App>{children}</App>
-      </MemoryRouter></QueryClientProvider>
-    </I18nextProvider>
-  });
+  return renderHook(
+    () => ({ controller: useAlertSilenceController(), navigate: useNavigate(), location: useLocation() }),
+    {
+      wrapper: ({ children }: PropsWithChildren) => (
+        <I18nextProvider i18n={i18n}>
+          <QueryClientProvider client={client}>
+            <MemoryRouter initialEntries={entries} initialIndex={initialIndex}>
+              <App>{children}</App>
+            </MemoryRouter>
+          </QueryClientProvider>
+        </I18nextProvider>
+      )
+    }
+  );
 }
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
   let reject!: (reason: unknown) => void;
-  const promise = new Promise<T>((done, fail) => { resolve = done; reject = fail; });
+  const promise = new Promise<T>((done, fail) => {
+    resolve = done;
+    reject = fail;
+  });
   return { promise, resolve, reject };
 }

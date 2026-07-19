@@ -64,6 +64,26 @@ describe('AlertSilencePage architecture', () => {
     expect(sourceLineCount(mutationsSource)).toBeLessThanOrEqual(200);
   });
 
+  it('keeps the local operation gate separate from silence transactions', () => {
+    const gateStart = mutationsSource.indexOf('function useAlertSilenceOperationGate');
+    const convergenceStart = mutationsSource.indexOf('function requireDraftConvergence');
+    const transactions = mutationsSource.slice(0, gateStart);
+    const gate = mutationsSource.slice(gateStart, convergenceStart);
+
+    expect(gateStart).toBeGreaterThan(0);
+    expect(convergenceStart).toBeGreaterThan(gateStart);
+    expect(transactions).toContain('const gate = useAlertSilenceOperationGate(message, t)');
+    expect(transactions).toMatch(/saveAlertSilence[\s\S]*loadAlertSilence[\s\S]*rereadList\(\)[\s\S]*onSaved\(\)/);
+    expect(transactions).toMatch(/updateAlertSilenceEnabled[\s\S]*loadAlertSilence[\s\S]*rereadList\(\)/);
+    expect(transactions).toMatch(/deleteAlertSilence[\s\S]*classifyAlertSilenceReadError[\s\S]*rereadList\(\)/);
+    expect(gate).toContain('const locked = useRef(false)');
+    expect(gate).toContain('if (locked.current) return');
+    expect(gate).toMatch(/finally\s*{[\s\S]*locked\.current = false;[\s\S]*setBusy\(false\)/);
+    expect(gate).not.toMatch(
+      /saveAlertSilence|loadAlertSilence|updateAlertSilenceEnabled|deleteAlertSilence|rereadList/
+    );
+  });
+
   it('keeps schedule normalization in the model and splits the two presentation windows', () => {
     expect(editorSource).toContain("from './alert-silence-schedule-fields'");
     expect(editorSource).not.toMatch(/DatePicker|TimePicker|Checkbox|Radio|changeAlertSilenceType/);

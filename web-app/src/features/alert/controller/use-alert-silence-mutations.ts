@@ -35,67 +35,81 @@ import {
   type AlertSilencePage
 } from '../alert-silence-model';
 
-export function useAlertSilenceMutations(draft: AlertSilenceDraft | null,
-  rereadList: () => Promise<AlertSilencePage>, onSaved: () => void) {
+const operationFeedback = {
+  success: 'alertSilences.operationSuccess',
+  error: 'alertSilences.operationFailed'
+} as const;
+const saveFeedback = { success: 'alertSilences.saveSuccess', error: 'alertSilences.saveFailed' } as const;
+
+type OperationFeedback = typeof operationFeedback | typeof saveFeedback;
+type MessageApi = ReturnType<typeof App.useApp>['message'];
+type Translate = ReturnType<typeof useTranslation>['t'];
+
+export function useAlertSilenceMutations(
+  draft: AlertSilenceDraft | null,
+  rereadList: () => Promise<AlertSilencePage>,
+  onSaved: () => void
+) {
   const { t } = useTranslation();
   const { message } = App.useApp();
-  const [busy, setBusy] = useState(false);
-  const locked = useRef(false);
-  const operate = async (operation: () => Promise<void>) => {
-    if (locked.current) return;
-    locked.current = true;
-    setBusy(true);
-    try {
-      await operation();
-      void message.success(t('alertSilences.operationSuccess'));
-    } catch {
-      void message.error(t('alertSilences.operationFailed'));
-    } finally {
-      locked.current = false;
-      setBusy(false);
-    }
-  };
+  const gate = useAlertSilenceOperationGate(message, t);
   const save = async () => {
-    if (locked.current) return;
+    if (gate.isLocked()) return;
     const current = draft;
     if (!current || validateAlertSilenceDraft(current).length > 0) {
       void message.warning(t('alertSilences.validation'));
       return;
     }
-    locked.current = true;
-    setBusy(true);
-    try {
+    await gate.run(async () => {
       await saveAlertSilence(current);
       if (current.id !== undefined) requireDraftConvergence(await loadAlertSilence(current.id), current);
       await rereadList();
       onSaved();
-      void message.success(t('alertSilences.saveSuccess'));
+    }, saveFeedback);
+  };
+  const toggle = (silence: AlertSilence, enabled: boolean) =>
+    gate.operate(async () => {
+      await updateAlertSilenceEnabled(silence, enabled);
+      requireSilenceConvergence(await loadAlertSilence(silence.id), { ...silence, enable: enabled });
+      await rereadList();
+    });
+  const remove = (id: number) =>
+    gate.operate(async () => {
+      await deleteAlertSilence(id);
+      try {
+        await loadAlertSilence(id);
+      } catch (reason) {
+        if (classifyAlertSilenceReadError(reason) === 'missing') {
+          await rereadList();
+          return;
+        }
+        throw reason;
+      }
+      throw new Error('Deleted silence still exists');
+    });
+  return { busy: gate.busy, isLocked: gate.isLocked, save, toggle, remove };
+}
+
+function useAlertSilenceOperationGate(message: MessageApi, t: Translate) {
+  const [busy, setBusy] = useState(false);
+  // Busy drives the UI; the ref closes same-tick races before React can publish that state.
+  const locked = useRef(false);
+  const run = async (operation: () => Promise<void>, feedback: OperationFeedback) => {
+    if (locked.current) return;
+    locked.current = true;
+    setBusy(true);
+    try {
+      await operation();
+      void message.success(t(feedback.success));
     } catch {
-      void message.error(t('alertSilences.saveFailed'));
+      void message.error(t(feedback.error));
     } finally {
       locked.current = false;
       setBusy(false);
     }
   };
-  const toggle = (silence: AlertSilence, enabled: boolean) => operate(async () => {
-    await updateAlertSilenceEnabled(silence, enabled);
-    requireSilenceConvergence(await loadAlertSilence(silence.id), { ...silence, enable: enabled });
-    await rereadList();
-  });
-  const remove = (id: number) => operate(async () => {
-    await deleteAlertSilence(id);
-    try {
-      await loadAlertSilence(id);
-    } catch (reason) {
-      if (classifyAlertSilenceReadError(reason) === 'missing') {
-        await rereadList();
-        return;
-      }
-      throw reason;
-    }
-    throw new Error('Deleted silence still exists');
-  });
-  return { busy, isLocked: () => locked.current, save, toggle, remove };
+  const operate = (operation: () => Promise<void>) => run(operation, operationFeedback);
+  return { busy, isLocked: () => locked.current, operate, run };
 }
 
 function requireDraftConvergence(actual: AlertSilence, draft: AlertSilenceDraft) {
@@ -105,10 +119,17 @@ function requireDraftConvergence(actual: AlertSilence, draft: AlertSilenceDraft)
 }
 
 function requireSilenceConvergence(actual: AlertSilence, expected: AlertSilence) {
-  if (actual.id !== expected.id || actual.name !== expected.name || actual.enable !== expected.enable
-    || actual.matchAll !== expected.matchAll || actual.type !== expected.type
-    || !mapsEqual(actual.labels, expected.labels) || !arraysEqual(actual.days, expected.days)
-    || !timesEqual(actual.periodStart, expected.periodStart) || !timesEqual(actual.periodEnd, expected.periodEnd)) {
+  if (
+    actual.id !== expected.id ||
+    actual.name !== expected.name ||
+    actual.enable !== expected.enable ||
+    actual.matchAll !== expected.matchAll ||
+    actual.type !== expected.type ||
+    !mapsEqual(actual.labels, expected.labels) ||
+    !arraysEqual(actual.days, expected.days) ||
+    !timesEqual(actual.periodStart, expected.periodStart) ||
+    !timesEqual(actual.periodEnd, expected.periodEnd)
+  ) {
     throw new AlertSilenceContractError('Alert Silence canonical fields did not converge');
   }
 }

@@ -33,12 +33,6 @@
     },
     {
       "rule": "function-size",
-      "path": "features/alert/controller/use-alert-silence-mutations.ts",
-      "identity": "function:useAlertSilenceMutations",
-      "allowedMax": 62
-    },
-    {
-      "rule": "function-size",
       "path": "features/alert/controller/use-notice-template-command-controller.ts",
       "identity": "function:useNoticeTemplateCommandController",
       "allowedMax": 96
