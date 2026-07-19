@@ -15,87 +15,21 @@
  * limitations under the License.
  */
 
-import { Checkbox, DatePicker, Input, Modal, Radio, Switch, TimePicker } from 'antd';
-import dayjs from 'dayjs';
+import { Input, Modal, Switch } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { changeAlertSilenceType, type AlertSilenceDraft, type AlertSilenceType } from './alert-silence-model';
+import type { AlertSilenceDraft } from './alert-silence-model';
 import styles from './alert-silence-editor.module.css';
+import { AlertSilenceScheduleFields } from './alert-silence-schedule-fields';
 
-const weekdays = [7, 1, 2, 3, 4, 5, 6] as const;
-
-function timePickerValue(value: string) {
-  const [hours = 0, minutes = 0] = value.split(':').map(Number);
-  return dayjs().hour(hours).minute(minutes).second(0).millisecond(0);
-}
-
-function AlertSilenceScheduleFields({ draft, update, replace }: {
-  draft: AlertSilenceDraft;
-  update: (patch: Partial<AlertSilenceDraft>) => void;
-  replace: (draft: AlertSilenceDraft) => void;
-}) {
-  const { t } = useTranslation();
-  const changeType = (type: AlertSilenceType) => replace(changeAlertSilenceType(draft, type));
-  return (
-    <>
-      <label className={`${styles.field} ${styles.wide}`}>
-        {t('alertSilences.type')}
-        <Radio.Group
-          optionType="button"
-          buttonStyle="solid"
-          value={draft.type}
-          options={[
-            { value: 0, label: t('alertSilences.once') },
-            { value: 1, label: t('alertSilences.recurring') }
-          ]}
-          onChange={event => changeType(event.target.value as AlertSilenceType)}
-        />
-      </label>
-      {draft.type === 1 && (
-        <label className={`${styles.field} ${styles.wide} ${styles.weekdays}`}>
-          {t('alertSilences.days')}
-          <Checkbox.Group
-            value={draft.days}
-            options={weekdays.map(day => ({ value: day, label: t(`alertSilences.week.${day}`) }))}
-            onChange={days => update({ days })}
-          />
-        </label>
-      )}
-      {draft.type === 0 ? (
-        <label className={`${styles.field} ${styles.wide}`}>
-          {t('alertSilences.timeWindow')}
-          <DatePicker.RangePicker
-            showTime={{ format: 'HH:mm' }}
-            format="YYYY-MM-DD HH:mm"
-            value={[dayjs(draft.periodStart), dayjs(draft.periodEnd)]}
-            onChange={range => {
-              if (range?.[0] && range[1]) {
-                update({
-                  periodStart: range[0].format('YYYY-MM-DDTHH:mm'),
-                  periodEnd: range[1].format('YYYY-MM-DDTHH:mm')
-                });
-              }
-            }}
-          />
-        </label>
-      ) : (
-        <>
-          <label className={styles.field}>
-            {t('alertSilences.start')}
-            <TimePicker format="HH:mm" minuteStep={5} value={timePickerValue(draft.periodStart)} onChange={value => value && update({ periodStart: value.format('HH:mm') })} />
-          </label>
-          <label className={styles.field}>
-            {t('alertSilences.end')}
-            <TimePicker format="HH:mm" minuteStep={5} value={timePickerValue(draft.periodEnd)} onChange={value => value && update({ periodEnd: value.format('HH:mm') })} />
-          </label>
-        </>
-      )}
-      {draft.type === 1 && <span className={`${styles.hint} ${styles.wide}`}>{t('alertSilences.crossMidnightHelp')}</span>}
-    </>
-  );
-}
-
-export function AlertSilenceEditor({ draft, saving, update, replace, close, submit }: {
+export function AlertSilenceEditor({
+  draft,
+  saving,
+  update,
+  replace,
+  close,
+  submit
+}: {
   draft: AlertSilenceDraft;
   saving: boolean;
   update: (patch: Partial<AlertSilenceDraft>) => void;
@@ -132,7 +66,12 @@ export function AlertSilenceEditor({ draft, saving, update, replace, close, subm
         {!draft.matchAll && (
           <label className={`${styles.field} ${styles.wide}`}>
             {t('alertSilences.labels')}
-            <Input.TextArea rows={2} value={draft.labelsText} placeholder={t('alertSilences.matcherPlaceholder')} onChange={event => update({ labelsText: event.target.value })} />
+            <Input.TextArea
+              rows={2}
+              value={draft.labelsText}
+              placeholder={t('alertSilences.matcherPlaceholder')}
+              onChange={event => update({ labelsText: event.target.value })}
+            />
             <span className={styles.hint}>{t('alertSilences.labelsHelp')}</span>
           </label>
         )}

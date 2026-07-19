@@ -18,8 +18,10 @@
 import { describe, expect, it } from 'vitest';
 
 import apiSource from './alert-silence-api.ts?raw';
+import editorSource from './alert-silence-editor.tsx?raw';
 import modelSource from './alert-silence-model.ts?raw';
 import pageSource from './alert-silence-page.tsx?raw';
+import scheduleSource from './alert-silence-schedule-fields.tsx?raw';
 import schemaSource from './alert-silence-schema.ts?raw';
 import writeModelSource from './alert-silence-write-model.ts?raw';
 import controllerSource from './controller/use-alert-silence-controller.ts?raw';
@@ -27,7 +29,9 @@ import pageModelSource from './alert-silence-page-model.ts?raw';
 import mutationsSource from './controller/use-alert-silence-mutations.ts?raw';
 
 function sourceLineCount(value: string) {
-  return value.replace(/\/\*[\s\S]*?\*\//g, '').split('\n')
+  return value
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .split('\n')
     .filter(line => line.trim() && !line.trim().startsWith('//')).length;
 }
 
@@ -55,8 +59,23 @@ describe('AlertSilencePage architecture', () => {
     expect(controllerSource).not.toMatch(/useState<AlertSilenceDraft/);
     expect(controllerSource).toContain("from './use-alert-silence-mutations'");
     expect(pageModelSource).toContain("| { kind: 'loading'; id: number }");
-    expect(pageModelSource).toContain("| { kind: AlertSilenceDetailFailure; id: number }");
+    expect(pageModelSource).toContain('| { kind: AlertSilenceDetailFailure; id: number }');
     expect(sourceLineCount(controllerSource)).toBeLessThanOrEqual(200);
     expect(sourceLineCount(mutationsSource)).toBeLessThanOrEqual(200);
+  });
+
+  it('keeps schedule normalization in the model and splits the two presentation windows', () => {
+    expect(editorSource).toContain("from './alert-silence-schedule-fields'");
+    expect(editorSource).not.toMatch(/DatePicker|TimePicker|Checkbox|Radio|changeAlertSilenceType/);
+    expect(scheduleSource).toContain('function AlertSilenceOnceWindow');
+    expect(scheduleSource).toContain('function AlertSilenceRecurringWindow');
+    expect(scheduleSource).toContain('changeAlertSilenceType(draft, type)');
+    expect(scheduleSource).toContain('const weekdayOrder = [7, 1, 2, 3, 4, 5, 6]');
+    expect(scheduleSource).toContain('format="YYYY-MM-DD HH:mm"');
+    expect(scheduleSource).toContain("format('YYYY-MM-DDTHH:mm')");
+    expect(scheduleSource.match(/minuteStep=\{5\}/g)).toHaveLength(2);
+    expect(scheduleSource).toContain('if (!range?.[0] || !range[1]) return');
+    expect(scheduleSource).toContain("t('alertSilences.crossMidnightHelp')");
+    expect(scheduleSource).not.toMatch(/controller|alert-silence-api|@tanstack\/react-query/);
   });
 });

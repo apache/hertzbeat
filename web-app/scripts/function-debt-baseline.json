@@ -9,12 +9,6 @@
     },
     {
       "rule": "function-size",
-      "path": "features/alert/alert-silence-editor.tsx",
-      "identity": "function:AlertSilenceScheduleFields",
-      "allowedMax": 65
-    },
-    {
-      "rule": "function-size",
       "path": "features/alert/controller/use-alert-group-command-controller.ts",
       "identity": "function:useAlertGroupCommandController",
       "allowedMax": 93
