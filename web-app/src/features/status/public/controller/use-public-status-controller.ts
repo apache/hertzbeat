@@ -19,7 +19,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { loadPublicStatusComponents, loadPublicStatusIncidents, loadPublicStatusOrg } from '../api/public-status-api';
 import type { PublicStatusState, PublicStatusViewModel } from '../model/public-status-contract';
-import { publicStatusState } from '../model/public-status-model';
+import { isCompletePublicStatusIncidentPage, publicStatusState } from '../model/public-status-model';
 import { publicStatusQueryKeys } from './public-status-query-keys';
 
 export function usePublicStatusController(): PublicStatusViewModel {
@@ -39,7 +39,12 @@ export function usePublicStatusController(): PublicStatusViewModel {
   if (state !== 'ready') {
     return { ...emptyViewModel(state, false), org: org.error ? undefined : org.data };
   }
-  if (org.data === undefined || components.data === undefined || incidents.data === undefined) {
+  if (
+    org.data === undefined ||
+    components.data === undefined ||
+    incidents.data === undefined ||
+    !isCompletePublicStatusIncidentPage(incidents.data)
+  ) {
     return emptyViewModel('unavailable', false);
   }
   return {

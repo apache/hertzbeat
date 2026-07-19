@@ -23,7 +23,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
 const { apiMessageGet } = vi.hoisted(() => ({ apiMessageGet: vi.fn() }));
-vi.mock('@/core/http/api-message', async (importOriginal) => ({
+vi.mock('@/core/http/api-message', async importOriginal => ({
   ...(await importOriginal<typeof import('@/core/http/api-message')>()),
   apiMessageGet
 }));
@@ -50,8 +50,9 @@ describe('PublicStatusPage failure states', () => {
     renderPage();
 
     expect(await screen.findByText('The public status page has not been configured yet.')).toBeInTheDocument();
-    expect(screen.queryByText('The service is unavailable. Check the backend connection and try again.'))
-      .not.toBeInTheDocument();
+    expect(
+      screen.queryByText('The service is unavailable. Check the backend connection and try again.')
+    ).not.toBeInTheDocument();
   });
 
   it.each([
@@ -63,9 +64,28 @@ describe('PublicStatusPage failure states', () => {
     mockStatusQueries(errors);
     renderPage();
 
-    expect(await screen.findByText('The service is unavailable. Check the backend connection and try again.'))
-      .toBeInTheDocument();
+    expect(
+      await screen.findByText('The service is unavailable. Check the backend connection and try again.')
+    ).toBeInTheDocument();
     expect(screen.queryByText('The public status page has not been configured yet.')).not.toBeInTheDocument();
+  });
+
+  it('shows unavailable instead of rendering a truncated incident collection', async () => {
+    mockStatusQueries({
+      incidentResponse: {
+        content: [{ id: 1, name: 'Incident 1', state: 1 }],
+        totalElements: 2,
+        totalPages: 1,
+        number: 0,
+        size: 20
+      }
+    });
+    renderPage();
+
+    expect(
+      await screen.findByText('The service is unavailable. Check the backend connection and try again.')
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Incident 1')).not.toBeInTheDocument();
   });
 });
 
@@ -73,6 +93,7 @@ type QueryErrors = {
   orgError?: Error;
   componentError?: Error;
   incidentError?: Error;
+  incidentResponse?: unknown;
 };
 
 function mockStatusQueries(errors: QueryErrors) {
@@ -87,7 +108,9 @@ function mockStatusQueries(errors: QueryErrors) {
     }
     return errors.incidentError
       ? Promise.reject(errors.incidentError)
-      : Promise.resolve({ content: [], totalElements: 0, totalPages: 0, number: 0, size: 20 });
+      : Promise.resolve(
+          errors.incidentResponse ?? { content: [], totalElements: 0, totalPages: 0, number: 0, size: 20 }
+        );
   });
 }
 

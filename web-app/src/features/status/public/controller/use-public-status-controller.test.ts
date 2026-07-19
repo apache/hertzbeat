@@ -108,6 +108,18 @@ describe('usePublicStatusController', () => {
       state: 'unavailable'
     });
   });
+
+  it('does not present an incomplete incident page as ready', () => {
+    setEvidence({ data: org }, { data: components }, { data: { ...incidents, totalElements: 2 } });
+
+    expect(renderHook(() => usePublicStatusController()).result.current).toEqual({
+      org: undefined,
+      components: [],
+      incidents: [],
+      loading: false,
+      state: 'unavailable'
+    });
+  });
 });
 
 function setEvidence(

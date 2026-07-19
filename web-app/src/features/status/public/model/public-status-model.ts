@@ -17,7 +17,7 @@
 
 import { isStatusOrgNotFound } from '@/features/status/shared/status-error-model';
 
-import type { PublicStatusState } from './public-status-contract';
+import type { PublicStatusIncidentPage, PublicStatusState } from './public-status-contract';
 
 export { isStatusOrgNotFound } from '@/features/status/shared/status-error-model';
 export type { PublicStatusState } from './public-status-contract';
@@ -30,4 +30,12 @@ export function publicStatusState(
   if (isStatusOrgNotFound(orgError) && !componentsError && !incidentsError) return 'unconfigured';
   if (orgError || componentsError || incidentsError) return 'unavailable';
   return 'ready';
+}
+
+export function isCompletePublicStatusIncidentPage(page: PublicStatusIncidentPage) {
+  if (page.number !== 0) return false;
+  if (page.content.length !== page.totalElements) return false;
+  if (new Set(page.content.map(incident => incident.id)).size !== page.content.length) return false;
+  const expectedPages = page.totalElements === 0 ? 0 : Math.ceil(page.totalElements / page.size);
+  return page.totalPages === expectedPages;
 }

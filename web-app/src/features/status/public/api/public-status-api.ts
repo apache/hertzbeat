@@ -17,7 +17,14 @@
 
 import { apiMessageGet } from '@/core/http/api-message';
 
-import { parsePublicStatusComponents, parsePublicStatusIncidents, parsePublicStatusOrg } from './public-status-schema';
+import type { PublicStatusIncidentPage } from '../model/public-status-contract';
+import { isCompletePublicStatusIncidentPage } from '../model/public-status-model';
+import {
+  parsePublicStatusComponents,
+  parsePublicStatusIncidents,
+  parsePublicStatusOrg,
+  PublicStatusContractError
+} from './public-status-schema';
 
 export type {
   PublicStatusComponent,
@@ -26,10 +33,70 @@ export type {
   PublicStatusOrg
 } from '../model/public-status-contract';
 
-export const loadPublicStatusOrg = async () => parsePublicStatusOrg(await apiMessageGet('/api/status/page/public/org'));
+const incidentPath = '/api/status/page/public/incident';
+const incidentPageSize = 20;
+const maximumIncidentPages = 100;
 
-export const loadPublicStatusComponents = async () =>
-  parsePublicStatusComponents(await apiMessageGet('/api/status/page/public/component'));
+type PublicStatusQueryContext = { signal?: AbortSignal };
 
-export const loadPublicStatusIncidents = async () =>
-  parsePublicStatusIncidents(await apiMessageGet('/api/status/page/public/incident?pageIndex=0&pageSize=20'));
+export const loadPublicStatusOrg = async (context?: PublicStatusQueryContext) =>
+  parsePublicStatusOrg(await get('/api/status/page/public/org', context));
+
+export const loadPublicStatusComponents = async (context?: PublicStatusQueryContext) =>
+  parsePublicStatusComponents(await get('/api/status/page/public/component', context));
+
+export async function loadPublicStatusIncidents(context?: PublicStatusQueryContext) {
+  const firstPage = await loadIncidentPage(0, context);
+  assertFirstPage(firstPage);
+  const pages = [firstPage];
+
+  // The validated first page fixes the termination bound; every later page must keep that snapshot metadata.
+  for (let pageIndex = 1; pageIndex < firstPage.totalPages; pageIndex += 1) {
+    const page = await loadIncidentPage(pageIndex, context);
+    assertContinuationPage(firstPage, page, pageIndex);
+    pages.push(page);
+  }
+
+  const result = { ...firstPage, content: pages.flatMap(page => page.content) };
+  if (!isCompletePublicStatusIncidentPage(result)) throw new PublicStatusContractError();
+  return result;
+}
+
+async function loadIncidentPage(pageIndex: number, context?: PublicStatusQueryContext) {
+  const path = `${incidentPath}?pageIndex=${pageIndex}&pageSize=${incidentPageSize}`;
+  return parsePublicStatusIncidents(await get(path, context));
+}
+
+function assertFirstPage(page: PublicStatusIncidentPage) {
+  const expectedPages = page.totalElements === 0 ? 0 : Math.ceil(page.totalElements / page.size);
+  if (
+    page.number !== 0 ||
+    page.totalPages !== expectedPages ||
+    page.totalPages > maximumIncidentPages ||
+    page.content.length > page.size
+  ) {
+    throw new PublicStatusContractError();
+  }
+}
+
+function assertContinuationPage(
+  firstPage: PublicStatusIncidentPage,
+  page: PublicStatusIncidentPage,
+  pageIndex: number
+) {
+  const remaining = firstPage.totalElements - pageIndex * firstPage.size;
+  const expectedLength = Math.min(firstPage.size, remaining);
+  if (
+    page.number !== pageIndex ||
+    page.totalPages !== firstPage.totalPages ||
+    page.totalElements !== firstPage.totalElements ||
+    page.size !== firstPage.size ||
+    page.content.length !== expectedLength
+  ) {
+    throw new PublicStatusContractError();
+  }
+}
+
+function get(path: string, context?: PublicStatusQueryContext) {
+  return context?.signal ? apiMessageGet(path, { signal: context.signal }) : apiMessageGet(path);
+}
