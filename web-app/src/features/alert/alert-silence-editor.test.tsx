@@ -103,6 +103,7 @@ describe('AlertSilenceEditor schedule', () => {
     expect(onceInputs.length).toBeGreaterThan(0);
     onceInputs.forEach(control => expect(control).toBeDisabled());
     expect(screen.getByRole('button', { name: 'common.cancel' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument();
 
     fireEvent.keyDown(document, { key: 'Escape', code: 'Escape' });
     expect(close).not.toHaveBeenCalled();

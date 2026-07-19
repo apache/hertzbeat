@@ -38,6 +38,7 @@ export function AlertSilenceEditor(props: AlertSilenceEditorProps) {
     <Modal
       open
       width={680}
+      closable={!saving}
       maskClosable={false}
       title={t(draft.id ? 'alertSilences.edit' : 'alertSilences.new')}
       okText={t('common.save')}
