@@ -15,56 +15,61 @@
  * limitations under the License.
  */
 
-import {
-  scopedQueryKey,
-  type ExactTimeWindow
-} from '@/shared/query-context';
+import { scopedQueryKey, type ExactTimeWindow } from '@/shared/query-context';
 
 import { exploreQueryContext, type ExploreQuery } from '../model/explore-model';
 
 const historyRootKey = ['explore-history'] as const;
 
 export const exploreQueryKeys = {
-  detail: (traceId: string | undefined) => ['trace-detail', traceId] as const,
-  history: (
-    query: ExploreQuery,
-    window: ExactTimeWindow | undefined,
-    refreshRevision: number
-  ) => [
-    ...scopedQueryKey(historyRootKey, exploreQueryContext(query), window, refreshRevision),
-    ...historyRequestIdentity(query, window)
-  ] as const
+  detail: (scopeKey: string, traceId: string | undefined) => ['trace-detail', scopeKey, traceId] as const,
+  history: (query: ExploreQuery, window: ExactTimeWindow | undefined, refreshRevision: number) =>
+    [
+      ...scopedQueryKey(historyRootKey, exploreQueryContext(query), window, refreshRevision),
+      ...historyRequestIdentity(query, window)
+    ] as const
 };
 
 function historyRequestIdentity(query: ExploreQuery, window: ExactTimeWindow | undefined) {
   // An exact window owns the request timestamps; the route preset matters only for a relative request.
   const relativeTimeRange = window ? undefined : query.timeRange;
-  if (query.signal === 'metrics') return ['metrics', {
-    relativeTimeRange,
-    query: query.query,
-    metricFilter: query.metricFilter,
-    groupBy: query.groupBy,
-    aggregation: query.aggregation,
-    step: query.step
-  }] as const;
-  if (query.signal === 'logs') return ['logs', {
-    relativeTimeRange,
-    query: query.query,
-    traceId: query.traceId,
-    spanId: query.spanId,
-    severityText: query.severityText,
-    resourceFilter: query.resourceFilter,
-    attributeFilter: query.attributeFilter,
-    pageIndex: query.pageIndex
-  }] as const;
-  return ['traces', {
-    relativeTimeRange,
-    query: query.query,
-    traceId: query.traceId,
-    resourceFilter: query.resourceFilter,
-    minDurationMs: query.minDurationMs,
-    maxDurationMs: query.maxDurationMs,
-    errorOnly: query.errorOnly,
-    pageIndex: query.pageIndex
-  }] as const;
+  if (query.signal === 'metrics')
+    return [
+      'metrics',
+      {
+        relativeTimeRange,
+        query: query.query,
+        metricFilter: query.metricFilter,
+        groupBy: query.groupBy,
+        aggregation: query.aggregation,
+        step: query.step
+      }
+    ] as const;
+  if (query.signal === 'logs')
+    return [
+      'logs',
+      {
+        relativeTimeRange,
+        query: query.query,
+        traceId: query.traceId,
+        spanId: query.spanId,
+        severityText: query.severityText,
+        resourceFilter: query.resourceFilter,
+        attributeFilter: query.attributeFilter,
+        pageIndex: query.pageIndex
+      }
+    ] as const;
+  return [
+    'traces',
+    {
+      relativeTimeRange,
+      query: query.query,
+      traceId: query.traceId,
+      resourceFilter: query.resourceFilter,
+      minDurationMs: query.minDurationMs,
+      maxDurationMs: query.maxDurationMs,
+      errorOnly: query.errorOnly,
+      pageIndex: query.pageIndex
+    }
+  ] as const;
 }

@@ -21,13 +21,19 @@ import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { TraceDetail } from '../model/explore-signal-contract';
+import type { TraceExploreQuery } from '../model/explore-model';
 import { useTraceDetailController } from './use-trace-detail-controller';
 
 const api = vi.hoisted(() => ({ loadTraceDetail: vi.fn() }));
-vi.mock('../api/explore-api', async importOriginal => ({ ...(await importOriginal<typeof import('../api/explore-api')>()), ...api }));
+vi.mock('../api/explore-api', async importOriginal => ({
+  ...(await importOriginal<typeof import('../api/explore-api')>()),
+  ...api
+}));
 
 describe('Trace detail controller', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('owns open, ready selection, cross-signal actions, pagination, and close reset', async () => {
     api.loadTraceDetail.mockResolvedValue(traceDetail('trace-1'));
@@ -48,12 +54,17 @@ describe('Trace detail controller', () => {
     act(() => view.result.current.close());
     expect(view.result.current.state.kind).toBe('closed');
     act(() => view.result.current.openTrace('trace-1'));
-    await waitFor(() => expect(view.result.current.state).toMatchObject({ kind: 'ready', selected: { spanId: 'span-1' } }));
+    await waitFor(() =>
+      expect(view.result.current.state).toMatchObject({ kind: 'ready', selected: { spanId: 'span-1' } })
+    );
   });
 
   it.each([
     ['missing', async () => new (await import('../model/explore-signal-contract')).ExploreSignalMissingError()],
-    ['unavailable', async () => new (await import('@/core/http/api-message')).ApiMessageError('offline', { status: 503 })],
+    [
+      'unavailable',
+      async () => new (await import('@/core/http/api-message')).ApiMessageError('offline', { status: 503 })
+    ],
     ['error', async () => new (await import('../model/explore-signal-contract')).ExploreSignalContractError('bad')],
     ['error', () => new Error('bad')]
   ] as const)('classifies detail failure as %s and retries', async (kind, reasonFactory) => {
@@ -61,7 +72,9 @@ describe('Trace detail controller', () => {
     const view = renderController(vi.fn());
     act(() => view.result.current.openTrace('trace-1'));
     await waitFor(() => expect(view.result.current.state.kind).toBe(kind));
-    await act(async () => { await view.result.current.retry(); });
+    await act(async () => {
+      await view.result.current.retry();
+    });
     await waitFor(() => expect(view.result.current.state.kind).toBe('ready'));
   });
 
@@ -80,7 +93,9 @@ describe('Trace detail controller', () => {
     await waitFor(() => expect(signals[0]?.aborted).toBe(true));
     act(() => first.resolve(traceDetail('trace-1')));
     act(() => second.resolve(traceDetail('trace-2')));
-    await waitFor(() => expect(view.result.current.state).toMatchObject({ kind: 'ready', detail: { traceId: 'trace-2' } }));
+    await waitFor(() =>
+      expect(view.result.current.state).toMatchObject({ kind: 'ready', detail: { traceId: 'trace-2' } })
+    );
     const third = deferred<TraceDetail>();
     api.loadTraceDetail.mockImplementationOnce((_traceId: string, signal: AbortSignal) => {
       signals.push(signal);
@@ -92,27 +107,74 @@ describe('Trace detail controller', () => {
     await waitFor(() => expect(signals[2]?.aborted).toBe(true));
     expect(view.result.current.state.kind).toBe('closed');
   });
+
+  it('closes selected trace evidence when the query scope changes', async () => {
+    api.loadTraceDetail.mockResolvedValue(traceDetail('trace-1'));
+    const view = renderController(vi.fn());
+    act(() => view.result.current.openTrace('trace-1'));
+    await waitFor(() => expect(view.result.current.state.kind).toBe('ready'));
+
+    view.rerender({ query: { ...defaultQuery, serviceName: 'payments' } });
+
+    expect(view.result.current.state.kind).toBe('closed');
+  });
 });
 
 function renderController(openPath: (path: string) => void) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
-  const wrapper = ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
-  return renderHook(() => useTraceDetailController({ signal: 'traces', timeRange: 'last-30m' }, openPath), { wrapper });
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  );
+  return renderHook(({ query }) => useTraceDetailController(query, openPath), {
+    initialProps: { query: defaultQuery },
+    wrapper
+  });
 }
 
+const defaultQuery: TraceExploreQuery = { signal: 'traces', timeRange: 'last-30m' };
+
 function traceDetail(traceId: string): TraceDetail {
-  return { traceId, rootSpanId: 'span-1', serviceName: 'checkout', serviceNamespace: null, rootSpanName: 'POST',
-    durationNanos: 2, status: 'OK', startTime: 0, errorSpanCount: 0, resourceAttributes: null, spans: [
-      span(traceId, 'span-1', 'checkout'), span(traceId, 'span-2', 'payments')
-    ] };
+  return {
+    traceId,
+    rootSpanId: 'span-1',
+    serviceName: 'checkout',
+    serviceNamespace: null,
+    rootSpanName: 'POST',
+    durationNanos: 2,
+    status: 'OK',
+    startTime: 0,
+    errorSpanCount: 0,
+    resourceAttributes: null,
+    spans: [span(traceId, 'span-1', 'checkout'), span(traceId, 'span-2', 'payments')]
+  };
 }
 function span(traceId: string, spanId: string, serviceName: string) {
-  return { traceId, spanId, parentSpanId: null, spanName: spanId, serviceName, status: 'OK', spanKind: null,
-    statusMessage: null, traceState: null, scopeName: null, scopeVersion: null, durationNanos: 1, startTime: 0,
-    highlighted: false, resourceAttributes: null, spanAttributes: null, events: null, links: null, codeNavigationHint: null };
+  return {
+    traceId,
+    spanId,
+    parentSpanId: null,
+    spanName: spanId,
+    serviceName,
+    status: 'OK',
+    spanKind: null,
+    statusMessage: null,
+    traceState: null,
+    scopeName: null,
+    scopeVersion: null,
+    durationNanos: 1,
+    startTime: 0,
+    highlighted: false,
+    resourceAttributes: null,
+    spanAttributes: null,
+    events: null,
+    links: null,
+    codeNavigationHint: null
+  };
 }
 function deferred<T>() {
   let resolve!: (value: T) => void;
-  const promise = new Promise<T>(done => { resolve = done; });
+  const promise = new Promise<T>(done => {
+    resolve = done;
+  });
   return { promise, resolve };
 }

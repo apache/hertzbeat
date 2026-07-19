@@ -51,10 +51,11 @@ const metricQuery: ExploreQuery = {
 };
 
 describe('Explore Query Key factory', () => {
-  it('builds trace detail identity from only the requested trace id', () => {
-    expect(exploreQueryKeys.detail(undefined)).toEqual(['trace-detail', undefined]);
-    expect(exploreQueryKeys.detail('trace-1')).toEqual(['trace-detail', 'trace-1']);
-    expect(exploreQueryKeys.detail('trace-2')).not.toEqual(exploreQueryKeys.detail('trace-1'));
+  it('builds trace detail identity from both evidence scope and trace id', () => {
+    expect(exploreQueryKeys.detail('scope-a', undefined)).toEqual(['trace-detail', 'scope-a', undefined]);
+    expect(exploreQueryKeys.detail('scope-a', 'trace-1')).toEqual(['trace-detail', 'scope-a', 'trace-1']);
+    expect(exploreQueryKeys.detail('scope-a', 'trace-2')).not.toEqual(exploreQueryKeys.detail('scope-a', 'trace-1'));
+    expect(exploreQueryKeys.detail('scope-b', 'trace-1')).not.toEqual(exploreQueryKeys.detail('scope-a', 'trace-1'));
   });
 
   it('builds one explicit metrics history identity', () => {
@@ -75,19 +76,23 @@ describe('Explore Query Key factory', () => {
         step: '30s'
       }
     ]);
-    expect(exploreQueryKeys.history({ ...metricQuery }, { ...window }, 3))
-      .toEqual(exploreQueryKeys.history(metricQuery, window, 3));
+    expect(exploreQueryKeys.history({ ...metricQuery }, { ...window }, 3)).toEqual(
+      exploreQueryKeys.history(metricQuery, window, 3)
+    );
   });
 
   it('excludes route-only state and keeps a relative range only without an exact window', () => {
-    expect(exploreQueryKeys.history({ ...metricQuery, timeRange: 'last-1h' }, window, 3))
-      .toEqual(exploreQueryKeys.history(metricQuery, window, 3));
+    expect(exploreQueryKeys.history({ ...metricQuery, timeRange: 'last-1h' }, window, 3)).toEqual(
+      exploreQueryKeys.history(metricQuery, window, 3)
+    );
 
     const logs: ExploreQuery = { ...sharedQuery, signal: 'logs' };
-    expect(exploreQueryKeys.history({ ...logs, live: true }, window, 3))
-      .toEqual(exploreQueryKeys.history(logs, window, 3));
-    expect(exploreQueryKeys.history({ ...metricQuery, timeRange: 'last-1h' }, undefined, 3))
-      .not.toEqual(exploreQueryKeys.history(metricQuery, undefined, 3));
+    expect(exploreQueryKeys.history({ ...logs, live: true }, window, 3)).toEqual(
+      exploreQueryKeys.history(logs, window, 3)
+    );
+    expect(exploreQueryKeys.history({ ...metricQuery, timeRange: 'last-1h' }, undefined, 3)).not.toEqual(
+      exploreQueryKeys.history(metricQuery, undefined, 3)
+    );
   });
 
   it('separates scope, time window, and manual refresh inputs', () => {
@@ -174,8 +179,10 @@ describe('Explore Query Key factory', () => {
 
   it('keeps trace detail reads and exact cancellation on the same factory', () => {
     expect(traceDetailControllerSource).toContain("from './explore-query-keys'");
-    expect(traceDetailControllerSource).toContain('queryKey: exploreQueryKeys.detail(traceId)');
-    expect(traceDetailControllerSource).toContain('queryKey: exploreQueryKeys.detail(id), exact: true');
+    expect(traceDetailControllerSource).toContain('queryKey: exploreQueryKeys.detail(scopeKey, traceId)');
+    expect(traceDetailControllerSource).toContain(
+      'queryKey: exploreQueryKeys.detail(opened.scopeKey, opened.traceId), exact: true'
+    );
     expect(traceDetailControllerSource).not.toMatch(/queryKey:\s*\[/);
   });
 });

@@ -21,7 +21,12 @@ import type { TFunction } from 'i18next';
 import { useState, type ReactNode } from 'react';
 
 import type { ExplorePageResult, LogRow } from '../model/explore-signal-contract';
-import { buildCrossSignalPath, buildExplorePath, type LogExploreQuery } from '../model/explore-model';
+import {
+  buildCrossSignalPath,
+  buildExplorePath,
+  exploreEvidenceScopeKey,
+  type LogExploreQuery
+} from '../model/explore-model';
 import { logBody, logServiceName } from '../model/explore-signal-model';
 import { interactiveTableRow } from './interactive-table-row';
 import { LogDetail } from './log-detail';
@@ -30,6 +35,7 @@ import styles from './log-result.module.css';
 import { SignalResultFrame } from './signal-result-frame';
 
 type Navigate = (path: string) => void;
+type LogSelection = { scopeKey: string; row: LogRow };
 
 export function LogRows({
   rows,
@@ -39,7 +45,7 @@ export function LogRows({
   navigate,
   live,
   connection,
-  actions,
+  actions
 }: {
   rows: LogRow[];
   data?: ExplorePageResult<LogRow> | undefined;
@@ -50,7 +56,9 @@ export function LogRows({
   connection?: ReactNode | undefined;
   actions?: ReactNode | undefined;
 }) {
-  const [selected, setSelected] = useState<LogRow>();
+  const scopeKey = exploreEvidenceScopeKey(query);
+  const [selection, setSelection] = useState<LogSelection>();
+  const selected = selection?.scopeKey === scopeKey ? selection.row : undefined;
 
   return (
     <SignalResultFrame
@@ -61,7 +69,7 @@ export function LogRows({
     >
       <Table<LogRow>
         className={styles.clickableTable ?? ''}
-        rowKey={(row) =>
+        rowKey={row =>
           `${row.timeUnixNano ?? row.observedTimeUnixNano ?? 'log'}-${row.traceId ?? ''}-${row.spanId ?? ''}`
         }
         size="small"
@@ -69,10 +77,10 @@ export function LogRows({
         dataSource={rows}
         pagination={logPagination(data, query, navigate)}
         scroll={{ x: 980, y: 520 }}
-        onRow={(row) => interactiveTableRow(() => setSelected(row))}
+        onRow={row => interactiveTableRow(() => setSelection({ scopeKey, row }))}
         columns={logColumns(t, query, navigate)}
       />
-      <LogDetail row={selected} t={t} query={query} navigate={navigate} onClose={() => setSelected(undefined)} />
+      <LogDetail row={selected} t={t} query={query} navigate={navigate} onClose={() => setSelection(undefined)} />
     </SignalResultFrame>
   );
 }
@@ -83,26 +91,29 @@ function logColumns(t: TFunction, query: LogExploreQuery, navigate: Navigate): C
     {
       title: t('explore.severity'),
       width: 100,
-      render: (_, row) => <Tag color={severityColor(row.severityText ?? undefined)}>{row.severityText ?? '—'}</Tag>,
+      render: (_, row) => <Tag color={severityColor(row.severityText ?? undefined)}>{row.severityText ?? '—'}</Tag>
     },
     { title: t('explore.service'), width: 170, render: (_, row) => logServiceName(row) ?? '—' },
     { title: t('explore.message'), ellipsis: true, render: (_, row) => logBody(row) ?? '—' },
     {
       title: t('explore.trace'),
       width: 190,
-      render: (_, row) => row.traceId ? (
-        <Button
-          className={styles.traceLink ?? ''}
-          type="link"
-          onClick={(event) => {
-            event.stopPropagation();
-            void navigate(buildCrossSignalPath(query, 'traces', { traceId: row.traceId ?? undefined }));
-          }}
-        >
-          {shortId(row.traceId)}
-        </Button>
-      ) : '—',
-    },
+      render: (_, row) =>
+        row.traceId ? (
+          <Button
+            className={styles.traceLink ?? ''}
+            type="link"
+            onClick={event => {
+              event.stopPropagation();
+              void navigate(buildCrossSignalPath(query, 'traces', { traceId: row.traceId ?? undefined }));
+            }}
+          >
+            {shortId(row.traceId)}
+          </Button>
+        ) : (
+          '—'
+        )
+    }
   ];
 }
 
@@ -116,7 +127,7 @@ function logPagination(data: ExplorePageResult<LogRow> | undefined, query: LogEx
     showSizeChanger: false,
     onChange: (page: number) => {
       void navigate(buildExplorePath({ ...query, pageIndex: page - 1 || undefined }));
-    },
+    }
   };
 }
 

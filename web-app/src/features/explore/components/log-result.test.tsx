@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { useState } from 'react';
 import { I18nextProvider, useTranslation } from 'react-i18next';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -35,7 +35,11 @@ describe('LogResult', () => {
 
   it('opens an inspectable OTLP log detail without leaving the workbench', () => {
     const navigate = vi.fn();
-    render(<I18nextProvider i18n={i18n}><Subject navigate={navigate} /></I18nextProvider>);
+    render(
+      <I18nextProvider i18n={i18n}>
+        <Subject navigate={navigate} />
+      </I18nextProvider>
+    );
     const logRow = screen.getByRole('row', { name: /payment timeout/ });
     expect(document.querySelector('.ant-table-tbody-virtual')).not.toBeNull();
     expect(logRow).toHaveAttribute('tabindex', '0');
@@ -50,19 +54,49 @@ describe('LogResult', () => {
     expect(navigate).toHaveBeenCalledWith(expect.stringContaining('timeRange=last-30m'));
   });
 
+  it('closes selected log evidence when the query scope changes', async () => {
+    const view = render(
+      <I18nextProvider i18n={i18n}>
+        <Subject query={{ ...defaultLogQuery, serviceName: 'checkout' }} />
+      </I18nextProvider>
+    );
+    fireEvent.click(screen.getByRole('row', { name: /payment timeout/ }));
+    expect(screen.getByRole('dialog', { name: i18n.t('exploreLog.detail') })).toBeInTheDocument();
+
+    view.rerender(
+      <I18nextProvider i18n={i18n}>
+        <Subject query={{ ...defaultLogQuery, serviceName: 'payments' }} />
+      </I18nextProvider>
+    );
+
+    const closingDrawer = screen.queryByRole('dialog', { name: i18n.t('exploreLog.detail') });
+    if (closingDrawer) expect(within(closingDrawer).queryByText('payment timeout')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: i18n.t('exploreLog.detail') })).not.toBeInTheDocument();
+    });
+  });
+
   it('keeps an out-of-range nonzero page ready with authoritative total', () => {
-    render(<I18nextProvider i18n={i18n}><LogResult
-      data={{ content: [], totalElements: 3, totalPages: 1, number: 3, size: 20 }}
-      query={{ signal: 'logs', timeRange: 'last-30m', pageIndex: 3 }}
-      t={i18n.t}
-      navigate={vi.fn()}
-    /></I18nextProvider>);
+    render(
+      <I18nextProvider i18n={i18n}>
+        <LogResult
+          data={{ content: [], totalElements: 3, totalPages: 1, number: 3, size: 20 }}
+          query={{ signal: 'logs', timeRange: 'last-30m', pageIndex: 3 }}
+          t={i18n.t}
+          navigate={vi.fn()}
+        />
+      </I18nextProvider>
+    );
     expect(screen.getByRole('heading', { name: 'Logs' }).parentElement).toHaveTextContent('3');
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
   it('lets an operator pause, resume, and clear a live stream', () => {
-    render(<I18nextProvider i18n={i18n}><LiveSubject /></I18nextProvider>);
+    render(
+      <I18nextProvider i18n={i18n}>
+        <LiveSubject />
+      </I18nextProvider>
+    );
     expect(screen.getByText('live payment timeout')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Pause' }));
@@ -75,11 +109,11 @@ describe('LogResult', () => {
   });
 
   it('does not turn a missing live view into a historical empty result', () => {
-    render(<I18nextProvider i18n={i18n}><LogResult
-      query={{ signal: 'logs', timeRange: 'last-30m', live: true }}
-      t={i18n.t}
-      navigate={vi.fn()}
-    /></I18nextProvider>);
+    render(
+      <I18nextProvider i18n={i18n}>
+        <LogResult query={{ signal: 'logs', timeRange: 'last-30m', live: true }} t={i18n.t} navigate={vi.fn()} />
+      </I18nextProvider>
+    );
     expect(screen.getByRole('alert')).toHaveTextContent(i18n.t('exploreLog.streamFailed'));
     expect(screen.queryByText(i18n.t('explore.empty.logs'))).not.toBeInTheDocument();
   });
@@ -89,64 +123,98 @@ describe('LogResult', () => {
     ['error', 'exploreLog.streamFailed'],
     ['contract', 'explore.loadFailed']
   ] as const)('labels %s without claiming the stream is connecting', (status, messageKey) => {
-    render(<I18nextProvider i18n={i18n}><LogResult
-      query={{ signal: 'logs', timeRange: 'last-30m', live: true }}
-      t={i18n.t}
-      navigate={vi.fn()}
-      live={{ rows: [], status, togglePaused: vi.fn(), clear: vi.fn() }}
-    /></I18nextProvider>);
+    render(
+      <I18nextProvider i18n={i18n}>
+        <LogResult
+          query={{ signal: 'logs', timeRange: 'last-30m', live: true }}
+          t={i18n.t}
+          navigate={vi.fn()}
+          live={{ rows: [], status, togglePaused: vi.fn(), clear: vi.fn() }}
+        />
+      </I18nextProvider>
+    );
     expect(screen.getAllByText(i18n.t(messageKey)).length).toBeGreaterThan(0);
     expect(screen.queryByText(i18n.t('exploreLog.connecting'))).not.toBeInTheDocument();
   });
 });
 
-function Subject({ navigate = vi.fn() }: { navigate?: (path: string) => void }) {
+function Subject({
+  navigate = vi.fn(),
+  query = defaultLogQuery
+}: {
+  navigate?: (path: string) => void;
+  query?: typeof defaultLogQuery & { serviceName?: string | undefined };
+}) {
   const { t } = useTranslation();
-  return <LogResult
-    data={{ content: [{
-      timeUnixNano: 1_750_000_000_000_000_000,
-      observedTimeUnixNano: null,
-      severityNumber: null,
-      severityText: 'ERROR',
-      body: 'payment timeout',
-      droppedAttributesCount: null,
-      traceId: 'trace-1',
-      spanId: 'span-1',
-      traceFlags: null,
-      resource: { 'service.name': 'checkout', 'service.version': '1.2.3' },
-      attributes: { 'retry.count': 2 },
-      resourceSchemaUrl: null,
-      instrumentationScope: null,
-      scopeSchemaUrl: null
-    }], totalElements: 1, totalPages: 1, number: 0, size: 20 }}
-    query={{ signal: 'logs', timeRange: 'last-30m' }}
-    t={t}
-    navigate={navigate}
-  />;
+  return (
+    <LogResult
+      data={{
+        content: [
+          {
+            timeUnixNano: 1_750_000_000_000_000_000,
+            observedTimeUnixNano: null,
+            severityNumber: null,
+            severityText: 'ERROR',
+            body: 'payment timeout',
+            droppedAttributesCount: null,
+            traceId: 'trace-1',
+            spanId: 'span-1',
+            traceFlags: null,
+            resource: { 'service.name': 'checkout', 'service.version': '1.2.3' },
+            attributes: { 'retry.count': 2 },
+            resourceSchemaUrl: null,
+            instrumentationScope: null,
+            scopeSchemaUrl: null
+          }
+        ],
+        totalElements: 1,
+        totalPages: 1,
+        number: 0,
+        size: 20
+      }}
+      query={query}
+      t={t}
+      navigate={navigate}
+    />
+  );
 }
+
+const defaultLogQuery = { signal: 'logs', timeRange: 'last-30m' } as const;
 
 function LiveSubject() {
   const { t } = useTranslation();
   const [rows, setRows] = useState([liveLogRow]);
   const [paused, setPaused] = useState(false);
-  return <LogResult
-    query={{ signal: 'logs', timeRange: 'last-30m', live: true }}
-    t={t}
-    navigate={vi.fn()}
-    live={{
-      rows,
-      status: paused ? 'paused' : 'waiting',
-      togglePaused: () => setPaused(current => !current),
-      clear: () => setRows([])
-    }}
-  />;
+  return (
+    <LogResult
+      query={{ signal: 'logs', timeRange: 'last-30m', live: true }}
+      t={t}
+      navigate={vi.fn()}
+      live={{
+        rows,
+        status: paused ? 'paused' : 'waiting',
+        togglePaused: () => setPaused(current => !current),
+        clear: () => setRows([])
+      }}
+    />
+  );
 }
 
 const liveLogRow = {
-  timeUnixNano: 1_750_000_000_000_000_000, observedTimeUnixNano: null, severityNumber: 17,
-  severityText: 'ERROR', body: 'live payment timeout', attributes: null, droppedAttributesCount: null,
-  traceId: null, spanId: null, traceFlags: null, resource: null, resourceSchemaUrl: null,
-  instrumentationScope: null, scopeSchemaUrl: null
+  timeUnixNano: 1_750_000_000_000_000_000,
+  observedTimeUnixNano: null,
+  severityNumber: 17,
+  severityText: 'ERROR',
+  body: 'live payment timeout',
+  attributes: null,
+  droppedAttributesCount: null,
+  traceId: null,
+  spanId: null,
+  traceFlags: null,
+  resource: null,
+  resourceSchemaUrl: null,
+  instrumentationScope: null,
+  scopeSchemaUrl: null
 };
 
 class ResizeObserverStub {

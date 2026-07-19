@@ -23,12 +23,7 @@ import {
   type ExploreTimeRange
 } from './explore-query';
 
-import {
-  parseQueryContext,
-  writeQueryContext,
-  type ExactTimeWindow,
-  type QueryContext
-} from '@/shared/query-context';
+import { parseQueryContext, writeQueryContext, type ExactTimeWindow, type QueryContext } from '@/shared/query-context';
 
 export {
   exploreHandoffState,
@@ -128,6 +123,14 @@ export function exploreQueryContext(query: ExploreQuery): QueryContext {
   };
 }
 
+/**
+ * Transient evidence must be discarded whenever any route-owned query input
+ * changes, otherwise a drawer can display data from the previous scope.
+ */
+export function exploreEvidenceScopeKey(query: ExploreQuery) {
+  return buildExplorePath(query);
+}
+
 export function mergeExploreQuery(query: ExploreQuery, changes: ExploreQueryPatch): ExploreQuery {
   return normalizeExploreQuery({
     ...query,
@@ -137,11 +140,17 @@ export function mergeExploreQuery(query: ExploreQuery, changes: ExploreQueryPatc
   });
 }
 
-export function buildCrossSignalPath(query: ExploreQuery, signal: ExploreSignal, context: { traceId?: string | undefined }) {
-  return buildExplorePath(mergeExploreQuery(query, {
-    ...signalSelectionPatch(signal),
-    traceId: context.traceId ?? (query.signal === 'metrics' ? undefined : query.traceId),
-  }));
+export function buildCrossSignalPath(
+  query: ExploreQuery,
+  signal: ExploreSignal,
+  context: { traceId?: string | undefined }
+) {
+  return buildExplorePath(
+    mergeExploreQuery(query, {
+      ...signalSelectionPatch(signal),
+      traceId: context.traceId ?? (query.signal === 'metrics' ? undefined : query.traceId)
+    })
+  );
 }
 
 /**
@@ -153,20 +162,14 @@ export function signalSelectionPatch(signal: ExploreSignal): ExploreQueryPatch {
   return { signal, query: undefined, live: undefined, pageIndex: undefined };
 }
 
-export function querySubmissionTimePatch(
-  query: ExploreQuery,
-  routeWindow?: ExactTimeWindow
-): ExploreQueryPatch {
+export function querySubmissionTimePatch(query: ExploreQuery, routeWindow?: ExactTimeWindow): ExploreQueryPatch {
   if (exploreUsesExactWindow(query)) return {};
   return routeWindow
     ? { start: routeWindow.from, end: routeWindow.to, windowMode: undefined }
     : { start: undefined, end: undefined };
 }
 
-export function presetTimeRangePatch(
-  query: ExploreQuery,
-  timeRange: ExploreTimeRange
-): ExploreQueryPatch {
+export function presetTimeRangePatch(query: ExploreQuery, timeRange: ExploreTimeRange): ExploreQueryPatch {
   return {
     timeRange,
     windowMode: exploreHandoffState(query) === 'scoped' ? 'preset' : undefined,
@@ -180,7 +183,9 @@ function readSignal(value: string | null): ExploreSignal {
 }
 
 function readTimeRange(value: string | null): ExploreTimeRange {
-  return EXPLORE_TIME_RANGES.includes(value as ExploreTimeRange) ? value as ExploreTimeRange : DEFAULT_EXPLORE_QUERY.timeRange;
+  return EXPLORE_TIME_RANGES.includes(value as ExploreTimeRange)
+    ? (value as ExploreTimeRange)
+    : DEFAULT_EXPLORE_QUERY.timeRange;
 }
 
 function readValue(value: string | null) {
@@ -233,7 +238,9 @@ function appendSignalParams(params: URLSearchParams, query: ExploreQuery) {
   if (query.maxDurationMs != null) params.set('maxDurationMs', String(query.maxDurationMs));
 }
 
-function normalizeExploreQuery(query: ExploreQueryPatch & { signal: ExploreSignal; timeRange: ExploreTimeRange }): ExploreQuery {
+function normalizeExploreQuery(
+  query: ExploreQueryPatch & { signal: ExploreSignal; timeRange: ExploreTimeRange }
+): ExploreQuery {
   const shared = {
     timeRange: query.timeRange,
     serviceName: query.serviceName,
@@ -247,28 +254,30 @@ function normalizeExploreQuery(query: ExploreQueryPatch & { signal: ExploreSigna
     start: query.start,
     end: query.end
   };
-  if (query.signal === 'metrics') return {
-    ...shared,
-    signal: 'metrics',
-    metricFilter: query.metricFilter,
-    groupBy: query.groupBy,
-    aggregation: query.aggregation,
-    step: query.step
-  };
+  if (query.signal === 'metrics')
+    return {
+      ...shared,
+      signal: 'metrics',
+      metricFilter: query.metricFilter,
+      groupBy: query.groupBy,
+      aggregation: query.aggregation,
+      step: query.step
+    };
   const traceContext = {
     ...shared,
     traceId: query.traceId,
     resourceFilter: query.resourceFilter,
     pageIndex: query.pageIndex
   };
-  if (query.signal === 'logs') return {
-    ...traceContext,
-    signal: 'logs',
-    live: query.live,
-    severityText: query.severityText,
-    spanId: query.spanId,
-    attributeFilter: query.attributeFilter
-  };
+  if (query.signal === 'logs')
+    return {
+      ...traceContext,
+      signal: 'logs',
+      live: query.live,
+      severityText: query.severityText,
+      spanId: query.spanId,
+      attributeFilter: query.attributeFilter
+    };
   return {
     ...traceContext,
     signal: 'traces',
