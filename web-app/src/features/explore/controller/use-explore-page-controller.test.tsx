@@ -84,23 +84,36 @@ describe('Explore page controller', () => {
     expect(api.loadLogSignal).not.toHaveBeenCalled();
   });
 
-  it('freezes the inherited route window and keeps exact onboarding windows fixed', async () => {
+  it('keeps preset ranges relative and exact onboarding windows fixed', async () => {
     const relative = renderController(['/explore?signal=metrics']);
     await waitFor(() => expect(api.loadMetricSignal).toHaveBeenCalled());
-    const inherited = api.loadMetricSignal.mock.calls[0]?.[0];
-    expect(inherited.start).toEqual(expect.any(Number));
-    expect(inherited.end).toEqual(expect.any(Number));
+    expect(api.loadMetricSignal.mock.calls[0]?.[0]).toMatchObject({
+      timeRange: 'last-30m',
+      start: undefined,
+      end: undefined
+    });
+    act(() => relative.current().updateQuery({ timeRange: 'last-1h', start: undefined, end: undefined }));
+    await waitFor(() => expect(api.loadMetricSignal).toHaveBeenCalledTimes(2));
+    expect(api.loadMetricSignal.mock.calls[1]?.[0]).toMatchObject({
+      timeRange: 'last-1h',
+      start: undefined,
+      end: undefined
+    });
     await act(async () => relative.current().refresh());
-    expect(api.loadMetricSignal.mock.calls[1]?.[0]).toMatchObject({ start: inherited.start, end: inherited.end });
+    expect(api.loadMetricSignal.mock.calls[2]?.[0]).toMatchObject({
+      timeRange: 'last-1h',
+      start: undefined,
+      end: undefined
+    });
     relative.unmount();
 
     const exact = renderController([
       '/explore?signal=metrics&serviceName=checkout&serviceNamespace=shop&environment=prod&collectorId=east&start=1000&end=2000'
     ]);
-    await waitFor(() => expect(api.loadMetricSignal).toHaveBeenCalledTimes(3));
-    expect(api.loadMetricSignal.mock.calls[2]?.[0]).toMatchObject({ start: 1000, end: 2000 });
-    await act(async () => exact.current().refresh());
+    await waitFor(() => expect(api.loadMetricSignal).toHaveBeenCalledTimes(4));
     expect(api.loadMetricSignal.mock.calls[3]?.[0]).toMatchObject({ start: 1000, end: 2000 });
+    await act(async () => exact.current().refresh());
+    expect(api.loadMetricSignal.mock.calls[4]?.[0]).toMatchObject({ start: 1000, end: 2000 });
   });
 
   it.each(['metrics', 'logs', 'traces'] as const)(
@@ -164,7 +177,8 @@ describe('Explore page controller', () => {
     });
     const routed = renderController([
       '/explore?signal=metrics&collectorId=east&serviceName=checkout' +
-        '&serviceNamespace=commerce&environment=prod&query=sum%28rate%28http_requests_total%5B5m%5D%29%29'
+        '&serviceNamespace=commerce&environment=prod&windowMode=preset' +
+        '&query=sum%28rate%28http_requests_total%5B5m%5D%29%29'
     ]);
     await waitFor(() => expect(routed.current().result.kind).toBe(kind));
   });

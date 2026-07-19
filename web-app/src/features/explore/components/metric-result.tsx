@@ -48,6 +48,9 @@ export function MetricResult({ data, t }: { data: MetricConsole; t: TFunction })
   if (state.kind === 'unsupported_query') {
     return <Alert type="warning" showIcon message={t('explore.states.unsupportedQuery')} />;
   }
+  if (state.kind === 'missing_context') {
+    return <Alert type="info" showIcon message={t('explore.states.missingContext')} />;
+  }
   if (state.kind === 'empty')
     return (
       <SignalResultFrame title={t('explore.signals.metrics')} count={0} unit={t('exploreMetric.series')}>

@@ -34,7 +34,11 @@ describe('MetricResult', () => {
   });
 
   it('shows a populated series as a trend and inspectable samples', () => {
-    render(<I18nextProvider i18n={i18n}><Subject data={metricData} /></I18nextProvider>);
+    render(
+      <I18nextProvider i18n={i18n}>
+        <Subject data={metricData} />
+      </I18nextProvider>
+    );
     expect(screen.getByRole('heading', { name: 'Metrics' })).toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'Metric trend' })).toBeInTheDocument();
     expect(screen.getByText('http.server.duration · checkout')).toBeInTheDocument();
@@ -42,43 +46,82 @@ describe('MetricResult', () => {
   });
 
   it('keeps a true empty response distinct from a zero-valued series', () => {
-    render(<I18nextProvider i18n={i18n}><Subject data={metricConsole({ status: 200, frames: [] })} /></I18nextProvider>);
+    render(
+      <I18nextProvider i18n={i18n}>
+        <Subject data={metricConsole({ status: 200, frames: [] })} />
+      </I18nextProvider>
+    );
     expect(screen.getByText('No metric series for this context.')).toBeInTheDocument();
 
     cleanup();
-    render(<I18nextProvider i18n={i18n}><Subject data={metricConsole({
-      status: 200,
-      frames: [{ schema: { fields: [{ name: 'value', type: 'number', unit: null }], labels: null, meta: null }, data: [[1_750_000_000_000, 0]] }]
-    })} /></I18nextProvider>);
+    render(
+      <I18nextProvider i18n={i18n}>
+        <Subject
+          data={metricConsole({
+            status: 200,
+            frames: [
+              {
+                schema: { fields: [{ name: 'value', type: 'number', unit: null }], labels: null, meta: null },
+                data: [[1_750_000_000_000, 0]]
+              }
+            ]
+          })}
+        />
+      </I18nextProvider>
+    );
     expect(screen.getByText('0')).toBeInTheDocument();
     expect(screen.queryByText('No metric series for this context.')).not.toBeInTheDocument();
   });
 
   it('treats explicit frames without numeric points as empty', () => {
-    render(<I18nextProvider i18n={i18n}><Subject data={metricConsole({
-      status: 200,
-      frames: [{ schema: null, data: [] }, { schema: null, data: [
-        [1_750_000_000_000, 'not-a-number'],
-        [1_750_000_000_001, null],
-        [1_750_000_000_002, false],
-        [1_750_000_000_003, '   ']
-      ] }]
-    })} /></I18nextProvider>);
+    render(
+      <I18nextProvider i18n={i18n}>
+        <Subject
+          data={metricConsole({
+            status: 200,
+            frames: [
+              { schema: null, data: [] },
+              {
+                schema: null,
+                data: [
+                  [1_750_000_000_000, 'not-a-number'],
+                  [1_750_000_000_001, null],
+                  [1_750_000_000_002, false],
+                  [1_750_000_000_003, '   ']
+                ]
+              }
+            ]
+          })}
+        />
+      </I18nextProvider>
+    );
     expect(screen.getByText('No metric series for this context.')).toBeInTheDocument();
     expect(screen.queryByRole('img', { name: 'Metric trend' })).not.toBeInTheDocument();
   });
 
   it('renders backend failures instead of empty results', () => {
-    render(<I18nextProvider i18n={i18n}><Subject data={metricConsole({ status: 503, msg: 'storage offline', frames: [] })} /></I18nextProvider>);
+    render(
+      <I18nextProvider i18n={i18n}>
+        <Subject data={metricConsole({ status: 503, msg: 'storage offline', frames: [] })} />
+      </I18nextProvider>
+    );
     expect(screen.getByText('storage offline')).toBeInTheDocument();
     expect(screen.queryByText('No metric series for this context.')).not.toBeInTheDocument();
 
     cleanup();
-    render(<I18nextProvider i18n={i18n}><Subject data={metricConsole({ status: 500, frames: [] })} /></I18nextProvider>);
+    render(
+      <I18nextProvider i18n={i18n}>
+        <Subject data={metricConsole({ status: 500, frames: [] })} />
+      </I18nextProvider>
+    );
     expect(screen.getByText('The signal query failed.')).toBeInTheDocument();
 
     cleanup();
-    render(<I18nextProvider i18n={i18n}><Subject data={metricConsole({ status: 200, frames: [] }, { errorMessage: 'transport failed' })} /></I18nextProvider>);
+    render(
+      <I18nextProvider i18n={i18n}>
+        <Subject data={metricConsole({ status: 200, frames: [] }, { errorMessage: 'transport failed' })} />
+      </I18nextProvider>
+    );
     expect(screen.getByText('transport failed')).toBeInTheDocument();
   });
 
@@ -91,11 +134,33 @@ describe('MetricResult', () => {
     ];
 
     for (const data of malformed) {
-      render(<I18nextProvider i18n={i18n}><Subject data={data} /></I18nextProvider>);
+      render(
+        <I18nextProvider i18n={i18n}>
+          <Subject data={data} />
+        </I18nextProvider>
+      );
       expect(screen.getByText('Metric storage is unavailable for this query.')).toBeInTheDocument();
       expect(screen.queryByText('No metric series for this context.')).not.toBeInTheDocument();
       cleanup();
     }
+  });
+
+  it('renders missing query context as guidance instead of a failure or empty result', () => {
+    render(
+      <I18nextProvider i18n={i18n}>
+        <Subject
+          data={{
+            ...metricConsole(null),
+            emptyStateReason: 'no_context',
+            errorMessage: 'Choose a metric or service context.'
+          }}
+        />
+      </I18nextProvider>
+    );
+
+    expect(screen.getByRole('alert')).toHaveTextContent(i18n.t('explore.states.missingContext'));
+    expect(screen.queryByText(i18n.t('explore.loadFailed'))).not.toBeInTheDocument();
+    expect(screen.queryByText(i18n.t('explore.empty.metrics'))).not.toBeInTheDocument();
   });
 });
 
@@ -114,22 +179,43 @@ const metricData: MetricConsole = {
     refId: null,
     msg: null,
     status: 200,
-    frames: [{
-      schema: { labels: { __name__: 'http.server.duration', service_name: 'checkout', method: 'POST' }, meta: null, fields: [{ name: 'value', type: 'number', unit: 'ms' }] },
-      data: [[1_750_000_000_000, 100], [1_750_000_060_000, 125]]
-    }]
+    frames: [
+      {
+        schema: {
+          labels: { __name__: 'http.server.duration', service_name: 'checkout', method: 'POST' },
+          meta: null,
+          fields: [{ name: 'value', type: 'number', unit: 'ms' }]
+        },
+        data: [
+          [1_750_000_000_000, 100],
+          [1_750_000_060_000, 125]
+        ]
+      }
+    ]
   },
   emptyStateReason: null,
   errorMessage: null
 };
 
 function metricConsole(
-  results: { status: number | null; frames: NonNullable<MetricConsole['results']>['frames']; msg?: string | null } | null,
+  results: {
+    status: number | null;
+    frames: NonNullable<MetricConsole['results']>['frames'];
+    msg?: string | null;
+  } | null,
   override: Partial<Pick<MetricConsole, 'errorMessage'>> = {}
 ): MetricConsole {
-  return { context: null, query: null, datasource: null, queryMode: null,
-    results: results && { refId: null, msg: null, ...results }, stats: null,
-    emptyStateReason: null, errorMessage: null, ...override };
+  return {
+    context: null,
+    query: null,
+    datasource: null,
+    queryMode: null,
+    results: results && { refId: null, msg: null, ...results },
+    stats: null,
+    emptyStateReason: null,
+    errorMessage: null,
+    ...override
+  };
 }
 
 class ResizeObserverStub {

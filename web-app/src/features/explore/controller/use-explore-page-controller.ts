@@ -59,13 +59,13 @@ export function useExplorePageController() {
   const parsedQuery = useMemo(() => parseExploreQuery(searchParams), [searchParams]);
   const sharedContext = useQueryContextOptional();
   const sharedTime = useSharedTimeOptional();
-  const effectiveWindow = exactWindow(parsedQuery) ?? sharedTime?.window;
-  const query = withExactWindow(parsedQuery, effectiveWindow);
+  const fixedWindow = exactWindow(parsedQuery);
+  const query = parsedQuery;
   const handoff = exploreHandoffState(query);
   const context = sharedContext?.context ?? exploreQueryContext(query);
   const historical = handoff !== 'invalid' && !(query.signal === 'logs' && query.live);
   const queryResult = useQuery({
-    queryKey: exploreQueryKeys.history(query, effectiveWindow, sharedTime?.refreshRevision ?? 0),
+    queryKey: exploreQueryKeys.history(query, fixedWindow, sharedTime?.refreshRevision ?? 0),
     queryFn: ({ signal }) => loadHistorical(query, signal),
     enabled: historical,
     retry: false,
@@ -79,7 +79,7 @@ export function useExplorePageController() {
   const submission = useExploreSubmission(query, patch =>
     updateQuery({
       ...patch,
-      ...querySubmissionTimePatch(query, effectiveWindow),
+      ...querySubmissionTimePatch(query, fixedWindow),
       pageIndex: undefined
     })
   );
@@ -126,10 +126,6 @@ function exactWindow(query: ExploreQuery) {
   return query.start != null && query.end != null && query.start < query.end
     ? { from: query.start, to: query.end }
     : undefined;
-}
-
-function withExactWindow(query: ExploreQuery, window: { from: number; to: number } | undefined) {
-  return window ? mergeExploreQuery(query, { start: window.from, end: window.to, windowMode: undefined }) : query;
 }
 
 function loadHistorical(query: ExploreQuery, signal: AbortSignal): Promise<HistoricalData> {
