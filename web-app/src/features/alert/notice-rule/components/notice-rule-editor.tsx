@@ -15,25 +15,23 @@
  * limitations under the License.
  */
 
-import { Collapse, Input, Modal, Select, Switch } from 'antd';
+import { Collapse, Modal } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { receiverTypeDefinitions, type NoticeReceiverOption } from '../../notice-receiver/model/notice-receiver-model';
+import type { NoticeReceiverOption } from '../../notice-receiver/model/notice-receiver-model';
 import type { NoticeTemplate } from '../../notice-template-model';
-import { compatibleNoticeRuleTemplates, type NoticeRuleDraft } from '../model/notice-rule-model';
+import type { NoticeRuleDraft } from '../model/notice-rule-model';
 import { NoticeRuleAdvancedFields } from './notice-rule-advanced-fields';
+import { NoticeRuleDeliveryFields } from './notice-rule-delivery-fields';
 import styles from './notice-rule-editor.module.css';
-
-function receiverLabel(receiver: NoticeReceiverOption, t: (key: string) => string) {
-  const type = receiverTypeDefinitions.find(definition => definition.type === receiver.type);
-  return `${receiver.name} · ${t(type?.labelKey ?? 'noticeReceivers.types.unknown')}`;
-}
 
 export function NoticeRuleEditor({
   draft,
   receivers,
   templates,
   saving,
+  dependenciesReady,
+  selectReceivers,
   update,
   close,
   submit
@@ -42,23 +40,13 @@ export function NoticeRuleEditor({
   receivers: NoticeReceiverOption[];
   templates: NoticeTemplate[];
   saving: boolean;
+  dependenciesReady: boolean;
+  selectReceivers: (receiverIds: number[]) => void;
   update: (patch: Partial<NoticeRuleDraft>) => void;
   close: () => void;
   submit: () => void;
 }) {
   const { t } = useTranslation();
-  const compatibleTemplates = compatibleNoticeRuleTemplates(draft.receiverIds, receivers, templates);
-  const selectReceivers = (receiverIds: number[]) => {
-    const compatibleIds = new Set(
-      compatibleNoticeRuleTemplates(receiverIds, receivers, templates).map(template => template.id)
-    );
-    update({
-      receiverIds,
-      ...(draft.templateId != null && !compatibleIds.has(draft.templateId)
-        ? { templateId: null, templateName: null }
-        : {})
-    });
-  };
   return (
     <Modal
       open
@@ -68,45 +56,18 @@ export function NoticeRuleEditor({
       okText={t('common.save')}
       cancelText={t('common.cancel')}
       confirmLoading={saving}
+      okButtonProps={{ disabled: !dependenciesReady }}
       onCancel={close}
       onOk={submit}
     >
       <div className={styles.form}>
-        <label className={styles.field}>
-          {t('noticeRules.name')}
-          <Input maxLength={100} value={draft.name} onChange={event => update({ name: event.target.value })} />
-        </label>
-        <label className={styles.switchField}>
-          <span>{t('noticeRules.enabled')}</span>
-          <Switch checked={draft.enable} onChange={enable => update({ enable })} />
-        </label>
-        <label className={styles.wideField}>
-          {t('noticeRules.receivers')}
-          <Select
-            mode="multiple"
-            showSearch
-            optionFilterProp="label"
-            value={draft.receiverIds}
-            options={receivers.map(receiver => ({ value: receiver.id, label: receiverLabel(receiver, t) }))}
-            onChange={selectReceivers}
-          />
-        </label>
-        <label className={styles.wideField}>
-          {t('noticeRules.template')}
-          <Select
-            showSearch
-            optionFilterProp="label"
-            value={draft.templateId ?? -1}
-            options={[
-              { value: -1, label: t('noticeRules.defaultTemplate') },
-              ...compatibleTemplates.map(template => ({ value: template.id!, label: template.name }))
-            ]}
-            onChange={templateId => update({ templateId: templateId === -1 ? null : templateId, templateName: null })}
-          />
-          <span className={styles.hint}>
-            {compatibleTemplates.length === 0 ? t('noticeRules.templateHelp') : t('noticeRules.templateCompatible')}
-          </span>
-        </label>
+        <NoticeRuleDeliveryFields
+          draft={draft}
+          receivers={receivers}
+          templates={templates}
+          selectReceivers={selectReceivers}
+          update={update}
+        />
         <Collapse
           className={styles.advanced ?? ''}
           ghost

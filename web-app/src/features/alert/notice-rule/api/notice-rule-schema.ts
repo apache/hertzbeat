@@ -2,44 +2,87 @@
 
 import { z } from 'zod';
 
-import { noticeReceiverTypeSchema } from '../../notice-receiver/api/notice-receiver-schema';
+import { noticeReceiverOptionSchema, noticeReceiverTypeSchema } from '../../notice-receiver/api/notice-receiver-schema';
 import type { NoticeTemplate } from '../../notice-template-model';
-import type { NoticeRule, NoticeRuleQuery } from '../model/notice-rule-model';
+import type { NoticeRule, NoticeRuleMutationVariables, NoticeRuleQuery } from '../model/notice-rule-model';
 
 const positiveId = z.number().int().positive();
 const nullableText = z.string().nullable().optional();
 const dateValue = z.union([z.string(), z.number()]).nullable().optional();
 
-const noticeRuleWireSchema = z.object({
-  id: positiveId,
-  name: z.string(),
-  receiverId: z.array(positiveId),
-  receiverName: z.array(z.string()),
-  templateId: positiveId.nullable(),
-  templateName: z.string().nullable(),
-  enable: z.boolean(),
-  filterAll: z.boolean(),
-  labels: z.record(z.string(), z.string()).nullable().optional(),
-  days: z.array(z.number().int().min(1).max(7)).nullable().optional(),
-  periodStart: dateValue,
-  periodEnd: dateValue,
-  creator: nullableText,
-  modifier: nullableText,
-  gmtCreate: dateValue,
-  gmtUpdate: dateValue
-}).strict().refine(rule => rule.receiverId.length === rule.receiverName.length);
+const noticeRuleWireSchema = z
+  .object({
+    id: positiveId,
+    name: z.string(),
+    receiverId: z.array(positiveId),
+    receiverName: z.array(z.string()),
+    templateId: positiveId.nullable(),
+    templateName: z.string().nullable(),
+    enable: z.boolean(),
+    filterAll: z.boolean(),
+    labels: z.record(z.string(), z.string()).nullable().optional(),
+    days: z.array(z.number().int().min(1).max(7)).nullable().optional(),
+    periodStart: dateValue,
+    periodEnd: dateValue,
+    creator: nullableText,
+    modifier: nullableText,
+    gmtCreate: dateValue,
+    gmtUpdate: dateValue
+  })
+  .strict()
+  .refine(rule => rule.receiverId.length === rule.receiverName.length);
 
-const noticeTemplateWireSchema = z.object({
-  id: positiveId.nullable().optional(),
-  name: z.string(),
-  type: noticeReceiverTypeSchema,
-  preset: z.boolean(),
-  content: z.string(),
-  creator: nullableText,
-  modifier: nullableText,
-  gmtCreate: dateValue,
-  gmtUpdate: dateValue
-}).strict();
+const noticeTemplateWireSchema = z
+  .object({
+    id: positiveId.nullable().optional(),
+    name: z.string(),
+    type: noticeReceiverTypeSchema,
+    preset: z.boolean(),
+    content: z.string(),
+    creator: nullableText,
+    modifier: nullableText,
+    gmtCreate: dateValue,
+    gmtUpdate: dateValue
+  })
+  .strict();
+
+const noticeRuleDraftSchema = z
+  .object({
+    id: positiveId.optional(),
+    name: z.string(),
+    receiverIds: z.array(positiveId),
+    receiverNames: z.array(z.string()),
+    templateId: positiveId.nullable(),
+    templateName: z.string().nullable(),
+    enable: z.boolean(),
+    filterAll: z.boolean(),
+    labelsText: z.string(),
+    limitDays: z.boolean(),
+    days: z.array(z.number().int().min(1).max(7)),
+    periodStart: z.string(),
+    periodEnd: z.string()
+  })
+  .strict();
+
+const noticeRuleMutationVariablesSchema = z
+  .object({
+    draft: noticeRuleDraftSchema,
+    receivers: z.array(noticeReceiverOptionSchema),
+    templates: z.array(noticeTemplateWireSchema)
+  })
+  .strict()
+  .superRefine((variables, context) => {
+    if (
+      new Set(variables.receivers.map(item => item.id)).size !== variables.receivers.length ||
+      variables.receivers.some(item => item.id < 1)
+    ) {
+      context.addIssue({ code: 'custom', message: 'Receiver identities must be unique and positive' });
+    }
+    const templateIds = variables.templates.flatMap(item => (item.id == null ? [] : [item.id]));
+    if (new Set(templateIds).size !== templateIds.length) {
+      context.addIssue({ code: 'custom', message: 'Template identities must be unique' });
+    }
+  });
 
 type NoticeRuleWire = z.infer<typeof noticeRuleWireSchema>;
 type NoticeTemplateWire = z.infer<typeof noticeTemplateWireSchema>;
@@ -47,25 +90,28 @@ type NoticeTemplateWire = z.infer<typeof noticeTemplateWireSchema>;
 const noticeRuleSchema = noticeRuleWireSchema.transform(toNoticeRule);
 const noticeTemplateSchema = noticeTemplateWireSchema.transform(toNoticeTemplate);
 
-const noticeRulePageSchema = z.object({
-  content: z.array(noticeRuleSchema),
-  totalElements: z.number().int().nonnegative(),
-  totalPages: z.number().int().nonnegative(),
-  number: z.number().int().nonnegative(),
-  size: z.number().int().positive(),
-  pageable: z.unknown().optional(),
-  last: z.boolean().optional(),
-  sort: z.unknown().optional(),
-  first: z.boolean().optional(),
-  numberOfElements: z.number().int().nonnegative().optional(),
-  empty: z.boolean().optional()
-}).strict().transform(({ content, totalElements, totalPages, number, size }) => ({
-  content,
-  totalElements,
-  totalPages,
-  number,
-  size
-}));
+const noticeRulePageSchema = z
+  .object({
+    content: z.array(noticeRuleSchema),
+    totalElements: z.number().int().nonnegative(),
+    totalPages: z.number().int().nonnegative(),
+    number: z.number().int().nonnegative(),
+    size: z.number().int().positive(),
+    pageable: z.unknown().optional(),
+    last: z.boolean().optional(),
+    sort: z.unknown().optional(),
+    first: z.boolean().optional(),
+    numberOfElements: z.number().int().nonnegative().optional(),
+    empty: z.boolean().optional()
+  })
+  .strict()
+  .transform(({ content, totalElements, totalPages, number, size }) => ({
+    content,
+    totalElements,
+    totalPages,
+    number,
+    size
+  }));
 
 export class NoticeRuleContractError extends Error {
   constructor(readonly code: string) {
@@ -76,10 +122,13 @@ export class NoticeRuleContractError extends Error {
 
 export function parseNoticeRulePage(value: unknown, query: NoticeRuleQuery) {
   const page = parse(noticeRulePageSchema, value, 'NOTICE_RULE_PAGE_INVALID');
-  if (page.number !== query.pageIndex || page.size !== query.pageSize
-    || page.totalElements < page.content.length
-    || page.totalPages !== Math.ceil(page.totalElements / query.pageSize)
-    || page.content.length > query.pageSize) {
+  if (
+    page.number !== query.pageIndex ||
+    page.size !== query.pageSize ||
+    page.totalElements < page.content.length ||
+    page.totalPages !== Math.ceil(page.totalElements / query.pageSize) ||
+    page.content.length > query.pageSize
+  ) {
     throw new NoticeRuleContractError('NOTICE_RULE_PAGE_INVALID');
   }
   return page;
@@ -93,6 +142,13 @@ export function parseNoticeRule(value: unknown, id: number): NoticeRule {
 
 export function parseNoticeTemplates(value: unknown): NoticeTemplate[] {
   return parse(z.array(noticeTemplateSchema), value, 'NOTICE_RULE_TEMPLATE_OPTIONS_INVALID');
+}
+
+export function parseNoticeRuleMutationVariables(value: unknown): NoticeRuleMutationVariables {
+  const parsed = parse(noticeRuleMutationVariablesSchema, value, 'NOTICE_RULE_VARIABLES_INVALID');
+  const { id, ...draftWithoutId } = parsed.draft;
+  const draft = id === undefined ? draftWithoutId : { ...draftWithoutId, id };
+  return { draft, receivers: parsed.receivers, templates: parsed.templates.map(toNoticeTemplate) };
 }
 
 function parse<T>(schema: z.ZodType<T>, value: unknown, code: string): T {

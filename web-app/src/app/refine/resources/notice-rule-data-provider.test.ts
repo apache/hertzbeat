@@ -16,7 +16,9 @@ vi.mock('@/features/alert/notice-rule/api/notice-rule-api', () => ({
   loadAllNoticeRulesByName: api.loadAll,
   loadNoticeRule: api.loadOne,
   loadNoticeRules: api.loadPage,
-  NoticeRuleContractError: class NoticeRuleContractError extends Error { code = 'NOTICE_RULE_RESPONSE_INVALID'; },
+  NoticeRuleContractError: class NoticeRuleContractError extends Error {
+    code = 'NOTICE_RULE_RESPONSE_INVALID';
+  },
   saveNoticeRule: api.save
 }));
 
@@ -30,9 +32,18 @@ const receiver = { id: 11, name: 'Email', type: 1 as const };
 const template = { id: 21, name: 'Mail', type: 1 as const, preset: false, content: '${content}' };
 const draft = { ...createNoticeRuleDraft(), name: 'Proof', receiverIds: [11], templateId: 21 };
 const rule = {
-  id: 31, name: 'Proof', receiverId: [11], receiverName: ['Email'], templateId: 21,
-  templateName: 'Mail', enable: true, filterAll: true, labels: {}, days: [1, 2, 3, 4, 5, 6, 7],
-  periodStart: null, periodEnd: null
+  id: 31,
+  name: 'Proof',
+  receiverId: [11],
+  receiverName: ['Email'],
+  templateId: 21,
+  templateName: 'Mail',
+  enable: true,
+  filterAll: true,
+  labels: {},
+  days: [1, 2, 3, 4, 5, 6, 7],
+  periodStart: null,
+  periodEnd: null
 };
 const variables: NoticeRuleMutationVariables = { draft, receivers: [receiver], templates: [template] };
 
@@ -52,21 +63,26 @@ describe('notice rule data provider', () => {
 
   it('rejects ambiguous create evidence without treating a matching name as identity', async () => {
     api.loadAll.mockResolvedValueOnce([]).mockResolvedValueOnce([rule, { ...rule, id: 32 }]);
-    await expect(noticeRuleDataProvider.create({ resource: 'notice-rules', variables }))
-      .rejects.toMatchObject({ code: 'NOTICE_RULE_CREATE_NOT_CONVERGED' });
+    await expect(noticeRuleDataProvider.create({ resource: 'notice-rules', variables })).rejects.toMatchObject({
+      code: 'NOTICE_RULE_CREATE_NOT_CONVERGED'
+    });
   });
 
   it('rejects stale, duplicate, malformed, and template-incompatible dependencies before transport', async () => {
     const cases: unknown[] = [
       { ...variables, receivers: [{ ...receiver, extra: 'not-public' }] },
+      { ...variables, templates: [{ ...template, extra: 'not-public' }] },
+      { ...variables, templates: [{ ...template, preset: true }] },
+      { ...variables, templates: [{ ...template, id: null }] },
       { ...variables, draft: { ...draft, receiverIds: [11, 11] } },
       { ...variables, draft: { ...draft, receiverIds: [999] } },
       { ...variables, draft: { ...draft, templateId: 999 } },
       { ...variables, receivers: [{ ...receiver, type: 2 }] }
     ];
     for (const invalid of cases) {
-      await expect(noticeRuleDataProvider.create({ resource: 'notice-rules', variables: invalid }))
-        .rejects.toMatchObject({ code: 'NOTICE_RULE_VARIABLES_INVALID' });
+      await expect(
+        noticeRuleDataProvider.create({ resource: 'notice-rules', variables: invalid })
+      ).rejects.toMatchObject({ code: 'NOTICE_RULE_VARIABLES_INVALID' });
     }
     expect(api.loadAll).not.toHaveBeenCalled();
     expect(api.save).not.toHaveBeenCalled();
@@ -75,11 +91,13 @@ describe('notice rule data provider', () => {
   it('requires update detail convergence and delete detail missing evidence', async () => {
     const updateVariables = { ...variables, draft: { ...draft, id: 31 } };
     api.loadOne.mockResolvedValueOnce({ ...rule, enable: false });
-    await expect(noticeRuleDataProvider.update({ resource: 'notice-rules', id: 31, variables: updateVariables }))
-      .rejects.toMatchObject({ code: 'NOTICE_RULE_UPDATE_NOT_CONVERGED' });
+    await expect(
+      noticeRuleDataProvider.update({ resource: 'notice-rules', id: 31, variables: updateVariables })
+    ).rejects.toMatchObject({ code: 'NOTICE_RULE_UPDATE_NOT_CONVERGED' });
 
     api.loadOne.mockResolvedValueOnce(rule).mockRejectedValueOnce(new Error('missing'));
-    await expect(noticeRuleDataProvider.deleteOne({ resource: 'notice-rules', id: 31 }))
-      .resolves.toEqual({ data: rule });
+    await expect(noticeRuleDataProvider.deleteOne({ resource: 'notice-rules', id: 31 })).resolves.toEqual({
+      data: rule
+    });
   });
 });

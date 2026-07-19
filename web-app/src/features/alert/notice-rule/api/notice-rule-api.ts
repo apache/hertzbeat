@@ -50,7 +50,7 @@ export async function loadAllNoticeReceivers() {
 
 export async function loadAllNoticeTemplates() {
   const templates = parseNoticeTemplates(await apiMessageGet('/api/notice/templates/all'));
-  const ids = templates.flatMap(item => item.id == null ? [] : [item.id]);
+  const ids = templates.flatMap(item => (item.id == null ? [] : [item.id]));
   if (new Set(ids).size !== ids.length) throw new NoticeRuleContractError('NOTICE_RULE_TEMPLATE_OPTIONS_INVALID');
   return templates;
 }
@@ -74,15 +74,9 @@ export async function loadAllNoticeRulesByName(name: string) {
   return records;
 }
 
-export function saveNoticeRule(
-  draft: NoticeRuleDraft,
-  receivers: NoticeReceiverOption[],
-  templates: NoticeTemplate[]
-) {
+export function saveNoticeRule(draft: NoticeRuleDraft, receivers: NoticeReceiverOption[], templates: NoticeTemplate[]) {
   const payload = buildNoticeRulePayload(draft, receivers, templates);
-  return draft.id
-    ? apiMessagePut('/api/notice/rule', payload)
-    : apiMessagePost('/api/notice/rule', payload);
+  return draft.id ? apiMessagePut('/api/notice/rule', payload) : apiMessagePost('/api/notice/rule', payload);
 }
 
 export function deleteNoticeRule(id: number) {

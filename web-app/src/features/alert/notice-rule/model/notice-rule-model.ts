@@ -44,8 +44,9 @@ export type NoticeRule = {
   gmtUpdate?: string | number | null;
 };
 
-export type NoticeRuleListState = RemotePageState<NoticeRule>;
 export type NoticeRuleFailureKind = 'missing' | 'invalid' | 'unavailable' | 'error';
+export type NoticeRuleCollectionFailureKind = Exclude<NoticeRuleFailureKind, 'missing'>;
+export type NoticeRuleListState = RemotePageState<NoticeRule, NoticeRuleCollectionFailureKind>;
 
 export type NoticeRuleDraft = {
   id?: number;
@@ -71,7 +72,7 @@ export type NoticeRuleMutationVariables = {
 
 export function resolveNoticeRuleListState(
   pending: boolean,
-  failure: NoticeRuleFailureKind | null,
+  failure: NoticeRuleCollectionFailureKind | null,
   records: NoticeRule[],
   total?: number
 ): NoticeRuleListState {
@@ -88,7 +89,7 @@ export function readNoticeRuleQuery(params: URLSearchParams): NoticeRuleQuery {
   return {
     name: params.get('name')?.trim() ?? '',
     pageIndex: Number.isFinite(pageIndex) && pageIndex >= 0 ? pageIndex : 0,
-    pageSize: noticeRulePageSizes.includes(pageSize as typeof noticeRulePageSizes[number]) ? pageSize : 8
+    pageSize: noticeRulePageSizes.includes(pageSize as (typeof noticeRulePageSizes)[number]) ? pageSize : 8
   };
 }
 
@@ -104,9 +105,18 @@ export function buildNoticeRuleListPath(query: NoticeRuleQuery) {
 
 export function createNoticeRuleDraft(): NoticeRuleDraft {
   return {
-    name: '', receiverIds: [], receiverNames: [], templateId: null, templateName: null,
-    enable: true, filterAll: true, labelsText: '', limitDays: false,
-    days: [1, 2, 3, 4, 5, 6, 7], periodStart: '', periodEnd: ''
+    name: '',
+    receiverIds: [],
+    receiverNames: [],
+    templateId: null,
+    templateName: null,
+    enable: true,
+    filterAll: true,
+    labelsText: '',
+    limitDays: false,
+    days: [1, 2, 3, 4, 5, 6, 7],
+    periodStart: '',
+    periodEnd: ''
   };
 }
 
@@ -136,13 +146,6 @@ export function noticeRuleDraftFromDetail(rule: NoticeRule): NoticeRuleDraft {
   };
 }
 
-export function compatibleNoticeRuleTemplates(receiverIds: number[], receivers: NoticeReceiverOption[], templates: NoticeTemplate[]) {
-  const selectedTypes = new Set(receivers.filter(receiver => receiverIds.includes(receiver.id)).map(receiver => receiver.type));
-  if (selectedTypes.size !== 1) return [];
-  const [selectedType] = selectedTypes;
-  return templates.filter(template => !template.preset && template.id != null && template.type === selectedType);
-}
-
 function timezoneOffset(offsetMinutes: number) {
   const sign = offsetMinutes >= 0 ? '+' : '-';
   const absolute = Math.abs(offsetMinutes);
@@ -154,12 +157,21 @@ function localIsoTime(value: string) {
   const [hours = 0, minutes = 0] = value.split(':').map(Number);
   const date = new Date();
   date.setHours(hours, minutes, 0, 0);
-  const localDate = [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
+  const localDate = [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0')
+  ].join('-');
   return `${localDate}T${value}:00${timezoneOffset(-date.getTimezoneOffset())}`;
 }
 
-export function buildNoticeRulePayload(draft: NoticeRuleDraft, receivers: NoticeReceiverOption[] = [], templates: NoticeTemplate[] = []) {
-  const receiverNames = draft.receiverIds.map(id => receivers.find(receiver => receiver.id === id)?.name)
+export function buildNoticeRulePayload(
+  draft: NoticeRuleDraft,
+  receivers: NoticeReceiverOption[] = [],
+  templates: NoticeTemplate[] = []
+) {
+  const receiverNames = draft.receiverIds
+    .map(id => receivers.find(receiver => receiver.id === id)?.name)
     .filter((name): name is string => Boolean(name));
   const template = draft.templateId == null ? null : templates.find(item => item.id === draft.templateId);
   return {
@@ -217,8 +229,11 @@ export function validateNoticeRuleDependencies(
   }
   if (draft.templateId != null) {
     const template = templates.find(item => item.id === draft.templateId && !item.preset);
-    if (!template || selectedReceivers.length !== draft.receiverIds.length
-      || selectedReceivers.some(receiver => receiver.type !== template.type)) {
+    if (
+      !template ||
+      selectedReceivers.length !== draft.receiverIds.length ||
+      selectedReceivers.some(receiver => receiver.type !== template.type)
+    ) {
       invalid.push('templateId');
     }
   }

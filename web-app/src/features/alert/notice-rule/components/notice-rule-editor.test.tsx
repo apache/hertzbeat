@@ -76,15 +76,28 @@ describe('NoticeRuleEditor advanced fields', () => {
     fireEvent.click(screen.getByRole('checkbox', { name: 'noticeRules.week.3' }));
     expect(update).toHaveBeenCalledWith({ days: [7, 1, 2, 4, 5, 6] });
   });
+
+  it('disables save but keeps cancel available when dependencies become non-ready', () => {
+    renderEditor(createNoticeRuleDraft(), vi.fn(), false);
+
+    expect(screen.getByRole('button', { name: 'common.save' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.cancel' })).toBeEnabled();
+  });
 });
 
-function renderEditor(draft: NoticeRuleDraft, update: (patch: Partial<NoticeRuleDraft>) => void) {
+function renderEditor(
+  draft: NoticeRuleDraft,
+  update: (patch: Partial<NoticeRuleDraft>) => void,
+  dependenciesReady = true
+) {
   return render(
     <NoticeRuleEditor
       draft={draft}
       receivers={[]}
       templates={[]}
       saving={false}
+      dependenciesReady={dependenciesReady}
+      selectReceivers={vi.fn()}
       update={update}
       close={vi.fn()}
       submit={vi.fn()}

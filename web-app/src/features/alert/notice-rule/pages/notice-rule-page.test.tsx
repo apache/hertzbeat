@@ -46,18 +46,75 @@ describe('notice rule page', () => {
     fireEvent.click(screen.getByRole('switch'));
     expect(ready.actions.toggle).toHaveBeenCalledWith(rule, false);
   });
+
+  it('disables create and row commands while any write command is busy', () => {
+    const busy = view('empty', 'ready');
+    busy.state.command = 'deleting';
+    busy.state.list = { kind: 'ready', records: [rule], total: 1 } as never;
+    controller.useNoticeRuleController.mockReturnValue(busy);
+    render(<NoticeRulePage />);
+
+    expect(screen.getByRole('button', { name: 'noticeRules.new' })).toBeDisabled();
+    expect(screen.getByRole('switch')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.edit' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'noticeRules.delete' })).toBeDisabled();
+  });
+
+  it('disables option-dependent row commands but keeps delete available when dependencies fail', () => {
+    const unavailable = view('empty', 'unavailable');
+    unavailable.state.list = { kind: 'ready', records: [rule], total: 1 } as never;
+    controller.useNoticeRuleController.mockReturnValue(unavailable);
+    render(<NoticeRulePage />);
+
+    expect(screen.getByText('noticeRules.options.unavailable')).toBeInTheDocument();
+    expect(screen.getByRole('switch')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.edit' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'noticeRules.delete' })).toBeEnabled();
+  });
 });
 
-const rule = { id: 31, name: 'Proof', receiverId: [11], receiverName: ['Email'], templateId: null,
-  templateName: null, enable: true, filterAll: true, labels: {}, days: [1, 2, 3, 4, 5, 6, 7],
-  periodStart: null, periodEnd: null };
+const rule = {
+  id: 31,
+  name: 'Proof',
+  receiverId: [11],
+  receiverName: ['Email'],
+  templateId: null,
+  templateName: null,
+  enable: true,
+  filterAll: true,
+  labels: {},
+  days: [1, 2, 3, 4, 5, 6, 7],
+  periodStart: null,
+  periodEnd: null
+};
 
 function view(list: 'invalid' | 'empty', options: 'ready' | 'empty' | 'invalid' | 'unavailable' | 'error') {
   return {
-    state: { command: 'idle', deleting: false, draft: null, editing: false, list: { kind: list }, name: '',
-      options: { kind: options }, query: { name: '', pageIndex: 0, pageSize: 8 }, receivers: [], refreshing: false,
-      saving: false, templates: [], togglingRuleId: null },
-    actions: { changePage: vi.fn(), close: vi.fn(), create: vi.fn(), edit: vi.fn(), refresh: vi.fn(),
-      remove: vi.fn(), search: vi.fn(), setName: vi.fn(), submit: vi.fn(), toggle: vi.fn(), updateDraft: vi.fn() }
+    state: {
+      command: 'idle',
+      draft: null,
+      list: { kind: list },
+      name: '',
+      options: { kind: options },
+      query: { name: '', pageIndex: 0, pageSize: 8 },
+      receivers: [],
+      refreshing: false,
+      saving: false,
+      templates: [],
+      togglingRuleId: null
+    },
+    actions: {
+      changePage: vi.fn(),
+      close: vi.fn(),
+      create: vi.fn(),
+      edit: vi.fn(),
+      refresh: vi.fn(),
+      remove: vi.fn(),
+      search: vi.fn(),
+      setName: vi.fn(),
+      submit: vi.fn(),
+      toggle: vi.fn(),
+      updateDraft: vi.fn()
+    }
   };
 }
