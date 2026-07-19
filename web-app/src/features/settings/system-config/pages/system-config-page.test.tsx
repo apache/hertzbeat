@@ -71,10 +71,29 @@ describe('SystemConfigPage', () => {
   it('keeps auxiliary timezone failure inside the ready editor', async () => {
     controller.useSystemConfigResourceController.mockReturnValue(buildController({ timezonesFailed: true }));
     renderPage();
-    expect(await screen.findByText('The time zone catalog is unavailable. The current value is still preserved.'))
-      .toBeInTheDocument();
+    expect(
+      await screen.findByText('The time zone catalog is unavailable. The current value is still preserved.')
+    ).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(controller.retryTimezones).toHaveBeenCalledTimes(1);
+  });
+
+  it('locks every editor action and auxiliary retry while a save is pending', async () => {
+    controller.useSystemConfigResourceController.mockReturnValue(
+      buildController({
+        dirty: true,
+        saving: true,
+        timezonesFailed: true
+      })
+    );
+    renderPage();
+
+    const selects = await screen.findAllByRole('combobox');
+    expect(selects).toHaveLength(3);
+    selects.forEach(select => expect(select).toBeDisabled());
+    expect(screen.getByRole('button', { name: /Save$/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Discard changes' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeDisabled();
   });
 });
 
@@ -103,7 +122,9 @@ function renderPage() {
   return render(
     <I18nextProvider i18n={i18n}>
       <MemoryRouter initialEntries={['/settings/system']}>
-        <App><SystemConfigPage /></App>
+        <App>
+          <SystemConfigPage />
+        </App>
       </MemoryRouter>
     </I18nextProvider>
   );

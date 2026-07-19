@@ -15,23 +15,15 @@
  * limitations under the License.
  */
 
-import {
-  useOne,
-  useUpdate,
-  type HttpError,
-  type OpenNotificationParams
-} from '@refinedev/core';
-import { useCallback, useState } from 'react';
+import { useOne, useUpdate, type HttpError, type OpenNotificationParams } from '@refinedev/core';
 import { useTranslation } from 'react-i18next';
 
 import {
-  createObjectStoreDraft,
-  isObjectStoreDirty,
   objectStoreResourceId,
-  validateObjectStoreDraft,
   type ObjectStoreDraft,
   type ObjectStoreResourceRecord
 } from '../model/object-store-model';
+import { useObjectStoreEditorController } from './object-store-editor-controller';
 
 const objectStoreResource = 'object-store';
 const objectStoreDataProvider = 'object-store';
@@ -53,45 +45,7 @@ export function useObjectStoreResourceController() {
     successNotification: () => notice(t('objectStore.saveSuccess'), 'success'),
     errorNotification: () => notice(t('objectStore.saveFailed'), 'error')
   });
-  const [draft, setDraft] = useState<ObjectStoreDraft | null>(null);
-  const [showValidation, setShowValidation] = useState(false);
-  const baseline = createObjectStoreDraft(resource.result);
-  const current = draft ?? baseline;
-  const missingFields = validateObjectStoreDraft(current);
-  const dirty = draft !== null && isObjectStoreDirty(draft, baseline);
-
-  const updateDraft = useCallback((next: ObjectStoreDraft) => {
-    setDraft(next);
-    setShowValidation(false);
-  }, []);
-  const discard = useCallback(() => {
-    setDraft(null);
-    setShowValidation(false);
-  }, []);
-  const retry = useCallback(() => {
-    void resource.query.refetch();
-  }, [resource.query]);
-  const submit = useCallback(() => {
-    if (missingFields.length > 0) {
-      setShowValidation(true);
-      return;
-    }
-    if (!dirty) return;
-    update.mutate({
-      id: objectStoreResourceId,
-      resource: objectStoreResource,
-      dataProviderName: objectStoreDataProvider,
-      invalidates: [...detailInvalidation],
-      mutationMode: 'pessimistic',
-      values: current
-    }, {
-      onSuccess: () => {
-        setDraft(null);
-        setShowValidation(false);
-      }
-    });
-  }, [current, dirty, missingFields.length, update]);
-
+  const editor = useObjectStoreEditorController(resource.result, resource.query.refetch, update);
   const kind = resolveResourceKind(
     resource.query.isPending,
     resource.query.isError,
@@ -100,20 +54,17 @@ export function useObjectStoreResourceController() {
   );
 
   return {
-    discard,
-    retry,
-    state: kind === 'ready'
-      ? {
-          kind,
-          current,
-          dirty,
-          missingFields,
-          saving: update.mutation.isPending,
-          showValidation
-        } as const
-      : { kind } as const,
-    submit,
-    updateDraft
+    discard: editor.discard,
+    retry: editor.retry,
+    state:
+      kind === 'ready'
+        ? ({
+            kind,
+            ...editor.state
+          } as const)
+        : ({ kind } as const),
+    submit: editor.submit,
+    updateDraft: editor.updateDraft
   };
 }
 

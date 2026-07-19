@@ -15,28 +15,20 @@
  * limitations under the License.
  */
 
-import {
-  useCustom,
-  useOne,
-  useUpdate,
-  type HttpError,
-  type OpenNotificationParams
-} from '@refinedev/core';
-import { useCallback, useState } from 'react';
+import { useCustom, useOne, useUpdate, type HttpError, type OpenNotificationParams } from '@refinedev/core';
 import { useTranslation } from 'react-i18next';
 
 import { resolveLocale } from '@/core/i18n/i18n';
-import { persistSystemPreferences, readRuntimeTheme } from '@/core/runtime-preferences';
+import { readRuntimeTheme } from '@/core/runtime-preferences';
 
 import {
   createSystemConfigDraft,
-  isSystemConfigDirty,
   systemConfigResourceId,
-  validateSystemConfigDraft,
   type SystemConfigDraft,
   type SystemConfigResourceRecord,
   type SystemTimezoneResourceRecord
 } from '../model/system-config-model';
+import { useSystemConfigFormController } from './system-config-form-controller';
 
 const resourceName = 'system-config';
 const providerName = 'system-config';
@@ -64,59 +56,35 @@ export function useSystemConfigResourceController() {
     successNotification: () => notice(t('systemConfig.saveSuccess'), 'success'),
     errorNotification: () => notice(t('systemConfig.saveFailed'), 'error')
   });
-  const [draft, setDraft] = useState<SystemConfigDraft | null>(null);
   const defaults = runtimeDefaults(i18n.resolvedLanguage);
   const baseline = createSystemConfigDraft(
     config.result ? { ...config.result, theme: defaults.theme } : null,
     defaults
   );
-  const current = draft ?? baseline;
-  const dirty = draft !== null && isSystemConfigDirty(draft, baseline);
-  const valid = validateSystemConfigDraft(current).length === 0;
-  const timezoneOptions = buildTimezoneOptions(timezones.result.data?.items, current.timeZoneId);
-
-  const update = useCallback(<K extends keyof SystemConfigDraft>(field: K, value: SystemConfigDraft[K]) => {
-    setDraft(previous => ({ ...(previous ?? current), [field]: value }));
-  }, [current]);
-  const discard = useCallback(() => setDraft(null), []);
-  const retry = useCallback(() => { void config.query.refetch(); }, [config.query]);
-  const retryTimezones = useCallback(() => { void timezones.query.refetch(); }, [timezones.query]);
-  const save = useCallback(() => {
-    if (!dirty || !valid) return;
-    mutation.mutate({
-      id: systemConfigResourceId,
-      resource: resourceName,
-      dataProviderName: providerName,
-      invalidates: ['detail'],
-      mutationMode: 'pessimistic',
-      values: current
-    }, {
-      onSuccess: response => {
-        persistSystemPreferences(response.data);
-        globalThis.location.reload();
-      }
-    });
-  }, [current, dirty, mutation, valid]);
+  const form = useSystemConfigFormController({
+    baseline,
+    mutation,
+    refetch: config.query.refetch,
+    retryTimezones: timezones.query.refetch,
+    timezoneOptions: buildTimezoneOptions(timezones.result.data?.items, baseline.timeZoneId),
+    timezonesFailed: timezones.query.isError,
+    timezonesPending: timezones.query.isPending
+  });
   const kind = resolveKind(config.query.isPending, config.query.isError, config.query.error, config.result);
 
   return {
-    discard,
-    retry,
-    retryTimezones,
-    save,
-    state: kind === 'ready'
-      ? {
-          kind,
-          current,
-          dirty,
-          saving: mutation.mutation.isPending,
-          timezoneOptions,
-          timezonesFailed: timezones.query.isError,
-          timezonesPending: timezones.query.isPending,
-          valid
-        } as const
-      : { kind } as const,
-    update
+    discard: form.discard,
+    retry: form.retry,
+    retryTimezones: form.retryTimezones,
+    save: form.save,
+    state:
+      kind === 'ready'
+        ? ({
+            kind,
+            ...form.state
+          } as const)
+        : ({ kind } as const),
+    update: form.update
   };
 }
 
@@ -128,10 +96,7 @@ function runtimeDefaults(language?: string) {
   };
 }
 
-function buildTimezoneOptions(
-  timezones: SystemTimezoneResourceRecord['items'] | undefined,
-  currentTimeZoneId: string
-) {
+function buildTimezoneOptions(timezones: SystemTimezoneResourceRecord['items'] | undefined, currentTimeZoneId: string) {
   const options = (timezones ?? []).map(timezone => ({
     value: timezone.zoneId,
     label: `${timezone.zoneId} (${timezone.offset}) ${timezone.displayName}`

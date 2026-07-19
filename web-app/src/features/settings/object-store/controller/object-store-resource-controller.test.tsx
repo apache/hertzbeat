@@ -18,10 +18,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  createObjectStoreDraft,
-  type ObjectStoreResourceRecord
-} from '../model/object-store-model';
+import { createObjectStoreDraft, type ObjectStoreResourceRecord } from '../model/object-store-model';
 import { useObjectStoreResourceController } from './object-store-resource-controller';
 
 const refine = vi.hoisted(() => ({
@@ -59,48 +56,60 @@ describe('Object Store resource controller', () => {
   it('uses the named singleton provider and pessimistic detail update', () => {
     const { result } = renderHook(() => useObjectStoreResourceController());
 
-    expect(refine.useOne).toHaveBeenCalledWith(expect.objectContaining({
-      resource: 'object-store',
-      id: 'current',
-      dataProviderName: 'object-store'
-    }));
-    expect(refine.useUpdate).toHaveBeenCalledWith(expect.objectContaining({
-      resource: 'object-store',
-      dataProviderName: 'object-store',
-      mutationMode: 'pessimistic',
-      invalidates: ['detail']
-    }));
+    expect(refine.useOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resource: 'object-store',
+        id: 'current',
+        dataProviderName: 'object-store'
+      })
+    );
+    expect(refine.useUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resource: 'object-store',
+        dataProviderName: 'object-store',
+        mutationMode: 'pessimistic',
+        invalidates: ['detail']
+      })
+    );
 
     const editable = createObjectStoreDraft(serverRecord);
-    act(() => result.current.updateDraft({
-      ...editable,
-      config: {
-        ...editable.config,
-        accessKey: 'changed-ak',
-        secretKey: 'runtime-only-secret'
-      }
-    }));
+    act(() =>
+      result.current.updateDraft({
+        ...editable,
+        config: {
+          ...editable.config,
+          accessKey: 'changed-ak',
+          secretKey: 'runtime-only-secret'
+        }
+      })
+    );
     act(() => result.current.submit());
 
-    expect(refine.updateMutate).toHaveBeenCalledWith(expect.objectContaining({
-      resource: 'object-store',
-      id: 'current',
-      dataProviderName: 'object-store',
-      mutationMode: 'pessimistic',
-      invalidates: ['detail'],
-      values: expect.objectContaining({ type: 'OBS', config: expect.objectContaining({ accessKey: 'changed-ak' }) })
-    }), expect.objectContaining({ onSuccess: expect.any(Function) }));
+    expect(refine.updateMutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resource: 'object-store',
+        id: 'current',
+        dataProviderName: 'object-store',
+        mutationMode: 'pessimistic',
+        invalidates: ['detail'],
+        values: expect.objectContaining({ type: 'OBS', config: expect.objectContaining({ accessKey: 'changed-ak' }) })
+      }),
+      expect.objectContaining({ onSuccess: expect.any(Function) })
+    );
   });
 
   it.each([
     ['loading', { isPending: true }],
     ['unavailable', { isError: true, error: { statusCode: 0 }, result: undefined }],
     ['unavailable', { isError: true, error: { statusCode: 502 }, result: undefined }],
-    ['error', {
-      isError: true,
-      error: { statusCode: 502, code: 'OBJECT_STORE_RESPONSE_INVALID' },
-      result: undefined
-    }],
+    [
+      'error',
+      {
+        isError: true,
+        error: { statusCode: 502, code: 'OBJECT_STORE_RESPONSE_INVALID' },
+        result: undefined
+      }
+    ],
     ['unavailable', { isError: true, error: { statusCode: 503 }, result: undefined }],
     ['unavailable', { isError: true, error: { statusCode: 504 }, result: undefined }],
     ['error', { isError: true, error: { statusCode: 400 }, result: undefined }],
@@ -135,15 +144,17 @@ describe('Object Store resource controller', () => {
   it('clears the draft only after the provider update succeeds', () => {
     const { result } = renderHook(() => useObjectStoreResourceController());
     const editable = createObjectStoreDraft(serverRecord);
-    act(() => result.current.updateDraft({
-      ...editable,
-      config: { ...editable.config, secretKey: 'runtime-only-secret' }
-    }));
+    act(() =>
+      result.current.updateDraft({
+        ...editable,
+        config: { ...editable.config, secretKey: 'runtime-only-secret' }
+      })
+    );
     act(() => result.current.submit());
     const callbacks = refine.updateMutate.mock.calls[0]?.[1];
 
     expect(result.current.state).toMatchObject({ kind: 'ready', dirty: true });
-    expect(callbacks).not.toHaveProperty('onError');
+    expect(callbacks).toHaveProperty('onError', expect.any(Function));
     expect(result.current.state).toMatchObject({
       kind: 'ready',
       dirty: true,
@@ -157,6 +168,31 @@ describe('Object Store resource controller', () => {
     expect(result.current.state).toMatchObject({ kind: 'ready', dirty: false, showValidation: false });
   });
 
+  it('admits one save and locks draft mutations until its owner completes', () => {
+    const { result } = renderHook(() => useObjectStoreResourceController());
+    const submitted = {
+      ...createObjectStoreDraft(serverRecord),
+      config: {
+        ...createObjectStoreDraft(serverRecord).config,
+        accessKey: 'submitted-ak',
+        secretKey: 'runtime-only-secret'
+      }
+    };
+    act(() => result.current.updateDraft(submitted));
+
+    act(() => {
+      result.current.submit();
+      result.current.submit();
+      result.current.updateDraft({ ...submitted, config: { ...submitted.config, accessKey: 'late-ak' } });
+      result.current.discard();
+      result.current.retry();
+    });
+
+    expect(refine.updateMutate).toHaveBeenCalledTimes(1);
+    expect(refine.refetch).not.toHaveBeenCalled();
+    expect(result.current.state).toMatchObject({ kind: 'ready', current: submitted, saving: true });
+  });
+
   it('keeps the editable secret out of browser persistence and logs', () => {
     const storageWrite = vi.spyOn(Storage.prototype, 'setItem');
     const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
@@ -165,15 +201,18 @@ describe('Object Store resource controller', () => {
     const { result } = renderHook(() => useObjectStoreResourceController());
     const editable = createObjectStoreDraft(serverRecord);
 
-    act(() => result.current.updateDraft({
-      ...editable,
-      config: { ...editable.config, secretKey: 'runtime-only-secret' }
-    }));
+    act(() =>
+      result.current.updateDraft({
+        ...editable,
+        config: { ...editable.config, secretKey: 'runtime-only-secret' }
+      })
+    );
     act(() => result.current.submit());
 
     expect(JSON.stringify(storageWrite.mock.calls)).not.toContain('runtime-only-secret');
-    expect(JSON.stringify([...log.mock.calls, ...info.mock.calls, ...debug.mock.calls]))
-      .not.toContain('runtime-only-secret');
+    expect(JSON.stringify([...log.mock.calls, ...info.mock.calls, ...debug.mock.calls])).not.toContain(
+      'runtime-only-secret'
+    );
     storageWrite.mockRestore();
     log.mockRestore();
     info.mockRestore();

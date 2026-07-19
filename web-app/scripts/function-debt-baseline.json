@@ -6,18 +6,6 @@
       "path": "features/alert/controller/use-alert-silence-controller.ts",
       "identity": "function:useAlertSilenceController",
       "allowedMax": 79
-    },
-    {
-      "rule": "function-size",
-      "path": "features/settings/object-store/controller/object-store-resource-controller.ts",
-      "identity": "function:useObjectStoreResourceController",
-      "allowedMax": 76
-    },
-    {
-      "rule": "function-size",
-      "path": "features/settings/system-config/controller/system-config-resource-controller.ts",
-      "identity": "function:useSystemConfigResourceController",
-      "allowedMax": 75
     }
   ]
 }

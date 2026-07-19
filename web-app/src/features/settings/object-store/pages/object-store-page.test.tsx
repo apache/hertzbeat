@@ -95,8 +95,7 @@ describe('ObjectStorePage', () => {
     controller.useObjectStoreResourceController.mockReturnValue(buildController({ kind: 'error' }));
     renderObjectStorePage();
 
-    expect(await screen.findByText('This page could not be loaded. Retry or return to it later.'))
-      .toBeInTheDocument();
+    expect(await screen.findByText('This page could not be loaded. Retry or return to it later.')).toBeInTheDocument();
     expect(screen.queryByText('Object storage configuration is unavailable.')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(controller.retry).toHaveBeenCalledTimes(1);
@@ -108,6 +107,17 @@ describe('ObjectStorePage', () => {
 
     expect(container.querySelector('.ant-skeleton')).toBeInTheDocument();
     expect(screen.queryByPlaceholderText('OBS access key')).not.toBeInTheDocument();
+  });
+
+  it('locks every editor action while a save is pending', async () => {
+    controller.useObjectStoreResourceController.mockReturnValue(buildController({ saving: true }));
+    renderObjectStorePage();
+
+    expect(await screen.findByPlaceholderText('OBS access key')).toBeDisabled();
+    expect(screen.getByPlaceholderText('OBS secret key')).toBeDisabled();
+    expect(screen.getByRole('combobox')).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Save$/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Discard changes' })).toBeDisabled();
   });
 });
 

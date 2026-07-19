@@ -47,14 +47,11 @@ export function SystemConfigEditor(props: SystemConfigEditorProps) {
   const { current } = props;
   return (
     <>
-      {props.timezonesFailed && (
-        <Alert type="warning" showIcon message={t('systemConfig.timezonesUnavailable')} action={
-          <Button size="small" onClick={props.onTimezoneRetry}>{t('common.retry')}</Button>
-        } />
-      )}
+      <TimezoneFailure {...props} />
       <div className={styles.form}>
         <SystemConfigField label={t('systemConfig.locale.label')} help={t('systemConfig.locale.help')}>
           <Select<SystemLocale>
+            disabled={props.saving}
             value={current.locale || null}
             options={systemLocales.map(locale => ({ value: locale, label: t(`systemConfig.locale.${locale}`) }))}
             onChange={value => props.onUpdate('locale', value)}
@@ -62,6 +59,7 @@ export function SystemConfigEditor(props: SystemConfigEditorProps) {
         </SystemConfigField>
         <SystemConfigField label={t('systemConfig.timezone.label')} help={t('systemConfig.timezone.help')}>
           <Select<string>
+            disabled={props.saving}
             value={current.timeZoneId || null}
             showSearch
             optionFilterProp="label"
@@ -72,20 +70,52 @@ export function SystemConfigEditor(props: SystemConfigEditorProps) {
         </SystemConfigField>
         <SystemConfigField label={t('systemConfig.theme.label')} help={t('systemConfig.theme.help')}>
           <Select<SystemTheme>
+            disabled={props.saving}
             value={current.theme || null}
             options={systemThemes.map(theme => ({ value: theme, label: t(`systemConfig.theme.${theme}`) }))}
             onChange={value => props.onUpdate('theme', value)}
           />
         </SystemConfigField>
       </div>
-      <div className={styles.actions}>
-        <Button type="primary" loading={props.saving} disabled={!props.dirty || !props.valid} onClick={props.onSave}>
-          {t('common.save')}
-        </Button>
-        <Button disabled={!props.dirty || props.saving} onClick={props.onDiscard}>{t('systemConfig.discard')}</Button>
-        {!props.dirty && <Typography.Text type="secondary">{t('systemConfig.noChanges')}</Typography.Text>}
-      </div>
+      <SystemConfigActions {...props} />
     </>
+  );
+}
+
+function TimezoneFailure(props: SystemConfigEditorProps) {
+  const { t } = useTranslation();
+  if (!props.timezonesFailed) return null;
+  return (
+    <Alert
+      type="warning"
+      showIcon
+      message={t('systemConfig.timezonesUnavailable')}
+      action={
+        <Button size="small" disabled={props.saving} onClick={props.onTimezoneRetry}>
+          {t('common.retry')}
+        </Button>
+      }
+    />
+  );
+}
+
+function SystemConfigActions(props: SystemConfigEditorProps) {
+  const { t } = useTranslation();
+  return (
+    <div className={styles.actions}>
+      <Button
+        type="primary"
+        loading={props.saving}
+        disabled={!props.dirty || !props.valid || props.saving}
+        onClick={props.onSave}
+      >
+        {t('common.save')}
+      </Button>
+      <Button disabled={!props.dirty || props.saving} onClick={props.onDiscard}>
+        {t('systemConfig.discard')}
+      </Button>
+      {!props.dirty && <Typography.Text type="secondary">{t('systemConfig.noChanges')}</Typography.Text>}
+    </div>
   );
 }
 

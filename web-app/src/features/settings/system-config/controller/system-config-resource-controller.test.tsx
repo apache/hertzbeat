@@ -61,12 +61,20 @@ describe('System Config resource controller', () => {
   it('uses the named singleton provider and custom timezone read', () => {
     const { result } = renderHook(() => useSystemConfigResourceController());
 
-    expect(refine.useOne).toHaveBeenCalledWith(expect.objectContaining({
-      resource: 'system-config', id: 'current', dataProviderName: 'system-config'
-    }));
-    expect(refine.useCustom).toHaveBeenCalledWith(expect.objectContaining({
-      url: '/api/config/timezones', method: 'get', dataProviderName: 'system-config'
-    }));
+    expect(refine.useOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resource: 'system-config',
+        id: 'current',
+        dataProviderName: 'system-config'
+      })
+    );
+    expect(refine.useCustom).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: '/api/config/timezones',
+        method: 'get',
+        dataProviderName: 'system-config'
+      })
+    );
     expect(result.current.state).toMatchObject({
       kind: 'ready',
       current: { locale: 'en_US', timeZoneId: 'UTC', theme: 'dark' },
@@ -77,11 +85,14 @@ describe('System Config resource controller', () => {
   it.each([
     ['loading', { isPending: true }],
     ['unavailable', { isError: true, error: { statusCode: 503 }, result: undefined }],
-    ['error', {
-      isError: true,
-      error: { statusCode: 502, code: 'SYSTEM_CONFIG_RESPONSE_INVALID' },
-      result: undefined
-    }],
+    [
+      'error',
+      {
+        isError: true,
+        error: { statusCode: 502, code: 'SYSTEM_CONFIG_RESPONSE_INVALID' },
+        result: undefined
+      }
+    ],
     ['error', { isError: true, error: { statusCode: 500 }, result: undefined }],
     ['error', { result: undefined }]
   ])('maps config evidence to %s', (kind, override) => {
@@ -100,9 +111,52 @@ describe('System Config resource controller', () => {
     const canonical = { id: 'current', locale: 'ja_JP', timeZoneId: 'Asia/Tokyo', theme: 'compact' };
 
     expect(preferences.persist).not.toHaveBeenCalled();
-    act(() => { void callbacks?.onSuccess?.({ data: canonical }); });
+    act(() => {
+      void callbacks?.onSuccess?.({ data: canonical });
+    });
     expect(preferences.persist).toHaveBeenCalledWith(canonical);
     expect(reload).toHaveBeenCalledTimes(1);
+    vi.unstubAllGlobals();
+  });
+
+  it('admits one save and locks edits, discard, and reloads until completion', () => {
+    const { result } = renderHook(() => useSystemConfigResourceController());
+    act(() => result.current.update('theme', 'compact'));
+
+    act(() => {
+      result.current.save();
+      result.current.save();
+      result.current.update('locale', 'ja_JP');
+      result.current.discard();
+      result.current.retry();
+      result.current.retryTimezones();
+    });
+
+    expect(refine.updateMutate).toHaveBeenCalledTimes(1);
+    expect(refine.configRefetch).not.toHaveBeenCalled();
+    expect(refine.timezonesRefetch).not.toHaveBeenCalled();
+    expect(result.current.state).toMatchObject({
+      kind: 'ready',
+      current: { locale: 'en_US', timeZoneId: 'UTC', theme: 'compact' },
+      saving: true
+    });
+  });
+
+  it('ignores a successful save completion after the controller unmounts', () => {
+    const reload = vi.fn();
+    vi.stubGlobal('location', { reload });
+    const hook = renderHook(() => useSystemConfigResourceController());
+    act(() => hook.result.current.update('theme', 'compact'));
+    act(() => hook.result.current.save());
+    const callbacks = refine.updateMutate.mock.calls[0]?.[1];
+
+    hook.unmount();
+    act(() => {
+      void callbacks?.onSuccess?.({ data: serverRecord });
+    });
+
+    expect(preferences.persist).not.toHaveBeenCalled();
+    expect(reload).not.toHaveBeenCalled();
     vi.unstubAllGlobals();
   });
 });

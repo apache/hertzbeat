@@ -28,11 +28,36 @@ import {
 import styles from './object-store.module.css';
 
 const obsFieldDefinitions = [
-  { key: 'accessKey', labelKey: 'objectStore.obs.accessKey', placeholderKey: 'objectStore.obs.accessKeyPlaceholder', secret: false },
-  { key: 'secretKey', labelKey: 'objectStore.obs.secretKey', placeholderKey: 'objectStore.obs.secretKeyPlaceholder', secret: true },
-  { key: 'bucketName', labelKey: 'objectStore.obs.bucketName', placeholderKey: 'objectStore.obs.bucketNamePlaceholder', secret: false },
-  { key: 'endpoint', labelKey: 'objectStore.obs.endpoint', placeholderKey: 'objectStore.obs.endpointPlaceholder', secret: false },
-  { key: 'savePath', labelKey: 'objectStore.obs.savePath', placeholderKey: 'objectStore.obs.savePathPlaceholder', secret: false }
+  {
+    key: 'accessKey',
+    labelKey: 'objectStore.obs.accessKey',
+    placeholderKey: 'objectStore.obs.accessKeyPlaceholder',
+    secret: false
+  },
+  {
+    key: 'secretKey',
+    labelKey: 'objectStore.obs.secretKey',
+    placeholderKey: 'objectStore.obs.secretKeyPlaceholder',
+    secret: true
+  },
+  {
+    key: 'bucketName',
+    labelKey: 'objectStore.obs.bucketName',
+    placeholderKey: 'objectStore.obs.bucketNamePlaceholder',
+    secret: false
+  },
+  {
+    key: 'endpoint',
+    labelKey: 'objectStore.obs.endpoint',
+    placeholderKey: 'objectStore.obs.endpointPlaceholder',
+    secret: false
+  },
+  {
+    key: 'savePath',
+    labelKey: 'objectStore.obs.savePath',
+    placeholderKey: 'objectStore.obs.savePathPlaceholder',
+    secret: false
+  }
 ] as const;
 
 type ObjectStoreEditorProps = {
@@ -56,7 +81,7 @@ export function ObjectStoreEditor(props: ObjectStoreEditorProps) {
           type="warning"
           showIcon
           message={t('objectStore.validation')}
-          description={props.missingFields.map((field) => t(`objectStore.obs.${field}`)).join(', ')}
+          description={props.missingFields.map(field => t(`objectStore.obs.${field}`)).join(', ')}
         />
       )}
       <div className={styles.form}>
@@ -64,24 +89,32 @@ export function ObjectStoreEditor(props: ObjectStoreEditorProps) {
           <span className={styles.label}>{t('objectStore.type.label')}</span>
           <span className={styles.control}>
             <Select
+              disabled={props.saving}
               value={current.type}
-              options={objectStoreTypeDefinitions.map((definition) => ({
+              options={objectStoreTypeDefinitions.map(definition => ({
                 value: definition.value,
                 label: t(definition.labelKey)
               }))}
-              onChange={(type) => props.onUpdate(changeObjectStoreType(current, type))}
+              onChange={type => props.onUpdate(changeObjectStoreType(current, type))}
             />
             <Typography.Text type="secondary">
               {t(`objectStore.typeHelp.${current.type.toLowerCase()}`)}
             </Typography.Text>
           </span>
         </label>
-        {current.type === 'OBS' && obsFieldDefinitions.map((field) => (
-          <ObjectStoreField key={field.key} draft={current} definition={field} onUpdate={props.onUpdate} />
-        ))}
+        {current.type === 'OBS' &&
+          obsFieldDefinitions.map(field => (
+            <ObjectStoreField
+              key={field.key}
+              draft={current}
+              definition={field}
+              disabled={props.saving}
+              onUpdate={props.onUpdate}
+            />
+          ))}
       </div>
       <div className={styles.actions}>
-        <Button type="primary" loading={props.saving} disabled={!props.dirty} onClick={props.onSubmit}>
+        <Button type="primary" loading={props.saving} disabled={!props.dirty || props.saving} onClick={props.onSubmit}>
           {t('common.save')}
         </Button>
         <Button disabled={!props.dirty || props.saving} onClick={props.onDiscard}>
@@ -96,15 +129,18 @@ export function ObjectStoreEditor(props: ObjectStoreEditorProps) {
 function ObjectStoreField({
   draft,
   definition,
+  disabled,
   onUpdate
 }: {
   draft: ObjectStoreDraft;
   definition: (typeof obsFieldDefinitions)[number];
+  disabled: boolean;
   onUpdate: (draft: ObjectStoreDraft) => void;
 }) {
   const { t } = useTranslation();
   const inputProps = {
     value: String(draft.config[definition.key] ?? ''),
+    disabled,
     placeholder: t(definition.placeholderKey),
     onChange: (event: ChangeEvent<HTMLInputElement>) =>
       onUpdate(updateObjectStoreField(draft, definition.key, event.target.value))
