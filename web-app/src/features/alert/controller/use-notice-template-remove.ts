@@ -17,37 +17,32 @@
 
 import { useNotification, type DataProvider } from '@refinedev/core';
 import type { TFunction } from 'i18next';
-import { useCallback } from 'react';
 
-import type {
-  NoticeTemplateQuery,
-  NoticeTemplateResourceRecord
-} from '../notice-template-model';
+import type { NoticeTemplateQuery, NoticeTemplateResourceRecord } from '../notice-template-model';
 import { noticeTemplateResourceName } from '../notice-template-resource';
-import type { NoticeTemplateCommand } from './notice-template-command-state';
+import type { NoticeTemplateOperationController } from './use-notice-template-operation-controller';
 
 export function useNoticeTemplateRemove({
-  command,
   guardWritable,
   notification,
   provider,
   query,
   refreshAuthoritatively,
-  setCommand,
+  operation,
   t
 }: {
-  command: NoticeTemplateCommand;
   guardWritable: (template: NoticeTemplateResourceRecord) => boolean;
   notification: ReturnType<typeof useNotification>;
   provider: DataProvider;
   query: NoticeTemplateQuery;
   refreshAuthoritatively: () => Promise<void>;
-  setCommand: (command: NoticeTemplateCommand) => void;
+  operation: NoticeTemplateOperationController;
   t: TFunction;
 }) {
-  return useCallback(async (template: NoticeTemplateResourceRecord) => {
-    if (command !== 'idle' || !guardWritable(template) || template.backendId == null || !provider.deleteOne) return;
-    setCommand('deleting');
+  return async (template: NoticeTemplateResourceRecord) => {
+    if (!guardWritable(template) || template.backendId == null || !provider.deleteOne) return;
+    const owner = operation.beginCommand('deleting');
+    if (!owner) return;
     try {
       await provider.deleteOne<
         NoticeTemplateResourceRecord,
@@ -57,12 +52,16 @@ export function useNoticeTemplateRemove({
         id: template.backendId,
         variables: { record: template, query }
       });
+      if (!operation.isCurrent(owner)) return;
       await refreshAuthoritatively();
+      if (!operation.isCurrent(owner)) return;
       notification.open?.({ message: t('noticeTemplates.deleteSuccess'), type: 'success' });
     } catch {
-      notification.open?.({ message: t('noticeTemplates.deleteFailed'), type: 'error' });
+      if (operation.isCurrent(owner)) {
+        notification.open?.({ message: t('noticeTemplates.deleteFailed'), type: 'error' });
+      }
     } finally {
-      setCommand('idle');
+      operation.end(owner);
     }
-  }, [command, guardWritable, notification, provider, query, refreshAuthoritatively, setCommand, t]);
+  };
 }

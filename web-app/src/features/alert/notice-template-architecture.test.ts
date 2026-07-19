@@ -25,19 +25,22 @@ const sources = import.meta.glob('./**/*notice-template*.{ts,tsx}', {
 
 describe('Notice Template architecture', () => {
   it('keeps transport, resource state, and presentation in explicit owners', () => {
-    const page = String(sources['./notice-template-page.tsx'] ?? '');
-    const controller = String(sources['./notice-template-controller.ts'] ?? '');
-    const queryController = String(sources['./controller/use-notice-template-query-controller.ts'] ?? '');
-    const listController = String(sources['./controller/use-notice-template-list-controller.ts'] ?? '');
-    const commandController = String(sources['./controller/use-notice-template-command-controller.ts'] ?? '');
-    const commandState = String(sources['./controller/notice-template-command-state.ts'] ?? '');
-    const removeController = String(sources['./controller/use-notice-template-remove.ts'] ?? '');
-    const api = String(sources['./notice-template-api.ts'] ?? '');
-    const domainModel = String(sources['./notice-template-model.ts'] ?? '');
-    const viewModel = String(sources['./model/notice-template-view-model.ts'] ?? '');
-    const overlays = String(sources['./components/notice-template-overlays.tsx'] ?? '');
+    const page = source('./notice-template-page.tsx');
+    const controller = source('./notice-template-controller.ts');
+    const queryController = source('./controller/use-notice-template-query-controller.ts');
+    const listController = source('./controller/use-notice-template-list-controller.ts');
+    const commandController = source('./controller/use-notice-template-command-controller.ts');
+    const commandState = source('./controller/notice-template-command-state.ts');
+    const editorController = source('./controller/use-notice-template-editor-controller.ts');
+    const operationController = source('./controller/use-notice-template-operation-controller.ts');
+    const removeController = source('./controller/use-notice-template-remove.ts');
+    const submitController = source('./controller/use-notice-template-submit.ts');
+    const api = source('./notice-template-api.ts');
+    const domainModel = source('./notice-template-model.ts');
+    const viewModel = source('./model/notice-template-view-model.ts');
+    const overlays = source('./components/notice-template-overlays.tsx');
 
-    expect(page).toContain("from \"./notice-template-controller\"");
+    expect(page).toContain('from "./notice-template-controller"');
     expect(page).not.toMatch(/@tanstack\/react-query|notice-template-api|useSearchParams|App\.useApp/);
     expect(page).toContain('components/notice-template-toolbar');
     expect(page).toContain('components/notice-template-results');
@@ -50,7 +53,13 @@ describe('Notice Template architecture', () => {
     expect(controller).not.toMatch(/useSearchParams|useList|provider\.(?:custom|update|deleteOne)/);
     expect(queryController).toContain('useSearchParams');
     expect(listController).toContain('useList');
-    expect(commandController).toMatch(/provider\.(?:custom|update)/);
+    expect(commandController).toContain('useNoticeTemplateOperationController');
+    expect(commandController).toContain('useNoticeTemplateEditorController');
+    expect(commandController).toContain('useNoticeTemplateSubmit');
+    expect(editorController).toContain('pendingRef');
+    expect(editorController).toContain('operation.isCurrent');
+    expect(operationController).toMatch(/ownerRef|epochRef/);
+    expect(submitController).toMatch(/provider\.(?:custom|update)/);
     expect(removeController).toContain('provider.deleteOne');
     expect(api).toMatch(/apiMessageGet|apiMessagePost|apiMessagePut|apiMessageDelete/);
     expect(domainModel).not.toContain('NoticeTemplateCommand');
@@ -69,3 +78,7 @@ describe('Notice Template architecture', () => {
     expect(results).toContain("title: t('noticeTemplates.source')");
   });
 });
+
+function source(path: string) {
+  return String(sources[path] ?? '');
+}

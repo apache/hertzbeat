@@ -15,12 +15,6 @@
     },
     {
       "rule": "function-size",
-      "path": "features/alert/controller/use-notice-template-command-controller.ts",
-      "identity": "function:useNoticeTemplateCommandController",
-      "allowedMax": 96
-    },
-    {
-      "rule": "function-size",
       "path": "features/monitor/controller/use-monitor-editor-controller.ts",
       "identity": "function:useMonitorEditorController",
       "allowedMax": 81
