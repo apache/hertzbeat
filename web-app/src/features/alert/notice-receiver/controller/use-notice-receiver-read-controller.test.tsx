@@ -1,6 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { act, renderHook, waitFor } from '@testing-library/react';
+import { StrictMode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { NoticeReceiverQuery } from '../model/notice-receiver-model';
@@ -52,6 +53,28 @@ describe('notice receiver read controller', () => {
     expect(oldRefetch).not.toHaveBeenCalled();
   });
 
+  it('rejects projection evidence when its visible query identity changes while refetch is pending', async () => {
+    const old = deferred<ReturnType<typeof noticeReceiverListResult>>();
+    const oldRefetch = vi.fn().mockReturnValue(old.promise);
+    const latestRefetch = vi.fn().mockResolvedValue(noticeReceiverListResult());
+    refine.useList.mockImplementation(({ filters }: { filters: Array<{ value: string }> }) =>
+      listHookResult(filters[0]?.value === 'latest' ? latestRefetch : oldRefetch)
+    );
+    const { result, rerender } = renderHook(
+      ({ query }: { query: NoticeReceiverQuery }) => useNoticeReceiverReadController(query),
+      { initialProps: { query: defaultNoticeReceiverQuery } }
+    );
+
+    const pendingProjection = result.current.rereadAuthoritatively();
+    rerender({ query: { ...defaultNoticeReceiverQuery, name: 'latest', pageIndex: 2 } });
+    act(() => old.resolve(noticeReceiverListResult()));
+
+    await act(async () => {
+      await expect(pendingProjection).rejects.toMatchObject({ code: 'NOTICE_RECEIVER_LIST_CONTEXT_CHANGED' });
+    });
+    expect(latestRefetch).not.toHaveBeenCalled();
+  });
+
   it('does not let an older successful refresh clear a newer failure', async () => {
     const older = deferred<ReturnType<typeof noticeReceiverListResult>>();
     const newer = deferred<{ isError: true; error: { statusCode: number; code: string } }>();
@@ -83,6 +106,17 @@ describe('notice receiver read controller', () => {
   it('keeps a successful reread without data visibly invalid', async () => {
     refine.refetch.mockResolvedValue({ isError: false, data: undefined });
     const { result } = renderReadController();
+
+    await act(async () => result.current.refresh());
+
+    expect(result.current.state.list.kind).toBe('invalid');
+  });
+
+  it('keeps publishing authoritative failures after StrictMode replays mount effects', async () => {
+    refine.refetch.mockResolvedValue({ isError: false, data: undefined });
+    const { result } = renderHook(() => useNoticeReceiverReadController(defaultNoticeReceiverQuery), {
+      wrapper: StrictMode
+    });
 
     await act(async () => result.current.refresh());
 

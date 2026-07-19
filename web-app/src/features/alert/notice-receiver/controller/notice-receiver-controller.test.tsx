@@ -108,6 +108,30 @@ describe('notice receiver controller composition', () => {
     expect(latestRefetch).toHaveBeenCalledTimes(1);
     expect(oldRefetch).not.toHaveBeenCalled();
   });
+
+  it('locks query, paging, refresh, and draft-context commands in the same tick as submit', async () => {
+    const write = deferred<{ data: typeof persistedNoticeReceiver }>();
+    refine.create.mockReturnValueOnce(write.promise);
+    const { result } = renderHook(() => useNoticeReceiverController());
+    openValidDraft(result.current.actions);
+    let submission!: Promise<boolean>;
+
+    act(() => {
+      submission = result.current.actions.submit();
+      result.current.actions.setName('blocked');
+      result.current.actions.search();
+      result.current.actions.changePage(3, 15);
+      void result.current.actions.refresh();
+      result.current.actions.close();
+    });
+
+    expect(result.current.state.name).toBe('');
+    expect(refine.setParams).not.toHaveBeenCalled();
+    expect(refine.refetch).not.toHaveBeenCalled();
+    expect(result.current.state.draft).not.toBeNull();
+    act(() => write.resolve({ data: persistedNoticeReceiver }));
+    await act(async () => submission);
+  });
 });
 
 function listHookResult(refetch: typeof refine.refetch) {

@@ -1,7 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { useDataProvider, useList, type HttpError } from '@refinedev/core';
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import type { RemotePayloadState } from '@/shared/remote-state';
 
@@ -26,6 +26,7 @@ type VisibleRead = {
   identity: string;
   refetch: ReturnType<typeof useList<NoticeReceiver, HttpError>>['query']['refetch'];
 };
+type ReadFailure = { identity: string; error: HttpError };
 
 function useNoticeReceiverList(query: NoticeReceiverQuery) {
   return useList<NoticeReceiver, HttpError>({
@@ -40,7 +41,8 @@ function useNoticeReceiverList(query: NoticeReceiverQuery) {
 export function useNoticeReceiverReadController(query: NoticeReceiverQuery) {
   const identity = JSON.stringify(query);
   const dataProvider = useDataProvider()(noticeReceiverResourceName);
-  const [failure, setFailure] = useState<{ identity: string; error: HttpError } | null>(null);
+  const [failure, setFailure] = useState<ReadFailure | null>(null);
+  const mountedRef = useRef(true);
   const rereadEpochRef = useRef(0);
   const list = useNoticeReceiverList(query);
   const visibleReadRef = useRef<VisibleRead>({ identity, refetch: list.query.refetch });
@@ -48,6 +50,13 @@ export function useNoticeReceiverReadController(query: NoticeReceiverQuery) {
     // A pending command proves against the query currently owned by the visible route.
     visibleReadRef.current = { identity, refetch: list.query.refetch };
   }, [identity, list.query.refetch]);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      rereadEpochRef.current += 1;
+    };
+  }, []);
   const activeFailure = failure?.identity === identity ? failure.error : null;
   const state = useMemo(
     () =>
@@ -68,23 +77,7 @@ export function useNoticeReceiverReadController(query: NoticeReceiverQuery) {
       list.result.total
     ]
   );
-  const rereadAuthoritatively = useCallback(async () => {
-    const epoch = rereadEpochRef.current + 1;
-    rereadEpochRef.current = epoch;
-    const visible = visibleReadRef.current;
-    const proof = await visible.refetch();
-    if (proof.isError) {
-      if (rereadEpochRef.current === epoch) setFailure({ identity: visible.identity, error: proof.error });
-      throw throwableNoticeReceiverError(proof.error);
-    }
-    if (!proof.data) {
-      const error = noticeReceiverRereadError('invalid');
-      if (rereadEpochRef.current === epoch) setFailure({ identity: visible.identity, error });
-      throw error;
-    }
-    if (rereadEpochRef.current === epoch) setFailure(null);
-    return { records: proof.data.data, total: proof.data.total };
-  }, []);
+  const rereadAuthoritatively = useAuthoritativeReread(visibleReadRef, mountedRef, rereadEpochRef, setFailure);
   const refresh = async () => {
     try {
       await rereadAuthoritatively();
@@ -98,6 +91,36 @@ export function useNoticeReceiverReadController(query: NoticeReceiverQuery) {
       id
     );
   return { state, loadExact, rereadAuthoritatively, refresh };
+}
+
+function useAuthoritativeReread(
+  visibleReadRef: { current: VisibleRead },
+  mountedRef: { current: boolean },
+  rereadEpochRef: { current: number },
+  setFailure: (failure: ReadFailure | null) => void
+) {
+  return useCallback(async () => {
+    const epoch = rereadEpochRef.current + 1;
+    rereadEpochRef.current = epoch;
+    const visible = visibleReadRef.current;
+    const proof = await visible.refetch();
+    if (visibleReadRef.current.identity !== visible.identity) {
+      throw noticeReceiverRereadError('unavailable', 'NOTICE_RECEIVER_LIST_CONTEXT_CHANGED');
+    }
+    if (proof.isError) {
+      if (mountedRef.current && rereadEpochRef.current === epoch) {
+        setFailure({ identity: visible.identity, error: proof.error });
+      }
+      throw throwableNoticeReceiverError(proof.error);
+    }
+    if (!proof.data) {
+      const error = noticeReceiverRereadError('invalid');
+      if (mountedRef.current && rereadEpochRef.current === epoch) setFailure({ identity: visible.identity, error });
+      throw error;
+    }
+    if (mountedRef.current && rereadEpochRef.current === epoch) setFailure(null);
+    return { records: proof.data.data, total: proof.data.total };
+  }, [mountedRef, rereadEpochRef, setFailure, visibleReadRef]);
 }
 
 function resolveReadState(

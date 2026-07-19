@@ -13,13 +13,21 @@ export function useNoticeReceiverController() {
     loadExact: read.loadExact,
     rereadAuthoritatively: read.rereadAuthoritatively
   });
+  const unlessLocked = (action: () => void) => {
+    if (!command.controls.isLocked()) action();
+  };
+  const refresh = () => {
+    if (command.controls.hasReceipt()) return command.actions.retry();
+    if (command.controls.isLocked()) return Promise.resolve(false);
+    return read.refresh();
+  };
   return {
     state: { query: query.query, name: query.name, ...read.state, ...command.state },
     actions: {
-      setName: query.setName,
-      search: query.search,
-      changePage: query.changePage,
-      refresh: read.refresh,
+      setName: (value: string) => unlessLocked(() => query.setName(value)),
+      search: () => unlessLocked(query.search),
+      changePage: (page: number, pageSize: number) => unlessLocked(() => query.changePage(page, pageSize)),
+      refresh,
       ...command.actions
     }
   };

@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import {
   createNoticeReceiverDraft,
@@ -14,27 +14,13 @@ import {
   type NoticeReceiverType
 } from '../model/notice-receiver-model';
 import { classifyNoticeReceiverDetailFailure, type NoticeReceiverFailureKind } from '../notice-receiver-failure';
+import {
+  useNoticeReceiverOperationController,
+  type NoticeReceiverOperationController
+} from './use-notice-receiver-operation-controller';
 
-type NoticeReceiverCommand = 'saving' | 'removing' | 'testing';
-
-export function useNoticeReceiverOperationGate() {
-  const ownerRef = useRef<'idle' | NoticeReceiverCommand>('idle');
-  const [command, setCommand] = useState<'idle' | NoticeReceiverCommand>('idle');
-  const begin = (next: NoticeReceiverCommand) => {
-    // React state is asynchronous; the ref closes same-tick command admission.
-    if (ownerRef.current !== 'idle') return false;
-    ownerRef.current = next;
-    setCommand(next);
-    return true;
-  };
-  const end = () => {
-    ownerRef.current = 'idle';
-    setCommand('idle');
-  };
-  return { begin, command, end, isLocked: () => ownerRef.current !== 'idle' };
-}
-
-export type NoticeReceiverOperationGate = ReturnType<typeof useNoticeReceiverOperationGate>;
+export { useNoticeReceiverOperationController as useNoticeReceiverOperationGate };
+export type NoticeReceiverOperationGate = NoticeReceiverOperationController;
 
 function useNoticeReceiverDraftStore() {
   const [draft, setDraft] = useState<NoticeReceiverDraft | null>(null);
@@ -53,8 +39,17 @@ function useNoticeReceiverDetailEditor(
   publishDraft: (draft: NoticeReceiverDraft | null) => void,
   onReadFailure: (kind: NoticeReceiverFailureKind) => void
 ) {
+  const mountedRef = useRef(true);
   const detailEpochRef = useRef(0);
   const pendingDetailRef = useRef<{ id: number; epoch: number; promise: Promise<boolean> } | undefined>(undefined);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      detailEpochRef.current += 1;
+      pendingDetailRef.current = undefined;
+    };
+  }, []);
   const invalidateDetail = () => {
     detailEpochRef.current += 1;
     pendingDetailRef.current = undefined;
@@ -75,10 +70,10 @@ function useNoticeReceiverDetailEditor(
     try {
       const record = await loadExact(id);
       // Only the newest requested identity may publish detail into the editor.
-      if (detailEpochRef.current !== epoch) return true;
+      if (!mountedRef.current || detailEpochRef.current !== epoch) return true;
       publishDraft(noticeReceiverDraftFromDetail(record));
     } catch (error) {
-      if (detailEpochRef.current !== epoch) return true;
+      if (!mountedRef.current || detailEpochRef.current !== epoch) return true;
       onReadFailure(classifyNoticeReceiverDetailFailure(error));
     } finally {
       if (pendingDetailRef.current?.epoch === epoch) pendingDetailRef.current = undefined;

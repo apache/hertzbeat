@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const controller = vi.hoisted(() => ({ useNoticeReceiverController: vi.fn() }));
@@ -32,11 +32,55 @@ describe('NoticeReceiverPage', () => {
     expect(screen.getByRole('button', { name: 'noticeReceivers.new' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'common.edit' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'noticeReceivers.delete' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'common.query' })).toBeEnabled();
+    expect(screen.getByPlaceholderText('noticeReceivers.search')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.query' })).toBeDisabled();
+  });
+
+  it('keeps recovery persistent and exposes only refresh or retry while uncertain', () => {
+    const current = view('ready', true, 'recovering');
+    controller.useNoticeReceiverController.mockReturnValue(current);
+    render(<NoticeReceiverPage />);
+
+    expect(screen.getByText('noticeReceivers.save.unavailable')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'common.refresh' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'common.retry' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'noticeReceivers.new' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.edit' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'noticeReceivers.delete' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+    expect(current.actions.retry).toHaveBeenCalledTimes(1);
+  });
+
+  it('locks continuation buttons while a recovery retry is in flight', () => {
+    const current = view('ready', true, 'saving');
+    current.state.recovery = { kind: 'save', phase: 'projection', retryable: true };
+    controller.useNoticeReceiverController.mockReturnValue(current);
+    render(<NoticeReceiverPage />);
+
+    expect(screen.getByRole('button', { name: 'common.refresh' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.retry' })).toBeDisabled();
+  });
+
+  it('keeps commit-uncertain create visible without offering a continuation that cannot prove identity', () => {
+    const current = view('ready', true, 'recovering');
+    current.state.recovery = { kind: 'save', phase: 'commit-uncertain', retryable: false };
+    controller.useNoticeReceiverController.mockReturnValue(current);
+    render(<NoticeReceiverPage />);
+
+    expect(screen.getByText('noticeReceivers.save.unavailable')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'common.refresh' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.retry' })).toBeDisabled();
   });
 });
 
-function view(kind: 'unavailable' | 'ready', busy = false) {
+function view(kind: 'unavailable' | 'ready', busy = false, command = busy ? 'saving' : 'idle') {
+  const recovery:
+    | {
+        kind: 'save';
+        phase: 'proof' | 'projection' | 'commit-uncertain';
+        retryable: boolean;
+      }
+    | undefined = command === 'recovering' ? { kind: 'save', phase: 'projection', retryable: true } : undefined;
   return {
     state: {
       query: { name: '', pageIndex: 0, pageSize: 8 },
@@ -52,7 +96,8 @@ function view(kind: 'unavailable' | 'ready', busy = false) {
               total: busy ? 1 : 0
             }
           : { kind },
-      command: busy ? 'saving' : 'idle',
+      command,
+      recovery,
       busy,
       testing: busy,
       saving: busy,
@@ -71,7 +116,8 @@ function view(kind: 'unavailable' | 'ready', busy = false) {
       selectType: vi.fn(),
       setSecretCleared: vi.fn(),
       submit: vi.fn(),
-      sendTest: vi.fn()
+      sendTest: vi.fn(),
+      retry: vi.fn()
     }
   };
 }

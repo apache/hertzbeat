@@ -1,6 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { act, renderHook } from '@testing-library/react';
+import { StrictMode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { NoticeReceiver } from '../model/notice-receiver-model';
@@ -88,7 +89,7 @@ describe('notice receiver editor controller', () => {
     const { result } = renderEditorController(loadExact);
     act(() => expect(result.current.editor.actions.create()).toBe(true));
     const before = result.current.editor.state.draft;
-    act(() => expect(result.current.gate.begin('saving')).toBe(true));
+    act(() => expect(result.current.gate.begin('saving')).toBeTruthy());
 
     expect(result.current.editor.actions.create()).toBe(false);
     expect(result.current.editor.actions.close()).toBe(false);
@@ -114,6 +115,40 @@ describe('notice receiver editor controller', () => {
     expect(result.current.editor.actions.updateDraft({ name: 'missing' })).toBe(false);
     expect(result.current.editor.actions.selectType(1)).toBe(false);
     expect(result.current.editor.actions.setSecretCleared('hookUrl', true)).toBe(false);
+  });
+
+  it('retires a pending detail failure when the editor controller unmounts', async () => {
+    const detail = deferred<NoticeReceiver>();
+    const onReadFailure = vi.fn();
+    loadExact.mockReturnValueOnce(detail.promise);
+    const { result, unmount } = renderEditorController(loadExact, onReadFailure);
+    let operation!: Promise<boolean>;
+    act(() => {
+      operation = result.current.editor.actions.edit(7);
+    });
+
+    unmount();
+    act(() => detail.reject({ statusCode: 503, code: 'NETWORK_REQUEST_FAILED' }));
+    await act(async () => operation);
+
+    expect(onReadFailure).not.toHaveBeenCalled();
+  });
+
+  it('remains active after StrictMode replays mount effects', async () => {
+    const { result } = renderHook(
+      () => {
+        const gate = useNoticeReceiverOperationGate();
+        const editor = useNoticeReceiverEditorController(gate, loadExact);
+        return { editor, gate };
+      },
+      { wrapper: StrictMode }
+    );
+
+    act(() => expect(result.current.editor.actions.create()).toBe(true));
+    await act(async () => result.current.editor.actions.edit(7));
+
+    expect(result.current.editor.state.draft).toMatchObject({ id: 7 });
+    act(() => expect(result.current.gate.begin('saving')).toBeTruthy());
   });
 });
 

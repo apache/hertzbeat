@@ -79,6 +79,7 @@ describe('notice receiver command controller', () => {
   it('admits only remove when remove claims the same-tick operation gate first', async () => {
     const deletion = deferred<{ data: typeof persistedNoticeReceiver }>();
     refine.remove.mockReturnValueOnce(deletion.promise);
+    loadExact.mockRejectedValueOnce({ statusCode: 404, code: 'NOTICE_RECEIVER_MISSING' });
     const { result } = renderCommandController();
     openValidDraft(result.current.actions);
 
@@ -120,9 +121,9 @@ describe('notice receiver command controller', () => {
     expect(result.current.state.command).toBe('idle');
   });
 
-  it('releases the operation gate in finally after submit, remove, and test failures', async () => {
-    refine.create.mockRejectedValueOnce({ statusCode: 503, code: 'NETWORK_REQUEST_FAILED' });
-    refine.remove.mockRejectedValueOnce({ statusCode: 503, code: 'NETWORK_REQUEST_FAILED' });
+  it('releases the operation gate after definite 4xx submit and remove failures', async () => {
+    refine.create.mockRejectedValueOnce({ statusCode: 400, code: 'NOTICE_RECEIVER_VARIABLES_INVALID' });
+    refine.remove.mockRejectedValueOnce({ statusCode: 400, code: 'NOTICE_RECEIVER_ID_INVALID' });
     api.testNoticeReceiver.mockRejectedValueOnce({ statusCode: 503, code: 'NETWORK_REQUEST_FAILED' });
     const { result } = renderCommandController();
     openValidDraft(result.current.actions);
@@ -135,6 +136,190 @@ describe('notice receiver command controller', () => {
     await act(async () => result.current.actions.sendTest());
     expect(result.current.state.command).toBe('idle');
     expect(result.current.actions.close()).toBe(true);
+  });
+
+  it('allows an explicit rewrite after a definite 4xx rejection', async () => {
+    refine.create
+      .mockRejectedValueOnce({ statusCode: 400, code: 'NOTICE_RECEIVER_VARIABLES_INVALID' })
+      .mockResolvedValueOnce({ data: persistedNoticeReceiver });
+    const { result } = renderCommandController();
+    openValidDraft(result.current.actions);
+
+    await act(async () => result.current.actions.submit());
+    expect(result.current.state.command).toBe('idle');
+    await act(async () => result.current.actions.submit());
+
+    expect(refine.create).toHaveBeenCalledTimes(2);
+    expect(result.current.state.draft).toBeNull();
+  });
+
+  it('retries only list projection after an acknowledged create without repeating POST', async () => {
+    rereadAuthoritatively
+      .mockRejectedValueOnce({ statusCode: 503, code: 'NETWORK_REQUEST_FAILED' })
+      .mockResolvedValueOnce({ records: [persistedNoticeReceiver], total: 1 });
+    const { result } = renderCommandController();
+    openValidDraft(result.current.actions);
+
+    await act(async () => result.current.actions.submit());
+    expect(result.current.state.command).toBe('recovering');
+    expect(result.current.state.draft).not.toBeNull();
+    await act(async () => result.current.actions.retry());
+
+    expect(refine.create).toHaveBeenCalledTimes(1);
+    expect(loadExact).not.toHaveBeenCalled();
+    expect(rereadAuthoritatively).toHaveBeenCalledTimes(2);
+    expect(result.current.state.command).toBe('idle');
+    expect(result.current.state.draft).toBeNull();
+  });
+
+  it('uses real mutation identity to recover an ambiguous create through proof only', async () => {
+    refine.create.mockRejectedValueOnce({
+      statusCode: 502,
+      code: 'NOTICE_RECEIVER_RESPONSE_INVALID',
+      noticeReceiverMutation: { id: 7, status: 'created', receiver: persistedNoticeReceiver }
+    });
+    const { result } = renderCommandController();
+    openValidDraft(result.current.actions);
+
+    await act(async () => result.current.actions.submit());
+    expect(result.current.state.command).toBe('recovering');
+    await act(async () => result.current.actions.retry());
+
+    expect(refine.create).toHaveBeenCalledTimes(1);
+    expect(loadExact).toHaveBeenCalledWith(7);
+    expect(rereadAuthoritatively).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps acknowledged create proof after its canonical reread returns 4xx', async () => {
+    refine.create.mockRejectedValueOnce({
+      statusCode: 404,
+      code: 'NOTICE_RECEIVER_MISSING',
+      noticeReceiverMutation: { id: 7, status: 'created', receiver: persistedNoticeReceiver }
+    });
+    const { result } = renderCommandController();
+    openValidDraft(result.current.actions);
+
+    await act(async () => result.current.actions.submit());
+    expect(result.current.state.command).toBe('recovering');
+    await act(async () => result.current.actions.retry());
+
+    expect(refine.create).toHaveBeenCalledTimes(1);
+    expect(loadExact).toHaveBeenCalledWith(7);
+    expect(result.current.state.draft).toBeNull();
+  });
+
+  it('keeps acknowledged update proof after its canonical reread returns 4xx', async () => {
+    refine.update.mockRejectedValueOnce({
+      statusCode: 404,
+      code: 'NOTICE_RECEIVER_MISSING',
+      noticeReceiverMutation: { id: 7, status: 'updated', receiver: persistedNoticeReceiver }
+    });
+    const { result } = renderCommandController();
+    await act(async () => result.current.actions.edit(7));
+
+    await act(async () => result.current.actions.submit());
+    expect(result.current.state.command).toBe('recovering');
+    await act(async () => result.current.actions.retry());
+
+    expect(refine.update).toHaveBeenCalledTimes(1);
+    expect(loadExact).toHaveBeenCalledTimes(2);
+    expect(result.current.state.draft).toBeNull();
+  });
+
+  it('keeps an ambiguous create without valid canonical identity locked instead of guessing or repeating POST', async () => {
+    refine.create.mockRejectedValueOnce({
+      statusCode: 503,
+      code: 'NETWORK_REQUEST_FAILED',
+      noticeReceiverMutation: { id: 7, status: 'deleted', receiver: null }
+    });
+    const { result } = renderCommandController();
+    openValidDraft(result.current.actions);
+
+    await act(async () => result.current.actions.submit());
+    expect(result.current.state.command).toBe('recovering');
+    expect(result.current.state.recovery).toEqual({ kind: 'save', phase: 'commit-uncertain', retryable: false });
+    let retried!: boolean;
+    await act(async () => {
+      retried = await result.current.actions.retry();
+    });
+
+    expect(retried).toBe(false);
+    expect(refine.create).toHaveBeenCalledTimes(1);
+    expect(loadExact).not.toHaveBeenCalled();
+    expect(rereadAuthoritatively).not.toHaveBeenCalled();
+    expect(result.current.state.command).toBe('recovering');
+    expect(result.current.state.draft).not.toBeNull();
+  });
+
+  it('recovers ambiguous update and delete writes by canonical proof without repeating mutations', async () => {
+    refine.update.mockRejectedValueOnce({ statusCode: 503, code: 'NETWORK_REQUEST_FAILED' });
+    const { result } = renderCommandController();
+    await act(async () => result.current.actions.edit(7));
+
+    await act(async () => result.current.actions.submit());
+    await act(async () => result.current.actions.retry());
+    expect(refine.update).toHaveBeenCalledTimes(1);
+    expect(loadExact).toHaveBeenCalledWith(7);
+
+    loadExact.mockRejectedValueOnce({ statusCode: 404, code: 'NOTICE_RECEIVER_MISSING' });
+    refine.remove.mockRejectedValueOnce({ statusCode: 503, code: 'NETWORK_REQUEST_FAILED' });
+    await act(async () => result.current.actions.remove(persistedNoticeReceiver));
+    await act(async () => result.current.actions.retry());
+    expect(refine.remove).toHaveBeenCalledTimes(1);
+    expect(rereadAuthoritatively).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not repeat DELETE when projection fails after missing-detail proof', async () => {
+    loadExact.mockRejectedValueOnce({ statusCode: 404, code: 'NOTICE_RECEIVER_MISSING' });
+    rereadAuthoritatively
+      .mockRejectedValueOnce({ statusCode: 503, code: 'NETWORK_REQUEST_FAILED' })
+      .mockResolvedValueOnce({ records: [], total: 0 });
+    const { result } = renderCommandController();
+
+    await act(async () => result.current.actions.remove(persistedNoticeReceiver));
+    expect(result.current.state.command).toBe('recovering');
+    await act(async () => result.current.actions.retry());
+
+    expect(refine.remove).toHaveBeenCalledTimes(1);
+    expect(loadExact).toHaveBeenCalledTimes(1);
+    expect(rereadAuthoritatively).toHaveBeenCalledTimes(2);
+  });
+
+  it('retires a pending write on unmount before proof, projection, state, or notifications', async () => {
+    const write = deferred<{ data: typeof persistedNoticeReceiver }>();
+    refine.create.mockReturnValueOnce(write.promise);
+    const { result, unmount } = renderCommandController();
+    openValidDraft(result.current.actions);
+    let operation!: Promise<boolean>;
+    act(() => {
+      operation = result.current.actions.submit();
+    });
+
+    unmount();
+    act(() => write.resolve({ data: persistedNoticeReceiver }));
+    await act(async () => operation);
+
+    expect(rereadAuthoritatively).not.toHaveBeenCalled();
+    expect(refine.notification).not.toHaveBeenCalled();
+  });
+
+  it('retires a pending projection on unmount without publishing completion', async () => {
+    const projection = deferred<{ records: (typeof persistedNoticeReceiver)[]; total: number }>();
+    rereadAuthoritatively.mockReturnValueOnce(projection.promise);
+    const { result, unmount } = renderCommandController();
+    openValidDraft(result.current.actions);
+    let operation!: Promise<boolean>;
+    act(() => {
+      operation = result.current.actions.submit();
+    });
+    await vi.waitFor(() => expect(rereadAuthoritatively).toHaveBeenCalledTimes(1));
+
+    unmount();
+    act(() => projection.resolve({ records: [persistedNoticeReceiver], total: 1 }));
+    await act(async () => operation);
+
+    expect(refine.create).toHaveBeenCalledTimes(1);
+    expect(refine.notification).not.toHaveBeenCalled();
   });
 
   it('cannot submit or test the retired draft in the same tick as a different edit', async () => {
@@ -165,6 +350,7 @@ describe('notice receiver command controller', () => {
     expect(result.current.state.draft).toBeNull();
 
     rereadAuthoritatively.mockResolvedValueOnce({ records: [persistedNoticeReceiver], total: 1 });
+    loadExact.mockRejectedValueOnce({ statusCode: 404, code: 'NOTICE_RECEIVER_MISSING' });
     await act(async () => result.current.actions.remove(persistedNoticeReceiver));
     expect(refine.notification).not.toHaveBeenCalledWith(
       expect.objectContaining({ message: 'noticeReceivers.deleteSuccess' })
@@ -203,6 +389,7 @@ describe('notice receiver command controller', () => {
   it('retires the matching open draft after deletion is authoritatively proved', async () => {
     const { result } = renderCommandController();
     await act(async () => result.current.actions.edit(7));
+    loadExact.mockRejectedValueOnce({ statusCode: 404, code: 'NOTICE_RECEIVER_MISSING' });
 
     await act(async () => result.current.actions.remove(persistedNoticeReceiver));
 

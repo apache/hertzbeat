@@ -1,42 +1,32 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Button, Input, Typography } from 'antd';
-import { useTranslation } from 'react-i18next';
-
 import styles from '../../alert-policy-page.module.css';
 import { NoticeReceiverEditor } from '../components/notice-receiver-editor';
+import {
+  NoticeReceiverHeading,
+  NoticeReceiverRecovery,
+  NoticeReceiverToolbar
+} from '../components/notice-receiver-page-controls';
 import { NoticeReceiverResults } from '../components/notice-receiver-results';
 import { useNoticeReceiverController } from '../controller/notice-receiver-controller';
 
 export function NoticeReceiverPage() {
-  const { t } = useTranslation();
   const { state, actions } = useNoticeReceiverController();
+  const recovering = state.command === 'recovering';
   return (
     <div className={styles.page}>
-      <header className={styles.heading}>
-        <div>
-          <Typography.Title level={2}>{t('noticeReceivers.title')}</Typography.Title>
-          <Typography.Text type="secondary">{t('noticeReceivers.description')}</Typography.Text>
-        </div>
-        <Button type="primary" disabled={state.busy} onClick={actions.create}>
-          {t('noticeReceivers.new')}
-        </Button>
-      </header>
-      <div className={styles.toolbar}>
-        <Input
-          allowClear
-          value={state.name}
-          placeholder={t('noticeReceivers.search')}
-          onChange={event => actions.setName(event.target.value)}
-          onPressEnter={() => void actions.search()}
-        />
-        <Button type="primary" onClick={actions.search}>
-          {t('common.query')}
-        </Button>
-        <Button loading={state.refreshing} onClick={() => void actions.refresh()}>
-          {t('common.refresh')}
-        </Button>
-      </div>
+      <NoticeReceiverHeading busy={state.busy} create={actions.create} />
+      <NoticeReceiverToolbar
+        name={state.name}
+        refreshing={state.refreshing}
+        busy={state.busy}
+        recovering={recovering}
+        recoveryRetryable={state.recovery?.retryable ?? false}
+        setName={actions.setName}
+        search={actions.search}
+        refresh={actions.refresh}
+      />
+      <NoticeReceiverRecovery recovery={state.recovery} busy={!recovering} retry={actions.retry} />
       <NoticeReceiverResults
         state={state.list}
         busy={state.busy}

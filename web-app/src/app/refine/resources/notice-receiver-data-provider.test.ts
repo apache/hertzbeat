@@ -18,6 +18,7 @@
 import type { GetListParams } from '@refinedev/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ApiMessageError } from '@/core/http/api-message';
 import { NoticeReceiverContractError } from '@/features/alert/notice-receiver/api/notice-receiver-api';
 import * as noticeReceiverModel from '@/features/alert/notice-receiver/model/notice-receiver-model';
 import {
@@ -113,6 +114,20 @@ describe('Notice Receiver Refine data provider', () => {
     await expect(
       noticeReceiverDataProvider.update({ resource: 'notice-receivers', id: 7, variables: { ...draft, id: 7 } })
     ).rejects.toMatchObject({ code: 'NOTICE_RECEIVER_REREAD_INVALID' });
+  });
+
+  it('preserves acknowledged mutation identity when the canonical reread cannot complete', async () => {
+    const mutation = { id: 7, status: 'created' as const, receiver };
+    api.saveNoticeReceiver.mockResolvedValueOnce(mutation);
+    api.loadNoticeReceiver.mockRejectedValueOnce(new ApiMessageError('network failed'));
+
+    await expect(
+      noticeReceiverDataProvider.create({ resource: 'notice-receivers', variables: draft })
+    ).rejects.toMatchObject({
+      code: 'NETWORK_REQUEST_FAILED',
+      noticeReceiverMutation: mutation
+    });
+    expect(api.saveNoticeReceiver).toHaveBeenCalledTimes(1);
   });
 
   it('rejects canonical reread that drops public options or does not converge secret names', async () => {

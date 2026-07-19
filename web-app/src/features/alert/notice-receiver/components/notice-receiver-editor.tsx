@@ -42,8 +42,12 @@ export function NoticeReceiverEditor(props: NoticeReceiverEditorProps) {
       confirmLoading={props.saving}
       okButtonProps={{ disabled: props.busy }}
       cancelButtonProps={{ disabled: props.busy }}
-      onCancel={props.close}
-      onOk={props.submit}
+      onCancel={() => {
+        if (!props.busy) props.close();
+      }}
+      onOk={() => {
+        if (!props.busy) props.submit();
+      }}
     >
       <NoticeReceiverForm {...props} />
     </Modal>

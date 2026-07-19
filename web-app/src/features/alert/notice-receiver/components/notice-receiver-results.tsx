@@ -47,6 +47,7 @@ export function NoticeReceiverResults({
         pageSize,
         pageSizeOptions: [...noticeReceiverPageSizes],
         showSizeChanger: true,
+        disabled: busy,
         ...(state.kind === 'ready' ? { total: state.total } : {}),
         onChange: onPageChange
       }}
@@ -88,7 +89,14 @@ function receiverColumns(
           <Button type="link" disabled={busy} onClick={() => edit(receiver.id)}>
             {t('common.edit')}
           </Button>
-          <Popconfirm disabled={busy} title={t('noticeReceivers.deleteConfirm')} onConfirm={() => remove(receiver)}>
+          <Popconfirm
+            disabled={busy}
+            title={t('noticeReceivers.deleteConfirm')}
+            okButtonProps={{ disabled: busy }}
+            onConfirm={() => {
+              if (!busy) remove(receiver);
+            }}
+          >
             <Button type="link" danger disabled={busy}>
               {t('noticeReceivers.delete')}
             </Button>

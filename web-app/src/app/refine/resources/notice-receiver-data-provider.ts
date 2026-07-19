@@ -24,10 +24,14 @@ import {
   saveNoticeReceiver
 } from '@/features/alert/notice-receiver/api/notice-receiver-api';
 import { noticeReceiverResourceName } from '@/features/alert/notice-receiver/notice-receiver-resource';
-import {
-  expectedNoticeReceiverEvidence,
-  type NoticeReceiverDraft
+import type {
+  NoticeReceiverDraft,
+  NoticeReceiverMutation
 } from '@/features/alert/notice-receiver/model/notice-receiver-model';
+import {
+  attachNoticeReceiverMutation,
+  requireNoticeReceiverConverged
+} from '@/features/alert/notice-receiver/notice-receiver-evidence';
 import { adaptRefineRecord, adaptRefineRecords } from '@/shared/refine/refine-provider-data';
 
 import { createRefineHttpError, toRefineHttpError } from '../refine-http-error';
@@ -69,7 +73,7 @@ export const noticeReceiverDataProvider: DataProvider = {
       const draft = readNoticeReceiverDraft(params.variables);
       const mutation = await saveNoticeReceiver(draft);
       assertMutation(mutation, 'created');
-      const canonical = await requireCanonical(mutation.id, draft);
+      const canonical = await requireCanonicalAfterMutation(mutation, draft);
       return { data: adaptRefineRecord<TData>(canonical) };
     });
   },
@@ -85,7 +89,7 @@ export const noticeReceiverDataProvider: DataProvider = {
       const draft = readNoticeReceiverDraft(params.variables, id);
       const mutation = await saveNoticeReceiver(draft);
       assertMutation(mutation, 'updated', id);
-      const canonical = await requireCanonical(id, draft);
+      const canonical = await requireCanonicalAfterMutation(mutation, draft);
       return { data: adaptRefineRecord<TData>(canonical) };
     });
   },
@@ -128,33 +132,23 @@ function assertResource(resource: string) {
 
 async function requireCanonical(id: number, draft: NoticeReceiverDraft) {
   const canonical = await loadNoticeReceiver(id);
-  const expected = expectedNoticeReceiverEvidence(draft);
-  if (
-    canonical.id !== id ||
-    canonical.name !== draft.name.trim() ||
-    canonical.type !== draft.type ||
-    !sameRecord(canonical.options, expected.options) ||
-    !sameStrings(canonical.configuredSecrets, expected.configuredSecrets)
-  ) {
+  try {
+    return requireNoticeReceiverConverged(canonical, id, draft);
+  } catch {
     throw contractError('NOTICE_RECEIVER_REREAD_INVALID');
   }
-  return canonical;
 }
 
-function sameRecord(actual: Record<string, unknown>, expected: Record<string, unknown>) {
-  const keys = [...new Set([...Object.keys(actual), ...Object.keys(expected)])];
-  return keys.every(key => actual[key] === expected[key]);
-}
-
-function sameStrings(actual: readonly string[], expected: readonly string[]) {
-  const actualValues = new Set(actual);
-  const expectedValues = new Set(expected);
-  return (
-    actualValues.size === actual.length &&
-    expectedValues.size === expected.length &&
-    actualValues.size === expectedValues.size &&
-    actual.every(item => expectedValues.has(item))
-  );
+async function requireCanonicalAfterMutation(mutation: NoticeReceiverMutation, draft: NoticeReceiverDraft) {
+  try {
+    return await requireCanonical(mutation.id, draft);
+  } catch (reason) {
+    const error =
+      reason instanceof NoticeReceiverContractError
+        ? contractError('NOTICE_RECEIVER_RESPONSE_INVALID')
+        : toRefineHttpError(reason);
+    throw attachNoticeReceiverMutation(error, mutation);
+  }
 }
 
 function assertMutation(
@@ -165,7 +159,7 @@ function assertMutation(
   if (mutation.status === 'missing') throw contractError('NOTICE_RECEIVER_MISSING', 404);
   if (
     mutation.status !== expected ||
-    mutation.receiver == null ||
+    mutation.receiver === null ||
     mutation.receiver.id !== mutation.id ||
     (id !== undefined && mutation.id !== id)
   ) {
