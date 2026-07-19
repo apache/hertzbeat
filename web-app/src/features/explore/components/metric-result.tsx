@@ -15,17 +15,20 @@
  * limitations under the License.
  */
 
-import { Alert, Table, Tag } from "antd";
-import type { TFunction } from "i18next";
+import { Alert, Table, Tag } from 'antd';
+import type { TFunction } from 'i18next';
 
-import type { MetricConsole } from "../model/explore-signal-contract";
-import { metricPath, metricPoints, metricResultState, type MetricSeries } from "../model/explore-signal-model";
-import styles from "./metric-result.module.css";
-import { SignalEmptyState, SignalResultFrame } from "./signal-result-frame";
+import type { MetricConsole } from '../model/explore-signal-contract';
+import { metricPath, metricPoints, metricResultState, type MetricSeries } from '../model/explore-signal-model';
+import styles from './metric-result.module.css';
+import { SignalEmptyState, SignalResultFrame } from './signal-result-frame';
 
 const CHART_WIDTH = 1000;
 const CHART_HEIGHT = 220;
-const COLORS = ["#4f6bed", "#00a389", "#d97706", "#c24172", "#7c3aed", "#0891b2"];
+const METRIC_SERIES_COLORS = ['#4f6bed', '#00a389', '#d97706', '#c24172', '#7c3aed', '#0891b2'];
+const METRIC_SAMPLE_LIMIT = 100;
+const METRIC_TABLE_SCROLL = { x: 760, y: 320 };
+const METRIC_NAME_LABEL = '__name__';
 
 type SampleRow = {
   key: string;
@@ -38,17 +41,17 @@ type SampleRow = {
 
 export function MetricResult({ data, t }: { data: MetricConsole; t: TFunction }) {
   const state = metricResultState(data);
-  if (state.kind === "error") return <Alert type="error" showIcon message={state.message ?? t("explore.loadFailed")} />;
-  if (state.kind === "storage_unavailable") {
-    return <Alert type="warning" showIcon message={t("explore.states.storageUnavailable")} />;
+  if (state.kind === 'error') return <Alert type="error" showIcon message={state.message ?? t('explore.loadFailed')} />;
+  if (state.kind === 'storage_unavailable') {
+    return <Alert type="warning" showIcon message={t('explore.states.storageUnavailable')} />;
   }
-  if (state.kind === "unsupported_query") {
-    return <Alert type="warning" showIcon message={t("explore.states.unsupportedQuery")} />;
+  if (state.kind === 'unsupported_query') {
+    return <Alert type="warning" showIcon message={t('explore.states.unsupportedQuery')} />;
   }
-  if (state.kind === "empty")
+  if (state.kind === 'empty')
     return (
-      <SignalResultFrame title={t("explore.signals.metrics")} count={0} unit={t("exploreMetric.series")}>
-        <SignalEmptyState title={t("explore.empty.metrics")} hint={t("explore.description")} />
+      <SignalResultFrame title={t('explore.signals.metrics')} count={0} unit={t('exploreMetric.series')}>
+        <SignalEmptyState title={t('explore.empty.metrics')} hint={t('explore.description')} />
       </SignalResultFrame>
     );
   const series = state.series;
@@ -56,20 +59,20 @@ export function MetricResult({ data, t }: { data: MetricConsole; t: TFunction })
 
   return (
     <SignalResultFrame
-      title={t("explore.signals.metrics")}
+      title={t('explore.signals.metrics')}
       count={data.stats?.totalSeries ?? series.length}
-      unit={t("exploreMetric.series")}
+      unit={t('exploreMetric.series')}
       meta={[
-        { label: t("explore.samples"), value: samples.length },
-        { label: t("exploreMetric.datasource"), value: data.datasource ?? "—" },
-        { label: t("exploreMetric.queryMode"), value: data.queryMode ?? "—" },
+        { label: t('explore.samples'), value: samples.length },
+        { label: t('exploreMetric.datasource'), value: data.datasource ?? '—' },
+        { label: t('exploreMetric.queryMode'), value: data.queryMode ?? '—' }
       ]}
     >
-      <section className={styles.chartSection} aria-label={t("exploreMetric.trend")}>
+      <section className={styles.chartSection} aria-label={t('exploreMetric.trend')}>
         <div className={styles.legend}>
-          {series.slice(0, COLORS.length).map((item, index) => (
+          {series.slice(0, METRIC_SERIES_COLORS.length).map((item, index) => (
             <span key={item.key}>
-              <i style={{ backgroundColor: COLORS[index] }} />
+              <i style={{ backgroundColor: METRIC_SERIES_COLORS[index] }} />
               {seriesLabel(item)}
             </span>
           ))}
@@ -78,14 +81,18 @@ export function MetricResult({ data, t }: { data: MetricConsole; t: TFunction })
           className={styles.chart}
           viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
           role="img"
-          aria-label={t("exploreMetric.trend")}
+          aria-label={t('exploreMetric.trend')}
           preserveAspectRatio="none"
         >
           <line x1="0" x2={CHART_WIDTH} y1="0" y2="0" />
           <line x1="0" x2={CHART_WIDTH} y1={CHART_HEIGHT / 2} y2={CHART_HEIGHT / 2} />
           <line x1="0" x2={CHART_WIDTH} y1={CHART_HEIGHT} y2={CHART_HEIGHT} />
-          {series.slice(0, COLORS.length).map((item, index) => (
-            <path key={item.key} d={metricPath(metricPoints(item), CHART_WIDTH, CHART_HEIGHT)} stroke={COLORS[index]} />
+          {series.slice(0, METRIC_SERIES_COLORS.length).map((item, index) => (
+            <path
+              key={item.key}
+              d={metricPath(metricPoints(item), CHART_WIDTH, CHART_HEIGHT)}
+              stroke={METRIC_SERIES_COLORS[index]}
+            />
           ))}
         </svg>
       </section>
@@ -93,36 +100,36 @@ export function MetricResult({ data, t }: { data: MetricConsole; t: TFunction })
       <Table<SampleRow>
         rowKey="key"
         size="small"
-        dataSource={samples.slice(-100).reverse()}
+        dataSource={samples.slice(-METRIC_SAMPLE_LIMIT).reverse()}
         pagination={false}
-        scroll={{ x: 760, y: 320 }}
+        scroll={METRIC_TABLE_SCROLL}
         columns={[
           {
-            title: t("explore.time"),
-            dataIndex: "timestamp",
-            render: (value) => new Date(value as number).toLocaleString(),
+            title: t('explore.time'),
+            dataIndex: 'timestamp',
+            render: value => new Date(value as number).toLocaleString()
           },
-          { title: t("explore.metric"), dataIndex: "seriesName" },
+          { title: t('explore.metric'), dataIndex: 'seriesName' },
           {
-            title: t("exploreMetric.value"),
-            dataIndex: "value",
-            render: (value, row) => `${String(value)}${row.unit ? ` ${row.unit}` : ""}`,
+            title: t('exploreMetric.value'),
+            dataIndex: 'value',
+            render: (value, row) => `${String(value)}${row.unit ? ` ${row.unit}` : ''}`
           },
           {
-            title: t("explore.labels"),
+            title: t('explore.labels'),
             render: (_, row) => {
-              const item = series.find((candidate) => candidate.key === row.seriesKey);
+              const item = series.find(candidate => candidate.key === row.seriesKey);
               return item
                 ? Object.entries(item.labels)
-                    .filter(([key]) => key !== "__name__")
+                    .filter(([key]) => key !== METRIC_NAME_LABEL)
                     .map(([key, value]) => (
                       <Tag key={key}>
                         {key}={value}
                       </Tag>
                     ))
-                : "—";
-            },
-          },
+                : '—';
+            }
+          }
         ]}
       />
     </SignalResultFrame>
@@ -130,15 +137,15 @@ export function MetricResult({ data, t }: { data: MetricConsole; t: TFunction })
 }
 
 function buildSampleRows(series: MetricSeries[]): SampleRow[] {
-  return series.flatMap((item) =>
+  return series.flatMap(item =>
     metricPoints(item).map((point, index) => ({
       key: `${item.key}-${point.timestamp}-${index}`,
       seriesKey: item.key,
       seriesName: item.name,
       timestamp: point.timestamp,
       value: point.value,
-      unit: item.unit,
-    })),
+      unit: item.unit
+    }))
   );
 }
 
