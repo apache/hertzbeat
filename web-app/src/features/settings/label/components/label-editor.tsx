@@ -20,9 +20,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { LabelRecord } from '../model/label-model';
 
-export type LabelEditorState =
-  | { value: Partial<LabelRecord>; isNew: true }
-  | { value: LabelRecord; isNew: false };
+export type LabelEditorState = { value: Partial<LabelRecord>; isNew: true } | { value: LabelRecord; isNew: false };
 
 type LabelEditorProps = {
   editor: LabelEditorState;
@@ -42,6 +40,11 @@ export function LabelEditor({ editor, saving, onCancel, onSubmit }: LabelEditorP
       destroyOnHidden
       title={t(editor.isNew ? 'labels.new' : 'labels.edit')}
       confirmLoading={saving}
+      closable={!saving}
+      keyboard={!saving}
+      maskClosable={false}
+      cancelButtonProps={{ disabled: saving }}
+      okButtonProps={{ disabled: saving }}
       onCancel={onCancel}
       onOk={() => form.submit()}
     >
@@ -51,13 +54,13 @@ export function LabelEditor({ editor, saving, onCancel, onSubmit }: LabelEditorP
           label={t('labels.name')}
           rules={[{ required: true, whitespace: true, message: t('labels.nameRequired') }]}
         >
-          <Input />
+          <Input disabled={saving} />
         </Form.Item>
         <Form.Item name="tagValue" label={t('labels.value')}>
-          <Input />
+          <Input disabled={saving} />
         </Form.Item>
         <Form.Item name="description" label={t('labels.descriptionLabel')}>
-          <Input />
+          <Input disabled={saving} />
         </Form.Item>
       </Form>
     </Modal>

@@ -101,20 +101,51 @@ describe('LabelResults', () => {
     expect(callbacks.onEdit).toHaveBeenCalledWith(record);
     expect(callbacks.onRemove).toHaveBeenCalledWith(record);
   });
+
+  it('locks an open delete confirmation when another write becomes busy', async () => {
+    const callbacks = labelCallbacks();
+    const results = render(labelResults(callbacks, false));
+    const actions = render(<App>{renderColumn('common.actions', undefined)}</App>);
+
+    fireEvent.click(screen.getByRole('button', { name: 'labels.delete' }));
+    expect(await screen.findByRole('button', { name: 'OK' })).toBeEnabled();
+
+    results.rerender(labelResults(callbacks, true));
+    actions.rerender(<App>{renderColumn('common.actions', undefined)}</App>);
+    const confirm = screen.getByRole('button', { name: 'OK' });
+    expect(confirm).toBeDisabled();
+    fireEvent.click(confirm);
+
+    expect(callbacks.onRemove).not.toHaveBeenCalled();
+  });
 });
 
 function renderResults() {
-  const callbacks = {
+  const callbacks = labelCallbacks();
+  render(labelResults(callbacks, false));
+  return callbacks;
+}
+
+function labelCallbacks() {
+  return {
     onPageChange: vi.fn(),
     onCopy: vi.fn(),
     onEdit: vi.fn(),
     onRemove: vi.fn(),
     onInspect: vi.fn()
   };
-  render(
-    <LabelResults state={{ kind: 'ready', records: [record], total: 33 }} pageIndex={2} pageSize={20} {...callbacks} />
+}
+
+function labelResults(callbacks: ReturnType<typeof labelCallbacks>, busy: boolean) {
+  return (
+    <LabelResults
+      busy={busy}
+      state={{ kind: 'ready', records: [record], total: 33 }}
+      pageIndex={2}
+      pageSize={20}
+      {...callbacks}
+    />
   );
-  return callbacks;
 }
 
 function readPagination() {

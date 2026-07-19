@@ -15,16 +15,10 @@
  * limitations under the License.
  */
 
-import {
-  useList,
-  type HttpError
-} from '@refinedev/core';
+import { useList, type HttpError } from '@refinedev/core';
 import { useCallback, useMemo } from 'react';
 
-import {
-  type LabelListState,
-  type LabelRecord
-} from '../model/label-model';
+import { type LabelListState, type LabelRecord } from '../model/label-model';
 import type { LabelQuery } from '../model/label-query-model';
 import { useLabelActionsController } from './label-actions-controller';
 import { useLabelMutationController } from './label-mutation-controller';
@@ -42,20 +36,18 @@ export function useLabelResourceController(query: LabelQuery) {
   });
   const mutations = useLabelMutationController();
   const actions = useLabelActionsController();
+  const isMutationLocked = mutations.isLocked;
+  const refetch = list.query.refetch;
   const listState = useMemo(
-    () => resolveListState(
-      list.query.isPending,
-      list.query.isError,
-      list.query.error,
-      list.result.data,
-      list.result.total
-    ),
+    () =>
+      resolveListState(list.query.isPending, list.query.isError, list.query.error, list.result.data, list.result.total),
     [list.query.error, list.query.isError, list.query.isPending, list.result.data, list.result.total]
   );
 
   const refresh = useCallback(() => {
-    void list.query.refetch();
-  }, [list.query]);
+    if (isMutationLocked()) return;
+    void refetch();
+  }, [isMutationLocked, refetch]);
 
   return {
     ...actions,

@@ -23,8 +23,10 @@ import {
   type HttpError,
   type OpenNotificationParams
 } from '@refinedev/core';
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useExclusiveOperation, type ExclusiveOperation } from '@/shared/exclusive-operation';
 
 import type { LabelRecord } from '../model/label-model';
 
@@ -36,57 +38,86 @@ type Translate = ReturnType<typeof useTranslation>['t'];
 export function useLabelMutationController() {
   const { t } = useTranslation();
   const notification = useNotification();
-  const create = useCreate<LabelRecord, HttpError, Partial<LabelRecord>>(saveMutationOptions(t));
+  const create = useCreate<LabelRecord, HttpError, Partial<LabelRecord>>(saveMutationOptions());
   const update = useUpdate<LabelRecord, HttpError, Partial<LabelRecord>>({
-    ...saveMutationOptions(t),
+    ...saveMutationOptions(),
     mutationMode: 'pessimistic'
   });
   const remove = useDelete<LabelRecord, HttpError, LabelRecord>();
+  const operation = useExclusiveOperation('label-mutation');
 
   const createLabel = useCallback(
-    (values: Partial<LabelRecord>, onSuccess: () => void) => {
-      create.mutate(createLabelParams(values), { onSuccess });
+    (values: Partial<LabelRecord>, onConfirmed: () => void) => {
+      const owner = operation.begin();
+      if (!owner) return false;
+      create.mutate(createLabelParams(values), ownedCallbacks(operation, owner, notification, t, 'save', onConfirmed));
+      return true;
     },
-    [create]
+    [create, notification, operation, t]
   );
 
   const updateLabel = useCallback(
-    (record: LabelRecord, values: Partial<LabelRecord>, onSuccess: () => void) => {
+    (record: LabelRecord, values: Partial<LabelRecord>, onConfirmed: () => void) => {
       if (record.id === undefined) {
         notification.open?.(notice(t('labels.saveFailed'), 'error'));
-        return;
+        return false;
       }
-      update.mutate(updateLabelParams(record, values), { onSuccess });
+      const owner = operation.begin();
+      if (!owner) return false;
+      update.mutate(
+        updateLabelParams(record, values),
+        ownedCallbacks(operation, owner, notification, t, 'save', onConfirmed)
+      );
+      return true;
     },
-    [notification, t, update]
+    [notification, operation, t, update]
   );
-
-  const deleteLabel = useCallback(
-    (record: LabelRecord) => {
-      if (record.id === undefined) {
-        notification.open?.(notice(t('labels.deleteFailed'), 'error'));
-        return;
-      }
-      remove.mutate(deleteLabelParams(record, t));
-    },
-    [notification, remove, t]
-  );
+  const deleteLabel = useDeleteLabel(remove, operation, notification, t);
 
   return {
     createLabel,
     deleteLabel,
-    isSaving: create.mutation.isPending || update.mutation.isPending,
+    isLocked: operation.isLocked,
+    isSaving: operation.pending || create.mutation.isPending || update.mutation.isPending || remove.mutation.isPending,
     updateLabel
   };
 }
 
-function saveMutationOptions(t: Translate) {
+function useDeleteLabel(
+  remove: ReturnType<typeof useDelete<LabelRecord, HttpError, LabelRecord>>,
+  operation: ExclusiveOperation,
+  notification: ReturnType<typeof useNotification>,
+  t: Translate
+) {
+  // Provider proof can precede list projection, so retire IDs from stale table rows.
+  const confirmedDeletedIdsRef = useRef(new Set<number>());
+  return useCallback(
+    (record: LabelRecord) => {
+      const id = record.id;
+      if (id === undefined) {
+        notification.open?.(notice(t('labels.deleteFailed'), 'error'));
+        return false;
+      }
+      if (confirmedDeletedIdsRef.current.has(id)) return false;
+      const owner = operation.begin();
+      if (!owner) return false;
+      remove.mutate(
+        deleteLabelParams(record),
+        ownedCallbacks(operation, owner, notification, t, 'delete', () => confirmedDeletedIdsRef.current.add(id))
+      );
+      return true;
+    },
+    [notification, operation, remove, t]
+  );
+}
+
+function saveMutationOptions() {
   return {
     resource: labelResource,
     dataProviderName: labelDataProvider,
     invalidates: [...listInvalidation],
-    successNotification: () => notice(t('labels.saveSuccess'), 'success'),
-    errorNotification: () => notice(t('labels.saveFailed'), 'error')
+    successNotification: false as const,
+    errorNotification: false as const
   };
 }
 
@@ -105,7 +136,7 @@ function updateLabelParams(record: LabelRecord, values: Partial<LabelRecord>) {
   };
 }
 
-function deleteLabelParams(record: LabelRecord, t: Translate) {
+function deleteLabelParams(record: LabelRecord) {
   return {
     id: record.id,
     resource: labelResource,
@@ -113,9 +144,43 @@ function deleteLabelParams(record: LabelRecord, t: Translate) {
     invalidates: [...listInvalidation],
     mutationMode: 'pessimistic' as const,
     values: record,
-    successNotification: () => notice(t('labels.deleteSuccess'), 'success'),
-    errorNotification: () => notice(t('labels.deleteFailed'), 'error')
+    successNotification: false as const,
+    errorNotification: false as const
   };
+}
+
+type LabelOperationOwner = NonNullable<ReturnType<ExclusiveOperation['begin']>>;
+
+function ownedCallbacks(
+  operation: ExclusiveOperation,
+  owner: LabelOperationOwner,
+  notification: ReturnType<typeof useNotification>,
+  t: Translate,
+  command: 'save' | 'delete',
+  onConfirmed: () => void
+) {
+  const successKey = command === 'save' ? 'labels.saveSuccess' : 'labels.deleteSuccess';
+  const failureKey = command === 'save' ? 'labels.saveFailed' : 'labels.deleteFailed';
+  return {
+    onSuccess: () =>
+      finishOwned(operation, owner, () => {
+        onConfirmed();
+        notification.open?.(notice(t(successKey), 'success'));
+      }),
+    onError: () =>
+      finishOwned(operation, owner, () => {
+        notification.open?.(notice(t(failureKey), 'error'));
+      })
+  };
+}
+
+function finishOwned(operation: ExclusiveOperation, owner: LabelOperationOwner, publish: () => void) {
+  if (!operation.isCurrent(owner)) return;
+  try {
+    publish();
+  } finally {
+    operation.end(owner);
+  }
 }
 
 function notice(message: string, type: OpenNotificationParams['type']): OpenNotificationParams {

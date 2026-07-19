@@ -84,9 +84,21 @@ describe('Label resource controller', () => {
     const onSuccess = vi.fn();
     const { result } = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
 
-    act(() => result.current.createLabel({ name: 'team', tagValue: 'platform' }, onSuccess));
-    act(() => result.current.updateLabel(serverLabel, { id: 99, description: 'Updated' }, onSuccess));
-    act(() => result.current.deleteLabel(serverLabel));
+    act(() => {
+      result.current.createLabel({ name: 'team', tagValue: 'platform' }, onSuccess);
+    });
+    act(() => {
+      void refine.createMutate.mock.calls[0]?.[1]?.onSuccess?.({ data: serverLabel });
+    });
+    act(() => {
+      result.current.updateLabel(serverLabel, { id: 99, description: 'Updated' }, onSuccess);
+    });
+    act(() => {
+      void refine.updateMutate.mock.calls[0]?.[1]?.onSuccess?.({ data: serverLabel });
+    });
+    act(() => {
+      result.current.deleteLabel(serverLabel);
+    });
 
     expect(refine.createMutate).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -95,7 +107,7 @@ describe('Label resource controller', () => {
         invalidates: ['list'],
         values: { name: 'team', tagValue: 'platform' }
       }),
-      expect.objectContaining({ onSuccess })
+      expect.objectContaining({ onSuccess: expect.any(Function), onError: expect.any(Function) })
     );
     expect(refine.updateMutate).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -106,7 +118,7 @@ describe('Label resource controller', () => {
         mutationMode: 'pessimistic',
         values: { ...serverLabel, description: 'Updated' }
       }),
-      expect.objectContaining({ onSuccess })
+      expect.objectContaining({ onSuccess: expect.any(Function), onError: expect.any(Function) })
     );
     const deleteParams = refine.deleteMutate.mock.calls[0]?.[0];
     expect(deleteParams).toEqual(
@@ -119,26 +131,107 @@ describe('Label resource controller', () => {
         values: serverLabel
       })
     );
-    expect(deleteParams.successNotification()).toEqual({ message: 'labels.deleteSuccess', type: 'success' });
-    expect(deleteParams.errorNotification()).toEqual({ message: 'labels.deleteFailed', type: 'error' });
+    expect(deleteParams.successNotification).toBe(false);
+    expect(deleteParams.errorNotification).toBe(false);
   });
 
-  it('provides existing localized success and backend error notifications', () => {
-    renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
+  it('admits only one same-tick mutation across create, update, and delete', () => {
+    const { result } = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
+
+    act(() => {
+      result.current.createLabel({ name: 'team' }, vi.fn());
+      result.current.createLabel({ name: 'duplicate' }, vi.fn());
+      result.current.updateLabel(serverLabel, { description: 'late' }, vi.fn());
+      result.current.deleteLabel(serverLabel);
+    });
+
+    expect(refine.createMutate).toHaveBeenCalledTimes(1);
+    expect(refine.updateMutate).not.toHaveBeenCalled();
+    expect(refine.deleteMutate).not.toHaveBeenCalled();
+  });
+
+  it('retires a confirmed delete so a stale list row cannot repeat it', () => {
+    const { result } = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
+
+    act(() => {
+      result.current.deleteLabel(serverLabel);
+    });
+    const callbacks = refine.deleteMutate.mock.calls[0]?.[1];
+    act(() => {
+      void callbacks?.onSuccess?.({ data: serverLabel });
+      result.current.deleteLabel(serverLabel);
+    });
+
+    expect(refine.deleteMutate).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not publish or notify when a pending mutation completes after unmount', () => {
+    const confirmed = vi.fn();
+    const hook = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
+    act(() => {
+      hook.result.current.createLabel({ name: 'team' }, confirmed);
+    });
+    const callbacks = refine.createMutate.mock.calls[0]?.[1];
+
+    hook.unmount();
+    act(() => {
+      void callbacks?.onSuccess?.({ data: serverLabel });
+    });
+
+    expect(confirmed).not.toHaveBeenCalled();
+    expect(refine.notificationOpen).not.toHaveBeenCalled();
+  });
+
+  it('ignores an old completion after a newer mutation owns the controller', () => {
+    const oldConfirmed = vi.fn();
+    const newConfirmed = vi.fn();
+    const { result } = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
+    act(() => {
+      result.current.createLabel({ name: 'old' }, oldConfirmed);
+    });
+    const oldCallbacks = refine.createMutate.mock.calls[0]?.[1];
+    act(() => {
+      void oldCallbacks?.onError?.({ statusCode: 500 });
+      result.current.updateLabel(serverLabel, { description: 'new' }, newConfirmed);
+      void oldCallbacks?.onSuccess?.({ data: serverLabel });
+    });
+
+    expect(oldConfirmed).not.toHaveBeenCalled();
+    expect(newConfirmed).not.toHaveBeenCalled();
+    expect(refine.notificationOpen).toHaveBeenCalledTimes(1);
+    expect(refine.notificationOpen).toHaveBeenCalledWith({ message: 'labels.saveFailed', type: 'error' });
+  });
+
+  it('publishes localized notifications only from the current mutation owner', () => {
+    const { result } = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
 
     const createOptions = refine.useCreate.mock.calls[0]?.[0];
     const updateOptions = refine.useUpdate.mock.calls[0]?.[0];
-    expect(createOptions?.successNotification?.()).toEqual({ message: 'labels.saveSuccess', type: 'success' });
-    expect(createOptions?.errorNotification?.()).toEqual({ message: 'labels.saveFailed', type: 'error' });
-    expect(updateOptions?.successNotification?.()).toEqual({ message: 'labels.saveSuccess', type: 'success' });
-    expect(updateOptions?.errorNotification?.()).toEqual({ message: 'labels.saveFailed', type: 'error' });
+    expect(createOptions).toMatchObject({ successNotification: false, errorNotification: false });
+    expect(updateOptions).toMatchObject({ successNotification: false, errorNotification: false });
+
+    act(() => {
+      result.current.createLabel({ name: 'team' }, vi.fn());
+    });
+    act(() => {
+      void refine.createMutate.mock.calls[0]?.[1]?.onSuccess?.({ data: serverLabel });
+    });
+    act(() => {
+      result.current.updateLabel(serverLabel, { description: 'changed' }, vi.fn());
+    });
+    act(() => {
+      void refine.updateMutate.mock.calls[0]?.[1]?.onError?.({ statusCode: 500 });
+    });
+
+    expect(refine.notificationOpen).toHaveBeenNthCalledWith(1, { message: 'labels.saveSuccess', type: 'success' });
+    expect(refine.notificationOpen).toHaveBeenNthCalledWith(2, { message: 'labels.saveFailed', type: 'error' });
   });
 
   it.each([
     [true, false, true, true],
     [false, true, true, true],
-    [false, false, true, false]
-  ])('aggregates only create/update pending as saving', (createPending, updatePending, deletePending, expected) => {
+    [false, false, true, true]
+  ])('aggregates every pending mutation as saving', (createPending, updatePending, deletePending, expected) => {
     refine.useCreate.mockReturnValue({ mutate: refine.createMutate, mutation: { isPending: createPending } });
     refine.useUpdate.mockReturnValue({ mutate: refine.updateMutate, mutation: { isPending: updatePending } });
     refine.useDelete.mockReturnValue({ mutate: refine.deleteMutate, mutation: { isPending: deletePending } });
@@ -169,8 +262,12 @@ describe('Label resource controller', () => {
     const invalidRecord = { name: 'env', tagValue: 'prod' } as unknown as LabelRecord;
     const { result } = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
 
-    act(() => result.current.updateLabel(invalidRecord, { description: 'Updated' }, vi.fn()));
-    act(() => result.current.deleteLabel(invalidRecord));
+    act(() => {
+      result.current.updateLabel(invalidRecord, { description: 'Updated' }, vi.fn());
+    });
+    act(() => {
+      result.current.deleteLabel(invalidRecord);
+    });
 
     expect(refine.updateMutate).not.toHaveBeenCalled();
     expect(refine.deleteMutate).not.toHaveBeenCalled();

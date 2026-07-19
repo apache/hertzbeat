@@ -32,6 +32,7 @@ type LabelResultActions = {
 };
 
 type LabelResultsProps = LabelResultActions & {
+  busy: boolean;
   state: LabelListState;
   pageIndex: number;
   pageSize: LabelPageSize;
@@ -52,6 +53,7 @@ export function LabelResults(props: LabelResultsProps) {
       columns={createLabelColumns(t, props)}
       dataSource={props.state.records}
       pagination={{
+        disabled: props.busy,
         current: props.pageIndex + 1,
         pageSize: props.pageSize,
         pageSizeOptions: [...labelPageSizes],
@@ -65,7 +67,7 @@ export function LabelResults(props: LabelResultsProps) {
   );
 }
 
-function createLabelColumns(t: TFunction, actions: LabelResultActions): ColumnsType<LabelRecord> {
+function createLabelColumns(t: TFunction, actions: LabelResultsProps): ColumnsType<LabelRecord> {
   return [
     {
       title: t('labels.label'),
@@ -100,11 +102,16 @@ function createLabelColumns(t: TFunction, actions: LabelResultActions): ColumnsT
           <Button type="link" onClick={() => actions.onCopy(row)}>
             {t('labels.copy')}
           </Button>
-          <Button type="link" onClick={() => actions.onEdit(row)}>
+          <Button type="link" disabled={actions.busy} onClick={() => actions.onEdit(row)}>
             {t('common.edit')}
           </Button>
-          <Popconfirm title={t('labels.deleteConfirm')} onConfirm={() => actions.onRemove(row)}>
-            <Button type="link" danger>
+          <Popconfirm
+            disabled={actions.busy}
+            okButtonProps={{ disabled: actions.busy }}
+            title={t('labels.deleteConfirm')}
+            onConfirm={() => actions.onRemove(row)}
+          >
+            <Button type="link" danger disabled={actions.busy}>
               {t('labels.delete')}
             </Button>
           </Popconfirm>

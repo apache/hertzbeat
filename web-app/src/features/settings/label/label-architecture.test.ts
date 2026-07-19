@@ -49,10 +49,10 @@ describe('Label architecture', () => {
     expect(mutationSource).toContain('function createLabelParams');
     expect(mutationSource).toContain('function updateLabelParams');
     expect(mutationSource).toContain('function deleteLabelParams');
-    expect(mutationSource).toContain('create.mutate(createLabelParams(values), { onSuccess })');
-    expect(mutationSource).toContain('update.mutate(updateLabelParams(record, values), { onSuccess })');
+    expect(mutationSource).toMatch(/create\.mutate\(\s*createLabelParams\(values\),\s*ownedCallbacks\(/);
+    expect(mutationSource).toMatch(/update\.mutate\(\s*updateLabelParams\(record, values\),\s*ownedCallbacks\(/);
     expect(mutationSource).toContain('values: { ...record, ...values, id: record.id }');
-    expect(mutationSource).toContain('remove.mutate(deleteLabelParams(record, t))');
-    expect(mutationSource).toContain('isSaving: create.mutation.isPending || update.mutation.isPending');
+    expect(mutationSource).toMatch(/remove\.mutate\(\s*deleteLabelParams\(record\),\s*ownedCallbacks\(/);
+    expect(mutationSource).toContain('useExclusiveOperation');
   });
 });

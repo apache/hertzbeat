@@ -16,14 +16,14 @@
  */
 
 import { Button, Input, Typography } from 'antd';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useStringQueryDraft } from '@/shared/query-context';
 
-import { LabelEditor, type LabelEditorState } from '../components/label-editor';
+import { LabelEditor } from '../components/label-editor';
 import { LabelResults } from '../components/label-results';
 import styles from '../components/label.module.css';
+import { useLabelEditorController } from '../controller/label-editor-controller';
 import { useLabelQueryController } from '../controller/label-query-controller';
 import { useLabelResourceController } from '../controller/label-resource-controller';
 
@@ -32,17 +32,11 @@ export function LabelPage() {
   const { query, setPage, setSearch } = useLabelQueryController();
   const resource = useLabelResourceController(query);
   const { value: draftSearch, setValue: setDraftSearch } = useStringQueryDraft(query.search, query.search);
-  const [editor, setEditor] = useState<LabelEditorState>();
+  const editor = useLabelEditorController(resource);
   const submitSearch = () => {
     const search = draftSearch.trim();
     setDraftSearch(search);
     setSearch(search);
-  };
-  const saveLabel = (value: LabelEditorState['value']) => {
-    if (!editor) return;
-    const closeEditor = () => setEditor(undefined);
-    if (editor.isNew) resource.createLabel(value, closeEditor);
-    else resource.updateLabel(editor.value, value, closeEditor);
   };
   return (
     <div className={styles.page}>
@@ -53,35 +47,39 @@ export function LabelPage() {
       <div className={styles.toolbar}>
         <Input
           allowClear
+          disabled={resource.isSaving}
           value={draftSearch}
           placeholder={t('labels.search')}
-          onChange={(event) => setDraftSearch(event.target.value)}
+          onChange={event => setDraftSearch(event.target.value)}
           onPressEnter={submitSearch}
         />
-        <Button type="primary" onClick={submitSearch}>
+        <Button type="primary" disabled={resource.isSaving} onClick={submitSearch}>
           {t('common.query')}
         </Button>
-        <Button loading={resource.refreshing} onClick={resource.refresh}>{t('common.refresh')}</Button>
-        <Button type="primary" onClick={() => setEditor({ value: {}, isNew: true })}>
+        <Button disabled={resource.isSaving} loading={resource.refreshing} onClick={resource.refresh}>
+          {t('common.refresh')}
+        </Button>
+        <Button type="primary" disabled={resource.isSaving} onClick={editor.actions.create}>
           {t('labels.new')}
         </Button>
       </div>
       <LabelResults
+        busy={resource.isSaving}
         state={resource.listState}
         pageIndex={query.pageIndex}
         pageSize={query.pageSize}
         onPageChange={setPage}
-        onCopy={(label) => void resource.copyLabel(label)}
-        onEdit={(label) => setEditor({ value: { ...label }, isNew: false })}
+        onCopy={label => void resource.copyLabel(label)}
+        onEdit={editor.actions.edit}
         onRemove={resource.deleteLabel}
         onInspect={resource.inspectLabel}
       />
-      {editor && (
+      {editor.state.editor && (
         <LabelEditor
-          editor={editor}
+          editor={editor.state.editor}
           saving={resource.isSaving}
-          onCancel={() => setEditor(undefined)}
-          onSubmit={saveLabel}
+          onCancel={editor.actions.close}
+          onSubmit={editor.actions.submit}
         />
       )}
     </div>

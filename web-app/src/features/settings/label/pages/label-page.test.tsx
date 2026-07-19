@@ -16,7 +16,7 @@
  */
 
 import { App } from 'antd';
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -34,6 +34,7 @@ const resource = vi.hoisted(() => {
     createLabel: vi.fn(),
     deleteLabel: vi.fn(),
     inspectLabel: vi.fn(),
+    isLocked: vi.fn(),
     isSaving: false,
     listState,
     refresh: vi.fn(),
@@ -63,6 +64,8 @@ describe('LabelPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resource.listState = { kind: 'ready', records: [serverLabel], total: 1 };
+    resource.isSaving = false;
+    resource.isLocked.mockImplementation(() => resource.isSaving);
     resource.createLabel.mockImplementation((_value, onSuccess: () => void) => onSuccess());
     resource.updateLabel.mockImplementation((_record, _value, onSuccess: () => void) => onSuccess());
   });
@@ -80,10 +83,12 @@ describe('LabelPage', () => {
     fireEvent.change(within(dialog).getByLabelText('Name'), { target: { value: ' team ' } });
     fireEvent.change(within(dialog).getByLabelText('Value'), { target: { value: ' platform ' } });
     fireEvent.click(within(dialog).getByRole('button', { name: 'OK' }));
-    await waitFor(() => expect(resource.createLabel).toHaveBeenCalledWith(
-      { name: ' team ', tagValue: ' platform ' },
-      expect.any(Function)
-    ));
+    await waitFor(() =>
+      expect(resource.createLabel).toHaveBeenCalledWith(
+        { name: ' team ', tagValue: ' platform ' },
+        expect.any(Function)
+      )
+    );
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   });
 
@@ -99,6 +104,44 @@ describe('LabelPage', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 
+  it('does not let an old create completion close a newly opened edit dialog', async () => {
+    let completeCreate: (() => void) | undefined;
+    resource.createLabel.mockImplementation((_value, onSuccess: () => void) => {
+      completeCreate = onSuccess;
+    });
+    renderLabelPage();
+    fireEvent.click(await screen.findByRole('button', { name: 'New label' }));
+    let dialog = screen.getByRole('dialog');
+    fireEvent.change(within(dialog).getByLabelText('Name'), { target: { value: 'team' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'OK' }));
+    await waitFor(() => expect(resource.createLabel).toHaveBeenCalled());
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByLabelText('Name')).toHaveValue('env');
+    act(() => completeCreate?.());
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(within(screen.getByRole('dialog')).getByLabelText('Name')).toHaveValue('env');
+  });
+
+  it('locks the editor and every write entry while a save is pending', async () => {
+    renderLabelPage();
+    fireEvent.click(await screen.findByRole('button', { name: 'New label' }));
+    resource.isSaving = true;
+    fireEvent.change(screen.getByPlaceholderText('Search labels'), { target: { value: 'rerender' } });
+
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByLabelText('Name')).toBeDisabled();
+    expect(within(dialog).getByLabelText('Value')).toBeDisabled();
+    expect(within(dialog).getByRole('button', { name: 'Cancel' })).toBeDisabled();
+    expect(within(dialog).getByRole('button', { name: /OK$/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'New label' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Edit' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeDisabled();
+  });
+
   it('updates, deletes, copies, inspects, and refreshes through the resource controller', async () => {
     renderLabelPage();
     await screen.findByText('env:prod');
@@ -106,11 +149,13 @@ describe('LabelPage', () => {
     const dialog = screen.getByRole('dialog');
     fireEvent.change(within(dialog).getByLabelText('Description'), { target: { value: 'Updated' } });
     fireEvent.click(within(dialog).getByRole('button', { name: 'OK' }));
-    await waitFor(() => expect(resource.updateLabel).toHaveBeenCalledWith(
-      serverLabel,
-      expect.objectContaining({ description: 'Updated' }),
-      expect.any(Function)
-    ));
+    await waitFor(() =>
+      expect(resource.updateLabel).toHaveBeenCalledWith(
+        serverLabel,
+        expect.objectContaining({ description: 'Updated' }),
+        expect.any(Function)
+      )
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
     fireEvent.click(screen.getByRole('button', { name: 'env:prod' }));
@@ -145,9 +190,11 @@ describe('LabelPage', () => {
 
     fireEvent.change(search, { target: { value: 'production' } });
     fireEvent.click(screen.getByRole('button', { name: 'Query' }));
-    await waitFor(() => expect(screen.getByTestId('route')).toHaveTextContent(
-      '/settings/labels?pageIndex=0&pageSize=50&search=production'
-    ));
+    await waitFor(() =>
+      expect(screen.getByTestId('route')).toHaveTextContent(
+        '/settings/labels?pageIndex=0&pageSize=50&search=production'
+      )
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'History back' }));
     await waitFor(() => expect(search).toHaveValue('env'));
@@ -175,8 +222,12 @@ function LocationProbe() {
   return (
     <>
       <output data-testid="route">{`${location.pathname}${location.search}`}</output>
-      <button type="button" onClick={() => void navigate(-1)}>History back</button>
-      <button type="button" onClick={() => void navigate(1)}>History forward</button>
+      <button type="button" onClick={() => void navigate(-1)}>
+        History back
+      </button>
+      <button type="button" onClick={() => void navigate(1)}>
+        History forward
+      </button>
     </>
   );
 }
