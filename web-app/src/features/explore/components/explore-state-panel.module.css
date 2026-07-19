@@ -15,11 +15,7 @@
  * limitations under the License.
  */
 
-.page {
-  max-width: 1480px;
-  margin: 0 auto;
-}
-
-.tableLink {
-  padding: 0;
+.results {
+  min-height: 360px;
+  padding-top: 16px;
 }

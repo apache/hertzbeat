@@ -15,11 +15,10 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Skeleton } from 'antd';
-import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ExploreQueryBar } from '../components/explore-query-bar';
+import { ExploreLoadingResult, ExploreMessageResult, ExploreResultFrame } from '../components/explore-state-panel';
 import { ExploreWorkbench } from '../components/explore-workbench';
 import { LogResult } from '../components/log-result';
 import { MetricResult } from '../components/metric-result';
@@ -71,33 +70,47 @@ function ResultPanel({
 }) {
   const { t } = useTranslation();
   if (result.kind === 'invalid') return null;
-  if (result.kind === 'loading')
-    return (
-      <ResultFrame>
-        <Skeleton active paragraph={{ rows: 8 }} />
-      </ResultFrame>
-    );
+  if (result.kind === 'loading') return <ExploreLoadingResult />;
   if (result.kind === 'transport_error')
-    return <FailureResult message={t('explore.states.transportError')} retry={retry} />;
+    return (
+      <ExploreMessageResult
+        type="error"
+        message={t('explore.states.transportError')}
+        retry={retry}
+        retryLabel={t('common.retry')}
+      />
+    );
   if (result.kind === 'contract_error')
-    return <FailureResult message={t('explore.states.contractError')} retry={retry} />;
+    return (
+      <ExploreMessageResult
+        type="error"
+        message={t('explore.states.contractError')}
+        retry={retry}
+        retryLabel={t('common.retry')}
+      />
+    );
   if (result.kind === 'storage_unavailable')
-    return <FailureResult message={t('explore.states.storageUnavailable')} retry={retry} />;
-  if (result.kind === 'missing_context') {
     return (
-      <ResultFrame>
-        <Alert type="info" showIcon message={t('explore.states.missingContext')} />
-      </ResultFrame>
+      <ExploreMessageResult
+        type="error"
+        message={t('explore.states.storageUnavailable')}
+        retry={retry}
+        retryLabel={t('common.retry')}
+      />
     );
-  }
-  if (result.kind === 'unsupported_query') {
+  if (result.kind === 'missing_context')
+    return <ExploreMessageResult type="info" message={t('explore.states.missingContext')} />;
+  if (result.kind === 'unsupported_query')
+    return <ExploreMessageResult type="warning" message={t('explore.states.unsupportedQuery')} />;
+  if (result.kind === 'error')
     return (
-      <ResultFrame>
-        <Alert type="warning" showIcon message={t('explore.states.unsupportedQuery')} />
-      </ResultFrame>
+      <ExploreMessageResult
+        type="error"
+        message={t('explore.loadFailed')}
+        retry={retry}
+        retryLabel={t('common.retry')}
+      />
     );
-  }
-  if (result.kind === 'error') return <FailureResult message={t('explore.loadFailed')} retry={retry} />;
   if (result.kind === 'live')
     return query.signal === 'logs' ? <LiveLogPanel query={query} openPath={openPath} /> : null;
   return <HistoricalResult query={query} result={result} openPath={openPath} />;
@@ -107,9 +120,9 @@ function LiveLogPanel({ query, openPath }: { query: LogExploreQuery; openPath: (
   const { t } = useTranslation();
   const live = useLiveLogController(query);
   return (
-    <ResultFrame>
+    <ExploreResultFrame>
       <LogResult query={query} t={t} navigate={openPath} live={live} />
-    </ResultFrame>
+    </ExploreResultFrame>
   );
 }
 
@@ -125,15 +138,15 @@ function HistoricalResult({
   const { t } = useTranslation();
   if (result.signal === 'metrics' && query.signal === 'metrics')
     return (
-      <ResultFrame>
+      <ExploreResultFrame>
         <MetricResult data={result.data} t={t} />
-      </ResultFrame>
+      </ExploreResultFrame>
     );
   if (result.signal === 'logs' && query.signal === 'logs')
     return (
-      <ResultFrame>
+      <ExploreResultFrame>
         <LogResult data={result.data} query={query} t={t} navigate={openPath} />
-      </ResultFrame>
+      </ExploreResultFrame>
     );
   if (result.signal === 'traces' && query.signal === 'traces')
     return <TracePanel data={result.data} query={query} openPath={openPath} />;
@@ -152,38 +165,8 @@ function TracePanel({
   const { t } = useTranslation();
   const trace = useTraceDetailController(query, openPath);
   return (
-    <ResultFrame>
+    <ExploreResultFrame>
       <TraceResult data={data} t={t} trace={trace} />
-    </ResultFrame>
-  );
-}
-
-function FailureResult({ message, retry }: { message: string; retry: () => Promise<void> }) {
-  const { t } = useTranslation();
-  return (
-    <ResultFrame>
-      <Alert
-        type="error"
-        showIcon
-        message={message}
-        action={
-          <Button
-            onClick={() => {
-              void retry();
-            }}
-          >
-            {t('common.retry')}
-          </Button>
-        }
-      />
-    </ResultFrame>
-  );
-}
-
-function ResultFrame({ children }: { children: ReactNode }) {
-  return (
-    <section className={styles.results} aria-live="polite">
-      {children}
-    </section>
+    </ExploreResultFrame>
   );
 }
