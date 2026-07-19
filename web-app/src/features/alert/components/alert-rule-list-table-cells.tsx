@@ -1,0 +1,79 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0.
+ */
+
+import { Button, Popconfirm, Space, Switch, Tag, Typography } from 'antd';
+import type { TFunction } from 'i18next';
+
+import type { AlertRule } from '../alert-rule-model';
+import styles from '../alert-rule-list-page.module.css';
+
+export type AlertRuleColumnActions = {
+  busy: boolean;
+  edit: (id: number) => unknown;
+  toggle: (rule: AlertRule, enabled: boolean) => unknown;
+  remove: (id: number) => unknown;
+};
+
+export function AlertRuleIdentityCell({ rule }: { rule: AlertRule }) {
+  return (
+    <div className={styles.name}>
+      <strong>{rule.name || `#${rule.id}`}</strong>
+      <span>{rule.expr ?? '—'}</span>
+    </div>
+  );
+}
+
+export function AlertRuleTypeCell({ rule }: { rule: AlertRule }) {
+  return (
+    <Space direction="vertical" size={2}>
+      {rule.type === null ? '—' : <Tag>{rule.type}</Tag>}
+      <Typography.Text type="secondary">{rule.datasource ?? '—'}</Typography.Text>
+    </Space>
+  );
+}
+
+export function AlertRuleEnabledCell({
+  actions,
+  enabled,
+  rule
+}: {
+  actions: AlertRuleColumnActions;
+  enabled: boolean;
+  rule: AlertRule;
+}) {
+  return <Switch checked={enabled} disabled={actions.busy} onChange={next => void actions.toggle(rule, next)} />;
+}
+
+export function AlertRuleActionCell({
+  actions,
+  rule,
+  t
+}: {
+  actions: AlertRuleColumnActions;
+  rule: AlertRule;
+  t: TFunction;
+}) {
+  return (
+    <Space>
+      <Button type="link" disabled={actions.busy} onClick={() => void actions.edit(rule.id)}>
+        {t('common.edit')}
+      </Button>
+      <Popconfirm
+        title={t('alertRules.deleteConfirm')}
+        disabled={actions.busy}
+        okButtonProps={{ disabled: actions.busy }}
+        onConfirm={() => {
+          if (!actions.busy) return actions.remove(rule.id);
+        }}
+      >
+        <Button type="link" danger disabled={actions.busy}>
+          {t('alertRules.delete')}
+        </Button>
+      </Popconfirm>
+    </Space>
+  );
+}

@@ -15,81 +15,44 @@
  * limitations under the License.
  */
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { App } from 'antd';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
-import { useStringQueryDraft } from '@/shared/query-context';
 import type { RemotePageState } from '@/shared/remote-state';
 
-import {
-  classifyAlertRuleReadError, deleteAlertRules, loadAlertRule, loadAlertRules, updateAlertRuleEnabled
-} from '../alert-rule-api';
-import {
-  AlertRuleContractError, buildAlertRuleTogglePayload, readAlertRuleQuery, writeAlertRuleQuery,
-  type AlertRule, type AlertRulePage, type AlertRuleQuery
-} from '../alert-rule-model';
-import { alertRuleQueryKeys } from './alert-rule-query-keys';
+import { classifyAlertRuleReadError } from '../alert-rule-api';
+import type { AlertRule, AlertRulePage } from '../alert-rule-model';
+import { createAlertRuleListActions } from './alert-rule-list-actions';
+import { useAlertRuleListOperations } from './use-alert-rule-list-operations';
+import { useAlertRuleListQueryController } from './use-alert-rule-list-query-controller';
+import { useAlertRuleListReadController } from './use-alert-rule-list-read-controller';
 
 export type AlertRuleListState = RemotePageState<AlertRule, 'unavailable' | 'error'>;
 
 export function useAlertRuleListController() {
   const { t } = useTranslation();
   const { message } = App.useApp();
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [params, setParams] = useSearchParams();
-  const query = readAlertRuleQuery(params);
-  const source = writeAlertRuleQuery(query).toString();
-  const { value: search, setValue: setSearch } = useStringQueryDraft(source, query.search);
-  const [command, setCommand] = useState<'idle' | 'operating'>('idle');
-  const listQuery = useQuery({
-    queryKey: alertRuleQueryKeys.list(query), queryFn: () => loadAlertRules(query), retry: false
-  });
-  const updateQuery = (patch: Partial<AlertRuleQuery>) => setParams(writeAlertRuleQuery({ ...query, ...patch }));
-  const rereadList = () => queryClient.fetchQuery({
-    queryKey: alertRuleQueryKeys.list(query), queryFn: () => loadAlertRules(query), staleTime: 0
-  });
-  const operate = async (operation: () => Promise<void>) => {
-    setCommand('operating');
-    try {
-      await operation();
+  const route = useAlertRuleListQueryController();
+  const { listQuery, rereadLatest } = useAlertRuleListReadController(route.query);
+  const operations = useAlertRuleListOperations(rereadLatest, {
+    success: () => {
       void message.success(t('alertRules.operationSuccess'));
-    } catch {
+    },
+    failure: () => {
       void message.error(t('alertRules.operationFailed'));
-    } finally {
-      setCommand('idle');
     }
-  };
-  const toggle = (rule: AlertRule, enable: boolean) => operate(async () => {
-    await updateAlertRuleEnabled(rule, enable);
-    const canonical = await loadAlertRule(rule.id);
-    requireWritableConvergence(canonical, buildAlertRuleTogglePayload(rule, enable));
-    await rereadList();
-  });
-  const remove = (id: number) => operate(async () => {
-    await deleteAlertRules([id]);
-    await proveMissing(id);
-    const canonical = await rereadList();
-    if (canonical.content.some(record => record.id === id)) throw new AlertRuleContractError('deleted id remains');
   });
   return {
     state: {
-      command, list: resolveListState(listQuery.isPending, listQuery.error, listQuery.data), query,
-      refreshing: listQuery.isFetching, search
+      command: operations.command,
+      list: resolveListState(listQuery.isPending, listQuery.error, listQuery.data),
+      query: route.query,
+      refreshing: listQuery.isFetching,
+      search: route.search
     },
-    setSearch,
-    submitSearch: () => updateQuery({ search: search.trim(), pageIndex: 0 }),
-    changePage: (page: number, pageSize: number) => updateQuery({
-      pageIndex: pageSize === query.pageSize ? page - 1 : 0, pageSize
-    }),
-    refresh: () => rereadList().then(() => undefined).catch(() => undefined),
-    create: () => { void navigate('/alerts/rules/new'); },
-    edit: (id: number) => { void navigate(`/alerts/rules/${id}/edit`); },
-    toggle,
-    remove
+    ...createAlertRuleListActions({ route, operations, navigate, rereadLatest })
   };
 }
 
@@ -99,32 +62,4 @@ function resolveListState(pending: boolean, error: Error | null, page: AlertRule
   if (!page) return { kind: 'error' };
   if (page.content.length === 0 && page.totalElements === 0) return { kind: 'empty' };
   return { kind: 'ready', records: page.content, total: page.totalElements };
-}
-
-function requireWritableConvergence(actual: AlertRule, expected: ReturnType<typeof buildAlertRuleTogglePayload>) {
-  if (actual.id !== expected.id || actual.name !== expected.name || actual.type !== expected.type
-    || actual.datasource !== expected.datasource || actual.expr !== expected.expr || actual.period !== expected.period
-    || actual.times !== expected.times || !mapsEqual(actual.labels, expected.labels)
-    || !mapsEqual(actual.annotations, expected.annotations) || actual.template !== expected.template
-    || actual.enable !== expected.enable) {
-    throw new AlertRuleContractError('canonical writable fields did not converge');
-  }
-}
-
-function mapsEqual(actual: Record<string, string> | null, expected: Record<string, string> | null) {
-  if (actual === null || expected === null) return actual === expected;
-  const actualKeys = Object.keys(actual).sort();
-  const expectedKeys = Object.keys(expected).sort();
-  return actualKeys.length === expectedKeys.length
-    && actualKeys.every((key, index) => key === expectedKeys[index] && actual[key] === expected[key]);
-}
-
-async function proveMissing(id: number) {
-  try {
-    await loadAlertRule(id);
-  } catch (reason) {
-    if (classifyAlertRuleReadError(reason) === 'missing') return;
-    throw reason;
-  }
-  throw new AlertRuleContractError('deleted detail still exists');
 }

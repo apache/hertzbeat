@@ -15,24 +15,46 @@
  * limitations under the License.
  */
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AlertRuleListPage } from './alert-rule-list-page';
 
 const controller = vi.hoisted(() => ({
-  changePage: vi.fn(), create: vi.fn(), edit: vi.fn(), refresh: vi.fn(), remove: vi.fn(), setSearch: vi.fn(),
-  state: {}, submitSearch: vi.fn(), toggle: vi.fn()
+  changePage: vi.fn(),
+  create: vi.fn(),
+  edit: vi.fn(),
+  refresh: vi.fn(),
+  remove: vi.fn(),
+  setSearch: vi.fn(),
+  state: {},
+  submitSearch: vi.fn(),
+  toggle: vi.fn()
 }));
 vi.mock('./controller/use-alert-rule-list-controller', () => ({ useAlertRuleListController: () => controller }));
 vi.mock('./alert-management-nav', () => ({ AlertManagementNav: () => <nav /> }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
-const record = { id: 7, name: 'CPU', type: 'realtime_metric', datasource: 'promql', expr: 'usage > 90', period: 300,
-  times: 3, labels: {}, annotations: {}, template: 'CPU', enable: true, gmtUpdate: '2026-07-17T09:00:00' };
+const record = {
+  id: 7,
+  name: 'CPU',
+  type: 'realtime_metric',
+  datasource: 'promql',
+  expr: 'usage > 90',
+  period: 300,
+  times: 3,
+  labels: {},
+  annotations: {},
+  template: 'CPU',
+  enable: true,
+  gmtUpdate: '2026-07-17T09:00:00'
+};
 
 describe('AlertRuleListPage', () => {
-  beforeEach(() => { vi.clearAllMocks(); controller.state = buildState(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    controller.state = buildState();
+  });
   afterEach(cleanup);
 
   it('renders LocalDateTime verbatim without browser parsing', () => {
@@ -42,7 +64,11 @@ describe('AlertRuleListPage', () => {
     expect(parse).not.toHaveBeenCalled();
   });
 
-  it.each([['empty', 'alertRules.empty'], ['unavailable', 'common.unavailable'], ['error', 'common.routeError.description']])('renders list state %s honestly', (kind, evidence) => {
+  it.each([
+    ['empty', 'alertRules.empty'],
+    ['unavailable', 'common.unavailable'],
+    ['error', 'common.routeError.description']
+  ])('renders list state %s honestly', (kind, evidence) => {
     controller.state = buildState({ list: { kind } });
     render(<AlertRuleListPage />);
     expect(screen.getByText(evidence)).toBeInTheDocument();
@@ -59,8 +85,13 @@ describe('AlertRuleListPage', () => {
   });
 
   it('does not invent nullable strategy, datasource, expression, period, times, or time', () => {
-    controller.state = buildState({ list: { kind: 'ready', records: [{ ...record, type: null, datasource: null, expr: null,
-      period: null, times: null, gmtUpdate: null }], total: 1 } });
+    controller.state = buildState({
+      list: {
+        kind: 'ready',
+        records: [{ ...record, type: null, datasource: null, expr: null, period: null, times: null, gmtUpdate: null }],
+        total: 1
+      }
+    });
     render(<AlertRuleListPage />);
     expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(6);
   });
@@ -79,9 +110,69 @@ describe('AlertRuleListPage', () => {
     expect(controller.edit).toHaveBeenCalledWith(7);
     expect(controller.toggle).toHaveBeenCalledWith(record, false);
   });
+
+  it('locks every list and query control while a command owns the page', () => {
+    controller.state = buildState({ command: 'operating' });
+    render(<AlertRuleListPage />);
+
+    expect(screen.getByPlaceholderText('alertRules.search')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.query' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.refresh' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'alertRules.new' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.edit' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'alertRules.delete' })).toBeDisabled();
+    expect(screen.getByRole('switch')).toBeDisabled();
+  });
+
+  it('keeps refresh and failure retry available while a retained command recovers', () => {
+    controller.state = buildState({ command: 'recovering', list: { kind: 'unavailable' } });
+    render(<AlertRuleListPage />);
+
+    expect(screen.getByPlaceholderText('alertRules.search')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.query' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'alertRules.new' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.refresh' })).toBeEnabled();
+    const recoveryActions = screen.getAllByRole('button', { name: 'common.retry' });
+    recoveryActions.forEach(action => expect(action).toBeEnabled());
+    fireEvent.click(recoveryActions[0]!);
+    expect(controller.refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it('visibly locks row commands while canonical proof is recoverable', () => {
+    controller.state = buildState({ command: 'recovering' });
+    render(<AlertRuleListPage />);
+
+    expect(screen.getByText('alertRules.operationFailed')).toBeVisible();
+    expect(screen.getByText('common.routeError.description')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'common.retry' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'alertRules.new' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.edit' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'alertRules.delete' })).toBeDisabled();
+    expect(screen.getByRole('switch')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.refresh' })).toBeEnabled();
+  });
+
+  it('retires an already open delete confirmation when busy changes', async () => {
+    const view = render(<AlertRuleListPage />);
+    fireEvent.click(screen.getByRole('button', { name: 'alertRules.delete' }));
+    await screen.findByText('alertRules.deleteConfirm');
+
+    controller.state = buildState({ command: 'operating' });
+    view.rerender(<AlertRuleListPage />);
+    const confirm = screen.getByRole('button', { name: 'OK' });
+    expect(confirm).toBeDisabled();
+    fireEvent.click(confirm);
+    await waitFor(() => expect(controller.remove).not.toHaveBeenCalled());
+  });
 });
 
 function buildState(override: Record<string, unknown> = {}) {
-  return { command: 'idle', list: { kind: 'ready', records: [record], total: 1 },
-    query: { search: '', pageIndex: 0, pageSize: 8 }, refreshing: false, search: '', ...override };
+  return {
+    command: 'idle',
+    list: { kind: 'ready', records: [record], total: 1 },
+    query: { search: '', pageIndex: 0, pageSize: 8 },
+    refreshing: false,
+    search: '',
+    ...override
+  };
 }

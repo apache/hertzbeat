@@ -21,12 +21,21 @@ import apiSource from './alert-rule-api.ts?raw';
 import modelSource from './alert-rule-model.ts?raw';
 import schemaSource from './alert-rule-schema.ts?raw';
 import controllerSource from './controller/use-alert-rule-list-controller.ts?raw';
+import readControllerSource from './controller/use-alert-rule-list-read-controller.ts?raw';
 
-const modules = import.meta.glob('./alert-rule-list-page.tsx', { eager: true, import: 'default', query: '?raw' });
-const source = Object.values(modules)[0] as string;
+const pageModules = import.meta.glob('./alert-rule-list-page.tsx', { eager: true, import: 'default', query: '?raw' });
+const pageSource = Object.values(pageModules)[0] as string;
+const presentationModules = import.meta.glob(['./alert-rule-list-page.tsx', './components/alert-rule-list-*.tsx'], {
+  eager: true,
+  import: 'default',
+  query: '?raw'
+});
+const presentationSource = Object.values(presentationModules).join('\n');
 
 function sourceLineCount(value: string) {
-  return value.replace(/\/\*[\s\S]*?\*\//g, '').split('\n')
+  return value
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .split('\n')
     .filter(line => line.trim() && !line.trim().startsWith('//')).length;
 }
 
@@ -44,13 +53,15 @@ describe('Alert Rule list architecture', () => {
   });
 
   it('keeps query, API, Router, notification, and browser date ownership out of the page', () => {
-    expect(source).not.toMatch(/@tanstack\/react-query|alert-rule-api|react-router|App\.useApp|Date\.parse|Intl\.DateTimeFormat/);
-    expect(source).toContain('./controller/use-alert-rule-list-controller');
+    expect(presentationSource).not.toMatch(
+      /@tanstack\/react-query|alert-rule-api|react-router|App\.useApp|Date\.parse|Intl\.DateTimeFormat/
+    );
+    expect(pageSource).toContain('./controller/use-alert-rule-list-controller');
   });
 
   it('delegates list cache identity to the Alert Rule feature Query Key factory', () => {
-    expect(controllerSource).toContain('alertRuleQueryKeys.list(query)');
-    expect(controllerSource).not.toMatch(/const\s+listKey\s*=/);
-    expect(controllerSource).not.toMatch(/queryKey:\s*\[/);
+    expect(readControllerSource).toContain('alertRuleQueryKeys.list(query)');
+    expect(`${controllerSource}\n${readControllerSource}`).not.toMatch(/const\s+listKey\s*=/);
+    expect(`${controllerSource}\n${readControllerSource}`).not.toMatch(/queryKey:\s*\[/);
   });
 });
