@@ -43,6 +43,24 @@ describe('explore query state', () => {
     expect(query).not.toHaveProperty('errorOnly');
   });
 
+  it('applies the submission field contract to URL-owned filters', () => {
+    const metrics = parseExploreQuery(new URLSearchParams('signal=metrics&aggregation=p95&step=1.5'));
+    const outOfRangeStep = parseExploreQuery(new URLSearchParams('signal=metrics&aggregation=AVG&step=86401'));
+    const traces = parseExploreQuery(new URLSearchParams('signal=traces&minDurationMs=1.5&maxDurationMs=200'));
+    const reversedDurations = parseExploreQuery(
+      new URLSearchParams('signal=traces&minDurationMs=300&maxDurationMs=200')
+    );
+
+    expect(metrics).toMatchObject({ signal: 'metrics', aggregation: undefined, step: undefined });
+    expect(outOfRangeStep).toMatchObject({ signal: 'metrics', aggregation: 'avg', step: undefined });
+    expect(traces).toMatchObject({ signal: 'traces', minDurationMs: undefined, maxDurationMs: 200 });
+    expect(reversedDurations).toMatchObject({
+      signal: 'traces',
+      minDurationMs: undefined,
+      maxDurationMs: undefined
+    });
+  });
+
   it('builds a reproducible path without internal entity context', () => {
     expect(
       buildExplorePath({

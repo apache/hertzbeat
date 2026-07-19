@@ -20,16 +20,16 @@ import type { TFunction } from 'i18next';
 
 import { QUERY_CONTEXT_FIELDS } from '@/shared/query-context';
 
-import type {
-  ExploreSubmissionViewModel,
-  LogExploreSubmissionDraft,
-  MetricExploreSubmissionDraft,
-  TraceExploreSubmissionDraft
+import {
+  EXPLORE_METRIC_AGGREGATIONS,
+  type ExploreSubmissionViewModel,
+  type LogExploreSubmissionDraft,
+  type MetricExploreSubmissionDraft,
+  type TraceExploreSubmissionDraft
 } from '../model/explore-submission-model';
 import { ExploreFilterField } from './explore-filter-field';
 import styles from './explore-query-bar.module.css';
 
-const METRIC_AGGREGATIONS = ['avg', 'sum', 'min', 'max', 'count'];
 const LOG_SEVERITIES = ['TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'];
 
 type Props = Pick<ExploreSubmissionViewModel, 'draft' | 'errors' | 'updateField'> & { t: TFunction };
@@ -79,7 +79,7 @@ function MetricFilters({ draft, errors, t, updateField }: ValidatedDraftFilterPr
           status={errors.aggregation ? 'error' : ''}
           value={draft.aggregation || undefined}
           placeholder={t('exploreMetric.aggregation')}
-          options={METRIC_AGGREGATIONS.map(value => ({ value, label: value }))}
+          options={EXPLORE_METRIC_AGGREGATIONS.map(value => ({ value, label: value }))}
           onChange={aggregation => updateField({ field: 'aggregation', value: aggregation ?? '' })}
         />
       </ExploreFilterField>

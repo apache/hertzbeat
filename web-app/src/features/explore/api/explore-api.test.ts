@@ -44,6 +44,7 @@ import {
   openLogStream
 } from './explore-api';
 import { ExploreSignalContractError, ExploreSignalMissingError } from '../model/explore-signal-contract';
+import { parseExploreQuery } from '../model/explore-model';
 
 describe('explore API paths', () => {
   beforeEach(() => {
@@ -110,11 +111,11 @@ describe('explore API paths', () => {
         metricFilter: 'method=POST',
         groupBy: 'service_name',
         aggregation: 'avg',
-        step: '60s'
+        step: '60'
       },
       4_000_000
     );
-    expect(metricPath).toContain('filter=method%3DPOST&groupBy=service_name&aggregation=avg&step=60s');
+    expect(metricPath).toContain('filter=method%3DPOST&groupBy=service_name&aggregation=avg&step=60');
 
     const tracePath = buildSignalApiPath(
       {
@@ -130,6 +131,22 @@ describe('explore API paths', () => {
     expect(tracePath).toContain(
       'resourceFilter=cloud.region%3Dap-southeast-1&minDurationMs=100&maxDurationMs=5000&errorOnly=true'
     );
+  });
+
+  it('does not forward invalid URL-owned field values to signal APIs', () => {
+    const metricPath = buildSignalApiPath(
+      parseExploreQuery(new URLSearchParams('signal=metrics&aggregation=p95&step=1.5')),
+      4_000_000
+    );
+    const tracePath = buildSignalApiPath(
+      parseExploreQuery(new URLSearchParams('signal=traces&minDurationMs=1.5&maxDurationMs=200')),
+      4_000_000
+    );
+
+    expect(metricPath).not.toContain('aggregation=');
+    expect(metricPath).not.toContain('step=');
+    expect(tracePath).not.toContain('minDurationMs=');
+    expect(tracePath).toContain('maxDurationMs=200');
   });
 
   it('uses the exact valid onboarding scope and refuses partial or reversed instrumentation context', () => {

@@ -16,6 +16,14 @@
  */
 
 import type { ExploreQuery, ExploreQueryPatch } from './explore-model';
+import {
+  isOrderedTraceDurationRange,
+  parseMetricAggregation,
+  parseMetricStep,
+  parseTraceDuration
+} from './explore-field-contract';
+
+export { EXPLORE_METRIC_AGGREGATIONS } from './explore-field-contract';
 
 type SharedExploreSubmissionDraft = {
   serviceName: string;
@@ -83,10 +91,6 @@ export type ExploreSubmissionViewModel = {
 export type ExploreSubmissionResult =
   { valid: true; patch: ExploreQueryPatch } | { valid: false; errors: ExploreSubmissionError[] };
 
-export const EXPLORE_METRIC_AGGREGATIONS = ['avg', 'sum', 'min', 'max', 'count'] as const;
-
-const MAX_METRIC_STEP_SECONDS = 86_400;
-
 export function draftFromQuery(query: ExploreQuery): ExploreSubmissionDraft {
   if (query.signal === 'metrics') return metricDraftFromQuery(query);
   if (query.signal === 'logs') return logDraftFromQuery(query);
@@ -145,13 +149,13 @@ function sharedDraftFromQuery(query: ExploreQuery): SharedExploreSubmissionDraft
 }
 
 function buildMetricSubmissionPatch(draft: MetricExploreSubmissionDraft): ExploreSubmissionResult {
-  const aggregation = normalizedValue(draft.aggregation)?.toLowerCase();
-  const step = normalizedValue(draft.stepSeconds);
+  const aggregation = parseMetricAggregation(draft.aggregation);
+  const step = parseMetricStep(draft.stepSeconds);
   const errors: ExploreSubmissionError[] = [];
-  if (aggregation && !isMetricAggregation(aggregation)) {
+  if (!aggregation.valid) {
     errors.push({ field: 'aggregation', code: 'unsupported_aggregation' });
   }
-  if (step && !isMetricStep(step)) {
+  if (!step.valid) {
     errors.push({ field: 'stepSeconds', code: 'invalid_step' });
   }
   if (errors.length) return { valid: false, errors };
@@ -161,8 +165,8 @@ function buildMetricSubmissionPatch(draft: MetricExploreSubmissionDraft): Explor
       ...sharedSubmissionPatch(draft),
       metricFilter: normalizedValue(draft.metricFilter),
       groupBy: normalizedValue(draft.groupBy),
-      aggregation,
-      step,
+      aggregation: aggregation.valid ? aggregation.value : undefined,
+      step: step.valid ? step.value : undefined,
       pageIndex: undefined
     }
   };
@@ -184,13 +188,13 @@ function buildLogSubmissionPatch(draft: LogExploreSubmissionDraft): ExploreSubmi
 }
 
 function buildTraceSubmissionPatch(draft: TraceExploreSubmissionDraft): ExploreSubmissionResult {
-  const minDuration = parseDuration(draft.minDurationMs);
-  const maxDuration = parseDuration(draft.maxDurationMs);
+  const minDuration = parseTraceDuration(draft.minDurationMs);
+  const maxDuration = parseTraceDuration(draft.maxDurationMs);
   const errors: ExploreSubmissionError[] = [];
   if (!minDuration.valid) errors.push({ field: 'minDurationMs', code: 'invalid_duration' });
   if (!maxDuration.valid) errors.push({ field: 'maxDurationMs', code: 'invalid_duration' });
   if (!minDuration.valid || !maxDuration.valid) return { valid: false, errors };
-  if (minDuration.value != null && maxDuration.value != null && minDuration.value > maxDuration.value) {
+  if (!isOrderedTraceDurationRange(minDuration.value, maxDuration.value)) {
     return { valid: false, errors: [{ field: 'maxDurationMs', code: 'min_exceeds_max' }] };
   }
   return {
@@ -220,22 +224,4 @@ function sharedSubmissionPatch(draft: SharedExploreSubmissionDraft): ExploreQuer
 function normalizedValue(value: string) {
   const normalized = value.trim();
   return normalized || undefined;
-}
-
-function isMetricAggregation(value: string): value is (typeof EXPLORE_METRIC_AGGREGATIONS)[number] {
-  return EXPLORE_METRIC_AGGREGATIONS.includes(value as (typeof EXPLORE_METRIC_AGGREGATIONS)[number]);
-}
-
-function isMetricStep(value: string) {
-  if (!/^[1-9]\d*$/.test(value)) return false;
-  const seconds = Number(value);
-  return Number.isSafeInteger(seconds) && seconds <= MAX_METRIC_STEP_SECONDS;
-}
-
-function parseDuration(value: string): { valid: true; value: number | undefined } | { valid: false } {
-  const normalized = value.trim();
-  if (!normalized) return { valid: true, value: undefined };
-  if (!/^\d+$/.test(normalized)) return { valid: false };
-  const duration = Number(normalized);
-  return Number.isSafeInteger(duration) ? { valid: true, value: duration } : { valid: false };
 }

@@ -28,6 +28,13 @@ import {
   type MetricExploreQuery,
   type TraceExploreQuery
 } from '../model/explore-query';
+import {
+  acceptedExploreField,
+  isOrderedTraceDurationRange,
+  parseMetricAggregation,
+  parseMetricStep,
+  parseTraceDuration
+} from '../model/explore-field-contract';
 import { ExploreSignalContractError, ExploreSignalMissingError } from '../model/explore-signal-contract';
 import { parseLogPage, parseLogRow } from './explore-log-schema';
 import { parseMetricConsole } from './explore-metric-schema';
@@ -77,8 +84,8 @@ export function buildSignalApiPath(query: ExploreQuery, now = Date.now()) {
     setValue(params, 'query', query.query);
     setValue(params, 'filter', query.metricFilter);
     setValue(params, 'groupBy', query.groupBy);
-    setValue(params, 'aggregation', query.aggregation);
-    setValue(params, 'step', query.step);
+    setValue(params, 'aggregation', acceptedExploreField(parseMetricAggregation(query.aggregation)));
+    setValue(params, 'step', acceptedExploreField(parseMetricStep(query.step)));
     return `/api/ingestion/otlp/metrics/console?${params.toString()}`;
   }
 
@@ -97,8 +104,12 @@ export function buildSignalApiPath(query: ExploreQuery, now = Date.now()) {
   setValue(params, 'operationName', query.query);
   setValue(params, 'traceId', query.traceId);
   setValue(params, 'resourceFilter', query.resourceFilter);
-  if (query.minDurationMs != null) params.set('minDurationMs', String(query.minDurationMs));
-  if (query.maxDurationMs != null) params.set('maxDurationMs', String(query.maxDurationMs));
+  const minimumDuration = acceptedExploreField(parseTraceDuration(String(query.minDurationMs ?? '')));
+  const maximumDuration = acceptedExploreField(parseTraceDuration(String(query.maxDurationMs ?? '')));
+  if (isOrderedTraceDurationRange(minimumDuration, maximumDuration)) {
+    if (minimumDuration != null) params.set('minDurationMs', String(minimumDuration));
+    if (maximumDuration != null) params.set('maxDurationMs', String(maximumDuration));
+  }
   if (query.errorOnly) params.set('errorOnly', 'true');
   return `/api/traces/list?${params.toString()}`;
 }

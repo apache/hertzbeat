@@ -118,7 +118,7 @@ describe('ExplorePage instrumentation context boundary', () => {
     );
   });
 
-  it('keeps metric controls local until a valid typed submission updates the URL', async () => {
+  it('drops an invalid URL filter and keeps typed controls local until a valid submission', async () => {
     renderPage('/explore?signal=metrics&page=4&aggregation=p95');
     const initialSearch = screen.getByTestId('location').textContent;
     fireEvent.click(screen.getByText(en.explore.advancedFilters));
@@ -128,7 +128,7 @@ describe('ExplorePage instrumentation context boundary', () => {
 
     fireEvent.click(querySubmitButton());
     expect(await screen.findByText(en.explore.submissionErrors.invalidStep)).toBeInTheDocument();
-    expect(screen.getByText(en.explore.submissionErrors.unsupportedAggregation)).toBeInTheDocument();
+    expect(screen.queryByText(en.explore.submissionErrors.unsupportedAggregation)).not.toBeInTheDocument();
     expect(screen.getByTestId('location')).toHaveTextContent(initialSearch ?? '');
 
     fireEvent.change(step, { target: { value: '60' } });

@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import { parseExploreFilterParams } from './explore-field-contract';
 import {
   exploreHandoffState,
   exploreUsesExactWindow,
@@ -94,10 +95,7 @@ export function parseExploreQuery(params: URLSearchParams): ExploreQuery {
     attributeFilter: readValue(params.get('attributeFilter')),
     metricFilter: readValue(params.get('metricFilter')),
     groupBy: readValue(params.get('groupBy')),
-    aggregation: readValue(params.get('aggregation')),
-    step: readValue(params.get('step')),
-    minDurationMs: readPositiveNumber(params.get('minDurationMs')),
-    maxDurationMs: readPositiveNumber(params.get('maxDurationMs')),
+    ...parseExploreFilterParams(params),
     pageIndex: readPageIndex(params.get('page'))
   });
 }
@@ -203,12 +201,6 @@ function readPageIndex(value: string | null) {
   if (!value || !/^\d+$/.test(value)) return undefined;
   const pageIndex = Number(value);
   return Number.isSafeInteger(pageIndex) && pageIndex > 0 ? pageIndex : undefined;
-}
-
-function readPositiveNumber(value: string | null) {
-  if (!value) return undefined;
-  const number = Number(value);
-  return Number.isFinite(number) && number >= 0 ? number : undefined;
 }
 
 function setValue(params: URLSearchParams, key: string, value: string | undefined) {
