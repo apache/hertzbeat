@@ -247,7 +247,7 @@ describe('Notice Template controller', () => {
     await act(async () => Promise.all([first, second]));
   });
 
-  it('does not let a stale submit close or notify for a newer draft owner', async () => {
+  it('does not let create or close supersede an in-flight submit', async () => {
     const write = deferred<{ data: { acknowledged: true } }>();
     refine.provider.mockReturnValue({
       ...refine.provider(),
@@ -263,13 +263,18 @@ describe('Notice Template controller', () => {
     act(() => {
       saving = result.current.submit();
       result.current.create();
+      result.current.closeDraft();
     });
+    expect(result.current.state.draft).toMatchObject({ name: 'Old' });
     write.resolve({ data: { acknowledged: true } });
     await act(async () => saving);
 
-    expect(result.current.state.draft).toEqual({ name: '', type: 1, content: '' });
-    expect(refine.refetch).not.toHaveBeenCalled();
-    expect(refine.notification).not.toHaveBeenCalled();
+    expect(result.current.state.draft).toBeNull();
+    expect(refine.refetch).toHaveBeenCalledTimes(1);
+    expect(refine.notification).toHaveBeenCalledWith({
+      message: 'noticeTemplates.saveSuccess',
+      type: 'success'
+    });
   });
 
   it('retires an in-flight submit when the controller unmounts', async () => {
@@ -317,25 +322,38 @@ describe('Notice Template controller', () => {
     await act(async () => Promise.all([first, second]));
   });
 
-  it('does not let a stale remove notify for a newer draft owner', async () => {
+  it('keeps remove ownership when create, edit, or another remove is requested', async () => {
     const deletion = deferred<{ data: typeof record }>();
     refine.provider.mockReturnValue({
       ...refine.provider(),
       deleteOne: vi.fn().mockReturnValue(deletion.promise)
     });
     const { result } = renderHook(() => useNoticeTemplateController());
+    act(() => {
+      result.current.create();
+    });
 
     let removing: Promise<void> | undefined;
     act(() => {
       removing = result.current.remove(record);
       result.current.create();
+      result.current.closeDraft();
+      void result.current.edit(anotherRecord);
+      void result.current.remove(anotherRecord);
     });
+    expect(result.current.state.draft).toEqual({ name: '', type: 1, content: '' });
     deletion.resolve({ data: record });
     await act(async () => removing);
 
+    const provider = refine.provider.mock.results.at(-1)?.value;
     expect(result.current.state.draft).toEqual({ name: '', type: 1, content: '' });
-    expect(refine.refetch).not.toHaveBeenCalled();
-    expect(refine.notification).not.toHaveBeenCalled();
+    expect(provider.getOne).not.toHaveBeenCalled();
+    expect(provider.deleteOne).toHaveBeenCalledTimes(1);
+    expect(refine.refetch).toHaveBeenCalledTimes(1);
+    expect(refine.notification).toHaveBeenCalledWith({
+      message: 'noticeTemplates.deleteSuccess',
+      type: 'success'
+    });
   });
 
   it('updates and deletes only after provider proof plus authoritative list refetch', async () => {

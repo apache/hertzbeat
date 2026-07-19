@@ -15,23 +15,25 @@
  * limitations under the License.
  */
 
-import styles from "./alert-policy-page.module.css";
-import { NoticeTemplateOverlays } from "./components/notice-template-overlays";
-import { NoticeTemplateResults } from "./components/notice-template-results";
-import { NoticeTemplateToolbar } from "./components/notice-template-toolbar";
-import { useNoticeTemplateController } from "./notice-template-controller";
-import pageStyles from "./notice-template-page.module.css";
+import styles from './alert-policy-page.module.css';
+import { NoticeTemplateOverlays } from './components/notice-template-overlays';
+import { NoticeTemplateResults } from './components/notice-template-results';
+import { NoticeTemplateToolbar } from './components/notice-template-toolbar';
+import { useNoticeTemplateController } from './notice-template-controller';
+import pageStyles from './notice-template-page.module.css';
 
 const NOTICE_TEMPLATE_HEADING_ID = 'notice-template-heading';
 
 export function NoticeTemplatePage() {
   const controller = useNoticeTemplateController();
   const { state } = controller;
+  const busy = state.command === 'saving' || state.command === 'deleting';
 
   return (
     <div className={styles.page}>
       <section className={pageStyles.workspace} aria-labelledby={NOTICE_TEMPLATE_HEADING_ID}>
         <NoticeTemplateToolbar
+          busy={busy}
           headingId={NOTICE_TEMPLATE_HEADING_ID}
           name={state.name}
           preset={state.query.preset}
@@ -43,6 +45,7 @@ export function NoticeTemplatePage() {
         />
         <div className={pageStyles.results}>
           <NoticeTemplateResults
+            busy={busy}
             state={state.list}
             pageIndex={state.query.pageIndex}
             pageSize={state.query.pageSize}
@@ -55,8 +58,8 @@ export function NoticeTemplatePage() {
         </div>
       </section>
       <NoticeTemplateOverlays
-        busy={state.command !== "idle"}
-        saving={state.command === "saving"}
+        busy={busy}
+        saving={state.command === 'saving'}
         draft={state.draft}
         preview={state.preview}
         onDraftChange={controller.updateDraft}

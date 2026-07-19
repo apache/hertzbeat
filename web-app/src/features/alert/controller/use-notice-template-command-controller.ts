@@ -70,9 +70,13 @@ export function useNoticeTemplateCommandController({
   });
 
   return {
-    closeDraft: editor.actions.close,
+    closeDraft: () => {
+      editor.actions.close();
+    },
     command: operation.command,
-    create: editor.actions.create,
+    create: () => {
+      editor.actions.create();
+    },
     draft: editor.state.draft,
     edit: editor.actions.edit,
     remove,

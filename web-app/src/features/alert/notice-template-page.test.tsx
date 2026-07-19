@@ -46,10 +46,17 @@ vi.mock('./notice-template-controller', () => ({
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 const custom = noticeTemplateResourceRecord({
-  id: 42, name: 'Custom', type: 1, preset: false, content: '${custom}'
+  id: 42,
+  name: 'Custom',
+  type: 1,
+  preset: false,
+  content: '${custom}'
 });
 const builtIn = noticeTemplateResourceRecord({
-  name: 'Built-in', type: 1, preset: true, content: '${preset}'
+  name: 'Built-in',
+  type: 1,
+  preset: true,
+  content: '${preset}'
 });
 
 describe('NoticeTemplatePage', () => {
@@ -149,6 +156,26 @@ describe('NoticeTemplatePage', () => {
     expect(controller.submit).not.toHaveBeenCalled();
     expect(controller.closeDraft).not.toHaveBeenCalled();
   });
+
+  it('locks list commands and an already-open delete confirmation while deleting', async () => {
+    const page = renderPage();
+    fireEvent.click(screen.getByRole('button', { name: 'noticeTemplates.delete' }));
+    const confirm = await screen.findByRole('button', { name: 'OK' });
+
+    controller.state = {
+      ...buildState({ kind: 'ready', records: [custom, builtIn], total: 2 }),
+      command: 'deleting'
+    };
+    page.rerender(pageElement());
+
+    expect(screen.getByRole('button', { name: 'noticeTemplates.new' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.edit' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'noticeTemplates.delete' })).toBeDisabled();
+    expect(confirm).toBeDisabled();
+
+    fireEvent.click(confirm);
+    expect(controller.remove).not.toHaveBeenCalled();
+  });
 });
 
 function buildState(list: Record<string, unknown>) {
@@ -164,9 +191,15 @@ function buildState(list: Record<string, unknown>) {
 }
 
 function renderPage() {
-  return render(
+  return render(pageElement());
+}
+
+function pageElement() {
+  return (
     <MemoryRouter>
-      <App><NoticeTemplatePage /></App>
+      <App>
+        <NoticeTemplatePage />
+      </App>
     </MemoryRouter>
   );
 }

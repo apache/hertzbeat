@@ -50,12 +50,14 @@ export function useNoticeTemplateEditorController({
   return {
     actions: {
       close: () => {
-        detailEditor.retire();
+        if (!detailEditor.retire()) return false;
         draftStore.publish(null);
+        return true;
       },
       create: () => {
-        detailEditor.retire();
+        if (!detailEditor.retire()) return false;
         draftStore.publish(createNoticeTemplateDraft());
+        return true;
       },
       edit: detailEditor.edit,
       update: (patch: Partial<NoticeTemplateDraft>) => {
@@ -101,8 +103,9 @@ function useNoticeTemplateDetailEditor({
     promise: Promise<void>;
   } | null>(null);
   const retire = () => {
-    operation.supersede();
+    if (!operation.supersedeDetail()) return false;
     pendingRef.current = null;
+    return true;
   };
   const edit = (template: NoticeTemplateResourceRecord): Promise<void> => {
     if (!guardWritable(template) || template.backendId == null || !provider.getOne) return Promise.resolve();

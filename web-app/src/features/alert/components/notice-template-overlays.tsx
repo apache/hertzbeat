@@ -40,7 +40,7 @@ export function NoticeTemplateOverlays({
   onDraftChange,
   onDraftClose,
   onDraftSubmit,
-  onPreviewClose,
+  onPreviewClose
 }: NoticeTemplateOverlaysProps) {
   return (
     <>
@@ -53,7 +53,15 @@ export function NoticeTemplateOverlays({
           submit={() => !busy && void onDraftSubmit()}
         />
       )}
-      <Drawer width={720} open={preview != null} title={preview?.name} onClose={onPreviewClose}>
+      <Drawer
+        width={720}
+        open={preview != null}
+        title={preview?.name}
+        closable={!busy}
+        keyboard={!busy}
+        maskClosable={!busy}
+        onClose={() => !busy && onPreviewClose()}
+      >
         {preview && <pre className={editorStyles.preview}>{preview.content}</pre>}
       </Drawer>
     </>

@@ -22,6 +22,7 @@ import styles from '../alert-policy-page.module.css';
 import pageStyles from '../notice-template-page.module.css';
 
 type NoticeTemplateToolbarProps = {
+  busy: boolean;
   headingId: string;
   name: string;
   preset: boolean;
@@ -33,6 +34,7 @@ type NoticeTemplateToolbarProps = {
 };
 
 export function NoticeTemplateToolbar({
+  busy,
   headingId,
   name,
   preset,
@@ -40,7 +42,7 @@ export function NoticeTemplateToolbar({
   onPresetChange,
   onQuery,
   onRefresh,
-  onCreate,
+  onCreate
 }: NoticeTemplateToolbarProps) {
   const { t } = useTranslation();
 
@@ -48,34 +50,40 @@ export function NoticeTemplateToolbar({
     <>
       <header className={`${styles.heading} ${pageStyles.heading}`}>
         <div>
-          <Typography.Title id={headingId} level={2}>{t('noticeTemplates.title')}</Typography.Title>
+          <Typography.Title id={headingId} level={2}>
+            {t('noticeTemplates.title')}
+          </Typography.Title>
           <Typography.Text type="secondary">{t('noticeTemplates.description')}</Typography.Text>
         </div>
-        <Button type="primary" onClick={onCreate}>
+        <Button type="primary" disabled={busy} onClick={onCreate}>
           {t('noticeTemplates.new')}
         </Button>
       </header>
       <div className={pageStyles.toolbar}>
         <Select
           aria-label={t('noticeTemplates.source')}
+          disabled={busy}
           value={preset ? 'preset' : 'custom'}
           options={[
             { value: 'preset', label: t('noticeTemplates.preset') },
-            { value: 'custom', label: t('noticeTemplates.custom') },
+            { value: 'custom', label: t('noticeTemplates.custom') }
           ]}
-          onChange={(value) => onPresetChange(value === 'preset')}
+          onChange={value => onPresetChange(value === 'preset')}
         />
         <Input
           allowClear
+          disabled={busy}
           value={name}
           placeholder={t('noticeTemplates.search')}
-          onChange={(event) => onNameChange(event.target.value)}
+          onChange={event => onNameChange(event.target.value)}
           onPressEnter={onQuery}
         />
-        <Button type="primary" onClick={onQuery}>
+        <Button type="primary" disabled={busy} onClick={onQuery}>
           {t('common.query')}
         </Button>
-        <Button onClick={onRefresh}>{t('common.refresh')}</Button>
+        <Button disabled={busy} onClick={onRefresh}>
+          {t('common.refresh')}
+        </Button>
       </div>
     </>
   );

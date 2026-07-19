@@ -60,12 +60,14 @@ export function useNoticeTemplateOperationController() {
     ownerRef.current = null;
     setCommand('idle');
   };
-  const supersede = () => {
+  const supersedeDetail = () => {
+    if (ownerRef.current && ownerRef.current.command !== 'loading-detail') return false;
     epochRef.current += 1;
     ownerRef.current = null;
     setCommand('idle');
+    return true;
   };
-  return { beginCommand, beginDetail, command, end, isCurrent, isLocked, supersede };
+  return { beginCommand, beginDetail, command, end, isCurrent, isLocked, supersedeDetail };
 }
 
 export type NoticeTemplateOperationController = ReturnType<typeof useNoticeTemplateOperationController>;

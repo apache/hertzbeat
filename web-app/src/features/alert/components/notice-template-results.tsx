@@ -26,10 +26,11 @@ import {
   isNoticeTemplateReadOnly,
   noticeTemplatePageSizes,
   type NoticeTemplateListState,
-  type NoticeTemplateResourceRecord,
+  type NoticeTemplateResourceRecord
 } from '../notice-template-model';
 
 type NoticeTemplateResultsProps = {
+  busy: boolean;
   state: NoticeTemplateListState;
   pageIndex: number;
   pageSize: number;
@@ -41,6 +42,7 @@ type NoticeTemplateResultsProps = {
 };
 
 export function NoticeTemplateResults({
+  busy,
   state,
   pageIndex,
   pageSize,
@@ -48,7 +50,7 @@ export function NoticeTemplateResults({
   onRetry,
   onView,
   onEdit,
-  onRemove,
+  onRemove
 }: NoticeTemplateResultsProps) {
   const { t } = useTranslation();
 
@@ -59,9 +61,11 @@ export function NoticeTemplateResults({
       </div>
     );
   }
-  if (state.kind === 'unavailable') return <FailureState message={t('common.unavailable')} onRetry={onRetry} />;
+  if (state.kind === 'unavailable') {
+    return <FailureState busy={busy} message={t('common.unavailable')} onRetry={onRetry} />;
+  }
   if (state.kind === 'error') {
-    return <FailureState message={t('common.routeError.description')} onRetry={onRetry} />;
+    return <FailureState busy={busy} message={t('common.routeError.description')} onRetry={onRetry} />;
   }
   if (state.kind === 'empty') return <Empty description={t('noticeTemplates.empty')} />;
 
@@ -71,40 +75,42 @@ export function NoticeTemplateResults({
       size="small"
       tableLayout="fixed"
       dataSource={state.records}
-      columns={templateColumns(t, onView, onEdit, onRemove)}
+      columns={templateColumns(t, busy, onView, onEdit, onRemove)}
       pagination={{
         current: pageIndex + 1,
+        disabled: busy,
         pageSize,
         pageSizeOptions: [...noticeTemplatePageSizes],
         showSizeChanger: true,
         total: state.total,
-        onChange: onPageChange,
+        onChange: onPageChange
       }}
     />
   );
 }
 
-function FailureState({ message, onRetry }: { message: string; onRetry: () => void }) {
+function FailureState({ busy, message, onRetry }: { busy: boolean; message: string; onRetry: () => void }) {
   const { t } = useTranslation();
   return (
     <Alert
       type="error"
       showIcon
       message={message}
-      action={(
-        <Button size="small" onClick={onRetry}>
+      action={
+        <Button size="small" disabled={busy} onClick={onRetry}>
           {t('common.retry')}
         </Button>
-      )}
+      }
     />
   );
 }
 
 function templateColumns(
   t: TFunction,
+  busy: boolean,
   view: (template: NoticeTemplateResourceRecord) => void,
   edit: (template: NoticeTemplateResourceRecord) => void | Promise<void>,
-  remove: (template: NoticeTemplateResourceRecord) => void | Promise<void>,
+  remove: (template: NoticeTemplateResourceRecord) => void | Promise<void>
 ): ColumnsType<NoticeTemplateResourceRecord> {
   return [
     {
@@ -112,7 +118,7 @@ function templateColumns(
       dataIndex: 'name',
       width: 230,
       ellipsis: true,
-      render: (name: string) => <span title={name}>{name}</span>,
+      render: (name: string) => <span title={name}>{name}</span>
     },
     {
       title: t('noticeTemplates.type'),
@@ -120,8 +126,12 @@ function templateColumns(
       ellipsis: true,
       render: (_value, template) => {
         const label = t(noticeTemplateTypeLabelKey(template.type));
-        return <Tag color="processing" title={label}>{label}</Tag>;
-      },
+        return (
+          <Tag color="processing" title={label}>
+            {label}
+          </Tag>
+        );
+      }
     },
     {
       title: t('noticeTemplates.source'),
@@ -130,7 +140,7 @@ function templateColumns(
       render: (_value, template) => {
         const label = t(template.preset ? 'noticeTemplates.preset' : 'noticeTemplates.custom');
         return <Tag title={label}>{label}</Tag>;
-      },
+      }
     },
     {
       title: t('noticeTemplates.updated'),
@@ -139,23 +149,45 @@ function templateColumns(
       render: (_value, template) => {
         const value = formatTemplateTime(template);
         return <span title={value}>{value}</span>;
-      },
+      }
     },
-    {
-      title: t('common.actions'),
-      width: 140,
-      render: (_value, template) => isNoticeTemplateReadOnly(template)
-        ? <Button type="link" onClick={() => view(template)}>{t('common.view')}</Button>
-        : (
-            <Space>
-              <Button type="link" onClick={() => void edit(template)}>{t('common.edit')}</Button>
-              <Popconfirm title={t('noticeTemplates.deleteConfirm')} onConfirm={() => void remove(template)}>
-                <Button type="link" danger>{t('noticeTemplates.delete')}</Button>
-              </Popconfirm>
-            </Space>
-          ),
-    },
+    templateActionColumn(t, busy, view, edit, remove)
   ];
+}
+
+function templateActionColumn(
+  t: TFunction,
+  busy: boolean,
+  view: (template: NoticeTemplateResourceRecord) => void,
+  edit: (template: NoticeTemplateResourceRecord) => void | Promise<void>,
+  remove: (template: NoticeTemplateResourceRecord) => void | Promise<void>
+): ColumnsType<NoticeTemplateResourceRecord>[number] {
+  return {
+    title: t('common.actions'),
+    width: 140,
+    render: (_value, template) =>
+      isNoticeTemplateReadOnly(template) ? (
+        <Button type="link" disabled={busy} onClick={() => view(template)}>
+          {t('common.view')}
+        </Button>
+      ) : (
+        <Space>
+          <Button type="link" disabled={busy} onClick={() => void edit(template)}>
+            {t('common.edit')}
+          </Button>
+          <Popconfirm
+            disabled={busy}
+            title={t('noticeTemplates.deleteConfirm')}
+            okButtonProps={{ disabled: busy }}
+            onConfirm={() => !busy && void remove(template)}
+          >
+            <Button type="link" danger disabled={busy}>
+              {t('noticeTemplates.delete')}
+            </Button>
+          </Popconfirm>
+        </Space>
+      )
+  };
 }
 
 function formatTemplateTime(template: NoticeTemplateResourceRecord) {
