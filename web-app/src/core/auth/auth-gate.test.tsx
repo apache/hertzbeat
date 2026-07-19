@@ -16,7 +16,7 @@
  */
 
 import { fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
 import { SessionContext } from './session-context';
@@ -36,4 +36,32 @@ describe('AuthGate', () => {
     fireEvent.click(screen.getByRole('button'));
     expect(retry).toHaveBeenCalledOnce();
   });
+
+  it('copies only a sanitized local direct-entry target into the anonymous login redirect', () => {
+    render(
+      <MemoryRouter
+        initialEntries={['/explore?serviceName=checkout&access_token=must-not-leak#?tab=logs&apiKey=also-secret']}
+      >
+        <SessionContext.Provider value={{ loading: false, retry: vi.fn(), session: undefined, unavailable: false }}>
+          <Routes>
+            <Route element={<AuthGate />}>
+              <Route path="/explore" element={<div>protected</div>} />
+            </Route>
+            <Route path="/passport/login" element={<LocationProbe />} />
+          </Routes>
+        </SessionContext.Provider>
+      </MemoryRouter>
+    );
+
+    const href = screen.getByTestId('location').textContent ?? '';
+    const redirect = new URL(href, 'https://hertzbeat.local').searchParams.get('redirect');
+    expect(redirect).toBe('/explore?serviceName=checkout#?tab=logs');
+    expect(href).not.toContain('must-not-leak');
+    expect(href).not.toContain('also-secret');
+  });
 });
+
+function LocationProbe() {
+  const location = useLocation();
+  return <output data-testid="location">{`${location.pathname}${location.search}${location.hash}`}</output>;
+}
