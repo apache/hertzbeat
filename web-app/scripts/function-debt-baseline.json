@@ -18,12 +18,6 @@
       "path": "features/settings/system-config/controller/system-config-resource-controller.ts",
       "identity": "function:useSystemConfigResourceController",
       "allowedMax": 75
-    },
-    {
-      "rule": "function-size",
-      "path": "layout/shell/shell-header.tsx",
-      "identity": "function:ShellHeader",
-      "allowedMax": 85
     }
   ]
 }
