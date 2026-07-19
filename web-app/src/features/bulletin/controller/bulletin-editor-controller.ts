@@ -67,8 +67,7 @@ export function useBulletinEditorController(
   const edit = (id: number): Promise<boolean> => {
     if (gate.isLocked()) return Promise.resolve(false);
     if (pendingDetailRef.current?.id === id) return pendingDetailRef.current.promise;
-    const epoch = detailEpochRef.current + 1;
-    detailEpochRef.current = epoch;
+    const epoch = ++detailEpochRef.current;
     // Retire the old identity before a same-tick save can read it.
     draftStore.publish(null);
     const promise = loadDetail(id, epoch);

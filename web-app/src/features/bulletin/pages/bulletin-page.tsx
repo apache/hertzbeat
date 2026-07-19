@@ -13,7 +13,6 @@ import styles from '../bulletin-page.module.css';
 export function BulletinPage() {
   const { t } = useTranslation();
   const { state, actions } = useBulletinController();
-  const records = state.list.kind === 'ready' ? state.list.records : [];
   const busy = state.command !== 'idle';
   const columns = createBulletinColumns(actions, busy, t);
   const handleRefresh = () => void actions.refresh();
@@ -52,7 +51,7 @@ export function BulletinPage() {
         columns={columns}
         list={state.list}
         query={state.query}
-        records={records}
+        records={state.list.kind === 'ready' ? state.list.records : []}
         selectedId={state.selectedId}
       />
       <section className={styles.metrics}>
