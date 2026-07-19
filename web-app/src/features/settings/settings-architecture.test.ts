@@ -51,23 +51,19 @@ const appRefineSources = import.meta.glob('../../app/refine/**/*.{ts,tsx}', {
   import: 'default',
   query: '?raw'
 });
-const existingImportDebt = new Map([
-  ['./system-config/model/system-config-model.ts imports api', 1]
-]);
-
 describe('Settings domain boundaries', () => {
   it.each(layeredDomains)('keeps $directory in explicit feature-local layers', domain => {
     const root = `./${domain.directory}/`;
-    const paths = Object.keys(productionSources)
-      .filter(path => path.startsWith(root) && !path.includes('.test.'));
+    const paths = Object.keys(productionSources).filter(path => path.startsWith(root) && !path.includes('.test.'));
 
-    expect(requiredDirectories.filter(directory => !paths.some(path => path.startsWith(`${root}${directory}/`))))
-      .toEqual([]);
-    expect(paths.filter(path => path.slice(root.length).includes('/') === false && path !== `${root}index.ts`))
-      .toEqual([]);
-    const publicPageEntry = domain.directory === 'token'
-      ? "import('./pages/token-page')"
-      : `export { ${domain.page} } from './pages/`;
+    expect(
+      requiredDirectories.filter(directory => !paths.some(path => path.startsWith(`${root}${directory}/`)))
+    ).toEqual([]);
+    expect(paths.filter(path => path.slice(root.length).includes('/') === false && path !== `${root}index.ts`)).toEqual(
+      []
+    );
+    const publicPageEntry =
+      domain.directory === 'token' ? "import('./pages/token-page')" : `export { ${domain.page} } from './pages/`;
     expect(productionSources[`${root}index.ts`]).toContain(publicPageEntry);
   });
 
@@ -77,17 +73,7 @@ describe('Settings domain boundaries', () => {
       .filter(([path]) => path.startsWith(root) && !path.includes('.test.'))
       .flatMap(([path, source]) => validateImports(path, source, root));
 
-    const debt = [...existingImportDebt].filter(([violation]) => violation.startsWith(root));
-    const counts = new Map(violations.map(violation => [
-      violation,
-      violations.filter(candidate => candidate === violation).length
-    ]));
-    const unexpected = [...counts].filter(([violation, count]) => (
-      count > (existingImportDebt.get(violation) ?? 0)
-    ));
-    const stale = debt.filter(([violation, count]) => (counts.get(violation) ?? 0) < count);
-
-    expect({ unexpected, stale }).toEqual({ unexpected: [], stale: [] });
+    expect(violations).toEqual([]);
   });
 
   it.each(layeredDomains)('loads $directory through its public entry', domain => {
@@ -99,48 +85,59 @@ describe('Settings domain boundaries', () => {
   });
 
   it('keeps Label pages and components behind model and controller boundaries', () => {
-    const labelSources = Object.entries(productionSources)
-      .filter(([path]) => /^\.\/label\/(?:pages|components)\//.test(path) && !path.includes('.test.'));
+    const labelSources = Object.entries(productionSources).filter(
+      ([path]) => /^\.\/label\/(?:pages|components)\//.test(path) && !path.includes('.test.')
+    );
 
-    expect(labelSources.flatMap(([path, source]) => (
-      source.includes("../api/") ? [path] : []
-    ))).toEqual([]);
+    expect(labelSources.flatMap(([path, source]) => (source.includes('../api/') ? [path] : []))).toEqual([]);
   });
 
   it('keeps Object Store pages behind its model and controller boundaries', () => {
-    const pageSources = Object.entries(productionSources)
-      .filter(([path]) => /^\.\/object-store\/pages\//.test(path) && !path.includes('.test.'));
+    const pageSources = Object.entries(productionSources).filter(
+      ([path]) => /^\.\/object-store\/pages\//.test(path) && !path.includes('.test.')
+    );
 
-    expect(pageSources.flatMap(([path, source]) => (
-      source.includes('../api/') || source.includes('@tanstack/react-query') ? [path] : []
-    ))).toEqual([]);
+    expect(
+      pageSources.flatMap(([path, source]) =>
+        source.includes('../api/') || source.includes('@tanstack/react-query') ? [path] : []
+      )
+    ).toEqual([]);
   });
 
   it('keeps System Config pages behind its model and controller boundaries', () => {
-    const pageSources = Object.entries(productionSources)
-      .filter(([path]) => /^\.\/system-config\/pages\//.test(path) && !path.includes('.test.'));
+    const pageSources = Object.entries(productionSources).filter(
+      ([path]) => /^\.\/system-config\/pages\//.test(path) && !path.includes('.test.')
+    );
 
-    expect(pageSources.flatMap(([path, source]) => (
-      source.includes('../api/') || source.includes('@tanstack/react-query') ? [path] : []
-    ))).toEqual([]);
+    expect(
+      pageSources.flatMap(([path, source]) =>
+        source.includes('../api/') || source.includes('@tanstack/react-query') ? [path] : []
+      )
+    ).toEqual([]);
   });
 
   it('keeps Token pages behind its model and controller boundaries', () => {
-    const pageSources = Object.entries(productionSources)
-      .filter(([path]) => /^\.\/token\/pages\//.test(path) && !path.includes('.test.'));
+    const pageSources = Object.entries(productionSources).filter(
+      ([path]) => /^\.\/token\/pages\//.test(path) && !path.includes('.test.')
+    );
 
-    expect(pageSources.flatMap(([path, source]) => (
-      source.includes('../api/') || source.includes('@tanstack/react-query') ? [path] : []
-    ))).toEqual([]);
+    expect(
+      pageSources.flatMap(([path, source]) =>
+        source.includes('../api/') || source.includes('@tanstack/react-query') ? [path] : []
+      )
+    ).toEqual([]);
   });
 
   it('keeps one-time Token plaintext out of Refine mutation hooks', () => {
-    const controllerSources = Object.entries(productionSources)
-      .filter(([path]) => /^\.\/token\/controller\//.test(path) && !path.includes('.test.'));
+    const controllerSources = Object.entries(productionSources).filter(
+      ([path]) => /^\.\/token\/controller\//.test(path) && !path.includes('.test.')
+    );
 
-    expect(controllerSources.flatMap(([path, source]) => (
-      /\buse(?:Create|Update|CustomMutation)\b/.test(source) ? [path] : []
-    ))).toEqual([]);
+    expect(
+      controllerSources.flatMap(([path, source]) =>
+        /\buse(?:Create|Update|CustomMutation)\b/.test(source) ? [path] : []
+      )
+    ).toEqual([]);
   });
 
   it('registers the feature-owned Token provider through its public entry', () => {
@@ -148,9 +145,7 @@ describe('Settings domain boundaries', () => {
     const runtime = appRefineSources['../../app/refine/refine-runtime.tsx'] ?? '';
     const internalImports = Object.entries(appRefineSources)
       .filter(([path]) => !path.includes('.test.'))
-      .flatMap(([path, source]) => (
-        source.includes('/features/settings/token/') ? [path] : []
-      ));
+      .flatMap(([path, source]) => (source.includes('/features/settings/token/') ? [path] : []));
 
     expect(productionSources['./token/provider/token-data-provider.ts']).toBeDefined();
     expect(tokenIndex).toContain("export { tokenDataProvider } from './provider/token-data-provider'");
@@ -191,25 +186,27 @@ describe('Settings domain boundaries', () => {
 function validateImports(path: string, source: string, root: string) {
   const sourceDirectory = path.slice(root.length).split('/')[0] as (typeof layerDirectories)[number];
   if (!layerDirectories.includes(sourceDirectory)) return [];
-  const directTransport = sourceDirectory !== 'api'
-    && /\b(?:fetch|apiFetch|apiMessage(?:Get|Post|Put|Delete))\s*\(/.test(source);
+  const directTransport =
+    sourceDirectory !== 'api' && /\b(?:fetch|apiFetch|apiMessage(?:Get|Post|Put|Delete))\s*\(/.test(source);
   const violations = directTransport ? [`${path} performs transport outside api`] : [];
 
-  return violations.concat([...source.matchAll(importPattern)].flatMap(match => {
-    const specifier = match[1];
-    if (!specifier) return [];
-    if (specifier.startsWith('@/core/http/')) {
-      return sourceDirectory === 'api' ? [] : [`${path} imports core transport`];
-    }
-    if (!specifier.startsWith('.')) return [];
-    const target = resolveDomainPath(path, specifier);
-    if (!target.startsWith(root)) return [`${path} imports outside ${root}`];
-    const targetDirectory = target.slice(root.length).split('/')[0];
-    if (!targetDirectory) return [`${path} has an unresolved relative import`];
-    return allowedDependencies[sourceDirectory].includes(targetDirectory)
-      ? []
-      : [`${path} imports ${targetDirectory}`];
-  }));
+  return violations.concat(
+    [...source.matchAll(importPattern)].flatMap(match => {
+      const specifier = match[1];
+      if (!specifier) return [];
+      if (specifier.startsWith('@/core/http/')) {
+        return sourceDirectory === 'api' ? [] : [`${path} imports core transport`];
+      }
+      if (!specifier.startsWith('.')) return [];
+      const target = resolveDomainPath(path, specifier);
+      if (!target.startsWith(root)) return [`${path} imports outside ${root}`];
+      const targetDirectory = target.slice(root.length).split('/')[0];
+      if (!targetDirectory) return [`${path} has an unresolved relative import`];
+      return allowedDependencies[sourceDirectory].includes(targetDirectory)
+        ? []
+        : [`${path} imports ${targetDirectory}`];
+    })
+  );
 }
 
 function resolveDomainPath(sourcePath: string, specifier: string) {
@@ -223,6 +220,8 @@ function resolveDomainPath(sourcePath: string, specifier: string) {
 }
 
 function sourceLineCount(value: string) {
-  return value.replace(/\/\*[\s\S]*?\*\//g, '').split('\n')
+  return value
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .split('\n')
     .filter(line => line.trim() && !line.trim().startsWith('//')).length;
 }

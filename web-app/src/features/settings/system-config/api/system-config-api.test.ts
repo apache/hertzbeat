@@ -15,16 +15,32 @@
  * limitations under the License.
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest';
+
+import type {
+  SystemConfigValue as ModelSystemConfigValue,
+  TimezoneOption as ModelTimezoneOption
+} from '../model/system-config-contract';
 
 const { apiMessageGet, apiMessagePost } = vi.hoisted(() => ({ apiMessageGet: vi.fn(), apiMessagePost: vi.fn() }));
 vi.mock('@/core/http/api-message', () => ({ apiMessageGet, apiMessagePost }));
 
-import { loadSystemConfig, loadTimezones, saveSystemConfig } from './system-config-api';
+import {
+  loadSystemConfig,
+  loadTimezones,
+  saveSystemConfig,
+  type SystemConfigValue as ApiSystemConfigValue,
+  type TimezoneOption as ApiTimezoneOption
+} from './system-config-api';
 import { SystemConfigContractError } from './system-config-schema';
 
 describe('system configuration API', () => {
   beforeEach(() => vi.clearAllMocks());
+
+  it('keeps its public types aligned with the model-owned contract', () => {
+    expectTypeOf<ApiSystemConfigValue>().toEqualTypeOf<ModelSystemConfigValue>();
+    expectTypeOf<ApiTimezoneOption>().toEqualTypeOf<ModelTimezoneOption>();
+  });
 
   it('uses the established general configuration endpoints', async () => {
     apiMessageGet.mockResolvedValueOnce({ locale: 'en_US', timeZoneId: 'UTC', theme: 'dark' });
@@ -46,7 +62,16 @@ describe('system configuration API', () => {
 
     await expect(loadSystemConfig()).rejects.toBeInstanceOf(SystemConfigContractError);
     await expect(loadTimezones()).rejects.toBeInstanceOf(SystemConfigContractError);
-    await expect(saveSystemConfig({ locale: 'en_US', timeZoneId: 'UTC', theme: 'dark' }))
-      .rejects.toBeInstanceOf(SystemConfigContractError);
+    await expect(saveSystemConfig({ locale: 'en_US', timeZoneId: 'UTC', theme: 'dark' })).rejects.toBeInstanceOf(
+      SystemConfigContractError
+    );
+  });
+
+  it('preserves nullable configuration and applies strict timezone validation', async () => {
+    apiMessageGet.mockResolvedValueOnce(null);
+    apiMessageGet.mockResolvedValueOnce([{ zoneId: 'UTC', offset: 'UTC+00:00', displayName: 'UTC', internal: true }]);
+
+    await expect(loadSystemConfig()).resolves.toBeNull();
+    await expect(loadTimezones()).rejects.toBeInstanceOf(SystemConfigContractError);
   });
 });

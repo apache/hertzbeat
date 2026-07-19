@@ -17,7 +17,7 @@
 
 import type { SupportedLocale } from '@/core/i18n/i18n';
 
-import type { SystemConfigValue, TimezoneOption } from '../api/system-config-api';
+import type { SystemConfigValue, TimezoneOption } from './system-config-contract';
 
 export const systemLocales = ['en_US', 'zh_CN', 'zh_TW', 'ja_JP', 'pt_BR'] as const;
 export const systemThemes = ['default', 'dark', 'compact'] as const;
@@ -66,9 +66,11 @@ export function createSystemConfigDraft(
   defaults: { locale: SupportedLocale; timeZoneId: string; theme: SystemTheme }
 ): SystemConfigDraft {
   return {
-    locale: systemLocales.includes(config?.locale as SystemLocale) ? config?.locale as SystemLocale : runtimeToSystemLocale[defaults.locale],
+    locale: systemLocales.includes(config?.locale as SystemLocale)
+      ? (config?.locale as SystemLocale)
+      : runtimeToSystemLocale[defaults.locale],
     timeZoneId: config?.timeZoneId?.trim() || defaults.timeZoneId,
-    theme: systemThemes.includes(config?.theme as SystemTheme) ? config?.theme as SystemTheme : defaults.theme
+    theme: systemThemes.includes(config?.theme as SystemTheme) ? (config?.theme as SystemTheme) : defaults.theme
   };
 }
 
@@ -89,9 +91,7 @@ export function createSystemConfigResourceRecord(
   };
 }
 
-export function createSystemTimezoneResourceRecord(
-  timezones: TimezoneOption[]
-): SystemTimezoneResourceRecord {
+export function createSystemTimezoneResourceRecord(timezones: TimezoneOption[]): SystemTimezoneResourceRecord {
   if (!Array.isArray(timezones) || !timezones.every(isTimezoneOption)) {
     throw new SystemConfigResourceContractError();
   }
@@ -104,9 +104,14 @@ export function createSystemTimezoneResourceRecord(
 function isTimezoneOption(value: unknown): value is TimezoneOption {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const item = value as Partial<TimezoneOption>;
-  return typeof item.zoneId === 'string' && Boolean(item.zoneId.trim())
-    && typeof item.offset === 'string' && Boolean(item.offset.trim())
-    && typeof item.displayName === 'string' && Boolean(item.displayName.trim());
+  return (
+    typeof item.zoneId === 'string' &&
+    Boolean(item.zoneId.trim()) &&
+    typeof item.offset === 'string' &&
+    Boolean(item.offset.trim()) &&
+    typeof item.displayName === 'string' &&
+    Boolean(item.displayName.trim())
+  );
 }
 
 export function validateSystemConfigDraft(config: SystemConfigDraft) {
@@ -114,5 +119,7 @@ export function validateSystemConfigDraft(config: SystemConfigDraft) {
 }
 
 export function isSystemConfigDirty(config: SystemConfigDraft, baseline: SystemConfigDraft) {
-  return config.locale !== baseline.locale || config.timeZoneId !== baseline.timeZoneId || config.theme !== baseline.theme;
+  return (
+    config.locale !== baseline.locale || config.timeZoneId !== baseline.timeZoneId || config.theme !== baseline.theme
+  );
 }

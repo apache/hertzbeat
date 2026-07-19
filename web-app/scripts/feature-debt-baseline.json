@@ -126,12 +126,6 @@
       "path": "features/monitor/model/monitor-param-codec.ts",
       "identity": "features/monitor/api/monitor-api",
       "allowedMax": 1
-    },
-    {
-      "rule": "model-api-dependency",
-      "path": "features/settings/system-config/model/system-config-model.ts",
-      "identity": "features/settings/system-config/api/system-config-api",
-      "allowedMax": 1
     }
   ]
 }

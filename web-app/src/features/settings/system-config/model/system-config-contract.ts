@@ -15,21 +15,14 @@
  * limitations under the License.
  */
 
-import { apiMessageGet, apiMessagePost } from '@/core/http/api-message';
+export type SystemConfigValue = {
+  locale: string;
+  timeZoneId: string;
+  theme: string;
+};
 
-import type { SystemConfigValue, TimezoneOption } from '../model/system-config-contract';
-import { parseSystemConfig, parseSystemConfigMutationResult, parseTimezoneOptions } from './system-config-schema';
-
-export type { SystemConfigValue, TimezoneOption };
-
-export async function loadSystemConfig() {
-  return parseSystemConfig(await apiMessageGet('/api/config/system'));
-}
-
-export async function loadTimezones() {
-  return parseTimezoneOptions(await apiMessageGet('/api/config/timezones'));
-}
-
-export async function saveSystemConfig(config: SystemConfigValue) {
-  return parseSystemConfigMutationResult(await apiMessagePost('/api/config/system', config));
-}
+export type TimezoneOption = {
+  zoneId: string;
+  offset: string;
+  displayName: string;
+};
