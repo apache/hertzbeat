@@ -26,24 +26,6 @@
       "allowedMax": 1
     },
     {
-      "rule": "presentation-api-dependency",
-      "path": "features/status/public/components/public-status-view.tsx",
-      "identity": "features/status/public/api/public-status-api",
-      "allowedMax": 1
-    },
-    {
-      "rule": "presentation-api-dependency",
-      "path": "features/status/public/pages/public-status-page.tsx",
-      "identity": "features/status/public/api/public-status-api",
-      "allowedMax": 1
-    },
-    {
-      "rule": "presentation-api-dependency",
-      "path": "features/status/public/pages/public-status-page.tsx",
-      "identity": "features/status/public/api/public-status-query-keys",
-      "allowedMax": 1
-    },
-    {
       "rule": "model-api-dependency",
       "path": "features/instrumentation/model/instrumentation-flow.ts",
       "identity": "features/instrumentation/api/instrumentation-contract",

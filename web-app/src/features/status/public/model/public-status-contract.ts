@@ -15,21 +15,43 @@
  * limitations under the License.
  */
 
-import { apiMessageGet } from '@/core/http/api-message';
+export type PublicStatusOrg = {
+  name: string;
+  description: string;
+  home?: string;
+  state: number;
+  color?: string;
+};
 
-import { parsePublicStatusComponents, parsePublicStatusIncidents, parsePublicStatusOrg } from './public-status-schema';
+export type PublicStatusComponent = {
+  id: number;
+  name: string;
+  description?: string;
+  state: number;
+};
 
-export type {
-  PublicStatusComponent,
-  PublicStatusIncident,
-  PublicStatusIncidentPage,
-  PublicStatusOrg
-} from '../model/public-status-contract';
+export type PublicStatusIncident = {
+  id: number;
+  name: string;
+  state: number;
+  startTime?: number;
+  endTime?: number;
+};
 
-export const loadPublicStatusOrg = async () => parsePublicStatusOrg(await apiMessageGet('/api/status/page/public/org'));
+export type PublicStatusIncidentPage = {
+  content: PublicStatusIncident[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+};
 
-export const loadPublicStatusComponents = async () =>
-  parsePublicStatusComponents(await apiMessageGet('/api/status/page/public/component'));
+export type PublicStatusState = 'ready' | 'unconfigured' | 'unavailable';
 
-export const loadPublicStatusIncidents = async () =>
-  parsePublicStatusIncidents(await apiMessageGet('/api/status/page/public/incident?pageIndex=0&pageSize=20'));
+export type PublicStatusViewModel = {
+  org: PublicStatusOrg | undefined;
+  components: PublicStatusComponent[];
+  incidents: PublicStatusIncident[];
+  loading: boolean;
+  state: PublicStatusState;
+};

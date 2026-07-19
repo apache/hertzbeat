@@ -17,12 +17,16 @@
 
 import { isStatusOrgNotFound } from '@/features/status/shared/status-error-model';
 
+import type { PublicStatusState } from './public-status-contract';
+
 export { isStatusOrgNotFound } from '@/features/status/shared/status-error-model';
+export type { PublicStatusState } from './public-status-contract';
 
-export type PublicStatusState = 'ready' | 'unconfigured' | 'unavailable';
-
-export function publicStatusState(orgError: unknown, componentsError: unknown,
-                                  incidentsError: unknown): PublicStatusState {
+export function publicStatusState(
+  orgError: unknown,
+  componentsError: unknown,
+  incidentsError: unknown
+): PublicStatusState {
   if (isStatusOrgNotFound(orgError) && !componentsError && !incidentsError) return 'unconfigured';
   if (orgError || componentsError || incidentsError) return 'unavailable';
   return 'ready';

@@ -18,11 +18,13 @@
 import { describe, expect, it } from 'vitest';
 
 const requiredDirectories = ['api', 'model', 'components', 'pages'] as const;
-const allowedDependencies: Record<(typeof requiredDirectories)[number], readonly string[]> = {
-  api: ['api'],
-  model: ['api', 'model'],
-  components: ['api', 'model', 'components'],
-  pages: ['api', 'model', 'components', 'pages']
+const publicDirectories = [...requiredDirectories, 'controller'] as const;
+const allowedDependencies: Record<(typeof publicDirectories)[number], readonly string[]> = {
+  api: ['api', 'model'],
+  model: ['model'],
+  controller: ['api', 'model', 'controller'],
+  components: ['model', 'components'],
+  pages: ['model', 'controller', 'components', 'pages']
 };
 const importPattern = /(import\s+type\s+(?:\{[\s\S]*?\}|[\w$]+)\s+from\s+|from\s+|import\s*\()\s*['"]([^'"]+)['"]/g;
 const publicSources = import.meta.glob('./public/**/*.{ts,tsx}', {
@@ -43,7 +45,7 @@ describe('Public Status boundaries', () => {
     const paths = Object.keys(publicSources).filter(path => !path.includes('.test.'));
 
     expect(
-      requiredDirectories.filter(directory => !paths.some(path => path.startsWith(`./public/${directory}/`)))
+      publicDirectories.filter(directory => !paths.some(path => path.startsWith(`./public/${directory}/`)))
     ).toEqual([]);
     expect(paths.filter(path => path.slice('./public/'.length).includes('/') === false)).toEqual([]);
     expect(paths.some(path => path.startsWith('./public/hooks/'))).toBe(false);
@@ -68,12 +70,20 @@ describe('Public Status boundaries', () => {
 
   it('owns public server-cache identity in one named factory', () => {
     const page = publicSources['./public/pages/public-status-page.tsx'] ?? '';
-    const queryKeys = publicSources['./public/api/public-status-query-keys.ts'] ?? '';
+    const controller = publicSources['./public/controller/use-public-status-controller.ts'] ?? '';
+    const queryKeys = publicSources['./public/controller/public-status-query-keys.ts'] ?? '';
+    const queryOwners = Object.entries(publicSources)
+      .filter(([path]) => !path.includes('.test.'))
+      .flatMap(([path, source]) => (source.includes('useQuery(') ? [path] : []));
 
     expect(queryKeys).toContain('publicStatusQueryKeys');
-    expect(page).toContain('publicStatusQueryKeys.org()');
-    expect(page).toContain('publicStatusQueryKeys.components()');
-    expect(page).toContain('publicStatusQueryKeys.incidents()');
+    expect(queryOwners).toEqual(['./public/controller/use-public-status-controller.ts']);
+    expect(controller.match(/\buseQuery\(/g)).toHaveLength(3);
+    expect(controller).toContain('publicStatusQueryKeys.org()');
+    expect(controller).toContain('publicStatusQueryKeys.components()');
+    expect(controller).toContain('publicStatusQueryKeys.incidents()');
+    expect(page).toContain('usePublicStatusController');
+    expect(page).not.toMatch(/useQuery|publicStatusQueryKeys|public-status-api|@tanstack\/react-query/);
     expect(page).not.toMatch(/queryKey:\s*\[/);
   });
 });
@@ -156,7 +166,7 @@ describe('Status Management boundaries', () => {
 });
 
 function validateImports(path: string, source: string) {
-  return validateLayeredImports(path, source, './public/', requiredDirectories, allowedDependencies);
+  return validateLayeredImports(path, source, './public/', publicDirectories, allowedDependencies);
 }
 
 function validateLayeredImports(

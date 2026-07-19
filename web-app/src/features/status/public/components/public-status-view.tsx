@@ -22,20 +22,13 @@ import { useTranslation } from 'react-i18next';
 import type {
   PublicStatusComponent,
   PublicStatusIncident,
-  PublicStatusOrg
-} from '../api/public-status-api';
-import type { PublicStatusState } from '../model/public-status-model';
+  PublicStatusOrg,
+  PublicStatusState,
+  PublicStatusViewModel
+} from '../model/public-status-contract';
 import styles from './public-status.module.css';
 
-type PublicStatusViewProps = {
-  org: PublicStatusOrg | undefined;
-  components: PublicStatusComponent[];
-  incidents: PublicStatusIncident[];
-  loading: boolean;
-  state: PublicStatusState;
-};
-
-export function PublicStatusView(props: PublicStatusViewProps) {
+export function PublicStatusView(props: PublicStatusViewModel) {
   return (
     <main className={styles.page} style={{ '--status-accent': props.org?.color ?? '#5b6fd8' } as CSSProperties}>
       <StatusHeader org={props.org} />
@@ -66,7 +59,12 @@ function StatusHeader({ org }: { org: PublicStatusOrg | undefined }) {
   );
 }
 
-function StatusBody({ loading, state, components, incidents }: {
+function StatusBody({
+  loading,
+  state,
+  components,
+  incidents
+}: {
   loading: boolean;
   state: PublicStatusState;
   components: PublicStatusComponent[];
@@ -79,57 +77,77 @@ function StatusBody({ loading, state, components, incidents }: {
   return <StatusContent components={components} incidents={incidents} />;
 }
 
-function StatusContent({ components, incidents }: {
+function StatusContent({
+  components,
+  incidents
+}: {
   components: PublicStatusComponent[];
   incidents: PublicStatusIncident[];
 }) {
-  const { t } = useTranslation();
   return (
     <>
-      <section className={styles.section}>
-        <Typography.Title level={4}>{t('status.components')}</Typography.Title>
-        {components.length ? (
-          <Table<PublicStatusComponent>
-            rowKey="id"
-            pagination={false}
-            size="small"
-            dataSource={components}
-            columns={[
-              { title: t('status.component'), dataIndex: 'name' },
-              { title: t('status.descriptionLabel'), dataIndex: 'description' },
-              {
-                title: t('status.state'),
-                dataIndex: 'state',
-                render: (state: number) => (
-                  <Tag color={state === 0 ? 'green' : 'red'}>
-                    {state === 0 ? t('status.normal') : t('status.abnormal')}
-                  </Tag>
-                )
-              }
-            ]}
-          />
-        ) : <Empty description={t('status.noComponents')} />}
-      </section>
-      <section className={styles.section}>
-        <Typography.Title level={4}>{t('status.incidents')}</Typography.Title>
-        {incidents.length ? (
-          <Table<PublicStatusIncident>
-            rowKey="id"
-            pagination={false}
-            size="small"
-            dataSource={incidents}
-            columns={[
-              { title: t('status.incident'), dataIndex: 'name' },
-              { title: t('status.state'), dataIndex: 'state' },
-              {
-                title: t('status.started'),
-                dataIndex: 'startTime',
-                render: (value: number | undefined) => value ? new Date(value).toLocaleString() : '—'
-              }
-            ]}
-          />
-        ) : <Empty description={t('status.noIncidents')} />}
-      </section>
+      <StatusComponentsSection components={components} />
+      <StatusIncidentsSection incidents={incidents} />
     </>
+  );
+}
+
+function StatusComponentsSection({ components }: { components: PublicStatusComponent[] }) {
+  const { t } = useTranslation();
+  return (
+    <section className={styles.section}>
+      <Typography.Title level={4}>{t('status.components')}</Typography.Title>
+      {components.length ? (
+        <Table<PublicStatusComponent>
+          rowKey="id"
+          pagination={false}
+          size="small"
+          dataSource={components}
+          columns={[
+            { title: t('status.component'), dataIndex: 'name' },
+            { title: t('status.descriptionLabel'), dataIndex: 'description' },
+            {
+              title: t('status.state'),
+              dataIndex: 'state',
+              render: (state: number) => (
+                <Tag color={state === 0 ? 'green' : 'red'}>
+                  {state === 0 ? t('status.normal') : t('status.abnormal')}
+                </Tag>
+              )
+            }
+          ]}
+        />
+      ) : (
+        <Empty description={t('status.noComponents')} />
+      )}
+    </section>
+  );
+}
+
+function StatusIncidentsSection({ incidents }: { incidents: PublicStatusIncident[] }) {
+  const { t } = useTranslation();
+  return (
+    <section className={styles.section}>
+      <Typography.Title level={4}>{t('status.incidents')}</Typography.Title>
+      {incidents.length ? (
+        <Table<PublicStatusIncident>
+          rowKey="id"
+          pagination={false}
+          size="small"
+          dataSource={incidents}
+          columns={[
+            { title: t('status.incident'), dataIndex: 'name' },
+            { title: t('status.state'), dataIndex: 'state' },
+            {
+              title: t('status.started'),
+              dataIndex: 'startTime',
+              render: (value: number | undefined) => (value ? new Date(value).toLocaleString() : '—')
+            }
+          ]}
+        />
+      ) : (
+        <Empty description={t('status.noIncidents')} />
+      )}
+    </section>
   );
 }

@@ -15,36 +15,9 @@
  * limitations under the License.
  */
 
-import { useQuery } from '@tanstack/react-query';
-
-import {
-  loadPublicStatusComponents,
-  loadPublicStatusIncidents,
-  loadPublicStatusOrg
-} from '../api/public-status-api';
-import { publicStatusQueryKeys } from '../api/public-status-query-keys';
 import { PublicStatusView } from '../components/public-status-view';
-import { publicStatusState } from '../model/public-status-model';
+import { usePublicStatusController } from '../controller/use-public-status-controller';
 
 export function PublicStatusPage() {
-  const org = useQuery({ queryKey: publicStatusQueryKeys.org(), queryFn: loadPublicStatusOrg });
-  const components = useQuery({
-    queryKey: publicStatusQueryKeys.components(),
-    queryFn: loadPublicStatusComponents
-  });
-  const incidents = useQuery({
-    queryKey: publicStatusQueryKeys.incidents(),
-    queryFn: loadPublicStatusIncidents
-  });
-  const queries = [org, components, incidents];
-
-  return (
-    <PublicStatusView
-      org={org.data}
-      components={components.data ?? []}
-      incidents={incidents.data?.content ?? []}
-      loading={queries.some(query => query.isPending)}
-      state={publicStatusState(org.error, components.error, incidents.error)}
-    />
-  );
+  return <PublicStatusView {...usePublicStatusController()} />;
 }
