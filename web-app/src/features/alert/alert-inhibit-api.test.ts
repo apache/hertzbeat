@@ -18,16 +18,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const transport = vi.hoisted(() => ({
-  apiMessageDelete: vi.fn(), apiMessageGet: vi.fn(), apiMessagePost: vi.fn(), apiMessagePut: vi.fn()
+  apiMessageDelete: vi.fn(),
+  apiMessageGet: vi.fn(),
+  apiMessagePost: vi.fn(),
+  apiMessagePut: vi.fn()
 }));
 vi.mock('@/core/http/api-message', async importOriginal => ({
-  ...(await importOriginal<typeof import('@/core/http/api-message')>()), ...transport
+  ...(await importOriginal<typeof import('@/core/http/api-message')>()),
+  ...transport
 }));
 
 import { ApiMessageError } from '@/core/http/api-message';
 
 import {
   classifyAlertInhibitReadError,
+  classifyAlertInhibitWriteError,
   deleteAlertInhibit,
   loadAlertInhibit,
   loadAlertInhibits,
@@ -65,11 +70,14 @@ describe('alert inhibit API', () => {
     transport.apiMessageGet
       .mockResolvedValueOnce({ content: [persisted], totalElements: 1, totalPages: 1, number: 0, size: 8 })
       .mockResolvedValueOnce({ ...persisted, transportOnly: true });
-    await expect(loadAlertInhibits({ search: 'critical', pageIndex: 0, pageSize: 8 }))
-      .resolves.toMatchObject({ content: [persisted], totalElements: 1 });
+    await expect(loadAlertInhibits({ search: 'critical', pageIndex: 0, pageSize: 8 })).resolves.toMatchObject({
+      content: [persisted],
+      totalElements: 1
+    });
     await expect(loadAlertInhibit(9)).resolves.toEqual(persisted);
     expect(transport.apiMessageGet).toHaveBeenNthCalledWith(
-      1, '/api/alert/inhibits?pageIndex=0&pageSize=8&sort=id&order=desc&search=critical'
+      1,
+      '/api/alert/inhibits?pageIndex=0&pageSize=8&sort=id&order=desc&search=critical'
     );
     expect(transport.apiMessageGet).toHaveBeenNthCalledWith(2, '/api/alert/inhibit/9');
   });
@@ -79,8 +87,11 @@ describe('alert inhibit API', () => {
     transport.apiMessagePut.mockResolvedValue({ id: 9, leaked: true });
     transport.apiMessageDelete.mockResolvedValue({ id: 9, leaked: true });
     const draft = {
-      ...createAlertInhibitDraft(), name: 'Policy', sourceLabelsText: 'severity:critical',
-      targetLabelsText: 'severity:warning', equalLabels: ['service']
+      ...createAlertInhibitDraft(),
+      name: 'Policy',
+      sourceLabelsText: 'severity:critical',
+      targetLabelsText: 'severity:warning',
+      equalLabels: ['service']
     };
     await expect(saveAlertInhibit(draft)).resolves.toBeUndefined();
     await expect(saveAlertInhibit({ ...draft, id: 9 })).resolves.toBeUndefined();
@@ -107,5 +118,14 @@ describe('alert inhibit API', () => {
     ['unknown', new Error('failed'), 'error']
   ])('classifies %s without collapsing missing, unavailable, and error', (_label, reason, expected) => {
     expect(classifyAlertInhibitReadError(reason)).toBe(expected);
+  });
+
+  it.each([
+    ['HTTP missing write', new ApiMessageError('missing', { status: 404 }), 'error'],
+    ['backend missing write', new ApiMessageError('missing', { code: 3, status: 200 }), 'error'],
+    ['network write', new ApiMessageError('offline', { cause: new TypeError('fetch') }), 'unavailable'],
+    ['gateway write', new ApiMessageError('gateway', { status: 503 }), 'unavailable']
+  ])('classifies %s without exposing detail missing', (_label, reason, expected) => {
+    expect(classifyAlertInhibitWriteError(reason)).toBe(expected);
   });
 });

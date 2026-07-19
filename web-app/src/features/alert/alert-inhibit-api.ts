@@ -15,7 +15,13 @@
  * limitations under the License.
  */
 
-import { ApiMessageError, apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
+import {
+  ApiMessageError,
+  apiMessageDelete,
+  apiMessageGet,
+  apiMessagePost,
+  apiMessagePut
+} from '@/core/http/api-message';
 
 import {
   buildAlertInhibitPayload,
@@ -65,10 +71,14 @@ export async function updateAlertInhibitEnabled(inhibit: AlertInhibit, enable: b
 export function classifyAlertInhibitReadError(reason: unknown): 'missing' | 'unavailable' | 'error' {
   if (reason instanceof AlertInhibitMissingError) return 'missing';
   if (reason instanceof ApiMessageError) {
-    if (reason.status === 404 || reason.status === 200 && reason.code === 3) return 'missing';
+    if (reason.status === 404 || (reason.status === 200 && reason.code === 3)) return 'missing';
     if (reason.cause !== undefined || reason.status === undefined || [0, 502, 503, 504].includes(reason.status)) {
       return 'unavailable';
     }
   }
   return 'error';
+}
+
+export function classifyAlertInhibitWriteError(reason: unknown): 'unavailable' | 'error' {
+  return classifyAlertInhibitReadError(reason) === 'unavailable' ? 'unavailable' : 'error';
 }

@@ -19,6 +19,10 @@ import { describe, expect, it } from 'vitest';
 
 import api from './alert-inhibit-api.ts?raw';
 import model from './alert-inhibit-model.ts?raw';
+import commandController from './controller/use-alert-inhibit-command-controller.ts?raw';
+import controller from './controller/use-alert-inhibit-controller.ts?raw';
+import editorController from './controller/use-alert-inhibit-editor-controller.ts?raw';
+import readController from './controller/use-alert-inhibit-read-controller.ts?raw';
 
 const modules = import.meta.glob('./alert-inhibit-page.tsx', { eager: true, import: 'default', query: '?raw' });
 const source = Object.values(modules)[0] as string;
@@ -33,7 +37,17 @@ describe('Alert Inhibit architecture', () => {
   });
 
   it('keeps query, transport, routing, notification, and date ownership out of the page', () => {
-    expect(source).not.toMatch(/@tanstack\/react-query|alert-inhibit-api|react-router|App\.useApp|Date\.parse|Intl\.DateTimeFormat/);
+    expect(source).not.toMatch(
+      /@tanstack\/react-query|alert-inhibit-api|react-router|App\.useApp|Date\.parse|Intl\.DateTimeFormat/
+    );
     expect(source).toContain('./controller/use-alert-inhibit-controller');
+  });
+
+  it('separates controller composition, reads, editor detail, and command transactions', () => {
+    expect(controller).not.toMatch(/@tanstack\/react-query|react-router|App\.useApp|alert-inhibit-api/);
+    expect(readController).toMatch(/@tanstack\/react-query|react-router/);
+    expect(readController).not.toMatch(/saveAlertInhibit|deleteAlertInhibit|updateAlertInhibitEnabled/);
+    expect(editorController).not.toMatch(/useSearchParams|useQuery|App\.useApp/);
+    expect(commandController).not.toMatch(/useSearchParams|useQuery/);
   });
 });
