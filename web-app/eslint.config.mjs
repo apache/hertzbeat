@@ -41,7 +41,7 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.flat.recommended.rules,
-      'complexity': ['error', 12],
+      complexity: ['error', 12],
       'max-depth': ['error', 4],
       'max-lines-per-function': ['error', { max: 100, skipBlankLines: true, skipComments: true }],
       'no-restricted-imports': ['error', { paths: ['mermaid', 'next'] }],
@@ -58,7 +58,7 @@ export default tseslint.config(
     }
   },
   {
-    files: ['scripts/**/*.mjs', '*.config.{cjs,mjs}'],
+    files: ['scripts/**/*.mjs', '*.config.{cjs,mjs}', '.*rc.{cjs,mjs}'],
     ...tseslint.configs.disableTypeChecked,
     languageOptions: {
       globals: globals.node
