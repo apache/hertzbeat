@@ -139,10 +139,18 @@ export function mergeExploreQuery(query: ExploreQuery, changes: ExploreQueryPatc
 
 export function buildCrossSignalPath(query: ExploreQuery, signal: ExploreSignal, context: { traceId?: string | undefined }) {
   return buildExplorePath(mergeExploreQuery(query, {
-    signal,
+    ...signalSelectionPatch(signal),
     traceId: context.traceId ?? (query.signal === 'metrics' ? undefined : query.traceId),
-    pageIndex: undefined
   }));
+}
+
+/**
+ * Keep investigation scope when changing signals, but drop the free-text
+ * expression because it means a metric name, log search, or operation name
+ * depending on the selected signal.
+ */
+export function signalSelectionPatch(signal: ExploreSignal): ExploreQueryPatch {
+  return { signal, query: undefined, live: undefined, pageIndex: undefined };
 }
 
 export function querySubmissionTimePatch(

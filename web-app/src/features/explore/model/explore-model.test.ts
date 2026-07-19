@@ -48,7 +48,9 @@ describe('explore query state', () => {
   });
 
   it('preserves trace context when moving from logs to traces', () => {
-    expect(buildCrossSignalPath({ signal: 'logs', timeRange: 'last-30m', serviceName: 'checkout' }, 'traces', { traceId: 'trace-1' })).toBe(
+    expect(buildCrossSignalPath({
+      signal: 'logs', timeRange: 'last-30m', serviceName: 'checkout', query: 'Failed to export'
+    }, 'traces', { traceId: 'trace-1' })).toBe(
       '/explore?signal=traces&timeRange=last-30m&serviceName=checkout&traceId=trace-1'
     );
   });

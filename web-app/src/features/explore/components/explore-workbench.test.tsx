@@ -44,8 +44,12 @@ describe('Explore workbench', () => {
 
     expect(screen.getByRole('combobox', { name: 'Time range' })).toBeInTheDocument();
     expect(screen.getByText('Last 30 minutes')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('tab', { name: 'Metrics' }));
+    expect(updateQuery).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('tab', { name: 'Logs' }));
-    expect(updateQuery).toHaveBeenCalledWith({ signal: 'logs', live: undefined, pageIndex: undefined });
+    expect(updateQuery).toHaveBeenCalledWith({
+      signal: 'logs', query: undefined, live: undefined, pageIndex: undefined
+    });
   });
 
   it('keeps raw log attributes behind an advanced disclosure', () => {
@@ -102,7 +106,12 @@ describe('Explore workbench', () => {
 
 function WorkbenchSubject({ updateQuery }: { updateQuery: (changes: ExploreQueryPatch) => void }) {
   const { t } = useTranslation();
-  return <ExploreWorkbench query={{ signal: 'metrics', timeRange: 'last-30m' }} t={t} updateQuery={updateQuery} refresh={vi.fn().mockResolvedValue(undefined)} />;
+  return <ExploreWorkbench
+    query={{ signal: 'metrics', timeRange: 'last-30m', query: 'http_requests_total' }}
+    t={t}
+    updateQuery={updateQuery}
+    refresh={vi.fn().mockResolvedValue(undefined)}
+  />;
 }
 
 function QuerySubject() {

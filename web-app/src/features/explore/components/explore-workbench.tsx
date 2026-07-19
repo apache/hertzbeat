@@ -23,6 +23,7 @@ import {
   exploreHandoffState,
   exploreUsesExactWindow,
   presetTimeRangePatch,
+  signalSelectionPatch,
   type ExploreQuery,
   type ExploreQueryPatch,
   type ExploreSignal,
@@ -46,6 +47,10 @@ export function ExploreWorkbench({ query, t, updateQuery, refresh }: Props) {
     if (!EXPLORE_TIME_RANGES.includes(value as ExploreTimeRange)) return;
     const timeRange = value as ExploreTimeRange;
     updateQuery(presetTimeRangePatch(query, timeRange));
+  };
+  const selectSignal = (signal: ExploreSignal) => {
+    if (query.signal === signal) return;
+    updateQuery(signalSelectionPatch(signal));
   };
   return <>
     <header className={styles.header}>
@@ -76,7 +81,7 @@ export function ExploreWorkbench({ query, t, updateQuery, refresh }: Props) {
           role="tab"
           aria-selected={query.signal === signal}
           className={(query.signal === signal ? styles.activeSignal : styles.signal) ?? ''}
-          onClick={() => updateQuery({ signal, live: undefined, pageIndex: undefined })}
+          onClick={() => selectSignal(signal)}
         >{t(`explore.signals.${signal}`)}</button>)}
       </nav>
       {query.signal === 'logs' && <div className={styles.logMode} aria-label={t('exploreLog.mode')}>
