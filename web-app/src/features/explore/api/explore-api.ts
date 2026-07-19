@@ -28,10 +28,7 @@ import {
   type MetricExploreQuery,
   type TraceExploreQuery
 } from '../model/explore-query';
-import {
-  ExploreSignalContractError,
-  ExploreSignalMissingError
-} from '../model/explore-signal-contract';
+import { ExploreSignalContractError, ExploreSignalMissingError } from '../model/explore-signal-contract';
 import { parseLogPage, parseLogRow } from './explore-log-schema';
 import { parseMetricConsole } from './explore-metric-schema';
 import { parseTraceDetail, parseTracePage } from './explore-trace-schema';
@@ -58,11 +55,13 @@ export async function loadTraceDetail(traceId: string, signal?: AbortSignal) {
   return parseTraceDetail(raw, traceId);
 }
 
-export function classifyExploreSignalError(reason: unknown): 'missing' | 'transport_error' | 'contract_error' | 'error' {
+export function classifyExploreSignalError(
+  reason: unknown
+): 'missing' | 'transport_error' | 'contract_error' | 'error' {
   if (reason instanceof ExploreSignalMissingError) return 'missing';
   if (reason instanceof ExploreSignalContractError) return 'contract_error';
   if (reason instanceof ApiMessageError) {
-    if (reason.status === 404 || reason.status === 200 && reason.code === 3) return 'missing';
+    if (reason.status === 404 || (reason.status === 200 && reason.code === 3)) return 'missing';
     if (reason.cause !== undefined || reason.status === undefined || [0, 502, 503, 504].includes(reason.status)) {
       return 'transport_error';
     }
@@ -123,13 +122,16 @@ export function buildLogStreamPath(query: LogExploreQuery) {
   return suffix ? `/api/logs/sse/subscribe?${suffix}` : '/api/logs/sse/subscribe';
 }
 
-export function openLogStream(path: string, handlers: {
-  onOpen: () => void;
-  onLog: (row: ReturnType<typeof parseLogRow>) => void;
-  onRetrying: () => void;
-  onUnavailable: () => void;
-  onContractError: () => void;
-}) {
+export function openLogStream(
+  path: string,
+  handlers: {
+    onOpen: () => void;
+    onLog: (row: ReturnType<typeof parseLogRow>) => void;
+    onRetrying: () => void;
+    onUnavailable: () => void;
+    onContractError: () => void;
+  }
+) {
   return openBrowserEventStream(path, {
     eventNames: ['LOG_EVENT'],
     onOpen: handlers.onOpen,
@@ -153,14 +155,14 @@ function sharedSignalParams(query: ExploreQuery, now: number) {
   const params = new URLSearchParams();
   const scoped = exploreHandoffState(query) === 'scoped';
   const exact = exploreUsesExactWindow(query);
-  const end = query.end ?? now;
   setValue(params, 'serviceName', query.serviceName);
   if (scoped) setValue(params, 'serviceNamespace', query.serviceNamespace);
   setValue(params, 'environment', query.environment);
   if (scoped) setValue(params, 'collectorId', query.collectorId);
   appendOptionalDimensions(params, query);
-  params.set('start', String(exact ? query.start : end - timeRangeMilliseconds(query.timeRange)));
-  params.set('end', String(end));
+  // Relative windows slide on every request; route timestamps are authoritative only for an exact window.
+  params.set('start', String(exact ? query.start : now - timeRangeMilliseconds(query.timeRange)));
+  params.set('end', String(exact ? query.end : now));
   return params;
 }
 

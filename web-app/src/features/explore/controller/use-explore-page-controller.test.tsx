@@ -23,6 +23,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryContextProvider } from '@/shared/query-context';
 import { GlobalTimeProvider, RouteTimeProvider } from '@/shared/time';
 
+import { buildSignalApiPath } from '../api/explore-api';
+import type { ExploreQuery } from '../model/explore-model';
 import type { MetricConsole } from '../model/explore-signal-contract';
 import { useExplorePageController } from './use-explore-page-controller';
 
@@ -117,28 +119,69 @@ describe('Explore page controller', () => {
   });
 
   it.each(['metrics', 'logs', 'traces'] as const)(
-    'auto-refetches %s every 30 seconds without changing history',
+    'auto-refetches relative %s with a fresh now without changing history or URL time fields',
     async signal => {
       vi.useFakeTimers();
       try {
+        vi.setSystemTime(2_000_000);
+        const paths: string[] = [];
+        const loader =
+          signal === 'metrics' ? api.loadMetricSignal : signal === 'logs' ? api.loadLogSignal : api.loadTraceSignal;
+        loader.mockImplementation((query: ExploreQuery) => {
+          paths.push(buildSignalApiPath(query, Date.now()));
+          return Promise.resolve(signal === 'metrics' ? metricConsole([]) : page([]));
+        });
         const routed = renderController([`/explore?signal=${signal}`]);
         await act(async () => {
           await vi.advanceTimersByTimeAsync(0);
         });
-        const loader =
-          signal === 'metrics' ? api.loadMetricSignal : signal === 'logs' ? api.loadLogSignal : api.loadTraceSignal;
         expect(loader).toHaveBeenCalledTimes(1);
+        expect(paths[0]).toContain('start=200000&end=2000000');
         const key = routed.router.state.location.key;
+        expect(routed.router.state.location.search).not.toMatch(/[?&](?:start|end)=/u);
         await act(async () => {
           await vi.advanceTimersByTimeAsync(30_000);
         });
         expect(loader).toHaveBeenCalledTimes(2);
+        expect(paths[1]).toContain('start=230000&end=2030000');
         expect(routed.router.state.location.key).toBe(key);
+        expect(routed.router.state.location.search).not.toMatch(/[?&](?:start|end)=/u);
       } finally {
         vi.useRealTimers();
       }
     }
   );
+
+  it('keeps an exact window fixed across the 30 second controller refresh', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(2_000_000);
+      const paths: string[] = [];
+      api.loadMetricSignal.mockImplementation((query: ExploreQuery) => {
+        paths.push(buildSignalApiPath(query, Date.now()));
+        return Promise.resolve(metricConsole([]));
+      });
+      const routed = renderController([
+        '/explore?signal=metrics&serviceName=checkout&serviceNamespace=commerce&environment=prod' +
+          '&collectorId=east&start=1000&end=2000'
+      ]);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      const key = routed.router.state.location.key;
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(30_000);
+      });
+
+      expect(paths).toHaveLength(2);
+      expect(paths[0]).toContain('start=1000&end=2000');
+      expect(paths[1]).toContain('start=1000&end=2000');
+      expect(routed.router.state.location.key).toBe(key);
+      expect(routed.router.state.location.search).toContain('start=1000&end=2000');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 
   it.each([
     [page([]), 'empty'],
