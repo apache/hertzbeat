@@ -99,12 +99,6 @@
     },
     {
       "rule": "function-size",
-      "path": "features/settings/message-server/components/message-server-editors.tsx",
-      "identity": "function:EmailServerEditor",
-      "allowedMax": 86
-    },
-    {
-      "rule": "function-size",
       "path": "features/settings/message-server/controller/use-message-server-controller.ts",
       "identity": "function:useMessageServerController",
       "allowedMax": 87
