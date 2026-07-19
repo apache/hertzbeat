@@ -15,7 +15,13 @@
  * limitations under the License.
  */
 
-import { ApiMessageError, apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
+import {
+  ApiMessageError,
+  apiMessageDelete,
+  apiMessageGet,
+  apiMessagePost,
+  apiMessagePut
+} from '@/core/http/api-message';
 
 import {
   buildAlertGroupListPath,
@@ -55,10 +61,14 @@ export async function updateAlertGroupEnabled(group: AlertGroupConverge, enable:
 export function classifyAlertGroupReadError(reason: unknown): 'missing' | 'unavailable' | 'error' {
   if (reason instanceof AlertGroupMissingError) return 'missing';
   if (reason instanceof ApiMessageError) {
-    if (reason.status === 404 || reason.status === 200 && reason.code === 3) return 'missing';
+    if (reason.status === 404 || (reason.status === 200 && reason.code === 3)) return 'missing';
     if (reason.cause !== undefined || reason.status === undefined || [0, 502, 503, 504].includes(reason.status)) {
       return 'unavailable';
     }
   }
   return 'error';
+}
+
+export function classifyAlertGroupWriteError(reason: unknown): 'unavailable' | 'error' {
+  return classifyAlertGroupReadError(reason) === 'unavailable' ? 'unavailable' : 'error';
 }

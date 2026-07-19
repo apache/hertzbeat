@@ -6,6 +6,7 @@
  */
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLayoutEffect, useRef } from 'react';
 
 import { classifyAlertGroupReadError, loadAlertGroups } from '../alert-group-api';
 import type { AlertGroupQuery } from '../alert-group-model';
@@ -14,19 +15,32 @@ import { alertGroupQueryKeys } from './alert-group-query-keys';
 
 export function useAlertGroupReadController(query: AlertGroupQuery) {
   const queryClient = useQueryClient();
+  const latestQueryRef = useRef(query);
+  // A pending command may outlive route changes, so its final reread must use the committed query.
+  useLayoutEffect(() => {
+    latestQueryRef.current = query;
+  }, [query]);
   const listQuery = useQuery({
     queryKey: alertGroupQueryKeys.list(query),
     queryFn: () => loadAlertGroups(query),
     retry: false
   });
-  const failure = listQuery.error
-    ? classifyAlertGroupReadError(listQuery.error) === 'unavailable' ? 'unavailable' : 'error'
-    : null;
-  const rereadList = () => queryClient.fetchQuery({
-    queryKey: alertGroupQueryKeys.list(query),
-    queryFn: () => loadAlertGroups(query),
-    staleTime: 0
-  });
+  const failure = alertGroupListFailure(listQuery.error);
+  const rereadList = () => {
+    const latestQuery = latestQueryRef.current;
+    return queryClient.fetchQuery({
+      queryKey: alertGroupQueryKeys.list(latestQuery),
+      queryFn: () => loadAlertGroups(latestQuery),
+      staleTime: 0
+    });
+  };
+  const refresh = async () => {
+    try {
+      await rereadList();
+    } catch {
+      // The query state owns visible refresh failures.
+    }
+  };
 
   return {
     state: {
@@ -34,6 +48,12 @@ export function useAlertGroupReadController(query: AlertGroupQuery) {
       refreshing: listQuery.isFetching
     },
     rereadList,
-    refresh: () => rereadList().then(() => undefined).catch(() => undefined)
+    refresh
   };
+}
+
+function alertGroupListFailure(reason: unknown): 'unavailable' | 'error' | null {
+  if (!reason) return null;
+  if (classifyAlertGroupReadError(reason) === 'unavailable') return 'unavailable';
+  return 'error';
 }

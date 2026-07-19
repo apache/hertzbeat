@@ -33,6 +33,7 @@ import { ApiMessageError } from '@/core/http/api-message';
 
 import {
   classifyAlertGroupReadError,
+  classifyAlertGroupWriteError,
   deleteAlertGroup,
   loadAlertGroup,
   loadAlertGroups,
@@ -74,11 +75,14 @@ describe('alert group API', () => {
       .mockResolvedValueOnce({ content: [persisted], totalElements: 1, totalPages: 1, number: 0, size: 8 })
       .mockResolvedValueOnce({ ...persisted, transportOnly: true });
 
-    await expect(loadAlertGroups({ search: '', pageIndex: 0, pageSize: 8 }))
-      .resolves.toMatchObject({ content: [persisted], totalElements: 1 });
+    await expect(loadAlertGroups({ search: '', pageIndex: 0, pageSize: 8 })).resolves.toMatchObject({
+      content: [persisted],
+      totalElements: 1
+    });
     await expect(loadAlertGroup(7)).resolves.toEqual(persisted);
     expect(transport.apiMessageGet).toHaveBeenNthCalledWith(
-      1, '/api/alert/groups?pageIndex=0&pageSize=8&sort=id&order=desc'
+      1,
+      '/api/alert/groups?pageIndex=0&pageSize=8&sort=id&order=desc'
     );
     expect(transport.apiMessageGet).toHaveBeenNthCalledWith(2, '/api/alert/group/7');
   });
@@ -115,5 +119,15 @@ describe('alert group API', () => {
     ['unknown error', new Error('failed'), 'error']
   ])('classifies %s without collapsing missing, unavailable, and error', (_label, reason, expected) => {
     expect(classifyAlertGroupReadError(reason)).toBe(expected);
+  });
+
+  it.each([
+    ['HTTP missing write', new ApiMessageError('missing', { status: 404 }), 'error'],
+    ['backend rejected write', new ApiMessageError('missing', { code: 3, status: 200 }), 'error'],
+    ['network failure', new ApiMessageError('offline', { cause: new TypeError('fetch') }), 'unavailable'],
+    ['gateway failure', new ApiMessageError('gateway', { status: 503 }), 'unavailable'],
+    ['server failure', new ApiMessageError('failed', { status: 500 }), 'error']
+  ])('classifies %s as a write-stage failure', (_label, reason, expected) => {
+    expect(classifyAlertGroupWriteError(reason)).toBe(expected);
   });
 });

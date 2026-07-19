@@ -9,12 +9,6 @@
     },
     {
       "rule": "function-size",
-      "path": "features/alert/controller/use-alert-group-command-controller.ts",
-      "identity": "function:useAlertGroupCommandController",
-      "allowedMax": 93
-    },
-    {
-      "rule": "function-size",
       "path": "features/alert/controller/use-alert-inhibit-controller.ts",
       "identity": "function:useAlertInhibitTransactions",
       "allowedMax": 83

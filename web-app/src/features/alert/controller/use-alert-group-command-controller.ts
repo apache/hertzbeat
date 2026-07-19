@@ -6,11 +6,11 @@
  */
 
 import { App } from 'antd';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
   classifyAlertGroupReadError,
+  classifyAlertGroupWriteError,
   deleteAlertGroup,
   loadAlertGroup,
   saveAlertGroup,
@@ -18,82 +18,123 @@ import {
 } from '../alert-group-api';
 import {
   AlertGroupContractError,
-  alertGroupDraftFromDetail,
   buildAlertGroupPayload,
   buildAlertGroupTogglePayload,
-  createAlertGroupDraft,
   validateAlertGroupDraft,
   type AlertGroupConverge,
-  type AlertGroupDraft,
   type AlertGroupPage
 } from '../alert-group-model';
-import type { AlertGroupDetailState, AlertGroupFailure } from '../alert-group-state';
 import {
   proveAlertGroupMissing,
   requireAlertGroupConvergence,
   requireExactAlertGroupId
 } from '../alert-group-write-proof';
+import {
+  useAlertGroupCommandGate,
+  useAlertGroupEditor,
+  type AlertGroupCommandGate,
+  type AlertGroupEditor
+} from './use-alert-group-editor-controller';
 
 export function useAlertGroupCommandController(rereadList: () => Promise<AlertGroupPage>) {
   const { t } = useTranslation();
   const { message } = App.useApp();
-  const [draft, setDraft] = useState<AlertGroupDraft | null>(null);
-  const [detail, setDetail] = useState<AlertGroupDetailState>({ kind: 'idle' });
-  const [editorFailure, setEditorFailure] = useState<AlertGroupFailure>();
-  const [command, setCommand] = useState<'idle' | 'saving' | 'operating'>('idle');
-
-  const edit = async (id: number) => {
-    setDetail({ kind: 'loading', id });
-    try {
-      const record = await loadAlertGroup(id);
-      requireExactAlertGroupId(record.id, id);
-      setDraft(alertGroupDraftFromDetail(record));
-      setEditorFailure(undefined);
-      setDetail({ kind: 'idle' });
-    } catch (reason) {
-      setDetail({ kind: classifyAlertGroupReadError(reason), id });
-    }
+  const gate = useAlertGroupCommandGate();
+  const editor = useAlertGroupEditor(gate);
+  const notifications: AlertGroupNotifications = {
+    validation: () => void message.warning(t('alertGroups.validation')),
+    saveSuccess: () => void message.success(t('alertGroups.saveSuccess')),
+    saveFailed: () => void message.error(t('alertGroups.saveFailed')),
+    operationSuccess: () => void message.success(t('alertGroups.operationSuccess')),
+    operationFailed: () => void message.error(t('alertGroups.operationFailed'))
   };
+  const submit = useAlertGroupSubmit(rereadList, gate, editor, notifications);
+  const operations = useAlertGroupOperations(rereadList, gate, editor, notifications);
+
+  return {
+    state: { command: gate.command, detail: editor.detail, draft: editor.draft, editorFailure: editor.editorFailure },
+    actions: { ...editor.actions, submit, ...operations }
+  };
+}
+
+type AlertGroupNotifications = {
+  validation: () => void;
+  saveSuccess: () => void;
+  saveFailed: () => void;
+  operationSuccess: () => void;
+  operationFailed: () => void;
+};
+type AlertGroupSubmitStage = 'write' | 'detail-proof' | 'list-proof';
+
+function classifyAlertGroupSubmitFailure(stage: AlertGroupSubmitStage, reason: unknown) {
+  if (stage === 'detail-proof') return classifyAlertGroupReadError(reason);
+  return classifyAlertGroupWriteError(reason);
+}
+
+function useAlertGroupSubmit(
+  rereadList: () => Promise<AlertGroupPage>,
+  gate: AlertGroupCommandGate,
+  editor: AlertGroupEditor,
+  notifications: AlertGroupNotifications
+) {
   const submit = async () => {
+    const draft = editor.draft;
     if (!draft || validateAlertGroupDraft(draft).length > 0) {
-      void message.warning(t('alertGroups.validation'));
+      notifications.validation();
       return;
     }
-    setCommand('saving');
-    setEditorFailure(undefined);
+    if (!gate.begin('saving')) return;
+    editor.invalidateDetail();
+    editor.setEditorFailure(undefined);
+    let stage: AlertGroupSubmitStage = 'write';
     try {
       await saveAlertGroup(draft);
       if (draft.id !== undefined) {
+        stage = 'detail-proof';
         const canonical = await loadAlertGroup(draft.id);
         requireAlertGroupConvergence(canonical, { ...buildAlertGroupPayload(draft), id: draft.id });
       }
+      stage = 'list-proof';
       await rereadList();
-      setDraft(null);
-      setDetail({ kind: 'idle' });
-      void message.success(t('alertGroups.saveSuccess'));
+      editor.setDraft(null);
+      notifications.saveSuccess();
     } catch (reason) {
-      setEditorFailure(classifyAlertGroupReadError(reason));
-      void message.error(t('alertGroups.saveFailed'));
+      editor.setEditorFailure(classifyAlertGroupSubmitFailure(stage, reason));
+      notifications.saveFailed();
     } finally {
-      setCommand('idle');
+      gate.end();
     }
   };
+  return submit;
+}
+
+function useAlertGroupOperations(
+  rereadList: () => Promise<AlertGroupPage>,
+  gate: AlertGroupCommandGate,
+  editor: AlertGroupEditor,
+  notifications: AlertGroupNotifications
+) {
   const toggle = async (group: AlertGroupConverge, enable: boolean) => {
-    setCommand('operating');
+    if (!gate.begin('operating')) return;
+    editor.invalidateDetail();
     try {
-      await updateAlertGroupEnabled(group, enable);
+      const current = await loadAlertGroup(group.id);
+      requireExactAlertGroupId(current.id, group.id);
+      await updateAlertGroupEnabled(current, enable);
       const canonical = await loadAlertGroup(group.id);
-      requireAlertGroupConvergence(canonical, buildAlertGroupTogglePayload(group, enable));
+      requireExactAlertGroupId(canonical.id, group.id);
+      requireAlertGroupConvergence(canonical, buildAlertGroupTogglePayload(current, enable));
       await rereadList();
-      void message.success(t('alertGroups.operationSuccess'));
+      notifications.operationSuccess();
     } catch {
-      void message.error(t('alertGroups.operationFailed'));
+      notifications.operationFailed();
     } finally {
-      setCommand('idle');
+      gate.end();
     }
   };
   const remove = async (id: number) => {
-    setCommand('operating');
+    if (!gate.begin('operating')) return;
+    editor.invalidateDetail();
     try {
       await deleteAlertGroup(id);
       await proveAlertGroupMissing(id);
@@ -101,31 +142,12 @@ export function useAlertGroupCommandController(rereadList: () => Promise<AlertGr
       if (canonical.content.some(record => record.id === id)) {
         throw new AlertGroupContractError('deleted id remains');
       }
-      void message.success(t('alertGroups.operationSuccess'));
+      notifications.operationSuccess();
     } catch {
-      void message.error(t('alertGroups.operationFailed'));
+      notifications.operationFailed();
     } finally {
-      setCommand('idle');
+      gate.end();
     }
   };
-
-  return {
-    state: { command, detail, draft, editorFailure },
-    actions: {
-      create: () => {
-        setDraft(createAlertGroupDraft());
-        setDetail({ kind: 'idle' });
-        setEditorFailure(undefined);
-      },
-      edit,
-      retryDetail: () => detail.kind === 'idle' ? Promise.resolve() : edit(detail.id),
-      closeDraft: () => { if (command === 'idle') setDraft(null); },
-      updateDraft: (patch: Partial<AlertGroupDraft>) => {
-        setDraft(current => current ? { ...current, ...patch } : current);
-      },
-      submit,
-      toggle,
-      remove
-    }
-  };
+  return { toggle, remove };
 }
