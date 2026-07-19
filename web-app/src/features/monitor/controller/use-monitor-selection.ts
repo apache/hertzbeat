@@ -26,7 +26,15 @@ type MonitorSelectionSnapshot = {
   visibleIds: readonly number[];
 };
 
-export function useMonitorSelection(scope: string, content?: Monitor[]) {
+export type MonitorSelectionController = {
+  rows: Monitor[];
+  selectedIds: number[];
+  selectIds: (ids: number[]) => void;
+  clear: () => void;
+  validatedIds: () => number[];
+};
+
+export function useMonitorSelection(scope: string, content?: Monitor[]): MonitorSelectionController {
   const rows = useMemo(() => content ?? [], [content]);
   const visibleIds = useMemo(() => rows.map(row => row.id), [rows]);
   const [selection, setSelection] = useState<MonitorScopedSelection>({ scope, ids: [] });
@@ -47,12 +55,15 @@ export function useMonitorSelection(scope: string, content?: Monitor[]) {
     });
   }, [scope, visibleIds]);
 
-  const selectIds = useCallback((ids: number[]) => {
-    setSelection({ scope, ids: reconcileMonitorSelection({ scope, ids }, scope, visibleIds) });
-  }, [scope, visibleIds]);
+  const selectIds = useCallback(
+    (ids: number[]) => {
+      setSelection({ scope, ids: reconcileMonitorSelection({ scope, ids }, scope, visibleIds) });
+    },
+    [scope, visibleIds]
+  );
 
   const clear = useCallback(() => {
-    setSelection(current => current.ids.length === 0 ? current : { ...current, ids: [] });
+    setSelection(current => (current.ids.length === 0 ? current : { ...current, ids: [] }));
   }, []);
 
   const validatedIds = useCallback(() => {

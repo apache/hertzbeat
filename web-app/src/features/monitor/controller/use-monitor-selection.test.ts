@@ -22,10 +22,9 @@ import { useMonitorSelection } from './use-monitor-selection';
 
 describe('useMonitorSelection', () => {
   it('revalidates a previously captured action against the latest scope and rows', () => {
-    const { result, rerender } = renderHook(
-      ({ scope, rows }) => useMonitorSelection(scope, rows),
-      { initialProps: { scope: 'checkout-page-1', rows: [monitor(7), monitor(8)] } }
-    );
+    const { result, rerender } = renderHook(({ scope, rows }) => useMonitorSelection(scope, rows), {
+      initialProps: { scope: 'checkout-page-1', rows: [monitor(7), monitor(8)] }
+    });
 
     act(() => result.current.selectIds([7]));
     const staleValidatedIds = result.current.validatedIds;

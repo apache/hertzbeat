@@ -3,11 +3,6 @@
   "entries": [
     {
       "rule": "generic-hooks-file",
-      "path": "features/monitor/hooks/use-monitor-selection.ts",
-      "allowedMax": 1
-    },
-    {
-      "rule": "generic-hooks-file",
       "path": "features/status/management/hooks/use-status-incident-editor.ts",
       "allowedMax": 1
     },

@@ -22,44 +22,106 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
-  classifyMonitorReadError, loadMonitorApps, loadMonitors, MonitorContractError, mutateMonitors,
-  type Monitor, type MonitorAction
+  classifyMonitorReadError,
+  loadMonitorApps,
+  loadMonitors,
+  MonitorContractError,
+  mutateMonitors,
+  type Monitor,
+  type MonitorAction,
+  type MonitorPage
 } from '../api/monitor-api';
-import { useMonitorSelection } from '../hooks/use-monitor-selection';
 import {
-  buildMonitorRoutePath, monitorAppOptions, monitorSelectionScope, readMonitorQuery, writeMonitorQuery,
+  buildMonitorRoutePath,
+  monitorAppOptions,
+  monitorSelectionScope,
+  readMonitorQuery,
+  writeMonitorQuery,
   type MonitorQuery
 } from '../model/monitor-model';
 import type { MonitorAppsEvidence, MonitorListEvidence } from '../model/monitor-list-model';
 import { monitorQueryKeys } from './monitor-query-keys';
+import { useMonitorSelection, type MonitorSelectionController } from './use-monitor-selection';
 
 export function useMonitorListController() {
-  const { t } = useTranslation();
-  const { message } = App.useApp();
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
   const [params, setParams] = useSearchParams();
   const query = readMonitorQuery(params);
   const source = writeMonitorQuery(query).toString();
   const [draftState, setDraftState] = useState({ source, search: query.search, labels: query.labels });
-  const [operating, setOperating] = useState(false);
   const queryChanged = draftState.source !== source;
-  const draft = queryChanged ? { search: query.search, labels: query.labels } : {
-    search: draftState.search, labels: draftState.labels
-  };
-  const monitors = useQuery({
-    queryKey: monitorQueryKeys.list(query), queryFn: ({ signal }) => loadMonitors(query, signal), retry: false
-  });
-  const apps = useQuery({
-    queryKey: monitorQueryKeys.apps(), queryFn: ({ signal }) => loadMonitorApps(signal), retry: false
-  });
+  const draft = queryChanged
+    ? { search: query.search, labels: query.labels }
+    : {
+        search: draftState.search,
+        labels: draftState.labels
+      };
+  const { monitors, apps, reread } = useMonitorListResources(query);
   const records = monitors.data?.content;
   const selection = useMonitorSelection(monitorSelectionScope(query), records);
+  const commands = useMonitorListCommands(reread, selection);
   const updateQuery = (patch: Partial<MonitorQuery>) => setParams(writeMonitorQuery({ ...query, ...patch }));
-  const reread = () => queryClient.fetchQuery({
-    queryKey: monitorQueryKeys.list(query), queryFn: ({ signal }) => loadMonitors(query, signal), staleTime: 0
+  return {
+    state: {
+      query,
+      draft,
+      operating: commands.operating,
+      selectedIds: selection.selectedIds,
+      monitors: resolveMonitorEvidence(monitors.isPending, monitors.error, monitors.data),
+      apps: resolveAppsEvidence(apps.isPending, apps.error, apps.data),
+      refreshing: monitors.isFetching
+    },
+    actions: {
+      setSearch: (search: string) => setDraftState({ source, search, labels: draft.labels }),
+      setLabels: (labels: string) => setDraftState({ source, search: draft.search, labels }),
+      submitSearch: () => updateQuery({ search: draft.search.trim(), pageIndex: 0 }),
+      submitFilters: () => updateQuery({ search: draft.search.trim(), labels: draft.labels.trim(), pageIndex: 0 }),
+      changeApp: (app: string) => updateQuery({ app, pageIndex: 0 }),
+      changeStatus: (status: string) => updateQuery({ status, pageIndex: 0 }),
+      changePage: (page: number, pageSize: number) => updateQuery({ pageIndex: page - 1, pageSize }),
+      refresh: commands.refresh,
+      create: () => {
+        void navigate('/monitors/new');
+      },
+      open: (id: number, mode: 'view' | 'edit') => {
+        void navigate(buildMonitorRoutePath(id, mode, `${location.pathname}${location.search}`));
+      },
+      run: commands.run,
+      runBulk: commands.runBulk,
+      selectIds: selection.selectIds
+    }
+  };
+}
+
+function useMonitorListResources(query: MonitorQuery) {
+  const queryClient = useQueryClient();
+  const monitors = useQuery({
+    queryKey: monitorQueryKeys.list(query),
+    queryFn: ({ signal }) => loadMonitors(query, signal),
+    retry: false
   });
+  const apps = useQuery({
+    queryKey: monitorQueryKeys.apps(),
+    queryFn: ({ signal }) => loadMonitorApps(signal),
+    retry: false
+  });
+  const reread = () =>
+    queryClient.fetchQuery({
+      queryKey: monitorQueryKeys.list(query),
+      queryFn: ({ signal }) => loadMonitors(query, signal),
+      staleTime: 0
+    });
+  return { monitors, apps, reread };
+}
+
+function useMonitorListCommands(
+  reread: () => Promise<MonitorPage>,
+  selection: Pick<MonitorSelectionController, 'clear' | 'validatedIds'>
+) {
+  const { t } = useTranslation();
+  const { message } = App.useApp();
+  const [operating, setOperating] = useState(false);
   const refresh = async () => {
     try {
       await reread();
@@ -84,32 +146,14 @@ export function useMonitorListController() {
     }
   };
   const runBulk = (action: MonitorAction) => run(action, selection.validatedIds());
-  return {
-    state: {
-      query, draft, operating, selectedIds: selection.selectedIds,
-      monitors: resolveMonitorEvidence(monitors.isPending, monitors.error, monitors.data),
-      apps: resolveAppsEvidence(apps.isPending, apps.error, apps.data),
-      refreshing: monitors.isFetching
-    },
-    actions: {
-      setSearch: (search: string) => setDraftState({ source, search, labels: draft.labels }),
-      setLabels: (labels: string) => setDraftState({ source, search: draft.search, labels }),
-      submitSearch: () => updateQuery({ search: draft.search.trim(), pageIndex: 0 }),
-      submitFilters: () => updateQuery({ search: draft.search.trim(), labels: draft.labels.trim(), pageIndex: 0 }),
-      changeApp: (app: string) => updateQuery({ app, pageIndex: 0 }),
-      changeStatus: (status: string) => updateQuery({ status, pageIndex: 0 }),
-      changePage: (page: number, pageSize: number) => updateQuery({ pageIndex: page - 1, pageSize }),
-      refresh,
-      create: () => { void navigate('/monitors/new'); },
-      open: (id: number, mode: 'view' | 'edit') => {
-        void navigate(buildMonitorRoutePath(id, mode, `${location.pathname}${location.search}`));
-      },
-      run, runBulk, selectIds: selection.selectIds
-    }
-  };
+  return { operating, refresh, run, runBulk };
 }
 
-function resolveMonitorEvidence(pending: boolean, error: Error | null, page: Awaited<ReturnType<typeof loadMonitors>> | undefined): MonitorListEvidence {
+function resolveMonitorEvidence(
+  pending: boolean,
+  error: Error | null,
+  page: Awaited<ReturnType<typeof loadMonitors>> | undefined
+): MonitorListEvidence {
   if (pending) return { kind: 'loading' };
   if (error) return { kind: classifyMonitorReadError(error) };
   if (!page) return { kind: 'error' };
@@ -117,7 +161,11 @@ function resolveMonitorEvidence(pending: boolean, error: Error | null, page: Awa
   return { kind: 'ready', records: page.content, total: page.totalElements };
 }
 
-function resolveAppsEvidence(pending: boolean, error: Error | null, apps: Awaited<ReturnType<typeof loadMonitorApps>> | undefined): MonitorAppsEvidence {
+function resolveAppsEvidence(
+  pending: boolean,
+  error: Error | null,
+  apps: Awaited<ReturnType<typeof loadMonitorApps>> | undefined
+): MonitorAppsEvidence {
   if (pending) return { kind: 'loading' };
   if (error) return { kind: classifyMonitorReadError(error) };
   if (!apps) return { kind: 'error' };

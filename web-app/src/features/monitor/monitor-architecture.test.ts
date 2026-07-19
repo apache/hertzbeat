@@ -25,14 +25,13 @@ import primitiveSchemaSource from './api/monitor-read-schema-primitives.ts?raw';
 import metricWorkbenchControllerSource from './controller/use-monitor-metric-workbench-controller.ts?raw';
 
 const requiredDirectories = ['api', 'model', 'controller', 'components', 'pages'] as const;
-const layerDirectories = [...requiredDirectories, 'hooks'] as const;
+const layerDirectories = requiredDirectories;
 const allowedDependencies: Record<(typeof layerDirectories)[number], readonly string[]> = {
   api: ['api'],
   model: ['api', 'model'],
-  hooks: ['api', 'model', 'hooks'],
-  controller: ['api', 'model', 'hooks', 'controller'],
-  components: ['api', 'model', 'hooks', 'components'],
-  pages: ['api', 'model', 'hooks', 'controller', 'components', 'pages']
+  controller: ['api', 'model', 'controller'],
+  components: ['api', 'model', 'components'],
+  pages: ['api', 'model', 'controller', 'components', 'pages']
 };
 const importPattern = /(?:from\s+|import\s*\()\s*['"]([^'"]+)['"]/g;
 const productionSources = import.meta.glob('./**/*.{ts,tsx}', {
@@ -44,7 +43,9 @@ const productionSources = import.meta.glob('./**/*.{ts,tsx}', {
 describe('Monitor feature boundaries', () => {
   it('keeps production source in explicit feature-local layers', () => {
     const paths = Object.keys(productionSources).filter(path => !path.includes('.test.'));
-    expect(requiredDirectories.filter(directory => !paths.some(path => path.startsWith(`./${directory}/`)))).toEqual([]);
+    expect(requiredDirectories.filter(directory => !paths.some(path => path.startsWith(`./${directory}/`)))).toEqual(
+      []
+    );
     expect(paths.filter(path => /^\.\/[^/]+$/.test(path) && path !== './index.ts')).toEqual([]);
   });
 
@@ -75,28 +76,33 @@ describe('Monitor feature boundaries', () => {
 });
 
 function sourceLineCount(value: string) {
-  return value.replace(/\/\*[\s\S]*?\*\//g, '').split('\n')
+  return value
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .split('\n')
     .filter(line => line.trim() && !line.trim().startsWith('//')).length;
 }
 
 function validateImports(path: string, source: string) {
   const sourceDirectory = path.split('/')[1] as (typeof layerDirectories)[number];
   if (!layerDirectories.includes(sourceDirectory)) return [];
-  const directTransport = sourceDirectory !== 'api'
-    && /\b(?:fetch|apiFetch|apiMessage(?:Get|Post|Put|Delete))\s*\(/.test(source);
+  const directTransport =
+    sourceDirectory !== 'api' && /\b(?:fetch|apiFetch|apiMessage(?:Get|Post|Put|Delete))\s*\(/.test(source);
   const violations = directTransport ? [`${path} performs transport outside api`] : [];
-  return violations.concat([...source.matchAll(importPattern)].flatMap(match => {
-    const specifier = match[1];
-    if (!specifier) return [];
-    if (specifier.startsWith('@/core/http/')) return sourceDirectory === 'api' ? [] : [`${path} imports core transport`];
-    if (!specifier.startsWith('.')) return [];
-    const target = resolveFeaturePath(path, specifier);
-    const targetDirectory = target.split('/')[1];
-    if (!target.startsWith('./') || !targetDirectory) return [`${path} imports outside the feature`];
-    return allowedDependencies[sourceDirectory].includes(targetDirectory)
-      ? []
-      : [`${path} imports ${targetDirectory}`];
-  }));
+  return violations.concat(
+    [...source.matchAll(importPattern)].flatMap(match => {
+      const specifier = match[1];
+      if (!specifier) return [];
+      if (specifier.startsWith('@/core/http/'))
+        return sourceDirectory === 'api' ? [] : [`${path} imports core transport`];
+      if (!specifier.startsWith('.')) return [];
+      const target = resolveFeaturePath(path, specifier);
+      const targetDirectory = target.split('/')[1];
+      if (!target.startsWith('./') || !targetDirectory) return [`${path} imports outside the feature`];
+      return allowedDependencies[sourceDirectory].includes(targetDirectory)
+        ? []
+        : [`${path} imports ${targetDirectory}`];
+    })
+  );
 }
 
 function resolveFeaturePath(sourcePath: string, specifier: string) {
