@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+import { useQuery, useQueryClient, type QueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { App } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -25,10 +25,14 @@ import {
   loadEmailServerConfig,
   loadSmsServerConfig,
   saveEmailServerConfig,
-  saveSmsServerConfig,
-  type EmailServerConfig,
-  type SmsServerConfig
+  saveSmsServerConfig
 } from '../api/message-server-api';
+import {
+  type EmailServerConfig,
+  type EmailServerEvidence,
+  type SmsServerConfig,
+  type SmsServerEvidence
+} from '../model/message-server-contract';
 import {
   buildEmailServerPayload,
   buildSmsServerPayload,
@@ -40,7 +44,12 @@ import {
   type EmailServerDraft,
   type SmsServerDraft
 } from '../model/message-server-model';
+import { emailServerSaveConverged, smsServerSaveConverged } from '../model/message-server-convergence';
 import { messageServerQueryKeys } from './message-server-query-keys';
+import {
+  useMessageServerSaveTransaction,
+  type MessageServerSaveNotifications
+} from './use-message-server-save-transaction';
 
 export type MessageServerChannelState<T> =
   | { kind: 'loading' }
@@ -54,91 +63,118 @@ export function useMessageServerController() {
   const { t } = useTranslation();
   const { message } = App.useApp();
   const queryClient = useQueryClient();
-  const emailQuery = useQuery({ queryKey: messageServerQueryKeys.email(),
-    queryFn: ({ signal }) => loadEmailServerConfig(signal), retry: false });
-  const smsQuery = useQuery({ queryKey: messageServerQueryKeys.sms(),
-    queryFn: ({ signal }) => loadSmsServerConfig(signal), retry: false });
-  const [emailDraft, setEmailDraft] = useState<EmailServerDraft | null>(null);
-  const [smsDraft, setSmsDraft] = useState<SmsServerDraft | null>(null);
-
-  const emailMutation = useMutation({
-    mutationFn: async (draft: EmailServerDraft) => {
-      await saveEmailServerConfig(buildEmailServerPayload(draft));
-      const proof = await emailQuery.refetch();
-      if (proof.error) throw new AuthoritativeReadError(proof.error);
-      if (!proof.data || proof.data.status !== 'configured') throw new AuthoritativeReadError(undefined, true);
-      return proof.data;
-    },
-    onSuccess: evidence => {
-      queryClient.setQueryData(messageServerQueryKeys.email(), evidence);
-      setEmailDraft(null);
-      void message.success(t('messageServer.saveSuccess'));
-    },
-    onError: error => void message.error(t(mutationErrorKey(error)))
+  const emailQuery = useQuery({
+    queryKey: messageServerQueryKeys.email(),
+    queryFn: ({ signal }) => loadEmailServerConfig(signal),
+    retry: false
   });
-  const smsMutation = useMutation({
-    mutationFn: async (draft: SmsServerDraft) => {
-      await saveSmsServerConfig(buildSmsServerPayload(draft));
-      const proof = await smsQuery.refetch();
-      if (proof.error) throw new AuthoritativeReadError(proof.error);
-      if (!proof.data || proof.data.status !== 'configured') throw new AuthoritativeReadError(undefined, true);
-      return proof.data;
-    },
-    onSuccess: evidence => {
-      queryClient.setQueryData(messageServerQueryKeys.sms(), evidence);
-      setSmsDraft(null);
-      void message.success(t('messageServer.saveSuccess'));
-    },
-    onError: error => void message.error(t(mutationErrorKey(error)))
+  const smsQuery = useQuery({
+    queryKey: messageServerQueryKeys.sms(),
+    queryFn: ({ signal }) => loadSmsServerConfig(signal),
+    retry: false
   });
-
-  const submitEmail = async () => {
-    if (!emailDraft || validateEmailServerDraft(emailDraft).length > 0) {
-      void message.warning(t('messageServer.validation'));
-      return;
-    }
-    try {
-      await emailMutation.mutateAsync(emailDraft);
-    } catch {
-      // The mutation boundary owns the localized failure notification.
-    }
+  const notifications: MessageServerSaveNotifications = {
+    invalid: () => void message.warning(t('messageServer.validation')),
+    success: () => void message.success(t('messageServer.saveSuccess')),
+    failure: key => void message.error(t(key))
   };
-  const submitSms = async () => {
-    if (!smsDraft || validateSmsServerDraft(smsDraft).length > 0) {
-      void message.warning(t('messageServer.validation'));
-      return;
-    }
-    try {
-      await smsMutation.mutateAsync(smsDraft);
-    } catch {
-      // The mutation boundary owns the localized failure notification.
-    }
-  };
+  const email = useEmailServerChannel(emailQuery, queryClient, notifications);
+  const sms = useSmsServerChannel(smsQuery, queryClient, notifications);
 
   return {
     email: channelState<EmailServerConfig>(emailQuery),
     sms: channelState<SmsServerConfig>(smsQuery),
-    emailDraft,
-    smsDraft,
-    savingEmail: emailMutation.isPending,
-    savingSms: smsMutation.isPending,
+    emailDraft: email.draft,
+    smsDraft: sms.draft,
+    savingEmail: email.saving,
+    savingSms: sms.saving,
     actions: {
-      openEmail: () => emailQuery.data && setEmailDraft(createEmailServerDraft(emailQuery.data)),
-      openSms: () => smsQuery.data && setSmsDraft(createSmsServerDraft(smsQuery.data)),
-      closeEmail: () => setEmailDraft(null),
-      closeSms: () => setSmsDraft(null),
-      updateEmail: (patch: Partial<EmailServerDraft>) => setEmailDraft(current => current ? {
-        ...current,
-        ...patch,
-        ...(patch.emailPassword?.trim() ? { clearSecrets: [] } : {})
-      } : null),
-      setEmailSecretCleared: (cleared: boolean) => setEmailDraft(current => current
-        ? setEmailSecretCleared(current, cleared) : null),
-      replaceSms: setSmsDraft,
+      ...email.actions,
+      ...sms.actions,
       retryEmail: () => void emailQuery.refetch(),
-      retrySms: () => void smsQuery.refetch(),
-      submitEmail,
-      submitSms
+      retrySms: () => void smsQuery.refetch()
+    }
+  };
+}
+
+function useEmailServerChannel(
+  query: UseQueryResult<EmailServerEvidence>,
+  queryClient: QueryClient,
+  notifications: MessageServerSaveNotifications
+) {
+  const [draft, setDraft] = useState<EmailServerDraft | null>(null);
+  const transaction = useMessageServerSaveTransaction({
+    draft,
+    validate: validateEmailServerDraft,
+    write: value => saveEmailServerConfig(buildEmailServerPayload(value)),
+    reread: query.refetch,
+    converged: emailServerSaveConverged,
+    close: () => setDraft(null),
+    accept: evidence => {
+      queryClient.setQueryData(messageServerQueryKeys.email(), evidence);
+      setDraft(null);
+    },
+    notifications
+  });
+  return {
+    draft,
+    saving: transaction.saving,
+    actions: {
+      openEmail: () => {
+        if (!transaction.isLocked() && query.data) setDraft(createEmailServerDraft(query.data));
+      },
+      closeEmail: transaction.close,
+      updateEmail: (patch: Partial<EmailServerDraft>) => {
+        if (transaction.isLocked()) return;
+        setDraft(current =>
+          current
+            ? {
+                ...current,
+                ...patch,
+                ...(patch.emailPassword?.trim() ? { clearSecrets: [] } : {})
+              }
+            : null
+        );
+      },
+      setEmailSecretCleared: (cleared: boolean) => {
+        if (!transaction.isLocked()) setDraft(current => (current ? setEmailSecretCleared(current, cleared) : null));
+      },
+      submitEmail: transaction.submit
+    }
+  };
+}
+
+function useSmsServerChannel(
+  query: UseQueryResult<SmsServerEvidence>,
+  queryClient: QueryClient,
+  notifications: MessageServerSaveNotifications
+) {
+  const [draft, setDraft] = useState<SmsServerDraft | null>(null);
+  const transaction = useMessageServerSaveTransaction({
+    draft,
+    validate: validateSmsServerDraft,
+    write: value => saveSmsServerConfig(buildSmsServerPayload(value)),
+    reread: query.refetch,
+    converged: smsServerSaveConverged,
+    close: () => setDraft(null),
+    accept: evidence => {
+      queryClient.setQueryData(messageServerQueryKeys.sms(), evidence);
+      setDraft(null);
+    },
+    notifications
+  });
+  return {
+    draft,
+    saving: transaction.saving,
+    actions: {
+      openSms: () => {
+        if (!transaction.isLocked() && query.data) setDraft(createSmsServerDraft(query.data));
+      },
+      closeSms: transaction.close,
+      replaceSms: (value: SmsServerDraft | null) => {
+        if (!transaction.isLocked()) setDraft(value);
+      },
+      submitSms: transaction.submit
     }
   };
 }
@@ -148,24 +184,6 @@ function channelState<T>(
 ): MessageServerChannelState<T> {
   if (query.isPending) return { kind: 'loading' };
   if (query.error) return { kind: classifyMessageServerReadError(query.error) };
-  return query.data.status === 'configured' ? { kind: 'configured', config: query.data.config }
-    : { kind: 'missing' };
-}
-
-class AuthoritativeReadError extends Error {
-  readonly reason: unknown;
-  readonly missing: boolean;
-
-  constructor(reason: unknown, missing = false) {
-    super('Authoritative message server reread failed');
-    this.name = 'AuthoritativeReadError';
-    this.reason = reason;
-    this.missing = missing;
-  }
-}
-
-function mutationErrorKey(error: unknown) {
-  if (!(error instanceof AuthoritativeReadError)) return 'messageServer.saveFailed';
-  if (error.missing) return 'messageServer.saveNotConverged';
-  return `messageServer.read.${classifyMessageServerReadError(error.reason)}`;
+  if (!query.data) return { kind: 'error' };
+  return query.data.status === 'configured' ? { kind: 'configured', config: query.data.config } : { kind: 'missing' };
 }

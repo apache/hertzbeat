@@ -87,12 +87,6 @@
     },
     {
       "rule": "function-size",
-      "path": "features/settings/message-server/controller/use-message-server-controller.ts",
-      "identity": "function:useMessageServerController",
-      "allowedMax": 87
-    },
-    {
-      "rule": "function-size",
       "path": "features/settings/object-store/controller/object-store-resource-controller.ts",
       "identity": "function:useObjectStoreResourceController",
       "allowedMax": 76
