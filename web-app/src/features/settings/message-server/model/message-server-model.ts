@@ -20,13 +20,21 @@ import {
   type EmailSecret,
   type EmailServerEvidence,
   type EmailServerPayload,
-  type SmsProviderType,
-  type SmsSecret,
   type SmsServerEvidence,
   type SmsServerPayload
 } from './message-server-contract';
+import { activeSmsProviderValues, type SmsServerDraft } from './sms-provider-draft';
 
 export type { EmailSecret, SmsProviderType, SmsSecret } from './message-server-contract';
+export {
+  activeSmsProviderValues,
+  selectSmsProvider,
+  setSmsSecretCleared,
+  smsProviderDefinition,
+  smsProviderDefinitions,
+  updateSmsProviderField,
+  type SmsServerDraft
+} from './sms-provider-draft';
 
 export type EmailServerDraft = Omit<EmailServerPayload, 'emailPassword' | 'clearSecrets'> & {
   emailPassword: string;
@@ -34,43 +42,19 @@ export type EmailServerDraft = Omit<EmailServerPayload, 'emailPassword' | 'clear
   clearSecrets: EmailSecret[];
 };
 
-type TencentDraft = { secretId: string; secretKey: string; appId: string; signName: string; templateId: string };
-type AlibabaDraft = { accessKeyId: string; accessKeySecret: string; signName: string; templateCode: string };
-type UnismsDraft = { accessKeyId: string; accessKeySecret: string; signature: string; templateId: string;
-  authMode: 'simple' | 'hmac' };
-type SmslocalDraft = { apiKey: string };
-type AwsDraft = { accessKeyId: string; accessKeySecret: string; region: string };
-type TwilioDraft = { accountSid: string; authToken: string; twilioPhoneNumber: string };
-
-export type SmsServerDraft = {
-  enable: boolean;
-  type: SmsProviderType;
-  configuredSecrets: SmsSecret[];
-  clearSecrets: SmsSecret[];
-  tencent: TencentDraft;
-  alibaba: AlibabaDraft;
-  unisms: UnismsDraft;
-  smslocal: SmslocalDraft;
-  aws: AwsDraft;
-  twilio: TwilioDraft;
-};
-
-type SmsProviderFieldDefinition = { key: string; labelKey: string; secret: boolean; kind?: 'text' | 'authMode' };
-type SmsProviderDefinition = { type: SmsProviderType; labelKey: string; fields: SmsProviderFieldDefinition[] };
-
-export const smsProviderDefinitions: SmsProviderDefinition[] = Object.entries(smsProviderFieldContracts)
-  .map(([type, fields]) => ({
-    type: type as SmsProviderType,
-    labelKey: `messageServer.sms.providers.${type}`,
-    fields: fields.map(item => ({ ...item, kind: item.kind ?? 'text',
-      labelKey: `messageServer.sms.fields.${item.key}` }))
-  }));
-
 export function createEmailServerDraft(evidence?: EmailServerEvidence): EmailServerDraft {
   if (!evidence || evidence.status === 'missing') {
     return {
-      type: 0, emailHost: '', emailPort: 465, emailUsername: '', emailPassword: '', emailSsl: true,
-      emailStarttls: false, enable: false, configuredSecrets: [], clearSecrets: []
+      type: 0,
+      emailHost: '',
+      emailPort: 465,
+      emailUsername: '',
+      emailPassword: '',
+      emailSsl: true,
+      emailStarttls: false,
+      enable: false,
+      configuredSecrets: [],
+      clearSecrets: []
     };
   }
   const config = evidence.config;
@@ -124,16 +108,20 @@ export function buildEmailServerPayload(draft: EmailServerDraft): EmailServerPay
 
 export function buildSmsServerPayload(draft: SmsServerDraft): SmsServerPayload {
   const fields = smsProviderFieldContracts[draft.type];
-  const values = draft[draft.type] as unknown as Record<string, string>;
-  const options = Object.fromEntries(fields.flatMap(field => {
-    if (skipUniSmsSecret(draft, field.key)) return [];
-    const value = String(values[field.key] ?? '').trim();
-    return field.secret && !value ? [] : [[field.key, value]];
-  }));
-  const replacedSecrets = fields.filter(field => field.secret && String(values[field.key] ?? '').trim())
+  const values = activeSmsProviderValues(draft);
+  const options = Object.fromEntries(
+    fields.flatMap(field => {
+      if (skipUniSmsSecret(draft, field.key)) return [];
+      const value = String(values[field.key] ?? '').trim();
+      return field.secret && !value ? [] : [[field.key, value]];
+    })
+  );
+  const replacedSecrets = fields
+    .filter(field => field.secret && String(values[field.key] ?? '').trim())
     .map(field => field.key);
-  const clearSecrets = draft.clearSecrets.filter(key => fields.some(field => field.secret && field.key === key)
-    && !replacedSecrets.includes(key));
+  const clearSecrets = draft.clearSecrets.filter(
+    key => fields.some(field => field.secret && field.key === key) && !replacedSecrets.includes(key)
+  );
   return {
     enable: draft.enable,
     type: draft.type,
@@ -147,8 +135,10 @@ export function validateEmailServerDraft(draft: EmailServerDraft) {
   const username = draft.emailUsername.trim();
   if (!draft.emailHost.trim()) invalid.push('emailHost');
   if (!username || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username)) invalid.push('emailUsername');
-  if (!emailSecretSatisfied(draft)
-    || draft.enable && draft.clearSecrets.includes('emailPassword') && !draft.emailPassword.trim()) {
+  if (
+    !emailSecretSatisfied(draft) ||
+    (draft.enable && draft.clearSecrets.includes('emailPassword') && !draft.emailPassword.trim())
+  ) {
     invalid.push('emailPassword');
   }
   if (!Number.isInteger(draft.emailPort) || draft.emailPort < 1 || draft.emailPort > 65_535) {
@@ -159,48 +149,41 @@ export function validateEmailServerDraft(draft: EmailServerDraft) {
 
 export function validateSmsServerDraft(draft: SmsServerDraft) {
   const fields = smsProviderFieldContracts[draft.type];
-  const values = draft[draft.type] as unknown as Record<string, string>;
-  return fields.filter(field => !skipUniSmsSecret(draft, field.key)).filter(field => {
-    const value = String(values[field.key] ?? '').trim();
-    if (!field.secret) return !value;
-    if (draft.enable && draft.clearSecrets.includes(field.key as SmsSecret) && !value) return true;
-    return !value && !draft.configuredSecrets.includes(field.key as SmsSecret)
-      && !draft.clearSecrets.includes(field.key as SmsSecret);
-  }).map(field => field.key);
-}
-
-export function updateSmsProviderField(draft: SmsServerDraft, key: string, value: string): SmsServerDraft {
-  const provider = { ...(draft[draft.type] as unknown as Record<string, string>), [key]: value };
-  const clearSecrets = value.trim() ? draft.clearSecrets.filter(item => item !== key) : draft.clearSecrets;
-  return { ...draft, [draft.type]: provider, clearSecrets };
-}
-
-export function selectSmsProvider(draft: SmsServerDraft, type: SmsProviderType): SmsServerDraft {
-  if (type === draft.type) return draft;
-  return { ...draft, type, configuredSecrets: [], clearSecrets: [] };
+  const values = activeSmsProviderValues(draft);
+  return fields
+    .filter(field => !skipUniSmsSecret(draft, field.key))
+    .filter(field => {
+      const value = String(values[field.key] ?? '').trim();
+      if (!field.secret) return !value;
+      if (draft.enable && field.secret && draft.clearSecrets.includes(field.key) && !value) return true;
+      return (
+        !value &&
+        (!field.secret || !draft.configuredSecrets.includes(field.key)) &&
+        (!field.secret || !draft.clearSecrets.includes(field.key))
+      );
+    })
+    .map(field => field.key);
 }
 
 export function setEmailSecretCleared(draft: EmailServerDraft, cleared: boolean): EmailServerDraft {
-  return { ...draft, emailPassword: cleared ? '' : draft.emailPassword,
-    clearSecrets: cleared ? ['emailPassword'] : [] };
-}
-
-export function setSmsSecretCleared(draft: SmsServerDraft, secret: SmsSecret, cleared: boolean): SmsServerDraft {
-  const values = draft[draft.type] as unknown as Record<string, string>;
-  const provider = cleared ? { ...values, [secret]: '' } : values;
-  return { ...draft, [draft.type]: provider,
-    clearSecrets: cleared ? [...new Set([...draft.clearSecrets, secret])]
-      : draft.clearSecrets.filter(item => item !== secret) };
+  return {
+    ...draft,
+    emailPassword: cleared ? '' : draft.emailPassword,
+    clearSecrets: cleared ? ['emailPassword'] : []
+  };
 }
 
 export function messageServerStatus(enable: boolean, invalidFields: string[]) {
   if (invalidFields.length > 0) return 'unconfigured' as const;
-  return enable ? 'enabled' as const : 'disabled' as const;
+  return enable ? ('enabled' as const) : ('disabled' as const);
 }
 
 function emailSecretSatisfied(draft: EmailServerDraft) {
-  return Boolean(draft.emailPassword.trim()) || draft.configuredSecrets.includes('emailPassword')
-    || draft.clearSecrets.includes('emailPassword');
+  return (
+    Boolean(draft.emailPassword.trim()) ||
+    draft.configuredSecrets.includes('emailPassword') ||
+    draft.clearSecrets.includes('emailPassword')
+  );
 }
 
 function skipUniSmsSecret(draft: SmsServerDraft, key: string) {

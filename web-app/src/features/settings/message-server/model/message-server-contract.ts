@@ -6,14 +6,13 @@
  */
 
 export type EmailSecret = 'emailPassword';
-export type SmsProviderType = 'tencent' | 'alibaba' | 'unisms' | 'smslocal' | 'aws' | 'twilio';
-export type SmsSecret = 'secretId' | 'secretKey' | 'accessKeySecret' | 'apiKey' | 'authToken';
+export const smsProviderTypes = ['tencent', 'alibaba', 'unisms', 'smslocal', 'aws', 'twilio'] as const;
+export type SmsProviderType = (typeof smsProviderTypes)[number];
+export const smsSecrets = ['secretId', 'secretKey', 'accessKeySecret', 'apiKey', 'authToken'] as const;
+export type SmsSecret = (typeof smsSecrets)[number];
 
-export type SmsProviderFieldContract = {
-  key: string;
-  secret: boolean;
-  kind?: 'authMode';
-};
+export type SmsProviderFieldContract =
+  { key: SmsSecret; secret: true; kind?: never } | { key: string; secret: false; kind?: 'authMode' };
 
 export type EmailServerConfig = {
   type: number;
@@ -43,18 +42,20 @@ export type SmsServerPayload = Omit<SmsServerConfig, 'configuredSecrets'> & {
 };
 
 export type EmailServerEvidence =
-  | { status: 'configured'; config: EmailServerConfig }
-  | { status: 'missing'; config: null };
-export type SmsServerEvidence =
-  | { status: 'configured'; config: SmsServerConfig }
-  | { status: 'missing'; config: null };
+  { status: 'configured'; config: EmailServerConfig } | { status: 'missing'; config: null };
+export type SmsServerEvidence = { status: 'configured'; config: SmsServerConfig } | { status: 'missing'; config: null };
 export type MessageServerReadFailure = 'unavailable' | 'error' | 'invalid';
 
 export const smsProviderFieldContracts: Record<SmsProviderType, readonly SmsProviderFieldContract[]> = {
   tencent: [secret('secretId'), secret('secretKey'), field('appId'), field('signName'), field('templateId')],
   alibaba: [field('accessKeyId'), secret('accessKeySecret'), field('signName'), field('templateCode')],
-  unisms: [field('accessKeyId'), field('authMode', 'authMode'), secret('accessKeySecret'), field('signature'),
-    field('templateId')],
+  unisms: [
+    field('accessKeyId'),
+    field('authMode', 'authMode'),
+    secret('accessKeySecret'),
+    field('signature'),
+    field('templateId')
+  ],
   smslocal: [secret('apiKey')],
   aws: [field('accessKeyId'), secret('accessKeySecret'), field('region')],
   twilio: [field('accountSid'), secret('authToken'), field('twilioPhoneNumber')]

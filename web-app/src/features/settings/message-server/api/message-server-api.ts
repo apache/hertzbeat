@@ -50,14 +50,14 @@ export type {
 export { MessageServerContractError } from './message-server-schema';
 
 export async function loadEmailServerConfig(signal?: AbortSignal) {
-  const value = signal ? await apiMessageGet('/api/config/email', { signal })
+  const value = signal
+    ? await apiMessageGet('/api/config/email', { signal })
     : await apiMessageGet('/api/config/email');
   return parseEmailEvidenceWire(value);
 }
 
 export async function loadSmsServerConfig(signal?: AbortSignal) {
-  const value = signal ? await apiMessageGet('/api/config/sms', { signal })
-    : await apiMessageGet('/api/config/sms');
+  const value = signal ? await apiMessageGet('/api/config/sms', { signal }) : await apiMessageGet('/api/config/sms');
   return mapSmsEvidence(parseSmsEvidenceWire(value));
 }
 
@@ -118,10 +118,7 @@ function mapSmsOption(field: SmsProviderFieldContract, value: unknown): string {
   return value;
 }
 
-function mapSmsSecrets(
-  secrets: string[],
-  fields: readonly SmsProviderFieldContract[]
-): SmsSecret[] {
+function mapSmsSecrets(secrets: SmsSecret[], fields: readonly SmsProviderFieldContract[]): SmsSecret[] {
   // Only secret names are returned; secret values are write-only and must never
   // be reconstructed or cached from read evidence.
   const allowedSecrets = new Set(fields.filter(field => field.secret).map(field => field.key));
@@ -129,6 +126,6 @@ function mapSmsSecrets(
     if (!allowedSecrets.has(secret)) {
       throw new MessageServerContractError('Configured SMS secrets do not match the selected provider');
     }
-    return secret as SmsSecret;
+    return secret;
   });
 }

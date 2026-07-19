@@ -118,6 +118,15 @@ function validateSource(path, sourceRoot, failures) {
       `${normalizedPath}: core auth contracts must use runtime schemas instead of primitive parser helpers`
     );
   }
+
+  if (!isTest(path) && /(?:^|\/)[^/]+-data-provider\.tsx?$/.test(normalizedPath)) {
+    if (/\bas\s+(?:unknown\s+as\s+)?TData\b/.test(source)) {
+      failures.push(`${normalizedPath}: Refine data providers must use the shared generic adapter boundary`);
+    }
+    if (/\bfunction\s+exposeProviderData\s*</.test(source)) {
+      failures.push(`${normalizedPath}: Refine data providers cannot declare local generic adapter helpers`);
+    }
+  }
 }
 
 function validateSourceFileName(path, normalizedPath, failures) {

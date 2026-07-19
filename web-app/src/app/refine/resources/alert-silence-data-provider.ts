@@ -36,10 +36,8 @@ import {
   saveAlertSilence,
   updateAlertSilenceEnabled
 } from '@/features/alert/alert-silence-api';
-import {
-  AlertSilenceContractError,
-  type AlertSilence
-} from '@/features/alert/alert-silence-model';
+import { AlertSilenceContractError, type AlertSilence } from '@/features/alert/alert-silence-model';
+import { exposeRefineProviderData } from '@/shared/refine/refine-provider-data';
 
 import { createRefineHttpError, toRefineHttpError } from '../refine-http-error';
 import {
@@ -59,7 +57,7 @@ export const alertSilenceDataProvider: DataProvider = {
       assertResource(params.resource);
       const query = readAlertSilenceListQuery(params);
       const page = await loadAlertSilences(query);
-      return { data: exposeProviderData<TData[]>(page.content), total: page.totalElements };
+      return { data: exposeRefineProviderData<TData[]>(page.content), total: page.totalElements };
     });
   },
 
@@ -72,7 +70,7 @@ export const alertSilenceDataProvider: DataProvider = {
       const id = readAlertSilenceId(params.id);
       const record = await loadAlertSilence(id);
       assertCanonicalIdentity(record, id);
-      return { data: exposeProviderData<TData>(record) };
+      return { data: exposeRefineProviderData<TData>(record) };
     });
   },
 
@@ -99,7 +97,7 @@ export const alertSilenceDataProvider: DataProvider = {
       const canonical = await loadAlertSilence(id);
       assertCanonicalIdentity(canonical, id);
       await loadAlertSilences(variables.query);
-      return { data: exposeProviderData<TData>(canonical) };
+      return { data: exposeRefineProviderData<TData>(canonical) };
     });
   },
 
@@ -125,7 +123,7 @@ export const alertSilenceDataProvider: DataProvider = {
       if (proof.content.some(item => item.id === id)) {
         throw contractError('ALERT_SILENCE_DELETE_NOT_CONFIRMED');
       }
-      return { data: exposeProviderData<TData>(canonical) };
+      return { data: exposeRefineProviderData<TData>(canonical) };
     });
   },
 
@@ -138,7 +136,7 @@ export const alertSilenceDataProvider: DataProvider = {
       }
       const draft = readAlertSilenceDraft(params.payload);
       await saveAlertSilence(draft);
-      return { data: exposeProviderData<TData>({ acknowledged: true }) };
+      return { data: exposeRefineProviderData<TData>({ acknowledged: true }) };
     });
   },
 
@@ -156,8 +154,11 @@ async function protect<T>(operation: () => Promise<T>): Promise<T> {
     if (isUnavailable(reason)) {
       const status = reason.status ?? 0;
       throw createRefineHttpError(
-        'Alert Silence is unavailable', status, 'ALERT_SILENCE_UNAVAILABLE',
-        status === 0 ? 'network' : 'http', reason.status
+        'Alert Silence is unavailable',
+        status,
+        'ALERT_SILENCE_UNAVAILABLE',
+        status === 0 ? 'network' : 'http',
+        reason.status
       );
     }
     throw toRefineHttpError(reason);
@@ -178,15 +179,9 @@ function isUnavailable(reason: unknown): reason is { status?: number } {
   if (!reason || typeof reason !== 'object') return false;
   const status = 'status' in reason ? reason.status : undefined;
   const cause = 'cause' in reason ? reason.cause : undefined;
-  return status === 502 || status === 503 || status === 504 || status === undefined && cause !== undefined;
+  return status === 502 || status === 503 || status === 504 || (status === undefined && cause !== undefined);
 }
 
 function contractError(code: string, status = 502) {
   return createRefineHttpError('Alert Silence contract failed', status, code);
-}
-
-function exposeProviderData<TData>(value: unknown): TData {
-  // Refine lets each caller select TData, so this unavoidable adapter cast is
-  // kept at the single boundary where domain records enter its generic API.
-  return value as TData;
 }

@@ -15,48 +15,34 @@
  * limitations under the License.
  */
 
-.form {
+.channelRow {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  grid-template-columns: minmax(260px, 1fr) minmax(240px, 0.7fr) auto;
+  align-items: center;
+  gap: 24px;
+  padding: 20px 4px;
 }
-.field {
-  display: grid;
-  gap: 7px;
-  color: var(--ant-color-text-secondary);
-  font-size: 13px;
+.channelRow + .channelRow {
+  border-top: 1px solid var(--ant-color-border-secondary);
 }
-.field > label {
-  display: grid;
-  gap: 7px;
+.channelRow :global(.ant-typography) {
+  margin: 0;
 }
-.field :global(.ant-input-number),
-.field :global(.ant-select) {
-  width: 100%;
-}
-.switchField {
+.summary {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  color: var(--ant-color-text-secondary);
-  font-size: 13px;
+  gap: 10px;
+  min-width: 0;
 }
-.wide {
-  grid-column: 1 / -1;
+.channelError {
+  min-width: 0;
 }
-.secretControls {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: -4px;
-}
-@media (max-width: 700px) {
-  .form {
+@media (max-width: 800px) {
+  .channelRow {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
-  .wide {
-    grid-column: auto;
+  .channelRow > :global(.ant-btn) {
+    justify-self: start;
   }
 }

@@ -7,37 +7,44 @@
 
 import { z } from 'zod';
 
+import { smsSecrets } from '../model/message-server-contract';
+
 const nonemptyTextSchema = z.string().refine(value => Boolean(value.trim()), 'Expected nonempty text');
-const uniqueStringsSchema = z.array(z.string())
-  .refine(values => new Set(values).size === values.length, 'Expected unique values');
 
 // These objects are strict because read responses must contain configuration
 // metadata only. A password echoed by the backend is a contract violation.
-const emailConfigSchema = z.object({
-  type: z.number().int(),
-  emailHost: nonemptyTextSchema,
-  emailUsername: nonemptyTextSchema,
-  emailPort: z.number().int().min(1).max(65_535),
-  emailSsl: z.boolean(),
-  emailStarttls: z.boolean(),
-  enable: z.boolean(),
-  configuredSecrets: z.array(z.literal('emailPassword'))
-    .refine(values => new Set(values).size === values.length, 'Expected unique values')
-}).strict();
+const emailConfigSchema = z
+  .object({
+    type: z.number().int(),
+    emailHost: nonemptyTextSchema,
+    emailUsername: nonemptyTextSchema,
+    emailPort: z.number().int().min(1).max(65_535),
+    emailSsl: z.boolean(),
+    emailStarttls: z.boolean(),
+    enable: z.boolean(),
+    configuredSecrets: z
+      .array(z.literal('emailPassword'))
+      .refine(values => new Set(values).size === values.length, 'Expected unique values')
+  })
+  .strict();
 
 const emailEvidenceSchema = z.discriminatedUnion('status', [
   z.object({ status: z.literal('configured'), config: emailConfigSchema }).strict(),
   z.object({ status: z.literal('missing'), config: z.null() }).strict()
 ]);
 
-const smsConfigSchema = z.object({
-  enable: z.boolean(),
-  type: z.enum(['tencent', 'alibaba', 'unisms', 'smslocal', 'aws', 'twilio']),
-  // Provider-specific option keys are validated after the provider is known.
-  // Keeping values unknown here avoids pretending every provider has one shape.
-  options: z.record(z.string(), z.unknown()),
-  configuredSecrets: uniqueStringsSchema
-}).strict();
+const smsConfigSchema = z
+  .object({
+    enable: z.boolean(),
+    type: z.enum(['tencent', 'alibaba', 'unisms', 'smslocal', 'aws', 'twilio']),
+    // Provider-specific option keys are validated after the provider is known.
+    // Keeping values unknown here avoids pretending every provider has one shape.
+    options: z.record(z.string(), z.unknown()),
+    configuredSecrets: z
+      .array(z.enum(smsSecrets))
+      .refine(values => new Set(values).size === values.length, 'Expected unique values')
+  })
+  .strict();
 
 const smsEvidenceSchema = z.discriminatedUnion('status', [
   z.object({ status: z.literal('configured'), config: smsConfigSchema }).strict(),

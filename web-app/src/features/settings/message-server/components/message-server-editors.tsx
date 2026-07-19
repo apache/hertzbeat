@@ -19,12 +19,13 @@ import { Checkbox, Input, Modal, Select, Switch, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import {
+  activeSmsProviderValues,
   selectSmsProvider,
   setSmsSecretCleared,
+  smsProviderDefinition,
   smsProviderDefinitions,
   updateSmsProviderField,
   type SmsProviderType,
-  type SmsSecret,
   type SmsServerDraft
 } from '../model/message-server-model';
 import styles from './message-server-editors.module.css';
@@ -33,12 +34,12 @@ export { EmailServerEditor } from './email-server-editor';
 
 function SmsProviderFields({ draft, replace }: { draft: SmsServerDraft; replace: (draft: SmsServerDraft) => void }) {
   const { t } = useTranslation();
-  const definition = smsProviderDefinitions.find(item => item.type === draft.type)!;
-  const values = draft[draft.type] as unknown as Record<string, string>;
+  const definition = smsProviderDefinition(draft.type);
+  const values = activeSmsProviderValues(draft);
   return definition.fields.map(field => {
     if (draft.type === 'unisms' && field.key === 'accessKeySecret' && draft.unisms.authMode !== 'hmac') return null;
-    const configured = field.secret && draft.configuredSecrets.includes(field.key as SmsSecret);
-    const cleared = field.secret && draft.clearSecrets.includes(field.key as SmsSecret);
+    const configured = field.secret && draft.configuredSecrets.includes(field.key);
+    const cleared = field.secret && draft.clearSecrets.includes(field.key);
     return (
       <div className={styles.field} key={field.key}>
         <label>
@@ -76,7 +77,7 @@ function SmsProviderFields({ draft, replace }: { draft: SmsServerDraft; replace:
             <Typography.Text type="secondary">{t('messageServer.secret.configured')}</Typography.Text>
             <Checkbox
               checked={cleared}
-              onChange={event => replace(setSmsSecretCleared(draft, field.key as SmsSecret, event.target.checked))}
+              onChange={event => replace(setSmsSecretCleared(draft, field.key, event.target.checked))}
             >
               {t('messageServer.secret.clearSaved')}
             </Checkbox>

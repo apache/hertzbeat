@@ -7,28 +7,26 @@
 
 import { describe, expect, it } from 'vitest';
 
-import {
-  MessageServerContractError,
-  parseEmailEvidenceWire,
-  parseSmsEvidenceWire
-} from './message-server-schema';
+import { MessageServerContractError, parseEmailEvidenceWire, parseSmsEvidenceWire } from './message-server-schema';
 
 describe('message server wire schemas', () => {
   it('parses exact configured and missing email evidence', () => {
     expect(parseEmailEvidenceWire({ status: 'missing', config: null })).toEqual({ status: 'missing', config: null });
-    expect(parseEmailEvidenceWire({
-      status: 'configured',
-      config: {
-        type: 0,
-        emailHost: 'smtp.example.test',
-        emailUsername: 'ops@example.test',
-        emailPort: 587,
-        emailSsl: false,
-        emailStarttls: true,
-        enable: true,
-        configuredSecrets: ['emailPassword']
-      }
-    })).toMatchObject({ status: 'configured', config: { emailPort: 587 } });
+    expect(
+      parseEmailEvidenceWire({
+        status: 'configured',
+        config: {
+          type: 0,
+          emailHost: 'smtp.example.test',
+          emailUsername: 'ops@example.test',
+          emailPort: 587,
+          emailSsl: false,
+          emailStarttls: true,
+          enable: true,
+          configuredSecrets: ['emailPassword']
+        }
+      })
+    ).toMatchObject({ status: 'configured', config: { emailPort: 587 } });
   });
 
   it('rejects secret echoes, blank identities, and invalid ports', () => {
@@ -42,27 +40,41 @@ describe('message server wire schemas', () => {
       enable: true,
       configuredSecrets: ['emailPassword']
     };
-    expect(() => parseEmailEvidenceWire({
-      status: 'configured', config: { ...config, emailPassword: 'echoed-secret' }
-    })).toThrow(MessageServerContractError);
-    expect(() => parseEmailEvidenceWire({
-      status: 'configured', config: { ...config, emailHost: '   ' }
-    })).toThrow(MessageServerContractError);
-    expect(() => parseEmailEvidenceWire({
-      status: 'configured', config: { ...config, emailPort: 65_536 }
-    })).toThrow(MessageServerContractError);
+    expect(() =>
+      parseEmailEvidenceWire({
+        status: 'configured',
+        config: { ...config, emailPassword: 'echoed-secret' }
+      })
+    ).toThrow(MessageServerContractError);
+    expect(() =>
+      parseEmailEvidenceWire({
+        status: 'configured',
+        config: { ...config, emailHost: '   ' }
+      })
+    ).toThrow(MessageServerContractError);
+    expect(() =>
+      parseEmailEvidenceWire({
+        status: 'configured',
+        config: { ...config, emailPort: 65_536 }
+      })
+    ).toThrow(MessageServerContractError);
   });
 
   it('validates the SMS envelope before provider-specific mapping', () => {
-    expect(parseSmsEvidenceWire({
-      status: 'configured',
-      config: { enable: true, type: 'twilio', options: {}, configuredSecrets: [] }
-    })).toMatchObject({ status: 'configured', config: { type: 'twilio' } });
-    expect(() => parseSmsEvidenceWire({
-      status: 'configured',
-      config: { enable: true, type: 'unknown', options: {}, configuredSecrets: [] }
-    })).toThrow(MessageServerContractError);
-    expect(() => parseSmsEvidenceWire({ status: 'missing', config: null, token: 'echoed-secret' }))
-      .toThrow(MessageServerContractError);
+    expect(
+      parseSmsEvidenceWire({
+        status: 'configured',
+        config: { enable: true, type: 'twilio', options: {}, configuredSecrets: [] }
+      })
+    ).toMatchObject({ status: 'configured', config: { type: 'twilio' } });
+    expect(() =>
+      parseSmsEvidenceWire({
+        status: 'configured',
+        config: { enable: true, type: 'unknown', options: {}, configuredSecrets: [] }
+      })
+    ).toThrow(MessageServerContractError);
+    expect(() => parseSmsEvidenceWire({ status: 'missing', config: null, token: 'echoed-secret' })).toThrow(
+      MessageServerContractError
+    );
   });
 });

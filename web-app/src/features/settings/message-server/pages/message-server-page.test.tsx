@@ -38,9 +38,22 @@ describe('MessageServerPage', () => {
   });
 
   it('does not present an enabled record with a cleared required secret as healthy', () => {
-    controller.value = state({ kind: 'configured', config: { type: 0, emailHost: 'smtp.example.test',
-      emailUsername: 'ops@example.test', emailPort: 587, emailSsl: false, emailStarttls: true,
-      enable: true, configuredSecrets: [] } }, { kind: 'missing' });
+    controller.value = state(
+      {
+        kind: 'configured',
+        config: {
+          type: 0,
+          emailHost: 'smtp.example.test',
+          emailUsername: 'ops@example.test',
+          emailPort: 587,
+          emailSsl: false,
+          emailStarttls: true,
+          enable: true,
+          configuredSecrets: []
+        }
+      },
+      { kind: 'missing' }
+    );
     render(<MessageServerPage />);
 
     expect(screen.getAllByText('messageServer.status.unconfigured')).toHaveLength(2);
@@ -57,9 +70,17 @@ function state(email: unknown, sms: unknown) {
     savingEmail: false,
     savingSms: false,
     actions: {
-      openEmail: vi.fn(), openSms: vi.fn(), closeEmail: vi.fn(), closeSms: vi.fn(), updateEmail: vi.fn(),
-      setEmailSecretCleared: vi.fn(), replaceSms: vi.fn(), retryEmail: vi.fn(), retrySms: vi.fn(),
-      submitEmail: vi.fn(), submitSms: vi.fn()
+      openEmail: vi.fn(),
+      openSms: vi.fn(),
+      closeEmail: vi.fn(),
+      closeSms: vi.fn(),
+      updateEmail: vi.fn(),
+      setEmailSecretCleared: vi.fn(),
+      replaceSms: vi.fn(),
+      retryEmail: vi.fn(),
+      retrySms: vi.fn(),
+      submitEmail: vi.fn(),
+      submitSms: vi.fn()
     }
   };
 }

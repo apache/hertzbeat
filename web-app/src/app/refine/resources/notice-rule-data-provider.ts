@@ -34,6 +34,7 @@ import {
   type NoticeRuleMutationVariables,
   type NoticeRuleQuery
 } from '@/features/alert/notice-rule/model/notice-rule-model';
+import { exposeRefineProviderData } from '@/shared/refine/refine-provider-data';
 
 import { createRefineHttpError, toRefineHttpError } from '../refine-http-error';
 
@@ -44,7 +45,7 @@ export const noticeRuleDataProvider: DataProvider = {
     return protect(async () => {
       assertResource(params.resource);
       const page = await loadNoticeRules(readListQuery(params));
-      return { data: page.content as unknown as TData[], total: page.totalElements };
+      return { data: exposeRefineProviderData<TData[]>(page.content), total: page.totalElements };
     });
   },
 
@@ -55,7 +56,7 @@ export const noticeRuleDataProvider: DataProvider = {
     return protect(async () => {
       assertResource(params.resource);
       const id = readId(params.id);
-      return { data: (await loadNoticeRule(id)) as unknown as TData };
+      return { data: exposeRefineProviderData<TData>(await loadNoticeRule(id)) };
     });
   },
 
@@ -77,7 +78,7 @@ export const noticeRuleDataProvider: DataProvider = {
           noticeRuleMatchesDraft(rule, variables.draft, variables.receivers, variables.templates)
       );
       if (created.length !== 1) throw contractError('NOTICE_RULE_CREATE_NOT_CONVERGED');
-      return { data: created[0] as unknown as TData };
+      return { data: exposeRefineProviderData<TData>(created[0]) };
     });
   },
 
@@ -95,7 +96,7 @@ export const noticeRuleDataProvider: DataProvider = {
       if (!noticeRuleMatchesDraft(canonical, variables.draft, variables.receivers, variables.templates)) {
         throw contractError('NOTICE_RULE_UPDATE_NOT_CONVERGED');
       }
-      return { data: canonical as unknown as TData };
+      return { data: exposeRefineProviderData<TData>(canonical) };
     });
   },
 
@@ -115,7 +116,7 @@ export const noticeRuleDataProvider: DataProvider = {
       } catch (error) {
         if (!isNoticeRuleMissing(error)) throw error;
       }
-      return { data: canonical as unknown as TData };
+      return { data: exposeRefineProviderData<TData>(canonical) };
     });
   },
 

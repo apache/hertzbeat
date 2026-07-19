@@ -54,35 +54,69 @@ describe('message server API contract', () => {
         configuredSecrets: ['authToken']
       }
     };
-    apiMessageGet.mockResolvedValueOnce(email).mockResolvedValueOnce({ status: 'missing', config: null })
+    apiMessageGet
+      .mockResolvedValueOnce(email)
+      .mockResolvedValueOnce({ status: 'missing', config: null })
       .mockResolvedValueOnce(sms);
 
     await expect(loadEmailServerConfig()).resolves.toEqual(email);
     await expect(loadEmailServerConfig()).resolves.toEqual({ status: 'missing', config: null });
     await expect(loadSmsServerConfig()).resolves.toEqual(sms);
-    expect(apiMessageGet.mock.calls).toEqual([
-      ['/api/config/email'], ['/api/config/email'], ['/api/config/sms']
-    ]);
+    expect(apiMessageGet.mock.calls).toEqual([['/api/config/email'], ['/api/config/email'], ['/api/config/sms']]);
   });
 
   it('accepts an existing configuration whose required secret was explicitly cleared', async () => {
-    const email = { status: 'configured', config: { type: 0, emailHost: 'smtp.example.test',
-      emailUsername: 'ops@example.test', emailPort: 587, emailSsl: false, emailStarttls: true,
-      enable: false, configuredSecrets: [] } };
+    const email = {
+      status: 'configured',
+      config: {
+        type: 0,
+        emailHost: 'smtp.example.test',
+        emailUsername: 'ops@example.test',
+        emailPort: 587,
+        emailSsl: false,
+        emailStarttls: true,
+        enable: false,
+        configuredSecrets: []
+      }
+    };
     apiMessageGet.mockResolvedValue(email);
     await expect(loadEmailServerConfig()).resolves.toEqual(email);
   });
 
   it.each([
     { status: 'missing', config: {} },
-    { status: 'configured', config: { type: 0, emailHost: 'smtp.example.test', emailUsername: 'ops@example.test',
-      emailPassword: 'must-not-return', emailPort: 587, emailSsl: false, emailStarttls: true, enable: true,
-      configuredSecrets: ['emailPassword'] } },
-    { status: 'configured', config: { enable: true, type: 'twilio',
-      options: { accountSid: 'account', twilioPhoneNumber: '+15550000000', authToken: 'must-not-return' },
-      configuredSecrets: ['authToken'] } },
-    { status: 'configured', config: { enable: true, type: 'smslocal', options: { accessKeyId: 'wrong-provider' },
-      configuredSecrets: ['apiKey'] } }
+    {
+      status: 'configured',
+      config: {
+        type: 0,
+        emailHost: 'smtp.example.test',
+        emailUsername: 'ops@example.test',
+        emailPassword: 'must-not-return',
+        emailPort: 587,
+        emailSsl: false,
+        emailStarttls: true,
+        enable: true,
+        configuredSecrets: ['emailPassword']
+      }
+    },
+    {
+      status: 'configured',
+      config: {
+        enable: true,
+        type: 'twilio',
+        options: { accountSid: 'account', twilioPhoneNumber: '+15550000000', authToken: 'must-not-return' },
+        configuredSecrets: ['authToken']
+      }
+    },
+    {
+      status: 'configured',
+      config: {
+        enable: true,
+        type: 'smslocal',
+        options: { accessKeyId: 'wrong-provider' },
+        configuredSecrets: ['apiKey']
+      }
+    }
   ])('rejects invalid or secret-bearing read evidence %#', async value => {
     apiMessageGet.mockResolvedValueOnce(value);
     const request = 'emailHost' in (value.config ?? {}) ? loadEmailServerConfig() : loadSmsServerConfig();
@@ -90,15 +124,44 @@ describe('message server API contract', () => {
   });
 
   it('posts only caller-built frozen payloads without placing secrets in URLs', async () => {
-    apiMessagePost.mockResolvedValueOnce({ status: 'configured', config: { type: 0,
-      emailHost: 'smtp.example.test', emailUsername: 'ops@example.test', emailPort: 587, emailSsl: false,
-      emailStarttls: true, enable: true, configuredSecrets: ['emailPassword'] } })
-      .mockResolvedValueOnce({ status: 'configured', config: { enable: true, type: 'twilio',
-        options: { accountSid: 'account', twilioPhoneNumber: '+15550000000' }, configuredSecrets: ['authToken'] } });
-    const email = { type: 0, emailHost: 'smtp.example.test', emailUsername: 'ops@example.test',
-      emailPassword: 'new-secret', emailPort: 587, emailSsl: false, emailStarttls: true, enable: true };
-    const sms = { enable: true, type: 'twilio' as const,
-      options: { accountSid: 'account', twilioPhoneNumber: '+15550000000', authToken: 'new-token' } };
+    apiMessagePost
+      .mockResolvedValueOnce({
+        status: 'configured',
+        config: {
+          type: 0,
+          emailHost: 'smtp.example.test',
+          emailUsername: 'ops@example.test',
+          emailPort: 587,
+          emailSsl: false,
+          emailStarttls: true,
+          enable: true,
+          configuredSecrets: ['emailPassword']
+        }
+      })
+      .mockResolvedValueOnce({
+        status: 'configured',
+        config: {
+          enable: true,
+          type: 'twilio',
+          options: { accountSid: 'account', twilioPhoneNumber: '+15550000000' },
+          configuredSecrets: ['authToken']
+        }
+      });
+    const email = {
+      type: 0,
+      emailHost: 'smtp.example.test',
+      emailUsername: 'ops@example.test',
+      emailPassword: 'new-secret',
+      emailPort: 587,
+      emailSsl: false,
+      emailStarttls: true,
+      enable: true
+    };
+    const sms = {
+      enable: true,
+      type: 'twilio' as const,
+      options: { accountSid: 'account', twilioPhoneNumber: '+15550000000', authToken: 'new-token' }
+    };
 
     await saveEmailServerConfig(email);
     await saveSmsServerConfig(sms);
@@ -109,11 +172,21 @@ describe('message server API contract', () => {
   });
 
   it('rejects a successful HTTP save envelope with invalid Message data', async () => {
-    apiMessagePost.mockResolvedValue({ status: 'configured', config: { enable: true, type: 'twilio',
-      options: { accountSid: 'account', twilioPhoneNumber: '+15550000000', authToken: 'echoed' },
-      configuredSecrets: ['authToken'] } });
-    await expect(saveSmsServerConfig({ enable: true, type: 'twilio',
-      options: { accountSid: 'account', twilioPhoneNumber: '+15550000000' } }))
-      .rejects.toBeInstanceOf(MessageServerContractError);
+    apiMessagePost.mockResolvedValue({
+      status: 'configured',
+      config: {
+        enable: true,
+        type: 'twilio',
+        options: { accountSid: 'account', twilioPhoneNumber: '+15550000000', authToken: 'echoed' },
+        configuredSecrets: ['authToken']
+      }
+    });
+    await expect(
+      saveSmsServerConfig({
+        enable: true,
+        type: 'twilio',
+        options: { accountSid: 'account', twilioPhoneNumber: '+15550000000' }
+      })
+    ).rejects.toBeInstanceOf(MessageServerContractError);
   });
 });

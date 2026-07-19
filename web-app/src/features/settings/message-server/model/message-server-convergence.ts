@@ -15,12 +15,7 @@
  * limitations under the License.
  */
 
-import {
-  smsProviderFieldContracts,
-  type EmailServerEvidence,
-  type SmsSecret,
-  type SmsServerEvidence
-} from './message-server-contract';
+import { smsProviderFieldContracts, type EmailServerEvidence, type SmsServerEvidence } from './message-server-contract';
 import {
   buildEmailServerPayload,
   buildSmsServerPayload,
@@ -60,9 +55,9 @@ export function smsServerSaveConverged(draft: SmsServerDraft, evidence: SmsServe
     if (!field.secret) return actual.options[field.key] === desired.options[field.key];
     return secretTransitionConverged(
       Object.hasOwn(desired.options, field.key),
-      Boolean(desired.clearSecrets?.includes(field.key as SmsSecret)),
-      draft.configuredSecrets.includes(field.key as SmsSecret),
-      actual.configuredSecrets.includes(field.key as SmsSecret)
+      Boolean(desired.clearSecrets?.includes(field.key)),
+      draft.configuredSecrets.includes(field.key),
+      actual.configuredSecrets.includes(field.key)
     );
   });
 }

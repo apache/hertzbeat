@@ -107,6 +107,25 @@ test('rejects hand-written primitive contract parsers in core auth', () => {
   assert.match(failures, /core auth contracts must use runtime schemas instead of primitive parser helpers/);
 });
 
+test('requires Refine data providers to use the shared generic adapter boundary', () => {
+  const project = createProject({
+    ...requiredProjectFiles(),
+    'src/features/orders/index.ts': 'export {};',
+    'src/app/refine/resources/order-data-provider.ts': [
+      'function exposeProviderData<TData>(value: unknown): TData {',
+      '  return value as unknown as TData;',
+      '}',
+      'export const orderDataProvider = exposeProviderData({ id: 1 });'
+    ].join('\n'),
+    'src/app/refine/resources/customer-data-provider.ts':
+      'export const customerDataProvider = <TData>(value: unknown) => value as TData;'
+  });
+
+  const failures = checkArchitecture(project).join('\n');
+  assert.match(failures, /Refine data providers must use the shared generic adapter boundary/);
+  assert.match(failures, /Refine data providers cannot declare local generic adapter helpers/);
+});
+
 test('rejects oversized instrumentation modules and route-local color literals', () => {
   const project = createProject({
     'src/app/main.ts': 'export {};',

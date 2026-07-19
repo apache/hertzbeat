@@ -15,48 +15,14 @@
  * limitations under the License.
  */
 
-.form {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-}
-.field {
-  display: grid;
-  gap: 7px;
-  color: var(--ant-color-text-secondary);
-  font-size: 13px;
-}
-.field > label {
-  display: grid;
-  gap: 7px;
-}
-.field :global(.ant-input-number),
-.field :global(.ant-select) {
-  width: 100%;
-}
-.switchField {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  color: var(--ant-color-text-secondary);
-  font-size: 13px;
-}
-.wide {
-  grid-column: 1 / -1;
-}
-.secretControls {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: -4px;
-}
-@media (max-width: 700px) {
-  .form {
-    grid-template-columns: 1fr;
-  }
-  .wide {
-    grid-column: auto;
-  }
+/**
+ * Adapts validated application data to Refine's caller-selected response type.
+ *
+ * Refine chooses `TData` at each call site, so a provider cannot prove that its
+ * concrete record is the exact subtype selected by the caller. Keep that one
+ * unavoidable assertion here. Provider implementations must validate or build
+ * their domain record before crossing this boundary.
+ */
+export function exposeRefineProviderData<TData>(value: unknown): TData {
+  return value as TData;
 }

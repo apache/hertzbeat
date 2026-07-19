@@ -18,6 +18,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  activeSmsProviderValues,
   buildEmailServerPayload,
   buildSmsServerPayload,
   createEmailServerDraft,
@@ -25,10 +26,13 @@ import {
   messageServerStatus,
   selectSmsProvider,
   setEmailSecretCleared,
+  setSmsSecretCleared,
   smsProviderDefinitions,
+  updateSmsProviderField,
   validateEmailServerDraft,
   validateSmsServerDraft
 } from './message-server-model';
+import { smsProviderTypes } from './message-server-contract';
 import { emailServerSaveConverged, smsServerSaveConverged } from './message-server-convergence';
 
 describe('message server model', () => {
@@ -98,6 +102,23 @@ describe('message server model', () => {
     expect(
       smsProviderDefinitions.find(definition => definition.type === 'twilio')?.fields.map(field => field.key)
     ).toEqual(['accountSid', 'authToken', 'twilioPhoneNumber']);
+  });
+
+  it('reads and updates every provider through the typed active-draft boundary', () => {
+    for (const type of smsProviderTypes) {
+      const selected = selectSmsProvider(createSmsServerDraft(), type);
+      const field = smsProviderDefinitions.find(definition => definition.type === type)?.fields[0];
+      expect(field).toBeDefined();
+      if (!field) continue;
+      const updated = updateSmsProviderField(selected, field.key, 'updated');
+      expect(activeSmsProviderValues(updated)[field.key]).toBe('updated');
+      expect(updateSmsProviderField(updated, 'notOwned', 'ignored')).toBe(updated);
+    }
+  });
+
+  it('does not clear a secret owned by another SMS provider', () => {
+    const draft = selectSmsProvider(createSmsServerDraft(), 'twilio');
+    expect(setSmsSecretCleared(draft, 'secretId', true)).toBe(draft);
   });
 
   it('validates only the selected SMS provider and sends only its allowlisted options', () => {

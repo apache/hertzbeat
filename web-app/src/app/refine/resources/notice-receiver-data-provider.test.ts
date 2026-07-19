@@ -196,9 +196,9 @@ describe('Notice Receiver provider input boundary', () => {
 
     expect(sourceLines.length).toBeLessThanOrEqual(200);
     expect(providerSource).not.toMatch(/function read(?:ListQuery|Pagination|NameFilter|Id|Draft|DeleteRecord)/);
-    expect(providerSource.match(/\bas TData\b/g)).toHaveLength(1);
+    expect(providerSource).not.toContain('as TData');
     expect(providerSource).not.toContain('as unknown as TData');
-    expect(providerSource).toContain('function exposeProviderData<TData>');
+    expect(providerSource).toContain("from '@/shared/refine/refine-provider-data'");
     expect(inputSource).toContain("from 'zod'");
     expect(inputSource).toContain('schema.safeParse(value)');
     expect(inputSource).toContain('receiverTypeDefinitions.some');

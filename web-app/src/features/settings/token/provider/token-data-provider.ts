@@ -28,6 +28,7 @@ import type {
 } from '@refinedev/core';
 
 import { createRefineHttpError, toRefineHttpError } from '@/shared/refine/refine-http-error';
+import { exposeRefineProviderData } from '@/shared/refine/refine-provider-data';
 
 import {
   generateToken,
@@ -42,13 +43,11 @@ import {
 import { tokenResourceName } from '../model/token-model';
 
 export const tokenDataProvider: DataProvider = {
-  getList<TData extends BaseRecord = BaseRecord>(params: {
-    resource: string;
-  }): Promise<GetListResponse<TData>> {
+  getList<TData extends BaseRecord = BaseRecord>(params: { resource: string }): Promise<GetListResponse<TData>> {
     return protect(async () => {
       assertResource(params.resource);
       const records = await loadTokens();
-      return { data: records as unknown as TData[], total: records.length };
+      return { data: exposeRefineProviderData<TData[]>(records), total: records.length };
     });
   },
 
@@ -74,18 +73,14 @@ export const tokenDataProvider: DataProvider = {
     return protect(async () => {
       if (params.url === tokenGenerateActionUrl && params.method === 'post') {
         const draft = readGenerationDraft(params.payload);
-        return { data: await generateToken(draft) as unknown as TData };
+        return { data: exposeRefineProviderData<TData>(await generateToken(draft)) };
       }
       const revokeId = params.method === 'delete' ? parseTokenRevokeActionUrl(params.url) : null;
       if (revokeId !== null) {
         await revokeToken(revokeId);
-        return { data: { id: revokeId } as TData };
+        return { data: exposeRefineProviderData<TData>({ id: revokeId }) };
       }
-      throw createRefineHttpError(
-        'Token custom action is not supported',
-        405,
-        'TOKEN_CUSTOM_ACTION_UNSUPPORTED'
-      );
+      throw createRefineHttpError('Token custom action is not supported', 405, 'TOKEN_CUSTOM_ACTION_UNSUPPORTED');
     });
   },
 

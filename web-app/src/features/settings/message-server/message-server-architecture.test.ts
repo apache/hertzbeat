@@ -19,6 +19,7 @@ import { describe, expect, it } from 'vitest';
 
 import api from './api/message-server-api.ts?raw';
 import emailEditor from './components/email-server-editor.tsx?raw';
+import editors from './components/message-server-editors.tsx?raw';
 import controller from './controller/use-message-server-controller.ts?raw';
 import model from './model/message-server-model.ts?raw';
 import page from './pages/message-server-page.tsx?raw';
@@ -45,5 +46,14 @@ describe('message server architecture', () => {
     expect(emailEditor).toMatch(/maskClosable=\{false\}/);
     expect(emailEditor).toMatch(/confirmLoading=\{saving\}/);
     expect(emailEditor).toMatch(/onCancel=\{close\}/);
+  });
+
+  it('uses typed SMS provider boundaries instead of unchecked casts and partial catalog lookup', () => {
+    for (const source of [model, editors, page]) {
+      expect(source).not.toMatch(/as unknown as/);
+      expect(source).not.toMatch(/smsProviderDefinitions\.find\([^\n]+\)!/);
+    }
+    expect(model).toMatch(/activeSmsProviderValues/);
+    expect(model).toMatch(/smsProviderDefinition/);
   });
 });

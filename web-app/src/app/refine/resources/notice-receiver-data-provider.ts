@@ -28,6 +28,7 @@ import {
   expectedNoticeReceiverEvidence,
   type NoticeReceiverDraft
 } from '@/features/alert/notice-receiver/model/notice-receiver-model';
+import { exposeRefineProviderData } from '@/shared/refine/refine-provider-data';
 
 import { createRefineHttpError, toRefineHttpError } from '../refine-http-error';
 import {
@@ -42,7 +43,7 @@ export const noticeReceiverDataProvider: DataProvider = {
     return protect(async () => {
       assertResource(params.resource);
       const page = await loadNoticeReceivers(readNoticeReceiverListQuery(params));
-      return { data: exposeProviderData<TData[]>(page.content), total: page.totalElements };
+      return { data: exposeRefineProviderData<TData[]>(page.content), total: page.totalElements };
     });
   },
 
@@ -55,7 +56,7 @@ export const noticeReceiverDataProvider: DataProvider = {
       const id = readNoticeReceiverId(params.id);
       const receiver = await loadNoticeReceiver(id);
       if (receiver.id !== id) throw contractError('NOTICE_RECEIVER_REREAD_INVALID');
-      return { data: exposeProviderData<TData>(receiver) };
+      return { data: exposeRefineProviderData<TData>(receiver) };
     });
   },
 
@@ -69,7 +70,7 @@ export const noticeReceiverDataProvider: DataProvider = {
       const mutation = await saveNoticeReceiver(draft);
       assertMutation(mutation, 'created');
       const canonical = await requireCanonical(mutation.id, draft);
-      return { data: exposeProviderData<TData>(canonical) };
+      return { data: exposeRefineProviderData<TData>(canonical) };
     });
   },
 
@@ -85,7 +86,7 @@ export const noticeReceiverDataProvider: DataProvider = {
       const mutation = await saveNoticeReceiver(draft);
       assertMutation(mutation, 'updated', id);
       const canonical = await requireCanonical(id, draft);
-      return { data: exposeProviderData<TData>(canonical) };
+      return { data: exposeRefineProviderData<TData>(canonical) };
     });
   },
 
@@ -103,7 +104,7 @@ export const noticeReceiverDataProvider: DataProvider = {
       if (mutation.status !== 'deleted' || mutation.id !== id || mutation.receiver !== null) {
         throw contractError('NOTICE_RECEIVER_DELETE_NOT_CONFIRMED');
       }
-      return { data: exposeProviderData<TData>(canonical) };
+      return { data: exposeRefineProviderData<TData>(canonical) };
     });
   },
 
@@ -174,10 +175,4 @@ function assertMutation(
 
 function contractError(code: string, status = 502) {
   return createRefineHttpError('Notice receiver contract failed', status, code);
-}
-
-function exposeProviderData<TData>(value: unknown): TData {
-  // Refine lets each caller select TData, so this unavoidable adapter cast is
-  // kept at the single boundary where domain records enter its generic API.
-  return value as TData;
 }

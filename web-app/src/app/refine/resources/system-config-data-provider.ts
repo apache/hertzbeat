@@ -39,6 +39,7 @@ import {
   SystemConfigResourceContractError,
   systemConfigResourceId
 } from '@/features/settings/system-config/model/system-config-model';
+import { exposeRefineProviderData } from '@/shared/refine/refine-provider-data';
 
 import { createRefineHttpError, toRefineHttpError } from '../refine-http-error';
 
@@ -56,7 +57,7 @@ export const systemConfigDataProvider: DataProvider = {
   }): Promise<GetOneResponse<TData>> {
     return protect(async () => {
       assertResourceAndId(params.resource, params.id);
-      return { data: readConfigRecord(await loadSystemConfig()) as unknown as TData };
+      return { data: exposeRefineProviderData<TData>(readConfigRecord(await loadSystemConfig())) };
     });
   },
 
@@ -80,7 +81,7 @@ export const systemConfigDataProvider: DataProvider = {
           'SYSTEM_CONFIG_CANONICAL_REREAD_MISSING'
         );
       }
-      return { data: readConfigRecord(canonical) as unknown as TData };
+      return { data: exposeRefineProviderData<TData>(readConfigRecord(canonical)) };
     });
   },
 
@@ -99,7 +100,7 @@ export const systemConfigDataProvider: DataProvider = {
           'SYSTEM_CONFIG_CUSTOM_UNSUPPORTED'
         );
       }
-      return { data: readTimezoneRecord(await loadTimezones()) as unknown as TData };
+      return { data: exposeRefineProviderData<TData>(readTimezoneRecord(await loadTimezones())) };
     });
   },
 
