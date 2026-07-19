@@ -31,73 +31,90 @@ import type { LabelRecord } from '../model/label-model';
 const labelResource = 'labels';
 const labelDataProvider = 'labels';
 const listInvalidation = ['list'] as const;
+type Translate = ReturnType<typeof useTranslation>['t'];
 
 export function useLabelMutationController() {
   const { t } = useTranslation();
   const notification = useNotification();
-  const create = useCreate<LabelRecord, HttpError, Partial<LabelRecord>>({
-    resource: labelResource,
-    dataProviderName: labelDataProvider,
-    invalidates: [...listInvalidation],
-    successNotification: () => notice(t('labels.saveSuccess'), 'success'),
-    errorNotification: () => notice(t('labels.saveFailed'), 'error')
-  });
+  const create = useCreate<LabelRecord, HttpError, Partial<LabelRecord>>(saveMutationOptions(t));
   const update = useUpdate<LabelRecord, HttpError, Partial<LabelRecord>>({
-    resource: labelResource,
-    dataProviderName: labelDataProvider,
-    invalidates: [...listInvalidation],
-    mutationMode: 'pessimistic',
-    successNotification: () => notice(t('labels.saveSuccess'), 'success'),
-    errorNotification: () => notice(t('labels.saveFailed'), 'error')
+    ...saveMutationOptions(t),
+    mutationMode: 'pessimistic'
   });
   const remove = useDelete<LabelRecord, HttpError, LabelRecord>();
 
-  const createLabel = useCallback((values: Partial<LabelRecord>, onSuccess: () => void) => {
-    create.mutate({
-      resource: labelResource,
-      dataProviderName: labelDataProvider,
-      invalidates: [...listInvalidation],
-      values
-    }, { onSuccess });
-  }, [create]);
+  const createLabel = useCallback(
+    (values: Partial<LabelRecord>, onSuccess: () => void) => {
+      create.mutate(createLabelParams(values), { onSuccess });
+    },
+    [create]
+  );
 
-  const updateLabel = useCallback((record: LabelRecord, values: Partial<LabelRecord>, onSuccess: () => void) => {
-    if (record.id === undefined) {
-      notification.open?.(notice(t('labels.saveFailed'), 'error'));
-      return;
-    }
-    update.mutate({
-      id: record.id,
-      resource: labelResource,
-      dataProviderName: labelDataProvider,
-      invalidates: [...listInvalidation],
-      mutationMode: 'pessimistic',
-      values: { ...record, ...values, id: record.id }
-    }, { onSuccess });
-  }, [notification, t, update]);
+  const updateLabel = useCallback(
+    (record: LabelRecord, values: Partial<LabelRecord>, onSuccess: () => void) => {
+      if (record.id === undefined) {
+        notification.open?.(notice(t('labels.saveFailed'), 'error'));
+        return;
+      }
+      update.mutate(updateLabelParams(record, values), { onSuccess });
+    },
+    [notification, t, update]
+  );
 
-  const deleteLabel = useCallback((record: LabelRecord) => {
-    if (record.id === undefined) {
-      notification.open?.(notice(t('labels.deleteFailed'), 'error'));
-      return;
-    }
-    remove.mutate({
-      id: record.id,
-      resource: labelResource,
-      dataProviderName: labelDataProvider,
-      invalidates: [...listInvalidation],
-      mutationMode: 'pessimistic',
-      values: record,
-      successNotification: () => notice(t('labels.deleteSuccess'), 'success'),
-      errorNotification: () => notice(t('labels.deleteFailed'), 'error')
-    });
-  }, [notification, remove, t]);
+  const deleteLabel = useCallback(
+    (record: LabelRecord) => {
+      if (record.id === undefined) {
+        notification.open?.(notice(t('labels.deleteFailed'), 'error'));
+        return;
+      }
+      remove.mutate(deleteLabelParams(record, t));
+    },
+    [notification, remove, t]
+  );
 
   return {
     createLabel,
     deleteLabel,
     isSaving: create.mutation.isPending || update.mutation.isPending,
     updateLabel
+  };
+}
+
+function saveMutationOptions(t: Translate) {
+  return {
+    resource: labelResource,
+    dataProviderName: labelDataProvider,
+    invalidates: [...listInvalidation],
+    successNotification: () => notice(t('labels.saveSuccess'), 'success'),
+    errorNotification: () => notice(t('labels.saveFailed'), 'error')
+  };
+}
+
+function createLabelParams(values: Partial<LabelRecord>) {
+  return { resource: labelResource, dataProviderName: labelDataProvider, invalidates: [...listInvalidation], values };
+}
+
+function updateLabelParams(record: LabelRecord, values: Partial<LabelRecord>) {
+  return {
+    id: record.id,
+    resource: labelResource,
+    dataProviderName: labelDataProvider,
+    invalidates: [...listInvalidation],
+    mutationMode: 'pessimistic' as const,
+    values: { ...record, ...values, id: record.id }
+  };
+}
+
+function deleteLabelParams(record: LabelRecord, t: Translate) {
+  return {
+    id: record.id,
+    resource: labelResource,
+    dataProviderName: labelDataProvider,
+    invalidates: [...listInvalidation],
+    mutationMode: 'pessimistic' as const,
+    values: record,
+    successNotification: () => notice(t('labels.deleteSuccess'), 'success'),
+    errorNotification: () => notice(t('labels.deleteFailed'), 'error')
   };
 }
 

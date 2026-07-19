@@ -105,12 +105,6 @@
     },
     {
       "rule": "function-size",
-      "path": "features/settings/label/controller/label-mutation-controller.ts",
-      "identity": "function:useLabelMutationController",
-      "allowedMax": 64
-    },
-    {
-      "rule": "function-size",
       "path": "features/settings/message-server/components/message-server-editors.tsx",
       "identity": "function:EmailServerEditor",
       "allowedMax": 86

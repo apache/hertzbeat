@@ -18,11 +18,14 @@
 import { describe, expect, it } from 'vitest';
 
 import apiSource from './api/label-api.ts?raw';
+import mutationSource from './controller/label-mutation-controller.ts?raw';
 import schemaSource from './api/label-schema.ts?raw';
 import modelSource from './model/label-model.ts?raw';
 
 function sourceLineCount(value: string) {
-  return value.replace(/\/\*[\s\S]*?\*\//g, '').split('\n')
+  return value
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .split('\n')
     .filter(line => line.trim() && !line.trim().startsWith('//')).length;
 }
 
@@ -39,5 +42,17 @@ describe('Label architecture', () => {
     expect(sourceLineCount(apiSource)).toBeLessThanOrEqual(250);
     expect(sourceLineCount(schemaSource)).toBeLessThanOrEqual(250);
     expect(sourceLineCount(modelSource)).toBeLessThanOrEqual(250);
+  });
+
+  it('keeps Refine mutation params in named controller adapters', () => {
+    expect(mutationSource).toContain('function saveMutationOptions');
+    expect(mutationSource).toContain('function createLabelParams');
+    expect(mutationSource).toContain('function updateLabelParams');
+    expect(mutationSource).toContain('function deleteLabelParams');
+    expect(mutationSource).toContain('create.mutate(createLabelParams(values), { onSuccess })');
+    expect(mutationSource).toContain('update.mutate(updateLabelParams(record, values), { onSuccess })');
+    expect(mutationSource).toContain('values: { ...record, ...values, id: record.id }');
+    expect(mutationSource).toContain('remove.mutate(deleteLabelParams(record, t))');
+    expect(mutationSource).toContain('isSaving: create.mutation.isPending || update.mutation.isPending');
   });
 });

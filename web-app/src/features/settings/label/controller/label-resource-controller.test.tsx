@@ -70,12 +70,14 @@ describe('Label resource controller', () => {
   it('uses the named Label provider and translates the canonical URL query', () => {
     renderHook(() => useLabelResourceController({ search: 'env', pageIndex: 2, pageSize: 50 }));
 
-    expect(refine.useList).toHaveBeenCalledWith(expect.objectContaining({
-      resource: 'labels',
-      dataProviderName: 'labels',
-      pagination: { currentPage: 3, pageSize: 50, mode: 'server' },
-      filters: [{ field: 'search', operator: 'contains', value: 'env' }]
-    }));
+    expect(refine.useList).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resource: 'labels',
+        dataProviderName: 'labels',
+        pagination: { currentPage: 3, pageSize: 50, mode: 'server' },
+        filters: [{ field: 'search', operator: 'contains', value: 'env' }]
+      })
+    );
   });
 
   it('uses pessimistic canonical mutations and passes the full selected row to delete', () => {
@@ -83,7 +85,7 @@ describe('Label resource controller', () => {
     const { result } = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
 
     act(() => result.current.createLabel({ name: 'team', tagValue: 'platform' }, onSuccess));
-    act(() => result.current.updateLabel(serverLabel, { description: 'Updated' }, onSuccess));
+    act(() => result.current.updateLabel(serverLabel, { id: 99, description: 'Updated' }, onSuccess));
     act(() => result.current.deleteLabel(serverLabel));
 
     expect(refine.createMutate).toHaveBeenCalledWith(
@@ -102,19 +104,21 @@ describe('Label resource controller', () => {
         dataProviderName: 'labels',
         invalidates: ['list'],
         mutationMode: 'pessimistic',
-        values: expect.objectContaining({ id: 7, name: 'env', tagValue: 'prod', description: 'Updated' })
+        values: { ...serverLabel, description: 'Updated' }
       }),
       expect.objectContaining({ onSuccess })
     );
     const deleteParams = refine.deleteMutate.mock.calls[0]?.[0];
-    expect(deleteParams).toEqual(expect.objectContaining({
-      id: 7,
-      resource: 'labels',
-      dataProviderName: 'labels',
-      invalidates: ['list'],
-      mutationMode: 'pessimistic',
-      values: serverLabel
-    }));
+    expect(deleteParams).toEqual(
+      expect.objectContaining({
+        id: 7,
+        resource: 'labels',
+        dataProviderName: 'labels',
+        invalidates: ['list'],
+        mutationMode: 'pessimistic',
+        values: serverLabel
+      })
+    );
     expect(deleteParams.successNotification()).toEqual({ message: 'labels.deleteSuccess', type: 'success' });
     expect(deleteParams.errorNotification()).toEqual({ message: 'labels.deleteFailed', type: 'error' });
   });
@@ -128,6 +132,20 @@ describe('Label resource controller', () => {
     expect(createOptions?.errorNotification?.()).toEqual({ message: 'labels.saveFailed', type: 'error' });
     expect(updateOptions?.successNotification?.()).toEqual({ message: 'labels.saveSuccess', type: 'success' });
     expect(updateOptions?.errorNotification?.()).toEqual({ message: 'labels.saveFailed', type: 'error' });
+  });
+
+  it.each([
+    [true, false, true, true],
+    [false, true, true, true],
+    [false, false, true, false]
+  ])('aggregates only create/update pending as saving', (createPending, updatePending, deletePending, expected) => {
+    refine.useCreate.mockReturnValue({ mutate: refine.createMutate, mutation: { isPending: createPending } });
+    refine.useUpdate.mockReturnValue({ mutate: refine.updateMutate, mutation: { isPending: updatePending } });
+    refine.useDelete.mockReturnValue({ mutate: refine.deleteMutate, mutation: { isPending: deletePending } });
+
+    const { result } = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
+
+    expect(result.current.isSaving).toBe(expected);
   });
 
   it.each([
