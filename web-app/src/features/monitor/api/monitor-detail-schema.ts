@@ -26,7 +26,7 @@ import {
   type MonitorDetailMetric,
   type MonitorGrafanaDashboard,
   type MonitorParam
-} from './monitor-contract';
+} from '../model/monitor-contract';
 import {
   javaByteSchema,
   monitorStatusSchema,
@@ -105,19 +105,18 @@ export function parseMonitorDetail(value: unknown, requestedId: number): Monitor
   if (!result.success) throw new MonitorContractError();
 
   const detail = result.data;
-  if (detail.monitor.id !== requestedId
-    || detail.params.some(param => param.monitorId !== null && param.monitorId !== requestedId)
-    || detail.grafanaDashboard?.monitorId != null
-      && detail.grafanaDashboard.monitorId !== requestedId) {
+  if (
+    detail.monitor.id !== requestedId ||
+    detail.params.some(param => param.monitorId !== null && param.monitorId !== requestedId) ||
+    (detail.grafanaDashboard?.monitorId != null && detail.grafanaDashboard.monitorId !== requestedId)
+  ) {
     throw new MonitorContractError('Monitor detail identity does not match request');
   }
   return {
     monitor: mapMonitor(detail.monitor),
     params: detail.params.map(mapMonitorParam),
     collector: detail.collector,
-    grafanaDashboard: detail.grafanaDashboard === null
-      ? null
-      : mapGrafanaDashboard(detail.grafanaDashboard),
+    grafanaDashboard: detail.grafanaDashboard === null ? null : mapGrafanaDashboard(detail.grafanaDashboard),
     metrics: detail.metrics.map(mapEmbeddedMetric)
   };
 }
@@ -130,9 +129,7 @@ function mapMonitorParam(wire: DetailWire['params'][number]): MonitorParam {
   return { ...wire };
 }
 
-function mapGrafanaDashboard(
-  wire: NonNullable<DetailWire['grafanaDashboard']>
-): MonitorGrafanaDashboard {
+function mapGrafanaDashboard(wire: NonNullable<DetailWire['grafanaDashboard']>): MonitorGrafanaDashboard {
   return { ...wire };
 }
 

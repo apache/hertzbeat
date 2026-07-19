@@ -19,7 +19,11 @@ export { MonitorDetailPage } from './pages/monitor-detail-page';
 export { MonitorEditorPage } from './pages/monitor-editor-page';
 export { MonitorListPage } from './pages/monitor-list-page';
 export {
-  classifyMonitorReadError, loadMonitorAppHierarchy, loadMonitorApps, loadMonitorMetricCatalog, loadMonitors,
-  MonitorContractError
+  classifyMonitorReadError,
+  loadMonitorAppHierarchy,
+  loadMonitorApps,
+  loadMonitorMetricCatalog,
+  loadMonitors
 } from './api/monitor-api';
-export type { Monitor, MonitorAppHierarchyNode } from './api/monitor-api';
+export { MonitorContractError } from './model/monitor-contract';
+export type { Monitor, MonitorAppHierarchyNode } from './model/monitor-contract';

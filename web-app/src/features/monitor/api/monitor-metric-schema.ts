@@ -23,7 +23,7 @@ import {
   type MonitorHistoryMetric,
   type MonitorMetricValue,
   type MonitorRealtimeMetric
-} from './monitor-contract';
+} from '../model/monitor-contract';
 import {
   javaByteSchema,
   nonEmptyStringSchema,
@@ -49,11 +49,13 @@ const catalogFieldSchema = z.object({
   label: z.boolean()
 });
 const catalogSchema = z.object({
-  metrics: z.array(z.object({
-    name: nonEmptyStringSchema,
-    visible: z.boolean(),
-    fields: z.array(catalogFieldSchema)
-  }))
+  metrics: z.array(
+    z.object({
+      name: nonEmptyStringSchema,
+      visible: z.boolean(),
+      fields: z.array(catalogFieldSchema)
+    })
+  )
 });
 const favoritesSchema = z.array(nonEmptyStringSchema);
 
@@ -138,16 +140,15 @@ export function parseHistoryMetric(
   const result = historySchema.safeParse(value);
   if (!result.success) throw new MonitorContractError();
   const wire = result.data;
-  if (wire.instance !== requestedInstance
-    || wire.metrics !== requestedGroup
-    || wire.field.name !== requestedField) {
+  if (wire.instance !== requestedInstance || wire.metrics !== requestedGroup || wire.field.name !== requestedField) {
     throw new MonitorContractError('History metric identity does not match request');
   }
   if (wire.field.type !== 0) throw new MonitorContractError('History metric field must be numeric');
-  return { values: Object.fromEntries(Object.entries(wire.values).map(([series, values]) => [
-    series,
-    values.map(mapMetricValue)
-  ])) };
+  return {
+    values: Object.fromEntries(
+      Object.entries(wire.values).map(([series, values]) => [series, values.map(mapMetricValue)])
+    )
+  };
 }
 
 function mapCatalogMetric(wire: CatalogWire['metrics'][number]): MonitorDetailMetric {

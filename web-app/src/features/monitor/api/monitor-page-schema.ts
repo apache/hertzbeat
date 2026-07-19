@@ -17,12 +17,7 @@
 
 import { z } from 'zod';
 
-import {
-  MonitorContractError,
-  type Monitor,
-  type MonitorPage,
-  type MonitorQuery
-} from './monitor-contract';
+import { MonitorContractError, type Monitor, type MonitorPage, type MonitorQuery } from '../model/monitor-contract';
 import {
   monitorStatusSchema,
   nonEmptyStringSchema,
@@ -58,10 +53,12 @@ export function parseMonitorPage(value: unknown, query: MonitorQuery): MonitorPa
   if (!result.success) throw new MonitorContractError();
 
   const page = result.data;
-  if (page.number !== query.pageIndex
-    || page.size !== query.pageSize
-    || page.content.length > page.size
-    || page.totalPages !== Math.ceil(page.totalElements / page.size)) {
+  if (
+    page.number !== query.pageIndex ||
+    page.size !== query.pageSize ||
+    page.content.length > page.size ||
+    page.totalPages !== Math.ceil(page.totalElements / page.size)
+  ) {
     throw new MonitorContractError('Monitor page identity is inconsistent with the request');
   }
   return {

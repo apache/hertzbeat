@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { Monitor, MonitorGrafanaDashboard, MonitorParam } from '../api/monitor-api';
+import type { Monitor, MonitorGrafanaDashboard, MonitorParam } from './monitor-contract';
 
 // The misspelling is the backend's legacy discovery sentinel; changing it breaks reread convergence.
 export const MONITOR_DISCOVERY_INSTANCE = 'unknow';

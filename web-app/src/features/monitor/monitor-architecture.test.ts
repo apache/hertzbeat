@@ -27,11 +27,11 @@ import metricWorkbenchControllerSource from './controller/use-monitor-metric-wor
 const requiredDirectories = ['api', 'model', 'controller', 'components', 'pages'] as const;
 const layerDirectories = requiredDirectories;
 const allowedDependencies: Record<(typeof layerDirectories)[number], readonly string[]> = {
-  api: ['api'],
-  model: ['api', 'model'],
+  api: ['api', 'model'],
+  model: ['model'],
   controller: ['api', 'model', 'controller'],
-  components: ['api', 'model', 'components'],
-  pages: ['api', 'model', 'controller', 'components', 'pages']
+  components: ['model', 'components'],
+  pages: ['model', 'controller', 'components', 'pages']
 };
 const importPattern = /(?:from\s+|import\s*\()\s*['"]([^'"]+)['"]/g;
 const productionSources = import.meta.glob('./**/*.{ts,tsx}', {
@@ -54,6 +54,24 @@ describe('Monitor feature boundaries', () => {
       .filter(([path]) => !path.includes('.test.'))
       .flatMap(([path, source]) => validateImports(path, source));
     expect(violations).toEqual([]);
+  });
+
+  it('keeps domain contracts below API facades and prevents view layers from importing API', () => {
+    const paths = Object.keys(productionSources).filter(path => !path.includes('.test.'));
+    expect(paths).toContain('./model/monitor-contract.ts');
+    expect(paths).not.toContain('./api/monitor-contract.ts');
+    expect(apiSource).not.toContain("export * from '../model/monitor-contract'");
+
+    const apiImporters = Object.entries(productionSources)
+      .filter(([path]) => !path.includes('.test.') && /^\.\/(?:model|components|pages)\//.test(path))
+      .flatMap(([path, source]) =>
+        [...source.matchAll(importPattern)]
+          .map(match => match[1])
+          .filter((specifier): specifier is string => Boolean(specifier?.startsWith('.')))
+          .filter(specifier => resolveFeaturePath(path, specifier).startsWith('./api/'))
+          .map(specifier => `${path} imports ${specifier}`)
+      );
+    expect(apiImporters).toEqual([]);
   });
 
   it('keeps primary response parsing out of the transport orchestrator', () => {

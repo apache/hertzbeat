@@ -17,7 +17,7 @@
 
 import { useState } from 'react';
 
-import type { MonitorParamDefine, MonitorScrape } from '../api/monitor-api';
+import type { MonitorParamDefine, MonitorScrape } from '../model/monitor-contract';
 import { transitionMonitorEditorDraft } from '../model/monitor-editor-draft';
 import type { MonitorEditorDraft } from '../model/monitor-editor-model';
 
@@ -35,9 +35,10 @@ export function useMonitorEditorDraft(
 ) {
   const [drafts, setDrafts] = useState<Record<string, MonitorEditorDraft>>({});
   const [carry, setCarry] = useState<CarryDraft | null>(null);
-  const transitioned = carry?.source === source && canonical
-    ? transitionMonitorEditorDraft(carry.draft, carry.defines, defines, scrape)
-    : undefined;
+  const transitioned =
+    carry?.source === source && canonical
+      ? transitionMonitorEditorDraft(carry.draft, carry.defines, defines, scrape)
+      : undefined;
   const draft = drafts[source] ?? transitioned ?? canonical;
 
   const update = (updater: (value: MonitorEditorDraft) => MonitorEditorDraft) => {

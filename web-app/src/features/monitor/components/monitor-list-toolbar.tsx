@@ -23,39 +23,130 @@ import type { MonitorQuery } from '../model/monitor-model';
 
 import styles from './monitor-list.module.css';
 
-export function MonitorListToolbar({ query, draft, apps, refreshing, actions }: {
-  query: MonitorQuery; draft: { search: string; labels: string }; apps: MonitorAppsEvidence; refreshing: boolean;
-  actions: {
-    setSearch: (value: string) => void; setLabels: (value: string) => void; submitSearch: () => void;
-    submitFilters: () => void; changeApp: (value: string) => void; changeStatus: (value: string) => void;
-    refresh: () => Promise<boolean>; create: () => void;
-  };
-}) {
-  const { t } = useTranslation();
-  return <div className={styles.toolbar}>
-    <Input value={draft.search} allowClear placeholder={t('monitor.search')}
-      onChange={event => actions.setSearch(event.target.value)} onPressEnter={actions.submitSearch} />
-    <AppFilter evidence={apps} value={query.app} change={actions.changeApp} />
-    <Select aria-label={t('monitor.status.label')} value={query.status} onChange={actions.changeStatus} options={[
-      { value: '9', label: t('monitor.status.all') }, { value: '1', label: t('monitor.status.available') },
-      { value: '2', label: t('monitor.status.unavailable') }, { value: '0', label: t('monitor.status.paused') }
-    ]} />
-    <Input value={draft.labels} allowClear placeholder={t('labels.filter')}
-      onChange={event => actions.setLabels(event.target.value)} onPressEnter={actions.submitFilters} />
-    <Button type="primary" onClick={actions.submitFilters}>{t('common.query')}</Button>
-    <Button disabled={refreshing} onClick={() => { void actions.refresh(); }}>{t('common.refresh')}</Button>
-    <Button type="primary" onClick={actions.create}>{t('monitor.editor.newTitle')}</Button>
-  </div>;
+type MonitorListToolbarActions = {
+  setSearch: (value: string) => void;
+  setLabels: (value: string) => void;
+  submitSearch: () => void;
+  submitFilters: () => void;
+  changeApp: (value: string) => void;
+  changeStatus: (value: string) => void;
+  refresh: () => Promise<boolean>;
+  create: () => void;
+};
+
+type MonitorListToolbarProps = {
+  query: MonitorQuery;
+  draft: { search: string; labels: string };
+  apps: MonitorAppsEvidence;
+  disabled: boolean;
+  refreshing: boolean;
+  actions: MonitorListToolbarActions;
+};
+
+export function MonitorListToolbar(props: MonitorListToolbarProps) {
+  const { query, draft, apps, disabled, refreshing, actions } = props;
+  return (
+    <div className={styles.toolbar}>
+      <MonitorFilterFields query={query} draft={draft} apps={apps} disabled={disabled} actions={actions} />
+      <MonitorToolbarActions disabled={disabled} refreshing={refreshing} actions={actions} />
+    </div>
+  );
 }
 
-function AppFilter({ evidence, value, change }: {
-  evidence: MonitorAppsEvidence; value: string; change: (value: string) => void;
+function MonitorFilterFields({ query, draft, apps, disabled, actions }: Omit<MonitorListToolbarProps, 'refreshing'>) {
+  const { t } = useTranslation();
+  return (
+    <>
+      <Input
+        value={draft.search}
+        allowClear
+        disabled={disabled}
+        placeholder={t('monitor.search')}
+        onChange={event => actions.setSearch(event.target.value)}
+        onPressEnter={actions.submitSearch}
+      />
+      <AppFilter evidence={apps} value={query.app} change={actions.changeApp} disabled={disabled} />
+      <Select
+        aria-label={t('monitor.status.label')}
+        disabled={disabled}
+        value={query.status}
+        onChange={actions.changeStatus}
+        options={[
+          { value: '9', label: t('monitor.status.all') },
+          { value: '1', label: t('monitor.status.available') },
+          { value: '2', label: t('monitor.status.unavailable') },
+          { value: '0', label: t('monitor.status.paused') }
+        ]}
+      />
+      <Input
+        value={draft.labels}
+        allowClear
+        disabled={disabled}
+        placeholder={t('labels.filter')}
+        onChange={event => actions.setLabels(event.target.value)}
+        onPressEnter={actions.submitFilters}
+      />
+    </>
+  );
+}
+
+function MonitorToolbarActions({
+  disabled,
+  refreshing,
+  actions
+}: Pick<MonitorListToolbarProps, 'disabled' | 'refreshing' | 'actions'>) {
+  const { t } = useTranslation();
+  return (
+    <>
+      <Button type="primary" disabled={disabled} onClick={actions.submitFilters}>
+        {t('common.query')}
+      </Button>
+      <Button
+        disabled={disabled || refreshing}
+        onClick={() => {
+          void actions.refresh();
+        }}
+      >
+        {t('common.refresh')}
+      </Button>
+      <Button type="primary" disabled={disabled} onClick={actions.create}>
+        {t('monitor.editor.newTitle')}
+      </Button>
+    </>
+  );
+}
+
+function AppFilter({
+  evidence,
+  value,
+  change,
+  disabled
+}: {
+  evidence: MonitorAppsEvidence;
+  value: string;
+  change: (value: string) => void;
+  disabled: boolean;
 }) {
   const { t } = useTranslation();
-  if (evidence.kind === 'loading') return <div role="status"><Spin size="small" /></div>;
+  if (evidence.kind === 'loading')
+    return (
+      <div role="status">
+        <Spin size="small" />
+      </div>
+    );
   if (evidence.kind === 'unavailable') return <Alert showIcon type="warning" message={t('common.unavailable')} />;
   if (evidence.kind === 'error') return <Alert showIcon type="error" message={t('common.routeError.description')} />;
-  return <Select aria-label={t('monitor.application')} allowClear showSearch optionFilterProp="label"
-    placeholder={t('monitor.application')} value={value || undefined} options={evidence.options}
-    onChange={next => change(next ?? '')} />;
+  return (
+    <Select
+      aria-label={t('monitor.application')}
+      allowClear
+      showSearch
+      disabled={disabled}
+      optionFilterProp="label"
+      placeholder={t('monitor.application')}
+      value={value || undefined}
+      options={evidence.options}
+      onChange={next => change(next ?? '')}
+    />
+  );
 }

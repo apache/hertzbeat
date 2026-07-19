@@ -17,7 +17,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { MonitorContractError } from './monitor-contract';
+import { MonitorContractError } from '../model/monitor-contract';
 import {
   parseFavoriteMetrics,
   parseHistoryMetric,
@@ -28,19 +28,27 @@ import {
 describe('Monitor metric read schemas', () => {
   it('maps valid favorites and catalog evidence while stripping unknown fields', () => {
     expect(parseFavoriteMetrics(['summary.responseTime'])).toEqual(['summary.responseTime']);
-    expect(parseMonitorMetricCatalog({
-      metrics: [{
-        name: 'summary',
-        visible: true,
-        fields: [{ type: 0, field: 'responseTime', unit: 'ms', label: false, ignored: true }],
+    expect(
+      parseMonitorMetricCatalog({
+        metrics: [
+          {
+            name: 'summary',
+            visible: true,
+            fields: [{ type: 0, field: 'responseTime', unit: 'ms', label: false, ignored: true }],
+            ignored: true
+          }
+        ],
         ignored: true
-      }],
-      ignored: true
-    })).toEqual({ metrics: [{
-      name: 'summary',
-      visible: true,
-      fields: [{ type: 0, field: 'responseTime', unit: 'ms', label: false }]
-    }] });
+      })
+    ).toEqual({
+      metrics: [
+        {
+          name: 'summary',
+          visible: true,
+          fields: [{ type: 0, field: 'responseTime', unit: 'ms', label: false }]
+        }
+      ]
+    });
   });
 
   it('preserves canonical realtime no-data and nullable value fields', () => {
@@ -48,10 +56,12 @@ describe('Monitor metric read schemas', () => {
     expect(parseRealtimeMetric(undefined, 7, 'summary')).toEqual({ fields: [], valueRows: [] });
     expect(parseRealtimeMetric(realtimeWire(), 7, 'summary')).toEqual({
       fields: [{ name: 'responseTime', type: 0, unit: 'ms', label: false }],
-      valueRows: [{
-        labels: { host: 'checkout-a' },
-        values: [{ origin: '12', mean: null, median: null, min: null, max: null, time: 0 }]
-      }]
+      valueRows: [
+        {
+          labels: { host: 'checkout-a' },
+          values: [{ origin: '12', mean: null, median: null, min: null, max: null, time: 0 }]
+        }
+      ]
     });
   });
 
@@ -68,14 +78,38 @@ describe('Monitor metric read schemas', () => {
     () => parseRealtimeMetric({ ...realtimeWire(), app: undefined }, 7, 'summary'),
     () => parseRealtimeMetric({ ...realtimeWire(), id: 8 }, 7, 'summary'),
     () => parseRealtimeMetric({ ...realtimeWire(), metrics: 'other' }, 7, 'summary'),
-    () => parseRealtimeMetric({ ...realtimeWire(), fields: [realtimeWire().fields[0], realtimeWire().fields[0]] }, 7, 'summary'),
+    () =>
+      parseRealtimeMetric(
+        { ...realtimeWire(), fields: [realtimeWire().fields[0], realtimeWire().fields[0]] },
+        7,
+        'summary'
+      ),
     () => parseRealtimeMetric({ ...realtimeWire(), valueRows: [{ labels: {}, values: [] }] }, 7, 'summary'),
-    () => parseRealtimeMetric({ ...realtimeWire(), fields: [{ ...realtimeWire().fields[0], type: 128 }] }, 7, 'summary'),
+    () =>
+      parseRealtimeMetric({ ...realtimeWire(), fields: [{ ...realtimeWire().fields[0], type: 128 }] }, 7, 'summary'),
     () => parseHistoryMetric({ ...historyWire(), instance: 'other' }, 'prod', 'summary', 'responseTime'),
     () => parseHistoryMetric({ ...historyWire(), metrics: 'other' }, 'prod', 'summary', 'responseTime'),
-    () => parseHistoryMetric({ ...historyWire(), field: { ...historyWire().field, name: 'other' } }, 'prod', 'summary', 'responseTime'),
-    () => parseHistoryMetric({ ...historyWire(), field: { ...historyWire().field, type: 1 } }, 'prod', 'summary', 'responseTime'),
-    () => parseHistoryMetric({ ...historyWire(), field: { ...historyWire().field, type: 128 } }, 'prod', 'summary', 'responseTime'),
+    () =>
+      parseHistoryMetric(
+        { ...historyWire(), field: { ...historyWire().field, name: 'other' } },
+        'prod',
+        'summary',
+        'responseTime'
+      ),
+    () =>
+      parseHistoryMetric(
+        { ...historyWire(), field: { ...historyWire().field, type: 1 } },
+        'prod',
+        'summary',
+        'responseTime'
+      ),
+    () =>
+      parseHistoryMetric(
+        { ...historyWire(), field: { ...historyWire().field, type: 128 } },
+        'prod',
+        'summary',
+        'responseTime'
+      ),
     () => parseHistoryMetric({ ...historyWire(), app: undefined }, 'prod', 'summary', 'responseTime')
   ])('rejects missing, identity, uniqueness, width, and Java-byte violations %#', parse => {
     expect(parse).toThrow(MonitorContractError);
@@ -101,10 +135,12 @@ function realtimeWire() {
     metrics: 'summary',
     time: 0,
     fields: [{ name: 'responseTime', type: 0, unit: 'ms', label: false }],
-    valueRows: [{
-      labels: { host: 'checkout-a' },
-      values: [{ origin: '12', mean: null, median: null, min: null, max: null, time: 0 }]
-    }]
+    valueRows: [
+      {
+        labels: { host: 'checkout-a' },
+        values: [{ origin: '12', mean: null, median: null, min: null, max: null, time: 0 }]
+      }
+    ]
   };
 }
 

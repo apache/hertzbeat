@@ -1,6 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { classifyMonitorMetricReadError, type MonitorDetailMetric } from '../api/monitor-api';
+import { classifyMonitorMetricReadError } from '../api/monitor-api';
+import type { MonitorDetailMetric } from '../model/monitor-contract';
 import {
   monitorMetricOptions,
   type MonitorMetricCatalogEvidence,
@@ -31,10 +32,7 @@ export function catalogEvidence(
   return options.length > 0 ? { kind: 'ready', options } : { kind: 'empty', options: [] };
 }
 
-export function favoriteEvidence(
-  query: QueryEvidence<string[]>,
-  metricKey: string
-): MonitorMetricFavoriteEvidence {
+export function favoriteEvidence(query: QueryEvidence<string[]>, metricKey: string): MonitorMetricFavoriteEvidence {
   if (query.isPending) return { kind: 'loading' };
   if (query.isError) return { kind: classifyMonitorMetricReadError(query.error) };
   if (!query.data) return { kind: 'error' };

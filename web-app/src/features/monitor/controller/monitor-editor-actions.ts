@@ -17,11 +17,8 @@
 
 import type { NavigateFunction } from 'react-router-dom';
 
-import { normalizeMonitorScrape, type MonitorEditorMode } from '../api/monitor-contract';
-import type {
-  MonitorEditorDraft,
-  MonitorParamFormValue
-} from '../model/monitor-editor-model';
+import { normalizeMonitorScrape, type MonitorEditorMode } from '../model/monitor-contract';
+import type { MonitorEditorDraft, MonitorParamFormValue } from '../model/monitor-editor-model';
 
 type DraftUpdater = (updater: (value: MonitorEditorDraft) => MonitorEditorDraft) => void;
 
@@ -39,32 +36,40 @@ type MonitorEditorActionsInput = {
   save: () => Promise<void>;
   cancel: () => void;
   retry: () => Promise<void>;
+  isLocked: () => boolean;
 };
 
 export function createMonitorEditorActions(input: MonitorEditorActionsInput) {
+  const updateDraft = (updater: (value: MonitorEditorDraft) => MonitorEditorDraft) => {
+    if (!input.isLocked()) input.updateDraft(updater);
+  };
   return {
-    updateMonitor: (patch: Partial<MonitorEditorDraft['monitor']>) => input.updateDraft(current => ({
-      ...current,
-      monitor: { ...current.monitor, ...patch }
-    })),
-    updateCollector: (collector: string) => input.updateDraft(current => ({ ...current, collector })),
-    updateGrafana: (patch: Partial<MonitorEditorDraft['grafanaDashboard']>) => input.updateDraft(current => ({
-      ...current,
-      grafanaDashboard: { ...current.grafanaDashboard, ...patch }
-    })),
-    updateParam: (field: string, value: MonitorParamFormValue) => input.updateDraft(current => ({
-      ...current,
-      params: current.params.map(param => param.field === field
-        ? { ...param, paramValue: value }
-        : param)
-    })),
-    setParamValid: (field: string, valid: boolean) => input.updateDraft(current => ({
-      ...current,
-      invalidParamFields: valid
-        ? current.invalidParamFields.filter(item => item !== field)
-        : [...new Set([...current.invalidParamFields, field])]
-    })),
-    changeSource: (next: { app?: string; scrape?: string }) => changeMonitorEditorSource(input, next),
+    updateMonitor: (patch: Partial<MonitorEditorDraft['monitor']>) =>
+      updateDraft(current => ({
+        ...current,
+        monitor: { ...current.monitor, ...patch }
+      })),
+    updateCollector: (collector: string) => updateDraft(current => ({ ...current, collector })),
+    updateGrafana: (patch: Partial<MonitorEditorDraft['grafanaDashboard']>) =>
+      updateDraft(current => ({
+        ...current,
+        grafanaDashboard: { ...current.grafanaDashboard, ...patch }
+      })),
+    updateParam: (field: string, value: MonitorParamFormValue) =>
+      updateDraft(current => ({
+        ...current,
+        params: current.params.map(param => (param.field === field ? { ...param, paramValue: value } : param))
+      })),
+    setParamValid: (field: string, valid: boolean) =>
+      updateDraft(current => ({
+        ...current,
+        invalidParamFields: valid
+          ? current.invalidParamFields.filter(item => item !== field)
+          : [...new Set([...current.invalidParamFields, field])]
+      })),
+    changeSource: (next: { app?: string; scrape?: string }) => {
+      if (!input.isLocked()) changeMonitorEditorSource(input, next);
+    },
     detect: input.detect,
     save: input.save,
     cancel: input.cancel,
@@ -72,10 +77,7 @@ export function createMonitorEditorActions(input: MonitorEditorActionsInput) {
   };
 }
 
-function changeMonitorEditorSource(
-  input: MonitorEditorActionsInput,
-  next: { app?: string; scrape?: string }
-) {
+function changeMonitorEditorSource(input: MonitorEditorActionsInput, next: { app?: string; scrape?: string }) {
   const params = new URLSearchParams(input.searchParams);
   if (next.app !== undefined) params.set('app', next.app);
   if (next.scrape !== undefined) params.set('scrape', normalizeMonitorScrape(next.scrape));

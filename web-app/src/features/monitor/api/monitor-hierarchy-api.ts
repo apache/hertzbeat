@@ -2,7 +2,7 @@
 
 import { apiMessageGet } from '@/core/http/api-message';
 
-import { MonitorContractError } from './monitor-contract';
+import { MonitorContractError } from '../model/monitor-contract';
 import { parseMonitorAppHierarchy } from './monitor-hierarchy-schema';
 
 function normalizeHierarchyInput(value: string) {

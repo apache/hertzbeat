@@ -17,8 +17,7 @@
 
 import type { RemotePageState, RemotePayloadState } from '@/shared/remote-state';
 
-import type { Monitor, MonitorAction } from '../api/monitor-api';
-import type { MonitorQuery } from './monitor-model';
+import type { Monitor, MonitorAction, MonitorQuery } from './monitor-contract';
 
 export type MonitorListEvidence = RemotePageState<Monitor, 'unavailable' | 'error'>;
 

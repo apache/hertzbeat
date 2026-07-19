@@ -17,7 +17,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
-import type { Monitor } from '../api/monitor-api';
+import type { Monitor } from '../model/monitor-contract';
 import { reconcileMonitorSelection, type MonitorScopedSelection } from '../model/monitor-model';
 
 type MonitorSelectionSnapshot = {
@@ -30,7 +30,7 @@ export type MonitorSelectionController = {
   rows: Monitor[];
   selectedIds: number[];
   selectIds: (ids: number[]) => void;
-  clear: () => void;
+  remove: (ids: readonly number[]) => void;
   validatedIds: () => number[];
 };
 
@@ -62,8 +62,12 @@ export function useMonitorSelection(scope: string, content?: Monitor[]): Monitor
     [scope, visibleIds]
   );
 
-  const clear = useCallback(() => {
-    setSelection(current => (current.ids.length === 0 ? current : { ...current, ids: [] }));
+  const remove = useCallback((ids: readonly number[]) => {
+    const removed = new Set(ids);
+    setSelection(current => {
+      const remaining = current.ids.filter(id => !removed.has(id));
+      return remaining.length === current.ids.length ? current : { ...current, ids: remaining };
+    });
   }, []);
 
   const validatedIds = useCallback(() => {
@@ -71,5 +75,5 @@ export function useMonitorSelection(scope: string, content?: Monitor[]): Monitor
     return reconcileMonitorSelection(current.selection, current.scope, current.visibleIds);
   }, []);
 
-  return { rows, selectedIds, selectIds, clear, validatedIds };
+  return { rows, selectedIds, selectIds, remove, validatedIds };
 }

@@ -15,17 +15,11 @@
  * limitations under the License.
  */
 
-export {
-  buildMonitorActionPath,
-  buildMonitorListPath,
-  monitorPageSizes,
-  readMonitorQuery,
-  writeMonitorQuery,
-  type MonitorAction,
-  type MonitorQuery
-} from '../api/monitor-api';
+export { monitorPageSizes, type MonitorAction, type MonitorQuery } from './monitor-contract';
+export { readMonitorQuery, writeMonitorQuery } from './monitor-query';
 
-import { writeMonitorQuery, type MonitorQuery } from '../api/monitor-api';
+import { monitorStatusCodes, type MonitorQuery } from './monitor-contract';
+import { writeMonitorQuery } from './monitor-query';
 
 export type MonitorScopedSelection = { scope: string; ids: number[] };
 
@@ -33,7 +27,11 @@ export function monitorSelectionScope(query: MonitorQuery) {
   return writeMonitorQuery(query).toString();
 }
 
-export function reconcileMonitorSelection(selection: MonitorScopedSelection, scope: string, visibleIds: readonly number[]) {
+export function reconcileMonitorSelection(
+  selection: MonitorScopedSelection,
+  scope: string,
+  visibleIds: readonly number[]
+) {
   if (selection.scope !== scope) return [];
   const visible = new Set(visibleIds);
   const reconciled = [...new Set(selection.ids)].filter(id => visible.has(id));
@@ -52,7 +50,7 @@ type MonitorAppItem = {
 export function monitorAppOptions(items: MonitorAppItem[]) {
   return items
     .filter(isSelectableMonitorApp)
-    .map(item => ({ value: item.value as string, label: item.label || item.value as string }));
+    .map(item => ({ value: item.value as string, label: item.label || (item.value as string) }));
 }
 
 export function isSelectableMonitorApp(item: MonitorAppItem) {
@@ -60,15 +58,15 @@ export function isSelectableMonitorApp(item: MonitorAppItem) {
 }
 
 export function monitorStatusKey(status: number) {
-  if (status === 0) return 'monitor.status.paused';
-  if (status === 1) return 'monitor.status.available';
-  if (status === 2) return 'monitor.status.unavailable';
+  if (status === monitorStatusCodes.paused) return 'monitor.status.paused';
+  if (status === monitorStatusCodes.available) return 'monitor.status.available';
+  if (status === monitorStatusCodes.unavailable) return 'monitor.status.unavailable';
   return 'monitor.status.unknown';
 }
 
 export function monitorStatusColor(status: number) {
-  if (status === 1) return 'green';
-  if (status === 2) return 'red';
+  if (status === monitorStatusCodes.available) return 'green';
+  if (status === monitorStatusCodes.unavailable) return 'red';
   return 'default';
 }
 

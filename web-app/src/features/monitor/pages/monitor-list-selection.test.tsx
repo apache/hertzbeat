@@ -24,7 +24,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
-import type { Monitor, MonitorQuery } from '../api/monitor-api';
+import type { Monitor, MonitorQuery } from '../model/monitor-contract';
 
 const { loadMonitorApps, loadMonitors, mutateMonitors } = vi.hoisted(() => ({
   loadMonitorApps: vi.fn(),
@@ -33,7 +33,7 @@ const { loadMonitorApps, loadMonitors, mutateMonitors } = vi.hoisted(() => ({
 }));
 
 vi.mock('../api/monitor-api', async importOriginal => ({
-  ...await importOriginal<typeof import('../api/monitor-api')>(),
+  ...(await importOriginal<typeof import('../api/monitor-api')>()),
   loadMonitorApps,
   loadMonitors,
   mutateMonitors
@@ -158,11 +158,27 @@ async function rowCheckbox(name: string) {
 
 function ScopeControls() {
   const navigate = useNavigate();
-  return <>
-    <button type="button" data-testid="search-scope" onClick={() => void navigate('/monitors?search=orders&pageIndex=0&pageSize=10')}>Search scope</button>
-    <button type="button" data-testid="page-scope" onClick={() => void navigate('/monitors?search=checkout&pageIndex=1&pageSize=10')}>Page scope</button>
-    <button type="button" data-testid="history-back" onClick={() => void navigate(-1)}>Back</button>
-  </>;
+  return (
+    <>
+      <button
+        type="button"
+        data-testid="search-scope"
+        onClick={() => void navigate('/monitors?search=orders&pageIndex=0&pageSize=10')}
+      >
+        Search scope
+      </button>
+      <button
+        type="button"
+        data-testid="page-scope"
+        onClick={() => void navigate('/monitors?search=checkout&pageIndex=1&pageSize=10')}
+      >
+        Page scope
+      </button>
+      <button type="button" data-testid="history-back" onClick={() => void navigate(-1)}>
+        Back
+      </button>
+    </>
+  );
 }
 
 function page(content: Monitor[]) {
@@ -170,9 +186,21 @@ function page(content: Monitor[]) {
 }
 
 const checkoutMonitor: Monitor = { id: 7, name: 'checkout-monitor', app: 'website', instance: 'checkout', status: 1 };
-const secondCheckoutMonitor: Monitor = { id: 8, name: 'second-checkout-monitor', app: 'website', instance: 'checkout-2', status: 0 };
+const secondCheckoutMonitor: Monitor = {
+  id: 8,
+  name: 'second-checkout-monitor',
+  app: 'website',
+  instance: 'checkout-2',
+  status: 0
+};
 const ordersMonitor: Monitor = { id: 9, name: 'orders-monitor', app: 'website', instance: 'orders', status: 1 };
-const checkoutPageTwo: Monitor = { id: 10, name: 'checkout-page-two', app: 'website', instance: 'checkout-page-2', status: 1 };
+const checkoutPageTwo: Monitor = {
+  id: 10,
+  name: 'checkout-page-two',
+  app: 'website',
+  instance: 'checkout-page-2',
+  status: 1
+};
 
 class ResizeObserverStub {
   observe() {}

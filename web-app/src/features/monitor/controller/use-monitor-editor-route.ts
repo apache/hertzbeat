@@ -16,19 +16,14 @@
  */
 
 import { useEffect } from 'react';
-import {
-  useLocation,
-  useNavigate,
-  useParams,
-  useSearchParams,
-  type NavigateFunction
-} from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams, type NavigateFunction } from 'react-router-dom';
 
 import {
+  normalizeMonitorScrape,
   type MonitorApp,
-  type MonitorDetail
-} from '../api/monitor-api';
-import { normalizeMonitorScrape, type MonitorEditorMode } from '../api/monitor-contract';
+  type MonitorDetail,
+  type MonitorEditorMode
+} from '../model/monitor-contract';
 import { parseMonitorRouteId } from '../model/monitor-detail-model';
 import { isSelectableMonitorApp, safeMonitorReturnTo } from '../model/monitor-model';
 
@@ -46,7 +41,7 @@ export function useMonitorEditorRoute(mode: MonitorEditorMode) {
     navigate,
     pathname: location.pathname,
     rawScrape,
-    requestedApp: mode === 'new' ? searchParams.get('app')?.trim() ?? '' : '',
+    requestedApp: mode === 'new' ? (searchParams.get('app')?.trim() ?? '') : '',
     requestedScrape: normalizeMonitorScrape(rawScrape),
     returnTo: safeMonitorReturnTo(searchParams.get('returnTo')),
     searchParams,
@@ -85,9 +80,7 @@ function canonicalEditorSearch(input: CanonicalUrlInput) {
   const params = new URLSearchParams(input.searchParams);
   if (corrections.invalidApp) params.delete('app');
   if (corrections.invalidScrape) {
-    params.set('scrape', input.mode === 'edit'
-      ? normalizeMonitorScrape(input.detail?.monitor.scrape)
-      : 'static');
+    params.set('scrape', input.mode === 'edit' ? normalizeMonitorScrape(input.detail?.monitor.scrape) : 'static');
   }
   // A direct edit URL cannot silently change the persisted scrape source.
   // Only an explicit in-page transition carries draft values across sources.
@@ -106,8 +99,11 @@ function monitorEditorUrlCorrections(input: CanonicalUrlInput) {
 }
 
 function isInvalidRequestedApp(input: CanonicalUrlInput) {
-  return input.mode === 'new' && Boolean(input.requestedApp)
-    && !input.apps?.some(app => app.value === input.requestedApp && isSelectableMonitorApp(app));
+  return (
+    input.mode === 'new' &&
+    Boolean(input.requestedApp) &&
+    !input.apps?.some(app => app.value === input.requestedApp && isSelectableMonitorApp(app))
+  );
 }
 
 function isInvalidRequestedScrape(input: CanonicalUrlInput) {
@@ -115,9 +111,11 @@ function isInvalidRequestedScrape(input: CanonicalUrlInput) {
 }
 
 function isDirectEditDrift(input: CanonicalUrlInput) {
-  return input.mode === 'edit'
-    && input.detail !== undefined
-    && input.rawScrape !== null
-    && normalizeMonitorScrape(input.rawScrape) !== normalizeMonitorScrape(input.detail.monitor.scrape)
-    && input.carrySource !== input.source;
+  return (
+    input.mode === 'edit' &&
+    input.detail !== undefined &&
+    input.rawScrape !== null &&
+    normalizeMonitorScrape(input.rawScrape) !== normalizeMonitorScrape(input.detail.monitor.scrape) &&
+    input.carrySource !== input.source
+  );
 }

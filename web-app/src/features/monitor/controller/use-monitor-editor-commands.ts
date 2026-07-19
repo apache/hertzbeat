@@ -15,57 +15,25 @@
  * limitations under the License.
  */
 
+import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
-import type { NavigateFunction } from 'react-router-dom';
 
-import {
-  detectMonitor,
-  loadMonitorDetail,
-  loadNewMonitorEvidence,
-  saveMonitor,
-  type MonitorDetail,
-  type MonitorParamDefine
-} from '../api/monitor-api';
-import type { MonitorEditorMode } from '../api/monitor-contract';
-import { monitorWritableConverged } from '../model/monitor-editor-convergence';
+import { detectMonitor } from '../api/monitor-api';
+import type { MonitorDetail } from '../model/monitor-contract';
 import { buildMonitorPayload } from '../model/monitor-editor-payload';
-import {
-  MonitorParamDraftError,
-  type MonitorEditorDraft
-} from '../model/monitor-editor-model';
 import { validateMonitorEditorDraft } from '../model/monitor-editor-validation';
+import { verifiedMonitorWrite, type MonitorWriteVerification } from '../model/monitor-write-verification';
 import {
   createMonitorEditorOperation,
   isCurrentMonitorEditorOperation,
   type MonitorEditorActiveOperation
 } from './monitor-editor-command-operation';
-
-type CommandText = {
-  validation: string;
-  detectSuccess: string;
-  detectFailed: string;
-  saveSuccess: string;
-  saveFailed: string;
-};
-
-type MessageApi = {
-  warning: (text: string) => unknown;
-  success: (text: string) => unknown;
-  error: (text: string) => unknown;
-};
-
-type CommandInput = {
-  mode: MonitorEditorMode;
-  id: number | undefined;
-  source: string;
-  draft: MonitorEditorDraft | undefined;
-  before: MonitorDetail | undefined;
-  defines: MonitorParamDefine[];
-  returnTo: string;
-  navigate: NavigateFunction;
-  message: MessageApi;
-  text: CommandText;
-};
+import type {
+  MonitorEditorCommandInput as CommandInput,
+  MonitorEditorCommandRequest
+} from './monitor-editor-command-model';
+import { completeCommittedMonitorSave } from './monitor-editor-save-completion';
+import { saveAndVerifyMonitor } from './monitor-editor-save-verification';
 
 type CommandState = {
   source: string;
@@ -80,7 +48,8 @@ type PreparedCommand = {
   payload: ReturnType<typeof buildMonitorPayload>;
 };
 
-export function useMonitorEditorCommands(input: CommandInput) {
+export function useMonitorEditorCommands(request: MonitorEditorCommandRequest) {
+  const input: CommandInput = { ...request, queryClient: useQueryClient() };
   const operation = useRef<MonitorEditorActiveOperation | null>(null);
   const [state, setState] = useState<CommandState>({
     source: input.source,
@@ -99,22 +68,24 @@ export function useMonitorEditorCommands(input: CommandInput) {
     }
   }, [input.source]);
 
-  useEffect(() => () => {
-    operation.current?.controller.abort();
-  }, []);
-
-  const run = (action: 'detect' | 'save') => executeMonitorCommand(
-    action,
-    input,
-    operation,
-    setState
+  useEffect(
+    () => () => {
+      const active = operation.current;
+      operation.current = null;
+      active?.controller.abort();
+    },
+    []
   );
+
+  const run = (action: 'detect' | 'save') => executeMonitorCommand(action, input, operation, setState);
 
   return {
     command: state.source === input.source ? state.command : 'idle',
-    validationIssues: state.source === input.source && state.showValidation && input.draft
-      ? validateMonitorEditorDraft(input.draft, input.defines)
-      : [],
+    isLocked: () => operation.current !== null,
+    validationIssues:
+      state.source === input.source && state.showValidation && input.draft
+        ? validateMonitorEditorDraft(input.draft, input.defines)
+        : [],
     detect: () => run('detect'),
     save: () => run('save'),
     cancel: () => {
@@ -137,8 +108,11 @@ async function executeMonitorCommand(
   const { active, payload } = prepared;
 
   try {
-    await runMonitorCommand(action, input, payload, active.controller.signal);
-    completeMonitorCommand(action, input, operation.current, active);
+    const verification = await runMonitorCommand(action, input, payload, active.controller.signal, () =>
+      isCurrentMonitorEditorOperation(operation.current, active)
+    );
+    if (!verification) return;
+    completeMonitorCommand(action, verification, input, operation.current, active);
   } catch {
     failMonitorCommand(action, input, operation.current, active);
   } finally {
@@ -181,21 +155,29 @@ async function runMonitorCommand(
   action: CommandAction,
   input: CommandInput,
   payload: ReturnType<typeof buildMonitorPayload>,
-  signal: AbortSignal
+  signal: AbortSignal,
+  ownsOperation: () => boolean
 ) {
-  if (action === 'detect') await detectMonitor(payload, signal);
-  else await saveAndProve(input, payload, signal);
+  if (action === 'detect') {
+    await detectMonitor(payload, signal);
+    return verifiedMonitorWrite(undefined);
+  }
+  return saveAndVerifyMonitor(input, payload, signal, ownsOperation);
 }
 
 function completeMonitorCommand(
   action: CommandAction,
+  verification: MonitorWriteVerification<MonitorDetail | undefined>,
   input: CommandInput,
   current: MonitorEditorActiveOperation | null,
   active: MonitorEditorActiveOperation
 ) {
   if (!isCurrentMonitorEditorOperation(current, active) || active.controller.signal.aborted) return;
-  void input.message.success(action === 'detect' ? input.text.detectSuccess : input.text.saveSuccess);
-  if (action === 'save') navigateAfterSave(input);
+  if (action === 'detect') {
+    void input.message.success(input.text.detectSuccess);
+    return;
+  }
+  completeCommittedMonitorSave(verification, input);
 }
 
 function failMonitorCommand(
@@ -217,26 +199,4 @@ function releaseMonitorCommand(
   if (operation.current?.token !== active.token) return;
   operation.current = null;
   setState({ source, command: 'idle', showValidation: false });
-}
-
-async function saveAndProve(
-  input: CommandInput,
-  payload: ReturnType<typeof buildMonitorPayload>,
-  signal: AbortSignal
-) {
-  await saveMonitor(input.mode, payload, signal);
-  const proof = input.mode === 'edit'
-    ? await loadMonitorDetail(input.id!, signal)
-    : await loadNewMonitorEvidence(payload.monitor.name ?? '', payload.monitor.app ?? '', signal);
-  if (!monitorWritableConverged(input.mode, payload, proof, input.defines, input.before)) {
-    throw new MonitorParamDraftError('convergence');
-  }
-}
-
-function navigateAfterSave(input: CommandInput) {
-  if (!input.draft) return;
-  const target = input.mode === 'edit'
-    ? input.returnTo
-    : `/monitors?app=${encodeURIComponent(input.draft.monitor.app)}`;
-  void input.navigate(target);
 }

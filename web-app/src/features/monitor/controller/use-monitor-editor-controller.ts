@@ -16,24 +16,69 @@
  */
 
 import { App } from 'antd';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
-import { monitorScrapeValues } from '../api/monitor-api';
-import type { MonitorEditorMode } from '../api/monitor-contract';
+import { monitorScrapeValues, type MonitorEditorMode } from '../model/monitor-contract';
 import { createMonitorEditorActions } from './monitor-editor-actions';
+import type { MonitorEditorCommandText } from './monitor-editor-command-model';
 import { useMonitorEditorCommands } from './use-monitor-editor-commands';
 import { useMonitorEditorDraft } from './use-monitor-editor-draft';
 import { useMonitorEditorResources } from './use-monitor-editor-resources';
-import {
-  useCanonicalMonitorEditorUrl,
-  useMonitorEditorRoute
-} from './use-monitor-editor-route';
+import { useCanonicalMonitorEditorUrl, useMonitorEditorRoute } from './use-monitor-editor-route';
 
 export type { MonitorEditorEvidence } from './use-monitor-editor-resources';
 
 export function useMonitorEditorController(mode: MonitorEditorMode) {
   const { t } = useTranslation();
   const { message } = App.useApp();
+  const { route, resources, draftState } = useMonitorEditorSession(mode);
+  const commands = useMonitorEditorCommands({
+    mode,
+    id: route.id,
+    source: resources.source,
+    draft: draftState.draft,
+    before: resources.detail,
+    defines: resources.defines,
+    returnTo: route.returnTo,
+    navigate: route.navigate,
+    message,
+    text: monitorEditorCommandText(t)
+  });
+  const actions = createMonitorEditorActions({
+    mode,
+    id: route.id,
+    app: resources.app,
+    draft: draftState.draft,
+    searchParams: route.searchParams,
+    pathname: route.pathname,
+    navigate: route.navigate,
+    updateDraft: draftState.update,
+    prepareTransition: draftState.prepareTransition,
+    detect: commands.detect,
+    save: commands.save,
+    cancel: commands.cancel,
+    retry: resources.retry,
+    isLocked: commands.isLocked
+  });
+  return {
+    state: {
+      evidence: resources.evidence,
+      draft: draftState.draft,
+      defines: resources.defines,
+      apps: resources.apps,
+      collectors: resources.collectors,
+      busy: commands.command !== 'idle',
+      command: commands.command,
+      validationIssues: commands.validationIssues,
+      scrapeValues: monitorScrapeValues,
+      sourceKey: resources.source
+    },
+    actions
+  };
+}
+
+function useMonitorEditorSession(mode: MonitorEditorMode) {
   const route = useMonitorEditorRoute(mode);
   const resources = useMonitorEditorResources({
     mode,
@@ -62,55 +107,17 @@ export function useMonitorEditorController(mode: MonitorEditorMode) {
     pathname: route.pathname,
     navigate: route.navigate
   });
-  const commands = useMonitorEditorCommands({
-    mode,
-    id: route.id,
-    source: resources.source,
-    draft: draftState.draft,
-    before: resources.detail,
-    defines: resources.defines,
-    returnTo: route.returnTo,
-    navigate: route.navigate,
-    message,
-    text: {
-      validation: t('monitor.editor.validation'),
-      detectSuccess: t('monitor.editor.detectSuccess'),
-      detectFailed: t('monitor.editor.detectFailed'),
-      saveSuccess: t('monitor.editor.saveSuccess'),
-      saveFailed: t('monitor.editor.saveFailed')
-    }
-  });
+  return { route, resources, draftState };
+}
 
-  const actions = createMonitorEditorActions({
-    mode,
-    id: route.id,
-    app: resources.app,
-    draft: draftState.draft,
-    searchParams: route.searchParams,
-    pathname: route.pathname,
-    navigate: route.navigate,
-    updateDraft: draftState.update,
-    prepareTransition: draftState.prepareTransition,
-    detect: commands.detect,
-    save: commands.save,
-    cancel: commands.cancel,
-    retry: resources.retry
-  });
-
+function monitorEditorCommandText(t: TFunction): MonitorEditorCommandText {
   return {
-    state: {
-      evidence: resources.evidence,
-      draft: draftState.draft,
-      defines: resources.defines,
-      apps: resources.apps,
-      collectors: resources.collectors,
-      busy: commands.command !== 'idle',
-      command: commands.command,
-      validationIssues: commands.validationIssues,
-      returnTo: route.returnTo,
-      scrapeValues: monitorScrapeValues,
-      sourceKey: resources.source
-    },
-    actions
+    validation: t('monitor.editor.validation'),
+    detectSuccess: t('monitor.editor.detectSuccess'),
+    detectFailed: t('monitor.editor.detectFailed'),
+    saveSuccess: t('monitor.editor.saveSuccess'),
+    saveFailed: t('monitor.editor.saveFailed'),
+    verificationUnavailable: t('common.unavailable'),
+    verificationError: t('common.routeError.description')
   };
 }

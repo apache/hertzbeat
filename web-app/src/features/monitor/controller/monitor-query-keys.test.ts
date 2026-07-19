@@ -18,15 +18,30 @@
 import { describe, expect, it } from 'vitest';
 
 import detailSource from './use-monitor-detail-controller.ts?raw';
-import editorResourcesSource from './use-monitor-editor-resources.ts?raw';
+import editorResourceQueriesSource from './use-monitor-editor-resource-queries.ts?raw';
+import favoriteMutationSource from './use-monitor-favorite-mutation.ts?raw';
 import listSource from './use-monitor-list-controller.ts?raw';
+import listCommandsSource from './use-monitor-list-commands.ts?raw';
+import metricDataSource from './use-monitor-metric-data.ts?raw';
 import metricSource from './use-monitor-metric-workbench-controller.ts?raw';
 import { monitorQueryKeys } from './monitor-query-keys';
 
 const listQuery = {
-  search: 'checkout', app: 'website', status: '1', labels: 'env:prod', pageIndex: 2, pageSize: 20
+  search: 'checkout',
+  app: 'website',
+  status: '1',
+  labels: 'env:prod',
+  pageIndex: 2,
+  pageSize: 20
 };
 const time = { window: { from: 1_000, to: 2_000 }, refreshRevision: 3 };
+const historySource = {
+  id: 7,
+  instance: '127.0.0.1:8080',
+  name: 'checkout',
+  app: 'website',
+  scrape: 'static' as const
+};
 
 describe('Monitor Query Key factory', () => {
   it('keeps equivalent resource inputs stable', () => {
@@ -36,19 +51,29 @@ describe('Monitor Query Key factory', () => {
     expect(monitorQueryKeys.collectors()).toEqual(monitorQueryKeys.collectors());
     expect(monitorQueryKeys.appDefines('website')).toEqual(monitorQueryKeys.appDefines('website'));
     expect(monitorQueryKeys.sdDefines('http')).toEqual(monitorQueryKeys.sdDefines('http'));
-    expect(monitorQueryKeys.metricCatalog(7, 'website', 'http'))
-      .toEqual(monitorQueryKeys.metricCatalog(7, 'website', 'http'));
+    expect(monitorQueryKeys.metricCatalog(7, 'website', 'http')).toEqual(
+      monitorQueryKeys.metricCatalog(7, 'website', 'http')
+    );
     expect(monitorQueryKeys.favorites(7)).toEqual(monitorQueryKeys.favorites(7));
-    expect(monitorQueryKeys.realtime(7, 'summary', 'responseTime', time))
-      .toEqual(monitorQueryKeys.realtime(7, 'summary', 'responseTime', { ...time, window: { ...time.window } }));
-    expect(monitorQueryKeys.history(7, 'summary.responseTime', '30m', time))
-      .toEqual(monitorQueryKeys.history(7, 'summary.responseTime', '30m', { ...time, window: { ...time.window } }));
+    expect(monitorQueryKeys.realtime(7, 'summary', 'responseTime', time)).toEqual(
+      monitorQueryKeys.realtime(7, 'summary', 'responseTime', { ...time, window: { ...time.window } })
+    );
+    expect(monitorQueryKeys.history(historySource, 'summary.responseTime', '30m', time)).toEqual(
+      monitorQueryKeys.history({ ...historySource }, 'summary.responseTime', '30m', {
+        ...time,
+        window: { ...time.window }
+      })
+    );
   });
 
   it('includes every list filter and page input', () => {
     for (const [field, value] of [
-      ['search', 'orders'], ['app', 'jvm'], ['status', '0'], ['labels', 'zone:a'],
-      ['pageIndex', 3], ['pageSize', 50]
+      ['search', 'orders'],
+      ['app', 'jvm'],
+      ['status', '0'],
+      ['labels', 'zone:a'],
+      ['pageIndex', 3],
+      ['pageSize', 50]
     ] as const) {
       expect(monitorQueryKeys.list({ ...listQuery, [field]: value })).not.toEqual(monitorQueryKeys.list(listQuery));
     }
@@ -75,29 +100,52 @@ describe('Monitor Query Key factory', () => {
       monitorQueryKeys.realtime(7, 'summary', 'responseTime', { ...time, window: { from: 999, to: 2_000 } }),
       monitorQueryKeys.realtime(7, 'summary', 'responseTime', { ...time, window: { from: 1_000, to: 2_001 } }),
       monitorQueryKeys.realtime(7, 'summary', 'responseTime', { ...time, refreshRevision: 4 })
-    ]) expect(candidate).not.toEqual(realtime);
+    ])
+      expect(candidate).not.toEqual(realtime);
 
-    const history = monitorQueryKeys.history(7, 'summary.responseTime', '30m', time);
+    const history = monitorQueryKeys.history(historySource, 'summary.responseTime', '30m', time);
     for (const candidate of [
-      monitorQueryKeys.history(8, 'summary.responseTime', '30m', time),
-      monitorQueryKeys.history(7, 'summary.max', '30m', time),
-      monitorQueryKeys.history(7, 'summary.responseTime', '1h', time),
-      monitorQueryKeys.history(7, 'summary.responseTime', '30m', { ...time, window: { from: 999, to: 2_000 } }),
-      monitorQueryKeys.history(7, 'summary.responseTime', '30m', { ...time, refreshRevision: 4 })
-    ]) expect(candidate).not.toEqual(history);
+      monitorQueryKeys.history({ ...historySource, id: 8 }, 'summary.responseTime', '30m', time),
+      monitorQueryKeys.history({ ...historySource, instance: '127.0.0.1:9090' }, 'summary.responseTime', '30m', time),
+      monitorQueryKeys.history({ ...historySource, name: 'orders' }, 'summary.responseTime', '30m', time),
+      monitorQueryKeys.history({ ...historySource, app: 'prometheus' }, 'summary.responseTime', '30m', time),
+      monitorQueryKeys.history({ ...historySource, scrape: 'http_sd' }, 'summary.responseTime', '30m', time),
+      monitorQueryKeys.history(historySource, 'summary.max', '30m', time),
+      monitorQueryKeys.history(historySource, 'summary.responseTime', '1h', time),
+      monitorQueryKeys.history(historySource, 'summary.responseTime', '30m', {
+        ...time,
+        window: { from: 999, to: 2_000 }
+      }),
+      monitorQueryKeys.history(historySource, 'summary.responseTime', '30m', { ...time, refreshRevision: 4 })
+    ])
+      expect(candidate).not.toEqual(history);
   });
 
   it('owns every production controller key and reuses shared resources', () => {
-    for (const source of [detailSource, editorResourcesSource, listSource, metricSource]) {
+    for (const source of [
+      detailSource,
+      editorResourceQueriesSource,
+      favoriteMutationSource,
+      listSource,
+      metricDataSource,
+      metricSource
+    ]) {
       expect(source).toContain("from './monitor-query-keys'");
       expect(source).not.toMatch(/queryKey:\s*\[/);
       expect(source).not.toMatch(/\b(?:const|function)\s+(?:monitorKey|monitorSharedTimeKey|\w+QueryKey)\b/);
     }
     expect(detailSource).toContain('monitorQueryKeys.detail(id)');
-    expect(editorResourcesSource).toContain('monitorQueryKeys.detail(input.id)');
+    expect(editorResourceQueriesSource).toContain('monitorQueryKeys.detail(input.id)');
     expect(listSource).toContain('monitorQueryKeys.apps()');
-    expect(editorResourcesSource).toContain('monitorQueryKeys.apps()');
-    expect(metricSource).toContain('queryKey: monitorQueryKeys.favorites(source.id)');
-    expect(metricSource).toContain('setQueryData(monitorQueryKeys.favorites(monitorId), canonical)');
+    expect(editorResourceQueriesSource).toContain('monitorQueryKeys.apps()');
+    expect(metricDataSource).toContain('queryKey: monitorQueryKeys.favorites(monitor?.id)');
+    expect(favoriteMutationSource).toContain('setQueryData(monitorQueryKeys.favorites(operation.monitorId)');
+  });
+
+  it('retires operation ownership before later layout work can publish stale completion', () => {
+    for (const source of [favoriteMutationSource, listCommandsSource]) {
+      expect(source).toContain('useLayoutEffect');
+      expect(source).not.toMatch(/\buseEffect\s*\(/);
+    }
   });
 });

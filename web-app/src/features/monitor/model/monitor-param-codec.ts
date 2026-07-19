@@ -15,36 +15,44 @@
  * limitations under the License.
  */
 
-import type { MonitorParamDefine } from '../api/monitor-api';
-import {
-  MonitorParamDraftError,
-  type MonitorMetricField,
-  type MonitorParamFormValue
-} from './monitor-editor-model';
+import type { MonitorParamDefine } from './monitor-contract';
+import { MonitorParamDraftError, type MonitorMetricField, type MonitorParamFormValue } from './monitor-editor-model';
 
 export function monitorParamFormValue(
   define: MonitorParamDefine,
   value: string | null | undefined
 ): MonitorParamFormValue {
   switch (define.type) {
-    case 'boolean': return parseBooleanValue(value, define.field);
-    case 'number': return parseNumberValue(value, define.field);
-    case 'key-value': return parseStructuredValue(value, define.field);
-    case 'metrics-field': return parseMetricsFields(value, define.field);
-    case 'radio': return parseRadioValue(value, define);
+    case 'boolean':
+      return parseBooleanValue(value, define.field);
+    case 'number':
+      return parseNumberValue(value, define.field);
+    case 'key-value':
+      return parseStructuredValue(value, define.field);
+    case 'metrics-field':
+      return parseMetricsFields(value, define.field);
+    case 'radio':
+      return parseRadioValue(value, define);
     // Arrays remain comma-delimited strings because that is the backend wire contract.
-    case 'array': return value ?? null;
-    default: return value ?? null;
+    case 'array':
+      return value ?? null;
+    default:
+      return value ?? null;
   }
 }
 
 export function serializeMonitorParamValue(define: MonitorParamDefine, value: unknown): string | null {
   switch (define.type) {
-    case 'boolean': return serializeBooleanValue(value);
-    case 'number': return serializeNumberValue(value);
-    case 'key-value': return serializeMapValue(value);
-    case 'metrics-field': return isMetricsFields(value) ? JSON.stringify(normalizeMetricsFields(value)) : null;
-    default: return typeof value === 'string' ? value.trim() : null;
+    case 'boolean':
+      return serializeBooleanValue(value);
+    case 'number':
+      return serializeNumberValue(value);
+    case 'key-value':
+      return serializeMapValue(value);
+    case 'metrics-field':
+      return isMetricsFields(value) ? JSON.stringify(normalizeMetricsFields(value)) : null;
+    default:
+      return typeof value === 'string' ? value.trim() : null;
   }
 }
 
@@ -123,14 +131,24 @@ function parseMetricsFields(value: string | null | undefined, field: string): Mo
 function isMetricsFields(value: unknown): value is MonitorMetricField[] {
   const allowed = new Set(['field', 'unit', 'type', 'label', 'i18n']);
   if (!Array.isArray(value)) return false;
-  const fields = value.map(entry => isUnknownRecord(entry) && typeof entry.field === 'string' ? entry.field.trim() : '');
-  return fields.every(Boolean) && new Set(fields).size === fields.length && value.every(entry => {
-    if (!isUnknownRecord(entry) || Object.keys(entry).some(key => !allowed.has(key))) return false;
-    return typeof entry.field === 'string' && typeof entry.unit === 'string' && entry.unit.trim().length > 0
-      && (entry.type === 0 || entry.type === 1)
-      && (entry.label === undefined || typeof entry.label === 'boolean')
-      && (entry.i18n === undefined || isStringRecord(entry.i18n));
-  });
+  const fields = value.map(entry =>
+    isUnknownRecord(entry) && typeof entry.field === 'string' ? entry.field.trim() : ''
+  );
+  return (
+    fields.every(Boolean) &&
+    new Set(fields).size === fields.length &&
+    value.every(entry => {
+      if (!isUnknownRecord(entry) || Object.keys(entry).some(key => !allowed.has(key))) return false;
+      return (
+        typeof entry.field === 'string' &&
+        typeof entry.unit === 'string' &&
+        entry.unit.trim().length > 0 &&
+        (entry.type === 0 || entry.type === 1) &&
+        (entry.label === undefined || typeof entry.label === 'boolean') &&
+        (entry.i18n === undefined || isStringRecord(entry.i18n))
+      );
+    })
+  );
 }
 
 function normalizeMetricsFields(value: MonitorMetricField[]) {
@@ -138,8 +156,12 @@ function normalizeMetricsFields(value: MonitorMetricField[]) {
 }
 
 function isStringRecord(value: unknown): value is Record<string, string> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-    && Object.entries(value).every(([key, entry]) => key.trim().length > 0 && typeof entry === 'string');
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    Object.entries(value).every(([key, entry]) => key.trim().length > 0 && typeof entry === 'string')
+  );
 }
 
 function isUnknownRecord(value: unknown): value is Record<string, unknown> {

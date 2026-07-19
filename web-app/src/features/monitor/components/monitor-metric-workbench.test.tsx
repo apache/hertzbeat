@@ -21,16 +21,32 @@ const catalogCases: Array<[MonitorMetricCatalogEvidence, string]> = [
 ];
 
 describe('MonitorMetricWorkbench', () => {
-  beforeAll(async () => { await initializeI18n(); await loadLocale('en-US'); });
+  beforeAll(async () => {
+    await initializeI18n();
+    await loadLocale('en-US');
+  });
   afterEach(cleanup);
 
   it('renders the selected realtime field and preserves epoch zero', () => {
-    renderWorkbench(controller({ realtime: { kind: 'ready', rows: [{
-      key: '0', labels: { host: 'a' }, value: '12', time: 0
-    }] } }));
+    renderWorkbench(
+      controller({
+        realtime: {
+          kind: 'ready',
+          rows: [
+            {
+              key: '0',
+              labels: { host: 'a' },
+              value: '12',
+              time: 0
+            }
+          ]
+        }
+      })
+    );
     expect(screen.getByText('12')).toBeInTheDocument();
-    expect(screen.getByText(new Intl.DateTimeFormat(undefined,
-      { dateStyle: 'short', timeStyle: 'medium' }).format(0))).toBeInTheDocument();
+    expect(
+      screen.getByText(new Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'medium' }).format(0))
+    ).toBeInTheDocument();
   });
 
   it.each([
@@ -56,6 +72,12 @@ describe('MonitorMetricWorkbench', () => {
     expect(screen.getByRole('button', { name: i18n.t('monitorMetrics.favorite') })).toBeDisabled();
   });
 
+  it('keeps favorite unavailable to interaction while canonical verification is pending', () => {
+    renderWorkbench(controller({ favoriteBusy: true }));
+
+    expect(screen.getByText(i18n.t('monitorMetrics.favorite')).closest('button')).toBeDisabled();
+  });
+
   it.each([
     ['unavailable', 'common.unavailable'],
     ['error', 'common.routeError.description'],
@@ -67,17 +89,28 @@ describe('MonitorMetricWorkbench', () => {
   });
 });
 
-function controller(statePatch: Partial<MonitorMetricWorkbenchController['state']> = {}): MonitorMetricWorkbenchController {
+function controller(
+  statePatch: Partial<MonitorMetricWorkbenchController['state']> = {}
+): MonitorMetricWorkbenchController {
   return {
     state: {
       catalog: { kind: 'ready', options: [{ key: 'summary.value', group: 'summary', field: 'value' }] },
-      metricKey: 'summary.value', history: '30m', favorite: { kind: 'ready', value: false }, favoriteBusy: false,
-      realtime: { kind: 'empty', rows: [] }, historical: { kind: 'empty', rows: [] }, ...statePatch
+      metricKey: 'summary.value',
+      history: '30m',
+      favorite: { kind: 'ready', value: false },
+      favoriteBusy: false,
+      realtime: { kind: 'empty', rows: [] },
+      historical: { kind: 'empty', rows: [] },
+      ...statePatch
     },
     actions: { setMetric: vi.fn(), setHistory: vi.fn(), toggleFavorite: vi.fn(), refresh: vi.fn() }
   };
 }
 
 function renderWorkbench(value: MonitorMetricWorkbenchController) {
-  return render(<I18nextProvider i18n={i18n}><MonitorMetricWorkbench {...value} /></I18nextProvider>);
+  return render(
+    <I18nextProvider i18n={i18n}>
+      <MonitorMetricWorkbench {...value} />
+    </I18nextProvider>
+  );
 }

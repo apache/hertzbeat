@@ -18,44 +18,57 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  buildFavoriteMetricPath, buildHistoryMetricPath, buildMetricCatalogPath, buildRealtimeMetricPath,
-  monitorHistoryRows, monitorMetricOptions, monitorRealtimeRows, parseMonitorRouteId
+  monitorHistoryRows,
+  monitorMetricOptions,
+  monitorRealtimeRows,
+  parseMonitorRouteId
 } from './monitor-detail-model';
 
 describe('monitor detail model', () => {
-  const monitor = { id: 7, app: 'website', name: 'home', instance: 'example.com:443', status: 1 };
-
   it('extracts visible numeric metric fields', () => {
-    expect(monitorMetricOptions([
-      { name: 'summary', fields: [{ field: 'responseTime', type: 0, unit: 'ms' },
-        { field: 'hostCode', type: 0, label: true }, { field: 'status', type: 1 }] },
-      { name: 'hidden', visible: false, fields: [{ field: 'value', type: 0 }] }
-    ])).toEqual([{ key: 'summary.responseTime', group: 'summary', field: 'responseTime', unit: 'ms' }]);
-  });
-
-  it('builds realtime, favorite, and history paths from master contracts', () => {
-    const metric = { key: 'summary.responseTime', group: 'summary', field: 'responseTime', unit: 'ms' };
-    expect(buildRealtimeMetricPath(7, metric.group)).toBe('/api/monitor/7/metrics/summary');
-    expect(buildFavoriteMetricPath(7, metric.key)).toBe('/api/metrics/favorite/7/summary.responseTime');
-    expect(buildHistoryMetricPath(monitor, metric, '6h')).toBe('/api/monitor/example.com%3A443/metric/website.summary.responseTime?history=6h&interval=false');
-    expect(buildMetricCatalogPath(monitor)).toBe('/api/apps/website/define');
+    expect(
+      monitorMetricOptions([
+        {
+          name: 'summary',
+          fields: [
+            { field: 'responseTime', type: 0, unit: 'ms' },
+            { field: 'hostCode', type: 0, label: true },
+            { field: 'status', type: 1 }
+          ]
+        },
+        { name: 'hidden', visible: false, fields: [{ field: 'value', type: 0 }] }
+      ])
+    ).toEqual([{ key: 'summary.responseTime', group: 'summary', field: 'responseTime', unit: 'ms' }]);
   });
 
   it('normalizes realtime and history values into inspectable rows', () => {
     const empty = { mean: null, median: null, min: null, max: null };
     const metric = { key: 'summary.responseTime', group: 'summary', field: 'responseTime' };
-    expect(monitorRealtimeRows({
-      fields: [
-        { name: 'status', type: 0, unit: null, label: false },
-        { name: 'responseTime', type: 0, unit: 'ms', label: false }
-      ],
-      valueRows: [{ labels: { host: 'a' }, values: [
-        { ...empty, origin: '200', time: 1000 }, { ...empty, origin: '12', time: 0 }
-      ] }]
-    }, metric)).toEqual([{ key: '0', labels: { host: 'a' }, value: '12', time: 0 }]);
-    expect(monitorHistoryRows({ values: { 'host=a': [{ origin: null, mean: '11', median: null, min: null,
-      max: null, time: 1000 }] } }))
-      .toEqual([{ key: 'host=a:0', series: 'host=a', value: '11', time: 1000 }]);
+    expect(
+      monitorRealtimeRows(
+        {
+          fields: [
+            { name: 'status', type: 0, unit: null, label: false },
+            { name: 'responseTime', type: 0, unit: 'ms', label: false }
+          ],
+          valueRows: [
+            {
+              labels: { host: 'a' },
+              values: [
+                { ...empty, origin: '200', time: 1000 },
+                { ...empty, origin: '12', time: 0 }
+              ]
+            }
+          ]
+        },
+        metric
+      )
+    ).toEqual([{ key: '0', labels: { host: 'a' }, value: '12', time: 0 }]);
+    expect(
+      monitorHistoryRows({
+        values: { 'host=a': [{ origin: null, mean: '11', median: null, min: null, max: null, time: 1000 }] }
+      })
+    ).toEqual([{ key: 'host=a:0', series: 'host=a', value: '11', time: 1000 }]);
   });
 
   it('accepts only positive safe route ids', () => {

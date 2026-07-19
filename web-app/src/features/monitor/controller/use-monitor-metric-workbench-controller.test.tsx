@@ -23,22 +23,27 @@ import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
-import { MonitorContractError, type Monitor } from '../api/monitor-api';
+import { MonitorContractError, type Monitor } from '../model/monitor-contract';
 
 const api = vi.hoisted(() => ({
-  loadFavoriteMetrics: vi.fn(), loadHistoryMetric: vi.fn(), loadMonitorMetricCatalog: vi.fn(),
-  loadRealtimeMetric: vi.fn(), updateFavoriteMetric: vi.fn()
+  loadFavoriteMetrics: vi.fn(),
+  loadHistoryMetric: vi.fn(),
+  loadMonitorMetricCatalog: vi.fn(),
+  loadRealtimeMetric: vi.fn(),
+  updateFavoriteMetric: vi.fn()
 }));
 const notifications = { success: vi.fn(), error: vi.fn() };
 vi.mock('../api/monitor-api', async importOriginal => ({
-  ...await importOriginal<typeof import('../api/monitor-api')>(), ...api
+  ...(await importOriginal<typeof import('../api/monitor-api')>()),
+  ...api
 }));
 
 import { useMonitorMetricWorkbenchController } from './use-monitor-metric-workbench-controller';
 
 const monitor = (id = 7): Monitor => ({ id, name: `monitor-${id}`, app: 'website', instance: `host-${id}`, status: 1 });
-const catalog = (name = 'summary') => ({ metrics: [{ name, visible: true,
-  fields: [{ type: 0, field: 'value', unit: 'ms', label: false }] }] });
+const catalog = (name = 'summary') => ({
+  metrics: [{ name, visible: true, fields: [{ type: 0, field: 'value', unit: 'ms', label: false }] }]
+});
 // URL convergence crosses both the router and asynchronous catalog query, so it
 // needs a wider deadline when the complete test suite is sharing worker CPU.
 const routeConvergenceWait = { timeout: 10_000 } as const;
@@ -55,20 +60,36 @@ describe('useMonitorMetricWorkbenchController', () => {
   afterEach(() => cleanup());
 
   it('converges metric and history from URL Push, Back, and monitor changes', async () => {
-    const view = renderController(monitor(), [], '/monitors/7?returnTo=%2Fmonitors%3FpageIndex%3D2&metric=bad.value&history=bad');
+    const view = renderController(
+      monitor(),
+      [],
+      '/monitors/7?returnTo=%2Fmonitors%3FpageIndex%3D2&metric=bad.value&history=bad'
+    );
     await waitFor(() => expect(view.result.current.controller.state.catalog.kind).toBe('ready'), routeConvergenceWait);
-    await waitFor(() => expect(view.result.current.controller.state).toMatchObject({ metricKey: 'summary.value', history: '30m' }), routeConvergenceWait);
+    await waitFor(
+      () => expect(view.result.current.controller.state).toMatchObject({ metricKey: 'summary.value', history: '30m' }),
+      routeConvergenceWait
+    );
     expect(view.result.current.location.search).toContain('returnTo=%2Fmonitors%3FpageIndex%3D2');
-    act(() => { void view.result.current.navigate('/monitors/7?metric=summary.value&history=1h'); });
+    act(() => {
+      void view.result.current.navigate('/monitors/7?metric=summary.value&history=1h');
+    });
     await waitFor(() => expect(view.result.current.controller.state.history).toBe('1h'), routeConvergenceWait);
-    act(() => { void view.result.current.navigate('/monitors/7?metric=summary.value&history=30m'); });
+    act(() => {
+      void view.result.current.navigate('/monitors/7?metric=summary.value&history=30m');
+    });
     await waitFor(() => expect(view.result.current.controller.state.history).toBe('30m'), routeConvergenceWait);
-    act(() => { void view.result.current.navigate(-1); });
+    act(() => {
+      void view.result.current.navigate(-1);
+    });
     await waitFor(() => expect(view.result.current.controller.state.history).toBe('1h'), routeConvergenceWait);
 
     api.loadMonitorMetricCatalog.mockResolvedValue(catalog('other'));
     view.rerender({ monitor: monitor(8), embedded: [] });
-    await waitFor(() => expect(view.result.current.controller.state.metricKey).toBe('other.value'), routeConvergenceWait);
+    await waitFor(
+      () => expect(view.result.current.controller.state.metricKey).toBe('other.value'),
+      routeConvergenceWait
+    );
     expect(view.result.current.location.search).toContain('metric=other.value');
   });
 
@@ -120,36 +141,108 @@ describe('useMonitorMetricWorkbenchController', () => {
   it('marks favorite ready only after canonical reread convergence', async () => {
     api.loadFavoriteMetrics.mockResolvedValueOnce([]).mockResolvedValueOnce(['summary.value']);
     const view = renderController(monitor(), [], '/monitors/7');
-    await waitFor(() => expect(view.result.current.controller.state.favorite).toMatchObject({ kind: 'ready', value: false }));
+    await waitFor(() =>
+      expect(view.result.current.controller.state.favorite).toMatchObject({ kind: 'ready', value: false })
+    );
     await act(() => view.result.current.controller.actions.toggleFavorite());
     expect(api.updateFavoriteMetric).toHaveBeenCalledWith(7, 'summary.value', true);
     expect(api.loadFavoriteMetrics).toHaveBeenCalledTimes(2);
     expect(view.result.current.controller.state.favorite).toMatchObject({ kind: 'ready', value: true });
   });
 
-  it('fails a favorite mutation without canonical convergence and locks duplicate mutations', async () => {
+  it('reports favoriteFailed only when the write itself is rejected', async () => {
+    const writeFailure = new ApiMessageError('write rejected', { status: 500 });
+    api.updateFavoriteMetric.mockRejectedValue(writeFailure);
+    const view = renderController(monitor(), [], '/monitors/7');
+    await waitFor(() =>
+      expect(view.result.current.controller.state.favorite).toMatchObject({ kind: 'ready', value: false })
+    );
+
+    await expect(act(() => view.result.current.controller.actions.toggleFavorite())).resolves.toBeUndefined();
+
+    expect(notifications.success).not.toHaveBeenCalled();
+    expect(notifications.error).toHaveBeenCalledWith('monitorMetrics.favoriteFailed');
+    expect(api.loadFavoriteMetrics).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    [new ApiMessageError('storage unavailable', { status: 503 }), 'common.unavailable', 'unavailable'],
+    [new MonitorContractError('invalid proof'), 'common.routeError.description', 'error']
+  ] as const)(
+    'keeps an acknowledged favorite write committed when proof becomes %s',
+    async (proofFailure, expectedMessage, expectedKind) => {
+      api.loadFavoriteMetrics.mockResolvedValueOnce([]).mockRejectedValue(proofFailure);
+      const view = renderController(monitor(), [], '/monitors/7');
+      await waitFor(() =>
+        expect(view.result.current.controller.state.favorite).toMatchObject({ kind: 'ready', value: false })
+      );
+
+      await expect(act(() => view.result.current.controller.actions.toggleFavorite())).resolves.toBeUndefined();
+
+      expect(notifications.success).toHaveBeenCalledWith('monitorMetrics.favoriteSaved');
+      expect(notifications.error).toHaveBeenCalledWith(expectedMessage);
+      expect(notifications.error).not.toHaveBeenCalledWith('monitorMetrics.favoriteFailed');
+      await waitFor(() => expect(view.result.current.controller.state.favorite.kind).toBe(expectedKind));
+
+      await act(() => view.result.current.controller.actions.toggleFavorite());
+      expect(api.updateFavoriteMetric).toHaveBeenCalledTimes(1);
+      expect(api.loadFavoriteMetrics.mock.calls.length).toBeGreaterThanOrEqual(3);
+    }
+  );
+
+  it('keeps an acknowledged but non-converged favorite write out of the failed-write path', async () => {
     let release: (() => void) | undefined;
-    api.updateFavoriteMetric.mockImplementation(() => new Promise<void>(resolve => { release = resolve; }));
+    api.updateFavoriteMetric.mockImplementation(
+      () =>
+        new Promise<void>(resolve => {
+          release = resolve;
+        })
+    );
     api.loadFavoriteMetrics.mockResolvedValue([]);
     const view = renderController(monitor(), [], '/monitors/7');
-    await waitFor(() => expect(view.result.current.controller.state.favorite).toMatchObject({ kind: 'ready', value: false }));
+    await waitFor(() =>
+      expect(view.result.current.controller.state.favorite).toMatchObject({ kind: 'ready', value: false })
+    );
     let first!: Promise<void>;
-    act(() => { first = view.result.current.controller.actions.toggleFavorite(); });
+    act(() => {
+      first = view.result.current.controller.actions.toggleFavorite();
+    });
     await waitFor(() => expect(api.updateFavoriteMetric).toHaveBeenCalledTimes(1));
     await act(() => view.result.current.controller.actions.toggleFavorite());
     expect(api.updateFavoriteMetric).toHaveBeenCalledTimes(1);
     release?.();
-    await expect(first).rejects.toThrow('converge');
-    expect(view.result.current.controller.state.favorite).toMatchObject({ kind: 'ready', value: false });
+    await expect(first).resolves.toBeUndefined();
+    expect(notifications.success).toHaveBeenCalledWith('monitorMetrics.favoriteSaved');
+    expect(notifications.error).toHaveBeenCalledWith('common.routeError.description');
+    expect(notifications.error).not.toHaveBeenCalledWith('monitorMetrics.favoriteFailed');
+    await waitFor(() => {
+      expect(api.loadFavoriteMetrics.mock.calls.length).toBeGreaterThanOrEqual(3);
+      expect(view.result.current.controller.state.favorite).toMatchObject({ kind: 'ready', value: false });
+    });
+    expect(view.result.current.controller.state.favoriteBusy).toBe(true);
+
+    api.loadFavoriteMetrics.mockResolvedValue(['summary.value']);
+    act(() => view.result.current.controller.actions.refresh());
+    await waitFor(() => {
+      expect(view.result.current.controller.state.favorite).toMatchObject({ kind: 'ready', value: true });
+      expect(view.result.current.controller.state.favoriteBusy).toBe(false);
+    });
   });
 
   it('drops an old favorite mutation when the monitor source changes', async () => {
     let release: (() => void) | undefined;
-    api.updateFavoriteMetric.mockImplementation(() => new Promise<void>(resolve => { release = resolve; }));
+    api.updateFavoriteMetric.mockImplementation(
+      () =>
+        new Promise<void>(resolve => {
+          release = resolve;
+        })
+    );
     const view = renderController(monitor(), [], '/monitors/7');
     await waitFor(() => expect(view.result.current.controller.state.favorite.kind).toBe('ready'));
     let mutation!: Promise<void>;
-    act(() => { mutation = view.result.current.controller.actions.toggleFavorite(); });
+    act(() => {
+      mutation = view.result.current.controller.actions.toggleFavorite();
+    });
     await waitFor(() => expect(api.updateFavoriteMetric).toHaveBeenCalledTimes(1));
     api.loadMonitorMetricCatalog.mockResolvedValue(catalog('other'));
     view.rerender({ monitor: monitor(8), embedded: [] });
@@ -170,19 +263,85 @@ describe('useMonitorMetricWorkbenchController', () => {
     expect(api.updateFavoriteMetric).toHaveBeenCalledTimes(2);
     expect(view.result.current.controller.state.favoriteBusy).toBe(false);
   });
+
+  it('does not revive an old favorite mutation after an ABA source change', async () => {
+    let release: (() => void) | undefined;
+    api.updateFavoriteMetric.mockImplementation(
+      () =>
+        new Promise<void>(resolve => {
+          release = resolve;
+        })
+    );
+    const view = renderController(monitor(7), [], '/monitors/7');
+    await waitFor(() => expect(view.result.current.controller.state.favorite.kind).toBe('ready'));
+    let mutation!: Promise<void>;
+    act(() => {
+      mutation = view.result.current.controller.actions.toggleFavorite();
+    });
+    await waitFor(() => expect(api.updateFavoriteMetric).toHaveBeenCalledTimes(1));
+
+    api.loadMonitorMetricCatalog.mockResolvedValue(catalog('other'));
+    view.rerender({ monitor: monitor(8), embedded: [] });
+    await waitFor(() => expect(view.result.current.controller.state.metricKey).toBe('other.value'));
+    api.loadMonitorMetricCatalog.mockResolvedValue(catalog());
+    view.rerender({ monitor: monitor(7), embedded: [] });
+    await waitFor(() => expect(view.result.current.controller.state.metricKey).toBe('summary.value'));
+    const readsBeforeRelease = api.loadFavoriteMetrics.mock.calls.length;
+    release?.();
+
+    await expect(mutation).resolves.toBeUndefined();
+    expect(api.loadFavoriteMetrics).toHaveBeenCalledTimes(readsBeforeRelease);
+    expect(notifications.success).not.toHaveBeenCalled();
+    expect(notifications.error).not.toHaveBeenCalled();
+  });
+
+  it('retires a favorite mutation when the controller unmounts', async () => {
+    let release: (() => void) | undefined;
+    api.updateFavoriteMetric.mockImplementation(
+      () =>
+        new Promise<void>(resolve => {
+          release = resolve;
+        })
+    );
+    const view = renderController(monitor(), [], '/monitors/7');
+    await waitFor(() => expect(view.result.current.controller.state.favorite.kind).toBe('ready'));
+    let mutation!: Promise<void>;
+    act(() => {
+      mutation = view.result.current.controller.actions.toggleFavorite();
+    });
+    await waitFor(() => expect(api.updateFavoriteMetric).toHaveBeenCalledTimes(1));
+
+    view.unmount();
+    release?.();
+
+    await expect(mutation).resolves.toBeUndefined();
+    expect(api.loadFavoriteMetrics).toHaveBeenCalledTimes(1);
+    expect(notifications.success).not.toHaveBeenCalled();
+    expect(notifications.error).not.toHaveBeenCalled();
+  });
 });
 
-function renderController(initialMonitor: Monitor, embedded: Parameters<typeof useMonitorMetricWorkbenchController>[1],
-  entry: string) {
+function renderController(
+  initialMonitor: Monitor,
+  embedded: Parameters<typeof useMonitorMetricWorkbenchController>[1],
+  entry: string
+) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return renderHook(({ monitor: current, embedded: currentEmbedded }) => ({
-    controller: useMonitorMetricWorkbenchController(current, currentEmbedded, notifications),
-    navigate: useNavigate(), location: useLocation()
-  }), {
-    initialProps: { monitor: initialMonitor, embedded },
-    wrapper: ({ children }: PropsWithChildren) => <QueryClientProvider client={client}><App>
-      <MemoryRouter initialEntries={[entry]}>{children}</MemoryRouter>
-    </App>
-    </QueryClientProvider>
-  });
+  return renderHook(
+    ({ monitor: current, embedded: currentEmbedded }) => ({
+      controller: useMonitorMetricWorkbenchController(current, currentEmbedded, notifications),
+      navigate: useNavigate(),
+      location: useLocation()
+    }),
+    {
+      initialProps: { monitor: initialMonitor, embedded },
+      wrapper: ({ children }: PropsWithChildren) => (
+        <QueryClientProvider client={client}>
+          <App>
+            <MemoryRouter initialEntries={[entry]}>{children}</MemoryRouter>
+          </App>
+        </QueryClientProvider>
+      )
+    }
+  );
 }

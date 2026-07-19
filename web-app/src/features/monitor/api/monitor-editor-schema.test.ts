@@ -17,7 +17,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { MonitorContractError } from './monitor-contract';
+import { MonitorContractError } from '../model/monitor-contract';
 import {
   parseMonitorCollectorPage,
   parseMonitorParamDefines,
@@ -26,28 +26,38 @@ import {
 
 describe('Monitor editor read schemas', () => {
   it('maps the full parameter definition and binds app identity case-insensitively', () => {
-    expect(parseMonitorParamDefines([{
-      ...parameterDefine(),
-      app: 'WebSite',
-      depend: { protocol: ['https', 443, true, null] },
-      options: [{ label: 'HTTPS', value: 'https', ignored: true }],
-      ignored: 'wire-only'
-    }], 'website')).toEqual([{
-      ...parameterDefine(),
-      app: 'WebSite',
-      depend: { protocol: ['https', 443, true, null] },
-      options: [{ label: 'HTTPS', value: 'https' }]
-    }]);
+    expect(
+      parseMonitorParamDefines(
+        [
+          {
+            ...parameterDefine(),
+            app: 'WebSite',
+            depend: { protocol: ['https', 443, true, null] },
+            options: [{ label: 'HTTPS', value: 'https', ignored: true }],
+            ignored: 'wire-only'
+          }
+        ],
+        'website'
+      )
+    ).toEqual([
+      {
+        ...parameterDefine(),
+        app: 'WebSite',
+        depend: { protocol: ['https', 443, true, null] },
+        options: [{ label: 'HTTPS', value: 'https' }]
+      }
+    ]);
   });
 
   it('uses the requested app only when the redundant wire identity is nullish', () => {
-    const withoutApp = Object.fromEntries(
-      Object.entries(parameterDefine()).filter(([key]) => key !== 'app')
+    const withoutApp = Object.fromEntries(Object.entries(parameterDefine()).filter(([key]) => key !== 'app'));
+    expect(parseMonitorParamDefines([{ ...withoutApp, app: null }, withoutApp], 'website')).toEqual([
+      { ...parameterDefine(), app: 'website' },
+      { ...parameterDefine(), app: 'website' }
+    ]);
+    expect(() => parseMonitorParamDefines([{ ...parameterDefine(), app: 'other' }], 'website')).toThrow(
+      MonitorContractError
     );
-    expect(parseMonitorParamDefines([{ ...withoutApp, app: null }, withoutApp], 'website'))
-      .toEqual([{ ...parameterDefine(), app: 'website' }, { ...parameterDefine(), app: 'website' }]);
-    expect(() => parseMonitorParamDefines([{ ...parameterDefine(), app: 'other' }], 'website'))
-      .toThrow(MonitorContractError);
   });
 
   it.each([
@@ -63,15 +73,23 @@ describe('Monitor editor read schemas', () => {
   });
 
   it('maps one requested Spring collector page and strips unknown fields', () => {
-    expect(parseMonitorCollectorPage({
-      content: [collectorSummary('collector-a', 0), collectorSummary('collector-b', 1)],
-      totalElements: 2,
-      totalPages: 1,
-      number: 0,
-      size: 200,
-      ignored: true
-    }, 0)).toEqual({
-      collectors: [{ name: 'collector-a', online: true }, { name: 'collector-b', online: false }],
+    expect(
+      parseMonitorCollectorPage(
+        {
+          content: [collectorSummary('collector-a', 0), collectorSummary('collector-b', 1)],
+          totalElements: 2,
+          totalPages: 1,
+          number: 0,
+          size: 200,
+          ignored: true
+        },
+        0
+      )
+    ).toEqual({
+      collectors: [
+        { name: 'collector-a', online: true },
+        { name: 'collector-b', online: false }
+      ],
       totalPages: 1
     });
   });
@@ -89,10 +107,12 @@ describe('Monitor editor read schemas', () => {
   });
 
   it('requires collector names to remain globally unique across pages', () => {
-    expect(() => requireUniqueMonitorCollectors([
-      { name: 'collector-a', online: true },
-      { name: 'collector-a', online: false }
-    ])).toThrow(MonitorContractError);
+    expect(() =>
+      requireUniqueMonitorCollectors([
+        { name: 'collector-a', online: true },
+        { name: 'collector-a', online: false }
+      ])
+    ).toThrow(MonitorContractError);
   });
 });
 

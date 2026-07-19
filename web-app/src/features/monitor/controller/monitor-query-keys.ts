@@ -15,34 +15,49 @@
  * limitations under the License.
  */
 
-import type { MonitorQuery } from '../api/monitor-contract';
+import type { Monitor, MonitorQuery } from '../model/monitor-contract';
 
-type MonitorSharedTime = {
-  window: { from: number; to: number } | undefined;
-  refreshRevision: number;
-} | null | undefined;
+type MonitorSharedTime =
+  | {
+      window: { from: number; to: number } | undefined;
+      refreshRevision: number;
+    }
+  | null
+  | undefined;
+
+type MonitorHistorySource = Pick<Monitor, 'id' | 'instance' | 'name' | 'app' | 'scrape'> | undefined;
 
 const rootKey = ['monitor'] as const;
 
 // Every value that can change a backend result belongs in its resource key.
 export const monitorQueryKeys = {
-  list: (query: MonitorQuery) => [
-    ...rootKey, 'list', query.search, query.app, query.status, query.labels, query.pageIndex, query.pageSize
-  ] as const,
+  lists: () => [...rootKey, 'list'] as const,
+  list: (query: MonitorQuery) =>
+    [...rootKey, 'list', query.search, query.app, query.status, query.labels, query.pageIndex, query.pageSize] as const,
   apps: () => [...rootKey, 'apps'] as const,
   detail: (id: number | undefined) => [...rootKey, 'detail', id] as const,
   collectors: () => [...rootKey, 'collectors'] as const,
   appDefines: (app: string) => [...rootKey, 'defines', 'app', app] as const,
   sdDefines: (scrape: string) => [...rootKey, 'defines', 'sd', scrape] as const,
-  metricCatalog: (id: number | undefined, app: string | undefined, scrape: string | null | undefined) => [
-    ...rootKey, 'metrics', 'catalog', id, app, scrape
-  ] as const,
+  metricCatalog: (id: number | undefined, app: string | undefined, scrape: string | null | undefined) =>
+    [...rootKey, 'metrics', 'catalog', id, app, scrape] as const,
   favorites: (id: number | undefined) => [...rootKey, 'metrics', 'favorites', id] as const,
-  realtime: (id: number | undefined, group: string | undefined, field: string | undefined,
-    time: MonitorSharedTime) => [...rootKey, 'metrics', 'realtime', id, group, field, ...sharedTimeKey(time)] as const,
-  history: (id: number | undefined, metricKey: string, history: string, time: MonitorSharedTime) => [
-    ...rootKey, 'metrics', 'history', id, metricKey, history, ...sharedTimeKey(time)
-  ] as const
+  realtime: (id: number | undefined, group: string | undefined, field: string | undefined, time: MonitorSharedTime) =>
+    [...rootKey, 'metrics', 'realtime', id, group, field, ...sharedTimeKey(time)] as const,
+  history: (source: MonitorHistorySource, metricKey: string, history: string, time: MonitorSharedTime) =>
+    [
+      ...rootKey,
+      'metrics',
+      'history',
+      source?.id,
+      source?.instance,
+      source?.name,
+      source?.app,
+      source?.scrape,
+      metricKey,
+      history,
+      ...sharedTimeKey(time)
+    ] as const
 };
 
 function sharedTimeKey(time: MonitorSharedTime) {

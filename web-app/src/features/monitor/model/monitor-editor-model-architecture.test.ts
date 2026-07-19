@@ -17,8 +17,9 @@
 
 import { describe, expect, it } from 'vitest';
 
-import formSource from '../components/monitor-editor-form-view.tsx?raw';
+import coreFieldsSource from '../components/monitor-editor-core-fields.tsx?raw';
 import paramFieldSource from '../components/monitor-param-field.tsx?raw';
+import paramSectionsSource from '../components/monitor-editor-param-sections.tsx?raw';
 import commandsSource from '../controller/use-monitor-editor-commands.ts?raw';
 import convergenceSource from './monitor-editor-convergence.ts?raw';
 import draftSource from './monitor-editor-draft.ts?raw';
@@ -30,19 +31,30 @@ import codecSource from './monitor-param-codec.ts?raw';
 describe('Monitor editor model architecture', () => {
   it('keeps the core model limited to shared draft types and errors', () => {
     expect(coreSource).not.toMatch(/export function/);
-    expect(coreSource).not.toMatch(/JSON\.parse|JSON\.stringify|CronExpression|buildMonitorPayload|transitionMonitorEditorDraft/);
+    expect(coreSource).not.toMatch(
+      /JSON\.parse|JSON\.stringify|CronExpression|buildMonitorPayload|transitionMonitorEditorDraft/
+    );
   });
 
   it('assigns each editor behavior to one named owner', () => {
     for (const name of ['monitorParamFormValue', 'serializeMonitorParamValue', 'numberDefineRange']) {
       expect(codecSource).toMatch(new RegExp(`export function ${name}\\b`));
     }
-    for (const name of ['buildMonitorParams', 'createMonitorEditorDraft', 'transitionMonitorEditorDraft',
-      'groupMonitorParamDefines', 'isMonitorParamVisible']) {
+    for (const name of [
+      'buildMonitorParams',
+      'createMonitorEditorDraft',
+      'transitionMonitorEditorDraft',
+      'groupMonitorParamDefines',
+      'isMonitorParamVisible'
+    ]) {
       expect(draftSource).toMatch(new RegExp(`export function ${name}\\b`));
     }
-    for (const name of ['validateMonitorDraft', 'validateMonitorEditorDraft', 'monitorIntervalBounds',
-      'isValidCronExpression']) {
+    for (const name of [
+      'validateMonitorDraft',
+      'validateMonitorEditorDraft',
+      'monitorIntervalBounds',
+      'isValidCronExpression'
+    ]) {
       expect(validationSource).toMatch(new RegExp(`export function ${name}\\b`));
     }
     expect(payloadSource).toContain('export function buildMonitorPayload');
@@ -54,8 +66,8 @@ describe('Monitor editor model architecture', () => {
     expect(commandsSource).toContain("from '../model/monitor-editor-validation'");
     expect(convergenceSource).toContain("from './monitor-editor-payload'");
     expect(paramFieldSource).toContain("from '../model/monitor-param-codec'");
-    expect(formSource).toContain("from '../model/monitor-editor-draft'");
-    expect(formSource).toContain("from '../model/monitor-editor-validation'");
+    expect(paramSectionsSource).toContain("from '../model/monitor-editor-draft'");
+    expect(coreFieldsSource).toContain("from '../model/monitor-editor-validation'");
   });
 
   it('owns the legacy discovery instance sentinel once in the core domain model', () => {
@@ -75,6 +87,8 @@ describe('Monitor editor model architecture', () => {
 });
 
 function sourceLineCount(value: string) {
-  return value.replace(/\/\*[\s\S]*?\*\//g, '').split('\n')
+  return value
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .split('\n')
     .filter(line => line.trim() && !line.trim().startsWith('//')).length;
 }

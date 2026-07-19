@@ -21,7 +21,9 @@ import pageSource from './monitor-list-page.tsx?raw';
 
 describe('MonitorListPage architecture', () => {
   it('keeps transport, TanStack, Router business logic, and notifications outside the page', () => {
-    expect(pageSource).not.toMatch(/@tanstack\/react-query|\.\.\/api\/|use(?:Navigate|Location|SearchParams)|App\.useApp/);
+    expect(pageSource).not.toMatch(
+      /@tanstack\/react-query|\.\.\/api\/|use(?:Navigate|Location|SearchParams)|App\.useApp/
+    );
     expect(pageSource).toMatch(/useMonitorListController/);
   });
 });

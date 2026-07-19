@@ -31,7 +31,7 @@ const { loadMonitorApps, loadMonitors, mutateMonitors } = vi.hoisted(() => ({
 }));
 
 vi.mock('../api/monitor-api', async importOriginal => ({
-  ...await importOriginal<typeof import('../api/monitor-api')>(),
+  ...(await importOriginal<typeof import('../api/monitor-api')>()),
   loadMonitorApps,
   loadMonitors,
   mutateMonitors
@@ -67,9 +67,12 @@ describe('MonitorListPage label query', () => {
     expect(searchInput).toHaveValue('checkout');
     expect(labelInput).toHaveValue('env:prod');
     expect(labelInput).toHaveAttribute('placeholder', 'Labels, for example env:prod');
-    await waitFor(() => expect(loadMonitors).toHaveBeenCalledWith(
-      expect.objectContaining({ labels: 'env:prod' }), expect.any(AbortSignal)
-    ));
+    await waitFor(() =>
+      expect(loadMonitors).toHaveBeenCalledWith(
+        expect.objectContaining({ labels: 'env:prod' }),
+        expect.any(AbortSignal)
+      )
+    );
   });
 
   it('submits search and labels together from the Query button and omits cleared values', async () => {
@@ -85,9 +88,15 @@ describe('MonitorListPage label query', () => {
       expect(search).toContain('search=checkout');
       expect(search).toContain('labels=team%3Acore');
     });
-    await waitFor(() => expect(loadMonitors).toHaveBeenCalledWith(expect.objectContaining({
-      search: 'checkout', labels: 'team:core'
-    }), expect.any(AbortSignal)));
+    await waitFor(() =>
+      expect(loadMonitors).toHaveBeenCalledWith(
+        expect.objectContaining({
+          search: 'checkout',
+          labels: 'team:core'
+        }),
+        expect.any(AbortSignal)
+      )
+    );
 
     fireEvent.change(searchInput, { target: { value: '' } });
     fireEvent.change(labelInput, { target: { value: '' } });

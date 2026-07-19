@@ -16,21 +16,10 @@
  */
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { App } from 'antd';
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
-import {
-  classifyMonitorReadError,
-  loadMonitorApps,
-  loadMonitors,
-  MonitorContractError,
-  mutateMonitors,
-  type Monitor,
-  type MonitorAction,
-  type MonitorPage
-} from '../api/monitor-api';
+import { classifyMonitorReadError, loadMonitorApps, loadMonitors } from '../api/monitor-api';
 import {
   buildMonitorRoutePath,
   monitorAppOptions,
@@ -41,7 +30,8 @@ import {
 } from '../model/monitor-model';
 import type { MonitorAppsEvidence, MonitorListEvidence } from '../model/monitor-list-model';
 import { monitorQueryKeys } from './monitor-query-keys';
-import { useMonitorSelection, type MonitorSelectionController } from './use-monitor-selection';
+import { useMonitorListCommands } from './use-monitor-list-commands';
+import { useMonitorSelection } from './use-monitor-selection';
 
 export function useMonitorListController() {
   const navigate = useNavigate();
@@ -60,7 +50,7 @@ export function useMonitorListController() {
   const { monitors, apps, reread } = useMonitorListResources(query);
   const records = monitors.data?.content;
   const selection = useMonitorSelection(monitorSelectionScope(query), records);
-  const commands = useMonitorListCommands(reread, selection);
+  const commands = useMonitorListCommands(source, reread, selection);
   const updateQuery = (patch: Partial<MonitorQuery>) => setParams(writeMonitorQuery({ ...query, ...patch }));
   return {
     state: {
@@ -115,40 +105,6 @@ function useMonitorListResources(query: MonitorQuery) {
   return { monitors, apps, reread };
 }
 
-function useMonitorListCommands(
-  reread: () => Promise<MonitorPage>,
-  selection: Pick<MonitorSelectionController, 'clear' | 'validatedIds'>
-) {
-  const { t } = useTranslation();
-  const { message } = App.useApp();
-  const [operating, setOperating] = useState(false);
-  const refresh = async () => {
-    try {
-      await reread();
-      return true;
-    } catch {
-      return false;
-    }
-  };
-  const run = async (action: MonitorAction, ids: number[]) => {
-    if (operating || ids.length === 0) return;
-    setOperating(true);
-    try {
-      await mutateMonitors(action, ids);
-      const canonical = await reread();
-      requireMutationConvergence(action, ids, canonical.content);
-      selection.clear();
-      void message.success(t('monitorActions.success'));
-    } catch {
-      void message.error(t('monitorActions.failed'));
-    } finally {
-      setOperating(false);
-    }
-  };
-  const runBulk = (action: MonitorAction) => run(action, selection.validatedIds());
-  return { operating, refresh, run, runBulk };
-}
-
 function resolveMonitorEvidence(
   pending: boolean,
   error: Error | null,
@@ -170,15 +126,4 @@ function resolveAppsEvidence(
   if (error) return { kind: classifyMonitorReadError(error) };
   if (!apps) return { kind: 'error' };
   return { kind: 'ready', options: monitorAppOptions(apps) };
-}
-
-function requireMutationConvergence(action: MonitorAction, ids: number[], records: Monitor[]) {
-  const indexed = new Map(records.map(record => [record.id, record]));
-  if (action === 'delete' && ids.some(id => indexed.has(id))) {
-    throw new MonitorContractError('Deleted monitor remains in the authoritative list');
-  }
-  const expectedStatus = action === 'enable' ? 1 : action === 'pause' ? 0 : undefined;
-  if (expectedStatus !== undefined && ids.some(id => indexed.get(id)?.status !== expectedStatus)) {
-    throw new MonitorContractError('Monitor status did not converge after mutation');
-  }
 }

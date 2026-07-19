@@ -15,13 +15,7 @@
  * limitations under the License.
  */
 
-import type {
-  Monitor,
-  MonitorDetail,
-  MonitorParam,
-  MonitorParamDefine,
-  MonitorScrape
-} from '../api/monitor-api';
+import type { Monitor, MonitorDetail, MonitorParam, MonitorParamDefine, MonitorScrape } from './monitor-contract';
 import {
   MONITOR_DISCOVERY_INSTANCE,
   MonitorParamDraftError,
@@ -30,18 +24,17 @@ import {
 } from './monitor-editor-model';
 import { monitorParamFormValue, numberDefineRange } from './monitor-param-codec';
 
-export function buildMonitorParams(
-  defines: MonitorParamDefine[],
-  existing: MonitorParam[] = []
-): MonitorParamDraft[] {
+export function buildMonitorParams(defines: MonitorParamDefine[], existing: MonitorParam[] = []): MonitorParamDraft[] {
   const values = new Map(existing.map(param => [param.field, param]));
   return defines.map(define => {
     const current = values.get(define.field);
-    return current ? { ...current, paramValue: monitorParamFormValue(define, current.paramValue) } : {
-      field: define.field,
-      type: paramType(define.type),
-      paramValue: defaultValue(define)
-    };
+    return current
+      ? { ...current, paramValue: monitorParamFormValue(define, current.paramValue) }
+      : {
+          field: define.field,
+          type: paramType(define.type),
+          paramValue: defaultValue(define)
+        };
   });
 }
 
@@ -51,24 +44,55 @@ export function createMonitorEditorDraft(
   scrape: MonitorScrape,
   defines: MonitorParamDefine[]
 ): MonitorEditorDraft {
-  const supportedTypes = new Set(['text', 'number', 'host', 'password', 'boolean', 'radio', 'textarea',
-    'key-value', 'array', 'metrics-field']);
+  const supportedTypes = new Set([
+    'text',
+    'number',
+    'host',
+    'password',
+    'boolean',
+    'radio',
+    'textarea',
+    'key-value',
+    'array',
+    'metrics-field'
+  ]);
   defines.forEach(define => {
     if (!supportedTypes.has(define.type)) throw new MonitorParamDraftError(define.field);
     if (define.type === 'number') numberDefineRange(define);
   });
   const existing = detail?.params ?? [];
   if (detail && existing.some(param => !defines.some(define => define.field === param.field))) {
-    throw new MonitorParamDraftError(existing.find(param => !defines.some(define => define.field === param.field))!.field);
+    throw new MonitorParamDraftError(
+      existing.find(param => !defines.some(define => define.field === param.field))!.field
+    );
   }
   return {
-    monitor: detail ? normalizeMonitorSchedule(detail.monitor) : { id: 0, app, name: '', instance: '', status: 0, type: 0,
-      intervals: 60, scheduleType: 'interval', cronExpression: null, scrape },
+    monitor: detail
+      ? normalizeMonitorSchedule(detail.monitor)
+      : {
+          id: 0,
+          app,
+          name: '',
+          instance: '',
+          status: 0,
+          type: 0,
+          intervals: 60,
+          scheduleType: 'interval',
+          cronExpression: null,
+          scrape
+        },
     collector: detail?.collector ?? '',
     params: buildMonitorParams(defines, existing),
     grafanaDashboard: detail?.grafanaDashboard ?? {
-      monitorId: null, folderUid: null, slug: null, status: null, uid: null, url: null, version: null,
-      enabled: false, template: null
+      monitorId: null,
+      folderUid: null,
+      slug: null,
+      status: null,
+      uid: null,
+      url: null,
+      version: null,
+      enabled: false,
+      template: null
     },
     invalidParamFields: []
   };
@@ -91,8 +115,12 @@ export function transitionMonitorEditorDraft(
     return previousDefine?.app === nextDefine.app && existing ? existing : param;
   });
   const instance = monitorInstanceForScrapeTransition(scrape);
-  return { ...draft, monitor: { ...draft.monitor, scrape, instance }, params,
-    invalidParamFields: draft.invalidParamFields.filter(field => nextDefines.some(define => define.field === field)) };
+  return {
+    ...draft,
+    monitor: { ...draft.monitor, scrape, instance },
+    params,
+    invalidParamFields: draft.invalidParamFields.filter(field => nextDefines.some(define => define.field === field))
+  };
 }
 
 export function isMonitorParamVisible(define: MonitorParamDefine, params: MonitorParamDraft[]) {
@@ -125,7 +153,7 @@ function paramType(type?: string) {
 
 function normalizeMonitorSchedule(monitor: Monitor): Monitor {
   const scheduleType = monitor.scheduleType ?? 'interval';
-  const intervals = scheduleType === 'interval' ? monitor.intervals ?? 60 : monitor.intervals;
+  const intervals = scheduleType === 'interval' ? (monitor.intervals ?? 60) : monitor.intervals;
   return { ...monitor, scheduleType, ...(intervals === undefined ? {} : { intervals }) };
 }
 

@@ -15,16 +15,8 @@
  * limitations under the License.
  */
 
-import type {
-  Monitor,
-  MonitorGrafanaDashboard,
-  MonitorParamDefine
-} from '../api/monitor-api';
-import {
-  MONITOR_DISCOVERY_INSTANCE,
-  MonitorParamDraftError,
-  type MonitorParamDraft
-} from './monitor-editor-model';
+import type { Monitor, MonitorGrafanaDashboard, MonitorParamDefine } from './monitor-contract';
+import { MONITOR_DISCOVERY_INSTANCE, MonitorParamDraftError, type MonitorParamDraft } from './monitor-editor-model';
 import { serializeMonitorParamValue } from './monitor-param-codec';
 
 export function buildMonitorPayload(
@@ -52,8 +44,15 @@ export function buildMonitorPayload(
     collector: collector.trim() || null,
     params: serializedParams,
     grafanaDashboard: grafanaDashboard ?? {
-      monitorId: null, folderUid: null, slug: null, status: null, uid: null, url: null, version: null,
-      enabled: false, template: null
+      monitorId: null,
+      folderUid: null,
+      slug: null,
+      status: null,
+      uid: null,
+      url: null,
+      version: null,
+      enabled: false,
+      template: null
     }
   };
 }

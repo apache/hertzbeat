@@ -21,34 +21,70 @@ import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
-import { MonitorContractError } from '../api/monitor-api';
+import { MonitorContractError } from '../model/monitor-contract';
 
 const api = vi.hoisted(() => ({
-  detectMonitor: vi.fn(), loadMonitorApps: vi.fn(), loadMonitorCollectors: vi.fn(), loadMonitorDetail: vi.fn(),
-  loadMonitorParamDefines: vi.fn(), loadNewMonitorEvidence: vi.fn(), saveMonitor: vi.fn()
+  detectMonitor: vi.fn(),
+  loadMonitorApps: vi.fn(),
+  loadMonitorCollectors: vi.fn(),
+  loadMonitorDetail: vi.fn(),
+  loadMonitorParamDefines: vi.fn(),
+  loadNewMonitorEvidence: vi.fn(),
+  saveMonitor: vi.fn()
 }));
 const notify = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn(), warning: vi.fn() }));
 vi.mock('../api/monitor-api', async importOriginal => ({
-  ...(await importOriginal<typeof import('../api/monitor-api')>()), ...api
+  ...(await importOriginal<typeof import('../api/monitor-api')>()),
+  ...api
 }));
 vi.mock('antd', async importOriginal => ({
-  ...(await importOriginal<typeof import('antd')>()), App: { useApp: () => ({ message: notify }) }
+  ...(await importOriginal<typeof import('antd')>()),
+  App: { useApp: () => ({ message: notify }) }
 }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 import { useMonitorEditorController } from './use-monitor-editor-controller';
+import { monitorQueryKeys } from './monitor-query-keys';
 
 const detail = {
-  monitor: { id: 7, jobId: 9, app: 'website', name: 'home', instance: 'home', status: 0, type: 0,
-    intervals: 60, scheduleType: 'interval', cronExpression: null, scrape: 'static', labels: null,
-    annotations: null, description: null },
-  collector: null, params: [], grafanaDashboard: null, metrics: []
+  monitor: {
+    id: 7,
+    jobId: 9,
+    app: 'website',
+    name: 'home',
+    instance: 'home',
+    status: 0,
+    type: 0,
+    intervals: 60,
+    scheduleType: 'interval',
+    cronExpression: null,
+    scrape: 'static',
+    labels: null,
+    annotations: null,
+    description: null
+  },
+  collector: null,
+  params: [],
+  grafanaDashboard: null,
+  metrics: []
 };
 
 const headersDefine = {
-  id: null, app: 'website', field: 'headers', name: { 'en-US': 'Headers' }, type: 'key-value', required: false,
-  defaultValue: null, placeholder: null, range: null, limit: null, options: null, keyAlias: null,
-  valueAlias: null, depend: null, hide: false
+  id: null,
+  app: 'website',
+  field: 'headers',
+  name: { 'en-US': 'Headers' },
+  type: 'key-value',
+  required: false,
+  defaultValue: null,
+  placeholder: null,
+  range: null,
+  limit: null,
+  options: null,
+  keyAlias: null,
+  valueAlias: null,
+  depend: null,
+  hide: false
 };
 
 describe('useMonitorEditorController', () => {
@@ -61,7 +97,8 @@ describe('useMonitorEditorController', () => {
     api.detectMonitor.mockResolvedValue(undefined);
     api.saveMonitor.mockResolvedValue(undefined);
     api.loadNewMonitorEvidence.mockImplementation(() =>
-      Promise.resolve({ ...detail, monitor: { ...detail.monitor, id: 8, jobId: 10 } }));
+      Promise.resolve({ ...detail, monitor: { ...detail.monitor, id: 8, jobId: 10 } })
+    );
   });
   afterEach(cleanup);
 
@@ -106,6 +143,52 @@ describe('useMonitorEditorController', () => {
     expect(notify.success).not.toHaveBeenCalled();
   });
 
+  it('freezes the draft and source controls while a command owns the payload snapshot', async () => {
+    const pending = deferred<void>();
+    api.detectMonitor.mockReturnValue(pending.promise);
+    const routed = renderController('new', '/monitors/new?app=website&scrape=static');
+    await waitFor(() => expect(routed.current().state.draft).toBeDefined());
+    act(() => routed.current().actions.updateMonitor({ name: 'home' }));
+    act(() => {
+      const actions = routed.current().actions;
+      void actions.detect();
+      actions.updateMonitor({ name: 'changed-after-detect' });
+      actions.changeSource({ scrape: 'http_sd' });
+    });
+
+    await waitFor(() => expect(routed.current().state.command).toBe('detecting'));
+    expect(routed.current().state.draft?.monitor.name).toBe('home');
+    expect(routed.router.state.location.search).toBe('?app=website&scrape=static');
+    pending.resolve();
+    await waitFor(() => expect(routed.current().state.command).toBe('idle'));
+  });
+
+  it('allows cancel to abort a pending save and leave without late completion effects', async () => {
+    const pending = deferred<void>();
+    api.saveMonitor.mockReturnValue(pending.promise);
+    const routed = renderController('new', '/monitors/new?app=website&returnTo=%2Fmonitors');
+    const invalidate = vi.spyOn(routed.client, 'invalidateQueries');
+    await waitFor(() => expect(routed.current().state.draft).toBeDefined());
+    act(() => routed.current().actions.updateMonitor({ name: 'home' }));
+    let save!: Promise<void>;
+    act(() => {
+      save = routed.current().actions.save();
+    });
+    await waitFor(() => expect(api.saveMonitor).toHaveBeenCalledTimes(1));
+    const signal = api.saveMonitor.mock.calls[0]?.[2] as AbortSignal;
+
+    act(() => routed.current().actions.cancel());
+
+    expect(signal.aborted).toBe(true);
+    expect(routed.router.state.location.pathname).toBe('/monitors');
+    pending.resolve();
+    await expect(save).resolves.toBeUndefined();
+    expect(api.loadNewMonitorEvidence).not.toHaveBeenCalled();
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: monitorQueryKeys.lists(), refetchType: 'none' });
+    expect(notify.success).not.toHaveBeenCalled();
+    expect(notify.error).not.toHaveBeenCalled();
+  });
+
   it('keeps the active source when an older define request resolves last', async () => {
     const httpDefines = deferred<unknown[]>();
     const dnsDefines = deferred<unknown[]>();
@@ -115,9 +198,7 @@ describe('useMonitorEditorController', () => {
       return Promise.resolve([]);
     });
     const routed = renderController('new', '/monitors/new?app=website&scrape=http_sd');
-    await waitFor(() => expect(api.loadMonitorParamDefines).toHaveBeenCalledWith(
-      'http_sd', expect.any(AbortSignal)
-    ));
+    await waitFor(() => expect(api.loadMonitorParamDefines).toHaveBeenCalledWith('http_sd', expect.any(AbortSignal)));
 
     await act(async () => routed.router.navigate('/monitors/new?app=website&scrape=dns_sd'));
     dnsDefines.resolve([{ ...headersDefine, app: 'dns_sd', field: 'dnsServer' }]);
@@ -130,7 +211,8 @@ describe('useMonitorEditorController', () => {
   });
 
   it('retries only the active failed source and classifies it independently', async () => {
-    api.loadMonitorApps.mockRejectedValueOnce(new ApiMessageError('offline', { status: 503 }))
+    api.loadMonitorApps
+      .mockRejectedValueOnce(new ApiMessageError('offline', { status: 503 }))
       .mockResolvedValueOnce([{ value: 'website', label: 'Website' }]);
     const routed = renderController('new', '/monitors/new?app=website');
     await waitFor(() => expect(routed.current().state.evidence.kind).toBe('unavailable'));
@@ -151,12 +233,40 @@ describe('useMonitorEditorController', () => {
     expect(routed.current().state.draft).toBeUndefined();
   });
 
+  it('keeps the application chooser ready when scrape is present without an application', async () => {
+    const routed = renderController('new', '/monitors/new?scrape=http_sd');
+
+    await waitFor(() => expect(routed.current().state.evidence.kind).toBe('ready'));
+    expect(routed.current().state.draft).toBeUndefined();
+    expect(api.loadMonitorParamDefines).not.toHaveBeenCalled();
+  });
+
   it('rejects direct edit scrape drift but transitions an explicit in-page change', async () => {
-    api.loadMonitorParamDefines.mockImplementation((app: string) => Promise.resolve(app === 'http_sd'
-      ? [{ id: null, app, field: 'url', name: { 'en-US': 'URL' }, type: 'text', required: true,
-        defaultValue: null, placeholder: null, range: null, limit: null, options: null, keyAlias: null,
-        valueAlias: null, depend: null, hide: false }]
-      : []));
+    api.loadMonitorParamDefines.mockImplementation((app: string) =>
+      Promise.resolve(
+        app === 'http_sd'
+          ? [
+              {
+                id: null,
+                app,
+                field: 'url',
+                name: { 'en-US': 'URL' },
+                type: 'text',
+                required: true,
+                defaultValue: null,
+                placeholder: null,
+                range: null,
+                limit: null,
+                options: null,
+                keyAlias: null,
+                valueAlias: null,
+                depend: null,
+                hide: false
+              }
+            ]
+          : []
+      )
+    );
     const direct = renderController('edit', '/monitors/7/edit?scrape=http_sd');
     await waitFor(() => expect(direct.router.state.location.search).toBe('?scrape=static'));
     cleanup();
@@ -170,8 +280,11 @@ describe('useMonitorEditorController', () => {
 
   it('requires exact-id reread convergence before edit navigation', async () => {
     const hostDefine = { ...headersDefine, field: 'host', type: 'host', name: { 'en-US': 'Host' } };
-    const exactDetail = { ...detail, monitor: { ...detail.monitor, instance: 'example.com', labels: {}, annotations: {} },
-      params: [{ id: 4, monitorId: 7, field: 'host', type: 1, paramValue: 'example.com' }] };
+    const exactDetail = {
+      ...detail,
+      monitor: { ...detail.monitor, instance: 'example.com', labels: {}, annotations: {} },
+      params: [{ id: 4, monitorId: 7, field: 'host', type: 1, paramValue: 'example.com' }]
+    };
     api.loadMonitorParamDefines.mockResolvedValue([hostDefine]);
     api.loadMonitorDetail.mockResolvedValue(exactDetail);
     const routed = renderController('edit', '/monitors/7/edit?returnTo=%2Fmonitors%3Fapp%3Dwebsite');
@@ -179,8 +292,83 @@ describe('useMonitorEditorController', () => {
     await act(async () => routed.current().actions.save());
     expect(api.saveMonitor).toHaveBeenCalledWith('edit', expect.anything(), expect.any(AbortSignal));
     expect(api.loadMonitorDetail).toHaveBeenLastCalledWith(7, expect.any(AbortSignal));
+    expect(routed.client.getQueryData(monitorQueryKeys.detail(7))).toEqual(exactDetail);
     expect(routed.router.state.location.pathname).toBe('/monitors');
     expect(notify.success).toHaveBeenCalledWith('monitor.editor.saveSuccess');
+  });
+
+  it('reports a committed new monitor honestly when verification is unavailable', async () => {
+    api.loadNewMonitorEvidence.mockRejectedValue(new ApiMessageError('offline', { status: 503 }));
+    const routed = renderController('new', '/monitors/new?app=website');
+    await waitFor(() => expect(routed.current().state.draft).toBeDefined());
+    act(() => routed.current().actions.updateMonitor({ name: 'home' }));
+
+    await act(async () => routed.current().actions.save());
+
+    expect(api.saveMonitor).toHaveBeenCalledTimes(1);
+    expect(notify.success).toHaveBeenCalledWith('monitor.editor.saveSuccess');
+    expect(notify.warning).toHaveBeenCalledWith('common.unavailable');
+    expect(notify.error).not.toHaveBeenCalledWith('monitor.editor.saveFailed');
+    expect(routed.router.state.location.pathname).toBe('/monitors');
+  });
+
+  it('marks the edited detail stale as soon as the write is acknowledged', async () => {
+    api.loadMonitorDetail
+      .mockResolvedValueOnce(detail)
+      .mockRejectedValueOnce(new ApiMessageError('offline', { status: 503 }));
+    const routed = renderController('edit', '/monitors/7/edit?returnTo=%2Fmonitors');
+    const invalidate = vi.spyOn(routed.client, 'invalidateQueries');
+    await waitFor(() => expect(routed.current().state.draft?.monitor.id).toBe(7));
+
+    await act(async () => routed.current().actions.save());
+
+    expect(invalidate).toHaveBeenCalledWith({
+      queryKey: monitorQueryKeys.detail(7),
+      exact: true,
+      refetchType: 'none'
+    });
+    expect(notify.warning).toHaveBeenCalledWith('common.unavailable');
+  });
+
+  it('classifies an unsafe canonical parameter definition as non-retryable', async () => {
+    api.loadMonitorParamDefines.mockResolvedValue([{ ...headersDefine, type: 'unsupported' }]);
+    const routed = renderController('new', '/monitors/new?app=website');
+
+    await waitFor(() => expect(routed.current().state.evidence.kind).toBe('invalid'));
+    expect(routed.current().state.draft).toBeUndefined();
+  });
+
+  it('distinguishes committed non-convergence from a rejected save', async () => {
+    api.loadNewMonitorEvidence.mockResolvedValue({
+      ...detail,
+      monitor: { ...detail.monitor, id: 8, jobId: 10, name: 'different' }
+    });
+    const routed = renderController('new', '/monitors/new?app=website');
+    await waitFor(() => expect(routed.current().state.draft).toBeDefined());
+    act(() => routed.current().actions.updateMonitor({ name: 'home' }));
+
+    await act(async () => routed.current().actions.save());
+
+    expect(notify.success).toHaveBeenCalledWith('monitor.editor.saveSuccess');
+    expect(notify.error).toHaveBeenCalledWith('common.routeError.description');
+    expect(notify.error).not.toHaveBeenCalledWith('monitor.editor.saveFailed');
+    expect(routed.router.state.location.pathname).toBe('/monitors');
+  });
+
+  it('reports save failure only when the write itself is rejected', async () => {
+    api.saveMonitor.mockRejectedValue(new Error('write rejected'));
+    const routed = renderController('new', '/monitors/new?app=website');
+    const invalidate = vi.spyOn(routed.client, 'invalidateQueries');
+    await waitFor(() => expect(routed.current().state.draft).toBeDefined());
+    act(() => routed.current().actions.updateMonitor({ name: 'home' }));
+
+    await act(async () => routed.current().actions.save());
+
+    expect(api.loadNewMonitorEvidence).not.toHaveBeenCalled();
+    expect(invalidate).not.toHaveBeenCalled();
+    expect(notify.error).toHaveBeenCalledWith('monitor.editor.saveFailed');
+    expect(notify.success).not.toHaveBeenCalledWith('monitor.editor.saveSuccess');
+    expect(routed.router.state.location.pathname).toBe('/monitors/new');
   });
 
   it('blocks save while a structured row reports invalid state', async () => {
@@ -239,18 +427,47 @@ describe('useMonitorEditorController', () => {
 function renderController(mode: 'new' | 'edit', entry: string) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   let controller: ReturnType<typeof useMonitorEditorController> | undefined;
-  function Probe() { controller = useMonitorEditorController(mode); return null; }
-  const router = createMemoryRouter([
-    { path: '/monitors/new', element: <QueryClientProvider client={client}><Probe /></QueryClientProvider> },
-    { path: '/monitors/:monitorId/edit', element: <QueryClientProvider client={client}><Probe /></QueryClientProvider> },
-    { path: '/monitors', element: null }
-  ], { initialEntries: [entry] });
+  function Probe() {
+    controller = useMonitorEditorController(mode);
+    return null;
+  }
+  const router = createMemoryRouter(
+    [
+      {
+        path: '/monitors/new',
+        element: (
+          <QueryClientProvider client={client}>
+            <Probe />
+          </QueryClientProvider>
+        )
+      },
+      {
+        path: '/monitors/:monitorId/edit',
+        element: (
+          <QueryClientProvider client={client}>
+            <Probe />
+          </QueryClientProvider>
+        )
+      },
+      { path: '/monitors', element: null }
+    ],
+    { initialEntries: [entry] }
+  );
   render(<RouterProvider router={router} />);
-  return { router, current: () => { if (!controller) throw new Error('controller not mounted'); return controller; } };
+  return {
+    client,
+    router,
+    current: () => {
+      if (!controller) throw new Error('controller not mounted');
+      return controller;
+    }
+  };
 }
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
-  const promise = new Promise<T>(done => { resolve = done; });
+  const promise = new Promise<T>(done => {
+    resolve = done;
+  });
   return { promise, resolve };
 }

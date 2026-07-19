@@ -29,15 +29,28 @@ export type MonitorListViewProps = { state: MonitorListViewState; actions: Monit
 
 export function MonitorListView({ state, actions }: MonitorListViewProps) {
   const { t } = useTranslation();
-  return <div className={styles.page}>
-    <header className={styles.heading}>
-      <Typography.Title level={2}>{t('monitor.title')}</Typography.Title>
-      <Typography.Text type="secondary">{t('monitor.description')}</Typography.Text>
-    </header>
-    <MonitorListToolbar query={state.query} draft={state.draft} apps={state.apps} refreshing={state.refreshing}
-      actions={actions} />
-    <MonitorBulkActions selectedIds={state.selectedIds} run={actions.runBulk} disabled={state.operating} />
-    <MonitorListResults evidence={state.monitors} query={state.query} selectedIds={state.selectedIds}
-      operating={state.operating} actions={actions} />
-  </div>;
+  return (
+    <div className={styles.page}>
+      <header className={styles.heading}>
+        <Typography.Title level={2}>{t('monitor.title')}</Typography.Title>
+        <Typography.Text type="secondary">{t('monitor.description')}</Typography.Text>
+      </header>
+      <MonitorListToolbar
+        query={state.query}
+        draft={state.draft}
+        apps={state.apps}
+        disabled={state.operating}
+        refreshing={state.refreshing}
+        actions={actions}
+      />
+      <MonitorBulkActions selectedIds={state.selectedIds} run={actions.runBulk} disabled={state.operating} />
+      <MonitorListResults
+        evidence={state.monitors}
+        query={state.query}
+        selectedIds={state.selectedIds}
+        operating={state.operating}
+        actions={actions}
+      />
+    </div>
+  );
 }

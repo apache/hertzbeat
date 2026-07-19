@@ -25,11 +25,15 @@ import styles from './monitor-editor-page.module.css';
 export function MonitorEditorPage({ mode }: { mode: 'new' | 'edit' }) {
   const { t } = useTranslation();
   const controller = useMonitorEditorController(mode);
-  return <div className={styles.page}>
-    <header className={styles.heading}>
-      <Typography.Title level={2}>{t(mode === 'new' ? 'monitor.editor.newTitle' : 'monitor.editor.editTitle')}</Typography.Title>
-      <Typography.Text type="secondary">{t('monitor.editor.description')}</Typography.Text>
-    </header>
-    <MonitorEditorFormView key={controller.state.sourceKey} mode={mode} controller={controller} />
-  </div>;
+  return (
+    <div className={styles.page}>
+      <header className={styles.heading}>
+        <Typography.Title level={2}>
+          {t(mode === 'new' ? 'monitor.editor.newTitle' : 'monitor.editor.editTitle')}
+        </Typography.Title>
+        <Typography.Text type="secondary">{t('monitor.editor.description')}</Typography.Text>
+      </header>
+      <MonitorEditorFormView key={controller.state.sourceKey} mode={mode} controller={controller} />
+    </div>
+  );
 }

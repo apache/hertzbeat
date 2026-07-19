@@ -16,7 +16,7 @@
  */
 
 import { apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
-import type { MonitorCollector } from './monitor-contract';
+import type { MonitorCollector } from '../model/monitor-contract';
 import {
   parseMonitorCollectorPage,
   parseMonitorParamDefines,
@@ -45,12 +45,14 @@ export async function loadMonitorCollectors(signal?: AbortSignal) {
 }
 
 export function detectMonitor(payload: unknown, signal?: AbortSignal) {
-  return apiMessagePost('/api/monitor/detect', payload,
-    { signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(15_000)]) : AbortSignal.timeout(15_000) });
+  return apiMessagePost('/api/monitor/detect', payload, {
+    signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(15_000)]) : AbortSignal.timeout(15_000)
+  });
 }
 
 export function saveMonitor(mode: 'new' | 'edit', payload: unknown, signal?: AbortSignal) {
   const options = signal ? { signal } : undefined;
-  return mode === 'new' ? apiMessagePost('/api/monitor', payload, options)
+  return mode === 'new'
+    ? apiMessagePost('/api/monitor', payload, options)
     : apiMessagePut('/api/monitor', payload, options);
 }

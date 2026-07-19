@@ -17,14 +17,26 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type { MonitorParamDefine } from '../api/monitor-api';
+import type { MonitorParamDefine } from './monitor-contract';
 import { MonitorParamDraftError } from './monitor-editor-model';
 import { monitorParamFormValue, serializeMonitorParamValue } from './monitor-param-codec';
 
 const define = (patch: Partial<MonitorParamDefine> & Pick<MonitorParamDefine, 'field'>): MonitorParamDefine => ({
-  id: null, app: 'website', name: { 'en-US': patch.field }, type: 'text', required: false,
-  defaultValue: null, placeholder: null, range: null, limit: null, options: null, keyAlias: null,
-  valueAlias: null, depend: null, hide: false, ...patch
+  id: null,
+  app: 'website',
+  name: { 'en-US': patch.field },
+  type: 'text',
+  required: false,
+  defaultValue: null,
+  placeholder: null,
+  range: null,
+  limit: null,
+  options: null,
+  keyAlias: null,
+  valueAlias: null,
+  depend: null,
+  hide: false,
+  ...patch
 });
 
 describe('Monitor parameter codec', () => {
@@ -70,15 +82,19 @@ describe('Monitor parameter codec', () => {
     expect(monitorParamFormValue(metrics, wire)).toEqual([{ field: 'latency', unit: 'ms', type: 0 }]);
     expect(serializeMonitorParamValue(metrics, [{ field: 'latency', unit: 'ms', type: 0 }])).toBe(wire);
     expect(serializeMonitorParamValue(metrics, [{ field: ' latency ', unit: ' ms ', type: 0 }])).toBe(wire);
-    expect(serializeMonitorParamValue(metrics, [
-      { field: 'latency', unit: 'ms', type: 0 }, { field: ' latency ', unit: 's', type: 0 }
-    ])).toBeNull();
+    expect(
+      serializeMonitorParamValue(metrics, [
+        { field: 'latency', unit: 'ms', type: 0 },
+        { field: ' latency ', unit: 's', type: 0 }
+      ])
+    ).toBeNull();
     for (const invalid of [
       '[{"field":"latency","unit":"ms","type":2}]',
       '[{"field":"latency","unit":"ms","type":"number"}]',
       '[{"field":"","unit":"ms","type":0}]',
       '[{"field":"latency","unit":"ms","type":0},{"field":"latency","unit":"s","type":0}]'
-    ]) expect(() => monitorParamFormValue(metrics, invalid)).toThrow(MonitorParamDraftError);
+    ])
+      expect(() => monitorParamFormValue(metrics, invalid)).toThrow(MonitorParamDraftError);
   });
 
   it('trims ordinary strings to backend validation semantics', () => {

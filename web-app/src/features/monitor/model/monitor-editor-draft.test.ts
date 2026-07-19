@@ -17,7 +17,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type { MonitorParamDefine } from '../api/monitor-api';
+import type { MonitorParamDefine } from './monitor-contract';
 import {
   buildMonitorParams,
   createMonitorEditorDraft,
@@ -28,18 +28,32 @@ import {
 import { MonitorParamDraftError } from './monitor-editor-model';
 
 const define = (patch: Partial<MonitorParamDefine> & Pick<MonitorParamDefine, 'field'>): MonitorParamDefine => ({
-  id: null, app: 'website', name: { 'en-US': patch.field }, type: 'text', required: false,
-  defaultValue: null, placeholder: null, range: null, limit: null, options: null, keyAlias: null,
-  valueAlias: null, depend: null, hide: false, ...patch
+  id: null,
+  app: 'website',
+  name: { 'en-US': patch.field },
+  type: 'text',
+  required: false,
+  defaultValue: null,
+  placeholder: null,
+  range: null,
+  limit: null,
+  options: null,
+  keyAlias: null,
+  valueAlias: null,
+  depend: null,
+  hide: false,
+  ...patch
 });
 
 describe('Monitor editor draft', () => {
   it('builds typed defaults from backend definitions', () => {
-    expect(buildMonitorParams([
-      define({ field: 'host', type: 'host', required: true }),
-      define({ field: 'port', type: 'number', defaultValue: '8080' }),
-      define({ field: 'ssl', type: 'boolean', defaultValue: 'true' })
-    ])).toEqual([
+    expect(
+      buildMonitorParams([
+        define({ field: 'host', type: 'host', required: true }),
+        define({ field: 'port', type: 'number', defaultValue: '8080' }),
+        define({ field: 'ssl', type: 'boolean', defaultValue: 'true' })
+      ])
+    ).toEqual([
       { field: 'host', type: 1, paramValue: null },
       { field: 'port', type: 0, paramValue: 8080 },
       { field: 'ssl', type: 1, paramValue: true }
@@ -49,33 +63,41 @@ describe('Monitor editor draft', () => {
   it('defaults a new boolean to false but rejects ambiguous existing null evidence', () => {
     const enabled = define({ field: 'enableSshTunnel', type: 'boolean', required: true });
     expect(buildMonitorParams([enabled])).toEqual([{ field: 'enableSshTunnel', type: 1, paramValue: false }]);
-    expect(() => buildMonitorParams([enabled], [{ field: 'enableSshTunnel', type: 1, paramValue: null }]))
-      .toThrow(MonitorParamDraftError);
+    expect(() => buildMonitorParams([enabled], [{ field: 'enableSshTunnel', type: 1, paramValue: null }])).toThrow(
+      MonitorParamDraftError
+    );
   });
 
   it('rejects corrupt existing values and unsupported definition types before rendering', () => {
-    expect(() => buildMonitorParams([define({ field: 'retries', type: 'number' })], [
-      { field: 'retries', type: 0, paramValue: 'abc' }
-    ])).toThrow(MonitorParamDraftError);
-    expect(() => buildMonitorParams([define({ field: 'headers', type: 'key-value' })], [
-      { field: 'headers', type: 3, paramValue: '{bad json}' }
-    ])).toThrow(MonitorParamDraftError);
-    expect(() => createMonitorEditorDraft(undefined, 'website', 'static', [
-      define({ field: 'mystery', type: 'unknown' })
-    ])).toThrow(MonitorParamDraftError);
+    expect(() =>
+      buildMonitorParams(
+        [define({ field: 'retries', type: 'number' })],
+        [{ field: 'retries', type: 0, paramValue: 'abc' }]
+      )
+    ).toThrow(MonitorParamDraftError);
+    expect(() =>
+      buildMonitorParams(
+        [define({ field: 'headers', type: 'key-value' })],
+        [{ field: 'headers', type: 3, paramValue: '{bad json}' }]
+      )
+    ).toThrow(MonitorParamDraftError);
+    expect(() =>
+      createMonitorEditorDraft(undefined, 'website', 'static', [define({ field: 'mystery', type: 'unknown' })])
+    ).toThrow(MonitorParamDraftError);
   });
 
   it('groups definitions and evaluates scalar dependencies', () => {
     const auth = define({ field: 'auth' });
-    const dependent = define({ field: 'token', type: 'password', required: true, hide: true,
-      depend: { auth: ['basic'] } });
+    const dependent = define({
+      field: 'token',
+      type: 'password',
+      required: true,
+      hide: true,
+      depend: { auth: ['basic'] }
+    });
     expect(groupMonitorParamDefines([auth, dependent])).toEqual({ basic: [auth], advanced: [dependent] });
-    expect(isMonitorParamVisible(dependent, [
-      { field: 'auth', type: 1, paramValue: 'basic' }
-    ])).toBe(true);
-    expect(isMonitorParamVisible(dependent, [
-      { field: 'auth', type: 1, paramValue: 'none' }
-    ])).toBe(false);
+    expect(isMonitorParamVisible(dependent, [{ field: 'auth', type: 1, paramValue: 'basic' }])).toBe(true);
+    expect(isMonitorParamVisible(dependent, [{ field: 'auth', type: 1, paramValue: 'none' }])).toBe(false);
   });
 
   it('transitions service-discovery params without carrying old credentials or instance', () => {
@@ -84,7 +106,7 @@ describe('Monitor editor draft', () => {
     const dns = { ...define({ field: 'server', type: 'text' }), app: 'dns_sd' };
     const draft = createMonitorEditorDraft(undefined, 'website', 'http_sd', [main, http]);
     draft.monitor.instance = 'old.example';
-    draft.params = draft.params.map(param => param.field === 'token' ? { ...param, paramValue: 'secret' } : param);
+    draft.params = draft.params.map(param => (param.field === 'token' ? { ...param, paramValue: 'secret' } : param));
     const next = transitionMonitorEditorDraft(draft, [main, http], [main, dns], 'dns_sd');
     expect(next.monitor).toMatchObject({ scrape: 'dns_sd', instance: 'unknow' });
     expect(next.params.find(param => param.field === 'port')?.paramValue).toBe(80);
@@ -95,10 +117,26 @@ describe('Monitor editor draft', () => {
   });
 
   it('normalizes missing detail schedule values to the form defaults', () => {
-    const normalized = createMonitorEditorDraft({
-      monitor: { id: 7, app: 'website', name: 'home', instance: 'home', status: 0,
-        intervals: null, scheduleType: null }, params: [], collector: null, grafanaDashboard: null, metrics: []
-    }, 'website', 'static', []);
+    const normalized = createMonitorEditorDraft(
+      {
+        monitor: {
+          id: 7,
+          app: 'website',
+          name: 'home',
+          instance: 'home',
+          status: 0,
+          intervals: null,
+          scheduleType: null
+        },
+        params: [],
+        collector: null,
+        grafanaDashboard: null,
+        metrics: []
+      },
+      'website',
+      'static',
+      []
+    );
     expect(normalized.monitor).toMatchObject({ scheduleType: 'interval', intervals: 60 });
   });
 });

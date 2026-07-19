@@ -17,7 +17,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type { MonitorParamDefine } from '../api/monitor-api';
+import type { MonitorParamDefine } from './monitor-contract';
 import { createMonitorEditorDraft } from './monitor-editor-draft';
 import { MonitorParamDraftError } from './monitor-editor-model';
 import { numberDefineRange } from './monitor-param-codec';
@@ -29,70 +29,126 @@ import {
 } from './monitor-editor-validation';
 
 const define = (patch: Partial<MonitorParamDefine> & Pick<MonitorParamDefine, 'field'>): MonitorParamDefine => ({
-  id: null, app: 'website', name: { 'en-US': patch.field }, type: 'text', required: false,
-  defaultValue: null, placeholder: null, range: null, limit: null, options: null, keyAlias: null,
-  valueAlias: null, depend: null, hide: false, ...patch
+  id: null,
+  app: 'website',
+  name: { 'en-US': patch.field },
+  type: 'text',
+  required: false,
+  defaultValue: null,
+  placeholder: null,
+  range: null,
+  limit: null,
+  options: null,
+  keyAlias: null,
+  valueAlias: null,
+  depend: null,
+  hide: false,
+  ...patch
 });
 
 describe('Monitor editor validation', () => {
   it('requires structured metric rows and required visible params', () => {
     const metrics = define({ field: 'fields', type: 'metrics-field', required: true });
-    expect(validateMonitorDraft({ app: 'push', name: 'push', intervals: 60 }, [metrics], [
-      { field: 'fields', type: 1, paramValue: [] }
-    ])).toContain('param:fields');
+    expect(
+      validateMonitorDraft(
+        { app: 'push', name: 'push', intervals: 60 },
+        [metrics],
+        [{ field: 'fields', type: 1, paramValue: [] }]
+      )
+    ).toContain('param:fields');
     expect(validateMonitorDraft({ app: '', name: '', intervals: 60 }, [], [])).toEqual(['app', 'name']);
-    expect(validateMonitorDraft({ app: 'website', name: 'home', intervals: 60 }, [
-      define({ field: 'host', required: true })
-    ], [{ field: 'host', paramValue: '' }])).toEqual(['param:host']);
+    expect(
+      validateMonitorDraft(
+        { app: 'website', name: 'home', intervals: 60 },
+        [define({ field: 'host', required: true })],
+        [{ field: 'host', paramValue: '' }]
+      )
+    ).toEqual(['param:host']);
   });
 
   it('enforces number definition ranges without inventing a fallback', () => {
     const port = define({ field: 'port', type: 'number', required: true, range: '[0,65535]' });
     expect(numberDefineRange(port)).toEqual({ min: 0, max: 65535 });
-    expect(validateMonitorDraft({ app: 'website', name: 'home', intervals: 60 }, [port], [
-      { field: 'port', type: 0, paramValue: 65536 }
-    ])).toContain('param:port');
-    expect(() => numberDefineRange(define({ field: 'port', type: 'number', range: 'unknown' })))
-      .toThrow(MonitorParamDraftError);
+    expect(
+      validateMonitorDraft(
+        { app: 'website', name: 'home', intervals: 60 },
+        [port],
+        [{ field: 'port', type: 0, paramValue: 65536 }]
+      )
+    ).toContain('param:port');
+    expect(() => numberDefineRange(define({ field: 'port', type: 'number', range: 'unknown' }))).toThrow(
+      MonitorParamDraftError
+    );
     const optional = define({ field: 'retries', type: 'number', range: '[0,10]' });
-    expect(validateMonitorDraft({ app: 'website', name: 'home', intervals: 60 }, [optional], [
-      { field: 'retries', type: 0, paramValue: 11 }
-    ])).toContain('param:retries');
+    expect(
+      validateMonitorDraft(
+        { app: 'website', name: 'home', intervals: 60 },
+        [optional],
+        [{ field: 'retries', type: 0, paramValue: 11 }]
+      )
+    ).toContain('param:retries');
   });
 
   it('validates legacy text limits', () => {
     const text = define({ field: 'path', type: 'text', limit: 3 });
-    expect(validateMonitorDraft({ app: 'website', name: 'home', intervals: 60 }, [text], [
-      { field: 'path', type: 1, paramValue: 'long' }
-    ])).toContain('param:path');
+    expect(
+      validateMonitorDraft(
+        { app: 'website', name: 'home', intervals: 60 },
+        [text],
+        [{ field: 'path', type: 1, paramValue: 'long' }]
+      )
+    ).toContain('param:path');
   });
 
   it('validates interval and cron schedules without treating them as the same field', () => {
-    expect(validateMonitorDraft({ app: 'website', name: 'home', scheduleType: 'interval', intervals: 0 }, [], []))
-      .toContain('intervals');
-    expect(validateMonitorDraft({ app: 'website', name: 'home', scheduleType: 'cron', cronExpression: '' }, [], []))
-      .toContain('cronExpression');
+    expect(
+      validateMonitorDraft({ app: 'website', name: 'home', scheduleType: 'interval', intervals: 0 }, [], [])
+    ).toContain('intervals');
+    expect(
+      validateMonitorDraft({ app: 'website', name: 'home', scheduleType: 'cron', cronExpression: '' }, [], [])
+    ).toContain('cronExpression');
     expect(isValidCronExpression('0 */5 * * * ?')).toBe(true);
     expect(isValidCronExpression('0 0 0 L * ?')).toBe(true);
     expect(isValidCronExpression('*/5 * * * *')).toBe(false);
     expect(monitorIntervalBounds('push')).toEqual({ min: 1, max: 604800, step: 1 });
     expect(monitorIntervalBounds('website')).toEqual({ min: 10, max: 604800, step: 10 });
-    expect(validateMonitorDraft({ app: 'website', name: 'home', scheduleType: 'interval', intervals: 1 }, [], []))
-      .toContain('intervals');
-    expect(validateMonitorDraft({ app: 'push', name: 'push', scheduleType: 'interval', intervals: 1 }, [], []))
-      .not.toContain('intervals');
+    expect(
+      validateMonitorDraft({ app: 'website', name: 'home', scheduleType: 'interval', intervals: 1 }, [], [])
+    ).toContain('intervals');
+    expect(
+      validateMonitorDraft({ app: 'push', name: 'push', scheduleType: 'interval', intervals: 1 }, [], [])
+    ).not.toContain('intervals');
   });
 
   it('requires dependent params only while their dependency is visible', () => {
     const auth = define({ field: 'auth' });
-    const dependent = define({ field: 'token', type: 'password', required: true, hide: true,
-      depend: { auth: ['basic'] } });
-    expect(validateMonitorDraft({ app: 'website', name: 'home', intervals: 60 }, [dependent], [
-      { field: 'auth', type: 1, paramValue: 'none' }, { field: 'token', type: 1, paramValue: '' }
-    ])).toEqual([]);
-    expect(validateMonitorDraft({ app: 'website', name: 'home', intervals: 60 }, [dependent], [
-      { field: 'auth', type: 1, paramValue: 'basic' }, { field: 'token', type: 1, paramValue: '' }
-    ])).toEqual(['param:token']);
+    const dependent = define({
+      field: 'token',
+      type: 'password',
+      required: true,
+      hide: true,
+      depend: { auth: ['basic'] }
+    });
+    expect(
+      validateMonitorDraft(
+        { app: 'website', name: 'home', intervals: 60 },
+        [dependent],
+        [
+          { field: 'auth', type: 1, paramValue: 'none' },
+          { field: 'token', type: 1, paramValue: '' }
+        ]
+      )
+    ).toEqual([]);
+    expect(
+      validateMonitorDraft(
+        { app: 'website', name: 'home', intervals: 60 },
+        [dependent],
+        [
+          { field: 'auth', type: 1, paramValue: 'basic' },
+          { field: 'token', type: 1, paramValue: '' }
+        ]
+      )
+    ).toEqual(['param:token']);
     const draft = createMonitorEditorDraft(undefined, 'website', 'static', [auth, dependent]);
     draft.monitor.name = 'home';
     draft.invalidParamFields = ['token'];

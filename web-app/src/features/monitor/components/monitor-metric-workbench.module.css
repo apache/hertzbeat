@@ -15,8 +15,27 @@
  * limitations under the License.
  */
 
-.workbench { display: grid; gap: 16px; border-top: 1px solid var(--ant-color-border-secondary); padding-top: 18px; }
-.heading :global(.ant-typography) { margin: 0; }
-.toolbar { display: grid; grid-template-columns: minmax(260px, 1fr) 160px auto auto; gap: 8px; }
-.labels { display: flex; flex-wrap: wrap; gap: 4px; }
-@media (max-width: 760px) { .toolbar { grid-template-columns: 1fr 1fr; } }
+.workbench {
+  display: grid;
+  gap: 16px;
+  border-top: 1px solid var(--ant-color-border-secondary);
+  padding-top: 18px;
+}
+.heading :global(.ant-typography) {
+  margin: 0;
+}
+.toolbar {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) 160px auto auto;
+  gap: 8px;
+}
+.labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+@media (max-width: 760px) {
+  .toolbar {
+    grid-template-columns: 1fr 1fr;
+  }
+}

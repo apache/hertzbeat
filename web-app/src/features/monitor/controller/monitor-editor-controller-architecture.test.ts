@@ -17,7 +17,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import contractSource from '../api/monitor-contract.ts?raw';
+import contractSource from '../model/monitor-contract.ts?raw';
 import controllerSource from './use-monitor-editor-controller.ts?raw';
 import actionsSource from './monitor-editor-actions.ts?raw';
 import commandsSource from './use-monitor-editor-commands.ts?raw';
@@ -25,13 +25,17 @@ import commandOperationSource from './monitor-editor-command-operation.ts?raw';
 import draftSource from './use-monitor-editor-draft.ts?raw';
 import queryKeysSource from './monitor-query-keys.ts?raw';
 import resourceModelSource from './monitor-editor-resource-model.ts?raw';
+import resourceQueriesSource from './use-monitor-editor-resource-queries.ts?raw';
 import resourcesSource from './use-monitor-editor-resources.ts?raw';
 import routeSource from './use-monitor-editor-route.ts?raw';
+import saveVerificationSource from './monitor-editor-save-verification.ts?raw';
 
 describe('Monitor editor controller architecture', () => {
   it('keeps the route controller as composition rather than resource or command ownership', () => {
     expect(controllerSource).not.toMatch(/@tanstack\/react-query|\buseQuery\b/);
-    expect(controllerSource).not.toMatch(/detectMonitor|saveMonitor|loadMonitor(?:Apps|Collectors|Detail|ParamDefines)/);
+    expect(controllerSource).not.toMatch(
+      /detectMonitor|saveMonitor|loadMonitor(?:Apps|Collectors|Detail|ParamDefines)/
+    );
     expect(controllerSource).not.toMatch(/queryKey:\s*\[/);
     expect(controllerSource).toContain("from './use-monitor-editor-resources'");
     expect(controllerSource).toContain("from './use-monitor-editor-draft'");
@@ -39,21 +43,21 @@ describe('Monitor editor controller architecture', () => {
   });
 
   it('owns all editor Query Keys in one factory', () => {
-    expect(resourcesSource).toContain('monitorQueryKeys');
-    expect(resourcesSource).not.toMatch(/queryKey:\s*\[/);
+    expect(resourceQueriesSource).toContain('monitorQueryKeys');
+    expect(resourceQueriesSource).not.toMatch(/queryKey:\s*\[/);
     for (const key of ['apps', 'collectors', 'detail', 'appDefines', 'sdDefines']) {
       expect(queryKeysSource).toMatch(new RegExp(`\\b${key}\\b`));
     }
   });
 
   it('keeps scrape normalization and editor mode independent of route hooks', () => {
-    for (const source of [actionsSource, commandsSource, resourceModelSource, resourcesSource]) {
+    for (const source of [actionsSource, commandsSource, resourceModelSource, resourceQueriesSource, resourcesSource]) {
       expect(source).not.toContain("from './use-monitor-editor-route'");
     }
     expect(contractSource).toContain('export type MonitorEditorMode');
     expect(contractSource).toContain('export function normalizeMonitorScrape');
-    for (const source of [actionsSource, resourceModelSource, resourcesSource, routeSource]) {
-      expect(source).toContain("from '../api/monitor-contract'");
+    for (const source of [actionsSource, resourceModelSource, resourceQueriesSource, resourcesSource, routeSource]) {
+      expect(source).toContain("from '../model/monitor-contract'");
     }
   });
 
@@ -66,8 +70,10 @@ describe('Monitor editor controller architecture', () => {
       draftSource,
       queryKeysSource,
       resourceModelSource,
+      resourceQueriesSource,
       resourcesSource,
-      routeSource
+      routeSource,
+      saveVerificationSource
     ]) {
       expect(sourceLineCount(source)).toBeLessThanOrEqual(200);
       expect(source).not.toMatch(/;[^\S\r\n]*(?:set|return|await|void)\b/);
@@ -76,6 +82,8 @@ describe('Monitor editor controller architecture', () => {
 });
 
 function sourceLineCount(value: string) {
-  return value.replace(/\/\*[\s\S]*?\*\//g, '').split('\n')
+  return value
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .split('\n')
     .filter(line => line.trim() && !line.trim().startsWith('//')).length;
 }

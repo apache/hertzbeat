@@ -17,11 +17,7 @@
 
 import { z } from 'zod';
 
-import {
-  MonitorContractError,
-  type MonitorCollector,
-  type MonitorParamDefine
-} from './monitor-contract';
+import { MonitorContractError, type MonitorCollector, type MonitorParamDefine } from '../model/monitor-contract';
 import {
   javaByteSchema,
   nonEmptyStringSchema,
@@ -89,11 +85,13 @@ export function parseMonitorCollectorPage(value: unknown, requestedPage: number)
   if (!result.success) throw new MonitorContractError();
   const page = result.data;
   // Pagination consistency depends on request context and therefore follows wire validation.
-  if (page.number !== requestedPage
-    || page.size !== 200
-    || page.totalPages !== Math.ceil(page.totalElements / page.size)
-    || page.content.length > page.size
-    || requestedPage + 1 < page.totalPages && page.content.length !== page.size) {
+  if (
+    page.number !== requestedPage ||
+    page.size !== 200 ||
+    page.totalPages !== Math.ceil(page.totalElements / page.size) ||
+    page.content.length > page.size ||
+    (requestedPage + 1 < page.totalPages && page.content.length !== page.size)
+  ) {
     throw new MonitorContractError('Collector page identity is inconsistent with the request');
   }
   return {

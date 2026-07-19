@@ -16,13 +16,14 @@
  */
 
 import {
+  normalizeMonitorScrape,
   type MonitorApp,
   type MonitorCollector,
   type MonitorDetail,
+  type MonitorEditorMode,
   type MonitorParamDefine,
   type MonitorScrape
-} from '../api/monitor-api';
-import { normalizeMonitorScrape, type MonitorEditorMode } from '../api/monitor-contract';
+} from '../model/monitor-contract';
 import { createMonitorEditorDraft } from '../model/monitor-editor-draft';
 import { MonitorParamDraftError } from '../model/monitor-editor-model';
 import { isSelectableMonitorApp } from '../model/monitor-model';
@@ -47,9 +48,7 @@ export function selectMonitorEditorApp(
   apps: MonitorApp[] | undefined
 ) {
   if (mode === 'edit') return detail?.monitor.app ?? '';
-  return apps?.some(app => app.value === requestedApp && isSelectableMonitorApp(app))
-    ? requestedApp
-    : '';
+  return apps?.some(app => app.value === requestedApp && isSelectableMonitorApp(app)) ? requestedApp : '';
 }
 
 export function combineMonitorEditorDefines(
@@ -59,16 +58,16 @@ export function combineMonitorEditorDefines(
 ) {
   const fields = new Set<string>();
   const eligibleMain = scrape === 'static' ? main : main.filter(define => define.field !== 'host');
-  return [...(scrape === 'static' ? [] : sd), ...eligibleMain]
-    .filter(define => !fields.has(define.field) && fields.add(define.field));
+  return [...(scrape === 'static' ? [] : sd), ...eligibleMain].filter(
+    define => !fields.has(define.field) && fields.add(define.field)
+  );
 }
 
 export function createMonitorEditorCanonicalDraft(input: MonitorEditorCanonicalInput) {
   if (!readyForDraft(input)) return undefined;
   try {
     // Changing discovery mode keeps monitor identity but rebuilds its parameter shape.
-    if (input.mode === 'edit' && input.detail
-      && normalizeMonitorScrape(input.detail.monitor.scrape) !== input.scrape) {
+    if (input.mode === 'edit' && input.detail && normalizeMonitorScrape(input.detail.monitor.scrape) !== input.scrape) {
       return createTransitionedDraft(input);
     }
     return createMonitorEditorDraft(input.detail, input.app, input.scrape, input.defines);
@@ -90,10 +89,12 @@ function createTransitionedDraft(input: MonitorEditorCanonicalInput) {
 }
 
 function readyForDraft(input: MonitorEditorCanonicalInput) {
-  return input.apps !== undefined
-    && input.collectors !== undefined
-    && Boolean(input.app)
-    && input.mainDefines !== undefined
-    && (input.scrape === 'static' || input.sdDefines !== undefined)
-    && (input.mode === 'new' || input.id !== undefined && input.detail !== undefined);
+  return (
+    input.apps !== undefined &&
+    input.collectors !== undefined &&
+    Boolean(input.app) &&
+    input.mainDefines !== undefined &&
+    (input.scrape === 'static' || input.sdDefines !== undefined) &&
+    (input.mode === 'new' || (input.id !== undefined && input.detail !== undefined))
+  );
 }

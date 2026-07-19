@@ -24,7 +24,10 @@ import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 import { MonitorListView, type MonitorListViewProps } from './monitor-list-view';
 
 describe('MonitorListView evidence states', () => {
-  beforeAll(async () => { await initializeI18n(); await loadLocale('en-US'); });
+  beforeAll(async () => {
+    await initializeI18n();
+    await loadLocale('en-US');
+  });
   afterEach(cleanup);
 
   it.each([
@@ -46,9 +49,22 @@ describe('MonitorListView evidence states', () => {
   });
 
   it('renders an epoch timestamp as evidence rather than a missing dash', () => {
-    renderView({ monitors: { kind: 'ready', records: [{
-      id: 7, name: 'epoch', app: 'website', instance: 'zero', status: 1, gmtUpdate: 0
-    }], total: 1 } });
+    renderView({
+      monitors: {
+        kind: 'ready',
+        records: [
+          {
+            id: 7,
+            name: 'epoch',
+            app: 'website',
+            instance: 'zero',
+            status: 1,
+            gmtUpdate: 0
+          }
+        ],
+        total: 1
+      }
+    });
     const row = screen.getByText('epoch').closest('tr');
     expect(row).not.toBeNull();
     expect(row).not.toHaveTextContent('—');
@@ -58,14 +74,32 @@ describe('MonitorListView evidence states', () => {
 function renderView(patch: Partial<MonitorListViewProps['state']>) {
   const state: MonitorListViewProps['state'] = {
     query: { search: '', app: '', status: '9', labels: '', pageIndex: 0, pageSize: 10 },
-    draft: { search: '', labels: '' }, selectedIds: [], operating: false, refreshing: false,
-    apps: { kind: 'ready', options: [] }, monitors: { kind: 'loading' }, ...patch
+    draft: { search: '', labels: '' },
+    selectedIds: [],
+    operating: false,
+    refreshing: false,
+    apps: { kind: 'ready', options: [] },
+    monitors: { kind: 'loading' },
+    ...patch
   };
   const actions: MonitorListViewProps['actions'] = {
-    setSearch: () => undefined, setLabels: () => undefined, submitSearch: () => undefined,
-    submitFilters: () => undefined, changeApp: () => undefined, changeStatus: () => undefined,
-    changePage: () => undefined, refresh: () => Promise.resolve(true), create: () => undefined,
-    open: () => undefined, run: () => undefined, runBulk: () => undefined, selectIds: () => undefined
+    setSearch: () => undefined,
+    setLabels: () => undefined,
+    submitSearch: () => undefined,
+    submitFilters: () => undefined,
+    changeApp: () => undefined,
+    changeStatus: () => undefined,
+    changePage: () => undefined,
+    refresh: () => Promise.resolve(true),
+    create: () => undefined,
+    open: () => undefined,
+    run: () => undefined,
+    runBulk: () => undefined,
+    selectIds: () => undefined
   };
-  return render(<I18nextProvider i18n={i18n}><MonitorListView state={state} actions={actions} /></I18nextProvider>);
+  return render(
+    <I18nextProvider i18n={i18n}>
+      <MonitorListView state={state} actions={actions} />
+    </I18nextProvider>
+  );
 }

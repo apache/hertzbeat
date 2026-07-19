@@ -15,11 +15,42 @@
  * limitations under the License.
  */
 
-.page { display: grid; gap: 20px; }
-.heading :global(.ant-typography) { margin: 0; }
-.toolbar { display: grid; grid-template-columns: minmax(160px, 1fr) minmax(150px, 200px) 140px minmax(150px, 200px) auto auto auto; gap: 8px; }
-.name { min-width: 0; }
-.name strong, .name span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bulk { display: flex; align-items: center; justify-content: space-between; min-height: 40px; border-block: 1px solid var(--ant-color-border-secondary); padding-block: 8px; }
-.name span { color: var(--ant-color-text-secondary); font-size: 12px; }
-@media (max-width: 900px) { .toolbar { grid-template-columns: 1fr 1fr; } }
+.page {
+  display: grid;
+  gap: 20px;
+}
+.heading :global(.ant-typography) {
+  margin: 0;
+}
+.toolbar {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) minmax(150px, 200px) 140px minmax(150px, 200px) auto auto auto;
+  gap: 8px;
+}
+.name {
+  min-width: 0;
+}
+.name strong,
+.name span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bulk {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 40px;
+  border-block: 1px solid var(--ant-color-border-secondary);
+  padding-block: 8px;
+}
+.name span {
+  color: var(--ant-color-text-secondary);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .toolbar {
+    grid-template-columns: 1fr 1fr;
+  }
+}

@@ -15,6 +15,16 @@
  * limitations under the License.
  */
 
-.page { display: grid; gap: 20px; }
-.heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
-.heading :global(.ant-typography) { margin: 0; }
+.page {
+  display: grid;
+  gap: 20px;
+}
+.heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.heading :global(.ant-typography) {
+  margin: 0;
+}

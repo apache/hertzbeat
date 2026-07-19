@@ -16,15 +16,22 @@
  */
 
 export const monitorScrapeValues = [
-  'static', 'http_sd', 'nacos_sd', 'dns_sd', 'eureka_sd', 'consul_sd', 'zookeeper_sd'
+  'static',
+  'http_sd',
+  'nacos_sd',
+  'dns_sd',
+  'eureka_sd',
+  'consul_sd',
+  'zookeeper_sd'
 ] as const;
 export const monitorScheduleTypes = ['interval', 'cron'] as const;
-export type MonitorScrape = typeof monitorScrapeValues[number];
-export type MonitorScheduleType = typeof monitorScheduleTypes[number];
+export const monitorStatusCodes = { paused: 0, available: 1, unavailable: 2 } as const;
+export type MonitorScrape = (typeof monitorScrapeValues)[number];
+export type MonitorScheduleType = (typeof monitorScheduleTypes)[number];
 export type MonitorEditorMode = 'new' | 'edit';
 
 export function normalizeMonitorScrape(value: string | null | undefined): MonitorScrape {
-  return monitorScrapeValues.includes(value as MonitorScrape) ? value as MonitorScrape : 'static';
+  return monitorScrapeValues.includes(value as MonitorScrape) ? (value as MonitorScrape) : 'static';
 }
 
 export class MonitorContractError extends Error {

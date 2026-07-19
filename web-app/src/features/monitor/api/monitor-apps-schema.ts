@@ -17,7 +17,7 @@
 
 import { z } from 'zod';
 
-import { MonitorContractError, type MonitorApp } from './monitor-contract';
+import { MonitorContractError, type MonitorApp } from '../model/monitor-contract';
 import { nonEmptyStringSchema, nullableStringSchema } from './monitor-read-schema-primitives';
 
 const monitorAppSchema = z.object({

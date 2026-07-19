@@ -15,18 +15,6 @@
     },
     {
       "rule": "function-size",
-      "path": "features/monitor/controller/use-monitor-editor-controller.ts",
-      "identity": "function:useMonitorEditorController",
-      "allowedMax": 81
-    },
-    {
-      "rule": "function-size",
-      "path": "features/monitor/controller/use-monitor-editor-resources.ts",
-      "identity": "function:useMonitorEditorResources",
-      "allowedMax": 89
-    },
-    {
-      "rule": "function-size",
       "path": "features/settings/object-store/controller/object-store-resource-controller.ts",
       "identity": "function:useObjectStoreResourceController",
       "allowedMax": 76

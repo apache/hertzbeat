@@ -18,17 +18,16 @@
 import { ApiMessageError, apiMessageDelete, apiMessageGet, apiMessagePost } from '@/core/http/api-message';
 import {
   MonitorContractError,
-  monitorPageSizes,
   type Monitor,
   type MonitorAction,
   type MonitorApp,
   type MonitorQuery
-} from './monitor-contract';
+} from '../model/monitor-contract';
+import { writeMonitorQuery } from '../model/monitor-query';
 import { parseMonitorApps } from './monitor-apps-schema';
 import { parseMonitorDetail } from './monitor-detail-schema';
 import { parseMonitorPage } from './monitor-page-schema';
 
-export * from './monitor-contract';
 export { detectMonitor, loadMonitorCollectors, loadMonitorParamDefines, saveMonitor } from './monitor-editor-api';
 export { buildMonitorAppHierarchyPath, loadMonitorAppHierarchy } from './monitor-hierarchy-api';
 export {
@@ -75,36 +74,6 @@ export function classifyMonitorMetricReadError(error: unknown): 'unavailable' | 
   if (error instanceof MonitorContractError) return 'error';
   if (error instanceof ApiMessageError && error.status === 200 && error.code === 15) return 'unavailable';
   return classifyMonitorReadError(error);
-}
-
-function validPageIndex(value: string | null) {
-  const parsed = Number.parseInt(value ?? '', 10);
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
-}
-
-function validPageSize(value: string | null) {
-  const parsed = Number.parseInt(value ?? '', 10);
-  return monitorPageSizes.includes(parsed as (typeof monitorPageSizes)[number]) ? parsed : 10;
-}
-
-export function readMonitorQuery(params: URLSearchParams): MonitorQuery {
-  return {
-    search: params.get('search')?.trim() ?? '',
-    app: params.get('app')?.trim() ?? '',
-    status: params.get('status')?.trim() ?? '9',
-    labels: params.get('labels')?.trim() ?? '',
-    pageIndex: validPageIndex(params.get('pageIndex')),
-    pageSize: validPageSize(params.get('pageSize'))
-  };
-}
-
-export function writeMonitorQuery(query: MonitorQuery) {
-  const params = new URLSearchParams({ pageIndex: String(query.pageIndex), pageSize: String(query.pageSize) });
-  if (query.search) params.set('search', query.search);
-  if (query.app) params.set('app', query.app);
-  if (query.status && query.status !== '9') params.set('status', query.status);
-  if (query.labels) params.set('labels', query.labels);
-  return params;
 }
 
 export function buildMonitorListPath(query: MonitorQuery) {

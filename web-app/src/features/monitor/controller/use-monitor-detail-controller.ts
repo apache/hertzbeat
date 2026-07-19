@@ -18,7 +18,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
-import { classifyMonitorDetailReadError, loadMonitorDetail, type MonitorDetail } from '../api/monitor-api';
+import { classifyMonitorDetailReadError, loadMonitorDetail } from '../api/monitor-api';
+import type { MonitorDetail } from '../model/monitor-contract';
 import { parseMonitorRouteId, type MonitorDetailEvidence } from '../model/monitor-detail-model';
 import { buildMonitorRoutePath, safeMonitorReturnTo } from '../model/monitor-model';
 import { monitorQueryKeys } from './monitor-query-keys';
@@ -38,7 +39,9 @@ export function useMonitorDetailController() {
   return {
     state: { detail: resolveMonitorDetail(id, query.isPending, query.error, query.data), returnTo },
     actions: {
-      back: () => { void navigate(returnTo); },
+      back: () => {
+        void navigate(returnTo);
+      },
       edit: () => {
         if (id !== undefined) void navigate(buildMonitorRoutePath(id, 'edit', returnTo));
       }
@@ -46,8 +49,12 @@ export function useMonitorDetailController() {
   };
 }
 
-function resolveMonitorDetail(id: number | undefined, pending: boolean, error: Error | null,
-  detail: MonitorDetail | undefined): MonitorDetailEvidence {
+function resolveMonitorDetail(
+  id: number | undefined,
+  pending: boolean,
+  error: Error | null,
+  detail: MonitorDetail | undefined
+): MonitorDetailEvidence {
   if (id === undefined) return { kind: 'missing' };
   if (pending) return { kind: 'loading' };
   if (error) return { kind: classifyMonitorDetailReadError(error) };

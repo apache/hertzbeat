@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 
-import { MonitorContractError, type MonitorAppHierarchyNode } from './monitor-contract';
+import { MonitorContractError, type MonitorAppHierarchyNode } from '../model/monitor-contract';
 import { javaByteSchema, nonEmptyStringSchema, nullableStringSchema } from './monitor-read-schema-primitives';
 
 type WireHierarchyNode = {
@@ -16,16 +16,18 @@ type WireHierarchyNode = {
   children?: WireHierarchyNode[] | null | undefined;
 };
 
-const hierarchyNodeSchema: z.ZodType<WireHierarchyNode> = z.lazy(() => z.object({
-  category: nullableStringSchema.optional(),
-  value: nonEmptyStringSchema,
-  label: nullableStringSchema.optional(),
-  isLeaf: z.boolean().optional(),
-  hide: z.boolean().nullable().optional(),
-  type: javaByteSchema.nullable().optional(),
-  unit: nullableStringSchema.optional(),
-  children: z.array(hierarchyNodeSchema).nullable().optional()
-}));
+const hierarchyNodeSchema: z.ZodType<WireHierarchyNode> = z.lazy(() =>
+  z.object({
+    category: nullableStringSchema.optional(),
+    value: nonEmptyStringSchema,
+    label: nullableStringSchema.optional(),
+    isLeaf: z.boolean().optional(),
+    hide: z.boolean().nullable().optional(),
+    type: javaByteSchema.nullable().optional(),
+    unit: nullableStringSchema.optional(),
+    children: z.array(hierarchyNodeSchema).nullable().optional()
+  })
+);
 
 const appHierarchySchema = z.array(hierarchyNodeSchema).length(1);
 

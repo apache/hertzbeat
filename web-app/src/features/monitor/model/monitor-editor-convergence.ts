@@ -15,49 +15,79 @@
  * limitations under the License.
  */
 
-import type { MonitorDetail, MonitorParam, MonitorParamDefine } from '../api/monitor-api';
+import type { MonitorDetail, MonitorParam, MonitorParamDefine } from './monitor-contract';
 import type { MonitorMutationPayload } from './monitor-editor-payload';
 
 const monitorWritableKeys = [
-  'name', 'app', 'scrape', 'intervals', 'scheduleType', 'cronExpression', 'labels', 'annotations', 'description'
+  'name',
+  'app',
+  'scrape',
+  'intervals',
+  'scheduleType',
+  'cronExpression',
+  'labels',
+  'annotations',
+  'description'
 ] as const;
 
-export function monitorWritableConverged(mode: 'new' | 'edit', payload: MonitorMutationPayload, detail: MonitorDetail,
-  defines: MonitorParamDefine[] = [], before?: MonitorDetail) {
-  return sameMonitor(payload, detail)
-    && (payload.collector ?? null) === (detail.collector ?? null)
-    && sameParams(payload.params, detail.params ?? [], mode, defines, before?.params ?? [])
-    && sameGrafana(payload, detail);
+export function monitorWritableConverged(
+  mode: 'new' | 'edit',
+  payload: MonitorMutationPayload,
+  detail: MonitorDetail,
+  defines: MonitorParamDefine[] = [],
+  before?: MonitorDetail
+) {
+  return (
+    sameMonitor(payload, detail) &&
+    (payload.collector ?? null) === (detail.collector ?? null) &&
+    sameParams(payload.params, detail.params ?? [], mode, defines, before?.params ?? []) &&
+    sameGrafana(payload, detail)
+  );
 }
 
 function sameMonitor(payload: MonitorMutationPayload, detail: MonitorDetail) {
-  return monitorWritableKeys.every(key => sameValue(payload.monitor[key], detail.monitor[key]))
-    && detail.monitor.instance === payload.monitor.instance;
+  return (
+    monitorWritableKeys.every(key => sameValue(payload.monitor[key], detail.monitor[key])) &&
+    detail.monitor.instance === payload.monitor.instance
+  );
 }
 
 function sameGrafana(payload: MonitorMutationPayload, detail: MonitorDetail) {
-  return payload.grafanaDashboard.enabled === (detail.grafanaDashboard?.enabled ?? false)
-    && (payload.grafanaDashboard.template ?? null) === (detail.grafanaDashboard?.template ?? null);
+  return (
+    payload.grafanaDashboard.enabled === (detail.grafanaDashboard?.enabled ?? false) &&
+    (payload.grafanaDashboard.template ?? null) === (detail.grafanaDashboard?.template ?? null)
+  );
 }
 
-function sameParams(left: MonitorMutationPayload['params'], right: MonitorParam[], mode: 'new' | 'edit',
-  defines: MonitorParamDefine[], before: MonitorParam[]) {
+function sameParams(
+  left: MonitorMutationPayload['params'],
+  right: MonitorParam[],
+  mode: 'new' | 'edit',
+  defines: MonitorParamDefine[],
+  before: MonitorParam[]
+) {
   if (left.length !== right.length) return false;
   const byField = new Map(right.map(param => [param.field, param]));
   return left.every(param => {
     const current = byField.get(param.field);
     const define = defines.find(item => item.field === param.field);
     const previous = before.find(item => item.field === param.field);
-    return current !== undefined && param.type === current.type
-      && (define?.type === 'password'
+    return (
+      current !== undefined &&
+      param.type === current.type &&
+      (define?.type === 'password'
         ? passwordValueConverged(param.paramValue, current.paramValue, previous?.paramValue)
-        : sameParamValue(param.type, param.paramValue, current.paramValue))
-      && (mode === 'new' || (param.id ?? null) === (current.id ?? null));
+        : sameParamValue(param.type, param.paramValue, current.paramValue)) &&
+      (mode === 'new' || (param.id ?? null) === (current.id ?? null))
+    );
   });
 }
 
-function passwordValueConverged(submitted: string | null | undefined, actual: string | null | undefined,
-  previous: string | null | undefined) {
+function passwordValueConverged(
+  submitted: string | null | undefined,
+  actual: string | null | undefined,
+  previous: string | null | undefined
+) {
   const submittedUnconfigured = submitted === null || submitted === undefined;
   const actualUnconfigured = actual === null || actual === undefined;
   if (submittedUnconfigured || actualUnconfigured) return submittedUnconfigured && actualUnconfigured;
@@ -92,19 +122,23 @@ function parseJsonRecord(value: string | null | undefined) {
 }
 
 function sameValue(left: unknown, right: unknown): boolean {
-  if (left === undefined && right == null || left == null && right === undefined) return true;
+  if ((left === undefined && right == null) || (left == null && right === undefined)) return true;
   if (isUnknownRecord(left) && isUnknownRecord(right)) {
     const leftKeys = Object.keys(left);
     const rightKeys = Object.keys(right);
-    return leftKeys.length === rightKeys.length
-      && leftKeys.every(key => Object.hasOwn(right, key) && sameValue(left[key], right[key]));
+    return (
+      leftKeys.length === rightKeys.length &&
+      leftKeys.every(key => Object.hasOwn(right, key) && sameValue(left[key], right[key]))
+    );
   }
   return left === right;
 }
 
 function isStringRecord(value: unknown): value is Record<string, string> {
-  return isUnknownRecord(value)
-    && Object.entries(value).every(([key, entry]) => key.trim().length > 0 && typeof entry === 'string');
+  return (
+    isUnknownRecord(value) &&
+    Object.entries(value).every(([key, entry]) => key.trim().length > 0 && typeof entry === 'string')
+  );
 }
 
 function isUnknownRecord(value: unknown): value is Record<string, unknown> {

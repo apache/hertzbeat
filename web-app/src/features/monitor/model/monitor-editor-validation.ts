@@ -15,13 +15,9 @@
  * limitations under the License.
  */
 
-import type { Monitor, MonitorParamDefine } from '../api/monitor-api';
+import type { Monitor, MonitorParamDefine } from './monitor-contract';
 import { isMonitorParamVisible } from './monitor-editor-draft';
-import type {
-  MonitorEditorDraft,
-  MonitorParamDraft,
-  MonitorParamFormValue
-} from './monitor-editor-model';
+import type { MonitorEditorDraft, MonitorParamDraft, MonitorParamFormValue } from './monitor-editor-model';
 import { numberDefineRange } from './monitor-param-codec';
 
 export function validateMonitorDraft(
@@ -38,16 +34,25 @@ export function validateMonitorDraft(
     issues.push('intervals');
   }
   const values = new Map(params.map(param => [param.field, param.paramValue]));
-  defines.filter(define => isMonitorParamVisible(define, params)).forEach(define => {
-    if (!isValidParamValue(define, values.get(define.field))) issues.push(`param:${define.field}`);
-  });
+  defines
+    .filter(define => isMonitorParamVisible(define, params))
+    .forEach(define => {
+      if (!isValidParamValue(define, values.get(define.field))) issues.push(`param:${define.field}`);
+    });
   return issues;
 }
 
 export function validateMonitorEditorDraft(draft: MonitorEditorDraft, defines: MonitorParamDefine[]) {
-  return [...validateMonitorDraft(draft.monitor, defines, draft.params),
-    ...draft.invalidParamFields.filter(field => field.startsWith('__') || defines.some(define =>
-      define.field === field && isMonitorParamVisible(define, draft.params))).map(field => `param:${field}`)];
+  return [
+    ...validateMonitorDraft(draft.monitor, defines, draft.params),
+    ...draft.invalidParamFields
+      .filter(
+        field =>
+          field.startsWith('__') ||
+          defines.some(define => define.field === field && isMonitorParamVisible(define, draft.params))
+      )
+      .map(field => `param:${field}`)
+  ];
 }
 
 export function monitorIntervalBounds(app: string | undefined) {
@@ -61,7 +66,8 @@ export function isValidCronExpression(value: string | null | undefined) {
 }
 
 function isValidParamValue(define: MonitorParamDefine, value: MonitorParamFormValue | undefined) {
-  const empty = value == null || typeof value === 'string' && !value.trim() || Array.isArray(value) && value.length === 0;
+  const empty =
+    value == null || (typeof value === 'string' && !value.trim()) || (Array.isArray(value) && value.length === 0);
   if (empty) return !define.required;
   if (define.type === 'number' && typeof value === 'number') return numberWithinDefineRange(define, value);
   if ((define.type === 'text' || define.type === 'textarea') && typeof value === 'string' && define.limit !== null) {
@@ -72,11 +78,12 @@ function isValidParamValue(define: MonitorParamDefine, value: MonitorParamFormVa
 
 function validMonitorInterval(app: string | undefined, value: number | null | undefined) {
   const bounds = monitorIntervalBounds(app);
-  return Number.isSafeInteger(value) && value !== null && value !== undefined
-    && value >= bounds.min && value <= bounds.max;
+  return (
+    Number.isSafeInteger(value) && value !== null && value !== undefined && value >= bounds.min && value <= bounds.max
+  );
 }
 
 function numberWithinDefineRange(define: MonitorParamDefine, value: number) {
   const range = numberDefineRange(define);
-  return range === null || value >= range.min && value <= range.max;
+  return range === null || (value >= range.min && value <= range.max);
 }

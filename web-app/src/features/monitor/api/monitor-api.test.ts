@@ -31,6 +31,12 @@ vi.mock('@/core/http/api-message', async importOriginal => ({
 import { ApiMessageError } from '@/core/http/api-message';
 
 import {
+  buildFavoriteMetricPath,
+  buildHistoryMetricPath,
+  buildMetricCatalogPath,
+  buildMonitorActionPath,
+  buildMonitorListPath,
+  buildRealtimeMetricPath,
   classifyMonitorDetailReadError,
   classifyMonitorMetricReadError,
   detectMonitor,
@@ -46,10 +52,9 @@ import {
   loadRealtimeMetric,
   mutateMonitors,
   saveMonitor,
-  MonitorContractError,
-  MonitorMissingError,
-  type MonitorQuery
+  MonitorMissingError
 } from './monitor-api';
+import { MonitorContractError, type MonitorQuery } from '../model/monitor-contract';
 import { monitorAppOptions } from '../model/monitor-model';
 
 const query: MonitorQuery = { search: '', app: '', status: '9', labels: '', pageIndex: 0, pageSize: 10 };
@@ -151,6 +156,32 @@ describe('monitor list API contracts', () => {
     expect(http.apiMessageDelete).toHaveBeenNthCalledWith(1, '/api/monitors/manage?ids=7&type=JSON');
     expect(http.apiMessageDelete).toHaveBeenNthCalledWith(2, '/api/monitors?ids=8');
     expect(http.apiMessageGet).not.toHaveBeenCalledWith('/api/monitors/manage?ids=7&ids=8');
+  });
+
+  it('owns list and mutation transport paths at the API boundary', () => {
+    expect(buildMonitorListPath({ ...query, search: 'mysql', app: 'mysql', status: '2' })).toBe(
+      '/api/monitors?pageIndex=0&pageSize=10&search=mysql&app=mysql&status=2'
+    );
+    expect(buildMonitorActionPath('copy', [7])).toBe('/api/monitor/copy/7');
+    expect(buildMonitorActionPath('enable', [7, 8])).toBe('/api/monitors/manage?ids=7&ids=8');
+    expect(buildMonitorActionPath('pause', [7, 8])).toBe('/api/monitors/manage?ids=7&ids=8&type=JSON');
+    expect(buildMonitorActionPath('delete', [7, 8])).toBe('/api/monitors?ids=7&ids=8');
+    expect(() => buildMonitorActionPath('copy', [])).toThrow();
+    expect(() => buildMonitorActionPath('copy', [7, 8])).toThrow();
+  });
+});
+
+describe('monitor metric API paths', () => {
+  it('owns realtime, favorite, catalog, and history transport paths at the API boundary', () => {
+    const monitor = { id: 7, app: 'website', name: 'home', instance: 'example.com:443', status: 1 };
+    const metric = { key: 'summary.responseTime', group: 'summary', field: 'responseTime', unit: 'ms' };
+
+    expect(buildRealtimeMetricPath(7, metric.group)).toBe('/api/monitor/7/metrics/summary');
+    expect(buildFavoriteMetricPath(7, metric.key)).toBe('/api/metrics/favorite/7/summary.responseTime');
+    expect(buildHistoryMetricPath(monitor, metric, '6h')).toBe(
+      '/api/monitor/example.com%3A443/metric/website.summary.responseTime?history=6h&interval=false'
+    );
+    expect(buildMetricCatalogPath(monitor)).toBe('/api/apps/website/define');
   });
 });
 

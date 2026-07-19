@@ -18,14 +18,15 @@
 import type { RemotePayloadState } from '@/shared/remote-state';
 
 import type {
-  MonitorDetail, MonitorDetailMetric, MonitorHistoryMetric, MonitorMetricOption, MonitorMetricValue,
+  MonitorDetail,
+  MonitorDetailMetric,
+  MonitorHistoryMetric,
+  MonitorMetricOption,
+  MonitorMetricValue,
   MonitorRealtimeMetric
-} from '../api/monitor-api';
+} from './monitor-contract';
 
-export type MonitorDetailEvidence = RemotePayloadState<
-  { detail: MonitorDetail },
-  'missing' | 'unavailable' | 'error'
->;
+export type MonitorDetailEvidence = RemotePayloadState<{ detail: MonitorDetail }, 'missing' | 'unavailable' | 'error'>;
 
 export type MonitorDetailViewState = { detail: MonitorDetailEvidence; returnTo: string };
 export type MonitorDetailViewActions = { back: () => void; edit: () => void };
@@ -36,16 +37,10 @@ export function parseMonitorRouteId(value: string | undefined) {
   return Number.isSafeInteger(parsed) ? parsed : undefined;
 }
 
-export {
-  buildFavoriteMetricPath,
-  buildHistoryMetricPath,
-  buildMetricCatalogPath,
-  buildRealtimeMetricPath,
-  type MonitorMetricOption
-} from '../api/monitor-api';
+export type { MonitorMetricOption } from './monitor-contract';
 
 export const monitorMetricHistoryRanges = ['30m', '1h', '6h', '24h'] as const;
-export type MonitorMetricHistory = typeof monitorMetricHistoryRanges[number];
+export type MonitorMetricHistory = (typeof monitorMetricHistoryRanges)[number];
 export type MonitorMetricCatalogEvidence =
   | { kind: 'loading'; options: MonitorMetricOption[] }
   | { kind: 'fallback'; options: MonitorMetricOption[]; references: string[] }
@@ -53,10 +48,7 @@ export type MonitorMetricCatalogEvidence =
   | { kind: 'unavailable'; options: MonitorMetricOption[] }
   | { kind: 'error'; options: MonitorMetricOption[] }
   | { kind: 'ready'; options: MonitorMetricOption[] };
-export type MonitorMetricFavoriteEvidence = RemotePayloadState<
-  { value: boolean },
-  'unavailable' | 'error'
->;
+export type MonitorMetricFavoriteEvidence = RemotePayloadState<{ value: boolean }, 'unavailable' | 'error'>;
 export type MonitorMetricRowsEvidence<T> =
   | { kind: 'loading'; rows: T[] }
   | { kind: 'empty'; rows: T[] }
@@ -82,18 +74,24 @@ export type MonitorMetricWorkbenchController = {
 };
 
 export function parseMonitorMetricHistory(value: string | null): MonitorMetricHistory {
-  return monitorMetricHistoryRanges.includes(value as MonitorMetricHistory) ? value as MonitorMetricHistory : '30m';
+  return monitorMetricHistoryRanges.includes(value as MonitorMetricHistory) ? (value as MonitorMetricHistory) : '30m';
 }
 
 export function monitorMetricOptions(metrics: MonitorDetailMetric[]) {
   return metrics.flatMap(metric => {
     if (metric.visible === false) return [];
-    return (metric.fields ?? []).flatMap(field => field.type === 0 && field.label !== true && field.field ? [{
-      key: `${metric.name}.${field.field}`,
-      group: metric.name,
-      field: field.field,
-      ...(field.unit ? { unit: field.unit } : {})
-    }] : []);
+    return (metric.fields ?? []).flatMap(field =>
+      field.type === 0 && field.label !== true && field.field
+        ? [
+            {
+              key: `${metric.name}.${field.field}`,
+              group: metric.name,
+              field: field.field,
+              ...(field.unit ? { unit: field.unit } : {})
+            }
+          ]
+        : []
+    );
   });
 }
 
@@ -106,15 +104,19 @@ export function monitorRealtimeRows(data: MonitorRealtimeMetric, metric: Monitor
   if (fieldIndex < 0) return [];
   return data.valueRows.flatMap((row, rowIndex) => {
     const value = row.values[fieldIndex];
-    return value ? [{ key: String(rowIndex), labels: row.labels, value: displayMetricValue(value), time: value.time }] : [];
+    return value
+      ? [{ key: String(rowIndex), labels: row.labels, value: displayMetricValue(value), time: value.time }]
+      : [];
   });
 }
 
 export function monitorHistoryRows(data: MonitorHistoryMetric) {
-  return Object.entries(data.values).flatMap(([series, values]) => values.map((value, index) => ({
-    key: `${series}:${index}`,
-    series,
-    value: displayMetricValue(value),
-    time: value.time
-  })));
+  return Object.entries(data.values).flatMap(([series, values]) =>
+    values.map((value, index) => ({
+      key: `${series}:${index}`,
+      series,
+      value: displayMetricValue(value),
+      time: value.time
+    }))
+  );
 }

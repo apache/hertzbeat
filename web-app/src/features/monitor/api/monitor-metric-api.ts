@@ -16,7 +16,7 @@
  */
 
 import { apiMessageDelete, apiMessageGet, apiMessagePost } from '@/core/http/api-message';
-import type { Monitor, MonitorMetricOption } from './monitor-contract';
+import type { Monitor, MonitorMetricOption } from '../model/monitor-contract';
 import {
   parseFavoriteMetrics,
   parseHistoryMetric,
@@ -36,7 +36,8 @@ export function buildMetricCatalogPath(monitor: Monitor) {
 }
 
 export function buildFavoriteMetricPath(monitorId: number, metricKey?: string) {
-  return metricKey == null ? `/api/metrics/favorite/${monitorId}`
+  return metricKey == null
+    ? `/api/metrics/favorite/${monitorId}`
     : `/api/metrics/favorite/${monitorId}/${encodeURIComponent(metricKey)}`;
 }
 
@@ -63,14 +64,17 @@ export function updateFavoriteMetric(monitorId: number, metricKey: string, favor
   return favorite ? apiMessagePost(path, null) : apiMessageDelete(path);
 }
 
-export async function loadRealtimeMetric(monitorId: number, metric: MonitorMetricOption,
-  signal?: AbortSignal) {
+export async function loadRealtimeMetric(monitorId: number, metric: MonitorMetricOption, signal?: AbortSignal) {
   const value = await apiMessageGet(buildRealtimeMetricPath(monitorId, metric.group), signal ? { signal } : undefined);
   return parseRealtimeMetric(value, monitorId, metric.group);
 }
 
-export async function loadHistoryMetric(monitor: Monitor, metric: MonitorMetricOption, history: string,
-  signal?: AbortSignal) {
+export async function loadHistoryMetric(
+  monitor: Monitor,
+  metric: MonitorMetricOption,
+  history: string,
+  signal?: AbortSignal
+) {
   const value = await apiMessageGet(buildHistoryMetricPath(monitor, metric, history), signal ? { signal } : undefined);
   return parseHistoryMetric(value, monitor.instance, metric.group, metric.field);
 }
