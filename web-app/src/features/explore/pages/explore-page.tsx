@@ -89,19 +89,6 @@ function ResultPanel({
         retryLabel={t('common.retry')}
       />
     );
-  if (result.kind === 'storage_unavailable')
-    return (
-      <ExploreMessageResult
-        type="error"
-        message={t('explore.states.storageUnavailable')}
-        retry={retry}
-        retryLabel={t('common.retry')}
-      />
-    );
-  if (result.kind === 'missing_context')
-    return <ExploreMessageResult type="info" message={t('explore.states.missingContext')} />;
-  if (result.kind === 'unsupported_query')
-    return <ExploreMessageResult type="warning" message={t('explore.states.unsupportedQuery')} />;
   if (result.kind === 'error')
     return (
       <ExploreMessageResult
@@ -113,7 +100,7 @@ function ResultPanel({
     );
   if (result.kind === 'live')
     return query.signal === 'logs' ? <LiveLogPanel query={query} openPath={openPath} /> : null;
-  return <HistoricalResult query={query} result={result} openPath={openPath} />;
+  return <HistoricalResult query={query} result={result} retry={retry} openPath={openPath} />;
 }
 
 function LiveLogPanel({ query, openPath }: { query: LogExploreQuery; openPath: (path: string) => void }) {
@@ -129,19 +116,20 @@ function LiveLogPanel({ query, openPath }: { query: LogExploreQuery; openPath: (
 function HistoricalResult({
   query,
   result,
+  retry,
   openPath
 }: {
   query: ExploreQuery;
-  result: Extract<ExplorePageResultState, { kind: 'ready' | 'empty' }>;
+  result: Extract<ExplorePageResultState, { kind: 'metric' | 'ready' | 'empty' }>;
+  retry: () => Promise<void>;
   openPath: (path: string) => void;
 }) {
   const { t } = useTranslation();
-  if (result.signal === 'metrics' && query.signal === 'metrics')
-    return (
-      <ExploreResultFrame>
-        <MetricResult data={result.data} t={t} />
-      </ExploreResultFrame>
-    );
+  if (result.kind === 'metric') {
+    return query.signal === 'metrics' ? (
+      <MetricResult data={result.data} state={result.state} retry={retry} t={t} />
+    ) : null;
+  }
   if (result.signal === 'logs' && query.signal === 'logs')
     return (
       <ExploreResultFrame>

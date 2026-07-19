@@ -12,10 +12,16 @@
 import { describe, expect, it } from 'vitest';
 
 import source from './explore-page.tsx?raw';
+import metricResult from '../components/metric-result.tsx?raw';
 
 describe('Explore page architecture', () => {
   it('keeps routing, TanStack, transport, submission, and browser globals in the controller', () => {
     expect(source).not.toMatch(/react-router-dom|@tanstack\/react-query|\.\.\/api\/|useExploreSubmission|\bwindow\b/);
     expect(source).toContain('useExplorePageController');
+  });
+
+  it('passes the controller-owned metric state through without component reclassification', () => {
+    expect(source).toMatch(/<MetricResult[\s\S]*state=\{result\.state\}/);
+    expect(metricResult).not.toMatch(/metricResultState/);
   });
 });

@@ -57,12 +57,6 @@
     },
     {
       "rule": "function-size",
-      "path": "features/explore/components/metric-result.tsx",
-      "identity": "function:MetricResult",
-      "allowedMax": 97
-    },
-    {
-      "rule": "function-size",
       "path": "features/explore/controller/use-trace-detail-controller.ts",
       "identity": "function:useTraceDetailController",
       "allowedMax": 69

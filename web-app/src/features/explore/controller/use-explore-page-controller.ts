@@ -35,7 +35,7 @@ import {
   type ExploreQueryPatch
 } from '../model/explore-model';
 import type { ExplorePageResult, LogRow, MetricConsole, TraceRow } from '../model/explore-signal-contract';
-import { metricResultState } from '../model/explore-signal-model';
+import { metricResultState, type MetricResultState } from '../model/explore-signal-model';
 import { exploreQueryKeys } from './explore-query-keys';
 
 type HistoricalData = MetricConsole | ExplorePageResult<LogRow> | ExplorePageResult<TraceRow>;
@@ -45,11 +45,8 @@ export type ExplorePageResultState =
   | { kind: 'loading' }
   | { kind: 'transport_error' }
   | { kind: 'contract_error' }
-  | { kind: 'storage_unavailable' }
-  | { kind: 'missing_context' }
-  | { kind: 'unsupported_query' }
   | { kind: 'error' }
-  | { kind: 'empty' | 'ready'; signal: 'metrics'; data: MetricConsole }
+  | { kind: 'metric'; state: MetricResultState; data: MetricConsole }
   | { kind: 'empty' | 'ready'; signal: 'logs'; data: ExplorePageResult<LogRow> }
   | { kind: 'empty' | 'ready'; signal: 'traces'; data: ExplorePageResult<TraceRow> };
 
@@ -154,16 +151,8 @@ function resolveResult(
 
 function resolveDataResult(query: ExploreQuery, data: HistoricalData): ExplorePageResultState {
   if (query.signal === 'metrics') {
-    const metric = metricResultState(data as MetricConsole);
-    if (
-      metric.kind === 'storage_unavailable' ||
-      metric.kind === 'missing_context' ||
-      metric.kind === 'unsupported_query'
-    ) {
-      return { kind: metric.kind };
-    }
-    if (metric.kind === 'error') return { kind: 'error' };
-    return { kind: metric.kind, signal: 'metrics', data: data as MetricConsole };
+    const metricData = data as MetricConsole;
+    return { kind: 'metric', state: metricResultState(metricData), data: metricData };
   }
   if (query.signal === 'logs') {
     const page = data as ExplorePageResult<LogRow>;

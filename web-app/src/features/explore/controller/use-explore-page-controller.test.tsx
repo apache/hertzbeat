@@ -192,7 +192,7 @@ describe('Explore page controller', () => {
     await waitFor(() => expect(routed.current().result.kind).toBe(kind));
   });
 
-  it('keeps transport, contract, and other failures distinct from empty', async () => {
+  it('keeps metric request failures at the page boundary instead of treating them as result states', async () => {
     const { ApiMessageError } = await import('@/core/http/api-message');
     const { ExploreSignalContractError } = await import('../model/explore-signal-contract');
     for (const [reason, kind] of [
@@ -200,30 +200,46 @@ describe('Explore page controller', () => {
       [new ExploreSignalContractError('bad'), 'contract_error'],
       [new Error('bad'), 'error']
     ] as const) {
-      api.loadLogSignal.mockRejectedValue(reason);
-      const routed = renderController(['/explore?signal=logs']);
+      api.loadMetricSignal.mockRejectedValue(reason);
+      const routed = renderController(['/explore?signal=metrics']);
       await waitFor(() => expect(routed.current().result.kind).toBe(kind));
       routed.unmount();
     }
   });
 
   it.each([
-    ['no_context', 'missing_context'],
-    ['unsupported_query', 'unsupported_query'],
-    ['load_failed', 'storage_unavailable']
-  ] as const)('preserves the metric backend state %s', async (emptyStateReason, kind) => {
-    api.loadMetricSignal.mockResolvedValue({
-      ...metricConsole([]),
-      results: null,
-      emptyStateReason,
-      errorMessage: emptyStateReason === 'no_context' ? 'Choose a metric or service context.' : null
-    });
+    ['missing context', metricConsole([], { results: null, emptyStateReason: 'no_context' }), 'missing_context'],
+    [
+      'unsupported query',
+      metricConsole([], { results: null, emptyStateReason: 'unsupported_query' }),
+      'unsupported_query'
+    ],
+    [
+      'failed storage load',
+      metricConsole([], { results: null, emptyStateReason: 'load_failed' }),
+      'storage_unavailable'
+    ],
+    [
+      'backend error',
+      metricConsole([], { results: { refId: null, status: 503, msg: 'storage offline', frames: [] } }),
+      'error'
+    ],
+    ['true empty', metricConsole([]), 'empty'],
+    ['invalid numeric data', metricConsole([{ schema: null, data: [[1000, 'not-a-number']] }]), 'empty'],
+    ['zero-valued data', metricConsole([{ schema: null, data: [[1000, 0]] }]), 'ready']
+  ] as const)('classifies $0 once and preserves the metric result object', async (_name, evidence, kind) => {
+    api.loadMetricSignal.mockResolvedValue(evidence);
     const routed = renderController([
       '/explore?signal=metrics&collectorId=east&serviceName=checkout' +
         '&serviceNamespace=commerce&environment=prod&windowMode=preset' +
         '&query=sum%28rate%28http_requests_total%5B5m%5D%29%29'
     ]);
-    await waitFor(() => expect(routed.current().result.kind).toBe(kind));
+    await waitFor(() =>
+      expect(routed.current().result).toMatchObject({ kind: 'metric', state: { kind }, data: evidence })
+    );
+    if (kind === 'error') {
+      expect(routed.current().result).toMatchObject({ state: { message: 'storage offline' } });
+    }
   });
 
   it('does not let a stale previous-signal promise replace the current result', async () => {
@@ -280,7 +296,10 @@ function renderController(entries: string[], initialIndex = 0) {
   };
 }
 
-function metricConsole(frames: NonNullable<NonNullable<MetricConsole['results']>['frames']>): MetricConsole {
+function metricConsole(
+  frames: NonNullable<NonNullable<MetricConsole['results']>['frames']>,
+  override: Partial<MetricConsole> = {}
+): MetricConsole {
   return {
     context: null,
     query: null,
@@ -289,7 +308,8 @@ function metricConsole(frames: NonNullable<NonNullable<MetricConsole['results']>
     results: { refId: null, status: 200, msg: null, frames },
     stats: null,
     emptyStateReason: null,
-    errorMessage: null
+    errorMessage: null,
+    ...override
   };
 }
 function page(content: unknown[], totalElements = content.length, number = 0, totalPages = totalElements ? 1 : 0) {

@@ -188,18 +188,29 @@ describe('ExplorePage instrumentation context boundary', () => {
   });
 
   it.each([
-    ['no_context', 'missingContext', 'Choose a metric or service context.'],
-    ['unsupported_query', 'unsupportedQuery', null],
-    ['load_failed', 'storageUnavailable', null]
+    ['no_context', 'missingContext', 'Choose a metric or service context.', false],
+    ['unsupported_query', 'unsupportedQuery', null, false],
+    ['load_failed', 'storageUnavailable', null, true]
   ] as const)(
     'renders the metric backend state %s without inventing empty data',
-    async (reason, messageKey, errorMessage) => {
+    async (reason, messageKey, errorMessage, retryable) => {
       api.loadMetricSignal.mockResolvedValue(metricState(reason, errorMessage));
       renderPage('/explore?signal=metrics');
       expect(await screen.findByText(i18n.t(`explore.states.${messageKey}`))).toBeInTheDocument();
       expect(screen.queryByText(en.explore.empty.metrics)).not.toBeInTheDocument();
+      if (retryable) expect(screen.getByRole('button', { name: en.common.retry })).toBeInTheDocument();
+      else expect(screen.queryByRole('button', { name: en.common.retry })).not.toBeInTheDocument();
     }
   );
+
+  it('shows the metric backend error message and retries the same query', async () => {
+    api.loadMetricSignal.mockResolvedValue(metricBackendError('storage offline'));
+    renderPage('/explore?signal=metrics');
+
+    expect(await screen.findByText('storage offline')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: en.common.retry }));
+    await waitFor(() => expect(api.loadMetricSignal).toHaveBeenCalledTimes(2));
+  });
 
   it.each([
     [new ApiMessageError('offline', { status: 503 }), 'transportError'],
@@ -222,6 +233,14 @@ function metricState(emptyStateReason: string, errorMessage: string | null): Met
     stats: { totalSeries: 0, nonEmptySeries: 0, latestObservedAt: null },
     emptyStateReason,
     errorMessage
+  };
+}
+
+function metricBackendError(message: string): MetricConsole {
+  return {
+    ...metricState('', null),
+    results: { refId: null, status: 503, msg: message, frames: [] },
+    emptyStateReason: null
   };
 }
 

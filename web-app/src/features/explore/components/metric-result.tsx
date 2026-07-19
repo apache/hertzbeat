@@ -15,144 +15,52 @@
  * limitations under the License.
  */
 
-import { Alert, Table, Tag } from 'antd';
 import type { TFunction } from 'i18next';
 
 import type { MetricConsole } from '../model/explore-signal-contract';
-import { metricPath, metricPoints, metricResultState, type MetricSeries } from '../model/explore-signal-model';
-import styles from './metric-result.module.css';
+import type { MetricResultState } from '../model/explore-signal-model';
+import { ExploreMessageResult, ExploreResultFrame } from './explore-state-panel';
+import { MetricReadyResult } from './metric-ready-result';
 import { SignalEmptyState, SignalResultFrame } from './signal-result-frame';
 
-const CHART_WIDTH = 1000;
-const CHART_HEIGHT = 220;
-const METRIC_SERIES_COLORS = ['#4f6bed', '#00a389', '#d97706', '#c24172', '#7c3aed', '#0891b2'];
-const METRIC_SAMPLE_LIMIT = 100;
-const METRIC_TABLE_SCROLL = { x: 760, y: 320 };
-const METRIC_NAME_LABEL = '__name__';
-
-type SampleRow = {
-  key: string;
-  seriesKey: string;
-  seriesName: string;
-  timestamp: number;
-  value: number;
-  unit?: string | undefined;
+type MetricResultProps = {
+  data: MetricConsole;
+  state: MetricResultState;
+  retry: () => Promise<void>;
+  t: TFunction;
 };
 
-export function MetricResult({ data, t }: { data: MetricConsole; t: TFunction }) {
-  const state = metricResultState(data);
-  if (state.kind === 'error') return <Alert type="error" showIcon message={state.message ?? t('explore.loadFailed')} />;
-  if (state.kind === 'storage_unavailable') {
-    return <Alert type="warning" showIcon message={t('explore.states.storageUnavailable')} />;
+export function MetricResult({ data, state, retry, t }: MetricResultProps) {
+  if (state.kind === 'error') {
+    return <MetricFailure message={state.message ?? t('explore.loadFailed')} retry={retry} t={t} />;
   }
-  if (state.kind === 'unsupported_query') {
-    return <Alert type="warning" showIcon message={t('explore.states.unsupportedQuery')} />;
+  if (state.kind === 'storage_unavailable') {
+    return <MetricFailure message={t('explore.states.storageUnavailable')} retry={retry} t={t} />;
   }
   if (state.kind === 'missing_context') {
-    return <Alert type="info" showIcon message={t('explore.states.missingContext')} />;
+    return <ExploreMessageResult type="info" message={t('explore.states.missingContext')} />;
   }
-  if (state.kind === 'empty')
-    return (
+  if (state.kind === 'unsupported_query') {
+    return <ExploreMessageResult type="warning" message={t('explore.states.unsupportedQuery')} />;
+  }
+  if (state.kind === 'empty') return <MetricEmptyResult t={t} />;
+  return (
+    <ExploreResultFrame>
+      <MetricReadyResult data={data} series={state.series} t={t} />
+    </ExploreResultFrame>
+  );
+}
+
+function MetricFailure({ message, retry, t }: { message: string; retry: () => Promise<void>; t: TFunction }) {
+  return <ExploreMessageResult type="error" message={message} retry={retry} retryLabel={t('common.retry')} />;
+}
+
+function MetricEmptyResult({ t }: { t: TFunction }) {
+  return (
+    <ExploreResultFrame>
       <SignalResultFrame title={t('explore.signals.metrics')} count={0} unit={t('exploreMetric.series')}>
         <SignalEmptyState title={t('explore.empty.metrics')} hint={t('explore.description')} />
       </SignalResultFrame>
-    );
-  const series = state.series;
-  const samples = buildSampleRows(series);
-
-  return (
-    <SignalResultFrame
-      title={t('explore.signals.metrics')}
-      count={data.stats?.totalSeries ?? series.length}
-      unit={t('exploreMetric.series')}
-      meta={[
-        { label: t('explore.samples'), value: samples.length },
-        { label: t('exploreMetric.datasource'), value: data.datasource ?? '—' },
-        { label: t('exploreMetric.queryMode'), value: data.queryMode ?? '—' }
-      ]}
-    >
-      <section className={styles.chartSection} aria-label={t('exploreMetric.trend')}>
-        <div className={styles.legend}>
-          {series.slice(0, METRIC_SERIES_COLORS.length).map((item, index) => (
-            <span key={item.key}>
-              <i style={{ backgroundColor: METRIC_SERIES_COLORS[index] }} />
-              {seriesLabel(item)}
-            </span>
-          ))}
-        </div>
-        <svg
-          className={styles.chart}
-          viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
-          role="img"
-          aria-label={t('exploreMetric.trend')}
-          preserveAspectRatio="none"
-        >
-          <line x1="0" x2={CHART_WIDTH} y1="0" y2="0" />
-          <line x1="0" x2={CHART_WIDTH} y1={CHART_HEIGHT / 2} y2={CHART_HEIGHT / 2} />
-          <line x1="0" x2={CHART_WIDTH} y1={CHART_HEIGHT} y2={CHART_HEIGHT} />
-          {series.slice(0, METRIC_SERIES_COLORS.length).map((item, index) => (
-            <path
-              key={item.key}
-              d={metricPath(metricPoints(item), CHART_WIDTH, CHART_HEIGHT)}
-              stroke={METRIC_SERIES_COLORS[index]}
-            />
-          ))}
-        </svg>
-      </section>
-
-      <Table<SampleRow>
-        rowKey="key"
-        size="small"
-        dataSource={samples.slice(-METRIC_SAMPLE_LIMIT).reverse()}
-        pagination={false}
-        scroll={METRIC_TABLE_SCROLL}
-        columns={[
-          {
-            title: t('explore.time'),
-            dataIndex: 'timestamp',
-            render: value => new Date(value as number).toLocaleString()
-          },
-          { title: t('explore.metric'), dataIndex: 'seriesName' },
-          {
-            title: t('exploreMetric.value'),
-            dataIndex: 'value',
-            render: (value, row) => `${String(value)}${row.unit ? ` ${row.unit}` : ''}`
-          },
-          {
-            title: t('explore.labels'),
-            render: (_, row) => {
-              const item = series.find(candidate => candidate.key === row.seriesKey);
-              return item
-                ? Object.entries(item.labels)
-                    .filter(([key]) => key !== METRIC_NAME_LABEL)
-                    .map(([key, value]) => (
-                      <Tag key={key}>
-                        {key}={value}
-                      </Tag>
-                    ))
-                : '—';
-            }
-          }
-        ]}
-      />
-    </SignalResultFrame>
+    </ExploreResultFrame>
   );
-}
-
-function buildSampleRows(series: MetricSeries[]): SampleRow[] {
-  return series.flatMap(item =>
-    metricPoints(item).map((point, index) => ({
-      key: `${item.key}-${point.timestamp}-${index}`,
-      seriesKey: item.key,
-      seriesName: item.name,
-      timestamp: point.timestamp,
-      value: point.value,
-      unit: item.unit
-    }))
-  );
-}
-
-function seriesLabel(series: MetricSeries) {
-  const service = series.labels.service_name;
-  return service ? `${series.name} · ${service}` : series.name;
 }

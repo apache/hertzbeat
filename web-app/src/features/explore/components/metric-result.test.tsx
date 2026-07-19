@@ -15,13 +15,14 @@
  * limitations under the License.
  */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { I18nextProvider, useTranslation } from 'react-i18next';
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
 import type { MetricConsole } from '../model/explore-signal-contract';
+import { metricSeries, type MetricResultState } from '../model/explore-signal-model';
 import { MetricResult } from './metric-result';
 
 describe('MetricResult', () => {
@@ -36,19 +37,22 @@ describe('MetricResult', () => {
   it('shows a populated series as a trend and inspectable samples', () => {
     render(
       <I18nextProvider i18n={i18n}>
-        <Subject data={metricData} />
+        <Subject data={metricData} state={{ kind: 'ready', series: metricSeries(metricData) }} />
       </I18nextProvider>
     );
     expect(screen.getByRole('heading', { name: 'Metrics' })).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: 'Metric trend' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Metric trend' })).toHaveAttribute('viewBox', '0 0 1000 220');
+    expect(screen.getByRole('img', { name: 'Metric trend' })).toHaveAttribute('preserveAspectRatio', 'none');
     expect(screen.getByText('http.server.duration · checkout')).toBeInTheDocument();
     expect(screen.getByText('125 ms')).toBeInTheDocument();
+    expect(screen.getAllByText('method=POST')).toHaveLength(2);
+    expect(screen.queryByText('__name__=http.server.duration')).not.toBeInTheDocument();
   });
 
   it('keeps a true empty response distinct from a zero-valued series', () => {
     render(
       <I18nextProvider i18n={i18n}>
-        <Subject data={metricConsole({ status: 200, frames: [] })} />
+        <Subject data={metricData} state={{ kind: 'empty' }} />
       </I18nextProvider>
     );
     expect(screen.getByText('No metric series for this context.')).toBeInTheDocument();
@@ -57,116 +61,104 @@ describe('MetricResult', () => {
     render(
       <I18nextProvider i18n={i18n}>
         <Subject
-          data={metricConsole({
-            status: 200,
-            frames: [
-              {
-                schema: { fields: [{ name: 'value', type: 'number', unit: null }], labels: null, meta: null },
-                data: [[1_750_000_000_000, 0]]
-              }
-            ]
-          })}
-        />
-      </I18nextProvider>
-    );
-    expect(screen.getByText('0')).toBeInTheDocument();
-    expect(screen.queryByText('No metric series for this context.')).not.toBeInTheDocument();
-  });
-
-  it('treats explicit frames without numeric points as empty', () => {
-    render(
-      <I18nextProvider i18n={i18n}>
-        <Subject
-          data={metricConsole({
-            status: 200,
-            frames: [
-              { schema: null, data: [] },
-              {
-                schema: null,
-                data: [
-                  [1_750_000_000_000, 'not-a-number'],
-                  [1_750_000_000_001, null],
-                  [1_750_000_000_002, false],
-                  [1_750_000_000_003, '   ']
-                ]
-              }
-            ]
-          })}
-        />
-      </I18nextProvider>
-    );
-    expect(screen.getByText('No metric series for this context.')).toBeInTheDocument();
-    expect(screen.queryByRole('img', { name: 'Metric trend' })).not.toBeInTheDocument();
-  });
-
-  it('renders backend failures instead of empty results', () => {
-    render(
-      <I18nextProvider i18n={i18n}>
-        <Subject data={metricConsole({ status: 503, msg: 'storage offline', frames: [] })} />
-      </I18nextProvider>
-    );
-    expect(screen.getByText('storage offline')).toBeInTheDocument();
-    expect(screen.queryByText('No metric series for this context.')).not.toBeInTheDocument();
-
-    cleanup();
-    render(
-      <I18nextProvider i18n={i18n}>
-        <Subject data={metricConsole({ status: 500, frames: [] })} />
-      </I18nextProvider>
-    );
-    expect(screen.getByText('The signal query failed.')).toBeInTheDocument();
-
-    cleanup();
-    render(
-      <I18nextProvider i18n={i18n}>
-        <Subject data={metricConsole({ status: 200, frames: [] }, { errorMessage: 'transport failed' })} />
-      </I18nextProvider>
-    );
-    expect(screen.getByText('transport failed')).toBeInTheDocument();
-  });
-
-  it('renders storage unavailable for malformed metric results', () => {
-    const malformed: MetricConsole[] = [
-      metricConsole(null),
-      metricConsole({ status: null, frames: [] }),
-      metricConsole({ status: 200, frames: null }),
-      metricConsole({ status: 200, frames: [{ schema: null, data: null }] })
-    ];
-
-    for (const data of malformed) {
-      render(
-        <I18nextProvider i18n={i18n}>
-          <Subject data={data} />
-        </I18nextProvider>
-      );
-      expect(screen.getByText('Metric storage is unavailable for this query.')).toBeInTheDocument();
-      expect(screen.queryByText('No metric series for this context.')).not.toBeInTheDocument();
-      cleanup();
-    }
-  });
-
-  it('renders missing query context as guidance instead of a failure or empty result', () => {
-    render(
-      <I18nextProvider i18n={i18n}>
-        <Subject
-          data={{
-            ...metricConsole(null),
-            emptyStateReason: 'no_context',
-            errorMessage: 'Choose a metric or service context.'
+          data={metricData}
+          state={{
+            kind: 'ready',
+            series: [{ key: 'zero', name: 'zero', labels: {}, points: [[1_750_000_000_000, 0]] }]
           }}
         />
       </I18nextProvider>
     );
+    expect(screen.getByText('0')).toBeInTheDocument();
+    expect(screen.queryByText('125 ms')).not.toBeInTheDocument();
+    expect(screen.queryByText('No metric series for this context.')).not.toBeInTheDocument();
+  });
 
-    expect(screen.getByRole('alert')).toHaveTextContent(i18n.t('explore.states.missingContext'));
-    expect(screen.queryByText(i18n.t('explore.loadFailed'))).not.toBeInTheDocument();
-    expect(screen.queryByText(i18n.t('explore.empty.metrics'))).not.toBeInTheDocument();
+  it('limits the trend to six consistently colored series', () => {
+    const series = Array.from({ length: 7 }, (_, index) => ({
+      key: `series-${index}`,
+      name: `series-${index}`,
+      labels: {},
+      points: [[1_750_000_000_000, index]]
+    }));
+    render(
+      <I18nextProvider i18n={i18n}>
+        <Subject data={metricData} state={{ kind: 'ready', series }} />
+      </I18nextProvider>
+    );
+
+    const trend = screen.getByRole('img', { name: 'Metric trend' });
+    expect(trend.querySelectorAll('path')).toHaveLength(6);
+    expect(trend.previousElementSibling).toHaveTextContent('series-5');
+    expect(trend.previousElementSibling).not.toHaveTextContent('series-6');
+    expect(screen.getByText('series-6')).toBeInTheDocument();
+  });
+
+  it('shows only the latest one hundred samples in reverse order', () => {
+    const points = Array.from({ length: 102 }, (_, index) => [1_750_000_000_000 + index, index]);
+    render(
+      <I18nextProvider i18n={i18n}>
+        <Subject
+          data={metricData}
+          state={{ kind: 'ready', series: [{ key: 'bounded', name: 'bounded', labels: {}, points }] }}
+        />
+      </I18nextProvider>
+    );
+
+    const rows = screen.getAllByRole('row');
+    expect(rows).toHaveLength(101);
+    expect(within(rows[1]!).getByText('101')).toBeInTheDocument();
+    expect(within(rows.at(-1)!).getByText('2')).toBeInTheDocument();
+  });
+
+  it('renders error state messages and exposes retry', () => {
+    const retry = vi.fn().mockResolvedValue(undefined);
+    render(
+      <I18nextProvider i18n={i18n}>
+        <Subject data={metricData} state={{ kind: 'error', message: 'storage offline' }} retry={retry} />
+      </I18nextProvider>
+    );
+    expect(screen.getByText('storage offline')).toBeInTheDocument();
+    expect(screen.queryByText('No metric series for this context.')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(retry).toHaveBeenCalledOnce();
+
+    cleanup();
+    render(
+      <I18nextProvider i18n={i18n}>
+        <Subject data={metricData} state={{ kind: 'error' }} retry={vi.fn()} />
+      </I18nextProvider>
+    );
+    expect(screen.getByText('The signal query failed.')).toBeInTheDocument();
+  });
+
+  it.each([
+    ['storage_unavailable', 'storageUnavailable', true],
+    ['missing_context', 'missingContext', false],
+    ['unsupported_query', 'unsupportedQuery', false]
+  ] as const)('renders explicit %s state with the correct retry policy', (kind, messageKey, retryable) => {
+    render(
+      <I18nextProvider i18n={i18n}>
+        <Subject data={metricData} state={{ kind }} retry={vi.fn()} />
+      </I18nextProvider>
+    );
+    expect(screen.getByText(i18n.t(`explore.states.${messageKey}`))).toBeInTheDocument();
+    if (retryable) expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+    else expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
   });
 });
 
-function Subject({ data }: { data: MetricConsole }) {
+function Subject({
+  data,
+  state,
+  retry = vi.fn()
+}: {
+  data: MetricConsole;
+  state: MetricResultState;
+  retry?: () => Promise<void>;
+}) {
   const { t } = useTranslation();
-  return <MetricResult data={data} t={t} />;
+  return <MetricResult data={data} state={state} retry={retry} t={t} />;
 }
 
 const metricData: MetricConsole = {
@@ -196,27 +188,6 @@ const metricData: MetricConsole = {
   emptyStateReason: null,
   errorMessage: null
 };
-
-function metricConsole(
-  results: {
-    status: number | null;
-    frames: NonNullable<MetricConsole['results']>['frames'];
-    msg?: string | null;
-  } | null,
-  override: Partial<Pick<MetricConsole, 'errorMessage'>> = {}
-): MetricConsole {
-  return {
-    context: null,
-    query: null,
-    datasource: null,
-    queryMode: null,
-    results: results && { refId: null, msg: null, ...results },
-    stats: null,
-    emptyStateReason: null,
-    errorMessage: null,
-    ...override
-  };
-}
 
 class ResizeObserverStub {
   observe() {}
