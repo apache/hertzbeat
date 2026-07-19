@@ -17,7 +17,12 @@
 
 import { ApiMessageError, apiMessageDelete, apiMessageGet, apiMessagePost } from '@/core/http/api-message';
 import {
-  MonitorContractError, monitorPageSizes, type Monitor, type MonitorAction, type MonitorApp, type MonitorQuery
+  MonitorContractError,
+  monitorPageSizes,
+  type Monitor,
+  type MonitorAction,
+  type MonitorApp,
+  type MonitorQuery
 } from './monitor-contract';
 import { parseMonitorApps } from './monitor-apps-schema';
 import { parseMonitorDetail } from './monitor-detail-schema';
@@ -27,8 +32,15 @@ export * from './monitor-contract';
 export { detectMonitor, loadMonitorCollectors, loadMonitorParamDefines, saveMonitor } from './monitor-editor-api';
 export { buildMonitorAppHierarchyPath, loadMonitorAppHierarchy } from './monitor-hierarchy-api';
 export {
-  buildFavoriteMetricPath, buildHistoryMetricPath, buildMetricCatalogPath, buildRealtimeMetricPath,
-  loadFavoriteMetrics, loadHistoryMetric, loadMonitorMetricCatalog, loadRealtimeMetric, updateFavoriteMetric
+  buildFavoriteMetricPath,
+  buildHistoryMetricPath,
+  buildMetricCatalogPath,
+  buildRealtimeMetricPath,
+  loadFavoriteMetrics,
+  loadHistoryMetric,
+  loadMonitorMetricCatalog,
+  loadRealtimeMetric,
+  updateFavoriteMetric
 } from './monitor-metric-api';
 
 export class MonitorMissingError extends Error {
@@ -40,16 +52,20 @@ export class MonitorMissingError extends Error {
 
 export function classifyMonitorReadError(error: unknown): 'unavailable' | 'error' {
   if (error instanceof MonitorContractError) return 'error';
-  if (error instanceof ApiMessageError
-    && (error.cause !== undefined || error.status === undefined || [0, 502, 503, 504].includes(error.status))) {
+  if (
+    error instanceof ApiMessageError &&
+    (error.cause !== undefined || error.status === undefined || [0, 502, 503, 504].includes(error.status))
+  ) {
     return 'unavailable';
   }
   return 'error';
 }
 
 export function classifyMonitorDetailReadError(error: unknown): 'missing' | 'unavailable' | 'error' {
-  if (error instanceof MonitorMissingError
-    || error instanceof ApiMessageError && (error.status === 404 || error.status === 200 && error.code === 15)) {
+  if (
+    error instanceof MonitorMissingError ||
+    (error instanceof ApiMessageError && (error.status === 404 || (error.status === 200 && error.code === 15)))
+  ) {
     return 'missing';
   }
   return classifyMonitorReadError(error);
@@ -68,7 +84,7 @@ function validPageIndex(value: string | null) {
 
 function validPageSize(value: string | null) {
   const parsed = Number.parseInt(value ?? '', 10);
-  return monitorPageSizes.includes(parsed as typeof monitorPageSizes[number]) ? parsed : 10;
+  return monitorPageSizes.includes(parsed as (typeof monitorPageSizes)[number]) ? parsed : 10;
 }
 
 export function readMonitorQuery(params: URLSearchParams): MonitorQuery {
@@ -122,9 +138,7 @@ export async function loadMonitorDetail(id: string | number, signal?: AbortSigna
   const requestedId = monitorDetailId(id);
   if (requestedId === undefined) throw new MonitorMissingError();
   const path = `/api/monitor/${requestedId}`;
-  const value = signal
-    ? await apiMessageGet(path, { signal })
-    : await apiMessageGet(path);
+  const value = signal ? await apiMessageGet(path, { signal }) : await apiMessageGet(path);
   if (value === null || value === undefined) throw new MonitorMissingError();
   return parseMonitorDetail(value, requestedId);
 }
@@ -137,8 +151,10 @@ export async function loadNewMonitorEvidence(name: string, app: string, signal?:
   let pageIndex = 0;
   let totalPages = 1;
   do {
-    const page = await loadMonitors({ search: normalizedName, app: normalizedApp, status: '9', labels: '',
-      pageIndex, pageSize: 50 }, signal);
+    const page = await loadMonitors(
+      { search: normalizedName, app: normalizedApp, status: '9', labels: '', pageIndex, pageSize: 50 },
+      signal
+    );
     if (page.totalPages > 20) throw new MonitorContractError('New monitor evidence exceeds the supported safety bound');
     matches.push(...page.content.filter(item => item.name === normalizedName && item.app === normalizedApp));
     totalPages = page.totalPages;

@@ -83,11 +83,18 @@ describe('apiFetch', () => {
 });
 
 function pendingFetchUntilAbort() {
-  return vi.fn<typeof fetch>((_input, init) => new Promise((_resolve, reject) => {
-    init?.signal?.addEventListener('abort', () => {
-      reject(abortReason(init.signal?.reason));
-    }, { once: true });
-  }));
+  return vi.fn<typeof fetch>(
+    (_input, init) =>
+      new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener(
+          'abort',
+          () => {
+            reject(abortReason(init.signal?.reason));
+          },
+          { once: true }
+        );
+      })
+  );
 }
 
 function abortReason(reason: unknown) {
