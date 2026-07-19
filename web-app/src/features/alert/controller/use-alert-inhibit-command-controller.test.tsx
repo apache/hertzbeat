@@ -82,6 +82,88 @@ describe('Alert Inhibit command controller', () => {
     expect(result.current.state.command).toBe('idle');
   });
 
+  it('retires a pending submit when the controller unmounts', async () => {
+    const write = deferred<void>();
+    api.saveAlertInhibit.mockReturnValueOnce(write.promise);
+    const { result, unmount } = renderCommandController();
+    act(() => result.current.create());
+    act(() => result.current.updateDraft(validAlertInhibitDraft()));
+
+    let submission!: Promise<void>;
+    act(() => {
+      submission = result.current.submit();
+    });
+    unmount();
+    act(() => write.resolve(undefined));
+    await act(async () => submission);
+
+    expect(reread).not.toHaveBeenCalled();
+    expect(notify.success).not.toHaveBeenCalled();
+    expect(notify.error).not.toHaveBeenCalled();
+  });
+
+  it('does not report a pending submit failure after the controller unmounts', async () => {
+    let rejectWrite!: (reason: unknown) => void;
+    api.saveAlertInhibit.mockReturnValueOnce(
+      new Promise<void>((_resolve, reject) => {
+        rejectWrite = reject;
+      })
+    );
+    const { result, unmount } = renderCommandController();
+    act(() => result.current.create());
+    act(() => result.current.updateDraft(validAlertInhibitDraft()));
+
+    let submission!: Promise<void>;
+    act(() => {
+      submission = result.current.submit();
+    });
+    unmount();
+    act(() => rejectWrite(new Error('late failure')));
+    await act(async () => submission);
+
+    expect(reread).not.toHaveBeenCalled();
+    expect(notify.success).not.toHaveBeenCalled();
+    expect(notify.error).not.toHaveBeenCalled();
+  });
+
+  it('retires a pending toggle when the controller unmounts', async () => {
+    const detail = deferred<AlertInhibit>();
+    api.loadAlertInhibit.mockReturnValueOnce(detail.promise);
+    const { result, unmount } = renderCommandController();
+
+    let operation!: Promise<void>;
+    act(() => {
+      operation = result.current.toggle(persistedAlertInhibit, false);
+    });
+    unmount();
+    act(() => detail.resolve(persistedAlertInhibit));
+    await act(async () => operation);
+
+    expect(api.updateAlertInhibitEnabled).not.toHaveBeenCalled();
+    expect(reread).not.toHaveBeenCalled();
+    expect(notify.success).not.toHaveBeenCalled();
+    expect(notify.error).not.toHaveBeenCalled();
+  });
+
+  it('retires a pending remove when the controller unmounts', async () => {
+    const deletion = deferred<void>();
+    api.deleteAlertInhibit.mockReturnValueOnce(deletion.promise);
+    const { result, unmount } = renderCommandController();
+
+    let operation!: Promise<void>;
+    act(() => {
+      operation = result.current.remove(persistedAlertInhibit.id);
+    });
+    unmount();
+    act(() => deletion.resolve(undefined));
+    await act(async () => operation);
+
+    expect(api.loadAlertInhibit).not.toHaveBeenCalled();
+    expect(reread).not.toHaveBeenCalled();
+    expect(notify.success).not.toHaveBeenCalled();
+    expect(notify.error).not.toHaveBeenCalled();
+  });
+
   it('lets toggle synchronously claim the gate before its detail read settles', async () => {
     const freshDetail = deferred<AlertInhibit>();
     api.loadAlertInhibit

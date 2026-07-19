@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { classifyAlertInhibitReadError } from '../alert-inhibit-api';
 import { alertInhibitDraftFromDetail, createAlertInhibitDraft, type AlertInhibitDraft } from '../alert-inhibit-model';
@@ -11,22 +11,35 @@ export type AlertInhibitDetailState =
   { kind: 'idle' } | { kind: 'loading'; id: number } | { kind: AlertInhibitFailure; id: number };
 
 type Command = 'saving' | 'operating';
+type OperationOwner = { command: Command };
 
 export function useAlertInhibitOperationGate() {
-  const ownerRef = useRef<'idle' | Command>('idle');
+  const mountedRef = useRef(true);
+  const ownerRef = useRef<OperationOwner | undefined>(undefined);
   const [command, setCommand] = useState<'idle' | Command>('idle');
   const begin = (next: Command) => {
     // React state is asynchronous; the ref closes same-tick command admission.
-    if (ownerRef.current !== 'idle') return false;
-    ownerRef.current = next;
+    if (!mountedRef.current || ownerRef.current) return undefined;
+    const owner = { command: next };
+    ownerRef.current = owner;
     setCommand(next);
-    return true;
+    return owner;
   };
-  const end = () => {
-    ownerRef.current = 'idle';
+  const isCurrent = (owner: OperationOwner) => mountedRef.current && ownerRef.current === owner;
+  const end = (owner: OperationOwner) => {
+    if (!isCurrent(owner)) return;
+    ownerRef.current = undefined;
     setCommand('idle');
   };
-  return { begin, command, end, isLocked: () => ownerRef.current !== 'idle' };
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      // Async continuations must lose ownership before the component leaves the route.
+      mountedRef.current = false;
+      ownerRef.current = undefined;
+    };
+  }, []);
+  return { begin, command, end, isCurrent, isLocked: () => ownerRef.current !== undefined };
 }
 
 export type AlertInhibitOperationGate = ReturnType<typeof useAlertInhibitOperationGate>;
@@ -50,6 +63,7 @@ function useAlertInhibitDetailEditor(
   publishDraft: (draft: AlertInhibitDraft | null) => void,
   clearEditorFailure: () => void
 ) {
+  const mountedRef = useRef(true);
   const [detail, setDetail] = useState<AlertInhibitDetailState>({ kind: 'idle' });
   const detailEpochRef = useRef(0);
   const pendingDetailRef = useRef<
@@ -60,13 +74,21 @@ function useAlertInhibitDetailEditor(
       }
     | undefined
   >(undefined);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      detailEpochRef.current += 1;
+      pendingDetailRef.current = undefined;
+    };
+  }, []);
   const invalidateDetail = () => {
     detailEpochRef.current += 1;
     pendingDetailRef.current = undefined;
     setDetail({ kind: 'idle' });
   };
   const edit = (id: number): Promise<void> => {
-    if (gate.isLocked()) return Promise.resolve();
+    if (!mountedRef.current || gate.isLocked()) return Promise.resolve();
     if (pendingDetailRef.current?.id === id) return pendingDetailRef.current.promise;
     const epoch = detailEpochRef.current + 1;
     detailEpochRef.current = epoch;
@@ -82,12 +104,14 @@ function useAlertInhibitDetailEditor(
     try {
       const record = await loadExactAlertInhibit(id);
       // Only the newest requested identity may publish detail into the editor.
-      if (detailEpochRef.current !== epoch) return;
+      if (!mountedRef.current || detailEpochRef.current !== epoch) return;
       publishDraft(alertInhibitDraftFromDetail(record));
       clearEditorFailure();
       setDetail({ kind: 'idle' });
     } catch (reason) {
-      if (detailEpochRef.current === epoch) setDetail({ kind: classifyAlertInhibitReadError(reason), id });
+      if (mountedRef.current && detailEpochRef.current === epoch) {
+        setDetail({ kind: classifyAlertInhibitReadError(reason), id });
+      }
     } finally {
       if (pendingDetailRef.current?.epoch === epoch) pendingDetailRef.current = undefined;
     }

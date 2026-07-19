@@ -15,25 +15,46 @@
  * limitations under the License.
  */
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AlertInhibitPage } from './alert-inhibit-page';
 
 const controller = vi.hoisted(() => ({
-  changePage: vi.fn(), closeDraft: vi.fn(), create: vi.fn(), edit: vi.fn(), refresh: vi.fn(), remove: vi.fn(),
-  retryDetail: vi.fn(), setSearch: vi.fn(), state: {}, submit: vi.fn(), submitSearch: vi.fn(), toggle: vi.fn(), updateDraft: vi.fn()
+  changePage: vi.fn(),
+  closeDraft: vi.fn(),
+  create: vi.fn(),
+  edit: vi.fn(),
+  refresh: vi.fn(),
+  remove: vi.fn(),
+  retryDetail: vi.fn(),
+  setSearch: vi.fn(),
+  state: {},
+  submit: vi.fn(),
+  submitSearch: vi.fn(),
+  toggle: vi.fn(),
+  updateDraft: vi.fn()
 }));
 vi.mock('./controller/use-alert-inhibit-controller', () => ({ useAlertInhibitController: () => controller }));
 vi.mock('./alert-management-nav', () => ({ AlertManagementNav: () => <nav /> }));
 vi.mock('./alert-noise-control-nav', () => ({ AlertNoiseControlNav: () => <nav /> }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
-const record = { id: 7, name: 'Policy', sourceLabels: { severity: 'critical' }, targetLabels: { severity: 'warning' },
-  equalLabels: ['service'], enable: true, gmtUpdate: '2026-07-17T09:00:00' };
+const record = {
+  id: 7,
+  name: 'Policy',
+  sourceLabels: { severity: 'critical' },
+  targetLabels: { severity: 'warning' },
+  equalLabels: ['service'],
+  enable: true,
+  gmtUpdate: '2026-07-17T09:00:00'
+};
 
 describe('AlertInhibitPage', () => {
-  beforeEach(() => { vi.clearAllMocks(); controller.state = buildState(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    controller.state = buildState();
+  });
   afterEach(cleanup);
 
   it('renders server LocalDateTime verbatim without browser parsing', () => {
@@ -43,13 +64,21 @@ describe('AlertInhibitPage', () => {
     expect(parse).not.toHaveBeenCalled();
   });
 
-  it.each([['empty', 'alertInhibits.empty'], ['unavailable', 'common.unavailable'], ['error', 'common.routeError.description']])('renders list state %s honestly', (kind, evidence) => {
+  it.each([
+    ['empty', 'alertInhibits.empty'],
+    ['unavailable', 'common.unavailable'],
+    ['error', 'common.routeError.description']
+  ])('renders list state %s honestly', (kind, evidence) => {
     controller.state = buildState({ list: { kind } });
     render(<AlertInhibitPage />);
     expect(screen.getByText(evidence)).toBeInTheDocument();
   });
 
-  it.each([['missing', 'common.notFound.description'], ['unavailable', 'common.unavailable'], ['error', 'alertInhibits.loadFailed']])('renders retryable detail state %s', (kind, evidence) => {
+  it.each([
+    ['missing', 'common.notFound.description'],
+    ['unavailable', 'common.unavailable'],
+    ['error', 'alertInhibits.loadFailed']
+  ])('renders retryable detail state %s', (kind, evidence) => {
     controller.state = buildState({ detail: { kind, id: 7 } });
     render(<AlertInhibitPage />);
     expect(screen.getByText(evidence)).toBeInTheDocument();
@@ -58,7 +87,15 @@ describe('AlertInhibitPage', () => {
   });
 
   it('does not invent nullable labels, enabled state, or time', () => {
-    controller.state = buildState({ list: { kind: 'ready', records: [{ ...record, sourceLabels: null, targetLabels: null, equalLabels: null, enable: null, gmtUpdate: null }], total: 1 } });
+    controller.state = buildState({
+      list: {
+        kind: 'ready',
+        records: [
+          { ...record, sourceLabels: null, targetLabels: null, equalLabels: null, enable: null, gmtUpdate: null }
+        ],
+        total: 1
+      }
+    });
     render(<AlertInhibitPage />);
     expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(4);
     expect(screen.getByRole('switch')).toBeDisabled();
@@ -76,10 +113,39 @@ describe('AlertInhibitPage', () => {
     expect(controller.create).toHaveBeenCalled();
     expect(controller.edit).toHaveBeenCalledWith(7);
   });
+
+  it.each(['saving', 'operating'] as const)('makes the editor explicitly non-interactive while %s', command => {
+    controller.state = buildState({
+      command,
+      draft: {
+        name: 'Policy',
+        sourceLabelsText: 'severity:critical',
+        targetLabelsText: 'severity:warning',
+        equalLabels: ['service'],
+        enable: true
+      }
+    });
+    render(<AlertInhibitPage />);
+
+    const editor = within(screen.getByRole('dialog'));
+    editor.getAllByRole('textbox').forEach(input => expect(input).toBeDisabled());
+    expect(editor.getByRole('combobox')).toBeDisabled();
+    expect(editor.getByRole('switch')).toBeDisabled();
+    expect(editor.getByRole('button', { name: 'common.cancel' })).toBeDisabled();
+    expect(editor.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument();
+  });
 });
 
 function buildState(override: Record<string, unknown> = {}) {
-  return { command: 'idle', detail: { kind: 'idle' }, draft: null, editorFailure: undefined,
-    list: { kind: 'ready', records: [record], total: 1 }, query: { search: '', pageIndex: 0, pageSize: 8 },
-    refreshing: false, search: '', ...override };
+  return {
+    command: 'idle',
+    detail: { kind: 'idle' },
+    draft: null,
+    editorFailure: undefined,
+    list: { kind: 'ready', records: [record], total: 1 },
+    query: { search: '', pageIndex: 0, pageSize: 8 },
+    refreshing: false,
+    search: '',
+    ...override
+  };
 }

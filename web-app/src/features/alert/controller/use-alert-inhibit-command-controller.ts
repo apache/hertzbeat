@@ -84,54 +84,70 @@ async function submitAlertInhibit(context: CommandContext, draft: AlertInhibitDr
     context.notify.validation();
     return;
   }
-  if (!context.gate.begin('saving')) return;
+  const owner = context.gate.begin('saving');
+  if (!owner) return;
   context.editor.controls.invalidateDetail();
   context.editor.controls.setEditorFailure(undefined);
   try {
     await saveAlertInhibit(draft);
+    if (!context.gate.isCurrent(owner)) return;
     if (draft.id !== undefined) {
       const canonical = await loadExactAlertInhibit(draft.id);
+      if (!context.gate.isCurrent(owner)) return;
       requireAlertInhibitConvergence(canonical, { ...buildAlertInhibitPayload(draft), id: draft.id });
     }
     await context.rereadAuthoritatively();
+    if (!context.gate.isCurrent(owner)) return;
     context.editor.controls.setDraft(null);
     context.notify.saveSuccess();
   } catch (reason) {
+    if (!context.gate.isCurrent(owner)) return;
     context.editor.controls.setEditorFailure(classifyAlertInhibitWriteError(reason));
     context.notify.saveFailure();
   } finally {
-    context.gate.end();
+    context.gate.end(owner);
   }
 }
 
 async function toggleAlertInhibit(context: CommandContext, inhibit: AlertInhibit, enable: boolean) {
-  if (!context.gate.begin('operating')) return;
+  const owner = context.gate.begin('operating');
+  if (!owner) return;
   context.editor.controls.invalidateDetail();
   try {
     const fresh = await loadExactAlertInhibit(inhibit.id);
+    if (!context.gate.isCurrent(owner)) return;
     await updateAlertInhibitEnabled(fresh, enable);
+    if (!context.gate.isCurrent(owner)) return;
     const canonical = await loadExactAlertInhibit(inhibit.id);
+    if (!context.gate.isCurrent(owner)) return;
     requireAlertInhibitConvergence(canonical, buildAlertInhibitTogglePayload(fresh, enable));
     await context.rereadAuthoritatively();
+    if (!context.gate.isCurrent(owner)) return;
     context.notify.operationSuccess();
   } catch {
+    if (!context.gate.isCurrent(owner)) return;
     context.notify.operationFailure();
   } finally {
-    context.gate.end();
+    context.gate.end(owner);
   }
 }
 
 async function removeAlertInhibit(context: CommandContext, id: number) {
-  if (!context.gate.begin('operating')) return;
+  const owner = context.gate.begin('operating');
+  if (!owner) return;
   context.editor.controls.invalidateDetail();
   try {
     await deleteAlertInhibit(id);
+    if (!context.gate.isCurrent(owner)) return;
     await proveAlertInhibitMissing(id);
+    if (!context.gate.isCurrent(owner)) return;
     requireAlertInhibitAbsent(await context.rereadAuthoritatively(), id);
+    if (!context.gate.isCurrent(owner)) return;
     context.notify.operationSuccess();
   } catch {
+    if (!context.gate.isCurrent(owner)) return;
     context.notify.operationFailure();
   } finally {
-    context.gate.end();
+    context.gate.end(owner);
   }
 }

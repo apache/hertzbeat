@@ -25,14 +25,20 @@ import { deferred, persistedAlertInhibit } from './alert-inhibit-controller-test
 import { useAlertInhibitEditorController, useAlertInhibitOperationGate } from './use-alert-inhibit-editor-controller';
 
 const api = vi.hoisted(() => ({ loadAlertInhibit: vi.fn() }));
+const model = vi.hoisted(() => ({ draftFromDetail: vi.fn() }));
 
 vi.mock('../alert-inhibit-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../alert-inhibit-api')>()),
   ...api
 }));
+vi.mock('../alert-inhibit-model', async importOriginal => {
+  const actual = await importOriginal<typeof import('../alert-inhibit-model')>();
+  model.draftFromDetail.mockImplementation(actual.alertInhibitDraftFromDetail);
+  return { ...actual, alertInhibitDraftFromDetail: model.draftFromDetail };
+});
 describe('Alert Inhibit editor controller', () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    vi.clearAllMocks();
     api.loadAlertInhibit.mockResolvedValue(persistedAlertInhibit);
   });
 
@@ -114,6 +120,22 @@ describe('Alert Inhibit editor controller', () => {
     act(() => next.resolve({ ...persistedAlertInhibit, id: 8 }));
     await act(async () => nextEdit);
     expect(result.current.state.draft).toMatchObject({ id: 8 });
+  });
+
+  it('retires a pending detail conversion when the editor unmounts', async () => {
+    const detail = deferred<AlertInhibit>();
+    api.loadAlertInhibit.mockReturnValueOnce(detail.promise);
+    const { result, unmount } = renderEditorController();
+
+    let edit!: Promise<void>;
+    act(() => {
+      edit = result.current.actions.edit(7);
+    });
+    unmount();
+    act(() => detail.resolve(persistedAlertInhibit));
+    await act(async () => edit);
+
+    expect(model.draftFromDetail).not.toHaveBeenCalled();
   });
 });
 
