@@ -52,12 +52,6 @@
     {
       "rule": "function-size",
       "path": "features/alert/notice-rule/components/notice-rule-editor.tsx",
-      "identity": "function:NoticeRuleAdvancedFields",
-      "allowedMax": 67
-    },
-    {
-      "rule": "function-size",
-      "path": "features/alert/notice-rule/components/notice-rule-editor.tsx",
       "identity": "function:NoticeRuleEditor",
       "allowedMax": 93
     },
