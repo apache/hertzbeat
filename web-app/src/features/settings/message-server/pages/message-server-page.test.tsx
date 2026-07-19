@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const controller = vi.hoisted<{ value: unknown }>(() => ({ value: undefined }));
@@ -23,6 +23,7 @@ vi.mock('../controller/use-message-server-controller', () => ({ useMessageServer
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 import { MessageServerPage } from './message-server-page';
+import { createEmailServerDraft } from '../model/message-server-model';
 
 describe('MessageServerPage', () => {
   afterEach(cleanup);
@@ -59,6 +60,24 @@ describe('MessageServerPage', () => {
     expect(screen.getAllByText('messageServer.status.unconfigured')).toHaveLength(2);
     expect(screen.queryByText('messageServer.status.enabled')).not.toBeInTheDocument();
   });
+
+  it('wires proof recovery into the open editor and disables retry while proof is active', () => {
+    const current = state({ kind: 'missing' }, { kind: 'missing' });
+    controller.value = {
+      ...current,
+      emailDraft: createEmailServerDraft(),
+      emailLocked: true,
+      emailSaveRecovery: 'messageServer.read.unavailable',
+      emailSaveRecoveryRetryable: true,
+      provingEmail: true
+    };
+    render(<MessageServerPage />);
+
+    expect(screen.getByLabelText('messageServer.email.host')).toBeDisabled();
+    expect(screen.getByRole('button', { name: /common\.retry/ })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: /common\.retry/ }));
+    expect(current.actions.retryEmailSave).not.toHaveBeenCalled();
+  });
 });
 
 function state(email: unknown, sms: unknown) {
@@ -69,6 +88,14 @@ function state(email: unknown, sms: unknown) {
     smsDraft: null,
     savingEmail: false,
     savingSms: false,
+    emailLocked: false,
+    smsLocked: false,
+    emailSaveRecovery: null,
+    smsSaveRecovery: null,
+    emailSaveRecoveryRetryable: false,
+    smsSaveRecoveryRetryable: false,
+    provingEmail: false,
+    provingSms: false,
     actions: {
       openEmail: vi.fn(),
       openSms: vi.fn(),
@@ -79,6 +106,8 @@ function state(email: unknown, sms: unknown) {
       replaceSms: vi.fn(),
       retryEmail: vi.fn(),
       retrySms: vi.fn(),
+      retryEmailSave: vi.fn(),
+      retrySmsSave: vi.fn(),
       submitEmail: vi.fn(),
       submitSms: vi.fn()
     }

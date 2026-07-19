@@ -62,6 +62,18 @@ export function smsServerSaveConverged(draft: SmsServerDraft, evidence: SmsServe
   });
 }
 
+/** Replacement secret values are write-only, so an ambiguous response cannot prove their exact value. */
+export function emailServerAmbiguousWriteProvable(draft: EmailServerDraft) {
+  return !buildEmailServerPayload(draft).emailPassword;
+}
+
+export function smsServerAmbiguousWriteProvable(draft: SmsServerDraft) {
+  const payload = buildSmsServerPayload(draft);
+  return !smsProviderFieldContracts[draft.type].some(
+    field => field.secret && Object.hasOwn(payload.options, field.key)
+  );
+}
+
 function secretTransitionConverged(replaced: boolean, cleared: boolean, retained: boolean, configured: boolean) {
   if (replaced) return configured;
   if (cleared) return !configured;

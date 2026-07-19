@@ -211,6 +211,69 @@ describe('message server editors', () => {
     expect(submit).not.toHaveBeenCalled();
   });
 
+  it('visibly locks every email editor exit and field while proof recovery owns the draft', () => {
+    const close = vi.fn();
+    const submit = vi.fn();
+    const retry = vi.fn();
+    render(
+      <EmailServerEditor
+        draft={{ ...createEmailServerDraft(), configuredSecrets: ['emailPassword'] }}
+        saving={false}
+        locked
+        recovery={{ messageKey: 'messageServer.read.unavailable', retryable: true, retry }}
+        update={vi.fn()}
+        setSecretCleared={vi.fn()}
+        close={close}
+        submit={submit}
+      />
+    );
+
+    expect(screen.getByLabelText('messageServer.email.host')).toBeDisabled();
+    expect(screen.getByLabelText('messageServer.email.port')).toBeDisabled();
+    expect(screen.getByLabelText('messageServer.email.username')).toBeDisabled();
+    expect(screen.getByLabelText('messageServer.email.password')).toBeDisabled();
+    expect(screen.getByRole('checkbox', { name: 'messageServer.secret.clearSaved' })).toBeDisabled();
+    expect(screen.getByRole('switch', { name: 'messageServer.email.ssl' })).toBeDisabled();
+    expect(screen.getByRole('switch', { name: 'messageServer.email.starttls' })).toBeDisabled();
+    expect(screen.getByRole('switch', { name: 'messageServer.enabled' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.save' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.cancel' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument();
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape', code: 'Escape', keyCode: 27 });
+    expect(close).not.toHaveBeenCalled();
+    expect(screen.getByText('messageServer.read.unavailable')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+    expect(retry).toHaveBeenCalledOnce();
+  });
+
+  it('locks SMS fields and exposes no fake retry for an unprovable secret write', () => {
+    const close = vi.fn();
+    const draft = { ...createSmsServerDraft(), configuredSecrets: ['secretId' as const] };
+    render(
+      <SmsServerEditor
+        draft={draft}
+        saving={false}
+        locked
+        recovery={{ messageKey: 'messageServer.saveNotConverged', retryable: false, retry: vi.fn() }}
+        replace={vi.fn()}
+        close={close}
+        submit={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole('combobox', { name: 'messageServer.sms.provider' })).toBeDisabled();
+    expect(screen.getByLabelText('messageServer.sms.fields.secretId')).toBeDisabled();
+    expect(screen.getByLabelText('messageServer.sms.fields.secretKey')).toBeDisabled();
+    expect(screen.getByLabelText('messageServer.sms.fields.appId')).toBeDisabled();
+    expect(screen.getByRole('checkbox', { name: 'messageServer.secret.clearSaved' })).toBeDisabled();
+    expect(screen.getByRole('switch', { name: 'messageServer.enabled' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument();
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape', code: 'Escape', keyCode: 27 });
+    expect(close).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'common.retry' })).not.toBeInTheDocument();
+    expect(screen.getByText('messageServer.saveNotConverged')).toBeInTheDocument();
+  });
+
   it('renders only the selected provider fields and treats Tencent IDs as secrets', () => {
     const draft = createSmsServerDraft();
     render(<SmsServerEditor draft={draft} saving={false} replace={vi.fn()} close={vi.fn()} submit={vi.fn()} />);

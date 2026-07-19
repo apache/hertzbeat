@@ -20,6 +20,8 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import type { PropsWithChildren } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ApiMessageError } from '@/core/http/api-message';
+
 const api = vi.hoisted(() => ({
   classifyMessageServerReadError: vi.fn((error: unknown) => {
     if (error === 'invalid') return 'invalid';
@@ -40,6 +42,7 @@ vi.mock('antd', () => ({ App: { useApp: () => ({ message: notify }) } }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 import { useMessageServerController } from './use-message-server-controller';
+import { MessageServerContractError } from '../api/message-server-schema';
 
 describe('useMessageServerController', () => {
   beforeEach(() => {
@@ -195,7 +198,7 @@ describe('useMessageServerController', () => {
     expect(api.loadSmsServerConfig).toHaveBeenCalledTimes(2);
   });
 
-  it('preserves the email draft and its replacement secret when close races a failed save, then unlocks retry', async () => {
+  it('locks an unprovable ambiguous email secret replacement without repeating POST', async () => {
     const firstSave = deferred<void>();
     api.loadEmailServerConfig.mockResolvedValue(emailEvidence());
     api.loadSmsServerConfig.mockResolvedValue({ status: 'missing', config: null });
@@ -220,34 +223,68 @@ describe('useMessageServerController', () => {
     firstSave.reject(new Error('write failed'));
     await act(async () => firstSubmit!);
     expect(result.current.emailDraft?.emailPassword).toBe('replacement');
+    expect(result.current.emailSaveRecovery).toBe('messageServer.saveNotConverged');
+    expect(result.current.emailSaveRecoveryRetryable).toBe(false);
+    expect(notify.error).toHaveBeenLastCalledWith('messageServer.saveNotConverged');
 
     await act(async () => result.current.actions.submitEmail());
-    expect(api.saveEmailServerConfig).toHaveBeenCalledTimes(2);
-    await waitFor(() => expect(result.current.emailDraft).toBeNull());
+    await act(async () => result.current.actions.retryEmailSave());
+    act(() => result.current.actions.closeEmail());
+    expect(api.saveEmailServerConfig).toHaveBeenCalledTimes(1);
+    expect(result.current.emailDraft).not.toBeNull();
   });
 
-  it('preserves the SMS draft when close races a failed save and allows close after the lock releases', async () => {
+  it('treats a malformed 2xx response after an email secret replacement as commit-uncertain', async () => {
+    api.loadEmailServerConfig.mockResolvedValue(emailEvidence());
+    api.loadSmsServerConfig.mockResolvedValue({ status: 'missing', config: null });
+    api.saveEmailServerConfig.mockRejectedValue(new MessageServerContractError());
+    const { result } = renderHook(() => useMessageServerController(), { wrapper: wrapper() });
+    await waitFor(() => expect(result.current.email.kind).toBe('configured'));
+    act(() => {
+      result.current.actions.openEmail();
+      result.current.actions.updateEmail({ emailPassword: 'replacement' });
+    });
+
+    await act(async () => result.current.actions.submitEmail());
+    await act(async () => result.current.actions.submitEmail());
+
+    expect(api.saveEmailServerConfig).toHaveBeenCalledTimes(1);
+    expect(api.loadEmailServerConfig).toHaveBeenCalledTimes(1);
+    expect(result.current.emailSaveRecovery).toBe('messageServer.saveNotConverged');
+    expect(result.current.emailSaveRecoveryRetryable).toBe(false);
+    expect(notify.error).toHaveBeenLastCalledWith('messageServer.saveNotConverged');
+  });
+
+  it('keeps a convergable ambiguous SMS write locked to proof-only retry', async () => {
     const save = deferred<void>();
     api.loadEmailServerConfig.mockResolvedValue({ status: 'missing', config: null });
-    api.loadSmsServerConfig.mockResolvedValue(smsEvidence());
+    api.loadSmsServerConfig
+      .mockResolvedValueOnce(smsEvidence())
+      .mockResolvedValueOnce(smsEvidence())
+      .mockResolvedValueOnce(smsEvidence({ enable: false }));
     api.saveSmsServerConfig.mockReturnValue(save.promise);
     const { result } = renderHook(() => useMessageServerController(), { wrapper: wrapper() });
     await waitFor(() => expect(result.current.sms.kind).toBe('configured'));
     act(() => result.current.actions.openSms());
 
     let submit: Promise<void>;
-    const replacement = { ...result.current.smsDraft!, enable: false };
+    act(() => result.current.actions.replaceSms({ ...result.current.smsDraft!, enable: false }));
     act(() => {
       submit = result.current.actions.submitSms();
       result.current.actions.closeSms();
-      result.current.actions.replaceSms(replacement);
     });
     expect(result.current.smsDraft).not.toBeNull();
-    expect(result.current.smsDraft?.enable).toBe(true);
+    expect(result.current.smsDraft?.enable).toBe(false);
     save.reject(new Error('write failed'));
     await act(async () => submit!);
     expect(result.current.smsDraft).not.toBeNull();
+    expect(result.current.smsSaveRecovery).toBe('messageServer.saveNotConverged');
     act(() => result.current.actions.closeSms());
+    expect(result.current.smsDraft).not.toBeNull();
+
+    await act(async () => result.current.actions.retrySmsSave());
+
+    expect(api.saveSmsServerConfig).toHaveBeenCalledTimes(1);
     expect(result.current.smsDraft).toBeNull();
   });
 
@@ -273,8 +310,9 @@ describe('useMessageServerController', () => {
     expect(notify.success).not.toHaveBeenCalled();
     expect(notify.error).toHaveBeenLastCalledWith('messageServer.saveNotConverged');
 
-    await act(async () => result.current.actions.submitEmail());
+    await act(async () => result.current.actions.retryEmailSave());
     await waitFor(() => expect(result.current.emailDraft).toBeNull());
+    expect(api.saveEmailServerConfig).toHaveBeenCalledTimes(1);
     expect(result.current.email).toMatchObject({ kind: 'configured', config: { emailHost: 'new.example.test' } });
     expect(notify.success).toHaveBeenCalledWith('messageServer.saveSuccess');
   });
@@ -303,8 +341,9 @@ describe('useMessageServerController', () => {
     expect(notify.error).toHaveBeenLastCalledWith('messageServer.saveNotConverged');
     expect(notify.success).not.toHaveBeenCalled();
 
-    await act(async () => result.current.actions.submitSms());
+    await act(async () => result.current.actions.retrySmsSave());
     await waitFor(() => expect(result.current.smsDraft).toBeNull());
+    expect(api.saveSmsServerConfig).toHaveBeenCalledTimes(1);
     expect(notify.success).toHaveBeenCalledWith('messageServer.saveSuccess');
   });
 
@@ -333,7 +372,8 @@ describe('useMessageServerController', () => {
   it('classifies write failure separately and releases the validation/save gate for a corrected draft', async () => {
     api.loadEmailServerConfig.mockResolvedValue(emailEvidence());
     api.loadSmsServerConfig.mockResolvedValue({ status: 'missing', config: null });
-    api.saveEmailServerConfig.mockRejectedValueOnce(new Error('write failed')).mockResolvedValueOnce(undefined);
+    const rejected = new ApiMessageError('write rejected', { status: 400 });
+    api.saveEmailServerConfig.mockRejectedValueOnce(rejected).mockResolvedValueOnce(undefined);
     const { result } = renderHook(() => useMessageServerController(), { wrapper: wrapper() });
     await waitFor(() => expect(result.current.email.kind).toBe('configured'));
     act(() => {
@@ -351,6 +391,102 @@ describe('useMessageServerController', () => {
     await act(async () => result.current.actions.submitEmail());
     expect(api.saveEmailServerConfig).toHaveBeenCalledTimes(2);
     await waitFor(() => expect(result.current.emailDraft).toBeNull());
+  });
+
+  it.each([
+    ['server error', { status: 503 }],
+    ['malformed success response', new MessageServerContractError()]
+  ])('proves an ambiguous email POST after %s without repeating the write', async (_label, details) => {
+    const desired = emailEvidence({ emailHost: 'new.example.test' });
+    api.loadEmailServerConfig.mockResolvedValueOnce(emailEvidence()).mockResolvedValueOnce(desired);
+    api.loadSmsServerConfig.mockResolvedValue({ status: 'missing', config: null });
+    const writeError = details instanceof Error ? details : Object.assign(new Error('ambiguous write'), details);
+    api.saveEmailServerConfig.mockRejectedValue(writeError);
+    const { result } = renderHook(() => useMessageServerController(), { wrapper: wrapper() });
+    await waitFor(() => expect(result.current.email.kind).toBe('configured'));
+    act(() => {
+      result.current.actions.openEmail();
+      result.current.actions.updateEmail({ emailHost: 'new.example.test' });
+    });
+
+    await act(async () => result.current.actions.submitEmail());
+
+    expect(api.saveEmailServerConfig).toHaveBeenCalledTimes(1);
+    expect(api.loadEmailServerConfig).toHaveBeenCalledTimes(2);
+    expect(result.current.emailDraft).toBeNull();
+    expect(notify.success).toHaveBeenCalledWith('messageServer.saveSuccess');
+  });
+
+  it('keeps an ambiguous email POST locked to proof-only retry while reread is unavailable', async () => {
+    const desired = emailEvidence({ emailHost: 'new.example.test' });
+    const retryProof = deferred<ReturnType<typeof emailEvidence>>();
+    api.loadEmailServerConfig
+      .mockResolvedValueOnce(emailEvidence())
+      .mockRejectedValueOnce('offline')
+      .mockReturnValueOnce(retryProof.promise);
+    api.loadSmsServerConfig.mockResolvedValue({ status: 'missing', config: null });
+    api.saveEmailServerConfig.mockRejectedValue(Object.assign(new Error('ambiguous write'), { status: 503 }));
+    const { result } = renderHook(() => useMessageServerController(), { wrapper: wrapper() });
+    await waitFor(() => expect(result.current.email.kind).toBe('configured'));
+    act(() => {
+      result.current.actions.openEmail();
+      result.current.actions.updateEmail({ emailHost: 'new.example.test' });
+    });
+
+    await act(async () => result.current.actions.submitEmail());
+    expect(result.current.emailSaveRecovery).toBe('messageServer.read.unavailable');
+
+    let firstRetry: Promise<void>;
+    let duplicateRetry: Promise<void>;
+    act(() => {
+      firstRetry = result.current.actions.retryEmailSave();
+      duplicateRetry = result.current.actions.retryEmailSave();
+    });
+    await waitFor(() => expect(result.current.provingEmail).toBe(true));
+    expect(api.loadEmailServerConfig).toHaveBeenCalledTimes(3);
+    retryProof.resolve(desired);
+    await act(async () => Promise.all([firstRetry!, duplicateRetry!]));
+
+    expect(api.saveEmailServerConfig).toHaveBeenCalledTimes(1);
+    expect(api.loadEmailServerConfig).toHaveBeenCalledTimes(3);
+    expect(result.current.emailDraft).toBeNull();
+  });
+
+  it('retires an in-flight email proof when the controller unmounts', async () => {
+    const proof = deferred<ReturnType<typeof emailEvidence>>();
+    api.loadEmailServerConfig.mockResolvedValueOnce(emailEvidence()).mockReturnValueOnce(proof.promise);
+    api.loadSmsServerConfig.mockResolvedValue({ status: 'missing', config: null });
+    api.saveEmailServerConfig.mockResolvedValue(undefined);
+    const { result, unmount } = renderHook(() => useMessageServerController(), { wrapper: wrapper() });
+    await waitFor(() => expect(result.current.email.kind).toBe('configured'));
+    act(() => result.current.actions.openEmail());
+
+    let saving: Promise<void> | undefined;
+    act(() => {
+      saving = result.current.actions.submitEmail();
+    });
+    await waitFor(() => expect(api.loadEmailServerConfig).toHaveBeenCalledTimes(2));
+    unmount();
+    proof.resolve(emailEvidence());
+    await act(async () => saving);
+
+    expect(notify.success).not.toHaveBeenCalled();
+  });
+
+  it('does not start a save through an action retained after unmount', async () => {
+    api.loadEmailServerConfig.mockResolvedValue(emailEvidence());
+    api.loadSmsServerConfig.mockResolvedValue({ status: 'missing', config: null });
+    api.saveEmailServerConfig.mockResolvedValue(undefined);
+    const { result, unmount } = renderHook(() => useMessageServerController(), { wrapper: wrapper() });
+    await waitFor(() => expect(result.current.email.kind).toBe('configured'));
+    act(() => result.current.actions.openEmail());
+    const retainedSubmit = result.current.actions.submitEmail;
+
+    unmount();
+    await act(async () => retainedSubmit());
+
+    expect(api.saveEmailServerConfig).not.toHaveBeenCalled();
+    expect(notify.success).not.toHaveBeenCalled();
   });
 
   it('reports defensive error state when a successful query has no evidence body', async () => {

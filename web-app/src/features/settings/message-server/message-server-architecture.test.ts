@@ -45,7 +45,9 @@ describe('message server architecture', () => {
     expect(emailEditor).toMatch(/function ConfiguredEmailSecret/);
     expect(emailEditor).toMatch(/maskClosable=\{false\}/);
     expect(emailEditor).toMatch(/confirmLoading=\{saving\}/);
-    expect(emailEditor).toMatch(/onCancel=\{close\}/);
+    expect(emailEditor).toMatch(/closable=\{!editorLocked\}/);
+    expect(emailEditor).toMatch(/keyboard=\{!editorLocked\}/);
+    expect(emailEditor).toMatch(/MessageServerSaveRecovery/);
   });
 
   it('uses typed SMS provider boundaries instead of unchecked casts and partial catalog lookup', () => {

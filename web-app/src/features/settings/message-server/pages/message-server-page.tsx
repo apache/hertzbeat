@@ -24,6 +24,7 @@ import {
   MessageServerChannelLoading,
   MessageServerChannelRow
 } from '../components/message-server-channel';
+import { createMessageServerEditorRecovery } from '../components/message-server-editor-recovery';
 import { useMessageServerController } from '../controller/use-message-server-controller';
 import {
   createEmailServerDraft,
@@ -54,6 +55,13 @@ export function MessageServerPage() {
         <EmailServerEditor
           draft={controller.emailDraft}
           saving={controller.savingEmail}
+          locked={controller.emailLocked}
+          recovery={createMessageServerEditorRecovery(
+            controller.emailSaveRecovery,
+            controller.emailSaveRecoveryRetryable,
+            controller.provingEmail,
+            controller.actions.retryEmailSave
+          )}
           update={controller.actions.updateEmail}
           setSecretCleared={controller.actions.setEmailSecretCleared}
           close={controller.actions.closeEmail}
@@ -66,6 +74,13 @@ export function MessageServerPage() {
         <SmsServerEditor
           draft={controller.smsDraft}
           saving={controller.savingSms}
+          locked={controller.smsLocked}
+          recovery={createMessageServerEditorRecovery(
+            controller.smsSaveRecovery,
+            controller.smsSaveRecoveryRetryable,
+            controller.provingSms,
+            controller.actions.retrySmsSave
+          )}
           replace={controller.actions.replaceSms}
           close={controller.actions.closeSms}
           submit={() => {
@@ -97,6 +112,7 @@ function EmailChannel({ controller }: { controller: Controller }) {
         description={t('messageServer.email.description')}
         summary={t('messageServer.notConfigured')}
         status="unconfigured"
+        disabled={controller.emailLocked}
         action={controller.actions.openEmail}
       />
     );
@@ -108,6 +124,7 @@ function EmailChannel({ controller }: { controller: Controller }) {
       description={t('messageServer.email.description')}
       summary={`${state.config.emailHost}:${state.config.emailPort} · ${state.config.emailUsername}`}
       status={messageServerStatus(state.config.enable, validateEmailServerDraft(draft))}
+      disabled={controller.emailLocked}
       action={controller.actions.openEmail}
     />
   );
@@ -133,6 +150,7 @@ function SmsChannel({ controller }: { controller: Controller }) {
         description={t('messageServer.sms.description')}
         summary={t('messageServer.notConfigured')}
         status="unconfigured"
+        disabled={controller.smsLocked}
         action={controller.actions.openSms}
       />
     );
@@ -145,6 +163,7 @@ function SmsChannel({ controller }: { controller: Controller }) {
       description={t('messageServer.sms.description')}
       summary={t(provider.labelKey)}
       status={messageServerStatus(state.config.enable, validateSmsServerDraft(draft))}
+      disabled={controller.smsLocked}
       action={controller.actions.openSms}
     />
   );

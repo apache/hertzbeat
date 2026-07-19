@@ -44,7 +44,12 @@ import {
   type EmailServerDraft,
   type SmsServerDraft
 } from '../model/message-server-model';
-import { emailServerSaveConverged, smsServerSaveConverged } from '../model/message-server-convergence';
+import {
+  emailServerAmbiguousWriteProvable,
+  emailServerSaveConverged,
+  smsServerAmbiguousWriteProvable,
+  smsServerSaveConverged
+} from '../model/message-server-convergence';
 import { messageServerQueryKeys } from './message-server-query-keys';
 import {
   useMessageServerSaveTransaction,
@@ -86,13 +91,23 @@ export function useMessageServerController() {
     sms: channelState<SmsServerConfig>(smsQuery),
     emailDraft: email.draft,
     smsDraft: sms.draft,
+    emailLocked: email.locked,
+    smsLocked: sms.locked,
+    emailSaveRecovery: email.recoveryKey,
+    smsSaveRecovery: sms.recoveryKey,
+    emailSaveRecoveryRetryable: email.recoveryRetryable,
+    smsSaveRecoveryRetryable: sms.recoveryRetryable,
+    provingEmail: email.proving,
+    provingSms: sms.proving,
     savingEmail: email.saving,
     savingSms: sms.saving,
     actions: {
       ...email.actions,
       ...sms.actions,
       retryEmail: () => void emailQuery.refetch(),
-      retrySms: () => void smsQuery.refetch()
+      retrySms: () => void smsQuery.refetch(),
+      retryEmailSave: email.retry,
+      retrySmsSave: sms.retry
     }
   };
 }
@@ -109,6 +124,7 @@ function useEmailServerChannel(
     write: value => saveEmailServerConfig(buildEmailServerPayload(value)),
     reread: query.refetch,
     converged: emailServerSaveConverged,
+    canProveAmbiguousWrite: emailServerAmbiguousWriteProvable,
     close: () => setDraft(null),
     accept: evidence => {
       queryClient.setQueryData(messageServerQueryKeys.email(), evidence);
@@ -118,6 +134,11 @@ function useEmailServerChannel(
   });
   return {
     draft,
+    locked: transaction.locked,
+    recoveryKey: transaction.recoveryKey,
+    recoveryRetryable: transaction.recoveryRetryable,
+    retry: transaction.retry,
+    proving: transaction.proving,
     saving: transaction.saving,
     actions: {
       openEmail: () => {
@@ -156,6 +177,7 @@ function useSmsServerChannel(
     write: value => saveSmsServerConfig(buildSmsServerPayload(value)),
     reread: query.refetch,
     converged: smsServerSaveConverged,
+    canProveAmbiguousWrite: smsServerAmbiguousWriteProvable,
     close: () => setDraft(null),
     accept: evidence => {
       queryClient.setQueryData(messageServerQueryKeys.sms(), evidence);
@@ -165,6 +187,11 @@ function useSmsServerChannel(
   });
   return {
     draft,
+    locked: transaction.locked,
+    recoveryKey: transaction.recoveryKey,
+    recoveryRetryable: transaction.recoveryRetryable,
+    retry: transaction.retry,
+    proving: transaction.proving,
     saving: transaction.saving,
     actions: {
       openSms: () => {

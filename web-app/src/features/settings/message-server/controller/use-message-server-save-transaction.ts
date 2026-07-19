@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import { useMutation } from '@tanstack/react-query';
-import { useRef } from 'react';
+import { useEffect, useRef, useState, type MutableRefObject } from 'react';
 
 import { classifyMessageServerReadError } from '../api/message-server-api';
+import { isDefiniteMessageServerWriteRejection } from './message-server-write-rejection';
 
 export type MessageServerSaveNotifications = {
   invalid: () => void;
@@ -32,46 +32,165 @@ type SaveTransactionOptions<Draft, Evidence> = {
   write: (draft: Draft) => Promise<unknown>;
   reread: () => Promise<{ data: Evidence | undefined; error: unknown }>;
   converged: (draft: Draft, evidence: Evidence) => boolean;
+  canProveAmbiguousWrite: (draft: Draft) => boolean;
   close: () => void;
   accept: (evidence: Evidence) => void;
   notifications: MessageServerSaveNotifications;
 };
 
+type SaveReceipt<Draft> = { draft: Draft; failureKey: string; retryable: boolean };
+type SaveCommand = 'idle' | 'saving' | 'proving';
+
 export function useMessageServerSaveTransaction<Draft, Evidence>(options: SaveTransactionOptions<Draft, Evidence>) {
-  // React Query pending state updates after the event. The ref is the same-tick
-  // transaction gate for submit, close, and draft mutation handlers.
-  const locked = useRef(false);
-  const mutation = useMutation({
-    mutationFn: async (draft: Draft) => {
-      await options.write(draft);
-      const proof = await options.reread();
-      if (proof.error) throw new AuthoritativeReadError(proof.error);
-      if (!proof.data || !options.converged(draft, proof.data)) throw new AuthoritativeReadError(undefined, true);
-      return proof.data;
-    }
-  });
-  const submit = async () => {
-    const draft = options.draft;
-    if (!draft || options.validate(draft).length > 0) {
-      options.notifications.invalid();
-      return;
-    }
-    if (locked.current) return;
-    locked.current = true;
-    try {
-      const evidence = await mutation.mutateAsync(draft);
-      options.accept(evidence);
-      options.notifications.success();
-    } catch (error) {
-      options.notifications.failure(mutationErrorKey(error));
-    } finally {
-      locked.current = false;
-    }
+  const runtime = useSaveTransactionRuntime<Draft>();
+  return {
+    close: () => {
+      if (!runtime.isLocked()) options.close();
+    },
+    isLocked: runtime.isLocked,
+    locked: runtime.command !== 'idle' || runtime.recoveryKey !== null,
+    recoveryKey: runtime.recoveryKey,
+    recoveryRetryable: runtime.recoveryRetryable,
+    retry: () => retrySave(options, runtime),
+    proving: runtime.command === 'proving',
+    saving: runtime.command === 'saving',
+    submit: () => submitSave(options, runtime)
   };
-  const close = () => {
-    if (!locked.current) options.close();
+}
+
+type TransactionRuntime<Draft> = {
+  receiptRef: MutableRefObject<SaveReceipt<Draft> | null>;
+  command: SaveCommand;
+  recoveryKey: string | null;
+  recoveryRetryable: boolean;
+  isCurrent: (owner: symbol) => boolean;
+  isLocked: () => boolean;
+  begin: (command: Exclude<SaveCommand, 'idle'>) => symbol | null;
+  publishReceipt: (owner: symbol, receipt: SaveReceipt<Draft> | null) => void;
+  finish: (owner: symbol) => void;
+};
+
+function useSaveTransactionRuntime<Draft>(): TransactionRuntime<Draft> {
+  const ownerRef = useRef<symbol | null>(null);
+  const receiptRef = useRef<SaveReceipt<Draft> | null>(null);
+  const mountedRef = useRef(true);
+  const [command, setCommand] = useState<SaveCommand>('idle');
+  const [recoveryKey, setRecoveryKey] = useState<string | null>(null);
+  const [recoveryRetryable, setRecoveryRetryable] = useState(false);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      ownerRef.current = null;
+      receiptRef.current = null;
+    };
+  }, []);
+
+  const isCurrent = (owner: symbol) => mountedRef.current && ownerRef.current === owner;
+  // The ref closes the same-tick gap before React can render the locked state.
+  const begin = (next: Exclude<SaveCommand, 'idle'>) => {
+    if (!mountedRef.current || ownerRef.current) return null;
+    const owner = Symbol(next);
+    ownerRef.current = owner;
+    setCommand(next);
+    return owner;
   };
-  return { submit, close, saving: mutation.isPending, isLocked: () => locked.current };
+  const publishReceipt = (owner: symbol, receipt: SaveReceipt<Draft> | null) => {
+    if (!isCurrent(owner)) return;
+    receiptRef.current = receipt;
+    setRecoveryKey(receipt?.failureKey ?? null);
+    setRecoveryRetryable(receipt?.retryable ?? false);
+  };
+  const finish = (owner: symbol) => {
+    if (!isCurrent(owner)) return;
+    ownerRef.current = null;
+    setCommand('idle');
+  };
+  const isLocked = () => ownerRef.current !== null || receiptRef.current !== null;
+  return {
+    receiptRef,
+    command,
+    recoveryKey,
+    recoveryRetryable,
+    isCurrent,
+    isLocked,
+    begin,
+    publishReceipt,
+    finish
+  };
+}
+
+async function submitSave<Draft, Evidence>(
+  options: SaveTransactionOptions<Draft, Evidence>,
+  runtime: TransactionRuntime<Draft>
+) {
+  if (runtime.receiptRef.current) return;
+  const draft = options.draft;
+  if (!draft || options.validate(draft).length > 0) return options.notifications.invalid();
+  const owner = runtime.begin('saving');
+  if (!owner) return;
+  // Publish the receipt before POST: a failed response does not prove that the
+  // server rejected the write, so later submits must not silently repeat it.
+  const receipt = { draft, failureKey: 'messageServer.saveNotConverged', retryable: true };
+  runtime.publishReceipt(owner, receipt);
+  try {
+    await options.write(draft);
+  } catch (error) {
+    if (isDefiniteMessageServerWriteRejection(error)) {
+      runtime.publishReceipt(owner, null);
+      if (runtime.isCurrent(owner)) options.notifications.failure('messageServer.saveFailed');
+      return runtime.finish(owner);
+    }
+    if (!options.canProveAmbiguousWrite(draft)) {
+      const uncertain = { ...receipt, failureKey: 'messageServer.saveNotConverged', retryable: false };
+      runtime.publishReceipt(owner, uncertain);
+      if (runtime.isCurrent(owner)) options.notifications.failure(uncertain.failureKey);
+      return runtime.finish(owner);
+    }
+  }
+  if (!runtime.isCurrent(owner)) return;
+  await proveSave(options, runtime, owner, receipt);
+  runtime.finish(owner);
+}
+
+async function retrySave<Draft, Evidence>(
+  options: SaveTransactionOptions<Draft, Evidence>,
+  runtime: TransactionRuntime<Draft>
+) {
+  // Recovery is proof-only. It never repeats the write represented by receipt.
+  const receipt = runtime.receiptRef.current;
+  if (!receipt?.retryable) return;
+  const owner = runtime.begin('proving');
+  if (!owner) return;
+  await proveSave(options, runtime, owner, receipt);
+  runtime.finish(owner);
+}
+
+async function proveSave<Draft, Evidence>(
+  options: SaveTransactionOptions<Draft, Evidence>,
+  runtime: TransactionRuntime<Draft>,
+  owner: symbol,
+  receipt: SaveReceipt<Draft>
+) {
+  try {
+    const evidence = await rereadAndConverge(options, receipt.draft);
+    if (!runtime.isCurrent(owner)) return;
+    runtime.publishReceipt(owner, null);
+    options.accept(evidence);
+    options.notifications.success();
+  } catch (error) {
+    if (!runtime.isCurrent(owner)) return;
+    const failureKey = mutationErrorKey(error);
+    runtime.publishReceipt(owner, { ...receipt, failureKey });
+    options.notifications.failure(failureKey);
+  }
+}
+
+async function rereadAndConverge<Draft, Evidence>(options: SaveTransactionOptions<Draft, Evidence>, draft: Draft) {
+  const proof = await options.reread();
+  if (proof.error) throw new AuthoritativeReadError(proof.error);
+  if (!proof.data || !options.converged(draft, proof.data)) throw new AuthoritativeReadError(undefined, true);
+  return proof.data;
 }
 
 class AuthoritativeReadError extends Error {
