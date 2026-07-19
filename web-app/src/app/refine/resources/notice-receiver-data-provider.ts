@@ -28,7 +28,7 @@ import {
   expectedNoticeReceiverEvidence,
   type NoticeReceiverDraft
 } from '@/features/alert/notice-receiver/model/notice-receiver-model';
-import { exposeRefineProviderData } from '@/shared/refine/refine-provider-data';
+import { adaptRefineRecord, adaptRefineRecords } from '@/shared/refine/refine-provider-data';
 
 import { createRefineHttpError, toRefineHttpError } from '../refine-http-error';
 import {
@@ -43,7 +43,7 @@ export const noticeReceiverDataProvider: DataProvider = {
     return protect(async () => {
       assertResource(params.resource);
       const page = await loadNoticeReceivers(readNoticeReceiverListQuery(params));
-      return { data: exposeRefineProviderData<TData[]>(page.content), total: page.totalElements };
+      return { data: adaptRefineRecords<TData>(page.content), total: page.totalElements };
     });
   },
 
@@ -56,7 +56,7 @@ export const noticeReceiverDataProvider: DataProvider = {
       const id = readNoticeReceiverId(params.id);
       const receiver = await loadNoticeReceiver(id);
       if (receiver.id !== id) throw contractError('NOTICE_RECEIVER_REREAD_INVALID');
-      return { data: exposeRefineProviderData<TData>(receiver) };
+      return { data: adaptRefineRecord<TData>(receiver) };
     });
   },
 
@@ -70,7 +70,7 @@ export const noticeReceiverDataProvider: DataProvider = {
       const mutation = await saveNoticeReceiver(draft);
       assertMutation(mutation, 'created');
       const canonical = await requireCanonical(mutation.id, draft);
-      return { data: exposeRefineProviderData<TData>(canonical) };
+      return { data: adaptRefineRecord<TData>(canonical) };
     });
   },
 
@@ -86,7 +86,7 @@ export const noticeReceiverDataProvider: DataProvider = {
       const mutation = await saveNoticeReceiver(draft);
       assertMutation(mutation, 'updated', id);
       const canonical = await requireCanonical(id, draft);
-      return { data: exposeRefineProviderData<TData>(canonical) };
+      return { data: adaptRefineRecord<TData>(canonical) };
     });
   },
 
@@ -104,7 +104,7 @@ export const noticeReceiverDataProvider: DataProvider = {
       if (mutation.status !== 'deleted' || mutation.id !== id || mutation.receiver !== null) {
         throw contractError('NOTICE_RECEIVER_DELETE_NOT_CONFIRMED');
       }
-      return { data: exposeRefineProviderData<TData>(canonical) };
+      return { data: adaptRefineRecord<TData>(canonical) };
     });
   },
 

@@ -41,7 +41,7 @@ import {
   type NoticeTemplateQuery
 } from '@/features/alert/notice-template-model';
 import { noticeTemplateCreateActionUrl, noticeTemplateResourceName } from '@/features/alert/notice-template-resource';
-import { exposeRefineProviderData } from '@/shared/refine/refine-provider-data';
+import { adaptRefineRecord, adaptRefineRecords } from '@/shared/refine/refine-provider-data';
 
 import { createRefineHttpError, toRefineHttpError } from '../refine-http-error';
 import {
@@ -59,7 +59,7 @@ export const noticeTemplateDataProvider: DataProvider = {
       const page = await loadNoticeTemplates(query);
       assertPageEvidence(page, query);
       const records = mapResourceRecords(page.content);
-      return { data: exposeRefineProviderData<TData[]>(records), total: page.totalElements };
+      return { data: adaptRefineRecords<TData>(records), total: page.totalElements };
     });
   },
 
@@ -72,7 +72,7 @@ export const noticeTemplateDataProvider: DataProvider = {
       const id = readNoticeTemplateId(params.id);
       const record = await loadNoticeTemplate(id);
       assertCanonicalCustom(record, id);
-      return { data: exposeRefineProviderData<TData>(noticeTemplateResourceRecord(record)) };
+      return { data: adaptRefineRecord<TData>(noticeTemplateResourceRecord(record)) };
     });
   },
 
@@ -92,7 +92,7 @@ export const noticeTemplateDataProvider: DataProvider = {
       await saveNoticeTemplate(draft);
       const canonical = await loadNoticeTemplate(id);
       assertCanonicalCustom(canonical, id);
-      return { data: exposeRefineProviderData<TData>(noticeTemplateResourceRecord(canonical)) };
+      return { data: adaptRefineRecord<TData>(noticeTemplateResourceRecord(canonical)) };
     });
   },
 
@@ -113,7 +113,7 @@ export const noticeTemplateDataProvider: DataProvider = {
       if (proof.content.some(item => item.id === id)) {
         throw contractError('NOTICE_TEMPLATE_DELETE_NOT_CONFIRMED');
       }
-      return { data: exposeRefineProviderData<TData>(noticeTemplateResourceRecord(canonical)) };
+      return { data: adaptRefineRecord<TData>(noticeTemplateResourceRecord(canonical)) };
     });
   },
 
@@ -127,7 +127,7 @@ export const noticeTemplateDataProvider: DataProvider = {
       const draft = readNoticeTemplateDraft(params.payload);
       if (draft.id !== undefined) throw contractError('NOTICE_TEMPLATE_VARIABLES_INVALID', 400);
       await saveNoticeTemplate(draft);
-      return { data: exposeRefineProviderData<TData>({ acknowledged: true }) };
+      return { data: adaptRefineRecord<TData>({ acknowledged: true }) };
     });
   },
 

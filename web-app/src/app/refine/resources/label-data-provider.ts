@@ -28,7 +28,7 @@ import type {
 import { deleteLabel, findCanonicalLabel, loadLabels, saveLabel } from '@/features/settings/label/api/label-api';
 import { LabelContractError, type LabelIdentity, type LabelRecord } from '@/features/settings/label/model/label-model';
 import { isLabelPageSize } from '@/features/settings/label/model/label-query-model';
-import { exposeRefineProviderData } from '@/shared/refine/refine-provider-data';
+import { adaptRefineRecord, adaptRefineRecords } from '@/shared/refine/refine-provider-data';
 
 import { createRefineHttpError, toRefineHttpError } from '../refine-http-error';
 
@@ -40,7 +40,7 @@ export const labelDataProvider: DataProvider = {
       assertLabelResource(params.resource);
       const query = readListQuery(params);
       const page = await loadLabels(query);
-      return { data: exposeRefineProviderData<TData[]>(page.content), total: page.totalElements };
+      return { data: adaptRefineRecords<TData>(page.content), total: page.totalElements };
     });
   },
 
@@ -64,7 +64,7 @@ export const labelDataProvider: DataProvider = {
       const draft = readLabelDraft(params.variables);
       await saveLabel(draft, true);
       const canonical = await requireCanonicalLabel(toIdentity(draft));
-      return { data: exposeRefineProviderData<TData>(canonical) };
+      return { data: adaptRefineRecord<TData>(canonical) };
     });
   },
 
@@ -79,7 +79,7 @@ export const labelDataProvider: DataProvider = {
       const draft = { ...readLabelDraft(params.variables), id };
       await saveLabel(draft, false);
       const canonical = await requireCanonicalLabel(toIdentity(draft));
-      return { data: exposeRefineProviderData<TData>(canonical) };
+      return { data: adaptRefineRecord<TData>(canonical) };
     });
   },
 
@@ -97,7 +97,7 @@ export const labelDataProvider: DataProvider = {
       if (await findCanonicalLabel(identity)) {
         throw createRefineHttpError('Label deletion could not be confirmed', 502, 'LABEL_DELETE_NOT_CONFIRMED');
       }
-      return { data: exposeRefineProviderData<TData>(canonical) };
+      return { data: adaptRefineRecord<TData>(canonical) };
     });
   },
 

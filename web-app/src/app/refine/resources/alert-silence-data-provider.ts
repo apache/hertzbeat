@@ -37,7 +37,7 @@ import {
   updateAlertSilenceEnabled
 } from '@/features/alert/alert-silence-api';
 import { AlertSilenceContractError, type AlertSilence } from '@/features/alert/alert-silence-model';
-import { exposeRefineProviderData } from '@/shared/refine/refine-provider-data';
+import { adaptRefineRecord, adaptRefineRecords } from '@/shared/refine/refine-provider-data';
 
 import { createRefineHttpError, toRefineHttpError } from '../refine-http-error';
 import {
@@ -57,7 +57,7 @@ export const alertSilenceDataProvider: DataProvider = {
       assertResource(params.resource);
       const query = readAlertSilenceListQuery(params);
       const page = await loadAlertSilences(query);
-      return { data: exposeRefineProviderData<TData[]>(page.content), total: page.totalElements };
+      return { data: adaptRefineRecords<TData>(page.content), total: page.totalElements };
     });
   },
 
@@ -70,7 +70,7 @@ export const alertSilenceDataProvider: DataProvider = {
       const id = readAlertSilenceId(params.id);
       const record = await loadAlertSilence(id);
       assertCanonicalIdentity(record, id);
-      return { data: exposeRefineProviderData<TData>(record) };
+      return { data: adaptRefineRecord<TData>(record) };
     });
   },
 
@@ -97,7 +97,7 @@ export const alertSilenceDataProvider: DataProvider = {
       const canonical = await loadAlertSilence(id);
       assertCanonicalIdentity(canonical, id);
       await loadAlertSilences(variables.query);
-      return { data: exposeRefineProviderData<TData>(canonical) };
+      return { data: adaptRefineRecord<TData>(canonical) };
     });
   },
 
@@ -123,7 +123,7 @@ export const alertSilenceDataProvider: DataProvider = {
       if (proof.content.some(item => item.id === id)) {
         throw contractError('ALERT_SILENCE_DELETE_NOT_CONFIRMED');
       }
-      return { data: exposeRefineProviderData<TData>(canonical) };
+      return { data: adaptRefineRecord<TData>(canonical) };
     });
   },
 
@@ -136,7 +136,7 @@ export const alertSilenceDataProvider: DataProvider = {
       }
       const draft = readAlertSilenceDraft(params.payload);
       await saveAlertSilence(draft);
-      return { data: exposeRefineProviderData<TData>({ acknowledged: true }) };
+      return { data: adaptRefineRecord<TData>({ acknowledged: true }) };
     });
   },
 

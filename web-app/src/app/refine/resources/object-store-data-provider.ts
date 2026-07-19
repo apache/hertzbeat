@@ -32,7 +32,7 @@ import {
   objectStoreResourceId,
   type ObjectStoreDraft
 } from '@/features/settings/object-store/model/object-store-model';
-import { exposeRefineProviderData } from '@/shared/refine/refine-provider-data';
+import { adaptRefineRecord } from '@/shared/refine/refine-provider-data';
 
 import { createRefineHttpError, toRefineHttpError } from '../refine-http-error';
 
@@ -50,7 +50,7 @@ export const objectStoreDataProvider: DataProvider = {
     return protect(async () => {
       assertResourceAndId(params.resource, params.id);
       const config = await readObjectStore();
-      return { data: exposeRefineProviderData<TData>(readResourceRecord(config)) };
+      return { data: adaptRefineRecord<TData>(readResourceRecord(config)) };
     });
   },
 
@@ -74,7 +74,7 @@ export const objectStoreDataProvider: DataProvider = {
           'OBJECT_STORE_CANONICAL_REREAD_MISSING'
         );
       }
-      return { data: exposeRefineProviderData<TData>(readResourceRecord(canonical)) };
+      return { data: adaptRefineRecord<TData>(readResourceRecord(canonical)) };
     });
   },
 

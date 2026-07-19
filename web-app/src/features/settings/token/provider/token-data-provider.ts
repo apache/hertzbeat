@@ -28,7 +28,7 @@ import type {
 } from '@refinedev/core';
 
 import { createRefineHttpError, toRefineHttpError } from '@/shared/refine/refine-http-error';
-import { exposeRefineProviderData } from '@/shared/refine/refine-provider-data';
+import { adaptRefineRecord, adaptRefineRecords } from '@/shared/refine/refine-provider-data';
 
 import {
   generateToken,
@@ -47,7 +47,7 @@ export const tokenDataProvider: DataProvider = {
     return protect(async () => {
       assertResource(params.resource);
       const records = await loadTokens();
-      return { data: exposeRefineProviderData<TData[]>(records), total: records.length };
+      return { data: adaptRefineRecords<TData>(records), total: records.length };
     });
   },
 
@@ -73,12 +73,12 @@ export const tokenDataProvider: DataProvider = {
     return protect(async () => {
       if (params.url === tokenGenerateActionUrl && params.method === 'post') {
         const draft = readGenerationDraft(params.payload);
-        return { data: exposeRefineProviderData<TData>(await generateToken(draft)) };
+        return { data: adaptRefineRecord<TData>(await generateToken(draft)) };
       }
       const revokeId = params.method === 'delete' ? parseTokenRevokeActionUrl(params.url) : null;
       if (revokeId !== null) {
         await revokeToken(revokeId);
-        return { data: exposeRefineProviderData<TData>({ id: revokeId }) };
+        return { data: adaptRefineRecord<TData>({ id: revokeId }) };
       }
       throw createRefineHttpError('Token custom action is not supported', 405, 'TOKEN_CUSTOM_ACTION_UNSUPPORTED');
     });

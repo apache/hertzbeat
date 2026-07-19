@@ -34,7 +34,7 @@ import {
   type NoticeRuleMutationVariables,
   type NoticeRuleQuery
 } from '@/features/alert/notice-rule/model/notice-rule-model';
-import { exposeRefineProviderData } from '@/shared/refine/refine-provider-data';
+import { adaptRefineRecord, adaptRefineRecords } from '@/shared/refine/refine-provider-data';
 
 import { createRefineHttpError, toRefineHttpError } from '../refine-http-error';
 
@@ -45,7 +45,7 @@ export const noticeRuleDataProvider: DataProvider = {
     return protect(async () => {
       assertResource(params.resource);
       const page = await loadNoticeRules(readListQuery(params));
-      return { data: exposeRefineProviderData<TData[]>(page.content), total: page.totalElements };
+      return { data: adaptRefineRecords<TData>(page.content), total: page.totalElements };
     });
   },
 
@@ -56,7 +56,7 @@ export const noticeRuleDataProvider: DataProvider = {
     return protect(async () => {
       assertResource(params.resource);
       const id = readId(params.id);
-      return { data: exposeRefineProviderData<TData>(await loadNoticeRule(id)) };
+      return { data: adaptRefineRecord<TData>(await loadNoticeRule(id)) };
     });
   },
 
@@ -77,8 +77,9 @@ export const noticeRuleDataProvider: DataProvider = {
           !previousIds.has(rule.id) &&
           noticeRuleMatchesDraft(rule, variables.draft, variables.receivers, variables.templates)
       );
-      if (created.length !== 1) throw contractError('NOTICE_RULE_CREATE_NOT_CONVERGED');
-      return { data: exposeRefineProviderData<TData>(created[0]) };
+      const canonical = created[0];
+      if (created.length !== 1 || !canonical) throw contractError('NOTICE_RULE_CREATE_NOT_CONVERGED');
+      return { data: adaptRefineRecord<TData>(canonical) };
     });
   },
 
@@ -96,7 +97,7 @@ export const noticeRuleDataProvider: DataProvider = {
       if (!noticeRuleMatchesDraft(canonical, variables.draft, variables.receivers, variables.templates)) {
         throw contractError('NOTICE_RULE_UPDATE_NOT_CONVERGED');
       }
-      return { data: exposeRefineProviderData<TData>(canonical) };
+      return { data: adaptRefineRecord<TData>(canonical) };
     });
   },
 
@@ -116,7 +117,7 @@ export const noticeRuleDataProvider: DataProvider = {
       } catch (error) {
         if (!isNoticeRuleMissing(error)) throw error;
       }
-      return { data: exposeRefineProviderData<TData>(canonical) };
+      return { data: adaptRefineRecord<TData>(canonical) };
     });
   },
 

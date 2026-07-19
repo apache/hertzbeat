@@ -15,14 +15,26 @@
  * limitations under the License.
  */
 
+import type { BaseRecord } from '@refinedev/core';
+
+/** Excludes arrays from Refine's otherwise permissive structural record type. */
+type RefineRecordInput = BaseRecord & { readonly length?: never };
+
+/** Adapts one validated application record to Refine's caller-selected subtype. */
+export function adaptRefineRecord<TData extends BaseRecord>(record: RefineRecordInput): TData {
+  return selectCallerSubtype<TData>(record);
+}
+
+/** Adapts validated application records without accepting a single record by mistake. */
+export function adaptRefineRecords<TData extends BaseRecord>(records: RefineRecordInput[]): TData[] {
+  return selectCallerSubtype<TData[]>(records);
+}
+
 /**
- * Adapts validated application data to Refine's caller-selected response type.
- *
- * Refine chooses `TData` at each call site, so a provider cannot prove that its
- * concrete record is the exact subtype selected by the caller. Keep that one
- * unavoidable assertion here. Provider implementations must validate or build
- * their domain record before crossing this boundary.
+ * Refine lets each caller select `TData`, which a provider cannot prove from its
+ * concrete validated record. Keep that unavoidable assertion private and let
+ * the exported single/plural adapters enforce every shape available to callers.
  */
-export function exposeRefineProviderData<TData>(value: unknown): TData {
+function selectCallerSubtype<TData extends BaseRecord | BaseRecord[]>(value: BaseRecord | BaseRecord[]): TData {
   return value as TData;
 }
