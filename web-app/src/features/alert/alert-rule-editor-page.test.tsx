@@ -21,17 +21,29 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createAlertRuleDraft } from './alert-rule-model';
 import { AlertRuleEditorPage } from './alert-rule-editor-page';
 
-const controller = vi.hoisted(() => ({ cancel: vi.fn(), preview: vi.fn(), retryDetail: vi.fn(), save: vi.fn(), state: {}, updateDraft: vi.fn() }));
+const controller = vi.hoisted(() => ({
+  cancel: vi.fn(),
+  preview: vi.fn(),
+  retryDetail: vi.fn(),
+  save: vi.fn(),
+  state: {},
+  updateDraft: vi.fn()
+}));
 vi.mock('./controller/use-alert-rule-editor-controller', () => ({ useAlertRuleEditorController: () => controller }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 describe('AlertRuleEditorPage', () => {
-  beforeEach(() => { vi.clearAllMocks(); controller.state = buildState(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    controller.state = buildState();
+  });
   afterEach(cleanup);
 
   it.each([
-    ['loading', 'loading'], ['missing', 'common.notFound.description'],
-    ['unavailable', 'common.unavailable'], ['error', 'common.routeError.description']
+    ['loading', 'loading'],
+    ['missing', 'common.notFound.description'],
+    ['unavailable', 'common.unavailable'],
+    ['error', 'common.routeError.description']
   ])('renders detail state %s honestly', (kind, evidence) => {
     controller.state = buildState({ detail: { kind } });
     render(<AlertRuleEditorPage mode="edit" />);
@@ -40,7 +52,9 @@ describe('AlertRuleEditorPage', () => {
   });
 
   it.each([
-    ['empty', 'alertRules.previewEmpty'], ['unavailable', 'common.unavailable'], ['error', 'alertRules.previewFailed']
+    ['empty', 'alertRules.previewEmpty'],
+    ['unavailable', 'common.unavailable'],
+    ['error', 'alertRules.previewFailed']
   ])('renders preview state %s distinctly', (kind, evidence) => {
     controller.state = buildState({ preview: { kind } });
     render(<AlertRuleEditorPage mode="new" />);
@@ -48,7 +62,9 @@ describe('AlertRuleEditorPage', () => {
   });
 
   it.each([
-    ['missing', 'common.notFound.description'], ['unavailable', 'common.unavailable'], ['error', 'alertRules.saveFailed']
+    ['missing', 'common.notFound.description'],
+    ['unavailable', 'common.unavailable'],
+    ['error', 'alertRules.saveFailed']
   ])('renders save failure %s distinctly', (failure, evidence) => {
     controller.state = buildState({ saveFailure: failure });
     render(<AlertRuleEditorPage mode="new" />);
@@ -77,9 +93,36 @@ describe('AlertRuleEditorPage', () => {
     expect(controller.save).toHaveBeenCalled();
     expect(controller.cancel).toHaveBeenCalled();
   });
+
+  it('disables every mutable field while save owns the operation gate', () => {
+    controller.state = buildState({
+      command: 'saving',
+      draft: { ...createAlertRuleDraft(), kind: 'periodic' }
+    });
+    render(<AlertRuleEditorPage mode="new" />);
+
+    for (const label of [
+      'alertRules.name',
+      'alertRules.expression',
+      'alertRules.template',
+      'alertRules.labels',
+      'alertRules.period',
+      'alertRules.times'
+    ]) {
+      expect(screen.getByLabelText(label)).toBeDisabled();
+    }
+    for (const select of screen.getAllByRole('combobox')) expect(select).toBeDisabled();
+    expect(screen.getByRole('switch')).toBeDisabled();
+  });
 });
 
 function buildState(override: Record<string, unknown> = {}) {
-  return { command: 'idle', detail: { kind: 'ready' }, draft: createAlertRuleDraft(), preview: { kind: 'idle' },
-    saveFailure: undefined, ...override };
+  return {
+    command: 'idle',
+    detail: { kind: 'ready' },
+    draft: createAlertRuleDraft(),
+    preview: { kind: 'idle' },
+    saveFailure: undefined,
+    ...override
+  };
 }

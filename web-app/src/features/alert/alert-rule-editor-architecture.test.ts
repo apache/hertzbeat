@@ -17,14 +17,18 @@
 
 import { describe, expect, it } from 'vitest';
 
+import commandSource from './controller/use-alert-rule-command-controller.ts?raw';
 import controllerSource from './controller/use-alert-rule-editor-controller.ts?raw';
+import previewSource from './controller/use-alert-rule-preview-controller.ts?raw';
 import proofSource from './alert-rule-write-proof.ts?raw';
 
 const modules = import.meta.glob('./alert-rule-editor-page.tsx', { eager: true, import: 'default', query: '?raw' });
 const source = Object.values(modules)[0] as string;
 
 function sourceLineCount(value: string) {
-  return value.replace(/\/\*[\s\S]*?\*\//g, '').split('\n')
+  return value
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .split('\n')
     .filter(line => line.trim() && !line.trim().startsWith('//')).length;
 }
 
@@ -35,11 +39,22 @@ describe('Alert Rule editor architecture', () => {
   });
 
   it('keeps bounded write proof outside the route controller', () => {
-    expect(controllerSource).toContain("from '../alert-rule-write-proof'");
+    expect(commandSource).toContain("from '../alert-rule-write-proof'");
+    expect(controllerSource).not.toContain("from '../alert-rule-write-proof'");
     expect(controllerSource).not.toContain('loadAlertRules');
     expect(proofSource).toContain('maximumAlertRuleCreateProofPages');
     expect(sourceLineCount(controllerSource)).toBeLessThanOrEqual(200);
+    expect(sourceLineCount(commandSource)).toBeLessThanOrEqual(200);
+    expect(sourceLineCount(previewSource)).toBeLessThanOrEqual(200);
     expect(sourceLineCount(proofSource)).toBeLessThanOrEqual(200);
+  });
+
+  it('separates latest-preview and synchronous-save ownership from route composition', () => {
+    expect(controllerSource).toContain('useAlertRulePreviewController');
+    expect(controllerSource).toContain('useAlertRuleCommandController');
+    expect(controllerSource).not.toMatch(/previewAlertRule|saveAlertRule|App\.useApp/);
+    expect(previewSource).toMatch(/previewEpochRef|identity\.isCurrent/);
+    expect(commandSource).toMatch(/ownerRef|identity\.isCurrent/);
   });
 
   it('delegates detail cache identity to the Alert Rule feature Query Key factory', () => {

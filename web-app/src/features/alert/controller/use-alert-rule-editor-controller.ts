@@ -1,133 +1,67 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { useQuery } from '@tanstack/react-query';
-import { App } from 'antd';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
-import { classifyAlertRuleReadError, loadAlertRule, previewAlertRule, saveAlertRule } from '../alert-rule-api';
+import { classifyAlertRuleReadError, loadAlertRule } from '../alert-rule-api';
 import {
-  alertRuleDraftFromDetail, buildAlertRulePayload, createAlertRuleDraft,
-  validateAlertRuleDraft, type AlertRuleDraft, type AlertRuleKind
+  alertRuleDraftFromDetail,
+  createAlertRuleDraft,
+  type AlertRuleDraft,
+  type AlertRuleKind
 } from '../alert-rule-model';
-import { proveCreatedAlertRule, proveUpdatedAlertRule } from '../alert-rule-write-proof';
+import {
+  freshAlertRuleRouteState,
+  type AlertRuleEditorDetailState,
+  type AlertRuleEditorIdentityController,
+  type AlertRuleEditorOperationIdentity,
+  type AlertRuleRouteState
+} from './alert-rule-editor-state';
 import { alertRuleQueryKeys } from './alert-rule-query-keys';
+import { useAlertRuleCommandController } from './use-alert-rule-command-controller';
+import { useAlertRulePreviewController } from './use-alert-rule-preview-controller';
 
-export type AlertRuleEditorFailure = 'missing' | 'unavailable' | 'error';
-export type AlertRuleEditorDetailState =
-  | { kind: 'loading' }
-  | { kind: AlertRuleEditorFailure }
-  | { kind: 'ready' };
-export type AlertRulePreviewState =
-  | { kind: 'idle' }
-  | { kind: 'loading' }
-  | { kind: 'empty' }
-  | { kind: 'ready'; records: Array<Record<string, unknown>> }
-  | { kind: 'unavailable' }
-  | { kind: 'error' };
-
-type RouteState = {
-  source: string;
-  token: symbol;
-  draft: AlertRuleDraft | null;
-  preview: AlertRulePreviewState;
-  command: 'idle' | 'saving';
-  saveFailure: AlertRuleEditorFailure | undefined;
-};
+export type {
+  AlertRuleEditorDetailState,
+  AlertRuleEditorFailure,
+  AlertRulePreviewState
+} from './alert-rule-editor-state';
 
 export function useAlertRuleEditorController(mode: 'new' | 'edit') {
-  const { t } = useTranslation();
-  const { message } = App.useApp();
   const navigate = useNavigate();
   const location = useLocation();
   const { ruleId = '' } = useParams();
   const validId = canonicalId(ruleId);
   const routeSource = `${mode}:${ruleId}:${location.key}`;
   const routeToken = useMemo(() => Symbol(routeSource), [routeSource]);
-  const sourceRef = useRouteSourceRef(routeSource);
-  const initialDraft = useMemo(() => mode === 'new' ? createAlertRuleDraft() : null, [mode]);
-  const [routeState, setRouteState] = useState<RouteState>(() => freshRouteState(routeSource, routeToken, initialDraft));
-  const detailQuery = useQuery({
-    queryKey: alertRuleQueryKeys.detail(validId),
-    queryFn: () => loadAlertRule(validId as number),
-    enabled: mode === 'edit' && validId !== null,
-    retry: false
-  });
-
-  const canonicalDraft = mode === 'new' ? initialDraft
-    : detailQuery.data ? alertRuleDraftFromDetail(detailQuery.data) : null;
-  const active = routeState.source === routeSource && routeState.token === routeToken
-    ? routeState : freshRouteState(routeSource, routeToken, canonicalDraft);
+  const identity = useAlertRuleEditorIdentity(routeToken);
+  const initialDraft = useMemo(() => (mode === 'new' ? createAlertRuleDraft() : null), [mode]);
+  const [routeState, setRouteState] = useState<AlertRuleRouteState>(() =>
+    freshAlertRuleRouteState(routeSource, routeToken, initialDraft)
+  );
+  const detailQuery = useAlertRuleDetail(mode, validId);
+  const canonicalDraft = resolveCanonicalDraft(mode, initialDraft, detailQuery.data);
+  const active =
+    routeState.source === routeSource && routeState.token === routeToken
+      ? routeState
+      : freshAlertRuleRouteState(routeSource, routeToken, canonicalDraft);
   const draft = active.draft ?? canonicalDraft;
-  const updateActive = (patch: Partial<RouteState>) => setRouteState(current => {
-    const base = current.source === routeSource && current.token === routeToken
-      ? current : freshRouteState(routeSource, routeToken, draft);
-    return { ...base, ...patch };
-  });
-  const updateDraft = (patch: Partial<AlertRuleDraft>) => {
-    if (!draft) return;
+  const updateRoute = (patch: Partial<AlertRuleRouteState>) =>
     setRouteState(current => {
-      const base = current.source === routeSource && current.token === routeToken
-        ? current : freshRouteState(routeSource, routeToken, draft);
-      return { ...base, draft: { ...draft, ...patch }, preview: { kind: 'idle' }, saveFailure: undefined };
+      const base =
+        current.source === routeSource && current.token === routeToken
+          ? current
+          : freshAlertRuleRouteState(routeSource, routeToken, draft);
+      return { ...base, ...patch };
     });
-  };
-  const runPreview = async () => {
-    const source = routeSource;
-    if (!draft?.expr.trim()) {
-      void message.warning(t('alertRules.expressionRequired'));
-      return;
-    }
-    updateActive({ preview: { kind: 'loading' } });
-    try {
-      const records = await previewAlertRule(draft);
-      if (sourceRef.current !== source) return;
-      updateActive({ preview: records.length === 0 ? { kind: 'empty' } : { kind: 'ready', records } });
-    } catch (reason) {
-      if (sourceRef.current !== source) return;
-      const kind = classifyAlertRuleReadError(reason) === 'unavailable' ? 'unavailable' : 'error';
-      updateActive({ preview: { kind } });
-    }
-  };
-  const save = async () => {
-    const source = routeSource;
-    if (!draft || validateAlertRuleDraft(draft).length > 0) {
-      void message.warning(t('alertRules.validation'));
-      return;
-    }
-    updateActive({ command: 'saving', saveFailure: undefined });
-    try {
-      await saveAlertRule(mode, draft);
-      if (sourceRef.current !== source) return;
-      const expected = buildAlertRulePayload(draft);
-      if (mode === 'edit') await proveUpdatedAlertRule(draft, expected);
-      else await proveCreatedAlertRule(expected);
-      if (sourceRef.current !== source) return;
-      void message.success(t('alertRules.saveSuccess'));
-      void navigate('/alerts/rules');
-    } catch (reason) {
-      if (sourceRef.current !== source) return;
-      updateActive({ saveFailure: classifyAlertRuleReadError(reason) });
-      void message.error(t('alertRules.saveFailed'));
-    } finally {
-      if (sourceRef.current === source) updateActive({ command: 'idle' });
-    }
+  const command = useAlertRuleCommandController(mode, draft, identity, updateRoute);
+  const preview = useAlertRulePreviewController(draft, identity, updateRoute);
+  const updateDraft = (patch: Partial<AlertRuleDraft>) => {
+    if (!draft || command.isLocked()) return;
+    identity.invalidate();
+    preview.invalidate();
+    updateRoute({ draft: { ...draft, ...patch }, preview: { kind: 'idle' }, saveFailure: undefined });
   };
   const changeKind = (kind: AlertRuleKind) => {
     if (!draft) return;
@@ -143,29 +77,67 @@ export function useAlertRuleEditorController(mode: 'new' | 'edit') {
     },
     updateDraft,
     changeKind,
-    preview: runPreview,
-    save,
-    retryDetail: () => mode === 'edit' && validId !== null
-      ? detailQuery.refetch().then(() => undefined) : Promise.resolve(),
-    cancel: () => { void navigate('/alerts/rules'); }
+    preview: preview.preview,
+    save: command.save,
+    retryDetail: () =>
+      mode === 'edit' && validId !== null ? detailQuery.refetch().then(() => undefined) : Promise.resolve(),
+    cancel: () => {
+      void navigate('/alerts/rules');
+    }
   };
 }
 
-function useRouteSourceRef(routeSource: string) {
-  const sourceRef = useRef(routeSource);
-  useEffect(() => {
-    sourceRef.current = routeSource;
-    return () => { sourceRef.current = ''; };
-  }, [routeSource]);
-  return sourceRef;
+function resolveCanonicalDraft(
+  mode: 'new' | 'edit',
+  initialDraft: AlertRuleDraft | null,
+  detail: Parameters<typeof alertRuleDraftFromDetail>[0] | undefined
+) {
+  if (mode === 'new') return initialDraft;
+  return detail ? alertRuleDraftFromDetail(detail) : null;
 }
 
-function freshRouteState(source: string, token: symbol, draft: AlertRuleDraft | null): RouteState {
-  return { source, token, draft, preview: { kind: 'idle' }, command: 'idle', saveFailure: undefined };
+function useAlertRuleDetail(mode: 'new' | 'edit', validId: number | null) {
+  return useQuery({
+    queryKey: alertRuleQueryKeys.detail(validId),
+    queryFn: () => loadAlertRule(validId as number),
+    enabled: mode === 'edit' && validId !== null,
+    retry: false
+  });
 }
 
-function resolveDetail(mode: 'new' | 'edit', id: number | null, pending: boolean,
-  error: Error | null, draft: AlertRuleDraft | null): AlertRuleEditorDetailState {
+function useAlertRuleEditorIdentity(routeToken: symbol): AlertRuleEditorIdentityController {
+  const routeTokenRef = useRef<symbol | null>(routeToken);
+  const editorEpochRef = useRef(0);
+  useLayoutEffect(() => {
+    routeTokenRef.current = routeToken;
+  }, [routeToken]);
+  useEffect(
+    () => () => {
+      routeTokenRef.current = null;
+      editorEpochRef.current += 1;
+    },
+    []
+  );
+  const capture = (): AlertRuleEditorOperationIdentity => ({
+    routeToken,
+    editorEpoch: editorEpochRef.current
+  });
+  return {
+    capture,
+    invalidate: () => {
+      editorEpochRef.current += 1;
+    },
+    isCurrent: owner => routeTokenRef.current === owner.routeToken && editorEpochRef.current === owner.editorEpoch
+  };
+}
+
+function resolveDetail(
+  mode: 'new' | 'edit',
+  id: number | null,
+  pending: boolean,
+  error: Error | null,
+  draft: AlertRuleDraft | null
+): AlertRuleEditorDetailState {
   if (mode === 'new') return draft ? { kind: 'ready' } : { kind: 'error' };
   if (id === null) return { kind: 'error' };
   if (pending) return { kind: 'loading' };
