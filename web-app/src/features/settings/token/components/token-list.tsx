@@ -46,11 +46,16 @@ export function TokenList(props: TokenListProps) {
         type="error"
         showIcon
         message={props.list.kind === 'unavailable' ? t('token.unavailable') : t('common.routeError.description')}
-        action={(
-          <Button size="small" onClick={() => { void props.onRetry(); }}>
+        action={
+          <Button
+            size="small"
+            onClick={() => {
+              void props.onRetry();
+            }}
+          >
             {t('common.retry')}
           </Button>
-        )}
+        }
       />
     );
   }
@@ -88,11 +93,7 @@ function tokenColumns(
   confirmRevoke: (token: TokenResourceRecord) => void,
   revokingId: number | null
 ): ColumnsType<TokenResourceRecord> {
-  return [
-    ...tokenIdentityColumns(t),
-    ...tokenActivityColumns(t),
-    tokenActionColumn(t, confirmRevoke, revokingId)
-  ];
+  return [...tokenIdentityColumns(t), ...tokenActivityColumns(t), tokenActionColumn(t, confirmRevoke, revokingId)];
 }
 
 function tokenIdentityColumns(t: TFunction): ColumnsType<TokenResourceRecord> {
@@ -108,7 +109,9 @@ function tokenIdentityColumns(t: TFunction): ColumnsType<TokenResourceRecord> {
       dataIndex: 'tokenMask',
       width: 180,
       render: (value: TokenResourceRecord['tokenMask']) => (
-        <Typography.Text className={styles.tokenMask ?? ''} code>{value || '—'}</Typography.Text>
+        <Typography.Text className={styles.tokenMask ?? ''} code>
+          {value || '—'}
+        </Typography.Text>
       )
     },
     {
@@ -141,14 +144,15 @@ function tokenActivityColumns(t: TFunction): ColumnsType<TokenResourceRecord> {
       title: t('token.expires'),
       dataIndex: 'expireTime',
       width: 210,
-      render: (value: TokenResourceRecord['expireTime'], token: TokenResourceRecord) => value == null
-        ? <Tag color="success">{t('token.expiration.never')}</Tag>
-        : (
-            <Space size={6}>
-              <span>{formatTokenTime(value)}</span>
-              {isTokenExpired(token) && <Tag color="error">{t('token.expired')}</Tag>}
-            </Space>
-          )
+      render: (value: TokenResourceRecord['expireTime'], token: TokenResourceRecord) =>
+        value == null ? (
+          <Tag color="success">{t('token.expiration.never')}</Tag>
+        ) : (
+          <Space size={6}>
+            <span>{formatTokenTime(value)}</span>
+            {isTokenExpired(token) && <Tag color="error">{t('token.expired')}</Tag>}
+          </Space>
+        )
     },
     {
       title: t('token.lastUsed'),
@@ -172,6 +176,7 @@ function tokenActionColumn(
       <Button
         danger
         type="link"
+        disabled={revokingId !== null}
         loading={revokingId === token.id}
         onClick={() => confirmRevoke(token)}
       >

@@ -70,20 +70,26 @@ describe('Token resource controller', () => {
   it('uses the named Refine list and exposes honest list evidence', () => {
     const { result, rerender } = renderHook(() => useTokenResourceController());
 
-    expect(refine.useList).toHaveBeenCalledWith(expect.objectContaining({
-      resource: 'tokens', dataProviderName: 'tokens', errorNotification: false
-    }));
+    expect(refine.useList).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resource: 'tokens',
+        dataProviderName: 'tokens',
+        errorNotification: false
+      })
+    );
     expect(refine.provider).toHaveBeenCalledWith('tokens');
     expect(result.current.state.list).toMatchObject({ kind: 'ready', records: [record] });
 
     refine.useList.mockReturnValue(buildListResult({ isError: true, error: { statusCode: 503 }, data: [] }));
     rerender();
     expect(result.current.state.list.kind).toBe('unavailable');
-    refine.useList.mockReturnValue(buildListResult({
-      isError: true,
-      error: { statusCode: 502, code: 'TOKEN_RESPONSE_INVALID' },
-      data: []
-    }));
+    refine.useList.mockReturnValue(
+      buildListResult({
+        isError: true,
+        error: { statusCode: 502, code: 'TOKEN_RESPONSE_INVALID' },
+        data: []
+      })
+    );
     rerender();
     expect(result.current.state.list.kind).toBe('error');
   });
@@ -94,9 +100,13 @@ describe('Token resource controller', () => {
     const { result } = renderHook(() => useTokenResourceController());
 
     act(() => result.current.openGenerator());
-    act(() => result.current.updateDraft({
-      name: 'Production Collector', expireSeconds: -1, scope: 'otlp-ingest'
-    }));
+    act(() =>
+      result.current.updateDraft({
+        name: 'Production Collector',
+        expireSeconds: -1,
+        scope: 'otlp-ingest'
+      })
+    );
     await act(async () => result.current.generate());
 
     expect(refine.custom).toHaveBeenCalledWith({
@@ -115,6 +125,77 @@ describe('Token resource controller', () => {
     expect(result.current.state.generatedToken).toBeNull();
   });
 
+  it('admits only one generate command when submit is called twice in the same tick', async () => {
+    const generation = deferred<{ data: { id: 'generated'; token: string } }>();
+    refine.custom.mockReturnValue(generation.promise);
+    const { result } = renderHook(() => useTokenResourceController());
+
+    act(() => result.current.openGenerator());
+    act(() => result.current.updateDraft({ name: 'Collector', expireSeconds: -1, scope: 'otlp-ingest' }));
+
+    let first: Promise<void>;
+    let second: Promise<void>;
+    act(() => {
+      first = result.current.generate();
+      second = result.current.generate();
+    });
+
+    expect(refine.custom).toHaveBeenCalledTimes(1);
+
+    generation.resolve({ data: { id: 'generated', token: 'hb_generated_once' } });
+    await act(async () => Promise.all([first!, second!]));
+  });
+
+  it('keeps the active generation draft unchanged when controller actions race the locked UI', async () => {
+    const generation = deferred<{ data: { id: 'generated'; token: string } }>();
+    refine.custom.mockReturnValue(generation.promise);
+    const { result } = renderHook(() => useTokenResourceController());
+
+    const activeDraft = { name: 'Collector', expireSeconds: -1, scope: 'otlp-ingest' as const };
+    act(() => result.current.openGenerator());
+    act(() => result.current.updateDraft(activeDraft));
+
+    let pending: Promise<void>;
+    act(() => {
+      pending = result.current.generate();
+    });
+    act(() => {
+      result.current.updateDraft({ ...activeDraft, name: 'Late edit' });
+      result.current.openGenerator();
+    });
+
+    expect(result.current.state.draft).toEqual(activeDraft);
+    expect(result.current.state.generating).toBe(true);
+
+    generation.resolve({ data: { id: 'generated', token: 'hb_generated_once' } });
+    await act(async () => pending!);
+  });
+
+  it('does not let a retired generate command publish into a newly opened draft', async () => {
+    const generation = deferred<{ data: { id: 'generated'; token: string } }>();
+    refine.custom.mockReturnValue(generation.promise);
+    const { result } = renderHook(() => useTokenResourceController());
+
+    act(() => result.current.openGenerator());
+    act(() => result.current.updateDraft({ name: 'Old draft', expireSeconds: -1, scope: 'otlp-ingest' }));
+
+    let pending: Promise<void>;
+    act(() => {
+      pending = result.current.generate();
+    });
+    act(() => result.current.closeGenerator());
+    act(() => result.current.openGenerator());
+
+    generation.resolve({ data: { id: 'generated', token: 'hb_old_secret' } });
+    await act(async () => pending!);
+
+    expect(result.current.state.draft).toEqual({ name: '', expireSeconds: -1, scope: 'otlp-ingest' });
+    expect(result.current.state.generatedToken).toBeNull();
+    expect(result.current.state.generating).toBe(false);
+    expect(refine.refetch).not.toHaveBeenCalled();
+    expect(JSON.stringify(refine.notification.mock.calls)).not.toContain('hb_old_secret');
+  });
+
   it('confirms revocation only after an authoritative list reread', async () => {
     refine.custom.mockResolvedValue({ data: { id: 7 } });
     refine.refetch.mockResolvedValue({ data: { data: [], total: 0 }, isError: false });
@@ -127,15 +208,59 @@ describe('Token resource controller', () => {
     expect(refine.notification).toHaveBeenCalledWith({ message: 'token.revokeSuccess', type: 'success' });
   });
 
+  it('admits only one revoke command when the same row is submitted twice in one tick', async () => {
+    const revocation = deferred<{ data: { id: number } }>();
+    refine.custom.mockReturnValue(revocation.promise);
+    refine.refetch.mockResolvedValue({ data: { data: [], total: 0 }, isError: false });
+    const { result } = renderHook(() => useTokenResourceController());
+
+    let first: Promise<void>;
+    let second: Promise<void>;
+    act(() => {
+      first = result.current.revoke(7);
+      second = result.current.revoke(7);
+    });
+
+    expect(refine.custom).toHaveBeenCalledTimes(1);
+    expect(result.current.state.revokingId).toBe(7);
+
+    revocation.resolve({ data: { id: 7 } });
+    await act(async () => Promise.all([first!, second!]));
+  });
+
+  it('does not overlap revocations whose completions could clear each other state', async () => {
+    const revocation = deferred<{ data: { id: number } }>();
+    refine.custom.mockReturnValue(revocation.promise);
+    refine.refetch.mockResolvedValue({ data: { data: [], total: 0 }, isError: false });
+    const { result } = renderHook(() => useTokenResourceController());
+
+    let first: Promise<void>;
+    act(() => {
+      first = result.current.revoke(7);
+    });
+    act(() => {
+      void result.current.revoke(8);
+    });
+
+    expect(refine.custom).toHaveBeenCalledTimes(1);
+    expect(result.current.state.revokingId).toBe(7);
+
+    revocation.resolve({ data: { id: 7 } });
+    await act(async () => first!);
+    expect(result.current.state.revokingId).toBeNull();
+  });
+
   it('keeps revocation unconfirmed when the authoritative list still contains the id', async () => {
     refine.custom.mockResolvedValue({ data: { id: 7 } });
     const { result } = renderHook(() => useTokenResourceController());
 
     await act(async () => result.current.revoke(7));
 
-    expect(refine.notification).not.toHaveBeenCalledWith(expect.objectContaining({
-      message: 'token.revokeSuccess'
-    }));
+    expect(refine.notification).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'token.revokeSuccess'
+      })
+    );
     expect(refine.notification).toHaveBeenCalledWith({ message: 'common.routeError.description', type: 'error' });
     expect(refine.notification).not.toHaveBeenCalledWith(expect.objectContaining({ message: 'token.unavailable' }));
     expect(result.current.state.list.kind).toBe('error');
@@ -148,9 +273,11 @@ describe('Token resource controller', () => {
 
     await act(async () => result.current.revoke(7));
 
-    expect(refine.notification).not.toHaveBeenCalledWith(expect.objectContaining({
-      message: 'token.revokeSuccess'
-    }));
+    expect(refine.notification).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'token.revokeSuccess'
+      })
+    );
     expect(refine.notification).toHaveBeenCalledWith({ message: 'common.routeError.description', type: 'error' });
     await waitFor(() => expect(result.current.state.list.kind).toBe('error'));
   });
@@ -199,4 +326,12 @@ function buildListResult(override: Record<string, unknown> = {}) {
       total: Object.hasOwn(override, 'total') ? override.total : 1
     }
   };
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>(fulfill => {
+    resolve = fulfill;
+  });
+  return { promise, resolve };
 }

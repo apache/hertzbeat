@@ -68,9 +68,11 @@ describe('TokenPage', () => {
   });
 
   it('renders authoritative metadata and does not relabel an unknown scope', () => {
-    controller.useTokenResourceController.mockReturnValue(buildController({
-      list: { kind: 'ready', records: [record, { ...record, id: 8, tokenMask: 'eyJh****ture', tokenScope: null }] }
-    }));
+    controller.useTokenResourceController.mockReturnValue(
+      buildController({
+        list: { kind: 'ready', records: [record, { ...record, id: 8, tokenMask: 'eyJh****ture', tokenScope: null }] }
+      })
+    );
 
     renderTokenPage();
 
@@ -95,10 +97,12 @@ describe('TokenPage', () => {
   });
 
   it('delegates draft, one-time copy, and close actions to the controller', () => {
-    controller.useTokenResourceController.mockReturnValue(buildController({
-      draft: { name: 'Collector', expireSeconds: -1, scope: 'otlp-ingest' },
-      generatedToken: 'hb_generated_once'
-    }));
+    controller.useTokenResourceController.mockReturnValue(
+      buildController({
+        draft: { name: 'Collector', expireSeconds: -1, scope: 'otlp-ingest' },
+        generatedToken: 'hb_generated_once'
+      })
+    );
 
     renderTokenPage();
     const nameInputs = screen.getAllByPlaceholderText('For example, production Collector');
@@ -110,7 +114,9 @@ describe('TokenPage', () => {
       target: { value: 'Production Collector' }
     });
     expect(controller.updateDraft).toHaveBeenCalledWith({
-      name: 'Production Collector', expireSeconds: -1, scope: 'otlp-ingest'
+      name: 'Production Collector',
+      expireSeconds: -1,
+      scope: 'otlp-ingest'
     });
     fireEvent.click(within(generator).getByRole('button', { name: 'Generate token' }));
     expect(controller.generate).toHaveBeenCalledTimes(1);
@@ -124,6 +130,26 @@ describe('TokenPage', () => {
     expect(controller.closeGeneratedToken).toHaveBeenCalledTimes(1);
   });
 
+  it('locks generator dismissal and fields while generation is pending', () => {
+    controller.useTokenResourceController.mockReturnValue(
+      buildController({
+        draft: { name: 'Collector', expireSeconds: -1, scope: 'otlp-ingest' },
+        generating: true
+      })
+    );
+
+    renderTokenPage();
+
+    const nameInput = screen.getByPlaceholderText('For example, production Collector');
+    const generator = nameInput.closest('[role="dialog"]');
+    if (!(generator instanceof HTMLElement)) throw new Error('Token generator dialog was not rendered.');
+
+    expect(nameInput).toBeDisabled();
+    for (const selector of within(generator).getAllByRole('combobox')) expect(selector).toBeDisabled();
+    expect(within(generator).getByRole('button', { name: 'Cancel' })).toBeDisabled();
+    expect(within(generator).queryByRole('button', { name: 'Close' })).not.toBeInTheDocument();
+  });
+
   it('requires UI confirmation before delegating revocation', () => {
     renderTokenPage();
 
@@ -131,6 +157,19 @@ describe('TokenPage', () => {
     const dialog = screen.getByRole('dialog', { name: 'Revoke this token?' });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Revoke' }));
     expect(controller.revoke).toHaveBeenCalledWith(7);
+  });
+
+  it('locks every revoke action while the exclusive revoke command is pending', () => {
+    controller.useTokenResourceController.mockReturnValue(
+      buildController({
+        list: { kind: 'ready', records: [record, { ...record, id: 8, name: 'Query client' }] },
+        revokingId: 7
+      })
+    );
+
+    renderTokenPage();
+
+    for (const revoke of screen.getAllByRole('button', { name: 'Revoke' })) expect(revoke).toBeDisabled();
   });
 });
 
@@ -160,7 +199,9 @@ function renderTokenPage() {
   render(
     <I18nextProvider i18n={i18n}>
       <MemoryRouter initialEntries={['/settings/tokens?scope=otlp-ingest']}>
-        <App><TokenPage /></App>
+        <App>
+          <TokenPage />
+        </App>
       </MemoryRouter>
     </I18nextProvider>
   );

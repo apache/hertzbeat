@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
-import { Alert, Button, Input, Modal, Select } from "antd";
-import { useTranslation } from "react-i18next";
+import { Alert, Button, Input, Modal, Select } from 'antd';
+import { useTranslation } from 'react-i18next';
 
-import styles from "./token.module.css";
-import { tokenExpirationDefinitions, tokenScopeDefinitions, type TokenDraft } from "../model/token-model";
+import { tokenExpirationDefinitions, tokenScopeDefinitions, type TokenDraft } from '../model/token-model';
+import styles from './token.module.css';
 
 type TokenGeneratorModalProps = {
   draft: TokenDraft;
@@ -35,42 +35,50 @@ export function TokenGeneratorModal(props: TokenGeneratorModalProps) {
   return (
     <Modal
       open
-      title={t("token.generateTitle")}
-      okText={t("token.generate")}
-      cancelText={t("common.cancel")}
+      title={t('token.generateTitle')}
+      okText={t('token.generate')}
+      cancelText={t('common.cancel')}
+      closable={!props.saving}
+      keyboard={!props.saving}
+      maskClosable={!props.saving}
       confirmLoading={props.saving}
+      cancelButtonProps={{ disabled: props.saving }}
+      okButtonProps={{ disabled: props.saving }}
       onCancel={props.onCancel}
       onOk={props.onSubmit}
     >
       <div className={styles.form}>
         <label className={styles.field}>
-          <span className={`${styles.label} ${styles.required}`}>{t("token.name")}</span>
+          <span className={`${styles.label} ${styles.required}`}>{t('token.name')}</span>
           <Input
+            disabled={props.saving}
             value={draft.name}
-            placeholder={t("token.namePlaceholder")}
-            onChange={(event) => props.onChange({ ...draft, name: event.target.value })}
+            placeholder={t('token.namePlaceholder')}
+            onChange={event => props.onChange({ ...draft, name: event.target.value })}
           />
         </label>
         <label className={styles.field}>
-          <span className={styles.label}>{t("token.scope.label")}</span>
+          <span className={styles.label}>{t('token.scope.label')}</span>
           <Select
+            disabled={props.saving}
             value={draft.scope}
-            options={tokenScopeDefinitions.map((definition) => ({
+            options={tokenScopeDefinitions.map(definition => ({
               value: definition.value,
-              label: t(definition.labelKey),
+              label: t(definition.labelKey)
             }))}
-            onChange={(scope) => props.onChange({ ...draft, scope })}
+            onChange={scope => props.onChange({ ...draft, scope })}
           />
         </label>
         <label className={styles.field}>
-          <span className={styles.label}>{t("token.expires")}</span>
+          <span className={styles.label}>{t('token.expires')}</span>
           <Select
+            disabled={props.saving}
             value={draft.expireSeconds}
-            options={tokenExpirationDefinitions.map((definition) => ({
+            options={tokenExpirationDefinitions.map(definition => ({
               value: definition.value,
-              label: t(definition.labelKey),
+              label: t(definition.labelKey)
             }))}
-            onChange={(expireSeconds) => props.onChange({ ...draft, expireSeconds })}
+            onChange={expireSeconds => props.onChange({ ...draft, expireSeconds })}
           />
         </label>
       </div>
@@ -89,17 +97,17 @@ export function GeneratedTokenModal(props: GeneratedTokenModalProps) {
   return (
     <Modal
       open
-      title={t("token.generatedTitle")}
-      okText={t("token.done")}
-      cancelButtonProps={{ style: { display: "none" } }}
+      title={t('token.generatedTitle')}
+      okText={t('token.done')}
+      cancelButtonProps={{ style: { display: 'none' } }}
       maskClosable={false}
       onOk={props.onClose}
       onCancel={props.onClose}
     >
       <div className={styles.tokenResult}>
-        <Alert type="warning" showIcon message={t("token.generatedNotice")} />
+        <Alert type="warning" showIcon message={t('token.generatedNotice')} />
         <pre className={styles.tokenValue}>{props.token}</pre>
-        <Button onClick={props.onCopy}>{t("token.copy")}</Button>
+        <Button onClick={props.onCopy}>{t('token.copy')}</Button>
       </div>
     </Modal>
   );
