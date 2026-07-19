@@ -3,6 +3,13 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import {
+  deferred,
+  noticeReceiverListResult,
+  persistedNoticeReceiver,
+  validNoticeReceiverDraft
+} from './notice-receiver-controller-test-fixtures';
+
 const refine = vi.hoisted(() => ({
   create: vi.fn(),
   getOne: vi.fn(),
@@ -31,136 +38,89 @@ vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => k
 vi.mock('react-router-dom', () => ({
   useSearchParams: () => [new URLSearchParams(refine.params), refine.setParams]
 }));
-vi.mock('../api/notice-receiver-api', () => ({ testNoticeReceiver: vi.fn() }));
+vi.mock('../api/notice-receiver-api', async importOriginal => ({
+  ...(await importOriginal<typeof import('../api/notice-receiver-api')>()),
+  testNoticeReceiver: vi.fn()
+}));
 
 import { useNoticeReceiverController } from './notice-receiver-controller';
 
-const receiver = {
-  id: 7, name: 'Pager', type: 2 as const, typeKey: 'webhook', options: { hookAuthType: 'Bearer' as const },
-  configuredSecrets: ['hookUrl' as const, 'hookAuthToken' as const], creator: null, modifier: null,
-  gmtCreate: null, gmtUpdate: null
-};
-
-describe('notice receiver controller', () => {
+describe('notice receiver controller composition', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     refine.params = 'pageIndex=0&pageSize=8';
-    refine.getOne.mockResolvedValue({ data: receiver });
-    refine.refetch.mockResolvedValue({ data: { data: [receiver], total: 1 }, isError: false });
-    refine.create.mockResolvedValue({ data: receiver });
-    refine.update.mockResolvedValue({ data: receiver });
-    refine.remove.mockResolvedValue({ data: receiver });
+    refine.getOne.mockResolvedValue({ data: persistedNoticeReceiver });
+    refine.refetch.mockResolvedValue(noticeReceiverListResult());
+    refine.create.mockResolvedValue({ data: persistedNoticeReceiver });
+    refine.update.mockResolvedValue({ data: persistedNoticeReceiver });
+    refine.remove.mockResolvedValue({ data: persistedNoticeReceiver });
     refine.useDataProvider.mockReturnValue(() => ({ getOne: refine.getOne }));
     refine.useNotification.mockReturnValue({ open: refine.notification });
-    refine.useCreate.mockReturnValue({ mutateAsync: refine.create, mutation: { isPending: false } });
-    refine.useUpdate.mockReturnValue({ mutateAsync: refine.update, mutation: { isPending: false } });
-    refine.useDelete.mockReturnValue({ mutateAsync: refine.remove, mutation: { isPending: false } });
-    refine.useList.mockReturnValue(listResult());
+    refine.useCreate.mockReturnValue({ mutateAsync: refine.create });
+    refine.useUpdate.mockReturnValue({ mutateAsync: refine.update });
+    refine.useDelete.mockReturnValue({ mutateAsync: refine.remove });
+    refine.useList.mockReturnValue(listHookResult(refine.refetch));
   });
 
-  it('uses the named Refine resource and closes create only after list reread', async () => {
-    refine.refetch.mockResolvedValue({ data: { data: [], total: 0 }, isError: false });
+  it('keeps create open until the composed authoritative reread succeeds', async () => {
+    const reread = deferred<ReturnType<typeof noticeReceiverListResult>>();
+    refine.refetch.mockReturnValueOnce(reread.promise);
     const { result } = renderHook(() => useNoticeReceiverController());
-    expect(refine.useList).toHaveBeenCalledWith(expect.objectContaining({
-      resource: 'notice-receivers', dataProviderName: 'notice-receivers',
-      pagination: { currentPage: 1, pageSize: 8, mode: 'server' }
-    }));
+    openValidDraft(result.current.actions);
 
-    act(() => result.current.actions.create());
-    act(() => result.current.actions.updateDraft({ name: 'Pager', type: 2, hookUrl: 'new-hook',
-      hookAuthType: 'Bearer', hookAuthToken: 'new-token' }));
-    await act(async () => result.current.actions.submit());
+    let submission!: Promise<boolean>;
+    act(() => {
+      submission = result.current.actions.submit();
+    });
+    await waitFor(() => expect(refine.create).toHaveBeenCalledTimes(1));
+    expect(result.current.state.draft).not.toBeNull();
+    act(() => reread.resolve(noticeReceiverListResult()));
+    await act(async () => submission);
 
-    expect(refine.create).toHaveBeenCalledWith(expect.objectContaining({
-      resource: 'notice-receivers', dataProviderName: 'notice-receivers', values: expect.objectContaining({ name: 'Pager' })
-    }));
-    expect(refine.refetch).toHaveBeenCalledTimes(1);
     expect(result.current.state.draft).toBeNull();
+    expect(refine.notification).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'noticeReceivers.saveSuccess' })
+    );
   });
 
-  it('keeps save editor open and marks list unavailable when list reread is unavailable', async () => {
-    refine.refetch.mockResolvedValue({ isError: true, error: { statusCode: 503, code: 'NETWORK_REQUEST_FAILED' } });
-    const { result } = renderHook(() => useNoticeReceiverController());
-    await act(async () => result.current.actions.edit(7));
-    await act(async () => result.current.actions.submit());
-
-    expect(result.current.state.draft).not.toBeNull();
-    expect(result.current.state.list.kind).toBe('unavailable');
-  });
-
-  it('keeps the editor open when provider canonical reread fails', async () => {
-    refine.update.mockRejectedValue({ statusCode: 503, code: 'NETWORK_REQUEST_FAILED' });
-    const { result } = renderHook(() => useNoticeReceiverController());
-    await act(async () => result.current.actions.edit(7));
-    await act(async () => result.current.actions.submit());
-
-    expect(result.current.state.draft).not.toBeNull();
-    expect(refine.refetch).not.toHaveBeenCalled();
-  });
-
-  it('keeps the editor open when update evidence reports missing', async () => {
-    refine.update.mockRejectedValue({ statusCode: 404, code: 'NOTICE_RECEIVER_MISSING' });
-    const { result } = renderHook(() => useNoticeReceiverController());
-    await act(async () => result.current.actions.edit(7));
-    await act(async () => result.current.actions.submit());
-
-    expect(result.current.state.draft).not.toBeNull();
-    expect(refine.notification).toHaveBeenCalledWith(expect.objectContaining({ message: 'noticeReceivers.save.missing' }));
-  });
-
-  it('keeps invalid and unavailable list states distinct', () => {
-    refine.useList.mockReturnValue(listResult({ error: { statusCode: 502, code: 'NOTICE_RECEIVER_RESPONSE_INVALID' } }));
-    const invalid = renderHook(() => useNoticeReceiverController());
-    expect(invalid.result.current.state.list.kind).toBe('invalid');
-    invalid.unmount();
-
-    refine.useList.mockReturnValue(listResult({ error: { statusCode: 503, code: 'NETWORK_REQUEST_FAILED' } }));
-    const unavailable = renderHook(() => useNoticeReceiverController());
-    expect(unavailable.result.current.state.list.kind).toBe('unavailable');
-  });
-
-  it('clears all prior secret ownership when the type changes', async () => {
-    const { result } = renderHook(() => useNoticeReceiverController());
-    await act(async () => result.current.actions.edit(7));
-    act(() => result.current.actions.selectType(1));
-    expect(result.current.state.draft).toMatchObject({ type: 1, configuredSecrets: [], clearSecrets: [] });
-  });
-
-  it('does not report delete success when list absence cannot be proved', async () => {
-    refine.refetch.mockResolvedValue({ data: { data: [receiver], total: 1 }, isError: false });
-    const { result } = renderHook(() => useNoticeReceiverController());
-    await act(async () => result.current.actions.remove(receiver));
-    expect(result.current.state.list.kind).toBe('invalid');
-    expect(refine.notification).not.toHaveBeenCalledWith(expect.objectContaining({
-      message: 'noticeReceivers.deleteSuccess'
-    }));
-  });
-
-  it('restores the search draft when browser navigation restores an earlier query', async () => {
+  it('proves a pending save against the latest visible query', async () => {
+    const write = deferred<{ data: typeof persistedNoticeReceiver }>();
+    const oldRefetch = vi.fn().mockResolvedValue(noticeReceiverListResult());
+    const latestRefetch = vi.fn().mockResolvedValue(noticeReceiverListResult());
+    refine.create.mockReturnValueOnce(write.promise);
+    refine.useList.mockImplementation(({ filters }: { filters: Array<{ value: string }> }) =>
+      listHookResult(filters[0]?.value === 'latest' ? latestRefetch : oldRefetch)
+    );
     const { result, rerender } = renderHook(() => useNoticeReceiverController());
+    openValidDraft(result.current.actions);
+    let submission!: Promise<boolean>;
+    act(() => {
+      submission = result.current.actions.submit();
+    });
+    await waitFor(() => expect(refine.create).toHaveBeenCalledTimes(1));
 
-    act(() => result.current.actions.setName('no-such-receiver'));
-    expect(result.current.state.name).toBe('no-such-receiver');
-
-    refine.params = 'pageIndex=0&pageSize=8&name=no-such-receiver';
+    refine.params = 'pageIndex=2&pageSize=8&name=latest';
     rerender();
-    await waitFor(() => expect(result.current.state.name).toBe('no-such-receiver'));
+    await waitFor(() => expect(result.current.state.query).toMatchObject({ name: 'latest', pageIndex: 2 }));
+    act(() => write.resolve({ data: persistedNoticeReceiver }));
+    await act(async () => submission);
 
-    refine.params = 'pageIndex=0&pageSize=8';
-    rerender();
-    await waitFor(() => expect(result.current.state.name).toBe(''));
+    expect(latestRefetch).toHaveBeenCalledTimes(1);
+    expect(oldRefetch).not.toHaveBeenCalled();
   });
 });
 
-function listResult(override: { error?: { statusCode: number; code: string } } = {}) {
+function listHookResult(refetch: typeof refine.refetch) {
   return {
-    query: {
-      error: override.error ?? null,
-      isError: Boolean(override.error),
-      isFetching: false,
-      isPending: false,
-      refetch: refine.refetch
-    },
-    result: { data: [receiver], total: 1 }
+    query: { error: null, isError: false, isFetching: false, isPending: false, refetch },
+    result: { data: [persistedNoticeReceiver], total: 1 }
   };
+}
+
+function openValidDraft(actions: {
+  create: () => boolean;
+  updateDraft: (patch: ReturnType<typeof validNoticeReceiverDraft>) => boolean;
+}) {
+  act(() => expect(actions.create()).toBe(true));
+  act(() => expect(actions.updateDraft(validNoticeReceiverDraft())).toBe(true));
 }

@@ -18,12 +18,12 @@ import type {
 
 import {
   deleteNoticeReceiver,
-  classifyNoticeReceiverError,
   loadNoticeReceiver,
   loadNoticeReceivers,
   NoticeReceiverContractError,
   saveNoticeReceiver
 } from '@/features/alert/notice-receiver/api/notice-receiver-api';
+import { noticeReceiverResourceName } from '@/features/alert/notice-receiver/notice-receiver-resource';
 import {
   expectedNoticeReceiverEvidence,
   type NoticeReceiverDraft
@@ -36,8 +36,6 @@ import {
   readNoticeReceiverId,
   readNoticeReceiverListQuery
 } from './notice-receiver-data-provider-input';
-
-export const noticeReceiverResourceName = 'notice-receivers';
 
 export const noticeReceiverDataProvider: DataProvider = {
   getList<TData extends BaseRecord = BaseRecord>(params: GetListParams): Promise<GetListResponse<TData>> {
@@ -105,12 +103,6 @@ export const noticeReceiverDataProvider: DataProvider = {
       if (mutation.status !== 'deleted' || mutation.id !== id || mutation.receiver !== null) {
         throw contractError('NOTICE_RECEIVER_DELETE_NOT_CONFIRMED');
       }
-      try {
-        await loadNoticeReceiver(id);
-        throw contractError('NOTICE_RECEIVER_DELETE_NOT_CONFIRMED');
-      } catch (error) {
-        if (classifyNoticeReceiverError(error) !== 'missing') throw error;
-      }
       return { data: exposeProviderData<TData>(canonical) };
     });
   },
@@ -136,9 +128,13 @@ function assertResource(resource: string) {
 async function requireCanonical(id: number, draft: NoticeReceiverDraft) {
   const canonical = await loadNoticeReceiver(id);
   const expected = expectedNoticeReceiverEvidence(draft);
-  if (canonical.id !== id || canonical.name !== draft.name.trim() || canonical.type !== draft.type
-    || !sameRecord(canonical.options, expected.options)
-    || !sameStrings(canonical.configuredSecrets, expected.configuredSecrets)) {
+  if (
+    canonical.id !== id ||
+    canonical.name !== draft.name.trim() ||
+    canonical.type !== draft.type ||
+    !sameRecord(canonical.options, expected.options) ||
+    !sameStrings(canonical.configuredSecrets, expected.configuredSecrets)
+  ) {
     throw contractError('NOTICE_RECEIVER_REREAD_INVALID');
   }
   return canonical;
@@ -150,7 +146,14 @@ function sameRecord(actual: Record<string, unknown>, expected: Record<string, un
 }
 
 function sameStrings(actual: readonly string[], expected: readonly string[]) {
-  return actual.length === expected.length && actual.every(item => expected.includes(item));
+  const actualValues = new Set(actual);
+  const expectedValues = new Set(expected);
+  return (
+    actualValues.size === actual.length &&
+    expectedValues.size === expected.length &&
+    actualValues.size === expectedValues.size &&
+    actual.every(item => expectedValues.has(item))
+  );
 }
 
 function assertMutation(
@@ -159,8 +162,12 @@ function assertMutation(
   id?: number
 ) {
   if (mutation.status === 'missing') throw contractError('NOTICE_RECEIVER_MISSING', 404);
-  if (mutation.status !== expected || mutation.receiver == null || mutation.receiver.id !== mutation.id
-    || (id !== undefined && mutation.id !== id)) {
+  if (
+    mutation.status !== expected ||
+    mutation.receiver == null ||
+    mutation.receiver.id !== mutation.id ||
+    (id !== undefined && mutation.id !== id)
+  ) {
     throw contractError('NOTICE_RECEIVER_MUTATION_INVALID');
   }
 }

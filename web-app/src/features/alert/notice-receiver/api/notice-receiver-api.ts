@@ -5,20 +5,16 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import {
-  ApiMessageError,
-  apiMessageDelete,
-  apiMessageGet,
-  apiMessagePost,
-  apiMessagePut
-} from '@/core/http/api-message';
+import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
 
 import {
   activeNoticeReceiverDefinition,
   buildNoticeReceiverListPath,
   buildNoticeReceiverPayload,
+  noticeReceiverLarkReceiveTypes,
   noticeReceiverSecretKeys,
   noticeReceiverTypeKeys,
+  noticeReceiverWebhookAuthTypes,
   type NoticeReceiver,
   type NoticeReceiverDraft,
   type NoticeReceiverMutation,
@@ -36,18 +32,9 @@ import {
   parseNoticeReceiverWire,
   type NoticeReceiverWire
 } from './notice-receiver-schema';
+import { requireExactNoticeReceiver } from '../notice-receiver-evidence';
 
 export { NoticeReceiverContractError } from './notice-receiver-schema';
-
-export type NoticeReceiverFailureKind = 'missing' | 'invalid' | 'unavailable' | 'error';
-
-export function classifyNoticeReceiverError(error: unknown): NoticeReceiverFailureKind {
-  if (error instanceof NoticeReceiverContractError) return 'invalid';
-  if (!(error instanceof ApiMessageError)) return 'error';
-  if (error.message === 'Receiver missing') return 'missing';
-  if (error.message === 'Receiver storage unavailable' || error.status == null || error.status >= 500) return 'unavailable';
-  return 'error';
-}
 
 export async function loadNoticeReceivers(query: NoticeReceiverQuery) {
   const page = parseNoticeReceiverPageWire(await apiMessageGet(buildNoticeReceiverListPath(query)));
@@ -55,7 +42,10 @@ export async function loadNoticeReceivers(query: NoticeReceiverQuery) {
 }
 
 export async function loadNoticeReceiver(id: number) {
-  return mapNoticeReceiver(parseNoticeReceiverWire(await apiMessageGet(`/api/notice/receiver/${id}`)));
+  return requireExactNoticeReceiver(
+    mapNoticeReceiver(parseNoticeReceiverWire(await apiMessageGet(`/api/notice/receiver/${id}`))),
+    id
+  );
 }
 
 export async function loadAllNoticeReceiverOptions() {
@@ -64,9 +54,10 @@ export async function loadAllNoticeReceiverOptions() {
 
 export async function saveNoticeReceiver(draft: NoticeReceiverDraft) {
   const payload = buildNoticeReceiverPayload(draft);
-  const value = draft.id == null
-    ? await apiMessagePost('/api/notice/receiver', payload)
-    : await apiMessagePut('/api/notice/receiver', payload);
+  const value =
+    draft.id == null
+      ? await apiMessagePost('/api/notice/receiver', payload)
+      : await apiMessagePut('/api/notice/receiver', payload);
   return mapNoticeReceiverMutation(parseNoticeReceiverMutationWire(value));
 }
 
@@ -75,9 +66,9 @@ export async function testNoticeReceiver(draft: NoticeReceiverDraft) {
 }
 
 export async function deleteNoticeReceiver(id: number) {
-  return mapNoticeReceiverMutation(parseNoticeReceiverMutationWire(
-    await apiMessageDelete(`/api/notice/receiver/${id}`)
-  ));
+  return mapNoticeReceiverMutation(
+    parseNoticeReceiverMutationWire(await apiMessageDelete(`/api/notice/receiver/${id}`))
+  );
 }
 
 function mapNoticeReceiver(source: NoticeReceiverWire): NoticeReceiver {
@@ -103,9 +94,11 @@ function mapNoticeReceiver(source: NoticeReceiverWire): NoticeReceiver {
 function mapNoticeReceiverOptions(options: Record<string, unknown>, type: NoticeReceiverType): NoticeReceiverOptions {
   // Only non-secret fields may return in options. Secrets are represented by
   // configuredSecrets metadata and must never enter ordinary frontend state.
-  const allowedKeys = new Set(activeNoticeReceiverDefinition(type).fields
-    .filter(field => !field.secret)
-    .map(field => field.key));
+  const allowedKeys = new Set(
+    activeNoticeReceiverDefinition(type)
+      .fields.filter(field => !field.secret)
+      .map(field => field.key)
+  );
   const entries = Object.entries(options).map(([key, value]) => {
     if (!allowedKeys.has(key as NoticeReceiverOptionKey)) throw new NoticeReceiverContractError();
     return [key, mapNoticeReceiverOptionValue(key as NoticeReceiverOptionKey, value)] as const;
@@ -119,11 +112,15 @@ function mapNoticeReceiverOptionValue(key: NoticeReceiverOptionKey, value: unkno
     return Number(value);
   }
   if (key === 'larkReceiveType') {
-    if (![0, 1, 2, 3].includes(value as number)) throw new NoticeReceiverContractError();
+    if (!noticeReceiverLarkReceiveTypes.includes(value as (typeof noticeReceiverLarkReceiveTypes)[number])) {
+      throw new NoticeReceiverContractError();
+    }
     return value as number;
   }
   if (key === 'hookAuthType') {
-    if (!['None', 'Basic', 'Bearer'].includes(value as string)) throw new NoticeReceiverContractError();
+    if (!noticeReceiverWebhookAuthTypes.includes(value as (typeof noticeReceiverWebhookAuthTypes)[number])) {
+      throw new NoticeReceiverContractError();
+    }
     return value as string;
   }
   if (typeof value !== 'string') throw new NoticeReceiverContractError();
@@ -134,15 +131,14 @@ function mapConfiguredSecrets(secrets: string[], type: NoticeReceiverType): Noti
   // Treat configuredSecrets as capability metadata, not arbitrary field names.
   // A crossed secret name often indicates a backend serialization regression.
   const allowedSecrets = noticeReceiverSecretKeys(type);
+  if (new Set(secrets).size !== secrets.length) throw new NoticeReceiverContractError();
   return secrets.map(secret => {
     if (!allowedSecrets.includes(secret as NoticeReceiverSecretKey)) throw new NoticeReceiverContractError();
     return secret as NoticeReceiverSecretKey;
   });
 }
 
-function mapNoticeReceiverMutation(
-  source: ReturnType<typeof parseNoticeReceiverMutationWire>
-): NoticeReceiverMutation {
+function mapNoticeReceiverMutation(source: ReturnType<typeof parseNoticeReceiverMutationWire>): NoticeReceiverMutation {
   const receiver = source.receiver == null ? null : mapNoticeReceiver(source.receiver);
   // Successful writes require matching authoritative evidence. Delete and
   // missing acknowledgements must not smuggle a stale receiver back into state.

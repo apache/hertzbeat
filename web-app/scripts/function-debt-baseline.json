@@ -27,12 +27,6 @@
     },
     {
       "rule": "function-size",
-      "path": "features/alert/notice-receiver/controller/notice-receiver-controller.ts",
-      "identity": "function:useNoticeReceiverController",
-      "allowedMax": 61
-    },
-    {
-      "rule": "function-size",
       "path": "features/monitor/controller/use-monitor-editor-controller.ts",
       "identity": "function:useMonitorEditorController",
       "allowedMax": 81

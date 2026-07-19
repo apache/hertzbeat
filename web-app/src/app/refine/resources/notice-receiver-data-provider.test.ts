@@ -18,10 +18,12 @@
 import type { GetListParams } from '@refinedev/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ApiMessageError } from '@/core/http/api-message';
 import { NoticeReceiverContractError } from '@/features/alert/notice-receiver/api/notice-receiver-api';
 import * as noticeReceiverModel from '@/features/alert/notice-receiver/model/notice-receiver-model';
-import { createNoticeReceiverDraft, type NoticeReceiverDraft } from '@/features/alert/notice-receiver/model/notice-receiver-model';
+import {
+  createNoticeReceiverDraft,
+  type NoticeReceiverDraft
+} from '@/features/alert/notice-receiver/model/notice-receiver-model';
 
 const api = vi.hoisted(() => ({
   deleteNoticeReceiver: vi.fn(),
@@ -30,7 +32,7 @@ const api = vi.hoisted(() => ({
   saveNoticeReceiver: vi.fn()
 }));
 vi.mock('@/features/alert/notice-receiver/api/notice-receiver-api', async importOriginal => ({
-  ...await importOriginal<typeof import('@/features/alert/notice-receiver/api/notice-receiver-api')>(),
+  ...(await importOriginal<typeof import('@/features/alert/notice-receiver/api/notice-receiver-api')>()),
   ...api
 }));
 
@@ -44,92 +46,141 @@ import {
 } from './notice-receiver-data-provider-input';
 import providerSource from './notice-receiver-data-provider.ts?raw';
 
-const receiver = { id: 7, name: 'Pager', type: 1 as const, typeKey: 'email',
-  options: { email: 'ops@example.test' }, configuredSecrets: [], creator: null, modifier: null,
-  gmtCreate: null, gmtUpdate: null };
-const draft = { ...createNoticeReceiverDraft(), name: 'Pager', type: 1, email: 'ops@example.test' } as NoticeReceiverDraft;
+const receiver = {
+  id: 7,
+  name: 'Pager',
+  type: 1 as const,
+  typeKey: 'email',
+  options: { email: 'ops@example.test' },
+  configuredSecrets: [],
+  creator: null,
+  modifier: null,
+  gmtCreate: null,
+  gmtUpdate: null
+};
+const draft = {
+  ...createNoticeReceiverDraft(),
+  name: 'Pager',
+  type: 1,
+  email: 'ops@example.test'
+} as NoticeReceiverDraft;
 
 describe('Notice Receiver Refine data provider', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('maps Refine list pagination and name filter to the frozen page endpoint', async () => {
-    api.loadNoticeReceivers.mockResolvedValue({ content: [receiver], totalElements: 1,
-      totalPages: 1, number: 1, size: 15 });
-    await expect(noticeReceiverDataProvider.getList({ resource: 'notice-receivers',
-      pagination: { currentPage: 2, pageSize: 15, mode: 'server' },
-      filters: [{ field: 'name', operator: 'contains', value: ' Pager ' }] }))
-      .resolves.toEqual({ data: [receiver], total: 1 });
+    api.loadNoticeReceivers.mockResolvedValue({
+      content: [receiver],
+      totalElements: 1,
+      totalPages: 1,
+      number: 1,
+      size: 15
+    });
+    await expect(
+      noticeReceiverDataProvider.getList({
+        resource: 'notice-receivers',
+        pagination: { currentPage: 2, pageSize: 15, mode: 'server' },
+        filters: [{ field: 'name', operator: 'contains', value: ' Pager ' }]
+      })
+    ).resolves.toEqual({ data: [receiver], total: 1 });
     expect(api.loadNoticeReceivers).toHaveBeenCalledWith({ name: 'Pager', pageIndex: 1, pageSize: 15 });
   });
 
   it('creates and updates pessimistically, then authoritatively rereads detail', async () => {
-    api.saveNoticeReceiver.mockResolvedValueOnce({ id: 7, status: 'created', receiver })
+    api.saveNoticeReceiver
+      .mockResolvedValueOnce({ id: 7, status: 'created', receiver })
       .mockResolvedValueOnce({ id: 7, status: 'updated', receiver });
     api.loadNoticeReceiver.mockResolvedValue(receiver);
 
-    await expect(noticeReceiverDataProvider.create({ resource: 'notice-receivers', variables: draft }))
-      .resolves.toEqual({ data: receiver });
-    await expect(noticeReceiverDataProvider.update({ resource: 'notice-receivers', id: 7,
-      variables: { ...draft, id: 7 } })).resolves.toEqual({ data: receiver });
+    await expect(
+      noticeReceiverDataProvider.create({ resource: 'notice-receivers', variables: draft })
+    ).resolves.toEqual({ data: receiver });
+    await expect(
+      noticeReceiverDataProvider.update({ resource: 'notice-receivers', id: 7, variables: { ...draft, id: 7 } })
+    ).resolves.toEqual({ data: receiver });
     expect(api.loadNoticeReceiver).toHaveBeenCalledTimes(2);
   });
 
   it('fails closed on missing mutation or mismatched canonical reread', async () => {
-    api.saveNoticeReceiver.mockResolvedValueOnce({ id: 7, status: 'missing', receiver: null })
+    api.saveNoticeReceiver
+      .mockResolvedValueOnce({ id: 7, status: 'missing', receiver: null })
       .mockResolvedValueOnce({ id: 7, status: 'updated', receiver });
     api.loadNoticeReceiver.mockResolvedValue({ ...receiver, name: 'Different' });
 
-    await expect(noticeReceiverDataProvider.update({ resource: 'notice-receivers', id: 7,
-      variables: { ...draft, id: 7 } })).rejects.toMatchObject({ code: 'NOTICE_RECEIVER_MISSING' });
-    await expect(noticeReceiverDataProvider.update({ resource: 'notice-receivers', id: 7,
-      variables: { ...draft, id: 7 } })).rejects.toMatchObject({ code: 'NOTICE_RECEIVER_REREAD_INVALID' });
+    await expect(
+      noticeReceiverDataProvider.update({ resource: 'notice-receivers', id: 7, variables: { ...draft, id: 7 } })
+    ).rejects.toMatchObject({ code: 'NOTICE_RECEIVER_MISSING' });
+    await expect(
+      noticeReceiverDataProvider.update({ resource: 'notice-receivers', id: 7, variables: { ...draft, id: 7 } })
+    ).rejects.toMatchObject({ code: 'NOTICE_RECEIVER_REREAD_INVALID' });
   });
 
   it('rejects canonical reread that drops public options or does not converge secret names', async () => {
-    const webhookDraft = { ...createNoticeReceiverDraft(), name: 'Gateway', type: 2 as const,
-      hookUrl: 'new-hook', hookAuthType: 'Bearer' as const, hookAuthToken: 'new-token' };
-    const mutationReceiver = { ...receiver, name: 'Gateway', type: 2 as const, typeKey: 'webhook',
-      options: { hookAuthType: 'Bearer' as const }, configuredSecrets: ['hookUrl' as const, 'hookAuthToken' as const] };
+    const webhookDraft = {
+      ...createNoticeReceiverDraft(),
+      name: 'Gateway',
+      type: 2 as const,
+      hookUrl: 'new-hook',
+      hookAuthType: 'Bearer' as const,
+      hookAuthToken: 'new-token'
+    };
+    const mutationReceiver = {
+      ...receiver,
+      name: 'Gateway',
+      type: 2 as const,
+      typeKey: 'webhook',
+      options: { hookAuthType: 'Bearer' as const },
+      configuredSecrets: ['hookUrl' as const, 'hookAuthToken' as const]
+    };
     api.saveNoticeReceiver.mockResolvedValue({ id: 7, status: 'created', receiver: mutationReceiver });
-    api.loadNoticeReceiver.mockResolvedValueOnce({ ...mutationReceiver, options: { hookAuthType: 'None' as const } })
-      .mockResolvedValueOnce({ ...mutationReceiver, configuredSecrets: ['hookUrl' as const] });
+    api.loadNoticeReceiver
+      .mockResolvedValueOnce({ ...mutationReceiver, options: { hookAuthType: 'None' as const } })
+      .mockResolvedValueOnce({ ...mutationReceiver, configuredSecrets: ['hookUrl' as const] })
+      .mockResolvedValueOnce({
+        ...mutationReceiver,
+        configuredSecrets: ['hookUrl' as const, 'hookUrl' as const]
+      });
 
-    await expect(noticeReceiverDataProvider.create({ resource: 'notice-receivers', variables: webhookDraft }))
-      .rejects.toMatchObject({ code: 'NOTICE_RECEIVER_REREAD_INVALID' });
-    await expect(noticeReceiverDataProvider.create({ resource: 'notice-receivers', variables: webhookDraft }))
-      .rejects.toMatchObject({ code: 'NOTICE_RECEIVER_REREAD_INVALID' });
+    await expect(
+      noticeReceiverDataProvider.create({ resource: 'notice-receivers', variables: webhookDraft })
+    ).rejects.toMatchObject({ code: 'NOTICE_RECEIVER_REREAD_INVALID' });
+    await expect(
+      noticeReceiverDataProvider.create({ resource: 'notice-receivers', variables: webhookDraft })
+    ).rejects.toMatchObject({ code: 'NOTICE_RECEIVER_REREAD_INVALID' });
+    await expect(
+      noticeReceiverDataProvider.create({ resource: 'notice-receivers', variables: webhookDraft })
+    ).rejects.toMatchObject({ code: 'NOTICE_RECEIVER_REREAD_INVALID' });
   });
 
-  it('deletes pessimistically only with confirmed deleted evidence', async () => {
+  it('uses confirmed deleted mutation evidence without a redundant detail reread', async () => {
     api.deleteNoticeReceiver.mockResolvedValue({ id: 7, status: 'deleted', receiver: null });
-    api.loadNoticeReceiver.mockRejectedValue(new ApiMessageError('Receiver missing', { code: 1, status: 200 }));
-    await expect(noticeReceiverDataProvider.deleteOne({ resource: 'notice-receivers', id: 7,
-      variables: receiver })).resolves.toEqual({ data: receiver });
+    await expect(
+      noticeReceiverDataProvider.deleteOne({ resource: 'notice-receivers', id: 7, variables: receiver })
+    ).resolves.toEqual({ data: receiver });
     expect(api.deleteNoticeReceiver).toHaveBeenCalledWith(7);
-  });
-
-  it('fails delete when its authoritative missing reread is unavailable', async () => {
-    api.deleteNoticeReceiver.mockResolvedValue({ id: 7, status: 'deleted', receiver: null });
-    api.loadNoticeReceiver.mockRejectedValue(new ApiMessageError('Receiver storage unavailable', { code: 1, status: 200 }));
-    await expect(noticeReceiverDataProvider.deleteOne({ resource: 'notice-receivers', id: 7,
-      variables: receiver })).rejects.toMatchObject({ kind: 'envelope' });
+    expect(api.loadNoticeReceiver).not.toHaveBeenCalled();
   });
 
   it('maps secret-bearing API evidence to a stable contract HttpError', async () => {
     api.saveNoticeReceiver.mockRejectedValue(new NoticeReceiverContractError());
-    await expect(noticeReceiverDataProvider.create({ resource: 'notice-receivers', variables: draft }))
-      .rejects.toMatchObject({ code: 'NOTICE_RECEIVER_RESPONSE_INVALID', kind: 'contract' });
+    await expect(
+      noticeReceiverDataProvider.create({ resource: 'notice-receivers', variables: draft })
+    ).rejects.toMatchObject({ code: 'NOTICE_RECEIVER_RESPONSE_INVALID', kind: 'contract' });
   });
 
   it('rejects unsupported resources, sorters, filters, ids, and variables before transport', async () => {
-    await expect(noticeReceiverDataProvider.getList({ resource: 'labels' }))
-      .rejects.toMatchObject({ code: 'NOTICE_RECEIVER_RESOURCE_UNSUPPORTED' });
-    await expect(noticeReceiverDataProvider.getList({ resource: 'notice-receivers',
-      sorters: [{ field: 'name', order: 'asc' }] })).rejects.toMatchObject({ code: 'NOTICE_RECEIVER_SORT_UNSUPPORTED' });
-    await expect(noticeReceiverDataProvider.getOne({ resource: 'notice-receivers', id: '7' }))
-      .rejects.toMatchObject({ code: 'NOTICE_RECEIVER_ID_INVALID' });
-    await expect(noticeReceiverDataProvider.create({ resource: 'notice-receivers', variables: {} }))
-      .rejects.toMatchObject({ code: 'NOTICE_RECEIVER_VARIABLES_INVALID' });
+    await expect(noticeReceiverDataProvider.getList({ resource: 'labels' })).rejects.toMatchObject({
+      code: 'NOTICE_RECEIVER_RESOURCE_UNSUPPORTED'
+    });
+    await expect(
+      noticeReceiverDataProvider.getList({ resource: 'notice-receivers', sorters: [{ field: 'name', order: 'asc' }] })
+    ).rejects.toMatchObject({ code: 'NOTICE_RECEIVER_SORT_UNSUPPORTED' });
+    await expect(noticeReceiverDataProvider.getOne({ resource: 'notice-receivers', id: '7' })).rejects.toMatchObject({
+      code: 'NOTICE_RECEIVER_ID_INVALID'
+    });
+    await expect(
+      noticeReceiverDataProvider.create({ resource: 'notice-receivers', variables: {} })
+    ).rejects.toMatchObject({ code: 'NOTICE_RECEIVER_VARIABLES_INVALID' });
     expect(api.loadNoticeReceivers).not.toHaveBeenCalled();
     expect(api.loadNoticeReceiver).not.toHaveBeenCalled();
     expect(api.saveNoticeReceiver).not.toHaveBeenCalled();
@@ -138,7 +189,9 @@ describe('Notice Receiver Refine data provider', () => {
 
 describe('Notice Receiver provider input boundary', () => {
   it('keeps Refine orchestration small and runtime parsing outside the provider', () => {
-    const sourceLines = providerSource.replace(/\/\*[\s\S]*?\*\//g, '').split('\n')
+    const sourceLines = providerSource
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .split('\n')
       .filter(line => line.trim() && !line.trim().startsWith('//'));
 
     expect(sourceLines.length).toBeLessThanOrEqual(200);
@@ -154,23 +207,36 @@ describe('Notice Receiver provider input boundary', () => {
   });
 
   it('keeps list normalization and every established unsupported or invalid error code', () => {
-    expect(readNoticeReceiverListQuery({
-      resource: 'notice-receivers',
-      pagination: { currentPage: 2, pageSize: 15, mode: 'server' },
-      filters: [{ field: 'name', operator: 'contains', value: ' Pager ' }]
-    })).toEqual({ name: 'Pager', pageIndex: 1, pageSize: 15 });
+    expect(
+      readNoticeReceiverListQuery({
+        resource: 'notice-receivers',
+        pagination: { currentPage: 2, pageSize: 15, mode: 'server' },
+        filters: [{ field: 'name', operator: 'contains', value: ' Pager ' }]
+      })
+    ).toEqual({ name: 'Pager', pageIndex: 1, pageSize: 15 });
 
     const cases: Array<[GetListParams, string]> = [
-      [{ resource: 'notice-receivers', sorters: [{ field: 'name', order: 'asc' }] }, 'NOTICE_RECEIVER_SORT_UNSUPPORTED'],
+      [
+        { resource: 'notice-receivers', sorters: [{ field: 'name', order: 'asc' }] },
+        'NOTICE_RECEIVER_SORT_UNSUPPORTED'
+      ],
       [{ resource: 'notice-receivers', pagination: { mode: 'client' } }, 'NOTICE_RECEIVER_PAGINATION_UNSUPPORTED'],
       [{ resource: 'notice-receivers', pagination: { currentPage: 0 } }, 'NOTICE_RECEIVER_PAGINATION_INVALID'],
       [{ resource: 'notice-receivers', pagination: { pageSize: 10 } }, 'NOTICE_RECEIVER_PAGINATION_INVALID'],
-      [{ resource: 'notice-receivers', filters: [{ field: 'name', operator: 'eq', value: 'Pager' }] },
-        'NOTICE_RECEIVER_FILTER_UNSUPPORTED'],
-      [{ resource: 'notice-receivers', filters: [
-        { field: 'name', operator: 'contains', value: 'Pager' },
-        { field: 'name', operator: 'contains', value: 'Backup' }
-      ] }, 'NOTICE_RECEIVER_FILTER_UNSUPPORTED']
+      [
+        { resource: 'notice-receivers', filters: [{ field: 'name', operator: 'eq', value: 'Pager' }] },
+        'NOTICE_RECEIVER_FILTER_UNSUPPORTED'
+      ],
+      [
+        {
+          resource: 'notice-receivers',
+          filters: [
+            { field: 'name', operator: 'contains', value: 'Pager' },
+            { field: 'name', operator: 'contains', value: 'Backup' }
+          ]
+        },
+        'NOTICE_RECEIVER_FILTER_UNSUPPORTED'
+      ]
     ];
     for (const [params, code] of cases) {
       expect(() => readNoticeReceiverListQuery(params)).toThrow(expect.objectContaining({ code, statusCode: 400 }));
@@ -189,17 +255,21 @@ describe('Notice Receiver provider input boundary', () => {
     };
     expect(readNoticeReceiverDraft(source)).toEqual(source);
     expect(readNoticeReceiverDraft({ ...source, agentId: 0 })).toMatchObject({ agentId: 0 });
-    expect(readNoticeReceiverDraft({ ...source, hookAuthType: 'Future', larkReceiveType: 99 }))
-      .toMatchObject({ hookAuthType: 'Future', larkReceiveType: 99 });
 
     const incomplete = { ...source } as Record<string, unknown>;
     delete incomplete.serverChanToken;
-    expect(() => readNoticeReceiverDraft(incomplete)).toThrow(expect.objectContaining({
-      code: 'NOTICE_RECEIVER_VARIABLES_INVALID', statusCode: 400
-    }));
-    expect(() => readNoticeReceiverDraft({ ...source, configuredSecrets: [7] })).toThrow(expect.objectContaining({
-      code: 'NOTICE_RECEIVER_VARIABLES_INVALID', statusCode: 400
-    }));
+    expect(() => readNoticeReceiverDraft(incomplete)).toThrow(
+      expect.objectContaining({
+        code: 'NOTICE_RECEIVER_VARIABLES_INVALID',
+        statusCode: 400
+      })
+    );
+    expect(() => readNoticeReceiverDraft({ ...source, configuredSecrets: [7] })).toThrow(
+      expect.objectContaining({
+        code: 'NOTICE_RECEIVER_VARIABLES_INVALID',
+        statusCode: 400
+      })
+    );
   });
 
   it('fails closed when the model baseline grows beyond the explicit runtime schema', () => {
@@ -209,39 +279,74 @@ describe('Notice Receiver provider input boundary', () => {
       futureChannel: ''
     } as NoticeReceiverDraft);
 
-    expect(() => readNoticeReceiverDraft({ ...draft, futureChannel: '' })).toThrow(expect.objectContaining({
-      code: 'NOTICE_RECEIVER_VARIABLES_INVALID', statusCode: 400
-    }));
+    expect(() => readNoticeReceiverDraft({ ...draft, futureChannel: '' })).toThrow(
+      expect.objectContaining({
+        code: 'NOTICE_RECEIVER_VARIABLES_INVALID',
+        statusCode: 400
+      })
+    );
   });
 
   it('accepts only catalog receiver types, applies domain validation, and enforces create/update ids', () => {
-    expect(() => readNoticeReceiverDraft({ ...draft, type: 15 })).toThrow(expect.objectContaining({
-      code: 'NOTICE_RECEIVER_VARIABLES_INVALID', statusCode: 400
-    }));
-    expect(() => readNoticeReceiverDraft({ ...draft, email: 'invalid' })).toThrow(expect.objectContaining({
-      code: 'NOTICE_RECEIVER_VARIABLES_INVALID', statusCode: 400
-    }));
-    expect(() => readNoticeReceiverDraft({ ...draft, id: 7 })).toThrow(expect.objectContaining({
-      code: 'NOTICE_RECEIVER_VARIABLES_INVALID', statusCode: 400
-    }));
+    expect(() => readNoticeReceiverDraft({ ...draft, type: 15 })).toThrow(
+      expect.objectContaining({
+        code: 'NOTICE_RECEIVER_VARIABLES_INVALID',
+        statusCode: 400
+      })
+    );
+    expect(() => readNoticeReceiverDraft({ ...draft, email: 'invalid' })).toThrow(
+      expect.objectContaining({
+        code: 'NOTICE_RECEIVER_VARIABLES_INVALID',
+        statusCode: 400
+      })
+    );
+    const invalidActiveDrafts = [
+      { ...draft, type: 2, hookUrl: 'secret', hookAuthType: 'Future' },
+      { ...draft, type: 14, appId: 'app', appSecret: 'secret', larkReceiveType: 99 },
+      { ...draft, type: 10, corpId: 'corp', appSecret: 'secret', userId: 'ops', agentId: -1 },
+      { ...draft, type: 10, corpId: 'corp', appSecret: 'secret', userId: 'ops', agentId: 1.5 }
+    ];
+    for (const invalid of invalidActiveDrafts) {
+      expect(() => readNoticeReceiverDraft(invalid)).toThrow(
+        expect.objectContaining({
+          code: 'NOTICE_RECEIVER_VARIABLES_INVALID',
+          statusCode: 400
+        })
+      );
+    }
+    expect(() => readNoticeReceiverDraft({ ...draft, id: 7 })).toThrow(
+      expect.objectContaining({
+        code: 'NOTICE_RECEIVER_VARIABLES_INVALID',
+        statusCode: 400
+      })
+    );
     expect(readNoticeReceiverDraft({ ...draft, id: 7 }, 7)).toMatchObject({ id: 7 });
-    expect(() => readNoticeReceiverDraft({ ...draft, id: 8 }, 7)).toThrow(expect.objectContaining({
-      code: 'NOTICE_RECEIVER_VARIABLES_INVALID', statusCode: 400
-    }));
+    expect(() => readNoticeReceiverDraft({ ...draft, id: 8 }, 7)).toThrow(
+      expect.objectContaining({
+        code: 'NOTICE_RECEIVER_VARIABLES_INVALID',
+        statusCode: 400
+      })
+    );
   });
 
   it('accepts only positive numeric ids and preserves the delete record identity', () => {
     expect(readNoticeReceiverId(7)).toBe(7);
     for (const value of ['7', 0, 1.5]) {
-      expect(() => readNoticeReceiverId(value)).toThrow(expect.objectContaining({
-        code: 'NOTICE_RECEIVER_ID_INVALID', statusCode: 400
-      }));
+      expect(() => readNoticeReceiverId(value)).toThrow(
+        expect.objectContaining({
+          code: 'NOTICE_RECEIVER_ID_INVALID',
+          statusCode: 400
+        })
+      );
     }
 
     const record = { ...receiver, futureEvidence: 'kept' };
     expect(readNoticeReceiverDeleteRecord(record, 7)).toBe(record);
-    expect(() => readNoticeReceiverDeleteRecord({ ...record, id: 8 }, 7)).toThrow(expect.objectContaining({
-      code: 'NOTICE_RECEIVER_VARIABLES_INVALID', statusCode: 400
-    }));
+    expect(() => readNoticeReceiverDeleteRecord({ ...record, id: 8 }, 7)).toThrow(
+      expect.objectContaining({
+        code: 'NOTICE_RECEIVER_VARIABLES_INVALID',
+        statusCode: 400
+      })
+    );
   });
 });

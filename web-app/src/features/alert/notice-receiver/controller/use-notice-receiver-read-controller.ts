@@ -1,0 +1,125 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+
+import { useDataProvider, useList, type HttpError } from '@refinedev/core';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+
+import type { RemotePayloadState } from '@/shared/remote-state';
+
+import {
+  noticeReceiverRereadError,
+  requireExactNoticeReceiver,
+  throwableNoticeReceiverError
+} from '../notice-receiver-evidence';
+import {
+  classifyNoticeReceiverCollectionFailure,
+  type NoticeReceiverNonMissingFailureKind
+} from '../notice-receiver-failure';
+import type { NoticeReceiver, NoticeReceiverQuery } from '../model/notice-receiver-model';
+import { noticeReceiverResourceName } from '../notice-receiver-resource';
+
+export type NoticeReceiverListState = RemotePayloadState<
+  { records: NoticeReceiver[]; total: number },
+  NoticeReceiverNonMissingFailureKind
+>;
+
+type VisibleRead = {
+  identity: string;
+  refetch: ReturnType<typeof useList<NoticeReceiver, HttpError>>['query']['refetch'];
+};
+
+function useNoticeReceiverList(query: NoticeReceiverQuery) {
+  return useList<NoticeReceiver, HttpError>({
+    resource: noticeReceiverResourceName,
+    dataProviderName: noticeReceiverResourceName,
+    pagination: { currentPage: query.pageIndex + 1, pageSize: query.pageSize, mode: 'server' },
+    filters: query.name ? [{ field: 'name', operator: 'contains', value: query.name }] : [],
+    errorNotification: false
+  });
+}
+
+export function useNoticeReceiverReadController(query: NoticeReceiverQuery) {
+  const identity = JSON.stringify(query);
+  const dataProvider = useDataProvider()(noticeReceiverResourceName);
+  const [failure, setFailure] = useState<{ identity: string; error: HttpError } | null>(null);
+  const rereadEpochRef = useRef(0);
+  const list = useNoticeReceiverList(query);
+  const visibleReadRef = useRef<VisibleRead>({ identity, refetch: list.query.refetch });
+  useLayoutEffect(() => {
+    // A pending command proves against the query currently owned by the visible route.
+    visibleReadRef.current = { identity, refetch: list.query.refetch };
+  }, [identity, list.query.refetch]);
+  const activeFailure = failure?.identity === identity ? failure.error : null;
+  const state = useMemo(
+    () =>
+      resolveReadState(
+        list.query.isPending,
+        activeFailure ?? (list.query.isError ? list.query.error : null),
+        list.result.data,
+        list.result.total,
+        list.query.isFetching
+      ),
+    [
+      activeFailure,
+      list.query.error,
+      list.query.isError,
+      list.query.isFetching,
+      list.query.isPending,
+      list.result.data,
+      list.result.total
+    ]
+  );
+  const rereadAuthoritatively = useCallback(async () => {
+    const epoch = rereadEpochRef.current + 1;
+    rereadEpochRef.current = epoch;
+    const visible = visibleReadRef.current;
+    const proof = await visible.refetch();
+    if (proof.isError) {
+      if (rereadEpochRef.current === epoch) setFailure({ identity: visible.identity, error: proof.error });
+      throw throwableNoticeReceiverError(proof.error);
+    }
+    if (!proof.data) {
+      const error = noticeReceiverRereadError('invalid');
+      if (rereadEpochRef.current === epoch) setFailure({ identity: visible.identity, error });
+      throw error;
+    }
+    if (rereadEpochRef.current === epoch) setFailure(null);
+    return { records: proof.data.data, total: proof.data.total };
+  }, []);
+  const refresh = async () => {
+    try {
+      await rereadAuthoritatively();
+    } catch {
+      // The latest reread epoch owns the visible failure state.
+    }
+  };
+  const loadExact = async (id: number) =>
+    requireExactNoticeReceiver(
+      (await dataProvider.getOne<NoticeReceiver>({ resource: noticeReceiverResourceName, id })).data,
+      id
+    );
+  return { state, loadExact, rereadAuthoritatively, refresh };
+}
+
+function resolveReadState(
+  pending: boolean,
+  error: HttpError | null,
+  records: NoticeReceiver[],
+  total: number | undefined,
+  refreshing: boolean
+) {
+  return {
+    list: resolveListState(pending, error, records, total),
+    refreshing
+  };
+}
+
+function resolveListState(
+  pending: boolean,
+  error: HttpError | null,
+  records: NoticeReceiver[],
+  total?: number
+): NoticeReceiverListState {
+  if (pending) return { kind: 'loading' };
+  if (error) return { kind: classifyNoticeReceiverCollectionFailure(error) };
+  return total === undefined ? { kind: 'invalid' } : { kind: 'ready', records, total };
+}

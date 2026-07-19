@@ -45,23 +45,40 @@ describe('notice receiver wire schemas', () => {
       gmtCreate: null,
       gmtUpdate: null
     });
-    expect(() => parseNoticeReceiverWire({ ...receiver, accessToken: 'echoed-secret' }))
-      .toThrow(NoticeReceiverContractError);
+    expect(() => parseNoticeReceiverWire({ ...receiver, accessToken: 'echoed-secret' })).toThrow(
+      NoticeReceiverContractError
+    );
   });
 
   it('rejects unsupported types and unsafe identifiers', () => {
     expect(() => parseNoticeReceiverWire({ ...receiver, type: 15 })).toThrow(NoticeReceiverContractError);
-    expect(() => parseNoticeReceiverWire({ ...receiver, id: Number.MAX_SAFE_INTEGER + 1 }))
-      .toThrow(NoticeReceiverContractError);
+    expect(() => parseNoticeReceiverWire({ ...receiver, id: 0 })).toThrow(NoticeReceiverContractError);
+    expect(() => parseNoticeReceiverOptionsWire([{ id: 0, name: 'Pager', type: 2 }])).toThrow(
+      NoticeReceiverContractError
+    );
+    expect(() => parseNoticeReceiverMutationWire({ id: 0, status: 'deleted', receiver: null })).toThrow(
+      NoticeReceiverContractError
+    );
+    expect(() => parseNoticeReceiverWire({ ...receiver, id: Number.MAX_SAFE_INTEGER + 1 })).toThrow(
+      NoticeReceiverContractError
+    );
   });
 
   it('validates page, rule option, and mutation envelopes', () => {
-    expect(() => parseNoticeReceiverPageWire({
-      content: [receiver], totalElements: 1, totalPages: 1, number: -1, size: 8
-    })).toThrow(NoticeReceiverContractError);
-    expect(() => parseNoticeReceiverOptionsWire([{ id: 7, name: 'Pager', type: 2, options: {} }]))
-      .toThrow(NoticeReceiverContractError);
-    expect(() => parseNoticeReceiverMutationWire({ id: 7, status: 'saved', receiver }))
-      .toThrow(NoticeReceiverContractError);
+    expect(() =>
+      parseNoticeReceiverPageWire({
+        content: [receiver],
+        totalElements: 1,
+        totalPages: 1,
+        number: -1,
+        size: 8
+      })
+    ).toThrow(NoticeReceiverContractError);
+    expect(() => parseNoticeReceiverOptionsWire([{ id: 7, name: 'Pager', type: 2, options: {} }])).toThrow(
+      NoticeReceiverContractError
+    );
+    expect(() => parseNoticeReceiverMutationWire({ id: 7, status: 'saved', receiver })).toThrow(
+      NoticeReceiverContractError
+    );
   });
 });

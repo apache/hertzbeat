@@ -7,36 +7,25 @@
 
 import { z } from 'zod';
 
+import { noticeReceiverTypes, type NoticeReceiverType } from '../model/notice-receiver-catalog';
+
 const safeIntegerSchema = z.number().refine(Number.isSafeInteger, 'Expected a safe integer');
 const nonNegativeIntegerSchema = safeIntegerSchema.refine(value => value >= 0, 'Expected a non-negative integer');
+const positiveIntegerSchema = safeIntegerSchema.refine(value => value > 0, 'Expected a positive integer');
 const nullableTextSchema = z
   .string()
   .nullish()
   .transform(value => value ?? null);
 
-export const noticeReceiverTypeSchema = z.union([
-  z.literal(0),
-  z.literal(1),
-  z.literal(2),
-  z.literal(3),
-  z.literal(4),
-  z.literal(5),
-  z.literal(6),
-  z.literal(7),
-  z.literal(8),
-  z.literal(9),
-  z.literal(10),
-  z.literal(11),
-  z.literal(12),
-  z.literal(13),
-  z.literal(14)
-]);
+export const noticeReceiverTypeSchema = z.custom<NoticeReceiverType>(value =>
+  noticeReceiverTypes.some(type => type === value)
+);
 
 // Receiver responses are strict because an unexpected field may be an echoed
 // credential. Reject it before React Query or component state can retain it.
 const noticeReceiverSchema = z
   .object({
-    id: nonNegativeIntegerSchema,
+    id: positiveIntegerSchema,
     name: z.string(),
     type: noticeReceiverTypeSchema,
     typeKey: z.string(),
@@ -63,7 +52,7 @@ const noticeReceiverPageSchema = z
 
 export const noticeReceiverOptionSchema = z
   .object({
-    id: nonNegativeIntegerSchema,
+    id: positiveIntegerSchema,
     name: z.string(),
     type: noticeReceiverTypeSchema
   })
@@ -71,7 +60,7 @@ export const noticeReceiverOptionSchema = z
 
 const noticeReceiverMutationSchema = z
   .object({
-    id: nonNegativeIntegerSchema,
+    id: positiveIntegerSchema,
     status: z.enum(['created', 'updated', 'deleted', 'missing']),
     receiver: noticeReceiverSchema.nullable()
   })

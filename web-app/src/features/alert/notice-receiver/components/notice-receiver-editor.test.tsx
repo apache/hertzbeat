@@ -1,7 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createNoticeReceiverDraft } from '../model/notice-receiver-model';
 import { NoticeReceiverEditor } from './notice-receiver-editor';
@@ -9,13 +9,31 @@ import { NoticeReceiverEditor } from './notice-receiver-editor';
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 describe('NoticeReceiverEditor', () => {
+  afterEach(cleanup);
   it('shows configured-secret retain and explicit clear controls without echoing the value', () => {
     const update = vi.fn();
     const setSecretCleared = vi.fn();
-    const draft = { ...createNoticeReceiverDraft(), id: 8, name: 'Slack', type: 8 as const,
-      configuredSecrets: ['slackWebHookUrl' as const] };
-    render(<NoticeReceiverEditor draft={draft} saving={false} testing={false} update={update}
-      selectType={vi.fn()} setSecretCleared={setSecretCleared} close={vi.fn()} submit={vi.fn()} test={vi.fn()} />);
+    const draft = {
+      ...createNoticeReceiverDraft(),
+      id: 8,
+      name: 'Slack',
+      type: 8 as const,
+      configuredSecrets: ['slackWebHookUrl' as const]
+    };
+    render(
+      <NoticeReceiverEditor
+        draft={draft}
+        saving={false}
+        testing={false}
+        update={update}
+        busy={false}
+        selectType={vi.fn()}
+        setSecretCleared={setSecretCleared}
+        close={vi.fn()}
+        submit={vi.fn()}
+        test={vi.fn()}
+      />
+    );
 
     const secret = screen.getByPlaceholderText('noticeReceivers.secret.retainHint');
     expect(secret).toHaveValue('');
@@ -24,5 +42,56 @@ describe('NoticeReceiverEditor', () => {
     expect(update).toHaveBeenCalledWith({ slackWebHookUrl: 'replacement' });
     fireEvent.click(screen.getByText('noticeReceivers.secret.clearSaved'));
     expect(setSecretCleared).toHaveBeenCalledWith('slackWebHookUrl', true);
+  });
+
+  it('disables every draft mutation and close affordance while busy', () => {
+    const draft = { ...createNoticeReceiverDraft(), name: 'Email', email: 'ops@example.test' };
+    render(
+      <NoticeReceiverEditor
+        draft={draft}
+        saving
+        testing={false}
+        busy
+        update={vi.fn()}
+        selectType={vi.fn()}
+        setSecretCleared={vi.fn()}
+        close={vi.fn()}
+        submit={vi.fn()}
+        test={vi.fn()}
+      />
+    );
+
+    expect(screen.getByDisplayValue('Email')).toBeDisabled();
+    expect(screen.getByRole('combobox')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'noticeReceivers.test' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.cancel' })).toBeDisabled();
+    expect(screen.getByText('common.save').closest('button')).toBeDisabled();
+  });
+
+  it('publishes the backend name limit on the name control', () => {
+    render(
+      <NoticeReceiverEditor
+        draft={{
+          ...createNoticeReceiverDraft(),
+          name: 'WeCom',
+          type: 10,
+          corpId: 'corp',
+          agentId: 1,
+          appSecret: 'secret',
+          userId: 'ops'
+        }}
+        saving={false}
+        testing={false}
+        busy={false}
+        update={vi.fn()}
+        selectType={vi.fn()}
+        setSecretCleared={vi.fn()}
+        close={vi.fn()}
+        submit={vi.fn()}
+        test={vi.fn()}
+      />
+    );
+
+    expect(screen.getByDisplayValue('WeCom')).toHaveAttribute('maxlength', '100');
   });
 });
