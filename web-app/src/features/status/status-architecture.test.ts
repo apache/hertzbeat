@@ -202,6 +202,32 @@ describe('Status Management boundaries', () => {
     expect(fields).not.toMatch(/buildIncidentPayload|Date\.now|Modal|controller|status-management-api/);
   });
 
+  it('keeps organization synchronization and transactions in the form parent', () => {
+    const form = managementSources['./management/components/status-org-form.tsx'] ?? '';
+    const presentation = managementSources['./management/components/status-org-presentation.tsx'] ?? '';
+
+    expect(form).toContain("from './status-org-presentation'");
+    expect(form).toContain('<StatusOrgFields disabled={!editing || saving} />');
+    expect(form).toContain('canCancel={Boolean(org)}');
+    expect(form).toContain('Form.useForm<StatusOrg>()');
+    expect(form).toContain('const submitting = useRef(false)');
+    expect(form).toContain('const initialized = useRef(false)');
+    expect(form).toContain('const previousOrg = useRef(org)');
+    expect(form).toContain('if (!initialized.current || (!editing && orgChanged))');
+    expect(form).toContain('if (saving || submitting.current) return');
+    expect(form).toContain('await onSubmit(value)');
+    expect(form).toContain('if (saving || submitting.current || !org) return');
+    expect(form).not.toMatch(/<Button|<Input|<Space|useTranslation/);
+    expect(presentation.match(/<Form\.Item/g)).toHaveLength(6);
+    expect(presentation).toContain('<Input disabled={disabled} type="color" />');
+    expect(presentation).toContain('htmlType="submit" loading={saving} disabled={saving}');
+    expect(presentation).toContain('htmlType="button" disabled={saving} onClick={onCancel}');
+    expect(presentation).toContain('htmlType="button" onClick={onEdit}');
+    expect(presentation).not.toMatch(
+      /useEffect|useRef|useState|Form\.useForm|setFieldsValue|onSubmit|controller|status-management-api/
+    );
+  });
+
   it('exposes the management page through the Status root entry', () => {
     const entry = Object.values(entrySources)[0] ?? '';
     const router = Object.values(routerSources)[0] ?? '';

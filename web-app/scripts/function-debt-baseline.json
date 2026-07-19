@@ -141,12 +141,6 @@
     },
     {
       "rule": "function-size",
-      "path": "features/status/management/components/status-org-form.tsx",
-      "identity": "function:StatusOrgForm",
-      "allowedMax": 69
-    },
-    {
-      "rule": "function-size",
       "path": "layout/shell/shell-header.tsx",
       "identity": "function:ShellHeader",
       "allowedMax": 85

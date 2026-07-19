@@ -15,20 +15,21 @@
  * limitations under the License.
  */
 
-import { Button, Form, Input, Space } from 'antd';
+import { Form } from 'antd';
 import { useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import type { StatusOrg, StatusOrgRecord } from '../model/status-management-contract';
+import { StatusOrgActions, StatusOrgFields } from './status-org-presentation';
 
 const emptyOrg: StatusOrg = { name: '', description: '', home: '', logo: '', feedback: '', color: '#5b6fd8', state: 0 };
 
-export function StatusOrgForm({ org, saving, onSubmit }: {
+interface StatusOrgFormProps {
   org: StatusOrg | undefined;
   saving: boolean;
   onSubmit: (org: StatusOrg) => Promise<StatusOrgRecord>;
-}) {
-  const { t } = useTranslation();
+}
+
+export function StatusOrgForm({ org, saving, onSubmit }: StatusOrgFormProps) {
   const [editing, setEditing] = useState(!org);
   const [form] = Form.useForm<StatusOrg>();
   const submitting = useRef(false);
@@ -75,26 +76,8 @@ export function StatusOrgForm({ org, saving, onSubmit }: {
 
   return (
     <Form form={form} layout="vertical" onFinish={submit}>
-      <div className="status-org-grid">
-        <Form.Item name="name" label={t('statusManagement.name')} rules={[{ required: true, whitespace: true }]}><Input disabled={!editing || saving} /></Form.Item>
-        <Form.Item name="home" label={t('statusManagement.home')} rules={[{ required: true, whitespace: true }]}><Input disabled={!editing || saving} /></Form.Item>
-        <Form.Item name="description" label={t('status.descriptionLabel')} rules={[{ required: true, whitespace: true }]}><Input disabled={!editing || saving} /></Form.Item>
-        <Form.Item name="logo" label={t('statusManagement.logo')} rules={[{ required: true, whitespace: true }]}><Input disabled={!editing || saving} /></Form.Item>
-        <Form.Item name="feedback" label={t('statusManagement.feedback')}><Input disabled={!editing || saving} /></Form.Item>
-        <Form.Item name="color" label={t('statusManagement.color')}><Input disabled={!editing || saving} type="color" /></Form.Item>
-      </div>
-      <Space>
-        {editing ? (
-          <>
-            <Button type="primary" htmlType="submit" loading={saving} disabled={saving}>{t('common.save')}</Button>
-            {org && (
-              <Button htmlType="button" disabled={saving} onClick={cancel}>
-                {t('common.cancel')}
-              </Button>
-            )}
-          </>
-        ) : <Button htmlType="button" onClick={edit}>{t('common.edit')}</Button>}
-      </Space>
+      <StatusOrgFields disabled={!editing || saving} />
+      <StatusOrgActions editing={editing} saving={saving} canCancel={Boolean(org)} onCancel={cancel} onEdit={edit} />
     </Form>
   );
 }
