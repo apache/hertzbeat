@@ -141,12 +141,6 @@
     },
     {
       "rule": "function-size",
-      "path": "features/status/management/components/status-management-editors.tsx",
-      "identity": "function:StatusIncidentEditor",
-      "allowedMax": 68
-    },
-    {
-      "rule": "function-size",
       "path": "features/status/management/components/status-org-form.tsx",
       "identity": "function:StatusOrgForm",
       "allowedMax": 69

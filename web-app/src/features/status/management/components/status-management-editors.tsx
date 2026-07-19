@@ -15,21 +15,28 @@
  * limitations under the License.
  */
 
-import { Form, Input, List, Modal, Radio, Select, Typography } from 'antd';
+import { Form, Input, Modal, Radio, Select, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import {
-  buildIncidentPayload,
-  formatLabels,
-  incidentStateKey,
-  parseLabels
-} from '../model/status-management-model';
+import { buildIncidentPayload, formatLabels, parseLabels } from '../model/status-management-model';
 import type { StatusComponent, StatusIncident } from '../model/status-management-contract';
+import { StatusIncidentFields, type StatusIncidentFormValue } from './status-incident-fields';
+import { StatusIncidentHistory } from './status-incident-history';
 
 type ComponentFormValue = StatusComponent & { labelText?: string };
 
-export function StatusManagementEditors({ component, incident, orgId, components, componentSaving,
-  incidentSaving, onCloseComponent, onCloseIncident, onSaveComponent, onSaveIncident }: {
+export function StatusManagementEditors({
+  component,
+  incident,
+  orgId,
+  components,
+  componentSaving,
+  incidentSaving,
+  onCloseComponent,
+  onCloseIncident,
+  onSaveComponent,
+  onSaveIncident
+}: {
   component: Partial<StatusComponent> | undefined;
   incident: StatusIncident | undefined;
   orgId: number | undefined;
@@ -65,7 +72,13 @@ export function StatusManagementEditors({ component, incident, orgId, components
   );
 }
 
-function StatusComponentEditor({ component, components, saving, onCancel, onSubmit }: {
+function StatusComponentEditor({
+  component,
+  components,
+  saving,
+  onCancel,
+  onSubmit
+}: {
   component: Partial<StatusComponent>;
   components: StatusComponent[];
   saving: boolean;
@@ -96,10 +109,13 @@ function StatusComponentEditor({ component, components, saving, onCancel, onSubm
           <Input />
         </Form.Item>
         <Form.Item name="method" label={t('statusManagement.method')}>
-          <Radio.Group optionType="button" options={[
-            { value: 0, label: t('statusManagement.automatic') },
-            { value: 1, label: t('statusManagement.manual') }
-          ]} />
+          <Radio.Group
+            optionType="button"
+            options={[
+              { value: 0, label: t('statusManagement.automatic') },
+              { value: 1, label: t('statusManagement.manual') }
+            ]}
+          />
         </Form.Item>
         {method === 0 ? (
           <Form.Item name="labelText" label={t('statusManagement.labels')} extra={t('statusManagement.labelsHint')}>
@@ -118,7 +134,13 @@ function StatusComponentEditor({ component, components, saving, onCancel, onSubm
   );
 }
 
-function StatusIncidentEditor({ incident, components, saving, onCancel, onSubmit }: {
+function StatusIncidentEditor({
+  incident,
+  components,
+  saving,
+  onCancel,
+  onSubmit
+}: {
   incident: StatusIncident;
   components: StatusComponent[];
   saving: boolean;
@@ -126,16 +148,18 @@ function StatusIncidentEditor({ incident, components, saving, onCancel, onSubmit
   onSubmit: (incident: StatusIncident) => void;
 }) {
   const { t } = useTranslation();
-  const [form] = Form.useForm<{ name: string; state: number; componentIds: number[]; message: string }>();
+  const [form] = Form.useForm<StatusIncidentFormValue>();
   const isNew = incident.id == null;
-  const submit = (values: { name: string; state: number; componentIds: number[]; message: string }) => {
-    onSubmit(buildIncidentPayload({
-      incident: { ...incident, name: values.name, state: values.state },
-      components,
-      componentIds: values.componentIds,
-      message: values.message,
-      timestamp: Date.now()
-    }));
+  const submit = (values: StatusIncidentFormValue) => {
+    onSubmit(
+      buildIncidentPayload({
+        incident: { ...incident, name: values.name, state: values.state },
+        components,
+        componentIds: values.componentIds,
+        message: values.message,
+        timestamp: Date.now()
+      })
+    );
   };
 
   return (
@@ -154,36 +178,14 @@ function StatusIncidentEditor({ incident, components, saving, onCancel, onSubmit
         initialValues={{
           name: incident.name,
           state: incident.state,
-          componentIds: incident.components?.flatMap(item => item.id == null ? [] : [item.id]) ?? [],
+          componentIds: incident.components?.flatMap(item => (item.id == null ? [] : [item.id])) ?? [],
           message: ''
         }}
         onFinish={submit}
       >
-        <Form.Item name="name" label={t('statusManagement.incidentName')} rules={[{ required: true, whitespace: true }]}>
-          <Input />
-        </Form.Item>
-        <Form.Item name="componentIds" label={t('status.components')} rules={[{ required: true }]}>
-          <Select mode="multiple" options={components.flatMap(item => item.id == null ? [] : [{ value: item.id, label: item.name }])} />
-        </Form.Item>
-        <Form.Item name="state" label={t('status.state')}>
-          <Select options={[0, 1, 2, 3].map(value => ({ value, label: t(incidentStateKey(value)) }))} />
-        </Form.Item>
-        <Form.Item name="message" label={t('statusManagement.updateMessage')} rules={[{ required: true, whitespace: true }]}>
-          <Input.TextArea rows={3} />
-        </Form.Item>
+        <StatusIncidentFields components={components} />
       </Form>
-      {!isNew && incident.contents?.length ? (
-        <List
-          size="small"
-          header={t('statusManagement.updateHistory')}
-          dataSource={[...incident.contents].sort((left, right) => right.timestamp - left.timestamp)}
-          renderItem={item => (
-            <List.Item extra={new Date(item.timestamp).toLocaleString()}>
-              <List.Item.Meta title={t(incidentStateKey(item.state))} description={item.message} />
-            </List.Item>
-          )}
-        />
-      ) : null}
+      {!isNew && incident.contents?.length ? <StatusIncidentHistory contents={incident.contents} /> : null}
     </Modal>
   );
 }

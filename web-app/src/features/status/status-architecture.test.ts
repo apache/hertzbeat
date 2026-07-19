@@ -170,6 +170,38 @@ describe('Status Management boundaries', () => {
     expect(controller).not.toMatch(/['"]\/status['"]/);
   });
 
+  it('keeps incident transactions in the editor and history as pure presentation', () => {
+    const editors = managementSources['./management/components/status-management-editors.tsx'] ?? '';
+    const fields = managementSources['./management/components/status-incident-fields.tsx'] ?? '';
+    const history = managementSources['./management/components/status-incident-history.tsx'] ?? '';
+
+    expect(editors).toContain("from './status-incident-fields'");
+    expect(editors).toContain("from './status-incident-history'");
+    expect(editors).toContain('<StatusIncidentFields components={components} />');
+    expect(editors).toContain('!isNew && incident.contents?.length ?');
+    expect(editors).toContain('<StatusIncidentHistory contents={incident.contents} />');
+    expect(editors).not.toContain('<List');
+    expect(editors).toContain('Form.useForm');
+    expect(editors).toContain('Form.useForm<StatusIncidentFormValue>()');
+    expect(editors).not.toContain(
+      'Form.useForm<{ name: string; state: number; componentIds: number[]; message: string }>'
+    );
+    expect(editors).toContain('buildIncidentPayload');
+    expect(editors).toContain('timestamp: Date.now()');
+    expect(editors).toContain('destroyOnHidden');
+    expect(editors).toContain('confirmLoading={saving}');
+    expect(editors).toContain("t(isNew ? 'statusManagement.newIncident' : 'statusManagement.updateIncident')");
+    expect(editors).toContain('item.id == null ? [] : [item.id]');
+    expect(history).toContain('const newestFirst = [...contents].sort');
+    expect(history).toContain('new Date(item.timestamp).toLocaleString()');
+    expect(history).toContain('t(incidentStateKey(item.state))');
+    expect(history).not.toMatch(/Form|buildIncidentPayload|Date\.now|Modal|controller|status-management-api/);
+    expect(fields).toContain('item.id == null ? [] : [{ value: item.id, label: item.name }]');
+    expect(fields).toContain('export type StatusIncidentFormValue');
+    expect(fields).toContain('t(incidentStateKey(value))');
+    expect(fields).not.toMatch(/buildIncidentPayload|Date\.now|Modal|controller|status-management-api/);
+  });
+
   it('exposes the management page through the Status root entry', () => {
     const entry = Object.values(entrySources)[0] ?? '';
     const router = Object.values(routerSources)[0] ?? '';
