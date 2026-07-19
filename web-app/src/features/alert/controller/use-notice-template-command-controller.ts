@@ -25,9 +25,59 @@ import {
   type NoticeTemplateResourceRecord
 } from '../notice-template-model';
 import { useNoticeTemplateEditorController } from './use-notice-template-editor-controller';
-import { useNoticeTemplateOperationController } from './use-notice-template-operation-controller';
+import {
+  useNoticeTemplateOperationController,
+  type NoticeTemplateOperationController
+} from './use-notice-template-operation-controller';
 import { useNoticeTemplateRemove } from './use-notice-template-remove';
 import { useNoticeTemplateSubmit } from './use-notice-template-submit';
+import { proveNoticeTemplateDeletion, proveNoticeTemplateUpdate } from './notice-template-write-proof';
+
+function createRecoveryRetry(options: {
+  editor: ReturnType<typeof useNoticeTemplateEditorController>;
+  notify: (message: string, type: 'error' | 'success') => void;
+  operation: NoticeTemplateOperationController;
+  provider: DataProvider;
+  refreshAuthoritatively: () => Promise<void>;
+  t: TFunction;
+}) {
+  return async () => {
+    const admission = options.operation.beginRecovery();
+    if (!admission) return;
+    const { owner, recovery } = admission;
+    try {
+      if (recovery.stage === 'projection') {
+        await options.refreshAuthoritatively();
+        options.operation.clearRecovery(owner);
+        return;
+      }
+      if (recovery.stage === 'update-proof') {
+        await proveNoticeTemplateUpdate(options.provider, recovery.draft);
+        if (!options.operation.isCurrent(owner)) return;
+        options.editor.controls.publish(null);
+        options.notify(options.t('noticeTemplates.saveSuccess'), 'success');
+      } else if (recovery.stage === 'delete-proof') {
+        await proveNoticeTemplateDeletion(options.provider, recovery.id);
+        if (!options.operation.isCurrent(owner)) return;
+        options.notify(options.t('noticeTemplates.deleteSuccess'), 'success');
+      } else {
+        return;
+      }
+      options.operation.clearRecovery(owner);
+      try {
+        await options.refreshAuthoritatively();
+      } catch {
+        options.operation.setRecovery(owner, { stage: 'projection' });
+      }
+    } catch {
+      if (!options.operation.isCurrent(owner) || recovery.stage === 'projection') return;
+      const key = recovery.stage === 'update-proof' ? 'noticeTemplates.saveFailed' : 'noticeTemplates.deleteFailed';
+      options.notify(options.t(key), 'error');
+    } finally {
+      options.operation.end(owner);
+    }
+  };
+}
 
 export function useNoticeTemplateCommandController({
   notification,
@@ -68,6 +118,7 @@ export function useNoticeTemplateCommandController({
     refreshAuthoritatively,
     t
   });
+  const retryRecovery = createRecoveryRetry({ editor, notify, operation, provider, refreshAuthoritatively, t });
 
   return {
     closeDraft: () => {
@@ -80,6 +131,8 @@ export function useNoticeTemplateCommandController({
     draft: editor.state.draft,
     edit: editor.actions.edit,
     remove,
+    recovery: operation.recovery,
+    retryRecovery,
     submit,
     updateDraft: editor.actions.update
   };

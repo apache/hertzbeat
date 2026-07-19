@@ -166,9 +166,8 @@ describe('Notice Template Refine data provider', () => {
     ).rejects.toMatchObject({ code: 'NOTICE_TEMPLATE_PAGE_CONTENT_INVALID' });
   });
 
-  it('rereads canonical detail after a void update', async () => {
+  it('returns the acknowledged update payload without hiding a later proof read', async () => {
     api.saveNoticeTemplate.mockResolvedValue(undefined);
-    api.loadNoticeTemplate.mockResolvedValue(record);
 
     await expect(
       noticeTemplateDataProvider.update<NoticeTemplateResourceRecord>({
@@ -176,14 +175,23 @@ describe('Notice Template Refine data provider', () => {
         id: 42,
         variables: { id: 42, name: 'Request', type: 1, content: '${request}' }
       })
-    ).resolves.toEqual({ data: resourceRecord });
+    ).resolves.toEqual({
+      data: {
+        id: 'notice-template:custom:42',
+        backendId: 42,
+        name: 'Request',
+        type: 1,
+        preset: false,
+        content: '${request}'
+      }
+    });
     expect(api.saveNoticeTemplate).toHaveBeenCalledWith({
       id: 42,
       name: 'Request',
       type: 1,
       content: '${request}'
     });
-    expect(api.loadNoticeTemplate).toHaveBeenCalledWith(42);
+    expect(api.loadNoticeTemplate).not.toHaveBeenCalled();
   });
 
   it('rejects a preset response as a custom canonical identity', async () => {
@@ -193,15 +201,6 @@ describe('Notice Template Refine data provider', () => {
       noticeTemplateDataProvider.getOne<NoticeTemplateResourceRecord>({
         resource: 'notice-templates',
         id: 42
-      })
-    ).rejects.toMatchObject({ code: 'NOTICE_TEMPLATE_CANONICAL_IDENTITY_INVALID' });
-
-    api.saveNoticeTemplate.mockResolvedValue(undefined);
-    await expect(
-      noticeTemplateDataProvider.update<NoticeTemplateResourceRecord>({
-        resource: 'notice-templates',
-        id: 42,
-        variables: { id: 42, name: 'Request', type: 1, content: '${request}' }
       })
     ).rejects.toMatchObject({ code: 'NOTICE_TEMPLATE_CANONICAL_IDENTITY_INVALID' });
   });
@@ -220,10 +219,8 @@ describe('Notice Template Refine data provider', () => {
     expect(api.loadNoticeTemplates).not.toHaveBeenCalled();
   });
 
-  it('confirms delete through an authoritative list where the id is absent', async () => {
-    api.loadNoticeTemplate.mockResolvedValue(record);
+  it('keeps delete mutation separate from both exact preflight and missing-detail proof', async () => {
     api.deleteNoticeTemplate.mockResolvedValue(undefined);
-    api.loadNoticeTemplates.mockResolvedValue({ ...page, content: [], totalElements: 0 });
 
     await expect(
       noticeTemplateDataProvider.deleteOne<NoticeTemplateResourceRecord>({
@@ -232,35 +229,8 @@ describe('Notice Template Refine data provider', () => {
         variables: { record: resourceRecord, query }
       })
     ).resolves.toEqual({ data: resourceRecord });
-    expect(api.loadNoticeTemplates).toHaveBeenCalledWith(query);
-
-    api.loadNoticeTemplates.mockResolvedValue(page);
-    await expect(
-      noticeTemplateDataProvider.deleteOne<NoticeTemplateResourceRecord>({
-        resource: 'notice-templates',
-        id: 42,
-        variables: { record: resourceRecord, query }
-      })
-    ).rejects.toMatchObject({ code: 'NOTICE_TEMPLATE_DELETE_NOT_CONFIRMED' });
-  });
-
-  it('does not confirm delete from a mismatched proof page', async () => {
-    api.loadNoticeTemplate.mockResolvedValue(record);
-    api.deleteNoticeTemplate.mockResolvedValue(undefined);
-    api.loadNoticeTemplates.mockResolvedValue({
-      ...page,
-      content: [],
-      totalElements: 0,
-      number: 1
-    });
-
-    await expect(
-      noticeTemplateDataProvider.deleteOne<NoticeTemplateResourceRecord>({
-        resource: 'notice-templates',
-        id: 42,
-        variables: { record: resourceRecord, query }
-      })
-    ).rejects.toMatchObject({ code: 'NOTICE_TEMPLATE_PAGE_MISMATCH' });
+    expect(api.loadNoticeTemplate).not.toHaveBeenCalled();
+    expect(api.loadNoticeTemplates).not.toHaveBeenCalled();
   });
 });
 

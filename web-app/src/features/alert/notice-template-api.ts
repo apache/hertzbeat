@@ -15,7 +15,13 @@
  * limitations under the License.
  */
 
-import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
+import {
+  ApiMessageError,
+  apiMessageDelete,
+  apiMessageGet,
+  apiMessagePost,
+  apiMessagePut
+} from '@/core/http/api-message';
 
 import {
   buildNoticeTemplateListPath,
@@ -33,8 +39,24 @@ export async function loadNoticeTemplates(query: NoticeTemplateQuery) {
 }
 
 export async function loadNoticeTemplate(id: number) {
-  const response = await apiMessageGet(`/api/notice/template/${id}`);
-  return parseNoticeTemplateDetail(response);
+  try {
+    const response = await apiMessageGet(`/api/notice/template/${id}`);
+    return parseNoticeTemplateDetail(response);
+  } catch (reason) {
+    // This exact endpoint uses its business-failure envelope only when the
+    // requested template id is absent; transport and HTTP failures stay distinct.
+    if (reason instanceof ApiMessageError && reason.code !== undefined) {
+      throw new NoticeTemplateMissingError(id);
+    }
+    throw reason;
+  }
+}
+
+export class NoticeTemplateMissingError extends Error {
+  constructor(readonly id: number) {
+    super('Notice Template is missing');
+    this.name = 'NoticeTemplateMissingError';
+  }
 }
 
 export async function saveNoticeTemplate(draft: NoticeTemplateDraft) {

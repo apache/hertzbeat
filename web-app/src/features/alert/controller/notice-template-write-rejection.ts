@@ -15,13 +15,12 @@
  * limitations under the License.
  */
 
-import type { NoticeTemplateDraft, NoticeTemplateResourceRecord } from '../notice-template-model';
-
-export type NoticeTemplateCommand = 'idle' | 'loading-detail' | 'saving' | 'deleting' | 'recovering';
-
-/** Durable in-session receipt describing the only safe continuation after a partial write transaction. */
-export type NoticeTemplateRecovery =
-  | { stage: 'projection' }
-  | { stage: 'update-proof'; draft: NoticeTemplateDraft }
-  | { stage: 'delete-proof'; id: number; record: NoticeTemplateResourceRecord }
-  | { stage: 'commit-uncertain'; draft: NoticeTemplateDraft };
+/** Only a definite pre-commit rejection makes it safe to submit the mutation again. */
+export function isDefiniteWriteRejection(reason: unknown) {
+  if (!reason || typeof reason !== 'object') return false;
+  const error = reason as { httpStatus?: unknown; kind?: unknown; statusCode?: unknown };
+  if (error.kind === 'envelope') return true;
+  const status = error.kind === 'http' ? error.httpStatus : error.statusCode;
+  if (typeof status !== 'number' || status < 400 || status >= 500) return false;
+  return error.kind === 'contract' || error.kind === 'http';
+}

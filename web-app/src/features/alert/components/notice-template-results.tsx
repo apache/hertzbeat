@@ -31,6 +31,7 @@ import {
 
 type NoticeTemplateResultsProps = {
   busy: boolean;
+  retryDisabled: boolean;
   state: NoticeTemplateListState;
   pageIndex: number;
   pageSize: number;
@@ -43,6 +44,7 @@ type NoticeTemplateResultsProps = {
 
 export function NoticeTemplateResults({
   busy,
+  retryDisabled,
   state,
   pageIndex,
   pageSize,
@@ -62,10 +64,10 @@ export function NoticeTemplateResults({
     );
   }
   if (state.kind === 'unavailable') {
-    return <FailureState busy={busy} message={t('common.unavailable')} onRetry={onRetry} />;
+    return <FailureState disabled={retryDisabled} message={t('common.unavailable')} onRetry={onRetry} />;
   }
   if (state.kind === 'error') {
-    return <FailureState busy={busy} message={t('common.routeError.description')} onRetry={onRetry} />;
+    return <FailureState disabled={retryDisabled} message={t('common.routeError.description')} onRetry={onRetry} />;
   }
   if (state.kind === 'empty') return <Empty description={t('noticeTemplates.empty')} />;
 
@@ -89,7 +91,7 @@ export function NoticeTemplateResults({
   );
 }
 
-function FailureState({ busy, message, onRetry }: { busy: boolean; message: string; onRetry: () => void }) {
+function FailureState({ disabled, message, onRetry }: { disabled: boolean; message: string; onRetry: () => void }) {
   const { t } = useTranslation();
   return (
     <Alert
@@ -97,7 +99,7 @@ function FailureState({ busy, message, onRetry }: { busy: boolean; message: stri
       showIcon
       message={message}
       action={
-        <Button size="small" disabled={busy} onClick={onRetry}>
+        <Button size="small" disabled={disabled} onClick={onRetry}>
           {t('common.retry')}
         </Button>
       }

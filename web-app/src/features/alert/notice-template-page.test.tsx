@@ -33,6 +33,7 @@ const controller = vi.hoisted(() => ({
   query: vi.fn(),
   refresh: vi.fn(),
   remove: vi.fn(),
+  retryRecovery: vi.fn(),
   setName: vi.fn(),
   setPreview: vi.fn(),
   state: {},
@@ -142,6 +143,40 @@ describe('NoticeTemplatePage', () => {
     expect(controller.refresh).toHaveBeenCalledTimes(1);
   });
 
+  it('uses the projection-only retry while keeping write commands locked', () => {
+    controller.state = {
+      ...buildState({ kind: 'unavailable' }),
+      recovery: { stage: 'projection' }
+    };
+    renderPage();
+
+    expect(screen.getByRole('button', { name: 'noticeTemplates.new' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+
+    expect(controller.retryRecovery).toHaveBeenCalledTimes(1);
+    expect(controller.refresh).not.toHaveBeenCalled();
+  });
+
+  it('exposes an explicit proof-only retry while keeping the acknowledged write locked', () => {
+    controller.state = {
+      ...buildState({ kind: 'ready', records: [custom], total: 1 }),
+      draft: { id: 42, name: 'Custom', type: 1, content: '${custom}' },
+      recovery: {
+        stage: 'update-proof',
+        draft: { id: 42, name: 'Custom', type: 1, content: '${custom}' }
+      }
+    };
+    renderPage();
+
+    expect(screen.getByText('noticeTemplates.saveFailed')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+
+    expect(controller.retryRecovery).toHaveBeenCalledTimes(1);
+    expect(controller.refresh).not.toHaveBeenCalled();
+    expect(controller.submit).not.toHaveBeenCalled();
+  });
+
   it('does not repeat submit or close while a command is pending', () => {
     controller.state = {
       ...buildState({ kind: 'ready', records: [custom], total: 1 }),
@@ -150,11 +185,57 @@ describe('NoticeTemplatePage', () => {
     };
     renderPage();
 
-    fireEvent.click(screen.getByRole('button', { name: /common\.save/ }));
-    fireEvent.click(screen.getByRole('button', { name: 'common.cancel' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(controller.submit).not.toHaveBeenCalled();
+    expect(controller.closeDraft).not.toHaveBeenCalled();
+  });
+
+  it('restores the preserved draft after a definite write failure retires', () => {
+    const page = renderPageWithState({
+      ...buildState({ kind: 'ready', records: [custom], total: 1 }),
+      command: 'saving',
+      draft: { id: 42, name: 'Custom', type: 1, content: '${custom}' }
+    });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    controller.state = {
+      ...buildState({ kind: 'ready', records: [custom], total: 1 }),
+      draft: { id: 42, name: 'Custom', type: 1, content: '${custom}' }
+    };
+    page.rerender(pageElement());
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /common\.save/ })).not.toHaveClass('ant-btn-loading');
+  });
+
+  it('keeps an unprovable create locked without exposing another write path', () => {
+    controller.state = {
+      ...buildState({ kind: 'ready', records: [custom], total: 1 }),
+      recovery: { stage: 'commit-uncertain', draft: { name: 'Uncertain', type: 1, content: '${content}' } },
+      draft: { name: 'Uncertain', type: 1, content: '${content}' }
+    };
+    renderPage();
+
+    expect(screen.getByRole('button', { name: 'noticeTemplates.new' })).toBeDisabled();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
     expect(controller.submit).not.toHaveBeenCalled();
     expect(controller.closeDraft).not.toHaveBeenCalled();
+    expect(controller.retryRecovery).not.toHaveBeenCalled();
+    expect(screen.getByText('noticeTemplates.saveFailed')).toBeInTheDocument();
+  });
+
+  it('keeps delete-proof recovery visible without exposing the editor', () => {
+    controller.state = {
+      ...buildState({ kind: 'ready', records: [custom], total: 1 }),
+      draft: { id: 42, name: 'Custom', type: 1, content: '${custom}' },
+      recovery: { stage: 'delete-proof', id: 42, record: custom }
+    };
+    renderPage();
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByText('noticeTemplates.deleteFailed')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'common.retry' })).toBeEnabled();
   });
 
   it('locks list commands and an already-open delete confirmation while deleting', async () => {
@@ -186,12 +267,18 @@ function buildState(list: Record<string, unknown>) {
     name: '',
     preview: null,
     query: { name: '', preset: false, pageIndex: 0, pageSize: 8 },
+    recovery: null,
     refreshing: false
   };
 }
 
 function renderPage() {
   return render(pageElement());
+}
+
+function renderPageWithState(state: Record<string, unknown>) {
+  controller.state = state;
+  return renderPage();
 }
 
 function pageElement() {

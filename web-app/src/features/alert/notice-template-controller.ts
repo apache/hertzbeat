@@ -52,6 +52,7 @@ export function useNoticeTemplateController() {
     query: queryController.submitQuery,
     refresh: listController.refresh,
     remove: commands.remove,
+    retryRecovery: commands.retryRecovery,
     setName: queryController.setName,
     setPreview,
     state: {
@@ -61,6 +62,7 @@ export function useNoticeTemplateController() {
       name: queryController.name,
       preview,
       query: queryController.query,
+      recovery: commands.recovery,
       refreshing: listController.refreshing
     },
     submit: commands.submit,

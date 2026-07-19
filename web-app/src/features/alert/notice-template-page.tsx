@@ -17,6 +17,7 @@
 
 import styles from './alert-policy-page.module.css';
 import { NoticeTemplateOverlays } from './components/notice-template-overlays';
+import { NoticeTemplateRecoveryAlert } from './components/notice-template-recovery-alert';
 import { NoticeTemplateResults } from './components/notice-template-results';
 import { NoticeTemplateToolbar } from './components/notice-template-toolbar';
 import { useNoticeTemplateController } from './notice-template-controller';
@@ -27,7 +28,8 @@ const NOTICE_TEMPLATE_HEADING_ID = 'notice-template-heading';
 export function NoticeTemplatePage() {
   const controller = useNoticeTemplateController();
   const { state } = controller;
-  const busy = state.command === 'saving' || state.command === 'deleting';
+  const commandBusy = state.command === 'saving' || state.command === 'deleting' || state.command === 'recovering';
+  const busy = commandBusy || state.recovery !== null;
 
   return (
     <div className={styles.page}>
@@ -43,14 +45,23 @@ export function NoticeTemplatePage() {
           onRefresh={controller.refresh}
           onCreate={controller.create}
         />
+        <NoticeTemplateRecoveryAlert
+          busy={commandBusy}
+          recovery={state.recovery}
+          retry={() => void controller.retryRecovery()}
+        />
         <div className={pageStyles.results}>
           <NoticeTemplateResults
             busy={busy}
+            retryDisabled={commandBusy}
             state={state.list}
             pageIndex={state.query.pageIndex}
             pageSize={state.query.pageSize}
             onPageChange={controller.changePage}
-            onRetry={controller.refresh}
+            onRetry={() => {
+              if (state.recovery?.stage === 'projection') void controller.retryRecovery();
+              else controller.refresh();
+            }}
             onView={controller.setPreview}
             onEdit={controller.edit}
             onRemove={controller.remove}
@@ -59,7 +70,6 @@ export function NoticeTemplatePage() {
       </section>
       <NoticeTemplateOverlays
         busy={busy}
-        saving={state.command === 'saving'}
         draft={state.draft}
         preview={state.preview}
         onDraftChange={controller.updateDraft}

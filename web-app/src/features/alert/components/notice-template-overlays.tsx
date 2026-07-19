@@ -23,7 +23,6 @@ import type { NoticeTemplateDraft, NoticeTemplateResourceRecord } from '../notic
 
 type NoticeTemplateOverlaysProps = {
   busy: boolean;
-  saving: boolean;
   draft: NoticeTemplateDraft | null;
   preview: NoticeTemplateResourceRecord | null;
   onDraftChange: (patch: Partial<NoticeTemplateDraft>) => void;
@@ -34,7 +33,6 @@ type NoticeTemplateOverlaysProps = {
 
 export function NoticeTemplateOverlays({
   busy,
-  saving,
   draft,
   preview,
   onDraftChange,
@@ -44,10 +42,10 @@ export function NoticeTemplateOverlays({
 }: NoticeTemplateOverlaysProps) {
   return (
     <>
-      {draft && (
+      {draft && !busy && (
         <NoticeTemplateEditor
           draft={draft}
-          saving={saving}
+          saving={false}
           update={onDraftChange}
           close={() => !busy && onDraftClose()}
           submit={() => !busy && void onDraftSubmit()}

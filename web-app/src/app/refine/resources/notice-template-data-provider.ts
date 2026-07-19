@@ -29,6 +29,7 @@ import type {
 } from '@refinedev/core';
 
 import {
+  NoticeTemplateMissingError,
   deleteNoticeTemplate,
   loadNoticeTemplate,
   loadNoticeTemplates,
@@ -90,9 +91,8 @@ export const noticeTemplateDataProvider: DataProvider = {
       const id = readNoticeTemplateId(params.id);
       const draft = readNoticeTemplateDraft(params.variables, id);
       await saveNoticeTemplate(draft);
-      const canonical = await loadNoticeTemplate(id);
-      assertCanonicalCustom(canonical, id);
-      return { data: adaptRefineRecord<TData>(noticeTemplateResourceRecord(canonical)) };
+      const acknowledged = noticeTemplateResourceRecord({ ...draft, id, preset: false });
+      return { data: adaptRefineRecord<TData>(acknowledged) };
     });
   },
 
@@ -104,16 +104,9 @@ export const noticeTemplateDataProvider: DataProvider = {
     return protect(async () => {
       assertResource(params.resource);
       const id = readNoticeTemplateId(params.id);
-      const { query } = readNoticeTemplateDeleteVariables(params.variables, id);
-      const canonical = await loadNoticeTemplate(id);
-      if (canonical.id !== id || canonical.preset) throw contractError('NOTICE_TEMPLATE_DELETE_FORBIDDEN', 400);
+      const { record } = readNoticeTemplateDeleteVariables(params.variables, id);
       await deleteNoticeTemplate(id);
-      const proof = await loadNoticeTemplates(query);
-      assertPageEvidence(proof, query);
-      if (proof.content.some(item => item.id === id)) {
-        throw contractError('NOTICE_TEMPLATE_DELETE_NOT_CONFIRMED');
-      }
-      return { data: adaptRefineRecord<TData>(noticeTemplateResourceRecord(canonical)) };
+      return { data: adaptRefineRecord<TData>(record) };
     });
   },
 
@@ -138,6 +131,9 @@ async function protect<T>(operation: () => Promise<T>): Promise<T> {
   try {
     return await operation();
   } catch (reason) {
+    if (reason instanceof NoticeTemplateMissingError) {
+      throw contractError('NOTICE_TEMPLATE_NOT_FOUND', 404);
+    }
     if (reason instanceof NoticeTemplateContractError) {
       throw contractError('NOTICE_TEMPLATE_RESPONSE_INVALID');
     }

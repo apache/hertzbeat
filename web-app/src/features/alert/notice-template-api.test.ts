@@ -23,9 +23,15 @@ const http = vi.hoisted(() => ({
   apiMessagePost: vi.fn(),
   apiMessagePut: vi.fn()
 }));
-vi.mock('@/core/http/api-message', () => http);
+vi.mock('@/core/http/api-message', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/core/http/api-message')>()),
+  ...http
+}));
+
+import { ApiMessageError } from '@/core/http/api-message';
 
 import {
+  NoticeTemplateMissingError,
   deleteNoticeTemplate,
   loadNoticeTemplate,
   loadNoticeTemplates,
@@ -41,8 +47,9 @@ describe('Notice Template API', () => {
   it('uses the exact list/detail paths and strictly parses both responses', async () => {
     http.apiMessageGet.mockResolvedValueOnce(page).mockResolvedValueOnce(custom);
 
-    await expect(loadNoticeTemplates({ name: 'Mail', preset: false, pageIndex: 0, pageSize: 8 }))
-      .resolves.toEqual(page);
+    await expect(loadNoticeTemplates({ name: 'Mail', preset: false, pageIndex: 0, pageSize: 8 })).resolves.toEqual(
+      page
+    );
     await expect(loadNoticeTemplate(42)).resolves.toEqual(custom);
     expect(http.apiMessageGet).toHaveBeenNthCalledWith(
       1,
@@ -57,14 +64,22 @@ describe('Notice Template API', () => {
     http.apiMessageDelete.mockResolvedValue({ ignored: true });
 
     await expect(saveNoticeTemplate({ name: 'New', type: 1, content: '${content}' })).resolves.toBeUndefined();
-    await expect(saveNoticeTemplate({ id: 42, name: 'Updated', type: 1, content: '${content}' }))
-      .resolves.toBeUndefined();
+    await expect(
+      saveNoticeTemplate({ id: 42, name: 'Updated', type: 1, content: '${content}' })
+    ).resolves.toBeUndefined();
     await expect(deleteNoticeTemplate(42)).resolves.toBeUndefined();
     expect(http.apiMessagePost).toHaveBeenCalledWith('/api/notice/template', {
-      name: 'New', type: 1, preset: false, content: '${content}'
+      name: 'New',
+      type: 1,
+      preset: false,
+      content: '${content}'
     });
     expect(http.apiMessagePut).toHaveBeenCalledWith('/api/notice/template', {
-      id: 42, name: 'Updated', type: 1, preset: false, content: '${content}'
+      id: 42,
+      name: 'Updated',
+      type: 1,
+      preset: false,
+      content: '${content}'
     });
     expect(http.apiMessageDelete).toHaveBeenCalledWith('/api/notice/template/42');
   });
@@ -72,7 +87,14 @@ describe('Notice Template API', () => {
   it('rejects malformed list data instead of returning an empty page', async () => {
     http.apiMessageGet.mockResolvedValue({ content: [], totalElements: '0' });
 
-    await expect(loadNoticeTemplates({ name: '', preset: true, pageIndex: 0, pageSize: 8 }))
-      .rejects.toThrowError('Notice Template response is invalid');
+    await expect(loadNoticeTemplates({ name: '', preset: true, pageIndex: 0, pageSize: 8 })).rejects.toThrowError(
+      'Notice Template response is invalid'
+    );
+  });
+
+  it('classifies the detail endpoint business failure as missing evidence', async () => {
+    http.apiMessageGet.mockRejectedValue(new ApiMessageError('missing', { code: 1, status: 200 }));
+
+    await expect(loadNoticeTemplate(42)).rejects.toBeInstanceOf(NoticeTemplateMissingError);
   });
 });

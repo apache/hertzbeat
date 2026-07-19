@@ -303,9 +303,11 @@ describe('Notice Template controller', () => {
 
   it('admits only one same-tick remove write', async () => {
     const deletion = deferred<{ data: typeof record }>();
+    const missing = Object.assign(new Error('missing'), { statusCode: 404 });
     refine.provider.mockReturnValue({
       ...refine.provider(),
-      deleteOne: vi.fn().mockReturnValue(deletion.promise)
+      deleteOne: vi.fn().mockReturnValue(deletion.promise),
+      getOne: vi.fn().mockResolvedValueOnce({ data: record }).mockRejectedValueOnce(missing)
     });
     const { result } = renderHook(() => useNoticeTemplateController());
     const provider = refine.provider.mock.results.at(-1)?.value;
@@ -317,16 +319,19 @@ describe('Notice Template controller', () => {
       second = result.current.remove(record);
     });
 
-    expect(provider.deleteOne).toHaveBeenCalledTimes(1);
+    expect(provider.getOne).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(provider.deleteOne).toHaveBeenCalledTimes(1));
     deletion.resolve({ data: record });
     await act(async () => Promise.all([first, second]));
   });
 
   it('keeps remove ownership when create, edit, or another remove is requested', async () => {
     const deletion = deferred<{ data: typeof record }>();
+    const missing = Object.assign(new Error('missing'), { statusCode: 404 });
     refine.provider.mockReturnValue({
       ...refine.provider(),
-      deleteOne: vi.fn().mockReturnValue(deletion.promise)
+      deleteOne: vi.fn().mockReturnValue(deletion.promise),
+      getOne: vi.fn().mockResolvedValueOnce({ data: record }).mockRejectedValueOnce(missing)
     });
     const { result } = renderHook(() => useNoticeTemplateController());
     act(() => {
@@ -347,7 +352,7 @@ describe('Notice Template controller', () => {
 
     const provider = refine.provider.mock.results.at(-1)?.value;
     expect(result.current.state.draft).toEqual({ name: '', type: 1, content: '' });
-    expect(provider.getOne).not.toHaveBeenCalled();
+    expect(provider.getOne).toHaveBeenCalledTimes(2);
     expect(provider.deleteOne).toHaveBeenCalledTimes(1);
     expect(refine.refetch).toHaveBeenCalledTimes(1);
     expect(refine.notification).toHaveBeenCalledWith({
@@ -357,8 +362,18 @@ describe('Notice Template controller', () => {
   });
 
   it('updates and deletes only after provider proof plus authoritative list refetch', async () => {
+    const missing = Object.assign(new Error('missing'), { statusCode: 404 });
+    refine.provider.mockReturnValue({
+      ...refine.provider(),
+      getOne: vi
+        .fn()
+        .mockResolvedValueOnce({ data: record })
+        .mockResolvedValueOnce({ data: { ...record, name: 'Updated' } })
+        .mockResolvedValueOnce({ data: record })
+        .mockRejectedValueOnce(missing)
+    });
     const { result } = renderHook(() => useNoticeTemplateController());
-    const provider = refine.provider.mock.results[0]?.value;
+    const provider = refine.provider.mock.results.at(-1)?.value;
 
     await act(async () => result.current.edit(record));
     act(() => {
@@ -382,9 +397,12 @@ describe('Notice Template controller', () => {
     expect(refine.refetch).toHaveBeenCalledTimes(2);
   });
 
-  it('keeps a create draft and marks the list unavailable when authoritative refresh fails', async () => {
-    refine.refetch.mockResolvedValue({ isError: true, error: { statusCode: 503 } });
+  it('retires a confirmed create and retries only its unavailable list projection', async () => {
+    refine.refetch
+      .mockResolvedValueOnce({ isError: true, error: { statusCode: 503 } })
+      .mockResolvedValueOnce({ data: { data: [record], total: 1 }, isError: false });
     const { result } = renderHook(() => useNoticeTemplateController());
+    const provider = refine.provider.mock.results.at(-1)?.value;
 
     act(() => result.current.create());
     act(() => {
@@ -392,21 +410,33 @@ describe('Notice Template controller', () => {
     });
     await act(async () => result.current.submit());
 
-    expect(result.current.state.draft).toMatchObject({ name: 'New' });
+    expect(result.current.state.draft).toBeNull();
     expect(result.current.state.list.kind).toBe('unavailable');
-    expect(refine.notification).not.toHaveBeenCalledWith(
-      expect.objectContaining({
-        message: 'noticeTemplates.saveSuccess'
-      })
-    );
+    expect(result.current.state.recovery).toEqual({ stage: 'projection' });
+    expect(refine.notification).toHaveBeenCalledWith({ message: 'noticeTemplates.saveSuccess', type: 'success' });
+
+    await act(async () => result.current.submit());
+    await act(async () => result.current.retryRecovery());
+
+    expect(provider.custom).toHaveBeenCalledTimes(1);
+    expect(refine.refetch).toHaveBeenCalledTimes(2);
+    expect(result.current.state.recovery).toBeNull();
+    expect(result.current.state.list.kind).toBe('ready');
   });
 
-  it('keeps an update draft and marks contract refresh failure as error', async () => {
-    refine.refetch.mockResolvedValue({
-      isError: true,
-      error: { statusCode: 502, code: 'NOTICE_TEMPLATE_RESPONSE_INVALID' }
+  it('retries update proof after a confirmed PUT without repeating the mutation', async () => {
+    const unavailable = Object.assign(new Error('detail unavailable'), { statusCode: 503 });
+    const updated = { ...record, name: 'Updated' };
+    refine.provider.mockReturnValue({
+      ...refine.provider(),
+      getOne: vi
+        .fn()
+        .mockResolvedValueOnce({ data: record })
+        .mockRejectedValueOnce(unavailable)
+        .mockResolvedValueOnce({ data: updated })
     });
     const { result } = renderHook(() => useNoticeTemplateController());
+    const provider = refine.provider.mock.results.at(-1)?.value;
 
     await act(async () => result.current.edit(record));
     act(() => {
@@ -414,27 +444,407 @@ describe('Notice Template controller', () => {
     });
     await act(async () => result.current.submit());
 
-    expect(result.current.state.draft).toMatchObject({ id: 42, name: 'Updated' });
-    expect(result.current.state.list.kind).toBe('error');
-    expect(refine.notification).not.toHaveBeenCalledWith(
-      expect.objectContaining({
-        message: 'noticeTemplates.saveSuccess'
-      })
-    );
+    expect(result.current.state.recovery).toMatchObject({ stage: 'update-proof', draft: { id: 42, name: 'Updated' } });
+    expect(provider.update).toHaveBeenCalledTimes(1);
+    expect(refine.refetch).not.toHaveBeenCalled();
+
+    await act(async () => result.current.retryRecovery());
+
+    expect(provider.update).toHaveBeenCalledTimes(1);
+    expect(provider.getOne).toHaveBeenCalledTimes(3);
+    expect(refine.refetch).toHaveBeenCalledTimes(1);
+    expect(result.current.state.recovery).toBeNull();
+    expect(result.current.state.draft).toBeNull();
   });
 
-  it('does not report delete success when its authoritative refresh fails', async () => {
-    refine.refetch.mockResolvedValue({ isError: true, error: { statusCode: 503 } });
+  it.each([
+    ['server error', { statusCode: 503, httpStatus: 503, kind: 'http' }],
+    ['malformed success response', { statusCode: 200, httpStatus: 200, kind: 'http' }]
+  ])('proves an ambiguous PUT %s without repeating the mutation', async (_name, details) => {
+    const ambiguous = Object.assign(new Error('ambiguous update'), details);
+    refine.provider.mockReturnValue({
+      ...refine.provider(),
+      getOne: vi
+        .fn()
+        .mockResolvedValueOnce({ data: record })
+        .mockResolvedValueOnce({ data: { ...record, name: 'Updated' } }),
+      update: vi.fn().mockRejectedValue(ambiguous)
+    });
     const { result } = renderHook(() => useNoticeTemplateController());
+    const provider = refine.provider.mock.results.at(-1)?.value;
+
+    await act(async () => result.current.edit(record));
+    act(() => {
+      result.current.updateDraft({ name: 'Updated' });
+    });
+    await act(async () => result.current.submit());
+
+    expect(provider.update).toHaveBeenCalledTimes(1);
+    expect(provider.getOne).toHaveBeenCalledTimes(2);
+    expect(refine.refetch).toHaveBeenCalledTimes(1);
+    expect(result.current.state.recovery).toBeNull();
+    expect(result.current.state.draft).toBeNull();
+  });
+
+  it('keeps an ambiguous PUT in proof recovery when exact detail is unavailable', async () => {
+    const ambiguous = Object.assign(new Error('ambiguous update'), {
+      statusCode: 503,
+      httpStatus: 503,
+      kind: 'http'
+    });
+    const unavailable = Object.assign(new Error('detail unavailable'), { statusCode: 503 });
+    refine.provider.mockReturnValue({
+      ...refine.provider(),
+      getOne: vi
+        .fn()
+        .mockResolvedValueOnce({ data: record })
+        .mockRejectedValueOnce(unavailable)
+        .mockResolvedValueOnce({ data: { ...record, name: 'Updated' } }),
+      update: vi.fn().mockRejectedValue(ambiguous)
+    });
+    const { result } = renderHook(() => useNoticeTemplateController());
+    const provider = refine.provider.mock.results.at(-1)?.value;
+
+    await act(async () => result.current.edit(record));
+    act(() => {
+      result.current.updateDraft({ name: 'Updated' });
+    });
+    await act(async () => result.current.submit());
+
+    expect(result.current.state.recovery).toMatchObject({ stage: 'update-proof', draft: { id: 42 } });
+    expect(provider.update).toHaveBeenCalledTimes(1);
+    expect(refine.refetch).not.toHaveBeenCalled();
+    await act(async () => result.current.retryRecovery());
+
+    expect(provider.update).toHaveBeenCalledTimes(1);
+    expect(provider.getOne).toHaveBeenCalledTimes(3);
+    expect(refine.refetch).toHaveBeenCalledTimes(1);
+    expect(result.current.state.recovery).toBeNull();
+  });
+
+  it('releases an update receipt after a definite rejection so PUT can be corrected and retried', async () => {
+    const rejected = Object.assign(new Error('rejected'), {
+      statusCode: 400,
+      httpStatus: 400,
+      kind: 'http'
+    });
+    refine.provider.mockReturnValue({
+      ...refine.provider(),
+      getOne: vi
+        .fn()
+        .mockResolvedValueOnce({ data: record })
+        .mockResolvedValueOnce({ data: { ...record, name: 'Updated' } }),
+      update: vi.fn().mockRejectedValueOnce(rejected).mockResolvedValueOnce({ data: record })
+    });
+    const { result } = renderHook(() => useNoticeTemplateController());
+    const provider = refine.provider.mock.results.at(-1)?.value;
+
+    await act(async () => result.current.edit(record));
+    act(() => {
+      result.current.updateDraft({ name: 'Updated' });
+    });
+    await act(async () => result.current.submit());
+    expect(result.current.state.recovery).toBeNull();
+
+    await act(async () => result.current.submit());
+
+    expect(provider.update).toHaveBeenCalledTimes(2);
+    expect(refine.refetch).toHaveBeenCalledTimes(1);
+    expect(result.current.state.draft).toBeNull();
+  });
+
+  it('retires a proof-only retry when the controller unmounts', async () => {
+    const unavailable = Object.assign(new Error('detail unavailable'), { statusCode: 503 });
+    const proof = deferred<{ data: typeof record }>();
+    refine.provider.mockReturnValue({
+      ...refine.provider(),
+      getOne: vi
+        .fn()
+        .mockResolvedValueOnce({ data: record })
+        .mockRejectedValueOnce(unavailable)
+        .mockReturnValueOnce(proof.promise)
+    });
+    const { result, unmount } = renderHook(() => useNoticeTemplateController());
+
+    await act(async () => result.current.edit(record));
+    act(() => {
+      result.current.updateDraft({ name: 'Updated' });
+    });
+    await act(async () => result.current.submit());
+    refine.notification.mockClear();
+
+    let retrying: Promise<void> | undefined;
+    act(() => {
+      retrying = result.current.retryRecovery();
+    });
+    unmount();
+    proof.resolve({ data: { ...record, name: 'Updated' } });
+    await act(async () => retrying);
+
+    expect(refine.notification).not.toHaveBeenCalled();
+    expect(refine.refetch).not.toHaveBeenCalled();
+  });
+
+  it('retires a canonically confirmed update when its list projection contract fails', async () => {
+    refine.refetch
+      .mockResolvedValueOnce({
+        isError: true,
+        error: { statusCode: 502, code: 'NOTICE_TEMPLATE_RESPONSE_INVALID' }
+      })
+      .mockResolvedValueOnce({ data: { data: [record], total: 1 }, isError: false });
+    refine.provider.mockReturnValue({
+      ...refine.provider(),
+      getOne: vi
+        .fn()
+        .mockResolvedValueOnce({ data: record })
+        .mockResolvedValueOnce({ data: { ...record, name: 'Updated' } })
+    });
+    const { result } = renderHook(() => useNoticeTemplateController());
+    const provider = refine.provider.mock.results.at(-1)?.value;
+
+    await act(async () => result.current.edit(record));
+    act(() => {
+      result.current.updateDraft({ name: 'Updated' });
+    });
+    await act(async () => result.current.submit());
+
+    expect(result.current.state.draft).toBeNull();
+    expect(result.current.state.list.kind).toBe('error');
+    expect(result.current.state.recovery).toEqual({ stage: 'projection' });
+    expect(refine.notification).toHaveBeenCalledWith({ message: 'noticeTemplates.saveSuccess', type: 'success' });
+
+    await act(async () => result.current.retryRecovery());
+
+    expect(provider.update).toHaveBeenCalledTimes(1);
+    expect(provider.getOne).toHaveBeenCalledTimes(2);
+    expect(refine.refetch).toHaveBeenCalledTimes(2);
+    expect(result.current.state.recovery).toBeNull();
+  });
+
+  it('retries exact missing-detail proof after a confirmed DELETE without repeating the mutation', async () => {
+    const unavailable = Object.assign(new Error('detail unavailable'), { statusCode: 503 });
+    const missing = Object.assign(new Error('missing'), { statusCode: 404 });
+    refine.provider.mockReturnValue({
+      ...refine.provider(),
+      getOne: vi
+        .fn()
+        .mockResolvedValueOnce({ data: record })
+        .mockRejectedValueOnce(unavailable)
+        .mockRejectedValueOnce(missing)
+    });
+    const { result } = renderHook(() => useNoticeTemplateController());
+    const provider = refine.provider.mock.results.at(-1)?.value;
+
+    await act(async () => result.current.remove(record));
+
+    expect(result.current.state.recovery).toMatchObject({ stage: 'delete-proof', id: 42 });
+    expect(provider.deleteOne).toHaveBeenCalledTimes(1);
+    expect(refine.refetch).not.toHaveBeenCalled();
+
+    await act(async () => result.current.retryRecovery());
+
+    expect(provider.deleteOne).toHaveBeenCalledTimes(1);
+    expect(provider.getOne).toHaveBeenCalledTimes(3);
+    expect(refine.refetch).toHaveBeenCalledTimes(1);
+    expect(result.current.state.recovery).toBeNull();
+  });
+
+  it.each([
+    ['server error', { statusCode: 503, httpStatus: 503, kind: 'http' }],
+    ['malformed success response', { statusCode: 200, httpStatus: 200, kind: 'http' }]
+  ])('proves an ambiguous DELETE %s without repeating the mutation', async (_name, details) => {
+    const ambiguous = Object.assign(new Error('ambiguous delete'), details);
+    const missing = Object.assign(new Error('missing'), { statusCode: 404 });
+    refine.provider.mockReturnValue({
+      ...refine.provider(),
+      deleteOne: vi.fn().mockRejectedValue(ambiguous),
+      getOne: vi.fn().mockResolvedValueOnce({ data: record }).mockRejectedValueOnce(missing)
+    });
+    const { result } = renderHook(() => useNoticeTemplateController());
+    const provider = refine.provider.mock.results.at(-1)?.value;
+
+    await act(async () => result.current.remove(record));
+
+    expect(provider.deleteOne).toHaveBeenCalledTimes(1);
+    expect(provider.getOne).toHaveBeenCalledTimes(2);
+    expect(refine.refetch).toHaveBeenCalledTimes(1);
+    expect(result.current.state.recovery).toBeNull();
+  });
+
+  it('keeps an ambiguous DELETE in missing-proof recovery without repeating the mutation', async () => {
+    const ambiguous = Object.assign(new Error('ambiguous delete'), {
+      statusCode: 503,
+      httpStatus: 503,
+      kind: 'http'
+    });
+    const unavailable = Object.assign(new Error('detail unavailable'), { statusCode: 503 });
+    const missing = Object.assign(new Error('missing'), { statusCode: 404 });
+    refine.provider.mockReturnValue({
+      ...refine.provider(),
+      deleteOne: vi.fn().mockRejectedValue(ambiguous),
+      getOne: vi
+        .fn()
+        .mockResolvedValueOnce({ data: record })
+        .mockRejectedValueOnce(unavailable)
+        .mockRejectedValueOnce(missing)
+    });
+    const { result } = renderHook(() => useNoticeTemplateController());
+    const provider = refine.provider.mock.results.at(-1)?.value;
+
+    await act(async () => result.current.remove(record));
+
+    expect(result.current.state.recovery).toMatchObject({ stage: 'delete-proof', id: 42 });
+    expect(provider.deleteOne).toHaveBeenCalledTimes(1);
+    expect(refine.refetch).not.toHaveBeenCalled();
+    await act(async () => result.current.retryRecovery());
+
+    expect(provider.deleteOne).toHaveBeenCalledTimes(1);
+    expect(provider.getOne).toHaveBeenCalledTimes(3);
+    expect(refine.refetch).toHaveBeenCalledTimes(1);
+    expect(result.current.state.recovery).toBeNull();
+  });
+
+  it('retries a failed delete preflight without claiming that DELETE was submitted', async () => {
+    const unavailable = Object.assign(new Error('detail unavailable'), { statusCode: 503 });
+    const missing = Object.assign(new Error('missing'), { statusCode: 404 });
+    refine.provider.mockReturnValue({
+      ...refine.provider(),
+      getOne: vi
+        .fn()
+        .mockRejectedValueOnce(unavailable)
+        .mockResolvedValueOnce({ data: record })
+        .mockRejectedValueOnce(missing)
+    });
+    const { result } = renderHook(() => useNoticeTemplateController());
+    const provider = refine.provider.mock.results.at(-1)?.value;
+
+    await act(async () => result.current.remove(record));
+    expect(provider.deleteOne).not.toHaveBeenCalled();
+    expect(result.current.state.recovery).toBeNull();
+
+    await act(async () => result.current.remove(record));
+
+    expect(provider.deleteOne).toHaveBeenCalledTimes(1);
+    expect(provider.getOne).toHaveBeenCalledTimes(3);
+    expect(refine.refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('releases a delete receipt after a definite rejection so DELETE can be retried', async () => {
+    const rejected = Object.assign(new Error('rejected'), {
+      statusCode: 400,
+      httpStatus: 400,
+      kind: 'http'
+    });
+    const missing = Object.assign(new Error('missing'), { statusCode: 404 });
+    refine.provider.mockReturnValue({
+      ...refine.provider(),
+      deleteOne: vi.fn().mockRejectedValueOnce(rejected).mockResolvedValueOnce({ data: record }),
+      getOne: vi
+        .fn()
+        .mockResolvedValueOnce({ data: record })
+        .mockResolvedValueOnce({ data: record })
+        .mockRejectedValueOnce(missing)
+    });
+    const { result } = renderHook(() => useNoticeTemplateController());
+    const provider = refine.provider.mock.results.at(-1)?.value;
+
+    await act(async () => result.current.remove(record));
+    expect(result.current.state.recovery).toBeNull();
+
+    await act(async () => result.current.remove(record));
+
+    expect(provider.deleteOne).toHaveBeenCalledTimes(2);
+    expect(provider.getOne).toHaveBeenCalledTimes(3);
+    expect(refine.refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not repeat a confirmed delete when only its list projection fails', async () => {
+    const missing = Object.assign(new Error('missing'), { statusCode: 404 });
+    refine.refetch
+      .mockResolvedValueOnce({ isError: true, error: { statusCode: 503 } })
+      .mockResolvedValueOnce({ data: { data: [], total: 0 }, isError: false });
+    refine.provider.mockReturnValue({
+      ...refine.provider(),
+      getOne: vi.fn().mockResolvedValueOnce({ data: record }).mockRejectedValue(missing)
+    });
+    const { result } = renderHook(() => useNoticeTemplateController());
+    const provider = refine.provider.mock.results.at(-1)?.value;
 
     await act(async () => result.current.remove(record));
 
     expect(result.current.state.list.kind).toBe('unavailable');
-    expect(refine.notification).not.toHaveBeenCalledWith(
-      expect.objectContaining({
-        message: 'noticeTemplates.deleteSuccess'
-      })
-    );
+    expect(result.current.state.recovery).toEqual({ stage: 'projection' });
+    expect(refine.notification).toHaveBeenCalledWith({ message: 'noticeTemplates.deleteSuccess', type: 'success' });
+
+    await act(async () => result.current.remove(record));
+    await act(async () => result.current.retryRecovery());
+    await act(async () => result.current.remove(record));
+
+    expect(provider.deleteOne).toHaveBeenCalledTimes(1);
+    expect(provider.getOne).toHaveBeenCalledTimes(2);
+    expect(refine.refetch).toHaveBeenCalledTimes(2);
+    expect(result.current.state.recovery).toBeNull();
+  });
+
+  it.each([
+    ['network', { statusCode: 0, kind: 'network' }],
+    ['server error', { statusCode: 503, httpStatus: 503, kind: 'http' }],
+    ['malformed success response', { statusCode: 200, httpStatus: 200, kind: 'http' }]
+  ])(
+    'locks an ambiguous create after %s because the void backend contract has no provable identity',
+    async (_name, details) => {
+      const ambiguous = Object.assign(new Error('ambiguous create'), details);
+      refine.provider.mockReturnValue({
+        ...refine.provider(),
+        custom: vi.fn().mockRejectedValue(ambiguous)
+      });
+      const { result } = renderHook(() => useNoticeTemplateController());
+      const provider = refine.provider.mock.results.at(-1)?.value;
+
+      act(() => result.current.create());
+      act(() => {
+        result.current.updateDraft({ name: 'New', content: '${content}' });
+      });
+      await act(async () => result.current.submit());
+
+      expect(result.current.state.draft).toMatchObject({ name: 'New' });
+      expect(result.current.state.recovery).toMatchObject({ stage: 'commit-uncertain', draft: { name: 'New' } });
+      expect(refine.refetch).not.toHaveBeenCalled();
+
+      await act(async () => result.current.submit());
+      await act(async () => result.current.retryRecovery());
+
+      expect(provider.custom).toHaveBeenCalledTimes(1);
+      expect(refine.refetch).not.toHaveBeenCalled();
+    }
+  );
+
+  it('allows create to be retried after a definite pre-commit rejection', async () => {
+    const rejected = Object.assign(new Error('rejected'), {
+      statusCode: 400,
+      httpStatus: 400,
+      kind: 'http'
+    });
+    refine.provider.mockReturnValue({
+      ...refine.provider(),
+      custom: vi
+        .fn()
+        .mockRejectedValueOnce(rejected)
+        .mockResolvedValueOnce({ data: { acknowledged: true } })
+    });
+    const { result } = renderHook(() => useNoticeTemplateController());
+    const provider = refine.provider.mock.results.at(-1)?.value;
+
+    act(() => result.current.create());
+    act(() => {
+      result.current.updateDraft({ name: 'New', content: '${content}' });
+    });
+    await act(async () => result.current.submit());
+    await act(async () => result.current.submit());
+
+    expect(provider.custom).toHaveBeenCalledTimes(2);
+    expect(result.current.state.recovery).toBeNull();
+    expect(result.current.state.draft).toBeNull();
   });
 
   it('does not leak query A refresh failure into a successful query B', async () => {

@@ -26,6 +26,8 @@ import {
 import { noticeTemplateCreateActionUrl, noticeTemplateResourceName } from '../notice-template-resource';
 import type { NoticeTemplateEditorController } from './use-notice-template-editor-controller';
 import type { NoticeTemplateOperationController } from './use-notice-template-operation-controller';
+import { proveNoticeTemplateUpdate } from './notice-template-write-proof';
+import { isDefiniteWriteRejection } from './notice-template-write-rejection';
 
 export function useNoticeTemplateSubmit({
   editor,
@@ -52,31 +54,65 @@ export function useNoticeTemplateSubmit({
     const owner = operation.beginCommand('saving');
     if (!owner) return;
     try {
-      await save(provider, draft);
-      if (!operation.isCurrent(owner)) return;
-      await refreshAuthoritatively();
-      if (!operation.isCurrent(owner)) return;
+      const confirmed = await saveAndProve(provider, draft, operation, owner);
+      if (!confirmed) return;
       editor.controls.publish(null);
       notify(t('noticeTemplates.saveSuccess'), 'success');
-    } catch {
-      if (operation.isCurrent(owner)) notify(t('noticeTemplates.saveFailed'), 'error');
+      try {
+        await refreshAuthoritatively();
+      } catch {
+        operation.setRecovery(owner, { stage: 'projection' });
+      }
+    } catch (reason) {
+      if (!operation.isCurrent(owner)) return;
+      if (draft.id === undefined && !isDefiniteWriteRejection(reason)) {
+        operation.setRecovery(owner, { stage: 'commit-uncertain', draft: { ...draft } });
+      }
+      notify(t('noticeTemplates.saveFailed'), 'error');
     } finally {
       operation.end(owner);
     }
   };
 }
 
-async function save(provider: DataProvider, draft: NoticeTemplateDraft) {
+async function saveAndProve(
+  provider: DataProvider,
+  draft: NoticeTemplateDraft,
+  operation: NoticeTemplateOperationController,
+  owner: Parameters<NoticeTemplateOperationController['isCurrent']>[0]
+) {
   if (draft.id === undefined) {
-    if (!provider.custom) throw new Error('Notice Template create action is unavailable');
-    const response = await provider.custom({
-      url: noticeTemplateCreateActionUrl,
-      method: 'post',
-      payload: draft
-    });
-    if (response.data.acknowledged !== true) throw new Error('Notice Template create was not acknowledged');
-    return;
+    await create(provider, draft);
+    return operation.isCurrent(owner);
   }
+  const receipt = { ...draft, id: draft.id };
+  operation.setRecovery(owner, { stage: 'update-proof', draft: receipt });
+  try {
+    await update(provider, receipt);
+  } catch (reason) {
+    if (isDefiniteWriteRejection(reason)) {
+      operation.clearRecovery(owner);
+      throw reason;
+    }
+  }
+  if (!operation.isCurrent(owner)) return false;
+  await proveNoticeTemplateUpdate(provider, receipt);
+  if (!operation.isCurrent(owner)) return false;
+  operation.clearRecovery(owner);
+  return true;
+}
+
+async function create(provider: DataProvider, draft: NoticeTemplateDraft) {
+  if (!provider.custom) throw new Error('Notice Template create action is unavailable');
+  const response = await provider.custom({
+    url: noticeTemplateCreateActionUrl,
+    method: 'post',
+    payload: draft
+  });
+  if (response.data.acknowledged !== true) throw new Error('Notice Template create was not acknowledged');
+}
+
+async function update(provider: DataProvider, draft: NoticeTemplateDraft & { id: number }) {
   if (!provider.update) throw new Error('Notice Template update action is unavailable');
   await provider.update<NoticeTemplateResourceRecord, NoticeTemplateDraft>({
     resource: noticeTemplateResourceName,

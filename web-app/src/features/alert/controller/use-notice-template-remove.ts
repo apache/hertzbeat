@@ -17,10 +17,13 @@
 
 import { useNotification, type DataProvider } from '@refinedev/core';
 import type { TFunction } from 'i18next';
+import { useRef } from 'react';
 
 import type { NoticeTemplateQuery, NoticeTemplateResourceRecord } from '../notice-template-model';
 import { noticeTemplateResourceName } from '../notice-template-resource';
 import type { NoticeTemplateOperationController } from './use-notice-template-operation-controller';
+import { preflightNoticeTemplateDeletion, proveNoticeTemplateDeletion } from './notice-template-write-proof';
+import { isDefiniteWriteRejection } from './notice-template-write-rejection';
 
 export function useNoticeTemplateRemove({
   guardWritable,
@@ -39,23 +42,29 @@ export function useNoticeTemplateRemove({
   operation: NoticeTemplateOperationController;
   t: TFunction;
 }) {
+  const confirmedDeletedIds = useRef(new Set<number>());
   return async (template: NoticeTemplateResourceRecord) => {
-    if (!guardWritable(template) || template.backendId == null || !provider.deleteOne) return;
+    const action = prepareDelete(guardWritable, provider, template);
+    if (!action || confirmedDeletedIds.current.has(action.id)) return;
     const owner = operation.beginCommand('deleting');
     if (!owner) return;
     try {
-      await provider.deleteOne<
-        NoticeTemplateResourceRecord,
-        { record: NoticeTemplateResourceRecord; query: NoticeTemplateQuery }
-      >({
-        resource: noticeTemplateResourceName,
-        id: template.backendId,
-        variables: { record: template, query }
+      const confirmed = await deleteAndProve({
+        action,
+        confirmedDeletedIds: confirmedDeletedIds.current,
+        operation,
+        owner,
+        provider,
+        query,
+        template
       });
-      if (!operation.isCurrent(owner)) return;
-      await refreshAuthoritatively();
-      if (!operation.isCurrent(owner)) return;
+      if (!confirmed) return;
       notification.open?.({ message: t('noticeTemplates.deleteSuccess'), type: 'success' });
+      try {
+        await refreshAuthoritatively();
+      } catch {
+        operation.setRecovery(owner, { stage: 'projection' });
+      }
     } catch {
       if (operation.isCurrent(owner)) {
         notification.open?.({ message: t('noticeTemplates.deleteFailed'), type: 'error' });
@@ -64,4 +73,52 @@ export function useNoticeTemplateRemove({
       operation.end(owner);
     }
   };
+}
+
+async function deleteAndProve(options: {
+  action: NonNullable<ReturnType<typeof prepareDelete>>;
+  confirmedDeletedIds: Set<number>;
+  operation: NoticeTemplateOperationController;
+  owner: Parameters<NoticeTemplateOperationController['isCurrent']>[0];
+  provider: DataProvider;
+  query: NoticeTemplateQuery;
+  template: NoticeTemplateResourceRecord;
+}) {
+  await preflightNoticeTemplateDeletion(options.provider, options.template);
+  if (!options.operation.isCurrent(options.owner)) return false;
+  options.operation.setRecovery(options.owner, {
+    stage: 'delete-proof',
+    id: options.action.id,
+    record: options.template
+  });
+  try {
+    await options.action.deleteOne<
+      NoticeTemplateResourceRecord,
+      { record: NoticeTemplateResourceRecord; query: NoticeTemplateQuery }
+    >({
+      resource: noticeTemplateResourceName,
+      id: options.action.id,
+      variables: { record: options.template, query: options.query }
+    });
+  } catch (reason) {
+    if (isDefiniteWriteRejection(reason)) {
+      options.operation.clearRecovery(options.owner);
+      throw reason;
+    }
+  }
+  if (!options.operation.isCurrent(options.owner)) return false;
+  options.confirmedDeletedIds.add(options.action.id);
+  await proveNoticeTemplateDeletion(options.provider, options.action.id);
+  if (!options.operation.isCurrent(options.owner)) return false;
+  options.operation.clearRecovery(options.owner);
+  return true;
+}
+
+function prepareDelete(
+  guardWritable: (template: NoticeTemplateResourceRecord) => boolean,
+  provider: DataProvider,
+  template: NoticeTemplateResourceRecord
+) {
+  if (!guardWritable(template) || template.backendId == null || !provider.deleteOne) return null;
+  return { deleteOne: provider.deleteOne, id: template.backendId };
 }
