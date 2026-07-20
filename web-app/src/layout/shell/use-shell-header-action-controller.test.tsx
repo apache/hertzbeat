@@ -9,7 +9,7 @@ import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const runtime = vi.hoisted(() => ({
-  changeLocale: vi.fn(),
+  changeLocale: vi.fn<(locale: string, options?: { signal?: AbortSignal }) => Promise<boolean>>(),
   go: vi.fn(),
   invalidateQueries: vi.fn(),
   logout: vi.fn(),
@@ -58,7 +58,7 @@ describe('useShellHeaderActionController', () => {
     vi.clearAllMocks();
     runtime.readLocale.mockReturnValue('en-US');
     runtime.invalidateQueries.mockResolvedValue(undefined);
-    runtime.changeLocale.mockResolvedValue(undefined);
+    runtime.changeLocale.mockResolvedValue(true);
     runtime.logout.mockResolvedValue(undefined);
   });
 
@@ -74,8 +74,102 @@ describe('useShellHeaderActionController', () => {
     expect(runtime.invalidateQueries).toHaveBeenCalledWith({ type: 'active' });
     expect(runtime.setTheme).toHaveBeenCalledWith('default');
     expect(runtime.persistPreferences).toHaveBeenCalledWith({ locale: 'zh-CN', theme: 'dark' });
-    expect(runtime.changeLocale).toHaveBeenCalledWith('zh-CN');
+    expect(runtime.changeLocale).toHaveBeenCalledWith('zh-CN', { signal: expect.any(AbortSignal) });
     expect(runtime.go).toHaveBeenCalledWith({ to: '/alerts', type: 'push' });
+  });
+
+  it('publishes and persists only the latest rapid locale selection', async () => {
+    let storedLocale = 'en-US';
+    let publishedLocale = 'en-US';
+    const older = deferred<void>();
+    runtime.readLocale.mockImplementation(() => storedLocale);
+    runtime.persistPreferences.mockImplementation(({ locale }: { locale: string }) => {
+      storedLocale = locale;
+    });
+    runtime.changeLocale
+      .mockImplementationOnce(async (locale: string, options?: { signal?: AbortSignal }) => {
+        await older.promise;
+        if (options?.signal?.aborted) return false;
+        publishedLocale = locale;
+        return true;
+      })
+      .mockImplementationOnce((locale: string, options?: { signal?: AbortSignal }) => {
+        if (options?.signal?.aborted) return Promise.resolve(false);
+        publishedLocale = locale;
+        return Promise.resolve(true);
+      });
+    const { result } = renderHook(() => useShellHeaderActionController());
+
+    let first!: Promise<boolean>;
+    let second!: Promise<boolean>;
+    act(() => {
+      first = result.current.changeLanguage();
+      second = result.current.changeLanguage();
+    });
+
+    await expect(second).resolves.toBe(true);
+    expect(publishedLocale).toBe('zh-TW');
+    expect(storedLocale).toBe('zh-TW');
+    expect(runtime.persistPreferences).toHaveBeenCalledTimes(1);
+
+    older.resolve();
+    await expect(first).resolves.toBe(false);
+    expect(publishedLocale).toBe('zh-TW');
+    expect(storedLocale).toBe('zh-TW');
+    expect(runtime.persistPreferences).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not publish or persist a locale after the controller unmounts', async () => {
+    const pending = deferred<void>();
+    let published = false;
+    runtime.changeLocale.mockImplementationOnce(async (_locale: string, options?: { signal?: AbortSignal }) => {
+      await pending.promise;
+      if (options?.signal?.aborted) return false;
+      published = true;
+      return true;
+    });
+    const { result, unmount } = renderHook(() => useShellHeaderActionController());
+
+    const command = result.current.changeLanguage();
+    unmount();
+    pending.resolve();
+
+    await expect(command).resolves.toBe(false);
+    expect(published).toBe(false);
+    expect(runtime.persistPreferences).not.toHaveBeenCalled();
+  });
+
+  it('ignores an older locale failure after a newer selection succeeds', async () => {
+    const older = deferred<void>();
+    runtime.changeLocale
+      .mockImplementationOnce(async () => {
+        await older.promise;
+        throw new Error('stale locale failure');
+      })
+      .mockResolvedValueOnce(true);
+    const { result } = renderHook(() => useShellHeaderActionController());
+
+    const first = result.current.changeLanguage();
+    const second = result.current.changeLanguage();
+    await expect(second).resolves.toBe(true);
+    older.resolve();
+
+    await expect(first).resolves.toBe(false);
+    expect(runtime.persistPreferences).toHaveBeenCalledTimes(1);
+    expect(runtime.persistPreferences).toHaveBeenLastCalledWith({ locale: 'zh-TW', theme: 'dark' });
+  });
+
+  it('does not persist a current locale failure and retries the same selection', async () => {
+    runtime.changeLocale.mockRejectedValueOnce(new Error('current locale failure')).mockResolvedValueOnce(true);
+    const { result } = renderHook(() => useShellHeaderActionController());
+
+    await expect(result.current.changeLanguage()).resolves.toBe(false);
+    expect(runtime.persistPreferences).not.toHaveBeenCalled();
+
+    await expect(result.current.changeLanguage()).resolves.toBe(true);
+    expect(runtime.changeLocale).toHaveBeenNthCalledWith(2, 'zh-CN', { signal: expect.any(AbortSignal) });
+    expect(runtime.persistPreferences).toHaveBeenCalledOnce();
+    expect(runtime.persistPreferences).toHaveBeenCalledWith({ locale: 'zh-CN', theme: 'dark' });
   });
 
   it('replaces the client identity only after logout succeeds', async () => {

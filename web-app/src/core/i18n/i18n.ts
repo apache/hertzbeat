@@ -48,6 +48,8 @@ const exploreLocaleLoaders: Record<SupportedLocale, () => Promise<{ default: Rec
 };
 
 export const i18n = i18next.createInstance();
+let latestLocaleLoad = 0;
+let localePublication = Promise.resolve();
 
 export function resolveLocale(value?: string | null): SupportedLocale {
   if (value && supportedLocales.includes(value as SupportedLocale)) return value as SupportedLocale;
@@ -55,33 +57,54 @@ export function resolveLocale(value?: string | null): SupportedLocale {
   return supportedLocales.find(locale => locale.startsWith(`${language}-`)) ?? 'en-US';
 }
 
-export async function loadLocale(locale: SupportedLocale) {
+export async function loadLocale(locale: SupportedLocale, options: { signal?: AbortSignal } = {}) {
+  const owner = ++latestLocaleLoad;
   if (!i18n.hasResourceBundle(locale, 'translation')) {
     const [messages, shellMessages, exploreMessages] = await Promise.all([
       localeLoaders[locale](),
       shellLocaleLoaders[locale](),
       exploreLocaleLoaders[locale]()
     ]);
-    i18n.addResourceBundle(locale, 'translation', {
-      ...messages.default,
-      ...shellMessages.default,
-      exploreTrace: {
-        ...messageGroup(messages.default.exploreTrace),
-        ...messageGroup(exploreMessages.default.exploreTrace)
+    i18n.addResourceBundle(
+      locale,
+      'translation',
+      {
+        ...messages.default,
+        ...shellMessages.default,
+        exploreTrace: {
+          ...messageGroup(messages.default.exploreTrace),
+          ...messageGroup(exploreMessages.default.exploreTrace)
+        },
+        explore: {
+          ...messageGroup(messages.default.explore),
+          ...messageGroup(exploreMessages.default.explore)
+        }
       },
-      explore: {
-        ...messageGroup(messages.default.explore),
-        ...messageGroup(exploreMessages.default.explore)
-      }
-    }, true, true);
+      true,
+      true
+    );
   }
-  await i18n.changeLanguage(locale);
+  return publishLatestLocale(locale, owner, options.signal);
+}
+
+function publishLatestLocale(locale: SupportedLocale, owner: number, signal?: AbortSignal) {
+  const ownsPublication = () => !signal?.aborted && owner === latestLocaleLoad;
+  // i18next publication is not cancellable. Serialize it so an older
+  // in-flight change always settles before the latest owner publishes.
+  const publication = localePublication.then(async () => {
+    if (!ownsPublication()) return false;
+    await i18n.changeLanguage(locale);
+    return ownsPublication();
+  });
+  localePublication = publication.then(
+    () => undefined,
+    () => undefined
+  );
+  return publication;
 }
 
 function messageGroup(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object' && !Array.isArray(value)
-    ? value as Record<string, unknown>
-    : {};
+  return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
 }
 
 export async function initializeI18n() {
