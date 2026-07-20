@@ -18,6 +18,9 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ApiMessageError } from '@/core/http/api-message';
+
+import { normalizeAlertInhibitApiFailure } from '../api/alert-inhibit-api-failure';
 import {
   AlertInhibitContractError,
   AlertInhibitMissingError,
@@ -429,6 +432,24 @@ describe('Alert Inhibit command controller', () => {
     expect(api.updateAlertInhibitEnabled).toHaveBeenCalledTimes(1);
     expect(api.loadAlertInhibit).toHaveBeenCalledTimes(2);
     expect(notify.success).toHaveBeenCalledWith('alertInhibits.operationSuccess');
+  });
+
+  it('keeps a timed-out update receipt proof-only when a second action is attempted', async () => {
+    const timedOutWrite = normalizeAlertInhibitApiFailure(new ApiMessageError('timeout', { status: 408 }));
+    api.saveAlertInhibit.mockRejectedValueOnce(timedOutWrite);
+    const { result } = renderCommandController();
+    await act(async () => result.current.edit(persistedAlertInhibit.id));
+
+    await act(async () => result.current.submit());
+    expect(result.current.state.recovery).toEqual({ kind: 'save', phase: 'proof', retryable: true });
+
+    await act(async () => result.current.submit());
+    expect(api.saveAlertInhibit).toHaveBeenCalledTimes(1);
+
+    await act(async () => result.current.retry());
+    expect(api.saveAlertInhibit).toHaveBeenCalledTimes(1);
+    expect(api.loadAlertInhibit).toHaveBeenCalledTimes(2);
+    expect(result.current.state.draft).toBeNull();
   });
 
   it('recovers an ambiguous delete by absence proof without repeating DELETE', async () => {

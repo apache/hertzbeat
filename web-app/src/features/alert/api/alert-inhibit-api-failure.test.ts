@@ -30,8 +30,32 @@ describe('Alert Inhibit API failure boundary', () => {
     ['malformed success', new ApiMessageError('invalid response', { status: 200 }), 'error', 'uncertain'],
     ['server response', new ApiMessageError('failed', { status: 500 }), 'error', 'uncertain'],
     ['server application response', new ApiMessageError('failed', { code: 12, status: 500 }), 'error', 'uncertain'],
-    ['request timeout response', new ApiMessageError('failed', { status: 408 }), 'error', 'rejected'],
+    ['request timeout response', new ApiMessageError('failed', { status: 408 }), 'error', 'uncertain'],
     ['other client rejection', new ApiMessageError('failed', { status: 400 }), 'error', 'rejected'],
+    [
+      'client rejection with business code',
+      new ApiMessageError('failed', { code: 12, status: 422 }),
+      'error',
+      'rejected'
+    ],
+    [
+      'client response with a transport cause',
+      new ApiMessageError('offline', { status: 422, cause: new Error('private cause') }),
+      'unavailable',
+      'uncertain'
+    ],
+    [
+      'HTTP missing with a transport cause',
+      new ApiMessageError('offline', { status: 404, cause: new Error('private cause') }),
+      'unavailable',
+      'uncertain'
+    ],
+    [
+      'backend missing with a transport cause',
+      new ApiMessageError('offline', { code: 3, status: 200, cause: new Error('private cause') }),
+      'unavailable',
+      'uncertain'
+    ],
     ['business response', new ApiMessageError('failed', { code: 12, status: 200 }), 'error', 'uncertain']
   ] as const)('maps %s to stable %s/%s domain evidence', (_label, error, kind, writeOutcome) => {
     expect(normalizeAlertInhibitApiFailure(error)).toMatchObject({ kind, writeOutcome });
