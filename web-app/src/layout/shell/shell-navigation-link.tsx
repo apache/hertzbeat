@@ -36,7 +36,13 @@ export function ShellNavigationLink(props: ShellNavigationLinkProps) {
     queryOptions: { staleTime: Number.POSITIVE_INFINITY }
   });
   const disabled = item.disabled || access.isLoading || access.data?.can === false;
-  const tooltip = collapsed ? label : disabled ? t(`shell.capability.${item.capability}`) : undefined;
+  let tooltip: string | undefined;
+  if (collapsed) {
+    tooltip = label;
+  } else if (disabled) {
+    tooltip = t(`shell.capability.${item.capability}`);
+  }
+  const linkClassName = active ? `${styles.navigationLink} ${styles.navigationLinkActive}` : styles.navigationLink;
 
   const navigate = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
@@ -48,7 +54,7 @@ export function ShellNavigationLink(props: ShellNavigationLinkProps) {
   return (
     <Tooltip title={tooltip} placement="right">
       <a
-        className={`${styles.navigationLink} ${active ? styles.navigationLinkActive : ''}`}
+        className={linkClassName}
         href={item.route}
         aria-current={active ? 'page' : undefined}
         aria-disabled={disabled || undefined}
