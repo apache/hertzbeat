@@ -178,7 +178,7 @@ describe('Notice Template Refine data provider', () => {
   });
 
   it('returns the acknowledged update payload without hiding a later proof read', async () => {
-    api.saveNoticeTemplate.mockResolvedValue(undefined);
+    api.saveNoticeTemplate.mockResolvedValue(null);
 
     await expect(
       noticeTemplateDataProvider.update<NoticeTemplateResourceRecord>({
@@ -216,8 +216,8 @@ describe('Notice Template Refine data provider', () => {
     ).rejects.toMatchObject({ code: 'NOTICE_TEMPLATE_CANONICAL_IDENTITY_INVALID' });
   });
 
-  it('uses only an exact custom acknowledgement for create and never guesses an id', async () => {
-    api.saveNoticeTemplate.mockResolvedValue(undefined);
+  it('preserves the server create response and never fabricates an acknowledgement or id', async () => {
+    api.saveNoticeTemplate.mockResolvedValue(null);
 
     await expect(
       noticeTemplateDataProvider.custom?.({
@@ -225,7 +225,7 @@ describe('Notice Template Refine data provider', () => {
         method: 'post',
         payload: { name: 'New', type: 1, content: '${content}' }
       })
-    ).resolves.toEqual({ data: { acknowledged: true } });
+    ).resolves.toEqual({ data: { response: null } });
     expect(api.saveNoticeTemplate).toHaveBeenCalledWith({ name: 'New', type: 1, content: '${content}' });
     expect(api.loadNoticeTemplate).not.toHaveBeenCalled();
     expect(api.loadNoticeTemplates).not.toHaveBeenCalled();

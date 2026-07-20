@@ -127,8 +127,8 @@ export const noticeTemplateDataProvider: DataProvider = {
       }
       const draft = readNoticeTemplateWriteInput(() => readNoticeTemplateDraft(params.payload));
       if (draft.id !== undefined) throw rejectedFailure('NOTICE_TEMPLATE_VARIABLES_INVALID');
-      await saveNoticeTemplate(draft);
-      return { data: adaptRefineRecord<TData>({ acknowledged: true }) };
+      const response = await saveNoticeTemplate(draft);
+      return { data: adaptRefineRecord<TData>({ response }) };
     });
   },
 

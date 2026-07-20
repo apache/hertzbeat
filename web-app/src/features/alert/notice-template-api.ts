@@ -19,6 +19,7 @@ import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '
 
 import {
   buildNoticeTemplatePayload,
+  NoticeTemplateContractError,
   parseNoticeTemplateDetail,
   parseNoticeTemplatePage,
   writeNoticeTemplateQuery,
@@ -44,11 +45,13 @@ export async function loadNoticeTemplate(id: number) {
 }
 
 export async function saveNoticeTemplate(draft: NoticeTemplateDraft) {
-  await noticeTemplateApiRequest('write', () => {
+  return noticeTemplateApiRequest('write', async () => {
     const payload = buildNoticeTemplatePayload(draft);
-    return draft.id
+    const response = await (draft.id
       ? apiMessagePut(noticeTemplateCreateActionUrl, payload)
-      : apiMessagePost(noticeTemplateCreateActionUrl, payload);
+      : apiMessagePost(noticeTemplateCreateActionUrl, payload));
+    if (response !== null) throw new NoticeTemplateContractError();
+    return null;
   });
 }
 

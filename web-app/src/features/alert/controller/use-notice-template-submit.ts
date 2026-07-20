@@ -104,12 +104,11 @@ async function saveAndProve(
 
 async function create(provider: DataProvider, draft: NoticeTemplateDraft) {
   if (!provider.custom) throw new Error('Notice Template create action is unavailable');
-  const response = await provider.custom({
+  await provider.custom({
     url: noticeTemplateCreateActionUrl,
     method: 'post',
     payload: draft
   });
-  if (response.data.acknowledged !== true) throw new Error('Notice Template create was not acknowledged');
 }
 
 async function update(provider: DataProvider, draft: NoticeTemplateDraft & { id: number }) {

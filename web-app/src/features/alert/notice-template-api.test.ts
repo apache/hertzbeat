@@ -58,15 +58,13 @@ describe('Notice Template API', () => {
     expect(http.apiMessageGet).toHaveBeenNthCalledWith(2, '/api/notice/template/42');
   });
 
-  it('keeps POST, PUT, and DELETE as explicit void acknowledgements', async () => {
-    http.apiMessagePost.mockResolvedValue({ ignored: true });
-    http.apiMessagePut.mockResolvedValue({ ignored: true });
+  it('accepts only exact null POST and PUT acknowledgements while DELETE remains void', async () => {
+    http.apiMessagePost.mockResolvedValue(null);
+    http.apiMessagePut.mockResolvedValue(null);
     http.apiMessageDelete.mockResolvedValue({ ignored: true });
 
-    await expect(saveNoticeTemplate({ name: 'New', type: 1, content: '${content}' })).resolves.toBeUndefined();
-    await expect(
-      saveNoticeTemplate({ id: 42, name: 'Updated', type: 1, content: '${content}' })
-    ).resolves.toBeUndefined();
+    await expect(saveNoticeTemplate({ name: 'New', type: 1, content: '${content}' })).resolves.toBeNull();
+    await expect(saveNoticeTemplate({ id: 42, name: 'Updated', type: 1, content: '${content}' })).resolves.toBeNull();
     await expect(deleteNoticeTemplate(42)).resolves.toBeUndefined();
     expect(http.apiMessagePost).toHaveBeenCalledWith('/api/notice/template', {
       name: 'New',
@@ -82,6 +80,24 @@ describe('Notice Template API', () => {
       content: '${content}'
     });
     expect(http.apiMessageDelete).toHaveBeenCalledWith('/api/notice/template/42');
+  });
+
+  it.each([
+    ['POST', { unexpectedId: 43 }],
+    ['PUT', undefined]
+  ])('rejects an unexpected non-null %s response as commit-uncertain invalid evidence', async (method, response) => {
+    if (method === 'POST') http.apiMessagePost.mockResolvedValue(response);
+    else http.apiMessagePut.mockResolvedValue(response);
+    const candidate =
+      method === 'POST'
+        ? { name: 'New', type: 1 as const, content: '${content}' }
+        : { id: 42, name: 'Updated', type: 1 as const, content: '${content}' };
+
+    await expect(saveNoticeTemplate(candidate)).rejects.toMatchObject({
+      kind: 'invalid',
+      writeOutcome: 'uncertain',
+      code: 'NOTICE_TEMPLATE_RESPONSE_INVALID'
+    });
   });
 
   it('rejects malformed list data instead of returning an empty page', async () => {

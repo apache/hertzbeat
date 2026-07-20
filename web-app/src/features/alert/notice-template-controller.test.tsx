@@ -70,8 +70,9 @@ describe('Notice Template controller', () => {
     vi.clearAllMocks();
     refine.params = 'name=Mail&preset=false&pageIndex=1&pageSize=15';
     refine.provider.mockReturnValue({
-      custom: vi.fn().mockResolvedValue({ data: { acknowledged: true } }),
+      custom: vi.fn().mockResolvedValue({ data: { response: null } }),
       deleteOne: vi.fn().mockResolvedValue({ data: record }),
+      getList: vi.fn(),
       getOne: vi.fn().mockResolvedValue({ data: record }),
       update: vi.fn().mockResolvedValue({ data: record })
     });
@@ -205,7 +206,7 @@ describe('Notice Template controller', () => {
     expect(result.current.state.list).toEqual({ kind: 'ready', records: [], total: 5 });
   });
 
-  it('creates through the exact custom ack and closes only after authoritative list refetch', async () => {
+  it('accepts one resolved POST without create inference and then refreshes the list', async () => {
     const { result } = renderHook(() => useNoticeTemplateController());
     const provider = refine.provider.mock.results[0]?.value;
     act(() => result.current.create());
@@ -219,12 +220,15 @@ describe('Notice Template controller', () => {
       method: 'post',
       payload: { name: 'New', type: 1, content: '${content}' }
     });
+    expect(provider.getList).not.toHaveBeenCalled();
+    expect(provider.getOne).not.toHaveBeenCalled();
     expect(refine.refetch).toHaveBeenCalledTimes(1);
     expect(result.current.state.draft).toBeNull();
+    expect(refine.notification).toHaveBeenCalledWith({ message: 'noticeTemplates.saveSuccess', type: 'success' });
   });
 
   it('admits only one same-tick submit write', async () => {
-    const write = deferred<{ data: { acknowledged: true } }>();
+    const write = deferred<{ data: { response: null } }>();
     refine.provider.mockReturnValue({
       ...refine.provider(),
       custom: vi.fn().mockReturnValue(write.promise)
@@ -244,12 +248,12 @@ describe('Notice Template controller', () => {
     });
 
     expect(provider.custom).toHaveBeenCalledTimes(1);
-    write.resolve({ data: { acknowledged: true } });
+    write.resolve({ data: { response: null } });
     await act(async () => Promise.all([first, second]));
   });
 
   it('does not let create or close supersede an in-flight submit', async () => {
-    const write = deferred<{ data: { acknowledged: true } }>();
+    const write = deferred<{ data: { response: null } }>();
     refine.provider.mockReturnValue({
       ...refine.provider(),
       custom: vi.fn().mockReturnValue(write.promise)
@@ -267,7 +271,7 @@ describe('Notice Template controller', () => {
       result.current.closeDraft();
     });
     expect(result.current.state.draft).toMatchObject({ name: 'Old' });
-    write.resolve({ data: { acknowledged: true } });
+    write.resolve({ data: { response: null } });
     await act(async () => saving);
 
     expect(result.current.state.draft).toBeNull();
@@ -279,7 +283,7 @@ describe('Notice Template controller', () => {
   });
 
   it('retires an in-flight submit when the controller unmounts', async () => {
-    const write = deferred<{ data: { acknowledged: true } }>();
+    const write = deferred<{ data: { response: null } }>();
     refine.provider.mockReturnValue({
       ...refine.provider(),
       custom: vi.fn().mockReturnValue(write.promise)
@@ -295,7 +299,7 @@ describe('Notice Template controller', () => {
       saving = result.current.submit();
     });
     unmount();
-    write.resolve({ data: { acknowledged: true } });
+    write.resolve({ data: { response: null } });
     await act(async () => saving);
 
     expect(refine.refetch).not.toHaveBeenCalled();
@@ -773,33 +777,30 @@ describe('Notice Template controller', () => {
     ['network', unavailableFailure()],
     ['server error', unavailableFailure()],
     ['malformed success response', invalidFailure()]
-  ])(
-    'locks an ambiguous create after %s because the void backend contract has no provable identity',
-    async (_name, ambiguous) => {
-      refine.provider.mockReturnValue({
-        ...refine.provider(),
-        custom: vi.fn().mockRejectedValue(ambiguous)
-      });
-      const { result } = renderHook(() => useNoticeTemplateController());
-      const provider = refine.provider.mock.results.at(-1)?.value;
+  ])('locks an ambiguous create after %s without replaying POST', async (_name, ambiguous) => {
+    refine.provider.mockReturnValue({
+      ...refine.provider(),
+      custom: vi.fn().mockRejectedValue(ambiguous)
+    });
+    const { result } = renderHook(() => useNoticeTemplateController());
+    const provider = refine.provider.mock.results.at(-1)?.value;
 
-      act(() => result.current.create());
-      act(() => {
-        result.current.updateDraft({ name: 'New', content: '${content}' });
-      });
-      await act(async () => result.current.submit());
+    act(() => result.current.create());
+    act(() => {
+      result.current.updateDraft({ name: 'New', content: '${content}' });
+    });
+    await act(async () => result.current.submit());
 
-      expect(result.current.state.draft).toMatchObject({ name: 'New' });
-      expect(result.current.state.recovery).toMatchObject({ stage: 'commit-uncertain', draft: { name: 'New' } });
-      expect(refine.refetch).not.toHaveBeenCalled();
+    expect(result.current.state.draft).toMatchObject({ name: 'New' });
+    expect(result.current.state.recovery).toMatchObject({ stage: 'commit-uncertain', draft: { name: 'New' } });
+    expect(refine.refetch).not.toHaveBeenCalled();
 
-      await act(async () => result.current.submit());
-      await act(async () => result.current.retryRecovery());
+    await act(async () => result.current.submit());
+    await act(async () => result.current.retryRecovery());
 
-      expect(provider.custom).toHaveBeenCalledTimes(1);
-      expect(refine.refetch).not.toHaveBeenCalled();
-    }
-  );
+    expect(provider.custom).toHaveBeenCalledTimes(1);
+    expect(refine.refetch).not.toHaveBeenCalled();
+  });
 
   it('allows create to be retried after a definite pre-commit rejection', async () => {
     const rejected = rejectedFailure();
@@ -808,7 +809,7 @@ describe('Notice Template controller', () => {
       custom: vi
         .fn()
         .mockRejectedValueOnce(rejected)
-        .mockResolvedValueOnce({ data: { acknowledged: true } })
+        .mockResolvedValueOnce({ data: { response: null } })
     });
     const { result } = renderHook(() => useNoticeTemplateController());
     const provider = refine.provider.mock.results.at(-1)?.value;
