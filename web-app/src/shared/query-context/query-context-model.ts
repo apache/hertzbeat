@@ -82,7 +82,7 @@ export function clearQueryContext(context: QueryContext, from: QueryContextField
 
 export function queryContextScopeKey(context: QueryContext) {
   const normalized = normalizeContext(context);
-  return contextFields.map(field => normalized[field] ?? '').join('\u001f');
+  return JSON.stringify(contextFields.map(field => normalized[field] ?? ''));
 }
 
 export function buildSignalHandoffPath(signal: SignalKind, context: QueryContext, window: ExactTimeWindow) {

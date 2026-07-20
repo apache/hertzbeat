@@ -84,7 +84,19 @@ describe('shared query context model', () => {
     expect(first).not.toEqual(switched);
     expect(first).not.toEqual(refreshed);
     expect(queryContextScopeKey(checkout)).toBe(
-      'collector-east\u001fcheckout\u001fcommerce\u001fprod\u001fcheckout-7d9\u001f/checkout'
+      '["collector-east","checkout","commerce","prod","checkout-7d9","/checkout"]'
+    );
+  });
+
+  it('does not collide when a scope value contains the former field delimiter', () => {
+    expect(queryContextScopeKey({ collectorId: 'a\u001fb', serviceName: 'c' })).not.toBe(
+      queryContextScopeKey({ collectorId: 'a', serviceName: 'b\u001fc' })
+    );
+  });
+
+  it('keeps fixed field order and stable defaults independently of object key order', () => {
+    expect(queryContextScopeKey({ serviceName: 'checkout', collectorId: 'collector-east' })).toBe(
+      '["collector-east","checkout","","","",""]'
     );
   });
 });
