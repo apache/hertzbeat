@@ -37,7 +37,7 @@ class BrowserEventStream {
   private source: EventSource | undefined;
   private retryTimer: ReturnType<typeof setTimeout> | undefined;
   private consecutiveFailures = 0;
-  private refreshAttempted = false;
+  private refreshAttemptedInFailureEpisode = false;
   private retryScheduled = false;
   private closed = false;
 
@@ -60,6 +60,9 @@ class BrowserEventStream {
     current.onopen = () => {
       if (!this.owns(current)) return;
       this.consecutiveFailures = 0;
+      // A native open event is the only proof that the previous failure
+      // episode recovered. Construction alone must not restore refresh credit.
+      this.refreshAttemptedInFailureEpisode = false;
       this.handlers.onOpen();
     };
     current.onerror = () => {
@@ -100,10 +103,10 @@ class BrowserEventStream {
   }
 
   private async recoverAndReconnect(delay: number) {
-    // Refresh at most once per stream. Further retries only back off so an
-    // expired session cannot create a refresh storm.
-    if (!this.refreshAttempted) {
-      this.refreshAttempted = true;
+    // Refresh at most once per continuous failure episode. Further retries
+    // only back off until a native open event proves recovery.
+    if (!this.refreshAttemptedInFailureEpisode) {
+      this.refreshAttemptedInFailureEpisode = true;
       try {
         await refreshBrowserSession();
       } catch {

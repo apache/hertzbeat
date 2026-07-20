@@ -64,6 +64,8 @@ describe('browser event stream transport', () => {
 
     expect(handlers.onOpen).toHaveBeenCalledOnce();
     expect(handlers.onEvent).toHaveBeenCalledWith('LOG_EVENT', 'payload');
+    expect(refreshBrowserSession).toHaveBeenCalledOnce();
+    expect(handlers.onRetrying).toHaveBeenCalledOnce();
     expect(FakeEventSource.instances).toHaveLength(1);
   });
 
@@ -83,7 +85,56 @@ describe('browser event stream transport', () => {
     expect(second.close).not.toHaveBeenCalled();
     expect(FakeEventSource.instances).toHaveLength(2);
   });
+
+  it('refreshes once again after a retry has genuinely opened a new connection', async () => {
+    const handlers = callbacks();
+    openBrowserEventStream('/logs', handlers);
+    const first = FakeEventSource.instances[0]!;
+
+    first.fail();
+    await vi.advanceTimersByTimeAsync(1_000);
+    const recovered = FakeEventSource.instances[1]!;
+    recovered.open();
+    recovered.fail();
+    await vi.advanceTimersByTimeAsync(1_000);
+
+    expect(refreshBrowserSession).toHaveBeenCalledTimes(2);
+    expect(handlers.onOpen).toHaveBeenCalledOnce();
+    expect(handlers.onRetrying).toHaveBeenCalledTimes(2);
+    expect(FakeEventSource.instances).toHaveLength(3);
+  });
+
+  it('does not reconnect or deliver callbacks after close while refresh is pending', async () => {
+    const refresh = deferred<boolean>();
+    refreshBrowserSession.mockReturnValueOnce(refresh.promise);
+    const handlers = callbacks();
+    const stream = openBrowserEventStream('/logs', handlers);
+    const source = FakeEventSource.instances[0]!;
+
+    source.fail();
+    stream.close();
+    source.open();
+    source.emit('LOG_EVENT', 'stale');
+    source.fail();
+    refresh.resolve(true);
+    await refresh.promise;
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    expect(FakeEventSource.instances).toHaveLength(1);
+    expect(handlers.onOpen).not.toHaveBeenCalled();
+    expect(handlers.onEvent).not.toHaveBeenCalled();
+    expect(handlers.onRetrying).toHaveBeenCalledOnce();
+    expect(handlers.onUnavailable).not.toHaveBeenCalled();
+  });
 });
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>(complete => {
+    resolve = complete;
+  });
+  return { promise, resolve };
+}
 
 function callbacks() {
   return {
@@ -101,11 +152,19 @@ class FakeEventSource {
   onerror: (() => void) | null = null;
   close = vi.fn();
   private listeners = new Map<string, (event: MessageEvent<string>) => void>();
-  constructor(readonly path: string) { FakeEventSource.instances.push(this); }
+  constructor(readonly path: string) {
+    FakeEventSource.instances.push(this);
+  }
   addEventListener(name: string, listener: EventListenerOrEventListenerObject) {
     this.listeners.set(name, listener as (event: MessageEvent<string>) => void);
   }
-  open() { this.onopen?.(); }
-  fail() { this.onerror?.(); }
-  emit(name: string, data: string) { this.listeners.get(name)?.(new MessageEvent(name, { data })); }
+  open() {
+    this.onopen?.();
+  }
+  fail() {
+    this.onerror?.();
+  }
+  emit(name: string, data: string) {
+    this.listeners.get(name)?.(new MessageEvent(name, { data }));
+  }
 }
