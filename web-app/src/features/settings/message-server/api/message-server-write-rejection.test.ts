@@ -19,7 +19,7 @@ import { describe, expect, it } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
 
-import { MessageServerContractError } from '../api/message-server-schema';
+import { MessageServerContractError } from './message-server-schema';
 import { isDefiniteMessageServerWriteRejection } from './message-server-write-rejection';
 
 describe('message server write rejection', () => {

@@ -18,7 +18,7 @@
 import { useEffect, useRef, useState, type MutableRefObject } from 'react';
 
 import { classifyMessageServerReadError } from '../api/message-server-api';
-import { isDefiniteMessageServerWriteRejection } from './message-server-write-rejection';
+import { isDefiniteMessageServerWriteRejection } from '../api/message-server-write-rejection';
 
 export type MessageServerSaveNotifications = {
   invalid: () => void;
