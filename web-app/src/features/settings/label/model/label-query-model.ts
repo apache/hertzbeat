@@ -16,7 +16,8 @@
  */
 
 export type LabelQuery = { search: string; pageIndex: number; pageSize: LabelPageSize };
-export type LabelPageSize = typeof labelPageSizes[number];
+export type LabelPageSize = (typeof labelPageSizes)[number];
+export type LabelDeletePageReceipt = { query: LabelQuery; visibleRecords: number };
 
 export const labelPageSizes = [20, 50, 100] as const;
 
@@ -44,12 +45,25 @@ export function isLabelPageSize(value: number): value is LabelPageSize {
   return labelPageSizes.includes(value as LabelPageSize);
 }
 
+export function labelQueryAfterConfirmedDelete(current: LabelQuery, receipt: LabelDeletePageReceipt) {
+  if (!sameLabelQuery(current, receipt.query) || current.pageIndex === 0 || receipt.visibleRecords !== 1) {
+    return undefined;
+  }
+  return { ...current, pageIndex: current.pageIndex - 1 };
+}
+
 function normalizeLabelQuery(query: LabelQuery): LabelQuery {
-  return readLabelQuery(new URLSearchParams({
-    search: query.search,
-    pageIndex: String(query.pageIndex),
-    pageSize: String(query.pageSize)
-  }));
+  return readLabelQuery(
+    new URLSearchParams({
+      search: query.search,
+      pageIndex: String(query.pageIndex),
+      pageSize: String(query.pageSize)
+    })
+  );
+}
+
+function sameLabelQuery(left: LabelQuery, right: LabelQuery) {
+  return left.search === right.search && left.pageIndex === right.pageIndex && left.pageSize === right.pageSize;
 }
 
 function readNonNegativeInteger(value: string | null) {

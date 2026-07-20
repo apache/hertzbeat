@@ -20,14 +20,17 @@ import { useCallback, useMemo } from 'react';
 
 import { type LabelListState, type LabelRecord } from '../model/label-model';
 import { classifyLabelReadFailure, labelProjectionConverged, type LabelMutationEvidence } from '../model/label-failure';
-import type { LabelQuery } from '../model/label-query-model';
+import type { LabelDeletePageReceipt, LabelQuery } from '../model/label-query-model';
 import { useLabelActionsController } from './label-actions-controller';
 import { useLabelMutationController } from './label-mutation-controller';
 
 const labelResource = 'labels';
 const labelDataProvider = 'labels';
 
-export function useLabelResourceController(query: LabelQuery) {
+export function useLabelResourceController(
+  query: LabelQuery,
+  reconcileConfirmedDelete?: (receipt: LabelDeletePageReceipt) => boolean
+) {
   const list = useList<LabelRecord, HttpError>({
     resource: labelResource,
     dataProviderName: labelDataProvider,
@@ -47,7 +50,12 @@ export function useLabelResourceController(query: LabelQuery) {
     },
     [refetch]
   );
-  const mutations = useLabelMutationController(convergeProjection);
+  const visibleRecords = list.result.data.length;
+  // The callback captured when DELETE starts is its immutable query/page receipt across later renders.
+  const onDeleteConfirmed = useCallback(() => {
+    reconcileConfirmedDelete?.({ query, visibleRecords });
+  }, [query, reconcileConfirmedDelete, visibleRecords]);
+  const mutations = useLabelMutationController(convergeProjection, onDeleteConfirmed);
   const actions = useLabelActionsController();
   const isMutationInFlight = mutations.isInFlight;
   const listState = useMemo(

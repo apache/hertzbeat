@@ -15,19 +15,32 @@
  * limitations under the License.
  */
 
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 
 import { settingsPaths } from '@/shared/settings/settings-routes';
 
-import { readLabelQuery, writeLabelQuery, type LabelPageSize } from '../model/label-query-model';
+import {
+  labelQueryAfterConfirmedDelete,
+  readLabelQuery,
+  writeLabelQuery,
+  type LabelDeletePageReceipt,
+  type LabelPageSize,
+  type LabelQuery
+} from '../model/label-query-model';
 
 export function useLabelQueryController() {
   const { pathname } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const locationSearch = searchParams.toString();
   const query = useMemo(() => readLabelQuery(new URLSearchParams(locationSearch)), [locationSearch]);
+  const queryRef = useRef(query);
   const canonicalSearch = useMemo(() => writeLabelQuery(query).toString(), [query]);
+
+  // Publish only committed external navigation before later layout effects can settle an old delete.
+  useLayoutEffect(() => {
+    queryRef.current = query;
+  }, [query]);
 
   useEffect(() => {
     if (pathname === settingsPaths.labels && locationSearch !== canonicalSearch) {
@@ -35,26 +48,43 @@ export function useLabelQueryController() {
     }
   }, [canonicalSearch, locationSearch, pathname, setSearchParams]);
 
+  const navigateQuery = useCallback(
+    (next: LabelQuery, replace = false) => {
+      queryRef.current = next;
+      setSearchParams(writeLabelQuery(next), { replace });
+    },
+    [setSearchParams]
+  );
+
   const setSearch = useCallback(
     (value: string) => {
       const search = value.trim();
-      setSearchParams(
-        writeLabelQuery({
-          ...query,
-          search,
-          pageIndex: search === query.search ? query.pageIndex : 0
-        })
-      );
+      const current = queryRef.current;
+      navigateQuery({
+        ...current,
+        search,
+        pageIndex: search === current.search ? current.pageIndex : 0
+      });
     },
-    [query, setSearchParams]
+    [navigateQuery]
   );
 
   const setPage = useCallback(
     (pageIndex: number, pageSize: LabelPageSize) => {
-      setSearchParams(writeLabelQuery({ ...query, pageIndex, pageSize }));
+      navigateQuery({ ...queryRef.current, pageIndex, pageSize });
     },
-    [query, setSearchParams]
+    [navigateQuery]
   );
 
-  return { query, setPage, setSearch };
+  const reconcileConfirmedDelete = useCallback(
+    (receipt: LabelDeletePageReceipt) => {
+      const next = labelQueryAfterConfirmedDelete(queryRef.current, receipt);
+      if (!next) return false;
+      navigateQuery(next, true);
+      return true;
+    },
+    [navigateQuery]
+  );
+
+  return { query, reconcileConfirmedDelete, setPage, setSearch };
 }

@@ -31,13 +31,16 @@ const labelDataProvider = 'labels';
 const listInvalidation = ['list'] as const;
 type Translate = ReturnType<typeof useTranslation>['t'];
 
-export function useLabelMutationController(convergeProjection: (evidence: LabelMutationEvidence) => Promise<boolean>) {
+export function useLabelMutationController(
+  convergeProjection: (evidence: LabelMutationEvidence) => Promise<boolean>,
+  onDeleteConfirmed: () => void
+) {
   const { t } = useTranslation();
   const notification = useNotification();
   const remove = useDelete<LabelRecord, HttpError, LabelRecord>();
   const operation = useExclusiveOperation('label-mutation');
   const save = useLabelSaveMutationController(operation, notification, t, convergeProjection);
-  const deleteLabel = useDeleteLabel(remove, operation, save.recoveryController, notification, t);
+  const deleteLabel = useDeleteLabel(remove, operation, save.recoveryController, notification, t, onDeleteConfirmed);
 
   return {
     createLabel: save.createLabel,
@@ -57,7 +60,8 @@ function useDeleteLabel(
   operation: ExclusiveOperation,
   recovery: LabelSaveRecoveryController,
   notification: ReturnType<typeof useNotification>,
-  t: Translate
+  t: Translate,
+  onDeleteConfirmed: () => void
 ) {
   // Provider proof can precede list projection, so retire IDs from stale table rows.
   const confirmedDeletedIdsRef = useRef(new Set<number>());
@@ -74,13 +78,14 @@ function useDeleteLabel(
       if (!owner) return false;
       remove.mutate(
         deleteLabelParams(record),
-        recovery.deleteCallbacks(owner, createLabelDeleteEvidence('write', 'proof', record), () =>
-          confirmedDeletedIdsRef.current.add(id)
-        )
+        recovery.deleteCallbacks(owner, createLabelDeleteEvidence('write', 'proof', record), () => {
+          confirmedDeletedIdsRef.current.add(id);
+          onDeleteConfirmed();
+        })
       );
       return true;
     },
-    [notification, operation, recovery, remove, t]
+    [notification, onDeleteConfirmed, operation, recovery, remove, t]
   );
 }
 

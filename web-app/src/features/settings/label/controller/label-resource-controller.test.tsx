@@ -201,7 +201,9 @@ describe('Label resource controller', () => {
   );
 
   it('retires a confirmed delete so a stale list row cannot repeat it', () => {
-    const { result } = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
+    const confirmDelete = vi.fn();
+    const query = { search: 'env', pageIndex: 2, pageSize: 50 as const };
+    const { result } = renderHook(() => useLabelResourceController(query, confirmDelete));
 
     act(() => {
       result.current.deleteLabel(serverLabel);
@@ -210,15 +212,21 @@ describe('Label resource controller', () => {
     act(() => {
       void callbacks?.onSuccess?.({ data: serverLabel });
       result.current.deleteLabel(serverLabel);
+      result.current.refresh();
     });
 
     expect(refine.deleteMutate).toHaveBeenCalledTimes(1);
+    expect(refine.refetch).toHaveBeenCalledTimes(1);
+    expect(confirmDelete).toHaveBeenCalledOnce();
+    expect(confirmDelete).toHaveBeenCalledWith({ query, visibleRecords: 1 });
   });
 
   it('retries ambiguous delete with exact GET proof and never repeats DELETE', async () => {
     labelApi.findCanonicalLabel.mockResolvedValue(undefined);
     refine.refetch.mockResolvedValue({ isError: false, data: { data: [], total: 0 } });
-    const { result } = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
+    const confirmDelete = vi.fn();
+    const query = { search: 'env', pageIndex: 2, pageSize: 50 as const };
+    const { result } = renderHook(() => useLabelResourceController(query, confirmDelete));
     act(() => {
       result.current.deleteLabel(serverLabel);
     });
@@ -240,6 +248,8 @@ describe('Label resource controller', () => {
     expect(labelApi.findCanonicalLabel).toHaveBeenCalledWith({ id: 7, name: 'env', tagValue: 'prod' });
     expect(refine.refetch).toHaveBeenCalledTimes(1);
     expect(refine.deleteMutate).toHaveBeenCalledTimes(1);
+    expect(confirmDelete).toHaveBeenCalledOnce();
+    expect(confirmDelete).toHaveBeenCalledWith({ query, visibleRecords: 1 });
     expect(result.current.recovery).toBeNull();
     expect(refine.notificationOpen).toHaveBeenCalledWith({ message: 'labels.deleteSuccess', type: 'success' });
   });
@@ -465,7 +475,10 @@ describe('Label resource controller', () => {
   it('retains delete proof when refetch succeeds but still projects the deleted id', async () => {
     labelApi.findCanonicalLabel.mockResolvedValue(undefined);
     refine.refetch.mockResolvedValue({ isError: false, data: { data: [serverLabel], total: 1 } });
-    const { result } = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
+    const confirmDelete = vi.fn();
+    const { result } = renderHook(() =>
+      useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }, confirmDelete)
+    );
     act(() => {
       result.current.deleteLabel(serverLabel);
     });
@@ -481,6 +494,7 @@ describe('Label resource controller', () => {
 
     expect(result.current.recovery).toBe('proof');
     expect(refine.deleteMutate).toHaveBeenCalledTimes(1);
+    expect(confirmDelete).not.toHaveBeenCalled();
     expect(refine.notificationOpen).not.toHaveBeenCalledWith({ message: 'labels.deleteSuccess', type: 'success' });
   });
 

@@ -30,8 +30,8 @@ import type { LabelRecovery } from '../controller/label-save-recovery-controller
 
 export function LabelPage() {
   const { t } = useTranslation();
-  const { query, setPage, setSearch } = useLabelQueryController();
-  const resource = useLabelResourceController(query);
+  const { query, reconcileConfirmedDelete, setPage, setSearch } = useLabelQueryController();
+  const resource = useLabelResourceController(query, reconcileConfirmedDelete);
   const { value: draftSearch, setValue: setDraftSearch } = useStringQueryDraft(query.search, query.search);
   const editor = useLabelEditorController(resource);
   const writeLocked = resource.isLocked();

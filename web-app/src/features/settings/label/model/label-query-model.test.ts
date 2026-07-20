@@ -17,13 +17,13 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { readLabelQuery, writeLabelQuery } from './label-query-model';
+import { labelQueryAfterConfirmedDelete, readLabelQuery, writeLabelQuery } from './label-query-model';
 
 describe('Label query model', () => {
   it('parses and writes only the canonical Label URL contract', () => {
-    const query = readLabelQuery(new URLSearchParams(
-      'search=%20env%20&pageIndex=2&pageSize=50&token=private-token&panel=legacy'
-    ));
+    const query = readLabelQuery(
+      new URLSearchParams('search=%20env%20&pageIndex=2&pageSize=50&token=private-token&panel=legacy')
+    );
 
     expect(query).toEqual({ search: 'env', pageIndex: 2, pageSize: 50 });
     expect(writeLabelQuery(query).toString()).toBe('pageIndex=2&pageSize=50&search=env');
@@ -36,5 +36,31 @@ describe('Label query model', () => {
     ['pageIndex=2x&pageSize=20', { search: '', pageIndex: 0, pageSize: 20 }]
   ])('canonicalizes invalid query values from %s', (input, expected) => {
     expect(readLabelQuery(new URLSearchParams(input))).toEqual(expected);
+  });
+
+  it('moves only an unchanged nonzero query with one visible record to its previous page', () => {
+    const deletedFrom = { search: 'env', pageIndex: 2, pageSize: 50 as const };
+
+    expect(labelQueryAfterConfirmedDelete(deletedFrom, { query: deletedFrom, visibleRecords: 1 })).toEqual({
+      search: 'env',
+      pageIndex: 1,
+      pageSize: 50
+    });
+    expect(labelQueryAfterConfirmedDelete(deletedFrom, { query: deletedFrom, visibleRecords: 2 })).toBeUndefined();
+    expect(
+      labelQueryAfterConfirmedDelete(
+        { ...deletedFrom, search: 'production' },
+        { query: deletedFrom, visibleRecords: 1 }
+      )
+    ).toBeUndefined();
+    expect(
+      labelQueryAfterConfirmedDelete(
+        { ...deletedFrom, pageIndex: 0 },
+        {
+          query: { ...deletedFrom, pageIndex: 0 },
+          visibleRecords: 1
+        }
+      )
+    ).toBeUndefined();
   });
 });
