@@ -413,7 +413,7 @@ describe('useMessageServerController', () => {
   it('classifies write failure separately and releases the validation/save gate for a corrected draft', async () => {
     api.loadEmailServerConfig.mockResolvedValue(emailEvidence());
     api.loadSmsServerConfig.mockResolvedValue({ status: 'missing', config: null });
-    const rejected = new ApiMessageError('write rejected', { status: 400 });
+    const rejected = new ApiMessageError('write rejected', { code: 42, status: 400 });
     api.saveEmailServerConfig.mockRejectedValueOnce(rejected).mockResolvedValueOnce('Update config success');
     const { result } = renderHook(() => useMessageServerController(), { wrapper: wrapper() });
     await waitFor(() => expect(result.current.email.kind).toBe('configured'));
@@ -436,6 +436,8 @@ describe('useMessageServerController', () => {
 
   it.each([
     ['business envelope', new ApiMessageError('business rejection', { code: 42, status: 200 })],
+    ['HTTP 408', new ApiMessageError('timeout', { status: 408 })],
+    ['cause-bearing HTTP 4xx', new ApiMessageError('offline', { status: 409, cause: new Error('private cause') })],
     ['server error', { status: 503 }],
     ['malformed success response', new MessageServerContractError()]
   ])('proves an ambiguous email POST after %s without repeating the write', async (_label, details) => {

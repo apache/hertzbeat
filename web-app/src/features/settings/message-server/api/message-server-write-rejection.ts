@@ -16,9 +16,10 @@
  */
 
 import { ApiMessageError } from '@/core/http/api-message';
+import { apiMessageWriteOutcome } from '@/core/http/api-message-write-evidence';
 
 /** Only an explicit HTTP 4xx proves that the Message Server POST did not commit. */
 export function isDefiniteMessageServerWriteRejection(reason: unknown) {
   if (!(reason instanceof ApiMessageError)) return false;
-  return reason.code === undefined && reason.status !== undefined && reason.status >= 400 && reason.status < 500;
+  return apiMessageWriteOutcome(reason) === 'rejected';
 }

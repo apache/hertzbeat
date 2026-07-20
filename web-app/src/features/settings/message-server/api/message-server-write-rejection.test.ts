@@ -27,7 +27,15 @@ describe('message server write rejection', () => {
     expect(
       isDefiniteMessageServerWriteRejection(new ApiMessageError('business rejection', { code: 42, status: 200 }))
     ).toBe(false);
-    expect(isDefiniteMessageServerWriteRejection(new ApiMessageError('client rejection', { status: 400 }))).toBe(true);
+    expect(isDefiniteMessageServerWriteRejection(new ApiMessageError('timeout', { status: 408 }))).toBe(false);
+    expect(
+      isDefiniteMessageServerWriteRejection(
+        new ApiMessageError('offline', { status: 409, cause: new Error('private cause') })
+      )
+    ).toBe(false);
+    expect(
+      isDefiniteMessageServerWriteRejection(new ApiMessageError('client rejection', { code: 42, status: 400 }))
+    ).toBe(true);
     expect(isDefiniteMessageServerWriteRejection(new ApiMessageError('server failure', { status: 503 }))).toBe(false);
     expect(isDefiniteMessageServerWriteRejection(new ApiMessageError('malformed response', { status: 200 }))).toBe(
       false
