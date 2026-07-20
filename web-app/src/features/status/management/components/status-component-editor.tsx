@@ -10,12 +10,23 @@ import type { FormInstance } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import type { StatusComponent } from '../model/status-management-contract';
-import { formatLabels, parseLabels } from '../model/status-management-model';
+import {
+  buildStatusComponentPayload,
+  formatLabels,
+  statusComponentMethod,
+  statusComponentState
+} from '../model/status-management-model';
 import { StatusWriteRecoveryAlert } from './status-write-recovery-alert';
 
-type ComponentFormValue = StatusComponent & { labelText?: string };
+type ComponentFormValue = {
+  name: string;
+  description?: string | null;
+  method: number;
+  configState?: number;
+  labelText?: string;
+};
 type StatusComponentEditorProps = {
-  component: Partial<StatusComponent>;
+  component: StatusComponent;
   components: StatusComponent[];
   commandLocked: boolean;
   writeRecovery: 'proof' | 'commit-uncertain' | undefined;
@@ -28,11 +39,11 @@ type StatusComponentEditorProps = {
 export function StatusComponentEditor(props: StatusComponentEditorProps) {
   const { t } = useTranslation();
   const [form] = Form.useForm<ComponentFormValue>();
-  const method = Form.useWatch('method', form) ?? props.component.method ?? 0;
+  const method = Form.useWatch('method', form) ?? props.component.method;
   const isNew = props.component.id == null;
   const submit = (values: ComponentFormValue) => {
     if (!props.commandLocked) {
-      props.onSubmit(componentPayload(props.component, values, method));
+      props.onSubmit(buildStatusComponentPayload({ component: props.component, ...values, method }));
     }
   };
   return (
@@ -72,7 +83,7 @@ export function StatusComponentEditor(props: StatusComponentEditorProps) {
 
 function ComponentForm(props: {
   form: FormInstance<ComponentFormValue>;
-  component: Partial<StatusComponent>;
+  component: StatusComponent;
   components: StatusComponent[];
   disabled: boolean;
   method: number;
@@ -94,15 +105,15 @@ function ComponentForm(props: {
       <Form.Item name="description" label={t('status.descriptionLabel')}>
         <Input />
       </Form.Item>
-      <Form.Item name="method" label={t('statusManagement.method')}>
+      <Form.Item name="method" label={t('statusManagement.method')} rules={[{ required: true }]}>
         <Radio.Group optionType="button" options={componentMethodOptions(t)} />
       </Form.Item>
-      {props.method === 0 ? (
+      {props.method === statusComponentMethod.automatic ? (
         <Form.Item name="labelText" label={t('statusManagement.labels')} extra={t('statusManagement.labelsHint')}>
           <Input placeholder={t('statusManagement.labelsHint')} />
         </Form.Item>
       ) : (
-        <Form.Item name="configState" label={t('status.state')}>
+        <Form.Item name="configState" label={t('status.state')} rules={[{ required: true }]}>
           <Select options={componentStateOptions(t)} />
         </Form.Item>
       )}
@@ -115,43 +126,25 @@ function ComponentForm(props: {
 
 function componentMethodOptions(t: (key: string) => string) {
   return [
-    { value: 0, label: t('statusManagement.automatic') },
-    { value: 1, label: t('statusManagement.manual') }
+    { value: statusComponentMethod.automatic, label: t('statusManagement.automatic') },
+    { value: statusComponentMethod.manual, label: t('statusManagement.manual') }
   ];
 }
 
 function componentStateOptions(t: (key: string) => string) {
   return [
-    { value: 0, label: t('status.normal') },
-    { value: 1, label: t('status.abnormal') },
-    { value: 2, label: t('statusManagement.unknown') }
+    { value: statusComponentState.normal, label: t('status.normal') },
+    { value: statusComponentState.abnormal, label: t('status.abnormal') },
+    { value: statusComponentState.unknown, label: t('statusManagement.unknown') }
   ];
 }
 
-function componentFormValue(component: Partial<StatusComponent>): ComponentFormValue {
+function componentFormValue(component: StatusComponent): ComponentFormValue {
   return {
-    orgId: component.orgId ?? 0,
-    name: component.name ?? '',
+    name: component.name,
     description: component.description ?? '',
-    method: component.method ?? 0,
-    configState: component.configState ?? 0,
-    state: component.state ?? 0,
-    labelText: formatLabels(component.labels),
-    ...(component.id == null ? {} : { id: component.id })
-  };
-}
-
-function componentPayload(
-  component: Partial<StatusComponent>,
-  values: ComponentFormValue,
-  method: number
-): StatusComponent {
-  const { labelText, ...record } = values;
-  return {
-    ...record,
-    ...(component.id == null ? {} : { id: component.id }),
-    name: values.name.trim(),
-    ...(values.description == null ? {} : { description: values.description.trim() }),
-    labels: method === 0 ? parseLabels(labelText ?? '') : {}
+    method: component.method,
+    configState: component.configState,
+    labelText: formatLabels(component.labels)
   };
 }

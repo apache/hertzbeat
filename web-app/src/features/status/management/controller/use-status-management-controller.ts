@@ -101,11 +101,11 @@ function createEditorCommands(context: {
   return {
     openNewComponent: () => {
       if (command.isLocked() || orgState.kind !== 'ready') return;
-      componentEditor.open({ orgId: orgState.record.id });
+      componentEditor.openNew(orgState.record.id);
     },
     editComponent: (value: StatusComponent) => {
       if (command.isLocked()) return;
-      componentEditor.open(value);
+      componentEditor.edit(value);
     },
     closeComponent: () => {
       if (command.isLocked()) return;

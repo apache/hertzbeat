@@ -11,6 +11,7 @@ import type { ExclusiveOperation } from '@/shared/exclusive-operation/use-exclus
 
 import { loadStatusIncident } from '../api/status-management-api';
 import type { StatusIncident } from '../model/status-management-contract';
+import { createStatusIncidentDraft } from '../model/status-management-model';
 import { requireStatusExactId } from './status-management-canonical-proof';
 
 type IncidentEditorView = { incident?: StatusIncident; loading: boolean; error?: unknown };
@@ -43,14 +44,12 @@ export function useStatusIncidentEditor(command: ExclusiveOperation, reportLoadF
     [command, invalidate, reportLoadFailure]
   );
   const openNew = useCallback(
-    (orgId: number | undefined) => {
-      if (command.isLocked()) return;
+    (orgId: number) => {
+      const incident = createStatusIncidentDraft(orgId);
+      if (!incident || command.isLocked()) return;
       invalidate();
       epoch.current += 1;
-      setView({
-        loading: false,
-        incident: { orgId: orgId ?? 0, name: '', state: 0, components: [], contents: [] }
-      });
+      setView({ loading: false, incident });
     },
     [command, invalidate]
   );

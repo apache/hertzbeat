@@ -95,6 +95,14 @@ describe('useStatusIncidentEditor', () => {
     expect(result.current.loading).toBe(false);
   });
 
+  it('does not open a draft for an invalid organization identity', () => {
+    const { result } = renderIncidentEditor(vi.fn());
+
+    act(() => result.current.openNew(0));
+
+    expect(result.current.incident).toBeUndefined();
+  });
+
   it('reports only the current request failure', async () => {
     const current = deferred<StatusIncident>();
     loadStatusIncident.mockReturnValue(current.promise);

@@ -18,27 +18,84 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildIncidentPayload,
+  buildStatusComponentPayload,
+  createStatusComponentDraft,
+  createStatusIncidentDraft,
   incidentStateKey
 } from './status-management-model';
 
 describe('status page management model', () => {
+  it('creates complete editor drafts only for an authoritative organization identity', () => {
+    expect(createStatusComponentDraft(2)).toEqual({
+      orgId: 2,
+      name: '',
+      method: 0,
+      configState: 0,
+      state: 0
+    });
+    expect(createStatusIncidentDraft(2)).toEqual({
+      orgId: 2,
+      name: '',
+      state: 0,
+      components: [],
+      contents: []
+    });
+    expect(createStatusComponentDraft(0)).toBeUndefined();
+    expect(createStatusIncidentDraft(0)).toBeUndefined();
+  });
+
+  it('rebuilds complete component writes and rejects missing editable state', () => {
+    const component = {
+      id: 4,
+      orgId: 2,
+      name: 'Old',
+      method: 1,
+      configState: 0,
+      state: 1
+    };
+    expect(
+      buildStatusComponentPayload({
+        component,
+        name: ' Updated ',
+        method: 1,
+        configState: 2
+      })
+    ).toEqual({ ...component, name: 'Updated', labels: {}, configState: 2 });
+    expect(
+      buildStatusComponentPayload({
+        component,
+        name: ' Automatic ',
+        method: 0,
+        labelText: 'env=prod'
+      })
+    ).toEqual({ ...component, name: 'Automatic', method: 0, labels: { env: 'prod' } });
+    expect(() => buildStatusComponentPayload({ component, name: 'Invalid', method: 1 })).toThrow(
+      'Status Management response is invalid'
+    );
+    expect(() =>
+      buildStatusComponentPayload({ component: { ...component, id: 0 }, name: 'Invalid', method: 0 })
+    ).toThrow('Status Management response is invalid');
+  });
+
   it('appends one timestamped update and keeps selected component objects', () => {
-    expect(buildIncidentPayload({
-      incident: {
-        id: 9,
-        orgId: 2,
-        name: ' API outage ',
-        state: 2,
-        contents: [{ message: 'Investigating', state: 0, timestamp: 100 }]
-      },
-      componentIds: [4],
-      components: [
-        { id: 3, orgId: 2, name: 'Web', method: 0, configState: 0, state: 0 },
-        { id: 4, orgId: 2, name: 'API', method: 0, configState: 0, state: 1 }
-      ],
-      message: ' Monitoring recovery ',
-      timestamp: 200
-    })).toEqual({
+    expect(
+      buildIncidentPayload({
+        incident: {
+          id: 9,
+          orgId: 2,
+          name: ' API outage ',
+          state: 2,
+          contents: [{ message: 'Investigating', state: 0, timestamp: 100 }]
+        },
+        componentIds: [4],
+        components: [
+          { id: 3, orgId: 2, name: 'Web', method: 0, configState: 0, state: 0 },
+          { id: 4, orgId: 2, name: 'API', method: 0, configState: 0, state: 1 }
+        ],
+        message: ' Monitoring recovery ',
+        timestamp: 200
+      })
+    ).toEqual({
       id: 9,
       orgId: 2,
       name: 'API outage',
@@ -53,30 +110,36 @@ describe('status page management model', () => {
 
   it('rejects unsupported incident states instead of presenting them as investigating', () => {
     expect(incidentStateKey(9)).toBe('statusManagement.unknown');
-    expect(() => buildIncidentPayload({
-      incident: { orgId: 2, name: 'Unknown state', state: 9 },
-      componentIds: [],
-      components: [],
-      message: 'Invalid update',
-      timestamp: 200
-    })).toThrow('Unsupported incident state');
+    expect(() =>
+      buildIncidentPayload({
+        incident: { orgId: 2, name: 'Unknown state', state: 9 },
+        componentIds: [],
+        components: [],
+        message: 'Invalid update',
+        timestamp: 200
+      })
+    ).toThrow('Unsupported incident state');
   });
 
   it('rejects empty update messages and invalid timestamps', () => {
     const incident = { orgId: 2, name: 'API outage', state: 0 };
-    expect(() => buildIncidentPayload({
-      incident,
-      componentIds: [],
-      components: [],
-      message: '   ',
-      timestamp: 200
-    })).toThrow('Incident update message is required');
-    expect(() => buildIncidentPayload({
-      incident,
-      componentIds: [],
-      components: [],
-      message: 'Investigating',
-      timestamp: Number.NaN
-    })).toThrow('Incident update timestamp is invalid');
+    expect(() =>
+      buildIncidentPayload({
+        incident,
+        componentIds: [],
+        components: [],
+        message: '   ',
+        timestamp: 200
+      })
+    ).toThrow('Incident update message is required');
+    expect(() =>
+      buildIncidentPayload({
+        incident,
+        componentIds: [],
+        components: [],
+        message: 'Investigating',
+        timestamp: Number.NaN
+      })
+    ).toThrow('Incident update timestamp is invalid');
   });
 });

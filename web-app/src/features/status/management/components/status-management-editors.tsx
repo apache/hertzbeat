@@ -10,9 +10,8 @@ import { StatusComponentEditor } from './status-component-editor';
 import { StatusIncidentEditor } from './status-incident-editor';
 
 type StatusManagementEditorsProps = {
-  component: Partial<StatusComponent> | undefined;
+  component: StatusComponent | undefined;
   incident: StatusIncident | undefined;
-  orgId: number | undefined;
   components: StatusComponent[];
   commandLocked: boolean;
   componentWriteRecovery: 'proof' | 'commit-uncertain' | undefined;
@@ -30,9 +29,9 @@ type StatusManagementEditorsProps = {
 export function StatusManagementEditors(props: StatusManagementEditorsProps) {
   return (
     <>
-      {props.component && props.orgId && (
+      {props.component && (
         <StatusComponentEditor
-          component={{ ...props.component, orgId: props.orgId }}
+          component={props.component}
           components={props.components}
           commandLocked={props.commandLocked}
           writeRecovery={props.componentWriteRecovery}

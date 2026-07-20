@@ -10,13 +10,20 @@ import { useRef, useState } from 'react';
 import type { ExclusiveOperation } from '@/shared/exclusive-operation/use-exclusive-operation';
 
 import type { StatusComponent } from '../model/status-management-contract';
+import { createStatusComponentDraft } from '../model/status-management-model';
 
 /** Owns component-editor identity so an old command cannot close a newer draft. */
 export function useStatusComponentEditor(command: ExclusiveOperation) {
-  const [component, setComponent] = useState<Partial<StatusComponent>>();
+  const [component, setComponent] = useState<StatusComponent>();
   const epoch = useRef(0);
 
-  const open = (value: Partial<StatusComponent>) => {
+  const openNew = (orgId: number) => {
+    const draft = createStatusComponentDraft(orgId);
+    if (!draft || command.isLocked()) return;
+    epoch.current += 1;
+    setComponent(draft);
+  };
+  const edit = (value: StatusComponent) => {
     if (command.isLocked()) return;
     epoch.current += 1;
     setComponent(value);
@@ -30,5 +37,5 @@ export function useStatusComponentEditor(command: ExclusiveOperation) {
     if (epoch.current === expectedEpoch) setComponent(undefined);
   };
 
-  return { component, open, close, complete, currentEpoch: () => epoch.current };
+  return { component, openNew, edit, close, complete, currentEpoch: () => epoch.current };
 }

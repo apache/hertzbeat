@@ -17,7 +17,32 @@
 
 import type { RemoteCollectionState, RemotePageState, RemoteRecordState } from '@/shared/remote-state';
 
-import type { StatusComponent, StatusIncident } from './status-management-contract';
+import { StatusManagementContractError, type StatusComponent, type StatusIncident } from './status-management-contract';
+
+export const statusComponentMethod = {
+  automatic: 0,
+  manual: 1
+} as const;
+
+export const statusComponentState = {
+  normal: 0,
+  abnormal: 1,
+  unknown: 2
+} as const;
+
+export const statusIncidentState = {
+  investigating: 0,
+  identified: 1,
+  monitoring: 2,
+  resolved: 3
+} as const;
+
+const incidentStateKeys: Record<number, string> = {
+  [statusIncidentState.investigating]: 'statusManagement.investigating',
+  [statusIncidentState.identified]: 'statusManagement.identified',
+  [statusIncidentState.monitoring]: 'statusManagement.monitoring',
+  [statusIncidentState.resolved]: 'statusManagement.resolved'
+};
 
 export type StatusRecordState<T> = RemoteRecordState<T, 'missing' | 'unavailable' | 'error'>;
 export type StatusCollectionState<T> = RemoteCollectionState<T, 'unavailable' | 'error'>;
@@ -25,15 +50,75 @@ export type StatusIncidentCollectionState<T> = RemotePageState<T, 'unavailable' 
 
 export { isStatusOrgNotFound } from '@/features/status/shared/status-error-model';
 
+/** Creation defaults preserve the established Status Page workflow; they are never missing-data fallbacks. */
+export function createStatusComponentDraft(orgId: number): StatusComponent | undefined {
+  if (!isPositiveId(orgId)) return undefined;
+  return {
+    orgId,
+    name: '',
+    method: statusComponentMethod.automatic,
+    configState: statusComponentState.normal,
+    state: statusComponentState.normal
+  };
+}
+
+/** A new incident starts in the established investigating state only after its organization is known. */
+export function createStatusIncidentDraft(orgId: number): StatusIncident | undefined {
+  if (!isPositiveId(orgId)) return undefined;
+  return {
+    orgId,
+    name: '',
+    state: statusIncidentState.investigating,
+    components: [],
+    contents: []
+  };
+}
+
 export function parseLabels(value: string) {
-  return Object.fromEntries(value.split(',').map(item => item.trim()).filter(Boolean).map(item => {
-    const separator = item.indexOf('=');
-    return separator < 0 ? [item, ''] : [item.slice(0, separator).trim(), item.slice(separator + 1).trim()];
-  }));
+  return Object.fromEntries(
+    value
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean)
+      .map(item => {
+        const separator = item.indexOf('=');
+        return separator < 0 ? [item, ''] : [item.slice(0, separator).trim(), item.slice(separator + 1).trim()];
+      })
+  );
 }
 
 export function formatLabels(labels?: Record<string, string> | null) {
-  return Object.entries(labels ?? {}).map(([key, value]) => `${key}=${value}`).join(', ');
+  return Object.entries(labels ?? {})
+    .map(([key, value]) => `${key}=${value}`)
+    .join(', ');
+}
+
+type ComponentPayloadInput = {
+  component: StatusComponent;
+  name: string;
+  description?: string | null;
+  method: number;
+  configState?: number;
+  labelText?: string;
+};
+
+/** Rebuilds the writable component without trusting unregistered Ant Form fields. */
+export function buildStatusComponentPayload(input: ComponentPayloadInput): StatusComponent {
+  const { component } = input;
+  const configState = input.method === statusComponentMethod.manual ? input.configState : component.configState;
+  if (!isValidComponentIdentity(component) || !isValidComponentInput(input) || !isComponentState(configState)) {
+    throw new StatusManagementContractError();
+  }
+  return {
+    ...(component.id == null ? {} : { id: component.id }),
+    orgId: component.orgId,
+    name: input.name.trim(),
+    ...(input.description == null ? {} : { description: input.description.trim() }),
+    labels: input.method === statusComponentMethod.automatic ? parseLabels(input.labelText ?? '') : {},
+    method: input.method,
+    configState,
+    state: component.state
+  };
 }
 
 type IncidentPayloadInput = {
@@ -67,12 +152,13 @@ export function buildIncidentPayload(input: IncidentPayloadInput): StatusInciden
 }
 
 export function statusStateKey(state: number) {
-  return state === 0 ? 'status.normal' : state === 1 ? 'status.abnormal' : 'statusManagement.unknown';
+  if (state === statusComponentState.normal) return 'status.normal';
+  if (state === statusComponentState.abnormal) return 'status.abnormal';
+  return 'statusManagement.unknown';
 }
 
 export function incidentStateKey(state: number) {
-  return ['statusManagement.investigating', 'statusManagement.identified',
-    'statusManagement.monitoring', 'statusManagement.resolved'][state] ?? 'statusManagement.unknown';
+  return incidentStateKeys[state] ?? 'statusManagement.unknown';
 }
 
 export function latestIncidentMessage(incident: StatusIncident) {
@@ -80,5 +166,26 @@ export function latestIncidentMessage(incident: StatusIncident) {
 }
 
 function isIncidentState(state: number) {
-  return Number.isInteger(state) && state >= 0 && state <= 3;
+  return Object.values(statusIncidentState).some(value => value === state);
+}
+
+function isPositiveId(value: number) {
+  return Number.isSafeInteger(value) && value > 0;
+}
+
+function isComponentMethod(value: number) {
+  return Object.values(statusComponentMethod).some(method => method === value);
+}
+
+function isComponentState(value: number | undefined): value is number {
+  return value !== undefined && Object.values(statusComponentState).some(state => state === value);
+}
+
+function isValidComponentIdentity(component: StatusComponent) {
+  const validOptionalId = component.id === undefined || isPositiveId(component.id);
+  return validOptionalId && isPositiveId(component.orgId) && isComponentState(component.state);
+}
+
+function isValidComponentInput(input: ComponentPayloadInput) {
+  return Boolean(input.name.trim()) && isComponentMethod(input.method);
 }

@@ -11,7 +11,13 @@ import { useTranslation } from 'react-i18next';
 import type { StatusCollectionState, StatusIncidentCollectionState } from '../model/status-management-model';
 import type { StatusComponent, StatusIncident } from '../model/status-management-contract';
 import { statusIncidentPageSizes } from '../model/status-incident-query';
-import { incidentStateKey, latestIncidentMessage, statusStateKey } from '../model/status-management-model';
+import {
+  incidentStateKey,
+  latestIncidentMessage,
+  statusComponentMethod,
+  statusComponentState,
+  statusStateKey
+} from '../model/status-management-model';
 
 type ComponentResultsProps = {
   state: StatusCollectionState<StatusComponent>;
@@ -42,8 +48,8 @@ export function ComponentResults({ state, commandLocked, onEdit, onDelete }: Com
       title: t('status.state'),
       dataIndex: 'state',
       render: (_value, row) => {
-        const state = row.method === 1 ? row.configState : row.state;
-        return <Tag color={state === 0 ? 'green' : 'red'}>{t(statusStateKey(state))}</Tag>;
+        const state = row.method === statusComponentMethod.manual ? row.configState : row.state;
+        return <Tag color={state === statusComponentState.normal ? 'green' : 'red'}>{t(statusStateKey(state))}</Tag>;
       }
     },
     {

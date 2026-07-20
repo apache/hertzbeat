@@ -140,7 +140,6 @@ describe('Status incident editor', () => {
       <StatusManagementEditors
         component={components[0]}
         incident={undefined}
-        orgId={1}
         components={components}
         commandLocked
         componentWriteRecovery="proof"
@@ -159,6 +158,40 @@ describe('Status incident editor', () => {
     fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
     expect(onRetry).toHaveBeenCalledTimes(1);
     expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('submits component identity and server state from the complete editor draft', async () => {
+    const onSubmit = vi.fn();
+    const draft: StatusComponent = {
+      orgId: 1,
+      name: 'API',
+      method: 1,
+      configState: 2,
+      state: 1
+    };
+    render(
+      <StatusManagementEditors
+        component={draft}
+        incident={undefined}
+        components={components}
+        commandLocked={false}
+        componentWriteRecovery={undefined}
+        incidentWriteRecovery={undefined}
+        componentSaving={false}
+        incidentSaving={false}
+        onCloseComponent={vi.fn()}
+        onCloseIncident={vi.fn()}
+        onRetryComponentWrite={vi.fn()}
+        onRetryIncidentWrite={vi.fn()}
+        onSaveComponent={onSubmit}
+        onSaveIncident={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'common.save' }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(onSubmit).toHaveBeenCalledWith({ ...draft, description: '', labels: {} });
   });
 });
 
@@ -194,7 +227,6 @@ function renderIncident(
     <StatusManagementEditors
       component={undefined}
       incident={incident}
-      orgId={1}
       components={components}
       commandLocked={patch.commandLocked ?? false}
       componentWriteRecovery={undefined}

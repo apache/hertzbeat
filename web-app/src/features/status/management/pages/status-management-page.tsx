@@ -78,25 +78,22 @@ export function StatusManagementPage() {
         onDelete={controller.deleteIncident}
       />
 
-      <StatusEditorLayer controller={controller} orgId={statusOrg?.id} components={statusComponents} />
+      <StatusEditorLayer controller={controller} components={statusComponents} />
     </div>
   );
 }
 
 function StatusEditorLayer({
   controller,
-  orgId,
   components
 }: {
   controller: ReturnType<typeof useStatusManagementController>;
-  orgId: number | undefined;
   components: Parameters<typeof StatusManagementEditors>[0]['components'];
 }) {
   return (
     <StatusManagementEditors
       component={controller.componentEditor}
       incident={controller.incidentEditor}
-      orgId={orgId}
       components={components}
       commandLocked={controller.commandLocked}
       componentWriteRecovery={controller.componentWriteRecovery}

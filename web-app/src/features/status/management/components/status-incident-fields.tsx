@@ -19,7 +19,7 @@ import { Form, Input, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import type { StatusComponent } from '../model/status-management-contract';
-import { incidentStateKey } from '../model/status-management-model';
+import { incidentStateKey, statusIncidentState } from '../model/status-management-model';
 
 interface StatusIncidentFieldsProps {
   components: StatusComponent[];
@@ -47,7 +47,9 @@ export function StatusIncidentFields({ components }: StatusIncidentFieldsProps) 
         />
       </Form.Item>
       <Form.Item name="state" label={t('status.state')}>
-        <Select options={[0, 1, 2, 3].map(value => ({ value, label: t(incidentStateKey(value)) }))} />
+        <Select
+          options={Object.values(statusIncidentState).map(value => ({ value, label: t(incidentStateKey(value)) }))}
+        />
       </Form.Item>
       <Form.Item
         name="message"

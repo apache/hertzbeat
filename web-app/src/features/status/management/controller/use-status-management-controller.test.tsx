@@ -235,6 +235,21 @@ describe('useStatusManagementController', () => {
     loading.unmount();
   });
 
+  it('owns explicit component creation defaults before the presentation layer renders', async () => {
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.org.kind).toBe('ready'));
+
+    act(() => result.current.openNewComponent());
+
+    expect(result.current.componentEditor).toEqual({
+      orgId: 1,
+      name: '',
+      method: 0,
+      configState: 0,
+      state: 0
+    });
+  });
+
   it('retires a resource command on unmount without stale projection or notification', async () => {
     const write = deferred<void>();
     api.saveStatusComponent.mockReturnValueOnce(write.promise);
