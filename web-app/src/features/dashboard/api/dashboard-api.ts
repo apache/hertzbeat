@@ -15,11 +15,12 @@
  * limitations under the License.
  */
 import { apiMessageGet } from '@/core/http/api-message';
+import { alertSummaryEndpoint } from '@/shared/alert-summary/alert-summary-contract';
 import { parseAlertSummary, parseDashboardSummary } from './dashboard-schema';
 
 export async function loadDashboardSummary(signal?: AbortSignal) {
   return parseDashboardSummary(await apiMessageGet('/api/summary', signal ? { signal } : undefined));
 }
 export async function loadDashboardAlertSummary(signal?: AbortSignal) {
-  return parseAlertSummary(await apiMessageGet('/api/alerts/summary', signal ? { signal } : undefined));
+  return parseAlertSummary(await apiMessageGet(alertSummaryEndpoint, signal ? { signal } : undefined));
 }

@@ -16,6 +16,7 @@
  */
 
 import { apiMessageGet } from '@/core/http/api-message';
+import { alertSummaryEndpoint } from '@/shared/alert-summary/alert-summary-contract';
 
 import { writeAlertQuery, type AlertQuery } from './alert-model';
 import { parseAlertGroupPage, parseAlertSummary } from './alert-schema';
@@ -28,7 +29,7 @@ export function buildAlertListPath(query: AlertQuery) {
 }
 
 export async function loadAlertSummary() {
-  const response = await apiMessageGet('/api/alerts/summary');
+  const response = await apiMessageGet(alertSummaryEndpoint);
   return parseAlertSummary(response);
 }
 

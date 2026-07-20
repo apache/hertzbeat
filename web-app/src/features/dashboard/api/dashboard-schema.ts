@@ -7,16 +7,15 @@
 
 import { z } from 'zod';
 
-import {
-  DashboardContractError,
-  type DashboardAlertSummary,
-  type DashboardSummary
-} from '../model/dashboard-model';
+import { AlertSummaryContractError, parseAlertSummaryWire } from '@/shared/alert-summary/alert-summary-contract';
+import { DashboardContractError, type DashboardAlertSummary, type DashboardSummary } from '../model/dashboard-model';
 
-const countSchema = z.number()
+const countSchema = z
+  .number()
   .refine(Number.isSafeInteger, 'Expected a safe integer')
   .refine(value => value >= 0, 'Expected a non-negative integer');
-const nonemptyTextSchema = z.string()
+const nonemptyTextSchema = z
+  .string()
   .refine(value => Boolean(value.trim()), 'Expected nonempty text')
   .transform(value => value.trim());
 
@@ -37,21 +36,27 @@ const dashboardSummarySchema = z.object({
   apps: z.array(appCountSchema).nullable()
 });
 
-const dashboardAlertSummarySchema = z.object({
-  total: countSchema,
-  dealNum: countSchema,
-  rate: z.number().finite().nonnegative(),
-  priorityWarningNum: countSchema,
-  priorityCriticalNum: countSchema,
-  priorityEmergencyNum: countSchema
-});
-
 export function parseDashboardSummary(value: unknown): DashboardSummary {
   return parseSchema(dashboardSummarySchema, value, 'Dashboard summary');
 }
 
 export function parseAlertSummary(value: unknown): DashboardAlertSummary {
-  return parseSchema(dashboardAlertSummarySchema, value, 'Dashboard alert summary');
+  try {
+    const summary = parseAlertSummaryWire(value);
+    return {
+      total: summary.total,
+      dealNum: summary.dealNum,
+      rate: summary.rate,
+      priorityWarningNum: summary.priorityWarningNum,
+      priorityCriticalNum: summary.priorityCriticalNum,
+      priorityEmergencyNum: summary.priorityEmergencyNum
+    };
+  } catch (error) {
+    if (error instanceof AlertSummaryContractError) {
+      throw new DashboardContractError(error.message, { cause: error });
+    }
+    throw error;
+  }
 }
 
 function parseSchema<T extends z.ZodType>(schema: T, value: unknown, label: string): z.output<T> {

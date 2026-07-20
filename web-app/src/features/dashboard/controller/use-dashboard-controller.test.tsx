@@ -34,12 +34,16 @@ describe('dashboard controller', () => {
 
   it('exposes ready and authoritative empty without partial or fake data', async () => {
     const ready = renderController();
-    await waitFor(() => expect(ready.result.current.state).toMatchObject({ kind: 'ready', data: { alert: { total: 2 } } }));
+    await waitFor(() =>
+      expect(ready.result.current.state).toMatchObject({ kind: 'ready', data: { alert: { total: 2 } } })
+    );
     ready.unmount();
     api.loadDashboardSummary.mockResolvedValue({ apps: [] });
     api.loadDashboardAlertSummary.mockResolvedValue(alert(0));
     const empty = renderController();
-    await waitFor(() => expect(empty.result.current.state).toMatchObject({ kind: 'empty', data: { apps: [], alert: { total: 0 } } }));
+    await waitFor(() =>
+      expect(empty.result.current.state).toMatchObject({ kind: 'empty', data: { apps: [], alert: { total: 0 } } })
+    );
   });
 
   it.each([
@@ -68,7 +72,9 @@ describe('dashboard controller', () => {
   it('refreshes both sources and forwards one AbortSignal', async () => {
     const view = renderController();
     await waitFor(() => expect(view.result.current.state.kind).toBe('ready'));
-    await act(async () => { await view.result.current.refresh(); });
+    await act(async () => {
+      await view.result.current.refresh();
+    });
     expect(api.loadDashboardSummary).toHaveBeenCalledTimes(2);
     expect(api.loadDashboardAlertSummary).toHaveBeenCalledTimes(2);
     expect(api.loadDashboardSummary.mock.calls[1]?.[0]).toBe(api.loadDashboardAlertSummary.mock.calls[1]?.[0]);
@@ -77,10 +83,14 @@ describe('dashboard controller', () => {
   it('auto refreshes the same combined query every 30 seconds', async () => {
     vi.useFakeTimers();
     const view = renderController();
-    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
     expect(api.loadDashboardSummary).toHaveBeenCalledTimes(1);
     expect(api.loadDashboardAlertSummary).toHaveBeenCalledTimes(1);
-    await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_000);
+    });
     expect(api.loadDashboardSummary).toHaveBeenCalledTimes(2);
     expect(api.loadDashboardAlertSummary).toHaveBeenCalledTimes(2);
     expect(view.result.current.state).toHaveProperty('data');
@@ -89,9 +99,19 @@ describe('dashboard controller', () => {
 
 function renderController() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
-  const wrapper = ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  );
   return renderHook(useDashboardController, { wrapper });
 }
 const app = { app: 'mysql', category: 'db', size: 1, availableSize: 1, unAvailableSize: 0, unManageSize: 0 };
-function alert(total: number) { return { total, dealNum: 0, rate: 0, priorityWarningNum: 0,
-  priorityCriticalNum: 0, priorityEmergencyNum: 0 }; }
+function alert(total: number) {
+  return {
+    total,
+    dealNum: 0,
+    rate: total === 0 ? 100 : 0,
+    priorityWarningNum: 0,
+    priorityCriticalNum: 0,
+    priorityEmergencyNum: 0
+  };
+}

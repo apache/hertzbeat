@@ -24,8 +24,14 @@ describe('dashboard API', () => {
   beforeEach(() => vi.clearAllMocks());
   it('reads both endpoints as unknown with the shared abort signal', async () => {
     const signal = new AbortController().signal;
-    http.apiMessageGet.mockResolvedValueOnce({ apps: [] }).mockResolvedValueOnce({ total: 0, dealNum: 0,
-      rate: 0, priorityWarningNum: 0, priorityCriticalNum: 0, priorityEmergencyNum: 0 });
+    http.apiMessageGet.mockResolvedValueOnce({ apps: [] }).mockResolvedValueOnce({
+      total: 0,
+      dealNum: 0,
+      rate: 100,
+      priorityWarningNum: 0,
+      priorityCriticalNum: 0,
+      priorityEmergencyNum: 0
+    });
     await expect(loadDashboardSummary(signal)).resolves.toEqual({ apps: [] });
     await expect(loadDashboardAlertSummary(signal)).resolves.toMatchObject({ total: 0 });
     expect(http.apiMessageGet).toHaveBeenNthCalledWith(1, '/api/summary', { signal });

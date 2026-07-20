@@ -23,22 +23,51 @@ vi.mock('../controller/use-dashboard-controller', () => controller);
 import { DashboardPage } from './dashboard-page';
 
 describe('DashboardPage', () => {
-  beforeAll(async () => { await initializeI18n(); await loadLocale('en-US'); });
-  afterEach(() => { cleanup(); vi.clearAllMocks(); });
-  it.each(['loading', 'missing', 'unavailable', 'error'] as const)('never renders Results or fake zero for %s', kind => {
-    controller.useDashboardController.mockReturnValue({ state: { kind }, refresh: vi.fn() });
-    renderPage();
-    expect(screen.queryByLabelText(i18n.t('dashboard.monitorSummary'))).not.toBeInTheDocument();
-    expect(screen.queryByText(/^0$/)).not.toBeInTheDocument();
+  beforeAll(async () => {
+    await initializeI18n();
+    await loadLocale('en-US');
   });
+  afterEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+  });
+  it.each(['loading', 'missing', 'unavailable', 'error'] as const)(
+    'never renders Results or fake zero for %s',
+    kind => {
+      controller.useDashboardController.mockReturnValue({ state: { kind }, refresh: vi.fn() });
+      renderPage();
+      expect(screen.queryByLabelText(i18n.t('dashboard.monitorSummary'))).not.toBeInTheDocument();
+      expect(screen.queryByText(/^0$/)).not.toBeInTheDocument();
+    }
+  );
   it('renders zero only from authoritative empty responses', () => {
-    controller.useDashboardController.mockReturnValue({ state: { kind: 'empty', data: { apps: [], alert: {
-      total: 0, dealNum: 0, rate: 0, priorityWarningNum: 0, priorityCriticalNum: 0, priorityEmergencyNum: 0
-    } } }, refresh: vi.fn() });
+    controller.useDashboardController.mockReturnValue({
+      state: {
+        kind: 'empty',
+        data: {
+          apps: [],
+          alert: {
+            total: 0,
+            dealNum: 0,
+            rate: 100,
+            priorityWarningNum: 0,
+            priorityCriticalNum: 0,
+            priorityEmergencyNum: 0
+          }
+        }
+      },
+      refresh: vi.fn()
+    });
     renderPage();
     expect(screen.getByLabelText(i18n.t('dashboard.monitorSummary'))).toBeInTheDocument();
     expect(screen.getAllByText('0').length).toBeGreaterThan(0);
     expect(screen.getByText(i18n.t('dashboard.empty'))).toBeInTheDocument();
   });
 });
-function renderPage() { return render(<I18nextProvider i18n={i18n}><DashboardPage /></I18nextProvider>); }
+function renderPage() {
+  return render(
+    <I18nextProvider i18n={i18n}>
+      <DashboardPage />
+    </I18nextProvider>
+  );
+}

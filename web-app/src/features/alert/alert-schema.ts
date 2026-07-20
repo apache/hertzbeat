@@ -17,6 +17,7 @@
 
 import { z } from 'zod';
 
+import { AlertSummaryContractError, parseAlertSummaryWire } from '@/shared/alert-summary/alert-summary-contract';
 import {
   AlertContractError,
   alertSeverities,
@@ -31,21 +32,12 @@ import {
 const safeIntegerSchema = z.number().refine(Number.isSafeInteger, 'Expected a safe integer');
 const positiveIntegerSchema = safeIntegerSchema.refine(value => value > 0, 'Expected a positive integer');
 const nonNegativeIntegerSchema = safeIntegerSchema.refine(value => value >= 0, 'Expected a non-negative integer');
-const percentageSchema = z.number().finite().min(0).max(100);
 const nullableStringMapSchema = z.record(z.string().min(1), z.string()).nullable();
 const nullableStringArraySchema = z.array(z.string()).nullable();
-const nullableServerLocalDateTimeSchema = z.string()
+const nullableServerLocalDateTimeSchema = z
+  .string()
   .refine(isServerLocalDateTime, 'Expected the GroupAlert server-local date-time format')
   .nullable();
-
-const alertSummarySchema = z.object({
-  total: nonNegativeIntegerSchema,
-  dealNum: nonNegativeIntegerSchema,
-  rate: percentageSchema,
-  priorityWarningNum: nonNegativeIntegerSchema,
-  priorityCriticalNum: nonNegativeIntegerSchema,
-  priorityEmergencyNum: nonNegativeIntegerSchema
-});
 
 // GroupAlert contains persistence and hydration fields that the center does
 // not consume. The schema allowlists only stable operator-facing evidence.
@@ -68,18 +60,22 @@ const alertGroupPageSchema = z.object({
 });
 
 export function parseAlertSummary(value: unknown): AlertSummary {
-  const summary = parseSchema(alertSummarySchema, value, 'Alert summary');
-  const activeSeverityTotal = summary.priorityWarningNum
-    + summary.priorityCriticalNum
-    + summary.priorityEmergencyNum;
-  if (summary.dealNum > summary.total || activeSeverityTotal > summary.total - summary.dealNum) {
-    throw new AlertContractError('Summary counts are inconsistent');
+  try {
+    const summary = parseAlertSummaryWire(value);
+    return {
+      total: summary.total,
+      dealNum: summary.dealNum,
+      rate: summary.rate,
+      priorityWarningNum: summary.priorityWarningNum,
+      priorityCriticalNum: summary.priorityCriticalNum,
+      priorityEmergencyNum: summary.priorityEmergencyNum
+    };
+  } catch (error) {
+    if (error instanceof AlertSummaryContractError) {
+      throw new AlertContractError(error.message, { cause: error });
+    }
+    throw error;
   }
-  // The Java service defines an empty history as fully handled and rounds
-  // non-empty rates to two decimals. Preserve that contract instead of deriving UI data.
-  const expectedRate = summary.total === 0 ? 100 : roundRate(100 * summary.dealNum / summary.total);
-  if (roundRate(summary.rate) !== expectedRate) throw new AlertContractError('Summary rate is inconsistent');
-  return summary;
 }
 
 export function parseAlertGroupPage(value: unknown, query: AlertQuery): AlertPage {
@@ -103,7 +99,7 @@ export function parseAlertGroupPage(value: unknown, query: AlertQuery): AlertPag
 
 function mapAlertGroup(source: z.output<typeof alertGroupSchema>): AlertGroup {
   const severity = source.commonLabels?.severity;
-  if (severity !== undefined && !alertSeverities.includes(severity as typeof alertSeverities[number])) {
+  if (severity !== undefined && !alertSeverities.includes(severity as (typeof alertSeverities)[number])) {
     throw new AlertContractError('commonLabels severity is unsupported');
   }
   return {
@@ -131,11 +127,15 @@ function isServerLocalDateTime(value: string) {
   const year = Number(match[1]);
   const month = Number(match[2]);
   const day = Number(match[3]);
-  return month >= 1 && month <= 12
-    && day >= 1 && day <= daysInMonth(year, month)
-    && Number(match[4]) <= 23
-    && Number(match[5]) <= 59
-    && Number(match[6]) <= 59;
+  return (
+    month >= 1 &&
+    month <= 12 &&
+    day >= 1 &&
+    day <= daysInMonth(year, month) &&
+    Number(match[4]) <= 23 &&
+    Number(match[5]) <= 59 &&
+    Number(match[6]) <= 59
+  );
 }
 
 function daysInMonth(year: number, month: number) {
@@ -145,8 +145,4 @@ function daysInMonth(year: number, month: number) {
 
 function isLeapYear(year: number) {
   return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
-}
-
-function roundRate(value: number) {
-  return Math.round((value + Number.EPSILON) * 100) / 100;
 }
