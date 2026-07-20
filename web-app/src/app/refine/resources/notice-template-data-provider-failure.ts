@@ -26,7 +26,7 @@ export function readNoticeTemplateWriteInput<T>(read: () => T): T {
   try {
     return read();
   } catch (reason) {
-    if (isRefineHttpError(reason)) {
+    if (isRefineHttpError(reason) && !hasTransportCause(reason)) {
       const code = stableTemplateCode(reason.code);
       if (reason.kind === 'contract' && code !== undefined) {
         throw new NoticeTemplateRequestFailure('invalid', 'rejected', { code });
@@ -46,9 +46,10 @@ function adaptRefineFailure(reason: RefineHttpError, phase: NoticeTemplateReques
 }
 
 function refineFailureKind(reason: RefineHttpError, phase: NoticeTemplateRequestPhase): NoticeTemplateFailureKind {
+  if (hasTransportCause(reason)) return 'unavailable';
+  if (isRefineUnavailable(reason)) return 'unavailable';
   if (isExactMissingDetail(reason, phase)) return 'missing';
   if (typeof reason.code === 'string' && reason.code.startsWith('NOTICE_TEMPLATE_')) return 'invalid';
-  if (isRefineUnavailable(reason)) return 'unavailable';
   return 'error';
 }
 
@@ -60,19 +61,24 @@ function isExactMissingDetail(reason: RefineHttpError, phase: NoticeTemplateRequ
 
 function isRefineUnavailable(reason: RefineHttpError) {
   if (reason.kind === 'network') return true;
-  return reason.kind === 'http' && (reason.httpStatus === 0 || (reason.httpStatus ?? 0) >= 500);
+  if (reason.kind !== 'http') return false;
+  return reason.httpStatus === undefined || reason.httpStatus === 0 || reason.httpStatus >= 500;
 }
 
 function refineWriteOutcome(reason: RefineHttpError, phase: NoticeTemplateRequestPhase): NoticeTemplateWriteOutcome {
   // `statusCode` is presentation metadata. Only a source HTTP status from the
   // write request can prove rejection, and a timeout remains commit-uncertain.
-  if (phase !== 'write' || reason.kind !== 'http') return 'uncertain';
+  if (phase !== 'write' || reason.kind !== 'http' || hasTransportCause(reason)) return 'uncertain';
   return reason.httpStatus !== undefined &&
     reason.httpStatus >= 400 &&
     reason.httpStatus < 500 &&
     reason.httpStatus !== 408
     ? 'rejected'
     : 'uncertain';
+}
+
+function hasTransportCause(reason: RefineHttpError) {
+  return reason.cause !== undefined;
 }
 
 function stableTemplateCode(code: string | number | undefined) {

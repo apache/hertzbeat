@@ -43,6 +43,10 @@ import { noticeTemplateCreateActionUrl } from '@/features/alert/notice-template-
 import { createRefineHttpError } from '../refine-http-error';
 import { noticeTemplateDataProvider } from './notice-template-data-provider';
 import {
+  normalizeNoticeTemplateProviderFailure,
+  readNoticeTemplateWriteInput
+} from './notice-template-data-provider-failure';
+import {
   readNoticeTemplateDeleteVariables,
   readNoticeTemplateDraft,
   readNoticeTemplateId,
@@ -295,7 +299,14 @@ describe('Notice Template Refine data provider', () => {
       'error',
       'uncertain'
     ],
-    ['display-only 400', createRefineHttpError('private', 400), 'write', 'error', 'uncertain'],
+    ['display-only contract 400', createRefineHttpError('private', 400), 'write', 'error', 'uncertain'],
+    [
+      'missing source status',
+      createRefineHttpError('private', 400, undefined, 'http'),
+      'write',
+      'unavailable',
+      'uncertain'
+    ],
     ['timeout', createRefineHttpError('private', 408, undefined, 'http', 408), 'write', 'error', 'uncertain'],
     [
       'source HTTP rejection',
@@ -320,7 +331,14 @@ describe('Notice Template Refine data provider', () => {
     ],
     [
       'network',
-      createRefineHttpError('private', 0, 'NETWORK_REQUEST_FAILED', 'network'),
+      createRefineHttpError('private', 0, 'NOTICE_TEMPLATE_NETWORK_FAILED', 'network'),
+      'write',
+      'unavailable',
+      'uncertain'
+    ],
+    [
+      'server failure carrying a stable code',
+      createRefineHttpError('private', 503, 'NOTICE_TEMPLATE_SERVER_FAILED', 'http', 503),
       'write',
       'unavailable',
       'uncertain'
@@ -340,6 +358,27 @@ describe('Notice Template Refine data provider', () => {
       'uncertain'
     ],
     [
+      'cause-bearing detail source 404',
+      withCause(createRefineHttpError('private', 404, undefined, 'http', 404)),
+      'detail',
+      'unavailable',
+      'uncertain'
+    ],
+    [
+      'cause-bearing exact missing envelope',
+      withCause(createRefineHttpError('private', 400, 15, 'envelope', 200)),
+      'detail',
+      'unavailable',
+      'uncertain'
+    ],
+    [
+      'cause-bearing source HTTP rejection',
+      withCause(createRefineHttpError('private', 422, 'NOTICE_TEMPLATE_PRIVATE', 'http', 422)),
+      'write',
+      'unavailable',
+      'uncertain'
+    ],
+    [
       'collection source 404',
       createRefineHttpError('private', 404, undefined, 'http', 404),
       'collection',
@@ -352,6 +391,26 @@ describe('Notice Template Refine data provider', () => {
     if (phase === 'collection') api.loadNoticeTemplates.mockRejectedValueOnce(reason);
 
     await expect(requestForPhase(phase)).rejects.toMatchObject({ kind, writeOutcome });
+  });
+
+  it('does not convert cause-bearing local-looking input evidence into a rewrite', () => {
+    const reason = withCause(
+      createRefineHttpError('private', 400, 'NOTICE_TEMPLATE_VARIABLES_INVALID', 'contract', 400)
+    );
+    let preserved: unknown;
+    try {
+      readNoticeTemplateWriteInput(() => {
+        throw reason;
+      });
+    } catch (failure) {
+      preserved = failure;
+    }
+
+    expect(preserved).toBe(reason);
+    expect(normalizeNoticeTemplateProviderFailure(preserved, 'write')).toMatchObject({
+      kind: 'unavailable',
+      writeOutcome: 'uncertain'
+    });
   });
 
   it('keeps delete mutation separate from both exact preflight and missing-detail proof', async () => {
@@ -386,6 +445,11 @@ function requestForPhase(phase: 'write' | 'detail' | 'collection') {
         filters: [{ field: 'preset', operator: 'eq', value: false }]
       });
   }
+}
+
+function withCause<T extends Error>(error: T) {
+  Object.defineProperty(error, 'cause', { value: new Error('private transport cause') });
+  return error;
 }
 
 describe('Notice Template provider input boundary', () => {
