@@ -50,6 +50,13 @@ const primitiveParserNames = new Set([
   'stringArray',
   'text'
 ]);
+const queryClientMethodsWithDirectKey = new Set([
+  'getQueryData',
+  'getQueryDefaults',
+  'getQueryState',
+  'setQueryData',
+  'setQueryDefaults'
+]);
 
 export function checkFeatureConventions(projectRoot) {
   const violations = collectFeatureViolations(projectRoot);
@@ -182,12 +189,30 @@ function countTypeScriptSyntax(
 }
 
 function isInlineQueryKey(node) {
-  if (!ts.isPropertyAssignment(node) && !ts.isPropertyDeclaration(node)) return false;
+  if (ts.isPropertyAssignment(node) || ts.isPropertyDeclaration(node)) {
+    return (
+      propertyName(node.name) === 'queryKey' &&
+      node.initializer !== undefined &&
+      ts.isArrayLiteralExpression(node.initializer)
+    );
+  }
+  if (!ts.isCallExpression(node)) return false;
+  const methodName = calledMethodName(node.expression);
+  const firstArgument = node.arguments[0];
   return (
-    propertyName(node.name) === 'queryKey' &&
-    node.initializer !== undefined &&
-    ts.isArrayLiteralExpression(node.initializer)
+    methodName !== null &&
+    queryClientMethodsWithDirectKey.has(methodName) &&
+    firstArgument !== undefined &&
+    ts.isArrayLiteralExpression(firstArgument)
   );
+}
+
+function calledMethodName(expression) {
+  if (ts.isPropertyAccessExpression(expression)) return expression.name.text;
+  if (ts.isElementAccessExpression(expression) && ts.isStringLiteral(expression.argumentExpression)) {
+    return expression.argumentExpression.text;
+  }
+  return null;
 }
 
 function collectDependencyObservations(source, path, importerPath) {

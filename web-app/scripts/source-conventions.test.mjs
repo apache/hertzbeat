@@ -92,6 +92,31 @@ test('rejects instrumentation primitive wire parsers and inline Query Keys', () 
   assert.match(failures, /use the feature Query Key factory/);
 });
 
+test('rejects inline Query Keys passed directly to QueryClient cache methods', () => {
+  const inlineCalls = [
+    "queryClient.getQueryData(['orders']);",
+    "queryClient.getQueryDefaults(['orders']);",
+    "queryClient.getQueryState(['orders']);",
+    "queryClient.setQueryData(['orders'], []);",
+    "queryClient.setQueryDefaults(['orders'], {});",
+    "queryClient['setQueryData'](['orders'], []);"
+  ];
+
+  for (const call of inlineCalls) {
+    const project = createProject({
+      ...requiredProjectFiles(),
+      'src/features/orders/controller/orders-cache.ts': call
+    });
+    assert.match(checkArchitecture(project).join('\n'), /use the feature Query Key factory/, call);
+  }
+
+  const factoryOwned = createProject({
+    ...requiredProjectFiles(),
+    'src/features/orders/controller/orders-cache.ts': 'queryClient.setQueryData(orderQueryKeys.all(), []);'
+  });
+  assert.deepEqual(checkArchitecture(factoryOwned), []);
+});
+
 test('rejects hand-written primitive contract parsers in core auth', () => {
   const project = createProject({
     ...requiredProjectFiles(),
