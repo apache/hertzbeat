@@ -3,6 +3,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import type { BulletinDependencySelection } from '../model/bulletin-dependency-proof';
 import type { BulletinDraft } from '../model/bulletin-model';
 import { BulletinEditor } from './bulletin-editor';
 import metricTreeStyles from './bulletin-metric-tree.module.css';
@@ -133,6 +134,16 @@ describe('Bulletin editor metric Tree', () => {
     expect(screen.getByRole('button', { name: 'common.save' })).toBeDisabled();
   });
 
+  it('keeps save blocked while dependency selections are not authoritative', () => {
+    const onSave = vi.fn();
+    renderEditor({ fieldSelection: 'unverified', monitorSelection: 'unverified', onSave });
+
+    const save = screen.getByRole('button', { name: 'common.save' });
+    expect(save).toBeDisabled();
+    fireEvent.click(save);
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
   it('locks every editor control while a write command is active', () => {
     const onChange = vi.fn();
     renderEditor({ busy: true, onChange });
@@ -162,8 +173,8 @@ function editor({
 }: {
   onChange?: (patch: Partial<BulletinDraft>) => void;
   onSave?: () => void;
-  fieldSelection?: 'valid' | 'stale';
-  monitorSelection?: 'valid' | 'stale';
+  fieldSelection?: BulletinDependencySelection;
+  monitorSelection?: BulletinDependencySelection;
   fields?: Record<string, string[]>;
   editing?: boolean;
   monitorIds?: number[];
@@ -186,7 +197,6 @@ function editor({
           { id: 1, name: 'prod', app: 'website', labels: { team: 'payments' } },
           { id: 2, name: 'backup', app: 'website', labels: { team: 'platform' } }
         ],
-        metrics: [{ name: 'summary', fields: ['status', 'responseTime'] }],
         metricTree: tree
       }}
       onClose={vi.fn()}

@@ -10,17 +10,21 @@ import {
   deleteBulletinAndConfirm,
   updateBulletinAndRead
 } from '../api/bulletin-api';
+import type { BulletinDependencyProof } from '../model/bulletin-dependency-proof';
 import { validateBulletinDraft, type Bulletin, type BulletinDraft } from '../model/bulletin-model';
-import type { BulletinDependencies } from './bulletin-dependencies-controller';
 import type { BulletinEditorController, BulletinOperationGate } from './bulletin-editor-controller';
 import { refreshSavedBulletinMetrics } from './bulletin-metrics-controller';
 import { bulletinQueryKeys } from './bulletin-query-keys';
 
 type BulletinFailure = 'missing' | 'invalid' | 'unavailable' | 'error';
 type StateSetter<T> = Dispatch<SetStateAction<T>>;
+type BulletinValidationProof = Pick<
+  BulletinDependencyProof,
+  'fieldSelection' | 'kind' | 'metrics' | 'monitorSelection' | 'monitors'
+>;
 
 type TransactionContext = {
-  dependencies: BulletinDependencies;
+  dependencies: BulletinValidationProof;
   editor: BulletinEditorController;
   gate: BulletinOperationGate;
   refresh: () => Promise<boolean>;
@@ -80,7 +84,7 @@ function useBulletinSave(
 
 function getValidDraft(
   editor: BulletinEditorController,
-  dependencies: BulletinDependencies,
+  dependencies: BulletinValidationProof,
   notification: ReturnType<typeof useNotification>,
   t: (key: string) => string
 ) {

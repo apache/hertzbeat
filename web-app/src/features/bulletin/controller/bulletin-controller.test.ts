@@ -32,11 +32,21 @@ describe('bulletin controller boundaries', () => {
   });
 
   it('keeps monitor-authoring applications even when hidden from definition settings', () => {
-    expect(buildBulletinDependencyRecords([
+    expect(
+      buildBulletinDependencyRecords(
+        [
+          { value: 'website', label: 'Website', hide: true },
+          { value: 'redis', label: null },
+          { value: 'prometheus', label: 'Prometheus', hide: true },
+          { value: '__system__', label: 'System', hide: false },
+          { value: null, label: 'Missing value', hide: false }
+        ],
+        undefined,
+        undefined
+      ).apps
+    ).toEqual([
       { value: 'website', label: 'Website', hide: true },
-      { value: 'prometheus', label: 'Prometheus', hide: true }
-    ], undefined, undefined).apps).toEqual([
-      { value: 'website', label: 'Website', hide: true }
+      { value: 'redis', label: null, hide: null }
     ]);
   });
 
@@ -60,8 +70,9 @@ describe('bulletin controller boundaries', () => {
   it('keeps a failed saved-metrics reread in error state instead of presenting stale data', async () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     client.setQueryData(bulletinQueryKeys.metrics(7), { name: 'Old', content: [] });
-    vi.spyOn(bulletinApi, 'loadBulletinMetrics')
-      .mockRejectedValue(new ApiMessageError('store unavailable', { code: 15, status: 200 }));
+    vi.spyOn(bulletinApi, 'loadBulletinMetrics').mockRejectedValue(
+      new ApiMessageError('store unavailable', { code: 15, status: 200 })
+    );
     await expect(refreshSavedBulletinMetrics(client, 7)).rejects.toBeInstanceOf(ApiMessageError);
     expect(client.getQueryState(bulletinQueryKeys.metrics(7))?.status).toBe('error');
   });

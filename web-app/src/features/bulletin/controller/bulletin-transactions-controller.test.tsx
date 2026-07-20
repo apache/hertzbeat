@@ -230,10 +230,8 @@ function createContext(options: { selectedId?: number } = {}) {
       kind: 'ready',
       fieldSelection: 'valid',
       monitorSelection: 'valid',
-      apps: [{ value: 'website', label: 'Website', hide: false }],
       monitors: [{ id: 1, name: 'Gateway', app: 'website', labels: {} }],
-      metrics: [{ name: 'responseTime', fields: ['duration'] }],
-      metricTree: []
+      metrics: [{ name: 'responseTime', fields: ['duration'] }]
     },
     editor: {
       state: { draft: initialDraft },

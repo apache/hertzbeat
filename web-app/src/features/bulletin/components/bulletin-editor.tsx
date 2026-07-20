@@ -2,13 +2,18 @@
 
 import { Alert, Button, Drawer, Form, Input, Select, Space, Spin, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
-import type { BulletinDependencies } from '../controller/bulletin-dependencies-controller';
+import type { BulletinDependencyProof } from '../model/bulletin-dependency-proof';
 import { bulletinMonitorMatchesSearch, type BulletinDraft } from '../model/bulletin-model';
 import { BulletinMetricTree } from './bulletin-metric-tree';
 
+type BulletinEditorDependencies = Pick<
+  BulletinDependencyProof,
+  'apps' | 'fieldSelection' | 'kind' | 'metricTree' | 'monitorSelection' | 'monitors'
+>;
+
 type BulletinEditorProps = {
   draft: BulletinDraft | null;
-  dependencies: BulletinDependencies;
+  dependencies: BulletinEditorDependencies;
   saving: boolean;
   busy: boolean;
   onClose: () => void;
@@ -71,7 +76,7 @@ function BulletinEditorForm({
           value={draft.app || null}
           showSearch
           disabled={busy || draft.id != null}
-          options={dependencies.apps.map(app => ({ value: app.value!, label: app.label || app.value }))}
+          options={dependencies.apps.map(app => ({ value: app.value, label: app.label || app.value }))}
           onChange={(app: string) => onChange({ app, monitorIds: [], fields: {} })}
         />
       </Form.Item>
@@ -115,7 +120,7 @@ function BulletinFieldSelection({
   t
 }: {
   draft: BulletinDraft;
-  dependencies: BulletinDependencies;
+  dependencies: BulletinEditorDependencies;
   busy: boolean;
   onChange: (patch: Partial<BulletinDraft>) => void;
   t: (key: string) => string;

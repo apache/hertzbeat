@@ -18,6 +18,11 @@ import {
   resolveSavedMetricTreeSelection,
   type BulletinMetricTreeMetricNode
 } from '../model/bulletin-metric-tree-model';
+import type {
+  BulletinDependencyKind,
+  BulletinDependencyProof,
+  BulletinDependencySelection
+} from '../model/bulletin-dependency-proof';
 import type { BulletinDraft } from '../model/bulletin-model';
 import { bulletinQueryKeys } from './bulletin-query-keys';
 
@@ -25,9 +30,6 @@ const bulletinDependencyStaleTimeMs = 30_000;
 const maximumMonitorProofPages = 20;
 const monitorProofPageSize = 50;
 
-export type BulletinDependencies = ReturnType<typeof useBulletinDependencies>;
-export type BulletinDependencySelection = 'unverified' | 'valid' | 'stale';
-type BulletinDependencyKind = 'idle' | 'loading' | 'ready' | 'invalid' | 'unavailable' | 'error';
 type DependencyResourceState = Exclude<BulletinDependencyKind, 'idle'>;
 
 type DependencyResource<T> = {
@@ -44,7 +46,7 @@ type BulletinDependencyResources = {
   hierarchy: DependencyResource<BulletinMetricTreeMetricNode[]>;
 };
 
-export function useBulletinDependencies(draft: BulletinDraft | null) {
+export function useBulletinDependencies(draft: BulletinDraft | null): BulletinDependencyProof {
   const resources = useBulletinDependencyResources(draft);
   return resolveBulletinDependencies(draft, resources);
 }
@@ -75,7 +77,10 @@ function useBulletinDependencyResources(draft: BulletinDraft | null) {
   return { app, apps, hierarchy, monitors };
 }
 
-export function resolveBulletinDependencies(draft: BulletinDraft | null, resources: BulletinDependencyResources) {
+export function resolveBulletinDependencies(
+  draft: BulletinDraft | null,
+  resources: BulletinDependencyResources
+): BulletinDependencyProof {
   const { app, apps, hierarchy, monitors } = resources;
   const kind = resolveDependencyKind(draft, resources);
   const appsData = apps.status === 'success' ? apps.data : undefined;
@@ -99,9 +104,11 @@ export function buildBulletinDependencyRecords(
   metricTree: BulletinMetricTreeMetricNode[] | undefined
 ) {
   return {
-    apps: (apps ?? []).filter(
-      item => Boolean(item.value) && item.value !== 'prometheus' && item.value !== '__system__'
-    ),
+    apps: (apps ?? []).flatMap(item => {
+      const value = item.value;
+      if (!value || value === 'prometheus' || value === '__system__') return [];
+      return [{ value, label: item.label ?? null, hide: item.hide ?? null }];
+    }),
     monitors: (monitors ?? []).map(item => ({
       id: item.id,
       name: item.name,
