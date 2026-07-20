@@ -24,6 +24,7 @@ import styles from './token.module.css';
 type TokenGeneratorModalProps = {
   draft: TokenDraft;
   saving: boolean;
+  uncertain: boolean;
   onChange: (draft: TokenDraft) => void;
   onCancel: () => void;
   onSubmit: () => void;
@@ -32,26 +33,29 @@ type TokenGeneratorModalProps = {
 export function TokenGeneratorModal(props: TokenGeneratorModalProps) {
   const { t } = useTranslation();
   const { draft } = props;
+  const locked = props.saving || props.uncertain;
   return (
     <Modal
       open
       title={t('token.generateTitle')}
       okText={t('token.generate')}
       cancelText={t('common.cancel')}
-      closable={!props.saving}
-      keyboard={!props.saving}
-      maskClosable={!props.saving}
+      closable={!locked}
+      keyboard={!locked}
+      maskClosable={!locked}
       confirmLoading={props.saving}
-      cancelButtonProps={{ disabled: props.saving }}
-      okButtonProps={{ disabled: props.saving }}
+      cancelButtonProps={{ disabled: locked }}
+      okButtonProps={{ disabled: locked }}
       onCancel={props.onCancel}
       onOk={props.onSubmit}
     >
       <div className={styles.form}>
+        {/* Commit-uncertain cannot claim failure or offer a retry that could create another token. */}
+        {props.uncertain && <Alert type="warning" showIcon message={t('token.unavailable')} />}
         <label className={styles.field}>
           <span className={`${styles.label} ${styles.required}`}>{t('token.name')}</span>
           <Input
-            disabled={props.saving}
+            disabled={locked}
             value={draft.name}
             placeholder={t('token.namePlaceholder')}
             onChange={event => props.onChange({ ...draft, name: event.target.value })}
@@ -60,7 +64,7 @@ export function TokenGeneratorModal(props: TokenGeneratorModalProps) {
         <label className={styles.field}>
           <span className={styles.label}>{t('token.scope.label')}</span>
           <Select
-            disabled={props.saving}
+            disabled={locked}
             value={draft.scope}
             options={tokenScopeDefinitions.map(definition => ({
               value: definition.value,
@@ -72,7 +76,7 @@ export function TokenGeneratorModal(props: TokenGeneratorModalProps) {
         <label className={styles.field}>
           <span className={styles.label}>{t('token.expires')}</span>
           <Select
-            disabled={props.saving}
+            disabled={locked}
             value={draft.expireSeconds}
             options={tokenExpirationDefinitions.map(definition => ({
               value: definition.value,

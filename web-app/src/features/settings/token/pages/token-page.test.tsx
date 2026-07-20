@@ -150,6 +150,26 @@ describe('TokenPage', () => {
     expect(within(generator).queryByRole('button', { name: 'Close' })).not.toBeInTheDocument();
   });
 
+  it('keeps an uncertain generation visible and locked without inventing a secret', () => {
+    const draft = { name: 'Collector', expireSeconds: -1, scope: 'otlp-ingest' as const };
+    controller.useTokenResourceController.mockReturnValue(
+      buildController({
+        draft,
+        generationRecovery: { phase: 'commit-uncertain', draft }
+      })
+    );
+
+    renderTokenPage();
+
+    expect(screen.getByText('Token data is unavailable.')).toBeInTheDocument();
+    expect(screen.queryByText('Token generated')).not.toBeInTheDocument();
+    const generator = screen.getByPlaceholderText('For example, production Collector').closest('[role="dialog"]');
+    if (!(generator instanceof HTMLElement)) throw new Error('Token generator dialog was not rendered.');
+    expect(within(generator).getByPlaceholderText('For example, production Collector')).toBeDisabled();
+    expect(within(generator).getByRole('button', { name: 'Generate token' })).toBeDisabled();
+    expect(within(generator).getByRole('button', { name: 'Cancel' })).toBeDisabled();
+  });
+
   it('requires UI confirmation before delegating revocation', () => {
     renderTokenPage();
 
@@ -171,6 +191,21 @@ describe('TokenPage', () => {
 
     for (const revoke of screen.getAllByRole('button', { name: 'Revoke' })) expect(revoke).toBeDisabled();
   });
+
+  it('does not render stale rows while revocation proof is unavailable', () => {
+    controller.useTokenResourceController.mockReturnValue(
+      buildController({
+        list: { kind: 'unavailable' }
+      })
+    );
+
+    renderTokenPage();
+
+    expect(screen.getByText('Token data is unavailable.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(controller.retry).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: 'Revoke' })).not.toBeInTheDocument();
+  });
 });
 
 function buildController(state: Record<string, unknown> = {}) {
@@ -185,6 +220,7 @@ function buildController(state: Record<string, unknown> = {}) {
     state: {
       draft: null,
       generatedToken: null,
+      generationRecovery: null,
       generating: false,
       list: { kind: 'ready', records: [record] },
       refreshing: false,

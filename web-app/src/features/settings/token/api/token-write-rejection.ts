@@ -15,29 +15,13 @@
  * limitations under the License.
  */
 
-import { Button, Typography } from 'antd';
-import { useTranslation } from 'react-i18next';
+import { isRefineHttpError } from '@/shared/refine/refine-http-error';
 
-import styles from './token.module.css';
-
-type TokenPageHeaderProps = {
-  blocked: boolean;
-  generating: boolean;
-  onGenerate: () => void;
-};
-
-export function TokenPageHeader({ blocked, generating, onGenerate }: TokenPageHeaderProps) {
-  const { t } = useTranslation();
-
+/** Only an explicit backend business or HTTP 4xx rejection makes another Token mutation safe. */
+export function isDefiniteTokenWriteRejection(reason: unknown) {
+  if (!isRefineHttpError(reason)) return false;
+  if (reason.kind === 'envelope') return true;
   return (
-    <header className={styles.heading}>
-      <div>
-        <Typography.Title level={2}>{t('token.title')}</Typography.Title>
-        <Typography.Text type="secondary">{t('token.description')}</Typography.Text>
-      </div>
-      <Button type="primary" disabled={blocked} loading={generating} onClick={onGenerate}>
-        {t('token.generate')}
-      </Button>
-    </header>
+    reason.kind === 'http' && reason.httpStatus !== undefined && reason.httpStatus >= 400 && reason.httpStatus < 500
   );
 }

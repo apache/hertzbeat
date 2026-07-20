@@ -20,11 +20,12 @@ import type { HttpError } from '@refinedev/core';
 import { ApiMessageError } from '@/core/http/api-message';
 
 export type RefineHttpErrorKind = 'contract' | 'envelope' | 'http' | 'network' | 'unexpected';
-export type RefineHttpError = Error & HttpError & {
-  code: number | string | undefined;
-  httpStatus: number | undefined;
-  kind: RefineHttpErrorKind;
-};
+export type RefineHttpError = Error &
+  HttpError & {
+    code: number | string | undefined;
+    httpStatus: number | undefined;
+    kind: RefineHttpErrorKind;
+  };
 
 export function createRefineHttpError(
   message: string,
@@ -56,8 +57,10 @@ export function toRefineHttpError(reason: unknown): RefineHttpError {
   return createRefineHttpError('Unexpected request failure', 500, 'REFINE_UNEXPECTED_ERROR', 'unexpected');
 }
 
-function isRefineHttpError(reason: unknown): reason is RefineHttpError {
-  return reason instanceof Error
-    && reason.name === 'RefineHttpError'
-    && typeof (reason as Partial<RefineHttpError>).statusCode === 'number';
+export function isRefineHttpError(reason: unknown): reason is RefineHttpError {
+  return (
+    reason instanceof Error &&
+    reason.name === 'RefineHttpError' &&
+    typeof (reason as Partial<RefineHttpError>).statusCode === 'number'
+  );
 }

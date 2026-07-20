@@ -21,27 +21,49 @@ import { useCallback, useEffect, useRef, useState } from 'react';
  * Owns one asynchronous command at a time. The ref is intentional: React state
  * cannot reject two commands admitted in the same event-loop tick.
  */
-export function useExclusiveOperation<T>() {
+export function useExclusiveOperation<T, R = never>() {
   const nextOwner = useRef(0);
   const currentOwner = useRef<number | null>(null);
+  const recoveryRef = useRef<R | null>(null);
   const [activeValue, setActiveValue] = useState<T | null>(null);
+  const [recovery, setRecovery] = useState<R | null>(null);
 
   useEffect(
     () => () => {
       currentOwner.current = null;
+      recoveryRef.current = null;
     },
     []
   );
 
   const begin = useCallback((value: T) => {
-    if (currentOwner.current !== null) return null;
+    if (currentOwner.current !== null || recoveryRef.current !== null) return null;
     const owner = ++nextOwner.current;
     currentOwner.current = owner;
     setActiveValue(value);
     return owner;
   }, []);
-  const isActive = useCallback(() => currentOwner.current !== null, []);
+  const beginRecovery = useCallback((value: T) => {
+    if (currentOwner.current !== null || recoveryRef.current === null) return null;
+    const owner = ++nextOwner.current;
+    currentOwner.current = owner;
+    setActiveValue(value);
+    return { owner, recovery: recoveryRef.current };
+  }, []);
+  const isLocked = useCallback(() => currentOwner.current !== null || recoveryRef.current !== null, []);
   const isOwnedBy = useCallback((owner: number) => currentOwner.current === owner, []);
+  const retainRecovery = useCallback((owner: number, next: R) => {
+    if (currentOwner.current !== owner) return false;
+    recoveryRef.current = next;
+    setRecovery(next);
+    return true;
+  }, []);
+  const clearRecovery = useCallback((owner: number) => {
+    if (currentOwner.current !== owner) return false;
+    recoveryRef.current = null;
+    setRecovery(null);
+    return true;
+  }, []);
   const retire = useCallback((owner?: number) => {
     if (owner !== undefined && currentOwner.current !== owner) return false;
     currentOwner.current = null;
@@ -49,5 +71,15 @@ export function useExclusiveOperation<T>() {
     return true;
   }, []);
 
-  return { activeValue, begin, isActive, isOwnedBy, retire };
+  return {
+    activeValue,
+    begin,
+    beginRecovery,
+    clearRecovery,
+    isLocked,
+    isOwnedBy,
+    recovery,
+    retainRecovery,
+    retire
+  };
 }

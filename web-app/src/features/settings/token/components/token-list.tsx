@@ -41,23 +41,7 @@ export function TokenList(props: TokenListProps) {
   const { modal } = App.useApp();
 
   if (props.list.kind === 'unavailable' || props.list.kind === 'error') {
-    return (
-      <Alert
-        type="error"
-        showIcon
-        message={props.list.kind === 'unavailable' ? t('token.unavailable') : t('common.routeError.description')}
-        action={
-          <Button
-            size="small"
-            onClick={() => {
-              void props.onRetry();
-            }}
-          >
-            {t('common.retry')}
-          </Button>
-        }
-      />
-    );
+    return <TokenListFailureAlert kind={props.list.kind} onRetry={props.onRetry} />;
   }
 
   const confirmRevoke = (token: TokenResourceRecord) => {
@@ -85,6 +69,27 @@ export function TokenList(props: TokenListProps) {
         scroll={{ x: 1380 }}
       />
     </div>
+  );
+}
+
+function TokenListFailureAlert(props: Pick<TokenListProps, 'onRetry'> & { kind: 'unavailable' | 'error' }) {
+  const { t } = useTranslation();
+  return (
+    <Alert
+      type="error"
+      showIcon
+      message={props.kind === 'unavailable' ? t('token.unavailable') : t('common.routeError.description')}
+      action={
+        <Button
+          size="small"
+          onClick={() => {
+            void props.onRetry();
+          }}
+        >
+          {t('common.retry')}
+        </Button>
+      }
+    />
   );
 }
 

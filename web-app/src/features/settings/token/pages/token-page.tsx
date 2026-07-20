@@ -27,6 +27,7 @@ export function TokenPage() {
   return (
     <div className={styles.page}>
       <TokenPageHeader
+        blocked={controller.state.generationRecovery !== null}
         generating={controller.state.generating}
         onGenerate={controller.openGenerator}
       />
@@ -41,15 +42,20 @@ export function TokenPage() {
         <TokenGeneratorModal
           draft={controller.state.draft}
           saving={controller.state.generating}
+          uncertain={controller.state.generationRecovery !== null}
           onChange={controller.updateDraft}
           onCancel={controller.closeGenerator}
-          onSubmit={() => { void controller.generate(); }}
+          onSubmit={() => {
+            void controller.generate();
+          }}
         />
       )}
       {controller.state.generatedToken && (
         <GeneratedTokenModal
           token={controller.state.generatedToken}
-          onCopy={() => { void controller.copyGeneratedToken(); }}
+          onCopy={() => {
+            void controller.copyGeneratedToken();
+          }}
           onClose={controller.closeGeneratedToken}
         />
       )}

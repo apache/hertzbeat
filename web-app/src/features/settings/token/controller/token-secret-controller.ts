@@ -21,11 +21,13 @@ import { useCallback, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { tokenGenerateActionUrl } from '../api/token-api';
+import { isDefiniteTokenWriteRejection } from '../api/token-write-rejection';
 import {
   createTokenDraft,
   validateTokenDraft,
   type GeneratedTokenReceipt,
-  type TokenDraft
+  type TokenDraft,
+  type TokenGenerationRecovery
 } from '../model/token-model';
 import { useExclusiveOperation } from './exclusive-operation';
 import { tokenListFailureMessage, type RefreshAuthoritativeTokenList } from './token-list-controller';
@@ -40,8 +42,8 @@ export function useTokenSecretActions(
 ) {
   const [searchParams] = useSearchParams();
   const [generatedToken, setGeneratedToken] = useState<string | null>(null);
-  const generation = useExclusiveOperation<'generating'>();
-  const editor = useTokenDraftEditor(searchParams.get('scope'), generation.isActive, generation.retire);
+  const generation = useExclusiveOperation<'generating', TokenGenerationRecovery>();
+  const editor = useTokenDraftEditor(searchParams.get('scope'), generation.isLocked);
   const completeGeneration = editor.complete;
   const closeGeneratedToken = useCallback(() => setGeneratedToken(null), []);
   const copyGeneratedToken = useGeneratedTokenClipboard(generatedToken, notification, t);
@@ -60,6 +62,7 @@ export function useTokenSecretActions(
     provider,
     publish: publishGeneratedToken,
     refresh,
+    retainRecovery: generation.retainRecovery,
     retire: generation.retire,
     t
   });
@@ -73,24 +76,29 @@ export function useTokenSecretActions(
       openGenerator: editor.open,
       updateDraft: editor.update
     },
-    state: { draft: editor.draft, generatedToken, generating: generation.activeValue !== null }
+    state: {
+      draft: editor.draft,
+      generatedToken,
+      generating: generation.activeValue !== null,
+      generationRecovery: generation.recovery
+    }
   };
 }
 
-function useTokenDraftEditor(scope: string | null, isGenerating: () => boolean, retireGeneration: () => boolean) {
+function useTokenDraftEditor(scope: string | null, isLocked: () => boolean) {
   const [draft, setDraft] = useState<TokenDraft | null>(null);
   const open = useCallback(() => {
-    if (!isGenerating()) setDraft(createTokenDraft(scope));
-  }, [isGenerating, scope]);
+    if (!isLocked()) setDraft(createTokenDraft(scope));
+  }, [isLocked, scope]);
   const close = useCallback(() => {
-    retireGeneration();
+    if (isLocked()) return;
     setDraft(null);
-  }, [retireGeneration]);
+  }, [isLocked]);
   const update = useCallback(
     (nextDraft: TokenDraft | null) => {
-      if (!isGenerating()) setDraft(nextDraft);
+      if (!isLocked()) setDraft(nextDraft);
     },
-    [isGenerating]
+    [isLocked]
   );
   const complete = useCallback(() => setDraft(null), []);
   return { close, complete, draft, open, update };
@@ -104,6 +112,7 @@ type TokenGenerationHookInput = {
   provider: DataProvider;
   publish: (receipt: GeneratedTokenReceipt) => void;
   refresh: RefreshAuthoritativeTokenList;
+  retainRecovery: (owner: number, recovery: TokenGenerationRecovery) => boolean;
   retire: (owner?: number) => boolean;
   t: TFunction;
 };
@@ -127,6 +136,7 @@ function useTokenGenerationCommand(input: TokenGenerationHookInput) {
       isCurrent: () => input.isCurrent(owner),
       retire: () => input.retire(owner),
       publish: input.publish,
+      retainRecovery: recovery => input.retainRecovery(owner, recovery),
       notifyFailure: messageKey => notifyError(input.notification, input.t, messageKey)
     });
   }, [input]);
@@ -139,6 +149,7 @@ type TokenGenerationCommand = {
   isCurrent: () => boolean;
   retire: () => boolean;
   publish: (receipt: GeneratedTokenReceipt) => void;
+  retainRecovery: (recovery: TokenGenerationRecovery) => boolean;
   notifyFailure: (messageKey: string) => void;
 };
 
@@ -151,8 +162,14 @@ async function executeTokenGeneration(command: TokenGenerationCommand) {
       payload: command.draft
     });
     receipt = response.data;
-  } catch {
-    if (command.retire()) command.notifyFailure('token.generateFailed');
+  } catch (reason) {
+    if (!command.isCurrent()) return;
+    if (isDefiniteTokenWriteRejection(reason)) {
+      if (command.retire()) command.notifyFailure('token.generateFailed');
+      return;
+    }
+    command.retainRecovery({ phase: 'commit-uncertain', draft: { ...command.draft } });
+    if (command.retire()) command.notifyFailure('token.unavailable');
     return;
   }
   // A cancelled command must not publish its secret into a newer editor session.

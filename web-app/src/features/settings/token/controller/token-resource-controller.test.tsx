@@ -18,6 +18,8 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createRefineHttpError } from '@/shared/refine/refine-http-error';
+
 import { tokenGenerateActionUrl, tokenRevokeActionUrl } from '../api/token-api';
 import { useTokenResourceController } from './token-resource-controller';
 
@@ -59,6 +61,8 @@ const record = {
 describe('Token resource controller', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    refine.custom.mockReset();
+    refine.refetch.mockReset();
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: clipboard });
     refine.provider.mockReturnValue({ custom: refine.custom });
     refine.useDataProvider.mockReturnValue(refine.provider);
@@ -171,7 +175,7 @@ describe('Token resource controller', () => {
     await act(async () => pending!);
   });
 
-  it('does not let a retired generate command publish into a newly opened draft', async () => {
+  it('does not let controller actions retire a generation whose write result is still pending', async () => {
     const generation = deferred<{ data: { id: 'generated'; token: string } }>();
     refine.custom.mockReturnValue(generation.promise);
     const { result } = renderHook(() => useTokenResourceController());
@@ -189,12 +193,36 @@ describe('Token resource controller', () => {
     generation.resolve({ data: { id: 'generated', token: 'hb_old_secret' } });
     await act(async () => pending!);
 
-    expect(result.current.state.draft).toEqual({ name: '', expireSeconds: -1, scope: 'otlp-ingest' });
-    expect(result.current.state.generatedToken).toBeNull();
+    expect(result.current.state.draft).toBeNull();
+    expect(result.current.state.generatedToken).toBe('hb_old_secret');
     expect(result.current.state.generating).toBe(false);
-    expect(refine.refetch).not.toHaveBeenCalled();
+    expect(refine.refetch).toHaveBeenCalledTimes(1);
     expect(JSON.stringify(refine.notification.mock.calls)).not.toContain('hb_old_secret');
   });
+
+  it.each(ambiguousWriteFailures)(
+    'retains a non-retryable generation receipt after an ambiguous %s outcome',
+    async (_label, failure) => {
+      refine.custom.mockRejectedValueOnce(failure());
+      const { result } = renderHook(() => useTokenResourceController());
+      const draft = { name: 'Collector', expireSeconds: -1, scope: 'otlp-ingest' as const };
+
+      act(() => result.current.openGenerator());
+      act(() => result.current.updateDraft(draft));
+      await act(async () => result.current.generate());
+
+      expect(result.current.state.generationRecovery).toEqual({ phase: 'commit-uncertain', draft });
+      expect(result.current.state.generatedToken).toBeNull();
+      expect(refine.notification).not.toHaveBeenCalledWith({ message: 'token.generateFailed', type: 'error' });
+      expect(refine.notification).toHaveBeenCalledWith({ message: 'token.unavailable', type: 'error' });
+
+      await act(async () => result.current.generate());
+      act(() => result.current.closeGenerator());
+      act(() => result.current.openGenerator());
+      expect(refine.custom).toHaveBeenCalledTimes(1);
+      expect(result.current.state.draft).toEqual(draft);
+    }
+  );
 
   it('confirms revocation only after an authoritative list reread', async () => {
     refine.custom.mockResolvedValue({ data: { id: 7 } });
@@ -261,9 +289,8 @@ describe('Token resource controller', () => {
         message: 'token.revokeSuccess'
       })
     );
-    expect(refine.notification).toHaveBeenCalledWith({ message: 'common.routeError.description', type: 'error' });
-    expect(refine.notification).not.toHaveBeenCalledWith(expect.objectContaining({ message: 'token.unavailable' }));
-    expect(result.current.state.list.kind).toBe('error');
+    expect(refine.notification).toHaveBeenCalledWith({ message: 'token.unavailable', type: 'error' });
+    expect(result.current.state.list.kind).toBe('unavailable');
   });
 
   it('keeps revocation unconfirmed when its authoritative reread fails', async () => {
@@ -278,8 +305,67 @@ describe('Token resource controller', () => {
         message: 'token.revokeSuccess'
       })
     );
-    expect(refine.notification).toHaveBeenCalledWith({ message: 'common.routeError.description', type: 'error' });
-    await waitFor(() => expect(result.current.state.list.kind).toBe('error'));
+    expect(refine.notification).toHaveBeenCalledWith({ message: 'token.unavailable', type: 'error' });
+    await waitFor(() => expect(result.current.state.list.kind).toBe('unavailable'));
+  });
+
+  it.each(ambiguousWriteFailures)(
+    'proves an ambiguous %s revocation by exact absence without repeating DELETE',
+    async (_label, failure) => {
+      refine.custom.mockRejectedValueOnce(failure());
+      refine.refetch.mockResolvedValue({ data: { data: [], total: 0 }, isError: false });
+      const { result } = renderHook(() => useTokenResourceController());
+
+      await act(async () => result.current.revoke(7));
+
+      expect(refine.custom).toHaveBeenCalledTimes(1);
+      expect(refine.refetch).toHaveBeenCalledTimes(1);
+      expect(refine.notification).toHaveBeenCalledWith({ message: 'token.revokeSuccess', type: 'success' });
+      expect(refine.notification).not.toHaveBeenCalledWith({ message: 'token.revokeFailed', type: 'error' });
+    }
+  );
+
+  it('retains proof-only revocation recovery and never repeats an ambiguous DELETE', async () => {
+    refine.custom.mockRejectedValueOnce(ambiguousWriteFailures[0][1]());
+    refine.refetch
+      .mockRejectedValueOnce(createRefineHttpError('offline', 503, undefined, 'http', 503))
+      .mockResolvedValueOnce({ data: { data: [], total: 0 }, isError: false });
+    const { result } = renderHook(() => useTokenResourceController());
+
+    await act(async () => result.current.revoke(7));
+    expect(result.current.state.list.kind).toBe('unavailable');
+    expect(refine.notification).not.toHaveBeenCalledWith({ message: 'token.revokeFailed', type: 'error' });
+
+    await act(async () => result.current.revoke(7));
+    expect(refine.custom).toHaveBeenCalledTimes(1);
+    await act(async () => result.current.retry());
+
+    expect(refine.custom).toHaveBeenCalledTimes(1);
+    expect(refine.refetch).toHaveBeenCalledTimes(2);
+    expect(refine.notification).toHaveBeenCalledWith({ message: 'token.revokeSuccess', type: 'success' });
+  });
+
+  it('releases generation and revocation after an explicit business rejection', async () => {
+    const rejected = createRefineHttpError('rejected', 400, 20, 'envelope', 200);
+    refine.custom
+      .mockRejectedValueOnce(rejected)
+      .mockResolvedValueOnce({ data: { id: 'generated', token: 'hb_generated_once' } })
+      .mockRejectedValueOnce(rejected)
+      .mockResolvedValueOnce({ data: { id: 7 } });
+    refine.refetch
+      .mockResolvedValueOnce({ data: { data: [record], total: 1 }, isError: false })
+      .mockResolvedValueOnce({ data: { data: [], total: 0 }, isError: false });
+    const { result } = renderHook(() => useTokenResourceController());
+
+    act(() => result.current.openGenerator());
+    act(() => result.current.updateDraft({ name: 'Collector', expireSeconds: -1, scope: 'otlp-ingest' }));
+    await act(async () => result.current.generate());
+    await act(async () => result.current.generate());
+    expect(result.current.state.generatedToken).toBe('hb_generated_once');
+
+    await act(async () => result.current.revoke(7));
+    await act(async () => result.current.revoke(7));
+    expect(refine.custom).toHaveBeenCalledTimes(4);
   });
 
   it('reports a contract refresh as error without discarding the one-time receipt', async () => {
@@ -335,3 +421,9 @@ function deferred<T>() {
   });
   return { promise, resolve };
 }
+
+const ambiguousWriteFailures = [
+  ['network', () => createRefineHttpError('offline', 0, 'NETWORK_REQUEST_FAILED', 'network')],
+  ['5xx', () => createRefineHttpError('gateway', 503, undefined, 'http', 503)],
+  ['malformed success', () => createRefineHttpError('invalid response', 502, 'TOKEN_RESPONSE_INVALID', 'contract', 200)]
+] as const;

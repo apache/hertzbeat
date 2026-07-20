@@ -46,6 +46,16 @@ export type GeneratedTokenReceipt = {
   token: string;
 };
 
+export type TokenGenerationRecovery = {
+  phase: 'commit-uncertain';
+  draft: TokenDraft;
+};
+
+export type TokenRevocationRecovery = {
+  phase: 'proof';
+  id: number;
+};
+
 export type TokenListState = RemoteCollectionState<TokenResourceRecord, 'unavailable' | 'error'>;
 
 export const tokenScopeDefinitions = [
@@ -66,7 +76,7 @@ export const tokenExpirationDefinitions = [
 function normalizeTokenScope(scope?: string | null): TokenScope {
   const normalized = scope?.trim().toLowerCase();
   return tokenScopeDefinitions.some(definition => definition.value === normalized)
-    ? normalized as TokenScope
+    ? (normalized as TokenScope)
     : 'api-admin';
 }
 

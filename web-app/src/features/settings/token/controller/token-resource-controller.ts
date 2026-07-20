@@ -21,13 +21,10 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { tokenRevokeActionUrl } from '../api/token-api';
-import { tokenResourceName } from '../model/token-model';
+import { isDefiniteTokenWriteRejection } from '../api/token-write-rejection';
+import { tokenResourceName, type TokenRevocationRecovery } from '../model/token-model';
 import { useExclusiveOperation } from './exclusive-operation';
-import {
-  tokenListFailureMessage,
-  useTokenListController,
-  type RefreshAuthoritativeTokenList
-} from './token-list-controller';
+import { useTokenListController, type RefreshAuthoritativeTokenList } from './token-list-controller';
 import { useTokenSecretActions } from './token-secret-controller';
 
 type Notification = ReturnType<typeof useNotification>;
@@ -43,11 +40,11 @@ export function useTokenResourceController() {
 
   return {
     ...secret.actions,
-    retry: list.retry,
+    retry: revocation.recovery ? revocation.recover : list.retry,
     revoke: revocation.revoke,
     state: {
       ...secret.state,
-      list: list.list,
+      list: revocation.recovery ? { kind: 'unavailable' as const } : list.list,
       refreshing: list.refreshing,
       revokingId: revocation.revokingId
     }
@@ -60,39 +57,85 @@ function useTokenRevocation(
   notification: Notification,
   t: TFunction
 ) {
-  const {
-    activeValue: revokingId,
-    begin: beginRevocation,
-    isOwnedBy: ownsRevocation,
-    retire: retireRevocation
-  } = useExclusiveOperation<number>();
+  const { activeValue, begin, beginRecovery, clearRecovery, isOwnedBy, recovery, retainRecovery, retire } =
+    useExclusiveOperation<number, TokenRevocationRecovery>();
+  const proveRevocation = useRevocationProof({
+    clearRecovery,
+    isOwnedBy,
+    notification,
+    refresh,
+    retainRecovery,
+    t
+  });
   const revoke = useCallback(
     async (id: number) => {
       if (!provider.custom) {
         notification.open?.({ message: t('token.revokeFailed'), type: 'error' });
         return;
       }
-      const owner = beginRevocation(id);
+      const owner = begin(id);
       if (owner === null) return;
       try {
-        await provider.custom({ url: tokenRevokeActionUrl(id), method: 'delete' });
-        if (!ownsRevocation(owner)) return;
-        const refreshFailure = await refresh(id);
-        if (!ownsRevocation(owner)) return;
-        if (!refreshFailure) {
-          notification.open?.({ message: t('token.revokeSuccess'), type: 'success' });
-        } else {
-          notification.open?.({ message: t(tokenListFailureMessage(refreshFailure)), type: 'error' });
+        try {
+          await provider.custom({ url: tokenRevokeActionUrl(id), method: 'delete' });
+        } catch (reason) {
+          if (!isOwnedBy(owner)) return;
+          if (isDefiniteTokenWriteRejection(reason)) {
+            notification.open?.({ message: t('token.revokeFailed'), type: 'error' });
+            return;
+          }
         }
-      } catch {
-        if (ownsRevocation(owner)) {
-          notification.open?.({ message: t('token.revokeFailed'), type: 'error' });
-        }
+        if (!isOwnedBy(owner)) return;
+        retainRecovery(owner, { phase: 'proof', id });
+        await proveRevocation(owner, id);
       } finally {
-        retireRevocation(owner);
+        retire(owner);
       }
     },
-    [beginRevocation, notification, ownsRevocation, provider, refresh, retireRevocation, t]
+    [begin, isOwnedBy, notification, proveRevocation, provider, retainRecovery, retire, t]
   );
-  return { revoke, revokingId };
+  const recover = useCallback(async () => {
+    if (!recovery) return;
+    const admitted = beginRecovery(recovery.id);
+    if (!admitted) return;
+    try {
+      await proveRevocation(admitted.owner, admitted.recovery.id);
+    } finally {
+      retire(admitted.owner);
+    }
+  }, [beginRecovery, proveRevocation, recovery, retire]);
+
+  return {
+    recover,
+    recovery,
+    revoke,
+    revokingId: activeValue
+  };
+}
+
+type RevocationProofInput = {
+  clearRecovery: (owner: number) => boolean;
+  isOwnedBy: (owner: number) => boolean;
+  notification: Notification;
+  refresh: RefreshAuthoritativeTokenList;
+  retainRecovery: (owner: number, recovery: TokenRevocationRecovery) => boolean;
+  t: TFunction;
+};
+
+function useRevocationProof(input: RevocationProofInput) {
+  const { clearRecovery, isOwnedBy, notification, refresh, retainRecovery, t } = input;
+  return useCallback(
+    async (owner: number, id: number) => {
+      const refreshFailure = await refresh(id);
+      if (!isOwnedBy(owner)) return;
+      if (refreshFailure) {
+        retainRecovery(owner, { phase: 'proof', id });
+        notification.open?.({ message: t('token.unavailable'), type: 'error' });
+        return;
+      }
+      clearRecovery(owner);
+      notification.open?.({ message: t('token.revokeSuccess'), type: 'success' });
+    },
+    [clearRecovery, isOwnedBy, notification, refresh, retainRecovery, t]
+  );
 }
