@@ -36,7 +36,10 @@ describe('Bulletin dependency controller', () => {
     ]);
     monitor.loadMonitors.mockResolvedValue({
       content: [{ id: 1, name: 'prod', app: 'website' }],
-      totalPages: 1
+      totalElements: 1,
+      totalPages: 1,
+      number: 0,
+      size: 50
     });
   });
 
@@ -227,6 +230,78 @@ describe('Bulletin dependency controller', () => {
       metricTree: []
     });
   });
+
+  it.each([
+    ['total pages drift', secondMonitorPage({ totalPages: 3 })],
+    ['total elements drift', secondMonitorPage({ totalElements: 52, content: monitorRecords(51, 2) })],
+    ['page size drift', secondMonitorPage({ size: 20 })],
+    ['page number mismatch', secondMonitorPage({ number: 0 })],
+    ['partial page content', secondMonitorPage({ content: [] })],
+    ['duplicate id across pages', secondMonitorPage({ content: monitorRecords(1, 1) })]
+  ])('surfaces invalid dependency evidence for %s', async (_label, secondPage) => {
+    monitor.loadMonitorAppHierarchy.mockResolvedValue(hierarchy('website'));
+    monitor.loadMonitors.mockImplementation(({ pageIndex }: { pageIndex: number }) =>
+      Promise.resolve(pageIndex === 0 ? firstMonitorPage() : secondPage)
+    );
+    const hook = renderHook(() => useBulletinDependencies(draft('website')), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(hook.result.current.kind).toBe('invalid'));
+    expect(hook.result.current.monitorSelection).toBe('unverified');
+    expect(hook.result.current.monitors).toEqual([]);
+  });
+
+  it('rejects duplicate monitor identities within one page', async () => {
+    monitor.loadMonitorAppHierarchy.mockResolvedValue(hierarchy('website'));
+    monitor.loadMonitors.mockResolvedValue({
+      content: [monitorRecord(1), monitorRecord(1)],
+      totalElements: 2,
+      totalPages: 1,
+      number: 0,
+      size: 50
+    });
+    const hook = renderHook(() => useBulletinDependencies(draft('website')), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(hook.result.current.kind).toBe('invalid'));
+    expect(hook.result.current.monitorSelection).toBe('unverified');
+  });
+
+  it('keeps scans beyond the monitor proof safety bound invalid', async () => {
+    monitor.loadMonitorAppHierarchy.mockResolvedValue(hierarchy('website'));
+    monitor.loadMonitors.mockResolvedValue({
+      content: monitorRecords(1, 50),
+      totalElements: 1_050,
+      totalPages: 21,
+      number: 0,
+      size: 50
+    });
+    const hook = renderHook(() => useBulletinDependencies(draft('website')), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(hook.result.current.kind).toBe('invalid'));
+    expect(hook.result.current.monitorSelection).toBe('unverified');
+  });
+
+  it('validates a stable multi-page scan while preserving cancellation and named policy inputs', async () => {
+    monitor.loadMonitorAppHierarchy.mockResolvedValue(hierarchy('website'));
+    monitor.loadMonitors.mockImplementation(({ pageIndex }: { pageIndex: number }) =>
+      Promise.resolve(pageIndex === 0 ? firstMonitorPage() : secondMonitorPage({}))
+    );
+    const hook = renderHook(() => useBulletinDependencies(draft('website')), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(hook.result.current.kind).toBe('ready'));
+    expect(hook.result.current.monitorSelection).toBe('valid');
+    expect(hook.result.current.monitors).toHaveLength(51);
+    expect(monitor.loadMonitors).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ pageIndex: 0, pageSize: 50, status: '9' }),
+      expect.any(AbortSignal)
+    );
+    expect(monitor.loadMonitors).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ pageIndex: 1, pageSize: 50, status: '9' }),
+      expect.any(AbortSignal)
+    );
+    expect(monitor.loadMonitors.mock.calls[0]?.[1]).toBe(monitor.loadMonitors.mock.calls[1]?.[1]);
+  });
 });
 
 function createWrapper() {
@@ -289,4 +364,33 @@ function refreshing<T>(data: T) {
 
 function failure(error: unknown) {
   return { status: 'error' as const, fetchStatus: 'idle' as const, data: undefined, error };
+}
+
+function monitorRecord(id: number) {
+  return { id, name: `monitor-${id}`, app: 'website', instance: `instance-${id}`, status: 1 };
+}
+
+function monitorRecords(firstId: number, count: number) {
+  return Array.from({ length: count }, (_value, index) => monitorRecord(firstId + index));
+}
+
+function firstMonitorPage() {
+  return {
+    content: monitorRecords(1, 50),
+    totalElements: 51,
+    totalPages: 2,
+    number: 0,
+    size: 50
+  };
+}
+
+function secondMonitorPage(patch: Partial<ReturnType<typeof firstMonitorPage>>): ReturnType<typeof firstMonitorPage> {
+  return {
+    content: monitorRecords(51, 1),
+    totalElements: 51,
+    totalPages: 2,
+    number: 1,
+    size: 50,
+    ...patch
+  };
 }

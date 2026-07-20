@@ -24,11 +24,15 @@ import type {
   BulletinDependencySelection
 } from '../model/bulletin-dependency-proof';
 import type { BulletinDraft } from '../model/bulletin-model';
+import {
+  BulletinMonitorPaginationEvidenceError,
+  BulletinMonitorPaginationProof,
+  bulletinMonitorProofPolicy,
+  isBulletinDependencyApplication
+} from '../model/bulletin-dependency-policy';
 import { bulletinQueryKeys } from './bulletin-query-keys';
 
 const bulletinDependencyStaleTimeMs = 30_000;
-const maximumMonitorProofPages = 20;
-const monitorProofPageSize = 50;
 
 type DependencyResourceState = Exclude<BulletinDependencyKind, 'idle'>;
 
@@ -106,7 +110,7 @@ export function buildBulletinDependencyRecords(
   return {
     apps: (apps ?? []).flatMap(item => {
       const value = item.value;
-      if (!value || value === 'prometheus' || value === '__system__') return [];
+      if (!value || !isBulletinDependencyApplication(value)) return [];
       return [{ value, label: item.label ?? null, hide: item.hide ?? null }];
     }),
     monitors: (monitors ?? []).map(item => ({
@@ -123,7 +127,13 @@ export function buildBulletinDependencyRecords(
 }
 
 export function classifyBulletinMonitorError(error: unknown): 'invalid' | 'unavailable' | 'error' {
-  if (error instanceof MonitorContractError || error instanceof BulletinMetricTreeError) return 'invalid';
+  if (
+    error instanceof MonitorContractError ||
+    error instanceof BulletinMetricTreeError ||
+    error instanceof BulletinMonitorPaginationEvidenceError
+  ) {
+    return 'invalid';
+  }
   return classifyMonitorReadError(error) === 'unavailable' ? 'unavailable' : 'error';
 }
 
@@ -179,27 +189,22 @@ async function loadBulletinMetricTree(app: string, locale: string, signal: Abort
 
 async function loadAllMonitors(app: string, signal?: AbortSignal): Promise<Monitor[]> {
   if (!app) return [];
-  const result: Monitor[] = [];
+  const proof = new BulletinMonitorPaginationProof();
   let pageIndex = 0;
-  let totalPages = 1;
   do {
     const page = await loadMonitors(
       {
         search: '',
         app,
-        status: '9',
+        status: bulletinMonitorProofPolicy.status,
         labels: '',
         pageIndex,
-        pageSize: monitorProofPageSize
+        pageSize: bulletinMonitorProofPolicy.pageSize
       },
       signal
     );
-    if (page.totalPages > maximumMonitorProofPages) {
-      throw new Error('Monitor option safety bound exceeded');
-    }
-    result.push(...page.content);
-    totalPages = page.totalPages;
+    proof.accept(page, pageIndex);
     pageIndex += 1;
-  } while (pageIndex < totalPages);
-  return result;
+  } while (pageIndex < proof.totalPages);
+  return proof.finish();
 }
