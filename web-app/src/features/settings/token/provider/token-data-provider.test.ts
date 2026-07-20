@@ -18,6 +18,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
+import { createRefineHttpError } from '@/shared/refine/refine-http-error';
 import { TokenRequestFailure } from '../model/token-failure';
 
 const api = vi.hoisted(() => ({
@@ -163,7 +164,47 @@ describe('Token Refine data provider', () => {
         method: 'post',
         payload: { name: 'Collector', expireSeconds: -1, scope: 'otlp-ingest' }
       })
-    ).rejects.toMatchObject({ kind: 'error', writeOutcome: 'rejected' });
+    ).rejects.toMatchObject({ kind: 'error', writeOutcome: 'uncertain' });
+  });
+
+  it('distinguishes an HTTP rejection from an ambiguous success-envelope failure', async () => {
+    api.generateToken
+      .mockRejectedValueOnce(createRefineHttpError('private-envelope', 400, 20, 'envelope', 200))
+      .mockRejectedValueOnce(createRefineHttpError('private-http', 400, undefined, 'http', 400))
+      .mockRejectedValueOnce(createRefineHttpError('private-display-http', 400, undefined, 'http'))
+      .mockRejectedValueOnce(createRefineHttpError('private-contract', 400, undefined, 'contract'))
+      .mockRejectedValueOnce(createRefineHttpError('private-unexpected', 400, undefined, 'unexpected'));
+
+    const command = {
+      url: api.tokenGenerateActionUrl,
+      method: 'post' as const,
+      payload: { name: 'Collector', expireSeconds: -1, scope: 'otlp-ingest' as const }
+    };
+    await expect(tokenDataProvider.custom?.(command)).rejects.toMatchObject({
+      kind: 'error',
+      message: 'Token request failed',
+      writeOutcome: 'uncertain'
+    });
+    await expect(tokenDataProvider.custom?.(command)).rejects.toMatchObject({
+      kind: 'error',
+      message: 'Token request failed',
+      writeOutcome: 'rejected'
+    });
+    await expect(tokenDataProvider.custom?.(command)).rejects.toMatchObject({
+      kind: 'error',
+      message: 'Token request failed',
+      writeOutcome: 'uncertain'
+    });
+    await expect(tokenDataProvider.custom?.(command)).rejects.toMatchObject({
+      kind: 'error',
+      message: 'Token request failed',
+      writeOutcome: 'uncertain'
+    });
+    await expect(tokenDataProvider.custom?.(command)).rejects.toMatchObject({
+      kind: 'error',
+      message: 'Token request failed',
+      writeOutcome: 'uncertain'
+    });
   });
 
   it('preserves typed failure identity without copying private evidence', async () => {

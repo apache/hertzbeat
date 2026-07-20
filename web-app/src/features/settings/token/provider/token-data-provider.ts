@@ -116,8 +116,12 @@ function refineFailureKind(reason: RefineHttpError): TokenFailureKind {
 }
 
 function refineWriteOutcome(reason: RefineHttpError): TokenWriteOutcome {
-  if (reason.kind === 'envelope') return 'rejected';
-  return reason.statusCode >= 400 && reason.statusCode < 500 ? 'rejected' : 'uncertain';
+  return reason.kind === 'http' &&
+    reason.httpStatus !== undefined &&
+    reason.httpStatus >= 400 &&
+    reason.httpStatus < 500
+    ? 'rejected'
+    : 'uncertain';
 }
 
 function stableTokenCode(code: string | number | undefined) {

@@ -34,7 +34,8 @@ function failureKind(reason: ApiMessageError): TokenFailureKind {
 
 function writeOutcome(reason: ApiMessageError, phase: TokenRequestPhase) {
   if (phase === 'collection') return 'uncertain';
-  // A non-zero envelope or HTTP 4xx proves the server rejected the command.
-  if (reason.code !== undefined) return 'rejected';
+  // The shared transport parses an envelope only after a successful HTTP response,
+  // so its business code cannot prove whether the write committed before the reply.
+  if (reason.code !== undefined) return 'uncertain';
   return reason.status !== undefined && reason.status >= 400 && reason.status < 500 ? 'rejected' : 'uncertain';
 }

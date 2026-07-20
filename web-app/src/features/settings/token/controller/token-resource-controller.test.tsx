@@ -16,7 +16,7 @@
  */
 
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { tokenGenerateActionUrl, tokenRevokeActionUrl } from '../api/token-api';
 import { TokenRequestFailure } from '../model/token-failure';
@@ -70,6 +70,8 @@ describe('Token resource controller', () => {
     refine.refetch.mockResolvedValue({ data: { data: [record], total: 1 }, isError: false });
   });
 
+  afterEach(() => vi.restoreAllMocks());
+
   it('uses the named Refine list and exposes honest list evidence', () => {
     const { result, rerender } = renderHook(() => useTokenResourceController());
 
@@ -113,6 +115,12 @@ describe('Token resource controller', () => {
   });
 
   it('keeps the one-time receipt only in React state and preserves it when list reread fails', async () => {
+    const storageWrite = vi.spyOn(Storage.prototype, 'setItem');
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const info = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    const debug = vi.spyOn(console, 'debug').mockImplementation(() => undefined);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     refine.custom.mockResolvedValue({ data: { id: 'generated', token: 'hb_generated_once' } });
     refine.refetch.mockRejectedValue(unavailableFailure());
     const { result } = renderHook(() => useTokenResourceController());
@@ -136,6 +144,17 @@ describe('Token resource controller', () => {
     expect(result.current.state.list.kind).toBe('unavailable');
     expect(refine.notification).toHaveBeenCalledWith({ message: 'token.unavailable', type: 'error' });
     expect(JSON.stringify(refine.notification.mock.calls)).not.toContain('hb_generated_once');
+    expect(window.location.href).not.toContain('hb_generated_once');
+    expect(JSON.stringify(storageWrite.mock.calls)).not.toContain('hb_generated_once');
+    expect(
+      JSON.stringify([
+        ...log.mock.calls,
+        ...info.mock.calls,
+        ...debug.mock.calls,
+        ...warn.mock.calls,
+        ...error.mock.calls
+      ])
+    ).not.toContain('hb_generated_once');
 
     await act(async () => result.current.copyGeneratedToken());
     expect(clipboard.writeText).toHaveBeenCalledWith('hb_generated_once');
@@ -352,28 +371,31 @@ describe('Token resource controller', () => {
     }
   );
 
-  it('retains proof-only revocation recovery and never repeats an ambiguous DELETE', async () => {
-    refine.custom.mockRejectedValueOnce(ambiguousWriteFailures[0][1]());
-    refine.refetch
-      .mockRejectedValueOnce(unavailableFailure())
-      .mockResolvedValueOnce({ data: { data: [], total: 0 }, isError: false });
-    const { result } = renderHook(() => useTokenResourceController());
+  it.each(ambiguousWriteFailures)(
+    'retains proof-only revocation recovery and never repeats an ambiguous %s DELETE',
+    async (_label, failure) => {
+      refine.custom.mockRejectedValueOnce(failure());
+      refine.refetch
+        .mockRejectedValueOnce(unavailableFailure())
+        .mockResolvedValueOnce({ data: { data: [], total: 0 }, isError: false });
+      const { result } = renderHook(() => useTokenResourceController());
 
-    await act(async () => result.current.revoke(7));
-    expect(result.current.state.list.kind).toBe('unavailable');
-    expect(refine.notification).not.toHaveBeenCalledWith({ message: 'token.revokeFailed', type: 'error' });
+      await act(async () => result.current.revoke(7));
+      expect(result.current.state.list.kind).toBe('unavailable');
+      expect(refine.notification).not.toHaveBeenCalledWith({ message: 'token.revokeFailed', type: 'error' });
 
-    await act(async () => result.current.revoke(7));
-    expect(refine.custom).toHaveBeenCalledTimes(1);
-    await act(async () => result.current.retry());
+      await act(async () => result.current.revoke(7));
+      expect(refine.custom).toHaveBeenCalledTimes(1);
+      await act(async () => result.current.retry());
 
-    expect(refine.custom).toHaveBeenCalledTimes(1);
-    expect(refine.refetch).toHaveBeenCalledTimes(2);
-    expect(refine.notification).toHaveBeenCalledWith({ message: 'token.revokeSuccess', type: 'success' });
-  });
+      expect(refine.custom).toHaveBeenCalledTimes(1);
+      expect(refine.refetch).toHaveBeenCalledTimes(2);
+      expect(refine.notification).toHaveBeenCalledWith({ message: 'token.revokeSuccess', type: 'success' });
+    }
+  );
 
-  it('releases generation and revocation after an explicit business rejection', async () => {
-    const rejected = rejectedFailure();
+  it('releases generation and revocation after an explicit HTTP rejection', async () => {
+    const rejected = httpRejectedFailure();
     refine.custom
       .mockRejectedValueOnce(rejected)
       .mockResolvedValueOnce({ data: { id: 'generated', token: 'hb_generated_once' } })
@@ -452,7 +474,8 @@ function deferred<T>() {
 const ambiguousWriteFailures = [
   ['network', unavailableFailure],
   ['5xx', unavailableFailure],
-  ['malformed success', invalidFailure]
+  ['malformed success', invalidFailure],
+  ['business envelope', envelopeFailure]
 ] as const;
 
 function unavailableFailure() {
@@ -463,6 +486,10 @@ function invalidFailure() {
   return new TokenRequestFailure('invalid', 'uncertain', { code: 'TOKEN_RESPONSE_INVALID' });
 }
 
-function rejectedFailure() {
+function httpRejectedFailure() {
   return new TokenRequestFailure('error', 'rejected');
+}
+
+function envelopeFailure() {
+  return new TokenRequestFailure('error', 'uncertain');
 }

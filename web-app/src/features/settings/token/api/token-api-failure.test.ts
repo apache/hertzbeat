@@ -20,7 +20,7 @@ describe('Token API failure boundary', () => {
     ['status zero', new ApiMessageError('private', { status: 0 }), 'collection', 'unavailable', 'uncertain'],
     ['server failure', new ApiMessageError('private', { status: 503 }), 'write', 'unavailable', 'uncertain'],
     ['HTTP rejection', new ApiMessageError('private', { status: 400 }), 'write', 'error', 'rejected'],
-    ['business rejection', new ApiMessageError('private', { code: 20, status: 200 }), 'write', 'error', 'rejected'],
+    ['business envelope', new ApiMessageError('private', { code: 20, status: 200 }), 'write', 'error', 'uncertain'],
     ['contract', new TokenApiContractError(), 'write', 'invalid', 'uncertain'],
     ['unknown', { statusCode: 503, token: 'private-token' }, 'write', 'error', 'uncertain']
   ] as const)('normalizes %s', (_label, reason, phase, kind, writeOutcome) => {
