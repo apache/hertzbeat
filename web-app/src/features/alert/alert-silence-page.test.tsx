@@ -187,6 +187,17 @@ describe('AlertSilencePage', () => {
     expect(within(row).getByRole('switch')).not.toBeChecked();
     expect(within(row).getByRole('switch')).toBeDisabled();
   });
+
+  it('renders server LocalDateTime audit evidence verbatim without browser parsing', async () => {
+    api.loadAlertSilences.mockResolvedValueOnce({
+      content: [{ ...record, gmtCreate: '2026-07-19T10:11:12', gmtUpdate: null }],
+      totalElements: 1
+    });
+    renderPage();
+
+    const row = await screen.findByRole('row', { name: /Database maintenance/ });
+    expect(within(row).getByText('2026-07-19T10:11:12')).toBeInTheDocument();
+  });
 });
 
 function createdPageFromLastWrite() {

@@ -49,7 +49,8 @@ function columns(t: TFunction, busy: boolean, actions: {
     { title: t('alertSilences.scope'), width: 250, render: (_value, item) => scope(t, item) },
     { title: t('alertSilences.schedule'), width: 330, render: (_value, item) => schedule(t, item) },
     { title: t('alertSilences.times'), dataIndex: 'times', width: 100, render: (value?: number) => value ?? '—' },
-    { title: t('alertSilences.updated'), width: 180, render: (_value, item) => formatDate(item.gmtUpdate ?? item.gmtCreate) },
+    { title: t('alertSilences.updated'), width: 180,
+      render: (_value, item) => item.gmtUpdate ?? item.gmtCreate ?? '—' },
     { title: t('common.actions'), width: 250, render: (_value, item) =>
       <AlertSilenceActions silence={item} busy={busy} {...actions} /> }
   ];
