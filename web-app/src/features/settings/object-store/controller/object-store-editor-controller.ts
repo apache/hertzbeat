@@ -24,12 +24,13 @@ export function useObjectStoreEditorController(
 ) {
   const [draft, setDraft] = useState<ObjectStoreDraft | null>(null);
   const [showValidation, setShowValidation] = useState(false);
-  const baseline = createObjectStoreDraft(record);
-  const current = draft ?? baseline;
+  const canonical = useAcceptedObjectStoreBaseline(record);
+  const current = draft ?? canonical.baseline;
   const missingFields = validateObjectStoreDraft(current);
-  const dirty = draft !== null && isObjectStoreDirty(draft, baseline);
+  const dirty = draft !== null && isObjectStoreDirty(draft, canonical.baseline);
   const transaction = useObjectStoreSaveTransaction({
-    accept: () => {
+    accept: value => {
+      canonical.accept(value);
       setDraft(null);
       setShowValidation(false);
     },
@@ -73,5 +74,17 @@ export function useObjectStoreEditorController(
     },
     submit,
     updateDraft
+  };
+}
+
+function useAcceptedObjectStoreBaseline(record: ObjectStoreResourceRecord | undefined) {
+  const [accepted, setAccepted] = useState<{
+    source: ObjectStoreResourceRecord | undefined;
+    value: ObjectStoreResourceRecord;
+  } | null>(null);
+  const acceptedRecord = accepted && accepted.source === record ? accepted.value : undefined;
+  return {
+    accept: (value: ObjectStoreResourceRecord) => setAccepted({ source: record, value }),
+    baseline: createObjectStoreDraft(acceptedRecord ?? record)
   };
 }

@@ -22,6 +22,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { Outlet } from 'react-router-dom';
 
 import { SessionProvider } from '@/core/auth/session-provider';
+import { objectStoreDataProvider } from '@/features/settings/object-store';
 import { tokenDataProvider } from '@/features/settings/token';
 import { noticeReceiverResourceName } from '@/features/alert/notice-receiver/notice-receiver-resource';
 
@@ -30,7 +31,6 @@ import { labelDataProvider } from './resources/label-data-provider';
 import { noticeReceiverDataProvider } from './resources/notice-receiver-data-provider';
 import { noticeRuleDataProvider } from './resources/notice-rule-data-provider';
 import { noticeTemplateDataProvider } from './resources/notice-template-data-provider';
-import { objectStoreDataProvider } from './resources/object-store-data-provider';
 import { systemConfigDataProvider } from './resources/system-config-data-provider';
 import { refineResources, shellAccessControlProvider } from './refine-resource-registry';
 import { SessionQueryRuntime } from './session-query-runtime';

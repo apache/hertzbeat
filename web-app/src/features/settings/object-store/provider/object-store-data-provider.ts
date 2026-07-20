@@ -25,36 +25,29 @@ import type {
   UpdateResponse
 } from '@refinedev/core';
 
-import {
-  loadObjectStore,
-  objectStoreEndpoint,
-  saveObjectStore
-} from '@/features/settings/object-store/api/object-store-api';
-import {
-  normalizeObjectStoreApiFailure,
-  type ObjectStoreRequestPhase
-} from '@/features/settings/object-store/api/object-store-api-failure';
+import { adaptRefineRecord } from '@/shared/refine/refine-provider-data';
+import { isRefineHttpError, type RefineHttpError } from '@/shared/refine/refine-http-error';
+
+import { loadObjectStore, objectStoreEndpoint, parseObjectStoreDraft, saveObjectStore } from '../api/object-store-api';
+import { normalizeObjectStoreApiFailure, type ObjectStoreRequestPhase } from '../api/object-store-api-failure';
 import {
   ObjectStoreRequestFailure,
   type ObjectStoreFailureKind,
   type ObjectStoreWriteOutcome
-} from '@/features/settings/object-store/model/object-store-failure';
+} from '../model/object-store-failure';
 import {
   createObjectStoreResourceRecord,
   ObjectStoreDraftContractError,
   ObjectStoreResourceContractError,
-  objectStoreResourceId,
-  type ObjectStoreDraft
-} from '@/features/settings/object-store/model/object-store-model';
-import { adaptRefineRecord } from '@/shared/refine/refine-provider-data';
-
-import { isRefineHttpError, type RefineHttpError } from '../refine-http-error';
+  objectStoreResourceId
+} from '../model/object-store-model';
 
 const objectStoreResource = 'object-store';
 
+/** Refine adapter for the Object Store singleton resource. */
 export const objectStoreDataProvider: DataProvider = {
   getList<TData extends BaseRecord = BaseRecord>(): Promise<GetListResponse<TData>> {
-    return rejectUnsupported('OBJECT_STORE_LIST_UNSUPPORTED');
+    return Promise.reject(uncertainFailure('OBJECT_STORE_LIST_UNSUPPORTED'));
   },
 
   getOne<TData extends BaseRecord = BaseRecord>(params: {
@@ -79,11 +72,9 @@ export const objectStoreDataProvider: DataProvider = {
   }): Promise<UpdateResponse<TData>> {
     return protect('write', async () => {
       assertResourceAndId(params.resource, params.id);
-      await saveObjectStore(readDraft(params.variables));
+      await saveObjectStore(parseObjectStoreDraft(params.variables));
       const canonical = await readCanonicalObjectStoreAfterWrite();
-      if (canonical == null) {
-        throw contractFailure('OBJECT_STORE_CANONICAL_REREAD_MISSING');
-      }
+      if (canonical == null) throw contractFailure('OBJECT_STORE_CANONICAL_REREAD_MISSING');
       return { data: adaptRefineRecord<TData>(readResourceRecord(canonical)) };
     });
   },
@@ -104,7 +95,11 @@ async function protect<T>(phase: ObjectStoreRequestPhase, operation: () => Promi
 }
 
 function providerFailure(reason: unknown, phase: ObjectStoreRequestPhase) {
-  if (reason instanceof ObjectStoreRequestFailure) return reason;
+  if (reason instanceof ObjectStoreRequestFailure) {
+    if (phase !== 'read' || reason.writeOutcome !== 'rejected') return reason;
+    const options = reason.code === undefined ? {} : { code: reason.code };
+    return new ObjectStoreRequestFailure(reason.kind, 'uncertain', options);
+  }
   if (reason instanceof ObjectStoreDraftContractError) return rejectedFailure('OBJECT_STORE_VARIABLES_INVALID');
   if (reason instanceof ObjectStoreResourceContractError) return contractFailure('OBJECT_STORE_RESPONSE_INVALID');
   if (isRefineHttpError(reason)) return adaptRefineFailure(reason, phase);
@@ -122,15 +117,20 @@ function adaptRefineFailure(reason: RefineHttpError, phase: ObjectStoreRequestPh
 
 function refineFailureKind(reason: RefineHttpError): ObjectStoreFailureKind {
   if (typeof reason.code === 'string' && reason.code.startsWith('OBJECT_STORE_')) return 'invalid';
-  if (reason.statusCode === 0 || reason.kind === 'network' || reason.statusCode >= 500) return 'unavailable';
+  if (reason.kind === 'network' || (reason.kind === 'http' && (reason.httpStatus ?? 0) >= 500)) {
+    return 'unavailable';
+  }
   return 'error';
 }
 
 function refineWriteOutcome(reason: RefineHttpError, phase: ObjectStoreRequestPhase): ObjectStoreWriteOutcome {
-  // Read failures never provide evidence about whether a separate write committed.
-  if (phase === 'read') return 'uncertain';
-  if (reason.kind === 'envelope') return 'rejected';
-  return reason.statusCode >= 400 && reason.statusCode < 500 ? 'rejected' : 'uncertain';
+  // Read failures cannot prove whether a separate write committed. For writes,
+  // only the source HTTP status is rejection evidence; display status codes and
+  // application envelopes may be synthesized after transport completed.
+  if (phase === 'read' || reason.kind !== 'http') return 'uncertain';
+  return reason.httpStatus !== undefined && reason.httpStatus >= 400 && reason.httpStatus < 500
+    ? 'rejected'
+    : 'uncertain';
 }
 
 function stableObjectStoreCode(code: string | number | undefined) {
@@ -142,24 +142,8 @@ function rejectUnsupported<T>(code: string): Promise<T> {
 }
 
 function assertResourceAndId(resource: string, id: string | number) {
-  if (resource !== objectStoreResource) {
-    throw rejectedFailure('OBJECT_STORE_RESOURCE_UNSUPPORTED');
-  }
-  if (id !== objectStoreResourceId) {
-    throw rejectedFailure('OBJECT_STORE_ID_INVALID');
-  }
-}
-
-function readDraft(value: unknown): ObjectStoreDraft {
-  if (!value || typeof value !== 'object' || !('type' in value) || !('config' in value)) {
-    throw rejectedFailure('OBJECT_STORE_VARIABLES_INVALID');
-  }
-  const { config, type } = value;
-  if (type !== 'DATABASE' && type !== 'FILE' && type !== 'OBS') throw rejectedFailure('OBJECT_STORE_VARIABLES_INVALID');
-  if (!config || typeof config !== 'object' || Array.isArray(config)) {
-    throw rejectedFailure('OBJECT_STORE_VARIABLES_INVALID');
-  }
-  return { type, config };
+  if (resource !== objectStoreResource) throw rejectedFailure('OBJECT_STORE_RESOURCE_UNSUPPORTED');
+  if (id !== objectStoreResourceId) throw rejectedFailure('OBJECT_STORE_ID_INVALID');
 }
 
 async function readObjectStore() {
@@ -177,8 +161,8 @@ async function readCanonicalObjectStoreAfterWrite() {
   try {
     return await readObjectStore();
   } catch {
-    // The POST already returned successfully. A failed GET cannot prove that
-    // the write was rejected, even when the GET itself returned a 4xx status.
+    // POST has already returned. A failed GET is not evidence that the write
+    // was rejected, even when that GET itself returned an HTTP 4xx response.
     throw contractFailure('OBJECT_STORE_CANONICAL_REREAD_FAILED');
   }
 }
@@ -200,4 +184,8 @@ function contractFailure(code: string) {
 
 function rejectedFailure(code: string) {
   return new ObjectStoreRequestFailure('invalid', 'rejected', { code });
+}
+
+function uncertainFailure(code: string) {
+  return new ObjectStoreRequestFailure('invalid', 'uncertain', { code });
 }

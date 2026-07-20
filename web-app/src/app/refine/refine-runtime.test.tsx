@@ -33,6 +33,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useSession } from '@/core/auth/session-context';
 import { sessionQueryKey } from '@/core/auth/session-api';
 import { initializeI18n } from '@/core/i18n/i18n';
+import { objectStoreDataProvider } from '@/features/settings/object-store';
 import { tokenDataProvider } from '@/features/settings/token';
 
 import { AppProviders } from '../providers';
@@ -40,7 +41,6 @@ import { appRoutes } from '../router';
 import { alertSilenceDataProvider } from './resources/alert-silence-data-provider';
 import { labelDataProvider } from './resources/label-data-provider';
 import { noticeTemplateDataProvider } from './resources/notice-template-data-provider';
-import { objectStoreDataProvider } from './resources/object-store-data-provider';
 import { systemConfigDataProvider } from './resources/system-config-data-provider';
 
 const { authenticatedSession } = vi.hoisted(() => ({

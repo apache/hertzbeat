@@ -20,10 +20,11 @@ describe('Object Store API failure boundary', () => {
     ['server failure', new ApiMessageError('private', { status: 503 }), 'write', 'unavailable', 'uncertain'],
     ['HTTP rejection', new ApiMessageError('private', { status: 422 }), 'write', 'error', 'rejected'],
     ['read HTTP failure', new ApiMessageError('private', { status: 422 }), 'read', 'error', 'uncertain'],
-    ['business rejection', new ApiMessageError('private', { code: 20, status: 200 }), 'write', 'error', 'rejected'],
+    ['business envelope', new ApiMessageError('private', { code: 20, status: 200 }), 'write', 'error', 'uncertain'],
     ['read contract', new ObjectStoreResourceContractError(), 'read', 'invalid', 'uncertain'],
     ['write response contract', new ObjectStoreResourceContractError(), 'write', 'invalid', 'uncertain'],
     ['draft contract', new ObjectStoreDraftContractError(), 'write', 'invalid', 'rejected'],
+    ['read draft contract', new ObjectStoreDraftContractError(), 'read', 'invalid', 'uncertain'],
     ['unknown', { statusCode: 503, secretKey: 'private-secret' }, 'write', 'error', 'uncertain']
   ] as const)('normalizes %s', (_label, reason, phase, kind, writeOutcome) => {
     const failure = normalizeObjectStoreApiFailure(reason, phase);

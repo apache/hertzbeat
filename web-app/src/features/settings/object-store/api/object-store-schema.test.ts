@@ -17,10 +17,41 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { ObjectStoreResourceContractError } from '../model/object-store-model';
-import { parseObjectStoreReadModel } from './object-store-schema';
+import { ObjectStoreDraftContractError, ObjectStoreResourceContractError } from '../model/object-store-model';
+import { parseObjectStoreDraft, parseObjectStoreReadModel } from './object-store-schema';
 
 describe('object store response schema', () => {
+  it('accepts a complete draft at the unknown-value boundary', () => {
+    const draft = {
+      type: 'OBS' as const,
+      config: {
+        accessKey: 'ak',
+        secretKey: 'sk',
+        bucketName: 'bucket',
+        endpoint: 'https://example.test',
+        savePath: 'hertzbeat'
+      }
+    };
+
+    expect(parseObjectStoreDraft(draft)).toEqual(draft);
+  });
+
+  it.each([
+    { type: 'OBS', config: new Date() },
+    { type: 'OBS', config: [] },
+    { type: 'OBS', config: {}, unexpected: 'private-extra-field' }
+  ])('rejects malformed draft variables without echoing them', value => {
+    let error: unknown;
+    try {
+      parseObjectStoreDraft(value);
+    } catch (reason) {
+      error = reason;
+    }
+
+    expect(error).toBeInstanceOf(ObjectStoreDraftContractError);
+    expect(JSON.stringify(error)).not.toContain('private-extra-field');
+  });
+
   it.each([
     ['plaintext', 'private-schema-secret', true],
     ['trimmed plaintext', ' private-trimmed-secret ', true],

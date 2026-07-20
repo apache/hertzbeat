@@ -17,10 +17,15 @@
 
 import { describe, expect, it } from 'vitest';
 
+import refineRuntimeSource from '../../../app/refine/refine-runtime.tsx?raw';
 import apiSource from './api/object-store-api.ts?raw';
 import schemaSource from './api/object-store-schema.ts?raw';
+import featureSource from './index.ts?raw';
 import modelSource from './model/object-store-model.ts?raw';
 import pageSource from './pages/object-store-page.tsx?raw';
+import resourceControllerSource from './controller/object-store-resource-controller.ts?raw';
+
+const staleProviderModules = import.meta.glob('../../../app/refine/resources/object-store-data-provider*.ts');
 
 describe('object store architecture', () => {
   it('owns unknown response parsing and secret removal at the API boundary', () => {
@@ -34,5 +39,17 @@ describe('object store architecture', () => {
   it('keeps transport and payload construction out of the page', () => {
     expect(pageSource).not.toMatch(/object-store-api|apiMessage|buildObjectStorePayload/);
     expect(pageSource).not.toMatch(/\buse(?:One|Update)\b/);
+  });
+
+  it('owns the data provider behind the feature public API', () => {
+    expect(featureSource).toContain("from './provider/object-store-data-provider'");
+    expect(refineRuntimeSource).toContain("from '@/features/settings/object-store'");
+    expect(refineRuntimeSource).not.toContain("from './resources/object-store-data-provider'");
+    expect(Object.keys(staleProviderModules)).toEqual([]);
+  });
+
+  it('keeps secret-bearing writes out of the shared mutation cache', () => {
+    expect(resourceControllerSource).toContain('useDataProvider');
+    expect(resourceControllerSource).not.toContain('useUpdate');
   });
 });

@@ -23,18 +23,21 @@ import { createObjectStoreDraft, type ObjectStoreResourceRecord } from '../model
 import { useObjectStoreResourceController } from './object-store-resource-controller';
 
 const refine = vi.hoisted(() => ({
+  invalidate: vi.fn(),
   notification: vi.fn(),
+  providerUpdate: vi.fn(),
   refetch: vi.fn(),
-  updateMutate: vi.fn(),
+  useDataProvider: vi.fn(),
+  useInvalidate: vi.fn(),
   useOne: vi.fn(),
-  useNotification: vi.fn(),
-  useUpdate: vi.fn()
+  useNotification: vi.fn()
 }));
 
 vi.mock('@refinedev/core', () => ({
+  useDataProvider: refine.useDataProvider,
+  useInvalidate: refine.useInvalidate,
   useOne: refine.useOne,
-  useNotification: refine.useNotification,
-  useUpdate: refine.useUpdate
+  useNotification: refine.useNotification
 }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
@@ -55,14 +58,18 @@ describe('Object Store resource controller', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     refine.refetch.mockReset();
-    refine.updateMutate.mockReset();
+    refine.invalidate.mockReset();
+    refine.invalidate.mockResolvedValue(undefined);
+    refine.providerUpdate.mockReset();
+    refine.providerUpdate.mockReturnValue(new Promise(() => undefined));
     refine.refetch.mockResolvedValue({ data: { data: serverRecord }, error: null, isError: false });
+    refine.useDataProvider.mockReturnValue(() => ({ update: refine.providerUpdate }));
+    refine.useInvalidate.mockReturnValue(refine.invalidate);
     refine.useOne.mockReturnValue(buildOneResult());
     refine.useNotification.mockReturnValue({ open: refine.notification });
-    refine.useUpdate.mockReturnValue({ mutate: refine.updateMutate, mutation: { isPending: false } });
   });
 
-  it('uses the named singleton provider and pessimistic detail update', () => {
+  it('uses the named singleton provider without placing secret variables in a shared mutation cache', () => {
     const { result } = renderHook(() => useObjectStoreResourceController());
 
     expect(refine.useOne).toHaveBeenCalledWith(
@@ -72,14 +79,7 @@ describe('Object Store resource controller', () => {
         dataProviderName: 'object-store'
       })
     );
-    expect(refine.useUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        resource: 'object-store',
-        dataProviderName: 'object-store',
-        mutationMode: 'pessimistic',
-        invalidates: ['detail']
-      })
-    );
+    expect(refine.useDataProvider).toHaveBeenCalledWith();
 
     const editable = createObjectStoreDraft(serverRecord);
     act(() =>
@@ -94,17 +94,11 @@ describe('Object Store resource controller', () => {
     );
     act(() => result.current.submit());
 
-    expect(refine.updateMutate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        resource: 'object-store',
-        id: 'current',
-        dataProviderName: 'object-store',
-        mutationMode: 'pessimistic',
-        invalidates: ['detail'],
-        values: expect.objectContaining({ type: 'OBS', config: expect.objectContaining({ accessKey: 'changed-ak' }) })
-      }),
-      expect.objectContaining({ onSuccess: expect.any(Function) })
-    );
+    expect(refine.providerUpdate).toHaveBeenCalledWith({
+      resource: 'object-store',
+      id: 'current',
+      variables: expect.objectContaining({ type: 'OBS', config: expect.objectContaining({ accessKey: 'changed-ak' }) })
+    });
   });
 
   it.each([
@@ -143,11 +137,14 @@ describe('Object Store resource controller', () => {
     expect(result.current.state).toMatchObject({ kind: 'ready', showValidation: true });
     act(() => result.current.discard());
 
-    expect(refine.updateMutate).not.toHaveBeenCalled();
+    expect(refine.providerUpdate).not.toHaveBeenCalled();
     expect(result.current.state).toMatchObject({ kind: 'ready', dirty: false, showValidation: false });
   });
 
-  it('clears the draft only after the provider update succeeds', () => {
+  it('accepts canonical success and invalidates only the named singleton detail without its secret', async () => {
+    refine.providerUpdate.mockResolvedValue({
+      data: { ...serverRecord, config: { ...serverRecord.config, accessKey: 'canonical' } }
+    });
     const { result } = renderHook(() => useObjectStoreResourceController());
     const editable = createObjectStoreDraft(serverRecord);
     act(() =>
@@ -157,27 +154,64 @@ describe('Object Store resource controller', () => {
       })
     );
     act(() => result.current.submit());
-    const callbacks = refine.updateMutate.mock.calls[0]?.[1];
-
     expect(result.current.state).toMatchObject({ kind: 'ready', dirty: true });
-    expect(callbacks).toHaveProperty('onError', expect.any(Function));
     expect(result.current.state).toMatchObject({
       kind: 'ready',
       dirty: true,
       current: { config: expect.objectContaining({ secretKey: 'runtime-only-secret' }) }
     });
-    act(() => {
-      void callbacks?.onSuccess?.({
-        data: { ...serverRecord, config: { ...serverRecord.config, accessKey: 'canonical' } }
+    await waitFor(() => {
+      expect(result.current.state).toMatchObject({
+        kind: 'ready',
+        dirty: false,
+        showValidation: false,
+        current: { config: expect.objectContaining({ accessKey: 'canonical', secretKey: '' }) }
       });
+      expect(JSON.stringify(result.current.state)).not.toContain('runtime-only-secret');
     });
+    expect(refine.invalidate).toHaveBeenCalledWith({
+      resource: 'object-store',
+      id: 'current',
+      dataProviderName: 'object-store',
+      invalidates: ['detail']
+    });
+    expect(JSON.stringify(refine.invalidate.mock.calls)).not.toContain('runtime-only-secret');
+  });
+
+  it.each([
+    ['rejects', () => refine.invalidate.mockRejectedValue(new Error('private-invalidation-failure'))],
+    [
+      'throws',
+      () =>
+        refine.invalidate.mockImplementation(() => {
+          throw new Error('private-invalidation-failure');
+        })
+    ]
+  ])('keeps canonical success when best-effort cache invalidation %s', async (_label, failInvalidation) => {
+    refine.providerUpdate.mockResolvedValue({
+      data: { ...serverRecord, config: { ...serverRecord.config, accessKey: 'canonical' } }
+    });
+    failInvalidation();
+    const { result } = renderHook(() => useObjectStoreResourceController());
+    const editable = createObjectStoreDraft(serverRecord);
+
+    act(() =>
+      result.current.updateDraft({
+        ...editable,
+        config: { ...editable.config, secretKey: 'runtime-only-secret' }
+      })
+    );
+    act(() => result.current.submit());
+
+    await waitFor(() => expect(result.current.state).toMatchObject({ kind: 'ready', dirty: false, saving: false }));
     expect(result.current.state).toMatchObject({
-      kind: 'ready',
-      dirty: false,
-      showValidation: false,
-      current: { config: expect.objectContaining({ secretKey: '' }) }
+      current: { config: expect.objectContaining({ accessKey: 'canonical', secretKey: '' }) }
     });
-    expect(JSON.stringify(result.current.state)).not.toContain('runtime-only-secret');
+    expect(refine.providerUpdate).toHaveBeenCalledTimes(1);
+    expect(refine.invalidate).toHaveBeenCalledTimes(1);
+    expect(refine.refetch).not.toHaveBeenCalled();
+    expect(refine.notification).toHaveBeenCalledWith({ message: 'objectStore.saveSuccess', type: 'success' });
+    expect(JSON.stringify(refine.notification.mock.calls)).not.toContain('private-invalidation-failure');
   });
 
   it('admits one save and locks draft mutations until its owner completes', () => {
@@ -200,16 +234,19 @@ describe('Object Store resource controller', () => {
       void result.current.retry();
     });
 
-    expect(refine.updateMutate).toHaveBeenCalledTimes(1);
+    expect(refine.providerUpdate).toHaveBeenCalledTimes(1);
     expect(refine.refetch).not.toHaveBeenCalled();
     expect(result.current.state).toMatchObject({ kind: 'ready', current: submitted, saving: true });
   });
 
   it('keeps the editable secret out of browser persistence and logs', () => {
+    const locationBeforeSave = window.location.href;
     const storageWrite = vi.spyOn(Storage.prototype, 'setItem');
     const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
     const info = vi.spyOn(console, 'info').mockImplementation(() => undefined);
     const debug = vi.spyOn(console, 'debug').mockImplementation(() => undefined);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const { result } = renderHook(() => useObjectStoreResourceController());
     const editable = createObjectStoreDraft(serverRecord);
 
@@ -222,13 +259,23 @@ describe('Object Store resource controller', () => {
     act(() => result.current.submit());
 
     expect(JSON.stringify(storageWrite.mock.calls)).not.toContain('runtime-only-secret');
-    expect(JSON.stringify([...log.mock.calls, ...info.mock.calls, ...debug.mock.calls])).not.toContain(
-      'runtime-only-secret'
-    );
+    expect(
+      JSON.stringify([
+        ...log.mock.calls,
+        ...info.mock.calls,
+        ...debug.mock.calls,
+        ...warn.mock.calls,
+        ...error.mock.calls
+      ])
+    ).not.toContain('runtime-only-secret');
+    expect(JSON.stringify(refine.notification.mock.calls)).not.toContain('runtime-only-secret');
+    expect(window.location.href).toBe(locationBeforeSave);
     storageWrite.mockRestore();
     log.mockRestore();
     info.mockRestore();
     debug.mockRestore();
+    warn.mockRestore();
+    error.mockRestore();
   });
 
   it('owns retry without changing the singleton identity', async () => {
@@ -249,18 +296,15 @@ describe('Object Store resource controller', () => {
         error: null,
         isError: false
       });
+      refine.providerUpdate.mockRejectedValueOnce(failure());
       const { result } = renderHook(() => useObjectStoreResourceController());
 
       act(() => result.current.updateDraft({ type: 'FILE', config: {} }));
       act(() => result.current.submit());
-      const callbacks = refine.updateMutate.mock.calls[0]?.[1];
-      act(() => {
-        void callbacks?.onError?.(failure());
-      });
 
       await waitFor(() => expect(refine.refetch).toHaveBeenCalledTimes(1));
       await waitFor(() => expect(result.current.state).toMatchObject({ kind: 'ready', recovery: null }));
-      expect(refine.updateMutate).toHaveBeenCalledTimes(1);
+      expect(refine.providerUpdate).toHaveBeenCalledTimes(1);
       expect(refine.notification).toHaveBeenCalledWith({ message: 'objectStore.saveSuccess', type: 'success' });
       expectPrivateFailureNotPublished(result.current.state);
     }
@@ -275,13 +319,10 @@ describe('Object Store resource controller', () => {
         ...createObjectStoreDraft(serverRecord),
         config: { ...createObjectStoreDraft(serverRecord).config, secretKey: 'runtime-only-secret' }
       };
+      refine.providerUpdate.mockRejectedValueOnce(rejection());
 
       act(() => result.current.updateDraft(submitted));
       act(() => result.current.submit());
-      const callbacks = refine.updateMutate.mock.calls[0]?.[1];
-      act(() => {
-        void callbacks?.onError?.(rejection());
-      });
 
       await waitFor(() =>
         expect(result.current.state).toMatchObject({
@@ -297,7 +338,7 @@ describe('Object Store resource controller', () => {
       expect(window.location.href).toBe(locationBeforeSave);
       expectPrivateFailureNotPublished(result.current.state);
       act(() => result.current.submit());
-      expect(refine.updateMutate).toHaveBeenCalledTimes(2);
+      expect(refine.providerUpdate).toHaveBeenCalledTimes(2);
     }
   );
 
@@ -305,14 +346,11 @@ describe('Object Store resource controller', () => {
     'does not start canonical proof after a definite FILE %s rejection',
     async (_label, rejection) => {
       refine.useOne.mockReturnValue(buildOneResult({ result: databaseRecord }));
+      refine.providerUpdate.mockRejectedValueOnce(rejection());
       const { result } = renderHook(() => useObjectStoreResourceController());
 
       act(() => result.current.updateDraft({ type: 'FILE', config: {} }));
       act(() => result.current.submit());
-      const callbacks = refine.updateMutate.mock.calls[0]?.[1];
-      act(() => {
-        void callbacks?.onError?.(rejection());
-      });
 
       await waitFor(() => expect(result.current.state).toMatchObject({ kind: 'ready', locked: false, recovery: null }));
       expect(refine.refetch).not.toHaveBeenCalled();
@@ -325,14 +363,11 @@ describe('Object Store resource controller', () => {
     refine.refetch
       .mockResolvedValueOnce({ data: undefined, error: unavailableFailure(), isError: true })
       .mockResolvedValueOnce({ data: { data: { ...databaseRecord, type: 'FILE' } }, error: null, isError: false });
+    refine.providerUpdate.mockRejectedValueOnce(envelopeFailure());
     const { result } = renderHook(() => useObjectStoreResourceController());
 
     act(() => result.current.updateDraft({ type: 'FILE', config: {} }));
     act(() => result.current.submit());
-    const callbacks = refine.updateMutate.mock.calls[0]?.[1];
-    act(() => {
-      void callbacks?.onError?.(unavailableFailure());
-    });
 
     await waitFor(() =>
       expect(result.current.state).toMatchObject({ kind: 'ready', locked: true, recovery: { phase: 'proof' } })
@@ -342,12 +377,12 @@ describe('Object Store resource controller', () => {
       result.current.discard();
       result.current.updateDraft({ type: 'DATABASE', config: {} });
     });
-    expect(refine.updateMutate).toHaveBeenCalledTimes(1);
+    expect(refine.providerUpdate).toHaveBeenCalledTimes(1);
 
     await act(async () => result.current.retry());
 
     expect(refine.refetch).toHaveBeenCalledTimes(2);
-    expect(refine.updateMutate).toHaveBeenCalledTimes(1);
+    expect(refine.providerUpdate).toHaveBeenCalledTimes(1);
     expect(result.current.state).toMatchObject({ kind: 'ready', locked: false, recovery: null });
   });
 
@@ -360,13 +395,10 @@ describe('Object Store resource controller', () => {
         ...createObjectStoreDraft(serverRecord),
         config: { ...createObjectStoreDraft(serverRecord).config, secretKey: 'runtime-only-secret' }
       };
+      refine.providerUpdate.mockRejectedValueOnce(failure());
 
       act(() => result.current.updateDraft(submitted));
       act(() => result.current.submit());
-      const callbacks = refine.updateMutate.mock.calls[0]?.[1];
-      act(() => {
-        void callbacks?.onError?.(failure());
-      });
 
       await waitFor(() =>
         expect(result.current.state).toMatchObject({
@@ -379,7 +411,7 @@ describe('Object Store resource controller', () => {
       await act(async () => result.current.retry());
       act(() => result.current.submit());
       expect(refine.refetch).not.toHaveBeenCalled();
-      expect(refine.updateMutate).toHaveBeenCalledTimes(1);
+      expect(refine.providerUpdate).toHaveBeenCalledTimes(1);
       expect(window.location.href).toBe(locationBeforeSave);
       expectPrivateFailureNotPublished(result.current.state);
     }
@@ -389,14 +421,11 @@ describe('Object Store resource controller', () => {
     const proof = deferred<{ data: { data: ObjectStoreResourceRecord }; error: null; isError: false }>();
     refine.useOne.mockReturnValue(buildOneResult({ result: databaseRecord }));
     refine.refetch.mockReturnValue(proof.promise);
+    refine.providerUpdate.mockRejectedValueOnce(unavailableFailure());
     const { result, unmount } = renderHook(() => useObjectStoreResourceController());
 
     act(() => result.current.updateDraft({ type: 'FILE', config: {} }));
     act(() => result.current.submit());
-    const callbacks = refine.updateMutate.mock.calls[0]?.[1];
-    act(() => {
-      void callbacks?.onError?.(unavailableFailure());
-    });
     unmount();
     proof.resolve({ data: { data: { ...databaseRecord, type: 'FILE' } }, error: null, isError: false });
     await act(async () => proof.promise);
@@ -422,14 +451,12 @@ function buildOneResult(override: Record<string, unknown> = {}) {
 const ambiguousWriteFailures = [
   ['network', unavailableFailure],
   ['5xx', unavailableFailure],
+  ['business envelope', envelopeFailure],
   ['malformed success', invalidFailure],
   ['unexpected cause', () => new Error(privateFailureMessage, { cause: new Error(privateFailureCause) })]
 ] as const;
 
-const definiteWriteRejections = [
-  ['business envelope', rejectedFailure],
-  ['HTTP 4xx', rejectedFailure]
-] as const;
+const definiteWriteRejections = [['HTTP 4xx', rejectedFailure]] as const;
 
 function unavailableFailure() {
   return new ObjectStoreRequestFailure('unavailable', 'uncertain');
@@ -437,6 +464,10 @@ function unavailableFailure() {
 
 function invalidFailure() {
   return new ObjectStoreRequestFailure('invalid', 'uncertain', { code: 'OBJECT_STORE_RESPONSE_INVALID' });
+}
+
+function envelopeFailure() {
+  return new ObjectStoreRequestFailure('error', 'uncertain');
 }
 
 function rejectedFailure() {

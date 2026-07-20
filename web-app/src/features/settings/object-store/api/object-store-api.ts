@@ -29,6 +29,8 @@ import {
 import { objectStoreApiRequest } from './object-store-api-failure';
 import { parseObjectStoreMutationResult, parseObjectStoreReadModel } from './object-store-schema';
 
+export { parseObjectStoreDraft } from './object-store-schema';
+
 export type ObjectStorePayload = {
   type: ObjectStoreType;
   config: ObjectStoreDraftConfig;

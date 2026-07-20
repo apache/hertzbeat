@@ -15,20 +15,29 @@
  * limitations under the License.
  */
 
-import { useUpdate, type HttpError } from '@refinedev/core';
 import { useEffect, useRef, useState } from 'react';
 
 import { isObjectStoreWriteRejection } from '../model/object-store-failure';
 import {
   canProveAmbiguousObjectStoreSave,
-  objectStoreResourceId,
   objectStoreSaveConverged,
   type ObjectStoreDraft,
   type ObjectStoreResourceRecord,
   type ObjectStoreSaveRecovery
 } from '../model/object-store-model';
 
-export type ObjectStoreMutation = ReturnType<typeof useUpdate<ObjectStoreResourceRecord, HttpError, ObjectStoreDraft>>;
+type ObjectStoreUpdateResult = { data: ObjectStoreResourceRecord };
+
+/** Minimal command port; deliberately independent from React Query mutation state. */
+export type ObjectStoreMutation = {
+  mutate: (
+    draft: ObjectStoreDraft,
+    callbacks: {
+      onError: (reason: unknown) => void;
+      onSuccess: (result: ObjectStoreUpdateResult) => void;
+    }
+  ) => void;
+};
 
 export type ObjectStoreCanonicalRead = () => Promise<{
   data: ObjectStoreResourceRecord | undefined;
@@ -42,7 +51,7 @@ export type ObjectStoreSaveNotifications = {
 };
 
 type SaveTransactionOptions = ObjectStoreSaveNotifications & {
-  accept: () => void;
+  accept: (record: ObjectStoreResourceRecord) => void;
   mutation: ObjectStoreMutation;
   reread: ObjectStoreCanonicalRead;
 };
@@ -61,7 +70,7 @@ export function useObjectStoreSaveTransaction(options: SaveTransactionOptions) {
       return;
     }
     runtime.publish(owner, null);
-    options.accept();
+    options.accept(evidence.data);
     options.notifySuccess();
   };
   const submit = (draft: ObjectStoreDraft) => submitObjectStoreSave(options, runtime, prove, draft);
@@ -78,7 +87,7 @@ export function useObjectStoreSaveTransaction(options: SaveTransactionOptions) {
     proving: runtime.command === 'proving',
     recovery: runtime.recovery,
     retry,
-    saving: runtime.command === 'saving' || options.mutation.mutation.isPending,
+    saving: runtime.command === 'saving',
     submit
   };
 }
@@ -120,11 +129,11 @@ function submitObjectStoreSave(
   if (!owner) return;
   const receipt = { draft, recovery: null };
   runtime.receiptRef.current = receipt;
-  options.mutation.mutate(buildUpdate(draft), {
-    onSuccess: () => {
+  options.mutation.mutate(draft, {
+    onSuccess: result => {
       if (!runtime.isCurrent(owner)) return;
       runtime.publish(owner, null);
-      options.accept();
+      options.accept(result.data);
       options.notifySuccess();
       runtime.finish(owner);
     },
@@ -132,17 +141,6 @@ function submitObjectStoreSave(
       void handleSaveFailure(options, runtime, prove, owner, receipt, reason);
     }
   });
-}
-
-function buildUpdate(draft: ObjectStoreDraft) {
-  return {
-    id: objectStoreResourceId,
-    resource: 'object-store',
-    dataProviderName: 'object-store',
-    invalidates: ['detail'] as Array<'detail'>,
-    mutationMode: 'pessimistic' as const,
-    values: draft
-  };
 }
 
 type SaveRuntime = ReturnType<typeof useSaveRuntime>;

@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import { useNotification, useOne, useUpdate, type HttpError } from '@refinedev/core';
-import { useCallback } from 'react';
+import { useDataProvider, useInvalidate, useNotification, useOne, type HttpError } from '@refinedev/core';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -24,12 +24,12 @@ import {
   type ObjectStoreDraft,
   type ObjectStoreResourceRecord
 } from '../model/object-store-model';
-import { classifyObjectStoreReadFailure } from '../model/object-store-failure';
+import { classifyObjectStoreReadFailure, ObjectStoreRequestFailure } from '../model/object-store-failure';
 import { useObjectStoreEditorController } from './object-store-editor-controller';
+import type { ObjectStoreMutation } from './object-store-save-transaction';
 
 const objectStoreResource = 'object-store';
 const objectStoreDataProvider = 'object-store';
-const detailInvalidation = ['detail'] as const;
 
 export function useObjectStoreResourceController() {
   const { t } = useTranslation();
@@ -40,14 +40,7 @@ export function useObjectStoreResourceController() {
     dataProviderName: objectStoreDataProvider,
     errorNotification: false
   });
-  const update = useUpdate<ObjectStoreResourceRecord, HttpError, ObjectStoreDraft>({
-    resource: objectStoreResource,
-    dataProviderName: objectStoreDataProvider,
-    invalidates: [...detailInvalidation],
-    mutationMode: 'pessimistic',
-    successNotification: false,
-    errorNotification: false
-  });
+  const update = useObjectStoreMutation();
   const refetch = resource.query.refetch;
   const reread = useCallback(async () => {
     try {
@@ -76,15 +69,48 @@ export function useObjectStoreResourceController() {
     discard: editor.discard,
     retry: editor.retry,
     state:
-      kind === 'ready' || editor.state.locked
-        ? ({
-            kind: 'ready',
-            ...editor.state
-          } as const)
-        : ({ kind } as const),
+      kind === 'ready' || editor.state.locked ? ({ kind: 'ready', ...editor.state } as const) : ({ kind } as const),
     submit: editor.submit,
     updateDraft: editor.updateDraft
   };
+}
+
+function useObjectStoreMutation() {
+  const provider = useDataProvider()(objectStoreDataProvider);
+  const invalidate = useInvalidate();
+  return useMemo<ObjectStoreMutation>(
+    () => ({
+      mutate: (draft, callbacks) => {
+        if (!provider.update) {
+          callbacks.onError(
+            new ObjectStoreRequestFailure('invalid', 'rejected', { code: 'OBJECT_STORE_UPDATE_UNSUPPORTED' })
+          );
+          return;
+        }
+        void provider
+          .update<ObjectStoreResourceRecord, ObjectStoreDraft>({
+            resource: objectStoreResource,
+            id: objectStoreResourceId,
+            variables: draft
+          })
+          .then(result => {
+            callbacks.onSuccess(result);
+            // The canonical provider result commits the editor state; cache invalidation is only best-effort cleanup.
+            void Promise.resolve()
+              .then(() =>
+                invalidate({
+                  resource: objectStoreResource,
+                  id: objectStoreResourceId,
+                  dataProviderName: objectStoreDataProvider,
+                  invalidates: ['detail']
+                })
+              )
+              .catch(() => undefined);
+          }, callbacks.onError);
+      }
+    }),
+    [invalidate, provider]
+  );
 }
 
 function resolveResourceKind(
