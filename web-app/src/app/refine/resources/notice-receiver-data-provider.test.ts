@@ -43,6 +43,10 @@ vi.mock('@/features/alert/notice-receiver/api/notice-receiver-api', async import
 
 import { noticeReceiverDataProvider } from './notice-receiver-data-provider';
 import {
+  normalizeNoticeReceiverProviderFailure,
+  readNoticeReceiverWriteInput
+} from './notice-receiver-data-provider-failure';
+import {
   readNoticeReceiverDeleteRecord,
   readNoticeReceiverDraft,
   readNoticeReceiverId,
@@ -324,10 +328,51 @@ describe('Notice Receiver Refine data provider', () => {
       'unavailable',
       'uncertain'
     ],
+    [
+      'cause-bearing detail source 404',
+      Object.assign(createRefineHttpError('private', 404, undefined, 'http', 404), {
+        cause: new Error('private-cause')
+      }),
+      'detail',
+      'unavailable',
+      'uncertain'
+    ],
+    [
+      'cause-bearing write source 422',
+      Object.assign(createRefineHttpError('private', 422, undefined, 'http', 422), {
+        cause: new Error('private-cause')
+      }),
+      'write',
+      'unavailable',
+      'uncertain'
+    ],
+    [
+      'cause-bearing write source with a stable receiver code',
+      Object.assign(createRefineHttpError('private', 422, 'NOTICE_RECEIVER_MISSING', 'http', 422), {
+        cause: new Error('private-cause')
+      }),
+      'write',
+      'unavailable',
+      'uncertain'
+    ],
     ['HTTP timeout', createRefineHttpError('private', 408, undefined, 'http', 408), 'write', 'error', 'uncertain'],
+    [
+      'missing source status',
+      createRefineHttpError('private', 404, 'NOTICE_RECEIVER_MISSING', 'http'),
+      'write',
+      'unavailable',
+      'uncertain'
+    ],
     [
       'zero source status',
       createRefineHttpError('private', 0, 'NOTICE_RECEIVER_MISSING', 'http', 0),
+      'write',
+      'unavailable',
+      'uncertain'
+    ],
+    [
+      'server source status',
+      createRefineHttpError('private', 503, 'NOTICE_RECEIVER_MISSING', 'http', 503),
       'write',
       'unavailable',
       'uncertain'
@@ -381,6 +426,28 @@ function requestForPhase(phase: 'write' | 'detail' | 'collection') {
 }
 
 describe('Notice Receiver provider input boundary', () => {
+  it('does not turn a cause-bearing contract failure into safe pretransport rejection', () => {
+    const reason = Object.assign(
+      createRefineHttpError('private', 400, 'NOTICE_RECEIVER_VARIABLES_INVALID', 'contract'),
+      { cause: new Error('private-cause') }
+    );
+
+    let observed: unknown;
+    try {
+      readNoticeReceiverWriteInput(() => {
+        throw reason;
+      });
+    } catch (failure) {
+      observed = failure;
+    }
+
+    expect(observed).toBe(reason);
+    expect(normalizeNoticeReceiverProviderFailure(observed, 'write')).toMatchObject({
+      kind: 'unavailable',
+      writeOutcome: 'uncertain'
+    });
+  });
+
   it('keeps list normalization and every established unsupported or invalid error code', () => {
     expect(
       readNoticeReceiverListQuery({

@@ -29,7 +29,7 @@ export function readNoticeReceiverWriteInput<T>(read: () => T): T {
   } catch (reason) {
     if (isRefineHttpError(reason)) {
       const code = stableReceiverCode(reason.code);
-      if (reason.kind === 'contract' && code !== undefined) {
+      if (reason.cause === undefined && reason.kind === 'contract' && code !== undefined) {
         throw new NoticeReceiverRequestFailure('invalid', 'rejected', { code });
       }
     }
@@ -47,11 +47,14 @@ function adaptRefineFailure(reason: RefineHttpError, phase: NoticeReceiverProvid
 }
 
 function refineFailureKind(reason: RefineHttpError, phase: NoticeReceiverProviderPhase): NoticeReceiverFailureKind {
-  if (phase === 'detail' && reason.kind === 'http' && reason.httpStatus === 404) return 'missing';
-  if (reason.kind === 'network') return 'unavailable';
-  if (reason.kind === 'http' && (reason.httpStatus === 0 || (reason.httpStatus ?? 0) >= 500)) {
+  if (
+    reason.cause !== undefined ||
+    reason.kind === 'network' ||
+    (reason.kind === 'http' && (reason.httpStatus === undefined || reason.httpStatus === 0 || reason.httpStatus >= 500))
+  ) {
     return 'unavailable';
   }
+  if (phase === 'detail' && reason.kind === 'http' && reason.httpStatus === 404) return 'missing';
   if (typeof reason.code === 'string' && reason.code.startsWith('NOTICE_RECEIVER_')) return 'invalid';
   return 'error';
 }
@@ -59,7 +62,7 @@ function refineFailureKind(reason: RefineHttpError, phase: NoticeReceiverProvide
 function refineWriteOutcome(reason: RefineHttpError, phase: NoticeReceiverProviderPhase): NoticeReceiverWriteOutcome {
   // `statusCode` is presentation metadata. Only the originating HTTP write
   // status can establish a rejection, and a timeout may still have committed.
-  if (phase !== 'write' || reason.kind !== 'http') return 'uncertain';
+  if (phase !== 'write' || reason.kind !== 'http' || reason.cause !== undefined) return 'uncertain';
   return reason.httpStatus !== undefined &&
     reason.httpStatus >= 400 &&
     reason.httpStatus < 500 &&
