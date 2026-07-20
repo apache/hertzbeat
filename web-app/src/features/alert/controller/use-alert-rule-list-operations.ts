@@ -29,6 +29,7 @@ import {
 } from '../alert-rule-model';
 
 type OperationPhase = 'write' | 'proof' | 'projection';
+type OperationCommand = 'operating' | 'recovering' | 'idle';
 
 type ToggleReceipt = {
   kind: 'toggle';
@@ -96,7 +97,7 @@ export function useAlertRuleListOperations(rereadLatest: () => Promise<AlertRule
   };
 
   return {
-    command: gate.pending ? ('operating' as const) : recoveryPending ? ('recovering' as const) : ('idle' as const),
+    command: resolveOperationCommand(gate.pending, recoveryPending),
     isLocked: () => gate.isLocked() || receiptRef.current !== undefined,
     hasReceipt: () => receiptRef.current !== undefined,
     resume: () => {
@@ -109,6 +110,13 @@ export function useAlertRuleListOperations(rereadLatest: () => Promise<AlertRule
 }
 
 export type AlertRuleListOperations = ReturnType<typeof useAlertRuleListOperations>;
+
+function resolveOperationCommand(operating: boolean, recovering: boolean): OperationCommand {
+  // An active retry remains operating even while it still owns a recovery receipt.
+  if (operating) return 'operating';
+  if (recovering) return 'recovering';
+  return 'idle';
+}
 
 async function advance(
   receipt: OperationReceipt,
