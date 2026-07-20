@@ -11,6 +11,11 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@refinedev/core', () => ({ useList: mocks.useList }));
 
 import type { NoticeRuleQuery } from '../model/notice-rule-model';
+import {
+  NoticeRuleContractError,
+  NoticeRuleDomainFailure,
+  NoticeRuleRequestFailure
+} from '../model/notice-rule-failure';
 import { useNoticeRuleList } from './notice-rule-read-controller';
 
 describe('notice rule authoritative list reread', () => {
@@ -50,13 +55,13 @@ describe('notice rule authoritative list reread', () => {
     const old = deferred<{ data: { data: never[]; total: number }; isError: false }>();
     mocks.currentRefetch
       .mockReturnValueOnce(old.promise)
-      .mockResolvedValueOnce({ error: { statusCode: 503 }, isError: true });
+      .mockResolvedValueOnce({ error: new NoticeRuleRequestFailure('unavailable'), isError: true });
     const query: NoticeRuleQuery = { name: '', pageIndex: 0, pageSize: 8 };
     const { result } = renderHook(() => useNoticeRuleList(query));
 
     const older = result.current.refreshAuthoritatively();
     await act(async () => {
-      await expect(result.current.refreshAuthoritatively()).rejects.toMatchObject({ statusCode: 503 });
+      await expect(result.current.refreshAuthoritatively()).rejects.toMatchObject({ kind: 'unavailable' });
     });
     expect(result.current.state.kind).toBe('unavailable');
 
@@ -66,15 +71,49 @@ describe('notice rule authoritative list reread', () => {
   });
 
   it('classifies a collection 404 as error rather than record missing', async () => {
-    mocks.currentRefetch.mockResolvedValueOnce({ error: { statusCode: 404 }, isError: true });
+    mocks.currentRefetch.mockResolvedValueOnce({ error: new NoticeRuleRequestFailure('missing'), isError: true });
     const query: NoticeRuleQuery = { name: '', pageIndex: 0, pageSize: 8 };
     const { result } = renderHook(() => useNoticeRuleList(query));
 
     await act(async () => {
-      await expect(result.current.refreshAuthoritatively()).rejects.toMatchObject({ statusCode: 404 });
+      await expect(result.current.refreshAuthoritatively()).rejects.toMatchObject({ kind: 'error' });
     });
 
     expect(result.current.state.kind).toBe('error');
+  });
+
+  it('uses a named invalid failure when a successful reread omits canonical list totals', async () => {
+    mocks.currentRefetch.mockResolvedValueOnce({ data: { data: [] }, isError: false });
+    const query: NoticeRuleQuery = { name: '', pageIndex: 0, pageSize: 8 };
+    const { result } = renderHook(() => useNoticeRuleList(query));
+
+    await act(async () => {
+      const failure = result.current.refreshAuthoritatively();
+      await expect(failure).rejects.toBeInstanceOf(NoticeRuleContractError);
+      await expect(failure).rejects.toMatchObject({
+        kind: 'invalid',
+        code: 'NOTICE_RULE_LIST_REREAD_INVALID'
+      });
+    });
+
+    expect(result.current.state.kind).toBe('invalid');
+  });
+
+  it('never copies arbitrary reread fields into the thrown domain failure', async () => {
+    mocks.currentRefetch.mockResolvedValueOnce({
+      error: { statusCode: 503, token: 'private-token' },
+      isError: true
+    });
+    const query: NoticeRuleQuery = { name: '', pageIndex: 0, pageSize: 8 };
+    const { result } = renderHook(() => useNoticeRuleList(query));
+
+    await act(async () => {
+      const failure = result.current.refreshAuthoritatively();
+      await expect(failure).rejects.toBeInstanceOf(NoticeRuleDomainFailure);
+      await expect(failure).rejects.toSatisfy(
+        (reason: NoticeRuleDomainFailure) => !Object.hasOwn(reason, 'statusCode') && !Object.hasOwn(reason, 'token')
+      );
+    });
   });
 });
 

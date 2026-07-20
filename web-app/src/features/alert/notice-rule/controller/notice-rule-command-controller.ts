@@ -9,11 +9,16 @@ import {
   validateNoticeRuleDraft,
   type NoticeRule,
   type NoticeRuleDraft,
-  type NoticeRuleFailureKind,
   type NoticeRuleMutationVariables
 } from '../model/notice-rule-model';
+import {
+  noticeRuleDetailMismatchFailure,
+  noticeRuleFailureKind,
+  noticeRuleVariablesInvalidFailure,
+  noticeRuleWriteFailureKind,
+  type NoticeRuleFailureKind
+} from '../model/notice-rule-failure';
 import { noticeRuleResourceName } from '../notice-rule-resource';
-import { classifyNoticeRuleFailure, classifyNoticeRuleWriteFailure } from './notice-rule-failure';
 import {
   useNoticeRuleCommandGate,
   useNoticeRuleEditorController,
@@ -41,17 +46,14 @@ export function useNoticeRuleCommandController(
   const loadDetail = async (id: number) => {
     if (!provider.getOne) throw new Error('Notice rule detail unavailable');
     const response = await provider.getOne<NoticeRule>({ resource: noticeRuleResourceName, id });
-    if (response.data.id !== id)
-      throw Object.assign(new Error('Notice rule detail id mismatch'), {
-        code: 'NOTICE_RULE_DETAIL_INVALID'
-      });
+    if (response.data.id !== id) throw noticeRuleDetailMismatchFailure();
     return response.data;
   };
   const editor = useNoticeRuleEditorController(
     gate,
     { ready: options.kind === 'ready', receivers: options.receivers, templates: options.templates },
     loadDetail,
-    reason => notify.readFailure(classifyNoticeRuleFailure(reason))
+    reason => notify.readFailure(noticeRuleFailureKind(reason))
   );
   const context = { list, options, provider, gate, editor, loadDetail, notify };
   const persist = createNoticeRulePersist(context);
@@ -123,7 +125,7 @@ function createNoticeRulePersist(context: NoticeRuleCommandContext) {
       context.notify.saveSuccess();
       return true;
     } catch (reason) {
-      context.notify.saveFailure(classifyNoticeRuleWriteFailure(reason));
+      context.notify.saveFailure(noticeRuleWriteFailureKind(reason));
       return false;
     } finally {
       context.gate.end();
@@ -140,7 +142,7 @@ function createNoticeRuleOperations(context: NoticeRuleCommandContext) {
       const current = await context.loadDetail(rule.id);
       const draft = { ...noticeRuleDraftFromDetail(current), enable };
       if (!validMutation(draft, context.options)) {
-        throw Object.assign(new Error(), { code: 'NOTICE_RULE_VARIABLES_INVALID' });
+        throw noticeRuleVariablesInvalidFailure();
       }
       await context.provider.update<NoticeRule, NoticeRuleMutationVariables>({
         resource: noticeRuleResourceName,
@@ -151,7 +153,7 @@ function createNoticeRuleOperations(context: NoticeRuleCommandContext) {
       context.notify.saveSuccess();
       return true;
     } catch (reason) {
-      context.notify.saveFailure(classifyNoticeRuleWriteFailure(reason));
+      context.notify.saveFailure(noticeRuleWriteFailureKind(reason));
       return false;
     } finally {
       context.gate.end();
@@ -165,7 +167,7 @@ function createNoticeRuleOperations(context: NoticeRuleCommandContext) {
       await context.list.refreshAuthoritatively();
       context.notify.deleteSuccess();
     } catch (reason) {
-      context.notify.deleteFailure(classifyNoticeRuleWriteFailure(reason));
+      context.notify.deleteFailure(noticeRuleWriteFailureKind(reason));
     } finally {
       context.gate.end();
     }

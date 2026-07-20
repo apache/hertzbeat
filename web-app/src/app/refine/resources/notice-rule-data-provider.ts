@@ -18,14 +18,18 @@ import type {
 
 import {
   deleteNoticeRule,
-  isNoticeRuleMissing,
   loadAllNoticeRulesByName,
   loadNoticeRule,
   loadNoticeRules,
-  NoticeRuleContractError,
   saveNoticeRule
 } from '@/features/alert/notice-rule/api/notice-rule-api';
 import { parseNoticeRuleMutationVariables } from '@/features/alert/notice-rule/api/notice-rule-schema';
+import {
+  NoticeRuleContractError,
+  noticeRuleFailureKind,
+  noticeRuleProviderMissingFailure,
+  preserveNoticeRuleFailure
+} from '@/features/alert/notice-rule/model/notice-rule-failure';
 import {
   noticeRuleMatchesDraft,
   noticeRulePageSizes,
@@ -36,8 +40,6 @@ import {
 } from '@/features/alert/notice-rule/model/notice-rule-model';
 import { noticeApiEndpoint } from '@/features/alert/notice-api-endpoints';
 import { adaptRefineRecord, adaptRefineRecords } from '@/shared/refine/refine-provider-data';
-
-import { createRefineHttpError, toRefineHttpError } from '../refine-http-error';
 
 export const noticeRuleResourceName = 'notice-rules';
 
@@ -68,7 +70,7 @@ export const noticeRuleDataProvider: DataProvider = {
     return protect(async () => {
       assertResource(params.resource);
       const variables = readMutationVariables(params.variables);
-      if (variables.draft.id !== undefined) throw contractError('NOTICE_RULE_VARIABLES_INVALID', 400);
+      if (variables.draft.id !== undefined) throw contractError('NOTICE_RULE_VARIABLES_INVALID');
       const before = await loadAllNoticeRulesByName(variables.draft.name.trim());
       const previousIds = new Set(before.map(rule => rule.id));
       await saveNoticeRule(variables.draft, variables.receivers, variables.templates);
@@ -116,7 +118,7 @@ export const noticeRuleDataProvider: DataProvider = {
         await loadNoticeRule(id);
         throw contractError('NOTICE_RULE_DELETE_NOT_CONVERGED');
       } catch (error) {
-        if (!isNoticeRuleMissing(error)) throw error;
+        if (noticeRuleFailureKind(error) !== 'missing') throw error;
       }
       return { data: adaptRefineRecord<TData>(canonical) };
     });
@@ -129,22 +131,17 @@ async function protect<T>(operation: () => Promise<T>): Promise<T> {
   try {
     return await operation();
   } catch (error) {
-    if (isNoticeRuleMissing(error)) {
-      throw contractError('NOTICE_RULE_MISSING', 404);
-    }
-    if (error instanceof NoticeRuleContractError) {
-      throw contractError(error.code);
-    }
-    throw toRefineHttpError(error);
+    const kind = noticeRuleFailureKind(error);
+    throw kind === 'missing' ? noticeRuleProviderMissingFailure() : preserveNoticeRuleFailure(error, kind);
   }
 }
 
 function assertResource(resource: string) {
-  if (resource !== noticeRuleResourceName) throw contractError('NOTICE_RULE_RESOURCE_UNSUPPORTED', 400);
+  if (resource !== noticeRuleResourceName) throw contractError('NOTICE_RULE_RESOURCE_UNSUPPORTED');
 }
 
 function readListQuery(params: GetListParams): NoticeRuleQuery {
-  if (params.sorters?.length) throw contractError('NOTICE_RULE_SORT_UNSUPPORTED', 400);
+  if (params.sorters?.length) throw contractError('NOTICE_RULE_SORT_UNSUPPORTED');
   return { ...readNameFilter(params.filters), ...readPagination(params.pagination) };
 }
 
@@ -157,7 +154,7 @@ function readPagination(pagination: GetListParams['pagination']) {
     currentPage < 1 ||
     !noticeRulePageSizes.includes(pageSize as (typeof noticeRulePageSizes)[number])
   ) {
-    throw contractError('NOTICE_RULE_PAGINATION_INVALID', 400);
+    throw contractError('NOTICE_RULE_PAGINATION_INVALID');
   }
   return { pageIndex: currentPage - 1, pageSize };
 }
@@ -173,7 +170,7 @@ function readNameFilter(filters: GetListParams['filters']) {
     filter.operator !== 'contains' ||
     typeof filter.value !== 'string'
   ) {
-    throw contractError('NOTICE_RULE_FILTER_UNSUPPORTED', 400);
+    throw contractError('NOTICE_RULE_FILTER_UNSUPPORTED');
   }
   return { name: filter.value.trim() };
 }
@@ -183,25 +180,25 @@ function readMutationVariables(value: unknown, id?: number): NoticeRuleMutationV
   try {
     candidate = parseNoticeRuleMutationVariables(value);
   } catch {
-    throw contractError('NOTICE_RULE_VARIABLES_INVALID', 400);
+    throw contractError('NOTICE_RULE_VARIABLES_INVALID');
   }
   if (
     validateNoticeRuleDraft(candidate.draft).length ||
     validateNoticeRuleDependencies(candidate.draft, candidate.receivers, candidate.templates).length ||
     (id === undefined ? candidate.draft.id !== undefined : candidate.draft.id !== id)
   ) {
-    throw contractError('NOTICE_RULE_VARIABLES_INVALID', 400);
+    throw contractError('NOTICE_RULE_VARIABLES_INVALID');
   }
   return candidate;
 }
 
 function readId(value: string | number) {
   if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 1) {
-    throw contractError('NOTICE_RULE_ID_INVALID', 400);
+    throw contractError('NOTICE_RULE_ID_INVALID');
   }
   return value;
 }
 
-function contractError(code: string, status = 502) {
-  return createRefineHttpError('Notice rule contract failed', status, code);
+function contractError(code: string) {
+  return new NoticeRuleContractError(code);
 }

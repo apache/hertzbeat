@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 import { noticeReceiverOptionSchema, noticeReceiverTypeSchema } from '../../notice-receiver/api/notice-receiver-schema';
 import type { NoticeTemplate } from '../../notice-template-model';
+import { NoticeRuleContractError } from '../model/notice-rule-failure';
 import type { NoticeRule, NoticeRuleMutationVariables, NoticeRuleQuery } from '../model/notice-rule-model';
 
 const positiveId = z.number().int().positive();
@@ -112,13 +113,6 @@ const noticeRulePageSchema = z
     number,
     size
   }));
-
-export class NoticeRuleContractError extends Error {
-  constructor(readonly code: string) {
-    super('Notice rule response invalid');
-    this.name = 'NoticeRuleContractError';
-  }
-}
 
 export function parseNoticeRulePage(value: unknown, query: NoticeRuleQuery) {
   const page = parse(noticeRulePageSchema, value, 'NOTICE_RULE_PAGE_INVALID');

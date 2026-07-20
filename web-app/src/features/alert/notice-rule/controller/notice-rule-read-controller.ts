@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { useList, type HttpError } from '@refinedev/core';
+import { useList } from '@refinedev/core';
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
@@ -14,11 +14,15 @@ import {
   resolveNoticeRuleListState,
   writeNoticeRuleQuery,
   type NoticeRule,
-  type NoticeRuleCollectionFailureKind,
   type NoticeRuleQuery
 } from '../model/notice-rule-model';
+import {
+  noticeRuleCollectionFailureKind,
+  noticeRuleListRereadInvalidFailure,
+  preserveNoticeRuleFailure,
+  type NoticeRuleCollectionFailureKind
+} from '../model/notice-rule-failure';
 import { noticeRuleResourceName } from '../notice-rule-resource';
-import { classifyNoticeRuleCollectionFailure, preserveNoticeRuleFailure } from './notice-rule-failure';
 import { noticeRuleQueryKeys } from './notice-rule-query-keys';
 
 export function useNoticeRuleOptions() {
@@ -41,8 +45,8 @@ function noticeRuleOptionFailure(
   receivers: { isError: boolean; error: unknown },
   templates: { isError: boolean; error: unknown }
 ) {
-  if (receivers.isError) return classifyNoticeRuleCollectionFailure(receivers.error);
-  if (templates.isError) return classifyNoticeRuleCollectionFailure(templates.error);
+  if (receivers.isError) return noticeRuleCollectionFailureKind(receivers.error);
+  if (templates.isError) return noticeRuleCollectionFailureKind(templates.error);
   return null;
 }
 
@@ -64,7 +68,7 @@ export function useNoticeRuleList(query: NoticeRuleQuery) {
     identity: string;
     kind: NoticeRuleCollectionFailureKind;
   } | null>(null);
-  const rules = useList<NoticeRule, HttpError>(noticeRuleListRequest(query));
+  const rules = useList<NoticeRule>(noticeRuleListRequest(query));
   const refreshOwnerRef = useRef({ identity: queryIdentity, refetch: rules.query.refetch });
   const refreshEpochRef = useRef(0);
   useLayoutEffect(() => {
@@ -76,7 +80,7 @@ export function useNoticeRuleList(query: NoticeRuleQuery) {
     () =>
       resolveNoticeRuleListState(
         rules.query.isPending,
-        activeRefreshFailure ?? (rules.query.isError ? classifyNoticeRuleCollectionFailure(rules.query.error) : null),
+        activeRefreshFailure ?? (rules.query.isError ? noticeRuleCollectionFailureKind(rules.query.error) : null),
         rules.result.data,
         rules.result.total
       ),
@@ -95,13 +99,13 @@ export function useNoticeRuleList(query: NoticeRuleQuery) {
     const owner = refreshOwnerRef.current;
     const result = await owner.refetch();
     if (result.isError) {
-      const kind = classifyNoticeRuleCollectionFailure(result.error);
+      const kind = noticeRuleCollectionFailureKind(result.error);
       if (refreshEpochRef.current === epoch) setRefreshFailure({ identity: owner.identity, kind });
       throw preserveNoticeRuleFailure(result.error, kind);
     }
     if (!result.data || result.data.total === undefined) {
       if (refreshEpochRef.current === epoch) setRefreshFailure({ identity: owner.identity, kind: 'invalid' });
-      throw preserveNoticeRuleFailure({ statusCode: 502, code: 'NOTICE_RULE_LIST_REREAD_INVALID' }, 'invalid');
+      throw noticeRuleListRereadInvalidFailure();
     }
     // An older success cannot erase failure evidence from a newer reread.
     if (refreshEpochRef.current === epoch) setRefreshFailure(null);

@@ -35,6 +35,7 @@ vi.mock('./notice-rule-query-controller', () => ({
 }));
 
 import { useNoticeRuleController } from './notice-rule-controller';
+import { NoticeRuleContractError, NoticeRuleRequestFailure } from '../model/notice-rule-failure';
 
 const receiver = { id: 11, name: 'Email', type: 1 as const };
 const template = { id: 21, name: 'Mail', type: 1 as const, preset: false, content: '${content}' };
@@ -79,9 +80,9 @@ describe('notice rule controller', () => {
 
   it.each([
     ['empty', ready([])],
-    ['invalid', failed({ statusCode: 502, code: 'NOTICE_RECEIVER_RESPONSE_INVALID' })],
-    ['unavailable', failed({ statusCode: 503 })],
-    ['error', failed({ statusCode: 500 })]
+    ['invalid', failed(new NoticeRuleContractError('NOTICE_RECEIVER_RESPONSE_INVALID'))],
+    ['unavailable', failed(new NoticeRuleRequestFailure('unavailable'))],
+    ['error', failed(new NoticeRuleRequestFailure('error'))]
   ])('keeps %s receiver options distinct and blocks create', (kind, receiverState) => {
     mocks.options.set('notice-receivers:all', receiverState);
     const { result } = renderHook(() => useNoticeRuleController());
@@ -91,7 +92,7 @@ describe('notice rule controller', () => {
   });
 
   it('blocks detail edit when dependencies are not ready', async () => {
-    mocks.options.set('notice-receivers:all', failed({ statusCode: 503 }));
+    mocks.options.set('notice-receivers:all', failed(new NoticeRuleRequestFailure('unavailable')));
     const { result } = renderHook(() => useNoticeRuleController());
 
     await act(async () => result.current.actions.edit(31));
@@ -104,7 +105,7 @@ describe('notice rule controller', () => {
     const { result, rerender } = renderHook(() => useNoticeRuleController());
     act(() => void result.current.actions.create());
     act(() => result.current.actions.updateDraft({ name: 'Proof', receiverIds: [11], templateId: 21 }));
-    mocks.options.set('notice-receivers:all', failed({ statusCode: 503 }));
+    mocks.options.set('notice-receivers:all', failed(new NoticeRuleRequestFailure('unavailable')));
     rerender();
 
     await act(async () => result.current.actions.submit());
@@ -115,7 +116,7 @@ describe('notice rule controller', () => {
   });
 
   it('keeps the editor open and preserves unavailable classification when plain refetch evidence fails', async () => {
-    mocks.refetch.mockResolvedValue({ isError: true, error: { statusCode: 503, code: 'NETWORK_REQUEST_FAILED' } });
+    mocks.refetch.mockResolvedValue({ isError: true, error: new NoticeRuleRequestFailure('unavailable') });
     const { result } = renderHook(() => useNoticeRuleController());
     act(() => void result.current.actions.create());
     act(() => result.current.actions.updateDraft({ name: 'Proof', receiverIds: [11], templateId: 21 }));
@@ -282,7 +283,7 @@ describe('notice rule controller', () => {
   });
 
   it('classifies a write 404 as save error rather than detail missing', async () => {
-    mocks.update.mockRejectedValueOnce({ statusCode: 404 });
+    mocks.update.mockRejectedValueOnce(new NoticeRuleRequestFailure('missing'));
     const { result } = renderHook(() => useNoticeRuleController());
     await act(async () => result.current.actions.edit(31));
 
@@ -293,6 +294,26 @@ describe('notice rule controller', () => {
     expect(mocks.notification).not.toHaveBeenCalledWith(
       expect.objectContaining({ message: 'noticeRules.save.missing' })
     );
+  });
+
+  it('reports a provider detail identity mismatch as named invalid domain evidence', async () => {
+    mocks.getOne.mockResolvedValueOnce({ data: { ...rule, id: 32 } });
+    const { result } = renderHook(() => useNoticeRuleController());
+
+    await act(async () => result.current.actions.edit(31));
+
+    expect(result.current.state.draft).toBeNull();
+    expect(mocks.notification).toHaveBeenCalledWith(expect.objectContaining({ message: 'noticeRules.read.invalid' }));
+  });
+
+  it('reports stale toggle dependencies as named invalid domain evidence before update', async () => {
+    mocks.getOne.mockResolvedValueOnce({ data: { ...rule, receiverId: [999], receiverName: ['Stale'] } });
+    const { result } = renderHook(() => useNoticeRuleController());
+
+    await act(async () => result.current.actions.toggle(rule, false));
+
+    expect(mocks.update).not.toHaveBeenCalled();
+    expect(mocks.notification).toHaveBeenCalledWith(expect.objectContaining({ message: 'noticeRules.save.invalid' }));
   });
 });
 

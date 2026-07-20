@@ -20,6 +20,7 @@ import type { RemotePageState } from '@/shared/remote-state';
 import { formatLabelMatchers, parseLabelMatchers } from '../../alert-label-matchers';
 import type { NoticeReceiverOption } from '../../notice-receiver/model/notice-receiver-model';
 import type { NoticeTemplate } from '../../notice-template-model';
+import type { NoticeRuleCollectionFailureKind } from './notice-rule-failure';
 
 export const noticeRulePageSizes = [8, 15, 25] as const;
 export const noticeRuleWeekdays = [7, 1, 2, 3, 4, 5, 6] as const;
@@ -44,8 +45,6 @@ export type NoticeRule = {
   gmtUpdate?: string | number | null;
 };
 
-export type NoticeRuleFailureKind = 'missing' | 'invalid' | 'unavailable' | 'error';
-export type NoticeRuleCollectionFailureKind = Exclude<NoticeRuleFailureKind, 'missing'>;
 export type NoticeRuleListState = RemotePageState<NoticeRule, NoticeRuleCollectionFailureKind>;
 
 export type NoticeRuleDraft = {

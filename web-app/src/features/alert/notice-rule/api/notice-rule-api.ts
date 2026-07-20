@@ -5,13 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import {
-  ApiMessageError,
-  apiMessageDelete,
-  apiMessageGet,
-  apiMessagePost,
-  apiMessagePut
-} from '@/core/http/api-message';
+import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
 
 import { loadAllNoticeReceiverOptions } from '../../notice-receiver/api/notice-receiver-api';
 import type { NoticeReceiverOption } from '../../notice-receiver/model/notice-receiver-model';
@@ -23,40 +17,38 @@ import {
   type NoticeRuleDraft,
   type NoticeRuleQuery
 } from '../model/notice-rule-model';
+import { NoticeRuleContractError } from '../model/notice-rule-failure';
 import { noticeRuleEndpoint, noticeRulesEndpoint, noticeTemplatesEndpoint } from '../../notice-api-endpoints';
-import {
-  NoticeRuleContractError,
-  parseNoticeRule,
-  parseNoticeRulePage,
-  parseNoticeTemplates
-} from './notice-rule-schema';
-
-export { NoticeRuleContractError } from './notice-rule-schema';
+import { noticeRuleApiRequest } from './notice-rule-api-failure';
+import { parseNoticeRule, parseNoticeRulePage, parseNoticeTemplates } from './notice-rule-schema';
 
 export async function loadNoticeRules(query: NoticeRuleQuery) {
-  return parseNoticeRulePage(
-    await apiMessageGet(`${noticeRulesEndpoint}?${writeNoticeRuleQuery(query).toString()}`),
-    query
+  return noticeRuleApiRequest(async () =>
+    parseNoticeRulePage(await apiMessageGet(`${noticeRulesEndpoint}?${writeNoticeRuleQuery(query).toString()}`), query)
   );
 }
 
 export async function loadNoticeRule(id: number) {
-  return parseNoticeRule(await apiMessageGet(noticeRuleDetailEndpoint(id)), id);
+  return noticeRuleApiRequest(async () => parseNoticeRule(await apiMessageGet(noticeRuleDetailEndpoint(id)), id));
 }
 
 export async function loadAllNoticeReceivers() {
-  const receivers = await loadAllNoticeReceiverOptions();
-  if (receivers.some(item => item.id < 1) || new Set(receivers.map(item => item.id)).size !== receivers.length) {
-    throw new NoticeRuleContractError('NOTICE_RULE_RECEIVER_OPTIONS_INVALID');
-  }
-  return receivers;
+  return noticeRuleApiRequest(async () => {
+    const receivers = await loadAllNoticeReceiverOptions();
+    if (receivers.some(item => item.id < 1) || new Set(receivers.map(item => item.id)).size !== receivers.length) {
+      throw new NoticeRuleContractError('NOTICE_RULE_RECEIVER_OPTIONS_INVALID');
+    }
+    return receivers;
+  });
 }
 
 export async function loadAllNoticeTemplates() {
-  const templates = parseNoticeTemplates(await apiMessageGet(`${noticeTemplatesEndpoint}/all`));
-  const ids = templates.flatMap(item => (item.id == null ? [] : [item.id]));
-  if (new Set(ids).size !== ids.length) throw new NoticeRuleContractError('NOTICE_RULE_TEMPLATE_OPTIONS_INVALID');
-  return templates;
+  return noticeRuleApiRequest(async () => {
+    const templates = parseNoticeTemplates(await apiMessageGet(`${noticeTemplatesEndpoint}/all`));
+    const ids = templates.flatMap(item => (item.id == null ? [] : [item.id]));
+    if (new Set(ids).size !== ids.length) throw new NoticeRuleContractError('NOTICE_RULE_TEMPLATE_OPTIONS_INVALID');
+    return templates;
+  });
 }
 
 export async function loadAllNoticeRulesByName(name: string) {
@@ -78,19 +70,21 @@ export async function loadAllNoticeRulesByName(name: string) {
   return records;
 }
 
-export function saveNoticeRule(draft: NoticeRuleDraft, receivers: NoticeReceiverOption[], templates: NoticeTemplate[]) {
+export async function saveNoticeRule(
+  draft: NoticeRuleDraft,
+  receivers: NoticeReceiverOption[],
+  templates: NoticeTemplate[]
+) {
   const payload = buildNoticeRulePayload(draft, receivers, templates);
-  return draft.id ? apiMessagePut(noticeRuleEndpoint, payload) : apiMessagePost(noticeRuleEndpoint, payload);
+  return noticeRuleApiRequest(() =>
+    draft.id ? apiMessagePut(noticeRuleEndpoint, payload) : apiMessagePost(noticeRuleEndpoint, payload)
+  );
 }
 
 export function deleteNoticeRule(id: number) {
-  return apiMessageDelete(noticeRuleDetailEndpoint(id));
+  return noticeRuleApiRequest(() => apiMessageDelete(noticeRuleDetailEndpoint(id)));
 }
 
 function noticeRuleDetailEndpoint(id: number) {
   return `${noticeRuleEndpoint}/${id}`;
-}
-
-export function isNoticeRuleMissing(error: unknown) {
-  return error instanceof ApiMessageError && error.code === 15;
 }

@@ -12,16 +12,16 @@ const api = vi.hoisted(() => ({
 
 vi.mock('@/features/alert/notice-rule/api/notice-rule-api', () => ({
   deleteNoticeRule: api.deleteRule,
-  isNoticeRuleMissing: (error: unknown) => (error as Error)?.message === 'missing',
   loadAllNoticeRulesByName: api.loadAll,
   loadNoticeRule: api.loadOne,
   loadNoticeRules: api.loadPage,
-  NoticeRuleContractError: class NoticeRuleContractError extends Error {
-    code = 'NOTICE_RULE_RESPONSE_INVALID';
-  },
   saveNoticeRule: api.save
 }));
 
+import {
+  NoticeRuleContractError,
+  NoticeRuleRequestFailure
+} from '@/features/alert/notice-rule/model/notice-rule-failure';
 import { noticeRuleDataProvider } from './notice-rule-data-provider';
 import {
   createNoticeRuleDraft,
@@ -95,9 +95,42 @@ describe('notice rule data provider', () => {
       noticeRuleDataProvider.update({ resource: 'notice-rules', id: 31, variables: updateVariables })
     ).rejects.toMatchObject({ code: 'NOTICE_RULE_UPDATE_NOT_CONVERGED' });
 
-    api.loadOne.mockResolvedValueOnce(rule).mockRejectedValueOnce(new Error('missing'));
+    api.loadOne.mockResolvedValueOnce(rule).mockRejectedValueOnce(new NoticeRuleRequestFailure('missing'));
     await expect(noticeRuleDataProvider.deleteOne({ resource: 'notice-rules', id: 31 })).resolves.toEqual({
       data: rule
     });
+  });
+
+  it('preserves explicit domain evidence instead of rebuilding it from HTTP-shaped fields', async () => {
+    const unavailable = new NoticeRuleRequestFailure('unavailable');
+    api.loadPage.mockRejectedValueOnce(unavailable);
+    await expect(
+      noticeRuleDataProvider.getList({ resource: 'notice-rules', pagination: { currentPage: 1, pageSize: 8 } })
+    ).rejects.toBe(unavailable);
+
+    const missing = new NoticeRuleRequestFailure('missing');
+    api.loadOne.mockRejectedValueOnce(missing);
+    await expect(noticeRuleDataProvider.getOne({ resource: 'notice-rules', id: 31 })).rejects.toMatchObject({
+      kind: 'missing',
+      code: 'NOTICE_RULE_MISSING'
+    });
+  });
+
+  it('returns named invalid domain evidence for provider validation and convergence', async () => {
+    const invalidCreate = noticeRuleDataProvider.create({
+      resource: 'notice-rules',
+      variables: { ...variables, draft: { ...draft, id: 31 } }
+    });
+    await expect(invalidCreate).rejects.toBeInstanceOf(NoticeRuleContractError);
+    await expect(invalidCreate).rejects.toMatchObject({ kind: 'invalid', code: 'NOTICE_RULE_VARIABLES_INVALID' });
+
+    api.loadOne.mockResolvedValueOnce({ ...rule, enable: false });
+    await expect(
+      noticeRuleDataProvider.update({
+        resource: 'notice-rules',
+        id: 31,
+        variables: { ...variables, draft: { ...draft, id: 31 } }
+      })
+    ).rejects.toMatchObject({ kind: 'invalid', code: 'NOTICE_RULE_UPDATE_NOT_CONVERGED' });
   });
 });
