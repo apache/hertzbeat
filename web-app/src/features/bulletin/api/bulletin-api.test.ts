@@ -36,6 +36,39 @@ describe('bulletin api', () => {
     await expect(loadBulletin(7)).rejects.toMatchObject({ kind: 'invalid', writeOutcome: 'uncertain' });
   });
 
+  it('accepts an empty out-of-range page as valid pagination recovery evidence', async () => {
+    http.apiMessageGet.mockResolvedValueOnce({
+      content: [],
+      totalElements: 9,
+      totalPages: 2,
+      number: 2,
+      size: 8
+    });
+
+    await expect(loadBulletins({ search: '', pageIndex: 2, pageSize: 8 })).resolves.toMatchObject({
+      content: [],
+      totalElements: 9,
+      totalPages: 2,
+      number: 2,
+      size: 8
+    });
+  });
+
+  it('rejects duplicate stable identities in an ordinary list page', async () => {
+    http.apiMessageGet.mockResolvedValueOnce({
+      content: [bulletin(7), bulletin(7)],
+      totalElements: 2,
+      totalPages: 1,
+      number: 0,
+      size: 8
+    });
+
+    await expect(loadBulletins({ search: '', pageIndex: 0, pageSize: 8 })).rejects.toMatchObject({
+      kind: 'invalid',
+      writeOutcome: 'uncertain'
+    });
+  });
+
   it('keeps valid empty metrics distinct from unavailable metrics', async () => {
     http.apiMessageGet.mockResolvedValueOnce({ name: 'Ops', content: [] });
     await expect(loadBulletinMetrics(7)).resolves.toEqual({ name: 'Ops', content: [] });

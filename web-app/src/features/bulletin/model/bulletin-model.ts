@@ -37,8 +37,7 @@ type BulletinPageEvidence = {
 export function isBulletinPageComplete(page: BulletinPageEvidence) {
   const expectedPages = Math.ceil(page.totalElements / page.size);
   if (page.totalPages !== expectedPages) return false;
-  if (page.totalElements === 0) return page.totalPages === 0 && page.content.length === 0;
-  if (page.number >= page.totalPages) return false;
+  if (page.number >= page.totalPages) return page.content.length === 0;
   const expectedRecords = Math.min(page.size, page.totalElements - page.number * page.size);
   return page.content.length === expectedRecords;
 }

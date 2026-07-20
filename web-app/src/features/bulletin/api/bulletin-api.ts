@@ -148,7 +148,13 @@ function sameScanIdentity(
 }
 
 function validatePageIdentity(page: PageResult<Bulletin>, query: BulletinQuery) {
-  if (page.number !== query.pageIndex || page.size !== query.pageSize || !isBulletinPageComplete(page)) {
+  const ids = new Set(page.content.map(item => item.id));
+  if (
+    page.number !== query.pageIndex ||
+    page.size !== query.pageSize ||
+    !isBulletinPageComplete(page) ||
+    ids.size !== page.content.length
+  ) {
     throw new BulletinContractError('Bulletin page identity did not match the request');
   }
   return page;
