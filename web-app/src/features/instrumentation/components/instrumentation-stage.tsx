@@ -19,10 +19,8 @@ import { Alert, Button, Typography } from 'antd';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { InstrumentationSetupController } from '../controller/use-instrumentation-page-controller';
+import type { FlowStage } from '../model/instrumentation-flow';
 import styles from './instrumentation-stage.module.css';
-
-type FlowStage = InstrumentationSetupController['stage'];
 
 export function StageBody({
   stage,
@@ -62,7 +60,10 @@ export function Field({
 }) {
   return (
     <label className={wide ? styles.fieldWide : styles.field}>
-      <span className={styles.fieldLabel}>{label}{hint && <small>{hint}</small>}</span>
+      <span className={styles.fieldLabel}>
+        {label}
+        {hint && <small>{hint}</small>}
+      </span>
       {children}
     </label>
   );
@@ -99,7 +100,11 @@ export function ResourceError({ title, onRetry }: { title: string; onRetry: () =
       type="error"
       showIcon
       message={title}
-      action={<Button size="small" onClick={onRetry}>{t('common.retry')}</Button>}
+      action={
+        <Button size="small" onClick={onRetry}>
+          {t('common.retry')}
+        </Button>
+      }
     />
   );
 }

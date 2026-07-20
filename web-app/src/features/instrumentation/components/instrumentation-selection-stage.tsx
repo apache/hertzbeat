@@ -18,20 +18,53 @@
 import { Alert, Select, Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { InstrumentationSetupController } from '../controller/use-instrumentation-page-controller';
+import type {
+  CatalogResponse,
+  InstrumentationEnvironment,
+  InstrumentationFramework,
+  InstrumentationLanguage,
+  InstrumentationMethod,
+  InstrumentationPlatform,
+  MethodOption
+} from '../model/instrumentation-contract';
+import type { FlowStage, InstrumentationFlowDraft } from '../model/instrumentation-flow';
 import { Field, StageActions, StageBody } from './instrumentation-stage';
 import styles from './instrumentation-stage.module.css';
 
-export function InstrumentationSelectionStage({ setup }: { setup: InstrumentationSetupController }) {
-  return setup.stage === 1
-    ? <EnvironmentStage setup={setup} />
-    : <LanguageStage setup={setup} />;
+type CatalogLanguage = CatalogResponse['languages'][number];
+type CatalogFramework = CatalogLanguage['frameworks'][number];
+
+export interface InstrumentationSelectionSetup {
+  stage: FlowStage;
+  draft: InstrumentationFlowDraft;
+  selectionOptions: {
+    environments: InstrumentationEnvironment[];
+    platforms: InstrumentationPlatform[];
+    languages: CatalogLanguage[];
+    frameworks: CatalogFramework[];
+    methods: MethodOption[];
+    frameworkSelected: boolean;
+  };
+  setStage: (stage: FlowStage) => void;
+  setEnvironment: (environment: InstrumentationEnvironment) => void;
+  setPlatform: (platform: InstrumentationPlatform) => void;
+  setLanguage: (language: InstrumentationLanguage) => void;
+  setFramework: (framework: InstrumentationFramework) => void;
+  setMethod: (method: InstrumentationMethod) => void;
 }
 
-function EnvironmentStage({ setup }: { setup: InstrumentationSetupController }) {
+export function InstrumentationSelectionStage({ setup }: { setup: InstrumentationSelectionSetup }) {
+  return setup.stage === 1 ? <EnvironmentStage setup={setup} /> : <LanguageStage setup={setup} />;
+}
+
+function EnvironmentStage({ setup }: { setup: InstrumentationSelectionSetup }) {
   const { t } = useTranslation();
   return (
-    <StageBody stage={1} title={t('instrumentation.stage.environment')} description={t('instrumentation.stage.environmentHelp')}>
+    <StageBody
+      stage={1}
+      title={t('instrumentation.stage.environment')}
+      description={t('instrumentation.stage.environmentHelp')}
+    >
       <div className={styles.formGrid}>
         <Field label={t('instrumentation.field.deploymentEnvironment')}>
           <Select
@@ -59,11 +92,15 @@ function EnvironmentStage({ setup }: { setup: InstrumentationSetupController }) 
   );
 }
 
-function LanguageStage({ setup }: { setup: InstrumentationSetupController }) {
+function LanguageStage({ setup }: { setup: InstrumentationSelectionSetup }) {
   const { t } = useTranslation();
   const { draft, selectionOptions } = setup;
   return (
-    <StageBody stage={2} title={t('instrumentation.stage.language')} description={t('instrumentation.stage.languageHelp')}>
+    <StageBody
+      stage={2}
+      title={t('instrumentation.stage.language')}
+      description={t('instrumentation.stage.languageHelp')}
+    >
       <div className={styles.formGrid}>
         <Field label={t('instrumentation.field.language')}>
           <Select
@@ -109,11 +146,7 @@ function LanguageStage({ setup }: { setup: InstrumentationSetupController }) {
           </button>
         ))}
       </div>
-      <StageActions
-        disabled={!draft.selection}
-        onBack={() => setup.setStage(1)}
-        onContinue={() => setup.setStage(3)}
-      />
+      <StageActions disabled={!draft.selection} onBack={() => setup.setStage(1)} onContinue={() => setup.setStage(3)} />
     </StageBody>
   );
 }

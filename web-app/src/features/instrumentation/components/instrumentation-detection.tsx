@@ -19,12 +19,27 @@ import { ExportOutlined } from '@ant-design/icons';
 import { Alert, Button, Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { InstrumentationDetectionController } from '../controller/use-instrumentation-detection-controller';
+import type { DetectionResponse, InstrumentationSignal } from '../model/instrumentation-contract';
 import { StageBody } from './instrumentation-stage';
 import styles from './instrumentation-guide.module.css';
 import stageStyles from './instrumentation-stage.module.css';
 
-export function InstrumentationDetection({ detection }: { detection: InstrumentationDetectionController }) {
+type InstrumentationDetectionViewState =
+  | { status: 'idle' }
+  | { status: 'checking'; response?: DetectionResponse }
+  | { status: 'complete'; response: DetectionResponse }
+  | { status: 'manual_retry'; response: DetectionResponse }
+  | { status: 'error'; error: unknown };
+
+export interface InstrumentationDetectionView {
+  state: InstrumentationDetectionViewState;
+  signalNames: readonly InstrumentationSignal[];
+  retry: () => void;
+  queryHandoff: (signal: InstrumentationSignal) => string | undefined;
+  openQuery: (signal: InstrumentationSignal) => void;
+}
+
+export function InstrumentationDetection({ detection }: { detection: InstrumentationDetectionView }) {
   const { t } = useTranslation();
   return (
     <StageBody stage={5} title={t('instrumentation.stage.detect')} description={t('instrumentation.stage.detectHelp')}>
@@ -33,10 +48,7 @@ export function InstrumentationDetection({ detection }: { detection: Instrumenta
   );
 }
 
-function DetectionState({ detection, t }: {
-  detection: InstrumentationDetectionController;
-  t: (key: string) => string;
-}) {
+function DetectionState({ detection, t }: { detection: InstrumentationDetectionView; t: (key: string) => string }) {
   const { state } = detection;
   switch (state.status) {
     case 'idle':
@@ -47,7 +59,9 @@ function DetectionState({ detection, t }: {
           <SignalTable detection={detection} response={state.response} t={t} />
           <Alert type="info" showIcon message={t('instrumentation.detection.waiting')} />
         </>
-      ) : <Alert type="info" showIcon message={t('instrumentation.detection.checking')} />;
+      ) : (
+        <Alert type="info" showIcon message={t('instrumentation.detection.checking')} />
+      );
     case 'complete':
       return <SignalTable detection={detection} response={state.response} t={t} />;
     case 'manual_retry':
@@ -65,7 +79,11 @@ function DetectionState({ detection, t }: {
           type="error"
           showIcon
           message={t('instrumentation.detection.unavailable')}
-          action={<Button size="small" onClick={detection.retry}>{t('common.retry')}</Button>}
+          action={
+            <Button size="small" onClick={detection.retry}>
+              {t('common.retry')}
+            </Button>
+          }
         />
       );
     default:
@@ -73,9 +91,13 @@ function DetectionState({ detection, t }: {
   }
 }
 
-function SignalTable({ detection, response, t }: {
-  detection: InstrumentationDetectionController;
-  response: Extract<InstrumentationDetectionController['state'], { response: unknown }>['response'];
+function SignalTable({
+  detection,
+  response,
+  t
+}: {
+  detection: InstrumentationDetectionView;
+  response: DetectionResponse;
   t: (key: string) => string;
 }) {
   return (
@@ -89,14 +111,23 @@ function SignalTable({ detection, response, t }: {
             <span>
               <Tag color={statusColor(result.status)}>{t(`instrumentation.detection.status.${result.status}`)}</Tag>
               <Typography.Text type="secondary">
-                {result.lastReceivedAt ? new Date(result.lastReceivedAt).toLocaleString() : errorText(result.errorCode, t)}
+                {result.lastReceivedAt
+                  ? new Date(result.lastReceivedAt).toLocaleString()
+                  : errorText(result.errorCode, t)}
               </Typography.Text>
             </span>
             {queryAvailable ? (
-              <Button type="link" onClick={() => detection.openQuery(signal)} icon={<ExportOutlined />} iconPosition="end">
+              <Button
+                type="link"
+                onClick={() => detection.openQuery(signal)}
+                icon={<ExportOutlined />}
+                iconPosition="end"
+              >
                 {t('instrumentation.action.openExplore')}
               </Button>
-            ) : <Typography.Text type="secondary">{t('instrumentation.queryUnavailable')}</Typography.Text>}
+            ) : (
+              <Typography.Text type="secondary">{t('instrumentation.queryUnavailable')}</Typography.Text>
+            )}
           </div>
         );
       })}

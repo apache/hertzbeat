@@ -19,11 +19,10 @@ import { CheckOutlined, LockOutlined } from '@ant-design/icons';
 import { Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { InstrumentationDetectionController } from '../controller/use-instrumentation-detection-controller';
-import type { InstrumentationSetupController } from '../controller/use-instrumentation-page-controller';
-import { InstrumentationDetection } from './instrumentation-detection';
-import { InstrumentationGuide } from './instrumentation-guide';
-import { InstrumentationStageContent } from './instrumentation-stage-content';
+import type { FlowStage } from '../model/instrumentation-flow';
+import { InstrumentationDetection, type InstrumentationDetectionView } from './instrumentation-detection';
+import { InstrumentationGuide, type InstrumentationGuideSetup } from './instrumentation-guide';
+import { InstrumentationStageContent, type InstrumentationStageContentSetup } from './instrumentation-stage-content';
 import styles from './instrumentation-shell.module.css';
 
 const stages = [
@@ -40,13 +39,18 @@ const MISSING_SCOPE_VALUE = '—';
 
 type RunbookStage = (typeof stages)[number];
 type RunbookStageStatus = 'active' | 'complete' | 'locked';
+type InstrumentationRunbookSetup = InstrumentationStageContentSetup & InstrumentationGuideSetup;
+type InstrumentationRunbookDetection = InstrumentationDetectionView & {
+  start: () => void;
+  reset: () => void;
+};
 
 export function InstrumentationRunbook({
   setup,
   detection
 }: {
-  setup: InstrumentationSetupController;
-  detection: InstrumentationDetectionController;
+  setup: InstrumentationRunbookSetup;
+  detection: InstrumentationRunbookDetection;
 }) {
   const { t } = useTranslation();
   const startDetection = () => {
@@ -90,7 +94,7 @@ export function InstrumentationRunbook({
   );
 }
 
-function ScopePanel({ setup }: { setup: InstrumentationSetupController }) {
+function ScopePanel({ setup }: { setup: InstrumentationRunbookSetup }) {
   const { t } = useTranslation();
   const { language, framework, method } = findSelectionMetadata(setup);
   const scope = [
@@ -134,7 +138,7 @@ function ScopePanel({ setup }: { setup: InstrumentationSetupController }) {
   );
 }
 
-function findSelectionMetadata(setup: InstrumentationSetupController) {
+function findSelectionMetadata(setup: InstrumentationRunbookSetup) {
   const selection = setup.draft.selection;
   if (!selection) return {};
   const language = setup.catalog?.languages.find(item => item.language === selection.language);
@@ -143,7 +147,7 @@ function findSelectionMetadata(setup: InstrumentationSetupController) {
   return { language, framework, method };
 }
 
-function runbookStageStatus(stage: RunbookStage['id'], currentStage: InstrumentationSetupController['stage']) {
+function runbookStageStatus(stage: RunbookStage['id'], currentStage: FlowStage) {
   if (stage < currentStage) return 'complete';
   if (stage === currentStage) return 'active';
   return 'locked';

@@ -18,7 +18,7 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { InstrumentationSetupController } from '../controller/use-instrumentation-page-controller';
+import type { GuideRenderResponse } from '../model/instrumentation-contract';
 
 const notifications = vi.hoisted(() => ({ success: vi.fn(), warning: vi.fn() }));
 
@@ -28,9 +28,9 @@ vi.mock('antd', async importOriginal => {
 });
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
-import { InstrumentationGuide } from './instrumentation-guide';
+import { InstrumentationGuide, type InstrumentationGuideSetup } from './instrumentation-guide';
 
-type Guide = NonNullable<InstrumentationSetupController['guide']>;
+type Guide = GuideRenderResponse;
 
 describe('InstrumentationGuide', () => {
   afterEach(() => {
@@ -120,61 +120,12 @@ describe('InstrumentationGuide', () => {
   });
 });
 
-function setupFixture(overrides: Partial<InstrumentationSetupController> = {}): InstrumentationSetupController {
+function setupFixture(overrides: Partial<InstrumentationGuideSetup> = {}): InstrumentationGuideSetup {
   return {
-    schemaVersion: 1,
-    stage: 4,
     setStage: vi.fn(),
-    draft: {
-      environment: 'docker',
-      platform: 'linux_amd64',
-      selection: {
-        language: 'go',
-        framework: 'go_generic',
-        method: 'sdk',
-        environment: 'docker',
-        platform: 'linux_amd64'
-      },
-      collectorId: 'collector-east',
-      serviceName: 'checkout-api',
-      serviceNamespace: 'commerce',
-      serviceEnvironment: 'prod'
-    },
-    selectionOptions: {
-      environments: [],
-      platforms: [],
-      languages: [],
-      frameworks: [],
-      methods: [],
-      frameworkSelected: false
-    },
-    contextMissing: [],
-    catalog: undefined,
-    catalogPending: false,
-    catalogError: false,
-    retryCatalog: vi.fn(),
-    collectors: [],
-    collectorsPending: false,
-    collectorsError: false,
-    retryCollectors: vi.fn(),
     token: '',
-    setToken: vi.fn(),
-    transientTarget: undefined,
-    setTransientTarget: vi.fn(),
     guide: guideFixture(),
-    guideState: { status: 'ready', guide: guideFixture() },
-    guidePending: false,
-    guideError: false,
-    setEnvironment: vi.fn(),
-    setPlatform: vi.fn(),
-    setLanguage: vi.fn(),
-    setFramework: vi.fn(),
-    setMethod: vi.fn(),
-    setContext: vi.fn(),
-    renderGuide: vi.fn(),
     copySnippet: vi.fn().mockResolvedValue(undefined),
-    clearGuide: vi.fn(),
-    handleContractError: vi.fn(),
     ...overrides
   };
 }

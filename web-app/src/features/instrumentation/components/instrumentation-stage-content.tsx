@@ -18,12 +18,20 @@
 import { Empty, Skeleton } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { InstrumentationSetupController } from '../controller/use-instrumentation-page-controller';
-import { InstrumentationContextStage } from './instrumentation-context-stage';
-import { InstrumentationSelectionStage } from './instrumentation-selection-stage';
+import type { CatalogResponse } from '../model/instrumentation-contract';
+import { InstrumentationContextStage, type InstrumentationContextSetup } from './instrumentation-context-stage';
+import { InstrumentationSelectionStage, type InstrumentationSelectionSetup } from './instrumentation-selection-stage';
 import { ResourceError } from './instrumentation-stage';
 
-export function InstrumentationStageContent({ setup }: { setup: InstrumentationSetupController }) {
+export type InstrumentationStageContentSetup = InstrumentationContextSetup &
+  InstrumentationSelectionSetup & {
+    catalog: CatalogResponse | undefined;
+    catalogPending: boolean;
+    catalogError: boolean;
+    retryCatalog: () => Promise<unknown>;
+  };
+
+export function InstrumentationStageContent({ setup }: { setup: InstrumentationStageContentSetup }) {
   const { t } = useTranslation();
   if (setup.catalogPending) return <Skeleton active paragraph={{ rows: 5 }} />;
   if (setup.catalogError || !setup.catalog) {

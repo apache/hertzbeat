@@ -18,7 +18,8 @@
 import { Alert, App } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { InstrumentationSetupController } from '../controller/use-instrumentation-page-controller';
+import type { GuideRenderResponse, GuideSnippet } from '../model/instrumentation-contract';
+import type { FlowStage } from '../model/instrumentation-flow';
 import {
   InstrumentationComponentSummary,
   InstrumentationGuideActions,
@@ -26,10 +27,15 @@ import {
 } from './instrumentation-guide-presentation';
 import { StageBody } from './instrumentation-stage';
 
-type GuideSnippet = NonNullable<InstrumentationSetupController['guide']>['steps'][number]['snippets'][number];
+export interface InstrumentationGuideSetup {
+  guide: GuideRenderResponse | undefined;
+  token: string;
+  copySnippet: (snippet: GuideSnippet) => Promise<void>;
+  setStage: (stage: FlowStage) => void;
+}
 
 interface InstrumentationGuideProps {
-  setup: InstrumentationSetupController;
+  setup: InstrumentationGuideSetup;
   onStartDetection: () => void;
 }
 

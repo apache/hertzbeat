@@ -19,19 +19,16 @@ import { CopyOutlined } from '@ant-design/icons';
 import { Alert, Button, Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { InstrumentationSetupController } from '../controller/use-instrumentation-page-controller';
+import type { GuideRenderResponse, GuideSnippet } from '../model/instrumentation-contract';
 import styles from './instrumentation-guide.module.css';
 import stageStyles from './instrumentation-stage.module.css';
 
-type Guide = NonNullable<InstrumentationSetupController['guide']>;
-type GuideSnippet = Guide['steps'][number]['snippets'][number];
-
 interface InstrumentationComponentSummaryProps {
-  component: Guide['component'];
+  component: GuideRenderResponse['component'];
 }
 
 interface InstrumentationGuideStepsProps {
-  steps: Guide['steps'];
+  steps: GuideRenderResponse['steps'];
   tokenAvailable: boolean;
   onCopy: (snippet: GuideSnippet) => Promise<void>;
 }

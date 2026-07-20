@@ -18,16 +18,39 @@
 import { Alert, Empty, Input, Select, Skeleton } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { InstrumentationSetupController } from '../controller/use-instrumentation-page-controller';
+import type { InstrumentationCollector } from '../model/instrumentation-collector';
+import type { FlowContextField, FlowStage, InstrumentationFlowDraft } from '../model/instrumentation-flow';
 import { Field, ResourceError, StageActions, StageBody } from './instrumentation-stage';
 import styles from './instrumentation-stage.module.css';
 
-export function InstrumentationContextStage({ setup }: { setup: InstrumentationSetupController }) {
+type GuideAvailabilityState =
+  | { status: 'unavailable'; reason: 'collector_unavailable' | 'collector_intake_unavailable' }
+  | { status: 'idle' | 'rendering' | 'ready' | 'error' };
+
+export interface InstrumentationContextSetup {
+  draft: InstrumentationFlowDraft;
+  collectors: InstrumentationCollector[];
+  collectorsPending: boolean;
+  collectorsError: boolean;
+  retryCollectors: () => Promise<unknown>;
+  contextMissing: FlowContextField[];
+  guideState: GuideAvailabilityState;
+  guidePending: boolean;
+  guideError: boolean;
+  token: string;
+  setToken: (token: string) => void;
+  setContext: (field: FlowContextField, value: string) => void;
+  setStage: (stage: FlowStage) => void;
+  renderGuide: () => Promise<unknown>;
+}
+
+export function InstrumentationContextStage({ setup }: { setup: InstrumentationContextSetup }) {
   const { t } = useTranslation();
   const collector = setup.collectors.find(item => item.collectorId === setup.draft.collectorId);
-  const intakeUnavailable = collector?.online === true
-    && setup.guideState.status === 'unavailable'
-    && setup.guideState.reason === 'collector_intake_unavailable';
+  const intakeUnavailable =
+    collector?.online === true &&
+    setup.guideState.status === 'unavailable' &&
+    setup.guideState.reason === 'collector_intake_unavailable';
   const renderDisabled = setup.contextMissing.length > 0 || !collector?.online || intakeUnavailable;
   const handleRender = async () => {
     try {
@@ -37,39 +60,13 @@ export function InstrumentationContextStage({ setup }: { setup: InstrumentationS
     }
   };
   return (
-    <StageBody stage={3} title={t('instrumentation.stage.context')} description={t('instrumentation.stage.contextHelp')}>
+    <StageBody
+      stage={3}
+      title={t('instrumentation.stage.context')}
+      description={t('instrumentation.stage.contextHelp')}
+    >
       <CollectorAvailability setup={setup} collector={collector} intakeUnavailable={intakeUnavailable} />
-      <div className={styles.formGrid}>
-        <Field label={t('instrumentation.field.collector')}>
-          <Select<string>
-            value={setup.draft.collectorId || null}
-            placeholder={t('instrumentation.field.collectorPlaceholder')}
-            options={setup.collectors.map(item => ({
-              value: item.collectorId,
-              disabled: !item.online,
-              label: `${item.name} · ${item.address} · ${t(item.online ? 'instrumentation.online' : 'instrumentation.offline')}`
-            }))}
-            onChange={value => setup.setContext('collectorId', value)}
-          />
-        </Field>
-        <Field label={t('instrumentation.field.serviceName')}>
-          <Input value={setup.draft.serviceName} onChange={event => setup.setContext('serviceName', event.target.value)} />
-        </Field>
-        <Field label={t('instrumentation.field.serviceNamespace')}>
-          <Input value={setup.draft.serviceNamespace} onChange={event => setup.setContext('serviceNamespace', event.target.value)} />
-        </Field>
-        <Field label={t('instrumentation.field.serviceEnvironment')}>
-          <Input value={setup.draft.serviceEnvironment} onChange={event => setup.setContext('serviceEnvironment', event.target.value)} />
-        </Field>
-        <Field wide label={t('instrumentation.field.token')} hint={t('instrumentation.field.tokenMemory')}>
-          <Input.Password
-            value={setup.token}
-            autoComplete="off"
-            placeholder={t('instrumentation.field.tokenPlaceholder')}
-            onChange={event => setup.setToken(event.target.value)}
-          />
-        </Field>
-      </div>
+      <InstrumentationContextFields setup={setup} />
       <StageActions
         disabled={renderDisabled}
         loading={setup.guidePending}
@@ -81,15 +78,64 @@ export function InstrumentationContextStage({ setup }: { setup: InstrumentationS
   );
 }
 
-type Collector = InstrumentationSetupController['collectors'][number];
+type ContextFieldsSetup = Pick<
+  InstrumentationContextSetup,
+  'collectors' | 'draft' | 'setContext' | 'setToken' | 'token'
+>;
+
+function InstrumentationContextFields({ setup }: { setup: ContextFieldsSetup }) {
+  const { t } = useTranslation();
+  return (
+    <div className={styles.formGrid}>
+      <Field label={t('instrumentation.field.collector')}>
+        <Select<string>
+          value={setup.draft.collectorId || null}
+          placeholder={t('instrumentation.field.collectorPlaceholder')}
+          options={setup.collectors.map(item => ({
+            value: item.collectorId,
+            disabled: !item.online,
+            label: `${item.name} · ${item.address} · ${t(item.online ? 'instrumentation.online' : 'instrumentation.offline')}`
+          }))}
+          onChange={value => setup.setContext('collectorId', value)}
+        />
+      </Field>
+      <Field label={t('instrumentation.field.serviceName')}>
+        <Input
+          value={setup.draft.serviceName}
+          onChange={event => setup.setContext('serviceName', event.target.value)}
+        />
+      </Field>
+      <Field label={t('instrumentation.field.serviceNamespace')}>
+        <Input
+          value={setup.draft.serviceNamespace}
+          onChange={event => setup.setContext('serviceNamespace', event.target.value)}
+        />
+      </Field>
+      <Field label={t('instrumentation.field.serviceEnvironment')}>
+        <Input
+          value={setup.draft.serviceEnvironment}
+          onChange={event => setup.setContext('serviceEnvironment', event.target.value)}
+        />
+      </Field>
+      <Field wide label={t('instrumentation.field.token')} hint={t('instrumentation.field.tokenMemory')}>
+        <Input.Password
+          value={setup.token}
+          autoComplete="off"
+          placeholder={t('instrumentation.field.tokenPlaceholder')}
+          onChange={event => setup.setToken(event.target.value)}
+        />
+      </Field>
+    </div>
+  );
+}
 
 function CollectorAvailability({
   setup,
   collector,
   intakeUnavailable
 }: {
-  setup: InstrumentationSetupController;
-  collector: Collector | undefined;
+  setup: InstrumentationContextSetup;
+  collector: InstrumentationCollector | undefined;
   intakeUnavailable: boolean;
 }) {
   const { t } = useTranslation();
@@ -102,7 +148,9 @@ function CollectorAvailability({
       {!setup.collectorsPending && !setup.collectorsError && setup.collectors.length === 0 && (
         <Empty description={t('instrumentation.collectorEmpty')} />
       )}
-      {collector && !collector.online && <Alert type="warning" showIcon message={t('instrumentation.collectorOffline')} />}
+      {collector && !collector.online && (
+        <Alert type="warning" showIcon message={t('instrumentation.collectorOffline')} />
+      )}
       {intakeUnavailable && <Alert type="warning" showIcon message={t('instrumentation.renderUnavailable')} />}
       {setup.guideError && <Alert type="error" showIcon message={t('instrumentation.renderUnavailable')} />}
     </>
