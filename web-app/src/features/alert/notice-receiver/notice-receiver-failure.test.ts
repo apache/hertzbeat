@@ -9,8 +9,17 @@ import {
   type NoticeReceiverFailureKind,
   type NoticeReceiverNonMissingFailureKind
 } from './notice-receiver-failure';
+import { noticeReceiverRereadError } from './notice-receiver-evidence';
 
 describe('notice receiver failure phases', () => {
+  it.each([
+    ['unavailable', 503],
+    ['invalid', 422],
+    ['error', 500]
+  ] as const)('maps %s reread failures to status %s', (kind, expectedStatus) => {
+    expect(noticeReceiverRereadError(kind).statusCode).toBe(expectedStatus);
+  });
+
   it.each([undefined, null])('classifies an absent reason safely as error: %s', reason => {
     expect(classifyNoticeReceiverDetailFailure(reason)).toBe('error');
     expect(classifyNoticeReceiverCollectionFailure(reason)).toBe('error');

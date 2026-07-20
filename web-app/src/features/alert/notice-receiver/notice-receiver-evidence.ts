@@ -51,7 +51,7 @@ export function noticeReceiverRereadError(
   code = `NOTICE_RECEIVER_LIST_REREAD_${kind.toUpperCase()}`
 ) {
   return Object.assign(new Error('Notice receiver list reread failed'), {
-    statusCode: kind === 'unavailable' ? 503 : kind === 'invalid' ? 422 : 500,
+    statusCode: noticeReceiverRereadStatusCode(kind),
     code
   });
 }
@@ -75,4 +75,10 @@ function sameStrings(actual: readonly string[], expected: readonly string[]) {
     actualValues.size === expectedValues.size &&
     actual.every(item => expectedValues.has(item))
   );
+}
+
+function noticeReceiverRereadStatusCode(kind: NoticeReceiverNonMissingFailureKind) {
+  if (kind === 'unavailable') return 503;
+  if (kind === 'invalid') return 422;
+  return 500;
 }
