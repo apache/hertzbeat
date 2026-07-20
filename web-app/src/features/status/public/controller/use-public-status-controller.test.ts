@@ -30,10 +30,10 @@ const reactQuery = vi.hoisted(() => ({
 }));
 vi.mock('@tanstack/react-query', () => ({ useQuery: reactQuery.useQuery }));
 
-const org: PublicStatusOrg = { name: 'HertzBeat', description: 'Status', state: 0 };
-const components: PublicStatusComponent[] = [{ id: 1, name: 'API', state: 0 }];
+const org: PublicStatusOrg = { name: 'HertzBeat', description: 'Status', state: 'healthy' };
+const components: PublicStatusComponent[] = [{ id: 1, name: 'API', state: 'healthy' }];
 const incidents: PublicStatusIncidentPage = {
-  content: [{ id: 2, name: 'Maintenance', state: 1 }],
+  content: [{ id: 2, name: 'Maintenance', state: 'identified' }],
   totalElements: 1,
   totalPages: 1,
   number: 0,
@@ -83,7 +83,7 @@ describe('usePublicStatusController', () => {
     expect(renderHook(() => usePublicStatusController()).result.current.state).toBe('unconfigured');
 
     setEvidence({ error: missing }, { error: new Error('components unavailable') }, { data: incidents });
-    expect(renderHook(() => usePublicStatusController()).result.current.state).toBe('unavailable');
+    expect(renderHook(() => usePublicStatusController()).result.current.state).toBe('error');
   });
 
   it('preserves a confirmed organization header when a sibling query fails', () => {
@@ -94,8 +94,14 @@ describe('usePublicStatusController', () => {
       components: [],
       incidents: [],
       loading: false,
-      state: 'unavailable'
+      state: 'error'
     });
+  });
+
+  it('distinguishes rejected requests from unavailable transport', () => {
+    setEvidence({ data: org }, { error: new Error('invalid contract') }, { data: incidents });
+
+    expect(renderHook(() => usePublicStatusController()).result.current.state).toBe('error');
   });
 
   it('fails closed when a completed successful query has no authoritative data', () => {
@@ -105,7 +111,7 @@ describe('usePublicStatusController', () => {
       components: [],
       incidents: [],
       loading: false,
-      state: 'unavailable'
+      state: 'error'
     });
   });
 
@@ -117,7 +123,7 @@ describe('usePublicStatusController', () => {
       components: [],
       incidents: [],
       loading: false,
-      state: 'unavailable'
+      state: 'error'
     });
   });
 });

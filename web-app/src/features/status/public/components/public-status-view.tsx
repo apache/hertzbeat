@@ -23,11 +23,15 @@ import { useTranslation } from 'react-i18next';
 
 import type {
   PublicStatusComponent,
+  PublicStatusComponentState,
   PublicStatusIncident,
+  PublicStatusIncidentState,
   PublicStatusOrg,
+  PublicStatusOrgState,
   PublicStatusState,
   PublicStatusViewModel
 } from '../model/public-status-contract';
+import { publicComponentStateKey, publicIncidentStateKey, publicOrgStateKey } from '../model/public-status-model';
 import styles from './public-status.module.css';
 
 export function PublicStatusView(props: PublicStatusViewModel) {
@@ -55,11 +59,7 @@ function StatusHeader({ org }: { org: PublicStatusOrg | undefined }) {
         <Typography.Title level={2}>{org?.name ?? t('status.title')}</Typography.Title>
         <Typography.Text type="secondary">{org?.description ?? t('status.description')}</Typography.Text>
       </div>
-      {org && (
-        <Tag color={org.state === 0 ? 'green' : 'red'}>
-          {org.state === 0 ? t('status.operational') : t('status.degraded')}
-        </Tag>
-      )}
+      {org && <Tag color={orgStateColor(org.state)}>{t(publicOrgStateKey(org.state))}</Tag>}
     </header>
   );
 }
@@ -79,6 +79,7 @@ function StatusBody({
   if (loading) return <Skeleton active paragraph={{ rows: 8 }} />;
   if (state === 'unconfigured') return <Alert type="info" showIcon message={t('status.notConfigured')} />;
   if (state === 'unavailable') return <Alert type="error" showIcon message={t('common.unavailable')} />;
+  if (state === 'error') return <Alert type="error" showIcon message={t('common.routeError.description')} />;
   return <StatusContent components={components} incidents={incidents} />;
 }
 
@@ -114,10 +115,8 @@ function StatusComponentsSection({ components }: { components: PublicStatusCompo
             {
               title: t('status.state'),
               dataIndex: 'state',
-              render: (state: number) => (
-                <Tag color={state === 0 ? 'green' : 'red'}>
-                  {state === 0 ? t('status.normal') : t('status.abnormal')}
-                </Tag>
+              render: (state: PublicStatusComponentState) => (
+                <Tag color={componentStateColor(state)}>{t(publicComponentStateKey(state))}</Tag>
               )
             }
           ]}
@@ -142,7 +141,11 @@ function StatusIncidentsSection({ incidents }: { incidents: PublicStatusIncident
           dataSource={incidents}
           columns={[
             { title: t('status.incident'), dataIndex: 'name' },
-            { title: t('status.state'), dataIndex: 'state' },
+            {
+              title: t('status.state'),
+              dataIndex: 'state',
+              render: (state: PublicStatusIncidentState) => <Tag>{t(publicIncidentStateKey(state))}</Tag>
+            },
             {
               title: t('status.started'),
               dataIndex: 'startTime',
@@ -155,4 +158,17 @@ function StatusIncidentsSection({ incidents }: { incidents: PublicStatusIncident
       )}
     </section>
   );
+}
+
+function orgStateColor(state: PublicStatusOrgState) {
+  if (state === 'healthy') return 'green';
+  if (state === 'degraded') return 'orange';
+  if (state === 'incident') return 'red';
+  return 'default';
+}
+
+function componentStateColor(state: PublicStatusComponentState) {
+  if (state === 'healthy') return 'green';
+  if (state === 'incident') return 'red';
+  return 'default';
 }

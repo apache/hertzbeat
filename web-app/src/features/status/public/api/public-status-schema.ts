@@ -9,9 +9,12 @@ import { z } from 'zod';
 
 import type {
   PublicStatusComponent,
+  PublicStatusComponentState,
   PublicStatusIncident,
   PublicStatusIncidentPage,
-  PublicStatusOrg
+  PublicStatusIncidentState,
+  PublicStatusOrg,
+  PublicStatusOrgState
 } from '../model/public-status-contract';
 
 const nullableText = z.string().nullable().optional();
@@ -38,7 +41,7 @@ const publicStatusOrgWireSchema = z
     name: value.name,
     description: value.description,
     ...(value.home == null ? {} : { home: value.home }),
-    state: value.state,
+    state: publicOrgState(value.state),
     ...(value.color == null ? {} : { color: value.color })
   }));
 
@@ -69,7 +72,7 @@ const publicStatusComponentWireSchema = z
     id: info.id,
     name: info.name,
     ...(info.description == null ? {} : { description: info.description }),
-    state: info.state
+    state: publicComponentState(info.state)
   }));
 
 const publicStatusIncidentSchema = z
@@ -91,7 +94,7 @@ const publicStatusIncidentSchema = z
   .transform((value): PublicStatusIncident => ({
     id: value.id,
     name: value.name,
-    state: value.state,
+    state: publicIncidentState(value.state),
     ...(value.startTime == null ? {} : { startTime: value.startTime }),
     ...(value.endTime == null ? {} : { endTime: value.endTime })
   }));
@@ -134,4 +137,26 @@ function parse<T>(schema: z.ZodType<T>, value: unknown): T {
   const result = schema.safeParse(value);
   if (!result.success) throw new PublicStatusContractError();
   return result.data;
+}
+
+// Persisted backend byte codes are a compatibility boundary; future values must remain unknown evidence.
+function publicOrgState(value: number): PublicStatusOrgState {
+  if (value === 0) return 'healthy';
+  if (value === 1) return 'degraded';
+  if (value === 2) return 'incident';
+  return 'unknown';
+}
+
+function publicComponentState(value: number): PublicStatusComponentState {
+  if (value === 0) return 'healthy';
+  if (value === 1) return 'incident';
+  return 'unknown';
+}
+
+function publicIncidentState(value: number): PublicStatusIncidentState {
+  if (value === 0) return 'investigating';
+  if (value === 1) return 'identified';
+  if (value === 2) return 'monitoring';
+  if (value === 3) return 'resolved';
+  return 'unknown';
 }

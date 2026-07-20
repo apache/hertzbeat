@@ -15,9 +15,15 @@
  * limitations under the License.
  */
 
-import { isStatusOrgNotFound } from '@/features/status/shared/status-error-model';
+import { isStatusOrgNotFound, statusRequestFailureKind } from '@/features/status/shared/status-error-model';
 
-import type { PublicStatusIncidentPage, PublicStatusState } from './public-status-contract';
+import type {
+  PublicStatusComponentState,
+  PublicStatusIncidentPage,
+  PublicStatusIncidentState,
+  PublicStatusOrgState,
+  PublicStatusState
+} from './public-status-contract';
 
 export { isStatusOrgNotFound } from '@/features/status/shared/status-error-model';
 export type { PublicStatusState } from './public-status-contract';
@@ -28,8 +34,31 @@ export function publicStatusState(
   incidentsError: unknown
 ): PublicStatusState {
   if (isStatusOrgNotFound(orgError) && !componentsError && !incidentsError) return 'unconfigured';
-  if (orgError || componentsError || incidentsError) return 'unavailable';
+  const errors = [orgError, componentsError, incidentsError].filter(Boolean);
+  if (errors.some(error => statusRequestFailureKind(error) === 'unavailable')) return 'unavailable';
+  if (errors.length) return 'error';
   return 'ready';
+}
+
+export function publicOrgStateKey(state: PublicStatusOrgState) {
+  if (state === 'healthy') return 'status.operational';
+  if (state === 'degraded') return 'status.degraded';
+  if (state === 'incident') return 'status.incident';
+  return 'statusManagement.unknown';
+}
+
+export function publicComponentStateKey(state: PublicStatusComponentState) {
+  if (state === 'healthy') return 'status.normal';
+  if (state === 'incident') return 'status.abnormal';
+  return 'statusManagement.unknown';
+}
+
+export function publicIncidentStateKey(state: PublicStatusIncidentState) {
+  if (state === 'investigating') return 'statusManagement.investigating';
+  if (state === 'identified') return 'statusManagement.identified';
+  if (state === 'monitoring') return 'statusManagement.monitoring';
+  if (state === 'resolved') return 'statusManagement.resolved';
+  return 'statusManagement.unknown';
 }
 
 export function isCompletePublicStatusIncidentPage(page: PublicStatusIncidentPage) {

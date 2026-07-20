@@ -19,7 +19,7 @@ export type PublicStatusOrg = {
   name: string;
   description: string;
   home?: string;
-  state: number;
+  state: PublicStatusOrgState;
   color?: string;
 };
 
@@ -27,16 +27,20 @@ export type PublicStatusComponent = {
   id: number;
   name: string;
   description?: string;
-  state: number;
+  state: PublicStatusComponentState;
 };
 
 export type PublicStatusIncident = {
   id: number;
   name: string;
-  state: number;
+  state: PublicStatusIncidentState;
   startTime?: number;
   endTime?: number;
 };
+
+export type PublicStatusOrgState = 'healthy' | 'degraded' | 'incident' | 'unknown';
+export type PublicStatusComponentState = 'healthy' | 'incident' | 'unknown';
+export type PublicStatusIncidentState = 'investigating' | 'identified' | 'monitoring' | 'resolved' | 'unknown';
 
 export type PublicStatusIncidentPage = {
   content: PublicStatusIncident[];
@@ -46,7 +50,7 @@ export type PublicStatusIncidentPage = {
   size: number;
 };
 
-export type PublicStatusState = 'ready' | 'unconfigured' | 'unavailable';
+export type PublicStatusState = 'ready' | 'unconfigured' | 'unavailable' | 'error';
 
 export type PublicStatusViewModel = {
   org: PublicStatusOrg | undefined;

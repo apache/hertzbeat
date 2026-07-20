@@ -19,7 +19,13 @@ import { describe, expect, it } from 'vitest';
 
 import { StatusOrgNotFoundError, StatusRequestFailure } from '@/features/status/shared/status-error-model';
 
-import { isStatusOrgNotFound, publicStatusState } from './public-status-model';
+import {
+  isStatusOrgNotFound,
+  publicComponentStateKey,
+  publicIncidentStateKey,
+  publicOrgStateKey,
+  publicStatusState
+} from './public-status-model';
 
 describe('public status state', () => {
   it('distinguishes missing configuration from backend failure', () => {
@@ -29,18 +35,33 @@ describe('public status state', () => {
     expect(publicStatusState(null, null, null)).toBe('ready');
   });
 
-  it('keeps transport and partial-query failures unavailable', () => {
+  it('distinguishes transport unavailability from rejected or invalid reads', () => {
     const serviceUnavailable = new StatusRequestFailure('unavailable', 'uncertain');
     const networkFailure = new StatusRequestFailure('unavailable', 'uncertain');
     const genericEnvelopeFailure = new StatusRequestFailure('error', 'rejected');
 
     expect(publicStatusState(serviceUnavailable, null, null)).toBe('unavailable');
     expect(publicStatusState(networkFailure, null, null)).toBe('unavailable');
-    expect(publicStatusState(genericEnvelopeFailure, null, null)).toBe('unavailable');
-    expect(publicStatusState(null, new Error('components unavailable'), null)).toBe('unavailable');
-    expect(publicStatusState(null, null, new Error('incidents unavailable'))).toBe('unavailable');
-    expect(publicStatusState(new StatusOrgNotFoundError(), new Error('components unavailable'), null)).toBe(
-      'unavailable'
-    );
+    expect(publicStatusState(genericEnvelopeFailure, null, null)).toBe('error');
+    expect(publicStatusState(null, new Error('components failed'), null)).toBe('error');
+    expect(publicStatusState(null, null, new Error('incidents failed'))).toBe('error');
+    expect(publicStatusState(new StatusOrgNotFoundError(), new Error('components unavailable'), null)).toBe('error');
+  });
+
+  it('keeps typed health and incident states distinct from unknown evidence', () => {
+    expect(publicOrgStateKey('healthy')).toBe('status.operational');
+    expect(publicOrgStateKey('degraded')).toBe('status.degraded');
+    expect(publicOrgStateKey('incident')).toBe('status.incident');
+    expect(publicOrgStateKey('unknown')).toBe('statusManagement.unknown');
+
+    expect(publicComponentStateKey('healthy')).toBe('status.normal');
+    expect(publicComponentStateKey('incident')).toBe('status.abnormal');
+    expect(publicComponentStateKey('unknown')).toBe('statusManagement.unknown');
+
+    expect(publicIncidentStateKey('investigating')).toBe('statusManagement.investigating');
+    expect(publicIncidentStateKey('identified')).toBe('statusManagement.identified');
+    expect(publicIncidentStateKey('monitoring')).toBe('statusManagement.monitoring');
+    expect(publicIncidentStateKey('resolved')).toBe('statusManagement.resolved');
+    expect(publicIncidentStateKey('unknown')).toBe('statusManagement.unknown');
   });
 });

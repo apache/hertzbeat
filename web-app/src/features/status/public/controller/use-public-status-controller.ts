@@ -45,7 +45,7 @@ export function usePublicStatusController(): PublicStatusViewModel {
     incidents.data === undefined ||
     !isCompletePublicStatusIncidentPage(incidents.data)
   ) {
-    return emptyViewModel('unavailable', false);
+    return emptyViewModel('error', false);
   }
   return {
     org: org.data,

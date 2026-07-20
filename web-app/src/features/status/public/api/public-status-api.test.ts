@@ -61,9 +61,56 @@ describe('public status API', () => {
         id: 1,
         name: 'API',
         description: 'Public API',
-        state: 0
+        state: 'healthy'
       }
     ]);
+  });
+
+  it('maps every backend state domain into stable public status values', async () => {
+    apiMessageGet
+      .mockResolvedValueOnce({ name: 'HertzBeat', description: 'Status', state: 0 })
+      .mockResolvedValueOnce({ name: 'HertzBeat', description: 'Status', state: 1 })
+      .mockResolvedValueOnce({ name: 'HertzBeat', description: 'Status', state: 2 })
+      .mockResolvedValueOnce({ name: 'HertzBeat', description: 'Status', state: 9 })
+      .mockResolvedValueOnce([
+        { info: { id: 1, name: 'Healthy', state: 0 } },
+        { info: { id: 2, name: 'Incident', state: 1 } },
+        { info: { id: 3, name: 'Unknown', state: 2 } },
+        { info: { id: 4, name: 'Future', state: 9 } }
+      ])
+      .mockResolvedValueOnce({
+        content: [
+          { id: 1, name: 'Investigating', state: 0 },
+          { id: 2, name: 'Identified', state: 1 },
+          { id: 3, name: 'Monitoring', state: 2 },
+          { id: 4, name: 'Resolved', state: 3 },
+          { id: 5, name: 'Future', state: 9 }
+        ],
+        totalElements: 5,
+        totalPages: 1,
+        number: 0,
+        size: 20
+      });
+
+    await expect(loadPublicStatusOrg()).resolves.toMatchObject({ state: 'healthy' });
+    await expect(loadPublicStatusOrg()).resolves.toMatchObject({ state: 'degraded' });
+    await expect(loadPublicStatusOrg()).resolves.toMatchObject({ state: 'incident' });
+    await expect(loadPublicStatusOrg()).resolves.toMatchObject({ state: 'unknown' });
+    await expect(loadPublicStatusComponents()).resolves.toEqual([
+      { id: 1, name: 'Healthy', state: 'healthy' },
+      { id: 2, name: 'Incident', state: 'incident' },
+      { id: 3, name: 'Unknown', state: 'unknown' },
+      { id: 4, name: 'Future', state: 'unknown' }
+    ]);
+    await expect(loadPublicStatusIncidents()).resolves.toMatchObject({
+      content: [
+        { id: 1, name: 'Investigating', state: 'investigating' },
+        { id: 2, name: 'Identified', state: 'identified' },
+        { id: 3, name: 'Monitoring', state: 'monitoring' },
+        { id: 4, name: 'Resolved', state: 'resolved' },
+        { id: 5, name: 'Future', state: 'unknown' }
+      ]
+    });
   });
 
   it('loads every incident page before returning public status evidence', async () => {
