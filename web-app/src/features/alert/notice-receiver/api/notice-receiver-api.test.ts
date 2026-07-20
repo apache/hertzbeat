@@ -13,17 +13,22 @@ const http = vi.hoisted(() => ({
   apiMessagePost: vi.fn(),
   apiMessagePut: vi.fn()
 }));
-vi.mock('@/core/http/api-message', () => ({ ...http, ApiMessageError: class ApiMessageError extends Error {} }));
+vi.mock('@/core/http/api-message', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/core/http/api-message')>()),
+  ...http
+}));
+
+import { ApiMessageError } from '@/core/http/api-message';
 
 import {
   deleteNoticeReceiver,
   loadAllNoticeReceiverOptions,
   loadNoticeReceiver,
   loadNoticeReceivers,
-  NoticeReceiverContractError,
   saveNoticeReceiver,
   testNoticeReceiver
 } from './notice-receiver-api';
+import { NoticeReceiverRequestFailure } from '../model/notice-receiver-failure';
 import { createNoticeReceiverDraft, type NoticeReceiverDraft } from '../model/notice-receiver-model';
 
 const safeReceiver = {
@@ -67,6 +72,35 @@ describe('notice receiver API contract', () => {
     ]);
   });
 
+  it('normalizes transport failures at every API entry before they reach an adapter or controller', async () => {
+    const draft = { ...createNoticeReceiverDraft(), name: 'Email', email: 'ops@example.test' };
+    const update = { ...draft, id: 7 };
+    const operations = [
+      [http.apiMessageGet, () => loadNoticeReceiver(7)],
+      [http.apiMessageGet, () => loadNoticeReceivers({ name: '', pageIndex: 0, pageSize: 8 })],
+      [http.apiMessageGet, () => loadAllNoticeReceiverOptions()],
+      [http.apiMessagePost, () => saveNoticeReceiver(draft)],
+      [http.apiMessagePut, () => saveNoticeReceiver(update)],
+      [http.apiMessagePost, () => testNoticeReceiver(draft)],
+      [http.apiMessageDelete, () => deleteNoticeReceiver(7)]
+    ] as const;
+
+    for (const [transport, operation] of operations) {
+      transport.mockRejectedValueOnce(new ApiMessageError('private network failure'));
+      await expect(operation()).rejects.toMatchObject({
+        name: 'NoticeReceiverRequestFailure',
+        kind: 'unavailable',
+        writeOutcome: 'uncertain'
+      });
+    }
+  });
+
+  it('normalizes schema failures instead of leaking the wire parser error', async () => {
+    http.apiMessageGet.mockResolvedValue({ unexpected: true });
+    await expect(loadNoticeReceiver(7)).rejects.toBeInstanceOf(NoticeReceiverRequestFailure);
+    await expect(loadNoticeReceiver(7)).rejects.toMatchObject({ kind: 'invalid', writeOutcome: 'uncertain' });
+  });
+
   it.each([
     { ...safeReceiver, options: { hookAuthType: 'Bearer', hookUrl: 'https://secret.test/hook' } },
     { ...safeReceiver, accessToken: 'echoed-secret' },
@@ -76,17 +110,17 @@ describe('notice receiver API contract', () => {
     { ...safeReceiver, type: 15, typeKey: 'ntfy' }
   ])('rejects secret-bearing, crossed, or unsupported detail evidence %#', async value => {
     http.apiMessageGet.mockResolvedValue(value);
-    await expect(loadNoticeReceiver(7)).rejects.toBeInstanceOf(NoticeReceiverContractError);
+    await expect(loadNoticeReceiver(7)).rejects.toMatchObject({ kind: 'invalid', writeOutcome: 'uncertain' });
   });
 
   it('rejects expanded receiver options used by rule authoring', async () => {
     http.apiMessageGet.mockResolvedValue([{ id: 7, name: 'Pager', type: 2, options: {} }]);
-    await expect(loadAllNoticeReceiverOptions()).rejects.toBeInstanceOf(NoticeReceiverContractError);
+    await expect(loadAllNoticeReceiverOptions()).rejects.toMatchObject({ kind: 'invalid', writeOutcome: 'uncertain' });
   });
 
   it('rejects detail evidence for a different receiver id', async () => {
     http.apiMessageGet.mockResolvedValue({ ...safeReceiver, id: 8 });
-    await expect(loadNoticeReceiver(7)).rejects.toBeInstanceOf(NoticeReceiverContractError);
+    await expect(loadNoticeReceiver(7)).rejects.toMatchObject({ kind: 'invalid', writeOutcome: 'uncertain' });
   });
 
   it('sends structured active-type payloads and validates mutation evidence', async () => {
@@ -144,7 +178,7 @@ describe('notice receiver API contract', () => {
       receiver: { ...safeReceiver, options: { hookUrl: 'echo' } }
     });
     const draft = { ...createNoticeReceiverDraft(), name: 'Email', email: 'ops@example.test' };
-    await expect(saveNoticeReceiver(draft)).rejects.toBeInstanceOf(NoticeReceiverContractError);
+    await expect(saveNoticeReceiver(draft)).rejects.toMatchObject({ kind: 'invalid', writeOutcome: 'uncertain' });
   });
 
   it.each([

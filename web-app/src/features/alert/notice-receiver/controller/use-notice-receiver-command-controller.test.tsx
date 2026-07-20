@@ -3,6 +3,9 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { NoticeReceiverRequestFailure, withNoticeReceiverMutation } from '../model/notice-receiver-failure';
+import type { NoticeReceiverMutation } from '../model/notice-receiver-model';
+
 import {
   defaultNoticeReceiverQuery,
   deferred,
@@ -79,7 +82,7 @@ describe('notice receiver command controller', () => {
   it('admits only remove when remove claims the same-tick operation gate first', async () => {
     const deletion = deferred<{ data: typeof persistedNoticeReceiver }>();
     refine.remove.mockReturnValueOnce(deletion.promise);
-    loadExact.mockRejectedValueOnce({ statusCode: 404, code: 'NOTICE_RECEIVER_MISSING' });
+    loadExact.mockRejectedValueOnce(missingFailure());
     const { result } = renderCommandController();
     openValidDraft(result.current.actions);
 
@@ -122,9 +125,9 @@ describe('notice receiver command controller', () => {
   });
 
   it('releases the operation gate after definite 4xx submit and remove failures', async () => {
-    refine.create.mockRejectedValueOnce({ statusCode: 400, code: 'NOTICE_RECEIVER_VARIABLES_INVALID' });
-    refine.remove.mockRejectedValueOnce({ statusCode: 400, code: 'NOTICE_RECEIVER_ID_INVALID' });
-    api.testNoticeReceiver.mockRejectedValueOnce({ statusCode: 503, code: 'NETWORK_REQUEST_FAILED' });
+    refine.create.mockRejectedValueOnce(rejectedFailure('NOTICE_RECEIVER_VARIABLES_INVALID'));
+    refine.remove.mockRejectedValueOnce(rejectedFailure('NOTICE_RECEIVER_ID_INVALID'));
+    api.testNoticeReceiver.mockRejectedValueOnce(unavailableFailure());
     const { result } = renderCommandController();
     openValidDraft(result.current.actions);
 
@@ -140,7 +143,7 @@ describe('notice receiver command controller', () => {
 
   it('allows an explicit rewrite after a definite 4xx rejection', async () => {
     refine.create
-      .mockRejectedValueOnce({ statusCode: 400, code: 'NOTICE_RECEIVER_VARIABLES_INVALID' })
+      .mockRejectedValueOnce(rejectedFailure('NOTICE_RECEIVER_VARIABLES_INVALID'))
       .mockResolvedValueOnce({ data: persistedNoticeReceiver });
     const { result } = renderCommandController();
     openValidDraft(result.current.actions);
@@ -155,7 +158,7 @@ describe('notice receiver command controller', () => {
 
   it('retries only list projection after an acknowledged create without repeating POST', async () => {
     rereadAuthoritatively
-      .mockRejectedValueOnce({ statusCode: 503, code: 'NETWORK_REQUEST_FAILED' })
+      .mockRejectedValueOnce(unavailableFailure())
       .mockResolvedValueOnce({ records: [persistedNoticeReceiver], total: 1 });
     const { result } = renderCommandController();
     openValidDraft(result.current.actions);
@@ -173,11 +176,9 @@ describe('notice receiver command controller', () => {
   });
 
   it('uses real mutation identity to recover an ambiguous create through proof only', async () => {
-    refine.create.mockRejectedValueOnce({
-      statusCode: 502,
-      code: 'NOTICE_RECEIVER_RESPONSE_INVALID',
-      noticeReceiverMutation: { id: 7, status: 'created', receiver: persistedNoticeReceiver }
-    });
+    refine.create.mockRejectedValueOnce(
+      mutationFailure({ id: 7, status: 'created', receiver: persistedNoticeReceiver })
+    );
     const { result } = renderCommandController();
     openValidDraft(result.current.actions);
 
@@ -191,11 +192,13 @@ describe('notice receiver command controller', () => {
   });
 
   it('keeps acknowledged create proof after its canonical reread returns 4xx', async () => {
-    refine.create.mockRejectedValueOnce({
-      statusCode: 404,
-      code: 'NOTICE_RECEIVER_MISSING',
-      noticeReceiverMutation: { id: 7, status: 'created', receiver: persistedNoticeReceiver }
-    });
+    refine.create.mockRejectedValueOnce(
+      withNoticeReceiverMutation(missingFailure(), {
+        id: 7,
+        status: 'created',
+        receiver: persistedNoticeReceiver
+      })
+    );
     const { result } = renderCommandController();
     openValidDraft(result.current.actions);
 
@@ -209,11 +212,13 @@ describe('notice receiver command controller', () => {
   });
 
   it('keeps acknowledged update proof after its canonical reread returns 4xx', async () => {
-    refine.update.mockRejectedValueOnce({
-      statusCode: 404,
-      code: 'NOTICE_RECEIVER_MISSING',
-      noticeReceiverMutation: { id: 7, status: 'updated', receiver: persistedNoticeReceiver }
-    });
+    refine.update.mockRejectedValueOnce(
+      withNoticeReceiverMutation(missingFailure(), {
+        id: 7,
+        status: 'updated',
+        receiver: persistedNoticeReceiver
+      })
+    );
     const { result } = renderCommandController();
     await act(async () => result.current.actions.edit(7));
 
@@ -227,11 +232,7 @@ describe('notice receiver command controller', () => {
   });
 
   it('keeps an ambiguous create without valid canonical identity locked instead of guessing or repeating POST', async () => {
-    refine.create.mockRejectedValueOnce({
-      statusCode: 503,
-      code: 'NETWORK_REQUEST_FAILED',
-      noticeReceiverMutation: { id: 7, status: 'deleted', receiver: null }
-    });
+    refine.create.mockRejectedValueOnce(mutationFailure({ id: 7, status: 'deleted', receiver: null }));
     const { result } = renderCommandController();
     openValidDraft(result.current.actions);
 
@@ -252,7 +253,7 @@ describe('notice receiver command controller', () => {
   });
 
   it('recovers ambiguous update and delete writes by canonical proof without repeating mutations', async () => {
-    refine.update.mockRejectedValueOnce({ statusCode: 503, code: 'NETWORK_REQUEST_FAILED' });
+    refine.update.mockRejectedValueOnce(unavailableFailure());
     const { result } = renderCommandController();
     await act(async () => result.current.actions.edit(7));
 
@@ -261,8 +262,8 @@ describe('notice receiver command controller', () => {
     expect(refine.update).toHaveBeenCalledTimes(1);
     expect(loadExact).toHaveBeenCalledWith(7);
 
-    loadExact.mockRejectedValueOnce({ statusCode: 404, code: 'NOTICE_RECEIVER_MISSING' });
-    refine.remove.mockRejectedValueOnce({ statusCode: 503, code: 'NETWORK_REQUEST_FAILED' });
+    loadExact.mockRejectedValueOnce(missingFailure());
+    refine.remove.mockRejectedValueOnce(unavailableFailure());
     await act(async () => result.current.actions.remove(persistedNoticeReceiver));
     await act(async () => result.current.actions.retry());
     expect(refine.remove).toHaveBeenCalledTimes(1);
@@ -270,10 +271,8 @@ describe('notice receiver command controller', () => {
   });
 
   it('does not repeat DELETE when projection fails after missing-detail proof', async () => {
-    loadExact.mockRejectedValueOnce({ statusCode: 404, code: 'NOTICE_RECEIVER_MISSING' });
-    rereadAuthoritatively
-      .mockRejectedValueOnce({ statusCode: 503, code: 'NETWORK_REQUEST_FAILED' })
-      .mockResolvedValueOnce({ records: [], total: 0 });
+    loadExact.mockRejectedValueOnce(missingFailure());
+    rereadAuthoritatively.mockRejectedValueOnce(unavailableFailure()).mockResolvedValueOnce({ records: [], total: 0 });
     const { result } = renderCommandController();
 
     await act(async () => result.current.actions.remove(persistedNoticeReceiver));
@@ -350,7 +349,7 @@ describe('notice receiver command controller', () => {
     expect(result.current.state.draft).toBeNull();
 
     rereadAuthoritatively.mockResolvedValueOnce({ records: [persistedNoticeReceiver], total: 1 });
-    loadExact.mockRejectedValueOnce({ statusCode: 404, code: 'NOTICE_RECEIVER_MISSING' });
+    loadExact.mockRejectedValueOnce(missingFailure());
     await act(async () => result.current.actions.remove(persistedNoticeReceiver));
     expect(refine.notification).not.toHaveBeenCalledWith(
       expect.objectContaining({ message: 'noticeReceivers.deleteSuccess' })
@@ -358,7 +357,7 @@ describe('notice receiver command controller', () => {
   });
 
   it('classifies write 404 as error rather than detail missing', async () => {
-    refine.create.mockRejectedValueOnce({ statusCode: 404, code: 'NOTICE_RECEIVER_MISSING' });
+    refine.create.mockRejectedValueOnce(missingFailure());
     const { result } = renderCommandController();
     openValidDraft(result.current.actions);
 
@@ -389,7 +388,7 @@ describe('notice receiver command controller', () => {
   it('retires the matching open draft after deletion is authoritatively proved', async () => {
     const { result } = renderCommandController();
     await act(async () => result.current.actions.edit(7));
-    loadExact.mockRejectedValueOnce({ statusCode: 404, code: 'NOTICE_RECEIVER_MISSING' });
+    loadExact.mockRejectedValueOnce(missingFailure());
 
     await act(async () => result.current.actions.remove(persistedNoticeReceiver));
 
@@ -410,4 +409,20 @@ function openValidDraft(actions: {
 }) {
   act(() => expect(actions.create()).toBe(true));
   act(() => expect(actions.updateDraft(validNoticeReceiverDraft())).toBe(true));
+}
+
+function missingFailure() {
+  return new NoticeReceiverRequestFailure('missing', 'rejected', { code: 'NOTICE_RECEIVER_MISSING' });
+}
+
+function rejectedFailure(code: string) {
+  return new NoticeReceiverRequestFailure('invalid', 'rejected', { code });
+}
+
+function unavailableFailure() {
+  return new NoticeReceiverRequestFailure('unavailable', 'uncertain');
+}
+
+function mutationFailure(mutation: NoticeReceiverMutation) {
+  return withNoticeReceiverMutation(unavailableFailure(), mutation);
 }

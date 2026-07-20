@@ -5,19 +5,21 @@ import {
   type NoticeReceiver,
   type NoticeReceiverDraft
 } from '../model/notice-receiver-model';
-import type {
-  NoticeReceiverFailureKind,
-  NoticeReceiverNonMissingFailureKind
-} from '../model/notice-receiver-failure-kind';
-import type { NoticeReceiverReceipt } from '../model/notice-receiver-operation-state';
 import {
+  classifyNoticeReceiverDetailFailure,
+  classifyNoticeReceiverWriteFailure,
+  isNoticeReceiverWriteRejection,
   noticeReceiverRereadError,
   readNoticeReceiverMutation,
+  type NoticeReceiverFailureKind,
+  type NoticeReceiverNonMissingFailureKind
+} from '../model/notice-receiver-failure';
+import {
   requireExactNoticeReceiver,
   requireNoticeReceiverAbsent,
   requireNoticeReceiverConverged
-} from '../notice-receiver-evidence';
-import { classifyNoticeReceiverDetailFailure, classifyNoticeReceiverWriteFailure } from '../notice-receiver-failure';
+} from '../model/notice-receiver-evidence';
+import type { NoticeReceiverReceipt } from '../model/notice-receiver-operation-state';
 import type { NoticeReceiverEditorController } from './use-notice-receiver-editor-controller';
 import type {
   NoticeReceiverOperationController,
@@ -167,7 +169,7 @@ function recoverOrReject(
       return;
     }
   }
-  if (isDefiniteWriteRejection(error)) {
+  if (isNoticeReceiverWriteRejection(error)) {
     context.operation.clear(owner);
     return;
   }
@@ -194,11 +196,6 @@ function notifyFailure(context: NoticeReceiverWriteContext, receipt: NoticeRecei
   const kind = classifyNoticeReceiverWriteFailure(error);
   if (receipt.kind === 'save') context.notify.saveFailure(kind);
   else context.notify.deleteFailure(kind);
-}
-
-function isDefiniteWriteRejection(error: unknown) {
-  const status = (error as { statusCode?: number } | null)?.statusCode;
-  return status !== undefined && status >= 400 && status < 500;
 }
 
 function hasIdentity(draft: NoticeReceiverDraft): draft is NoticeReceiverUpdateDraft {

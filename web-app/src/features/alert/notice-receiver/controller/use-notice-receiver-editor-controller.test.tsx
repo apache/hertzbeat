@@ -4,7 +4,7 @@ import { act, renderHook } from '@testing-library/react';
 import { StrictMode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { NoticeReceiverFailureKind } from '../model/notice-receiver-failure-kind';
+import { NoticeReceiverRequestFailure, type NoticeReceiverFailureKind } from '../model/notice-receiver-failure';
 import type { NoticeReceiver } from '../model/notice-receiver-model';
 import { deferred, persistedNoticeReceiver } from './notice-receiver-controller-test-fixtures';
 
@@ -103,7 +103,9 @@ describe('notice receiver editor controller', () => {
 
   it('keeps detail missing distinct from other detail failures', async () => {
     const onReadFailure = vi.fn();
-    loadExact.mockRejectedValue({ statusCode: 404, code: 'NOTICE_RECEIVER_MISSING' });
+    loadExact.mockRejectedValue(
+      new NoticeReceiverRequestFailure('missing', 'rejected', { code: 'NOTICE_RECEIVER_MISSING' })
+    );
     const { result } = renderEditorController(loadExact, onReadFailure);
     await act(async () => result.current.editor.actions.edit(7));
     expect(onReadFailure).toHaveBeenCalledWith('missing');
@@ -128,7 +130,7 @@ describe('notice receiver editor controller', () => {
     });
 
     unmount();
-    act(() => detail.reject({ statusCode: 503, code: 'NETWORK_REQUEST_FAILED' }));
+    act(() => detail.reject(new NoticeReceiverRequestFailure('unavailable', 'uncertain')));
     await act(async () => operation);
 
     expect(onReadFailure).not.toHaveBeenCalled();

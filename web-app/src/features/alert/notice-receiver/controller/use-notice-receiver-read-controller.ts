@@ -3,12 +3,12 @@
 import { useDataProvider, useList, type HttpError } from '@refinedev/core';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
+import { requireExactNoticeReceiver } from '../model/notice-receiver-evidence';
 import {
+  classifyNoticeReceiverCollectionFailure,
   noticeReceiverRereadError,
-  requireExactNoticeReceiver,
   throwableNoticeReceiverError
-} from '../notice-receiver-evidence';
-import { classifyNoticeReceiverCollectionFailure } from '../notice-receiver-failure';
+} from '../model/notice-receiver-failure';
 import type { NoticeReceiverListState } from '../model/notice-receiver-list-state';
 import type { NoticeReceiver, NoticeReceiverQuery } from '../model/notice-receiver-model';
 import { noticeReceiverResourceName } from '../notice-receiver-resource';
@@ -17,7 +17,7 @@ type VisibleRead = {
   identity: string;
   refetch: ReturnType<typeof useList<NoticeReceiver, HttpError>>['query']['refetch'];
 };
-type ReadFailure = { identity: string; error: HttpError };
+type ReadFailure = { identity: string; error: unknown };
 
 function useNoticeReceiverList(query: NoticeReceiverQuery) {
   return useList<NoticeReceiver, HttpError>({
@@ -116,7 +116,7 @@ function useAuthoritativeReread(
 
 function resolveReadState(
   pending: boolean,
-  error: HttpError | null,
+  error: unknown,
   records: NoticeReceiver[],
   total: number | undefined,
   refreshing: boolean
@@ -129,7 +129,7 @@ function resolveReadState(
 
 function resolveListState(
   pending: boolean,
-  error: HttpError | null,
+  error: unknown,
   records: NoticeReceiver[],
   total?: number
 ): NoticeReceiverListState {

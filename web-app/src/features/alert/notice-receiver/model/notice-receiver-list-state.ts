@@ -2,7 +2,7 @@
 
 import type { RemotePayloadState } from '@/shared/remote-state';
 
-import type { NoticeReceiverNonMissingFailureKind } from './notice-receiver-failure-kind';
+import type { NoticeReceiverNonMissingFailureKind } from './notice-receiver-failure';
 import type { NoticeReceiver } from './notice-receiver-model';
 
 export type NoticeReceiverListState = RemotePayloadState<

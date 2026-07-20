@@ -21,6 +21,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiMessageError } from '@/core/http/api-message';
 import { noticeApiEndpoint } from '@/features/alert/notice-api-endpoints';
 import { NoticeReceiverContractError } from '@/features/alert/notice-receiver/api/notice-receiver-api';
+import { NoticeReceiverRequestFailure } from '@/features/alert/notice-receiver/model/notice-receiver-failure';
 import * as noticeReceiverModel from '@/features/alert/notice-receiver/model/notice-receiver-model';
 import {
   createNoticeReceiverDraft,
@@ -104,6 +105,46 @@ describe('Notice Receiver Refine data provider', () => {
     expect(api.loadNoticeReceiver).toHaveBeenCalledTimes(2);
   });
 
+  it('preserves Receiver domain failures instead of collapsing them into an unexpected Refine error', async () => {
+    const failure = new NoticeReceiverRequestFailure('unavailable', 'uncertain');
+    api.loadNoticeReceiver.mockRejectedValueOnce(failure);
+
+    let observed: unknown;
+    try {
+      await noticeReceiverDataProvider.getOne({ resource: 'notice-receivers', id: 7 });
+    } catch (reason) {
+      observed = reason;
+    }
+
+    expect(observed).toBe(failure);
+  });
+
+  it('carries acknowledged mutation identity only through typed domain evidence', async () => {
+    const mutation = { id: 7, status: 'updated' as const, receiver };
+    api.saveNoticeReceiver.mockResolvedValueOnce(mutation);
+    api.loadNoticeReceiver.mockRejectedValueOnce(new NoticeReceiverRequestFailure('unavailable', 'uncertain'));
+
+    let observed: unknown;
+    try {
+      await noticeReceiverDataProvider.update({
+        resource: 'notice-receivers',
+        id: 7,
+        variables: { ...draft, id: 7 }
+      });
+    } catch (reason) {
+      observed = reason;
+    }
+
+    expect(observed).toBeInstanceOf(NoticeReceiverRequestFailure);
+    expect(observed).toMatchObject({
+      kind: 'unavailable',
+      writeOutcome: 'uncertain',
+      mutation
+    });
+    expect(observed).not.toHaveProperty('noticeReceiverMutation');
+    expect(observed).not.toHaveProperty('statusCode');
+  });
+
   it('fails closed on missing mutation or mismatched canonical reread', async () => {
     api.saveNoticeReceiver
       .mockResolvedValueOnce({ id: 7, status: 'missing', receiver: null })
@@ -148,7 +189,13 @@ describe('Notice Receiver Refine data provider', () => {
     } catch (reason) {
       failure = reason;
     }
-    expect(failure).toMatchObject({ code: 'NETWORK_REQUEST_FAILED', noticeReceiverMutation: mutation });
+    expect(failure).toMatchObject({
+      kind: 'unavailable',
+      writeOutcome: 'uncertain',
+      mutation
+    });
+    expect(failure).not.toHaveProperty('noticeReceiverMutation');
+    expect(failure).not.toHaveProperty('statusCode');
     const serializedFailure = JSON.stringify(failure);
     expect(serializedFailure).not.toContain('private-hook-value');
     expect(serializedFailure).not.toContain('private-token-value');
@@ -201,11 +248,15 @@ describe('Notice Receiver Refine data provider', () => {
     expect(api.loadNoticeReceiver).not.toHaveBeenCalled();
   });
 
-  it('maps secret-bearing API evidence to a stable contract HttpError', async () => {
+  it('maps secret-bearing API evidence to stable typed domain evidence', async () => {
     api.saveNoticeReceiver.mockRejectedValue(new NoticeReceiverContractError());
     await expect(
       noticeReceiverDataProvider.create({ resource: 'notice-receivers', variables: draft })
-    ).rejects.toMatchObject({ code: 'NOTICE_RECEIVER_RESPONSE_INVALID', kind: 'contract' });
+    ).rejects.toMatchObject({
+      code: 'NOTICE_RECEIVER_RESPONSE_INVALID',
+      kind: 'invalid',
+      writeOutcome: 'uncertain'
+    });
   });
 
   it('rejects unsupported resources, sorters, filters, ids, and variables before transport', async () => {

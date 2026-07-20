@@ -17,6 +17,7 @@
 
 export {
   createRefineHttpError,
+  isRefineHttpError,
   toRefineHttpError,
   type RefineHttpError,
   type RefineHttpErrorKind

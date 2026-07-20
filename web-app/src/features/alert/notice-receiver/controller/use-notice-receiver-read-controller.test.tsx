@@ -5,7 +5,7 @@ import { StrictMode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { NoticeReceiverQuery } from '../model/notice-receiver-model';
-import { NoticeReceiverContractError } from '../api/notice-receiver-api';
+import { NoticeReceiverRequestFailure } from '../model/notice-receiver-failure';
 import {
   defaultNoticeReceiverQuery,
   deferred,
@@ -31,7 +31,11 @@ describe('notice receiver read controller', () => {
     refine.getOne.mockResolvedValue({ data: { ...persistedNoticeReceiver, id: 8 } });
     const { result } = renderReadController();
 
-    await expect(result.current.loadExact(7)).rejects.toBeInstanceOf(NoticeReceiverContractError);
+    await expect(result.current.loadExact(7)).rejects.toMatchObject({
+      name: 'NoticeReceiverRequestFailure',
+      kind: 'invalid',
+      writeOutcome: 'uncertain'
+    });
   });
 
   it('rereads the latest visible query through a layout-synchronized ref', async () => {
@@ -77,7 +81,7 @@ describe('notice receiver read controller', () => {
 
   it('does not let an older successful refresh clear a newer failure', async () => {
     const older = deferred<ReturnType<typeof noticeReceiverListResult>>();
-    const newer = deferred<{ isError: true; error: { statusCode: number; code: string } }>();
+    const newer = deferred<{ isError: true; error: NoticeReceiverRequestFailure }>();
     refine.refetch.mockReturnValueOnce(older.promise).mockReturnValueOnce(newer.promise);
     const { result } = renderReadController();
 
@@ -87,7 +91,7 @@ describe('notice receiver read controller', () => {
       first = result.current.refresh();
       second = result.current.refresh();
     });
-    act(() => newer.resolve({ isError: true, error: { statusCode: 503, code: 'NETWORK_REQUEST_FAILED' } }));
+    act(() => newer.resolve({ isError: true, error: unavailableFailure() }));
     await act(async () => second);
     expect(result.current.state.list.kind).toBe('unavailable');
     act(() => older.resolve(noticeReceiverListResult()));
@@ -97,7 +101,10 @@ describe('notice receiver read controller', () => {
 
   it('classifies a collection 404 as error rather than receiver missing', async () => {
     refine.useList.mockReturnValue(
-      listHookResult(refine.refetch, { statusCode: 404, code: 'NOTICE_RECEIVER_MISSING' })
+      listHookResult(
+        refine.refetch,
+        new NoticeReceiverRequestFailure('missing', 'rejected', { code: 'NOTICE_RECEIVER_MISSING' })
+      )
     );
     const { result } = renderReadController();
     await waitFor(() => expect(result.current.state.list.kind).toBe('error'));
@@ -128,9 +135,13 @@ function renderReadController() {
   return renderHook(() => useNoticeReceiverReadController(defaultNoticeReceiverQuery));
 }
 
-function listHookResult(refetch = refine.refetch, error: { statusCode: number; code: string } | null = null) {
+function listHookResult(refetch = refine.refetch, error: NoticeReceiverRequestFailure | null = null) {
   return {
     query: { error, isError: Boolean(error), isFetching: false, isPending: false, refetch },
     result: { data: [persistedNoticeReceiver], total: 1 }
   };
+}
+
+function unavailableFailure() {
+  return new NoticeReceiverRequestFailure('unavailable', 'uncertain');
 }

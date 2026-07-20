@@ -16,10 +16,11 @@ import {
   type NoticeReceiver,
   type NoticeReceiverDraft
 } from '../model/notice-receiver-model';
-import type {
-  NoticeReceiverFailureKind,
-  NoticeReceiverNonMissingFailureKind
-} from '../model/notice-receiver-failure-kind';
+import {
+  classifyNoticeReceiverWriteFailure,
+  type NoticeReceiverFailureKind,
+  type NoticeReceiverNonMissingFailureKind
+} from '../model/notice-receiver-failure';
 import { noticeReceiverResourceName } from '../notice-receiver-resource';
 import {
   removeNoticeReceiver,
@@ -104,7 +105,7 @@ async function sendNoticeReceiverTest(
     return true;
   } catch (error) {
     if (!context.operation.isCurrent(owner)) return false;
-    context.notify.testFailure(classifyTestFailure(error));
+    context.notify.testFailure(classifyNoticeReceiverWriteFailure(error));
     return false;
   } finally {
     context.operation.end(owner);
@@ -150,9 +151,4 @@ function createNotifications(notification: ReturnType<typeof useNotification>, t
     testSuccess: () => open('noticeReceivers.testSuccess', 'success'),
     testFailure: (kind: NoticeReceiverNonMissingFailureKind) => open(`noticeReceivers.testError.${kind}`, 'error')
   };
-}
-
-function classifyTestFailure(error: unknown): NoticeReceiverNonMissingFailureKind {
-  const status = (error as { statusCode?: number } | null)?.statusCode;
-  return status === 0 || status === undefined || status >= 500 ? 'unavailable' : 'error';
 }

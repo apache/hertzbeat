@@ -20,22 +20,25 @@ import {
   deleteNoticeReceiver,
   loadNoticeReceiver,
   loadNoticeReceivers,
-  NoticeReceiverContractError,
   saveNoticeReceiver
 } from '@/features/alert/notice-receiver/api/notice-receiver-api';
+import { normalizeNoticeReceiverApiFailure } from '@/features/alert/notice-receiver/api/notice-receiver-api-failure';
+import {
+  NoticeReceiverRequestFailure,
+  withNoticeReceiverMutation,
+  type NoticeReceiverFailureKind,
+  type NoticeReceiverWriteOutcome
+} from '@/features/alert/notice-receiver/model/notice-receiver-failure';
 import { noticeReceiverResourceName } from '@/features/alert/notice-receiver/notice-receiver-resource';
 import type {
   NoticeReceiverDraft,
   NoticeReceiverMutation
 } from '@/features/alert/notice-receiver/model/notice-receiver-model';
-import {
-  attachNoticeReceiverMutation,
-  requireNoticeReceiverConverged
-} from '@/features/alert/notice-receiver/notice-receiver-evidence';
+import { requireNoticeReceiverConverged } from '@/features/alert/notice-receiver/model/notice-receiver-evidence';
 import { noticeApiEndpoint } from '@/features/alert/notice-api-endpoints';
 import { adaptRefineRecord, adaptRefineRecords } from '@/shared/refine/refine-provider-data';
 
-import { createRefineHttpError, toRefineHttpError } from '../refine-http-error';
+import { isRefineHttpError, type RefineHttpError } from '../refine-http-error';
 import {
   readNoticeReceiverDeleteRecord,
   readNoticeReceiverDraft,
@@ -60,7 +63,7 @@ export const noticeReceiverDataProvider: DataProvider = {
       assertResource(params.resource);
       const id = readNoticeReceiverId(params.id);
       const receiver = await loadNoticeReceiver(id);
-      if (receiver.id !== id) throw contractError('NOTICE_RECEIVER_REREAD_INVALID');
+      if (receiver.id !== id) throw contractFailure('NOTICE_RECEIVER_REREAD_INVALID');
       return { data: adaptRefineRecord<TData>(receiver) };
     });
   },
@@ -105,9 +108,9 @@ export const noticeReceiverDataProvider: DataProvider = {
       const id = readNoticeReceiverId(params.id);
       const canonical = readNoticeReceiverDeleteRecord(params.variables, id);
       const mutation = await deleteNoticeReceiver(id);
-      if (mutation.status === 'missing') throw contractError('NOTICE_RECEIVER_MISSING', 404);
+      if (mutation.status === 'missing') throw rejectedFailure('missing', 'NOTICE_RECEIVER_MISSING');
       if (mutation.status !== 'deleted' || mutation.id !== id || mutation.receiver !== null) {
-        throw contractError('NOTICE_RECEIVER_DELETE_NOT_CONFIRMED');
+        throw contractFailure('NOTICE_RECEIVER_DELETE_NOT_CONFIRMED');
       }
       return { data: adaptRefineRecord<TData>(canonical) };
     });
@@ -120,15 +123,40 @@ async function protect<T>(operation: () => Promise<T>): Promise<T> {
   try {
     return await operation();
   } catch (reason) {
-    if (reason instanceof NoticeReceiverContractError) {
-      throw contractError('NOTICE_RECEIVER_RESPONSE_INVALID');
-    }
-    throw toRefineHttpError(reason);
+    throw providerFailure(reason);
   }
 }
 
+function providerFailure(reason: unknown): NoticeReceiverRequestFailure {
+  if (reason instanceof NoticeReceiverRequestFailure) return reason;
+  if (isRefineHttpError(reason)) {
+    const code = stableReceiverCode(reason.code);
+    return code === undefined
+      ? new NoticeReceiverRequestFailure(refineFailureKind(reason), refineWriteOutcome(reason))
+      : new NoticeReceiverRequestFailure(refineFailureKind(reason), refineWriteOutcome(reason), { code });
+  }
+  return normalizeNoticeReceiverApiFailure(reason);
+}
+
+function refineFailureKind(reason: RefineHttpError): NoticeReceiverFailureKind {
+  if (reason.statusCode === 404 || reason.code === 'NOTICE_RECEIVER_MISSING') return 'missing';
+  if (typeof reason.code === 'string' && reason.code.startsWith('NOTICE_RECEIVER_')) return 'invalid';
+  if (reason.statusCode === 0 || reason.kind === 'network' || reason.statusCode >= 500) return 'unavailable';
+  return 'error';
+}
+
+function refineWriteOutcome(reason: RefineHttpError): NoticeReceiverWriteOutcome {
+  return reason.statusCode >= 400 && reason.statusCode < 500 ? 'rejected' : 'uncertain';
+}
+
+function stableReceiverCode(code: string | number | undefined) {
+  return typeof code === 'string' && code.startsWith('NOTICE_RECEIVER_') ? code : undefined;
+}
+
 function assertResource(resource: string) {
-  if (resource !== noticeReceiverResourceName) throw contractError('NOTICE_RECEIVER_RESOURCE_UNSUPPORTED', 400);
+  if (resource !== noticeReceiverResourceName) {
+    throw rejectedFailure('invalid', 'NOTICE_RECEIVER_RESOURCE_UNSUPPORTED');
+  }
 }
 
 async function requireCanonical(id: number, draft: NoticeReceiverDraft) {
@@ -136,7 +164,7 @@ async function requireCanonical(id: number, draft: NoticeReceiverDraft) {
   try {
     return requireNoticeReceiverConverged(canonical, id, draft);
   } catch {
-    throw contractError('NOTICE_RECEIVER_REREAD_INVALID');
+    throw contractFailure('NOTICE_RECEIVER_REREAD_INVALID');
   }
 }
 
@@ -144,11 +172,7 @@ async function requireCanonicalAfterMutation(mutation: NoticeReceiverMutation, d
   try {
     return await requireCanonical(mutation.id, draft);
   } catch (reason) {
-    const error =
-      reason instanceof NoticeReceiverContractError
-        ? contractError('NOTICE_RECEIVER_RESPONSE_INVALID')
-        : toRefineHttpError(reason);
-    throw attachNoticeReceiverMutation(error, mutation);
+    throw withNoticeReceiverMutation(providerFailure(reason), mutation);
   }
 }
 
@@ -157,17 +181,21 @@ function assertMutation(
   expected: 'created' | 'updated',
   id?: number
 ) {
-  if (mutation.status === 'missing') throw contractError('NOTICE_RECEIVER_MISSING', 404);
+  if (mutation.status === 'missing') throw rejectedFailure('missing', 'NOTICE_RECEIVER_MISSING');
   if (
     mutation.status !== expected ||
     mutation.receiver === null ||
     mutation.receiver.id !== mutation.id ||
     (id !== undefined && mutation.id !== id)
   ) {
-    throw contractError('NOTICE_RECEIVER_MUTATION_INVALID');
+    throw contractFailure('NOTICE_RECEIVER_MUTATION_INVALID');
   }
 }
 
-function contractError(code: string, status = 502) {
-  return createRefineHttpError('Notice receiver contract failed', status, code);
+function contractFailure(code: string) {
+  return new NoticeReceiverRequestFailure('invalid', 'uncertain', { code });
+}
+
+function rejectedFailure(kind: 'missing' | 'invalid', code: string) {
+  return new NoticeReceiverRequestFailure(kind, 'rejected', { code });
 }

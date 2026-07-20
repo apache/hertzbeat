@@ -33,44 +33,54 @@ import {
   parseNoticeReceiverWire,
   type NoticeReceiverWire
 } from './notice-receiver-schema';
-import { requireExactNoticeReceiver } from '../notice-receiver-evidence';
+import { noticeReceiverApiRequest } from './notice-receiver-api-failure';
+import { requireExactNoticeReceiver } from '../model/notice-receiver-evidence';
 
 export { NoticeReceiverContractError } from './notice-receiver-schema';
 
 export async function loadNoticeReceivers(query: NoticeReceiverQuery) {
-  const page = parseNoticeReceiverPageWire(
-    await apiMessageGet(`${noticeReceiversEndpoint}?${writeNoticeReceiverQuery(query).toString()}`)
-  );
-  return { ...page, content: page.content.map(mapNoticeReceiver) };
+  return noticeReceiverApiRequest(async () => {
+    const page = parseNoticeReceiverPageWire(
+      await apiMessageGet(`${noticeReceiversEndpoint}?${writeNoticeReceiverQuery(query).toString()}`)
+    );
+    return { ...page, content: page.content.map(mapNoticeReceiver) };
+  });
 }
 
 export async function loadNoticeReceiver(id: number) {
-  return requireExactNoticeReceiver(
-    mapNoticeReceiver(parseNoticeReceiverWire(await apiMessageGet(noticeReceiverDetailEndpoint(id)))),
-    id
+  return noticeReceiverApiRequest(async () =>
+    requireExactNoticeReceiver(
+      mapNoticeReceiver(parseNoticeReceiverWire(await apiMessageGet(noticeReceiverDetailEndpoint(id)))),
+      id
+    )
   );
 }
 
 export async function loadAllNoticeReceiverOptions() {
-  return parseNoticeReceiverOptionsWire(await apiMessageGet(`${noticeReceiversEndpoint}/all`));
+  return noticeReceiverApiRequest(async () =>
+    parseNoticeReceiverOptionsWire(await apiMessageGet(`${noticeReceiversEndpoint}/all`))
+  );
 }
 
 export async function saveNoticeReceiver(draft: NoticeReceiverDraft) {
   const payload = buildNoticeReceiverPayload(draft);
-  const value =
-    draft.id == null
-      ? await apiMessagePost(noticeReceiverEndpoint, payload)
-      : await apiMessagePut(noticeReceiverEndpoint, payload);
-  return mapNoticeReceiverMutation(parseNoticeReceiverMutationWire(value));
+  return noticeReceiverApiRequest(async () => {
+    const value =
+      draft.id == null
+        ? await apiMessagePost(noticeReceiverEndpoint, payload)
+        : await apiMessagePut(noticeReceiverEndpoint, payload);
+    return mapNoticeReceiverMutation(parseNoticeReceiverMutationWire(value));
+  });
 }
 
 export async function testNoticeReceiver(draft: NoticeReceiverDraft) {
-  await apiMessagePost(`${noticeReceiverEndpoint}/send-test-msg`, buildNoticeReceiverPayload(draft));
+  const payload = buildNoticeReceiverPayload(draft);
+  await noticeReceiverApiRequest(() => apiMessagePost(`${noticeReceiverEndpoint}/send-test-msg`, payload));
 }
 
 export async function deleteNoticeReceiver(id: number) {
-  return mapNoticeReceiverMutation(
-    parseNoticeReceiverMutationWire(await apiMessageDelete(noticeReceiverDetailEndpoint(id)))
+  return noticeReceiverApiRequest(async () =>
+    mapNoticeReceiverMutation(parseNoticeReceiverMutationWire(await apiMessageDelete(noticeReceiverDetailEndpoint(id))))
   );
 }
 
