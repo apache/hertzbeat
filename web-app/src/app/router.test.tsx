@@ -16,8 +16,10 @@
  */
 
 import type { RouteObject } from 'react-router-dom';
+import { isValidElement } from 'react';
 import { describe, expect, it } from 'vitest';
 
+import { AuthGate } from '@/core/auth/auth-gate';
 import { loadTokenPageRoute } from '@/features/settings/token';
 import { legacySettingsPaths } from '@/shared/settings/settings-routes';
 
@@ -68,6 +70,9 @@ describe('application data router', () => {
       { id: 'login', layout: 'passport' },
       { id: 'status', layout: 'blank' }
     ]);
+    expect(isValidElement(authenticatedRoute?.element)).toBe(true);
+    if (!isValidElement(authenticatedRoute?.element)) throw new Error('The authenticated route gate is missing.');
+    expect(authenticatedRoute.element.type).toBe(AuthGate);
     expect(basicCanonicalRoutes.map(route => route.id).sort()).toEqual(
       routeRegistry
         .filter(route => route.layout === 'basic')

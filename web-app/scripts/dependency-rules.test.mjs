@@ -83,6 +83,44 @@ test('rejects React runtime dependencies from every feature API', () => {
   assert.match(result.output, /no-feature-api-to-react-runtime/);
 });
 
+test('rejects alternate production owners for the session provider and authentication gate', () => {
+  const fixture = createProject({
+    'src/core/auth/session-provider.tsx': 'export const SessionProvider = () => null;',
+    'src/core/auth/auth-gate.tsx': 'export const AuthGate = () => null;',
+    'src/app/refine/refine-runtime.tsx':
+      "import { SessionProvider } from '@/core/auth/session-provider'; export const Runtime = SessionProvider;",
+    'src/app/router.tsx': "import { AuthGate } from '@/core/auth/auth-gate'; export const router = AuthGate;",
+    'src/layout/shell/alternate-auth-owner.tsx': [
+      "import { SessionProvider } from '@/core/auth/session-provider';",
+      "import { AuthGate } from '@/core/auth/auth-gate';",
+      'export const AlternateAuthOwner = () => <><SessionProvider /><AuthGate /></>;'
+    ].join('\n')
+  });
+
+  const result = cruise(fixture);
+
+  assert.notEqual(result.status, 0, result.output);
+  assert.match(result.output, /session-provider-single-production-owner/);
+  assert.match(result.output, /auth-gate-single-production-owner/);
+});
+
+test('rejects shell header dependencies on action side-effect owners', () => {
+  const fixture = createProject({
+    'src/core/auth/session-api.ts': 'export const logoutSession = () => undefined;',
+    'src/core/runtime-preferences.ts': 'export const persistSystemPreferences = () => undefined;',
+    'src/layout/shell/shell-header.tsx': [
+      "import { logoutSession } from '@/core/auth/session-api';",
+      "import { persistSystemPreferences } from '@/core/runtime-preferences';",
+      'export const ShellHeader = () => { logoutSession(); persistSystemPreferences(); return null; };'
+    ].join('\n')
+  });
+
+  const result = cruise(fixture);
+
+  assert.notEqual(result.status, 0, result.output);
+  assert.match(result.output, /shell-header-composition-only/);
+});
+
 function createProject(files) {
   const directory = mkdtempSync(join(tmpdir(), 'hertzbeat-architecture-'));
   temporaryProjects.push(directory);

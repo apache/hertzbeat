@@ -17,6 +17,7 @@
 
 import {
   useDataProvider,
+  useIsExistAuthentication,
   useNotification,
   useParsed,
   useRefineContext,
@@ -67,27 +68,36 @@ describe('production Refine runtime', () => {
 
     const routes = withProbeRoute(appRoutes, client => observedClients.push(client));
     const router = createMemoryRouter(routes, { initialEntries: ['/runtime-probe'] });
-    render(<AppProviders><RouterProvider router={router} /></AppProviders>);
+    render(
+      <AppProviders>
+        <RouterProvider router={router} />
+      </AppProviders>
+    );
 
     await waitFor(() => expect(screen.getByTestId('session-user')).toHaveTextContent('operator'));
     expect(screen.getByTestId('refine-initialized')).toHaveTextContent('true');
+    expect(screen.getByTestId('refine-auth-provider')).toHaveTextContent('false');
     expect(screen.getByTestId('parsed-path')).toHaveTextContent('/runtime-probe');
     expect(screen.getByTestId('mutation-mode')).toHaveTextContent('pessimistic');
     expect(screen.getByTestId('label-resource')).toHaveTextContent('labels|/settings/labels|labels');
     expect(screen.getByTestId('label-provider')).toHaveTextContent('shared');
-    expect(screen.getByTestId('object-store-resource'))
-      .toHaveTextContent('object-store|/settings/storage/object-store|object-store');
+    expect(screen.getByTestId('object-store-resource')).toHaveTextContent(
+      'object-store|/settings/storage/object-store|object-store'
+    );
     expect(screen.getByTestId('object-store-provider')).toHaveTextContent('shared');
-    expect(screen.getByTestId('system-config-resource'))
-      .toHaveTextContent('system-config|/settings/system|system-config');
+    expect(screen.getByTestId('system-config-resource')).toHaveTextContent(
+      'system-config|/settings/system|system-config'
+    );
     expect(screen.getByTestId('system-config-provider')).toHaveTextContent('shared');
     expect(screen.getByTestId('token-resource')).toHaveTextContent('tokens|/settings/tokens|tokens');
     expect(screen.getByTestId('token-provider')).toHaveTextContent('shared');
-    expect(screen.getByTestId('notice-template-resource'))
-      .toHaveTextContent('notice-templates|/settings/notifications/templates|notice-templates');
+    expect(screen.getByTestId('notice-template-resource')).toHaveTextContent(
+      'notice-templates|/settings/notifications/templates|notice-templates'
+    );
     expect(screen.getByTestId('notice-template-provider')).toHaveTextContent('shared');
-    expect(screen.getByTestId('alert-silence-resource'))
-      .toHaveTextContent('alert-silences|/alerts/silences|alert-silences');
+    expect(screen.getByTestId('alert-silence-resource')).toHaveTextContent(
+      'alert-silences|/alerts/silences|alert-silences'
+    );
     expect(screen.getByTestId('alert-silence-provider')).toHaveTextContent('shared');
     fireEvent.click(screen.getByRole('button', { name: 'Open runtime notification' }));
     expect(await screen.findByText('Runtime notification ready')).toBeInTheDocument();
@@ -103,6 +113,7 @@ describe('production Refine runtime', () => {
 function RuntimeProbe({ onClient }: { onClient: (client: QueryClient) => void }) {
   const queryClient = useQueryClient();
   const refine = useRefineContext();
+  const hasRefineAuthentication = useIsExistAuthentication();
   const parsed = useParsed();
   const dataProvider = useDataProvider();
   const { resources } = useResourceParams();
@@ -118,20 +129,10 @@ function RuntimeProbe({ onClient }: { onClient: (client: QueryClient) => void })
   const noticeTemplateResource = resources.find(resource => resource.name === 'notice-templates');
   const alertSilenceResource = resources.find(resource => resource.name === 'alert-silences');
   const labelProvider = resolveProviderState(dataProvider, 'labels', labelDataProvider, true);
-  const objectStoreProvider = resolveProviderState(
-    dataProvider,
-    'object-store',
-    objectStoreDataProvider,
-    false
-  );
+  const objectStoreProvider = resolveProviderState(dataProvider, 'object-store', objectStoreDataProvider, false);
   const labelResourceText = formatResource(labelResource);
   const objectStoreResourceText = formatResource(objectStoreResource);
-  const systemConfigProvider = resolveProviderState(
-    dataProvider,
-    'system-config',
-    systemConfigDataProvider,
-    false
-  );
+  const systemConfigProvider = resolveProviderState(dataProvider, 'system-config', systemConfigDataProvider, false);
   const systemConfigResourceText = formatResource(systemConfigResource);
   const tokenProvider = resolveProviderState(dataProvider, 'tokens', tokenDataProvider, false);
   const tokenResourceText = formatResource(tokenResource);
@@ -142,18 +143,14 @@ function RuntimeProbe({ onClient }: { onClient: (client: QueryClient) => void })
     false
   );
   const noticeTemplateResourceText = formatResource(noticeTemplateResource);
-  const alertSilenceProvider = resolveProviderState(
-    dataProvider,
-    'alert-silences',
-    alertSilenceDataProvider,
-    false
-  );
+  const alertSilenceProvider = resolveProviderState(dataProvider, 'alert-silences', alertSilenceDataProvider, false);
   const alertSilenceResourceText = formatResource(alertSilenceResource);
 
   return (
     <>
       <output data-testid="session-user">{session?.username}</output>
       <output data-testid="refine-initialized">{String(refine.__initialized)}</output>
+      <output data-testid="refine-auth-provider">{String(hasRefineAuthentication)}</output>
       <output data-testid="parsed-path">{parsed.pathname}</output>
       <output data-testid="mutation-mode">{refine.mutationMode}</output>
       <output data-testid="label-resource">{labelResourceText}</output>

@@ -57,6 +57,38 @@ module.exports = {
       to: { path: '^src/app/' }
     },
     {
+      name: 'session-provider-single-production-owner',
+      severity: 'error',
+      from: {
+        path: '^src/',
+        pathNot: `(?:${productionSource}|^src/app/refine/refine-runtime[.]tsx$)`
+      },
+      to: { path: '^src/core/auth/session-provider[.]tsx$' }
+    },
+    {
+      name: 'auth-gate-single-production-owner',
+      severity: 'error',
+      from: {
+        path: '^src/',
+        pathNot: `(?:${productionSource}|^src/app/router[.]tsx$)`
+      },
+      to: { path: '^src/core/auth/auth-gate[.]tsx$' }
+    },
+    {
+      name: 'shell-header-composition-only',
+      severity: 'error',
+      from: { path: '^src/layout/shell/shell-header[.]tsx$' },
+      to: {
+        path: [
+          '^(?:node_modules/)?(?:@refinedev/core|@tanstack/react-query)',
+          '^src/core/auth/(?:session-api|session-identity-context)[.]tsx?$',
+          '^src/core/i18n/i18n[.]ts$',
+          '^src/core/runtime-(?:preferences|theme-context)[.]tsx?$',
+          '^src/shared/navigation/app-paths[.]ts$'
+        ].join('|')
+      }
+    },
+    {
       name: 'no-presentation-to-api',
       severity: 'error',
       from: {
