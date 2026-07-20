@@ -1,6 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { ApiMessageError } from '@/core/http/api-message';
+import { apiMessageWriteOutcome } from '@/core/http/api-message-write-evidence';
 
 import { ObjectStoreRequestFailure, type ObjectStoreFailureKind } from '../model/object-store-failure';
 import { ObjectStoreDraftContractError, ObjectStoreResourceContractError } from '../model/object-store-model';
@@ -43,8 +44,5 @@ function failureKind(reason: ApiMessageError): ObjectStoreFailureKind {
 function writeOutcome(reason: ApiMessageError, phase: ObjectStoreRequestPhase) {
   // A read-side response cannot establish whether an earlier write committed.
   if (phase === 'read') return 'uncertain';
-  // A business envelope arrives after HTTP accepted the request. It cannot
-  // prove that a non-idempotent replacement write did not commit.
-  if (reason.code !== undefined) return 'uncertain';
-  return reason.status !== undefined && reason.status >= 400 && reason.status < 500 ? 'rejected' : 'uncertain';
+  return apiMessageWriteOutcome(reason);
 }

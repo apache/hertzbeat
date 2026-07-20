@@ -116,10 +116,14 @@ function adaptRefineFailure(reason: RefineHttpError, phase: ObjectStoreRequestPh
 }
 
 function refineFailureKind(reason: RefineHttpError): ObjectStoreFailureKind {
-  if (typeof reason.code === 'string' && reason.code.startsWith('OBJECT_STORE_')) return 'invalid';
-  if (reason.kind === 'network' || (reason.kind === 'http' && (reason.httpStatus ?? 0) >= 500)) {
+  if (
+    reason.cause !== undefined ||
+    reason.kind === 'network' ||
+    (reason.kind === 'http' && (reason.httpStatus === undefined || reason.httpStatus === 0 || reason.httpStatus >= 500))
+  ) {
     return 'unavailable';
   }
+  if (typeof reason.code === 'string' && reason.code.startsWith('OBJECT_STORE_')) return 'invalid';
   return 'error';
 }
 
@@ -127,8 +131,11 @@ function refineWriteOutcome(reason: RefineHttpError, phase: ObjectStoreRequestPh
   // Read failures cannot prove whether a separate write committed. For writes,
   // only the source HTTP status is rejection evidence; display status codes and
   // application envelopes may be synthesized after transport completed.
-  if (phase === 'read' || reason.kind !== 'http') return 'uncertain';
-  return reason.httpStatus !== undefined && reason.httpStatus >= 400 && reason.httpStatus < 500
+  if (phase === 'read' || reason.kind !== 'http' || reason.cause !== undefined) return 'uncertain';
+  return reason.httpStatus !== undefined &&
+    reason.httpStatus >= 400 &&
+    reason.httpStatus < 500 &&
+    reason.httpStatus !== 408
     ? 'rejected'
     : 'uncertain';
 }

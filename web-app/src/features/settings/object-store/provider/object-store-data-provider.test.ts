@@ -181,17 +181,56 @@ describe('Object Store Refine data provider', () => {
   });
 
   it.each([
-    ['HTTP source 4xx', createRefineHttpError('private', 400, undefined, 'http', 422), 'rejected'],
-    ['display-only 4xx', createRefineHttpError('private', 400, 20, 'envelope', 200), 'uncertain'],
-    ['contract', createRefineHttpError('private', 400, 'OBJECT_STORE_RESPONSE_INVALID', 'contract'), 'uncertain'],
-    ['unexpected', createRefineHttpError('private', 500, 'REFINE_UNEXPECTED_ERROR', 'unexpected'), 'uncertain'],
-    ['network', createRefineHttpError('private', 0, 'NETWORK_REQUEST_FAILED', 'network'), 'uncertain']
-  ] as const)('uses source evidence for %s write classification', async (_label, failure, writeOutcome) => {
+    ['HTTP source 4xx', createRefineHttpError('private', 400, undefined, 'http', 422), 'error', 'rejected'],
+    ['HTTP source timeout', createRefineHttpError('private', 408, undefined, 'http', 408), 'error', 'uncertain'],
+    [
+      'HTTP source status zero',
+      createRefineHttpError('private', 400, undefined, 'http', 0),
+      'unavailable',
+      'uncertain'
+    ],
+    [
+      'cause-bearing HTTP 4xx',
+      Object.assign(createRefineHttpError('private', 400, undefined, 'http', 422), {
+        cause: new Error('private-cause')
+      }),
+      'unavailable',
+      'uncertain'
+    ],
+    [
+      'cause-bearing HTTP 4xx with a domain display code',
+      Object.assign(createRefineHttpError('private', 400, 'OBJECT_STORE_RESPONSE_INVALID', 'http', 422), {
+        cause: new Error('private-cause')
+      }),
+      'unavailable',
+      'uncertain'
+    ],
+    [
+      'network-bearing 4xx',
+      createRefineHttpError('private', 400, undefined, 'network', 422),
+      'unavailable',
+      'uncertain'
+    ],
+    ['display-only 4xx', createRefineHttpError('private', 400, 20, 'envelope', 200), 'error', 'uncertain'],
+    [
+      'contract',
+      createRefineHttpError('private', 400, 'OBJECT_STORE_RESPONSE_INVALID', 'contract'),
+      'invalid',
+      'uncertain'
+    ],
+    [
+      'unexpected',
+      createRefineHttpError('private', 500, 'REFINE_UNEXPECTED_ERROR', 'unexpected'),
+      'error',
+      'uncertain'
+    ],
+    ['network', createRefineHttpError('private', 0, 'NETWORK_REQUEST_FAILED', 'network'), 'unavailable', 'uncertain']
+  ] as const)('uses source evidence for %s write classification', async (_label, failure, kind, writeOutcome) => {
     objectStoreApi.saveObjectStore.mockRejectedValueOnce(failure);
 
     await expect(
       objectStoreDataProvider.update({ resource: 'object-store', id: 'current', variables: configuredDraft })
-    ).rejects.toMatchObject({ writeOutcome });
+    ).rejects.toMatchObject({ kind, writeOutcome });
   });
 
   it('never presents a read failure as proof that a write was rejected', async () => {

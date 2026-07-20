@@ -18,6 +18,15 @@ describe('Object Store API failure boundary', () => {
       'uncertain'
     ],
     ['server failure', new ApiMessageError('private', { status: 503 }), 'write', 'unavailable', 'uncertain'],
+    ['timeout response', new ApiMessageError('private', { status: 408 }), 'write', 'error', 'uncertain'],
+    [
+      'cause-bearing client response',
+      new ApiMessageError('private', { status: 422, cause: new Error('private-cause') }),
+      'write',
+      'unavailable',
+      'uncertain'
+    ],
+    ['status zero', new ApiMessageError('private', { status: 0 }), 'write', 'unavailable', 'uncertain'],
     ['HTTP rejection', new ApiMessageError('private', { status: 422 }), 'write', 'error', 'rejected'],
     ['read HTTP failure', new ApiMessageError('private', { status: 422 }), 'read', 'error', 'uncertain'],
     ['business envelope', new ApiMessageError('private', { code: 20, status: 200 }), 'write', 'error', 'uncertain'],
