@@ -181,6 +181,10 @@ describe('instrumentation v1 model', () => {
     duplicatePlaceholders.secondaryToken = duplicate.secretPlaceholders.authorizationToken!;
     duplicate.steps[0]!.snippets[0]!.secretPlaceholders.push('secondaryToken');
     expect(() => parseGuideRenderResponse(duplicate)).toThrow(InstrumentationContractError);
+
+    const duplicateReference = guideFixture();
+    duplicateReference.steps[0]!.snippets[0]!.secretPlaceholders.push('authorizationToken');
+    expect(() => parseGuideRenderResponse(duplicateReference)).toThrow(InstrumentationContractError);
   });
 
   it('parses five-state detection, polling decisions, invariants, and typed jumps', () => {
@@ -228,6 +232,40 @@ describe('instrumentation v1 model', () => {
     const mismatchedSignal = detectionFixture();
     mismatchedSignal.queryJumps[0]!.context.environment = 'staging';
     expect(() => parseDetectionResponse(mismatchedSignal)).toThrow(InstrumentationContractError);
+  });
+
+  it('rejects a detection window that cannot produce a valid query handoff', () => {
+    const invalidWindow = detectionFixture();
+    invalidWindow.detectedAt = invalidWindow.context.startedAt;
+    invalidWindow.queryJumpContext.detectedAt = invalidWindow.context.startedAt;
+    invalidWindow.queryJumps.forEach(jump => {
+      jump.context.detectedAt = invalidWindow.context.startedAt;
+    });
+
+    expect(() => parseDetectionResponse(invalidWindow)).toThrow(InstrumentationContractError);
+  });
+
+  it.each([
+    ['before the onboarding attempt', 1_709_999_999_999],
+    ['after the detection boundary', 1_710_000_005_001]
+  ])('rejects received evidence timestamped %s', (_label, lastReceivedAt) => {
+    const invalidEvidence = detectionFixture();
+    invalidEvidence.signals.metrics.lastReceivedAt = lastReceivedAt;
+
+    expect(() => parseDetectionResponse(invalidEvidence)).toThrow(InstrumentationContractError);
+  });
+
+  it.each([
+    ['unavailable', 'signal_not_received'],
+    ['unavailable', 'signal_not_supported'],
+    ['error', 'signal_not_received'],
+    ['error', 'signal_not_supported']
+  ] as const)('rejects %s evidence with the reserved %s code', (status, errorCode) => {
+    const contradictory = detectionFixture();
+    contradictory.signals.logs = { status, lastReceivedAt: null, errorCode };
+    contradictory.polling = { decision: 'manual_retry', pollAfterMs: null, deadlineAt: 1_710_000_120_000 };
+
+    expect(() => parseDetectionResponse(contradictory)).toThrow(InstrumentationContractError);
   });
 
   it('normalizes omitted nullable detection fields from the Spring response', () => {

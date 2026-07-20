@@ -41,6 +41,15 @@ const optionalNullableErrorSchema = z
   .nullish()
   .transform(value => value ?? null);
 
+export const instrumentationMessageEnvelopeSchema = z
+  .object({
+    code: z.number().int(),
+    msg: z.string().nullable().optional(),
+    data: z.unknown()
+  })
+  .strict();
+export type InstrumentationMessageEnvelope = z.output<typeof instrumentationMessageEnvelopeSchema>;
+
 export const instrumentationSelectionSchema = z.object({
   language: z.enum(INSTRUMENTATION_LANGUAGES),
   framework: z.enum(INSTRUMENTATION_FRAMEWORKS),

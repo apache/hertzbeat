@@ -15,15 +15,16 @@
  * limitations under the License.
  */
 
-import type {
-  CatalogResponse,
-  DetectionRequest,
-  GuideRenderRequest,
-  GuideRenderResponse,
-  GuideSnippet,
-  InstrumentationSelection,
-  SecretPlaceholder,
-  ServiceIdentity
+import {
+  INSTRUMENTATION_SCHEMA_VERSION,
+  type CatalogResponse,
+  type DetectionRequest,
+  type GuideRenderRequest,
+  type GuideRenderResponse,
+  type GuideSnippet,
+  type InstrumentationSelection,
+  type SecretPlaceholder,
+  type ServiceIdentity
 } from '../model/instrumentation-contract';
 import {
   catalogResponseSchema,
@@ -47,7 +48,7 @@ export function parseGuideRenderResponse(value: unknown): GuideRenderResponse {
 
 export function buildGuideRenderPayload(request: GuideRenderRequest): GuideRenderRequest {
   return {
-    schemaVersion: 1,
+    schemaVersion: INSTRUMENTATION_SCHEMA_VERSION,
     ...copySelection(request),
     collector: {
       collectorId: request.collector.collectorId,
@@ -61,7 +62,7 @@ export function buildGuideRenderPayload(request: GuideRenderRequest): GuideRende
 
 export function buildDetectionPayload(request: DetectionRequest): DetectionRequest {
   return {
-    schemaVersion: 1,
+    schemaVersion: INSTRUMENTATION_SCHEMA_VERSION,
     ...copySelection(request),
     service: copyService(request.service),
     collectorId: request.collectorId,
@@ -92,6 +93,9 @@ function validateSnippetSecretReferences(
   placeholders: Array<[string, SecretPlaceholder]>,
   referenced: Set<string>
 ) {
+  if (new Set(snippet.secretPlaceholders).size !== snippet.secretPlaceholders.length) {
+    contractViolation('Guide snippet secret references must be unique');
+  }
   for (const name of snippet.secretPlaceholders) {
     const placeholder = placeholders.find(([candidate]) => candidate === name)?.[1];
     if (!placeholder || !snippet.content.includes(placeholder.marker)) {

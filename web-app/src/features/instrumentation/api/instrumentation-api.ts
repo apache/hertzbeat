@@ -32,17 +32,15 @@ import {
   parseDetectionResponse,
   parseGuideRenderResponse
 } from './instrumentation-wire';
-import { InstrumentationContractError } from './instrumentation-schema';
+import {
+  InstrumentationContractError,
+  instrumentationMessageEnvelopeSchema,
+  type InstrumentationMessageEnvelope
+} from './instrumentation-schema';
 
 export { InstrumentationContractError } from './instrumentation-schema';
 
 const INSTRUMENTATION_API_PATH = '/api/instrumentation/v1';
-
-type MessageEnvelope = {
-  code: number;
-  msg: string | undefined;
-  data: unknown;
-};
 
 export class InstrumentationRequestError extends Error {
   constructor(readonly machineCode: InstrumentationRequestErrorCode) {
@@ -95,7 +93,14 @@ function jsonRequest(body: GuideRenderRequest | DetectionRequest, signal?: Abort
 }
 
 async function requestInstrumentation<T>(path: string, init: RequestInit, parse: (value: unknown) => T): Promise<T> {
-  const response = await apiFetch(path, init);
+  let response: Response;
+  try {
+    response = await apiFetch(path, init);
+  } catch {
+    // Transport implementations may include request bodies or credentials in
+    // their error text. Nothing below this boundary exposes that cause.
+    throw new InstrumentationApiError('Instrumentation request failed');
+  }
   if (!response.ok) {
     throw new InstrumentationApiError(`Instrumentation request failed with HTTP ${response.status}`, response.status);
   }
@@ -112,28 +117,20 @@ async function requestInstrumentation<T>(path: string, init: RequestInit, parse:
   return parse(envelope.data);
 }
 
-function parseMessageEnvelope(value: unknown): MessageEnvelope {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    throw new InstrumentationApiError('Instrumentation response envelope was invalid');
-  }
-  const envelope = value as Record<string, unknown>;
-  if (typeof envelope.code !== 'number' || !Number.isSafeInteger(envelope.code)) {
-    throw new InstrumentationApiError('Instrumentation response code was invalid');
-  }
-  if (envelope.msg !== undefined && typeof envelope.msg !== 'string') {
-    throw new InstrumentationApiError('Instrumentation response message was invalid');
-  }
-  return { code: envelope.code, msg: envelope.msg, data: envelope.data };
+function parseMessageEnvelope(value: unknown): InstrumentationMessageEnvelope {
+  const result = instrumentationMessageEnvelopeSchema.safeParse(value);
+  if (result.success) return result.data;
+  throw new InstrumentationApiError('Instrumentation response envelope was invalid');
 }
 
-function throwMessageError(envelope: MessageEnvelope): never {
+function throwMessageError(envelope: InstrumentationMessageEnvelope): never {
   if (envelope.code === 1 && isRequestErrorCode(envelope.msg)) {
     throw new InstrumentationRequestError(envelope.msg);
   }
-  throw new InstrumentationApiError(envelope.msg || `Instrumentation request failed with code ${envelope.code}`);
+  throw new InstrumentationApiError('Instrumentation request failed');
 }
 
-function isRequestErrorCode(value: string | undefined): value is InstrumentationRequestErrorCode {
+function isRequestErrorCode(value: string | null | undefined): value is InstrumentationRequestErrorCode {
   return value !== undefined && INSTRUMENTATION_REQUEST_ERROR_CODES.some(code => code === value);
 }
 

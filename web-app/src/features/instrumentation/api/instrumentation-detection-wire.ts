@@ -30,24 +30,41 @@ import { contractViolation, detectionResponseSchema, parseInstrumentationSchema 
 export function parseDetectionResponse(value: unknown): DetectionResponse {
   const response = parseInstrumentationSchema(detectionResponseSchema, value, 'detection');
   Object.entries(response.signals).forEach(([signal, detection]) => {
-    validateSignalDetection(detection, signal);
+    validateSignalDetection(detection, signal, response.context.startedAt, response.detectedAt);
   });
   validatePolling(response);
   validateDetectionContext(response);
   return response;
 }
 
-function validateSignalDetection(detection: SignalDetection, label: string) {
+function validateSignalDetection(detection: SignalDetection, label: string, startedAt: number, detectedAt: number) {
   const { status, lastReceivedAt, errorCode } = detection;
-  if (status === 'received' && (lastReceivedAt == null || errorCode != null)) {
-    contractViolation(`${label} received invariant`);
-  }
+  if (status === 'received') validateReceivedDetection(lastReceivedAt, errorCode, startedAt, detectedAt, label);
   if (status === 'waiting') validateEmptySignal(lastReceivedAt, errorCode, 'signal_not_received', label);
   if (status === 'unsupported') validateEmptySignal(lastReceivedAt, errorCode, 'signal_not_supported', label);
-  if (status === 'unavailable' && (lastReceivedAt != null || errorCode == null)) {
-    contractViolation(`${label} unavailable invariant`);
+  if (status === 'unavailable' || status === 'error') validateFailureDetection(detection, label);
+}
+
+function validateReceivedDetection(
+  lastReceivedAt: number | null,
+  errorCode: DetectionErrorCode | null,
+  startedAt: number,
+  detectedAt: number,
+  label: string
+) {
+  if (lastReceivedAt == null || errorCode != null || lastReceivedAt < startedAt || lastReceivedAt > detectedAt) {
+    contractViolation(`${label} received invariant`);
   }
-  if (status === 'error' && errorCode == null) contractViolation(`${label} error invariant`);
+}
+
+function validateFailureDetection(detection: SignalDetection, label: string) {
+  if (detection.lastReceivedAt != null || detection.errorCode == null || isEmptySignalCode(detection.errorCode)) {
+    contractViolation(`${label} ${detection.status} invariant`);
+  }
+}
+
+function isEmptySignalCode(errorCode: DetectionErrorCode | null) {
+  return errorCode === 'signal_not_received' || errorCode === 'signal_not_supported';
 }
 
 function validateEmptySignal(
@@ -86,6 +103,9 @@ function expectedPollingDecision(response: DetectionResponse): PollingDecision {
 }
 
 function validateDetectionContext(response: DetectionResponse) {
+  if (response.detectedAt <= response.context.startedAt) {
+    contractViolation('Detection window must advance beyond its start');
+  }
   const expected: QueryJumpContext = {
     serviceName: response.context.service.name,
     serviceNamespace: response.context.service.namespace,

@@ -22,6 +22,7 @@ vi.mock('@/core/http/http-client', () => ({ apiFetch }));
 
 import {
   detectInstrumentationSignals,
+  InstrumentationApiError,
   InstrumentationContractError,
   InstrumentationRequestError,
   loadInstrumentationCatalog,
@@ -57,6 +58,17 @@ describe('instrumentation v1 API', () => {
       '/api/instrumentation/v1/catalog',
       expect.objectContaining({ method: 'GET' })
     );
+  });
+
+  it('accepts the nullable message field emitted by the shared Apache Message envelope', async () => {
+    apiFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ code: 0, msg: null, data: { schemaVersion: 1, languages: [] } }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+    );
+
+    await expect(loadInstrumentationCatalog()).resolves.toEqual({ schemaVersion: 1, languages: [] });
   });
 
   it('renders through an allowlisted body that cannot carry a token', async () => {
@@ -151,6 +163,40 @@ describe('instrumentation v1 API', () => {
       expect(error).toBeInstanceOf(InstrumentationRequestError);
       expect((error as InstrumentationRequestError).machineCode).toBe(code);
     }
+  });
+
+  it('redacts an unknown backend envelope message instead of serializing private text', async () => {
+    const privateMessage = 'private-token-value-from-backend';
+    apiFetch.mockResolvedValueOnce(messageResponse(null, 20, privateMessage));
+
+    let error: unknown;
+    try {
+      await loadInstrumentationCatalog();
+    } catch (reason: unknown) {
+      error = reason;
+    }
+
+    expect(error).toBeInstanceOf(InstrumentationApiError);
+    expect((error as Error).message).toBe('Instrumentation request failed');
+    expect(JSON.stringify(error)).not.toContain(privateMessage);
+  });
+
+  it('redacts transport failures instead of exposing the original error or cause', async () => {
+    const privateMessage = 'request-failed-with-private-token-value';
+    const transportError = new Error(privateMessage);
+    apiFetch.mockRejectedValueOnce(transportError);
+
+    let error: unknown;
+    try {
+      await loadInstrumentationCatalog();
+    } catch (reason: unknown) {
+      error = reason;
+    }
+
+    expect(error).toBeInstanceOf(InstrumentationApiError);
+    expect(error).not.toBe(transportError);
+    expect((error as Error).message).toBe('Instrumentation request failed');
+    expect(JSON.stringify(error)).not.toContain(privateMessage);
   });
 });
 
