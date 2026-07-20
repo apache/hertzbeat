@@ -16,7 +16,7 @@
  */
 
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { extname, isAbsolute, join, normalize, posix, relative, sep } from 'node:path';
+import { dirname, extname, isAbsolute, join, normalize, posix, relative, sep } from 'node:path';
 import ts from 'typescript';
 
 const featureDebtRules = Object.freeze({
@@ -26,6 +26,8 @@ const featureDebtRules = Object.freeze({
   directBrowserTransport: 'direct-browser-transport',
   rawCssColor: 'feature-css-raw-color',
   genericHooksFile: 'generic-hooks-file',
+  pageDomFormParsing: 'page-dom-form-parsing',
+  publicFeatureRootFile: 'public-feature-root-file',
   presentationApiDependency: 'presentation-api-dependency',
   modelApiDependency: 'model-api-dependency',
   crossFeatureInternalDependency: 'cross-feature-internal-dependency'
@@ -60,6 +62,8 @@ const queryClientMethodsWithDirectKey = new Set([
 ]);
 const browserTransportNames = new Set(['fetch', 'EventSource', 'WebSocket', 'XMLHttpRequest']);
 const browserGlobalNames = new Set(['globalThis', 'self', 'window']);
+const domFormReaderNames = new Set(['readFormNumber', 'readFormValue']);
+const domFormTypeNames = new Set(['FormEvent', 'HTMLFormElement']);
 
 export function checkFeatureConventions(projectRoot) {
   const violations = collectFeatureViolations(projectRoot);
@@ -111,17 +115,28 @@ function inspectFeatureFile(path, sourceRoot) {
   if (normalizedPath.split('/').includes('hooks')) {
     observations.push(observation(featureDebtRules.genericHooksFile, normalizedPath, 1));
   }
+  if (isPublicFeatureRootFile(path, normalizedPath)) {
+    observations.push(observation(featureDebtRules.publicFeatureRootFile, normalizedPath, 1));
+  }
   const limit = featureModuleLimit(normalizedPath);
   if (limit !== undefined) {
     const actual = countSourceLines(source, extname(path));
     if (actual > limit) observations.push(observation(featureDebtRules.moduleSize, normalizedPath, actual, limit));
   }
-  if (/\/api\//.test(`/${normalizedPath}`)) {
+  if (isFeatureApiOrModel(normalizedPath)) {
     addCountObservation(
       observations,
       featureDebtRules.primitiveParser,
       normalizedPath,
       syntaxCounts?.primitiveParsers ?? 0
+    );
+  }
+  if (isFeaturePage(normalizedPath)) {
+    addCountObservation(
+      observations,
+      featureDebtRules.pageDomFormParsing,
+      normalizedPath,
+      syntaxCounts?.pageDomFormParsing ?? 0
     );
   }
   addCountObservation(
@@ -175,7 +190,12 @@ function countTypeScriptSyntax(
     true,
     extname(path) === '.tsx' ? ts.ScriptKind.TSX : ts.ScriptKind.TS
   );
-  const counts = { primitiveParsers: 0, inlineQueryKeys: 0, directBrowserTransports: 0 };
+  const counts = {
+    primitiveParsers: 0,
+    inlineQueryKeys: 0,
+    directBrowserTransports: 0,
+    pageDomFormParsing: 0
+  };
   const visit = node => {
     if (ts.isFunctionDeclaration(node) && node.name && parserNames.has(node.name.text)) {
       counts.primitiveParsers += 1;
@@ -192,6 +212,7 @@ function countTypeScriptSyntax(
     }
     if (isInlineQueryKey(node)) counts.inlineQueryKeys += 1;
     if (isDirectBrowserTransport(node)) counts.directBrowserTransports += 1;
+    if (isPageDomFormParsing(node)) counts.pageDomFormParsing += 1;
     ts.forEachChild(node, visit);
   };
   visit(sourceFile);
@@ -216,6 +237,26 @@ function browserGlobalMemberName(expression) {
   if (ts.isPropertyAccessExpression(expression)) return expression.name.text;
   if (ts.isStringLiteralLike(expression.argumentExpression)) return expression.argumentExpression.text;
   return undefined;
+}
+
+function isPageDomFormParsing(node) {
+  if (ts.isCallExpression(node) || ts.isNewExpression(node)) {
+    const name = directOrGlobalMemberName(node.expression);
+    if (name === 'FormData' || (name !== undefined && domFormReaderNames.has(name))) return true;
+  }
+  if (ts.isTypeReferenceNode(node) && domFormTypeNames.has(rightmostTypeName(node.typeName))) return true;
+  return ts.isPropertyAccessExpression(node) && node.name.text === 'currentTarget';
+}
+
+function directOrGlobalMemberName(expression) {
+  if (ts.isIdentifier(expression)) return expression.text;
+  if (!ts.isPropertyAccessExpression(expression) && !ts.isElementAccessExpression(expression)) return undefined;
+  if (!ts.isIdentifier(expression.expression) || !browserGlobalNames.has(expression.expression.text)) return undefined;
+  return browserGlobalMemberName(expression);
+}
+
+function rightmostTypeName(name) {
+  return ts.isIdentifier(name) ? name.text : name.right.text;
 }
 
 function isInlineQueryKey(node) {
@@ -327,6 +368,20 @@ function featureModuleLimit(path) {
   if (/\/(?:api|model)\//.test(path)) return 250;
   if (/^features\/[^/]+\/index\.[jt]sx?$/.test(path)) return 100;
   return undefined;
+}
+
+function isFeatureApiOrModel(path) {
+  return /\/(?:api|model)\//.test(`/${path}`) || /(?:^|\/)[^/]+-(?:api|model)\.[cm]?[jt]sx?$/.test(path);
+}
+
+function isFeaturePage(path) {
+  return /\/pages\//.test(`/${path}`) || /(?:^|\/)[^/]+-page\.[cm]?[jt]sx?$/.test(path);
+}
+
+function isPublicFeatureRootFile(path, normalizedPath) {
+  if (!/^features\/[^/]+\/[^/]+\.[cm]?[jt]sx?$/.test(normalizedPath)) return false;
+  if (/\/index\.[cm]?[jt]sx?$/.test(normalizedPath)) return false;
+  return existsSync(join(dirname(path), 'index.ts')) || existsSync(join(dirname(path), 'index.tsx'));
 }
 
 export function countSourceLines(source, extension) {
@@ -463,6 +518,10 @@ function formatViolation(violation) {
       return `${violation.path}: use shared semantic color tokens`;
     case featureDebtRules.genericHooksFile:
       return `${violation.path}: generic feature hooks directories are forbidden; move orchestration to controller`;
+    case featureDebtRules.pageDomFormParsing:
+      return `${violation.path}: pages cannot parse DOM form state; move form ownership into a component and typed model`;
+    case featureDebtRules.publicFeatureRootFile:
+      return `${violation.path}: public features cannot keep production source at the feature root`;
     case featureDebtRules.presentationApiDependency:
       return `${violation.path}: presentation cannot depend on feature API ${violation.identity}`;
     case featureDebtRules.modelApiDependency:

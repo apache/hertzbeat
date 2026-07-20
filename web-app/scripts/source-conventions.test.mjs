@@ -127,6 +127,60 @@ test('rejects instrumentation primitive wire parsers and inline Query Keys', () 
   assert.match(failures, /use the feature Query Key factory/);
 });
 
+test('rejects primitive wire parser families in feature models without banning domain query parsers', () => {
+  const project = createProject({
+    ...requiredProjectFiles(),
+    'src/features/orders/model/orders-wire.ts': 'function record(value) { return value; }',
+    'src/features/orders/orders-model.ts': 'function text(value) { return String(value); }',
+    'src/features/orders/model/orders-query.ts':
+      'export function parseOrdersQuery(value) { return new URLSearchParams(value); }'
+  });
+
+  const failures = checkArchitecture(project).join('\n');
+  assert.match(failures, /orders-wire[.]ts: use runtime schemas instead of local primitive wire parsers/);
+  assert.match(failures, /orders-model[.]ts: use runtime schemas instead of local primitive wire parsers/);
+  assert.doesNotMatch(failures, /orders-query[.]ts/);
+});
+
+test('rejects DOM form parsing in feature pages while leaving form ownership to components', () => {
+  const project = createProject({
+    ...requiredProjectFiles(),
+    'src/features/orders/pages/orders-page.tsx': [
+      "import type { FormEvent } from 'react';",
+      'export function OrdersPage(event: FormEvent<HTMLFormElement>) {',
+      '  const data = new FormData(event.currentTarget);',
+      '  return String(data.get("query"));',
+      '}'
+    ].join('\n'),
+    'src/features/billing/billing-page.tsx':
+      'export const BillingPage = (event: { currentTarget: HTMLFormElement }) => event.currentTarget;',
+    'src/features/payments/pages/payments-page.tsx': 'export const PaymentsPage = () => String(new window.FormData());',
+    'src/features/orders/components/orders-form.tsx': [
+      "import type { FormEvent } from 'react';",
+      'export const OrdersForm = (_props: { onSubmit(event: FormEvent<HTMLFormElement>): void }) => null;'
+    ].join('\n')
+  });
+
+  const failures = checkArchitecture(project).join('\n');
+  assert.match(failures, /orders-page[.]tsx: pages cannot parse DOM form state/);
+  assert.match(failures, /billing-page[.]tsx: pages cannot parse DOM form state/);
+  assert.match(failures, /payments-page[.]tsx: pages cannot parse DOM form state/);
+  assert.doesNotMatch(failures, /orders-form[.]tsx/);
+});
+
+test('keeps production source out of a feature root once the feature exposes a public index', () => {
+  const project = createProject({
+    ...requiredProjectFiles(),
+    'src/features/orders/index.ts': 'export {};',
+    'src/features/orders/orders-helper.ts': 'export const helper = true;',
+    'src/features/orders/orders-helper.test.ts': 'export const fixture = true;'
+  });
+
+  const failures = checkArchitecture(project).join('\n');
+  assert.match(failures, /orders-helper[.]ts: public features cannot keep production source at the feature root/);
+  assert.doesNotMatch(failures, /orders-helper[.]test[.]ts/);
+});
+
 test('rejects inline Query Keys passed directly to QueryClient cache methods', () => {
   const inlineCalls = [
     "queryClient.getQueryData(['orders']);",

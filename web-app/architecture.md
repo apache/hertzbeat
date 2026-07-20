@@ -113,6 +113,11 @@ generic feature-level `hooks` directory. A React hook is placed according to its
 responsibility: orchestration in `controller`, reusable product behavior in a
 named `shared` slice, and UI-only behavior beside the owning component.
 
+Once a feature exposes a public `index.ts`, that index is its only production
+TypeScript file at the feature root. Implementation stays in the explicit
+`api`, `model`, `controller`, `components`, and `pages` layers; tests may remain
+beside their owner.
+
 ## Dependency direction
 
 The permitted source-layer direction is:
@@ -149,8 +154,12 @@ pages -> components/controller -> model/api -> core
   It may use feature API/model modules and shared product modules.
 - `components` receive typed state and actions. They do not call transport,
   parse backend payloads, create Query Keys, or own route navigation policy.
+- Component contracts are consumer-owned or model-owned. Components never
+  import controllers or pages, including through type-only imports. Pages may
+  import controllers to compose a route workflow.
 - `pages` select controllers and compose components. They do not contain API
-  calls, schema parsing, substantial domain logic, or large form handlers.
+  calls, schema parsing, substantial domain logic, DOM form parsing, or large
+  form handlers.
 
 Refine data providers are adapters. A feature-specific provider is implemented
 inside that feature and registered by `app/refine`; feature code must never
@@ -162,6 +171,9 @@ import an adapter back out of `app`.
   ad-hoc credential/header handling outside `core/http` is forbidden.
 - Backend `unknown` input is validated with a maintained schema library at the
   API boundary. Do not write local `object`, `integer`, `text`, or `stringArray`
+  parser families.
+- Runtime schema libraries such as Zod belong to API modules. Models contain
+  domain and URL decisions; they do not own wire schemas or primitive wire
   parser families.
 - Wire DTOs and domain models are different when their responsibilities differ.
   Convert once in the API layer; do not duplicate equivalent DTO interfaces.
@@ -240,10 +252,12 @@ use 200, API and model modules use 250, and a feature-root `index.ts` uses 100.
 It counts non-empty, non-comment lines using lexical comment scanning for
 TypeScript/TSX and block-comment removal for CSS. Test and spec files are not
 production debt. The same gate rejects primitive wire-parser families in
-feature API modules, inline Query Key arrays anywhere in a feature, and raw
-hex/RGB/HSL colors in feature CSS. TypeScript rules inspect function and
-property AST nodes rather than matching source text; CSS colors are checked
-only after block comments are removed with line boundaries preserved.
+feature API and model modules, DOM form parsing in pages, production TypeScript
+files beside a public feature `index.ts`, inline Query Key arrays anywhere in a
+feature, and raw hex/RGB/HSL colors in feature CSS. TypeScript rules inspect
+function and property AST nodes rather than matching source text; CSS colors
+are checked only after block comments are removed with line boundaries
+preserved.
 
 The same gate enforces the 60-line function limit with TypeScript AST nodes and
 stable declaration identities. Existing function debt is recorded per exact
@@ -257,9 +271,11 @@ The same feature gate rejects new files under generic `hooks` directories,
 presentation or model imports from feature API internals, and cross-feature
 imports that bypass the target feature's `index.ts`. Existing exact dependency
 and hooks debt is listed in `scripts/feature-debt-baseline.json`; it cannot
-authorize a new path or target. Dependency Cruiser separately prevents React,
-Refine, and Ant Design runtime dependencies from API directories throughout the
-current feature tree.
+authorize a new path or target. Dependency Cruiser separately prevents API and
+model imports from outer feature layers, component imports from controllers or
+pages, model imports from runtime schema libraries, and React, Refine, or Ant
+Design runtime dependencies from API directories throughout the current
+feature tree.
 
 ## Testing contract
 

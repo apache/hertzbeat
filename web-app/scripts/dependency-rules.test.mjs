@@ -42,7 +42,7 @@ test('accepts the documented inward dependency direction', () => {
     'src/features/instrumentation/components/instrumentation-guide.tsx':
       "import type { Guide } from '../model/instrumentation-model'; export const InstrumentationGuide = (_props: { guide: Guide }) => null;",
     'src/features/instrumentation/pages/instrumentation-page.tsx':
-      "import { InstrumentationGuide } from '../components/instrumentation-guide'; export const InstrumentationPage = () => <InstrumentationGuide guide={{ id: 'guide' }} />;"
+      "import { InstrumentationGuide } from '../components/instrumentation-guide'; import { useGuide } from '../controller/instrumentation-controller'; export const InstrumentationPage = () => <InstrumentationGuide guide={{ id: String(useGuide()) }} />;"
   });
 
   const result = cruise(fixture);
@@ -89,6 +89,51 @@ test('rejects type-only dependencies from API, model, and controller into outer 
   assert.match(result.output, /no-feature-api-to-outer-feature-layers/);
   assert.match(result.output, /no-feature-model-to-non-model-feature-layers/);
   assert.match(result.output, /no-feature-controller-to-presentation/);
+});
+
+test('rejects component dependencies on controllers and pages, including type-only imports', () => {
+  const fixture = createProject({
+    'src/features/orders/controller/orders-controller.ts': 'export type OrdersState = { count: number };',
+    'src/features/orders/pages/orders-page.tsx': 'export const OrdersPage = () => null;',
+    'src/features/orders/components/orders-table.tsx':
+      "import type { OrdersState } from '../controller/orders-controller'; export const OrdersTable = (_props: OrdersState) => null;",
+    'src/features/orders/components/orders-summary.tsx':
+      "import { OrdersPage } from '../pages/orders-page'; export const OrdersSummary = OrdersPage;",
+    'src/features/orders/admin/controller/admin-orders-controller.ts':
+      'export type AdminOrdersState = { count: number };',
+    'src/features/orders/admin/components/admin-orders-table.tsx':
+      "import type { AdminOrdersState } from '../controller/admin-orders-controller'; export const AdminOrdersTable = (_props: AdminOrdersState) => null;"
+  });
+
+  const result = cruise(fixture);
+
+  assert.notEqual(result.status, 0, result.output);
+  assert.match(result.output, /no-feature-components-to-controller-or-pages/);
+  assert.match(result.output, /orders-table[.]tsx/);
+  assert.match(result.output, /orders-summary[.]tsx/);
+  assert.match(result.output, /admin-orders-table[.]tsx/);
+});
+
+test('rejects runtime schema libraries from feature models while allowing API schemas', () => {
+  const fixture = createProject({
+    'src/features/orders/api/orders-schema.ts':
+      "import { z } from 'zod'; export const orderWireSchema = z.object({ id: z.number() });",
+    'src/features/orders/model/orders-model.ts':
+      "import { z } from 'zod'; export const invalidDomainSchema = z.object({ id: z.number() });",
+    'src/features/orders/model/orders-type-model.ts':
+      "import type { ZodType } from 'zod'; export type InvalidDomainContract = ZodType<{ id: number }> ;",
+    'src/features/orders/orders-model.ts':
+      "import { z } from 'zod'; export const invalidRootDomainSchema = z.object({ id: z.number() });"
+  });
+
+  const result = cruise(fixture);
+
+  assert.notEqual(result.status, 0, result.output);
+  assert.match(result.output, /no-feature-model-to-runtime-schema/);
+  assert.match(result.output, /model\/orders-model[.]ts/);
+  assert.match(result.output, /model\/orders-type-model[.]ts/);
+  assert.match(result.output, /orders\/orders-model[.]ts/);
+  assert.doesNotMatch(result.output, /orders-schema[.]ts.*no-feature-model-to-runtime-schema/);
 });
 
 test('rejects reverse layer dependencies and presentation transport access', () => {

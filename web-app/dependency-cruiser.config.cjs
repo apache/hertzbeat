@@ -144,6 +144,12 @@ module.exports = {
       to: { path: [featureComponentsSource, featurePagesSource].join('|') }
     },
     {
+      name: 'no-feature-components-to-controller-or-pages',
+      severity: 'error',
+      from: { path: featureComponentsSource, pathNot: productionSource },
+      to: { path: [featureControllerSource, featurePagesSource].join('|') }
+    },
+    {
       name: 'no-feature-presentation-to-orchestration-runtime',
       severity: 'error',
       from: {
@@ -176,6 +182,15 @@ module.exports = {
       to: {
         dependencyTypes: ['npm', 'npm-dev', 'npm-optional', 'npm-peer', 'npm-bundled', 'npm-no-pkg', 'unknown'],
         path: '^(?:node_modules/)?(?:react|react-dom|react-router|react-router-dom|@tanstack/react-query|antd|@refinedev/)(?:/|$)'
+      }
+    },
+    {
+      name: 'no-feature-model-to-runtime-schema',
+      severity: 'error',
+      from: { path: featureModelSource, pathNot: productionSource },
+      to: {
+        dependencyTypes: ['npm', 'npm-dev', 'npm-optional', 'npm-peer', 'npm-bundled', 'npm-no-pkg', 'unknown'],
+        path: '^(?:node_modules/)?zod(?:/|$)'
       }
     }
   ],
