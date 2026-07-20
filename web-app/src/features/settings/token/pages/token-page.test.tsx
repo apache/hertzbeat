@@ -83,6 +83,15 @@ describe('TokenPage', () => {
     expect(within(futureRow as HTMLElement).getAllByText('—').length).toBeGreaterThan(0);
   });
 
+  it('renders the page identity and delegates token generation from the header', () => {
+    renderTokenPage();
+
+    expect(screen.getByRole('heading', { name: i18n.t('token.title') })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('token.generate') }));
+
+    expect(controller.openGenerator).toHaveBeenCalledTimes(1);
+  });
+
   it.each([
     ['unavailable', 'Token data is unavailable.'],
     ['error', 'This page could not be loaded. Retry or return to it later.']
