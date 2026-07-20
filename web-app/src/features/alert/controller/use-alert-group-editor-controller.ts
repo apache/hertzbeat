@@ -109,6 +109,8 @@ function useAlertGroupDetailLoader(
     if (pendingDetailRef.current?.id === id) return pendingDetailRef.current.promise;
     const epoch = detailEpochRef.current + 1;
     detailEpochRef.current = epoch;
+    // Retire a different identity before loading so it cannot remain submit-enabled.
+    setDraft(current => (current?.id === id ? current : null));
     setDetail({ kind: 'loading', id });
     const promise = (async () => {
       try {

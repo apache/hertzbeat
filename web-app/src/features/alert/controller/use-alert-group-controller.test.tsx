@@ -381,6 +381,42 @@ describe('Alert Group controller', () => {
     expect(result.current.state.draft).toMatchObject({ id: 8, name: 'Latest group' });
   });
 
+  it('retires the previous draft while a different detail identity is loading', async () => {
+    const failed = deferred<AlertGroupConverge>();
+    const latest = deferred<AlertGroupConverge>();
+    api.loadAlertGroup.mockReset();
+    api.loadAlertGroup
+      .mockResolvedValueOnce(persisted)
+      .mockReturnValueOnce(failed.promise)
+      .mockReturnValueOnce(latest.promise);
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
+    await act(async () => result.current.edit(7));
+    expect(result.current.state.draft).toMatchObject({ id: 7 });
+
+    let failedEdit!: Promise<void>;
+    act(() => {
+      failedEdit = result.current.edit(8);
+    });
+    expect(result.current.state.draft).toBeNull();
+    await act(async () => result.current.submit());
+    expect(api.saveAlertGroup).not.toHaveBeenCalled();
+
+    act(() => failed.reject(new AlertGroupMissingError()));
+    await act(async () => failedEdit);
+    expect(result.current.state.detail).toEqual({ kind: 'missing', id: 8 });
+    expect(result.current.state.draft).toBeNull();
+
+    let latestEdit!: Promise<void>;
+    act(() => {
+      latestEdit = result.current.edit(8);
+    });
+    expect(result.current.state.draft).toBeNull();
+    act(() => latest.resolve({ ...persisted, id: 8, name: 'Latest group' }));
+    await act(async () => latestEdit);
+    expect(result.current.state.draft).toMatchObject({ id: 8, name: 'Latest group' });
+  });
+
   it('invalidates pending detail when create or close changes editor ownership', async () => {
     const createDetail = deferred<AlertGroupConverge>();
     api.loadAlertGroup.mockReturnValueOnce(createDetail.promise);
@@ -946,8 +982,10 @@ function rejectedMissingRequestFailure() {
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
-  const promise = new Promise<T>(done => {
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((done, fail) => {
     resolve = done;
+    reject = fail;
   });
-  return { promise, resolve };
+  return { promise, reject, resolve };
 }
