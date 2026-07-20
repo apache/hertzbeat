@@ -2,10 +2,15 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-import { classifyAlertInhibitReadError } from '../alert-inhibit-api';
-import { alertInhibitDraftFromDetail, createAlertInhibitDraft, type AlertInhibitDraft } from '../alert-inhibit-model';
+import {
+  alertInhibitDraftFromDetail,
+  alertInhibitFailureKind,
+  createAlertInhibitDraft,
+  type AlertInhibitDraft,
+  type AlertInhibitFailure
+} from '../alert-inhibit-model';
 import { loadExactAlertInhibit } from '../alert-inhibit-write-proof';
-import type { AlertInhibitDetailState, AlertInhibitFailure } from '../model/alert-inhibit-state';
+import type { AlertInhibitDetailState } from '../model/alert-inhibit-state';
 import type { AlertInhibitOperationController } from './use-alert-inhibit-operation-controller';
 
 function useAlertInhibitDraftStore() {
@@ -74,7 +79,7 @@ function useAlertInhibitDetailEditor(
       setDetail({ kind: 'idle' });
     } catch (reason) {
       if (mountedRef.current && detailEpochRef.current === epoch) {
-        setDetail({ kind: classifyAlertInhibitReadError(reason), id });
+        setDetail({ kind: alertInhibitFailureKind(reason), id });
       }
     } finally {
       if (pendingDetailRef.current?.epoch === epoch) pendingDetailRef.current = undefined;

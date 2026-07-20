@@ -21,9 +21,7 @@ import type { PropsWithChildren } from 'react';
 import { createMemoryRouter, MemoryRouter, RouterProvider } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ApiMessageError } from '@/core/http/api-message';
-
-import { AlertInhibitContractError, type AlertInhibitQuery } from '../alert-inhibit-model';
+import { AlertInhibitContractError, AlertInhibitRequestFailure, type AlertInhibitQuery } from '../alert-inhibit-model';
 import { alertInhibitPage, deferred } from './alert-inhibit-controller-test-fixtures';
 import { useAlertInhibitReadController } from './use-alert-inhibit-read-controller';
 
@@ -57,7 +55,7 @@ describe('Alert Inhibit read controller', () => {
   });
 
   it.each([
-    [new ApiMessageError('offline', { status: 503 }), 'unavailable'],
+    [new AlertInhibitRequestFailure('unavailable', 'uncertain'), 'unavailable'],
     [new AlertInhibitContractError('bad'), 'error']
   ])('keeps list failure distinct as %s', async (reason, kind) => {
     api.loadAlertInhibits.mockRejectedValue(reason);

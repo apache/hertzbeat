@@ -18,9 +18,12 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ApiMessageError } from '@/core/http/api-message';
-
-import { AlertInhibitContractError, AlertInhibitMissingError, type AlertInhibit } from '../alert-inhibit-model';
+import {
+  AlertInhibitContractError,
+  AlertInhibitMissingError,
+  AlertInhibitRequestFailure,
+  type AlertInhibit
+} from '../alert-inhibit-model';
 import { deferred, persistedAlertInhibit } from './alert-inhibit-controller-test-fixtures';
 import { useAlertInhibitEditorController } from './use-alert-inhibit-editor-controller';
 import { useAlertInhibitOperationController } from './use-alert-inhibit-operation-controller';
@@ -45,7 +48,7 @@ describe('Alert Inhibit editor controller', () => {
 
   it.each([
     [new AlertInhibitMissingError(), 'missing'],
-    [new ApiMessageError('offline', { status: 503 }), 'unavailable'],
+    [new AlertInhibitRequestFailure('unavailable', 'uncertain'), 'unavailable'],
     [new AlertInhibitContractError('bad'), 'error']
   ])('keeps detail failures retryable as %s', async (reason, kind) => {
     api.loadAlertInhibit.mockRejectedValueOnce(reason).mockResolvedValueOnce(persistedAlertInhibit);

@@ -15,19 +15,12 @@
  * limitations under the License.
  */
 
-import {
-  ApiMessageError,
-  apiMessageDelete,
-  apiMessageGet,
-  apiMessagePost,
-  apiMessagePut
-} from '@/core/http/api-message';
+import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
 
+import { alertInhibitApiRequest } from './api/alert-inhibit-api-failure';
 import {
   buildAlertInhibitPayload,
   buildAlertInhibitTogglePayload,
-  AlertInhibitMissingError,
-  AlertInhibitUnavailableError,
   type AlertInhibit,
   type AlertInhibitDraft,
   type AlertInhibitQuery
@@ -46,41 +39,27 @@ function buildAlertInhibitListPath(query: AlertInhibitQuery) {
 }
 
 export async function loadAlertInhibits(query: AlertInhibitQuery) {
-  const response = await apiMessageGet(buildAlertInhibitListPath(query));
+  const response = await alertInhibitApiRequest(() => apiMessageGet(buildAlertInhibitListPath(query)));
   return parseAlertInhibitPage(response, query);
 }
 
 export async function loadAlertInhibit(id: number) {
-  const response = await apiMessageGet(`/api/alert/inhibit/${id}`);
+  const response = await alertInhibitApiRequest(() => apiMessageGet(`/api/alert/inhibit/${id}`));
   return parseAlertInhibitDetail(response);
 }
 
 export async function saveAlertInhibit(draft: AlertInhibitDraft): Promise<void> {
   const payload = buildAlertInhibitPayload(draft);
-  if (draft.id) await apiMessagePut('/api/alert/inhibit', payload);
-  else await apiMessagePost('/api/alert/inhibit', payload);
+  if (draft.id) await alertInhibitApiRequest(() => apiMessagePut('/api/alert/inhibit', payload));
+  else await alertInhibitApiRequest(() => apiMessagePost('/api/alert/inhibit', payload));
 }
 
 export async function deleteAlertInhibit(id: number): Promise<void> {
-  await apiMessageDelete(`/api/alert/inhibits?ids=${id}`);
+  await alertInhibitApiRequest(() => apiMessageDelete(`/api/alert/inhibits?ids=${id}`));
 }
 
 export async function updateAlertInhibitEnabled(inhibit: AlertInhibit, enable: boolean): Promise<void> {
-  await apiMessagePut('/api/alert/inhibit', buildAlertInhibitTogglePayload(inhibit, enable));
-}
-
-export function classifyAlertInhibitReadError(reason: unknown): 'missing' | 'unavailable' | 'error' {
-  if (reason instanceof AlertInhibitMissingError) return 'missing';
-  if (reason instanceof AlertInhibitUnavailableError) return 'unavailable';
-  if (reason instanceof ApiMessageError) {
-    if (reason.status === 404 || (reason.status === 200 && reason.code === 3)) return 'missing';
-    if (reason.cause !== undefined || reason.status === undefined || [0, 502, 503, 504].includes(reason.status)) {
-      return 'unavailable';
-    }
-  }
-  return 'error';
-}
-
-export function classifyAlertInhibitWriteError(reason: unknown): 'unavailable' | 'error' {
-  return classifyAlertInhibitReadError(reason) === 'unavailable' ? 'unavailable' : 'error';
+  await alertInhibitApiRequest(() =>
+    apiMessagePut('/api/alert/inhibit', buildAlertInhibitTogglePayload(inhibit, enable))
+  );
 }

@@ -18,12 +18,18 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  alertInhibitFailureKind,
+  alertInhibitWriteOutcome,
   buildAlertInhibitPayload,
   buildAlertInhibitTogglePayload,
   createAlertInhibitDraft,
   readAlertInhibitQuery,
   writeAlertInhibitQuery,
-  validateAlertInhibitDraft
+  validateAlertInhibitDraft,
+  AlertInhibitContractError,
+  AlertInhibitMissingError,
+  AlertInhibitRequestFailure,
+  AlertInhibitUnavailableError
 } from './alert-inhibit-model';
 
 const persisted = {
@@ -41,10 +47,14 @@ const persisted = {
 
 describe('alert inhibit model', () => {
   it('normalizes and serializes the operator-owned query contract', () => {
-    expect(readAlertInhibitQuery(new URLSearchParams('search=%20critical%20&pageIndex=1&pageSize=15')))
-      .toEqual({ search: 'critical', pageIndex: 1, pageSize: 15 });
-    expect(writeAlertInhibitQuery({ search: 'critical', pageIndex: 1, pageSize: 15 }).toString())
-      .toBe('pageIndex=1&pageSize=15&search=critical');
+    expect(readAlertInhibitQuery(new URLSearchParams('search=%20critical%20&pageIndex=1&pageSize=15'))).toEqual({
+      search: 'critical',
+      pageIndex: 1,
+      pageSize: 15
+    });
+    expect(writeAlertInhibitQuery({ search: 'critical', pageIndex: 1, pageSize: 15 }).toString()).toBe(
+      'pageIndex=1&pageSize=15&search=critical'
+    );
   });
 
   it('parses label matchers and removes duplicate equal labels', () => {
@@ -66,14 +76,21 @@ describe('alert inhibit model', () => {
   });
 
   it('requires a name, valid source and target matchers, and an equal label', () => {
-    expect(validateAlertInhibitDraft(createAlertInhibitDraft())).toEqual(['name', 'sourceLabels', 'targetLabels', 'equalLabels']);
-    expect(validateAlertInhibitDraft({
-      ...createAlertInhibitDraft(),
-      name: 'Invalid matcher',
-      sourceLabelsText: 'missing-value',
-      targetLabelsText: 'severity:warning',
-      equalLabels: ['service']
-    })).toEqual(['sourceLabels']);
+    expect(validateAlertInhibitDraft(createAlertInhibitDraft())).toEqual([
+      'name',
+      'sourceLabels',
+      'targetLabels',
+      'equalLabels'
+    ]);
+    expect(
+      validateAlertInhibitDraft({
+        ...createAlertInhibitDraft(),
+        name: 'Invalid matcher',
+        sourceLabelsText: 'missing-value',
+        targetLabelsText: 'severity:warning',
+        equalLabels: ['service']
+      })
+    ).toEqual(['sourceLabels']);
   });
 
   it('allowlists toggle fields and excludes audit and response-only data', () => {
@@ -86,5 +103,21 @@ describe('alert inhibit model', () => {
       equalLabels: ['service'],
       enable: false
     });
+  });
+
+  it('classifies stable read failures without transport evidence', () => {
+    expect(alertInhibitFailureKind(new AlertInhibitMissingError())).toBe('missing');
+    expect(alertInhibitFailureKind(new AlertInhibitUnavailableError('query changed'))).toBe('unavailable');
+    expect(alertInhibitFailureKind(new AlertInhibitRequestFailure('unavailable', 'uncertain'))).toBe('unavailable');
+    expect(alertInhibitFailureKind(new AlertInhibitRequestFailure('error', 'uncertain'))).toBe('error');
+    expect(alertInhibitFailureKind(new AlertInhibitContractError('invalid contract'))).toBe('error');
+    expect(alertInhibitFailureKind(new Error('unknown failure'))).toBe('error');
+  });
+
+  it('treats only explicit HTTP rejection evidence as definite', () => {
+    expect(alertInhibitWriteOutcome(new AlertInhibitRequestFailure('missing', 'rejected'))).toBe('rejected');
+    expect(alertInhibitWriteOutcome(new AlertInhibitRequestFailure('error', 'uncertain'))).toBe('uncertain');
+    expect(alertInhibitWriteOutcome(new AlertInhibitContractError('invalid command'))).toBe('uncertain');
+    expect(alertInhibitWriteOutcome(new Error('unknown failure'))).toBe('uncertain');
   });
 });

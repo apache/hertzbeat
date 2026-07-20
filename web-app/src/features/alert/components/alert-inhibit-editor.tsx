@@ -20,7 +20,8 @@ import { useTranslation } from 'react-i18next';
 
 import type { AlertInhibitDraft } from '../alert-inhibit-model';
 import styles from '../alert-policy-page.module.css';
-import type { AlertInhibitFailure, AlertInhibitRecovery as RecoveryState } from '../model/alert-inhibit-state';
+import type { AlertInhibitFailure } from '../alert-inhibit-model';
+import type { AlertInhibitRecovery as RecoveryState } from '../model/alert-inhibit-state';
 import { AlertInhibitRecovery } from './alert-inhibit-recovery';
 
 const COMMON_LABELS = ['alertname', 'instance', 'job', 'severity', 'service', 'host', 'env'];

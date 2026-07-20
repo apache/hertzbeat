@@ -6,9 +6,10 @@ import { useSearchParams } from 'react-router-dom';
 
 import { useStringQueryDraft } from '@/shared/query-context';
 
-import { classifyAlertInhibitReadError, loadAlertInhibits } from '../alert-inhibit-api';
+import { loadAlertInhibits } from '../alert-inhibit-api';
 import {
   AlertInhibitUnavailableError,
+  alertInhibitFailureKind,
   readAlertInhibitQuery,
   writeAlertInhibitQuery,
   type AlertInhibitPage,
@@ -80,7 +81,7 @@ function resolveListState(
   page: AlertInhibitPage | undefined
 ): AlertInhibitListState {
   if (pending) return { kind: 'loading' };
-  if (error) return { kind: classifyAlertInhibitReadError(error) === 'unavailable' ? 'unavailable' : 'error' };
+  if (error) return { kind: alertInhibitFailureKind(error) === 'unavailable' ? 'unavailable' : 'error' };
   if (!page) return { kind: 'error' };
   if (page.content.length === 0 && page.totalElements === 0) return { kind: 'empty' };
   return { kind: 'ready', records: page.content, total: page.totalElements };

@@ -17,9 +17,7 @@
 
 import type { RemotePageState } from '@/shared/remote-state';
 
-import type { AlertInhibit, AlertInhibitDraft } from '../alert-inhibit-model';
-
-export type AlertInhibitFailure = 'missing' | 'unavailable' | 'error';
+import type { AlertInhibit, AlertInhibitDraft, AlertInhibitFailure } from '../alert-inhibit-model';
 
 export type AlertInhibitDetailState =
   { kind: 'idle' } | { kind: 'loading'; id: number } | { kind: AlertInhibitFailure; id: number };

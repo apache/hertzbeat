@@ -1,7 +1,12 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { classifyAlertInhibitReadError, loadAlertInhibit } from './alert-inhibit-api';
-import { AlertInhibitContractError, type AlertInhibit, type AlertInhibitPage } from './alert-inhibit-model';
+import { loadAlertInhibit } from './alert-inhibit-api';
+import {
+  AlertInhibitContractError,
+  alertInhibitFailureKind,
+  type AlertInhibit,
+  type AlertInhibitPage
+} from './alert-inhibit-model';
 
 type WritableInhibit = {
   id: number;
@@ -35,7 +40,7 @@ export async function proveAlertInhibitMissing(id: number) {
   try {
     await loadAlertInhibit(id);
   } catch (reason) {
-    if (classifyAlertInhibitReadError(reason) === 'missing') return;
+    if (alertInhibitFailureKind(reason) === 'missing') return;
     throw reason;
   }
   throw new AlertInhibitContractError('deleted detail still exists');

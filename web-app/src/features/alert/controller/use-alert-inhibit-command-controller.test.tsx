@@ -18,9 +18,12 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ApiMessageError } from '@/core/http/api-message';
-
-import { AlertInhibitContractError, AlertInhibitMissingError, type AlertInhibit } from '../alert-inhibit-model';
+import {
+  AlertInhibitContractError,
+  AlertInhibitMissingError,
+  AlertInhibitRequestFailure,
+  type AlertInhibit
+} from '../alert-inhibit-model';
 import {
   alertInhibitPage,
   deferred,
@@ -281,7 +284,7 @@ describe('Alert Inhibit command controller', () => {
   });
 
   it('classifies write missing as an editor error rather than detail missing', async () => {
-    api.saveAlertInhibit.mockRejectedValueOnce(new ApiMessageError('missing', { status: 404 }));
+    api.saveAlertInhibit.mockRejectedValueOnce(new AlertInhibitRequestFailure('missing', 'rejected'));
     const { result } = renderCommandController();
     act(() => result.current.create());
     act(() => result.current.updateDraft(validAlertInhibitDraft()));
@@ -357,9 +360,10 @@ describe('Alert Inhibit command controller', () => {
   });
 
   it.each([
-    ['network', new ApiMessageError('offline', { cause: new TypeError('fetch') })],
-    ['server', new ApiMessageError('failed', { status: 500 })],
-    ['malformed success', new ApiMessageError('invalid response', { status: 200 })]
+    ['unavailable request', unavailableRequestFailure()],
+    ['uncertain request', uncertainRequestFailure()],
+    ['unknown failure', new Error('unknown write outcome')],
+    ['contract failure', new AlertInhibitContractError('local contract is uncertain')]
   ])('recovers an ambiguous update %s by proof without repeating PUT', async (_label, failure) => {
     const { result } = renderCommandController();
     await act(async () => result.current.edit(persistedAlertInhibit.id));
@@ -379,7 +383,7 @@ describe('Alert Inhibit command controller', () => {
   it('resumes list projection after an acknowledged update without repeating write or detail proof', async () => {
     const { result } = renderCommandController();
     await act(async () => result.current.edit(persistedAlertInhibit.id));
-    reread.mockRejectedValueOnce(new ApiMessageError('offline', { status: 503 }));
+    reread.mockRejectedValueOnce(unavailableRequestFailure());
 
     await act(async () => result.current.submit());
 
@@ -412,9 +416,7 @@ describe('Alert Inhibit command controller', () => {
   });
 
   it('recovers an ambiguous toggle by exact proof without repeating PUT', async () => {
-    api.updateAlertInhibitEnabled.mockRejectedValueOnce(
-      new ApiMessageError('offline', { cause: new TypeError('fetch') })
-    );
+    api.updateAlertInhibitEnabled.mockRejectedValueOnce(unavailableRequestFailure());
     api.loadAlertInhibit
       .mockResolvedValueOnce(persistedAlertInhibit)
       .mockResolvedValueOnce({ ...persistedAlertInhibit, enable: false });
@@ -430,7 +432,7 @@ describe('Alert Inhibit command controller', () => {
   });
 
   it('recovers an ambiguous delete by absence proof without repeating DELETE', async () => {
-    api.deleteAlertInhibit.mockRejectedValueOnce(new ApiMessageError('offline', { cause: new TypeError('fetch') }));
+    api.deleteAlertInhibit.mockRejectedValueOnce(unavailableRequestFailure());
     api.loadAlertInhibit.mockRejectedValue(new AlertInhibitMissingError());
     const { result } = renderCommandController();
 
@@ -470,6 +472,14 @@ describe('Alert Inhibit command controller', () => {
     expect(notify.error).not.toHaveBeenCalledWith('alertInhibits.operationFailed');
   });
 });
+
+function unavailableRequestFailure() {
+  return new AlertInhibitRequestFailure('unavailable', 'uncertain');
+}
+
+function uncertainRequestFailure() {
+  return new AlertInhibitRequestFailure('error', 'uncertain');
+}
 
 function renderCommandController() {
   return renderHook(() => {

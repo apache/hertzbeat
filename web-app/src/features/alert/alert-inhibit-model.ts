@@ -20,6 +20,8 @@ import { formatLabelMatchers, parseLabelMatchers } from './alert-label-matchers'
 export const alertInhibitPageSizes = [8, 15, 25] as const;
 
 export type AlertInhibitQuery = { search: string; pageIndex: number; pageSize: number };
+export type AlertInhibitFailure = 'missing' | 'unavailable' | 'error';
+export type AlertInhibitWriteOutcome = 'rejected' | 'uncertain';
 
 export type AlertInhibitDraft = {
   id?: number;
@@ -70,6 +72,35 @@ export class AlertInhibitUnavailableError extends Error {
     super(message);
     this.name = 'AlertInhibitUnavailableError';
   }
+}
+
+/**
+ * Stable request evidence exposed by the Alert Inhibit API boundary. Transport
+ * details stay private so controllers cannot depend on HTTP implementation.
+ */
+export class AlertInhibitRequestFailure extends Error {
+  constructor(
+    readonly kind: AlertInhibitFailure,
+    readonly writeOutcome: AlertInhibitWriteOutcome
+  ) {
+    super('Alert Inhibit request failed');
+    this.name = 'AlertInhibitRequestFailure';
+  }
+}
+
+/** Maps domain failures to the read state understood by Alert Inhibit screens. */
+export function alertInhibitFailureKind(error: unknown): AlertInhibitFailure {
+  if (error instanceof AlertInhibitMissingError) return 'missing';
+  if (error instanceof AlertInhibitUnavailableError) return 'unavailable';
+  return error instanceof AlertInhibitRequestFailure ? error.kind : 'error';
+}
+
+/**
+ * Only an explicit boundary rejection permits the receipt owner to repeat a
+ * write. Every local or unknown outcome remains uncertain and requires proof.
+ */
+export function alertInhibitWriteOutcome(error: unknown): AlertInhibitWriteOutcome {
+  return error instanceof AlertInhibitRequestFailure ? error.writeOutcome : 'uncertain';
 }
 
 export function readAlertInhibitQuery(params: URLSearchParams): AlertInhibitQuery {

@@ -31,21 +31,13 @@ vi.mock('@/core/http/api-message', async importOriginal => ({
 import { ApiMessageError } from '@/core/http/api-message';
 
 import {
-  classifyAlertInhibitReadError,
-  classifyAlertInhibitWriteError,
   deleteAlertInhibit,
   loadAlertInhibit,
   loadAlertInhibits,
   saveAlertInhibit,
   updateAlertInhibitEnabled
 } from './alert-inhibit-api';
-import {
-  AlertInhibitContractError,
-  AlertInhibitMissingError,
-  AlertInhibitUnavailableError,
-  createAlertInhibitDraft,
-  type AlertInhibit
-} from './alert-inhibit-model';
+import { AlertInhibitRequestFailure, createAlertInhibitDraft, type AlertInhibit } from './alert-inhibit-model';
 
 const persisted: AlertInhibit = {
   id: 9,
@@ -108,26 +100,32 @@ describe('alert inhibit API', () => {
     });
   });
 
-  it.each([
-    ['null detail', new AlertInhibitMissingError(), 'missing'],
-    ['backend missing', new ApiMessageError('missing', { code: 3, status: 200 }), 'missing'],
-    ['HTTP missing', new ApiMessageError('missing', { status: 404 }), 'missing'],
-    ['network', new ApiMessageError('offline', { cause: new TypeError('fetch') }), 'unavailable'],
-    ['gateway', new ApiMessageError('gateway', { status: 503 }), 'unavailable'],
-    ['stale projection', new AlertInhibitUnavailableError('query changed'), 'unavailable'],
-    ['contract', new AlertInhibitContractError('invalid'), 'error'],
-    ['server', new ApiMessageError('failed', { status: 500 }), 'error'],
-    ['unknown', new Error('failed'), 'error']
-  ])('classifies %s without collapsing missing, unavailable, and error', (_label, reason, expected) => {
-    expect(classifyAlertInhibitReadError(reason)).toBe(expected);
-  });
+  it('normalizes every transport entry before leaving the API', async () => {
+    const draft = {
+      ...createAlertInhibitDraft(),
+      name: 'Policy',
+      sourceLabelsText: 'severity:critical',
+      targetLabelsText: 'severity:warning',
+      equalLabels: ['service']
+    };
 
-  it.each([
-    ['HTTP missing write', new ApiMessageError('missing', { status: 404 }), 'error'],
-    ['backend missing write', new ApiMessageError('missing', { code: 3, status: 200 }), 'error'],
-    ['network write', new ApiMessageError('offline', { cause: new TypeError('fetch') }), 'unavailable'],
-    ['gateway write', new ApiMessageError('gateway', { status: 503 }), 'unavailable']
-  ])('classifies %s without exposing detail missing', (_label, reason, expected) => {
-    expect(classifyAlertInhibitWriteError(reason)).toBe(expected);
+    transport.apiMessageGet.mockRejectedValueOnce(transportFailure());
+    await expect(loadAlertInhibits({ search: '', pageIndex: 0, pageSize: 8 })).rejects.toBeInstanceOf(
+      AlertInhibitRequestFailure
+    );
+    transport.apiMessageGet.mockRejectedValueOnce(transportFailure());
+    await expect(loadAlertInhibit(9)).rejects.toBeInstanceOf(AlertInhibitRequestFailure);
+    transport.apiMessagePost.mockRejectedValueOnce(transportFailure());
+    await expect(saveAlertInhibit(draft)).rejects.toBeInstanceOf(AlertInhibitRequestFailure);
+    transport.apiMessagePut.mockRejectedValueOnce(transportFailure());
+    await expect(saveAlertInhibit({ ...draft, id: 9 })).rejects.toBeInstanceOf(AlertInhibitRequestFailure);
+    transport.apiMessageDelete.mockRejectedValueOnce(transportFailure());
+    await expect(deleteAlertInhibit(9)).rejects.toBeInstanceOf(AlertInhibitRequestFailure);
+    transport.apiMessagePut.mockRejectedValueOnce(transportFailure());
+    await expect(updateAlertInhibitEnabled(persisted, false)).rejects.toBeInstanceOf(AlertInhibitRequestFailure);
   });
 });
+
+function transportFailure() {
+  return new ApiMessageError('private transport failure', { status: 503 });
+}

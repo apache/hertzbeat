@@ -1,16 +1,11 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { ApiMessageError } from '@/core/http/api-message';
-
-import {
-  classifyAlertInhibitWriteError,
-  deleteAlertInhibit,
-  saveAlertInhibit,
-  updateAlertInhibitEnabled
-} from '../alert-inhibit-api';
+import { deleteAlertInhibit, saveAlertInhibit, updateAlertInhibitEnabled } from '../alert-inhibit-api';
 import {
   AlertInhibitContractError,
   AlertInhibitUnavailableError,
+  alertInhibitFailureKind,
+  alertInhibitWriteOutcome,
   buildAlertInhibitPayload,
   validateAlertInhibitDraft,
   type AlertInhibit,
@@ -170,11 +165,10 @@ function recoverOrReject(
 ) {
   if (receipt.phase === 'prepare' || (receipt.phase === 'write' && isDefiniteWriteRejection(reason))) {
     context.operation.clear(owner);
-    return false;
+    return;
   }
-  if (receipt.phase !== 'write') return false;
+  if (receipt.phase !== 'write') return;
   receipt.phase = 'proof';
-  return true;
 }
 
 function completeReceipt(
@@ -193,7 +187,9 @@ function completeReceipt(
 
 function notifyFailure(context: AlertInhibitWriteContext, receipt: AlertInhibitReceipt, reason: unknown) {
   // Once a receipt is retained, the write outcome can no longer be stated as a definite failure.
-  const kind = context.operation.getRecovery() ? 'unavailable' : classifyAlertInhibitWriteError(reason);
+  const hasRetainedReceipt = context.operation.getRecovery() !== undefined;
+  const isUnavailable = alertInhibitFailureKind(reason) === 'unavailable';
+  const kind = hasRetainedReceipt || isUnavailable ? 'unavailable' : 'error';
   if (receipt.kind === 'save') {
     context.editor.controls.setEditorFailure(kind);
     context.notify.saveFailure(kind);
@@ -203,7 +199,5 @@ function notifyFailure(context: AlertInhibitWriteContext, receipt: AlertInhibitR
 }
 
 function isDefiniteWriteRejection(reason: unknown) {
-  return (
-    reason instanceof ApiMessageError && reason.status !== undefined && reason.status >= 400 && reason.status < 500
-  );
+  return alertInhibitWriteOutcome(reason) === 'rejected';
 }
