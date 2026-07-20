@@ -88,6 +88,22 @@ describe('apiFetch', () => {
     expect(refresh).not.toHaveBeenCalled();
   });
 
+  it.each([new URL('http://localhost/api/ui/session/refresh'), new Request('http://localhost/api/ui/session/refresh')])(
+    'recognizes the refresh endpoint from URL and Request inputs',
+    async input => {
+      const refresh = vi.fn().mockResolvedValue(true);
+      unregisterRefreshCoordinator = registerBrowserSessionRefreshCoordinator(refresh);
+      const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 401 }));
+      vi.stubGlobal('fetch', fetchMock);
+
+      const response = await apiFetch(input, { method: 'POST' });
+
+      expect(response.status).toBe(401);
+      expect(fetchMock).toHaveBeenCalledOnce();
+      expect(refresh).not.toHaveBeenCalled();
+    }
+  );
+
   it('aborts a stalled request instead of leaving consumers pending indefinitely', async () => {
     const timeout = new AbortController();
     const timeoutSpy = vi.spyOn(AbortSignal, 'timeout').mockReturnValue(timeout.signal);

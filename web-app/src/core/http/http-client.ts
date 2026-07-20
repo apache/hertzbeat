@@ -42,8 +42,14 @@ export async function apiFetch(input: RequestInfo | URL, init: RequestInit = {})
 }
 
 function isSessionRefresh(input: RequestInfo | URL) {
-  const value = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+  const value = requestUrl(input);
   return value === SESSION_REFRESH_PATH || value.endsWith(SESSION_REFRESH_PATH);
+}
+
+function requestUrl(input: RequestInfo | URL) {
+  if (typeof input === 'string') return input;
+  if (input instanceof URL) return input.href;
+  return input.url;
 }
 
 function withBrowserSession(init: RequestInit): RequestInit {
