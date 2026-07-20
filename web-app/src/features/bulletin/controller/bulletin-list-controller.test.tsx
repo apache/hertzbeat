@@ -5,14 +5,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ApiMessageError } from '@/core/http/api-message';
-
+import { BulletinRequestFailure } from '../model/bulletin-failure';
 import { useBulletinListController } from './bulletin-list-controller';
 
 const api = vi.hoisted(() => ({ loadBulletins: vi.fn() }));
 
 vi.mock('../api/bulletin-api', async importOriginal => ({
-  ...await importOriginal<typeof import('../api/bulletin-api')>(),
+  ...(await importOriginal<typeof import('../api/bulletin-api')>()),
   loadBulletins: api.loadBulletins
 }));
 
@@ -26,7 +25,7 @@ describe('Bulletin list controller', () => {
   it('hides stale records after refresh failure and restores authoritative retry data', async () => {
     api.loadBulletins
       .mockResolvedValueOnce(page([oldRecord]))
-      .mockRejectedValueOnce(new ApiMessageError('store unavailable', { status: 503 }))
+      .mockRejectedValueOnce(new BulletinRequestFailure('unavailable', 'uncertain'))
       .mockResolvedValueOnce(page([freshRecord]));
     const hook = renderHook(() => useBulletinListController(query), { wrapper: createWrapper() });
 
@@ -60,6 +59,19 @@ describe('Bulletin list controller', () => {
     await act(async () => {
       await expect(originalRefresh()).resolves.toBe(false);
     });
+  });
+
+  it('does not present an incomplete non-empty page as an authoritative empty result', async () => {
+    api.loadBulletins.mockResolvedValue({
+      content: [],
+      totalElements: 1,
+      totalPages: 1,
+      number: 0,
+      size: 8
+    });
+    const hook = renderHook(() => useBulletinListController(query), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(hook.result.current.state).toEqual({ kind: 'invalid' }));
   });
 });
 

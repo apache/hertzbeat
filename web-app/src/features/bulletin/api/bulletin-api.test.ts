@@ -2,13 +2,25 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ApiMessageError } from '@/core/http/api-message';
 import {
-  BulletinContractError, classifyBulletinError, createBulletinAndRead, deleteBulletinAndConfirm,
-  loadBulletin, loadBulletinMetrics, loadBulletins, updateBulletinAndRead
+  captureBulletinCreateBaseline,
+  createBulletin,
+  deleteBulletin,
+  loadBulletin,
+  loadBulletinMetrics,
+  loadBulletins,
+  proveBulletinCreated,
+  proveBulletinDeleted,
+  proveBulletinUpdated,
+  updateBulletin
 } from './bulletin-api';
 
-const http = vi.hoisted(() => ({ apiMessageGet: vi.fn(), apiMessagePost: vi.fn(), apiMessagePut: vi.fn(), apiMessageDelete: vi.fn() }));
+const http = vi.hoisted(() => ({
+  apiMessageGet: vi.fn(),
+  apiMessagePost: vi.fn(),
+  apiMessagePut: vi.fn(),
+  apiMessageDelete: vi.fn()
+}));
 vi.mock('@/core/http/api-message', async importOriginal => ({ ...(await importOriginal()), ...http }));
 
 describe('bulletin api', () => {
@@ -16,56 +28,132 @@ describe('bulletin api', () => {
 
   it('validates page identity and detail identity', async () => {
     http.apiMessageGet.mockResolvedValueOnce({ content: [], totalElements: 0, totalPages: 0, number: 1, size: 8 });
-    await expect(loadBulletins({ search: '', pageIndex: 0, pageSize: 8 })).rejects.toBeInstanceOf(BulletinContractError);
+    await expect(loadBulletins({ search: '', pageIndex: 0, pageSize: 8 })).rejects.toMatchObject({
+      kind: 'invalid',
+      writeOutcome: 'uncertain'
+    });
     http.apiMessageGet.mockResolvedValueOnce({ id: 8, name: 'x', app: 'website', monitorIds: [], fields: {} });
-    await expect(loadBulletin(7)).rejects.toBeInstanceOf(BulletinContractError);
+    await expect(loadBulletin(7)).rejects.toMatchObject({ kind: 'invalid', writeOutcome: 'uncertain' });
   });
 
   it('keeps valid empty metrics distinct from unavailable metrics', async () => {
     http.apiMessageGet.mockResolvedValueOnce({ name: 'Ops', content: [] });
     await expect(loadBulletinMetrics(7)).resolves.toEqual({ name: 'Ops', content: [] });
-    expect(classifyBulletinError(new ApiMessageError('store down', { code: 15, status: 200 }), 'metrics')).toBe('unavailable');
   });
 
   it('normalizes the legacy no-data sentinel instead of exposing a healthy value', async () => {
-    http.apiMessageGet.mockResolvedValueOnce({ name: 'Ops', content: [{
-      monitorName: 'site', monitorId: 7, host: 'localhost', metrics: [{
-        name: 'responseTime', fields: [[{ key: 'duration', unit: '', value: 'No Data' }]]
-      }]
-    }] });
+    http.apiMessageGet.mockResolvedValueOnce({
+      name: 'Ops',
+      content: [
+        {
+          monitorName: 'site',
+          monitorId: 7,
+          host: 'localhost',
+          metrics: [
+            {
+              name: 'responseTime',
+              fields: [[{ key: 'duration', unit: '', value: 'No Data' }]]
+            }
+          ]
+        }
+      ]
+    });
     const metrics = await loadBulletinMetrics(7);
     expect(metrics.content[0]?.metrics[0]?.fields[0]?.[0]).toEqual({
-      key: 'duration', unit: '', value: null, status: 'no-data'
+      key: 'duration',
+      unit: '',
+      value: null,
+      status: 'no-data'
     });
   });
 
-  it('classifies missing by protocol code and invalid shape separately', () => {
-    expect(classifyBulletinError(new ApiMessageError('localized', { code: 15, status: 200 }), 'read-detail')).toBe('error');
-    expect(classifyBulletinError(new ApiMessageError('not found', { status: 404 }), 'read-detail')).toBe('missing');
-    expect(classifyBulletinError(new ApiMessageError('create rejected', { code: 15, status: 200 }), 'create')).toBe('error');
-    expect(classifyBulletinError(new ApiMessageError('update rejected', { code: 15, status: 200 }), 'update')).toBe('error');
-    expect(classifyBulletinError(new BulletinContractError())).toBe('invalid');
-  });
-
-  it('proves void create, update, and delete mutations by authoritative rereads', async () => {
+  it('sends void create, update, and delete mutations through their owned endpoints', async () => {
     const draft = { name: 'Ops', app: 'website', monitorIds: [1], fields: { responseTime: ['duration'] } };
-    http.apiMessageGet
-      .mockResolvedValueOnce(page([]))
-      .mockResolvedValueOnce(page([{ id: 7, ...draft }]))
-      .mockResolvedValueOnce({ id: 7, ...draft });
-    await expect(createBulletinAndRead(draft)).resolves.toMatchObject({ id: 7, name: 'Ops' });
+    await expect(createBulletin(draft)).resolves.toBeUndefined();
     expect(http.apiMessagePost).toHaveBeenCalledWith('/api/bulletin', draft);
 
-    http.apiMessageGet.mockResolvedValueOnce({ id: 7, ...draft, name: 'Renamed' });
-    await expect(updateBulletinAndRead({ id: 7, ...draft, name: 'Renamed' })).resolves.toMatchObject({ name: 'Renamed' });
-    expect(http.apiMessagePut).toHaveBeenCalled();
+    await expect(updateBulletin({ id: 7, ...draft, name: 'Renamed' })).resolves.toBeUndefined();
+    expect(http.apiMessagePut).toHaveBeenCalledWith('/api/bulletin', { id: 7, ...draft, name: 'Renamed' });
 
-    http.apiMessageGet.mockResolvedValueOnce(null);
-    await expect(deleteBulletinAndConfirm(7)).resolves.toBeUndefined();
+    await expect(deleteBulletin(7)).resolves.toBeUndefined();
     expect(http.apiMessageDelete).toHaveBeenCalledWith('/api/bulletin?ids=7');
+  });
+
+  it('exposes proof-only continuations that never repeat a mutation', async () => {
+    const draft = { name: 'Ops', app: 'website', monitorIds: [1], fields: { responseTime: ['duration'] } };
+    http.apiMessageGet
+      .mockResolvedValueOnce(page([{ id: 3, ...draft }]))
+      .mockResolvedValueOnce(
+        page([
+          { id: 3, ...draft },
+          { id: 7, ...draft }
+        ])
+      )
+      .mockResolvedValueOnce({ id: 7, ...draft })
+      .mockResolvedValueOnce({ id: 7, ...draft, name: 'Renamed' })
+      .mockResolvedValueOnce(null);
+
+    const beforeIds = await captureBulletinCreateBaseline(draft.name);
+    await expect(proveBulletinCreated(draft, beforeIds)).resolves.toMatchObject({ id: 7 });
+    await expect(proveBulletinUpdated({ id: 7, ...draft, name: 'Renamed' })).resolves.toMatchObject({ id: 7 });
+    await expect(proveBulletinDeleted(7)).resolves.toBeUndefined();
+
+    expect(http.apiMessagePost).not.toHaveBeenCalled();
+    expect(http.apiMessagePut).not.toHaveBeenCalled();
+    expect(http.apiMessageDelete).not.toHaveBeenCalled();
+  });
+
+  it('rejects a created candidate whose canonical detail changed before proof completed', async () => {
+    const draft = { name: 'Ops', app: 'website', monitorIds: [1], fields: { responseTime: ['duration'] } };
+    http.apiMessageGet
+      .mockResolvedValueOnce(page([{ id: 7, ...draft }]))
+      .mockResolvedValueOnce({ id: 7, ...draft, fields: { responseTime: ['status'] } });
+
+    await expect(proveBulletinCreated(draft, [])).rejects.toMatchObject({
+      kind: 'invalid',
+      writeOutcome: 'uncertain'
+    });
+  });
+
+  it('rejects metadata drift while scanning exact-name create evidence', async () => {
+    const firstPage = Array.from({ length: 25 }, (_, index) => bulletin(index + 1));
+    http.apiMessageGet
+      .mockResolvedValueOnce(paged(firstPage, 26, 2, 0))
+      .mockResolvedValueOnce(paged([bulletin(26), bulletin(27)], 27, 2, 1));
+
+    await expect(captureBulletinCreateBaseline('Ops')).rejects.toMatchObject({
+      kind: 'invalid',
+      writeOutcome: 'uncertain'
+    });
+  });
+
+  it('rejects duplicate identities across exact-name evidence pages', async () => {
+    const firstPage = Array.from({ length: 25 }, (_, index) => bulletin(index + 1));
+    http.apiMessageGet
+      .mockResolvedValueOnce(paged(firstPage, 26, 2, 0))
+      .mockResolvedValueOnce(paged([bulletin(1)], 26, 2, 1));
+
+    await expect(captureBulletinCreateBaseline('Ops')).rejects.toMatchObject({
+      kind: 'invalid',
+      writeOutcome: 'uncertain'
+    });
   });
 });
 
 function page(content: unknown[]) {
   return { content, totalElements: content.length, totalPages: content.length ? 1 : 0, number: 0, size: 25 };
+}
+
+function paged(content: unknown[], totalElements: number, totalPages: number, number: number) {
+  return { content, totalElements, totalPages, number, size: 25 };
+}
+
+function bulletin(id: number) {
+  return {
+    id,
+    name: 'Ops',
+    app: 'website',
+    monitorIds: [1],
+    fields: { responseTime: ['duration'] }
+  };
 }

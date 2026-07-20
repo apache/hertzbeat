@@ -45,12 +45,40 @@ describe('bulletin page', () => {
     fireEvent.click(screen.getByText('Ops'));
     expect(current.actions.select).not.toHaveBeenCalled();
   });
+
+  it('keeps retained proof recovery visible and retries only through its recovery action', () => {
+    const current = pageController({
+      recovery: {
+        stage: 'update-proof',
+        draft: { ...record },
+        failure: 'unavailable'
+      }
+    });
+    controller.useBulletinController.mockReturnValue(current.value);
+
+    render(<BulletinPage />);
+
+    expect(screen.getByText('bulletin.save.unavailable')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'bulletin.create' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.edit' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+    expect(current.actions.retry).toHaveBeenCalledOnce();
+  });
 });
 
 function pageController({
   command = 'idle',
+  recovery = null,
   selectedId = null
-}: { command?: 'idle' | 'saving'; selectedId?: number | null } = {}) {
+}: {
+  command?: 'idle' | 'saving';
+  recovery?: null | {
+    stage: 'update-proof';
+    draft: typeof record;
+    failure: 'unavailable';
+  };
+  selectedId?: number | null;
+} = {}) {
   const actions = {
     changePage: vi.fn(),
     close: vi.fn(),
@@ -58,6 +86,7 @@ function pageController({
     edit: vi.fn(),
     refresh: vi.fn(),
     remove: vi.fn(),
+    retry: vi.fn(),
     save: vi.fn(),
     select: vi.fn(),
     setSearch: vi.fn(),
@@ -74,6 +103,7 @@ function pageController({
         list: { kind: 'ready', records: [record], total: 1 },
         metrics: { kind: 'idle' },
         query: { search: '', pageIndex: 0, pageSize: 8 },
+        recovery,
         refreshing: false,
         search: '',
         selectedId

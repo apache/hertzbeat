@@ -1,0 +1,15 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+
+import type { BulletinFailureKind } from './bulletin-failure';
+import type { BulletinDraft } from './bulletin-model';
+
+export type BulletinCommand = 'idle' | 'saving' | 'deleting' | 'recovering';
+
+type FailedProof = { failure: BulletinFailureKind };
+
+/** Durable in-session evidence for the only safe continuation after a partial mutation. */
+export type BulletinRecovery =
+  | (FailedProof & { stage: 'create-proof'; draft: BulletinDraft; beforeIds: number[] })
+  | (FailedProof & { stage: 'update-proof'; draft: BulletinDraft & { id: number } })
+  | (FailedProof & { stage: 'delete-proof'; id: number })
+  | (FailedProof & { stage: 'projection' });

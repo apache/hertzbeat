@@ -42,6 +42,7 @@ export function useBulletinController() {
       list: list.state,
       metrics,
       query: query.query,
+      recovery: gate.recovery,
       refreshing: list.refreshing,
       search: query.search,
       selectedId: activeSelectedId
@@ -53,6 +54,7 @@ export function useBulletinController() {
       edit: editor.actions.edit,
       refresh: list.refresh,
       remove: transactions.remove,
+      retry: transactions.retry,
       save: transactions.save,
       select: setSelectedId,
       setSearch: query.setSearch,

@@ -2,13 +2,17 @@
 
 import type { OptionalRemoteValueState } from '@/shared/remote-state';
 
-const bulletinPageSizes = [8, 15, 25] as const;
+export const bulletinPageSizes = [8, 15, 25] as const;
 
 export type BulletinQuery = { search: string; pageIndex: number; pageSize: number };
 export type BulletinFields = Record<string, string[]>;
 export type BulletinDraft = { id?: number; name: string; app: string; monitorIds: number[]; fields: BulletinFields };
 export type Bulletin = BulletinDraft & {
-  id: number; creator: string | null; modifier: string | null; gmtCreate: string | null; gmtUpdate: string | null;
+  id: number;
+  creator: string | null;
+  modifier: string | null;
+  gmtCreate: string | null;
+  gmtUpdate: string | null;
 };
 export type BulletinMonitor = { id: number; name: string; app: string; labels: Record<string, string> };
 export type BulletinMetricDefinition = { name: string; fields: string[] };
@@ -21,13 +25,31 @@ export type BulletinMetricsState = OptionalRemoteValueState<
   'missing' | 'invalid' | 'unavailable' | 'error'
 >;
 
+type BulletinPageEvidence = {
+  content: readonly unknown[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+};
+
+/** Proves that an empty page is genuinely empty and that populated pages are not partial projections. */
+export function isBulletinPageComplete(page: BulletinPageEvidence) {
+  const expectedPages = Math.ceil(page.totalElements / page.size);
+  if (page.totalPages !== expectedPages) return false;
+  if (page.totalElements === 0) return page.totalPages === 0 && page.content.length === 0;
+  if (page.number >= page.totalPages) return false;
+  const expectedRecords = Math.min(page.size, page.totalElements - page.number * page.size);
+  return page.content.length === expectedRecords;
+}
+
 export function readBulletinQuery(params: URLSearchParams): BulletinQuery {
   const pageIndex = Number.parseInt(params.get('pageIndex') ?? '', 10);
   const pageSize = Number.parseInt(params.get('pageSize') ?? '', 10);
   return {
     search: params.get('search')?.trim() ?? '',
     pageIndex: Number.isFinite(pageIndex) && pageIndex >= 0 ? pageIndex : 0,
-    pageSize: bulletinPageSizes.includes(pageSize as typeof bulletinPageSizes[number]) ? pageSize : 8
+    pageSize: bulletinPageSizes.includes(pageSize as (typeof bulletinPageSizes)[number]) ? pageSize : 8
   };
 }
 
@@ -60,36 +82,52 @@ export function buildBulletinPayload(draft: BulletinDraft): BulletinDraft {
     if (metric && normalizedNames.length) fields[metric] = normalizedNames;
   }
   return {
-    ...(draft.id == null ? {} : { id: draft.id }), name: draft.name.trim(), app: draft.app.trim(),
-    monitorIds: [...new Set(draft.monitorIds)].sort((a, b) => a - b), fields
+    ...(draft.id == null ? {} : { id: draft.id }),
+    name: draft.name.trim(),
+    app: draft.app.trim(),
+    monitorIds: [...new Set(draft.monitorIds)].sort((a, b) => a - b),
+    fields
   };
 }
 
 export function bulletinMonitorMatchesSearch(monitor: BulletinMonitor, query: string) {
   const term = query.trim().toLocaleLowerCase();
   if (!term) return true;
-  return [monitor.name, ...Object.entries(monitor.labels).flatMap(([key, value]) => [key, value])]
-    .some(value => value.toLocaleLowerCase().includes(term));
+  return [monitor.name, ...Object.entries(monitor.labels).flatMap(([key, value]) => [key, value])].some(value =>
+    value.toLocaleLowerCase().includes(term)
+  );
 }
 
-export function validateBulletinDraft(draft: BulletinDraft, monitors: BulletinMonitor[], metrics: BulletinMetricDefinition[]) {
+export function validateBulletinDraft(
+  draft: BulletinDraft,
+  monitors: BulletinMonitor[],
+  metrics: BulletinMetricDefinition[]
+) {
   const errors: string[] = [];
   if (!draft.name.trim()) errors.push('name');
   if (!draft.app.trim()) errors.push('app');
   const monitorMap = new Map(monitors.map(item => [item.id, item]));
-  if (!draft.monitorIds.length || draft.monitorIds.some(id => monitorMap.get(id)?.app !== draft.app)) errors.push('monitorIds');
+  if (!draft.monitorIds.length || draft.monitorIds.some(id => monitorMap.get(id)?.app !== draft.app))
+    errors.push('monitorIds');
   const metricMap = new Map(metrics.map(metric => [metric.name, new Set(metric.fields)]));
   const selectedMetrics = Object.entries(draft.fields);
-  if (!selectedMetrics.length || selectedMetrics.some(([metric, fields]) => {
-    const availableFields = metricMap.get(metric);
-    return !availableFields || !fields.length || fields.some(field => !availableFields.has(field));
-  })) errors.push('fields');
+  if (
+    !selectedMetrics.length ||
+    selectedMetrics.some(([metric, fields]) => {
+      const availableFields = metricMap.get(metric);
+      return !availableFields || !fields.length || fields.some(field => !availableFields.has(field));
+    })
+  )
+    errors.push('fields');
   return errors;
 }
 
 export function sameBulletin(left: Bulletin, draft: BulletinDraft) {
   const payload = buildBulletinPayload(draft);
-  return left.name === payload.name && left.app === payload.app
-    && JSON.stringify([...left.monitorIds].sort((a, b) => a - b)) === JSON.stringify(payload.monitorIds)
-    && JSON.stringify(buildBulletinPayload(left).fields) === JSON.stringify(payload.fields);
+  return (
+    left.name === payload.name &&
+    left.app === payload.app &&
+    JSON.stringify([...left.monitorIds].sort((a, b) => a - b)) === JSON.stringify(payload.monitorIds) &&
+    JSON.stringify(buildBulletinPayload(left).fields) === JSON.stringify(payload.fields)
+  );
 }

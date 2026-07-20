@@ -1,21 +1,20 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Alert, Button, Empty, Input, Popconfirm, Space, Table, Tag, Typography, type TableProps } from 'antd';
+import { Button, Input, Popconfirm, Space, Table, Tag, Typography, type TableProps } from 'antd';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import { BulletinEditor } from '../components/bulletin-editor';
 import { BulletinMetricsPanel } from '../components/bulletin-metrics';
+import { BulletinPageStatus } from '../components/bulletin-page-status';
 import { useBulletinController } from '../controller/bulletin-controller';
-import { formatBulletinTime, type Bulletin } from '../model/bulletin-model';
+import { bulletinPageSizes, formatBulletinTime, type Bulletin } from '../model/bulletin-model';
 import styles from '../bulletin-page.module.css';
 
 export function BulletinPage() {
   const { t } = useTranslation();
   const { state, actions } = useBulletinController();
-  const busy = state.command !== 'idle';
-  const columns = createBulletinColumns(actions, busy, t);
-  const handleRefresh = () => void actions.refresh();
+  const busy = state.command !== 'idle' || state.recovery !== null;
   return (
     <div className={styles.page}>
       <header className={styles.heading}>
@@ -37,18 +36,20 @@ export function BulletinPage() {
         <Button type="primary" onClick={actions.submitSearch}>
           {t('common.query')}
         </Button>
-        <Button loading={state.refreshing} onClick={handleRefresh}>
+        <Button loading={state.refreshing} onClick={() => void actions.refresh()}>
           {t('common.refresh')}
         </Button>
       </Space.Compact>
-      {['invalid', 'unavailable', 'error'].includes(state.list.kind) && (
-        <Alert type="error" showIcon message={t(`bulletin.list.${state.list.kind}`)} />
-      )}
-      {state.list.kind === 'empty' && <Empty description={t('bulletin.empty')} />}
+      <BulletinPageStatus
+        command={state.command}
+        list={state.list}
+        recovery={state.recovery}
+        onRetry={() => void actions.retry()}
+      />
       <BulletinTable
         actions={actions}
         busy={busy}
-        columns={columns}
+        columns={createBulletinColumns(actions, busy, t)}
         list={state.list}
         query={state.query}
         records={state.list.kind === 'ready' ? state.list.records : []}
@@ -97,7 +98,7 @@ function BulletinTable({ actions, busy, columns, list, query, records, selectedI
               pageSize: query.pageSize,
               total: list.total,
               showSizeChanger: true,
-              pageSizeOptions: [8, 15, 25],
+              pageSizeOptions: [...bulletinPageSizes],
               onChange: actions.changePage
             }
           : false

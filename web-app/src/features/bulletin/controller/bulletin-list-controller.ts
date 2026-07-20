@@ -5,8 +5,9 @@ import { useCallback, useEffect, type Dispatch, type SetStateAction } from 'reac
 
 import type { RemotePageState } from '@/shared/remote-state';
 
-import { classifyBulletinError, loadBulletins } from '../api/bulletin-api';
-import type { Bulletin, BulletinQuery } from '../model/bulletin-model';
+import { loadBulletins } from '../api/bulletin-api';
+import { classifyBulletinFailure } from '../model/bulletin-failure';
+import { isBulletinPageComplete, type Bulletin, type BulletinQuery } from '../model/bulletin-model';
 import { bulletinQueryKeys } from './bulletin-query-keys';
 
 type BulletinListFailure = 'invalid' | 'unavailable' | 'error';
@@ -57,7 +58,7 @@ export function useBulletinSelectionConvergence(
     let active = true;
     queueMicrotask(() => {
       if (active) {
-        setSelectedId(current => current === selectedId ? null : current);
+        setSelectedId(current => (current === selectedId ? null : current));
       }
     });
     return () => {
@@ -72,11 +73,12 @@ function resolveListState(
 ): BulletinListState {
   if (list.isPending) return { kind: 'loading' };
   if (list.isError) return { kind: classifyListFailure(list.error) };
+  if (!isBulletinPageComplete(list.data)) return { kind: 'invalid' };
   if (list.data.content.length === 0) return { kind: 'empty' };
   return { kind: 'ready', records: list.data.content, total: list.data.totalElements };
 }
 
 function classifyListFailure(error: unknown): BulletinListFailure {
-  const failure = classifyBulletinError(error);
+  const failure = classifyBulletinFailure(error);
   return failure === 'missing' ? 'error' : failure;
 }

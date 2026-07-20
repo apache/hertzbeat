@@ -17,51 +17,61 @@
 
 import { describe, expect, it } from 'vitest';
 
-import {
-  BulletinContractError,
-  parseBulletinPageWire,
-  parseBulletinWire,
-  parseMetricsWire
-} from './bulletin-schema';
+import { BulletinContractError, parseBulletinPageWire, parseBulletinWire, parseMetricsWire } from './bulletin-schema';
 
 describe('bulletin wire schemas', () => {
   it('normalizes absent audit metadata without weakening required fields', () => {
-    expect(parseBulletinWire({
-      id: 7,
-      name: 'Ops',
-      app: 'website',
-      monitorIds: [1],
-      fields: { responseTime: ['duration'] }
-    })).toMatchObject({ creator: null, modifier: null, gmtCreate: null, gmtUpdate: null });
+    expect(
+      parseBulletinWire({
+        id: 7,
+        name: 'Ops',
+        app: 'website',
+        monitorIds: [1],
+        fields: { responseTime: ['duration'] }
+      })
+    ).toMatchObject({ creator: null, modifier: null, gmtCreate: null, gmtUpdate: null });
 
-    expect(() => parseBulletinWire({ id: 7, name: 'Ops', app: 'website', monitorIds: [1] }))
-      .toThrow(BulletinContractError);
+    expect(() => parseBulletinWire({ id: 7, name: 'Ops', app: 'website', monitorIds: [1] })).toThrow(
+      BulletinContractError
+    );
   });
 
   it('rejects unsafe identifiers and malformed dynamic field arrays', () => {
-    expect(() => parseBulletinWire({
-      id: Number.MAX_SAFE_INTEGER + 1,
-      name: 'Ops',
-      app: 'website',
-      monitorIds: [1],
-      fields: {}
-    })).toThrow(BulletinContractError);
-    expect(() => parseBulletinWire({
-      id: 7,
-      name: 'Ops',
-      app: 'website',
-      monitorIds: [1],
-      fields: { responseTime: ['duration', 42] }
-    })).toThrow(BulletinContractError);
+    expect(() =>
+      parseBulletinWire({
+        id: Number.MAX_SAFE_INTEGER + 1,
+        name: 'Ops',
+        app: 'website',
+        monitorIds: [1],
+        fields: {}
+      })
+    ).toThrow(BulletinContractError);
+    expect(() =>
+      parseBulletinWire({
+        id: 7,
+        name: 'Ops',
+        app: 'website',
+        monitorIds: [1],
+        fields: { responseTime: ['duration', 42] }
+      })
+    ).toThrow(BulletinContractError);
   });
 
   it('validates page and nested metrics structures at the boundary', () => {
-    expect(() => parseBulletinPageWire({
-      content: [], totalElements: 0, totalPages: 0, number: -1, size: 8
-    })).toThrow(BulletinContractError);
-    expect(() => parseMetricsWire({
-      name: 'Ops',
-      content: [{ monitorName: 'site', monitorId: 1, host: 'localhost', metrics: [{ name: 'cpu', fields: [{}] }] }]
-    })).toThrow(BulletinContractError);
+    expect(() =>
+      parseBulletinPageWire({
+        content: [],
+        totalElements: 0,
+        totalPages: 0,
+        number: -1,
+        size: 8
+      })
+    ).toThrow(BulletinContractError);
+    expect(() =>
+      parseMetricsWire({
+        name: 'Ops',
+        content: [{ monitorName: 'site', monitorId: 1, host: 'localhost', metrics: [{ name: 'cpu', fields: [{}] }] }]
+      })
+    ).toThrow(BulletinContractError);
   });
 });

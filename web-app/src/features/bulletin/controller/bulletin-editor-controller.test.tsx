@@ -108,6 +108,40 @@ describe('Bulletin editor controller', () => {
     act(() => result.current.gate.end(owner));
     expect(result.current.gate.isLocked()).toBe(false);
   });
+
+  it('separates an active recovery command from its retained proof receipt', () => {
+    const { result } = renderEditorController();
+    const draft = { ...bulletin(7, 'Operations') };
+    let owner!: NonNullable<ReturnType<typeof result.current.gate.begin>>;
+    act(() => {
+      owner = result.current.gate.begin('saving')!;
+      result.current.gate.setRecovery(owner, {
+        stage: 'update-proof',
+        draft,
+        failure: 'unavailable'
+      });
+      result.current.gate.end(owner);
+    });
+
+    expect(result.current.gate.command).toBe('idle');
+    expect(result.current.gate.recovery).toMatchObject({ stage: 'update-proof', draft: { id: 7 } });
+    expect(result.current.gate.isLocked()).toBe(true);
+    expect(result.current.gate.begin('saving')).toBeUndefined();
+
+    let recoveryOwner!: NonNullable<ReturnType<typeof result.current.gate.beginRecovery>>;
+    act(() => {
+      recoveryOwner = result.current.gate.beginRecovery()!;
+    });
+    expect(result.current.gate.command).toBe('recovering');
+    expect(recoveryOwner.recovery).toMatchObject({ stage: 'update-proof', draft: { id: 7 } });
+
+    act(() => {
+      result.current.gate.clearRecovery(recoveryOwner.owner);
+      result.current.gate.end(recoveryOwner.owner);
+    });
+    expect(result.current.gate.recovery).toBeNull();
+    expect(result.current.gate.isLocked()).toBe(false);
+  });
 });
 
 function renderEditorController(onReadFailure = vi.fn()) {

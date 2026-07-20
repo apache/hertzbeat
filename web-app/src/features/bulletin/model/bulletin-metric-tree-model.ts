@@ -52,22 +52,30 @@ export function buildBulletinMetricTree(root: MonitorAppHierarchyNode): Bulletin
       if (!field.isLeaf || field.children.length || fields.has(field.value)) throw new BulletinMetricTreeError();
       fields.add(field.value);
       return {
-        key: fieldKey(metric.value, field.value), title: field.label ?? field.value,
-        isLeaf: true as const, metric: metric.value, field: field.value
+        key: fieldKey(metric.value, field.value),
+        title: field.label ?? field.value,
+        isLeaf: true as const,
+        metric: metric.value,
+        field: field.value
       };
     });
     return {
-      key: metricKey(metric.value), title: metric.label ?? metric.value,
-      isLeaf: false as const, metric: metric.value, children
+      key: metricKey(metric.value),
+      title: metric.label ?? metric.value,
+      isLeaf: false as const,
+      metric: metric.value,
+      children
     };
   });
 }
 
 function canonicalFields(fields: Map<string, Set<string>>): BulletinFields {
-  return Object.fromEntries([...fields.entries()]
-    .filter(([, values]) => values.size > 0)
-    .sort(([left], [right]) => left.localeCompare(right))
-    .map(([metric, values]) => [metric, [...values].sort()]));
+  return Object.fromEntries(
+    [...fields.entries()]
+      .filter(([, values]) => values.size > 0)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([metric, values]) => [metric, [...values].sort()])
+  );
 }
 
 /** Parent keys are display state only; persisted bulletin fields always come from checked leaves. */
@@ -91,7 +99,8 @@ export function fieldsFromMetricTreeKeys(tree: BulletinMetricTreeMetricNode[], c
 
 /** Backfill reports removed schema entries instead of silently presenting an apparently valid edit. */
 export function resolveSavedMetricTreeSelection(
-  tree: BulletinMetricTreeMetricNode[], savedFields: BulletinFields
+  tree: BulletinMetricTreeMetricNode[],
+  savedFields: BulletinFields
 ): BulletinMetricTreeSelection {
   const known = new Map(tree.map(metric => [metric.metric, new Set(metric.children.map(field => field.field))]));
   const selected = new Set<string>();

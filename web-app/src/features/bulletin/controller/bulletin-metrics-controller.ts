@@ -2,7 +2,9 @@
 
 import { useQuery, type QueryClient } from '@tanstack/react-query';
 
-import { classifyBulletinError, loadBulletinMetrics } from '../api/bulletin-api';
+import { loadBulletinMetrics } from '../api/bulletin-api';
+import { classifyBulletinFailure } from '../model/bulletin-failure';
+import { hasBulletinMetricFields } from '../model/bulletin-metrics-model';
 import { bulletinQueryKeys } from './bulletin-query-keys';
 
 const bulletinMetricsRefreshIntervalMs = 30_000;
@@ -17,8 +19,8 @@ export function useBulletinMetrics(selectedId: number | null) {
   });
   if (selectedId == null) return { kind: 'idle' as const };
   if (query.isPending) return { kind: 'loading' as const };
-  if (query.isError) return { kind: classifyBulletinError(query.error, 'metrics') };
-  return query.data.content.length
+  if (query.isError) return { kind: classifyBulletinFailure(query.error) };
+  return hasBulletinMetricFields(query.data)
     ? { kind: 'ready' as const, data: query.data }
     : { kind: 'empty' as const };
 }

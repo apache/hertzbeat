@@ -23,7 +23,10 @@ const positiveIntegerSchema = safeIntegerSchema.refine(value => value > 0, 'Expe
 
 // Audit metadata is optional in older responses. Normalize both absence and null
 // so downstream view models do not need to distinguish two equivalent states.
-const nullableTextSchema = z.string().nullish().transform(value => value ?? null);
+const nullableTextSchema = z
+  .string()
+  .nullish()
+  .transform(value => value ?? null);
 
 const bulletinSchema = z.object({
   id: positiveIntegerSchema,

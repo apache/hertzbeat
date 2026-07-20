@@ -2,25 +2,41 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-import { classifyBulletinError, loadBulletin, type BulletinFailureKind } from '../api/bulletin-api';
+import { loadBulletin } from '../api/bulletin-api';
+import { classifyBulletinFailure, type BulletinFailureKind } from '../model/bulletin-failure';
 import { createBulletinDraft, type BulletinDraft } from '../model/bulletin-model';
+import type { BulletinCommand, BulletinRecovery } from '../model/bulletin-operation-state';
 
-export type BulletinCommand = 'saving' | 'deleting';
-export type BulletinOperationOwner = { command: BulletinCommand };
+export type BulletinOperationOwner = { command: Exclude<BulletinCommand, 'idle'> };
 
 export function useBulletinOperationGate() {
   const mountedRef = useRef(true);
   const ownerRef = useRef<BulletinOperationOwner | undefined>(undefined);
-  const [command, setCommand] = useState<'idle' | BulletinCommand>('idle');
-  const begin = (next: BulletinCommand) => {
-    // React state is asynchronous, so the ref closes same-tick command admission.
-    if (!mountedRef.current || ownerRef.current) return undefined;
+  const recoveryRef = useRef<BulletinRecovery | null>(null);
+  const [command, setCommand] = useState<BulletinCommand>('idle');
+  const [recovery, setRecoveryState] = useState<BulletinRecovery | null>(null);
+  const replace = (next: BulletinOperationOwner['command']) => {
     const owner = { command: next };
     ownerRef.current = owner;
     setCommand(next);
     return owner;
   };
+  const begin = (next: 'saving' | 'deleting') => {
+    // React state is asynchronous, so the ref closes same-tick command admission.
+    if (!mountedRef.current || ownerRef.current || recoveryRef.current) return undefined;
+    return replace(next);
+  };
+  const beginRecovery = () => {
+    if (!mountedRef.current || ownerRef.current || !recoveryRef.current) return undefined;
+    return { owner: replace('recovering'), recovery: recoveryRef.current };
+  };
   const isCurrent = (owner: BulletinOperationOwner) => mountedRef.current && ownerRef.current === owner;
+  const publishRecovery = (owner: BulletinOperationOwner, next: BulletinRecovery | null) => {
+    if (!isCurrent(owner)) return false;
+    recoveryRef.current = next;
+    setRecoveryState(next);
+    return true;
+  };
   const end = (owner: BulletinOperationOwner) => {
     // A stale finally block must never unlock a newer command owner.
     if (!isCurrent(owner)) return;
@@ -33,9 +49,20 @@ export function useBulletinOperationGate() {
       // Async continuations lose permission to publish as soon as the page unmounts.
       mountedRef.current = false;
       ownerRef.current = undefined;
+      recoveryRef.current = null;
     };
   }, []);
-  return { begin, command, end, isCurrent, isLocked: () => ownerRef.current !== undefined };
+  return {
+    begin,
+    beginRecovery,
+    clearRecovery: (owner: BulletinOperationOwner) => publishRecovery(owner, null),
+    command,
+    end,
+    isCurrent,
+    isLocked: () => ownerRef.current !== undefined || recoveryRef.current !== null,
+    recovery,
+    setRecovery: (owner: BulletinOperationOwner, next: BulletinRecovery) => publishRecovery(owner, next)
+  };
 }
 
 export type BulletinOperationGate = ReturnType<typeof useBulletinOperationGate>;
@@ -82,7 +109,7 @@ export function useBulletinEditorController(
       return true;
     } catch (error) {
       if (detailEpochRef.current !== epoch) return false;
-      onReadFailure(classifyBulletinError(error, 'read-detail'));
+      onReadFailure(classifyBulletinFailure(error));
       return false;
     } finally {
       if (pendingDetailRef.current?.epoch === epoch) pendingDetailRef.current = undefined;

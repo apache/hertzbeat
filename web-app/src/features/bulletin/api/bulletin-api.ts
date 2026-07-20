@@ -1,13 +1,28 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import {
-  ApiMessageError, apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut, type PageResult
+  apiMessageDelete,
+  apiMessageGet,
+  apiMessagePost,
+  apiMessagePut,
+  type PageResult
 } from '@/core/http/api-message';
+
+import { BulletinRequestFailure, classifyBulletinFailure } from '../model/bulletin-failure';
 import type {
-  Bulletin, BulletinDraft, BulletinMetricField, BulletinMetrics, BulletinQuery
+  Bulletin,
+  BulletinDraft,
+  BulletinMetricField,
+  BulletinMetrics,
+  BulletinQuery
 } from '../model/bulletin-model';
-import { buildBulletinListPath, buildBulletinPayload } from '../model/bulletin-model';
-import { sameBulletin } from '../model/bulletin-model';
+import {
+  buildBulletinListPath,
+  buildBulletinPayload,
+  isBulletinPageComplete,
+  sameBulletin
+} from '../model/bulletin-model';
+import { bulletinApiRequest } from './bulletin-api-failure';
 import {
   BulletinContractError,
   parseBulletinPageWire,
@@ -16,100 +31,124 @@ import {
   type BulletinMetricFieldWire
 } from './bulletin-schema';
 
-export { BulletinContractError } from './bulletin-schema';
+export type { BulletinFailureKind } from '../model/bulletin-failure';
 
-export class BulletinMissingError extends Error {
-  constructor() { super('Bulletin is missing'); this.name = 'BulletinMissingError'; }
-}
-
-export type BulletinFailureKind = 'missing' | 'invalid' | 'unavailable' | 'error';
-type BulletinOperation = 'read-detail' | 'create' | 'update' | 'delete' | 'metrics' | 'list';
-export function classifyBulletinError(error: unknown, operation: BulletinOperation = 'list'): BulletinFailureKind {
-  if (error instanceof BulletinMissingError) return 'missing';
-  if (error instanceof BulletinContractError) return 'invalid';
-  if (!(error instanceof ApiMessageError)) return 'error';
-  if (operation === 'read-detail' && error.status === 404) return 'missing';
-  if (error.status == null || error.status >= 500 || operation === 'metrics' && error.status === 200 && error.code === 15) return 'unavailable';
-  return 'error';
-}
+const createProofPageSize = 25;
+const createProofMaxPages = 20;
 
 export async function loadBulletins(query: BulletinQuery) {
-  return validatePageIdentity(
-    parseBulletinPageWire(await apiMessageGet(buildBulletinListPath(query))),
-    query
-  );
+  return bulletinApiRequest('list', async () => {
+    const page = parseBulletinPageWire(await apiMessageGet(buildBulletinListPath(query)));
+    return validatePageIdentity(page, query);
+  });
 }
 
 export async function loadBulletin(id: number) {
-  const value = await apiMessageGet(`/api/bulletin/${id}`);
-  if (value == null) throw new BulletinMissingError();
-  const bulletin = parseBulletinWire(value);
-  if (bulletin.id !== id) throw new BulletinContractError('Bulletin identity mismatch');
-  return bulletin;
+  return bulletinApiRequest('read-detail', async () => {
+    const value = await apiMessageGet(`/api/bulletin/${id}`);
+    if (value == null) throw new BulletinRequestFailure('missing', 'uncertain');
+    const bulletin = parseBulletinWire(value);
+    if (bulletin.id !== id) throw new BulletinContractError('Bulletin identity mismatch');
+    return bulletin;
+  });
 }
 
 export async function loadBulletinMetrics(id: number) {
-  return mapMetrics(parseMetricsWire(await apiMessageGet(`/api/bulletin/metrics?id=${id}`)));
+  return bulletinApiRequest('metrics', async () =>
+    mapMetrics(parseMetricsWire(await apiMessageGet(`/api/bulletin/metrics?id=${id}`)))
+  );
 }
 
 export async function createBulletin(draft: BulletinDraft) {
-  await apiMessagePost('/api/bulletin', buildBulletinPayload(draft));
+  await bulletinApiRequest('create', () => apiMessagePost('/api/bulletin', buildBulletinPayload(draft)));
 }
+
 export async function updateBulletin(draft: BulletinDraft) {
-  await apiMessagePut('/api/bulletin', buildBulletinPayload(draft));
+  await bulletinApiRequest('update', () => apiMessagePut('/api/bulletin', buildBulletinPayload(draft)));
 }
+
 export async function deleteBulletin(id: number) {
-  await apiMessageDelete(`/api/bulletin?ids=${id}`);
+  await bulletinApiRequest('delete', () => apiMessageDelete(`/api/bulletin?ids=${id}`));
 }
 
-export async function createBulletinAndRead(draft: BulletinDraft) {
-  const before = await loadExactNameBulletins(draft.name);
-  await createBulletin(draft);
-  const after = await loadExactNameBulletins(draft.name);
-  const beforeIds = new Set(before.map(item => item.id));
-  const created = after.filter(item => !beforeIds.has(item.id) && sameBulletin(item, draft));
-  if (created.length !== 1) throw new BulletinContractError('Create evidence did not converge');
-  return loadBulletin(created[0]!.id);
+export async function captureBulletinCreateBaseline(name: string) {
+  return bulletinApiRequest('list', async () => (await loadExactNameBulletins(name)).map(item => item.id));
 }
 
-export async function updateBulletinAndRead(draft: BulletinDraft) {
-  if (draft.id == null) throw new BulletinContractError('Update identity is missing');
-  await updateBulletin(draft);
-  const saved = await loadBulletin(draft.id);
-  if (!sameBulletin(saved, draft)) throw new BulletinContractError('Update evidence did not converge');
-  return saved;
+export async function proveBulletinCreated(draft: BulletinDraft, beforeIds: readonly number[]) {
+  return bulletinApiRequest('read-detail', async () => {
+    const before = new Set(beforeIds);
+    const candidates = (await loadExactNameBulletins(draft.name)).filter(
+      item => !before.has(item.id) && sameBulletin(item, draft)
+    );
+    if (candidates.length !== 1) throw new BulletinContractError('Create evidence did not converge');
+    const saved = await loadBulletin(candidates[0]!.id);
+    if (!sameBulletin(saved, draft)) throw new BulletinContractError('Create detail evidence did not converge');
+    return saved;
+  });
 }
 
-export async function deleteBulletinAndConfirm(id: number) {
-  await deleteBulletin(id);
-  try {
-    await loadBulletin(id);
-  } catch (error) {
-    if (classifyBulletinError(error, 'read-detail') === 'missing') return;
-    throw error;
-  }
-  throw new BulletinContractError('Delete evidence did not converge');
+export async function proveBulletinUpdated(draft: BulletinDraft & { id: number }) {
+  return bulletinApiRequest('read-detail', async () => {
+    const saved = await loadBulletin(draft.id);
+    if (!sameBulletin(saved, draft)) throw new BulletinContractError('Update evidence did not converge');
+    return saved;
+  });
+}
+
+export async function proveBulletinDeleted(id: number) {
+  return bulletinApiRequest('read-detail', async () => {
+    try {
+      await loadBulletin(id);
+    } catch (error) {
+      if (classifyBulletinFailure(error) === 'missing') return;
+      throw error;
+    }
+    throw new BulletinContractError('Delete evidence did not converge');
+  });
 }
 
 async function loadExactNameBulletins(name: string) {
+  const exactName = name.trim();
   const exact: Bulletin[] = [];
+  const seenIds = new Set<number>();
   let pageIndex = 0;
   let totalPages = 1;
+  let scanIdentity: { totalElements: number; totalPages: number; size: number } | undefined;
   do {
-    const page = await loadBulletins({ search: name.trim(), pageIndex, pageSize: 25 });
-    if (page.totalPages > 20) throw new BulletinContractError('Create evidence exceeds safety bound');
-    exact.push(...page.content.filter(item => item.name === name.trim()));
+    const page = await loadBulletins({ search: exactName, pageIndex, pageSize: createProofPageSize });
+    if (page.totalPages > createProofMaxPages) {
+      throw new BulletinContractError('Create evidence exceeds safety bound');
+    }
+    const currentIdentity = {
+      totalElements: page.totalElements,
+      totalPages: page.totalPages,
+      size: page.size
+    };
+    if (scanIdentity && !sameScanIdentity(scanIdentity, currentIdentity)) {
+      throw new BulletinContractError('Create evidence changed during pagination');
+    }
+    scanIdentity ??= currentIdentity;
+    for (const item of page.content) {
+      if (seenIds.has(item.id)) throw new BulletinContractError('Create evidence repeated an identity');
+      seenIds.add(item.id);
+      if (item.name === exactName) exact.push(item);
+    }
     totalPages = page.totalPages;
     pageIndex += 1;
   } while (pageIndex < totalPages);
   return exact;
 }
 
+function sameScanIdentity(
+  left: { totalElements: number; totalPages: number; size: number },
+  right: { totalElements: number; totalPages: number; size: number }
+) {
+  return left.totalElements === right.totalElements && left.totalPages === right.totalPages && left.size === right.size;
+}
+
 function validatePageIdentity(page: PageResult<Bulletin>, query: BulletinQuery) {
-  if (page.number !== query.pageIndex
-    || page.size !== query.pageSize
-    || page.totalPages !== Math.ceil(page.totalElements / page.size)
-    || page.content.length > page.size) {
+  if (page.number !== query.pageIndex || page.size !== query.pageSize || !isBulletinPageComplete(page)) {
     throw new BulletinContractError('Bulletin page identity did not match the request');
   }
   return page;

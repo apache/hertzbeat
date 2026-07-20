@@ -3,41 +3,70 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  buildBulletinPayload, bulletinMonitorMatchesSearch, formatBulletinTime, readBulletinQuery,
-  validateBulletinDraft, writeBulletinQuery
+  buildBulletinPayload,
+  bulletinMonitorMatchesSearch,
+  formatBulletinTime,
+  readBulletinQuery,
+  validateBulletinDraft,
+  writeBulletinQuery
 } from './bulletin-model';
 
 describe('bulletin model', () => {
   it('canonicalizes search and pagination query state', () => {
-    expect(readBulletinQuery(new URLSearchParams('search= api &pageIndex=2&pageSize=15')))
-      .toEqual({ search: 'api', pageIndex: 2, pageSize: 15 });
-    expect(writeBulletinQuery({ search: '', pageIndex: 0, pageSize: 8 }).toString())
-      .toBe('pageIndex=0&pageSize=8');
+    expect(readBulletinQuery(new URLSearchParams('search= api &pageIndex=2&pageSize=15'))).toEqual({
+      search: 'api',
+      pageIndex: 2,
+      pageSize: 15
+    });
+    expect(writeBulletinQuery({ search: '', pageIndex: 0, pageSize: 8 }).toString()).toBe('pageIndex=0&pageSize=8');
   });
 
   it('rejects monitor/app mismatches and invalid metric fields', () => {
     const draft = { name: 'Ops', app: 'website', monitorIds: [1, 2], fields: { responseTime: ['duration'] } };
-    expect(validateBulletinDraft(draft, [
-      monitor(1, 'one', 'website'), monitor(2, 'two', 'mysql')
-    ], [{ name: 'responseTime', fields: ['duration'] }])).toContain('monitorIds');
-    expect(validateBulletinDraft(draft, [monitor(1, 'one', 'website')], [{ name: 'availability', fields: ['status'] }]))
-      .toContain('fields');
-    expect(validateBulletinDraft({ ...draft, monitorIds: [99] }, [monitor(1, 'one', 'website')], [{ name: 'responseTime', fields: ['duration'] }]))
-      .toContain('monitorIds');
-    expect(validateBulletinDraft({ ...draft, fields: { responseTime: ['stale'] } },
-      [monitor(1, 'one', 'website'), monitor(2, 'two', 'website')],
-      [{ name: 'responseTime', fields: ['duration'] }])).toContain('fields');
+    expect(
+      validateBulletinDraft(
+        draft,
+        [monitor(1, 'one', 'website'), monitor(2, 'two', 'mysql')],
+        [{ name: 'responseTime', fields: ['duration'] }]
+      )
+    ).toContain('monitorIds');
+    expect(
+      validateBulletinDraft(draft, [monitor(1, 'one', 'website')], [{ name: 'availability', fields: ['status'] }])
+    ).toContain('fields');
+    expect(
+      validateBulletinDraft(
+        { ...draft, monitorIds: [99] },
+        [monitor(1, 'one', 'website')],
+        [{ name: 'responseTime', fields: ['duration'] }]
+      )
+    ).toContain('monitorIds');
+    expect(
+      validateBulletinDraft(
+        { ...draft, fields: { responseTime: ['stale'] } },
+        [monitor(1, 'one', 'website'), monitor(2, 'two', 'website')],
+        [{ name: 'responseTime', fields: ['duration'] }]
+      )
+    ).toContain('fields');
   });
 
   it('builds a canonical payload without audit fields', () => {
-    expect(buildBulletinPayload({
-      id: 7, name: ' Ops ', app: 'website', monitorIds: [2, 1, 2], fields: { responseTime: ['duration', 'duration'] }
-    })).toEqual({ id: 7, name: 'Ops', app: 'website', monitorIds: [1, 2], fields: { responseTime: ['duration'] } });
+    expect(
+      buildBulletinPayload({
+        id: 7,
+        name: ' Ops ',
+        app: 'website',
+        monitorIds: [2, 1, 2],
+        fields: { responseTime: ['duration', 'duration'] }
+      })
+    ).toEqual({ id: 7, name: 'Ops', app: 'website', monitorIds: [1, 2], fields: { responseTime: ['duration'] } });
   });
 
   it('matches monitor choices by name, label key, or label value', () => {
     const monitor = {
-      id: 1, name: 'checkout-api', app: 'website', labels: { environment: 'production', team: 'payments' }
+      id: 1,
+      name: 'checkout-api',
+      app: 'website',
+      labels: { environment: 'production', team: 'payments' }
     };
 
     expect(bulletinMonitorMatchesSearch(monitor, 'CHECKOUT')).toBe(true);

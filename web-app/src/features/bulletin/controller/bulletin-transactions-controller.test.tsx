@@ -3,18 +3,24 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { BulletinRequestFailure } from '../model/bulletin-failure';
+import type { BulletinRecovery } from '../model/bulletin-operation-state';
 import { bulletinQueryKeys } from './bulletin-query-keys';
 import { useBulletinEditorController, useBulletinOperationGate } from './bulletin-editor-controller';
 import { useBulletinTransactions } from './bulletin-transactions-controller';
 import type { BulletinDraft } from '../model/bulletin-model';
 
 const mocks = vi.hoisted(() => ({
-  createBulletinAndRead: vi.fn(),
-  deleteBulletinAndConfirm: vi.fn(),
+  captureBulletinCreateBaseline: vi.fn(),
+  createBulletin: vi.fn(),
+  deleteBulletin: vi.fn(),
   invalidateQueries: vi.fn(),
   notification: vi.fn(),
+  proveBulletinCreated: vi.fn(),
+  proveBulletinDeleted: vi.fn(),
+  proveBulletinUpdated: vi.fn(),
   refreshMetrics: vi.fn(),
-  updateBulletinAndRead: vi.fn()
+  updateBulletin: vi.fn()
 }));
 
 vi.mock('@refinedev/core', () => ({
@@ -28,9 +34,13 @@ vi.mock('@tanstack/react-query', async importOriginal => ({
 
 vi.mock('../api/bulletin-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/bulletin-api')>()),
-  createBulletinAndRead: mocks.createBulletinAndRead,
-  deleteBulletinAndConfirm: mocks.deleteBulletinAndConfirm,
-  updateBulletinAndRead: mocks.updateBulletinAndRead
+  captureBulletinCreateBaseline: mocks.captureBulletinCreateBaseline,
+  createBulletin: mocks.createBulletin,
+  deleteBulletin: mocks.deleteBulletin,
+  proveBulletinCreated: mocks.proveBulletinCreated,
+  proveBulletinDeleted: mocks.proveBulletinDeleted,
+  proveBulletinUpdated: mocks.proveBulletinUpdated,
+  updateBulletin: mocks.updateBulletin
 }));
 
 vi.mock('./bulletin-metrics-controller', async importOriginal => ({
@@ -41,23 +51,35 @@ vi.mock('./bulletin-metrics-controller', async importOriginal => ({
 describe('Bulletin transactions controller', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.captureBulletinCreateBaseline.mockResolvedValue([]);
+    mocks.createBulletin.mockResolvedValue(undefined);
+    mocks.deleteBulletin.mockResolvedValue(undefined);
     mocks.invalidateQueries.mockResolvedValue(undefined);
+    mocks.proveBulletinCreated.mockResolvedValue(bulletin(7, 'Operations'));
+    mocks.proveBulletinDeleted.mockResolvedValue(undefined);
+    mocks.proveBulletinUpdated.mockResolvedValue(bulletin(7, 'Operations'));
     mocks.refreshMetrics.mockResolvedValue(undefined);
+    mocks.updateBulletin.mockResolvedValue(undefined);
   });
 
   it('publishes save success only after the canonical record and list have converged', async () => {
     const context = createContext();
     const saved = bulletin(7, 'Operations');
     context.refresh.mockResolvedValue(true);
-    mocks.createBulletinAndRead.mockResolvedValue(saved);
+    mocks.proveBulletinCreated.mockResolvedValue(saved);
     const hook = renderHook(() => useBulletinTransactions(context.value));
 
     await act(async () => {
       await expect(hook.result.current.save()).resolves.toBe(true);
     });
 
-    expect(mocks.createBulletinAndRead).toHaveBeenCalledWith(context.initialDraft);
-    expect(mocks.invalidateQueries).toHaveBeenCalledWith({ queryKey: bulletinQueryKeys.lists() });
+    expect(mocks.captureBulletinCreateBaseline).toHaveBeenCalledWith(context.initialDraft.name);
+    expect(mocks.createBulletin).toHaveBeenCalledWith(context.initialDraft);
+    expect(mocks.proveBulletinCreated).toHaveBeenCalledWith(context.initialDraft, []);
+    expect(mocks.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: bulletinQueryKeys.lists(),
+      refetchType: 'none'
+    });
     expect(context.refresh).toHaveBeenCalledOnce();
     expect(context.setSelectedId).toHaveBeenCalledWith(saved.id);
     expect(mocks.refreshMetrics).toHaveBeenCalledWith(expect.anything(), saved.id);
@@ -71,7 +93,6 @@ describe('Bulletin transactions controller', () => {
   it('retires a confirmed save even when the list projection refresh fails', async () => {
     const context = createContext();
     context.refresh.mockResolvedValue(false);
-    mocks.createBulletinAndRead.mockResolvedValue(bulletin(7, 'Operations'));
     const hook = renderHook(() => useBulletinTransactions(context.value));
 
     await act(async () => {
@@ -81,7 +102,7 @@ describe('Bulletin transactions controller', () => {
 
     expect(context.setSelectedId).toHaveBeenCalledWith(7);
     expect(context.setDraft).toHaveBeenCalledWith(null);
-    expect(mocks.createBulletinAndRead).toHaveBeenCalledTimes(1);
+    expect(mocks.createBulletin).toHaveBeenCalledTimes(1);
     expect(mocks.refreshMetrics).toHaveBeenCalledWith(expect.anything(), 7);
     expect(mocks.notification).toHaveBeenCalledWith({ message: 'bulletin.saveSuccess', type: 'success' });
     expect(mocks.notification).not.toHaveBeenCalledWith({ message: 'bulletin.save.error', type: 'error' });
@@ -91,7 +112,7 @@ describe('Bulletin transactions controller', () => {
     const context = createContext();
     const pending = deferred<ReturnType<typeof bulletin>>();
     context.refresh.mockResolvedValue(true);
-    mocks.createBulletinAndRead.mockReturnValue(pending.promise);
+    mocks.proveBulletinCreated.mockReturnValue(pending.promise);
     const hook = renderHook(() => useBulletinTransactions(context.value));
 
     let first!: Promise<boolean>;
@@ -100,9 +121,10 @@ describe('Bulletin transactions controller', () => {
       void hook.result.current.save();
       void hook.result.current.remove(bulletin(8, 'Other'));
     });
+    await act(async () => Promise.resolve());
 
-    expect(mocks.createBulletinAndRead).toHaveBeenCalledTimes(1);
-    expect(mocks.deleteBulletinAndConfirm).not.toHaveBeenCalled();
+    expect(mocks.createBulletin).toHaveBeenCalledTimes(1);
+    expect(mocks.deleteBulletin).not.toHaveBeenCalled();
     act(() => pending.resolve(bulletin(7, 'Operations')));
     await act(async () => first);
   });
@@ -118,7 +140,7 @@ describe('Bulletin transactions controller', () => {
         await expect(hook.result.current.save()).resolves.toBe(false);
       });
 
-      expect(mocks.createBulletinAndRead).not.toHaveBeenCalled();
+      expect(mocks.createBulletin).not.toHaveBeenCalled();
       expect(mocks.notification).toHaveBeenCalledWith({ message: 'bulletin.validation', type: 'error' });
     }
   );
@@ -126,7 +148,6 @@ describe('Bulletin transactions controller', () => {
   it('keeps a confirmed save successful when the post-write metrics refresh fails', async () => {
     const context = createContext();
     context.refresh.mockResolvedValue(true);
-    mocks.createBulletinAndRead.mockResolvedValue(bulletin(7, 'Operations'));
     mocks.refreshMetrics.mockRejectedValue(new Error('metrics unavailable'));
     const hook = renderHook(() => useBulletinTransactions(context.value));
 
@@ -136,7 +157,7 @@ describe('Bulletin transactions controller', () => {
     });
 
     expect(context.setDraft).toHaveBeenCalledWith(null);
-    expect(mocks.createBulletinAndRead).toHaveBeenCalledTimes(1);
+    expect(mocks.createBulletin).toHaveBeenCalledTimes(1);
     expect(mocks.notification).toHaveBeenCalledWith({ message: 'bulletin.saveSuccess', type: 'success' });
     expect(mocks.notification).not.toHaveBeenCalledWith({ message: 'bulletin.save.error', type: 'error' });
   });
@@ -144,7 +165,6 @@ describe('Bulletin transactions controller', () => {
   it('clears a deleted selection and reports success only after list convergence', async () => {
     const context = createContext({ selectedId: 7 });
     context.refresh.mockResolvedValue(true);
-    mocks.deleteBulletinAndConfirm.mockResolvedValue(undefined);
     const hook = renderHook(() => useBulletinTransactions(context.value));
     const record = bulletin(7, 'Operations');
 
@@ -152,9 +172,13 @@ describe('Bulletin transactions controller', () => {
       await expect(hook.result.current.remove(record)).resolves.toBe(true);
     });
 
-    expect(mocks.deleteBulletinAndConfirm).toHaveBeenCalledWith(record.id);
+    expect(mocks.deleteBulletin).toHaveBeenCalledWith(record.id);
+    expect(mocks.proveBulletinDeleted).toHaveBeenCalledWith(record.id);
     expect(context.setSelectedId).toHaveBeenCalledWith(null);
-    expect(mocks.invalidateQueries).toHaveBeenCalledWith({ queryKey: bulletinQueryKeys.lists() });
+    expect(mocks.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: bulletinQueryKeys.lists(),
+      refetchType: 'none'
+    });
     expect(context.refresh).toHaveBeenCalledOnce();
     expect(mocks.notification).toHaveBeenLastCalledWith({
       message: 'bulletin.deleteSuccess',
@@ -165,7 +189,6 @@ describe('Bulletin transactions controller', () => {
   it('retires a confirmed delete even when the list projection refresh fails', async () => {
     const context = createContext({ selectedId: 7 });
     context.refresh.mockResolvedValue(false);
-    mocks.deleteBulletinAndConfirm.mockResolvedValue(undefined);
     const hook = renderHook(() => useBulletinTransactions(context.value));
     const record = bulletin(7, 'Operations');
 
@@ -174,16 +197,123 @@ describe('Bulletin transactions controller', () => {
       await expect(hook.result.current.remove(record)).resolves.toBe(false);
     });
 
-    expect(mocks.deleteBulletinAndConfirm).toHaveBeenCalledTimes(1);
+    expect(mocks.deleteBulletin).toHaveBeenCalledTimes(1);
     expect(context.setSelectedId).toHaveBeenCalledWith(null);
     expect(mocks.notification).toHaveBeenCalledWith({ message: 'bulletin.deleteSuccess', type: 'success' });
     expect(mocks.notification).not.toHaveBeenCalledWith({ message: 'bulletin.deleteError.error', type: 'error' });
   });
 
+  it('retains ambiguous create proof and retries only the before/after evidence', async () => {
+    const context = createContext();
+    context.refresh.mockResolvedValue(true);
+    mocks.createBulletin.mockRejectedValue(new BulletinRequestFailure('unavailable', 'uncertain'));
+    mocks.proveBulletinCreated
+      .mockRejectedValueOnce(new BulletinRequestFailure('unavailable', 'uncertain'))
+      .mockResolvedValueOnce(bulletin(7, 'Operations'));
+    const hook = renderHook(() => useBulletinTransactions(context.value));
+
+    await act(async () => expect(hook.result.current.save()).resolves.toBe(false));
+    await act(async () => expect(hook.result.current.save()).resolves.toBe(false));
+
+    expect(context.getRecovery()).toMatchObject({ stage: 'create-proof', beforeIds: [] });
+    expect(mocks.createBulletin).toHaveBeenCalledTimes(1);
+    expect(mocks.proveBulletinCreated).toHaveBeenCalledTimes(1);
+
+    await act(async () => expect(hook.result.current.retry()).resolves.toBe(true));
+
+    expect(mocks.createBulletin).toHaveBeenCalledTimes(1);
+    expect(mocks.proveBulletinCreated).toHaveBeenCalledTimes(2);
+    expect(context.getRecovery()).toBeNull();
+    expect(context.setDraft).toHaveBeenCalledWith(null);
+  });
+
+  it('retains create recovery when canonical detail no longer matches the submitted draft', async () => {
+    const context = createContext();
+    mocks.proveBulletinCreated.mockRejectedValue(new BulletinRequestFailure('invalid', 'uncertain'));
+    const hook = renderHook(() => useBulletinTransactions(context.value));
+
+    await act(async () => expect(hook.result.current.save()).resolves.toBe(false));
+    await act(async () => expect(hook.result.current.save()).resolves.toBe(false));
+
+    expect(context.getRecovery()).toMatchObject({ stage: 'create-proof', beforeIds: [], failure: 'invalid' });
+    expect(mocks.createBulletin).toHaveBeenCalledTimes(1);
+    expect(mocks.proveBulletinCreated).toHaveBeenCalledTimes(1);
+  });
+
+  it('retains ambiguous update proof and never repeats PUT during recovery', async () => {
+    const context = createContext();
+    context.initialDraft.id = 7;
+    context.refresh.mockResolvedValue(true);
+    mocks.updateBulletin.mockRejectedValue(new BulletinRequestFailure('error', 'uncertain'));
+    mocks.proveBulletinUpdated
+      .mockRejectedValueOnce(new BulletinRequestFailure('invalid', 'uncertain'))
+      .mockResolvedValueOnce(bulletin(7, 'Operations'));
+    const hook = renderHook(() => useBulletinTransactions(context.value));
+
+    await act(async () => expect(hook.result.current.save()).resolves.toBe(false));
+    expect(context.getRecovery()).toMatchObject({ stage: 'update-proof', draft: { id: 7 } });
+
+    await act(async () => expect(hook.result.current.retry()).resolves.toBe(true));
+
+    expect(mocks.updateBulletin).toHaveBeenCalledTimes(1);
+    expect(mocks.proveBulletinUpdated).toHaveBeenCalledTimes(2);
+    expect(context.getRecovery()).toBeNull();
+  });
+
+  it('retains ambiguous delete proof and never repeats DELETE during recovery', async () => {
+    const context = createContext({ selectedId: 7 });
+    context.refresh.mockResolvedValue(true);
+    mocks.deleteBulletin.mockRejectedValue(new BulletinRequestFailure('unavailable', 'uncertain'));
+    mocks.proveBulletinDeleted
+      .mockRejectedValueOnce(new BulletinRequestFailure('unavailable', 'uncertain'))
+      .mockResolvedValueOnce(undefined);
+    const hook = renderHook(() => useBulletinTransactions(context.value));
+    const record = bulletin(7, 'Operations');
+
+    await act(async () => expect(hook.result.current.remove(record)).resolves.toBe(false));
+    await act(async () => expect(hook.result.current.remove(record)).resolves.toBe(false));
+    expect(context.getRecovery()).toMatchObject({ stage: 'delete-proof', id: 7 });
+
+    await act(async () => expect(hook.result.current.retry()).resolves.toBe(true));
+
+    expect(mocks.deleteBulletin).toHaveBeenCalledTimes(1);
+    expect(mocks.proveBulletinDeleted).toHaveBeenCalledTimes(2);
+    expect(context.getRecovery()).toBeNull();
+  });
+
+  it('retains projection recovery after proof and retries only the list read', async () => {
+    const context = createContext();
+    context.refresh.mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+    const hook = renderHook(() => useBulletinTransactions(context.value));
+
+    await act(async () => expect(hook.result.current.save()).resolves.toBe(true));
+    expect(context.getRecovery()).toMatchObject({ stage: 'projection' });
+    await act(async () => expect(hook.result.current.save()).resolves.toBe(false));
+
+    await act(async () => expect(hook.result.current.retry()).resolves.toBe(true));
+
+    expect(mocks.createBulletin).toHaveBeenCalledTimes(1);
+    expect(context.refresh).toHaveBeenCalledTimes(2);
+    expect(context.getRecovery()).toBeNull();
+  });
+
+  it('allows a deliberate rewrite only after an explicit typed 4xx rejection', async () => {
+    const context = createContext();
+    mocks.createBulletin.mockRejectedValue(new BulletinRequestFailure('error', 'rejected'));
+    const hook = renderHook(() => useBulletinTransactions(context.value));
+
+    await act(async () => expect(hook.result.current.save()).resolves.toBe(false));
+    expect(context.getRecovery()).toBeNull();
+    await act(async () => expect(hook.result.current.save()).resolves.toBe(false));
+
+    expect(mocks.createBulletin).toHaveBeenCalledTimes(2);
+    expect(mocks.proveBulletinCreated).not.toHaveBeenCalled();
+  });
+
   it('does not publish or notify after a pending save loses ownership on unmount', async () => {
     const pending = deferred<ReturnType<typeof bulletin>>();
     const setSelectedId = vi.fn();
-    mocks.createBulletinAndRead.mockReturnValue(pending.promise);
+    mocks.proveBulletinCreated.mockReturnValue(pending.promise);
     const hook = renderHook(() => {
       const gate = useBulletinOperationGate();
       const editor = useBulletinEditorController(gate, vi.fn());
@@ -220,7 +350,8 @@ function createContext(options: { selectedId?: number } = {}) {
     fields: { responseTime: ['duration'] }
   };
   let draft: typeof initialDraft | null = initialDraft;
-  let owner: { command: 'saving' | 'deleting' } | undefined;
+  let owner: { command: 'saving' | 'deleting' | 'recovering' } | undefined;
+  let recovery: BulletinRecovery | null = null;
   const setDraft = vi.fn((next: typeof initialDraft | null) => {
     draft = next;
   });
@@ -241,22 +372,38 @@ function createContext(options: { selectedId?: number } = {}) {
     gate: {
       command: 'idle',
       begin: next => {
-        if (owner) return undefined;
+        if (owner || recovery) return undefined;
         owner = { command: next };
         return owner;
+      },
+      beginRecovery: () => {
+        if (owner || !recovery) return undefined;
+        owner = { command: 'recovering' };
+        return { owner, recovery };
+      },
+      clearRecovery: candidate => {
+        if (owner !== candidate) return false;
+        recovery = null;
+        return true;
       },
       end: candidate => {
         if (owner === candidate) owner = undefined;
       },
       isCurrent: candidate => owner === candidate,
-      isLocked: () => owner !== undefined
+      isLocked: () => owner !== undefined || recovery !== null,
+      recovery: null,
+      setRecovery: (candidate, next) => {
+        if (owner !== candidate) return false;
+        recovery = next;
+        return true;
+      }
     },
     refresh,
     selectedId: options.selectedId ?? null,
     setSelectedId,
     t: key => key
   };
-  return { initialDraft, refresh, setDraft, setSelectedId, value };
+  return { getRecovery: () => recovery, initialDraft, refresh, setDraft, setSelectedId, value };
 }
 
 function bulletin(id: number, name: string) {
