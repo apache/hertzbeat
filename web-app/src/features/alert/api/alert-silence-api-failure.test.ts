@@ -25,9 +25,21 @@ describe('Alert Silence API failure boundary', () => {
       writeOutcome: 'rejected'
     },
     {
+      label: 'HTTP missing with a transport cause',
+      error: new ApiMessageError('offline', { status: 404, cause: new Error('private cause') }),
+      kind: 'unavailable',
+      writeOutcome: 'uncertain'
+    },
+    {
       label: 'backend missing',
       error: new ApiMessageError('missing', { code: 3, status: 200 }),
       kind: 'missing',
+      writeOutcome: 'uncertain'
+    },
+    {
+      label: 'backend missing with a transport cause',
+      error: new ApiMessageError('offline', { code: 3, status: 200, cause: new Error('private cause') }),
+      kind: 'unavailable',
       writeOutcome: 'uncertain'
     },
     {
@@ -89,6 +101,18 @@ describe('Alert Silence API failure boundary', () => {
       error: new ApiMessageError('rejected', { status: 400 }),
       kind: 'error',
       writeOutcome: 'rejected'
+    },
+    {
+      label: 'client response with a transport cause',
+      error: new ApiMessageError('offline', { status: 400, cause: new Error('private cause') }),
+      kind: 'unavailable',
+      writeOutcome: 'uncertain'
+    },
+    {
+      label: 'request timeout',
+      error: new ApiMessageError('timeout', { status: 408 }),
+      kind: 'error',
+      writeOutcome: 'uncertain'
     }
   ] as const)('maps $label to stable $kind/$writeOutcome domain evidence', ({ error, kind, writeOutcome }) => {
     expect(normalizeAlertSilenceApiFailure(error)).toMatchObject({ kind, writeOutcome });

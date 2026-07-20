@@ -6,6 +6,7 @@
  */
 
 import { ApiMessageError } from '@/core/http/api-message';
+import { apiMessageWriteOutcome } from '@/core/http/api-message-write-evidence';
 
 import { AlertSilenceMissingError, AlertSilenceRequestFailure, type AlertSilenceFailure } from '../alert-silence-model';
 
@@ -18,7 +19,7 @@ export function normalizeAlertSilenceApiFailure(error: unknown) {
     return error;
   }
   if (error instanceof ApiMessageError) {
-    return new AlertSilenceRequestFailure(readFailureKind(error), writeOutcome(error));
+    return new AlertSilenceRequestFailure(readFailureKind(error), apiMessageWriteOutcome(error));
   }
   return new AlertSilenceRequestFailure('error', 'uncertain');
 }
@@ -33,17 +34,11 @@ export async function alertSilenceApiRequest<T>(operation: () => Promise<T>): Pr
 }
 
 function readFailureKind(error: ApiMessageError): AlertSilenceFailure {
-  // AlertSilenceController reuses the shared MONITOR_NOT_EXIST_CODE (0x03)
-  // for a missing detail even though this resource is not a monitor.
-  if (error.status === 404 || (error.status === 200 && error.code === missingCode)) return 'missing';
   if (error.cause !== undefined || error.status === undefined || unavailableStatuses.has(error.status)) {
     return 'unavailable';
   }
+  // AlertSilenceController reuses the shared MONITOR_NOT_EXIST_CODE (0x03)
+  // for a missing detail even though this resource is not a monitor.
+  if (error.status === 404 || (error.status === 200 && error.code === missingCode)) return 'missing';
   return 'error';
-}
-
-function writeOutcome(error: ApiMessageError) {
-  // Envelope, malformed-success, network, and server failures can all arrive
-  // after persistence. Only an explicit HTTP client response permits retry.
-  return error.status !== undefined && error.status >= 400 && error.status < 500 ? 'rejected' : 'uncertain';
 }

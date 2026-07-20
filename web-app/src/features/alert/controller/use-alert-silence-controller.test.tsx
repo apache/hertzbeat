@@ -24,6 +24,7 @@ import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
+import { ApiMessageError } from '@/core/http/api-message';
 import {
   AlertSilenceContractError,
   AlertSilenceMissingError,
@@ -32,6 +33,7 @@ import {
   type AlertSilence
 } from '../alert-silence-model';
 import { alertSilenceDetailDraft } from '../alert-silence-page-model';
+import { normalizeAlertSilenceApiFailure } from '../api/alert-silence-api-failure';
 
 const api = vi.hoisted(() => ({
   deleteAlertSilence: vi.fn(),
@@ -380,6 +382,14 @@ describe('useAlertSilenceController', () => {
   it.each([
     ['network', new AlertSilenceRequestFailure('unavailable', 'uncertain')],
     ['5xx', new AlertSilenceRequestFailure('unavailable', 'uncertain')],
+    ['HTTP 408', normalizeAlertSilenceApiFailure(new ApiMessageError('timeout', { status: 408 }))],
+    [
+      'cause-bearing 4xx',
+      normalizeAlertSilenceApiFailure(
+        new ApiMessageError('offline', { status: 400, cause: new Error('private cause') })
+      )
+    ],
+    ['business envelope', normalizeAlertSilenceApiFailure(new ApiMessageError('failed', { code: 15, status: 200 }))],
     ['unknown', new Error('private provider failure')]
   ] as const)('locks an uncertain create after a %s failure and never repeats its POST', async (_label, reason) => {
     api.saveAlertSilence.mockRejectedValueOnce(reason).mockResolvedValueOnce(undefined);
