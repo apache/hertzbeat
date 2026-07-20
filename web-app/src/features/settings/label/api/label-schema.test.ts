@@ -22,23 +22,30 @@ import { parseLabelPage } from './label-schema';
 
 describe('Label response schema', () => {
   it('maps the Spring Page and omits nullable entity fields', () => {
-    expect(parseLabelPage({
-      content: [{
-        id: 7,
-        name: 'env',
-        tagValue: null,
-        description: null,
-        type: null,
-        creator: null,
-        modifier: null,
-        gmtCreate: null,
-        gmtUpdate: null
-      }],
-      totalElements: 1,
-      totalPages: 1,
-      number: 0,
-      size: 20
-    }, { pageIndex: 0, pageSize: 20 })).toEqual({
+    expect(
+      parseLabelPage(
+        {
+          content: [
+            {
+              id: 7,
+              name: 'env',
+              tagValue: null,
+              description: null,
+              type: null,
+              creator: null,
+              modifier: null,
+              gmtCreate: null,
+              gmtUpdate: null
+            }
+          ],
+          totalElements: 1,
+          totalPages: 1,
+          number: 0,
+          size: 20
+        },
+        { pageIndex: 0, pageSize: 20 }
+      )
+    ).toEqual({
       content: [{ id: 7, name: 'env' }],
       totalElements: 1,
       totalPages: 1,
@@ -50,13 +57,16 @@ describe('Label response schema', () => {
   it('uses a sanitized stable error for malformed content', () => {
     let error: unknown;
     try {
-      parseLabelPage({
-        content: [{ id: 7, name: 'private-label-response', tagValue: [] }],
-        totalElements: 1,
-        totalPages: 1,
-        number: 0,
-        size: 20
-      }, { pageIndex: 0, pageSize: 20 });
+      parseLabelPage(
+        {
+          content: [{ id: 7, name: 'private-label-response', tagValue: [] }],
+          totalElements: 1,
+          totalPages: 1,
+          number: 0,
+          size: 20
+        },
+        { pageIndex: 0, pageSize: 20 }
+      );
     } catch (reason) {
       error = reason;
     }
@@ -65,19 +75,42 @@ describe('Label response schema', () => {
     expect(JSON.stringify(error)).not.toContain('private-label-response');
   });
 
+  it('rejects an otherwise exact page with duplicate stable ids', () => {
+    expect(() =>
+      parseLabelPage(
+        {
+          content: [
+            { id: 7, name: 'env' },
+            { id: 7, name: 'service' }
+          ],
+          totalElements: 2,
+          totalPages: 1,
+          number: 0,
+          size: 20
+        },
+        { pageIndex: 0, pageSize: 20 }
+      )
+    ).toThrow(LabelContractError);
+  });
+
   it('keeps the documented legacy numeric timestamp compatibility', () => {
-    const page = parseLabelPage({
-      content: [{
-        id: 7,
-        name: 'env',
-        gmtCreate: 1_650_000_000_000,
-        gmtUpdate: '2026-07-18T10:30:00'
-      }],
-      totalElements: 1,
-      totalPages: 1,
-      number: 0,
-      size: 20
-    }, { pageIndex: 0, pageSize: 20 });
+    const page = parseLabelPage(
+      {
+        content: [
+          {
+            id: 7,
+            name: 'env',
+            gmtCreate: 1_650_000_000_000,
+            gmtUpdate: '2026-07-18T10:30:00'
+          }
+        ],
+        totalElements: 1,
+        totalPages: 1,
+        number: 0,
+        size: 20
+      },
+      { pageIndex: 0, pageSize: 20 }
+    );
 
     expect(page.content[0]).toMatchObject({
       gmtCreate: 1_650_000_000_000,

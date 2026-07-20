@@ -17,11 +17,7 @@
 
 import { z } from 'zod';
 
-import {
-  LabelContractError,
-  type LabelPage,
-  type LabelRecord
-} from '../model/label-model';
+import { LabelContractError, type LabelPage, type LabelRecord } from '../model/label-model';
 
 const safeIntegerSchema = z.number().refine(Number.isSafeInteger);
 const positiveIntegerSchema = safeIntegerSchema.refine(value => value > 0);
@@ -60,12 +56,16 @@ export function parseLabelPage(value: unknown, request: LabelPageRequest): Label
 
   const page = result.data;
   const expectedTotalPages = Math.ceil(page.totalElements / page.size);
-  const remainingElements = page.totalElements - (page.number * page.size);
+  const remainingElements = page.totalElements - page.number * page.size;
   const expectedContentSize = Math.max(0, Math.min(page.size, remainingElements));
-  if (page.number !== request.pageIndex
-    || page.size !== request.pageSize
-    || page.content.length !== expectedContentSize
-    || page.totalPages !== expectedTotalPages) {
+  const hasUniqueIds = new Set(page.content.map(label => label.id)).size === page.content.length;
+  if (
+    page.number !== request.pageIndex ||
+    page.size !== request.pageSize ||
+    page.content.length !== expectedContentSize ||
+    page.totalPages !== expectedTotalPages ||
+    !hasUniqueIds
+  ) {
     throw new LabelContractError('Label page identity is invalid');
   }
 
