@@ -245,6 +245,47 @@ describe('notice rule controller', () => {
     expect(result.current.state.draft).toMatchObject({ name: '', receiverIds: [] });
   });
 
+  it('retires the previous draft while a different detail loads and blocks stale submit', async () => {
+    const next = deferred<{ data: typeof rule }>();
+    mocks.getOne.mockReset();
+    mocks.getOne.mockResolvedValueOnce({ data: rule }).mockReturnValueOnce(next.promise);
+    const { result } = renderHook(() => useNoticeRuleController());
+    await act(async () => result.current.actions.edit(31));
+    expect(result.current.state.draft).toMatchObject({ id: 31 });
+
+    let nextEdit!: Promise<void>;
+    act(() => {
+      nextEdit = result.current.actions.edit(32);
+    });
+    expect(result.current.state.draft).toBeNull();
+
+    await act(async () => result.current.actions.submit());
+    expect(mocks.update).not.toHaveBeenCalled();
+
+    act(() => next.resolve({ data: { ...rule, id: 32, name: 'Latest' } }));
+    await act(async () => nextEdit);
+    expect(result.current.state.draft).toMatchObject({ id: 32, name: 'Latest' });
+  });
+
+  it('does not restore a stale draft when the next detail fails', async () => {
+    const next = deferred<{ data: typeof rule }>();
+    mocks.getOne.mockReset();
+    mocks.getOne.mockResolvedValueOnce({ data: rule }).mockReturnValueOnce(next.promise);
+    const { result } = renderHook(() => useNoticeRuleController());
+    await act(async () => result.current.actions.edit(31));
+
+    let nextEdit!: Promise<void>;
+    act(() => {
+      nextEdit = result.current.actions.edit(32);
+    });
+    expect(result.current.state.draft).toBeNull();
+
+    act(() => next.reject(new NoticeRuleRequestFailure('error')));
+    await act(async () => nextEdit);
+    expect(result.current.state.draft).toBeNull();
+    expect(mocks.notification).toHaveBeenCalledWith(expect.objectContaining({ message: 'noticeRules.read.error' }));
+  });
+
   it('atomically clears both template identity fields when receivers become incompatible', () => {
     const { result } = renderHook(() => useNoticeRuleController());
     act(() => void result.current.actions.create());
@@ -436,8 +477,10 @@ function failed(error: unknown) {
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
-  const promise = new Promise<T>(done => {
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((done, fail) => {
     resolve = done;
+    reject = fail;
   });
-  return { promise, resolve };
+  return { promise, reject, resolve };
 }

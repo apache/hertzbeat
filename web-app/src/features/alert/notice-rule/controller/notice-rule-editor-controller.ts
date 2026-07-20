@@ -166,7 +166,7 @@ function useNoticeRuleDetail({
   gate: NoticeRuleCommandGate;
   loadDetail: (id: number) => Promise<NoticeRule>;
   reportReadFailure: (reason: unknown) => void;
-  setDraft: (draft: NoticeRuleDraft | null) => void;
+  setDraft: Dispatch<SetStateAction<NoticeRuleDraft | null>>;
 }) {
   const detailEpochRef = useRef(0);
   const pendingDetailRef = useRef<{ id: number; epoch: number; promise: Promise<void> } | undefined>(undefined);
@@ -179,6 +179,8 @@ function useNoticeRuleDetail({
     if (pendingDetailRef.current?.id === id) return pendingDetailRef.current.promise;
     const epoch = detailEpochRef.current + 1;
     detailEpochRef.current = epoch;
+    // Retire another identity before its draft can be submitted while this detail is pending.
+    setDraft(current => (current?.id === id ? current : null));
     const promise = (async () => {
       try {
         const detail = await loadDetail(id);
