@@ -19,16 +19,12 @@ import { App } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import type { RemotePageState } from '@/shared/remote-state';
-
 import { classifyAlertRuleReadError } from '../alert-rule-api';
-import type { AlertRule, AlertRulePage } from '../alert-rule-model';
+import type { AlertRuleListState, AlertRulePage } from '../alert-rule-model';
 import { createAlertRuleListActions } from './alert-rule-list-actions';
 import { useAlertRuleListOperations } from './use-alert-rule-list-operations';
 import { useAlertRuleListQueryController } from './use-alert-rule-list-query-controller';
 import { useAlertRuleListReadController } from './use-alert-rule-list-read-controller';
-
-export type AlertRuleListState = RemotePageState<AlertRule, 'unavailable' | 'error'>;
 
 export function useAlertRuleListController() {
   const { t } = useTranslation();

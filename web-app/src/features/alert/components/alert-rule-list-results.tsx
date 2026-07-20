@@ -9,8 +9,7 @@ import { Alert, Button, Empty, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 
-import { alertRulePageSizes, type AlertRule } from '../alert-rule-model';
-import type { AlertRuleListState } from '../controller/use-alert-rule-list-controller';
+import { alertRulePageSizes, type AlertRule, type AlertRuleListState } from '../alert-rule-model';
 
 type AlertRuleListResultsProps = {
   state: AlertRuleListState;

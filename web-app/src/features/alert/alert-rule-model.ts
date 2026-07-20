@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import type { RemotePageState } from '@/shared/remote-state';
+
 export const alertRulePageSizes = [8, 15, 25] as const;
 export const alertRuleTypes = [
   'realtime_metric', 'periodic_metric', 'realtime_log', 'periodic_log', 'periodic_trace'
@@ -76,6 +78,8 @@ export type AlertRulePage = {
   number: number;
   size: number;
 };
+
+export type AlertRuleListState = RemotePageState<AlertRule, 'unavailable' | 'error'>;
 
 export class AlertRuleContractError extends Error {
   constructor(message: string, options?: ErrorOptions) {
