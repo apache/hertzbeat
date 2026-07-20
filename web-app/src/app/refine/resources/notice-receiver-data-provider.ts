@@ -22,12 +22,9 @@ import {
   loadNoticeReceivers,
   saveNoticeReceiver
 } from '@/features/alert/notice-receiver/api/notice-receiver-api';
-import { normalizeNoticeReceiverApiFailure } from '@/features/alert/notice-receiver/api/notice-receiver-api-failure';
 import {
   NoticeReceiverRequestFailure,
-  withNoticeReceiverMutation,
-  type NoticeReceiverFailureKind,
-  type NoticeReceiverWriteOutcome
+  withNoticeReceiverMutation
 } from '@/features/alert/notice-receiver/model/notice-receiver-failure';
 import { noticeReceiverResourceName } from '@/features/alert/notice-receiver/notice-receiver-resource';
 import type {
@@ -38,7 +35,10 @@ import { requireNoticeReceiverConverged } from '@/features/alert/notice-receiver
 import { noticeApiEndpoint } from '@/features/alert/notice-api-endpoints';
 import { adaptRefineRecord, adaptRefineRecords } from '@/shared/refine/refine-provider-data';
 
-import { isRefineHttpError, type RefineHttpError } from '../refine-http-error';
+import {
+  normalizeNoticeReceiverProviderFailure,
+  readNoticeReceiverWriteInput
+} from './notice-receiver-data-provider-failure';
 import {
   readNoticeReceiverDeleteRecord,
   readNoticeReceiverDraft,
@@ -48,7 +48,7 @@ import {
 
 export const noticeReceiverDataProvider: DataProvider = {
   getList<TData extends BaseRecord = BaseRecord>(params: GetListParams): Promise<GetListResponse<TData>> {
-    return protect(async () => {
+    return protect('collection', async () => {
       assertResource(params.resource);
       const page = await loadNoticeReceivers(readNoticeReceiverListQuery(params));
       return { data: adaptRefineRecords<TData>(page.content), total: page.totalElements };
@@ -59,7 +59,7 @@ export const noticeReceiverDataProvider: DataProvider = {
     resource: string;
     id: string | number;
   }): Promise<GetOneResponse<TData>> {
-    return protect(async () => {
+    return protect('detail', async () => {
       assertResource(params.resource);
       const id = readNoticeReceiverId(params.id);
       const receiver = await loadNoticeReceiver(id);
@@ -72,9 +72,9 @@ export const noticeReceiverDataProvider: DataProvider = {
     resource: string;
     variables: TVariables;
   }): Promise<CreateResponse<TData>> {
-    return protect(async () => {
+    return protect('write', async () => {
       assertResource(params.resource);
-      const draft = readNoticeReceiverDraft(params.variables);
+      const draft = readNoticeReceiverWriteInput(() => readNoticeReceiverDraft(params.variables));
       const mutation = await saveNoticeReceiver(draft);
       assertMutation(mutation, 'created');
       const canonical = await requireCanonicalAfterMutation(mutation, draft);
@@ -87,10 +87,12 @@ export const noticeReceiverDataProvider: DataProvider = {
     id: string | number;
     variables: TVariables;
   }): Promise<UpdateResponse<TData>> {
-    return protect(async () => {
+    return protect('write', async () => {
       assertResource(params.resource);
-      const id = readNoticeReceiverId(params.id);
-      const draft = readNoticeReceiverDraft(params.variables, id);
+      const { id, draft } = readNoticeReceiverWriteInput(() => {
+        const id = readNoticeReceiverId(params.id);
+        return { id, draft: readNoticeReceiverDraft(params.variables, id) };
+      });
       const mutation = await saveNoticeReceiver(draft);
       assertMutation(mutation, 'updated', id);
       const canonical = await requireCanonicalAfterMutation(mutation, draft);
@@ -103,10 +105,12 @@ export const noticeReceiverDataProvider: DataProvider = {
     id: string | number;
     variables?: TVariables;
   }): Promise<DeleteOneResponse<TData>> {
-    return protect(async () => {
+    return protect('write', async () => {
       assertResource(params.resource);
-      const id = readNoticeReceiverId(params.id);
-      const canonical = readNoticeReceiverDeleteRecord(params.variables, id);
+      const { id, canonical } = readNoticeReceiverWriteInput(() => {
+        const id = readNoticeReceiverId(params.id);
+        return { id, canonical: readNoticeReceiverDeleteRecord(params.variables, id) };
+      });
       const mutation = await deleteNoticeReceiver(id);
       if (mutation.status === 'missing') throw rejectedFailure('missing', 'NOTICE_RECEIVER_MISSING');
       if (mutation.status !== 'deleted' || mutation.id !== id || mutation.receiver !== null) {
@@ -119,38 +123,12 @@ export const noticeReceiverDataProvider: DataProvider = {
   getApiUrl: () => noticeApiEndpoint
 };
 
-async function protect<T>(operation: () => Promise<T>): Promise<T> {
+async function protect<T>(phase: 'detail' | 'collection' | 'write', operation: () => Promise<T>): Promise<T> {
   try {
     return await operation();
   } catch (reason) {
-    throw providerFailure(reason);
+    throw normalizeNoticeReceiverProviderFailure(reason, phase);
   }
-}
-
-function providerFailure(reason: unknown): NoticeReceiverRequestFailure {
-  if (reason instanceof NoticeReceiverRequestFailure) return reason;
-  if (isRefineHttpError(reason)) {
-    const code = stableReceiverCode(reason.code);
-    return code === undefined
-      ? new NoticeReceiverRequestFailure(refineFailureKind(reason), refineWriteOutcome(reason))
-      : new NoticeReceiverRequestFailure(refineFailureKind(reason), refineWriteOutcome(reason), { code });
-  }
-  return normalizeNoticeReceiverApiFailure(reason);
-}
-
-function refineFailureKind(reason: RefineHttpError): NoticeReceiverFailureKind {
-  if (reason.statusCode === 404 || reason.code === 'NOTICE_RECEIVER_MISSING') return 'missing';
-  if (typeof reason.code === 'string' && reason.code.startsWith('NOTICE_RECEIVER_')) return 'invalid';
-  if (reason.statusCode === 0 || reason.kind === 'network' || reason.statusCode >= 500) return 'unavailable';
-  return 'error';
-}
-
-function refineWriteOutcome(reason: RefineHttpError): NoticeReceiverWriteOutcome {
-  return reason.statusCode >= 400 && reason.statusCode < 500 ? 'rejected' : 'uncertain';
-}
-
-function stableReceiverCode(code: string | number | undefined) {
-  return typeof code === 'string' && code.startsWith('NOTICE_RECEIVER_') ? code : undefined;
 }
 
 function assertResource(resource: string) {
@@ -172,7 +150,7 @@ async function requireCanonicalAfterMutation(mutation: NoticeReceiverMutation, d
   try {
     return await requireCanonical(mutation.id, draft);
   } catch (reason) {
-    throw withNoticeReceiverMutation(providerFailure(reason), mutation);
+    throw withNoticeReceiverMutation(normalizeNoticeReceiverProviderFailure(reason, 'detail'), mutation);
   }
 }
 

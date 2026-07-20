@@ -28,6 +28,8 @@ import {
   type NoticeReceiverDraft
 } from '@/features/alert/notice-receiver/model/notice-receiver-model';
 
+import { createRefineHttpError } from '../refine-http-error';
+
 const api = vi.hoisted(() => ({
   deleteNoticeReceiver: vi.fn(),
   loadNoticeReceiver: vi.fn(),
@@ -271,12 +273,112 @@ describe('Notice Receiver Refine data provider', () => {
     });
     await expect(
       noticeReceiverDataProvider.create({ resource: 'notice-receivers', variables: {} })
-    ).rejects.toMatchObject({ code: 'NOTICE_RECEIVER_VARIABLES_INVALID' });
+    ).rejects.toMatchObject({
+      code: 'NOTICE_RECEIVER_VARIABLES_INVALID',
+      kind: 'invalid',
+      writeOutcome: 'rejected'
+    });
+    await expect(
+      noticeReceiverDataProvider.update({ resource: 'notice-receivers', id: '7', variables: draft })
+    ).rejects.toMatchObject({
+      code: 'NOTICE_RECEIVER_ID_INVALID',
+      kind: 'invalid',
+      writeOutcome: 'rejected'
+    });
+    await expect(
+      noticeReceiverDataProvider.deleteOne({
+        resource: 'notice-receivers',
+        id: 7,
+        variables: { ...receiver, id: 8 }
+      })
+    ).rejects.toMatchObject({
+      code: 'NOTICE_RECEIVER_VARIABLES_INVALID',
+      kind: 'invalid',
+      writeOutcome: 'rejected'
+    });
     expect(api.loadNoticeReceivers).not.toHaveBeenCalled();
     expect(api.loadNoticeReceiver).not.toHaveBeenCalled();
     expect(api.saveNoticeReceiver).not.toHaveBeenCalled();
+    expect(api.deleteNoticeReceiver).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [
+      'display-only envelope status',
+      createRefineHttpError('private', 404, 15, 'envelope', 200),
+      'write',
+      'error',
+      'uncertain'
+    ],
+    [
+      'detail envelope with a display 404',
+      createRefineHttpError('private', 404, 15, 'envelope', 200),
+      'detail',
+      'error',
+      'uncertain'
+    ],
+    [
+      'network with a display 404',
+      createRefineHttpError('private', 404, 'NOTICE_RECEIVER_MISSING', 'network'),
+      'write',
+      'unavailable',
+      'uncertain'
+    ],
+    ['HTTP timeout', createRefineHttpError('private', 408, undefined, 'http', 408), 'write', 'error', 'uncertain'],
+    [
+      'zero source status',
+      createRefineHttpError('private', 0, 'NOTICE_RECEIVER_MISSING', 'http', 0),
+      'write',
+      'unavailable',
+      'uncertain'
+    ],
+    [
+      'source rejection with a business code',
+      createRefineHttpError('private', 400, 15, 'http', 422),
+      'write',
+      'error',
+      'rejected'
+    ],
+    [
+      'detail source rejection',
+      createRefineHttpError('private', 422, undefined, 'http', 422),
+      'detail',
+      'error',
+      'uncertain'
+    ],
+    [
+      'collection source rejection',
+      createRefineHttpError('private', 422, undefined, 'http', 422),
+      'collection',
+      'error',
+      'uncertain'
+    ],
+    [
+      'exact detail source missing',
+      createRefineHttpError('private', 404, undefined, 'http', 404),
+      'detail',
+      'missing',
+      'uncertain'
+    ]
+  ] as const)('normalizes Refine %s evidence', async (_label, reason, phase, kind, writeOutcome) => {
+    if (phase === 'write') api.saveNoticeReceiver.mockRejectedValueOnce(reason);
+    if (phase === 'detail') api.loadNoticeReceiver.mockRejectedValueOnce(reason);
+    if (phase === 'collection') api.loadNoticeReceivers.mockRejectedValueOnce(reason);
+
+    await expect(requestForPhase(phase)).rejects.toMatchObject({ kind, writeOutcome });
   });
 });
+
+function requestForPhase(phase: 'write' | 'detail' | 'collection') {
+  switch (phase) {
+    case 'write':
+      return noticeReceiverDataProvider.create({ resource: 'notice-receivers', variables: draft });
+    case 'detail':
+      return noticeReceiverDataProvider.getOne({ resource: 'notice-receivers', id: 7 });
+    case 'collection':
+      return noticeReceiverDataProvider.getList({ resource: 'notice-receivers' });
+  }
+}
 
 describe('Notice Receiver provider input boundary', () => {
   it('keeps list normalization and every established unsupported or invalid error code', () => {

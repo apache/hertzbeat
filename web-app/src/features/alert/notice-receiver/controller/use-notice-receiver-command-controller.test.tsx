@@ -3,6 +3,9 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ApiMessageError } from '@/core/http/api-message';
+
+import { normalizeNoticeReceiverApiFailure } from '../api/notice-receiver-api-failure';
 import { NoticeReceiverRequestFailure, withNoticeReceiverMutation } from '../model/notice-receiver-failure';
 import type { NoticeReceiverMutation } from '../model/notice-receiver-model';
 
@@ -154,6 +157,21 @@ describe('notice receiver command controller', () => {
 
     expect(refine.create).toHaveBeenCalledTimes(2);
     expect(result.current.state.draft).toBeNull();
+  });
+
+  it('keeps a timed-out write locked when submit is pressed again', async () => {
+    refine.create.mockRejectedValueOnce(
+      normalizeNoticeReceiverApiFailure(new ApiMessageError('private timeout', { status: 408 }), 'write')
+    );
+    const { result } = renderCommandController();
+    openValidDraft(result.current.actions);
+
+    await act(async () => result.current.actions.submit());
+    expect(result.current.state.command).toBe('recovering');
+    await act(async () => result.current.actions.submit());
+
+    expect(refine.create).toHaveBeenCalledTimes(1);
+    expect(result.current.state.recovery).toEqual({ kind: 'save', phase: 'commit-uncertain', retryable: false });
   });
 
   it('retries only list projection after an acknowledged create without repeating POST', async () => {
