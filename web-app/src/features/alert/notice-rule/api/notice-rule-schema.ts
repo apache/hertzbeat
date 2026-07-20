@@ -116,12 +116,13 @@ const noticeRulePageSchema = z
 
 export function parseNoticeRulePage(value: unknown, query: NoticeRuleQuery) {
   const page = parse(noticeRulePageSchema, value, 'NOTICE_RULE_PAGE_INVALID');
+  const expectedContentSize = Math.max(0, Math.min(page.size, page.totalElements - page.number * page.size));
   if (
     page.number !== query.pageIndex ||
     page.size !== query.pageSize ||
-    page.totalElements < page.content.length ||
     page.totalPages !== Math.ceil(page.totalElements / query.pageSize) ||
-    page.content.length > query.pageSize
+    page.content.length !== expectedContentSize ||
+    new Set(page.content.map(rule => rule.id)).size !== page.content.length
   ) {
     throw new NoticeRuleContractError('NOTICE_RULE_PAGE_INVALID');
   }
