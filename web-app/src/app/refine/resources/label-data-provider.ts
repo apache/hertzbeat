@@ -25,7 +25,13 @@ import type {
   UpdateResponse
 } from '@refinedev/core';
 
-import { deleteLabel, findCanonicalLabel, loadLabels, saveLabel } from '@/features/settings/label/api/label-api';
+import {
+  deleteLabel,
+  findCanonicalLabel,
+  labelEndpoint,
+  loadLabels,
+  saveLabel
+} from '@/features/settings/label/api/label-api';
 import { LabelContractError, type LabelIdentity, type LabelRecord } from '@/features/settings/label/model/label-model';
 import { isLabelPageSize } from '@/features/settings/label/model/label-query-model';
 import { adaptRefineRecord, adaptRefineRecords } from '@/shared/refine/refine-provider-data';
@@ -101,7 +107,7 @@ export const labelDataProvider: DataProvider = {
     });
   },
 
-  getApiUrl: () => '/api/label'
+  getApiUrl: () => labelEndpoint
 };
 
 async function protect<T>(operation: () => Promise<T>): Promise<T> {

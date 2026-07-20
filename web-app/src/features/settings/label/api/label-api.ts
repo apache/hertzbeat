@@ -17,15 +17,12 @@
 
 import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
 
-import {
-  LabelContractError,
-  type LabelIdentity,
-  type LabelPage,
-  type LabelRecord
-} from '../model/label-model';
+import { LabelContractError, type LabelIdentity, type LabelPage, type LabelRecord } from '../model/label-model';
 import { parseLabelPage } from './label-schema';
 
 export type LabelListRequest = { search: string; pageIndex: number; pageSize: number };
+
+export const labelEndpoint = '/api/label';
 
 export type LabelPayload = {
   id?: number;
@@ -53,11 +50,11 @@ export async function loadLabels(query: LabelListRequest) {
 
 export function saveLabel(label: Partial<LabelRecord>, isNew: boolean) {
   const payload = buildLabelPayload(label, isNew);
-  return isNew ? apiMessagePost('/api/label', payload) : apiMessagePut('/api/label', payload);
+  return isNew ? apiMessagePost(labelEndpoint, payload) : apiMessagePut(labelEndpoint, payload);
 }
 
 export function deleteLabel(id: number) {
-  return apiMessageDelete(`/api/label?ids=${encodeURIComponent(id)}`);
+  return apiMessageDelete(`${labelEndpoint}?ids=${encodeURIComponent(id)}`);
 }
 
 export async function findCanonicalLabel(identity: LabelIdentity) {
@@ -77,11 +74,14 @@ export async function findCanonicalLabel(identity: LabelIdentity) {
     pages.push(page);
   }
 
-  const matches = pages.flatMap(page => page.content).filter(label => (
-    (identity.id === undefined || label.id === identity.id)
-    && label.name.trim() === expectedName
-    && normalizeLabelValue(label.tagValue) === expectedValue
-  ));
+  const matches = pages
+    .flatMap(page => page.content)
+    .filter(
+      label =>
+        (identity.id === undefined || label.id === identity.id) &&
+        label.name.trim() === expectedName &&
+        normalizeLabelValue(label.tagValue) === expectedValue
+    );
   if (matches.length > 1) throw new LabelContractError('Label canonical proof is ambiguous');
   return matches[0];
 }
@@ -92,7 +92,7 @@ export function buildLabelListPath(query: LabelListRequest) {
     pageSize: String(query.pageSize)
   });
   if (query.search) params.set('search', query.search);
-  return `/api/label?${params.toString()}`;
+  return `${labelEndpoint}?${params.toString()}`;
 }
 
 export function buildLabelPayload(label: Partial<LabelRecord>, isNew: boolean): LabelPayload {
@@ -101,23 +101,24 @@ export function buildLabelPayload(label: Partial<LabelRecord>, isNew: boolean): 
     name: label.name?.trim() ?? '',
     tagValue: label.tagValue?.trim() ?? '',
     description: label.description?.trim() ?? '',
-    type: isNew ? 1 : label.type ?? 1
+    type: isNew ? 1 : (label.type ?? 1)
   };
 }
 
 function assertBoundedProof(totalPages: number) {
-  if (!Number.isSafeInteger(totalPages) || totalPages < 0
-    || totalPages > maximumLabelCanonicalProofPages) {
+  if (!Number.isSafeInteger(totalPages) || totalPages < 0 || totalPages > maximumLabelCanonicalProofPages) {
     throw new LabelCanonicalProofLimitError();
   }
 }
 
 function assertStableProofPage(page: LabelPage, first: LabelPage, expectedPage: number) {
   assertBoundedProof(page.totalPages);
-  if (page.number !== expectedPage
-    || page.totalElements !== first.totalElements
-    || page.totalPages !== first.totalPages
-    || page.size !== first.size) {
+  if (
+    page.number !== expectedPage ||
+    page.totalElements !== first.totalElements ||
+    page.totalPages !== first.totalPages ||
+    page.size !== first.size
+  ) {
     throw new LabelContractError('Label canonical page set changed during proof');
   }
 }
