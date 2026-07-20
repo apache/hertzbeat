@@ -18,9 +18,32 @@ describe('Bulletin API failure boundary', () => {
       'uncertain'
     ],
     ['server write', new ApiMessageError('private', { status: 503 }), 'update', 'unavailable', 'uncertain'],
+    ['timeout write', new ApiMessageError('private', { status: 408 }), 'create', 'error', 'uncertain'],
+    [
+      'cause-bearing client write',
+      new ApiMessageError('private', { status: 400, cause: new Error('private-cause') }),
+      'update',
+      'unavailable',
+      'uncertain'
+    ],
     ['HTTP rejection', new ApiMessageError('private', { status: 422 }), 'delete', 'error', 'rejected'],
+    [
+      'HTTP rejection carrying a business code',
+      new ApiMessageError('private', { code: 15, status: 422 }),
+      'delete',
+      'error',
+      'rejected'
+    ],
     ['business envelope', new ApiMessageError('private', { code: 15, status: 200 }), 'create', 'error', 'uncertain'],
     ['detail absence', new ApiMessageError('private', { status: 404 }), 'read-detail', 'missing', 'uncertain'],
+    [
+      'detail absence carrying a transport cause',
+      new ApiMessageError('private', { status: 404, cause: new Error('private-cause') }),
+      'read-detail',
+      'unavailable',
+      'uncertain'
+    ],
+    ['list client response', new ApiMessageError('private', { status: 422 }), 'list', 'error', 'uncertain'],
     [
       'metrics unavailable',
       new ApiMessageError('private', { code: 15, status: 200 }),

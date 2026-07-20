@@ -1,6 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { ApiMessageError } from '@/core/http/api-message';
+import { apiMessageWriteOutcome } from '@/core/http/api-message-write-evidence';
 
 import { BulletinRequestFailure, type BulletinFailureKind, type BulletinWriteOutcome } from '../model/bulletin-failure';
 import { BulletinContractError } from './bulletin-schema';
@@ -26,20 +27,17 @@ export async function bulletinApiRequest<T>(operation: BulletinApiOperation, req
 }
 
 function failureKind(reason: ApiMessageError, operation: BulletinApiOperation): BulletinFailureKind {
-  if (operation === 'read-detail' && reason.status === 404) return 'missing';
-  if (operation === 'metrics' && reason.status === 200 && reason.code === 15) return 'unavailable';
   if (reason.cause !== undefined || reason.status == null || reason.status === 0 || reason.status >= 500) {
     return 'unavailable';
   }
+  if (operation === 'read-detail' && reason.status === 404) return 'missing';
+  if (operation === 'metrics' && reason.status === 200 && reason.code === 15) return 'unavailable';
   return 'error';
 }
 
 function writeOutcome(reason: ApiMessageError, operation: BulletinApiOperation): BulletinWriteOutcome {
   if (!isWriteOperation(operation)) return 'uncertain';
-  // Only an explicit HTTP 4xx proves that the backend rejected this mutation.
-  return reason.code === undefined && reason.status != null && reason.status >= 400 && reason.status < 500
-    ? 'rejected'
-    : 'uncertain';
+  return apiMessageWriteOutcome(reason);
 }
 
 function isWriteOperation(operation: BulletinApiOperation) {

@@ -3,6 +3,9 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ApiMessageError } from '@/core/http/api-message';
+
+import { normalizeBulletinApiFailure } from '../api/bulletin-api-failure';
 import { BulletinRequestFailure } from '../model/bulletin-failure';
 import type { BulletinRecovery } from '../model/bulletin-operation-state';
 import { bulletinQueryKeys } from './bulletin-query-keys';
@@ -240,11 +243,25 @@ describe('Bulletin transactions controller', () => {
     expect(mocks.proveBulletinCreated).toHaveBeenCalledTimes(1);
   });
 
-  it('retains ambiguous update proof and never repeats PUT during recovery', async () => {
+  it.each([
+    ['typed uncertainty', new BulletinRequestFailure('error', 'uncertain')],
+    ['HTTP 408', normalizeBulletinApiFailure(new ApiMessageError('timeout', { status: 408 }), 'update')],
+    [
+      'cause-bearing 4xx',
+      normalizeBulletinApiFailure(
+        new ApiMessageError('offline', { status: 400, cause: new Error('private cause') }),
+        'update'
+      )
+    ],
+    [
+      'business envelope',
+      normalizeBulletinApiFailure(new ApiMessageError('failed', { code: 15, status: 200 }), 'update')
+    ]
+  ] as const)('retains ambiguous update proof for %s and never repeats PUT during recovery', async (_label, reason) => {
     const context = createContext();
     context.initialDraft.id = 7;
     context.refresh.mockResolvedValue(true);
-    mocks.updateBulletin.mockRejectedValue(new BulletinRequestFailure('error', 'uncertain'));
+    mocks.updateBulletin.mockRejectedValue(reason);
     mocks.proveBulletinUpdated
       .mockRejectedValueOnce(new BulletinRequestFailure('invalid', 'uncertain'))
       .mockResolvedValueOnce(bulletin(7, 'Operations'));
