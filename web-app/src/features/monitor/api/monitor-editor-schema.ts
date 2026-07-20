@@ -17,7 +17,7 @@
 
 import { z } from 'zod';
 
-import { MonitorContractError, type MonitorCollector, type MonitorParamDefine } from '../model/monitor-contract';
+import { MonitorContractError, type MonitorParamDefine } from '../model/monitor-contract';
 import {
   javaByteSchema,
   nonEmptyStringSchema,
@@ -56,7 +56,10 @@ const paramDefineSchema = z.object({
 
 const paramDefinesSchema = z.array(paramDefineSchema);
 
-const collectorStatusSchema = javaByteSchema.refine(value => value <= 1);
+const collectorStatusSchema = javaByteSchema.refine(value => value >= 0 && value <= 1);
+export const monitorCollectorPageSize = 200;
+// The editor needs every eligible Collector, but caps the read at 4,000 records to keep the scan bounded.
+const maximumMonitorCollectorPages = 20;
 const collectorSummarySchema = z.object({
   collector: z.object({
     name: nonEmptyStringSchema,
@@ -66,7 +69,7 @@ const collectorSummarySchema = z.object({
 const collectorPageSchema = z.object({
   content: z.array(collectorSummarySchema),
   totalElements: nonNegativeIntegerSchema,
-  totalPages: nonNegativeIntegerSchema.refine(value => value <= 20),
+  totalPages: nonNegativeIntegerSchema.refine(value => value <= maximumMonitorCollectorPages),
   number: nonNegativeIntegerSchema,
   size: positiveIntegerSchema
 });
@@ -84,13 +87,14 @@ export function parseMonitorCollectorPage(value: unknown, requestedPage: number)
   const result = collectorPageSchema.safeParse(value);
   if (!result.success) throw new MonitorContractError();
   const page = result.data;
+  const remaining = Math.max(0, page.totalElements - page.number * page.size);
+  const expectedContentSize = Math.min(page.size, remaining);
   // Pagination consistency depends on request context and therefore follows wire validation.
   if (
     page.number !== requestedPage ||
-    page.size !== 200 ||
+    page.size !== monitorCollectorPageSize ||
     page.totalPages !== Math.ceil(page.totalElements / page.size) ||
-    page.content.length > page.size ||
-    (requestedPage + 1 < page.totalPages && page.content.length !== page.size)
+    page.content.length !== expectedContentSize
   ) {
     throw new MonitorContractError('Collector page identity is inconsistent with the request');
   }
@@ -99,13 +103,11 @@ export function parseMonitorCollectorPage(value: unknown, requestedPage: number)
       name: summary.collector.name,
       online: summary.collector.status === 0
     })),
-    totalPages: page.totalPages
+    totalElements: page.totalElements,
+    totalPages: page.totalPages,
+    number: page.number,
+    size: page.size
   };
-}
-
-export function requireUniqueMonitorCollectors(collectors: MonitorCollector[]) {
-  const names = new Set(collectors.map(collector => collector.name));
-  if (names.size !== collectors.length) throw new MonitorContractError('Collector identity must be unique');
 }
 
 function mapParamDefine(wire: ParamDefineWire, requestedApp: string): MonitorParamDefine {

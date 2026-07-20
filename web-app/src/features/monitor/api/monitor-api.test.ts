@@ -574,7 +574,7 @@ describe('monitor editor API contracts', () => {
     expect(http.apiMessageGet).toHaveBeenCalledWith('/api/collector?pageIndex=0&pageSize=200', { signal });
   });
 
-  it('reads all collector pages and rejects a duplicate identity across pages', async () => {
+  it('reads all collector pages with stable pagination metadata', async () => {
     const firstPage = Array.from({ length: 200 }, (_, index) => ({
       collector: { name: `collector-${index}`, status: 0 }
     }));
@@ -589,8 +589,12 @@ describe('monitor editor API contracts', () => {
       });
     await expect(loadMonitorCollectors()).resolves.toHaveLength(201);
     expect(http.apiMessageGet).toHaveBeenNthCalledWith(2, '/api/collector?pageIndex=1&pageSize=200');
+  });
 
-    http.apiMessageGet.mockReset();
+  it('rejects duplicate collector identities across pages', async () => {
+    const firstPage = Array.from({ length: 200 }, (_, index) => ({
+      collector: { name: `collector-${index}`, status: 0 }
+    }));
     http.apiMessageGet
       .mockResolvedValueOnce({ content: firstPage, totalElements: 201, totalPages: 2, number: 0, size: 200 })
       .mockResolvedValueOnce({
@@ -600,6 +604,34 @@ describe('monitor editor API contracts', () => {
         number: 1,
         size: 200
       });
+    await expect(loadMonitorCollectors()).rejects.toBeInstanceOf(MonitorContractError);
+  });
+
+  it('rejects collector pagination metadata that shrinks during pagination', async () => {
+    const firstPage = Array.from({ length: 200 }, (_, index) => ({
+      collector: { name: `collector-${index}`, status: 0 }
+    }));
+    http.apiMessageGet
+      .mockResolvedValueOnce({ content: firstPage, totalElements: 401, totalPages: 3, number: 0, size: 200 })
+      .mockResolvedValueOnce({
+        content: [{ collector: { name: 'collector-200', status: 1 } }],
+        totalElements: 201,
+        totalPages: 2,
+        number: 1,
+        size: 200
+      });
+
+    await expect(loadMonitorCollectors()).rejects.toBeInstanceOf(MonitorContractError);
+  });
+
+  it('rejects a final Collector page that leaves the inventory incomplete', async () => {
+    const firstPage = Array.from({ length: 200 }, (_, index) => ({
+      collector: { name: `collector-${index}`, status: 0 }
+    }));
+    http.apiMessageGet
+      .mockResolvedValueOnce({ content: firstPage, totalElements: 201, totalPages: 2, number: 0, size: 200 })
+      .mockResolvedValueOnce({ content: [], totalElements: 201, totalPages: 2, number: 1, size: 200 });
+
     await expect(loadMonitorCollectors()).rejects.toBeInstanceOf(MonitorContractError);
   });
 

@@ -16,12 +16,8 @@
  */
 
 import { apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
-import type { MonitorCollector } from '../model/monitor-contract';
-import {
-  parseMonitorCollectorPage,
-  parseMonitorParamDefines,
-  requireUniqueMonitorCollectors
-} from './monitor-editor-schema';
+import { MonitorContractError, type MonitorCollector } from '../model/monitor-contract';
+import { monitorCollectorPageSize, parseMonitorCollectorPage, parseMonitorParamDefines } from './monitor-editor-schema';
 
 export async function loadMonitorParamDefines(app: string, signal?: AbortSignal) {
   const value = await apiMessageGet(`/api/apps/${encodeURIComponent(app)}/params`, signal ? { signal } : undefined);
@@ -31,17 +27,36 @@ export async function loadMonitorParamDefines(app: string, signal?: AbortSignal)
 export async function loadMonitorCollectors(signal?: AbortSignal) {
   const collectors: MonitorCollector[] = [];
   let pageIndex = 0;
-  let totalPages = 1;
+  let paginationMetadata: CollectorPaginationMetadata | undefined;
   do {
-    const path = `/api/collector?pageIndex=${pageIndex}&pageSize=200`;
+    const path = `/api/collector?pageIndex=${pageIndex}&pageSize=${monitorCollectorPageSize}`;
     const value = signal ? await apiMessageGet(path, { signal }) : await apiMessageGet(path);
     const page = parseMonitorCollectorPage(value, pageIndex);
+    const pageMetadata = { totalElements: page.totalElements, totalPages: page.totalPages, size: page.size };
+    // Page zero fixes the expected totals and size; later metadata drift cannot terminate the bounded scan early.
+    if (paginationMetadata && !sameCollectorPaginationMetadata(paginationMetadata, pageMetadata)) {
+      throw new MonitorContractError('Collector pagination metadata changed during pagination');
+    }
+    paginationMetadata ??= pageMetadata;
     collectors.push(...page.collectors);
-    totalPages = page.totalPages;
     pageIndex += 1;
-  } while (pageIndex < totalPages);
+  } while (pageIndex < paginationMetadata.totalPages);
   requireUniqueMonitorCollectors(collectors);
+  if (collectors.length !== paginationMetadata.totalElements) {
+    throw new MonitorContractError('Collector inventory is incomplete');
+  }
   return collectors;
+}
+
+type CollectorPaginationMetadata = { totalElements: number; totalPages: number; size: number };
+
+function sameCollectorPaginationMetadata(left: CollectorPaginationMetadata, right: CollectorPaginationMetadata) {
+  return left.totalElements === right.totalElements && left.totalPages === right.totalPages && left.size === right.size;
+}
+
+function requireUniqueMonitorCollectors(collectors: MonitorCollector[]) {
+  const names = new Set(collectors.map(collector => collector.name));
+  if (names.size !== collectors.length) throw new MonitorContractError('Collector identity must be unique');
 }
 
 export function detectMonitor(payload: unknown, signal?: AbortSignal) {

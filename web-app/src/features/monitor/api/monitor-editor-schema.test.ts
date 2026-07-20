@@ -18,11 +18,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { MonitorContractError } from '../model/monitor-contract';
-import {
-  parseMonitorCollectorPage,
-  parseMonitorParamDefines,
-  requireUniqueMonitorCollectors
-} from './monitor-editor-schema';
+import { parseMonitorCollectorPage, parseMonitorParamDefines } from './monitor-editor-schema';
 
 describe('Monitor editor read schemas', () => {
   it('maps the full parameter definition and binds app identity case-insensitively', () => {
@@ -90,7 +86,10 @@ describe('Monitor editor read schemas', () => {
         { name: 'collector-a', online: true },
         { name: 'collector-b', online: false }
       ],
-      totalPages: 1
+      totalElements: 2,
+      totalPages: 1,
+      number: 0,
+      size: 200
     });
   });
 
@@ -99,20 +98,14 @@ describe('Monitor editor read schemas', () => {
     [{ content: [], totalElements: 0, totalPages: 0, number: 0, size: 100 }, 0],
     [{ content: [], totalElements: 201, totalPages: 1, number: 0, size: 200 }, 0],
     [{ content: [collectorSummary('collector-a', 0)], totalElements: 201, totalPages: 2, number: 0, size: 200 }, 0],
+    [{ content: [], totalElements: 1, totalPages: 1, number: 0, size: 200 }, 0],
+    [{ content: [], totalElements: 201, totalPages: 2, number: 1, size: 200 }, 1],
     [{ content: [], totalElements: 4_001, totalPages: 21, number: 0, size: 200 }, 0],
+    [{ content: [collectorSummary('collector-a', -1)], totalElements: 1, totalPages: 1, number: 0, size: 200 }, 0],
     [{ content: [collectorSummary('collector-a', 127)], totalElements: 1, totalPages: 1, number: 0, size: 200 }, 0],
     [{ content: [collectorSummary('collector-a', 128)], totalElements: 1, totalPages: 1, number: 0, size: 200 }, 0]
   ])('rejects collector page drift, bounds, fullness, and Java-byte violations %#', (value, pageIndex) => {
     expect(() => parseMonitorCollectorPage(value, pageIndex)).toThrow(MonitorContractError);
-  });
-
-  it('requires collector names to remain globally unique across pages', () => {
-    expect(() =>
-      requireUniqueMonitorCollectors([
-        { name: 'collector-a', online: true },
-        { name: 'collector-a', online: false }
-      ])
-    ).toThrow(MonitorContractError);
   });
 });
 
