@@ -21,7 +21,6 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN, TitleService } from '@delon/theme';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
-import { switchMap } from 'rxjs';
 
 import { Message } from '../../pojo/Message';
 import { StatusPageComponentStatus } from '../../pojo/StatusPageComponentStatus';
@@ -52,6 +51,9 @@ export class StatusPublicComponent implements OnInit {
   // component or incident
   showMode: string = 'component';
 
+  historyDays: number = 30;
+  historyDaysOptions: number[] = [1, 7, 30, 90];
+
   pageIndex: number = 1;
   pageSize: number = 9999;
   incidentYear: Date = new Date();
@@ -63,24 +65,28 @@ export class StatusPublicComponent implements OnInit {
     this.loadStatusPageOrg();
   }
 
-  loadStatusPageOrg() {
+  onHistoryDaysChange() {
+    this.loadComponentStatus();
+  }
+
+  getHistoryDaysLabel(days: number): string {
+    if (days === 1) {
+      return this.i18nSvc.fanyi('status.public.24-hour');
+    }
+    return `${days} ${this.i18nSvc.fanyi('status.public.days')}`;
+  }
+
+  getHistoryDaysAgoLabel(): string {
+    if (this.historyDays === 1) {
+      return this.i18nSvc.fanyi('status.public.24-hour-ago');
+    }
+    return `${this.historyDays} ${this.i18nSvc.fanyi('status.public.days-ago')}`;
+  }
+
+  loadComponentStatus() {
     this.loading = true;
-    let loadInit$ = this.statusPagePublicService
-      .getStatusPageOrg()
-      .pipe(
-        switchMap((message: Message<StatusPageOrg>) => {
-          if (message.code === 0) {
-            this.statusOrg = message.data;
-            this.titleService.setTitle(`${this.statusOrg.name} ${this.i18nSvc.fanyi('menu.advanced.status')}`);
-          } else {
-            this.statusOrg = new StatusPageOrg();
-            console.log(message.msg);
-            this.notifySvc.error(message.msg, '');
-            throw new Error(message.msg);
-          }
-          return this.statusPagePublicService.getStatusPageComponents();
-        })
-      )
+    let componentLoad$ = this.statusPagePublicService
+      .getStatusPageComponents(this.historyDays)
       .subscribe(
         (message: Message<StatusPageComponentStatus[]>) => {
           if (message.code !== 0) {
@@ -89,6 +95,31 @@ export class StatusPublicComponent implements OnInit {
             this.componentStatus = message.data;
           }
           this.loading = false;
+          componentLoad$.unsubscribe();
+        },
+        error => {
+          this.loading = false;
+          this.notifySvc.error(error.msg, '');
+          componentLoad$.unsubscribe();
+        }
+      );
+  }
+
+  loadStatusPageOrg() {
+    this.loading = true;
+    let loadInit$ = this.statusPagePublicService
+      .getStatusPageOrg()
+      .subscribe(
+        (message: Message<StatusPageOrg>) => {
+          if (message.code === 0) {
+            this.statusOrg = message.data;
+            this.titleService.setTitle(`${this.statusOrg.name} ${this.i18nSvc.fanyi('menu.advanced.status')}`);
+          } else {
+            this.statusOrg = new StatusPageOrg();
+            console.log(message.msg);
+            this.notifySvc.error(message.msg, '');
+          }
+          this.loadComponentStatus();
           loadInit$.unsubscribe();
         },
         error => {
@@ -106,7 +137,7 @@ export class StatusPublicComponent implements OnInit {
 
   showComponent() {
     this.showMode = 'component';
-    this.loadStatusPageOrg();
+    this.loadComponentStatus();
   }
 
   loadStatusPageIncident() {

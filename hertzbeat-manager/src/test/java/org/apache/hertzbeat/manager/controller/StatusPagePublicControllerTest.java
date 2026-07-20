@@ -88,7 +88,7 @@ class StatusPagePublicControllerTest {
     public void testQueryStatusPageComponent() throws Exception {
 
         List<ComponentStatus> componentStatusList = Collections.singletonList(new ComponentStatus());
-        when(statusPageService.queryComponentsStatus()).thenReturn(componentStatusList);
+        when(statusPageService.queryComponentsStatus(30)).thenReturn(componentStatusList);
 
         mockMvc.perform(get("/api/status/page/public/component")
                         .accept(MediaType.APPLICATION_JSON))
@@ -100,7 +100,7 @@ class StatusPagePublicControllerTest {
     public void testQueryStatusPageComponentById() throws Exception {
 
         ComponentStatus componentStatus = new ComponentStatus();
-        when(statusPageService.queryComponentStatus(1L)).thenReturn(componentStatus);
+        when(statusPageService.queryComponentStatus(1L, 30)).thenReturn(componentStatus);
 
         mockMvc.perform(get("/api/status/page/public/component/1")
                         .accept(MediaType.APPLICATION_JSON))

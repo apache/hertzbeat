@@ -62,15 +62,20 @@ public class StatusPagePublicController {
 
     @GetMapping("/component")
     @Operation(summary = "Query Status Page Components")
-    public ResponseEntity<Message<List<ComponentStatus>>> queryStatusPageComponent() {
-        List<ComponentStatus> componentStatusList = statusPageService.queryComponentsStatus();
+    public ResponseEntity<Message<List<ComponentStatus>>> queryStatusPageComponent(
+            @Parameter(description = "Number of days of history", example = "30")
+            @RequestParam(defaultValue = "30") int days) {
+        List<ComponentStatus> componentStatusList = statusPageService.queryComponentsStatus(days);
         return ResponseEntity.ok(Message.success(componentStatusList));
     }
 
     @GetMapping("/component/{id}")
     @Operation(summary = "Query Status Page Component")
-    public ResponseEntity<Message<ComponentStatus>> queryStatusPageComponent(@PathVariable("id") final long id) {
-        ComponentStatus componentStatus = statusPageService.queryComponentStatus(id);
+    public ResponseEntity<Message<ComponentStatus>> queryStatusPageComponent(
+            @PathVariable("id") final long id,
+            @Parameter(description = "Number of days of history", example = "30")
+            @RequestParam(defaultValue = "30") int days) {
+        ComponentStatus componentStatus = statusPageService.queryComponentStatus(id, days);
         return ResponseEntity.ok(Message.success(componentStatus));
     }
 
