@@ -20,9 +20,9 @@ export const alertStatuses = ['firing', 'pending', 'acknowledged', 'resolved'] a
 export const alertStatusFilters = ['firing', 'acknowledged', 'resolved'] as const;
 export const alertSeverities = ['info', 'warning', 'critical', 'emergency'] as const;
 
-export type AlertStatus = typeof alertStatuses[number];
-export type AlertStatusFilter = '' | typeof alertStatusFilters[number];
-export type AlertSeverity = '' | typeof alertSeverities[number];
+export type AlertStatus = (typeof alertStatuses)[number];
+export type AlertStatusFilter = '' | (typeof alertStatusFilters)[number];
+export type AlertSeverity = '' | (typeof alertSeverities)[number];
 declare const serverLocalDateTimeBrand: unique symbol;
 export type ServerLocalDateTime = string & { readonly [serverLocalDateTimeBrand]: true };
 
@@ -69,6 +69,20 @@ export class AlertContractError extends Error {
     super(message, options);
     this.name = 'AlertContractError';
   }
+}
+
+export type AlertFailureKind = 'unavailable' | 'error';
+
+/** Stable request evidence emitted by the Alert Center API boundary. */
+export class AlertRequestFailure extends Error {
+  constructor(readonly kind: AlertFailureKind) {
+    super('Alert request failed');
+    this.name = 'AlertRequestFailure';
+  }
+}
+
+export function alertFailureKind(error: unknown): AlertFailureKind {
+  return error instanceof AlertRequestFailure ? error.kind : 'error';
 }
 
 export function readAlertQuery(params: URLSearchParams): AlertQuery {
@@ -118,5 +132,5 @@ function readPageIndex(value: string | null) {
 
 function readPageSize(value: string | null) {
   const requested = Number.parseInt(value ?? '', 10);
-  return alertPageSizes.includes(requested as typeof alertPageSizes[number]) ? requested : 8;
+  return alertPageSizes.includes(requested as (typeof alertPageSizes)[number]) ? requested : 8;
 }

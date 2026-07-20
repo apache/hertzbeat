@@ -19,12 +19,11 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { ApiMessageError } from '@/core/http/api-message';
 import { alertRoutePaths } from '@/shared/navigation/app-paths';
 
 import { loadAlertGroups, loadAlertSummary } from '../alert-api';
 import {
-  AlertContractError,
+  alertFailureKind,
   readAlertQuery,
   writeAlertQuery,
   type AlertPage,
@@ -117,7 +116,7 @@ function resolveListState(query: {
   isPending: boolean;
 }): AlertListState {
   if (query.isPending) return { kind: 'loading' };
-  if (query.isError) return { kind: failureKind(query.error) };
+  if (query.isError) return { kind: alertFailureKind(query.error) };
   if (!query.data) return { kind: 'error' };
   if (query.data.totalElements === 0) return { kind: 'empty' };
   return { kind: 'ready', records: query.data.content, total: query.data.totalElements };
@@ -130,18 +129,8 @@ function resolveSummaryState(query: {
   isPending: boolean;
 }): AlertSummaryState {
   if (query.isPending) return { kind: 'loading' };
-  if (query.isError) return { kind: failureKind(query.error) };
+  if (query.isError) return { kind: alertFailureKind(query.error) };
   return query.data ? { kind: 'ready', summary: query.data } : { kind: 'error' };
-}
-
-function failureKind(error: Error | null): 'unavailable' | 'error' {
-  if (error instanceof AlertContractError) return 'error';
-  if (error instanceof ApiMessageError) {
-    if (error.cause !== undefined || error.status === undefined || [0, 502, 503, 504].includes(error.status)) {
-      return 'unavailable';
-    }
-  }
-  return 'error';
 }
 
 function draftFromQuery(query: AlertQuery): AlertFilterDraft {

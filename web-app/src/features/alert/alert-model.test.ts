@@ -18,24 +18,35 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  alertFailureKind,
+  AlertContractError,
+  AlertRequestFailure,
   readAlertQuery,
   writeAlertQuery
 } from './alert-model';
 
 describe('alert center model', () => {
   it('normalizes URL-owned filters and pagination', () => {
-    const query = readAlertQuery(new URLSearchParams(
-      'search=checkout&status=FIRING&severity=critical&serviceName=checkout-api&serviceNamespace=payments'
-      + '&environment=prod&pageIndex=-1&pageSize=99'
-    ));
+    const query = readAlertQuery(
+      new URLSearchParams(
+        'search=checkout&status=FIRING&severity=critical&serviceName=checkout-api&serviceNamespace=payments' +
+          '&environment=prod&pageIndex=-1&pageSize=99'
+      )
+    );
 
     expect(query).toEqual({
-      search: 'checkout', status: 'firing', severity: 'critical', serviceName: 'checkout-api',
-      serviceNamespace: 'payments', environment: 'prod', pageIndex: 0, pageSize: 8
+      search: 'checkout',
+      status: 'firing',
+      severity: 'critical',
+      serviceName: 'checkout-api',
+      serviceNamespace: 'payments',
+      environment: 'prod',
+      pageIndex: 0,
+      pageSize: 8
     });
     expect(writeAlertQuery(query).toString()).toBe(
-      'pageIndex=0&pageSize=8&search=checkout&status=firing&severity=critical'
-      + '&serviceName=checkout-api&serviceNamespace=payments&environment=prod'
+      'pageIndex=0&pageSize=8&search=checkout&status=firing&severity=critical' +
+        '&serviceName=checkout-api&serviceNamespace=payments&environment=prod'
     );
   });
 
@@ -44,9 +55,24 @@ describe('alert center model', () => {
     expect(query.status).toBe('');
     expect(query.severity).toBe('');
     expect(readAlertQuery(new URLSearchParams('severity=INFO')).severity).toBe('info');
-    expect(writeAlertQuery({
-      search: '', status: '', severity: '', serviceName: '', serviceNamespace: '', environment: '',
-      pageIndex: 1, pageSize: 15
-    }).toString()).toBe('pageIndex=1&pageSize=15');
+    expect(
+      writeAlertQuery({
+        search: '',
+        status: '',
+        severity: '',
+        serviceName: '',
+        serviceNamespace: '',
+        environment: '',
+        pageIndex: 1,
+        pageSize: 15
+      }).toString()
+    ).toBe('pageIndex=1&pageSize=15');
+  });
+
+  it('classifies only stable request evidence as unavailable', () => {
+    expect(alertFailureKind(new AlertRequestFailure('unavailable'))).toBe('unavailable');
+    expect(alertFailureKind(new AlertRequestFailure('error'))).toBe('error');
+    expect(alertFailureKind(new AlertContractError('invalid contract'))).toBe('error');
+    expect(alertFailureKind(new Error('unknown failure'))).toBe('error');
   });
 });

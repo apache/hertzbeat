@@ -21,9 +21,13 @@ import { StrictMode, type PropsWithChildren } from 'react';
 import { createMemoryRouter, MemoryRouter, RouterProvider } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ApiMessageError } from '@/core/http/api-message';
-
-import { AlertContractError, type AlertPage, type AlertQuery, type AlertSummary } from '../alert-model';
+import {
+  AlertContractError,
+  AlertRequestFailure,
+  type AlertPage,
+  type AlertQuery,
+  type AlertSummary
+} from '../alert-model';
 import { useAlertCenterController } from './use-alert-center-controller';
 
 const api = vi.hoisted(() => ({
@@ -56,14 +60,22 @@ describe('Alert Center controller', () => {
 
   it('owns URL query, scoped drafts, and discards drafts after Back or Forward changes the URL', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    const routed = renderRoutedController([
-      '/alerts?search=A&serviceName=checkout&serviceNamespace=shop&environment=prod&pageIndex=1&pageSize=15',
-      '/alerts?search=B&serviceName=billing&environment=stage&pageIndex=0&pageSize=8'
-    ], true);
+    const routed = renderRoutedController(
+      [
+        '/alerts?search=A&serviceName=checkout&serviceNamespace=shop&environment=prod&pageIndex=1&pageSize=15',
+        '/alerts?search=B&serviceName=billing&environment=stage&pageIndex=0&pageSize=8'
+      ],
+      true
+    );
     await waitFor(() => expect(routed.current().state.list.kind).toBe('empty'));
 
     expect(routed.current().state.query).toMatchObject({
-      search: 'A', serviceName: 'checkout', serviceNamespace: 'shop', environment: 'prod', pageIndex: 1, pageSize: 15
+      search: 'A',
+      serviceName: 'checkout',
+      serviceNamespace: 'shop',
+      environment: 'prod',
+      pageIndex: 1,
+      pageSize: 15
     });
     act(() => routed.current().setDraft('search', 'draft'));
     expect(routed.current().state.draft.search).toBe('draft');
@@ -73,16 +85,22 @@ describe('Alert Center controller', () => {
 
     await act(async () => routed.router.navigate(-1));
     expect(routed.current().state.draft).toMatchObject({
-      search: 'A', serviceName: 'checkout', serviceNamespace: 'shop', environment: 'prod'
+      search: 'A',
+      serviceName: 'checkout',
+      serviceNamespace: 'shop',
+      environment: 'prod'
     });
     expect(consoleError).not.toHaveBeenCalled();
   });
 
   it('resets unsubmitted drafts when POP changes only status and page identity', async () => {
-    const routed = renderRoutedController([
-      '/alerts?search=A&status=firing&pageIndex=0&pageSize=8',
-      '/alerts?search=A&status=resolved&pageIndex=2&pageSize=8'
-    ], true);
+    const routed = renderRoutedController(
+      [
+        '/alerts?search=A&status=firing&pageIndex=0&pageSize=8',
+        '/alerts?search=A&status=resolved&pageIndex=2&pageSize=8'
+      ],
+      true
+    );
     await waitFor(() => expect(routed.current().state.query.status).toBe('firing'));
     act(() => routed.current().setDraft('search', 'unsubmitted'));
 
@@ -100,10 +118,14 @@ describe('Alert Center controller', () => {
   });
 
   it('keeps summary and list failures independent and preserves an out-of-range ready page', async () => {
-    api.loadAlertSummary.mockRejectedValue(new ApiMessageError('offline', { status: 503 }));
-    api.loadAlertGroups.mockImplementation((query: AlertQuery) => Promise.resolve({
-      ...page(query), totalElements: 5, totalPages: 1
-    }));
+    api.loadAlertSummary.mockRejectedValue(new AlertRequestFailure('unavailable'));
+    api.loadAlertGroups.mockImplementation((query: AlertQuery) =>
+      Promise.resolve({
+        ...page(query),
+        totalElements: 5,
+        totalPages: 1
+      })
+    );
     const { result } = renderController('/alerts?pageIndex=2&pageSize=8');
 
     await waitFor(() => expect(result.current.state.summary.kind).toBe('unavailable'));
@@ -120,7 +142,7 @@ describe('Alert Center controller', () => {
   });
 
   it('classifies a transport status zero as unavailable', async () => {
-    api.loadAlertGroups.mockRejectedValue(new ApiMessageError('network unavailable', { status: 0 }));
+    api.loadAlertGroups.mockRejectedValue(new AlertRequestFailure('unavailable'));
     const { result } = renderController();
 
     await waitFor(() => expect(result.current.state.list.kind).toBe('unavailable'));
@@ -128,9 +150,9 @@ describe('Alert Center controller', () => {
 
   it('does not let a late query A response replace query B', async () => {
     const a = deferred<AlertPage>();
-    api.loadAlertGroups.mockImplementation((query: AlertQuery) => query.search === 'A'
-      ? a.promise
-      : Promise.resolve({ ...page(query), totalElements: 1, totalPages: 1 }));
+    api.loadAlertGroups.mockImplementation((query: AlertQuery) =>
+      query.search === 'A' ? a.promise : Promise.resolve({ ...page(query), totalElements: 1, totalPages: 1 })
+    );
     const { result } = renderController('/alerts?search=A&pageIndex=0&pageSize=8');
 
     act(() => result.current.setDraft('search', 'B'));
@@ -178,11 +200,18 @@ function renderRoutedController(entries: string[], strict = false) {
     controller = useAlertCenterController();
     return null;
   }
-  const element = <QueryClientProvider client={client}><Probe /></QueryClientProvider>;
-  const router = createMemoryRouter([{ path: '/alerts', element: strict ? <StrictMode>{element}</StrictMode> : element }], {
-    initialEntries: entries,
-    initialIndex: 0
-  });
+  const element = (
+    <QueryClientProvider client={client}>
+      <Probe />
+    </QueryClientProvider>
+  );
+  const router = createMemoryRouter(
+    [{ path: '/alerts', element: strict ? <StrictMode>{element}</StrictMode> : element }],
+    {
+      initialEntries: entries,
+      initialIndex: 0
+    }
+  );
   render(<RouterProvider router={router} />);
   return {
     router,
@@ -199,6 +228,8 @@ function page(query: AlertQuery): AlertPage {
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
-  const promise = new Promise<T>(done => { resolve = done; });
+  const promise = new Promise<T>(done => {
+    resolve = done;
+  });
   return { promise, resolve };
 }

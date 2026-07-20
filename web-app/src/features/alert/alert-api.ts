@@ -19,6 +19,7 @@ import { apiMessageGet } from '@/core/http/api-message';
 import { alertSummaryEndpoint } from '@/shared/alert-summary/alert-summary-contract';
 
 import { writeAlertQuery, type AlertQuery } from './alert-model';
+import { alertApiRequest } from './alert-api-failure';
 import { parseAlertGroupPage, parseAlertSummary } from './alert-schema';
 
 export function buildAlertListPath(query: AlertQuery) {
@@ -28,12 +29,10 @@ export function buildAlertListPath(query: AlertQuery) {
   return `/api/alerts/group?${params.toString()}`;
 }
 
-export async function loadAlertSummary() {
-  const response = await apiMessageGet(alertSummaryEndpoint);
-  return parseAlertSummary(response);
+export function loadAlertSummary() {
+  return alertApiRequest(async () => parseAlertSummary(await apiMessageGet(alertSummaryEndpoint)));
 }
 
-export async function loadAlertGroups(query: AlertQuery) {
-  const response = await apiMessageGet(buildAlertListPath(query));
-  return parseAlertGroupPage(response, query);
+export function loadAlertGroups(query: AlertQuery) {
+  return alertApiRequest(async () => parseAlertGroupPage(await apiMessageGet(buildAlertListPath(query)), query));
 }
