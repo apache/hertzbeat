@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { alertRoutePaths } from '@/shared/navigation/app-paths';
+import { alertRoutePaths, applicationRoutePaths, monitorRoutePaths } from '@/shared/navigation/app-paths';
 import { settingsPaths } from '@/shared/settings/settings-routes';
 
 export type AppRouteDefinition = {
@@ -36,15 +36,15 @@ type ResourceRouteDefinition = AppRouteDefinition & { resource: AppRouteResource
 export const applicationRootPath = '/';
 
 export const appRouteCatalog = {
-  dashboard: pageRoute('dashboard', '/dashboard', {
+  dashboard: pageRoute('dashboard', applicationRoutePaths.dashboard, {
     resource: { labelKey: 'menu.dashboard' }
   }),
-  monitors: pageRoute('monitors', '/monitors', {
+  monitors: pageRoute('monitors', monitorRoutePaths.list, {
     resource: { labelKey: 'menu.monitors' }
   }),
-  'monitor-new': pageRoute('monitor-new', '/monitors/new'),
-  'monitor-edit': pageRoute('monitor-edit', '/monitors/:monitorId/edit'),
-  'monitor-detail': pageRoute('monitor-detail', '/monitors/:monitorId'),
+  'monitor-new': pageRoute('monitor-new', monitorRoutePaths.create),
+  'monitor-edit': pageRoute('monitor-edit', monitorRoutePaths.edit),
+  'monitor-detail': pageRoute('monitor-detail', monitorRoutePaths.detail),
   explore: pageRoute('explore', '/explore', {
     resource: { labelKey: 'menu.explore' }
   }),
@@ -102,7 +102,7 @@ export const appRouteCatalog = {
     resource: { labelKey: 'menu.bulletin' }
   }),
   status: pageRoute('status', '/status', { layout: 'blank' }),
-  login: pageRoute('login', '/passport/login', { layout: 'passport' }),
+  login: pageRoute('login', applicationRoutePaths.login, { layout: 'passport' }),
   'not-found': pageRoute('not-found', '*')
 } as const satisfies Record<string, AppRouteDefinition>;
 

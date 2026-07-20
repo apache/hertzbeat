@@ -15,11 +15,13 @@
  * limitations under the License.
  */
 
-export { monitorPageSizes, type MonitorAction, type MonitorQuery } from './monitor-contract';
-export { readMonitorQuery, writeMonitorQuery } from './monitor-query';
+import { buildMonitorDetailPath, buildMonitorEditPath, monitorRoutePaths } from '@/shared/navigation/app-paths';
 
 import { monitorStatusCodes, type MonitorQuery } from './monitor-contract';
-import { writeMonitorQuery } from './monitor-query';
+import { readMonitorQuery, writeMonitorQuery } from './monitor-query';
+
+export { monitorPageSizes, type MonitorAction, type MonitorQuery } from './monitor-contract';
+export { readMonitorQuery, writeMonitorQuery } from './monitor-query';
 
 export type MonitorScopedSelection = { scope: string; ids: number[] };
 
@@ -77,10 +79,30 @@ export function parseMonitorTimestamp(value?: number | string | null) {
 }
 
 export function safeMonitorReturnTo(value?: string | null) {
-  return value && /^\/monitors(?:[?#]|$)/.test(value) ? value : '/monitors';
+  if (!value) return monitorRoutePaths.list;
+
+  const withoutHash = value.split('#', 1)[0] ?? '';
+  const querySeparator = withoutHash.indexOf('?');
+  const pathname = querySeparator < 0 ? withoutHash : withoutHash.slice(0, querySeparator);
+  if (pathname !== monitorRoutePaths.list) return monitorRoutePaths.list;
+
+  const input = new URLSearchParams(querySeparator < 0 ? '' : withoutHash.slice(querySeparator + 1));
+  const query = readMonitorQuery(input);
+  const normalized = writeMonitorQuery(query);
+  const safe = new URLSearchParams();
+
+  // A return URL is a security boundary: retain only the list model's public filters,
+  // while reusing its normalization rules instead of maintaining a second parser.
+  for (const key of Object.keys(query)) {
+    const normalizedValue = normalized.get(key);
+    if (input.has(key) && normalizedValue !== null) safe.set(key, normalizedValue);
+  }
+
+  const search = safe.toString();
+  return search ? `${monitorRoutePaths.list}?${search}` : monitorRoutePaths.list;
 }
 
 export function buildMonitorRoutePath(monitorId: number, mode: 'view' | 'edit', returnTo: string) {
-  const suffix = mode === 'edit' ? '/edit' : '';
-  return `/monitors/${monitorId}${suffix}?returnTo=${encodeURIComponent(safeMonitorReturnTo(returnTo))}`;
+  const pathname = mode === 'edit' ? buildMonitorEditPath(monitorId) : buildMonitorDetailPath(monitorId);
+  return `${pathname}?returnTo=${encodeURIComponent(safeMonitorReturnTo(returnTo))}`;
 }

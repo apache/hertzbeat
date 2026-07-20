@@ -23,6 +23,7 @@ import { safeRedirectTarget } from '@/core/auth/navigation';
 import { loginSession } from '@/core/auth/session-api';
 import { useSession } from '@/core/auth/session-context';
 import { useSessionIdentityBoundary } from '@/core/auth/session-identity-context';
+import { applicationRoutePaths } from '@/shared/navigation/app-paths';
 
 import { loginErrorMessageKey } from './login-model';
 
@@ -34,7 +35,7 @@ export function useLoginController() {
   const [searchParams] = useSearchParams();
   const { loading, retry, session, unavailable } = useSession();
   const submitting = useRef(false);
-  const redirectTarget = safeRedirectTarget(searchParams.get('redirect')) ?? '/dashboard';
+  const redirectTarget = safeRedirectTarget(searchParams.get('redirect')) ?? applicationRoutePaths.dashboard;
   const login = useMutation({
     mutationFn: ({ identifier, credential }: LoginValues) => loginSession(identifier, credential)
   });

@@ -17,7 +17,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { loginHref, safeRedirectTarget } from './navigation';
+import { loginHref, loginPath, safeRedirectTarget } from './navigation';
 
 describe('authentication navigation', () => {
   it('accepts only local non-passport redirect targets', () => {
@@ -28,7 +28,7 @@ describe('authentication navigation', () => {
   });
 
   it('encodes the requested route in the login URL', () => {
-    expect(loginHref('/bulletin?search=db')).toBe('/passport/login?redirect=%2Fbulletin%3Fsearch%3Ddb');
+    expect(loginHref('/bulletin?search=db')).toBe(`${loginPath}?redirect=%2Fbulletin%3Fsearch%3Ddb`);
   });
 
   it.each(['token', 'ACCESS_TOKEN', 'authorization', 'pass-word', 'credential', 'secret', 'client.secret', 'api-key'])(
@@ -96,7 +96,7 @@ describe('authentication navigation', () => {
     '/explore?query=%E0%A4%A'
   ])('discards an external, protocol-relative, or malformed redirect target: %s', target => {
     expect(safeRedirectTarget(target)).toBeNull();
-    expect(loginHref(target)).toBe('/passport/login');
+    expect(loginHref(target)).toBe(loginPath);
   });
 });
 

@@ -54,6 +54,9 @@ vi.mock('@/shared/time', () => ({
     requestRefresh: runtime.requestRefresh
   })
 }));
+vi.mock('@/shared/navigation/app-paths', () => ({
+  alertRoutePaths: { center: '/canonical-alerts' }
+}));
 
 import { useShellHeaderActionController } from './use-shell-header-action-controller';
 
@@ -79,7 +82,7 @@ describe('useShellHeaderActionController', () => {
     expect(runtime.setTheme).toHaveBeenCalledWith('default');
     expect(runtime.persistPreferences).toHaveBeenCalledWith({ locale: 'zh-CN', theme: 'dark' });
     expect(runtime.changeLocale).toHaveBeenCalledWith('zh-CN', { signal: expect.any(AbortSignal) });
-    expect(runtime.go).toHaveBeenCalledWith({ to: '/alerts', type: 'push' });
+    expect(runtime.go).toHaveBeenCalledWith({ to: '/canonical-alerts', type: 'push' });
   });
 
   it('publishes and persists only the latest rapid locale selection', async () => {

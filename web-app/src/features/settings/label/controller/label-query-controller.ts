@@ -18,11 +18,9 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 
-import {
-  readLabelQuery,
-  writeLabelQuery,
-  type LabelPageSize
-} from '../model/label-query-model';
+import { settingsPaths } from '@/shared/settings/settings-routes';
+
+import { readLabelQuery, writeLabelQuery, type LabelPageSize } from '../model/label-query-model';
 
 export function useLabelQueryController() {
   const { pathname } = useLocation();
@@ -32,23 +30,31 @@ export function useLabelQueryController() {
   const canonicalSearch = useMemo(() => writeLabelQuery(query).toString(), [query]);
 
   useEffect(() => {
-    if (pathname === '/settings/labels' && locationSearch !== canonicalSearch) {
+    if (pathname === settingsPaths.labels && locationSearch !== canonicalSearch) {
       setSearchParams(canonicalSearch, { replace: true });
     }
   }, [canonicalSearch, locationSearch, pathname, setSearchParams]);
 
-  const setSearch = useCallback((value: string) => {
-    const search = value.trim();
-    setSearchParams(writeLabelQuery({
-      ...query,
-      search,
-      pageIndex: search === query.search ? query.pageIndex : 0
-    }));
-  }, [query, setSearchParams]);
+  const setSearch = useCallback(
+    (value: string) => {
+      const search = value.trim();
+      setSearchParams(
+        writeLabelQuery({
+          ...query,
+          search,
+          pageIndex: search === query.search ? query.pageIndex : 0
+        })
+      );
+    },
+    [query, setSearchParams]
+  );
 
-  const setPage = useCallback((pageIndex: number, pageSize: LabelPageSize) => {
-    setSearchParams(writeLabelQuery({ ...query, pageIndex, pageSize }));
-  }, [query, setSearchParams]);
+  const setPage = useCallback(
+    (pageIndex: number, pageSize: LabelPageSize) => {
+      setSearchParams(writeLabelQuery({ ...query, pageIndex, pageSize }));
+    },
+    [query, setSearchParams]
+  );
 
   return { query, setPage, setSearch };
 }

@@ -17,6 +17,7 @@ import { loadLocale, resolveLocale } from '@/core/i18n/i18n';
 import { supportedLocales, type SupportedLocale } from '@/core/i18n/locale';
 import { persistSystemPreferences, readRuntimeLocale } from '@/core/runtime-preferences';
 import { useRuntimeTheme } from '@/core/runtime-theme-context';
+import { alertRoutePaths } from '@/shared/navigation/app-paths';
 import { useSharedTime } from '@/shared/time';
 
 export function useShellHeaderActionController() {
@@ -47,7 +48,7 @@ export function useShellHeaderActionController() {
     await queryClient.invalidateQueries({ type: 'active' });
   };
   const toggleTheme = () => setTheme(theme === 'default' ? 'dark' : 'default');
-  const openAlerts = () => go({ to: '/alerts', type: 'push' });
+  const openAlerts = () => go({ to: alertRoutePaths.center, type: 'push' });
 
   return {
     sharedTime,

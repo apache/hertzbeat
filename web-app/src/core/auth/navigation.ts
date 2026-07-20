@@ -21,13 +21,15 @@ const LOCAL_URL_BASE = 'https://hertzbeat.local';
 const MAX_NESTED_REDIRECT_DEPTH = 4;
 const redirectFieldNames = new Set(['redirect', 'redirectto', 'returnto', 'returnurl', 'continue', 'next']);
 
+export const loginPath = '/passport/login';
+
 export function safeRedirectTarget(value?: string | null) {
   return sanitizeLocalTarget(value, 0);
 }
 
 export function loginHref(returnTo?: string | null) {
   const target = safeRedirectTarget(returnTo);
-  return target ? `/passport/login?redirect=${encodeURIComponent(target)}` : '/passport/login';
+  return target ? `${loginPath}?redirect=${encodeURIComponent(target)}` : loginPath;
 }
 
 function sanitizeLocalTarget(value: string | null | undefined, depth: number): string | null {

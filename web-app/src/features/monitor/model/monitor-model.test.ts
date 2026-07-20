@@ -98,7 +98,27 @@ describe('monitor list model', () => {
     expect(safeMonitorReturnTo('https://example.com')).toBe('/monitors');
     expect(safeMonitorReturnTo('/monitors-evil')).toBe('/monitors');
     expect(safeMonitorReturnTo('/monitors/7')).toBe('/monitors');
-    expect(safeMonitorReturnTo('/monitors#selection')).toBe('/monitors#selection');
+    expect(safeMonitorReturnTo('/monitors#selection')).toBe('/monitors');
+  });
+
+  it('keeps only normalized monitor filters in return paths', () => {
+    expect(safeMonitorReturnTo('/monitors?app=website&token=private-token&credential=private-credential')).toBe(
+      '/monitors?app=website'
+    );
+    expect(safeMonitorReturnTo('/monitors?search=%20mysql%20&status=2&pageIndex=2&pageSize=20&unknown=value')).toBe(
+      '/monitors?search=mysql&status=2&pageIndex=2&pageSize=20'
+    );
+    expect(safeMonitorReturnTo('/monitors?app=website#token=private-token')).toBe('/monitors?app=website');
+
+    const routePath = buildMonitorRoutePath(
+      7,
+      'view',
+      '/monitors?app=website&token=private-token#credential=private-credential'
+    );
+    const returnTo = new URL(routePath, 'https://hertzbeat.local').searchParams.get('returnTo');
+    expect(returnTo).toBe('/monitors?app=website');
+    expect(routePath).not.toContain('private-token');
+    expect(routePath).not.toContain('private-credential');
   });
 
   it('keeps bulk selection inside one query scope and visible row set', () => {

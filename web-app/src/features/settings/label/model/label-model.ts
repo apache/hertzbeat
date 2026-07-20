@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import { buildMonitorListPath } from '@/shared/navigation/app-paths';
 import type { RemotePageState } from '@/shared/remote-state';
 
 export type LabelRecord = {
@@ -58,8 +59,7 @@ export function buildLabelDisplayName(label: Pick<LabelRecord, 'name' | 'tagValu
 }
 
 export function buildLabelMonitorPath(label: Pick<LabelRecord, 'name' | 'tagValue'>) {
-  const params = new URLSearchParams({ labels: buildLabelDisplayName(label) });
-  return `/monitors?${params.toString()}`;
+  return buildMonitorListPath({ labels: buildLabelDisplayName(label) });
 }
 
 export function labelTypeKey(type?: number) {
