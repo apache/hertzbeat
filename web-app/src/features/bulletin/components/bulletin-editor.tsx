@@ -19,7 +19,10 @@ type BulletinEditorProps = {
 export function BulletinEditor(props: BulletinEditorProps) {
   const { draft, dependencies, saving, busy, onClose, onSave } = props;
   const { t } = useTranslation();
-  const canSave = dependencies.kind === 'ready' && dependencies.fieldSelection === 'valid';
+  const canSave =
+    dependencies.kind === 'ready' &&
+    dependencies.monitorSelection === 'valid' &&
+    dependencies.fieldSelection === 'valid';
   return (
     <Drawer
       open={draft != null}
@@ -92,6 +95,9 @@ function BulletinEditorForm({
               onChange={monitorIds => onChange({ monitorIds })}
             />
           </Form.Item>
+          {dependencies.monitorSelection === 'stale' && (
+            <Alert type="warning" showIcon message={t('bulletin.validation')} />
+          )}
           <Form.Item label={t('bulletin.fields')} required>
             <BulletinFieldSelection draft={draft} dependencies={dependencies} busy={busy} onChange={onChange} t={t} />
           </Form.Item>

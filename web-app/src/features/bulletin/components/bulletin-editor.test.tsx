@@ -103,6 +103,13 @@ describe('Bulletin editor metric Tree', () => {
     expect(onChange).toHaveBeenCalledWith({ fields: { summary: ['status'] } });
   });
 
+  it('keeps a removed saved monitor visible as stale and blocks save', () => {
+    renderEditor({ monitorSelection: 'stale', monitorIds: [9] });
+
+    expect(screen.getByText('bulletin.validation')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'common.save' })).toBeDisabled();
+  });
+
   it('locks every editor control while a write command is active', () => {
     const onChange = vi.fn();
     renderEditor({ busy: true, onChange });
@@ -124,6 +131,7 @@ function editor({
   onChange = vi.fn(),
   onSave = vi.fn(),
   fieldSelection = 'valid',
+  monitorSelection = 'valid',
   fields = { summary: ['status'] },
   editing = true,
   monitorIds = [1],
@@ -132,6 +140,7 @@ function editor({
   onChange?: (patch: Partial<BulletinDraft>) => void;
   onSave?: () => void;
   fieldSelection?: 'valid' | 'stale';
+  monitorSelection?: 'valid' | 'stale';
   fields?: Record<string, string[]>;
   editing?: boolean;
   monitorIds?: number[];
@@ -145,6 +154,7 @@ function editor({
       dependencies={{
         kind: 'ready',
         fieldSelection,
+        monitorSelection,
         apps: [
           { value: 'website', label: 'Website', hide: false },
           { value: 'redis', label: 'Redis', hide: false }

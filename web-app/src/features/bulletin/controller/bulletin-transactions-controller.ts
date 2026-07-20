@@ -86,7 +86,11 @@ function getValidDraft(
 ) {
   const draft = editor.controls.getDraft();
   if (!draft || dependencies.kind !== 'ready') return null;
-  if (validateBulletinDraft(draft, dependencies.monitors, dependencies.metrics).length) {
+  if (
+    dependencies.monitorSelection !== 'valid' ||
+    dependencies.fieldSelection !== 'valid' ||
+    validateBulletinDraft(draft, dependencies.monitors, dependencies.metrics).length
+  ) {
     notification.open?.({ message: t('bulletin.validation'), type: 'error' });
     return null;
   }

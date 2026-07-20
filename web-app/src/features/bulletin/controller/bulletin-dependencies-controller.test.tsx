@@ -7,15 +7,17 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
 import type { BulletinDraft } from '../model/bulletin-model';
-import { useBulletinDependencies } from './bulletin-dependencies-controller';
+import { resolveBulletinDependencies, useBulletinDependencies } from './bulletin-dependencies-controller';
 
 const monitor = vi.hoisted(() => ({
-  loadMonitorApps: vi.fn(), loadMonitorAppHierarchy: vi.fn(), loadMonitors: vi.fn()
+  loadMonitorApps: vi.fn(),
+  loadMonitorAppHierarchy: vi.fn(),
+  loadMonitors: vi.fn()
 }));
 const language = vi.hoisted(() => ({ current: 'en-US' }));
 
 vi.mock('@/features/monitor', async importOriginal => ({
-  ...await importOriginal<typeof import('@/features/monitor')>(),
+  ...(await importOriginal<typeof import('@/features/monitor')>()),
   loadMonitorApps: monitor.loadMonitorApps,
   loadMonitorAppHierarchy: monitor.loadMonitorAppHierarchy,
   loadMonitors: monitor.loadMonitors
@@ -33,18 +35,47 @@ describe('Bulletin dependency controller', () => {
       { value: 'redis', label: 'Redis', hide: false }
     ]);
     monitor.loadMonitors.mockResolvedValue({
-      content: [{ id: 1, name: 'prod', app: 'website' }], totalPages: 1
+      content: [{ id: 1, name: 'prod', app: 'website' }],
+      totalPages: 1
     });
+  });
+
+  it('keeps the closed editor idle without starting dependency requests', () => {
+    const hook = renderHook(() => useBulletinDependencies(null), { wrapper: createWrapper() });
+
+    expect(hook.result.current).toMatchObject({
+      kind: 'idle',
+      monitorSelection: 'unverified',
+      fieldSelection: 'unverified'
+    });
+    expect(monitor.loadMonitorApps).not.toHaveBeenCalled();
+    expect(monitor.loadMonitors).not.toHaveBeenCalled();
+    expect(monitor.loadMonitorAppHierarchy).not.toHaveBeenCalled();
+  });
+
+  it('loads the application catalog without treating disabled downstream queries as pending', async () => {
+    const blank: BulletinDraft = { name: '', app: '', monitorIds: [], fields: {} };
+    const hook = renderHook(() => useBulletinDependencies(blank), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(hook.result.current.kind).toBe('ready'));
+    expect(hook.result.current).toMatchObject({ monitorSelection: 'valid', fieldSelection: 'valid' });
+    expect(monitor.loadMonitors).not.toHaveBeenCalled();
+    expect(monitor.loadMonitorAppHierarchy).not.toHaveBeenCalled();
   });
 
   it('loads the active app hierarchy in the active locale and never presents the prior tree during a switch', async () => {
     let resolveRedis!: (value: ReturnType<typeof hierarchy>) => void;
-    monitor.loadMonitorAppHierarchy.mockImplementation((app: string) => app === 'website'
-      ? Promise.resolve(hierarchy('website'))
-      : new Promise(resolve => { resolveRedis = resolve; }));
+    monitor.loadMonitorAppHierarchy.mockImplementation((app: string) =>
+      app === 'website'
+        ? Promise.resolve(hierarchy('website'))
+        : new Promise(resolve => {
+            resolveRedis = resolve;
+          })
+    );
     const initialProps = draft('website');
     const hook = renderHook(({ value }) => useBulletinDependencies(value), {
-      initialProps: { value: initialProps }, wrapper: createWrapper()
+      initialProps: { value: initialProps },
+      wrapper: createWrapper()
     });
 
     await waitFor(() => expect(hook.result.current.kind).toBe('ready'));
@@ -54,6 +85,7 @@ describe('Bulletin dependency controller', () => {
     hook.rerender({ value: draft('redis') });
     await waitFor(() => expect(hook.result.current.kind).toBe('loading'));
     expect(hook.result.current.metricTree).toEqual([]);
+    expect(hook.result.current.fieldSelection).toBe('unverified');
     resolveRedis(hierarchy('redis'));
     await waitFor(() => expect(hook.result.current.kind).toBe('ready'));
     expect(hook.result.current.metricTree[0]?.metric).toBe('summary');
@@ -71,11 +103,16 @@ describe('Bulletin dependency controller', () => {
 
   it('does not present labels from the prior locale while localized hierarchy reloads', async () => {
     let resolveChinese!: (value: ReturnType<typeof hierarchy>) => void;
-    monitor.loadMonitorAppHierarchy.mockImplementation((_app: string, locale: string) => locale === 'en-US'
-      ? Promise.resolve(hierarchy('website'))
-      : new Promise(resolve => { resolveChinese = resolve; }));
+    monitor.loadMonitorAppHierarchy.mockImplementation((_app: string, locale: string) =>
+      locale === 'en-US'
+        ? Promise.resolve(hierarchy('website'))
+        : new Promise(resolve => {
+            resolveChinese = resolve;
+          })
+    );
     const hook = renderHook(({ value }) => useBulletinDependencies(value), {
-      initialProps: { value: draft('website') }, wrapper: createWrapper()
+      initialProps: { value: draft('website') },
+      wrapper: createWrapper()
     });
 
     await waitFor(() => expect(hook.result.current.kind).toBe('ready'));
@@ -94,17 +131,101 @@ describe('Bulletin dependency controller', () => {
 
     await waitFor(() => expect(hook.result.current.kind).toBe('unavailable'));
     expect(hook.result.current.metricTree).toEqual([]);
+    expect(hook.result.current.fieldSelection).toBe('unverified');
   });
 
   it('blocks an edit with saved fields when the authoritative hierarchy is empty', async () => {
     monitor.loadMonitorAppHierarchy.mockResolvedValue({ ...hierarchy('website'), children: [] });
-    const hook = renderHook(() => useBulletinDependencies({
-      ...draft('website'), id: 7
-    }), { wrapper: createWrapper() });
+    const hook = renderHook(
+      () =>
+        useBulletinDependencies({
+          ...draft('website'),
+          id: 7
+        }),
+      { wrapper: createWrapper() }
+    );
 
     await waitFor(() => expect(hook.result.current.kind).toBe('ready'));
     expect(hook.result.current.metricTree).toEqual([]);
     expect(hook.result.current.fieldSelection).toBe('stale');
+    expect(hook.result.current.monitorSelection).toBe('valid');
+  });
+
+  it('treats disabled downstream queries as intentional only while no application is selected', () => {
+    const result = resolveBulletinDependencies(draft(''), {
+      app: '',
+      apps: success([{ value: 'website', label: 'Website', hide: false }]),
+      monitors: pending(),
+      hierarchy: pending()
+    });
+
+    expect(result.kind).toBe('ready');
+    expect(result.monitorSelection).toBe('stale');
+    expect(result.fieldSelection).toBe('stale');
+  });
+
+  it('keeps selections unverified while selected-application dependencies are pending or failed', () => {
+    const editing = { ...draft('website'), id: 7 };
+    const loading = resolveBulletinDependencies(editing, {
+      app: 'website',
+      apps: success([{ value: 'website', label: 'Website', hide: false }]),
+      monitors: pending(),
+      hierarchy: success([])
+    });
+    const unavailable = resolveBulletinDependencies(editing, {
+      app: 'website',
+      apps: pending(),
+      monitors: failure(new ApiMessageError('offline', { status: 503 })),
+      hierarchy: pending()
+    });
+
+    expect(loading).toMatchObject({ kind: 'loading', monitorSelection: 'unverified', fieldSelection: 'unverified' });
+    expect(unavailable).toMatchObject({
+      kind: 'unavailable',
+      monitorSelection: 'unverified',
+      fieldSelection: 'unverified'
+    });
+  });
+
+  it('distinguishes authoritative empty data from an impossible successful undefined result', () => {
+    const editing = { ...draft('website'), id: 7 };
+    const empty = resolveBulletinDependencies(editing, {
+      app: 'website',
+      apps: success([{ value: 'website', label: 'Website', hide: false }]),
+      monitors: success([]),
+      hierarchy: success([])
+    });
+    const undefinedMonitors = resolveBulletinDependencies(editing, {
+      app: 'website',
+      apps: success([{ value: 'website', label: 'Website', hide: false }]),
+      monitors: success(undefined),
+      hierarchy: success([])
+    });
+
+    expect(empty).toMatchObject({ kind: 'ready', monitorSelection: 'stale', fieldSelection: 'stale' });
+    expect(undefinedMonitors).toMatchObject({
+      kind: 'invalid',
+      monitorSelection: 'unverified',
+      fieldSelection: 'unverified'
+    });
+  });
+
+  it('does not validate saved selections against cached data during an active refresh', () => {
+    const editing = { ...draft('website'), id: 7 };
+    const result = resolveBulletinDependencies(editing, {
+      app: 'website',
+      apps: success([{ value: 'website', label: 'Website', hide: false }]),
+      monitors: refreshing([{ id: 1, name: 'prod', app: 'website', instance: 'prod', status: 1 }]),
+      hierarchy: success([])
+    });
+
+    expect(result).toMatchObject({
+      kind: 'loading',
+      monitorSelection: 'unverified',
+      fieldSelection: 'unverified',
+      monitors: [],
+      metricTree: []
+    });
   });
 });
 
@@ -121,9 +242,51 @@ function draft(app: string): BulletinDraft {
 
 function hierarchy(app: string) {
   return {
-    category: 'network', value: app, label: app, isLeaf: false as const, hide: false, type: null, unit: null,
-    children: [{ category: null, value: 'summary', label: 'Summary', isLeaf: false as const, hide: null,
-      type: null, unit: null, children: [{ category: null, value: 'status', label: 'Status', isLeaf: true as const,
-        hide: null, type: 0, unit: null, children: [] }] }]
+    category: 'network',
+    value: app,
+    label: app,
+    isLeaf: false as const,
+    hide: false,
+    type: null,
+    unit: null,
+    children: [
+      {
+        category: null,
+        value: 'summary',
+        label: 'Summary',
+        isLeaf: false as const,
+        hide: null,
+        type: null,
+        unit: null,
+        children: [
+          {
+            category: null,
+            value: 'status',
+            label: 'Status',
+            isLeaf: true as const,
+            hide: null,
+            type: 0,
+            unit: null,
+            children: []
+          }
+        ]
+      }
+    ]
   };
+}
+
+function pending() {
+  return { status: 'pending' as const, fetchStatus: 'fetching' as const, data: undefined, error: null };
+}
+
+function success<T>(data: T | undefined) {
+  return { status: 'success' as const, fetchStatus: 'idle' as const, data, error: null };
+}
+
+function refreshing<T>(data: T) {
+  return { status: 'success' as const, fetchStatus: 'fetching' as const, data, error: null };
+}
+
+function failure(error: unknown) {
+  return { status: 'error' as const, fetchStatus: 'idle' as const, data: undefined, error };
 }

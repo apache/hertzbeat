@@ -26,6 +26,23 @@ const maximumMonitorProofPages = 20;
 const monitorProofPageSize = 50;
 
 export type BulletinDependencies = ReturnType<typeof useBulletinDependencies>;
+export type BulletinDependencySelection = 'unverified' | 'valid' | 'stale';
+type BulletinDependencyKind = 'idle' | 'loading' | 'ready' | 'invalid' | 'unavailable' | 'error';
+type DependencyResourceState = Exclude<BulletinDependencyKind, 'idle'>;
+
+type DependencyResource<T> = {
+  status: 'pending' | 'error' | 'success';
+  fetchStatus: 'idle' | 'fetching' | 'paused';
+  data: T | undefined;
+  error: unknown;
+};
+
+type BulletinDependencyResources = {
+  app: string;
+  apps: DependencyResource<Awaited<ReturnType<typeof loadMonitorApps>>>;
+  monitors: DependencyResource<Monitor[]>;
+  hierarchy: DependencyResource<BulletinMetricTreeMetricNode[]>;
+};
 
 export function useBulletinDependencies(draft: BulletinDraft | null) {
   const resources = useBulletinDependencyResources(draft);
@@ -39,12 +56,13 @@ function useBulletinDependencyResources(draft: BulletinDraft | null) {
   const apps = useQuery({
     queryKey: bulletinQueryKeys.apps(),
     queryFn: loadBulletinApps,
+    enabled: draft != null,
     retry: false,
     staleTime: bulletinDependencyStaleTimeMs
   });
   const monitors = useQuery({
     queryKey: bulletinQueryKeys.monitors(app),
-    queryFn: () => loadAllMonitors(app),
+    queryFn: ({ signal }) => loadAllMonitors(app, signal),
     enabled: Boolean(draft && app),
     retry: false
   });
@@ -54,34 +72,21 @@ function useBulletinDependencyResources(draft: BulletinDraft | null) {
     enabled: Boolean(draft && app),
     retry: false
   });
-  return { app, apps, hierarchy, locale, monitors };
+  return { app, apps, hierarchy, monitors };
 }
 
-function resolveBulletinDependencies(
-  draft: BulletinDraft | null,
-  resources: ReturnType<typeof useBulletinDependencyResources>
-) {
+export function resolveBulletinDependencies(draft: BulletinDraft | null, resources: BulletinDependencyResources) {
   const { app, apps, hierarchy, monitors } = resources;
-  const metricTree = hierarchy.data ?? [];
-  const records = buildBulletinDependencyRecords(apps.data, monitors.data, metricTree);
-  const failure = resolveDependencyFailure(
-    apps.isError,
-    apps.error,
-    monitors.isError,
-    monitors.error,
-    hierarchy.isError,
-    hierarchy.error
+  const kind = resolveDependencyKind(draft, resources);
+  const appsData = apps.status === 'success' ? apps.data : undefined;
+  const activeMonitors = kind === 'ready' && app ? monitors.data : undefined;
+  const metricTree = kind === 'ready' && app ? hierarchy.data : undefined;
+  const records = buildBulletinDependencyRecords(appsData, activeMonitors, metricTree);
+  const monitorSelection = resolveSelection(kind, draft, current =>
+    hasUnknownMonitorSelection(current, activeMonitors ?? [])
   );
-  const loading = isDependencyLoading(
-    apps.isPending,
-    monitors.isPending,
-    hierarchy.isPending,
-    app
-  );
-  const kind = loading ? 'loading' as const
-    : failure ?? 'ready' as const;
-  const fieldSelection = hasUnknownSavedFields(draft, metricTree) ? 'stale' as const : 'valid' as const;
-  return { kind, fieldSelection, metricTree: kind === 'ready' ? metricTree : [], ...records };
+  const fieldSelection = resolveSelection(kind, draft, current => hasUnknownFieldSelection(current, metricTree ?? []));
+  return { kind, fieldSelection, monitorSelection, metricTree: metricTree ?? [], ...records };
 }
 
 export function loadBulletinApps({ signal }: { signal: AbortSignal }) {
@@ -94,9 +99,9 @@ export function buildBulletinDependencyRecords(
   metricTree: BulletinMetricTreeMetricNode[] | undefined
 ) {
   return {
-    apps: (apps ?? []).filter(item => (
-      Boolean(item.value) && item.value !== 'prometheus' && item.value !== '__system__'
-    )),
+    apps: (apps ?? []).filter(
+      item => Boolean(item.value) && item.value !== 'prometheus' && item.value !== '__system__'
+    ),
     monitors: (monitors ?? []).map(item => ({
       id: item.id,
       name: item.name,
@@ -115,31 +120,49 @@ export function classifyBulletinMonitorError(error: unknown): 'invalid' | 'unava
   return classifyMonitorReadError(error) === 'unavailable' ? 'unavailable' : 'error';
 }
 
-function resolveDependencyFailure(
-  appsError: boolean,
-  appsReason: unknown,
-  monitorsError: boolean,
-  monitorsReason: unknown,
-  hierarchyError: boolean,
-  hierarchyReason: unknown
-) {
-  if (monitorsError) return classifyBulletinMonitorError(monitorsReason);
-  if (hierarchyError) return classifyBulletinMonitorError(hierarchyReason);
-  if (appsError) return classifyBulletinMonitorError(appsReason);
-  return null;
+function resolveDependencyKind(
+  draft: BulletinDraft | null,
+  resources: BulletinDependencyResources
+): BulletinDependencyKind {
+  if (!draft) return 'idle' as const;
+  const { app, apps, monitors, hierarchy } = resources;
+  const states = [resolveResourceState(apps)];
+  if (app) states.push(resolveResourceState(monitors), resolveResourceState(hierarchy));
+  const failure = states.find(isFailure);
+  if (failure) return failure;
+  if (states.includes('loading')) return 'loading' as const;
+  return 'ready' as const;
 }
 
-function isDependencyLoading(
-  appsPending: boolean,
-  monitorsPending: boolean,
-  hierarchyPending: boolean,
-  app: string
-) {
-  return appsPending || Boolean(app && (monitorsPending || hierarchyPending));
+function resolveResourceState(resource: DependencyResource<unknown>): DependencyResourceState {
+  if (resource.status === 'error') return classifyBulletinMonitorError(resource.error);
+  if (resource.status === 'pending') return 'loading' as const;
+  // An empty collection is authoritative; a successful query without data violates the query contract.
+  if (resource.data === undefined) return 'invalid' as const;
+  // Cached data cannot validate a saved selection while its authoritative refresh is still in flight.
+  return resource.fetchStatus === 'idle' ? ('ready' as const) : ('loading' as const);
 }
 
-function hasUnknownSavedFields(draft: BulletinDraft | null, tree: BulletinMetricTreeMetricNode[]) {
-  if (draft?.id == null) return false;
+function isFailure(kind: DependencyResourceState): kind is Exclude<DependencyResourceState, 'loading' | 'ready'> {
+  return kind === 'invalid' || kind === 'unavailable' || kind === 'error';
+}
+
+function resolveSelection(
+  kind: BulletinDependencyKind,
+  draft: BulletinDraft | null,
+  hasUnknownSelection: (current: BulletinDraft) => boolean
+): BulletinDependencySelection {
+  // Pending or failed dependencies cannot prove that a persisted selection is valid or stale.
+  if (kind !== 'ready' || !draft) return 'unverified';
+  return hasUnknownSelection(draft) ? 'stale' : 'valid';
+}
+
+function hasUnknownMonitorSelection(draft: BulletinDraft, monitors: Monitor[]) {
+  const knownIds = new Set(monitors.map(monitor => monitor.id));
+  return draft.monitorIds.some(id => !knownIds.has(id));
+}
+
+function hasUnknownFieldSelection(draft: BulletinDraft, tree: BulletinMetricTreeMetricNode[]) {
   return Object.keys(resolveSavedMetricTreeSelection(tree, draft.fields).unknownFields).length > 0;
 }
 
@@ -147,20 +170,23 @@ async function loadBulletinMetricTree(app: string, locale: string, signal: Abort
   return buildBulletinMetricTree(await loadMonitorAppHierarchy(app, locale, signal));
 }
 
-async function loadAllMonitors(app: string): Promise<Monitor[]> {
+async function loadAllMonitors(app: string, signal?: AbortSignal): Promise<Monitor[]> {
   if (!app) return [];
   const result: Monitor[] = [];
   let pageIndex = 0;
   let totalPages = 1;
   do {
-    const page = await loadMonitors({
-      search: '',
-      app,
-      status: '9',
-      labels: '',
-      pageIndex,
-      pageSize: monitorProofPageSize
-    });
+    const page = await loadMonitors(
+      {
+        search: '',
+        app,
+        status: '9',
+        labels: '',
+        pageIndex,
+        pageSize: monitorProofPageSize
+      },
+      signal
+    );
     if (page.totalPages > maximumMonitorProofPages) {
       throw new Error('Monitor option safety bound exceeded');
     }

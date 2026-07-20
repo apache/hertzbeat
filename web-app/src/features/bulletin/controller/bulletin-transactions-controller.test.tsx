@@ -107,6 +107,22 @@ describe('Bulletin transactions controller', () => {
     await act(async () => first);
   });
 
+  it.each(['monitorSelection', 'fieldSelection'] as const)(
+    'rejects a save while %s has not converged to the authoritative dependencies',
+    async selection => {
+      const context = createContext();
+      context.value.dependencies = { ...context.value.dependencies, [selection]: 'stale' };
+      const hook = renderHook(() => useBulletinTransactions(context.value));
+
+      await act(async () => {
+        await expect(hook.result.current.save()).resolves.toBe(false);
+      });
+
+      expect(mocks.createBulletinAndRead).not.toHaveBeenCalled();
+      expect(mocks.notification).toHaveBeenCalledWith({ message: 'bulletin.validation', type: 'error' });
+    }
+  );
+
   it('keeps a confirmed save successful when the post-write metrics refresh fails', async () => {
     const context = createContext();
     context.refresh.mockResolvedValue(true);
@@ -213,6 +229,7 @@ function createContext(options: { selectedId?: number } = {}) {
     dependencies: {
       kind: 'ready',
       fieldSelection: 'valid',
+      monitorSelection: 'valid',
       apps: [{ value: 'website', label: 'Website', hide: false }],
       monitors: [{ id: 1, name: 'Gateway', app: 'website', labels: {} }],
       metrics: [{ name: 'responseTime', fields: ['duration'] }],
