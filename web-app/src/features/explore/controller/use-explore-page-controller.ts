@@ -53,7 +53,8 @@ export type ExplorePageResultState =
 export function useExplorePageController() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const parsedQuery = useMemo(() => parseExploreQuery(searchParams), [searchParams]);
+  const locationSearch = searchParams.toString();
+  const parsedQuery = useMemo(() => parseExploreQuery(new URLSearchParams(locationSearch)), [locationSearch]);
   const sharedContext = useQueryContextOptional();
   const sharedTime = useSharedTimeOptional();
   const fixedWindow = exactWindow(parsedQuery);
@@ -66,8 +67,7 @@ export function useExplorePageController() {
     queryFn: ({ signal }) => loadHistorical(query, signal),
     enabled: historical,
     retry: false,
-    staleTime: 0,
-    refetchInterval: historical ? 30_000 : false
+    staleTime: 0
   });
   const updateQuery = (changes: ExploreQueryPatch) => {
     const next = mergeExploreQuery(query, mergeContextChanges(context, changes));
@@ -80,13 +80,22 @@ export function useExplorePageController() {
       pageIndex: undefined
     })
   );
+  const refresh = () => {
+    if (!historical) return Promise.resolve();
+    if (sharedTime?.manualRefreshOwner === 'time_revision') {
+      // Time-owned queries refresh by changing their scoped key. Refetching here too would duplicate one operator action.
+      sharedTime.requestRefresh();
+      return Promise.resolve();
+    }
+    return queryResult.refetch().then(() => undefined);
+  };
   return {
     query,
     handoff,
     submission,
     result: resolveResult(query, handoff, queryResult.isPending, queryResult.error, queryResult.data),
     updateQuery,
-    refresh: () => (historical ? queryResult.refetch().then(() => undefined) : Promise.resolve()),
+    refresh,
     openPath: (path: string) => {
       void navigate(path);
     }

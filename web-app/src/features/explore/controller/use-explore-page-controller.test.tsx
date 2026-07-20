@@ -21,10 +21,10 @@ import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { QueryContextProvider } from '@/shared/query-context';
-import { GlobalTimeProvider, RouteTimeProvider } from '@/shared/time';
+import { GlobalTimeProvider, RouteTimeProvider, useSharedTime, type SharedTimeValue } from '@/shared/time';
 
 import { buildSignalApiPath } from '../api/explore-api';
-import type { ExploreQuery } from '../model/explore-model';
+import type { ExploreQuery, ExploreQueryPatch } from '../model/explore-model';
 import type { MetricConsole } from '../model/explore-signal-contract';
 import { exploreQueryKeys } from './explore-query-keys';
 import { useExplorePageController } from './use-explore-page-controller';
@@ -54,6 +54,23 @@ describe('Explore page controller', () => {
     await waitFor(() => expect(routed.current().query.query).toBeUndefined());
     await act(async () => routed.router.navigate(1));
     await waitFor(() => expect(routed.current().query.query).toBe('current'));
+  });
+
+  it('preserves exact handoff windows across Back and Forward', async () => {
+    const scope = 'serviceName=checkout&serviceNamespace=commerce&environment=prod&collectorId=east';
+    const routed = renderController(
+      [`/explore?signal=traces&${scope}&start=1000&end=2000`, `/explore?signal=traces&${scope}&start=3000&end=4000`],
+      1
+    );
+    await waitFor(() => expect(routed.current().query).toMatchObject({ start: 3000, end: 4000 }));
+
+    await act(async () => routed.router.navigate(-1));
+    await waitFor(() => expect(routed.current().query).toMatchObject({ start: 1000, end: 2000 }));
+    expect(routed.router.state.location.search).toContain('start=1000&end=2000');
+
+    await act(async () => routed.router.navigate(1));
+    await waitFor(() => expect(routed.current().query).toMatchObject({ start: 3000, end: 4000 }));
+    expect(routed.router.state.location.search).toContain('start=3000&end=4000');
   });
 
   it('clears downstream scope and old-service identity on service and Collector switches', async () => {
@@ -120,7 +137,7 @@ describe('Explore page controller', () => {
   });
 
   it.each(['metrics', 'logs', 'traces'] as const)(
-    'auto-refetches relative %s with a fresh now without changing history or URL time fields',
+    'does not hide a 30 second %s refresh while route-owned shell auto-refresh is off',
     async signal => {
       vi.useFakeTimers();
       try {
@@ -138,13 +155,13 @@ describe('Explore page controller', () => {
         });
         expect(loader).toHaveBeenCalledTimes(1);
         expect(paths[0]).toContain('start=200000&end=2000000');
+        expect(routed.time()).toMatchObject({ policy: 'route_owned', autoRefreshMs: 0, refreshRevision: 0 });
         const key = routed.router.state.location.key;
         expect(routed.router.state.location.search).not.toMatch(/[?&](?:start|end)=/u);
         await act(async () => {
           await vi.advanceTimersByTimeAsync(30_000);
         });
-        expect(loader).toHaveBeenCalledTimes(2);
-        expect(paths[1]).toContain('start=230000&end=2030000');
+        expect(loader).toHaveBeenCalledTimes(1);
         expect(routed.router.state.location.key).toBe(key);
         expect(routed.router.state.location.search).not.toMatch(/[?&](?:start|end)=/u);
       } finally {
@@ -153,7 +170,7 @@ describe('Explore page controller', () => {
     }
   );
 
-  it('keeps an exact window fixed across the 30 second controller refresh', async () => {
+  it('does not refresh an exact window behind the route-owned shell policy', async () => {
     vi.useFakeTimers();
     try {
       vi.setSystemTime(2_000_000);
@@ -174,14 +191,24 @@ describe('Explore page controller', () => {
         await vi.advanceTimersByTimeAsync(30_000);
       });
 
-      expect(paths).toHaveLength(2);
+      expect(paths).toHaveLength(1);
       expect(paths[0]).toContain('start=1000&end=2000');
-      expect(paths[1]).toContain('start=1000&end=2000');
       expect(routed.router.state.location.key).toBe(key);
       expect(routed.router.state.location.search).toContain('start=1000&end=2000');
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('routes a local refresh through the route-owned shell time revision exactly once', async () => {
+    const routed = renderController(['/explore?signal=metrics']);
+    await waitFor(() => expect(api.loadMetricSignal).toHaveBeenCalledOnce());
+    const revision = routed.time().refreshRevision;
+
+    await act(async () => routed.current().refresh());
+    await waitFor(() => expect(api.loadMetricSignal).toHaveBeenCalledTimes(2));
+
+    expect(routed.time().refreshRevision).toBe(revision + 1);
   });
 
   it.each([
@@ -245,15 +272,44 @@ describe('Explore page controller', () => {
 
   it('does not let a stale previous-signal promise replace the current result', async () => {
     const metric = deferred<MetricConsole>();
-    api.loadMetricSignal.mockReturnValue(metric.promise);
+    let metricSignal: AbortSignal | undefined;
+    api.loadMetricSignal.mockImplementation((_query: ExploreQuery, signal: AbortSignal) => {
+      metricSignal = signal;
+      return metric.promise;
+    });
     api.loadLogSignal.mockResolvedValue(page([logRow({ body: 'current' })]));
     const routed = renderController(['/explore?signal=metrics']);
     await waitFor(() => expect(api.loadMetricSignal).toHaveBeenCalled());
     act(() => routed.current().updateQuery({ signal: 'logs', pageIndex: undefined }));
     await waitFor(() => expect(routed.current().result).toMatchObject({ kind: 'ready', signal: 'logs' }));
+    expect(metricSignal?.aborted).toBe(true);
     act(() => metric.resolve(metricConsole([])));
     await act(async () => metric.promise);
     expect(routed.current().result).toMatchObject({ kind: 'ready', signal: 'logs' });
+  });
+
+  it.each<[string, ExploreQueryPatch]>([
+    ['time', { timeRange: 'last-1h' }],
+    ['context', { serviceName: 'payments' }]
+  ])('aborts an old request when the active %s scope changes', async (_scope, patch) => {
+    const first = deferred<MetricConsole>();
+    const signals: AbortSignal[] = [];
+    api.loadMetricSignal
+      .mockImplementationOnce((_query: ExploreQuery, signal: AbortSignal) => {
+        signals.push(signal);
+        return first.promise;
+      })
+      .mockImplementation((_query: ExploreQuery, signal: AbortSignal) => {
+        signals.push(signal);
+        return Promise.resolve(metricConsole([]));
+      });
+    const routed = renderController(['/explore?signal=metrics']);
+    await waitFor(() => expect(signals).toHaveLength(1));
+
+    act(() => routed.current().updateQuery(patch));
+    await waitFor(() => expect(signals).toHaveLength(2));
+
+    expect(signals[0]?.aborted).toBe(true);
   });
 
   it('shares the feature-owned history identity with cached signal evidence', async () => {
@@ -288,8 +344,10 @@ function renderController(
   client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } })
 ) {
   let controller: ReturnType<typeof useExplorePageController> | undefined;
+  let time: SharedTimeValue | undefined;
   function Probe() {
     controller = useExplorePageController();
+    time = useSharedTime();
     return null;
   }
   const router = createMemoryRouter(
@@ -321,6 +379,10 @@ function renderController(
     current: () => {
       if (!controller) throw new Error('controller not mounted');
       return controller;
+    },
+    time: () => {
+      if (!time) throw new Error('shared time not mounted');
+      return time;
     }
   };
 }
