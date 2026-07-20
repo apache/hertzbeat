@@ -21,22 +21,28 @@ import { ObjectStoreResourceContractError } from '../model/object-store-model';
 import { parseObjectStoreReadModel } from './object-store-schema';
 
 describe('object store response schema', () => {
-  it('replaces the OBS wire secret with non-sensitive configured evidence', () => {
+  it.each([
+    ['plaintext', 'private-schema-secret', true],
+    ['trimmed plaintext', ' private-trimmed-secret ', true],
+    ['empty', '', false],
+    ['blank', '   ', false]
+  ])('replaces an OBS %s wire secret with non-sensitive configured evidence', (_label, secretKey, configured) => {
     const result = parseObjectStoreReadModel({
       type: 'OBS',
       config: {
         accessKey: 'ak',
-        secretKey: 'private-schema-secret',
+        secretKey,
         bucketName: 'bucket'
       }
     });
 
     expect(result).toEqual({
       type: 'OBS',
-      config: { accessKey: 'ak', bucketName: 'bucket', secretConfigured: true }
+      config: { accessKey: 'ak', bucketName: 'bucket', secretConfigured: configured }
     });
-    expect(JSON.stringify(result)).not.toContain('secretKey');
-    expect(JSON.stringify(result)).not.toContain('private-schema-secret');
+    const serialized = JSON.stringify(result);
+    expect(serialized).not.toContain('secretKey');
+    if (secretKey.trim()) expect(serialized).not.toContain(secretKey.trim());
   });
 
   it('reports an absent OBS wire secret without inventing configured state', () => {
@@ -46,13 +52,12 @@ describe('object store response schema', () => {
     });
   });
 
-  it.each([
-    { type: 'DATABASE' },
-    { type: 'FILE', config: null },
-    { type: 'DATABASE', config: undefined }
-  ])('normalizes a missing legacy config object for $type', wire => {
-    expect(parseObjectStoreReadModel(wire)).toEqual({ type: wire.type, config: {} });
-  });
+  it.each([{ type: 'DATABASE' }, { type: 'FILE', config: null }, { type: 'DATABASE', config: undefined }])(
+    'normalizes a missing legacy config object for $type',
+    wire => {
+      expect(parseObjectStoreReadModel(wire)).toEqual({ type: wire.type, config: {} });
+    }
+  );
 
   it.each([
     { type: 'OTHER', config: { secretKey: 'private-type-secret' } },

@@ -80,20 +80,23 @@ describe('Object Store Refine data provider', () => {
     expect(objectStoreApi.loadObjectStore).toHaveBeenCalledTimes(1);
   });
 
-  it('rereads authoritative configuration after POST before resolving update', async () => {
-    const canonical: ObjectStoreReadModel = { type: 'FILE', config: {} };
+  it('sends plaintext only in the write and resolves cache-safe presence evidence from reread', async () => {
+    const plaintext = 'runtime-only-provider-secret';
+    const write = { ...configuredDraft, config: { ...configuredDraft.config, secretKey: plaintext } };
     objectStoreApi.saveObjectStore.mockResolvedValue('Update config success');
-    objectStoreApi.loadObjectStore.mockResolvedValue(canonical);
+    objectStoreApi.loadObjectStore.mockResolvedValue(configuredRead);
 
     const result = await objectStoreDataProvider.update({
       resource: 'object-store',
       id: 'current',
-      variables: configuredDraft
+      variables: write
     });
 
-    expect(result).toEqual({ data: { id: 'current', ...canonical } });
+    expect(result).toEqual({ data: { id: 'current', ...configuredRead } });
     expect(JSON.stringify(result)).not.toContain('secretKey');
-    expect(objectStoreApi.saveObjectStore).toHaveBeenCalledWith(configuredDraft);
+    expect(JSON.stringify(result)).not.toContain(plaintext);
+    expect(objectStoreApi.saveObjectStore).toHaveBeenCalledWith(write);
+    expect(objectStoreApi.loadObjectStore).toHaveBeenCalledWith();
     expect(objectStoreApi.saveObjectStore.mock.invocationCallOrder[0]).toBeLessThan(
       objectStoreApi.loadObjectStore.mock.invocationCallOrder[0] ?? 0
     );
@@ -105,17 +108,25 @@ describe('Object Store Refine data provider', () => {
       new ApiMessageError('secretKey=private-reread-secret', { cause: new TypeError('private-reread-cause') })
     );
 
-    await expect(
-      objectStoreDataProvider.update({
+    let error: unknown;
+    try {
+      await objectStoreDataProvider.update({
         resource: 'object-store',
         id: 'current',
         variables: configuredDraft
-      })
-    ).rejects.toMatchObject({
+      });
+    } catch (reason) {
+      error = reason;
+    }
+
+    expect(error).toMatchObject({
       statusCode: 502,
       code: 'OBJECT_STORE_CANONICAL_REREAD_FAILED',
       message: 'Object Store canonical reread failed'
     });
+    expect(JSON.stringify(error)).not.toContain('private-reread-secret');
+    expect(JSON.stringify(error)).not.toContain('private-reread-cause');
+    expect((error as Error).cause).toBeUndefined();
     expect(objectStoreApi.saveObjectStore).toHaveBeenCalledTimes(1);
     expect(objectStoreApi.loadObjectStore).toHaveBeenCalledTimes(1);
   });

@@ -175,7 +175,13 @@ describe('Object Store resource controller', () => {
         data: { ...serverRecord, config: { ...serverRecord.config, accessKey: 'canonical' } }
       });
     });
-    expect(result.current.state).toMatchObject({ kind: 'ready', dirty: false, showValidation: false });
+    expect(result.current.state).toMatchObject({
+      kind: 'ready',
+      dirty: false,
+      showValidation: false,
+      current: { config: expect.objectContaining({ secretKey: '' }) }
+    });
+    expect(JSON.stringify(result.current.state)).not.toContain('runtime-only-secret');
   });
 
   it('admits one save and locks draft mutations until its owner completes', () => {
@@ -260,12 +266,14 @@ describe('Object Store resource controller', () => {
       await waitFor(() => expect(result.current.state).toMatchObject({ kind: 'ready', recovery: null }));
       expect(refine.updateMutate).toHaveBeenCalledTimes(1);
       expect(refine.notification).toHaveBeenCalledWith({ message: 'objectStore.saveSuccess', type: 'success' });
+      expectPrivateFailureNotPublished(result.current.state);
     }
   );
 
   it.each(definiteWriteRejections)(
     'unlocks an OBS secret draft after a definite %s rejection',
     async (_label, rejection) => {
+      const locationBeforeSave = window.location.href;
       const { result } = renderHook(() => useObjectStoreResourceController());
       const submitted = {
         ...createObjectStoreDraft(serverRecord),
@@ -279,9 +287,19 @@ describe('Object Store resource controller', () => {
         void callbacks?.onError?.(rejection());
       });
 
-      await waitFor(() => expect(result.current.state).toMatchObject({ kind: 'ready', locked: false, recovery: null }));
+      await waitFor(() =>
+        expect(result.current.state).toMatchObject({
+          kind: 'ready',
+          current: submitted,
+          dirty: true,
+          locked: false,
+          recovery: null
+        })
+      );
       expect(refine.refetch).not.toHaveBeenCalled();
       expect(refine.notification).toHaveBeenCalledWith({ message: 'objectStore.saveFailed', type: 'error' });
+      expect(window.location.href).toBe(locationBeforeSave);
+      expectPrivateFailureNotPublished(result.current.state);
       act(() => result.current.submit());
       expect(refine.updateMutate).toHaveBeenCalledTimes(2);
     }
@@ -340,6 +358,7 @@ describe('Object Store resource controller', () => {
   it.each(ambiguousWriteFailures)(
     'keeps an OBS secret save commit-uncertain after an ambiguous %s outcome',
     async (_label, failure) => {
+      const locationBeforeSave = window.location.href;
       const { result } = renderHook(() => useObjectStoreResourceController());
       const submitted = {
         ...createObjectStoreDraft(serverRecord),
@@ -365,7 +384,8 @@ describe('Object Store resource controller', () => {
       act(() => result.current.submit());
       expect(refine.refetch).not.toHaveBeenCalled();
       expect(refine.updateMutate).toHaveBeenCalledTimes(1);
-      expect(JSON.stringify(refine.notification.mock.calls)).not.toContain('runtime-only-secret');
+      expect(window.location.href).toBe(locationBeforeSave);
+      expectPrivateFailureNotPublished(result.current.state);
     }
   );
 
@@ -404,15 +424,34 @@ function buildOneResult(override: Record<string, unknown> = {}) {
 }
 
 const ambiguousWriteFailures = [
-  ['network', () => ({ statusCode: 0, kind: 'network' })],
-  ['5xx', () => ({ statusCode: 503, kind: 'http' })],
-  ['malformed success', () => ({ statusCode: 502, code: 'OBJECT_STORE_RESPONSE_INVALID', kind: 'contract' })]
+  ['network', () => createRefineHttpError(privateFailureMessage, 0, 'NETWORK', 'network')],
+  ['5xx', () => createRefineHttpError(privateFailureMessage, 503, undefined, 'http', 503)],
+  [
+    'malformed success',
+    () => createRefineHttpError(privateFailureMessage, 502, 'OBJECT_STORE_RESPONSE_INVALID', 'contract')
+  ],
+  ['unexpected cause', () => new Error(privateFailureMessage, { cause: new Error(privateFailureCause) })]
 ] as const;
 
 const definiteWriteRejections = [
-  ['business envelope', () => createRefineHttpError('rejected', 400, 20, 'envelope', 200)],
-  ['HTTP 4xx', () => createRefineHttpError('rejected', 422, undefined, 'http', 422)]
+  ['business envelope', () => createRefineHttpError(privateFailureMessage, 400, 20, 'envelope', 200)],
+  ['HTTP 4xx', () => createRefineHttpError(privateFailureMessage, 422, undefined, 'http', 422)]
 ] as const;
+
+const privateFailureMessage = 'private-write-failure-message';
+const privateFailureCause = 'private-write-failure-cause';
+
+function expectPrivateFailureNotPublished(state: unknown) {
+  // The retry draft may retain plaintext in component memory. Query results and
+  // notifications are separate publishable surfaces and must remain secret-free.
+  const publishable = JSON.stringify({
+    queryResults: refine.useOne.mock.results,
+    notifications: refine.notification.mock.calls
+  });
+  expect(publishable).not.toContain('runtime-only-secret');
+  expect(JSON.stringify({ state, notifications: refine.notification.mock.calls })).not.toContain(privateFailureMessage);
+  expect(JSON.stringify({ state, notifications: refine.notification.mock.calls })).not.toContain(privateFailureCause);
+}
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
