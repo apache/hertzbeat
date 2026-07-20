@@ -1,13 +1,13 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { useQuery } from '@tanstack/react-query';
-import { useCallback, useEffect, type Dispatch, type SetStateAction } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useReducer, type Dispatch, type SetStateAction } from 'react';
 
 import type { RemotePageState } from '@/shared/remote-state';
 
 import { loadBulletins } from '../api/bulletin-api';
 import { classifyBulletinFailure } from '../model/bulletin-failure';
-import { isBulletinPageComplete, type Bulletin, type BulletinQuery } from '../model/bulletin-model';
+import { isBulletinPageComplete, writeBulletinQuery, type Bulletin, type BulletinQuery } from '../model/bulletin-model';
 import { bulletinQueryKeys } from './bulletin-query-keys';
 
 type BulletinListFailure = 'invalid' | 'unavailable' | 'error';
@@ -47,25 +47,56 @@ export function reconcileBulletinSelection(
   return list.records?.some(record => record.id === selectedId) ? selectedId : null;
 }
 
-export function useBulletinSelectionConvergence(
-  selectedId: number | null,
-  list: BulletinListState,
-  setSelectedId: Dispatch<SetStateAction<number | null>>
-) {
-  const activeSelectedId = reconcileBulletinSelection(selectedId, list);
+type BulletinSelection = { scope: string; selectedId: number | null };
+type BulletinSelectionAction =
+  | { type: 'enter-scope'; from: string; scope: string }
+  | { type: 'select'; scope: string; value: SetStateAction<number | null> }
+  | { type: 'clear-invalid'; scope: string; selectedId: number };
+
+export function useBulletinSelection(query: BulletinQuery, list: BulletinListState) {
+  const scope = writeBulletinQuery(query).toString();
+  const [selection, dispatch] = useReducer(reduceBulletinSelection, { scope, selectedId: null });
+  const activeSelectedId = selection.scope === scope ? reconcileBulletinSelection(selection.selectedId, list) : null;
+
+  useLayoutEffect(() => {
+    if (selection.scope === scope) return;
+    // Commit the new scope before events or command continuations can publish a selection.
+    dispatch({ type: 'enter-scope', from: selection.scope, scope });
+  }, [scope, selection.scope]);
+
   useEffect(() => {
-    if (selectedId == null || activeSelectedId != null) return;
+    const selectedId = selection.selectedId;
+    if (selection.scope !== scope || selectedId == null || activeSelectedId != null) return;
+    if (list.kind === 'loading') return;
     let active = true;
+    // Scope and id ownership prevent a retired list result from clearing a newer selection.
     queueMicrotask(() => {
-      if (active) {
-        setSelectedId(current => (current === selectedId ? null : current));
-      }
+      if (active) dispatch({ type: 'clear-invalid', scope, selectedId });
     });
     return () => {
       active = false;
     };
-  }, [activeSelectedId, selectedId, setSelectedId]);
-  return activeSelectedId;
+  }, [activeSelectedId, list.kind, scope, selection.scope, selection.selectedId]);
+
+  const setSelectedId = useCallback<Dispatch<SetStateAction<number | null>>>(
+    value => dispatch({ type: 'select', scope, value }),
+    [scope]
+  );
+  return { selectedId: activeSelectedId, setSelectedId };
+}
+
+function reduceBulletinSelection(state: BulletinSelection, action: BulletinSelectionAction): BulletinSelection {
+  if (action.type === 'enter-scope') {
+    return state.scope === action.from ? { scope: action.scope, selectedId: null } : state;
+  }
+  if (action.type === 'clear-invalid') {
+    return state.scope === action.scope && state.selectedId === action.selectedId
+      ? { ...state, selectedId: null }
+      : state;
+  }
+  if (state.scope !== action.scope) return state;
+  const selectedId = typeof action.value === 'function' ? action.value(state.selectedId) : action.value;
+  return { scope: action.scope, selectedId };
 }
 
 function resolveListState(

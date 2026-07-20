@@ -6,12 +6,16 @@ import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { BulletinRequestFailure } from '../model/bulletin-failure';
-import { useBulletinListController } from './bulletin-list-controller';
+import type { BulletinQuery } from '../model/bulletin-model';
+import { useBulletinListController, useBulletinSelection, type BulletinListState } from './bulletin-list-controller';
+import { useBulletinMetrics } from './bulletin-metrics-controller';
+import { bulletinQueryKeys } from './bulletin-query-keys';
 
-const api = vi.hoisted(() => ({ loadBulletins: vi.fn() }));
+const api = vi.hoisted(() => ({ loadBulletinMetrics: vi.fn(), loadBulletins: vi.fn() }));
 
 vi.mock('../api/bulletin-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/bulletin-api')>()),
+  loadBulletinMetrics: api.loadBulletinMetrics,
   loadBulletins: api.loadBulletins
 }));
 
@@ -73,12 +77,139 @@ describe('Bulletin list controller', () => {
 
     await waitFor(() => expect(hook.result.current.state).toEqual({ kind: 'invalid' }));
   });
+
+  it('synchronously retires selection and metrics when the canonical list query changes', async () => {
+    api.loadBulletinMetrics.mockReturnValue(new Promise(() => undefined));
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const firstQuery = { search: '', pageIndex: 0, pageSize: 8 };
+    const secondQuery = { ...firstQuery, pageIndex: 1 };
+    const hook = renderHook(
+      ({ list, query }: { list: BulletinListState; query: BulletinQuery }) => useSelectionHarness(query, list),
+      {
+        initialProps: {
+          list: { kind: 'ready', records: [oldRecord], total: 1 } as BulletinListState,
+          query: firstQuery
+        },
+        wrapper: createWrapper(client)
+      }
+    );
+
+    act(() => hook.result.current.select(7));
+    await waitFor(() => expect(api.loadBulletinMetrics).toHaveBeenCalledWith(7));
+    expect(
+      client
+        .getQueryCache()
+        .find({ queryKey: bulletinQueryKeys.metrics(7) })
+        ?.getObserversCount()
+    ).toBe(1);
+
+    hook.rerender({ list: { kind: 'loading' }, query: secondQuery });
+
+    expect(hook.result.current.selectedId).toBeNull();
+    expect(hook.result.current.metrics).toEqual({ kind: 'idle' });
+    expect(
+      client
+        .getQueryCache()
+        .find({ queryKey: bulletinQueryKeys.metrics(7) })
+        ?.getObserversCount()
+    ).toBe(0);
+  });
+
+  it.each([
+    ['save selection', 7],
+    ['delete clear', null]
+  ] as const)('rejects a retired-scope %s without losing the new-scope selection', (_operation, lateValue) => {
+    const firstQuery = { search: 'old', pageIndex: 0, pageSize: 8 };
+    const secondQuery = { ...firstQuery, search: 'new' };
+    const hook = renderHook(
+      ({ query, record }: { query: BulletinQuery; record: typeof oldRecord }) =>
+        useSelectionHarness(query, { kind: 'ready', records: [record], total: 1 }),
+      { initialProps: { query: firstQuery, record: oldRecord }, wrapper: createWrapper() }
+    );
+    const retiredSetter = hook.result.current.select;
+
+    hook.rerender({ query: secondQuery, record: freshRecord });
+    act(() => hook.result.current.select(8));
+    expect(hook.result.current.selectedId).toBe(8);
+
+    act(() => retiredSetter(lateValue));
+
+    expect(hook.result.current.selectedId).toBe(8);
+  });
+
+  it('retains a valid selection while the same canonical query refreshes', async () => {
+    api.loadBulletinMetrics.mockReturnValue(new Promise(() => undefined));
+    const hook = renderHook(({ list }: { list: BulletinListState }) => useSelectionHarness(query, list), {
+      initialProps: { list: { kind: 'ready', records: [oldRecord], total: 1 } as BulletinListState },
+      wrapper: createWrapper()
+    });
+
+    act(() => hook.result.current.select(7));
+    await waitFor(() => expect(api.loadBulletinMetrics).toHaveBeenCalledWith(7));
+
+    hook.rerender({ list: { kind: 'loading' } });
+    expect(hook.result.current.selectedId).toBe(7);
+    expect(hook.result.current.metrics).toEqual({ kind: 'loading' });
+
+    hook.rerender({ list: { kind: 'ready', records: [oldRecord], total: 1 } });
+    expect(hook.result.current.selectedId).toBe(7);
+  });
+
+  it('does not let a retired list completion clear or restore the new scope selection', async () => {
+    const retiredList = deferred<ReturnType<typeof page>>();
+    const firstQuery = { search: 'old', pageIndex: 0, pageSize: 8 };
+    const secondQuery = { ...firstQuery, search: 'new' };
+    api.loadBulletins.mockImplementation(current =>
+      current.search === 'old' ? retiredList.promise : Promise.resolve(page([freshRecord]))
+    );
+    api.loadBulletinMetrics.mockReturnValue(new Promise(() => undefined));
+    const hook = renderHook(({ query }: { query: BulletinQuery }) => useOwnedSelectionHarness(query), {
+      initialProps: { query: firstQuery },
+      wrapper: createWrapper()
+    });
+
+    act(() => hook.result.current.select(7));
+    expect(hook.result.current.selectedId).toBe(7);
+
+    hook.rerender({ query: secondQuery });
+    expect(hook.result.current.selectedId).toBeNull();
+    await waitFor(() => expect(hook.result.current.list.kind).toBe('ready'));
+    act(() => hook.result.current.select(8));
+    expect(hook.result.current.selectedId).toBe(8);
+
+    retiredList.resolve(page([oldRecord]));
+    await act(() => retiredList.promise);
+
+    expect(hook.result.current.selectedId).toBe(8);
+    expect(hook.result.current.query).toEqual(secondQuery);
+  });
 });
 
-function createWrapper() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+function createWrapper(client = new QueryClient({ defaultOptions: { queries: { retry: false } } })) {
   return function Wrapper({ children }: { children: ReactNode }) {
     return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  };
+}
+
+function useSelectionHarness(query: BulletinQuery, list: BulletinListState) {
+  const selection = useBulletinSelection(query, list);
+  return {
+    metrics: useBulletinMetrics(selection.selectedId),
+    query,
+    select: selection.setSelectedId,
+    selectedId: selection.selectedId
+  };
+}
+
+function useOwnedSelectionHarness(query: BulletinQuery) {
+  const list = useBulletinListController(query);
+  const selection = useBulletinSelection(query, list.state);
+  return {
+    list: list.state,
+    metrics: useBulletinMetrics(selection.selectedId),
+    query,
+    select: selection.setSelectedId,
+    selectedId: selection.selectedId
   };
 }
 
@@ -98,4 +229,12 @@ function bulletin(id: number, name: string) {
     gmtCreate: null,
     gmtUpdate: null
   };
+}
+
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  const promise = new Promise<T>(fulfill => {
+    resolve = fulfill;
+  });
+  return { promise, resolve };
 }

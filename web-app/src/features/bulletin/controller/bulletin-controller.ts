@@ -1,12 +1,11 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { useNotification } from '@refinedev/core';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useBulletinDependencies } from './bulletin-dependencies-controller';
 import { useBulletinEditorController, useBulletinOperationGate } from './bulletin-editor-controller';
-import { useBulletinListController, useBulletinSelectionConvergence } from './bulletin-list-controller';
+import { useBulletinListController, useBulletinSelection } from './bulletin-list-controller';
 import { useBulletinMetrics } from './bulletin-metrics-controller';
 import { useBulletinQueryController } from './bulletin-query-controller';
 import { useBulletinTransactions } from './bulletin-transactions-controller';
@@ -16,21 +15,20 @@ export function useBulletinController() {
   const notification = useNotification();
   const query = useBulletinQueryController();
   const list = useBulletinListController(query.query);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const selection = useBulletinSelection(query.query, list.state);
   const gate = useBulletinOperationGate();
   const editor = useBulletinEditorController(gate, failure => {
     notification.open?.({ message: t(`bulletin.read.${failure}`), type: 'error' });
   });
   const dependencies = useBulletinDependencies(editor.state.draft);
-  const activeSelectedId = useBulletinSelectionConvergence(selectedId, list.state, setSelectedId);
-  const metrics = useBulletinMetrics(activeSelectedId);
+  const metrics = useBulletinMetrics(selection.selectedId);
   const transactions = useBulletinTransactions({
     dependencies,
     editor,
     gate,
     refresh: list.refresh,
-    selectedId,
-    setSelectedId,
+    selectedId: selection.selectedId,
+    setSelectedId: selection.setSelectedId,
     t
   });
 
@@ -45,7 +43,7 @@ export function useBulletinController() {
       recovery: gate.recovery,
       refreshing: list.refreshing,
       search: query.search,
-      selectedId: activeSelectedId
+      selectedId: selection.selectedId
     },
     actions: {
       changePage: query.changePage,
@@ -56,7 +54,7 @@ export function useBulletinController() {
       remove: transactions.remove,
       retry: transactions.retry,
       save: transactions.save,
-      select: setSelectedId,
+      select: selection.setSelectedId,
       setSearch: query.setSearch,
       submitSearch: query.submitSearch,
       updateDraft: editor.actions.update
