@@ -18,7 +18,7 @@
 import { Alert, Button } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { NoticeTemplateRecovery } from '../controller/notice-template-command-state';
+import type { NoticeTemplateRecovery } from '../model/notice-template-command-state';
 
 export function NoticeTemplateRecoveryAlert({
   busy,

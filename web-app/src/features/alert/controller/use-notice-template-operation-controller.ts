@@ -17,7 +17,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-import type { NoticeTemplateCommand, NoticeTemplateRecovery } from './notice-template-command-state';
+import type { NoticeTemplateCommand, NoticeTemplateRecovery } from '../model/notice-template-command-state';
 
 export type NoticeTemplateOperationOwner = {
   command: Exclude<NoticeTemplateCommand, 'idle'>;
