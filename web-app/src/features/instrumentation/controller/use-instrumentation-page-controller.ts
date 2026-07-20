@@ -20,9 +20,9 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import { mergeQueryContext, useQueryContextOptional, type QueryContext } from '@/shared/query-context';
 
-import { loadInstrumentationCollectors } from '../api/collector-api';
+import { collectorReadFailureKind, loadInstrumentationCollectors } from '../api/collector-api';
 import { INSTRUMENTATION_SCHEMA_VERSION, type GuideSnippet } from '../model/instrumentation-contract';
-import type { CollectorTarget } from '../model/instrumentation-collector';
+import type { CollectorTarget, InstrumentationCollectorsState } from '../model/instrumentation-collector';
 import { instrumentationQueryKeys } from '../api/instrumentation-query-keys';
 import { validateFlowContext, type FlowStage } from '../model/instrumentation-flow';
 import { buildInstrumentationSelectionOptions } from './instrumentation-selection-options';
@@ -140,8 +140,7 @@ function buildInstrumentationSetup(
     catalogError: catalog.state.status === 'error',
     retryCatalog: catalog.retry,
     collectors: collectorsQuery.data ?? [],
-    collectorsPending: collectorsQuery.isPending,
-    collectorsError: collectorsQuery.isError,
+    collectorsState: instrumentationCollectorsState(collectorsQuery.error, collectorsQuery.isPending),
     retryCollectors: collectorsQuery.refetch,
     token: guide.token,
     setToken: guide.setToken,
@@ -162,6 +161,12 @@ function buildInstrumentationSetup(
     clearGuide: guide.clearContractState,
     handleContractError: actions.handleContractError
   };
+}
+
+function instrumentationCollectorsState(error: unknown, isPending: boolean): InstrumentationCollectorsState {
+  if (isPending) return { status: 'loading' };
+  if (error) return { status: collectorReadFailureKind(error) };
+  return { status: 'ready' };
 }
 
 function useRestoreInstrumentationDraft(

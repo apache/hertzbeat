@@ -24,6 +24,7 @@ const trimmedTextSchema = z
   .min(1)
   .refine(value => value === value.trim());
 const publicHttpsEndpointSchema = trimmedTextSchema.refine(isPublicHttpsEndpoint);
+const collectorStatusSchema = z.union([z.literal(0), z.literal(1)]);
 const capabilitySchema = z
   .array(z.enum(COLLECTOR_INTAKE_CAPABILITIES))
   .length(COLLECTOR_INTAKE_CAPABILITIES.length)
@@ -37,22 +38,40 @@ const capabilitySchema = z
     }
   });
 
-export const collectorPageSchema = z.object({
-  content: z.array(
-    z
+const collectorSummarySchema = z
+  .object({
+    collector: z
       .object({
-        collector: z
-          .object({
-            name: trimmedTextSchema,
-            ip: trimmedTextSchema,
-            online: z.boolean().optional(),
-            status: z.number().optional()
-          })
-          .passthrough(),
-        instrumentationIntake: z.unknown().optional()
+        name: trimmedTextSchema,
+        ip: trimmedTextSchema,
+        online: z.boolean().optional(),
+        status: collectorStatusSchema.optional()
       })
       .passthrough()
-  )
+      .superRefine((collector, context) => {
+        if (collector.online === undefined && collector.status === undefined) {
+          context.addIssue({ code: 'custom', message: 'Collector online evidence is missing' });
+        }
+        if (
+          collector.online !== undefined &&
+          collector.status !== undefined &&
+          collector.online !== (collector.status === 0)
+        ) {
+          context.addIssue({ code: 'custom', message: 'Collector online evidence is contradictory' });
+        }
+      }),
+    instrumentationIntake: z.unknown().optional()
+  })
+  .passthrough();
+
+export type CollectorSummaryWire = z.output<typeof collectorSummarySchema>;
+
+export const collectorPageSchema = z.object({
+  content: z.array(collectorSummarySchema),
+  totalElements: z.number().int().nonnegative(),
+  totalPages: z.number().int().nonnegative(),
+  number: z.number().int().nonnegative(),
+  size: z.number().int().positive()
 });
 
 export const availableCollectorIntakeSchema = z.object({

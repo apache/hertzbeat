@@ -16,11 +16,14 @@
  */
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ApiMessageError } from '@/core/http/api-message';
+
+import { CollectorContractError } from '../api/collector-api';
 import { InstrumentationRequestError } from '../api/instrumentation-api';
 
 const dependencies = vi.hoisted(() => ({
@@ -29,7 +32,10 @@ const dependencies = vi.hoisted(() => ({
   guide: vi.fn(),
   loadCollectors: vi.fn()
 }));
-vi.mock('../api/collector-api', () => ({ loadInstrumentationCollectors: dependencies.loadCollectors }));
+vi.mock('../api/collector-api', async importOriginal => ({
+  ...(await importOriginal<typeof import('../api/collector-api')>()),
+  loadInstrumentationCollectors: dependencies.loadCollectors
+}));
 vi.mock('./use-instrumentation-catalog-controller', () => ({
   useInstrumentationCatalogController: dependencies.catalog
 }));
@@ -140,6 +146,28 @@ describe('instrumentation page controller', () => {
 
     expect(result.current.setup.stage).toBe(2);
     expect(reset).toHaveBeenCalled();
+  });
+
+  it('keeps a complete empty Collector inventory in the ready state', async () => {
+    dependencies.catalog.mockReturnValue(catalogController(vi.fn(), vi.fn()));
+    dependencies.guide.mockReturnValue(guideController(vi.fn()));
+    const { result } = renderHook(() => useInstrumentationPageController(), { wrapper: queryWrapper() });
+
+    await waitFor(() => expect(result.current.setup.collectorsState).toEqual({ status: 'ready' }));
+    expect(result.current.setup.collectors).toEqual([]);
+  });
+
+  it.each([
+    ['contract failure', new CollectorContractError(), 'error'],
+    ['transport unavailability', new ApiMessageError('service unavailable', { status: 503 }), 'unavailable']
+  ] as const)('classifies %s without inventing an empty inventory', async (_label, failure, status) => {
+    dependencies.loadCollectors.mockRejectedValue(failure);
+    dependencies.catalog.mockReturnValue(catalogController(vi.fn(), vi.fn()));
+    dependencies.guide.mockReturnValue(guideController(vi.fn()));
+    const { result } = renderHook(() => useInstrumentationPageController(), { wrapper: queryWrapper() });
+
+    await waitFor(() => expect(result.current.setup.collectorsState).toEqual({ status }));
+    expect(result.current.setup.collectors).toEqual([]);
   });
 });
 

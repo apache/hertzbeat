@@ -94,7 +94,7 @@ describe('InstrumentationPage', () => {
     expect(setup.setStage).toHaveBeenCalledWith(2);
   });
 
-  it('keeps catalog failure and Collector empty or offline states actionable and distinct', () => {
+  it('keeps catalog, Collector unavailable, contract error, empty, and offline states distinct', () => {
     const retryCatalog = vi.fn();
     useInstrumentationSetup.mockReturnValue({ ...setupFixture(), stage: 1, catalogError: true, retryCatalog });
     useInstrumentationDetection.mockReturnValue(detectionFixture());
@@ -103,6 +103,27 @@ describe('InstrumentationPage', () => {
     expect(screen.getByText('The instrumentation catalog is unavailable.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(retryCatalog).toHaveBeenCalledOnce();
+
+    useInstrumentationSetup.mockReturnValue({
+      ...setupFixture(),
+      stage: 3,
+      catalog,
+      collectorsState: { status: 'unavailable' }
+    });
+    view.rerender(pageElement());
+    expect(screen.getByText('Collector data is unavailable.')).toBeInTheDocument();
+    expect(screen.queryByText('No registered Collectors are available.')).not.toBeInTheDocument();
+
+    useInstrumentationSetup.mockReturnValue({
+      ...setupFixture(),
+      stage: 3,
+      catalog,
+      collectorsState: { status: 'error' }
+    });
+    view.rerender(pageElement());
+    expect(screen.getByText('This page could not be loaded. Retry or return to it later.')).toBeInTheDocument();
+    expect(screen.queryByText('Collector data is unavailable.')).not.toBeInTheDocument();
+    expect(screen.queryByText('No registered Collectors are available.')).not.toBeInTheDocument();
 
     useInstrumentationSetup.mockReturnValue({ ...setupFixture(), stage: 3, catalog, collectors: [] });
     view.rerender(pageElement());
@@ -284,8 +305,7 @@ function setupFixture() {
     catalogError: false,
     retryCatalog: vi.fn(),
     collectors: [],
-    collectorsPending: false,
-    collectorsError: false,
+    collectorsState: { status: 'ready' },
     retryCollectors: vi.fn(),
     token: '',
     setToken: vi.fn(),

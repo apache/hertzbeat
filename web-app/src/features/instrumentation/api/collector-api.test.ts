@@ -15,14 +15,22 @@
  * limitations under the License.
  */
 
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { apiMessageGet } = vi.hoisted(() => ({ apiMessageGet: vi.fn() }));
-vi.mock('@/core/http/api-message', () => ({ apiMessageGet }));
+vi.mock('@/core/http/api-message', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/core/http/api-message')>()),
+  apiMessageGet
+}));
 
-import { loadInstrumentationCollectors } from './collector-api';
+import { ApiMessageError } from '@/core/http/api-message';
+
+import { CollectorContractError, collectorReadFailureKind, loadInstrumentationCollectors } from './collector-api';
+import type { InstrumentationFlowDraft } from '../model/instrumentation-flow';
+import { buildDetectionRequest, buildGuideRequest } from '../model/instrumentation-requests';
 
 afterEach(() => vi.restoreAllMocks());
+beforeEach(() => apiMessageGet.mockReset());
 
 describe('instrumentation Collector API', () => {
   it('accepts the exact available v1 advertisement without changing its public source shape', async () => {
@@ -63,17 +71,16 @@ describe('instrumentation Collector API', () => {
     expect(apiMessageGet).toHaveBeenCalledWith('/api/collector?pageIndex=0&pageSize=200', undefined);
   });
 
-  it.each([
-    'intake_not_advertised',
-    'intake_advertisement_invalid',
-    'intake_advertisement_unavailable'
-  ] as const)('accepts canonical unavailable state %s', async errorCode => {
-    apiMessageGet.mockResolvedValue(page(summary('collector-east', unavailableIntake(errorCode))));
+  it.each(['intake_not_advertised', 'intake_advertisement_invalid', 'intake_advertisement_unavailable'] as const)(
+    'accepts canonical unavailable state %s',
+    async errorCode => {
+      apiMessageGet.mockResolvedValue(page(summary('collector-east', unavailableIntake(errorCode))));
 
-    const [collector] = await loadInstrumentationCollectors();
+      const [collector] = await loadInstrumentationCollectors();
 
-    expect(collector?.intake).toEqual({ status: 'unavailable', errorCode });
-  });
+      expect(collector?.intake).toEqual({ status: 'unavailable', errorCode });
+    }
+  );
 
   it.each([
     ['schema mismatch', { schemaVersion: 2 }],
@@ -116,10 +123,9 @@ describe('instrumentation Collector API', () => {
   );
 
   it('rejects Collector identity mismatch in canonical unavailable state', async () => {
-    apiMessageGet.mockResolvedValue(page(summary(
-      'collector-east',
-      { ...unavailableIntake('intake_not_advertised'), collectorId: 'collector-west' }
-    )));
+    apiMessageGet.mockResolvedValue(
+      page(summary('collector-east', { ...unavailableIntake('intake_not_advertised'), collectorId: 'collector-west' }))
+    );
 
     const [collector] = await loadInstrumentationCollectors();
 
@@ -138,9 +144,7 @@ describe('instrumentation Collector API', () => {
     ['non-empty unavailable capability', { capabilities: ['otlp_grpc'] }],
     ['non-null unavailable endpoint', { otlpGrpcEndpoint: 'https://otel.example.com:4317' }]
   ])('degrades null/missing canonical fields: %s', async (_label, override) => {
-    const base = _label.includes('unavailable')
-      ? unavailableIntake('intake_not_advertised')
-      : availableIntake();
+    const base = _label.includes('unavailable') ? unavailableIntake('intake_not_advertised') : availableIntake();
     apiMessageGet.mockResolvedValue(page(summary('collector-east', { ...base, ...override })));
 
     const [collector] = await loadInstrumentationCollectors();
@@ -152,10 +156,12 @@ describe('instrumentation Collector API', () => {
     const storageWrite = vi.spyOn(Storage.prototype, 'setItem');
     const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
     const rejected = 'https://operator:plain_secret@rejected.example.com:4318?token=plain_secret';
-    apiMessageGet.mockResolvedValue(page(
-      summary('collector-bad', { ...availableIntake('collector-bad'), otlpHttpEndpoint: rejected }),
-      summary('collector-good', availableIntake('collector-good'))
-    ));
+    apiMessageGet.mockResolvedValue(
+      page(
+        summary('collector-bad', { ...availableIntake('collector-bad'), otlpHttpEndpoint: rejected }),
+        summary('collector-good', availableIntake('collector-good'))
+      )
+    );
 
     const collectors = await loadInstrumentationCollectors();
 
@@ -164,10 +170,130 @@ describe('instrumentation Collector API', () => {
     expect(JSON.stringify(storageWrite.mock.calls)).not.toContain('plain_secret');
     expect(JSON.stringify(log.mock.calls)).not.toContain('plain_secret');
   });
+
+  it.each([
+    ['unsupported legacy status', { status: 99 }],
+    ['missing online evidence', { online: undefined, status: undefined }],
+    ['boolean online contradicts legacy offline', { online: true, status: 1 }],
+    ['boolean offline contradicts legacy online', { online: false, status: 0 }]
+  ])('rejects %s instead of mapping unknown liveness to offline', async (_label, liveness) => {
+    apiMessageGet.mockResolvedValue(page(summaryWithLiveness('collector-east', liveness)));
+
+    await expect(loadInstrumentationCollectors()).rejects.toBeInstanceOf(CollectorContractError);
+  });
+
+  it.each([
+    ['boolean online', { online: true, status: undefined }, true],
+    ['boolean offline', { online: false, status: undefined }, false],
+    ['legacy online', { online: undefined, status: 0 }, true],
+    ['legacy offline', { online: undefined, status: 1 }, false],
+    ['consistent online signals', { online: true, status: 0 }, true],
+    ['consistent offline signals', { online: false, status: 1 }, false]
+  ])('maps %s from authoritative liveness evidence', async (_label, liveness, expected) => {
+    apiMessageGet.mockResolvedValue(page(summaryWithLiveness('collector-east', liveness)));
+
+    const [collector] = await loadInstrumentationCollectors();
+
+    expect(collector?.online).toBe(expected);
+  });
+
+  it('loads a Collector after row 200 for wizard selection, guide rendering, and detection context', async () => {
+    const signal = new AbortController().signal;
+    const firstPage = Array.from({ length: 200 }, (_, index) => summary(`collector-${index}`));
+    apiMessageGet
+      .mockResolvedValueOnce(collectorPage(firstPage, 0, 201, 2))
+      .mockResolvedValueOnce(collectorPage([summary('collector-200', availableIntake('collector-200'))], 1, 201, 2));
+
+    const collectors = await loadInstrumentationCollectors(signal);
+    const selected = collectors.at(200);
+
+    expect(collectors).toHaveLength(201);
+    expect(selected?.collectorId).toBe('collector-200');
+    expect(apiMessageGet).toHaveBeenNthCalledWith(1, '/api/collector?pageIndex=0&pageSize=200', { signal });
+    expect(apiMessageGet).toHaveBeenNthCalledWith(2, '/api/collector?pageIndex=1&pageSize=200', { signal });
+    if (!selected || selected.intake.status !== 'available') throw new Error('Expected available Collector');
+    const draft = flowDraft(selected.collectorId);
+    const target = {
+      collectorId: selected.intake.collectorId,
+      otlpHttpEndpoint: selected.intake.otlpHttpEndpoint,
+      otlpGrpcEndpoint: selected.intake.otlpGrpcEndpoint,
+      authorizationHeader: selected.intake.authorizationHeader
+    };
+    expect(buildGuideRequest(draft, selected, target).collector.collectorId).toBe('collector-200');
+    expect(buildDetectionRequest(draft, 1_710_000_000_000).collectorId).toBe('collector-200');
+  });
+
+  it.each([
+    ['repeated page identity', collectorPage([summary('collector-200')], 0, 201, 2)],
+    ['changed total evidence', collectorPage([summary('collector-200')], 1, 202, 2)],
+    ['duplicate Collector identity', collectorPage([summary('collector-0')], 1, 201, 2)]
+  ])('rejects %s instead of returning partial or scope-drifted inventory', async (_label, continuation) => {
+    const firstPage = Array.from({ length: 200 }, (_, index) => summary(`collector-${index}`));
+    apiMessageGet.mockResolvedValueOnce(collectorPage(firstPage, 0, 201, 2)).mockResolvedValueOnce(continuation);
+
+    await expect(loadInstrumentationCollectors()).rejects.toThrow(/Collector/i);
+  });
+
+  it('rejects an excessive backend page count before issuing an unbounded request sequence', async () => {
+    apiMessageGet.mockResolvedValueOnce(
+      collectorPage(
+        Array.from({ length: 200 }, (_, index) => summary(`collector-${index}`)),
+        0,
+        4_001,
+        21
+      )
+    );
+
+    await expect(loadInstrumentationCollectors()).rejects.toBeInstanceOf(CollectorContractError);
+    expect(apiMessageGet).toHaveBeenCalledOnce();
+  });
+
+  it('classifies contract evidence separately from transport unavailability', () => {
+    expect(collectorReadFailureKind(new CollectorContractError())).toBe('error');
+    expect(collectorReadFailureKind(new ApiMessageError('invalid response', { status: 200 }))).toBe('error');
+    expect(collectorReadFailureKind(new ApiMessageError('rejected request', { status: 400 }))).toBe('error');
+    expect(collectorReadFailureKind(new ApiMessageError('service unavailable', { status: 503 }))).toBe('unavailable');
+    expect(collectorReadFailureKind(new ApiMessageError('network failed', { cause: new Error('offline') }))).toBe(
+      'unavailable'
+    );
+  });
+
+  it('propagates a later-page failure instead of presenting the first page as complete', async () => {
+    const firstPage = Array.from({ length: 200 }, (_, index) => summary(`collector-${index}`));
+    apiMessageGet
+      .mockResolvedValueOnce(collectorPage(firstPage, 0, 201, 2))
+      .mockRejectedValueOnce(new Error('Collector service unavailable'));
+
+    await expect(loadInstrumentationCollectors()).rejects.toThrow('Collector service unavailable');
+  });
+
+  it('rejects a late continuation after cancellation instead of publishing retired inventory', async () => {
+    const controller = new AbortController();
+    const continuation = deferred<unknown>();
+    const firstPage = Array.from({ length: 200 }, (_, index) => summary(`collector-${index}`));
+    apiMessageGet.mockResolvedValueOnce(collectorPage(firstPage, 0, 201, 2)).mockReturnValueOnce(continuation.promise);
+
+    const pending = loadInstrumentationCollectors(controller.signal);
+    try {
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(apiMessageGet).toHaveBeenCalledTimes(2);
+      controller.abort();
+    } finally {
+      continuation.resolve(collectorPage([summary('collector-200')], 1, 201, 2));
+    }
+
+    await expect(pending).rejects.toMatchObject({ name: 'AbortError' });
+  });
 });
 
 function page(...content: unknown[]) {
-  return { content };
+  return collectorPage(content, 0, content.length, content.length ? 1 : 0);
+}
+
+function collectorPage(content: unknown[], number: number, totalElements: number, totalPages: number) {
+  return { content, number, size: 200, totalElements, totalPages };
 }
 
 function summary(name: string, instrumentationIntake?: unknown) {
@@ -175,6 +301,11 @@ function summary(name: string, instrumentationIntake?: unknown) {
     collector: { name, ip: name === 'collector-east' ? '10.0.0.8' : '10.0.0.9', status: 0 },
     ...(instrumentationIntake !== undefined ? { instrumentationIntake } : {})
   };
+}
+
+function summaryWithLiveness(name: string, liveness: { online?: boolean | undefined; status?: number | undefined }) {
+  const value = summary(name);
+  return { ...value, collector: { ...value.collector, ...liveness } };
 }
 
 function availableIntake(collectorId = 'collector-east'): Record<string, unknown> {
@@ -203,4 +334,32 @@ function unavailableIntake(errorCode: string): Record<string, unknown> {
     authorizationHeader: null,
     errorCode
   };
+}
+
+function flowDraft(collectorId: string): InstrumentationFlowDraft {
+  return {
+    environment: 'docker',
+    platform: 'linux_amd64',
+    selection: {
+      language: 'go',
+      framework: 'go_generic',
+      method: 'sdk',
+      environment: 'docker',
+      platform: 'linux_amd64'
+    },
+    collectorId,
+    serviceName: 'checkout-api',
+    serviceNamespace: 'commerce',
+    serviceEnvironment: 'prod'
+  };
+}
+
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((done, fail) => {
+    resolve = done;
+    reject = fail;
+  });
+  return { promise, resolve, reject };
 }

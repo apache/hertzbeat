@@ -18,7 +18,7 @@
 import { Alert, Empty, Input, Select, Skeleton } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { InstrumentationCollector } from '../model/instrumentation-collector';
+import type { InstrumentationCollector, InstrumentationCollectorsState } from '../model/instrumentation-collector';
 import type { FlowContextField, FlowStage, InstrumentationFlowDraft } from '../model/instrumentation-flow';
 import { Field, ResourceError, StageActions, StageBody } from './instrumentation-stage';
 import styles from './instrumentation-stage.module.css';
@@ -30,8 +30,7 @@ type GuideAvailabilityState =
 export interface InstrumentationContextSetup {
   draft: InstrumentationFlowDraft;
   collectors: InstrumentationCollector[];
-  collectorsPending: boolean;
-  collectorsError: boolean;
+  collectorsState: InstrumentationCollectorsState;
   retryCollectors: () => Promise<unknown>;
   contextMissing: FlowContextField[];
   guideState: GuideAvailabilityState;
@@ -141,11 +140,14 @@ function CollectorAvailability({
   const { t } = useTranslation();
   return (
     <>
-      {setup.collectorsPending && <Skeleton active paragraph={{ rows: 2 }} />}
-      {setup.collectorsError && (
+      {setup.collectorsState.status === 'loading' && <Skeleton active paragraph={{ rows: 2 }} />}
+      {setup.collectorsState.status === 'unavailable' && (
         <ResourceError title={t('instrumentation.collectorUnavailable')} onRetry={() => void setup.retryCollectors()} />
       )}
-      {!setup.collectorsPending && !setup.collectorsError && setup.collectors.length === 0 && (
+      {setup.collectorsState.status === 'error' && (
+        <ResourceError title={t('common.routeError.description')} onRetry={() => void setup.retryCollectors()} />
+      )}
+      {setup.collectorsState.status === 'ready' && setup.collectors.length === 0 && (
         <Empty description={t('instrumentation.collectorEmpty')} />
       )}
       {collector && !collector.online && (

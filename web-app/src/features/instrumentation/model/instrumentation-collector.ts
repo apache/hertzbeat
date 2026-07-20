@@ -51,3 +51,6 @@ export type InstrumentationCollector = {
   online: boolean;
   intake: CollectorInstrumentationIntake;
 };
+
+export type InstrumentationCollectorsState =
+  { status: 'loading' } | { status: 'ready' } | { status: 'unavailable' } | { status: 'error' };
