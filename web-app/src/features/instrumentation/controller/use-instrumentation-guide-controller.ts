@@ -15,15 +15,14 @@
  * limitations under the License.
  */
 
-import { useMutation } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import type { CollectorTarget, InstrumentationCollector } from '../model/instrumentation-collector';
-import type { GuideRenderRequest, GuideRenderResponse, GuideSnippet } from '../model/instrumentation-contract';
-import { renderInstrumentationGuide } from '../api/instrumentation-api';
+import type { GuideRenderResponse, GuideSnippet } from '../model/instrumentation-contract';
 import { buildGuideRequest, createTransientCollectorTarget } from '../model/instrumentation-requests';
 import { materializeGuideSnippet } from '../model/instrumentation-snippet';
 import type { InstrumentationFlowDraft } from '../model/instrumentation-flow';
+import { useInstrumentationGuideRenderer } from './use-instrumentation-guide-renderer';
 
 export type InstrumentationGuideState =
   | { status: 'unavailable'; reason: 'collector_unavailable' | 'collector_intake_unavailable' }
@@ -36,34 +35,33 @@ export function useInstrumentationGuideController(
   draft: InstrumentationFlowDraft,
   collectors: InstrumentationCollector[]
 ) {
-  const mutation = useMutation<GuideRenderResponse, Error, GuideRenderRequest>({
-    mutationFn: request => renderInstrumentationGuide(request)
-  });
+  const renderer = useInstrumentationGuideRenderer();
   const advertisedTarget = useMemo(
     () => collectorTargetFromInventory(draft.collectorId, collectors),
     [collectors, draft.collectorId]
   );
-  const contract = useGuideContractState(draft, advertisedTarget, mutation.reset);
+  const contract = useGuideContractState(draft, advertisedTarget, renderer.reset);
   const render = useCallback(async () => {
     const collector = collectors.find(item => item.collectorId === draft.collectorId);
     if (!collector || !collector.online) throw new Error('Selected Collector is unavailable');
-    return mutation.mutateAsync(buildGuideRequest(draft, collector, contract.transientTarget));
-  }, [collectors, contract.transientTarget, draft, mutation]);
+    return renderer.render(buildGuideRequest(draft, collector, contract.transientTarget));
+  }, [collectors, contract.transientTarget, draft, renderer]);
+  const guide = renderer.state.status === 'ready' ? renderer.state.guide : undefined;
   const materializeSnippet = useCallback(
     (snippet: GuideSnippet) => {
-      if (!mutation.data) throw new Error('Guide is unavailable');
-      return materializeGuideSnippet(snippet, mutation.data, contract.token);
+      if (!guide) throw new Error('Guide is unavailable');
+      return materializeGuideSnippet(snippet, guide, contract.token);
     },
-    [contract.token, mutation.data]
+    [contract.token, guide]
   );
 
   return {
-    state: guideState(draft, collectors, contract.transientTarget, mutation.data, mutation.error, mutation.isPending),
-    guide: mutation.data,
+    state: guideState(draft, collectors, contract.transientTarget, renderer.state),
+    guide,
     ...contract,
     render,
     materializeSnippet,
-    reset: mutation.reset
+    reset: renderer.reset
   };
 }
 
@@ -91,7 +89,7 @@ function useGuideContractState(
     [reset]
   );
   const previousDraft = useRef(draft);
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (previousDraft.current === draft) return;
     const collectorChanged = previousDraft.current.collectorId !== draft.collectorId;
     previousDraft.current = draft;
@@ -102,7 +100,7 @@ function useGuideContractState(
       setToken('');
     }
   }, [draft, reset]);
-  useEffect(() => {
+  useLayoutEffect(() => {
     setTransientTarget(advertisedTarget);
   }, [advertisedTarget, setTransientTarget]);
 
@@ -142,14 +140,10 @@ function guideState(
   draft: InstrumentationFlowDraft,
   collectors: InstrumentationCollector[],
   target: CollectorTarget | undefined,
-  guide: GuideRenderResponse | undefined,
-  error: Error | null,
-  pending: boolean
+  renderState: Exclude<InstrumentationGuideState, { status: 'unavailable' }>
 ): InstrumentationGuideState {
   const collector = collectors.find(item => item.collectorId === draft.collectorId);
   if (!collector || !collector.online) return { status: 'unavailable', reason: 'collector_unavailable' };
   if (!target) return { status: 'unavailable', reason: 'collector_intake_unavailable' };
-  if (pending) return { status: 'rendering' };
-  if (error) return { status: 'error', error };
-  return guide ? { status: 'ready', guide } : { status: 'idle' };
+  return renderState;
 }

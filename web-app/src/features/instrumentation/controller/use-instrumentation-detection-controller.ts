@@ -15,7 +15,16 @@
  * limitations under the License.
  */
 
-import { useCallback, useEffect, useRef, useState, type Dispatch, type RefObject, type SetStateAction } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type Dispatch,
+  type RefObject,
+  type SetStateAction
+} from 'react';
 
 import { detectInstrumentationSignals } from '../api/instrumentation-api';
 import {
@@ -39,9 +48,10 @@ export type InstrumentationDetectionState =
 export function useInstrumentationDetectionController(
   createRequest: RequestFactory,
   onContractError?: ContractErrorHandler,
-  openPath?: (path: string) => void
+  openPath?: (path: string) => void,
+  requestIdentity?: string
 ) {
-  const { state, start, reset } = useDetectionRequestLifecycle(createRequest, onContractError);
+  const { state, start, reset } = useDetectionRequestLifecycle(createRequest, onContractError, requestIdentity);
   const { queryHandoff, openQuery } = useDetectionNavigation(responseFromState(state), openPath);
 
   return {
@@ -55,17 +65,33 @@ export function useInstrumentationDetectionController(
   };
 }
 
-function useDetectionRequestLifecycle(createRequest: RequestFactory, onContractError?: ContractErrorHandler) {
+function useDetectionRequestLifecycle(
+  createRequest: RequestFactory,
+  onContractError?: ContractErrorHandler,
+  requestIdentity?: string
+) {
   // One state value prevents consumers from observing combinations such as
   // `checking + error` or a stale response beside a failed request.
   const [state, setState] = useState<InstrumentationDetectionState>({ status: 'idle' });
   const generationRef = useRef(0);
+  const activeRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const abortRef = useRef<AbortController | undefined>(undefined);
-  const { clearPending, run } = useDetectionRunner(setState, generationRef, timerRef, abortRef, onContractError);
+  const { clearPending, run } = useDetectionRunner(
+    setState,
+    generationRef,
+    activeRef,
+    timerRef,
+    abortRef,
+    onContractError
+  );
 
   const start = useCallback(() => {
+    // This lock is synchronous because two click handlers can run before React
+    // publishes the first `checking` state.
+    if (activeRef.current) return;
     clearPending();
+    activeRef.current = true;
     const nextGeneration = generationRef.current + 1;
     generationRef.current = nextGeneration;
     setState({ status: 'checking' });
@@ -73,6 +99,7 @@ function useDetectionRequestLifecycle(createRequest: RequestFactory, onContractE
     try {
       request = createRequest(Date.now());
     } catch (reason: unknown) {
+      activeRef.current = false;
       setState({ status: 'error', error: reason });
       return;
     }
@@ -80,12 +107,23 @@ function useDetectionRequestLifecycle(createRequest: RequestFactory, onContractE
   }, [clearPending, createRequest, run]);
   const reset = useCallback(() => {
     generationRef.current += 1;
+    activeRef.current = false;
     clearPending();
     setState({ status: 'idle' });
   }, [clearPending]);
+  const previousRequestIdentity = useRef(requestIdentity);
+  useLayoutEffect(() => {
+    if (Object.is(previousRequestIdentity.current, requestIdentity)) return;
+    previousRequestIdentity.current = requestIdentity;
+    generationRef.current += 1;
+    activeRef.current = false;
+    clearPending();
+    setState({ status: 'idle' });
+  }, [clearPending, requestIdentity]);
   useEffect(
     () => () => {
       generationRef.current += 1;
+      activeRef.current = false;
       clearPending();
     },
     [clearPending]
@@ -99,6 +137,7 @@ type DetectionStateSetter = Dispatch<SetStateAction<InstrumentationDetectionStat
 function useDetectionRunner(
   setState: DetectionStateSetter,
   generationRef: RefObject<number>,
+  activeRef: RefObject<boolean>,
   timerRef: RefObject<ReturnType<typeof setTimeout> | undefined>,
   abortRef: RefObject<AbortController | undefined>,
   onContractError?: ContractErrorHandler
@@ -122,9 +161,10 @@ function useDetectionRunner(
       }
       // Refreshing the catalog is asynchronous, so a reset may have superseded this run.
       if (controller.signal.aborted || generationRef.current !== runGeneration) return;
+      activeRef.current = false;
       setState(contractRefreshed ? { status: 'idle' } : { status: 'error', error: reason });
     },
-    [generationRef, onContractError, setState]
+    [activeRef, generationRef, onContractError, setState]
   );
   const run = useCallback(
     async (current: DetectionRequest, runGeneration: number) => {
@@ -136,10 +176,10 @@ function useDetectionRunner(
         if (generationRef.current !== runGeneration) return;
         if (next.polling.decision === 'continue_polling') {
           setState({ status: 'checking', response: next });
-          const delay = next.polling.pollAfterMs;
-          if (delay == null) throw new Error('Detection polling delay was unavailable');
-          timerRef.current = setTimeout(() => void runRef.current?.(current, runGeneration), delay);
+          if (next.polling.pollAfterMs == null) throw new Error('Detection polling delay was unavailable');
+          timerRef.current = setTimeout(() => void runRef.current?.(current, runGeneration), next.polling.pollAfterMs);
         } else {
+          activeRef.current = false;
           setState(
             next.polling.decision === 'complete'
               ? { status: 'complete', response: next }
@@ -150,7 +190,7 @@ function useDetectionRunner(
         await handleRequestFailure(reason, controller, runGeneration);
       }
     },
-    [abortRef, generationRef, handleRequestFailure, setState, timerRef]
+    [abortRef, activeRef, generationRef, handleRequestFailure, setState, timerRef]
   );
   useEffect(() => {
     runRef.current = run;

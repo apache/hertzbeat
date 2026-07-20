@@ -33,7 +33,10 @@ vi.mock('../api/instrumentation-api', () => ({ renderInstrumentationGuide }));
 
 import { useInstrumentationGuideController } from './use-instrumentation-guide-controller';
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.clearAllMocks();
+  vi.restoreAllMocks();
+});
 
 describe('instrumentation guide controller', () => {
   it('fails closed until an explicit transient intake target is supplied', async () => {
@@ -71,6 +74,72 @@ describe('instrumentation guide controller', () => {
     expect(window.location.href).not.toContain('runtime_only_token');
     expect(JSON.stringify(storageWrite.mock.calls)).not.toContain('runtime_only_token');
     expect(JSON.stringify(log.mock.calls)).not.toContain('runtime_only_token');
+  });
+
+  it('deduplicates same-tick render commands into one POST owner', async () => {
+    const rendering = deferred<GuideRenderResponse>();
+    renderInstrumentationGuide.mockReturnValue(rendering.promise);
+    const { result } = renderGuideController();
+    act(() => result.current.setTransientTarget(target));
+
+    let first: Promise<GuideRenderResponse>;
+    let duplicate: Promise<GuideRenderResponse>;
+    act(() => {
+      first = result.current.render();
+      duplicate = result.current.render();
+    });
+    rendering.resolve(guide);
+    await act(async () => void (await Promise.all([first!, duplicate!])));
+
+    expect(renderInstrumentationGuide).toHaveBeenCalledOnce();
+  });
+
+  it('aborts and rejects an old render owner when the draft identity changes', async () => {
+    const rendering = deferred<GuideRenderResponse>();
+    let signal: AbortSignal | undefined;
+    renderInstrumentationGuide.mockImplementation((_request, currentSignal) => {
+      signal = currentSignal;
+      return rendering.promise;
+    });
+    const view = renderGuideLifecycle(draft, [collector]);
+    act(() => view.result.current.setTransientTarget(target));
+
+    let pending: Promise<GuideRenderResponse>;
+    act(() => {
+      pending = view.result.current.render();
+    });
+    await act(async () => void (await Promise.resolve()));
+    view.rerender({
+      currentDraft: { ...draft, selection: { ...draft.selection!, method: 'ebpf' } },
+      currentCollectors: [collector]
+    });
+    rendering.resolve(guide);
+
+    await expect(pending!).rejects.toThrow(/retired/i);
+    expect(signal?.aborted).toBe(true);
+    expect(view.result.current.guide).toBeUndefined();
+  });
+
+  it('aborts and retires an in-flight render when the controller unmounts', async () => {
+    const rendering = deferred<GuideRenderResponse>();
+    let signal: AbortSignal | undefined;
+    renderInstrumentationGuide.mockImplementation((_request, currentSignal) => {
+      signal = currentSignal;
+      return rendering.promise;
+    });
+    const view = renderGuideController();
+    act(() => view.result.current.setTransientTarget(target));
+    let pending: Promise<GuideRenderResponse>;
+    act(() => {
+      pending = view.result.current.render();
+    });
+    await act(async () => void (await Promise.resolve()));
+
+    view.unmount();
+    rendering.resolve(guide);
+
+    await expect(pending!).rejects.toThrow(/retired/i);
+    expect(signal?.aborted).toBe(true);
   });
 
   it('clears the token and rendered guide at the contract refresh boundary', async () => {
@@ -220,6 +289,16 @@ function renderGuideLifecycle(currentDraft: InstrumentationFlowDraft, currentCol
     wrapper,
     initialProps: { currentDraft, currentCollectors }
   });
+}
+
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((done, fail) => {
+    resolve = done;
+    reject = fail;
+  });
+  return { promise, resolve, reject };
 }
 
 const selection: InstrumentationSelection = {

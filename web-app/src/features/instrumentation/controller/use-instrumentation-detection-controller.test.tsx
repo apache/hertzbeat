@@ -126,6 +126,105 @@ describe('instrumentation detection controller', () => {
     expect(detectInstrumentationSignals.mock.calls[1]?.[0].startedAt).toBe(STARTED_AT + 10_000);
   });
 
+  it('deduplicates same-tick starts into one detection attempt', async () => {
+    const detection = deferred<ReturnType<typeof response>>();
+    detectInstrumentationSignals.mockReturnValue(detection.promise);
+    const { result } = renderHook(() =>
+      useInstrumentationDetectionController(startedAt => ({ ...request, startedAt }))
+    );
+
+    act(() => {
+      result.current.start();
+      result.current.start();
+    });
+    const currentRequest = detectInstrumentationSignals.mock.calls[0]![0] as DetectionRequest;
+    detection.resolve(response(currentRequest, 'complete'));
+    await act(async () => void (await Promise.resolve()));
+
+    expect(detectInstrumentationSignals).toHaveBeenCalledOnce();
+  });
+
+  it('aborts and retires detection evidence when the request identity changes', async () => {
+    const detection = deferred<ReturnType<typeof response>>();
+    let signal: AbortSignal | undefined;
+    detectInstrumentationSignals.mockImplementation((_current, currentSignal) => {
+      signal = currentSignal;
+      return detection.promise;
+    });
+    const initialFactory = (startedAt: number): DetectionRequest => ({ ...request, startedAt });
+    const nextFactory = (startedAt: number): DetectionRequest => ({
+      ...request,
+      service: { ...request.service, name: 'payments-api' },
+      startedAt
+    });
+    const view = renderHook(
+      ({ createRequest, identity }) =>
+        useInstrumentationDetectionController(createRequest, undefined, undefined, identity),
+      { initialProps: { createRequest: initialFactory, identity: 'checkout-api' } }
+    );
+
+    act(() => view.result.current.start());
+    const oldRequest = detectInstrumentationSignals.mock.calls[0]![0] as DetectionRequest;
+    view.rerender({ createRequest: nextFactory, identity: 'payments-api' });
+    detection.resolve(response(oldRequest, 'complete'));
+    await act(async () => void (await Promise.resolve()));
+
+    expect(signal?.aborted).toBe(true);
+    expect(view.result.current.state).toEqual({ status: 'idle' });
+  });
+
+  it('cancels an automatic poll before it can cross into a new request identity', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(STARTED_AT);
+    let firstSignal: AbortSignal | undefined;
+    detectInstrumentationSignals.mockImplementationOnce((current: DetectionRequest, signal?: AbortSignal) => {
+      firstSignal = signal;
+      return Promise.resolve(response(current, 'continue_polling'));
+    });
+    const initialFactory = (startedAt: number): DetectionRequest => ({ ...request, startedAt });
+    const nextFactory = (startedAt: number): DetectionRequest => ({
+      ...request,
+      collectorId: 'collector-west',
+      startedAt
+    });
+    const view = renderHook(
+      ({ createRequest, identity }) =>
+        useInstrumentationDetectionController(createRequest, undefined, undefined, identity),
+      { initialProps: { createRequest: initialFactory, identity: 'collector-east' } }
+    );
+    act(() => view.result.current.start());
+    await act(async () => void (await Promise.resolve()));
+    expect(view.result.current.state.status).toBe('checking');
+
+    view.rerender({ createRequest: nextFactory, identity: 'collector-west' });
+    await act(async () => void (await vi.advanceTimersByTimeAsync(3_000)));
+
+    expect(firstSignal?.aborted).toBe(true);
+    expect(detectInstrumentationSignals).toHaveBeenCalledOnce();
+    expect(view.result.current.state).toEqual({ status: 'idle' });
+  });
+
+  it('aborts an in-flight detection on reset and ignores its old response', async () => {
+    const detection = deferred<ReturnType<typeof response>>();
+    let signal: AbortSignal | undefined;
+    detectInstrumentationSignals.mockImplementation((_current, currentSignal) => {
+      signal = currentSignal;
+      return detection.promise;
+    });
+    const { result } = renderHook(() =>
+      useInstrumentationDetectionController(startedAt => ({ ...request, startedAt }))
+    );
+    act(() => result.current.start());
+    const oldRequest = detectInstrumentationSignals.mock.calls[0]![0] as DetectionRequest;
+
+    act(() => result.current.reset());
+    detection.resolve(response(oldRequest, 'complete'));
+    await act(async () => void (await Promise.resolve()));
+
+    expect(signal?.aborted).toBe(true);
+    expect(result.current.state).toEqual({ status: 'idle' });
+  });
+
   it('delegates schema and selection errors to the catalog refresh boundary', async () => {
     const refreshCatalog = vi.fn().mockResolvedValue(true);
     detectInstrumentationSignals.mockRejectedValue(
@@ -257,4 +356,14 @@ function signalsForDecision(
     logs: { status: 'unavailable' as const, lastReceivedAt: null, errorCode: 'storage_unavailable' as const },
     traces: { status: 'error' as const, lastReceivedAt: null, errorCode: 'storage_query_failed' as const }
   };
+}
+
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((done, fail) => {
+    resolve = done;
+    reject = fail;
+  });
+  return { promise, resolve, reject };
 }

@@ -97,12 +97,60 @@ describe('instrumentation page controller', () => {
     expect(handleContractError).toBe(result.current.setup.handleContractError);
     expect(openPath).toEqual(expect.any(Function));
   });
+
+  it('uses an unambiguous detection identity for user-controlled service context', () => {
+    const separator = '\u001f';
+    const first = catalogController(vi.fn(), vi.fn());
+    first.draft.serviceName = `checkout${separator}commerce`;
+    first.draft.serviceNamespace = 'prod';
+    const second = catalogController(vi.fn(), vi.fn());
+    second.draft.serviceName = 'checkout';
+    second.draft.serviceNamespace = `commerce${separator}prod`;
+    dependencies.catalog.mockReturnValue(first);
+    dependencies.guide.mockReturnValue(guideController(vi.fn()));
+    const view = renderHook(() => useInstrumentationPageController(), { wrapper: queryWrapper() });
+    const firstIdentity = dependencies.detection.mock.calls.at(-1)?.[3];
+
+    dependencies.catalog.mockReturnValue(second);
+    view.rerender();
+    const secondIdentity = dependencies.detection.mock.calls.at(-1)?.[3];
+
+    expect(firstIdentity).not.toBe(secondIdentity);
+  });
+
+  it('does not let a retired guide render advance a newer setup stage', async () => {
+    const rendering = deferred<unknown>();
+    const reset = vi.fn();
+    dependencies.catalog.mockReturnValue(catalogController(vi.fn(), vi.fn()));
+    dependencies.guide.mockReturnValue({
+      ...guideController(vi.fn()),
+      render: vi.fn(() => rendering.promise),
+      reset
+    });
+    const { result } = renderHook(() => useInstrumentationPageController(), { wrapper: queryWrapper() });
+    act(() => result.current.setup.setStage(3));
+
+    let pending: Promise<unknown>;
+    act(() => {
+      pending = result.current.setup.renderGuide();
+    });
+    act(() => result.current.setup.setStage(2));
+    rendering.resolve(undefined);
+    await act(async () => void (await pending!));
+
+    expect(result.current.setup.stage).toBe(2);
+    expect(reset).toHaveBeenCalled();
+  });
 });
 
 function queryWrapper() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return function Wrapper({ children }: { children: ReactNode }) {
-    return <MemoryRouter><QueryClientProvider client={client}>{children}</QueryClientProvider></MemoryRouter>;
+    return (
+      <MemoryRouter>
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      </MemoryRouter>
+    );
   };
 }
 
@@ -147,6 +195,17 @@ function guideController(clearContractState: ReturnType<typeof vi.fn>) {
     setTransientTarget: vi.fn(),
     render: vi.fn(),
     materializeSnippet: vi.fn(),
-    clearContractState
+    clearContractState,
+    reset: vi.fn()
   };
+}
+
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((done, fail) => {
+    resolve = done;
+    reject = fail;
+  });
+  return { promise, resolve, reject };
 }

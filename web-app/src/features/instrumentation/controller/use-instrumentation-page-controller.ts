@@ -17,7 +17,6 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 import { mergeQueryContext, useQueryContextOptional, type QueryContext } from '@/shared/query-context';
 
@@ -25,13 +24,12 @@ import { loadInstrumentationCollectors } from '../api/collector-api';
 import { INSTRUMENTATION_SCHEMA_VERSION, type GuideSnippet } from '../model/instrumentation-contract';
 import type { CollectorTarget } from '../model/instrumentation-collector';
 import { instrumentationQueryKeys } from '../api/instrumentation-query-keys';
-import { validateFlowContext, type FlowStage, type InstrumentationFlowDraft } from '../model/instrumentation-flow';
-import { buildDetectionRequest } from '../model/instrumentation-requests';
+import { validateFlowContext, type FlowStage } from '../model/instrumentation-flow';
 import { buildInstrumentationSelectionOptions } from './instrumentation-selection-options';
 import { useInstrumentationCatalogController } from './use-instrumentation-catalog-controller';
 import { useInstrumentationContractRefresh } from './use-instrumentation-contract-refresh';
-import { useInstrumentationDetectionController } from './use-instrumentation-detection-controller';
 import { useInstrumentationGuideController } from './use-instrumentation-guide-controller';
+import { useInstrumentationPageDetection } from './use-instrumentation-page-detection';
 import { useInstrumentationProgressController } from './use-instrumentation-progress-controller';
 
 export function useInstrumentationPageController() {
@@ -61,7 +59,7 @@ export function useInstrumentationPageController() {
   );
   const actions = useInstrumentationSetupActions(catalog, guide, progress, sharedContext, handleContractError);
   const setup = buildInstrumentationSetup(catalog, collectorsQuery, guide, progress, selectionOptions, actions);
-  const detection = usePageDetection(catalog.draft, handleContractError);
+  const detection = useInstrumentationPageDetection(catalog.draft, handleContractError);
   return { setup, detection };
 }
 
@@ -85,22 +83,29 @@ function useInstrumentationSetupActions(
   sharedContext: SharedContext,
   handleContractError: ContractErrorHandler
 ) {
+  const renderGeneration = useRef(0);
   const setStage = useCallback(
     (stage: FlowStage) => {
+      if (stage < 4) {
+        renderGeneration.current += 1;
+        guide.reset();
+      }
       progress.setStage(stage, catalog.draft);
     },
-    [catalog.draft, progress]
+    [catalog.draft, guide, progress]
   );
-  const renderGuide = async () => {
+  const renderGuide = useCallback(async () => {
+    const generation = renderGeneration.current + 1;
+    renderGeneration.current = generation;
     try {
       const rendered = await guide.render();
-      setStage(4);
+      if (renderGeneration.current === generation) setStage(4);
       return rendered;
     } catch (error: unknown) {
       await handleContractError(error);
       throw error;
     }
-  };
+  }, [guide, handleContractError, setStage]);
   const copySnippet = async (snippet: GuideSnippet) => {
     await navigator.clipboard.writeText(guide.materializeSnippet(snippet));
   };
@@ -157,18 +162,6 @@ function buildInstrumentationSetup(
     clearGuide: guide.clearContractState,
     handleContractError: actions.handleContractError
   };
-}
-
-function usePageDetection(draft: InstrumentationFlowDraft, handleContractError: ContractErrorHandler) {
-  const createDetectionRequest = useCallback((startedAt: number) => buildDetectionRequest(draft, startedAt), [draft]);
-  const navigate = useNavigate();
-  const openPath = useCallback(
-    (path: string) => {
-      void navigate(path);
-    },
-    [navigate]
-  );
-  return useInstrumentationDetectionController(createDetectionRequest, handleContractError, openPath);
 }
 
 function useRestoreInstrumentationDraft(
