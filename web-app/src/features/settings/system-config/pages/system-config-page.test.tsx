@@ -82,6 +82,7 @@ describe('SystemConfigPage', () => {
     controller.useSystemConfigResourceController.mockReturnValue(
       buildController({
         dirty: true,
+        locked: true,
         saving: true,
         timezonesFailed: true
       })
@@ -95,6 +96,21 @@ describe('SystemConfigPage', () => {
     expect(screen.getByRole('button', { name: 'Discard changes' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Retry' })).toBeDisabled();
   });
+
+  it('keeps ambiguous-write proof visible, locked, and GET-retryable', async () => {
+    controller.useSystemConfigResourceController.mockReturnValue(
+      buildController({ dirty: true, locked: true, recovery: { phase: 'proof' } })
+    );
+    renderPage();
+
+    expect(await screen.findByText('System settings are unavailable.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(controller.retry).toHaveBeenCalledTimes(1);
+    const selects = screen.getAllByRole('combobox');
+    selects.forEach(select => expect(select).toBeDisabled());
+    expect(screen.getByRole('button', { name: /Save$/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Discard changes' })).toBeDisabled();
+  });
 });
 
 function buildController(state: Record<string, unknown> = {}) {
@@ -107,6 +123,9 @@ function buildController(state: Record<string, unknown> = {}) {
       kind: 'ready',
       current: { locale: 'en_US', timeZoneId: 'UTC', theme: 'dark' },
       dirty: false,
+      locked: false,
+      proving: false,
+      recovery: null,
       saving: false,
       timezoneOptions: [{ value: 'UTC', label: 'UTC (UTC+00:00) UTC' }],
       timezonesFailed: false,

@@ -38,7 +38,7 @@ export function SystemConfigPage() {
           type="error"
           showIcon
           message={t('systemConfig.unavailable')}
-          action={<Button size="small" onClick={controller.retry}>{t('common.retry')}</Button>}
+          action={<RetryButton onRetry={controller.retry} />}
         />
       )}
       {state.kind === 'error' && (
@@ -46,25 +46,51 @@ export function SystemConfigPage() {
           type="error"
           showIcon
           message={t('common.routeError.description')}
-          action={<Button size="small" onClick={controller.retry}>{t('common.retry')}</Button>}
+          action={<RetryButton onRetry={controller.retry} />}
         />
       )}
       {state.kind === 'loading' && <Skeleton active paragraph={{ rows: 4 }} />}
       {state.kind === 'ready' && (
-        <SystemConfigEditor
-          current={state.current}
-          timezoneOptions={state.timezoneOptions}
-          timezonesPending={state.timezonesPending}
-          timezonesFailed={state.timezonesFailed}
-          dirty={state.dirty}
-          valid={state.valid}
-          saving={state.saving}
-          onTimezoneRetry={controller.retryTimezones}
-          onUpdate={controller.update}
-          onSave={controller.save}
-          onDiscard={controller.discard}
-        />
+        <>
+          {state.recovery && (
+            <Alert
+              type="warning"
+              showIcon
+              message={t('systemConfig.unavailable')}
+              action={<RetryButton loading={state.proving} onRetry={controller.retry} />}
+            />
+          )}
+          <SystemConfigEditor
+            current={state.current}
+            timezoneOptions={state.timezoneOptions}
+            timezonesPending={state.timezonesPending}
+            timezonesFailed={state.timezonesFailed}
+            dirty={state.dirty}
+            locked={state.locked}
+            valid={state.valid}
+            saving={state.saving}
+            onTimezoneRetry={controller.retryTimezones}
+            onUpdate={controller.update}
+            onSave={controller.save}
+            onDiscard={controller.discard}
+          />
+        </>
       )}
     </div>
+  );
+}
+
+function RetryButton({ loading = false, onRetry }: { loading?: boolean; onRetry: () => Promise<void> }) {
+  const { t } = useTranslation();
+  return (
+    <Button
+      size="small"
+      loading={loading}
+      onClick={() => {
+        void onRetry();
+      }}
+    >
+      {t('common.retry')}
+    </Button>
   );
 }

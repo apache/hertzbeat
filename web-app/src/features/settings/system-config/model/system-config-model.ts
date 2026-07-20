@@ -25,6 +25,7 @@ export const systemThemes = ['default', 'dark', 'compact'] as const;
 export type SystemLocale = (typeof systemLocales)[number];
 export type SystemTheme = (typeof systemThemes)[number];
 export type SystemConfigDraft = { locale: SystemLocale | ''; timeZoneId: string; theme: SystemTheme | '' };
+export type SystemConfigSaveRecovery = { phase: 'proof' };
 
 export const systemConfigResourceId = 'current' as const;
 export const systemTimezonesResourceId = 'timezones' as const;
@@ -122,4 +123,9 @@ export function isSystemConfigDirty(config: SystemConfigDraft, baseline: SystemC
   return (
     config.locale !== baseline.locale || config.timeZoneId !== baseline.timeZoneId || config.theme !== baseline.theme
   );
+}
+
+/** All System Config fields are readable, so exact canonical equality proves an ambiguous save. */
+export function systemConfigSaveConverged(draft: SystemConfigDraft, record: SystemConfigResourceRecord) {
+  return draft.locale === record.locale && draft.timeZoneId === record.timeZoneId && draft.theme === record.theme;
 }

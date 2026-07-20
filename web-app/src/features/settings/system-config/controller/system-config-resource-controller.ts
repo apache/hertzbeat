@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import { useCustom, useOne, useUpdate, type HttpError, type OpenNotificationParams } from '@refinedev/core';
+import { useCustom, useNotification, useOne, useUpdate, type HttpError } from '@refinedev/core';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { resolveLocale } from '@/core/i18n/i18n';
@@ -36,6 +37,46 @@ const providerName = 'system-config';
 
 export function useSystemConfigResourceController() {
   const { t, i18n } = useTranslation();
+  const notification = useNotification();
+  const { config, mutation, reread, timezones } = useSystemConfigResources();
+  const defaults = runtimeDefaults(i18n.resolvedLanguage);
+  const baseline = createSystemConfigDraft(
+    config.result ? { ...config.result, theme: defaults.theme } : null,
+    defaults
+  );
+  const form = useSystemConfigFormController({
+    baseline,
+    mutation,
+    notifications: {
+      notifyFailure: () => notification.open?.({ message: t('systemConfig.unavailable'), type: 'error' }),
+      notifyRejected: () => notification.open?.({ message: t('systemConfig.saveFailed'), type: 'error' }),
+      notifySuccess: () => notification.open?.({ message: t('systemConfig.saveSuccess'), type: 'success' })
+    },
+    reread,
+    retryTimezones: timezones.query.refetch,
+    timezoneOptions: buildTimezoneOptions(timezones.result.data?.items, baseline.timeZoneId),
+    timezonesFailed: timezones.query.isError,
+    timezonesPending: timezones.query.isPending
+  });
+  const kind = resolveKind(config.query.isPending, config.query.isError, config.query.error, config.result);
+
+  return {
+    discard: form.discard,
+    retry: form.retry,
+    retryTimezones: form.retryTimezones,
+    save: form.save,
+    state:
+      kind === 'ready' || form.state.locked
+        ? ({
+            kind: 'ready',
+            ...form.state
+          } as const)
+        : ({ kind } as const),
+    update: form.update
+  };
+}
+
+function useSystemConfigResources() {
   const config = useOne<SystemConfigResourceRecord, HttpError>({
     resource: resourceName,
     id: systemConfigResourceId,
@@ -53,39 +94,22 @@ export function useSystemConfigResourceController() {
     dataProviderName: providerName,
     invalidates: ['detail'],
     mutationMode: 'pessimistic',
-    successNotification: () => notice(t('systemConfig.saveSuccess'), 'success'),
-    errorNotification: () => notice(t('systemConfig.saveFailed'), 'error')
+    successNotification: false,
+    errorNotification: false
   });
-  const defaults = runtimeDefaults(i18n.resolvedLanguage);
-  const baseline = createSystemConfigDraft(
-    config.result ? { ...config.result, theme: defaults.theme } : null,
-    defaults
-  );
-  const form = useSystemConfigFormController({
-    baseline,
-    mutation,
-    refetch: config.query.refetch,
-    retryTimezones: timezones.query.refetch,
-    timezoneOptions: buildTimezoneOptions(timezones.result.data?.items, baseline.timeZoneId),
-    timezonesFailed: timezones.query.isError,
-    timezonesPending: timezones.query.isPending
-  });
-  const kind = resolveKind(config.query.isPending, config.query.isError, config.query.error, config.result);
-
-  return {
-    discard: form.discard,
-    retry: form.retry,
-    retryTimezones: form.retryTimezones,
-    save: form.save,
-    state:
-      kind === 'ready'
-        ? ({
-            kind,
-            ...form.state
-          } as const)
-        : ({ kind } as const),
-    update: form.update
-  };
+  const refetch = config.query.refetch;
+  const reread = useCallback(async () => {
+    try {
+      const result = await refetch();
+      return {
+        data: result.isError ? undefined : result.data?.data,
+        error: result.isError ? result.error : null
+      };
+    } catch (error) {
+      return { data: undefined, error };
+    }
+  }, [refetch]);
+  return { config, mutation, reread, timezones };
 }
 
 function runtimeDefaults(language?: string) {
@@ -126,8 +150,4 @@ function isUnavailable(error: HttpError | null) {
 function readErrorCode(error: HttpError | null) {
   const code: unknown = error?.code;
   return typeof code === 'string' || typeof code === 'number' ? code : undefined;
-}
-
-function notice(message: string, type: OpenNotificationParams['type']): OpenNotificationParams {
-  return { message, type };
 }

@@ -1,25 +1,27 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { useUpdate, type HttpError } from '@refinedev/core';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 
 import { persistSystemPreferences } from '@/core/runtime-preferences';
-import { useExclusiveOperation, type ExclusiveOperation } from '@/shared/exclusive-operation';
 
 import {
   isSystemConfigDirty,
-  systemConfigResourceId,
   validateSystemConfigDraft,
   type SystemConfigDraft,
   type SystemConfigResourceRecord
 } from '../model/system-config-model';
-
-type SystemConfigMutation = ReturnType<typeof useUpdate<SystemConfigResourceRecord, HttpError, SystemConfigDraft>>;
+import {
+  useSystemConfigSaveTransaction,
+  type SystemConfigCanonicalRead,
+  type SystemConfigMutation,
+  type SystemConfigSaveNotifications
+} from './system-config-save-transaction';
 
 type FormOptions = {
   baseline: SystemConfigDraft;
   mutation: SystemConfigMutation;
-  refetch: () => unknown;
+  notifications: SystemConfigSaveNotifications;
+  reread: SystemConfigCanonicalRead;
   retryTimezones: () => unknown;
   timezoneOptions: Array<{ value: string; label: string }>;
   timezonesFailed: boolean;
@@ -28,26 +30,35 @@ type FormOptions = {
 
 export function useSystemConfigFormController(options: FormOptions) {
   const [draft, setDraft] = useState<SystemConfigDraft | null>(null);
-  const operation = useExclusiveOperation('system-config-save');
   const current = draft ?? options.baseline;
   const dirty = draft !== null && isSystemConfigDirty(draft, options.baseline);
   const valid = validateSystemConfigDraft(current).length === 0;
-  const update = useCallback(
-    <K extends keyof SystemConfigDraft>(field: K, value: SystemConfigDraft[K]) => {
-      if (!operation.isLocked()) setDraft(previous => ({ ...(previous ?? current), [field]: value }));
+  const transaction = useSystemConfigSaveTransaction({
+    accept: record => {
+      setDraft(null);
+      applyCanonicalSystemConfig(record);
     },
-    [current, operation]
-  );
-  const discard = useCallback(() => {
-    if (!operation.isLocked()) setDraft(null);
-  }, [operation]);
-  const retry = useCallback(() => {
-    if (!operation.isLocked()) void options.refetch();
-  }, [operation, options]);
-  const retryTimezones = useCallback(() => {
-    if (!operation.isLocked()) void options.retryTimezones();
-  }, [operation, options]);
-  const save = useSystemConfigSave(current, dirty, valid, options.mutation, operation);
+    mutation: options.mutation,
+    reread: options.reread,
+    ...options.notifications
+  });
+  const update = <K extends keyof SystemConfigDraft>(field: K, value: SystemConfigDraft[K]) => {
+    if (transaction.isLocked()) return;
+    setDraft(previous => ({ ...(previous ?? current), [field]: value }));
+  };
+  const discard = () => {
+    if (!transaction.isLocked()) setDraft(null);
+  };
+  const retry = async () => {
+    if (transaction.recovery) return transaction.retry();
+    if (!transaction.isLocked()) await options.reread();
+  };
+  const retryTimezones = () => {
+    if (!transaction.isLocked()) void options.retryTimezones();
+  };
+  const save = () => {
+    if (dirty && valid) transaction.submit(current);
+  };
   return {
     discard,
     retry,
@@ -56,7 +67,10 @@ export function useSystemConfigFormController(options: FormOptions) {
     state: {
       current,
       dirty,
-      saving: operation.pending || options.mutation.mutation.isPending,
+      locked: transaction.isLocked(),
+      proving: transaction.proving,
+      recovery: transaction.recovery,
+      saving: transaction.saving,
       timezoneOptions: options.timezoneOptions,
       timezonesFailed: options.timezonesFailed,
       timezonesPending: options.timezonesPending,
@@ -66,38 +80,11 @@ export function useSystemConfigFormController(options: FormOptions) {
   };
 }
 
-function useSystemConfigSave(
-  current: SystemConfigDraft,
-  dirty: boolean,
-  valid: boolean,
-  mutation: SystemConfigMutation,
-  operation: ExclusiveOperation
-) {
-  return useCallback(() => {
-    if (!dirty || !valid) return;
-    const owner = operation.begin();
-    if (!owner) return;
-    mutation.mutate(
-      {
-        id: systemConfigResourceId,
-        resource: 'system-config',
-        dataProviderName: 'system-config',
-        invalidates: ['detail'],
-        mutationMode: 'pessimistic',
-        values: current
-      },
-      {
-        onSuccess: response => {
-          if (!operation.isCurrent(owner)) return;
-          try {
-            persistSystemPreferences(response.data);
-          } finally {
-            operation.end(owner);
-          }
-          globalThis.location.reload();
-        },
-        onError: () => operation.end(owner)
-      }
-    );
-  }, [current, dirty, mutation, operation, valid]);
+/** Apply only the canonical backend response before reloading runtime locale and theme. */
+function applyCanonicalSystemConfig(record: SystemConfigResourceRecord) {
+  try {
+    persistSystemPreferences(record);
+  } finally {
+    globalThis.location.reload();
+  }
 }

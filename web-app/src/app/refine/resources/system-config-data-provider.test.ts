@@ -17,6 +17,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ApiMessageError } from '@/core/http/api-message';
 import { systemConfigTimezonesEndpoint } from '@/features/settings/system-config/api/system-config-api';
 import systemConfigApiSource from '@/features/settings/system-config/api/system-config-api.ts?raw';
 import systemConfigControllerSource from '@/features/settings/system-config/controller/system-config-resource-controller.ts?raw';
@@ -108,5 +109,23 @@ describe('System Config Refine data provider', () => {
     }
     expect(error).toMatchObject({ code: 'SYSTEM_CONFIG_RESPONSE_INVALID' });
     expect(JSON.stringify(error)).not.toContain('private-invalid-locale');
+  });
+
+  it.each([
+    ['HTTP 4xx', () => new ApiMessageError('Forbidden', { status: 403 })],
+    ['backend envelope', () => new ApiMessageError('Rejected', { code: 20, status: 200 })]
+  ])('marks a post-write canonical %s failure as uncertainty', async (_label, failure) => {
+    api.saveSystemConfig.mockResolvedValue('Update config success');
+    api.loadSystemConfig.mockRejectedValue(failure());
+
+    await expect(
+      systemConfigDataProvider.update({ resource: 'system-config', id: 'current', variables: config })
+    ).rejects.toMatchObject({
+      statusCode: 502,
+      code: 'SYSTEM_CONFIG_CANONICAL_REREAD_FAILED',
+      kind: 'contract'
+    });
+    expect(api.saveSystemConfig).toHaveBeenCalledTimes(1);
+    expect(api.loadSystemConfig).toHaveBeenCalledTimes(1);
   });
 });
