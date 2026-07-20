@@ -16,12 +16,13 @@
  */
 
 import type { QueryClient } from '@tanstack/react-query';
-import { useCallback, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
 
 import { createSessionQueryClient } from '@/core/auth/session-cache-boundary';
-import type { UiSession } from '@/core/auth/session-api';
+import { anonymousSession, refreshSession, type UiSession } from '@/core/auth/session-api';
 import { SessionIdentityProvider } from '@/core/auth/session-identity-provider';
+import { registerBrowserSessionRefreshCoordinator } from '@/core/http/http-client';
 
 export type SessionQueryRuntimeValue = {
   generation: number;
@@ -33,14 +34,22 @@ type SessionQueryRuntimeProps = {
   createQueryClient: () => QueryClient;
 };
 
+type PendingSessionRefresh = {
+  generation: number;
+  promise: Promise<boolean>;
+};
+
 export function SessionQueryRuntime({ children, createQueryClient }: SessionQueryRuntimeProps) {
   const [runtime, setRuntime] = useState<SessionQueryRuntimeValue>(() => ({
     generation: 0,
     queryClient: createQueryClient()
   }));
   const runtimeRef = useRef(runtime);
+  const mountedRef = useRef(true);
+  const refreshRequestRef = useRef<PendingSessionRefresh | undefined>(undefined);
   const replaceIdentity = useCallback(
     (nextSession: UiSession) => {
+      if (!mountedRef.current) return;
       const previousClient = runtimeRef.current.queryClient;
       const nextRuntime = {
         generation: runtimeRef.current.generation + 1,
@@ -57,6 +66,41 @@ export function SessionQueryRuntime({ children, createQueryClient }: SessionQuer
     },
     [createQueryClient]
   );
+
+  const refreshIdentity = useCallback(() => {
+    async function refreshIdentityGeneration(generation: number) {
+      try {
+        const refreshedSession = await refreshSession();
+        if (!mountedRef.current || runtimeRef.current.generation !== generation) return false;
+        replaceIdentity(refreshedSession);
+        return refreshedSession.authenticated;
+      } catch {
+        if (!mountedRef.current || runtimeRef.current.generation !== generation) return false;
+        replaceIdentity(anonymousSession);
+        return false;
+      }
+    }
+
+    if (!mountedRef.current) return Promise.resolve(false);
+    const ownerGeneration = runtimeRef.current.generation;
+    const pendingRefresh = refreshRequestRef.current;
+    if (pendingRefresh?.generation === ownerGeneration) return pendingRefresh.promise;
+
+    const refreshPromise = refreshIdentityGeneration(ownerGeneration).finally(() => {
+      if (refreshRequestRef.current?.promise === refreshPromise) refreshRequestRef.current = undefined;
+    });
+    refreshRequestRef.current = { generation: ownerGeneration, promise: refreshPromise };
+    return refreshPromise;
+  }, [replaceIdentity]);
+
+  useLayoutEffect(() => {
+    mountedRef.current = true;
+    const unregister = registerBrowserSessionRefreshCoordinator(refreshIdentity);
+    return () => {
+      mountedRef.current = false;
+      unregister();
+    };
+  }, [refreshIdentity]);
 
   return <SessionIdentityProvider replaceIdentity={replaceIdentity}>{children(runtime)}</SessionIdentityProvider>;
 }

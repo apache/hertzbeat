@@ -17,35 +17,51 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { apiFetch } from './http-client';
+import { apiFetch, registerBrowserSessionRefreshCoordinator } from './http-client';
 
 describe('apiFetch', () => {
+  let unregisterRefreshCoordinator: (() => void) | undefined;
+
   afterEach(() => {
+    unregisterRefreshCoordinator?.();
+    unregisterRefreshCoordinator = undefined;
     document.cookie = 'hb_ui_csrf=; Max-Age=0; path=/';
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
 
   it('refreshes and retries a read once after an unauthorized response', async () => {
+    const refresh = vi.fn().mockResolvedValue(true);
+    unregisterRefreshCoordinator = registerBrowserSessionRefreshCoordinator(refresh);
     const fetchMock = vi
       .fn<typeof fetch>()
       .mockResolvedValueOnce(new Response(null, { status: 401 }))
-      .mockResolvedValueOnce(new Response(null, { status: 200 }))
       .mockResolvedValueOnce(new Response('{"data":[]}', { status: 200 }));
     vi.stubGlobal('fetch', fetchMock);
 
     const response = await apiFetch('/api/monitor');
 
     expect(response.status).toBe(200);
-    expect(fetchMock).toHaveBeenNthCalledWith(
-      2,
-      '/api/ui/session/refresh',
-      expect.objectContaining({ method: 'POST', credentials: 'same-origin' })
-    );
-    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(refresh).toHaveBeenCalledOnce();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('returns the unauthorized read when the session coordinator cannot recover', async () => {
+    const refresh = vi.fn().mockResolvedValue(false);
+    unregisterRefreshCoordinator = registerBrowserSessionRefreshCoordinator(refresh);
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 401 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const response = await apiFetch('/api/monitor');
+
+    expect(response.status).toBe(401);
+    expect(refresh).toHaveBeenCalledOnce();
+    expect(fetchMock).toHaveBeenCalledOnce();
   });
 
   it('never replays a mutation', async () => {
+    const refresh = vi.fn().mockResolvedValue(true);
+    unregisterRefreshCoordinator = registerBrowserSessionRefreshCoordinator(refresh);
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 401 }));
     vi.stubGlobal('fetch', fetchMock);
     document.cookie = 'hb_ui_csrf=monitor-csrf-token; path=/';
@@ -54,8 +70,22 @@ describe('apiFetch', () => {
 
     expect(response.status).toBe(401);
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(refresh).toHaveBeenCalledOnce();
     const request = fetchMock.mock.calls[0]?.[1];
     expect(new Headers(request?.headers).get('X-HertzBeat-CSRF')).toBe('monitor-csrf-token');
+  });
+
+  it('does not recursively refresh when the refresh endpoint itself rejects the session', async () => {
+    const refresh = vi.fn().mockResolvedValue(true);
+    unregisterRefreshCoordinator = registerBrowserSessionRefreshCoordinator(refresh);
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 401 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const response = await apiFetch('/api/ui/session/refresh', { method: 'POST' });
+
+    expect(response.status).toBe(401);
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(refresh).not.toHaveBeenCalled();
   });
 
   it('aborts a stalled request instead of leaving consumers pending indefinitely', async () => {

@@ -21,17 +21,23 @@ const SESSION_REFRESH_PATH = '/api/ui/session/refresh';
 const REQUEST_TIMEOUT_MS = 30_000;
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
-let refreshRequest: Promise<boolean> | undefined;
+type BrowserSessionRefreshCoordinator = () => Promise<boolean>;
+
+let sessionRefreshCoordinator: BrowserSessionRefreshCoordinator | undefined;
 
 export async function apiFetch(input: RequestInfo | URL, init: RequestInit = {}) {
   const request = withBrowserSession(init);
   const response = await fetchWithTimeout(input, request);
   const method = (request.method ?? 'GET').toUpperCase();
 
-  if (response.status !== 401 || !SAFE_METHODS.has(method) || isSessionRefresh(input)) {
+  if (response.status !== 401 || isSessionRefresh(input)) {
     return response;
   }
-  if (!(await refreshBrowserSession())) return response;
+  const refreshed = await refreshBrowserSession();
+  // A rejected mutation is never replayed automatically. Refresh still
+  // converges the session identity so the caller does not remain in a stale
+  // authenticated shell after revocation.
+  if (!SAFE_METHODS.has(method) || !refreshed) return response;
   return fetchWithTimeout(input, request);
 }
 
@@ -51,14 +57,21 @@ function withBrowserSession(init: RequestInit): RequestInit {
 }
 
 export function refreshBrowserSession() {
-  if (!refreshRequest) {
-    refreshRequest = fetchWithTimeout(SESSION_REFRESH_PATH, withBrowserSession({ method: 'POST' }))
-      .then(response => response.ok)
-      .finally(() => {
-        refreshRequest = undefined;
-      });
-  }
-  return refreshRequest;
+  return Promise.resolve()
+    .then(() => sessionRefreshCoordinator?.() ?? false)
+    .catch(() => false);
+}
+
+/**
+ * Installs the single application-level owner that can parse and publish a
+ * refreshed session. The transport intentionally cannot maintain a second,
+ * boolean-only identity beside the React Query session boundary.
+ */
+export function registerBrowserSessionRefreshCoordinator(coordinator: BrowserSessionRefreshCoordinator) {
+  sessionRefreshCoordinator = coordinator;
+  return () => {
+    if (sessionRefreshCoordinator === coordinator) sessionRefreshCoordinator = undefined;
+  };
 }
 
 function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit) {

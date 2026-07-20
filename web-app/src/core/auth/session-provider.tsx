@@ -16,27 +16,74 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import type { PropsWithChildren } from 'react';
+import { useEffect, type PropsWithChildren } from 'react';
 
 import { SessionContext } from './session-context';
-import { getSession, sessionQueryKey } from './session-api';
+import { anonymousSession, getSession, sessionQueryKey, type UiSession } from './session-api';
+import { useSessionIdentityBoundary } from './session-identity-context';
+
+const MAXIMUM_EXPIRY_TIMER_MS = 2_147_483_647;
 
 export function SessionProvider({ children }: PropsWithChildren) {
+  const replaceIdentity = useSessionIdentityBoundary();
   const query = useQuery({
     queryKey: sessionQueryKey,
     queryFn: ({ signal }) => getSession({ signal }),
     retry: false
   });
+  useSessionExpiry(query.data, replaceIdentity);
+  const visibleSession = failClosedExpiredSession(query.data);
   return (
     <SessionContext.Provider
       value={{
-        session: query.data,
+        session: visibleSession,
         loading: query.isPending,
         unavailable: query.isError,
-        retry: () => { void query.refetch(); }
+        retry: () => {
+          void query.refetch();
+        }
       }}
     >
       {children}
     </SessionContext.Provider>
   );
+}
+
+function useSessionExpiry(session: UiSession | undefined, replaceIdentity: (session: UiSession) => void) {
+  useEffect(() => {
+    if (!session?.authenticated || !session.expiresAt) return undefined;
+    const expiresAt = Date.parse(session.expiresAt);
+    if (!Number.isFinite(expiresAt)) {
+      replaceIdentity(anonymousSession);
+      return undefined;
+    }
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    const expireWhenDue = () => {
+      const remainingMs = expiresAt - Date.now();
+      if (remainingMs <= 0) {
+        replaceIdentity(anonymousSession);
+        return;
+      }
+      // Browsers clamp larger delays. Re-arming avoids treating a far-future
+      // valid session as expired immediately while retaining one timer owner.
+      timer = setTimeout(expireWhenDue, Math.min(remainingMs, MAXIMUM_EXPIRY_TIMER_MS));
+    };
+
+    expireWhenDue();
+    return () => {
+      if (timer !== undefined) clearTimeout(timer);
+    };
+  }, [replaceIdentity, session]);
+}
+
+/**
+ * Authentication is fail-closed during render. The expiry effect rotates the
+ * query identity, but protected children must not observe an expired cached
+ * session during the render that schedules that rotation.
+ */
+function failClosedExpiredSession(session: UiSession | undefined) {
+  if (!session?.authenticated || !session.expiresAt) return session;
+  const expiresAt = Date.parse(session.expiresAt);
+  return Number.isFinite(expiresAt) && expiresAt > Date.now() ? session : anonymousSession;
 }
