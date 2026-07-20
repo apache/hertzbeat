@@ -5,8 +5,16 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useState,
-  type PropsWithChildren } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useReducer,
+  useState,
+  type PropsWithChildren
+} from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import type { ExactTimeWindow } from '@/shared/query-context';
@@ -21,6 +29,7 @@ import {
   globalTimeWindow,
   hasExactTimeWindowFields,
   headerTimeMode,
+  manualRefreshOwner,
   parseExactTimeWindow,
   refreshGlobalTime,
   tickGlobalTime,
@@ -71,29 +80,22 @@ export function RouteTimeProvider({ children, policy }: PropsWithChildren<{ poli
     setParams(clearExactTimeWindow(params), { replace: true });
   }, [invalidExact, params, setParams]);
 
-  const setRange = useCallback((range: GlobalTimeRange) => {
-    global.dispatch({ type: 'range', range, nowMs: Date.now() });
-  }, [global]);
-  const setAutoRefresh = useCallback((intervalMs: number) => {
-    global.dispatch({ type: 'autoRefresh', intervalMs, nowMs: Date.now() });
-  }, [global]);
-  const commitWindow = useCallback((window: ExactTimeWindow) => {
-    if (policy !== 'route_owned') return;
-    commitRouteWindow(createRouteTimeState(policy, inherited), window);
-    setParams(writeExactTimeWindow(params, window));
-  }, [inherited, params, policy, setParams]);
-  const requestRefresh = useCallback(() => {
-    if (policy === 'global') global.dispatch({ type: 'refresh', nowMs: Date.now() });
-    if (policy === 'route_owned') bumpRouteRefresh();
-  }, [global, policy]);
+  const { commitWindow, requestRefresh, setAutoRefresh, setRange } = useRouteTimeCommands(
+    global,
+    policy,
+    inherited,
+    params,
+    setParams,
+    bumpRouteRefresh
+  );
 
   const value = useMemo<SharedTimeValue>(() => {
     const globalOwned = policy === 'global';
     return {
       policy,
       headerMode: headerTimeMode(policy),
-      window: globalOwned ? globalTimeWindow(global.state)
-        : policy === 'route_owned' ? exact ?? inherited : undefined,
+      manualRefreshOwner: manualRefreshOwner(policy),
+      window: resolveTimeWindow(policy, global.state, exact, inherited),
       range: global.state.range,
       autoRefreshMs: globalOwned ? global.state.autoRefreshMs : 0,
       remainingMs: globalOwned ? global.state.remainingMs : null,
@@ -103,9 +105,61 @@ export function RouteTimeProvider({ children, policy }: PropsWithChildren<{ poli
       commitWindow,
       requestRefresh
     };
-  }, [commitWindow, exact, global.state, inherited, policy, requestRefresh, routeRefreshRevision, setAutoRefresh, setRange]);
+  }, [
+    commitWindow,
+    exact,
+    global.state,
+    inherited,
+    policy,
+    requestRefresh,
+    routeRefreshRevision,
+    setAutoRefresh,
+    setRange
+  ]);
 
   return <RouteTimeContext.Provider value={value}>{children}</RouteTimeContext.Provider>;
+}
+
+function resolveTimeWindow(
+  policy: TimeOwnership,
+  globalState: GlobalTimeState,
+  routeWindow: ExactTimeWindow | undefined,
+  inheritedWindow: ExactTimeWindow
+): ExactTimeWindow | undefined {
+  if (policy === 'global') return globalTimeWindow(globalState);
+  if (policy === 'route_owned') return routeWindow ?? inheritedWindow;
+  return undefined;
+}
+
+function useRouteTimeCommands(
+  global: GlobalTimeValue,
+  policy: TimeOwnership,
+  inherited: ExactTimeWindow,
+  params: URLSearchParams,
+  setParams: ReturnType<typeof useSearchParams>[1],
+  bumpRouteRefresh: () => void
+) {
+  const setRange = useCallback(
+    (range: GlobalTimeRange) => global.dispatch({ type: 'range', range, nowMs: Date.now() }),
+    [global]
+  );
+  const setAutoRefresh = useCallback(
+    (intervalMs: number) => global.dispatch({ type: 'autoRefresh', intervalMs, nowMs: Date.now() }),
+    [global]
+  );
+  const commitWindow = useCallback(
+    (window: ExactTimeWindow) => {
+      if (policy !== 'route_owned') return;
+      commitRouteWindow(createRouteTimeState(policy, inherited), window);
+      setParams(writeExactTimeWindow(params, window));
+    },
+    [inherited, params, policy, setParams]
+  );
+  const requestRefresh = useCallback(() => {
+    if (policy === 'global') global.dispatch({ type: 'refresh', nowMs: Date.now() });
+    if (policy === 'route_owned') bumpRouteRefresh();
+  }, [bumpRouteRefresh, global, policy]);
+  return { commitWindow, requestRefresh, setAutoRefresh, setRange };
 }
 
 function useGlobalTime() {

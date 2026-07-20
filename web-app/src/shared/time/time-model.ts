@@ -10,6 +10,7 @@ import type { ExactTimeWindow } from '@/shared/query-context';
 export type TimeOwnership = 'global' | 'route_owned' | 'none' | 'unknown';
 export type GlobalTimeRange = '15m' | '30m' | '1h' | '6h' | '24h';
 export type HeaderTimeMode = 'global_controls' | 'exact_window' | 'hidden';
+export type ManualRefreshOwner = 'time_revision' | 'active_queries';
 
 export type GlobalTimeState = {
   range: GlobalTimeRange;
@@ -39,25 +40,21 @@ const rangeMilliseconds: Record<GlobalTimeRange, number> = {
 
 export function createGlobalTimeState(nowMs: number): GlobalTimeState {
   return {
-    range: '30m', rangeMs: rangeMilliseconds['30m'], autoRefreshMs: 0,
-    anchorMs: nowMs, remainingMs: null, refreshRevision: 0
+    range: '30m',
+    rangeMs: rangeMilliseconds['30m'],
+    autoRefreshMs: 0,
+    anchorMs: nowMs,
+    remainingMs: null,
+    refreshRevision: 0
   };
 }
 
-export function updateGlobalRange(
-  state: GlobalTimeState,
-  range: GlobalTimeRange,
-  nowMs: number
-): GlobalTimeState {
+export function updateGlobalRange(state: GlobalTimeState, range: GlobalTimeRange, nowMs: number): GlobalTimeState {
   return { ...state, range, rangeMs: rangeMilliseconds[range], anchorMs: nowMs };
 }
 
-export function updateGlobalAutoRefresh(
-  state: GlobalTimeState,
-  autoRefreshMs: number,
-  nowMs: number
-): GlobalTimeState {
-  if (!globalAutoRefreshValues.includes(autoRefreshMs as typeof globalAutoRefreshValues[number])) {
+export function updateGlobalAutoRefresh(state: GlobalTimeState, autoRefreshMs: number, nowMs: number): GlobalTimeState {
+  if (!globalAutoRefreshValues.includes(autoRefreshMs as (typeof globalAutoRefreshValues)[number])) {
     throw new Error('Unsupported global auto-refresh interval');
   }
   return {
@@ -114,6 +111,10 @@ export function headerTimeMode(policy: TimeOwnership): HeaderTimeMode {
   return 'hidden';
 }
 
+export function manualRefreshOwner(policy: TimeOwnership): ManualRefreshOwner {
+  return policy === 'global' || policy === 'route_owned' ? 'time_revision' : 'active_queries';
+}
+
 export function parseExactTimeWindow(params: URLSearchParams): ExactTimeWindow | undefined {
   const from = readTimestamp(params.get('start'));
   const to = readTimestamp(params.get('end'));
@@ -140,8 +141,12 @@ export function clearExactTimeWindow(params: URLSearchParams) {
 }
 
 function requireExactWindow(window: ExactTimeWindow) {
-  if (!Number.isSafeInteger(window.from) || !Number.isSafeInteger(window.to)
-    || window.from <= 0 || window.from >= window.to) {
+  if (
+    !Number.isSafeInteger(window.from) ||
+    !Number.isSafeInteger(window.to) ||
+    window.from <= 0 ||
+    window.from >= window.to
+  ) {
     throw new Error('Invalid exact time window');
   }
 }

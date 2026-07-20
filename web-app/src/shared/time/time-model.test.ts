@@ -13,6 +13,7 @@ import {
   createRouteTimeState,
   globalTimeWindow,
   headerTimeMode,
+  manualRefreshOwner,
   refreshGlobalTime,
   tickGlobalTime,
   updateGlobalAutoRefresh,
@@ -45,5 +46,12 @@ describe('shared time ownership model', () => {
     expect(headerTimeMode('route_owned')).toBe('exact_window');
     expect(headerTimeMode('none')).toBe('hidden');
     expect(headerTimeMode('unknown')).toBe('hidden');
+  });
+
+  it('assigns exactly one manual refresh owner for every time policy', () => {
+    expect(manualRefreshOwner('global')).toBe('time_revision');
+    expect(manualRefreshOwner('route_owned')).toBe('time_revision');
+    expect(manualRefreshOwner('none')).toBe('active_queries');
+    expect(manualRefreshOwner('unknown')).toBe('active_queries');
   });
 });

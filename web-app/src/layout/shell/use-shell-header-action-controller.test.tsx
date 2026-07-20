@@ -48,7 +48,11 @@ vi.mock('@/core/runtime-theme-context', () => ({
   useRuntimeTheme: () => ({ theme: 'dark', setTheme: runtime.setTheme })
 }));
 vi.mock('@/shared/time', () => ({
-  useSharedTime: () => ({ headerMode: 'hidden', requestRefresh: runtime.requestRefresh })
+  useSharedTime: () => ({
+    headerMode: 'hidden',
+    manualRefreshOwner: 'active_queries',
+    requestRefresh: runtime.requestRefresh
+  })
 }));
 
 import { useShellHeaderActionController } from './use-shell-header-action-controller';
@@ -70,7 +74,7 @@ describe('useShellHeaderActionController', () => {
     await act(() => result.current.changeLanguage());
     await act(() => result.current.openAlerts());
 
-    expect(runtime.requestRefresh).toHaveBeenCalledOnce();
+    expect(runtime.requestRefresh).not.toHaveBeenCalled();
     expect(runtime.invalidateQueries).toHaveBeenCalledWith({ type: 'active' });
     expect(runtime.setTheme).toHaveBeenCalledWith('default');
     expect(runtime.persistPreferences).toHaveBeenCalledWith({ locale: 'zh-CN', theme: 'dark' });

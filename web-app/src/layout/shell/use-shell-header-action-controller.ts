@@ -38,7 +38,12 @@ export function useShellHeaderActionController() {
   const changeLanguage = useLocaleChangeAction(theme, i18n.resolvedLanguage);
 
   const refresh = async () => {
-    sharedTime.requestRefresh();
+    // Time-owned queries observe refreshRevision/window. Invalidating them as
+    // well would start a second request for the same header action.
+    if (sharedTime.manualRefreshOwner === 'time_revision') {
+      sharedTime.requestRefresh();
+      return;
+    }
     await queryClient.invalidateQueries({ type: 'active' });
   };
   const toggleTheme = () => setTheme(theme === 'default' ? 'dark' : 'default');

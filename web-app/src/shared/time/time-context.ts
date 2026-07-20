@@ -9,11 +9,12 @@ import { createContext, useContext } from 'react';
 
 import type { ExactTimeWindow } from '@/shared/query-context';
 
-import type { GlobalTimeRange, HeaderTimeMode, TimeOwnership } from './time-model';
+import type { GlobalTimeRange, HeaderTimeMode, ManualRefreshOwner, TimeOwnership } from './time-model';
 
 export type SharedTimeValue = {
   policy: TimeOwnership;
   headerMode: HeaderTimeMode;
+  manualRefreshOwner: ManualRefreshOwner;
   window: ExactTimeWindow | undefined;
   range: GlobalTimeRange;
   autoRefreshMs: number;
