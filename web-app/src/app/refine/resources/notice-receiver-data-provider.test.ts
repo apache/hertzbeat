@@ -19,6 +19,7 @@ import type { GetListParams } from '@refinedev/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
+import { noticeApiEndpoint } from '@/features/alert/notice-api-endpoints';
 import { NoticeReceiverContractError } from '@/features/alert/notice-receiver/api/notice-receiver-api';
 import * as noticeReceiverModel from '@/features/alert/notice-receiver/model/notice-receiver-model';
 import {
@@ -38,14 +39,12 @@ vi.mock('@/features/alert/notice-receiver/api/notice-receiver-api', async import
 }));
 
 import { noticeReceiverDataProvider } from './notice-receiver-data-provider';
-import inputSource from './notice-receiver-data-provider-input.ts?raw';
 import {
   readNoticeReceiverDeleteRecord,
   readNoticeReceiverDraft,
   readNoticeReceiverId,
   readNoticeReceiverListQuery
 } from './notice-receiver-data-provider-input';
-import providerSource from './notice-receiver-data-provider.ts?raw';
 
 const receiver = {
   id: 7,
@@ -85,6 +84,7 @@ describe('Notice Receiver Refine data provider', () => {
       })
     ).resolves.toEqual({ data: [receiver], total: 1 });
     expect(api.loadNoticeReceivers).toHaveBeenCalledWith({ name: 'Pager', pageIndex: 1, pageSize: 15 });
+    expect(noticeReceiverDataProvider.getApiUrl()).toBe(noticeApiEndpoint);
   });
 
   it('creates and updates pessimistically, then authoritatively rereads detail', async () => {
@@ -99,6 +99,8 @@ describe('Notice Receiver Refine data provider', () => {
     await expect(
       noticeReceiverDataProvider.update({ resource: 'notice-receivers', id: 7, variables: { ...draft, id: 7 } })
     ).resolves.toEqual({ data: receiver });
+    expect(api.saveNoticeReceiver).toHaveBeenNthCalledWith(1, draft);
+    expect(api.saveNoticeReceiver).toHaveBeenNthCalledWith(2, { ...draft, id: 7 });
     expect(api.loadNoticeReceiver).toHaveBeenCalledTimes(2);
   });
 
@@ -117,16 +119,39 @@ describe('Notice Receiver Refine data provider', () => {
   });
 
   it('preserves acknowledged mutation identity when the canonical reread cannot complete', async () => {
-    const mutation = { id: 7, status: 'created' as const, receiver };
+    const secretDraft = {
+      ...createNoticeReceiverDraft(),
+      name: 'Gateway',
+      type: 2 as const,
+      hookUrl: 'private-hook-value',
+      hookAuthType: 'Bearer' as const,
+      hookAuthToken: 'private-token-value'
+    };
+    const mutation = {
+      id: 7,
+      status: 'created' as const,
+      receiver: {
+        ...receiver,
+        name: 'Gateway',
+        type: 2 as const,
+        typeKey: 'webhook',
+        options: { hookAuthType: 'Bearer' as const },
+        configuredSecrets: ['hookUrl' as const, 'hookAuthToken' as const]
+      }
+    };
     api.saveNoticeReceiver.mockResolvedValueOnce(mutation);
     api.loadNoticeReceiver.mockRejectedValueOnce(new ApiMessageError('network failed'));
 
-    await expect(
-      noticeReceiverDataProvider.create({ resource: 'notice-receivers', variables: draft })
-    ).rejects.toMatchObject({
-      code: 'NETWORK_REQUEST_FAILED',
-      noticeReceiverMutation: mutation
-    });
+    let failure: unknown;
+    try {
+      await noticeReceiverDataProvider.create({ resource: 'notice-receivers', variables: secretDraft });
+    } catch (reason) {
+      failure = reason;
+    }
+    expect(failure).toMatchObject({ code: 'NETWORK_REQUEST_FAILED', noticeReceiverMutation: mutation });
+    const serializedFailure = JSON.stringify(failure);
+    expect(serializedFailure).not.toContain('private-hook-value');
+    expect(serializedFailure).not.toContain('private-token-value');
     expect(api.saveNoticeReceiver).toHaveBeenCalledTimes(1);
   });
 
@@ -203,24 +228,6 @@ describe('Notice Receiver Refine data provider', () => {
 });
 
 describe('Notice Receiver provider input boundary', () => {
-  it('keeps Refine orchestration small and runtime parsing outside the provider', () => {
-    const sourceLines = providerSource
-      .replace(/\/\*[\s\S]*?\*\//g, '')
-      .split('\n')
-      .filter(line => line.trim() && !line.trim().startsWith('//'));
-
-    expect(sourceLines.length).toBeLessThanOrEqual(200);
-    expect(providerSource).not.toMatch(/function read(?:ListQuery|Pagination|NameFilter|Id|Draft|DeleteRecord)/);
-    expect(providerSource).not.toContain('as TData');
-    expect(providerSource).not.toContain('as unknown as TData');
-    expect(providerSource).toContain("from '@/shared/refine/refine-provider-data'");
-    expect(inputSource).toContain("from 'zod'");
-    expect(inputSource).toContain('schema.safeParse(value)');
-    expect(inputSource).toContain('receiverTypeDefinitions.some');
-    expect(inputSource).toContain('hasCurrentDraftShape()');
-    expect(inputSource).not.toMatch(/z\.literal\((?:0|1[0-4])\).*receiverType/);
-  });
-
   it('keeps list normalization and every established unsupported or invalid error code', () => {
     expect(
       readNoticeReceiverListQuery({

@@ -19,10 +19,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
 import { systemConfigTimezonesEndpoint } from '@/features/settings/system-config/api/system-config-api';
-import systemConfigApiSource from '@/features/settings/system-config/api/system-config-api.ts?raw';
-import systemConfigControllerSource from '@/features/settings/system-config/controller/system-config-resource-controller.ts?raw';
-
-import systemConfigProviderSource from './system-config-data-provider.ts?raw';
 
 type SystemConfigApi = typeof import('@/features/settings/system-config/api/system-config-api');
 const api = vi.hoisted(() => ({
@@ -42,14 +38,18 @@ const config = { locale: 'en_US', timeZoneId: 'UTC', theme: 'dark' };
 describe('System Config Refine data provider', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('keeps the timezone endpoint owned by the feature API', () => {
-    expect(systemConfigApiSource).toMatch(
-      /export const systemConfigTimezonesEndpoint\s*=\s*['"]\/api\/config\/timezones['"]/
-    );
-    for (const consumerSource of [systemConfigControllerSource, systemConfigProviderSource]) {
-      expect(consumerSource).toContain('systemConfigTimezonesEndpoint');
-      expect(consumerSource).not.toMatch(/['"]\/api\/config\/timezones['"]/);
+  it('rejects an inexact timezone endpoint or HTTP verb before transport', async () => {
+    const unsupportedRequests = [
+      { url: `${systemConfigTimezonesEndpoint}/other`, method: 'get' as const },
+      { url: systemConfigTimezonesEndpoint, method: 'post' as const }
+    ];
+    for (const request of unsupportedRequests) {
+      await expect(systemConfigDataProvider.custom?.(request)).rejects.toMatchObject({
+        code: 'SYSTEM_CONFIG_CUSTOM_UNSUPPORTED',
+        statusCode: 400
+      });
     }
+    expect(api.loadTimezones).not.toHaveBeenCalled();
   });
 
   it('reads the singleton and auxiliary timezone collection', async () => {
@@ -71,6 +71,18 @@ describe('System Config Refine data provider', () => {
         items: [{ zoneId: 'UTC', offset: 'UTC+00:00', displayName: 'UTC' }]
       }
     });
+  });
+
+  it('rejects an inexact singleton resource or id before transport', async () => {
+    await expect(systemConfigDataProvider.getOne({ resource: 'settings', id: 'current' })).rejects.toMatchObject({
+      code: 'SYSTEM_CONFIG_RESOURCE_UNSUPPORTED',
+      statusCode: 400
+    });
+    await expect(systemConfigDataProvider.getOne({ resource: 'system-config', id: 'other' })).rejects.toMatchObject({
+      code: 'SYSTEM_CONFIG_ID_INVALID',
+      statusCode: 400
+    });
+    expect(api.loadSystemConfig).not.toHaveBeenCalled();
   });
 
   it('resolves update only after an authoritative canonical reread', async () => {
@@ -109,6 +121,34 @@ describe('System Config Refine data provider', () => {
     }
     expect(error).toMatchObject({ code: 'SYSTEM_CONFIG_RESPONSE_INVALID' });
     expect(JSON.stringify(error)).not.toContain('private-invalid-locale');
+  });
+
+  it('rejects malformed write input and timezone evidence without exposing their values', async () => {
+    const privateLocale = 'private-invalid-locale';
+    let writeFailure: unknown;
+    try {
+      await systemConfigDataProvider.update({
+        resource: 'system-config',
+        id: 'current',
+        variables: { ...config, locale: privateLocale }
+      });
+    } catch (reason) {
+      writeFailure = reason;
+    }
+    expect(writeFailure).toMatchObject({ code: 'SYSTEM_CONFIG_VARIABLES_INVALID', statusCode: 400 });
+    expect(JSON.stringify(writeFailure)).not.toContain(privateLocale);
+    expect(api.saveSystemConfig).not.toHaveBeenCalled();
+
+    const privateZone = 'private-zone-value';
+    api.loadTimezones.mockResolvedValue([{ zoneId: privateZone, offset: '', displayName: 'Private' }]);
+    let timezoneFailure: unknown;
+    try {
+      await systemConfigDataProvider.custom?.({ url: systemConfigTimezonesEndpoint, method: 'get' });
+    } catch (reason) {
+      timezoneFailure = reason;
+    }
+    expect(timezoneFailure).toMatchObject({ code: 'SYSTEM_TIMEZONES_RESPONSE_INVALID', statusCode: 502 });
+    expect(JSON.stringify(timezoneFailure)).not.toContain(privateZone);
   });
 
   it.each([

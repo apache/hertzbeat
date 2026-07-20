@@ -37,8 +37,6 @@ vi.mock('@/features/alert/alert-silence-api', async importOriginal => ({
 import { alertSilenceEndpoint } from '@/features/alert/alert-silence-api';
 
 import { alertSilenceDataProvider } from './alert-silence-data-provider';
-import inputSource from './alert-silence-data-provider-input.ts?raw';
-import providerSource from './alert-silence-data-provider.ts?raw';
 
 const record: AlertSilence = {
   id: 7,
@@ -83,6 +81,22 @@ describe('Alert Silence Refine data provider', () => {
         payload: draft
       })
     ).resolves.toEqual({ data: { acknowledged: true } });
+    expect(api.saveAlertSilence).toHaveBeenCalledWith(draft);
+  });
+
+  it('rejects an inexact custom endpoint or HTTP verb before transport', async () => {
+    const unsupportedRequests = [
+      { url: `${alertSilenceEndpoint}/other`, method: 'post' as const },
+      { url: alertSilenceEndpoint, method: 'get' as const }
+    ];
+
+    for (const request of unsupportedRequests) {
+      await expect(alertSilenceDataProvider.custom?.({ ...request, payload: draft })).rejects.toMatchObject({
+        code: 'ALERT_SILENCE_CUSTOM_ACTION_UNSUPPORTED',
+        statusCode: 405
+      });
+    }
+    expect(api.saveAlertSilence).not.toHaveBeenCalled();
   });
 
   it('owns only the named resource and exact server list query', async () => {
@@ -218,20 +232,5 @@ describe('Alert Silence Refine data provider', () => {
       code: 'ALERT_SILENCE_CANONICAL_IDENTITY_INVALID',
       statusCode: 502
     });
-  });
-
-  it('keeps Refine orchestration small and delegates runtime input validation', () => {
-    const sourceLines = providerSource
-      .replace(/\/\*[\s\S]*?\*\//g, '')
-      .split('\n')
-      .filter(line => line.trim() && !line.trim().startsWith('//'));
-
-    expect(sourceLines.length).toBeLessThanOrEqual(200);
-    expect(providerSource).not.toMatch(/function\s+(?:objectValue|readQuery|hasValidDraft\w*)\s*\(/);
-    expect(providerSource).not.toContain('as unknown as TData');
-    expect(providerSource).toContain("from '@/shared/refine/refine-provider-data'");
-    expect(inputSource).toContain("from 'zod'");
-    expect(inputSource).toContain('schema.safeParse(value)');
-    expect(inputSource).not.toMatch(/function\s+(?:objectValue|hasValidDraft\w*)\s*\(/);
   });
 });

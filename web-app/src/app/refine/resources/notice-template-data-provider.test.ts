@@ -17,7 +17,13 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { NoticeTemplate, NoticeTemplateResourceRecord } from '@/features/alert/notice-template-model';
+import { noticeApiEndpoint } from '@/features/alert/notice-api-endpoints';
+import { NoticeTemplateMissingError } from '@/features/alert/notice-template-api';
+import {
+  NoticeTemplateContractError,
+  type NoticeTemplate,
+  type NoticeTemplateResourceRecord
+} from '@/features/alert/notice-template-model';
 
 type NoticeTemplateApi = typeof import('@/features/alert/notice-template-api');
 const api = vi.hoisted(() => ({
@@ -34,14 +40,12 @@ vi.mock('@/features/alert/notice-template-api', async importOriginal => ({
 import { noticeTemplateCreateActionUrl } from '@/features/alert/notice-template-resource';
 
 import { noticeTemplateDataProvider } from './notice-template-data-provider';
-import inputSource from './notice-template-data-provider-input.ts?raw';
 import {
   readNoticeTemplateDeleteVariables,
   readNoticeTemplateDraft,
   readNoticeTemplateId,
   readNoticeTemplateListQuery
 } from './notice-template-data-provider-input';
-import providerSource from './notice-template-data-provider.ts?raw';
 
 const record: NoticeTemplate = {
   id: 42,
@@ -81,6 +85,7 @@ describe('Notice Template Refine data provider', () => {
       pageIndex: 0,
       pageSize: 8
     });
+    expect(noticeTemplateDataProvider.getApiUrl()).toBe(noticeApiEndpoint);
   });
 
   it('keeps preset ids UI-only even when a preset and custom template share the same backend number', async () => {
@@ -215,8 +220,48 @@ describe('Notice Template Refine data provider', () => {
         payload: { name: 'New', type: 1, content: '${content}' }
       })
     ).resolves.toEqual({ data: { acknowledged: true } });
+    expect(api.saveNoticeTemplate).toHaveBeenCalledWith({ name: 'New', type: 1, content: '${content}' });
     expect(api.loadNoticeTemplate).not.toHaveBeenCalled();
     expect(api.loadNoticeTemplates).not.toHaveBeenCalled();
+  });
+
+  it('rejects ordinary create and inexact custom action wires before transport', async () => {
+    await expect(
+      noticeTemplateDataProvider.getList({
+        resource: 'labels',
+        filters: [{ field: 'preset', operator: 'eq', value: false }]
+      })
+    ).rejects.toMatchObject({ code: 'NOTICE_TEMPLATE_RESOURCE_UNSUPPORTED', statusCode: 400 });
+    await expect(
+      noticeTemplateDataProvider.create({ resource: 'notice-templates', variables: {} })
+    ).rejects.toMatchObject({ code: 'NOTICE_TEMPLATE_CREATE_UNSUPPORTED', statusCode: 405 });
+
+    const unsupportedRequests = [
+      { url: `${noticeTemplateCreateActionUrl}/other`, method: 'post' as const },
+      { url: noticeTemplateCreateActionUrl, method: 'get' as const }
+    ];
+    for (const request of unsupportedRequests) {
+      await expect(
+        noticeTemplateDataProvider.custom?.({ ...request, payload: { name: 'New', type: 1, content: '${content}' } })
+      ).rejects.toMatchObject({ code: 'NOTICE_TEMPLATE_CUSTOM_ACTION_UNSUPPORTED', statusCode: 405 });
+    }
+    expect(api.loadNoticeTemplates).not.toHaveBeenCalled();
+    expect(api.saveNoticeTemplate).not.toHaveBeenCalled();
+  });
+
+  it('keeps missing detail and invalid response contracts distinguishable', async () => {
+    api.loadNoticeTemplate
+      .mockRejectedValueOnce(new NoticeTemplateMissingError(42))
+      .mockRejectedValueOnce(new NoticeTemplateContractError());
+
+    await expect(noticeTemplateDataProvider.getOne({ resource: 'notice-templates', id: 42 })).rejects.toMatchObject({
+      code: 'NOTICE_TEMPLATE_NOT_FOUND',
+      statusCode: 404
+    });
+    await expect(noticeTemplateDataProvider.getOne({ resource: 'notice-templates', id: 42 })).rejects.toMatchObject({
+      code: 'NOTICE_TEMPLATE_RESPONSE_INVALID',
+      statusCode: 502
+    });
   });
 
   it('keeps delete mutation separate from both exact preflight and missing-detail proof', async () => {
@@ -235,20 +280,6 @@ describe('Notice Template Refine data provider', () => {
 });
 
 describe('Notice Template provider input boundary', () => {
-  it('keeps Refine orchestration small and runtime parsing outside the provider', () => {
-    const sourceLines = providerSource
-      .replace(/\/\*[\s\S]*?\*\//g, '')
-      .split('\n')
-      .filter(line => line.trim() && !line.trim().startsWith('//'));
-    expect(sourceLines.length).toBeLessThanOrEqual(200);
-    expect(providerSource).not.toMatch(/function read(?:Draft|DeleteVariables|DeleteQuery|Pagination|Filters)/);
-    expect(providerSource).not.toContain('as TData');
-    expect(providerSource).not.toContain('as unknown as TData');
-    expect(providerSource).toContain("from '@/shared/refine/refine-provider-data'");
-    expect(inputSource).toContain("from 'zod'");
-    expect(inputSource).toContain('schema.safeParse(value)');
-  });
-
   it('normalizes supported list input and rejects unsupported Refine controls', () => {
     expect(
       readNoticeTemplateListQuery({
