@@ -98,28 +98,40 @@ async function protect<T>(phase: TokenRequestPhase, operation: () => Promise<T>)
 }
 
 function providerFailure(reason: unknown, phase: TokenRequestPhase) {
-  if (reason instanceof TokenRequestFailure) return reason;
+  if (reason instanceof TokenRequestFailure) return normalizeTokenApiFailure(reason, phase);
   if (reason instanceof TokenApiContractError) return contractFailure('TOKEN_RESPONSE_INVALID');
-  if (isRefineHttpError(reason)) return adaptRefineFailure(reason);
+  if (isRefineHttpError(reason)) return adaptRefineFailure(reason, phase);
   return normalizeTokenApiFailure(reason, phase);
 }
 
-function adaptRefineFailure(reason: RefineHttpError) {
+function adaptRefineFailure(reason: RefineHttpError, phase: TokenRequestPhase) {
   const code = stableTokenCode(reason.code);
-  return new TokenRequestFailure(refineFailureKind(reason), refineWriteOutcome(reason), code ? { code } : {});
+  return new TokenRequestFailure(refineFailureKind(reason), refineWriteOutcome(reason, phase), code ? { code } : {});
 }
 
 function refineFailureKind(reason: RefineHttpError): TokenFailureKind {
+  if (reason.cause !== undefined || reason.kind === 'network') {
+    return 'unavailable';
+  }
+  if (
+    reason.kind === 'http' &&
+    (reason.httpStatus === undefined || reason.httpStatus === 0 || reason.httpStatus >= 500)
+  ) {
+    return 'unavailable';
+  }
   if (typeof reason.code === 'string' && reason.code.startsWith('TOKEN_')) return 'invalid';
-  if (reason.statusCode === 0 || reason.kind === 'network' || reason.statusCode >= 500) return 'unavailable';
   return 'error';
 }
 
-function refineWriteOutcome(reason: RefineHttpError): TokenWriteOutcome {
+function refineWriteOutcome(reason: RefineHttpError, phase: TokenRequestPhase): TokenWriteOutcome {
+  // Refine's statusCode is display metadata. Only a source HTTP write response
+  // can prove rejection; reads, network causes, and timeouts remain uncertain.
+  if (phase === 'collection' || reason.cause !== undefined) return 'uncertain';
   return reason.kind === 'http' &&
     reason.httpStatus !== undefined &&
     reason.httpStatus >= 400 &&
-    reason.httpStatus < 500
+    reason.httpStatus < 500 &&
+    reason.httpStatus !== 408
     ? 'rejected'
     : 'uncertain';
 }

@@ -191,7 +191,7 @@ describe('Token Refine data provider', () => {
       writeOutcome: 'rejected'
     });
     await expect(tokenDataProvider.custom?.(command)).rejects.toMatchObject({
-      kind: 'error',
+      kind: 'unavailable',
       message: 'Token request failed',
       writeOutcome: 'uncertain'
     });
@@ -207,10 +207,71 @@ describe('Token Refine data provider', () => {
     });
   });
 
+  it('uses only source write evidence and never classifies collection reads as rejected', async () => {
+    const causeBearingHttp = createRefineHttpError('private-cause-http', 400, 20, 'http', 400);
+    Object.defineProperty(causeBearingHttp, 'cause', { value: new Error('private-cause') });
+    api.generateToken
+      .mockRejectedValueOnce(createRefineHttpError('private-timeout', 408, undefined, 'http', 408))
+      .mockRejectedValueOnce(causeBearingHttp)
+      .mockRejectedValueOnce(createRefineHttpError('private-status-zero', 400, undefined, 'http', 0))
+      .mockRejectedValueOnce(createRefineHttpError('private-source', 400, 20, 'http', 422));
+    api.loadTokens.mockRejectedValueOnce(createRefineHttpError('private-read', 400, undefined, 'http', 400));
+
+    const command = {
+      url: api.tokenGenerateActionUrl,
+      method: 'post' as const,
+      payload: { name: 'Collector', expireSeconds: -1, scope: 'otlp-ingest' as const }
+    };
+    await expect(tokenDataProvider.custom?.(command)).rejects.toMatchObject({ writeOutcome: 'uncertain' });
+    await expect(tokenDataProvider.custom?.(command)).rejects.toMatchObject({ writeOutcome: 'uncertain' });
+    await expect(tokenDataProvider.custom?.(command)).rejects.toMatchObject({ writeOutcome: 'uncertain' });
+    await expect(tokenDataProvider.custom?.(command)).rejects.toMatchObject({ writeOutcome: 'rejected' });
+    await expect(tokenDataProvider.getList({ resource: 'tokens' })).rejects.toMatchObject({
+      writeOutcome: 'uncertain'
+    });
+  });
+
+  it('derives unavailability only from source transport evidence', async () => {
+    api.generateToken
+      .mockRejectedValueOnce(createRefineHttpError('private-display', 503, undefined, 'contract'))
+      .mockRejectedValueOnce(createRefineHttpError('private-envelope', 503, 20, 'envelope', 200))
+      .mockRejectedValueOnce(createRefineHttpError('private-source', 400, undefined, 'http', 503));
+
+    const command = {
+      url: api.tokenGenerateActionUrl,
+      method: 'post' as const,
+      payload: { name: 'Collector', expireSeconds: -1, scope: 'otlp-ingest' as const }
+    };
+    await expect(tokenDataProvider.custom?.(command)).rejects.toMatchObject({
+      kind: 'error',
+      writeOutcome: 'uncertain'
+    });
+    await expect(tokenDataProvider.custom?.(command)).rejects.toMatchObject({
+      kind: 'error',
+      writeOutcome: 'uncertain'
+    });
+    await expect(tokenDataProvider.custom?.(command)).rejects.toMatchObject({
+      kind: 'unavailable',
+      writeOutcome: 'uncertain'
+    });
+  });
+
   it('preserves typed failure identity without copying private evidence', async () => {
     const failure = new TokenRequestFailure('unavailable', 'uncertain');
     api.loadTokens.mockRejectedValueOnce(failure);
 
     await expect(tokenDataProvider.getList({ resource: 'tokens' })).rejects.toBe(failure);
+  });
+
+  it('never leaks rejected write ownership through a collection operation', async () => {
+    api.loadTokens.mockRejectedValueOnce(
+      new TokenRequestFailure('error', 'rejected', { code: 'TOKEN_UPSTREAM_REJECTED' })
+    );
+
+    await expect(tokenDataProvider.getList({ resource: 'tokens' })).rejects.toMatchObject({
+      code: 'TOKEN_UPSTREAM_REJECTED',
+      kind: 'error',
+      writeOutcome: 'uncertain'
+    });
   });
 });
