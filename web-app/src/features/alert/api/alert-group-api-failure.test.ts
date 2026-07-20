@@ -15,7 +15,19 @@ import { normalizeAlertGroupApiFailure } from './alert-group-api-failure';
 describe('Alert Group API failure boundary', () => {
   it.each([
     ['HTTP missing', new ApiMessageError('missing', { status: 404 }), 'missing', 'rejected'],
+    [
+      'HTTP missing carrying a transport cause',
+      new ApiMessageError('offline', { status: 404, cause: new Error('private cause') }),
+      'unavailable',
+      'uncertain'
+    ],
     ['backend missing', new ApiMessageError('missing', { code: 3, status: 200 }), 'missing', 'uncertain'],
+    [
+      'backend missing carrying a transport cause',
+      new ApiMessageError('offline', { code: 3, status: 200, cause: new Error('private cause') }),
+      'unavailable',
+      'uncertain'
+    ],
     ['missing HTTP evidence', new ApiMessageError('offline'), 'unavailable', 'uncertain'],
     [
       'network cause',
