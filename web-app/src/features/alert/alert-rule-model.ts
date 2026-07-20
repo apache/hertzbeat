@@ -19,13 +19,17 @@ import type { RemotePageState } from '@/shared/remote-state';
 
 export const alertRulePageSizes = [8, 15, 25] as const;
 export const alertRuleTypes = [
-  'realtime_metric', 'periodic_metric', 'realtime_log', 'periodic_log', 'periodic_trace'
+  'realtime_metric',
+  'periodic_metric',
+  'realtime_log',
+  'periodic_log',
+  'periodic_trace'
 ] as const;
 
 export type AlertRuleQuery = { search: string; pageIndex: number; pageSize: number };
 export type AlertRuleKind = 'realtime' | 'periodic';
 export type AlertRuleDataType = 'metric' | 'log' | 'trace';
-export type AlertRuleType = typeof alertRuleTypes[number];
+export type AlertRuleType = (typeof alertRuleTypes)[number];
 export type AlertRuleDatasource = 'promql' | 'sql';
 
 type AlertRuleWritableSnapshot = {
@@ -101,7 +105,7 @@ export function readAlertRuleQuery(params: URLSearchParams): AlertRuleQuery {
   return {
     search: params.get('search')?.trim() ?? '',
     pageIndex: Number.isFinite(pageIndex) && pageIndex >= 0 ? pageIndex : 0,
-    pageSize: alertRulePageSizes.includes(pageSize as typeof alertRulePageSizes[number]) ? pageSize : 8
+    pageSize: alertRulePageSizes.includes(pageSize as (typeof alertRulePageSizes)[number]) ? pageSize : 8
   };
 }
 
@@ -113,8 +117,16 @@ export function writeAlertRuleQuery(query: AlertRuleQuery) {
 
 export function createAlertRuleDraft(): AlertRuleDraft {
   return {
-    name: '', kind: 'realtime', dataType: 'metric', expr: '', template: '', labelsText: '', annotations: {},
-    enable: true, period: 300, times: 3
+    name: '',
+    kind: 'realtime',
+    dataType: 'metric',
+    expr: '',
+    template: '',
+    labelsText: '',
+    annotations: {},
+    enable: true,
+    period: 300,
+    times: 3
   };
 }
 
@@ -125,18 +137,32 @@ export function buildAlertRulePayload(draft: AlertRuleDraft) {
   const type = preserveNullStrategy(draft, selectedType);
   return {
     ...(draft.id === undefined ? {} : { id: positiveInteger(draft.id, 'id') }),
-    name: draft.name.trim(), type, datasource: resolveDatasource(draft, selectedType),
-    expr: resolveNullableText(draft.expr, draft.persisted?.expr), period: draft.period, times: draft.times,
-    labels: resolveLabels(draft), annotations: cloneNullableMap(draft.annotations),
-    template: resolveNullableText(draft.template, draft.persisted?.template), enable: draft.enable
+    name: draft.name.trim(),
+    type,
+    datasource: resolveDatasource(draft, selectedType),
+    expr: resolveNullableText(draft.expr, draft.persisted?.expr),
+    period: draft.period,
+    times: draft.times,
+    labels: resolveLabels(draft),
+    annotations: cloneNullableMap(draft.annotations),
+    template: resolveNullableText(draft.template, draft.persisted?.template),
+    enable: draft.enable
   };
 }
 
 export function buildAlertRuleTogglePayload(rule: AlertRule, enable: boolean) {
   return {
-    id: rule.id, name: rule.name, type: rule.type, datasource: rule.datasource, expr: rule.expr,
-    period: rule.period, times: rule.times, labels: cloneNullableMap(rule.labels),
-    annotations: cloneNullableMap(rule.annotations), template: rule.template, enable
+    id: rule.id,
+    name: rule.name,
+    type: rule.type,
+    datasource: rule.datasource,
+    expr: rule.expr,
+    period: rule.period,
+    times: rule.times,
+    labels: cloneNullableMap(rule.labels),
+    annotations: cloneNullableMap(rule.annotations),
+    template: rule.template,
+    enable
   };
 }
 
@@ -154,7 +180,8 @@ export function validateAlertRuleDraft(draft: AlertRuleDraft) {
   if (!validWritableText(draft.template, draft.persisted?.template, 2048)) invalid.push('template');
   if (!tryParseLabels(draft.labelsText)) invalid.push('labels');
   if (!validNullableMap(draft.annotations)) invalid.push('annotations');
-  if (draft.kind === 'periodic' ? !isPositiveJavaInteger(draft.period) : !isNullablePositiveJavaInteger(draft.period)) invalid.push('period');
+  if (draft.kind === 'periodic' ? !isPositiveJavaInteger(draft.period) : !isNullablePositiveJavaInteger(draft.period))
+    invalid.push('period');
   if (!isNullablePositiveJavaInteger(draft.times)) invalid.push('times');
   return invalid;
 }
@@ -162,12 +189,27 @@ export function validateAlertRuleDraft(draft: AlertRuleDraft) {
 export function alertRuleDraftFromDetail(rule: AlertRule): AlertRuleDraft {
   const [kind, dataType] = (rule.type ?? 'realtime_metric').split('_') as [AlertRuleKind, AlertRuleDataType];
   return {
-    id: rule.id, name: rule.name, kind, dataType, expr: rule.expr ?? '', template: rule.template ?? '',
-    labelsText: Object.entries(rule.labels ?? {}).map(([key, value]) => `${key}:${value}`).join(', '),
-    annotations: cloneNullableMap(rule.annotations), enable: rule.enable, period: rule.period, times: rule.times,
+    id: rule.id,
+    name: rule.name,
+    kind,
+    dataType,
+    expr: rule.expr ?? '',
+    template: rule.template ?? '',
+    labelsText: Object.entries(rule.labels ?? {})
+      .map(([key, value]) => `${key}:${value}`)
+      .join(', '),
+    annotations: cloneNullableMap(rule.annotations),
+    enable: rule.enable,
+    period: rule.period,
+    times: rule.times,
     persisted: {
-      type: rule.type, datasource: rule.datasource, expr: rule.expr, period: rule.period, times: rule.times,
-      labels: cloneNullableMap(rule.labels), template: rule.template
+      type: rule.type,
+      datasource: rule.datasource,
+      expr: rule.expr,
+      period: rule.period,
+      times: rule.times,
+      labels: cloneNullableMap(rule.labels),
+      template: rule.template
     }
   };
 }
@@ -203,7 +245,7 @@ function resolveNullableText(value: string, original: string | null | undefined)
 }
 
 function validWritableText(value: string, original: string | null | undefined, max: number) {
-  return original === null && !value.trim() || validBoundedText(value, max);
+  return (original === null && !value.trim()) || validBoundedText(value, max);
 }
 
 function resolveLabels(draft: AlertRuleDraft) {
@@ -218,14 +260,20 @@ function parseLabels(value: string) {
     const separator = item.indexOf(':');
     const key = item.slice(0, separator).trim();
     const labelValue = item.slice(separator + 1).trim();
-    if (separator < 1 || !key || !labelValue || key in result) throw contract('labels must contain unique key:value entries');
+    if (separator < 1 || !key || !labelValue || key in result)
+      throw contract('labels must contain unique key:value entries');
     result[key] = labelValue;
   }
   return result;
 }
 
 function tryParseLabels(value: string) {
-  try { parseLabels(value); return true; } catch { return false; }
+  try {
+    parseLabels(value);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function validBoundedText(value: unknown, max: number): value is string {
@@ -250,8 +298,13 @@ function isNullablePositiveJavaInteger(value: unknown): value is number | null {
 }
 
 function validNullableMap(value: unknown): value is Record<string, string> | null {
-  return value === null || Boolean(value) && typeof value === 'object' && !Array.isArray(value)
-    && Object.entries(value).every(([key, item]) => Boolean(key.trim()) && typeof item === 'string');
+  return (
+    value === null ||
+    (Boolean(value) &&
+      typeof value === 'object' &&
+      !Array.isArray(value) &&
+      Object.entries(value).every(([key, item]) => Boolean(key.trim()) && typeof item === 'string'))
+  );
 }
 
 function cloneNullableMap(value: Record<string, string> | null) {
@@ -259,9 +312,11 @@ function cloneNullableMap(value: Record<string, string> | null) {
 }
 
 function validDraftType(draft: AlertRuleDraft) {
-  return (draft.kind === 'realtime' || draft.kind === 'periodic')
-    && (draft.dataType === 'metric' || draft.dataType === 'log' || draft.dataType === 'trace')
-    && !(draft.kind === 'realtime' && draft.dataType === 'trace');
+  return (
+    (draft.kind === 'realtime' || draft.kind === 'periodic') &&
+    (draft.dataType === 'metric' || draft.dataType === 'log' || draft.dataType === 'trace') &&
+    !(draft.kind === 'realtime' && draft.dataType === 'trace')
+  );
 }
 
 function contract(message: string) {
