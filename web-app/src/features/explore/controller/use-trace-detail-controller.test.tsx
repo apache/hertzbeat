@@ -21,7 +21,8 @@ import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { TraceDetail } from '../model/explore-signal-contract';
-import type { TraceExploreQuery } from '../model/explore-model';
+import { exploreEvidenceScopeKey, type TraceExploreQuery } from '../model/explore-model';
+import { exploreQueryKeys } from './explore-query-keys';
 import { useTraceDetailController } from './use-trace-detail-controller';
 
 const api = vi.hoisted(() => ({ loadTraceDetail: vi.fn() }));
@@ -168,10 +169,30 @@ describe('Trace detail controller', () => {
     expect(view.result.current.state).toMatchObject({ kind: 'ready', detail: { traceId: 'trace-1' } });
     expect(api.loadTraceDetail).toHaveBeenCalledOnce();
   });
+
+  it('shares the feature-owned detail identity with cached trace evidence', async () => {
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false, gcTime: 0, staleTime: Number.POSITIVE_INFINITY } }
+    });
+    client.setQueryData(
+      exploreQueryKeys.detail(exploreEvidenceScopeKey(defaultQuery), 'trace-1'),
+      traceDetail('trace-1')
+    );
+    const view = renderController(vi.fn(), client);
+
+    act(() => view.result.current.openTrace('trace-1'));
+
+    await waitFor(() =>
+      expect(view.result.current.state).toMatchObject({ kind: 'ready', detail: { traceId: 'trace-1' } })
+    );
+    expect(api.loadTraceDetail).not.toHaveBeenCalled();
+  });
 });
 
-function renderController(openPath: (path: string) => void) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+function renderController(
+  openPath: (path: string) => void,
+  client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } })
+) {
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
   );

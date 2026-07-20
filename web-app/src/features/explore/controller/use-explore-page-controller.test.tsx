@@ -26,6 +26,7 @@ import { GlobalTimeProvider, RouteTimeProvider } from '@/shared/time';
 import { buildSignalApiPath } from '../api/explore-api';
 import type { ExploreQuery } from '../model/explore-model';
 import type { MetricConsole } from '../model/explore-signal-contract';
+import { exploreQueryKeys } from './explore-query-keys';
 import { useExplorePageController } from './use-explore-page-controller';
 
 const api = vi.hoisted(() => ({ loadLogSignal: vi.fn(), loadMetricSignal: vi.fn(), loadTraceSignal: vi.fn() }));
@@ -254,10 +255,38 @@ describe('Explore page controller', () => {
     await act(async () => metric.promise);
     expect(routed.current().result).toMatchObject({ kind: 'ready', signal: 'logs' });
   });
+
+  it('shares the feature-owned history identity with cached signal evidence', async () => {
+    const refresh = deferred<ReturnType<typeof page>>();
+    let refreshSignal: AbortSignal | undefined;
+    api.loadLogSignal.mockImplementation((_query: ExploreQuery, signal: AbortSignal) => {
+      refreshSignal = signal;
+      return refresh.promise;
+    });
+    const query: ExploreQuery = { signal: 'logs', timeRange: 'last-30m', query: 'cached' };
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+    client.setQueryData(exploreQueryKeys.history(query, undefined, 0), page([logRow({ body: 'cached' })]));
+
+    const routed = renderController(['/explore?signal=logs&query=cached'], 0, client);
+
+    await waitFor(() =>
+      expect(routed.current().result).toMatchObject({
+        kind: 'ready',
+        signal: 'logs',
+        data: { content: [{ body: 'cached' }] }
+      })
+    );
+    expect(api.loadLogSignal).toHaveBeenCalledOnce();
+    routed.unmount();
+    await waitFor(() => expect(refreshSignal?.aborted).toBe(true));
+  });
 });
 
-function renderController(entries: string[], initialIndex = 0) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+function renderController(
+  entries: string[],
+  initialIndex = 0,
+  client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } })
+) {
   let controller: ReturnType<typeof useExplorePageController> | undefined;
   function Probe() {
     controller = useExplorePageController();

@@ -20,8 +20,6 @@ import { describe, expect, it } from 'vitest';
 import type { QueryContext } from '@/shared/query-context';
 
 import type { ExploreQuery } from '../model/explore-model';
-import controllerSource from './use-explore-page-controller.ts?raw';
-import traceDetailControllerSource from './use-trace-detail-controller.ts?raw';
 import { exploreQueryKeys } from './explore-query-keys';
 
 const context: QueryContext = {
@@ -169,20 +167,5 @@ describe('Explore Query Key factory', () => {
     ] as const) {
       expect(exploreQueryKeys.history({ ...traces, [field]: value }, window, 3)).not.toEqual(traceKey);
     }
-  });
-
-  it('keeps the controller on the feature-owned factory', () => {
-    expect(controllerSource).toContain("from './explore-query-keys'");
-    expect(controllerSource).toContain('queryKey: exploreQueryKeys.history(');
-    expect(controllerSource).not.toMatch(/queryKey:\s*\[/);
-  });
-
-  it('keeps trace detail reads and exact cancellation on the same factory', () => {
-    expect(traceDetailControllerSource).toContain("from './explore-query-keys'");
-    expect(traceDetailControllerSource).toContain('queryKey: exploreQueryKeys.detail(scopeKey, selection.traceId)');
-    expect(traceDetailControllerSource).toContain(
-      'queryKey: exploreQueryKeys.detail(opened.scopeKey, opened.traceId), exact: true'
-    );
-    expect(traceDetailControllerSource).not.toMatch(/queryKey:\s*\[/);
   });
 });
