@@ -18,9 +18,7 @@
 import { Form, Input, Modal } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { LabelRecord } from '../model/label-model';
-
-export type LabelEditorState = { value: Partial<LabelRecord>; isNew: true } | { value: LabelRecord; isNew: false };
+import type { LabelEditorState, LabelRecord } from '../model/label-model';
 
 type LabelEditorProps = {
   editor: LabelEditorState;

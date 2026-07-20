@@ -2,8 +2,7 @@
 
 import { useRef, useState } from 'react';
 
-import type { LabelEditorState } from '../components/label-editor';
-import type { LabelRecord } from '../model/label-model';
+import type { LabelEditorState, LabelRecord } from '../model/label-model';
 
 type LabelEditorMutations = {
   createLabel: (values: Partial<LabelRecord>, onConfirmed: () => void) => boolean;

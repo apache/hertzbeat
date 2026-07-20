@@ -29,8 +29,9 @@ export type LabelRecord = {
   gmtUpdate?: number | string;
 };
 
-export type LabelIdentity = Pick<LabelRecord, 'name'>
-  & Partial<Pick<LabelRecord, 'id' | 'tagValue'>>;
+export type LabelEditorState = { value: Partial<LabelRecord>; isNew: true } | { value: LabelRecord; isNew: false };
+
+export type LabelIdentity = Pick<LabelRecord, 'name'> & Partial<Pick<LabelRecord, 'id' | 'tagValue'>>;
 
 export type LabelPage = {
   content: LabelRecord[];
