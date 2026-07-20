@@ -17,32 +17,30 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { ApiMessageError } from '@/core/http/api-message';
+import { StatusOrgNotFoundError, StatusRequestFailure } from '@/features/status/shared/status-error-model';
 
 import { isStatusOrgNotFound, publicStatusState } from './public-status-model';
 
 describe('public status state', () => {
   it('distinguishes missing configuration from backend failure', () => {
-    const notFound = new ApiMessageError('Status Page Organization Not Found', { code: 15, status: 200 });
+    const notFound = new StatusOrgNotFoundError();
     expect(isStatusOrgNotFound(notFound)).toBe(true);
     expect(publicStatusState(notFound, null, null)).toBe('unconfigured');
     expect(publicStatusState(null, null, null)).toBe('ready');
   });
 
   it('keeps transport and partial-query failures unavailable', () => {
-    const serviceUnavailable = new ApiMessageError('Request failed with status 503', { status: 503 });
-    const networkFailure = new ApiMessageError('Failed to fetch');
-    const genericEnvelopeFailure = new ApiMessageError('Status Page Organization Not Found', { code: 15, status: 503 });
+    const serviceUnavailable = new StatusRequestFailure('unavailable', 'uncertain');
+    const networkFailure = new StatusRequestFailure('unavailable', 'uncertain');
+    const genericEnvelopeFailure = new StatusRequestFailure('error', 'rejected');
 
     expect(publicStatusState(serviceUnavailable, null, null)).toBe('unavailable');
     expect(publicStatusState(networkFailure, null, null)).toBe('unavailable');
     expect(publicStatusState(genericEnvelopeFailure, null, null)).toBe('unavailable');
     expect(publicStatusState(null, new Error('components unavailable'), null)).toBe('unavailable');
     expect(publicStatusState(null, null, new Error('incidents unavailable'))).toBe('unavailable');
-    expect(publicStatusState(
-      new ApiMessageError('Status Page Organization Not Found', { code: 15, status: 200 }),
-      new Error('components unavailable'),
-      null
-    )).toBe('unavailable');
+    expect(publicStatusState(new StatusOrgNotFoundError(), new Error('components unavailable'), null)).toBe(
+      'unavailable'
+    );
   });
 });

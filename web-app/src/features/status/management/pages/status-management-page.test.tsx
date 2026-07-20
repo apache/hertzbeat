@@ -22,8 +22,8 @@ import { I18nextProvider } from 'react-i18next';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ApiMessageError } from '@/core/http/api-message';
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
+import { StatusOrgNotFoundError, StatusRequestFailure } from '@/features/status/shared/status-error-model';
 
 import { statusManagementQueryKeys } from '../controller/status-management-query-keys';
 import { StatusManagementMissingError, type StatusIncident, type StatusOrg } from '../model/status-management-contract';
@@ -112,9 +112,7 @@ describe('StatusManagementPage', () => {
   });
 
   it('allows initial configuration only for exact organization not-found', async () => {
-    api.loadStatusOrg.mockRejectedValue(
-      new ApiMessageError('Status Page Organization Not Found', { code: 15, status: 200 })
-    );
+    api.loadStatusOrg.mockRejectedValue(new StatusOrgNotFoundError());
     renderPage();
 
     expect(await screen.findByText('Configure the page identity before adding components.')).toBeInTheDocument();
@@ -122,7 +120,7 @@ describe('StatusManagementPage', () => {
   });
 
   it('keeps organization authoring unavailable on transport failure', async () => {
-    api.loadStatusOrg.mockRejectedValue(new ApiMessageError('Request failed with status 503', { status: 503 }));
+    api.loadStatusOrg.mockRejectedValue(new StatusRequestFailure('unavailable', 'uncertain'));
     renderPage();
 
     expect(
@@ -168,7 +166,7 @@ describe('StatusManagementPage', () => {
     expect(save).toBeDisabled();
 
     await act(async () => {
-      firstSave.reject(new ApiMessageError('Request failed', { status: 503 }));
+      firstSave.reject(new StatusRequestFailure('unavailable', 'uncertain'));
       await Promise.resolve();
     });
     await waitFor(() => expect(screen.getByRole('button', { name: /Retry$/ })).toBeEnabled());

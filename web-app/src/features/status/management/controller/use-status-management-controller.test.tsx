@@ -10,7 +10,7 @@ import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ApiMessageError } from '@/core/http/api-message';
+import { StatusOrgNotFoundError, StatusRequestFailure } from '@/features/status/shared/status-error-model';
 
 import {
   StatusManagementMissingError,
@@ -131,10 +131,8 @@ describe('useStatusManagementController', () => {
   });
 
   it('locks an ambiguous organization create without exposing a second POST', async () => {
-    api.loadStatusOrg.mockRejectedValueOnce(
-      new ApiMessageError('Status Page Organization Not Found', { code: 15, status: 200 })
-    );
-    api.saveStatusOrg.mockRejectedValueOnce(new ApiMessageError('Request failed', { status: 503 }));
+    api.loadStatusOrg.mockRejectedValueOnce(new StatusOrgNotFoundError());
+    api.saveStatusOrg.mockRejectedValueOnce(unavailableRequestFailure());
     const { result } = renderController();
     await waitFor(() => expect(result.current.org.kind).toBe('missing'));
 
@@ -160,11 +158,11 @@ describe('useStatusManagementController', () => {
 
   it('keeps a failed organization proof retry retained without an unhandled rejection', async () => {
     const updated = { ...org, name: 'Updated' };
-    api.saveStatusOrg.mockRejectedValueOnce(new ApiMessageError('Request failed', { status: 503 }));
+    api.saveStatusOrg.mockRejectedValueOnce(unavailableRequestFailure());
     api.loadStatusOrg
       .mockResolvedValueOnce(org)
       .mockResolvedValueOnce(org)
-      .mockRejectedValueOnce(new ApiMessageError('Unavailable', { status: 503 }));
+      .mockRejectedValueOnce(unavailableRequestFailure());
     const { result } = renderController();
     await waitFor(() => expect(result.current.org.kind).toBe('ready'));
 
@@ -213,9 +211,7 @@ describe('useStatusManagementController', () => {
       expect(view.result.current.componentEditor).toBeUndefined();
       expect(view.result.current.incidentEditor).toBeUndefined();
     };
-    api.loadStatusOrg.mockRejectedValueOnce(
-      new ApiMessageError('Status Page Organization Not Found', { code: 15, status: 200 })
-    );
+    api.loadStatusOrg.mockRejectedValueOnce(new StatusOrgNotFoundError());
     const missing = renderController();
     await waitFor(() => expect(missing.result.current.org.kind).toBe('missing'));
     assertClosed(missing);
@@ -338,10 +334,8 @@ describe('useStatusManagementController', () => {
       components: incident.components ?? [],
       contents: incident.contents ?? []
     };
-    api.saveStatusComponent.mockRejectedValueOnce(
-      new ApiMessageError('Request failed with status 503', { status: 503 })
-    );
-    api.saveStatusIncident.mockRejectedValueOnce(new ApiMessageError('Invalid API response', { status: 200 }));
+    api.saveStatusComponent.mockRejectedValueOnce(unavailableRequestFailure());
+    api.saveStatusIncident.mockRejectedValueOnce(uncertainRequestFailure());
     const componentView = renderController();
     const { result } = componentView;
     await waitFor(() => expect(result.current.components.kind).toBe('ready'));
@@ -398,9 +392,7 @@ describe('useStatusManagementController', () => {
       configState: component.configState,
       state: component.state
     };
-    api.saveStatusComponent
-      .mockRejectedValueOnce(new ApiMessageError('Validation rejected', { code: 12, status: 200 }))
-      .mockResolvedValueOnce(undefined);
+    api.saveStatusComponent.mockRejectedValueOnce(rejectedRequestFailure()).mockResolvedValueOnce(undefined);
     const { result } = renderController();
     await waitFor(() => expect(result.current.components.kind).toBe('ready'));
     act(() => result.current.openNewComponent());
@@ -436,9 +428,7 @@ describe('useStatusManagementController', () => {
   it('retains a clean component save for proof-only Retry when list projection is unavailable', async () => {
     const updated = { ...component, name: 'Updated' };
     api.loadStatusComponent.mockResolvedValueOnce(updated).mockResolvedValueOnce(updated);
-    api.loadStatusComponents
-      .mockResolvedValueOnce([component])
-      .mockRejectedValueOnce(new ApiMessageError('Request failed with status 503', { status: 503 }));
+    api.loadStatusComponents.mockResolvedValueOnce([component]).mockRejectedValueOnce(unavailableRequestFailure());
     const { result } = renderController();
     await waitFor(() => expect(result.current.components.kind).toBe('ready'));
     act(() => result.current.editComponent(component));
@@ -460,7 +450,7 @@ describe('useStatusManagementController', () => {
   it('returns honest component refresh outcomes and hides stale records after failure', async () => {
     api.loadStatusComponents
       .mockResolvedValueOnce([component])
-      .mockRejectedValueOnce(new ApiMessageError('Request failed with status 503', { status: 503 }))
+      .mockRejectedValueOnce(unavailableRequestFailure())
       .mockResolvedValueOnce([{ ...component, name: 'Recovered' }]);
     const { result } = renderController();
     await waitFor(() => expect(result.current.components.kind).toBe('ready'));
@@ -542,7 +532,7 @@ describe('useStatusManagementController', () => {
 
   it('recovers ambiguous updates with exact proof and never repeats the PUT', async () => {
     const updated = { ...component, name: 'Updated' };
-    api.saveStatusComponent.mockRejectedValueOnce(new ApiMessageError('Request failed', { status: 503 }));
+    api.saveStatusComponent.mockRejectedValueOnce(unavailableRequestFailure());
     api.loadStatusComponent.mockResolvedValueOnce(component).mockResolvedValueOnce(updated);
     api.loadStatusComponents.mockResolvedValueOnce([component]).mockResolvedValueOnce([updated]);
     const { result } = renderController();
@@ -568,7 +558,7 @@ describe('useStatusManagementController', () => {
     await waitFor(() => expect(result.current.incidents.kind).toBe('ready'));
     act(() => result.current.openIncident(7));
     await waitFor(() => expect(result.current.incidentEditor).toMatchObject({ id: 7 }));
-    api.saveStatusIncident.mockRejectedValueOnce(new ApiMessageError('Request failed', { status: 503 }));
+    api.saveStatusIncident.mockRejectedValueOnce(unavailableRequestFailure());
     api.loadStatusIncident.mockResolvedValueOnce(incident).mockResolvedValueOnce(updated);
 
     act(() => result.current.saveIncident(updated));
@@ -584,9 +574,7 @@ describe('useStatusManagementController', () => {
 
   it('unlocks definite write rejections so the operator can issue a corrected mutation', async () => {
     const updated = { ...component, name: 'Corrected' };
-    api.saveStatusComponent
-      .mockRejectedValueOnce(new ApiMessageError('Rejected', { status: 400 }))
-      .mockResolvedValueOnce(undefined);
+    api.saveStatusComponent.mockRejectedValueOnce(rejectedRequestFailure()).mockResolvedValueOnce(undefined);
     const { result } = renderController();
     await waitFor(() => expect(result.current.components.kind).toBe('ready'));
     act(() => result.current.editComponent(component));
@@ -603,9 +591,7 @@ describe('useStatusManagementController', () => {
     await waitFor(() => expect(result.current.componentEditor).toBeUndefined());
     expect(api.saveStatusComponent).toHaveBeenCalledTimes(2);
 
-    api.deleteStatusIncident
-      .mockRejectedValueOnce(new ApiMessageError('Rejected', { status: 400 }))
-      .mockResolvedValueOnce(undefined);
+    api.deleteStatusIncident.mockRejectedValueOnce(rejectedRequestFailure()).mockResolvedValueOnce(undefined);
     act(() => result.current.deleteIncident(7));
     await waitFor(() => expect(notification.error).toHaveBeenCalledWith('statusManagement.deleteFailed'));
     expect(result.current.commandLocked).toBe(false);
@@ -667,7 +653,7 @@ describe('useStatusManagementController', () => {
   });
 
   it('recovers an ambiguous delete by exact missing proof and never repeats DELETE', async () => {
-    api.deleteStatusIncident.mockRejectedValueOnce(new ApiMessageError('Invalid response', { status: 200 }));
+    api.deleteStatusIncident.mockRejectedValueOnce(uncertainRequestFailure());
     api.loadStatusIncident
       .mockResolvedValueOnce(incident)
       .mockRejectedValueOnce(new StatusManagementMissingError('incident'));
@@ -691,7 +677,7 @@ describe('useStatusManagementController', () => {
   });
 
   it('applies the same exact-missing delete recovery to components', async () => {
-    api.deleteStatusComponent.mockRejectedValueOnce(new ApiMessageError('Request failed', { status: 503 }));
+    api.deleteStatusComponent.mockRejectedValueOnce(unavailableRequestFailure());
     api.loadStatusComponent
       .mockResolvedValueOnce(component)
       .mockRejectedValueOnce(new StatusManagementMissingError('component'));
@@ -715,7 +701,7 @@ describe('useStatusManagementController', () => {
     const pendingProof = deferred<StatusComponent[]>();
     api.loadStatusComponents
       .mockResolvedValueOnce([component])
-      .mockRejectedValueOnce(new ApiMessageError('Projection unavailable', { status: 503 }))
+      .mockRejectedValueOnce(unavailableRequestFailure())
       .mockReturnValueOnce(pendingProof.promise);
     const view = renderController();
     await waitFor(() => expect(view.result.current.components.kind).toBe('ready'));
@@ -793,7 +779,7 @@ describe('useStatusManagementController', () => {
   });
 
   it('distinguishes unavailable, missing detail, and an out-of-range ready page', async () => {
-    api.loadStatusComponents.mockRejectedValue(new ApiMessageError('Request failed with status 503', { status: 503 }));
+    api.loadStatusComponents.mockRejectedValue(unavailableRequestFailure());
     api.loadStatusIncidents.mockResolvedValue(incidentPage([], 5));
     api.loadStatusIncident.mockRejectedValue(new StatusManagementMissingError('incident'));
     const { result } = renderController('/settings/status-page?pageIndex=3&pageSize=8');
@@ -807,7 +793,7 @@ describe('useStatusManagementController', () => {
   it('does not leak an authoritative incident refresh failure into a new URL query', async () => {
     api.loadStatusIncidents
       .mockResolvedValueOnce(incidentPage([incident], 1))
-      .mockRejectedValueOnce(new ApiMessageError('Request failed with status 503', { status: 503 }))
+      .mockRejectedValueOnce(unavailableRequestFailure())
       .mockResolvedValueOnce(incidentPage([incident], 1))
       .mockResolvedValueOnce(incidentPage([], 0));
     const { result } = renderController('/settings/status-page?search=old&pageIndex=0&pageSize=8');
@@ -832,7 +818,7 @@ describe('useStatusManagementController', () => {
   it('returns honest incident refresh outcomes and recovers with current-query evidence', async () => {
     api.loadStatusIncidents
       .mockResolvedValueOnce(incidentPage([incident], 1))
-      .mockRejectedValueOnce(new ApiMessageError('Request failed with status 503', { status: 503 }))
+      .mockRejectedValueOnce(unavailableRequestFailure())
       .mockResolvedValueOnce(incidentPage([], 0));
     const { result } = renderController('/settings/status-page?search=current&pageIndex=0&pageSize=8');
     await waitFor(() => expect(result.current.incidents.kind).toBe('ready'));
@@ -872,6 +858,18 @@ function renderController(entry = '/settings/status-page') {
 
 function incidentPage(content: StatusIncident[], totalElements: number) {
   return { content, totalElements, totalPages: Math.ceil(totalElements / 8), number: 0, size: 8 };
+}
+
+function unavailableRequestFailure() {
+  return new StatusRequestFailure('unavailable', 'uncertain');
+}
+
+function uncertainRequestFailure() {
+  return new StatusRequestFailure('error', 'uncertain');
+}
+
+function rejectedRequestFailure() {
+  return new StatusRequestFailure('error', 'rejected');
 }
 
 function deferred<T>() {

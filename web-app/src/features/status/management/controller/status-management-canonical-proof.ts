@@ -5,8 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
+import { statusWriteOutcome } from '@/features/status/shared/status-error-model';
+
 import { isStatusManagementMissing } from '../api/status-management-api';
-import { ApiMessageError } from '@/core/http/api-message';
 
 import {
   StatusManagementContractError,
@@ -23,10 +24,7 @@ export function requireStatusId(id: number | undefined) {
 
 /** A transport/server/malformed-success failure cannot prove that a write was rejected. */
 export function isAmbiguousStatusWriteFailure(error: unknown) {
-  if (!(error instanceof ApiMessageError)) return true;
-  if (error.code !== undefined) return false;
-  const status = error.status ?? 0;
-  return status === 0 || status === 408 || status >= 500 || (status >= 200 && status < 300) || error.cause != null;
+  return statusWriteOutcome(error) === 'uncertain';
 }
 
 export function statusComponentIdentityMatches(actual: StatusComponent, expected: StatusComponent) {

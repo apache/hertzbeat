@@ -18,7 +18,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { apiMessageGet } = vi.hoisted(() => ({ apiMessageGet: vi.fn() }));
-vi.mock('@/core/http/api-message', () => ({ apiMessageGet }));
+vi.mock('@/core/http/api-message', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/core/http/api-message')>()),
+  apiMessageGet
+}));
+
+import { ApiMessageError } from '@/core/http/api-message';
+import { StatusOrgNotFoundError } from '../../shared/status-error-model';
 
 import { loadPublicStatusComponents, loadPublicStatusIncidents, loadPublicStatusOrg } from './public-status-api';
 import { PublicStatusContractError } from './public-status-schema';
@@ -112,6 +118,14 @@ describe('public status API', () => {
     apiMessageGet.mockResolvedValueOnce({ name: 'HertzBeat', description: 'Status', state: 0, token: 'secret' });
 
     await expect(loadPublicStatusOrg()).rejects.toBeInstanceOf(PublicStatusContractError);
+  });
+
+  it('normalizes organization-not-found transport evidence before leaving the API', async () => {
+    apiMessageGet.mockRejectedValue(
+      new ApiMessageError('Status Page Organization Not Found', { code: 15, status: 200 })
+    );
+
+    await expect(loadPublicStatusOrg()).rejects.toBeInstanceOf(StatusOrgNotFoundError);
   });
 });
 

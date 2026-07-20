@@ -15,14 +15,36 @@
  * limitations under the License.
  */
 
-import { ApiMessageError } from '@/core/http/api-message';
+export type StatusFailureKind = 'missing' | 'unavailable' | 'error';
+export type StatusWriteOutcome = 'rejected' | 'uncertain';
 
-const STATUS_ORG_NOT_FOUND_CODE = 15;
-const STATUS_ORG_NOT_FOUND_MESSAGE = 'Status Page Organization Not Found';
+/** Stable domain evidence emitted by the Status API boundary. */
+export class StatusRequestFailure extends Error {
+  constructor(
+    readonly kind: StatusFailureKind,
+    readonly writeOutcome: StatusWriteOutcome
+  ) {
+    super('Status request failed');
+    this.name = 'StatusRequestFailure';
+  }
+}
+
+/** Exact evidence that no Status Page organization has been configured. */
+export class StatusOrgNotFoundError extends StatusRequestFailure {
+  constructor() {
+    super('missing', 'rejected');
+    this.name = 'StatusOrgNotFoundError';
+  }
+}
 
 export function isStatusOrgNotFound(error: unknown) {
-  return error instanceof ApiMessageError
-    && error.code === STATUS_ORG_NOT_FOUND_CODE
-    && error.status === 200
-    && error.message === STATUS_ORG_NOT_FOUND_MESSAGE;
+  return error instanceof StatusOrgNotFoundError;
+}
+
+export function statusRequestFailureKind(error: unknown) {
+  return error instanceof StatusRequestFailure ? error.kind : undefined;
+}
+
+export function statusWriteOutcome(error: unknown): StatusWriteOutcome {
+  return error instanceof StatusRequestFailure ? error.writeOutcome : 'uncertain';
 }

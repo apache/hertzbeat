@@ -16,6 +16,7 @@
  */
 
 import { apiMessageGet } from '@/core/http/api-message';
+import { statusApiRequest, type StatusApiFailureContext } from '@/features/status/api/status-api-failure';
 
 import type { PublicStatusIncidentPage } from '../model/public-status-contract';
 import { isCompletePublicStatusIncidentPage } from '../model/public-status-model';
@@ -40,7 +41,7 @@ const maximumIncidentPages = 100;
 type PublicStatusQueryContext = { signal?: AbortSignal };
 
 export const loadPublicStatusOrg = async (context?: PublicStatusQueryContext) =>
-  parsePublicStatusOrg(await get('/api/status/page/public/org', context));
+  parsePublicStatusOrg(await get('/api/status/page/public/org', context, { resource: 'organization' }));
 
 export const loadPublicStatusComponents = async (context?: PublicStatusQueryContext) =>
   parsePublicStatusComponents(await get('/api/status/page/public/component', context));
@@ -97,6 +98,9 @@ function assertContinuationPage(
   }
 }
 
-function get(path: string, context?: PublicStatusQueryContext) {
-  return context?.signal ? apiMessageGet(path, { signal: context.signal }) : apiMessageGet(path);
+function get(path: string, context?: PublicStatusQueryContext, failureContext?: StatusApiFailureContext) {
+  return statusApiRequest(
+    () => (context?.signal ? apiMessageGet(path, { signal: context.signal }) : apiMessageGet(path)),
+    failureContext
+  );
 }

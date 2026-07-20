@@ -18,7 +18,7 @@
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ApiMessageError } from '@/core/http/api-message';
+import { StatusOrgNotFoundError } from '@/features/status/shared/status-error-model';
 
 import type { PublicStatusComponent, PublicStatusIncidentPage, PublicStatusOrg } from '../model/public-status-contract';
 import { usePublicStatusController } from './use-public-status-controller';
@@ -78,7 +78,7 @@ describe('usePublicStatusController', () => {
   });
 
   it('uses unconfigured only for exact missing organization with successful sibling queries', () => {
-    const missing = new ApiMessageError('Status Page Organization Not Found', { code: 15, status: 200 });
+    const missing = new StatusOrgNotFoundError();
     setEvidence({ error: missing }, { data: [] }, { data: { ...incidents, content: [], totalElements: 0 } });
     expect(renderHook(() => usePublicStatusController()).result.current.state).toBe('unconfigured');
 
