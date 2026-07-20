@@ -24,6 +24,7 @@ import {
   type ObjectStoreDraft,
   type ObjectStoreResourceRecord
 } from '../model/object-store-model';
+import { classifyObjectStoreReadFailure } from '../model/object-store-failure';
 import { useObjectStoreEditorController } from './object-store-editor-controller';
 
 const objectStoreResource = 'object-store';
@@ -93,12 +94,6 @@ function resolveResourceKind(
   record: ObjectStoreResourceRecord | undefined
 ) {
   if (isPending) return 'loading';
-  if (isError) return isUnavailable(error) ? 'unavailable' : 'error';
+  if (isError) return classifyObjectStoreReadFailure(error) === 'unavailable' ? 'unavailable' : 'error';
   return record ? 'ready' : 'error';
-}
-
-function isUnavailable(error: HttpError | null) {
-  const code: unknown = error?.code;
-  if (code === 'OBJECT_STORE_RESPONSE_INVALID') return false;
-  return error?.statusCode === 0 || [502, 503, 504].includes(error?.statusCode ?? -1);
 }

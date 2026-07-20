@@ -26,6 +26,7 @@ import {
   type ObjectStoreDraftConfig,
   type ObjectStoreType
 } from '../model/object-store-model';
+import { objectStoreApiRequest } from './object-store-api-failure';
 import { parseObjectStoreMutationResult, parseObjectStoreReadModel } from './object-store-schema';
 
 export type ObjectStorePayload = {
@@ -36,13 +37,17 @@ export type ObjectStorePayload = {
 export const objectStoreEndpoint = '/api/config/oss';
 
 export async function loadObjectStore() {
-  const response = await apiMessageGet(objectStoreEndpoint);
-  return parseObjectStoreReadModel(response);
+  return objectStoreApiRequest('read', async () => {
+    const response = await apiMessageGet(objectStoreEndpoint);
+    return parseObjectStoreReadModel(response);
+  });
 }
 
 export async function saveObjectStore(config: ObjectStoreDraft) {
-  const payload = buildObjectStorePayload(config);
-  return parseObjectStoreMutationResult(await apiMessagePost(objectStoreEndpoint, payload));
+  return objectStoreApiRequest('write', async () => {
+    const payload = buildObjectStorePayload(config);
+    return parseObjectStoreMutationResult(await apiMessagePost(objectStoreEndpoint, payload));
+  });
 }
 
 export function buildObjectStorePayload(config: ObjectStoreDraft): ObjectStorePayload {

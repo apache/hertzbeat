@@ -18,8 +18,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createRefineHttpError } from '@/shared/refine/refine-http-error';
-
+import { ObjectStoreRequestFailure } from '../model/object-store-failure';
 import { createObjectStoreDraft, type ObjectStoreResourceRecord } from '../model/object-store-model';
 import { useObjectStoreResourceController } from './object-store-resource-controller';
 
@@ -110,20 +109,17 @@ describe('Object Store resource controller', () => {
 
   it.each([
     ['loading', { isPending: true }],
-    ['unavailable', { isError: true, error: { statusCode: 0 }, result: undefined }],
-    ['unavailable', { isError: true, error: { statusCode: 502 }, result: undefined }],
+    ['unavailable', { isError: true, error: unavailableFailure(), result: undefined }],
     [
       'error',
       {
         isError: true,
-        error: { statusCode: 502, code: 'OBJECT_STORE_RESPONSE_INVALID' },
+        error: invalidFailure(),
         result: undefined
       }
     ],
-    ['unavailable', { isError: true, error: { statusCode: 503 }, result: undefined }],
-    ['unavailable', { isError: true, error: { statusCode: 504 }, result: undefined }],
+    ['error', { isError: true, error: { statusCode: 503 }, result: undefined }],
     ['error', { isError: true, error: { statusCode: 400 }, result: undefined }],
-    ['error', { isError: true, error: { statusCode: 500 }, result: undefined }],
     ['error', { isError: false, result: undefined }],
     ['ready', {}]
   ])('maps authoritative evidence to the %s state', (kind, override) => {
@@ -327,7 +323,7 @@ describe('Object Store resource controller', () => {
   it('retains proof-only recovery and retries GET without repeating an ambiguous write', async () => {
     refine.useOne.mockReturnValue(buildOneResult({ result: databaseRecord }));
     refine.refetch
-      .mockResolvedValueOnce({ data: undefined, error: { statusCode: 503 }, isError: true })
+      .mockResolvedValueOnce({ data: undefined, error: unavailableFailure(), isError: true })
       .mockResolvedValueOnce({ data: { data: { ...databaseRecord, type: 'FILE' } }, error: null, isError: false });
     const { result } = renderHook(() => useObjectStoreResourceController());
 
@@ -335,7 +331,7 @@ describe('Object Store resource controller', () => {
     act(() => result.current.submit());
     const callbacks = refine.updateMutate.mock.calls[0]?.[1];
     act(() => {
-      void callbacks?.onError?.({ statusCode: 503 });
+      void callbacks?.onError?.(unavailableFailure());
     });
 
     await waitFor(() =>
@@ -399,7 +395,7 @@ describe('Object Store resource controller', () => {
     act(() => result.current.submit());
     const callbacks = refine.updateMutate.mock.calls[0]?.[1];
     act(() => {
-      void callbacks?.onError?.({ statusCode: 503 });
+      void callbacks?.onError?.(unavailableFailure());
     });
     unmount();
     proof.resolve({ data: { data: { ...databaseRecord, type: 'FILE' } }, error: null, isError: false });
@@ -424,19 +420,28 @@ function buildOneResult(override: Record<string, unknown> = {}) {
 }
 
 const ambiguousWriteFailures = [
-  ['network', () => createRefineHttpError(privateFailureMessage, 0, 'NETWORK', 'network')],
-  ['5xx', () => createRefineHttpError(privateFailureMessage, 503, undefined, 'http', 503)],
-  [
-    'malformed success',
-    () => createRefineHttpError(privateFailureMessage, 502, 'OBJECT_STORE_RESPONSE_INVALID', 'contract')
-  ],
+  ['network', unavailableFailure],
+  ['5xx', unavailableFailure],
+  ['malformed success', invalidFailure],
   ['unexpected cause', () => new Error(privateFailureMessage, { cause: new Error(privateFailureCause) })]
 ] as const;
 
 const definiteWriteRejections = [
-  ['business envelope', () => createRefineHttpError(privateFailureMessage, 400, 20, 'envelope', 200)],
-  ['HTTP 4xx', () => createRefineHttpError(privateFailureMessage, 422, undefined, 'http', 422)]
+  ['business envelope', rejectedFailure],
+  ['HTTP 4xx', rejectedFailure]
 ] as const;
+
+function unavailableFailure() {
+  return new ObjectStoreRequestFailure('unavailable', 'uncertain');
+}
+
+function invalidFailure() {
+  return new ObjectStoreRequestFailure('invalid', 'uncertain', { code: 'OBJECT_STORE_RESPONSE_INVALID' });
+}
+
+function rejectedFailure() {
+  return new ObjectStoreRequestFailure('error', 'rejected');
+}
 
 const privateFailureMessage = 'private-write-failure-message';
 const privateFailureCause = 'private-write-failure-cause';

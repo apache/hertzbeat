@@ -18,10 +18,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { apiMessageGet, apiMessagePost } = vi.hoisted(() => ({ apiMessageGet: vi.fn(), apiMessagePost: vi.fn() }));
-vi.mock('@/core/http/api-message', () => ({ apiMessageGet, apiMessagePost }));
+vi.mock('@/core/http/api-message', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/core/http/api-message')>()),
+  apiMessageGet,
+  apiMessagePost
+}));
+
+import { ApiMessageError } from '@/core/http/api-message';
 
 import { loadObjectStore, saveObjectStore } from './object-store-api';
-import { ObjectStoreResourceContractError } from '../model/object-store-model';
 
 describe('object store API', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -100,16 +105,17 @@ describe('object store API', () => {
       error = reason;
     }
 
-    expect(error).toBeInstanceOf(ObjectStoreResourceContractError);
+    expect(error).toMatchObject({ kind: 'invalid', writeOutcome: 'uncertain' });
     expect(JSON.stringify(error)).not.toContain('private-');
   });
 
   it('rejects malformed mutation responses', async () => {
     apiMessagePost.mockResolvedValue({ message: 'Update config success' });
 
-    await expect(saveObjectStore({ type: 'FILE', config: {} })).rejects.toBeInstanceOf(
-      ObjectStoreResourceContractError
-    );
+    await expect(saveObjectStore({ type: 'FILE', config: {} })).rejects.toMatchObject({
+      kind: 'invalid',
+      writeOutcome: 'uncertain'
+    });
   });
 
   it.each(['', '   ', '******', '••••••', '__KEEP__', '<masked>', '[REDACTED]'])(
@@ -126,8 +132,18 @@ describe('object store API', () => {
             savePath: 'hertzbeat'
           }
         })
-      ).rejects.toBeInstanceOf(Error);
+      ).rejects.toMatchObject({ kind: 'invalid', writeOutcome: 'rejected' });
       expect(apiMessagePost).not.toHaveBeenCalled();
     }
   );
+
+  it('normalizes transport evidence at every Object Store API operation boundary', async () => {
+    const failure = () => new ApiMessageError('secretKey=private-network-evidence');
+    const expected = { kind: 'unavailable', writeOutcome: 'uncertain' };
+    apiMessageGet.mockRejectedValueOnce(failure());
+    apiMessagePost.mockRejectedValueOnce(failure());
+
+    await expect(loadObjectStore()).rejects.toMatchObject(expected);
+    await expect(saveObjectStore({ type: 'FILE', config: {} })).rejects.toMatchObject(expected);
+  });
 });

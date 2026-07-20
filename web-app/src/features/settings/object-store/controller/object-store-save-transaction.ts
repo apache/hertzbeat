@@ -18,7 +18,7 @@
 import { useUpdate, type HttpError } from '@refinedev/core';
 import { useEffect, useRef, useState } from 'react';
 
-import { isDefiniteObjectStoreWriteRejection } from '../api/object-store-write-rejection';
+import { isObjectStoreWriteRejection } from '../model/object-store-failure';
 import {
   canProveAmbiguousObjectStoreSave,
   objectStoreResourceId,
@@ -92,7 +92,7 @@ async function handleSaveFailure(
   reason: unknown
 ) {
   if (!runtime.isCurrent(owner)) return;
-  if (isDefiniteObjectStoreWriteRejection(reason)) {
+  if (isObjectStoreWriteRejection(reason)) {
     runtime.publish(owner, null);
     options.notifyRejected();
     runtime.finish(owner);

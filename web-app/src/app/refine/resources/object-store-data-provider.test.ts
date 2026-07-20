@@ -18,11 +18,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
+import { ObjectStoreRequestFailure } from '@/features/settings/object-store/model/object-store-failure';
 import {
   ObjectStoreResourceContractError,
   type ObjectStoreDraft,
   type ObjectStoreReadModel
 } from '@/features/settings/object-store/model/object-store-model';
+import { createRefineHttpError } from '@/shared/refine/refine-http-error';
 
 type ObjectStoreApi = typeof import('@/features/settings/object-store/api/object-store-api');
 const canonical = vi.hoisted(() => ({ endpoint: '/canonical-object-store-endpoint' }));
@@ -120,9 +122,10 @@ describe('Object Store Refine data provider', () => {
     }
 
     expect(error).toMatchObject({
-      statusCode: 502,
       code: 'OBJECT_STORE_CANONICAL_REREAD_FAILED',
-      message: 'Object Store canonical reread failed'
+      kind: 'invalid',
+      message: 'Object Store request failed',
+      writeOutcome: 'uncertain'
     });
     expect(JSON.stringify(error)).not.toContain('private-reread-secret');
     expect(JSON.stringify(error)).not.toContain('private-reread-cause');
@@ -142,9 +145,9 @@ describe('Object Store Refine data provider', () => {
         variables: configuredDraft
       })
     ).rejects.toMatchObject({
-      statusCode: 502,
       code: 'OBJECT_STORE_CANONICAL_REREAD_FAILED',
-      kind: 'contract'
+      kind: 'invalid',
+      writeOutcome: 'uncertain'
     });
   });
 
@@ -159,8 +162,9 @@ describe('Object Store Refine data provider', () => {
         variables: configuredDraft
       })
     ).rejects.toMatchObject({
-      statusCode: 502,
-      code: 'OBJECT_STORE_CANONICAL_REREAD_MISSING'
+      code: 'OBJECT_STORE_CANONICAL_REREAD_MISSING',
+      kind: 'invalid',
+      writeOutcome: 'uncertain'
     });
   });
 
@@ -174,31 +178,75 @@ describe('Object Store Refine data provider', () => {
       error = reason;
     }
     expect(error).toMatchObject({
-      statusCode: 502,
-      code: 'OBJECT_STORE_RESPONSE_INVALID'
+      code: 'OBJECT_STORE_RESPONSE_INVALID',
+      kind: 'invalid',
+      writeOutcome: 'uncertain'
     });
     expect(JSON.stringify(error)).not.toContain('secretKey');
   });
 
   it('rejects unsupported resources, ids, and actions before transport', async () => {
     await expect(objectStoreDataProvider.getOne({ resource: 'labels', id: 'current' })).rejects.toMatchObject({
-      code: 'OBJECT_STORE_RESOURCE_UNSUPPORTED'
+      code: 'OBJECT_STORE_RESOURCE_UNSUPPORTED',
+      kind: 'invalid',
+      writeOutcome: 'rejected'
     });
     await expect(objectStoreDataProvider.getOne({ resource: 'object-store', id: 'other' })).rejects.toMatchObject({
-      code: 'OBJECT_STORE_ID_INVALID'
+      code: 'OBJECT_STORE_ID_INVALID',
+      kind: 'invalid',
+      writeOutcome: 'rejected'
     });
     await expect(objectStoreDataProvider.getList({ resource: 'object-store' })).rejects.toMatchObject({
-      statusCode: 405,
-      code: 'OBJECT_STORE_LIST_UNSUPPORTED'
+      code: 'OBJECT_STORE_LIST_UNSUPPORTED',
+      kind: 'invalid',
+      writeOutcome: 'rejected'
     });
     await expect(
       objectStoreDataProvider.create({ resource: 'object-store', variables: configuredDraft })
-    ).rejects.toMatchObject({ statusCode: 405, code: 'OBJECT_STORE_CREATE_UNSUPPORTED' });
+    ).rejects.toMatchObject({ code: 'OBJECT_STORE_CREATE_UNSUPPORTED', kind: 'invalid', writeOutcome: 'rejected' });
     await expect(objectStoreDataProvider.deleteOne({ resource: 'object-store', id: 'current' })).rejects.toMatchObject({
-      statusCode: 405,
-      code: 'OBJECT_STORE_DELETE_UNSUPPORTED'
+      code: 'OBJECT_STORE_DELETE_UNSUPPORTED',
+      kind: 'invalid',
+      writeOutcome: 'rejected'
     });
     expect(objectStoreApi.loadObjectStore).not.toHaveBeenCalled();
     expect(objectStoreApi.saveObjectStore).not.toHaveBeenCalled();
+  });
+
+  it('normalizes raw fallback evidence with the provider operation context', async () => {
+    objectStoreApi.loadObjectStore.mockRejectedValueOnce(new ApiMessageError('private-network'));
+    objectStoreApi.saveObjectStore.mockRejectedValueOnce(
+      new ApiMessageError('private-business', { code: 20, status: 200 })
+    );
+
+    await expect(objectStoreDataProvider.getOne({ resource: 'object-store', id: 'current' })).rejects.toMatchObject({
+      kind: 'unavailable',
+      writeOutcome: 'uncertain'
+    });
+    await expect(
+      objectStoreDataProvider.update({
+        resource: 'object-store',
+        id: 'current',
+        variables: configuredDraft
+      })
+    ).rejects.toMatchObject({ kind: 'error', writeOutcome: 'rejected' });
+  });
+
+  it('never presents a read failure as proof that a write was rejected', async () => {
+    objectStoreApi.loadObjectStore.mockRejectedValueOnce(
+      createRefineHttpError('private-read-rejection', 422, undefined, 'http', 422)
+    );
+
+    await expect(objectStoreDataProvider.getOne({ resource: 'object-store', id: 'current' })).rejects.toMatchObject({
+      kind: 'error',
+      writeOutcome: 'uncertain'
+    });
+  });
+
+  it('preserves typed failure identity without copying secret evidence', async () => {
+    const failure = new ObjectStoreRequestFailure('unavailable', 'uncertain');
+    objectStoreApi.loadObjectStore.mockRejectedValueOnce(failure);
+
+    await expect(objectStoreDataProvider.getOne({ resource: 'object-store', id: 'current' })).rejects.toBe(failure);
   });
 });
