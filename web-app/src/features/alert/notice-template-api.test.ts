@@ -31,12 +31,12 @@ vi.mock('@/core/http/api-message', async importOriginal => ({
 import { ApiMessageError } from '@/core/http/api-message';
 
 import {
-  NoticeTemplateMissingError,
   deleteNoticeTemplate,
   loadNoticeTemplate,
   loadNoticeTemplates,
   saveNoticeTemplate
 } from './notice-template-api';
+import type { NoticeTemplateDraft } from './notice-template-model';
 
 const custom = { id: 42, name: 'Custom', type: 1 as const, preset: false, content: '${content}' };
 const page = { content: [custom], totalElements: 1, totalPages: 1, number: 0, size: 8 };
@@ -87,14 +87,46 @@ describe('Notice Template API', () => {
   it('rejects malformed list data instead of returning an empty page', async () => {
     http.apiMessageGet.mockResolvedValue({ content: [], totalElements: '0' });
 
-    await expect(loadNoticeTemplates({ name: '', preset: true, pageIndex: 0, pageSize: 8 })).rejects.toThrowError(
-      'Notice Template response is invalid'
-    );
+    await expect(loadNoticeTemplates({ name: '', preset: true, pageIndex: 0, pageSize: 8 })).rejects.toMatchObject({
+      kind: 'invalid',
+      writeOutcome: 'uncertain'
+    });
   });
 
   it('classifies the detail endpoint business failure as missing evidence', async () => {
     http.apiMessageGet.mockRejectedValue(new ApiMessageError('missing', { code: 1, status: 200 }));
 
-    await expect(loadNoticeTemplate(42)).rejects.toBeInstanceOf(NoticeTemplateMissingError);
+    await expect(loadNoticeTemplate(42)).rejects.toMatchObject({ kind: 'missing', writeOutcome: 'rejected' });
+  });
+
+  it('normalizes transport evidence at every API operation boundary', async () => {
+    const failure = () => new ApiMessageError('private network evidence');
+    const expected = { kind: 'unavailable', writeOutcome: 'uncertain' };
+
+    http.apiMessageGet.mockRejectedValueOnce(failure()).mockRejectedValueOnce(failure());
+    http.apiMessagePost.mockRejectedValueOnce(failure());
+    http.apiMessagePut.mockRejectedValueOnce(failure());
+    http.apiMessageDelete.mockRejectedValueOnce(failure());
+
+    await expect(loadNoticeTemplates({ name: '', preset: false, pageIndex: 0, pageSize: 8 })).rejects.toMatchObject(
+      expected
+    );
+    await expect(loadNoticeTemplate(42)).rejects.toMatchObject(expected);
+    await expect(saveNoticeTemplate({ name: 'New', type: 1, content: '${content}' })).rejects.toMatchObject(expected);
+    await expect(saveNoticeTemplate({ id: 42, name: 'Updated', type: 1, content: '${content}' })).rejects.toMatchObject(
+      expected
+    );
+    await expect(deleteNoticeTemplate(42)).rejects.toMatchObject(expected);
+  });
+
+  it('normalizes malformed runtime input before it can escape the write API boundary', async () => {
+    const malformed = { name: null, type: 1, content: '${content}' } as unknown as NoticeTemplateDraft;
+
+    await expect(saveNoticeTemplate(malformed)).rejects.toMatchObject({
+      kind: 'error',
+      writeOutcome: 'uncertain'
+    });
+    expect(http.apiMessagePost).not.toHaveBeenCalled();
+    expect(http.apiMessagePut).not.toHaveBeenCalled();
   });
 });

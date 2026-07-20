@@ -15,13 +15,7 @@
  * limitations under the License.
  */
 
-import {
-  ApiMessageError,
-  apiMessageDelete,
-  apiMessageGet,
-  apiMessagePost,
-  apiMessagePut
-} from '@/core/http/api-message';
+import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
 
 import {
   buildNoticeTemplatePayload,
@@ -33,41 +27,33 @@ import {
 } from './notice-template-model';
 import { noticeTemplateEndpoint, noticeTemplatesEndpoint } from './notice-api-endpoints';
 import { noticeTemplateCreateActionUrl } from './notice-template-resource';
+import { noticeTemplateApiRequest } from './api/notice-template-api-failure';
 
 export async function loadNoticeTemplates(query: NoticeTemplateQuery) {
-  const response = await apiMessageGet(`${noticeTemplatesEndpoint}?${writeNoticeTemplateQuery(query).toString()}`);
-  return parseNoticeTemplatePage(response);
+  return noticeTemplateApiRequest('collection', async () => {
+    const response = await apiMessageGet(`${noticeTemplatesEndpoint}?${writeNoticeTemplateQuery(query).toString()}`);
+    return parseNoticeTemplatePage(response);
+  });
 }
 
 export async function loadNoticeTemplate(id: number) {
-  try {
+  return noticeTemplateApiRequest('detail', async () => {
     const response = await apiMessageGet(noticeTemplateDetailEndpoint(id));
     return parseNoticeTemplateDetail(response);
-  } catch (reason) {
-    // This exact endpoint uses its business-failure envelope only when the
-    // requested template id is absent; transport and HTTP failures stay distinct.
-    if (reason instanceof ApiMessageError && reason.code !== undefined) {
-      throw new NoticeTemplateMissingError(id);
-    }
-    throw reason;
-  }
-}
-
-export class NoticeTemplateMissingError extends Error {
-  constructor(readonly id: number) {
-    super('Notice Template is missing');
-    this.name = 'NoticeTemplateMissingError';
-  }
+  });
 }
 
 export async function saveNoticeTemplate(draft: NoticeTemplateDraft) {
-  const payload = buildNoticeTemplatePayload(draft);
-  if (draft.id) await apiMessagePut(noticeTemplateCreateActionUrl, payload);
-  else await apiMessagePost(noticeTemplateCreateActionUrl, payload);
+  await noticeTemplateApiRequest('write', () => {
+    const payload = buildNoticeTemplatePayload(draft);
+    return draft.id
+      ? apiMessagePut(noticeTemplateCreateActionUrl, payload)
+      : apiMessagePost(noticeTemplateCreateActionUrl, payload);
+  });
 }
 
 export async function deleteNoticeTemplate(id: number) {
-  await apiMessageDelete(noticeTemplateDetailEndpoint(id));
+  await noticeTemplateApiRequest('write', () => apiMessageDelete(noticeTemplateDetailEndpoint(id)));
 }
 
 function noticeTemplateDetailEndpoint(id: number) {

@@ -15,12 +15,7 @@
  * limitations under the License.
  */
 
-/** Only a definite pre-commit rejection makes it safe to submit the mutation again. */
-export function isDefiniteWriteRejection(reason: unknown) {
-  if (!reason || typeof reason !== 'object') return false;
-  const error = reason as { httpStatus?: unknown; kind?: unknown; statusCode?: unknown };
-  if (error.kind === 'envelope') return true;
-  const status = error.kind === 'http' ? error.httpStatus : error.statusCode;
-  if (typeof status !== 'number' || status < 400 || status >= 500) return false;
-  return error.kind === 'contract' || error.kind === 'http';
-}
+import { isNoticeTemplateWriteRejection } from '../model/notice-template-failure';
+
+/** Only explicit domain rejection evidence makes it safe to submit the mutation again. */
+export const isDefiniteWriteRejection = isNoticeTemplateWriteRejection;

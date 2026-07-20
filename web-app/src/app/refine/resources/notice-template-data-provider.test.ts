@@ -17,8 +17,9 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ApiMessageError } from '@/core/http/api-message';
 import { noticeApiEndpoint } from '@/features/alert/notice-api-endpoints';
-import { NoticeTemplateMissingError } from '@/features/alert/notice-template-api';
+import { NoticeTemplateRequestFailure } from '@/features/alert/model/notice-template-failure';
 import {
   NoticeTemplateContractError,
   type NoticeTemplate,
@@ -231,10 +232,18 @@ describe('Notice Template Refine data provider', () => {
         resource: 'labels',
         filters: [{ field: 'preset', operator: 'eq', value: false }]
       })
-    ).rejects.toMatchObject({ code: 'NOTICE_TEMPLATE_RESOURCE_UNSUPPORTED', statusCode: 400 });
+    ).rejects.toMatchObject({
+      code: 'NOTICE_TEMPLATE_RESOURCE_UNSUPPORTED',
+      kind: 'invalid',
+      writeOutcome: 'rejected'
+    });
     await expect(
       noticeTemplateDataProvider.create({ resource: 'notice-templates', variables: {} })
-    ).rejects.toMatchObject({ code: 'NOTICE_TEMPLATE_CREATE_UNSUPPORTED', statusCode: 405 });
+    ).rejects.toMatchObject({
+      code: 'NOTICE_TEMPLATE_CREATE_UNSUPPORTED',
+      kind: 'invalid',
+      writeOutcome: 'rejected'
+    });
 
     const unsupportedRequests = [
       { url: `${noticeTemplateCreateActionUrl}/other`, method: 'post' as const },
@@ -243,7 +252,11 @@ describe('Notice Template Refine data provider', () => {
     for (const request of unsupportedRequests) {
       await expect(
         noticeTemplateDataProvider.custom?.({ ...request, payload: { name: 'New', type: 1, content: '${content}' } })
-      ).rejects.toMatchObject({ code: 'NOTICE_TEMPLATE_CUSTOM_ACTION_UNSUPPORTED', statusCode: 405 });
+      ).rejects.toMatchObject({
+        code: 'NOTICE_TEMPLATE_CUSTOM_ACTION_UNSUPPORTED',
+        kind: 'invalid',
+        writeOutcome: 'rejected'
+      });
     }
     expect(api.loadNoticeTemplates).not.toHaveBeenCalled();
     expect(api.saveNoticeTemplate).not.toHaveBeenCalled();
@@ -251,16 +264,25 @@ describe('Notice Template Refine data provider', () => {
 
   it('keeps missing detail and invalid response contracts distinguishable', async () => {
     api.loadNoticeTemplate
-      .mockRejectedValueOnce(new NoticeTemplateMissingError(42))
+      .mockRejectedValueOnce(new ApiMessageError('private', { code: 1, status: 200 }))
+      .mockRejectedValueOnce(
+        new NoticeTemplateRequestFailure('missing', 'rejected', { code: 'NOTICE_TEMPLATE_NOT_FOUND' })
+      )
       .mockRejectedValueOnce(new NoticeTemplateContractError());
 
     await expect(noticeTemplateDataProvider.getOne({ resource: 'notice-templates', id: 42 })).rejects.toMatchObject({
+      kind: 'missing',
+      writeOutcome: 'rejected'
+    });
+    await expect(noticeTemplateDataProvider.getOne({ resource: 'notice-templates', id: 42 })).rejects.toMatchObject({
       code: 'NOTICE_TEMPLATE_NOT_FOUND',
-      statusCode: 404
+      kind: 'missing',
+      writeOutcome: 'rejected'
     });
     await expect(noticeTemplateDataProvider.getOne({ resource: 'notice-templates', id: 42 })).rejects.toMatchObject({
       code: 'NOTICE_TEMPLATE_RESPONSE_INVALID',
-      statusCode: 502
+      kind: 'invalid',
+      writeOutcome: 'uncertain'
     });
   });
 

@@ -19,6 +19,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useNoticeTemplateController } from './notice-template-controller';
+import { NoticeTemplateRequestFailure } from './model/notice-template-failure';
 import { noticeTemplateResourceRecord } from './notice-template-model';
 import { noticeTemplateCreateActionUrl } from './notice-template-resource';
 
@@ -303,7 +304,7 @@ describe('Notice Template controller', () => {
 
   it('admits only one same-tick remove write', async () => {
     const deletion = deferred<{ data: typeof record }>();
-    const missing = Object.assign(new Error('missing'), { statusCode: 404 });
+    const missing = missingFailure();
     refine.provider.mockReturnValue({
       ...refine.provider(),
       deleteOne: vi.fn().mockReturnValue(deletion.promise),
@@ -327,7 +328,7 @@ describe('Notice Template controller', () => {
 
   it('keeps remove ownership when create, edit, or another remove is requested', async () => {
     const deletion = deferred<{ data: typeof record }>();
-    const missing = Object.assign(new Error('missing'), { statusCode: 404 });
+    const missing = missingFailure();
     refine.provider.mockReturnValue({
       ...refine.provider(),
       deleteOne: vi.fn().mockReturnValue(deletion.promise),
@@ -362,7 +363,7 @@ describe('Notice Template controller', () => {
   });
 
   it('updates and deletes only after provider proof plus authoritative list refetch', async () => {
-    const missing = Object.assign(new Error('missing'), { statusCode: 404 });
+    const missing = missingFailure();
     refine.provider.mockReturnValue({
       ...refine.provider(),
       getOne: vi
@@ -399,7 +400,7 @@ describe('Notice Template controller', () => {
 
   it('retires a confirmed create and retries only its unavailable list projection', async () => {
     refine.refetch
-      .mockResolvedValueOnce({ isError: true, error: { statusCode: 503 } })
+      .mockResolvedValueOnce({ isError: true, error: unavailableFailure() })
       .mockResolvedValueOnce({ data: { data: [record], total: 1 }, isError: false });
     const { result } = renderHook(() => useNoticeTemplateController());
     const provider = refine.provider.mock.results.at(-1)?.value;
@@ -425,7 +426,7 @@ describe('Notice Template controller', () => {
   });
 
   it('retries update proof after a confirmed PUT without repeating the mutation', async () => {
-    const unavailable = Object.assign(new Error('detail unavailable'), { statusCode: 503 });
+    const unavailable = unavailableFailure();
     const updated = { ...record, name: 'Updated' };
     refine.provider.mockReturnValue({
       ...refine.provider(),
@@ -458,10 +459,9 @@ describe('Notice Template controller', () => {
   });
 
   it.each([
-    ['server error', { statusCode: 503, httpStatus: 503, kind: 'http' }],
-    ['malformed success response', { statusCode: 200, httpStatus: 200, kind: 'http' }]
-  ])('proves an ambiguous PUT %s without repeating the mutation', async (_name, details) => {
-    const ambiguous = Object.assign(new Error('ambiguous update'), details);
+    ['server error', unavailableFailure()],
+    ['malformed success response', invalidFailure()]
+  ])('proves an ambiguous PUT %s without repeating the mutation', async (_name, ambiguous) => {
     refine.provider.mockReturnValue({
       ...refine.provider(),
       getOne: vi
@@ -487,12 +487,8 @@ describe('Notice Template controller', () => {
   });
 
   it('keeps an ambiguous PUT in proof recovery when exact detail is unavailable', async () => {
-    const ambiguous = Object.assign(new Error('ambiguous update'), {
-      statusCode: 503,
-      httpStatus: 503,
-      kind: 'http'
-    });
-    const unavailable = Object.assign(new Error('detail unavailable'), { statusCode: 503 });
+    const ambiguous = unavailableFailure();
+    const unavailable = unavailableFailure();
     refine.provider.mockReturnValue({
       ...refine.provider(),
       getOne: vi
@@ -523,11 +519,7 @@ describe('Notice Template controller', () => {
   });
 
   it('releases an update receipt after a definite rejection so PUT can be corrected and retried', async () => {
-    const rejected = Object.assign(new Error('rejected'), {
-      statusCode: 400,
-      httpStatus: 400,
-      kind: 'http'
-    });
+    const rejected = rejectedFailure();
     refine.provider.mockReturnValue({
       ...refine.provider(),
       getOne: vi
@@ -554,7 +546,7 @@ describe('Notice Template controller', () => {
   });
 
   it('retires a proof-only retry when the controller unmounts', async () => {
-    const unavailable = Object.assign(new Error('detail unavailable'), { statusCode: 503 });
+    const unavailable = unavailableFailure();
     const proof = deferred<{ data: typeof record }>();
     refine.provider.mockReturnValue({
       ...refine.provider(),
@@ -589,7 +581,7 @@ describe('Notice Template controller', () => {
     refine.refetch
       .mockResolvedValueOnce({
         isError: true,
-        error: { statusCode: 502, code: 'NOTICE_TEMPLATE_RESPONSE_INVALID' }
+        error: invalidFailure()
       })
       .mockResolvedValueOnce({ data: { data: [record], total: 1 }, isError: false });
     refine.provider.mockReturnValue({
@@ -622,8 +614,8 @@ describe('Notice Template controller', () => {
   });
 
   it('retries exact missing-detail proof after a confirmed DELETE without repeating the mutation', async () => {
-    const unavailable = Object.assign(new Error('detail unavailable'), { statusCode: 503 });
-    const missing = Object.assign(new Error('missing'), { statusCode: 404 });
+    const unavailable = unavailableFailure();
+    const missing = missingFailure();
     refine.provider.mockReturnValue({
       ...refine.provider(),
       getOne: vi
@@ -650,11 +642,10 @@ describe('Notice Template controller', () => {
   });
 
   it.each([
-    ['server error', { statusCode: 503, httpStatus: 503, kind: 'http' }],
-    ['malformed success response', { statusCode: 200, httpStatus: 200, kind: 'http' }]
-  ])('proves an ambiguous DELETE %s without repeating the mutation', async (_name, details) => {
-    const ambiguous = Object.assign(new Error('ambiguous delete'), details);
-    const missing = Object.assign(new Error('missing'), { statusCode: 404 });
+    ['server error', unavailableFailure()],
+    ['malformed success response', invalidFailure()]
+  ])('proves an ambiguous DELETE %s without repeating the mutation', async (_name, ambiguous) => {
+    const missing = missingFailure();
     refine.provider.mockReturnValue({
       ...refine.provider(),
       deleteOne: vi.fn().mockRejectedValue(ambiguous),
@@ -672,13 +663,9 @@ describe('Notice Template controller', () => {
   });
 
   it('keeps an ambiguous DELETE in missing-proof recovery without repeating the mutation', async () => {
-    const ambiguous = Object.assign(new Error('ambiguous delete'), {
-      statusCode: 503,
-      httpStatus: 503,
-      kind: 'http'
-    });
-    const unavailable = Object.assign(new Error('detail unavailable'), { statusCode: 503 });
-    const missing = Object.assign(new Error('missing'), { statusCode: 404 });
+    const ambiguous = unavailableFailure();
+    const unavailable = unavailableFailure();
+    const missing = missingFailure();
     refine.provider.mockReturnValue({
       ...refine.provider(),
       deleteOne: vi.fn().mockRejectedValue(ambiguous),
@@ -705,8 +692,8 @@ describe('Notice Template controller', () => {
   });
 
   it('retries a failed delete preflight without claiming that DELETE was submitted', async () => {
-    const unavailable = Object.assign(new Error('detail unavailable'), { statusCode: 503 });
-    const missing = Object.assign(new Error('missing'), { statusCode: 404 });
+    const unavailable = unavailableFailure();
+    const missing = missingFailure();
     refine.provider.mockReturnValue({
       ...refine.provider(),
       getOne: vi
@@ -730,12 +717,8 @@ describe('Notice Template controller', () => {
   });
 
   it('releases a delete receipt after a definite rejection so DELETE can be retried', async () => {
-    const rejected = Object.assign(new Error('rejected'), {
-      statusCode: 400,
-      httpStatus: 400,
-      kind: 'http'
-    });
-    const missing = Object.assign(new Error('missing'), { statusCode: 404 });
+    const rejected = rejectedFailure();
+    const missing = missingFailure();
     refine.provider.mockReturnValue({
       ...refine.provider(),
       deleteOne: vi.fn().mockRejectedValueOnce(rejected).mockResolvedValueOnce({ data: record }),
@@ -759,9 +742,9 @@ describe('Notice Template controller', () => {
   });
 
   it('does not repeat a confirmed delete when only its list projection fails', async () => {
-    const missing = Object.assign(new Error('missing'), { statusCode: 404 });
+    const missing = missingFailure();
     refine.refetch
-      .mockResolvedValueOnce({ isError: true, error: { statusCode: 503 } })
+      .mockResolvedValueOnce({ isError: true, error: unavailableFailure() })
       .mockResolvedValueOnce({ data: { data: [], total: 0 }, isError: false });
     refine.provider.mockReturnValue({
       ...refine.provider(),
@@ -787,13 +770,12 @@ describe('Notice Template controller', () => {
   });
 
   it.each([
-    ['network', { statusCode: 0, kind: 'network' }],
-    ['server error', { statusCode: 503, httpStatus: 503, kind: 'http' }],
-    ['malformed success response', { statusCode: 200, httpStatus: 200, kind: 'http' }]
+    ['network', unavailableFailure()],
+    ['server error', unavailableFailure()],
+    ['malformed success response', invalidFailure()]
   ])(
     'locks an ambiguous create after %s because the void backend contract has no provable identity',
-    async (_name, details) => {
-      const ambiguous = Object.assign(new Error('ambiguous create'), details);
+    async (_name, ambiguous) => {
       refine.provider.mockReturnValue({
         ...refine.provider(),
         custom: vi.fn().mockRejectedValue(ambiguous)
@@ -820,11 +802,7 @@ describe('Notice Template controller', () => {
   );
 
   it('allows create to be retried after a definite pre-commit rejection', async () => {
-    const rejected = Object.assign(new Error('rejected'), {
-      statusCode: 400,
-      httpStatus: 400,
-      kind: 'http'
-    });
+    const rejected = rejectedFailure();
     refine.provider.mockReturnValue({
       ...refine.provider(),
       custom: vi
@@ -849,7 +827,7 @@ describe('Notice Template controller', () => {
 
   it('does not leak query A refresh failure into a successful query B', async () => {
     refine.params = 'name=A&preset=false&pageIndex=0&pageSize=8';
-    refine.refetch.mockResolvedValue({ isError: true, error: { statusCode: 503 } });
+    refine.refetch.mockResolvedValue({ isError: true, error: unavailableFailure() });
     const { result, rerender } = renderHook(() => useNoticeTemplateController());
 
     act(() => result.current.create());
@@ -866,7 +844,7 @@ describe('Notice Template controller', () => {
 
   it('clears a refresh failure across URL navigation without render-phase updates or Back revival', async () => {
     refine.params = 'name=A&preset=false&pageIndex=0&pageSize=8';
-    refine.refetch.mockResolvedValue({ isError: true, error: { statusCode: 503 } });
+    refine.refetch.mockResolvedValue({ isError: true, error: unavailableFailure() });
     const { result, rerender } = renderHook(() => useNoticeTemplateController());
 
     act(() => result.current.create());
@@ -896,7 +874,7 @@ describe('Notice Template controller', () => {
   });
 
   it('clears refresh failure after an explicit retry succeeds in the same query', async () => {
-    refine.refetch.mockResolvedValueOnce({ isError: true, error: { statusCode: 503 } });
+    refine.refetch.mockResolvedValueOnce({ isError: true, error: unavailableFailure() });
     const { result } = renderHook(() => useNoticeTemplateController());
 
     act(() => result.current.create());
@@ -911,6 +889,28 @@ describe('Notice Template controller', () => {
     await waitFor(() => expect(result.current.state.list.kind).toBe('ready'));
   });
 });
+
+function missingFailure() {
+  return new NoticeTemplateRequestFailure('missing', 'rejected', {
+    code: 'NOTICE_TEMPLATE_NOT_FOUND'
+  });
+}
+
+function unavailableFailure() {
+  return new NoticeTemplateRequestFailure('unavailable', 'uncertain');
+}
+
+function invalidFailure() {
+  return new NoticeTemplateRequestFailure('invalid', 'uncertain', {
+    code: 'NOTICE_TEMPLATE_RESPONSE_INVALID'
+  });
+}
+
+function rejectedFailure() {
+  return new NoticeTemplateRequestFailure('invalid', 'rejected', {
+    code: 'NOTICE_TEMPLATE_VARIABLES_INVALID'
+  });
+}
 
 function buildListResult(override: { data?: (typeof record)[]; total?: number } = {}) {
   return {

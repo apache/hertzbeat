@@ -23,6 +23,7 @@ import {
   type NoticeTemplateResourceRecord
 } from '../notice-template-model';
 import { noticeTemplateResourceName } from '../notice-template-resource';
+import { classifyNoticeTemplateDetailFailure } from '../model/notice-template-failure';
 
 export class NoticeTemplateWriteProofError extends Error {
   constructor(message: string) {
@@ -71,12 +72,8 @@ export async function proveNoticeTemplateDeletion(provider: DataProvider, id: nu
   try {
     await provider.getOne<NoticeTemplateResourceRecord>({ resource: noticeTemplateResourceName, id });
   } catch (reason) {
-    if (isNotFound(reason)) return;
+    if (classifyNoticeTemplateDetailFailure(reason) === 'missing') return;
     throw reason;
   }
   throw new NoticeTemplateWriteProofError('Deleted template is still returned by its exact detail endpoint');
-}
-
-function isNotFound(reason: unknown) {
-  return Boolean(reason && typeof reason === 'object' && (reason as { statusCode?: unknown }).statusCode === 404);
 }

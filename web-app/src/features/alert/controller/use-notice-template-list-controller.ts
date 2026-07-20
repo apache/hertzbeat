@@ -25,6 +25,10 @@ import {
   type NoticeTemplateResourceRecord
 } from '../notice-template-model';
 import { noticeTemplateResourceName } from '../notice-template-resource';
+import {
+  classifyNoticeTemplateCollectionFailure,
+  normalizeNoticeTemplateCollectionFailure
+} from '../model/notice-template-failure';
 
 type FailureKind = 'error' | 'unavailable';
 
@@ -40,7 +44,7 @@ export function useNoticeTemplateListController(query: NoticeTemplateQuery) {
     // The derived value hides an old failure immediately. Resetting after the
     // navigation commit prevents that failure from reviving on Browser Back.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setRefreshState(current => current.queryKey === queryKey ? current : { queryKey, failure: null });
+    setRefreshState(current => (current.queryKey === queryKey ? current : { queryKey, failure: null }));
   }, [queryKey]);
 
   const list = useList<NoticeTemplateResourceRecord, HttpError>({
@@ -54,30 +58,24 @@ export function useNoticeTemplateListController(query: NoticeTemplateQuery) {
     errorNotification: false
   });
   const listState = useMemo(
-    () => resolveListState(
-      list.query.isPending,
-      list.query.isError,
-      list.query.error,
-      list.result.data,
-      list.result.total,
-      refreshFailure
-    ),
-    [
-      list.query.error,
-      list.query.isError,
-      list.query.isPending,
-      list.result.data,
-      list.result.total,
-      refreshFailure
-    ]
+    () =>
+      resolveListState(
+        list.query.isPending,
+        list.query.isError,
+        list.query.error,
+        list.result.data,
+        list.result.total,
+        refreshFailure
+      ),
+    [list.query.error, list.query.isError, list.query.isPending, list.result.data, list.result.total, refreshFailure]
   );
   const refreshAuthoritatively = useCallback(async () => {
     const result = await list.query.refetch();
     if (result.isError) {
-      const failure = isUnavailable(result.error) ? 'unavailable' : 'error';
+      const reason = normalizeNoticeTemplateCollectionFailure(result.error);
+      const failure = reason.kind === 'unavailable' ? 'unavailable' : 'error';
       setRefreshState({ queryKey, failure });
-      if (result.error instanceof Error) throw result.error;
-      throw new Error('Notice Template refresh failed');
+      throw reason;
     }
     setRefreshState({ queryKey, failure: null });
   }, [list.query, queryKey]);
@@ -93,21 +91,17 @@ export function useNoticeTemplateListController(query: NoticeTemplateQuery) {
 function resolveListState(
   pending: boolean,
   failed: boolean,
-  error: HttpError | null,
+  error: unknown,
   records: NoticeTemplateResourceRecord[],
   total: number | undefined,
   refreshFailure: FailureKind | null
 ): NoticeTemplateListState {
   if (refreshFailure) return { kind: refreshFailure };
   if (pending) return { kind: 'loading' };
-  if (failed) return { kind: isUnavailable(error) ? 'unavailable' : 'error' };
+  if (failed) {
+    return { kind: classifyNoticeTemplateCollectionFailure(error) === 'unavailable' ? 'unavailable' : 'error' };
+  }
   if (total === undefined) return { kind: 'error' };
   if (records.length === 0 && total === 0) return { kind: 'empty' };
   return { kind: 'ready', records, total };
-}
-
-function isUnavailable(error: HttpError | null) {
-  const code: unknown = error?.code;
-  if (typeof code === 'string' && code.startsWith('NOTICE_TEMPLATE_')) return false;
-  return error?.statusCode === 0 || [502, 503, 504].includes(error?.statusCode ?? -1);
 }
