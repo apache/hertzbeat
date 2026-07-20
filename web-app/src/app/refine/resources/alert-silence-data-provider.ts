@@ -29,6 +29,7 @@ import type {
 } from '@refinedev/core';
 
 import {
+  alertSilenceEndpoint,
   deleteAlertSilence,
   isAlertSilenceMissing,
   loadAlertSilence,
@@ -49,7 +50,6 @@ import {
 } from './alert-silence-data-provider-input';
 
 export const alertSilenceResourceName = 'alert-silences';
-export const alertSilenceCreateActionUrl = '/api/alert/silence';
 
 export const alertSilenceDataProvider: DataProvider = {
   getList<TData extends BaseRecord = BaseRecord>(params: GetListParams): Promise<GetListResponse<TData>> {
@@ -131,7 +131,7 @@ export const alertSilenceDataProvider: DataProvider = {
     params: CustomParams<TQuery, TPayload>
   ): Promise<CustomResponse<TData>> {
     return protect(async () => {
-      if (params.url !== alertSilenceCreateActionUrl || params.method !== 'post') {
+      if (params.url !== alertSilenceEndpoint || params.method !== 'post') {
         throw contractError('ALERT_SILENCE_CUSTOM_ACTION_UNSUPPORTED', 405);
       }
       const draft = readAlertSilenceDraft(params.payload);

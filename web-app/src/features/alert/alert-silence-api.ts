@@ -15,7 +15,13 @@
  * limitations under the License.
  */
 
-import { ApiMessageError, apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
+import {
+  ApiMessageError,
+  apiMessageDelete,
+  apiMessageGet,
+  apiMessagePost,
+  apiMessagePut
+} from '@/core/http/api-message';
 
 import {
   buildAlertSilencePayload,
@@ -28,7 +34,10 @@ import {
 } from './alert-silence-model';
 import { parseAlertSilenceDetail, parseAlertSilencePage } from './alert-silence-schema';
 
-function buildAlertSilenceListPath(query: AlertSilenceQuery) {
+export const alertSilenceEndpoint = '/api/alert/silence';
+const alertSilenceCollectionEndpoint = '/api/alert/silences';
+
+export function buildAlertSilenceListPath(query: AlertSilenceQuery) {
   const params = new URLSearchParams({
     pageIndex: String(query.pageIndex),
     pageSize: String(query.pageSize),
@@ -36,37 +45,41 @@ function buildAlertSilenceListPath(query: AlertSilenceQuery) {
     order: 'desc'
   });
   if (query.search) params.set('search', query.search);
-  return `/api/alert/silences?${params.toString()}`;
+  return `${alertSilenceCollectionEndpoint}?${params.toString()}`;
+}
+
+export function buildAlertSilenceDetailPath(id: number) {
+  return `${alertSilenceEndpoint}/${canonicalAlertSilenceId(id)}`;
+}
+
+export function buildAlertSilenceDeletePath(id: number) {
+  return `${alertSilenceCollectionEndpoint}?ids=${canonicalAlertSilenceId(id)}`;
 }
 
 export async function loadAlertSilences(query: AlertSilenceQuery, signal?: AbortSignal) {
   const path = buildAlertSilenceListPath(query);
-  const response = signal
-    ? await apiMessageGet(path, { signal })
-    : await apiMessageGet(path);
+  const response = signal ? await apiMessageGet(path, { signal }) : await apiMessageGet(path);
   return parseAlertSilencePage(response, query);
 }
 
 export async function loadAlertSilence(id: number, signal?: AbortSignal) {
-  const path = `/api/alert/silence/${canonicalAlertSilenceId(id)}`;
-  const response = signal
-    ? await apiMessageGet(path, { signal })
-    : await apiMessageGet(path);
+  const path = buildAlertSilenceDetailPath(id);
+  const response = signal ? await apiMessageGet(path, { signal }) : await apiMessageGet(path);
   return parseAlertSilenceDetail(response);
 }
 
 export async function saveAlertSilence(draft: AlertSilenceDraft): Promise<void> {
   const payload = buildAlertSilencePayload(draft);
-  if (draft.id !== undefined) await apiMessagePut('/api/alert/silence', payload);
-  else await apiMessagePost('/api/alert/silence', payload);
+  if (draft.id !== undefined) await apiMessagePut(alertSilenceEndpoint, payload);
+  else await apiMessagePost(alertSilenceEndpoint, payload);
 }
 
 export async function deleteAlertSilence(id: number): Promise<void> {
-  await apiMessageDelete(`/api/alert/silences?ids=${canonicalAlertSilenceId(id)}`);
+  await apiMessageDelete(buildAlertSilenceDeletePath(id));
 }
 
 export async function updateAlertSilenceEnabled(silence: AlertSilence, enable: boolean): Promise<void> {
-  await apiMessagePut('/api/alert/silence', buildAlertSilenceTogglePayload(silence, enable));
+  await apiMessagePut(alertSilenceEndpoint, buildAlertSilenceTogglePayload(silence, enable));
 }
 
 // AlertSilenceController reports a missing detail with the backend's shared
@@ -74,15 +87,19 @@ export async function updateAlertSilenceEnabled(silence: AlertSilence, enable: b
 const alertSilenceMissingCode = 3;
 
 export function isAlertSilenceMissing(reason: unknown) {
-  return reason instanceof AlertSilenceMissingError
-    || reason instanceof ApiMessageError
-      && (reason.status === 404 || reason.status === 200 && reason.code === alertSilenceMissingCode);
+  return (
+    reason instanceof AlertSilenceMissingError ||
+    (reason instanceof ApiMessageError &&
+      (reason.status === 404 || (reason.status === 200 && reason.code === alertSilenceMissingCode)))
+  );
 }
 
 export function classifyAlertSilenceReadError(reason: unknown): 'missing' | 'unavailable' | 'error' {
   if (isAlertSilenceMissing(reason)) return 'missing';
-  if (reason instanceof ApiMessageError
-    && (reason.cause !== undefined || reason.status === undefined || [0, 502, 503, 504].includes(reason.status))) {
+  if (
+    reason instanceof ApiMessageError &&
+    (reason.cause !== undefined || reason.status === undefined || [0, 502, 503, 504].includes(reason.status))
+  ) {
     return 'unavailable';
   }
   return 'error';

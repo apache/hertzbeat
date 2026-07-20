@@ -20,6 +20,7 @@ import { ApiMessageError } from '@/core/http/api-message';
 import type { AlertSilence } from '@/features/alert/alert-silence-model';
 
 type AlertSilenceApi = typeof import('@/features/alert/alert-silence-api');
+const canonical = vi.hoisted(() => ({ endpoint: '/canonical-alert-silence-endpoint' }));
 const api = vi.hoisted(() => ({
   deleteAlertSilence: vi.fn<AlertSilenceApi['deleteAlertSilence']>(),
   loadAlertSilence: vi.fn<AlertSilenceApi['loadAlertSilence']>(),
@@ -29,10 +30,13 @@ const api = vi.hoisted(() => ({
 }));
 vi.mock('@/features/alert/alert-silence-api', async importOriginal => ({
   ...(await importOriginal<AlertSilenceApi>()),
-  ...api
+  ...api,
+  alertSilenceEndpoint: canonical.endpoint
 }));
 
-import { alertSilenceCreateActionUrl, alertSilenceDataProvider } from './alert-silence-data-provider';
+import { alertSilenceEndpoint } from '@/features/alert/alert-silence-api';
+
+import { alertSilenceDataProvider } from './alert-silence-data-provider';
 import inputSource from './alert-silence-data-provider-input.ts?raw';
 import providerSource from './alert-silence-data-provider.ts?raw';
 
@@ -68,6 +72,19 @@ const draft = {
 describe('Alert Silence Refine data provider', () => {
   beforeEach(() => vi.clearAllMocks());
 
+  it('accepts the custom action endpoint owned by the Alert Silence API', async () => {
+    api.saveAlertSilence.mockResolvedValue(undefined);
+    expect(alertSilenceEndpoint).toBe(canonical.endpoint);
+
+    await expect(
+      alertSilenceDataProvider.custom?.({
+        url: alertSilenceEndpoint,
+        method: 'post',
+        payload: draft
+      })
+    ).resolves.toEqual({ data: { acknowledged: true } });
+  });
+
   it('owns only the named resource and exact server list query', async () => {
     api.loadAlertSilences.mockResolvedValue(page);
     await expect(
@@ -87,7 +104,7 @@ describe('Alert Silence Refine data provider', () => {
     api.saveAlertSilence.mockResolvedValue(undefined);
     await expect(
       alertSilenceDataProvider.custom?.({
-        url: alertSilenceCreateActionUrl,
+        url: alertSilenceEndpoint,
         method: 'post',
         payload: draft
       })
@@ -126,7 +143,7 @@ describe('Alert Silence Refine data provider', () => {
     ).rejects.toMatchObject({ code: 'ALERT_SILENCE_VARIABLES_INVALID', statusCode: 400 });
     await expect(
       alertSilenceDataProvider.custom?.({
-        url: alertSilenceCreateActionUrl,
+        url: alertSilenceEndpoint,
         method: 'post',
         payload: { ...draft, id: 7 }
       })

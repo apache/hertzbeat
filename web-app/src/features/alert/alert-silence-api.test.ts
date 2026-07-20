@@ -14,7 +14,10 @@ const { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } = vi.ho
 }));
 vi.mock('@/core/http/api-message', async importOriginal => ({
   ...(await importOriginal<typeof import('@/core/http/api-message')>()),
-  apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut
+  apiMessageDelete,
+  apiMessageGet,
+  apiMessagePost,
+  apiMessagePut
 }));
 
 import {
@@ -29,8 +32,16 @@ import { ApiMessageError } from '@/core/http/api-message';
 import { AlertSilenceContractError, AlertSilenceMissingError, createAlertSilenceDraft } from './alert-silence-model';
 
 const persisted = {
-  id: 7, name: 'Maintenance', enable: true, matchAll: true, type: 0 as const,
-  times: null, labels: null, days: null, periodStart: null, periodEnd: null
+  id: 7,
+  name: 'Maintenance',
+  enable: true,
+  matchAll: true,
+  type: 0 as const,
+  times: null,
+  labels: null,
+  days: null,
+  periodStart: null,
+  periodEnd: null
 };
 
 describe('alert silence API', () => {
@@ -67,10 +78,15 @@ describe('alert silence API', () => {
 
   it('parses reads strictly and exposes missing detail separately', async () => {
     apiMessageGet.mockResolvedValueOnce({
-      content: [{ ...persisted, enable: 'true' }], totalElements: 1, totalPages: 1, number: 0, size: 8
+      content: [{ ...persisted, enable: 'true' }],
+      totalElements: 1,
+      totalPages: 1,
+      number: 0,
+      size: 8
     });
-    await expect(loadAlertSilences({ search: '', pageIndex: 0, pageSize: 8 }))
-      .rejects.toBeInstanceOf(AlertSilenceContractError);
+    await expect(loadAlertSilences({ search: '', pageIndex: 0, pageSize: 8 })).rejects.toBeInstanceOf(
+      AlertSilenceContractError
+    );
 
     apiMessageGet.mockResolvedValueOnce(null);
     await expect(loadAlertSilence(7)).rejects.toBeInstanceOf(AlertSilenceMissingError);
@@ -106,14 +122,17 @@ describe('alert silence API', () => {
 
   it('allowlists the toggle request without echoing response-only and audit fields', async () => {
     apiMessagePut.mockResolvedValue(undefined);
-    await updateAlertSilenceEnabled({
-      ...persisted,
-      times: 3,
-      creator: 'creator',
-      modifier: 'modifier',
-      gmtCreate: '2026-07-13T09:00:00',
-      gmtUpdate: '2026-07-13T10:00:00'
-    }, false);
+    await updateAlertSilenceEnabled(
+      {
+        ...persisted,
+        times: 3,
+        creator: 'creator',
+        modifier: 'modifier',
+        gmtCreate: '2026-07-13T09:00:00',
+        gmtUpdate: '2026-07-13T10:00:00'
+      },
+      false
+    );
 
     expect(apiMessagePut).toHaveBeenCalledWith('/api/alert/silence', {
       id: 7,
