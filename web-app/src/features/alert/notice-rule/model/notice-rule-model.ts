@@ -99,10 +99,6 @@ export function writeNoticeRuleQuery(query: NoticeRuleQuery) {
   return params;
 }
 
-export function buildNoticeRuleListPath(query: NoticeRuleQuery) {
-  return `/api/notice/rules?${writeNoticeRuleQuery(query).toString()}`;
-}
-
 export function createNoticeRuleDraft(): NoticeRuleDraft {
   return {
     name: '',

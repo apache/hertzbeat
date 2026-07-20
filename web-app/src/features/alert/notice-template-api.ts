@@ -24,23 +24,24 @@ import {
 } from '@/core/http/api-message';
 
 import {
-  buildNoticeTemplateListPath,
   buildNoticeTemplatePayload,
   parseNoticeTemplateDetail,
   parseNoticeTemplatePage,
+  writeNoticeTemplateQuery,
   type NoticeTemplateDraft,
   type NoticeTemplateQuery
 } from './notice-template-model';
+import { noticeTemplateEndpoint, noticeTemplatesEndpoint } from './notice-api-endpoints';
 import { noticeTemplateCreateActionUrl } from './notice-template-resource';
 
 export async function loadNoticeTemplates(query: NoticeTemplateQuery) {
-  const response = await apiMessageGet(buildNoticeTemplateListPath(query));
+  const response = await apiMessageGet(`${noticeTemplatesEndpoint}?${writeNoticeTemplateQuery(query).toString()}`);
   return parseNoticeTemplatePage(response);
 }
 
 export async function loadNoticeTemplate(id: number) {
   try {
-    const response = await apiMessageGet(`/api/notice/template/${id}`);
+    const response = await apiMessageGet(noticeTemplateDetailEndpoint(id));
     return parseNoticeTemplateDetail(response);
   } catch (reason) {
     // This exact endpoint uses its business-failure envelope only when the
@@ -66,5 +67,9 @@ export async function saveNoticeTemplate(draft: NoticeTemplateDraft) {
 }
 
 export async function deleteNoticeTemplate(id: number) {
-  await apiMessageDelete(`/api/notice/template/${id}`);
+  await apiMessageDelete(noticeTemplateDetailEndpoint(id));
+}
+
+function noticeTemplateDetailEndpoint(id: number) {
+  return `${noticeTemplateEndpoint}/${id}`;
 }

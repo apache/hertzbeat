@@ -79,10 +79,6 @@ export function writeNoticeReceiverQuery(query: NoticeReceiverQuery) {
   return params;
 }
 
-export function buildNoticeReceiverListPath(query: NoticeReceiverQuery) {
-  return `/api/notice/receivers?${writeNoticeReceiverQuery(query).toString()}`;
-}
-
 export function createNoticeReceiverDraft(): NoticeReceiverDraft {
   return {
     name: '',

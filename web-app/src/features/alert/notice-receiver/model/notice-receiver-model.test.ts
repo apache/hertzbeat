@@ -18,24 +18,22 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  buildNoticeReceiverListPath,
   buildNoticeReceiverPayload,
   createNoticeReceiverDraft,
   expectedNoticeReceiverEvidence,
   noticeReceiverDraftFromDetail,
   selectNoticeReceiverType,
   setNoticeReceiverSecretCleared,
-  validateNoticeReceiverDraft
+  validateNoticeReceiverDraft,
+  writeNoticeReceiverQuery
 } from './notice-receiver-model';
 import { noticeReceiverSettingSummary } from './notice-receiver-summary';
 
 describe('notice receiver model', () => {
-  it('builds the master receiver pagination contract', () => {
-    expect(buildNoticeReceiverListPath({ name: '', pageIndex: 0, pageSize: 8 })).toBe(
-      '/api/notice/receivers?pageIndex=0&pageSize=8'
-    );
-    expect(buildNoticeReceiverListPath({ name: 'on-call', pageIndex: 1, pageSize: 15 })).toBe(
-      '/api/notice/receivers?pageIndex=1&pageSize=15&name=on-call'
+  it('serializes the master receiver pagination contract', () => {
+    expect(writeNoticeReceiverQuery({ name: '', pageIndex: 0, pageSize: 8 }).toString()).toBe('pageIndex=0&pageSize=8');
+    expect(writeNoticeReceiverQuery({ name: 'on-call', pageIndex: 1, pageSize: 15 }).toString()).toBe(
+      'pageIndex=1&pageSize=15&name=on-call'
     );
   });
 

@@ -41,6 +41,7 @@ import {
   type NoticeTemplate,
   type NoticeTemplateQuery
 } from '@/features/alert/notice-template-model';
+import { noticeApiEndpoint } from '@/features/alert/notice-api-endpoints';
 import { noticeTemplateCreateActionUrl, noticeTemplateResourceName } from '@/features/alert/notice-template-resource';
 import { adaptRefineRecord, adaptRefineRecords } from '@/shared/refine/refine-provider-data';
 
@@ -124,7 +125,7 @@ export const noticeTemplateDataProvider: DataProvider = {
     });
   },
 
-  getApiUrl: () => '/api/notice'
+  getApiUrl: () => noticeApiEndpoint
 };
 
 async function protect<T>(operation: () => Promise<T>): Promise<T> {

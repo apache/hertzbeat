@@ -17,12 +17,13 @@ import { loadAllNoticeReceiverOptions } from '../../notice-receiver/api/notice-r
 import type { NoticeReceiverOption } from '../../notice-receiver/model/notice-receiver-model';
 import type { NoticeTemplate } from '../../notice-template-model';
 import {
-  buildNoticeRuleListPath,
   buildNoticeRulePayload,
   noticeRulePageSizes,
+  writeNoticeRuleQuery,
   type NoticeRuleDraft,
   type NoticeRuleQuery
 } from '../model/notice-rule-model';
+import { noticeRuleEndpoint, noticeRulesEndpoint, noticeTemplatesEndpoint } from '../../notice-api-endpoints';
 import {
   NoticeRuleContractError,
   parseNoticeRule,
@@ -33,11 +34,14 @@ import {
 export { NoticeRuleContractError } from './notice-rule-schema';
 
 export async function loadNoticeRules(query: NoticeRuleQuery) {
-  return parseNoticeRulePage(await apiMessageGet(buildNoticeRuleListPath(query)), query);
+  return parseNoticeRulePage(
+    await apiMessageGet(`${noticeRulesEndpoint}?${writeNoticeRuleQuery(query).toString()}`),
+    query
+  );
 }
 
 export async function loadNoticeRule(id: number) {
-  return parseNoticeRule(await apiMessageGet(`/api/notice/rule/${id}`), id);
+  return parseNoticeRule(await apiMessageGet(noticeRuleDetailEndpoint(id)), id);
 }
 
 export async function loadAllNoticeReceivers() {
@@ -49,7 +53,7 @@ export async function loadAllNoticeReceivers() {
 }
 
 export async function loadAllNoticeTemplates() {
-  const templates = parseNoticeTemplates(await apiMessageGet('/api/notice/templates/all'));
+  const templates = parseNoticeTemplates(await apiMessageGet(`${noticeTemplatesEndpoint}/all`));
   const ids = templates.flatMap(item => (item.id == null ? [] : [item.id]));
   if (new Set(ids).size !== ids.length) throw new NoticeRuleContractError('NOTICE_RULE_TEMPLATE_OPTIONS_INVALID');
   return templates;
@@ -76,11 +80,15 @@ export async function loadAllNoticeRulesByName(name: string) {
 
 export function saveNoticeRule(draft: NoticeRuleDraft, receivers: NoticeReceiverOption[], templates: NoticeTemplate[]) {
   const payload = buildNoticeRulePayload(draft, receivers, templates);
-  return draft.id ? apiMessagePut('/api/notice/rule', payload) : apiMessagePost('/api/notice/rule', payload);
+  return draft.id ? apiMessagePut(noticeRuleEndpoint, payload) : apiMessagePost(noticeRuleEndpoint, payload);
 }
 
 export function deleteNoticeRule(id: number) {
-  return apiMessageDelete(`/api/notice/rule/${id}`);
+  return apiMessageDelete(noticeRuleDetailEndpoint(id));
+}
+
+function noticeRuleDetailEndpoint(id: number) {
+  return `${noticeRuleEndpoint}/${id}`;
 }
 
 export function isNoticeRuleMissing(error: unknown) {

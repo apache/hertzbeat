@@ -15,7 +15,11 @@
  * limitations under the License.
  */
 
-import { noticeTemplateEndpoint } from './notice-api-endpoints';
-
-export const noticeTemplateResourceName = 'notice-templates';
-export const noticeTemplateCreateActionUrl = noticeTemplateEndpoint;
+/** Shared root used by every Notice transport and Refine adapter. */
+export const noticeApiEndpoint = '/api/notice';
+export const noticeTemplateEndpoint = `${noticeApiEndpoint}/template`;
+export const noticeTemplatesEndpoint = `${noticeApiEndpoint}/templates`;
+export const noticeReceiverEndpoint = `${noticeApiEndpoint}/receiver`;
+export const noticeReceiversEndpoint = `${noticeApiEndpoint}/receivers`;
+export const noticeRuleEndpoint = `${noticeApiEndpoint}/rule`;
+export const noticeRulesEndpoint = `${noticeApiEndpoint}/rules`;

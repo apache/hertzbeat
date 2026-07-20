@@ -18,14 +18,14 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  buildNoticeRuleListPath,
   buildNoticeRulePayload,
   createNoticeRuleDraft,
   noticeRuleDraftFromDetail,
   readNoticeRuleQuery,
   resolveNoticeRuleListState,
   validateNoticeRuleDependencies,
-  validateNoticeRuleDraft
+  validateNoticeRuleDraft,
+  writeNoticeRuleQuery
 } from './notice-rule-model';
 import { compatibleNoticeRuleTemplates, noticeRuleReceiverPatch } from './notice-rule-delivery-model';
 
@@ -53,7 +53,7 @@ describe('notice rule model', () => {
   it('normalizes the searchable zero-based list query', () => {
     const query = readNoticeRuleQuery(new URLSearchParams('name=Night&pageIndex=2&pageSize=15'));
     expect(query).toEqual({ name: 'Night', pageIndex: 2, pageSize: 15 });
-    expect(buildNoticeRuleListPath(query)).toBe('/api/notice/rules?pageIndex=2&pageSize=15&name=Night');
+    expect(writeNoticeRuleQuery(query).toString()).toBe('pageIndex=2&pageSize=15&name=Night');
   });
 
   it('builds backend payload names from selected options and omits custom filtering when forwarding all', () => {

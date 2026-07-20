@@ -34,6 +34,7 @@ import {
   type NoticeRuleMutationVariables,
   type NoticeRuleQuery
 } from '@/features/alert/notice-rule/model/notice-rule-model';
+import { noticeApiEndpoint } from '@/features/alert/notice-api-endpoints';
 import { adaptRefineRecord, adaptRefineRecords } from '@/shared/refine/refine-provider-data';
 
 import { createRefineHttpError, toRefineHttpError } from '../refine-http-error';
@@ -121,7 +122,7 @@ export const noticeRuleDataProvider: DataProvider = {
     });
   },
 
-  getApiUrl: () => '/api/notice'
+  getApiUrl: () => noticeApiEndpoint
 };
 
 async function protect<T>(operation: () => Promise<T>): Promise<T> {

@@ -45,10 +45,7 @@ export type NoticeTemplatePage = {
   number: number;
   size: number;
 };
-export type NoticeTemplateListState = RemotePageState<
-  NoticeTemplateResourceRecord,
-  'unavailable' | 'error'
->;
+export type NoticeTemplateListState = RemotePageState<NoticeTemplateResourceRecord, 'unavailable' | 'error'>;
 
 export class NoticeTemplateContractError extends Error {
   constructor() {
@@ -66,7 +63,7 @@ export function readNoticeTemplateQuery(params: URLSearchParams): NoticeTemplate
     name: params.get('name')?.trim() ?? '',
     preset: params.get('preset') !== 'false',
     pageIndex: Number.isFinite(pageIndex) && pageIndex >= 0 ? pageIndex : 0,
-    pageSize: noticeTemplatePageSizes.includes(pageSize as typeof noticeTemplatePageSizes[number]) ? pageSize : 8
+    pageSize: noticeTemplatePageSizes.includes(pageSize as (typeof noticeTemplatePageSizes)[number]) ? pageSize : 8
   };
 }
 
@@ -77,10 +74,6 @@ export function writeNoticeTemplateQuery(query: NoticeTemplateQuery) {
   params.set('pageIndex', String(query.pageIndex));
   params.set('pageSize', String(query.pageSize));
   return params;
-}
-
-export function buildNoticeTemplateListPath(query: NoticeTemplateQuery) {
-  return `/api/notice/templates?${writeNoticeTemplateQuery(query).toString()}`;
 }
 
 export function createNoticeTemplateDraft(): NoticeTemplateDraft {
@@ -169,12 +162,12 @@ export function parseNoticeTemplateDetail(value: unknown): NoticeTemplate {
   if (!isPlainRecord(value)) throw new NoticeTemplateContractError();
   const id = readOptionalId(value.id);
   if (
-    typeof value.name !== 'string'
-    || !value.name.trim()
-    || !supportedTypes.has(value.type as NoticeReceiverType)
-    || typeof value.preset !== 'boolean'
-    || typeof value.content !== 'string'
-    || !value.content.trim()
+    typeof value.name !== 'string' ||
+    !value.name.trim() ||
+    !supportedTypes.has(value.type as NoticeReceiverType) ||
+    typeof value.preset !== 'boolean' ||
+    typeof value.content !== 'string' ||
+    !value.content.trim()
   ) {
     throw new NoticeTemplateContractError();
   }

@@ -18,7 +18,6 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  buildNoticeTemplateListPath,
   buildNoticeTemplatePayload,
   createNoticeTemplateDraft,
   isNoticeTemplateReadOnly,
@@ -36,7 +35,6 @@ describe('notice template model', () => {
     const query = readNoticeTemplateQuery(new URLSearchParams('name=Email&preset=false&pageIndex=2&pageSize=15'));
 
     expect(query).toEqual({ name: 'Email', preset: false, pageIndex: 2, pageSize: 15 });
-    expect(buildNoticeTemplateListPath(query)).toBe('/api/notice/templates?name=Email&preset=false&pageIndex=2&pageSize=15');
     expect(writeNoticeTemplateQuery(query).toString()).toBe('name=Email&preset=false&pageIndex=2&pageSize=15');
   });
 
@@ -65,8 +63,12 @@ describe('notice template model', () => {
   it('validates required content and all backend channel types', () => {
     const draft = createNoticeTemplateDraft();
     expect(validateNoticeTemplateDraft(draft)).toEqual(['name', 'content']);
-    expect(validateNoticeTemplateDraft({ ...draft, name: 'Ntfy', type: 15 as never, content: '${content}' })).toEqual(['type']);
-    expect(validateNoticeTemplateDraft({ ...draft, name: 'Invalid', type: 16 as never, content: '${content}' })).toEqual(['type']);
+    expect(validateNoticeTemplateDraft({ ...draft, name: 'Ntfy', type: 15 as never, content: '${content}' })).toEqual([
+      'type'
+    ]);
+    expect(
+      validateNoticeTemplateDraft({ ...draft, name: 'Invalid', type: 16 as never, content: '${content}' })
+    ).toEqual(['type']);
   });
 
   it('keeps built-in templates read-only even though they do not have database ids', () => {
@@ -75,24 +77,28 @@ describe('notice template model', () => {
   });
 
   it('maps backend identity into a separate namespaced UI identity', () => {
-    expect(noticeTemplateResourceRecord({
-      id: 42,
-      name: 'Built-in:Email',
-      type: 1,
-      preset: true,
-      content: '${content}'
-    })).toMatchObject({
+    expect(
+      noticeTemplateResourceRecord({
+        id: 42,
+        name: 'Built-in:Email',
+        type: 1,
+        preset: true,
+        content: '${content}'
+      })
+    ).toMatchObject({
       id: 'notice-template:preset:1:Built-in%3AEmail',
       backendId: null,
       preset: true
     });
-    expect(noticeTemplateResourceRecord({
-      id: 42,
-      name: 'Custom',
-      type: 1,
-      preset: false,
-      content: '${content}'
-    })).toMatchObject({
+    expect(
+      noticeTemplateResourceRecord({
+        id: 42,
+        name: 'Custom',
+        type: 1,
+        preset: false,
+        content: '${content}'
+      })
+    ).toMatchObject({
       id: 'notice-template:custom:42',
       backendId: 42,
       preset: false
@@ -102,43 +108,61 @@ describe('notice template model', () => {
   it('strictly parses list and detail responses without turning malformed data into empty state', () => {
     const custom = { id: 42, name: 'Custom', type: 1, preset: false, content: '${content}' };
     expect(parseNoticeTemplateDetail(custom)).toEqual(custom);
-    expect(parseNoticeTemplatePage({
-      content: [custom], totalElements: 1, totalPages: 1, number: 0, size: 8
-    })).toEqual({ content: [custom], totalElements: 1, totalPages: 1, number: 0, size: 8 });
-
-    expect(() => parseNoticeTemplatePage({ content: [], totalElements: '0' }))
-      .toThrowError('Notice Template response is invalid');
-    expect(() => parseNoticeTemplateDetail({ id: 42, name: 'Custom', type: 99, preset: false, content: '' }))
-      .toThrowError('Notice Template response is invalid');
-  });
-
-  it('requires a positive id for custom list records while allowing id-less presets', () => {
-    const preset = { name: 'Built-in', type: 1, preset: true, content: '${content}' };
-    expect(parseNoticeTemplatePage({
-      content: [preset], totalElements: 1, totalPages: 1, number: 0, size: 8
-    }).content).toEqual([preset]);
-
-    for (const id of [undefined, null, 0, -1]) {
-      expect(() => parseNoticeTemplatePage({
-        content: [{ id, name: 'Custom', type: 1, preset: false, content: '${content}' }],
+    expect(
+      parseNoticeTemplatePage({
+        content: [custom],
         totalElements: 1,
         totalPages: 1,
         number: 0,
         size: 8
-      })).toThrowError('Notice Template response is invalid');
+      })
+    ).toEqual({ content: [custom], totalElements: 1, totalPages: 1, number: 0, size: 8 });
+
+    expect(() => parseNoticeTemplatePage({ content: [], totalElements: '0' })).toThrowError(
+      'Notice Template response is invalid'
+    );
+    expect(() =>
+      parseNoticeTemplateDetail({ id: 42, name: 'Custom', type: 99, preset: false, content: '' })
+    ).toThrowError('Notice Template response is invalid');
+  });
+
+  it('requires a positive id for custom list records while allowing id-less presets', () => {
+    const preset = { name: 'Built-in', type: 1, preset: true, content: '${content}' };
+    expect(
+      parseNoticeTemplatePage({
+        content: [preset],
+        totalElements: 1,
+        totalPages: 1,
+        number: 0,
+        size: 8
+      }).content
+    ).toEqual([preset]);
+
+    for (const id of [undefined, null, 0, -1]) {
+      expect(() =>
+        parseNoticeTemplatePage({
+          content: [{ id, name: 'Custom', type: 1, preset: false, content: '${content}' }],
+          totalElements: 1,
+          totalPages: 1,
+          number: 0,
+          size: 8
+        })
+      ).toThrowError('Notice Template response is invalid');
     }
   });
 
   it('rejects page content that exceeds the declared page size', () => {
-    expect(() => parseNoticeTemplatePage({
-      content: [
-        { id: 41, name: 'One', type: 1, preset: false, content: '${one}' },
-        { id: 42, name: 'Two', type: 1, preset: false, content: '${two}' }
-      ],
-      totalElements: 2,
-      totalPages: 2,
-      number: 0,
-      size: 1
-    })).toThrowError('Notice Template response is invalid');
+    expect(() =>
+      parseNoticeTemplatePage({
+        content: [
+          { id: 41, name: 'One', type: 1, preset: false, content: '${one}' },
+          { id: 42, name: 'Two', type: 1, preset: false, content: '${two}' }
+        ],
+        totalElements: 2,
+        totalPages: 2,
+        number: 0,
+        size: 1
+      })
+    ).toThrowError('Notice Template response is invalid');
   });
 });
