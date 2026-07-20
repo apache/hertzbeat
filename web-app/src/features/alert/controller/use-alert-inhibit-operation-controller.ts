@@ -2,29 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-import type { AlertInhibit, AlertInhibitDraft } from '../alert-inhibit-model';
+import type { AlertInhibitReceipt, AlertInhibitRecovery } from '../model/alert-inhibit-state';
 
 export type AlertInhibitCommand = 'saving' | 'operating';
-type ReceiptPhase = 'prepare' | 'write' | 'proof' | 'projection';
-type AlertInhibitWritable = Omit<AlertInhibit, 'enable'> & { enable: boolean };
-
-export type AlertInhibitReceipt =
-  | { kind: 'save'; phase: Exclude<ReceiptPhase, 'prepare'>; draft: AlertInhibitDraft; id?: number }
-  | {
-      kind: 'toggle';
-      phase: ReceiptPhase;
-      record: AlertInhibit;
-      enable: boolean;
-      expected?: AlertInhibitWritable;
-    }
-  | { kind: 'delete'; phase: Exclude<ReceiptPhase, 'prepare'>; id: number };
 
 export type AlertInhibitOperationOwner = { token: symbol };
-export type AlertInhibitRecovery = {
-  kind: AlertInhibitReceipt['kind'];
-  phase: 'proof' | 'projection' | 'commit-uncertain';
-  retryable: boolean;
-};
 
 /** Owns same-tick admission, retained proof receipts, and unmount retirement. */
 export function useAlertInhibitOperationController() {

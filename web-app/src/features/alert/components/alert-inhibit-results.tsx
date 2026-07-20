@@ -22,7 +22,7 @@ import { useTranslation } from 'react-i18next';
 
 import { alertInhibitPageSizes, type AlertInhibit } from '../alert-inhibit-model';
 import styles from '../alert-policy-page.module.css';
-import type { AlertInhibitDetailState, AlertInhibitListState } from '../controller/use-alert-inhibit-controller';
+import type { AlertInhibitDetailState, AlertInhibitListState } from '../model/alert-inhibit-state';
 
 type ResultsProps = {
   state: AlertInhibitListState;

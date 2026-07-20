@@ -3,9 +3,6 @@
 import { useAlertInhibitCommandController } from './use-alert-inhibit-command-controller';
 import { useAlertInhibitReadController } from './use-alert-inhibit-read-controller';
 
-export type { AlertInhibitDetailState, AlertInhibitFailure } from './use-alert-inhibit-editor-controller';
-export type { AlertInhibitListState } from './use-alert-inhibit-read-controller';
-
 export function useAlertInhibitController() {
   const read = useAlertInhibitReadController();
   const command = useAlertInhibitCommandController(read.rereadAuthoritatively);

@@ -5,19 +5,16 @@ import { useCallback, useLayoutEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { useStringQueryDraft } from '@/shared/query-context';
-import type { RemotePageState } from '@/shared/remote-state';
 
 import { classifyAlertInhibitReadError, loadAlertInhibits } from '../alert-inhibit-api';
 import {
   AlertInhibitUnavailableError,
   readAlertInhibitQuery,
   writeAlertInhibitQuery,
-  type AlertInhibit,
   type AlertInhibitPage,
   type AlertInhibitQuery
 } from '../alert-inhibit-model';
-
-export type AlertInhibitListState = RemotePageState<AlertInhibit, 'unavailable' | 'error'>;
+import type { AlertInhibitListState } from '../model/alert-inhibit-state';
 
 const listKey = (query: AlertInhibitQuery) => ['alert-inhibit-policies', query] as const;
 type VisibleQuery = { identity: string; query: AlertInhibitQuery };

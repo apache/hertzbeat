@@ -22,11 +22,11 @@ import {
   requireAlertInhibitAbsent,
   requireAlertInhibitConvergence
 } from '../alert-inhibit-write-proof';
+import type { AlertInhibitReceipt } from '../model/alert-inhibit-state';
 import type { AlertInhibitEditorController } from './use-alert-inhibit-editor-controller';
 import type {
   AlertInhibitOperationController,
-  AlertInhibitOperationOwner,
-  AlertInhibitReceipt
+  AlertInhibitOperationOwner
 } from './use-alert-inhibit-operation-controller';
 
 type Notifications = {

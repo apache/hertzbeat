@@ -3,7 +3,7 @@
 import { Alert, Button } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { AlertInhibitRecovery as RecoveryState } from '../controller/use-alert-inhibit-operation-controller';
+import type { AlertInhibitRecovery as RecoveryState } from '../model/alert-inhibit-state';
 
 export function AlertInhibitRecovery({
   recovery,

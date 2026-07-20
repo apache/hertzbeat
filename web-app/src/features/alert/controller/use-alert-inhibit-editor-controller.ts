@@ -5,11 +5,8 @@ import { useEffect, useRef, useState } from 'react';
 import { classifyAlertInhibitReadError } from '../alert-inhibit-api';
 import { alertInhibitDraftFromDetail, createAlertInhibitDraft, type AlertInhibitDraft } from '../alert-inhibit-model';
 import { loadExactAlertInhibit } from '../alert-inhibit-write-proof';
+import type { AlertInhibitDetailState, AlertInhibitFailure } from '../model/alert-inhibit-state';
 import type { AlertInhibitOperationController } from './use-alert-inhibit-operation-controller';
-
-export type AlertInhibitFailure = 'missing' | 'unavailable' | 'error';
-export type AlertInhibitDetailState =
-  { kind: 'idle' } | { kind: 'loading'; id: number } | { kind: AlertInhibitFailure; id: number };
 
 function useAlertInhibitDraftStore() {
   const [draft, setDraft] = useState<AlertInhibitDraft | null>(null);
