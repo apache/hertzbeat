@@ -387,6 +387,14 @@ function buildTimezoneResult(override: Record<string, unknown> = {}) {
 
 const ambiguousWriteFailures = [
   ['network', () => createRefineHttpError('network', 0, 'NETWORK_REQUEST_FAILED', 'network')],
+  ['HTTP 408', () => createRefineHttpError('timeout', 408, undefined, 'http', 408)],
+  [
+    'direct cause-bearing HTTP 4xx',
+    () =>
+      Object.assign(createRefineHttpError('private', 422, undefined, 'http', 422), {
+        cause: new TypeError('private-system-config-cause')
+      })
+  ],
   [
     'cause-bearing HTTP 4xx',
     () =>

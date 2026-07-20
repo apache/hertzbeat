@@ -21,6 +21,11 @@ import { isRefineHttpError } from '@/shared/refine/refine-http-error';
 export function isDefiniteSystemConfigWriteRejection(reason: unknown) {
   if (!isRefineHttpError(reason)) return false;
   return (
-    reason.kind === 'http' && reason.httpStatus !== undefined && reason.httpStatus >= 400 && reason.httpStatus < 500
+    reason.cause === undefined &&
+    reason.kind === 'http' &&
+    reason.httpStatus !== undefined &&
+    reason.httpStatus >= 400 &&
+    reason.httpStatus < 500 &&
+    reason.httpStatus !== 408
   );
 }

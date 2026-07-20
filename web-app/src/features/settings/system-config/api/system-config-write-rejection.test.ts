@@ -22,19 +22,25 @@ import { createRefineHttpError } from '@/shared/refine/refine-http-error';
 import { isDefiniteSystemConfigWriteRejection } from './system-config-write-rejection';
 
 describe('System Config write rejection', () => {
-  it('accepts only an explicit HTTP 4xx as proof that the POST did not commit', () => {
-    expect(isDefiniteSystemConfigWriteRejection(createRefineHttpError('rejected', 400, 20, 'envelope', 200))).toBe(
+  it.each([
+    ['direct client rejection', createRefineHttpError('private', 422, undefined, 'http', 422), true],
+    ['request timeout', createRefineHttpError('private', 408, undefined, 'http', 408), false],
+    [
+      'cause-bearing client response',
+      Object.assign(createRefineHttpError('private', 422, undefined, 'http', 422), {
+        cause: new Error('private-cause')
+      }),
       false
-    );
-    expect(isDefiniteSystemConfigWriteRejection(createRefineHttpError('rejected', 422, undefined, 'http', 422))).toBe(
-      true
-    );
-    expect(
-      isDefiniteSystemConfigWriteRejection(createRefineHttpError('malformed', 400, 'INVALID', 'contract', 400))
-    ).toBe(false);
-    expect(
-      isDefiniteSystemConfigWriteRejection(createRefineHttpError('unavailable', 503, undefined, 'http', 503))
-    ).toBe(false);
-    expect(isDefiniteSystemConfigWriteRejection({ kind: 'envelope', statusCode: 400 })).toBe(false);
+    ],
+    ['network response', createRefineHttpError('private', 400, undefined, 'network', 422), false],
+    ['business envelope', createRefineHttpError('private', 400, 20, 'envelope', 200), false],
+    ['contract response', createRefineHttpError('private', 400, 'INVALID', 'contract', 422), false],
+    ['display-only client status', createRefineHttpError('private', 422, undefined, 'http'), false],
+    ['missing source status', createRefineHttpError('private', 500, undefined, 'http'), false],
+    ['source status zero', createRefineHttpError('private', 422, undefined, 'http', 0), false],
+    ['server response', createRefineHttpError('private', 503, undefined, 'http', 503), false],
+    ['untyped display status', { kind: 'http', statusCode: 422 }, false]
+  ] as const)('classifies %s from source evidence', (_label, reason, expected) => {
+    expect(isDefiniteSystemConfigWriteRejection(reason)).toBe(expected);
   });
 });
