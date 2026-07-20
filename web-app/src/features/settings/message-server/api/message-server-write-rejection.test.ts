@@ -23,8 +23,10 @@ import { MessageServerContractError } from './message-server-schema';
 import { isDefiniteMessageServerWriteRejection } from './message-server-write-rejection';
 
 describe('message server write rejection', () => {
-  it('permits a new write only after explicit business or HTTP client rejection', () => {
-    expect(isDefiniteMessageServerWriteRejection(new ApiMessageError('business rejection', { code: 42 }))).toBe(true);
+  it('permits a new write only after an explicit HTTP client rejection', () => {
+    expect(
+      isDefiniteMessageServerWriteRejection(new ApiMessageError('business rejection', { code: 42, status: 200 }))
+    ).toBe(false);
     expect(isDefiniteMessageServerWriteRejection(new ApiMessageError('client rejection', { status: 400 }))).toBe(true);
     expect(isDefiniteMessageServerWriteRejection(new ApiMessageError('server failure', { status: 503 }))).toBe(false);
     expect(isDefiniteMessageServerWriteRejection(new ApiMessageError('malformed response', { status: 200 }))).toBe(

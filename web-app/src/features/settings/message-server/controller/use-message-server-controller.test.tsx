@@ -236,7 +236,10 @@ describe('useMessageServerController', () => {
     expect(api.loadSmsServerConfig).toHaveBeenCalledTimes(2);
   });
 
-  it('locks an unprovable ambiguous email secret replacement without repeating POST', async () => {
+  it.each([
+    ['network failure', () => new Error('write failed')],
+    ['business envelope', () => new ApiMessageError('business rejection', { code: 42, status: 200 })]
+  ])('locks an unprovable ambiguous email secret replacement after %s without repeating POST', async (_label, fail) => {
     const firstSave = deferred<void>();
     api.loadEmailServerConfig.mockResolvedValue(emailEvidence());
     api.loadSmsServerConfig.mockResolvedValue({ status: 'missing', config: null });
@@ -258,7 +261,7 @@ describe('useMessageServerController', () => {
     expect(result.current.emailDraft?.emailPassword).toBe('replacement');
     expect(result.current.emailDraft?.emailHost).toBe('smtp.example.test');
     expect(result.current.emailDraft?.clearSecrets).toEqual([]);
-    firstSave.reject(new Error('write failed'));
+    firstSave.reject(fail());
     await act(async () => firstSubmit!);
     expect(result.current.emailDraft?.emailPassword).toBe('replacement');
     expect(result.current.emailSaveRecovery).toBe('messageServer.saveNotConverged');
@@ -432,6 +435,7 @@ describe('useMessageServerController', () => {
   });
 
   it.each([
+    ['business envelope', new ApiMessageError('business rejection', { code: 42, status: 200 })],
     ['server error', { status: 503 }],
     ['malformed success response', new MessageServerContractError()]
   ])('proves an ambiguous email POST after %s without repeating the write', async (_label, details) => {

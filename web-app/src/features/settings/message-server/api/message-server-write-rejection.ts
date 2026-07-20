@@ -17,9 +17,8 @@
 
 import { ApiMessageError } from '@/core/http/api-message';
 
-/** Only an explicit business or 4xx rejection makes another POST safe. */
+/** Only an explicit HTTP 4xx proves that the Message Server POST did not commit. */
 export function isDefiniteMessageServerWriteRejection(reason: unknown) {
   if (!(reason instanceof ApiMessageError)) return false;
-  if (reason.code !== undefined) return true;
-  return reason.status !== undefined && reason.status >= 400 && reason.status < 500;
+  return reason.code === undefined && reason.status !== undefined && reason.status >= 400 && reason.status < 500;
 }
