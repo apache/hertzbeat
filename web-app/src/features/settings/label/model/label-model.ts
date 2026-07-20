@@ -34,6 +34,14 @@ export type LabelEditorState = { value: Partial<LabelRecord>; isNew: true } | { 
 
 export type LabelIdentity = Pick<LabelRecord, 'name'> & Partial<Pick<LabelRecord, 'id' | 'tagValue'>>;
 
+export type LabelExpectedWrite = {
+  id?: number;
+  name: string;
+  tagValue: string;
+  description: string;
+  type: number;
+};
+
 export type LabelPage = {
   content: LabelRecord[];
   totalElements: number;
@@ -62,8 +70,52 @@ export function buildLabelMonitorPath(label: Pick<LabelRecord, 'name' | 'tagValu
   return buildMonitorListPath({ labels: buildLabelDisplayName(label) });
 }
 
+export function buildLabelExpectedWrite(
+  label: Partial<LabelRecord>,
+  operation: 'create' | 'update'
+): LabelExpectedWrite {
+  return {
+    ...(operation === 'update' && label.id !== undefined ? { id: label.id } : {}),
+    name: label.name?.trim() ?? '',
+    tagValue: normalizeLabelText(label.tagValue),
+    description: normalizeLabelText(label.description),
+    type: operation === 'create' ? 1 : (label.type ?? 1)
+  };
+}
+
+export function labelExpectedIdentity(expected: LabelExpectedWrite): LabelIdentity {
+  return {
+    ...(expected.id === undefined ? {} : { id: expected.id }),
+    name: expected.name,
+    tagValue: expected.tagValue
+  };
+}
+
+export function labelRecordIdentity(record: Pick<LabelRecord, 'id' | 'name' | 'tagValue'>): LabelIdentity {
+  return {
+    id: record.id,
+    name: record.name.trim(),
+    tagValue: normalizeLabelText(record.tagValue)
+  };
+}
+
+/** Verifies every client-owned field before a void Label write is considered committed. */
+export function labelSaveConverged(expected: LabelExpectedWrite, canonical: LabelRecord) {
+  return (
+    (expected.id === undefined || canonical.id === expected.id) &&
+    canonical.name.trim() === expected.name &&
+    normalizeLabelText(canonical.tagValue) === expected.tagValue &&
+    normalizeLabelText(canonical.description) === expected.description &&
+    (canonical.type ?? 1) === expected.type
+  );
+}
+
 export function labelTypeKey(type?: number) {
   if (type === 0) return 'labels.type.auto';
   if (type === 2) return 'labels.type.preset';
   return 'labels.type.user';
+}
+
+function normalizeLabelText(value?: string) {
+  return value?.trim() ?? '';
 }

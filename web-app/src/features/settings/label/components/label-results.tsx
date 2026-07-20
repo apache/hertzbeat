@@ -33,6 +33,7 @@ type LabelResultActions = {
 
 type LabelResultsProps = LabelResultActions & {
   busy: boolean;
+  writeLocked: boolean;
   state: LabelListState;
   pageIndex: number;
   pageSize: LabelPageSize;
@@ -102,16 +103,16 @@ function createLabelColumns(t: TFunction, actions: LabelResultsProps): ColumnsTy
           <Button type="link" onClick={() => actions.onCopy(row)}>
             {t('labels.copy')}
           </Button>
-          <Button type="link" disabled={actions.busy} onClick={() => actions.onEdit(row)}>
+          <Button type="link" disabled={actions.writeLocked} onClick={() => actions.onEdit(row)}>
             {t('common.edit')}
           </Button>
           <Popconfirm
-            disabled={actions.busy}
-            okButtonProps={{ disabled: actions.busy }}
+            disabled={actions.writeLocked}
+            okButtonProps={{ disabled: actions.writeLocked }}
             title={t('labels.deleteConfirm')}
             onConfirm={() => actions.onRemove(row)}
           >
-            <Button type="link" danger disabled={actions.busy}>
+            <Button type="link" danger disabled={actions.writeLocked}>
               {t('labels.delete')}
             </Button>
           </Popconfirm>

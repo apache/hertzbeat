@@ -15,12 +15,32 @@
  * limitations under the License.
  */
 import { describe, expect, it } from 'vitest';
-import { buildLabelDisplayName, buildLabelMonitorPath } from './label-model';
+import {
+  buildLabelDisplayName,
+  buildLabelExpectedWrite,
+  buildLabelMonitorPath,
+  labelSaveConverged
+} from './label-model';
 
 describe('label model', () => {
   it('formats labels and builds Monitor query context', () => {
     expect(buildLabelDisplayName({ name: 'env', tagValue: 'prod' })).toBe('env:prod');
     expect(buildLabelDisplayName({ name: 'team', tagValue: ' ' })).toBe('team');
     expect(buildLabelMonitorPath({ name: 'env', tagValue: 'prod' })).toBe('/monitors?labels=env%3Aprod');
+  });
+
+  it('proves all writable fields rather than accepting identity alone', () => {
+    const canonical = { id: 7, name: 'env', tagValue: 'prod', description: 'updated', type: 1 };
+
+    expect(
+      labelSaveConverged(
+        buildLabelExpectedWrite({ name: ' env ', tagValue: ' prod ', description: ' updated ' }, 'create'),
+        canonical
+      )
+    ).toBe(true);
+    expect(
+      labelSaveConverged(buildLabelExpectedWrite({ ...canonical, description: 'stale' }, 'update'), canonical)
+    ).toBe(false);
+    expect(labelSaveConverged(buildLabelExpectedWrite({ ...canonical, type: 2 }, 'update'), canonical)).toBe(false);
   });
 });

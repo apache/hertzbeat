@@ -19,6 +19,7 @@ import { describe, expect, it } from 'vitest';
 
 import apiSource from './api/label-api.ts?raw';
 import mutationSource from './controller/label-mutation-controller.ts?raw';
+import saveMutationSource from './controller/label-save-mutation-controller.ts?raw';
 import schemaSource from './api/label-schema.ts?raw';
 import modelSource from './model/label-model.ts?raw';
 
@@ -45,14 +46,16 @@ describe('Label architecture', () => {
   });
 
   it('keeps Refine mutation params in named controller adapters', () => {
-    expect(mutationSource).toContain('function saveMutationOptions');
-    expect(mutationSource).toContain('function createLabelParams');
-    expect(mutationSource).toContain('function updateLabelParams');
+    expect(saveMutationSource).toContain('function saveMutationOptions');
+    expect(saveMutationSource).toContain('function createLabelParams');
+    expect(saveMutationSource).toContain('function updateLabelParams');
     expect(mutationSource).toContain('function deleteLabelParams');
-    expect(mutationSource).toMatch(/create\.mutate\(\s*createLabelParams\(values\),\s*ownedCallbacks\(/);
-    expect(mutationSource).toMatch(/update\.mutate\(\s*updateLabelParams\(record, values\),\s*ownedCallbacks\(/);
-    expect(mutationSource).toContain('values: { ...record, ...values, id: record.id }');
-    expect(mutationSource).toMatch(/remove\.mutate\(\s*deleteLabelParams\(record\),\s*ownedCallbacks\(/);
+    expect(saveMutationSource).toMatch(/create\.mutate\(\s*createLabelParams\(values\),\s*recovery\.saveCallbacks\(/);
+    expect(saveMutationSource).toMatch(
+      /update\.mutate\(\s*updateLabelParams\(record, values\),\s*recovery\.saveCallbacks\(/
+    );
+    expect(saveMutationSource).toContain('values: { ...record, ...values, id: record.id }');
+    expect(mutationSource).toMatch(/remove\.mutate\(\s*deleteLabelParams\(record\),\s*recovery\.deleteCallbacks\(/);
     expect(mutationSource).toContain('useExclusiveOperation');
   });
 });

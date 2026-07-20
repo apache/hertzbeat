@@ -140,6 +140,7 @@ function labelResults(callbacks: ReturnType<typeof labelCallbacks>, busy: boolea
   return (
     <LabelResults
       busy={busy}
+      writeLocked={busy}
       state={{ kind: 'ready', records: [record], total: 33 }}
       pageIndex={2}
       pageSize={20}

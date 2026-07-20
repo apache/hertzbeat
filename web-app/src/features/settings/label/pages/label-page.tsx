@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Button, Input, Typography } from 'antd';
+import { Alert, Button, Input, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import { useStringQueryDraft } from '@/shared/query-context';
@@ -26,6 +26,7 @@ import styles from '../components/label.module.css';
 import { useLabelEditorController } from '../controller/label-editor-controller';
 import { useLabelQueryController } from '../controller/label-query-controller';
 import { useLabelResourceController } from '../controller/label-resource-controller';
+import type { LabelRecovery } from '../controller/label-save-recovery-controller';
 
 export function LabelPage() {
   const { t } = useTranslation();
@@ -33,6 +34,7 @@ export function LabelPage() {
   const resource = useLabelResourceController(query);
   const { value: draftSearch, setValue: setDraftSearch } = useStringQueryDraft(query.search, query.search);
   const editor = useLabelEditorController(resource);
+  const writeLocked = resource.isLocked();
   const submitSearch = () => {
     const search = draftSearch.trim();
     setDraftSearch(search);
@@ -44,27 +46,25 @@ export function LabelPage() {
         <Typography.Title level={2}>{t('labels.title')}</Typography.Title>
         <Typography.Text type="secondary">{t('labels.description')}</Typography.Text>
       </header>
-      <div className={styles.toolbar}>
-        <Input
-          allowClear
-          disabled={resource.isSaving}
-          value={draftSearch}
-          placeholder={t('labels.search')}
-          onChange={event => setDraftSearch(event.target.value)}
-          onPressEnter={submitSearch}
-        />
-        <Button type="primary" disabled={resource.isSaving} onClick={submitSearch}>
-          {t('common.query')}
-        </Button>
-        <Button disabled={resource.isSaving} loading={resource.refreshing} onClick={resource.refresh}>
-          {t('common.refresh')}
-        </Button>
-        <Button type="primary" disabled={resource.isSaving} onClick={editor.actions.create}>
-          {t('labels.new')}
-        </Button>
-      </div>
+      <LabelRecoveryAlert
+        command={resource.recoveryCommand}
+        recovery={resource.recovery}
+        saving={resource.isSaving}
+        onRetry={resource.retryMutationProof}
+      />
+      <LabelToolbar
+        draftSearch={draftSearch}
+        refreshing={resource.refreshing}
+        saving={resource.isSaving}
+        writeLocked={writeLocked}
+        onCreate={editor.actions.create}
+        onRefresh={resource.refresh}
+        onSearchChange={setDraftSearch}
+        onSubmitSearch={submitSearch}
+      />
       <LabelResults
         busy={resource.isSaving}
+        writeLocked={writeLocked}
         state={resource.listState}
         pageIndex={query.pageIndex}
         pageSize={query.pageSize}
@@ -77,11 +77,75 @@ export function LabelPage() {
       {editor.state.editor && (
         <LabelEditor
           editor={editor.state.editor}
+          locked={writeLocked}
           saving={resource.isSaving}
           onCancel={editor.actions.close}
           onSubmit={editor.actions.submit}
         />
       )}
+    </div>
+  );
+}
+
+function LabelRecoveryAlert({
+  command,
+  recovery,
+  saving,
+  onRetry
+}: {
+  command: 'save' | 'delete' | null;
+  recovery: LabelRecovery;
+  saving: boolean;
+  onRetry: () => Promise<boolean>;
+}) {
+  const { t } = useTranslation();
+  if (!recovery) return null;
+  return (
+    <Alert
+      type="warning"
+      showIcon
+      message={t(command === 'delete' ? 'labels.deleteFailed' : 'labels.saveFailed')}
+      action={
+        <Button size="small" loading={saving} onClick={() => void onRetry()}>
+          {t('common.retry')}
+        </Button>
+      }
+    />
+  );
+}
+
+type LabelToolbarProps = {
+  draftSearch: string;
+  refreshing: boolean;
+  saving: boolean;
+  writeLocked: boolean;
+  onCreate: () => boolean;
+  onRefresh: () => void;
+  onSearchChange: (value: string) => void;
+  onSubmitSearch: () => void;
+};
+
+function LabelToolbar(props: LabelToolbarProps) {
+  const { t } = useTranslation();
+  return (
+    <div className={styles.toolbar}>
+      <Input
+        allowClear
+        disabled={props.saving}
+        value={props.draftSearch}
+        placeholder={t('labels.search')}
+        onChange={event => props.onSearchChange(event.target.value)}
+        onPressEnter={props.onSubmitSearch}
+      />
+      <Button type="primary" disabled={props.saving} onClick={props.onSubmitSearch}>
+        {t('common.query')}
+      </Button>
+      <Button disabled={props.saving} loading={props.refreshing} onClick={props.onRefresh}>
+        {t('common.refresh')}
+      </Button>
+      <Button type="primary" disabled={props.writeLocked} onClick={props.onCreate}>
+        {t('labels.new')}
+      </Button>
     </div>
   );
 }

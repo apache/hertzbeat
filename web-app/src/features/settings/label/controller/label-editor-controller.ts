@@ -6,6 +6,7 @@ import type { LabelEditorState, LabelRecord } from '../model/label-model';
 
 type LabelEditorMutations = {
   createLabel: (values: Partial<LabelRecord>, onConfirmed: () => void) => boolean;
+  isInFlight: () => boolean;
   isLocked: () => boolean;
   updateLabel: (record: LabelRecord, values: Partial<LabelRecord>, onConfirmed: () => void) => boolean;
 };
@@ -29,7 +30,7 @@ export function useLabelEditorController(mutations: LabelEditorMutations) {
     return true;
   };
   const close = () => {
-    if (mutations.isLocked()) return false;
+    if (mutations.isInFlight()) return false;
     publish(undefined);
     return true;
   };

@@ -34,11 +34,15 @@ const resource = vi.hoisted(() => {
     createLabel: vi.fn(),
     deleteLabel: vi.fn(),
     inspectLabel: vi.fn(),
+    isInFlight: vi.fn(),
     isLocked: vi.fn(),
     isSaving: false,
     listState,
+    recovery: null as 'commit-uncertain' | 'proof' | null,
+    recoveryCommand: null as 'save' | 'delete' | null,
     refresh: vi.fn(),
     refreshing: false,
+    retryMutationProof: vi.fn(),
     updateLabel: vi.fn()
   };
 });
@@ -65,6 +69,9 @@ describe('LabelPage', () => {
     vi.clearAllMocks();
     resource.listState = { kind: 'ready', records: [serverLabel], total: 1 };
     resource.isSaving = false;
+    resource.recovery = null;
+    resource.recoveryCommand = null;
+    resource.isInFlight.mockImplementation(() => resource.isSaving);
     resource.isLocked.mockImplementation(() => resource.isSaving);
     resource.createLabel.mockImplementation((_value, onSuccess: () => void) => onSuccess());
     resource.updateLabel.mockImplementation((_record, _value, onSuccess: () => void) => onSuccess());
@@ -139,6 +146,60 @@ describe('LabelPage', () => {
     expect(within(dialog).getByRole('button', { name: /OK$/ })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'New label' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Edit' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeDisabled();
+  });
+
+  it('shows commit uncertainty with GET-only recovery, refresh, and editor exit', async () => {
+    resource.retryMutationProof.mockResolvedValue(false);
+    renderLabelPage();
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit' }));
+    resource.recovery = 'commit-uncertain';
+    resource.isLocked.mockReturnValue(true);
+    fireEvent.change(screen.getByPlaceholderText('Search labels'), { target: { value: 'rerender' } });
+    const dialog = screen.getByRole('dialog');
+
+    expect(screen.getByText('Label could not be saved.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeEnabled();
+    expect(within(dialog).getByRole('button', { name: 'Cancel' })).toBeEnabled();
+    expect(within(dialog).getByRole('button', { name: /OK$/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Refresh' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'New label' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Edit' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+
+    expect(resource.refresh).toHaveBeenCalledTimes(1);
+    expect(resource.retryMutationProof).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(resource.isLocked()).toBe(true);
+  });
+
+  it('offers proof-only retry for update recovery', async () => {
+    resource.recovery = 'proof';
+    resource.isLocked.mockReturnValue(true);
+    resource.recoveryCommand = 'save';
+    resource.retryMutationProof.mockResolvedValue(true);
+    renderLabelPage();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Retry' }));
+
+    expect(resource.retryMutationProof).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows delete proof recovery without a loading spinner and offers GET-only retry', async () => {
+    resource.recovery = 'proof';
+    resource.recoveryCommand = 'delete';
+    resource.isLocked.mockReturnValue(true);
+    resource.retryMutationProof.mockResolvedValue(true);
+    renderLabelPage();
+
+    expect(await screen.findByText('Label could not be deleted.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+
+    expect(resource.retryMutationProof).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('button', { name: 'Delete' })).toBeDisabled();
   });
 

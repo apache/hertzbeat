@@ -15,14 +15,22 @@
  * limitations under the License.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ApiMessageError } from '@/core/http/api-message';
 const { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } = vi.hoisted(() => ({
   apiMessageDelete: vi.fn(),
   apiMessageGet: vi.fn(),
   apiMessagePost: vi.fn(),
   apiMessagePut: vi.fn()
 }));
-vi.mock('@/core/http/api-message', () => ({ apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut }));
+vi.mock('@/core/http/api-message', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/core/http/api-message')>()),
+  apiMessageDelete,
+  apiMessageGet,
+  apiMessagePost,
+  apiMessagePut
+}));
 import { LabelContractError } from '../model/label-model';
+import { LabelTransportFailure } from './label-api-failure';
 import {
   buildLabelPayload,
   deleteLabel,
@@ -89,6 +97,24 @@ describe('label API', () => {
       description: '',
       type: 2
     });
+  });
+
+  it.each([
+    [new ApiMessageError('private rejection', { status: 409 }), 'rejected', 409],
+    [new ApiMessageError('private outage', { cause: new TypeError('private cause') }), 'unavailable', undefined]
+  ])('normalizes write transport evidence without exposing its message', async (reason, kind, status) => {
+    apiMessagePost.mockRejectedValue(reason);
+
+    let failure: unknown;
+    try {
+      await saveLabel({ name: 'env' }, true);
+    } catch (error) {
+      failure = error;
+    }
+
+    expect(failure).toBeInstanceOf(LabelTransportFailure);
+    expect(failure).toMatchObject({ kind, status });
+    expect(JSON.stringify(failure)).not.toContain('private');
   });
 
   it('finds only an exact server record across paginated fuzzy search results', async () => {

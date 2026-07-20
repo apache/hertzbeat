@@ -22,12 +22,13 @@ import type { LabelEditorState, LabelRecord } from '../model/label-model';
 
 type LabelEditorProps = {
   editor: LabelEditorState;
+  locked: boolean;
   saving: boolean;
   onCancel: () => void;
   onSubmit: (value: Partial<LabelRecord>) => void;
 };
 
-export function LabelEditor({ editor, saving, onCancel, onSubmit }: LabelEditorProps) {
+export function LabelEditor({ editor, locked, saving, onCancel, onSubmit }: LabelEditorProps) {
   const { t } = useTranslation();
   const [form] = Form.useForm<Partial<LabelRecord>>();
   const submit = (values: Partial<LabelRecord>) => onSubmit({ ...editor.value, ...values });
@@ -42,7 +43,7 @@ export function LabelEditor({ editor, saving, onCancel, onSubmit }: LabelEditorP
       keyboard={!saving}
       maskClosable={false}
       cancelButtonProps={{ disabled: saving }}
-      okButtonProps={{ disabled: saving }}
+      okButtonProps={{ disabled: locked }}
       onCancel={onCancel}
       onOk={() => form.submit()}
     >
@@ -52,13 +53,13 @@ export function LabelEditor({ editor, saving, onCancel, onSubmit }: LabelEditorP
           label={t('labels.name')}
           rules={[{ required: true, whitespace: true, message: t('labels.nameRequired') }]}
         >
-          <Input disabled={saving} />
+          <Input disabled={locked} />
         </Form.Item>
         <Form.Item name="tagValue" label={t('labels.value')}>
-          <Input disabled={saving} />
+          <Input disabled={locked} />
         </Form.Item>
         <Form.Item name="description" label={t('labels.descriptionLabel')}>
-          <Input disabled={saving} />
+          <Input disabled={locked} />
         </Form.Item>
       </Form>
     </Modal>

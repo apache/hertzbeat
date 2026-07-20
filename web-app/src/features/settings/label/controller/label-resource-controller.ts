@@ -19,6 +19,7 @@ import { useList, type HttpError } from '@refinedev/core';
 import { useCallback, useMemo } from 'react';
 
 import { type LabelListState, type LabelRecord } from '../model/label-model';
+import { classifyLabelReadFailure, labelProjectionConverged, type LabelMutationEvidence } from '../model/label-failure';
 import type { LabelQuery } from '../model/label-query-model';
 import { useLabelActionsController } from './label-actions-controller';
 import { useLabelMutationController } from './label-mutation-controller';
@@ -34,10 +35,21 @@ export function useLabelResourceController(query: LabelQuery) {
     filters: query.search ? [{ field: 'search', operator: 'contains', value: query.search }] : [],
     errorNotification: false
   });
-  const mutations = useLabelMutationController();
-  const actions = useLabelActionsController();
-  const isMutationLocked = mutations.isLocked;
   const refetch = list.query.refetch;
+  const convergeProjection = useCallback(
+    async (evidence: LabelMutationEvidence) => {
+      const projection = await refetch();
+      return (
+        !projection.isError &&
+        projection.data !== undefined &&
+        labelProjectionConverged(evidence, projection.data.data, projection.data.total)
+      );
+    },
+    [refetch]
+  );
+  const mutations = useLabelMutationController(convergeProjection);
+  const actions = useLabelActionsController();
+  const isMutationInFlight = mutations.isInFlight;
   const listState = useMemo(
     () =>
       resolveListState(list.query.isPending, list.query.isError, list.query.error, list.result.data, list.result.total),
@@ -45,9 +57,9 @@ export function useLabelResourceController(query: LabelQuery) {
   );
 
   const refresh = useCallback(() => {
-    if (isMutationLocked()) return;
+    if (isMutationInFlight()) return;
     void refetch();
-  }, [isMutationLocked, refetch]);
+  }, [isMutationInFlight, refetch]);
 
   return {
     ...actions,
@@ -66,12 +78,10 @@ function resolveListState(
   total: number | undefined
 ): LabelListState {
   if (isPending) return { kind: 'loading' };
-  if (isError) return isUnavailable(error) ? { kind: 'unavailable' } : { kind: 'error' };
-  if (records.length === 0) return { kind: 'empty' };
-  if (total === undefined) return { kind: 'error' };
+  if (isError) return { kind: classifyLabelReadFailure(error) };
+  if (typeof total !== 'number' || !Number.isSafeInteger(total) || total < 0 || records.length > total) {
+    return { kind: 'error' };
+  }
+  if (records.length === 0) return total === 0 ? { kind: 'empty' } : { kind: 'error' };
   return { kind: 'ready', records, total };
-}
-
-function isUnavailable(error: HttpError | null) {
-  return error?.statusCode === 0 || [502, 503, 504].includes(error?.statusCode ?? -1);
 }

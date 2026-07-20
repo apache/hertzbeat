@@ -25,26 +25,21 @@ import type {
   UpdateResponse
 } from '@refinedev/core';
 
-import {
-  deleteLabel,
-  findCanonicalLabel,
-  labelEndpoint,
-  loadLabels,
-  saveLabel
-} from '@/features/settings/label/api/label-api';
-import { LabelContractError, type LabelIdentity, type LabelRecord } from '@/features/settings/label/model/label-model';
-import { isLabelPageSize } from '@/features/settings/label/model/label-query-model';
+import { labelEndpoint, loadLabels } from '@/features/settings/label/api/label-api';
+import { LabelTransportFailure } from '@/features/settings/label/api/label-api-failure';
+import { LabelRequestFailure } from '@/features/settings/label/model/label-failure';
+import { LabelContractError } from '@/features/settings/label/model/label-model';
 import { adaptRefineRecord, adaptRefineRecords } from '@/shared/refine/refine-provider-data';
 
 import { createRefineHttpError, toRefineHttpError } from '../refine-http-error';
-
-const labelResource = 'labels';
+import { assertLabelResource, readLabelDraft, readLabelId, readLabelListQuery } from './label-data-provider-input';
+import { deleteAndProveLabel, toLabelRequestFailure, writeAndProveLabel } from './label-data-provider-mutation';
 
 export const labelDataProvider: DataProvider = {
   async getList<TData extends BaseRecord = BaseRecord>(params: GetListParams): Promise<GetListResponse<TData>> {
     return protect(async () => {
       assertLabelResource(params.resource);
-      const query = readListQuery(params);
+      const query = readLabelListQuery(params);
       const page = await loadLabels(query);
       return { data: adaptRefineRecords<TData>(page.content), total: page.totalElements };
     });
@@ -68,8 +63,7 @@ export const labelDataProvider: DataProvider = {
     return protect(async () => {
       assertLabelResource(params.resource);
       const draft = readLabelDraft(params.variables);
-      await saveLabel(draft, true);
-      const canonical = await requireCanonicalLabel(toIdentity(draft));
+      const canonical = await writeAndProveLabel('create', draft);
       return { data: adaptRefineRecord<TData>(canonical) };
     });
   },
@@ -83,8 +77,7 @@ export const labelDataProvider: DataProvider = {
       assertLabelResource(params.resource);
       const id = readLabelId(params.id);
       const draft = { ...readLabelDraft(params.variables), id };
-      await saveLabel(draft, false);
-      const canonical = await requireCanonicalLabel(toIdentity(draft));
+      const canonical = await writeAndProveLabel('update', draft);
       return { data: adaptRefineRecord<TData>(canonical) };
     });
   },
@@ -97,12 +90,7 @@ export const labelDataProvider: DataProvider = {
     return protect(async () => {
       assertLabelResource(params.resource);
       const id = readLabelId(params.id);
-      const identity = toIdentity(readLabelDraft(params.variables), id);
-      const canonical = await requireCanonicalLabel(identity);
-      await deleteLabel(id);
-      if (await findCanonicalLabel(identity)) {
-        throw createRefineHttpError('Label deletion could not be confirmed', 502, 'LABEL_DELETE_NOT_CONFIRMED');
-      }
+      const canonical = await deleteAndProveLabel(id, readLabelDraft(params.variables));
       return { data: adaptRefineRecord<TData>(canonical) };
     });
   },
@@ -114,97 +102,9 @@ async function protect<T>(operation: () => Promise<T>): Promise<T> {
   try {
     return await operation();
   } catch (reason) {
-    if (reason instanceof LabelContractError) {
-      throw createRefineHttpError('Label response is invalid', 502, reason.code);
-    }
+    if (reason instanceof LabelRequestFailure) throw reason;
+    if (reason instanceof LabelTransportFailure || reason instanceof LabelContractError)
+      throw toLabelRequestFailure(reason);
     throw toRefineHttpError(reason);
   }
-}
-
-function assertLabelResource(resource: string) {
-  if (resource !== labelResource) {
-    throw createRefineHttpError('Unsupported Label resource', 400, 'LABEL_RESOURCE_UNSUPPORTED');
-  }
-}
-
-function readListQuery(params: GetListParams) {
-  assertNoSorters(params.sorters);
-  const { currentPage, pageSize } = readPagination(params.pagination);
-  return { search: readSearchFilter(params.filters), pageIndex: currentPage - 1, pageSize };
-}
-
-function assertNoSorters(sorters: GetListParams['sorters']) {
-  if (sorters && sorters.length > 0) {
-    throw createRefineHttpError('Label sorting is not supported', 400, 'LABEL_SORT_UNSUPPORTED');
-  }
-}
-
-function readPagination(pagination: GetListParams['pagination']) {
-  if (pagination?.mode && pagination.mode !== 'server') {
-    throw createRefineHttpError('Label pagination mode is not supported', 400, 'LABEL_PAGINATION_UNSUPPORTED');
-  }
-  const currentPage = pagination?.currentPage ?? 1;
-  const pageSize = pagination?.pageSize ?? 20;
-  if (!Number.isInteger(currentPage) || currentPage < 1 || !isLabelPageSize(pageSize)) {
-    throw createRefineHttpError('Label pagination is invalid', 400, 'LABEL_PAGINATION_INVALID');
-  }
-  return { currentPage, pageSize };
-}
-
-function readSearchFilter(filters: GetListParams['filters']) {
-  if (!filters || filters.length === 0) return '';
-  const [filter] = filters;
-  if (
-    filters.length !== 1 ||
-    !filter ||
-    !('field' in filter) ||
-    filter.field !== 'search' ||
-    filter.operator !== 'contains' ||
-    typeof filter.value !== 'string'
-  ) {
-    throw createRefineHttpError('Label filter is not supported', 400, 'LABEL_FILTER_UNSUPPORTED');
-  }
-  return filter.value.trim();
-}
-
-function readLabelDraft(value: unknown): Partial<LabelRecord> & Pick<LabelRecord, 'name'> {
-  if (!value || typeof value !== 'object') {
-    throw createRefineHttpError('Label variables are invalid', 400, 'LABEL_VARIABLES_INVALID');
-  }
-  const draft = value as Partial<LabelRecord>;
-  if (typeof draft.name !== 'string' || !draft.name.trim()) {
-    throw createRefineHttpError('Label variables are invalid', 400, 'LABEL_VARIABLES_INVALID');
-  }
-  if (draft.tagValue !== undefined && typeof draft.tagValue !== 'string') {
-    throw createRefineHttpError('Label variables are invalid', 400, 'LABEL_VARIABLES_INVALID');
-  }
-  return draft as Partial<LabelRecord> & Pick<LabelRecord, 'name'>;
-}
-
-function readLabelId(value: string | number) {
-  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 1) {
-    throw createRefineHttpError('Label id is invalid', 400, 'LABEL_ID_INVALID');
-  }
-  return value;
-}
-
-function toIdentity(label: LabelIdentity, id?: number): LabelIdentity {
-  const canonicalId = id ?? label.id;
-  return {
-    ...(canonicalId === undefined ? {} : { id: canonicalId }),
-    name: label.name.trim(),
-    tagValue: label.tagValue?.trim() ?? ''
-  };
-}
-
-async function requireCanonicalLabel(identity: LabelIdentity) {
-  const canonical = await findCanonicalLabel(identity);
-  if (!canonical) {
-    throw createRefineHttpError(
-      'Label canonical reread returned no matching server record',
-      502,
-      'LABEL_CANONICAL_REREAD_MISSING'
-    );
-  }
-  return canonical;
 }

@@ -18,6 +18,7 @@
 import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
 
 import { LabelContractError, type LabelIdentity, type LabelPage, type LabelRecord } from '../model/label-model';
+import { labelApiRequest } from './label-api-failure';
 import { parseLabelPage } from './label-schema';
 
 export type LabelListRequest = { search: string; pageIndex: number; pageSize: number };
@@ -44,17 +45,19 @@ export class LabelCanonicalProofLimitError extends LabelContractError {
 }
 
 export async function loadLabels(query: LabelListRequest) {
-  const response = await apiMessageGet(buildLabelListPath(query));
+  const response = await labelApiRequest(() => apiMessageGet(buildLabelListPath(query)));
   return parseLabelPage(response, query);
 }
 
 export function saveLabel(label: Partial<LabelRecord>, isNew: boolean) {
   const payload = buildLabelPayload(label, isNew);
-  return isNew ? apiMessagePost(labelEndpoint, payload) : apiMessagePut(labelEndpoint, payload);
+  return labelApiRequest(() =>
+    isNew ? apiMessagePost(labelEndpoint, payload) : apiMessagePut(labelEndpoint, payload)
+  );
 }
 
 export function deleteLabel(id: number) {
-  return apiMessageDelete(`${labelEndpoint}?ids=${encodeURIComponent(id)}`);
+  return labelApiRequest(() => apiMessageDelete(`${labelEndpoint}?ids=${encodeURIComponent(id)}`));
 }
 
 export async function findCanonicalLabel(identity: LabelIdentity) {

@@ -18,7 +18,13 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { LabelRecord } from '../model/label-model';
+import {
+  createLabelDeleteEvidence,
+  createLabelWriteEvidence,
+  LabelRequestFailure,
+  type LabelWriteRecovery
+} from '../model/label-failure';
+import { buildLabelExpectedWrite, type LabelRecord } from '../model/label-model';
 import { useLabelResourceController } from './label-resource-controller';
 
 const refine = vi.hoisted(() => ({
@@ -35,6 +41,7 @@ const refine = vi.hoisted(() => ({
   useUpdate: vi.fn()
 }));
 const router = vi.hoisted(() => ({ navigate: vi.fn() }));
+const labelApi = vi.hoisted(() => ({ findCanonicalLabel: vi.fn() }));
 
 vi.mock('@refinedev/core', () => ({
   useCreate: refine.useCreate,
@@ -45,6 +52,10 @@ vi.mock('@refinedev/core', () => ({
 }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 vi.mock('react-router-dom', () => ({ useNavigate: () => router.navigate }));
+vi.mock('../api/label-api', async importOriginal => ({
+  ...(await importOriginal<typeof import('../api/label-api')>()),
+  findCanonicalLabel: labelApi.findCanonicalLabel
+}));
 
 const serverLabel: LabelRecord = {
   id: 7,
@@ -67,6 +78,8 @@ describe('Label resource controller', () => {
     refine.useDelete.mockReturnValue({ mutate: refine.deleteMutate, mutation: { isPending: false } });
     refine.useNotification.mockReturnValue({ open: refine.notificationOpen });
     refine.useList.mockReturnValue(buildListResult({ data: [serverLabel], total: 1 }));
+    refine.refetch.mockResolvedValue({ isError: false, data: { data: [serverLabel], total: 1 } });
+    labelApi.findCanonicalLabel.mockReset();
     Object.defineProperty(navigator, 'clipboard', {
       configurable: true,
       value: { writeText: refine.clipboardWrite.mockResolvedValue(undefined) }
@@ -202,6 +215,55 @@ describe('Label resource controller', () => {
     expect(refine.deleteMutate).toHaveBeenCalledTimes(1);
   });
 
+  it('retries ambiguous delete with exact GET proof and never repeats DELETE', async () => {
+    labelApi.findCanonicalLabel.mockResolvedValue(undefined);
+    refine.refetch.mockResolvedValue({ isError: false, data: { data: [], total: 0 } });
+    const { result } = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
+    act(() => {
+      result.current.deleteLabel(serverLabel);
+    });
+    act(() => {
+      void refine.deleteMutate.mock.calls[0]?.[1]?.onError?.(
+        new LabelRequestFailure('unavailable', 'uncertain', {
+          evidence: createLabelDeleteEvidence('write', 'proof', serverLabel)
+        })
+      );
+    });
+
+    expect(result.current.isSaving).toBe(false);
+    expect(result.current.recovery).toBe('proof');
+    expect(result.current.recoveryCommand).toBe('delete');
+    expect(result.current.deleteLabel(serverLabel)).toBe(false);
+
+    await act(async () => result.current.retryMutationProof());
+
+    expect(labelApi.findCanonicalLabel).toHaveBeenCalledWith({ id: 7, name: 'env', tagValue: 'prod' });
+    expect(refine.refetch).toHaveBeenCalledTimes(1);
+    expect(refine.deleteMutate).toHaveBeenCalledTimes(1);
+    expect(result.current.recovery).toBeNull();
+    expect(refine.notificationOpen).toHaveBeenCalledWith({ message: 'labels.deleteSuccess', type: 'success' });
+  });
+
+  it('releases delete recovery only for an explicit typed 4xx rejection', () => {
+    const { result } = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
+    act(() => {
+      result.current.deleteLabel(serverLabel);
+    });
+    act(() => {
+      void refine.deleteMutate.mock.calls[0]?.[1]?.onError?.(
+        new LabelRequestFailure('error', 'rejected', {
+          evidence: createLabelDeleteEvidence('write', 'rewrite', serverLabel)
+        })
+      );
+    });
+    act(() => {
+      result.current.deleteLabel(serverLabel);
+    });
+
+    expect(result.current.recovery).toBeNull();
+    expect(refine.deleteMutate).toHaveBeenCalledTimes(2);
+  });
+
   it('does not publish or notify when a pending mutation completes after unmount', () => {
     const confirmed = vi.fn();
     const hook = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
@@ -219,7 +281,7 @@ describe('Label resource controller', () => {
     expect(refine.notificationOpen).not.toHaveBeenCalled();
   });
 
-  it('ignores an old completion after a newer mutation owns the controller', () => {
+  it('releases a write receipt only after an explicit prewrite 4xx rejection', () => {
     const oldConfirmed = vi.fn();
     const newConfirmed = vi.fn();
     const { result } = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
@@ -228,7 +290,11 @@ describe('Label resource controller', () => {
     });
     const oldCallbacks = refine.createMutate.mock.calls[0]?.[1];
     act(() => {
-      void oldCallbacks?.onError?.({ statusCode: 500 });
+      void oldCallbacks?.onError?.(
+        new LabelRequestFailure('error', 'rejected', {
+          evidence: writeEvidence('create', 'write', 'rewrite', { name: 'old' })
+        })
+      );
       result.current.updateLabel(serverLabel, { description: 'new' }, newConfirmed);
       void oldCallbacks?.onSuccess?.({ data: serverLabel });
     });
@@ -237,6 +303,248 @@ describe('Label resource controller', () => {
     expect(newConfirmed).not.toHaveBeenCalled();
     expect(refine.notificationOpen).toHaveBeenCalledTimes(1);
     expect(refine.notificationOpen).toHaveBeenCalledWith({ message: 'labels.saveFailed', type: 'error' });
+  });
+
+  it('retains a create receipt after canonical proof fails so the UI cannot repeat any mutation', async () => {
+    labelApi.findCanonicalLabel.mockResolvedValue(undefined);
+    const { result } = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
+    act(() => {
+      result.current.createLabel({ name: 'team' }, vi.fn());
+    });
+    act(() => {
+      void refine.createMutate.mock.calls[0]?.[1]?.onError?.(
+        new LabelRequestFailure('unavailable', 'uncertain', {
+          evidence: writeEvidence('create', 'proof', 'commit-uncertain', { name: 'team' })
+        })
+      );
+    });
+
+    expect(result.current.createLabel({ name: 'team' }, vi.fn())).toBe(false);
+    expect(result.current.updateLabel(serverLabel, { description: 'changed' }, vi.fn())).toBe(false);
+    expect(result.current.deleteLabel(serverLabel)).toBe(false);
+    expect(refine.createMutate).toHaveBeenCalledTimes(1);
+    expect(refine.updateMutate).not.toHaveBeenCalled();
+    expect(refine.deleteMutate).not.toHaveBeenCalled();
+    expect(result.current.isSaving).toBe(false);
+    expect(result.current.recovery).toBe('commit-uncertain');
+    await expect(result.current.retryMutationProof()).resolves.toBe(false);
+    expect(labelApi.findCanonicalLabel).toHaveBeenCalledWith({ name: 'team', tagValue: '' });
+    expect(result.current.recovery).toBe('commit-uncertain');
+    expect(refine.createMutate).toHaveBeenCalledTimes(1);
+  });
+
+  it('proves an ambiguous create by GET, enriches its server id, and converges projection without another POST', async () => {
+    const confirmed = vi.fn();
+    const created = { id: 9, name: 'team', tagValue: '', description: '', type: 1 };
+    labelApi.findCanonicalLabel.mockResolvedValue(created);
+    refine.refetch.mockResolvedValue({ isError: false, data: { data: [created], total: 1 } });
+    const { result } = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
+    act(() => {
+      result.current.createLabel({ name: 'team' }, confirmed);
+    });
+    act(() => {
+      void refine.createMutate.mock.calls[0]?.[1]?.onError?.(
+        new LabelRequestFailure('unavailable', 'uncertain', {
+          evidence: writeEvidence('create', 'proof', 'commit-uncertain', { name: 'team' })
+        })
+      );
+    });
+
+    await act(async () => result.current.retryMutationProof());
+
+    expect(labelApi.findCanonicalLabel).toHaveBeenCalledWith({ name: 'team', tagValue: '' });
+    expect(refine.refetch).toHaveBeenCalledTimes(1);
+    expect(refine.createMutate).toHaveBeenCalledTimes(1);
+    expect(confirmed).toHaveBeenCalledTimes(1);
+    expect(result.current.recovery).toBeNull();
+  });
+
+  it('retains enriched create proof when the refreshed projection does not contain its server id', async () => {
+    const confirmed = vi.fn();
+    const created = { id: 9, name: 'team', tagValue: '', description: '', type: 1 };
+    labelApi.findCanonicalLabel.mockResolvedValue(created);
+    refine.refetch.mockResolvedValue({ isError: false, data: { data: [], total: 0 } });
+    const { result } = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
+    act(() => {
+      result.current.createLabel({ name: 'team' }, confirmed);
+    });
+    act(() => {
+      void refine.createMutate.mock.calls[0]?.[1]?.onError?.(
+        new LabelRequestFailure('unavailable', 'uncertain', {
+          evidence: writeEvidence('create', 'proof', 'commit-uncertain', { name: 'team' })
+        })
+      );
+    });
+
+    await act(async () => result.current.retryMutationProof());
+
+    expect(result.current.recovery).toBe('commit-uncertain');
+    expect(confirmed).not.toHaveBeenCalled();
+    expect(refine.createMutate).toHaveBeenCalledTimes(1);
+  });
+
+  it('retries exact-id update proof with GET only and never issues another PUT', async () => {
+    const confirmed = vi.fn();
+    labelApi.findCanonicalLabel.mockResolvedValue({ ...serverLabel, description: 'changed' });
+    refine.refetch.mockResolvedValue({
+      isError: false,
+      data: { data: [{ ...serverLabel, description: 'changed' }], total: 1 }
+    });
+    const { result } = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
+    act(() => {
+      result.current.updateLabel(serverLabel, { description: 'changed' }, confirmed);
+    });
+    act(() => {
+      void refine.updateMutate.mock.calls[0]?.[1]?.onError?.(
+        new LabelRequestFailure('unavailable', 'uncertain', {
+          evidence: writeEvidence('update', 'proof', 'proof', { ...serverLabel, description: 'changed' })
+        })
+      );
+    });
+
+    expect(result.current.updateLabel(serverLabel, { description: 'changed again' }, vi.fn())).toBe(false);
+    expect(refine.updateMutate).toHaveBeenCalledTimes(1);
+    expect(result.current.isSaving).toBe(false);
+    expect(result.current.recovery).toBe('proof');
+
+    await act(async () => result.current.retryMutationProof());
+
+    expect(labelApi.findCanonicalLabel).toHaveBeenCalledWith({ id: 7, name: 'env', tagValue: 'prod' });
+    expect(refine.updateMutate).toHaveBeenCalledTimes(1);
+    expect(confirmed).toHaveBeenCalledTimes(1);
+    expect(result.current.recovery).toBeNull();
+  });
+
+  it('retains proof recovery when canonical data converges but list projection refresh fails', async () => {
+    const confirmed = vi.fn();
+    labelApi.findCanonicalLabel.mockResolvedValue({ ...serverLabel, description: 'changed' });
+    refine.refetch.mockResolvedValue({ isError: true });
+    const { result } = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
+    act(() => {
+      result.current.updateLabel(serverLabel, { description: 'changed' }, confirmed);
+    });
+    act(() => {
+      void refine.updateMutate.mock.calls[0]?.[1]?.onError?.(
+        new LabelRequestFailure('unavailable', 'uncertain', {
+          evidence: writeEvidence('update', 'proof', 'proof', { ...serverLabel, description: 'changed' })
+        })
+      );
+    });
+
+    await act(async () => result.current.retryMutationProof());
+
+    expect(refine.updateMutate).toHaveBeenCalledTimes(1);
+    expect(refine.refetch).toHaveBeenCalledTimes(1);
+    expect(result.current.recovery).toBe('proof');
+    expect(confirmed).not.toHaveBeenCalled();
+  });
+
+  it('retains update proof when refetch succeeds but projects the old writable fields', async () => {
+    const confirmed = vi.fn();
+    labelApi.findCanonicalLabel.mockResolvedValue({ ...serverLabel, description: 'changed' });
+    refine.refetch.mockResolvedValue({ isError: false, data: { data: [serverLabel], total: 1 } });
+    const { result } = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
+    act(() => {
+      result.current.updateLabel(serverLabel, { description: 'changed' }, confirmed);
+    });
+    act(() => {
+      void refine.updateMutate.mock.calls[0]?.[1]?.onError?.(
+        new LabelRequestFailure('unavailable', 'uncertain', {
+          evidence: writeEvidence('update', 'proof', 'proof', { ...serverLabel, description: 'changed' })
+        })
+      );
+    });
+
+    await act(async () => result.current.retryMutationProof());
+
+    expect(result.current.recovery).toBe('proof');
+    expect(confirmed).not.toHaveBeenCalled();
+    expect(refine.updateMutate).toHaveBeenCalledTimes(1);
+  });
+
+  it('retains delete proof when refetch succeeds but still projects the deleted id', async () => {
+    labelApi.findCanonicalLabel.mockResolvedValue(undefined);
+    refine.refetch.mockResolvedValue({ isError: false, data: { data: [serverLabel], total: 1 } });
+    const { result } = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
+    act(() => {
+      result.current.deleteLabel(serverLabel);
+    });
+    act(() => {
+      void refine.deleteMutate.mock.calls[0]?.[1]?.onError?.(
+        new LabelRequestFailure('unavailable', 'uncertain', {
+          evidence: createLabelDeleteEvidence('proof', 'proof', serverLabel)
+        })
+      );
+    });
+
+    await act(async () => result.current.retryMutationProof());
+
+    expect(result.current.recovery).toBe('proof');
+    expect(refine.deleteMutate).toHaveBeenCalledTimes(1);
+    expect(refine.notificationOpen).not.toHaveBeenCalledWith({ message: 'labels.deleteSuccess', type: 'success' });
+  });
+
+  it('retains proof recovery when the exact-id GET still has stale writable values', async () => {
+    labelApi.findCanonicalLabel.mockResolvedValue(serverLabel);
+    const { result } = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
+    act(() => {
+      result.current.updateLabel(serverLabel, { description: 'changed' }, vi.fn());
+    });
+    act(() => {
+      void refine.updateMutate.mock.calls[0]?.[1]?.onError?.(
+        new LabelRequestFailure('unavailable', 'uncertain', {
+          evidence: writeEvidence('update', 'proof', 'proof', { ...serverLabel, description: 'changed' })
+        })
+      );
+    });
+
+    await act(async () => result.current.retryMutationProof());
+
+    expect(refine.updateMutate).toHaveBeenCalledTimes(1);
+    expect(labelApi.findCanonicalLabel).toHaveBeenCalledTimes(1);
+    expect(result.current.recovery).toBe('proof');
+    expect(result.current.isLocked()).toBe(true);
+    expect(result.current.isSaving).toBe(false);
+  });
+
+  it('retires retained proof evidence on unmount before an old retry can issue GET', async () => {
+    const hook = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
+    act(() => {
+      hook.result.current.updateLabel(serverLabel, { description: 'changed' }, vi.fn());
+    });
+    act(() => {
+      void refine.updateMutate.mock.calls[0]?.[1]?.onError?.(
+        new LabelRequestFailure('unavailable', 'uncertain', {
+          evidence: writeEvidence('update', 'proof', 'proof', { ...serverLabel, description: 'changed' })
+        })
+      );
+    });
+    const retry = hook.result.current.retryMutationProof;
+
+    hook.unmount();
+
+    await expect(retry()).resolves.toBe(false);
+    expect(labelApi.findCanonicalLabel).not.toHaveBeenCalled();
+  });
+
+  it('allows a safe list refresh while a commit-uncertain create keeps writes locked', () => {
+    const { result } = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
+    act(() => {
+      result.current.createLabel({ name: 'team' }, vi.fn());
+    });
+    act(() => {
+      void refine.createMutate.mock.calls[0]?.[1]?.onError?.(
+        new LabelRequestFailure('unavailable', 'uncertain', {
+          evidence: writeEvidence('create', 'proof', 'commit-uncertain', { name: 'team' })
+        })
+      );
+    });
+
+    act(() => result.current.refresh());
+
+    expect(refine.refetch).toHaveBeenCalledTimes(1);
+    expect(result.current.isLocked()).toBe(true);
+    expect(result.current.isSaving).toBe(false);
   });
 
   it('publishes localized notifications only from the current mutation owner', () => {
@@ -257,7 +565,11 @@ describe('Label resource controller', () => {
       result.current.updateLabel(serverLabel, { description: 'changed' }, vi.fn());
     });
     act(() => {
-      void refine.updateMutate.mock.calls[0]?.[1]?.onError?.({ statusCode: 500 });
+      void refine.updateMutate.mock.calls[0]?.[1]?.onError?.(
+        new LabelRequestFailure('error', 'rejected', {
+          evidence: writeEvidence('update', 'write', 'rewrite', serverLabel)
+        })
+      );
     });
 
     expect(refine.notificationOpen).toHaveBeenNthCalledWith(1, { message: 'labels.saveSuccess', type: 'success' });
@@ -280,12 +592,9 @@ describe('Label resource controller', () => {
 
   it.each([
     ['loading', { isPending: true }],
-    ['unavailable', { isError: true, error: { statusCode: 0 } }],
-    ['unavailable', { isError: true, error: { statusCode: 502 } }],
-    ['unavailable', { isError: true, error: { statusCode: 503 } }],
-    ['unavailable', { isError: true, error: { statusCode: 504 } }],
-    ['error', { isError: true, error: { statusCode: 400, kind: 'envelope' } }],
-    ['error', { isError: true, error: { statusCode: 500 } }],
+    ['unavailable', { isError: true, error: new LabelRequestFailure('unavailable', 'uncertain') }],
+    ['error', { isError: true, error: new LabelRequestFailure('invalid', 'uncertain') }],
+    ['error', { isError: true, error: new LabelRequestFailure('error', 'uncertain') }],
     ['empty', { result: { data: [], total: 0 } }]
   ])('maps list evidence to the %s state without fake records', (kind, override) => {
     refine.useList.mockReturnValue(buildListResult(override));
@@ -294,6 +603,17 @@ describe('Label resource controller', () => {
 
     expect(result.current.listState).toEqual({ kind });
   });
+
+  it.each([[{ data: [], total: undefined }], [{ data: [], total: 1 }], [{ data: [serverLabel], total: 0 }]])(
+    'rejects incomplete or contradictory list totals instead of showing fake empty/ready state',
+    resultData => {
+      refine.useList.mockReturnValue(buildListResult({ result: resultData }));
+
+      const { result } = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
+
+      expect(result.current.listState).toEqual({ kind: 'error' });
+    }
+  );
 
   it('fails closed without provider transport when a selected server record has no id', () => {
     const invalidRecord = { name: 'env', tagValue: 'prod' } as unknown as LabelRecord;
@@ -353,4 +673,13 @@ function buildListResult(override: Record<string, unknown>) {
 function readResultOverride(override: Record<string, unknown>) {
   const result = override.result;
   return result && typeof result === 'object' ? result : {};
+}
+
+function writeEvidence(
+  operation: 'create' | 'update',
+  phase: 'write' | 'proof',
+  recovery: LabelWriteRecovery,
+  value: Partial<LabelRecord>
+) {
+  return createLabelWriteEvidence(operation, phase, recovery, buildLabelExpectedWrite(value, operation));
 }

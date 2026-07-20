@@ -18,6 +18,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
+import { LabelTransportFailure } from '@/features/settings/label/api/label-api-failure';
+import { LabelRequestFailure } from '@/features/settings/label/model/label-failure';
 import { LabelContractError, type LabelRecord } from '@/features/settings/label/model/label-model';
 
 type LabelApi = typeof import('@/features/settings/label/api/label-api');
@@ -117,6 +119,19 @@ describe('Label Refine data provider', () => {
         id: 7
       })
     ).rejects.toMatchObject({ code: 'LABEL_VARIABLES_INVALID' });
+    await expect(
+      labelDataProvider.create({
+        resource: 'labels',
+        variables: { name: 'env', description: 42 }
+      })
+    ).rejects.toMatchObject({ code: 'LABEL_VARIABLES_INVALID' });
+    await expect(
+      labelDataProvider.update({
+        resource: 'labels',
+        id: 7,
+        variables: { name: 'env', type: 'user' }
+      })
+    ).rejects.toMatchObject({ code: 'LABEL_VARIABLES_INVALID' });
     expect(labelApi.loadLabels).not.toHaveBeenCalled();
     expect(labelApi.saveLabel).not.toHaveBeenCalled();
     expect(labelApi.findCanonicalLabel).not.toHaveBeenCalled();
@@ -124,29 +139,50 @@ describe('Label Refine data provider', () => {
   });
 
   it('rereads server canonical data after void create and update mutations', async () => {
+    const createdLabel = { ...serverLabel, description: 'request value' };
+    const updatedLabel = { ...serverLabel, description: 'new request value' };
     labelApi.saveLabel.mockResolvedValue(undefined);
-    labelApi.findCanonicalLabel.mockResolvedValue(serverLabel);
+    labelApi.findCanonicalLabel.mockResolvedValueOnce(createdLabel).mockResolvedValueOnce(updatedLabel);
 
     await expect(
       labelDataProvider.create<LabelRecord, Partial<LabelRecord>>({
         resource: 'labels',
         variables: { name: ' env ', tagValue: ' prod ', description: 'request value' }
       })
-    ).resolves.toEqual({ data: serverLabel });
+    ).resolves.toEqual({ data: createdLabel });
     await expect(
       labelDataProvider.update<LabelRecord, Partial<LabelRecord>>({
         resource: 'labels',
         id: 7,
         variables: { name: ' env ', tagValue: ' prod ', description: 'new request value' }
       })
-    ).resolves.toEqual({ data: serverLabel });
+    ).resolves.toEqual({ data: updatedLabel });
     expect(labelApi.saveLabel).toHaveBeenNthCalledWith(1, expect.objectContaining({ name: ' env ' }), true);
     expect(labelApi.saveLabel).toHaveBeenNthCalledWith(2, expect.objectContaining({ id: 7 }), false);
     expect(labelApi.findCanonicalLabel).toHaveBeenNthCalledWith(1, { name: 'env', tagValue: 'prod' });
     expect(labelApi.findCanonicalLabel).toHaveBeenNthCalledWith(2, { id: 7, name: 'env', tagValue: 'prod' });
   });
 
-  it('fails closed when a void mutation cannot be reread canonically', async () => {
+  it('does not accept a matching id with stale writable values as update proof', async () => {
+    labelApi.saveLabel.mockResolvedValue(undefined);
+    labelApi.findCanonicalLabel.mockResolvedValue(serverLabel);
+
+    await expect(
+      labelDataProvider.update({
+        resource: 'labels',
+        id: 7,
+        variables: { name: 'env', tagValue: 'prod', description: 'new value' }
+      })
+    ).rejects.toMatchObject({
+      name: 'LabelRequestFailure',
+      kind: 'invalid',
+      writeOutcome: 'uncertain',
+      code: 'LABEL_CANONICAL_NOT_CONVERGED',
+      evidence: { operation: 'update', phase: 'proof', recovery: 'proof', identity: { id: 7 } }
+    });
+  });
+
+  it('marks a create without a canonical server id as commit-uncertain', async () => {
     labelApi.saveLabel.mockResolvedValue(undefined);
     labelApi.findCanonicalLabel.mockResolvedValue(undefined);
 
@@ -155,34 +191,74 @@ describe('Label Refine data provider', () => {
         resource: 'labels',
         variables: { name: 'env', tagValue: 'prod' }
       })
-    ).rejects.toMatchObject({ statusCode: 502, code: 'LABEL_CANONICAL_REREAD_MISSING' });
+    ).rejects.toMatchObject({
+      name: 'LabelRequestFailure',
+      kind: 'invalid',
+      writeOutcome: 'uncertain',
+      code: 'LABEL_CANONICAL_REREAD_MISSING',
+      evidence: {
+        operation: 'create',
+        phase: 'proof',
+        recovery: 'commit-uncertain',
+        identity: { name: 'env', tagValue: 'prod' }
+      }
+    });
   });
 
-  it('sanitizes canonical reread transport failures after the completed mutation', async () => {
+  it('retains exact-id proof evidence when an update canonical reread fails', async () => {
     labelApi.saveLabel.mockResolvedValue(undefined);
-    labelApi.findCanonicalLabel.mockRejectedValue(
-      new ApiMessageError('token=private-reread-token', { cause: new TypeError('private-reread-cause') })
-    );
+    labelApi.findCanonicalLabel.mockRejectedValue(new LabelTransportFailure('unavailable'));
 
     let error: unknown;
     try {
-      await labelDataProvider.create({
+      await labelDataProvider.update({
         resource: 'labels',
+        id: 7,
         variables: { name: 'env', tagValue: 'prod' }
       });
     } catch (reason) {
       error = reason;
     }
+    expect(error).toBeInstanceOf(LabelRequestFailure);
     expect(error).toMatchObject({
-      message: 'Network request failed',
-      statusCode: 0,
-      code: 'NETWORK_REQUEST_FAILED'
+      kind: 'unavailable',
+      writeOutcome: 'uncertain',
+      evidence: {
+        operation: 'update',
+        phase: 'proof',
+        recovery: 'proof',
+        identity: { id: 7, name: 'env', tagValue: 'prod' }
+      }
     });
-    expect(JSON.stringify(error)).not.toContain('private-reread');
     expect(labelApi.saveLabel).toHaveBeenCalledTimes(1);
     expect(labelApi.findCanonicalLabel).toHaveBeenCalledTimes(1);
     expect(labelApi.loadLabels).not.toHaveBeenCalled();
     expect(labelApi.deleteLabel).not.toHaveBeenCalled();
+  });
+
+  it('marks only an explicit 4xx write rejection as safe to rewrite', async () => {
+    labelApi.saveLabel.mockRejectedValue(new LabelTransportFailure('rejected', { status: 409 }));
+
+    await expect(
+      labelDataProvider.create({ resource: 'labels', variables: { name: 'env', tagValue: 'prod' } })
+    ).rejects.toMatchObject({
+      name: 'LabelRequestFailure',
+      writeOutcome: 'rejected',
+      evidence: { operation: 'create', phase: 'write', recovery: 'rewrite' }
+    });
+    expect(labelApi.findCanonicalLabel).not.toHaveBeenCalled();
+  });
+
+  it('does not trust a rejected label without explicit 4xx transport evidence', async () => {
+    labelApi.saveLabel.mockRejectedValue(new LabelTransportFailure('rejected'));
+
+    await expect(
+      labelDataProvider.create({ resource: 'labels', variables: { name: 'env', tagValue: 'prod' } })
+    ).rejects.toMatchObject({
+      name: 'LabelRequestFailure',
+      writeOutcome: 'uncertain',
+      evidence: { operation: 'create', phase: 'write', recovery: 'commit-uncertain' }
+    });
   });
 
   it('deletes a server record pessimistically and confirms canonical absence', async () => {
@@ -203,6 +279,50 @@ describe('Label Refine data provider', () => {
     });
     expect(labelApi.deleteLabel).toHaveBeenCalledWith(7);
     expect(labelApi.findCanonicalLabel).toHaveBeenCalledTimes(2);
+  });
+
+  it('turns ambiguous DELETE and delete-proof failures into exact proof-only evidence', async () => {
+    labelApi.findCanonicalLabel.mockResolvedValueOnce(serverLabel);
+    labelApi.deleteLabel.mockRejectedValueOnce(new LabelTransportFailure('unavailable'));
+
+    await expect(
+      labelDataProvider.deleteOne<LabelRecord, LabelRecord>({
+        resource: 'labels',
+        id: 7,
+        variables: serverLabel
+      })
+    ).rejects.toMatchObject({
+      name: 'LabelRequestFailure',
+      writeOutcome: 'uncertain',
+      evidence: {
+        operation: 'delete',
+        phase: 'write',
+        recovery: 'proof',
+        identity: { id: 7, name: 'env', tagValue: 'prod' }
+      }
+    });
+
+    vi.clearAllMocks();
+    labelApi.findCanonicalLabel
+      .mockResolvedValueOnce(serverLabel)
+      .mockRejectedValueOnce(new LabelTransportFailure('unavailable'));
+    labelApi.deleteLabel.mockResolvedValue(undefined);
+
+    await expect(
+      labelDataProvider.deleteOne<LabelRecord, LabelRecord>({
+        resource: 'labels',
+        id: 7,
+        variables: serverLabel
+      })
+    ).rejects.toMatchObject({
+      evidence: {
+        operation: 'delete',
+        phase: 'proof',
+        recovery: 'proof',
+        identity: { id: 7, name: 'env', tagValue: 'prod' }
+      }
+    });
+    expect(labelApi.deleteLabel).toHaveBeenCalledTimes(1);
   });
 
   it('converts transport errors without exposing secret-shaped messages', async () => {
@@ -228,8 +348,9 @@ describe('Label Refine data provider', () => {
     labelApi.loadLabels.mockRejectedValue(new LabelContractError());
 
     await expect(labelDataProvider.getList({ resource: 'labels' })).rejects.toMatchObject({
-      message: 'Label response is invalid',
-      statusCode: 502,
+      name: 'LabelRequestFailure',
+      kind: 'invalid',
+      writeOutcome: 'uncertain',
       code: 'LABEL_RESPONSE_INVALID'
     });
   });
