@@ -15,11 +15,31 @@
  * limitations under the License.
  */
 
-import { SessionRequestError } from '@/core/auth/session-api';
+export type LoginCredentials = {
+  identifier: string;
+  credential: string;
+};
 
-export function loginErrorMessageKey(error: unknown) {
-  if (!(error instanceof SessionRequestError)) return 'common.routeError.description';
-  if (error.kind === 'invalid-credentials') return 'auth.invalidCredentials';
-  if (error.kind === 'unavailable') return 'common.unavailable';
+export type LoginFailureKind = 'invalid-credentials' | 'unavailable' | 'error';
+
+export type LoginSessionState = 'checking' | 'unavailable' | 'authenticated' | 'anonymous';
+
+type LoginSessionEvidence = {
+  loading: boolean;
+  unavailable: boolean;
+  authenticated: boolean;
+};
+
+/** Gives session evidence a stable precedence before the page renders a state. */
+export function resolveLoginSessionState(evidence: LoginSessionEvidence): LoginSessionState {
+  if (evidence.loading) return 'checking';
+  if (evidence.unavailable) return 'unavailable';
+  if (evidence.authenticated) return 'authenticated';
+  return 'anonymous';
+}
+
+export function loginErrorMessageKey(failure: LoginFailureKind) {
+  if (failure === 'invalid-credentials') return 'auth.invalidCredentials';
+  if (failure === 'unavailable') return 'common.unavailable';
   return 'common.routeError.description';
 }

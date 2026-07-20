@@ -20,14 +20,17 @@ import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { safeRedirectTarget } from '@/core/auth/navigation';
-import { loginSession } from '@/core/auth/session-api';
+import { loginSession, SessionRequestError } from '@/core/auth/session-api';
 import { useSession } from '@/core/auth/session-context';
 import { useSessionIdentityBoundary } from '@/core/auth/session-identity-context';
 import { applicationRoutePaths } from '@/shared/navigation/app-paths';
 
-import { loginErrorMessageKey } from './login-model';
-
-type LoginValues = { identifier: string; credential: string };
+import {
+  loginErrorMessageKey,
+  resolveLoginSessionState,
+  type LoginCredentials,
+  type LoginFailureKind
+} from './login-model';
 
 export function useLoginController() {
   const navigate = useNavigate();
@@ -35,18 +38,26 @@ export function useLoginController() {
   const [searchParams] = useSearchParams();
   const { loading, retry, session, unavailable } = useSession();
   const submitting = useRef(false);
+  const navigatedTargetRef = useRef<string | null>(null);
   const redirectTarget = safeRedirectTarget(searchParams.get('redirect')) ?? applicationRoutePaths.dashboard;
   const login = useMutation({
-    mutationFn: ({ identifier, credential }: LoginValues) => loginSession(identifier, credential)
+    mutationFn: ({ identifier, credential }: LoginCredentials) => loginSession(identifier, credential)
   });
 
   useEffect(() => {
-    if (!loading && !unavailable && session?.authenticated) {
-      void navigate(redirectTarget, { replace: true });
+    // Keep the completed target through transient checking or unavailable evidence.
+    // A true anonymous state retires it so a later login may navigate again.
+    if (loading || unavailable) return;
+    if (!session?.authenticated) {
+      navigatedTargetRef.current = null;
+      return;
     }
+    if (navigatedTargetRef.current === redirectTarget) return;
+    navigatedTargetRef.current = redirectTarget;
+    void navigate(redirectTarget, { replace: true });
   }, [loading, navigate, redirectTarget, session?.authenticated, unavailable]);
 
-  const submit = async (values: LoginValues) => {
+  const submit = async (values: LoginCredentials) => {
     if (submitting.current) return;
     submitting.current = true;
     try {
@@ -59,16 +70,21 @@ export function useLoginController() {
   };
 
   return {
-    errorKey: login.error ? loginErrorMessageKey(login.error) : undefined,
+    errorKey: login.error ? loginErrorMessageKey(classifyLoginFailure(login.error)) : undefined,
     pending: login.isPending,
     retrySession: retry,
-    sessionState: loading
-      ? ('checking' as const)
-      : unavailable
-        ? ('unavailable' as const)
-        : session?.authenticated
-          ? ('authenticated' as const)
-          : ('anonymous' as const),
+    sessionState: resolveLoginSessionState({
+      loading,
+      unavailable,
+      authenticated: Boolean(session?.authenticated)
+    }),
     submit
   };
+}
+
+function classifyLoginFailure(error: unknown): LoginFailureKind {
+  if (!(error instanceof SessionRequestError)) return 'error';
+  if (error.kind === 'invalid-credentials') return 'invalid-credentials';
+  if (error.kind === 'unavailable') return 'unavailable';
+  return 'error';
 }

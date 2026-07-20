@@ -19,9 +19,8 @@ import { Alert, Button, Form, Input, Skeleton, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import styles from './login-page.module.css';
+import type { LoginCredentials } from './login-model';
 import { useLoginController } from './use-login-controller';
-
-type LoginValues = { identifier: string; credential: string };
 
 export function LoginPage() {
   const { t } = useTranslation();
@@ -55,12 +54,16 @@ export function LoginPage() {
   return (
     <main className={styles.page}>
       <section className={styles.panel} aria-labelledby="login-title">
-        <Typography.Title id="login-title" level={2}>{t('auth.title')}</Typography.Title>
+        <Typography.Title id="login-title" level={2}>
+          {t('auth.title')}
+        </Typography.Title>
         <Typography.Paragraph type="secondary">{t('auth.description')}</Typography.Paragraph>
         {controller.errorKey && <Alert type="error" showIcon message={t(controller.errorKey)} />}
-        <Form<LoginValues>
+        <Form<LoginCredentials>
           layout="vertical"
-          onFinish={values => { void controller.submit(values); }}
+          onFinish={values => {
+            void controller.submit(values);
+          }}
           requiredMark={false}
         >
           <Form.Item name="identifier" label={t('auth.username')} rules={[{ required: true }]}>

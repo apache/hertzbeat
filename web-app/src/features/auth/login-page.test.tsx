@@ -23,7 +23,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import { SessionProvider } from '@/core/auth/session-provider';
 import { SessionIdentityProvider } from '@/core/auth/session-identity-provider';
-import { anonymousSession, sessionQueryKey, type UiSession } from '@/core/auth/session-api';
+import { anonymousSession, SessionRequestError, sessionQueryKey, type UiSession } from '@/core/auth/session-api';
 import { SessionContext, type SessionState } from '@/core/auth/session-context';
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 import { SessionQueryRuntime } from '@/app/refine/session-query-runtime';
@@ -75,6 +75,26 @@ describe('LoginPage', () => {
     expect(sessionApi.loginSession).toHaveBeenCalledTimes(1);
   });
 
+  it('starts with empty credentials and submits only the values entered in this session', async () => {
+    sessionApi.loginSession.mockResolvedValue(authenticated);
+    renderLogin('/passport/login?redirect=%2Fdashboard');
+    const username = screen.getByLabelText('Username');
+    const password = screen.getByLabelText('Password');
+
+    expect(username).toHaveValue('');
+    expect(password).toHaveValue('');
+
+    fireEvent.change(username, { target: { value: 'typed-operator' } });
+    fireEvent.change(password, { target: { value: 'typed-session-credential' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+
+    await waitFor(() =>
+      expect(sessionApi.loginSession).toHaveBeenCalledWith('typed-operator', 'typed-session-credential')
+    );
+    await waitFor(() => expect(screen.getByTestId('route')).toHaveTextContent('/dashboard'));
+    expect(screen.getByTestId('route')).not.toHaveTextContent('typed-session-credential');
+  });
+
   it('publishes a successful login through a new QueryClient generation', async () => {
     sessionApi.loginSession.mockResolvedValue(authenticated);
     const { queryClients } = renderLogin();
@@ -98,15 +118,35 @@ describe('LoginPage', () => {
     expect(sessionApi.loginSession).not.toHaveBeenCalled();
   });
 
-  it('never renders a raw backend authentication error', async () => {
-    const { SessionRequestError } = await import('@/core/auth/session-api');
-    sessionApi.loginSession.mockRejectedValue(new SessionRequestError('invalid-credentials'));
+  it.each([
+    [
+      'invalid credentials',
+      new SessionRequestError('invalid-credentials', { cause: new Error('internal authentication detail') }),
+      'The username or password is incorrect.'
+    ],
+    [
+      'unavailable service',
+      new SessionRequestError('unavailable', { cause: new Error('internal authentication detail') }),
+      'The service is unavailable. Check the backend connection and try again.'
+    ],
+    [
+      'contract failure',
+      new SessionRequestError('contract', { cause: new Error('internal authentication detail') }),
+      'This page could not be loaded. Retry or return to it later.'
+    ],
+    [
+      'unexpected failure',
+      new Error('internal authentication detail'),
+      'This page could not be loaded. Retry or return to it later.'
+    ]
+  ])('maps %s without rendering raw backend details', async (_label, failure, message) => {
+    sessionApi.loginSession.mockRejectedValue(failure);
     renderLogin();
     fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'operator' } });
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'bad-credential' } });
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
 
-    expect(await screen.findByText('The username or password is incorrect.')).toBeInTheDocument();
+    expect(await screen.findByText(message)).toBeInTheDocument();
     expect(screen.queryByText(/internal authentication detail/i)).not.toBeInTheDocument();
   });
 
