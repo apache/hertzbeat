@@ -7,7 +7,7 @@ import {
   type NoticeReceiverDraft,
   type NoticeReceiverMutation
 } from './model/notice-receiver-model';
-import type { NoticeReceiverNonMissingFailureKind } from './notice-receiver-failure';
+import type { NoticeReceiverNonMissingFailureKind } from './model/notice-receiver-failure-kind';
 
 export function requireExactNoticeReceiver(receiver: NoticeReceiver, id: number) {
   if (receiver.id !== id) throw new NoticeReceiverContractError('Notice receiver detail id mismatch');

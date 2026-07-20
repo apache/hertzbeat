@@ -3,9 +3,10 @@
 import { ApiMessageError } from '@/core/http/api-message';
 
 import { NoticeReceiverContractError } from './api/notice-receiver-schema';
-
-export type NoticeReceiverFailureKind = 'missing' | 'invalid' | 'unavailable' | 'error';
-export type NoticeReceiverNonMissingFailureKind = Exclude<NoticeReceiverFailureKind, 'missing'>;
+import type {
+  NoticeReceiverFailureKind,
+  NoticeReceiverNonMissingFailureKind
+} from './model/notice-receiver-failure-kind';
 
 type FailurePhase = 'detail' | 'collection' | 'write';
 type FailureEvidence = { code?: string | number; status?: number; statusCode?: number };

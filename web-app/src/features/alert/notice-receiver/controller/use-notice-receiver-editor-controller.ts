@@ -13,7 +13,8 @@ import {
   type NoticeReceiverSecretKey,
   type NoticeReceiverType
 } from '../model/notice-receiver-model';
-import { classifyNoticeReceiverDetailFailure, type NoticeReceiverFailureKind } from '../notice-receiver-failure';
+import type { NoticeReceiverFailureKind } from '../model/notice-receiver-failure-kind';
+import { classifyNoticeReceiverDetailFailure } from '../notice-receiver-failure';
 import {
   useNoticeReceiverOperationController,
   type NoticeReceiverOperationController

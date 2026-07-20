@@ -16,8 +16,11 @@ import {
   type NoticeReceiver,
   type NoticeReceiverDraft
 } from '../model/notice-receiver-model';
+import type {
+  NoticeReceiverFailureKind,
+  NoticeReceiverNonMissingFailureKind
+} from '../model/notice-receiver-failure-kind';
 import { noticeReceiverResourceName } from '../notice-receiver-resource';
-import type { NoticeReceiverFailureKind, NoticeReceiverNonMissingFailureKind } from '../notice-receiver-failure';
 import {
   removeNoticeReceiver,
   retryNoticeReceiver,

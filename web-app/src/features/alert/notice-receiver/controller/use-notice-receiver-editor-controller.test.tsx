@@ -4,8 +4,8 @@ import { act, renderHook } from '@testing-library/react';
 import { StrictMode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { NoticeReceiverFailureKind } from '../model/notice-receiver-failure-kind';
 import type { NoticeReceiver } from '../model/notice-receiver-model';
-import type { NoticeReceiverFailureKind } from '../notice-receiver-failure';
 import { deferred, persistedNoticeReceiver } from './notice-receiver-controller-test-fixtures';
 
 import {

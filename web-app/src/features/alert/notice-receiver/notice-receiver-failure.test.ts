@@ -2,12 +2,14 @@
 
 import { describe, expect, expectTypeOf, it } from 'vitest';
 
+import type {
+  NoticeReceiverFailureKind,
+  NoticeReceiverNonMissingFailureKind
+} from './model/notice-receiver-failure-kind';
 import {
   classifyNoticeReceiverCollectionFailure,
   classifyNoticeReceiverDetailFailure,
-  classifyNoticeReceiverWriteFailure,
-  type NoticeReceiverFailureKind,
-  type NoticeReceiverNonMissingFailureKind
+  classifyNoticeReceiverWriteFailure
 } from './notice-receiver-failure';
 import { noticeReceiverRereadError } from './notice-receiver-evidence';
 

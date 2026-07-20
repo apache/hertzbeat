@@ -4,7 +4,7 @@ import { Alert, Button, Input, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import styles from '../../alert-policy-page.module.css';
-import type { NoticeReceiverRecovery as NoticeReceiverRecoveryState } from '../controller/use-notice-receiver-operation-controller';
+import type { NoticeReceiverRecovery as NoticeReceiverRecoveryState } from '../model/notice-receiver-operation-state';
 
 export function NoticeReceiverHeading({ busy, create }: { busy: boolean; create: () => void }) {
   const { t } = useTranslation();

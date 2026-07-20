@@ -5,7 +5,7 @@ import type { ColumnsType } from 'antd/es/table';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
-import type { NoticeReceiverListState } from '../controller/notice-receiver-controller';
+import type { NoticeReceiverListState } from '../model/notice-receiver-list-state';
 import { noticeReceiverPageSizes, receiverTypeDefinitions, type NoticeReceiver } from '../model/notice-receiver-model';
 import { noticeReceiverSettingSummary } from '../model/notice-receiver-summary';
 

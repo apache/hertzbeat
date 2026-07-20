@@ -5,6 +5,11 @@ import {
   type NoticeReceiver,
   type NoticeReceiverDraft
 } from '../model/notice-receiver-model';
+import type {
+  NoticeReceiverFailureKind,
+  NoticeReceiverNonMissingFailureKind
+} from '../model/notice-receiver-failure-kind';
+import type { NoticeReceiverReceipt } from '../model/notice-receiver-operation-state';
 import {
   noticeReceiverRereadError,
   readNoticeReceiverMutation,
@@ -12,17 +17,11 @@ import {
   requireNoticeReceiverAbsent,
   requireNoticeReceiverConverged
 } from '../notice-receiver-evidence';
-import {
-  classifyNoticeReceiverDetailFailure,
-  classifyNoticeReceiverWriteFailure,
-  type NoticeReceiverFailureKind,
-  type NoticeReceiverNonMissingFailureKind
-} from '../notice-receiver-failure';
+import { classifyNoticeReceiverDetailFailure, classifyNoticeReceiverWriteFailure } from '../notice-receiver-failure';
 import type { NoticeReceiverEditorController } from './use-notice-receiver-editor-controller';
 import type {
   NoticeReceiverOperationController,
-  NoticeReceiverOperationOwner,
-  NoticeReceiverReceipt
+  NoticeReceiverOperationOwner
 } from './use-notice-receiver-operation-controller';
 
 type NoticeReceiverNotifications = {

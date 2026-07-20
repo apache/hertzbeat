@@ -4,8 +4,6 @@ import { useNoticeReceiverCommandController } from './use-notice-receiver-comman
 import { useNoticeReceiverQueryController } from './notice-receiver-query-controller';
 import { useNoticeReceiverReadController } from './use-notice-receiver-read-controller';
 
-export type { NoticeReceiverListState } from './use-notice-receiver-read-controller';
-
 export function useNoticeReceiverController() {
   const query = useNoticeReceiverQueryController();
   const read = useNoticeReceiverReadController(query.query);

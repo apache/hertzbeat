@@ -3,24 +3,15 @@
 import { useDataProvider, useList, type HttpError } from '@refinedev/core';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
-import type { RemotePayloadState } from '@/shared/remote-state';
-
 import {
   noticeReceiverRereadError,
   requireExactNoticeReceiver,
   throwableNoticeReceiverError
 } from '../notice-receiver-evidence';
-import {
-  classifyNoticeReceiverCollectionFailure,
-  type NoticeReceiverNonMissingFailureKind
-} from '../notice-receiver-failure';
+import { classifyNoticeReceiverCollectionFailure } from '../notice-receiver-failure';
+import type { NoticeReceiverListState } from '../model/notice-receiver-list-state';
 import type { NoticeReceiver, NoticeReceiverQuery } from '../model/notice-receiver-model';
 import { noticeReceiverResourceName } from '../notice-receiver-resource';
-
-export type NoticeReceiverListState = RemotePayloadState<
-  { records: NoticeReceiver[]; total: number },
-  NoticeReceiverNonMissingFailureKind
->;
 
 type VisibleRead = {
   identity: string;
