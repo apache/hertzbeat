@@ -20,7 +20,7 @@ import { basename, extname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import process from 'node:process';
 
-import { checkFeatureConventions, containsPrimitiveParserHelper } from './feature-conventions.mjs';
+import { checkFeatureConventions, containsPrimitiveParserHelper, countSourceLines } from './feature-conventions.mjs';
 import { checkFunctionConventions } from './function-conventions.mjs';
 
 const requiredDirectories = ['app', 'core', 'layout', 'features', 'shared', join('assets', 'i18n')];
@@ -28,6 +28,7 @@ const forbiddenSegments = new Set(['compat', 'controllers', 'deprecated', 'legac
 const sourceExtensions = new Set(['.ts', '.tsx', '.css']);
 const ignoredDirectories = new Set(['.tmp', 'coverage', 'dist', 'node_modules']);
 const maximumSourceLineLength = 200;
+const maximumDataProviderLines = 200;
 const authPrimitiveParserNames = new Set([
   'array',
   'boolean',
@@ -153,6 +154,13 @@ function validateReadableTsx(path, normalizedPath, source, failures) {
 
 function validateModuleSize(path, normalizedPath, source, failures) {
   if (isTest(path) || normalizedPath.startsWith('features/')) return;
+  if (/^app\/refine\/resources\/[^/]+-data-provider\.[jt]sx?$/.test(normalizedPath)) {
+    const lines = countSourceLines(source, extname(path));
+    if (lines > maximumDataProviderLines) {
+      failures.push(`${normalizedPath}: ${lines} lines exceeds ${maximumDataProviderLines}`);
+    }
+    return;
+  }
   const lines = source.trimEnd().split(/\r?\n/).length;
   const limit = lineLimit(normalizedPath);
   if (lines > limit) failures.push(`${normalizedPath}: ${lines} lines exceeds ${limit}`);

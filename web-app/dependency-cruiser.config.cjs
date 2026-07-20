@@ -16,11 +16,22 @@
  */
 
 const productionSource = '[.](?:test|spec)[.](?:ts|tsx)$';
-const featurePresentationSource = [
-  '^src/features/[^/]+/(?:components|pages)/',
-  '^src/features/[^/]+/[^/]+/(?:components|pages)/',
-  '^src/features/[^/]+/[^/]+-page[.]tsx?$'
-].join('|');
+
+function featureLayerSource(directory, rootSuffix = directory) {
+  return [
+    `^src/features/[^/]+/${directory}/`,
+    `^src/features/[^/]+/[^/]+/${directory}/`,
+    `^src/features/[^/]+/[^/]+-${rootSuffix}[.]tsx?$`,
+    `^src/features/[^/]+/[^/]+/[^/]+-${rootSuffix}[.]tsx?$`
+  ].join('|');
+}
+
+const featureApiSource = featureLayerSource('api');
+const featureModelSource = featureLayerSource('model');
+const featureControllerSource = featureLayerSource('controller');
+const featureComponentsSource = featureLayerSource('components', 'component');
+const featurePagesSource = featureLayerSource('pages', 'page');
+const featurePresentationSource = [featureComponentsSource, featurePagesSource].join('|');
 
 /** @type {import('dependency-cruiser').IConfiguration} */
 module.exports = {
@@ -115,6 +126,24 @@ module.exports = {
       }
     },
     {
+      name: 'no-feature-api-to-outer-feature-layers',
+      severity: 'error',
+      from: { path: featureApiSource, pathNot: productionSource },
+      to: { path: [featureControllerSource, featureComponentsSource, featurePagesSource].join('|') }
+    },
+    {
+      name: 'no-feature-model-to-non-model-feature-layers',
+      severity: 'error',
+      from: { path: featureModelSource, pathNot: productionSource },
+      to: { path: [featureApiSource, featureControllerSource, featureComponentsSource, featurePagesSource].join('|') }
+    },
+    {
+      name: 'no-feature-controller-to-presentation',
+      severity: 'error',
+      from: { path: featureControllerSource, pathNot: productionSource },
+      to: { path: [featureComponentsSource, featurePagesSource].join('|') }
+    },
+    {
       name: 'no-feature-presentation-to-orchestration-runtime',
       severity: 'error',
       from: {
@@ -141,11 +170,7 @@ module.exports = {
       name: 'no-feature-model-to-ui-runtime',
       severity: 'error',
       from: {
-        path: [
-          '^src/features/[^/]+/model/',
-          '^src/features/[^/]+/[^/]+/model/',
-          '^src/features/[^/]+/[^/]+-model[.]tsx?$'
-        ].join('|'),
+        path: featureModelSource,
         pathNot: productionSource
       },
       to: {

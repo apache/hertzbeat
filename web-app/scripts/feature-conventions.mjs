@@ -23,6 +23,7 @@ const featureDebtRules = Object.freeze({
   moduleSize: 'feature-module-size',
   primitiveParser: 'primitive-wire-parser',
   inlineQueryKey: 'inline-query-key',
+  directBrowserTransport: 'direct-browser-transport',
   rawCssColor: 'feature-css-raw-color',
   genericHooksFile: 'generic-hooks-file',
   presentationApiDependency: 'presentation-api-dependency',
@@ -57,6 +58,8 @@ const queryClientMethodsWithDirectKey = new Set([
   'setQueryData',
   'setQueryDefaults'
 ]);
+const browserTransportNames = new Set(['fetch', 'EventSource', 'WebSocket', 'XMLHttpRequest']);
+const browserGlobalNames = new Set(['globalThis', 'self', 'window']);
 
 export function checkFeatureConventions(projectRoot) {
   const violations = collectFeatureViolations(projectRoot);
@@ -127,6 +130,12 @@ function inspectFeatureFile(path, sourceRoot) {
     normalizedPath,
     syntaxCounts?.inlineQueryKeys ?? 0
   );
+  addCountObservation(
+    observations,
+    featureDebtRules.directBrowserTransport,
+    normalizedPath,
+    syntaxCounts?.directBrowserTransports ?? 0
+  );
   if (extname(path) === '.css') {
     const sourceWithoutComments = stripCssComments(source);
     addCountObservation(
@@ -166,7 +175,7 @@ function countTypeScriptSyntax(
     true,
     extname(path) === '.tsx' ? ts.ScriptKind.TSX : ts.ScriptKind.TS
   );
-  const counts = { primitiveParsers: 0, inlineQueryKeys: 0 };
+  const counts = { primitiveParsers: 0, inlineQueryKeys: 0, directBrowserTransports: 0 };
   const visit = node => {
     if (ts.isFunctionDeclaration(node) && node.name && parserNames.has(node.name.text)) {
       counts.primitiveParsers += 1;
@@ -182,10 +191,31 @@ function countTypeScriptSyntax(
       counts.primitiveParsers += 1;
     }
     if (isInlineQueryKey(node)) counts.inlineQueryKeys += 1;
+    if (isDirectBrowserTransport(node)) counts.directBrowserTransports += 1;
     ts.forEachChild(node, visit);
   };
   visit(sourceFile);
   return counts;
+}
+
+function isDirectBrowserTransport(node) {
+  if (!ts.isCallExpression(node) && !ts.isNewExpression(node)) return false;
+  return directBrowserTransportName(node.expression) !== undefined;
+}
+
+function directBrowserTransportName(expression) {
+  if (ts.isIdentifier(expression) && browserTransportNames.has(expression.text)) return expression.text;
+  if (!ts.isPropertyAccessExpression(expression) && !ts.isElementAccessExpression(expression)) return undefined;
+  if (!ts.isIdentifier(expression.expression) || !browserGlobalNames.has(expression.expression.text)) return undefined;
+
+  const memberName = browserGlobalMemberName(expression);
+  return memberName !== undefined && browserTransportNames.has(memberName) ? memberName : undefined;
+}
+
+function browserGlobalMemberName(expression) {
+  if (ts.isPropertyAccessExpression(expression)) return expression.name.text;
+  if (ts.isStringLiteralLike(expression.argumentExpression)) return expression.argumentExpression.text;
+  return undefined;
 }
 
 function isInlineQueryKey(node) {
@@ -299,7 +329,7 @@ function featureModuleLimit(path) {
   return undefined;
 }
 
-function countSourceLines(source, extension) {
+export function countSourceLines(source, extension) {
   const withoutComments =
     extension === '.css' ? stripCssComments(source) : stripTypeScriptComments(source, extension === '.tsx');
   return withoutComments.split(/\r?\n/).filter(line => line.trim()).length;
@@ -427,6 +457,8 @@ function formatViolation(violation) {
       return `${violation.path}: use runtime schemas instead of local primitive wire parsers`;
     case featureDebtRules.inlineQueryKey:
       return `${violation.path}: use the feature Query Key factory`;
+    case featureDebtRules.directBrowserTransport:
+      return `${violation.path}: direct browser transport is forbidden; use core/http`;
     case featureDebtRules.rawCssColor:
       return `${violation.path}: use shared semantic color tokens`;
     case featureDebtRules.genericHooksFile:

@@ -60,6 +60,41 @@ test('rejects unreadable paths, forbidden debt folders, and presentation transpo
   assert.match(failures, /pages and components cannot own transport/);
 });
 
+test('rejects direct global browser transport throughout feature production', () => {
+  const project = createProject({
+    ...requiredProjectFiles(),
+    'src/features/orders/api/orders-api.ts': "export const loadOrders = () => globalThis.fetch('/api/orders');",
+    'src/features/orders/model/orders-model.ts':
+      "export const openOrderEvents = () => new window['EventSource']('/api/orders/events');",
+    'src/features/orders/controller/orders-controller.ts':
+      "export const openOrderSocket = () => new WebSocket('ws://localhost/orders');",
+    'src/features/orders/components/orders-table.tsx': 'export const createOrderRequest = () => new XMLHttpRequest();'
+  });
+
+  const failures = checkArchitecture(project).join('\n');
+  for (const path of ['orders-api.ts', 'orders-model.ts', 'orders-controller.ts', 'orders-table.tsx']) {
+    assert.match(failures, new RegExp(`${path}: direct browser transport is forbidden; use core/http`), path);
+  }
+});
+
+test('allows browser transport in core HTTP and ignores transport-like object methods in features', () => {
+  const project = createProject({
+    ...requiredProjectFiles(),
+    'src/core/http/browser-transport.ts': [
+      "export const request = () => fetch('/api/orders');",
+      "export const events = () => new EventSource('/api/orders/events');"
+    ].join('\n'),
+    'src/features/orders/controller/orders-controller.ts': [
+      'declare const client: { fetch(): void };',
+      'declare const transport: { WebSocket: new () => unknown };',
+      'export const loadOrders = () => client.fetch();',
+      'export const openSocket = () => new transport.WebSocket();'
+    ].join('\n')
+  });
+
+  assert.deepEqual(checkArchitecture(project), []);
+});
+
 test('rejects instrumentation persistence and logging sinks', () => {
   const project = createProject({
     'src/app/main.ts': 'export {};',
@@ -149,6 +184,31 @@ test('requires Refine data providers to use the shared generic adapter boundary'
   const failures = checkArchitecture(project).join('\n');
   assert.match(failures, /Refine data providers must use the shared generic adapter boundary/);
   assert.match(failures, /Refine data providers cannot declare local generic adapter helpers/);
+});
+
+test('caps Refine data providers at 200 non-empty non-comment lines', () => {
+  const accepted = createProject({
+    ...requiredProjectFiles(),
+    'src/features/orders/index.ts': 'export {};',
+    'src/app/refine/resources/order-data-provider.ts': [
+      ...Array.from({ length: 200 }, (_, index) => `export const line${index} = ${index};`),
+      '',
+      '// comments do not consume the provider budget',
+      '/* block comments',
+      '   do not consume it either */'
+    ].join('\n')
+  });
+  assert.deepEqual(checkArchitecture(accepted), []);
+
+  const oversized = createProject({
+    ...requiredProjectFiles(),
+    'src/features/orders/index.ts': 'export {};',
+    'src/app/refine/resources/order-data-provider.ts': sourceLines(201)
+  });
+  assert.match(
+    checkArchitecture(oversized).join('\n'),
+    /app\/refine\/resources\/order-data-provider\.ts: 201 lines exceeds 200/
+  );
 });
 
 test('rejects oversized instrumentation modules and route-local color literals', () => {

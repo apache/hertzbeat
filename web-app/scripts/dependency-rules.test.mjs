@@ -50,6 +50,47 @@ test('accepts the documented inward dependency direction', () => {
   assert.equal(result.status, 0, result.output);
 });
 
+test('rejects runtime dependencies from API, model, and controller into outer feature layers', () => {
+  const fixture = createProject({
+    'src/features/orders/orders-api.ts':
+      "import { loadOrders } from './orders-controller'; export const invalidApi = loadOrders;",
+    'src/features/orders/admin/model/orders-model.ts':
+      "import { requestOrders } from '../../api/orders-request'; export const invalidModel = requestOrders;",
+    'src/features/orders/api/orders-request.ts': 'export const requestOrders = true;',
+    'src/features/orders/orders-controller.ts':
+      "import { OrdersPage } from './orders-page'; export const loadOrders = OrdersPage;",
+    'src/features/orders/orders-page.tsx': 'export const OrdersPage = () => null;'
+  });
+
+  const result = cruise(fixture);
+
+  assert.notEqual(result.status, 0, result.output);
+  assert.match(result.output, /no-feature-api-to-outer-feature-layers/);
+  assert.match(result.output, /no-feature-model-to-non-model-feature-layers/);
+  assert.match(result.output, /no-feature-controller-to-presentation/);
+});
+
+test('rejects type-only dependencies from API, model, and controller into outer feature layers', () => {
+  const fixture = createProject({
+    'src/features/orders/api/orders-api.ts':
+      "import type { OrdersControllerState } from '../controller/orders-controller'; export type InvalidApi = OrdersControllerState;",
+    'src/features/orders/model/orders-model.ts':
+      "import type { OrdersRequest } from '../api/orders-request'; export type InvalidModel = OrdersRequest;",
+    'src/features/orders/api/orders-request.ts': 'export type OrdersRequest = { page: number };',
+    'src/features/orders/controller/orders-controller.ts':
+      "import type { OrdersTableProps } from '../components/orders-table'; export type OrdersControllerState = OrdersTableProps;",
+    'src/features/orders/components/orders-table.tsx':
+      'export type OrdersTableProps = { rows: string[] }; export const OrdersTable = (_props: OrdersTableProps) => null;'
+  });
+
+  const result = cruise(fixture);
+
+  assert.notEqual(result.status, 0, result.output);
+  assert.match(result.output, /no-feature-api-to-outer-feature-layers/);
+  assert.match(result.output, /no-feature-model-to-non-model-feature-layers/);
+  assert.match(result.output, /no-feature-controller-to-presentation/);
+});
+
 test('rejects reverse layer dependencies and presentation transport access', () => {
   const fixture = createProject({
     'src/app/router.ts': 'export const router = true;',
