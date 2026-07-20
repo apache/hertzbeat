@@ -17,8 +17,9 @@
 
 import { Refine } from '@refinedev/core';
 import routerProvider from '@refinedev/react-router';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { useQuery } from '@tanstack/react-query';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 import { AppProviders } from '@/app/providers';
@@ -26,6 +27,7 @@ import { refineResources, shellAccessControlProvider } from '@/app/refine/refine
 import { SessionContext } from '@/core/auth/session-context';
 import { SessionIdentityProvider } from '@/core/auth/session-identity-provider';
 import { initializeI18n, loadLocale } from '@/core/i18n/i18n';
+import { useSharedTime } from '@/shared/time';
 
 import { BasicLayout } from './basic-layout';
 import stylesheet from '../shell/hertzbeat-shell.module.css?raw';
@@ -48,8 +50,8 @@ describe('BasicLayout shell', () => {
     expect(screen.getByText('HertzBeat')).toHaveAttribute('aria-hidden', 'true');
   });
 
-  it('renders an honest status and time spine without fake health', () => {
-    renderLayout();
+  it('renders an honest status and global time spine on monitor detail without fake health', () => {
+    renderLayout('/monitors/7');
 
     expect(screen.getByTestId('shell-status-server')).toHaveTextContent('Unknown');
     expect(screen.getByTestId('shell-status-greptime')).toHaveTextContent('Unknown');
@@ -62,7 +64,39 @@ describe('BasicLayout shell', () => {
     renderLayout('/settings/notifications/templates');
 
     expect(screen.queryByTestId('shell-time-policy')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Refresh active data' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Refresh active data' })).toBeEnabled();
+  });
+
+  it.each(['/dashboard', '/monitors'])(
+    'invalidates the active %s query from the header without fake time controls',
+    async path => {
+      const fetchActiveData = vi.fn().mockResolvedValue('ready');
+      renderLayout(path, <ActiveQueryProbe fetchActiveData={fetchActiveData} />);
+
+      await waitFor(() => expect(fetchActiveData).toHaveBeenCalledTimes(1));
+      expect(screen.queryByTestId('shell-time-policy')).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Refresh active data' }));
+
+      await waitFor(() => expect(fetchActiveData).toHaveBeenCalledTimes(2));
+    }
+  );
+
+  it('keeps monitor detail refresh owned by the global time revision without duplicate invalidation', async () => {
+    const fetchActiveData = vi.fn().mockResolvedValue('ready');
+    renderLayout('/monitors/7', <TimeOwnedQueryProbe fetchActiveData={fetchActiveData} />);
+
+    await waitFor(() => expect(fetchActiveData).toHaveBeenCalledTimes(1));
+    expect(screen.getByTestId('shell-time-policy')).toHaveTextContent('30m');
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh active data' }));
+
+    await waitFor(() => expect(fetchActiveData).toHaveBeenCalledTimes(2));
+  });
+
+  it.each(['/monitors/new', '/monitors/7/edit'])('does not apply monitor detail global time to %s', path => {
+    renderLayout(path);
+
+    expect(screen.queryByTestId('shell-time-policy')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Refresh active data' })).toBeEnabled();
   });
 
   it('selects the longest Refine route and supports the 220 to 48 pixel rail', () => {
@@ -112,7 +146,7 @@ function cssRule(selector: string) {
   return match[1];
 }
 
-function renderLayout(path = '/alerts') {
+function renderLayout(path = '/alerts', routeElement: React.ReactNode = <div>Route content</div>) {
   return render(
     <AppProviders>
       <MemoryRouter initialEntries={[path]}>
@@ -139,8 +173,13 @@ function renderLayout(path = '/alerts') {
             >
               <Routes>
                 <Route element={<BasicLayout />}>
-                  <Route path="/alerts" element={<div>Alerts route</div>} />
-                  <Route path="/settings/notifications/templates" element={<div>Templates route</div>} />
+                  <Route path="/dashboard" element={routeElement} />
+                  <Route path="/monitors" element={routeElement} />
+                  <Route path="/monitors/new" element={routeElement} />
+                  <Route path="/monitors/:monitorId" element={routeElement} />
+                  <Route path="/monitors/:monitorId/edit" element={routeElement} />
+                  <Route path="/alerts" element={routeElement} />
+                  <Route path="/settings/notifications/templates" element={routeElement} />
                 </Route>
               </Routes>
             </SessionContext.Provider>
@@ -149,4 +188,19 @@ function renderLayout(path = '/alerts') {
       </MemoryRouter>
     </AppProviders>
   );
+}
+
+function ActiveQueryProbe({ fetchActiveData }: { fetchActiveData: () => Promise<string> }) {
+  useQuery({ queryKey: ['shell-active-query-proof'], queryFn: fetchActiveData, staleTime: Number.POSITIVE_INFINITY });
+  return null;
+}
+
+function TimeOwnedQueryProbe({ fetchActiveData }: { fetchActiveData: () => Promise<string> }) {
+  const time = useSharedTime();
+  useQuery({
+    queryKey: ['shell-time-query-proof', time.window?.from, time.window?.to, time.refreshRevision],
+    queryFn: fetchActiveData,
+    staleTime: Number.POSITIVE_INFINITY
+  });
+  return null;
 }

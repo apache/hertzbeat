@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { activeNavigationTrail, buildShellNavigation } from './shell-navigation-model';
+import { activeNavigationTrail, buildShellNavigation, resolveShellTimePolicy } from './shell-navigation-model';
 
 describe('shell navigation model', () => {
   const resources = [
@@ -22,22 +22,14 @@ describe('shell navigation model', () => {
     const tree = buildShellNavigation(resources);
 
     expect(tree.map(item => item.name)).toEqual(['workspace']);
-    expect(tree[0]?.children.map(item => item.name)).toEqual([
-      'monitors',
-      'alerts',
-      'unknown-capability'
-    ]);
+    expect(tree[0]?.children.map(item => item.name)).toEqual(['monitors', 'alerts', 'unknown-capability']);
     expect(tree[0]?.children[1]?.children.map(item => item.name)).toEqual(['alert-rules']);
   });
 
   it('uses the longest registered route for deep-link selection', () => {
     const tree = buildShellNavigation(resources);
 
-    expect(activeNavigationTrail(tree, '/alerts/rules/42/edit')).toEqual([
-      'workspace',
-      'alerts',
-      'alert-rules'
-    ]);
+    expect(activeNavigationTrail(tree, '/alerts/rules/42/edit')).toEqual(['workspace', 'alerts', 'alert-rules']);
   });
 
   it('keeps unknown capability entries visible but explicitly disabled', () => {
@@ -45,6 +37,24 @@ describe('shell navigation model', () => {
     const unknown = tree[0]?.children.find(item => item.name === 'unknown-capability');
 
     expect(unknown).toMatchObject({ capability: 'unknown', disabled: true });
+  });
+
+  it('uses typed action overrides and falls back to the resource policy for every other action', () => {
+    const shell = {
+      capability: 'supported' as const,
+      labelKey: 'menu.monitors',
+      navigation: true,
+      order: 20,
+      timePolicy: 'none' as const,
+      actionTimePolicies: { show: 'global' as const }
+    };
+
+    expect(resolveShellTimePolicy(shell, 'show')).toBe('global');
+    expect(resolveShellTimePolicy(shell, 'list')).toBe('none');
+    expect(resolveShellTimePolicy(shell, 'create')).toBe('none');
+    expect(resolveShellTimePolicy(shell, 'edit')).toBe('none');
+    expect(resolveShellTimePolicy(shell, undefined)).toBe('none');
+    expect(resolveShellTimePolicy(undefined, undefined)).toBe('unknown');
   });
 });
 
@@ -63,7 +73,7 @@ function resource(
         labelKey: `shell.navigation.${name}`,
         navigation: true,
         order,
-        timePolicy: list ? 'unknown' as const : 'none' as const
+        timePolicy: list ? ('unknown' as const) : ('none' as const)
       },
       ...(parent ? { parent } : {})
     },

@@ -14,13 +14,15 @@ import { GlobalTimeProvider, RouteTimeProvider, type TimeOwnership } from '@/sha
 
 import { ShellHeader } from './shell-header';
 import { ShellNavigation } from './shell-navigation';
-import type { ShellResourceMeta } from './shell-navigation-model';
+import { resolveShellTimePolicy, type ShellResourceMeta } from './shell-navigation-model';
 import styles from './hertzbeat-shell.module.css';
 
 export function HertzBeatShell() {
   return (
     <QueryContextProvider>
-      <GlobalTimeProvider><RouteOwnedShell /></GlobalTimeProvider>
+      <GlobalTimeProvider>
+        <RouteOwnedShell />
+      </GlobalTimeProvider>
     </QueryContextProvider>
   );
 }
@@ -28,17 +30,14 @@ export function HertzBeatShell() {
 function RouteOwnedShell() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
-  const { resource } = useResourceParams();
-  const policy: TimeOwnership = (resource?.meta?.shell as ShellResourceMeta | undefined)?.timePolicy ?? 'unknown';
+  const { action, resource } = useResourceParams();
+  const policy: TimeOwnership = resolveShellTimePolicy(resource?.meta?.shell as ShellResourceMeta | undefined, action);
   return (
     <RouteTimeProvider key={`${location.pathname}:${policy}`} policy={policy}>
       <div className={`${styles.shell} ${collapsed ? styles.shellCollapsed : ''}`}>
         <ShellHeader collapsed={collapsed} />
         <div className={styles.shellBody}>
-          <ShellNavigation
-            collapsed={collapsed}
-            onCollapsedChange={setCollapsed}
-          />
+          <ShellNavigation collapsed={collapsed} onCollapsedChange={setCollapsed} />
           <main className={styles.content}>
             <Outlet />
           </main>

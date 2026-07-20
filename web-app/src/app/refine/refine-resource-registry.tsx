@@ -30,6 +30,9 @@ import type { ShellCapability, ShellResourceMeta, ShellTimePolicy } from '@/layo
 type NavigationResource = {
   name: string;
   list?: string;
+  create?: string;
+  edit?: string;
+  show?: string;
   labelKey: string;
   icon: ReactNode;
   parent?: string;
@@ -37,6 +40,7 @@ type NavigationResource = {
   capability?: ShellCapability;
   dataProviderName?: string;
   timePolicy?: ShellTimePolicy;
+  actionTimePolicies?: ShellResourceMeta['actionTimePolicies'];
 };
 
 type RoutedNavigationResource = Omit<NavigationResource, 'name' | 'list' | 'labelKey'> & {
@@ -70,13 +74,17 @@ export const refineResources: ResourceProps[] = [
     parent: 'shell-workspace',
     icon: <DashboardOutlined />,
     order: 10,
-    timePolicy: 'global'
+    timePolicy: 'none'
   }),
   routedNavigationResource('monitors', {
     parent: 'shell-workspace',
     icon: <MonitorOutlined />,
     order: 20,
-    timePolicy: 'global'
+    create: getAppRoute('monitor-new').path,
+    edit: getAppRoute('monitor-edit').path,
+    show: getAppRoute('monitor-detail').path,
+    timePolicy: 'none',
+    actionTimePolicies: { show: 'global' }
   }),
   routedNavigationResource('explore', {
     parent: 'shell-workspace',
@@ -94,7 +102,7 @@ export const refineResources: ResourceProps[] = [
     parent: 'shell-operations',
     icon: <AlertOutlined />,
     order: 10,
-    timePolicy: 'global'
+    timePolicy: 'none'
   }),
   routedNavigationResource('alert-rules', {
     parent: 'alerts',
@@ -125,7 +133,7 @@ export const refineResources: ResourceProps[] = [
     parent: 'shell-operations',
     icon: <ReadOutlined />,
     order: 20,
-    timePolicy: 'global'
+    timePolicy: 'none'
   }),
   routedNavigationResource('settings', {
     parent: 'shell-administration',
@@ -198,7 +206,8 @@ function navigationResource(resource: NavigationResource): ResourceProps {
     labelKey: resource.labelKey,
     navigation: true,
     order: resource.order,
-    timePolicy: resource.timePolicy ?? (resource.parent === 'settings' || !resource.list ? 'none' : 'unknown')
+    timePolicy: resource.timePolicy ?? (resource.parent === 'settings' || !resource.list ? 'none' : 'unknown'),
+    ...(resource.actionTimePolicies ? { actionTimePolicies: resource.actionTimePolicies } : {})
   };
   const meta = {
     icon: resource.icon,
@@ -209,7 +218,10 @@ function navigationResource(resource: NavigationResource): ResourceProps {
   return {
     name: resource.name,
     meta,
-    ...(resource.list ? { list: resource.list } : {})
+    ...(resource.list ? { list: resource.list } : {}),
+    ...(resource.create ? { create: resource.create } : {}),
+    ...(resource.edit ? { edit: resource.edit } : {}),
+    ...(resource.show ? { show: resource.show } : {})
   };
 }
 

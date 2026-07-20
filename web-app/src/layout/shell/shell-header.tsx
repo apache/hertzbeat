@@ -39,7 +39,7 @@ export function ShellHeader({ collapsed }: { collapsed: boolean }) {
         <ShellHeaderActions
           accountName={accountName}
           loggingOut={actions.loggingOut}
-          showRefresh={actions.sharedTime.headerMode !== 'hidden'}
+          showRefresh={actions.sharedTime.policy !== 'unknown'}
           t={t}
           onRefresh={() => void actions.refresh()}
           onOpenAlerts={actions.openAlerts}

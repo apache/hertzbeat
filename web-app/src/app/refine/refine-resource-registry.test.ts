@@ -8,6 +8,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { routeRegistry } from '@/app/route-registry';
+import type { ShellResourceMeta } from '@/layout/shell/shell-navigation-model';
 
 import { refineResources } from './refine-resource-registry';
 
@@ -33,7 +34,27 @@ describe('Refine shell resource registry', () => {
       });
     });
   });
+
+  it('assigns global time only to routes whose active queries consume the shared window and revision', () => {
+    expect(shellMeta('dashboard')).toMatchObject({ timePolicy: 'none' });
+    expect(shellMeta('alerts')).toMatchObject({ timePolicy: 'none' });
+    expect(shellMeta('bulletin')).toMatchObject({ timePolicy: 'none' });
+    expect(shellMeta('monitors')).toMatchObject({
+      timePolicy: 'none',
+      actionTimePolicies: { show: 'global' }
+    });
+    expect(refineResources.find(resource => resource.name === 'monitors')).toMatchObject({
+      create: '/monitors/new',
+      edit: '/monitors/:monitorId/edit',
+      list: '/monitors',
+      show: '/monitors/:monitorId'
+    });
+  });
 });
+
+function shellMeta(name: string) {
+  return refineResources.find(resource => resource.name === name)?.meta?.shell as ShellResourceMeta | undefined;
+}
 
 function compareResourceRoute(left: { list: string }, right: { list: string }) {
   return left.list.localeCompare(right.list);

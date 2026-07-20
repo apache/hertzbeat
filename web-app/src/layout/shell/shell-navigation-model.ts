@@ -5,13 +5,14 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import type { IResourceItem } from '@refinedev/core';
+import type { Action, IResourceItem } from '@refinedev/core';
 import type { ReactNode } from 'react';
 
 import type { TimeOwnership } from '@/shared/time';
 
 export type ShellCapability = 'supported' | 'unknown' | 'unsupported';
 export type ShellTimePolicy = TimeOwnership;
+export type ShellResourceAction = Action;
 
 export type ShellResourceMeta = {
   capability: ShellCapability;
@@ -20,7 +21,13 @@ export type ShellResourceMeta = {
   order: number;
   requiredRoles?: string[];
   timePolicy: ShellTimePolicy;
+  actionTimePolicies?: Partial<Record<ShellResourceAction, ShellTimePolicy>>;
 };
+
+export function resolveShellTimePolicy(shell: ShellResourceMeta | undefined, action: ShellResourceAction | undefined) {
+  if (!shell) return 'unknown';
+  return (action ? shell.actionTimePolicies?.[action] : undefined) ?? shell.timePolicy;
+}
 
 export type ShellNavigationItem = {
   capability: ShellCapability;
