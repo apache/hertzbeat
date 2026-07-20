@@ -16,6 +16,7 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ApiMessageError } from '@/core/http/api-message';
 import { AlertSilenceRequestFailure, type AlertSilence } from '@/features/alert/alert-silence-model';
 
 type AlertSilenceApi = typeof import('@/features/alert/alert-silence-api');
@@ -127,5 +128,28 @@ describe('Alert Silence Refine data provider', () => {
       code: 'ALERT_SILENCE_CANONICAL_IDENTITY_INVALID',
       statusCode: 502
     });
+  });
+
+  it('preserves a cause-bearing read as redacted network evidence', async () => {
+    api.loadAlertSilence.mockRejectedValue(
+      new ApiMessageError('token=private-silence-message', {
+        status: 422,
+        cause: new TypeError('private-silence-cause')
+      })
+    );
+
+    let error: unknown;
+    try {
+      await alertSilenceDataProvider.getOne({ resource: 'alert-silences', id: 7 });
+    } catch (reason) {
+      error = reason;
+    }
+    expect(error).toMatchObject({
+      kind: 'network',
+      statusCode: 0,
+      httpStatus: undefined,
+      code: 'NETWORK_REQUEST_FAILED'
+    });
+    expect(JSON.stringify(error)).not.toContain('private-silence');
   });
 });

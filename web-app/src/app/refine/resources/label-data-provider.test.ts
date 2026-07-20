@@ -349,7 +349,10 @@ describe('Label Refine data provider', () => {
 
   it('converts transport errors without exposing secret-shaped messages', async () => {
     labelApi.loadLabels.mockRejectedValue(
-      new ApiMessageError('token=private-provider-token', { cause: new TypeError('private-provider-cause') })
+      new ApiMessageError('token=private-provider-token', {
+        status: 422,
+        cause: new TypeError('private-provider-cause')
+      })
     );
 
     let error: unknown;
@@ -361,7 +364,9 @@ describe('Label Refine data provider', () => {
     expect(error).toMatchObject({
       message: 'Network request failed',
       statusCode: 0,
-      code: 'NETWORK_REQUEST_FAILED'
+      httpStatus: undefined,
+      code: 'NETWORK_REQUEST_FAILED',
+      kind: 'network'
     });
     expect(JSON.stringify(error)).not.toContain('private-provider');
   });

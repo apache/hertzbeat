@@ -44,10 +44,9 @@ describe('Refine HTTP error boundary', () => {
       code: undefined,
       kind: 'http'
     });
-    const network = toRefineHttpError(new ApiMessageError(
-      'token=private-network-token',
-      { cause: new TypeError('private-network-cause') }
-    ));
+    const network = toRefineHttpError(
+      new ApiMessageError('token=private-network-token', { cause: new TypeError('private-network-cause') })
+    );
     expect(network).toMatchObject({
       message: 'Network request failed',
       statusCode: 0,
@@ -56,7 +55,33 @@ describe('Refine HTTP error boundary', () => {
     });
     expect(`${network.message} ${JSON.stringify(network)}`).not.toContain('private-network');
     expect(Object.hasOwn(network, 'cause')).toBe(false);
-    expect(createRefineHttpError('Unsupported resource', 400, 'LABEL_RESOURCE_UNSUPPORTED'))
-      .toMatchObject({ statusCode: 400, code: 'LABEL_RESOURCE_UNSUPPORTED', kind: 'contract' });
+    expect(createRefineHttpError('Unsupported resource', 400, 'LABEL_RESOURCE_UNSUPPORTED')).toMatchObject({
+      statusCode: 400,
+      code: 'LABEL_RESOURCE_UNSUPPORTED',
+      kind: 'contract'
+    });
+  });
+
+  it.each([
+    ['client status', { status: 422 }],
+    ['business envelope', { code: 15, status: 200 }],
+    ['server status', { status: 503 }]
+  ] as const)('keeps a transport cause authoritative over %s metadata', (_label, metadata) => {
+    const error = toRefineHttpError(
+      new ApiMessageError('token=private-source-message', {
+        ...metadata,
+        cause: new TypeError('private-transport-cause')
+      })
+    );
+
+    expect(error).toMatchObject({
+      message: 'Network request failed',
+      statusCode: 0,
+      httpStatus: undefined,
+      code: 'NETWORK_REQUEST_FAILED',
+      kind: 'network'
+    });
+    expect(`${error.message} ${JSON.stringify(error)}`).not.toContain('private');
+    expect(Object.hasOwn(error, 'cause')).toBe(false);
   });
 });

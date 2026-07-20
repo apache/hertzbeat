@@ -18,7 +18,8 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createRefineHttpError } from '@/shared/refine/refine-http-error';
+import { ApiMessageError } from '@/core/http/api-message';
+import { createRefineHttpError, toRefineHttpError } from '@/shared/refine/refine-http-error';
 
 import { systemConfigTimezonesEndpoint } from '../api/system-config-api';
 import { useSystemConfigResourceController } from './system-config-resource-controller';
@@ -386,6 +387,16 @@ function buildTimezoneResult(override: Record<string, unknown> = {}) {
 
 const ambiguousWriteFailures = [
   ['network', () => createRefineHttpError('network', 0, 'NETWORK_REQUEST_FAILED', 'network')],
+  [
+    'cause-bearing HTTP 4xx',
+    () =>
+      toRefineHttpError(
+        new ApiMessageError('private-system-config-message', {
+          status: 422,
+          cause: new TypeError('private-system-config-cause')
+        })
+      )
+  ],
   ['HTTP 5xx', () => createRefineHttpError('unavailable', 503, undefined, 'http', 503)],
   ['business envelope', () => createRefineHttpError('rejected', 400, 20, 'envelope', 200)],
   ['malformed success', () => createRefineHttpError('malformed', 502, 'SYSTEM_CONFIG_RESPONSE_INVALID', 'contract')]

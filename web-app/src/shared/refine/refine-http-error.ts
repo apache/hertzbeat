@@ -46,15 +46,20 @@ export function createRefineHttpError(
 export function toRefineHttpError(reason: unknown): RefineHttpError {
   if (isRefineHttpError(reason)) return reason;
   if (reason instanceof ApiMessageError) {
+    if (reason.cause !== undefined) return networkRequestFailure();
     if (reason.code !== undefined) {
       return createRefineHttpError('Server rejected the request', 400, reason.code, 'envelope', reason.status);
     }
     if (reason.status !== undefined) {
       return createRefineHttpError('Request failed', reason.status, undefined, 'http', reason.status);
     }
-    return createRefineHttpError('Network request failed', 0, 'NETWORK_REQUEST_FAILED', 'network');
+    return networkRequestFailure();
   }
   return createRefineHttpError('Unexpected request failure', 500, 'REFINE_UNEXPECTED_ERROR', 'unexpected');
+}
+
+function networkRequestFailure() {
+  return createRefineHttpError('Network request failed', 0, 'NETWORK_REQUEST_FAILED', 'network');
 }
 
 export function isRefineHttpError(reason: unknown): reason is RefineHttpError {
