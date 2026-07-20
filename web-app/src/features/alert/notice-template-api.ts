@@ -20,8 +20,6 @@ import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '
 import {
   buildNoticeTemplatePayload,
   NoticeTemplateContractError,
-  parseNoticeTemplateDetail,
-  parseNoticeTemplatePage,
   writeNoticeTemplateQuery,
   type NoticeTemplateDraft,
   type NoticeTemplateQuery
@@ -29,18 +27,19 @@ import {
 import { noticeTemplateEndpoint, noticeTemplatesEndpoint } from './notice-api-endpoints';
 import { noticeTemplateCreateActionUrl } from './notice-template-resource';
 import { noticeTemplateApiRequest } from './api/notice-template-api-failure';
+import { parseNoticeTemplateDetailWire, parseNoticeTemplatePageWire } from './api/notice-template-schema';
 
 export async function loadNoticeTemplates(query: NoticeTemplateQuery) {
   return noticeTemplateApiRequest('collection', async () => {
     const response = await apiMessageGet(`${noticeTemplatesEndpoint}?${writeNoticeTemplateQuery(query).toString()}`);
-    return parseNoticeTemplatePage(response);
+    return parseNoticeTemplatePageWire(response, query);
   });
 }
 
 export async function loadNoticeTemplate(id: number) {
   return noticeTemplateApiRequest('detail', async () => {
     const response = await apiMessageGet(noticeTemplateDetailEndpoint(id));
-    return parseNoticeTemplateDetail(response);
+    return parseNoticeTemplateDetailWire(response);
   });
 }
 

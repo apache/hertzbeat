@@ -40,6 +40,7 @@ import type { NoticeTemplateDraft } from './notice-template-model';
 
 const custom = { id: 42, name: 'Custom', type: 1 as const, preset: false, content: '${content}' };
 const page = { content: [custom], totalElements: 1, totalPages: 1, number: 0, size: 8 };
+const query = { name: 'Mail', preset: false, pageIndex: 0, pageSize: 8 };
 
 describe('Notice Template API', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -47,9 +48,7 @@ describe('Notice Template API', () => {
   it('uses the exact list/detail paths and strictly parses both responses', async () => {
     http.apiMessageGet.mockResolvedValueOnce(page).mockResolvedValueOnce(custom);
 
-    await expect(loadNoticeTemplates({ name: 'Mail', preset: false, pageIndex: 0, pageSize: 8 })).resolves.toEqual(
-      page
-    );
+    await expect(loadNoticeTemplates(query)).resolves.toEqual(page);
     await expect(loadNoticeTemplate(42)).resolves.toEqual(custom);
     expect(http.apiMessageGet).toHaveBeenNthCalledWith(
       1,
@@ -107,6 +106,107 @@ describe('Notice Template API', () => {
       kind: 'invalid',
       writeOutcome: 'uncertain'
     });
+  });
+
+  it.each([
+    ['request page mismatch', { ...page, number: 1 }, query],
+    ['request size mismatch', { ...page, size: 15 }, query],
+    ['inconsistent total pages', { ...page, totalPages: 2 }, query],
+    [
+      'content beyond the final-page remainder',
+      {
+        content: [custom, { ...custom, id: 43 }],
+        totalElements: 9,
+        totalPages: 2,
+        number: 1,
+        size: 8
+      },
+      { ...query, pageIndex: 1 }
+    ],
+    [
+      'content on an out-of-range page',
+      { content: [custom], totalElements: 8, totalPages: 1, number: 2, size: 8 },
+      { ...query, pageIndex: 2 }
+    ],
+    [
+      'duplicate custom backend ids',
+      { content: [custom, { ...custom, name: 'Other' }], totalElements: 2, totalPages: 1, number: 0, size: 8 },
+      query
+    ],
+    [
+      'duplicate id-less preset identities',
+      {
+        content: [
+          { name: 'Built-in', type: 1, preset: true, content: '${one}' },
+          { name: 'Built-in', type: 1, preset: true, content: '${two}' }
+        ],
+        totalElements: 2,
+        totalPages: 1,
+        number: 0,
+        size: 8
+      },
+      query
+    ],
+    ['custom row in the preset branch', page, { ...query, preset: true }],
+    [
+      'preset row in the custom branch',
+      {
+        content: [{ name: 'Built-in', type: 1, preset: true, content: '${content}' }],
+        totalElements: 1,
+        totalPages: 1,
+        number: 0,
+        size: 8
+      },
+      query
+    ],
+    [
+      'short non-last page under authoritative totals',
+      {
+        content: Array.from({ length: 7 }, (_, index) => ({ ...custom, id: index + 1 })),
+        totalElements: 9,
+        totalPages: 2,
+        number: 0,
+        size: 8
+      },
+      query
+    ],
+    [
+      'short last page under authoritative totals',
+      { content: [], totalElements: 9, totalPages: 2, number: 1, size: 8 },
+      { ...query, pageIndex: 1 }
+    ]
+  ])('rejects Spring page evidence with %s', async (_label, evidence, request) => {
+    http.apiMessageGet.mockResolvedValue(evidence);
+
+    await expect(loadNoticeTemplates(request)).rejects.toMatchObject({
+      kind: 'invalid',
+      writeOutcome: 'uncertain',
+      code: 'NOTICE_TEMPLATE_RESPONSE_INVALID'
+    });
+  });
+
+  it('redacts unknown telemetry and template content from strict contract failures', async () => {
+    const privateBody = '${private-template-body}';
+    const privateTelemetry = 'trace-private-token';
+    http.apiMessageGet.mockResolvedValue({
+      ...page,
+      content: [{ ...custom, content: privateBody, telemetry: privateTelemetry }]
+    });
+
+    let failure: unknown;
+    try {
+      await loadNoticeTemplates(query);
+    } catch (reason: unknown) {
+      failure = reason;
+    }
+    expect(failure).toMatchObject({
+      kind: 'invalid',
+      writeOutcome: 'uncertain',
+      code: 'NOTICE_TEMPLATE_RESPONSE_INVALID'
+    });
+    expect(failure).not.toHaveProperty('cause');
+    expect(JSON.stringify(failure)).not.toContain(privateBody);
+    expect(JSON.stringify(failure)).not.toContain(privateTelemetry);
   });
 
   it('classifies the detail endpoint business failure as missing evidence', async () => {
