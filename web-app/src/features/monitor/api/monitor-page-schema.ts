@@ -53,13 +53,18 @@ export function parseMonitorPage(value: unknown, query: MonitorQuery): MonitorPa
   if (!result.success) throw new MonitorContractError();
 
   const page = result.data;
+  const remainingRows =
+    page.number >= page.totalPages ? 0 : Math.min(page.size, page.totalElements - page.number * page.size);
+  const monitorIds = new Set(page.content.map(item => item.id));
   if (
     page.number !== query.pageIndex ||
     page.size !== query.pageSize ||
     page.content.length > page.size ||
-    page.totalPages !== Math.ceil(page.totalElements / page.size)
+    page.totalPages !== Math.ceil(page.totalElements / page.size) ||
+    page.content.length > remainingRows ||
+    monitorIds.size !== page.content.length
   ) {
-    throw new MonitorContractError('Monitor page identity is inconsistent with the request');
+    throw new MonitorContractError('Monitor page evidence is inconsistent with the request');
   }
   return {
     content: page.content.map(mapMonitorListItem),

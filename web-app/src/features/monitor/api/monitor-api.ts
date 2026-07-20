@@ -21,6 +21,7 @@ import {
   type Monitor,
   type MonitorAction,
   type MonitorApp,
+  type MonitorPage,
   type MonitorQuery
 } from '../model/monitor-contract';
 import { writeMonitorQuery } from '../model/monitor-query';
@@ -117,22 +118,50 @@ export async function loadNewMonitorEvidence(name: string, app: string, signal?:
   const normalizedApp = app.trim();
   if (!normalizedName || !normalizedApp) throw new MonitorContractError('New monitor identity is incomplete');
   const matches: Monitor[] = [];
-  let pageIndex = 0;
-  let totalPages = 1;
-  do {
+  const seenIds = new Set<number>();
+  const firstPage = await loadMonitors(
+    { search: normalizedName, app: normalizedApp, status: '9', labels: '', pageIndex: 0, pageSize: 50 },
+    signal
+  );
+  if (firstPage.totalPages > 20) {
+    throw new MonitorContractError('New monitor evidence exceeds the supported safety bound');
+  }
+  // Freeze the first response before following pages so later totals cannot shorten or extend save evidence.
+  const snapshot = { totalElements: firstPage.totalElements, totalPages: firstPage.totalPages };
+  collectNewMonitorEvidence(firstPage, snapshot, seenIds, matches, normalizedName, normalizedApp);
+
+  for (let pageIndex = 1; pageIndex < snapshot.totalPages; pageIndex += 1) {
     const page = await loadMonitors(
       { search: normalizedName, app: normalizedApp, status: '9', labels: '', pageIndex, pageSize: 50 },
       signal
     );
-    if (page.totalPages > 20) throw new MonitorContractError('New monitor evidence exceeds the supported safety bound');
-    matches.push(...page.content.filter(item => item.name === normalizedName && item.app === normalizedApp));
-    totalPages = page.totalPages;
-    pageIndex += 1;
-  } while (pageIndex < totalPages);
+    collectNewMonitorEvidence(page, snapshot, seenIds, matches, normalizedName, normalizedApp);
+  }
+  if (seenIds.size !== snapshot.totalElements) {
+    throw new MonitorContractError('New monitor evidence does not contain the complete page snapshot');
+  }
   if (matches.length !== 1) {
     throw new MonitorContractError(`Expected one exact saved monitor, received ${matches.length}`);
   }
   return loadMonitorDetail(matches[0]!.id, signal);
+}
+
+function collectNewMonitorEvidence(
+  page: MonitorPage,
+  snapshot: { totalElements: number; totalPages: number },
+  seenIds: Set<number>,
+  matches: Monitor[],
+  normalizedName: string,
+  normalizedApp: string
+) {
+  if (page.totalElements !== snapshot.totalElements || page.totalPages !== snapshot.totalPages) {
+    throw new MonitorContractError('New monitor evidence changed while scanning pages');
+  }
+  for (const monitor of page.content) {
+    if (seenIds.has(monitor.id)) throw new MonitorContractError('New monitor evidence contains duplicate monitor ids');
+    seenIds.add(monitor.id);
+    if (monitor.name === normalizedName && monitor.app === normalizedApp) matches.push(monitor);
+  }
 }
 
 export function mutateMonitors(action: MonitorAction, ids: number[]) {
