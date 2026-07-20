@@ -7,7 +7,7 @@
 
 import { ApiMessageError } from '@/core/http/api-message';
 
-import { AlertRequestFailure } from './alert-model';
+import { AlertRequestFailure } from '../alert-model';
 
 const unavailableHttpStatuses = new Set([0, 502, 503, 504]);
 
