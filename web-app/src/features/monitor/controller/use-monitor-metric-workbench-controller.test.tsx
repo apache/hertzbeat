@@ -104,6 +104,31 @@ describe('useMonitorMetricWorkbenchController', () => {
     expect(api.loadRealtimeMetric).not.toHaveBeenCalled();
   });
 
+  it('keeps refresh inert until monitor and metric context is available', async () => {
+    const view = renderController(undefined, [], '/monitors/7');
+
+    await act(async () => {
+      view.result.current.controller.actions.refresh();
+      await Promise.resolve();
+    });
+
+    expectMetricReadsNotCalled();
+  });
+
+  it('keeps refresh inert when the monitor has no metric selection', async () => {
+    api.loadMonitorMetricCatalog.mockResolvedValue({ metrics: [] });
+    const view = renderController(monitor(), [], '/monitors/7');
+    await waitFor(() => expect(view.result.current.controller.state.catalog.kind).toBe('empty'));
+    vi.clearAllMocks();
+
+    await act(async () => {
+      view.result.current.controller.actions.refresh();
+      await Promise.resolve();
+    });
+
+    expectMetricReadsNotCalled();
+  });
+
   it('treats a successful query without its required payload as invalid evidence', async () => {
     api.loadMonitorMetricCatalog.mockResolvedValue(undefined);
     api.loadFavoriteMetrics.mockResolvedValue(undefined);
@@ -322,7 +347,7 @@ describe('useMonitorMetricWorkbenchController', () => {
 });
 
 function renderController(
-  initialMonitor: Monitor,
+  initialMonitor: Monitor | undefined,
   embedded: Parameters<typeof useMonitorMetricWorkbenchController>[1],
   entry: string
 ) {
@@ -344,4 +369,11 @@ function renderController(
       )
     }
   );
+}
+
+function expectMetricReadsNotCalled() {
+  expect(api.loadMonitorMetricCatalog).not.toHaveBeenCalled();
+  expect(api.loadFavoriteMetrics).not.toHaveBeenCalled();
+  expect(api.loadRealtimeMetric).not.toHaveBeenCalled();
+  expect(api.loadHistoryMetric).not.toHaveBeenCalled();
 }

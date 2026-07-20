@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { useQuery } from '@tanstack/react-query';
+import { skipToken, useQuery } from '@tanstack/react-query';
 
 import type { SharedTimeValue } from '@/shared/time';
 
@@ -19,21 +19,19 @@ export function useMonitorMetricData(input: {
   sharedTime: SharedTimeValue | null;
 }) {
   const { monitor, metric, metricKey, history, sharedTime } = input;
+  // `enabled: false` still permits manual refetch; skipToken removes the unsafe query function entirely.
   const favorites = useQuery({
     queryKey: monitorQueryKeys.favorites(monitor?.id),
-    queryFn: ({ signal }) => loadFavoriteMetrics(monitor!.id, signal),
-    enabled: Boolean(monitor)
+    queryFn: monitor ? ({ signal }) => loadFavoriteMetrics(monitor.id, signal) : skipToken
   });
   const realtime = useQuery({
     queryKey: monitorQueryKeys.realtime(monitor?.id, metric?.group, metric?.field, sharedTime),
-    queryFn: ({ signal }) => loadRealtimeMetric(monitor!.id, metric!, signal),
-    enabled: Boolean(monitor && metric),
+    queryFn: monitor && metric ? ({ signal }) => loadRealtimeMetric(monitor.id, metric, signal) : skipToken,
     refetchInterval: realtimeRefreshIntervalMs
   });
   const historical = useQuery({
     queryKey: monitorQueryKeys.history(monitor, metricKey, history, sharedTime),
-    queryFn: ({ signal }) => loadHistoryMetric(monitor!, metric!, history, signal),
-    enabled: Boolean(monitor && metric)
+    queryFn: monitor && metric ? ({ signal }) => loadHistoryMetric(monitor, metric, history, signal) : skipToken
   });
   return { favorites, realtime, historical };
 }

@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { skipToken, useQuery, useQueryClient } from '@tanstack/react-query';
 import { App } from 'antd';
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -67,7 +67,7 @@ export function useMonitorMetricWorkbenchController(
   const favorite = favoriteEvidence(favoritesQuery, metricKey);
   const realtimeQuery = queries.realtime;
   const historicalQuery = queries.historical;
-  const realtime = metricEvidence(realtimeQuery, data => monitorRealtimeRows(data, metric!));
+  const realtime = metricEvidence(realtimeQuery, data => (metric ? monitorRealtimeRows(data, metric) : []));
   const historical = metricEvidence(historicalQuery, monitorHistoryRows);
   const favoriteMutation = useMonitorFavoriteMutation({
     monitorId: source.id,
@@ -88,11 +88,13 @@ export function useMonitorMetricWorkbenchController(
     realtime,
     historical,
     urlActions,
-    refresh: () => refreshMonitorMetricQueries(queries)
+    refresh: () => refreshMonitorMetricQueries(queries, Boolean(monitor && metric))
   });
 }
 
-function refreshMonitorMetricQueries(queries: ReturnType<typeof useMonitorMetricData>) {
+function refreshMonitorMetricQueries(queries: ReturnType<typeof useMonitorMetricData>, canRefresh: boolean) {
+  // Refresh is one operator action, so do not issue a partial request set under incomplete context.
+  if (!canRefresh) return;
   void queries.favorites.refetch();
   void queries.realtime.refetch();
   void queries.historical.refetch();
@@ -105,8 +107,7 @@ function useMonitorMetricCatalog(
 ) {
   const query = useQuery({
     queryKey: monitorQueryKeys.metricCatalog(source.id, source.app, source.scrape),
-    queryFn: ({ signal }) => loadMonitorMetricCatalog(monitor!, signal),
-    enabled: Boolean(monitor)
+    queryFn: monitor ? ({ signal }) => loadMonitorMetricCatalog(monitor, signal) : skipToken
   });
   return catalogEvidence(query, embedded);
 }
