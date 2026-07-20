@@ -33,14 +33,16 @@ export type ObjectStorePayload = {
   config: ObjectStoreDraftConfig;
 };
 
+export const objectStoreEndpoint = '/api/config/oss';
+
 export async function loadObjectStore() {
-  const response = await apiMessageGet('/api/config/oss');
+  const response = await apiMessageGet(objectStoreEndpoint);
   return parseObjectStoreReadModel(response);
 }
 
 export async function saveObjectStore(config: ObjectStoreDraft) {
   const payload = buildObjectStorePayload(config);
-  return parseObjectStoreMutationResult(await apiMessagePost('/api/config/oss', payload));
+  return parseObjectStoreMutationResult(await apiMessagePost(objectStoreEndpoint, payload));
 }
 
 export function buildObjectStorePayload(config: ObjectStoreDraft): ObjectStorePayload {

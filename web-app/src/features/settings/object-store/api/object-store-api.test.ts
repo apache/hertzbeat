@@ -31,16 +31,18 @@ describe('object store API', () => {
     apiMessagePost.mockResolvedValue('Update config success');
     await expect(loadObjectStore()).resolves.toEqual({ type: 'DATABASE', config: {} });
     await expect(saveObjectStore({ type: 'FILE', config: {} })).resolves.toBe('Update config success');
-    await expect(saveObjectStore({
-      type: 'OBS',
-      config: {
-        accessKey: ' access ',
-        secretKey: ' secret ',
-        bucketName: ' bucket ',
-        endpoint: ' https://obs.cn-north-4.myhuaweicloud.com ',
-        savePath: ' hertzbeat '
-      }
-    })).resolves.toBe('Update config success');
+    await expect(
+      saveObjectStore({
+        type: 'OBS',
+        config: {
+          accessKey: ' access ',
+          secretKey: ' secret ',
+          bucketName: ' bucket ',
+          endpoint: ' https://obs.cn-north-4.myhuaweicloud.com ',
+          savePath: ' hertzbeat '
+        }
+      })
+    ).resolves.toBe('Update config success');
     expect(apiMessageGet).toHaveBeenCalledWith('/api/config/oss');
     expect(apiMessagePost).toHaveBeenCalledWith('/api/config/oss', { type: 'FILE', config: {} });
     expect(apiMessagePost).toHaveBeenLastCalledWith('/api/config/oss', {
@@ -105,23 +107,26 @@ describe('object store API', () => {
   it('rejects malformed mutation responses', async () => {
     apiMessagePost.mockResolvedValue({ message: 'Update config success' });
 
-    await expect(saveObjectStore({ type: 'FILE', config: {} }))
-      .rejects.toBeInstanceOf(ObjectStoreResourceContractError);
+    await expect(saveObjectStore({ type: 'FILE', config: {} })).rejects.toBeInstanceOf(
+      ObjectStoreResourceContractError
+    );
   });
 
   it.each(['', '   ', '******', '••••••', '__KEEP__', '<masked>', '[REDACTED]'])(
     'rejects OBS writes without a newly entered secret: %j',
     async secretKey => {
-      await expect(saveObjectStore({
-        type: 'OBS',
-        config: {
-          accessKey: 'ak',
-          secretKey,
-          bucketName: 'bucket',
-          endpoint: 'https://obs.cn-north-4.myhuaweicloud.com',
-          savePath: 'hertzbeat'
-        }
-      })).rejects.toBeInstanceOf(Error);
+      await expect(
+        saveObjectStore({
+          type: 'OBS',
+          config: {
+            accessKey: 'ak',
+            secretKey,
+            bucketName: 'bucket',
+            endpoint: 'https://obs.cn-north-4.myhuaweicloud.com',
+            savePath: 'hertzbeat'
+          }
+        })
+      ).rejects.toBeInstanceOf(Error);
       expect(apiMessagePost).not.toHaveBeenCalled();
     }
   );

@@ -25,7 +25,11 @@ import type {
   UpdateResponse
 } from '@refinedev/core';
 
-import { loadObjectStore, saveObjectStore } from '@/features/settings/object-store/api/object-store-api';
+import {
+  loadObjectStore,
+  objectStoreEndpoint,
+  saveObjectStore
+} from '@/features/settings/object-store/api/object-store-api';
 import {
   createObjectStoreResourceRecord,
   ObjectStoreResourceContractError,
@@ -82,7 +86,7 @@ export const objectStoreDataProvider: DataProvider = {
     return rejectUnsupported('OBJECT_STORE_DELETE_UNSUPPORTED', 'Object Store delete is not supported');
   },
 
-  getApiUrl: () => '/api/config/oss'
+  getApiUrl: () => objectStoreEndpoint
 };
 
 async function protect<T>(operation: () => Promise<T>): Promise<T> {

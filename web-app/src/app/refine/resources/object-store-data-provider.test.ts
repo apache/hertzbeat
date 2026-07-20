@@ -25,13 +25,15 @@ import {
 } from '@/features/settings/object-store/model/object-store-model';
 
 type ObjectStoreApi = typeof import('@/features/settings/object-store/api/object-store-api');
+const canonical = vi.hoisted(() => ({ endpoint: '/canonical-object-store-endpoint' }));
 const objectStoreApi = vi.hoisted(() => ({
   loadObjectStore: vi.fn<ObjectStoreApi['loadObjectStore']>(),
   saveObjectStore: vi.fn<ObjectStoreApi['saveObjectStore']>()
 }));
 vi.mock('@/features/settings/object-store/api/object-store-api', async importOriginal => ({
   ...(await importOriginal<ObjectStoreApi>()),
-  ...objectStoreApi
+  ...objectStoreApi,
+  objectStoreEndpoint: canonical.endpoint
 }));
 
 import { objectStoreDataProvider } from './object-store-data-provider';
@@ -60,6 +62,10 @@ const configuredDraft: ObjectStoreDraft = {
 
 describe('Object Store Refine data provider', () => {
   beforeEach(() => vi.clearAllMocks());
+
+  it('uses the endpoint owned by the Object Store API', () => {
+    expect(objectStoreDataProvider.getApiUrl()).toBe(canonical.endpoint);
+  });
 
   it('reads the named singleton into the model-owned stable record', async () => {
     objectStoreApi.loadObjectStore.mockResolvedValue(configuredRead);
