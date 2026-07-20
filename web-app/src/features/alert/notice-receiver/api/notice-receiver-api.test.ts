@@ -101,6 +101,21 @@ describe('notice receiver API contract', () => {
     await expect(loadNoticeReceiver(7)).rejects.toMatchObject({ kind: 'invalid', writeOutcome: 'uncertain' });
   });
 
+  it('rejects list evidence whose Spring page identity does not match the request', async () => {
+    http.apiMessageGet.mockResolvedValue({
+      content: [safeReceiver],
+      totalElements: 9,
+      totalPages: 2,
+      number: 1,
+      size: 8
+    });
+
+    await expect(loadNoticeReceivers({ name: '', pageIndex: 0, pageSize: 8 })).rejects.toMatchObject({
+      kind: 'invalid',
+      writeOutcome: 'uncertain'
+    });
+  });
+
   it.each([
     { ...safeReceiver, options: { hookAuthType: 'Bearer', hookUrl: 'https://secret.test/hook' } },
     { ...safeReceiver, accessToken: 'echoed-secret' },

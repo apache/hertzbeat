@@ -41,7 +41,8 @@ export { NoticeReceiverContractError } from './notice-receiver-schema';
 export async function loadNoticeReceivers(query: NoticeReceiverQuery) {
   return noticeReceiverApiRequest('collection', async () => {
     const page = parseNoticeReceiverPageWire(
-      await apiMessageGet(`${noticeReceiversEndpoint}?${writeNoticeReceiverQuery(query).toString()}`)
+      await apiMessageGet(`${noticeReceiversEndpoint}?${writeNoticeReceiverQuery(query).toString()}`),
+      query
     );
     return { ...page, content: page.content.map(mapNoticeReceiver) };
   });

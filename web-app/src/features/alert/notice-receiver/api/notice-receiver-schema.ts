@@ -8,6 +8,7 @@
 import { z } from 'zod';
 
 import { noticeReceiverTypes, type NoticeReceiverType } from '../model/notice-receiver-catalog';
+import type { NoticeReceiverQuery } from '../model/notice-receiver-model';
 
 const safeIntegerSchema = z.number().refine(Number.isSafeInteger, 'Expected a safe integer');
 const nonNegativeIntegerSchema = safeIntegerSchema.refine(value => value >= 0, 'Expected a non-negative integer');
@@ -46,7 +47,7 @@ const noticeReceiverPageSchema = z
     totalElements: nonNegativeIntegerSchema,
     totalPages: nonNegativeIntegerSchema,
     number: nonNegativeIntegerSchema,
-    size: nonNegativeIntegerSchema
+    size: positiveIntegerSchema
   })
   .strict();
 
@@ -79,8 +80,10 @@ export function parseNoticeReceiverWire(value: unknown) {
   return parseSchema(noticeReceiverSchema, value, 'Notice receiver');
 }
 
-export function parseNoticeReceiverPageWire(value: unknown) {
-  return parseSchema(noticeReceiverPageSchema, value, 'Notice receiver page');
+export function parseNoticeReceiverPageWire(value: unknown, query: NoticeReceiverQuery) {
+  const page = parseSchema(noticeReceiverPageSchema, value, 'Notice receiver page');
+  requireSpringPageIdentity(page, query);
+  return page;
 }
 
 export function parseNoticeReceiverOptionsWire(value: unknown) {
@@ -95,6 +98,20 @@ function parseSchema<T extends z.ZodType>(schema: T, value: unknown, label: stri
   const result = schema.safeParse(value);
   if (result.success) return result.data;
   throw new NoticeReceiverContractError(`${label} did not match the response contract`, { cause: result.error });
+}
+
+function requireSpringPageIdentity(page: z.output<typeof noticeReceiverPageSchema>, query: NoticeReceiverQuery) {
+  if (page.number !== query.pageIndex || page.size !== query.pageSize) throw new NoticeReceiverContractError();
+  const expectedTotalPages = page.totalElements === 0 ? 0 : Math.ceil(page.totalElements / page.size);
+  if (page.totalPages !== expectedTotalPages) throw new NoticeReceiverContractError();
+  // Spring permits an out-of-range page, but every in-range snapshot must carry
+  // exactly the rows implied by its authoritative total.
+  const remaining = page.number >= page.totalPages ? 0 : page.totalElements - page.number * page.size;
+  const expectedContentSize = Math.max(0, Math.min(page.size, remaining));
+  if (page.content.length !== expectedContentSize) throw new NoticeReceiverContractError();
+  if (new Set(page.content.map(receiver => receiver.id)).size !== page.content.length) {
+    throw new NoticeReceiverContractError();
+  }
 }
 
 export type NoticeReceiverWire = z.output<typeof noticeReceiverSchema>;

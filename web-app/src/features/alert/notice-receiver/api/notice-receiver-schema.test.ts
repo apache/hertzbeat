@@ -27,6 +27,14 @@ const receiver = {
   gmtCreate: null,
   gmtUpdate: null
 };
+const query = { name: 'Pager', pageIndex: 1, pageSize: 8 };
+const page = {
+  content: [receiver],
+  totalElements: 9,
+  totalPages: 2,
+  number: 1,
+  size: 8
+};
 
 describe('notice receiver wire schemas', () => {
   it('normalizes absent audit metadata while keeping the response exact', () => {
@@ -66,13 +74,16 @@ describe('notice receiver wire schemas', () => {
 
   it('validates page, rule option, and mutation envelopes', () => {
     expect(() =>
-      parseNoticeReceiverPageWire({
-        content: [receiver],
-        totalElements: 1,
-        totalPages: 1,
-        number: -1,
-        size: 8
-      })
+      parseNoticeReceiverPageWire(
+        {
+          content: [receiver],
+          totalElements: 1,
+          totalPages: 1,
+          number: -1,
+          size: 8
+        },
+        query
+      )
     ).toThrow(NoticeReceiverContractError);
     expect(() => parseNoticeReceiverOptionsWire([{ id: 7, name: 'Pager', type: 2, options: {} }])).toThrow(
       NoticeReceiverContractError
@@ -80,5 +91,36 @@ describe('notice receiver wire schemas', () => {
     expect(() => parseNoticeReceiverMutationWire({ id: 7, status: 'saved', receiver })).toThrow(
       NoticeReceiverContractError
     );
+  });
+
+  it.each([
+    ['zero page size', { ...page, size: 0 }],
+    ['request page mismatch', { ...page, number: 0 }],
+    ['request size mismatch', { ...page, size: 15 }],
+    ['inconsistent total pages', { ...page, totalPages: 3 }],
+    ['content beyond the last-page remainder', { ...page, content: [receiver, { ...receiver, id: 8 }] }],
+    ['duplicate receiver ids', { ...page, content: [receiver, receiver], totalElements: 10 }]
+  ])('rejects Spring page evidence with %s', (_name, evidence) => {
+    expect(() => parseNoticeReceiverPageWire(evidence, query)).toThrow(NoticeReceiverContractError);
+  });
+
+  it.each([
+    [
+      'a short non-last page',
+      { content: [receiver], totalElements: 100, totalPages: 13, number: 0, size: 8 },
+      { ...query, pageIndex: 0 }
+    ],
+    ['a short last page', { content: [receiver], totalElements: 10, totalPages: 2, number: 1, size: 8 }, query]
+  ])('rejects %s under an authoritative Spring total', (_name, evidence, requested) => {
+    expect(() => parseNoticeReceiverPageWire(evidence, requested)).toThrow(NoticeReceiverContractError);
+  });
+
+  it('accepts an empty page beyond the authoritative result range', () => {
+    expect(
+      parseNoticeReceiverPageWire(
+        { content: [], totalElements: 10, totalPages: 2, number: 2, size: 8 },
+        { ...query, pageIndex: 2 }
+      )
+    ).toMatchObject({ content: [], totalElements: 10, totalPages: 2, number: 2, size: 8 });
   });
 });

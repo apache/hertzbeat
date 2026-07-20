@@ -78,8 +78,8 @@ describe('Notice Receiver Refine data provider', () => {
   it('maps Refine list pagination and name filter to the frozen page endpoint', async () => {
     api.loadNoticeReceivers.mockResolvedValue({
       content: [receiver],
-      totalElements: 1,
-      totalPages: 1,
+      totalElements: 16,
+      totalPages: 2,
       number: 1,
       size: 15
     });
@@ -89,7 +89,7 @@ describe('Notice Receiver Refine data provider', () => {
         pagination: { currentPage: 2, pageSize: 15, mode: 'server' },
         filters: [{ field: 'name', operator: 'contains', value: ' Pager ' }]
       })
-    ).resolves.toEqual({ data: [receiver], total: 1 });
+    ).resolves.toEqual({ data: [receiver], total: 16 });
     expect(api.loadNoticeReceivers).toHaveBeenCalledWith({ name: 'Pager', pageIndex: 1, pageSize: 15 });
     expect(noticeReceiverDataProvider.getApiUrl()).toBe(noticeApiEndpoint);
   });
