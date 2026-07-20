@@ -18,7 +18,6 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  buildAlertGroupListPath,
   buildAlertGroupPayload,
   buildAlertGroupTogglePayload,
   createAlertGroupDraft,
@@ -40,13 +39,6 @@ const persisted = {
 };
 
 describe('alert group model', () => {
-  it('builds the master pagination and search contract', () => {
-    expect(buildAlertGroupListPath({ search: '', pageIndex: 0, pageSize: 8 }))
-      .toBe('/api/alert/groups?pageIndex=0&pageSize=8&sort=id&order=desc');
-    expect(buildAlertGroupListPath({ search: 'service', pageIndex: 1, pageSize: 15 }))
-      .toBe('/api/alert/groups?pageIndex=1&pageSize=15&sort=id&order=desc&search=service');
-  });
-
   it('builds an explicit group convergence payload', () => {
     const draft = { ...createAlertGroupDraft(), name: 'By service', groupLabels: ['service', 'severity'] };
     expect(buildAlertGroupPayload(draft)).toEqual({

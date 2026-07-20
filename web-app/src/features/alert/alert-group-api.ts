@@ -24,7 +24,6 @@ import {
 } from '@/core/http/api-message';
 
 import {
-  buildAlertGroupListPath,
   buildAlertGroupPayload,
   buildAlertGroupTogglePayload,
   AlertGroupMissingError,
@@ -34,28 +33,42 @@ import {
 } from './alert-group-model';
 import { parseAlertGroupDetail, parseAlertGroupPage } from './alert-group-schema';
 
+const alertGroupEndpoint = '/api/alert/group';
+const alertGroupsEndpoint = '/api/alert/groups';
+
+function buildAlertGroupListPath(query: AlertGroupQuery) {
+  const params = new URLSearchParams({
+    pageIndex: String(query.pageIndex),
+    pageSize: String(query.pageSize),
+    sort: 'id',
+    order: 'desc'
+  });
+  if (query.search) params.set('search', query.search);
+  return `${alertGroupsEndpoint}?${params.toString()}`;
+}
+
 export async function loadAlertGroups(query: AlertGroupQuery) {
   const response = await apiMessageGet(buildAlertGroupListPath(query));
   return parseAlertGroupPage(response, query);
 }
 
 export async function loadAlertGroup(id: number) {
-  const response = await apiMessageGet(`/api/alert/group/${id}`);
+  const response = await apiMessageGet(`${alertGroupEndpoint}/${id}`);
   return parseAlertGroupDetail(response);
 }
 
 export async function saveAlertGroup(draft: AlertGroupDraft): Promise<void> {
   const payload = buildAlertGroupPayload(draft);
-  if (draft.id) await apiMessagePut('/api/alert/group', payload);
-  else await apiMessagePost('/api/alert/group', payload);
+  if (draft.id) await apiMessagePut(alertGroupEndpoint, payload);
+  else await apiMessagePost(alertGroupEndpoint, payload);
 }
 
 export async function deleteAlertGroup(id: number): Promise<void> {
-  await apiMessageDelete(`/api/alert/groups?ids=${id}`);
+  await apiMessageDelete(`${alertGroupsEndpoint}?ids=${id}`);
 }
 
 export async function updateAlertGroupEnabled(group: AlertGroupConverge, enable: boolean): Promise<void> {
-  await apiMessagePut('/api/alert/group', buildAlertGroupTogglePayload(group, enable));
+  await apiMessagePut(alertGroupEndpoint, buildAlertGroupTogglePayload(group, enable));
 }
 
 export function classifyAlertGroupReadError(reason: unknown): 'missing' | 'unavailable' | 'error' {

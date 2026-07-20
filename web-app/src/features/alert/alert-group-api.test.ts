@@ -87,6 +87,22 @@ describe('alert group API', () => {
     expect(transport.apiMessageGet).toHaveBeenNthCalledWith(2, '/api/alert/group/7');
   });
 
+  it('owns backend pagination, sorting, and search request assembly', async () => {
+    transport.apiMessageGet.mockResolvedValue({
+      content: [],
+      totalElements: 0,
+      totalPages: 0,
+      number: 1,
+      size: 15
+    });
+
+    await loadAlertGroups({ search: 'service', pageIndex: 1, pageSize: 15 });
+
+    expect(transport.apiMessageGet).toHaveBeenCalledWith(
+      '/api/alert/groups?pageIndex=1&pageSize=15&sort=id&order=desc&search=service'
+    );
+  });
+
   it('returns void acknowledgements and never treats response data as a canonical entity', async () => {
     transport.apiMessagePost.mockResolvedValue({ id: 99, leaked: true });
     transport.apiMessagePut.mockResolvedValue({ id: 7, leaked: true });

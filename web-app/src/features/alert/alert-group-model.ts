@@ -71,7 +71,7 @@ export function readAlertGroupQuery(params: URLSearchParams): AlertGroupQuery {
   return {
     search: params.get('search')?.trim() ?? '',
     pageIndex: Number.isFinite(pageIndex) && pageIndex >= 0 ? pageIndex : 0,
-    pageSize: alertGroupPageSizes.includes(pageSize as typeof alertGroupPageSizes[number]) ? pageSize : 8
+    pageSize: alertGroupPageSizes.includes(pageSize as (typeof alertGroupPageSizes)[number]) ? pageSize : 8
   };
 }
 
@@ -79,17 +79,6 @@ export function writeAlertGroupQuery(query: AlertGroupQuery) {
   const params = new URLSearchParams({ pageIndex: String(query.pageIndex), pageSize: String(query.pageSize) });
   if (query.search) params.set('search', query.search);
   return params;
-}
-
-export function buildAlertGroupListPath(query: AlertGroupQuery) {
-  const params = new URLSearchParams({
-    pageIndex: String(query.pageIndex),
-    pageSize: String(query.pageSize),
-    sort: 'id',
-    order: 'desc'
-  });
-  if (query.search) params.set('search', query.search);
-  return `/api/alert/groups?${params.toString()}`;
 }
 
 export function createAlertGroupDraft(): AlertGroupDraft {
