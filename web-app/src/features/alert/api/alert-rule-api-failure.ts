@@ -7,7 +7,7 @@
 
 import { ApiMessageError } from '@/core/http/api-message';
 
-import { AlertRuleRequestFailure, type AlertRuleFailureKind, type AlertRuleWriteOutcome } from './alert-rule-model';
+import { AlertRuleRequestFailure, type AlertRuleFailureKind, type AlertRuleWriteOutcome } from '../alert-rule-model';
 
 const unavailableStatuses = new Set([0, 502, 503, 504]);
 

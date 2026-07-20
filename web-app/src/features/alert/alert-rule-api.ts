@@ -17,7 +17,7 @@
 
 import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
 
-import { alertRuleApiRequest } from './alert-rule-api-failure';
+import { alertRuleApiRequest } from './api/alert-rule-api-failure';
 import {
   AlertRuleContractError,
   buildAlertRulePayload,

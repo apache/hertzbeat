@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
 
-import { AlertRuleRequestFailure } from './alert-rule-model';
+import { AlertRuleRequestFailure } from '../alert-rule-model';
 import { normalizeAlertRuleApiFailure } from './alert-rule-api-failure';
 
 describe('Alert Rule API failure boundary', () => {
