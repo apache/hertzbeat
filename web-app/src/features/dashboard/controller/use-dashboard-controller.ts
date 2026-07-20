@@ -15,9 +15,8 @@
  * limitations under the License.
  */
 import { useQuery } from '@tanstack/react-query';
-import { ApiMessageError } from '@/core/http/api-message';
 import { loadDashboardAlertSummary, loadDashboardSummary } from '../api/dashboard-api';
-import { DashboardContractError, type DashboardData } from '../model/dashboard-model';
+import { dashboardFailureKind, type DashboardData } from '../model/dashboard-model';
 import { dashboardQueryKeys } from './dashboard-query-keys';
 
 export type DashboardState =
@@ -44,20 +43,17 @@ export function useDashboardController() {
 function dashboardState(
   pending: boolean,
   error: Error | null,
-  result: { summary: Awaited<ReturnType<typeof loadDashboardSummary>>;
-    alert: Awaited<ReturnType<typeof loadDashboardAlertSummary>> } | undefined
+  result:
+    | {
+        summary: Awaited<ReturnType<typeof loadDashboardSummary>>;
+        alert: Awaited<ReturnType<typeof loadDashboardAlertSummary>>;
+      }
+    | undefined
 ): DashboardState {
   if (pending) return { kind: 'loading' };
-  if (error) return { kind: classifyDashboardError(error) };
+  if (error) return { kind: dashboardFailureKind(error) };
   if (!result) return { kind: 'error' };
   if (result.summary.apps === null) return { kind: 'missing' };
   const data = { apps: result.summary.apps, alert: result.alert };
   return { kind: data.apps.length === 0 ? 'empty' : 'ready', data };
-}
-
-function classifyDashboardError(error: Error): 'unavailable' | 'error' {
-  if (error instanceof DashboardContractError) return 'error';
-  if (error instanceof ApiMessageError
-    && (error.cause !== undefined || error.status === undefined || [0, 502, 503, 504].includes(error.status))) return 'unavailable';
-  return 'error';
 }

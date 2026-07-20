@@ -16,7 +16,12 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 const http = vi.hoisted(() => ({ apiMessageGet: vi.fn() }));
-vi.mock('@/core/http/api-message', () => http);
+vi.mock('@/core/http/api-message', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/core/http/api-message')>()),
+  ...http
+}));
+
+import { ApiMessageError } from '@/core/http/api-message';
 import { loadDashboardAlertSummary, loadDashboardSummary } from './dashboard-api';
 import { DashboardContractError } from '../model/dashboard-model';
 
@@ -41,5 +46,13 @@ describe('dashboard API', () => {
     http.apiMessageGet.mockResolvedValueOnce({ apps: null }).mockResolvedValueOnce({});
     await expect(loadDashboardSummary()).resolves.toEqual({ apps: null });
     await expect(loadDashboardAlertSummary()).rejects.toBeInstanceOf(DashboardContractError);
+  });
+
+  it('normalizes transport failures from both endpoints before leaving the API', async () => {
+    http.apiMessageGet.mockRejectedValueOnce(new ApiMessageError('private summary failure', { status: 503 }));
+    await expect(loadDashboardSummary()).rejects.toMatchObject({ kind: 'unavailable' });
+
+    http.apiMessageGet.mockRejectedValueOnce(new ApiMessageError('private alert failure', { status: 400 }));
+    await expect(loadDashboardAlertSummary()).rejects.toMatchObject({ kind: 'error' });
   });
 });

@@ -15,12 +15,21 @@
  * limitations under the License.
  */
 export type AppCount = {
-  app: string; category: string; size: number; availableSize: number; unAvailableSize: number; unManageSize: number;
+  app: string;
+  category: string;
+  size: number;
+  availableSize: number;
+  unAvailableSize: number;
+  unManageSize: number;
 };
 export type DashboardSummary = { apps: AppCount[] | null };
 export type DashboardAlertSummary = {
-  total: number; dealNum: number; rate: number; priorityWarningNum: number;
-  priorityCriticalNum: number; priorityEmergencyNum: number;
+  total: number;
+  dealNum: number;
+  rate: number;
+  priorityWarningNum: number;
+  priorityCriticalNum: number;
+  priorityEmergencyNum: number;
 };
 export type DashboardData = { apps: AppCount[]; alert: DashboardAlertSummary };
 
@@ -31,8 +40,28 @@ export class DashboardContractError extends Error {
   }
 }
 
+export type DashboardFailureKind = 'unavailable' | 'error';
+
+/** Stable request evidence emitted by the Dashboard API boundary. */
+export class DashboardRequestFailure extends Error {
+  constructor(readonly kind: DashboardFailureKind) {
+    super('Dashboard request failed');
+    this.name = 'DashboardRequestFailure';
+  }
+}
+
+export function dashboardFailureKind(error: unknown): DashboardFailureKind {
+  return error instanceof DashboardRequestFailure ? error.kind : 'error';
+}
+
 export function monitorTotals(apps: AppCount[]) {
-  return apps.reduce((total, app) => ({ total: total.total + app.size,
-    available: total.available + app.availableSize, unavailable: total.unavailable + app.unAvailableSize,
-    unmanaged: total.unmanaged + app.unManageSize }), { total: 0, available: 0, unavailable: 0, unmanaged: 0 });
+  return apps.reduce(
+    (total, app) => ({
+      total: total.total + app.size,
+      available: total.available + app.availableSize,
+      unavailable: total.unavailable + app.unAvailableSize,
+      unmanaged: total.unmanaged + app.unManageSize
+    }),
+    { total: 0, available: 0, unavailable: 0, unmanaged: 0 }
+  );
 }

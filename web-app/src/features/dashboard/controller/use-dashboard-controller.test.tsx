@@ -18,8 +18,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ApiMessageError } from '@/core/http/api-message';
-import { DashboardContractError } from '../model/dashboard-model';
+import { DashboardContractError, DashboardRequestFailure } from '../model/dashboard-model';
 import { dashboardQueryKeys } from './dashboard-query-keys';
 import { useDashboardController } from './use-dashboard-controller';
 
@@ -50,7 +49,7 @@ describe('dashboard controller', () => {
 
   it.each([
     [{ apps: null }, alert(0), 'missing'],
-    [new ApiMessageError('offline', { status: 503 }), alert(0), 'unavailable'],
+    [new DashboardRequestFailure('unavailable'), alert(0), 'unavailable'],
     [new DashboardContractError('bad'), alert(0), 'error']
   ] as const)('classifies incomplete evidence as %s without Results data', async (summary, alerts, kind) => {
     if (summary instanceof Error) api.loadDashboardSummary.mockRejectedValue(summary);
@@ -61,7 +60,7 @@ describe('dashboard controller', () => {
   });
 
   it.each([
-    [new ApiMessageError('offline', { status: 503 }), 'unavailable'],
+    [new DashboardRequestFailure('unavailable'), 'unavailable'],
     [new DashboardContractError('bad'), 'error'],
     [new Error('bad'), 'error']
   ] as const)('withholds data when the alert source fails as %s', async (reason, kind) => {
