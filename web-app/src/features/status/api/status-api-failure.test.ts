@@ -28,6 +28,18 @@ describe('Status API failure boundary', () => {
     for (const error of nearMatches) {
       expect(normalizeStatusApiFailure(error, { resource: 'organization' })).not.toBeInstanceOf(StatusOrgNotFoundError);
     }
+
+    const causeBearingExact = normalizeStatusApiFailure(
+      new ApiMessageError('Status Page Organization Not Found', {
+        code: 15,
+        status: 200,
+        cause: new Error('private-cause')
+      }),
+      { resource: 'organization' }
+    );
+    expect(causeBearingExact).not.toBeInstanceOf(StatusOrgNotFoundError);
+    expect(causeBearingExact).toMatchObject({ kind: 'unavailable', writeOutcome: 'uncertain' });
+    expect(JSON.stringify(causeBearingExact)).not.toContain('private-cause');
   });
 
   it.each([
@@ -43,6 +55,18 @@ describe('Status API failure boundary', () => {
     ['request timeout', new ApiMessageError('Timed out', { code: 12, status: 408 }), 'error', 'uncertain'],
     ['unknown transport', new ApiMessageError('Unknown', { code: 12 }), 'unavailable', 'uncertain'],
     ['transport status zero', new ApiMessageError('Network', { status: 0 }), 'unavailable', 'uncertain'],
+    [
+      'transport cause with missing-looking status',
+      new ApiMessageError('Network', { status: 404, cause: new Error('offline') }),
+      'unavailable',
+      'uncertain'
+    ],
+    [
+      'transport cause with missing-looking envelope',
+      new ApiMessageError('Network', { status: 200, code: 15, cause: new Error('offline') }),
+      'unavailable',
+      'uncertain'
+    ],
     [
       'transport cause with client-looking status',
       new ApiMessageError('Network', { status: 422, cause: new Error('offline') }),

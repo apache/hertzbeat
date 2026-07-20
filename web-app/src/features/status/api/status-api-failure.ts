@@ -6,6 +6,7 @@
  */
 
 import { ApiMessageError } from '@/core/http/api-message';
+import { apiMessageWriteOutcome } from '@/core/http/api-message-write-evidence';
 
 import { StatusOrgNotFoundError, StatusRequestFailure } from '../shared/status-error-model';
 
@@ -21,7 +22,7 @@ export function normalizeStatusApiFailure(error: unknown, context: StatusApiFail
     return new StatusOrgNotFoundError();
   }
 
-  return new StatusRequestFailure(readFailureKind(error), writeOutcome(error));
+  return new StatusRequestFailure(readFailureKind(error), apiMessageWriteOutcome(error));
 }
 
 export async function statusApiRequest<T>(
@@ -36,25 +37,20 @@ export async function statusApiRequest<T>(
 }
 
 function isExactStatusOrgNotFound(error: ApiMessageError) {
-  return error.code === statusOrgNotFoundCode && error.status === 200 && error.message === statusOrgNotFoundMessage;
+  return (
+    error.cause === undefined &&
+    error.code === statusOrgNotFoundCode &&
+    error.status === 200 &&
+    error.message === statusOrgNotFoundMessage
+  );
 }
 
 function readFailureKind(error: ApiMessageError) {
+  if (error.cause !== undefined || error.status === undefined || error.status === 0 || error.status >= 500) {
+    return 'unavailable' as const;
+  }
   if (error.status === 404 || (error.status === 200 && error.code === statusOrgNotFoundCode)) {
     return 'missing' as const;
   }
-  if (error.cause != null || [0, 502, 503, 504].includes(error.status ?? 0)) {
-    return 'unavailable' as const;
-  }
   return 'error' as const;
-}
-
-function writeOutcome(error: ApiMessageError) {
-  const status = error.status ?? 0;
-  // Business envelopes and transport/server failures may be observed after
-  // persistence. Only a direct, non-timeout HTTP 4xx proves rejection.
-  const hasNoTransportCause = error.cause === undefined || error.cause === null;
-  return hasNoTransportCause && status >= 400 && status < 500 && status !== 408
-    ? ('rejected' as const)
-    : ('uncertain' as const);
 }
