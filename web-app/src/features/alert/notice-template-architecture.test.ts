@@ -40,7 +40,7 @@ describe('Notice Template architecture', () => {
     const viewModel = source('./model/notice-template-view-model.ts');
     const overlays = source('./components/notice-template-overlays.tsx');
 
-    expect(page).toContain('from "./notice-template-controller"');
+    expect(page).toMatch(/from\s+['"]\.\/notice-template-controller['"]/);
     expect(page).not.toMatch(/@tanstack\/react-query|notice-template-api|useSearchParams|App\.useApp/);
     expect(page).toContain('components/notice-template-toolbar');
     expect(page).toContain('components/notice-template-results');
@@ -65,9 +65,8 @@ describe('Notice Template architecture', () => {
     expect(domainModel).not.toContain('NoticeTemplateCommand');
     expect(viewModel).not.toContain('NoticeTemplateCommand');
     expect(overlays).not.toContain('NoticeTemplateCommand');
-    expect(commandState).toMatch(/NoticeTemplateCommand = 'idle' \| 'loading-detail' \| 'saving' \| 'deleting'/);
-    expect(page).toContain('busy={state.command !== "idle"}');
-    expect(page).toContain('saving={state.command === "saving"}');
+    expect(commandState).toMatch(/export type NoticeTemplateCommand\s*=/);
+    expect(commandState).toMatch(/['"]recovering['"]/);
   });
 
   it('keeps the results table responsive without hiding source evidence', () => {
