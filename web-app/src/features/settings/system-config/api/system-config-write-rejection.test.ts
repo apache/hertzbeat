@@ -22,9 +22,9 @@ import { createRefineHttpError } from '@/shared/refine/refine-http-error';
 import { isDefiniteSystemConfigWriteRejection } from './system-config-write-rejection';
 
 describe('System Config write rejection', () => {
-  it('accepts only explicit backend business and HTTP 4xx evidence', () => {
+  it('accepts only an explicit HTTP 4xx as proof that the POST did not commit', () => {
     expect(isDefiniteSystemConfigWriteRejection(createRefineHttpError('rejected', 400, 20, 'envelope', 200))).toBe(
-      true
+      false
     );
     expect(isDefiniteSystemConfigWriteRejection(createRefineHttpError('rejected', 422, undefined, 'http', 422))).toBe(
       true

@@ -387,11 +387,11 @@ function buildTimezoneResult(override: Record<string, unknown> = {}) {
 const ambiguousWriteFailures = [
   ['network', () => createRefineHttpError('network', 0, 'NETWORK_REQUEST_FAILED', 'network')],
   ['HTTP 5xx', () => createRefineHttpError('unavailable', 503, undefined, 'http', 503)],
+  ['business envelope', () => createRefineHttpError('rejected', 400, 20, 'envelope', 200)],
   ['malformed success', () => createRefineHttpError('malformed', 502, 'SYSTEM_CONFIG_RESPONSE_INVALID', 'contract')]
 ] as const;
 
 const definiteWriteRejections = [
-  ['business envelope', () => createRefineHttpError('rejected', 400, 20, 'envelope', 200)],
   ['HTTP 4xx', () => createRefineHttpError('rejected', 422, undefined, 'http', 422)]
 ] as const;
 

@@ -17,10 +17,9 @@
 
 import { isRefineHttpError } from '@/shared/refine/refine-http-error';
 
-/** Only explicit backend business and HTTP 4xx responses prove that no System Config write committed. */
+/** Only an explicit HTTP 4xx proves that no System Config POST committed. */
 export function isDefiniteSystemConfigWriteRejection(reason: unknown) {
   if (!isRefineHttpError(reason)) return false;
-  if (reason.kind === 'envelope') return true;
   return (
     reason.kind === 'http' && reason.httpStatus !== undefined && reason.httpStatus >= 400 && reason.httpStatus < 500
   );
