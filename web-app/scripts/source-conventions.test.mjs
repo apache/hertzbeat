@@ -496,7 +496,12 @@ test('rejects generic feature hooks through exact production-file debt entries',
 test('enforces feature presentation, model, and public API dependency boundaries', () => {
   const project = createProject({
     ...requiredProjectFiles(),
-    'src/features/orders/api/orders-api.ts': 'export type OrderDto = { id: number };',
+    'src/features/orders/api/orders-api.ts': [
+      'export type OrderDto = { id: number };',
+      'export const loadOrders = () => [];'
+    ].join('\n'),
+    'src/features/orders/orders-page.tsx':
+      "import { loadOrders } from './api/orders-api'; export const OrdersPage = () => String(loadOrders());",
     'src/features/orders/components/orders-table.tsx':
       "import type { OrderDto } from '../api/orders-api'; export const OrdersTable = (_props: { order: OrderDto }) => null;",
     'src/features/orders/model/orders.ts':
@@ -513,6 +518,10 @@ test('enforces feature presentation, model, and public API dependency boundaries
   assert.match(
     failures,
     /orders-table\.tsx.*presentation cannot depend on feature API.*features\/orders\/api\/orders-api/
+  );
+  assert.match(
+    failures,
+    /orders-page\.tsx.*presentation cannot depend on feature API.*features\/orders\/api\/orders-api/
   );
   assert.match(failures, /model\/orders\.ts.*model cannot depend on feature API.*features\/orders\/api\/orders-api/);
   assert.match(

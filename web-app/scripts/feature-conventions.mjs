@@ -201,7 +201,9 @@ function collectDependencyObservations(source, path, importerPath) {
   const observations = [];
   const importerSegments = importerPath.split('/');
   const importerFeature = importerSegments[1];
-  const isPresentation = importerSegments.includes('components') || importerSegments.includes('pages');
+  const isFeatureRootPage = importerSegments.length === 3 && /-page\.tsx?$/.test(importerSegments[2] ?? '');
+  const isPresentation =
+    isFeatureRootPage || importerSegments.includes('components') || importerSegments.includes('pages');
   const isModel = importerSegments.includes('model');
 
   for (const specifier of collectModuleSpecifiers(sourceFile)) {
