@@ -16,16 +16,9 @@
  */
 
 import { isRefineHttpError } from '@/shared/refine/refine-http-error';
+import { isDefiniteRefineWriteRejection } from '@/shared/refine/refine-source-evidence';
 
 /** Only an explicit HTTP 4xx proves that no System Config POST committed. */
 export function isDefiniteSystemConfigWriteRejection(reason: unknown) {
-  if (!isRefineHttpError(reason)) return false;
-  return (
-    reason.cause === undefined &&
-    reason.kind === 'http' &&
-    reason.httpStatus !== undefined &&
-    reason.httpStatus >= 400 &&
-    reason.httpStatus < 500 &&
-    reason.httpStatus !== 408
-  );
+  return isRefineHttpError(reason) && isDefiniteRefineWriteRejection(reason);
 }

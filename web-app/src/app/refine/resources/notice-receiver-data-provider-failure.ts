@@ -9,6 +9,7 @@ import {
   type NoticeReceiverFailureKind,
   type NoticeReceiverWriteOutcome
 } from '@/features/alert/notice-receiver/model/notice-receiver-failure';
+import { isDefiniteRefineWriteRejection, isRefineSourceUnavailable } from '@/shared/refine/refine-source-evidence';
 
 import { isRefineHttpError, type RefineHttpError } from '../refine-http-error';
 
@@ -47,13 +48,7 @@ function adaptRefineFailure(reason: RefineHttpError, phase: NoticeReceiverProvid
 }
 
 function refineFailureKind(reason: RefineHttpError, phase: NoticeReceiverProviderPhase): NoticeReceiverFailureKind {
-  if (
-    reason.cause !== undefined ||
-    reason.kind === 'network' ||
-    (reason.kind === 'http' && (reason.httpStatus === undefined || reason.httpStatus === 0 || reason.httpStatus >= 500))
-  ) {
-    return 'unavailable';
-  }
+  if (isRefineSourceUnavailable(reason)) return 'unavailable';
   if (phase === 'detail' && reason.kind === 'http' && reason.httpStatus === 404) return 'missing';
   if (typeof reason.code === 'string' && reason.code.startsWith('NOTICE_RECEIVER_')) return 'invalid';
   return 'error';
@@ -62,13 +57,8 @@ function refineFailureKind(reason: RefineHttpError, phase: NoticeReceiverProvide
 function refineWriteOutcome(reason: RefineHttpError, phase: NoticeReceiverProviderPhase): NoticeReceiverWriteOutcome {
   // `statusCode` is presentation metadata. Only the originating HTTP write
   // status can establish a rejection, and a timeout may still have committed.
-  if (phase !== 'write' || reason.kind !== 'http' || reason.cause !== undefined) return 'uncertain';
-  return reason.httpStatus !== undefined &&
-    reason.httpStatus >= 400 &&
-    reason.httpStatus < 500 &&
-    reason.httpStatus !== 408
-    ? 'rejected'
-    : 'uncertain';
+  if (phase !== 'write') return 'uncertain';
+  return isDefiniteRefineWriteRejection(reason) ? 'rejected' : 'uncertain';
 }
 
 function stableReceiverCode(code: string | number | undefined) {

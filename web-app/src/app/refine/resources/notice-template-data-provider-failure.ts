@@ -11,6 +11,7 @@ import {
   type NoticeTemplateWriteOutcome
 } from '@/features/alert/model/notice-template-failure';
 import { NoticeTemplateContractError } from '@/features/alert/notice-template-model';
+import { isDefiniteRefineWriteRejection, isRefineSourceUnavailable } from '@/shared/refine/refine-source-evidence';
 
 import { isRefineHttpError, type RefineHttpError } from '../refine-http-error';
 
@@ -46,8 +47,7 @@ function adaptRefineFailure(reason: RefineHttpError, phase: NoticeTemplateReques
 }
 
 function refineFailureKind(reason: RefineHttpError, phase: NoticeTemplateRequestPhase): NoticeTemplateFailureKind {
-  if (hasTransportCause(reason)) return 'unavailable';
-  if (isRefineUnavailable(reason)) return 'unavailable';
+  if (isRefineSourceUnavailable(reason)) return 'unavailable';
   if (isExactMissingDetail(reason, phase)) return 'missing';
   if (typeof reason.code === 'string' && reason.code.startsWith('NOTICE_TEMPLATE_')) return 'invalid';
   return 'error';
@@ -59,22 +59,11 @@ function isExactMissingDetail(reason: RefineHttpError, phase: NoticeTemplateRequ
   return reason.kind === 'envelope' && reason.httpStatus === 200 && reason.code === NOTICE_TEMPLATE_MISSING_API_CODE;
 }
 
-function isRefineUnavailable(reason: RefineHttpError) {
-  if (reason.kind === 'network') return true;
-  if (reason.kind !== 'http') return false;
-  return reason.httpStatus === undefined || reason.httpStatus === 0 || reason.httpStatus >= 500;
-}
-
 function refineWriteOutcome(reason: RefineHttpError, phase: NoticeTemplateRequestPhase): NoticeTemplateWriteOutcome {
   // `statusCode` is presentation metadata. Only a source HTTP status from the
   // write request can prove rejection, and a timeout remains commit-uncertain.
-  if (phase !== 'write' || reason.kind !== 'http' || hasTransportCause(reason)) return 'uncertain';
-  return reason.httpStatus !== undefined &&
-    reason.httpStatus >= 400 &&
-    reason.httpStatus < 500 &&
-    reason.httpStatus !== 408
-    ? 'rejected'
-    : 'uncertain';
+  if (phase !== 'write') return 'uncertain';
+  return isDefiniteRefineWriteRejection(reason) ? 'rejected' : 'uncertain';
 }
 
 function hasTransportCause(reason: RefineHttpError) {

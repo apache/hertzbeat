@@ -29,6 +29,7 @@ import type {
 
 import { isRefineHttpError, type RefineHttpError } from '@/shared/refine/refine-http-error';
 import { adaptRefineRecord, adaptRefineRecords } from '@/shared/refine/refine-provider-data';
+import { isDefiniteRefineWriteRejection, isRefineSourceUnavailable } from '@/shared/refine/refine-source-evidence';
 
 import { normalizeTokenApiFailure, type TokenRequestPhase } from '../api/token-api-failure';
 import {
@@ -110,15 +111,7 @@ function adaptRefineFailure(reason: RefineHttpError, phase: TokenRequestPhase) {
 }
 
 function refineFailureKind(reason: RefineHttpError): TokenFailureKind {
-  if (reason.cause !== undefined || reason.kind === 'network') {
-    return 'unavailable';
-  }
-  if (
-    reason.kind === 'http' &&
-    (reason.httpStatus === undefined || reason.httpStatus === 0 || reason.httpStatus >= 500)
-  ) {
-    return 'unavailable';
-  }
+  if (isRefineSourceUnavailable(reason)) return 'unavailable';
   if (typeof reason.code === 'string' && reason.code.startsWith('TOKEN_')) return 'invalid';
   return 'error';
 }
@@ -126,14 +119,8 @@ function refineFailureKind(reason: RefineHttpError): TokenFailureKind {
 function refineWriteOutcome(reason: RefineHttpError, phase: TokenRequestPhase): TokenWriteOutcome {
   // Refine's statusCode is display metadata. Only a source HTTP write response
   // can prove rejection; reads, network causes, and timeouts remain uncertain.
-  if (phase === 'collection' || reason.cause !== undefined) return 'uncertain';
-  return reason.kind === 'http' &&
-    reason.httpStatus !== undefined &&
-    reason.httpStatus >= 400 &&
-    reason.httpStatus < 500 &&
-    reason.httpStatus !== 408
-    ? 'rejected'
-    : 'uncertain';
+  if (phase === 'collection') return 'uncertain';
+  return isDefiniteRefineWriteRejection(reason) ? 'rejected' : 'uncertain';
 }
 
 function stableTokenCode(code: string | number | undefined) {
