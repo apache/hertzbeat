@@ -40,6 +40,7 @@ vi.mock('@/features/alert/notice-template-api', async importOriginal => ({
 
 import { noticeTemplateCreateActionUrl } from '@/features/alert/notice-template-resource';
 
+import { createRefineHttpError } from '../refine-http-error';
 import { noticeTemplateDataProvider } from './notice-template-data-provider';
 import {
   readNoticeTemplateDeleteVariables,
@@ -235,7 +236,7 @@ describe('Notice Template Refine data provider', () => {
     ).rejects.toMatchObject({
       code: 'NOTICE_TEMPLATE_RESOURCE_UNSUPPORTED',
       kind: 'invalid',
-      writeOutcome: 'rejected'
+      writeOutcome: 'uncertain'
     });
     await expect(
       noticeTemplateDataProvider.create({ resource: 'notice-templates', variables: {} })
@@ -264,7 +265,7 @@ describe('Notice Template Refine data provider', () => {
 
   it('keeps missing detail and invalid response contracts distinguishable', async () => {
     api.loadNoticeTemplate
-      .mockRejectedValueOnce(new ApiMessageError('private', { code: 1, status: 200 }))
+      .mockRejectedValueOnce(new ApiMessageError('private', { code: 15, status: 200 }))
       .mockRejectedValueOnce(
         new NoticeTemplateRequestFailure('missing', 'rejected', { code: 'NOTICE_TEMPLATE_NOT_FOUND' })
       )
@@ -272,18 +273,85 @@ describe('Notice Template Refine data provider', () => {
 
     await expect(noticeTemplateDataProvider.getOne({ resource: 'notice-templates', id: 42 })).rejects.toMatchObject({
       kind: 'missing',
-      writeOutcome: 'rejected'
+      writeOutcome: 'uncertain'
     });
     await expect(noticeTemplateDataProvider.getOne({ resource: 'notice-templates', id: 42 })).rejects.toMatchObject({
       code: 'NOTICE_TEMPLATE_NOT_FOUND',
       kind: 'missing',
-      writeOutcome: 'rejected'
+      writeOutcome: 'uncertain'
     });
     await expect(noticeTemplateDataProvider.getOne({ resource: 'notice-templates', id: 42 })).rejects.toMatchObject({
       code: 'NOTICE_TEMPLATE_RESPONSE_INVALID',
       kind: 'invalid',
       writeOutcome: 'uncertain'
     });
+  });
+
+  it.each([
+    [
+      'HTTP-success business envelope',
+      createRefineHttpError('private', 400, 15, 'envelope', 200),
+      'write',
+      'error',
+      'uncertain'
+    ],
+    ['display-only 400', createRefineHttpError('private', 400), 'write', 'error', 'uncertain'],
+    ['timeout', createRefineHttpError('private', 408, undefined, 'http', 408), 'write', 'error', 'uncertain'],
+    [
+      'source HTTP rejection',
+      createRefineHttpError('private', 400, undefined, 'http', 400),
+      'write',
+      'error',
+      'rejected'
+    ],
+    [
+      'server failure',
+      createRefineHttpError('private', 503, undefined, 'http', 503),
+      'write',
+      'unavailable',
+      'uncertain'
+    ],
+    [
+      'zero source status',
+      createRefineHttpError('private', 0, undefined, 'http', 0),
+      'write',
+      'unavailable',
+      'uncertain'
+    ],
+    [
+      'network',
+      createRefineHttpError('private', 0, 'NETWORK_REQUEST_FAILED', 'network'),
+      'write',
+      'unavailable',
+      'uncertain'
+    ],
+    [
+      'unexpected',
+      createRefineHttpError('private', 500, 'REFINE_UNEXPECTED_ERROR', 'unexpected'),
+      'write',
+      'error',
+      'uncertain'
+    ],
+    [
+      'detail source 404',
+      createRefineHttpError('private', 404, undefined, 'http', 404),
+      'detail',
+      'missing',
+      'uncertain'
+    ],
+    [
+      'collection source 404',
+      createRefineHttpError('private', 404, undefined, 'http', 404),
+      'collection',
+      'error',
+      'uncertain'
+    ]
+  ] as const)('normalizes Refine %s evidence', async (_label, reason, phase, kind, writeOutcome) => {
+    if (phase === 'write') api.saveNoticeTemplate.mockRejectedValueOnce(reason);
+    if (phase === 'detail') api.loadNoticeTemplate.mockRejectedValueOnce(reason);
+    if (phase === 'collection') api.loadNoticeTemplates.mockRejectedValueOnce(reason);
+
+    await expect(requestForPhase(phase)).rejects.toMatchObject({ kind, writeOutcome });
   });
 
   it('keeps delete mutation separate from both exact preflight and missing-detail proof', async () => {
@@ -300,6 +368,25 @@ describe('Notice Template Refine data provider', () => {
     expect(api.loadNoticeTemplates).not.toHaveBeenCalled();
   });
 });
+
+function requestForPhase(phase: 'write' | 'detail' | 'collection') {
+  switch (phase) {
+    case 'write':
+      return noticeTemplateDataProvider.update({
+        resource: 'notice-templates',
+        id: 42,
+        variables: { id: 42, name: 'Request', type: 1, content: '${request}' }
+      });
+    case 'detail':
+      return noticeTemplateDataProvider.getOne({ resource: 'notice-templates', id: 42 });
+    case 'collection':
+      return noticeTemplateDataProvider.getList({
+        resource: 'notice-templates',
+        pagination: { currentPage: 1, pageSize: 8, mode: 'server' },
+        filters: [{ field: 'preset', operator: 'eq', value: false }]
+      });
+  }
+}
 
 describe('Notice Template provider input boundary', () => {
   it('normalizes supported list input and rejects unsupported Refine controls', () => {

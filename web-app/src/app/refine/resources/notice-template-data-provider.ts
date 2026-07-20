@@ -34,17 +34,9 @@ import {
   loadNoticeTemplates,
   saveNoticeTemplate
 } from '@/features/alert/notice-template-api';
+import type { NoticeTemplateRequestPhase } from '@/features/alert/api/notice-template-api-failure';
+import { NoticeTemplateRequestFailure } from '@/features/alert/model/notice-template-failure';
 import {
-  normalizeNoticeTemplateApiFailure,
-  type NoticeTemplateRequestPhase
-} from '@/features/alert/api/notice-template-api-failure';
-import {
-  NoticeTemplateRequestFailure,
-  type NoticeTemplateFailureKind,
-  type NoticeTemplateWriteOutcome
-} from '@/features/alert/model/notice-template-failure';
-import {
-  NoticeTemplateContractError,
   noticeTemplateResourceRecord,
   type NoticeTemplate,
   type NoticeTemplateQuery
@@ -53,7 +45,10 @@ import { noticeApiEndpoint } from '@/features/alert/notice-api-endpoints';
 import { noticeTemplateCreateActionUrl, noticeTemplateResourceName } from '@/features/alert/notice-template-resource';
 import { adaptRefineRecord, adaptRefineRecords } from '@/shared/refine/refine-provider-data';
 
-import { isRefineHttpError, type RefineHttpError } from '../refine-http-error';
+import {
+  normalizeNoticeTemplateProviderFailure,
+  readNoticeTemplateWriteInput
+} from './notice-template-data-provider-failure';
 import {
   readNoticeTemplateDeleteVariables,
   readNoticeTemplateDraft,
@@ -97,8 +92,10 @@ export const noticeTemplateDataProvider: DataProvider = {
   }): Promise<UpdateResponse<TData>> {
     return protect('write', async () => {
       assertResource(params.resource);
-      const id = readNoticeTemplateId(params.id);
-      const draft = readNoticeTemplateDraft(params.variables, id);
+      const { draft, id } = readNoticeTemplateWriteInput(() => {
+        const id = readNoticeTemplateId(params.id);
+        return { draft: readNoticeTemplateDraft(params.variables, id), id };
+      });
       await saveNoticeTemplate(draft);
       const acknowledged = noticeTemplateResourceRecord({ ...draft, id, preset: false });
       return { data: adaptRefineRecord<TData>(acknowledged) };
@@ -112,8 +109,10 @@ export const noticeTemplateDataProvider: DataProvider = {
   }): Promise<DeleteOneResponse<TData>> {
     return protect('write', async () => {
       assertResource(params.resource);
-      const id = readNoticeTemplateId(params.id);
-      const { record } = readNoticeTemplateDeleteVariables(params.variables, id);
+      const { id, record } = readNoticeTemplateWriteInput(() => {
+        const id = readNoticeTemplateId(params.id);
+        return { id, ...readNoticeTemplateDeleteVariables(params.variables, id) };
+      });
       await deleteNoticeTemplate(id);
       return { data: adaptRefineRecord<TData>(record) };
     });
@@ -126,7 +125,7 @@ export const noticeTemplateDataProvider: DataProvider = {
       if (params.url !== noticeTemplateCreateActionUrl || params.method !== 'post') {
         throw rejectedFailure('NOTICE_TEMPLATE_CUSTOM_ACTION_UNSUPPORTED');
       }
-      const draft = readNoticeTemplateDraft(params.payload);
+      const draft = readNoticeTemplateWriteInput(() => readNoticeTemplateDraft(params.payload));
       if (draft.id !== undefined) throw rejectedFailure('NOTICE_TEMPLATE_VARIABLES_INVALID');
       await saveNoticeTemplate(draft);
       return { data: adaptRefineRecord<TData>({ acknowledged: true }) };
@@ -140,39 +139,8 @@ async function protect<T>(phase: NoticeTemplateRequestPhase, operation: () => Pr
   try {
     return await operation();
   } catch (reason) {
-    throw providerFailure(reason, phase);
+    throw normalizeNoticeTemplateProviderFailure(reason, phase);
   }
-}
-
-function providerFailure(reason: unknown, phase: NoticeTemplateRequestPhase): NoticeTemplateRequestFailure {
-  if (reason instanceof NoticeTemplateRequestFailure) return reason;
-  if (reason instanceof NoticeTemplateContractError) return contractFailure('NOTICE_TEMPLATE_RESPONSE_INVALID');
-  if (isRefineHttpError(reason)) return adaptRefineFailure(reason);
-  return normalizeNoticeTemplateApiFailure(reason, phase);
-}
-
-function adaptRefineFailure(reason: RefineHttpError) {
-  const kind = refineFailureKind(reason);
-  const outcome = refineWriteOutcome(reason);
-  const code = stableTemplateCode(reason.code);
-  return code === undefined
-    ? new NoticeTemplateRequestFailure(kind, outcome)
-    : new NoticeTemplateRequestFailure(kind, outcome, { code });
-}
-
-function refineFailureKind(reason: RefineHttpError): NoticeTemplateFailureKind {
-  if (reason.statusCode === 404 || reason.code === 'NOTICE_TEMPLATE_NOT_FOUND') return 'missing';
-  if (typeof reason.code === 'string' && reason.code.startsWith('NOTICE_TEMPLATE_')) return 'invalid';
-  if (reason.statusCode === 0 || reason.kind === 'network' || reason.statusCode >= 500) return 'unavailable';
-  return 'error';
-}
-
-function refineWriteOutcome(reason: RefineHttpError): NoticeTemplateWriteOutcome {
-  return reason.statusCode >= 400 && reason.statusCode < 500 ? 'rejected' : 'uncertain';
-}
-
-function stableTemplateCode(code: string | number | undefined) {
-  return typeof code === 'string' && code.startsWith('NOTICE_TEMPLATE_') ? code : undefined;
 }
 
 function assertResource(resource: string) {

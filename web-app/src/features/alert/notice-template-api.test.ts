@@ -94,9 +94,9 @@ describe('Notice Template API', () => {
   });
 
   it('classifies the detail endpoint business failure as missing evidence', async () => {
-    http.apiMessageGet.mockRejectedValue(new ApiMessageError('missing', { code: 1, status: 200 }));
+    http.apiMessageGet.mockRejectedValue(new ApiMessageError('missing', { code: 15, status: 200 }));
 
-    await expect(loadNoticeTemplate(42)).rejects.toMatchObject({ kind: 'missing', writeOutcome: 'rejected' });
+    await expect(loadNoticeTemplate(42)).rejects.toMatchObject({ kind: 'missing', writeOutcome: 'uncertain' });
   });
 
   it('normalizes transport evidence at every API operation boundary', async () => {
