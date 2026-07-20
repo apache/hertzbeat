@@ -16,6 +16,11 @@
  */
 
 const productionSource = '[.](?:test|spec)[.](?:ts|tsx)$';
+const featurePresentationSource = [
+  '^src/features/[^/]+/(?:components|pages)/',
+  '^src/features/[^/]+/[^/]+/(?:components|pages)/',
+  '^src/features/[^/]+/[^/]+-page[.]tsx?$'
+].join('|');
 
 /** @type {import('dependency-cruiser').IConfiguration} */
 module.exports = {
@@ -113,16 +118,23 @@ module.exports = {
       name: 'no-feature-presentation-to-orchestration-runtime',
       severity: 'error',
       from: {
-        path: [
-          '^src/features/[^/]+/(?:components|pages)/',
-          '^src/features/[^/]+/[^/]+/(?:components|pages)/',
-          '^src/features/[^/]+/[^/]+-page[.]tsx?$'
-        ].join('|'),
+        path: featurePresentationSource,
         pathNot: productionSource
       },
       to: {
         dependencyTypes: ['npm', 'npm-dev', 'npm-optional', 'npm-peer', 'npm-bundled', 'npm-no-pkg', 'unknown'],
-        path: '^(?:node_modules/)?(?:@tanstack/react-query|react-router|react-router-dom)(?:/|$)'
+        path: '^(?:node_modules/)?(?:@tanstack/react-query|react-router|react-router-dom|@refinedev)(?:/|$)'
+      }
+    },
+    {
+      name: 'no-feature-presentation-to-http-transport',
+      severity: 'error',
+      from: {
+        path: featurePresentationSource,
+        pathNot: productionSource
+      },
+      to: {
+        path: '^src/core/http(?:[.]tsx?$|/)'
       }
     },
     {
