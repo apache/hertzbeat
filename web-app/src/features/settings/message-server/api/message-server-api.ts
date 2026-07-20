@@ -29,6 +29,7 @@ import {
 import {
   MessageServerContractError,
   parseEmailEvidenceWire,
+  parseMessageServerMutationResult,
   parseSmsEvidenceWire,
   type SmsEvidenceWire
 } from './message-server-schema';
@@ -49,24 +50,27 @@ export type {
 } from '../model/message-server-contract';
 export { MessageServerContractError } from './message-server-schema';
 
+const emailServerEndpoint = '/api/config/email';
+const smsServerEndpoint = '/api/config/sms';
+
 export async function loadEmailServerConfig(signal?: AbortSignal) {
   const value = signal
-    ? await apiMessageGet('/api/config/email', { signal })
-    : await apiMessageGet('/api/config/email');
+    ? await apiMessageGet(emailServerEndpoint, { signal })
+    : await apiMessageGet(emailServerEndpoint);
   return parseEmailEvidenceWire(value);
 }
 
 export async function loadSmsServerConfig(signal?: AbortSignal) {
-  const value = signal ? await apiMessageGet('/api/config/sms', { signal }) : await apiMessageGet('/api/config/sms');
+  const value = signal ? await apiMessageGet(smsServerEndpoint, { signal }) : await apiMessageGet(smsServerEndpoint);
   return mapSmsEvidence(parseSmsEvidenceWire(value));
 }
 
 export async function saveEmailServerConfig(payload: EmailServerPayload) {
-  return parseEmailEvidenceWire(await apiMessagePost('/api/config/email', payload));
+  return parseMessageServerMutationResult(await apiMessagePost(emailServerEndpoint, payload));
 }
 
 export async function saveSmsServerConfig(payload: SmsServerPayload) {
-  return mapSmsEvidence(parseSmsEvidenceWire(await apiMessagePost('/api/config/sms', payload)));
+  return parseMessageServerMutationResult(await apiMessagePost(smsServerEndpoint, payload));
 }
 
 export function classifyMessageServerReadError(error: unknown): MessageServerReadFailure {

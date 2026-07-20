@@ -124,29 +124,7 @@ describe('message server API contract', () => {
   });
 
   it('posts only caller-built frozen payloads without placing secrets in URLs', async () => {
-    apiMessagePost
-      .mockResolvedValueOnce({
-        status: 'configured',
-        config: {
-          type: 0,
-          emailHost: 'smtp.example.test',
-          emailUsername: 'ops@example.test',
-          emailPort: 587,
-          emailSsl: false,
-          emailStarttls: true,
-          enable: true,
-          configuredSecrets: ['emailPassword']
-        }
-      })
-      .mockResolvedValueOnce({
-        status: 'configured',
-        config: {
-          enable: true,
-          type: 'twilio',
-          options: { accountSid: 'account', twilioPhoneNumber: '+15550000000' },
-          configuredSecrets: ['authToken']
-        }
-      });
+    apiMessagePost.mockResolvedValue('Update config success');
     const email = {
       type: 0,
       emailHost: 'smtp.example.test',
@@ -163,15 +141,15 @@ describe('message server API contract', () => {
       options: { accountSid: 'account', twilioPhoneNumber: '+15550000000', authToken: 'new-token' }
     };
 
-    await saveEmailServerConfig(email);
-    await saveSmsServerConfig(sms);
+    await expect(saveEmailServerConfig(email)).resolves.toBe('Update config success');
+    await expect(saveSmsServerConfig(sms)).resolves.toBe('Update config success');
 
     expect(apiMessagePost).toHaveBeenNthCalledWith(1, '/api/config/email', email);
     expect(apiMessagePost).toHaveBeenNthCalledWith(2, '/api/config/sms', sms);
     expect(apiMessagePost.mock.calls.map(call => String(call[0])).join(' ')).not.toMatch(/new-secret|new-token/);
   });
 
-  it('rejects a successful HTTP save envelope with invalid Message data', async () => {
+  it('keeps malformed successful Message data distinct from a valid mutation acknowledgement', async () => {
     apiMessagePost.mockResolvedValue({
       status: 'configured',
       config: {

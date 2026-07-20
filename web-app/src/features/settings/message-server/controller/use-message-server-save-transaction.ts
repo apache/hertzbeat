@@ -29,7 +29,7 @@ export type MessageServerSaveNotifications = {
 type SaveTransactionOptions<Draft, Evidence> = {
   draft: Draft | null;
   validate: (draft: Draft) => string[];
-  write: (draft: Draft) => Promise<unknown>;
+  write: (draft: Draft) => Promise<string>;
   reread: () => Promise<{ data: Evidence | undefined; error: unknown }>;
   converged: (draft: Draft, evidence: Evidence) => boolean;
   canProveAmbiguousWrite: (draft: Draft) => boolean;
@@ -38,7 +38,18 @@ type SaveTransactionOptions<Draft, Evidence> = {
   notifications: MessageServerSaveNotifications;
 };
 
-type SaveReceipt<Draft> = { draft: Draft; failureKey: string; retryable: boolean };
+type MutationReceipt<Draft> = { phase: 'mutation'; draft: Draft };
+type ProofReceipt<Draft> = {
+  phase: 'proof-after-acknowledgement' | 'proof-after-ambiguous-mutation';
+  draft: Draft;
+  failureKey: string | null;
+};
+type CommitUncertainReceipt<Draft> = {
+  phase: 'commit-uncertain';
+  draft: Draft;
+  failureKey: string;
+};
+type SaveReceipt<Draft> = MutationReceipt<Draft> | ProofReceipt<Draft> | CommitUncertainReceipt<Draft>;
 type SaveCommand = 'idle' | 'saving' | 'proving';
 
 export function useMessageServerSaveTransaction<Draft, Evidence>(options: SaveTransactionOptions<Draft, Evidence>) {
@@ -98,8 +109,9 @@ function useSaveTransactionRuntime<Draft>(): TransactionRuntime<Draft> {
   const publishReceipt = (owner: symbol, receipt: SaveReceipt<Draft> | null) => {
     if (!isCurrent(owner)) return;
     receiptRef.current = receipt;
-    setRecoveryKey(receipt?.failureKey ?? null);
-    setRecoveryRetryable(receipt?.retryable ?? false);
+    const failureKey = receipt?.phase === 'mutation' ? null : (receipt?.failureKey ?? null);
+    setRecoveryKey(failureKey);
+    setRecoveryRetryable(isProofReceipt(receipt) && failureKey !== null);
   };
   const finish = (owner: symbol) => {
     if (!isCurrent(owner)) return;
@@ -129,12 +141,15 @@ async function submitSave<Draft, Evidence>(
   if (!draft || options.validate(draft).length > 0) return options.notifications.invalid();
   const owner = runtime.begin('saving');
   if (!owner) return;
-  // Publish the receipt before POST: a failed response does not prove that the
-  // server rejected the write, so later submits must not silently repeat it.
-  const receipt = { draft, failureKey: 'messageServer.saveNotConverged', retryable: true };
-  runtime.publishReceipt(owner, receipt);
+  // Own the draft before POST so same-tick callers cannot dispatch it twice.
+  const mutationReceipt: MutationReceipt<Draft> = { phase: 'mutation', draft };
+  runtime.publishReceipt(owner, mutationReceipt);
+  let proofReceipt: ProofReceipt<Draft>;
   try {
     await options.write(draft);
+    // A valid success acknowledgement proves that the mutation returned
+    // normally. Canonical GET still owns persisted non-secret convergence.
+    proofReceipt = { phase: 'proof-after-acknowledgement', draft, failureKey: null };
   } catch (error) {
     if (isDefiniteMessageServerWriteRejection(error)) {
       runtime.publishReceipt(owner, null);
@@ -142,14 +157,20 @@ async function submitSave<Draft, Evidence>(
       return runtime.finish(owner);
     }
     if (!options.canProveAmbiguousWrite(draft)) {
-      const uncertain = { ...receipt, failureKey: 'messageServer.saveNotConverged', retryable: false };
+      const uncertain: CommitUncertainReceipt<Draft> = {
+        phase: 'commit-uncertain',
+        draft,
+        failureKey: 'messageServer.saveNotConverged'
+      };
       runtime.publishReceipt(owner, uncertain);
       if (runtime.isCurrent(owner)) options.notifications.failure(uncertain.failureKey);
       return runtime.finish(owner);
     }
+    proofReceipt = { phase: 'proof-after-ambiguous-mutation', draft, failureKey: null };
   }
   if (!runtime.isCurrent(owner)) return;
-  await proveSave(options, runtime, owner, receipt);
+  runtime.publishReceipt(owner, proofReceipt);
+  await proveSave(options, runtime, owner, proofReceipt);
   runtime.finish(owner);
 }
 
@@ -159,7 +180,7 @@ async function retrySave<Draft, Evidence>(
 ) {
   // Recovery is proof-only. It never repeats the write represented by receipt.
   const receipt = runtime.receiptRef.current;
-  if (!receipt?.retryable) return;
+  if (!isProofReceipt(receipt) || !receipt.failureKey) return;
   const owner = runtime.begin('proving');
   if (!owner) return;
   await proveSave(options, runtime, owner, receipt);
@@ -170,7 +191,7 @@ async function proveSave<Draft, Evidence>(
   options: SaveTransactionOptions<Draft, Evidence>,
   runtime: TransactionRuntime<Draft>,
   owner: symbol,
-  receipt: SaveReceipt<Draft>
+  receipt: ProofReceipt<Draft>
 ) {
   try {
     const evidence = await rereadAndConverge(options, receipt.draft);
@@ -180,7 +201,7 @@ async function proveSave<Draft, Evidence>(
     options.notifications.success();
   } catch (error) {
     if (!runtime.isCurrent(owner)) return;
-    const failureKey = mutationErrorKey(error);
+    const failureKey = canonicalReadFailureKey(error);
     runtime.publishReceipt(owner, { ...receipt, failureKey });
     options.notifications.failure(failureKey);
   }
@@ -203,8 +224,12 @@ class AuthoritativeReadError extends Error {
   }
 }
 
-function mutationErrorKey(error: unknown) {
+function canonicalReadFailureKey(error: unknown) {
   if (!(error instanceof AuthoritativeReadError)) return 'messageServer.saveFailed';
   if (error.missing) return 'messageServer.saveNotConverged';
   return `messageServer.read.${classifyMessageServerReadError(error.reason)}`;
+}
+
+function isProofReceipt<Draft>(receipt: SaveReceipt<Draft> | null): receipt is ProofReceipt<Draft> {
+  return receipt?.phase === 'proof-after-acknowledgement' || receipt?.phase === 'proof-after-ambiguous-mutation';
 }
