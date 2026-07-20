@@ -53,6 +53,12 @@ const serverLabel: LabelRecord = {
   description: 'Server canonical'
 };
 
+const exclusiveMutationCases = [
+  ['create', ['update', 'delete']],
+  ['update', ['create', 'delete']],
+  ['delete', ['create', 'update']]
+] as const;
+
 describe('Label resource controller', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -135,20 +141,51 @@ describe('Label resource controller', () => {
     expect(deleteParams.errorNotification).toBe(false);
   });
 
-  it('admits only one same-tick mutation across create, update, and delete', () => {
-    const { result } = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
+  it.each(exclusiveMutationCases)(
+    'serializes every Label mutation while %s owns the operation gate',
+    (owner, blocked) => {
+      const { result } = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
+      const transports = {
+        create: refine.createMutate,
+        update: refine.updateMutate,
+        delete: refine.deleteMutate
+      };
+      const invoke = {
+        create: () => result.current.createLabel({ name: 'team' }, vi.fn()),
+        update: () => result.current.updateLabel(serverLabel, { description: 'changed' }, vi.fn()),
+        delete: () => result.current.deleteLabel(serverLabel)
+      };
+      const settle = (operation: keyof typeof transports) => {
+        const callbacks = transports[operation].mock.calls.at(-1)?.[1];
+        void callbacks?.onSuccess?.({ data: serverLabel });
+      };
 
-    act(() => {
-      result.current.createLabel({ name: 'team' }, vi.fn());
-      result.current.createLabel({ name: 'duplicate' }, vi.fn());
-      result.current.updateLabel(serverLabel, { description: 'late' }, vi.fn());
-      result.current.deleteLabel(serverLabel);
-    });
+      let ownerAccepted = false;
+      act(() => {
+        ownerAccepted = invoke[owner]();
+      });
+      expect(ownerAccepted).toBe(true);
+      expect(transports[owner]).toHaveBeenCalledTimes(1);
 
-    expect(refine.createMutate).toHaveBeenCalledTimes(1);
-    expect(refine.updateMutate).not.toHaveBeenCalled();
-    expect(refine.deleteMutate).not.toHaveBeenCalled();
-  });
+      const blockedResults: boolean[] = [];
+      act(() => {
+        blocked.forEach(operation => blockedResults.push(invoke[operation]()));
+      });
+      expect(blockedResults).toEqual([false, false]);
+      blocked.forEach(operation => expect(transports[operation]).not.toHaveBeenCalled());
+
+      act(() => settle(owner));
+      blocked.forEach(operation => {
+        let acceptedAfterSettle = false;
+        act(() => {
+          acceptedAfterSettle = invoke[operation]();
+        });
+        expect(acceptedAfterSettle).toBe(true);
+        expect(transports[operation]).toHaveBeenCalledTimes(1);
+        act(() => settle(operation));
+      });
+    }
+  );
 
   it('retires a confirmed delete so a stale list row cannot repeat it', () => {
     const { result } = renderHook(() => useLabelResourceController({ search: '', pageIndex: 0, pageSize: 20 }));
