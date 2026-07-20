@@ -12,14 +12,16 @@ import { routeRegistry } from '@/app/route-registry';
 import { refineResources } from './refine-resource-registry';
 
 describe('Refine shell resource registry', () => {
-  it('covers every canonical visible route without inventing a second route path', () => {
-    const canonicalPaths = new Set<string>(routeRegistry.map(route => route.path));
-    const resourcePaths = refineResources.flatMap(resource => resource.list ? [resource.list] : []);
+  it('matches canonical resource paths and labels exactly', () => {
+    const canonicalResources = routeRegistry
+      .flatMap(route => (route.resource ? [{ labelKey: route.resource.labelKey, list: route.path }] : []))
+      .sort(compareResourceRoute);
+    const actualResources = refineResources
+      .filter(resource => resource.list)
+      .map(resource => ({ labelKey: resource.meta?.shell?.labelKey, list: resource.list as string }))
+      .sort(compareResourceRoute);
 
-    resourcePaths.forEach(path => expect(canonicalPaths.has(path)).toBe(true));
-    routeRegistry.filter(route => route.navigation).forEach(route => {
-      expect(resourcePaths).toContain(route.path);
-    });
+    expect(actualResources).toEqual(canonicalResources);
   });
 
   it('declares a time policy and capability for every visible resource', () => {
@@ -32,3 +34,7 @@ describe('Refine shell resource registry', () => {
     });
   });
 });
+
+function compareResourceRoute(left: { list: string }, right: { list: string }) {
+  return left.list.localeCompare(right.list);
+}

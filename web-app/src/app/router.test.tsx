@@ -19,7 +19,9 @@ import type { RouteObject } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 
 import { loadTokenPageRoute } from '@/features/settings/token';
+import { legacySettingsPaths } from '@/shared/settings/settings-routes';
 
+import { applicationRootPath, getAppRoute, routeRegistry, type AppRouteId } from './route-registry';
 import { appRoutes } from './router';
 
 function flattenRoutes(routes: RouteObject[]): RouteObject[] {
@@ -27,42 +29,59 @@ function flattenRoutes(routes: RouteObject[]): RouteObject[] {
 }
 
 describe('application data router', () => {
-  it('keeps public and protected entry routes in one inspectable route tree', () => {
+  it('matches every non-container, non-legacy route to the canonical catalog exactly', () => {
     const routes = flattenRoutes(appRoutes);
-    const paths = routes.map(route => route.path).filter(Boolean);
+    const infrastructureIds = new Set(['application', 'authenticated', 'basic-layout']);
+    const actualRoutes = routes
+      .filter(route => route.path && !infrastructureIds.has(route.id ?? '') && !route.id?.startsWith('legacy-'))
+      .map(route => ({ id: route.id, path: route.path }))
+      .sort(compareRouteId);
+    const canonicalRoutes = routeRegistry.map(route => ({ id: route.id, path: route.path })).sort(compareRouteId);
 
-    expect(paths).toEqual(
-      expect.arrayContaining([
-        '/passport/login',
-        '/status',
-        '/dashboard',
-        '/monitors',
-        '/observability/integration',
-        '/alerts',
-        '/alerts/groups',
-        '/alerts/inhibits',
-        '/alerts/silences',
-        '/settings/notifications/receivers',
-        '/settings/notifications/rules',
-        '/settings/notifications/templates',
-        '/settings/notifications/channels',
-        '/settings/tokens',
-        '/settings/system',
-        '/settings/labels',
-        '/settings/storage/object-store',
-        '/settings/status-page',
-        '/alerts/notifications/receivers',
-        '/alerts/notifications/rules',
-        '/alerts/notifications/templates',
-        '/setting/settings/server',
-        '/setting/settings/config',
-        '/setting/labels',
-        '/setting/settings/object-store',
-        '/setting/status',
-        '/bulletin',
-        '*'
-      ])
+    expect(actualRoutes).toEqual(canonicalRoutes);
+    expect(appRoutes[0]).toMatchObject({ id: 'application', path: applicationRootPath });
+  });
+
+  it('keeps legacy redirects explicit and separate from canonical pages', () => {
+    const legacyRoutes = flattenRoutes(appRoutes)
+      .filter(route => route.id?.startsWith('legacy-'))
+      .map(route => route.path)
+      .sort();
+
+    expect(legacyRoutes).toEqual(Object.values(legacySettingsPaths).sort());
+  });
+
+  it('enforces canonical page, redirect, and layout ownership in the route tree', () => {
+    const applicationChildren = appRoutes[0]?.children ?? [];
+    const authenticatedRoute = applicationChildren.find(route => route.id === 'authenticated');
+    const basicRoute = authenticatedRoute?.children?.find(route => route.id === 'basic-layout');
+    const directCanonicalRoutes = applicationChildren.filter(route => route.id && route.id !== 'authenticated');
+    const basicCanonicalRoutes = (basicRoute?.children ?? []).filter(
+      route => route.id && !route.id.startsWith('legacy-')
     );
+
+    expect(
+      directCanonicalRoutes
+        .map(route => ({ id: route.id, layout: getAppRoute(route.id as AppRouteId).layout }))
+        .sort(compareRouteId)
+    ).toEqual([
+      { id: 'login', layout: 'passport' },
+      { id: 'status', layout: 'blank' }
+    ]);
+    expect(basicCanonicalRoutes.map(route => route.id).sort()).toEqual(
+      routeRegistry
+        .filter(route => route.layout === 'basic')
+        .map(route => route.id)
+        .sort()
+    );
+
+    [...directCanonicalRoutes, ...basicCanonicalRoutes].forEach(route => {
+      const definition = getAppRoute(route.id as AppRouteId);
+      expect(Boolean(route.lazy)).toBe(definition.kind === 'page');
+      if (definition.kind === 'redirect') expect(route.element).toBeDefined();
+    });
+
+    expect(applicationChildren.find(route => route.index)?.element).toBeDefined();
   });
 
   it('provides a shared route error boundary', () => {
@@ -76,3 +95,7 @@ describe('application data router', () => {
     expect(tokenRoute?.lazy).toBe(loadTokenPageRoute);
   });
 });
+
+function compareRouteId(left: { id: string | undefined }, right: { id: string | undefined }) {
+  return (left.id ?? '').localeCompare(right.id ?? '');
+}

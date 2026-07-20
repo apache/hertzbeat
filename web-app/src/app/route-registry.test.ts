@@ -15,51 +15,55 @@
  * limitations under the License.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vitest';
 
-import { routeRegistry } from './route-registry';
+import {
+  appRouteCatalog,
+  applicationRootPath,
+  getAppRoute,
+  routeRegistry,
+  type AppResourceRouteId
+} from './route-registry';
 
 describe('route registry', () => {
   it('keeps route ids and paths unique', () => {
+    expect(applicationRootPath).toBe('/');
+    expect(Object.entries(appRouteCatalog).every(([key, route]) => key === route.id)).toBe(true);
     expect(new Set(routeRegistry.map(route => route.id)).size).toBe(routeRegistry.length);
     expect(new Set(routeRegistry.map(route => route.path)).size).toBe(routeRegistry.length);
   });
 
-  it('keeps the wildcard route out of navigation', () => {
-    expect(routeRegistry.find(route => route.path === '*')?.navigation).toBe(false);
+  it('defines every monitor and alert-rule workflow page in the canonical catalog', () => {
+    expect([
+      getAppRoute('monitor-new'),
+      getAppRoute('monitor-edit'),
+      getAppRoute('monitor-detail'),
+      getAppRoute('alert-rule-new'),
+      getAppRoute('alert-rule-edit')
+    ]).toEqual([
+      expect.objectContaining({ id: 'monitor-new', path: '/monitors/new', kind: 'page' }),
+      expect.objectContaining({ id: 'monitor-edit', path: '/monitors/:monitorId/edit', kind: 'page' }),
+      expect.objectContaining({ id: 'monitor-detail', path: '/monitors/:monitorId', kind: 'page' }),
+      expect.objectContaining({ id: 'alert-rule-new', path: '/alerts/rules/new', kind: 'page' }),
+      expect.objectContaining({ id: 'alert-rule-edit', path: '/alerts/rules/:ruleId/edit', kind: 'page' })
+    ]);
+  });
+
+  it('keeps the wildcard route out of Refine shell resources', () => {
+    expect(routeRegistry.find(route => route.path === '*')?.resource).toBeUndefined();
+  });
+
+  it('limits Refine resource ids to routes with resource metadata', () => {
+    expectTypeOf<'dashboard'>().toMatchTypeOf<AppResourceRouteId>();
+    expectTypeOf<'monitor-new'>().not.toMatchTypeOf<AppResourceRouteId>();
+    expectTypeOf<'login'>().not.toMatchTypeOf<AppResourceRouteId>();
+    expectTypeOf<'not-found'>().not.toMatchTypeOf<AppResourceRouteId>();
   });
 
   it('keeps notification configuration under one settings entry', () => {
-    expect(routeRegistry.map(route => route.path)).toEqual(
-      expect.arrayContaining([
-        '/',
-        '/dashboard',
-        '/monitors',
-        '/observability/integration',
-        '/alerts',
-        '/alerts/rules',
-        '/alerts/groups',
-        '/alerts/inhibits',
-        '/alerts/silences',
-        '/settings/notifications/receivers',
-        '/settings/notifications/rules',
-        '/settings/notifications/templates',
-        '/settings/notifications/channels',
-        '/settings/tokens',
-        '/settings/system',
-        '/settings/labels',
-        '/settings/storage/object-store',
-        '/settings/status-page',
-        '/bulletin',
-        '/status',
-        '/passport/login'
-      ])
-    );
-
-    expect(routeRegistry.find(route => route.id === 'settings')?.navigation).toBe(true);
+    expect(routeRegistry.find(route => route.id === 'settings')?.resource).toBeDefined();
     expect(routeRegistry.find(route => route.id === 'instrumentation')).toMatchObject({
-      labelKey: 'instrumentation.menu',
-      navigation: true
+      resource: { labelKey: 'instrumentation.menu' }
     });
   });
 });

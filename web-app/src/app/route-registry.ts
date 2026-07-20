@@ -20,40 +20,121 @@ import { settingsPaths } from '@/shared/settings/settings-routes';
 export type AppRouteDefinition = {
   id: string;
   path: string;
-  labelKey: string;
   layout: 'basic' | 'blank' | 'passport';
-  navigation: boolean;
+  kind: 'page' | 'redirect';
+  resource?: {
+    labelKey: string;
+  };
 };
 
-export const routeRegistry = [
-  { id: 'root', path: '/', labelKey: 'menu.dashboard', layout: 'basic', navigation: false },
-  { id: 'dashboard', path: '/dashboard', labelKey: 'menu.dashboard', layout: 'basic', navigation: true },
-  { id: 'monitors', path: '/monitors', labelKey: 'menu.monitors', layout: 'basic', navigation: true },
-  { id: 'explore', path: '/explore', labelKey: 'menu.explore', layout: 'basic', navigation: true },
-  { id: 'instrumentation', path: '/observability/integration', labelKey: 'instrumentation.menu', layout: 'basic', navigation: true },
-  { id: 'alerts', path: '/alerts', labelKey: 'menu.alerts', layout: 'basic', navigation: true },
-  { id: 'alert-rules', path: '/alerts/rules', labelKey: 'alertRules.title', layout: 'basic', navigation: false },
-  { id: 'alert-groups', path: '/alerts/groups', labelKey: 'alertGroups.title', layout: 'basic', navigation: false },
-  { id: 'alert-inhibits', path: '/alerts/inhibits', labelKey: 'alertInhibits.title', layout: 'basic', navigation: false },
-  { id: 'alert-silences', path: '/alerts/silences', labelKey: 'alertSilences.title', layout: 'basic', navigation: false },
-  { id: 'settings', path: settingsPaths.root, labelKey: 'menu.settings', layout: 'basic', navigation: true },
-  { id: 'notice-receivers', path: settingsPaths.receivers, labelKey: 'noticeReceivers.title', layout: 'basic', navigation: false },
-  { id: 'notice-rules', path: settingsPaths.rules, labelKey: 'noticeRules.title', layout: 'basic', navigation: false },
-  { id: 'notice-templates', path: settingsPaths.templates, labelKey: 'noticeTemplates.title', layout: 'basic', navigation: false },
-  { id: 'message-server', path: settingsPaths.channels, labelKey: 'messageServer.title', layout: 'basic', navigation: false },
-  { id: 'tokens', path: settingsPaths.tokens, labelKey: 'token.title', layout: 'basic', navigation: false },
-  { id: 'system-settings', path: settingsPaths.system, labelKey: 'systemConfig.title', layout: 'basic', navigation: false },
-  { id: 'labels', path: settingsPaths.labels, labelKey: 'labels.title', layout: 'basic', navigation: false },
-  { id: 'object-store', path: settingsPaths.objectStore, labelKey: 'objectStore.title', layout: 'basic', navigation: false },
-  { id: 'status-management', path: settingsPaths.statusPage, labelKey: 'statusManagement.title', layout: 'basic', navigation: false },
-  { id: 'bulletin', path: '/bulletin', labelKey: 'menu.bulletin', layout: 'basic', navigation: true },
-  { id: 'status', path: '/status', labelKey: 'menu.status', layout: 'blank', navigation: false },
-  { id: 'login', path: '/passport/login', labelKey: 'auth.title', layout: 'passport', navigation: false },
-  {
-    id: 'not-found',
-    path: '*',
-    labelKey: 'common.notFound.title',
-    layout: 'basic',
-    navigation: false
-  }
-] as const satisfies readonly AppRouteDefinition[];
+type AppRouteOptions = Partial<Pick<AppRouteDefinition, 'layout' | 'resource'>>;
+type AppRouteResource = NonNullable<AppRouteDefinition['resource']>;
+type ResourceRouteOptions = AppRouteOptions & { resource: AppRouteResource };
+type ResourceRouteDefinition = AppRouteDefinition & { resource: AppRouteResource };
+
+export const applicationRootPath = '/';
+
+export const appRouteCatalog = {
+  dashboard: pageRoute('dashboard', '/dashboard', {
+    resource: { labelKey: 'menu.dashboard' }
+  }),
+  monitors: pageRoute('monitors', '/monitors', {
+    resource: { labelKey: 'menu.monitors' }
+  }),
+  'monitor-new': pageRoute('monitor-new', '/monitors/new'),
+  'monitor-edit': pageRoute('monitor-edit', '/monitors/:monitorId/edit'),
+  'monitor-detail': pageRoute('monitor-detail', '/monitors/:monitorId'),
+  explore: pageRoute('explore', '/explore', {
+    resource: { labelKey: 'menu.explore' }
+  }),
+  instrumentation: pageRoute('instrumentation', '/observability/integration', {
+    resource: { labelKey: 'instrumentation.menu' }
+  }),
+  alerts: pageRoute('alerts', '/alerts', {
+    resource: { labelKey: 'menu.alerts' }
+  }),
+  'alert-rules': pageRoute('alert-rules', '/alerts/rules', {
+    resource: { labelKey: 'alertRules.title' }
+  }),
+  'alert-rule-new': pageRoute('alert-rule-new', '/alerts/rules/new'),
+  'alert-rule-edit': pageRoute('alert-rule-edit', '/alerts/rules/:ruleId/edit'),
+  'alert-groups': pageRoute('alert-groups', '/alerts/groups', {
+    resource: { labelKey: 'alertGroups.title' }
+  }),
+  'alert-inhibits': pageRoute('alert-inhibits', '/alerts/inhibits', {
+    resource: { labelKey: 'alertInhibits.title' }
+  }),
+  'alert-silences': pageRoute('alert-silences', '/alerts/silences', {
+    resource: { labelKey: 'alertSilences.title' }
+  }),
+  settings: redirectRoute('settings', settingsPaths.root, {
+    resource: { labelKey: 'menu.settings' }
+  }),
+  'notice-receivers': pageRoute('notice-receivers', settingsPaths.receivers, {
+    resource: { labelKey: 'settingsNavigation.receivers' }
+  }),
+  'notice-rules': pageRoute('notice-rules', settingsPaths.rules, {
+    resource: { labelKey: 'settingsNavigation.rules' }
+  }),
+  'notice-templates': pageRoute('notice-templates', settingsPaths.templates, {
+    resource: { labelKey: 'settingsNavigation.templates' }
+  }),
+  'message-server': pageRoute('message-server', settingsPaths.channels, {
+    resource: { labelKey: 'settingsNavigation.channels' }
+  }),
+  tokens: pageRoute('tokens', settingsPaths.tokens, {
+    resource: { labelKey: 'settingsNavigation.tokens' }
+  }),
+  'system-settings': pageRoute('system-settings', settingsPaths.system, {
+    resource: { labelKey: 'settingsNavigation.system' }
+  }),
+  labels: pageRoute('labels', settingsPaths.labels, {
+    resource: { labelKey: 'settingsNavigation.labels' }
+  }),
+  'object-store': pageRoute('object-store', settingsPaths.objectStore, {
+    resource: { labelKey: 'settingsNavigation.objectStore' }
+  }),
+  'status-management': pageRoute('status-management', settingsPaths.statusPage, {
+    resource: { labelKey: 'settingsNavigation.statusPage' }
+  }),
+  bulletin: pageRoute('bulletin', '/bulletin', {
+    resource: { labelKey: 'menu.bulletin' }
+  }),
+  status: pageRoute('status', '/status', { layout: 'blank' }),
+  login: pageRoute('login', '/passport/login', { layout: 'passport' }),
+  'not-found': pageRoute('not-found', '*')
+} as const satisfies Record<string, AppRouteDefinition>;
+
+export type AppRouteId = keyof typeof appRouteCatalog;
+export type AppResourceRouteId = {
+  [RouteId in AppRouteId]: (typeof appRouteCatalog)[RouteId] extends ResourceRouteDefinition ? RouteId : never;
+}[AppRouteId];
+
+export const routeRegistry = Object.values(appRouteCatalog);
+
+export function getAppRoute<RouteId extends AppRouteId>(id: RouteId) {
+  return appRouteCatalog[id];
+}
+
+export function getAppRouteIdentity(id: AppRouteId) {
+  const definition = getAppRoute(id);
+  return { id: definition.id, path: definition.path };
+}
+
+function pageRoute(id: string, path: string, options: ResourceRouteOptions): ResourceRouteDefinition;
+function pageRoute(id: string, path: string, options?: AppRouteOptions): AppRouteDefinition;
+function pageRoute(id: string, path: string, options: AppRouteOptions = {}): AppRouteDefinition {
+  return {
+    id,
+    path,
+    layout: options.layout ?? 'basic',
+    kind: 'page',
+    ...(options.resource ? { resource: options.resource } : {})
+  };
+}
+
+function redirectRoute(id: string, path: string, options: ResourceRouteOptions): ResourceRouteDefinition;
+function redirectRoute(id: string, path: string, options?: AppRouteOptions): AppRouteDefinition;
+function redirectRoute(id: string, path: string, options: AppRouteOptions = {}): AppRouteDefinition {
+  return { ...pageRoute(id, path, options), kind: 'redirect' as const };
+}
