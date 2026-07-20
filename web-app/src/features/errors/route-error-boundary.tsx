@@ -16,14 +16,31 @@
  */
 
 import { Button, Result } from 'antd';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useRouteError } from 'react-router-dom';
+import { isRouteErrorResponse, useMatches, useRouteError } from 'react-router-dom';
+
+const SAFE_ROUTE_ID = /^[a-z0-9-]{1,64}$/;
+
+function describeRouteError(error: unknown, routeId: string | undefined) {
+  const safeRouteId = routeId && SAFE_ROUTE_ID.test(routeId) ? routeId : 'unknown';
+  if (isRouteErrorResponse(error)) {
+    return { category: 'route-response', routeId: safeRouteId, status: error.status } as const;
+  }
+  return { category: error instanceof Error ? 'exception' : 'unknown', routeId: safeRouteId } as const;
+}
 
 export function RouteErrorBoundary() {
   const { t } = useTranslation();
   const error = useRouteError();
+  const matches = useMatches();
+  const routeId = matches[matches.length - 1]?.id;
 
-  if (import.meta.env.DEV) console.error('Route rendering failed', error);
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    // Router errors can contain tokens, telemetry bodies, and backend payloads; log only a safe diagnostic shape.
+    console.error('Route rendering failed', describeRouteError(error, routeId));
+  }, [error, routeId]);
 
   return (
     <Result
