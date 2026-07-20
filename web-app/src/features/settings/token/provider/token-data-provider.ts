@@ -27,9 +27,10 @@ import type {
   UpdateResponse
 } from '@refinedev/core';
 
-import { createRefineHttpError, toRefineHttpError } from '@/shared/refine/refine-http-error';
+import { isRefineHttpError, type RefineHttpError } from '@/shared/refine/refine-http-error';
 import { adaptRefineRecord, adaptRefineRecords } from '@/shared/refine/refine-provider-data';
 
+import { normalizeTokenApiFailure, type TokenRequestPhase } from '../api/token-api-failure';
 import {
   generateToken,
   loadTokens,
@@ -40,11 +41,12 @@ import {
   tokenApiUrl,
   tokenGenerateActionUrl
 } from '../api/token-api';
+import { TokenRequestFailure, type TokenFailureKind, type TokenWriteOutcome } from '../model/token-failure';
 import { tokenResourceName } from '../model/token-model';
 
 export const tokenDataProvider: DataProvider = {
   getList<TData extends BaseRecord = BaseRecord>(params: { resource: string }): Promise<GetListResponse<TData>> {
-    return protect(async () => {
+    return protect('collection', async () => {
       assertResource(params.resource);
       const records = await loadTokens();
       return { data: adaptRefineRecords<TData>(records), total: records.length };
@@ -52,25 +54,25 @@ export const tokenDataProvider: DataProvider = {
   },
 
   getOne<TData extends BaseRecord = BaseRecord>(): Promise<GetOneResponse<TData>> {
-    return rejectUnsupported('TOKEN_GET_ONE_UNSUPPORTED', 'Token detail is not supported');
+    return rejectUnsupported('TOKEN_GET_ONE_UNSUPPORTED');
   },
 
   create<TData extends BaseRecord = BaseRecord>(): Promise<CreateResponse<TData>> {
-    return rejectUnsupported('TOKEN_CREATE_UNSUPPORTED', 'Token create is not supported');
+    return rejectUnsupported('TOKEN_CREATE_UNSUPPORTED');
   },
 
   update<TData extends BaseRecord = BaseRecord>(): Promise<UpdateResponse<TData>> {
-    return rejectUnsupported('TOKEN_UPDATE_UNSUPPORTED', 'Token update is not supported');
+    return rejectUnsupported('TOKEN_UPDATE_UNSUPPORTED');
   },
 
   deleteOne<TData extends BaseRecord = BaseRecord>(): Promise<DeleteOneResponse<TData>> {
-    return rejectUnsupported('TOKEN_DELETE_UNSUPPORTED', 'Token delete is not supported');
+    return rejectUnsupported('TOKEN_DELETE_UNSUPPORTED');
   },
 
   custom<TData extends BaseRecord = BaseRecord, TQuery = unknown, TPayload = unknown>(
     params: CustomParams<TQuery, TPayload>
   ): Promise<CustomResponse<TData>> {
-    return protect(async () => {
+    return protect('write', async () => {
       if (params.url === tokenGenerateActionUrl && params.method === 'post') {
         const draft = readGenerationDraft(params.payload);
         return { data: adaptRefineRecord<TData>(await generateToken(draft)) };
@@ -80,22 +82,46 @@ export const tokenDataProvider: DataProvider = {
         await revokeToken(revokeId);
         return { data: adaptRefineRecord<TData>({ id: revokeId }) };
       }
-      throw createRefineHttpError('Token custom action is not supported', 405, 'TOKEN_CUSTOM_ACTION_UNSUPPORTED');
+      throw rejectedFailure('TOKEN_CUSTOM_ACTION_UNSUPPORTED');
     });
   },
 
   getApiUrl: () => tokenApiUrl
 };
 
-async function protect<T>(operation: () => Promise<T>): Promise<T> {
+async function protect<T>(phase: TokenRequestPhase, operation: () => Promise<T>): Promise<T> {
   try {
     return await operation();
   } catch (reason) {
-    if (reason instanceof TokenApiContractError) {
-      throw createRefineHttpError('Token response is invalid', 502, 'TOKEN_RESPONSE_INVALID');
-    }
-    throw toRefineHttpError(reason);
+    throw providerFailure(reason, phase);
   }
+}
+
+function providerFailure(reason: unknown, phase: TokenRequestPhase) {
+  if (reason instanceof TokenRequestFailure) return reason;
+  if (reason instanceof TokenApiContractError) return contractFailure('TOKEN_RESPONSE_INVALID');
+  if (isRefineHttpError(reason)) return adaptRefineFailure(reason);
+  return normalizeTokenApiFailure(reason, phase);
+}
+
+function adaptRefineFailure(reason: RefineHttpError) {
+  const code = stableTokenCode(reason.code);
+  return new TokenRequestFailure(refineFailureKind(reason), refineWriteOutcome(reason), code ? { code } : {});
+}
+
+function refineFailureKind(reason: RefineHttpError): TokenFailureKind {
+  if (typeof reason.code === 'string' && reason.code.startsWith('TOKEN_')) return 'invalid';
+  if (reason.statusCode === 0 || reason.kind === 'network' || reason.statusCode >= 500) return 'unavailable';
+  return 'error';
+}
+
+function refineWriteOutcome(reason: RefineHttpError): TokenWriteOutcome {
+  if (reason.kind === 'envelope') return 'rejected';
+  return reason.statusCode >= 400 && reason.statusCode < 500 ? 'rejected' : 'uncertain';
+}
+
+function stableTokenCode(code: string | number | undefined) {
+  return typeof code === 'string' && code.startsWith('TOKEN_') ? code : undefined;
 }
 
 function readGenerationDraft(value: unknown) {
@@ -103,18 +129,26 @@ function readGenerationDraft(value: unknown) {
     return parseTokenGenerationDraft(value);
   } catch (reason) {
     if (reason instanceof TokenApiContractError) {
-      throw createRefineHttpError('Token generation variables are invalid', 400, 'TOKEN_VARIABLES_INVALID');
+      throw rejectedFailure('TOKEN_VARIABLES_INVALID');
     }
     throw reason;
   }
 }
 
-function rejectUnsupported<T>(code: string, message: string): Promise<T> {
-  return Promise.reject(createRefineHttpError(message, 405, code));
+function rejectUnsupported<T>(code: string): Promise<T> {
+  return Promise.reject(rejectedFailure(code));
 }
 
 function assertResource(resource: string) {
   if (resource !== tokenResourceName) {
-    throw createRefineHttpError('Unsupported Token resource', 400, 'TOKEN_RESOURCE_UNSUPPORTED');
+    throw rejectedFailure('TOKEN_RESOURCE_UNSUPPORTED');
   }
+}
+
+function contractFailure(code: string) {
+  return new TokenRequestFailure('invalid', 'uncertain', { code });
+}
+
+function rejectedFailure(code: string) {
+  return new TokenRequestFailure('invalid', 'rejected', { code });
 }

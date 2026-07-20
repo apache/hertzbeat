@@ -18,9 +18,8 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createRefineHttpError } from '@/shared/refine/refine-http-error';
-
 import { tokenGenerateActionUrl, tokenRevokeActionUrl } from '../api/token-api';
+import { TokenRequestFailure } from '../model/token-failure';
 import { useTokenResourceController } from './token-resource-controller';
 
 const refine = vi.hoisted(() => ({
@@ -84,23 +83,38 @@ describe('Token resource controller', () => {
     expect(refine.provider).toHaveBeenCalledWith('tokens');
     expect(result.current.state.list).toMatchObject({ kind: 'ready', records: [record] });
 
-    refine.useList.mockReturnValue(buildListResult({ isError: true, error: { statusCode: 503 }, data: [] }));
+    refine.useList.mockReturnValue(buildListResult({ isError: true, error: unavailableFailure(), data: [] }));
     rerender();
     expect(result.current.state.list.kind).toBe('unavailable');
     refine.useList.mockReturnValue(
       buildListResult({
         isError: true,
-        error: { statusCode: 502, code: 'TOKEN_RESPONSE_INVALID' },
+        error: invalidFailure(),
         data: []
       })
     );
     rerender();
     expect(result.current.state.list.kind).toBe('error');
+    refine.useList.mockReturnValue(buildListResult({ isError: true, error: { statusCode: 503 }, data: [] }));
+    rerender();
+    expect(result.current.state.list.kind).toBe('error');
+  });
+
+  it.each([
+    ['missing total', { data: [], total: undefined }],
+    ['truncated records', { data: [], total: 1 }],
+    ['impossible total', { data: [record], total: 0 }]
+  ])('does not present %s as an honest empty or ready list', (_label, evidence) => {
+    refine.useList.mockReturnValue(buildListResult(evidence));
+
+    const { result } = renderHook(() => useTokenResourceController());
+
+    expect(result.current.state.list.kind).toBe('error');
   });
 
   it('keeps the one-time receipt only in React state and preserves it when list reread fails', async () => {
     refine.custom.mockResolvedValue({ data: { id: 'generated', token: 'hb_generated_once' } });
-    refine.refetch.mockRejectedValue({ statusCode: 503 });
+    refine.refetch.mockRejectedValue(unavailableFailure());
     const { result } = renderHook(() => useTokenResourceController());
 
     act(() => result.current.openGenerator());
@@ -293,9 +307,22 @@ describe('Token resource controller', () => {
     expect(result.current.state.list.kind).toBe('unavailable');
   });
 
+  it('keeps revocation in proof-only recovery when list totals contradict apparent absence', async () => {
+    refine.custom.mockResolvedValue({ data: { id: 7 } });
+    refine.refetch.mockResolvedValue({ data: { data: [], total: 1 }, isError: false });
+    const { result } = renderHook(() => useTokenResourceController());
+
+    await act(async () => result.current.revoke(7));
+
+    expect(refine.custom).toHaveBeenCalledTimes(1);
+    expect(refine.notification).not.toHaveBeenCalledWith({ message: 'token.revokeSuccess', type: 'success' });
+    expect(refine.notification).toHaveBeenCalledWith({ message: 'token.unavailable', type: 'error' });
+    expect(result.current.state.list.kind).toBe('unavailable');
+  });
+
   it('keeps revocation unconfirmed when its authoritative reread fails', async () => {
     refine.custom.mockResolvedValue({ data: { id: 7 } });
-    refine.refetch.mockRejectedValue({ statusCode: 500 });
+    refine.refetch.mockRejectedValue(unavailableFailure());
     const { result } = renderHook(() => useTokenResourceController());
 
     await act(async () => result.current.revoke(7));
@@ -328,7 +355,7 @@ describe('Token resource controller', () => {
   it('retains proof-only revocation recovery and never repeats an ambiguous DELETE', async () => {
     refine.custom.mockRejectedValueOnce(ambiguousWriteFailures[0][1]());
     refine.refetch
-      .mockRejectedValueOnce(createRefineHttpError('offline', 503, undefined, 'http', 503))
+      .mockRejectedValueOnce(unavailableFailure())
       .mockResolvedValueOnce({ data: { data: [], total: 0 }, isError: false });
     const { result } = renderHook(() => useTokenResourceController());
 
@@ -346,7 +373,7 @@ describe('Token resource controller', () => {
   });
 
   it('releases generation and revocation after an explicit business rejection', async () => {
-    const rejected = createRefineHttpError('rejected', 400, 20, 'envelope', 200);
+    const rejected = rejectedFailure();
     refine.custom
       .mockRejectedValueOnce(rejected)
       .mockResolvedValueOnce({ data: { id: 'generated', token: 'hb_generated_once' } })
@@ -370,7 +397,7 @@ describe('Token resource controller', () => {
 
   it('reports a contract refresh as error without discarding the one-time receipt', async () => {
     refine.custom.mockResolvedValue({ data: { id: 'generated', token: 'hb_generated_once' } });
-    refine.refetch.mockRejectedValue({ statusCode: 502, code: 'TOKEN_RESPONSE_INVALID' });
+    refine.refetch.mockRejectedValue(invalidFailure());
     const { result } = renderHook(() => useTokenResourceController());
 
     act(() => result.current.openGenerator());
@@ -423,7 +450,19 @@ function deferred<T>() {
 }
 
 const ambiguousWriteFailures = [
-  ['network', () => createRefineHttpError('offline', 0, 'NETWORK_REQUEST_FAILED', 'network')],
-  ['5xx', () => createRefineHttpError('gateway', 503, undefined, 'http', 503)],
-  ['malformed success', () => createRefineHttpError('invalid response', 502, 'TOKEN_RESPONSE_INVALID', 'contract', 200)]
+  ['network', unavailableFailure],
+  ['5xx', unavailableFailure],
+  ['malformed success', invalidFailure]
 ] as const;
+
+function unavailableFailure() {
+  return new TokenRequestFailure('unavailable', 'uncertain');
+}
+
+function invalidFailure() {
+  return new TokenRequestFailure('invalid', 'uncertain', { code: 'TOKEN_RESPONSE_INVALID' });
+}
+
+function rejectedFailure() {
+  return new TokenRequestFailure('error', 'rejected');
+}

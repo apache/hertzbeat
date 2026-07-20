@@ -17,15 +17,21 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ApiMessageError } from '@/core/http/api-message';
+import { TokenRequestFailure } from '../model/token-failure';
+
 const api = vi.hoisted(() => ({
   generateToken: vi.fn(),
   loadTokens: vi.fn(),
-  parseTokenGenerationDraft: vi.fn((value: unknown) => value as {
-    name: string;
-    expireSeconds: number;
-    scope: 'api-admin' | 'otlp-ingest' | 'readonly-query';
-  }),
-  parseTokenRevokeActionUrl: vi.fn((value: string) => value.endsWith('/7') ? 7 : null),
+  parseTokenGenerationDraft: vi.fn(
+    (value: unknown) =>
+      value as {
+        name: string;
+        expireSeconds: number;
+        scope: 'api-admin' | 'otlp-ingest' | 'readonly-query';
+      }
+  ),
+  parseTokenRevokeActionUrl: vi.fn((value: string) => (value.endsWith('/7') ? 7 : null)),
   revokeToken: vi.fn(),
   TokenApiContractError: class TokenApiContractError extends Error {},
   tokenApiUrl: '/api/account/token',
@@ -40,17 +46,19 @@ describe('Token Refine data provider', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('returns only the records sanitized by the API boundary', async () => {
-    api.loadTokens.mockResolvedValue([{
-      id: 7,
-      name: 'Collector',
-      tokenMask: 'eyJh****once',
-      tokenScope: 'otlp-ingest',
-      workspaceId: null,
-      creator: null,
-      gmtCreate: null,
-      expireTime: null,
-      lastUsedTime: null
-    }]);
+    api.loadTokens.mockResolvedValue([
+      {
+        id: 7,
+        name: 'Collector',
+        tokenMask: 'eyJh****once',
+        tokenScope: 'otlp-ingest',
+        workspaceId: null,
+        creator: null,
+        gmtCreate: null,
+        expireTime: null,
+        lastUsedTime: null
+      }
+    ]);
 
     await expect(tokenDataProvider.getList({ resource: 'tokens' })).resolves.toEqual({
       data: [expect.objectContaining({ id: 7, name: 'Collector' })],
@@ -63,9 +71,10 @@ describe('Token Refine data provider', () => {
 
     const promise = tokenDataProvider.getList({ resource: 'tokens' });
     await expect(promise).rejects.toMatchObject({
-      statusCode: 502,
       code: 'TOKEN_RESPONSE_INVALID',
-      message: 'Token response is invalid'
+      kind: 'invalid',
+      message: 'Token request failed',
+      writeOutcome: 'uncertain'
     });
     await expect(promise).rejects.not.toMatchObject({ message: expect.stringContaining('private-wire-value') });
   });
@@ -74,20 +83,29 @@ describe('Token Refine data provider', () => {
     api.generateToken.mockResolvedValue({ id: 'generated', token: 'hb-once' });
     api.revokeToken.mockResolvedValue(undefined);
 
-    await expect(tokenDataProvider.custom?.({
-      url: api.tokenGenerateActionUrl,
-      method: 'post',
-      payload: { name: 'Collector', expireSeconds: -1, scope: 'otlp-ingest' }
-    })).resolves.toEqual({ data: { id: 'generated', token: 'hb-once' } });
-    await expect(tokenDataProvider.custom?.({
-      url: '/api/account/token/7',
-      method: 'delete'
-    })).resolves.toEqual({ data: { id: 7 } });
+    await expect(
+      tokenDataProvider.custom?.({
+        url: api.tokenGenerateActionUrl,
+        method: 'post',
+        payload: { name: 'Collector', expireSeconds: -1, scope: 'otlp-ingest' }
+      })
+    ).resolves.toEqual({ data: { id: 'generated', token: 'hb-once' } });
+    await expect(
+      tokenDataProvider.custom?.({
+        url: '/api/account/token/7',
+        method: 'delete'
+      })
+    ).resolves.toEqual({ data: { id: 7 } });
 
     expect(api.generateToken).toHaveBeenCalledWith({ name: 'Collector', expireSeconds: -1, scope: 'otlp-ingest' });
     expect(api.revokeToken).toHaveBeenCalledWith(7);
-    await expect(tokenDataProvider.custom?.({ url: api.tokenGenerateActionUrl, method: 'delete' }))
-      .rejects.toMatchObject({ statusCode: 405, code: 'TOKEN_CUSTOM_ACTION_UNSUPPORTED' });
+    await expect(
+      tokenDataProvider.custom?.({ url: api.tokenGenerateActionUrl, method: 'delete' })
+    ).rejects.toMatchObject({
+      code: 'TOKEN_CUSTOM_ACTION_UNSUPPORTED',
+      kind: 'invalid',
+      writeOutcome: 'rejected'
+    });
   });
 
   it('reports malformed generation variables as a client contract error', async () => {
@@ -95,25 +113,63 @@ describe('Token Refine data provider', () => {
       throw new api.TokenApiContractError();
     });
 
-    await expect(tokenDataProvider.custom?.({
-      url: api.tokenGenerateActionUrl,
-      method: 'post',
-      payload: { name: '' }
-    })).rejects.toMatchObject({ statusCode: 400, code: 'TOKEN_VARIABLES_INVALID' });
+    await expect(
+      tokenDataProvider.custom?.({
+        url: api.tokenGenerateActionUrl,
+        method: 'post',
+        payload: { name: '' }
+      })
+    ).rejects.toMatchObject({ code: 'TOKEN_VARIABLES_INVALID', kind: 'invalid', writeOutcome: 'rejected' });
     expect(api.generateToken).not.toHaveBeenCalled();
   });
 
   it('rejects unsupported CRUD before transport', async () => {
-    await expect(tokenDataProvider.getOne({ resource: 'tokens', id: 7 }))
-      .rejects.toMatchObject({ statusCode: 405, code: 'TOKEN_GET_ONE_UNSUPPORTED' });
-    await expect(tokenDataProvider.create({ resource: 'tokens', variables: {} }))
-      .rejects.toMatchObject({ statusCode: 405, code: 'TOKEN_CREATE_UNSUPPORTED' });
-    await expect(tokenDataProvider.update({ resource: 'tokens', id: 7, variables: {} }))
-      .rejects.toMatchObject({ statusCode: 405, code: 'TOKEN_UPDATE_UNSUPPORTED' });
-    await expect(tokenDataProvider.deleteOne({ resource: 'tokens', id: 7 }))
-      .rejects.toMatchObject({ statusCode: 405, code: 'TOKEN_DELETE_UNSUPPORTED' });
+    await expect(tokenDataProvider.getOne({ resource: 'tokens', id: 7 })).rejects.toMatchObject({
+      code: 'TOKEN_GET_ONE_UNSUPPORTED',
+      kind: 'invalid',
+      writeOutcome: 'rejected'
+    });
+    await expect(tokenDataProvider.create({ resource: 'tokens', variables: {} })).rejects.toMatchObject({
+      code: 'TOKEN_CREATE_UNSUPPORTED',
+      kind: 'invalid',
+      writeOutcome: 'rejected'
+    });
+    await expect(tokenDataProvider.update({ resource: 'tokens', id: 7, variables: {} })).rejects.toMatchObject({
+      code: 'TOKEN_UPDATE_UNSUPPORTED',
+      kind: 'invalid',
+      writeOutcome: 'rejected'
+    });
+    await expect(tokenDataProvider.deleteOne({ resource: 'tokens', id: 7 })).rejects.toMatchObject({
+      code: 'TOKEN_DELETE_UNSUPPORTED',
+      kind: 'invalid',
+      writeOutcome: 'rejected'
+    });
     expect(api.loadTokens).not.toHaveBeenCalled();
     expect(api.generateToken).not.toHaveBeenCalled();
     expect(api.revokeToken).not.toHaveBeenCalled();
+  });
+
+  it('normalizes raw fallback evidence with the provider operation context', async () => {
+    api.loadTokens.mockRejectedValueOnce(new ApiMessageError('private-network'));
+    api.generateToken.mockRejectedValueOnce(new ApiMessageError('private-business', { code: 20, status: 200 }));
+
+    await expect(tokenDataProvider.getList({ resource: 'tokens' })).rejects.toMatchObject({
+      kind: 'unavailable',
+      writeOutcome: 'uncertain'
+    });
+    await expect(
+      tokenDataProvider.custom?.({
+        url: api.tokenGenerateActionUrl,
+        method: 'post',
+        payload: { name: 'Collector', expireSeconds: -1, scope: 'otlp-ingest' }
+      })
+    ).rejects.toMatchObject({ kind: 'error', writeOutcome: 'rejected' });
+  });
+
+  it('preserves typed failure identity without copying private evidence', async () => {
+    const failure = new TokenRequestFailure('unavailable', 'uncertain');
+    api.loadTokens.mockRejectedValueOnce(failure);
+
+    await expect(tokenDataProvider.getList({ resource: 'tokens' })).rejects.toBe(failure);
   });
 });

@@ -23,15 +23,16 @@ const { apiMessageDelete, apiMessageGet, apiMessagePost } = vi.hoisted(() => ({
   apiMessagePost: vi.fn()
 }));
 
-vi.mock('@/core/http/api-message', () => ({ apiMessageDelete, apiMessageGet, apiMessagePost }));
+vi.mock('@/core/http/api-message', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/core/http/api-message')>()),
+  apiMessageDelete,
+  apiMessageGet,
+  apiMessagePost
+}));
 
-import {
-  buildGenerateTokenPath,
-  generateToken,
-  loadTokens,
-  parseTokenRevokeActionUrl,
-  revokeToken
-} from './token-api';
+import { ApiMessageError } from '@/core/http/api-message';
+
+import { buildGenerateTokenPath, generateToken, loadTokens, parseTokenRevokeActionUrl, revokeToken } from './token-api';
 import { createTokenDraft } from '../model/token-model';
 
 describe('token API', () => {
@@ -43,13 +44,19 @@ describe('token API', () => {
     apiMessageDelete.mockResolvedValueOnce(undefined);
 
     await expect(loadTokens()).resolves.toEqual([]);
-    await expect(generateToken({ ...createTokenDraft(), name: 'collector' }))
-      .resolves.toEqual({ id: 'generated', token: 'hb-once' });
+    await expect(generateToken({ ...createTokenDraft(), name: 'collector' })).resolves.toEqual({
+      id: 'generated',
+      token: 'hb-once'
+    });
     await expect(revokeToken(7)).resolves.toBeUndefined();
 
     expect(apiMessageGet).toHaveBeenCalledWith('/api/account/token');
-    expect(apiMessagePost).toHaveBeenCalledWith('/api/account/token/generate?name=collector&expireSeconds=-1&scope=api-admin', {});
+    expect(apiMessagePost).toHaveBeenCalledWith(
+      '/api/account/token/generate?name=collector&expireSeconds=-1&scope=api-admin',
+      {}
+    );
     expect(apiMessageDelete).toHaveBeenCalledWith('/api/account/token/7');
+    expect(JSON.stringify(apiMessagePost.mock.calls)).not.toContain('hb-once');
   });
 
   it('owns generation serialization and exact revoke endpoint recognition', () => {
@@ -60,10 +67,34 @@ describe('token API', () => {
       scope: 'readonly-query' as const
     };
 
-    expect(buildGenerateTokenPath(draft))
-      .toBe('/api/account/token/generate?name=CI+integration&expireSeconds=2592000&scope=readonly-query');
+    expect(buildGenerateTokenPath(draft)).toBe(
+      '/api/account/token/generate?name=CI+integration&expireSeconds=2592000&scope=readonly-query'
+    );
     expect(parseTokenRevokeActionUrl('/api/account/token/7')).toBe(7);
     expect(parseTokenRevokeActionUrl('/api/account/token/0')).toBeNull();
     expect(parseTokenRevokeActionUrl('/api/account/token/7?token=private')).toBeNull();
+  });
+
+  it('normalizes transport evidence at every Token API operation boundary', async () => {
+    const failure = () => new ApiMessageError('private network evidence');
+    const expected = { kind: 'unavailable', writeOutcome: 'uncertain' };
+    apiMessageGet.mockRejectedValueOnce(failure());
+    apiMessagePost.mockRejectedValueOnce(failure());
+    apiMessageDelete.mockRejectedValueOnce(failure());
+
+    await expect(loadTokens()).rejects.toMatchObject(expected);
+    await expect(generateToken({ ...createTokenDraft(), name: 'collector' })).rejects.toMatchObject(expected);
+    await expect(revokeToken(7)).rejects.toMatchObject(expected);
+  });
+
+  it('keeps malformed list and generated-secret responses inside the redacted API boundary', async () => {
+    apiMessageGet.mockResolvedValueOnce([{ id: 'private-wire-id' }]);
+    apiMessagePost.mockResolvedValueOnce({ token: '' });
+
+    await expect(loadTokens()).rejects.toMatchObject({ kind: 'invalid', writeOutcome: 'uncertain' });
+    await expect(generateToken({ ...createTokenDraft(), name: 'collector' })).rejects.toMatchObject({
+      kind: 'invalid',
+      writeOutcome: 'uncertain'
+    });
   });
 });

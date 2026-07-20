@@ -18,16 +18,11 @@
 import { useList, type HttpError } from '@refinedev/core';
 import { useCallback, useState } from 'react';
 
-import {
-  tokenResourceName,
-  type TokenListState,
-  type TokenResourceRecord
-} from '../model/token-model';
+import { tokenResourceName, type TokenListState, type TokenResourceRecord } from '../model/token-model';
+import { classifyTokenCollectionFailure } from '../model/token-failure';
 
 export type TokenListFailureKind = 'error' | 'unavailable';
-export type RefreshAuthoritativeTokenList = (
-  expectedAbsentId?: number
-) => Promise<TokenListFailureKind | null>;
+export type RefreshAuthoritativeTokenList = (expectedAbsentId?: number) => Promise<TokenListFailureKind | null>;
 
 export function useTokenListController() {
   const list = useList<TokenResourceRecord, HttpError>({
@@ -38,26 +33,32 @@ export function useTokenListController() {
   });
   const [refreshFailure, setRefreshFailure] = useState<TokenListFailureKind | null>(null);
 
-  const refresh = useCallback<RefreshAuthoritativeTokenList>(async expectedAbsentId => {
-    try {
-      const result = await list.query.refetch();
-      if (result.isError) {
-        const kind = resolveTokenListFailure(result.error);
+  const refresh = useCallback<RefreshAuthoritativeTokenList>(
+    async expectedAbsentId => {
+      try {
+        const result = await list.query.refetch();
+        if (result.isError) {
+          const kind = resolveTokenListFailure(result.error);
+          setRefreshFailure(kind);
+          return kind;
+        }
+        if (
+          expectedAbsentId !== undefined &&
+          !confirmsAbsentId(result.data?.data, result.data?.total, expectedAbsentId)
+        ) {
+          setRefreshFailure('error');
+          return 'error';
+        }
+        setRefreshFailure(null);
+        return null;
+      } catch (reason) {
+        const kind = resolveTokenListFailure(reason);
         setRefreshFailure(kind);
         return kind;
       }
-      if (expectedAbsentId !== undefined && !confirmsAbsentId(result.data?.data, expectedAbsentId)) {
-        setRefreshFailure('error');
-        return 'error';
-      }
-      setRefreshFailure(null);
-      return null;
-    } catch (reason) {
-      const kind = resolveTokenListFailure(reason);
-      setRefreshFailure(kind);
-      return kind;
-    }
-  }, [list.query]);
+    },
+    [list.query]
+  );
 
   const retry = useCallback(async () => {
     await refresh();
@@ -82,26 +83,26 @@ function resolveTokenListState(
   if (refreshFailure) return { kind: refreshFailure };
   if (list.query.isPending) return { kind: 'loading' };
   if (list.query.isError) return { kind: resolveTokenListFailure(list.query.error) };
+  if (list.result.total === undefined || list.result.total !== list.result.data.length) return { kind: 'error' };
   if (list.result.data.length === 0) return { kind: 'empty' };
-  if (list.result.total === undefined) return { kind: 'error' };
   return { kind: 'ready', records: list.result.data };
 }
 
-function confirmsAbsentId(value: unknown, expectedAbsentId: number) {
-  return Array.isArray(value)
-    && value.every(record => (
-      !!record
-      && typeof record === 'object'
-      && typeof (record as { id?: unknown }).id === 'number'
-      && (record as { id: number }).id !== expectedAbsentId
-    ));
+function confirmsAbsentId(value: unknown, total: unknown, expectedAbsentId: number) {
+  return (
+    Array.isArray(value) &&
+    Number.isSafeInteger(total) &&
+    total === value.length &&
+    value.every(record => hasDifferentNumericId(record, expectedAbsentId))
+  );
+}
+
+function hasDifferentNumericId(value: unknown, expectedId: number) {
+  if (!value || typeof value !== 'object' || !('id' in value)) return false;
+  const { id } = value;
+  return typeof id === 'number' && id !== expectedId;
 }
 
 function resolveTokenListFailure(reason: unknown): TokenListFailureKind {
-  const error = reason && typeof reason === 'object' ? reason as Record<string, unknown> : null;
-  if (error?.code === 'TOKEN_RESPONSE_INVALID') return 'error';
-  const status = error?.statusCode;
-  return status === 0 || status === 502 || status === 503 || status === 504
-    ? 'unavailable'
-    : 'error';
+  return classifyTokenCollectionFailure(reason) === 'unavailable' ? 'unavailable' : 'error';
 }

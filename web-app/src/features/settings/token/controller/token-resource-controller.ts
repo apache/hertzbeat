@@ -21,7 +21,7 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { tokenRevokeActionUrl } from '../api/token-api';
-import { isDefiniteTokenWriteRejection } from '../api/token-write-rejection';
+import { isTokenWriteRejection } from '../model/token-failure';
 import { tokenResourceName, type TokenRevocationRecovery } from '../model/token-model';
 import { useExclusiveOperation } from './exclusive-operation';
 import { useTokenListController, type RefreshAuthoritativeTokenList } from './token-list-controller';
@@ -80,7 +80,7 @@ function useTokenRevocation(
           await provider.custom({ url: tokenRevokeActionUrl(id), method: 'delete' });
         } catch (reason) {
           if (!isOwnedBy(owner)) return;
-          if (isDefiniteTokenWriteRejection(reason)) {
+          if (isTokenWriteRejection(reason)) {
             notification.open?.({ message: t('token.revokeFailed'), type: 'error' });
             return;
           }

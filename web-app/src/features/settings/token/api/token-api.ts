@@ -24,22 +24,27 @@ import {
   parseTokenResourceRecords,
   TokenApiContractError
 } from './token-schema';
+import { tokenApiRequest } from './token-api-failure';
 
 export const tokenApiUrl = '/api/account/token';
 export const tokenGenerateActionUrl = `${tokenApiUrl}/generate`;
 
 export async function loadTokens() {
-  const response = await apiMessageGet(tokenApiUrl);
-  return parseTokenResourceRecords(response);
+  return tokenApiRequest('collection', async () => {
+    const response = await apiMessageGet(tokenApiUrl);
+    return parseTokenResourceRecords(response);
+  });
 }
 
 export async function generateToken(draft: TokenDraft) {
-  const response = await apiMessagePost(buildGenerateTokenPath(draft), {});
-  return parseGeneratedTokenReceipt(response);
+  return tokenApiRequest('write', async () => {
+    const response = await apiMessagePost(buildGenerateTokenPath(draft), {});
+    return parseGeneratedTokenReceipt(response);
+  });
 }
 
 export function revokeToken(id: number) {
-  return apiMessageDelete(tokenRevokeActionUrl(id));
+  return tokenApiRequest('write', () => apiMessageDelete(tokenRevokeActionUrl(id)));
 }
 
 export function buildGenerateTokenPath(draft: TokenDraft) {

@@ -21,7 +21,7 @@ import { useCallback, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { tokenGenerateActionUrl } from '../api/token-api';
-import { isDefiniteTokenWriteRejection } from '../api/token-write-rejection';
+import { isTokenWriteRejection } from '../model/token-failure';
 import {
   createTokenDraft,
   validateTokenDraft,
@@ -164,7 +164,7 @@ async function executeTokenGeneration(command: TokenGenerationCommand) {
     receipt = response.data;
   } catch (reason) {
     if (!command.isCurrent()) return;
-    if (isDefiniteTokenWriteRejection(reason)) {
+    if (isTokenWriteRejection(reason)) {
       if (command.retire()) command.notifyFailure('token.generateFailed');
       return;
     }
