@@ -31,6 +31,7 @@ import {
   loadSystemConfig,
   loadTimezones,
   saveSystemConfig,
+  systemConfigTimezonesEndpoint,
   type SystemConfigValue
 } from '@/features/settings/system-config/api/system-config-api';
 import {
@@ -44,7 +45,6 @@ import { adaptRefineRecord } from '@/shared/refine/refine-provider-data';
 import { createRefineHttpError, toRefineHttpError } from '../refine-http-error';
 
 const systemConfigResource = 'system-config';
-const timezonesUrl = '/api/config/timezones';
 
 export const systemConfigDataProvider: DataProvider = {
   getList<TData extends BaseRecord = BaseRecord>(): Promise<GetListResponse<TData>> {
@@ -93,7 +93,7 @@ export const systemConfigDataProvider: DataProvider = {
     params: CustomParams<TQuery, TPayload>
   ): Promise<CustomResponse<TData>> {
     return protect(async () => {
-      if (params.url !== timezonesUrl || params.method !== 'get') {
+      if (params.url !== systemConfigTimezonesEndpoint || params.method !== 'get') {
         throw createRefineHttpError(
           'System Config custom request is not supported',
           400,

@@ -18,6 +18,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { systemConfigTimezonesEndpoint } from '../api/system-config-api';
 import { useSystemConfigResourceController } from './system-config-resource-controller';
 
 const refine = vi.hoisted(() => ({
@@ -70,7 +71,7 @@ describe('System Config resource controller', () => {
     );
     expect(refine.useCustom).toHaveBeenCalledWith(
       expect.objectContaining({
-        url: '/api/config/timezones',
+        url: systemConfigTimezonesEndpoint,
         method: 'get',
         dataProviderName: 'system-config'
       })

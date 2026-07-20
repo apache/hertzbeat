@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { resolveLocale } from '@/core/i18n/i18n';
 import { readRuntimeTheme } from '@/core/runtime-preferences';
 
+import { systemConfigTimezonesEndpoint } from '../api/system-config-api';
 import {
   createSystemConfigDraft,
   systemConfigResourceId,
@@ -32,7 +33,6 @@ import { useSystemConfigFormController } from './system-config-form-controller';
 
 const resourceName = 'system-config';
 const providerName = 'system-config';
-const timezonesUrl = '/api/config/timezones';
 
 export function useSystemConfigResourceController() {
   const { t, i18n } = useTranslation();
@@ -43,7 +43,7 @@ export function useSystemConfigResourceController() {
     errorNotification: false
   });
   const timezones = useCustom<SystemTimezoneResourceRecord, HttpError>({
-    url: timezonesUrl,
+    url: systemConfigTimezonesEndpoint,
     method: 'get',
     dataProviderName: providerName,
     errorNotification: false

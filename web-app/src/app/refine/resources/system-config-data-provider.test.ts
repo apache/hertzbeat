@@ -17,6 +17,12 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { systemConfigTimezonesEndpoint } from '@/features/settings/system-config/api/system-config-api';
+import systemConfigApiSource from '@/features/settings/system-config/api/system-config-api.ts?raw';
+import systemConfigControllerSource from '@/features/settings/system-config/controller/system-config-resource-controller.ts?raw';
+
+import systemConfigProviderSource from './system-config-data-provider.ts?raw';
+
 type SystemConfigApi = typeof import('@/features/settings/system-config/api/system-config-api');
 const api = vi.hoisted(() => ({
   loadSystemConfig: vi.fn<SystemConfigApi['loadSystemConfig']>(),
@@ -35,17 +41,30 @@ const config = { locale: 'en_US', timeZoneId: 'UTC', theme: 'dark' };
 describe('System Config Refine data provider', () => {
   beforeEach(() => vi.clearAllMocks());
 
+  it('keeps the timezone endpoint owned by the feature API', () => {
+    expect(systemConfigApiSource).toMatch(
+      /export const systemConfigTimezonesEndpoint\s*=\s*['"]\/api\/config\/timezones['"]/
+    );
+    for (const consumerSource of [systemConfigControllerSource, systemConfigProviderSource]) {
+      expect(consumerSource).toContain('systemConfigTimezonesEndpoint');
+      expect(consumerSource).not.toMatch(/['"]\/api\/config\/timezones['"]/);
+    }
+  });
+
   it('reads the singleton and auxiliary timezone collection', async () => {
     api.loadSystemConfig.mockResolvedValue(config);
     api.loadTimezones.mockResolvedValue([{ zoneId: 'UTC', offset: 'UTC+00:00', displayName: 'UTC' }]);
 
-    await expect(systemConfigDataProvider.getOne({ resource: 'system-config', id: 'current' }))
-      .resolves.toEqual({ data: { id: 'current', ...config } });
-    await expect(systemConfigDataProvider.custom?.({
-      url: '/api/config/timezones',
-      method: 'get',
-      headers: {}
-    })).resolves.toEqual({
+    await expect(systemConfigDataProvider.getOne({ resource: 'system-config', id: 'current' })).resolves.toEqual({
+      data: { id: 'current', ...config }
+    });
+    await expect(
+      systemConfigDataProvider.custom?.({
+        url: systemConfigTimezonesEndpoint,
+        method: 'get',
+        headers: {}
+      })
+    ).resolves.toEqual({
       data: {
         id: 'timezones',
         items: [{ zoneId: 'UTC', offset: 'UTC+00:00', displayName: 'UTC' }]
@@ -58,13 +77,16 @@ describe('System Config Refine data provider', () => {
     api.saveSystemConfig.mockResolvedValue('Update config success');
     api.loadSystemConfig.mockResolvedValue(canonical);
 
-    await expect(systemConfigDataProvider.update({
-      resource: 'system-config',
-      id: 'current',
-      variables: config
-    })).resolves.toEqual({ data: { id: 'current', ...canonical } });
-    expect(api.saveSystemConfig.mock.invocationCallOrder[0])
-      .toBeLessThan(api.loadSystemConfig.mock.invocationCallOrder[0] ?? 0);
+    await expect(
+      systemConfigDataProvider.update({
+        resource: 'system-config',
+        id: 'current',
+        variables: config
+      })
+    ).resolves.toEqual({ data: { id: 'current', ...canonical } });
+    expect(api.saveSystemConfig.mock.invocationCallOrder[0]).toBeLessThan(
+      api.loadSystemConfig.mock.invocationCallOrder[0] ?? 0
+    );
   });
 
   it('fails closed on null or malformed canonical rereads', async () => {
@@ -75,8 +97,9 @@ describe('System Config Refine data provider', () => {
       theme: 'dark'
     });
 
-    await expect(systemConfigDataProvider.update({ resource: 'system-config', id: 'current', variables: config }))
-      .rejects.toMatchObject({ code: 'SYSTEM_CONFIG_CANONICAL_REREAD_MISSING' });
+    await expect(
+      systemConfigDataProvider.update({ resource: 'system-config', id: 'current', variables: config })
+    ).rejects.toMatchObject({ code: 'SYSTEM_CONFIG_CANONICAL_REREAD_MISSING' });
     let error: unknown;
     try {
       await systemConfigDataProvider.update({ resource: 'system-config', id: 'current', variables: config });

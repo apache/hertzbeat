@@ -22,12 +22,14 @@ import { parseSystemConfig, parseSystemConfigMutationResult, parseTimezoneOption
 
 export type { SystemConfigValue, TimezoneOption };
 
+export const systemConfigTimezonesEndpoint = '/api/config/timezones';
+
 export async function loadSystemConfig() {
   return parseSystemConfig(await apiMessageGet('/api/config/system'));
 }
 
 export async function loadTimezones() {
-  return parseTimezoneOptions(await apiMessageGet('/api/config/timezones'));
+  return parseTimezoneOptions(await apiMessageGet(systemConfigTimezonesEndpoint));
 }
 
 export async function saveSystemConfig(config: SystemConfigValue) {

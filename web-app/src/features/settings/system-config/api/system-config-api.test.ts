@@ -29,6 +29,7 @@ import {
   loadSystemConfig,
   loadTimezones,
   saveSystemConfig,
+  systemConfigTimezonesEndpoint,
   type SystemConfigValue as ApiSystemConfigValue,
   type TimezoneOption as ApiTimezoneOption
 } from './system-config-api';
@@ -51,7 +52,7 @@ describe('system configuration API', () => {
     await expect(loadTimezones()).resolves.toHaveLength(1);
     await expect(saveSystemConfig(config)).resolves.toBe('Update config success');
     expect(apiMessageGet).toHaveBeenNthCalledWith(1, '/api/config/system');
-    expect(apiMessageGet).toHaveBeenNthCalledWith(2, '/api/config/timezones');
+    expect(apiMessageGet).toHaveBeenNthCalledWith(2, systemConfigTimezonesEndpoint);
     expect(apiMessagePost).toHaveBeenCalledWith('/api/config/system', config);
   });
 
