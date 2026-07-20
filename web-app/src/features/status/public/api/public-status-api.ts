@@ -35,7 +35,7 @@ export type {
 } from '../model/public-status-contract';
 
 const incidentPath = '/api/status/page/public/incident';
-const incidentPageSize = 20;
+export const publicStatusIncidentPageSize = 20;
 const maximumIncidentPages = 100;
 
 type PublicStatusQueryContext = { signal?: AbortSignal };
@@ -64,14 +64,15 @@ export async function loadPublicStatusIncidents(context?: PublicStatusQueryConte
 }
 
 async function loadIncidentPage(pageIndex: number, context?: PublicStatusQueryContext) {
-  const path = `${incidentPath}?pageIndex=${pageIndex}&pageSize=${incidentPageSize}`;
+  const path = `${incidentPath}?pageIndex=${pageIndex}&pageSize=${publicStatusIncidentPageSize}`;
   return parsePublicStatusIncidents(await get(path, context));
 }
 
 function assertFirstPage(page: PublicStatusIncidentPage) {
-  const expectedPages = page.totalElements === 0 ? 0 : Math.ceil(page.totalElements / page.size);
+  const expectedPages = page.totalElements === 0 ? 0 : Math.ceil(page.totalElements / publicStatusIncidentPageSize);
   if (
     page.number !== 0 ||
+    page.size !== publicStatusIncidentPageSize ||
     page.totalPages !== expectedPages ||
     page.totalPages > maximumIncidentPages ||
     page.content.length > page.size

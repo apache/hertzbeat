@@ -26,7 +26,12 @@ vi.mock('@/core/http/api-message', async importOriginal => ({
 import { ApiMessageError } from '@/core/http/api-message';
 import { StatusOrgNotFoundError } from '../../shared/status-error-model';
 
-import { loadPublicStatusComponents, loadPublicStatusIncidents, loadPublicStatusOrg } from './public-status-api';
+import {
+  loadPublicStatusComponents,
+  loadPublicStatusIncidents,
+  loadPublicStatusOrg,
+  publicStatusIncidentPageSize
+} from './public-status-api';
 import { PublicStatusContractError } from './public-status-schema';
 
 describe('public status API', () => {
@@ -132,6 +137,16 @@ describe('public status API', () => {
     expect(apiMessageGet).toHaveBeenNthCalledWith(2, '/api/status/page/public/incident?pageIndex=1&pageSize=20');
   });
 
+  it('rejects a single first page whose positive size differs from the requested size', async () => {
+    apiMessageGet.mockResolvedValueOnce({
+      ...incidentPage(0, 1, 1, [1]),
+      size: publicStatusIncidentPageSize + 1
+    });
+
+    await expect(loadPublicStatusIncidents()).rejects.toBeInstanceOf(PublicStatusContractError);
+    expect(apiMessageGet).toHaveBeenCalledTimes(1);
+  });
+
   it('rejects incident pages that change pagination evidence mid-read', async () => {
     apiMessageGet
       .mockResolvedValueOnce(
@@ -182,6 +197,6 @@ function incidentPage(number: number, totalPages: number, totalElements: number,
     totalElements,
     totalPages,
     number,
-    size: 20
+    size: publicStatusIncidentPageSize
   };
 }
