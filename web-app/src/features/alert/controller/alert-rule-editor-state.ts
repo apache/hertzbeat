@@ -12,6 +12,12 @@ export type AlertRulePreviewState =
   | { kind: 'unavailable' }
   | { kind: 'error' };
 
+export type AlertRuleSaveRecovery = {
+  phase: 'proof' | 'commit-uncertain';
+  failure: 'unavailable' | 'error';
+  retryable: boolean;
+};
+
 export type AlertRuleRouteState = {
   source: string;
   token: symbol;
@@ -19,6 +25,7 @@ export type AlertRuleRouteState = {
   preview: AlertRulePreviewState;
   command: 'idle' | 'saving';
   saveFailure: AlertRuleEditorFailure | undefined;
+  recovery: AlertRuleSaveRecovery | undefined;
 };
 
 export type AlertRuleEditorOperationIdentity = {
@@ -39,5 +46,13 @@ export function freshAlertRuleRouteState(
   token: symbol,
   draft: AlertRuleDraft | null
 ): AlertRuleRouteState {
-  return { source, token, draft, preview: { kind: 'idle' }, command: 'idle', saveFailure: undefined };
+  return {
+    source,
+    token,
+    draft,
+    preview: { kind: 'idle' },
+    command: 'idle',
+    saveFailure: undefined,
+    recovery: undefined
+  };
 }

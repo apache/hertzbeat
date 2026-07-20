@@ -25,6 +25,7 @@ const controller = vi.hoisted(() => ({
   cancel: vi.fn(),
   preview: vi.fn(),
   retryDetail: vi.fn(),
+  retrySave: vi.fn(),
   save: vi.fn(),
   state: {},
   updateDraft: vi.fn()
@@ -69,6 +70,25 @@ describe('AlertRuleEditorPage', () => {
     controller.state = buildState({ saveFailure: failure });
     render(<AlertRuleEditorPage mode="new" />);
     expect(screen.getByText(evidence)).toBeInTheDocument();
+  });
+
+  it('offers retry only for recoverable proof and keeps commit uncertainty write-locked', () => {
+    controller.state = buildState({
+      recovery: { phase: 'proof', failure: 'unavailable', retryable: true }
+    });
+    render(<AlertRuleEditorPage mode="new" />);
+    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+    expect(controller.retrySave).toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'common.save' })).toBeDisabled();
+    expect(screen.getByLabelText('alertRules.name')).toBeDisabled();
+
+    cleanup();
+    controller.state = buildState({
+      recovery: { phase: 'commit-uncertain', failure: 'unavailable', retryable: false }
+    });
+    render(<AlertRuleEditorPage mode="new" />);
+    expect(screen.queryByRole('button', { name: 'common.retry' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'common.save' })).toBeDisabled();
   });
 
   it('preserves cleared period and times as null for validation', () => {
@@ -122,6 +142,7 @@ function buildState(override: Record<string, unknown> = {}) {
     detail: { kind: 'ready' },
     draft: createAlertRuleDraft(),
     preview: { kind: 'idle' },
+    recovery: undefined,
     saveFailure: undefined,
     ...override
   };

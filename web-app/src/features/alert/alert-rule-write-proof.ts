@@ -33,6 +33,13 @@ export class AlertRuleCreateProofLimitError extends AlertRuleContractError {
   }
 }
 
+export class AlertRuleCreateIdentityUncertainError extends AlertRuleContractError {
+  constructor() {
+    super('create proof cannot identify exactly one new rule');
+    this.name = 'AlertRuleCreateIdentityUncertainError';
+  }
+}
+
 type AlertRulePayload = ReturnType<typeof buildAlertRulePayload>;
 
 export async function proveUpdatedAlertRule(draft: AlertRuleDraft, expected: AlertRulePayload) {
@@ -41,27 +48,40 @@ export async function proveUpdatedAlertRule(draft: AlertRuleDraft, expected: Ale
   requireConvergence(canonical, expected, draft.id);
 }
 
-export async function proveCreatedAlertRule(expected: AlertRulePayload) {
-  const first = await loadAlertRules({ search: expected.name, pageIndex: 0, pageSize: 25 });
+export async function captureAlertRuleCreateBaseline(name: string) {
+  const matches = await loadExactNameRules(name);
+  const ids = matches.map(rule => rule.id);
+  if (new Set(ids).size !== ids.length) throw new AlertRuleContractError('create baseline contains duplicate ids');
+  return ids;
+}
+
+export async function proveCreatedAlertRule(expected: AlertRulePayload, baselineIds: number[]) {
+  const baseline = new Set(baselineIds);
+  if (baseline.size !== baselineIds.length) throw new AlertRuleContractError('create baseline contains duplicate ids');
+  const matches = await loadExactNameRules(expected.name);
+  const candidates = matches.filter(rule => !baseline.has(rule.id));
+  if (candidates.length !== 1) throw new AlertRuleCreateIdentityUncertainError();
+  requireConvergence(candidates[0] as AlertRule, expected);
+}
+
+async function loadExactNameRules(name: string) {
+  const first = await loadAlertRules({ search: name, pageIndex: 0, pageSize: 25 });
   assertBoundedPageCount(first.totalPages);
   const pages: AlertRulePage[] = [first];
 
   // The POST endpoint does not return the new id. This bounded scan is a
   // temporary compatibility proof, not permission to traverse arbitrary pages.
   for (let pageIndex = 1; pageIndex < first.totalPages; pageIndex += 1) {
-    const page = await loadAlertRules({ search: expected.name, pageIndex, pageSize: 25 });
+    const page = await loadAlertRules({ search: name, pageIndex, pageSize: 25 });
     assertStablePageSet(page, first);
     pages.push(page);
   }
 
-  const matches = pages.flatMap(page => page.content).filter(rule => rule.name === expected.name);
-  if (matches.length !== 1) throw new AlertRuleContractError('create proof requires one exact-name rule');
-  requireConvergence(matches[0] as AlertRule, expected);
+  return pages.flatMap(page => page.content).filter(rule => rule.name === name);
 }
 
 function assertBoundedPageCount(totalPages: number) {
-  if (!Number.isSafeInteger(totalPages) || totalPages < 0
-    || totalPages > maximumAlertRuleCreateProofPages) {
+  if (!Number.isSafeInteger(totalPages) || totalPages < 0 || totalPages > maximumAlertRuleCreateProofPages) {
     throw new AlertRuleCreateProofLimitError();
   }
 }
@@ -87,8 +107,11 @@ function requireConvergence(actual: AlertRule, expected: AlertRulePayload, expec
     actual.template === expected.template,
     actual.enable === expected.enable
   ].every(Boolean);
-  if (!scalarFieldsMatch || !mapsEqual(actual.labels, expected.labels)
-    || !mapsEqual(actual.annotations, expected.annotations)) {
+  if (
+    !scalarFieldsMatch ||
+    !mapsEqual(actual.labels, expected.labels) ||
+    !mapsEqual(actual.annotations, expected.annotations)
+  ) {
     throw new AlertRuleContractError('canonical writable fields did not converge');
   }
 }
@@ -97,6 +120,7 @@ function mapsEqual(actual: Record<string, string> | null, expected: Record<strin
   if (actual === null || expected === null) return actual === expected;
   const left = Object.keys(actual).sort();
   const right = Object.keys(expected).sort();
-  return left.length === right.length
-    && left.every((key, index) => key === right[index] && actual[key] === expected[key]);
+  return (
+    left.length === right.length && left.every((key, index) => key === right[index] && actual[key] === expected[key])
+  );
 }

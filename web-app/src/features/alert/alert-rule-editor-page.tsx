@@ -24,7 +24,8 @@ import {
   useAlertRuleEditorController,
   type AlertRuleEditorDetailState,
   type AlertRuleEditorFailure,
-  type AlertRulePreviewState
+  type AlertRulePreviewState,
+  type AlertRuleSaveRecovery
 } from './controller/use-alert-rule-editor-controller';
 
 function DetailEvidence({ state, retry }: { state: AlertRuleEditorDetailState; retry: () => unknown }) {
@@ -66,6 +67,34 @@ function SaveEvidence({ failure }: { failure: AlertRuleEditorFailure | undefined
   return <Alert type="error" showIcon message={t(saveFailureMessageKey(failure))} />;
 }
 
+function SaveRecovery({
+  recovery,
+  retrying,
+  retry
+}: {
+  recovery: AlertRuleSaveRecovery | undefined;
+  retrying: boolean;
+  retry: () => unknown;
+}) {
+  const { t } = useTranslation();
+  if (!recovery) return null;
+  const message = recovery.failure === 'unavailable' ? t('common.unavailable') : t('common.routeError.description');
+  return (
+    <Alert
+      type="warning"
+      showIcon
+      message={message}
+      action={
+        recovery.retryable ? (
+          <Button size="small" disabled={retrying} onClick={() => void retry()}>
+            {t('common.retry')}
+          </Button>
+        ) : undefined
+      }
+    />
+  );
+}
+
 function detailFailureMessageKey(failure: AlertRuleEditorFailure) {
   if (failure === 'missing') return 'common.notFound.description';
   if (failure === 'unavailable') return 'common.unavailable';
@@ -81,7 +110,7 @@ function saveFailureMessageKey(failure: AlertRuleEditorFailure) {
 export function AlertRuleEditorPage({ mode }: { mode: 'new' | 'edit' }) {
   const { t } = useTranslation();
   const controller = useAlertRuleEditorController(mode);
-  const { command, detail, draft, preview, saveFailure } = controller.state;
+  const { command, detail, draft, preview, recovery, saveFailure } = controller.state;
   return (
     <div className={styles.page}>
       <header className={styles.heading}>
@@ -91,10 +120,14 @@ export function AlertRuleEditorPage({ mode }: { mode: 'new' | 'edit' }) {
       <DetailEvidence state={detail} retry={controller.retryDetail} />
       {detail.kind === 'ready' && draft && (
         <>
-          <SaveEvidence failure={saveFailure} />
+          {recovery ? (
+            <SaveRecovery recovery={recovery} retrying={command === 'saving'} retry={controller.retrySave} />
+          ) : (
+            <SaveEvidence failure={saveFailure} />
+          )}
           <AlertRuleFields
             draft={draft}
-            busy={command === 'saving'}
+            busy={command === 'saving' || recovery !== undefined}
             update={controller.updateDraft}
             changeKind={controller.changeKind}
           />
@@ -105,7 +138,7 @@ export function AlertRuleEditorPage({ mode }: { mode: 'new' | 'edit' }) {
             </Button>
             <Button
               loading={preview.kind === 'loading'}
-              disabled={command === 'saving'}
+              disabled={command === 'saving' || recovery !== undefined}
               onClick={() => {
                 void controller.preview();
               }}
@@ -114,7 +147,8 @@ export function AlertRuleEditorPage({ mode }: { mode: 'new' | 'edit' }) {
             </Button>
             <Button
               type="primary"
-              loading={command === 'saving'}
+              loading={command === 'saving' && !recovery}
+              disabled={recovery !== undefined}
               onClick={() => {
                 void controller.save();
               }}

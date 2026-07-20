@@ -168,13 +168,14 @@ describe('Alert Rule editor controller', () => {
     api.loadAlertRule.mockResolvedValue({ ...persisted, annotations: {} });
     await act(async () => second.result.current.save());
     expect(second.result.current.state.draft).not.toBeNull();
-    expect(notify.error).toHaveBeenCalledWith('alertRules.saveFailed');
+    expect(notify.error).toHaveBeenCalledWith('common.routeError.description');
   });
 
   it('proves POST by traversing pages for one exact normalized name and convergence', async () => {
     const routed = renderRouted(['/alerts/rules/new']);
     act(() => routed.current().updateDraft(validDraft()));
     api.loadAlertRules
+      .mockImplementationOnce((query: AlertRuleQuery) => Promise.resolve(page(query, [])))
       .mockImplementationOnce((query: AlertRuleQuery) =>
         Promise.resolve({ ...page(query, []), totalElements: 26, totalPages: 2 })
       )
@@ -198,8 +199,139 @@ describe('Alert Rule editor controller', () => {
         })
       );
     await act(async () => routed.current().save());
-    expect(api.loadAlertRules).toHaveBeenCalledTimes(2);
+    expect(api.loadAlertRules).toHaveBeenCalledTimes(3);
     expect(routed.router.state.location.pathname).toBe('/alerts/rules');
+  });
+
+  it('retains an uncertain create receipt and retries only canonical reads', async () => {
+    const { result } = renderController('new', '/alerts/rules/new');
+    act(() => result.current.updateDraft(validDraft()));
+    api.loadAlertRules
+      .mockImplementationOnce((query: AlertRuleQuery) => Promise.resolve(page(query, [])))
+      .mockImplementationOnce((query: AlertRuleQuery) =>
+        Promise.resolve(
+          page(query, [
+            {
+              ...persisted,
+              id: 9,
+              name: 'New Rule',
+              expr: 'usage > 90',
+              period: 300,
+              times: 3,
+              labels: {},
+              annotations: {},
+              template: 'Alert'
+            }
+          ])
+        )
+      );
+    api.saveAlertRule.mockRejectedValueOnce(new AlertRuleRequestFailure('unavailable', 'uncertain'));
+
+    await act(async () => result.current.save());
+    expect(result.current.state.recovery).toEqual({ phase: 'proof', failure: 'unavailable', retryable: true });
+    await act(async () => result.current.save());
+    await waitFor(() => expect(api.saveAlertRule).toHaveBeenCalledTimes(1));
+
+    await act(async () => result.current.retrySave());
+    expect(api.saveAlertRule).toHaveBeenCalledTimes(1);
+    expect(api.loadAlertRules).toHaveBeenCalledTimes(2);
+    expect(notify.success).toHaveBeenCalledWith('alertRules.saveSuccess');
+  });
+
+  it('retains an uncertain update receipt and retries only its exact-id proof', async () => {
+    const { result } = renderController('edit');
+    await waitFor(() => expect(result.current.state.detail.kind).toBe('ready'));
+    api.saveAlertRule.mockRejectedValueOnce(new AlertRuleRequestFailure('unavailable', 'uncertain'));
+
+    await act(async () => result.current.save());
+    expect(result.current.state.recovery).toEqual({ phase: 'proof', failure: 'unavailable', retryable: true });
+    await act(async () => result.current.save());
+    expect(api.saveAlertRule).toHaveBeenCalledTimes(1);
+
+    await act(async () => result.current.retrySave());
+    expect(api.saveAlertRule).toHaveBeenCalledTimes(1);
+    expect(api.loadAlertRule).toHaveBeenCalledTimes(2);
+    expect(notify.success).toHaveBeenCalledWith('alertRules.saveSuccess');
+  });
+
+  it('retries only proof after an acknowledged update proof read fails', async () => {
+    const { result } = renderController('edit');
+    await waitFor(() => expect(result.current.state.detail.kind).toBe('ready'));
+    api.loadAlertRule.mockRejectedValueOnce(new AlertRuleRequestFailure('unavailable', 'uncertain'));
+
+    await act(async () => result.current.save());
+    expect(result.current.state.recovery).toEqual({ phase: 'proof', failure: 'unavailable', retryable: true });
+    await act(async () => result.current.retrySave());
+
+    expect(api.saveAlertRule).toHaveBeenCalledTimes(1);
+    expect(api.loadAlertRule).toHaveBeenCalledTimes(3);
+    expect(notify.success).toHaveBeenCalledWith('alertRules.saveSuccess');
+  });
+
+  it('unlocks the editor only after a definite source rejection', async () => {
+    const { result } = renderController('edit');
+    await waitFor(() => expect(result.current.state.detail.kind).toBe('ready'));
+    api.saveAlertRule.mockRejectedValueOnce(new AlertRuleRequestFailure('error', 'rejected'));
+
+    await act(async () => result.current.save());
+    expect(result.current.state.recovery).toBeUndefined();
+    act(() => result.current.updateDraft({ name: 'CPU updated' }));
+    expect(result.current.state.draft?.name).toBe('CPU updated');
+
+    api.loadAlertRule.mockResolvedValueOnce({ ...persisted, name: 'CPU updated' });
+    await act(async () => result.current.save());
+    expect(api.saveAlertRule).toHaveBeenCalledTimes(2);
+    expect(notify.success).toHaveBeenCalledWith('alertRules.saveSuccess');
+  });
+
+  it('does not treat an unscoped contract exception as source rejection evidence', async () => {
+    const { result } = renderController('edit');
+    await waitFor(() => expect(result.current.state.detail.kind).toBe('ready'));
+    api.saveAlertRule.mockRejectedValueOnce(new AlertRuleContractError('write outcome is not known'));
+
+    await act(async () => result.current.save());
+
+    expect(result.current.state.recovery).toEqual({ phase: 'proof', failure: 'error', retryable: true });
+    await act(async () => result.current.save());
+    expect(api.saveAlertRule).toHaveBeenCalledTimes(1);
+  });
+
+  it('captures create baseline before POST and does not accept a pre-existing same-name rule', async () => {
+    const existing = {
+      ...persisted,
+      name: 'New Rule',
+      expr: 'usage > 90',
+      period: 300,
+      times: 3,
+      labels: {},
+      annotations: {},
+      template: 'Alert'
+    };
+    const order: string[] = [];
+    api.loadAlertRules.mockImplementation((query: AlertRuleQuery) => {
+      order.push('read');
+      return Promise.resolve(page(query, [existing]));
+    });
+    api.saveAlertRule.mockImplementation(() => {
+      order.push('write');
+      return Promise.resolve();
+    });
+    const { result } = renderController('new', '/alerts/rules/new');
+    act(() => result.current.updateDraft(validDraft()));
+
+    await act(async () => result.current.save());
+
+    expect(order).toEqual(['read', 'write', 'read']);
+    expect(result.current.state.recovery).toEqual({
+      phase: 'commit-uncertain',
+      failure: 'unavailable',
+      retryable: false
+    });
+    expect(notify.success).not.toHaveBeenCalled();
+    await act(async () => result.current.retrySave());
+    await act(async () => result.current.save());
+    expect(api.saveAlertRule).toHaveBeenCalledTimes(1);
+    expect(api.loadAlertRules).toHaveBeenCalledTimes(2);
   });
 
   it('admits only one same-tick save write', async () => {
@@ -214,7 +346,7 @@ describe('Alert Rule editor controller', () => {
       first = result.current.save();
       second = result.current.save();
     });
-    expect(api.saveAlertRule).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(api.saveAlertRule).toHaveBeenCalledTimes(1));
 
     act(() => write.resolve());
     await act(async () => Promise.all([first, second]));
@@ -324,7 +456,7 @@ describe('Alert Rule editor controller', () => {
     act(() => oldSave.resolve());
     await act(async () => save);
     expect(routed.router.state.location.pathname).toBe('/alerts/rules/8/edit');
-    expect(api.loadAlertRules).not.toHaveBeenCalled();
+    expect(api.loadAlertRules).toHaveBeenCalledTimes(1);
     expect(notify.success).not.toHaveBeenCalled();
     expect(routed.current().state.command).toBe('idle');
   });
@@ -343,7 +475,7 @@ describe('Alert Rule editor controller', () => {
     act(() => oldSave.resolve());
     await act(async () => save);
     expect(routed.router.state.location.pathname).toBe('/alerts/rules');
-    expect(api.loadAlertRules).not.toHaveBeenCalled();
+    expect(api.loadAlertRules).toHaveBeenCalledTimes(1);
     expect(notify.success).not.toHaveBeenCalled();
   });
 });

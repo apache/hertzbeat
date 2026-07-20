@@ -29,6 +29,31 @@ describe('Alert Rule API failure boundary', () => {
     ['gateway timeout', new ApiMessageError('offline', { status: 504 }), 'unavailable', 'uncertain'],
     ['other server failure', new ApiMessageError('failed', { status: 500 }), 'error', 'uncertain'],
     ['client rejection', new ApiMessageError('failed', { status: 400 }), 'error', 'rejected'],
+    ['request timeout', new ApiMessageError('failed', { status: 408 }), 'error', 'uncertain'],
+    [
+      'client-looking network failure',
+      new ApiMessageError('failed', { status: 422, cause: new Error('request did not complete') }),
+      'unavailable',
+      'uncertain'
+    ],
+    [
+      'missing-looking network failure',
+      new ApiMessageError('failed', { status: 404, cause: new Error('request did not complete') }),
+      'unavailable',
+      'uncertain'
+    ],
+    [
+      'business-missing-looking network failure',
+      new ApiMessageError('failed', { status: 200, code: 3, cause: new Error('request did not complete') }),
+      'unavailable',
+      'uncertain'
+    ],
+    [
+      'source rejection with business code',
+      new ApiMessageError('failed', { status: 422, code: 12 }),
+      'error',
+      'rejected'
+    ],
     ['business response', new ApiMessageError('failed', { code: 12, status: 200 }), 'error', 'uncertain']
   ] as const)('maps %s to stable %s/%s domain evidence', (_label, error, kind, writeOutcome) => {
     expect(normalizeAlertRuleApiFailure(error)).toMatchObject({ kind, writeOutcome });

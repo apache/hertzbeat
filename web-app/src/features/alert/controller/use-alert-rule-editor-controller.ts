@@ -28,7 +28,8 @@ import { useAlertRulePreviewController } from './use-alert-rule-preview-controll
 export type {
   AlertRuleEditorDetailState,
   AlertRuleEditorFailure,
-  AlertRulePreviewState
+  AlertRulePreviewState,
+  AlertRuleSaveRecovery
 } from './alert-rule-editor-state';
 
 export function useAlertRuleEditorController(mode: 'new' | 'edit') {
@@ -64,7 +65,7 @@ export function useAlertRuleEditorController(mode: 'new' | 'edit') {
     if (!draft || command.isLocked()) return;
     identity.invalidate();
     preview.invalidate();
-    updateRoute({ draft: { ...draft, ...patch }, preview: { kind: 'idle' }, saveFailure: undefined });
+    updateRoute(updatedDraftState(draft, patch));
   };
   const changeKind = (kind: AlertRuleKind) => {
     if (!draft) return;
@@ -76,17 +77,28 @@ export function useAlertRuleEditorController(mode: 'new' | 'edit') {
       detail: resolveDetail(mode, validId, detailQuery.isPending, detailQuery.error, draft),
       draft,
       preview: active.preview,
-      saveFailure: active.saveFailure
+      saveFailure: active.saveFailure,
+      recovery: active.recovery
     },
     updateDraft,
     changeKind,
     preview: preview.preview,
     save: command.save,
+    retrySave: command.retry,
     retryDetail: () =>
       mode === 'edit' && validId !== null ? detailQuery.refetch().then(() => undefined) : Promise.resolve(),
     cancel: () => {
       void navigate(alertRoutePaths.rules);
     }
+  };
+}
+
+function updatedDraftState(draft: AlertRuleDraft, patch: Partial<AlertRuleDraft>): Partial<AlertRuleRouteState> {
+  return {
+    draft: { ...draft, ...patch },
+    preview: { kind: 'idle' },
+    saveFailure: undefined,
+    recovery: undefined
   };
 }
 

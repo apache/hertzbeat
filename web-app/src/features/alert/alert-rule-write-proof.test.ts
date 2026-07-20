@@ -26,6 +26,7 @@ vi.mock('./alert-rule-api', async importOriginal => ({
 import { buildAlertRulePayload, createAlertRuleDraft, type AlertRule, type AlertRuleQuery } from './alert-rule-model';
 import {
   AlertRuleCreateProofLimitError,
+  captureAlertRuleCreateBaseline,
   maximumAlertRuleCreateProofPages,
   proveCreatedAlertRule
 } from './alert-rule-write-proof';
@@ -59,21 +60,45 @@ describe('Alert Rule write proof', () => {
         size: 25
       });
 
-      await expect(proveCreatedAlertRule(expected)).rejects.toBeInstanceOf(AlertRuleCreateProofLimitError);
+      await expect(proveCreatedAlertRule(expected, [])).rejects.toBeInstanceOf(AlertRuleCreateProofLimitError);
       expect(api.loadAlertRules).toHaveBeenCalledTimes(1);
     }
   );
 
   it('finds one converged rule across a small stable page set', async () => {
-    api.loadAlertRules.mockImplementation((query: AlertRuleQuery) => Promise.resolve({
-      content: query.pageIndex === 1 ? [matching] : [],
-      totalElements: 26,
-      totalPages: 2,
-      number: query.pageIndex,
-      size: query.pageSize
-    }));
+    api.loadAlertRules.mockImplementation((query: AlertRuleQuery) =>
+      Promise.resolve({
+        content: query.pageIndex === 1 ? [matching] : [],
+        totalElements: 26,
+        totalPages: 2,
+        number: query.pageIndex,
+        size: query.pageSize
+      })
+    );
 
-    await expect(proveCreatedAlertRule(expected)).resolves.toBeUndefined();
+    await expect(proveCreatedAlertRule(expected, [])).resolves.toBeUndefined();
     expect(api.loadAlertRules).toHaveBeenCalledTimes(2);
+  });
+
+  it('captures exact-name ids and proves only one post-write identity absent from the baseline', async () => {
+    const existing = { ...matching, id: 7 };
+    const created = { ...matching, id: 9 };
+    api.loadAlertRules.mockResolvedValueOnce({
+      content: [existing],
+      totalElements: 1,
+      totalPages: 1,
+      number: 0,
+      size: 25
+    });
+    await expect(captureAlertRuleCreateBaseline(expected.name)).resolves.toEqual([7]);
+
+    api.loadAlertRules.mockResolvedValueOnce({
+      content: [existing, created],
+      totalElements: 2,
+      totalPages: 1,
+      number: 0,
+      size: 25
+    });
+    await expect(proveCreatedAlertRule(expected, [7])).resolves.toBeUndefined();
   });
 });
