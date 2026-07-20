@@ -23,6 +23,7 @@ import { AlertNoiseControlNav } from './alert-noise-control-nav';
 import styles from './alert-policy-page.module.css';
 import { buildAlertGroupColumns } from './components/alert-group-columns';
 import { AlertGroupEditor } from './components/alert-group-editor';
+import { AlertGroupRecovery } from './components/alert-group-recovery';
 import { AlertGroupDetailFailure, AlertGroupResults } from './components/alert-group-results';
 import { useAlertGroupController } from './controller/use-alert-group-controller';
 
@@ -55,11 +56,28 @@ function AlertGroupToolbar(props: AlertGroupToolbarProps) {
   );
 }
 
+function AlertGroupPageHeader({ busy, create }: { busy: boolean; create: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <header className={styles.heading}>
+      <div>
+        <Typography.Title level={2}>{t('alertGroups.title')}</Typography.Title>
+        <Typography.Text type="secondary">{t('alertGroups.description')}</Typography.Text>
+      </div>
+      <Button type="primary" disabled={busy} onClick={create}>
+        {t('alertGroups.new')}
+      </Button>
+    </header>
+  );
+}
+
 export function AlertGroupPage() {
   const { t } = useTranslation();
   const controller = useAlertGroupController();
   const state = controller.state;
   const busy = state.command !== 'idle';
+  const saveRecovery = state.recovery?.kind === 'update' ? state.recovery : undefined;
+  const routeRecovery = state.recovery?.kind === 'update' ? undefined : state.recovery;
   const columns = buildAlertGroupColumns(t, {
     busy,
     edit: controller.edit,
@@ -69,15 +87,7 @@ export function AlertGroupPage() {
 
   return (
     <div className={styles.page}>
-      <header className={styles.heading}>
-        <div>
-          <Typography.Title level={2}>{t('alertGroups.title')}</Typography.Title>
-          <Typography.Text type="secondary">{t('alertGroups.description')}</Typography.Text>
-        </div>
-        <Button type="primary" disabled={busy} onClick={controller.create}>
-          {t('alertGroups.new')}
-        </Button>
-      </header>
+      <AlertGroupPageHeader busy={busy} create={controller.create} />
       <AlertManagementNav />
       <AlertNoiseControlNav />
       <AlertGroupToolbar
@@ -87,6 +97,7 @@ export function AlertGroupPage() {
         submitSearch={controller.submitSearch}
         refresh={controller.refresh}
       />
+      <AlertGroupRecovery recovery={routeRecovery} retrying={state.command !== 'recovering'} retry={controller.retry} />
       <AlertGroupDetailFailure state={state.detail} retry={controller.retryDetail} />
       <AlertGroupResults
         state={state.list}
@@ -104,9 +115,12 @@ export function AlertGroupPage() {
           failure={state.editorFailure}
           createAcknowledged={state.createAcknowledged}
           proofFailure={state.createProofFailure}
+          recovery={saveRecovery}
+          retrying={state.command !== 'recovering'}
           update={controller.updateDraft}
           close={controller.closeDraft}
           submit={controller.submit}
+          retry={controller.retry}
         />
       )}
     </div>

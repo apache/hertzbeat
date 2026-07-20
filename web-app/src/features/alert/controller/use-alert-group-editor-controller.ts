@@ -17,36 +17,65 @@ import {
 } from '../alert-group-model';
 import type { AlertGroupDetailState } from '../alert-group-state';
 import { requireExactAlertGroupId, type AlertGroupCreateProof } from '../alert-group-write-proof';
+import type { AlertGroupOperationReceipt, AlertGroupOperationRecovery } from '../model/alert-group-operation-state';
 
 type CommandKind = 'saving' | 'operating';
 
 export function useAlertGroupCommandGate() {
   const ownerAliveRef = useRef(false);
   const commandRef = useRef<'idle' | CommandKind>('idle');
-  const [command, setCommand] = useState<'idle' | CommandKind>('idle');
+  const receiptRef = useRef<AlertGroupOperationReceipt | undefined>(undefined);
+  const [command, setCommand] = useState<'idle' | 'recovering' | CommandKind>('idle');
+  const [recovery, setRecovery] = useState<AlertGroupOperationRecovery>();
   useEffect(() => {
     ownerAliveRef.current = true;
     return () => {
       ownerAliveRef.current = false;
       commandRef.current = 'idle';
+      receiptRef.current = undefined;
     };
   }, []);
   const begin = (next: CommandKind) => {
-    if (!ownerAliveRef.current || commandRef.current !== 'idle') return false;
+    if (!ownerAliveRef.current || commandRef.current !== 'idle' || receiptRef.current) return false;
     // State publishes availability; the ref closes same-tick admission before React renders.
     commandRef.current = next;
     setCommand(next);
     return true;
   };
+  const beginRecovery = () => {
+    const receipt = receiptRef.current;
+    if (!ownerAliveRef.current || commandRef.current !== 'idle' || !receipt) return undefined;
+    const next = receipt.kind === 'update' ? 'saving' : 'operating';
+    commandRef.current = next;
+    setCommand(next);
+    return receipt;
+  };
+  const retain = (receipt: AlertGroupOperationReceipt) => {
+    if (ownerAliveRef.current && commandRef.current !== 'idle') receiptRef.current = receipt;
+  };
+  const clear = () => {
+    receiptRef.current = undefined;
+    if (ownerAliveRef.current) setRecovery(undefined);
+  };
+  const markRecovery = (failure: AlertGroupOperationRecovery['failure']) => {
+    const receipt = receiptRef.current;
+    if (!ownerAliveRef.current || !receipt || receipt.phase === 'write' || receipt.phase === 'prepare') return;
+    setRecovery({ kind: receipt.kind, phase: receipt.phase, failure, retryable: true });
+  };
   const end = () => {
     commandRef.current = 'idle';
-    if (ownerAliveRef.current) setCommand('idle');
+    if (ownerAliveRef.current) setCommand(receiptRef.current ? 'recovering' : 'idle');
   };
   return {
     command,
+    recovery,
     begin,
+    beginRecovery,
+    retain,
+    clear,
+    markRecovery,
     end,
-    isLocked: () => commandRef.current !== 'idle',
+    isLocked: () => commandRef.current !== 'idle' || receiptRef.current !== undefined,
     isOwnerAlive: () => ownerAliveRef.current
   };
 }

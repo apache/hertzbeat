@@ -8,31 +8,21 @@
 import { App } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { deleteAlertGroup, loadAlertGroup, updateAlertGroupEnabled } from '../alert-group-api';
-import {
-  AlertGroupContractError,
-  buildAlertGroupTogglePayload,
-  validateAlertGroupDraft,
-  type AlertGroupConverge,
-  type AlertGroupPage
-} from '../alert-group-model';
-import {
-  proveAlertGroupMissing,
-  requireAlertGroupConvergence,
-  requireExactAlertGroupId
-} from '../alert-group-write-proof';
-import { submitAlertGroupCreate, submitAlertGroupUpdate } from './alert-group-submit-command';
+import { validateAlertGroupDraft, type AlertGroupConverge, type AlertGroupPage } from '../alert-group-model';
+import { submitAlertGroupCreate } from './alert-group-submit-command';
 import {
   reportAlertGroupSubmitFailure,
   type AlertGroupNotifications,
   type AlertGroupSubmitStage
 } from './alert-group-submit-failure';
 import {
-  useAlertGroupCommandGate,
-  useAlertGroupEditor,
-  type AlertGroupCommandGate,
-  type AlertGroupEditor
-} from './use-alert-group-editor-controller';
+  removeAlertGroup,
+  retryAlertGroupOperation,
+  toggleAlertGroup,
+  updateAlertGroup,
+  type AlertGroupWriteContext
+} from './alert-group-write-operations';
+import { useAlertGroupCommandGate, useAlertGroupEditor } from './use-alert-group-editor-controller';
 
 export function useAlertGroupCommandController(rereadList: () => Promise<AlertGroupPage>) {
   const { t } = useTranslation();
@@ -48,8 +38,8 @@ export function useAlertGroupCommandController(rereadList: () => Promise<AlertGr
     operationSuccess: () => void message.success(t('alertGroups.operationSuccess')),
     operationFailed: () => void message.error(t('alertGroups.operationFailed'))
   };
-  const submit = useAlertGroupSubmit(rereadList, gate, editor, notifications);
-  const operations = useAlertGroupOperations(rereadList, gate, editor, notifications);
+  const context: AlertGroupWriteContext = { rereadList, gate, editor, notifications };
+  const submit = useAlertGroupSubmit(context);
 
   return {
     state: {
@@ -58,29 +48,36 @@ export function useAlertGroupCommandController(rereadList: () => Promise<AlertGr
       draft: editor.draft,
       editorFailure: editor.editorFailure,
       createAcknowledged: editor.createAcknowledged,
-      createProofFailure: editor.createProofFailure
+      createProofFailure: editor.createProofFailure,
+      recovery: gate.recovery
     },
-    actions: { ...editor.actions, submit, ...operations }
+    actions: {
+      ...editor.actions,
+      submit,
+      toggle: (group: AlertGroupConverge, enable: boolean) => toggleAlertGroup(context, group, enable),
+      remove: (id: number) => removeAlertGroup(context, id),
+      retry: () => retryAlertGroupOperation(context)
+    }
   };
 }
 
-function useAlertGroupSubmit(
-  rereadList: () => Promise<AlertGroupPage>,
-  gate: AlertGroupCommandGate,
-  editor: AlertGroupEditor,
-  notifications: AlertGroupNotifications
-) {
+function useAlertGroupSubmit(context: AlertGroupWriteContext) {
   const submit = async () => {
+    const { editor, gate, notifications, rereadList } = context;
     const draft = editor.draft;
     if (!draft || validateAlertGroupDraft(draft).length > 0) {
       notifications.validation();
+      return;
+    }
+    if (draft.id !== undefined) {
+      await updateAlertGroup(context, { ...draft, id: draft.id });
       return;
     }
     if (!gate.begin('saving')) return;
     editor.invalidateDetail();
     editor.setEditorFailure(undefined);
     editor.setCreateProofFailure(undefined);
-    let stage: AlertGroupSubmitStage = draft.id === undefined ? 'preflight' : 'write';
+    let stage: AlertGroupSubmitStage = 'preflight';
     let createAcknowledged = editor.createProof !== null;
     const setStage = (next: AlertGroupSubmitStage) => {
       stage = next;
@@ -89,11 +86,7 @@ function useAlertGroupSubmit(
       createAcknowledged = true;
     };
     try {
-      if (draft.id !== undefined) {
-        await submitAlertGroupUpdate({ ...draft, id: draft.id }, gate, setStage);
-      } else {
-        await submitAlertGroupCreate(draft, gate, editor, setStage, acknowledgeCreate);
-      }
+      await submitAlertGroupCreate(draft, gate, editor, setStage, acknowledgeCreate);
       editor.setDraft(null);
       editor.clearCreateProof();
       notifications.saveSuccess();
@@ -114,55 +107,4 @@ async function refreshAlertGroupProjection(rereadList: () => Promise<AlertGroupP
   } catch {
     // Canonical proof already completed; the list query owns this projection failure.
   }
-}
-
-function useAlertGroupOperations(
-  rereadList: () => Promise<AlertGroupPage>,
-  gate: AlertGroupCommandGate,
-  editor: AlertGroupEditor,
-  notifications: AlertGroupNotifications
-) {
-  const toggle = async (group: AlertGroupConverge, enable: boolean) => {
-    if (!gate.begin('operating')) return;
-    editor.invalidateDetail();
-    try {
-      const current = await loadAlertGroup(group.id);
-      if (!gate.isOwnerAlive()) return;
-      requireExactAlertGroupId(current.id, group.id);
-      await updateAlertGroupEnabled(current, enable);
-      if (!gate.isOwnerAlive()) return;
-      const canonical = await loadAlertGroup(group.id);
-      if (!gate.isOwnerAlive()) return;
-      requireExactAlertGroupId(canonical.id, group.id);
-      requireAlertGroupConvergence(canonical, buildAlertGroupTogglePayload(current, enable));
-      await rereadList();
-      if (!gate.isOwnerAlive()) return;
-      notifications.operationSuccess();
-    } catch {
-      if (gate.isOwnerAlive()) notifications.operationFailed();
-    } finally {
-      gate.end();
-    }
-  };
-  const remove = async (id: number) => {
-    if (!gate.begin('operating')) return;
-    editor.invalidateDetail();
-    try {
-      await deleteAlertGroup(id);
-      if (!gate.isOwnerAlive()) return;
-      await proveAlertGroupMissing(id);
-      if (!gate.isOwnerAlive()) return;
-      const canonical = await rereadList();
-      if (!gate.isOwnerAlive()) return;
-      if (canonical.content.some(record => record.id === id)) {
-        throw new AlertGroupContractError('deleted id remains');
-      }
-      notifications.operationSuccess();
-    } catch {
-      if (gate.isOwnerAlive()) notifications.operationFailed();
-    } finally {
-      gate.end();
-    }
-  };
-  return { toggle, remove };
 }

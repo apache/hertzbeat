@@ -5,31 +5,11 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { loadAlertGroup, saveAlertGroup } from '../alert-group-api';
+import { saveAlertGroup } from '../alert-group-api';
 import { alertGroupWriteOutcome, buildAlertGroupPayload, type AlertGroupDraft } from '../alert-group-model';
-import {
-  prepareAlertGroupCreateProof,
-  proveAlertGroupCreated,
-  requireAlertGroupConvergence
-} from '../alert-group-write-proof';
+import { prepareAlertGroupCreateProof, proveAlertGroupCreated } from '../alert-group-write-proof';
 import type { AlertGroupSubmitStage } from './alert-group-submit-failure';
 import type { AlertGroupCommandGate, AlertGroupEditor } from './use-alert-group-editor-controller';
-
-type PersistedAlertGroupDraft = AlertGroupDraft & { id: number };
-
-export async function submitAlertGroupUpdate(
-  draft: PersistedAlertGroupDraft,
-  gate: AlertGroupCommandGate,
-  setStage: (stage: AlertGroupSubmitStage) => void
-) {
-  setStage('write');
-  await saveAlertGroup(draft);
-  assertActiveCommandOwner(gate);
-  setStage('detail-proof');
-  const canonical = await loadAlertGroup(draft.id);
-  assertActiveCommandOwner(gate);
-  requireAlertGroupConvergence(canonical, { ...buildAlertGroupPayload(draft), id: draft.id });
-}
 
 export async function submitAlertGroupCreate(
   draft: AlertGroupDraft,

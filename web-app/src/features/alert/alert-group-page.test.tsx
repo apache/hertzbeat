@@ -27,6 +27,7 @@ const controller = vi.hoisted(() => ({
   edit: vi.fn(),
   refresh: vi.fn(),
   remove: vi.fn(),
+  retry: vi.fn(),
   retryDetail: vi.fn(),
   setSearch: vi.fn(),
   state: {},
@@ -124,7 +125,7 @@ describe('AlertGroupPage', () => {
     render(<AlertGroupPage />);
 
     expect(screen.getByDisplayValue('New')).toBeDisabled();
-    expect(screen.getByText('common.unavailable')).toBeInTheDocument();
+    expect(screen.getAllByText('common.unavailable')).toHaveLength(1);
     expect(screen.queryByText('alertGroups.saveFailed')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
     expect(controller.submit).toHaveBeenCalledOnce();
@@ -159,6 +160,46 @@ describe('AlertGroupPage', () => {
     expect(controller.closeDraft).not.toHaveBeenCalled();
   });
 
+  it('renders unavailable row-operation recovery with a proof-only retry', () => {
+    controller.state = buildState({
+      command: 'recovering',
+      recovery: { kind: 'delete', phase: 'proof', failure: 'unavailable', retryable: true }
+    });
+    render(<AlertGroupPage />);
+
+    expect(screen.getByText('common.unavailable')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+    expect(controller.retry).toHaveBeenCalledOnce();
+    expect(screen.getByRole('button', { name: 'alertGroups.new' })).toBeDisabled();
+  });
+
+  it('renders contract-error update recovery inside the frozen editor', () => {
+    controller.state = buildState({
+      command: 'recovering',
+      draft: { ...record, groupLabels: ['service'] },
+      recovery: { kind: 'update', phase: 'proof', failure: 'error', retryable: true }
+    });
+    render(<AlertGroupPage />);
+
+    expect(screen.getAllByText('common.routeError.description')).toHaveLength(1);
+    expect(screen.queryByText('alertGroups.saveFailed')).not.toBeInTheDocument();
+    expect(screen.getByDisplayValue('By service')).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+    expect(controller.retry).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the single recovery action visible but disabled while proof is running', () => {
+    controller.state = buildState({
+      command: 'saving',
+      draft: { ...record, groupLabels: ['service'] },
+      recovery: { kind: 'update', phase: 'proof', failure: 'unavailable', retryable: true }
+    });
+    render(<AlertGroupPage />);
+
+    expect(screen.getAllByText('common.unavailable')).toHaveLength(1);
+    expect(screen.getByText('common.retry').closest('button')).toBeDisabled();
+  });
+
   it('disables an already open delete confirmation when another command starts', () => {
     const view = render(<AlertGroupPage />);
     fireEvent.click(screen.getByRole('button', { name: 'alertGroups.delete' }));
@@ -185,6 +226,7 @@ function buildState(override: Record<string, unknown> = {}) {
     list: { kind: 'ready', records: [record], total: 1 },
     query: { search: '', pageIndex: 0, pageSize: 8 },
     refreshing: false,
+    recovery: undefined,
     search: '',
     ...override
   };

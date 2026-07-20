@@ -9,7 +9,9 @@ import { Alert, Input, InputNumber, Modal, Select, Switch } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import { createAlertGroupDraft, type AlertGroupDraft, type AlertGroupFailure } from '../alert-group-model';
+import type { AlertGroupOperationRecovery } from '../model/alert-group-operation-state';
 import styles from '../alert-policy-page.module.css';
+import { AlertGroupRecovery } from './alert-group-recovery';
 
 const commonGroupLabels = ['alertname', 'instance', 'job', 'severity', 'service', 'host', 'env'];
 const draftDefaults = createAlertGroupDraft();
@@ -23,9 +25,12 @@ type AlertGroupEditorProps = {
   failure: AlertGroupFailure | undefined;
   createAcknowledged: boolean;
   proofFailure: 'unavailable' | 'error' | undefined;
+  recovery: AlertGroupOperationRecovery | undefined;
+  retrying: boolean;
   update: (patch: Partial<AlertGroupDraft>) => void;
   close: () => void;
   submit: () => unknown;
+  retry: () => unknown;
 };
 
 export function AlertGroupEditor(props: AlertGroupEditorProps) {
@@ -53,6 +58,7 @@ export function AlertGroupEditor(props: AlertGroupEditorProps) {
       onOk={submit}
     >
       <EditorFailure failure={props.failure} acknowledged={props.createAcknowledged} proof={props.proofFailure} />
+      <AlertGroupRecovery recovery={props.recovery} retrying={props.retrying} retry={props.retry} />
       <AlertGroupFields draft={props.draft} disabled={fieldsLocked} update={props.update} />
     </Modal>
   );

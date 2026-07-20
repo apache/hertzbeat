@@ -18,7 +18,7 @@ export type AlertGroupNotifications = {
   operationFailed: () => void;
 };
 
-export type AlertGroupSubmitStage = 'preflight' | 'write' | 'detail-proof' | 'create-proof';
+export type AlertGroupSubmitStage = 'preflight' | 'write' | 'create-proof';
 
 export function reportAlertGroupSubmitFailure(
   reason: unknown,
