@@ -38,7 +38,7 @@ export function ObjectStorePage() {
           type="error"
           showIcon
           message={t('objectStore.unavailable')}
-          action={<Button size="small" onClick={controller.retry}>{t('common.retry')}</Button>}
+          action={<RetryButton onRetry={controller.retry} />}
         />
       )}
       {state.kind === 'error' && (
@@ -46,22 +46,52 @@ export function ObjectStorePage() {
           type="error"
           showIcon
           message={t('common.routeError.description')}
-          action={<Button size="small" onClick={controller.retry}>{t('common.retry')}</Button>}
+          action={<RetryButton onRetry={controller.retry} />}
         />
       )}
       {state.kind === 'loading' && <Skeleton active paragraph={{ rows: 6 }} />}
       {state.kind === 'ready' && (
-        <ObjectStoreEditor
-          current={state.current}
-          missingFields={state.missingFields}
-          dirty={state.dirty}
-          showValidation={state.showValidation}
-          saving={state.saving}
-          onUpdate={controller.updateDraft}
-          onSubmit={controller.submit}
-          onDiscard={controller.discard}
-        />
+        <>
+          {state.recovery && (
+            <Alert
+              type="warning"
+              showIcon
+              message={t('objectStore.unavailable')}
+              action={
+                state.recovery.phase === 'proof' ? (
+                  <RetryButton loading={state.proving} onRetry={controller.retry} />
+                ) : undefined
+              }
+            />
+          )}
+          <ObjectStoreEditor
+            current={state.current}
+            missingFields={state.missingFields}
+            dirty={state.dirty}
+            locked={state.locked}
+            showValidation={state.showValidation}
+            saving={state.saving}
+            onUpdate={controller.updateDraft}
+            onSubmit={controller.submit}
+            onDiscard={controller.discard}
+          />
+        </>
       )}
     </div>
+  );
+}
+
+function RetryButton({ loading = false, onRetry }: { loading?: boolean; onRetry: () => Promise<void> }) {
+  const { t } = useTranslation();
+  return (
+    <Button
+      size="small"
+      loading={loading}
+      onClick={() => {
+        void onRetry();
+      }}
+    >
+      {t('common.retry')}
+    </Button>
   );
 }

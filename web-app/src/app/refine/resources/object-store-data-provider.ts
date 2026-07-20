@@ -66,7 +66,7 @@ export const objectStoreDataProvider: DataProvider = {
     return protect(async () => {
       assertResourceAndId(params.resource, params.id);
       await saveObjectStore(readDraft(params.variables));
-      const canonical = await readObjectStore();
+      const canonical = await readCanonicalObjectStoreAfterWrite();
       if (canonical == null) {
         throw createRefineHttpError(
           'Object Store canonical reread returned no record',
@@ -128,6 +128,16 @@ async function readObjectStore() {
       throw createRefineHttpError('Object Store response is invalid', 502, 'OBJECT_STORE_RESPONSE_INVALID');
     }
     throw reason;
+  }
+}
+
+async function readCanonicalObjectStoreAfterWrite() {
+  try {
+    return await readObjectStore();
+  } catch {
+    // The POST already returned successfully. A failed GET cannot prove that
+    // the write was rejected, even when the GET itself returned a 4xx status.
+    throw createRefineHttpError('Object Store canonical reread failed', 502, 'OBJECT_STORE_CANONICAL_REREAD_FAILED');
   }
 }
 

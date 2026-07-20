@@ -64,6 +64,7 @@ type ObjectStoreEditorProps = {
   current: ObjectStoreDraft;
   missingFields: string[];
   dirty: boolean;
+  locked: boolean;
   showValidation: boolean;
   saving: boolean;
   onUpdate: (draft: ObjectStoreDraft) => void;
@@ -89,7 +90,7 @@ export function ObjectStoreEditor(props: ObjectStoreEditorProps) {
           <span className={styles.label}>{t('objectStore.type.label')}</span>
           <span className={styles.control}>
             <Select
-              disabled={props.saving}
+              disabled={props.locked}
               value={current.type}
               options={objectStoreTypeDefinitions.map(definition => ({
                 value: definition.value,
@@ -108,16 +109,16 @@ export function ObjectStoreEditor(props: ObjectStoreEditorProps) {
               key={field.key}
               draft={current}
               definition={field}
-              disabled={props.saving}
+              disabled={props.locked}
               onUpdate={props.onUpdate}
             />
           ))}
       </div>
       <div className={styles.actions}>
-        <Button type="primary" loading={props.saving} disabled={!props.dirty || props.saving} onClick={props.onSubmit}>
+        <Button type="primary" loading={props.saving} disabled={!props.dirty || props.locked} onClick={props.onSubmit}>
           {t('common.save')}
         </Button>
-        <Button disabled={!props.dirty || props.saving} onClick={props.onDiscard}>
+        <Button disabled={!props.dirty || props.locked} onClick={props.onDiscard}>
           {t('objectStore.discard')}
         </Button>
         {!props.dirty && <Typography.Text type="secondary">{t('objectStore.noChanges')}</Typography.Text>}

@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import { useOne, useUpdate, type HttpError, type OpenNotificationParams } from '@refinedev/core';
+import { useNotification, useOne, useUpdate, type HttpError } from '@refinedev/core';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -31,6 +32,7 @@ const detailInvalidation = ['detail'] as const;
 
 export function useObjectStoreResourceController() {
   const { t } = useTranslation();
+  const notification = useNotification();
   const resource = useOne<ObjectStoreResourceRecord, HttpError>({
     resource: objectStoreResource,
     id: objectStoreResourceId,
@@ -42,10 +44,26 @@ export function useObjectStoreResourceController() {
     dataProviderName: objectStoreDataProvider,
     invalidates: [...detailInvalidation],
     mutationMode: 'pessimistic',
-    successNotification: () => notice(t('objectStore.saveSuccess'), 'success'),
-    errorNotification: () => notice(t('objectStore.saveFailed'), 'error')
+    successNotification: false,
+    errorNotification: false
   });
-  const editor = useObjectStoreEditorController(resource.result, resource.query.refetch, update);
+  const refetch = resource.query.refetch;
+  const reread = useCallback(async () => {
+    try {
+      const result = await refetch();
+      return {
+        data: result.isError ? undefined : result.data?.data,
+        error: result.isError ? result.error : null
+      };
+    } catch (error) {
+      return { data: undefined, error };
+    }
+  }, [refetch]);
+  const editor = useObjectStoreEditorController(resource.result, reread, update, {
+    notifyFailure: () => notification.open?.({ message: t('objectStore.unavailable'), type: 'error' }),
+    notifyRejected: () => notification.open?.({ message: t('objectStore.saveFailed'), type: 'error' }),
+    notifySuccess: () => notification.open?.({ message: t('objectStore.saveSuccess'), type: 'success' })
+  });
   const kind = resolveResourceKind(
     resource.query.isPending,
     resource.query.isError,
@@ -57,9 +75,9 @@ export function useObjectStoreResourceController() {
     discard: editor.discard,
     retry: editor.retry,
     state:
-      kind === 'ready'
+      kind === 'ready' || editor.state.locked
         ? ({
-            kind,
+            kind: 'ready',
             ...editor.state
           } as const)
         : ({ kind } as const),
@@ -83,8 +101,4 @@ function isUnavailable(error: HttpError | null) {
   const code: unknown = error?.code;
   if (code === 'OBJECT_STORE_RESPONSE_INVALID') return false;
   return error?.statusCode === 0 || [502, 503, 504].includes(error?.statusCode ?? -1);
-}
-
-function notice(message: string, type: OpenNotificationParams['type']): OpenNotificationParams {
-  return { message, type };
 }

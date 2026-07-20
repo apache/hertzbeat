@@ -110,7 +110,7 @@ describe('ObjectStorePage', () => {
   });
 
   it('locks every editor action while a save is pending', async () => {
-    controller.useObjectStoreResourceController.mockReturnValue(buildController({ saving: true }));
+    controller.useObjectStoreResourceController.mockReturnValue(buildController({ locked: true, saving: true }));
     renderObjectStorePage();
 
     expect(await screen.findByPlaceholderText('OBS access key')).toBeDisabled();
@@ -118,6 +118,31 @@ describe('ObjectStorePage', () => {
     expect(screen.getByRole('combobox')).toBeDisabled();
     expect(screen.getByRole('button', { name: /Save$/ })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Discard changes' })).toBeDisabled();
+  });
+
+  it('keeps proof recovery visible, locked, and GET-retryable', async () => {
+    controller.useObjectStoreResourceController.mockReturnValue(
+      buildController({ locked: true, recovery: { phase: 'proof' } })
+    );
+    renderObjectStorePage();
+
+    expect(await screen.findByText('Object storage configuration is unavailable.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(controller.retry).toHaveBeenCalledTimes(1);
+    expect(screen.getByPlaceholderText('OBS access key')).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Save$/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Discard changes' })).toBeDisabled();
+  });
+
+  it('shows commit uncertainty without offering an unsafe retry', async () => {
+    controller.useObjectStoreResourceController.mockReturnValue(
+      buildController({ locked: true, recovery: { phase: 'commit-uncertain' } })
+    );
+    renderObjectStorePage();
+
+    expect(await screen.findByText('Object storage configuration is unavailable.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText('OBS secret key')).toBeDisabled();
   });
 });
 
@@ -129,7 +154,9 @@ function buildController(state: Record<string, unknown> = {}) {
       kind: 'ready',
       current: configuredObs,
       dirty: true,
+      locked: false,
       missingFields: [],
+      recovery: null,
       saving: false,
       showValidation: false,
       ...state

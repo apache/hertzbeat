@@ -88,39 +88,60 @@ describe('Object Store Refine data provider', () => {
     expect(result).toEqual({ data: { id: 'current', ...canonical } });
     expect(JSON.stringify(result)).not.toContain('secretKey');
     expect(objectStoreApi.saveObjectStore).toHaveBeenCalledWith(configuredDraft);
-    expect(objectStoreApi.saveObjectStore.mock.invocationCallOrder[0])
-      .toBeLessThan(objectStoreApi.loadObjectStore.mock.invocationCallOrder[0] ?? 0);
+    expect(objectStoreApi.saveObjectStore.mock.invocationCallOrder[0]).toBeLessThan(
+      objectStoreApi.loadObjectStore.mock.invocationCallOrder[0] ?? 0
+    );
   });
 
   it('fails the mutation when the authoritative reread fails after POST', async () => {
     objectStoreApi.saveObjectStore.mockResolvedValue('Update config success');
-    objectStoreApi.loadObjectStore.mockRejectedValue(new ApiMessageError(
-      'secretKey=private-reread-secret',
-      { cause: new TypeError('private-reread-cause') }
-    ));
+    objectStoreApi.loadObjectStore.mockRejectedValue(
+      new ApiMessageError('secretKey=private-reread-secret', { cause: new TypeError('private-reread-cause') })
+    );
 
-    await expect(objectStoreDataProvider.update({
-      resource: 'object-store',
-      id: 'current',
-      variables: configuredDraft
-    })).rejects.toMatchObject({
-      statusCode: 0,
-      code: 'NETWORK_REQUEST_FAILED',
-      message: 'Network request failed'
+    await expect(
+      objectStoreDataProvider.update({
+        resource: 'object-store',
+        id: 'current',
+        variables: configuredDraft
+      })
+    ).rejects.toMatchObject({
+      statusCode: 502,
+      code: 'OBJECT_STORE_CANONICAL_REREAD_FAILED',
+      message: 'Object Store canonical reread failed'
     });
     expect(objectStoreApi.saveObjectStore).toHaveBeenCalledTimes(1);
     expect(objectStoreApi.loadObjectStore).toHaveBeenCalledTimes(1);
+  });
+
+  it('marks a 4xx canonical reread as post-write uncertainty instead of a rejected save', async () => {
+    objectStoreApi.saveObjectStore.mockResolvedValue('Update config success');
+    objectStoreApi.loadObjectStore.mockRejectedValue(new ApiMessageError('Forbidden', { status: 403 }));
+
+    await expect(
+      objectStoreDataProvider.update({
+        resource: 'object-store',
+        id: 'current',
+        variables: configuredDraft
+      })
+    ).rejects.toMatchObject({
+      statusCode: 502,
+      code: 'OBJECT_STORE_CANONICAL_REREAD_FAILED',
+      kind: 'contract'
+    });
   });
 
   it('fails closed when the post-write authoritative reread has no record', async () => {
     objectStoreApi.saveObjectStore.mockResolvedValue('Update config success');
     objectStoreApi.loadObjectStore.mockResolvedValue(null);
 
-    await expect(objectStoreDataProvider.update({
-      resource: 'object-store',
-      id: 'current',
-      variables: configuredDraft
-    })).rejects.toMatchObject({
+    await expect(
+      objectStoreDataProvider.update({
+        resource: 'object-store',
+        id: 'current',
+        variables: configuredDraft
+      })
+    ).rejects.toMatchObject({
       statusCode: 502,
       code: 'OBJECT_STORE_CANONICAL_REREAD_MISSING'
     });
@@ -143,16 +164,23 @@ describe('Object Store Refine data provider', () => {
   });
 
   it('rejects unsupported resources, ids, and actions before transport', async () => {
-    await expect(objectStoreDataProvider.getOne({ resource: 'labels', id: 'current' }))
-      .rejects.toMatchObject({ code: 'OBJECT_STORE_RESOURCE_UNSUPPORTED' });
-    await expect(objectStoreDataProvider.getOne({ resource: 'object-store', id: 'other' }))
-      .rejects.toMatchObject({ code: 'OBJECT_STORE_ID_INVALID' });
-    await expect(objectStoreDataProvider.getList({ resource: 'object-store' }))
-      .rejects.toMatchObject({ statusCode: 405, code: 'OBJECT_STORE_LIST_UNSUPPORTED' });
-    await expect(objectStoreDataProvider.create({ resource: 'object-store', variables: configuredDraft }))
-      .rejects.toMatchObject({ statusCode: 405, code: 'OBJECT_STORE_CREATE_UNSUPPORTED' });
-    await expect(objectStoreDataProvider.deleteOne({ resource: 'object-store', id: 'current' }))
-      .rejects.toMatchObject({ statusCode: 405, code: 'OBJECT_STORE_DELETE_UNSUPPORTED' });
+    await expect(objectStoreDataProvider.getOne({ resource: 'labels', id: 'current' })).rejects.toMatchObject({
+      code: 'OBJECT_STORE_RESOURCE_UNSUPPORTED'
+    });
+    await expect(objectStoreDataProvider.getOne({ resource: 'object-store', id: 'other' })).rejects.toMatchObject({
+      code: 'OBJECT_STORE_ID_INVALID'
+    });
+    await expect(objectStoreDataProvider.getList({ resource: 'object-store' })).rejects.toMatchObject({
+      statusCode: 405,
+      code: 'OBJECT_STORE_LIST_UNSUPPORTED'
+    });
+    await expect(
+      objectStoreDataProvider.create({ resource: 'object-store', variables: configuredDraft })
+    ).rejects.toMatchObject({ statusCode: 405, code: 'OBJECT_STORE_CREATE_UNSUPPORTED' });
+    await expect(objectStoreDataProvider.deleteOne({ resource: 'object-store', id: 'current' })).rejects.toMatchObject({
+      statusCode: 405,
+      code: 'OBJECT_STORE_DELETE_UNSUPPORTED'
+    });
     expect(objectStoreApi.loadObjectStore).not.toHaveBeenCalled();
     expect(objectStoreApi.saveObjectStore).not.toHaveBeenCalled();
   });

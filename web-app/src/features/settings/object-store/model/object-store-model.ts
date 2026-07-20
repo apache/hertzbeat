@@ -51,6 +51,8 @@ export type ObjectStoreResourceRecord = ObjectStoreReadModel & {
   id: typeof objectStoreResourceId;
 };
 
+export type ObjectStoreSaveRecovery = { phase: 'proof' } | { phase: 'commit-uncertain' };
+
 export class ObjectStoreResourceContractError extends Error {
   constructor() {
     super('Object Store resource response is invalid');
@@ -79,13 +81,7 @@ export const objectStoreObsFieldNames = [
   'savePath'
 ] as const satisfies readonly (keyof ObjectStoreDraftConfig)[];
 
-const secretPlaceholderSentinels = new Set([
-  '__keep__',
-  '<masked>',
-  '[masked]',
-  '<redacted>',
-  '[redacted]'
-]);
+const secretPlaceholderSentinels = new Set(['__keep__', '<masked>', '[masked]', '<redacted>', '[redacted]']);
 
 function normalizeObjectStoreType(type?: ObjectStoreType | null): ObjectStoreType {
   return type === 'FILE' || type === 'OBS' ? type : 'DATABASE';
@@ -108,9 +104,7 @@ export function createObjectStoreDraft(config?: ObjectStoreReadModel | null): Ob
   };
 }
 
-export function createObjectStoreResourceRecord(
-  config?: ObjectStoreReadModel | null
-): ObjectStoreResourceRecord {
+export function createObjectStoreResourceRecord(config?: ObjectStoreReadModel | null): ObjectStoreResourceRecord {
   if (config == null) {
     return { id: objectStoreResourceId, type: 'DATABASE', config: {} };
   }
@@ -151,14 +145,16 @@ export function changeObjectStoreType(config: ObjectStoreDraft, type: ObjectStor
   if (config.type === normalized) return { ...config, type: normalized };
   return {
     type: normalized,
-    config: normalized === 'OBS'
-      ? { accessKey: '', secretKey: '', bucketName: '', endpoint: '', savePath: 'hertzbeat' }
-      : {}
+    config:
+      normalized === 'OBS' ? { accessKey: '', secretKey: '', bucketName: '', endpoint: '', savePath: 'hertzbeat' } : {}
   };
 }
 
-export function updateObjectStoreField(config: ObjectStoreDraft, key: keyof ObjectStoreDraftConfig,
-  value: string): ObjectStoreDraft {
+export function updateObjectStoreField(
+  config: ObjectStoreDraft,
+  key: keyof ObjectStoreDraftConfig,
+  value: string
+): ObjectStoreDraft {
   return { ...config, config: { ...config.config, [key]: value } };
 }
 
@@ -185,19 +181,26 @@ export function isObjectStoreDirty(config: ObjectStoreDraft, baseline: ObjectSto
   return JSON.stringify(normalizeObjectStoreDraft(config)) !== JSON.stringify(normalizeObjectStoreDraft(baseline));
 }
 
+/** OBS secret plaintext is write-only, so an ambiguous replacement cannot be proved by GET. */
+export function canProveAmbiguousObjectStoreSave(draft: ObjectStoreDraft) {
+  return draft.type !== 'OBS';
+}
+
+export function objectStoreSaveConverged(draft: ObjectStoreDraft, record: ObjectStoreResourceRecord) {
+  return canProveAmbiguousObjectStoreSave(draft) && !isObjectStoreDirty(draft, createObjectStoreDraft(record));
+}
+
 export function normalizeObjectStoreDraft(config: ObjectStoreDraft): ObjectStoreDraft {
   if (config.type !== 'OBS') return { type: config.type, config: {} };
   return {
     type: 'OBS',
-    config: Object.fromEntries(objectStoreObsFieldNames.map(field => [
-      field,
-      String(config.config[field] ?? '').trim()
-    ]))
+    config: Object.fromEntries(
+      objectStoreObsFieldNames.map(field => [field, String(config.config[field] ?? '').trim()])
+    )
   };
 }
 
 function isSecretPlaceholder(value: string) {
   const normalized = value.trim().toLowerCase();
-  return /^[*•]+$/.test(normalized)
-    || secretPlaceholderSentinels.has(normalized);
+  return /^[*•]+$/.test(normalized) || secretPlaceholderSentinels.has(normalized);
 }

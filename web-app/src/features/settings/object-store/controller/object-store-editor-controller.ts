@@ -1,116 +1,77 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { useUpdate, type HttpError } from '@refinedev/core';
-import { useCallback, useState } from 'react';
-
-import { useExclusiveOperation, type ExclusiveOperation } from '@/shared/exclusive-operation';
+import { useState } from 'react';
 
 import {
   createObjectStoreDraft,
   isObjectStoreDirty,
-  objectStoreResourceId,
   validateObjectStoreDraft,
   type ObjectStoreDraft,
   type ObjectStoreResourceRecord
 } from '../model/object-store-model';
-
-type ObjectStoreUpdate = ReturnType<typeof useUpdate<ObjectStoreResourceRecord, HttpError, ObjectStoreDraft>>;
+import {
+  useObjectStoreSaveTransaction,
+  type ObjectStoreCanonicalRead,
+  type ObjectStoreMutation,
+  type ObjectStoreSaveNotifications
+} from './object-store-save-transaction';
 
 export function useObjectStoreEditorController(
   record: ObjectStoreResourceRecord | undefined,
-  refetch: () => unknown,
-  update: ObjectStoreUpdate
+  reread: ObjectStoreCanonicalRead,
+  update: ObjectStoreMutation,
+  notifications: ObjectStoreSaveNotifications
 ) {
   const [draft, setDraft] = useState<ObjectStoreDraft | null>(null);
   const [showValidation, setShowValidation] = useState(false);
-  const operation = useExclusiveOperation('object-store-save');
   const baseline = createObjectStoreDraft(record);
   const current = draft ?? baseline;
   const missingFields = validateObjectStoreDraft(current);
   const dirty = draft !== null && isObjectStoreDirty(draft, baseline);
-  const updateDraft = useCallback(
-    (next: ObjectStoreDraft) => {
-      if (operation.isLocked()) return;
-      setDraft(next);
+  const transaction = useObjectStoreSaveTransaction({
+    accept: () => {
+      setDraft(null);
       setShowValidation(false);
     },
-    [operation]
-  );
-  const discard = useCallback(() => {
-    if (operation.isLocked()) return;
+    mutation: update,
+    reread,
+    ...notifications
+  });
+  const updateDraft = (next: ObjectStoreDraft) => {
+    if (transaction.isLocked()) return;
+    setDraft(next);
+    setShowValidation(false);
+  };
+  const discard = () => {
+    if (transaction.isLocked()) return;
     setDraft(null);
     setShowValidation(false);
-  }, [operation]);
-  const retry = useCallback(() => {
-    if (!operation.isLocked()) void refetch();
-  }, [operation, refetch]);
-  const submit = useObjectStoreSubmit({
-    current,
-    dirty,
-    missingFields,
-    operation,
-    setDraft,
-    setShowValidation,
-    update
-  });
+  };
+  const retry = async () => {
+    if (transaction.recovery) return transaction.retry();
+    if (!transaction.isLocked()) await reread();
+  };
+  const submit = () => {
+    if (missingFields.length > 0) {
+      setShowValidation(true);
+      return;
+    }
+    if (dirty) transaction.submit(current);
+  };
   return {
     discard,
     retry,
     state: {
       current,
       dirty,
+      locked: transaction.isLocked(),
       missingFields,
-      saving: operation.pending || update.mutation.isPending,
+      proving: transaction.proving,
+      recovery: transaction.recovery,
+      saving: transaction.saving,
       showValidation
     },
     submit,
     updateDraft
   };
-}
-
-function useObjectStoreSubmit({
-  current,
-  dirty,
-  missingFields,
-  operation,
-  setDraft,
-  setShowValidation,
-  update
-}: {
-  current: ObjectStoreDraft;
-  dirty: boolean;
-  missingFields: string[];
-  operation: ExclusiveOperation;
-  setDraft: (draft: ObjectStoreDraft | null) => void;
-  setShowValidation: (show: boolean) => void;
-  update: ObjectStoreUpdate;
-}) {
-  return useCallback(() => {
-    if (missingFields.length > 0) {
-      setShowValidation(true);
-      return;
-    }
-    if (!dirty) return;
-    const owner = operation.begin();
-    if (!owner) return;
-    update.mutate(
-      {
-        id: objectStoreResourceId,
-        resource: 'object-store',
-        dataProviderName: 'object-store',
-        invalidates: ['detail'],
-        mutationMode: 'pessimistic',
-        values: current
-      },
-      {
-        onSuccess: () => {
-          if (!operation.isCurrent(owner)) return;
-          setDraft(null);
-          setShowValidation(false);
-          operation.end(owner);
-        },
-        onError: () => operation.end(owner)
-      }
-    );
-  }, [current, dirty, missingFields.length, operation, setDraft, setShowValidation, update]);
 }
