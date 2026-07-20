@@ -21,6 +21,9 @@ import type { PropsWithChildren } from 'react';
 import { createMemoryRouter, MemoryRouter, RouterProvider } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ApiMessageError } from '@/core/http/api-message';
+
+import { normalizeAlertGroupApiFailure } from '../api/alert-group-api-failure';
 import {
   AlertGroupContractError,
   AlertGroupMissingError,
@@ -172,6 +175,31 @@ describe('Alert Group controller', () => {
       expect(notify.success).not.toHaveBeenCalled();
     }
   );
+
+  it.each([
+    ['HTTP-success business envelope', new ApiMessageError('private', { code: 12, status: 200 })],
+    ['HTTP timeout', new ApiMessageError('private', { status: 408 })],
+    ['HTTP server envelope', new ApiMessageError('private', { code: 12, status: 500 })]
+  ])('retains create proof ownership after an ambiguous %s and retries GET only', async (_label, transportFailure) => {
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
+    api.loadAlertGroups.mockResolvedValueOnce(proofPage([], 0));
+    api.saveAlertGroup.mockRejectedValueOnce(normalizeAlertGroupApiFailure(transportFailure));
+    act(() => result.current.create());
+    act(() => result.current.updateDraft({ name: 'New', groupLabels: ['service'] }));
+
+    await act(async () => result.current.submit());
+    expect(result.current.state.createAcknowledged).toBe(true);
+    expect(api.saveAlertGroup).toHaveBeenCalledOnce();
+
+    api.loadAlertGroups.mockResolvedValueOnce(proofPage([], 0));
+    await act(async () => result.current.submit());
+
+    expect(api.saveAlertGroup).toHaveBeenCalledOnce();
+    expect(api.loadAlertGroups).toHaveBeenCalledTimes(3);
+    expect(api.loadAlertGroups).toHaveBeenLastCalledWith({ search: 'New', pageIndex: 0, pageSize: 25 });
+    expect(notify.success).not.toHaveBeenCalled();
+  });
 
   it('keeps a definitely rejected create retryable without accepting proof ownership', async () => {
     const { result } = renderController();

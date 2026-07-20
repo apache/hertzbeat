@@ -15,11 +15,17 @@ import { normalizeAlertGroupApiFailure } from './alert-group-api-failure';
 describe('Alert Group API failure boundary', () => {
   it.each([
     ['HTTP missing', new ApiMessageError('missing', { status: 404 }), 'missing', 'rejected'],
-    ['backend missing', new ApiMessageError('missing', { code: 3, status: 200 }), 'missing', 'rejected'],
+    ['backend missing', new ApiMessageError('missing', { code: 3, status: 200 }), 'missing', 'uncertain'],
     ['missing HTTP evidence', new ApiMessageError('offline'), 'unavailable', 'uncertain'],
     [
       'network cause',
       new ApiMessageError('offline', { cause: new Error('private cause') }),
+      'unavailable',
+      'uncertain'
+    ],
+    [
+      'network cause with client status',
+      new ApiMessageError('offline', { status: 422, cause: new Error('private cause') }),
       'unavailable',
       'uncertain'
     ],
@@ -29,10 +35,16 @@ describe('Alert Group API failure boundary', () => {
     ['gateway timeout', new ApiMessageError('offline', { status: 504 }), 'unavailable', 'uncertain'],
     ['malformed success', new ApiMessageError('invalid response', { status: 200 }), 'error', 'uncertain'],
     ['server response without an app code', new ApiMessageError('failed', { status: 500 }), 'error', 'uncertain'],
-    ['server application rejection', new ApiMessageError('failed', { code: 12, status: 500 }), 'error', 'rejected'],
-    ['request timeout response', new ApiMessageError('failed', { status: 408 }), 'error', 'rejected'],
+    ['server application response', new ApiMessageError('failed', { code: 12, status: 500 }), 'error', 'uncertain'],
+    ['request timeout response', new ApiMessageError('failed', { status: 408 }), 'error', 'uncertain'],
     ['other client rejection', new ApiMessageError('failed', { status: 400 }), 'error', 'rejected'],
-    ['business response', new ApiMessageError('failed', { code: 12, status: 200 }), 'error', 'rejected']
+    [
+      'client rejection with application code',
+      new ApiMessageError('failed', { code: 12, status: 422 }),
+      'error',
+      'rejected'
+    ],
+    ['business response', new ApiMessageError('failed', { code: 12, status: 200 }), 'error', 'uncertain']
   ] as const)('maps %s to stable %s/%s domain evidence', (_label, error, kind, writeOutcome) => {
     expect(normalizeAlertGroupApiFailure(error)).toMatchObject({ kind, writeOutcome });
   });

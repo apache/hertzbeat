@@ -35,13 +35,11 @@ function readFailureKind(error: ApiMessageError): AlertGroupFailure {
 }
 
 function writeOutcome(error: ApiMessageError): AlertGroupWriteOutcome {
-  // An application code proves rejection. Network failures, malformed 200
-  // envelopes, and server failures without such evidence can arrive after a
-  // void write committed, so those outcomes must remain uncertain.
-  if (error.code !== undefined) return 'rejected';
-  if (error.cause !== undefined || error.status === undefined || unavailableStatuses.has(error.status)) {
-    return 'uncertain';
-  }
-  if (error.status === 200 || error.status >= 500) return 'uncertain';
-  return 'rejected';
+  // A response body code does not override the source HTTP evidence. Network
+  // causes, timeouts, success envelopes, and server failures can all arrive
+  // after persistence; only a direct non-timeout HTTP 4xx is safe to replay.
+  if (error.cause !== undefined) return 'uncertain';
+  return error.status !== undefined && error.status >= 400 && error.status < 500 && error.status !== 408
+    ? 'rejected'
+    : 'uncertain';
 }
