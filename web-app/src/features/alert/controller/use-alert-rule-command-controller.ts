@@ -5,6 +5,8 @@ import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { alertRoutePaths } from '@/shared/navigation/app-paths';
+
 import { classifyAlertRuleReadError, saveAlertRule } from '../alert-rule-api';
 import { buildAlertRulePayload, validateAlertRuleDraft, type AlertRuleDraft } from '../alert-rule-model';
 import { proveCreatedAlertRule, proveUpdatedAlertRule } from '../alert-rule-write-proof';
@@ -42,7 +44,7 @@ export function useAlertRuleCommandController(
       else await proveCreatedAlertRule(expected);
       if (!identity.isCurrent(owner)) return;
       void message.success(t('alertRules.saveSuccess'));
-      void navigate('/alerts/rules');
+      void navigate(alertRoutePaths.rules);
     } catch (reason) {
       if (!identity.isCurrent(owner)) return;
       updateRoute({ saveFailure: classifyAlertRuleReadError(reason) });

@@ -20,6 +20,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { ApiMessageError } from '@/core/http/api-message';
+import { alertRoutePaths } from '@/shared/navigation/app-paths';
 
 import { loadAlertGroups, loadAlertSummary } from '../alert-api';
 import {
@@ -55,9 +56,7 @@ export function useAlertCenterController() {
     // The derived draft shows the URL immediately. Re-reading the canonical
     // source here prevents an abandoned draft from reviving after Browser Back.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setDraftState(current => current.source === source
-      ? current
-      : { source, value: draftFromSource(source) });
+    setDraftState(current => (current.source === source ? current : { source, value: draftFromSource(source) }));
   }, [source]);
 
   const summaryQuery = useQuery({
@@ -99,14 +98,15 @@ export function useAlertCenterController() {
     submitFilters,
     changeStatus: (status: AlertStatusFilter) => updateQuery({ status, pageIndex: 0 }),
     changeSeverity: (severity: AlertSeverity) => updateQuery({ severity, pageIndex: 0 }),
-    changePage: (page: number, pageSize: number) => updateQuery({
-      pageIndex: pageSize === query.pageSize ? page - 1 : 0,
-      pageSize
-    }),
+    changePage: (page: number, pageSize: number) =>
+      updateQuery({
+        pageIndex: pageSize === query.pageSize ? page - 1 : 0,
+        pageSize
+      }),
     retryList: () => listQuery.refetch(),
     retrySummary: () => summaryQuery.refetch(),
     refresh: () => Promise.all([summaryQuery.refetch(), listQuery.refetch()]),
-    manageRules: () => navigate('/alerts/rules')
+    manageRules: () => void navigate(alertRoutePaths.rules)
   };
 }
 

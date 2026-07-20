@@ -7,6 +7,8 @@
 
 import type { NavigateFunction } from 'react-router-dom';
 
+import { alertRoutePaths, buildAlertRuleEditPath } from '@/shared/navigation/app-paths';
+
 import type { AlertRulePage } from '../alert-rule-model';
 import type { AlertRuleListQueryController } from './use-alert-rule-list-query-controller';
 import type { AlertRuleListOperations } from './use-alert-rule-list-operations';
@@ -47,11 +49,11 @@ export function createAlertRuleListActions({
     },
     create: () =>
       unlessLocked(() => {
-        void navigate('/alerts/rules/new');
+        void navigate(alertRoutePaths.ruleNew);
       }),
     edit: (id: number) =>
       unlessLocked(() => {
-        void navigate(`/alerts/rules/${id}/edit`);
+        void navigate(buildAlertRuleEditPath(id));
       }),
     toggle: operations.toggle,
     remove: operations.remove

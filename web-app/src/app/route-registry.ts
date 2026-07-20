@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import { alertRoutePaths } from '@/shared/navigation/app-paths';
 import { settingsPaths } from '@/shared/settings/settings-routes';
 
 export type AppRouteDefinition = {
@@ -50,21 +51,21 @@ export const appRouteCatalog = {
   instrumentation: pageRoute('instrumentation', '/observability/integration', {
     resource: { labelKey: 'instrumentation.menu' }
   }),
-  alerts: pageRoute('alerts', '/alerts', {
+  alerts: pageRoute('alerts', alertRoutePaths.center, {
     resource: { labelKey: 'menu.alerts' }
   }),
-  'alert-rules': pageRoute('alert-rules', '/alerts/rules', {
+  'alert-rules': pageRoute('alert-rules', alertRoutePaths.rules, {
     resource: { labelKey: 'alertRules.title' }
   }),
-  'alert-rule-new': pageRoute('alert-rule-new', '/alerts/rules/new'),
-  'alert-rule-edit': pageRoute('alert-rule-edit', '/alerts/rules/:ruleId/edit'),
-  'alert-groups': pageRoute('alert-groups', '/alerts/groups', {
+  'alert-rule-new': pageRoute('alert-rule-new', alertRoutePaths.ruleNew),
+  'alert-rule-edit': pageRoute('alert-rule-edit', alertRoutePaths.ruleEdit),
+  'alert-groups': pageRoute('alert-groups', alertRoutePaths.groups, {
     resource: { labelKey: 'alertGroups.title' }
   }),
-  'alert-inhibits': pageRoute('alert-inhibits', '/alerts/inhibits', {
+  'alert-inhibits': pageRoute('alert-inhibits', alertRoutePaths.inhibits, {
     resource: { labelKey: 'alertInhibits.title' }
   }),
-  'alert-silences': pageRoute('alert-silences', '/alerts/silences', {
+  'alert-silences': pageRoute('alert-silences', alertRoutePaths.silences, {
     resource: { labelKey: 'alertSilences.title' }
   }),
   settings: redirectRoute('settings', settingsPaths.root, {

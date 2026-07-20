@@ -19,16 +19,24 @@ import { Tabs } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { alertRoutePaths } from '@/shared/navigation/app-paths';
+
 const alertManagementRoutes = [
-  { key: '/alerts', labelKey: 'alertNavigation.events' },
-  { key: '/alerts/rules', labelKey: 'alertNavigation.rules' },
-  { key: '/alerts/groups', labelKey: 'alertNavigation.noiseControl' }
+  { key: alertRoutePaths.center, labelKey: 'alertNavigation.events' },
+  { key: alertRoutePaths.rules, labelKey: 'alertNavigation.rules' },
+  { key: alertRoutePaths.groups, labelKey: 'alertNavigation.noiseControl' }
 ] as const;
 
 function activeAlertRoute(pathname: string) {
-  if (pathname.startsWith('/alerts/rules')) return '/alerts/rules';
-  if (pathname.startsWith('/alerts/groups') || pathname.startsWith('/alerts/inhibits') || pathname.startsWith('/alerts/silences')) return '/alerts/groups';
-  return '/alerts';
+  if (pathname.startsWith(alertRoutePaths.rules)) return alertRoutePaths.rules;
+  if (
+    pathname.startsWith(alertRoutePaths.groups) ||
+    pathname.startsWith(alertRoutePaths.inhibits) ||
+    pathname.startsWith(alertRoutePaths.silences)
+  ) {
+    return alertRoutePaths.groups;
+  }
+  return alertRoutePaths.center;
 }
 
 export function AlertManagementNav() {

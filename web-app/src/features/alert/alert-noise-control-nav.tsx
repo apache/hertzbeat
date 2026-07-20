@@ -19,14 +19,16 @@ import { Segmented } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { alertRoutePaths } from '@/shared/navigation/app-paths';
+
 const noiseControlRoutes = [
-  { value: '/alerts/groups', labelKey: 'alertNavigation.groups' },
-  { value: '/alerts/inhibits', labelKey: 'alertNavigation.inhibits' },
-  { value: '/alerts/silences', labelKey: 'alertNavigation.silences' }
+  { value: alertRoutePaths.groups, labelKey: 'alertNavigation.groups' },
+  { value: alertRoutePaths.inhibits, labelKey: 'alertNavigation.inhibits' },
+  { value: alertRoutePaths.silences, labelKey: 'alertNavigation.silences' }
 ] as const;
 
 function activeNoiseControlRoute(pathname: string) {
-  return noiseControlRoutes.find(route => pathname.startsWith(route.value))?.value ?? '/alerts/groups';
+  return noiseControlRoutes.find(route => pathname.startsWith(route.value))?.value ?? alertRoutePaths.groups;
 }
 
 export function AlertNoiseControlNav() {

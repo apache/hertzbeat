@@ -4,6 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
+import { alertRoutePaths } from '@/shared/navigation/app-paths';
+
 import { classifyAlertRuleReadError, loadAlertRule } from '../alert-rule-api';
 import {
   alertRuleDraftFromDetail,
@@ -82,7 +84,7 @@ export function useAlertRuleEditorController(mode: 'new' | 'edit') {
     retryDetail: () =>
       mode === 'edit' && validId !== null ? detailQuery.refetch().then(() => undefined) : Promise.resolve(),
     cancel: () => {
-      void navigate('/alerts/rules');
+      void navigate(alertRoutePaths.rules);
     }
   };
 }
