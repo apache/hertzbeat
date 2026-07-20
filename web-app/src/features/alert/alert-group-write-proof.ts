@@ -5,8 +5,13 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { classifyAlertGroupReadError, loadAlertGroup, loadAlertGroups } from './alert-group-api';
-import { AlertGroupContractError, alertGroupPageSizes, type AlertGroupConverge } from './alert-group-model';
+import { loadAlertGroup, loadAlertGroups } from './alert-group-api';
+import {
+  AlertGroupContractError,
+  alertGroupFailureKind,
+  alertGroupPageSizes,
+  type AlertGroupConverge
+} from './alert-group-model';
 
 const createProofPageSize = alertGroupPageSizes[alertGroupPageSizes.length - 1] ?? 25;
 
@@ -62,7 +67,7 @@ export async function proveAlertGroupMissing(id: number) {
   try {
     await loadAlertGroup(id);
   } catch (reason) {
-    if (classifyAlertGroupReadError(reason) === 'missing') return;
+    if (alertGroupFailureKind(reason) === 'missing') return;
     throw reason;
   }
   throw new AlertGroupContractError('deleted detail still exists');

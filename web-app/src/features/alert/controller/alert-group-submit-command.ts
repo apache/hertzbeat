@@ -5,9 +5,8 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { classifyAlertGroupWriteError, loadAlertGroup, saveAlertGroup } from '../alert-group-api';
-import { ApiMessageError } from '@/core/http/api-message';
-import { buildAlertGroupPayload, type AlertGroupDraft } from '../alert-group-model';
+import { loadAlertGroup, saveAlertGroup } from '../alert-group-api';
+import { alertGroupWriteOutcome, buildAlertGroupPayload, type AlertGroupDraft } from '../alert-group-model';
 import {
   prepareAlertGroupCreateProof,
   proveAlertGroupCreated,
@@ -71,9 +70,5 @@ function assertActiveCommandOwner(gate: AlertGroupCommandGate) {
 class AlertGroupCommandOwnerRetiredError extends Error {}
 
 function createCommitMayBeAmbiguous(reason: unknown) {
-  if (classifyAlertGroupWriteError(reason) === 'unavailable') return true;
-  if (!(reason instanceof ApiMessageError)) return true;
-  // An application error code or a 4xx response proves rejection. A malformed
-  // success envelope and every server failure can arrive after persistence.
-  return reason.code === undefined && (reason.status === 200 || (reason.status ?? 0) >= 500);
+  return alertGroupWriteOutcome(reason) === 'uncertain';
 }

@@ -7,9 +7,15 @@
 
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 
-import { classifyAlertGroupReadError, loadAlertGroup } from '../alert-group-api';
-import { alertGroupDraftFromDetail, createAlertGroupDraft, type AlertGroupDraft } from '../alert-group-model';
-import type { AlertGroupDetailState, AlertGroupFailure } from '../alert-group-state';
+import { loadAlertGroup } from '../alert-group-api';
+import {
+  alertGroupDraftFromDetail,
+  alertGroupFailureKind,
+  createAlertGroupDraft,
+  type AlertGroupDraft,
+  type AlertGroupFailure
+} from '../alert-group-model';
+import type { AlertGroupDetailState } from '../alert-group-state';
 import { requireExactAlertGroupId, type AlertGroupCreateProof } from '../alert-group-write-proof';
 
 type CommandKind = 'saving' | 'operating';
@@ -85,7 +91,7 @@ function useAlertGroupDetailLoader(
         setDetail({ kind: 'idle' });
       } catch (reason) {
         if (gate.isOwnerAlive() && detailEpochRef.current === epoch) {
-          setDetail({ kind: classifyAlertGroupReadError(reason), id });
+          setDetail({ kind: alertGroupFailureKind(reason), id });
         }
       } finally {
         if (pendingDetailRef.current?.epoch === epoch) pendingDetailRef.current = undefined;

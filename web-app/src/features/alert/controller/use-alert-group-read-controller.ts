@@ -8,8 +8,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLayoutEffect, useRef } from 'react';
 
-import { classifyAlertGroupReadError, loadAlertGroups } from '../alert-group-api';
-import type { AlertGroupQuery } from '../alert-group-model';
+import { loadAlertGroups } from '../alert-group-api';
+import { alertGroupFailureKind, type AlertGroupQuery } from '../alert-group-model';
 import { resolveAlertGroupListState } from '../alert-group-state';
 import { alertGroupQueryKeys } from './alert-group-query-keys';
 
@@ -54,6 +54,6 @@ export function useAlertGroupReadController(query: AlertGroupQuery) {
 
 function alertGroupListFailure(reason: unknown): 'unavailable' | 'error' | null {
   if (!reason) return null;
-  if (classifyAlertGroupReadError(reason) === 'unavailable') return 'unavailable';
+  if (alertGroupFailureKind(reason) === 'unavailable') return 'unavailable';
   return 'error';
 }

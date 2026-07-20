@@ -15,18 +15,12 @@
  * limitations under the License.
  */
 
-import {
-  ApiMessageError,
-  apiMessageDelete,
-  apiMessageGet,
-  apiMessagePost,
-  apiMessagePut
-} from '@/core/http/api-message';
+import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
 
+import { alertGroupApiRequest } from './api/alert-group-api-failure';
 import {
   buildAlertGroupPayload,
   buildAlertGroupTogglePayload,
-  AlertGroupMissingError,
   type AlertGroupConverge,
   type AlertGroupDraft,
   type AlertGroupQuery
@@ -48,40 +42,25 @@ function buildAlertGroupListPath(query: AlertGroupQuery) {
 }
 
 export async function loadAlertGroups(query: AlertGroupQuery) {
-  const response = await apiMessageGet(buildAlertGroupListPath(query));
+  const response = await alertGroupApiRequest(() => apiMessageGet(buildAlertGroupListPath(query)));
   return parseAlertGroupPage(response, query);
 }
 
 export async function loadAlertGroup(id: number) {
-  const response = await apiMessageGet(`${alertGroupEndpoint}/${id}`);
+  const response = await alertGroupApiRequest(() => apiMessageGet(`${alertGroupEndpoint}/${id}`));
   return parseAlertGroupDetail(response);
 }
 
 export async function saveAlertGroup(draft: AlertGroupDraft): Promise<void> {
   const payload = buildAlertGroupPayload(draft);
-  if (draft.id) await apiMessagePut(alertGroupEndpoint, payload);
-  else await apiMessagePost(alertGroupEndpoint, payload);
+  if (draft.id) await alertGroupApiRequest(() => apiMessagePut(alertGroupEndpoint, payload));
+  else await alertGroupApiRequest(() => apiMessagePost(alertGroupEndpoint, payload));
 }
 
 export async function deleteAlertGroup(id: number): Promise<void> {
-  await apiMessageDelete(`${alertGroupsEndpoint}?ids=${id}`);
+  await alertGroupApiRequest(() => apiMessageDelete(`${alertGroupsEndpoint}?ids=${id}`));
 }
 
 export async function updateAlertGroupEnabled(group: AlertGroupConverge, enable: boolean): Promise<void> {
-  await apiMessagePut(alertGroupEndpoint, buildAlertGroupTogglePayload(group, enable));
-}
-
-export function classifyAlertGroupReadError(reason: unknown): 'missing' | 'unavailable' | 'error' {
-  if (reason instanceof AlertGroupMissingError) return 'missing';
-  if (reason instanceof ApiMessageError) {
-    if (reason.status === 404 || (reason.status === 200 && reason.code === 3)) return 'missing';
-    if (reason.cause !== undefined || reason.status === undefined || [0, 502, 503, 504].includes(reason.status)) {
-      return 'unavailable';
-    }
-  }
-  return 'error';
-}
-
-export function classifyAlertGroupWriteError(reason: unknown): 'unavailable' | 'error' {
-  return classifyAlertGroupReadError(reason) === 'unavailable' ? 'unavailable' : 'error';
+  await alertGroupApiRequest(() => apiMessagePut(alertGroupEndpoint, buildAlertGroupTogglePayload(group, enable)));
 }

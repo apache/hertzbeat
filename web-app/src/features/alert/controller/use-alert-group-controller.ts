@@ -5,16 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import type {
-  AlertGroupDetailState,
-  AlertGroupFailure,
-  AlertGroupListState
-} from '../alert-group-state';
 import { useAlertGroupCommandController } from './use-alert-group-command-controller';
 import { useAlertGroupQueryController } from './use-alert-group-query-controller';
 import { useAlertGroupReadController } from './use-alert-group-read-controller';
-
-export type { AlertGroupDetailState, AlertGroupFailure, AlertGroupListState };
 
 export function useAlertGroupController() {
   const queryController = useAlertGroupQueryController();

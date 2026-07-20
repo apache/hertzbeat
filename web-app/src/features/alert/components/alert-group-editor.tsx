@@ -8,8 +8,7 @@
 import { Alert, Input, InputNumber, Modal, Select, Switch } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { createAlertGroupDraft, type AlertGroupDraft } from '../alert-group-model';
-import type { AlertGroupFailure } from '../alert-group-state';
+import { createAlertGroupDraft, type AlertGroupDraft, type AlertGroupFailure } from '../alert-group-model';
 import styles from '../alert-policy-page.module.css';
 
 const commonGroupLabels = ['alertname', 'instance', 'job', 'severity', 'service', 'host', 'env'];

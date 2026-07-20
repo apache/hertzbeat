@@ -18,10 +18,15 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  alertGroupFailureKind,
+  alertGroupWriteOutcome,
   buildAlertGroupPayload,
   buildAlertGroupTogglePayload,
   createAlertGroupDraft,
-  validateAlertGroupDraft
+  validateAlertGroupDraft,
+  AlertGroupContractError,
+  AlertGroupMissingError,
+  AlertGroupRequestFailure
 } from './alert-group-model';
 
 const persisted = {
@@ -66,5 +71,20 @@ describe('alert group model', () => {
       repeatInterval: 0,
       enable: false
     });
+  });
+
+  it('classifies stable read failures without transport evidence', () => {
+    expect(alertGroupFailureKind(new AlertGroupMissingError())).toBe('missing');
+    expect(alertGroupFailureKind(new AlertGroupRequestFailure('unavailable', 'uncertain'))).toBe('unavailable');
+    expect(alertGroupFailureKind(new AlertGroupRequestFailure('error', 'rejected'))).toBe('error');
+    expect(alertGroupFailureKind(new AlertGroupContractError('invalid contract'))).toBe('error');
+    expect(alertGroupFailureKind(new Error('unknown failure'))).toBe('error');
+  });
+
+  it('treats only contract and explicit request rejection as definite', () => {
+    expect(alertGroupWriteOutcome(new AlertGroupContractError('invalid command'))).toBe('rejected');
+    expect(alertGroupWriteOutcome(new AlertGroupRequestFailure('error', 'rejected'))).toBe('rejected');
+    expect(alertGroupWriteOutcome(new AlertGroupRequestFailure('unavailable', 'uncertain'))).toBe('uncertain');
+    expect(alertGroupWriteOutcome(new Error('unknown failure'))).toBe('uncertain');
   });
 });

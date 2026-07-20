@@ -21,11 +21,10 @@ import type { PropsWithChildren } from 'react';
 import { createMemoryRouter, MemoryRouter, RouterProvider } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ApiMessageError } from '@/core/http/api-message';
-
 import {
   AlertGroupContractError,
   AlertGroupMissingError,
+  AlertGroupRequestFailure,
   type AlertGroupConverge,
   type AlertGroupQuery
 } from '../alert-group-model';
@@ -90,7 +89,7 @@ describe('Alert Group controller', () => {
   });
 
   it.each([
-    [new ApiMessageError('offline', { status: 503 }), 'unavailable'],
+    [unavailableRequestFailure(), 'unavailable'],
     [new AlertGroupContractError('invalid'), 'error']
   ])('keeps list failure %s distinct from empty', async (reason, kind) => {
     api.loadAlertGroups.mockRejectedValue(reason);
@@ -113,7 +112,7 @@ describe('Alert Group controller', () => {
 
   it.each([
     [new AlertGroupMissingError(), 'missing'],
-    [new ApiMessageError('offline', { status: 503 }), 'unavailable'],
+    [unavailableRequestFailure(), 'unavailable'],
     [new AlertGroupContractError('invalid'), 'error']
   ])('keeps detail failure %s retryable and distinct', async (reason, kind) => {
     api.loadAlertGroup.mockRejectedValueOnce(reason).mockResolvedValueOnce(persisted);
@@ -130,9 +129,7 @@ describe('Alert Group controller', () => {
     const { result } = renderController();
     await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
     const created = { ...persisted, name: 'New', repeatInterval: 14_400 };
-    api.loadAlertGroups
-      .mockResolvedValueOnce(proofPage([], 0))
-      .mockRejectedValueOnce(new ApiMessageError('offline', { status: 503 }));
+    api.loadAlertGroups.mockResolvedValueOnce(proofPage([], 0)).mockRejectedValueOnce(unavailableRequestFailure());
     act(() => result.current.create());
     act(() => result.current.updateDraft({ name: 'New', groupLabels: ['service'] }));
 
@@ -153,27 +150,43 @@ describe('Alert Group controller', () => {
     expect(notify.success).toHaveBeenCalledWith('alertGroups.saveSuccess');
   });
 
-  it.each([
-    new ApiMessageError('offline', { status: 503 }),
-    new ApiMessageError('malformed success envelope', { status: 200 })
-  ])('does not repeat a POST whose %s response leaves commit status ambiguous', async reason => {
+  it.each([unavailableRequestFailure(), uncertainRequestFailure()])(
+    'does not repeat a POST whose %s response leaves commit status ambiguous',
+    async reason => {
+      const { result } = renderController();
+      await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
+      api.loadAlertGroups.mockResolvedValueOnce(proofPage([], 0));
+      api.saveAlertGroup.mockRejectedValueOnce(reason);
+      act(() => result.current.create());
+      act(() => result.current.updateDraft({ name: 'New', groupLabels: ['service'] }));
+
+      await act(async () => result.current.submit());
+      expect(result.current.state.createAcknowledged).toBe(true);
+      expect(api.saveAlertGroup).toHaveBeenCalledOnce();
+
+      api.loadAlertGroups.mockResolvedValueOnce(proofPage([], 0));
+      await act(async () => result.current.submit());
+
+      expect(api.saveAlertGroup).toHaveBeenCalledOnce();
+      expect(result.current.state.createAcknowledged).toBe(true);
+      expect(notify.success).not.toHaveBeenCalled();
+    }
+  );
+
+  it('keeps a definitely rejected create retryable without accepting proof ownership', async () => {
     const { result } = renderController();
     await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
     api.loadAlertGroups.mockResolvedValueOnce(proofPage([], 0));
-    api.saveAlertGroup.mockRejectedValueOnce(reason);
+    api.saveAlertGroup.mockRejectedValueOnce(new AlertGroupRequestFailure('error', 'rejected'));
     act(() => result.current.create());
     act(() => result.current.updateDraft({ name: 'New', groupLabels: ['service'] }));
 
     await act(async () => result.current.submit());
-    expect(result.current.state.createAcknowledged).toBe(true);
-    expect(api.saveAlertGroup).toHaveBeenCalledOnce();
-
-    api.loadAlertGroups.mockResolvedValueOnce(proofPage([], 0));
-    await act(async () => result.current.submit());
 
     expect(api.saveAlertGroup).toHaveBeenCalledOnce();
-    expect(result.current.state.createAcknowledged).toBe(true);
-    expect(notify.success).not.toHaveBeenCalled();
+    expect(result.current.state.createAcknowledged).toBe(false);
+    expect(result.current.state.draft).toMatchObject({ name: 'New' });
+    expect(result.current.state.editorFailure).toBe('error');
   });
 
   it('does not report create success when a successful reread cannot prove the new record', async () => {
@@ -267,7 +280,7 @@ describe('Alert Group controller', () => {
     api.loadAlertGroups
       .mockResolvedValueOnce(proofPage([], 0))
       .mockResolvedValueOnce(proofPage([created], 1))
-      .mockRejectedValueOnce(new ApiMessageError('offline', { status: 503 }));
+      .mockRejectedValueOnce(unavailableRequestFailure());
     act(() => result.current.create());
     act(() => result.current.updateDraft({ name: 'New', groupLabels: ['service'] }));
 
@@ -413,9 +426,7 @@ describe('Alert Group controller', () => {
   it('lets the operator abandon acknowledged proof without repeating the POST', async () => {
     const { result } = renderController();
     await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
-    api.loadAlertGroups
-      .mockResolvedValueOnce(proofPage([], 0))
-      .mockRejectedValueOnce(new ApiMessageError('offline', { status: 503 }));
+    api.loadAlertGroups.mockResolvedValueOnce(proofPage([], 0)).mockRejectedValueOnce(unavailableRequestFailure());
     act(() => result.current.create());
     act(() => result.current.updateDraft({ name: 'New', groupLabels: ['service'] }));
     await act(async () => result.current.submit());
@@ -432,7 +443,7 @@ describe('Alert Group controller', () => {
   it('keeps the create draft and reports no success when authoritative reread fails', async () => {
     const { result } = renderController();
     await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
-    api.loadAlertGroups.mockRejectedValueOnce(new ApiMessageError('offline', { status: 503 }));
+    api.loadAlertGroups.mockRejectedValueOnce(unavailableRequestFailure());
     act(() => result.current.create());
     act(() => result.current.updateDraft({ name: 'New', groupLabels: ['service'] }));
     await act(async () => result.current.submit());
@@ -442,13 +453,10 @@ describe('Alert Group controller', () => {
     expect(notify.success).not.toHaveBeenCalled();
   });
 
-  it.each([
-    new ApiMessageError('missing list', { status: 404 }),
-    new ApiMessageError('rejected list', { code: 3, status: 200 })
-  ])('keeps create list-proof %s distinct from missing detail semantics', async reason => {
+  it('keeps missing create list proof distinct from missing detail semantics', async () => {
     const { result } = renderController();
     await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
-    api.loadAlertGroups.mockRejectedValueOnce(reason);
+    api.loadAlertGroups.mockRejectedValueOnce(rejectedMissingRequestFailure());
     act(() => result.current.create());
     act(() => result.current.updateDraft({ name: 'New', groupLabels: ['service'] }));
 
@@ -525,7 +533,7 @@ describe('Alert Group controller', () => {
     const { result } = renderController();
     await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
     await act(async () => result.current.edit(7));
-    api.saveAlertGroup.mockRejectedValueOnce(new ApiMessageError('missing write target', { status: 404 }));
+    api.saveAlertGroup.mockRejectedValueOnce(rejectedMissingRequestFailure());
 
     await act(async () => result.current.submit());
 
@@ -652,6 +660,18 @@ function proofPage(content: AlertGroupConverge[], totalElements: number) {
     number: 0,
     size: 25
   };
+}
+
+function unavailableRequestFailure() {
+  return new AlertGroupRequestFailure('unavailable', 'uncertain');
+}
+
+function uncertainRequestFailure() {
+  return new AlertGroupRequestFailure('error', 'uncertain');
+}
+
+function rejectedMissingRequestFailure() {
+  return new AlertGroupRequestFailure('missing', 'rejected');
 }
 
 function deferred<T>() {

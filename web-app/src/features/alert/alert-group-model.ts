@@ -18,6 +18,8 @@
 export const alertGroupPageSizes = [8, 15, 25] as const;
 
 export type AlertGroupQuery = { search: string; pageIndex: number; pageSize: number };
+export type AlertGroupFailure = 'missing' | 'unavailable' | 'error';
+export type AlertGroupWriteOutcome = 'rejected' | 'uncertain';
 
 export type AlertGroupDraft = {
   id?: number;
@@ -63,6 +65,35 @@ export class AlertGroupMissingError extends Error {
     super('Alert Group detail is missing');
     this.name = 'AlertGroupMissingError';
   }
+}
+
+/**
+ * Stable request evidence exposed by the Alert Group API boundary. Transport
+ * details stay private so controllers cannot depend on HTTP implementation.
+ */
+export class AlertGroupRequestFailure extends Error {
+  constructor(
+    readonly kind: AlertGroupFailure,
+    readonly writeOutcome: AlertGroupWriteOutcome
+  ) {
+    super('Alert Group request failed');
+    this.name = 'AlertGroupRequestFailure';
+  }
+}
+
+/** Maps domain failures to the read state understood by Alert Group screens. */
+export function alertGroupFailureKind(error: unknown): AlertGroupFailure {
+  if (error instanceof AlertGroupMissingError) return 'missing';
+  return error instanceof AlertGroupRequestFailure ? error.kind : 'error';
+}
+
+/**
+ * Returns rejected only when retrying the write is known to be safe. Unknown
+ * outcomes remain uncertain and must proceed through canonical read proof.
+ */
+export function alertGroupWriteOutcome(error: unknown): AlertGroupWriteOutcome {
+  if (error instanceof AlertGroupContractError) return 'rejected';
+  return error instanceof AlertGroupRequestFailure ? error.writeOutcome : 'uncertain';
 }
 
 export function readAlertGroupQuery(params: URLSearchParams): AlertGroupQuery {

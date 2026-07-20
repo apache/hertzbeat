@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { classifyAlertGroupReadError, classifyAlertGroupWriteError } from '../alert-group-api';
+import { alertGroupFailureKind } from '../alert-group-model';
 import type { AlertGroupEditor } from './use-alert-group-editor-controller';
 
 export type AlertGroupNotifications = {
@@ -28,18 +28,22 @@ export function reportAlertGroupSubmitFailure(
   notifications: AlertGroupNotifications
 ) {
   if (!createAcknowledged) {
-    const failure = stage === 'write' ? classifyAlertGroupWriteError(reason) : classifyReadProofFailure(stage, reason);
+    const failure = stage === 'write' ? classifyWriteFailure(reason) : classifyReadProofFailure(stage, reason);
     editor.setEditorFailure(failure);
     notifications.saveFailed();
     return;
   }
-  const failure = classifyAlertGroupReadError(reason) === 'unavailable' ? 'unavailable' : 'error';
+  const failure = alertGroupFailureKind(reason) === 'unavailable' ? 'unavailable' : 'error';
   editor.setCreateProofFailure(failure);
   if (failure === 'unavailable') notifications.proofUnavailable();
   else notifications.proofFailed();
 }
 
 function classifyReadProofFailure(stage: AlertGroupSubmitStage, reason: unknown) {
-  const failure = classifyAlertGroupReadError(reason);
+  const failure = alertGroupFailureKind(reason);
   return stage === 'preflight' && failure === 'missing' ? 'error' : failure;
+}
+
+function classifyWriteFailure(reason: unknown) {
+  return alertGroupFailureKind(reason) === 'unavailable' ? 'unavailable' : 'error';
 }

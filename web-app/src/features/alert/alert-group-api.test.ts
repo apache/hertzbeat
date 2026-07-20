@@ -32,20 +32,13 @@ vi.mock('@/core/http/api-message', async importOriginal => ({
 import { ApiMessageError } from '@/core/http/api-message';
 
 import {
-  classifyAlertGroupReadError,
-  classifyAlertGroupWriteError,
   deleteAlertGroup,
   loadAlertGroup,
   loadAlertGroups,
   saveAlertGroup,
   updateAlertGroupEnabled
 } from './alert-group-api';
-import {
-  AlertGroupContractError,
-  AlertGroupMissingError,
-  createAlertGroupDraft,
-  type AlertGroupConverge
-} from './alert-group-model';
+import { AlertGroupRequestFailure, createAlertGroupDraft, type AlertGroupConverge } from './alert-group-model';
 
 const persisted: AlertGroupConverge = {
   id: 7,
@@ -124,26 +117,26 @@ describe('alert group API', () => {
     });
   });
 
-  it.each([
-    ['missing custom detail', new AlertGroupMissingError(), 'missing'],
-    ['backend missing detail', new ApiMessageError('missing', { code: 3, status: 200 }), 'missing'],
-    ['HTTP missing detail', new ApiMessageError('missing', { status: 404 }), 'missing'],
-    ['network failure', new ApiMessageError('offline', { cause: new TypeError('fetch') }), 'unavailable'],
-    ['gateway failure', new ApiMessageError('gateway', { status: 503 }), 'unavailable'],
-    ['malformed response', new AlertGroupContractError('invalid'), 'error'],
-    ['server error', new ApiMessageError('failed', { status: 500 }), 'error'],
-    ['unknown error', new Error('failed'), 'error']
-  ])('classifies %s without collapsing missing, unavailable, and error', (_label, reason, expected) => {
-    expect(classifyAlertGroupReadError(reason)).toBe(expected);
-  });
+  it('normalizes every transport entry before leaving the API', async () => {
+    const draft = { ...createAlertGroupDraft(), name: 'By service', groupLabels: ['service'] };
 
-  it.each([
-    ['HTTP missing write', new ApiMessageError('missing', { status: 404 }), 'error'],
-    ['backend rejected write', new ApiMessageError('missing', { code: 3, status: 200 }), 'error'],
-    ['network failure', new ApiMessageError('offline', { cause: new TypeError('fetch') }), 'unavailable'],
-    ['gateway failure', new ApiMessageError('gateway', { status: 503 }), 'unavailable'],
-    ['server failure', new ApiMessageError('failed', { status: 500 }), 'error']
-  ])('classifies %s as a write-stage failure', (_label, reason, expected) => {
-    expect(classifyAlertGroupWriteError(reason)).toBe(expected);
+    transport.apiMessageGet.mockRejectedValueOnce(transportFailure());
+    await expect(loadAlertGroups({ search: '', pageIndex: 0, pageSize: 8 })).rejects.toBeInstanceOf(
+      AlertGroupRequestFailure
+    );
+    transport.apiMessageGet.mockRejectedValueOnce(transportFailure());
+    await expect(loadAlertGroup(7)).rejects.toBeInstanceOf(AlertGroupRequestFailure);
+    transport.apiMessagePost.mockRejectedValueOnce(transportFailure());
+    await expect(saveAlertGroup(draft)).rejects.toBeInstanceOf(AlertGroupRequestFailure);
+    transport.apiMessagePut.mockRejectedValueOnce(transportFailure());
+    await expect(saveAlertGroup({ ...draft, id: 7 })).rejects.toBeInstanceOf(AlertGroupRequestFailure);
+    transport.apiMessageDelete.mockRejectedValueOnce(transportFailure());
+    await expect(deleteAlertGroup(7)).rejects.toBeInstanceOf(AlertGroupRequestFailure);
+    transport.apiMessagePut.mockRejectedValueOnce(transportFailure());
+    await expect(updateAlertGroupEnabled(persisted, false)).rejects.toBeInstanceOf(AlertGroupRequestFailure);
   });
 });
+
+function transportFailure() {
+  return new ApiMessageError('private transport failure', { status: 503 });
+}

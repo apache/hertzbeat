@@ -7,14 +7,11 @@
 
 import type { RemotePageState } from '@/shared/remote-state';
 
-import type { AlertGroupConverge, AlertGroupPage } from './alert-group-model';
+import type { AlertGroupConverge, AlertGroupFailure, AlertGroupPage } from './alert-group-model';
 
-export type AlertGroupFailure = 'missing' | 'unavailable' | 'error';
 export type AlertGroupListState = RemotePageState<AlertGroupConverge, 'unavailable' | 'error'>;
 export type AlertGroupDetailState =
-  | { kind: 'idle' }
-  | { kind: 'loading'; id: number }
-  | { kind: AlertGroupFailure; id: number };
+  { kind: 'idle' } | { kind: 'loading'; id: number } | { kind: AlertGroupFailure; id: number };
 
 export function resolveAlertGroupListState(
   pending: boolean,
