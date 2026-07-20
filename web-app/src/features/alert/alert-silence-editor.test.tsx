@@ -43,10 +43,13 @@ describe('AlertSilenceEditor schedule', () => {
     render(
       <AlertSilenceEditor
         draft={onceDraft}
+        recovery={null}
         saving={false}
+        writeLocked={false}
         update={vi.fn()}
         replace={replace}
         close={vi.fn()}
+        retry={vi.fn()}
         submit={vi.fn()}
       />
     );
@@ -66,10 +69,13 @@ describe('AlertSilenceEditor schedule', () => {
     render(
       <AlertSilenceEditor
         draft={{ ...onceDraft, type: 1, periodStart: '22:00', periodEnd: '02:00' }}
+        recovery={null}
         saving={false}
+        writeLocked={false}
         update={update}
         replace={vi.fn()}
         close={vi.fn()}
+        retry={vi.fn()}
         submit={vi.fn()}
       />
     );
@@ -87,10 +93,13 @@ describe('AlertSilenceEditor schedule', () => {
     render(
       <AlertSilenceEditor
         draft={{ ...onceDraft, matchAll: false, labelsText: 'service=api' }}
+        recovery={null}
         saving
+        writeLocked
         update={vi.fn()}
         replace={vi.fn()}
         close={close}
+        retry={vi.fn()}
         submit={vi.fn()}
       />
     );
@@ -113,10 +122,13 @@ describe('AlertSilenceEditor schedule', () => {
     render(
       <AlertSilenceEditor
         draft={{ ...onceDraft, type: 1, periodStart: '22:00', periodEnd: '02:00' }}
+        recovery={null}
         saving
+        writeLocked
         update={vi.fn()}
         replace={vi.fn()}
         close={vi.fn()}
+        retry={vi.fn()}
         submit={vi.fn()}
       />
     );

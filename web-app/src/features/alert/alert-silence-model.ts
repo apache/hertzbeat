@@ -19,6 +19,9 @@ import type { AlertSilenceQuery } from './alert-silence-types';
 
 export const alertSilencePageSizes = [8, 15, 25] as const;
 
+export type AlertSilenceFailure = 'missing' | 'unavailable' | 'error';
+export type AlertSilenceWriteOutcome = 'rejected' | 'uncertain';
+
 export type {
   AlertSilence,
   AlertSilenceDraft,
@@ -34,13 +37,38 @@ export class AlertSilenceMissingError extends Error {
   }
 }
 
+/**
+ * Stable request evidence exposed by the Alert Silence API boundary. HTTP
+ * status, backend messages, and network causes remain private to that boundary.
+ */
+export class AlertSilenceRequestFailure extends Error {
+  constructor(
+    readonly kind: AlertSilenceFailure,
+    readonly writeOutcome: AlertSilenceWriteOutcome
+  ) {
+    super('Alert Silence request failed');
+    this.name = 'AlertSilenceRequestFailure';
+  }
+}
+
+/** Maps domain failures to the read state understood by Alert Silence screens. */
+export function alertSilenceFailureKind(error: unknown): AlertSilenceFailure {
+  if (error instanceof AlertSilenceMissingError) return 'missing';
+  return error instanceof AlertSilenceRequestFailure ? error.kind : 'error';
+}
+
+/** Only an explicit HTTP 4xx proves that a write was rejected before commit. */
+export function alertSilenceWriteOutcome(error: unknown): AlertSilenceWriteOutcome {
+  return error instanceof AlertSilenceRequestFailure ? error.writeOutcome : 'uncertain';
+}
+
 export function readAlertSilenceQuery(params: URLSearchParams): AlertSilenceQuery {
   const pageIndex = Number.parseInt(params.get('pageIndex') ?? '', 10);
   const pageSize = Number.parseInt(params.get('pageSize') ?? '', 10);
   return {
     search: params.get('search')?.trim() ?? '',
     pageIndex: Number.isFinite(pageIndex) && pageIndex >= 0 ? pageIndex : 0,
-    pageSize: alertSilencePageSizes.includes(pageSize as typeof alertSilencePageSizes[number]) ? pageSize : 8
+    pageSize: alertSilencePageSizes.includes(pageSize as (typeof alertSilencePageSizes)[number]) ? pageSize : 8
   };
 }
 

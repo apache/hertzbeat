@@ -24,10 +24,10 @@ import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
-import { ApiMessageError } from '@/core/http/api-message';
 import {
   AlertSilenceContractError,
   AlertSilenceMissingError,
+  AlertSilenceRequestFailure,
   buildAlertSilencePayload,
   type AlertSilence
 } from '../alert-silence-model';
@@ -175,7 +175,7 @@ describe('useAlertSilenceController', () => {
   });
 
   it.each([
-    [new ApiMessageError('offline', { status: 503 }), 'unavailable'],
+    [new AlertSilenceRequestFailure('unavailable', 'uncertain'), 'unavailable'],
     [new AlertSilenceContractError('bad detail'), 'error']
   ] as const)('clears previous detail evidence when the next read becomes %s', async (reason, kind) => {
     api.loadAlertSilence.mockResolvedValueOnce(editable).mockRejectedValueOnce(reason);
@@ -212,7 +212,7 @@ describe('useAlertSilenceController', () => {
   });
 
   it.each([
-    [new ApiMessageError('offline', { status: 503 }), 'unavailable'],
+    [new AlertSilenceRequestFailure('unavailable', 'uncertain'), 'unavailable'],
     [new AlertSilenceContractError('bad'), 'error']
   ] as const)('classifies list failures without fake empty as %s', async (reason, kind) => {
     api.loadAlertSilences.mockRejectedValue(reason);
@@ -246,7 +246,7 @@ describe('useAlertSilenceController', () => {
   it('classifies an unavailable post-commit projection without making create retryable', async () => {
     api.loadAlertSilences
       .mockResolvedValueOnce(page())
-      .mockRejectedValueOnce(new ApiMessageError('offline', { status: 503 }));
+      .mockRejectedValueOnce(new AlertSilenceRequestFailure('unavailable', 'uncertain'));
     const view = renderController(['/alerts/silences'], 0);
     await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
     act(() => view.result.current.controller.actions.create());
@@ -377,22 +377,142 @@ describe('useAlertSilenceController', () => {
     expect(screen.queryByText(i18n.t('alertSilences.saveFailed'))).not.toBeInTheDocument();
   });
 
-  it('releases the save mutex after failure, retains the draft, and permits a retry', async () => {
-    api.saveAlertSilence.mockRejectedValueOnce(new Error('private provider failure')).mockResolvedValueOnce(undefined);
+  it.each([
+    ['network', new AlertSilenceRequestFailure('unavailable', 'uncertain')],
+    ['5xx', new AlertSilenceRequestFailure('unavailable', 'uncertain')],
+    ['unknown', new Error('private provider failure')]
+  ] as const)('locks an uncertain create after a %s failure and never repeats its POST', async (_label, reason) => {
+    api.saveAlertSilence.mockRejectedValueOnce(reason).mockResolvedValueOnce(undefined);
     const view = renderController(['/alerts/silences'], 0);
     await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
     act(() => view.result.current.controller.actions.create());
     act(() => view.result.current.controller.actions.updateDraft({ name: 'Created' }));
 
     await act(() => view.result.current.controller.actions.save());
+    expect(view.result.current.controller.state.recovery).toEqual({
+      kind: 'create',
+      phase: 'commit-uncertain',
+      retryable: false
+    });
+    expect(view.result.current.controller.state.busy).toBe(false);
+    expect(view.result.current.controller.state.writeLocked).toBe(true);
+    expect(alertSilenceDetailDraft(view.result.current.controller.state.detail)).toMatchObject({ name: 'Created' });
+    expect(document.body).not.toHaveTextContent('private provider failure');
+
+    await act(() => view.result.current.controller.actions.save());
+    expect(api.saveAlertSilence).toHaveBeenCalledTimes(1);
+  });
+
+  it('permits a deliberate create resubmit only after an explicit HTTP 4xx rejection', async () => {
+    api.saveAlertSilence
+      .mockRejectedValueOnce(new AlertSilenceRequestFailure('error', 'rejected'))
+      .mockResolvedValueOnce(undefined);
+    api.loadAlertSilences.mockImplementation(query =>
+      Promise.resolve(query.search === 'Created' ? page([{ ...record, id: 8, name: 'Created' }]) : page())
+    );
+    const view = renderController(['/alerts/silences'], 0);
+    await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
+    act(() => view.result.current.controller.actions.create());
+    act(() => view.result.current.controller.actions.updateDraft({ name: 'Created' }));
+
+    await act(() => view.result.current.controller.actions.save());
+    expect(view.result.current.controller.state.recovery).toBeNull();
     expect(view.result.current.controller.state.busy).toBe(false);
     expect(alertSilenceDetailDraft(view.result.current.controller.state.detail)).toMatchObject({ name: 'Created' });
-    expect(await screen.findByText(i18n.t('alertSilences.saveFailed'))).toBeInTheDocument();
-    expect(document.body).not.toHaveTextContent('private provider failure');
 
     await act(() => view.result.current.controller.actions.save());
     expect(api.saveAlertSilence).toHaveBeenCalledTimes(2);
     expect(view.result.current.controller.state.detail).toEqual({ kind: 'idle' });
+  });
+
+  it('recovers an uncertain update through exact detail proof without repeating PUT', async () => {
+    api.loadAlertSilence.mockResolvedValueOnce(editable);
+    api.saveAlertSilence.mockRejectedValueOnce(new AlertSilenceRequestFailure('unavailable', 'uncertain'));
+    const view = renderController(['/alerts/silences'], 0);
+    await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
+    await act(() => view.result.current.controller.actions.edit(7));
+    act(() => view.result.current.controller.actions.updateDraft({ name: 'Updated' }));
+
+    await act(() => view.result.current.controller.actions.save());
+    expect(view.result.current.controller.state.recovery).toEqual({ kind: 'update', phase: 'proof', retryable: true });
+    expect(view.result.current.controller.state.busy).toBe(false);
+    expect(view.result.current.controller.state.writeLocked).toBe(true);
+    expect(api.saveAlertSilence).toHaveBeenCalledTimes(1);
+
+    api.loadAlertSilence.mockResolvedValueOnce({ ...editable, name: 'Updated' });
+    await act(() => view.result.current.controller.actions.refresh());
+    expect(api.saveAlertSilence).toHaveBeenCalledTimes(1);
+    expect(view.result.current.controller.state.recovery).toBeNull();
+    expect(view.result.current.controller.state.detail).toEqual({ kind: 'idle' });
+  });
+
+  it('does not enter a different editor while an update proof receipt is retained', async () => {
+    api.loadAlertSilence.mockResolvedValueOnce(editable);
+    api.saveAlertSilence.mockRejectedValueOnce(new AlertSilenceRequestFailure('unavailable', 'uncertain'));
+    const view = renderController(['/alerts/silences'], 0);
+    await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
+    await act(() => view.result.current.controller.actions.edit(7));
+    act(() => view.result.current.controller.actions.updateDraft({ name: 'Updated' }));
+    await act(() => view.result.current.controller.actions.save());
+    expect(view.result.current.controller.state.recovery).toMatchObject({ kind: 'update', phase: 'proof' });
+
+    act(() => view.result.current.controller.actions.cancel());
+    expect(view.result.current.controller.state.detail).toEqual({ kind: 'idle' });
+    const inspected = { ...editable, id: 8, name: 'Another silence' };
+    api.loadAlertSilence.mockImplementation(id =>
+      Promise.resolve(id === 8 ? inspected : { ...editable, name: 'Updated' })
+    );
+    act(() => view.result.current.controller.actions.create());
+    await act(() => view.result.current.controller.actions.edit(8));
+    expect(view.result.current.controller.state.detail).toEqual({ kind: 'idle' });
+    expect(api.loadAlertSilence).toHaveBeenCalledTimes(1);
+
+    await act(() => view.result.current.controller.actions.refresh());
+
+    expect(api.saveAlertSilence).toHaveBeenCalledTimes(1);
+    expect(view.result.current.controller.state.recovery).toBeNull();
+    expect(view.result.current.controller.state.detail).toEqual({ kind: 'idle' });
+
+    await act(() => view.result.current.controller.actions.edit(8));
+    expect(view.result.current.controller.state.detail).toMatchObject({
+      kind: 'ready',
+      id: 8,
+      draft: { id: 8, name: 'Another silence' }
+    });
+  });
+
+  it('recovers an uncertain toggle through exact detail proof without repeating PUT', async () => {
+    api.updateAlertSilenceEnabled.mockRejectedValueOnce(new AlertSilenceRequestFailure('unavailable', 'uncertain'));
+    const view = renderController(['/alerts/silences'], 0);
+    await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
+
+    await act(() => view.result.current.controller.actions.toggle(record, false));
+    expect(view.result.current.controller.state.recovery).toEqual({ kind: 'toggle', phase: 'proof', retryable: true });
+    api.loadAlertSilence.mockImplementation(id =>
+      Promise.resolve(id === 8 ? { ...editable, id: 8, name: 'Another silence' } : { ...record, enable: false })
+    );
+    act(() => view.result.current.controller.actions.create());
+    await act(() => view.result.current.controller.actions.edit(8));
+    expect(view.result.current.controller.state.detail).toEqual({ kind: 'idle' });
+    expect(api.loadAlertSilence).not.toHaveBeenCalled();
+
+    await act(() => view.result.current.controller.actions.refresh());
+    expect(api.updateAlertSilenceEnabled).toHaveBeenCalledTimes(1);
+    expect(view.result.current.controller.state.recovery).toBeNull();
+  });
+
+  it('recovers an uncertain delete through exact missing proof without repeating DELETE', async () => {
+    api.deleteAlertSilence.mockRejectedValueOnce(new AlertSilenceRequestFailure('unavailable', 'uncertain'));
+    const view = renderController(['/alerts/silences'], 0);
+    await waitFor(() => expect(view.result.current.controller.state.list.kind).toBe('ready'));
+
+    await act(() => view.result.current.controller.actions.remove(7));
+    expect(view.result.current.controller.state.recovery).toEqual({ kind: 'delete', phase: 'proof', retryable: true });
+    api.loadAlertSilence.mockRejectedValueOnce(new AlertSilenceMissingError());
+
+    await act(() => view.result.current.controller.actions.refresh());
+    expect(api.deleteAlertSilence).toHaveBeenCalledTimes(1);
+    expect(view.result.current.controller.state.recovery).toBeNull();
   });
 
   it('does not replace an in-flight save draft with a new draft', async () => {
@@ -457,9 +577,11 @@ describe('useAlertSilenceController', () => {
     expect(api.loadAlertSilences).toHaveBeenCalledTimes(1);
     expect(view.result.current.controller.state.list.kind).toBe('error');
 
+    api.loadAlertSilence.mockResolvedValue({ ...record, enable: false });
     await act(() => view.result.current.controller.actions.refresh());
     expect(api.loadAlertSilences).toHaveBeenCalledTimes(2);
     expect(view.result.current.controller.state.list.kind).toBe('ready');
+    expect(view.result.current.controller.state.recovery).toBeNull();
 
     api.loadAlertSilence.mockRejectedValue(new AlertSilenceMissingError());
     await act(() => view.result.current.controller.actions.remove(7));

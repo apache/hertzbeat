@@ -20,16 +20,17 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Dispatch, RefObject, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { classifyAlertSilenceReadError, loadAlertSilence } from '../alert-silence-api';
+import { loadAlertSilence } from '../alert-silence-api';
 import type { AlertSilenceDetailState } from '../alert-silence-page-model';
 import {
   AlertSilenceContractError,
+  alertSilenceFailureKind,
   alertSilenceDraftFromDetail,
   createAlertSilenceDraft,
   type AlertSilenceDraft
 } from '../alert-silence-model';
 
-export function useAlertSilenceDetailController(isLocked: () => boolean) {
+export function useAlertSilenceDetailController(isBusy: () => boolean, isWriteLocked: () => boolean) {
   const { t } = useTranslation();
   const { message } = App.useApp();
   const [detail, setDetail] = useState<AlertSilenceDetailState>({ kind: 'idle' });
@@ -40,9 +41,17 @@ export function useAlertSilenceDetailController(isLocked: () => boolean) {
     retireDetail(intent, request);
     setDetail({ kind: 'idle' });
   }, []);
+  const captureCloseCurrentSession = useCallback(() => {
+    const session = intent.current;
+    return () => {
+      if (intent.current === session) close();
+    };
+  }, [close]);
   const edit = useCallback(
     async (id: number) => {
-      if (isLocked()) return;
+      // A retained write receipt belongs to the current editor session. Do not
+      // let another detail inherit that session's recovery controls.
+      if (isWriteLocked()) return;
       request.current?.abort();
       const active = new AbortController();
       request.current = active;
@@ -56,39 +65,42 @@ export function useAlertSilenceDetailController(isLocked: () => boolean) {
         }
       } catch (reason) {
         if (!active.signal.aborted && intent.current === token) {
-          setDetail({ kind: classifyAlertSilenceReadError(reason), id });
+          setDetail({ kind: alertSilenceFailureKind(reason), id });
           void message.error(t('alertSilences.loadFailed'));
         }
       } finally {
         if (request.current === active) request.current = null;
       }
     },
-    [isLocked, message, t]
+    [isWriteLocked, message, t]
   );
-  const actions = useAlertSilenceDraftActions(isLocked, intent, request, setDetail, close);
-  return { detail, close, edit, ...actions };
+  const actions = useAlertSilenceDraftActions(isBusy, isWriteLocked, intent, request, setDetail, close);
+  return { detail, captureCloseCurrentSession, edit, ...actions };
 }
 
 function useAlertSilenceDraftActions(
-  isLocked: () => boolean,
+  isBusy: () => boolean,
+  isWriteLocked: () => boolean,
   intent: RefObject<number>,
   request: RefObject<AbortController | null>,
   setDetail: Dispatch<SetStateAction<AlertSilenceDetailState>>,
   close: () => void
 ) {
   const create = () => {
-    if (isLocked()) return;
+    if (isWriteLocked()) return;
     retireDetail(intent, request);
     setDetail({ kind: 'ready', source: 'create', draft: createAlertSilenceDraft() });
   };
   const cancel = () => {
-    if (!isLocked()) close();
+    if (!isBusy()) close();
   };
   const updateDraft = (patch: Partial<AlertSilenceDraft>) => {
-    if (!isLocked()) setDetail(current => replaceReadyDraft(current, currentDraft => ({ ...currentDraft, ...patch })));
+    if (!isWriteLocked()) {
+      setDetail(current => replaceReadyDraft(current, currentDraft => ({ ...currentDraft, ...patch })));
+    }
   };
   const replaceDraft = (draft: AlertSilenceDraft) => {
-    if (!isLocked()) setDetail(current => replaceReadyDraft(current, () => draft));
+    if (!isWriteLocked()) setDetail(current => replaceReadyDraft(current, () => draft));
   };
   return { create, cancel, updateDraft, replaceDraft };
 }

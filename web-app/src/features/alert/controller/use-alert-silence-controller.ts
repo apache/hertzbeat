@@ -21,10 +21,11 @@ import { useSearchParams } from 'react-router-dom';
 
 import { useStringQueryDraft } from '@/shared/query-context';
 
-import { classifyAlertSilenceReadError, loadAlertSilences } from '../alert-silence-api';
+import { loadAlertSilences } from '../alert-silence-api';
 import { alertSilenceDetailDraft, type AlertSilenceListEvidence } from '../alert-silence-page-model';
 import {
   readAlertSilenceQuery,
+  alertSilenceFailureKind,
   writeAlertSilenceQuery,
   type AlertSilenceDraft,
   type AlertSilencePage,
@@ -68,7 +69,7 @@ export function useAlertSilenceController() {
     });
   };
   const mutations = useAlertSilenceMutations(rereadList, readCreatedProjection);
-  const detail = useAlertSilenceDetailController(mutations.isLocked);
+  const detail = useAlertSilenceDetailController(mutations.isActive, mutations.isLocked);
   const draft = alertSilenceDetailDraft(detail.detail);
   return {
     state: {
@@ -76,6 +77,8 @@ export function useAlertSilenceController() {
       search,
       detail: detail.detail,
       busy: mutations.busy,
+      writeLocked: mutations.isLocked(),
+      recovery: mutations.recovery,
       refreshing: list.isFetching,
       list: resolveListEvidence(mutations.projectionFailure, list.isPending, list.error, list.data, overflow)
     },
@@ -83,20 +86,30 @@ export function useAlertSilenceController() {
       setSearch,
       submitSearch: () => updateQuery({ search: search.trim(), pageIndex: 0 }),
       changePage: (page: number, pageSize: number) => updateQuery({ pageIndex: page - 1, pageSize }),
-      refresh: () =>
-        rereadList()
-          .then(mutations.clearProjectionFailure)
-          .catch(() => undefined),
+      refresh: () => refreshAlertSilences(mutations.recovery?.retryable === true, mutations.retry, rereadList),
       create: detail.create,
       edit: detail.edit,
       cancel: detail.cancel,
       updateDraft: detail.updateDraft,
       replaceDraft: detail.replaceDraft,
-      save: () => mutations.save(draft, detail.close),
+      save: () => mutations.save(draft, detail.captureCloseCurrentSession()),
       toggle: mutations.toggle,
       remove: mutations.remove
     }
   };
+}
+
+async function refreshAlertSilences(
+  hasRecovery: boolean,
+  retry: () => Promise<void>,
+  reread: () => Promise<AlertSilencePage>
+) {
+  if (hasRecovery) return retry();
+  try {
+    await reread();
+  } catch {
+    // React Query keeps the visible list error; refresh must not hide it.
+  }
 }
 
 function createdProjectionQuery(draft: AlertSilenceDraft): AlertSilenceQuery {
@@ -140,7 +153,7 @@ function resolveListEvidence(
 ): AlertSilenceListEvidence {
   if (projectionFailure) return { kind: projectionFailure };
   if (pending || overflow) return { kind: 'loading' };
-  if (error) return { kind: classifyAlertSilenceReadError(error) === 'unavailable' ? 'unavailable' : 'error' };
+  if (error) return { kind: alertSilenceFailureKind(error) === 'unavailable' ? 'unavailable' : 'error' };
   if (!page) return { kind: 'error' };
   if (page.content.length === 0 && page.totalElements === 0) return { kind: 'empty' };
   if (page.content.length === 0) return { kind: 'error' };

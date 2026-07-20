@@ -28,21 +28,64 @@ import { AlertNoiseControlNav } from './alert-noise-control-nav';
 import { AlertSilenceEditor } from './alert-silence-editor';
 import { AlertSilenceResults } from './alert-silence-results';
 import { AlertSilenceToolbar } from './alert-silence-toolbar';
+import { AlertSilenceRecovery } from './components/alert-silence-recovery';
 import styles from './alert-policy-page.module.css';
 
-export function AlertSilenceView({ state, actions }: { state: AlertSilenceViewState; actions: AlertSilenceViewActions }) {
+export function AlertSilenceView({
+  state,
+  actions
+}: {
+  state: AlertSilenceViewState;
+  actions: AlertSilenceViewActions;
+}) {
   const { t } = useTranslation();
   const draft = alertSilenceDetailDraft(state.detail);
-  return <div className={styles.page}>
-    <header className={styles.heading}><div>
-      <Typography.Title level={2}>{t('alertSilences.title')}</Typography.Title>
-      <Typography.Text type="secondary">{t('alertSilences.description')}</Typography.Text>
-    </div><Button type="primary" disabled={state.busy} onClick={actions.create}>{t('alertSilences.new')}</Button></header>
-    <AlertManagementNav /><AlertNoiseControlNav />
-    <AlertSilenceToolbar search={state.search} refreshing={state.refreshing} setSearch={actions.setSearch}
-      submit={actions.submitSearch} refresh={actions.refresh} />
-    <AlertSilenceResults evidence={state.list} query={state.query} busy={state.busy} actions={actions} />
-    {draft && <AlertSilenceEditor draft={draft} saving={state.busy} update={actions.updateDraft}
-      replace={actions.replaceDraft} close={actions.cancel} submit={() => void actions.save()} />}
-  </div>;
+  const editorRecovery = draft && isSaveRecovery(state.recovery) ? state.recovery : null;
+  const pageRecovery = editorRecovery ? null : state.recovery;
+  return (
+    <div className={styles.page}>
+      <header className={styles.heading}>
+        <div>
+          <Typography.Title level={2}>{t('alertSilences.title')}</Typography.Title>
+          <Typography.Text type="secondary">{t('alertSilences.description')}</Typography.Text>
+        </div>
+        <Button type="primary" disabled={state.writeLocked} onClick={actions.create}>
+          {t('alertSilences.new')}
+        </Button>
+      </header>
+      <AlertManagementNav />
+      <AlertNoiseControlNav />
+      <AlertSilenceToolbar
+        search={state.search}
+        refreshing={state.refreshing}
+        setSearch={actions.setSearch}
+        submit={actions.submitSearch}
+        refresh={actions.refresh}
+      />
+      <AlertSilenceRecovery busy={state.busy} recovery={pageRecovery} retry={actions.refresh} />
+      <AlertSilenceResults
+        evidence={state.list}
+        query={state.query}
+        writeLocked={state.writeLocked}
+        actions={actions}
+      />
+      {draft && (
+        <AlertSilenceEditor
+          draft={draft}
+          recovery={editorRecovery}
+          saving={state.busy}
+          writeLocked={state.writeLocked}
+          update={actions.updateDraft}
+          replace={actions.replaceDraft}
+          close={actions.cancel}
+          retry={actions.refresh}
+          submit={() => void actions.save()}
+        />
+      )}
+    </div>
+  );
+}
+
+function isSaveRecovery(recovery: AlertSilenceViewState['recovery']) {
+  return recovery?.kind === 'create' || recovery?.kind === 'update';
 }

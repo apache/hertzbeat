@@ -15,19 +15,13 @@
  * limitations under the License.
  */
 
-import {
-  ApiMessageError,
-  apiMessageDelete,
-  apiMessageGet,
-  apiMessagePost,
-  apiMessagePut
-} from '@/core/http/api-message';
+import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
 
+import { alertSilenceApiRequest } from './api/alert-silence-api-failure';
 import {
   buildAlertSilencePayload,
   buildAlertSilenceTogglePayload,
   AlertSilenceContractError,
-  AlertSilenceMissingError,
   type AlertSilence,
   type AlertSilenceDraft,
   type AlertSilenceQuery
@@ -58,51 +52,37 @@ export function buildAlertSilenceDeletePath(id: number) {
 
 export async function loadAlertSilences(query: AlertSilenceQuery, signal?: AbortSignal) {
   const path = buildAlertSilenceListPath(query);
-  const response = signal ? await apiMessageGet(path, { signal }) : await apiMessageGet(path);
-  return parseAlertSilencePage(response, query);
+  return alertSilenceApiRequest(async () => {
+    const response = await (signal ? apiMessageGet(path, { signal }) : apiMessageGet(path));
+    return parseAlertSilencePage(response, query);
+  });
 }
 
 export async function loadAlertSilence(id: number, signal?: AbortSignal) {
   const path = buildAlertSilenceDetailPath(id);
-  const response = signal ? await apiMessageGet(path, { signal }) : await apiMessageGet(path);
-  return parseAlertSilenceDetail(response);
+  return alertSilenceApiRequest(async () => {
+    const response = await (signal ? apiMessageGet(path, { signal }) : apiMessageGet(path));
+    return parseAlertSilenceDetail(response);
+  });
 }
 
 export async function saveAlertSilence(draft: AlertSilenceDraft): Promise<void> {
   const payload = buildAlertSilencePayload(draft);
-  if (draft.id !== undefined) await apiMessagePut(alertSilenceEndpoint, payload);
-  else await apiMessagePost(alertSilenceEndpoint, payload);
+  if (draft.id !== undefined) {
+    await alertSilenceApiRequest(() => apiMessagePut(alertSilenceEndpoint, payload));
+  } else {
+    await alertSilenceApiRequest(() => apiMessagePost(alertSilenceEndpoint, payload));
+  }
 }
 
 export async function deleteAlertSilence(id: number): Promise<void> {
-  await apiMessageDelete(buildAlertSilenceDeletePath(id));
+  const path = buildAlertSilenceDeletePath(id);
+  await alertSilenceApiRequest(() => apiMessageDelete(path));
 }
 
 export async function updateAlertSilenceEnabled(silence: AlertSilence, enable: boolean): Promise<void> {
-  await apiMessagePut(alertSilenceEndpoint, buildAlertSilenceTogglePayload(silence, enable));
-}
-
-// AlertSilenceController reports a missing detail with the backend's shared
-// MONITOR_NOT_EXIST_CODE (0x03), even though this resource is not a monitor.
-const alertSilenceMissingCode = 3;
-
-export function isAlertSilenceMissing(reason: unknown) {
-  return (
-    reason instanceof AlertSilenceMissingError ||
-    (reason instanceof ApiMessageError &&
-      (reason.status === 404 || (reason.status === 200 && reason.code === alertSilenceMissingCode)))
-  );
-}
-
-export function classifyAlertSilenceReadError(reason: unknown): 'missing' | 'unavailable' | 'error' {
-  if (isAlertSilenceMissing(reason)) return 'missing';
-  if (
-    reason instanceof ApiMessageError &&
-    (reason.cause !== undefined || reason.status === undefined || [0, 502, 503, 504].includes(reason.status))
-  ) {
-    return 'unavailable';
-  }
-  return 'error';
+  const payload = buildAlertSilenceTogglePayload(silence, enable);
+  await alertSilenceApiRequest(() => apiMessagePut(alertSilenceEndpoint, payload));
 }
 
 function canonicalAlertSilenceId(value: unknown) {

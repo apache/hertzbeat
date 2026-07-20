@@ -20,17 +20,35 @@ import { useTranslation } from 'react-i18next';
 
 import type { AlertSilence } from './alert-silence-model';
 
-export function AlertSilenceActions({ silence, busy, edit, toggle, remove }: {
-  silence: AlertSilence; busy: boolean; edit: (id: number) => void;
-  toggle: (silence: AlertSilence, enabled: boolean) => void; remove: (id: number) => void;
+export function AlertSilenceActions({
+  silence,
+  writeLocked,
+  edit,
+  toggle,
+  remove
+}: {
+  silence: AlertSilence;
+  writeLocked: boolean;
+  edit: (id: number) => void;
+  toggle: (silence: AlertSilence, enabled: boolean) => void;
+  remove: (id: number) => void;
 }) {
   const { t } = useTranslation();
-  return <Space>
-    <Switch checked={silence.enable === true} disabled={busy || typeof silence.enable !== 'boolean'}
-      onChange={enabled => toggle(silence, enabled)} />
-    <Button type="link" disabled={busy} onClick={() => edit(silence.id)}>{t('common.edit')}</Button>
-    <Popconfirm title={t('alertSilences.deleteConfirm')} onConfirm={() => remove(silence.id)}>
-      <Button type="link" danger disabled={busy}>{t('alertSilences.delete')}</Button>
-    </Popconfirm>
-  </Space>;
+  return (
+    <Space>
+      <Switch
+        checked={silence.enable === true}
+        disabled={writeLocked || typeof silence.enable !== 'boolean'}
+        onChange={enabled => toggle(silence, enabled)}
+      />
+      <Button type="link" disabled={writeLocked} onClick={() => edit(silence.id)}>
+        {t('common.edit')}
+      </Button>
+      <Popconfirm title={t('alertSilences.deleteConfirm')} onConfirm={() => remove(silence.id)}>
+        <Button type="link" danger disabled={writeLocked}>
+          {t('alertSilences.delete')}
+        </Button>
+      </Popconfirm>
+    </Space>
+  );
 }

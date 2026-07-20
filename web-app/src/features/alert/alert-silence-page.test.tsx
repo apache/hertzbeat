@@ -22,7 +22,6 @@ import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
-import { ApiMessageError } from '@/core/http/api-message';
 
 const api = vi.hoisted(() => ({
   deleteAlertSilence: vi.fn(),
@@ -37,7 +36,12 @@ vi.mock('./alert-silence-api', async importOriginal => ({
 }));
 
 import { AlertSilencePage } from './alert-silence-page';
-import { AlertSilenceMissingError, buildAlertSilencePayload, type AlertSilenceDraft } from './alert-silence-model';
+import {
+  AlertSilenceMissingError,
+  AlertSilenceRequestFailure,
+  buildAlertSilencePayload,
+  type AlertSilenceDraft
+} from './alert-silence-model';
 
 const record = {
   id: 7,
@@ -87,7 +91,7 @@ describe('AlertSilencePage', () => {
   });
 
   it('distinguishes unavailable and empty list states', async () => {
-    api.loadAlertSilences.mockRejectedValueOnce(new ApiMessageError('offline', { status: 503 }));
+    api.loadAlertSilences.mockRejectedValueOnce(new AlertSilenceRequestFailure('unavailable', 'uncertain'));
     const unavailable = renderPage();
     expect(
       await screen.findByText('The service is unavailable. Check the backend connection and try again.')
@@ -156,6 +160,67 @@ describe('AlertSilencePage', () => {
     resolveSave();
     await waitFor(() => expect(create).toBeEnabled());
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('renders commit uncertainty without permanent loading and allows safe cancel and refresh', async () => {
+    api.loadAlertSilences.mockResolvedValue({ content: [{ ...record, enable: true }], totalElements: 1 });
+    api.saveAlertSilence.mockRejectedValue(new AlertSilenceRequestFailure('unavailable', 'uncertain'));
+    renderPage();
+    await screen.findByText('Database maintenance');
+
+    fireEvent.click(screen.getByRole('button', { name: 'New silence' }));
+    const dialog = screen.getByRole('dialog');
+    fireEvent.change(within(dialog).getByLabelText('Policy'), { target: { value: 'Planned maintenance' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+
+    expect(await within(dialog).findByText('Silence policy could not be saved.')).toBeInTheDocument();
+    const save = within(dialog).getByText('Save').closest('button');
+    expect(save).toBeDisabled();
+    expect(save).not.toHaveClass('ant-btn-loading');
+    expect(within(dialog).getByRole('button', { name: 'Cancel' })).toBeEnabled();
+    const create = screen.getByRole('button', { name: 'New silence' });
+    expect(create).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByText('Silence policy could not be saved.')).toBeInTheDocument();
+    const row = screen.getByRole('row', { name: /Database maintenance/ });
+    const edit = within(row).getByRole('button', { name: 'Edit' });
+    expect(create).toBeDisabled();
+    expect(edit).toBeDisabled();
+    expect(within(row).getByRole('button', { name: 'Delete' })).toBeDisabled();
+    fireEvent.click(create);
+    fireEvent.click(edit);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+    await waitFor(() => expect(api.loadAlertSilences).toHaveBeenCalledTimes(2));
+    expect(api.saveAlertSilence).toHaveBeenCalledTimes(1);
+    expect(create).toBeDisabled();
+    expect(edit).toBeDisabled();
+  });
+
+  it('renders an explicit proof retry without repeating the update', async () => {
+    api.saveAlertSilence.mockRejectedValueOnce(new AlertSilenceRequestFailure('unavailable', 'uncertain'));
+    renderPage();
+    const row = await screen.findByRole('row', { name: /Database maintenance/ });
+    fireEvent.click(within(row).getByRole('button', { name: 'Edit' }));
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.change(within(dialog).getByLabelText('Policy'), { target: { value: 'Updated maintenance' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+
+    const retry = await within(dialog).findByRole('button', { name: 'Retry' });
+    expect(retry).toBeEnabled();
+    expect(within(dialog).getByText('Save').closest('button')).toBeDisabled();
+    expect(within(dialog).getByRole('button', { name: 'Cancel' })).toBeEnabled();
+
+    api.loadAlertSilence.mockResolvedValueOnce({ ...detailRecord, name: 'Updated maintenance' });
+    fireEvent.click(retry);
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(api.saveAlertSilence).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText('Silence policy could not be saved.')).not.toBeInTheDocument();
   });
 
   it('loads an edit before saving and deletes through the batch endpoint', async () => {

@@ -19,7 +19,6 @@ import { App } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import {
-  classifyAlertSilenceReadError,
   deleteAlertSilence,
   loadAlertSilence,
   saveAlertSilence,
@@ -27,6 +26,7 @@ import {
 } from '../alert-silence-api';
 import {
   AlertSilenceContractError,
+  alertSilenceFailureKind,
   buildAlertSilencePayload,
   validateAlertSilenceDraft,
   type AlertSilence,
@@ -55,25 +55,16 @@ export function useAlertSilenceMutations(
       return;
     }
     const current = draft;
-    await gate.run(
-      {
-        write: () => saveAlertSilence(current),
-        onCommitted,
-        verify: async () => {
-          if (current.id === undefined) requireCreatedProjection(await readCreatedProjection(current), current);
-          else requireDraftConvergence(await loadAlertSilence(current.id), current);
-          await rereadList();
-        }
-      },
-      saveFeedback
-    );
+    await gate.run(buildSaveOperation(current, onCommitted, rereadList, readCreatedProjection), saveFeedback);
   };
   const toggle = (silence: AlertSilence, enabled: boolean) =>
     gate.run(
       {
+        kind: 'toggle',
         write: () => updateAlertSilenceEnabled(silence, enabled),
-        verify: async () => {
-          requireSilenceConvergence(await loadAlertSilence(silence.id), { ...silence, enable: enabled });
+        prove: async () =>
+          requireSilenceConvergence(await loadAlertSilence(silence.id), { ...silence, enable: enabled }),
+        project: async () => {
           await rereadList();
         }
       },
@@ -82,9 +73,10 @@ export function useAlertSilenceMutations(
   const remove = (id: number) =>
     gate.run(
       {
+        kind: 'delete',
         write: () => deleteAlertSilence(id),
-        verify: async () => {
-          await requireMissingSilence(id);
+        prove: () => requireMissingSilence(id),
+        project: async () => {
           await rereadList();
         }
       },
@@ -93,11 +85,38 @@ export function useAlertSilenceMutations(
   return { ...gate, save, toggle, remove };
 }
 
+function buildSaveOperation(
+  draft: AlertSilenceDraft,
+  onCommitted: () => void,
+  rereadList: () => Promise<AlertSilencePage>,
+  readCreatedProjection: (draft: AlertSilenceDraft) => Promise<AlertSilencePage>
+) {
+  const id = draft.id;
+  const creating = id === undefined;
+  return {
+    kind: creating ? ('create' as const) : ('update' as const),
+    write: () => saveAlertSilence(draft),
+    onCommitted,
+    ...(id === undefined ? {} : { prove: async () => requireDraftConvergence(await loadAlertSilence(id), draft) }),
+    project: async () => {
+      if (creating) requireCreatedProjection(await readCreatedProjection(draft), draft);
+      await rereadList();
+    },
+    ...(creating
+      ? {
+          recoverProjection: async () => {
+            await rereadList();
+          }
+        }
+      : {})
+  };
+}
+
 async function requireMissingSilence(id: number) {
   try {
     await loadAlertSilence(id);
   } catch (reason) {
-    if (classifyAlertSilenceReadError(reason) === 'missing') return;
+    if (alertSilenceFailureKind(reason) === 'missing') return;
     throw reason;
   }
   throw new AlertSilenceContractError('Deleted silence still exists');

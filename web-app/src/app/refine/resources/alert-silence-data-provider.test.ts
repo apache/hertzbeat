@@ -16,11 +16,9 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ApiMessageError } from '@/core/http/api-message';
-import type { AlertSilence } from '@/features/alert/alert-silence-model';
+import { AlertSilenceRequestFailure, type AlertSilence } from '@/features/alert/alert-silence-model';
 
 type AlertSilenceApi = typeof import('@/features/alert/alert-silence-api');
-const canonical = vi.hoisted(() => ({ endpoint: '/canonical-alert-silence-endpoint' }));
 const api = vi.hoisted(() => ({
   deleteAlertSilence: vi.fn<AlertSilenceApi['deleteAlertSilence']>(),
   loadAlertSilence: vi.fn<AlertSilenceApi['loadAlertSilence']>(),
@@ -30,11 +28,8 @@ const api = vi.hoisted(() => ({
 }));
 vi.mock('@/features/alert/alert-silence-api', async importOriginal => ({
   ...(await importOriginal<AlertSilenceApi>()),
-  ...api,
-  alertSilenceEndpoint: canonical.endpoint
+  ...api
 }));
-
-import { alertSilenceEndpoint } from '@/features/alert/alert-silence-api';
 
 import { alertSilenceDataProvider } from './alert-silence-data-provider';
 
@@ -70,33 +65,35 @@ const draft = {
 describe('Alert Silence Refine data provider', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('accepts the custom action endpoint owned by the Alert Silence API', async () => {
+  it('is read-only because the page controller is the only mutation transaction owner', async () => {
+    api.loadAlertSilence.mockResolvedValue(record);
+    api.loadAlertSilences.mockResolvedValue(page);
     api.saveAlertSilence.mockResolvedValue(undefined);
-    expect(alertSilenceEndpoint).toBe(canonical.endpoint);
+    api.updateAlertSilenceEnabled.mockResolvedValue(undefined);
+    api.deleteAlertSilence.mockResolvedValue(undefined);
 
     await expect(
-      alertSilenceDataProvider.custom?.({
-        url: alertSilenceEndpoint,
-        method: 'post',
-        payload: draft
+      alertSilenceDataProvider.create({ resource: 'alert-silences', variables: draft })
+    ).rejects.toMatchObject({ code: 'ALERT_SILENCE_CREATE_UNSUPPORTED', statusCode: 405 });
+    await expect(
+      alertSilenceDataProvider.update({
+        resource: 'alert-silences',
+        id: 7,
+        variables: { draft: { ...draft, id: 7 }, query }
       })
-    ).resolves.toEqual({ data: { acknowledged: true } });
-    expect(api.saveAlertSilence).toHaveBeenCalledWith(draft);
-  });
+    ).rejects.toMatchObject({ code: 'ALERT_SILENCE_UPDATE_UNSUPPORTED', statusCode: 405 });
+    await expect(
+      alertSilenceDataProvider.deleteOne({ resource: 'alert-silences', id: 7, variables: { query } })
+    ).rejects.toMatchObject({ code: 'ALERT_SILENCE_DELETE_UNSUPPORTED', statusCode: 405 });
+    await expect(
+      alertSilenceDataProvider.custom?.({ url: '/api/alert/silence', method: 'post', payload: draft })
+    ).rejects.toMatchObject({ code: 'ALERT_SILENCE_CUSTOM_ACTION_UNSUPPORTED', statusCode: 405 });
 
-  it('rejects an inexact custom endpoint or HTTP verb before transport', async () => {
-    const unsupportedRequests = [
-      { url: `${alertSilenceEndpoint}/other`, method: 'post' as const },
-      { url: alertSilenceEndpoint, method: 'get' as const }
-    ];
-
-    for (const request of unsupportedRequests) {
-      await expect(alertSilenceDataProvider.custom?.({ ...request, payload: draft })).rejects.toMatchObject({
-        code: 'ALERT_SILENCE_CUSTOM_ACTION_UNSUPPORTED',
-        statusCode: 405
-      });
-    }
+    expect(api.loadAlertSilence).not.toHaveBeenCalled();
+    expect(api.loadAlertSilences).not.toHaveBeenCalled();
     expect(api.saveAlertSilence).not.toHaveBeenCalled();
+    expect(api.updateAlertSilenceEnabled).not.toHaveBeenCalled();
+    expect(api.deleteAlertSilence).not.toHaveBeenCalled();
   });
 
   it('owns only the named resource and exact server list query', async () => {
@@ -114,115 +111,13 @@ describe('Alert Silence Refine data provider', () => {
     });
   });
 
-  it('creates only through an explicit custom void action without guessing an id', async () => {
-    api.saveAlertSilence.mockResolvedValue(undefined);
-    await expect(
-      alertSilenceDataProvider.custom?.({
-        url: alertSilenceEndpoint,
-        method: 'post',
-        payload: draft
-      })
-    ).resolves.toEqual({ data: { acknowledged: true } });
-    expect(api.loadAlertSilence).not.toHaveBeenCalled();
-    await expect(
-      alertSilenceDataProvider.create({ resource: 'alert-silences', variables: draft })
-    ).rejects.toMatchObject({ statusCode: 405 });
-  });
-
-  it('strips unknown draft and query fields without weakening identity checks', async () => {
-    api.saveAlertSilence.mockResolvedValue(undefined);
-    api.loadAlertSilence.mockResolvedValue(record);
-    api.loadAlertSilences.mockResolvedValue(page);
-
-    await expect(
-      alertSilenceDataProvider.update<AlertSilence>({
-        resource: 'alert-silences',
-        id: 7,
-        variables: {
-          draft: { ...draft, id: 7, ignored: 'backend-only' },
-          query: { ...query, ignored: 'backend-only' },
-          ignored: 'adapter-only'
-        }
-      })
-    ).resolves.toEqual({ data: record });
-    expect(api.saveAlertSilence).toHaveBeenCalledWith({ ...draft, id: 7 });
-    expect(api.loadAlertSilences).toHaveBeenCalledWith(query);
-
-    await expect(
-      alertSilenceDataProvider.update({
-        resource: 'alert-silences',
-        id: 7,
-        variables: { draft: { ...draft, id: 8 }, query }
-      })
-    ).rejects.toMatchObject({ code: 'ALERT_SILENCE_VARIABLES_INVALID', statusCode: 400 });
-    await expect(
-      alertSilenceDataProvider.custom?.({
-        url: alertSilenceEndpoint,
-        method: 'post',
-        payload: { ...draft, id: 7 }
-      })
-    ).rejects.toMatchObject({ code: 'ALERT_SILENCE_VARIABLES_INVALID', statusCode: 400 });
-  });
-
-  it('updates and toggles from an exact canonical identity with authoritative list proof', async () => {
-    api.saveAlertSilence.mockResolvedValue(undefined);
-    api.loadAlertSilence.mockResolvedValue(record);
-    api.loadAlertSilences.mockResolvedValue(page);
-    await expect(
-      alertSilenceDataProvider.update<AlertSilence>({
-        resource: 'alert-silences',
-        id: 7,
-        variables: { draft: { ...draft, id: 7 }, query }
-      })
-    ).resolves.toEqual({ data: record });
-    expect(api.saveAlertSilence).toHaveBeenCalledWith({ ...draft, id: 7 });
-    expect(api.loadAlertSilences).toHaveBeenCalledWith(query);
-
-    api.loadAlertSilence.mockClear();
-    api.loadAlertSilences.mockClear();
-    await expect(
-      alertSilenceDataProvider.update<AlertSilence>({
-        resource: 'alert-silences',
-        id: 7,
-        variables: { operation: 'toggle', enable: false, query }
-      })
-    ).resolves.toEqual({ data: record });
-    expect(api.loadAlertSilence).toHaveBeenCalledTimes(2);
-    expect(api.updateAlertSilenceEnabled).toHaveBeenCalledWith(record, false);
-    expect(api.loadAlertSilences).toHaveBeenCalledWith(query);
-  });
-
-  it('requires missing detail and authoritative list evidence after delete', async () => {
-    api.loadAlertSilence
-      .mockResolvedValueOnce(record)
-      .mockRejectedValueOnce(new ApiMessageError('missing', { code: 3, status: 200 }));
-    api.deleteAlertSilence.mockResolvedValue(undefined);
-    api.loadAlertSilences.mockResolvedValue({ ...page, content: [], totalElements: 0, totalPages: 0 });
-    await expect(
-      alertSilenceDataProvider.deleteOne<AlertSilence>({
-        resource: 'alert-silences',
-        id: 7,
-        variables: { query }
-      })
-    ).resolves.toEqual({ data: record });
-
-    api.loadAlertSilence.mockReset().mockResolvedValue(record);
-    await expect(
-      alertSilenceDataProvider.deleteOne<AlertSilence>({
-        resource: 'alert-silences',
-        id: 7,
-        variables: { query }
-      })
-    ).rejects.toMatchObject({ code: 'ALERT_SILENCE_DELETE_NOT_CONFIRMED' });
-  });
-
   it('keeps missing, unavailable, and invalid-contract failures distinguishable', async () => {
-    api.loadAlertSilence.mockRejectedValueOnce(new ApiMessageError('missing', { code: 3, status: 200 }));
+    api.loadAlertSilence.mockRejectedValueOnce(new AlertSilenceRequestFailure('missing', 'uncertain'));
     await expect(alertSilenceDataProvider.getOne({ resource: 'alert-silences', id: 7 })).rejects.toMatchObject({
       code: 'ALERT_SILENCE_MISSING',
       statusCode: 404
     });
-    api.loadAlertSilence.mockRejectedValueOnce(new ApiMessageError('gateway', { status: 503 }));
+    api.loadAlertSilence.mockRejectedValueOnce(new AlertSilenceRequestFailure('unavailable', 'uncertain'));
     await expect(alertSilenceDataProvider.getOne({ resource: 'alert-silences', id: 7 })).rejects.toMatchObject({
       code: 'ALERT_SILENCE_UNAVAILABLE',
       statusCode: 503

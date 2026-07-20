@@ -20,6 +20,12 @@ import type { RemotePageState } from '@/shared/remote-state';
 import type { AlertSilence, AlertSilenceDraft, AlertSilenceQuery } from './alert-silence-model';
 
 export type AlertSilenceListEvidence = RemotePageState<AlertSilence, 'unavailable' | 'error'>;
+export type AlertSilenceOperationKind = 'create' | 'update' | 'toggle' | 'delete';
+export type AlertSilenceRecovery = {
+  kind: AlertSilenceOperationKind;
+  phase: 'proof' | 'projection' | 'commit-uncertain';
+  retryable: boolean;
+};
 
 type AlertSilenceDetailFailure = 'missing' | 'unavailable' | 'error';
 export type AlertSilenceDetailState =
@@ -35,6 +41,8 @@ export type AlertSilenceViewState = {
   detail: AlertSilenceDetailState;
   list: AlertSilenceListEvidence;
   busy: boolean;
+  writeLocked: boolean;
+  recovery: AlertSilenceRecovery | null;
   refreshing: boolean;
 };
 

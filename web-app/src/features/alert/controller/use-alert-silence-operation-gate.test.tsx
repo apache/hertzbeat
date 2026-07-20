@@ -24,6 +24,7 @@ vi.mock('antd', () => ({ App: { useApp: () => ({ message: feedback }) } }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 import { useAlertSilenceOperationGate } from './use-alert-silence-operation-gate';
+import { AlertSilenceRequestFailure } from '../alert-silence-model';
 
 const labels = { success: 'operation.success', error: 'operation.error' };
 
@@ -35,7 +36,7 @@ describe('useAlertSilenceOperationGate', () => {
     const view = renderHook(() => useAlertSilenceOperationGate());
     let operation!: Promise<void>;
     act(() => {
-      operation = view.result.current.run({ write: () => write.promise, verify: vi.fn() }, labels);
+      operation = view.result.current.run({ kind: 'create', write: () => write.promise, project: vi.fn() }, labels);
     });
 
     view.unmount();
@@ -54,7 +55,7 @@ describe('useAlertSilenceOperationGate', () => {
     const view = renderHook(() => useAlertSilenceOperationGate());
     let operation!: Promise<void>;
     act(() => {
-      operation = view.result.current.run({ write: () => Promise.resolve(), verify }, labels);
+      operation = view.result.current.run({ kind: 'create', write: () => Promise.resolve(), project: verify }, labels);
     });
     await waitFor(() => expect(verify).toHaveBeenCalledOnce());
     expect(feedback.success).toHaveBeenCalledWith(labels.success);
@@ -66,6 +67,28 @@ describe('useAlertSilenceOperationGate', () => {
     });
 
     expect(feedback.error).not.toHaveBeenCalled();
+  });
+
+  it('keeps an uncertain receipt write-locked without presenting idle recovery as an active request', async () => {
+    const project = vi.fn();
+    const view = renderHook(() => useAlertSilenceOperationGate());
+
+    await act(() =>
+      view.result.current.run(
+        {
+          kind: 'create',
+          write: () => Promise.reject(new AlertSilenceRequestFailure('unavailable', 'uncertain')),
+          project
+        },
+        labels
+      )
+    );
+
+    expect(view.result.current.busy).toBe(false);
+    expect(view.result.current.isLocked()).toBe(true);
+    expect(view.result.current.recovery).toEqual({ kind: 'create', phase: 'commit-uncertain', retryable: false });
+    expect(feedback.error).not.toHaveBeenCalled();
+    expect(project).not.toHaveBeenCalled();
   });
 });
 

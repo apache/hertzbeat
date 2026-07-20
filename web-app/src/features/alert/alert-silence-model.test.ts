@@ -19,6 +19,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   AlertSilenceContractError,
+  AlertSilenceMissingError,
+  AlertSilenceRequestFailure,
+  alertSilenceFailureKind,
+  alertSilenceWriteOutcome,
   alertSilenceDraftFromDetail,
   buildAlertSilencePayload,
   changeAlertSilenceType,
@@ -30,6 +34,21 @@ import {
 
 describe('alert silence model', () => {
   afterEach(() => vi.useRealTimers());
+
+  it('classifies only stable domain failures for controllers', () => {
+    expect(alertSilenceFailureKind(new AlertSilenceMissingError())).toBe('missing');
+    expect(alertSilenceFailureKind(new AlertSilenceRequestFailure('unavailable', 'uncertain'))).toBe('unavailable');
+    expect(alertSilenceFailureKind(new AlertSilenceRequestFailure('error', 'rejected'))).toBe('error');
+    expect(alertSilenceFailureKind(new AlertSilenceContractError('invalid response'))).toBe('error');
+    expect(alertSilenceFailureKind(new Error('unknown failure'))).toBe('error');
+  });
+
+  it('permits a repeated write only after an explicit boundary rejection', () => {
+    expect(alertSilenceWriteOutcome(new AlertSilenceRequestFailure('error', 'rejected'))).toBe('rejected');
+    expect(alertSilenceWriteOutcome(new AlertSilenceRequestFailure('unavailable', 'uncertain'))).toBe('uncertain');
+    expect(alertSilenceWriteOutcome(new AlertSilenceContractError('unknown outcome'))).toBe('uncertain');
+    expect(alertSilenceWriteOutcome(new Error('unknown outcome'))).toBe('uncertain');
+  });
 
   it('normalizes unsupported URL pagination without discarding search context', () => {
     expect(readAlertSilenceQuery(new URLSearchParams('search=%20prod%20&pageIndex=-2&pageSize=999'))).toEqual({

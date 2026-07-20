@@ -18,7 +18,6 @@
 import type {
   BaseRecord,
   CreateResponse,
-  CustomParams,
   CustomResponse,
   DataProvider,
   DeleteOneResponse,
@@ -28,26 +27,16 @@ import type {
   UpdateResponse
 } from '@refinedev/core';
 
+import { loadAlertSilence, loadAlertSilences } from '@/features/alert/alert-silence-api';
 import {
-  alertSilenceEndpoint,
-  deleteAlertSilence,
-  isAlertSilenceMissing,
-  loadAlertSilence,
-  loadAlertSilences,
-  saveAlertSilence,
-  updateAlertSilenceEnabled
-} from '@/features/alert/alert-silence-api';
-import { AlertSilenceContractError, type AlertSilence } from '@/features/alert/alert-silence-model';
+  AlertSilenceContractError,
+  alertSilenceFailureKind,
+  type AlertSilence
+} from '@/features/alert/alert-silence-model';
 import { adaptRefineRecord, adaptRefineRecords } from '@/shared/refine/refine-provider-data';
 
 import { createRefineHttpError, toRefineHttpError } from '../refine-http-error';
-import {
-  readAlertSilenceDeleteVariables,
-  readAlertSilenceDraft,
-  readAlertSilenceId,
-  readAlertSilenceListQuery,
-  readAlertSilenceUpdateVariables
-} from './alert-silence-data-provider-input';
+import { readAlertSilenceId, readAlertSilenceListQuery } from './alert-silence-data-provider-input';
 
 export const alertSilenceResourceName = 'alert-silences';
 
@@ -75,69 +64,19 @@ export const alertSilenceDataProvider: DataProvider = {
   },
 
   create<TData extends BaseRecord = BaseRecord>(): Promise<CreateResponse<TData>> {
-    return Promise.reject(contractError('ALERT_SILENCE_CREATE_UNSUPPORTED', 405));
+    return unsupported('ALERT_SILENCE_CREATE_UNSUPPORTED');
   },
 
-  update<TData extends BaseRecord = BaseRecord, TVariables = object>(params: {
-    resource: string;
-    id: string | number;
-    variables: TVariables;
-  }): Promise<UpdateResponse<TData>> {
-    return protect(async () => {
-      assertResource(params.resource);
-      const id = readAlertSilenceId(params.id);
-      const variables = readAlertSilenceUpdateVariables(params.variables, id);
-      if ('operation' in variables) {
-        const before = await loadAlertSilence(id);
-        assertCanonicalIdentity(before, id);
-        await updateAlertSilenceEnabled(before, variables.enable);
-      } else {
-        await saveAlertSilence(variables.draft);
-      }
-      const canonical = await loadAlertSilence(id);
-      assertCanonicalIdentity(canonical, id);
-      await loadAlertSilences(variables.query);
-      return { data: adaptRefineRecord<TData>(canonical) };
-    });
+  update<TData extends BaseRecord = BaseRecord>(): Promise<UpdateResponse<TData>> {
+    return unsupported('ALERT_SILENCE_UPDATE_UNSUPPORTED');
   },
 
-  deleteOne<TData extends BaseRecord = BaseRecord, TVariables = object>(params: {
-    resource: string;
-    id: string | number;
-    variables?: TVariables;
-  }): Promise<DeleteOneResponse<TData>> {
-    return protect(async () => {
-      assertResource(params.resource);
-      const id = readAlertSilenceId(params.id);
-      const query = readAlertSilenceDeleteVariables(params.variables);
-      const canonical = await loadAlertSilence(id);
-      assertCanonicalIdentity(canonical, id);
-      await deleteAlertSilence(id);
-      try {
-        await loadAlertSilence(id);
-        throw contractError('ALERT_SILENCE_DELETE_NOT_CONFIRMED');
-      } catch (reason) {
-        if (!isAlertSilenceMissing(reason)) throw reason;
-      }
-      const proof = await loadAlertSilences(query);
-      if (proof.content.some(item => item.id === id)) {
-        throw contractError('ALERT_SILENCE_DELETE_NOT_CONFIRMED');
-      }
-      return { data: adaptRefineRecord<TData>(canonical) };
-    });
+  deleteOne<TData extends BaseRecord = BaseRecord>(): Promise<DeleteOneResponse<TData>> {
+    return unsupported('ALERT_SILENCE_DELETE_UNSUPPORTED');
   },
 
-  custom<TData extends BaseRecord = BaseRecord, TQuery = unknown, TPayload = unknown>(
-    params: CustomParams<TQuery, TPayload>
-  ): Promise<CustomResponse<TData>> {
-    return protect(async () => {
-      if (params.url !== alertSilenceEndpoint || params.method !== 'post') {
-        throw contractError('ALERT_SILENCE_CUSTOM_ACTION_UNSUPPORTED', 405);
-      }
-      const draft = readAlertSilenceDraft(params.payload);
-      await saveAlertSilence(draft);
-      return { data: adaptRefineRecord<TData>({ acknowledged: true }) };
-    });
+  custom<TData extends BaseRecord = BaseRecord>(): Promise<CustomResponse<TData>> {
+    return unsupported('ALERT_SILENCE_CUSTOM_ACTION_UNSUPPORTED');
   },
 
   getApiUrl: () => '/api/alert'
@@ -147,19 +86,13 @@ async function protect<T>(operation: () => Promise<T>): Promise<T> {
   try {
     return await operation();
   } catch (reason) {
-    if (isAlertSilenceMissing(reason)) throw contractError('ALERT_SILENCE_MISSING', 404);
+    const failure = alertSilenceFailureKind(reason);
+    if (failure === 'missing') throw contractError('ALERT_SILENCE_MISSING', 404);
     if (reason instanceof AlertSilenceContractError) {
       throw contractError('ALERT_SILENCE_RESPONSE_INVALID');
     }
-    if (isUnavailable(reason)) {
-      const status = reason.status ?? 0;
-      throw createRefineHttpError(
-        'Alert Silence is unavailable',
-        status,
-        'ALERT_SILENCE_UNAVAILABLE',
-        status === 0 ? 'network' : 'http',
-        reason.status
-      );
+    if (failure === 'unavailable') {
+      throw createRefineHttpError('Alert Silence is unavailable', 503, 'ALERT_SILENCE_UNAVAILABLE', 'http', 503);
     }
     throw toRefineHttpError(reason);
   }
@@ -175,13 +108,10 @@ function assertCanonicalIdentity(record: AlertSilence, id: number) {
   if (record.id !== id) throw contractError('ALERT_SILENCE_CANONICAL_IDENTITY_INVALID');
 }
 
-function isUnavailable(reason: unknown): reason is { status?: number } {
-  if (!reason || typeof reason !== 'object') return false;
-  const status = 'status' in reason ? reason.status : undefined;
-  const cause = 'cause' in reason ? reason.cause : undefined;
-  return status === 502 || status === 503 || status === 504 || (status === undefined && cause !== undefined);
-}
-
 function contractError(code: string, status = 502) {
   return createRefineHttpError('Alert Silence contract failed', status, code);
+}
+
+function unsupported<T>(code: string): Promise<T> {
+  return Promise.reject(contractError(code, 405));
 }
