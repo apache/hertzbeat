@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
   deleteOne: vi.fn(),
+  getList: vi.fn(),
   getOne: vi.fn(),
   notification: vi.fn(),
   options: new Map<string, unknown>(),
@@ -56,7 +57,7 @@ const rule = {
 
 describe('notice rule controller', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     mocks.options.clear();
     mocks.options.set('notice-receivers:all', ready([receiver]));
     mocks.options.set('notice-templates:all', ready([template]));
@@ -64,10 +65,12 @@ describe('notice rule controller', () => {
     mocks.create.mockResolvedValue({ data: { id: 31 } });
     mocks.deleteOne.mockResolvedValue({ data: rule });
     mocks.getOne.mockResolvedValue({ data: rule });
+    mocks.getList.mockResolvedValue({ data: [], total: 0 });
     mocks.update.mockResolvedValue({ data: { ...rule, enable: false } });
     mocks.useDataProvider.mockReturnValue(() => ({
       create: mocks.create,
       deleteOne: mocks.deleteOne,
+      getList: mocks.getList,
       getOne: mocks.getOne,
       update: mocks.update
     }));
@@ -123,9 +126,8 @@ describe('notice rule controller', () => {
     await act(async () => result.current.actions.submit());
     expect(result.current.state.draft).not.toBeNull();
     expect(result.current.state.list.kind).toBe('unavailable');
-    expect(mocks.notification).toHaveBeenCalledWith(
-      expect.objectContaining({ message: 'noticeRules.save.unavailable' })
-    );
+    expect(result.current.state.recovery).toMatchObject({ phase: 'projection', failure: 'unavailable' });
+    expect(mocks.notification).toHaveBeenCalledWith(expect.objectContaining({ message: 'common.unavailable' }));
   });
 
   it('closes only after provider proof and authoritative list reread both succeed', async () => {
@@ -206,7 +208,7 @@ describe('notice rule controller', () => {
       void result.current.actions.edit(31);
     });
 
-    expect(mocks.create).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(mocks.create).toHaveBeenCalledTimes(1));
     expect(mocks.update).not.toHaveBeenCalled();
     expect(mocks.deleteOne).not.toHaveBeenCalled();
     expect(mocks.getOne).not.toHaveBeenCalled();
@@ -283,7 +285,7 @@ describe('notice rule controller', () => {
   });
 
   it('classifies a write 404 as save error rather than detail missing', async () => {
-    mocks.update.mockRejectedValueOnce(new NoticeRuleRequestFailure('missing'));
+    mocks.update.mockRejectedValueOnce(new NoticeRuleRequestFailure('missing', 'rejected'));
     const { result } = renderHook(() => useNoticeRuleController());
     await act(async () => result.current.actions.edit(31));
 
@@ -314,6 +316,114 @@ describe('notice rule controller', () => {
 
     expect(mocks.update).not.toHaveBeenCalled();
     expect(mocks.notification).toHaveBeenCalledWith(expect.objectContaining({ message: 'noticeRules.save.invalid' }));
+  });
+
+  it.each([
+    ['create', 'submit'],
+    ['update', 'submit'],
+    ['toggle', 'toggle'],
+    ['delete', 'remove']
+  ] as const)('retains an ambiguous %s receipt and retries only proof reads', async (kind, action) => {
+    const { result } = renderHook(() => useNoticeRuleController());
+    if (kind === 'create') {
+      act(() => result.current.actions.create());
+      act(() => result.current.actions.updateDraft({ name: 'Proof', receiverIds: [11], templateId: 21 }));
+      mocks.create.mockRejectedValueOnce(new NoticeRuleRequestFailure('unavailable', 'uncertain'));
+      await act(async () => result.current.actions.submit());
+    } else if (kind === 'update') {
+      await act(async () => result.current.actions.edit(31));
+      mocks.update.mockRejectedValueOnce(new NoticeRuleRequestFailure('unavailable', 'uncertain'));
+      await act(async () => result.current.actions.submit());
+    } else if (kind === 'toggle') {
+      mocks.update.mockRejectedValueOnce(new NoticeRuleRequestFailure('unavailable', 'uncertain'));
+      await act(async () => result.current.actions.toggle(rule, false));
+    } else {
+      mocks.deleteOne.mockRejectedValueOnce(new NoticeRuleRequestFailure('unavailable', 'uncertain'));
+      await act(async () => result.current.actions.remove(rule));
+    }
+
+    expect(result.current.state.recovery).toMatchObject({ kind, failure: 'unavailable', retryable: true });
+    const writesBeforeRetry = {
+      create: mocks.create.mock.calls.length,
+      delete: mocks.deleteOne.mock.calls.length,
+      update: mocks.update.mock.calls.length
+    };
+
+    if (action === 'submit') await act(async () => result.current.actions.submit());
+    if (action === 'toggle') await act(async () => result.current.actions.toggle(rule, false));
+    if (action === 'remove') await act(async () => result.current.actions.remove(rule));
+    expect(mocks.create).toHaveBeenCalledTimes(writesBeforeRetry.create);
+    expect(mocks.deleteOne).toHaveBeenCalledTimes(writesBeforeRetry.delete);
+    expect(mocks.update).toHaveBeenCalledTimes(writesBeforeRetry.update);
+
+    if (kind === 'delete') mocks.getOne.mockRejectedValueOnce(new NoticeRuleRequestFailure('missing', 'rejected'));
+    await act(async () => result.current.actions.retry());
+    expect(mocks.create).toHaveBeenCalledTimes(writesBeforeRetry.create);
+    expect(mocks.deleteOne).toHaveBeenCalledTimes(writesBeforeRetry.delete);
+    expect(mocks.update).toHaveBeenCalledTimes(writesBeforeRetry.update);
+  });
+
+  it('releases a definitely rejected update so the corrected UI action may write again', async () => {
+    const { result } = renderHook(() => useNoticeRuleController());
+    await act(async () => result.current.actions.edit(31));
+    mocks.update.mockRejectedValueOnce(new NoticeRuleRequestFailure('error', 'rejected'));
+
+    await act(async () => result.current.actions.submit());
+    expect(result.current.state.recovery).toBeUndefined();
+
+    await act(async () => result.current.actions.submit());
+    expect(mocks.update).toHaveBeenCalledTimes(2);
+  });
+
+  it('locks an ambiguous create identity without offering another proof or write', async () => {
+    const { result } = renderHook(() => useNoticeRuleController());
+    act(() => result.current.actions.create());
+    act(() => result.current.actions.updateDraft({ name: 'Proof', receiverIds: [11], templateId: 21 }));
+    mocks.create.mockRejectedValueOnce(new NoticeRuleRequestFailure('unavailable', 'uncertain'));
+    await act(async () => result.current.actions.submit());
+    const matching = { ...rule, templateId: 21, templateName: 'Mail' };
+    mocks.getList.mockResolvedValueOnce({ data: [matching, { ...matching, id: 32 }], total: 2 });
+
+    await act(async () => result.current.actions.retry());
+
+    expect(result.current.state.recovery).toEqual({
+      kind: 'create',
+      phase: 'commit-uncertain',
+      failure: 'commit-uncertain',
+      retryable: false
+    });
+    const proofReads = mocks.getList.mock.calls.length;
+    await act(async () => result.current.actions.retry());
+    expect(mocks.getList).toHaveBeenCalledTimes(proofReads);
+    expect(mocks.create).toHaveBeenCalledOnce();
+  });
+
+  it('does not start a write when its preflight owner unmounts', async () => {
+    const createPreflight = deferred<{ data: (typeof rule)[]; total: number }>();
+    mocks.getList.mockReturnValueOnce(createPreflight.promise);
+    const createView = renderHook(() => useNoticeRuleController());
+    act(() => createView.result.current.actions.create());
+    act(() => createView.result.current.actions.updateDraft({ name: 'Proof', receiverIds: [11], templateId: 21 }));
+    let create!: Promise<boolean>;
+    act(() => {
+      create = createView.result.current.actions.submit();
+    });
+    createView.unmount();
+    createPreflight.resolve({ data: [], total: 0 });
+    await act(async () => create);
+    expect(mocks.create).not.toHaveBeenCalled();
+
+    const togglePreflight = deferred<{ data: typeof rule }>();
+    mocks.getOne.mockReturnValueOnce(togglePreflight.promise);
+    const toggleView = renderHook(() => useNoticeRuleController());
+    let toggle!: Promise<boolean>;
+    act(() => {
+      toggle = toggleView.result.current.actions.toggle(rule, false);
+    });
+    toggleView.unmount();
+    togglePreflight.resolve({ data: rule });
+    await act(async () => toggle);
+    expect(mocks.update).not.toHaveBeenCalled();
   });
 });
 

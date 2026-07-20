@@ -19,6 +19,7 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createNoticeRuleDraft, type NoticeRuleDraft } from '../model/notice-rule-model';
+import type { NoticeRuleOperationRecovery } from '../model/notice-rule-operation-state';
 
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
@@ -83,24 +84,86 @@ describe('NoticeRuleEditor advanced fields', () => {
     expect(screen.getByRole('button', { name: 'common.save' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'common.cancel' })).toBeEnabled();
   });
+
+  it('does not expose inert save or cancel actions while proof ownership is retained', () => {
+    renderEditor(createNoticeRuleDraft(), vi.fn(), true, {
+      kind: 'create',
+      phase: 'commit-uncertain',
+      failure: 'commit-uncertain',
+      retryable: false
+    });
+
+    expect(screen.getByRole('button', { name: 'common.save' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.cancel' })).toBeDisabled();
+  });
+
+  it.each([
+    [
+      'recovery',
+      false,
+      {
+        kind: 'create',
+        phase: 'commit-uncertain',
+        failure: 'commit-uncertain',
+        retryable: false
+      } satisfies NoticeRuleOperationRecovery
+    ],
+    ['saving', true, undefined]
+  ] as const)('disables every visible field while %s owns the editor', (_label, saving, recovery) => {
+    const draft = {
+      ...createNoticeRuleDraft(),
+      filterAll: false,
+      labelsText: 'severity:critical',
+      limitDays: true
+    };
+    const update = vi.fn();
+    const view = renderEditor(draft, update);
+    openAdvancedFields();
+
+    view.rerender(editorElement(draft, update, true, recovery, saving));
+
+    const nativeControls = ['textbox', 'switch', 'checkbox'].flatMap(role => screen.queryAllByRole(role));
+    expect(nativeControls.length).toBeGreaterThan(0);
+    nativeControls.forEach(control => expect(control).toBeDisabled());
+    expect(document.querySelectorAll('.ant-select-disabled')).toHaveLength(2);
+    expect(screen.getByText('noticeRules.advanced').closest('[role="button"]')).toHaveAttribute(
+      'aria-disabled',
+      'true'
+    );
+  });
 });
 
 function renderEditor(
   draft: NoticeRuleDraft,
   update: (patch: Partial<NoticeRuleDraft>) => void,
-  dependenciesReady = true
+  dependenciesReady = true,
+  recovery?: NoticeRuleOperationRecovery,
+  saving = false
 ) {
-  return render(
+  return render(editorElement(draft, update, dependenciesReady, recovery, saving));
+}
+
+function editorElement(
+  draft: NoticeRuleDraft,
+  update: (patch: Partial<NoticeRuleDraft>) => void,
+  dependenciesReady = true,
+  recovery?: NoticeRuleOperationRecovery,
+  saving = false
+) {
+  return (
     <NoticeRuleEditor
       draft={draft}
       receivers={[]}
       templates={[]}
-      saving={false}
+      saving={saving}
       dependenciesReady={dependenciesReady}
       selectReceivers={vi.fn()}
       update={update}
       close={vi.fn()}
       submit={vi.fn()}
+      recovery={recovery}
+      retrying={false}
+      retry={vi.fn()}
     />
   );
 }

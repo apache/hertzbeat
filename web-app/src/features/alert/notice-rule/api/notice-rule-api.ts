@@ -12,6 +12,7 @@ import type { NoticeReceiverOption } from '../../notice-receiver/model/notice-re
 import type { NoticeTemplate } from '../../notice-template-model';
 import {
   buildNoticeRulePayload,
+  maximumNoticeRuleScanPages,
   noticeRulePageSizes,
   writeNoticeRuleQuery,
   type NoticeRuleDraft,
@@ -23,13 +24,21 @@ import { noticeRuleApiRequest } from './notice-rule-api-failure';
 import { parseNoticeRule, parseNoticeRulePage, parseNoticeTemplates } from './notice-rule-schema';
 
 export async function loadNoticeRules(query: NoticeRuleQuery) {
-  return noticeRuleApiRequest(async () =>
-    parseNoticeRulePage(await apiMessageGet(`${noticeRulesEndpoint}?${writeNoticeRuleQuery(query).toString()}`), query)
+  return noticeRuleApiRequest(
+    async () =>
+      parseNoticeRulePage(
+        await apiMessageGet(`${noticeRulesEndpoint}?${writeNoticeRuleQuery(query).toString()}`),
+        query
+      ),
+    'collection'
   );
 }
 
 export async function loadNoticeRule(id: number) {
-  return noticeRuleApiRequest(async () => parseNoticeRule(await apiMessageGet(noticeRuleDetailEndpoint(id)), id));
+  return noticeRuleApiRequest(
+    async () => parseNoticeRule(await apiMessageGet(noticeRuleDetailEndpoint(id)), id),
+    'detail'
+  );
 }
 
 export async function loadAllNoticeReceivers() {
@@ -39,7 +48,7 @@ export async function loadAllNoticeReceivers() {
       throw new NoticeRuleContractError('NOTICE_RULE_RECEIVER_OPTIONS_INVALID');
     }
     return receivers;
-  });
+  }, 'collection');
 }
 
 export async function loadAllNoticeTemplates() {
@@ -48,13 +57,15 @@ export async function loadAllNoticeTemplates() {
     const ids = templates.flatMap(item => (item.id == null ? [] : [item.id]));
     if (new Set(ids).size !== ids.length) throw new NoticeRuleContractError('NOTICE_RULE_TEMPLATE_OPTIONS_INVALID');
     return templates;
-  });
+  }, 'collection');
 }
 
 export async function loadAllNoticeRulesByName(name: string) {
   const pageSize = noticeRulePageSizes.at(-1)!;
   const first = await loadNoticeRules({ name, pageIndex: 0, pageSize });
-  if (first.totalPages > 10_000) throw new NoticeRuleContractError('NOTICE_RULE_PAGE_COUNT_INVALID');
+  if (first.totalPages > maximumNoticeRuleScanPages) {
+    throw new NoticeRuleContractError('NOTICE_RULE_PAGE_COUNT_INVALID');
+  }
   const pages = [first];
   for (let pageIndex = 1; pageIndex < first.totalPages; pageIndex += 1) {
     const page = await loadNoticeRules({ name, pageIndex, pageSize });
@@ -76,13 +87,14 @@ export async function saveNoticeRule(
   templates: NoticeTemplate[]
 ) {
   const payload = buildNoticeRulePayload(draft, receivers, templates);
-  return noticeRuleApiRequest(() =>
-    draft.id ? apiMessagePut(noticeRuleEndpoint, payload) : apiMessagePost(noticeRuleEndpoint, payload)
+  return noticeRuleApiRequest(
+    () => (draft.id ? apiMessagePut(noticeRuleEndpoint, payload) : apiMessagePost(noticeRuleEndpoint, payload)),
+    'write'
   );
 }
 
 export function deleteNoticeRule(id: number) {
-  return noticeRuleApiRequest(() => apiMessageDelete(noticeRuleDetailEndpoint(id)));
+  return noticeRuleApiRequest(() => apiMessageDelete(noticeRuleDetailEndpoint(id)), 'write');
 }
 
 function noticeRuleDetailEndpoint(id: number) {

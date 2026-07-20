@@ -16,13 +16,7 @@ import type {
   UpdateResponse
 } from '@refinedev/core';
 
-import {
-  deleteNoticeRule,
-  loadAllNoticeRulesByName,
-  loadNoticeRule,
-  loadNoticeRules,
-  saveNoticeRule
-} from '@/features/alert/notice-rule/api/notice-rule-api';
+import { loadNoticeRule, loadNoticeRules } from '@/features/alert/notice-rule/api/notice-rule-api';
 import { parseNoticeRuleMutationVariables } from '@/features/alert/notice-rule/api/notice-rule-schema';
 import {
   NoticeRuleContractError,
@@ -31,7 +25,6 @@ import {
   preserveNoticeRuleFailure
 } from '@/features/alert/notice-rule/model/notice-rule-failure';
 import {
-  noticeRuleMatchesDraft,
   noticeRulePageSizes,
   validateNoticeRuleDependencies,
   validateNoticeRuleDraft,
@@ -40,12 +33,17 @@ import {
 } from '@/features/alert/notice-rule/model/notice-rule-model';
 import { noticeApiEndpoint } from '@/features/alert/notice-api-endpoints';
 import { adaptRefineRecord, adaptRefineRecords } from '@/shared/refine/refine-provider-data';
+import {
+  createNoticeRuleRecord,
+  deleteNoticeRuleRecord,
+  updateNoticeRuleRecord
+} from './notice-rule-provider-operations';
 
 export const noticeRuleResourceName = 'notice-rules';
 
 export const noticeRuleDataProvider: DataProvider = {
   getList<TData extends BaseRecord = BaseRecord>(params: GetListParams): Promise<GetListResponse<TData>> {
-    return protect(async () => {
+    return protectRead(async () => {
       assertResource(params.resource);
       const page = await loadNoticeRules(readListQuery(params));
       return { data: adaptRefineRecords<TData>(page.content), total: page.totalElements };
@@ -56,7 +54,7 @@ export const noticeRuleDataProvider: DataProvider = {
     resource: string;
     id: string | number;
   }): Promise<GetOneResponse<TData>> {
-    return protect(async () => {
+    return protectRead(async () => {
       assertResource(params.resource);
       const id = readId(params.id);
       return { data: adaptRefineRecord<TData>(await loadNoticeRule(id)) };
@@ -67,23 +65,7 @@ export const noticeRuleDataProvider: DataProvider = {
     resource: string;
     variables: TVariables;
   }): Promise<CreateResponse<TData>> {
-    return protect(async () => {
-      assertResource(params.resource);
-      const variables = readMutationVariables(params.variables);
-      if (variables.draft.id !== undefined) throw contractError('NOTICE_RULE_VARIABLES_INVALID');
-      const before = await loadAllNoticeRulesByName(variables.draft.name.trim());
-      const previousIds = new Set(before.map(rule => rule.id));
-      await saveNoticeRule(variables.draft, variables.receivers, variables.templates);
-      const after = await loadAllNoticeRulesByName(variables.draft.name.trim());
-      const created = after.filter(
-        rule =>
-          !previousIds.has(rule.id) &&
-          noticeRuleMatchesDraft(rule, variables.draft, variables.receivers, variables.templates)
-      );
-      const canonical = created[0];
-      if (created.length !== 1 || !canonical) throw contractError('NOTICE_RULE_CREATE_NOT_CONVERGED');
-      return { data: adaptRefineRecord<TData>(canonical) };
-    });
+    return createRecord(params);
   },
 
   update<TData extends BaseRecord = BaseRecord, TVariables = object>(params: {
@@ -91,17 +73,7 @@ export const noticeRuleDataProvider: DataProvider = {
     id: string | number;
     variables: TVariables;
   }): Promise<UpdateResponse<TData>> {
-    return protect(async () => {
-      assertResource(params.resource);
-      const id = readId(params.id);
-      const variables = readMutationVariables(params.variables, id);
-      await saveNoticeRule(variables.draft, variables.receivers, variables.templates);
-      const canonical = await loadNoticeRule(id);
-      if (!noticeRuleMatchesDraft(canonical, variables.draft, variables.receivers, variables.templates)) {
-        throw contractError('NOTICE_RULE_UPDATE_NOT_CONVERGED');
-      }
-      return { data: adaptRefineRecord<TData>(canonical) };
-    });
+    return updateRecord(params);
   },
 
   deleteOne<TData extends BaseRecord = BaseRecord, TVariables = object>(params: {
@@ -109,25 +81,44 @@ export const noticeRuleDataProvider: DataProvider = {
     id: string | number;
     variables?: TVariables;
   }): Promise<DeleteOneResponse<TData>> {
-    return protect(async () => {
-      assertResource(params.resource);
-      const id = readId(params.id);
-      const canonical = await loadNoticeRule(id);
-      await deleteNoticeRule(id);
-      try {
-        await loadNoticeRule(id);
-        throw contractError('NOTICE_RULE_DELETE_NOT_CONVERGED');
-      } catch (error) {
-        if (noticeRuleFailureKind(error) !== 'missing') throw error;
-      }
-      return { data: adaptRefineRecord<TData>(canonical) };
-    });
+    return deleteRecord(params);
   },
 
   getApiUrl: () => noticeApiEndpoint
 };
 
-async function protect<T>(operation: () => Promise<T>): Promise<T> {
+async function createRecord<TData extends BaseRecord, TVariables>(params: {
+  resource: string;
+  variables: TVariables;
+}): Promise<CreateResponse<TData>> {
+  assertResource(params.resource);
+  const variables = readMutationVariables(params.variables);
+  if (variables.draft.id !== undefined) throw contractError('NOTICE_RULE_VARIABLES_INVALID');
+  return createNoticeRuleRecord<TData>(variables);
+}
+
+async function updateRecord<TData extends BaseRecord, TVariables>(params: {
+  resource: string;
+  id: string | number;
+  variables: TVariables;
+}): Promise<UpdateResponse<TData>> {
+  assertResource(params.resource);
+  const id = readId(params.id);
+  const variables = readMutationVariables(params.variables, id);
+  return updateNoticeRuleRecord<TData>(id, variables);
+}
+
+async function deleteRecord<TData extends BaseRecord, TVariables>(params: {
+  resource: string;
+  id: string | number;
+  variables?: TVariables;
+}): Promise<DeleteOneResponse<TData>> {
+  assertResource(params.resource);
+  const id = readId(params.id);
+  return deleteNoticeRuleRecord<TData>(id);
+}
+
+async function protectRead<T>(operation: () => Promise<T>): Promise<T> {
   try {
     return await operation();
   } catch (error) {
@@ -135,6 +126,11 @@ async function protect<T>(operation: () => Promise<T>): Promise<T> {
     throw kind === 'missing' ? noticeRuleProviderMissingFailure() : preserveNoticeRuleFailure(error, kind);
   }
 }
+
+/*
+ * Input readers below are deliberately synchronous: failures occur before a
+ * provider method can issue transport and are therefore definitely rejected.
+ */
 
 function assertResource(resource: string) {
   if (resource !== noticeRuleResourceName) throw contractError('NOTICE_RULE_RESOURCE_UNSUPPORTED');

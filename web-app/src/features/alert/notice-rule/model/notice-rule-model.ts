@@ -24,6 +24,7 @@ import type { NoticeRuleCollectionFailureKind } from './notice-rule-failure';
 
 export const noticeRulePageSizes = [8, 15, 25] as const;
 export const noticeRuleWeekdays = [7, 1, 2, 3, 4, 5, 6] as const;
+export const maximumNoticeRuleScanPages = 10_000;
 
 export type NoticeRuleQuery = { name: string; pageIndex: number; pageSize: number };
 export type NoticeRule = {

@@ -23,6 +23,7 @@ export function useNoticeRuleController() {
       list: list.state,
       name: queryController.name,
       options: { kind: options.kind },
+      recovery: gate.recovery,
       query: queryController.query,
       receivers: options.receivers,
       refreshing: list.refreshing,

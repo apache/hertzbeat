@@ -25,32 +25,34 @@ import styles from './notice-rule-editor.module.css';
 interface NoticeRuleAdvancedFieldsProps {
   draft: NoticeRuleDraft;
   update: (patch: Partial<NoticeRuleDraft>) => void;
+  disabled: boolean;
 }
 
 /** Composes advanced presentation while the editor continues to own draft state. */
-export function NoticeRuleAdvancedFields({ draft, update }: NoticeRuleAdvancedFieldsProps) {
+export function NoticeRuleAdvancedFields({ draft, update, disabled }: NoticeRuleAdvancedFieldsProps) {
   return (
     <div className={styles.advancedFields}>
-      <NoticeRuleMatchFields draft={draft} update={update} />
-      <NoticeRuleDeliveryWindow draft={draft} update={update} />
+      <NoticeRuleMatchFields draft={draft} update={update} disabled={disabled} />
+      <NoticeRuleDeliveryWindow draft={draft} update={update} disabled={disabled} />
     </div>
   );
 }
 
-function NoticeRuleMatchFields({ draft, update }: NoticeRuleAdvancedFieldsProps) {
+function NoticeRuleMatchFields({ draft, update, disabled }: NoticeRuleAdvancedFieldsProps) {
   const { t } = useTranslation();
 
   return (
     <>
       <label className={styles.switchField}>
         <span>{t('noticeRules.forwardAll')}</span>
-        <Switch checked={draft.filterAll} onChange={filterAll => update({ filterAll })} />
+        <Switch disabled={disabled} checked={draft.filterAll} onChange={filterAll => update({ filterAll })} />
       </label>
       {!draft.filterAll && (
         <label className={styles.wideField}>
           {t('noticeRules.labels')}
           <Input.TextArea
             rows={2}
+            disabled={disabled}
             value={draft.labelsText}
             placeholder={t('noticeRules.labelsPlaceholder')}
             onChange={event => update({ labelsText: event.target.value })}
@@ -62,7 +64,7 @@ function NoticeRuleMatchFields({ draft, update }: NoticeRuleAdvancedFieldsProps)
   );
 }
 
-function NoticeRuleDeliveryWindow({ draft, update }: NoticeRuleAdvancedFieldsProps) {
+function NoticeRuleDeliveryWindow({ draft, update, disabled }: NoticeRuleAdvancedFieldsProps) {
   const { t } = useTranslation();
   const changeDayLimit = (limitDays: boolean) => {
     if (limitDays) {
@@ -77,12 +79,13 @@ function NoticeRuleDeliveryWindow({ draft, update }: NoticeRuleAdvancedFieldsPro
     <>
       <label className={styles.switchField}>
         <span>{t('noticeRules.limitDays')}</span>
-        <Switch checked={draft.limitDays} onChange={changeDayLimit} />
+        <Switch disabled={disabled} checked={draft.limitDays} onChange={changeDayLimit} />
       </label>
       {draft.limitDays && (
         <label className={styles.wideField}>
           {t('noticeRules.days')}
           <Checkbox.Group
+            disabled={disabled}
             value={draft.days}
             options={noticeRuleWeekdays.map(day => ({ value: day, label: t(`noticeRules.week.${day}`) }))}
             onChange={days => update({ days })}
@@ -93,6 +96,7 @@ function NoticeRuleDeliveryWindow({ draft, update }: NoticeRuleAdvancedFieldsPro
         {t('noticeRules.periodStart')}
         <TimePicker
           allowClear
+          disabled={disabled}
           format="HH:mm"
           minuteStep={5}
           value={timeValue(draft.periodStart)}
@@ -103,6 +107,7 @@ function NoticeRuleDeliveryWindow({ draft, update }: NoticeRuleAdvancedFieldsPro
         {t('noticeRules.periodEnd')}
         <TimePicker
           allowClear
+          disabled={disabled}
           format="HH:mm"
           minuteStep={5}
           value={timeValue(draft.periodEnd)}

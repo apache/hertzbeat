@@ -9,6 +9,15 @@ import { compatibleNoticeRuleTemplates } from '../model/notice-rule-delivery-mod
 import type { NoticeRuleDraft } from '../model/notice-rule-model';
 import styles from './notice-rule-editor.module.css';
 
+type NoticeRuleDeliveryFieldsProps = {
+  draft: NoticeRuleDraft;
+  receivers: NoticeReceiverOption[];
+  templates: NoticeTemplate[];
+  selectReceivers: (receiverIds: number[]) => void;
+  update: (patch: Partial<NoticeRuleDraft>) => void;
+  disabled: boolean;
+};
+
 function receiverLabel(receiver: NoticeReceiverOption, t: (key: string) => string) {
   const type = receiverTypeDefinitions.find(definition => definition.type === receiver.type);
   return `${receiver.name} · ${t(type?.labelKey ?? 'noticeReceivers.types.unknown')}`;
@@ -19,35 +28,53 @@ function templatePatch(templateId: number): Partial<NoticeRuleDraft> {
   return { templateId, templateName: null };
 }
 
-export function NoticeRuleDeliveryFields({
-  draft,
-  receivers,
-  templates,
-  selectReceivers,
-  update
-}: {
-  draft: NoticeRuleDraft;
-  receivers: NoticeReceiverOption[];
-  templates: NoticeTemplate[];
-  selectReceivers: (receiverIds: number[]) => void;
-  update: (patch: Partial<NoticeRuleDraft>) => void;
-}) {
+export function NoticeRuleDeliveryFields(props: NoticeRuleDeliveryFieldsProps) {
+  return (
+    <>
+      <NoticeRuleIdentityFields {...props} />
+      <NoticeRuleTargetFields {...props} />
+    </>
+  );
+}
+
+function NoticeRuleIdentityFields({ draft, update, disabled }: NoticeRuleDeliveryFieldsProps) {
   const { t } = useTranslation();
-  const compatibleTemplates = compatibleNoticeRuleTemplates(draft.receiverIds, receivers, templates);
   return (
     <>
       <label className={styles.field}>
         {t('noticeRules.name')}
-        <Input maxLength={100} value={draft.name} onChange={event => update({ name: event.target.value })} />
+        <Input
+          disabled={disabled}
+          maxLength={100}
+          value={draft.name}
+          onChange={event => update({ name: event.target.value })}
+        />
       </label>
       <label className={styles.switchField}>
         <span>{t('noticeRules.enabled')}</span>
-        <Switch checked={draft.enable} onChange={enable => update({ enable })} />
+        <Switch disabled={disabled} checked={draft.enable} onChange={enable => update({ enable })} />
       </label>
+    </>
+  );
+}
+
+function NoticeRuleTargetFields({
+  draft,
+  receivers,
+  templates,
+  selectReceivers,
+  update,
+  disabled
+}: NoticeRuleDeliveryFieldsProps) {
+  const { t } = useTranslation();
+  const compatibleTemplates = compatibleNoticeRuleTemplates(draft.receiverIds, receivers, templates);
+  return (
+    <>
       <label className={styles.wideField}>
         {t('noticeRules.receivers')}
         <Select
           mode="multiple"
+          disabled={disabled}
           showSearch
           optionFilterProp="label"
           value={draft.receiverIds}
@@ -58,6 +85,7 @@ export function NoticeRuleDeliveryFields({
       <label className={styles.wideField}>
         {t('noticeRules.template')}
         <Select
+          disabled={disabled}
           showSearch
           optionFilterProp="label"
           value={draft.templateId ?? -1}

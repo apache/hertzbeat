@@ -7,6 +7,7 @@ import styles from '../../alert-policy-page.module.css';
 import { NoticeRuleEditor } from '../components/notice-rule-editor';
 import { NoticeRuleTable } from '../components/notice-rule-table';
 import { NoticeRuleToolbar } from '../components/notice-rule-toolbar';
+import { NoticeRuleRecovery } from '../components/notice-rule-recovery';
 import { useNoticeRuleController } from '../controller/notice-rule-controller';
 
 type OptionKind = 'loading' | 'ready' | 'empty' | 'invalid' | 'unavailable' | 'error';
@@ -23,6 +24,9 @@ export function NoticeRulePage() {
   const alert = optionAlert(state.options.kind);
   const busy = state.command !== 'idle';
   const dependenciesReady = state.options.kind === 'ready';
+  const editorRecovery =
+    state.recovery?.kind === 'create' || state.recovery?.kind === 'update' ? state.recovery : undefined;
+  const routeRecovery = editorRecovery ? undefined : state.recovery;
   const tableActions = {
     changePage: actions.changePage,
     edit: (id: number) => void actions.edit(id),
@@ -40,6 +44,7 @@ export function NoticeRulePage() {
         onCreate={actions.create}
       />
       {alert ? <Alert type={alert.type} showIcon message={t(alert.messageKey)} /> : null}
+      <NoticeRuleRecovery recovery={routeRecovery} retrying={state.command !== 'recovering'} retry={actions.retry} />
       <NoticeRuleTable
         actions={tableActions}
         busy={busy}
@@ -60,6 +65,9 @@ export function NoticeRulePage() {
           update={actions.updateDraft}
           close={actions.close}
           submit={() => void actions.submit()}
+          recovery={editorRecovery}
+          retrying={state.command !== 'recovering'}
+          retry={actions.retry}
         />
       ) : null}
     </div>

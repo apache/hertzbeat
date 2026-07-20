@@ -20,7 +20,8 @@ vi.mock('@/features/alert/notice-rule/api/notice-rule-api', () => ({
 
 import {
   NoticeRuleContractError,
-  NoticeRuleRequestFailure
+  NoticeRuleRequestFailure,
+  noticeRuleWriteOutcome
 } from '@/features/alert/notice-rule/model/notice-rule-failure';
 import { noticeRuleDataProvider } from './notice-rule-data-provider';
 import {
@@ -49,7 +50,7 @@ const variables: NoticeRuleMutationVariables = { draft, receivers: [receiver], t
 
 describe('notice rule data provider', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     api.save.mockResolvedValue(undefined);
   });
 
@@ -64,7 +65,8 @@ describe('notice rule data provider', () => {
   it('rejects ambiguous create evidence without treating a matching name as identity', async () => {
     api.loadAll.mockResolvedValueOnce([]).mockResolvedValueOnce([rule, { ...rule, id: 32 }]);
     await expect(noticeRuleDataProvider.create({ resource: 'notice-rules', variables })).rejects.toMatchObject({
-      code: 'NOTICE_RULE_CREATE_NOT_CONVERGED'
+      code: 'NOTICE_RULE_CREATE_IDENTITY_AMBIGUOUS',
+      writeOutcome: 'uncertain'
     });
   });
 
@@ -132,5 +134,35 @@ describe('notice rule data provider', () => {
         variables: { ...variables, draft: { ...draft, id: 31 } }
       })
     ).rejects.toMatchObject({ kind: 'invalid', code: 'NOTICE_RULE_UPDATE_NOT_CONVERGED' });
+  });
+
+  it('keeps local input failures definitely rejected before transport', async () => {
+    const failure = noticeRuleDataProvider.create({
+      resource: 'notice-rules',
+      variables: { ...variables, draft: { ...draft, id: 31 } }
+    });
+
+    await expect(failure).rejects.toSatisfy(reason => noticeRuleWriteOutcome(reason) === 'rejected');
+    expect(api.save).not.toHaveBeenCalled();
+  });
+
+  it('keeps a source 422 write rejected even when its body has a business code', async () => {
+    api.loadOne.mockResolvedValueOnce(rule);
+    api.save.mockRejectedValueOnce(new NoticeRuleRequestFailure('error', 'rejected'));
+    const updateVariables = { ...variables, draft: { ...draft, id: 31 } };
+
+    const failure = noticeRuleDataProvider.update({ resource: 'notice-rules', id: 31, variables: updateVariables });
+
+    await expect(failure).rejects.toSatisfy(reason => noticeRuleWriteOutcome(reason) === 'rejected');
+  });
+
+  it('makes post-write detail proof failure uncertain even when the GET proves missing', async () => {
+    api.loadOne.mockRejectedValueOnce(new NoticeRuleRequestFailure('missing', 'rejected'));
+    const updateVariables = { ...variables, draft: { ...draft, id: 31 } };
+
+    const failure = noticeRuleDataProvider.update({ resource: 'notice-rules', id: 31, variables: updateVariables });
+
+    await expect(failure).rejects.toSatisfy(reason => noticeRuleWriteOutcome(reason) === 'uncertain');
+    expect(api.save).toHaveBeenCalledOnce();
   });
 });
