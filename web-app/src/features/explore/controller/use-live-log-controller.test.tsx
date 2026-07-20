@@ -16,7 +16,10 @@ import type { LogExploreQuery } from '../model/explore-model';
 import { useLiveLogController } from './use-live-log-controller';
 
 const api = vi.hoisted(() => ({ buildLogStreamPath: vi.fn(), openLogStream: vi.fn() }));
-vi.mock('../api/explore-api', async importOriginal => ({ ...(await importOriginal<typeof import('../api/explore-api')>()), ...api }));
+vi.mock('../api/explore-api', async importOriginal => ({
+  ...(await importOriginal<typeof import('../api/explore-api')>()),
+  ...api
+}));
 
 describe('Live Log controller', () => {
   beforeEach(() => {
@@ -59,7 +62,9 @@ describe('Live Log controller', () => {
   });
 
   it('reports source construction failures as error', () => {
-    api.openLogStream.mockImplementation(() => { throw new Error('blocked'); });
+    api.openLogStream.mockImplementation(() => {
+      throw new Error('blocked');
+    });
     const view = renderLive(query());
     expect(view.result.current.status).toBe('error');
   });
@@ -80,6 +85,24 @@ describe('Live Log controller', () => {
     act(() => second.event(logRow('late')));
   });
 
+  it('keeps paused rows scoped to their stream path and reconnects the current path on resume', () => {
+    const view = renderLive(query('first'));
+    const first = FakeSource.instances[0]!;
+    act(() => first.event(logRow('first')));
+    act(() => view.result.current.togglePaused());
+
+    view.rerender({ query: query('second') });
+    expect(view.result.current.status).toBe('paused');
+    expect(view.result.current.rows).toEqual([]);
+    expect(FakeSource.instances).toHaveLength(1);
+
+    act(() => first.event(logRow('stale')));
+    expect(view.result.current.rows).toEqual([]);
+    act(() => view.result.current.togglePaused());
+    expect(view.result.current.status).toBe('waiting');
+    expect(FakeSource.instances).toHaveLength(2);
+  });
+
   it('keeps only the latest 500 canonical rows', () => {
     const view = renderLive(query());
     const source = FakeSource.instances[0]!;
@@ -95,11 +118,26 @@ describe('Live Log controller', () => {
 function renderLive(initialQuery: LogExploreQuery) {
   return renderHook(({ query: current }) => useLiveLogController(current), { initialProps: { query: initialQuery } });
 }
-function query(value = 'errors'): LogExploreQuery { return { signal: 'logs', timeRange: 'last-30m', live: true, query: value }; }
+function query(value = 'errors'): LogExploreQuery {
+  return { signal: 'logs', timeRange: 'last-30m', live: true, query: value };
+}
 function logRow(body: string) {
-  return { timeUnixNano: 1_750_000_000_000_000_000, observedTimeUnixNano: null, severityNumber: 9,
-    severityText: 'INFO', body, attributes: null, droppedAttributesCount: null, traceId: null, spanId: null,
-    traceFlags: null, resource: null, resourceSchemaUrl: null, instrumentationScope: null, scopeSchemaUrl: null };
+  return {
+    timeUnixNano: 1_750_000_000_000_000_000,
+    observedTimeUnixNano: null,
+    severityNumber: 9,
+    severityText: 'INFO',
+    body,
+    attributes: null,
+    droppedAttributesCount: null,
+    traceId: null,
+    spanId: null,
+    traceFlags: null,
+    resource: null,
+    resourceSchemaUrl: null,
+    instrumentationScope: null,
+    scopeSchemaUrl: null
+  };
 }
 
 type FakeHandlers = {
@@ -112,9 +150,19 @@ type FakeHandlers = {
 class FakeSource {
   static instances: FakeSource[] = [];
   close = vi.fn();
-  constructor(private readonly handlers: FakeHandlers) { FakeSource.instances.push(this); }
-  open() { this.handlers.onOpen(); }
-  error() { this.handlers.onUnavailable(); }
-  contractError() { this.handlers.onContractError(); }
-  event(row: ReturnType<typeof logRow>) { this.handlers.onLog(row); }
+  constructor(private readonly handlers: FakeHandlers) {
+    FakeSource.instances.push(this);
+  }
+  open() {
+    this.handlers.onOpen();
+  }
+  error() {
+    this.handlers.onUnavailable();
+  }
+  contractError() {
+    this.handlers.onContractError();
+  }
+  event(row: ReturnType<typeof logRow>) {
+    this.handlers.onLog(row);
+  }
 }

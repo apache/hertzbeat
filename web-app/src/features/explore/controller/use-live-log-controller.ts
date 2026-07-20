@@ -22,12 +22,13 @@ import type { LogRow } from '../model/explore-signal-contract';
 import type { LogExploreQuery } from '../model/explore-model';
 import type { LiveLogStatus } from '../model/explore-signal-model';
 
-const MAX_STREAM_ROWS = 500;
+const MAXIMUM_RETAINED_LIVE_LOG_ROWS = 500;
 type PathState<T> = { path: string; value: T };
 
 export function useLiveLogController(query: LogExploreQuery) {
   const path = useMemo(() => buildLogStreamPath(query), [query]);
   const [paused, setPaused] = useState(false);
+  // Tag stream-owned state with its path so a query change cannot briefly expose rows from the previous stream.
   const [rowsState, setRowsState] = useState<PathState<LogRow[]>>({ path, value: [] });
   const [statusState, setStatusState] = useState<PathState<LiveLogStatus>>({ path, value: 'waiting' });
   const active = useRef<symbol | undefined>(undefined);
@@ -50,7 +51,7 @@ export function useLiveLogController(query: LogExploreQuery) {
           if (active.current !== token) return;
           setRowsState(current => ({
             path,
-            value: [row, ...(current.path === path ? current.value : [])].slice(0, MAX_STREAM_ROWS)
+            value: [row, ...rowsForPath(current, path)].slice(0, MAXIMUM_RETAINED_LIVE_LOG_ROWS)
           }));
         }
       });
@@ -64,11 +65,12 @@ export function useLiveLogController(query: LogExploreQuery) {
     };
   }, [path, paused]);
 
-  const rows = rowsState.path === path ? rowsState.value : [];
-  const status = paused ? 'paused' : statusState.path === path ? statusState.value : 'waiting';
+  const rows = rowsForPath(rowsState, path);
+  const status = statusForPath(statusState, path, paused);
   const togglePaused = () => {
-    if (paused) setStatusState({ path, value: 'waiting' });
-    setPaused(!paused);
+    const nextPaused = !paused;
+    if (!nextPaused) setStatusState({ path, value: 'waiting' });
+    setPaused(nextPaused);
   };
   return {
     rows,
@@ -76,4 +78,15 @@ export function useLiveLogController(query: LogExploreQuery) {
     togglePaused,
     clear: () => setRowsState({ path, value: [] })
   };
+}
+
+function rowsForPath(state: PathState<LogRow[]>, path: string) {
+  if (state.path !== path) return [];
+  return state.value;
+}
+
+function statusForPath(state: PathState<LiveLogStatus>, path: string, paused: boolean): LiveLogStatus {
+  if (paused) return 'paused';
+  if (state.path !== path) return 'waiting';
+  return state.value;
 }
