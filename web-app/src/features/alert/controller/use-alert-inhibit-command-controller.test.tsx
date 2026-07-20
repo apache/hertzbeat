@@ -20,7 +20,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
 
-import { AlertInhibitMissingError, type AlertInhibit } from '../alert-inhibit-model';
+import { AlertInhibitContractError, AlertInhibitMissingError, type AlertInhibit } from '../alert-inhibit-model';
 import {
   alertInhibitPage,
   deferred,
@@ -79,14 +79,19 @@ describe('Alert Inhibit command controller', () => {
     expect(api.deleteAlertInhibit).not.toHaveBeenCalled();
     act(() => write.resolve(undefined));
     await act(async () => Promise.all([first, duplicate]));
-    expect(result.current.state.command).toBe('idle');
+    expect(result.current.state.command).toBe('recovering');
+    expect(result.current.state.recovery).toEqual({
+      kind: 'save',
+      phase: 'commit-uncertain',
+      retryable: false
+    });
   });
 
   it('retires a pending submit when the controller unmounts', async () => {
     const write = deferred<void>();
     api.saveAlertInhibit.mockReturnValueOnce(write.promise);
     const { result, unmount } = renderCommandController();
-    act(() => result.current.create());
+    await act(async () => result.current.edit(persistedAlertInhibit.id));
     act(() => result.current.updateDraft(validAlertInhibitDraft()));
 
     let submission!: Promise<void>;
@@ -217,7 +222,7 @@ describe('Alert Inhibit command controller', () => {
     const write = deferred<void>();
     api.saveAlertInhibit.mockReturnValueOnce(write.promise);
     const { result } = renderCommandController();
-    act(() => result.current.create());
+    await act(async () => result.current.edit(persistedAlertInhibit.id));
     act(() => result.current.updateDraft(validAlertInhibitDraft()));
     let submission!: Promise<void>;
     act(() => {
@@ -231,7 +236,7 @@ describe('Alert Inhibit command controller', () => {
       void result.current.edit(persistedAlertInhibit.id);
     });
     expect(result.current.state.draft).toMatchObject({ name: persistedAlertInhibit.name });
-    expect(api.loadAlertInhibit).not.toHaveBeenCalled();
+    expect(api.loadAlertInhibit).toHaveBeenCalledTimes(1);
 
     act(() => write.resolve(undefined));
     await act(async () => submission);
@@ -284,6 +289,7 @@ describe('Alert Inhibit command controller', () => {
     await act(async () => result.current.submit());
 
     expect(result.current.state.editorFailure).toBe('error');
+    expect(result.current.state.recovery).toBeUndefined();
     expect(result.current.state.detail).toEqual({ kind: 'idle' });
     expect(result.current.state.draft).not.toBeNull();
     expect(result.current.state.command).toBe('idle');
@@ -311,7 +317,9 @@ describe('Alert Inhibit command controller', () => {
     });
     await act(async () => result.current.submit());
     expect(result.current.state.draft).not.toBeNull();
-    expect(result.current.state.editorFailure).toBe('error');
+    expect(result.current.state.editorFailure).toBe('unavailable');
+    expect(result.current.state.recovery).toEqual({ kind: 'save', phase: 'proof', retryable: true });
+    expect(notify.error).toHaveBeenCalledWith('common.unavailable');
     expect(notify.success).toHaveBeenCalledTimes(1);
   });
 
@@ -326,9 +334,13 @@ describe('Alert Inhibit command controller', () => {
     expect(notify.success).toHaveBeenCalledWith('alertInhibits.operationSuccess');
     vi.clearAllMocks();
     api.updateAlertInhibitEnabled.mockResolvedValue(undefined);
-    api.loadAlertInhibit.mockResolvedValue({ ...persistedAlertInhibit, id: 8, enable: false });
+    api.loadAlertInhibit
+      .mockResolvedValueOnce(persistedAlertInhibit)
+      .mockResolvedValueOnce({ ...persistedAlertInhibit, id: 8, enable: false });
     await act(async () => result.current.toggle(persistedAlertInhibit, false));
     expect(notify.success).not.toHaveBeenCalled();
+    expect(notify.error).toHaveBeenCalledWith('common.unavailable');
+    expect(result.current.state.recovery).toEqual({ kind: 'toggle', phase: 'proof', retryable: true });
   });
 
   it('deletes only after missing detail and list absence', async () => {
@@ -342,6 +354,120 @@ describe('Alert Inhibit command controller', () => {
     reread.mockResolvedValue(alertInhibitPage({ search: '', pageIndex: 0, pageSize: 8 }, [persistedAlertInhibit]));
     await act(async () => result.current.remove(7));
     expect(notify.success).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['network', new ApiMessageError('offline', { cause: new TypeError('fetch') })],
+    ['server', new ApiMessageError('failed', { status: 500 })],
+    ['malformed success', new ApiMessageError('invalid response', { status: 200 })]
+  ])('recovers an ambiguous update %s by proof without repeating PUT', async (_label, failure) => {
+    const { result } = renderCommandController();
+    await act(async () => result.current.edit(persistedAlertInhibit.id));
+    api.saveAlertInhibit.mockRejectedValueOnce(failure);
+
+    await act(async () => result.current.submit());
+
+    expect(result.current.state.recovery).toEqual({ kind: 'save', phase: 'proof', retryable: true });
+    expect(result.current.state.draft).not.toBeNull();
+    await act(async () => result.current.retry());
+    expect(api.saveAlertInhibit).toHaveBeenCalledTimes(1);
+    expect(api.loadAlertInhibit).toHaveBeenCalledTimes(2);
+    expect(result.current.state.draft).toBeNull();
+    expect(notify.success).toHaveBeenCalledWith('alertInhibits.saveSuccess');
+  });
+
+  it('resumes list projection after an acknowledged update without repeating write or detail proof', async () => {
+    const { result } = renderCommandController();
+    await act(async () => result.current.edit(persistedAlertInhibit.id));
+    reread.mockRejectedValueOnce(new ApiMessageError('offline', { status: 503 }));
+
+    await act(async () => result.current.submit());
+
+    expect(result.current.state.recovery).toEqual({ kind: 'save', phase: 'projection', retryable: true });
+    await act(async () => result.current.retry());
+    expect(api.saveAlertInhibit).toHaveBeenCalledTimes(1);
+    expect(api.loadAlertInhibit).toHaveBeenCalledTimes(2);
+    expect(reread).toHaveBeenCalledTimes(2);
+    expect(result.current.state.draft).toBeNull();
+  });
+
+  it('keeps an acknowledged create without a server id commit-uncertain and non-retryable', async () => {
+    const { result } = renderCommandController();
+    act(() => result.current.create());
+    act(() => result.current.updateDraft(validAlertInhibitDraft()));
+
+    await act(async () => result.current.submit());
+
+    expect(result.current.state.recovery).toEqual({
+      kind: 'save',
+      phase: 'commit-uncertain',
+      retryable: false
+    });
+    expect(result.current.state.draft).not.toBeNull();
+    expect(reread).not.toHaveBeenCalled();
+    expect(notify.success).not.toHaveBeenCalled();
+    expect(notify.error).toHaveBeenCalledWith('common.unavailable');
+    await act(async () => result.current.retry());
+    expect(api.saveAlertInhibit).toHaveBeenCalledTimes(1);
+  });
+
+  it('recovers an ambiguous toggle by exact proof without repeating PUT', async () => {
+    api.updateAlertInhibitEnabled.mockRejectedValueOnce(
+      new ApiMessageError('offline', { cause: new TypeError('fetch') })
+    );
+    api.loadAlertInhibit
+      .mockResolvedValueOnce(persistedAlertInhibit)
+      .mockResolvedValueOnce({ ...persistedAlertInhibit, enable: false });
+    const { result } = renderCommandController();
+
+    await act(async () => result.current.toggle(persistedAlertInhibit, false));
+    expect(result.current.state.recovery).toEqual({ kind: 'toggle', phase: 'proof', retryable: true });
+
+    await act(async () => result.current.retry());
+    expect(api.updateAlertInhibitEnabled).toHaveBeenCalledTimes(1);
+    expect(api.loadAlertInhibit).toHaveBeenCalledTimes(2);
+    expect(notify.success).toHaveBeenCalledWith('alertInhibits.operationSuccess');
+  });
+
+  it('recovers an ambiguous delete by absence proof without repeating DELETE', async () => {
+    api.deleteAlertInhibit.mockRejectedValueOnce(new ApiMessageError('offline', { cause: new TypeError('fetch') }));
+    api.loadAlertInhibit.mockRejectedValue(new AlertInhibitMissingError());
+    const { result } = renderCommandController();
+
+    await act(async () => result.current.remove(persistedAlertInhibit.id));
+    expect(result.current.state.recovery).toEqual({ kind: 'delete', phase: 'proof', retryable: true });
+    expect(notify.error).toHaveBeenCalledWith('common.unavailable');
+
+    await act(async () => result.current.retry());
+    expect(api.deleteAlertInhibit).toHaveBeenCalledTimes(1);
+    expect(api.loadAlertInhibit).toHaveBeenCalledTimes(1);
+    expect(notify.success).toHaveBeenCalledWith('alertInhibits.operationSuccess');
+  });
+
+  it('uses non-definite copy when acknowledged toggle projection fails', async () => {
+    api.loadAlertInhibit
+      .mockResolvedValueOnce(persistedAlertInhibit)
+      .mockResolvedValueOnce({ ...persistedAlertInhibit, enable: false });
+    reread.mockRejectedValueOnce(new AlertInhibitContractError('projection invalid'));
+    const { result } = renderCommandController();
+
+    await act(async () => result.current.toggle(persistedAlertInhibit, false));
+
+    expect(result.current.state.recovery).toEqual({ kind: 'toggle', phase: 'projection', retryable: true });
+    expect(notify.error).toHaveBeenCalledWith('common.unavailable');
+    expect(notify.error).not.toHaveBeenCalledWith('alertInhibits.operationFailed');
+  });
+
+  it('uses non-definite copy when acknowledged delete projection fails', async () => {
+    api.loadAlertInhibit.mockRejectedValue(new AlertInhibitMissingError());
+    reread.mockRejectedValueOnce(new AlertInhibitContractError('projection invalid'));
+    const { result } = renderCommandController();
+
+    await act(async () => result.current.remove(persistedAlertInhibit.id));
+
+    expect(result.current.state.recovery).toEqual({ kind: 'delete', phase: 'projection', retryable: true });
+    expect(notify.error).toHaveBeenCalledWith('common.unavailable');
+    expect(notify.error).not.toHaveBeenCalledWith('alertInhibits.operationFailed');
   });
 });
 

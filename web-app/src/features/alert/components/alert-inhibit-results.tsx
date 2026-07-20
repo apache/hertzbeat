@@ -60,6 +60,46 @@ function labelList(labels: string[] | null) {
   );
 }
 
+function AlertInhibitActions({
+  t,
+  busy,
+  inhibit,
+  edit,
+  remove
+}: {
+  t: TFunction;
+  busy: boolean;
+  inhibit: AlertInhibit;
+  edit: ResultsProps['edit'];
+  remove: ResultsProps['remove'];
+}) {
+  return (
+    <Space>
+      <Button
+        type="link"
+        disabled={busy}
+        onClick={() => {
+          if (!busy) void edit(inhibit.id);
+        }}
+      >
+        {t('common.edit')}
+      </Button>
+      <Popconfirm
+        disabled={busy}
+        title={t('alertInhibits.deleteConfirm')}
+        okButtonProps={{ disabled: busy }}
+        onConfirm={() => {
+          if (!busy) void remove(inhibit.id);
+        }}
+      >
+        <Button type="link" danger disabled={busy}>
+          {t('alertInhibits.delete')}
+        </Button>
+      </Popconfirm>
+    </Space>
+  );
+}
+
 function buildColumns(
   t: TFunction,
   busy: boolean,
@@ -80,7 +120,9 @@ function buildColumns(
         <Switch
           checked={value === true}
           disabled={busy || value === null}
-          onChange={enabled => void toggle(inhibit, enabled)}
+          onChange={enabled => {
+            if (!busy) void toggle(inhibit, enabled);
+          }}
         />
       )
     },
@@ -93,16 +135,7 @@ function buildColumns(
       title: t('common.actions'),
       width: 150,
       render: (_value, inhibit) => (
-        <Space>
-          <Button type="link" disabled={busy} onClick={() => void edit(inhibit.id)}>
-            {t('common.edit')}
-          </Button>
-          <Popconfirm title={t('alertInhibits.deleteConfirm')} onConfirm={() => remove(inhibit.id)}>
-            <Button type="link" danger disabled={busy}>
-              {t('alertInhibits.delete')}
-            </Button>
-          </Popconfirm>
-        </Space>
+        <AlertInhibitActions t={t} busy={busy} inhibit={inhibit} edit={edit} remove={remove} />
       )
     }
   ];
@@ -110,9 +143,10 @@ function buildColumns(
 
 export function AlertInhibitResults(props: ResultsProps) {
   const { t } = useTranslation();
-  if (props.state.kind === 'unavailable') return <RetryFailure message={t('common.unavailable')} retry={props.retry} />;
+  if (props.state.kind === 'unavailable')
+    return <RetryFailure busy={props.busy} message={t('common.unavailable')} retry={props.retry} />;
   if (props.state.kind === 'error')
-    return <RetryFailure message={t('common.routeError.description')} retry={props.retry} />;
+    return <RetryFailure busy={props.busy} message={t('common.routeError.description')} retry={props.retry} />;
   if (props.state.kind === 'empty') return <Empty description={t('alertInhibits.empty')} />;
   const records = props.state.kind === 'ready' ? props.state.records : [];
   const total = props.state.kind === 'ready' ? props.state.total : 0;
@@ -129,14 +163,25 @@ export function AlertInhibitResults(props: ResultsProps) {
         pageSize: props.pageSize,
         pageSizeOptions: [...alertInhibitPageSizes],
         showSizeChanger: true,
+        disabled: props.busy,
         total,
-        onChange: props.changePage
+        onChange: (page, pageSize) => {
+          if (!props.busy) props.changePage(page, pageSize);
+        }
       }}
     />
   );
 }
 
-export function AlertInhibitDetailFailure({ state, retry }: { state: AlertInhibitDetailState; retry: () => unknown }) {
+export function AlertInhibitDetailFailure({
+  state,
+  busy,
+  retry
+}: {
+  state: AlertInhibitDetailState;
+  busy: boolean;
+  retry: () => unknown;
+}) {
   const { t } = useTranslation();
   if (state.kind === 'idle') return null;
   if (state.kind === 'loading') return <Skeleton active paragraph={false} />;
@@ -145,10 +190,10 @@ export function AlertInhibitDetailFailure({ state, retry }: { state: AlertInhibi
     unavailable: t('common.unavailable'),
     error: t('alertInhibits.loadFailed')
   } satisfies Record<typeof state.kind, string>;
-  return <RetryFailure message={messageByKind[state.kind]} retry={retry} />;
+  return <RetryFailure busy={busy} message={messageByKind[state.kind]} retry={retry} />;
 }
 
-function RetryFailure({ message, retry }: { message: string; retry: () => unknown }) {
+function RetryFailure({ busy, message, retry }: { busy: boolean; message: string; retry: () => unknown }) {
   const { t } = useTranslation();
   return (
     <Alert
@@ -156,7 +201,13 @@ function RetryFailure({ message, retry }: { message: string; retry: () => unknow
       showIcon
       message={message}
       action={
-        <Button size="small" onClick={() => void retry()}>
+        <Button
+          size="small"
+          disabled={busy}
+          onClick={() => {
+            if (!busy) void retry();
+          }}
+        >
           {t('common.retry')}
         </Button>
       }

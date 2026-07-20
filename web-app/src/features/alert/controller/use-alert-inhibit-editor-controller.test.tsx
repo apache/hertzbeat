@@ -22,7 +22,8 @@ import { ApiMessageError } from '@/core/http/api-message';
 
 import { AlertInhibitContractError, AlertInhibitMissingError, type AlertInhibit } from '../alert-inhibit-model';
 import { deferred, persistedAlertInhibit } from './alert-inhibit-controller-test-fixtures';
-import { useAlertInhibitEditorController, useAlertInhibitOperationGate } from './use-alert-inhibit-editor-controller';
+import { useAlertInhibitEditorController } from './use-alert-inhibit-editor-controller';
+import { useAlertInhibitOperationController } from './use-alert-inhibit-operation-controller';
 
 const api = vi.hoisted(() => ({ loadAlertInhibit: vi.fn() }));
 const model = vi.hoisted(() => ({ draftFromDetail: vi.fn() }));
@@ -141,7 +142,7 @@ describe('Alert Inhibit editor controller', () => {
 
 function renderEditorController() {
   return renderHook(() => {
-    const gate = useAlertInhibitOperationGate();
-    return useAlertInhibitEditorController(gate);
+    const operation = useAlertInhibitOperationController();
+    return useAlertInhibitEditorController(operation);
   });
 }

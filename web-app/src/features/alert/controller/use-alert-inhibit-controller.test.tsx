@@ -21,8 +21,6 @@ import type { PropsWithChildren } from 'react';
 import { createMemoryRouter, MemoryRouter, RouterProvider } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ApiMessageError } from '@/core/http/api-message';
-
 import type { AlertInhibitQuery } from '../alert-inhibit-model';
 import {
   alertInhibitPage,
@@ -59,30 +57,46 @@ describe('Alert Inhibit controller composition', () => {
     api.saveAlertInhibit.mockResolvedValue(undefined);
   });
 
-  it('keeps create open until the composed authoritative reread succeeds', async () => {
-    const reread = deferred<ReturnType<typeof alertInhibitPage>>();
+  it('keeps an acknowledged create without identity open as commit-uncertain', async () => {
     const { result } = renderAlertInhibitController();
     await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
-    api.loadAlertInhibits.mockReturnValueOnce(reread.promise);
+    act(() => result.current.create());
+    act(() => result.current.updateDraft(validAlertInhibitDraft()));
+    await act(async () => result.current.submit());
+
+    expect(result.current.state.draft).not.toBeNull();
+    expect(result.current.state.recovery).toEqual({
+      kind: 'save',
+      phase: 'commit-uncertain',
+      retryable: false
+    });
+    expect(notify.success).not.toHaveBeenCalled();
+  });
+
+  it('blocks query mutations and manual refresh while a command owns the route', async () => {
+    const write = deferred<void>();
+    api.saveAlertInhibit.mockReturnValueOnce(write.promise);
+    const { result } = renderAlertInhibitController();
+    await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
     act(() => result.current.create());
     act(() => result.current.updateDraft(validAlertInhibitDraft()));
     let submission!: Promise<void>;
     act(() => {
       submission = result.current.submit();
     });
-    await waitFor(() => expect(api.saveAlertInhibit).toHaveBeenCalled());
-    expect(result.current.state.draft).not.toBeNull();
-    act(() => reread.resolve(alertInhibitPage(result.current.state.query, [persistedAlertInhibit])));
-    await act(async () => submission);
-    expect(result.current.state.draft).toBeNull();
-    expect(notify.success).toHaveBeenCalledWith('alertInhibits.saveSuccess');
 
-    api.loadAlertInhibits.mockRejectedValueOnce(new ApiMessageError('offline', { status: 503 }));
-    act(() => result.current.create());
-    act(() => result.current.updateDraft(validAlertInhibitDraft()));
-    await act(async () => result.current.submit());
-    expect(result.current.state.draft).not.toBeNull();
-    expect(result.current.state.editorFailure).toBe('unavailable');
+    act(() => {
+      result.current.setSearch('must not publish');
+      result.current.submitSearch();
+      result.current.changePage(2, 15);
+      void result.current.refresh();
+    });
+    expect(result.current.state.search).toBe('');
+    expect(result.current.state.query).toEqual({ search: '', pageIndex: 0, pageSize: 8 });
+    expect(api.loadAlertInhibits).toHaveBeenCalledTimes(1);
+
+    act(() => write.resolve(undefined));
+    await act(async () => submission);
   });
 
   it('rereads the latest visible query after a pending command', async () => {
@@ -90,7 +104,7 @@ describe('Alert Inhibit controller composition', () => {
     api.saveAlertInhibit.mockReturnValueOnce(write.promise);
     const routed = renderRoutedController(['/alerts/inhibits?search=old&pageIndex=0&pageSize=8']);
     await waitFor(() => expect(routed.current().state.list.kind).toBe('empty'));
-    act(() => routed.current().create());
+    await act(async () => routed.current().edit(persistedAlertInhibit.id));
     act(() => routed.current().updateDraft(validAlertInhibitDraft()));
     let submission!: Promise<void>;
     act(() => {

@@ -22,6 +22,7 @@ import { AlertManagementNav } from './alert-management-nav';
 import { AlertNoiseControlNav } from './alert-noise-control-nav';
 import styles from './alert-policy-page.module.css';
 import { AlertInhibitEditor } from './components/alert-inhibit-editor';
+import { AlertInhibitRecovery } from './components/alert-inhibit-recovery';
 import { AlertInhibitDetailFailure, AlertInhibitResults } from './components/alert-inhibit-results';
 import { AlertInhibitToolbar } from './components/alert-inhibit-toolbar';
 import { useAlertInhibitController } from './controller/use-alert-inhibit-controller';
@@ -29,7 +30,9 @@ import { useAlertInhibitController } from './controller/use-alert-inhibit-contro
 export function AlertInhibitPage() {
   const { t } = useTranslation();
   const controller = useAlertInhibitController();
-  const { command, detail, draft, editorFailure, list, query, refreshing, search } = controller.state;
+  const { command, detail, draft, editorFailure, list, query, recovery, refreshing, search } = controller.state;
+  const saveRecovery = recovery?.kind === 'save' ? recovery : undefined;
+  const routeRecovery = recovery?.kind === 'save' ? undefined : recovery;
   const busy = command !== 'idle';
   return (
     <div className={styles.page}>
@@ -45,13 +48,15 @@ export function AlertInhibitPage() {
       <AlertManagementNav />
       <AlertNoiseControlNav />
       <AlertInhibitToolbar
+        busy={busy}
         search={search}
         refreshing={refreshing}
         setSearch={controller.setSearch}
         submitSearch={controller.submitSearch}
         refresh={controller.refresh}
       />
-      <AlertInhibitDetailFailure state={detail} retry={controller.retryDetail} />
+      <AlertInhibitRecovery recovery={routeRecovery} retrying={command !== 'recovering'} retry={controller.retry} />
+      <AlertInhibitDetailFailure state={detail} busy={busy} retry={controller.retryDetail} />
       <AlertInhibitResults
         state={list}
         busy={busy}
@@ -69,9 +74,12 @@ export function AlertInhibitPage() {
           busy={busy}
           saving={command === 'saving'}
           failure={editorFailure}
+          recovery={saveRecovery}
+          retrying={command !== 'recovering'}
           update={controller.updateDraft}
           close={controller.closeDraft}
           submit={controller.submit}
+          retry={controller.retry}
         />
       )}
     </div>

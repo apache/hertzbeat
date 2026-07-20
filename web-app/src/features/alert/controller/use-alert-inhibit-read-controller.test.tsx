@@ -24,7 +24,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiMessageError } from '@/core/http/api-message';
 
 import { AlertInhibitContractError, type AlertInhibitQuery } from '../alert-inhibit-model';
-import { alertInhibitPage } from './alert-inhibit-controller-test-fixtures';
+import { alertInhibitPage, deferred } from './alert-inhibit-controller-test-fixtures';
 import { useAlertInhibitReadController } from './use-alert-inhibit-read-controller';
 
 const api = vi.hoisted(() => ({ loadAlertInhibits: vi.fn() }));
@@ -71,6 +71,19 @@ describe('Alert Inhibit read controller', () => {
     );
     const { result } = renderReadController('/alerts/inhibits?pageIndex=2&pageSize=8');
     await waitFor(() => expect(result.current.state.list).toEqual({ kind: 'ready', records: [], total: 5 }));
+  });
+
+  it('rejects a command projection when the visible query changes while its reread is pending', async () => {
+    const pending = deferred<ReturnType<typeof alertInhibitPage>>();
+    const routed = renderRoutedReadController(['/alerts/inhibits?search=old&pageIndex=0&pageSize=8']);
+    await waitFor(() => expect(routed.current().state.list.kind).toBe('empty'));
+    api.loadAlertInhibits.mockReturnValueOnce(pending.promise);
+
+    const proof = routed.current().rereadAuthoritatively();
+    await act(async () => routed.router.navigate('/alerts/inhibits?search=latest&pageIndex=1&pageSize=8'));
+    act(() => pending.resolve(alertInhibitPage({ search: 'old', pageIndex: 0, pageSize: 8 }, [])));
+
+    await expect(proof).rejects.toMatchObject({ name: 'AlertInhibitUnavailableError' });
   });
 });
 

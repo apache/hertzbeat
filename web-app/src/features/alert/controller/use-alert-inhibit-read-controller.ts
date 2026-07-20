@@ -9,6 +9,7 @@ import type { RemotePageState } from '@/shared/remote-state';
 
 import { classifyAlertInhibitReadError, loadAlertInhibits } from '../alert-inhibit-api';
 import {
+  AlertInhibitUnavailableError,
   readAlertInhibitQuery,
   writeAlertInhibitQuery,
   type AlertInhibit,
@@ -19,6 +20,7 @@ import {
 export type AlertInhibitListState = RemotePageState<AlertInhibit, 'unavailable' | 'error'>;
 
 const listKey = (query: AlertInhibitQuery) => ['alert-inhibit-policies', query] as const;
+type VisibleQuery = { identity: string; query: AlertInhibitQuery };
 
 export function useAlertInhibitReadController() {
   const queryClient = useQueryClient();
@@ -27,18 +29,22 @@ export function useAlertInhibitReadController() {
   const source = writeAlertInhibitQuery(query).toString();
   const { value: search, setValue: setSearch } = useStringQueryDraft(source, query.search);
   const listQuery = useQuery({ queryKey: listKey(query), queryFn: () => loadAlertInhibits(query), retry: false });
-  const currentQueryRef = useRef(query);
+  const currentQueryRef = useRef<VisibleQuery>({ identity: source, query });
   useLayoutEffect(() => {
     // A pending command rereads the query currently owned by the visible route.
-    currentQueryRef.current = query;
-  }, [query]);
-  const rereadAuthoritatively = useCallback(() => {
-    const current = currentQueryRef.current;
-    return queryClient.fetchQuery({
-      queryKey: listKey(current),
-      queryFn: () => loadAlertInhibits(current),
+    currentQueryRef.current = { identity: source, query };
+  }, [query, source]);
+  const rereadAuthoritatively = useCallback(async () => {
+    const visible = currentQueryRef.current;
+    const page = await queryClient.fetchQuery({
+      queryKey: listKey(visible.query),
+      queryFn: () => loadAlertInhibits(visible.query),
       staleTime: 0
     });
+    if (currentQueryRef.current.identity !== visible.identity) {
+      throw new AlertInhibitUnavailableError('visible alert inhibit query changed during projection');
+    }
+    return page;
   }, [queryClient]);
   const updateQuery = (patch: Partial<AlertInhibitQuery>) => {
     setParams(writeAlertInhibitQuery({ ...query, ...patch }));

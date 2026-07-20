@@ -5,44 +5,11 @@ import { useEffect, useRef, useState } from 'react';
 import { classifyAlertInhibitReadError } from '../alert-inhibit-api';
 import { alertInhibitDraftFromDetail, createAlertInhibitDraft, type AlertInhibitDraft } from '../alert-inhibit-model';
 import { loadExactAlertInhibit } from '../alert-inhibit-write-proof';
+import type { AlertInhibitOperationController } from './use-alert-inhibit-operation-controller';
 
 export type AlertInhibitFailure = 'missing' | 'unavailable' | 'error';
 export type AlertInhibitDetailState =
   { kind: 'idle' } | { kind: 'loading'; id: number } | { kind: AlertInhibitFailure; id: number };
-
-type Command = 'saving' | 'operating';
-type OperationOwner = { command: Command };
-
-export function useAlertInhibitOperationGate() {
-  const mountedRef = useRef(true);
-  const ownerRef = useRef<OperationOwner | undefined>(undefined);
-  const [command, setCommand] = useState<'idle' | Command>('idle');
-  const begin = (next: Command) => {
-    // React state is asynchronous; the ref closes same-tick command admission.
-    if (!mountedRef.current || ownerRef.current) return undefined;
-    const owner = { command: next };
-    ownerRef.current = owner;
-    setCommand(next);
-    return owner;
-  };
-  const isCurrent = (owner: OperationOwner) => mountedRef.current && ownerRef.current === owner;
-  const end = (owner: OperationOwner) => {
-    if (!isCurrent(owner)) return;
-    ownerRef.current = undefined;
-    setCommand('idle');
-  };
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      // Async continuations must lose ownership before the component leaves the route.
-      mountedRef.current = false;
-      ownerRef.current = undefined;
-    };
-  }, []);
-  return { begin, command, end, isCurrent, isLocked: () => ownerRef.current !== undefined };
-}
-
-export type AlertInhibitOperationGate = ReturnType<typeof useAlertInhibitOperationGate>;
 
 function useAlertInhibitDraftStore() {
   const [draft, setDraft] = useState<AlertInhibitDraft | null>(null);
@@ -59,7 +26,7 @@ function useAlertInhibitDraftStore() {
 }
 
 function useAlertInhibitDetailEditor(
-  gate: AlertInhibitOperationGate,
+  operation: AlertInhibitOperationController,
   publishDraft: (draft: AlertInhibitDraft | null) => void,
   clearEditorFailure: () => void
 ) {
@@ -88,7 +55,7 @@ function useAlertInhibitDetailEditor(
     setDetail({ kind: 'idle' });
   };
   const edit = (id: number): Promise<void> => {
-    if (!mountedRef.current || gate.isLocked()) return Promise.resolve();
+    if (!mountedRef.current || operation.isLocked()) return Promise.resolve();
     if (pendingDetailRef.current?.id === id) return pendingDetailRef.current.promise;
     const epoch = detailEpochRef.current + 1;
     detailEpochRef.current = epoch;
@@ -120,23 +87,23 @@ function useAlertInhibitDetailEditor(
   return { detail, edit, invalidate: invalidateDetail, retry };
 }
 
-export function useAlertInhibitEditorController(gate: AlertInhibitOperationGate) {
+export function useAlertInhibitEditorController(operation: AlertInhibitOperationController) {
   const draftStore = useAlertInhibitDraftStore();
   const [editorFailure, setEditorFailure] = useState<AlertInhibitFailure>();
-  const detailEditor = useAlertInhibitDetailEditor(gate, draftStore.publish, () => setEditorFailure(undefined));
+  const detailEditor = useAlertInhibitDetailEditor(operation, draftStore.publish, () => setEditorFailure(undefined));
   const create = () => {
-    if (gate.isLocked()) return;
+    if (operation.isLocked()) return;
     detailEditor.invalidate();
     draftStore.publish(createAlertInhibitDraft());
     setEditorFailure(undefined);
   };
   const closeDraft = () => {
-    if (gate.isLocked()) return;
+    if (operation.isLocked()) return;
     detailEditor.invalidate();
     draftStore.publish(null);
   };
   const updateDraft = (patch: Partial<AlertInhibitDraft>) => {
-    if (gate.isLocked()) return;
+    if (operation.isLocked()) return;
     draftStore.patch(patch);
   };
   return {

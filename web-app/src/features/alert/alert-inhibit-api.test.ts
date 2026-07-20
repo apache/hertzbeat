@@ -42,6 +42,7 @@ import {
 import {
   AlertInhibitContractError,
   AlertInhibitMissingError,
+  AlertInhibitUnavailableError,
   createAlertInhibitDraft,
   type AlertInhibit
 } from './alert-inhibit-model';
@@ -113,6 +114,7 @@ describe('alert inhibit API', () => {
     ['HTTP missing', new ApiMessageError('missing', { status: 404 }), 'missing'],
     ['network', new ApiMessageError('offline', { cause: new TypeError('fetch') }), 'unavailable'],
     ['gateway', new ApiMessageError('gateway', { status: 503 }), 'unavailable'],
+    ['stale projection', new AlertInhibitUnavailableError('query changed'), 'unavailable'],
     ['contract', new AlertInhibitContractError('invalid'), 'error'],
     ['server', new ApiMessageError('failed', { status: 500 }), 'error'],
     ['unknown', new Error('failed'), 'error']

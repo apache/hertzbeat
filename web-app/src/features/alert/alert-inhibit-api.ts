@@ -27,6 +27,7 @@ import {
   buildAlertInhibitPayload,
   buildAlertInhibitTogglePayload,
   AlertInhibitMissingError,
+  AlertInhibitUnavailableError,
   type AlertInhibit,
   type AlertInhibitDraft,
   type AlertInhibitQuery
@@ -70,6 +71,7 @@ export async function updateAlertInhibitEnabled(inhibit: AlertInhibit, enable: b
 
 export function classifyAlertInhibitReadError(reason: unknown): 'missing' | 'unavailable' | 'error' {
   if (reason instanceof AlertInhibitMissingError) return 'missing';
+  if (reason instanceof AlertInhibitUnavailableError) return 'unavailable';
   if (reason instanceof ApiMessageError) {
     if (reason.status === 404 || (reason.status === 200 && reason.code === 3)) return 'missing';
     if (reason.cause !== undefined || reason.status === undefined || [0, 502, 503, 504].includes(reason.status)) {

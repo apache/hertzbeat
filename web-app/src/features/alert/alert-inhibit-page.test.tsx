@@ -27,6 +27,7 @@ const controller = vi.hoisted(() => ({
   edit: vi.fn(),
   refresh: vi.fn(),
   remove: vi.fn(),
+  retry: vi.fn(),
   retryDetail: vi.fn(),
   setSearch: vi.fn(),
   state: {},
@@ -134,6 +135,93 @@ describe('AlertInhibitPage', () => {
     expect(editor.getByRole('button', { name: 'common.cancel' })).toBeDisabled();
     expect(editor.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument();
   });
+
+  it.each(['saving', 'operating', 'recovering'] as const)('locks every route control while %s', command => {
+    controller.state = buildState({
+      command,
+      detail: { kind: 'unavailable', id: 7 },
+      list: { kind: 'ready', records: [record], total: 20 }
+    });
+    render(<AlertInhibitPage />);
+
+    expect(screen.getByRole('button', { name: 'alertInhibits.new' })).toBeDisabled();
+    expect(screen.getByPlaceholderText('alertInhibits.search')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.query' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.refresh' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.edit' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'alertInhibits.delete' })).toBeDisabled();
+    expect(screen.getByRole('switch')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.retry' })).toBeDisabled();
+    expect(document.querySelector('.ant-pagination')).toHaveClass('ant-pagination-disabled');
+  });
+
+  it('enables only proof recovery retry while idle between attempts', () => {
+    controller.state = buildState({
+      command: 'recovering',
+      draft: {
+        name: 'Policy',
+        sourceLabelsText: 'severity:critical',
+        targetLabelsText: 'severity:warning',
+        equalLabels: ['service'],
+        enable: true
+      },
+      recovery: { kind: 'save', phase: 'proof', retryable: true }
+    });
+    render(<AlertInhibitPage />);
+
+    const retry = within(screen.getByRole('dialog')).getByRole('button', { name: 'common.retry' });
+    expect(screen.getAllByRole('button', { name: 'common.retry' })).toHaveLength(1);
+    expect(retry).toBeEnabled();
+    fireEvent.click(retry);
+    expect(controller.retry).toHaveBeenCalled();
+  });
+
+  it('disables recovery retry while its proof request is active', () => {
+    controller.state = buildState({
+      command: 'saving',
+      draft: {
+        name: 'Policy',
+        sourceLabelsText: 'severity:critical',
+        targetLabelsText: 'severity:warning',
+        equalLabels: ['service'],
+        enable: true
+      },
+      recovery: { kind: 'save', phase: 'proof', retryable: true }
+    });
+    render(<AlertInhibitPage />);
+
+    expect(within(screen.getByRole('dialog')).getByRole('button', { name: 'common.retry' })).toBeDisabled();
+  });
+
+  it('keeps create-without-id recovery visible but non-retryable', () => {
+    controller.state = buildState({
+      command: 'recovering',
+      draft: {
+        name: 'Policy',
+        sourceLabelsText: 'severity:critical',
+        targetLabelsText: 'severity:warning',
+        equalLabels: ['service'],
+        enable: true
+      },
+      recovery: { kind: 'save', phase: 'commit-uncertain', retryable: false }
+    });
+    render(<AlertInhibitPage />);
+
+    expect(within(screen.getByRole('dialog')).getByText('common.unavailable')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'common.retry' })).not.toBeInTheDocument();
+  });
+
+  it('keeps toggle and delete recovery outside the editor', () => {
+    controller.state = buildState({
+      command: 'recovering',
+      recovery: { kind: 'delete', phase: 'proof', retryable: true }
+    });
+    render(<AlertInhibitPage />);
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+    expect(controller.retry).toHaveBeenCalled();
+  });
 });
 
 function buildState(override: Record<string, unknown> = {}) {
@@ -142,6 +230,7 @@ function buildState(override: Record<string, unknown> = {}) {
     detail: { kind: 'idle' },
     draft: null,
     editorFailure: undefined,
+    recovery: undefined,
     list: { kind: 'ready', records: [record], total: 1 },
     query: { search: '', pageIndex: 0, pageSize: 8 },
     refreshing: false,

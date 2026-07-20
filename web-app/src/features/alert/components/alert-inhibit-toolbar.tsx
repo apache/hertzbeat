@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import styles from '../alert-policy-page.module.css';
 
 type AlertInhibitToolbarProps = {
+  busy: boolean;
   search: string;
   refreshing: boolean;
   setSearch: (value: string) => void;
@@ -14,6 +15,7 @@ type AlertInhibitToolbarProps = {
 };
 
 export function AlertInhibitToolbar({
+  busy,
   search,
   refreshing,
   setSearch,
@@ -25,15 +27,16 @@ export function AlertInhibitToolbar({
     <div className={styles.toolbar}>
       <Input
         allowClear
+        disabled={busy}
         value={search}
         placeholder={t('alertInhibits.search')}
         onChange={event => setSearch(event.target.value)}
         onPressEnter={submitSearch}
       />
-      <Button type="primary" onClick={submitSearch}>
+      <Button type="primary" disabled={busy} onClick={submitSearch}>
         {t('common.query')}
       </Button>
-      <Button loading={refreshing} onClick={() => void refresh()}>
+      <Button loading={refreshing} disabled={busy} onClick={() => void refresh()}>
         {t('common.refresh')}
       </Button>
     </div>

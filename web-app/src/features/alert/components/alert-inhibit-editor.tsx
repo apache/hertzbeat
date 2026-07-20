@@ -21,6 +21,8 @@ import { useTranslation } from 'react-i18next';
 import type { AlertInhibitDraft } from '../alert-inhibit-model';
 import styles from '../alert-policy-page.module.css';
 import type { AlertInhibitFailure } from '../controller/use-alert-inhibit-controller';
+import type { AlertInhibitRecovery as RecoveryState } from '../controller/use-alert-inhibit-operation-controller';
+import { AlertInhibitRecovery } from './alert-inhibit-recovery';
 
 const COMMON_LABELS = ['alertname', 'instance', 'job', 'severity', 'service', 'host', 'env'];
 
@@ -29,9 +31,12 @@ type AlertInhibitEditorProps = {
   busy: boolean;
   saving: boolean;
   failure: AlertInhibitFailure | undefined;
+  recovery: RecoveryState | undefined;
+  retrying: boolean;
   update: (patch: Partial<AlertInhibitDraft>) => void;
   close: () => void;
   submit: () => unknown;
+  retry: () => unknown;
 };
 
 type MatcherFieldProps = {
@@ -102,7 +107,18 @@ function AlertInhibitFields({ draft, busy, update }: Pick<AlertInhibitEditorProp
   );
 }
 
-export function AlertInhibitEditor({ draft, busy, saving, failure, update, close, submit }: AlertInhibitEditorProps) {
+export function AlertInhibitEditor({
+  draft,
+  busy,
+  saving,
+  failure,
+  recovery,
+  retrying,
+  update,
+  close,
+  submit,
+  retry
+}: AlertInhibitEditorProps) {
   const { t } = useTranslation();
   return (
     <Modal
@@ -116,16 +132,22 @@ export function AlertInhibitEditor({ draft, busy, saving, failure, update, close
       keyboard={!busy}
       cancelButtonProps={{ disabled: busy }}
       okButtonProps={{ disabled: busy }}
-      onCancel={close}
-      onOk={() => void submit()}
+      onCancel={() => {
+        if (!busy) close();
+      }}
+      onOk={() => {
+        if (!busy) void submit();
+      }}
     >
-      {failure && (
+      {recovery ? (
+        <AlertInhibitRecovery recovery={recovery} retrying={retrying} retry={retry} />
+      ) : failure ? (
         <Alert
           type="error"
           showIcon
           message={failure === 'unavailable' ? t('common.unavailable') : t('alertInhibits.saveFailed')}
         />
-      )}
+      ) : null}
       <AlertInhibitFields draft={draft} busy={busy} update={update} />
     </Modal>
   );
