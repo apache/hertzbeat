@@ -108,6 +108,38 @@ module.exports = {
         dependencyTypes: ['npm', 'npm-dev', 'npm-optional', 'npm-peer', 'npm-bundled', 'npm-no-pkg', 'unknown'],
         path: '^(?:node_modules/)?(?:react|react-dom|react-router|react-router-dom|antd|@refinedev/)'
       }
+    },
+    {
+      name: 'no-feature-presentation-to-orchestration-runtime',
+      severity: 'error',
+      from: {
+        path: [
+          '^src/features/[^/]+/(?:components|pages)/',
+          '^src/features/[^/]+/[^/]+/(?:components|pages)/',
+          '^src/features/[^/]+/[^/]+-page[.]tsx?$'
+        ].join('|'),
+        pathNot: productionSource
+      },
+      to: {
+        dependencyTypes: ['npm', 'npm-dev', 'npm-optional', 'npm-peer', 'npm-bundled', 'npm-no-pkg', 'unknown'],
+        path: '^(?:node_modules/)?(?:@tanstack/react-query|react-router|react-router-dom)(?:/|$)'
+      }
+    },
+    {
+      name: 'no-feature-model-to-ui-runtime',
+      severity: 'error',
+      from: {
+        path: [
+          '^src/features/[^/]+/model/',
+          '^src/features/[^/]+/[^/]+/model/',
+          '^src/features/[^/]+/[^/]+-model[.]tsx?$'
+        ].join('|'),
+        pathNot: productionSource
+      },
+      to: {
+        dependencyTypes: ['npm', 'npm-dev', 'npm-optional', 'npm-peer', 'npm-bundled', 'npm-no-pkg', 'unknown'],
+        path: '^(?:node_modules/)?(?:react|react-dom|react-router|react-router-dom|@tanstack/react-query|antd|@refinedev/)(?:/|$)'
+      }
     }
   ],
   options: {

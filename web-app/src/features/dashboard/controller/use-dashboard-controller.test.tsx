@@ -20,9 +20,11 @@ import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiMessageError } from '@/core/http/api-message';
 import { DashboardContractError } from '../model/dashboard-model';
+import { dashboardQueryKeys } from './dashboard-query-keys';
+import { useDashboardController } from './use-dashboard-controller';
+
 const api = vi.hoisted(() => ({ loadDashboardSummary: vi.fn(), loadDashboardAlertSummary: vi.fn() }));
 vi.mock('../api/dashboard-api', () => api);
-import { useDashboardController } from './use-dashboard-controller';
 
 describe('dashboard controller', () => {
   beforeEach(() => {
@@ -80,6 +82,25 @@ describe('dashboard controller', () => {
     expect(api.loadDashboardSummary.mock.calls[1]?.[0]).toBe(api.loadDashboardAlertSummary.mock.calls[1]?.[0]);
   });
 
+  it('reuses the feature-owned combined dashboard cache entry', async () => {
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false, gcTime: 0, staleTime: Number.POSITIVE_INFINITY } }
+    });
+    client.setQueryData(dashboardQueryKeys.summary(), {
+      summary: { apps: [app] },
+      alert: alert(7)
+    });
+
+    const view = renderController(client);
+
+    await waitFor(() =>
+      expect(view.result.current.state).toMatchObject({ kind: 'ready', data: { alert: { total: 7 } } })
+    );
+    expect(dashboardQueryKeys.summary()).toEqual(['dashboard']);
+    expect(api.loadDashboardSummary).not.toHaveBeenCalled();
+    expect(api.loadDashboardAlertSummary).not.toHaveBeenCalled();
+  });
+
   it('auto refreshes the same combined query every 30 seconds', async () => {
     vi.useFakeTimers();
     const view = renderController();
@@ -97,8 +118,7 @@ describe('dashboard controller', () => {
   });
 });
 
-function renderController() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+function renderController(client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } })) {
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
   );

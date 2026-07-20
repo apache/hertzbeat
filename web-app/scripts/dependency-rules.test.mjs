@@ -83,6 +83,70 @@ test('rejects React runtime dependencies from every feature API', () => {
   assert.match(result.output, /no-feature-api-to-react-runtime/);
 });
 
+test('rejects server-state and navigation runtimes from feature presentation', () => {
+  const fixture = createProject({
+    'src/features/orders/components/order-table.tsx':
+      "import { useQuery } from '@tanstack/react-query'; export const OrderTable = useQuery;",
+    'src/features/orders/pages/order-page.tsx':
+      "import { useNavigate } from 'react-router-dom'; export const OrderPage = useNavigate;"
+  });
+
+  const result = cruise(fixture);
+
+  assert.notEqual(result.status, 0, result.output);
+  assert.match(result.output, /no-feature-presentation-to-orchestration-runtime/);
+});
+
+test('rejects Refine resource and HTTP transport dependencies from feature presentation', () => {
+  const fixture = createProject({
+    'src/core/http.ts': 'export const request = true;',
+    'src/features/orders/components/order-table.tsx':
+      "import { useList } from '@refinedev/core'; export const OrderTable = useList;",
+    'src/features/orders/pages/order-page.tsx':
+      "import { request } from '@/core/http'; export const OrderPage = request;"
+  });
+
+  const result = cruise(fixture);
+
+  assert.notEqual(result.status, 0, result.output);
+  assert.match(result.output, /no-feature-presentation-to-orchestration-runtime/);
+  assert.match(result.output, /no-feature-presentation-to-http-transport/);
+});
+
+test('rejects orchestration runtimes from legacy feature-root pages', () => {
+  const fixture = createProject({
+    'src/features/orders/order-page.tsx':
+      "import { useQuery } from '@tanstack/react-query'; export const OrderPage = useQuery;"
+  });
+
+  const result = cruise(fixture);
+
+  assert.notEqual(result.status, 0, result.output);
+  assert.match(result.output, /no-feature-presentation-to-orchestration-runtime/);
+});
+
+test('rejects UI runtime dependencies from feature models', () => {
+  const fixture = createProject({
+    'src/features/orders/model/order.ts': "import { useMemo } from 'react'; export const invalidOrderModel = useMemo;"
+  });
+
+  const result = cruise(fixture);
+
+  assert.notEqual(result.status, 0, result.output);
+  assert.match(result.output, /no-feature-model-to-ui-runtime/);
+});
+
+test('rejects UI runtimes from legacy feature-root models', () => {
+  const fixture = createProject({
+    'src/features/orders/order-model.ts': "import { useMemo } from 'react'; export const invalidOrderModel = useMemo;"
+  });
+
+  const result = cruise(fixture);
+
+  assert.notEqual(result.status, 0, result.output);
+  assert.match(result.output, /no-feature-model-to-ui-runtime/);
+});
+
 test('rejects alternate production owners for the session provider and authentication gate', () => {
   const fixture = createProject({
     'src/core/auth/session-provider.tsx': 'export const SessionProvider = () => null;',
