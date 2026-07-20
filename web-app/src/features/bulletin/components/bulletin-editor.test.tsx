@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { BulletinDraft } from '../model/bulletin-model';
 import { BulletinEditor } from './bulletin-editor';
-import metricTreeStyles from './bulletin-metric-tree.module.css?raw';
+import metricTreeStyles from './bulletin-metric-tree.module.css';
 
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
@@ -38,9 +38,32 @@ describe('Bulletin editor metric Tree', () => {
   afterEach(cleanup);
 
   it('keeps large application hierarchies inside a bounded scrolling field', () => {
-    expect(metricTreeStyles).toContain('max-height: 260px');
-    expect(metricTreeStyles).toContain('overflow: auto');
-    expect(metricTreeStyles).toContain('var(--ant-color-border)');
+    renderEditor();
+
+    const tree = screen.getByRole('tree');
+    const field = tree.closest(`.${metricTreeStyles.metricTree}`);
+    if (!(field instanceof HTMLElement)) throw new Error('Bulletin metric tree field was not rendered.');
+    const style = getComputedStyle(field);
+    expect(style.maxHeight).toBe('260px');
+    expect(style.overflow).toBe('auto');
+  });
+
+  it('echoes the saved leaf selection without selecting its sibling', () => {
+    renderEditor({ fields: { summary: ['status'] } });
+
+    const checkboxes = [...document.querySelectorAll<HTMLElement>('.ant-tree-checkbox')];
+    expect(checkboxes[0]).toHaveClass('ant-tree-checkbox-indeterminate');
+    expect(checkboxes[1]).toHaveClass('ant-tree-checkbox-checked');
+    expect(checkboxes[2]).not.toHaveClass('ant-tree-checkbox-checked');
+  });
+
+  it('submits a valid converged selection through the editor action', () => {
+    const onSave = vi.fn();
+    renderEditor({ onSave });
+
+    fireEvent.click(screen.getByRole('button', { name: 'common.save' }));
+
+    expect(onSave).toHaveBeenCalledOnce();
   });
 
   it('disables application changes while editing and preserves fields when monitors change', () => {
