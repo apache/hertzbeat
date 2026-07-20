@@ -3,6 +3,8 @@
 export type NoticeRuleFailureKind = 'missing' | 'invalid' | 'unavailable' | 'error';
 export type NoticeRuleCollectionFailureKind = Exclude<NoticeRuleFailureKind, 'missing'>;
 export type NoticeRuleWriteOutcome = 'rejected' | 'uncertain';
+export type NoticeRuleDetailState =
+  { kind: 'idle' } | { kind: 'loading'; id: number } | { kind: NoticeRuleFailureKind; id: number };
 
 /** Redacted evidence shared by the Notice Rule API, provider, and controllers. */
 export class NoticeRuleDomainFailure extends Error {

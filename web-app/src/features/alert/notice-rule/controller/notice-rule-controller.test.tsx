@@ -104,6 +104,44 @@ describe('notice rule controller', () => {
     expect(result.current.state.draft).toBeNull();
   });
 
+  it.each([
+    ['missing', new NoticeRuleRequestFailure('missing')],
+    ['invalid', new NoticeRuleContractError('NOTICE_RULE_DETAIL_INVALID')],
+    ['unavailable', new NoticeRuleRequestFailure('unavailable')],
+    ['error', new NoticeRuleRequestFailure('error')]
+  ] as const)('owns persistent %s detail evidence and retries the exact identity', async (kind, reason) => {
+    const first = deferred<{ data: typeof rule }>();
+    mocks.getOne.mockReset();
+    mocks.getOne.mockReturnValueOnce(first.promise).mockResolvedValueOnce({ data: rule });
+    const { result } = renderHook(() => useNoticeRuleController());
+
+    let edit!: Promise<void>;
+    act(() => {
+      edit = result.current.actions.edit(31);
+    });
+    expect(result.current.state.detail).toEqual({ kind: 'loading', id: 31 });
+
+    let loadingRetry!: Promise<void>;
+    act(() => {
+      loadingRetry = result.current.actions.retryDetail();
+    });
+    expect(mocks.getOne).toHaveBeenCalledOnce();
+
+    act(() => first.reject(reason));
+    await act(async () => Promise.all([edit, loadingRetry]));
+    expect(result.current.state.detail).toEqual({ kind, id: 31 });
+    expect(result.current.state.draft).toBeNull();
+    expect(mocks.notification).not.toHaveBeenCalledWith(
+      expect.objectContaining({ message: `noticeRules.read.${kind}` })
+    );
+
+    await act(async () => result.current.actions.retryDetail());
+    expect(mocks.getOne).toHaveBeenCalledTimes(2);
+    expect(mocks.getOne).toHaveBeenLastCalledWith({ resource: 'notice-rules', id: 31 });
+    expect(result.current.state.detail).toEqual({ kind: 'idle' });
+    expect(result.current.state.draft).toMatchObject({ id: 31 });
+  });
+
   it('does not report draft validation when dependencies become unavailable before submit', async () => {
     const { result, rerender } = renderHook(() => useNoticeRuleController());
     act(() => void result.current.actions.create());
@@ -235,13 +273,16 @@ describe('notice rule controller', () => {
       secondEdit = result.current.actions.edit(32);
     });
     expect(mocks.getOne).toHaveBeenCalledTimes(2);
+    expect(result.current.state.detail).toEqual({ kind: 'loading', id: 32 });
     act(() => second.resolve({ data: { ...rule, id: 32, name: 'Latest' } }));
     await act(async () => secondEdit);
+    expect(result.current.state.detail).toEqual({ kind: 'idle' });
     expect(result.current.state.draft).toMatchObject({ id: 32, name: 'Latest' });
 
     act(() => result.current.actions.create());
     act(() => first.resolve({ data: rule }));
     await act(async () => Promise.all([firstEdit, duplicateEdit]));
+    expect(result.current.state.detail).toEqual({ kind: 'idle' });
     expect(result.current.state.draft).toMatchObject({ name: '', receiverIds: [] });
   });
 
@@ -283,7 +324,8 @@ describe('notice rule controller', () => {
     act(() => next.reject(new NoticeRuleRequestFailure('error')));
     await act(async () => nextEdit);
     expect(result.current.state.draft).toBeNull();
-    expect(mocks.notification).toHaveBeenCalledWith(expect.objectContaining({ message: 'noticeRules.read.error' }));
+    expect(result.current.state.detail).toEqual({ kind: 'error', id: 32 });
+    expect(mocks.notification).not.toHaveBeenCalledWith(expect.objectContaining({ message: 'noticeRules.read.error' }));
   });
 
   it('atomically clears both template identity fields when receivers become incompatible', () => {
@@ -346,7 +388,10 @@ describe('notice rule controller', () => {
     await act(async () => result.current.actions.edit(31));
 
     expect(result.current.state.draft).toBeNull();
-    expect(mocks.notification).toHaveBeenCalledWith(expect.objectContaining({ message: 'noticeRules.read.invalid' }));
+    expect(result.current.state.detail).toEqual({ kind: 'invalid', id: 31 });
+    expect(mocks.notification).not.toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'noticeRules.read.invalid' })
+    );
   });
 
   it('reports stale toggle dependencies as named invalid domain evidence before update', async () => {

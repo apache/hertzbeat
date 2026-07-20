@@ -19,6 +19,7 @@ export function useNoticeRuleController() {
   return {
     state: {
       command: gate.command,
+      detail: editor.detail,
       draft: editor.draft,
       list: list.state,
       name: queryController.name,

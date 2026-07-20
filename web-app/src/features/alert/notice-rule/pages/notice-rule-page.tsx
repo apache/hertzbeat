@@ -4,6 +4,7 @@ import { Alert } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import styles from '../../alert-policy-page.module.css';
+import { NoticeRuleDetailEvidence } from '../components/notice-rule-detail-evidence';
 import { NoticeRuleEditor } from '../components/notice-rule-editor';
 import { NoticeRuleTable } from '../components/notice-rule-table';
 import { NoticeRuleToolbar } from '../components/notice-rule-toolbar';
@@ -44,6 +45,7 @@ export function NoticeRulePage() {
         onCreate={actions.create}
       />
       {alert ? <Alert type={alert.type} showIcon message={t(alert.messageKey)} /> : null}
+      <NoticeRuleDetailEvidence state={state.detail} busy={busy} retry={actions.retryDetail} />
       <NoticeRuleRecovery recovery={routeRecovery} retrying={state.command !== 'recovering'} retry={actions.retry} />
       <NoticeRuleTable
         actions={tableActions}

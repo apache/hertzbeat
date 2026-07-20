@@ -11,6 +11,7 @@ import {
   type NoticeRuleDraft
 } from '../model/notice-rule-model';
 import { noticeRuleReceiverPatch } from '../model/notice-rule-delivery-model';
+import { noticeRuleFailureKind, type NoticeRuleDetailState } from '../model/notice-rule-failure';
 import type { NoticeRuleOperationReceipt, NoticeRuleOperationRecovery } from '../model/notice-rule-operation-state';
 
 type Command = 'saving' | 'deleting' | 'toggling';
@@ -115,11 +116,10 @@ type NoticeRuleEditorOptions = {
 export function useNoticeRuleEditorController(
   gate: NoticeRuleCommandGate,
   options: NoticeRuleEditorOptions,
-  loadDetail: (id: number) => Promise<NoticeRule>,
-  reportReadFailure: (reason: unknown) => void
+  loadDetail: (id: number) => Promise<NoticeRule>
 ) {
   const [draft, setDraft] = useState<NoticeRuleDraft | null>(null);
-  const detail = useNoticeRuleDetail({ gate, loadDetail, reportReadFailure, setDraft });
+  const detail = useNoticeRuleDetail({ gate, loadDetail, setDraft });
   const edit = (id: number) => {
     if (!options.ready) return Promise.resolve();
     return detail.edit(id);
@@ -151,28 +151,35 @@ export function useNoticeRuleEditorController(
   };
   return {
     draft,
+    detail: detail.state,
     setDraft,
     invalidateDetail: detail.invalidate,
-    actions: { close, create, edit, selectReceivers, updateDraft }
+    actions: { close, create, edit, retryDetail: detail.retry, selectReceivers, updateDraft }
   };
 }
 
 function useNoticeRuleDetail({
   gate,
   loadDetail,
-  reportReadFailure,
   setDraft
 }: {
   gate: NoticeRuleCommandGate;
   loadDetail: (id: number) => Promise<NoticeRule>;
-  reportReadFailure: (reason: unknown) => void;
   setDraft: Dispatch<SetStateAction<NoticeRuleDraft | null>>;
 }) {
+  const [state, setState] = useState<NoticeRuleDetailState>({ kind: 'idle' });
   const detailEpochRef = useRef(0);
   const pendingDetailRef = useRef<{ id: number; epoch: number; promise: Promise<void> } | undefined>(undefined);
+  useEffect(() => {
+    return () => {
+      detailEpochRef.current += 1;
+      pendingDetailRef.current = undefined;
+    };
+  }, []);
   const invalidate = () => {
     detailEpochRef.current += 1;
     pendingDetailRef.current = undefined;
+    if (gate.isOwnerAlive()) setState({ kind: 'idle' });
   };
   const edit = (id: number): Promise<void> => {
     if (gate.isLocked()) return Promise.resolve();
@@ -181,14 +188,19 @@ function useNoticeRuleDetail({
     detailEpochRef.current = epoch;
     // Retire another identity before its draft can be submitted while this detail is pending.
     setDraft(current => (current?.id === id ? current : null));
+    // Publish the new identity before its transport can synchronously start.
+    setState({ kind: 'loading', id });
     const promise = (async () => {
       try {
         const detail = await loadDetail(id);
         // Only the newest epoch may publish detail into the editor.
         if (!gate.isOwnerAlive() || detailEpochRef.current !== epoch) return;
+        setState({ kind: 'idle' });
         setDraft(noticeRuleDraftFromDetail(detail));
       } catch (reason) {
-        if (gate.isOwnerAlive() && detailEpochRef.current === epoch) reportReadFailure(reason);
+        if (gate.isOwnerAlive() && detailEpochRef.current === epoch) {
+          setState({ kind: noticeRuleFailureKind(reason), id });
+        }
       } finally {
         if (pendingDetailRef.current?.epoch === epoch) pendingDetailRef.current = undefined;
       }
@@ -196,7 +208,7 @@ function useNoticeRuleDetail({
     pendingDetailRef.current = { id, epoch, promise };
     return promise;
   };
-  return { edit, invalidate };
+  return { state, edit, retry: () => (state.kind === 'idle' ? Promise.resolve() : edit(state.id)), invalidate };
 }
 
 export type NoticeRuleEditorController = ReturnType<typeof useNoticeRuleEditorController>;

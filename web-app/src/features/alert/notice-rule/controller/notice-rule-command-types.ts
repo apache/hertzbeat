@@ -14,7 +14,6 @@ export type NoticeRuleCommandNotifications = {
   saveSuccess: () => void;
   deleteSuccess: () => void;
   proofFailure: (failure: 'unavailable' | 'error' | 'commit-uncertain') => void;
-  readFailure: (failure: NoticeRuleFailureKind) => void;
   saveFailure: (failure: WriteFailure) => void;
   deleteFailure: (failure: WriteFailure) => void;
 };

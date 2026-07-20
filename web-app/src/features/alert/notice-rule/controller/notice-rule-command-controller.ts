@@ -4,7 +4,7 @@ import { useDataProvider, useNotification } from '@refinedev/core';
 import { useTranslation } from 'react-i18next';
 
 import type { NoticeRule } from '../model/notice-rule-model';
-import { noticeRuleDetailMismatchFailure, noticeRuleFailureKind } from '../model/notice-rule-failure';
+import { noticeRuleDetailMismatchFailure } from '../model/notice-rule-failure';
 import { noticeRuleResourceName } from '../notice-rule-resource';
 import { useNoticeRuleCommandGate, useNoticeRuleEditorController } from './notice-rule-editor-controller';
 import type { useNoticeRuleList, useNoticeRuleOptions } from './notice-rule-read-controller';
@@ -33,7 +33,6 @@ export function useNoticeRuleCommandController(
         message: t(failure === 'error' ? 'common.routeError.description' : 'common.unavailable'),
         type: 'error'
       }),
-    readFailure: failure => notification.open?.({ message: t(`noticeRules.read.${failure}`), type: 'error' }),
     saveFailure: failure => notification.open?.({ message: t(`noticeRules.save.${failure}`), type: 'error' }),
     deleteFailure: failure => notification.open?.({ message: t(`noticeRules.deleteError.${failure}`), type: 'error' })
   };
@@ -45,9 +44,12 @@ export function useNoticeRuleCommandController(
   };
   const editor = useNoticeRuleEditorController(
     gate,
-    { ready: options.kind === 'ready', receivers: options.receivers, templates: options.templates },
-    loadDetail,
-    reason => notify.readFailure(noticeRuleFailureKind(reason))
+    {
+      ready: options.kind === 'ready',
+      receivers: options.receivers,
+      templates: options.templates
+    },
+    loadDetail
   );
   const context = { list, options, provider, gate, editor, loadDetail, notify };
   return {

@@ -8,6 +8,7 @@ vi.mock('../controller/notice-rule-controller', () => controller);
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 import { NoticeRulePage } from './notice-rule-page';
+import type { NoticeRuleDetailState } from '../model/notice-rule-failure';
 
 describe('notice rule page', () => {
   afterEach(cleanup);
@@ -71,6 +72,29 @@ describe('notice rule page', () => {
     expect(screen.getByRole('button', { name: 'common.edit' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'noticeRules.delete' })).toBeEnabled();
   });
+
+  it('renders persistent detail loading evidence while no editor draft is available', () => {
+    const loading = view('empty', 'ready', { kind: 'loading', id: 31 });
+    controller.useNoticeRuleController.mockReturnValue(loading);
+
+    render(<NoticeRulePage />);
+
+    expect(screen.getByTestId('notice-rule-detail-loading')).toBeInTheDocument();
+  });
+
+  it.each(['missing', 'invalid', 'unavailable', 'error'] as const)(
+    'renders persistent %s detail evidence and retries that identity',
+    kind => {
+      const failed = view('empty', 'ready', { kind, id: 31 });
+      controller.useNoticeRuleController.mockReturnValue(failed);
+
+      render(<NoticeRulePage />);
+
+      expect(screen.getByText(`noticeRules.read.${kind}`)).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+      expect(failed.actions.retryDetail).toHaveBeenCalledOnce();
+    }
+  );
 });
 
 const rule = {
@@ -88,10 +112,15 @@ const rule = {
   periodEnd: null
 };
 
-function view(list: 'invalid' | 'empty', options: 'ready' | 'empty' | 'invalid' | 'unavailable' | 'error') {
+function view(
+  list: 'invalid' | 'empty',
+  options: 'ready' | 'empty' | 'invalid' | 'unavailable' | 'error',
+  detail: NoticeRuleDetailState = { kind: 'idle' }
+) {
   return {
     state: {
       command: 'idle',
+      detail,
       draft: null,
       list: { kind: list },
       name: '',
@@ -112,6 +141,7 @@ function view(list: 'invalid' | 'empty', options: 'ready' | 'empty' | 'invalid' 
       refresh: vi.fn(),
       remove: vi.fn(),
       retry: vi.fn(),
+      retryDetail: vi.fn(),
       search: vi.fn(),
       setName: vi.fn(),
       submit: vi.fn(),
