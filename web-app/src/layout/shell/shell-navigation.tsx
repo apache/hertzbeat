@@ -6,16 +6,15 @@
  */
 
 import { LeftOutlined, RightOutlined, UpOutlined } from '@ant-design/icons';
-import { useCan, useGo, useResourceParams } from '@refinedev/core';
-import { Tooltip } from 'antd';
-import { useMemo, useState, type MouseEvent } from 'react';
+import { useResourceParams } from '@refinedev/core';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 
-import { useSession } from '@/core/auth/session-context';
-
 import { activeNavigationTrail, buildShellNavigation, type ShellNavigationItem } from './shell-navigation-model';
 import styles from './hertzbeat-shell.module.css';
+import { ShellNavigationFlyout } from './shell-navigation-flyout';
+import { ShellNavigationLink } from './shell-navigation-link';
 
 type ShellNavigationProps = {
   collapsed: boolean;
@@ -48,17 +47,14 @@ export function ShellNavigation({ collapsed, onCollapsedChange }: ShellNavigatio
       data-testid="shell-navigation"
     >
       <nav className={styles.navigationScroll}>
-        {tree.map(item => (
-          <NavigationBranch
-            key={item.name}
-            item={item}
-            activeTrail={trail}
-            collapsed={collapsed}
-            open={visibleOpen}
-            onToggle={toggle}
-            depth={0}
-          />
-        ))}
+        <NavigationBranches
+          key={collapsed ? `collapsed:${location.pathname}` : 'expanded'}
+          activeTrail={trail}
+          collapsed={collapsed}
+          open={visibleOpen}
+          tree={tree}
+          onToggle={toggle}
+        />
       </nav>
       <button
         className={styles.collapseButton}
@@ -73,11 +69,42 @@ export function ShellNavigation({ collapsed, onCollapsedChange }: ShellNavigatio
   );
 }
 
+function NavigationBranches({
+  activeTrail,
+  collapsed,
+  onToggle,
+  open,
+  tree
+}: {
+  activeTrail: string[];
+  collapsed: boolean;
+  onToggle: (name: string) => void;
+  open: Set<string>;
+  tree: ShellNavigationItem[];
+}) {
+  const [flyout, setFlyout] = useState<string>();
+  return tree.map(item => (
+    <NavigationBranch
+      key={item.name}
+      item={item}
+      activeTrail={activeTrail}
+      collapsed={collapsed}
+      open={open}
+      onToggle={onToggle}
+      flyout={flyout}
+      onFlyoutChange={setFlyout}
+      depth={0}
+    />
+  ));
+}
+
 type NavigationBranchProps = {
   activeTrail: string[];
   collapsed: boolean;
   depth: number;
   item: ShellNavigationItem;
+  flyout: string | undefined;
+  onFlyoutChange: (name: string | undefined) => void;
   onToggle: (name: string) => void;
   open: Set<string>;
 };
@@ -91,24 +118,25 @@ function NavigationBranch(props: NavigationBranchProps) {
   const label = t(item.labelKey);
 
   if (collapsed && depth > 0) return null;
+  if (collapsed && !item.route && hasChildren) {
+    return (
+      <ShellNavigationFlyout
+        active={active}
+        activeTrail={activeTrail}
+        item={item}
+        label={label}
+        open={props.flyout === item.name}
+        onOpenChange={next => props.onFlyoutChange(next ? item.name : undefined)}
+      />
+    );
+  }
   return (
     <div className={styles.navigationBranch} data-depth={depth}>
-      <NavigationBranchControl
-        {...props}
-        active={active}
-        hasChildren={hasChildren}
-        isOpen={isOpen}
-        label={label}
-      />
+      <NavigationBranchControl {...props} active={active} hasChildren={hasChildren} isOpen={isOpen} label={label} />
       {hasChildren && isOpen && !collapsed && (
         <div className={styles.navigationChildren}>
           {item.children.map(child => (
-            <NavigationBranch
-              key={child.name}
-              {...props}
-              item={child}
-              depth={depth + 1}
-            />
+            <NavigationBranch key={child.name} {...props} item={child} depth={depth + 1} />
           ))}
         </div>
       )}
@@ -116,29 +144,36 @@ function NavigationBranch(props: NavigationBranchProps) {
   );
 }
 
-function NavigationBranchControl(props: NavigationBranchProps & {
-  active: boolean;
-  hasChildren: boolean;
-  isOpen: boolean;
-  label: string;
-}) {
+function NavigationBranchControl(
+  props: NavigationBranchProps & {
+    active: boolean;
+    hasChildren: boolean;
+    isOpen: boolean;
+    label: string;
+  }
+) {
   const { t } = useTranslation();
   const { item, activeTrail, collapsed, onToggle, active, hasChildren, isOpen, label } = props;
   return (
     <div className={styles.navigationRow}>
       {item.route ? (
-        <NavigationLink item={item} active={activeTrail.at(-1) === item.name} collapsed={collapsed} label={label} />
+        <ShellNavigationLink
+          item={item}
+          active={activeTrail.at(-1) === item.name}
+          collapsed={collapsed}
+          label={label}
+        />
       ) : (
-        <Tooltip title={collapsed ? label : undefined} placement="right">
-          <button
-            className={`${styles.navigationLink} ${active ? styles.navigationParentActive : ''}`}
-            type="button"
-            onClick={() => onToggle(item.name)}
-          >
-            <span className={styles.navigationIcon} aria-hidden="true">{item.icon}</span>
-            {!collapsed && <span className={styles.navigationText}>{label}</span>}
-          </button>
-        </Tooltip>
+        <button
+          className={`${styles.navigationLink} ${active ? styles.navigationParentActive : ''}`}
+          type="button"
+          onClick={() => onToggle(item.name)}
+        >
+          <span className={styles.navigationIcon} aria-hidden="true">
+            {item.icon}
+          </span>
+          {!collapsed && <span className={styles.navigationText}>{label}</span>}
+        </button>
       )}
       {hasChildren && !collapsed && (
         <button
@@ -152,40 +187,5 @@ function NavigationBranchControl(props: NavigationBranchProps & {
         </button>
       )}
     </div>
-  );
-}
-
-function NavigationLink(props: { active: boolean; collapsed: boolean; item: ShellNavigationItem; label: string }) {
-  const { t } = useTranslation();
-  const { session } = useSession();
-  const go = useGo();
-  const { active, collapsed, item, label } = props;
-  const access = useCan({
-    resource: item.name,
-    action: 'list',
-    params: { resource: item.resource, roles: session?.roles ?? [] },
-    queryOptions: { staleTime: Number.POSITIVE_INFINITY }
-  });
-  const disabled = item.disabled || access.isLoading || access.data?.can === false;
-  const tooltip = collapsed ? label : disabled ? t(`shell.capability.${item.capability}`) : undefined;
-
-  const navigate = (event: MouseEvent<HTMLAnchorElement>) => {
-    event.preventDefault();
-    if (!disabled && item.route) go({ to: item.route, type: 'push' });
-  };
-
-  return (
-    <Tooltip title={tooltip} placement="right">
-      <a
-        className={`${styles.navigationLink} ${active ? styles.navigationLinkActive : ''}`}
-        href={item.route}
-        aria-current={active ? 'page' : undefined}
-        aria-disabled={disabled || undefined}
-        onClick={navigate}
-      >
-        <span className={styles.navigationIcon} aria-hidden="true">{item.icon}</span>
-        {!collapsed && <span className={styles.navigationText}>{label}</span>}
-      </a>
-    </Tooltip>
   );
 }

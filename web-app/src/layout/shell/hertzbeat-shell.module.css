@@ -352,6 +352,55 @@ button.timePolicy:hover {
   padding: 0;
 }
 
+.navigationFlyoutOverlay :global(.ant-popover-inner) {
+  padding: 0;
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-control);
+  background: var(--hb-bg-navigation);
+}
+
+.navigationFlyout {
+  width: 216px;
+  max-height: min(520px, calc(100vh - 64px));
+  padding: 7px;
+  overflow-y: auto;
+}
+
+.navigationFlyoutTitle {
+  padding: 5px 8px 7px;
+  color: var(--hb-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.navigationFlyoutList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.navigationFlyout .navigationLink {
+  justify-content: flex-start;
+  height: 30px;
+  padding: 0 8px;
+}
+
+.navigationFlyoutBranch[data-depth='1'] > .navigationLink {
+  padding-left: 20px;
+}
+
+.navigationFlyoutBranch[data-depth='2'] > .navigationLink {
+  padding-left: 32px;
+}
+
+.navigationFlyoutGroupLabel {
+  padding: 6px 8px 3px;
+  color: var(--hb-text-muted);
+  font-size: 10px;
+  font-weight: 600;
+}
+
 .content {
   width: 100%;
   max-width: 100%;
