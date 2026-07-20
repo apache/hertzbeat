@@ -43,6 +43,9 @@ vi.mock('@/core/auth/session-context', () => ({ useSession: () => runtime.sessio
 vi.mock('@/core/auth/session-identity-context', () => ({
   useSessionIdentityBoundary: () => runtime.replaceIdentity
 }));
+vi.mock('@/shared/navigation/app-paths', () => ({
+  applicationRoutePaths: { dashboard: '/canonical-dashboard', login: '/canonical-login' }
+}));
 
 import { useLoginController } from './use-login-controller';
 

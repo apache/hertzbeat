@@ -19,8 +19,8 @@ import { Alert, Button, Form, Input, Skeleton, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import styles from './login-page.module.css';
-import type { LoginCredentials } from './login-model';
-import { useLoginController } from './use-login-controller';
+import { useLoginController } from '../controller/use-login-controller';
+import type { LoginCredentials } from '../model/login-model';
 
 export function LoginPage() {
   const { t } = useTranslation();

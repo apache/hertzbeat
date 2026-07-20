@@ -46,7 +46,7 @@ export const appRoutes: RouteObject[] = [
       {
         ...getAppRouteIdentity('login'),
         lazy: async () => {
-          const { LoginPage } = await import('@/features/auth/login-page');
+          const { LoginPage } = await import('@/features/auth');
           return { Component: LoginPage };
         }
       },

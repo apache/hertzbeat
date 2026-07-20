@@ -183,6 +183,42 @@ test('rejects server-state and navigation runtimes from feature presentation', (
   assert.match(result.output, /no-feature-presentation-to-orchestration-runtime/);
 });
 
+test('rejects auth session runtimes from feature presentation while allowing controllers', () => {
+  const coreSessionRuntime = {
+    'src/core/auth/session-api.ts': 'export const loginSession = () => undefined;',
+    'src/core/auth/session-context.tsx': 'export const useSession = () => undefined;',
+    'src/core/auth/session-identity-context.tsx': 'export const useSessionIdentityBoundary = () => undefined;'
+  };
+  const allowedFixture = createProject({
+    ...coreSessionRuntime,
+    'src/features/auth/controller/use-login-controller.ts': [
+      "import { loginSession } from '@/core/auth/session-api';",
+      "import { useSession } from '@/core/auth/session-context';",
+      "import { useSessionIdentityBoundary } from '@/core/auth/session-identity-context';",
+      'export const useLoginController = () => [loginSession, useSession, useSessionIdentityBoundary];'
+    ].join('\n')
+  });
+  const rejectedFixture = createProject({
+    ...coreSessionRuntime,
+    'src/features/auth/pages/login-page.tsx':
+      "import { useSession } from '@/core/auth/session-context'; export const LoginPage = useSession;",
+    'src/features/account/components/session-status.tsx': [
+      "import { loginSession } from '@/core/auth/session-api';",
+      "import { useSessionIdentityBoundary } from '@/core/auth/session-identity-context';",
+      'export const SessionStatus = () => [loginSession, useSessionIdentityBoundary];'
+    ].join('\n')
+  });
+
+  const allowedResult = cruise(allowedFixture);
+  const rejectedResult = cruise(rejectedFixture);
+
+  assert.equal(allowedResult.status, 0, allowedResult.output);
+  assert.notEqual(rejectedResult.status, 0, rejectedResult.output);
+  assert.match(rejectedResult.output, /no-feature-presentation-to-auth-session-runtime/);
+  assert.match(rejectedResult.output, /login-page[.]tsx/);
+  assert.match(rejectedResult.output, /session-status[.]tsx/);
+});
+
 test('rejects Refine resource and HTTP transport dependencies from feature presentation', () => {
   const fixture = createProject({
     'src/core/http.ts': 'export const request = true;',

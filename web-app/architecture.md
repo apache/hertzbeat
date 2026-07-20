@@ -159,7 +159,9 @@ pages -> components/controller -> model/api -> core
   import controllers to compose a route workflow.
 - `pages` select controllers and compose components. They do not contain API
   calls, schema parsing, substantial domain logic, DOM form parsing, or large
-  form handlers.
+  form handlers. Pages and components consume controller-owned session state;
+  direct dependencies on the core session API, session context, or session
+  identity context belong in controllers.
 
 Refine data providers are adapters. A feature-specific provider is implemented
 inside that feature and registered by `app/refine`; feature code must never

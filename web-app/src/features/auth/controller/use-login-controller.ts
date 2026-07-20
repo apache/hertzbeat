@@ -30,7 +30,7 @@ import {
   resolveLoginSessionState,
   type LoginCredentials,
   type LoginFailureKind
-} from './login-model';
+} from '../model/login-model';
 
 export function useLoginController() {
   const navigate = useNavigate();

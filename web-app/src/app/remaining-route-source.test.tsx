@@ -21,7 +21,6 @@ import type { PropsWithChildren } from 'react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useLoginController } from '@/features/auth/use-login-controller';
 import { useMonitorListController } from '@/features/monitor/controller/use-monitor-list-controller';
 import { buildMonitorRoutePath, safeMonitorReturnTo } from '@/features/monitor/model/monitor-model';
 import { useLabelQueryController } from '@/features/settings/label/controller/label-query-controller';
@@ -73,15 +72,6 @@ vi.mock('@/features/monitor/api/monitor-api', async importOriginal => ({
   ...(await importOriginal<typeof import('@/features/monitor/api/monitor-api')>()),
   ...monitorApi
 }));
-vi.mock('@/core/auth/session-context', () => ({
-  useSession: () => ({
-    loading: false,
-    retry: vi.fn(),
-    session: { authenticated: true },
-    unavailable: false
-  })
-}));
-vi.mock('@/core/auth/session-identity-context', () => ({ useSessionIdentityBoundary: () => vi.fn() }));
 vi.mock('react-router-dom', async importOriginal => ({
   ...(await importOriginal<typeof import('react-router-dom')>()),
   useNavigate: () => navigate
@@ -119,14 +109,11 @@ describe('remaining route ownership', () => {
     expect(buildLabelMonitorPath({ name: 'env', tagValue: 'prod' })).toBe('/canonical-monitors?labels=env%3Aprod');
   });
 
-  it('uses canonical Monitor and login success targets in controllers', async () => {
+  it('uses the canonical Monitor create target in the controller', async () => {
     const monitor = renderController(canonical.monitor.list, useMonitorListController);
     await waitFor(() => expect(monitor.result.current.state.monitors.kind).toBe('empty'));
     act(() => monitor.result.current.actions.create());
     expect(navigate).toHaveBeenLastCalledWith(canonical.monitor.create);
-
-    renderController(canonical.application.login, useLoginController);
-    await waitFor(() => expect(navigate).toHaveBeenLastCalledWith(canonical.application.dashboard, { replace: true }));
   });
 
   it('canonicalizes the label query only on the shared label route and drops sensitive parameters', async () => {

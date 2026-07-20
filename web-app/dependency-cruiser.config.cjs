@@ -162,6 +162,17 @@ module.exports = {
       }
     },
     {
+      name: 'no-feature-presentation-to-auth-session-runtime',
+      severity: 'error',
+      from: {
+        path: featurePresentationSource,
+        pathNot: productionSource
+      },
+      to: {
+        path: '^src/core/auth/(?:session-api|session-context|session-identity-context)[.]tsx?$'
+      }
+    },
+    {
       name: 'no-feature-presentation-to-http-transport',
       severity: 'error',
       from: {
