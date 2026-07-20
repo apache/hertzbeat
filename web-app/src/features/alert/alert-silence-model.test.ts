@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   AlertSilenceContractError,
@@ -29,11 +29,17 @@ import {
 } from './alert-silence-model';
 
 describe('alert silence model', () => {
+  afterEach(() => vi.useRealTimers());
+
   it('normalizes unsupported URL pagination without discarding search context', () => {
-    expect(readAlertSilenceQuery(new URLSearchParams('search=%20prod%20&pageIndex=-2&pageSize=999')))
-      .toEqual({ search: 'prod', pageIndex: 0, pageSize: 8 });
-    expect(writeAlertSilenceQuery({ search: 'maintenance', pageIndex: 1, pageSize: 15 }).toString())
-      .toBe('pageIndex=1&pageSize=15&search=maintenance');
+    expect(readAlertSilenceQuery(new URLSearchParams('search=%20prod%20&pageIndex=-2&pageSize=999'))).toEqual({
+      search: 'prod',
+      pageIndex: 0,
+      pageSize: 8
+    });
+    expect(writeAlertSilenceQuery({ search: 'maintenance', pageIndex: 1, pageSize: 15 }).toString()).toBe(
+      'pageIndex=1&pageSize=15&search=maintenance'
+    );
   });
 
   it('builds a label-scoped one-time silence payload', () => {
@@ -59,24 +65,30 @@ describe('alert silence model', () => {
   });
 
   it('validates labels, selected days, and ordered time ranges', () => {
-    expect(validateAlertSilenceDraft({
-      ...createAlertSilenceDraft(),
-      name: 'Invalid once',
-      matchAll: false,
-      periodStart: '2026-07-13T12:00',
-      periodEnd: '2026-07-13T10:00'
-    })).toEqual(['labels', 'period']);
-    expect(validateAlertSilenceDraft({
-      ...createAlertSilenceDraft(),
-      name: 'Invalid recurring',
-      type: 1,
-      days: [],
-      periodStart: '',
-      periodEnd: '10:00'
-    })).toEqual(['days', 'period']);
+    expect(
+      validateAlertSilenceDraft({
+        ...createAlertSilenceDraft(),
+        name: 'Invalid once',
+        matchAll: false,
+        periodStart: '2026-07-13T12:00',
+        periodEnd: '2026-07-13T10:00'
+      })
+    ).toEqual(['labels', 'period']);
+    expect(
+      validateAlertSilenceDraft({
+        ...createAlertSilenceDraft(),
+        name: 'Invalid recurring',
+        type: 1,
+        days: [],
+        periodStart: '',
+        periodEnd: '10:00'
+      })
+    ).toEqual(['days', 'period']);
   });
 
   it('preserves the visible time window when changing schedule type', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 6, 20, 12, 0));
     const once = {
       ...createAlertSilenceDraft(),
       periodStart: '2026-07-13T22:00',
@@ -85,8 +97,21 @@ describe('alert silence model', () => {
     const recurring = changeAlertSilenceType(once, 1);
     expect(recurring).toMatchObject({ type: 1, periodStart: '22:00', periodEnd: '02:00' });
     const restored = changeAlertSilenceType(recurring, 0);
-    expect(restored.type).toBe(0);
-    expect(Date.parse(restored.periodStart)).toBeLessThan(Date.parse(restored.periodEnd));
+    expect(restored).toMatchObject({
+      type: 0,
+      periodStart: '2026-07-20T22:00',
+      periodEnd: '2026-07-21T02:00'
+    });
+  });
+
+  it('creates a six-hour default with the backend weekday order', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 0, 15, 10, 30));
+
+    const draft = createAlertSilenceDraft();
+
+    expect(draft.days).toEqual([7, 1, 2, 3, 4, 5, 6]);
+    expect(new Date(draft.periodEnd).getTime() - new Date(draft.periodStart).getTime()).toBe(6 * 60 * 60 * 1000);
   });
 
   it('keeps an invalid recurring clock editable when changing schedule type', () => {
@@ -164,6 +189,56 @@ describe('alert silence model', () => {
     });
   });
 
+  it('preserves unchanged zoned strings across a leap-day and non-hour offset', () => {
+    const persisted = {
+      id: 43,
+      name: 'Leap day maintenance',
+      enable: true,
+      matchAll: true,
+      type: 0 as const,
+      times: null,
+      labels: null,
+      days: null,
+      periodStart: '2024-02-29T23:30:00+05:30',
+      periodEnd: '2024-03-01T00:30:00+05:30'
+    };
+
+    expect(
+      buildAlertSilencePayload({
+        ...alertSilenceDraftFromDetail(persisted),
+        name: 'Renamed leap day maintenance'
+      })
+    ).toMatchObject({
+      periodStart: persisted.periodStart,
+      periodEnd: persisted.periodEnd
+    });
+  });
+
+  it('accepts a real leap day and rejects impossible calendar dates', () => {
+    const valid = {
+      ...createAlertSilenceDraft(),
+      name: 'Calendar validation',
+      periodStart: '2024-02-29T10:00',
+      periodEnd: '2024-02-29T12:00'
+    };
+
+    expect(validateAlertSilenceDraft(valid)).toEqual([]);
+    expect(
+      validateAlertSilenceDraft({
+        ...valid,
+        periodStart: '2100-02-29T10:00',
+        periodEnd: '2100-03-01T12:00'
+      })
+    ).toContain('period');
+    expect(
+      validateAlertSilenceDraft({
+        ...valid,
+        periodStart: '2026-04-31T10:00',
+        periodEnd: '2026-05-01T12:00'
+      })
+    ).toContain('period');
+  });
+
   it('rejects invalid drafts at the payload boundary', () => {
     const valid = {
       ...createAlertSilenceDraft(),
@@ -172,23 +247,23 @@ describe('alert silence model', () => {
       periodEnd: '2026-07-13T12:00'
     };
 
-    expect(() => buildAlertSilencePayload({ ...valid, name: ' ' }))
-      .toThrow(AlertSilenceContractError);
-    expect(() => buildAlertSilencePayload({ ...valid, matchAll: false, labelsText: '' }))
-      .toThrow(AlertSilenceContractError);
-    expect(() => buildAlertSilencePayload({ ...valid, type: 1, days: [0], periodStart: '10:00', periodEnd: '11:00' }))
-      .toThrow(AlertSilenceContractError);
-    expect(() => buildAlertSilencePayload({ ...valid, type: 1, days: [1], periodStart: '25:99', periodEnd: '11:00' }))
-      .toThrow(AlertSilenceContractError);
-    expect(() => buildAlertSilencePayload({ ...valid, periodStart: 'not-a-date' }))
-      .toThrow(AlertSilenceContractError);
-    expect(() => buildAlertSilencePayload({ ...valid, periodStart: '2026-02-30T10:00' }))
-      .toThrow(AlertSilenceContractError);
+    expect(() => buildAlertSilencePayload({ ...valid, name: ' ' })).toThrow(AlertSilenceContractError);
+    expect(() => buildAlertSilencePayload({ ...valid, matchAll: false, labelsText: '' })).toThrow(
+      AlertSilenceContractError
+    );
+    expect(() =>
+      buildAlertSilencePayload({ ...valid, type: 1, days: [0], periodStart: '10:00', periodEnd: '11:00' })
+    ).toThrow(AlertSilenceContractError);
+    expect(() =>
+      buildAlertSilencePayload({ ...valid, type: 1, days: [1], periodStart: '25:99', periodEnd: '11:00' })
+    ).toThrow(AlertSilenceContractError);
+    expect(() => buildAlertSilencePayload({ ...valid, periodStart: 'not-a-date' })).toThrow(AlertSilenceContractError);
+    expect(() => buildAlertSilencePayload({ ...valid, periodStart: '2026-02-30T10:00' })).toThrow(
+      AlertSilenceContractError
+    );
 
     for (const id of [0, -1, Number.MAX_SAFE_INTEGER + 1]) {
-      expect(() => buildAlertSilencePayload({ ...valid, id }))
-        .toThrow(AlertSilenceContractError);
+      expect(() => buildAlertSilencePayload({ ...valid, id })).toThrow(AlertSilenceContractError);
     }
   });
-
 });
