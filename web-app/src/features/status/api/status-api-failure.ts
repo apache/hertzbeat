@@ -50,10 +50,11 @@ function readFailureKind(error: ApiMessageError) {
 }
 
 function writeOutcome(error: ApiMessageError) {
-  if (error.code !== undefined) return 'rejected' as const;
   const status = error.status ?? 0;
-  if (status === 0 || status === 408 || status >= 500 || (status >= 200 && status < 300) || error.cause != null) {
-    return 'uncertain' as const;
-  }
-  return 'rejected' as const;
+  // Business envelopes and transport/server failures may be observed after
+  // persistence. Only a direct, non-timeout HTTP 4xx proves rejection.
+  const hasNoTransportCause = error.cause === undefined || error.cause === null;
+  return hasNoTransportCause && status >= 400 && status < 500 && status !== 408
+    ? ('rejected' as const)
+    : ('uncertain' as const);
 }

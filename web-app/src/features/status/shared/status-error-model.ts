@@ -32,7 +32,8 @@ export class StatusRequestFailure extends Error {
 /** Exact evidence that no Status Page organization has been configured. */
 export class StatusOrgNotFoundError extends StatusRequestFailure {
   constructor() {
-    super('missing', 'rejected');
+    // This is read-side envelope evidence, not proof that a write was rejected.
+    super('missing', 'uncertain');
     this.name = 'StatusOrgNotFoundError';
   }
 }

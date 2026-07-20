@@ -33,11 +33,37 @@ describe('Status API failure boundary', () => {
   it.each([
     ['missing', new ApiMessageError('Missing', { status: 404 }), 'missing', 'rejected'],
     ['unavailable', new ApiMessageError('Unavailable', { status: 503 }), 'unavailable', 'uncertain'],
-    ['business rejection', new ApiMessageError('Rejected', { code: 12, status: 200 }), 'error', 'rejected'],
+    ['business envelope', new ApiMessageError('Rejected', { code: 12, status: 200 }), 'error', 'uncertain'],
+    [
+      'server business envelope',
+      new ApiMessageError('Rejected', { code: 12, status: 503 }),
+      'unavailable',
+      'uncertain'
+    ],
+    ['request timeout', new ApiMessageError('Timed out', { code: 12, status: 408 }), 'error', 'uncertain'],
+    ['unknown transport', new ApiMessageError('Unknown', { code: 12 }), 'unavailable', 'uncertain'],
+    ['transport status zero', new ApiMessageError('Network', { status: 0 }), 'unavailable', 'uncertain'],
+    [
+      'transport cause with client-looking status',
+      new ApiMessageError('Network', { status: 422, cause: new Error('offline') }),
+      'unavailable',
+      'uncertain'
+    ],
+    ['HTTP rejection with code', new ApiMessageError('Rejected', { code: 12, status: 422 }), 'error', 'rejected'],
     ['HTTP rejection', new ApiMessageError('Rejected', { status: 400 }), 'error', 'rejected'],
     ['malformed success', new ApiMessageError('Invalid', { status: 200 }), 'error', 'uncertain']
   ] as const)('maps %s evidence to stable domain semantics', (_label, error, kind, writeOutcome) => {
     expect(normalizeStatusApiFailure(error)).toMatchObject({ kind, writeOutcome });
+  });
+
+  it('keeps the organization not-found envelope as read-only missing evidence', () => {
+    const normalized = normalizeStatusApiFailure(
+      new ApiMessageError('Status Page Organization Not Found', { code: 15, status: 200 }),
+      { resource: 'organization' }
+    );
+
+    expect(normalized).toBeInstanceOf(StatusOrgNotFoundError);
+    expect(normalized).toMatchObject({ kind: 'missing', writeOutcome: 'uncertain' });
   });
 
   it('does not retain transport messages and preserves existing domain errors', () => {
