@@ -21,11 +21,10 @@ import type { PropsWithChildren } from 'react';
 import { createMemoryRouter, MemoryRouter, RouterProvider } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ApiMessageError } from '@/core/http/api-message';
-
 import {
   AlertRuleContractError,
   AlertRuleMissingError,
+  AlertRuleRequestFailure,
   type AlertRule,
   type AlertRuleQuery
 } from '../alert-rule-model';
@@ -91,7 +90,7 @@ describe('Alert Rule list controller', () => {
   });
 
   it.each([
-    [new ApiMessageError('offline', { status: 503 }), 'unavailable'],
+    [unavailableRequestFailure(), 'unavailable'],
     [new AlertRuleContractError('bad'), 'error']
   ])('keeps list failures distinct as %s', async (reason, kind) => {
     api.loadAlertRules.mockRejectedValue(reason);
@@ -195,7 +194,7 @@ describe('Alert Rule list controller', () => {
 
   it('retries toggle proof without repeating an acknowledged PUT', async () => {
     api.loadAlertRule
-      .mockRejectedValueOnce(new ApiMessageError('offline', { status: 503 }))
+      .mockRejectedValueOnce(unavailableRequestFailure())
       .mockResolvedValueOnce({ ...persisted, enable: false });
     const { result } = renderController();
     await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
@@ -213,7 +212,7 @@ describe('Alert Rule list controller', () => {
     const { result } = renderController();
     await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
     api.loadAlertRules
-      .mockRejectedValueOnce(new ApiMessageError('offline', { status: 503 }))
+      .mockRejectedValueOnce(unavailableRequestFailure())
       .mockImplementationOnce((query: AlertRuleQuery) => Promise.resolve(page(query, [])));
 
     await act(async () => result.current.toggle(persisted, false));
@@ -229,7 +228,7 @@ describe('Alert Rule list controller', () => {
     const { result } = renderController();
     await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
     api.loadAlertRules
-      .mockRejectedValueOnce(new ApiMessageError('offline', { status: 503 }))
+      .mockRejectedValueOnce(unavailableRequestFailure())
       .mockImplementationOnce((query: AlertRuleQuery) => Promise.resolve(page(query, [])));
 
     await act(async () => result.current.remove(persisted.id));
@@ -241,9 +240,7 @@ describe('Alert Rule list controller', () => {
   });
 
   it('permits a new write after a definite 4xx rejection', async () => {
-    api.updateAlertRuleEnabled
-      .mockRejectedValueOnce(new ApiMessageError('rejected', { status: 400 }))
-      .mockResolvedValueOnce(undefined);
+    api.updateAlertRuleEnabled.mockRejectedValueOnce(rejectedRequestFailure()).mockResolvedValueOnce(undefined);
     api.loadAlertRule.mockResolvedValue({ ...persisted, enable: false });
     const { result } = renderController();
     await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
@@ -256,7 +253,7 @@ describe('Alert Rule list controller', () => {
   });
 
   it('keeps every unrelated command locked while canonical proof is recoverable', async () => {
-    api.loadAlertRule.mockRejectedValueOnce(new ApiMessageError('offline', { status: 503 }));
+    api.loadAlertRule.mockRejectedValueOnce(unavailableRequestFailure());
     const routed = renderRouted(['/alerts/rules?search=A&pageIndex=0&pageSize=8']);
     await waitFor(() => expect(routed.current().state.list.kind).toBe('empty'));
 
@@ -287,7 +284,7 @@ describe('Alert Rule list controller', () => {
     const { result } = renderController();
     await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
     api.loadAlertRules
-      .mockRejectedValueOnce(new ApiMessageError('offline', { status: 503 }))
+      .mockRejectedValueOnce(unavailableRequestFailure())
       .mockImplementation((query: AlertRuleQuery) => Promise.resolve(page(query, [])));
 
     await act(async () => result.current.toggle(persisted, false));
@@ -303,7 +300,7 @@ describe('Alert Rule list controller', () => {
   });
 
   it('treats a malformed 2xx write response as ambiguous and resumes proof without another PUT', async () => {
-    api.updateAlertRuleEnabled.mockRejectedValueOnce(new ApiMessageError('invalid envelope', { status: 200 }));
+    api.updateAlertRuleEnabled.mockRejectedValueOnce(uncertainRequestFailure());
     api.loadAlertRule.mockResolvedValue({ ...persisted, enable: false });
     const { result } = renderController();
     await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
@@ -397,4 +394,16 @@ function deferred<T>() {
     resolve = next;
   });
   return { promise, resolve };
+}
+
+function unavailableRequestFailure() {
+  return new AlertRuleRequestFailure('unavailable', 'uncertain');
+}
+
+function rejectedRequestFailure() {
+  return new AlertRuleRequestFailure('error', 'rejected');
+}
+
+function uncertainRequestFailure() {
+  return new AlertRuleRequestFailure('error', 'uncertain');
 }

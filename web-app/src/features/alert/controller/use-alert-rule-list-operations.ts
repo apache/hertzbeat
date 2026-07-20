@@ -17,12 +17,13 @@
 
 import { useRef, useState } from 'react';
 
-import { ApiMessageError } from '@/core/http/api-message';
 import { useExclusiveOperation } from '@/shared/exclusive-operation';
 
-import { classifyAlertRuleReadError, deleteAlertRules, loadAlertRule, updateAlertRuleEnabled } from '../alert-rule-api';
+import { deleteAlertRules, loadAlertRule, updateAlertRuleEnabled } from '../alert-rule-api';
 import {
   AlertRuleContractError,
+  alertRuleFailureKind,
+  alertRuleWriteOutcome,
   buildAlertRuleTogglePayload,
   type AlertRule,
   type AlertRulePage
@@ -164,10 +165,7 @@ function createToggleReceipt(rule: AlertRule, enabled: boolean): ToggleReceipt {
 }
 
 function isDefiniteWriteRejection(reason: unknown) {
-  if (reason instanceof AlertRuleContractError) return true;
-  return (
-    reason instanceof ApiMessageError && reason.status !== undefined && reason.status >= 400 && reason.status < 500
-  );
+  return alertRuleWriteOutcome(reason) === 'rejected';
 }
 
 function requireWritableConvergence(actual: AlertRule, expected: ReturnType<typeof buildAlertRuleTogglePayload>) {
@@ -202,7 +200,7 @@ async function proveMissing(id: number) {
   try {
     await loadAlertRule(id);
   } catch (reason) {
-    if (classifyAlertRuleReadError(reason) === 'missing') return;
+    if (alertRuleFailureKind(reason) === 'missing') return;
     throw reason;
   }
   throw new AlertRuleContractError('deleted detail still exists');

@@ -7,8 +7,13 @@ import { useNavigate } from 'react-router-dom';
 
 import { alertRoutePaths } from '@/shared/navigation/app-paths';
 
-import { classifyAlertRuleReadError, saveAlertRule } from '../alert-rule-api';
-import { buildAlertRulePayload, validateAlertRuleDraft, type AlertRuleDraft } from '../alert-rule-model';
+import { saveAlertRule } from '../alert-rule-api';
+import {
+  alertRuleFailureKind,
+  buildAlertRulePayload,
+  validateAlertRuleDraft,
+  type AlertRuleDraft
+} from '../alert-rule-model';
 import { proveCreatedAlertRule, proveUpdatedAlertRule } from '../alert-rule-write-proof';
 import type {
   AlertRuleEditorIdentityController,
@@ -47,7 +52,7 @@ export function useAlertRuleCommandController(
       void navigate(alertRoutePaths.rules);
     } catch (reason) {
       if (!identity.isCurrent(owner)) return;
-      updateRoute({ saveFailure: classifyAlertRuleReadError(reason) });
+      updateRoute({ saveFailure: alertRuleFailureKind(reason) });
       void message.error(t('alertRules.saveFailed'));
     } finally {
       if (ownerRef.current === owner) ownerRef.current = null;

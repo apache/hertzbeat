@@ -6,8 +6,9 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { alertRoutePaths } from '@/shared/navigation/app-paths';
 
-import { classifyAlertRuleReadError, loadAlertRule } from '../alert-rule-api';
+import { loadAlertRule } from '../alert-rule-api';
 import {
+  alertRuleFailureKind,
   alertRuleDraftFromDetail,
   createAlertRuleDraft,
   type AlertRuleDraft,
@@ -143,7 +144,7 @@ function resolveDetail(
   if (mode === 'new') return draft ? { kind: 'ready' } : { kind: 'error' };
   if (id === null) return { kind: 'error' };
   if (pending) return { kind: 'loading' };
-  if (error) return { kind: classifyAlertRuleReadError(error) };
+  if (error) return { kind: alertRuleFailureKind(error) };
   return draft ? { kind: 'ready' } : { kind: 'loading' };
 }
 

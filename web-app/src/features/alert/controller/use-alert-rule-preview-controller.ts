@@ -4,8 +4,8 @@ import { App } from 'antd';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { classifyAlertRuleReadError, previewAlertRule } from '../alert-rule-api';
-import type { AlertRuleDraft } from '../alert-rule-model';
+import { previewAlertRule } from '../alert-rule-api';
+import { alertRuleFailureKind, type AlertRuleDraft } from '../alert-rule-model';
 import type { AlertRuleEditorIdentityController, AlertRuleRouteUpdate } from './alert-rule-editor-state';
 
 export function useAlertRulePreviewController(
@@ -34,7 +34,7 @@ export function useAlertRulePreviewController(
       updateRoute({ preview: records.length === 0 ? { kind: 'empty' } : { kind: 'ready', records } });
     } catch (reason) {
       if (!identity.isCurrent(owner) || previewEpochRef.current !== epoch) return;
-      const kind = classifyAlertRuleReadError(reason) === 'unavailable' ? 'unavailable' : 'error';
+      const kind = alertRuleFailureKind(reason) === 'unavailable' ? 'unavailable' : 'error';
       updateRoute({ preview: { kind } });
     }
   };

@@ -21,11 +21,10 @@ import type { PropsWithChildren } from 'react';
 import { createMemoryRouter, MemoryRouter, Route, Routes, RouterProvider } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ApiMessageError } from '@/core/http/api-message';
-
 import {
   AlertRuleContractError,
   AlertRuleMissingError,
+  AlertRuleRequestFailure,
   type AlertRule,
   type AlertRuleQuery
 } from '../alert-rule-model';
@@ -80,7 +79,7 @@ describe('Alert Rule editor controller', () => {
 
   it.each([
     [new AlertRuleMissingError(), 'missing'],
-    [new ApiMessageError('offline', { status: 503 }), 'unavailable'],
+    [new AlertRuleRequestFailure('unavailable', 'uncertain'), 'unavailable'],
     [new AlertRuleContractError('bad'), 'error']
   ])('keeps detail failure %s distinct and retryable', async (reason, kind) => {
     api.loadAlertRule.mockRejectedValueOnce(reason).mockResolvedValueOnce(persisted);
@@ -105,7 +104,7 @@ describe('Alert Rule editor controller', () => {
   it.each([
     [[], 'empty'],
     [[{ value: 1 }], 'ready'],
-    [new ApiMessageError('offline', { status: 503 }), 'unavailable'],
+    [new AlertRuleRequestFailure('unavailable', 'uncertain'), 'unavailable'],
     [new AlertRuleContractError('bad'), 'error']
   ])('keeps preview evidence distinct as %s', async (evidence, kind) => {
     if (evidence instanceof Error) api.previewAlertRule.mockRejectedValue(evidence);

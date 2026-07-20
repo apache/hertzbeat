@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
-import { ApiMessageError, apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
+import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
 
+import { alertRuleApiRequest } from './alert-rule-api-failure';
 import {
   AlertRuleContractError,
-  AlertRuleMissingError,
   buildAlertRulePayload,
   buildAlertRulePreviewRequest,
   buildAlertRuleTogglePayload,
@@ -31,7 +31,10 @@ import { parseAlertRuleDetail, parseAlertRulePage, parseAlertRulePreview } from 
 
 export function buildAlertRuleListPath(query: AlertRuleQuery) {
   const params = new URLSearchParams({
-    pageIndex: String(query.pageIndex), pageSize: String(query.pageSize), sort: 'id', order: 'desc'
+    pageIndex: String(query.pageIndex),
+    pageSize: String(query.pageSize),
+    sort: 'id',
+    order: 'desc'
   });
   // Spring decodes the parameter before the service deliberately URL-decodes it again.
   if (query.search.trim()) params.set('search', encodeURIComponent(JSON.stringify([query.search.trim()])));
@@ -39,13 +42,13 @@ export function buildAlertRuleListPath(query: AlertRuleQuery) {
 }
 
 export async function loadAlertRules(query: AlertRuleQuery) {
-  const response = await apiMessageGet(buildAlertRuleListPath(query));
+  const response = await alertRuleApiRequest(() => apiMessageGet(buildAlertRuleListPath(query)));
   return parseAlertRulePage(response, query);
 }
 
 export async function loadAlertRule(id: string | number) {
   const normalizedId = normalizeId(id);
-  const response = await apiMessageGet(`/api/alert/define/${normalizedId}`);
+  const response = await alertRuleApiRequest(() => apiMessageGet(`/api/alert/define/${normalizedId}`));
   const detail = parseAlertRuleDetail(response);
   if (detail.id !== normalizedId) throw new AlertRuleContractError('detail id does not match the endpoint');
   return detail;
@@ -55,8 +58,8 @@ export async function saveAlertRule(mode: 'new' | 'edit', draft: AlertRuleDraft)
   if (mode === 'new' && draft.id !== undefined) throw new AlertRuleContractError('create must not carry an id');
   if (mode === 'edit' && draft.id === undefined) throw new AlertRuleContractError('update requires an id');
   const payload = buildAlertRulePayload(draft);
-  if (mode === 'new') await apiMessagePost('/api/alert/define', payload);
-  else await apiMessagePut('/api/alert/define', payload);
+  if (mode === 'new') await alertRuleApiRequest(() => apiMessagePost('/api/alert/define', payload));
+  else await alertRuleApiRequest(() => apiMessagePut('/api/alert/define', payload));
 }
 
 export async function deleteAlertRules(ids: number[]): Promise<void> {
@@ -64,11 +67,11 @@ export async function deleteAlertRules(ids: number[]): Promise<void> {
   const uniqueIds = [...new Set(ids.map(normalizeId))];
   const params = new URLSearchParams();
   uniqueIds.forEach(id => params.append('ids', String(id)));
-  await apiMessageDelete(`/api/alert/defines?${params.toString()}`);
+  await alertRuleApiRequest(() => apiMessageDelete(`/api/alert/defines?${params.toString()}`));
 }
 
 export async function updateAlertRuleEnabled(rule: AlertRule, enable: boolean): Promise<void> {
-  await apiMessagePut('/api/alert/define', buildAlertRuleTogglePayload(rule, enable));
+  await alertRuleApiRequest(() => apiMessagePut('/api/alert/define', buildAlertRuleTogglePayload(rule, enable)));
 }
 
 export async function previewAlertRule(draft: AlertRuleDraft) {
@@ -76,21 +79,10 @@ export async function previewAlertRule(draft: AlertRuleDraft) {
   const params = new URLSearchParams({ type: request.type, expr: request.expr });
   // The backend currently exposes preview only as GET, so the expression
   // remains in the URL until that contract supports a request body.
-  const response = await apiMessageGet(
-    `/api/alert/define/preview/${encodeURIComponent(request.datasource)}?${params.toString()}`
+  const response = await alertRuleApiRequest(() =>
+    apiMessageGet(`/api/alert/define/preview/${encodeURIComponent(request.datasource)}?${params.toString()}`)
   );
   return parseAlertRulePreview(response);
-}
-
-export function classifyAlertRuleReadError(reason: unknown): 'missing' | 'unavailable' | 'error' {
-  if (reason instanceof AlertRuleMissingError) return 'missing';
-  if (reason instanceof ApiMessageError) {
-    if (reason.status === 404 || reason.status === 200 && reason.code === 3) return 'missing';
-    if (reason.cause !== undefined || reason.status === undefined || [0, 502, 503, 504].includes(reason.status)) {
-      return 'unavailable';
-    }
-  }
-  return 'error';
 }
 
 function normalizeId(value: string | number) {

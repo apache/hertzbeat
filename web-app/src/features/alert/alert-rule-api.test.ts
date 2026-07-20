@@ -17,44 +17,88 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ApiMessageError, apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
+import {
+  ApiMessageError,
+  apiMessageDelete,
+  apiMessageGet,
+  apiMessagePost,
+  apiMessagePut
+} from '@/core/http/api-message';
 
 import {
-  buildAlertRuleListPath, classifyAlertRuleReadError, deleteAlertRules, loadAlertRule, loadAlertRules,
-  previewAlertRule, saveAlertRule, updateAlertRuleEnabled
+  buildAlertRuleListPath,
+  deleteAlertRules,
+  loadAlertRule,
+  loadAlertRules,
+  previewAlertRule,
+  saveAlertRule,
+  updateAlertRuleEnabled
 } from './alert-rule-api';
 import {
-  AlertRuleContractError, AlertRuleMissingError, alertRuleDraftFromDetail, createAlertRuleDraft,
-  type AlertRule, type AlertRuleQuery
+  AlertRuleContractError,
+  AlertRuleRequestFailure,
+  alertRuleDraftFromDetail,
+  createAlertRuleDraft,
+  type AlertRule,
+  type AlertRuleQuery
 } from './alert-rule-model';
 
 vi.mock('@/core/http/api-message', async importOriginal => ({
   ...(await importOriginal<typeof import('@/core/http/api-message')>()),
-  apiMessageDelete: vi.fn(), apiMessageGet: vi.fn(), apiMessagePost: vi.fn(), apiMessagePut: vi.fn()
+  apiMessageDelete: vi.fn(),
+  apiMessageGet: vi.fn(),
+  apiMessagePost: vi.fn(),
+  apiMessagePut: vi.fn()
 }));
 
 const query: AlertRuleQuery = { search: '', pageIndex: 0, pageSize: 8 };
 const persisted: AlertRule = {
-  id: 7, name: 'CPU high', type: 'realtime_metric', datasource: 'promql', expr: 'usage > 90', period: 300,
-  times: 3, labels: { severity: 'critical' }, annotations: { summary: 'CPU high' }, template: 'CPU {{ $value }}',
-  enable: true, creator: null, modifier: null, gmtCreate: null, gmtUpdate: null
+  id: 7,
+  name: 'CPU high',
+  type: 'realtime_metric',
+  datasource: 'promql',
+  expr: 'usage > 90',
+  period: 300,
+  times: 3,
+  labels: { severity: 'critical' },
+  annotations: { summary: 'CPU high' },
+  template: 'CPU {{ $value }}',
+  enable: true,
+  creator: null,
+  modifier: null,
+  gmtCreate: null,
+  gmtUpdate: null
 };
 
 describe('alert rule API', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('owns the established double-decoded paged search path', () => {
-    expect(buildAlertRuleListPath({ search: '', pageIndex: 0, pageSize: 8 }))
-      .toBe('/api/alert/defines?pageIndex=0&pageSize=8&sort=id&order=desc');
-    expect(buildAlertRuleListPath({ search: 'cpu', pageIndex: 2, pageSize: 15 }))
-      .toBe('/api/alert/defines?pageIndex=2&pageSize=15&sort=id&order=desc&search=%255B%2522cpu%2522%255D');
+    expect(buildAlertRuleListPath({ search: '', pageIndex: 0, pageSize: 8 })).toBe(
+      '/api/alert/defines?pageIndex=0&pageSize=8&sort=id&order=desc'
+    );
+    expect(buildAlertRuleListPath({ search: 'cpu', pageIndex: 2, pageSize: 15 })).toBe(
+      '/api/alert/defines?pageIndex=2&pageSize=15&sort=id&order=desc&search=%255B%2522cpu%2522%255D'
+    );
   });
 
   it('parses unknown list and detail responses through the strict boundary', async () => {
     vi.mocked(apiMessageGet)
-      .mockResolvedValueOnce({ content: [{ ...persisted, ignored: true }], totalElements: 1, totalPages: 1, number: 0, size: 8 })
+      .mockResolvedValueOnce({
+        content: [{ ...persisted, ignored: true }],
+        totalElements: 1,
+        totalPages: 1,
+        number: 0,
+        size: 8
+      })
       .mockResolvedValueOnce({ ...persisted, ignored: true });
-    await expect(loadAlertRules(query)).resolves.toEqual({ content: [persisted], totalElements: 1, totalPages: 1, number: 0, size: 8 });
+    await expect(loadAlertRules(query)).resolves.toEqual({
+      content: [persisted],
+      totalElements: 1,
+      totalPages: 1,
+      number: 0,
+      size: 8
+    });
     await expect(loadAlertRule('7')).resolves.toEqual(persisted);
   });
 
@@ -67,7 +111,13 @@ describe('alert rule API', () => {
     vi.mocked(apiMessagePost).mockResolvedValue({ id: 99 });
     vi.mocked(apiMessagePut).mockResolvedValue({ ...persisted, id: 99 });
     vi.mocked(apiMessageDelete).mockResolvedValue({ deleted: [7] });
-    const draft = { ...createAlertRuleDraft(), name: 'CPU high', expr: 'usage > 90', template: 'CPU', labelsText: 'severity:critical' };
+    const draft = {
+      ...createAlertRuleDraft(),
+      name: 'CPU high',
+      expr: 'usage > 90',
+      template: 'CPU',
+      labelsText: 'severity:critical'
+    };
     await expect(saveAlertRule('new', draft)).resolves.toBeUndefined();
     await expect(saveAlertRule('edit', { ...draft, id: 7 })).resolves.toBeUndefined();
     await expect(updateAlertRuleEnabled(persisted, false)).resolves.toBeUndefined();
@@ -82,10 +132,13 @@ describe('alert rule API', () => {
     expect(apiMessagePut).not.toHaveBeenCalled();
   });
 
-  it.each(['', ' 7', '7 ', '1e2', '1.0', '+1', '0', '-1'])('rejects non-canonical detail id %s before transport', async id => {
-    await expect(loadAlertRule(id)).rejects.toThrow(AlertRuleContractError);
-    expect(apiMessageGet).not.toHaveBeenCalled();
-  });
+  it.each(['', ' 7', '7 ', '1e2', '1.0', '+1', '0', '-1'])(
+    'rejects non-canonical detail id %s before transport',
+    async id => {
+      await expect(loadAlertRule(id)).rejects.toThrow(AlertRuleContractError);
+      expect(apiMessageGet).not.toHaveBeenCalled();
+    }
+  );
 
   it('requires a nonempty valid delete set and stably removes duplicate ids', async () => {
     vi.mocked(apiMessageDelete).mockResolvedValue(undefined);
@@ -102,8 +155,17 @@ describe('alert rule API', () => {
     vi.mocked(apiMessagePut).mockResolvedValue(undefined);
     await updateAlertRuleEnabled(persisted, false);
     expect(apiMessagePut).toHaveBeenCalledWith('/api/alert/define', {
-      id: 7, name: 'CPU high', type: 'realtime_metric', datasource: 'promql', expr: 'usage > 90', period: 300,
-      times: 3, labels: { severity: 'critical' }, annotations: { summary: 'CPU high' }, template: 'CPU {{ $value }}', enable: false
+      id: 7,
+      name: 'CPU high',
+      type: 'realtime_metric',
+      datasource: 'promql',
+      expr: 'usage > 90',
+      period: 300,
+      times: 3,
+      labels: { severity: 'critical' },
+      annotations: { summary: 'CPU high' },
+      template: 'CPU {{ $value }}',
+      enable: false
     });
   });
 
@@ -111,27 +173,52 @@ describe('alert rule API', () => {
     vi.mocked(apiMessagePut).mockResolvedValue(undefined);
     const draft = alertRuleDraftFromDetail(persisted);
     await saveAlertRule('edit', draft);
-    expect(apiMessagePut).toHaveBeenCalledWith('/api/alert/define', expect.objectContaining({ annotations: { summary: 'CPU high' } }));
+    expect(apiMessagePut).toHaveBeenCalledWith(
+      '/api/alert/define',
+      expect.objectContaining({ annotations: { summary: 'CPU high' } })
+    );
   });
 
   it('previews a valid strategy and expression without requiring unrelated editor fields', async () => {
     vi.mocked(apiMessageGet).mockResolvedValue([{ value: 1 }]);
     await expect(previewAlertRule({ ...createAlertRuleDraft(), expr: 'usage > 90' })).resolves.toEqual([{ value: 1 }]);
-    expect(apiMessageGet).toHaveBeenCalledWith('/api/alert/define/preview/promql?type=realtime_metric&expr=usage+%3E+90');
+    expect(apiMessageGet).toHaveBeenCalledWith(
+      '/api/alert/define/preview/promql?type=realtime_metric&expr=usage+%3E+90'
+    );
   });
 
   it('rejects malformed preview rows at the response boundary', async () => {
     vi.mocked(apiMessageGet).mockResolvedValue([[]]);
-    await expect(previewAlertRule({ ...createAlertRuleDraft(), expr: 'usage > 90' }))
-      .rejects.toThrow(AlertRuleContractError);
+    await expect(previewAlertRule({ ...createAlertRuleDraft(), expr: 'usage > 90' })).rejects.toThrow(
+      AlertRuleContractError
+    );
   });
 
-  it.each([
-    [new AlertRuleMissingError(), 'missing'],
-    [new ApiMessageError('missing', { status: 200, code: 3 }), 'missing'],
-    [new ApiMessageError('offline', { status: 503 }), 'unavailable'],
-    [new AlertRuleContractError('bad'), 'error']
-  ])('classifies %s as %s', (reason, expected) => {
-    expect(classifyAlertRuleReadError(reason)).toBe(expected);
+  it('normalizes every transport entry before leaving the API', async () => {
+    const draft = {
+      ...createAlertRuleDraft(),
+      name: 'CPU high',
+      expr: 'usage > 90',
+      template: 'CPU'
+    };
+
+    vi.mocked(apiMessageGet).mockRejectedValueOnce(transportFailure());
+    await expect(loadAlertRules(query)).rejects.toBeInstanceOf(AlertRuleRequestFailure);
+    vi.mocked(apiMessageGet).mockRejectedValueOnce(transportFailure());
+    await expect(loadAlertRule(7)).rejects.toBeInstanceOf(AlertRuleRequestFailure);
+    vi.mocked(apiMessagePost).mockRejectedValueOnce(transportFailure());
+    await expect(saveAlertRule('new', draft)).rejects.toBeInstanceOf(AlertRuleRequestFailure);
+    vi.mocked(apiMessagePut).mockRejectedValueOnce(transportFailure());
+    await expect(saveAlertRule('edit', { ...draft, id: 7 })).rejects.toBeInstanceOf(AlertRuleRequestFailure);
+    vi.mocked(apiMessageDelete).mockRejectedValueOnce(transportFailure());
+    await expect(deleteAlertRules([7])).rejects.toBeInstanceOf(AlertRuleRequestFailure);
+    vi.mocked(apiMessagePut).mockRejectedValueOnce(transportFailure());
+    await expect(updateAlertRuleEnabled(persisted, false)).rejects.toBeInstanceOf(AlertRuleRequestFailure);
+    vi.mocked(apiMessageGet).mockRejectedValueOnce(transportFailure());
+    await expect(previewAlertRule(draft)).rejects.toBeInstanceOf(AlertRuleRequestFailure);
   });
 });
+
+function transportFailure() {
+  return new ApiMessageError('private transport failure', { status: 503 });
+}

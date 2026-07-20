@@ -18,9 +18,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ApiMessageError } from '@/core/http/api-message';
-
-import type { AlertRule } from '../alert-rule-model';
+import { AlertRuleRequestFailure, type AlertRule } from '../alert-rule-model';
 import { useAlertRuleListOperations } from './use-alert-rule-list-operations';
 
 const api = vi.hoisted(() => ({
@@ -43,7 +41,7 @@ describe('alert rule list operation state', () => {
   it('prioritizes operating over recovering and returns to idle after recovery succeeds', async () => {
     const proof = deferred<AlertRule>();
     api.loadAlertRule
-      .mockRejectedValueOnce(new ApiMessageError('offline', { status: 503 }))
+      .mockRejectedValueOnce(new AlertRuleRequestFailure('unavailable', 'uncertain'))
       .mockReturnValueOnce(proof.promise);
     const rereadLatest = vi.fn().mockResolvedValue({ content: [], totalElements: 0, totalPages: 0 });
     const { result } = renderHook(() =>

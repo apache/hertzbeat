@@ -84,6 +84,8 @@ export type AlertRulePage = {
 };
 
 export type AlertRuleListState = RemotePageState<AlertRule, 'unavailable' | 'error'>;
+export type AlertRuleFailureKind = 'missing' | 'unavailable' | 'error';
+export type AlertRuleWriteOutcome = 'rejected' | 'uncertain';
 
 export class AlertRuleContractError extends Error {
   constructor(message: string, options?: ErrorOptions) {
@@ -97,6 +99,35 @@ export class AlertRuleMissingError extends Error {
     super('Alert Rule detail is missing');
     this.name = 'AlertRuleMissingError';
   }
+}
+
+/**
+ * Stable request evidence exposed by the Alert Rule API boundary. Transport
+ * details stay private so controllers cannot depend on HTTP implementation.
+ */
+export class AlertRuleRequestFailure extends Error {
+  constructor(
+    readonly kind: AlertRuleFailureKind,
+    readonly writeOutcome: AlertRuleWriteOutcome
+  ) {
+    super('Alert Rule request failed');
+    this.name = 'AlertRuleRequestFailure';
+  }
+}
+
+/** Maps domain failures to the read state understood by Alert Rule screens. */
+export function alertRuleFailureKind(error: unknown): AlertRuleFailureKind {
+  if (error instanceof AlertRuleMissingError) return 'missing';
+  return error instanceof AlertRuleRequestFailure ? error.kind : 'error';
+}
+
+/**
+ * Returns rejected only when retrying the write is known to be safe. Unknown
+ * outcomes remain uncertain and must proceed through canonical read proof.
+ */
+export function alertRuleWriteOutcome(error: unknown): AlertRuleWriteOutcome {
+  if (error instanceof AlertRuleContractError) return 'rejected';
+  return error instanceof AlertRuleRequestFailure ? error.writeOutcome : 'uncertain';
 }
 
 export function readAlertRuleQuery(params: URLSearchParams): AlertRuleQuery {

@@ -19,8 +19,7 @@ import { App } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { classifyAlertRuleReadError } from '../alert-rule-api';
-import type { AlertRuleListState, AlertRulePage } from '../alert-rule-model';
+import { alertRuleFailureKind, type AlertRuleListState, type AlertRulePage } from '../alert-rule-model';
 import { createAlertRuleListActions } from './alert-rule-list-actions';
 import { useAlertRuleListOperations } from './use-alert-rule-list-operations';
 import { useAlertRuleListQueryController } from './use-alert-rule-list-query-controller';
@@ -54,7 +53,7 @@ export function useAlertRuleListController() {
 
 function resolveListState(pending: boolean, error: Error | null, page: AlertRulePage | undefined): AlertRuleListState {
   if (pending) return { kind: 'loading' };
-  if (error) return { kind: classifyAlertRuleReadError(error) === 'unavailable' ? 'unavailable' : 'error' };
+  if (error) return { kind: alertRuleFailureKind(error) === 'unavailable' ? 'unavailable' : 'error' };
   if (!page) return { kind: 'error' };
   if (page.content.length === 0 && page.totalElements === 0) return { kind: 'empty' };
   return { kind: 'ready', records: page.content, total: page.totalElements };
