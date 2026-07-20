@@ -47,7 +47,13 @@ export function NoticeReceiverPage() {
           setSecretCleared={actions.setSecretCleared}
           close={actions.close}
           submit={() => void actions.submit()}
-          test={() => void actions.sendTest()}
+          {...(state.testRecovery
+            ? {
+                testRecovery: state.testRecovery,
+                retryTest: () => void actions.retryTest(),
+                dismissTestRecovery: () => void actions.dismissTestRecovery()
+              }
+            : { test: () => void actions.sendTest() })}
         />
       ) : null}
     </div>

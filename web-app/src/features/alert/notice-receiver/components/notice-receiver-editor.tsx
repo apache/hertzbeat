@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Button, Input, Modal, Select } from 'antd';
+import { Alert, Button, Input, Modal, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -11,10 +11,11 @@ import {
   type NoticeReceiverSecretKey,
   type NoticeReceiverType
 } from '../model/notice-receiver-model';
+import type { NoticeReceiverTestRecovery } from '../model/notice-receiver-operation-state';
 import styles from './notice-receiver-editor.module.css';
 import { NoticeReceiverField } from './notice-receiver-fields';
 
-type NoticeReceiverEditorProps = {
+type NoticeReceiverEditorBaseProps = {
   draft: NoticeReceiverDraft;
   saving: boolean;
   testing: boolean;
@@ -24,26 +25,39 @@ type NoticeReceiverEditorProps = {
   setSecretCleared: (key: NoticeReceiverSecretKey, cleared: boolean) => void;
   close: () => void;
   submit: () => void;
-  test: () => void;
 };
+
+type NoticeReceiverEditorProps = NoticeReceiverEditorBaseProps &
+  (
+    | { testRecovery?: undefined; test: () => void; retryTest?: never; dismissTestRecovery?: never }
+    | {
+        testRecovery: NoticeReceiverTestRecovery;
+        test?: never;
+        retryTest: () => void;
+        dismissTestRecovery: () => void;
+      }
+  );
 
 export function NoticeReceiverEditor(props: NoticeReceiverEditorProps) {
   const { t } = useTranslation();
+  const testUncertain = Boolean(props.testRecovery);
+  const canDismissTestRecovery = testUncertain && !props.testing;
   return (
     <Modal
       open
       width={760}
       maskClosable={false}
-      closable={!props.busy}
-      keyboard={!props.busy}
+      closable={!props.busy || canDismissTestRecovery}
+      keyboard={!props.busy || canDismissTestRecovery}
       title={t(props.draft.id ? 'noticeReceivers.edit' : 'noticeReceivers.new')}
       okText={t('common.save')}
       cancelText={t('common.cancel')}
       confirmLoading={props.saving}
       okButtonProps={{ disabled: props.busy }}
-      cancelButtonProps={{ disabled: props.busy }}
+      cancelButtonProps={{ disabled: props.busy && !canDismissTestRecovery }}
       onCancel={() => {
-        if (!props.busy) props.close();
+        if (props.testRecovery && canDismissTestRecovery) props.dismissTestRecovery();
+        else if (!props.busy) props.close();
       }}
       onOk={() => {
         if (!props.busy) props.submit();
@@ -59,6 +73,14 @@ function NoticeReceiverForm(props: NoticeReceiverEditorProps) {
   const definition = activeNoticeReceiverDefinition(props.draft.type);
   return (
     <div className={styles.form}>
+      {props.testRecovery ? (
+        <Alert
+          className={`${styles.wide}`}
+          type="warning"
+          showIcon
+          message={t(`noticeReceivers.testError.${props.testRecovery.failure}`)}
+        />
+      ) : null}
       <label className={`${styles.field} ${styles.wide}`}>
         {t('noticeReceivers.name')}
         <Input
@@ -92,10 +114,10 @@ function NoticeReceiverForm(props: NoticeReceiverEditorProps) {
       <Button
         className={`${styles.test} ${styles.wide}`}
         loading={props.testing}
-        disabled={props.busy}
-        onClick={props.test}
+        disabled={props.testing || (props.busy && !props.testRecovery)}
+        onClick={props.testRecovery ? props.retryTest : props.test}
       >
-        {t('noticeReceivers.test')}
+        {t(props.testRecovery ? 'common.retry' : 'noticeReceivers.test')}
       </Button>
     </div>
   );

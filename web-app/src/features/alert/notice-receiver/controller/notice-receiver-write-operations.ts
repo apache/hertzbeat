@@ -19,7 +19,7 @@ import {
   requireNoticeReceiverAbsent,
   requireNoticeReceiverConverged
 } from '../model/notice-receiver-evidence';
-import type { NoticeReceiverReceipt } from '../model/notice-receiver-operation-state';
+import type { NoticeReceiverWriteReceipt } from '../model/notice-receiver-operation-state';
 import type { NoticeReceiverEditorController } from './use-notice-receiver-editor-controller';
 import type {
   NoticeReceiverOperationController,
@@ -58,7 +58,12 @@ export async function submitNoticeReceiver(context: NoticeReceiverWriteContext) 
   }
   const owner = context.operation.begin('saving');
   if (!owner) return false;
-  const receipt: NoticeReceiverReceipt = { kind: 'save', phase: 'write', draft, ...(draft.id ? { id: draft.id } : {}) };
+  const receipt: NoticeReceiverWriteReceipt = {
+    kind: 'save',
+    phase: 'write',
+    draft,
+    ...(draft.id ? { id: draft.id } : {})
+  };
   context.operation.retain(owner, receipt);
   context.editor.controls.invalidateDetail();
   return runWrite(context, owner, receipt);
@@ -67,7 +72,7 @@ export async function submitNoticeReceiver(context: NoticeReceiverWriteContext) 
 export async function removeNoticeReceiver(context: NoticeReceiverWriteContext, record: NoticeReceiver) {
   const owner = context.operation.begin('removing');
   if (!owner) return false;
-  const receipt: NoticeReceiverReceipt = { kind: 'delete', phase: 'write', record };
+  const receipt: NoticeReceiverWriteReceipt = { kind: 'delete', phase: 'write', record };
   context.operation.retain(owner, receipt);
   context.editor.controls.invalidateDetail();
   return runWrite(context, owner, receipt);
@@ -82,7 +87,7 @@ export async function retryNoticeReceiver(context: NoticeReceiverWriteContext) {
 async function runWrite(
   context: NoticeReceiverWriteContext,
   owner: NoticeReceiverOperationOwner,
-  receipt: NoticeReceiverReceipt
+  receipt: NoticeReceiverWriteReceipt
 ) {
   try {
     const completed = await advance(context, owner, receipt);
@@ -103,7 +108,7 @@ async function runWrite(
 async function advance(
   context: NoticeReceiverWriteContext,
   owner: NoticeReceiverOperationOwner,
-  receipt: NoticeReceiverReceipt
+  receipt: NoticeReceiverWriteReceipt
 ) {
   // The receipt advances monotonically so Retry resumes proof or projection without repeating an acknowledged write.
   if (receipt.phase === 'write') {
@@ -121,7 +126,7 @@ async function advance(
   return true;
 }
 
-async function mutate(context: NoticeReceiverWriteContext, receipt: NoticeReceiverReceipt) {
+async function mutate(context: NoticeReceiverWriteContext, receipt: NoticeReceiverWriteReceipt) {
   if (receipt.kind === 'delete') {
     requireExactNoticeReceiver(await context.remove(receipt.record), receipt.record.id);
     receipt.phase = 'proof';
@@ -136,7 +141,7 @@ async function mutate(context: NoticeReceiverWriteContext, receipt: NoticeReceiv
   receipt.phase = 'projection';
 }
 
-async function prove(context: NoticeReceiverWriteContext, receipt: NoticeReceiverReceipt) {
+async function prove(context: NoticeReceiverWriteContext, receipt: NoticeReceiverWriteReceipt) {
   if (receipt.kind === 'save') {
     // An ambiguous create without a server-issued identity cannot be proved safely by name or list position.
     if (receipt.id === undefined)
@@ -156,7 +161,7 @@ async function prove(context: NoticeReceiverWriteContext, receipt: NoticeReceive
 function recoverOrReject(
   context: NoticeReceiverWriteContext,
   owner: NoticeReceiverOperationOwner,
-  receipt: NoticeReceiverReceipt,
+  receipt: NoticeReceiverWriteReceipt,
   error: unknown
 ) {
   if (receipt.phase !== 'write') return;
@@ -180,7 +185,7 @@ function recoverOrReject(
 function complete(
   context: NoticeReceiverWriteContext,
   owner: NoticeReceiverOperationOwner,
-  receipt: NoticeReceiverReceipt
+  receipt: NoticeReceiverWriteReceipt
 ) {
   context.operation.clear(owner);
   if (receipt.kind === 'save') {
@@ -192,7 +197,7 @@ function complete(
   context.notify.deleteSuccess();
 }
 
-function notifyFailure(context: NoticeReceiverWriteContext, receipt: NoticeReceiverReceipt, error: unknown) {
+function notifyFailure(context: NoticeReceiverWriteContext, receipt: NoticeReceiverWriteReceipt, error: unknown) {
   const kind = classifyNoticeReceiverWriteFailure(error);
   if (receipt.kind === 'save') context.notify.saveFailure(kind);
   else context.notify.deleteFailure(kind);

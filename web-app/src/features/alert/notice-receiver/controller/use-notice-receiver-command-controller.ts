@@ -18,6 +18,7 @@ import {
 } from '../model/notice-receiver-model';
 import {
   classifyNoticeReceiverWriteFailure,
+  isNoticeReceiverWriteRejection,
   type NoticeReceiverFailureKind,
   type NoticeReceiverNonMissingFailureKind
 } from '../model/notice-receiver-failure';
@@ -73,6 +74,7 @@ export function useNoticeReceiverCommandController(read: NoticeReceiverReadCapab
       saving: operation.command === 'saving',
       testing: operation.command === 'testing',
       recovery: operation.getRecovery(),
+      testRecovery: operation.getTestRecovery(),
       ...editor.state
     },
     controls: { ...editor.controls, isLocked: operation.isLocked, hasReceipt: () => Boolean(operation.getReceipt()) },
@@ -81,7 +83,9 @@ export function useNoticeReceiverCommandController(read: NoticeReceiverReadCapab
       submit: () => submitNoticeReceiver(context),
       remove: (record: NoticeReceiver) => removeNoticeReceiver(context, record),
       retry: () => retryNoticeReceiver(context),
-      sendTest: () => sendNoticeReceiverTest(context, testNoticeReceiver)
+      sendTest: () => sendNoticeReceiverTest(context, testNoticeReceiver),
+      retryTest: () => retryNoticeReceiverTest(context, testNoticeReceiver),
+      dismissTestRecovery: () => dismissNoticeReceiverTest(context)
     }
   };
 }
@@ -98,18 +102,49 @@ async function sendNoticeReceiverTest(
   }
   const owner = context.operation.begin('testing');
   if (!owner) return false;
+  return deliverNoticeReceiverTest(context, owner, draft, send);
+}
+
+async function retryNoticeReceiverTest(
+  context: NoticeReceiverWriteContext,
+  send: (draft: NoticeReceiverDraft) => Promise<void>
+) {
+  const resumed = context.operation.resumeTest();
+  if (!resumed) return false;
+  return deliverNoticeReceiverTest(context, resumed.owner, resumed.receipt.draft, send);
+}
+
+async function deliverNoticeReceiverTest(
+  context: NoticeReceiverWriteContext,
+  owner: NonNullable<ReturnType<NoticeReceiverWriteContext['operation']['begin']>>,
+  draft: NoticeReceiverDraft,
+  send: (draft: NoticeReceiverDraft) => Promise<void>
+) {
   try {
     await send(draft);
     if (!context.operation.isCurrent(owner)) return false;
+    context.operation.clear(owner);
     context.notify.testSuccess();
     return true;
   } catch (error) {
     if (!context.operation.isCurrent(owner)) return false;
-    context.notify.testFailure(classifyNoticeReceiverWriteFailure(error));
+    const failure = classifyNoticeReceiverWriteFailure(error);
+    if (isNoticeReceiverWriteRejection(error)) {
+      context.operation.clear(owner);
+      context.notify.testFailure(failure);
+    } else {
+      // Delivery may already have happened. Retain ownership until the operator explicitly retries or cancels.
+      context.operation.retain(owner, { kind: 'test', phase: 'delivery-uncertain', draft, failure });
+    }
     return false;
   } finally {
     context.operation.end(owner);
   }
+}
+
+function dismissNoticeReceiverTest(context: NoticeReceiverWriteContext) {
+  if (!context.operation.dismissTest()) return false;
+  return context.editor.actions.close();
 }
 
 function mutationOptions() {

@@ -127,7 +127,68 @@ describe('notice receiver command controller', () => {
     expect(result.current.state.command).toBe('idle');
   });
 
-  it('releases the operation gate after definite 4xx submit and remove failures', async () => {
+  it('retains an uncertain test result until the operator explicitly retries it', async () => {
+    api.testNoticeReceiver.mockRejectedValueOnce(unavailableFailure()).mockResolvedValueOnce(undefined);
+    const { result } = renderCommandController();
+    openValidDraft(result.current.actions);
+
+    await act(async () => result.current.actions.sendTest());
+    expect(result.current.state.command).toBe('recovering');
+    expect(result.current.state.testRecovery).toEqual({
+      phase: 'delivery-uncertain',
+      failure: 'unavailable'
+    });
+
+    await act(async () => result.current.actions.sendTest());
+    expect(api.testNoticeReceiver).toHaveBeenCalledTimes(1);
+
+    await act(async () => result.current.actions.retryTest());
+    expect(api.testNoticeReceiver).toHaveBeenCalledTimes(2);
+    expect(result.current.state.command).toBe('idle');
+    expect(result.current.state.testRecovery).toBeUndefined();
+    expect(refine.notification).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'noticeReceivers.testSuccess' })
+    );
+  });
+
+  it('lets the operator dismiss uncertain delivery without reporting success or resending', async () => {
+    api.testNoticeReceiver.mockRejectedValueOnce(errorFailure());
+    const { result } = renderCommandController();
+    openValidDraft(result.current.actions);
+
+    await act(async () => result.current.actions.sendTest());
+    expect(result.current.state.testRecovery).toMatchObject({
+      phase: 'delivery-uncertain',
+      failure: 'error'
+    });
+    act(() => expect(result.current.actions.dismissTestRecovery()).toBe(true));
+
+    expect(api.testNoticeReceiver).toHaveBeenCalledTimes(1);
+    expect(result.current.state.draft).toBeNull();
+    expect(refine.notification).not.toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'noticeReceivers.testSuccess' })
+    );
+  });
+
+  it('unlocks after an explicitly retried test receives a definite rejection', async () => {
+    api.testNoticeReceiver
+      .mockRejectedValueOnce(unavailableFailure())
+      .mockRejectedValueOnce(rejectedFailure('NOTICE_RECEIVER_TEST_REJECTED'));
+    const { result } = renderCommandController();
+    openValidDraft(result.current.actions);
+
+    await act(async () => result.current.actions.sendTest());
+    await act(async () => result.current.actions.retryTest());
+
+    expect(api.testNoticeReceiver).toHaveBeenCalledTimes(2);
+    expect(result.current.state.command).toBe('idle');
+    expect(result.current.state.testRecovery).toBeUndefined();
+    expect(refine.notification).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'noticeReceivers.testError.invalid' })
+    );
+  });
+
+  it('releases definite write rejections but retains uncertain test delivery', async () => {
     refine.create.mockRejectedValueOnce(rejectedFailure('NOTICE_RECEIVER_VARIABLES_INVALID'));
     refine.remove.mockRejectedValueOnce(rejectedFailure('NOTICE_RECEIVER_ID_INVALID'));
     api.testNoticeReceiver.mockRejectedValueOnce(unavailableFailure());
@@ -140,8 +201,9 @@ describe('notice receiver command controller', () => {
     await act(async () => result.current.actions.remove(persistedNoticeReceiver));
     expect(result.current.actions.updateDraft({ name: 'still editable' })).toBe(true);
     await act(async () => result.current.actions.sendTest());
-    expect(result.current.state.command).toBe('idle');
-    expect(result.current.actions.close()).toBe(true);
+    expect(result.current.state.command).toBe('recovering');
+    expect(result.current.actions.close()).toBe(false);
+    act(() => expect(result.current.actions.dismissTestRecovery()).toBe(true));
   });
 
   it('allows an explicit rewrite after a definite 4xx rejection', async () => {
@@ -439,6 +501,10 @@ function rejectedFailure(code: string) {
 
 function unavailableFailure() {
   return new NoticeReceiverRequestFailure('unavailable', 'uncertain');
+}
+
+function errorFailure() {
+  return new NoticeReceiverRequestFailure('error', 'uncertain');
 }
 
 function mutationFailure(mutation: NoticeReceiverMutation) {

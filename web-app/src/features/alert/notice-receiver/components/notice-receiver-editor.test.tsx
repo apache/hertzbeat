@@ -94,4 +94,53 @@ describe('NoticeReceiverEditor', () => {
 
     expect(screen.getByDisplayValue('WeCom')).toHaveAttribute('maxlength', '100');
   });
+
+  it('requires an explicit retry or cancel after test delivery becomes uncertain', () => {
+    const retryTest = vi.fn();
+    const dismissTestRecovery = vi.fn();
+    render(
+      <NoticeReceiverEditor
+        draft={{ ...createNoticeReceiverDraft(), name: 'Email', email: 'ops@example.test' }}
+        saving={false}
+        testing={false}
+        busy
+        testRecovery={{ phase: 'delivery-uncertain', failure: 'unavailable' }}
+        update={vi.fn()}
+        selectType={vi.fn()}
+        setSecretCleared={vi.fn()}
+        close={vi.fn()}
+        submit={vi.fn()}
+        retryTest={retryTest}
+        dismissTestRecovery={dismissTestRecovery}
+      />
+    );
+
+    expect(screen.getByText('noticeReceivers.testError.unavailable')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+    expect(retryTest).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'common.cancel' }));
+    expect(dismissTestRecovery).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not allow cancellation or another retry while an explicit retry is in flight', () => {
+    render(
+      <NoticeReceiverEditor
+        draft={{ ...createNoticeReceiverDraft(), name: 'Email', email: 'ops@example.test' }}
+        saving={false}
+        testing
+        busy
+        testRecovery={{ phase: 'delivery-uncertain', failure: 'error' }}
+        update={vi.fn()}
+        selectType={vi.fn()}
+        setSecretCleared={vi.fn()}
+        close={vi.fn()}
+        submit={vi.fn()}
+        retryTest={vi.fn()}
+        dismissTestRecovery={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: /common.retry/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.cancel' })).toBeDisabled();
+  });
 });

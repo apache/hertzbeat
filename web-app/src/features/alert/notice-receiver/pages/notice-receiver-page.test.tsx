@@ -3,6 +3,9 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createNoticeReceiverDraft, type NoticeReceiverDraft } from '../model/notice-receiver-model';
+import type { NoticeReceiverTestRecovery } from '../model/notice-receiver-operation-state';
+
 const controller = vi.hoisted(() => ({ useNoticeReceiverController: vi.fn() }));
 vi.mock('../controller/notice-receiver-controller', () => controller);
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
@@ -71,6 +74,24 @@ describe('NoticeReceiverPage', () => {
     expect(screen.getByRole('button', { name: 'common.refresh' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'common.retry' })).toBeDisabled();
   });
+
+  it('wires uncertain test delivery to explicit retry or cancel actions', () => {
+    const current = view('ready', true, 'recovering');
+    current.state.recovery = undefined;
+    current.state.testRecovery = { phase: 'delivery-uncertain', failure: 'error' };
+    current.state.draft = { ...createNoticeReceiverDraft(), name: 'Email', email: 'ops@example.test' };
+    current.state.testing = false;
+    current.state.saving = false;
+    controller.useNoticeReceiverController.mockReturnValue(current);
+    render(<NoticeReceiverPage />);
+
+    expect(screen.getByText('noticeReceivers.testError.error')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+    expect(current.actions.retryTest).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'common.cancel' }));
+    expect(current.actions.dismissTestRecovery).toHaveBeenCalledTimes(1);
+    expect(current.actions.sendTest).not.toHaveBeenCalled();
+  });
 });
 
 function view(kind: 'unavailable' | 'ready', busy = false, command = busy ? 'saving' : 'idle') {
@@ -85,7 +106,7 @@ function view(kind: 'unavailable' | 'ready', busy = false, command = busy ? 'sav
     state: {
       query: { name: '', pageIndex: 0, pageSize: 8 },
       name: '',
-      draft: null,
+      draft: null as NoticeReceiverDraft | null,
       list:
         kind === 'ready'
           ? {
@@ -98,6 +119,7 @@ function view(kind: 'unavailable' | 'ready', busy = false, command = busy ? 'sav
           : { kind },
       command,
       recovery,
+      testRecovery: undefined as NoticeReceiverTestRecovery | undefined,
       busy,
       testing: busy,
       saving: busy,
@@ -117,6 +139,8 @@ function view(kind: 'unavailable' | 'ready', busy = false, command = busy ? 'sav
       setSecretCleared: vi.fn(),
       submit: vi.fn(),
       sendTest: vi.fn(),
+      retryTest: vi.fn(),
+      dismissTestRecovery: vi.fn(),
       retry: vi.fn()
     }
   };
