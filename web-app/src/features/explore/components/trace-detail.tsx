@@ -19,7 +19,7 @@ import { Alert, Button, Descriptions, Empty, Skeleton, Typography } from 'antd';
 import type { TFunction } from 'i18next';
 
 import type { TraceSpan } from '../model/explore-signal-contract';
-import { traceDurationMs, type TraceDetailState } from '../model/explore-signal-model';
+import { traceDurationMs, type TraceDetailState, type TraceSpanTiming } from '../model/explore-signal-model';
 import { OtlpAttributeList, OtlpAttributeSection } from './otlp-attribute-list';
 import { formatTraceDuration } from './trace-display';
 import styles from './trace-result.module.css';
@@ -35,12 +35,15 @@ type Props = {
 };
 
 export function TraceDetail({ state, t, close, selectSpan, retry, openRelatedLogs, openRelatedMetrics }: Props) {
-  const title = state.kind === 'ready' ? state.detail.rootSpanName ?? t('exploreTrace.detail') : t('exploreTrace.detail');
+  const title =
+    state.kind === 'ready' ? (state.detail.rootSpanName ?? t('exploreTrace.detail')) : t('exploreTrace.detail');
   return (
     <aside className={styles.detailPane} aria-label={title}>
       <div className={styles.detailHeader}>
         <Typography.Title level={4}>{title}</Typography.Title>
-        <Button size="small" onClick={close}>{t('exploreTrace.closeDetail')}</Button>
+        <Button size="small" onClick={close}>
+          {t('exploreTrace.closeDetail')}
+        </Button>
       </div>
       <div className={styles.detailBody}>
         {state.kind === 'loading' && <Skeleton active paragraph={{ rows: 10 }} />}
@@ -65,7 +68,12 @@ export function TraceDetail({ state, t, close, selectSpan, retry, openRelatedLog
   );
 }
 
-function TraceFailure({ type, message, retry, t }: {
+function TraceFailure({
+  type,
+  message,
+  retry,
+  t
+}: {
   type: 'warning' | 'error';
   message: string;
   retry: () => Promise<void>;
@@ -76,12 +84,26 @@ function TraceFailure({ type, message, retry, t }: {
       type={type}
       showIcon
       message={message}
-      action={<Button onClick={() => { void retry(); }}>{t('common.retry')}</Button>}
+      action={
+        <Button
+          onClick={() => {
+            void retry();
+          }}
+        >
+          {t('common.retry')}
+        </Button>
+      }
     />
   );
 }
 
-function TraceDetailContent({ state, t, selectSpan, openRelatedLogs, openRelatedMetrics }: {
+function TraceDetailContent({
+  state,
+  t,
+  selectSpan,
+  openRelatedLogs,
+  openRelatedMetrics
+}: {
   state: Extract<TraceDetailState, { kind: 'ready' }>;
   t: TFunction;
   selectSpan: (spanId: string) => void;
@@ -94,8 +116,12 @@ function TraceDetailContent({ state, t, selectSpan, openRelatedLogs, openRelated
       <div className={styles.detailToolbar}>
         <div className={styles.traceSummary}>
           <strong>{formatTraceDuration(traceDurationMs(detail))}</strong>
-          <span>{spans.length} {t('exploreTrace.spans')}</span>
-          <span>{detail.errorSpanCount ?? '—'} {t('exploreTrace.errors')}</span>
+          <span>
+            {spans.length} {t('exploreTrace.spans')}
+          </span>
+          <span>
+            {detail.errorSpanCount ?? '—'} {t('exploreTrace.errors')}
+          </span>
         </div>
         <div className={styles.actions}>
           <Button onClick={openRelatedLogs}>{t('explore.relatedLogs')}</Button>
@@ -103,33 +129,58 @@ function TraceDetailContent({ state, t, selectSpan, openRelatedLogs, openRelated
         </div>
       </div>
       <div className={styles.waterfall}>
-        {spans.map((span) => (
+        {spans.map(span => (
           <button
             key={span.spanId}
             type="button"
             data-selected={span.spanId === selected?.spanId}
             className={styles.spanRow}
-            onClick={() => { if (span.spanId) selectSpan(span.spanId); }}
+            onClick={() => {
+              if (span.spanId) selectSpan(span.spanId);
+            }}
           >
             <span className={styles.spanName} style={{ paddingLeft: `${span.depth * 16 + 8}px` }}>
               <strong>{span.serviceName ?? '—'}</strong>
               <small>{span.spanName ?? '—'}</small>
             </span>
-            <span className={styles.track}>
-              <i
-                data-error={span.status === 'error'}
-                style={{
-                  left: `${span.offsetPercent}%`,
-                  width: `${Math.min(span.widthPercent, 100 - span.offsetPercent)}%`,
-                }}
-              />
-            </span>
+            <SpanTimeline timing={span.timing} error={span.status === 'error'} durationLabel={t('explore.duration')} />
             <span className={styles.spanDuration}>{formatTraceDuration(traceDurationMs(span))}</span>
           </button>
         ))}
       </div>
       {selected && <SpanDetail span={selected} t={t} />}
     </>
+  );
+}
+
+function SpanTimeline({
+  timing,
+  error,
+  durationLabel
+}: {
+  timing: TraceSpanTiming;
+  error: boolean;
+  durationLabel: string;
+}) {
+  if (timing.kind === 'unavailable') {
+    return (
+      <span className={styles.track}>
+        <span className={styles.timingUnavailable} aria-label={`${durationLabel}: —`}>
+          —
+        </span>
+      </span>
+    );
+  }
+  const width = timing.kind === 'duration' ? Math.min(timing.widthPercent, 100 - timing.offsetPercent) : undefined;
+  return (
+    <span className={styles.track}>
+      <span
+        className={styles.timingBar}
+        data-error={error}
+        data-timing={timing.kind}
+        style={{ left: `${timing.offsetPercent}%`, width: width == null ? undefined : `${width}%` }}
+      />
+    </span>
   );
 }
 
@@ -145,7 +196,7 @@ function SpanDetail({ span, t }: { span: TraceSpan; t: TFunction }) {
           { key: 'span', label: t('explore.spanId'), children: span.spanId ?? '—' },
           { key: 'kind', label: t('exploreTrace.kind'), children: span.spanKind ?? '—' },
           { key: 'status', label: t('exploreTrace.status'), children: span.status ?? '—' },
-          { key: 'scope', label: t('exploreTrace.scope'), children: span.scopeName ?? '—' },
+          { key: 'scope', label: t('exploreTrace.scope'), children: span.scopeName ?? '—' }
         ]}
       />
       <OtlpAttributeSection title={t('exploreTrace.spanAttributes')} value={span.spanAttributes ?? undefined} />

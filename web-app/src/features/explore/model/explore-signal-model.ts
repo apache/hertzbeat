@@ -18,7 +18,11 @@
 import type { LogRow, MetricConsole, TraceDetail, TraceRow, TraceSpan } from './explore-signal-contract';
 
 export type LiveLogStatus = 'waiting' | 'connected' | 'paused' | 'unavailable' | 'error' | 'contract';
-export type TraceSpanLayout = TraceSpan & { depth: number; offsetPercent: number; widthPercent: number };
+export type TraceSpanTiming =
+  | { kind: 'unavailable' }
+  | { kind: 'instant'; offsetPercent: number }
+  | { kind: 'duration'; offsetPercent: number; widthPercent: number };
+export type TraceSpanLayout = TraceSpan & { depth: number; timing: TraceSpanTiming };
 export type TraceDetailState =
   | { kind: 'closed' }
   | { kind: 'loading' | 'missing' | 'unavailable' | 'error'; traceId: string }
@@ -124,9 +128,8 @@ export function traceHealthState(row: Pick<TraceRow, 'status' | 'errorSpanCount'
 }
 
 export function traceSpanLayout(detail: TraceDetail): TraceSpanLayout[] {
-  const spans = [...(detail.spans ?? [])].sort((left, right) => (left.startTime ?? 0) - (right.startTime ?? 0));
-  const rootStart = detail.startTime ?? spans[0]?.startTime ?? 0;
-  const totalMs = Math.max(traceDurationMs(detail) ?? 0, 0.001);
+  const spans = [...(detail.spans ?? [])].sort(compareTraceSpanStart);
+  const timeline = traceTimeline(detail, spans);
   const byId = new Map(spans.map(span => [span.spanId, span]));
   const depthOf = (span: TraceSpan, visited = new Set<string>()): number => {
     if (!span.parentSpanId || visited.has(span.parentSpanId)) return 0;
@@ -138,9 +141,48 @@ export function traceSpanLayout(detail: TraceDetail): TraceSpanLayout[] {
   return spans.map(span => ({
     ...span,
     depth: depthOf(span),
-    offsetPercent: clamp((((span.startTime ?? rootStart) - rootStart) / totalMs) * 100, 0, 100),
-    widthPercent: clamp(((span.durationNanos ?? 0) / 1_000_000 / totalMs) * 100, 0.4, 100)
+    timing: traceSpanTiming(span, timeline)
   }));
+}
+
+type TraceTimeline = { startTime: number; durationMs: number };
+
+function traceTimeline(detail: TraceDetail, spans: TraceSpan[]): TraceTimeline | undefined {
+  // Only complete timing pairs define the extent. Nullable fields must not
+  // participate as synthetic epoch or zero-duration evidence.
+  const timedSpans = spans.filter(hasCompleteSpanTiming);
+  const startTime = detail.startTime ?? timedSpans[0]?.startTime;
+  if (startTime == null) return undefined;
+
+  const declaredEnd = startTime + (traceDurationMs(detail) ?? 0);
+  const endTime = timedSpans.reduce(
+    (latest, span) => Math.max(latest, span.startTime + span.durationNanos / 1_000_000),
+    Math.max(startTime, declaredEnd)
+  );
+  return { startTime, durationMs: endTime - startTime };
+}
+
+function traceSpanTiming(span: TraceSpan, timeline: TraceTimeline | undefined): TraceSpanTiming {
+  if (!timeline || !hasCompleteSpanTiming(span)) return { kind: 'unavailable' };
+  const offsetPercent =
+    timeline.durationMs > 0 ? clamp(((span.startTime - timeline.startTime) / timeline.durationMs) * 100, 0, 100) : 0;
+  if (span.durationNanos === 0) return { kind: 'instant', offsetPercent };
+  if (timeline.durationMs === 0) return { kind: 'unavailable' };
+  return {
+    kind: 'duration',
+    offsetPercent,
+    widthPercent: clamp((span.durationNanos / 1_000_000 / timeline.durationMs) * 100, 0.4, 100)
+  };
+}
+
+function hasCompleteSpanTiming(span: TraceSpan): span is TraceSpan & { startTime: number; durationNanos: number } {
+  return span.startTime != null && span.durationNanos != null;
+}
+
+function compareTraceSpanStart(left: TraceSpan, right: TraceSpan) {
+  if (left.startTime == null) return right.startTime == null ? 0 : 1;
+  if (right.startTime == null) return -1;
+  return left.startTime - right.startTime;
 }
 
 export function logServiceName(row: LogRow) {

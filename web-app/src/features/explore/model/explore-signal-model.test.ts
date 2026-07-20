@@ -149,9 +149,36 @@ describe('explore API contracts', () => {
         })
       )
     ).toMatchObject([
-      { spanId: 'root', depth: 0, offsetPercent: 0, widthPercent: 100 },
-      { spanId: 'child', depth: 1, offsetPercent: 25, widthPercent: 50 }
+      { spanId: 'root', depth: 0, timing: { kind: 'duration', offsetPercent: 0, widthPercent: 100 } },
+      { spanId: 'child', depth: 1, timing: { kind: 'duration', offsetPercent: 25, widthPercent: 50 } }
     ]);
+  });
+
+  it('keeps missing, partial, and actual zero span timing distinct', () => {
+    const layout = traceSpanLayout(
+      traceDetail({
+        spans: [
+          traceSpan({ spanId: 'missing', startTime: null, durationNanos: null }),
+          traceSpan({ spanId: 'missing-start', startTime: null, durationNanos: 1_000_000 }),
+          traceSpan({ spanId: 'missing-duration', startTime: 1_000, durationNanos: null }),
+          traceSpan({ spanId: 'instant', startTime: 1_000, durationNanos: 0 }),
+          traceSpan({ spanId: 'measured', startTime: 1_000, durationNanos: 1_000_000 })
+        ]
+      })
+    );
+
+    for (const spanId of ['missing', 'missing-start', 'missing-duration']) {
+      const span = layout.find(item => item.spanId === spanId);
+      expect(span).toMatchObject({ timing: { kind: 'unavailable' } });
+      expect(span).not.toHaveProperty('offsetPercent');
+      expect(span).not.toHaveProperty('widthPercent');
+    }
+    expect(layout.find(span => span.spanId === 'instant')).toMatchObject({
+      timing: { kind: 'instant', offsetPercent: 0 }
+    });
+    expect(layout.find(span => span.spanId === 'measured')).toMatchObject({
+      timing: { kind: 'duration', offsetPercent: 0, widthPercent: 100 }
+    });
   });
 
   it('classifies trace health only from explicit evidence', () => {
