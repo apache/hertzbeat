@@ -15,14 +15,13 @@
  * limitations under the License.
  */
 
-import { useMutation } from '@tanstack/react-query';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { safeRedirectTarget } from '@/core/auth/navigation';
 import { loginSession, SessionRequestError } from '@/core/auth/session-api';
 import { useSession } from '@/core/auth/session-context';
-import { useSessionIdentityBoundary } from '@/core/auth/session-identity-context';
+import { useSessionIdentityBoundary, type ReplaceSessionIdentity } from '@/core/auth/session-identity-context';
 import { applicationRoutePaths } from '@/shared/navigation/app-paths';
 
 import {
@@ -37,12 +36,9 @@ export function useLoginController() {
   const replaceSessionIdentity = useSessionIdentityBoundary();
   const [searchParams] = useSearchParams();
   const { loading, retry, session, unavailable } = useSession();
-  const submitting = useRef(false);
+  const login = useLoginCommand(replaceSessionIdentity);
   const navigatedTargetRef = useRef<string | null>(null);
   const redirectTarget = safeRedirectTarget(searchParams.get('redirect')) ?? applicationRoutePaths.dashboard;
-  const login = useMutation({
-    mutationFn: ({ identifier, credential }: LoginCredentials) => loginSession(identifier, credential)
-  });
 
   useEffect(() => {
     // Keep the completed target through transient checking or unavailable evidence.
@@ -57,29 +53,61 @@ export function useLoginController() {
     void navigate(redirectTarget, { replace: true });
   }, [loading, navigate, redirectTarget, session?.authenticated, unavailable]);
 
-  const submit = async (values: LoginCredentials) => {
-    if (submitting.current) return;
-    submitting.current = true;
-    try {
-      const authenticated = await login.mutateAsync(values);
-      replaceSessionIdentity(authenticated);
-    } catch {
-      // React Query retains the classified error for the presentation boundary.
-      submitting.current = false;
-    }
-  };
-
   return {
-    errorKey: login.error ? loginErrorMessageKey(classifyLoginFailure(login.error)) : undefined,
-    pending: login.isPending,
+    errorKey: login.failure ? loginErrorMessageKey(login.failure) : undefined,
+    pending: login.pending,
     retrySession: retry,
     sessionState: resolveLoginSessionState({
       loading,
       unavailable,
       authenticated: Boolean(session?.authenticated)
     }),
-    submit
+    submit: login.submit
   };
+}
+
+function useLoginCommand(replaceSessionIdentity: ReplaceSessionIdentity) {
+  const submitting = useRef(false);
+  const mounted = useRef(false);
+  const nextCommand = useRef(0);
+  const activeCommand = useRef<number | null>(null);
+  const [failure, setFailure] = useState<LoginFailureKind | null>(null);
+  const [pending, setPending] = useState(false);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      activeCommand.current = null;
+      submitting.current = false;
+    };
+  }, []);
+
+  const submit = async (values: LoginCredentials) => {
+    if (submitting.current) return;
+    submitting.current = true;
+    const command = ++nextCommand.current;
+    activeCommand.current = command;
+    setFailure(null);
+    setPending(true);
+    const { identifier, credential } = values;
+    try {
+      const authenticated = await loginSession(identifier, credential);
+      if (!mounted.current || activeCommand.current !== command) return;
+      replaceSessionIdentity(authenticated);
+      if (!mounted.current || activeCommand.current !== command) return;
+      activeCommand.current = null;
+      submitting.current = false;
+      setPending(false);
+    } catch (error) {
+      if (!mounted.current || activeCommand.current !== command) return;
+      activeCommand.current = null;
+      submitting.current = false;
+      setFailure(classifyLoginFailure(error));
+      setPending(false);
+    }
+  };
+  return { failure, pending, submit };
 }
 
 function classifyLoginFailure(error: unknown): LoginFailureKind {

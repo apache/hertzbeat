@@ -16,11 +16,14 @@
  */
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { StrictMode, type PropsWithChildren } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { SessionRequestError, type UiSession } from '@/core/auth/session-api';
 import { applicationRoutePaths } from '@/shared/navigation/app-paths';
+
+const sessionApi = vi.hoisted(() => ({ loginSession: vi.fn() }));
 
 const runtime = vi.hoisted(() => ({
   navigate: vi.fn(),
@@ -43,6 +46,10 @@ vi.mock('@/core/auth/session-context', () => ({ useSession: () => runtime.sessio
 vi.mock('@/core/auth/session-identity-context', () => ({
   useSessionIdentityBoundary: () => runtime.replaceIdentity
 }));
+vi.mock('@/core/auth/session-api', async () => {
+  const actual = await vi.importActual<typeof import('@/core/auth/session-api')>('@/core/auth/session-api');
+  return { ...actual, loginSession: sessionApi.loginSession };
+});
 vi.mock('@/shared/navigation/app-paths', () => ({
   applicationRoutePaths: { dashboard: '/canonical-dashboard', login: '/canonical-login' }
 }));
@@ -56,6 +63,66 @@ describe('login controller navigation', () => {
     runtime.session.loading = false;
     runtime.session.session.authenticated = true;
     runtime.session.unavailable = false;
+  });
+
+  it('classifies a failed login, admits a retry, and never gives either credential to MutationCache', async () => {
+    runtime.session.session.authenticated = false;
+    sessionApi.loginSession
+      .mockRejectedValueOnce(new SessionRequestError('invalid-credentials'))
+      .mockResolvedValueOnce(authenticatedSession);
+    const hook = renderLoginController();
+
+    await act(() => hook.result.current.submit({ identifier: 'operator', credential: 'failed-secret' }));
+
+    expect(hook.result.current.errorKey).toBe('auth.invalidCredentials');
+    expect(hook.result.current.pending).toBe(false);
+    expectMutationCacheNotToContain(hook.client, 'failed-secret');
+
+    await act(() => hook.result.current.submit({ identifier: 'operator', credential: 'retry-secret' }));
+
+    expect(sessionApi.loginSession).toHaveBeenCalledTimes(2);
+    expect(runtime.replaceIdentity).toHaveBeenCalledWith(authenticatedSession);
+    expect(hook.result.current.errorKey).toBeUndefined();
+    expectMutationCacheNotToContain(hook.client, 'failed-secret', 'retry-secret');
+  });
+
+  it('publishes successful identity and navigation without giving the credential to MutationCache', async () => {
+    runtime.session.session.authenticated = false;
+    sessionApi.loginSession.mockResolvedValue(authenticatedSession);
+    const hook = renderLoginController();
+
+    await act(() => hook.result.current.submit({ identifier: 'operator', credential: 'success-secret' }));
+
+    expect(runtime.replaceIdentity).toHaveBeenCalledWith(authenticatedSession);
+    expectMutationCacheNotToContain(hook.client, 'success-secret');
+
+    runtime.session.session.authenticated = true;
+    hook.rerender();
+    await waitFor(() =>
+      expect(runtime.navigate).toHaveBeenCalledWith(applicationRoutePaths.dashboard, { replace: true })
+    );
+    expectMutationCacheNotToContain(hook.client, 'success-secret');
+  });
+
+  it('does not publish a late login completion after unmount or retain its credential in MutationCache', async () => {
+    runtime.session.session.authenticated = false;
+    const login = deferred<UiSession>();
+    sessionApi.loginSession.mockReturnValue(login.promise);
+    const hook = renderLoginController();
+    let completion: Promise<void> | undefined;
+
+    act(() => {
+      completion = hook.result.current.submit({ identifier: 'operator', credential: 'unmounted-secret' });
+    });
+    expect(hook.result.current.pending).toBe(true);
+    expectMutationCacheNotToContain(hook.client, 'unmounted-secret');
+
+    hook.unmount();
+    login.resolve(authenticatedSession);
+    await completion;
+
+    expect(runtime.replaceIdentity).not.toHaveBeenCalled();
+    expectMutationCacheNotToContain(hook.client, 'unmounted-secret');
   });
 
   it('navigates once per stable authenticated target under Strict Mode and admits a real target change', async () => {
@@ -98,5 +165,31 @@ function renderLoginController() {
       <QueryClientProvider client={client}>{children}</QueryClientProvider>
     </StrictMode>
   );
-  return renderHook(() => useLoginController(), { wrapper });
+  return { ...renderHook(() => useLoginController(), { wrapper }), client };
+}
+
+const authenticatedSession: UiSession = {
+  authenticated: true,
+  username: 'operator',
+  roles: ['ADMIN'],
+  workspaceId: 'default',
+  expiresAt: null
+};
+
+function expectMutationCacheNotToContain(client: QueryClient, ...credentials: string[]) {
+  const cachedVariables = JSON.stringify(
+    client
+      .getMutationCache()
+      .getAll()
+      .map(mutation => mutation.state.variables)
+  );
+  for (const credential of credentials) expect(cachedVariables).not.toContain(credential);
+}
+
+function deferred<T>() {
+  let resolve: (value: T) => void = () => undefined;
+  const promise = new Promise<T>(settle => {
+    resolve = settle;
+  });
+  return { promise, resolve };
 }
