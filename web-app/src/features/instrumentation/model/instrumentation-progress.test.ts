@@ -10,6 +10,19 @@ import { describe, expect, it } from 'vitest';
 import { parseInstrumentationProgress, writeInstrumentationProgress } from './instrumentation-progress';
 
 describe('instrumentation progress URL contract', () => {
+  it.each([
+    ['instrumentationSchemaVersion=1&instrumentationStage=2', 2],
+    ['instrumentationSchemaVersion=1&instrumentationStage=4', 1],
+    ['instrumentationSchemaVersion=1&instrumentationStage=unknown', 1],
+    ['', 1]
+  ])('restores only a valid persisted setup stage from %s', (query, expectedStage) => {
+    const progress = parseInstrumentationProgress(new URLSearchParams(query), {});
+
+    expect(progress.stage).toBe(expectedStage);
+    expect(progress.draft.environment).toBe('docker');
+    expect(progress.draft.platform).toBe('linux_amd64');
+  });
+
   it('restores the non-sensitive selection and shared service scope without restoring a token', () => {
     const progress = parseInstrumentationProgress(
       new URLSearchParams(

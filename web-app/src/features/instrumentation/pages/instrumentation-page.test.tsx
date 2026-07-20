@@ -24,7 +24,9 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 
 const { useInstrumentationPageController, useInstrumentationSetup, useInstrumentationDetection } = vi.hoisted(() => ({
-  useInstrumentationPageController: vi.fn(), useInstrumentationSetup: vi.fn(), useInstrumentationDetection: vi.fn()
+  useInstrumentationPageController: vi.fn(),
+  useInstrumentationSetup: vi.fn(),
+  useInstrumentationDetection: vi.fn()
 }));
 vi.mock('../controller/use-instrumentation-page-controller', () => ({ useInstrumentationPageController }));
 
@@ -51,7 +53,8 @@ describe('InstrumentationPage', () => {
   it('renders the continuous runbook and does not turn unavailable data into a zero or success state', () => {
     useInstrumentationSetup.mockReturnValue(setupFixture());
     useInstrumentationDetection.mockReturnValue({
-      ...detectionFixture(), state: { status: 'error', error: new Error('storage unavailable') }
+      ...detectionFixture(),
+      state: { status: 'error', error: new Error('storage unavailable') }
     });
     renderPage();
 
@@ -70,6 +73,27 @@ describe('InstrumentationPage', () => {
     expect(screen.queryByText(i18n.t('instrumentation.schemaVersion', { version: 1 }))).not.toBeInTheDocument();
   });
 
+  it('allows returning to completed stages, resets detection evidence, and locks future stages', () => {
+    const setup = { ...setupFixture(), stage: 3, catalog };
+    const detection = detectionFixture();
+    useInstrumentationSetup.mockReturnValue(setup);
+    useInstrumentationDetection.mockReturnValue(detection);
+    renderPage();
+
+    const environment = screen.getByRole('button', { name: /Environment$/ });
+    const language = screen.getByRole('button', { name: /Language and method$/ });
+    const installation = screen.getByRole('button', { name: /Install and configure$/ });
+    const detectionStage = screen.getByRole('button', { name: /Verify signals$/ });
+    expect(environment).toBeEnabled();
+    expect(language).toBeEnabled();
+    expect(installation).toBeDisabled();
+    expect(detectionStage).toBeDisabled();
+
+    fireEvent.click(language);
+    expect(detection.reset).toHaveBeenCalledOnce();
+    expect(setup.setStage).toHaveBeenCalledWith(2);
+  });
+
   it('keeps catalog failure and Collector empty or offline states actionable and distinct', () => {
     const retryCatalog = vi.fn();
     useInstrumentationSetup.mockReturnValue({ ...setupFixture(), stage: 1, catalogError: true, retryCatalog });
@@ -86,7 +110,10 @@ describe('InstrumentationPage', () => {
     expect(screen.queryByText('Installation guidance is unavailable for this selection.')).not.toBeInTheDocument();
 
     useInstrumentationSetup.mockReturnValue({
-      ...setupFixture(), stage: 3, catalog, collectors: [{ ...collector, online: false }],
+      ...setupFixture(),
+      stage: 3,
+      catalog,
+      collectors: [{ ...collector, online: false }],
       guideState: { status: 'unavailable', reason: 'collector_unavailable' }
     });
     view.rerender(pageElement());
@@ -98,7 +125,11 @@ describe('InstrumentationPage', () => {
   it('blocks guide rendering when the selected online Collector has no advertised intake', () => {
     const renderGuide = vi.fn();
     useInstrumentationSetup.mockReturnValue({
-      ...setupFixture(), stage: 3, catalog, collectors: [collector], renderGuide,
+      ...setupFixture(),
+      stage: 3,
+      catalog,
+      collectors: [collector],
+      renderGuide,
       guideState: { status: 'unavailable', reason: 'collector_intake_unavailable' }
     });
     useInstrumentationDetection.mockReturnValue(detectionFixture());
@@ -118,19 +149,24 @@ describe('InstrumentationPage', () => {
     renderPage();
 
     expect(screen.getByRole('button', { name: /Token required/ })).toBeDisabled();
-    expect(screen.getByText('Add a token before copying a snippet that contains the authorization placeholder.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Add a token before copying a snippet that contains the authorization placeholder.')
+    ).toBeInTheDocument();
   });
 
   it('enables Explore only for received signals and renders waiting and unsupported honestly', () => {
     const openQuery = vi.fn();
     const response = detectionResponse({
-      metrics: ['received', null], logs: ['waiting', 'signal_not_received'], traces: ['unsupported', 'signal_not_supported']
+      metrics: ['received', null],
+      logs: ['waiting', 'signal_not_received'],
+      traces: ['unsupported', 'signal_not_supported']
     });
     response.queryJumps.push({ ...response.queryJumps[0]!, signal: 'logs', enabled: true });
     useInstrumentationSetup.mockReturnValue({ ...setupFixture(), catalog });
     useInstrumentationDetection.mockReturnValue({
-      ...detectionFixture(response), openQuery,
-      queryHandoff: vi.fn((signal: string) => signal === 'metrics' ? '/explore?ownedBy=controller' : undefined)
+      ...detectionFixture(response),
+      openQuery,
+      queryHandoff: vi.fn((signal: string) => (signal === 'metrics' ? '/explore?ownedBy=controller' : undefined))
     });
     renderPage();
 
@@ -145,10 +181,15 @@ describe('InstrumentationPage', () => {
 
   it('distinguishes storage unavailable and detection error signal results', () => {
     useInstrumentationSetup.mockReturnValue({ ...setupFixture(), catalog });
-    useInstrumentationDetection.mockReturnValue(detectionFixture(detectionResponse({
-      metrics: ['unavailable', 'storage_unavailable'], logs: ['error', 'storage_query_failed'],
-      traces: ['waiting', 'signal_not_received']
-    })));
+    useInstrumentationDetection.mockReturnValue(
+      detectionFixture(
+        detectionResponse({
+          metrics: ['unavailable', 'storage_unavailable'],
+          logs: ['error', 'storage_query_failed'],
+          traces: ['waiting', 'signal_not_received']
+        })
+      )
+    );
     renderPage();
 
     expect(screen.getByText('Storage unavailable')).toBeInTheDocument();
@@ -166,14 +207,20 @@ describe('InstrumentationPage', () => {
     ['error', 'storage_query_failed']
   ] as const)('renders %s as explicit signal evidence without a fake zero', (status, errorCode) => {
     useInstrumentationSetup.mockReturnValue({ ...setupFixture(), catalog });
-    useInstrumentationDetection.mockReturnValue(detectionFixture(detectionResponse({
-      metrics: [status, errorCode], logs: ['unsupported', 'signal_not_supported'],
-      traces: ['unsupported', 'signal_not_supported']
-    })));
+    useInstrumentationDetection.mockReturnValue(
+      detectionFixture(
+        detectionResponse({
+          metrics: [status, errorCode],
+          logs: ['unsupported', 'signal_not_supported'],
+          traces: ['unsupported', 'signal_not_supported']
+        })
+      )
+    );
     renderPage();
 
-    expect(screen.getAllByText(i18n.t(`instrumentation.detection.status.${status}`), { selector: '.ant-tag' }).length)
-      .toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(i18n.t(`instrumentation.detection.status.${status}`), { selector: '.ant-tag' }).length
+    ).toBeGreaterThan(0);
     expect(screen.queryByText(/^0$/)).not.toBeInTheDocument();
   });
 
@@ -194,7 +241,11 @@ function renderPage() {
 function pageElement() {
   return (
     <I18nextProvider i18n={i18n}>
-      <MemoryRouter><App><InstrumentationPage /></App></MemoryRouter>
+      <MemoryRouter>
+        <App>
+          <InstrumentationPage />
+        </App>
+      </MemoryRouter>
     </I18nextProvider>
   );
 }
@@ -202,24 +253,55 @@ function pageElement() {
 function setupFixture() {
   return {
     schemaVersion: 1,
-    stage: 5, setStage: vi.fn(), draft: {
-      environment: 'docker', platform: 'linux_amd64', selection: {
-        language: 'go', framework: 'go_generic', method: 'sdk', environment: 'docker', platform: 'linux_amd64'
-      }, collectorId: 'collector-east', serviceName: 'checkout-api', serviceNamespace: 'commerce',
+    stage: 5,
+    setStage: vi.fn(),
+    draft: {
+      environment: 'docker',
+      platform: 'linux_amd64',
+      selection: {
+        language: 'go',
+        framework: 'go_generic',
+        method: 'sdk',
+        environment: 'docker',
+        platform: 'linux_amd64'
+      },
+      collectorId: 'collector-east',
+      serviceName: 'checkout-api',
+      serviceNamespace: 'commerce',
       serviceEnvironment: 'prod'
     },
     selectionOptions: {
-      environments: ['docker'], platforms: ['linux_amd64'], languages: catalog.languages,
-      frameworks: catalog.languages[0]!.frameworks, methods: catalog.languages[0]!.frameworks[0]!.methods,
+      environments: ['docker'],
+      platforms: ['linux_amd64'],
+      languages: catalog.languages,
+      frameworks: catalog.languages[0]!.frameworks,
+      methods: catalog.languages[0]!.frameworks[0]!.methods,
       frameworkSelected: true
     },
     contextMissing: [],
-    catalog: undefined, catalogPending: false, catalogError: false, retryCatalog: vi.fn(),
-    collectors: [], collectorsPending: false, collectorsError: false, retryCollectors: vi.fn(),
-    token: '', setToken: vi.fn(), guide: undefined, guidePending: false, guideError: false,
+    catalog: undefined,
+    catalogPending: false,
+    catalogError: false,
+    retryCatalog: vi.fn(),
+    collectors: [],
+    collectorsPending: false,
+    collectorsError: false,
+    retryCollectors: vi.fn(),
+    token: '',
+    setToken: vi.fn(),
+    guide: undefined,
+    guidePending: false,
+    guideError: false,
     guideState: { status: 'unavailable', reason: 'collector_unavailable' },
-    setEnvironment: vi.fn(), setPlatform: vi.fn(), setLanguage: vi.fn(), setFramework: vi.fn(), setMethod: vi.fn(),
-    setContext: vi.fn(), renderGuide: vi.fn(), copySnippet: vi.fn(), clearGuide: vi.fn(),
+    setEnvironment: vi.fn(),
+    setPlatform: vi.fn(),
+    setLanguage: vi.fn(),
+    setFramework: vi.fn(),
+    setMethod: vi.fn(),
+    setContext: vi.fn(),
+    renderGuide: vi.fn(),
+    copySnippet: vi.fn(),
+    clearGuide: vi.fn(),
     handleContractError: vi.fn()
   };
 }
@@ -227,27 +309,52 @@ function setupFixture() {
 function detectionFixture(response?: ReturnType<typeof detectionResponse>) {
   return {
     state: response ? { status: 'complete', response } : { status: 'idle' },
-    start: vi.fn(), retry: vi.fn(), reset: vi.fn(),
-    signalNames: ['metrics', 'logs', 'traces'], queryHandoff: vi.fn(), openQuery: vi.fn()
+    start: vi.fn(),
+    retry: vi.fn(),
+    reset: vi.fn(),
+    signalNames: ['metrics', 'logs', 'traces'],
+    queryHandoff: vi.fn(),
+    openQuery: vi.fn()
   };
 }
 
 function detectionResponse(statuses: Record<'metrics' | 'logs' | 'traces', [string, string | null]>) {
   const context = {
-    serviceName: 'checkout-api', serviceNamespace: 'commerce', environment: 'prod', collectorId: 'collector-east',
-    startedAt: 1_710_000_000_000, detectedAt: 1_710_000_005_000
+    serviceName: 'checkout-api',
+    serviceNamespace: 'commerce',
+    environment: 'prod',
+    collectorId: 'collector-east',
+    startedAt: 1_710_000_000_000,
+    detectedAt: 1_710_000_005_000
   };
   return {
-    schemaVersion: 1, detectedAt: context.detectedAt,
+    schemaVersion: 1,
+    detectedAt: context.detectedAt,
     context: {
-      schemaVersion: 1, language: 'go', framework: 'go_generic', method: 'sdk', environment: 'docker',
-      platform: 'linux_amd64', service: {
-        serviceName: context.serviceName, serviceNamespace: context.serviceNamespace, environment: context.environment
-      }, collectorId: context.collectorId, startedAt: context.startedAt
+      schemaVersion: 1,
+      language: 'go',
+      framework: 'go_generic',
+      method: 'sdk',
+      environment: 'docker',
+      platform: 'linux_amd64',
+      service: {
+        serviceName: context.serviceName,
+        serviceNamespace: context.serviceNamespace,
+        environment: context.environment
+      },
+      collectorId: context.collectorId,
+      startedAt: context.startedAt
     },
-    signals: Object.fromEntries(Object.entries(statuses).map(([signal, [status, errorCode]]) => [signal, {
-      status, lastReceivedAt: status === 'received' ? context.detectedAt : null, errorCode
-    }])),
+    signals: Object.fromEntries(
+      Object.entries(statuses).map(([signal, [status, errorCode]]) => [
+        signal,
+        {
+          status,
+          lastReceivedAt: status === 'received' ? context.detectedAt : null,
+          errorCode
+        }
+      ])
+    ),
     polling: { decision: 'complete', pollAfterMs: null, deadlineAt: context.startedAt + 120_000 },
     queryJumpContext: context,
     queryJumps: statuses.metrics[0] === 'received' ? [{ signal: 'metrics', enabled: true, context }] : []
@@ -255,38 +362,75 @@ function detectionResponse(statuses: Record<'metrics' | 'logs' | 'traces', [stri
 }
 
 const component = {
-  name: 'OpenTelemetry Go SDK', sourceUrl: 'https://opentelemetry.io/', version: '1.43.0', versionPolicy: 'pinned',
-  license: 'Apache-2.0', installationLocationKey: 'instrumentation.location.application_host', official: true,
-  bundledWithHertzBeat: false, dependencies: [], artifacts: []
+  name: 'OpenTelemetry Go SDK',
+  sourceUrl: 'https://opentelemetry.io/',
+  version: '1.43.0',
+  versionPolicy: 'pinned',
+  license: 'Apache-2.0',
+  installationLocationKey: 'instrumentation.location.application_host',
+  official: true,
+  bundledWithHertzBeat: false,
+  dependencies: [],
+  artifacts: []
 };
 
 const catalog = {
   schemaVersion: 1,
-  languages: [{ language: 'go', labelKey: 'instrumentation.language.go', frameworks: [{
-    framework: 'go_generic', labelKey: 'instrumentation.framework.go_generic', methods: [{
-      method: 'sdk', labelKey: 'instrumentation.method.sdk', preview: false, environments: ['docker'],
-      platforms: ['linux_amd64'], signals: { metrics: 'supported', logs: 'preview', traces: 'supported' }, component
-    }]
-  }] }]
+  languages: [
+    {
+      language: 'go',
+      labelKey: 'instrumentation.language.go',
+      frameworks: [
+        {
+          framework: 'go_generic',
+          labelKey: 'instrumentation.framework.go_generic',
+          methods: [
+            {
+              method: 'sdk',
+              labelKey: 'instrumentation.method.sdk',
+              preview: false,
+              environments: ['docker'],
+              platforms: ['linux_amd64'],
+              signals: { metrics: 'supported', logs: 'preview', traces: 'supported' },
+              component
+            }
+          ]
+        }
+      ]
+    }
+  ]
 };
 
 const collector = {
-  collectorId: 'collector-east', name: 'collector-east', online: true, address: '10.0.0.8',
+  collectorId: 'collector-east',
+  name: 'collector-east',
+  online: true,
+  address: '10.0.0.8',
   intake: { status: 'unavailable', errorCode: 'old_server' }
 };
 
 const guide = {
   schemaVersion: 1,
   selection: { language: 'go', framework: 'go_generic', method: 'sdk', environment: 'docker', platform: 'linux_amd64' },
-  signals: { metrics: 'supported', logs: 'preview', traces: 'supported' }, component,
+  signals: { metrics: 'supported', logs: 'preview', traces: 'supported' },
+  component,
   secretPlaceholders: {
     authorizationToken: { marker: '${HERTZBEAT_TOKEN}', valueFormat: 'url_unreserved', replacement: 'raw' }
   },
-  steps: [{
-    id: 'configure', type: 'configure', titleKey: 'instrumentation.step.configure',
-    executionLocationKey: 'instrumentation.location.application_environment', snippets: [{
-      id: 'otel-env', language: 'bash', content: 'Authorization=Bearer ${HERTZBEAT_TOKEN}',
-      secretPlaceholders: ['authorizationToken']
-    }]
-  }]
+  steps: [
+    {
+      id: 'configure',
+      type: 'configure',
+      titleKey: 'instrumentation.step.configure',
+      executionLocationKey: 'instrumentation.location.application_environment',
+      snippets: [
+        {
+          id: 'otel-env',
+          language: 'bash',
+          content: 'Authorization=Bearer ${HERTZBEAT_TOKEN}',
+          secretPlaceholders: ['authorizationToken']
+        }
+      ]
+    }
+  ]
 };

@@ -33,6 +33,13 @@ const stages = [
   { id: 4, key: 'install' },
   { id: 5, key: 'detect' }
 ] as const;
+const LAST_SETUP_STAGE = 3;
+const INSTALLATION_STAGE = 4;
+const DETECTION_STAGE = 5;
+const MISSING_SCOPE_VALUE = '—';
+
+type RunbookStage = (typeof stages)[number];
+type RunbookStageStatus = 'active' | 'complete' | 'locked';
 
 export function InstrumentationRunbook({
   setup,
@@ -43,23 +50,26 @@ export function InstrumentationRunbook({
 }) {
   const { t } = useTranslation();
   const startDetection = () => {
-    setup.setStage(5);
+    setup.setStage(DETECTION_STAGE);
     detection.start();
   };
-  const selectStage = (stage: (typeof stages)[number]['id']) => {
-    if (stage < 5) detection.reset();
+  const selectStage = (stage: RunbookStage['id']) => {
+    // Detection evidence belongs to the completed setup; returning to setup invalidates that evidence.
+    if (stage < DETECTION_STAGE) detection.reset();
     setup.setStage(stage);
   };
   return (
     <>
       <ol className={styles.stageRail} aria-label={t('instrumentation.progress')}>
         {stages.map(stage => {
-          const complete = stage.id < setup.stage;
-          const active = stage.id === setup.stage;
+          const status = runbookStageStatus(stage.id, setup.stage);
+          let marker = <>{stage.id}</>;
+          if (status === 'complete') marker = <CheckOutlined />;
+          if (status === 'locked') marker = <LockOutlined />;
           return (
-            <li key={stage.id} className={active ? styles.stageActive : complete ? styles.stageComplete : styles.stageLocked}>
-              <button type="button" disabled={stage.id > setup.stage} onClick={() => selectStage(stage.id)}>
-                <span>{complete ? <CheckOutlined /> : stage.id > setup.stage ? <LockOutlined /> : stage.id}</span>
+            <li key={stage.id} className={runbookStageClassName(status)}>
+              <button type="button" disabled={status === 'locked'} onClick={() => selectStage(stage.id)}>
+                <span>{marker}</span>
                 <strong>{t(`instrumentation.stage.${stage.key}`)}</strong>
               </button>
             </li>
@@ -68,9 +78,11 @@ export function InstrumentationRunbook({
       </ol>
       <div className={styles.workspaceGrid}>
         <div>
-          {setup.stage <= 3 && <InstrumentationStageContent setup={setup} />}
-          {setup.stage === 4 && <InstrumentationGuide setup={setup} onStartDetection={startDetection} />}
-          {setup.stage === 5 && <InstrumentationDetection detection={detection} />}
+          {setup.stage <= LAST_SETUP_STAGE && <InstrumentationStageContent setup={setup} />}
+          {setup.stage === INSTALLATION_STAGE && (
+            <InstrumentationGuide setup={setup} onStartDetection={startDetection} />
+          )}
+          {setup.stage === DETECTION_STAGE && <InstrumentationDetection detection={detection} />}
         </div>
         <ScopePanel setup={setup} />
       </div>
@@ -84,36 +96,61 @@ function ScopePanel({ setup }: { setup: InstrumentationSetupController }) {
   const scope = [
     ['deploymentEnvironment', t(`instrumentation.environment.${setup.draft.environment}`)],
     ['platform', t(`instrumentation.platform.${setup.draft.platform}`)],
-    ['language', language ? t(language.labelKey) : '—'],
-    ['framework', framework ? t(framework.labelKey) : '—'],
-    ['method', method ? t(method.labelKey) : '—'],
-    ['collector', setup.draft.collectorId || '—'],
-    ['serviceName', setup.draft.serviceName || '—'],
-    ['serviceNamespace', setup.draft.serviceNamespace || '—'],
-    ['serviceEnvironment', setup.draft.serviceEnvironment || '—'],
+    ['language', language ? t(language.labelKey) : MISSING_SCOPE_VALUE],
+    ['framework', framework ? t(framework.labelKey) : MISSING_SCOPE_VALUE],
+    ['method', method ? t(method.labelKey) : MISSING_SCOPE_VALUE],
+    ['collector', setup.draft.collectorId || MISSING_SCOPE_VALUE],
+    ['serviceName', setup.draft.serviceName || MISSING_SCOPE_VALUE],
+    ['serviceNamespace', setup.draft.serviceNamespace || MISSING_SCOPE_VALUE],
+    ['serviceEnvironment', setup.draft.serviceEnvironment || MISSING_SCOPE_VALUE],
     ['token', t(setup.token ? 'instrumentation.tokenInMemory' : 'instrumentation.tokenMissing')]
   ];
   return (
     <aside className={styles.scopePanel}>
       <Typography.Text className={styles.scopeTitle ?? ''}>{t('instrumentation.scope')}</Typography.Text>
-      <dl>{scope.map(([key, value]) => <div key={key}><dt>{t(`instrumentation.field.${key}`)}</dt><dd>{value}</dd></div>)}</dl>
+      <dl>
+        {scope.map(([key, value]) => (
+          <div key={key}>
+            <dt>{t(`instrumentation.field.${key}`)}</dt>
+            <dd>{value}</dd>
+          </div>
+        ))}
+      </dl>
       {method && (
         <div className={styles.scopeSignals}>
           <Typography.Text type="secondary">{t('instrumentation.signalCapability')}</Typography.Text>
           {Object.entries(method.signals).map(([signal, capability]) => (
-            <span key={signal}><b>{t(`instrumentation.signal.${signal}`)}</b><em>{t(`instrumentation.capability.${capability}`)}</em></span>
+            <span key={signal}>
+              <b>{t(`instrumentation.signal.${signal}`)}</b>
+              <em>{t(`instrumentation.capability.${capability}`)}</em>
+            </span>
           ))}
         </div>
       )}
-      <Typography.Text type="secondary" className={styles.scopeNote ?? ''}>{t('instrumentation.scopeHelp')}</Typography.Text>
+      <Typography.Text type="secondary" className={styles.scopeNote ?? ''}>
+        {t('instrumentation.scopeHelp')}
+      </Typography.Text>
     </aside>
   );
 }
 
 function findSelectionMetadata(setup: InstrumentationSetupController) {
   const selection = setup.draft.selection;
-  const language = selection ? setup.catalog?.languages.find(item => item.language === selection.language) : undefined;
-  const framework = selection ? language?.frameworks.find(item => item.framework === selection.framework) : undefined;
-  const method = selection ? framework?.methods.find(item => item.method === selection.method) : undefined;
+  if (!selection) return {};
+  const language = setup.catalog?.languages.find(item => item.language === selection.language);
+  const framework = language?.frameworks.find(item => item.framework === selection.framework);
+  const method = framework?.methods.find(item => item.method === selection.method);
   return { language, framework, method };
+}
+
+function runbookStageStatus(stage: RunbookStage['id'], currentStage: InstrumentationSetupController['stage']) {
+  if (stage < currentStage) return 'complete';
+  if (stage === currentStage) return 'active';
+  return 'locked';
+}
+
+function runbookStageClassName(status: RunbookStageStatus) {
+  if (status === 'active') return styles.stageActive;
+  if (status === 'complete') return styles.stageComplete;
+  return styles.stageLocked;
 }
