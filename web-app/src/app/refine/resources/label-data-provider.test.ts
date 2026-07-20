@@ -261,6 +261,28 @@ describe('Label Refine data provider', () => {
     });
   });
 
+  it.each([
+    ['timeout response', new LabelTransportFailure('unavailable', { status: 408 })],
+    ['cause-bearing client response', new LabelTransportFailure('unavailable', { status: 409 })],
+    ['business envelope', new LabelTransportFailure('error', { status: 200 })]
+  ])('retains write proof after an uncertain %s', async (_label, failure) => {
+    labelApi.saveLabel.mockRejectedValue(failure);
+
+    await expect(
+      labelDataProvider.update({
+        resource: 'labels',
+        id: 7,
+        variables: { name: 'env', tagValue: 'prod' }
+      })
+    ).rejects.toMatchObject({
+      name: 'LabelRequestFailure',
+      writeOutcome: 'uncertain',
+      evidence: { operation: 'update', phase: 'write', recovery: 'proof' }
+    });
+    expect(labelApi.saveLabel).toHaveBeenCalledTimes(1);
+    expect(labelApi.findCanonicalLabel).not.toHaveBeenCalled();
+  });
+
   it('deletes a server record pessimistically and confirms canonical absence', async () => {
     labelApi.findCanonicalLabel.mockResolvedValueOnce(serverLabel).mockResolvedValueOnce(undefined);
     labelApi.deleteLabel.mockResolvedValue(undefined);

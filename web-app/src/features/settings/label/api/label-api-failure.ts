@@ -37,11 +37,11 @@ export async function labelApiRequest<T>(operation: () => Promise<T>): Promise<T
 export function normalizeLabelTransportFailure(reason: unknown) {
   if (reason instanceof LabelTransportFailure) return reason;
   if (!(reason instanceof ApiMessageError)) return new LabelTransportFailure('error');
-  if (reason.status !== undefined && reason.status >= 400 && reason.status < 500) {
-    return new LabelTransportFailure('rejected', { status: reason.status });
-  }
   if (reason.cause !== undefined || reason.status === undefined || reason.status === 0 || reason.status >= 500) {
     return new LabelTransportFailure('unavailable', reason.status === undefined ? {} : { status: reason.status });
+  }
+  if (isNonTimeoutClientStatus(reason.status)) {
+    return new LabelTransportFailure('rejected', { status: reason.status });
   }
   return new LabelTransportFailure('error', { status: reason.status });
 }
@@ -51,7 +51,10 @@ export function isExplicitLabelTransportRejection(reason: unknown) {
     reason instanceof LabelTransportFailure &&
     reason.kind === 'rejected' &&
     reason.status !== undefined &&
-    reason.status >= 400 &&
-    reason.status < 500
+    isNonTimeoutClientStatus(reason.status)
   );
+}
+
+function isNonTimeoutClientStatus(status: number) {
+  return status >= 400 && status < 500 && status !== 408;
 }
