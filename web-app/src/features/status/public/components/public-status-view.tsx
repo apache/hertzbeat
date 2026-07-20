@@ -17,6 +17,8 @@
 
 import { Alert, Empty, Skeleton, Table, Tag, Typography } from 'antd';
 import type { CSSProperties } from 'react';
+
+import { defaultStatusAccent } from '@/features/status/shared/status-constants';
 import { useTranslation } from 'react-i18next';
 
 import type {
@@ -30,7 +32,10 @@ import styles from './public-status.module.css';
 
 export function PublicStatusView(props: PublicStatusViewModel) {
   return (
-    <main className={styles.page} style={{ '--status-accent': props.org?.color ?? '#5b6fd8' } as CSSProperties}>
+    <main
+      className={styles.page}
+      style={{ '--status-accent': props.org?.color ?? defaultStatusAccent } as CSSProperties}
+    >
       <StatusHeader org={props.org} />
       <StatusBody
         loading={props.loading}

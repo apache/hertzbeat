@@ -4,7 +4,7 @@
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
-import { Alert, Button, Input, Skeleton, Typography } from 'antd';
+import { Alert, Button, Input, Skeleton, Space, Typography } from 'antd';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -13,19 +13,25 @@ import type {
   StatusIncidentCollectionState,
   StatusRecordState
 } from '../model/status-management-model';
-import type {
-  StatusComponent,
-  StatusIncident,
-  StatusOrg,
-  StatusOrgRecord
-} from '../model/status-management-contract';
+import type { StatusComponent, StatusIncident, StatusOrg, StatusOrgRecord } from '../model/status-management-contract';
 import styles from './status-management.module.css';
+import { StatusDeleteRecoveryAlert } from './status-delete-recovery-alert';
 import { ComponentResults, IncidentResults } from './status-management-results';
 import { StatusOrgForm } from './status-org-form';
 
-export function StatusOrgSection({ state, saving, onSave }: {
+export function StatusOrgSection({
+  state,
+  saving,
+  commandLocked,
+  writeRecovery,
+  onRetryWrite,
+  onSave
+}: {
   state: StatusRecordState<StatusOrgRecord>;
   saving: boolean;
+  commandLocked: boolean;
+  writeRecovery: 'proof' | 'commit-uncertain' | undefined;
+  onRetryWrite: () => Promise<StatusOrgRecord | undefined>;
   onSave: (org: StatusOrg) => Promise<StatusOrgRecord>;
 }) {
   const { t } = useTranslation();
@@ -41,18 +47,48 @@ export function StatusOrgSection({ state, saving, onSave }: {
       {state.kind === 'missing' && (
         <>
           <Alert type="info" showIcon message={t('statusManagement.notConfigured')} />
-          <StatusOrgForm org={undefined} saving={saving} onSubmit={onSave} />
+          <StatusOrgForm
+            org={undefined}
+            saving={saving}
+            commandLocked={commandLocked}
+            writeRecovery={writeRecovery}
+            onRetry={onRetryWrite}
+            onSubmit={onSave}
+          />
         </>
       )}
-      {state.kind === 'ready' && <StatusOrgForm org={state.record} saving={saving} onSubmit={onSave} />}
+      {state.kind === 'ready' && (
+        <StatusOrgForm
+          org={state.record}
+          saving={saving}
+          commandLocked={commandLocked}
+          writeRecovery={writeRecovery}
+          onRetry={onRetryWrite}
+          onSubmit={onSave}
+        />
+      )}
     </section>
   );
 }
 
-export function StatusComponentSection({ orgId, state, onNew, onEdit, onDelete }: {
+export function StatusComponentSection({
+  orgId,
+  state,
+  commandLocked,
+  deleteRecovery,
+  deleteRecoveryPending,
+  onNew,
+  onRefresh,
+  onEdit,
+  onDelete
+}: {
   orgId: number | undefined;
   state: StatusCollectionState<StatusComponent>;
+  commandLocked: boolean;
+  deleteRecovery: boolean;
+  deleteRecoveryPending: boolean;
   onNew: () => void;
+  onRefresh: () => Promise<boolean>;
   onEdit: (record: StatusComponent) => void;
   onDelete: (id: number) => void;
 }) {
@@ -62,9 +98,19 @@ export function StatusComponentSection({ orgId, state, onNew, onEdit, onDelete }
       <SectionHeading
         title={t('status.components')}
         description={t('statusManagement.componentsDescription')}
-        action={<Button type="primary" disabled={!orgId} onClick={onNew}>{t('statusManagement.newComponent')}</Button>}
+        action={
+          <Space>
+            <Button disabled={commandLocked} onClick={() => void onRefresh()}>
+              {t('common.refresh')}
+            </Button>
+            <Button type="primary" disabled={!orgId || commandLocked} onClick={onNew}>
+              {t('statusManagement.newComponent')}
+            </Button>
+          </Space>
+        }
       />
-      <ComponentResults state={state} onEdit={onEdit} onDelete={onDelete} />
+      {deleteRecovery && <StatusDeleteRecoveryAlert pending={deleteRecoveryPending} onRetry={() => void onRefresh()} />}
+      <ComponentResults state={state} commandLocked={commandLocked} onEdit={onEdit} onDelete={onDelete} />
     </section>
   );
 }
@@ -80,6 +126,9 @@ type IncidentSectionProps = {
   pageIndex: number;
   pageSize: number;
   total: number;
+  commandLocked: boolean;
+  deleteRecovery: boolean;
+  deleteRecoveryPending: boolean;
   onDraftSearch: (value: string) => void;
   onQuery: () => void;
   onRefresh: () => Promise<boolean>;
@@ -96,23 +145,35 @@ export function StatusIncidentSection(props: IncidentSectionProps) {
       <SectionHeading
         title={t('status.incidents')}
         description={t('statusManagement.incidentsDescription')}
-        action={(
-          <Button type="primary" disabled={!props.orgId || props.componentCount === 0} onClick={props.onNew}>
+        action={
+          <Button
+            type="primary"
+            disabled={!props.orgId || props.componentCount === 0 || props.commandLocked}
+            onClick={props.onNew}
+          >
             {t('statusManagement.newIncident')}
           </Button>
-        )}
+        }
       />
       <div className={styles.toolbar}>
         <Input
           allowClear
+          disabled={props.commandLocked}
           value={props.draftSearch}
           placeholder={t('statusManagement.searchIncidents')}
           onChange={event => props.onDraftSearch(event.target.value)}
           onPressEnter={props.onQuery}
         />
-        <Button type="primary" onClick={props.onQuery}>{t('common.query')}</Button>
-        <Button onClick={() => void props.onRefresh()}>{t('common.refresh')}</Button>
+        <Button type="primary" disabled={props.commandLocked} onClick={props.onQuery}>
+          {t('common.query')}
+        </Button>
+        <Button disabled={props.commandLocked} onClick={() => void props.onRefresh()}>
+          {t('common.refresh')}
+        </Button>
       </div>
+      {props.deleteRecovery && (
+        <StatusDeleteRecoveryAlert pending={props.deleteRecoveryPending} onRetry={() => void props.onRefresh()} />
+      )}
       {props.detailState && (
         <Alert
           type={props.detailState === 'missing' ? 'info' : 'error'}

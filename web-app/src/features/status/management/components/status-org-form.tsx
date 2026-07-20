@@ -18,21 +18,63 @@
 import { Form } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 
+import { useExclusiveOperation } from '@/shared/exclusive-operation/use-exclusive-operation';
+import { defaultStatusAccent } from '@/features/status/shared/status-constants';
+
 import type { StatusOrg, StatusOrgRecord } from '../model/status-management-contract';
 import { StatusOrgActions, StatusOrgFields } from './status-org-presentation';
+import { StatusWriteRecoveryAlert } from './status-write-recovery-alert';
 
-const emptyOrg: StatusOrg = { name: '', description: '', home: '', logo: '', feedback: '', color: '#5b6fd8', state: 0 };
+const emptyOrg: StatusOrg = {
+  name: '',
+  description: '',
+  home: '',
+  logo: '',
+  feedback: '',
+  color: defaultStatusAccent,
+  state: 0
+};
 
 interface StatusOrgFormProps {
   org: StatusOrg | undefined;
   saving: boolean;
+  commandLocked: boolean;
+  writeRecovery: 'proof' | 'commit-uncertain' | undefined;
+  onRetry: () => Promise<StatusOrgRecord | undefined>;
   onSubmit: (org: StatusOrg) => Promise<StatusOrgRecord>;
 }
 
-export function StatusOrgForm({ org, saving, onSubmit }: StatusOrgFormProps) {
+export function StatusOrgForm({ org, saving, commandLocked, writeRecovery, onRetry, onSubmit }: StatusOrgFormProps) {
+  const controller = useStatusOrgFormController({ org, saving, commandLocked, writeRecovery, onRetry, onSubmit });
+  return (
+    <Form form={controller.form} layout="vertical" onFinish={controller.save}>
+      {writeRecovery && <StatusWriteRecoveryAlert />}
+      <StatusOrgFields disabled={controller.fieldsDisabled} />
+      <StatusOrgActions
+        editing={controller.editing}
+        saving={saving}
+        locked={controller.locked}
+        canCancel={Boolean(org)}
+        writeRecovery={writeRecovery}
+        onCancel={controller.cancel}
+        onEdit={controller.edit}
+        onRetry={controller.retry}
+      />
+    </Form>
+  );
+}
+
+function useStatusOrgFormController({
+  org,
+  saving,
+  commandLocked,
+  writeRecovery,
+  onRetry,
+  onSubmit
+}: StatusOrgFormProps) {
   const [editing, setEditing] = useState(!org);
   const [form] = Form.useForm<StatusOrg>();
-  const submitting = useRef(false);
+  const submitOperation = useExclusiveOperation('status-org-form-submit');
   const initialized = useRef(false);
   const previousOrg = useRef(org);
   useEffect(() => {
@@ -45,39 +87,50 @@ export function StatusOrgForm({ org, saving, onSubmit }: StatusOrgFormProps) {
   }, [editing, form, org]);
 
   const save = async (value: StatusOrg) => {
-    if (saving || submitting.current) return;
-    submitting.current = true;
+    if (saving || commandLocked) return;
+    const owner = submitOperation.begin();
+    if (!owner) return;
     try {
       await onSubmit(value);
-      setEditing(false);
+      if (submitOperation.isCurrent(owner)) setEditing(false);
     } catch {
       // The mutation reports the failure; retaining this state keeps the draft retryable.
     } finally {
-      submitting.current = false;
+      submitOperation.end(owner);
     }
   };
 
-  const submit = (value: StatusOrg) => {
-    void save(value);
-  };
-
   const cancel = () => {
-    if (saving || submitting.current || !org) return;
+    if (saving || commandLocked || submitOperation.isLocked() || !org) return;
     form.setFieldsValue(org);
     previousOrg.current = org;
     setEditing(false);
   };
 
   const edit = () => {
+    if (commandLocked || submitOperation.isLocked()) return;
     form.setFieldsValue(org ?? emptyOrg);
     previousOrg.current = org;
     setEditing(true);
   };
 
-  return (
-    <Form form={form} layout="vertical" onFinish={submit}>
-      <StatusOrgFields disabled={!editing || saving} />
-      <StatusOrgActions editing={editing} saving={saving} canCancel={Boolean(org)} onCancel={cancel} onEdit={edit} />
-    </Form>
-  );
+  return {
+    form,
+    save: (value: StatusOrg) => void save(value),
+    cancel,
+    edit,
+    retry: () => void retryStatusOrgForm(writeRecovery, onRetry, setEditing),
+    editing: editing || Boolean(writeRecovery),
+    locked: saving || commandLocked || submitOperation.pending,
+    fieldsDisabled: !editing || saving || commandLocked || submitOperation.pending || Boolean(writeRecovery)
+  };
+}
+
+async function retryStatusOrgForm(
+  recovery: StatusOrgFormProps['writeRecovery'],
+  onRetry: StatusOrgFormProps['onRetry'],
+  setEditing: (value: boolean) => void
+) {
+  if (recovery !== 'proof') return;
+  if (await onRetry()) setEditing(false);
 }

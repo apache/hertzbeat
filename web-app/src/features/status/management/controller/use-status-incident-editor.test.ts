@@ -18,6 +18,8 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { useExclusiveOperation } from '@/shared/exclusive-operation/use-exclusive-operation';
+
 import type { StatusIncident } from '../model/status-management-contract';
 
 const { loadStatusIncident } = vi.hoisted(() => ({ loadStatusIncident: vi.fn() }));
@@ -36,7 +38,7 @@ describe('useStatusIncidentEditor', () => {
     const second = deferred<StatusIncident>();
     loadStatusIncident.mockImplementation((id: number) => (id === 1 ? first.promise : second.promise));
     const failed = vi.fn();
-    const { result } = renderHook(() => useStatusIncidentEditor(failed));
+    const { result } = renderIncidentEditor(failed);
 
     act(() => result.current.edit(1));
     const firstSignal = loadStatusIncident.mock.calls[0]?.[1] as AbortSignal;
@@ -59,7 +61,7 @@ describe('useStatusIncidentEditor', () => {
     const second = deferred<StatusIncident>();
     loadStatusIncident.mockImplementation((id: number) => (id === 1 ? first.promise : second.promise));
     const failed = vi.fn();
-    const { result } = renderHook(() => useStatusIncidentEditor(failed));
+    const { result } = renderIncidentEditor(failed);
 
     act(() => result.current.edit(1));
     act(() => result.current.edit(2));
@@ -74,7 +76,7 @@ describe('useStatusIncidentEditor', () => {
     const first = deferred<StatusIncident>();
     const second = deferred<StatusIncident>();
     loadStatusIncident.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
-    const { result } = renderHook(() => useStatusIncidentEditor(vi.fn()));
+    const { result } = renderIncidentEditor(vi.fn());
 
     act(() => result.current.edit(1));
     const firstSignal = loadStatusIncident.mock.calls[0]?.[1] as AbortSignal;
@@ -97,7 +99,7 @@ describe('useStatusIncidentEditor', () => {
     const current = deferred<StatusIncident>();
     loadStatusIncident.mockReturnValue(current.promise);
     const failed = vi.fn();
-    const { result } = renderHook(() => useStatusIncidentEditor(failed));
+    const { result } = renderIncidentEditor(failed);
 
     act(() => result.current.edit(3));
     await settle(() => current.reject(new Error('current failure')));
@@ -106,7 +108,27 @@ describe('useStatusIncidentEditor', () => {
     expect(result.current.incident).toBeUndefined();
     expect(result.current.loading).toBe(false);
   });
+
+  it('rejects a mismatched detail id instead of opening the wrong incident', async () => {
+    loadStatusIncident.mockResolvedValue(incident(99));
+    const failed = vi.fn();
+    const { result } = renderIncidentEditor(failed);
+
+    act(() => result.current.edit(3));
+    await settle(() => undefined);
+
+    expect(result.current.incident).toBeUndefined();
+    expect(result.current.error).toBeDefined();
+    expect(failed).toHaveBeenCalledTimes(1);
+  });
 });
+
+function renderIncidentEditor(reportLoadFailure: (error: unknown) => void) {
+  return renderHook(() => {
+    const command = useExclusiveOperation('status-incident-editor-test');
+    return useStatusIncidentEditor(command, reportLoadFailure);
+  });
+}
 
 function incident(id: number): StatusIncident {
   return { id, orgId: 9, name: `Incident ${id}`, state: 0, components: [], contents: [] };

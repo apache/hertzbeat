@@ -8,25 +8,19 @@ import { Alert, Button, Empty, Pagination, Popconfirm, Space, Table, Tag } from 
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 
-import type {
-  StatusCollectionState,
-  StatusIncidentCollectionState
-} from '../model/status-management-model';
+import type { StatusCollectionState, StatusIncidentCollectionState } from '../model/status-management-model';
 import type { StatusComponent, StatusIncident } from '../model/status-management-contract';
 import { statusIncidentPageSizes } from '../model/status-incident-query';
-import {
-  incidentStateKey,
-  latestIncidentMessage,
-  statusStateKey
-} from '../model/status-management-model';
+import { incidentStateKey, latestIncidentMessage, statusStateKey } from '../model/status-management-model';
 
 type ComponentResultsProps = {
   state: StatusCollectionState<StatusComponent>;
+  commandLocked: boolean;
   onEdit: (record: StatusComponent) => void;
   onDelete: (id: number) => void;
 };
 
-export function ComponentResults({ state, onEdit, onDelete }: ComponentResultsProps) {
+export function ComponentResults({ state, commandLocked, onEdit, onDelete }: ComponentResultsProps) {
   const { t } = useTranslation();
   if (state.kind === 'unavailable') return <Alert type="error" showIcon message={t('common.unavailable')} />;
   if (state.kind === 'error') return <Alert type="error" showIcon message={t('common.routeError.title')} />;
@@ -57,12 +51,17 @@ export function ComponentResults({ state, onEdit, onDelete }: ComponentResultsPr
       width: 170,
       render: (_value, row) => (
         <Space size={2}>
-          <Button type="link" onClick={() => onEdit(row)}>{t('common.edit')}</Button>
+          <Button type="link" disabled={commandLocked} onClick={() => onEdit(row)}>
+            {t('common.edit')}
+          </Button>
           <Popconfirm
             title={t('statusManagement.deleteComponentConfirm')}
+            okButtonProps={{ disabled: commandLocked }}
             onConfirm={() => row.id && onDelete(row.id)}
           >
-            <Button type="link" danger>{t('statusManagement.delete')}</Button>
+            <Button type="link" danger disabled={commandLocked}>
+              {t('statusManagement.delete')}
+            </Button>
           </Popconfirm>
         </Space>
       )
@@ -87,13 +86,15 @@ type IncidentResultsProps = {
   pageIndex: number;
   pageSize: number;
   total: number;
+  commandLocked: boolean;
   onPageChange: (pageIndex: number, pageSize: number) => void;
   onEdit: (id: number) => void;
   onDelete: (id: number) => void;
 };
 
 export function IncidentResults(props: IncidentResultsProps) {
-  const { state, detailLoading, records, pageIndex, pageSize, total, onPageChange, onEdit, onDelete } = props;
+  const { state, detailLoading, records, pageIndex, pageSize, total, commandLocked, onPageChange, onEdit, onDelete } =
+    props;
   const { t } = useTranslation();
   if (state.kind === 'unavailable') return <Alert type="error" showIcon message={t('common.unavailable')} />;
   if (state.kind === 'error') return <Alert type="error" showIcon message={t('common.routeError.title')} />;
@@ -106,32 +107,33 @@ export function IncidentResults(props: IncidentResultsProps) {
       width: 140,
       render: (value: number) => <Tag>{t(incidentStateKey(value))}</Tag>
     },
-    { title: t('status.components'), render: (_value, row) => row.components?.map(item => item.name).join(', ') || '—' },
+    {
+      title: t('status.components'),
+      render: (_value, row) => row.components?.map(item => item.name).join(', ') || '—'
+    },
     { title: t('statusManagement.latestUpdate'), render: (_value, row) => latestIncidentMessage(row) },
     {
       title: t('common.actions'),
       width: 180,
       render: (_value, row) => (
         <Space size={2}>
-          <Button type="link" onClick={() => row.id && onEdit(row.id)}>{t('statusManagement.update')}</Button>
+          <Button type="link" disabled={commandLocked} onClick={() => row.id && onEdit(row.id)}>
+            {t('statusManagement.update')}
+          </Button>
           <Popconfirm
             title={t('statusManagement.deleteIncidentConfirm')}
+            okButtonProps={{ disabled: commandLocked }}
             onConfirm={() => row.id && onDelete(row.id)}
           >
-            <Button type="link" danger>{t('statusManagement.delete')}</Button>
+            <Button type="link" danger disabled={commandLocked}>
+              {t('statusManagement.delete')}
+            </Button>
           </Popconfirm>
         </Space>
       )
     }
   ];
-  const pagination = {
-    current: pageIndex + 1,
-    pageSize,
-    pageSizeOptions: [...statusIncidentPageSizes],
-    showSizeChanger: true,
-    total,
-    onChange: (page: number, size: number) => onPageChange(page - 1, size)
-  };
+  const pagination = incidentPagination(pageIndex, pageSize, total, commandLocked, onPageChange);
   return (
     <>
       <Table
@@ -145,4 +147,22 @@ export function IncidentResults(props: IncidentResultsProps) {
       {state.kind === 'ready' && records.length === 0 && total > 0 && <Pagination {...pagination} />}
     </>
   );
+}
+
+function incidentPagination(
+  pageIndex: number,
+  pageSize: number,
+  total: number,
+  disabled: boolean,
+  onPageChange: (pageIndex: number, pageSize: number) => void
+) {
+  return {
+    current: pageIndex + 1,
+    pageSize,
+    pageSizeOptions: [...statusIncidentPageSizes],
+    showSizeChanger: true,
+    disabled,
+    total,
+    onChange: (page: number, size: number) => onPageChange(page - 1, size)
+  };
 }

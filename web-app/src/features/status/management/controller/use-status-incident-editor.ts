@@ -2,83 +2,96 @@
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { type Dispatch, type SetStateAction, useCallback, useEffect, useRef, useState } from 'react';
+
+import type { ExclusiveOperation } from '@/shared/exclusive-operation/use-exclusive-operation';
 
 import { loadStatusIncident } from '../api/status-management-api';
 import type { StatusIncident } from '../model/status-management-contract';
+import { requireStatusExactId } from './status-management-canonical-proof';
 
-export function useStatusIncidentEditor(reportLoadFailure?: (error: unknown) => void) {
-  const [incident, setIncident] = useState<StatusIncident>();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<unknown>();
+type IncidentEditorView = { incident?: StatusIncident; loading: boolean; error?: unknown };
+type DetailRequest = {
+  id: number;
+  controller: AbortController;
+  current: React.RefObject<AbortController | undefined>;
+  setView: Dispatch<SetStateAction<IncidentEditorView>>;
+  reportLoadFailure: ((error: unknown) => void) | undefined;
+};
+
+export function useStatusIncidentEditor(command: ExclusiveOperation, reportLoadFailure?: (error: unknown) => void) {
+  const [view, setView] = useState<IncidentEditorView>({ loading: false });
   const request = useRef<AbortController | undefined>(undefined);
-
+  const epoch = useRef(0);
   const invalidate = useCallback(() => {
     request.current?.abort();
     request.current = undefined;
   }, []);
-
   const edit = useCallback(
     (id: number) => {
+      if (command.isLocked()) return;
       invalidate();
+      epoch.current += 1;
       const controller = new AbortController();
       request.current = controller;
-      setIncident(undefined);
-      setError(undefined);
-      setLoading(true);
-
-      void (async () => {
-        try {
-          const next = await loadStatusIncident(id, controller.signal);
-          // Some transports still resolve after abort; controller identity keeps stale details closed.
-          if (controller.signal.aborted || request.current !== controller) return;
-          request.current = undefined;
-          setIncident(next);
-          setError(undefined);
-          setLoading(false);
-        } catch (reason) {
-          if (controller.signal.aborted || request.current !== controller) return;
-          request.current = undefined;
-          setLoading(false);
-          setError(reason);
-          reportLoadFailure?.(reason);
-        }
-      })();
+      setView({ loading: true });
+      void loadDetail({ id, controller, current: request, setView, reportLoadFailure });
     },
-    [invalidate, reportLoadFailure]
+    [command, invalidate, reportLoadFailure]
   );
-
   const openNew = useCallback(
     (orgId: number | undefined) => {
+      if (command.isLocked()) return;
       invalidate();
-      setLoading(false);
-      setError(undefined);
-      setIncident({ orgId: orgId ?? 0, name: '', state: 0, components: [], contents: [] });
+      epoch.current += 1;
+      setView({
+        loading: false,
+        incident: { orgId: orgId ?? 0, name: '', state: 0, components: [], contents: [] }
+      });
+    },
+    [command, invalidate]
+  );
+  const close = useCallback(() => {
+    if (command.isLocked()) return;
+    invalidate();
+    epoch.current += 1;
+    setView({ loading: false });
+  }, [command, invalidate]);
+  const complete = useCallback(
+    (expectedEpoch: number) => {
+      if (epoch.current !== expectedEpoch) return;
+      invalidate();
+      setView({ loading: false });
     },
     [invalidate]
   );
-
-  const close = useCallback(() => {
+  const retireDetail = useCallback(() => {
     invalidate();
-    setLoading(false);
-    setError(undefined);
-    setIncident(undefined);
+    setView(current => ({ ...current, loading: false, error: undefined }));
   }, [invalidate]);
-
   useEffect(() => invalidate, [invalidate]);
+  return { ...view, edit, openNew, close, complete, retireDetail, currentEpoch: () => epoch.current };
+}
 
-  return { incident, loading, error, edit, openNew, close };
+async function loadDetail(request: DetailRequest) {
+  try {
+    const next = await loadStatusIncident(request.id, request.controller.signal);
+    // Some transports still resolve after abort; controller identity keeps stale details closed.
+    if (!isCurrentRequest(request)) return;
+    requireStatusExactId(next.id, request.id);
+    request.current.current = undefined;
+    request.setView({ incident: next, loading: false });
+  } catch (error) {
+    if (!isCurrentRequest(request)) return;
+    request.current.current = undefined;
+    request.setView({ loading: false, error });
+    request.reportLoadFailure?.(error);
+  }
+}
+
+function isCurrentRequest(request: DetailRequest) {
+  return !request.controller.signal.aborted && request.current.current === request.controller;
 }

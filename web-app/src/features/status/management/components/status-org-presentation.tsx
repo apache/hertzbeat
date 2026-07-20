@@ -25,9 +25,12 @@ interface StatusOrgFieldsProps {
 interface StatusOrgActionsProps {
   editing: boolean;
   saving: boolean;
+  locked: boolean;
   canCancel: boolean;
+  writeRecovery: 'proof' | 'commit-uncertain' | undefined;
   onCancel: () => void;
   onEdit: () => void;
+  onRetry: () => void;
 }
 
 export function StatusOrgFields({ disabled }: StatusOrgFieldsProps) {
@@ -57,24 +60,39 @@ export function StatusOrgFields({ disabled }: StatusOrgFieldsProps) {
   );
 }
 
-export function StatusOrgActions({ editing, saving, canCancel, onCancel, onEdit }: StatusOrgActionsProps) {
+export function StatusOrgActions({
+  editing,
+  saving,
+  locked,
+  canCancel,
+  writeRecovery,
+  onCancel,
+  onEdit,
+  onRetry
+}: StatusOrgActionsProps) {
   const { t } = useTranslation();
 
   return (
     <Space>
       {editing ? (
         <>
-          <Button type="primary" htmlType="submit" loading={saving} disabled={saving}>
-            {t('common.save')}
+          <Button
+            type="primary"
+            htmlType={writeRecovery ? 'button' : 'submit'}
+            loading={saving}
+            disabled={writeRecovery === 'commit-uncertain' || (locked && writeRecovery !== 'proof')}
+            onClick={writeRecovery === 'proof' ? onRetry : undefined}
+          >
+            {t(writeRecovery === 'proof' ? 'common.retry' : 'common.save')}
           </Button>
           {canCancel && (
-            <Button htmlType="button" disabled={saving} onClick={onCancel}>
+            <Button htmlType="button" disabled={locked} onClick={onCancel}>
               {t('common.cancel')}
             </Button>
           )}
         </>
       ) : (
-        <Button htmlType="button" onClick={onEdit}>
+        <Button htmlType="button" disabled={locked} onClick={onEdit}>
           {t('common.edit')}
         </Button>
       )}

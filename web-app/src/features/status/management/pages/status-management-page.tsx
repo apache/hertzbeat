@@ -22,6 +22,7 @@ import {
   StatusIncidentSection,
   StatusOrgSection
 } from '../components/status-management-sections';
+import { publicStatusPath } from '@/features/status/shared/status-constants';
 import styles from '../components/status-management.module.css';
 import { useStatusManagementController } from '../controller/use-status-management-controller';
 
@@ -34,12 +35,23 @@ export function StatusManagementPage() {
   const { query } = controller.incidentQuery;
   return (
     <div className={styles.page}>
-      <StatusManagementHeader publicStatusHref="/status" />
-      <StatusOrgSection state={controller.org} saving={controller.orgSaving} onSave={controller.saveOrg} />
+      <StatusManagementHeader publicStatusHref={publicStatusPath} />
+      <StatusOrgSection
+        state={controller.org}
+        saving={controller.orgSaving}
+        commandLocked={controller.commandLocked}
+        writeRecovery={controller.orgWriteRecovery}
+        onRetryWrite={controller.retryOrgWrite}
+        onSave={controller.saveOrg}
+      />
       <StatusComponentSection
         orgId={statusOrg?.id}
         state={controller.components}
+        commandLocked={controller.commandLocked}
+        deleteRecovery={controller.componentDeleteRecovery}
+        deleteRecoveryPending={controller.componentDeleteRecoveryPending}
         onNew={controller.openNewComponent}
+        onRefresh={controller.refreshComponents}
         onEdit={controller.editComponent}
         onDelete={controller.deleteComponent}
       />
@@ -54,6 +66,9 @@ export function StatusManagementPage() {
         pageIndex={query.pageIndex}
         pageSize={query.pageSize}
         total={incidentTotal}
+        commandLocked={controller.commandLocked}
+        deleteRecovery={controller.incidentDeleteRecovery}
+        deleteRecoveryPending={controller.incidentDeleteRecoveryPending}
         onDraftSearch={controller.incidentQuery.setDraftSearch}
         onQuery={controller.incidentQuery.submit}
         onRefresh={controller.refreshIncidents}
@@ -63,18 +78,37 @@ export function StatusManagementPage() {
         onDelete={controller.deleteIncident}
       />
 
-      <StatusManagementEditors
-        component={controller.componentEditor}
-        incident={controller.incidentEditor}
-        orgId={statusOrg?.id}
-        components={statusComponents}
-        componentSaving={controller.componentSaving}
-        incidentSaving={controller.incidentSaving}
-        onCloseComponent={controller.closeComponent}
-        onCloseIncident={controller.closeIncident}
-        onSaveComponent={controller.saveComponent}
-        onSaveIncident={controller.saveIncident}
-      />
+      <StatusEditorLayer controller={controller} orgId={statusOrg?.id} components={statusComponents} />
     </div>
+  );
+}
+
+function StatusEditorLayer({
+  controller,
+  orgId,
+  components
+}: {
+  controller: ReturnType<typeof useStatusManagementController>;
+  orgId: number | undefined;
+  components: Parameters<typeof StatusManagementEditors>[0]['components'];
+}) {
+  return (
+    <StatusManagementEditors
+      component={controller.componentEditor}
+      incident={controller.incidentEditor}
+      orgId={orgId}
+      components={components}
+      commandLocked={controller.commandLocked}
+      componentWriteRecovery={controller.componentWriteRecovery}
+      incidentWriteRecovery={controller.incidentWriteRecovery}
+      componentSaving={controller.componentSaving}
+      incidentSaving={controller.incidentSaving}
+      onCloseComponent={controller.closeComponent}
+      onCloseIncident={controller.closeIncident}
+      onRetryComponentWrite={controller.retryComponentWrite}
+      onRetryIncidentWrite={controller.retryIncidentWrite}
+      onSaveComponent={controller.saveComponent}
+      onSaveIncident={controller.saveIncident}
+    />
   );
 }

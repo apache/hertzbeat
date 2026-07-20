@@ -4,7 +4,7 @@
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
-import { useState } from 'react';
+import { useExclusiveOperation } from '@/shared/exclusive-operation/use-exclusive-operation';
 
 import { statusManagementFailureKind, type StatusManagementFailureKind } from '../api/status-management-api';
 import {
@@ -21,6 +21,7 @@ import {
   type StatusRecordState
 } from '../model/status-management-model';
 import { useStatusComponentTransactions } from './use-status-component-transactions';
+import { useStatusComponentEditor } from './use-status-component-editor';
 import { useStatusIncidentEditor } from './use-status-incident-editor';
 import { useStatusIncidentQuery } from './use-status-incident-query';
 import { useStatusIncidentTransactions } from './use-status-incident-transactions';
@@ -29,14 +30,15 @@ import { useStatusManagementResources } from './use-status-management-resources'
 import { useStatusOrgSave } from './use-status-org-save';
 
 export function useStatusManagementController() {
+  const command = useExclusiveOperation('status-management-command');
   const incidentQuery = useStatusIncidentQuery();
   const resources = useStatusManagementResources(incidentQuery.query);
-  const [componentEditor, setComponentEditor] = useState<Partial<StatusComponent>>();
-  const incidentEditor = useStatusIncidentEditor();
   const notify = useStatusManagementNotifications();
-  const orgSave = useStatusOrgSave(resources.org.data, notify);
-  const components = useStatusComponentTransactions(setComponentEditor, notify);
-  const incidents = useStatusIncidentTransactions(incidentQuery.query, incidentEditor.close, notify);
+  const componentEditor = useStatusComponentEditor(command);
+  const incidentEditor = useStatusIncidentEditor(command);
+  const orgSave = useStatusOrgSave(resources.org.data, command, notify);
+  const components = useStatusComponentTransactions(command, componentEditor, notify, incidentEditor.retireDetail);
+  const incidents = useStatusIncidentTransactions(incidentQuery.query, command, incidentEditor, notify);
   const orgState = resolveOrgState(resources.org.isPending, resources.org.error, resources.org.data);
   const componentState = resolveComponentState(
     resources.components.isPending,
@@ -48,32 +50,100 @@ export function useStatusManagementController() {
     resources.incidents.error,
     resources.incidents.data
   );
+  const editorCommands = createEditorCommands({
+    command,
+    orgState,
+    componentEditor,
+    incidentEditor
+  });
 
   return {
     org: orgState,
     components: componentState,
     incidents: incidentState,
-    incidentQuery,
-    componentEditor,
+    incidentQuery: guardedIncidentQuery(incidentQuery, command.isLocked),
+    commandLocked: command.pending,
+    componentEditor: componentEditor.component,
+    componentWriteRecovery: components.writeRecovery,
+    componentDeleteRecovery: components.deleteRecovery,
+    componentDeleteRecoveryPending: components.deleteRecoveryPending,
     incidentEditor: incidentEditor.incident,
+    incidentWriteRecovery: incidents.writeRecovery,
+    incidentDeleteRecovery: incidents.deleteRecovery,
+    incidentDeleteRecoveryPending: incidents.deleteRecoveryPending,
     incidentDetailLoading: incidentEditor.loading,
     incidentDetailState: incidentEditor.error ? statusManagementFailureKind(incidentEditor.error) : undefined,
-    orgSaving: orgSave.isPending,
-    componentSaving: components.save.isPending,
-    incidentSaving: incidents.save.isPending,
-    saveOrg: orgSave.mutateAsync,
-    openNewComponent: () => setComponentEditor({ orgId: orgState.kind === 'ready' ? orgState.record.id : 0 }),
-    editComponent: setComponentEditor,
-    closeComponent: () => setComponentEditor(undefined),
-    saveComponent: components.save.mutate,
-    deleteComponent: components.remove.mutate,
-    openNewIncident: () => incidentEditor.openNew(orgState.kind === 'ready' ? orgState.record.id : undefined),
-    openIncident: incidentEditor.edit,
-    closeIncident: incidentEditor.close,
-    saveIncident: incidents.save.mutate,
-    deleteIncident: incidents.remove.mutate,
+    orgSaving: orgSave.saving,
+    componentSaving: components.saving,
+    incidentSaving: incidents.saving,
+    saveOrg: orgSave.save,
+    retryOrgWrite: orgSave.retryWrite,
+    orgWriteRecovery: orgSave.writeRecovery,
+    ...editorCommands,
+    saveComponent: components.save,
+    retryComponentWrite: components.retryWrite,
+    deleteComponent: components.remove,
+    saveIncident: incidents.save,
+    retryIncidentWrite: incidents.retryWrite,
+    deleteIncident: incidents.remove,
     refreshComponents: components.refresh,
     refreshIncidents: incidents.refresh
+  };
+}
+
+function createEditorCommands(context: {
+  command: ReturnType<typeof useExclusiveOperation>;
+  orgState: StatusRecordState<StatusOrgRecord>;
+  componentEditor: ReturnType<typeof useStatusComponentEditor>;
+  incidentEditor: ReturnType<typeof useStatusIncidentEditor>;
+}) {
+  const { command, orgState, componentEditor, incidentEditor } = context;
+  return {
+    openNewComponent: () => {
+      if (command.isLocked() || orgState.kind !== 'ready') return;
+      componentEditor.open({ orgId: orgState.record.id });
+    },
+    editComponent: (value: StatusComponent) => {
+      if (command.isLocked()) return;
+      componentEditor.open(value);
+    },
+    closeComponent: () => {
+      if (command.isLocked()) return;
+      componentEditor.close();
+    },
+    openNewIncident: () => {
+      if (command.isLocked() || orgState.kind !== 'ready') return;
+      incidentEditor.openNew(orgState.record.id);
+    },
+    openIncident: (id: number) => {
+      if (command.isLocked()) return;
+      incidentEditor.edit(id);
+    },
+    closeIncident: () => {
+      if (command.isLocked()) return;
+      incidentEditor.close();
+    }
+  };
+}
+
+function guardedIncidentQuery<
+  T extends {
+    setDraftSearch: (value: string) => void;
+    submit: () => void;
+    changePage: (pageIndex: number, pageSize: number) => void;
+  }
+>(query: T, isLocked: () => boolean): T {
+  return {
+    ...query,
+    setDraftSearch: value => {
+      if (!isLocked()) query.setDraftSearch(value);
+    },
+    submit: () => {
+      if (!isLocked()) query.submit();
+    },
+    changePage: (pageIndex, pageSize) => {
+      if (!isLocked()) query.changePage(pageIndex, pageSize);
+    }
   };
 }
 

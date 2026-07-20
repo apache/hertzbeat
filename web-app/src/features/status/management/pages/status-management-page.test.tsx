@@ -31,6 +31,7 @@ import { StatusManagementMissingError, type StatusIncident, type StatusOrg } fro
 const api = vi.hoisted(() => ({
   deleteStatusComponent: vi.fn(),
   deleteStatusIncident: vi.fn(),
+  loadStatusComponent: vi.fn(),
   loadStatusComponents: vi.fn(),
   loadStatusIncident: vi.fn(),
   loadStatusIncidents: vi.fn(),
@@ -65,6 +66,7 @@ describe('StatusManagementPage', () => {
     api.saveStatusIncident.mockResolvedValue(undefined);
     api.deleteStatusComponent.mockResolvedValue(undefined);
     api.deleteStatusIncident.mockResolvedValue(undefined);
+    api.loadStatusComponent.mockResolvedValue(statusComponent);
   });
 
   afterEach(() => cleanup());
@@ -142,15 +144,14 @@ describe('StatusManagementPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
     await waitFor(() => expect(screen.getByLabelText('Name')).toBeEnabled());
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Updated' } });
+    api.saveStatusOrg.mockResolvedValueOnce({ ...org, name: 'Updated' });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(api.saveStatusOrg).toHaveBeenCalledWith(expect.objectContaining({ name: 'Updated' })));
   });
 
-  it('keeps the organization draft editable after failure and blocks duplicate pending saves', async () => {
+  it('keeps an ambiguous organization draft locked and retries with read-only proof', async () => {
     const firstSave = deferred<StatusOrg>();
-    api.saveStatusOrg
-      .mockReturnValueOnce(firstSave.promise)
-      .mockResolvedValueOnce({ ...org, name: 'Draft organization' });
+    api.saveStatusOrg.mockReturnValueOnce(firstSave.promise);
     renderPage();
 
     expect(await screen.findByDisplayValue('HertzBeat')).toBeDisabled();
@@ -167,18 +168,56 @@ describe('StatusManagementPage', () => {
     expect(save).toBeDisabled();
 
     await act(async () => {
-      firstSave.reject(new Error('save failed'));
+      firstSave.reject(new ApiMessageError('Request failed', { status: 503 }));
       await Promise.resolve();
     });
-    await waitFor(() => expect(name).toBeEnabled());
+    await waitFor(() => expect(screen.getByRole('button', { name: /Retry$/ })).toBeEnabled());
+    expect(name).toBeDisabled();
     expect(name).toHaveValue('Draft organization');
-    expect(screen.getByRole('button', { name: 'Cancel' })).toBeEnabled();
-    expect(await screen.findByText(i18n.t('statusManagement.saveFailed'))).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled();
 
-    fireEvent.click(save);
-    await waitFor(() => expect(api.saveStatusOrg).toHaveBeenCalledTimes(2));
+    api.loadStatusOrg.mockResolvedValueOnce({ ...org, name: 'Draft organization' });
+    fireEvent.click(screen.getByRole('button', { name: /Retry$/ }));
+    await waitFor(() => expect(api.loadStatusOrg).toHaveBeenCalledTimes(3));
+    expect(api.saveStatusOrg).toHaveBeenCalledTimes(1);
     await waitFor(() => expect(name).toBeDisabled());
+  });
+
+  it('shows component delete recovery with one explicit read-only Retry', async () => {
+    api.loadStatusComponents.mockResolvedValue([statusComponent]);
+    renderPage();
+
+    const row = (await screen.findByText('API')).closest('tr');
+    if (!(row instanceof HTMLElement)) throw new Error('Missing component row');
+    fireEvent.click(within(row).getByRole('button', { name: 'Delete' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'OK' }));
+
+    expect(await screen.findByText(i18n.t('statusManagement.unknown'))).toBeInTheDocument();
+    for (const refresh of screen.getAllByRole('button', { name: 'Refresh' })) expect(refresh).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeEnabled();
+    expect(api.deleteStatusComponent).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows incident delete recovery with one explicit read-only Retry', async () => {
+    api.loadStatusComponents.mockResolvedValue([statusComponent]);
+    api.loadStatusIncidents.mockResolvedValue({
+      content: [incidentSummary],
+      totalElements: 1,
+      totalPages: 1,
+      number: 0,
+      size: 8
+    });
+    api.loadStatusIncident.mockResolvedValue(incidentSummary);
+    renderPage();
+
+    const row = (await screen.findByText('Outage')).closest('tr');
+    if (!(row instanceof HTMLElement)) throw new Error('Missing incident row');
+    fireEvent.click(within(row).getByRole('button', { name: 'Delete' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'OK' }));
+
+    expect(await screen.findByText(i18n.t('statusManagement.unknown'))).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeEnabled();
+    expect(api.deleteStatusIncident).toHaveBeenCalledTimes(1);
   });
 
   it('does not replace an organization draft during a background refresh', async () => {

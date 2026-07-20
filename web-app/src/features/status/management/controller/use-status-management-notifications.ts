@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 export type StatusManagementNotifications = {
   saveSuccess: () => void;
   saveFailed: () => void;
+  writeUnverified: () => void;
   deleteSuccess: () => void;
   deleteFailed: () => void;
 };
@@ -21,6 +22,7 @@ export function useStatusManagementNotifications(): StatusManagementNotification
   return {
     saveSuccess: () => void message.success(t('statusManagement.saveSuccess')),
     saveFailed: () => void message.error(t('statusManagement.saveFailed')),
+    writeUnverified: () => void message.warning(t('statusManagement.unknown')),
     deleteSuccess: () => void message.success(t('statusManagement.deleteSuccess')),
     deleteFailed: () => void message.error(t('statusManagement.deleteFailed'))
   };

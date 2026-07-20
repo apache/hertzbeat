@@ -68,7 +68,7 @@ describe('Status incident editor', () => {
 
     expect(screen.getByText('statusManagement.newIncident')).toBeInTheDocument();
     expect(screen.queryByText('statusManagement.updateHistory')).not.toBeInTheDocument();
-    const save = screen.getByRole('button', { name: /OK$/ });
+    const save = screen.getByRole('button', { name: /common\.save$/ });
     expect(save).toHaveClass('ant-btn-loading');
     fireEvent.click(save);
     expect(onSubmit).not.toHaveBeenCalled();
@@ -88,7 +88,7 @@ describe('Status incident editor', () => {
     expect(screen.getByText('statusManagement.updateIncident')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('statusManagement.incidentName'), { target: { value: ' Updated ' } });
     fireEvent.change(screen.getByLabelText('statusManagement.updateMessage'), { target: { value: ' Fixed ' } });
-    fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+    fireEvent.click(screen.getByRole('button', { name: 'common.save' }));
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
     expect(onSubmit).toHaveBeenCalledWith(
@@ -99,6 +99,66 @@ describe('Status incident editor', () => {
         contents: [{ incidentId: 7, message: 'Fixed', state: 0, timestamp: 4_000 }]
       })
     );
+  });
+
+  it('removes every incident-editor exit while another command owns the gate', () => {
+    const onCancel = vi.fn();
+    const onSubmit = vi.fn();
+    renderIncident(existingIncident, { commandLocked: true, onCancel, onSubmit });
+
+    expect(screen.getByLabelText('statusManagement.incidentName')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.save' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument();
+    fireEvent.keyDown(document, { key: 'Escape', code: 'Escape', keyCode: 27 });
+    expect(onCancel).not.toHaveBeenCalled();
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('keeps an uncertain write identity frozen and invokes proof-only Retry without rebuilding the payload', () => {
+    const onCancel = vi.fn();
+    const onRetry = vi.fn();
+    const onSubmit = vi.fn();
+    renderIncident(newIncident, { commandLocked: true, writeRecovery: 'proof', onCancel, onRetry, onSubmit });
+
+    expect(screen.getByLabelText('statusManagement.incidentName')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'common.retry' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument();
+    expect(screen.getByText('statusManagement.unknown')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+    expect(onCancel).not.toHaveBeenCalled();
+    expect(onRetry).toHaveBeenCalledTimes(1);
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('routes component recovery Retry directly to the retained proof receipt', () => {
+    const onRetry = vi.fn();
+    const onSubmit = vi.fn();
+    render(
+      <StatusManagementEditors
+        component={components[0]}
+        incident={undefined}
+        orgId={1}
+        components={components}
+        commandLocked
+        componentWriteRecovery="proof"
+        incidentWriteRecovery={undefined}
+        componentSaving={false}
+        incidentSaving={false}
+        onCloseComponent={vi.fn()}
+        onCloseIncident={vi.fn()}
+        onRetryComponentWrite={onRetry}
+        onRetryIncidentWrite={vi.fn()}
+        onSaveComponent={onSubmit}
+        onSaveIncident={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 });
 
@@ -121,7 +181,14 @@ const newIncident: StatusIncident = {
 
 function renderIncident(
   incident: StatusIncident,
-  patch: { saving?: boolean; onCancel?: () => void; onSubmit?: (value: StatusIncident) => void } = {}
+  patch: {
+    commandLocked?: boolean;
+    writeRecovery?: 'proof' | 'commit-uncertain';
+    saving?: boolean;
+    onCancel?: () => void;
+    onRetry?: () => void;
+    onSubmit?: (value: StatusIncident) => void;
+  } = {}
 ) {
   return render(
     <StatusManagementEditors
@@ -129,10 +196,15 @@ function renderIncident(
       incident={incident}
       orgId={1}
       components={components}
+      commandLocked={patch.commandLocked ?? false}
+      componentWriteRecovery={undefined}
+      incidentWriteRecovery={patch.writeRecovery}
       componentSaving={false}
       incidentSaving={patch.saving ?? false}
       onCloseComponent={vi.fn()}
       onCloseIncident={patch.onCancel ?? vi.fn()}
+      onRetryComponentWrite={vi.fn()}
+      onRetryIncidentWrite={patch.onRetry ?? vi.fn()}
       onSaveComponent={vi.fn()}
       onSaveIncident={patch.onSubmit ?? vi.fn()}
     />

@@ -154,6 +154,9 @@ describe('Status Management boundaries', () => {
     expect(controller).not.toContain('useQuery(');
     expect(controller).not.toContain('fetchQuery');
     expect(controller).not.toContain("['status-page-");
+    expect(managementSources['./management/controller/use-status-incident-transactions.ts']).toContain(
+      'useLayoutEffect'
+    );
   });
 
   it('keeps the public status route explicit in the page and the heading presentational', () => {
@@ -161,7 +164,7 @@ describe('Status Management boundaries', () => {
     const header = managementSources['./management/components/status-management-header.tsx'] ?? '';
     const controller = managementSources['./management/controller/use-status-management-controller.ts'] ?? '';
 
-    expect(page).toContain('<StatusManagementHeader publicStatusHref="/status" />');
+    expect(page).toContain('<StatusManagementHeader publicStatusHref={publicStatusPath} />');
     expect(page).not.toContain('<header');
     expect(page).not.toContain('Typography.');
     expect(page).not.toContain('<Button');
@@ -172,26 +175,27 @@ describe('Status Management boundaries', () => {
 
   it('keeps incident transactions in the editor and history as pure presentation', () => {
     const editors = managementSources['./management/components/status-management-editors.tsx'] ?? '';
+    const incidentEditor = managementSources['./management/components/status-incident-editor.tsx'] ?? '';
     const fields = managementSources['./management/components/status-incident-fields.tsx'] ?? '';
     const history = managementSources['./management/components/status-incident-history.tsx'] ?? '';
 
-    expect(editors).toContain("from './status-incident-fields'");
-    expect(editors).toContain("from './status-incident-history'");
-    expect(editors).toContain('<StatusIncidentFields components={components} />');
-    expect(editors).toContain('!isNew && incident.contents?.length ?');
-    expect(editors).toContain('<StatusIncidentHistory contents={incident.contents} />');
+    expect(editors).toContain("from './status-incident-editor'");
+    expect(incidentEditor).toContain("from './status-incident-fields'");
+    expect(incidentEditor).toContain("from './status-incident-history'");
+    expect(incidentEditor).toContain('<StatusIncidentFields components={props.components} />');
+    expect(incidentEditor).toContain('!isNew && props.incident.contents?.length ?');
+    expect(incidentEditor).toContain('<StatusIncidentHistory contents={props.incident.contents} />');
     expect(editors).not.toContain('<List');
-    expect(editors).toContain('Form.useForm');
-    expect(editors).toContain('Form.useForm<StatusIncidentFormValue>()');
-    expect(editors).not.toContain(
+    expect(incidentEditor).toContain('Form.useForm<StatusIncidentFormValue>()');
+    expect(incidentEditor).not.toContain(
       'Form.useForm<{ name: string; state: number; componentIds: number[]; message: string }>'
     );
-    expect(editors).toContain('buildIncidentPayload');
-    expect(editors).toContain('timestamp: Date.now()');
-    expect(editors).toContain('destroyOnHidden');
-    expect(editors).toContain('confirmLoading={saving}');
-    expect(editors).toContain("t(isNew ? 'statusManagement.newIncident' : 'statusManagement.updateIncident')");
-    expect(editors).toContain('item.id == null ? [] : [item.id]');
+    expect(incidentEditor).toContain('buildIncidentPayload');
+    expect(incidentEditor).toContain('timestamp: Date.now()');
+    expect(incidentEditor).toContain('destroyOnHidden');
+    expect(incidentEditor).toContain('confirmLoading={props.saving}');
+    expect(incidentEditor).toContain("t(isNew ? 'statusManagement.newIncident' : 'statusManagement.updateIncident')");
+    expect(incidentEditor).toContain('item.id == null ? [] : [item.id]');
     expect(history).toContain('const newestFirst = [...contents].sort');
     expect(history).toContain('new Date(item.timestamp).toLocaleString()');
     expect(history).toContain('t(incidentStateKey(item.state))');
@@ -207,22 +211,28 @@ describe('Status Management boundaries', () => {
     const presentation = managementSources['./management/components/status-org-presentation.tsx'] ?? '';
 
     expect(form).toContain("from './status-org-presentation'");
-    expect(form).toContain('<StatusOrgFields disabled={!editing || saving} />');
+    expect(form).toContain(
+      'fieldsDisabled: !editing || saving || commandLocked || submitOperation.pending || Boolean(writeRecovery)'
+    );
     expect(form).toContain('canCancel={Boolean(org)}');
     expect(form).toContain('Form.useForm<StatusOrg>()');
-    expect(form).toContain('const submitting = useRef(false)');
+    expect(form).toContain("useExclusiveOperation('status-org-form-submit')");
     expect(form).toContain('const initialized = useRef(false)');
     expect(form).toContain('const previousOrg = useRef(org)');
     expect(form).toContain('if (!initialized.current || (!editing && orgChanged))');
-    expect(form).toContain('if (saving || submitting.current) return');
+    expect(form).toContain('if (saving || commandLocked) return');
     expect(form).toContain('await onSubmit(value)');
-    expect(form).toContain('if (saving || submitting.current || !org) return');
+    expect(form).toContain('if (saving || commandLocked || submitOperation.isLocked() || !org) return');
     expect(form).not.toMatch(/<Button|<Input|<Space|useTranslation/);
     expect(presentation.match(/<Form\.Item/g)).toHaveLength(6);
     expect(presentation).toContain('<Input disabled={disabled} type="color" />');
-    expect(presentation).toContain('htmlType="submit" loading={saving} disabled={saving}');
-    expect(presentation).toContain('htmlType="button" disabled={saving} onClick={onCancel}');
-    expect(presentation).toContain('htmlType="button" onClick={onEdit}');
+    expect(presentation).toContain("htmlType={writeRecovery ? 'button' : 'submit'}");
+    expect(presentation).toContain(
+      "disabled={writeRecovery === 'commit-uncertain' || (locked && writeRecovery !== 'proof')}"
+    );
+    expect(presentation).toContain("onClick={writeRecovery === 'proof' ? onRetry : undefined}");
+    expect(presentation).toContain('htmlType="button" disabled={locked} onClick={onCancel}');
+    expect(presentation).toContain('htmlType="button" disabled={locked} onClick={onEdit}');
     expect(presentation).not.toMatch(
       /useEffect|useRef|useState|Form\.useForm|setFieldsValue|onSubmit|controller|status-management-api/
     );

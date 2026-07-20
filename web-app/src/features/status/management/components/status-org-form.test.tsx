@@ -18,13 +18,13 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { StatusOrg } from '../model/status-management-contract';
+import type { StatusOrg, StatusOrgRecord } from '../model/status-management-contract';
 
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 import { StatusOrgForm } from './status-org-form';
 
-const org: StatusOrg = {
+const org: StatusOrgRecord = {
   id: 1,
   name: 'HertzBeat',
   home: 'https://hertzbeat.apache.org',
@@ -39,7 +39,7 @@ describe('StatusOrgForm presentation', () => {
   afterEach(cleanup);
 
   it('starts a missing organization in edit mode with all fields and no cancel action', () => {
-    render(<StatusOrgForm org={undefined} saving={false} onSubmit={vi.fn()} />);
+    renderOrgForm({ org: undefined });
 
     for (const key of fieldKeys) expect(screen.getByLabelText(key)).toBeEnabled();
     expect(screen.getByLabelText('statusManagement.color')).toHaveAttribute('type', 'color');
@@ -49,7 +49,7 @@ describe('StatusOrgForm presentation', () => {
   });
 
   it('keeps a new organization disabled while saving and exposes the loading boundary', () => {
-    render(<StatusOrgForm org={undefined} saving onSubmit={vi.fn()} />);
+    renderOrgForm({ org: undefined, saving: true });
 
     for (const key of fieldKeys) expect(screen.getByLabelText(key)).toBeDisabled();
     const save = screen.getByText('common.save').closest('button');
@@ -60,7 +60,7 @@ describe('StatusOrgForm presentation', () => {
 
   it('initializes an existing organization and restores it through cancel', () => {
     const onSubmit = vi.fn();
-    render(<StatusOrgForm org={org} saving={false} onSubmit={onSubmit} />);
+    renderOrgForm({ org, onSubmit });
 
     expect(screen.getByLabelText('statusManagement.name')).toHaveValue('HertzBeat');
     expect(screen.getByLabelText('statusManagement.name')).toBeDisabled();
@@ -77,7 +77,43 @@ describe('StatusOrgForm presentation', () => {
     expect(screen.getByLabelText('statusManagement.name')).toBeDisabled();
     expect(onSubmit).not.toHaveBeenCalled();
   });
+
+  it('uses the retained proof action directly and locks an unverifiable create', () => {
+    const onRetry = vi.fn().mockResolvedValue(org);
+    const proof = renderOrgForm({ org, commandLocked: true, writeRecovery: 'proof', onRetry });
+
+    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+    expect(onRetry).toHaveBeenCalledOnce();
+
+    proof.unmount();
+    renderOrgForm({ org: undefined, commandLocked: true, writeRecovery: 'commit-uncertain' });
+    expect(screen.getByRole('button', { name: 'common.save' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'common.retry' })).not.toBeInTheDocument();
+    expect(screen.getByText('statusManagement.unknown')).toBeInTheDocument();
+  });
 });
+
+function renderOrgForm(
+  patch: {
+    org?: StatusOrg | undefined;
+    saving?: boolean;
+    commandLocked?: boolean;
+    writeRecovery?: 'proof' | 'commit-uncertain';
+    onRetry?: () => Promise<StatusOrgRecord | undefined>;
+    onSubmit?: (value: StatusOrg) => Promise<StatusOrgRecord>;
+  } = {}
+) {
+  return render(
+    <StatusOrgForm
+      org={patch.org}
+      saving={patch.saving ?? false}
+      commandLocked={patch.commandLocked ?? false}
+      writeRecovery={patch.writeRecovery}
+      onRetry={patch.onRetry ?? vi.fn().mockResolvedValue(undefined)}
+      onSubmit={patch.onSubmit ?? vi.fn().mockResolvedValue(org)}
+    />
+  );
+}
 
 const fieldKeys = [
   'statusManagement.name',

@@ -5,71 +5,72 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLayoutEffect, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
-import {
-  deleteStatusIncident,
-  loadStatusIncident,
-  loadStatusIncidents,
-  saveStatusIncident
-} from '../api/status-management-api';
+import type { ExclusiveOperation } from '@/shared/exclusive-operation/use-exclusive-operation';
+
 import type { StatusIncident } from '../model/status-management-contract';
 import type { StatusIncidentQuery } from '../model/status-incident-query';
 import {
-  proveStatusMissing,
-  requireStatusExactId,
-  requireStatusId
-} from './status-management-canonical-proof';
-import { statusManagementQueryKeys } from './status-management-query-keys';
+  refreshIncidentProjection,
+  startIncidentRemove,
+  type IncidentDeleteContext
+} from './status-incident-delete-operations';
+import { retryIncidentWrite, startIncidentSave, type IncidentWriteContext } from './status-incident-write-operations';
 import type { StatusManagementNotifications } from './use-status-management-notifications';
+
+type IncidentEditor = { complete: (epoch: number) => void; currentEpoch: () => number; retireDetail: () => void };
 
 export function useStatusIncidentTransactions(
   query: StatusIncidentQuery,
-  closeEditor: () => void,
+  command: ExclusiveOperation,
+  editor: IncidentEditor,
   notify: StatusManagementNotifications
 ) {
+  const [saving, setSaving] = useState(false);
+  const [writeRecovery, setWriteRecovery] = useState<'proof' | 'commit-uncertain'>();
+  const [deleteRecovery, setDeleteRecovery] = useState(false);
+  const [deleteRecoveryPending, setDeleteRecoveryPending] = useState(false);
+  const latestQuery = useRef(query);
+  useLayoutEffect(() => {
+    latestQuery.current = query;
+  }, [query]);
   const queryClient = useQueryClient();
-  const refreshQuery = () => queryClient.fetchQuery({
-    queryKey: statusManagementQueryKeys.incidents(query),
-    queryFn: () => loadStatusIncidents(query),
-    staleTime: 0,
-    retry: false
-  });
-  const refresh = async () => {
-    try {
-      await refreshQuery();
-      return true;
-    } catch {
-      // Keep the failed current-query cache state visible instead of reporting success.
-      return false;
-    }
+  const committedDeletes = useRef(new Set<number>());
+  const recoveryProofPending = useRef(false);
+  const writeContext: IncidentWriteContext = {
+    query: latestQuery,
+    command,
+    editor,
+    notify,
+    queryClient,
+    committedDeletes,
+    recovery: useRef(undefined),
+    recoveryProofPending,
+    setSaving,
+    setWriteRecovery
   };
-  const save = useMutation({
-    mutationFn: async (value: StatusIncident) => {
-      const isNew = value.id == null;
-      await saveStatusIncident(value, isNew);
-      if (!isNew) {
-        const id = requireStatusId(value.id);
-        requireStatusExactId((await loadStatusIncident(id)).id, id);
-      }
-      await refreshQuery();
-    },
-    // A failed proof leaves the editor open with the operator's draft intact.
-    onSuccess: () => {
-      closeEditor();
-      notify.saveSuccess();
-    },
-    onError: notify.saveFailed
-  });
-  const remove = useMutation({
-    mutationFn: async (id: number) => {
-      const exactId = requireStatusId(id);
-      await deleteStatusIncident(exactId);
-      await proveStatusMissing(() => loadStatusIncident(exactId));
-      await refreshQuery();
-    },
-    onSuccess: notify.deleteSuccess,
-    onError: notify.deleteFailed
-  });
-  return { save, remove, refresh };
+  const deleteContext: IncidentDeleteContext = {
+    query: latestQuery,
+    command,
+    retireDetail: editor.retireDetail,
+    notify,
+    queryClient,
+    committedDeletes,
+    recovery: useRef(undefined),
+    recoveryProofPending,
+    setDeleteRecovery,
+    setDeleteRecoveryPending
+  };
+  return {
+    save: (value: StatusIncident) => startIncidentSave(writeContext, value),
+    retryWrite: () => retryIncidentWrite(writeContext),
+    remove: (id: number) => startIncidentRemove(deleteContext, id),
+    refresh: () => refreshIncidentProjection(deleteContext),
+    saving,
+    writeRecovery,
+    deleteRecovery,
+    deleteRecoveryPending
+  };
 }
