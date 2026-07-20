@@ -17,17 +17,33 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { loginErrorMessageKey, resolveLoginSessionState, type LoginFailureKind } from './login-model';
+import {
+  loginErrorMessageKey,
+  loginSessionFailureMessageKey,
+  resolveLoginSessionState,
+  type LoginFailureKind
+} from './login-model';
 
 describe('login model', () => {
   it.each([
-    ['checking', { loading: true, unavailable: false, authenticated: false }],
-    ['checking', { loading: true, unavailable: true, authenticated: true }],
-    ['unavailable', { loading: false, unavailable: true, authenticated: true }],
-    ['authenticated', { loading: false, unavailable: false, authenticated: true }],
-    ['anonymous', { loading: false, unavailable: false, authenticated: false }]
+    ['checking', { loading: true, failure: undefined, authenticated: false }],
+    ['checking', { loading: true, failure: 'unavailable', authenticated: true }],
+    ['unavailable', { loading: false, failure: 'unavailable', authenticated: true }],
+    ['contract', { loading: false, failure: 'contract', authenticated: true }],
+    ['error', { loading: false, failure: 'error', authenticated: true }],
+    ['authenticated', { loading: false, failure: undefined, authenticated: true }],
+    ['anonymous', { loading: false, failure: undefined, authenticated: false }]
   ] as const)('maps session evidence to %s', (expected, evidence) => {
     expect(resolveLoginSessionState(evidence)).toBe(expected);
+  });
+
+  it.each([
+    ['unavailable', 'common.unavailable'],
+    ['contract', 'common.routeError.description'],
+    ['error', 'common.routeError.title'],
+    ['anonymous', undefined]
+  ] as const)('maps session state %s to its public failure key', (state, expected) => {
+    expect(loginSessionFailureMessageKey(state)).toBe(expected);
   });
 
   it.each([

@@ -18,8 +18,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, type PropsWithChildren } from 'react';
 
-import { SessionContext } from './session-context';
-import { anonymousSession, getSession, sessionQueryKey, type UiSession } from './session-api';
+import { SessionContext, type SessionReadFailureKind } from './session-context';
+import { anonymousSession, getSession, sessionQueryKey, SessionRequestError, type UiSession } from './session-api';
 import { useSessionIdentityBoundary } from './session-identity-context';
 
 const MAXIMUM_EXPIRY_TIMER_MS = 2_147_483_647;
@@ -33,12 +33,13 @@ export function SessionProvider({ children }: PropsWithChildren) {
   });
   useSessionExpiry(query.data, replaceIdentity);
   const visibleSession = failClosedExpiredSession(query.data);
+  const failure = query.isError ? classifySessionReadFailure(query.error) : undefined;
   return (
     <SessionContext.Provider
       value={{
         session: visibleSession,
         loading: query.isPending,
-        unavailable: query.isError,
+        failure,
         retry: () => {
           void query.refetch();
         }
@@ -47,6 +48,11 @@ export function SessionProvider({ children }: PropsWithChildren) {
       {children}
     </SessionContext.Provider>
   );
+}
+
+function classifySessionReadFailure(error: unknown): SessionReadFailureKind {
+  if (!(error instanceof SessionRequestError) || error.kind === 'invalid-credentials') return 'error';
+  return error.kind;
 }
 
 function useSessionExpiry(session: UiSession | undefined, replaceIdentity: (session: UiSession) => void) {

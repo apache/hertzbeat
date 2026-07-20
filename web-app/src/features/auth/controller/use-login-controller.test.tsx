@@ -30,10 +30,10 @@ const runtime = vi.hoisted(() => ({
   redirect: null as string | null,
   replaceIdentity: vi.fn(),
   session: {
+    failure: undefined as 'unavailable' | 'contract' | 'error' | undefined,
     loading: false,
     retry: vi.fn(),
-    session: { authenticated: true },
-    unavailable: false
+    session: { authenticated: true }
   }
 }));
 
@@ -60,9 +60,9 @@ describe('login controller navigation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     runtime.redirect = null;
+    runtime.session.failure = undefined;
     runtime.session.loading = false;
     runtime.session.session.authenticated = true;
-    runtime.session.unavailable = false;
   });
 
   it('classifies a failed login, admits a retry, and never gives either credential to MutationCache', async () => {

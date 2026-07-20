@@ -154,7 +154,6 @@ describe('LoginPage', () => {
     renderLoginWithSessionState({
       session: undefined,
       loading: true,
-      unavailable: false,
       retry: vi.fn()
     });
 
@@ -163,18 +162,20 @@ describe('LoginPage', () => {
     expect(screen.queryByLabelText('Password')).not.toBeInTheDocument();
   });
 
-  it('keeps session unavailability distinct from anonymous and retries through the provider', () => {
+  it.each([
+    ['unavailable', 'The service is unavailable. Check the backend connection and try again.'],
+    ['contract', 'This page could not be loaded. Retry or return to it later.'],
+    ['error', 'Page unavailable']
+  ] as const)('keeps session %s distinct from anonymous and retries through the provider', (failure, message) => {
     const retry = vi.fn();
     renderLoginWithSessionState({
+      failure,
       session: undefined,
       loading: false,
-      unavailable: true,
       retry
     });
 
-    expect(
-      screen.getByText('The service is unavailable. Check the backend connection and try again.')
-    ).toBeInTheDocument();
+    expect(screen.getByText(message)).toBeInTheDocument();
     expect(screen.queryByLabelText('Username')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Password')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));

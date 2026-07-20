@@ -167,8 +167,7 @@ function renderLayout(path = '/alerts', routeElement: React.ReactNode = <div>Rou
                   roles: ['ADMIN'],
                   workspaceId: 'default',
                   expiresAt: null
-                },
-                unavailable: false
+                }
               }}
             >
               <Routes>

@@ -26,6 +26,7 @@ import { applicationRoutePaths } from '@/shared/navigation/app-paths';
 
 import {
   loginErrorMessageKey,
+  loginSessionFailureMessageKey,
   resolveLoginSessionState,
   type LoginCredentials,
   type LoginFailureKind
@@ -35,15 +36,15 @@ export function useLoginController() {
   const navigate = useNavigate();
   const replaceSessionIdentity = useSessionIdentityBoundary();
   const [searchParams] = useSearchParams();
-  const { loading, retry, session, unavailable } = useSession();
+  const { failure: sessionFailure, loading, retry, session } = useSession();
   const login = useLoginCommand(replaceSessionIdentity);
   const navigatedTargetRef = useRef<string | null>(null);
   const redirectTarget = safeRedirectTarget(searchParams.get('redirect')) ?? applicationRoutePaths.dashboard;
 
   useEffect(() => {
-    // Keep the completed target through transient checking or unavailable evidence.
+    // Keep the completed target through transient checking or failed session evidence.
     // A true anonymous state retires it so a later login may navigate again.
-    if (loading || unavailable) return;
+    if (loading || sessionFailure) return;
     if (!session?.authenticated) {
       navigatedTargetRef.current = null;
       return;
@@ -51,17 +52,20 @@ export function useLoginController() {
     if (navigatedTargetRef.current === redirectTarget) return;
     navigatedTargetRef.current = redirectTarget;
     void navigate(redirectTarget, { replace: true });
-  }, [loading, navigate, redirectTarget, session?.authenticated, unavailable]);
+  }, [loading, navigate, redirectTarget, session?.authenticated, sessionFailure]);
+
+  const sessionState = resolveLoginSessionState({
+    loading,
+    failure: sessionFailure,
+    authenticated: Boolean(session?.authenticated)
+  });
 
   return {
     errorKey: login.failure ? loginErrorMessageKey(login.failure) : undefined,
     pending: login.pending,
     retrySession: retry,
-    sessionState: resolveLoginSessionState({
-      loading,
-      unavailable,
-      authenticated: Boolean(session?.authenticated)
-    }),
+    sessionFailureKey: loginSessionFailureMessageKey(sessionState),
+    sessionState,
     submit: login.submit
   };
 }

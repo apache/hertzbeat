@@ -35,14 +35,15 @@ export function LoginPage() {
       </main>
     );
   }
-  if (controller.sessionState === 'unavailable') {
+  if (controller.sessionFailureKey) {
     return (
       <main className={styles.page}>
         <section className={styles.panel}>
           <Alert
+            data-session-failure={controller.sessionState}
             type="error"
             showIcon
-            message={t('common.unavailable')}
+            message={t(controller.sessionFailureKey)}
             action={<Button onClick={controller.retrySession}>{t('common.retry')}</Button>}
           />
         </section>

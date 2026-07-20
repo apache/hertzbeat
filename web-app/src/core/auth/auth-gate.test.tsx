@@ -15,19 +15,21 @@
  * limitations under the License.
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { SessionContext } from './session-context';
 import { AuthGate } from './auth-gate';
 
 describe('AuthGate', () => {
+  afterEach(cleanup);
+
   it('lets the user retry a failed session request after the backend recovers', () => {
     const retry = vi.fn();
     render(
       <MemoryRouter>
-        <SessionContext.Provider value={{ loading: false, retry, session: undefined, unavailable: true }}>
+        <SessionContext.Provider value={{ failure: 'unavailable', loading: false, retry, session: undefined }}>
           <AuthGate />
         </SessionContext.Provider>
       </MemoryRouter>
@@ -37,12 +39,34 @@ describe('AuthGate', () => {
     expect(retry).toHaveBeenCalledOnce();
   });
 
+  it.each([
+    ['unavailable', 'common.unavailable'],
+    ['contract', 'common.routeError.description'],
+    ['error', 'common.routeError.title']
+  ] as const)('keeps a direct protected entry in place for a retryable %s session failure', (failure, message) => {
+    const retry = vi.fn();
+    render(
+      <MemoryRouter initialEntries={['/dashboard?view=operations']}>
+        <SessionContext.Provider value={{ failure, loading: false, retry, session: undefined }}>
+          <AuthGate />
+          <LocationProbe />
+        </SessionContext.Provider>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText(message)).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveAttribute('data-session-failure', failure);
+    expect(screen.getByTestId('location')).toHaveTextContent('/dashboard?view=operations');
+    fireEvent.click(screen.getByRole('button'));
+    expect(retry).toHaveBeenCalledOnce();
+  });
+
   it('copies only a sanitized local direct-entry target into the anonymous login redirect', () => {
     render(
       <MemoryRouter
         initialEntries={['/explore?serviceName=checkout&access_token=must-not-leak#?tab=logs&apiKey=also-secret']}
       >
-        <SessionContext.Provider value={{ loading: false, retry: vi.fn(), session: undefined, unavailable: false }}>
+        <SessionContext.Provider value={{ loading: false, retry: vi.fn(), session: undefined }}>
           <Routes>
             <Route element={<AuthGate />}>
               <Route path="/explore" element={<div>protected</div>} />

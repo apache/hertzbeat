@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import { sessionFailureMessageKey, type SessionReadFailureKind } from '@/core/auth/session-model';
+
 export type LoginCredentials = {
   identifier: string;
   credential: string;
@@ -22,20 +24,26 @@ export type LoginCredentials = {
 
 export type LoginFailureKind = 'invalid-credentials' | 'unavailable' | 'error';
 
-export type LoginSessionState = 'checking' | 'unavailable' | 'authenticated' | 'anonymous';
+export type LoginSessionState = 'checking' | 'authenticated' | 'anonymous' | SessionReadFailureKind;
 
 type LoginSessionEvidence = {
   loading: boolean;
-  unavailable: boolean;
+  failure?: SessionReadFailureKind | undefined;
   authenticated: boolean;
 };
 
 /** Gives session evidence a stable precedence before the page renders a state. */
 export function resolveLoginSessionState(evidence: LoginSessionEvidence): LoginSessionState {
   if (evidence.loading) return 'checking';
-  if (evidence.unavailable) return 'unavailable';
+  if (evidence.failure) return evidence.failure;
   if (evidence.authenticated) return 'authenticated';
   return 'anonymous';
+}
+
+export function loginSessionFailureMessageKey(state: LoginSessionState) {
+  return state === 'unavailable' || state === 'contract' || state === 'error'
+    ? sessionFailureMessageKey(state)
+    : undefined;
 }
 
 export function loginErrorMessageKey(failure: LoginFailureKind) {

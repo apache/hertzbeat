@@ -21,19 +21,21 @@ import { useTranslation } from 'react-i18next';
 
 import { loginHref } from './navigation';
 import { useSession } from './session-context';
+import { sessionFailureMessageKey } from './session-model';
 
 export function AuthGate() {
   const { t } = useTranslation();
   const location = useLocation();
-  const { loading, retry, session, unavailable } = useSession();
+  const { failure, loading, retry, session } = useSession();
 
   if (loading) return <Skeleton active paragraph={{ rows: 4 }} />;
-  if (unavailable) {
+  if (failure) {
     return (
       <Alert
+        data-session-failure={failure}
         type="error"
         showIcon
-        message={t('common.unavailable')}
+        message={t(sessionFailureMessageKey(failure))}
         action={<Button onClick={retry}>{t('common.retry')}</Button>}
       />
     );

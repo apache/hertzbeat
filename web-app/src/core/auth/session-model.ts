@@ -15,26 +15,16 @@
  * limitations under the License.
  */
 
-import { createContext, useContext } from 'react';
+import type { SessionFailureKind } from './session-api';
 
-import type { UiSession } from './session-api';
-import type { SessionReadFailureKind } from './session-model';
+export type SessionReadFailureKind = Exclude<SessionFailureKind, 'invalid-credentials'>;
 
-export type { SessionReadFailureKind } from './session-model';
+export type SessionFailureMessageKey =
+  'common.unavailable' | 'common.routeError.description' | 'common.routeError.title';
 
-export type SessionState = {
-  session: UiSession | undefined;
-  loading: boolean;
-  failure?: SessionReadFailureKind | undefined;
-  retry: () => void;
-};
-
-export const SessionContext = createContext<SessionState>({
-  session: undefined,
-  loading: true,
-  retry: () => undefined
-});
-
-export function useSession() {
-  return useContext(SessionContext);
+/** Keeps every session entry point aligned on the same redacted failure presentation. */
+export function sessionFailureMessageKey(failure: SessionReadFailureKind): SessionFailureMessageKey {
+  if (failure === 'unavailable') return 'common.unavailable';
+  if (failure === 'contract') return 'common.routeError.description';
+  return 'common.routeError.title';
 }
