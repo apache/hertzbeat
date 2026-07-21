@@ -48,6 +48,7 @@ import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
+import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 
 import java.io.IOException;
@@ -69,7 +70,7 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
 
     private final GeneralConfigDao generalConfigDao;
 
-    private ModelProviderConfig modelProviderConfig;
+    private volatile ModelProviderConfig modelProviderConfig;
 
 
     private final SkillRegistry skillRegistry;
@@ -78,7 +79,9 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
     @Qualifier("hertzbeatTools")
     private ToolCallbackProvider toolCallbackProvider;
 
-    private boolean isConfigured = false;
+    private volatile boolean configured;
+
+    private volatile boolean configurationLoaded;
 
     @Value("classpath:/prompt/system-message.st")
     private Resource systemResource;
@@ -150,7 +153,8 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
                 .replace(CONVERSATION_ID_PLACEHOLDER, String.valueOf(conversationId));
 
             // add extra prompt for protected model to guide it to use protected tools
-            if (Objects.equals(modelProviderConfig.getParticipationModel(), "PROTECTED")) {
+            ModelProviderConfig currentConfig = modelProviderConfig;
+            if (currentConfig != null && Objects.equals(currentConfig.getParticipationModel(), "PROTECTED")) {
                 Map<String, Object> metadata = new HashMap<>();
                 metadata.put("conversationId", conversationId);
                 return template + SystemPromptTemplate.builder().resource(extraResourceProtected).build()
@@ -202,19 +206,32 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
 
     @EventListener(AiProviderConfigChangeEvent.class)
     public void onAiProviderConfigChange(AiProviderConfigChangeEvent event) {
-        GeneralConfig providerConfig = generalConfigDao.findByType("provider");
-        this.modelProviderConfig = JsonUtil.fromJson(providerConfig.getContent(), ModelProviderConfig.class);
+        refreshProviderConfiguration();
     }
 
     @Override
     public boolean isConfigured() {
-        if (!isConfigured) {
-            GeneralConfig providerConfig = generalConfigDao.findByType("provider");
-            ModelProviderConfig modelProviderConfig = JsonUtil.fromJson(providerConfig.getContent(),
-                ModelProviderConfig.class);
-            isConfigured = modelProviderConfig != null && modelProviderConfig.getApiKey() != null;
-            this.modelProviderConfig = modelProviderConfig;
+        if (!configurationLoaded) {
+            synchronized (this) {
+                if (!configurationLoaded) {
+                    refreshProviderConfiguration();
+                }
+            }
         }
-        return isConfigured;
+        return configured;
+    }
+
+    /**
+     * Atomically refreshes the configuration snapshot after enabling, disabling, or switching providers.
+     */
+    private synchronized void refreshProviderConfiguration() {
+        GeneralConfig providerConfig = generalConfigDao.findByType("provider");
+        ModelProviderConfig refreshedConfig = null;
+        if (providerConfig != null && StringUtils.hasText(providerConfig.getContent())) {
+            refreshedConfig = JsonUtil.fromJson(providerConfig.getContent(), ModelProviderConfig.class);
+        }
+        modelProviderConfig = refreshedConfig;
+        configured = refreshedConfig != null && StringUtils.hasText(refreshedConfig.getApiKey());
+        configurationLoaded = true;
     }
 }

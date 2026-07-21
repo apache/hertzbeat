@@ -41,9 +41,6 @@ import reactor.core.publisher.Flux;
 @Service
 public class SopEngineImpl implements SopEngine {
 
-    // Thread-local context for each execution
-    private static final ThreadLocal<Map<String, Object>> CONTEXT_BUS = ThreadLocal.withInitial(HashMap::new);
-    
     private final List<SopExecutor> executors;
 
     @Autowired
@@ -55,21 +52,11 @@ public class SopEngineImpl implements SopEngine {
     public Flux<String> execute(SopDefinition definition, Map<String, Object> inputParams) {
         return Flux.create(sink -> {
             try {
+                OutputConfig outputConfig = resolveOutputConfig(definition);
+                Map<String, Object> context = prepareContext(definition, inputParams, outputConfig);
+
                 log.info("Starting execution of SOP: {}", definition.getName());
                 sink.next("Starting SOP: " + definition.getName() + " (v" + definition.getVersion() + ")");
-                
-                // Initialize context with input parameters
-                Map<String, Object> context = CONTEXT_BUS.get();
-                context.clear();
-                context.putAll(inputParams);
-                
-                // Add language configuration to context
-                OutputConfig outputConfig = definition.getOutput();
-                if (outputConfig != null) {
-                    context.put("_language", outputConfig.getLanguageCode());
-                } else {
-                    context.put("_language", "zh");
-                }
                 
                 for (SopStep step : definition.getSteps()) {
                     sink.next("Executing step [" + step.getId() + "]: " + step.getType());
@@ -106,10 +93,9 @@ public class SopEngineImpl implements SopEngine {
                 sink.next("SOP " + definition.getName() + " completed successfully.");
                 sink.complete();
             } catch (Exception e) {
-                log.error("Error executing SOP {}: {}", definition.getName(), e.getMessage(), e);
+                String sopName = definition == null ? "unknown" : definition.getName();
+                log.error("Error executing SOP {}: {}", sopName, e.getMessage(), e);
                 sink.error(e);
-            } finally {
-                CONTEXT_BUS.remove();
             }
         });
     }
@@ -118,40 +104,20 @@ public class SopEngineImpl implements SopEngine {
     public SopResult executeSync(SopDefinition definition, Map<String, Object> inputParams) {
         long startTime = System.currentTimeMillis();
         List<StepResult> stepResults = new ArrayList<>();
-        Map<String, Object> context = new HashMap<>(inputParams);
-        
-        // Apply default values for parameters that are not provided
-        if (definition.getParameters() != null) {
-            for (SopParameter param : definition.getParameters()) {
-                if (!context.containsKey(param.getName()) && param.getDefaultValue() != null) {
-                    context.put(param.getName(), param.getDefaultValue());
-                }
-            }
-        }
-        
-        // Get output configuration first
-        OutputConfig outputConfig = definition.getOutput();
-        if (outputConfig == null) {
-            outputConfig = OutputConfig.builder()
-                    .type("simple")
-                    .format("text")
-                    .language("zh")
-                    .build();
-        }
-        
-        // Add language configuration to context
-        context.put("_language", outputConfig.getLanguageCode());
-        
+
         SopResult.SopResultBuilder resultBuilder = SopResult.builder()
-                .sopName(definition.getName())
-                .sopVersion(definition.getVersion())
+                .sopName(definition == null ? null : definition.getName())
+                .sopVersion(definition == null ? null : definition.getVersion())
                 .startTime(startTime);
-        
-        resultBuilder.outputType(outputConfig.getOutputType());
-        resultBuilder.outputFormat(outputConfig.getFormat() != null ? outputConfig.getFormat() : "text");
-        resultBuilder.language(outputConfig.getLanguageCode());
-        
+
         try {
+            OutputConfig outputConfig = resolveOutputConfig(definition);
+            Map<String, Object> context = prepareContext(definition, inputParams, outputConfig);
+
+            resultBuilder.outputType(outputConfig.getOutputType());
+            resultBuilder.outputFormat(outputConfig.getFormat() != null ? outputConfig.getFormat() : "text");
+            resultBuilder.language(outputConfig.getLanguageCode());
+
             log.info("Starting sync execution of SOP: {}", definition.getName());
             
             for (SopStep step : definition.getSteps()) {
@@ -216,6 +182,50 @@ public class SopEngineImpl implements SopEngine {
             log.error("Error executing SOP {}: {}", definition.getName(), e.getMessage(), e);
             return buildFailedResult(resultBuilder, stepResults, e.getMessage(), startTime);
         }
+    }
+
+    /**
+     * Applies defaults and validates required parameters consistently for every execution entry point.
+     */
+    private Map<String, Object> prepareContext(SopDefinition definition, Map<String, Object> inputParams,
+                                                OutputConfig outputConfig) {
+        if (definition.getSteps() == null || definition.getSteps().isEmpty()) {
+            throw new IllegalArgumentException("SOP must contain at least one step");
+        }
+
+        Map<String, Object> context = inputParams == null ? new HashMap<>() : new HashMap<>(inputParams);
+        if (definition.getParameters() != null) {
+            for (SopParameter parameter : definition.getParameters()) {
+                Object value = context.get(parameter.getName());
+                if (isMissing(value) && parameter.getDefaultValue() != null) {
+                    context.put(parameter.getName(), parameter.getDefaultValue());
+                    value = parameter.getDefaultValue();
+                }
+                if (parameter.isRequired() && isMissing(value)) {
+                    throw new IllegalArgumentException("Required SOP parameter is missing: " + parameter.getName());
+                }
+            }
+        }
+        context.put("_language", outputConfig.getLanguageCode());
+        return context;
+    }
+
+    private boolean isMissing(Object value) {
+        return value == null || value instanceof String text && text.isBlank();
+    }
+
+    private OutputConfig resolveOutputConfig(SopDefinition definition) {
+        if (definition == null) {
+            throw new IllegalArgumentException("SOP definition must not be null");
+        }
+        if (definition.getOutput() != null) {
+            return definition.getOutput();
+        }
+        return OutputConfig.builder()
+                .type("simple")
+                .format("text")
+                .language("zh")
+                .build();
     }
     
     private SopResult buildFailedResult(SopResult.SopResultBuilder builder, 
