@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import org.apache.hertzbeat.alert.service.impl.NoticeConfigServiceImpl;
+import org.apache.hertzbeat.alert.util.NoticeReceiverMaskUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeRule;
@@ -174,6 +175,7 @@ class NoticeConfigControllerTest {
         NoticeReceiver receiver1 = new NoticeReceiver();
         receiver1.setId(1L);
         receiver1.setName("Receiver1");
+        receiver1.setTgBotToken("1499012345:AAEOB_wEYS-DZyPM3h5NzI8voJM");
 
         NoticeReceiver receiver2 = new NoticeReceiver();
         receiver2.setId(2L);
@@ -197,6 +199,7 @@ class NoticeConfigControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.content[0].id").value(1))
                 .andExpect(jsonPath("$.data.content[0].name").value("Receiver1"))
+                .andExpect(jsonPath("$.data.content[0].tgBotToken").value(NoticeReceiverMaskUtil.SECRET_MASK + "voJM"))
                 .andExpect(jsonPath("$.data.content[1].id").value(2))
                 .andExpect(jsonPath("$.data.content[1].name").value("Receiver2"))
                 .andExpect(jsonPath("$.data.totalElements").value(2))
@@ -222,6 +225,8 @@ class NoticeConfigControllerTest {
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/notice/receiver/{id}", 7565463543L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.accessToken").value(NoticeReceiverMaskUtil.SECRET_MASK + "739d"))
+                .andExpect(jsonPath("$.data.email").value("2762242004@qq.com"))
                 .andReturn();
     }
 
