@@ -22,6 +22,7 @@ import org.apache.hertzbeat.alert.dao.NoticeRuleDao;
 import org.apache.hertzbeat.alert.dao.NoticeTemplateDao;
 import org.apache.hertzbeat.alert.notice.AlertNoticeDispatch;
 import org.apache.hertzbeat.alert.service.impl.NoticeConfigServiceImpl;
+import org.apache.hertzbeat.alert.util.NoticeReceiverMaskUtil;
 import org.apache.hertzbeat.common.cache.CacheFactory;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
@@ -48,6 +49,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -214,6 +216,39 @@ class NoticeConfigServiceTest {
         final NoticeReceiver noticeReceiver = mock(NoticeReceiver.class);
         noticeConfigService.editReceiver(noticeReceiver);
         verify(noticeReceiverDao, times(1)).save(noticeReceiver);
+    }
+
+    @Test
+    void editReceiverKeepsStoredSecretWhenMasked() {
+        final NoticeReceiver stored = new NoticeReceiver();
+        stored.setId(5L);
+        stored.setTgBotToken("1499012345:AAEOB_wEYS-DZyPM3h5NzI8voJM");
+        when(noticeReceiverDao.findById(5L)).thenReturn(Optional.of(stored));
+
+        final NoticeReceiver incoming = new NoticeReceiver();
+        incoming.setId(5L);
+        incoming.setTgBotToken(NoticeReceiverMaskUtil.SECRET_MASK + "voJM");
+
+        noticeConfigService.editReceiver(incoming);
+
+        assertEquals("1499012345:AAEOB_wEYS-DZyPM3h5NzI8voJM", incoming.getTgBotToken());
+        verify(noticeReceiverDao, times(1)).save(incoming);
+    }
+
+    @Test
+    void sendTestMsgResolvesMaskedSecret() {
+        final NoticeReceiver stored = new NoticeReceiver();
+        stored.setId(5L);
+        stored.setTgBotToken("1499012345:AAEOB_wEYS-DZyPM3h5NzI8voJM");
+        when(noticeReceiverDao.findById(5L)).thenReturn(Optional.of(stored));
+
+        final NoticeReceiver incoming = new NoticeReceiver();
+        incoming.setId(5L);
+        incoming.setTgBotToken(NoticeReceiverMaskUtil.SECRET_MASK + "voJM");
+
+        noticeConfigService.sendTestMsg(incoming);
+
+        assertEquals("1499012345:AAEOB_wEYS-DZyPM3h5NzI8voJM", incoming.getTgBotToken());
     }
 
     @Test

@@ -30,6 +30,7 @@ import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeRule;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
 import org.apache.hertzbeat.alert.service.NoticeConfigService;
+import org.apache.hertzbeat.alert.util.NoticeReceiverMaskUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -87,14 +88,16 @@ public class NoticeConfigController {
             @Parameter(description = "en: Recipient name,support fuzzy query", example = "tom") @RequestParam(required = false) final String name,
             @Parameter(description = "en: List current page", example = "0") @RequestParam(defaultValue = "0") final int pageIndex,
             @Parameter(description = "en: Number of list pages", example = "8") @RequestParam(defaultValue = "8") final int pageSize) {
-        return ResponseEntity.ok(Message.success(noticeConfigService.getNoticeReceivers(name, pageIndex, pageSize)));
+        return ResponseEntity.ok(Message.success(noticeConfigService.getNoticeReceivers(name, pageIndex, pageSize)
+                .map(NoticeReceiverMaskUtil::mask)));
     }
 
     @GetMapping(path = "/receivers/all")
     @Operation(summary = "Get a list of all message notification recipients",
             description = "Get a list of all message notification recipients")
     public ResponseEntity<Message<List<NoticeReceiver>>> getAllReceivers() {
-        return ResponseEntity.ok(Message.success(noticeConfigService.getAllNoticeReceivers()));
+        return ResponseEntity.ok(Message.success(noticeConfigService.getAllNoticeReceivers().stream()
+                .map(NoticeReceiverMaskUtil::mask).toList()));
     }
 
     @GetMapping(path = "/receiver/{id}")
@@ -106,7 +109,7 @@ public class NoticeConfigController {
         if (noticeReceiver == null) {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "The relevant information of the recipient could not be found, please check whether the parameters are correct or refresh the page"));
         }
-        return ResponseEntity.ok(Message.success(noticeReceiver));
+        return ResponseEntity.ok(Message.success(NoticeReceiverMaskUtil.mask(noticeReceiver)));
     }
 
     @PostMapping(path = "/rule")
