@@ -129,7 +129,7 @@ public class ToolRegistry {
      */
     public Set<String> getToolNames() {
         ensureInitialized();
-        return tools.keySet();
+        return Set.copyOf(tools.keySet());
     }
 
     /**
@@ -176,15 +176,19 @@ public class ToolRegistry {
          * Invoke this tool method with the given arguments.
          */
         public String invoke(Map<String, Object> args) {
-            try {
-                Object[] methodArgs = new Object[paramInfos.size()];
-                
-                for (int i = 0; i < paramInfos.size(); i++) {
-                    ParamInfo paramInfo = paramInfos.get(i);
-                    Object value = args.get(paramInfo.name);
-                    methodArgs[i] = convertValue(value, paramInfo.type);
+            Map<String, Object> safeArgs = args == null ? Map.of() : args;
+            Object[] methodArgs = new Object[paramInfos.size()];
+
+            for (int i = 0; i < paramInfos.size(); i++) {
+                ParamInfo paramInfo = paramInfos.get(i);
+                Object value = safeArgs.get(paramInfo.name);
+                if (paramInfo.required && isMissing(value)) {
+                    throw new IllegalArgumentException("Required tool parameter is missing: " + paramInfo.name);
                 }
-                
+                methodArgs[i] = convertValue(value, paramInfo.type);
+            }
+
+            try {
                 Object result = method.invoke(bean, methodArgs);
                 return result != null ? result.toString() : "";
                 
@@ -192,6 +196,10 @@ public class ToolRegistry {
                 log.error("Failed to invoke tool {}: {}", annotation.name(), e.getMessage(), e);
                 throw new RuntimeException("Tool invocation failed: " + annotation.name(), e);
             }
+        }
+
+        private boolean isMissing(Object value) {
+            return value == null || value instanceof String text && text.isBlank();
         }
 
         private Object convertValue(Object value, Class<?> targetType) {
