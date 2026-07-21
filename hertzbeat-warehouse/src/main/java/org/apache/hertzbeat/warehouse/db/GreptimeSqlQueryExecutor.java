@@ -38,6 +38,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -79,7 +81,7 @@ public class GreptimeSqlQueryExecutor extends SqlQueryExecutor {
             headers.add(HttpHeaders.AUTHORIZATION, NetworkConstants.BASIC + SignConstants.BLANK + encodedAuth);
         }
 
-        String requestBody = "sql=" + queryString;
+        String requestBody = "sql=" + URLEncoder.encode(queryString, StandardCharsets.UTF_8);
         HttpEntity<String> httpEntity = new HttpEntity<>(requestBody, headers);
 
         String url = greptimeProperties.httpEndpoint() + QUERY_PATH;
