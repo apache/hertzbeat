@@ -185,13 +185,18 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
      * The rest api returns receivers with masked secret fields, so a receiver submitted
      * from the ui may carry the mask placeholder instead of the real secret.
      * Restore such fields from the stored entity before using the receiver.
+     * @throws IllegalArgumentException if the receiver carries an id but no stored receiver
+     *                                  exists for it: without the stored entity the mask cannot
+     *                                  be resolved, and saving would persist the placeholder
      */
     private void resolveMaskedSecrets(NoticeReceiver noticeReceiver) {
         if (noticeReceiver == null || noticeReceiver.getId() == null) {
             return;
         }
-        noticeReceiverDao.findById(noticeReceiver.getId())
-                .ifPresent(existing -> NoticeReceiverMaskUtil.resolveMask(noticeReceiver, existing));
+        NoticeReceiver existing = noticeReceiverDao.findById(noticeReceiver.getId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "The receiver with id " + noticeReceiver.getId() + " does not exist."));
+        NoticeReceiverMaskUtil.resolveMask(noticeReceiver, existing);
     }
 
     @Override
