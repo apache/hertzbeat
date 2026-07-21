@@ -31,6 +31,7 @@ import org.apache.hertzbeat.alert.dao.NoticeReceiverDao;
 import org.apache.hertzbeat.alert.dao.NoticeRuleDao;
 import org.apache.hertzbeat.alert.dao.NoticeTemplateDao;
 import org.apache.hertzbeat.alert.service.NoticeConfigService;
+import org.apache.hertzbeat.alert.util.NoticeReceiverMaskUtil;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -176,7 +177,21 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
 
     @Override
     public void editReceiver(NoticeReceiver noticeReceiver) {
+        resolveMaskedSecrets(noticeReceiver);
         noticeReceiverDao.save(noticeReceiver);
+    }
+
+    /**
+     * The rest api returns receivers with masked secret fields, so a receiver submitted
+     * from the ui may carry the mask placeholder instead of the real secret.
+     * Restore such fields from the stored entity before using the receiver.
+     */
+    private void resolveMaskedSecrets(NoticeReceiver noticeReceiver) {
+        if (noticeReceiver == null || noticeReceiver.getId() == null) {
+            return;
+        }
+        noticeReceiverDao.findById(noticeReceiver.getId())
+                .ifPresent(existing -> NoticeReceiverMaskUtil.resolveMask(noticeReceiver, existing));
     }
 
     @Override
@@ -319,6 +334,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
 
     @Override
     public boolean sendTestMsg(NoticeReceiver noticeReceiver) {
+        resolveMaskedSecrets(noticeReceiver);
         Map<String, String> labels = new HashMap<>(8);
         labels.put(CommonConstants.LABEL_INSTANCE, "127.0.0.1");
         labels.put(CommonConstants.LABEL_ALERT_NAME, "CPU Usage Alert");
