@@ -17,9 +17,11 @@
 
 package org.apache.hertzbeat.log.controller;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.apache.hertzbeat.log.notice.LogSseFilterCriteria;
@@ -35,6 +37,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 /**
@@ -73,6 +76,28 @@ class LogSseControllerTest {
         Assertions.assertNull(capturedCriteria.getSeverityNumber());
         Assertions.assertNull(capturedCriteria.getTraceId());
         Assertions.assertNull(capturedCriteria.getSpanId());
+    }
+
+    @Test
+    void testSubscribeCommitsInitialEvent() throws Exception {
+        LogSseManager realEmitterManager = new LogSseManager();
+        try {
+            MockMvc realMockMvc = MockMvcBuilders
+                    .standaloneSetup(new LogSseController(realEmitterManager))
+                    .build();
+
+            MvcResult result = realMockMvc.perform(get("/api/logs/sse/subscribe")
+                            .accept(MediaType.TEXT_EVENT_STREAM_VALUE))
+                    .andExpect(status().isOk())
+                    .andExpect(request().asyncStarted())
+                    .andReturn();
+
+            assertTrue(result.getResponse().isCommitted());
+            assertTrue(result.getResponse().getContentAsString().contains(":connected"));
+            assertTrue(result.getResponse().getContentAsString().contains("retry:5000"));
+        } finally {
+            realEmitterManager.shutdown();
+        }
     }
 
     @Test
