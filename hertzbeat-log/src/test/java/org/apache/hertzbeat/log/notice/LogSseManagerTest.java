@@ -73,6 +73,33 @@ class LogSseManagerTest {
     }
 
     @Test
+    void shouldSendHeartbeatToSubscribers() throws IOException {
+        SseEmitter mockEmitter = mock(SseEmitter.class);
+        subscribeClient(CLIENT_ID, null, mockEmitter);
+
+        logSseManager.sendHeartbeat();
+
+        await().atMost(500, TimeUnit.MILLISECONDS).untilAsserted(() ->
+                verify(mockEmitter).send(any(SseEmitter.SseEventBuilder.class))
+        );
+    }
+
+    @Test
+    void shouldRemoveEmitterWhenHeartbeatFails() throws IOException {
+        SseEmitter mockEmitter = mock(SseEmitter.class);
+        doThrow(new IOException("Connection closed"))
+                .when(mockEmitter).send(any(SseEmitter.SseEventBuilder.class));
+        subscribeClient(CLIENT_ID, null, mockEmitter);
+
+        logSseManager.sendHeartbeat();
+
+        await().atMost(500, TimeUnit.MILLISECONDS).untilAsserted(() -> {
+            verify(mockEmitter).complete();
+            assertFalse(logSseManager.getEmitters().containsKey(CLIENT_ID));
+        });
+    }
+
+    @Test
     void shouldBroadcastLogWhenFilterMatches() throws IOException {
         // Given: A client with a filter for "INFO" logs
         LogSseFilterCriteria filters = new LogSseFilterCriteria();

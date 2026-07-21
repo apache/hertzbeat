@@ -38,6 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -51,6 +52,8 @@ import java.util.concurrent.atomic.AtomicLong;
 public class LogSseManager {
     
     private static final long BATCH_INTERVAL_MS = 200;
+    private static final long HEARTBEAT_INTERVAL_SECONDS = 15;
+    private static final long RECONNECT_TIME_MS = 5_000;
     private static final int MAX_BATCH_SIZE = 1000;
     private static final int MAX_QUEUE_SIZE = 10000;
     
@@ -70,6 +73,8 @@ public class LogSseManager {
 
     public LogSseManager() {
         scheduler.scheduleAtFixedRate(this::flushBatch, BATCH_INTERVAL_MS, BATCH_INTERVAL_MS, TimeUnit.MILLISECONDS);
+        scheduler.scheduleAtFixedRate(this::sendHeartbeat, HEARTBEAT_INTERVAL_SECONDS,
+                HEARTBEAT_INTERVAL_SECONDS, TimeUnit.SECONDS);
     }
 
     @PreDestroy
@@ -96,6 +101,13 @@ public class LogSseManager {
         emitter.onError((ex) -> removeEmitter(clientId));
 
         emitters.put(clientId, new SseSubscriber(emitter, filters));
+        try {
+            emitter.send(SseEmitter.event()
+                    .comment("connected")
+                    .reconnectTime(RECONNECT_TIME_MS));
+        } catch (IOException | IllegalStateException e) {
+            safeComplete(clientId, emitter);
+        }
         return emitter;
     }
 
@@ -163,6 +175,31 @@ public class LogSseManager {
             safeComplete(clientId, emitter);
         } catch (Exception e) {
             log.error("Failed to send to client {}: {}", clientId, e.getMessage());
+            safeComplete(clientId, emitter);
+        }
+    }
+
+    void sendHeartbeat() {
+        for (Map.Entry<Long, SseSubscriber> entry : emitters.entrySet()) {
+            Long clientId = entry.getKey();
+            SseEmitter emitter = entry.getValue().emitter;
+            try {
+                senderPool.submit(() -> sendHeartbeat(clientId, emitter));
+            } catch (RejectedExecutionException e) {
+                if (!senderPool.isShutdown()) {
+                    log.warn("Failed to schedule SSE heartbeat for client {}", clientId, e);
+                }
+            }
+        }
+    }
+
+    private void sendHeartbeat(Long clientId, SseEmitter emitter) {
+        try {
+            emitter.send(SseEmitter.event().comment("heartbeat"));
+        } catch (IOException | IllegalStateException e) {
+            safeComplete(clientId, emitter);
+        } catch (Exception e) {
+            log.error("Failed to send SSE heartbeat to client {}", clientId, e);
             safeComplete(clientId, emitter);
         }
     }
