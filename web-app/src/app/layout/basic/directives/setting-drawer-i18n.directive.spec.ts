@@ -74,6 +74,12 @@ describe('SettingDrawerI18nDirective', () => {
       'setting.drawer.theme.color': '主題色',
       'setting.drawer.settings': '設置',
       'setting.drawer.info.message': '配置欄只在開發環境用於預覽,生產環境不會展現,請拷貝後手動修改參數配置文件 src/styles/theme.less'
+    },
+    'ko-KR': {
+      'setting.drawer.theme.color': '테마 색상',
+      'setting.drawer.settings': '설정',
+      'setting.drawer.info.message':
+        '이 설정 패널은 개발 환경에서 미리보기 용도로만 제공되며, 운영 환경에서는 표시되지 않습니다. src/styles/theme.less 파일을 복사하여 직접 수정해 주세요'
     }
   };
 
@@ -121,7 +127,7 @@ describe('SettingDrawerI18nDirective', () => {
   it('should load mappings from i18n files', fakeAsync(() => {
     fixture.detectChanges();
 
-    const languages = ['zh-CN', 'en-US', 'ja-JP', 'pt-BR', 'zh-TW'];
+    const languages = ['zh-CN', 'en-US', 'ja-JP', 'pt-BR', 'zh-TW', 'ko-KR'];
     const requests = languages.map(lang => httpMock.expectOne(`./assets/i18n/${lang}.json`));
 
     languages.forEach((lang, index) => {
@@ -137,7 +143,7 @@ describe('SettingDrawerI18nDirective', () => {
   it('should replace Chinese text with translations', fakeAsync(() => {
     fixture.detectChanges();
 
-    const languages = ['zh-CN', 'en-US', 'ja-JP', 'pt-BR', 'zh-TW'];
+    const languages = ['zh-CN', 'en-US', 'ja-JP', 'pt-BR', 'zh-TW', 'ko-KR'];
     const requests = languages.map(lang => httpMock.expectOne(`./assets/i18n/${lang}.json`));
 
     languages.forEach((lang, index) => {
