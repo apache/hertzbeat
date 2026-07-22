@@ -6,6 +6,7 @@
  */
 
 import { apiMessageDelete, apiMessageGet, apiMessagePut } from '@/core/http/api-message';
+import { parseCollectorIntakeAdvertisementRequest, parseExactCollectorInstrumentationIntake } from '@/shared/collector';
 
 import { CollectorContractError, immutableCollectorName, type CollectorMutationAction } from '../model/collector-model';
 import type { CollectorQuery } from '../model/collector-query-model';
@@ -52,4 +53,40 @@ export function mutateCollectors(action: CollectorMutationAction, collectors: st
   normalized.forEach(collector => params.append('collectors', collector));
   const path = `${collectorEndpoint}${action === 'delete' ? '' : `/${action}`}?${params.toString()}`;
   return action === 'delete' ? apiMessageDelete(path) : apiMessagePut(path, null);
+}
+
+export async function saveCollectorInstrumentationIntake(collector: string, value: unknown) {
+  const collectorId = normalizeCollectorId(collector);
+  const request = parseCollectorIntakeAdvertisementRequest(value);
+  if (!request) throw new CollectorContractError();
+  const response = await apiMessagePut(collectorIntakePath(collectorId), request);
+  return requireExactIntakeResponse(response, collectorId);
+}
+
+export async function clearCollectorInstrumentationIntake(collector: string) {
+  const collectorId = normalizeCollectorId(collector);
+  const response = await apiMessageDelete(collectorIntakePath(collectorId));
+  return requireExactIntakeResponse(response, collectorId);
+}
+
+function normalizeCollectorId(value: string) {
+  const collectorId = value.trim();
+  if (
+    !collectorId ||
+    collectorId.length > 128 ||
+    Array.from(collectorId).some(character => /\p{Cc}/u.test(character))
+  ) {
+    throw new CollectorContractError();
+  }
+  return collectorId;
+}
+
+function collectorIntakePath(collectorId: string) {
+  return `${collectorEndpoint}/${encodeURIComponent(collectorId)}/instrumentation-intake`;
+}
+
+function requireExactIntakeResponse(value: unknown, collectorId: string) {
+  const intake = parseExactCollectorInstrumentationIntake(value, collectorId);
+  if (!intake) throw new CollectorContractError();
+  return intake;
 }

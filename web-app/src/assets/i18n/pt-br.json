@@ -472,6 +472,32 @@
     "takeSelectedOffline": "Colocar selecionados offline",
     "deleteSelected": "Excluir selecionados",
     "mutationSuccess": "O estado dos coletores foi atualizado.",
+    "intake": {
+      "configure": "Entrada",
+      "configureNamed": "Configurar entrada de {{name}}",
+      "column": "Entrada",
+      "state": {
+        "available": "Anunciada",
+        "notAdvertised": "Não anunciada",
+        "invalid": "O anúncio armazenado é inválido.",
+        "unavailable": "O anúncio está indisponível no momento."
+      },
+      "title": "Entrada de instrumentação de {{name}}",
+      "gateway": "Gateway",
+      "gatewayCollector": "Coletor",
+      "gatewayServer": "Servidor",
+      "capabilities": "Capacidades",
+      "httpCapability": "OTLP HTTP/protobuf",
+      "grpcCapability": "OTLP gRPC",
+      "httpEndpoint": "Endpoint HTTPS OTLP HTTP/protobuf",
+      "grpcEndpoint": "Endpoint HTTPS OTLP gRPC",
+      "save": "Salvar anúncio",
+      "clear": "Limpar anúncio",
+      "clearTitle": "Limpar o anúncio de entrada de {{name}}?",
+      "clearDescription": "O coletor deixará de anunciar estes endpoints de instrumentação.",
+      "invalid": "Use endpoints HTTPS que correspondam exatamente às capacidades selecionadas.",
+      "success": "O anúncio de entrada do coletor foi atualizado."
+    },
     "failure": {
       "permission": "Você não tem permissão para alterar este coletor.",
       "validation": "A alteração foi rejeitada. Revise o estado atual no servidor.",

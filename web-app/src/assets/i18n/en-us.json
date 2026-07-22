@@ -472,6 +472,32 @@
     "takeSelectedOffline": "Take selected offline",
     "deleteSelected": "Delete selected",
     "mutationSuccess": "Collector state refreshed.",
+    "intake": {
+      "configure": "Intake",
+      "configureNamed": "Configure {{name}} intake",
+      "column": "Intake",
+      "state": {
+        "available": "Advertised",
+        "notAdvertised": "Not advertised",
+        "invalid": "Stored advertisement is invalid.",
+        "unavailable": "Advertisement is currently unavailable."
+      },
+      "title": "Instrumentation intake for {{name}}",
+      "gateway": "Gateway",
+      "gatewayCollector": "Collector",
+      "gatewayServer": "Server",
+      "capabilities": "Capabilities",
+      "httpCapability": "OTLP HTTP/protobuf",
+      "grpcCapability": "OTLP gRPC",
+      "httpEndpoint": "OTLP HTTP/protobuf HTTPS endpoint",
+      "grpcEndpoint": "OTLP gRPC HTTPS endpoint",
+      "save": "Save advertisement",
+      "clear": "Clear advertisement",
+      "clearTitle": "Clear intake advertisement for {{name}}?",
+      "clearDescription": "The Collector will stop advertising these instrumentation endpoints.",
+      "invalid": "Use HTTPS endpoints that exactly match the selected capabilities.",
+      "success": "Collector intake advertisement refreshed."
+    },
     "failure": {
       "permission": "You do not have permission to change this Collector.",
       "validation": "The Collector change was rejected. Review its current server state.",

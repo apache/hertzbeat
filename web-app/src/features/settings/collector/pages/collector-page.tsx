@@ -9,6 +9,7 @@ import { Alert, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import { CollectorActionDialog } from '../components/collector-action-dialog';
+import { CollectorIntakeDialog } from '../components/collector-intake-dialog';
 import { CollectorList } from '../components/collector-list';
 import { CollectorToolbar } from '../components/collector-toolbar';
 import { useCollectorController } from '../controller/use-collector-controller';
@@ -26,7 +27,9 @@ export function CollectorPage() {
         <Typography.Title level={2}>{t('collectors.title')}</Typography.Title>
         <Typography.Text type="secondary">{t('collectors.description')}</Typography.Text>
       </header>
-      {controller.mutationFailure && <MutationFailure failure={controller.mutationFailure} />}
+      {!controller.intakeEditor && controller.mutationFailure && (
+        <MutationFailure failure={controller.mutationFailure} />
+      )}
       <div className={styles.toolbar}>
         <CollectorToolbar
           name={controller.nameDraft}
@@ -48,12 +51,21 @@ export function CollectorPage() {
         onSelect={controller.actions.toggleSelection}
         onSelectAll={controller.actions.toggleAll}
         onAction={controller.actions.requestAction}
+        onIntake={controller.actions.openIntake}
       />
       <CollectorActionDialog
         command={controller.pendingAction}
         pending={controller.mutating}
         onCancel={controller.actions.cancelAction}
         onConfirm={controller.actions.confirmAction}
+      />
+      <CollectorIntakeDialog
+        record={controller.intakeEditor?.record ?? null}
+        saving={controller.intakeSaving}
+        failure={controller.intakeFailure}
+        onCancel={controller.actions.cancelIntake}
+        onSave={request => void controller.actions.saveIntake(request)}
+        onClear={() => void controller.actions.clearIntake()}
       />
     </div>
   );

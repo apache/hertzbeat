@@ -19,6 +19,7 @@ import type {
 } from '../model/collector-model';
 import {
   collectorQueryAfterConfirmedDelete,
+  sameCollectorQuery,
   type CollectorDeletePageReceipt,
   type CollectorQuery
 } from '../model/collector-query-model';
@@ -46,7 +47,7 @@ export function useCollectorMutationController(options: Options) {
   const requestAction = useCollectorActionRequest(options, mutating, setMutationFailure, setPendingAction);
   const confirmAction = useCallback(async () => {
     if (!pendingAction || mutating) return;
-    if (!sameQuery(pendingAction.receipt.query, options.queryRef.current)) return setPendingAction(null);
+    if (!sameCollectorQuery(pendingAction.receipt.query, options.queryRef.current)) return setPendingAction(null);
     const command = { action: pendingAction.action, collectors: pendingAction.collectors };
     const proofQuery = pendingAction.receipt.query;
     let proofPage: CollectorPage | undefined;
@@ -68,8 +69,8 @@ export function useCollectorMutationController(options: Options) {
     options.clearSelection();
     if (result.kind === 'confirmed') {
       const nextQuery = mutationNavigationQuery(command, pendingAction.receipt);
-      const originalQueryIsCurrent = sameQuery(pendingAction.receipt.query, options.queryRef.current);
-      if (originalQueryIsCurrent && !sameQuery(nextQuery, options.queryRef.current)) {
+      const originalQueryIsCurrent = sameCollectorQuery(pendingAction.receipt.query, options.queryRef.current);
+      if (originalQueryIsCurrent && !sameCollectorQuery(nextQuery, options.queryRef.current)) {
         options.navigateQuery(nextQuery, true);
       }
       void message.success(t('collectors.mutationSuccess'));
@@ -123,8 +124,4 @@ function useCollectorActionRequest(
 function mutationNavigationQuery(command: CollectorMutationCommand, receipt: CollectorDeletePageReceipt) {
   if (command.action !== 'delete' || command.collectors.length !== receipt.visibleRecords) return receipt.query;
   return collectorQueryAfterConfirmedDelete(receipt.query, receipt, command.collectors.length) ?? receipt.query;
-}
-
-function sameQuery(left: CollectorQuery, right: CollectorQuery) {
-  return left.name === right.name && left.pageIndex === right.pageIndex && left.pageSize === right.pageSize;
 }

@@ -472,6 +472,32 @@
     "takeSelectedOffline": "選択項目をオフラインにする",
     "deleteSelected": "選択項目を削除",
     "mutationSuccess": "コレクターの状態を更新しました。",
+    "intake": {
+      "configure": "受信設定",
+      "configureNamed": "{{name}} の受信設定を構成",
+      "column": "受信状態",
+      "state": {
+        "available": "広告済み",
+        "notAdvertised": "未広告",
+        "invalid": "保存された広告が無効です。",
+        "unavailable": "広告は現在利用できません。"
+      },
+      "title": "{{name}} の計装データ受信",
+      "gateway": "ゲートウェイ",
+      "gatewayCollector": "コレクター",
+      "gatewayServer": "サーバー",
+      "capabilities": "機能",
+      "httpCapability": "OTLP HTTP/protobuf",
+      "grpcCapability": "OTLP gRPC",
+      "httpEndpoint": "OTLP HTTP/protobuf HTTPS エンドポイント",
+      "grpcEndpoint": "OTLP gRPC HTTPS エンドポイント",
+      "save": "広告を保存",
+      "clear": "広告をクリア",
+      "clearTitle": "{{name}} の受信広告をクリアしますか？",
+      "clearDescription": "このコレクターは計装エンドポイントの広告を停止します。",
+      "invalid": "選択した機能に正確に対応する HTTPS エンドポイントを使用してください。",
+      "success": "コレクターの受信広告を更新しました。"
+    },
     "failure": {
       "permission": "このコレクターを変更する権限がありません。",
       "validation": "コレクターの変更が拒否されました。現在の状態を確認してください。",

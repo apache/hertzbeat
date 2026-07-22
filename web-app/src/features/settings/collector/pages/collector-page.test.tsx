@@ -6,12 +6,13 @@
  */
 
 import { App } from 'antd';
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
+import type { CollectorInstrumentationIntake } from '@/shared/collector';
 
 const resource = vi.hoisted(() => ({
   useCollectorController: vi.fn()
@@ -45,17 +46,122 @@ describe('CollectorPage', () => {
     fireEvent.change(screen.getByPlaceholderText('Search collectors'), { target: { value: ' west ' } });
     fireEvent.click(screen.getByRole('button', { name: 'Search' }));
     fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Configure edge intake' }));
     fireEvent.click(screen.getByRole('button', { name: 'Take edge offline' }));
     fireEvent.click(screen.getByTitle('Next Page'));
 
     expect(controller.actions.setNameDraft).toHaveBeenCalledWith(' west ');
     expect(controller.actions.submitName).toHaveBeenCalledTimes(1);
     expect(controller.actions.refresh).toHaveBeenCalledTimes(1);
+    expect(controller.actions.openIntake).toHaveBeenCalledWith('edge');
     expect(controller.actions.requestAction).toHaveBeenCalledWith('offline', ['edge']);
     expect(controller.actions.setPage).toHaveBeenCalledWith(1, 8);
     expect(
       screen.queryByRole('button', { name: /main-default-collector (online|offline|delete)/i })
     ).not.toBeInTheDocument();
+  });
+
+  it('edits or clears only the explicit safe intake advertisement and exposes no Token field', async () => {
+    const controller = buildController({ intakeEditor: { record: collector('edge', false, intakeAvailable()) } });
+    resource.useCollectorController.mockReturnValue(controller);
+    renderPage();
+
+    const dialog = screen.getByRole('dialog', { name: 'Instrumentation intake for edge' });
+    expect(within(dialog).getByLabelText('Gateway')).toBeInTheDocument();
+    expect(within(dialog).getByText('Server')).toBeInTheDocument();
+    expect(within(dialog).getByRole('checkbox', { name: 'OTLP gRPC' })).toBeChecked();
+    expect(within(dialog).getByLabelText('OTLP gRPC HTTPS endpoint')).toHaveValue(
+      'https://telemetry.example.test:4317'
+    );
+    expect(within(dialog).queryByLabelText(/token/i)).not.toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save advertisement' }));
+    await waitFor(() =>
+      expect(controller.actions.saveIntake).toHaveBeenCalledWith({
+        schemaVersion: 1,
+        gateway: 'server',
+        capabilities: ['otlp_grpc'],
+        otlpHttpEndpoint: null,
+        otlpGrpcEndpoint: 'https://telemetry.example.test:4317'
+      })
+    );
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Clear advertisement' }));
+    const clearDialog = screen.getByText('Clear intake advertisement for edge?').closest('[role="dialog"]');
+    expect(clearDialog).not.toBeNull();
+    fireEvent.click(within(clearDialog as HTMLElement).getByRole('button', { name: 'Cancel' }));
+    expect(controller.actions.clearIntake).not.toHaveBeenCalled();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Clear advertisement' }));
+    const reopenedClearDialog = screen
+      .getAllByText('Clear intake advertisement for edge?')
+      .at(-1)
+      ?.closest('[role="dialog"]');
+    expect(reopenedClearDialog).not.toBeNull();
+    fireEvent.click(within(reopenedClearDialog as HTMLElement).getByRole('button', { name: 'Clear advertisement' }));
+    expect(controller.actions.clearIntake).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps invalid Save feedback visible inside the intake dialog without transport', async () => {
+    const controller = buildController({ intakeEditor: { record: collector('edge', false, intakeAvailable()) } });
+    resource.useCollectorController.mockReturnValue(controller);
+    renderPage();
+    const dialog = screen.getByRole('dialog', { name: 'Instrumentation intake for edge' });
+
+    fireEvent.change(within(dialog).getByLabelText('OTLP gRPC HTTPS endpoint'), {
+      target: { value: 'http://unsafe.example.test:4317' }
+    });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save advertisement' }));
+
+    await waitFor(() =>
+      expect(
+        within(dialog).getByText('Use HTTPS endpoints that exactly match the selected capabilities.')
+      ).toBeInTheDocument()
+    );
+    expect(controller.actions.saveIntake).not.toHaveBeenCalled();
+    fireEvent.change(within(dialog).getByLabelText('OTLP gRPC HTTPS endpoint'), {
+      target: { value: 'https://telemetry.example.test:4317' }
+    });
+    expect(
+      within(dialog).queryByText('Use HTTPS endpoints that exactly match the selected capabilities.')
+    ).not.toBeInTheDocument();
+  });
+
+  it('distinguishes every safe current intake state and allows persisted invalid state recovery', () => {
+    const records = [
+      collector('available', false, { ...intakeAvailable(), collectorId: 'available' }),
+      collector('absent'),
+      collector('invalid', false, intakeUnavailable('intake_advertisement_invalid')),
+      collector('unavailable', false, intakeUnavailable('intake_advertisement_unavailable'))
+    ];
+    resource.useCollectorController.mockReturnValue(
+      buildController({
+        listState: { kind: 'ready', records, total: records.length },
+        intakeEditor: { record: records[2] }
+      })
+    );
+    renderPage();
+
+    expect(screen.getByText('Advertised')).toBeInTheDocument();
+    expect(screen.getByText('Not advertised')).toBeInTheDocument();
+    expect(screen.getAllByText('Stored advertisement is invalid.').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText('Advertisement is currently unavailable.')).toBeInTheDocument();
+    const dialog = screen.getByRole('dialog', { name: 'Instrumentation intake for invalid' });
+    expect(within(dialog).getByRole('button', { name: 'Clear advertisement' })).toBeInTheDocument();
+    expect(within(dialog).queryByLabelText('OTLP gRPC HTTPS endpoint')).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ['permission', 'You do not have permission to change this Collector.'],
+    ['validation', 'The Collector change was rejected. Review its current server state.'],
+    ['unavailable', 'The Collector change could not be verified. Refresh before trying again.'],
+    ['error', 'The Collector change failed. Refresh and try again.']
+  ] as const)('shows classified %s feedback inside the open intake dialog', (failure, copy) => {
+    resource.useCollectorController.mockReturnValue(
+      buildController({ intakeFailure: failure, intakeEditor: { record: collector('edge') } })
+    );
+    renderPage();
+
+    const dialog = screen.getByRole('dialog', { name: 'Instrumentation intake for edge' });
+    expect(within(dialog).getByText(copy)).toBeInTheDocument();
   });
 
   it('requires explicit confirmation and supports cancel without executing the mutation', () => {
@@ -131,7 +237,10 @@ function buildController(overrides: Record<string, unknown> = {}) {
     refreshing: false,
     mutating: false,
     mutationFailure: null,
+    intakeFailure: null,
     pendingAction: null,
+    intakeEditor: null,
+    intakeSaving: false,
     selected: [],
     actions: {
       setNameDraft: vi.fn(),
@@ -139,6 +248,10 @@ function buildController(overrides: Record<string, unknown> = {}) {
       setPage: vi.fn(),
       refresh: vi.fn(),
       requestAction: vi.fn(),
+      openIntake: vi.fn(),
+      saveIntake: vi.fn(),
+      clearIntake: vi.fn(),
+      cancelIntake: vi.fn(),
       toggleSelection: vi.fn(),
       toggleAll: vi.fn(),
       cancelAction: vi.fn(),
@@ -148,7 +261,11 @@ function buildController(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function collector(name: string, immutable = false) {
+function collector(
+  name: string,
+  immutable = false,
+  instrumentationIntake: CollectorInstrumentationIntake = intakeUnavailable()
+) {
   return {
     name,
     address: '10.0.0.7',
@@ -160,8 +277,30 @@ function collector(name: string, immutable = false) {
     dispatchMonitorNum: 3,
     updatedAt: '2026-07-22T10:00:00',
     runtimeStatusReportedAt: null,
-    instrumentationIntake: { state: 'unavailable', errorCode: 'intake_not_advertised' }
+    instrumentationIntake
   };
+}
+
+function intakeAvailable() {
+  return {
+    status: 'available' as const,
+    schemaVersion: 1 as const,
+    collectorId: 'edge',
+    gateway: 'server' as const,
+    capabilities: ['otlp_grpc'] as const,
+    otlpHttpEndpoint: null,
+    otlpGrpcEndpoint: 'https://telemetry.example.test:4317',
+    authorizationHeader: 'Authorization' as const
+  };
+}
+
+function intakeUnavailable(
+  errorCode:
+    | 'intake_not_advertised'
+    | 'intake_advertisement_invalid'
+    | 'intake_advertisement_unavailable' = 'intake_not_advertised'
+) {
+  return { status: 'unavailable' as const, errorCode };
 }
 
 function renderPage() {

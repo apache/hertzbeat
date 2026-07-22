@@ -39,12 +39,16 @@ export function collectorQueryAfterConfirmedDelete(
   receipt: CollectorDeletePageReceipt,
   deletedRecords = 1
 ) {
-  if (!sameQuery(current, receipt.query) || current.pageIndex === 0 || receipt.visibleRecords !== deletedRecords) {
+  if (
+    !sameCollectorQuery(current, receipt.query) ||
+    current.pageIndex === 0 ||
+    receipt.visibleRecords !== deletedRecords
+  ) {
     return undefined;
   }
   return { ...current, pageIndex: current.pageIndex - 1 };
 }
 
-function sameQuery(left: CollectorQuery, right: CollectorQuery) {
+export function sameCollectorQuery(left: CollectorQuery, right: CollectorQuery) {
   return left.name === right.name && left.pageIndex === right.pageIndex && left.pageSize === right.pageSize;
 }

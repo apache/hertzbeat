@@ -21,6 +21,7 @@ import {
   type CollectorQuery
 } from '../model/collector-query-model';
 import { useCollectorMutationController } from './use-collector-mutation-controller';
+import { useCollectorIntakeController } from './use-collector-intake-controller';
 import { collectorQueryKeys } from './collector-query-keys';
 
 export function useCollectorController() {
@@ -35,7 +36,15 @@ export function useCollectorController() {
     navigateQuery: state.navigateQuery,
     clearSelection: () => state.setSelected([])
   });
+  const intake = useCollectorIntakeController({
+    query: state.query,
+    queryRef: state.queryRef,
+    records: state.records,
+    queryClient,
+    locked: mutation.mutating
+  });
   const listState = resolveCollectorListState(state.collectorQuery, mutation.proofFailure);
+  const busy = mutation.mutating || intake.saving;
 
   return {
     query: state.query,
@@ -43,10 +52,13 @@ export function useCollectorController() {
     listState,
     selected: state.selected,
     refreshing: state.collectorQuery.isFetching,
-    mutating: mutation.mutating,
+    mutating: busy,
     mutationFailure: mutation.mutationFailure,
+    intakeFailure: intake.failure,
     pendingAction: mutation.pendingAction,
-    actions: buildCollectorActions({ ...state, mutation, refetch: state.collectorQuery.refetch })
+    intakeEditor: intake.editor,
+    intakeSaving: intake.saving,
+    actions: buildCollectorActions({ ...state, mutation, intake, refetch: state.collectorQuery.refetch })
   };
 }
 
@@ -106,6 +118,7 @@ type ActionOptions = {
   setSelected: (selected: string[]) => void;
   navigateQuery: (next: CollectorQuery, replace?: boolean) => void;
   mutation: ReturnType<typeof useCollectorMutationController>;
+  intake: ReturnType<typeof useCollectorIntakeController>;
   refetch: () => unknown;
 };
 
@@ -119,18 +132,28 @@ function buildCollectorActions(options: ActionOptions) {
     },
     setPage: (pageIndex: number, pageSize: CollectorPageSize) =>
       options.navigateQuery({ ...options.queryRef.current, pageIndex, pageSize }),
-    refresh: () => options.mutation.refresh(options.refetch),
-    requestAction: options.mutation.requestAction,
+    refresh: () => {
+      if (!options.intake.saving) options.mutation.refresh(options.refetch);
+    },
+    requestAction: (action: Parameters<typeof options.mutation.requestAction>[0], collectors: string[]) => {
+      if (!options.intake.saving) options.mutation.requestAction(action, collectors);
+    },
     cancelAction: options.mutation.cancelAction,
     confirmAction: options.mutation.confirmAction,
+    openIntake: options.intake.open,
+    saveIntake: options.intake.save,
+    clearIntake: options.intake.clear,
+    cancelIntake: options.intake.cancel,
     toggleSelection: (name: string, checked: boolean) => {
-      if (options.mutation.mutating || !options.visibleMutableNames.includes(name)) return;
+      if (options.mutation.mutating || options.intake.saving || !options.visibleMutableNames.includes(name)) return;
       options.setSelected(
         checked ? [...new Set([...options.selected, name])] : options.selected.filter(candidate => candidate !== name)
       );
     },
     toggleAll: (checked: boolean) => {
-      if (!options.mutation.mutating) options.setSelected(checked ? options.visibleMutableNames : []);
+      if (!options.mutation.mutating && !options.intake.saving) {
+        options.setSelected(checked ? options.visibleMutableNames : []);
+      }
     }
   };
 }

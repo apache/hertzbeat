@@ -468,6 +468,32 @@
     "takeSelectedOffline": "所选设为离线",
     "deleteSelected": "删除所选",
     "mutationSuccess": "采集器状态已刷新。",
+    "intake": {
+      "configure": "接收配置",
+      "configureNamed": "配置 {{name}} 接收端",
+      "column": "接收声明",
+      "state": {
+        "available": "已声明",
+        "notAdvertised": "未声明",
+        "invalid": "已保存的声明无效。",
+        "unavailable": "声明当前不可用。"
+      },
+      "title": "{{name}} 的插桩数据接收",
+      "gateway": "网关",
+      "gatewayCollector": "采集器",
+      "gatewayServer": "服务端",
+      "capabilities": "能力",
+      "httpCapability": "OTLP HTTP/protobuf",
+      "grpcCapability": "OTLP gRPC",
+      "httpEndpoint": "OTLP HTTP/protobuf HTTPS 端点",
+      "grpcEndpoint": "OTLP gRPC HTTPS 端点",
+      "save": "保存声明",
+      "clear": "清除声明",
+      "clearTitle": "清除 {{name}} 的接收声明？",
+      "clearDescription": "该采集器将停止声明这些插桩数据端点。",
+      "invalid": "请使用与所选能力严格对应的 HTTPS 端点。",
+      "success": "采集器接收声明已刷新。"
+    },
     "failure": {
       "permission": "你没有权限更改此采集器。",
       "validation": "服务器拒绝了采集器变更，请检查当前状态。",

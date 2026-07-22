@@ -14,7 +14,7 @@ export const COLLECTOR_INTAKE_ERROR_CODES = [
   'intake_advertisement_unavailable'
 ] as const;
 
-type CollectorIntakeCapability = (typeof COLLECTOR_INTAKE_CAPABILITIES)[number];
+export type CollectorIntakeCapability = (typeof COLLECTOR_INTAKE_CAPABILITIES)[number];
 type CollectorIntakeErrorCode = (typeof COLLECTOR_INTAKE_ERROR_CODES)[number];
 
 export type CollectorInstrumentationIntake =
@@ -29,6 +29,18 @@ export type CollectorInstrumentationIntake =
       authorizationHeader: 'Authorization';
     }
   | { status: 'unavailable'; errorCode: CollectorIntakeErrorCode };
+
+export type CollectorIntakeState = 'available' | 'notAdvertised' | 'invalid' | 'unavailable';
+
+export function collectorIntakeState(intake: CollectorInstrumentationIntake): CollectorIntakeState {
+  if (intake.status === 'available') return 'available';
+  if (intake.errorCode === 'intake_not_advertised') return 'notAdvertised';
+  return intake.errorCode === 'intake_advertisement_invalid' ? 'invalid' : 'unavailable';
+}
+
+export function collectorIntakeCanBeCleared(intake: CollectorInstrumentationIntake) {
+  return collectorIntakeState(intake) !== 'notAdvertised';
+}
 
 const trimmedTextSchema = z
   .string()
@@ -47,6 +59,30 @@ const capabilitySchema = z
       context.addIssue({ code: 'custom', message: 'Collector intake capabilities must be unique' });
     }
   });
+
+export const collectorIntakeAdvertisementRequestSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    gateway: z.enum(['collector', 'server']),
+    capabilities: capabilitySchema,
+    otlpHttpEndpoint: publicHttpsEndpointSchema.nullable(),
+    otlpGrpcEndpoint: publicHttpsEndpointSchema.nullable()
+  })
+  .strict()
+  .superRefine((request, context) => {
+    const httpMatches = request.capabilities.includes('otlp_http_protobuf') === (request.otlpHttpEndpoint !== null);
+    const grpcMatches = request.capabilities.includes('otlp_grpc') === (request.otlpGrpcEndpoint !== null);
+    if (!httpMatches || !grpcMatches) {
+      context.addIssue({ code: 'custom', message: 'Collector intake request endpoints must match capabilities' });
+    }
+  });
+
+export type CollectorIntakeAdvertisementRequest = z.output<typeof collectorIntakeAdvertisementRequestSchema>;
+
+export function parseCollectorIntakeAdvertisementRequest(value: unknown): CollectorIntakeAdvertisementRequest | null {
+  const result = collectorIntakeAdvertisementRequestSchema.safeParse(value);
+  return result.success ? result.data : null;
+}
 
 export const availableCollectorIntakeSchema = z
   .object({
@@ -87,6 +123,18 @@ export function parseCollectorInstrumentationIntake(
   value: unknown,
   registeredCollectorId: string
 ): CollectorInstrumentationIntake {
+  return (
+    parseExactCollectorInstrumentationIntake(value, registeredCollectorId) ?? {
+      status: 'unavailable',
+      errorCode: 'intake_advertisement_invalid'
+    }
+  );
+}
+
+export function parseExactCollectorInstrumentationIntake(
+  value: unknown,
+  registeredCollectorId: string
+): CollectorInstrumentationIntake | null {
   const available = availableCollectorIntakeSchema.safeParse(value);
   if (available.success && available.data.collectorId === registeredCollectorId) {
     return {
@@ -104,7 +152,7 @@ export function parseCollectorInstrumentationIntake(
   if (unavailable.success && unavailable.data.collectorId === registeredCollectorId) {
     return { status: 'unavailable', errorCode: unavailable.data.errorCode };
   }
-  return { status: 'unavailable', errorCode: 'intake_advertisement_invalid' };
+  return null;
 }
 
 function isPublicHttpsEndpoint(value: string) {
@@ -116,7 +164,8 @@ function isPublicHttpsEndpoint(value: string) {
       !endpoint.username &&
       !endpoint.password &&
       !endpoint.search &&
-      !endpoint.hash
+      !endpoint.hash &&
+      !/\s/u.test(value)
     );
   } catch {
     return false;
