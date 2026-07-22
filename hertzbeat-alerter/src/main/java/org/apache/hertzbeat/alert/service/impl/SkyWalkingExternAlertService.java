@@ -47,9 +47,9 @@ public class SkyWalkingExternAlertService implements ExternAlertService {
     @Override
     public void addExternAlert(String content) {
         TypeReference<List<SkyWalkingExternAlert>> typeReference = new TypeReference<>() {};
-        List<SkyWalkingExternAlert> alerts = JsonUtil.fromJson(content, typeReference);
+        List<SkyWalkingExternAlert> alerts = JsonUtil.fromJsonQuietly(content, typeReference);
         if (alerts == null || alerts.isEmpty()) {
-            log.warn("Parse SkyWalking extern alert content failed! content: {}", content);
+            log.warn("Failed to parse SkyWalking external alert content");
             return;
         }
         for (SkyWalkingExternAlert alert : alerts) {

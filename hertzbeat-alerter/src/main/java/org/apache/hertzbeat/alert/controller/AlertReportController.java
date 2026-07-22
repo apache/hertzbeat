@@ -20,13 +20,14 @@ package org.apache.hertzbeat.alert.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.service.ExternAlertService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -37,8 +38,10 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @Tag(name = "Extern Alarm Manage API")
 @RestController
-@Slf4j
 public class AlertReportController {
+
+    private static final String ALERT_REJECTED = "external_alert_rejected";
+    private static final String SOURCE_UNSUPPORTED = "external_alert_source_unsupported";
     
     private final List<ExternAlertService> externAlertServiceList;
 
@@ -50,66 +53,49 @@ public class AlertReportController {
     @Operation(summary = "Api for receive external alarm information")
     public ResponseEntity<Message<Void>> receiveExternAlert(@PathVariable(value = "source") String source, 
                                                             @RequestBody String content) {
-        log.info("Receive extern alert from source: {}, content: {}", source, content);
         if (!StringUtils.hasText(source)) {
             source = "default";
         }
-        for (ExternAlertService externAlertService : externAlertServiceList) {
-            if (externAlertService.supportSource().equals(source)) {
-                try {
-                    externAlertService.addExternAlert(content);
-                    return ResponseEntity.ok(Message.success("Add extern alert success"));      
-                } catch (Exception e) {
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                            .body(Message.fail(CommonConstants.FAIL_CODE, 
-                                    "Add extern alert failed: " + e.getMessage()));
-                }
-            }
-        }
-        log.warn("Not support extern alert from source: {}", source);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Message.fail(CommonConstants.FAIL_CODE, "Not support the " + source + " source alert"));
+        return receive(source, content);
     }
 
     @PostMapping("/api/alerts/report")
     @Operation(summary = "Api for receive default external alarm information")
     public ResponseEntity<Message<Void>> receiveDefaultExternAlert(@RequestBody String content) {
-        log.info("Receive default extern alert content: {}", content);
-        ExternAlertService externAlertService = externAlertServiceList.stream()
-                .filter(item -> "default".equals(item.supportSource())).findFirst().orElse(null);
-        if (externAlertService != null) {
-            try {
-                externAlertService.addExternAlert(content);
-                return ResponseEntity.ok(Message.success("Add extern alert success"));   
-            } catch (Exception e) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(Message.fail(CommonConstants.FAIL_CODE, 
-                                "Add extern alert failed: " + e.getMessage()));
-            }
-        }
-        log.error("Not support default extern alert");
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Message.success("Not support the default source alert"));
+        return receive("default", content);
     }
 
     @PostMapping("/api/v2/alerts")
     @Operation(summary = "Api for receive external alarm information")
     public ResponseEntity<Message<Void>> receivePrometheusServerAlert(@RequestBody String content) {
-        log.info("Receive prometheus server alert, content: {}", content);
         ExternAlertService externAlertService = externAlertServiceList.stream()
                 .filter(item -> "prometheus".equals(item.supportSource())).findFirst().orElse(null);
-        if (externAlertService != null) {
-            try {
-                externAlertService.addExternAlert(content);
-                return ResponseEntity.ok(Message.success("Add extern alert success"));
-            } catch (Exception e) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(Message.fail(CommonConstants.FAIL_CODE,
-                                "Add extern alert failed: " + e.getMessage()));
-            }
-        }
-        log.error("Not support prometheus extern alert");
+        return receive(externAlertService, content);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Message<Void>> missingBody() {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Message.success("Not support the prometheus source alert"));
+                .body(Message.fail(CommonConstants.FAIL_CODE, ALERT_REJECTED));
+    }
+
+    private ResponseEntity<Message<Void>> receive(String source, String content) {
+        ExternAlertService externAlertService = externAlertServiceList.stream()
+                .filter(item -> source.equals(item.supportSource())).findFirst().orElse(null);
+        return receive(externAlertService, content);
+    }
+
+    private ResponseEntity<Message<Void>> receive(ExternAlertService externAlertService, String content) {
+        if (externAlertService == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Message.fail(CommonConstants.FAIL_CODE, SOURCE_UNSUPPORTED));
+        }
+        try {
+            externAlertService.addExternAlert(content);
+            return ResponseEntity.ok(Message.success("Add extern alert success"));
+        } catch (Exception exception) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Message.fail(CommonConstants.FAIL_CODE, ALERT_REJECTED));
+        }
     }
 }

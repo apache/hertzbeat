@@ -46,9 +46,9 @@ public class TencentExternAlertService implements ExternAlertService {
     
     @Override
     public void addExternAlert(String content) {
-        TencentCloudExternAlert report = JsonUtil.fromJson(content, TencentCloudExternAlert.class);
+        TencentCloudExternAlert report = JsonUtil.fromJsonQuietly(content, TencentCloudExternAlert.class);
         if (report == null) {
-            log.warn("parse extern alert content failed! content: {}", content);
+            log.warn("Failed to parse Tencent external alert content");
             return;
         }
         SingleAlert alert = new TencentCloudAlertConverter().convert(report);
@@ -213,7 +213,7 @@ public class TencentExternAlertService implements ExternAlertService {
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 return sdf.parse(timeStr).getTime();
             } catch (ParseException e) {
-                log.error("Failed to parse time: {}", timeStr);
+                log.error("Failed to parse Tencent external alert time");
                 throw new IllegalArgumentException("Failed to parse time: " + timeStr, e);
             }
         }

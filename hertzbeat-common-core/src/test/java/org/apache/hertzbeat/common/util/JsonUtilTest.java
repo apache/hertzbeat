@@ -58,6 +58,17 @@ class JsonUtilTest {
     }
 
     @Test
+    void quietParsingReturnsNullForSensitiveInvalidInput() {
+        String privateInput = "{\"token\":\"Bearer-private\"";
+
+        assertNull(JsonUtil.fromJsonQuietly(privateInput, Map.class));
+        assertNull(JsonUtil.fromJsonQuietly(privateInput, new TypeReference<Map<String, String>>() { }));
+        assertNull(JsonUtil.fromJsonQuietly(privateInput));
+        assertNull(JsonUtil.fromJsonQuietly(" ", Map.class));
+        assertNull(JsonUtil.fromJsonQuietly((String) null));
+    }
+
+    @Test
     void testIsJsonStr() {
         String jsonString = "{\"name\":\"John\", \"age\":30";
         assertFalse(isJsonStr(jsonString));

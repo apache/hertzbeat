@@ -47,14 +47,14 @@ public class AlertManagerExternAlertService implements ExternAlertService {
     @Override
     public void addExternAlert(String content) {
 
-        AlertManagerExternAlert alert = JsonUtil.fromJson(content, AlertManagerExternAlert.class);
+        AlertManagerExternAlert alert = JsonUtil.fromJsonQuietly(content, AlertManagerExternAlert.class);
         if (alert == null) {
-            log.warn("parse alertmanager extern alert content failed! content: {}", content);
+            log.warn("Parse alertmanager external alert content failed");
             return;
         }
         List<PrometheusExternAlert> alerts = alert.getAlerts();
         if (alerts == null || alerts.isEmpty()) {
-            log.warn("receive alertmanager extern alert without alerts! content: {}", content);
+            log.warn("Received alertmanager external alert without alerts");
             return;
         }
         for (PrometheusExternAlert prometheusAlert : alerts) {

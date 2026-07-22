@@ -37,9 +37,9 @@ public class ZabbixExternAlertServiceImpl implements ExternAlertService {
 
     @Override
     public void addExternAlert(String content) {
-        SingleAlert alert = JsonUtil.fromJson(content, SingleAlert.class);
+        SingleAlert alert = JsonUtil.fromJsonQuietly(content, SingleAlert.class);
         if (alert == null) {
-            log.warn("parse extern alert content failed! content: {}", content);
+            log.warn("Failed to parse Zabbix external alert content");
             return;
         }
         alarmCommonReduce.reduceAndSendAlarm(alert);

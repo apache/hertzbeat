@@ -99,6 +99,61 @@ public final class JsonUtil {
     }
 
     /**
+     * Parse sensitive JSON without logging parser exception details.
+     *
+     * @param jsonStr json string
+     * @param clazz target class
+     * @param <T> target type
+     * @return parsed value, or null when input is empty or invalid
+     */
+    public static <T> T fromJsonQuietly(String jsonStr, Class<T> clazz) {
+        if (jsonStr == null || jsonStr.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return OBJECT_MAPPER.readValue(jsonStr, clazz);
+        } catch (JacksonException ignored) {
+            return null;
+        }
+    }
+
+    /**
+     * Parse sensitive generic JSON without logging parser exception details.
+     *
+     * @param jsonStr json string
+     * @param type target type reference
+     * @param <T> target type
+     * @return parsed value, or null when input is empty or invalid
+     */
+    public static <T> T fromJsonQuietly(String jsonStr, TypeReference<T> type) {
+        if (jsonStr == null || jsonStr.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return OBJECT_MAPPER.readValue(jsonStr, type);
+        } catch (JacksonException ignored) {
+            return null;
+        }
+    }
+
+    /**
+     * Parse a sensitive JSON tree without logging parser exception details.
+     *
+     * @param jsonStr json string
+     * @return parsed tree, or null when input is empty or invalid
+     */
+    public static JsonNode fromJsonQuietly(String jsonStr) {
+        if (jsonStr == null || jsonStr.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return OBJECT_MAPPER.readTree(jsonStr);
+        } catch (JacksonException ignored) {
+            return null;
+        }
+    }
+
+    /**
      * check if the string is a json string
      * @param jsonStr json string
      * @return true if the string is a json string

@@ -39,9 +39,9 @@ public class DefaultExternAlertService implements ExternAlertService {
     
     @Override
     public void addExternAlert(String content) {
-        SingleAlert alert = JsonUtil.fromJson(content, SingleAlert.class);
+        SingleAlert alert = JsonUtil.fromJsonQuietly(content, SingleAlert.class);
         if (alert == null) {
-            log.warn("parse extern alert content failed! content: {}", content);
+            log.warn("Failed to parse default external alert content");
             throw new IllegalArgumentException("parse extern alert content failed!");
         }
         alert.setId(null);
