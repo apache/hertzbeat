@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 type SourceScopedValue<T> = {
   source: string;
@@ -26,15 +26,13 @@ type SourceScopedValue<T> = {
 export function useSourceScopedValue<T>(source: string, canonicalValue: T) {
   const [scopedValue, setScopedValue] = useState<SourceScopedValue<T>>({ source, value: canonicalValue });
 
-  // Derivation makes back/forward navigation visible without waiting for an effect or updating during render.
-  const value = scopedValue.source === source ? scopedValue.value : canonicalValue;
+  if (scopedValue.source !== source) {
+    // Retire the previous source during render so navigation commits only the
+    // canonical value and an old draft cannot flash or reappear on back/forward.
+    setScopedValue({ source, value: canonicalValue });
+  }
 
-  useEffect(() => {
-    // Once navigation commits, discard the previous source so its local value cannot reappear on a later visit.
-    // Rendering already uses canonicalValue, so this cleanup cannot expose the retired value.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setScopedValue(current => (current.source === source ? current : { source, value: canonicalValue }));
-  }, [canonicalValue, source]);
+  const value = scopedValue.source === source ? scopedValue.value : canonicalValue;
 
   const setValue = useCallback(
     (nextValue: T) => {
