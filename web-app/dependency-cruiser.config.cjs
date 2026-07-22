@@ -114,13 +114,21 @@ module.exports = {
       }
     },
     {
+      name: 'settings-refine-split-entry-only',
+      severity: 'error',
+      from: { path: '^src/app/refine/', pathNot: productionSource },
+      to: {
+        path: '^src/features/settings/(?:system-config|label|object-store)/.+',
+        pathNot: '^src/features/settings/(?:system-config|label|object-store)/refine/index[.]tsx?$'
+      }
+    },
+    {
       name: 'settings-refine-public-entry-only',
       severity: 'error',
       from: { path: '^src/app/refine/', pathNot: productionSource },
       to: {
-        path: '^src/features/settings/(?:message-server|token|system-config|label|object-store)/.+',
-        pathNot:
-          '^src/features/settings/(?:message-server|token|system-config|label|object-store)/(?:index|refine/index)[.]tsx?$'
+        path: '^src/features/settings/(?:message-server|token)/.+',
+        pathNot: '^src/features/settings/(?:message-server|token)/index[.]tsx?$'
       }
     },
     {

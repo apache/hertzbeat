@@ -310,20 +310,21 @@ test('rejects shell header dependencies on action side-effect owners', () => {
 test('keeps settings composition imports on feature public entries', () => {
   const allowedFixture = createProject({
     'src/features/settings/label/index.ts': 'export const LabelPage = true;',
-    'src/features/settings/token/refine/index.ts': 'export const tokenDataProvider = true;',
+    'src/features/settings/label/refine/index.ts': 'export const labelDataProvider = true;',
+    'src/features/settings/token/index.ts': 'export const tokenDataProvider = true;',
     'src/app/router.tsx': "import { LabelPage } from '@/features/settings/label'; export const route = LabelPage;",
     'src/app/refine/refine-runtime.tsx':
-      "import { tokenDataProvider } from '@/features/settings/token/refine'; export const provider = tokenDataProvider;"
+      "import { labelDataProvider } from '@/features/settings/label/refine'; import { tokenDataProvider } from '@/features/settings/token'; export const providers = [labelDataProvider, tokenDataProvider];"
   });
   const rejectedFixture = createProject({
-    'src/features/settings/label/index.ts': 'export const LabelPage = true;',
+    'src/features/settings/label/index.ts': 'export const LabelPage = true; export const labelDataProvider = true;',
     'src/features/settings/label/pages/label-page.tsx': 'export const LabelPage = true;',
     'src/features/settings/token/index.ts': 'export const tokenDataProvider = true;',
     'src/features/settings/token/provider/token-data-provider.ts': 'export const tokenDataProvider = true;',
     'src/app/router.tsx':
       "import { LabelPage } from '@/features/settings/label/pages/label-page'; export const route = LabelPage;",
     'src/app/refine/refine-runtime.tsx':
-      "import { tokenDataProvider } from '@/features/settings/token/provider/token-data-provider'; export const provider = tokenDataProvider;"
+      "import { labelDataProvider } from '@/features/settings/label'; import { tokenDataProvider } from '@/features/settings/token/provider/token-data-provider'; export const providers = [labelDataProvider, tokenDataProvider];"
   });
 
   const allowedResult = cruise(allowedFixture);
@@ -332,6 +333,7 @@ test('keeps settings composition imports on feature public entries', () => {
   assert.equal(allowedResult.status, 0, allowedResult.output);
   assert.notEqual(rejectedResult.status, 0, rejectedResult.output);
   assert.match(rejectedResult.output, /settings-router-public-entry-only/);
+  assert.match(rejectedResult.output, /settings-refine-split-entry-only/);
   assert.match(rejectedResult.output, /settings-refine-public-entry-only/);
   assert.match(rejectedResult.output, /router[.]tsx/);
   assert.match(rejectedResult.output, /refine-runtime[.]tsx/);
