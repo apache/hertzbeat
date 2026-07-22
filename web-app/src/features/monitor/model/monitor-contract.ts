@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import type { PagedCollection } from '@/shared/pagination';
+
 export const monitorScrapeValues = [
   'static',
   'http_sd',
@@ -147,13 +149,7 @@ export type MonitorQuery = {
   pageIndex: number;
   pageSize: number;
 };
-export type MonitorPage = {
-  content: Monitor[];
-  totalElements: number;
-  totalPages: number;
-  number: number;
-  size: number;
-};
+export type MonitorPage = PagedCollection<Monitor>;
 export type MonitorAction = 'copy' | 'enable' | 'pause' | 'delete';
 export type MonitorMetricOption = {
   key: string;

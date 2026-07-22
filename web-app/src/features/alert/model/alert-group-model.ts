@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { compactTablePageSizes } from '@/shared/pagination';
+import { compactTablePageSizes, type PagedCollection } from '@/shared/pagination';
 
 export const alertGroupPageSizes = compactTablePageSizes;
 
@@ -47,13 +47,7 @@ export type AlertGroupConverge = {
   gmtUpdate?: string | null;
 };
 
-export type AlertGroupPage = {
-  content: AlertGroupConverge[];
-  totalElements: number;
-  totalPages: number;
-  number: number;
-  size: number;
-};
+export type AlertGroupPage = PagedCollection<AlertGroupConverge>;
 
 export class AlertGroupContractError extends Error {
   constructor(message: string, options?: ErrorOptions) {

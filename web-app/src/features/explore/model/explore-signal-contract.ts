@@ -15,14 +15,10 @@
  * limitations under the License.
  */
 
+import type { PagedCollection } from '@/shared/pagination';
+
 export type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
-export type ExplorePageResult<T> = {
-  content: T[];
-  totalElements: number;
-  totalPages: number;
-  number: number;
-  size: number;
-};
+export type ExplorePageResult<T> = PagedCollection<T>;
 
 export type TraceRow = {
   traceId: string;

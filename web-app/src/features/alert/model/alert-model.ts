@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { compactTablePageSizes } from '@/shared/pagination';
+import { compactTablePageSizes, type PagedCollection } from '@/shared/pagination';
 
 export const alertPageSizes = compactTablePageSizes;
 export const alertStatuses = ['firing', 'pending', 'acknowledged', 'resolved'] as const;
@@ -58,13 +58,7 @@ export type AlertGroup = {
   gmtUpdate: ServerLocalDateTime | null;
 };
 
-export type AlertPage = {
-  content: AlertGroup[];
-  totalElements: number;
-  totalPages: number;
-  number: number;
-  size: number;
-};
+export type AlertPage = PagedCollection<AlertGroup>;
 
 export class AlertContractError extends Error {
   constructor(message: string, options?: ErrorOptions) {

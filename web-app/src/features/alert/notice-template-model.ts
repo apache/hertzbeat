@@ -16,7 +16,7 @@
  */
 
 import type { RemotePageState } from '@/shared/remote-state';
-import { compactTablePageSizes } from '@/shared/pagination';
+import { compactTablePageSizes, type PagedCollection } from '@/shared/pagination';
 
 import { receiverTypeDefinitions, type NoticeReceiverType } from './notice-receiver/model/notice-receiver-model';
 
@@ -39,13 +39,7 @@ type NoticeTemplateResourceFields = Omit<NoticeTemplate, 'id' | 'preset'>;
 export type NoticeTemplateResourceRecord =
   | (NoticeTemplateResourceFields & { id: string; backendId: null; preset: true })
   | (NoticeTemplateResourceFields & { id: string; backendId: number; preset: false });
-export type NoticeTemplatePage = {
-  content: NoticeTemplate[];
-  totalElements: number;
-  totalPages: number;
-  number: number;
-  size: number;
-};
+export type NoticeTemplatePage = PagedCollection<NoticeTemplate>;
 export type NoticeTemplateListState = RemotePageState<NoticeTemplateResourceRecord, 'unavailable' | 'error'>;
 
 export class NoticeTemplateContractError extends Error {

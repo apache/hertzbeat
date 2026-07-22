@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import type { PagedCollection } from '@/shared/pagination';
+
 type AuditFields = {
   creator?: string | null;
   modifier?: string | null;
@@ -78,13 +80,7 @@ export type StatusIncidentRecord = Omit<StatusIncident, 'components' | 'contents
   contents?: StatusIncidentContentRecord[] | null;
 };
 
-export type StatusIncidentPage = {
-  content: StatusIncidentRecord[];
-  totalElements: number;
-  totalPages: number;
-  number: number;
-  size: number;
-};
+export type StatusIncidentPage = PagedCollection<StatusIncidentRecord>;
 
 export class StatusManagementContractError extends Error {
   constructor() {

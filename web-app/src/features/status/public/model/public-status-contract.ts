@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import type { PagedCollection } from '@/shared/pagination';
+
 export type PublicStatusOrg = {
   name: string;
   description: string;
@@ -42,13 +44,7 @@ export type PublicStatusOrgState = 'healthy' | 'degraded' | 'incident' | 'unknow
 export type PublicStatusComponentState = 'healthy' | 'incident' | 'unknown';
 export type PublicStatusIncidentState = 'investigating' | 'identified' | 'monitoring' | 'resolved' | 'unknown';
 
-export type PublicStatusIncidentPage = {
-  content: PublicStatusIncident[];
-  totalElements: number;
-  totalPages: number;
-  number: number;
-  size: number;
-};
+export type PublicStatusIncidentPage = PagedCollection<PublicStatusIncident>;
 
 export type PublicStatusState = 'ready' | 'unconfigured' | 'unavailable' | 'error';
 

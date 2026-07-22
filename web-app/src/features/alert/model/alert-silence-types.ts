@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import type { PagedCollection } from '@/shared/pagination';
+
 export type AlertSilenceQuery = { search: string; pageIndex: number; pageSize: number };
 export type AlertSilenceType = 0 | 1;
 
@@ -58,10 +60,4 @@ export type AlertSilence = {
   gmtUpdate?: string | null;
 };
 
-export type AlertSilencePage = {
-  content: AlertSilence[];
-  totalElements: number;
-  totalPages: number;
-  number: number;
-  size: number;
-};
+export type AlertSilencePage = PagedCollection<AlertSilence>;

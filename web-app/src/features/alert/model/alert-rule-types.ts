@@ -1,6 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import type { RemotePageState } from '@/shared/remote-state';
+import type { PagedCollection } from '@/shared/pagination';
 
 export const alertRuleTypes = [
   'realtime_metric',
@@ -33,13 +34,7 @@ export type AlertRule = {
   gmtUpdate?: string | null;
 };
 
-export type AlertRulePage = {
-  content: AlertRule[];
-  totalElements: number;
-  totalPages: number;
-  number: number;
-  size: number;
-};
+export type AlertRulePage = PagedCollection<AlertRule>;
 
 export type AlertRuleListState = RemotePageState<AlertRule, 'unavailable' | 'error'>;
 export type AlertRuleFailureKind = 'missing' | 'unavailable' | 'error';

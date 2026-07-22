@@ -17,6 +17,7 @@
 
 import { buildMonitorListPath } from '@/shared/navigation/app-paths';
 import type { RemotePageState } from '@/shared/remote-state';
+import type { PagedCollection } from '@/shared/pagination';
 
 export const labelResourceName = 'labels' as const;
 
@@ -44,13 +45,7 @@ export type LabelExpectedWrite = {
   type: number;
 };
 
-export type LabelPage = {
-  content: LabelRecord[];
-  totalElements: number;
-  totalPages: number;
-  number: number;
-  size: number;
-};
+export type LabelPage = PagedCollection<LabelRecord>;
 
 export class LabelContractError extends Error {
   readonly code: string = 'LABEL_RESPONSE_INVALID';

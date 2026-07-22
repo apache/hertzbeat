@@ -16,7 +16,7 @@
  */
 
 import { formatLabelMatchers, parseLabelMatchers } from '../shared/alert-label-matchers';
-import { compactTablePageSizes } from '@/shared/pagination';
+import { compactTablePageSizes, type PagedCollection } from '@/shared/pagination';
 
 export const alertInhibitPageSizes = compactTablePageSizes;
 
@@ -46,13 +46,7 @@ export type AlertInhibit = {
   gmtUpdate?: string | null;
 };
 
-export type AlertInhibitPage = {
-  content: AlertInhibit[];
-  totalElements: number;
-  totalPages: number;
-  number: number;
-  size: number;
-};
+export type AlertInhibitPage = PagedCollection<AlertInhibit>;
 
 export class AlertInhibitContractError extends Error {
   constructor(message: string, options?: ErrorOptions) {
