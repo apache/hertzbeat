@@ -27,7 +27,7 @@ import { noticeRuleDataProvider, noticeRuleResourceName } from '@/features/alert
 import { noticeTemplateDataProvider, noticeTemplateResourceName } from '@/features/alert/notice-template';
 import { labelDataProvider, labelResourceName } from '@/features/settings/label/refine';
 import { objectStoreDataProvider } from '@/features/settings/object-store';
-import { systemConfigDataProvider, systemConfigResourceName } from '@/features/settings/system-config';
+import { systemConfigDataProvider, systemConfigResourceName } from '@/features/settings/system-config/refine';
 import { tokenDataProvider } from '@/features/settings/token';
 
 import { alertSilenceDataProvider } from './resources/alert-silence-data-provider';

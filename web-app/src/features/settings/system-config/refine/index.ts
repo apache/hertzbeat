@@ -15,4 +15,5 @@
  * limitations under the License.
  */
 
-export { SystemConfigPage } from './pages/system-config-page';
+export { systemConfigResourceName } from '../model/system-config-model';
+export { systemConfigDataProvider } from '../provider/system-config-data-provider';

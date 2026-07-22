@@ -38,7 +38,7 @@ import { noticeRuleDataProvider, noticeRuleResourceName } from '@/features/alert
 import { noticeTemplateDataProvider, noticeTemplateResourceName } from '@/features/alert/notice-template';
 import { objectStoreDataProvider } from '@/features/settings/object-store';
 import { labelDataProvider, labelResourceName } from '@/features/settings/label/refine';
-import { systemConfigDataProvider } from '@/features/settings/system-config';
+import { systemConfigDataProvider } from '@/features/settings/system-config/refine';
 import { tokenDataProvider } from '@/features/settings/token';
 
 import { AppProviders } from '../providers';
