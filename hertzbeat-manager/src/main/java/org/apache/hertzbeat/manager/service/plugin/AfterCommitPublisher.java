@@ -15,28 +15,28 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.pojo.dto;
+package org.apache.hertzbeat.manager.service.plugin;
 
-import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
- * Popup rendering and parameter values
+ * Publishes in-memory plugin state only after its database transaction commits.
  */
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class PluginParametersVO {
+@Component
+public class AfterCommitPublisher {
 
-    /**
-     * Stencil rendering
-     */
-    private List<PluginParameterDefinition> paramDefines;
-
-    /**
-     * specific parameter
-     */
-    private List<PluginParameterValue> pluginParams;
+    public void publish(Runnable publication) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            publication.run();
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                publication.run();
+            }
+        });
+    }
 }

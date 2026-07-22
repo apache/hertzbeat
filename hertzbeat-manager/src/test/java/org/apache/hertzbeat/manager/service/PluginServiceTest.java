@@ -28,11 +28,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
@@ -44,30 +42,26 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import org.apache.hertzbeat.common.constants.PluginType;
-import org.apache.hertzbeat.common.entity.job.RuntimeParamDefine;
 import org.apache.hertzbeat.common.entity.manager.PluginItem;
 import org.apache.hertzbeat.common.entity.manager.PluginMetadata;
 import org.apache.hertzbeat.common.entity.plugin.PluginConfig;
 import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.manager.dao.PluginItemDao;
 import org.apache.hertzbeat.manager.dao.PluginMetadataDao;
-import org.apache.hertzbeat.manager.dao.PluginParamDao;
 import org.apache.hertzbeat.manager.pojo.dto.PluginUpload;
-import org.apache.hertzbeat.manager.pojo.dto.PluginParam;
-import org.apache.hertzbeat.manager.pojo.dto.PluginParametersVO;
 import org.apache.hertzbeat.manager.service.impl.PluginServiceImpl;
+import org.apache.hertzbeat.manager.service.plugin.AfterCommitPublisher;
+import org.apache.hertzbeat.manager.service.plugin.PluginParameterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -76,6 +70,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * Test case for {@link PluginService}
@@ -90,15 +85,18 @@ class PluginServiceTest {
     private PluginMetadataDao metadataDao;
 
     @Mock
-    private PluginParamDao pluginParamDao;
+    private PluginParameterService pluginParameterService;
 
     @Mock
     private PluginItemDao itemDao;
 
+    private PluginParameterRegistry pluginParameterRegistry;
 
     @BeforeEach
     void setUp() {
-        pluginService = new PluginServiceImpl(metadataDao, itemDao, pluginParamDao);
+        pluginParameterRegistry = new PluginParameterRegistry();
+        pluginService = new PluginServiceImpl(
+                metadataDao, itemDao, pluginParameterService, pluginParameterRegistry, new AfterCommitPublisher());
     }
 
     @Test
@@ -140,6 +138,40 @@ class PluginServiceTest {
         assertNotNull(metadataCaptor.getValue().getJarFilePath());
         assertTrue(new File(metadataCaptor.getValue().getJarFilePath()).getCanonicalPath().startsWith(pluginLibDir.getCanonicalPath() + File.separator));
 
+    }
+
+    @Test
+    void testSaveDisabledPluginPreservesRequestedStatus(@TempDir File tempDir) throws IOException {
+        PluginMetadata parsed = new PluginMetadata();
+        parsed.setItems(List.of(new PluginItem("org.apache.hertzbeat.DisabledPlugin", PluginType.POST_ALERT)));
+        parsed.setParamCount(0);
+        PluginServiceImpl service = spy(pluginService);
+        doReturn(parsed).when(service).validateJarFile(any());
+        String previousPluginLib = System.getProperty("hertzbeat.plugin.lib.dir");
+        System.setProperty("hertzbeat.plugin.lib.dir", tempDir.getAbsolutePath());
+        PluginUpload upload = new PluginUpload(new MockMultipartFile(
+                "file", "disabled.jar", "application/java-archive", new byte[]{1}), "Disabled Plugin", false);
+
+        try {
+            service.savePlugin(upload);
+        } finally {
+            if (previousPluginLib == null) {
+                System.clearProperty("hertzbeat.plugin.lib.dir");
+            } else {
+                System.setProperty("hertzbeat.plugin.lib.dir", previousPluginLib);
+            }
+        }
+
+        ArgumentCaptor<PluginMetadata> saved = ArgumentCaptor.forClass(PluginMetadata.class);
+        verify(metadataDao).save(saved.capture());
+        assertFalse(saved.getValue().getEnableStatus());
+    }
+
+    @Test
+    void rejectsBlankPluginNameAtServiceBoundary() {
+        PluginUpload upload = new PluginUpload(new MockMultipartFile(
+                "file", "blank-name.jar", "application/java-archive", new byte[]{1}), "  ", true);
+        assertThrows(CommonException.class, () -> pluginService.savePlugin(upload));
     }
 
     @Test
@@ -186,6 +218,15 @@ class PluginServiceTest {
     }
 
     @Test
+    void rejectsIncompleteStatusRequestsAtServiceBoundary() {
+        assertThrows(IllegalArgumentException.class, () -> pluginService.updateStatus(null));
+        assertThrows(IllegalArgumentException.class,
+                () -> pluginService.updateStatus(PluginMetadata.builder().enableStatus(true).build()));
+        assertThrows(IllegalArgumentException.class,
+                () -> pluginService.updateStatus(PluginMetadata.builder().id(1L).build()));
+    }
+
+    @Test
     void testDeletePlugins() {
         PluginMetadata first = PluginMetadata.builder()
                 .id(1L).enableStatus(true).jarFilePath("path/to/plugin-one.jar").items(List.of()).build();
@@ -202,9 +243,72 @@ class PluginServiceTest {
         pluginService.deletePlugins(ids);
         verify(metadataDao).deleteById(1L);
         verify(metadataDao).deleteById(2L);
-        verify(pluginParamDao).deletePluginParamsByPluginMetadataIdIn(ids);
+        verify(pluginParameterService).deleteByPluginIds(ids);
         assertFalse(first.getEnableStatus());
         assertFalse(second.getEnableStatus());
+    }
+
+    @Test
+    void rolledBackDeleteDoesNotPublishRegistryClassloaderOrStatusChanges(@TempDir File tempDir) {
+        PluginItem item = new PluginItem(RollbackMarker.class.getName(), PluginType.POST_ALERT);
+        PluginMetadata plugin = PluginMetadata.builder()
+                .id(71L)
+                .enableStatus(true)
+                .jarFilePath(new File(tempDir, "missing-plugin.jar").getAbsolutePath())
+                .items(List.of(item))
+                .build();
+        when(metadataDao.findById(71L)).thenReturn(Optional.of(plugin));
+        pluginService.updateStatus(plugin);
+        pluginParameterRegistry.registerDefinition(71L, new PluginConfig());
+        when(metadataDao.findAllById(Set.of(71L))).thenReturn(List.of(plugin));
+
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            pluginService.deletePlugins(Set.of(71L));
+            assertTrue(pluginService.pluginIsEnable(RollbackMarker.class));
+            assertTrue(pluginParameterRegistry.definition(71L).isPresent());
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+        assertTrue(pluginService.pluginIsEnable(RollbackMarker.class));
+        assertTrue(pluginParameterRegistry.definition(71L).isPresent());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void enablingPluginReloadsRuntimeOnlyAfterCommit(@TempDir File tempDir) throws Exception {
+        File jar = new File(tempDir, "enable-plugin.jar");
+        try (JarOutputStream output = new JarOutputStream(new FileOutputStream(jar))) {
+            output.putNextEntry(new JarEntry("define/plugin-define.yml"));
+            output.write("params:\n  - field: token\n    type: password\n".getBytes(StandardCharsets.UTF_8));
+            output.closeEntry();
+        }
+        PluginItem item = new PluginItem(RollbackMarker.class.getName(), PluginType.POST_ALERT);
+        PluginMetadata persisted = PluginMetadata.builder()
+                .id(72L).enableStatus(false).jarFilePath(jar.getAbsolutePath()).items(List.of(item)).build();
+        PluginMetadata request = PluginMetadata.builder().id(72L).enableStatus(true).build();
+        when(metadataDao.findById(72L)).thenReturn(Optional.of(persisted));
+        when(metadataDao.findPluginMetadataByEnableStatusTrue()).thenReturn(List.of(persisted));
+        Field loadersField = PluginServiceImpl.class.getDeclaredField("pluginClassLoaders");
+        loadersField.setAccessible(true);
+        List<?> loaders = (List<?>) loadersField.get(pluginService);
+        int initialLoaderCount = loaders.size();
+
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            pluginService.updateStatus(request);
+            assertFalse(pluginService.pluginIsEnable(RollbackMarker.class));
+            assertTrue(pluginParameterRegistry.definition(72L).isEmpty());
+            assertEquals(initialLoaderCount, loaders.size());
+
+            TransactionSynchronizationManager.getSynchronizations()
+                    .forEach(synchronization -> synchronization.afterCommit());
+            assertTrue(pluginService.pluginIsEnable(RollbackMarker.class));
+            assertTrue(pluginParameterRegistry.definition(72L).isPresent());
+            assertEquals(initialLoaderCount + 1, loaders.size());
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
     }
 
     @Test
@@ -217,77 +321,6 @@ class PluginServiceTest {
         verify(metadataDao).findAll(any(Specification.class), pageRequest.capture());
         assertEquals(0, pageRequest.getValue().getPageNumber());
         assertEquals(10, pageRequest.getValue().getPageSize());
-    }
-
-    @Test
-    void testMissingParamDefinitionReturnsArrayShapedResponse() {
-        PluginParametersVO result = pluginService.getParamDefine(Long.MAX_VALUE);
-
-        assertNotNull(result.getParamDefines());
-        assertNotNull(result.getPluginParams());
-        assertTrue(result.getParamDefines().isEmpty());
-        assertTrue(result.getPluginParams().isEmpty());
-        verifyNoInteractions(pluginParamDao);
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    void testConfiguredParamDefinitionReturnsDefinitionAndSavedValues() throws Exception {
-        long pluginId = Long.MAX_VALUE - 1;
-        PluginConfig config = new PluginConfig();
-        config.setParams(List.of(RuntimeParamDefine.builder().field("endpoint").type("text").build()));
-        PluginParam saved = PluginParam.builder()
-                .pluginMetadataId(pluginId)
-                .field("endpoint")
-                .paramValue("https://example.invalid")
-                .type((byte) 1)
-                .build();
-        Field field = PluginServiceImpl.class.getDeclaredField("PARAMS_CONFIG_MAP");
-        field.setAccessible(true);
-        Map<Long, PluginConfig> configs = (Map<Long, PluginConfig>) field.get(null);
-        configs.put(pluginId, config);
-        when(pluginParamDao.findParamsByPluginMetadataId(pluginId)).thenReturn(List.of(saved));
-
-        try {
-            PluginParametersVO result = pluginService.getParamDefine(pluginId);
-            assertEquals("endpoint", result.getParamDefines().get(0).getField());
-            assertEquals("text", result.getParamDefines().get(0).getType());
-            assertEquals(List.of(saved), result.getPluginParams());
-        } finally {
-            configs.remove(pluginId);
-        }
-    }
-
-    @Test
-    void testEmptyPluginParamArrayIsNoOp() {
-        pluginService.savePluginParam(List.of());
-
-        verifyNoInteractions(pluginParamDao);
-    }
-
-    @Test
-    void testSavePluginParamFlushesDeleteBeforeInsert() {
-        List<org.apache.hertzbeat.manager.pojo.dto.PluginParam> params = List.of(
-            org.apache.hertzbeat.manager.pojo.dto.PluginParam.builder()
-                .pluginMetadataId(1L)
-                .field("endpoint")
-                .paramValue("https://example.invalid/hertzbeat-plugin-audit")
-                .type((byte) 1)
-                .build(),
-            org.apache.hertzbeat.manager.pojo.dto.PluginParam.builder()
-                .pluginMetadataId(1L)
-                .field("mode")
-                .paramValue("audit-only")
-                .type((byte) 1)
-                .build()
-        );
-
-        pluginService.savePluginParam(params);
-
-        InOrder inOrder = inOrder(pluginParamDao);
-        inOrder.verify(pluginParamDao).deletePluginParamsByPluginMetadataId(1L);
-        inOrder.verify(pluginParamDao).flush();
-        inOrder.verify(pluginParamDao).saveAll(params);
     }
 
     @Test
@@ -313,6 +346,9 @@ class PluginServiceTest {
 
         assertInstanceOf(IOException.class, exception);
         assertTrue(exception.getMessage().contains("Zip Slip detected"));
+    }
+
+    private static final class RollbackMarker {
     }
 
 }

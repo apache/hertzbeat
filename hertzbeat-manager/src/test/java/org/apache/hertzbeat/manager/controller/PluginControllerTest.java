@@ -32,10 +32,14 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.PluginMetadata;
 import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.common.util.JsonUtil;
-import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
-import org.apache.hertzbeat.manager.pojo.dto.PluginParam;
+import org.apache.hertzbeat.manager.pojo.dto.PasswordIntent;
+import org.apache.hertzbeat.manager.pojo.dto.PluginParameterDefinition;
+import org.apache.hertzbeat.manager.pojo.dto.PluginParameterInput;
+import org.apache.hertzbeat.manager.pojo.dto.PluginParameterSaveRequest;
+import org.apache.hertzbeat.manager.pojo.dto.PluginParameterValue;
 import org.apache.hertzbeat.manager.pojo.dto.PluginParametersVO;
 import org.apache.hertzbeat.manager.pojo.dto.PluginUpload;
+import org.apache.hertzbeat.manager.service.PluginParameterService;
 import org.apache.hertzbeat.manager.service.PluginService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -65,6 +69,9 @@ class PluginControllerTest {
 
     @Mock
     private PluginService pluginService;
+
+    @Mock
+    private PluginParameterService pluginParameterService;
 
     @BeforeEach
     void setUp() {
@@ -155,52 +162,75 @@ class PluginControllerTest {
     }
 
     @Test
-    void parameterDefinitionReadUsesIdQueryAndArrayFields() throws Exception {
-        ParamDefineInfo define = new ParamDefineInfo();
-        define.setField("endpoint");
-        define.setType("text");
-        PluginParam value = PluginParam.builder()
-                .pluginMetadataId(11L)
-                .field("endpoint")
-                .paramValue("https://example.invalid")
-                .type((byte) 1)
-                .build();
-        when(pluginService.getParamDefine(11L))
-                .thenReturn(new PluginParametersVO(List.of(define), List.of(value)));
+    void incompleteStatusUpdateUsesStableFailureMessage() throws Exception {
+        doThrow(new IllegalArgumentException("Plugin id and enable status are required"))
+                .when(pluginService).updateStatus(any(PluginMetadata.class));
+
+        this.mockMvc.perform(MockMvcRequestBuilders.put("/api/plugin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"id\":6565463543}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("plugin_operation_failed"))
+                .andExpect(jsonPath("$.msg").value(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("enable status"))));
+    }
+
+    @Test
+    void parameterDefinitionReadNeverExposesPasswordOrPersistenceFields() throws Exception {
+        PluginParameterDefinition password = new PluginParameterDefinition();
+        password.setField("token");
+        password.setType("password");
+        password.setDefaultValue(null);
+        when(pluginParameterService.getParameters(11L)).thenReturn(new PluginParametersVO(
+                List.of(password),
+                List.of(new PluginParameterValue("token", "password", null, true))));
 
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/plugin/params/define")
                         .param("pluginMetadataId", "11"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                .andExpect(jsonPath("$.data.paramDefines[0].field").value("endpoint"))
-                .andExpect(jsonPath("$.data.pluginParams[0].pluginMetadataId").value(11));
-        verify(pluginService).getParamDefine(11L);
+                .andExpect(jsonPath("$.data.paramDefines[0].field").value("token"))
+                .andExpect(jsonPath("$.data.paramDefines[0].defaultValue").doesNotExist())
+                .andExpect(jsonPath("$.data.paramDefines[0].placeholder").doesNotExist())
+                .andExpect(jsonPath("$.data.paramDefines[0].id").doesNotExist())
+                .andExpect(jsonPath("$.data.paramDefines[0].gmtUpdate").doesNotExist())
+                .andExpect(jsonPath("$.data.pluginParams[0].field").value("token"))
+                .andExpect(jsonPath("$.data.pluginParams[0].configured").value(true))
+                .andExpect(jsonPath("$.data.pluginParams[0].value").doesNotExist())
+                .andExpect(jsonPath("$.data.pluginParams[0].id").doesNotExist())
+                .andExpect(jsonPath("$.data.pluginParams[0].pluginMetadataId").doesNotExist())
+                .andExpect(jsonPath("$.data.pluginParams[0].gmtCreate").doesNotExist());
+        verify(pluginParameterService).getParameters(11L);
     }
 
     @Test
-    void parameterSaveAcceptsArrayAndEmptyArray() throws Exception {
-        PluginParam value = PluginParam.builder()
-                .pluginMetadataId(11L)
-                .field("endpoint")
-                .paramValue("https://example.invalid")
-                .type((byte) 1)
-                .build();
+    void parameterSaveUsesOnePluginIdAndExplicitPasswordIntent() throws Exception {
+        PluginParameterSaveRequest request = new PluginParameterSaveRequest(
+                11L,
+                List.of(new PluginParameterInput("token", "new-secret", PasswordIntent.REPLACE)));
 
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/plugin/params")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(JsonUtil.toJson(List.of(value))))
+                        .content(JsonUtil.toJson(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.data").value(true));
-        verify(pluginService).savePluginParam(List.of(value));
+        verify(pluginParameterService).save(request);
+    }
 
+    @Test
+    void parameterSaveRejectsLegacyEntityAndAuditFieldsWithoutEchoingThem() throws Exception {
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/plugin/params")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("[]"))
+                        .content("{\"pluginMetadataId\":11,\"params\":[{\"field\":\"token\","
+                                + "\"value\":\"private-value\",\"intent\":\"REPLACE\","
+                                + "\"type\":2,\"gmtCreate\":\"2026-07-23T00:00:00\"}]}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                .andExpect(jsonPath("$.data").value(true));
-        verify(pluginService).savePluginParam(List.of());
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("plugin_operation_failed"))
+                .andExpect(jsonPath("$.msg").value(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("private-value"))));
     }
 
     @Test

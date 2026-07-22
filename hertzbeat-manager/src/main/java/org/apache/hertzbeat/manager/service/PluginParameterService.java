@@ -15,28 +15,20 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.pojo.dto;
+package org.apache.hertzbeat.manager.service;
 
-import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.util.Set;
+import org.apache.hertzbeat.manager.pojo.dto.PluginParameterSaveRequest;
+import org.apache.hertzbeat.manager.pojo.dto.PluginParametersVO;
 
 /**
- * Popup rendering and parameter values
+ * Secure application boundary for plugin parameter reads and writes.
  */
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class PluginParametersVO {
+public interface PluginParameterService {
 
-    /**
-     * Stencil rendering
-     */
-    private List<PluginParameterDefinition> paramDefines;
+    PluginParametersVO getParameters(Long pluginMetadataId);
 
-    /**
-     * specific parameter
-     */
-    private List<PluginParameterValue> pluginParams;
+    void save(PluginParameterSaveRequest request);
+
+    void deleteByPluginIds(Set<Long> pluginMetadataIds);
 }

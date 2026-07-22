@@ -15,28 +15,25 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.pojo.dto;
+package org.apache.hertzbeat.manager.service.plugin;
 
-import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 
 /**
- * Popup rendering and parameter values
+ * Server-owned runtime type mapping for plugin parameter definitions.
  */
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class PluginParametersVO {
+public final class PluginParameterTypes {
 
-    /**
-     * Stencil rendering
-     */
-    private List<PluginParameterDefinition> paramDefines;
+    private PluginParameterTypes() {
+    }
 
-    /**
-     * specific parameter
-     */
-    private List<PluginParameterValue> pluginParams;
+    public static byte fromDefinition(String type) {
+        return switch (type) {
+            case "number" -> CommonConstants.PARAM_TYPE_NUMBER;
+            case "password" -> CommonConstants.PARAM_TYPE_PASSWORD;
+            case "key-value", "metrics-field" -> CommonConstants.PARAM_TYPE_MAP;
+            case "array" -> CommonConstants.PARAM_TYPE_ARRAY;
+            default -> CommonConstants.PARAM_TYPE_STRING;
+        };
+    }
 }

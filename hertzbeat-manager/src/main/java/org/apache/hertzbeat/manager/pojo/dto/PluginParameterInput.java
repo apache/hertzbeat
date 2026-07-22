@@ -17,26 +17,29 @@
 
 package org.apache.hertzbeat.manager.pojo.dto;
 
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Popup rendering and parameter values
+ * One caller-supplied plugin parameter value. Field type is server-owned.
  */
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class PluginParametersVO {
+@AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = false)
+public class PluginParameterInput {
 
-    /**
-     * Stencil rendering
-     */
-    private List<PluginParameterDefinition> paramDefines;
+    private String field;
 
-    /**
-     * specific parameter
-     */
-    private List<PluginParameterValue> pluginParams;
+    private String value;
+
+    private PasswordIntent intent;
+
+    @JsonAnySetter
+    void rejectUnknownProperty(String name, Object ignored) {
+        throw new IllegalArgumentException("Unknown plugin parameter input property");
+    }
 }

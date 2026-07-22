@@ -17,26 +17,25 @@
 
 package org.apache.hertzbeat.manager.pojo.dto;
 
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Popup rendering and parameter values
+ * Safe plugin parameter projection. Password values are always null and omitted.
  */
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class PluginParametersVO {
+@AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class PluginParameterValue {
 
-    /**
-     * Stencil rendering
-     */
-    private List<PluginParameterDefinition> paramDefines;
+    private String field;
 
-    /**
-     * specific parameter
-     */
-    private List<PluginParameterValue> pluginParams;
+    private String type;
+
+    private String value;
+
+    private boolean configured;
 }

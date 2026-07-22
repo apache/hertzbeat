@@ -43,14 +43,12 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.hertzbeat.common.constants.PluginType;
-import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.manager.PluginItem;
 import org.apache.hertzbeat.common.entity.manager.PluginMetadata;
 import org.apache.hertzbeat.common.entity.plugin.PluginConfig;
@@ -58,12 +56,11 @@ import org.apache.hertzbeat.common.entity.plugin.PluginContext;
 import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.manager.dao.PluginItemDao;
 import org.apache.hertzbeat.manager.dao.PluginMetadataDao;
-import org.apache.hertzbeat.manager.dao.PluginParamDao;
-import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 import org.apache.hertzbeat.manager.pojo.dto.PluginUpload;
-import org.apache.hertzbeat.manager.pojo.dto.PluginParam;
-import org.apache.hertzbeat.manager.pojo.dto.PluginParametersVO;
+import org.apache.hertzbeat.manager.service.PluginParameterService;
 import org.apache.hertzbeat.manager.service.PluginService;
+import org.apache.hertzbeat.manager.service.plugin.AfterCommitPublisher;
+import org.apache.hertzbeat.manager.service.plugin.PluginParameterRegistry;
 import org.apache.hertzbeat.plugin.PostAlertPlugin;
 import org.apache.hertzbeat.plugin.Plugin;
 import org.apache.hertzbeat.plugin.PostCollectPlugin;
@@ -89,7 +86,11 @@ public class PluginServiceImpl implements PluginService {
 
     private final PluginItemDao itemDao;
 
-    private final PluginParamDao pluginParamDao;
+    private final PluginParameterService pluginParameterService;
+
+    private final PluginParameterRegistry pluginParameterRegistry;
+
+    private final AfterCommitPublisher afterCommitPublisher;
 
     public static Map<Class<?>, PluginType> PLUGIN_TYPE_MAPPING = new HashMap<>();
 
@@ -97,16 +98,6 @@ public class PluginServiceImpl implements PluginService {
      * plugin status
      */
     private static final Map<String, Boolean> PLUGIN_ENABLE_STATUS = new ConcurrentHashMap<>();
-
-    /**
-     * plugin param define
-     */
-    private static final Map<Long, PluginConfig> PARAMS_CONFIG_MAP = new ConcurrentHashMap<>();
-
-    /**
-     * plugin params
-     */
-    private static final Map<Long, List<Configmap>> PARAMS_MAP = new ConcurrentHashMap<>();
 
     /**
      * pluginItem Mapping pluginId
@@ -122,10 +113,10 @@ public class PluginServiceImpl implements PluginService {
         // disable the plugins that need to be removed
         for (PluginMetadata plugin : plugins) {
             plugin.setEnableStatus(false);
-            updateStatus(plugin);
+            updateStatus(plugin, false);
         }
         // reload classloader
-        loadJarToClassLoader();
+        afterCommitPublisher.publish(this::loadJarToClassLoader);
         for (PluginMetadata plugin : plugins) {
             try {
                 // delete jar file
@@ -140,14 +131,13 @@ public class PluginServiceImpl implements PluginService {
                 }
                 // delete metadata
                 metadataDao.deleteById(plugin.getId());
-                syncPluginParamMap(plugin.getId(), null, true);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
 
         }
-        pluginParamDao.deletePluginParamsByPluginMetadataIdIn(ids);
-        syncPluginStatus();
+        pluginParameterService.deleteByPluginIds(ids);
+        afterCommitPublisher.publish(this::syncPluginStatus);
 
     }
 
@@ -162,52 +152,27 @@ public class PluginServiceImpl implements PluginService {
     }
 
     @Override
+    @Transactional
     public void updateStatus(PluginMetadata plugin) {
+        updateStatus(plugin, true);
+    }
+
+    private void updateStatus(PluginMetadata plugin, boolean reloadRuntime) {
+        if (plugin == null || plugin.getId() == null || plugin.getEnableStatus() == null) {
+            throw new IllegalArgumentException("Plugin id and enable status are required");
+        }
         Optional<PluginMetadata> pluginMetadata = metadataDao.findById(plugin.getId());
         if (pluginMetadata.isPresent()) {
             PluginMetadata metadata = pluginMetadata.get();
             metadata.setEnableStatus(plugin.getEnableStatus());
             metadataDao.save(metadata);
-            syncSinglePluginStatus(metadata);
+            afterCommitPublisher.publish(() -> syncSinglePluginStatus(metadata));
+            if (reloadRuntime) {
+                afterCommitPublisher.publish(this::loadJarToClassLoader);
+            }
         } else {
             throw new IllegalArgumentException("The plugin is not existed");
         }
-    }
-
-    @Override
-    public PluginParametersVO getParamDefine(Long pluginMetadataId) {
-
-        PluginParametersVO pluginParametersVO = new PluginParametersVO(new ArrayList<>(), new ArrayList<>());
-        if (PARAMS_CONFIG_MAP.containsKey(pluginMetadataId)) {
-            PluginConfig config = PARAMS_CONFIG_MAP.get(pluginMetadataId);
-            List<PluginParam> paramsByPluginMetadataId = pluginParamDao.findParamsByPluginMetadataId(pluginMetadataId);
-            pluginParametersVO.setParamDefines(Optional.ofNullable(config).map(PluginConfig::getParams)
-                    .orElse(new ArrayList<>()).stream().map(ParamDefineInfo::fromRuntime).toList());
-            pluginParametersVO.setPluginParams(paramsByPluginMetadataId);
-            return pluginParametersVO;
-        }
-        return pluginParametersVO;
-    }
-
-    @Override
-    @Transactional
-    public void savePluginParam(List<PluginParam> params) {
-        if (CollectionUtils.isEmpty(params)) {
-            return;
-        }
-        pluginParamDao.deletePluginParamsByPluginMetadataId(params.get(0).getPluginMetadataId());
-        pluginParamDao.flush();
-        pluginParamDao.saveAll(params);
-        syncPluginParamMap(params.get(0).getPluginMetadataId(), params, false);
-    }
-
-    private void syncPluginParamMap(Long pluginMetadataId, List<PluginParam> params, boolean isDelete) {
-        if (isDelete) {
-            PARAMS_MAP.remove(pluginMetadataId);
-            return;
-        }
-        List<Configmap> configmapList = params.stream().map(item -> new Configmap(item.getField(), item.getParamValue(), item.getType())).toList();
-        PARAMS_MAP.put(pluginMetadataId, configmapList);
     }
 
     static {
@@ -316,6 +281,10 @@ public class PluginServiceImpl implements PluginService {
     @SneakyThrows
     @Transactional
     public void savePlugin(PluginUpload pluginUpload) {
+        if (pluginUpload == null || pluginUpload.getJarFile() == null || pluginUpload.getEnableStatus() == null
+                || pluginUpload.getName() == null || pluginUpload.getName().isBlank()) {
+            throw new CommonException("Plugin upload fields are required");
+        }
         File extLibDir = resolvePluginLibDir();
         String fileName = pluginUpload.getJarFile().getOriginalFilename();
         validateFileName(fileName);
@@ -330,7 +299,7 @@ public class PluginServiceImpl implements PluginService {
             pluginItems = parsed.getItems();
             pluginMetadata = PluginMetadata.builder()
                 .name(pluginUpload.getName())
-                .enableStatus(true)
+                .enableStatus(pluginUpload.getEnableStatus())
                 .paramCount(parsed.getParamCount())
                 .items(pluginItems).jarFilePath(destFile.getAbsolutePath())
                 .gmtCreate(LocalDateTime.now())
@@ -345,9 +314,9 @@ public class PluginServiceImpl implements PluginService {
         metadataDao.save(pluginMetadata);
         itemDao.saveAll(pluginItems);
         // load jar to classloader
-        loadJarToClassLoader();
+        afterCommitPublisher.publish(this::loadJarToClassLoader);
         // sync enabled status
-        syncPluginStatus();
+        afterCommitPublisher.publish(this::syncPluginStatus);
     }
 
     /**
@@ -430,22 +399,6 @@ public class PluginServiceImpl implements PluginService {
         }
     }
 
-    @PostConstruct
-    private void initParams() {
-        try {
-            List<PluginParam> params = pluginParamDao.findAll();
-            Map<Long, List<PluginParam>> content = params.stream()
-                .collect(Collectors.groupingBy(PluginParam::getPluginMetadataId));
-
-            for (Map.Entry<Long, List<PluginParam>> entry : content.entrySet()) {
-                syncPluginParamMap(entry.getKey(), entry.getValue(), false);
-            }
-        } catch (Exception e) {
-            log.error("Failed to init params:{}", e.getMessage());
-            throw new CommonException("Failed to init params:" + e.getMessage());
-        }
-    }
-
     /**
      * load jar to classloader
      */
@@ -465,7 +418,7 @@ public class PluginServiceImpl implements PluginService {
             pluginClassLoaders.clear();
             System.gc();
         }
-        PARAMS_CONFIG_MAP.clear();
+        pluginParameterRegistry.clearDefinitions();
         List<PluginMetadata> plugins = metadataDao.findPluginMetadataByEnableStatusTrue();
         for (PluginMetadata metadata : plugins) {
             try {
@@ -522,7 +475,7 @@ public class PluginServiceImpl implements PluginService {
                 }
                 if ((entry.getName().contains("define")) && (entry.getName().endsWith(".yml") || entry.getName().endsWith(".yaml"))) {
                     PluginConfig config = readPluginConfig(jarFile, entry);
-                    PARAMS_CONFIG_MAP.put(pluginMetadataId, config);
+                    pluginParameterRegistry.registerDefinition(pluginMetadataId, config);
                 }
             }
         }
@@ -566,8 +519,7 @@ public class PluginServiceImpl implements PluginService {
                     continue;
                 }
                 Long pluginId = ITEM_TO_PLUGINMETADATAID_MAP.get(t.getClass().getName());
-                List<Configmap> configmapList = PARAMS_MAP.get(pluginId);
-                PluginContext context = PluginContext.builder().params(configmapList).build();
+                PluginContext context = pluginParameterRegistry.runtimeContext(pluginId);
                 execute.accept(t, context);
             }
         }

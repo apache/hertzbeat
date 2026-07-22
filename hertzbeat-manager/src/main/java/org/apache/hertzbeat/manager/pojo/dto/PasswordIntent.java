@@ -17,26 +17,11 @@
 
 package org.apache.hertzbeat.manager.pojo.dto;
 
-import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 /**
- * Popup rendering and parameter values
+ * Explicit write intent for a plugin password parameter.
  */
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class PluginParametersVO {
-
-    /**
-     * Stencil rendering
-     */
-    private List<PluginParameterDefinition> paramDefines;
-
-    /**
-     * specific parameter
-     */
-    private List<PluginParameterValue> pluginParams;
+public enum PasswordIntent {
+    KEEP,
+    REPLACE,
+    CLEAR
 }
