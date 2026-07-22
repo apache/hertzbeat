@@ -92,6 +92,27 @@ final class ExternalLanguageProcessHarness implements AutoCloseable {
                 "GOCACHE", buildCache.toString());
     }
 
+    Map<String, String> createDotnetEnvironment(Path dotnetBinary) throws IOException {
+        Path dotnetRoot = dotnetBinary.getParent();
+        Path cliHome = Files.createDirectories(resolve("dotnet-cli-home"));
+        Path nugetPackages = Files.createDirectories(resolve("nuget-packages"));
+        Path nugetHttpCache = Files.createDirectories(resolve("nuget-http-cache"));
+        Path bundleExtract = Files.createDirectories(resolve("dotnet-bundle-extract"));
+        return Map.ofEntries(
+                Map.entry("PATH", dotnetRoot + ":/usr/bin:/bin:/usr/sbin:/sbin"),
+                Map.entry("DOTNET_ROOT", dotnetRoot.toString()),
+                Map.entry("DOTNET_CLI_HOME", cliHome.toString()),
+                Map.entry("NUGET_PACKAGES", nugetPackages.toString()),
+                Map.entry("NUGET_HTTP_CACHE_PATH", nugetHttpCache.toString()),
+                Map.entry("DOTNET_BUNDLE_EXTRACT_BASE_DIR", bundleExtract.toString()),
+                Map.entry("DOTNET_CLI_TELEMETRY_OPTOUT", "1"),
+                Map.entry("DOTNET_SKIP_FIRST_TIME_EXPERIENCE", "1"),
+                Map.entry("DOTNET_NOLOGO", "1"),
+                Map.entry("DOTNET_MULTILEVEL_LOOKUP", "0"),
+                Map.entry("DOTNET_ADD_GLOBAL_TOOLS_TO_PATH", "false"),
+                Map.entry("DOTNET_GENERATE_ASPNET_CERTIFICATE", "false"));
+    }
+
     Process start(List<String> command, Map<String, String> environment, String label) throws IOException {
         requireCommand(command);
         Path output = outputPath(label);
@@ -112,7 +133,7 @@ final class ExternalLanguageProcessHarness implements AutoCloseable {
         processes.remove(process);
         if (process.exitValue() != 0) {
             throw new IllegalStateException("External command failed with exit code "
-                    + process.exitValue() + ": " + label);
+                    + process.exitValue() + ": " + label + "; " + processDiagnostic(process, label));
         }
     }
 
