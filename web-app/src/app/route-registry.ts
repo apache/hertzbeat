@@ -45,7 +45,7 @@ export const appRouteCatalog = {
   'monitor-new': pageRoute('monitor-new', monitorRoutePaths.create),
   'monitor-edit': pageRoute('monitor-edit', monitorRoutePaths.edit),
   'monitor-detail': pageRoute('monitor-detail', monitorRoutePaths.detail),
-  explore: pageRoute('explore', '/explore', {
+  explore: pageRoute('explore', applicationRoutePaths.explore, {
     resource: { labelKey: 'menu.explore' }
   }),
   instrumentation: pageRoute('instrumentation', '/observability/integration', {
@@ -101,7 +101,7 @@ export const appRouteCatalog = {
   bulletin: pageRoute('bulletin', '/bulletin', {
     resource: { labelKey: 'menu.bulletin' }
   }),
-  status: pageRoute('status', '/status', { layout: 'blank' }),
+  status: pageRoute('status', applicationRoutePaths.status, { layout: 'blank' }),
   login: pageRoute('login', applicationRoutePaths.login, { layout: 'passport' }),
   'not-found': pageRoute('not-found', '*')
 } as const satisfies Record<string, AppRouteDefinition>;

@@ -23,14 +23,19 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useMonitorListController } from '@/features/monitor/controller/use-monitor-list-controller';
 import { buildMonitorRoutePath, safeMonitorReturnTo } from '@/features/monitor/model/monitor-model';
+import { buildExplorePath } from '@/features/explore/model/explore-model';
 import { useLabelQueryController } from '@/features/settings/label/controller/label-query-controller';
 import { buildLabelMonitorPath } from '@/features/settings/label/model/label-model';
+import { publicStatusPath } from '@/features/status/shared/status-constants';
+import { buildSignalHandoffPath } from '@/shared/query-context';
 
 import { getAppRoute } from './route-registry';
 
 const canonical = vi.hoisted(() => ({
   application: {
     dashboard: '/canonical-dashboard',
+    explore: '/canonical-explore',
+    status: '/canonical-status',
     login: '/canonical-login'
   },
   monitor: {
@@ -92,6 +97,8 @@ describe('remaining route ownership', () => {
 
   it('derives catalog, Monitor builders, and label drilldown from inward contracts', () => {
     expect(getAppRoute('dashboard').path).toBe(canonical.application.dashboard);
+    expect(getAppRoute('explore').path).toBe(canonical.application.explore);
+    expect(getAppRoute('status').path).toBe(canonical.application.status);
     expect(getAppRoute('login').path).toBe(canonical.application.login);
     expect(getAppRoute('monitors').path).toBe(canonical.monitor.list);
     expect(getAppRoute('monitor-new').path).toBe(canonical.monitor.create);
@@ -107,6 +114,19 @@ describe('remaining route ownership', () => {
       '/canonical-monitors/7/edit?returnTo=%2Fcanonical-monitors'
     );
     expect(buildLabelMonitorPath({ name: 'env', tagValue: 'prod' })).toBe('/canonical-monitors?labels=env%3Aprod');
+  });
+
+  it('builds Explore navigation from the application path contract', () => {
+    expect(buildExplorePath({ signal: 'logs', timeRange: 'last-30m', serviceName: 'checkout' })).toBe(
+      '/canonical-explore?signal=logs&timeRange=last-30m&serviceName=checkout'
+    );
+    expect(buildSignalHandoffPath('traces', { serviceName: 'checkout' }, { from: 1000, to: 2000 })).toBe(
+      '/canonical-explore?signal=traces&serviceName=checkout&start=1000&end=2000'
+    );
+  });
+
+  it('uses the application path contract for the public Status link', () => {
+    expect(publicStatusPath).toBe(canonical.application.status);
   });
 
   it('uses the canonical Monitor create target in the controller', async () => {

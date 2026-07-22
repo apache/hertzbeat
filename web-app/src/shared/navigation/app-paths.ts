@@ -23,6 +23,8 @@ const monitorListPath = '/monitors';
 
 export const applicationRoutePaths = {
   dashboard: '/dashboard',
+  explore: '/explore',
+  status: '/status',
   login: loginPath
 } as const;
 

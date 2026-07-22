@@ -24,6 +24,7 @@ import {
   type ExploreTimeRange
 } from './explore-query';
 
+import { applicationRoutePaths } from '@/shared/navigation/app-paths';
 import { parseQueryContext, writeQueryContext, type ExactTimeWindow, type QueryContext } from '@/shared/query-context';
 
 export {
@@ -107,7 +108,7 @@ export function buildExplorePath(query: ExploreQuery) {
   if (query.windowMode === 'preset') params.set('windowMode', 'preset');
   if (query.start) params.set('start', String(query.start));
   if (query.end) params.set('end', String(query.end));
-  return `/explore?${params.toString()}`;
+  return `${applicationRoutePaths.explore}?${params.toString()}`;
 }
 
 export function exploreQueryContext(query: ExploreQuery): QueryContext {

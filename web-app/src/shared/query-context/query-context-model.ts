@@ -6,6 +6,7 @@
  */
 
 import { isSensitiveFieldName } from '@/core/security/sensitive-field';
+import { applicationRoutePaths } from '@/shared/navigation/app-paths';
 
 export type QueryContext = {
   collectorId?: string | undefined;
@@ -97,7 +98,7 @@ export function buildSignalHandoffPath(signal: SignalKind, context: QueryContext
   append(params, 'endpoint', context.endpoint);
   params.set('start', String(window.from));
   params.set('end', String(window.to));
-  return `/explore?${params.toString()}`;
+  return `${applicationRoutePaths.explore}?${params.toString()}`;
 }
 
 export function scopedQueryKey(
