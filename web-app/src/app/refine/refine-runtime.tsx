@@ -25,7 +25,7 @@ import { SessionProvider } from '@/core/auth/session-provider';
 import { noticeReceiverDataProvider, noticeReceiverResourceName } from '@/features/alert/notice-receiver';
 import { noticeRuleDataProvider, noticeRuleResourceName } from '@/features/alert/notice-rule';
 import { noticeTemplateDataProvider, noticeTemplateResourceName } from '@/features/alert/notice-template';
-import { labelDataProvider, labelResourceName } from '@/features/settings/label';
+import { labelDataProvider, labelResourceName } from '@/features/settings/label/refine';
 import { objectStoreDataProvider } from '@/features/settings/object-store';
 import { systemConfigDataProvider, systemConfigResourceName } from '@/features/settings/system-config';
 import { tokenDataProvider } from '@/features/settings/token';

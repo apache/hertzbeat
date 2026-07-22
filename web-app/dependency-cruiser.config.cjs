@@ -105,12 +105,22 @@ module.exports = {
       }
     },
     {
-      name: 'settings-composition-public-entry-only',
+      name: 'settings-router-public-entry-only',
       severity: 'error',
-      from: { path: '^src/app/(?:router|refine/refine-runtime)[.]tsx$' },
+      from: { path: '^src/app/router[.]tsx$' },
       to: {
         path: '^src/features/settings/(?:message-server|token|system-config|label|object-store)/.+',
         pathNot: '^src/features/settings/(?:message-server|token|system-config|label|object-store)/index[.]tsx?$'
+      }
+    },
+    {
+      name: 'settings-refine-public-entry-only',
+      severity: 'error',
+      from: { path: '^src/app/refine/', pathNot: productionSource },
+      to: {
+        path: '^src/features/settings/(?:message-server|token|system-config|label|object-store)/.+',
+        pathNot:
+          '^src/features/settings/(?:message-server|token|system-config|label|object-store)/(?:index|refine/index)[.]tsx?$'
       }
     },
     {

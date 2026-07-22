@@ -27,7 +27,7 @@ import { getAppRoute, type AppResourceRouteId } from '@/app/route-registry';
 import { noticeReceiverResourceName } from '@/features/alert/notice-receiver';
 import { noticeRuleResourceName } from '@/features/alert/notice-rule';
 import { noticeTemplateResourceName } from '@/features/alert/notice-template';
-import { labelResourceName } from '@/features/settings/label';
+import { labelResourceName } from '@/features/settings/label/refine';
 import { systemConfigResourceName } from '@/features/settings/system-config';
 import type { ShellCapability, ShellResourceMeta, ShellTimePolicy } from '@/layout/shell/shell-navigation-model';
 
