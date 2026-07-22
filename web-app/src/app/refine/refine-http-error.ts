@@ -15,10 +15,4 @@
  * limitations under the License.
  */
 
-export {
-  createRefineHttpError,
-  isRefineHttpError,
-  toRefineHttpError,
-  type RefineHttpError,
-  type RefineHttpErrorKind
-} from '@/shared/refine/refine-http-error';
+export { createRefineHttpError, toRefineHttpError } from '@/shared/refine/refine-http-error';

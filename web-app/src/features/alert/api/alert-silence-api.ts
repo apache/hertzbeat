@@ -28,10 +28,10 @@ import {
 } from '../model/alert-silence-model';
 import { parseAlertSilenceDetail, parseAlertSilencePage } from './alert-silence-schema';
 
-export const alertSilenceEndpoint = '/api/alert/silence';
+const alertSilenceEndpoint = '/api/alert/silence';
 const alertSilenceCollectionEndpoint = '/api/alert/silences';
 
-export function buildAlertSilenceListPath(query: AlertSilenceQuery) {
+function buildAlertSilenceListPath(query: AlertSilenceQuery) {
   const params = new URLSearchParams({
     pageIndex: String(query.pageIndex),
     pageSize: String(query.pageSize),
@@ -42,11 +42,11 @@ export function buildAlertSilenceListPath(query: AlertSilenceQuery) {
   return `${alertSilenceCollectionEndpoint}?${params.toString()}`;
 }
 
-export function buildAlertSilenceDetailPath(id: number) {
+function buildAlertSilenceDetailPath(id: number) {
   return `${alertSilenceEndpoint}/${canonicalAlertSilenceId(id)}`;
 }
 
-export function buildAlertSilenceDeletePath(id: number) {
+function buildAlertSilenceDeletePath(id: number) {
   return `${alertSilenceCollectionEndpoint}?ids=${canonicalAlertSilenceId(id)}`;
 }
 

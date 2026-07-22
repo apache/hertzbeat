@@ -29,8 +29,9 @@ import { noticeRuleResourceName } from '@/features/alert/notice-rule';
 import { noticeTemplateResourceName } from '@/features/alert/notice-template';
 import { labelResourceName } from '@/features/settings/label';
 import { systemConfigResourceName } from '@/features/settings/system-config';
-
 import type { ShellCapability, ShellResourceMeta, ShellTimePolicy } from '@/layout/shell/shell-navigation-model';
+
+import { alertSilenceResourceName } from './resources/alert-silence-data-provider';
 
 type NavigationResource = {
   name: string;
@@ -127,10 +128,11 @@ export const refineResources: ResourceProps[] = [
     timePolicy: 'none'
   }),
   routedNavigationResource('alert-silences', {
+    name: alertSilenceResourceName,
     parent: 'alerts',
     icon: <ToolOutlined />,
     order: 40,
-    dataProviderName: 'alert-silences',
+    dataProviderName: alertSilenceResourceName,
     timePolicy: 'none'
   }),
   routedNavigationResource('bulletin', {

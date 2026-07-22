@@ -12,7 +12,7 @@ import { NoticeReceiverContractError } from './notice-receiver-schema';
 export type NoticeReceiverRequestPhase = 'detail' | 'collection' | 'write' | 'command';
 
 /** Backend `CommonConstants.FAIL_CODE`, used by the exact receiver detail endpoint for not-found. */
-export const NOTICE_RECEIVER_MISSING_API_CODE = 15;
+const NOTICE_RECEIVER_MISSING_API_CODE = 15;
 
 /** Converts transport and wire-schema evidence before it can escape the Receiver API. */
 export function normalizeNoticeReceiverApiFailure(reason: unknown, phase: NoticeReceiverRequestPhase) {

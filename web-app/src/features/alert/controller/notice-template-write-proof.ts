@@ -25,7 +25,7 @@ import {
 import { noticeTemplateResourceName } from '../api/notice-template-resource';
 import { classifyNoticeTemplateDetailFailure } from '../model/notice-template-failure';
 
-export class NoticeTemplateWriteProofError extends Error {
+class NoticeTemplateWriteProofError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'NoticeTemplateWriteProofError';

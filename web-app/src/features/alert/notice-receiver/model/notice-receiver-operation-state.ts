@@ -9,7 +9,7 @@ export type NoticeReceiverWriteReceipt =
   | { kind: 'save'; phase: 'write' | 'proof' | 'projection'; draft: NoticeReceiverDraft; id?: number }
   | { kind: 'delete'; phase: 'write' | 'proof' | 'projection'; record: NoticeReceiver };
 
-export type NoticeReceiverTestReceipt = {
+type NoticeReceiverTestReceipt = {
   kind: 'test';
   phase: 'delivery-uncertain';
   draft: NoticeReceiverDraft;
