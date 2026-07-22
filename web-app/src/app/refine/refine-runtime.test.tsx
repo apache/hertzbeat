@@ -42,7 +42,7 @@ import { systemConfigDataProvider } from '@/features/settings/system-config/refi
 import { tokenDataProvider } from '@/features/settings/token';
 
 import { AppProviders } from '../providers';
-import { appRoutes } from '../router';
+import { appRoutes } from '../app-routes';
 import { alertSilenceDataProvider } from './resources/alert-silence-data-provider';
 
 const { authenticatedSession } = vi.hoisted(() => ({

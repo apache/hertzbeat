@@ -275,7 +275,7 @@ test('rejects alternate production owners for the session provider and authentic
     'src/core/auth/auth-gate.tsx': 'export const AuthGate = () => null;',
     'src/app/refine/refine-runtime.tsx':
       "import { SessionProvider } from '@/core/auth/session-provider'; export const Runtime = SessionProvider;",
-    'src/app/router.tsx': "import { AuthGate } from '@/core/auth/auth-gate'; export const router = AuthGate;",
+    'src/app/app-routes.tsx': "import { AuthGate } from '@/core/auth/auth-gate'; export const routes = AuthGate;",
     'src/layout/shell/alternate-auth-owner.tsx': [
       "import { SessionProvider } from '@/core/auth/session-provider';",
       "import { AuthGate } from '@/core/auth/auth-gate';",
@@ -312,7 +312,7 @@ test('keeps settings composition imports on feature public entries', () => {
     'src/features/settings/label/index.ts': 'export const LabelPage = true;',
     'src/features/settings/label/refine/index.ts': 'export const labelDataProvider = true;',
     'src/features/settings/token/index.ts': 'export const tokenDataProvider = true;',
-    'src/app/router.tsx': "import { LabelPage } from '@/features/settings/label'; export const route = LabelPage;",
+    'src/app/app-routes.tsx': "import { LabelPage } from '@/features/settings/label'; export const route = LabelPage;",
     'src/app/refine/refine-runtime.tsx':
       "import { labelDataProvider } from '@/features/settings/label/refine'; import { tokenDataProvider } from '@/features/settings/token'; export const providers = [labelDataProvider, tokenDataProvider];"
   });
@@ -321,7 +321,7 @@ test('keeps settings composition imports on feature public entries', () => {
     'src/features/settings/label/pages/label-page.tsx': 'export const LabelPage = true;',
     'src/features/settings/token/index.ts': 'export const tokenDataProvider = true;',
     'src/features/settings/token/provider/token-data-provider.ts': 'export const tokenDataProvider = true;',
-    'src/app/router.tsx':
+    'src/app/app-routes.tsx':
       "import { LabelPage } from '@/features/settings/label/pages/label-page'; export const route = LabelPage;",
     'src/app/refine/refine-runtime.tsx':
       "import { labelDataProvider } from '@/features/settings/label'; import { tokenDataProvider } from '@/features/settings/token/provider/token-data-provider'; export const providers = [labelDataProvider, tokenDataProvider];"
@@ -335,7 +335,7 @@ test('keeps settings composition imports on feature public entries', () => {
   assert.match(rejectedResult.output, /settings-router-public-entry-only/);
   assert.match(rejectedResult.output, /settings-refine-split-entry-only/);
   assert.match(rejectedResult.output, /settings-refine-public-entry-only/);
-  assert.match(rejectedResult.output, /router[.]tsx/);
+  assert.match(rejectedResult.output, /app-routes[.]tsx/);
   assert.match(rejectedResult.output, /refine-runtime[.]tsx/);
 });
 
@@ -343,7 +343,7 @@ test('separates Alert route and Refine public entries', () => {
   const allowedFixture = createProject({
     'src/features/alert/notice-rule/index.ts': 'export const NoticeRulePage = true;',
     'src/features/alert/notice-rule/refine/index.ts': 'export const noticeRuleDataProvider = true;',
-    'src/app/router.tsx':
+    'src/app/app-routes.tsx':
       "import { NoticeRulePage } from '@/features/alert/notice-rule'; export const route = NoticeRulePage;",
     'src/app/refine/refine-runtime.tsx':
       "import { noticeRuleDataProvider } from '@/features/alert/notice-rule/refine'; export const provider = noticeRuleDataProvider;"
@@ -351,7 +351,7 @@ test('separates Alert route and Refine public entries', () => {
   const rejectedFixture = createProject({
     'src/features/alert/notice-rule/index.ts': 'export const NoticeRulePage = true;',
     'src/features/alert/notice-rule/refine/index.ts': 'export const noticeRuleDataProvider = true;',
-    'src/app/router.tsx':
+    'src/app/app-routes.tsx':
       "import { noticeRuleDataProvider } from '@/features/alert/notice-rule/refine'; export const route = noticeRuleDataProvider;",
     'src/app/refine/refine-runtime.tsx':
       "import { NoticeRulePage } from '@/features/alert/notice-rule'; export const provider = NoticeRulePage;"
@@ -369,12 +369,13 @@ test('separates Alert route and Refine public entries', () => {
 test('keeps Status routes on the feature public entry', () => {
   const allowedFixture = createProject({
     'src/features/status/index.ts': 'export const PublicStatusPage = true;',
-    'src/app/router.tsx': "import { PublicStatusPage } from '@/features/status'; export const route = PublicStatusPage;"
+    'src/app/app-routes.tsx':
+      "import { PublicStatusPage } from '@/features/status'; export const route = PublicStatusPage;"
   });
   const rejectedFixture = createProject({
     'src/features/status/index.ts': 'export const PublicStatusPage = true;',
     'src/features/status/public/pages/public-status-page.tsx': 'export const PublicStatusPage = true;',
-    'src/app/router.tsx':
+    'src/app/app-routes.tsx':
       "import { PublicStatusPage } from '@/features/status/public/pages/public-status-page'; export const route = PublicStatusPage;"
   });
 
@@ -389,12 +390,13 @@ test('keeps Status routes on the feature public entry', () => {
 test('keeps Monitor routes on the feature public entry', () => {
   const allowedFixture = createProject({
     'src/features/monitor/index.ts': 'export const MonitorListPage = true;',
-    'src/app/router.tsx': "import { MonitorListPage } from '@/features/monitor'; export const route = MonitorListPage;"
+    'src/app/app-routes.tsx':
+      "import { MonitorListPage } from '@/features/monitor'; export const route = MonitorListPage;"
   });
   const rejectedFixture = createProject({
     'src/features/monitor/index.ts': 'export const MonitorListPage = true;',
     'src/features/monitor/pages/monitor-list-page.tsx': 'export const MonitorListPage = true;',
-    'src/app/router.tsx':
+    'src/app/app-routes.tsx':
       "import { MonitorListPage } from '@/features/monitor/pages/monitor-list-page'; export const route = MonitorListPage;"
   });
 

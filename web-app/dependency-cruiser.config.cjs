@@ -86,7 +86,7 @@ module.exports = {
       severity: 'error',
       from: {
         path: '^src/',
-        pathNot: `(?:${productionSource}|^src/app/router[.]tsx$)`
+        pathNot: `(?:${productionSource}|^src/app/app-routes[.]tsx$)`
       },
       to: { path: '^src/core/auth/auth-gate[.]tsx$' }
     },
@@ -107,7 +107,7 @@ module.exports = {
     {
       name: 'settings-router-public-entry-only',
       severity: 'error',
-      from: { path: '^src/app/router[.]tsx$' },
+      from: { path: '^src/app/app-routes[.]tsx$' },
       to: {
         path: '^src/features/settings/(?:message-server|token|system-config|label|object-store)/.+',
         pathNot: '^src/features/settings/(?:message-server|token|system-config|label|object-store)/index[.]tsx?$'
@@ -134,7 +134,7 @@ module.exports = {
     {
       name: 'alert-router-public-entry-only',
       severity: 'error',
-      from: { path: '^src/app/router[.]tsx$' },
+      from: { path: '^src/app/app-routes[.]tsx$' },
       to: {
         path: '^src/features/alert/notice-(?:receiver|rule)/.+',
         pathNot: '^src/features/alert/notice-(?:receiver|rule)/index[.]tsx?$'
@@ -152,7 +152,7 @@ module.exports = {
     {
       name: 'status-router-public-entry-only',
       severity: 'error',
-      from: { path: '^src/app/router[.]tsx$' },
+      from: { path: '^src/app/app-routes[.]tsx$' },
       to: {
         path: '^src/features/status/.+',
         pathNot: '^src/features/status/index[.]tsx?$'
@@ -161,7 +161,7 @@ module.exports = {
     {
       name: 'monitor-router-public-entry-only',
       severity: 'error',
-      from: { path: '^src/app/router[.]tsx$' },
+      from: { path: '^src/app/app-routes[.]tsx$' },
       to: {
         path: '^src/features/monitor/.+',
         pathNot: '^src/features/monitor/index[.]tsx?$'

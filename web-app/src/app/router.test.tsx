@@ -24,7 +24,7 @@ import { loadTokenPageRoute } from '@/features/settings/token';
 import { legacySettingsPaths } from '@/shared/settings/settings-routes';
 
 import { applicationRootPath, getAppRoute, routeRegistry, type AppRouteId } from './route-registry';
-import { appRoutes } from './router';
+import { appRoutes } from './app-routes';
 
 function flattenRoutes(routes: RouteObject[]): RouteObject[] {
   return routes.flatMap(route => [route, ...flattenRoutes(route.children ?? [])]);
