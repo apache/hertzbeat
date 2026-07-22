@@ -62,6 +62,16 @@ final class ExternalLanguageProcessHarness implements AutoCloseable {
         return resolved;
     }
 
+    Path createPythonVirtualEnvironment(Path pythonBinary) throws Exception {
+        Path virtualEnvironment = resolve("python-venv");
+        run(
+                List.of(pythonBinary.toString(), "-m", "venv", virtualEnvironment.toString()),
+                Map.of(),
+                Duration.ofMinutes(1),
+                "python-venv");
+        return virtualEnvironment;
+    }
+
     Process start(List<String> command, Map<String, String> environment, String label) throws IOException {
         requireCommand(command);
         Path output = outputPath(label);
