@@ -23,7 +23,10 @@ import { hasOwnProperties } from '@/shared/validation/own-properties';
 
 import {
   createNoticeReceiverDraft,
+  noticeReceiverLarkReceiveTypes,
   noticeReceiverPageSizes,
+  noticeReceiverSecretKeyCatalog,
+  noticeReceiverWebhookAuthTypes,
   receiverTypeDefinitions,
   validateNoticeReceiverDraft,
   type NoticeReceiverDraft,
@@ -37,7 +40,9 @@ const looseNumberSchema = z.custom<number>(value => typeof value === 'number');
 const receiverTypeSchema = z.custom<NoticeReceiverDraft['type']>(value =>
   receiverTypeDefinitions.some(item => item.type === value)
 );
-const stringArraySchema = z.array(z.string());
+const webhookAuthTypeSchema = z.enum(noticeReceiverWebhookAuthTypes);
+const larkReceiveTypeSchema = z.union(noticeReceiverLarkReceiveTypes.map(type => z.literal(type)));
+const secretKeyArraySchema = z.array(z.enum(noticeReceiverSecretKeyCatalog));
 const draftShape = {
   id: positiveIntegerSchema.optional(),
   name: z.string(),
@@ -45,7 +50,7 @@ const draftShape = {
   phone: z.string(),
   email: z.string(),
   hookUrl: z.string(),
-  hookAuthType: z.string(),
+  hookAuthType: webhookAuthTypeSchema,
   hookAuthToken: z.string(),
   wechatId: z.string(),
   accessToken: z.string(),
@@ -69,12 +74,12 @@ const draftShape = {
   serverChanToken: z.string(),
   gotifyToken: z.string(),
   appId: z.string(),
-  larkReceiveType: looseNumberSchema,
+  larkReceiveType: larkReceiveTypeSchema,
   chatId: z.string(),
-  configuredSecrets: stringArraySchema,
-  clearSecrets: stringArraySchema
+  configuredSecrets: secretKeyArraySchema,
+  clearSecrets: secretKeyArraySchema
 };
-const draftSchema = z.object(draftShape).passthrough();
+const draftSchema = z.object(draftShape);
 const draftFieldNames = Object.keys(draftShape).filter(key => key !== 'id');
 const nameFilterSchema = z.object({
   field: z.literal('name'),
@@ -113,7 +118,10 @@ export function readNoticeReceiverDraft(value: unknown, id?: number): NoticeRece
   if (id === undefined ? source.id !== undefined : source.id !== id) {
     throw inputError('NOTICE_RECEIVER_VARIABLES_INVALID');
   }
-  const draft = source as NoticeReceiverDraft;
+  // Zod models an optional key as possibly present with `undefined`; the
+  // domain model instead requires true absence for a create draft.
+  const { id: sourceId, ...fields } = source;
+  const draft: NoticeReceiverDraft = sourceId === undefined ? fields : { ...fields, id: sourceId };
   if (validateNoticeReceiverDraft(draft).length > 0) {
     throw inputError('NOTICE_RECEIVER_VARIABLES_INVALID');
   }

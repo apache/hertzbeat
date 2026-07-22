@@ -485,17 +485,27 @@ describe('Notice Receiver provider input boundary', () => {
     }
   });
 
-  it('preserves the complete draft shape, unknown fields, nullable numeric values, and string arrays', () => {
+  it('reconstructs the complete draft shape without retaining unknown fields', () => {
     const source = {
       ...createNoticeReceiverDraft(),
       name: 'Pager',
       email: 'ops@example.test',
       agentId: null,
-      configuredSecrets: ['future-secret'],
-      clearSecrets: ['future-clear'],
-      futureMessageServer: { id: 9 }
+      configuredSecrets: ['hookUrl'],
+      clearSecrets: ['hookAuthToken'],
+      authorization: 'private-authorization'
     };
-    expect(readNoticeReceiverDraft(source)).toEqual(source);
+    const parsed = readNoticeReceiverDraft(source);
+    expect(parsed).toEqual({
+      ...createNoticeReceiverDraft(),
+      name: 'Pager',
+      email: 'ops@example.test',
+      agentId: null,
+      configuredSecrets: ['hookUrl'],
+      clearSecrets: ['hookAuthToken']
+    });
+    expect(parsed).not.toHaveProperty('authorization');
+    expect(JSON.stringify(parsed)).not.toContain('private-authorization');
     expect(readNoticeReceiverDraft({ ...source, agentId: 0 })).toMatchObject({ agentId: 0 });
     expect(() => readNoticeReceiverDraft(Object.create(source) as unknown)).toThrow(
       expect.objectContaining({ code: 'NOTICE_RECEIVER_VARIABLES_INVALID', statusCode: 400 })
@@ -510,6 +520,12 @@ describe('Notice Receiver provider input boundary', () => {
       })
     );
     expect(() => readNoticeReceiverDraft({ ...source, configuredSecrets: [7] })).toThrow(
+      expect.objectContaining({
+        code: 'NOTICE_RECEIVER_VARIABLES_INVALID',
+        statusCode: 400
+      })
+    );
+    expect(() => readNoticeReceiverDraft({ ...source, configuredSecrets: ['future-secret'] })).toThrow(
       expect.objectContaining({
         code: 'NOTICE_RECEIVER_VARIABLES_INVALID',
         statusCode: 400
