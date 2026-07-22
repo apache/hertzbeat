@@ -2,6 +2,8 @@
 
 import { z } from 'zod';
 
+import { hasOwnProperties } from '@/shared/validation/own-properties';
+
 import { noticeReceiverOptionSchema, noticeReceiverTypeSchema } from '../../notice-receiver/api/notice-receiver-schema';
 import type { NoticeTemplate } from '../../notice-template-model';
 import { NoticeRuleContractError } from '../model/notice-rule-failure';
@@ -140,6 +142,9 @@ export function parseNoticeTemplates(value: unknown): NoticeTemplate[] {
 }
 
 export function parseNoticeRuleMutationVariables(value: unknown): NoticeRuleMutationVariables {
+  if (!hasOwnProperties(value, ['draft', 'receivers', 'templates'])) {
+    throw new NoticeRuleContractError('NOTICE_RULE_VARIABLES_INVALID');
+  }
   const parsed = parse(noticeRuleMutationVariablesSchema, value, 'NOTICE_RULE_VARIABLES_INVALID');
   const { id, ...draftWithoutId } = parsed.draft;
   const draft = id === undefined ? draftWithoutId : { ...draftWithoutId, id };

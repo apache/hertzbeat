@@ -87,6 +87,14 @@ describe('notice rule data provider', () => {
     expect(api.save).not.toHaveBeenCalled();
   });
 
+  it('rejects a mutation envelope whose required fields are inherited', async () => {
+    await expect(
+      noticeRuleDataProvider.create({ resource: 'notice-rules', variables: Object.create(variables) as unknown })
+    ).rejects.toMatchObject({ code: 'NOTICE_RULE_VARIABLES_INVALID' });
+    expect(api.loadAll).not.toHaveBeenCalled();
+    expect(api.save).not.toHaveBeenCalled();
+  });
+
   it('requires update detail convergence and delete detail missing evidence', async () => {
     const updateVariables = { ...variables, draft: { ...draft, id: 31 } };
     api.loadOne.mockResolvedValueOnce({ ...rule, enable: false });
