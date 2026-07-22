@@ -3,7 +3,7 @@
 import { App } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { AlertInhibit, AlertInhibitPage } from '../alert-inhibit-model';
+import type { AlertInhibit, AlertInhibitPage } from '../model/alert-inhibit-model';
 import {
   removeAlertInhibit,
   retryAlertInhibit,

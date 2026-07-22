@@ -8,9 +8,9 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLayoutEffect, useRef } from 'react';
 
-import { loadAlertGroups } from '../alert-group-api';
-import { alertGroupFailureKind, type AlertGroupQuery } from '../alert-group-model';
-import { resolveAlertGroupListState } from '../alert-group-state';
+import { loadAlertGroups } from '../api/alert-group-api';
+import { alertGroupFailureKind, type AlertGroupQuery } from '../model/alert-group-model';
+import { resolveAlertGroupListState } from '../model/alert-group-state';
 import { alertGroupQueryKeys } from './alert-group-query-keys';
 
 export function useAlertGroupReadController(query: AlertGroupQuery) {

@@ -21,7 +21,7 @@ import type { PropsWithChildren } from 'react';
 import { createMemoryRouter, MemoryRouter, RouterProvider } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { AlertInhibitQuery } from '../alert-inhibit-model';
+import type { AlertInhibitQuery } from '../model/alert-inhibit-model';
 import {
   alertInhibitPage,
   deferred,
@@ -37,8 +37,8 @@ const api = vi.hoisted(() => ({
 }));
 const notify = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn(), warning: vi.fn() }));
 
-vi.mock('../alert-inhibit-api', async importOriginal => ({
-  ...(await importOriginal<typeof import('../alert-inhibit-api')>()),
+vi.mock('../api/alert-inhibit-api', async importOriginal => ({
+  ...(await importOriginal<typeof import('../api/alert-inhibit-api')>()),
   ...api
 }));
 vi.mock('antd', async importOriginal => ({

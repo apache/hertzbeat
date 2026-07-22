@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import type { AlertInhibitQuery } from '../alert-inhibit-model';
+import type { AlertInhibitQuery } from '../model/alert-inhibit-model';
 
 const rootKey = ['alert-inhibit-policies'] as const;
 

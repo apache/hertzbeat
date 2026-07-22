@@ -145,14 +145,14 @@ export const appRoutes: RouteObject[] = [
               {
                 ...getAppRouteIdentity('alert-groups'),
                 lazy: async () => {
-                  const { AlertGroupPage } = await import('@/features/alert/alert-group-page');
+                  const { AlertGroupPage } = await import('@/features/alert/pages/alert-group-page');
                   return { Component: AlertGroupPage };
                 }
               },
               {
                 ...getAppRouteIdentity('alert-inhibits'),
                 lazy: async () => {
-                  const { AlertInhibitPage } = await import('@/features/alert/alert-inhibit-page');
+                  const { AlertInhibitPage } = await import('@/features/alert/pages/alert-inhibit-page');
                   return { Component: AlertInhibitPage };
                 }
               },

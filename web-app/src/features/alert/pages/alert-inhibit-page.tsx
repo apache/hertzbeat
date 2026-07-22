@@ -18,14 +18,14 @@
 import { Button, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { AlertManagementNav } from './components/alert-management-nav';
-import { AlertNoiseControlNav } from './components/alert-noise-control-nav';
-import styles from './shared/alert-policy-page.module.css';
-import { AlertInhibitEditor } from './components/alert-inhibit-editor';
-import { AlertInhibitRecovery } from './components/alert-inhibit-recovery';
-import { AlertInhibitDetailFailure, AlertInhibitResults } from './components/alert-inhibit-results';
-import { AlertInhibitToolbar } from './components/alert-inhibit-toolbar';
-import { useAlertInhibitController } from './controller/use-alert-inhibit-controller';
+import { AlertManagementNav } from '../components/alert-management-nav';
+import { AlertNoiseControlNav } from '../components/alert-noise-control-nav';
+import { AlertInhibitEditor } from '../components/alert-inhibit-editor';
+import { AlertInhibitRecovery } from '../components/alert-inhibit-recovery';
+import { AlertInhibitDetailFailure, AlertInhibitResults } from '../components/alert-inhibit-results';
+import { AlertInhibitToolbar } from '../components/alert-inhibit-toolbar';
+import { useAlertInhibitController } from '../controller/use-alert-inhibit-controller';
+import styles from '../shared/alert-policy-page.module.css';
 
 export function AlertInhibitPage() {
   const { t } = useTranslation();

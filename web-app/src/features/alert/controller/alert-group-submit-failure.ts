@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { alertGroupFailureKind } from '../alert-group-model';
+import { alertGroupFailureKind } from '../model/alert-group-model';
 import type { AlertGroupEditor } from './use-alert-group-editor-controller';
 
 export type AlertGroupNotifications = {

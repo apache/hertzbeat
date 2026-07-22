@@ -17,14 +17,14 @@
 
 import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
 
-import { alertGroupApiRequest } from './api/alert-group-api-failure';
+import { alertGroupApiRequest } from './alert-group-api-failure';
 import {
   buildAlertGroupPayload,
   buildAlertGroupTogglePayload,
   type AlertGroupConverge,
   type AlertGroupDraft,
   type AlertGroupQuery
-} from './alert-group-model';
+} from '../model/alert-group-model';
 import { parseAlertGroupDetail, parseAlertGroupPage } from './alert-group-schema';
 
 const alertGroupEndpoint = '/api/alert/group';

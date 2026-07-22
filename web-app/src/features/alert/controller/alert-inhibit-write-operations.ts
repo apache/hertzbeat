@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { deleteAlertInhibit, saveAlertInhibit, updateAlertInhibitEnabled } from '../alert-inhibit-api';
+import { deleteAlertInhibit, saveAlertInhibit, updateAlertInhibitEnabled } from '../api/alert-inhibit-api';
 import {
   AlertInhibitContractError,
   AlertInhibitUnavailableError,
@@ -10,13 +10,13 @@ import {
   validateAlertInhibitDraft,
   type AlertInhibit,
   type AlertInhibitPage
-} from '../alert-inhibit-model';
+} from '../model/alert-inhibit-model';
 import {
   loadExactAlertInhibit,
   proveAlertInhibitMissing,
   requireAlertInhibitAbsent,
   requireAlertInhibitConvergence
-} from '../alert-inhibit-write-proof';
+} from '../api/alert-inhibit-write-proof';
 import type { AlertInhibitReceipt } from '../model/alert-inhibit-state';
 import type { AlertInhibitEditorController } from './use-alert-inhibit-editor-controller';
 import type {

@@ -23,7 +23,7 @@ import {
   type AlertInhibit,
   type AlertInhibitPage,
   type AlertInhibitQuery
-} from './alert-inhibit-model';
+} from '../model/alert-inhibit-model';
 
 const safeIntegerSchema = z.number().refine(Number.isSafeInteger, 'Expected a safe integer');
 const positiveIntegerSchema = safeIntegerSchema.refine(value => value > 0, 'Expected a positive integer');

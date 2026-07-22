@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { saveAlertGroup } from '../alert-group-api';
-import { alertGroupWriteOutcome, buildAlertGroupPayload, type AlertGroupDraft } from '../alert-group-model';
-import { prepareAlertGroupCreateProof, proveAlertGroupCreated } from '../alert-group-write-proof';
+import { saveAlertGroup } from '../api/alert-group-api';
+import { prepareAlertGroupCreateProof, proveAlertGroupCreated } from '../api/alert-group-write-proof';
+import { alertGroupWriteOutcome, buildAlertGroupPayload, type AlertGroupDraft } from '../model/alert-group-model';
 import type { AlertGroupSubmitStage } from './alert-group-submit-failure';
 import type { AlertGroupCommandGate, AlertGroupEditor } from './use-alert-group-editor-controller';
 

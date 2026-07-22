@@ -31,7 +31,7 @@ import {
   type AlertGroupConverge,
   type AlertGroupDraft,
   type AlertGroupQuery
-} from '../alert-group-model';
+} from '../model/alert-group-model';
 import { useAlertGroupController } from './use-alert-group-controller';
 
 const api = vi.hoisted(() => ({
@@ -43,8 +43,8 @@ const api = vi.hoisted(() => ({
 }));
 const notify = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn(), warning: vi.fn() }));
 
-vi.mock('../alert-group-api', async importOriginal => ({
-  ...(await importOriginal<typeof import('../alert-group-api')>()),
+vi.mock('../api/alert-group-api', async importOriginal => ({
+  ...(await importOriginal<typeof import('../api/alert-group-api')>()),
   ...api
 }));
 vi.mock('antd', async importOriginal => ({

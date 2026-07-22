@@ -2,21 +2,30 @@
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 import { describe, expect, it } from 'vitest';
 
-import { AlertGroupContractError, AlertGroupMissingError } from './alert-group-model';
-import { parseAlertGroupDetail, parseAlertGroupPage } from './alert-group-schema';
+import { AlertInhibitContractError, AlertInhibitMissingError } from '../model/alert-inhibit-model';
+import { parseAlertInhibitDetail, parseAlertInhibitPage } from './alert-inhibit-schema';
 
 const persisted = {
-  id: 7,
-  name: 'By service',
-  groupLabels: ['service', 'severity'],
-  groupWait: 30,
-  groupInterval: 300,
-  repeatInterval: 0,
+  id: 9,
+  name: 'Critical suppresses warning',
+  sourceLabels: { severity: 'critical', service: 'checkout' },
+  targetLabels: { severity: 'warning', service: 'checkout' },
+  equalLabels: ['service'],
   enable: true,
   creator: 'operator',
   modifier: null,
@@ -24,25 +33,29 @@ const persisted = {
   gmtUpdate: '2026-07-17T09:00:00'
 };
 
-describe('alert group wire schemas', () => {
+describe('alert inhibit wire schemas', () => {
   it('allowlists detail fields and preserves nullable Java entity values', () => {
-    expect(parseAlertGroupDetail({ ...persisted, internal: 'ignored' })).toEqual(persisted);
+    expect(parseAlertInhibitDetail({ ...persisted, responseOnly: 'discard' })).toEqual(persisted);
+    const withoutAudit: Record<string, unknown> = { ...persisted };
+    delete withoutAudit.creator;
+    delete withoutAudit.modifier;
+    delete withoutAudit.gmtCreate;
+    delete withoutAudit.gmtUpdate;
+    expect(parseAlertInhibitDetail(withoutAudit)).toEqual(withoutAudit);
     expect(
-      parseAlertGroupDetail({
+      parseAlertInhibitDetail({
         ...persisted,
-        groupLabels: null,
-        groupWait: null,
-        groupInterval: null,
-        repeatInterval: null,
+        sourceLabels: null,
+        targetLabels: null,
+        equalLabels: null,
         enable: null,
         gmtCreate: null,
         gmtUpdate: null
       })
     ).toMatchObject({
-      groupLabels: null,
-      groupWait: null,
-      groupInterval: null,
-      repeatInterval: null,
+      sourceLabels: null,
+      targetLabels: null,
+      equalLabels: null,
       enable: null,
       gmtCreate: null,
       gmtUpdate: null
@@ -52,24 +65,24 @@ describe('alert group wire schemas', () => {
   it.each([
     ['unsafe id', { ...persisted, id: Number.MAX_SAFE_INTEGER + 1 }],
     ['blank name', { ...persisted, name: '  ' }],
-    ['duplicate grouping label', { ...persisted, groupLabels: ['service', 'service'] }],
-    ['negative interval', { ...persisted, groupInterval: -1 }],
+    ['invalid source map', { ...persisted, sourceLabels: { severity: 1 } }],
+    ['blank target key', { ...persisted, targetLabels: { ' ': 'warning' } }],
+    ['duplicate equal label', { ...persisted, equalLabels: ['service', 'service'] }],
     ['string enablement', { ...persisted, enable: 'true' }],
-    ['numeric audit time', { ...persisted, gmtUpdate: Date.now() }],
-    ['invalid local audit time', { ...persisted, gmtUpdate: '2026-02-30T09:00:00' }]
+    ['invalid audit time', { ...persisted, gmtUpdate: '2026-02-30T09:00:00' }]
   ])('rejects malformed %s evidence', (_label, value) => {
-    expect(() => parseAlertGroupDetail(value)).toThrow(AlertGroupContractError);
+    expect(() => parseAlertInhibitDetail(value)).toThrow(AlertInhibitContractError);
   });
 
   it('keeps missing detail distinct from malformed detail', () => {
-    expect(() => parseAlertGroupDetail(null)).toThrow(AlertGroupMissingError);
-    expect(() => parseAlertGroupDetail({})).toThrow(AlertGroupContractError);
+    expect(() => parseAlertInhibitDetail(null)).toThrow(AlertInhibitMissingError);
+    expect(() => parseAlertInhibitDetail({})).toThrow(AlertInhibitContractError);
   });
 
-  it('validates Spring page consistency, request identity, and unique ids', () => {
+  it('validates Spring page consistency, request identity, capacity, and unique ids', () => {
     const query = { search: '', pageIndex: 1, pageSize: 15 };
     expect(
-      parseAlertGroupPage(
+      parseAlertInhibitPage(
         {
           content: [persisted],
           totalElements: 16,
@@ -82,7 +95,7 @@ describe('alert group wire schemas', () => {
       )
     ).toEqual({ content: [persisted], totalElements: 16, totalPages: 2, number: 1, size: 15 });
     expect(() =>
-      parseAlertGroupPage(
+      parseAlertInhibitPage(
         {
           content: [persisted],
           totalElements: 1,
@@ -92,9 +105,9 @@ describe('alert group wire schemas', () => {
         },
         query
       )
-    ).toThrow(AlertGroupContractError);
+    ).toThrow(AlertInhibitContractError);
     expect(() =>
-      parseAlertGroupPage(
+      parseAlertInhibitPage(
         {
           content: [persisted],
           totalElements: 16,
@@ -104,9 +117,9 @@ describe('alert group wire schemas', () => {
         },
         query
       )
-    ).toThrow(AlertGroupContractError);
+    ).toThrow(AlertInhibitContractError);
     expect(() =>
-      parseAlertGroupPage(
+      parseAlertInhibitPage(
         {
           content: [persisted, persisted],
           totalElements: 17,
@@ -116,7 +129,7 @@ describe('alert group wire schemas', () => {
         },
         query
       )
-    ).toThrow(AlertGroupContractError);
+    ).toThrow(AlertInhibitContractError);
   });
 
   it.each([
@@ -137,12 +150,12 @@ describe('alert group wire schemas', () => {
       { search: '', pageIndex: 1, pageSize: 8 }
     ]
   ])('rejects %s under an authoritative Spring total', (_name, page, query) => {
-    expect(() => parseAlertGroupPage(page, query)).toThrow(AlertGroupContractError);
+    expect(() => parseAlertInhibitPage(page, query)).toThrow(AlertInhibitContractError);
   });
 
   it('accepts an empty page beyond the authoritative result range', () => {
     expect(
-      parseAlertGroupPage(
+      parseAlertInhibitPage(
         { content: [], totalElements: 10, totalPages: 2, number: 2, size: 8 },
         { search: '', pageIndex: 2, pageSize: 8 }
       )

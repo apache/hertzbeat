@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { AlertInhibit, AlertInhibitQuery } from '../alert-inhibit-model';
+import type { AlertInhibit, AlertInhibitQuery } from '../model/alert-inhibit-model';
 
 export const persistedAlertInhibit: AlertInhibit = {
   id: 7,

@@ -9,7 +9,7 @@ import { Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { TFunction } from 'i18next';
 
-import type { AlertGroupConverge } from '../alert-group-model';
+import type { AlertGroupConverge } from '../model/alert-group-model';
 import styles from '../shared/alert-policy-page.module.css';
 import { AlertGroupActionCell, AlertGroupEnabledCell, type AlertGroupColumnActions } from './alert-group-table-cells';
 

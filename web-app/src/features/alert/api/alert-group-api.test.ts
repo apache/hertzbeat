@@ -38,7 +38,7 @@ import {
   saveAlertGroup,
   updateAlertGroupEnabled
 } from './alert-group-api';
-import { AlertGroupRequestFailure, createAlertGroupDraft, type AlertGroupConverge } from './alert-group-model';
+import { AlertGroupRequestFailure, createAlertGroupDraft, type AlertGroupConverge } from '../model/alert-group-model';
 
 const persisted: AlertGroupConverge = {
   id: 7,

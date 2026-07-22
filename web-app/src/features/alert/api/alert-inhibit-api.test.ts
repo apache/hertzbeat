@@ -37,7 +37,7 @@ import {
   saveAlertInhibit,
   updateAlertInhibitEnabled
 } from './alert-inhibit-api';
-import { AlertInhibitRequestFailure, createAlertInhibitDraft, type AlertInhibit } from './alert-inhibit-model';
+import { AlertInhibitRequestFailure, createAlertInhibitDraft, type AlertInhibit } from '../model/alert-inhibit-model';
 
 const persisted: AlertInhibit = {
   id: 9,

@@ -18,14 +18,14 @@
 import { Button, Input, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { AlertManagementNav } from './components/alert-management-nav';
-import { AlertNoiseControlNav } from './components/alert-noise-control-nav';
-import styles from './shared/alert-policy-page.module.css';
-import { buildAlertGroupColumns } from './components/alert-group-columns';
-import { AlertGroupEditor } from './components/alert-group-editor';
-import { AlertGroupRecovery } from './components/alert-group-recovery';
-import { AlertGroupDetailFailure, AlertGroupResults } from './components/alert-group-results';
-import { useAlertGroupController } from './controller/use-alert-group-controller';
+import { AlertManagementNav } from '../components/alert-management-nav';
+import { AlertNoiseControlNav } from '../components/alert-noise-control-nav';
+import { buildAlertGroupColumns } from '../components/alert-group-columns';
+import { AlertGroupEditor } from '../components/alert-group-editor';
+import { AlertGroupRecovery } from '../components/alert-group-recovery';
+import { AlertGroupDetailFailure, AlertGroupResults } from '../components/alert-group-results';
+import { useAlertGroupController } from '../controller/use-alert-group-controller';
+import styles from '../shared/alert-policy-page.module.css';
 
 type AlertGroupToolbarProps = {
   refreshing: boolean;

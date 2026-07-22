@@ -8,8 +8,8 @@ import {
   createAlertInhibitDraft,
   type AlertInhibitDraft,
   type AlertInhibitFailure
-} from '../alert-inhibit-model';
-import { loadExactAlertInhibit } from '../alert-inhibit-write-proof';
+} from '../model/alert-inhibit-model';
+import { loadExactAlertInhibit } from '../api/alert-inhibit-write-proof';
 import type { AlertInhibitDetailState } from '../model/alert-inhibit-state';
 import type { AlertInhibitOperationController } from './use-alert-inhibit-operation-controller';
 

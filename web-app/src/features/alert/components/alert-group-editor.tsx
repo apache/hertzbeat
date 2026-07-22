@@ -8,7 +8,7 @@
 import { Alert, Input, InputNumber, Modal, Select, Switch } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { createAlertGroupDraft, type AlertGroupDraft, type AlertGroupFailure } from '../alert-group-model';
+import { createAlertGroupDraft, type AlertGroupDraft, type AlertGroupFailure } from '../model/alert-group-model';
 import type { AlertGroupOperationRecovery } from '../model/alert-group-operation-state';
 import styles from '../shared/alert-policy-page.module.css';
 import { AlertGroupRecovery } from './alert-group-recovery';

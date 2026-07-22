@@ -22,8 +22,7 @@ const record: AlertGroupConverge = {
 
 describe('Alert Group list state', () => {
   it('keeps pending evidence loading regardless of an older failure or page', () => {
-    expect(resolveAlertGroupListState(true, 'unavailable', page([record], 1)))
-      .toEqual({ kind: 'loading' });
+    expect(resolveAlertGroupListState(true, 'unavailable', page([record], 1))).toEqual({ kind: 'loading' });
   });
 
   it.each(['unavailable', 'error'] as const)('preserves the %s failure kind', failure => {

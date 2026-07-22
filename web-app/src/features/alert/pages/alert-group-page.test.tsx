@@ -36,9 +36,9 @@ const controller = vi.hoisted(() => ({
   toggle: vi.fn(),
   updateDraft: vi.fn()
 }));
-vi.mock('./controller/use-alert-group-controller', () => ({ useAlertGroupController: () => controller }));
-vi.mock('./components/alert-management-nav', () => ({ AlertManagementNav: () => <nav /> }));
-vi.mock('./components/alert-noise-control-nav', () => ({ AlertNoiseControlNav: () => <nav /> }));
+vi.mock('../controller/use-alert-group-controller', () => ({ useAlertGroupController: () => controller }));
+vi.mock('../components/alert-management-nav', () => ({ AlertManagementNav: () => <nav /> }));
+vi.mock('../components/alert-noise-control-nav', () => ({ AlertNoiseControlNav: () => <nav /> }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 const record = {

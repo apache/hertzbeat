@@ -6,7 +6,7 @@ import {
   alertInhibitFailureKind,
   type AlertInhibit,
   type AlertInhibitPage
-} from './alert-inhibit-model';
+} from '../model/alert-inhibit-model';
 
 type WritableInhibit = {
   id: number;

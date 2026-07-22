@@ -8,7 +8,7 @@
 import { Button, Popconfirm, Space, Switch } from 'antd';
 import type { TFunction } from 'i18next';
 
-import type { AlertGroupConverge } from '../alert-group-model';
+import type { AlertGroupConverge } from '../model/alert-group-model';
 
 export type AlertGroupColumnActions = {
   busy: boolean;

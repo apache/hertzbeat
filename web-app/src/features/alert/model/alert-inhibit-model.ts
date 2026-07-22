@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { formatLabelMatchers, parseLabelMatchers } from './shared/alert-label-matchers';
+import { formatLabelMatchers, parseLabelMatchers } from '../shared/alert-label-matchers';
 
 export const alertInhibitPageSizes = [8, 15, 25] as const;
 

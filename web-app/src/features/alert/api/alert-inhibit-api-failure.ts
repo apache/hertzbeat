@@ -8,7 +8,7 @@
 import { ApiMessageError } from '@/core/http/api-message';
 import { apiMessageWriteOutcome } from '@/core/http/api-message-write-evidence';
 
-import { AlertInhibitRequestFailure, type AlertInhibitFailure } from '../alert-inhibit-model';
+import { AlertInhibitRequestFailure, type AlertInhibitFailure } from '../model/alert-inhibit-model';
 
 const unavailableStatuses = new Set([0, 502, 503, 504]);
 

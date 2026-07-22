@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import type { AlertGroupConverge, AlertGroupDraft } from '../alert-group-model';
+import type { AlertGroupConverge, AlertGroupDraft } from './alert-group-model';
 
 type PersistedAlertGroupDraft = AlertGroupDraft & { id: number };
 type AlertGroupOperationPhase = 'prepare' | 'write' | 'proof' | 'projection';

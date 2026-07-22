@@ -11,7 +11,7 @@ import {
   alertGroupFailureKind,
   alertGroupPageSizes,
   type AlertGroupConverge
-} from './alert-group-model';
+} from '../model/alert-group-model';
 
 const createProofPageSize = alertGroupPageSizes[alertGroupPageSizes.length - 1] ?? 25;
 

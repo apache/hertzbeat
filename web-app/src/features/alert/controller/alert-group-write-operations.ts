@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { deleteAlertGroup, loadAlertGroup, saveAlertGroup, updateAlertGroupEnabled } from '../alert-group-api';
+import { deleteAlertGroup, loadAlertGroup, saveAlertGroup, updateAlertGroupEnabled } from '../api/alert-group-api';
 import {
   AlertGroupContractError,
   alertGroupFailureKind,
@@ -15,12 +15,12 @@ import {
   type AlertGroupConverge,
   type AlertGroupDraft,
   type AlertGroupPage
-} from '../alert-group-model';
+} from '../model/alert-group-model';
 import {
   proveAlertGroupMissing,
   requireAlertGroupConvergence,
   requireExactAlertGroupId
-} from '../alert-group-write-proof';
+} from '../api/alert-group-write-proof';
 import type { AlertGroupOperationReceipt } from '../model/alert-group-operation-state';
 import type { AlertGroupNotifications } from './alert-group-submit-failure';
 import type { AlertGroupCommandGate, AlertGroupEditor } from './use-alert-group-editor-controller';

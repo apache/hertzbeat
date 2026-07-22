@@ -21,14 +21,18 @@ import type { PropsWithChildren } from 'react';
 import { createMemoryRouter, MemoryRouter, RouterProvider } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AlertInhibitContractError, AlertInhibitRequestFailure, type AlertInhibitQuery } from '../alert-inhibit-model';
+import {
+  AlertInhibitContractError,
+  AlertInhibitRequestFailure,
+  type AlertInhibitQuery
+} from '../model/alert-inhibit-model';
 import { alertInhibitPage, deferred } from './alert-inhibit-controller-test-fixtures';
 import { useAlertInhibitReadController } from './use-alert-inhibit-read-controller';
 
 const api = vi.hoisted(() => ({ loadAlertInhibits: vi.fn() }));
 
-vi.mock('../alert-inhibit-api', async importOriginal => ({
-  ...(await importOriginal<typeof import('../alert-inhibit-api')>()),
+vi.mock('../api/alert-inhibit-api', async importOriginal => ({
+  ...(await importOriginal<typeof import('../api/alert-inhibit-api')>()),
   ...api
 }));
 describe('Alert Inhibit read controller', () => {

@@ -20,7 +20,7 @@ import type { ColumnsType } from 'antd/es/table';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
-import { alertInhibitPageSizes, type AlertInhibit } from '../alert-inhibit-model';
+import { alertInhibitPageSizes, type AlertInhibit } from '../model/alert-inhibit-model';
 import styles from '../shared/alert-policy-page.module.css';
 import type { AlertInhibitDetailState, AlertInhibitListState } from '../model/alert-inhibit-state';
 

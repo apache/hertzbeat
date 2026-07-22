@@ -9,11 +9,7 @@ import { useSearchParams } from 'react-router-dom';
 
 import { useStringQueryDraft } from '@/shared/query-context';
 
-import {
-  readAlertGroupQuery,
-  writeAlertGroupQuery,
-  type AlertGroupQuery
-} from '../alert-group-model';
+import { readAlertGroupQuery, writeAlertGroupQuery, type AlertGroupQuery } from '../model/alert-group-model';
 
 export function useAlertGroupQueryController() {
   const [params, setParams] = useSearchParams();
@@ -29,10 +25,11 @@ export function useAlertGroupQueryController() {
     actions: {
       setSearch,
       submitSearch: () => updateQuery({ search: search.trim(), pageIndex: 0 }),
-      changePage: (page: number, pageSize: number) => updateQuery({
-        pageIndex: pageSize === query.pageSize ? page - 1 : 0,
-        pageSize
-      })
+      changePage: (page: number, pageSize: number) =>
+        updateQuery({
+          pageIndex: pageSize === query.pageSize ? page - 1 : 0,
+          pageSize
+        })
     }
   };
 }

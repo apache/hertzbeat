@@ -8,7 +8,7 @@
 import { App } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { validateAlertGroupDraft, type AlertGroupConverge, type AlertGroupPage } from '../alert-group-model';
+import { validateAlertGroupDraft, type AlertGroupConverge, type AlertGroupPage } from '../model/alert-group-model';
 import { submitAlertGroupCreate } from './alert-group-submit-command';
 import {
   reportAlertGroupSubmitFailure,

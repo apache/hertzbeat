@@ -23,7 +23,7 @@ import {
   AlertInhibitMissingError,
   AlertInhibitRequestFailure,
   type AlertInhibit
-} from '../alert-inhibit-model';
+} from '../model/alert-inhibit-model';
 import { deferred, persistedAlertInhibit } from './alert-inhibit-controller-test-fixtures';
 import { useAlertInhibitEditorController } from './use-alert-inhibit-editor-controller';
 import { useAlertInhibitOperationController } from './use-alert-inhibit-operation-controller';
@@ -31,12 +31,12 @@ import { useAlertInhibitOperationController } from './use-alert-inhibit-operatio
 const api = vi.hoisted(() => ({ loadAlertInhibit: vi.fn() }));
 const model = vi.hoisted(() => ({ draftFromDetail: vi.fn() }));
 
-vi.mock('../alert-inhibit-api', async importOriginal => ({
-  ...(await importOriginal<typeof import('../alert-inhibit-api')>()),
+vi.mock('../api/alert-inhibit-api', async importOriginal => ({
+  ...(await importOriginal<typeof import('../api/alert-inhibit-api')>()),
   ...api
 }));
-vi.mock('../alert-inhibit-model', async importOriginal => {
-  const actual = await importOriginal<typeof import('../alert-inhibit-model')>();
+vi.mock('../model/alert-inhibit-model', async importOriginal => {
+  const actual = await importOriginal<typeof import('../model/alert-inhibit-model')>();
   model.draftFromDetail.mockImplementation(actual.alertInhibitDraftFromDetail);
   return { ...actual, alertInhibitDraftFromDetail: model.draftFromDetail };
 });

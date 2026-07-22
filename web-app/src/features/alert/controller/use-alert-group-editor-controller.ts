@@ -7,16 +7,16 @@
 
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 
-import { loadAlertGroup } from '../alert-group-api';
+import { loadAlertGroup } from '../api/alert-group-api';
 import {
   alertGroupDraftFromDetail,
   alertGroupFailureKind,
   createAlertGroupDraft,
   type AlertGroupDraft,
   type AlertGroupFailure
-} from '../alert-group-model';
-import type { AlertGroupDetailState } from '../alert-group-state';
-import { requireExactAlertGroupId, type AlertGroupCreateProof } from '../alert-group-write-proof';
+} from '../model/alert-group-model';
+import type { AlertGroupDetailState } from '../model/alert-group-state';
+import { requireExactAlertGroupId, type AlertGroupCreateProof } from '../api/alert-group-write-proof';
 import type { AlertGroupOperationReceipt, AlertGroupOperationRecovery } from '../model/alert-group-operation-state';
 
 type CommandKind = 'saving' | 'operating';

@@ -5,16 +5,10 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import type { AlertGroupQuery } from '../alert-group-model';
+import type { AlertGroupQuery } from '../model/alert-group-model';
 
 const rootKey = ['alert-group-policies'] as const;
 
 export const alertGroupQueryKeys = {
-  list: (query: AlertGroupQuery) => [
-    ...rootKey,
-    'list',
-    query.search,
-    query.pageIndex,
-    query.pageSize
-  ] as const
+  list: (query: AlertGroupQuery) => [...rootKey, 'list', query.search, query.pageIndex, query.pageSize] as const
 };

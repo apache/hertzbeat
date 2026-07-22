@@ -9,8 +9,8 @@ import { Alert, Button, Empty, Skeleton, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 
-import { alertGroupPageSizes, type AlertGroupConverge } from '../alert-group-model';
-import type { AlertGroupDetailState, AlertGroupListState } from '../alert-group-state';
+import { alertGroupPageSizes, type AlertGroupConverge } from '../model/alert-group-model';
+import type { AlertGroupDetailState, AlertGroupListState } from '../model/alert-group-state';
 
 export function AlertGroupResults({
   state,

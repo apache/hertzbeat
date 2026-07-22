@@ -13,7 +13,7 @@ import {
   type AlertGroupConverge,
   type AlertGroupPage,
   type AlertGroupQuery
-} from './alert-group-model';
+} from '../model/alert-group-model';
 
 const safeIntegerSchema = z.number().refine(Number.isSafeInteger, 'Expected a safe integer');
 const positiveIntegerSchema = safeIntegerSchema.refine(value => value > 0, 'Expected a positive integer');

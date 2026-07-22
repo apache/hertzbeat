@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
 
-import { AlertInhibitRequestFailure } from '../alert-inhibit-model';
+import { AlertInhibitRequestFailure } from '../model/alert-inhibit-model';
 import { alertInhibitApiRequest, normalizeAlertInhibitApiFailure } from './alert-inhibit-api-failure';
 
 describe('Alert Inhibit API failure boundary', () => {

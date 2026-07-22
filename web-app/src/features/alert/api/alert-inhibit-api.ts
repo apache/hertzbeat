@@ -17,14 +17,14 @@
 
 import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
 
-import { alertInhibitApiRequest } from './api/alert-inhibit-api-failure';
+import { alertInhibitApiRequest } from './alert-inhibit-api-failure';
 import {
   buildAlertInhibitPayload,
   buildAlertInhibitTogglePayload,
   type AlertInhibit,
   type AlertInhibitDraft,
   type AlertInhibitQuery
-} from './alert-inhibit-model';
+} from '../model/alert-inhibit-model';
 import { parseAlertInhibitDetail, parseAlertInhibitPage } from './alert-inhibit-schema';
 
 function buildAlertInhibitListPath(query: AlertInhibitQuery) {

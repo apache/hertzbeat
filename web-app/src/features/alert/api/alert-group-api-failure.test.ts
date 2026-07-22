@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
 
-import { AlertGroupRequestFailure } from '../alert-group-model';
+import { AlertGroupRequestFailure } from '../model/alert-group-model';
 import { alertGroupApiRequest, normalizeAlertGroupApiFailure } from './alert-group-api-failure';
 
 describe('Alert Group API failure boundary', () => {

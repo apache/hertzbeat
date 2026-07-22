@@ -8,7 +8,7 @@
 import { ApiMessageError } from '@/core/http/api-message';
 import { apiMessageWriteOutcome } from '@/core/http/api-message-write-evidence';
 
-import { AlertGroupRequestFailure, type AlertGroupFailure } from '../alert-group-model';
+import { AlertGroupRequestFailure, type AlertGroupFailure } from '../model/alert-group-model';
 
 const unavailableStatuses = new Set([0, 502, 503, 504]);
 

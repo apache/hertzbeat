@@ -6,7 +6,7 @@ import { useSearchParams } from 'react-router-dom';
 
 import { useStringQueryDraft } from '@/shared/query-context';
 
-import { loadAlertInhibits } from '../alert-inhibit-api';
+import { loadAlertInhibits } from '../api/alert-inhibit-api';
 import {
   AlertInhibitUnavailableError,
   alertInhibitFailureKind,
@@ -14,7 +14,7 @@ import {
   writeAlertInhibitQuery,
   type AlertInhibitPage,
   type AlertInhibitQuery
-} from '../alert-inhibit-model';
+} from '../model/alert-inhibit-model';
 import type { AlertInhibitListState } from '../model/alert-inhibit-state';
 import { alertInhibitQueryKeys } from './alert-inhibit-query-keys';
 
