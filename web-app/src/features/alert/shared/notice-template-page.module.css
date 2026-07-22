@@ -58,5 +58,7 @@
 }
 
 @media (max-width: 800px) {
-  .toolbar { grid-template-columns: 1fr 1fr; }
+  .toolbar {
+    grid-template-columns: 1fr 1fr;
+  }
 }

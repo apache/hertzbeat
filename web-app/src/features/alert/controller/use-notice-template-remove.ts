@@ -20,7 +20,7 @@ import type { TFunction } from 'i18next';
 import { useRef } from 'react';
 
 import type { NoticeTemplateQuery, NoticeTemplateResourceRecord } from '../notice-template-model';
-import { noticeTemplateResourceName } from '../notice-template-resource';
+import { noticeTemplateResourceName } from '../api/notice-template-resource';
 import type { NoticeTemplateOperationController } from './use-notice-template-operation-controller';
 import { preflightNoticeTemplateDeletion, proveNoticeTemplateDeletion } from './notice-template-write-proof';
 import { isDefiniteWriteRejection } from './notice-template-write-rejection';

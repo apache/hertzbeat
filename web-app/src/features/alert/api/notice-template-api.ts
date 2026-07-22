@@ -23,11 +23,11 @@ import {
   writeNoticeTemplateQuery,
   type NoticeTemplateDraft,
   type NoticeTemplateQuery
-} from './notice-template-model';
-import { noticeTemplateEndpoint, noticeTemplatesEndpoint } from './api/notice-api-endpoints';
+} from '../notice-template-model';
+import { noticeTemplateEndpoint, noticeTemplatesEndpoint } from './notice-api-endpoints';
+import { noticeTemplateApiRequest } from './notice-template-api-failure';
 import { noticeTemplateCreateActionUrl } from './notice-template-resource';
-import { noticeTemplateApiRequest } from './api/notice-template-api-failure';
-import { parseNoticeTemplateDetailWire, parseNoticeTemplatePageWire } from './api/notice-template-schema';
+import { parseNoticeTemplateDetailWire, parseNoticeTemplatePageWire } from './notice-template-schema';
 
 export async function loadNoticeTemplates(query: NoticeTemplateQuery) {
   return noticeTemplateApiRequest('collection', async () => {

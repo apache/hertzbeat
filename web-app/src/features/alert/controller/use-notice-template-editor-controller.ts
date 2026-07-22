@@ -25,7 +25,7 @@ import {
   type NoticeTemplateDraft,
   type NoticeTemplateResourceRecord
 } from '../notice-template-model';
-import { noticeTemplateResourceName } from '../notice-template-resource';
+import { noticeTemplateResourceName } from '../api/notice-template-resource';
 import type { NoticeTemplateOperationController } from './use-notice-template-operation-controller';
 
 export function useNoticeTemplateEditorController({

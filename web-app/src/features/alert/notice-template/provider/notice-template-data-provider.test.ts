@@ -20,19 +20,19 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { noticeApiEndpoint } from '../../api/notice-api-endpoints';
 import { type NoticeTemplate, type NoticeTemplateResourceRecord } from '../../notice-template-model';
 
-type NoticeTemplateApi = typeof import('../../notice-template-api');
+type NoticeTemplateApi = typeof import('../../api/notice-template-api');
 const api = vi.hoisted(() => ({
   deleteNoticeTemplate: vi.fn<NoticeTemplateApi['deleteNoticeTemplate']>(),
   loadNoticeTemplate: vi.fn<NoticeTemplateApi['loadNoticeTemplate']>(),
   loadNoticeTemplates: vi.fn<NoticeTemplateApi['loadNoticeTemplates']>(),
   saveNoticeTemplate: vi.fn<NoticeTemplateApi['saveNoticeTemplate']>()
 }));
-vi.mock('../../notice-template-api', async importOriginal => ({
+vi.mock('../../api/notice-template-api', async importOriginal => ({
   ...(await importOriginal<NoticeTemplateApi>()),
   ...api
 }));
 
-import { noticeTemplateCreateActionUrl } from '../../notice-template-resource';
+import { noticeTemplateCreateActionUrl } from '../../api/notice-template-resource';
 
 import { noticeTemplateDataProvider } from './notice-template-data-provider';
 

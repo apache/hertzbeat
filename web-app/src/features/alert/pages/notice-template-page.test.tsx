@@ -20,8 +20,8 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { noticeTemplateResourceRecord } from '../notice-template-model';
 import { NoticeTemplatePage } from './notice-template-page';
-import { noticeTemplateResourceRecord } from './notice-template-model';
 
 const controller = vi.hoisted(() => ({
   changePage: vi.fn(),
@@ -41,7 +41,7 @@ const controller = vi.hoisted(() => ({
   updateDraft: vi.fn()
 }));
 
-vi.mock('./notice-template-controller', () => ({
+vi.mock('../controller/notice-template-controller', () => ({
   useNoticeTemplateController: () => controller
 }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));

@@ -24,7 +24,7 @@ import {
   type NoticeTemplateQuery,
   type NoticeTemplateResourceRecord
 } from '../notice-template-model';
-import { noticeTemplateResourceName } from '../notice-template-resource';
+import { noticeTemplateResourceName } from '../api/notice-template-resource';
 import {
   classifyNoticeTemplateCollectionFailure,
   normalizeNoticeTemplateCollectionFailure

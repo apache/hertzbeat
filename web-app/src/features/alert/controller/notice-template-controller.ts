@@ -19,11 +19,11 @@ import { useDataProvider, useNotification } from '@refinedev/core';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useNoticeTemplateCommandController } from './controller/use-notice-template-command-controller';
-import { useNoticeTemplateListController } from './controller/use-notice-template-list-controller';
-import { useNoticeTemplateQueryController } from './controller/use-notice-template-query-controller';
-import type { NoticeTemplateResourceRecord } from './notice-template-model';
-import { noticeTemplateResourceName } from './notice-template-resource';
+import type { NoticeTemplateResourceRecord } from '../notice-template-model';
+import { noticeTemplateResourceName } from '../api/notice-template-resource';
+import { useNoticeTemplateCommandController } from './use-notice-template-command-controller';
+import { useNoticeTemplateListController } from './use-notice-template-list-controller';
+import { useNoticeTemplateQueryController } from './use-notice-template-query-controller';
 
 /** Composes URL, read, and command owners into the page-facing controller. */
 export function useNoticeTemplateController() {

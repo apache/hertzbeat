@@ -22,7 +22,7 @@ import {
   type NoticeTemplateDraft,
   type NoticeTemplateResourceRecord
 } from '../notice-template-model';
-import { noticeTemplateResourceName } from '../notice-template-resource';
+import { noticeTemplateResourceName } from '../api/notice-template-resource';
 import { classifyNoticeTemplateDetailFailure } from '../model/notice-template-failure';
 
 export class NoticeTemplateWriteProofError extends Error {

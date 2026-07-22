@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-import styles from './shared/alert-policy-page.module.css';
-import { NoticeTemplateOverlays } from './components/notice-template-overlays';
-import { NoticeTemplateRecoveryAlert } from './components/notice-template-recovery-alert';
-import { NoticeTemplateResults } from './components/notice-template-results';
-import { NoticeTemplateToolbar } from './components/notice-template-toolbar';
-import { useNoticeTemplateController } from './notice-template-controller';
-import pageStyles from './notice-template-page.module.css';
+import { NoticeTemplateOverlays } from '../components/notice-template-overlays';
+import { NoticeTemplateRecoveryAlert } from '../components/notice-template-recovery-alert';
+import { NoticeTemplateResults } from '../components/notice-template-results';
+import { NoticeTemplateToolbar } from '../components/notice-template-toolbar';
+import { useNoticeTemplateController } from '../controller/notice-template-controller';
+import styles from '../shared/alert-policy-page.module.css';
+import pageStyles from '../shared/notice-template-page.module.css';
 
 const NOTICE_TEMPLATE_HEADING_ID = 'notice-template-heading';
 

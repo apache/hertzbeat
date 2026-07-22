@@ -36,7 +36,7 @@ import {
   loadNoticeTemplates,
   saveNoticeTemplate
 } from './notice-template-api';
-import type { NoticeTemplateDraft } from './notice-template-model';
+import type { NoticeTemplateDraft } from '../notice-template-model';
 
 const custom = { id: 42, name: 'Custom', type: 1 as const, preset: false, content: '${content}' };
 const page = { content: [custom], totalElements: 1, totalPages: 1, number: 0, size: 8 };

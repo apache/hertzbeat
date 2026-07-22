@@ -38,13 +38,13 @@ import {
   loadNoticeTemplate,
   loadNoticeTemplates,
   saveNoticeTemplate
-} from '../../notice-template-api';
+} from '../../api/notice-template-api';
 import {
   noticeTemplateResourceRecord,
   type NoticeTemplate,
   type NoticeTemplateQuery
 } from '../../notice-template-model';
-import { noticeTemplateCreateActionUrl, noticeTemplateResourceName } from '../../notice-template-resource';
+import { noticeTemplateCreateActionUrl, noticeTemplateResourceName } from '../../api/notice-template-resource';
 
 import {
   normalizeNoticeTemplateProviderFailure,

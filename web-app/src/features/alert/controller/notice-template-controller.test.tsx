@@ -18,10 +18,10 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { NoticeTemplateRequestFailure } from '../model/notice-template-failure';
+import { noticeTemplateResourceRecord } from '../notice-template-model';
+import { noticeTemplateCreateActionUrl } from '../api/notice-template-resource';
 import { useNoticeTemplateController } from './notice-template-controller';
-import { NoticeTemplateRequestFailure } from './model/notice-template-failure';
-import { noticeTemplateResourceRecord } from './notice-template-model';
-import { noticeTemplateCreateActionUrl } from './notice-template-resource';
 
 const refine = vi.hoisted(() => ({
   notification: vi.fn(),

@@ -21,7 +21,7 @@ import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import { noticeTemplateTime, noticeTemplateTypeLabelKey } from '../model/notice-template-view-model';
-import pageStyles from '../notice-template-page.module.css';
+import pageStyles from '../shared/notice-template-page.module.css';
 import {
   isNoticeTemplateReadOnly,
   noticeTemplatePageSizes,

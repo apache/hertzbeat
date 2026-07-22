@@ -23,13 +23,13 @@ import { createRefineHttpError } from '@/shared/refine/refine-http-error';
 import { NoticeTemplateRequestFailure } from '../../model/notice-template-failure';
 import { NoticeTemplateContractError } from '../../notice-template-model';
 
-type NoticeTemplateApi = typeof import('../../notice-template-api');
+type NoticeTemplateApi = typeof import('../../api/notice-template-api');
 const api = vi.hoisted(() => ({
   loadNoticeTemplate: vi.fn<NoticeTemplateApi['loadNoticeTemplate']>(),
   loadNoticeTemplates: vi.fn<NoticeTemplateApi['loadNoticeTemplates']>(),
   saveNoticeTemplate: vi.fn<NoticeTemplateApi['saveNoticeTemplate']>()
 }));
-vi.mock('../../notice-template-api', async importOriginal => ({
+vi.mock('../../api/notice-template-api', async importOriginal => ({
   ...(await importOriginal<NoticeTemplateApi>()),
   ...api
 }));
