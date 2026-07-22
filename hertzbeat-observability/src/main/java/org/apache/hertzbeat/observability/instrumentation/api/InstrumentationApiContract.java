@@ -17,11 +17,13 @@
 
 package org.apache.hertzbeat.observability.instrumentation.api;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.hertzbeat.observability.shared.query.TelemetryQueryContextScope;
 
 /**
  * Version 1 wire contract for application instrumentation onboarding.
@@ -339,7 +341,23 @@ public final class InstrumentationApiContract {
     }
 
     /** OpenTelemetry service resource identity. */
-    public record ServiceIdentity(String name, String namespace, String environment) {
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public record ServiceIdentity(
+            String name,
+            String namespace,
+            String environment,
+            String serviceInstanceId,
+            String endpoint) {
+
+        public ServiceIdentity {
+            TelemetryQueryContextScope scope = new TelemetryQueryContextScope(serviceInstanceId, endpoint);
+            serviceInstanceId = scope.instance();
+            endpoint = scope.endpoint();
+        }
+
+        public ServiceIdentity(String name, String namespace, String environment) {
+            this(name, namespace, environment, null, null);
+        }
     }
 
     /** Rendered structured guide. */
@@ -553,13 +571,26 @@ public final class InstrumentationApiContract {
     }
 
     /** Shared query context retained when leaving the onboarding flow. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record QueryJumpContext(
             String serviceName,
             String serviceNamespace,
             String environment,
             String collectorId,
+            String serviceInstanceId,
+            String endpoint,
             long startedAt,
             long detectedAt) {
+
+        public QueryJumpContext(
+                String serviceName,
+                String serviceNamespace,
+                String environment,
+                String collectorId,
+                long startedAt,
+                long detectedAt) {
+            this(serviceName, serviceNamespace, environment, collectorId, null, null, startedAt, detectedAt);
+        }
     }
 
     /** Typed signal query handoff; only received signals are enabled. */

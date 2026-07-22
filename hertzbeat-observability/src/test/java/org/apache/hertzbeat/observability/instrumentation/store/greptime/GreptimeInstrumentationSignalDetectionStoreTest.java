@@ -41,6 +41,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Signal;
 import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationSignalDetectionStore.DetectionCriteria;
 import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationSignalDetectionStore.DetectionSnapshot;
 import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationSignalDetectionStore.SignalObservation;
@@ -57,6 +58,7 @@ import org.springframework.beans.factory.ObjectProvider;
 class GreptimeInstrumentationSignalDetectionStoreTest {
 
     private static final long STARTED_AT = 1_710_000_000_000L;
+    private static final long DETECTED_AT = STARTED_AT + 5_000;
 
     @Mock
     private ObjectProvider<GreptimeSqlQueryExecutor> executorProvider;
@@ -72,7 +74,7 @@ class GreptimeInstrumentationSignalDetectionStoreTest {
     }
 
     @Test
-    void queriesOnlyLatestTimestampForEachSignalWithTheCompleteEscapedScope() {
+    void queriesOnlyLatestTimestampForEachSignalWithTheCompleteEscapedScopeAndInclusiveMillis() {
         when(executorProvider.getIfAvailable()).thenReturn(executor);
         when(executor.executeStrict(anyString())).thenAnswer(invocation -> {
             String sql = invocation.getArgument(0);
@@ -85,7 +87,9 @@ class GreptimeInstrumentationSignalDetectionStoreTest {
             return List.of(Map.of("last_received_at", "2024-03-09T16:00:03.003Z"));
         });
 
-        DetectionSnapshot snapshot = store.detect(criteria("checkout's-api", "commerce's", "prod's", "collector's"));
+        DetectionSnapshot snapshot = store.detect(new DetectionCriteria(
+                "checkout's-api", "commerce's", "prod's", "collector's",
+                "checkout's-7d9", "/checkout/{id}'s", STARTED_AT, DETECTED_AT));
 
         assertReceived(snapshot.observation(METRICS), 1_710_000_001_001L);
         assertReceived(snapshot.observation(LOGS), 1_710_000_002_002L);
@@ -126,10 +130,38 @@ class GreptimeInstrumentationSignalDetectionStoreTest {
     }
 
     @Test
+    void constructsTheInclusiveUpperMillisecondWithoutOverflow() {
+        GreptimeInstrumentationDetectionQueryFactory queryFactory =
+                new GreptimeInstrumentationDetectionQueryFactory();
+        DetectionCriteria criteria = new DetectionCriteria(
+                "checkout", "commerce", "prod", "collector-1", null, null, STARTED_AT, Long.MAX_VALUE);
+
+        for (Signal signal : Signal.values()) {
+            String sql = queryFactory.latestReceivedAt(signal, criteria);
+            assertTrue(sql.contains("<= to_timestamp_millis(" + Long.MAX_VALUE + ")"));
+            assertFalse(sql.contains(String.valueOf(Long.MIN_VALUE)));
+        }
+    }
+
+    @Test
     void doesNotAcceptStorageRowOlderThanTheOnboardingBoundary() {
         when(executorProvider.getIfAvailable()).thenReturn(executor);
         when(executor.executeStrict(anyString()))
                 .thenReturn(List.of(Map.of("last_received_at", STARTED_AT - 1)));
+
+        DetectionSnapshot snapshot = store.detect(criteria("checkout", "commerce", "prod", "collector-1"));
+
+        snapshot.observations().values().forEach(observation -> {
+            assertEquals(WAITING, observation.status());
+            assertEquals(SIGNAL_NOT_RECEIVED, observation.errorCode());
+        });
+    }
+
+    @Test
+    void doesNotAcceptStorageRowNewerThanTheDetectionBoundary() {
+        when(executorProvider.getIfAvailable()).thenReturn(executor);
+        when(executor.executeStrict(anyString()))
+                .thenReturn(List.of(Map.of("last_received_at", DETECTED_AT + 1)));
 
         DetectionSnapshot snapshot = store.detect(criteria("checkout", "commerce", "prod", "collector-1"));
 
@@ -150,6 +182,73 @@ class GreptimeInstrumentationSignalDetectionStoreTest {
         snapshot.observations().values().forEach(observation -> {
             assertEquals(WAITING, observation.status());
             assertEquals(SIGNAL_NOT_RECEIVED, observation.errorCode());
+        });
+    }
+
+    @Test
+    void interpretsZoneLessGreptimeSqlTimestampsAsUtc() {
+        when(executorProvider.getIfAvailable()).thenReturn(executor);
+        when(executor.executeStrict(anyString()))
+                .thenReturn(List.of(Map.of("last_received_at", "2024-03-09 16:00:03.003")));
+
+        DetectionSnapshot snapshot = store.detect(criteria("checkout", "commerce", "prod", "collector-1"));
+
+        snapshot.observations().values().forEach(observation ->
+                assertReceived(observation, STARTED_AT + 3_003));
+    }
+
+    @Test
+    void normalizesNumericMillisMicrosAndNanosBeforeApplyingTheDetectionWindow() {
+        when(executorProvider.getIfAvailable()).thenReturn(executor);
+        long receivedAt = STARTED_AT + 1_234;
+        when(executor.executeStrict(anyString())).thenAnswer(invocation -> {
+            String sql = invocation.getArgument(0);
+            if (sql.contains("FROM greptime_physical_table")) {
+                return List.of(Map.of("last_received_at", receivedAt));
+            }
+            if (sql.contains("FROM hertzbeat_logs")) {
+                return List.of(Map.of("last_received_at", receivedAt * 1_000L));
+            }
+            return List.of(Map.of("last_received_at", receivedAt * 1_000_000L));
+        });
+
+        DetectionSnapshot snapshot = store.detect(criteria("checkout", "commerce", "prod", "collector-1"));
+
+        snapshot.observations().values().forEach(observation -> assertReceived(observation, receivedAt));
+    }
+
+    @Test
+    void normalizesNumericStringMillisMicrosAndNanosWithoutOverflow() {
+        when(executorProvider.getIfAvailable()).thenReturn(executor);
+        long receivedAt = STARTED_AT + 2_345;
+        when(executor.executeStrict(anyString())).thenAnswer(invocation -> {
+            String sql = invocation.getArgument(0);
+            if (sql.contains("FROM greptime_physical_table")) {
+                return List.of(Map.of("last_received_at", Long.toString(receivedAt)));
+            }
+            if (sql.contains("FROM hertzbeat_logs")) {
+                return List.of(Map.of("last_received_at", Long.toString(receivedAt * 1_000L)));
+            }
+            return List.of(Map.of("last_received_at", Long.toString(receivedAt * 1_000_000L)));
+        });
+
+        DetectionSnapshot snapshot = store.detect(criteria("checkout", "commerce", "prod", "collector-1"));
+
+        snapshot.observations().values().forEach(observation -> assertReceived(observation, receivedAt));
+    }
+
+    @Test
+    void containsMalformedTimestampFailuresWithinEachSignalObservation() {
+        when(executorProvider.getIfAvailable()).thenReturn(executor);
+        when(executor.executeStrict(anyString()))
+                .thenReturn(List.of(Map.of("last_received_at", "not-a-timestamp")));
+
+        DetectionSnapshot snapshot = store.detect(criteria("checkout", "commerce", "prod", "collector-1"));
+
+        snapshot.observations().values().forEach(observation -> {
+            assertEquals(ERROR, observation.status());
+            assertEquals(STORAGE_QUERY_FAILED, observation.errorCode());
+            assertNull(observation.lastReceivedAt());
         });
     }
 
@@ -204,7 +303,8 @@ class GreptimeInstrumentationSignalDetectionStoreTest {
     }
 
     private DetectionCriteria criteria(String serviceName, String namespace, String environment, String collectorId) {
-        return new DetectionCriteria(serviceName, namespace, environment, collectorId, STARTED_AT);
+        return new DetectionCriteria(
+                serviceName, namespace, environment, collectorId, null, null, STARTED_AT, DETECTED_AT);
     }
 
     private void assertMetricQuery(String sql) {
@@ -214,7 +314,10 @@ class GreptimeInstrumentationSignalDetectionStoreTest {
         assertTrue(sql.contains("service_namespace = 'commerce''s'"));
         assertTrue(sql.contains("deployment_environment_name = 'prod''s'"));
         assertTrue(sql.contains("hertzbeat_collector_id = 'collector''s'"));
+        assertTrue(sql.contains("service_instance_id = 'checkout''s-7d9'"));
+        assertTrue(sql.contains("http_route = '/checkout/{id}''s'"));
         assertTrue(sql.contains("greptime_timestamp >= to_timestamp_millis(" + STARTED_AT + ")"));
+        assertTrue(sql.contains("greptime_timestamp < to_timestamp_millis(" + (DETECTED_AT + 1) + ")"));
     }
 
     private void assertJsonResourceQuery(String sql, String table) {
@@ -224,7 +327,10 @@ class GreptimeInstrumentationSignalDetectionStoreTest {
         assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"service.namespace\"]') = 'commerce''s'"));
         assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"deployment.environment.name\"]') = 'prod''s'"));
         assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"hertzbeat.collector.id\"]') = 'collector''s'"));
+        assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"service.instance.id\"]') = 'checkout''s-7d9'"));
+        assertTrue(sql.contains("json_get_string(log_attributes, '$[\"http.route\"]') = '/checkout/{id}''s'"));
         assertTrue(sql.contains("timestamp >= to_timestamp_millis(" + STARTED_AT + ")"));
+        assertTrue(sql.contains("timestamp < to_timestamp_millis(" + (DETECTED_AT + 1) + ")"));
     }
 
     private void assertFlattenedTraceResourceQuery(String sql) {
@@ -234,7 +340,11 @@ class GreptimeInstrumentationSignalDetectionStoreTest {
         assertTrue(sql.contains("\"resource_attributes.service.namespace\" = 'commerce''s'"));
         assertTrue(sql.contains("\"resource_attributes.deployment.environment.name\" = 'prod''s'"));
         assertTrue(sql.contains("\"resource_attributes.hertzbeat.collector.id\" = 'collector''s'"));
+        assertTrue(sql.contains("\"resource_attributes.service.instance.id\" = 'checkout''s-7d9'"));
+        assertTrue(sql.contains("\"span_attributes.http.route\" = '/checkout/{id}''s'"));
         assertTrue(sql.contains("timestamp >= to_timestamp_millis(" + STARTED_AT + ")"));
+        assertTrue(sql.contains("timestamp < to_timestamp_millis(" + (DETECTED_AT + 1) + ")"));
+        assertFalse(sql.contains("resource_attributes.http.route"));
         assertFalse(sql.contains("json_get_string(resource_attributes"));
     }
 

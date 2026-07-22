@@ -62,6 +62,8 @@ import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApi
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.ServiceIdentity;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Signal;
 import org.apache.hertzbeat.observability.instrumentation.service.InstrumentationDetectionService;
+import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationSignalDetectionStore;
+import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationSignalDetectionStore.DetectionCriteria;
 import org.apache.hertzbeat.observability.logs.service.LogQueryService;
 import org.apache.hertzbeat.observability.metrics.service.CollectorScopedMetricsQueryService;
 import org.apache.hertzbeat.observability.traces.service.EntityTraceQueryService;
@@ -122,6 +124,9 @@ class GreptimeThreeSignalInstrumentationE2eTest {
     private InstrumentationDetectionService detectionService;
 
     @Autowired
+    private InstrumentationSignalDetectionStore signalDetectionStore;
+
+    @Autowired
     private GreptimeSqlQueryExecutor queryExecutor;
 
     @Autowired
@@ -158,6 +163,22 @@ class GreptimeThreeSignalInstrumentationE2eTest {
                     .as("trace schema: %s", queryExecutor.executeStrict("DESC TABLE hzb_traces"))
                     .isPositive();
         });
+        await().atMost(Duration.ofSeconds(20)).pollInterval(Duration.ofSeconds(1)).untilAsserted(
+                () -> assertNativeContextMappings(startedAt, System.currentTimeMillis()));
+
+        var nativeSnapshot = signalDetectionStore.detect(new DetectionCriteria(
+                SERVICE_NAME,
+                SERVICE_NAMESPACE,
+                ENVIRONMENT,
+                COLLECTOR_ID,
+                INSTANCE_ID,
+                ENDPOINT,
+                startedAt,
+                System.currentTimeMillis()));
+        assertThat(nativeSnapshot.observation(LOGS)).as("native log detector snapshot").satisfies(observation -> {
+            assertThat(observation.status()).isEqualTo(RECEIVED);
+            assertThat(observation.lastReceivedAt()).isBetween(startedAt, System.currentTimeMillis());
+        });
 
         DetectionRequest request = new DetectionRequest(
                 1,
@@ -166,7 +187,8 @@ class GreptimeThreeSignalInstrumentationE2eTest {
                 Method.ZERO_CODE,
                 Environment.VM,
                 Platform.LINUX_AMD64,
-                new ServiceIdentity(SERVICE_NAME, SERVICE_NAMESPACE, ENVIRONMENT),
+                new ServiceIdentity(
+                        SERVICE_NAME, SERVICE_NAMESPACE, ENVIRONMENT, INSTANCE_ID, ENDPOINT),
                 COLLECTOR_ID,
                 startedAt);
 
@@ -185,6 +207,8 @@ class GreptimeThreeSignalInstrumentationE2eTest {
                 assertThat(jump.context().serviceNamespace()).isEqualTo(SERVICE_NAMESPACE);
                 assertThat(jump.context().environment()).isEqualTo(ENVIRONMENT);
                 assertThat(jump.context().collectorId()).isEqualTo(COLLECTOR_ID);
+                assertThat(jump.context().serviceInstanceId()).isEqualTo(INSTANCE_ID);
+                assertThat(jump.context().endpoint()).isEqualTo(ENDPOINT);
                 assertThat(jump.context().startedAt()).isEqualTo(startedAt);
                 assertThat(jump.context().detectedAt()).isGreaterThanOrEqualTo(startedAt);
             });
@@ -201,12 +225,63 @@ class GreptimeThreeSignalInstrumentationE2eTest {
                 "other-collector", startedAt));
         assertNotReceived(requestWith(request, SERVICE_NAME, SERVICE_NAMESPACE, ENVIRONMENT,
                 COLLECTOR_ID, signalTimeNanos / 1_000_000L + 1));
+        assertNotReceived(requestWithContext(request, "other-instance", ENDPOINT));
+        assertNotReceived(requestWithContext(request, INSTANCE_ID, "/other"));
 
         DetectionResponse detected = detectionService.detect(request);
         assertProductionQueries(
                 enabledJump(detected, METRICS).context(),
                 enabledJump(detected, LOGS).context(),
                 enabledJump(detected, TRACES).context());
+    }
+
+    private void assertNativeContextMappings(long startedAt, long detectedAt) {
+        assertThat(queryExecutor.executeStrict("""
+                SELECT service_name, resource_attributes, log_attributes, timestamp
+                FROM hertzbeat_logs
+                ORDER BY timestamp DESC LIMIT 1
+                """))
+                .singleElement()
+                .satisfies(row -> {
+                    assertThat(String.valueOf(row.get("resource_attributes")))
+                            .contains("service.instance.id", INSTANCE_ID);
+                    assertThat(String.valueOf(row.get("log_attributes")))
+                            .contains("http.route", ENDPOINT);
+                });
+        assertThat(queryExecutor.executeStrict("""
+                SELECT COUNT(*) AS signal_count FROM hertzbeat_logs
+                WHERE service_name = '%s'
+                  AND json_get_string(resource_attributes, '$["service.namespace"]') = '%s'
+                  AND json_get_string(resource_attributes, '$["deployment.environment.name"]') = '%s'
+                  AND json_get_string(resource_attributes, '$["hertzbeat.collector.id"]') = '%s'
+                  AND json_get_string(resource_attributes, '$["service.instance.id"]') = '%s'
+                  AND json_get_string(log_attributes, '$["http.route"]') = '%s'
+                  AND timestamp >= to_timestamp_millis(%d)
+                  AND timestamp < to_timestamp_millis(%d)
+                """.formatted(
+                        SERVICE_NAME,
+                        SERVICE_NAMESPACE,
+                        ENVIRONMENT,
+                        COLLECTOR_ID,
+                        INSTANCE_ID,
+                        ENDPOINT,
+                        startedAt,
+                        detectedAt + 1)))
+                .singleElement()
+                .satisfies(row -> assertThat(((Number) row.get("signal_count")).longValue()).isPositive());
+        assertThat(queryExecutor.executeStrict("""
+                SELECT service_name,
+                  "resource_attributes.service.instance.id" AS service_instance_id,
+                  "span_attributes.http.route" AS http_route,
+                  timestamp
+                FROM hzb_traces
+                ORDER BY timestamp DESC LIMIT 1
+                """))
+                .singleElement()
+                .satisfies(row -> {
+                    assertThat(row.get("service_instance_id")).hasToString(INSTANCE_ID);
+                    assertThat(row.get("http_route")).hasToString(ENDPOINT);
+                });
     }
 
     private QueryJump enabledJump(DetectionResponse response, Signal signal) {
@@ -304,9 +379,33 @@ class GreptimeThreeSignalInstrumentationE2eTest {
                 source.method(),
                 source.environment(),
                 source.platform(),
-                new ServiceIdentity(serviceName, serviceNamespace, environment),
+                new ServiceIdentity(
+                        serviceName,
+                        serviceNamespace,
+                        environment,
+                        source.service().serviceInstanceId(),
+                        source.service().endpoint()),
                 collectorId,
                 startedAt);
+    }
+
+    private DetectionRequest requestWithContext(
+            DetectionRequest source, String serviceInstanceId, String endpoint) {
+        return new DetectionRequest(
+                source.schemaVersion(),
+                source.language(),
+                source.framework(),
+                source.method(),
+                source.environment(),
+                source.platform(),
+                new ServiceIdentity(
+                        source.service().name(),
+                        source.service().namespace(),
+                        source.service().environment(),
+                        serviceInstanceId,
+                        endpoint),
+                source.collectorId(),
+                source.startedAt());
     }
 
     private void assertNotReceived(DetectionRequest request) {

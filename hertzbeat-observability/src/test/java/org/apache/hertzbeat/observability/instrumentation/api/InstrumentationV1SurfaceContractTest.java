@@ -18,6 +18,8 @@
 package org.apache.hertzbeat.observability.instrumentation.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -48,6 +50,7 @@ import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApi
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.SecretPlaceholder;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.SecretReplacement;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.SecretValueFormat;
+import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.ServiceIdentity;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Signal;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.SignalCapabilities;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.SignalDetection;
@@ -88,6 +91,8 @@ class InstrumentationV1SurfaceContractTest {
                 GuideStep.class, "id", "type", "titleKey", "executionLocationKey", "snippets");
         assertRecordComponents(GuideSnippet.class, "id", "language", "content", "secretPlaceholders");
         assertRecordComponents(SecretPlaceholder.class, "marker", "valueFormat", "replacement");
+        assertRecordComponents(
+                ServiceIdentity.class, "name", "namespace", "environment", "serviceInstanceId", "endpoint");
 
         assertRecordComponents(
                 DetectionRequest.class,
@@ -129,9 +134,26 @@ class InstrumentationV1SurfaceContractTest {
                 "serviceNamespace",
                 "environment",
                 "collectorId",
+                "serviceInstanceId",
+                "endpoint",
                 "startedAt",
                 "detectedAt");
         assertRecordComponents(QueryJump.class, "signal", "enabled", "context");
+    }
+
+    @Test
+    void keepsLegacyServiceIdentityJsonReadableAndOmitsAbsentOptionalContext() throws Exception {
+        ServiceIdentity identity = objectMapper.readValue(
+                """
+                        {"name":"checkout-api","namespace":"commerce","environment":"prod"}
+                        """,
+                ServiceIdentity.class);
+
+        assertNull(identity.serviceInstanceId());
+        assertNull(identity.endpoint());
+        var serialized = objectMapper.readTree(objectMapper.writeValueAsString(identity));
+        assertFalse(serialized.has("serviceInstanceId"));
+        assertFalse(serialized.has("endpoint"));
     }
 
     @Test

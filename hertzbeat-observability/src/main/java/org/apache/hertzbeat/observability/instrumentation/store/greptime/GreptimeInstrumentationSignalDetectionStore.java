@@ -46,6 +46,11 @@ import org.springframework.stereotype.Component;
 @ConditionalOnProperty(prefix = "warehouse.store.greptime", name = "enabled", havingValue = "true")
 public class GreptimeInstrumentationSignalDetectionStore implements InstrumentationSignalDetectionStore {
 
+    // Detection operates on contemporary telemetry. These decimal boundaries distinguish the
+    // epoch precision Greptime may expose for TIMESTAMP values while keeping epoch millis intact.
+    private static final long MICROSECOND_EPOCH_MIN_ABSOLUTE = 100_000_000_000_000L;
+    private static final long NANOSECOND_EPOCH_MIN_ABSOLUTE = 100_000_000_000_000_000L;
+
     private static final String LAST_RECEIVED_AT = "last_received_at";
 
     private final ObjectProvider<GreptimeSqlQueryExecutor> executorProvider;
@@ -84,7 +89,9 @@ public class GreptimeInstrumentationSignalDetectionStore implements Instrumentat
         try {
             List<Map<String, Object>> rows = executor.executeStrict(queryFactory.latestReceivedAt(signal, criteria));
             Long lastReceivedAt = latestTimestamp(rows);
-            if (lastReceivedAt == null || lastReceivedAt < criteria.startedAt()) {
+            if (lastReceivedAt == null
+                    || lastReceivedAt < criteria.startedAt()
+                    || lastReceivedAt > criteria.detectedAt()) {
                 return SignalObservation.waiting();
             }
             return SignalObservation.received(lastReceivedAt);
@@ -123,7 +130,7 @@ public class GreptimeInstrumentationSignalDetectionStore implements Instrumentat
 
     private long timestampMillis(Object value) {
         if (value instanceof Number number) {
-            return number.longValue();
+            return numericTimestampMillis(number.longValue());
         }
         if (value instanceof Instant instant) {
             return instant.toEpochMilli();
@@ -149,7 +156,7 @@ public class GreptimeInstrumentationSignalDetectionStore implements Instrumentat
     private long timestampTextMillis(String value) {
         String text = value.trim();
         try {
-            return Long.parseLong(text);
+            return numericTimestampMillis(Long.parseLong(text));
         } catch (NumberFormatException ignored) {
             // Greptime SQL commonly returns an ISO timestamp instead of epoch milliseconds.
         }
@@ -164,9 +171,19 @@ public class GreptimeInstrumentationSignalDetectionStore implements Instrumentat
             // Continue with Greptime's SQL timestamp representation.
         }
         try {
-            return Timestamp.valueOf(text).toInstant().toEpochMilli();
+            return Timestamp.valueOf(text).toLocalDateTime().toInstant(ZoneOffset.UTC).toEpochMilli();
         } catch (IllegalArgumentException exception) {
             throw new IllegalArgumentException("Greptime returned an invalid detection timestamp", exception);
         }
+    }
+
+    private long numericTimestampMillis(long value) {
+        if (value >= NANOSECOND_EPOCH_MIN_ABSOLUTE || value <= -NANOSECOND_EPOCH_MIN_ABSOLUTE) {
+            return Math.floorDiv(value, 1_000_000L);
+        }
+        if (value >= MICROSECOND_EPOCH_MIN_ABSOLUTE || value <= -MICROSECOND_EPOCH_MIN_ABSOLUTE) {
+            return Math.floorDiv(value, 1_000L);
+        }
+        return value;
     }
 }

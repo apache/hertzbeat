@@ -22,6 +22,7 @@ import java.util.Map;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.DetectionErrorCode;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.DetectionStatus;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Signal;
+import org.apache.hertzbeat.observability.shared.query.TelemetryQueryContextScope;
 
 /**
  * Storage-neutral port for scoped signal reception detection.
@@ -41,7 +42,16 @@ public interface InstrumentationSignalDetectionStore {
             String serviceNamespace,
             String environment,
             String collectorId,
-            long startedAt) {
+            String serviceInstanceId,
+            String endpoint,
+            long startedAt,
+            long detectedAt) {
+
+        public DetectionCriteria {
+            TelemetryQueryContextScope scope = new TelemetryQueryContextScope(serviceInstanceId, endpoint);
+            serviceInstanceId = scope.instance();
+            endpoint = scope.endpoint();
+        }
     }
 
     /** Per-signal observations returned from a storage adapter. */

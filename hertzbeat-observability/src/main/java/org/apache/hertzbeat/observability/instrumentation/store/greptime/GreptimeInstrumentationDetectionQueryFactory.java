@@ -45,7 +45,9 @@ final class GreptimeInstrumentationDetectionQueryFactory {
         filters.add(equalsColumn("service_namespace", criteria.serviceNamespace()));
         filters.add(equalsColumn("deployment_environment_name", criteria.environment()));
         filters.add(equalsColumn(OtlpMetricSemanticLabels.HERTZBEAT_COLLECTOR_ID, criteria.collectorId()));
-        filters.add("greptime_timestamp >= to_timestamp_millis(" + criteria.startedAt() + ")");
+        addOptionalColumn(filters, OtlpMetricSemanticLabels.SERVICE_INSTANCE_ID, criteria.serviceInstanceId());
+        addOptionalColumn(filters, OtlpMetricSemanticLabels.HTTP_ROUTE, criteria.endpoint());
+        addTimeWindow(filters, "greptime_timestamp", criteria);
         return "SELECT MAX(greptime_timestamp) AS last_received_at FROM " + METRICS_TABLE
                 + " WHERE " + String.join(" AND ", filters);
     }
@@ -56,7 +58,9 @@ final class GreptimeInstrumentationDetectionQueryFactory {
         filters.add(equalsResourceAttribute("service.namespace", criteria.serviceNamespace()));
         filters.add(equalsResourceAttribute("deployment.environment.name", criteria.environment()));
         filters.add(equalsResourceAttribute("hertzbeat.collector.id", criteria.collectorId()));
-        filters.add("timestamp >= to_timestamp_millis(" + criteria.startedAt() + ")");
+        addOptionalResourceAttribute(filters, "service.instance.id", criteria.serviceInstanceId());
+        addOptionalJsonAttribute(filters, "log_attributes", "http.route", criteria.endpoint());
+        addTimeWindow(filters, "timestamp", criteria);
         return "SELECT MAX(timestamp) AS last_received_at FROM " + table
                 + " WHERE " + String.join(" AND ", filters);
     }
@@ -70,7 +74,10 @@ final class GreptimeInstrumentationDetectionQueryFactory {
                 criteria.environment()));
         filters.add(equalsColumn(quotedIdentifier("resource_attributes.hertzbeat.collector.id"),
                 criteria.collectorId()));
-        filters.add("timestamp >= to_timestamp_millis(" + criteria.startedAt() + ")");
+        addOptionalColumn(filters, quotedIdentifier("resource_attributes.service.instance.id"),
+                criteria.serviceInstanceId());
+        addOptionalColumn(filters, quotedIdentifier("span_attributes.http.route"), criteria.endpoint());
+        addTimeWindow(filters, "timestamp", criteria);
         return "SELECT MAX(timestamp) AS last_received_at FROM " + TRACES_TABLE
                 + " WHERE " + String.join(" AND ", filters);
     }
@@ -80,8 +87,38 @@ final class GreptimeInstrumentationDetectionQueryFactory {
     }
 
     private String equalsResourceAttribute(String attribute, String value) {
-        return "json_get_string(resource_attributes, '$[\"" + attribute + "\"]') = '"
+        return equalsJsonAttribute("resource_attributes", attribute, value);
+    }
+
+    private String equalsJsonAttribute(String column, String attribute, String value) {
+        return "json_get_string(" + column + ", '$[\"" + attribute + "\"]') = '"
                 + escapeSql(value) + "'";
+    }
+
+    private void addOptionalColumn(List<String> filters, String column, String value) {
+        if (value != null) {
+            filters.add(equalsColumn(column, value));
+        }
+    }
+
+    private void addOptionalResourceAttribute(List<String> filters, String attribute, String value) {
+        addOptionalJsonAttribute(filters, "resource_attributes", attribute, value);
+    }
+
+    private void addOptionalJsonAttribute(
+            List<String> filters, String column, String attribute, String value) {
+        if (value != null) {
+            filters.add(equalsJsonAttribute(column, attribute, value));
+        }
+    }
+
+    private void addTimeWindow(List<String> filters, String column, DetectionCriteria criteria) {
+        filters.add(column + " >= to_timestamp_millis(" + criteria.startedAt() + ")");
+        if (criteria.detectedAt() == Long.MAX_VALUE) {
+            filters.add(column + " <= to_timestamp_millis(" + Long.MAX_VALUE + ")");
+            return;
+        }
+        filters.add(column + " < to_timestamp_millis(" + (criteria.detectedAt() + 1) + ")");
     }
 
     private String quotedIdentifier(String identifier) {

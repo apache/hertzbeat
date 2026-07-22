@@ -94,7 +94,8 @@ public class InstrumentationDetectionService {
     }
 
     public DetectionResponse detect(DetectionRequest request) {
-        requireRequest(request);
+        long detectedAt = clock.getAsLong();
+        requireRequest(request, detectedAt);
         MethodOption method = catalogService.requireMethod(request.language(), request.framework(), request.method());
         if (!method.environments().contains(request.environment())
                 || !method.platforms().contains(request.platform())
@@ -108,20 +109,24 @@ public class InstrumentationDetectionService {
                 request.service().namespace(),
                 request.service().environment(),
                 request.collectorId(),
-                request.startedAt());
+                request.service().serviceInstanceId(),
+                request.service().endpoint(),
+                request.startedAt(),
+                detectedAt);
         DetectionSnapshot snapshot = safeDetect(criteria);
         CollectorReadiness readiness = safeReadiness(request.collectorId());
         SignalDetection metrics = signal(method, snapshot, readiness, Signal.METRICS, request.startedAt());
         SignalDetection logs = signal(method, snapshot, readiness, Signal.LOGS, request.startedAt());
         SignalDetection traces = signal(method, snapshot, readiness, Signal.TRACES, request.startedAt());
         SignalDetections signals = new SignalDetections(metrics, logs, traces);
-        long detectedAt = clock.getAsLong();
         PollingInstruction polling = polling(signals, request.startedAt(), detectedAt);
         QueryJumpContext jumpContext = new QueryJumpContext(
                 request.service().name(),
                 request.service().namespace(),
                 request.service().environment(),
                 request.collectorId(),
+                request.service().serviceInstanceId(),
+                request.service().endpoint(),
                 request.startedAt(),
                 detectedAt);
         return new DetectionResponse(
@@ -235,7 +240,7 @@ public class InstrumentationDetectionService {
         return new DetectionSnapshot(observations);
     }
 
-    private void requireRequest(DetectionRequest request) {
+    private void requireRequest(DetectionRequest request, long detectedAt) {
         if (request == null || request.schemaVersion() != SCHEMA_VERSION) {
             throw new InstrumentationRequestException(RequestErrorCode.SCHEMA_UNSUPPORTED);
         }
@@ -245,8 +250,7 @@ public class InstrumentationDetectionService {
         }
         requireService(request.service());
         requireSafeValue(request.collectorId(), "Collector ID");
-        long now = clock.getAsLong();
-        if (request.startedAt() <= 0 || request.startedAt() > now + 60_000) {
+        if (request.startedAt() <= 0 || request.startedAt() > detectedAt + 60_000) {
             throw new InstrumentationRequestException(RequestErrorCode.CONTEXT_INVALID);
         }
     }

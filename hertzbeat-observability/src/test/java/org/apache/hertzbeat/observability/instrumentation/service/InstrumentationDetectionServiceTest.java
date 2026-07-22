@@ -53,6 +53,7 @@ import org.junit.jupiter.api.Test;
 class InstrumentationDetectionServiceTest {
 
     private static final long STARTED_AT = 1_710_000_000_000L;
+    private static final long DETECTED_AT = STARTED_AT + 5_000;
 
     @Test
     void scopesDetectionToTheExactOnboardingContextAndKeepsSignalsDistinct() {
@@ -66,13 +67,14 @@ class InstrumentationDetectionServiceTest {
                     DetectionErrorCode.STORAGE_QUERY_FAILED, STARTED_AT + 2_000));
             return new DetectionSnapshot(observations);
         };
-        InstrumentationDetectionService service =
-                new InstrumentationDetectionService(new InstrumentationCatalogService(), store);
+        InstrumentationDetectionService service = new InstrumentationDetectionService(
+                new InstrumentationCatalogService(), store, () -> DETECTED_AT);
 
-        var response = service.detect(javaRequest());
+        var response = service.detect(scopedJavaRequest());
 
         assertEquals(new DetectionCriteria(
-                "checkout-api", "commerce", "prod", "collector-east", STARTED_AT), observedCriteria.get());
+                "checkout-api", "commerce", "prod", "collector-east",
+                "checkout-7d9", "/checkout/{id}", STARTED_AT, DETECTED_AT), observedCriteria.get());
         assertEquals(DetectionStatus.RECEIVED, response.signals().metrics().status());
         assertEquals(STARTED_AT + 1_000, response.signals().metrics().lastReceivedAt());
         assertEquals(DetectionStatus.WAITING, response.signals().logs().status());
@@ -81,7 +83,13 @@ class InstrumentationDetectionServiceTest {
         assertEquals(DetectionErrorCode.STORAGE_QUERY_FAILED, response.signals().traces().errorCode());
         assertEquals("checkout-api", response.queryJumpContext().serviceName());
         assertEquals("collector-east", response.queryJumpContext().collectorId());
+        assertEquals("checkout-7d9", response.queryJumpContext().serviceInstanceId());
+        assertEquals("/checkout/{id}", response.queryJumpContext().endpoint());
         assertEquals(STARTED_AT, response.queryJumpContext().startedAt());
+        assertEquals(DETECTED_AT, response.queryJumpContext().detectedAt());
+        assertEquals(response.queryJumpContext(), response.queryJumps().get(0).context());
+        assertEquals(response.queryJumpContext(), response.queryJumps().get(1).context());
+        assertEquals(response.queryJumpContext(), response.queryJumps().get(2).context());
         assertEquals(PollingDecision.MANUAL_RETRY, response.polling().decision());
         assertNull(response.polling().pollAfterMs());
         assertEquals(STARTED_AT + 120_000, response.polling().deadlineAt());
@@ -269,6 +277,20 @@ class InstrumentationDetectionServiceTest {
                 Environment.DOCKER,
                 Platform.LINUX_AMD64,
                 new ServiceIdentity("checkout-api", "commerce", "prod"),
+                "collector-east",
+                STARTED_AT);
+    }
+
+    private DetectionRequest scopedJavaRequest() {
+        return new DetectionRequest(
+                1,
+                Language.JAVA,
+                Framework.SPRING_BOOT,
+                Method.ZERO_CODE,
+                Environment.DOCKER,
+                Platform.LINUX_AMD64,
+                new ServiceIdentity(
+                        "checkout-api", "commerce", "prod", " checkout-7d9 ", " /checkout/{id} "),
                 "collector-east",
                 STARTED_AT);
     }

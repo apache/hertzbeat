@@ -129,6 +129,8 @@ class InstrumentationControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.schemaVersion").value(1))
                 .andExpect(jsonPath("$.data.context.service.name").value("checkout-api"))
+                .andExpect(jsonPath("$.data.context.service.serviceInstanceId").doesNotExist())
+                .andExpect(jsonPath("$.data.context.service.endpoint").doesNotExist())
                 .andExpect(jsonPath("$.data.context.collectorId").value("collector-east"))
                 .andExpect(jsonPath("$.data.signals.metrics.status").value("unsupported"))
                 .andExpect(jsonPath("$.data.signals.logs.status").value("unsupported"))
@@ -137,8 +139,71 @@ class InstrumentationControllerTest {
                 .andExpect(jsonPath("$.data.polling.decision").value("manual_retry"))
                 .andExpect(jsonPath("$.data.polling.pollAfterMs").doesNotExist())
                 .andExpect(jsonPath("$.data.queryJumpContext.startedAt").value(1710000000000L))
+                .andExpect(jsonPath("$.data.queryJumpContext.serviceInstanceId").doesNotExist())
+                .andExpect(jsonPath("$.data.queryJumpContext.endpoint").doesNotExist())
                 .andExpect(jsonPath("$.data.queryJumps[2].signal").value("traces"))
                 .andExpect(jsonPath("$.data.queryJumps[2].enabled").value(false));
+    }
+
+    @Test
+    void normalizesAdditiveInstanceAndEndpointAcrossDetectionResponseAndJumps() throws Exception {
+        mockMvc.perform(post("/api/instrumentation/v1/detect")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "schemaVersion": 1,
+                                  "language": "go",
+                                  "framework": "go_generic",
+                                  "method": "ebpf",
+                                  "environment": "vm",
+                                  "platform": "linux_amd64",
+                                  "service": {
+                                    "name": "checkout-api",
+                                    "namespace": "commerce",
+                                    "environment": "prod",
+                                    "serviceInstanceId": " checkout-7d9 ",
+                                    "endpoint": " /checkout/{id} "
+                                  },
+                                  "collectorId": "collector-east",
+                                  "startedAt": 1710000000000
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.context.service.serviceInstanceId").value("checkout-7d9"))
+                .andExpect(jsonPath("$.data.context.service.endpoint").value("/checkout/{id}"))
+                .andExpect(jsonPath("$.data.queryJumpContext.serviceInstanceId").value("checkout-7d9"))
+                .andExpect(jsonPath("$.data.queryJumpContext.endpoint").value("/checkout/{id}"))
+                .andExpect(jsonPath("$.data.queryJumps[0].context.serviceInstanceId").value("checkout-7d9"))
+                .andExpect(jsonPath("$.data.queryJumps[0].context.endpoint").value("/checkout/{id}"))
+                .andExpect(jsonPath("$.data.queryJumps[2].context.serviceInstanceId").value("checkout-7d9"))
+                .andExpect(jsonPath("$.data.queryJumps[2].context.endpoint").value("/checkout/{id}"));
+    }
+
+    @Test
+    void rejectsHighCardinalityEndpointWithStableNonEchoingError() throws Exception {
+        mockMvc.perform(post("/api/instrumentation/v1/detect")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "schemaVersion": 1,
+                                  "language": "go",
+                                  "framework": "go_generic",
+                                  "method": "ebpf",
+                                  "environment": "vm",
+                                  "platform": "linux_amd64",
+                                  "service": {
+                                    "name": "checkout-api",
+                                    "namespace": "commerce",
+                                    "environment": "prod",
+                                    "endpoint": "/checkout?token=private"
+                                  },
+                                  "collectorId": "collector-east",
+                                  "startedAt": 1710000000000
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(1))
+                .andExpect(jsonPath("$.msg").value("instrumentation_selection_invalid"));
     }
 
     @Test
