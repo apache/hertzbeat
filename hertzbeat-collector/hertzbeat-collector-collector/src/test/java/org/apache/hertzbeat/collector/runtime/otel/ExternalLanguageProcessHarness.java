@@ -24,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -130,6 +131,46 @@ final class ExternalLanguageProcessHarness implements AutoCloseable {
         Process process = builder.start();
         processes.add(process);
         return process;
+    }
+
+    Process startWithSecretInput(
+            List<String> command,
+            Map<String, String> environment,
+            String label,
+            char[] secretInput) throws IOException {
+        if (secretInput == null || secretInput.length == 0) {
+            throw new IllegalArgumentException("External process secret input is required");
+        }
+        try {
+            if (command != null && command.stream().anyMatch(argument -> argument != null
+                    && contains(argument, secretInput))) {
+                throw new IllegalArgumentException("External process secret must not appear in command arguments");
+            }
+            Process process = start(command, environment, label);
+            try (var writer = new java.io.OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8)) {
+                writer.write(secretInput);
+                writer.write('\n');
+            }
+            return process;
+        } finally {
+            Arrays.fill(secretInput, '\0');
+        }
+    }
+
+    private boolean contains(String value, char[] candidate) {
+        if (candidate.length > value.length()) {
+            return false;
+        }
+        for (int offset = 0; offset <= value.length() - candidate.length; offset++) {
+            int index = 0;
+            while (index < candidate.length && value.charAt(offset + index) == candidate[index]) {
+                index++;
+            }
+            if (index == candidate.length) {
+                return true;
+            }
+        }
+        return false;
     }
 
     void run(List<String> command, Map<String, String> environment, Duration timeout, String label) throws Exception {

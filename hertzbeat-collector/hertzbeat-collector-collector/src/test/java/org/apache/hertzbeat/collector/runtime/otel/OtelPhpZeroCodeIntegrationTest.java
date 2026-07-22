@@ -37,6 +37,8 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
@@ -58,9 +60,11 @@ class OtelPhpZeroCodeIntegrationTest {
     private static final String SERVICE_NAMESPACE = "storefront";
     private static final String ENVIRONMENT = "integration";
     private static final String COLLECTOR_ID = "collector-php-zero-code";
+    private static final Pattern CONTAINER_NAME = Pattern.compile(
+            "hertzbeat-php-(?:zero-code|composer)-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
 
     @Test
-    void collectsOfficialPsr18ClientTraceWithoutUnsupportedSignals() throws Exception {
+    void collectsOfficialPsr18ClientTraceWithoutUnsupportedSignals() throws Throwable {
         Path runtimeBinary = requiredExecutable(RUNTIME_BINARY_ENV, null);
         Path dockerBinary = requiredExecutable(DOCKER_BINARY_ENV, PREFERRED_DOCKER_BINARY);
         Path bridgePython = requiredExecutable(BRIDGE_PYTHON_BINARY_ENV, PREFERRED_BRIDGE_PYTHON_BINARY);
@@ -74,6 +78,7 @@ class OtelPhpZeroCodeIntegrationTest {
             Map<String, String> dockerEnvironment = harness.createDockerEnvironment(dockerBinary);
             assumeDockerReady(harness, dockerBinary, dockerEnvironment);
             Path workspace = prepareWorkspace(harness, extensionArchive);
+            Throwable primaryFailure = null;
             try {
                 copyComposer(harness, dockerBinary, dockerEnvironment, workspace, composerContainer);
                 startPhpContainer(harness, dockerBinary, dockerEnvironment, workspace, phpContainer);
@@ -139,9 +144,16 @@ class OtelPhpZeroCodeIntegrationTest {
                 } finally {
                     supervisor.close();
                 }
+            } catch (Throwable failure) {
+                primaryFailure = failure;
+                throw failure;
             } finally {
-                removeContainer(harness, dockerBinary, dockerEnvironment, composerContainer, "composer-cleanup");
-                removeContainer(harness, dockerBinary, dockerEnvironment, phpContainer, "php-cleanup");
+                cleanupContainers(
+                        harness,
+                        dockerBinary,
+                        dockerEnvironment,
+                        primaryFailure,
+                        Map.of(composerContainer, "composer-cleanup", phpContainer, "php-cleanup"));
             }
         }
     }
@@ -292,6 +304,7 @@ class OtelPhpZeroCodeIntegrationTest {
             boolean instrumented) throws Exception {
         List<String> command = new ArrayList<>(dockerCommand(dockerBinary, "exec"));
         if (instrumented) {
+            command.add("--interactive");
             addEnvironment(command, "OTEL_PHP_AUTOLOAD_ENABLED", "true");
             addEnvironment(command, "OTEL_SERVICE_NAME", SERVICE_NAME);
             addEnvironment(command, "OTEL_RESOURCE_ATTRIBUTES", "service.namespace=" + SERVICE_NAMESPACE
@@ -301,17 +314,28 @@ class OtelPhpZeroCodeIntegrationTest {
             addEnvironment(command, "OTEL_LOGS_EXPORTER", "none");
             addEnvironment(command, "OTEL_EXPORTER_OTLP_ENDPOINT", otlpEndpoint);
             addEnvironment(command, "OTEL_EXPORTER_OTLP_PROTOCOL", "http/protobuf");
-            addEnvironment(command, "OTEL_EXPORTER_OTLP_HEADERS", "Authorization=Bearer%20" + relayToken);
             addEnvironment(command, "OTEL_PROPAGATORS", "baggage,tracecontext");
         } else {
             addEnvironment(command, "OTEL_PHP_AUTOLOAD_ENABLED", "false");
         }
         command.add(containerName);
-        command.add("php");
-        command.add("/workspace/application.php");
-        command.add(targetUrl);
+        if (instrumented) {
+            command.add("sh");
+            command.add("-c");
+            command.add("IFS= read -r RELAY_TOKEN; "
+                    + "export OTEL_EXPORTER_OTLP_HEADERS=Authorization=Bearer%20${RELAY_TOKEN}; "
+                    + "exec php /workspace/application.php \"$1\"");
+            command.add("php-secret-launch");
+            command.add(targetUrl);
+        } else {
+            command.add("php");
+            command.add("/workspace/application.php");
+            command.add(targetUrl);
+        }
         String label = instrumented ? "php-instrumented" : "php-uninstrumented";
-        Process process = harness.start(command, environment, label);
+        Process process = instrumented
+                ? harness.startWithSecretInput(command, environment, label, relayToken.toCharArray())
+                : harness.start(command, environment, label);
         if (!process.waitFor(Duration.ofSeconds(45).toMillis(), java.util.concurrent.TimeUnit.MILLISECONDS)) {
             String diagnostic = harness.processDiagnostic(process, label);
             harness.stop(process, Duration.ofSeconds(5));
@@ -379,20 +403,87 @@ class OtelPhpZeroCodeIntegrationTest {
         return normalized;
     }
 
+    private void cleanupContainers(
+            ExternalLanguageProcessHarness harness,
+            Path dockerBinary,
+            Map<String, String> environment,
+            Throwable primaryFailure,
+            Map<String, String> containers) throws Exception {
+        Exception cleanupFailure = null;
+        for (Map.Entry<String, String> container : containers.entrySet()) {
+            try {
+                removeContainer(
+                        harness, dockerBinary, environment, container.getKey(), container.getValue());
+            } catch (Exception failure) {
+                if (cleanupFailure == null) {
+                    cleanupFailure = failure;
+                } else {
+                    cleanupFailure.addSuppressed(failure);
+                }
+            }
+        }
+        if (cleanupFailure == null) {
+            return;
+        }
+        if (primaryFailure != null) {
+            primaryFailure.addSuppressed(cleanupFailure);
+            return;
+        }
+        throw cleanupFailure;
+    }
+
     private void removeContainer(
             ExternalLanguageProcessHarness harness,
             Path dockerBinary,
             Map<String, String> environment,
             String containerName,
-            String label) {
+            String label) throws Exception {
+        verifyContainerRemoved(
+                containerName,
+                () -> {
+                    harness.run(
+                            dockerCommand(dockerBinary, "container", "rm", "--force", containerName),
+                            environment,
+                            Duration.ofSeconds(15),
+                            label);
+                    return null;
+                },
+                () -> {
+                    String remaining = harness.capture(
+                            dockerCommand(
+                                    dockerBinary,
+                                    "container", "ls", "--all", "--quiet",
+                                    "--filter", "name=^/" + containerName + "$"),
+                            environment,
+                            Duration.ofSeconds(10));
+                    return !remaining.isBlank();
+                });
+    }
+
+    static void verifyContainerRemoved(
+            String containerName,
+            Callable<Void> remove,
+            Callable<Boolean> containerExists) throws Exception {
+        if (!CONTAINER_NAME.matcher(containerName).matches()) {
+            throw new IllegalArgumentException("Refusing cleanup for a non-owned PHP container name");
+        }
         try {
-            harness.run(
-                    dockerCommand(dockerBinary, "container", "rm", "--force", containerName),
-                    environment,
-                    Duration.ofSeconds(15),
-                    label);
-        } catch (Exception ignored) {
-            // The helper uses --rm and an absent container is already clean.
+            remove.call();
+        } catch (Exception removalFailure) {
+            boolean exists;
+            try {
+                exists = containerExists.call();
+            } catch (Exception statusFailure) {
+                statusFailure.addSuppressed(removalFailure);
+                throw statusFailure;
+            }
+            if (!exists) {
+                return;
+            }
+            IllegalStateException cleanupFailure = new IllegalStateException(
+                    "Temporary PHP container still exists after cleanup: " + containerName);
+            cleanupFailure.addSuppressed(removalFailure);
+            throw cleanupFailure;
         }
     }
 

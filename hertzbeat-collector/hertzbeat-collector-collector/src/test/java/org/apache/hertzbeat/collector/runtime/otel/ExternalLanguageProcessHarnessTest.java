@@ -19,6 +19,7 @@ package org.apache.hertzbeat.collector.runtime.otel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
@@ -52,6 +53,47 @@ class ExternalLanguageProcessHarnessTest {
         }
     }
 
+    @Test
+    void transportsSecretOnlyThroughStdinAndRedactsChildFailure() throws Exception {
+        String relayToken = "relay-secret-value";
+        List<String> command = List.of(
+                javaExecutable().toString(),
+                "-cp",
+                testClasses().toString(),
+                StdinSecretProcess.class.getName());
+        assertTrue(command.stream().noneMatch(argument -> argument.contains(relayToken)));
+
+        try (ExternalLanguageProcessHarness harness = ExternalLanguageProcessHarness.create("external-secret-input-")) {
+            char[] secretInput = relayToken.toCharArray();
+            Process process = harness.startWithSecretInput(
+                    command, Map.of(), "stdin-secret-process", secretInput);
+            assertTrue(allCleared(secretInput));
+
+            assertTrue(process.waitFor(Duration.ofSeconds(5).toMillis(), TimeUnit.MILLISECONDS));
+            assertEquals(29, process.exitValue());
+            String diagnostic = harness.processDiagnostic(process, "stdin-secret-process");
+            assertTrue(diagnostic.contains("<redacted>"));
+            assertFalse(diagnostic.contains(relayToken));
+
+            char[] rejectedSecretInput = relayToken.toCharArray();
+            assertThrows(IllegalArgumentException.class, () -> harness.startWithSecretInput(
+                    List.of(javaExecutable().toString(), relayToken),
+                    Map.of(),
+                    "rejected-secret-argument",
+                    rejectedSecretInput));
+            assertTrue(allCleared(rejectedSecretInput));
+        }
+    }
+
+    private boolean allCleared(char[] value) {
+        for (char character : value) {
+            if (character != '\0') {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private Path javaExecutable() {
         String executable = System.getProperty("os.name").toLowerCase().contains("win") ? "java.exe" : "java";
         return Path.of(System.getProperty("java.home"), "bin", executable);
@@ -68,6 +110,16 @@ class ExternalLanguageProcessHarnessTest {
             System.out.println("Authorization=Bearer secret-value");
             System.out.println("startup failed");
             System.exit(23);
+        }
+    }
+
+    static class StdinSecretProcess {
+
+        public static void main(String[] arguments) throws Exception {
+            String relayToken = new String(System.in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8).trim();
+            System.out.println("Authorization=Bearer " + relayToken);
+            System.out.println("relay startup failed");
+            System.exit(29);
         }
     }
 }
