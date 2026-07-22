@@ -58,8 +58,6 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 public class StatusPageServiceImpl implements StatusPageService {
 
-    private static final int HISTORY_SPAN_DAYS = 29;
-
     @Autowired
     private StatusPageOrgDao statusPageOrgDao;
 
@@ -126,7 +124,12 @@ public class StatusPageServiceImpl implements StatusPageService {
     }
 
     @Override
-    public List<ComponentStatus> queryComponentsStatus() {
+    public List<ComponentStatus> queryComponentsStatus(int days) {
+        if (days < 1 || days > 90) {
+            throw new IllegalArgumentException("days must be between 1 and 90");
+        }
+
+        int historySpanDays = days - 1;
         List<StatusPageComponent> components = statusPageComponentDao.findAll();
         List<ComponentStatus> componentStatusList = new LinkedList<>();
         for (StatusPageComponent component : components) {
@@ -150,11 +153,11 @@ public class StatusPageServiceImpl implements StatusPageService {
                     .findStatusPageHistoriesByComponentIdAndTimestampBetween(component.getId(), todayStartTimestamp, nowTimestamp);
             StatusPageHistory todayStatus = combineOneDayStatusPageHistory(todayStatusPageHistoryList, component, nowTimestamp);
             histories.add(todayStatus);
-            // query 30d component status history
+            // query component status history for the configured number of days
             long preTimestamp = now
                 .atZone(zoneId)
                 .toLocalDate()
-                .minusDays(HISTORY_SPAN_DAYS)
+                .minusDays(historySpanDays)
                 .atStartOfDay(zoneId)
                 .toInstant()
                 .toEpochMilli();
@@ -167,7 +170,7 @@ public class StatusPageServiceImpl implements StatusPageService {
                 .atZone(zoneId)
                 .minusSeconds(1);   // yesterday 23:59:59 local time
 
-            for (int i = 0; i < HISTORY_SPAN_DAYS; i++) {
+            for (int i = 0; i < historySpanDays; i++) {
                 long endTimestamp = end.toInstant().toEpochMilli();
 
                 long startTimestamp = end.toLocalDate()
@@ -242,7 +245,12 @@ public class StatusPageServiceImpl implements StatusPageService {
     }
 
     @Override
-    public ComponentStatus queryComponentStatus(long id) {
+    public ComponentStatus queryComponentStatus(long id, int days) {
+        if (days < 1 || days > 90) {
+            throw new IllegalArgumentException("days must be between 1 and 90");
+        }
+
+        int historySpanDays = days - 1;
         StatusPageComponent component = statusPageComponentDao.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("component not found"));
 
@@ -272,11 +280,11 @@ public class StatusPageServiceImpl implements StatusPageService {
 
         histories.add(todayStatus);
 
-        // Previous HISTORY_SPAN_DAYS days (excluding today)
+        // Previous historySpanDays days (excluding today)
         long preTimestamp = now
             .atZone(zoneId)
             .toLocalDate()
-            .minusDays(HISTORY_SPAN_DAYS)
+            .minusDays(historySpanDays)
             .atStartOfDay(zoneId)
             .toInstant()
             .toEpochMilli();
@@ -292,7 +300,7 @@ public class StatusPageServiceImpl implements StatusPageService {
             .atZone(zoneId)
             .minusSeconds(1);   // yesterday 23:59:59 local time
 
-        for (int i = 0; i < HISTORY_SPAN_DAYS; i++) {
+        for (int i = 0; i < historySpanDays; i++) {
             long endTimestamp = end.toInstant().toEpochMilli();
 
             long startTimestamp = end.toLocalDate()

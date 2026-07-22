@@ -99,8 +99,9 @@ class StatusPageServiceImplTimeTest {
         when(historyDao.findStatusPageHistoriesByComponentIdAndTimestampBetween(anyLong(), anyLong(), anyLong()))
             .thenReturn(List.of(before, after));
 
-        List<ComponentStatus> result = service.queryComponentsStatus();
-        assertEquals(30, result.get(0).getHistory().size());
+        assertEquals(30, service.queryComponentsStatus(30).get(0).getHistory().size());
+        assertEquals(1, service.queryComponentsStatus(1).get(0).getHistory().size());
+        assertEquals(90, service.queryComponentsStatus(90).get(0).getHistory().size());
     }
 
     @Test
@@ -114,7 +115,7 @@ class StatusPageServiceImplTimeTest {
         when(historyDao.findStatusPageHistoriesByComponentIdAndTimestampBetween(anyLong(), anyLong(), anyLong()))
             .thenReturn(List.of(history));
 
-        List<ComponentStatus> result = service.queryComponentsStatus();
+        List<ComponentStatus> result = service.queryComponentsStatus(30);
         assertEquals(30, result.get(0).getHistory().size());
     }
 
@@ -128,7 +129,7 @@ class StatusPageServiceImplTimeTest {
         when(historyDao.findStatusPageHistoriesByComponentIdAndTimestampBetween(anyLong(), anyLong(), anyLong()))
             .thenReturn(List.of(history));
 
-        List<ComponentStatus> result = service.queryComponentsStatus();
+        List<ComponentStatus> result = service.queryComponentsStatus(30);
         assertEquals(30, result.get(0).getHistory().size());
     }
 
