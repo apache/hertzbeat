@@ -8,7 +8,6 @@
 import { theme } from 'antd';
 import { describe, expect, it } from 'vitest';
 
-import globalStyles from '../styles.css?raw';
 import { createHertzBeatTheme } from './hertzbeat-theme';
 
 describe('HertzBeat semantic theme', () => {
@@ -34,16 +33,19 @@ describe('HertzBeat semantic theme', () => {
     });
   });
 
-  it('keeps overlay surfaces in the same neutral hierarchy as the application shell', () => {
-    expect(createHertzBeatTheme('dark').token).toMatchObject({ colorBgElevated: '#14171e' });
-    expect(createHertzBeatTheme('compact').token).toMatchObject({ colorBgElevated: '#14171e' });
-    expect(createHertzBeatTheme('default').token).toMatchObject({ colorBgElevated: '#ffffff' });
-  });
-
-  it('defines selected surfaces independently from transient hover state', () => {
-    expect(globalStyles).toMatch(/:root\s*\{[^}]*--hb-bg-selected:\s*#211a26;/s);
-    expect(globalStyles).toMatch(/:root\[data-theme='default'\]\s*\{[^}]*--hb-bg-selected:\s*#f7f0f8;/s);
-    expect(globalStyles.match(/--hb-nav-selected:\s*var\(--hb-bg-selected\);/g)).toHaveLength(1);
+  it('keeps raised and selected surfaces in each runtime theme hierarchy', () => {
+    expect(createHertzBeatTheme('dark')).toMatchObject({
+      token: { colorBgElevated: '#14171e' },
+      components: { Menu: { itemSelectedBg: '#211a26' } }
+    });
+    expect(createHertzBeatTheme('compact')).toMatchObject({
+      token: { colorBgElevated: '#14171e' },
+      components: { Menu: { itemSelectedBg: '#211a26' } }
+    });
+    expect(createHertzBeatTheme('default')).toMatchObject({
+      token: { colorBgElevated: '#ffffff' },
+      components: { Menu: { itemSelectedBg: '#f7f0f8' } }
+    });
   });
 
   it.each(['dark', 'default', 'compact'] as const)(
