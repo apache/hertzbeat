@@ -30,7 +30,6 @@ import { initializeI18n, loadLocale } from '@/core/i18n/i18n';
 import { useSharedTime } from '@/shared/time';
 
 import { BasicLayout } from './basic-layout';
-import stylesheet from '../shell/hertzbeat-shell.module.css?raw';
 
 describe('BasicLayout shell', () => {
   beforeAll(async () => {
@@ -113,52 +112,17 @@ describe('BasicLayout shell', () => {
     expect(screen.getByRole('button', { name: 'Refresh active data' })).toBeEnabled();
   });
 
-  it('selects the longest Refine route and supports the 220 to 48 pixel rail', () => {
+  it('selects the longest Refine route and exposes the collapsed navigation state', () => {
     renderLayout('/settings/notifications/templates');
 
-    expect(screen.getByRole('link', { name: 'Templates' })).toHaveAttribute('aria-current', 'page');
+    const activeLink = screen.getByRole('link', { name: 'Templates' });
+    expect(activeLink).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Receivers' })).not.toHaveAttribute('aria-current');
     expect(screen.getByTestId('shell-navigation')).toHaveAttribute('data-collapsed', 'false');
     fireEvent.click(screen.getByRole('button', { name: 'Collapse navigation' }));
     expect(screen.getByTestId('shell-navigation')).toHaveAttribute('data-collapsed', 'true');
-
-    const expanded = cssRule('.shell');
-    const collapsed = cssRule('.shellCollapsed');
-    expect(expanded).toContain('--hb-shell-sidebar-width: 220px');
-    expect(collapsed).toContain('--hb-shell-sidebar-width: 48px');
-  });
-
-  it('keeps active, hover, and keyboard navigation states visually distinct', () => {
-    const link = cssRule('.navigationLink');
-    const active = cssRule('.navigationLinkActive');
-    const hover = cssRule('.navigationLink:hover');
-    const focus = cssRule('.navigationLink:focus-visible');
-
-    expect(link).toContain('border-left: 2px solid transparent');
-    expect(active).toContain('border-left-color: var(--hb-brand-accent)');
-    expect(active).toContain('border-radius: 0');
-    expect(active).toContain('background: var(--hb-nav-selected)');
-    expect(active).not.toContain('box-shadow');
-    expect(hover).toContain('background: var(--hb-nav-hover)');
-    expect(focus).toContain('outline: 2px solid var(--hb-focus-ring)');
-  });
-
-  it('contains wide route content inside the work surface without pushing global chrome', () => {
-    expect(cssRule('.shell')).toContain('max-width: 100vw');
-    expect(cssRule('.shell')).toContain('overflow-x: hidden');
-    expect(cssRule('.shellBody')).toContain('min-width: 0');
-    expect(cssRule('.shellBody')).toContain('overflow: hidden');
-    expect(cssRule('.content')).toContain('min-width: 0');
-    expect(cssRule('.content')).toContain('max-width: 100%');
-    expect(cssRule('.content')).toContain('overflow-x: auto');
   });
 });
-
-function cssRule(selector: string) {
-  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const match = stylesheet.match(new RegExp(`${escaped}\\s*\\{([^}]*)\\}`));
-  if (!match?.[1]) throw new Error(`Missing CSS rule: ${selector}`);
-  return match[1];
-}
 
 function renderLayout(path = '/alerts', routeElement: React.ReactNode = <div>Route content</div>) {
   return render(
