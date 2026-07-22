@@ -16,10 +16,11 @@
  */
 
 import type { RemotePageState } from '@/shared/remote-state';
+import { compactTablePageSizes } from '@/shared/pagination';
 
 import { receiverTypeDefinitions, type NoticeReceiverType } from './notice-receiver/model/notice-receiver-model';
 
-export const noticeTemplatePageSizes = [8, 15, 25] as const;
+export const noticeTemplatePageSizes = compactTablePageSizes;
 
 export type NoticeTemplateQuery = { name: string; preset: boolean; pageIndex: number; pageSize: number };
 export type NoticeTemplateDraft = { id?: number; name: string; type: NoticeReceiverType; content: string };

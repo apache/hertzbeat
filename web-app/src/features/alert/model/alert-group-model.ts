@@ -15,7 +15,9 @@
  * limitations under the License.
  */
 
-export const alertGroupPageSizes = [8, 15, 25] as const;
+import { compactTablePageSizes } from '@/shared/pagination';
+
+export const alertGroupPageSizes = compactTablePageSizes;
 
 export type AlertGroupQuery = { search: string; pageIndex: number; pageSize: number };
 export type AlertGroupFailure = 'missing' | 'unavailable' | 'error';

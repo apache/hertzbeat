@@ -1,8 +1,9 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import type { OptionalRemoteValueState } from '@/shared/remote-state';
+import { compactTablePageSizes } from '@/shared/pagination';
 
-export const bulletinPageSizes = [8, 15, 25] as const;
+export const bulletinPageSizes = compactTablePageSizes;
 
 export type BulletinQuery = { search: string; pageIndex: number; pageSize: number };
 export type BulletinFields = Record<string, string[]>;

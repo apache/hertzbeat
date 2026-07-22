@@ -16,8 +16,9 @@
  */
 
 import { formatLabelMatchers, parseLabelMatchers } from '../shared/alert-label-matchers';
+import { compactTablePageSizes } from '@/shared/pagination';
 
-export const alertInhibitPageSizes = [8, 15, 25] as const;
+export const alertInhibitPageSizes = compactTablePageSizes;
 
 export type AlertInhibitQuery = { search: string; pageIndex: number; pageSize: number };
 export type AlertInhibitFailure = 'missing' | 'unavailable' | 'error';

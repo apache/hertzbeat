@@ -16,13 +16,14 @@
  */
 
 import type { RemotePageState } from '@/shared/remote-state';
+import { compactTablePageSizes } from '@/shared/pagination';
 
 import { formatLabelMatchers, parseLabelMatchers } from '../../shared/alert-label-matchers';
 import type { NoticeReceiverOption } from '../../notice-receiver/model/notice-receiver-model';
 import type { NoticeTemplate } from '../../notice-template-model';
 import type { NoticeRuleCollectionFailureKind } from './notice-rule-failure';
 
-export const noticeRulePageSizes = [8, 15, 25] as const;
+export const noticeRulePageSizes = compactTablePageSizes;
 export const noticeRuleWeekdays = [7, 1, 2, 3, 4, 5, 6] as const;
 export const maximumNoticeRuleScanPages = 10_000;
 

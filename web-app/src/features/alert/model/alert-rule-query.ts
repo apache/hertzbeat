@@ -1,6 +1,8 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-export const alertRulePageSizes = [8, 15, 25] as const;
+import { compactTablePageSizes } from '@/shared/pagination';
+
+export const alertRulePageSizes = compactTablePageSizes;
 
 export type AlertRuleQuery = { search: string; pageIndex: number; pageSize: number };
 

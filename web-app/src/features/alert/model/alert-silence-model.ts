@@ -16,8 +16,9 @@
  */
 
 import type { AlertSilenceQuery } from './alert-silence-types';
+import { compactTablePageSizes } from '@/shared/pagination';
 
-export const alertSilencePageSizes = [8, 15, 25] as const;
+export const alertSilencePageSizes = compactTablePageSizes;
 
 export type AlertSilenceFailure = 'missing' | 'unavailable' | 'error';
 export type AlertSilenceWriteOutcome = 'rejected' | 'uncertain';

@@ -18,10 +18,11 @@ import {
   type NoticeReceiverType,
   type WebHookAuthType
 } from './notice-receiver-catalog';
+import { compactTablePageSizes } from '@/shared/pagination';
 
 export * from './notice-receiver-catalog';
 
-export const noticeReceiverPageSizes = [8, 15, 25] as const;
+export const noticeReceiverPageSizes = compactTablePageSizes;
 export type NoticeReceiverQuery = { name: string; pageIndex: number; pageSize: number };
 
 export type NoticeReceiverOptions = Partial<Record<NoticeReceiverOptionKey, string | number>> & {

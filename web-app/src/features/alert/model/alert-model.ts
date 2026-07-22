@@ -15,7 +15,9 @@
  * limitations under the License.
  */
 
-export const alertPageSizes = [8, 15, 25] as const;
+import { compactTablePageSizes } from '@/shared/pagination';
+
+export const alertPageSizes = compactTablePageSizes;
 export const alertStatuses = ['firing', 'pending', 'acknowledged', 'resolved'] as const;
 export const alertStatusFilters = ['firing', 'acknowledged', 'resolved'] as const;
 export const alertSeverities = ['info', 'warning', 'critical', 'emergency'] as const;
