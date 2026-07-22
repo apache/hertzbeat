@@ -17,58 +17,53 @@
 
 import { z } from 'zod';
 
-import {
-  RUNTIME_STATUS_ERROR_CODES,
-  RUNTIME_STATUS_STATES,
-  type RuntimeStatusSnapshot
-} from '../model/runtime-status-contract';
+import { RUNTIME_STATUS_STATES, type RuntimeStatusSnapshot } from '../model/runtime-status-contract';
 
 const instantSchema = z.string().datetime({ offset: true });
-const errorCodeSchema = z.enum(RUNTIME_STATUS_ERROR_CODES).nullable();
-const statusSchema = z
+type CollectorEvidence = {
+  status: (typeof RUNTIME_STATUS_STATES)[number];
+  total: number | null;
+  online: number | null;
+  runtimeHealthy: number | null;
+  lastReportedAt: string | null;
+};
+const serverSchema = z
   .object({
     status: z.enum(RUNTIME_STATUS_STATES),
-    errorCode: errorCodeSchema
+    errorCode: z.literal('server_unavailable').nullable()
   })
   .strict()
   .superRefine(requireStatusErrorPair);
-
-const storageSchema = statusSchema.extend({ kind: z.literal('greptime') }).strict();
-const collectorsSchema = statusSchema
-  .extend({
+const storageSchema = z
+  .object({
+    status: z.enum(RUNTIME_STATUS_STATES),
+    errorCode: z.enum(['storage_unavailable', 'storage_query_failed']).nullable()
+  })
+  .strict()
+  .superRefine(requireStatusErrorPair)
+  .safeExtend({ kind: z.literal('greptime') })
+  .strict();
+const collectorsSchema = z
+  .object({
+    status: z.enum(RUNTIME_STATUS_STATES),
+    errorCode: z.literal('collector_status_unavailable').nullable()
+  })
+  .strict()
+  .superRefine(requireStatusErrorPair)
+  .safeExtend({
     total: z.number().int().nonnegative().nullable(),
     online: z.number().int().nonnegative().nullable(),
     runtimeHealthy: z.number().int().nonnegative().nullable(),
     lastReportedAt: instantSchema.nullable()
   })
   .strict()
-  .superRefine((collectors, context) => {
-    const observed = collectors.status === 'available' || collectors.status === 'degraded';
-    if (observed) {
-      if (collectors.total === null || collectors.online === null || collectors.runtimeHealthy === null) {
-        context.addIssue({ code: 'custom', message: 'Observed Collector status requires counts' });
-        return;
-      }
-      if (collectors.runtimeHealthy > collectors.online || collectors.online > collectors.total) {
-        context.addIssue({ code: 'custom', message: 'Collector counts are inconsistent' });
-      }
-      return;
-    }
-    if (
-      collectors.total !== null ||
-      collectors.online !== null ||
-      collectors.runtimeHealthy !== null ||
-      collectors.lastReportedAt !== null
-    ) {
-      context.addIssue({ code: 'custom', message: 'Unobserved Collector status cannot expose counts' });
-    }
-  });
+  .superRefine(requireCollectorEvidence);
 
 const runtimeStatusSchema = z
   .object({
     schemaVersion: z.literal(1),
     observedAt: instantSchema,
-    server: statusSchema,
+    server: serverSchema,
     storage: storageSchema,
     collectors: collectorsSchema
   })
@@ -100,5 +95,34 @@ function requireStatusErrorPair(
   const requiresError = value.status === 'degraded' || value.status === 'unavailable';
   if (requiresError !== (value.errorCode !== null)) {
     context.addIssue({ code: 'custom', message: 'Runtime status and error code do not match' });
+  }
+}
+
+function requireCollectorEvidence(collectors: CollectorEvidence, context: z.RefinementCtx) {
+  const observed = collectors.status === 'available' || collectors.status === 'degraded';
+  if (!observed) {
+    requireUnobservedCollectorEvidence(collectors, context);
+    return;
+  }
+  if (collectors.total === null || collectors.online === null || collectors.runtimeHealthy === null) {
+    context.addIssue({ code: 'custom', message: 'Observed Collector status requires counts' });
+    return;
+  }
+  if (collectors.runtimeHealthy > collectors.online || collectors.online > collectors.total) {
+    context.addIssue({ code: 'custom', message: 'Collector counts are inconsistent' });
+  }
+  if (collectors.status === 'available' && (collectors.total === 0 || collectors.online !== collectors.total)) {
+    context.addIssue({ code: 'custom', message: 'Available Collector status requires every Collector online' });
+  }
+}
+
+function requireUnobservedCollectorEvidence(collectors: CollectorEvidence, context: z.RefinementCtx) {
+  if (
+    collectors.total !== null ||
+    collectors.online !== null ||
+    collectors.runtimeHealthy !== null ||
+    collectors.lastReportedAt !== null
+  ) {
+    context.addIssue({ code: 'custom', message: 'Unobserved Collector status cannot expose counts' });
   }
 }

@@ -33,6 +33,10 @@
   --hb-nav-selected: var(--hb-bg-selected);
   --hb-nav-hover: #181b22;
   --hb-focus-ring: #bd7bd0;
+  --hb-status-loading: var(--hb-status-unknown);
+  --hb-status-available: var(--ant-color-success);
+  --hb-status-degraded: var(--ant-color-warning);
+  --hb-status-unavailable: var(--ant-color-error);
   --hb-status-unknown: #7d8593;
   --hb-radius-control: 2px;
   --hb-page-bg: var(--hb-bg-canvas);

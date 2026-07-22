@@ -38,6 +38,24 @@ describe('runtime status API', () => {
     ['schema version', { schemaVersion: 2 }],
     ['observed instant', { observedAt: 'not-an-instant' }],
     ['unknown server error', { server: { status: 'unknown', errorCode: 'server_unavailable' } }],
+    ['server with storage error', { server: { status: 'degraded', errorCode: 'storage_query_failed' } }],
+    [
+      'storage with server error',
+      { storage: { kind: 'greptime', status: 'unavailable', errorCode: 'server_unavailable' } }
+    ],
+    [
+      'Collectors with storage error',
+      {
+        collectors: {
+          status: 'degraded',
+          total: 3,
+          online: 2,
+          runtimeHealthy: 1,
+          lastReportedAt: '2026-07-22T01:02:00Z',
+          errorCode: 'storage_unavailable'
+        }
+      }
+    ],
     ['degraded storage without error', { storage: { kind: 'greptime', status: 'degraded', errorCode: null } }],
     [
       'inconsistent Collector counts',
@@ -48,6 +66,45 @@ describe('runtime status API', () => {
           online: 3,
           runtimeHealthy: 1,
           lastReportedAt: '2026-07-22T01:02:00Z',
+          errorCode: null
+        }
+      }
+    ],
+    [
+      'available zero Collector inventory',
+      {
+        collectors: {
+          status: 'available',
+          total: 0,
+          online: 0,
+          runtimeHealthy: 0,
+          lastReportedAt: null,
+          errorCode: null
+        }
+      }
+    ],
+    [
+      'available partially offline Collectors',
+      {
+        collectors: {
+          status: 'available',
+          total: 3,
+          online: 2,
+          runtimeHealthy: 1,
+          lastReportedAt: '2026-07-22T01:02:00Z',
+          errorCode: null
+        }
+      }
+    ],
+    [
+      'available fully offline Collectors',
+      {
+        collectors: {
+          status: 'available',
+          total: 3,
+          online: 0,
+          runtimeHealthy: 0,
+          lastReportedAt: null,
           errorCode: null
         }
       }
@@ -88,6 +145,26 @@ describe('runtime status API', () => {
 
     await expect(loadRuntimeStatus()).resolves.toEqual(snapshotFromWire(value));
   });
+
+  it.each([
+    ['empty inventory', 0, 0, 0, null],
+    ['partially offline', 3, 2, 1, '2026-07-22T01:02:00Z'],
+    ['fully offline', 3, 0, 0, null]
+  ])('accepts degraded Collector evidence for %s', async (_label, total, online, runtimeHealthy, lastReportedAt) => {
+    const value = runtimeStatusFixture({
+      collectors: {
+        status: 'degraded',
+        total,
+        online,
+        runtimeHealthy,
+        lastReportedAt,
+        errorCode: 'collector_status_unavailable'
+      }
+    });
+    apiMessageGet.mockResolvedValue(value);
+
+    await expect(loadRuntimeStatus()).resolves.toEqual(snapshotFromWire(value));
+  });
 });
 
 function runtimeStatusFixture(overrides: Record<string, unknown> = {}) {
@@ -99,7 +176,7 @@ function runtimeStatusFixture(overrides: Record<string, unknown> = {}) {
     collectors: {
       status: 'available',
       total: 3,
-      online: 2,
+      online: 3,
       runtimeHealthy: 1,
       lastReportedAt: '2026-07-22T01:02:00Z',
       errorCode: null

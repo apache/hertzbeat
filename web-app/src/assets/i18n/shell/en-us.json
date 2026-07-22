@@ -22,7 +22,9 @@
         "unavailable": "Unavailable",
         "unknown": "Unknown"
       },
-      "observedAt": "Observed {{time}}",
+      "snapshotObservedAt": "Snapshot {{time}}",
+      "collectorLastReportedAt": "Last report {{time}}",
+      "collectorNotReported": "No runtime report",
       "notObserved": "Not observed",
       "reason": {
         "server_unavailable": "Server unavailable",

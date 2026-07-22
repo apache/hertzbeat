@@ -22,7 +22,9 @@
         "unavailable": "Indisponível",
         "unknown": "Desconhecido"
       },
-      "observedAt": "Observado às {{time}}",
+      "snapshotObservedAt": "Snapshot às {{time}}",
+      "collectorLastReportedAt": "Último relato às {{time}}",
+      "collectorNotReported": "Sem relato de runtime",
       "notObserved": "Não observado",
       "reason": {
         "server_unavailable": "Servidor indisponível",

@@ -22,7 +22,9 @@
         "unavailable": "利用不可",
         "unknown": "不明"
       },
-      "observedAt": "{{time}} に観測",
+      "snapshotObservedAt": "スナップショット {{time}}",
+      "collectorLastReportedAt": "最終報告 {{time}}",
+      "collectorNotReported": "ランタイム報告なし",
       "notObserved": "未観測",
       "reason": {
         "server_unavailable": "サーバーを利用できません",

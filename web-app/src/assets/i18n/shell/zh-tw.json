@@ -22,7 +22,9 @@
         "unavailable": "無法使用",
         "unknown": "未知"
       },
-      "observedAt": "觀測於 {{time}}",
+      "snapshotObservedAt": "快照於 {{time}}",
+      "collectorLastReportedAt": "最後回報於 {{time}}",
+      "collectorNotReported": "暫無執行階段回報",
       "notObserved": "尚未觀測",
       "reason": {
         "server_unavailable": "伺服器無法使用",

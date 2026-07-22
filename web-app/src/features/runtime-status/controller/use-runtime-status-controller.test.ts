@@ -95,7 +95,7 @@ function runtimeStatusFixture() {
     collectors: {
       status: 'available' as const,
       total: 3,
-      online: 2,
+      online: 3,
       runtimeHealthy: 1,
       lastReportedAt: '2026-07-22T01:02:00Z',
       errorCode: null

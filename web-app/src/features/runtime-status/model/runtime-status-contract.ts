@@ -16,15 +16,10 @@
  */
 
 export const RUNTIME_STATUS_STATES = ['available', 'degraded', 'unavailable', 'unknown'] as const;
-export const RUNTIME_STATUS_ERROR_CODES = [
-  'server_unavailable',
-  'storage_unavailable',
-  'storage_query_failed',
-  'collector_status_unavailable'
-] as const;
 
 type RuntimeStatusState = (typeof RUNTIME_STATUS_STATES)[number];
-export type RuntimeStatusErrorCode = (typeof RUNTIME_STATUS_ERROR_CODES)[number];
+export type RuntimeStatusErrorCode =
+  'server_unavailable' | 'storage_unavailable' | 'storage_query_failed' | 'collector_status_unavailable';
 
 export type RuntimeComponentStatus = {
   status: RuntimeStatusState;

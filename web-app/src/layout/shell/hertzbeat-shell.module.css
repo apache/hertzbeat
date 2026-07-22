@@ -107,6 +107,35 @@
   background: transparent;
 }
 
+.statusSlot[data-status='loading'] .statusDot {
+  border-color: var(--hb-status-loading);
+  border-style: dashed;
+}
+
+.statusSlot[data-status='available'] .statusDot {
+  border-color: var(--hb-status-available);
+  border-style: solid;
+  background: var(--hb-status-available);
+}
+
+.statusSlot[data-status='degraded'] .statusDot {
+  border-color: var(--hb-status-degraded);
+  border-style: solid;
+  background: var(--hb-status-degraded);
+}
+
+.statusSlot[data-status='unavailable'] .statusDot {
+  border-color: var(--hb-status-unavailable);
+  border-style: solid;
+  background: var(--hb-status-unavailable);
+}
+
+.statusSlot[data-status='unknown'] .statusDot {
+  border-color: var(--hb-status-unknown);
+  border-style: solid;
+  background: transparent;
+}
+
 .timePolicy {
   display: flex;
   align-items: baseline;

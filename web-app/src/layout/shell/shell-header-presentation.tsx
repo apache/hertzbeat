@@ -61,6 +61,7 @@ export function ShellStatusSpine({
       <StatusSlot
         id="collector"
         label={t('shell.status.collector')}
+        lastReportedAt={snapshot.collectors.lastReportedAt}
         locale={locale}
         observedAt={snapshot.observedAt}
         status={snapshot.collectors}
@@ -121,19 +122,21 @@ type StatusSlotProps = {
   id: string;
   label: string;
   loading?: boolean;
+  lastReportedAt?: string | null | undefined;
   locale?: string | undefined;
   observedAt?: string | null | undefined;
   status?: RuntimeComponentStatus | undefined;
   t: TFunction;
 };
 
-function StatusSlot({ id, label, loading = false, locale, observedAt, status, t }: StatusSlotProps) {
+function StatusSlot({ id, label, loading = false, lastReportedAt, locale, observedAt, status, t }: StatusSlotProps) {
   const state = loading ? 'loading' : (status?.status ?? 'unavailable');
   const stateLabel = t(`shell.status.state.${state}`);
-  const context = statusContext(observedAt, status?.errorCode ?? null, locale, t);
+  const context = statusContext(observedAt, lastReportedAt, status?.errorCode ?? null, locale, t);
   return (
     <div
       className={styles.statusSlot}
+      data-status={state}
       data-testid={`shell-status-${id}`}
       title={`${label}: ${stateLabel} · ${context}`}
     >
@@ -148,13 +151,23 @@ function StatusSlot({ id, label, loading = false, locale, observedAt, status, t 
 
 function statusContext(
   observedAt: string | null | undefined,
+  lastReportedAt: string | null | undefined,
   errorCode: RuntimeStatusErrorCode | null,
   locale: string | undefined,
   t: TFunction
 ) {
-  const observed = observedAt ? t('shell.status.observedAt', { time: formatObservedAt(observedAt, locale) }) : null;
+  const observed = observedAt
+    ? t('shell.status.snapshotObservedAt', { time: formatObservedAt(observedAt, locale) })
+    : null;
+  const collectorReport = collectorReportContext(lastReportedAt, locale, t);
   const reason = errorCode ? t(`shell.status.reason.${errorCode}`) : null;
-  return [observed, reason].filter(Boolean).join(' · ') || t('shell.status.notObserved');
+  return [observed, collectorReport, reason].filter(Boolean).join(' · ') || t('shell.status.notObserved');
+}
+
+function collectorReportContext(lastReportedAt: string | null | undefined, locale: string | undefined, t: TFunction) {
+  if (lastReportedAt === undefined) return null;
+  if (lastReportedAt === null) return t('shell.status.collectorNotReported');
+  return t('shell.status.collectorLastReportedAt', { time: formatObservedAt(lastReportedAt, locale) });
 }
 
 function formatObservedAt(value: string, locale: string | undefined) {

@@ -41,7 +41,7 @@ describe('ShellStatusSpine', () => {
             collectors: {
               status: 'available',
               total: 3,
-              online: 2,
+              online: 3,
               runtimeHealthy: 1,
               lastReportedAt: '2026-07-22T01:02:00Z',
               errorCode: null
@@ -51,10 +51,14 @@ describe('ShellStatusSpine', () => {
       />
     );
 
+    expect(screen.getByTestId('shell-status-server')).toHaveAttribute('data-status', 'available');
     expect(screen.getByTestId('shell-status-server')).toHaveTextContent('shell.status.state.available');
-    expect(screen.getByTestId('shell-status-greptime')).toHaveTextContent('shell.status.state.degraded');
+    expect(screen.getByTestId('shell-status-greptime')).toHaveAttribute('data-status', 'degraded');
+    expect(screen.getByTestId('shell-status-collector')).toHaveAttribute('data-status', 'available');
     expect(screen.getByTestId('shell-status-greptime')).toHaveTextContent('shell.status.reason.storage_query_failed');
-    expect(screen.getAllByText(/shell\.status\.observedAt:/)).toHaveLength(3);
+    expect(screen.getAllByText(/shell\.status\.snapshotObservedAt:/)).toHaveLength(3);
+    expect(screen.getByTestId('shell-status-server')).not.toHaveTextContent('shell.status.collectorLastReportedAt:');
+    expect(screen.getByTestId('shell-status-collector')).toHaveTextContent('shell.status.collectorLastReportedAt:');
   });
 
   it('shows explicit unavailable reasons after transport or contract failure without fake counts', () => {
@@ -86,6 +90,42 @@ describe('ShellStatusSpine', () => {
     expect(screen.getByTestId('shell-status-collector')).toHaveTextContent(
       'shell.status.reason.collector_status_unavailable'
     );
+    expect(screen.getByTestId('shell-status-collector')).toHaveAttribute('data-status', 'unavailable');
+    expect(screen.getByTestId('shell-status-collector')).toHaveTextContent('shell.status.collectorNotReported');
     expect(screen.queryByText('0')).not.toBeInTheDocument();
+  });
+
+  it('exposes loading and unknown as stable presentation states', () => {
+    const { rerender } = render(
+      <ShellStatusSpine locale="en-US" t={t} runtime={{ state: 'loading', snapshot: null }} />
+    );
+
+    expect(screen.getByTestId('shell-status-server')).toHaveAttribute('data-status', 'loading');
+
+    rerender(
+      <ShellStatusSpine
+        locale="en-US"
+        t={t}
+        runtime={{
+          state: 'ready',
+          snapshot: {
+            observedAt: '2026-07-22T01:02:03Z',
+            server: { status: 'unknown', errorCode: null },
+            storage: { kind: 'greptime', status: 'unknown', errorCode: null },
+            collectors: {
+              status: 'unknown',
+              total: null,
+              online: null,
+              runtimeHealthy: null,
+              lastReportedAt: null,
+              errorCode: null
+            }
+          }
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('shell-status-server')).toHaveAttribute('data-status', 'unknown');
+    expect(screen.getByTestId('shell-status-collector')).toHaveTextContent('shell.status.collectorNotReported');
   });
 });
