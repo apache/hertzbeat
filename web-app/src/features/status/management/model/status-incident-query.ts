@@ -38,7 +38,7 @@ export function writeStatusIncidentQuery(query: StatusIncidentQuery) {
   return params;
 }
 
-export function normalizeStatusIncidentQuery(query: StatusIncidentQuery): StatusIncidentQuery {
+function normalizeStatusIncidentQuery(query: StatusIncidentQuery): StatusIncidentQuery {
   return {
     search: query.search.trim(),
     pageIndex: Number.isSafeInteger(query.pageIndex) && query.pageIndex >= 0 ? query.pageIndex : defaultPageIndex,

@@ -74,7 +74,7 @@ export function createStatusIncidentDraft(orgId: number): StatusIncident | undef
   };
 }
 
-export function parseLabels(value: string) {
+function parseLabels(value: string) {
   return Object.fromEntries(
     value
       .split(',')

@@ -69,7 +69,7 @@ export const deleteStatusIncident = (id: number) =>
     await apiMessageDelete(`${incidentPath}/${id}`);
   });
 
-export function buildStatusIncidentPath(query: StatusIncidentQuery) {
+function buildStatusIncidentPath(query: StatusIncidentQuery) {
   const params = new URLSearchParams({
     pageIndex: String(query.pageIndex),
     pageSize: String(query.pageSize)

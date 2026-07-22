@@ -27,11 +27,11 @@ export function isAmbiguousStatusWriteFailure(error: unknown) {
   return statusWriteOutcome(error) === 'uncertain';
 }
 
-export function statusComponentIdentityMatches(actual: StatusComponent, expected: StatusComponent) {
+function statusComponentIdentityMatches(actual: StatusComponent, expected: StatusComponent) {
   return JSON.stringify(componentWritable(actual, false)) === JSON.stringify(componentWritable(expected, false));
 }
 
-export function statusIncidentIdentityMatches(actual: StatusIncident, expected: StatusIncident) {
+function statusIncidentIdentityMatches(actual: StatusIncident, expected: StatusIncident) {
   return JSON.stringify(incidentWritable(actual)) === JSON.stringify(incidentWritable(expected));
 }
 

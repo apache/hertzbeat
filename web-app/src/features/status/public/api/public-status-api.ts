@@ -31,12 +31,7 @@ import {
   PublicStatusContractError
 } from './public-status-schema';
 
-export type {
-  PublicStatusComponent,
-  PublicStatusIncident,
-  PublicStatusIncidentPage,
-  PublicStatusOrg
-} from '../model/public-status-contract';
+export type { PublicStatusIncidentPage } from '../model/public-status-contract';
 
 const incidentPath = '/api/status/page/public/incident';
 export const publicStatusIncidentPageSize = 20;

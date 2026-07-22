@@ -58,7 +58,7 @@ export type StatusIncidentContent = AuditFields & {
   timestamp: number;
 };
 
-export type StatusIncidentContentRecord = StatusIncidentContent & {
+type StatusIncidentContentRecord = StatusIncidentContent & {
   id: number;
   incidentId: number;
 };
