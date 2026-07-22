@@ -16,14 +16,3 @@ export const settingsPaths = {
   objectStore: '/settings/storage/object-store',
   statusPage: '/settings/status-page'
 } as const;
-
-export const legacySettingsPaths = {
-  receivers: '/alerts/notifications/receivers',
-  rules: '/alerts/notifications/rules',
-  templates: '/alerts/notifications/templates',
-  channels: '/setting/settings/server',
-  system: '/setting/settings/config',
-  labels: '/setting/labels',
-  objectStore: '/setting/settings/object-store',
-  statusPage: '/setting/status'
-} as const;

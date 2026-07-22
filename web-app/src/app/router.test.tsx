@@ -21,9 +21,7 @@ import { describe, expect, it } from 'vitest';
 
 import { AuthGate } from '@/core/auth/auth-gate';
 import { loadTokenPageRoute } from '@/features/settings/token';
-import { legacySettingsPaths } from '@/shared/settings/settings-routes';
-
-import { applicationRootPath, getAppRoute, routeRegistry, type AppRouteId } from './route-registry';
+import { applicationRootPath, getAppRoute, legacyRouteCatalog, routeRegistry, type AppRouteId } from './route-registry';
 import { appRoutes } from './app-routes';
 
 function flattenRoutes(routes: RouteObject[]): RouteObject[] {
@@ -50,7 +48,16 @@ describe('application data router', () => {
       .map(route => route.path)
       .sort();
 
-    expect(legacyRoutes).toEqual(Object.values(legacySettingsPaths).sort());
+    expect(legacyRoutes).toEqual(legacyRouteCatalog.map(route => route.path).sort());
+  });
+
+  it('leaves excluded legacy product areas on the wildcard 404 route', () => {
+    const legacyPaths = new Set(legacyRouteCatalog.map(route => route.path));
+
+    for (const path of ['/actions', '/incidents', '/events', '/ai', '/mcp', '/ui-lab']) {
+      expect(legacyPaths.has(path)).toBe(false);
+      expect(flattenRoutes(appRoutes).some(route => route.path === path)).toBe(false);
+    }
   });
 
   it('enforces canonical page, redirect, and layout ownership in the route tree', () => {

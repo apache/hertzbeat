@@ -21,6 +21,7 @@ import {
   appRouteCatalog,
   applicationRootPath,
   getAppRoute,
+  legacyRouteCatalog,
   routeRegistry,
   type AppResourceRouteId
 } from './route-registry';
@@ -31,6 +32,54 @@ describe('route registry', () => {
     expect(Object.entries(appRouteCatalog).every(([key, route]) => key === route.id)).toBe(true);
     expect(new Set(routeRegistry.map(route => route.id)).size).toBe(routeRegistry.length);
     expect(new Set(routeRegistry.map(route => route.path)).size).toBe(routeRegistry.length);
+  });
+
+  it('owns every legacy business mapping and fixed query in one catalog', () => {
+    expect(
+      legacyRouteCatalog.map(({ id, path, targetRouteId, fixedSearch }) => ({
+        id,
+        path,
+        targetRouteId,
+        fixedSearch
+      }))
+    ).toEqual(
+      expect.arrayContaining([
+        { id: 'legacy-overview', path: '/overview', targetRouteId: 'dashboard', fixedSearch: [] },
+        {
+          id: 'legacy-log-stream',
+          path: '/log/stream',
+          targetRouteId: 'explore',
+          fixedSearch: [
+            ['signal', 'logs'],
+            ['mode', 'live']
+          ]
+        },
+        {
+          id: 'legacy-log-integration',
+          path: '/log/integration/:source',
+          targetRouteId: 'instrumentation',
+          fixedSearch: []
+        },
+        {
+          id: 'legacy-log-manage',
+          path: '/log/manage',
+          targetRouteId: 'explore',
+          fixedSearch: [['signal', 'logs']]
+        },
+        {
+          id: 'legacy-ingestion-otlp',
+          path: '/ingestion/otlp',
+          targetRouteId: 'instrumentation',
+          fixedSearch: []
+        },
+        {
+          id: 'legacy-ingestion-otlp-child',
+          path: '/ingestion/otlp/*',
+          targetRouteId: 'instrumentation',
+          fixedSearch: []
+        }
+      ])
+    );
   });
 
   it('defines every monitor and alert-rule workflow page in the canonical catalog', () => {

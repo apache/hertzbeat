@@ -22,11 +22,10 @@ import { AuthGate } from '@/core/auth/auth-gate';
 import { RouteErrorBoundary } from '@/features/errors/route-error-boundary';
 import { loadTokenPageRoute } from '@/features/settings/token';
 import { BasicLayout } from '@/layout/basic/basic-layout';
-import { legacySettingsPaths } from '@/shared/settings/settings-routes';
 
 import { RefineRuntime } from './refine/refine-runtime';
-import { applicationRootPath, getAppRoute, getAppRouteIdentity } from './route-registry';
-import { LegacySettingsRedirect } from './legacy-settings-redirect';
+import { LegacyRouteRedirect } from './legacy-route-redirect';
+import { applicationRootPath, getAppRoute, getAppRouteIdentity, legacyRouteCatalog } from './route-registry';
 
 // Static route metadata is exported so architecture tests can inspect the data-router boundary.
 export const appRoutes: RouteObject[] = [
@@ -222,46 +221,11 @@ export const appRoutes: RouteObject[] = [
                 ...getAppRouteIdentity('settings'),
                 element: <Navigate replace to={getAppRoute('notice-receivers').path} />
               },
-              {
-                id: 'legacy-notice-receivers',
-                path: legacySettingsPaths.receivers,
-                element: <LegacySettingsRedirect to={getAppRoute('notice-receivers').path} />
-              },
-              {
-                id: 'legacy-notice-templates',
-                path: legacySettingsPaths.templates,
-                element: <LegacySettingsRedirect to={getAppRoute('notice-templates').path} />
-              },
-              {
-                id: 'legacy-notice-rules',
-                path: legacySettingsPaths.rules,
-                element: <LegacySettingsRedirect to={getAppRoute('notice-rules').path} />
-              },
-              {
-                id: 'legacy-message-server',
-                path: legacySettingsPaths.channels,
-                element: <LegacySettingsRedirect to={getAppRoute('message-server').path} />
-              },
-              {
-                id: 'legacy-system-settings',
-                path: legacySettingsPaths.system,
-                element: <LegacySettingsRedirect to={getAppRoute('system-settings').path} />
-              },
-              {
-                id: 'legacy-labels',
-                path: legacySettingsPaths.labels,
-                element: <LegacySettingsRedirect to={getAppRoute('labels').path} />
-              },
-              {
-                id: 'legacy-object-store',
-                path: legacySettingsPaths.objectStore,
-                element: <LegacySettingsRedirect to={getAppRoute('object-store').path} />
-              },
-              {
-                id: 'legacy-status-management',
-                path: legacySettingsPaths.statusPage,
-                element: <LegacySettingsRedirect to={getAppRoute('status-management').path} />
-              },
+              ...legacyRouteCatalog.map(definition => ({
+                id: definition.id,
+                path: definition.path,
+                element: <LegacyRouteRedirect definition={definition} />
+              })),
               {
                 ...getAppRouteIdentity('bulletin'),
                 lazy: async () => {

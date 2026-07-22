@@ -22,6 +22,7 @@ const SENSITIVE_FIELD_FRAGMENTS = [
   'authorization',
   'credential',
   'apikey',
+  'header',
   'installlog',
   'telemetrybody'
 ] as const;

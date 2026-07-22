@@ -111,6 +111,33 @@ export type AppResourceRouteId = {
   [RouteId in AppRouteId]: (typeof appRouteCatalog)[RouteId] extends ResourceRouteDefinition ? RouteId : never;
 }[AppRouteId];
 
+export type LegacyRouteDefinition = {
+  id: `legacy-${string}`;
+  path: string;
+  targetRouteId: AppRouteId;
+  fixedSearch: readonly (readonly [string, string])[];
+};
+
+export const legacyRouteCatalog = [
+  legacyRoute('legacy-overview', '/overview', 'dashboard'),
+  legacyRoute('legacy-log-stream', '/log/stream', 'explore', [
+    ['signal', 'logs'],
+    ['mode', 'live']
+  ]),
+  legacyRoute('legacy-log-integration', '/log/integration/:source', 'instrumentation'),
+  legacyRoute('legacy-log-manage', '/log/manage', 'explore', [['signal', 'logs']]),
+  legacyRoute('legacy-ingestion-otlp', '/ingestion/otlp', 'instrumentation'),
+  legacyRoute('legacy-ingestion-otlp-child', '/ingestion/otlp/*', 'instrumentation'),
+  legacyRoute('legacy-notice-receivers', '/alerts/notifications/receivers', 'notice-receivers'),
+  legacyRoute('legacy-notice-templates', '/alerts/notifications/templates', 'notice-templates'),
+  legacyRoute('legacy-notice-rules', '/alerts/notifications/rules', 'notice-rules'),
+  legacyRoute('legacy-message-server', '/setting/settings/server', 'message-server'),
+  legacyRoute('legacy-system-settings', '/setting/settings/config', 'system-settings'),
+  legacyRoute('legacy-labels', '/setting/labels', 'labels'),
+  legacyRoute('legacy-object-store', '/setting/settings/object-store', 'object-store'),
+  legacyRoute('legacy-status-management', '/setting/status', 'status-management')
+] as const satisfies readonly LegacyRouteDefinition[];
+
 export const routeRegistry = Object.values(appRouteCatalog);
 
 export function getAppRoute<RouteId extends AppRouteId>(id: RouteId) {
@@ -138,4 +165,13 @@ function redirectRoute(id: string, path: string, options: ResourceRouteOptions):
 function redirectRoute(id: string, path: string, options?: AppRouteOptions): AppRouteDefinition;
 function redirectRoute(id: string, path: string, options: AppRouteOptions = {}): AppRouteDefinition {
   return { ...pageRoute(id, path, options), kind: 'redirect' as const };
+}
+
+function legacyRoute(
+  id: LegacyRouteDefinition['id'],
+  path: string,
+  targetRouteId: AppRouteId,
+  fixedSearch: LegacyRouteDefinition['fixedSearch'] = []
+): LegacyRouteDefinition {
+  return { id, path, targetRouteId, fixedSearch };
 }
