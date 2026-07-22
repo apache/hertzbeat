@@ -52,10 +52,12 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -213,7 +215,9 @@ class NoticeConfigServiceTest {
 
     @Test
     void editReceiver() {
-        final NoticeReceiver noticeReceiver = mock(NoticeReceiver.class);
+        final NoticeReceiver noticeReceiver = new NoticeReceiver();
+        noticeReceiver.setId(5L);
+        when(noticeReceiverDao.findById(5L)).thenReturn(Optional.of(noticeReceiver));
         noticeConfigService.editReceiver(noticeReceiver);
         verify(noticeReceiverDao, times(1)).save(noticeReceiver);
     }
@@ -236,6 +240,18 @@ class NoticeConfigServiceTest {
     }
 
     @Test
+    void editReceiverRejectsUnknownId() {
+        when(noticeReceiverDao.findById(5L)).thenReturn(Optional.empty());
+
+        final NoticeReceiver incoming = new NoticeReceiver();
+        incoming.setId(5L);
+        incoming.setTgBotToken(NoticeReceiverMaskUtil.SECRET_MASK + "voJM");
+
+        assertThrows(IllegalArgumentException.class, () -> noticeConfigService.editReceiver(incoming));
+        verify(noticeReceiverDao, never()).save(any());
+    }
+
+    @Test
     void sendTestMsgResolvesMaskedSecret() {
         final NoticeReceiver stored = new NoticeReceiver();
         stored.setId(5L);
@@ -249,6 +265,18 @@ class NoticeConfigServiceTest {
         noticeConfigService.sendTestMsg(incoming);
 
         assertEquals("1499012345:AAEOB_wEYS-DZyPM3h5NzI8voJM", incoming.getTgBotToken());
+    }
+
+    @Test
+    void sendTestMsgRejectsUnknownId() {
+        when(noticeReceiverDao.findById(5L)).thenReturn(Optional.empty());
+
+        final NoticeReceiver incoming = new NoticeReceiver();
+        incoming.setId(5L);
+        incoming.setTgBotToken(NoticeReceiverMaskUtil.SECRET_MASK + "voJM");
+
+        assertThrows(IllegalArgumentException.class, () -> noticeConfigService.sendTestMsg(incoming));
+        verify(dispatcherAlarm, never()).sendNoticeMsg(any(), any(), any());
     }
 
     @Test
@@ -323,7 +351,7 @@ class NoticeConfigServiceTest {
 
     @Test
     void sendTestMsg() {
-        final NoticeReceiver noticeReceiver = mock(NoticeReceiver.class);
+        final NoticeReceiver noticeReceiver = new NoticeReceiver();
         final NoticeTemplate noticeTemplate = null;
         noticeConfigService.sendTestMsg(noticeReceiver);
         verify(dispatcherAlarm, times(1)).sendNoticeMsg(eq(noticeReceiver), eq(noticeTemplate), any(GroupAlert.class));
