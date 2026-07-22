@@ -139,7 +139,7 @@ function assertResourceAndId(resource: string, id: string | number) {
 
 function readVariables(value: unknown): SystemConfigValue {
   try {
-    const record = createSystemConfigResourceRecord(value as SystemConfigValue);
+    const record = createSystemConfigResourceRecord(value);
     return { locale: record.locale, timeZoneId: record.timeZoneId, theme: record.theme };
   } catch (reason) {
     if (reason instanceof SystemConfigResourceContractError) {

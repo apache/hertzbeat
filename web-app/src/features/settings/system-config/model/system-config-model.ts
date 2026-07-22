@@ -17,7 +17,7 @@
 
 import type { SupportedLocale } from '@/core/i18n/i18n';
 
-import type { SystemConfigValue, TimezoneOption } from './system-config-contract';
+import type { TimezoneOption } from './system-config-contract';
 
 export const systemLocales = ['en_US', 'zh_CN', 'zh_TW', 'ja_JP', 'pt_BR'] as const;
 export const systemThemes = ['default', 'dark', 'compact'] as const;
@@ -58,9 +58,16 @@ const runtimeToSystemLocale: Record<SupportedLocale, SystemLocale> = {
   'pt-BR': 'pt_BR'
 };
 
+const systemToRuntimeLocale: Record<SystemLocale, SupportedLocale> = {
+  en_US: 'en-US',
+  zh_CN: 'zh-CN',
+  zh_TW: 'zh-TW',
+  ja_JP: 'ja-JP',
+  pt_BR: 'pt-BR'
+};
+
 export function localeToRuntime(locale?: string | null): SupportedLocale {
-  const entry = Object.entries(runtimeToSystemLocale).find(([, value]) => value === locale);
-  return (entry?.[0] as SupportedLocale | undefined) ?? 'en-US';
+  return isSystemLocale(locale) ? systemToRuntimeLocale[locale] : 'en-US';
 }
 
 export function createSystemConfigDraft(
@@ -68,52 +75,73 @@ export function createSystemConfigDraft(
   defaults: { locale: SupportedLocale; timeZoneId: string; theme: SystemTheme }
 ): SystemConfigDraft {
   return {
-    locale: systemLocales.includes(config?.locale as SystemLocale)
-      ? (config?.locale as SystemLocale)
-      : runtimeToSystemLocale[defaults.locale],
+    locale: isSystemLocale(config?.locale) ? config.locale : runtimeToSystemLocale[defaults.locale],
     timeZoneId: config?.timeZoneId?.trim() || defaults.timeZoneId,
-    theme: systemThemes.includes(config?.theme as SystemTheme) ? (config?.theme as SystemTheme) : defaults.theme
+    theme: isSystemTheme(config?.theme) ? config.theme : defaults.theme
   };
 }
 
-export function createSystemConfigResourceRecord(
-  config: SystemConfigValue | null | undefined
-): SystemConfigResourceRecord {
-  if (!config || !systemLocales.includes(config.locale as SystemLocale)) {
+/**
+ * Validates the untyped Refine mutation boundary and reconstructs the exact
+ * writable System Config shape. Inherited or server-owned fields never cross
+ * into the API client.
+ */
+export function createSystemConfigResourceRecord(config: unknown): SystemConfigResourceRecord {
+  if (!config || typeof config !== 'object' || Array.isArray(config)) {
     throw new SystemConfigResourceContractError();
   }
-  if (!systemThemes.includes(config.theme as SystemTheme) || !config.timeZoneId?.trim()) {
+  const locale = readOwnField(config, 'locale');
+  const timeZoneId = readOwnField(config, 'timeZoneId');
+  const theme = readOwnField(config, 'theme');
+  if (!isSystemLocale(locale) || !isNonBlankString(timeZoneId) || !isSystemTheme(theme)) {
     throw new SystemConfigResourceContractError();
   }
   return {
     id: systemConfigResourceId,
-    locale: config.locale as SystemLocale,
-    timeZoneId: config.timeZoneId.trim(),
-    theme: config.theme as SystemTheme
+    locale,
+    timeZoneId: timeZoneId.trim(),
+    theme
   };
 }
 
-export function createSystemTimezoneResourceRecord(timezones: TimezoneOption[]): SystemTimezoneResourceRecord {
-  if (!Array.isArray(timezones) || !timezones.every(isTimezoneOption)) {
+export function createSystemTimezoneResourceRecord(timezones: unknown): SystemTimezoneResourceRecord {
+  if (!Array.isArray(timezones)) {
     throw new SystemConfigResourceContractError();
   }
   return {
     id: systemTimezonesResourceId,
-    items: timezones.map(timezone => ({ ...timezone }))
+    items: timezones.map(readTimezoneOption)
   };
 }
 
-function isTimezoneOption(value: unknown): value is TimezoneOption {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
-  const item = value as Partial<TimezoneOption>;
-  return (
-    typeof item.zoneId === 'string' &&
-    Boolean(item.zoneId.trim()) &&
-    typeof item.offset === 'string' &&
-    Boolean(item.offset.trim()) &&
-    typeof item.displayName === 'string' &&
-    Boolean(item.displayName.trim())
-  );
+function isSystemLocale(value: unknown): value is SystemLocale {
+  return systemLocales.some(locale => locale === value);
+}
+
+function isSystemTheme(value: unknown): value is SystemTheme {
+  return systemThemes.some(theme => theme === value);
+}
+
+function readTimezoneOption(value: unknown): TimezoneOption {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new SystemConfigResourceContractError();
+  }
+
+  const zoneId = readOwnField(value, 'zoneId');
+  const offset = readOwnField(value, 'offset');
+  const displayName = readOwnField(value, 'displayName');
+  if (!isNonBlankString(zoneId) || !isNonBlankString(offset) || !isNonBlankString(displayName)) {
+    throw new SystemConfigResourceContractError();
+  }
+  return { zoneId, offset, displayName };
+}
+
+function readOwnField(value: object, field: string): unknown {
+  return Object.hasOwn(value, field) ? Reflect.get(value, field) : undefined;
+}
+
+function isNonBlankString(value: unknown): value is string {
+  return typeof value === 'string' && Boolean(value.trim());
 }
 
 export function validateSystemConfigDraft(config: SystemConfigDraft) {

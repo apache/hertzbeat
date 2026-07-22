@@ -151,6 +151,15 @@ describe('System Config Refine data provider', () => {
     expect(JSON.stringify(timezoneFailure)).not.toContain(privateZone);
   });
 
+  it('accepts only own System Config fields from mutation input', async () => {
+    const inheritedConfig = Object.create(config) as typeof config;
+
+    await expect(
+      systemConfigDataProvider.update({ resource: 'system-config', id: 'current', variables: inheritedConfig })
+    ).rejects.toMatchObject({ code: 'SYSTEM_CONFIG_VARIABLES_INVALID', statusCode: 400 });
+    expect(api.saveSystemConfig).not.toHaveBeenCalled();
+  });
+
   it.each([
     ['HTTP 4xx', () => new ApiMessageError('Forbidden', { status: 403 })],
     ['backend envelope', () => new ApiMessageError('Rejected', { code: 20, status: 200 })]
