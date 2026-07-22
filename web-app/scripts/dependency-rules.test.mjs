@@ -336,6 +336,26 @@ test('keeps settings composition imports on feature public entries', () => {
   assert.match(rejectedResult.output, /refine-runtime[.]tsx/);
 });
 
+test('keeps Status routes on the feature public entry', () => {
+  const allowedFixture = createProject({
+    'src/features/status/index.ts': 'export const PublicStatusPage = true;',
+    'src/app/router.tsx': "import { PublicStatusPage } from '@/features/status'; export const route = PublicStatusPage;"
+  });
+  const rejectedFixture = createProject({
+    'src/features/status/index.ts': 'export const PublicStatusPage = true;',
+    'src/features/status/public/pages/public-status-page.tsx': 'export const PublicStatusPage = true;',
+    'src/app/router.tsx':
+      "import { PublicStatusPage } from '@/features/status/public/pages/public-status-page'; export const route = PublicStatusPage;"
+  });
+
+  const allowedResult = cruise(allowedFixture);
+  const rejectedResult = cruise(rejectedFixture);
+
+  assert.equal(allowedResult.status, 0, allowedResult.output);
+  assert.notEqual(rejectedResult.status, 0, rejectedResult.output);
+  assert.match(rejectedResult.output, /status-router-public-entry-only/);
+});
+
 function createProject(files) {
   const directory = mkdtempSync(join(tmpdir(), 'hertzbeat-architecture-'));
   temporaryProjects.push(directory);

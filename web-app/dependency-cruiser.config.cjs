@@ -114,6 +114,15 @@ module.exports = {
       }
     },
     {
+      name: 'status-router-public-entry-only',
+      severity: 'error',
+      from: { path: '^src/app/router[.]tsx$' },
+      to: {
+        path: '^src/features/status/.+',
+        pathNot: '^src/features/status/index[.]tsx?$'
+      }
+    },
+    {
       name: 'no-presentation-to-api',
       severity: 'error',
       from: {
