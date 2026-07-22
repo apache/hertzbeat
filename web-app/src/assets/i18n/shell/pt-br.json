@@ -14,7 +14,22 @@
       "greptime": "GreptimeDB",
       "collector": "Coletor",
       "unknown": "Desconhecido",
-      "unavailable": "Indisponível"
+      "unavailable": "Indisponível",
+      "state": {
+        "loading": "Carregando",
+        "available": "Disponível",
+        "degraded": "Degradado",
+        "unavailable": "Indisponível",
+        "unknown": "Desconhecido"
+      },
+      "observedAt": "Observado às {{time}}",
+      "notObserved": "Não observado",
+      "reason": {
+        "server_unavailable": "Servidor indisponível",
+        "storage_unavailable": "Armazenamento indisponível",
+        "storage_query_failed": "Falha na consulta ao armazenamento",
+        "collector_status_unavailable": "Status do coletor indisponível"
+      }
     },
     "time": {
       "global": "Tempo global",

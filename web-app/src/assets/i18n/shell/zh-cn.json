@@ -14,7 +14,22 @@
       "greptime": "GreptimeDB",
       "collector": "采集器",
       "unknown": "未知",
-      "unavailable": "不可用"
+      "unavailable": "不可用",
+      "state": {
+        "loading": "加载中",
+        "available": "可用",
+        "degraded": "已降级",
+        "unavailable": "不可用",
+        "unknown": "未知"
+      },
+      "observedAt": "观测于 {{time}}",
+      "notObserved": "尚未观测",
+      "reason": {
+        "server_unavailable": "服务端不可用",
+        "storage_unavailable": "存储不可用",
+        "storage_query_failed": "存储查询失败",
+        "collector_status_unavailable": "采集器状态不可用"
+      }
     },
     "time": {
       "global": "全局时间",

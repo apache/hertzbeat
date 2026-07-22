@@ -23,18 +23,18 @@ const trimmedTextSchema = z
   .string()
   .min(1)
   .refine(value => value === value.trim());
+const collectorIdSchema = trimmedTextSchema
+  .max(128)
+  .refine(value => !Array.from(value).some(character => /\p{Cc}/u.test(character)));
 const publicHttpsEndpointSchema = trimmedTextSchema.refine(isPublicHttpsEndpoint);
 const collectorStatusSchema = z.union([z.literal(0), z.literal(1)]);
 const capabilitySchema = z
   .array(z.enum(COLLECTOR_INTAKE_CAPABILITIES))
-  .length(COLLECTOR_INTAKE_CAPABILITIES.length)
+  .min(1)
+  .max(COLLECTOR_INTAKE_CAPABILITIES.length)
   .superRefine((capabilities, context) => {
-    const unique = new Set(capabilities);
-    if (
-      unique.size !== COLLECTOR_INTAKE_CAPABILITIES.length ||
-      !COLLECTOR_INTAKE_CAPABILITIES.every(capability => unique.has(capability))
-    ) {
-      context.addIssue({ code: 'custom', message: 'Collector intake capabilities are incomplete' });
+    if (new Set(capabilities).size !== capabilities.length) {
+      context.addIssue({ code: 'custom', message: 'Collector intake capabilities must be unique' });
     }
   });
 
@@ -60,9 +60,14 @@ const collectorSummarySchema = z
           context.addIssue({ code: 'custom', message: 'Collector online evidence is contradictory' });
         }
       }),
-    instrumentationIntake: z.unknown().optional()
+    instrumentationIntake: z.unknown()
   })
-  .passthrough();
+  .passthrough()
+  .superRefine((summary, context) => {
+    if (!Object.hasOwn(summary, 'instrumentationIntake')) {
+      context.addIssue({ code: 'custom', message: 'Collector instrumentation intake is required' });
+    }
+  });
 
 export type CollectorSummaryWire = z.output<typeof collectorSummarySchema>;
 
@@ -74,29 +79,40 @@ export const collectorPageSchema = z.object({
   size: z.number().int().positive()
 });
 
-export const availableCollectorIntakeSchema = z.object({
-  schemaVersion: z.literal(1),
-  collectorId: trimmedTextSchema,
-  state: z.literal('available'),
-  gateway: z.enum(['collector', 'server']),
-  capabilities: capabilitySchema,
-  otlpHttpEndpoint: publicHttpsEndpointSchema,
-  otlpGrpcEndpoint: publicHttpsEndpointSchema,
-  authorizationHeader: z.literal('Authorization'),
-  errorCode: z.null()
-});
+export const availableCollectorIntakeSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    collectorId: collectorIdSchema,
+    state: z.literal('available'),
+    gateway: z.enum(['collector', 'server']),
+    capabilities: capabilitySchema,
+    otlpHttpEndpoint: publicHttpsEndpointSchema.nullable(),
+    otlpGrpcEndpoint: publicHttpsEndpointSchema.nullable(),
+    authorizationHeader: z.literal('Authorization'),
+    errorCode: z.null()
+  })
+  .strict()
+  .superRefine((intake, context) => {
+    const httpMatches = intake.capabilities.includes('otlp_http_protobuf') === (intake.otlpHttpEndpoint !== null);
+    const grpcMatches = intake.capabilities.includes('otlp_grpc') === (intake.otlpGrpcEndpoint !== null);
+    if (!httpMatches || !grpcMatches) {
+      context.addIssue({ code: 'custom', message: 'Collector intake endpoints must match capabilities' });
+    }
+  });
 
-export const unavailableCollectorIntakeSchema = z.object({
-  schemaVersion: z.literal(1),
-  collectorId: trimmedTextSchema,
-  state: z.literal('unavailable'),
-  gateway: z.null(),
-  capabilities: z.array(z.never()).length(0),
-  otlpHttpEndpoint: z.null(),
-  otlpGrpcEndpoint: z.null(),
-  authorizationHeader: z.null(),
-  errorCode: z.enum(COLLECTOR_INTAKE_ERROR_CODES)
-});
+export const unavailableCollectorIntakeSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    collectorId: collectorIdSchema,
+    state: z.literal('unavailable'),
+    gateway: z.null(),
+    capabilities: z.array(z.never()).length(0),
+    otlpHttpEndpoint: z.null(),
+    otlpGrpcEndpoint: z.null(),
+    authorizationHeader: z.null(),
+    errorCode: z.enum(COLLECTOR_INTAKE_ERROR_CODES)
+  })
+  .strict();
 
 function isPublicHttpsEndpoint(value: string) {
   try {

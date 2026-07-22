@@ -14,7 +14,22 @@
       "greptime": "GreptimeDB",
       "collector": "コレクター",
       "unknown": "不明",
-      "unavailable": "利用不可"
+      "unavailable": "利用不可",
+      "state": {
+        "loading": "読み込み中",
+        "available": "利用可能",
+        "degraded": "性能低下",
+        "unavailable": "利用不可",
+        "unknown": "不明"
+      },
+      "observedAt": "{{time}} に観測",
+      "notObserved": "未観測",
+      "reason": {
+        "server_unavailable": "サーバーを利用できません",
+        "storage_unavailable": "ストレージを利用できません",
+        "storage_query_failed": "ストレージのクエリに失敗しました",
+        "collector_status_unavailable": "コレクターの状態を取得できません"
+      }
     },
     "time": {
       "global": "グローバル時間",

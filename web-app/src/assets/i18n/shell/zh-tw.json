@@ -14,7 +14,22 @@
       "greptime": "GreptimeDB",
       "collector": "採集器",
       "unknown": "未知",
-      "unavailable": "無法使用"
+      "unavailable": "無法使用",
+      "state": {
+        "loading": "載入中",
+        "available": "可用",
+        "degraded": "已降級",
+        "unavailable": "無法使用",
+        "unknown": "未知"
+      },
+      "observedAt": "觀測於 {{time}}",
+      "notObserved": "尚未觀測",
+      "reason": {
+        "server_unavailable": "伺服器無法使用",
+        "storage_unavailable": "儲存空間無法使用",
+        "storage_query_failed": "儲存空間查詢失敗",
+        "collector_status_unavailable": "採集器狀態無法使用"
+      }
     },
     "time": {
       "global": "全域時間",

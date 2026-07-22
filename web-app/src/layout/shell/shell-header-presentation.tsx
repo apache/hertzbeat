@@ -17,14 +17,55 @@ import { Avatar, Button, Dropdown, Tooltip } from 'antd';
 import type { TFunction } from 'i18next';
 import type { ReactNode } from 'react';
 
+import type { RuntimeComponentStatus, RuntimeStatusErrorCode, RuntimeStatusViewModel } from '@/features/runtime-status';
+
 import styles from './hertzbeat-shell.module.css';
 
-export function ShellStatusSpine({ t }: { t: TFunction }) {
+export function ShellStatusSpine({
+  locale,
+  runtime,
+  t
+}: {
+  locale: string | undefined;
+  runtime: RuntimeStatusViewModel;
+  t: TFunction;
+}) {
+  if (runtime.state === 'loading') {
+    return (
+      <div className={styles.statusSpine} aria-label={t('shell.status.summary')}>
+        <StatusSlot id="server" label={t('shell.status.server')} loading t={t} />
+        <StatusSlot id="greptime" label={t('shell.status.greptime')} loading t={t} />
+        <StatusSlot id="collector" label={t('shell.status.collector')} loading t={t} />
+      </div>
+    );
+  }
+  const { snapshot } = runtime;
   return (
     <div className={styles.statusSpine} aria-label={t('shell.status.summary')}>
-      <StatusSlot id="server" label={t('shell.status.server')} value={t('shell.status.unknown')} />
-      <StatusSlot id="greptime" label={t('shell.status.greptime')} value={t('shell.status.unknown')} />
-      <StatusSlot id="collector" label={t('shell.status.collector')} value={t('shell.status.unknown')} />
+      <StatusSlot
+        id="server"
+        label={t('shell.status.server')}
+        locale={locale}
+        observedAt={snapshot.observedAt}
+        status={snapshot.server}
+        t={t}
+      />
+      <StatusSlot
+        id="greptime"
+        label={t('shell.status.greptime')}
+        locale={locale}
+        observedAt={snapshot.observedAt}
+        status={snapshot.storage}
+        t={t}
+      />
+      <StatusSlot
+        id="collector"
+        label={t('shell.status.collector')}
+        locale={locale}
+        observedAt={snapshot.observedAt}
+        status={snapshot.collectors}
+        t={t}
+      />
     </div>
   );
 }
@@ -76,13 +117,49 @@ export function ShellHeaderActions({
   );
 }
 
-function StatusSlot({ id, label, value }: { id: string; label: string; value: string }) {
+type StatusSlotProps = {
+  id: string;
+  label: string;
+  loading?: boolean;
+  locale?: string | undefined;
+  observedAt?: string | null | undefined;
+  status?: RuntimeComponentStatus | undefined;
+  t: TFunction;
+};
+
+function StatusSlot({ id, label, loading = false, locale, observedAt, status, t }: StatusSlotProps) {
+  const state = loading ? 'loading' : (status?.status ?? 'unavailable');
+  const stateLabel = t(`shell.status.state.${state}`);
+  const context = statusContext(observedAt, status?.errorCode ?? null, locale, t);
   return (
-    <div className={styles.statusSlot} data-testid={`shell-status-${id}`}>
+    <div
+      className={styles.statusSlot}
+      data-testid={`shell-status-${id}`}
+      title={`${label}: ${stateLabel} · ${context}`}
+    >
       <span className={styles.statusDot} aria-hidden="true" />
-      <span>{label}</span>
-      <small>{value}</small>
+      <span className={styles.statusLabel}>{label}</span>
+      <small className={styles.statusValue}>
+        {stateLabel} · {context}
+      </small>
     </div>
+  );
+}
+
+function statusContext(
+  observedAt: string | null | undefined,
+  errorCode: RuntimeStatusErrorCode | null,
+  locale: string | undefined,
+  t: TFunction
+) {
+  const observed = observedAt ? t('shell.status.observedAt', { time: formatObservedAt(observedAt, locale) }) : null;
+  const reason = errorCode ? t(`shell.status.reason.${errorCode}`) : null;
+  return [observed, reason].filter(Boolean).join(' · ') || t('shell.status.notObserved');
+}
+
+function formatObservedAt(value: string, locale: string | undefined) {
+  return new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(
+    Date.parse(value)
   );
 }
 

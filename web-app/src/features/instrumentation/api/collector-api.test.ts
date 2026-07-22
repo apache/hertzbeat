@@ -61,13 +61,33 @@ describe('instrumentation Collector API', () => {
     expect(collector?.intake.status).toBe('available');
   });
 
-  it('treats an absent advertisement as an old server without deriving endpoints', async () => {
-    apiMessageGet.mockResolvedValue(page(summary('collector-east')));
+  it.each([
+    [
+      'HTTP only',
+      {
+        capabilities: ['otlp_http_protobuf'],
+        otlpGrpcEndpoint: null
+      }
+    ],
+    [
+      'gRPC only',
+      {
+        capabilities: ['otlp_grpc'],
+        otlpHttpEndpoint: null
+      }
+    ]
+  ])('accepts an available %s capability subset with only its matching endpoint', async (_label, override) => {
+    apiMessageGet.mockResolvedValue(page(summary('collector-east', { ...availableIntake(), ...override })));
 
     const [collector] = await loadInstrumentationCollectors();
 
-    expect(collector?.intake).toEqual({ status: 'unavailable', errorCode: 'old_server' });
-    expect(JSON.stringify(collector?.intake)).not.toMatch(/10\.0\.0\.8|431[78]|location|host/i);
+    expect(collector?.intake).toMatchObject({ status: 'available', ...override });
+  });
+
+  it('rejects an absent mandatory advertisement instead of inventing old-server compatibility', async () => {
+    apiMessageGet.mockResolvedValue(page(summaryWithoutIntake('collector-east')));
+
+    await expect(loadInstrumentationCollectors()).rejects.toBeInstanceOf(CollectorContractError);
     expect(apiMessageGet).toHaveBeenCalledWith('/api/collector?pageIndex=0&pageSize=200', undefined);
   });
 
@@ -89,13 +109,17 @@ describe('instrumentation Collector API', () => {
     ['unknown state', { state: 'healthy' }],
     ['unknown gateway', { gateway: 'browser' }],
     ['missing gateway', { gateway: null }],
-    ['missing HTTP capability', { capabilities: ['otlp_grpc'] }],
+    ['HTTP endpoint without capability', { capabilities: ['otlp_grpc'] }],
+    ['gRPC endpoint without capability', { capabilities: ['otlp_http_protobuf'] }],
+    ['HTTP capability without endpoint', { capabilities: ['otlp_http_protobuf'], otlpHttpEndpoint: null }],
+    ['gRPC capability without endpoint', { capabilities: ['otlp_grpc'], otlpGrpcEndpoint: null }],
+    ['empty capability set', { capabilities: [], otlpHttpEndpoint: null, otlpGrpcEndpoint: null }],
     ['duplicate capability', { capabilities: ['otlp_http_protobuf', 'otlp_grpc', 'otlp_grpc'] }],
     ['unknown capability', { capabilities: ['otlp_http_protobuf', 'otlp_grpc', 'zipkin'] }],
-    ['null endpoint', { otlpHttpEndpoint: null }],
     ['missing endpoint', { otlpGrpcEndpoint: undefined }],
     ['missing header', { authorizationHeader: undefined }],
     ['wrong header', { authorizationHeader: 'X-HertzBeat-Token' }],
+    ['unexpected field', { credential: 'must-not-be-accepted' }],
     ['non-null available error', { errorCode: 'intake_advertisement_invalid' }],
     ['HTTP endpoint', { otlpHttpEndpoint: 'http://otel.example.com:4318' }],
     ['non-HTTPS endpoint', { otlpGrpcEndpoint: 'grpc://otel.example.com:4317' }],
@@ -105,6 +129,17 @@ describe('instrumentation Collector API', () => {
     ['endpoint fragment', { otlpGrpcEndpoint: 'https://otel.example.com:4317#secret' }]
   ])('degrades an invalid available advertisement: %s', async (_label, override) => {
     apiMessageGet.mockResolvedValue(page(summary('collector-east', { ...availableIntake(), ...override })));
+
+    const [collector] = await loadInstrumentationCollectors();
+
+    expect(collector?.intake).toEqual({ status: 'unavailable', errorCode: 'intake_advertisement_invalid' });
+  });
+
+  it.each([
+    ['overlong Collector identity', `${'c'.repeat(129)}`],
+    ['control character in Collector identity', 'collector\neast']
+  ])('degrades an invalid advertised %s', async (_label, collectorId) => {
+    apiMessageGet.mockResolvedValue(page(summary('collector-east', availableIntake(collectorId))));
 
     const [collector] = await loadInstrumentationCollectors();
 
@@ -212,6 +247,9 @@ describe('instrumentation Collector API', () => {
     expect(apiMessageGet).toHaveBeenNthCalledWith(1, '/api/collector?pageIndex=0&pageSize=200', { signal });
     expect(apiMessageGet).toHaveBeenNthCalledWith(2, '/api/collector?pageIndex=1&pageSize=200', { signal });
     if (!selected || selected.intake.status !== 'available') throw new Error('Expected available Collector');
+    if (!selected.intake.otlpHttpEndpoint || !selected.intake.otlpGrpcEndpoint) {
+      throw new Error('Expected both Collector endpoints');
+    }
     const draft = flowDraft(selected.collectorId);
     const target = {
       collectorId: selected.intake.collectorId,
@@ -296,11 +334,15 @@ function collectorPage(content: unknown[], number: number, totalElements: number
   return { content, number, size: 200, totalElements, totalPages };
 }
 
-function summary(name: string, instrumentationIntake?: unknown) {
+function summary(name: string, instrumentationIntake: unknown = unavailableIntake('intake_not_advertised', name)) {
   return {
     collector: { name, ip: name === 'collector-east' ? '10.0.0.8' : '10.0.0.9', status: 0 },
-    ...(instrumentationIntake !== undefined ? { instrumentationIntake } : {})
+    instrumentationIntake
   };
+}
+
+function summaryWithoutIntake(name: string) {
+  return { collector: { name, ip: '10.0.0.8', status: 0 } };
 }
 
 function summaryWithLiveness(name: string, liveness: { online?: boolean | undefined; status?: number | undefined }) {
@@ -322,10 +364,10 @@ function availableIntake(collectorId = 'collector-east'): Record<string, unknown
   };
 }
 
-function unavailableIntake(errorCode: string): Record<string, unknown> {
+function unavailableIntake(errorCode: string, collectorId = 'collector-east'): Record<string, unknown> {
   return {
     schemaVersion: 1,
-    collectorId: 'collector-east',
+    collectorId,
     state: 'unavailable',
     gateway: null,
     capabilities: [],

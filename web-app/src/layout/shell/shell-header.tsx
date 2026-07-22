@@ -11,6 +11,7 @@ import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import { useSession } from '@/core/auth/session-context';
+import { useRuntimeStatusController } from '@/features/runtime-status';
 import { globalAutoRefreshValues, globalTimeRanges, type GlobalTimeRange, type SharedTimeValue } from '@/shared/time';
 
 import styles from './hertzbeat-shell.module.css';
@@ -21,6 +22,7 @@ export function ShellHeader({ collapsed }: { collapsed: boolean }) {
   const { t, i18n } = useTranslation();
   const { session } = useSession();
   const actions = useShellHeaderActionController();
+  const runtimeStatus = useRuntimeStatusController();
   const accountName = session?.username ?? '';
 
   return (
@@ -34,7 +36,7 @@ export function ShellHeader({ collapsed }: { collapsed: boolean }) {
         )}
       </div>
       <div className={styles.headerSpine}>
-        <ShellStatusSpine t={t} />
+        <ShellStatusSpine locale={i18n.resolvedLanguage} runtime={runtimeStatus} t={t} />
         <ShellTimeControl time={actions.sharedTime} t={t} locale={i18n.resolvedLanguage} />
         <ShellHeaderActions
           accountName={accountName}

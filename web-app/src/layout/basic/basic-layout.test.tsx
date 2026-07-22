@@ -31,6 +31,25 @@ import { useSharedTime } from '@/shared/time';
 
 import { BasicLayout } from './basic-layout';
 
+vi.mock('@/features/runtime-status', () => ({
+  useRuntimeStatusController: () => ({
+    state: 'ready',
+    snapshot: {
+      observedAt: '2026-07-22T01:02:03Z',
+      server: { status: 'available', errorCode: null },
+      storage: { kind: 'greptime', status: 'degraded', errorCode: 'storage_query_failed' },
+      collectors: {
+        status: 'available',
+        total: 3,
+        online: 2,
+        runtimeHealthy: 1,
+        lastReportedAt: '2026-07-22T01:02:00Z',
+        errorCode: null
+      }
+    }
+  })
+}));
+
 describe('BasicLayout shell', () => {
   beforeAll(async () => {
     await initializeI18n();
@@ -49,12 +68,13 @@ describe('BasicLayout shell', () => {
     expect(screen.getByText('HertzBeat')).toHaveAttribute('aria-hidden', 'true');
   });
 
-  it('renders monitor detail without a global time claim the API cannot honor', () => {
+  it('renders authoritative runtime status without a global time claim the route API cannot honor', () => {
     renderLayout('/monitors/7');
 
-    expect(screen.getByTestId('shell-status-server')).toHaveTextContent('Unknown');
-    expect(screen.getByTestId('shell-status-greptime')).toHaveTextContent('Unknown');
-    expect(screen.getByTestId('shell-status-collector')).toHaveTextContent('Unknown');
+    expect(screen.getByTestId('shell-status-server')).toHaveTextContent('Available');
+    expect(screen.getByTestId('shell-status-greptime')).toHaveTextContent('Degraded');
+    expect(screen.getByTestId('shell-status-greptime')).toHaveTextContent('Storage query failed');
+    expect(screen.getByTestId('shell-status-collector')).toHaveTextContent('Available');
     expect(screen.queryByTestId('shell-time-policy')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Refresh active data' })).toBeEnabled();
   });

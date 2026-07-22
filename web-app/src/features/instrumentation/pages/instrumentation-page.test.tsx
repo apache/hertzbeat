@@ -426,7 +426,7 @@ const collector = {
   name: 'collector-east',
   online: true,
   address: '10.0.0.8',
-  intake: { status: 'unavailable', errorCode: 'old_server' }
+  intake: { status: 'unavailable', errorCode: 'intake_not_advertised' }
 };
 
 const guide = {

@@ -181,7 +181,7 @@ const collector = {
   name: 'collector-east',
   online: true,
   address: '10.0.0.8',
-  intake: { status: 'unavailable' as const, errorCode: 'old_server' as const }
+  intake: { status: 'unavailable' as const, errorCode: 'intake_not_advertised' as const }
 };
 
 const transientTarget = createTransientCollectorTarget({

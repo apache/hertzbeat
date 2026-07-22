@@ -79,9 +79,7 @@ function mapCollector(summary: CollectorSummaryWire): InstrumentationCollector {
     name,
     address: ip,
     online: resolveCollectorOnline(summary.collector),
-    intake: Object.hasOwn(summary, 'instrumentationIntake')
-      ? parseInstrumentationIntake(summary.instrumentationIntake, name)
-      : { status: 'unavailable', errorCode: 'old_server' }
+    intake: parseInstrumentationIntake(summary.instrumentationIntake, name)
   };
 }
 

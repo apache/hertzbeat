@@ -23,7 +23,7 @@ export const COLLECTOR_INTAKE_ERROR_CODES = [
 ] as const;
 
 type CollectorIntakeCapability = (typeof COLLECTOR_INTAKE_CAPABILITIES)[number];
-type CollectorIntakeErrorCode = (typeof COLLECTOR_INTAKE_ERROR_CODES)[number] | 'old_server';
+type CollectorIntakeErrorCode = (typeof COLLECTOR_INTAKE_ERROR_CODES)[number];
 export type CollectorInstrumentationIntake =
   | {
       status: 'available';
@@ -31,8 +31,8 @@ export type CollectorInstrumentationIntake =
       collectorId: string;
       gateway: 'collector' | 'server';
       capabilities: readonly CollectorIntakeCapability[];
-      otlpHttpEndpoint: string;
-      otlpGrpcEndpoint: string;
+      otlpHttpEndpoint: string | null;
+      otlpGrpcEndpoint: string | null;
       authorizationHeader: 'Authorization';
     }
   | { status: 'unavailable'; errorCode: CollectorIntakeErrorCode };

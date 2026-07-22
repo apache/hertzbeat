@@ -118,7 +118,7 @@ function collectorTargetFromInventory(
   collectors: InstrumentationCollector[]
 ): CollectorTarget | undefined {
   const intake = collectors.find(item => item.collectorId === collectorId)?.intake;
-  if (intake?.status !== 'available') return undefined;
+  if (intake?.status !== 'available' || !intake.otlpHttpEndpoint || !intake.otlpGrpcEndpoint) return undefined;
   return {
     collectorId: intake.collectorId,
     otlpHttpEndpoint: intake.otlpHttpEndpoint,
