@@ -33,3 +33,8 @@
 .panel :global(.ant-alert) {
   margin-bottom: 20px;
 }
+
+.actions,
+.actions > :global(.ant-space-item) {
+  width: 100%;
+}

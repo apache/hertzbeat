@@ -28,6 +28,7 @@ const controller = vi.hoisted(() => ({
 vi.mock('../controller/use-session-lock-controller', () => ({ useSessionLockController: () => controller }));
 
 import { SessionLockPage } from './session-lock-page';
+import styles from './login-page.module.css';
 
 describe('SessionLockPage', () => {
   beforeAll(async () => {
@@ -71,5 +72,21 @@ describe('SessionLockPage', () => {
     await waitFor(() => expect(controller.unlock).toHaveBeenCalledOnce());
     expect(controller.logout).toHaveBeenCalledOnce();
     expect(document.body.textContent).not.toContain('in-memory-only');
+  });
+
+  it('owns a full-width vertical action stack with two block buttons', () => {
+    render(
+      <I18nextProvider i18n={i18n}>
+        <SessionLockPage />
+      </I18nextProvider>
+    );
+
+    const unlock = screen.getByRole('button', { name: 'Unlock' });
+    const logout = screen.getByRole('button', { name: 'Sign out' });
+    const actionStack = unlock.closest('.ant-space-vertical');
+
+    expect(actionStack).toHaveClass(styles.actions ?? '');
+    expect(unlock).toHaveClass('ant-btn-block');
+    expect(logout).toHaveClass('ant-btn-block');
   });
 });

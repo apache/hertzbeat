@@ -76,7 +76,7 @@ function SessionUnlockForm({ controller }: { controller: ReturnType<typeof useSe
           onChange={event => controller.setPassword(event.target.value)}
         />
       </Form.Item>
-      <Space direction="vertical" size="middle">
+      <Space className={styles.actions ?? ''} direction="vertical" size="middle">
         <Button
           block
           type="primary"
