@@ -19,7 +19,7 @@ import { z } from 'zod';
 
 import {
   tokenExpirationDefinitions,
-  tokenScopeDefinitions,
+  isTokenScope,
   type GeneratedTokenReceipt,
   type TokenDraft,
   type TokenResourceRecord,
@@ -66,7 +66,7 @@ const generatedTokenWireSchema = z.object({
 const tokenDraftInputSchema = z.object({
   name: z.string().refine(value => value.trim() !== ''),
   expireSeconds: z.number().refine(value => tokenExpirationDefinitions.some(definition => definition.value === value)),
-  scope: z.string().refine(value => tokenScopeDefinitions.some(definition => definition.value === value))
+  scope: z.custom<TokenScope>(isTokenScope)
 });
 
 type TokenWire = z.output<typeof tokenWireSchema>;
@@ -84,12 +84,13 @@ export function parseGeneratedTokenReceipt(value: unknown): GeneratedTokenReceip
 }
 
 export function parseTokenGenerationDraft(value: unknown): TokenDraft {
+  if (!hasOwnTokenDraftFields(value)) throw new TokenApiContractError();
   const result = tokenDraftInputSchema.safeParse(value);
   if (!result.success) throw new TokenApiContractError();
   return {
     name: result.data.name.trim(),
     expireSeconds: result.data.expireSeconds,
-    scope: result.data.scope as TokenScope
+    scope: result.data.scope
   };
 }
 
@@ -108,5 +109,16 @@ function mapTokenRecord(wire: TokenWire): TokenResourceRecord {
 }
 
 function readKnownScope(value: string | null | undefined): TokenScope | null {
-  return tokenScopeDefinitions.some(definition => definition.value === value) ? (value as TokenScope) : null;
+  return isTokenScope(value) ? value : null;
+}
+
+function hasOwnTokenDraftFields(value: unknown) {
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    Object.hasOwn(value, 'name') &&
+    Object.hasOwn(value, 'expireSeconds') &&
+    Object.hasOwn(value, 'scope')
+  );
 }

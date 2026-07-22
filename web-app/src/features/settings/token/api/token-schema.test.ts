@@ -90,5 +90,10 @@ describe('Token API schemas', () => {
     expect(() => parseTokenGenerationDraft({ name: '', expireSeconds: -1, scope: 'otlp-ingest' })).toThrow(
       TokenApiContractError
     );
+    expect(() =>
+      parseTokenGenerationDraft(
+        Object.create({ name: 'Inherited', expireSeconds: -1, scope: 'otlp-ingest' }) as unknown
+      )
+    ).toThrow(TokenApiContractError);
   });
 });

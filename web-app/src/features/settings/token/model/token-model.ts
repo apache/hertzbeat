@@ -73,11 +73,13 @@ export const tokenExpirationDefinitions = [
   { value: 31_536_000, labelKey: 'token.expiration.days365' }
 ] as const;
 
+export function isTokenScope(value: unknown): value is TokenScope {
+  return tokenScopeDefinitions.some(definition => definition.value === value);
+}
+
 function normalizeTokenScope(scope?: string | null): TokenScope {
   const normalized = scope?.trim().toLowerCase();
-  return tokenScopeDefinitions.some(definition => definition.value === normalized)
-    ? (normalized as TokenScope)
-    : 'api-admin';
+  return isTokenScope(normalized) ? normalized : 'api-admin';
 }
 
 export function tokenScopeLabelKey(scope: TokenScope | null | undefined) {
