@@ -16,7 +16,9 @@
  */
 
 import { useList, type HttpError } from '@refinedev/core';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
+
+import { useSourceScopedValue } from '@/shared/query-context';
 
 import {
   writeNoticeTemplateQuery,
@@ -34,18 +36,10 @@ type FailureKind = 'error' | 'unavailable';
 
 export function useNoticeTemplateListController(query: NoticeTemplateQuery) {
   const queryKey = writeNoticeTemplateQuery(query).toString();
-  const [refreshState, setRefreshState] = useState<{
-    queryKey: string;
-    failure: FailureKind | null;
-  }>({ queryKey, failure: null });
-  const refreshFailure = refreshState.queryKey === queryKey ? refreshState.failure : null;
-
-  useEffect(() => {
-    // The derived value hides an old failure immediately. Resetting after the
-    // navigation commit prevents that failure from reviving on Browser Back.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setRefreshState(current => (current.queryKey === queryKey ? current : { queryKey, failure: null }));
-  }, [queryKey]);
+  const { value: refreshFailure, setValue: setRefreshFailure } = useSourceScopedValue<FailureKind | null>(
+    queryKey,
+    null
+  );
 
   const list = useList<NoticeTemplateResourceRecord, HttpError>({
     resource: noticeTemplateResourceName,
@@ -74,11 +68,11 @@ export function useNoticeTemplateListController(query: NoticeTemplateQuery) {
     if (result.isError) {
       const reason = normalizeNoticeTemplateCollectionFailure(result.error);
       const failure = reason.kind === 'unavailable' ? 'unavailable' : 'error';
-      setRefreshState({ queryKey, failure });
+      setRefreshFailure(failure);
       throw reason;
     }
-    setRefreshState({ queryKey, failure: null });
-  }, [list.query, queryKey]);
+    setRefreshFailure(null);
+  }, [list.query, setRefreshFailure]);
 
   return {
     listState,

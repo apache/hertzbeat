@@ -17,33 +17,37 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-type QueryDraft<T> = {
+type SourceScopedValue<T> = {
   source: string;
   value: T;
 };
 
-/** Keeps an unsubmitted draft local while treating a changed URL source as authoritative. */
-export function useQueryDraft<T>(source: string, canonicalValue: T) {
-  const [draft, setDraft] = useState<QueryDraft<T>>({ source, value: canonicalValue });
+/** Retires local state when its canonical URL source changes. */
+export function useSourceScopedValue<T>(source: string, canonicalValue: T) {
+  const [scopedValue, setScopedValue] = useState<SourceScopedValue<T>>({ source, value: canonicalValue });
 
   // Derivation makes back/forward navigation visible without waiting for an effect or updating during render.
-  const value = draft.source === source ? draft.value : canonicalValue;
+  const value = scopedValue.source === source ? scopedValue.value : canonicalValue;
 
   useEffect(() => {
-    // Once navigation commits, discard the previous source so its abandoned draft cannot reappear on a later visit.
-    // The rendered value already comes from canonicalValue, so this cleanup cannot expose the abandoned draft.
+    // Once navigation commits, discard the previous source so its local value cannot reappear on a later visit.
+    // Rendering already uses canonicalValue, so this cleanup cannot expose the retired value.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setDraft(current => (current.source === source ? current : { source, value: canonicalValue }));
+    setScopedValue(current => (current.source === source ? current : { source, value: canonicalValue }));
   }, [canonicalValue, source]);
 
   const setValue = useCallback(
     (nextValue: T) => {
-      setDraft({ source, value: nextValue });
+      setScopedValue({ source, value: nextValue });
     },
     [source]
   );
 
   return { value, setValue };
+}
+
+export function useQueryDraft<T>(source: string, canonicalValue: T) {
+  return useSourceScopedValue(source, canonicalValue);
 }
 
 export function useStringQueryDraft(source: string, canonicalValue: string) {
