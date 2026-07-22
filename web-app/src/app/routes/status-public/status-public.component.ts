@@ -85,49 +85,45 @@ export class StatusPublicComponent implements OnInit {
 
   loadComponentStatus() {
     this.loading = true;
-    let componentLoad$ = this.statusPagePublicService
-      .getStatusPageComponents(this.historyDays)
-      .subscribe(
-        (message: Message<StatusPageComponentStatus[]>) => {
-          if (message.code !== 0) {
-            this.notifySvc.error(message.msg, '');
-          } else {
-            this.componentStatus = message.data;
-          }
-          this.loading = false;
-          componentLoad$.unsubscribe();
-        },
-        error => {
-          this.loading = false;
-          this.notifySvc.error(error.msg, '');
-          componentLoad$.unsubscribe();
+    let componentLoad$ = this.statusPagePublicService.getStatusPageComponents(this.historyDays).subscribe(
+      (message: Message<StatusPageComponentStatus[]>) => {
+        if (message.code !== 0) {
+          this.notifySvc.error(message.msg, '');
+        } else {
+          this.componentStatus = message.data;
         }
-      );
+        this.loading = false;
+        componentLoad$.unsubscribe();
+      },
+      error => {
+        this.loading = false;
+        this.notifySvc.error(error.msg, '');
+        componentLoad$.unsubscribe();
+      }
+    );
   }
 
   loadStatusPageOrg() {
     this.loading = true;
-    let loadInit$ = this.statusPagePublicService
-      .getStatusPageOrg()
-      .subscribe(
-        (message: Message<StatusPageOrg>) => {
-          if (message.code === 0) {
-            this.statusOrg = message.data;
-            this.titleService.setTitle(`${this.statusOrg.name} ${this.i18nSvc.fanyi('menu.advanced.status')}`);
-          } else {
-            this.statusOrg = new StatusPageOrg();
-            console.log(message.msg);
-            this.notifySvc.error(message.msg, '');
-          }
-          this.loadComponentStatus();
-          loadInit$.unsubscribe();
-        },
-        error => {
-          this.loading = false;
-          this.notifySvc.error(error.msg, '');
-          loadInit$.unsubscribe();
+    let loadInit$ = this.statusPagePublicService.getStatusPageOrg().subscribe(
+      (message: Message<StatusPageOrg>) => {
+        if (message.code === 0) {
+          this.statusOrg = message.data;
+          this.titleService.setTitle(`${this.statusOrg.name} ${this.i18nSvc.fanyi('menu.advanced.status')}`);
+        } else {
+          this.statusOrg = new StatusPageOrg();
+          console.log(message.msg);
+          this.notifySvc.error(message.msg, '');
         }
-      );
+        this.loadComponentStatus();
+        loadInit$.unsubscribe();
+      },
+      error => {
+        this.loading = false;
+        this.notifySvc.error(error.msg, '');
+        loadInit$.unsubscribe();
+      }
+    );
   }
 
   showIncident() {
@@ -137,7 +133,7 @@ export class StatusPublicComponent implements OnInit {
 
   showComponent() {
     this.showMode = 'component';
-    this.loadComponentStatus();
+    this.loadStatusPageOrg();
   }
 
   loadStatusPageIncident() {

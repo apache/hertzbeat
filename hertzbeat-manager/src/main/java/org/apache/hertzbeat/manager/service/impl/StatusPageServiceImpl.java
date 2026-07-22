@@ -125,6 +125,10 @@ public class StatusPageServiceImpl implements StatusPageService {
 
     @Override
     public List<ComponentStatus> queryComponentsStatus(int days) {
+        if (days < 1 || days > 90) {
+            throw new IllegalArgumentException("days must be between 1 and 90");
+        }
+
         int historySpanDays = days - 1;
         List<StatusPageComponent> components = statusPageComponentDao.findAll();
         List<ComponentStatus> componentStatusList = new LinkedList<>();
@@ -149,7 +153,7 @@ public class StatusPageServiceImpl implements StatusPageService {
                     .findStatusPageHistoriesByComponentIdAndTimestampBetween(component.getId(), todayStartTimestamp, nowTimestamp);
             StatusPageHistory todayStatus = combineOneDayStatusPageHistory(todayStatusPageHistoryList, component, nowTimestamp);
             histories.add(todayStatus);
-            // query 30d component status history
+            // query component status history for the configured number of days
             long preTimestamp = now
                 .atZone(zoneId)
                 .toLocalDate()
@@ -242,6 +246,10 @@ public class StatusPageServiceImpl implements StatusPageService {
 
     @Override
     public ComponentStatus queryComponentStatus(long id, int days) {
+        if (days < 1 || days > 90) {
+            throw new IllegalArgumentException("days must be between 1 and 90");
+        }
+
         int historySpanDays = days - 1;
         StatusPageComponent component = statusPageComponentDao.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("component not found"));
