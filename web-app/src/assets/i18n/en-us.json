@@ -26,11 +26,61 @@
     "primary": "Primary navigation",
     "dashboard": "Dashboard",
     "monitors": "Monitors",
+    "entities": "Entities",
     "explore": "Explore",
     "alerts": "Alerts",
     "settings": "Settings",
     "bulletin": "Bulletin",
     "status": "Status"
+  },
+  "entity": {
+    "title": "Entities",
+    "description": "Read-only operational inventory and evidence",
+    "empty": "No entities match the current filters.",
+    "filters": {
+      "search": "Search entities",
+      "type": "Type",
+      "status": "Status",
+      "owner": "Owner",
+      "source": "Source",
+      "environment": "Environment",
+      "lifecycle": "Lifecycle",
+      "tier": "Tier",
+      "system": "System"
+    },
+    "sort": {
+      "field": "Sort field",
+      "order": "Sort order",
+      "gmtUpdate": "Updated",
+      "name": "Name",
+      "type": "Type",
+      "status": "Status",
+      "asc": "Ascending",
+      "desc": "Descending"
+    },
+    "fields": {
+      "name": "Name",
+      "type": "Type",
+      "status": "Status",
+      "reason": "Status evidence",
+      "environment": "Environment",
+      "owner": "Owner",
+      "source": "Source",
+      "lifecycle": "Lifecycle",
+      "tier": "Tier",
+      "system": "System",
+      "monitors": "Monitors",
+      "relations": "Relations",
+      "alerts": "Alerts",
+      "description": "Description"
+    },
+    "sections": { "identities": "Identities", "monitors": "Monitor bindings", "relations": "Relations" },
+    "missing": {
+      "identities": "No identity evidence is available.",
+      "monitors": "No monitor bindings are available.",
+      "relations": "No relation evidence is available."
+    },
+    "explore": { "metrics": "Explore metrics", "logs": "Explore logs" }
   },
   "exploreMetric": {
     "series": "Series",

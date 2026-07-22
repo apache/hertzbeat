@@ -26,11 +26,61 @@
     "primary": "Navegação principal",
     "dashboard": "Painel",
     "monitors": "Monitores",
+    "entities": "Entidades",
     "explore": "Explorar",
     "alerts": "Alertas",
     "settings": "Configurações",
     "bulletin": "Quadros",
     "status": "Status"
+  },
+  "entity": {
+    "title": "Entidades",
+    "description": "Inventário operacional e evidências somente leitura",
+    "empty": "Nenhuma entidade corresponde aos filtros atuais.",
+    "filters": {
+      "search": "Pesquisar entidades",
+      "type": "Tipo",
+      "status": "Status",
+      "owner": "Responsável",
+      "source": "Origem",
+      "environment": "Ambiente",
+      "lifecycle": "Ciclo de vida",
+      "tier": "Nível",
+      "system": "Sistema"
+    },
+    "sort": {
+      "field": "Campo de ordenação",
+      "order": "Ordem",
+      "gmtUpdate": "Atualizado",
+      "name": "Nome",
+      "type": "Tipo",
+      "status": "Status",
+      "asc": "Crescente",
+      "desc": "Decrescente"
+    },
+    "fields": {
+      "name": "Nome",
+      "type": "Tipo",
+      "status": "Status",
+      "reason": "Evidência do status",
+      "environment": "Ambiente",
+      "owner": "Responsável",
+      "source": "Origem",
+      "lifecycle": "Ciclo de vida",
+      "tier": "Nível",
+      "system": "Sistema",
+      "monitors": "Monitores",
+      "relations": "Relações",
+      "alerts": "Alertas",
+      "description": "Descrição"
+    },
+    "sections": { "identities": "Identidades", "monitors": "Vínculos de monitor", "relations": "Relações" },
+    "missing": {
+      "identities": "Nenhuma evidência de identidade disponível.",
+      "monitors": "Nenhum vínculo de monitor disponível.",
+      "relations": "Nenhuma evidência de relação disponível."
+    },
+    "explore": { "metrics": "Explorar métricas", "logs": "Explorar logs" }
   },
   "exploreMetric": {
     "series": "Séries",

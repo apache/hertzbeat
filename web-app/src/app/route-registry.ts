@@ -18,6 +18,7 @@
 import {
   alertRoutePaths,
   applicationRoutePaths,
+  entityRoutePaths,
   buildAlertIntegrationPath,
   monitorRoutePaths
 } from '@/shared/navigation/app-paths';
@@ -51,6 +52,10 @@ export const appRouteCatalog = {
   'monitor-new': pageRoute('monitor-new', monitorRoutePaths.create),
   'monitor-edit': pageRoute('monitor-edit', monitorRoutePaths.edit),
   'monitor-detail': pageRoute('monitor-detail', monitorRoutePaths.detail),
+  entities: pageRoute('entities', entityRoutePaths.list, {
+    resource: { labelKey: 'menu.entities' }
+  }),
+  'entity-detail': pageRoute('entity-detail', entityRoutePaths.detail),
   explore: pageRoute('explore', applicationRoutePaths.explore, {
     resource: { labelKey: 'menu.explore' }
   }),

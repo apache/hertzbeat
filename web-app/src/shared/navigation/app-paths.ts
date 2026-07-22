@@ -21,6 +21,7 @@ const alertCenterPath = '/alerts';
 const alertRuleListPath = `${alertCenterPath}/rules`;
 const alertIntegrationPath = `${alertCenterPath}/integrations/:source`;
 const monitorListPath = '/monitors';
+const entityListPath = '/entities';
 
 export const applicationRoutePaths = {
   dashboard: defaultAuthenticatedPath,
@@ -35,6 +36,11 @@ export const monitorRoutePaths = {
   create: `${monitorListPath}/new`,
   detail: `${monitorListPath}/:monitorId`,
   edit: `${monitorListPath}/:monitorId/edit`
+} as const;
+
+export const entityRoutePaths = {
+  list: entityListPath,
+  detail: `${entityListPath}/:entityId`
 } as const;
 
 /** Alert path templates shared by route registration and feature navigation. */

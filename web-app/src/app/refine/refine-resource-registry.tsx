@@ -12,6 +12,7 @@ import {
   BellOutlined,
   DashboardOutlined,
   DatabaseOutlined,
+  DeploymentUnitOutlined,
   FundProjectionScreenOutlined,
   MonitorOutlined,
   ReadOutlined,
@@ -94,6 +95,13 @@ export const refineResources: ResourceProps[] = [
     create: getAppRoute('monitor-new').path,
     edit: getAppRoute('monitor-edit').path,
     show: getAppRoute('monitor-detail').path,
+    timePolicy: 'none'
+  }),
+  routedNavigationResource('entities', {
+    parent: 'shell-workspace',
+    icon: <DeploymentUnitOutlined />,
+    order: 25,
+    show: getAppRoute('entity-detail').path,
     timePolicy: 'none'
   }),
   routedNavigationResource('explore', {

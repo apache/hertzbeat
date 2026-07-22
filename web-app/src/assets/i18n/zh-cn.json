@@ -26,11 +26,57 @@
     "primary": "主导航",
     "dashboard": "仪表盘",
     "monitors": "监控中心",
+    "entities": "实体",
     "explore": "信号查询",
     "alerts": "告警中心",
     "settings": "设置",
     "bulletin": "监控看板",
     "status": "状态页"
+  },
+  "entity": {
+    "title": "实体",
+    "description": "只读运维资产与证据",
+    "empty": "当前筛选条件下没有实体。",
+    "filters": {
+      "search": "搜索实体",
+      "type": "类型",
+      "status": "状态",
+      "owner": "负责人",
+      "source": "来源",
+      "environment": "环境",
+      "lifecycle": "生命周期",
+      "tier": "等级",
+      "system": "系统"
+    },
+    "sort": {
+      "field": "排序字段",
+      "order": "排序方向",
+      "gmtUpdate": "更新时间",
+      "name": "名称",
+      "type": "类型",
+      "status": "状态",
+      "asc": "升序",
+      "desc": "降序"
+    },
+    "fields": {
+      "name": "名称",
+      "type": "类型",
+      "status": "状态",
+      "reason": "状态证据",
+      "environment": "环境",
+      "owner": "负责人",
+      "source": "来源",
+      "lifecycle": "生命周期",
+      "tier": "等级",
+      "system": "系统",
+      "monitors": "监控",
+      "relations": "关系",
+      "alerts": "告警",
+      "description": "描述"
+    },
+    "sections": { "identities": "身份", "monitors": "监控绑定", "relations": "关系" },
+    "missing": { "identities": "暂无身份记录。", "monitors": "暂无监控绑定。", "relations": "暂无关系记录。" },
+    "explore": { "metrics": "查询指标", "logs": "查询日志" }
   },
   "exploreMetric": {
     "series": "序列",

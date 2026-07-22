@@ -1,0 +1,33 @@
+.page {
+  display: grid;
+  gap: 16px;
+}
+.heading {
+  align-items: flex-start;
+  display: flex;
+  justify-content: space-between;
+}
+.heading h2 {
+  margin: 0;
+}
+.filters {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(5, minmax(140px, 1fr));
+}
+.rowLink {
+  height: auto;
+  padding: 0;
+}
+.section {
+  border-top: 1px solid var(--ant-color-border-secondary);
+  padding-top: 12px;
+}
+.section h4 {
+  margin: 0 0 8px;
+}
+@media (max-width: 1100px) {
+  .filters {
+    grid-template-columns: repeat(3, minmax(140px, 1fr));
+  }
+}

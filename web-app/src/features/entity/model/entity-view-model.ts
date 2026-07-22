@@ -1,0 +1,83 @@
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
+
+import type { RemotePageState, RemotePayloadState } from '@/shared/remote-state';
+import { applicationRoutePaths, entityRoutePaths } from '@/shared/navigation/app-paths';
+import type { EntityDetail, EntityQuery, EntitySummary } from './entity-contract';
+import { readEntityQuery, writeEntityQuery } from './entity-query';
+
+export const defaultEntityQuery: EntityQuery = {
+  search: '',
+  type: '',
+  status: '',
+  owner: '',
+  source: '',
+  environment: '',
+  lifecycle: '',
+  tier: '',
+  system: '',
+  sort: 'gmtUpdate',
+  order: 'desc',
+  pageIndex: 0,
+  pageSize: 10
+};
+
+export type EntityListEvidence = RemotePageState<EntitySummary, 'unavailable' | 'error'>;
+export type EntityDetailEvidence = RemotePayloadState<{ detail: EntityDetail }, 'missing' | 'unavailable' | 'error'>;
+export type EntityExploreSignal = 'metrics' | 'logs';
+
+export type EntityListViewState = {
+  query: EntityQuery;
+  draft: string;
+  evidence: EntityListEvidence;
+  refreshing: boolean;
+};
+export type EntityListViewActions = {
+  updateDraft: (value: string) => void;
+  submit: () => void;
+  changeFilter: (key: EntityFilterKey, value: string) => void;
+  changeSort: (sort: EntityQuery['sort'], order: EntityQuery['order']) => void;
+  changePage: (page: number, pageSize: number) => void;
+  refresh: () => void;
+  open: (id: number) => void;
+};
+export type EntityFilterKey = Exclude<keyof EntityQuery, 'search' | 'sort' | 'order' | 'pageIndex' | 'pageSize'>;
+
+export function buildEntityDetailPath(id: number, query: EntityQuery) {
+  const returnTo = `${entityRoutePaths.list}?${writeEntityQuery(query).toString()}`;
+  const detail = entityRoutePaths.detail.replace(':entityId', String(id));
+  return `${detail}?returnTo=${encodeURIComponent(returnTo)}`;
+}
+
+export function safeEntityReturnTo(value: string | null) {
+  if (!value?.startsWith(`${entityRoutePaths.list}?`)) return entityRoutePaths.list;
+  const url = new URL(value, 'https://hertzbeat.local');
+  if (url.pathname !== entityRoutePaths.list) return entityRoutePaths.list;
+  const query = readEntityQuery(url.searchParams);
+  return `${entityRoutePaths.list}?${writeEntityQuery(query).toString()}`;
+}
+
+export function entityExploreSignals(detail: EntityDetail): EntityExploreSignal[] {
+  const hasContext = detail.entity.type === 'service' || uniqueMonitorInstance(detail) !== undefined;
+  return [
+    ...(hasContext && detail.boundMonitors.length > 0 ? (['metrics'] as const) : []),
+    ...(hasContext && (detail.evidence?.logHintCount ?? 0) > 0 ? (['logs'] as const) : [])
+  ];
+}
+
+export function buildEntityExplorePath(detail: EntityDetail, signal: EntityExploreSignal) {
+  const params = new URLSearchParams({ signal, timeRange: 'last-30m' });
+  if (detail.entity.type === 'service') params.set('serviceName', detail.entity.name);
+  else {
+    const instance = uniqueMonitorInstance(detail);
+    if (instance) params.set('instance', instance);
+  }
+  if (detail.entity.environment) params.set('environment', detail.entity.environment);
+  return `${applicationRoutePaths.explore}?${params.toString()}`;
+}
+
+function uniqueMonitorInstance(detail: EntityDetail) {
+  const instances = [
+    ...new Set(detail.boundMonitors.map(monitor => monitor.instance).filter((value): value is string => Boolean(value)))
+  ];
+  return instances.length === 1 ? instances[0] : undefined;
+}

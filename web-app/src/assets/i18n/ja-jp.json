@@ -26,11 +26,61 @@
     "primary": "メインナビゲーション",
     "dashboard": "ダッシュボード",
     "monitors": "監視センター",
+    "entities": "エンティティ",
     "explore": "シグナル検索",
     "alerts": "アラートセンター",
     "settings": "設定",
     "bulletin": "監視ボード",
     "status": "ステータス"
+  },
+  "entity": {
+    "title": "エンティティ",
+    "description": "読み取り専用の運用資産と証拠",
+    "empty": "現在の条件に一致するエンティティはありません。",
+    "filters": {
+      "search": "エンティティを検索",
+      "type": "タイプ",
+      "status": "状態",
+      "owner": "所有者",
+      "source": "ソース",
+      "environment": "環境",
+      "lifecycle": "ライフサイクル",
+      "tier": "階層",
+      "system": "システム"
+    },
+    "sort": {
+      "field": "並び替え項目",
+      "order": "順序",
+      "gmtUpdate": "更新日時",
+      "name": "名前",
+      "type": "タイプ",
+      "status": "状態",
+      "asc": "昇順",
+      "desc": "降順"
+    },
+    "fields": {
+      "name": "名前",
+      "type": "タイプ",
+      "status": "状態",
+      "reason": "状態の根拠",
+      "environment": "環境",
+      "owner": "所有者",
+      "source": "ソース",
+      "lifecycle": "ライフサイクル",
+      "tier": "階層",
+      "system": "システム",
+      "monitors": "モニター",
+      "relations": "関係",
+      "alerts": "アラート",
+      "description": "説明"
+    },
+    "sections": { "identities": "識別情報", "monitors": "モニター関連付け", "relations": "関係" },
+    "missing": {
+      "identities": "識別情報はありません。",
+      "monitors": "モニター関連付けはありません。",
+      "relations": "関係情報はありません。"
+    },
+    "explore": { "metrics": "メトリクスを検索", "logs": "ログを検索" }
   },
   "exploreMetric": {
     "series": "系列",
