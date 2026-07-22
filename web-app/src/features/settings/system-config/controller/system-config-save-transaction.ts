@@ -21,6 +21,7 @@ import { useEffect, useRef, useState } from 'react';
 import { isDefiniteSystemConfigWriteRejection } from '../api/system-config-write-rejection';
 import {
   systemConfigResourceId,
+  systemConfigResourceName,
   systemConfigSaveConverged,
   type SystemConfigDraft,
   type SystemConfigResourceRecord,
@@ -164,8 +165,8 @@ function completeSave(
 function buildUpdate(draft: SystemConfigDraft) {
   return {
     id: systemConfigResourceId,
-    resource: 'system-config',
-    dataProviderName: 'system-config',
+    resource: systemConfigResourceName,
+    dataProviderName: systemConfigResourceName,
     invalidates: ['detail'] as Array<'detail'>,
     mutationMode: 'pessimistic' as const,
     values: draft

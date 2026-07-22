@@ -18,15 +18,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
-import { systemConfigTimezonesEndpoint } from '@/features/settings/system-config/api/system-config-api';
+import { systemConfigTimezonesEndpoint } from '../api/system-config-api';
 
-type SystemConfigApi = typeof import('@/features/settings/system-config/api/system-config-api');
+type SystemConfigApi = typeof import('../api/system-config-api');
 const api = vi.hoisted(() => ({
   loadSystemConfig: vi.fn<SystemConfigApi['loadSystemConfig']>(),
   loadTimezones: vi.fn<SystemConfigApi['loadTimezones']>(),
   saveSystemConfig: vi.fn<SystemConfigApi['saveSystemConfig']>()
 }));
-vi.mock('@/features/settings/system-config/api/system-config-api', async importOriginal => ({
+vi.mock('../api/system-config-api', async importOriginal => ({
   ...(await importOriginal<SystemConfigApi>()),
   ...api
 }));

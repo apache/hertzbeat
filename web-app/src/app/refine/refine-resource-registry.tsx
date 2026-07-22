@@ -24,6 +24,7 @@ import type { AccessControlProvider, ResourceProps } from '@refinedev/core';
 import type { ReactNode } from 'react';
 
 import { getAppRoute, type AppResourceRouteId } from '@/app/route-registry';
+import { systemConfigResourceName } from '@/features/settings/system-config';
 
 import type { ShellCapability, ShellResourceMeta, ShellTimePolicy } from '@/layout/shell/shell-navigation-model';
 
@@ -171,11 +172,11 @@ export const refineResources: ResourceProps[] = [
     dataProviderName: 'tokens'
   }),
   routedNavigationResource('system-settings', {
-    name: 'system-config',
+    name: systemConfigResourceName,
     parent: 'settings',
     icon: <SettingOutlined />,
     order: 60,
-    dataProviderName: 'system-config'
+    dataProviderName: systemConfigResourceName
   }),
   routedNavigationResource('labels', {
     parent: 'settings',

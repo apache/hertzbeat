@@ -27,6 +27,7 @@ export type SystemTheme = (typeof systemThemes)[number];
 export type SystemConfigDraft = { locale: SystemLocale | ''; timeZoneId: string; theme: SystemTheme | '' };
 export type SystemConfigSaveRecovery = { phase: 'proof' };
 
+export const systemConfigResourceName = 'system-config' as const;
 export const systemConfigResourceId = 'current' as const;
 export const systemTimezonesResourceId = 'timezones' as const;
 

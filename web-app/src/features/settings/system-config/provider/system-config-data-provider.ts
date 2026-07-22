@@ -31,20 +31,19 @@ import {
   loadSystemConfig,
   loadTimezones,
   saveSystemConfig,
+  systemConfigApiRoot,
   systemConfigTimezonesEndpoint,
   type SystemConfigValue
-} from '@/features/settings/system-config/api/system-config-api';
+} from '../api/system-config-api';
 import {
   createSystemConfigResourceRecord,
   createSystemTimezoneResourceRecord,
   SystemConfigResourceContractError,
-  systemConfigResourceId
-} from '@/features/settings/system-config/model/system-config-model';
+  systemConfigResourceId,
+  systemConfigResourceName
+} from '../model/system-config-model';
 import { adaptRefineRecord } from '@/shared/refine/refine-provider-data';
-
-import { createRefineHttpError, toRefineHttpError } from '../refine-http-error';
-
-const systemConfigResource = 'system-config';
+import { createRefineHttpError, toRefineHttpError } from '@/shared/refine/refine-http-error';
 
 export const systemConfigDataProvider: DataProvider = {
   getList<TData extends BaseRecord = BaseRecord>(): Promise<GetListResponse<TData>> {
@@ -104,7 +103,7 @@ export const systemConfigDataProvider: DataProvider = {
     });
   },
 
-  getApiUrl: () => '/api/config'
+  getApiUrl: () => systemConfigApiRoot
 };
 
 async function protect<T>(operation: () => Promise<T>): Promise<T> {
@@ -130,7 +129,7 @@ function rejectUnsupported<T>(code: string, message: string): Promise<T> {
 }
 
 function assertResourceAndId(resource: string, id: string | number) {
-  if (resource !== systemConfigResource) {
+  if (resource !== systemConfigResourceName) {
     throw createRefineHttpError('Unsupported System Config resource', 400, 'SYSTEM_CONFIG_RESOURCE_UNSUPPORTED');
   }
   if (id !== systemConfigResourceId) {

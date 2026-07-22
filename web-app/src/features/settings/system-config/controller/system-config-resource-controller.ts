@@ -26,14 +26,12 @@ import { systemConfigTimezonesEndpoint } from '../api/system-config-api';
 import {
   createSystemConfigDraft,
   systemConfigResourceId,
+  systemConfigResourceName,
   type SystemConfigDraft,
   type SystemConfigResourceRecord,
   type SystemTimezoneResourceRecord
 } from '../model/system-config-model';
 import { useSystemConfigFormController } from './system-config-form-controller';
-
-const resourceName = 'system-config';
-const providerName = 'system-config';
 
 export function useSystemConfigResourceController() {
   const { t, i18n } = useTranslation();
@@ -78,20 +76,20 @@ export function useSystemConfigResourceController() {
 
 function useSystemConfigResources() {
   const config = useOne<SystemConfigResourceRecord, HttpError>({
-    resource: resourceName,
+    resource: systemConfigResourceName,
     id: systemConfigResourceId,
-    dataProviderName: providerName,
+    dataProviderName: systemConfigResourceName,
     errorNotification: false
   });
   const timezones = useCustom<SystemTimezoneResourceRecord, HttpError>({
     url: systemConfigTimezonesEndpoint,
     method: 'get',
-    dataProviderName: providerName,
+    dataProviderName: systemConfigResourceName,
     errorNotification: false
   });
   const mutation = useUpdate<SystemConfigResourceRecord, HttpError, SystemConfigDraft>({
-    resource: resourceName,
-    dataProviderName: providerName,
+    resource: systemConfigResourceName,
+    dataProviderName: systemConfigResourceName,
     invalidates: ['detail'],
     mutationMode: 'pessimistic',
     successNotification: false,
