@@ -53,10 +53,40 @@ export function ExploreWorkbench({ query, t, updateQuery, refresh }: Props) {
     if (query.signal === signal) return;
     updateQuery(signalSelectionPatch(signal));
   };
-  return <>
+  return (
+    <>
+      <ExploreHeader
+        exactWindow={exactWindow}
+        query={query}
+        refresh={refresh}
+        t={t}
+        updateTimeRange={updateTimeRange}
+      />
+      {handoffState === 'invalid' && <Alert type="warning" showIcon message={t('explore.handoffInvalid')} />}
+      <ExploreSignalNavigation query={query} selectSignal={selectSignal} t={t} updateQuery={updateQuery} />
+    </>
+  );
+}
+
+function ExploreHeader({
+  exactWindow,
+  query,
+  refresh,
+  t,
+  updateTimeRange
+}: Pick<Props, 'query' | 'refresh' | 't'> & {
+  exactWindow: boolean;
+  updateTimeRange: (value: string) => void;
+}) {
+  const exactOption = exactWindow
+    ? [{ value: EXACT_WINDOW_OPTION, label: t('explore.exactWindow'), disabled: true }]
+    : [];
+  return (
     <header className={styles.header}>
       <div>
-        <Typography.Title className={styles.title ?? ''} level={2}>{t('explore.title')}</Typography.Title>
+        <Typography.Title className={styles.title ?? ''} level={2}>
+          {t('explore.title')}
+        </Typography.Title>
         <Typography.Text type="secondary">{t('explore.description')}</Typography.Text>
       </div>
       <div className={styles.scope} aria-label={t('explore.context')}>
@@ -65,30 +95,49 @@ export function ExploreWorkbench({ query, t, updateQuery, refresh }: Props) {
           aria-label={t('explore.timeRange')}
           value={exactWindow ? EXACT_WINDOW_OPTION : query.timeRange}
           options={[
-            ...(exactWindow ? [{ value: EXACT_WINDOW_OPTION, label: t('explore.exactWindow'), disabled: true }] : []),
+            ...exactOption,
             ...EXPLORE_TIME_RANGES.map(value => ({ value, label: t(`explore.timeRanges.${value}`) }))
           ]}
           onChange={updateTimeRange}
         />
-        <Button onClick={() => { void refresh(); }}>{t('common.refresh')}</Button>
+        <Button onClick={() => void refresh()}>{t('common.refresh')}</Button>
       </div>
     </header>
-    {handoffState === 'invalid' && <Alert type="warning" showIcon message={t('explore.handoffInvalid')} />}
+  );
+}
+
+function ExploreSignalNavigation({
+  query,
+  selectSignal,
+  t,
+  updateQuery
+}: Pick<Props, 'query' | 't' | 'updateQuery'> & { selectSignal: (signal: ExploreSignal) => void }) {
+  return (
     <div className={styles.navigationRow}>
       <nav className={styles.signalNavigation} aria-label={t('explore.signalsNavigation')}>
-        {signalKeys.map(signal => <button
-          key={signal}
-          type="button"
-          role="tab"
-          aria-selected={query.signal === signal}
-          className={(query.signal === signal ? styles.activeSignal : styles.signal) ?? ''}
-          onClick={() => selectSignal(signal)}
-        >{t(`explore.signals.${signal}`)}</button>)}
+        {signalKeys.map(signal => (
+          <button
+            key={signal}
+            type="button"
+            role="tab"
+            aria-selected={query.signal === signal}
+            className={(query.signal === signal ? styles.activeSignal : styles.signal) ?? ''}
+            onClick={() => selectSignal(signal)}
+          >
+            {t(`explore.signals.${signal}`)}
+          </button>
+        ))}
       </nav>
-      {query.signal === 'logs' && <div className={styles.logMode} aria-label={t('exploreLog.mode')}>
-        <Button type={query.live ? 'text' : 'primary'} onClick={() => updateQuery({ live: undefined })}>{t('exploreLog.query')}</Button>
-        <Button type={query.live ? 'primary' : 'text'} onClick={() => updateQuery({ live: true })}>{t('exploreLog.live')}</Button>
-      </div>}
+      {query.signal === 'logs' && (
+        <div className={styles.logMode} aria-label={t('exploreLog.mode')}>
+          <Button type={query.live ? 'text' : 'primary'} onClick={() => updateQuery({ live: undefined })}>
+            {t('exploreLog.query')}
+          </Button>
+          <Button type={query.live ? 'primary' : 'text'} onClick={() => updateQuery({ live: true })}>
+            {t('exploreLog.live')}
+          </Button>
+        </div>
+      )}
     </div>
-  </>;
+  );
 }
