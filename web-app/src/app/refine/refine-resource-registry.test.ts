@@ -38,7 +38,7 @@ describe('Refine shell resource registry', () => {
   it('assigns global time only to routes whose active queries consume the shared window and revision', () => {
     expect(shellMeta('dashboard')).toMatchObject({ timePolicy: 'none' });
     expect(shellMeta('explore')).toMatchObject({ timePolicy: 'route_owned' });
-    expect(shellMeta('instrumentation')).toMatchObject({ timePolicy: 'route_owned' });
+    expect(shellMeta('instrumentation')).toMatchObject({ timePolicy: 'none' });
     expect(shellMeta('alerts')).toMatchObject({ timePolicy: 'none' });
     expect(shellMeta('bulletin')).toMatchObject({ timePolicy: 'none' });
     expect(shellMeta('monitors')).toMatchObject({

@@ -67,6 +67,20 @@ describe('BasicLayout shell', () => {
     expect(screen.getByRole('button', { name: 'Refresh active data' })).toBeEnabled();
   });
 
+  it('refreshes Instrumentation queries without claiming its onboarding timestamps are shell time', async () => {
+    const fetchActiveData = vi.fn().mockResolvedValue('ready');
+    renderLayout(
+      '/observability/integration?instrumentationStage=5',
+      <ActiveQueryProbe fetchActiveData={fetchActiveData} />
+    );
+
+    await waitFor(() => expect(fetchActiveData).toHaveBeenCalledTimes(1));
+    expect(screen.queryByTestId('shell-time-policy')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh active data' }));
+
+    await waitFor(() => expect(fetchActiveData).toHaveBeenCalledTimes(2));
+  });
+
   it.each(['/dashboard', '/monitors'])(
     'invalidates the active %s query from the header without fake time controls',
     async path => {
@@ -178,6 +192,7 @@ function renderLayout(path = '/alerts', routeElement: React.ReactNode = <div>Rou
                   <Route path="/monitors/:monitorId" element={routeElement} />
                   <Route path="/monitors/:monitorId/edit" element={routeElement} />
                   <Route path="/alerts" element={routeElement} />
+                  <Route path="/observability/integration" element={routeElement} />
                   <Route path="/settings/notifications/templates" element={routeElement} />
                 </Route>
               </Routes>

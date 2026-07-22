@@ -96,7 +96,7 @@ export const refineResources: ResourceProps[] = [
     parent: 'shell-workspace',
     icon: <ApiOutlined />,
     order: 40,
-    timePolicy: 'route_owned'
+    timePolicy: 'none'
   }),
   routedNavigationResource('alerts', {
     parent: 'shell-operations',
