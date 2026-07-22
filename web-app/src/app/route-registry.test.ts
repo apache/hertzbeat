@@ -135,6 +135,13 @@ describe('route registry', () => {
       kind: 'page',
       resource: { labelKey: 'settingsNavigation.collectors' }
     });
+    expect(legacyRouteCatalog).toContainEqual(
+      expect.objectContaining({
+        id: 'legacy-collectors',
+        path: '/setting/collector',
+        targetRouteId: 'collectors'
+      })
+    );
   });
 
   it('registers versioned Monitor Definitions management and its legacy redirect', () => {

@@ -28,7 +28,11 @@ describe('LegacyRouteRedirect', () => {
     ['/log/manage?service=checkout', '/explore?signal=logs&service=checkout'],
     ['/ingestion/otlp?tab=java', '/observability/integration?tab=java'],
     ['/ingestion/otlp/grpc/java?tab=setup#sdk', '/observability/integration?tab=setup#sdk'],
-    ['/alerts/notifications/receivers?pageIndex=2#receiver', '/settings/notifications/receivers?pageIndex=2#receiver']
+    ['/alerts/notifications/receivers?pageIndex=2#receiver', '/settings/notifications/receivers?pageIndex=2#receiver'],
+    [
+      '/setting/collector?pageIndex=2&status=online#collector-7',
+      '/settings/collectors?pageIndex=2&status=online#collector-7'
+    ]
   ])('redirects %s to %s', async (source, expected) => {
     renderLegacyRoutes(source);
 

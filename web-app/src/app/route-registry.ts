@@ -155,6 +155,7 @@ export const legacyRouteCatalog = [
   legacyRoute('legacy-labels', '/setting/labels', 'labels'),
   legacyRoute('legacy-object-store', '/setting/settings/object-store', 'object-store'),
   legacyRoute('legacy-plugins', '/setting/plugin', 'plugins'),
+  legacyRoute('legacy-collectors', '/setting/collector', 'collectors'),
   legacyRoute('legacy-monitor-definitions', '/setting/define', 'monitor-definitions'),
   legacyRoute('legacy-status-management', '/setting/status', 'status-management')
 ] as const satisfies readonly LegacyRouteDefinition[];
