@@ -17,14 +17,6 @@
 
 import type { Monitor, MonitorQuery } from '../model/monitor-contract';
 
-type MonitorSharedTime =
-  | {
-      window: { from: number; to: number } | undefined;
-      refreshRevision: number;
-    }
-  | null
-  | undefined;
-
 type MonitorHistorySource = Pick<Monitor, 'id' | 'instance' | 'name' | 'app' | 'scrape'> | undefined;
 
 const rootKey = ['monitor'] as const;
@@ -42,9 +34,9 @@ export const monitorQueryKeys = {
   metricCatalog: (id: number | undefined, app: string | undefined, scrape: string | null | undefined) =>
     [...rootKey, 'metrics', 'catalog', id, app, scrape] as const,
   favorites: (id: number | undefined) => [...rootKey, 'metrics', 'favorites', id] as const,
-  realtime: (id: number | undefined, group: string | undefined, field: string | undefined, time: MonitorSharedTime) =>
-    [...rootKey, 'metrics', 'realtime', id, group, field, ...sharedTimeKey(time)] as const,
-  history: (source: MonitorHistorySource, metricKey: string, history: string, time: MonitorSharedTime) =>
+  realtime: (id: number | undefined, group: string | undefined, field: string | undefined) =>
+    [...rootKey, 'metrics', 'realtime', id, group, field] as const,
+  history: (source: MonitorHistorySource, metricKey: string, history: string) =>
     [
       ...rootKey,
       'metrics',
@@ -55,11 +47,6 @@ export const monitorQueryKeys = {
       source?.app,
       source?.scrape,
       metricKey,
-      history,
-      ...sharedTimeKey(time)
+      history
     ] as const
 };
-
-function sharedTimeKey(time: MonitorSharedTime) {
-  return [time?.window?.from, time?.window?.to, time?.refreshRevision ?? 0] as const;
-}

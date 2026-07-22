@@ -50,13 +50,13 @@ describe('BasicLayout shell', () => {
     expect(screen.getByText('HertzBeat')).toHaveAttribute('aria-hidden', 'true');
   });
 
-  it('renders an honest status and global time spine on monitor detail without fake health', () => {
+  it('renders monitor detail without a global time claim the API cannot honor', () => {
     renderLayout('/monitors/7');
 
     expect(screen.getByTestId('shell-status-server')).toHaveTextContent('Unknown');
     expect(screen.getByTestId('shell-status-greptime')).toHaveTextContent('Unknown');
     expect(screen.getByTestId('shell-status-collector')).toHaveTextContent('Unknown');
-    expect(screen.getByTestId('shell-time-policy')).toHaveTextContent('30m');
+    expect(screen.queryByTestId('shell-time-policy')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Refresh active data' })).toBeEnabled();
   });
 
@@ -81,12 +81,12 @@ describe('BasicLayout shell', () => {
     }
   );
 
-  it('keeps monitor detail refresh owned by the global time revision without duplicate invalidation', async () => {
+  it('refreshes monitor detail active queries without publishing a meaningless global revision', async () => {
     const fetchActiveData = vi.fn().mockResolvedValue('ready');
-    renderLayout('/monitors/7', <TimeOwnedQueryProbe fetchActiveData={fetchActiveData} />);
+    renderLayout('/monitors/7', <MonitorQueryProbe fetchActiveData={fetchActiveData} />);
 
     await waitFor(() => expect(fetchActiveData).toHaveBeenCalledTimes(1));
-    expect(screen.getByTestId('shell-time-policy')).toHaveTextContent('30m');
+    expect(screen.queryByTestId('shell-time-policy')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Refresh active data' }));
 
     await waitFor(() => expect(fetchActiveData).toHaveBeenCalledTimes(2));
@@ -194,7 +194,7 @@ function ActiveQueryProbe({ fetchActiveData }: { fetchActiveData: () => Promise<
   return null;
 }
 
-function TimeOwnedQueryProbe({ fetchActiveData }: { fetchActiveData: () => Promise<string> }) {
+function MonitorQueryProbe({ fetchActiveData }: { fetchActiveData: () => Promise<string> }) {
   const time = useSharedTime();
   useQuery({
     queryKey: ['shell-time-query-proof', time.window?.from, time.window?.to, time.refreshRevision],

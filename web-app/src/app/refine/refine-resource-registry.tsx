@@ -84,8 +84,7 @@ export const refineResources: ResourceProps[] = [
     create: getAppRoute('monitor-new').path,
     edit: getAppRoute('monitor-edit').path,
     show: getAppRoute('monitor-detail').path,
-    timePolicy: 'none',
-    actionTimePolicies: { show: 'global' }
+    timePolicy: 'none'
   }),
   routedNavigationResource('explore', {
     parent: 'shell-workspace',

@@ -34,7 +34,6 @@ const listQuery = {
   pageIndex: 2,
   pageSize: 20
 };
-const time = { window: { from: 1_000, to: 2_000 }, refreshRevision: 3 };
 const historySource = {
   id: 7,
   instance: '127.0.0.1:8080',
@@ -55,14 +54,11 @@ describe('Monitor Query Key factory', () => {
       monitorQueryKeys.metricCatalog(7, 'website', 'http')
     );
     expect(monitorQueryKeys.favorites(7)).toEqual(monitorQueryKeys.favorites(7));
-    expect(monitorQueryKeys.realtime(7, 'summary', 'responseTime', time)).toEqual(
-      monitorQueryKeys.realtime(7, 'summary', 'responseTime', { ...time, window: { ...time.window } })
+    expect(monitorQueryKeys.realtime(7, 'summary', 'responseTime')).toEqual(
+      monitorQueryKeys.realtime(7, 'summary', 'responseTime')
     );
-    expect(monitorQueryKeys.history(historySource, 'summary.responseTime', '30m', time)).toEqual(
-      monitorQueryKeys.history({ ...historySource }, 'summary.responseTime', '30m', {
-        ...time,
-        window: { ...time.window }
-      })
+    expect(monitorQueryKeys.history(historySource, 'summary.responseTime', '30m')).toEqual(
+      monitorQueryKeys.history({ ...historySource }, 'summary.responseTime', '30m')
     );
   });
 
@@ -91,32 +87,24 @@ describe('Monitor Query Key factory', () => {
     expect(monitorQueryKeys.favorites(8)).not.toEqual(monitorQueryKeys.favorites(7));
   });
 
-  it('includes metric identity and the shared time window revision', () => {
-    const realtime = monitorQueryKeys.realtime(7, 'summary', 'responseTime', time);
+  it('includes only metric inputs that the backend request actually consumes', () => {
+    const realtime = monitorQueryKeys.realtime(7, 'summary', 'responseTime');
     for (const candidate of [
-      monitorQueryKeys.realtime(8, 'summary', 'responseTime', time),
-      monitorQueryKeys.realtime(7, 'cpu', 'responseTime', time),
-      monitorQueryKeys.realtime(7, 'summary', 'max', time),
-      monitorQueryKeys.realtime(7, 'summary', 'responseTime', { ...time, window: { from: 999, to: 2_000 } }),
-      monitorQueryKeys.realtime(7, 'summary', 'responseTime', { ...time, window: { from: 1_000, to: 2_001 } }),
-      monitorQueryKeys.realtime(7, 'summary', 'responseTime', { ...time, refreshRevision: 4 })
+      monitorQueryKeys.realtime(8, 'summary', 'responseTime'),
+      monitorQueryKeys.realtime(7, 'cpu', 'responseTime'),
+      monitorQueryKeys.realtime(7, 'summary', 'max')
     ])
       expect(candidate).not.toEqual(realtime);
 
-    const history = monitorQueryKeys.history(historySource, 'summary.responseTime', '30m', time);
+    const history = monitorQueryKeys.history(historySource, 'summary.responseTime', '30m');
     for (const candidate of [
-      monitorQueryKeys.history({ ...historySource, id: 8 }, 'summary.responseTime', '30m', time),
-      monitorQueryKeys.history({ ...historySource, instance: '127.0.0.1:9090' }, 'summary.responseTime', '30m', time),
-      monitorQueryKeys.history({ ...historySource, name: 'orders' }, 'summary.responseTime', '30m', time),
-      monitorQueryKeys.history({ ...historySource, app: 'prometheus' }, 'summary.responseTime', '30m', time),
-      monitorQueryKeys.history({ ...historySource, scrape: 'http_sd' }, 'summary.responseTime', '30m', time),
-      monitorQueryKeys.history(historySource, 'summary.max', '30m', time),
-      monitorQueryKeys.history(historySource, 'summary.responseTime', '1h', time),
-      monitorQueryKeys.history(historySource, 'summary.responseTime', '30m', {
-        ...time,
-        window: { from: 999, to: 2_000 }
-      }),
-      monitorQueryKeys.history(historySource, 'summary.responseTime', '30m', { ...time, refreshRevision: 4 })
+      monitorQueryKeys.history({ ...historySource, id: 8 }, 'summary.responseTime', '30m'),
+      monitorQueryKeys.history({ ...historySource, instance: '127.0.0.1:9090' }, 'summary.responseTime', '30m'),
+      monitorQueryKeys.history({ ...historySource, name: 'orders' }, 'summary.responseTime', '30m'),
+      monitorQueryKeys.history({ ...historySource, app: 'prometheus' }, 'summary.responseTime', '30m'),
+      monitorQueryKeys.history({ ...historySource, scrape: 'http_sd' }, 'summary.responseTime', '30m'),
+      monitorQueryKeys.history(historySource, 'summary.max', '30m'),
+      monitorQueryKeys.history(historySource, 'summary.responseTime', '1h')
     ])
       expect(candidate).not.toEqual(history);
   });

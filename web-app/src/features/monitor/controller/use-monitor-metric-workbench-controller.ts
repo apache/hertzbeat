@@ -11,8 +11,6 @@ import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
-import { useSharedTimeOptional } from '@/shared/time';
-
 import { loadMonitorMetricCatalog } from '../api/monitor-api';
 import type { Monitor, MonitorDetailMetric } from '../model/monitor-contract';
 import {
@@ -42,7 +40,6 @@ export function useMonitorMetricWorkbenchController(
   const message = notificationOverride ?? appMessage;
   const queryClient = useQueryClient();
   const [params, setParams] = useSearchParams();
-  const sharedTime = useSharedTimeOptional();
   const source = monitorSource(monitor);
   const catalog = useMonitorMetricCatalog(monitor, embedded, source);
   const requestedMetric = params.get('metric') ?? '';
@@ -62,7 +59,7 @@ export function useMonitorMetricWorkbenchController(
     setParams
   });
 
-  const queries = useMonitorMetricData({ monitor, metric, metricKey, history, sharedTime });
+  const queries = useMonitorMetricData({ monitor, metric, metricKey, history });
   const favoritesQuery = queries.favorites;
   const favorite = favoriteEvidence(favoritesQuery, metricKey);
   const realtimeQuery = queries.realtime;

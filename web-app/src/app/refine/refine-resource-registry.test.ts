@@ -42,9 +42,9 @@ describe('Refine shell resource registry', () => {
     expect(shellMeta('alerts')).toMatchObject({ timePolicy: 'none' });
     expect(shellMeta('bulletin')).toMatchObject({ timePolicy: 'none' });
     expect(shellMeta('monitors')).toMatchObject({
-      timePolicy: 'none',
-      actionTimePolicies: { show: 'global' }
+      timePolicy: 'none'
     });
+    expect(shellMeta('monitors')?.actionTimePolicies).toBeUndefined();
     expect(refineResources.find(resource => resource.name === 'monitors')).toMatchObject({
       create: '/monitors/new',
       edit: '/monitors/:monitorId/edit',
