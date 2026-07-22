@@ -21,6 +21,8 @@
 # eg: /api/v1/source2===get===[] means /api/v1/source2===get can not access by any role.
 resourceRole:
   - /api/account/auth/refresh===post===[admin,user,guest]
+  - /api/monitor-definitions/v1/validate===post===[admin]
+  - /api/monitor-definitions/v1/**===get===[admin,user,guest]
   - /api/apps/**===get===[admin,user,guest]
   - /api/monitor===get===[admin,user,guest]
   - /api/monitor/**===get===[admin,user,guest]

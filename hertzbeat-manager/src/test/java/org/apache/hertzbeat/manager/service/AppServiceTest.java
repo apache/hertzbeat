@@ -27,6 +27,7 @@ import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
 import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
+import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionSource;
 import org.apache.hertzbeat.manager.service.impl.AppServiceImpl;
 import org.apache.hertzbeat.manager.service.impl.ObjectStoreConfigServiceImpl;
 import org.apache.hertzbeat.warehouse.service.WarehouseService;
@@ -43,13 +44,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -188,5 +195,108 @@ class AppServiceTest {
         List<ParamDefineInfo> appParamDefines = appService.getAppParamDefines(define.getApp());
         assertNotNull(appParamDefines);
         assertTrue(appParamDefines.stream().anyMatch(t -> t.getField().equals("host_test")));
+    }
+
+    @Test
+    void monitorDefinitionSourceReportsActualBuiltinCustomIntersection() {
+        Define custom = Define.builder()
+                .app("custom_app")
+                .content("app: custom_app\nname:\n  en-US: Custom")
+                .build();
+        Define override = Define.builder()
+                .app("jvm")
+                .content("app: jvm\nname:\n  en-US: JVM override")
+                .build();
+        when(defineDao.findAll()).thenReturn(List.of(custom, override));
+        ObjectStoreDTO<Object> config = new ObjectStoreDTO<>();
+        config.setType(ObjectStoreDTO.Type.DATABASE);
+
+        appService.onObjectStoreConfigChange(new ObjectStoreConfigChangeEvent(config));
+        clearInvocations(defineDao);
+
+        Map<String, MonitorDefinitionSource> sources = appService.readAll().stream()
+                .collect(java.util.stream.Collectors.toMap(source -> source.job().getApp(), source -> source));
+        assertFalse(sources.get("custom_app").builtin());
+        assertTrue(sources.get("custom_app").custom());
+        assertTrue(sources.get("jvm").builtin());
+        assertTrue(sources.get("jvm").custom());
+        assertEquals(override.getContent(), sources.get("jvm").definition());
+        verifyNoInteractions(defineDao);
+    }
+
+    @Test
+    void monitorDefinitionSourceRefreshReplacesPriorActiveInventory() {
+        Define previous = Define.builder().app("previous").content("app: previous").build();
+        Define current = Define.builder().app("current").content("app: current").build();
+        ObjectStoreDTO<Object> config = new ObjectStoreDTO<>();
+        config.setType(ObjectStoreDTO.Type.DATABASE);
+        when(defineDao.findAll()).thenReturn(List.of(previous));
+        appService.onObjectStoreConfigChange(new ObjectStoreConfigChangeEvent(config));
+        assertTrue(appService.readAll().stream().anyMatch(source -> source.job().getApp().equals("previous")));
+
+        when(defineDao.findAll()).thenReturn(List.of(current));
+        appService.onObjectStoreConfigChange(new ObjectStoreConfigChangeEvent(config));
+
+        assertFalse(appService.readAll().stream().anyMatch(source -> source.job().getApp().equals("previous")));
+        assertTrue(appService.readAll().stream().anyMatch(source -> source.job().getApp().equals("current")));
+    }
+
+    @Test
+    void monitorDefinitionSourcePublishesRefreshAtomically() throws InterruptedException {
+        Define previous = Define.builder().app("previous").content("app: previous").build();
+        Define current = Define.builder().app("current").content("app: current").build();
+        ObjectStoreDTO<Object> config = new ObjectStoreDTO<>();
+        config.setType(ObjectStoreDTO.Type.DATABASE);
+        when(defineDao.findAll()).thenReturn(List.of(previous));
+        appService.onObjectStoreConfigChange(new ObjectStoreConfigChangeEvent(config));
+        CountDownLatch reloadEntered = new CountDownLatch(1);
+        CountDownLatch allowReload = new CountDownLatch(1);
+        when(defineDao.findAll()).thenAnswer(invocation -> {
+            reloadEntered.countDown();
+            assertTrue(allowReload.await(10, TimeUnit.SECONDS));
+            return List.of(current);
+        });
+
+        Thread refresh = Thread.startVirtualThread(
+                () -> appService.onObjectStoreConfigChange(new ObjectStoreConfigChangeEvent(config)));
+        assertTrue(reloadEntered.await(10, TimeUnit.SECONDS));
+        try {
+            List<String> duringRefresh = appService.readAll().stream()
+                    .map(source -> source.job().getApp())
+                    .toList();
+            assertTrue(duringRefresh.contains("previous"));
+            assertFalse(duringRefresh.contains("current"));
+        } finally {
+            allowReload.countDown();
+        }
+        refresh.join(TimeUnit.SECONDS.toMillis(10));
+
+        assertFalse(refresh.isAlive());
+        assertFalse(appService.readAll().stream().anyMatch(source -> source.job().getApp().equals("previous")));
+        assertTrue(appService.readAll().stream().anyMatch(source -> source.job().getApp().equals("current")));
+    }
+
+    @Test
+    void monitorDefinitionValidationHasNoStoreOrMonitorSideEffects() {
+        String definition = appService.getMonitorDefineFileContent("jvm");
+        clearInvocations(defineDao, monitorDao);
+
+        Job validated = appService.validate(definition);
+
+        assertEquals("jvm", validated.getApp());
+        verifyNoInteractions(defineDao, monitorDao);
+    }
+
+    @Test
+    void monitorDefinitionValidationAndLegacyMutationShareRiskyTokenGuard() {
+        clearInvocations(defineDao, monitorDao);
+
+        IllegalArgumentException validationError = assertThrows(
+                IllegalArgumentException.class, () -> appService.validate("!!unsafe"));
+        IllegalArgumentException mutationError = assertThrows(
+                IllegalArgumentException.class, () -> appService.applyMonitorDefineYml("!!unsafe", false));
+
+        assertEquals(validationError.getMessage(), mutationError.getMessage());
+        verifyNoInteractions(defineDao, monitorDao);
     }
 }
