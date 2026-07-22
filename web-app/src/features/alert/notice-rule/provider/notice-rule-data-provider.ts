@@ -16,30 +16,30 @@ import type {
   UpdateResponse
 } from '@refinedev/core';
 
-import { loadNoticeRule, loadNoticeRules } from '@/features/alert/notice-rule/api/notice-rule-api';
-import { parseNoticeRuleMutationVariables } from '@/features/alert/notice-rule/api/notice-rule-schema';
+import { noticeApiEndpoint } from '@/features/alert/notice-api-endpoints';
+import { adaptRefineRecord, adaptRefineRecords } from '@/shared/refine/refine-provider-data';
+
+import { loadNoticeRule, loadNoticeRules } from '../api/notice-rule-api';
+import { parseNoticeRuleMutationVariables } from '../api/notice-rule-schema';
 import {
   NoticeRuleContractError,
   noticeRuleFailureKind,
   noticeRuleProviderMissingFailure,
   preserveNoticeRuleFailure
-} from '@/features/alert/notice-rule/model/notice-rule-failure';
+} from '../model/notice-rule-failure';
 import {
   noticeRulePageSizes,
   validateNoticeRuleDependencies,
   validateNoticeRuleDraft,
   type NoticeRuleMutationVariables,
   type NoticeRuleQuery
-} from '@/features/alert/notice-rule/model/notice-rule-model';
-import { noticeApiEndpoint } from '@/features/alert/notice-api-endpoints';
-import { adaptRefineRecord, adaptRefineRecords } from '@/shared/refine/refine-provider-data';
+} from '../model/notice-rule-model';
+import { noticeRuleResourceName } from '../notice-rule-resource';
 import {
   createNoticeRuleRecord,
   deleteNoticeRuleRecord,
   updateNoticeRuleRecord
 } from './notice-rule-provider-operations';
-
-export const noticeRuleResourceName = 'notice-rules';
 
 export const noticeRuleDataProvider: DataProvider = {
   getList<TData extends BaseRecord = BaseRecord>(params: GetListParams): Promise<GetListResponse<TData>> {

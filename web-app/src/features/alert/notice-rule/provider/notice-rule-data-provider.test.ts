@@ -18,16 +18,13 @@ vi.mock('@/features/alert/notice-rule/api/notice-rule-api', () => ({
   saveNoticeRule: api.save
 }));
 
+import { noticeRuleDataProvider } from './notice-rule-data-provider';
+import { createNoticeRuleDraft, type NoticeRuleMutationVariables } from '../model/notice-rule-model';
 import {
   NoticeRuleContractError,
   NoticeRuleRequestFailure,
   noticeRuleWriteOutcome
-} from '@/features/alert/notice-rule/model/notice-rule-failure';
-import { noticeRuleDataProvider } from './notice-rule-data-provider';
-import {
-  createNoticeRuleDraft,
-  type NoticeRuleMutationVariables
-} from '@/features/alert/notice-rule/model/notice-rule-model';
+} from '../model/notice-rule-failure';
 
 const receiver = { id: 11, name: 'Email', type: 1 as const };
 const template = { id: 21, name: 'Mail', type: 1 as const, preset: false, content: '${content}' };

@@ -2,12 +2,7 @@
 
 import type { BaseRecord, CreateResponse, DeleteOneResponse, UpdateResponse } from '@refinedev/core';
 
-import {
-  deleteNoticeRule,
-  loadAllNoticeRulesByName,
-  loadNoticeRule,
-  saveNoticeRule
-} from '@/features/alert/notice-rule/api/notice-rule-api';
+import { deleteNoticeRule, loadAllNoticeRulesByName, loadNoticeRule, saveNoticeRule } from '../api/notice-rule-api';
 import {
   NoticeRuleCommitUncertainFailure,
   NoticeRuleContractError,
@@ -15,11 +10,8 @@ import {
   noticeRuleFailureKind,
   noticeRuleProofFailure,
   preserveNoticeRuleFailure
-} from '@/features/alert/notice-rule/model/notice-rule-failure';
-import {
-  noticeRuleMatchesDraft,
-  type NoticeRuleMutationVariables
-} from '@/features/alert/notice-rule/model/notice-rule-model';
+} from '../model/notice-rule-failure';
+import { noticeRuleMatchesDraft, type NoticeRuleMutationVariables } from '../model/notice-rule-model';
 import { adaptRefineRecord } from '@/shared/refine/refine-provider-data';
 
 type MutationPhase = 'preflight' | 'write' | 'proof';

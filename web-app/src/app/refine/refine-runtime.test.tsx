@@ -34,6 +34,7 @@ import { useSession } from '@/core/auth/session-context';
 import { sessionQueryKey } from '@/core/auth/session-api';
 import { initializeI18n } from '@/core/i18n/i18n';
 import { noticeReceiverDataProvider, noticeReceiverResourceName } from '@/features/alert/notice-receiver';
+import { noticeRuleDataProvider, noticeRuleResourceName } from '@/features/alert/notice-rule';
 import { objectStoreDataProvider } from '@/features/settings/object-store';
 import { labelDataProvider, labelResourceName } from '@/features/settings/label';
 import { systemConfigDataProvider } from '@/features/settings/system-config';
@@ -104,6 +105,10 @@ describe('production Refine runtime', () => {
       `${noticeReceiverResourceName}|/settings/notifications/receivers|${noticeReceiverResourceName}`
     );
     expect(screen.getByTestId('notice-receiver-provider')).toHaveTextContent('shared');
+    expect(screen.getByTestId('notice-rule-resource')).toHaveTextContent(
+      `${noticeRuleResourceName}|/settings/notifications/rules|${noticeRuleResourceName}`
+    );
+    expect(screen.getByTestId('notice-rule-provider')).toHaveTextContent('shared');
     fireEvent.click(screen.getByRole('button', { name: 'Open runtime notification' }));
     expect(await screen.findByText('Runtime notification ready')).toBeInTheDocument();
     const mountedClients = mountSpy.mock.instances;
@@ -134,6 +139,7 @@ function RuntimeProbe({ onClient }: { onClient: (client: QueryClient) => void })
   const noticeTemplateResource = resources.find(resource => resource.name === 'notice-templates');
   const alertSilenceResource = resources.find(resource => resource.name === 'alert-silences');
   const noticeReceiverResource = resources.find(resource => resource.name === noticeReceiverResourceName);
+  const noticeRuleResource = resources.find(resource => resource.name === noticeRuleResourceName);
   const labelProvider = resolveProviderState(dataProvider, labelResourceName, labelDataProvider, true);
   const objectStoreProvider = resolveProviderState(dataProvider, 'object-store', objectStoreDataProvider, false);
   const labelResourceText = formatResource(labelResource);
@@ -158,6 +164,8 @@ function RuntimeProbe({ onClient }: { onClient: (client: QueryClient) => void })
     false
   );
   const noticeReceiverResourceText = formatResource(noticeReceiverResource);
+  const noticeRuleProvider = resolveProviderState(dataProvider, noticeRuleResourceName, noticeRuleDataProvider, false);
+  const noticeRuleResourceText = formatResource(noticeRuleResource);
 
   return (
     <>
@@ -180,6 +188,8 @@ function RuntimeProbe({ onClient }: { onClient: (client: QueryClient) => void })
       <output data-testid="alert-silence-provider">{alertSilenceProvider}</output>
       <output data-testid="notice-receiver-resource">{noticeReceiverResourceText}</output>
       <output data-testid="notice-receiver-provider">{noticeReceiverProvider}</output>
+      <output data-testid="notice-rule-resource">{noticeRuleResourceText}</output>
+      <output data-testid="notice-rule-provider">{noticeRuleProvider}</output>
       <button
         type="button"
         onClick={() => notification.open?.({ message: 'Runtime notification ready', type: 'success' })}

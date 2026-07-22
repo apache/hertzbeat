@@ -23,13 +23,13 @@ import { Outlet } from 'react-router-dom';
 
 import { SessionProvider } from '@/core/auth/session-provider';
 import { noticeReceiverDataProvider, noticeReceiverResourceName } from '@/features/alert/notice-receiver';
+import { noticeRuleDataProvider, noticeRuleResourceName } from '@/features/alert/notice-rule';
 import { labelDataProvider, labelResourceName } from '@/features/settings/label';
 import { objectStoreDataProvider } from '@/features/settings/object-store';
 import { systemConfigDataProvider, systemConfigResourceName } from '@/features/settings/system-config';
 import { tokenDataProvider } from '@/features/settings/token';
 
 import { alertSilenceDataProvider } from './resources/alert-silence-data-provider';
-import { noticeRuleDataProvider } from './resources/notice-rule-data-provider';
 import { noticeTemplateDataProvider } from './resources/notice-template-data-provider';
 import { refineResources, shellAccessControlProvider } from './refine-resource-registry';
 import { SessionQueryRuntime } from './session-query-runtime';
@@ -54,7 +54,7 @@ const dataProviders = {
   [labelResourceName]: labelDataProvider,
   'alert-silences': alertSilenceDataProvider,
   [noticeReceiverResourceName]: noticeReceiverDataProvider,
-  'notice-rules': noticeRuleDataProvider,
+  [noticeRuleResourceName]: noticeRuleDataProvider,
   'notice-templates': noticeTemplateDataProvider,
   'object-store': objectStoreDataProvider,
   [systemConfigResourceName]: systemConfigDataProvider,

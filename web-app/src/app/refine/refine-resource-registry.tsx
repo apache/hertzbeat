@@ -25,6 +25,7 @@ import type { ReactNode } from 'react';
 
 import { getAppRoute, type AppResourceRouteId } from '@/app/route-registry';
 import { noticeReceiverResourceName } from '@/features/alert/notice-receiver';
+import { noticeRuleResourceName } from '@/features/alert/notice-rule';
 import { labelResourceName } from '@/features/settings/label';
 import { systemConfigResourceName } from '@/features/settings/system-config';
 
@@ -150,11 +151,11 @@ export const refineResources: ResourceProps[] = [
     order: 10,
     dataProviderName: noticeReceiverResourceName
   }),
-  routedNavigationResource('notice-rules', {
+  routedNavigationResource(noticeRuleResourceName, {
     parent: 'settings',
     icon: <ToolOutlined />,
     order: 20,
-    dataProviderName: 'notice-rules'
+    dataProviderName: noticeRuleResourceName
   }),
   routedNavigationResource('notice-templates', {
     parent: 'settings',
