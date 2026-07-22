@@ -26,6 +26,12 @@ export const monitorScrapeValues = [
 ] as const;
 export const monitorScheduleTypes = ['interval', 'cron'] as const;
 export const monitorStatusCodes = { paused: 0, available: 1, unavailable: 2 } as const;
+export const monitorStatusFilters = {
+  all: '9',
+  paused: String(monitorStatusCodes.paused),
+  available: String(monitorStatusCodes.available),
+  unavailable: String(monitorStatusCodes.unavailable)
+} as const;
 export type MonitorScrape = (typeof monitorScrapeValues)[number];
 export type MonitorScheduleType = (typeof monitorScheduleTypes)[number];
 export type MonitorEditorMode = 'new' | 'edit';

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { monitorPageSizes, type MonitorQuery } from './monitor-contract';
+import { monitorPageSizes, monitorStatusFilters, type MonitorQuery } from './monitor-contract';
 
 function validPageIndex(value: string | null) {
   if (!value || !/^(?:0|[1-9]\d*)$/.test(value)) return 0;
@@ -30,7 +30,7 @@ function validPageSize(value: string | null) {
 }
 
 function validStatus(value: string | null) {
-  return value !== null && ['0', '1', '2', '9'].includes(value) ? value : '9';
+  return value !== null && Object.values(monitorStatusFilters).includes(value) ? value : monitorStatusFilters.all;
 }
 
 /** Reads the route-owned list filters without introducing backend paths into the domain model. */
@@ -50,7 +50,7 @@ export function writeMonitorQuery(query: MonitorQuery) {
   const params = new URLSearchParams({ pageIndex: String(query.pageIndex), pageSize: String(query.pageSize) });
   if (query.search) params.set('search', query.search);
   if (query.app) params.set('app', query.app);
-  if (query.status && query.status !== '9') params.set('status', query.status);
+  if (query.status && query.status !== monitorStatusFilters.all) params.set('status', query.status);
   if (query.labels) params.set('labels', query.labels);
   return params;
 }

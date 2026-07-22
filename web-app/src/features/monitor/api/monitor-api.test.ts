@@ -137,10 +137,51 @@ describe('monitor list API contracts', () => {
       caseName: 'content on an out-of-range page',
       request: { ...query, pageIndex: 2 },
       value: { content: [row], totalElements: 10, totalPages: 1, number: 2, size: 10 }
+    },
+    {
+      caseName: 'short content on a non-last page',
+      request: query,
+      value: { content: [row], totalElements: 11, totalPages: 2, number: 0, size: 10 }
+    },
+    {
+      caseName: 'short content on the last page',
+      request: { ...query, pageIndex: 1 },
+      value: { content: [], totalElements: 11, totalPages: 2, number: 1, size: 10 }
+    },
+    {
+      caseName: 'monitor app outside the requested app filter',
+      request: { ...query, app: 'website' },
+      value: { ...page, content: [{ ...row, app: 'mysql' }] }
+    },
+    {
+      caseName: 'monitor status outside the requested status filter',
+      request: { ...query, status: '1' },
+      value: { ...page, content: [{ ...row, status: 2 }] }
     }
   ])('rejects $caseName', async ({ request, value }) => {
     http.apiMessageGet.mockResolvedValue(value);
     await expect(loadMonitors(request)).rejects.toBeInstanceOf(MonitorContractError);
+  });
+
+  it('accepts exact app/status evidence and an empty out-of-range page', async () => {
+    http.apiMessageGet.mockResolvedValueOnce(page).mockResolvedValueOnce({
+      content: [],
+      totalElements: 10,
+      totalPages: 1,
+      number: 2,
+      size: 10
+    });
+
+    await expect(loadMonitors({ ...query, app: 'website', status: '1' })).resolves.toMatchObject({
+      content: [{ app: 'website', status: 1 }]
+    });
+    await expect(loadMonitors({ ...query, pageIndex: 2 })).resolves.toEqual({
+      content: [],
+      totalElements: 10,
+      totalPages: 1,
+      number: 2,
+      size: 10
+    });
   });
 
   it('parses application evidence without turning malformed data into empty options', async () => {

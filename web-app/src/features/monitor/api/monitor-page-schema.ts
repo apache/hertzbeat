@@ -17,7 +17,13 @@
 
 import { z } from 'zod';
 
-import { MonitorContractError, type Monitor, type MonitorPage, type MonitorQuery } from '../model/monitor-contract';
+import {
+  MonitorContractError,
+  monitorStatusFilters,
+  type Monitor,
+  type MonitorPage,
+  type MonitorQuery
+} from '../model/monitor-contract';
 import {
   monitorStatusSchema,
   nonEmptyStringSchema,
@@ -53,16 +59,21 @@ export function parseMonitorPage(value: unknown, query: MonitorQuery): MonitorPa
   if (!result.success) throw new MonitorContractError();
 
   const page = result.data;
-  const remainingRows =
-    page.number >= page.totalPages ? 0 : Math.min(page.size, page.totalElements - page.number * page.size);
+  const remainingRows = Math.max(0, page.totalElements - page.number * page.size);
+  const expectedContentSize = Math.min(page.size, remainingRows);
   const monitorIds = new Set(page.content.map(item => item.id));
+  // App and active status are backend equality predicates; search and label expressions intentionally are not.
+  const crossesAppFilter = query.app.length > 0 && page.content.some(item => item.app !== query.app);
+  const crossesStatusFilter =
+    query.status !== monitorStatusFilters.all && page.content.some(item => String(item.status) !== query.status);
   if (
     page.number !== query.pageIndex ||
     page.size !== query.pageSize ||
-    page.content.length > page.size ||
     page.totalPages !== Math.ceil(page.totalElements / page.size) ||
-    page.content.length > remainingRows ||
-    monitorIds.size !== page.content.length
+    page.content.length !== expectedContentSize ||
+    monitorIds.size !== page.content.length ||
+    crossesAppFilter ||
+    crossesStatusFilter
   ) {
     throw new MonitorContractError('Monitor page evidence is inconsistent with the request');
   }

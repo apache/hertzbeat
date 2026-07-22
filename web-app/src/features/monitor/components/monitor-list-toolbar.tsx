@@ -18,8 +18,8 @@
 import { Alert, Button, Input, Select, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
 
+import { monitorStatusFilters, type MonitorQuery } from '../model/monitor-contract';
 import type { MonitorAppsEvidence } from '../model/monitor-list-model';
-import type { MonitorQuery } from '../model/monitor-model';
 
 import styles from './monitor-list.module.css';
 
@@ -72,10 +72,10 @@ function MonitorFilterFields({ query, draft, apps, disabled, actions }: Omit<Mon
         value={query.status}
         onChange={actions.changeStatus}
         options={[
-          { value: '9', label: t('monitor.status.all') },
-          { value: '1', label: t('monitor.status.available') },
-          { value: '2', label: t('monitor.status.unavailable') },
-          { value: '0', label: t('monitor.status.paused') }
+          { value: monitorStatusFilters.all, label: t('monitor.status.all') },
+          { value: monitorStatusFilters.available, label: t('monitor.status.available') },
+          { value: monitorStatusFilters.unavailable, label: t('monitor.status.unavailable') },
+          { value: monitorStatusFilters.paused, label: t('monitor.status.paused') }
         ]}
       />
       <Input

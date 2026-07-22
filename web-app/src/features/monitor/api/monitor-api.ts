@@ -18,6 +18,7 @@
 import { ApiMessageError, apiMessageDelete, apiMessageGet, apiMessagePost } from '@/core/http/api-message';
 import {
   MonitorContractError,
+  monitorStatusFilters,
   type Monitor,
   type MonitorAction,
   type MonitorApp,
@@ -120,7 +121,14 @@ export async function loadNewMonitorEvidence(name: string, app: string, signal?:
   const matches: Monitor[] = [];
   const seenIds = new Set<number>();
   const firstPage = await loadMonitors(
-    { search: normalizedName, app: normalizedApp, status: '9', labels: '', pageIndex: 0, pageSize: 50 },
+    {
+      search: normalizedName,
+      app: normalizedApp,
+      status: monitorStatusFilters.all,
+      labels: '',
+      pageIndex: 0,
+      pageSize: 50
+    },
     signal
   );
   if (firstPage.totalPages > 20) {
@@ -132,7 +140,14 @@ export async function loadNewMonitorEvidence(name: string, app: string, signal?:
 
   for (let pageIndex = 1; pageIndex < snapshot.totalPages; pageIndex += 1) {
     const page = await loadMonitors(
-      { search: normalizedName, app: normalizedApp, status: '9', labels: '', pageIndex, pageSize: 50 },
+      {
+        search: normalizedName,
+        app: normalizedApp,
+        status: monitorStatusFilters.all,
+        labels: '',
+        pageIndex,
+        pageSize: 50
+      },
       signal
     );
     collectNewMonitorEvidence(page, snapshot, seenIds, matches, normalizedName, normalizedApp);
