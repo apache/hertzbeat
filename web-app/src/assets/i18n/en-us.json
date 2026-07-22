@@ -529,6 +529,7 @@
     "creator": "Creator",
     "created": "Created",
     "paramCount": "Parameters",
+    "unknown": "Unknown",
     "jarFile": "Jar file",
     "chooseJar": "Choose an in-memory .jar file",
     "initialStatus": "Enable after upload",

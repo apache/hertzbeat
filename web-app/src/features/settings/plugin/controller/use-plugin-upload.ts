@@ -31,6 +31,7 @@ export function usePluginUpload(canWrite: boolean, onChanged: () => Promise<void
     if (active.current) return;
     setUpload(null);
     setInvalid({ name: false, jarFile: false });
+    setFailure(null);
   };
   const patch = (value: Partial<PluginUploadDraft>) => {
     if (!active.current) setUpload(current => (current ? { ...current, ...value } : current));

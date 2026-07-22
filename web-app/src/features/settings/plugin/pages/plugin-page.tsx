@@ -32,8 +32,8 @@ export function PluginPage() {
         </Button>
       </header>
       {!controller.canWrite && <Alert type="info" showIcon message={t('plugins.readOnly')} />}
-      {controller.failure && !controller.upload && (
-        <Alert type="error" showIcon message={t(`plugins.failure.${controller.failure}`)} />
+      {controller.mutationFailure && !controller.deleteTarget && (
+        <Alert type="error" showIcon message={t(`plugins.failure.${controller.mutationFailure}`)} />
       )}
       {controller.notice && <Alert type="success" showIcon message={t(`plugins.notice.${controller.notice}`)} />}
       <PluginToolbar controller={controller} />
@@ -41,7 +41,7 @@ export function PluginPage() {
       <PluginUploadDialog
         upload={controller.upload}
         invalid={controller.uploadInvalid}
-        failure={controller.upload ? controller.failure : null}
+        failure={controller.upload ? controller.uploadFailure : null}
         busy={controller.busy}
         onCancel={controller.actions.cancelUpload}
         onSave={() => void controller.actions.saveUpload()}
@@ -51,7 +51,7 @@ export function PluginPage() {
       />
       <PluginDeleteDialog
         target={controller.deleteTarget}
-        failure={controller.deleteTarget ? controller.failure : null}
+        failure={controller.deleteTarget ? controller.mutationFailure : null}
         busy={controller.busy}
         onCancel={controller.actions.cancelDelete}
         onConfirm={() => void controller.actions.confirmDelete()}

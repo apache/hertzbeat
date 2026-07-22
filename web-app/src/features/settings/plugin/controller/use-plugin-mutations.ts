@@ -28,6 +28,7 @@ export function usePluginMutations(options: {
 }) {
   const [deleteTarget, setDeleteTarget] = useState<PluginDeleteTarget | null>(null);
   const write = usePluginWriteState(options.canWrite);
+  const deleteRequests = createDeleteRequests(options, write, setDeleteTarget);
   const toggleStatus = async (plugin: PluginRecord) => {
     const changed = await write.run(() => updatePluginStatus(plugin.id, !plugin.enableStatus), 'updated');
     if (changed) await options.onChanged();
@@ -54,19 +55,37 @@ export function usePluginMutations(options: {
     notice: write.notice,
     busy: write.busy,
     actions: {
+      ...deleteRequests,
+      clearOutcome: write.reset,
       toggleStatus,
-      confirmDelete,
-      cancelDelete: () => {
-        if (!write.active.current) setDeleteTarget(null);
-      },
-      requestDeleteOne: (plugin: PluginRecord) => {
-        if (options.canWrite && !write.active.current)
-          setDeleteTarget({ ids: [plugin.id], label: plugin.name, mode: 'single' });
-      },
-      requestDeleteSelected: () => {
-        if (options.canWrite && options.selectedIds.length > 0 && !write.active.current) {
-          setDeleteTarget({ ids: [...options.selectedIds], label: String(options.selectedIds.length), mode: 'batch' });
-        }
+      confirmDelete
+    }
+  };
+}
+
+function createDeleteRequests(
+  options: { canWrite: boolean; selectedIds: number[] },
+  write: ReturnType<typeof usePluginWriteState>,
+  setTarget: (target: PluginDeleteTarget | null) => void
+) {
+  const ready = () => options.canWrite && !write.active.current;
+  return {
+    cancelDelete: () => {
+      if (!write.active.current) {
+        setTarget(null);
+        write.reset();
+      }
+    },
+    requestDeleteOne: (plugin: PluginRecord) => {
+      if (ready()) {
+        write.reset();
+        setTarget({ ids: [plugin.id], label: plugin.name, mode: 'single' });
+      }
+    },
+    requestDeleteSelected: () => {
+      if (ready() && options.selectedIds.length > 0) {
+        write.reset();
+        setTarget({ ids: [...options.selectedIds], label: String(options.selectedIds.length), mode: 'batch' });
       }
     }
   };
@@ -77,11 +96,15 @@ function usePluginWriteState(canWrite: boolean) {
   const [notice, setNotice] = useState<'updated' | 'deleted' | null>(null);
   const [busy, setBusy] = useState(false);
   const active = useRef(false);
+  const reset = () => {
+    setFailure(null);
+    setNotice(null);
+  };
   const run = async (operation: () => Promise<unknown>, success: 'updated' | 'deleted') => {
     if (!canWrite || active.current) return false;
     active.current = true;
     setBusy(true);
-    setFailure(null);
+    reset();
     try {
       await operation();
       setNotice(success);
@@ -94,5 +117,5 @@ function usePluginWriteState(canWrite: boolean) {
       setBusy(false);
     }
   };
-  return { active, busy, failure, notice, run };
+  return { active, busy, failure, notice, reset, run };
 }

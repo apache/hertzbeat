@@ -87,7 +87,7 @@ function columns(props: Parameters<typeof PluginList>[0], t: TFunction): Columns
       title: t('plugins.paramCount'),
       dataIndex: 'paramCount',
       key: 'paramCount',
-      render: (value: number | undefined) => value ?? 0
+      render: (value: number | undefined) => value ?? t('plugins.unknown')
     },
     {
       title: t('common.actions'),

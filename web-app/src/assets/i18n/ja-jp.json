@@ -525,6 +525,7 @@
     "creator": "作成者",
     "created": "作成日時",
     "paramCount": "パラメーター",
+    "unknown": "不明",
     "jarFile": "Jar ファイル",
     "chooseJar": "メモリ内の .jar ファイルを選択",
     "initialStatus": "アップロード後に有効化",

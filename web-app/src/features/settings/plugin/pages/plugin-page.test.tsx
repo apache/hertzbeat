@@ -43,6 +43,18 @@ describe('PluginPage', () => {
     expect(screen.getByRole('button', { name: 'plugins.upload' })).toBeDisabled();
     expect(screen.queryByText(/parameter/i)).not.toBeInTheDocument();
   });
+
+  it('does not leak an upload failure into a delete operation', () => {
+    controller.value = pluginController({
+      uploadFailure: 'operation-failed',
+      mutationFailure: null,
+      deleteTarget: { ids: [11], label: 'audit', mode: 'single' }
+    });
+    render(<PluginPage />);
+
+    expect(screen.queryByText('plugins.failure.operation-failed')).not.toBeInTheDocument();
+    expect(screen.getByText('plugins.deleteConfirm')).toBeInTheDocument();
+  });
 });
 
 function pluginController(overrides: Record<string, unknown> = {}) {
@@ -53,7 +65,8 @@ function pluginController(overrides: Record<string, unknown> = {}) {
     selectedIds: [],
     listState: { kind: 'empty' },
     busy: false,
-    failure: null,
+    uploadFailure: null,
+    mutationFailure: null,
     notice: null,
     upload: null,
     uploadInvalid: { name: false, jarFile: false },

@@ -33,6 +33,7 @@ export function usePluginController() {
     navigate: state.navigate,
     onChanged: changed
   });
+  const { clearOutcome, ...mutationActions } = mutations.actions;
   return {
     canWrite,
     query: state.query,
@@ -41,14 +42,19 @@ export function usePluginController() {
     listState: listState(state.result, state.query.search),
     pageSizes: state.pageSizes,
     busy: upload.busy || mutations.busy,
-    failure: upload.failure ?? mutations.failure,
+    uploadFailure: upload.failure,
+    mutationFailure: mutations.failure,
     notice: mutations.notice,
     upload: upload.upload,
     uploadInvalid: upload.uploadInvalid,
     deleteTarget: mutations.deleteTarget,
     actions: {
       ...upload.actions,
-      ...mutations.actions,
+      ...mutationActions,
+      openUpload: () => {
+        if (canWrite) clearOutcome();
+        upload.actions.openUpload();
+      },
       refresh: () => void state.result.refetch(),
       setPage: state.setPage,
       setSearchDraft: state.setSearchDraft,

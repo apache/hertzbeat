@@ -60,7 +60,10 @@ describe('usePluginController', () => {
     await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
     const jar = new File(['plugin'], 'audit.jar', { type: 'application/java-archive' });
 
+    await act(() => result.current.actions.toggleStatus(records[0]!));
+    expect(result.current.notice).toBe('updated');
     act(() => result.current.actions.openUpload());
+    expect(result.current.notice).toBeNull();
     act(() => result.current.actions.setUploadName('audit'));
     act(() => result.current.actions.setUploadFile(jar));
     await act(() => result.current.actions.saveUpload());
@@ -137,6 +140,38 @@ describe('usePluginController', () => {
     await act(() => deletion);
 
     expect(result.current.query.pageIndex).toBe(0);
+  });
+
+  it('clears a failed upload on cancel and keeps it out of a later delete', async () => {
+    api.upload.mockRejectedValueOnce(new Error('private upload detail'));
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
+    const jar = new File(['plugin'], 'audit.jar', { type: 'application/java-archive' });
+
+    act(() => result.current.actions.openUpload());
+    act(() => result.current.actions.setUploadName('audit'));
+    act(() => result.current.actions.setUploadFile(jar));
+    await act(() => result.current.actions.saveUpload());
+    expect(result.current.uploadFailure).toBe('error');
+
+    act(() => result.current.actions.cancelUpload());
+    expect(result.current.uploadFailure).toBeNull();
+    act(() => result.current.actions.requestDeleteOne(records[0]!));
+    expect(result.current.deleteTarget).toMatchObject({ ids: [11], mode: 'single' });
+    expect(result.current.mutationFailure).toBeNull();
+  });
+
+  it('clears an old success notice when the next mutation starts and fails', async () => {
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
+    await act(() => result.current.actions.toggleStatus(records[0]!));
+    expect(result.current.notice).toBe('updated');
+
+    api.toggle.mockRejectedValueOnce(new Error('private update detail'));
+    await act(() => result.current.actions.toggleStatus(records[0]!));
+
+    expect(result.current.notice).toBeNull();
+    expect(result.current.mutationFailure).toBe('error');
   });
 });
 

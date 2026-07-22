@@ -521,6 +521,7 @@
     "creator": "建立者",
     "created": "建立時間",
     "paramCount": "參數數量",
+    "unknown": "未知",
     "jarFile": "Jar 檔案",
     "chooseJar": "選擇記憶體中的 .jar 檔案",
     "initialStatus": "上傳後啟用",

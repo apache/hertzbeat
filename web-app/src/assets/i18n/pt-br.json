@@ -525,6 +525,7 @@
     "creator": "Criador",
     "created": "Criado em",
     "paramCount": "Parâmetros",
+    "unknown": "Desconhecido",
     "jarFile": "Arquivo jar",
     "chooseJar": "Escolher um arquivo .jar em memória",
     "initialStatus": "Ativar após o envio",
