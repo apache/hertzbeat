@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,29 +15,26 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.pojo.dto;
+package org.apache.hertzbeat.manager.ui.session;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import java.time.Instant;
+import java.util.List;
 
 /**
- * Refresh token dto
+ * Browser-safe UI session metadata. This type never contains token material.
  */
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-@Schema(description = "Request refresh token transfer body")
-public class TokenDto {
-    
-    @Schema(description = "token")
-    @NotBlank(message = "token can not null")
-    @ToString.Exclude
-    private String token;
+public record UiSessionView(
+        boolean authenticated,
+        String username,
+        List<String> roles,
+        String workspaceId,
+        Instant expiresAt) {
 
+    public UiSessionView {
+        roles = roles == null ? List.of() : List.copyOf(roles);
+    }
+
+    public static UiSessionView anonymous() {
+        return new UiSessionView(false, null, List.of(), null, null);
+    }
 }
