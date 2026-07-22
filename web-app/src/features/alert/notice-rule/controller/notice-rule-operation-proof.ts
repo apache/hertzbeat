@@ -5,7 +5,7 @@ import type { DataProvider } from '@refinedev/core';
 import {
   noticeRuleMatchesDraft,
   maximumNoticeRuleScanPages,
-  noticeRulePageSizes,
+  noticeRuleScanPageSize,
   type NoticeRule,
   type NoticeRuleMutationVariables
 } from '../model/notice-rule-model';
@@ -19,13 +19,12 @@ import { noticeRuleResourceName } from '../notice-rule-resource';
 
 export async function scanNoticeRulesByName(provider: DataProvider, name: string) {
   if (!provider.getList) throw new NoticeRuleContractError('NOTICE_RULE_PROOF_UNAVAILABLE');
-  const pageSize = noticeRulePageSizes.at(-1)!;
   const records: NoticeRule[] = [];
   let expectedTotal: number | undefined;
   for (let currentPage = 1; currentPage <= maximumNoticeRuleScanPages; currentPage += 1) {
     const response = await provider.getList<NoticeRule>({
       resource: noticeRuleResourceName,
-      pagination: { currentPage, pageSize, mode: 'server' },
+      pagination: { currentPage, pageSize: noticeRuleScanPageSize, mode: 'server' },
       filters: [{ field: 'name', operator: 'contains', value: name }]
     });
     expectedTotal ??= response.total;

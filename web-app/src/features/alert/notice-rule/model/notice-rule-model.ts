@@ -24,6 +24,7 @@ import type { NoticeTemplate } from '../../notice-template-model';
 import type { NoticeRuleCollectionFailureKind } from './notice-rule-failure';
 
 export const noticeRulePageSizes = compactTablePageSizes;
+export const noticeRuleScanPageSize = Math.max(...noticeRulePageSizes);
 export const noticeRuleWeekdays = [7, 1, 2, 3, 4, 5, 6] as const;
 export const maximumNoticeRuleScanPages = 10_000;
 

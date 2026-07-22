@@ -13,7 +13,7 @@ import type { NoticeTemplate } from '../../notice-template-model';
 import {
   buildNoticeRulePayload,
   maximumNoticeRuleScanPages,
-  noticeRulePageSizes,
+  noticeRuleScanPageSize,
   writeNoticeRuleQuery,
   type NoticeRuleDraft,
   type NoticeRuleQuery
@@ -73,14 +73,13 @@ export async function loadAllNoticeTemplates(signal?: AbortSignal) {
 }
 
 export async function loadAllNoticeRulesByName(name: string) {
-  const pageSize = noticeRulePageSizes.at(-1)!;
-  const first = await loadNoticeRules({ name, pageIndex: 0, pageSize });
+  const first = await loadNoticeRules({ name, pageIndex: 0, pageSize: noticeRuleScanPageSize });
   if (first.totalPages > maximumNoticeRuleScanPages) {
     throw new NoticeRuleContractError('NOTICE_RULE_PAGE_COUNT_INVALID');
   }
   const pages = [first];
   for (let pageIndex = 1; pageIndex < first.totalPages; pageIndex += 1) {
-    const page = await loadNoticeRules({ name, pageIndex, pageSize });
+    const page = await loadNoticeRules({ name, pageIndex, pageSize: noticeRuleScanPageSize });
     if (page.totalElements !== first.totalElements || page.totalPages !== first.totalPages) {
       throw new NoticeRuleContractError('NOTICE_RULE_PAGE_SET_CHANGED');
     }

@@ -78,6 +78,13 @@ describe('NoticeRuleEditor advanced fields', () => {
     expect(update).toHaveBeenCalledWith({ days: [7, 1, 2, 4, 5, 6] });
   });
 
+  it('renders invalid canonical time evidence as an empty input', () => {
+    renderEditor({ ...createNoticeRuleDraft(), periodStart: 'invalid' }, vi.fn());
+    openAdvancedFields();
+
+    expect(screen.queryByDisplayValue('invalid')).not.toBeInTheDocument();
+  });
+
   it('disables save but keeps cancel available when dependencies become non-ready', () => {
     renderEditor(createNoticeRuleDraft(), vi.fn(), false);
 

@@ -121,6 +121,17 @@ function NoticeRuleDeliveryWindow({ draft, update, disabled }: NoticeRuleAdvance
 
 function timeValue(value: string) {
   if (!value) return null;
-  const [hours, minutes] = value.split(':').map(Number);
-  return dayjs().hour(hours!).minute(minutes!).second(0).millisecond(0);
+  if (!/^\d{2}:\d{2}$/.test(value)) return null;
+  const [hours = Number.NaN, minutes = Number.NaN] = value.split(':').map(Number);
+  if (
+    !Number.isInteger(hours) ||
+    !Number.isInteger(minutes) ||
+    hours < 0 ||
+    hours > 23 ||
+    minutes < 0 ||
+    minutes > 59
+  ) {
+    return null;
+  }
+  return dayjs().hour(hours).minute(minutes).second(0).millisecond(0);
 }
