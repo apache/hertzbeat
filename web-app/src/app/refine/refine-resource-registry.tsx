@@ -187,6 +187,11 @@ export const refineResources: ResourceProps[] = [
     icon: <ApiOutlined />,
     order: 55
   }),
+  routedNavigationResource('monitor-definitions', {
+    parent: 'settings',
+    icon: <ReadOutlined />,
+    order: 58
+  }),
   routedNavigationResource('system-settings', {
     name: systemConfigResourceName,
     parent: 'settings',

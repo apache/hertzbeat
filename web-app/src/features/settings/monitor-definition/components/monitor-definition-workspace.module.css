@@ -1,0 +1,19 @@
+/* Licensed to the Apache Software Foundation (ASF) under one or more contributor license agreements. */
+
+.workspace {
+  width: 100%;
+}
+
+.editor,
+.readOnly {
+  width: 100%;
+  min-height: 360px;
+  margin: 0;
+  padding: 12px;
+  overflow: auto;
+  border: 1px solid var(--hb-border-subtle);
+  background: var(--hb-bg-canvas);
+  color: var(--hb-text-primary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  white-space: pre;
+}

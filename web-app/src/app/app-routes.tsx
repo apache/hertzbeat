@@ -204,6 +204,13 @@ export const appRoutes: RouteObject[] = [
                 }
               },
               {
+                ...getAppRouteIdentity('monitor-definitions'),
+                lazy: async () => {
+                  const { MonitorDefinitionPage } = await import('@/features/settings/monitor-definition');
+                  return { Component: MonitorDefinitionPage };
+                }
+              },
+              {
                 ...getAppRouteIdentity('system-settings'),
                 lazy: async () => {
                   const { SystemConfigPage } = await import('@/features/settings/system-config');

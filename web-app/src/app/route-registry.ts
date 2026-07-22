@@ -89,6 +89,9 @@ export const appRouteCatalog = {
   collectors: pageRoute('collectors', settingsPaths.collectors, {
     resource: { labelKey: 'settingsNavigation.collectors' }
   }),
+  'monitor-definitions': pageRoute('monitor-definitions', settingsPaths.monitorDefinitions, {
+    resource: { labelKey: 'settingsNavigation.monitorDefinitions' }
+  }),
   'system-settings': pageRoute('system-settings', settingsPaths.system, {
     resource: { labelKey: 'settingsNavigation.system' }
   }),
@@ -139,6 +142,7 @@ export const legacyRouteCatalog = [
   legacyRoute('legacy-system-settings', '/setting/settings/config', 'system-settings'),
   legacyRoute('legacy-labels', '/setting/labels', 'labels'),
   legacyRoute('legacy-object-store', '/setting/settings/object-store', 'object-store'),
+  legacyRoute('legacy-monitor-definitions', '/setting/define', 'monitor-definitions'),
   legacyRoute('legacy-status-management', '/setting/status', 'status-management')
 ] as const satisfies readonly LegacyRouteDefinition[];
 

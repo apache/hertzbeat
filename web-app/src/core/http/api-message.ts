@@ -63,12 +63,16 @@ export function apiMessagePost(path: string, data: unknown, options?: Pick<Reque
   return apiMessageRequest(path, jsonRequest('POST', data, options));
 }
 
-export function apiMessagePut(path: string, data: unknown, options?: Pick<RequestInit, 'signal'>): Promise<unknown> {
+export function apiMessagePut(
+  path: string,
+  data: unknown,
+  options?: Pick<RequestInit, 'signal' | 'headers'>
+): Promise<unknown> {
   return apiMessageRequest(path, jsonRequest('PUT', data, options));
 }
 
-export function apiMessageDelete(path: string): Promise<unknown> {
-  return apiMessageRequest(path, { method: 'DELETE' });
+export function apiMessageDelete(path: string, options?: Pick<RequestInit, 'signal' | 'headers'>): Promise<unknown> {
+  return apiMessageRequest(path, { ...options, method: 'DELETE' });
 }
 
 async function apiMessageRequest(path: string, init?: RequestInit): Promise<unknown> {
@@ -99,11 +103,17 @@ async function parseApiEnvelope(response: Response) {
   throw new ApiMessageError('Invalid API response', { status: response.status });
 }
 
-function jsonRequest(method: 'POST' | 'PUT', data: unknown, options?: Pick<RequestInit, 'signal'>): RequestInit {
+function jsonRequest(
+  method: 'POST' | 'PUT',
+  data: unknown,
+  options?: Pick<RequestInit, 'signal' | 'headers'>
+): RequestInit {
+  const headers = new Headers(options?.headers);
+  headers.set('Content-Type', 'application/json');
   return {
     ...options,
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(data)
   };
 }

@@ -20,7 +20,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const { apiFetch } = vi.hoisted(() => ({ apiFetch: vi.fn() }));
 vi.mock('./http-client', () => ({ apiFetch }));
 
-import { ApiMessageError, apiMessageGet } from './api-message';
+import { ApiMessageError, apiMessageDelete, apiMessageGet, apiMessagePut } from './api-message';
 
 describe('api message errors', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -77,6 +77,20 @@ describe('api message errors', () => {
       message: 'Request failed',
       cause: abort
     });
+  });
+
+  it('preserves conditional headers on JSON PUT and DELETE requests', async () => {
+    apiFetch.mockImplementation(() => Promise.resolve(jsonResponse({ code: 0, msg: null, data: null })));
+
+    await apiMessagePut('/conditional', { definition: 'app: custom' }, { headers: { 'If-Match': '"revision"' } });
+    await apiMessageDelete('/conditional', { headers: { 'If-Match': '"revision"' } });
+
+    const put = apiFetch.mock.calls[0]?.[1] as RequestInit;
+    const remove = apiFetch.mock.calls[1]?.[1] as RequestInit;
+    expect(new Headers(put.headers)).toEqual(expect.objectContaining({}));
+    expect(new Headers(put.headers).get('Content-Type')).toBe('application/json');
+    expect(new Headers(put.headers).get('If-Match')).toBe('"revision"');
+    expect(new Headers(remove.headers).get('If-Match')).toBe('"revision"');
   });
 
   it.each([

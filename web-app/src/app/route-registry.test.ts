@@ -125,6 +125,22 @@ describe('route registry', () => {
     });
   });
 
+  it('registers versioned Monitor Definitions management and its legacy redirect', () => {
+    expect(getAppRoute('monitor-definitions')).toMatchObject({
+      id: 'monitor-definitions',
+      path: '/settings/monitor-definitions',
+      kind: 'page',
+      resource: { labelKey: 'settingsNavigation.monitorDefinitions' }
+    });
+    expect(legacyRouteCatalog).toContainEqual(
+      expect.objectContaining({
+        id: 'legacy-monitor-definitions',
+        path: '/setting/define',
+        targetRouteId: 'monitor-definitions'
+      })
+    );
+  });
+
   it('registers the session lock as a canonical passport-layout page', () => {
     expect(getAppRoute('lock')).toEqual({ id: 'lock', path: '/passport/lock', layout: 'passport', kind: 'page' });
   });
