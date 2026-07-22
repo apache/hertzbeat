@@ -24,6 +24,10 @@ import { assertRuntimeMajor, readToolchainRequirements } from './check-toolchain
 const packageManifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const preCommitHook = readFileSync(new URL('../../.githooks/pre-commit', import.meta.url), 'utf8');
 
+test('the Ant Design React 19 compatibility patch is an exact production dependency', () => {
+  assert.equal(packageManifest.dependencies['@ant-design/v5-patch-for-react-19'], '1.0.3');
+});
+
 test('the release gate checks formatting and the worktree diff without writing files', () => {
   assert.equal(packageManifest.scripts['format:check'], 'prettier --check .');
   assert.equal(packageManifest.scripts['diff:check'], 'cd .. && git diff --check');
