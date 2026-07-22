@@ -71,17 +71,107 @@ describe('alert silence wire schemas', () => {
 
   it('validates Spring page identity, totals, final-page capacity, and unique ids', () => {
     const query = { search: '', pageIndex: 1, pageSize: 15 };
-    expect(parseAlertSilencePage({
-      content: [persisted], totalElements: 16, totalPages: 2, number: 1, size: 15, ignored: true
-    }, query)).toEqual({ content: [persisted], totalElements: 16, totalPages: 2, number: 1, size: 15 });
-    expect(() => parseAlertSilencePage({
-      content: [persisted], totalElements: 1, totalPages: 1, number: 0, size: 8
-    }, query)).toThrow(AlertSilenceContractError);
-    expect(() => parseAlertSilencePage({
-      content: [persisted], totalElements: 16, totalPages: 1, number: 1, size: 15
-    }, query)).toThrow(AlertSilenceContractError);
-    expect(() => parseAlertSilencePage({
-      content: [persisted, persisted], totalElements: 17, totalPages: 2, number: 1, size: 15
-    }, query)).toThrow(AlertSilenceContractError);
+    expect(
+      parseAlertSilencePage(
+        {
+          content: [persisted],
+          totalElements: 16,
+          totalPages: 2,
+          number: 1,
+          size: 15,
+          ignored: true
+        },
+        query
+      )
+    ).toEqual({ content: [persisted], totalElements: 16, totalPages: 2, number: 1, size: 15 });
+    expect(() =>
+      parseAlertSilencePage(
+        {
+          content: [persisted],
+          totalElements: 1,
+          totalPages: 1,
+          number: 0,
+          size: 8
+        },
+        query
+      )
+    ).toThrow(AlertSilenceContractError);
+    expect(() =>
+      parseAlertSilencePage(
+        {
+          content: [persisted],
+          totalElements: 16,
+          totalPages: 1,
+          number: 1,
+          size: 15
+        },
+        query
+      )
+    ).toThrow(AlertSilenceContractError);
+    expect(() =>
+      parseAlertSilencePage(
+        {
+          content: [persisted, persisted],
+          totalElements: 17,
+          totalPages: 2,
+          number: 1,
+          size: 15
+        },
+        query
+      )
+    ).toThrow(AlertSilenceContractError);
+  });
+
+  it('rejects a short non-final Spring page', () => {
+    const content = Array.from({ length: 14 }, (_, index) => ({ ...persisted, id: index + 1 }));
+
+    expect(() =>
+      parseAlertSilencePage(
+        {
+          content,
+          totalElements: 31,
+          totalPages: 3,
+          number: 0,
+          size: 15
+        },
+        { search: '', pageIndex: 0, pageSize: 15 }
+      )
+    ).toThrow(AlertSilenceContractError);
+  });
+
+  it('rejects a short final Spring page', () => {
+    expect(() =>
+      parseAlertSilencePage(
+        {
+          content: [persisted],
+          totalElements: 17,
+          totalPages: 2,
+          number: 1,
+          size: 15
+        },
+        { search: '', pageIndex: 1, pageSize: 15 }
+      )
+    ).toThrow(AlertSilenceContractError);
+  });
+
+  it('accepts an empty page beyond the final Spring page', () => {
+    expect(
+      parseAlertSilencePage(
+        {
+          content: [],
+          totalElements: 17,
+          totalPages: 2,
+          number: 4,
+          size: 15
+        },
+        { search: '', pageIndex: 4, pageSize: 15 }
+      )
+    ).toEqual({
+      content: [],
+      totalElements: 17,
+      totalPages: 2,
+      number: 4,
+      size: 15
+    });
   });
 });

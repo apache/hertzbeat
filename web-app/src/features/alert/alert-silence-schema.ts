@@ -30,14 +30,17 @@ const positiveIntegerSchema = safeIntegerSchema.refine(value => value > 0, 'Expe
 const nonNegativeIntegerSchema = safeIntegerSchema.refine(value => value >= 0, 'Expected a non-negative integer');
 const nonBlankTextSchema = z.string().refine(value => Boolean(value.trim()), 'Expected non-blank text');
 const nullableLabelsSchema = z.record(nonBlankTextSchema, z.string()).nullable();
-const nullableDaysSchema = z.array(safeIntegerSchema.min(1).max(7))
+const nullableDaysSchema = z
+  .array(safeIntegerSchema.min(1).max(7))
   .refine(days => new Set(days).size === days.length, 'Expected unique days')
   .nullable();
-const nullableOffsetDateTimeSchema = z.string()
+const nullableOffsetDateTimeSchema = z
+  .string()
   .refine(isOffsetDateTime, 'Expected a valid date-time with an explicit offset')
   .nullable();
 const nullableAuditTextSchema = z.string().nullable().optional();
-const nullableLocalDateTimeSchema = z.string()
+const nullableLocalDateTimeSchema = z
+  .string()
   .refine(isLocalDateTime, 'Expected a valid Java local date-time')
   .nullable()
   .optional();
@@ -83,9 +86,11 @@ export function parseAlertSilencePage(value: unknown, query: AlertSilenceQuery):
   if (page.totalPages !== Math.ceil(page.totalElements / page.size)) {
     throw new AlertSilenceContractError('totalPages is inconsistent');
   }
-  // Final-page capacity is bounded by the remaining authoritative row count.
-  const availableContent = Math.max(0, page.totalElements - page.number * page.size);
-  if (page.content.length > Math.min(page.size, availableContent)) {
+  // The endpoint returns the repository Page without post-filtering, so one
+  // response must carry the exact remaining cardinality, including zero.
+  const remainingContent = Math.max(0, page.totalElements - page.number * page.size);
+  const expectedContentSize = Math.min(page.size, remainingContent);
+  if (page.content.length !== expectedContentSize) {
     throw new AlertSilenceContractError('Page content is inconsistent');
   }
   if (new Set(page.content.map(item => item.id)).size !== page.content.length) {
@@ -142,11 +147,15 @@ function hasValidCalendarFields(match: RegExpExecArray) {
   const year = Number(match[1]);
   const month = Number(match[2]);
   const day = Number(match[3]);
-  return month >= 1 && month <= 12
-    && day >= 1 && day <= daysInMonth(year, month)
-    && Number(match[4]) <= 23
-    && Number(match[5]) <= 59
-    && Number(match[6] ?? '0') <= 59;
+  return (
+    month >= 1 &&
+    month <= 12 &&
+    day >= 1 &&
+    day <= daysInMonth(year, month) &&
+    Number(match[4]) <= 23 &&
+    Number(match[5]) <= 59 &&
+    Number(match[6] ?? '0') <= 59
+  );
 }
 
 function daysInMonth(year: number, month: number) {
