@@ -41,14 +41,22 @@ export function buildAlertRuleListPath(query: AlertRuleQuery) {
   return `/api/alert/defines?${params.toString()}`;
 }
 
-export async function loadAlertRules(query: AlertRuleQuery) {
-  const response = await alertRuleApiRequest(() => apiMessageGet(buildAlertRuleListPath(query)));
+export async function loadAlertRules(query: AlertRuleQuery, signal?: AbortSignal) {
+  const path = buildAlertRuleListPath(query);
+  const response = await alertRuleApiRequest(
+    () => (signal ? apiMessageGet(path, { signal }) : apiMessageGet(path)),
+    signal
+  );
   return parseAlertRulePage(response, query);
 }
 
-export async function loadAlertRule(id: string | number) {
+export async function loadAlertRule(id: string | number, signal?: AbortSignal) {
   const normalizedId = normalizeId(id);
-  const response = await alertRuleApiRequest(() => apiMessageGet(`/api/alert/define/${normalizedId}`));
+  const path = `/api/alert/define/${normalizedId}`;
+  const response = await alertRuleApiRequest(
+    () => (signal ? apiMessageGet(path, { signal }) : apiMessageGet(path)),
+    signal
+  );
   const detail = parseAlertRuleDetail(response);
   if (detail.id !== normalizedId) throw new AlertRuleContractError('detail id does not match the endpoint');
   return detail;

@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest';
 import { ApiMessageError } from '@/core/http/api-message';
 
 import { AlertGroupRequestFailure } from '../alert-group-model';
-import { normalizeAlertGroupApiFailure } from './alert-group-api-failure';
+import { alertGroupApiRequest, normalizeAlertGroupApiFailure } from './alert-group-api-failure';
 
 describe('Alert Group API failure boundary', () => {
   it.each([
@@ -71,5 +71,17 @@ describe('Alert Group API failure boundary', () => {
 
     const domainError = new Error('domain validation failed');
     expect(normalizeAlertGroupApiFailure(domainError)).toBe(domainError);
+  });
+
+  it('keeps caller cancellation out of the user-visible failure contract', async () => {
+    const controller = new AbortController();
+    controller.abort();
+
+    await expect(
+      alertGroupApiRequest(
+        () => Promise.reject(new ApiMessageError('private abort', { cause: new DOMException('abort', 'AbortError') })),
+        controller.signal
+      )
+    ).rejects.toMatchObject({ name: 'AbortError', message: 'Request aborted' });
   });
 });

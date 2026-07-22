@@ -22,7 +22,7 @@ export function useAlertGroupReadController(query: AlertGroupQuery) {
   }, [query]);
   const listQuery = useQuery({
     queryKey: alertGroupQueryKeys.list(query),
-    queryFn: () => loadAlertGroups(query),
+    queryFn: ({ signal }) => loadAlertGroups(query, signal),
     retry: false
   });
   const failure = alertGroupListFailure(listQuery.error);
@@ -30,7 +30,7 @@ export function useAlertGroupReadController(query: AlertGroupQuery) {
     const latestQuery = latestQueryRef.current;
     return queryClient.fetchQuery({
       queryKey: alertGroupQueryKeys.list(latestQuery),
-      queryFn: () => loadAlertGroups(latestQuery),
+      queryFn: ({ signal }) => loadAlertGroups(latestQuery, signal),
       staleTime: 0
     });
   };

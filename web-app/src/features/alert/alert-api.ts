@@ -29,10 +29,20 @@ export function buildAlertListPath(query: AlertQuery) {
   return `/api/alerts/group?${params.toString()}`;
 }
 
-export function loadAlertSummary() {
-  return alertApiRequest(async () => parseAlertSummary(await apiMessageGet(alertSummaryEndpoint)));
+export function loadAlertSummary(signal?: AbortSignal) {
+  return alertApiRequest(
+    async () =>
+      parseAlertSummary(
+        await (signal ? apiMessageGet(alertSummaryEndpoint, { signal }) : apiMessageGet(alertSummaryEndpoint))
+      ),
+    signal
+  );
 }
 
-export function loadAlertGroups(query: AlertQuery) {
-  return alertApiRequest(async () => parseAlertGroupPage(await apiMessageGet(buildAlertListPath(query)), query));
+export function loadAlertGroups(query: AlertQuery, signal?: AbortSignal) {
+  return alertApiRequest(async () => {
+    const path = buildAlertListPath(query);
+    const response = await (signal ? apiMessageGet(path, { signal }) : apiMessageGet(path));
+    return parseAlertGroupPage(response, query);
+  }, signal);
 }

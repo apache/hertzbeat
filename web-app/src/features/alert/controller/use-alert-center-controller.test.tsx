@@ -165,6 +165,27 @@ describe('Alert Center controller', () => {
     expect(result.current.state.list).toMatchObject({ kind: 'ready', total: 1 });
   });
 
+  it('aborts the stale list request when route query identity changes', async () => {
+    const requests: Array<{ query: AlertQuery; signal: AbortSignal }> = [];
+    api.loadAlertGroups.mockImplementation((query: AlertQuery, signal: AbortSignal) => {
+      requests.push({ query, signal });
+      if (query.search !== 'A') return Promise.resolve(page(query));
+      return new Promise((_resolve, reject) => {
+        signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')), { once: true });
+      });
+    });
+    const { result } = renderController('/alerts?search=A&pageIndex=0&pageSize=8');
+    await waitFor(() => expect(requests).toHaveLength(1));
+
+    act(() => result.current.setDraft('search', 'B'));
+    act(() => result.current.submitFilters());
+
+    await waitFor(() => expect(requests).toHaveLength(2));
+    expect(requests[0]?.signal.aborted).toBe(true);
+    expect(requests[1]).toMatchObject({ query: expect.objectContaining({ search: 'B' }) });
+    await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
+  });
+
   it('provides independent retries and a combined refresh', async () => {
     const { result } = renderController();
     await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));

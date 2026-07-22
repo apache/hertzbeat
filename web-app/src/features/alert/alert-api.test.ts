@@ -82,6 +82,32 @@ describe('alert API', () => {
     expect(apiMessageGet).toHaveBeenCalledWith('/api/alerts/summary');
   });
 
+  it('forwards caller cancellation to summary and list transports', async () => {
+    const signal = new AbortController().signal;
+    apiMessageGet
+      .mockResolvedValueOnce({
+        total: 2,
+        dealNum: 1,
+        rate: 50,
+        priorityWarningNum: 1,
+        priorityCriticalNum: 0,
+        priorityEmergencyNum: 0
+      })
+      .mockResolvedValueOnce({
+        content: [],
+        totalElements: 0,
+        totalPages: 0,
+        number: 0,
+        size: 8
+      });
+
+    await loadAlertSummary(signal);
+    await loadAlertGroups(query, signal);
+
+    expect(apiMessageGet).toHaveBeenNthCalledWith(1, '/api/alerts/summary', { signal });
+    expect(apiMessageGet).toHaveBeenNthCalledWith(2, buildAlertListPath(query), { signal });
+  });
+
   it('parses exact requested page evidence and rejects null or malformed reads', async () => {
     apiMessageGet.mockResolvedValueOnce({
       content: [],

@@ -76,6 +76,17 @@ describe('Alert Group controller', () => {
     api.deleteAlertGroup.mockResolvedValue(undefined);
   });
 
+  it('forwards TanStack cancellation to the list read', async () => {
+    const { result } = renderController();
+
+    await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
+
+    expect(api.loadAlertGroups).toHaveBeenCalledWith(
+      { search: '', pageIndex: 0, pageSize: 8 },
+      expect.any(AbortSignal)
+    );
+  });
+
   it('owns canonical URL search, POP convergence, and page-size reset', async () => {
     const routed = renderRoutedController([
       '/alerts/groups?search=A&pageIndex=1&pageSize=15',
@@ -591,7 +602,10 @@ describe('Alert Group controller', () => {
     await act(async () => operation);
 
     expect(api.loadAlertGroups.mock.calls.length).toBeGreaterThan(callsBeforeConvergence);
-    expect(api.loadAlertGroups).toHaveBeenLastCalledWith({ search: 'fresh', pageIndex: 2, pageSize: 8 });
+    expect(api.loadAlertGroups).toHaveBeenLastCalledWith(
+      { search: 'fresh', pageIndex: 2, pageSize: 8 },
+      expect.any(AbortSignal)
+    );
   });
 
   it('keeps write 404 distinct from missing detail semantics', async () => {
@@ -767,7 +781,10 @@ describe('Alert Group controller', () => {
 
     expect(api.updateAlertGroupEnabled).toHaveBeenCalledOnce();
     expect(api.loadAlertGroup).toHaveBeenCalledTimes(2);
-    expect(api.loadAlertGroups).toHaveBeenLastCalledWith({ search: 'fresh', pageIndex: 2, pageSize: 8 });
+    expect(api.loadAlertGroups).toHaveBeenLastCalledWith(
+      { search: 'fresh', pageIndex: 2, pageSize: 8 },
+      expect.any(AbortSignal)
+    );
     expect(routed.current().state.recovery).toBeUndefined();
   });
 

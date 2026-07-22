@@ -70,6 +70,22 @@ describe('Alert Rule editor controller', () => {
     api.saveAlertRule.mockResolvedValue(undefined);
   });
 
+  it('forwards TanStack cancellation and aborts the detail read on unmount', async () => {
+    let detailSignal: AbortSignal | undefined;
+    api.loadAlertRule.mockImplementation((_id: number, signal: AbortSignal) => {
+      detailSignal = signal;
+      return new Promise((_resolve, reject) => {
+        signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')), { once: true });
+      });
+    });
+    const { unmount } = renderController('edit');
+    await waitFor(() => expect(detailSignal).toBeInstanceOf(AbortSignal));
+
+    unmount();
+
+    expect(detailSignal?.aborted).toBe(true);
+  });
+
   it.each([' 7', '1e2', '+1', '0'])('rejects invalid route id %s without a request', async ruleId => {
     const { result } = renderController('edit', `/alerts/rules/${encodeURIComponent(ruleId)}/edit`);
     await waitFor(() => expect(result.current.state.detail.kind).toBe('error'));

@@ -96,6 +96,25 @@ describe('alert group API', () => {
     );
   });
 
+  it('forwards caller cancellation for list reads', async () => {
+    const signal = new AbortController().signal;
+    const query = { search: '', pageIndex: 0, pageSize: 8 };
+    transport.apiMessageGet.mockResolvedValue({
+      content: [],
+      totalElements: 0,
+      totalPages: 0,
+      number: 0,
+      size: 8
+    });
+
+    await loadAlertGroups(query, signal);
+
+    expect(transport.apiMessageGet).toHaveBeenCalledWith(
+      '/api/alert/groups?pageIndex=0&pageSize=8&sort=id&order=desc',
+      { signal }
+    );
+  });
+
   it('returns void acknowledgements and never treats response data as a canonical entity', async () => {
     transport.apiMessagePost.mockResolvedValue({ id: 99, leaked: true });
     transport.apiMessagePut.mockResolvedValue({ id: 7, leaked: true });

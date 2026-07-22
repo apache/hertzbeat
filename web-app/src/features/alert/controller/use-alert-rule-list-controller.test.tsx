@@ -72,6 +72,14 @@ describe('Alert Rule list controller', () => {
     api.deleteAlertRules.mockResolvedValue(undefined);
   });
 
+  it('forwards TanStack cancellation to the list read', async () => {
+    const { result } = renderController();
+
+    await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
+
+    expect(api.loadAlertRules).toHaveBeenCalledWith({ search: '', pageIndex: 0, pageSize: 8 }, expect.any(AbortSignal));
+  });
+
   it('owns canonical search, POP convergence, page size, and navigation', async () => {
     const routed = renderRouted([
       '/alerts/rules?search=A&pageIndex=1&pageSize=15',
@@ -331,7 +339,10 @@ describe('Alert Rule list controller', () => {
     act(() => proof.resolve({ ...persisted, enable: false }));
     await act(async () => operation);
 
-    expect(api.loadAlertRules).toHaveBeenLastCalledWith(expect.objectContaining({ search: 'B', pageIndex: 2 }));
+    expect(api.loadAlertRules).toHaveBeenLastCalledWith(
+      expect.objectContaining({ search: 'B', pageIndex: 2 }),
+      expect.any(AbortSignal)
+    );
   });
 });
 

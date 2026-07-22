@@ -102,6 +102,19 @@ describe('alert rule API', () => {
     await expect(loadAlertRule('7')).resolves.toEqual(persisted);
   });
 
+  it('forwards caller cancellation for list and detail reads', async () => {
+    const signal = new AbortController().signal;
+    vi.mocked(apiMessageGet)
+      .mockResolvedValueOnce({ content: [], totalElements: 0, totalPages: 0, number: 0, size: 8 })
+      .mockResolvedValueOnce(persisted);
+
+    await loadAlertRules(query, signal);
+    await loadAlertRule(7, signal);
+
+    expect(apiMessageGet).toHaveBeenNthCalledWith(1, buildAlertRuleListPath(query), { signal });
+    expect(apiMessageGet).toHaveBeenNthCalledWith(2, '/api/alert/define/7', { signal });
+  });
+
   it('rejects detail evidence whose id does not match the canonical endpoint', async () => {
     vi.mocked(apiMessageGet).mockResolvedValue({ ...persisted, id: 8 });
     await expect(loadAlertRule('7')).rejects.toThrow(AlertRuleContractError);

@@ -60,11 +60,11 @@ export function useAlertCenterController() {
 
   const summaryQuery = useQuery({
     queryKey: alertCenterQueryKeys.summary(),
-    queryFn: loadAlertSummary
+    queryFn: ({ signal }) => loadAlertSummary(signal)
   });
   const listQuery = useQuery({
     queryKey: alertCenterQueryKeys.groups(query),
-    queryFn: () => loadAlertGroups(query)
+    queryFn: ({ signal }) => loadAlertGroups(query, signal)
   });
 
   const updateQuery = (patch: Partial<AlertQuery>) => {

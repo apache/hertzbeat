@@ -41,8 +41,12 @@ function buildAlertGroupListPath(query: AlertGroupQuery) {
   return `${alertGroupsEndpoint}?${params.toString()}`;
 }
 
-export async function loadAlertGroups(query: AlertGroupQuery) {
-  const response = await alertGroupApiRequest(() => apiMessageGet(buildAlertGroupListPath(query)));
+export async function loadAlertGroups(query: AlertGroupQuery, signal?: AbortSignal) {
+  const path = buildAlertGroupListPath(query);
+  const response = await alertGroupApiRequest(
+    () => (signal ? apiMessageGet(path, { signal }) : apiMessageGet(path)),
+    signal
+  );
   return parseAlertGroupPage(response, query);
 }
 

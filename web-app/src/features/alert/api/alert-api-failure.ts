@@ -21,10 +21,12 @@ export function normalizeAlertApiFailure(error: unknown) {
   return new AlertRequestFailure(unavailable ? 'unavailable' : 'error');
 }
 
-export async function alertApiRequest<T>(operation: () => Promise<T>): Promise<T> {
+export async function alertApiRequest<T>(operation: () => Promise<T>, signal?: AbortSignal): Promise<T> {
   try {
     return await operation();
   } catch (error) {
+    // Caller cancellation retires query ownership; it is not availability evidence.
+    if (signal?.aborted) throw new DOMException('Request aborted', 'AbortError');
     throw normalizeAlertApiFailure(error);
   }
 }

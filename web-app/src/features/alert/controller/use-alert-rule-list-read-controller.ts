@@ -17,7 +17,7 @@ export function useAlertRuleListReadController(query: AlertRuleQuery) {
   const queryClient = useQueryClient();
   const listQuery = useQuery({
     queryKey: alertRuleQueryKeys.list(query),
-    queryFn: () => loadAlertRules(query),
+    queryFn: ({ signal }) => loadAlertRules(query, signal),
     retry: false
   });
   const latestRef = useRef({ query, queryClient });
@@ -28,7 +28,7 @@ export function useAlertRuleListReadController(query: AlertRuleQuery) {
     const latest = latestRef.current;
     return latest.queryClient.fetchQuery({
       queryKey: alertRuleQueryKeys.list(latest.query),
-      queryFn: () => loadAlertRules(latest.query),
+      queryFn: ({ signal }) => loadAlertRules(latest.query, signal),
       staleTime: 0
     });
   };

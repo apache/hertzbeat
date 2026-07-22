@@ -114,7 +114,7 @@ function resolveCanonicalDraft(
 function useAlertRuleDetail(mode: 'new' | 'edit', validId: number | null) {
   return useQuery({
     queryKey: alertRuleQueryKeys.detail(validId),
-    queryFn: () => loadAlertRule(validId as number),
+    queryFn: ({ signal }) => loadAlertRule(validId as number, signal),
     enabled: mode === 'edit' && validId !== null,
     retry: false
   });
