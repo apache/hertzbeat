@@ -177,7 +177,7 @@ public class PluginServiceImpl implements PluginService {
     @Override
     public PluginParametersVO getParamDefine(Long pluginMetadataId) {
 
-        PluginParametersVO pluginParametersVO = new PluginParametersVO();
+        PluginParametersVO pluginParametersVO = new PluginParametersVO(new ArrayList<>(), new ArrayList<>());
         if (PARAMS_CONFIG_MAP.containsKey(pluginMetadataId)) {
             PluginConfig config = PARAMS_CONFIG_MAP.get(pluginMetadataId);
             List<PluginParam> paramsByPluginMetadataId = pluginParamDao.findParamsByPluginMetadataId(pluginMetadataId);

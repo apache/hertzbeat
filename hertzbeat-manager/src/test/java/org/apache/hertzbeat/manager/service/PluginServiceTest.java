@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.manager.service;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -25,35 +26,41 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import org.apache.hertzbeat.common.constants.PluginType;
+import org.apache.hertzbeat.common.entity.job.RuntimeParamDefine;
 import org.apache.hertzbeat.common.entity.manager.PluginItem;
 import org.apache.hertzbeat.common.entity.manager.PluginMetadata;
+import org.apache.hertzbeat.common.entity.plugin.PluginConfig;
 import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.manager.dao.PluginItemDao;
 import org.apache.hertzbeat.manager.dao.PluginMetadataDao;
 import org.apache.hertzbeat.manager.dao.PluginParamDao;
 import org.apache.hertzbeat.manager.pojo.dto.PluginUpload;
+import org.apache.hertzbeat.manager.pojo.dto.PluginParam;
+import org.apache.hertzbeat.manager.pojo.dto.PluginParametersVO;
 import org.apache.hertzbeat.manager.service.impl.PluginServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -154,30 +161,50 @@ class PluginServiceTest {
 
     @Test
     void testUpdateStatus() {
-        PluginMetadata plugin = new PluginMetadata();
-        plugin.setId(1L);
-        plugin.setEnableStatus(true);
-        plugin.setName("test-plugin");
+        PluginMetadata persisted = PluginMetadata.builder()
+                .id(1L)
+                .name("persisted-plugin")
+                .enableStatus(false)
+                .jarFilePath("plugin-lib/persisted.jar")
+                .items(List.of())
+                .build();
+        PluginMetadata request = PluginMetadata.builder()
+                .id(1L)
+                .name("untrusted-name")
+                .enableStatus(true)
+                .jarFilePath("/untrusted/path.jar")
+                .build();
 
-        when(metadataDao.findById(1L)).thenReturn(Optional.of(plugin));
-        when(metadataDao.save(any(PluginMetadata.class))).thenReturn(plugin);
-        assertDoesNotThrow(() -> pluginService.updateStatus(plugin));
+        when(metadataDao.findById(1L)).thenReturn(Optional.of(persisted));
+        when(metadataDao.save(any(PluginMetadata.class))).thenReturn(persisted);
+        assertDoesNotThrow(() -> pluginService.updateStatus(request));
+
+        verify(metadataDao).save(persisted);
+        assertTrue(persisted.getEnableStatus());
+        assertEquals("persisted-plugin", persisted.getName());
+        assertEquals("plugin-lib/persisted.jar", persisted.getJarFilePath());
     }
 
     @Test
     void testDeletePlugins() {
-        PluginMetadata plugin = new PluginMetadata();
-        plugin.setId(1L);
-        plugin.setJarFilePath("path/to/plugin.jar");
-        Set<Long> ids = new HashSet<>(Collections.singletonList(1L));
+        PluginMetadata first = PluginMetadata.builder()
+                .id(1L).enableStatus(true).jarFilePath("path/to/plugin-one.jar").items(List.of()).build();
+        PluginMetadata second = PluginMetadata.builder()
+                .id(2L).enableStatus(true).jarFilePath("path/to/plugin-two.jar").items(List.of()).build();
+        Set<Long> ids = new HashSet<>(Set.of(1L, 2L));
 
-        when(metadataDao.findAllById(ids)).thenReturn(Collections.singletonList(plugin));
-        when(metadataDao.findById(anyLong())).thenReturn(Optional.of(plugin));
-        when(metadataDao.save(plugin)).thenReturn(plugin);
+        when(metadataDao.findAllById(ids)).thenReturn(List.of(first, second));
+        when(metadataDao.findById(1L)).thenReturn(Optional.of(first));
+        when(metadataDao.findById(2L)).thenReturn(Optional.of(second));
         doNothing().when(metadataDao).deleteById(1L);
+        doNothing().when(metadataDao).deleteById(2L);
 
         pluginService.deletePlugins(ids);
-        verify(metadataDao, times(1)).deleteById(1L);
+        verify(metadataDao).deleteById(1L);
+        verify(metadataDao).deleteById(2L);
+        verify(pluginParamDao).deletePluginParamsByPluginMetadataIdIn(ids);
+        assertFalse(first.getEnableStatus());
+        assertFalse(second.getEnableStatus());
     }
 
     @Test
@@ -186,7 +213,56 @@ class PluginServiceTest {
         when(metadataDao.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(page);
         Page<PluginMetadata> result = pluginService.getPlugins(null, 0, 10);
         assertFalse(result.isEmpty());
-        verify(metadataDao, times(1)).findAll(any(Specification.class), any(PageRequest.class));
+        ArgumentCaptor<PageRequest> pageRequest = ArgumentCaptor.forClass(PageRequest.class);
+        verify(metadataDao).findAll(any(Specification.class), pageRequest.capture());
+        assertEquals(0, pageRequest.getValue().getPageNumber());
+        assertEquals(10, pageRequest.getValue().getPageSize());
+    }
+
+    @Test
+    void testMissingParamDefinitionReturnsArrayShapedResponse() {
+        PluginParametersVO result = pluginService.getParamDefine(Long.MAX_VALUE);
+
+        assertNotNull(result.getParamDefines());
+        assertNotNull(result.getPluginParams());
+        assertTrue(result.getParamDefines().isEmpty());
+        assertTrue(result.getPluginParams().isEmpty());
+        verifyNoInteractions(pluginParamDao);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void testConfiguredParamDefinitionReturnsDefinitionAndSavedValues() throws Exception {
+        long pluginId = Long.MAX_VALUE - 1;
+        PluginConfig config = new PluginConfig();
+        config.setParams(List.of(RuntimeParamDefine.builder().field("endpoint").type("text").build()));
+        PluginParam saved = PluginParam.builder()
+                .pluginMetadataId(pluginId)
+                .field("endpoint")
+                .paramValue("https://example.invalid")
+                .type((byte) 1)
+                .build();
+        Field field = PluginServiceImpl.class.getDeclaredField("PARAMS_CONFIG_MAP");
+        field.setAccessible(true);
+        Map<Long, PluginConfig> configs = (Map<Long, PluginConfig>) field.get(null);
+        configs.put(pluginId, config);
+        when(pluginParamDao.findParamsByPluginMetadataId(pluginId)).thenReturn(List.of(saved));
+
+        try {
+            PluginParametersVO result = pluginService.getParamDefine(pluginId);
+            assertEquals("endpoint", result.getParamDefines().get(0).getField());
+            assertEquals("text", result.getParamDefines().get(0).getType());
+            assertEquals(List.of(saved), result.getPluginParams());
+        } finally {
+            configs.remove(pluginId);
+        }
+    }
+
+    @Test
+    void testEmptyPluginParamArrayIsNoOp() {
+        pluginService.savePluginParam(List.of());
+
+        verifyNoInteractions(pluginParamDao);
     }
 
     @Test
