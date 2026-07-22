@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { useQuery } from '@tanstack/react-query';
+import { skipToken, useQuery } from '@tanstack/react-query';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
@@ -112,10 +112,10 @@ function resolveCanonicalDraft(
 }
 
 function useAlertRuleDetail(mode: 'new' | 'edit', validId: number | null) {
+  const detailId = mode === 'edit' ? validId : null;
   return useQuery({
-    queryKey: alertRuleQueryKeys.detail(validId),
-    queryFn: ({ signal }) => loadAlertRule(validId as number, signal),
-    enabled: mode === 'edit' && validId !== null,
+    queryKey: alertRuleQueryKeys.detail(detailId),
+    queryFn: detailId === null ? skipToken : ({ signal }) => loadAlertRule(detailId, signal),
     retry: false
   });
 }
