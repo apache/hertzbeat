@@ -20,7 +20,7 @@ import { buildMonitorDetailPath, buildMonitorEditPath, monitorRoutePaths } from 
 import { monitorStatusCodes, type MonitorQuery } from './monitor-contract';
 import { readMonitorQuery, writeMonitorQuery } from './monitor-query';
 
-export { monitorPageSizes, type MonitorAction, type MonitorQuery } from './monitor-contract';
+export { monitorPageSizes, type MonitorQuery } from './monitor-contract';
 export { readMonitorQuery, writeMonitorQuery } from './monitor-query';
 
 export type MonitorScopedSelection = { scope: string; ids: number[] };

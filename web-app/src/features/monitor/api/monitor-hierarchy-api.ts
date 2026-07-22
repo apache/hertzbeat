@@ -11,7 +11,7 @@ function normalizeHierarchyInput(value: string) {
   return normalized;
 }
 
-export function buildMonitorAppHierarchyPath(app: string, locale: string) {
+function buildMonitorAppHierarchyPath(app: string, locale: string) {
   const requestedApp = normalizeHierarchyInput(app);
   const requestedLocale = normalizeHierarchyInput(locale);
   const query = new URLSearchParams({ lang: requestedLocale });

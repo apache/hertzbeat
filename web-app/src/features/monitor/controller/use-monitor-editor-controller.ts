@@ -27,8 +27,6 @@ import { useMonitorEditorDraft } from './use-monitor-editor-draft';
 import { useMonitorEditorResources } from './use-monitor-editor-resources';
 import { useCanonicalMonitorEditorUrl, useMonitorEditorRoute } from './use-monitor-editor-route';
 
-export type { MonitorEditorEvidence } from './use-monitor-editor-resources';
-
 export function useMonitorEditorController(mode: MonitorEditorMode) {
   const { t } = useTranslation();
   const { message } = App.useApp();

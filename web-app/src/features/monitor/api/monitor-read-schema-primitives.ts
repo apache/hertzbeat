@@ -17,7 +17,7 @@
 
 import { z } from 'zod';
 
-export const safeIntegerSchema = z.number().refine(Number.isSafeInteger);
+const safeIntegerSchema = z.number().refine(Number.isSafeInteger);
 export const positiveIntegerSchema = safeIntegerSchema.refine(value => value > 0);
 export const nonNegativeIntegerSchema = safeIntegerSchema.refine(value => value >= 0);
 export const nullablePositiveIntegerSchema = positiveIntegerSchema.nullable();

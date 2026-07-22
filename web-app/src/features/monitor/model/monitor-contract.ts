@@ -35,7 +35,7 @@ export const monitorStatusFilters = {
   unavailable: String(monitorStatusCodes.unavailable)
 } as const;
 export type MonitorScrape = (typeof monitorScrapeValues)[number];
-export type MonitorScheduleType = (typeof monitorScheduleTypes)[number];
+type MonitorScheduleType = (typeof monitorScheduleTypes)[number];
 export type MonitorEditorMode = 'new' | 'edit';
 
 export function normalizeMonitorScrape(value: string | null | undefined): MonitorScrape {

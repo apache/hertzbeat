@@ -31,7 +31,7 @@ import { parseMonitorDetail } from './monitor-detail-schema';
 import { parseMonitorPage } from './monitor-page-schema';
 
 export { detectMonitor, loadMonitorCollectors, loadMonitorParamDefines, saveMonitor } from './monitor-editor-api';
-export { buildMonitorAppHierarchyPath, loadMonitorAppHierarchy } from './monitor-hierarchy-api';
+export { loadMonitorAppHierarchy } from './monitor-hierarchy-api';
 export {
   buildFavoriteMetricPath,
   buildHistoryMetricPath,
