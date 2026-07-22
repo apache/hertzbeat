@@ -39,10 +39,12 @@ import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApi
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Language;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Method;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Platform;
+import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.RequestErrorCode;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.ServiceIdentity;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.SecretReplacement;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.SecretValueFormat;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.StepType;
+import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationRequestException;
 import org.apache.hertzbeat.observability.instrumentation.guide.InstrumentationGuideAdapterRegistry;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -202,12 +204,75 @@ class InstrumentationGuideRendererTest {
                 Platform.LINUX_AMD64,
                 new CollectorTarget(
                         "collector-east",
-                        "http://token@collector.internal:4318?authorization=secret",
-                        "http://collector.internal:4317",
+                        "http://collector.internal:4318",
+                        "http://token@collector.internal:4317?authorization=secret",
                         "Authorization"),
                 new ServiceIdentity("checkout-api", "commerce", "prod"));
 
         assertThrows(IllegalArgumentException.class, () -> renderer.render(request));
+    }
+
+    @Test
+    void rendersHttpOnlyCollectorTargetWithHttpProtobuf() {
+        String configure = configureContent(renderer.render(request(new CollectorTarget(
+                "collector-east", "https://http-only.collector.test:4318", null, "Authorization"))));
+
+        assertTrue(configure.contains("OTEL_EXPORTER_OTLP_ENDPOINT=https://http-only.collector.test:4318"));
+        assertTrue(configure.contains("OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf"));
+        assertFalse(configure.contains("OTEL_EXPORTER_OTLP_PROTOCOL=grpc"));
+    }
+
+    @Test
+    void rendersGrpcOnlyCollectorTargetAcrossEveryLanguageAdapter() {
+        InstrumentationCatalogService catalog = new InstrumentationCatalogService();
+        int renderedSelections = 0;
+        for (var language : catalog.catalog().languages()) {
+            for (var framework : language.frameworks()) {
+                for (var method : framework.methods()) {
+                    GuideRenderRequest request = request(
+                            language.language(),
+                            framework.framework(),
+                            method.method(),
+                            method.environments().getFirst(),
+                            method.platforms().getFirst(),
+                            new CollectorTarget(
+                                    "collector-east", null, "https://grpc-only.collector.test:4317", "Authorization"));
+
+                    String configure = configureContent(renderer.render(request));
+
+                    assertTrue(configure.contains(
+                            "OTEL_EXPORTER_OTLP_ENDPOINT=https://grpc-only.collector.test:4317"));
+                    assertTrue(configure.contains("OTEL_EXPORTER_OTLP_PROTOCOL=grpc"));
+                    assertFalse(configure.contains("http/protobuf"));
+                    renderedSelections++;
+                }
+            }
+        }
+        assertEquals(12, renderedSelections);
+    }
+
+    @Test
+    void deterministicallyPrefersHttpWhenBothProtocolsAreAdvertised() {
+        String configure = configureContent(renderer.render(request(new CollectorTarget(
+                "collector-east",
+                "https://preferred-http.collector.test:4318",
+                "https://secondary-grpc.collector.test:4317",
+                "Authorization"))));
+
+        assertTrue(configure.contains("https://preferred-http.collector.test:4318"));
+        assertTrue(configure.contains("OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf"));
+        assertFalse(configure.contains("https://secondary-grpc.collector.test:4317"));
+    }
+
+    @Test
+    void rejectsCollectorTargetWithNoAdvertisedProtocolUsingStableSafeError() {
+        InstrumentationRequestException exception = assertThrows(
+                InstrumentationRequestException.class,
+                () -> renderer.render(request(new CollectorTarget(
+                        "collector-east", null, null, "Authorization"))));
+
+        assertEquals(RequestErrorCode.CONTEXT_INVALID, exception.errorCode());
+        assertEquals("instrumentation_context_invalid", exception.getMessage());
     }
 
     @Test
@@ -373,10 +438,48 @@ class InstrumentationGuideRendererTest {
                 new ServiceIdentity("checkout-api", "commerce", "prod"));
     }
 
+    private GuideRenderRequest request(CollectorTarget collector) {
+        return request(
+                Language.JAVA,
+                Framework.SPRING_BOOT,
+                Method.ZERO_CODE,
+                Environment.DOCKER,
+                Platform.LINUX_AMD64,
+                collector);
+    }
+
+    private GuideRenderRequest request(
+            Language language,
+            Framework framework,
+            Method method,
+            Environment environment,
+            Platform platform,
+            CollectorTarget collector) {
+        return new GuideRenderRequest(
+                1,
+                language,
+                framework,
+                method,
+                environment,
+                platform,
+                collector,
+                new ServiceIdentity("checkout-api", "commerce", "prod"));
+    }
+
     private String renderedContent(
             org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.GuideRenderResponse
                     guide) {
         return guide.steps().stream()
+                .flatMap(step -> step.snippets().stream())
+                .map(snippet -> snippet.content())
+                .collect(Collectors.joining("\n"));
+    }
+
+    private String configureContent(
+            org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.GuideRenderResponse
+                    guide) {
+        return guide.steps().stream()
+                .filter(step -> step.type() == StepType.CONFIGURE)
                 .flatMap(step -> step.snippets().stream())
                 .map(snippet -> snippet.content())
                 .collect(Collectors.joining("\n"));

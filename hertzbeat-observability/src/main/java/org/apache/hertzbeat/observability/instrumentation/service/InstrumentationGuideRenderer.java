@@ -73,11 +73,12 @@ public class InstrumentationGuideRenderer {
             throw new InstrumentationRequestException(RequestErrorCode.SELECTION_INVALID);
         }
         CollectorTarget collector = requireCollector(request.collector());
+        CollectorOtlpTarget otlpTarget = selectOtlpTarget(collector);
         ServiceIdentity service = requireService(request.service());
         LanguageGuideSteps languageSteps = adapterRegistry.require(request.language()).render(request, method);
         List<GuideStep> steps = List.of(
                 languageSteps.install(),
-                configureStep(collector, service, request.platform(), method),
+                configureStep(collector, otlpTarget, service, request.platform(), method),
                 languageSteps.start(),
                 languageSteps.container(),
                 languageSteps.disable());
@@ -118,12 +119,26 @@ public class InstrumentationGuideRenderer {
             throw new InstrumentationRequestException(RequestErrorCode.CONTEXT_INVALID);
         }
         requireResourceValue(collector.collectorId(), "Collector ID");
-        requireEndpoint(collector.otlpHttpEndpoint(), "HTTP endpoint");
-        requireEndpoint(collector.otlpGrpcEndpoint(), "gRPC endpoint");
+        if (collector.otlpHttpEndpoint() != null) {
+            requireEndpoint(collector.otlpHttpEndpoint(), "HTTP endpoint");
+        }
+        if (collector.otlpGrpcEndpoint() != null) {
+            requireEndpoint(collector.otlpGrpcEndpoint(), "gRPC endpoint");
+        }
+        if (collector.otlpHttpEndpoint() == null && collector.otlpGrpcEndpoint() == null) {
+            throw new InstrumentationRequestException(RequestErrorCode.CONTEXT_INVALID);
+        }
         if (!"Authorization".equals(collector.authorizationHeader())) {
             throw new InstrumentationRequestException(RequestErrorCode.CONTEXT_INVALID);
         }
         return collector;
+    }
+
+    private CollectorOtlpTarget selectOtlpTarget(CollectorTarget collector) {
+        if (collector.otlpHttpEndpoint() != null) {
+            return new CollectorOtlpTarget(collector.otlpHttpEndpoint(), "http/protobuf");
+        }
+        return new CollectorOtlpTarget(collector.otlpGrpcEndpoint(), "grpc");
     }
 
     private ServiceIdentity requireService(ServiceIdentity service) {
@@ -155,7 +170,8 @@ public class InstrumentationGuideRenderer {
     }
 
     private GuideStep configureStep(
-            CollectorTarget collector, ServiceIdentity service, Platform platform, MethodOption method) {
+            CollectorTarget collector, CollectorOtlpTarget otlpTarget, ServiceIdentity service,
+            Platform platform, MethodOption method) {
         String resourceAttributes = "service.namespace=" + service.namespace()
                 + ",deployment.environment.name=" + service.environment()
                 + ",hertzbeat.collector.id=" + collector.collectorId();
@@ -168,8 +184,8 @@ public class InstrumentationGuideRenderer {
             language = "powershell";
             content = "$env:OTEL_SERVICE_NAME='" + service.name() + "'\n"
                     + "$env:OTEL_RESOURCE_ATTRIBUTES='" + resourceAttributes + "'\n"
-                    + "$env:OTEL_EXPORTER_OTLP_ENDPOINT='" + collector.otlpHttpEndpoint() + "'\n"
-                    + "$env:OTEL_EXPORTER_OTLP_PROTOCOL='http/protobuf'\n"
+                    + "$env:OTEL_EXPORTER_OTLP_ENDPOINT='" + otlpTarget.endpoint() + "'\n"
+                    + "$env:OTEL_EXPORTER_OTLP_PROTOCOL='" + otlpTarget.protocol() + "'\n"
                     + "$env:OTEL_TRACES_EXPORTER='" + tracesExporter + "'\n"
                     + "$env:OTEL_METRICS_EXPORTER='" + metricsExporter + "'\n"
                     + "$env:OTEL_LOGS_EXPORTER='" + logsExporter + "'\n"
@@ -178,8 +194,8 @@ public class InstrumentationGuideRenderer {
             language = "bash";
             content = "export OTEL_SERVICE_NAME=" + service.name() + "\n"
                     + "export OTEL_RESOURCE_ATTRIBUTES='" + resourceAttributes + "'\n"
-                    + "export OTEL_EXPORTER_OTLP_ENDPOINT=" + collector.otlpHttpEndpoint() + "\n"
-                    + "export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf\n"
+                    + "export OTEL_EXPORTER_OTLP_ENDPOINT=" + otlpTarget.endpoint() + "\n"
+                    + "export OTEL_EXPORTER_OTLP_PROTOCOL=" + otlpTarget.protocol() + "\n"
                     + "export OTEL_TRACES_EXPORTER=" + tracesExporter + "\n"
                     + "export OTEL_METRICS_EXPORTER=" + metricsExporter + "\n"
                     + "export OTEL_LOGS_EXPORTER=" + logsExporter + "\n"
@@ -203,5 +219,8 @@ public class InstrumentationGuideRenderer {
 
     private GuideStep step(String id, StepType type, String titleKey, String locationKey, GuideSnippet... snippets) {
         return new GuideStep(id, type, titleKey, locationKey, List.of(snippets));
+    }
+
+    private record CollectorOtlpTarget(String endpoint, String protocol) {
     }
 }
