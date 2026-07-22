@@ -40,8 +40,6 @@ import { parseLogPage, parseLogRow } from './explore-log-schema';
 import { parseMetricConsole } from './explore-metric-schema';
 import { parseTraceDetail, parseTracePage } from './explore-trace-schema';
 
-export type { ExplorePageResult } from '../model/explore-signal-contract';
-
 export async function loadMetricSignal(query: MetricExploreQuery, signal?: AbortSignal) {
   return parseMetricConsole(await apiMessageGet(buildSignalApiPath(query), requestSignal(signal)));
 }

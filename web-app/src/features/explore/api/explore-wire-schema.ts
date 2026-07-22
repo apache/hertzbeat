@@ -20,7 +20,7 @@ import { z } from 'zod';
 import { ExploreSignalContractError, type ExplorePageResult, type JsonValue } from '../model/explore-signal-contract';
 
 export const nullableStringSchema = z.string().nullable();
-export const integerSchema = z.number().int().safe();
+const integerSchema = z.number().int().safe();
 export const nonNegativeIntegerSchema = integerSchema.nonnegative();
 export const nullableIntegerSchema = integerSchema.nullable();
 export const nullableNonNegativeIntegerSchema = nonNegativeIntegerSchema.nullable();

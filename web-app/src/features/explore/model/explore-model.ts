@@ -35,7 +35,6 @@ export {
   type ExploreSignal,
   type ExploreTimeRange,
   type LogExploreQuery,
-  type MetricExploreQuery,
   type TraceExploreQuery
 } from './explore-query';
 

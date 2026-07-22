@@ -6,7 +6,7 @@ import type { BulletinMetricDefinition, BulletinMonitor } from './bulletin-model
 export type BulletinDependencyKind = 'idle' | 'loading' | 'ready' | 'invalid' | 'unavailable' | 'error';
 export type BulletinDependencySelection = 'unverified' | 'valid' | 'stale';
 
-export type BulletinApplication = {
+type BulletinApplication = {
   value: string;
   label: string | null;
   hide: boolean | null;

@@ -62,7 +62,7 @@ export type TraceExploreSubmissionDraft = SharedExploreSubmissionDraft & {
 export type ExploreSubmissionDraft =
   MetricExploreSubmissionDraft | LogExploreSubmissionDraft | TraceExploreSubmissionDraft;
 
-export type ExploreSubmissionError =
+type ExploreSubmissionError =
   | { field: 'aggregation'; code: 'unsupported_aggregation' }
   | { field: 'stepSeconds'; code: 'invalid_step' }
   | { field: 'minDurationMs' | 'maxDurationMs'; code: 'invalid_duration' }
