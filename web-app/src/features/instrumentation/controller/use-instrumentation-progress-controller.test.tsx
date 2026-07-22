@@ -43,9 +43,18 @@ describe('instrumentation progress controller', () => {
     await waitFor(() => expect(routed.router.state.location.search).toContain('instrumentationStage=1'));
     expect(routed.router.state.location.search).not.toMatch(/instrumentationLanguage|token|secret/i);
   });
+
+  it('ignores a completed stage inherited by Router location state', () => {
+    const routed = renderProgress({
+      pathname: '/observability/integration',
+      state: Object.create({ instrumentationStage: 5 }) as unknown
+    });
+
+    expect(routed.current().stage).toBe(1);
+  });
 });
 
-function renderProgress(entry: string) {
+function renderProgress(entry: string | { pathname: string; state: unknown }) {
   let value: ReturnType<typeof useInstrumentationProgressController> | undefined;
   function Probe() {
     value = useInstrumentationProgressController({

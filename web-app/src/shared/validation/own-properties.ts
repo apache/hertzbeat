@@ -16,10 +16,13 @@
  */
 
 /**
- * Guards mutation envelopes before schema libraries perform ordinary property
- * lookup, which can otherwise satisfy required fields from the prototype chain.
+ * Guards untrusted object boundaries before ordinary property lookup can
+ * satisfy required fields from the prototype chain.
  */
-export function hasOwnProperties(value: unknown, properties: readonly PropertyKey[]): value is object {
+export function hasOwnProperties<const Property extends PropertyKey>(
+  value: unknown,
+  properties: readonly Property[]
+): value is Record<Property, unknown> {
   return (
     value !== null &&
     typeof value === 'object' &&

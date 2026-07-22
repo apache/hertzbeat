@@ -9,6 +9,7 @@ import { useCallback, useMemo } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 
 import type { QueryContext } from '@/shared/query-context';
+import { hasOwnProperties } from '@/shared/validation/own-properties';
 
 import type { FlowStage, InstrumentationFlowDraft } from '../model/instrumentation-flow';
 import { clearFlowSelection } from '../model/instrumentation-flow';
@@ -49,7 +50,7 @@ export function useInstrumentationProgressController(context: QueryContext) {
 }
 
 function ephemeralStage(state: unknown): Extract<FlowStage, 4 | 5> | undefined {
-  if (!state || typeof state !== 'object') return undefined;
-  const value = (state as { instrumentationStage?: unknown }).instrumentationStage;
+  if (!hasOwnProperties(state, ['instrumentationStage'])) return undefined;
+  const value = state.instrumentationStage;
   return value === 4 || value === 5 ? value : undefined;
 }
