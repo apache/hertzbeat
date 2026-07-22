@@ -77,6 +77,21 @@ final class ExternalLanguageProcessHarness implements AutoCloseable {
         return virtualEnvironment;
     }
 
+    Map<String, String> createGoEnvironment(Path goBinary) throws IOException {
+        Path goRoot = Files.createDirectories(resolve("go"));
+        Path goPath = Files.createDirectories(goRoot.resolve("gopath"));
+        Path moduleCache = Files.createDirectories(goRoot.resolve("module-cache"));
+        Path buildCache = Files.createDirectories(goRoot.resolve("build-cache"));
+        return Map.of(
+                "PATH", goBinary.getParent() + ":/usr/bin:/bin:/usr/sbin:/sbin",
+                "GOENV", "off",
+                "GOTOOLCHAIN", "local",
+                "CGO_ENABLED", "0",
+                "GOPATH", goPath.toString(),
+                "GOMODCACHE", moduleCache.toString(),
+                "GOCACHE", buildCache.toString());
+    }
+
     Process start(List<String> command, Map<String, String> environment, String label) throws IOException {
         requireCommand(command);
         Path output = outputPath(label);
@@ -205,7 +220,11 @@ final class ExternalLanguageProcessHarness implements AutoCloseable {
             stop(process, Duration.ofSeconds(2));
         }
         try (var paths = Files.walk(root)) {
-            for (Path path : paths.sorted(Comparator.reverseOrder()).toList()) {
+            List<Path> ownedPaths = paths.toList();
+            for (Path path : ownedPaths) {
+                path.toFile().setWritable(true);
+            }
+            for (Path path : ownedPaths.stream().sorted(Comparator.reverseOrder()).toList()) {
                 Files.deleteIfExists(path);
             }
         }
