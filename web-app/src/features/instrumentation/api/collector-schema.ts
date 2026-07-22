@@ -17,8 +17,6 @@
 
 import { z } from 'zod';
 
-export { availableCollectorIntakeSchema, unavailableCollectorIntakeSchema } from '@/shared/collector';
-
 const trimmedTextSchema = z
   .string()
   .min(1)

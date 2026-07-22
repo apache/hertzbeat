@@ -7,8 +7,8 @@
 
 import { z } from 'zod';
 
-export const COLLECTOR_INTAKE_CAPABILITIES = ['otlp_http_protobuf', 'otlp_grpc'] as const;
-export const COLLECTOR_INTAKE_ERROR_CODES = [
+const COLLECTOR_INTAKE_CAPABILITIES = ['otlp_http_protobuf', 'otlp_grpc'] as const;
+const COLLECTOR_INTAKE_ERROR_CODES = [
   'intake_not_advertised',
   'intake_advertisement_invalid',
   'intake_advertisement_unavailable'
@@ -60,7 +60,7 @@ const capabilitySchema = z
     }
   });
 
-export const collectorIntakeAdvertisementRequestSchema = z
+const collectorIntakeAdvertisementRequestSchema = z
   .object({
     schemaVersion: z.literal(1),
     gateway: z.enum(['collector', 'server']),
