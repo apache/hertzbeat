@@ -30,12 +30,15 @@ const safeIntegerSchema = z.number().refine(Number.isSafeInteger, 'Expected a sa
 const positiveIntegerSchema = safeIntegerSchema.refine(value => value > 0, 'Expected a positive integer');
 const nonNegativeIntegerSchema = safeIntegerSchema.refine(value => value >= 0, 'Expected a non-negative integer');
 const positiveJavaIntegerSchema = positiveIntegerSchema.max(2_147_483_647);
-const nullableMapSchema = z.record(
-  z.string().refine(key => Boolean(key.trim()), 'Expected a non-blank key'),
-  z.string()
-).nullable();
+const nullableMapSchema = z
+  .record(
+    z.string().refine(key => Boolean(key.trim()), 'Expected a non-blank key'),
+    z.string()
+  )
+  .nullable();
 const nullableAuditTextSchema = z.string().nullable().optional();
-const nullableLocalDateTimeSchema = z.string()
+const nullableLocalDateTimeSchema = z
+  .string()
   .refine(isLocalDateTime, 'Expected a Java local date-time')
   .nullable()
   .optional();
@@ -84,8 +87,9 @@ export function parseAlertRulePage(value: unknown, query: AlertRuleQuery): Alert
   if (page.totalPages !== Math.ceil(page.totalElements / page.size)) {
     throw new AlertRuleContractError('totalPages is inconsistent');
   }
-  const availableContent = Math.max(0, page.totalElements - page.number * page.size);
-  if (page.content.length > Math.min(page.size, availableContent)) {
+  const remainingElements = Math.max(0, page.totalElements - page.number * page.size);
+  const expectedContentSize = Math.min(page.size, remainingElements);
+  if (page.content.length !== expectedContentSize) {
     throw new AlertRuleContractError('Page content is inconsistent');
   }
   if (new Set(page.content.map(item => item.id)).size !== page.content.length) {
@@ -131,8 +135,15 @@ function isLocalDateTime(value: string) {
   const year = Number(match[1]);
   const month = Number(match[2]);
   const day = Number(match[3]);
-  return month >= 1 && month <= 12 && day >= 1 && day <= daysInMonth(year, month)
-    && Number(match[4]) <= 23 && Number(match[5]) <= 59 && Number(match[6]) <= 59;
+  return (
+    month >= 1 &&
+    month <= 12 &&
+    day >= 1 &&
+    day <= daysInMonth(year, month) &&
+    Number(match[4]) <= 23 &&
+    Number(match[5]) <= 59 &&
+    Number(match[6]) <= 59
+  );
 }
 
 function daysInMonth(year: number, month: number) {

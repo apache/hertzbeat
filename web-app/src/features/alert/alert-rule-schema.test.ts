@@ -42,8 +42,19 @@ const persisted = {
 describe('alert rule wire schemas', () => {
   it('allowlists detail fields and preserves legacy nullable strategy and text', () => {
     expect(parseAlertRuleDetail({ ...persisted, serverOnly: 'discard' })).toEqual(persisted);
-    expect(parseAlertRuleDetail({
-      ...persisted,
+    expect(
+      parseAlertRuleDetail({
+        ...persisted,
+        type: null,
+        datasource: null,
+        expr: null,
+        period: null,
+        times: null,
+        labels: null,
+        annotations: null,
+        template: null
+      })
+    ).toMatchObject({
       type: null,
       datasource: null,
       expr: null,
@@ -52,12 +63,12 @@ describe('alert rule wire schemas', () => {
       labels: null,
       annotations: null,
       template: null
-    })).toMatchObject({
-      type: null, datasource: null, expr: null, period: null, times: null,
-      labels: null, annotations: null, template: null
     });
-    expect(parseAlertRuleDetail({ ...persisted, name: '', expr: '', template: '' }))
-      .toMatchObject({ name: '', expr: '', template: '' });
+    expect(parseAlertRuleDetail({ ...persisted, name: '', expr: '', template: '' })).toMatchObject({
+      name: '',
+      expr: '',
+      template: ''
+    });
   });
 
   it('preserves absent audit fields separately from authoritative null', () => {
@@ -91,29 +102,115 @@ describe('alert rule wire schemas', () => {
   });
 
   it('validates Spring page identity, totals, final-page capacity, and unique ids', () => {
-    expect(parseAlertRulePage({
-      content: [persisted], totalElements: 1, totalPages: 1, number: 0, size: 8, pageable: {}
-    }, query)).toEqual({ content: [persisted], totalElements: 1, totalPages: 1, number: 0, size: 8 });
-    expect(parseAlertRulePage({
-      content: [], totalElements: 1, totalPages: 1, number: 2, size: 8
-    }, { ...query, pageIndex: 2 })).toMatchObject({ content: [], totalElements: 1 });
-    expect(() => parseAlertRulePage({
-      content: [persisted], totalElements: 1, totalPages: 1, number: 2, size: 8
-    }, { ...query, pageIndex: 2 })).toThrow(AlertRuleContractError);
-    expect(() => parseAlertRulePage({
-      content: [], totalElements: 0, totalPages: 0, number: 1, size: 8
-    }, query)).toThrow(AlertRuleContractError);
-    expect(() => parseAlertRulePage({
-      content: [persisted], totalElements: 1, totalPages: 0, number: 0, size: 8
-    }, query)).toThrow(AlertRuleContractError);
-    expect(() => parseAlertRulePage({
-      content: [persisted, persisted], totalElements: 2, totalPages: 1, number: 0, size: 8
-    }, query)).toThrow(AlertRuleContractError);
+    expect(
+      parseAlertRulePage(
+        {
+          content: [persisted],
+          totalElements: 1,
+          totalPages: 1,
+          number: 0,
+          size: 8,
+          pageable: {}
+        },
+        query
+      )
+    ).toEqual({ content: [persisted], totalElements: 1, totalPages: 1, number: 0, size: 8 });
+    expect(
+      parseAlertRulePage(
+        {
+          content: [],
+          totalElements: 1,
+          totalPages: 1,
+          number: 2,
+          size: 8
+        },
+        { ...query, pageIndex: 2 }
+      )
+    ).toMatchObject({ content: [], totalElements: 1 });
+    expect(() =>
+      parseAlertRulePage(
+        {
+          content: [persisted],
+          totalElements: 1,
+          totalPages: 1,
+          number: 2,
+          size: 8
+        },
+        { ...query, pageIndex: 2 }
+      )
+    ).toThrow(AlertRuleContractError);
+    expect(() =>
+      parseAlertRulePage(
+        {
+          content: [],
+          totalElements: 0,
+          totalPages: 0,
+          number: 1,
+          size: 8
+        },
+        query
+      )
+    ).toThrow(AlertRuleContractError);
+    expect(() =>
+      parseAlertRulePage(
+        {
+          content: [persisted],
+          totalElements: 1,
+          totalPages: 0,
+          number: 0,
+          size: 8
+        },
+        query
+      )
+    ).toThrow(AlertRuleContractError);
+    expect(() =>
+      parseAlertRulePage(
+        {
+          content: [persisted, persisted],
+          totalElements: 2,
+          totalPages: 1,
+          number: 0,
+          size: 8
+        },
+        query
+      )
+    ).toThrow(AlertRuleContractError);
+  });
+
+  it('rejects a short non-final Spring page', () => {
+    const content = Array.from({ length: 7 }, (_, index) => ({ ...persisted, id: index + 1 }));
+
+    expect(() =>
+      parseAlertRulePage(
+        {
+          content,
+          totalElements: 17,
+          totalPages: 3,
+          number: 0,
+          size: 8
+        },
+        query
+      )
+    ).toThrow(AlertRuleContractError);
+  });
+
+  it('rejects a short final Spring page', () => {
+    expect(() =>
+      parseAlertRulePage(
+        {
+          content: [],
+          totalElements: 17,
+          totalPages: 3,
+          number: 2,
+          size: 8
+        },
+        { ...query, pageIndex: 2 }
+      )
+    ).toThrow(AlertRuleContractError);
   });
 
   it('accepts preview records and rejects arrays or primitives masquerading as rows', () => {
-    expect(parseAlertRulePreview([{ value: 1, service: 'checkout' }]))
-      .toEqual([{ value: 1, service: 'checkout' }]);
+    expect(parseAlertRulePreview([{ value: 1, service: 'checkout' }])).toEqual([{ value: 1, service: 'checkout' }]);
     expect(parseAlertRulePreview([])).toEqual([]);
     expect(() => parseAlertRulePreview(null)).toThrow(AlertRuleContractError);
     expect(() => parseAlertRulePreview([[]])).toThrow(AlertRuleContractError);
