@@ -141,6 +141,18 @@ describe('route registry', () => {
     );
   });
 
+  it('registers Plugin base management and its singular legacy redirect', () => {
+    expect(getAppRoute('plugins')).toMatchObject({
+      id: 'plugins',
+      path: '/settings/plugins',
+      kind: 'page',
+      resource: { labelKey: 'settingsNavigation.plugins' }
+    });
+    expect(legacyRouteCatalog).toContainEqual(
+      expect.objectContaining({ id: 'legacy-plugins', path: '/setting/plugin', targetRouteId: 'plugins' })
+    );
+  });
+
   it('registers the session lock as a canonical passport-layout page', () => {
     expect(getAppRoute('lock')).toEqual({ id: 'lock', path: '/passport/lock', layout: 'passport', kind: 'page' });
   });

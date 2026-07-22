@@ -204,6 +204,13 @@ export const appRoutes: RouteObject[] = [
                 }
               },
               {
+                ...getAppRouteIdentity('plugins'),
+                lazy: async () => {
+                  const { PluginPage } = await import('@/features/settings/plugin');
+                  return { Component: PluginPage };
+                }
+              },
+              {
                 ...getAppRouteIdentity('monitor-definitions'),
                 lazy: async () => {
                   const { MonitorDefinitionPage } = await import('@/features/settings/monitor-definition');

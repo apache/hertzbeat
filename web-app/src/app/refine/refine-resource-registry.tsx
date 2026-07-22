@@ -187,6 +187,11 @@ export const refineResources: ResourceProps[] = [
     icon: <ApiOutlined />,
     order: 55
   }),
+  routedNavigationResource('plugins', {
+    parent: 'settings',
+    icon: <AppstoreOutlined />,
+    order: 57
+  }),
   routedNavigationResource('monitor-definitions', {
     parent: 'settings',
     icon: <ReadOutlined />,

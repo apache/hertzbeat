@@ -448,6 +448,7 @@
     "channels": "チャネルサービス",
     "tokens": "API トークン",
     "collectors": "コレクター",
+    "plugins": "プラグイン",
     "monitorDefinitions": "監視定義",
     "system": "システム",
     "labels": "ラベル",
@@ -503,6 +504,44 @@
       "unavailable": "監視定義を利用できません。再試行してください。",
       "contract": "サーバーから無効な監視定義レスポンスが返されました。",
       "error": "監視定義の操作に失敗しました。"
+    }
+  },
+  "plugins": {
+    "title": "プラグイン管理",
+    "description": "プラグイン jar をアップロードし、実行可否を管理します。",
+    "upload": "プラグインをアップロード",
+    "uploadTitle": "プラグイン jar をアップロード",
+    "search": "プラグインを検索",
+    "deleteSelected": "選択項目を削除",
+    "loading": "プラグインを読み込み中…",
+    "empty": "プラグインはインストールされていません。",
+    "searchEmpty": "検索条件に一致するプラグインはありません。",
+    "readOnly": "プラグインを変更するには管理者権限が必要です。",
+    "name": "プラグイン名",
+    "status": "状態",
+    "enabled": "有効",
+    "disabled": "無効",
+    "toggle": "{{name}} の状態を変更",
+    "creator": "作成者",
+    "created": "作成日時",
+    "paramCount": "パラメーター",
+    "jarFile": "Jar ファイル",
+    "chooseJar": "メモリ内の .jar ファイルを選択",
+    "initialStatus": "アップロード後に有効化",
+    "deleteTitle": "プラグインを削除",
+    "deleteConfirm": "{{target}} を削除しますか？",
+    "deleteBatchConfirm": "選択した {{target}} 件のプラグインを削除しますか？",
+    "validation": {
+      "name": "プラグイン名を入力してください。",
+      "jarFile": "空でない .jar ファイルを選択してください。"
+    },
+    "notice": { "updated": "プラグインの状態を更新しました。", "deleted": "選択したプラグインを削除しました。" },
+    "failure": {
+      "operation-failed": "サーバーがプラグイン操作を拒否しました。",
+      "forbidden": "この操作には管理者権限が必要です。",
+      "unavailable": "プラグインを利用できません。再試行してください。",
+      "contract": "サーバーから無効なプラグイン応答が返されました。",
+      "error": "プラグイン操作に失敗しました。"
     }
   },
   "collectors": {

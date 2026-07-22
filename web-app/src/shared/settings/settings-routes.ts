@@ -12,6 +12,7 @@ export const settingsPaths = {
   channels: '/settings/notifications/channels',
   tokens: '/settings/tokens',
   collectors: '/settings/collectors',
+  plugins: '/settings/plugins',
   monitorDefinitions: '/settings/monitor-definitions',
   system: '/settings/system',
   labels: '/settings/labels',

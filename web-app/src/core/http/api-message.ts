@@ -63,6 +63,14 @@ export function apiMessagePost(path: string, data: unknown, options?: Pick<Reque
   return apiMessageRequest(path, jsonRequest('POST', data, options));
 }
 
+export function apiMessagePostForm(
+  path: string,
+  data: FormData,
+  options?: Pick<RequestInit, 'signal'>
+): Promise<unknown> {
+  return apiMessageRequest(path, { ...options, method: 'POST', body: data });
+}
+
 export function apiMessagePut(
   path: string,
   data: unknown,

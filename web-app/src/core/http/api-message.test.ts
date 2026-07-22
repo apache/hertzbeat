@@ -20,7 +20,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const { apiFetch } = vi.hoisted(() => ({ apiFetch: vi.fn() }));
 vi.mock('./http-client', () => ({ apiFetch }));
 
-import { ApiMessageError, apiMessageDelete, apiMessageGet, apiMessagePut } from './api-message';
+import { ApiMessageError, apiMessageDelete, apiMessageGet, apiMessagePostForm, apiMessagePut } from './api-message';
 
 describe('api message errors', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -91,6 +91,18 @@ describe('api message errors', () => {
     expect(new Headers(put.headers).get('Content-Type')).toBe('application/json');
     expect(new Headers(put.headers).get('If-Match')).toBe('"revision"');
     expect(new Headers(remove.headers).get('If-Match')).toBe('"revision"');
+  });
+
+  it('posts FormData without overriding the browser multipart boundary', async () => {
+    apiFetch.mockResolvedValue(jsonResponse({ code: 0, msg: null, data: null }));
+    const form = new FormData();
+    form.append('name', 'audit');
+
+    await apiMessagePostForm('/multipart', form);
+
+    expect(apiFetch).toHaveBeenCalledWith('/multipart', expect.objectContaining({ method: 'POST', body: form }));
+    const request = apiFetch.mock.calls[0]?.[1] as RequestInit;
+    expect(new Headers(request.headers).has('Content-Type')).toBe(false);
   });
 
   it.each([

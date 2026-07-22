@@ -448,6 +448,7 @@
     "channels": "Serviços de canal",
     "tokens": "Tokens de API",
     "collectors": "Coletores",
+    "plugins": "Plugins",
     "monitorDefinitions": "Definições de monitor",
     "system": "Sistema",
     "labels": "Rótulos",
@@ -503,6 +504,44 @@
       "unavailable": "As definições de monitor estão indisponíveis. Tente novamente.",
       "contract": "O servidor retornou uma resposta inválida de definição de monitor.",
       "error": "A operação da definição de monitor falhou."
+    }
+  },
+  "plugins": {
+    "title": "Gerenciamento de plugins",
+    "description": "Envie jars de plugins e gerencie sua disponibilidade de execução.",
+    "upload": "Enviar plugin",
+    "uploadTitle": "Enviar jar do plugin",
+    "search": "Pesquisar plugins",
+    "deleteSelected": "Excluir selecionados",
+    "loading": "Carregando plugins…",
+    "empty": "Nenhum plugin está instalado.",
+    "searchEmpty": "Nenhum plugin corresponde à pesquisa atual.",
+    "readOnly": "É necessário acesso de administrador para alterar plugins.",
+    "name": "Nome do plugin",
+    "status": "Status",
+    "enabled": "Ativado",
+    "disabled": "Desativado",
+    "toggle": "Alterar status de {{name}}",
+    "creator": "Criador",
+    "created": "Criado em",
+    "paramCount": "Parâmetros",
+    "jarFile": "Arquivo jar",
+    "chooseJar": "Escolher um arquivo .jar em memória",
+    "initialStatus": "Ativar após o envio",
+    "deleteTitle": "Excluir plugins",
+    "deleteConfirm": "Excluir {{target}}?",
+    "deleteBatchConfirm": "Excluir os {{target}} plugins selecionados?",
+    "validation": { "name": "Informe o nome do plugin.", "jarFile": "Escolha um arquivo .jar não vazio." },
+    "notice": {
+      "updated": "O status do plugin foi atualizado.",
+      "deleted": "Os plugins selecionados foram excluídos."
+    },
+    "failure": {
+      "operation-failed": "O servidor rejeitou a operação do plugin.",
+      "forbidden": "É necessário acesso de administrador para esta operação.",
+      "unavailable": "Os plugins estão indisponíveis. Tente novamente.",
+      "contract": "O servidor retornou uma resposta de plugin inválida.",
+      "error": "A operação do plugin falhou."
     }
   },
   "collectors": {
