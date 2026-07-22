@@ -19,10 +19,8 @@ package org.apache.hertzbeat.manager.pojo.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus;
 
 /**
@@ -30,8 +28,6 @@ import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus;
  */
 @Data
 @Builder
-@AllArgsConstructor
-@NoArgsConstructor
 @Schema(description = "collector summary")
 public class CollectorSummary {
 
@@ -49,4 +45,53 @@ public class CollectorSummary {
 
     @Schema(description = "manager receive time of the runtime status")
     private Instant runtimeStatusReportedAt;
+
+    @Schema(description = "safe application-instrumentation intake advertisement")
+    private CollectorInstrumentationIntake instrumentationIntake;
+
+    public CollectorSummary() {
+        instrumentationIntake = CollectorInstrumentationIntake.notAdvertised("unknown");
+    }
+
+    public CollectorSummary(CollectorInfo collector, int pinMonitorNum, int dispatchMonitorNum,
+                            ManagedOtelRuntimeStatus runtimeStatus, Instant runtimeStatusReportedAt,
+                            CollectorInstrumentationIntake instrumentationIntake) {
+        this.collector = collector;
+        this.pinMonitorNum = pinMonitorNum;
+        this.dispatchMonitorNum = dispatchMonitorNum;
+        this.runtimeStatus = runtimeStatus;
+        this.runtimeStatusReportedAt = runtimeStatusReportedAt;
+        this.instrumentationIntake = instrumentationIntake == null
+                ? CollectorInstrumentationIntake.notAdvertised(collectorIdOrUnknown(collector))
+                : instrumentationIntake;
+    }
+
+    public void setInstrumentationIntake(CollectorInstrumentationIntake instrumentationIntake) {
+        this.instrumentationIntake = instrumentationIntake == null
+                ? CollectorInstrumentationIntake.notAdvertised(collectorIdOrUnknown(collector))
+                : instrumentationIntake;
+    }
+
+    private static String collectorIdOrUnknown(CollectorInfo collector) {
+        return collector == null || collector.getName() == null || collector.getName().isBlank()
+                ? "unknown"
+                : collector.getName();
+    }
+
+    /** Ensures Lombok-built summaries retain the mandatory intake object and its Collector identity. */
+    public static class CollectorSummaryBuilder {
+
+        public CollectorSummary build() {
+            if (instrumentationIntake == null) {
+                instrumentationIntake = CollectorInstrumentationIntake.notAdvertised(collectorIdOrUnknown(collector));
+            }
+            return new CollectorSummary(
+                    collector,
+                    pinMonitorNum,
+                    dispatchMonitorNum,
+                    runtimeStatus,
+                    runtimeStatusReportedAt,
+                    instrumentationIntake);
+        }
+    }
 }
