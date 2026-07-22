@@ -78,10 +78,44 @@ describe('Alert Inhibit read controller', () => {
     api.loadAlertInhibits.mockReturnValueOnce(pending.promise);
 
     const proof = routed.current().rereadAuthoritatively();
+    const rejection = expect(proof).rejects.toMatchObject({ name: 'AlertInhibitUnavailableError' });
     await act(async () => routed.router.navigate('/alerts/inhibits?search=latest&pageIndex=1&pageSize=8'));
     act(() => pending.resolve(alertInhibitPage({ search: 'old', pageIndex: 0, pageSize: 8 }, [])));
 
-    await expect(proof).rejects.toMatchObject({ name: 'AlertInhibitUnavailableError' });
+    await rejection;
+  });
+
+  it('cancels the retired list request and publishes only the latest route query', async () => {
+    const requests: Array<{ query: AlertInhibitQuery; signal: AbortSignal }> = [];
+    api.loadAlertInhibits.mockImplementation((query: AlertInhibitQuery, signal: AbortSignal) => {
+      requests.push({ query, signal });
+      if (query.search === 'latest') return Promise.resolve(alertInhibitPage(query, []));
+      return new Promise((_resolve, reject) => {
+        signal.addEventListener('abort', () => reject(new DOMException('abort', 'AbortError')), { once: true });
+      });
+    });
+    const routed = renderRoutedReadController(['/alerts/inhibits?search=old&pageIndex=0&pageSize=8']);
+    await waitFor(() => expect(requests).toHaveLength(1));
+
+    await act(async () => routed.router.navigate('/alerts/inhibits?search=latest&pageIndex=0&pageSize=8'));
+
+    await waitFor(() => expect(routed.current().state.list.kind).toBe('empty'));
+    expect(requests[0]?.signal.aborted).toBe(true);
+    expect(requests[1]).toMatchObject({ query: { search: 'latest', pageIndex: 0, pageSize: 8 } });
+    expect(requests[1]?.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it('forwards an AbortSignal when rereading the visible projection', async () => {
+    const { result } = renderReadController();
+    await waitFor(() => expect(result.current.state.list.kind).toBe('empty'));
+    api.loadAlertInhibits.mockClear();
+
+    await act(async () => result.current.rereadAuthoritatively());
+
+    expect(api.loadAlertInhibits).toHaveBeenCalledWith(
+      { search: '', pageIndex: 0, pageSize: 8 },
+      expect.any(AbortSignal)
+    );
   });
 });
 

@@ -38,8 +38,12 @@ function buildAlertInhibitListPath(query: AlertInhibitQuery) {
   return `/api/alert/inhibits?${params.toString()}`;
 }
 
-export async function loadAlertInhibits(query: AlertInhibitQuery) {
-  const response = await alertInhibitApiRequest(() => apiMessageGet(buildAlertInhibitListPath(query)));
+export async function loadAlertInhibits(query: AlertInhibitQuery, signal?: AbortSignal) {
+  const path = buildAlertInhibitListPath(query);
+  const response = await alertInhibitApiRequest(
+    () => (signal ? apiMessageGet(path, { signal }) : apiMessageGet(path)),
+    signal
+  );
   return parseAlertInhibitPage(response, query);
 }
 

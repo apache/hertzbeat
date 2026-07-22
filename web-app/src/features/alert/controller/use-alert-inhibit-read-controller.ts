@@ -16,8 +16,8 @@ import {
   type AlertInhibitQuery
 } from '../alert-inhibit-model';
 import type { AlertInhibitListState } from '../model/alert-inhibit-state';
+import { alertInhibitQueryKeys } from './alert-inhibit-query-keys';
 
-const listKey = (query: AlertInhibitQuery) => ['alert-inhibit-policies', query] as const;
 type VisibleQuery = { identity: string; query: AlertInhibitQuery };
 
 export function useAlertInhibitReadController() {
@@ -26,7 +26,11 @@ export function useAlertInhibitReadController() {
   const query = readAlertInhibitQuery(params);
   const source = writeAlertInhibitQuery(query).toString();
   const { value: search, setValue: setSearch } = useStringQueryDraft(source, query.search);
-  const listQuery = useQuery({ queryKey: listKey(query), queryFn: () => loadAlertInhibits(query), retry: false });
+  const listQuery = useQuery({
+    queryKey: alertInhibitQueryKeys.list(query),
+    queryFn: ({ signal }) => loadAlertInhibits(query, signal),
+    retry: false
+  });
   const currentQueryRef = useRef<VisibleQuery>({ identity: source, query });
   useLayoutEffect(() => {
     // A pending command rereads the query currently owned by the visible route.
@@ -35,8 +39,8 @@ export function useAlertInhibitReadController() {
   const rereadAuthoritatively = useCallback(async () => {
     const visible = currentQueryRef.current;
     const page = await queryClient.fetchQuery({
-      queryKey: listKey(visible.query),
-      queryFn: () => loadAlertInhibits(visible.query),
+      queryKey: alertInhibitQueryKeys.list(visible.query),
+      queryFn: ({ signal }) => loadAlertInhibits(visible.query, signal),
       staleTime: 0
     });
     if (currentQueryRef.current.identity !== visible.identity) {

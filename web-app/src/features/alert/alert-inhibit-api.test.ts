@@ -75,6 +75,15 @@ describe('alert inhibit API', () => {
     expect(transport.apiMessageGet).toHaveBeenNthCalledWith(2, '/api/alert/inhibit/9');
   });
 
+  it('forwards the caller AbortSignal for list reads', async () => {
+    const signal = new AbortController().signal;
+    transport.apiMessageGet.mockResolvedValue({ content: [], totalElements: 0, totalPages: 0, number: 0, size: 8 });
+
+    await loadAlertInhibits({ search: '', pageIndex: 0, pageSize: 8 }, signal);
+
+    expect(transport.apiMessageGet).toHaveBeenCalledWith(expect.any(String), { signal });
+  });
+
   it('returns void from POST, PUT, toggle, and DELETE acknowledgements', async () => {
     transport.apiMessagePost.mockResolvedValue({ id: 99, leaked: true });
     transport.apiMessagePut.mockResolvedValue({ id: 9, leaked: true });

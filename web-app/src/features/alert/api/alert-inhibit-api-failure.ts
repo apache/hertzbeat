@@ -19,10 +19,12 @@ export function normalizeAlertInhibitApiFailure(error: unknown) {
 }
 
 /** Runs one transport operation behind the Alert Inhibit domain boundary. */
-export async function alertInhibitApiRequest<T>(operation: () => Promise<T>): Promise<T> {
+export async function alertInhibitApiRequest<T>(operation: () => Promise<T>, signal?: AbortSignal): Promise<T> {
   try {
     return await operation();
   } catch (error) {
+    // Caller cancellation retires query ownership; it is not availability evidence.
+    if (signal?.aborted) throw new DOMException('Request aborted', 'AbortError');
     throw normalizeAlertInhibitApiFailure(error);
   }
 }

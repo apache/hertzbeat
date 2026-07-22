@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest';
 import { ApiMessageError } from '@/core/http/api-message';
 
 import { AlertInhibitRequestFailure } from '../alert-inhibit-model';
-import { normalizeAlertInhibitApiFailure } from './alert-inhibit-api-failure';
+import { alertInhibitApiRequest, normalizeAlertInhibitApiFailure } from './alert-inhibit-api-failure';
 
 describe('Alert Inhibit API failure boundary', () => {
   it.each([
@@ -71,5 +71,17 @@ describe('Alert Inhibit API failure boundary', () => {
 
     const domainError = new Error('domain validation failed');
     expect(normalizeAlertInhibitApiFailure(domainError)).toBe(domainError);
+  });
+
+  it('keeps caller cancellation out of the user-visible failure contract', async () => {
+    const controller = new AbortController();
+    controller.abort();
+
+    await expect(
+      alertInhibitApiRequest(
+        () => Promise.reject(new ApiMessageError('private abort', { cause: new DOMException('abort', 'AbortError') })),
+        controller.signal
+      )
+    ).rejects.toMatchObject({ name: 'AbortError', message: 'Request aborted' });
   });
 });
