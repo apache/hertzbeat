@@ -82,7 +82,7 @@ describe('Token Refine data provider', () => {
 
   it('restricts generation and revocation to their exact custom actions', async () => {
     api.generateToken.mockResolvedValue({ id: 'generated', token: 'hb-once' });
-    api.revokeToken.mockResolvedValue(undefined);
+    api.revokeToken.mockResolvedValue({ id: 7, status: 'deleted' });
 
     await expect(
       tokenDataProvider.custom?.({
@@ -96,7 +96,7 @@ describe('Token Refine data provider', () => {
         url: '/api/account/token/7',
         method: 'delete'
       })
-    ).resolves.toEqual({ data: { id: 7 } });
+    ).resolves.toEqual({ data: { id: 7, status: 'deleted' } });
 
     expect(api.generateToken).toHaveBeenCalledWith({ name: 'Collector', expireSeconds: -1, scope: 'otlp-ingest' });
     expect(api.revokeToken).toHaveBeenCalledWith(7);
@@ -106,6 +106,14 @@ describe('Token Refine data provider', () => {
       code: 'TOKEN_CUSTOM_ACTION_UNSUPPORTED',
       kind: 'invalid',
       writeOutcome: 'rejected'
+    });
+  });
+
+  it('preserves a safe missing revoke result for the controller proof flow', async () => {
+    api.revokeToken.mockResolvedValue({ id: 7, status: 'missing' });
+
+    await expect(tokenDataProvider.custom?.({ url: '/api/account/token/7', method: 'delete' })).resolves.toEqual({
+      data: { id: 7, status: 'missing' }
     });
   });
 

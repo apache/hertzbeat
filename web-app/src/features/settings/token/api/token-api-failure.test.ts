@@ -27,7 +27,7 @@ describe('Token API failure boundary', () => {
       'unavailable',
       'uncertain'
     ],
-    ['HTTP rejection', new ApiMessageError('private', { status: 400 }), 'write', 'error', 'rejected'],
+    ['permission rejection', new ApiMessageError('private', { status: 403 }), 'write', 'error', 'rejected'],
     [
       'HTTP rejection with business code',
       new ApiMessageError('private', { code: 20, status: 422 }),

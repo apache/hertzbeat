@@ -20,52 +20,37 @@ import { describe, expect, it } from 'vitest';
 import {
   parseGeneratedTokenReceipt,
   parseTokenGenerationDraft,
+  parseTokenMutationResponse,
   parseTokenResourceRecords,
   TokenApiContractError
 } from './token-schema';
 
 describe('Token API schemas', () => {
-  it('allowlists list metadata before it enters Refine state', () => {
-    const [record] = parseTokenResourceRecords([
-      {
-        id: 7,
-        name: 'Collector',
-        tokenHash: 'must-never-enter-client-state',
-        tokenMask: 'eyJh****once',
-        tokenScope: 'otlp-ingest',
-        workspaceId: 'default',
-        creator: 'admin',
-        gmtCreate: '2026-07-16T20:00:00',
-        expireTime: null,
-        lastUsedTime: 1_000,
-        unknown: 'discard-me'
-      }
-    ]);
+  it('parses the complete safe list summary before it enters Refine state', () => {
+    const [record] = parseTokenResourceRecords([tokenSummaryWire()]);
 
     expect(record).toEqual({
-      id: 7,
-      name: 'Collector',
-      tokenMask: 'eyJh****once',
-      tokenScope: 'otlp-ingest',
-      workspaceId: 'default',
-      creator: 'admin',
-      gmtCreate: '2026-07-16T20:00:00',
-      expireTime: null,
-      lastUsedTime: 1_000
+      ...tokenSummaryWire(),
+      tokenScope: 'otlp-ingest'
     });
-    expect(JSON.stringify(record)).not.toMatch(/must-never|discard-me/);
   });
 
-  it('keeps unknown scopes honest and rejects unsafe metadata', () => {
-    expect(parseTokenResourceRecords([{ id: 8, tokenScope: 'future-scope' }])[0]?.tokenScope).toBeNull();
+  it('keeps unknown scopes honest and rejects raw credentials, hashes, and unknown fields', () => {
+    expect(
+      parseTokenResourceRecords([{ ...tokenSummaryWire(), id: 8, tokenScope: 'future-scope' }])[0]?.tokenScope
+    ).toBeNull();
     expect(() => parseTokenResourceRecords(null)).toThrow(TokenApiContractError);
-    expect(() => parseTokenResourceRecords([{ id: 'not-a-number' }])).toThrow(TokenApiContractError);
-    expect(() => parseTokenResourceRecords([{ id: 9, tokenMask: 'plaintext-token-value' }])).toThrow(
+    expect(() => parseTokenResourceRecords([{ ...tokenSummaryWire(), id: 'not-a-number' }])).toThrow(
       TokenApiContractError
     );
-    expect(() => parseTokenResourceRecords([{ id: 10, gmtCreate: '' }])).toThrow(TokenApiContractError);
-    expect(() => parseTokenResourceRecords([{ id: 10, expireTime: 'not-a-date' }])).toThrow(TokenApiContractError);
-    expect(() => parseTokenResourceRecords([{ id: 10, lastUsedTime: Number.POSITIVE_INFINITY }])).toThrow(
+    for (const unsafe of [
+      { token: 'raw-token' },
+      { tokenHash: 'server-hash' },
+      { unknown: 'discarding-is-not-validation' }
+    ]) {
+      expect(() => parseTokenResourceRecords([{ ...tokenSummaryWire(), ...unsafe }])).toThrow(TokenApiContractError);
+    }
+    expect(() => parseTokenResourceRecords([{ ...tokenSummaryWire(), tokenMask: 'plaintext-token-value' }])).toThrow(
       TokenApiContractError
     );
   });
@@ -76,7 +61,17 @@ describe('Token API schemas', () => {
       token: '  hb-exact-secret  '
     });
     expect(() => parseGeneratedTokenReceipt({ token: '   ' })).toThrow(TokenApiContractError);
+    expect(() => parseGeneratedTokenReceipt({ token: 'hb-secret', id: 7 })).toThrow(TokenApiContractError);
     expect(() => parseGeneratedTokenReceipt(undefined)).toThrow(TokenApiContractError);
+  });
+
+  it('parses only id-bound deleted or missing revoke results', () => {
+    expect(parseTokenMutationResponse({ id: 7, status: 'deleted' })).toEqual({ id: 7, status: 'deleted' });
+    expect(parseTokenMutationResponse({ id: 8, status: 'missing' })).toEqual({ id: 8, status: 'missing' });
+    expect(() => parseTokenMutationResponse({ id: 7, status: 'success' })).toThrow(TokenApiContractError);
+    expect(() => parseTokenMutationResponse({ id: 7, status: 'deleted', token: 'raw-token' })).toThrow(
+      TokenApiContractError
+    );
   });
 
   it('validates provider variables into a domain draft', () => {
@@ -91,9 +86,32 @@ describe('Token API schemas', () => {
       TokenApiContractError
     );
     expect(() =>
+      parseTokenGenerationDraft({ name: 'Collector', expireSeconds: -1, scope: 'otlp-ingest', token: 'raw-token' })
+    ).toThrow(TokenApiContractError);
+    expect(() =>
       parseTokenGenerationDraft(
         Object.create({ name: 'Inherited', expireSeconds: -1, scope: 'otlp-ingest' }) as unknown
       )
     ).toThrow(TokenApiContractError);
   });
 });
+
+function tokenSummaryWire() {
+  return {
+    id: 7,
+    name: 'Collector',
+    tokenMask: 'eyJh****once',
+    tokenScope: 'otlp-ingest',
+    workspaceId: 'default',
+    tokenAudience: 'collector-intake',
+    collectorId: 'collector-a',
+    allowedSignals: 'metrics,logs,traces',
+    status: 1,
+    creator: 'admin',
+    gmtCreate: '2026-07-16T20:00:00',
+    expireTime: null,
+    lastUsedTime: 1_000,
+    revokedTime: null,
+    revokedBy: null
+  };
+}

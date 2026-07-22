@@ -24,6 +24,7 @@ import {
   isTokenScope,
   type GeneratedTokenReceipt,
   type TokenDraft,
+  type TokenMutationResult,
   type TokenResourceRecord,
   type TokenScope
 } from '../model/token-model';
@@ -39,37 +40,58 @@ const safePositiveIntegerSchema = z
   .number()
   .refine(Number.isSafeInteger)
   .refine(value => value > 0);
-const nullableTextSchema = z.string().nullish();
+const nullableTextSchema = z.string().nullable();
 // Spring serializes LocalDateTime as text. Numeric timestamps remain accepted
 // only for compatibility with the pre-migration frontend contract.
 const nullableTimestampSchema = z
   .union([z.string().refine(value => value.trim() !== '' && Number.isFinite(Date.parse(value))), z.number().finite()])
-  .nullish();
+  .nullable();
 
-const tokenWireSchema = z.object({
-  id: safePositiveIntegerSchema,
-  name: nullableTextSchema,
-  tokenMask: z
-    .string()
-    .regex(/^.{4}\*{4}.{4}$/)
-    .nullish(),
-  tokenScope: nullableTextSchema,
-  workspaceId: nullableTextSchema,
-  creator: nullableTextSchema,
-  gmtCreate: nullableTimestampSchema,
-  expireTime: nullableTimestampSchema,
-  lastUsedTime: nullableTimestampSchema
-});
+const tokenWireSchema = z
+  .object({
+    id: safePositiveIntegerSchema,
+    name: nullableTextSchema,
+    tokenMask: z
+      .string()
+      .regex(/^.{4}\*{4}.{4}$/)
+      .nullable(),
+    tokenScope: nullableTextSchema,
+    workspaceId: nullableTextSchema,
+    tokenAudience: nullableTextSchema,
+    collectorId: nullableTextSchema,
+    allowedSignals: nullableTextSchema,
+    status: z.number().int().min(-128).max(127).nullable(),
+    creator: nullableTextSchema,
+    gmtCreate: nullableTimestampSchema,
+    expireTime: nullableTimestampSchema,
+    lastUsedTime: nullableTimestampSchema,
+    revokedTime: nullableTimestampSchema,
+    revokedBy: nullableTextSchema
+  })
+  .strict();
 
-const generatedTokenWireSchema = z.object({
-  token: z.string().refine(value => value.trim() !== '')
-});
+const generatedTokenWireSchema = z
+  .object({
+    token: z.string().refine(value => value.trim() !== '')
+  })
+  .strict();
 
-const tokenDraftInputSchema = z.object({
-  name: z.string().refine(value => value.trim() !== ''),
-  expireSeconds: z.number().refine(value => tokenExpirationDefinitions.some(definition => definition.value === value)),
-  scope: z.custom<TokenScope>(isTokenScope)
-});
+const tokenMutationWireSchema = z
+  .object({
+    id: safePositiveIntegerSchema,
+    status: z.enum(['deleted', 'missing'])
+  })
+  .strict();
+
+const tokenDraftInputSchema = z
+  .object({
+    name: z.string().refine(value => value.trim() !== ''),
+    expireSeconds: z
+      .number()
+      .refine(value => tokenExpirationDefinitions.some(definition => definition.value === value)),
+    scope: z.custom<TokenScope>(isTokenScope)
+  })
+  .strict();
 
 type TokenWire = z.output<typeof tokenWireSchema>;
 
@@ -83,6 +105,12 @@ export function parseGeneratedTokenReceipt(value: unknown): GeneratedTokenReceip
   const result = generatedTokenWireSchema.safeParse(value);
   if (!result.success) throw new TokenApiContractError();
   return { id: 'generated', token: result.data.token };
+}
+
+export function parseTokenMutationResponse(value: unknown): TokenMutationResult {
+  const result = tokenMutationWireSchema.safeParse(value);
+  if (!result.success) throw new TokenApiContractError();
+  return result.data;
 }
 
 export function parseTokenGenerationDraft(value: unknown): TokenDraft {
@@ -103,10 +131,16 @@ function mapTokenRecord(wire: TokenWire): TokenResourceRecord {
     tokenMask: wire.tokenMask ?? null,
     tokenScope: readKnownScope(wire.tokenScope),
     workspaceId: wire.workspaceId ?? null,
+    tokenAudience: wire.tokenAudience,
+    collectorId: wire.collectorId,
+    allowedSignals: wire.allowedSignals,
+    status: wire.status,
     creator: wire.creator ?? null,
     gmtCreate: wire.gmtCreate ?? null,
     expireTime: wire.expireTime ?? null,
-    lastUsedTime: wire.lastUsedTime ?? null
+    lastUsedTime: wire.lastUsedTime ?? null,
+    revokedTime: wire.revokedTime,
+    revokedBy: wire.revokedBy
   };
 }
 

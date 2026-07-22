@@ -35,15 +35,26 @@ export type TokenResourceRecord = {
   tokenMask: string | null;
   tokenScope: TokenScope | null;
   workspaceId: string | null;
+  tokenAudience: string | null;
+  collectorId: string | null;
+  allowedSignals: string | null;
+  status: number | null;
   creator: string | null;
   gmtCreate: TokenTimeValue;
   expireTime: TokenTimeValue;
   lastUsedTime: TokenTimeValue;
+  revokedTime: TokenTimeValue;
+  revokedBy: string | null;
 };
 
 export type GeneratedTokenReceipt = {
   id: 'generated';
   token: string;
+};
+
+export type TokenMutationResult = {
+  id: number;
+  status: 'deleted' | 'missing';
 };
 
 export type TokenGenerationRecovery = {

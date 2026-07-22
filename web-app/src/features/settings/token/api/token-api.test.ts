@@ -41,14 +41,14 @@ describe('token API', () => {
   it('uses the established list, generate, and revoke endpoints', async () => {
     apiMessageGet.mockResolvedValueOnce([]);
     apiMessagePost.mockResolvedValueOnce({ token: 'hb-once' });
-    apiMessageDelete.mockResolvedValueOnce(undefined);
+    apiMessageDelete.mockResolvedValueOnce({ id: 7, status: 'deleted' });
 
     await expect(loadTokens()).resolves.toEqual([]);
     await expect(generateToken({ ...createTokenDraft(), name: 'collector' })).resolves.toEqual({
       id: 'generated',
       token: 'hb-once'
     });
-    await expect(revokeToken(7)).resolves.toBeUndefined();
+    await expect(revokeToken(7)).resolves.toEqual({ id: 7, status: 'deleted' });
 
     expect(apiMessageGet).toHaveBeenCalledWith('/api/account/token');
     expect(apiMessagePost).toHaveBeenCalledWith(
@@ -57,6 +57,17 @@ describe('token API', () => {
     );
     expect(apiMessageDelete).toHaveBeenCalledWith('/api/account/token/7');
     expect(JSON.stringify(apiMessagePost.mock.calls)).not.toContain('hb-once');
+  });
+
+  it('accepts an id-bound missing revoke result and rejects mismatched or unsafe evidence', async () => {
+    apiMessageDelete
+      .mockResolvedValueOnce({ id: 7, status: 'missing' })
+      .mockResolvedValueOnce({ id: 8, status: 'deleted' })
+      .mockResolvedValueOnce({ id: 7, status: 'deleted', token: 'raw-token' });
+
+    await expect(revokeToken(7)).resolves.toEqual({ id: 7, status: 'missing' });
+    await expect(revokeToken(7)).rejects.toMatchObject({ kind: 'invalid', writeOutcome: 'uncertain' });
+    await expect(revokeToken(7)).rejects.toMatchObject({ kind: 'invalid', writeOutcome: 'uncertain' });
   });
 
   it('owns generation serialization and exact revoke endpoint recognition', () => {

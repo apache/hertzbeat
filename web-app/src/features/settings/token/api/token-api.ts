@@ -21,6 +21,7 @@ import type { TokenDraft } from '../model/token-model';
 import {
   parseGeneratedTokenReceipt,
   parseTokenGenerationDraft,
+  parseTokenMutationResponse,
   parseTokenResourceRecords,
   TokenApiContractError
 } from './token-schema';
@@ -44,7 +45,11 @@ export async function generateToken(draft: TokenDraft) {
 }
 
 export function revokeToken(id: number) {
-  return tokenApiRequest('write', () => apiMessageDelete(tokenRevokeActionUrl(id)));
+  return tokenApiRequest('write', async () => {
+    const result = parseTokenMutationResponse(await apiMessageDelete(tokenRevokeActionUrl(id)));
+    if (result.id !== id) throw new TokenApiContractError();
+    return result;
+  });
 }
 
 export function buildGenerateTokenPath(draft: TokenDraft) {

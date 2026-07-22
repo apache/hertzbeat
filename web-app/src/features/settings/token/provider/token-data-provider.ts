@@ -80,8 +80,7 @@ export const tokenDataProvider: DataProvider = {
       }
       const revokeId = params.method === 'delete' ? parseTokenRevokeActionUrl(params.url) : null;
       if (revokeId !== null) {
-        await revokeToken(revokeId);
-        return { data: adaptRefineRecord<TData>({ id: revokeId }) };
+        return { data: adaptRefineRecord<TData>(await revokeToken(revokeId)) };
       }
       throw rejectedFailure('TOKEN_CUSTOM_ACTION_UNSUPPORTED');
     });

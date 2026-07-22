@@ -233,6 +233,17 @@ describe('Token resource controller', () => {
     expect(JSON.stringify(refine.notification.mock.calls)).not.toContain('hb_old_secret');
   });
 
+  it('closes a generation draft without dispatching a write', () => {
+    const { result } = renderHook(() => useTokenResourceController());
+
+    act(() => result.current.openGenerator());
+    act(() => result.current.updateDraft({ name: 'Cancelled', expireSeconds: -1, scope: 'api-admin' }));
+    act(() => result.current.closeGenerator());
+
+    expect(result.current.state.draft).toBeNull();
+    expect(refine.custom).not.toHaveBeenCalled();
+  });
+
   it.each(ambiguousWriteFailures)(
     'retains a non-retryable generation receipt after an ambiguous %s outcome',
     async (_label, failure) => {
@@ -257,20 +268,23 @@ describe('Token resource controller', () => {
     }
   );
 
-  it('confirms revocation only after an authoritative list reread', async () => {
-    refine.custom.mockResolvedValue({ data: { id: 7 } });
-    refine.refetch.mockResolvedValue({ data: { data: [], total: 0 }, isError: false });
-    const { result } = renderHook(() => useTokenResourceController());
+  it.each(['deleted', 'missing'] as const)(
+    'confirms a %s revocation result only after an authoritative list reread',
+    async status => {
+      refine.custom.mockResolvedValue({ data: { id: 7, status } });
+      refine.refetch.mockResolvedValue({ data: { data: [], total: 0 }, isError: false });
+      const { result } = renderHook(() => useTokenResourceController());
 
-    await act(async () => result.current.revoke(7));
+      await act(async () => result.current.revoke(7));
 
-    expect(refine.custom).toHaveBeenCalledWith({ url: tokenRevokeActionUrl(7), method: 'delete' });
-    expect(refine.refetch).toHaveBeenCalledTimes(1);
-    expect(refine.notification).toHaveBeenCalledWith({ message: 'token.revokeSuccess', type: 'success' });
-  });
+      expect(refine.custom).toHaveBeenCalledWith({ url: tokenRevokeActionUrl(7), method: 'delete' });
+      expect(refine.refetch).toHaveBeenCalledTimes(1);
+      expect(refine.notification).toHaveBeenCalledWith({ message: 'token.revokeSuccess', type: 'success' });
+    }
+  );
 
   it('admits only one revoke command when the same row is submitted twice in one tick', async () => {
-    const revocation = deferred<{ data: { id: number } }>();
+    const revocation = deferred<{ data: { id: number; status: 'deleted' } }>();
     refine.custom.mockReturnValue(revocation.promise);
     refine.refetch.mockResolvedValue({ data: { data: [], total: 0 }, isError: false });
     const { result } = renderHook(() => useTokenResourceController());
@@ -285,12 +299,12 @@ describe('Token resource controller', () => {
     expect(refine.custom).toHaveBeenCalledTimes(1);
     expect(result.current.state.revokingId).toBe(7);
 
-    revocation.resolve({ data: { id: 7 } });
+    revocation.resolve({ data: { id: 7, status: 'deleted' } });
     await act(async () => Promise.all([first!, second!]));
   });
 
   it('does not overlap revocations whose completions could clear each other state', async () => {
-    const revocation = deferred<{ data: { id: number } }>();
+    const revocation = deferred<{ data: { id: number; status: 'deleted' } }>();
     refine.custom.mockReturnValue(revocation.promise);
     refine.refetch.mockResolvedValue({ data: { data: [], total: 0 }, isError: false });
     const { result } = renderHook(() => useTokenResourceController());
@@ -306,13 +320,13 @@ describe('Token resource controller', () => {
     expect(refine.custom).toHaveBeenCalledTimes(1);
     expect(result.current.state.revokingId).toBe(7);
 
-    revocation.resolve({ data: { id: 7 } });
+    revocation.resolve({ data: { id: 7, status: 'deleted' } });
     await act(async () => first!);
     expect(result.current.state.revokingId).toBeNull();
   });
 
   it('keeps revocation unconfirmed when the authoritative list still contains the id', async () => {
-    refine.custom.mockResolvedValue({ data: { id: 7 } });
+    refine.custom.mockResolvedValue({ data: { id: 7, status: 'deleted' } });
     const { result } = renderHook(() => useTokenResourceController());
 
     await act(async () => result.current.revoke(7));
@@ -327,7 +341,7 @@ describe('Token resource controller', () => {
   });
 
   it('keeps revocation in proof-only recovery when list totals contradict apparent absence', async () => {
-    refine.custom.mockResolvedValue({ data: { id: 7 } });
+    refine.custom.mockResolvedValue({ data: { id: 7, status: 'deleted' } });
     refine.refetch.mockResolvedValue({ data: { data: [], total: 1 }, isError: false });
     const { result } = renderHook(() => useTokenResourceController());
 
@@ -340,7 +354,7 @@ describe('Token resource controller', () => {
   });
 
   it('keeps revocation unconfirmed when its authoritative reread fails', async () => {
-    refine.custom.mockResolvedValue({ data: { id: 7 } });
+    refine.custom.mockResolvedValue({ data: { id: 7, status: 'missing' } });
     refine.refetch.mockRejectedValue(unavailableFailure());
     const { result } = renderHook(() => useTokenResourceController());
 
@@ -400,7 +414,7 @@ describe('Token resource controller', () => {
       .mockRejectedValueOnce(rejected)
       .mockResolvedValueOnce({ data: { id: 'generated', token: 'hb_generated_once' } })
       .mockRejectedValueOnce(rejected)
-      .mockResolvedValueOnce({ data: { id: 7 } });
+      .mockResolvedValueOnce({ data: { id: 7, status: 'deleted' } });
     refine.refetch
       .mockResolvedValueOnce({ data: { data: [record], total: 1 }, isError: false })
       .mockResolvedValueOnce({ data: { data: [], total: 0 }, isError: false });
