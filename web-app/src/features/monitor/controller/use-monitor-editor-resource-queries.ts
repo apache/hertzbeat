@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { useQuery } from '@tanstack/react-query';
+import { skipToken, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { loadMonitorApps, loadMonitorCollectors, loadMonitorDetail, loadMonitorParamDefines } from '../api/monitor-api';
@@ -29,6 +29,7 @@ export function useMonitorEditorResourceQueries(input: MonitorEditorResourceInpu
 }
 
 function useMonitorEditorBaseQueries(input: MonitorEditorResourceInput) {
+  const detailId = input.mode === 'edit' ? input.id : undefined;
   const apps = useQuery({
     queryKey: monitorQueryKeys.apps(),
     queryFn: ({ signal }) => loadMonitorApps(signal),
@@ -42,9 +43,8 @@ function useMonitorEditorBaseQueries(input: MonitorEditorResourceInput) {
     retry: false
   });
   const detail = useQuery({
-    queryKey: monitorQueryKeys.detail(input.id),
-    queryFn: ({ signal }) => loadMonitorDetail(input.id!, signal),
-    enabled: input.mode === 'edit' && input.id !== undefined,
+    queryKey: monitorQueryKeys.detail(detailId),
+    queryFn: detailId === undefined ? skipToken : ({ signal }) => loadMonitorDetail(detailId, signal),
     retry: false
   });
   return { apps, collectors, detail };

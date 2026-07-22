@@ -34,6 +34,8 @@ export async function saveAndVerifyMonitor(
   signal: AbortSignal,
   ownsOperation: () => boolean
 ) {
+  const editId = input.mode === 'edit' ? input.id : undefined;
+  if (input.mode === 'edit' && editId === undefined) return invalidMonitorWriteEvidence<MonitorDetail>();
   await saveMonitor(input.mode, payload, signal);
   // A successful write remains authoritative even if proof is later cancelled or unavailable.
   markAcknowledgedMonitorSave(input);
@@ -41,9 +43,9 @@ export async function saveAndVerifyMonitor(
   let proof: MonitorDetail;
   try {
     proof =
-      input.mode === 'edit'
-        ? await loadMonitorDetail(input.id!, signal)
-        : await loadNewMonitorEvidence(payload.monitor.name ?? '', payload.monitor.app ?? '', signal);
+      editId === undefined
+        ? await loadNewMonitorEvidence(payload.monitor.name ?? '', payload.monitor.app ?? '', signal)
+        : await loadMonitorDetail(editId, signal);
   } catch (error) {
     return classifyMonitorReadError(error) === 'unavailable'
       ? unavailableMonitorWrite()

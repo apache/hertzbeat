@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { useQuery } from '@tanstack/react-query';
+import { skipToken, useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { classifyMonitorDetailReadError, loadMonitorDetail } from '../api/monitor-api';
@@ -32,8 +32,7 @@ export function useMonitorDetailController() {
   const returnTo = safeMonitorReturnTo(searchParams.get('returnTo'));
   const query = useQuery({
     queryKey: monitorQueryKeys.detail(id),
-    queryFn: ({ signal }) => loadMonitorDetail(id!, signal),
-    enabled: id !== undefined,
+    queryFn: id === undefined ? skipToken : ({ signal }) => loadMonitorDetail(id, signal),
     retry: false
   });
   return {
