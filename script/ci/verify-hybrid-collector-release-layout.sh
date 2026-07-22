@@ -32,12 +32,13 @@ release_workflow=.github/workflows/hybrid-collector-release.yml
 release_scanner=script/ci/verify-hybrid-collector-release-content.py
 release_scanner_test=script/ci/test_verify_hybrid_collector_release_content.py
 native_package_verifier=script/ci/verify-hybrid-collector-native-package.sh
+jvm_package_verifier=script/ci/verify-hybrid-collector-jvm-package.sh
 native_image_verifier=script/ci/verify-hybrid-collector-native-image.sh
 native_container_context=script/ci/prepare-hybrid-collector-native-container-context.sh
 
 for required in "$dockerfile" "$foreground" "$systemd_unit" "$systemd_installer" "$systemd_readme" \
   "$release_assets" "$release_workflow" \
-  "$release_scanner" "$release_scanner_test" "$native_package_verifier" "$native_image_verifier" \
+  "$release_scanner" "$release_scanner_test" "$native_package_verifier" "$jvm_package_verifier" "$native_image_verifier" \
   "$native_container_context"; do
   if [ ! -f "$required" ]; then
     echo "missing Hybrid Collector release file: $required" >&2
@@ -98,8 +99,9 @@ grep -q 'java-version: 25' "$release_workflow"
 grep -q 'test_verify_hybrid_collector_release_content.py' "$release_workflow"
 grep -q 'test_prepare_hybrid_collector_native_container_context.py' "$release_workflow"
 grep -q -- '--source' "$release_workflow"
-grep -q -- '--jvm' "$release_workflow"
+grep -q -- '--jvm' "$jvm_package_verifier"
 grep -q -- '--native' "$native_package_verifier"
+grep -q 'verify-hybrid-collector-jvm-package.sh' "$release_workflow"
 grep -q 'verify-hybrid-collector-native-image.sh' "$release_workflow"
 grep -q 'prepare-hybrid-collector-native-container-context.sh' "$release_workflow"
 grep -q 'context: target/native-container-context' "$release_workflow"
@@ -115,5 +117,21 @@ if [ -z "$verify_line" ] || [ -z "$extract_line" ] || [ "$verify_line" -ge "$ext
   echo "native image must verify its archive before explicit extraction" >&2
   exit 1
 fi
+
+for descriptor in script/assembly/collector/assembly-macos-arm64.xml \
+  script/assembly/collector/assembly-macos-amd64.xml \
+  script/assembly/collector/assembly-linux-arm64.xml \
+  script/assembly/collector/assembly-linux-amd64.xml \
+  script/assembly/collector/assembly-windows-64.xml; do
+  grep -Fq '<directory>../../script/assembly/collector/bin</directory>' "$descriptor"
+  grep -Fq '<directory>../../jdk/' "$descriptor"
+  grep -Fq '<directory>../../script/ext-lib</directory>' "$descriptor"
+  grep -Fq '<directory>../../</directory>' "$descriptor"
+  grep -Fq '<directory>../../material/licenses/collector</directory>' "$descriptor"
+  if grep -Eq '<directory>\.\./[^.]' "$descriptor"; then
+    echo "platform JVM descriptor contains a stale module-relative input: $descriptor" >&2
+    exit 1
+  fi
+done
 
 echo "Hybrid Collector release layout contract passed"

@@ -77,7 +77,7 @@ jobs:
             -Pcluster -DskipTests package
           archive=$(find dist -maxdepth 1 -type f -name 'apache-hertzbeat-collector-*-bin.tar.gz' -print -quit)
           test -n "$archive"
-          python3 script/ci/verify-hybrid-collector-release-content.py --jvm "$archive"
+          sh ./script/ci/verify-hybrid-collector-jvm-package.sh "$archive" generic
 
   source-policy:
     strategy:

@@ -42,7 +42,7 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
     <fileSets>
         <!--All script files under the bin directory are output to the bin directory after packaging-->
         <fileSet>
-            <directory>../script/assembly/collector/bin</directory>
+            <directory>../../script/assembly/collector/bin</directory>
             <!-- Whether to perform property replacement, that is, use ${project.artifactId} -->
             <filtered>true</filtered>
             <outputDirectory>bin</outputDirectory>
@@ -74,7 +74,7 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
 
         <!-- copy jdk -->
         <fileSet>
-            <directory>../jdk/linux-arm64</directory>
+            <directory>../../jdk/linux-arm64</directory>
             <outputDirectory>java</outputDirectory>
         </fileSet>
 
@@ -103,7 +103,7 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
 
         <!-- external lib -->
         <fileSet>
-            <directory>../script/ext-lib</directory>
+            <directory>../../script/ext-lib</directory>
             <includes>
                 <include>**/*</include>
             </includes>
@@ -112,14 +112,14 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
 
         <!-- license -->
         <fileSet>
-            <directory>../</directory>
+            <directory>../../</directory>
             <outputDirectory>/</outputDirectory>
             <includes>
                 <include>README.md</include>
             </includes>
         </fileSet>
         <fileSet>
-            <directory>../material/licenses/collector</directory>
+            <directory>../../material/licenses/collector</directory>
             <outputDirectory>/</outputDirectory>
             <includes>
                 <include>LICENSE</include>
@@ -127,7 +127,7 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
             </includes>
         </fileSet>
         <fileSet>
-            <directory>../material/licenses/collector</directory>
+            <directory>../../material/licenses/collector</directory>
             <outputDirectory>licenses</outputDirectory>
             <includes>
                 <include>LICENSE-*</include>
