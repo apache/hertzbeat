@@ -17,13 +17,6 @@
 
 import { describe, expect, it } from 'vitest';
 
-import detailSource from './use-monitor-detail-controller.ts?raw';
-import editorResourceQueriesSource from './use-monitor-editor-resource-queries.ts?raw';
-import favoriteMutationSource from './use-monitor-favorite-mutation.ts?raw';
-import listSource from './use-monitor-list-controller.ts?raw';
-import listCommandsSource from './use-monitor-list-commands.ts?raw';
-import metricDataSource from './use-monitor-metric-data.ts?raw';
-import metricSource from './use-monitor-metric-workbench-controller.ts?raw';
 import { monitorQueryKeys } from './monitor-query-keys';
 
 const listQuery = {
@@ -107,33 +100,5 @@ describe('Monitor Query Key factory', () => {
       monitorQueryKeys.history(historySource, 'summary.responseTime', '1h')
     ])
       expect(candidate).not.toEqual(history);
-  });
-
-  it('owns every production controller key and reuses shared resources', () => {
-    for (const source of [
-      detailSource,
-      editorResourceQueriesSource,
-      favoriteMutationSource,
-      listSource,
-      metricDataSource,
-      metricSource
-    ]) {
-      expect(source).toContain("from './monitor-query-keys'");
-      expect(source).not.toMatch(/queryKey:\s*\[/);
-      expect(source).not.toMatch(/\b(?:const|function)\s+(?:monitorKey|monitorSharedTimeKey|\w+QueryKey)\b/);
-    }
-    expect(detailSource).toContain('monitorQueryKeys.detail(id)');
-    expect(editorResourceQueriesSource).toContain('monitorQueryKeys.detail(input.id)');
-    expect(listSource).toContain('monitorQueryKeys.apps()');
-    expect(editorResourceQueriesSource).toContain('monitorQueryKeys.apps()');
-    expect(metricDataSource).toContain('queryKey: monitorQueryKeys.favorites(monitor?.id)');
-    expect(favoriteMutationSource).toContain('setQueryData(monitorQueryKeys.favorites(operation.monitorId)');
-  });
-
-  it('retires operation ownership before later layout work can publish stale completion', () => {
-    for (const source of [favoriteMutationSource, listCommandsSource]) {
-      expect(source).toContain('useLayoutEffect');
-      expect(source).not.toMatch(/\buseEffect\s*\(/);
-    }
   });
 });

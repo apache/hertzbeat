@@ -356,6 +356,26 @@ test('keeps Status routes on the feature public entry', () => {
   assert.match(rejectedResult.output, /status-router-public-entry-only/);
 });
 
+test('keeps Monitor routes on the feature public entry', () => {
+  const allowedFixture = createProject({
+    'src/features/monitor/index.ts': 'export const MonitorListPage = true;',
+    'src/app/router.tsx': "import { MonitorListPage } from '@/features/monitor'; export const route = MonitorListPage;"
+  });
+  const rejectedFixture = createProject({
+    'src/features/monitor/index.ts': 'export const MonitorListPage = true;',
+    'src/features/monitor/pages/monitor-list-page.tsx': 'export const MonitorListPage = true;',
+    'src/app/router.tsx':
+      "import { MonitorListPage } from '@/features/monitor/pages/monitor-list-page'; export const route = MonitorListPage;"
+  });
+
+  const allowedResult = cruise(allowedFixture);
+  const rejectedResult = cruise(rejectedFixture);
+
+  assert.equal(allowedResult.status, 0, allowedResult.output);
+  assert.notEqual(rejectedResult.status, 0, rejectedResult.output);
+  assert.match(rejectedResult.output, /monitor-router-public-entry-only/);
+});
+
 function createProject(files) {
   const directory = mkdtempSync(join(tmpdir(), 'hertzbeat-architecture-'));
   temporaryProjects.push(directory);
