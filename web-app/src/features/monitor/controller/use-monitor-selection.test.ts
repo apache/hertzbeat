@@ -40,6 +40,19 @@ describe('useMonitorSelection', () => {
 
     expect(staleValidatedIds()).toEqual([]);
   });
+
+  it('does not revive a selected id after it leaves and later returns to the visible rows', () => {
+    const { result, rerender } = renderHook(({ rows }) => useMonitorSelection('checkout-page-1', rows), {
+      initialProps: { rows: [monitor(7), monitor(8)] }
+    });
+
+    act(() => result.current.selectIds([7]));
+    rerender({ rows: [monitor(8)] });
+    expect(result.current.selectedIds).toEqual([]);
+
+    rerender({ rows: [monitor(7), monitor(8)] });
+    expect(result.current.selectedIds).toEqual([]);
+  });
 });
 
 function monitor(id: number) {

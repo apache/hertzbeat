@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import type { Monitor } from '../model/monitor-contract';
 import { reconcileMonitorSelection, type MonitorScopedSelection } from '../model/monitor-model';
@@ -46,14 +46,11 @@ export function useMonitorSelection(scope: string, content?: Monitor[]): Monitor
 
   const selectedIds = reconcileMonitorSelection(selection, scope, visibleIds);
 
-  useEffect(() => {
-    // Render already fails closed. Persisting that invalidation prevents history or later rows from reviving old IDs.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSelection(current => {
-      const ids = reconcileMonitorSelection(current, scope, visibleIds);
-      return current.scope === scope && ids === current.ids ? current : { scope, ids };
-    });
-  }, [scope, visibleIds]);
+  if (selection.scope !== scope || selectedIds !== selection.ids) {
+    // Persist fail-closed reconciliation before commit so removed rows cannot
+    // revive a previous selection when they re-enter the visible result set.
+    setSelection({ scope, ids: selectedIds });
+  }
 
   const selectIds = useCallback(
     (ids: number[]) => {
