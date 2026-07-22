@@ -22,7 +22,13 @@ import { receiverTypeDefinitions, type NoticeReceiverType } from './notice-recei
 import type { NoticeTemplateDraft } from './notice-template-model';
 import styles from './notice-template-editor.module.css';
 
-export function NoticeTemplateEditor({ draft, saving, update, close, submit }: {
+export function NoticeTemplateEditor({
+  draft,
+  saving,
+  update,
+  close,
+  submit
+}: {
   draft: NoticeTemplateDraft;
   saving: boolean;
   update: (patch: Partial<NoticeTemplateDraft>) => void;
@@ -31,7 +37,17 @@ export function NoticeTemplateEditor({ draft, saving, update, close, submit }: {
 }) {
   const { t } = useTranslation();
   return (
-    <Modal open width={820} maskClosable={false} title={t(draft.id ? 'noticeTemplates.edit' : 'noticeTemplates.new')} okText={t('common.save')} cancelText={t('common.cancel')} confirmLoading={saving} onCancel={close} onOk={submit}>
+    <Modal
+      open
+      width={820}
+      maskClosable={false}
+      title={t(draft.id ? 'noticeTemplates.edit' : 'noticeTemplates.new')}
+      okText={t('common.save')}
+      cancelText={t('common.cancel')}
+      confirmLoading={saving}
+      onCancel={close}
+      onOk={submit}
+    >
       <div className={styles.form}>
         <label className={styles.field}>
           {t('noticeTemplates.name')}
@@ -49,7 +65,13 @@ export function NoticeTemplateEditor({ draft, saving, update, close, submit }: {
         </label>
         <label className={`${styles.field} ${styles.content}`}>
           {t('noticeTemplates.content')}
-          <Input.TextArea rows={16} maxLength={60_000} showCount value={draft.content} onChange={event => update({ content: event.target.value })} />
+          <Input.TextArea
+            rows={16}
+            maxLength={60_000}
+            showCount
+            value={draft.content}
+            onChange={event => update({ content: event.target.value })}
+          />
         </label>
       </div>
     </Modal>
