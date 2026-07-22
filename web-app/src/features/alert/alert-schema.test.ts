@@ -32,78 +32,165 @@ const group = {
 };
 
 const firstPageQuery = {
-  search: '', status: '', severity: '', serviceName: '', serviceNamespace: '', environment: '',
-  pageIndex: 0, pageSize: 8
+  search: '',
+  status: '',
+  severity: '',
+  serviceName: '',
+  serviceNamespace: '',
+  environment: '',
+  pageIndex: 0,
+  pageSize: 8
 } as const;
 
 describe('alert center wire schemas', () => {
   it('allowlists summary evidence and preserves the backend zero-total rate', () => {
-    expect(parseAlertSummary({
-      total: 10, dealNum: 4, rate: 40, priorityWarningNum: 2,
-      priorityCriticalNum: 2, priorityEmergencyNum: 1, ignored: true
-    })).toEqual({
-      total: 10, dealNum: 4, rate: 40, priorityWarningNum: 2,
-      priorityCriticalNum: 2, priorityEmergencyNum: 1
+    expect(
+      parseAlertSummary({
+        total: 10,
+        dealNum: 4,
+        rate: 40,
+        priorityWarningNum: 2,
+        priorityCriticalNum: 2,
+        priorityEmergencyNum: 1,
+        ignored: true
+      })
+    ).toEqual({
+      total: 10,
+      dealNum: 4,
+      rate: 40,
+      priorityWarningNum: 2,
+      priorityCriticalNum: 2,
+      priorityEmergencyNum: 1
     });
-    expect(parseAlertSummary({
-      total: 0, dealNum: 0, rate: 100, priorityWarningNum: 0,
-      priorityCriticalNum: 0, priorityEmergencyNum: 0
-    })).toMatchObject({ total: 0, dealNum: 0, rate: 100 });
-    expect(parseAlertSummary({
-      total: 3, dealNum: 2, rate: 66.67, priorityWarningNum: 1,
-      priorityCriticalNum: 0, priorityEmergencyNum: 0
-    })).toMatchObject({ total: 3, dealNum: 2, rate: 66.67 });
+    expect(
+      parseAlertSummary({
+        total: 0,
+        dealNum: 0,
+        rate: 100,
+        priorityWarningNum: 0,
+        priorityCriticalNum: 0,
+        priorityEmergencyNum: 0
+      })
+    ).toMatchObject({ total: 0, dealNum: 0, rate: 100 });
+    expect(
+      parseAlertSummary({
+        total: 3,
+        dealNum: 2,
+        rate: 66.67,
+        priorityWarningNum: 1,
+        priorityCriticalNum: 0,
+        priorityEmergencyNum: 0
+      })
+    ).toMatchObject({ total: 3, dealNum: 2, rate: 66.67 });
   });
 
   it.each([
     ['null summary', null],
-    ['unsafe total', { total: Number.MAX_SAFE_INTEGER + 1, dealNum: 0, rate: 0,
-      priorityWarningNum: 0, priorityCriticalNum: 0, priorityEmergencyNum: 0 }],
-    ['processed count above total', { total: 3, dealNum: 4, rate: 100,
-      priorityWarningNum: 0, priorityCriticalNum: 0, priorityEmergencyNum: 0 }],
-    ['active severities above remaining', { total: 3, dealNum: 2, rate: 66.67,
-      priorityWarningNum: 1, priorityCriticalNum: 1, priorityEmergencyNum: 0 }],
-    ['inconsistent rate', { total: 3, dealNum: 2, rate: 65,
-      priorityWarningNum: 1, priorityCriticalNum: 0, priorityEmergencyNum: 0 }],
-    ['over-precise rate drift', { total: 10, dealNum: 4, rate: 40.01,
-      priorityWarningNum: 2, priorityCriticalNum: 2, priorityEmergencyNum: 1 }]
+    [
+      'unsafe total',
+      {
+        total: Number.MAX_SAFE_INTEGER + 1,
+        dealNum: 0,
+        rate: 0,
+        priorityWarningNum: 0,
+        priorityCriticalNum: 0,
+        priorityEmergencyNum: 0
+      }
+    ],
+    [
+      'processed count above total',
+      { total: 3, dealNum: 4, rate: 100, priorityWarningNum: 0, priorityCriticalNum: 0, priorityEmergencyNum: 0 }
+    ],
+    [
+      'active severities above remaining',
+      { total: 3, dealNum: 2, rate: 66.67, priorityWarningNum: 1, priorityCriticalNum: 1, priorityEmergencyNum: 0 }
+    ],
+    [
+      'inconsistent rate',
+      { total: 3, dealNum: 2, rate: 65, priorityWarningNum: 1, priorityCriticalNum: 0, priorityEmergencyNum: 0 }
+    ],
+    [
+      'over-precise rate drift',
+      { total: 10, dealNum: 4, rate: 40.01, priorityWarningNum: 2, priorityCriticalNum: 2, priorityEmergencyNum: 1 }
+    ]
   ])('rejects %s instead of presenting false summary evidence', (_label, value) => {
     expect(() => parseAlertSummary(value)).toThrow(AlertContractError);
   });
 
   it('allowlists a GroupAlert row and preserves server-local time verbatim', () => {
-    expect(parseAlertGroupPage({
-      content: [group], totalElements: 1, totalPages: 1, number: 0, size: 8,
-      pageable: { ignored: true }
-    }, firstPageQuery)).toEqual({
-      content: [{
-        id: 7, status: 'firing', groupLabels: { alertname: 'HighLatency' },
-        commonLabels: { severity: 'critical', 'service.name': 'checkout' }, commonAnnotations: null,
-        alertFingerprints: ['fingerprint-1'], gmtUpdate: '2026-07-17 10:20:30'
-      }],
-      totalElements: 1, totalPages: 1, number: 0, size: 8
+    expect(
+      parseAlertGroupPage(
+        {
+          content: [group],
+          totalElements: 1,
+          totalPages: 1,
+          number: 0,
+          size: 8,
+          pageable: { ignored: true }
+        },
+        firstPageQuery
+      )
+    ).toEqual({
+      content: [
+        {
+          id: 7,
+          status: 'firing',
+          groupLabels: { alertname: 'HighLatency' },
+          commonLabels: { severity: 'critical', 'service.name': 'checkout' },
+          commonAnnotations: null,
+          alertFingerprints: ['fingerprint-1'],
+          gmtUpdate: '2026-07-17 10:20:30'
+        }
+      ],
+      totalElements: 1,
+      totalPages: 1,
+      number: 0,
+      size: 8
     });
-    expect(parseAlertGroupPage({
-      content: [{
-        ...group,
-        status: 'pending',
-        groupLabels: null,
-        commonLabels: null,
-        commonAnnotations: null,
-        alertFingerprints: null,
-        gmtUpdate: null
-      }],
-      totalElements: 1, totalPages: 1, number: 0, size: 8
-    }, firstPageQuery).content[0]).toMatchObject({
-      status: 'pending', groupLabels: null, commonLabels: null, commonAnnotations: null,
-      alertFingerprints: null, gmtUpdate: null
+    expect(
+      parseAlertGroupPage(
+        {
+          content: [
+            {
+              ...group,
+              status: 'pending',
+              groupLabels: null,
+              commonLabels: null,
+              commonAnnotations: null,
+              alertFingerprints: null,
+              gmtUpdate: null
+            }
+          ],
+          totalElements: 1,
+          totalPages: 1,
+          number: 0,
+          size: 8
+        },
+        firstPageQuery
+      ).content[0]
+    ).toMatchObject({
+      status: 'pending',
+      groupLabels: null,
+      commonLabels: null,
+      commonAnnotations: null,
+      alertFingerprints: null,
+      gmtUpdate: null
     });
   });
 
   it('keeps a canonical empty page distinct from malformed page evidence', () => {
-    expect(parseAlertGroupPage({
-      content: [], totalElements: 0, totalPages: 0, number: 0, size: 8
-    }, firstPageQuery)).toEqual({ content: [], totalElements: 0, totalPages: 0, number: 0, size: 8 });
+    expect(
+      parseAlertGroupPage(
+        {
+          content: [],
+          totalElements: 0,
+          totalPages: 0,
+          number: 0,
+          size: 8
+        },
+        firstPageQuery
+      )
+    ).toEqual({ content: [], totalElements: 0, totalPages: 0, number: 0, size: 8 });
     expect(() => parseAlertGroupPage(null, firstPageQuery)).toThrow(AlertContractError);
   });
 
@@ -114,27 +201,136 @@ describe('alert center wire schemas', () => {
     ['offset date-time', { ...group, gmtUpdate: '2026-07-17T10:20:30Z' }],
     ['invalid Java local date-time', { ...group, gmtUpdate: '2026-02-30 10:20:30' }]
   ])('rejects malformed row %s', (_label, row) => {
-    expect(() => parseAlertGroupPage({
-      content: [row], totalElements: 1, totalPages: 1, number: 0, size: 8
-    }, firstPageQuery)).toThrow(AlertContractError);
+    expect(() =>
+      parseAlertGroupPage(
+        {
+          content: [row],
+          totalElements: 1,
+          totalPages: 1,
+          number: 0,
+          size: 8
+        },
+        firstPageQuery
+      )
+    ).toThrow(AlertContractError);
   });
 
   it('validates request identity, total pages, final-page capacity, and unique ids', () => {
     const overflowQuery = { ...firstPageQuery, pageIndex: 2 };
-    expect(parseAlertGroupPage({
-      content: [], totalElements: 9, totalPages: 2, number: 2, size: 8
-    }, overflowQuery)).toMatchObject({ content: [], totalElements: 9, number: 2 });
-    expect(() => parseAlertGroupPage({
-      content: [group], totalElements: 9, totalPages: 2, number: 2, size: 8
-    }, overflowQuery)).toThrow(AlertContractError);
-    expect(() => parseAlertGroupPage({
-      content: [group], totalElements: 9, totalPages: 1, number: 2, size: 8
-    }, overflowQuery)).toThrow(AlertContractError);
-    expect(() => parseAlertGroupPage({
-      content: [group, group], totalElements: 2, totalPages: 1, number: 0, size: 8
-    }, firstPageQuery)).toThrow(AlertContractError);
-    expect(() => parseAlertGroupPage({
-      content: [group], totalElements: 1, totalPages: 1, number: 1, size: 8
-    }, firstPageQuery)).toThrow(AlertContractError);
+    expect(
+      parseAlertGroupPage(
+        {
+          content: [],
+          totalElements: 9,
+          totalPages: 2,
+          number: 2,
+          size: 8
+        },
+        overflowQuery
+      )
+    ).toMatchObject({ content: [], totalElements: 9, number: 2 });
+    expect(() =>
+      parseAlertGroupPage(
+        {
+          content: [group],
+          totalElements: 9,
+          totalPages: 2,
+          number: 2,
+          size: 8
+        },
+        overflowQuery
+      )
+    ).toThrow(AlertContractError);
+    expect(() =>
+      parseAlertGroupPage(
+        {
+          content: [group],
+          totalElements: 9,
+          totalPages: 1,
+          number: 2,
+          size: 8
+        },
+        overflowQuery
+      )
+    ).toThrow(AlertContractError);
+    expect(() =>
+      parseAlertGroupPage(
+        {
+          content: [group, group],
+          totalElements: 2,
+          totalPages: 1,
+          number: 0,
+          size: 8
+        },
+        firstPageQuery
+      )
+    ).toThrow(AlertContractError);
+    expect(() =>
+      parseAlertGroupPage(
+        {
+          content: [group],
+          totalElements: 1,
+          totalPages: 1,
+          number: 1,
+          size: 8
+        },
+        firstPageQuery
+      )
+    ).toThrow(AlertContractError);
+  });
+
+  it.each([
+    [
+      'a short non-last page',
+      {
+        content: Array.from({ length: 7 }, (_, index) => ({ ...group, id: index + 1 })),
+        totalElements: 9,
+        totalPages: 2,
+        number: 0,
+        size: 8
+      },
+      firstPageQuery
+    ],
+    [
+      'a short last page',
+      { content: [group], totalElements: 10, totalPages: 2, number: 1, size: 8 },
+      { ...firstPageQuery, pageIndex: 1 }
+    ]
+  ])('rejects %s under an authoritative Spring total', (_name, page, query) => {
+    expect(() => parseAlertGroupPage(page, query)).toThrow(AlertContractError);
+  });
+
+  it.each([
+    ['status', { ...firstPageQuery, status: 'resolved' as const }],
+    ['service name', { ...firstPageQuery, serviceName: 'payments' }],
+    ['service namespace', { ...firstPageQuery, serviceNamespace: 'payments' }],
+    ['environment', { ...firstPageQuery, environment: 'prod' }]
+  ])('rejects a row outside the requested %s scope', (_name, query) => {
+    expect(() =>
+      parseAlertGroupPage({ content: [group], totalElements: 1, totalPages: 1, number: 0, size: 8 }, query)
+    ).toThrow(AlertContractError);
+  });
+
+  it('accepts rows whose backend-compatible labels satisfy the complete requested scope', () => {
+    const scopedGroup = {
+      ...group,
+      groupLabels: {
+        service: 'checkout',
+        service_namespace: 'payments',
+        'deployment.environment': 'prod'
+      }
+    };
+    const query = {
+      ...firstPageQuery,
+      status: 'firing' as const,
+      serviceName: 'checkout',
+      serviceNamespace: 'payments',
+      environment: 'prod'
+    };
+
+    expect(
+      parseAlertGroupPage({ content: [scopedGroup], totalElements: 1, totalPages: 1, number: 0, size: 8 }, query)
+        .content
+    ).toHaveLength(1);
   });
 });

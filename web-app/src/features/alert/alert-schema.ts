@@ -59,6 +59,12 @@ const alertGroupPageSchema = z.object({
   size: positiveIntegerSchema
 });
 
+const alertScopeLabelKeys = {
+  serviceName: ['service.name', 'service', 'serviceName', 'job', 'instance'],
+  serviceNamespace: ['service.namespace', 'serviceNamespace', 'service_namespace'],
+  environment: ['deployment.environment.name', 'environment', 'deployment.environment']
+} as const;
+
 export function parseAlertSummary(value: unknown): AlertSummary {
   try {
     const summary = parseAlertSummaryWire(value);
@@ -87,14 +93,35 @@ export function parseAlertGroupPage(value: unknown, query: AlertQuery): AlertPag
   if (page.totalPages !== Math.ceil(page.totalElements / page.size)) {
     throw new AlertContractError('totalPages is inconsistent');
   }
-  const remaining = Math.max(0, page.totalElements - page.number * page.size);
-  if (page.content.length > Math.min(page.size, remaining)) {
+  const expectedContentSize = Math.max(0, Math.min(page.size, page.totalElements - page.number * page.size));
+  if (page.content.length !== expectedContentSize) {
     throw new AlertContractError('Page content is inconsistent');
   }
   if (new Set(page.content.map(item => item.id)).size !== page.content.length) {
     throw new AlertContractError('Duplicate ids are not allowed');
   }
+  // Status and OTLP scope are exact backend predicates visible on each group.
+  // Search is fuzzy and severity is evaluated against hydrated child alerts, so
+  // neither can be proven from this intentionally smaller list-row contract.
+  if (page.content.some(item => !matchesRequestedAlertScope(item, query))) {
+    throw new AlertContractError('Page content does not match the requested scope');
+  }
   return { ...page, content: page.content.map(mapAlertGroup) };
+}
+
+function matchesRequestedAlertScope(source: z.output<typeof alertGroupSchema>, query: AlertQuery) {
+  return (
+    (!query.status || source.status === query.status) &&
+    matchesRequestedLabel(source, query.serviceName, alertScopeLabelKeys.serviceName) &&
+    matchesRequestedLabel(source, query.serviceNamespace, alertScopeLabelKeys.serviceNamespace) &&
+    matchesRequestedLabel(source, query.environment, alertScopeLabelKeys.environment)
+  );
+}
+
+function matchesRequestedLabel(source: z.output<typeof alertGroupSchema>, requested: string, keys: readonly string[]) {
+  const expected = requested.trim();
+  if (!expected) return true;
+  return [source.commonLabels, source.groupLabels].some(labels => keys.some(key => labels?.[key]?.trim() === expected));
 }
 
 function mapAlertGroup(source: z.output<typeof alertGroupSchema>): AlertGroup {
