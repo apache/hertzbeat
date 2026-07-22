@@ -18,8 +18,10 @@
 import type { HttpError } from '@refinedev/core';
 
 import { ApiMessageError } from '@/core/http/api-message';
+import { hasOwnProperties } from '@/shared/validation/own-properties';
 
-export type RefineHttpErrorKind = 'contract' | 'envelope' | 'http' | 'network' | 'unexpected';
+const refineHttpErrorKinds = ['contract', 'envelope', 'http', 'network', 'unexpected'] as const;
+export type RefineHttpErrorKind = (typeof refineHttpErrorKinds)[number];
 export type RefineHttpError = Error &
   HttpError & {
     code: number | string | undefined;
@@ -34,13 +36,13 @@ export function createRefineHttpError(
   kind: RefineHttpErrorKind = 'contract',
   httpStatus?: number
 ): RefineHttpError {
-  const error = new Error(message) as RefineHttpError;
-  error.name = 'RefineHttpError';
-  error.statusCode = statusCode;
-  error.code = code;
-  error.httpStatus = httpStatus;
-  error.kind = kind;
-  return error;
+  return Object.assign(new Error(message), {
+    name: 'RefineHttpError',
+    statusCode,
+    code,
+    httpStatus,
+    kind
+  });
 }
 
 export function toRefineHttpError(reason: unknown): RefineHttpError {
@@ -66,6 +68,18 @@ export function isRefineHttpError(reason: unknown): reason is RefineHttpError {
   return (
     reason instanceof Error &&
     reason.name === 'RefineHttpError' &&
-    typeof (reason as Partial<RefineHttpError>).statusCode === 'number'
+    hasOwnProperties(reason, ['statusCode', 'code', 'httpStatus', 'kind']) &&
+    isStatusCode(reason.statusCode) &&
+    isErrorCode(reason.code) &&
+    (reason.httpStatus === undefined || isStatusCode(reason.httpStatus)) &&
+    refineHttpErrorKinds.some(kind => kind === reason.kind)
   );
+}
+
+function isStatusCode(value: unknown): value is number {
+  return Number.isSafeInteger(value) && Number(value) >= 0;
+}
+
+function isErrorCode(value: unknown): value is number | string | undefined {
+  return value === undefined || typeof value === 'number' || typeof value === 'string';
 }

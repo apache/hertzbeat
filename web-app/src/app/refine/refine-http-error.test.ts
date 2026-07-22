@@ -84,4 +84,27 @@ describe('Refine HTTP error boundary', () => {
     expect(`${error.message} ${JSON.stringify(error)}`).not.toContain('private');
     expect(Object.hasOwn(error, 'cause')).toBe(false);
   });
+
+  it.each(['inherited status', 'incomplete own status'] as const)('does not trust a Refine marker with %s', variant => {
+    class ErrorWithInheritedStatus extends Error {
+      get statusCode() {
+        return 418;
+      }
+    }
+    const reason =
+      variant === 'inherited status'
+        ? new ErrorWithInheritedStatus('private malformed error')
+        : Object.assign(new Error('private malformed error'), { statusCode: 418 });
+    reason.name = 'RefineHttpError';
+
+    const error = toRefineHttpError(reason);
+
+    expect(error).not.toBe(reason);
+    expect(error).toMatchObject({
+      message: 'Unexpected request failure',
+      statusCode: 500,
+      code: 'REFINE_UNEXPECTED_ERROR',
+      kind: 'unexpected'
+    });
+  });
 });
