@@ -17,7 +17,7 @@
 
 export { useRuntimeStatusController } from './controller/use-runtime-status-controller';
 export type {
-  RuntimeComponentStatus,
+  RuntimeStatusPresentation,
   RuntimeStatusErrorCode,
   RuntimeStatusViewModel
 } from './model/runtime-status-contract';

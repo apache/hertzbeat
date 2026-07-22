@@ -68,12 +68,15 @@ const runtimeStatusSchema = z
     collectors: collectorsSchema
   })
   .strict()
-  .transform(({ observedAt, server, storage, collectors }): RuntimeStatusSnapshot => ({
-    observedAt,
-    server,
-    storage,
-    collectors
-  }));
+  .transform(
+    ({ observedAt, server, storage, collectors }) =>
+      ({
+        observedAt,
+        server,
+        storage,
+        collectors
+      }) satisfies RuntimeStatusSnapshot
+  );
 
 export function parseRuntimeStatus(value: unknown): RuntimeStatusSnapshot {
   const result = runtimeStatusSchema.safeParse(value);

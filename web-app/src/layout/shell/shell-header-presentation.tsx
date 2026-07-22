@@ -17,7 +17,11 @@ import { Avatar, Button, Dropdown, Tooltip } from 'antd';
 import type { TFunction } from 'i18next';
 import type { ReactNode } from 'react';
 
-import type { RuntimeComponentStatus, RuntimeStatusErrorCode, RuntimeStatusViewModel } from '@/features/runtime-status';
+import type {
+  RuntimeStatusErrorCode,
+  RuntimeStatusPresentation,
+  RuntimeStatusViewModel
+} from '@/features/runtime-status';
 
 import styles from './hertzbeat-shell.module.css';
 
@@ -125,7 +129,7 @@ type StatusSlotProps = {
   lastReportedAt?: string | null | undefined;
   locale?: string | undefined;
   observedAt?: string | null | undefined;
-  status?: RuntimeComponentStatus | undefined;
+  status?: RuntimeStatusPresentation | undefined;
   t: TFunction;
 };
 

@@ -15,8 +15,9 @@
  * limitations under the License.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vitest';
 
+import type { RuntimeStatusSnapshot } from './runtime-status-contract';
 import { unavailableRuntimeStatus } from './runtime-status-model';
 
 describe('runtime status model', () => {
@@ -34,5 +35,15 @@ describe('runtime status model', () => {
         errorCode: 'collector_status_unavailable'
       }
     });
+  });
+
+  it('keeps section error evidence distinct in the domain model', () => {
+    expectTypeOf<RuntimeStatusSnapshot['server']['errorCode']>().toEqualTypeOf<'server_unavailable' | null>();
+    expectTypeOf<RuntimeStatusSnapshot['storage']['errorCode']>().toEqualTypeOf<
+      'storage_unavailable' | 'storage_query_failed' | null
+    >();
+    expectTypeOf<RuntimeStatusSnapshot['collectors']['errorCode']>().toEqualTypeOf<
+      'collector_status_unavailable' | null
+    >();
   });
 });

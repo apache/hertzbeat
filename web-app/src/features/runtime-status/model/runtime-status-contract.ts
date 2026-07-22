@@ -18,31 +18,41 @@
 export const RUNTIME_STATUS_STATES = ['available', 'degraded', 'unavailable', 'unknown'] as const;
 
 type RuntimeStatusState = (typeof RUNTIME_STATUS_STATES)[number];
-export type RuntimeStatusErrorCode =
-  'server_unavailable' | 'storage_unavailable' | 'storage_query_failed' | 'collector_status_unavailable';
+type RuntimeServerErrorCode = 'server_unavailable';
+type RuntimeStorageErrorCode = 'storage_unavailable' | 'storage_query_failed';
+type RuntimeCollectorsErrorCode = 'collector_status_unavailable';
+export type RuntimeStatusErrorCode = RuntimeServerErrorCode | RuntimeStorageErrorCode | RuntimeCollectorsErrorCode;
 
-export type RuntimeComponentStatus = {
+type RuntimeSectionStatus<ErrorCode extends RuntimeStatusErrorCode> = Readonly<{
+  status: RuntimeStatusState;
+  errorCode: ErrorCode | null;
+}>;
+
+type RuntimeServerStatus = RuntimeSectionStatus<RuntimeServerErrorCode>;
+
+type RuntimeStorageStatus = RuntimeSectionStatus<RuntimeStorageErrorCode> & Readonly<{ kind: 'greptime' }>;
+
+type RuntimeCollectorsStatus = RuntimeSectionStatus<RuntimeCollectorsErrorCode> &
+  Readonly<{
+    total: number | null;
+    online: number | null;
+    runtimeHealthy: number | null;
+    lastReportedAt: string | null;
+  }>;
+
+export type RuntimeStatusPresentation = Readonly<{
   status: RuntimeStatusState;
   errorCode: RuntimeStatusErrorCode | null;
-};
+}>;
 
-type RuntimeStorageStatus = RuntimeComponentStatus & { kind: 'greptime' };
-
-type RuntimeCollectorsStatus = RuntimeComponentStatus & {
-  total: number | null;
-  online: number | null;
-  runtimeHealthy: number | null;
-  lastReportedAt: string | null;
-};
-
-export type RuntimeStatusSnapshot = {
+export type RuntimeStatusSnapshot = Readonly<{
   observedAt: string | null;
-  server: RuntimeComponentStatus;
+  server: RuntimeServerStatus;
   storage: RuntimeStorageStatus;
   collectors: RuntimeCollectorsStatus;
-};
+}>;
 
 export type RuntimeStatusViewModel =
-  | { state: 'loading'; snapshot: null }
-  | { state: 'ready'; snapshot: RuntimeStatusSnapshot }
-  | { state: 'unavailable'; snapshot: RuntimeStatusSnapshot };
+  | Readonly<{ state: 'loading'; snapshot: null }>
+  | Readonly<{ state: 'ready'; snapshot: RuntimeStatusSnapshot }>
+  | Readonly<{ state: 'unavailable'; snapshot: RuntimeStatusSnapshot }>;
