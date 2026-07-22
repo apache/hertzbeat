@@ -83,19 +83,34 @@ function CollectorDialogs({ controller }: { controller: ReturnType<typeof useCol
         loading={controller.runtimeLoading}
         saving={controller.runtimeSaving}
         failure={controller.runtimeFailure}
-        prometheusEditor={controller.prometheusEditor}
-        prometheusSaving={controller.prometheusSaving}
-        prometheusFailure={controller.prometheusFailure}
         onCancel={controller.actions.cancelRuntimeConfig}
         onSave={draft => void controller.actions.saveRuntimeConfig(draft)}
         onOpenPrometheus={controller.actions.openPrometheusSources}
-        onSelectPrometheus={controller.actions.selectPrometheusTarget}
-        onApplyPrometheus={controller.actions.applyPrometheusTarget}
-        onRemovePrometheus={controller.actions.removePrometheusTarget}
-        onSavePrometheus={() => void controller.actions.savePrometheusSources()}
-        onCancelPrometheus={controller.actions.cancelPrometheusSources}
-        onClosePrometheus={controller.actions.closePrometheusSources}
-        onCancelPrometheusTarget={controller.actions.cancelPrometheusTarget}
+        onOpenFileLog={controller.actions.openFileLogSources}
+        prometheus={{
+          editor: controller.prometheusEditor,
+          saving: controller.prometheusSaving,
+          failure: controller.prometheusFailure,
+          select: controller.actions.selectPrometheusTarget,
+          apply: controller.actions.applyPrometheusTarget,
+          remove: controller.actions.removePrometheusTarget,
+          save: () => void controller.actions.savePrometheusSources(),
+          back: controller.actions.cancelPrometheusSources,
+          close: controller.actions.closePrometheusSources,
+          cancelTarget: controller.actions.cancelPrometheusTarget
+        }}
+        fileLog={{
+          editor: controller.fileLogEditor,
+          saving: controller.fileLogSaving,
+          failure: controller.fileLogFailure,
+          select: controller.actions.selectFileLogSource,
+          apply: controller.actions.applyFileLogSource,
+          remove: controller.actions.removeFileLogSource,
+          save: () => void controller.actions.saveFileLogSources(),
+          back: controller.actions.cancelFileLogSources,
+          close: controller.actions.closeFileLogSources,
+          cancelSource: controller.actions.cancelFileLogSource
+        }}
       />
     </>
   );

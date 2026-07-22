@@ -7,6 +7,7 @@
 
 import type { CollectorPageSize, CollectorQuery } from '../model/collector-query-model';
 import type { useCollectorIntakeController } from './use-collector-intake-controller';
+import type { useCollectorFileLogSourceController } from './use-collector-file-log-source-controller';
 import type { useCollectorMutationController } from './use-collector-mutation-controller';
 import type { useCollectorPrometheusSourceController } from './use-collector-prometheus-source-controller';
 import type { useCollectorRuntimeConfigController } from './use-collector-runtime-config-controller';
@@ -23,11 +24,13 @@ type ActionOptions = {
   intake: ReturnType<typeof useCollectorIntakeController>;
   runtime: ReturnType<typeof useCollectorRuntimeConfigController>;
   prometheus: ReturnType<typeof useCollectorPrometheusSourceController>;
+  fileLog: ReturnType<typeof useCollectorFileLogSourceController>;
   refetch: () => unknown;
 };
 
 export function buildCollectorActions(options: ActionOptions) {
-  const managedBusy = () => options.intake.saving || options.runtime.busy || options.prometheus.saving;
+  const managedBusy = () =>
+    options.intake.saving || options.runtime.busy || options.prometheus.saving || options.fileLog.saving;
   return {
     setNameDraft: options.setNameDraft,
     submitName: () => {
@@ -60,6 +63,14 @@ export function buildCollectorActions(options: ActionOptions) {
     cancelPrometheusSources: options.prometheus.cancel,
     closePrometheusSources: options.prometheus.close,
     cancelPrometheusTarget: options.prometheus.cancelTarget,
+    openFileLogSources: options.fileLog.open,
+    selectFileLogSource: options.fileLog.select,
+    applyFileLogSource: options.fileLog.apply,
+    removeFileLogSource: options.fileLog.remove,
+    saveFileLogSources: options.fileLog.save,
+    cancelFileLogSources: options.fileLog.cancel,
+    closeFileLogSources: options.fileLog.close,
+    cancelFileLogSource: options.fileLog.cancelSource,
     toggleSelection: (name: string, checked: boolean) => {
       if (options.mutation.mutating || managedBusy() || !options.visibleMutableNames.includes(name)) return;
       options.setSelected(

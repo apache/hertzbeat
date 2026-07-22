@@ -8,6 +8,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildManagedOtelRuntimeConfigUpdate, parseManagedOtelRuntimeConfig } from './collector-runtime-config-schema';
+import { buildManagedOtelFileLogSourcesUpdate } from './collector-file-log-source-schema';
 import { buildManagedOtelPrometheusTargetsUpdate } from './collector-prometheus-source-schema';
 
 describe('managed Collector runtime config schema', () => {
@@ -205,6 +206,48 @@ describe('managed Collector runtime config schema', () => {
     ['more than 32 targets', Array.from({ length: 33 }, (_, index) => prometheusDraft({ name: `target-${index}` }))]
   ])('rejects unsafe Prometheus editor draft: %s', (_label, draft) => {
     expect(buildManagedOtelPrometheusTargetsUpdate(parseManagedOtelRuntimeConfig(runtimeConfig()), draft)).toBeNull();
+  });
+
+  it('replaces only FileLog sources while upgrading revision and preserving core and Prometheus exactly', () => {
+    const current = parseManagedOtelRuntimeConfig(runtimeConfig());
+    const update = buildManagedOtelFileLogSourcesUpdate(current, [{ name: 'checkout', pathProfile: 'checkout-logs' }]);
+
+    expect(update).toEqual({
+      ...current,
+      schemaVersion: 3,
+      revision: 8,
+      fileLogSources: [{ name: 'checkout', pathProfile: 'checkout-logs' }]
+    });
+    expect(update?.prometheusTargets).toEqual(current?.prometheusTargets);
+    expect(update?.hostMetricsScrapers).toEqual(current?.hostMetricsScrapers);
+  });
+
+  it('keeps FileLog order exact and treats source names as case-sensitive', () => {
+    const update = buildManagedOtelFileLogSourcesUpdate(parseManagedOtelRuntimeConfig(runtimeConfig()), [
+      { name: 'Payments', pathProfile: 'payments-upper' },
+      { name: 'payments', pathProfile: 'payments-lower' }
+    ]);
+
+    expect(update?.fileLogSources.map(source => source.name)).toEqual(['Payments', 'payments']);
+  });
+
+  it.each([
+    ['unsafe source name', [{ name: 'system logs', pathProfile: 'system-logs' }]],
+    ['raw path-shaped profile', [{ name: 'system', pathProfile: '/var/log/system.log' }]],
+    [
+      'duplicate source name',
+      [
+        { name: 'system', pathProfile: 'system-logs' },
+        { name: 'system', pathProfile: 'system-audit' }
+      ]
+    ],
+    ['path-shaped extra field', [{ name: 'system', pathProfile: 'system-logs', path: '/var/log/system.log' }]],
+    [
+      'more than 16 sources',
+      Array.from({ length: 17 }, (_, index) => ({ name: `source-${index}`, pathProfile: `profile-${index}` }))
+    ]
+  ])('rejects unsafe FileLog editor draft: %s', (_label, draft) => {
+    expect(buildManagedOtelFileLogSourcesUpdate(parseManagedOtelRuntimeConfig(runtimeConfig()), draft)).toBeNull();
   });
 });
 

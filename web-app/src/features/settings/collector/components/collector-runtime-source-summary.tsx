@@ -12,10 +12,12 @@ import type { ManagedRuntimeConfigView } from '../model/collector-runtime-config
 
 export function CollectorRuntimeSourceSummary({
   config,
-  onManagePrometheus
+  onManagePrometheus,
+  onManageFileLog
 }: {
   config: ManagedRuntimeConfigView;
   onManagePrometheus: () => void;
+  onManageFileLog: () => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -38,6 +40,7 @@ export function CollectorRuntimeSourceSummary({
           <Typography.Text>
             {t('collectors.runtime.fileLogSummary', { count: config.fileLogSourceCount })}
           </Typography.Text>
+          <Button onClick={onManageFileLog}>{t('collectors.runtime.fileLog.manage')}</Button>
           <Typography.Text type="secondary">{t('collectors.runtime.sourceNotice')}</Typography.Text>
         </Space>
       }

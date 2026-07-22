@@ -548,6 +548,24 @@
         "fileLogUnchanged_other": "FileLog ソース {{count}} 件は変更されません。",
         "schedule": "{{interval}} 秒ごと・タイムアウト {{timeout}} 秒"
       },
+      "fileLog": {
+        "title": "{{name}} の FileLog ソース",
+        "manage": "FileLog ソースを管理",
+        "success": "FileLog ソース設定を保存しました。",
+        "add": "FileLog ソースを追加",
+        "empty": "FileLog ソースは設定されていません。",
+        "editNamed": "{{name}} を編集",
+        "removeNamed": "{{name}} を削除",
+        "save": "ソースの変更を保存",
+        "back": "ランタイムに戻る",
+        "backToList": "ソース一覧に戻る",
+        "apply": "ソースを適用",
+        "name": "ソース名",
+        "pathProfile": "パスプロファイル参照名",
+        "referenceOnly": "パスプロファイルには Collector のローカルプリセット参照名のみを使用し、ファイルパスや Glob は入力しません。",
+        "prometheusUnchanged_one": "{{count}} 件の Prometheus ターゲットは変更されません。",
+        "prometheusUnchanged_other": "{{count}} 件の Prometheus ターゲットは変更されません。"
+      },
       "scraper": {
         "CPU": "CPU",
         "DISK": "ディスク",

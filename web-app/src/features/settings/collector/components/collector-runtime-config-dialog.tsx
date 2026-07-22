@@ -5,189 +5,155 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Alert, Checkbox, Empty, Form, Input, InputNumber, Modal, Skeleton, Switch } from 'antd';
+import { Form, Modal } from 'antd';
 import type { FormInstance } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import type { CollectorMutationFailure, CollectorRecord } from '../model/collector-model';
-import {
-  managedRuntimeCoreDraft,
-  managedRuntimeFilterPresets,
-  managedRuntimeHostMetricsIntervalLimits,
-  managedRuntimeHostScrapers,
-  managedRuntimeResourceDetectors,
-  type ManagedRuntimeCoreDraft,
-  type ManagedRuntimeConfigView
-} from '../model/collector-runtime-config-model';
-import {
-  type ManagedPrometheusSourceView,
-  type ManagedPrometheusTargetDraft,
-  type ManagedPrometheusTargetSelection
+import type {
+  ManagedFileLogSourceDraft,
+  ManagedFileLogSourceSelection,
+  ManagedFileLogSourceView
+} from '../model/collector-file-log-source-model';
+import type {
+  ManagedPrometheusSourceView,
+  ManagedPrometheusTargetDraft,
+  ManagedPrometheusTargetSelection
 } from '../model/collector-prometheus-source-model';
+import type { ManagedRuntimeCoreDraft, ManagedRuntimeConfigView } from '../model/collector-runtime-config-model';
+import { CollectorFileLogSourcesView } from './collector-file-log-sources-view';
 import { CollectorPrometheusSourcesView } from './collector-prometheus-sources-view';
-import { CollectorRuntimeSourceSummary } from './collector-runtime-source-summary';
+import { CollectorRuntimeCoreForm } from './collector-runtime-core-form';
 
+type PrometheusProps = {
+  editor: ManagedPrometheusSourceView | null;
+  saving: boolean;
+  failure: CollectorMutationFailure | null;
+  select: (selection: ManagedPrometheusTargetSelection) => void;
+  apply: (target: ManagedPrometheusTargetDraft) => void;
+  remove: (index: number) => void;
+  save: () => void;
+  back: () => void;
+  close: () => void;
+  cancelTarget: () => void;
+};
+type FileLogProps = {
+  editor: ManagedFileLogSourceView | null;
+  saving: boolean;
+  failure: CollectorMutationFailure | null;
+  select: (selection: ManagedFileLogSourceSelection) => void;
+  apply: (source: ManagedFileLogSourceDraft) => void;
+  remove: (index: number) => void;
+  save: () => void;
+  back: () => void;
+  close: () => void;
+  cancelSource: () => void;
+};
 type Props = {
   record: CollectorRecord | null;
   config: ManagedRuntimeConfigView | null;
   loading: boolean;
   saving: boolean;
   failure: CollectorMutationFailure | null;
-  prometheusEditor: ManagedPrometheusSourceView | null;
-  prometheusSaving: boolean;
-  prometheusFailure: CollectorMutationFailure | null;
   onCancel: () => void;
   onSave: (draft: ManagedRuntimeCoreDraft) => void;
   onOpenPrometheus: () => void;
-  onSelectPrometheus: (selection: ManagedPrometheusTargetSelection) => void;
-  onApplyPrometheus: (target: ManagedPrometheusTargetDraft) => void;
-  onRemovePrometheus: (index: number) => void;
-  onSavePrometheus: () => void;
-  onCancelPrometheus: () => void;
-  onClosePrometheus: () => void;
-  onCancelPrometheusTarget: () => void;
+  onOpenFileLog: () => void;
+  prometheus: PrometheusProps;
+  fileLog: FileLogProps;
 };
+type DialogMode = 'runtime' | 'prometheus' | 'fileLog';
 
 export function CollectorRuntimeConfigDialog(props: Props) {
   const { t } = useTranslation();
   const [form] = Form.useForm<ManagedRuntimeCoreDraft>();
   if (!props.record) return null;
-  const prometheusEditor = props.prometheusEditor;
-  const prometheusOpen = prometheusEditor !== null;
-  const locked = props.saving || props.prometheusSaving;
+  const mode = dialogMode(props);
+  const locked = props.saving || props.prometheus.saving || props.fileLog.saving;
   return (
     <Modal
       open
       destroyOnHidden
       width={720}
-      title={t(prometheusOpen ? 'collectors.runtime.prometheus.title' : 'collectors.runtime.title', {
-        name: props.record.name
-      })}
+      title={t(dialogTitle(mode), { name: props.record.name })}
       okText={t('collectors.runtime.save')}
       cancelText={t('common.cancel')}
       okButtonProps={{ disabled: props.loading || props.saving || !props.config }}
       cancelButtonProps={{ disabled: props.saving }}
       confirmLoading={props.saving}
-      footer={prometheusOpen ? null : undefined}
+      footer={mode === 'runtime' ? undefined : null}
       closable={!locked}
       keyboard={!locked}
       maskClosable={false}
-      onCancel={prometheusOpen ? props.onClosePrometheus : props.onCancel}
+      onCancel={closeAction(props, mode)}
       onOk={() => form.submit()}
     >
-      {prometheusEditor && props.config ? (
-        <CollectorPrometheusSourcesView
-          view={prometheusEditor}
-          fileLogSourceCount={props.config.fileLogSourceCount}
-          saving={props.prometheusSaving}
-          failure={props.prometheusFailure}
-          onSelect={props.onSelectPrometheus}
-          onApply={props.onApplyPrometheus}
-          onRemove={props.onRemovePrometheus}
-          onSave={props.onSavePrometheus}
-          onCancel={props.onCancelPrometheus}
-          onCancelTarget={props.onCancelPrometheusTarget}
-        />
-      ) : (
-        <>
-          {props.failure && <Alert type="error" showIcon message={t(`collectors.failure.${props.failure}`)} />}
-          <RuntimeConfigBody {...props} form={form} />
-        </>
-      )}
+      <DialogContent {...props} mode={mode} form={form} />
     </Modal>
   );
 }
 
-function RuntimeConfigBody(props: Props & { form: FormInstance<ManagedRuntimeCoreDraft> }) {
-  const { t } = useTranslation();
-  if (props.config) return <RuntimeConfigForm {...props} config={props.config} form={props.form} />;
-  if (props.loading) {
+function DialogContent(props: Props & { mode: DialogMode; form: FormInstance<ManagedRuntimeCoreDraft> }) {
+  if (props.mode === 'prometheus' && props.prometheus.editor && props.config) {
     return (
-      <div data-testid="runtime-config-loading">
-        <Skeleton active />
-      </div>
+      <CollectorPrometheusSourcesView
+        view={props.prometheus.editor}
+        fileLogSourceCount={props.config.fileLogSourceCount}
+        saving={props.prometheus.saving}
+        failure={props.prometheus.failure}
+        onSelect={props.prometheus.select}
+        onApply={props.prometheus.apply}
+        onRemove={props.prometheus.remove}
+        onSave={props.prometheus.save}
+        onCancel={props.prometheus.back}
+        onCancelTarget={props.prometheus.cancelTarget}
+      />
     );
   }
-  return <Empty description={t('collectors.runtime.loadFailed')} />;
-}
-
-function RuntimeConfigForm(
-  props: Props & { config: ManagedRuntimeConfigView; form: FormInstance<ManagedRuntimeCoreDraft> }
-) {
+  if (props.mode === 'fileLog' && props.fileLog.editor && props.config) {
+    return (
+      <CollectorFileLogSourcesView
+        view={props.fileLog.editor}
+        prometheusTargetCount={props.config.prometheusTargetCount}
+        saving={props.fileLog.saving}
+        failure={props.fileLog.failure}
+        onSelect={props.fileLog.select}
+        onApply={props.fileLog.apply}
+        onRemove={props.fileLog.remove}
+        onSave={props.fileLog.save}
+        onCancel={props.fileLog.back}
+        onCancelSource={props.fileLog.cancelSource}
+      />
+    );
+  }
   return (
-    <Form<ManagedRuntimeCoreDraft>
+    <CollectorRuntimeCoreForm
+      config={props.config}
+      loading={props.loading}
+      saving={props.saving}
+      failure={props.failure}
       form={props.form}
-      layout="vertical"
-      disabled={props.saving}
-      initialValues={managedRuntimeCoreDraft(props.config)}
-      onFinish={props.onSave}
-    >
-      <RuntimeBasics />
-      <RuntimeHostScrapers />
-      <RuntimeGovernance />
-      <CollectorRuntimeSourceSummary config={props.config} onManagePrometheus={props.onOpenPrometheus} />
-    </Form>
+      onSave={props.onSave}
+      onOpenPrometheus={props.onOpenPrometheus}
+      onOpenFileLog={props.onOpenFileLog}
+    />
   );
 }
 
-function RuntimeBasics() {
-  const { t } = useTranslation();
-  return (
-    <>
-      <Form.Item name="environment" label={t('collectors.runtime.environment')}>
-        <Input />
-      </Form.Item>
-      <Form.Item name="hostMetricsEnabled" label={t('collectors.runtime.hostMetrics')} valuePropName="checked">
-        <Switch />
-      </Form.Item>
-      <Form.Item name="hostMetricsIntervalSeconds" label={t('collectors.runtime.intervalSeconds')}>
-        <InputNumber
-          min={managedRuntimeHostMetricsIntervalLimits.minimum}
-          max={managedRuntimeHostMetricsIntervalLimits.maximum}
-          precision={0}
-        />
-      </Form.Item>
-    </>
-  );
+function dialogMode(props: Props): DialogMode {
+  if (props.prometheus.editor) return 'prometheus';
+  if (props.fileLog.editor) return 'fileLog';
+  return 'runtime';
 }
 
-function RuntimeHostScrapers() {
-  const { t } = useTranslation();
-  return (
-    <Form.Item name="hostMetricsScrapers" label={t('collectors.runtime.scrapers')}>
-      <Checkbox.Group>
-        {managedRuntimeHostScrapers.map(scraper => (
-          <Checkbox key={scraper} value={scraper}>
-            {t(`collectors.runtime.scraper.${scraper}`)}
-          </Checkbox>
-        ))}
-      </Checkbox.Group>
-    </Form.Item>
-  );
+function dialogTitle(mode: DialogMode) {
+  if (mode === 'prometheus') return 'collectors.runtime.prometheus.title';
+  if (mode === 'fileLog') return 'collectors.runtime.fileLog.title';
+  return 'collectors.runtime.title';
 }
 
-function RuntimeGovernance() {
-  const { t } = useTranslation();
-  return (
-    <>
-      <Form.Item name="resourceDetectors" label={t('collectors.runtime.detectors')}>
-        <Checkbox.Group>
-          {managedRuntimeResourceDetectors.map(detector => (
-            <Checkbox key={detector} value={detector}>
-              {t(`collectors.runtime.detector.${detector}`)}
-            </Checkbox>
-          ))}
-        </Checkbox.Group>
-      </Form.Item>
-      <Form.Item name="telemetryFilterPresets" label={t('collectors.runtime.filterPresets')}>
-        <Checkbox.Group>
-          {managedRuntimeFilterPresets.map(preset => (
-            <Checkbox key={preset} value={preset}>
-              {t(`collectors.runtime.filter.${preset}`)}
-            </Checkbox>
-          ))}
-        </Checkbox.Group>
-      </Form.Item>
-    </>
-  );
+function closeAction(props: Props, mode: DialogMode) {
+  if (mode === 'prometheus') return props.prometheus.close;
+  if (mode === 'fileLog') return props.fileLog.close;
+  return props.onCancel;
 }

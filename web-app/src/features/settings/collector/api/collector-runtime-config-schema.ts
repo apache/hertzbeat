@@ -7,6 +7,7 @@
 
 import { z } from 'zod';
 
+import { managedFileLogLimits } from '../model/collector-file-log-source-model';
 import {
   managedRuntimeFilterPresets,
   managedRuntimeHostMetricsIntervalLimits,
@@ -15,6 +16,7 @@ import {
   managedRuntimeSafeNamePattern
 } from '../model/collector-runtime-config-model';
 import { managedPrometheusLimits } from '../model/collector-prometheus-source-model';
+import { managedOtelFileLogSourceSchema } from './collector-file-log-source-contract';
 import { managedRuntimeDurationSeconds } from './collector-runtime-duration';
 
 const sourceNameSchema = z.string().regex(managedRuntimeSafeNamePattern);
@@ -83,8 +85,6 @@ const prometheusTargetSchema = z
     }
   });
 
-const fileLogSourceSchema = z.object({ name: sourceNameSchema, pathProfile: sourceNameSchema }).strict();
-
 const managedOtelRuntimeConfigSchema = z
   .object({
     schemaVersion: z.union([z.literal(1), z.literal(2), z.literal(3)]),
@@ -92,7 +92,7 @@ const managedOtelRuntimeConfigSchema = z
     hostMetricsEnabled: z.boolean(),
     hostMetricsInterval: hostMetricsIntervalDurationSchema,
     prometheusTargets: uniqueNamedArray(prometheusTargetSchema, managedPrometheusLimits.targets),
-    fileLogSources: uniqueNamedArray(fileLogSourceSchema, 16),
+    fileLogSources: uniqueNamedArray(managedOtelFileLogSourceSchema, managedFileLogLimits.sources),
     environment: z.union([z.literal(''), sourceNameSchema]),
     resourceDetectors: resourceDetectorsSchema,
     telemetryFilterPresets: filterPresetsSchema,
@@ -155,19 +155,6 @@ export function buildManagedOtelRuntimeConfigUpdate(
     resourceDetectors: draft.data.resourceDetectors,
     telemetryFilterPresets: draft.data.telemetryFilterPresets,
     hostMetricsScrapers: draft.data.hostMetricsScrapers
-  });
-}
-
-export function replaceManagedOtelPrometheusTargets(
-  current: ManagedOtelRuntimeConfig | null,
-  prometheusTargets: unknown
-): ManagedOtelRuntimeConfig | null {
-  if (!current || current.revision >= Number.MAX_SAFE_INTEGER) return null;
-  return parseManagedOtelRuntimeConfig({
-    ...current,
-    schemaVersion: 3,
-    revision: current.revision + 1,
-    prometheusTargets
   });
 }
 

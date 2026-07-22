@@ -18,12 +18,15 @@ import { readCollectorQuery, writeCollectorQuery, type CollectorQuery } from '..
 import { buildCollectorActions } from './collector-actions';
 import { useCollectorMutationController } from './use-collector-mutation-controller';
 import { useCollectorIntakeController } from './use-collector-intake-controller';
+import { useCollectorFileLogSourceController } from './use-collector-file-log-source-controller';
 import { useCollectorPrometheusSourceController } from './use-collector-prometheus-source-controller';
 import { useCollectorRuntimeConfigController } from './use-collector-runtime-config-controller';
+import { createRuntimeSourceCoordinator } from './use-collector-runtime-source-session';
 import { collectorQueryKeys } from './collector-query-keys';
 
 export function useCollectorController() {
   const queryClient = useQueryClient();
+  const sourceCoordinator = useMemo(() => createRuntimeSourceCoordinator(), []);
   const state = useCollectorQueryState();
   const mutation = useCollectorMutationController({
     query: state.query,
@@ -50,11 +53,20 @@ export function useCollectorController() {
   const prometheus = useCollectorPrometheusSourceController({
     queryRef: state.queryRef,
     session: runtime.editor,
-    closeRuntime: runtime.cancel
+    closeRuntime: runtime.cancel,
+    owner: 'prometheus',
+    coordinator: sourceCoordinator
+  });
+  const fileLog = useCollectorFileLogSourceController({
+    queryRef: state.queryRef,
+    session: runtime.editor,
+    closeRuntime: runtime.cancel,
+    owner: 'fileLog',
+    coordinator: sourceCoordinator
   });
   const listState = resolveCollectorListState(state.collectorQuery, mutation.proofFailure);
-  const busy = mutation.mutating || intake.saving || runtime.busy || prometheus.saving;
-  return collectorPageModel(state, mutation, intake, runtime, prometheus, listState, busy);
+  const busy = mutation.mutating || intake.saving || runtime.busy || prometheus.saving || fileLog.saving;
+  return collectorPageModel(state, mutation, intake, runtime, prometheus, fileLog, listState, busy);
 }
 
 function collectorPageModel(
@@ -63,6 +75,7 @@ function collectorPageModel(
   intake: ReturnType<typeof useCollectorIntakeController>,
   runtime: ReturnType<typeof useCollectorRuntimeConfigController>,
   prometheus: ReturnType<typeof useCollectorPrometheusSourceController>,
+  fileLog: ReturnType<typeof useCollectorFileLogSourceController>,
   listState: CollectorListState,
   busy: boolean
 ) {
@@ -86,12 +99,16 @@ function collectorPageModel(
     prometheusEditor: prometheus.editor,
     prometheusSaving: prometheus.saving,
     prometheusFailure: prometheus.failure,
+    fileLogEditor: fileLog.editor,
+    fileLogSaving: fileLog.saving,
+    fileLogFailure: fileLog.failure,
     actions: buildCollectorActions({
       ...state,
       mutation,
       intake,
       runtime,
       prometheus,
+      fileLog,
       refetch: state.collectorQuery.refetch
     })
   };

@@ -165,6 +165,8 @@ describe('CollectorPage', () => {
     expect(within(dialog).getByText('Schema 3 · revision 7')).toBeInTheDocument();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Manage Prometheus targets' }));
     expect(controller.actions.openPrometheusSources).toHaveBeenCalledTimes(1);
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Manage FileLog sources' }));
+    expect(controller.actions.openFileLogSources).toHaveBeenCalledTimes(1);
     expect(dialog).not.toHaveTextContent('payments-key-ref');
     expect(dialog).not.toHaveTextContent('internal-ca');
     expect(within(dialog).queryByLabelText(/token|secret|raw json/i)).not.toBeInTheDocument();
@@ -269,6 +271,82 @@ describe('CollectorPage', () => {
 
     const dialog = screen.getByRole('dialog', { name: 'Prometheus sources for edge' });
     expect(within(dialog).getByRole('button', { name: 'Add header reference' })).toBeDisabled();
+  });
+
+  it('manages the FileLog list in the same modal without adding another row action', () => {
+    const controller = buildController({
+      runtimeEditor: { record: collector('edge'), config: runtimeConfig() },
+      fileLogEditor: fileLogEditor()
+    });
+    resource.useCollectorController.mockReturnValue(controller);
+    renderPage();
+
+    const dialog = screen.getByRole('dialog', { name: 'FileLog sources for edge' });
+    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    expect(within(dialog).getByText('payments')).toBeInTheDocument();
+    expect(within(dialog).getByText('payments-logs')).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Edit payments' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Remove payments' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Add FileLog source' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save source changes' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Back to runtime' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
+    expect(controller.actions.selectFileLogSource).toHaveBeenCalledWith(0);
+    expect(controller.actions.removeFileLogSource).toHaveBeenCalledWith(0);
+    expect(controller.actions.selectFileLogSource).toHaveBeenCalledWith('new');
+    expect(controller.actions.saveFileLogSources).toHaveBeenCalledTimes(1);
+    expect(controller.actions.cancelFileLogSources).toHaveBeenCalledTimes(1);
+    expect(controller.actions.closeFileLogSources).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: /configure edge filelog/i })).not.toBeInTheDocument();
+  });
+
+  it('edits only FileLog local preset references and keeps failure feedback in the inline form', async () => {
+    const controller = buildController({
+      runtimeEditor: { record: collector('edge'), config: runtimeConfig() },
+      fileLogEditor: fileLogEditor({ selection: 0 }),
+      fileLogFailure: 'validation'
+    });
+    resource.useCollectorController.mockReturnValue(controller);
+    renderPage();
+
+    const dialog = screen.getByRole('dialog', { name: 'FileLog sources for edge' });
+    expect(within(dialog).getByLabelText('Path profile reference name')).toHaveValue('payments-logs');
+    expect(
+      within(dialog).getByText('The Collector change was rejected. Review its current server state.')
+    ).toBeInTheDocument();
+    expect(within(dialog).getAllByText(/local preset reference/i)).toHaveLength(2);
+    expect(within(dialog).queryByLabelText(/file path|glob|raw path|raw json/i)).not.toBeInTheDocument();
+    fireEvent.change(within(dialog).getByLabelText('Source name'), { target: { value: 'checkout' } });
+    fireEvent.change(within(dialog).getByLabelText('Path profile reference name'), {
+      target: { value: 'checkout-logs' }
+    });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Apply source' }));
+    await waitFor(() =>
+      expect(controller.actions.applyFileLogSource).toHaveBeenCalledWith({
+        name: 'checkout',
+        pathProfile: 'checkout-logs'
+      })
+    );
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Back to source list' }));
+    expect(controller.actions.cancelFileLogSource).toHaveBeenCalledTimes(1);
+  });
+
+  it('disables adding a seventeenth FileLog source', () => {
+    resource.useCollectorController.mockReturnValue(
+      buildController({
+        runtimeEditor: { record: collector('edge'), config: runtimeConfig() },
+        fileLogEditor: fileLogEditor({
+          sources: Array.from({ length: 16 }, (_, index) => ({
+            name: `source-${index}`,
+            pathProfile: `profile-${index}`
+          }))
+        })
+      })
+    );
+    renderPage();
+
+    const dialog = screen.getByRole('dialog', { name: 'FileLog sources for edge' });
+    expect(within(dialog).getByRole('button', { name: 'Add FileLog source' })).toBeDisabled();
   });
 
   it('disables the complete runtime form while writing and keeps classified failure inside it', () => {
@@ -430,6 +508,9 @@ function buildController(overrides: Record<string, unknown> = {}) {
     prometheusEditor: null,
     prometheusSaving: false,
     prometheusFailure: null,
+    fileLogEditor: null,
+    fileLogSaving: false,
+    fileLogFailure: null,
     selected: [],
     actions: {
       setNameDraft: vi.fn(),
@@ -452,6 +533,14 @@ function buildController(overrides: Record<string, unknown> = {}) {
       cancelPrometheusSources: vi.fn(),
       closePrometheusSources: vi.fn(),
       cancelPrometheusTarget: vi.fn(),
+      openFileLogSources: vi.fn(),
+      selectFileLogSource: vi.fn(),
+      applyFileLogSource: vi.fn(),
+      removeFileLogSource: vi.fn(),
+      saveFileLogSources: vi.fn(),
+      cancelFileLogSources: vi.fn(),
+      closeFileLogSources: vi.fn(),
+      cancelFileLogSource: vi.fn(),
       toggleSelection: vi.fn(),
       toggleAll: vi.fn(),
       cancelAction: vi.fn(),
@@ -544,6 +633,15 @@ function prometheusEditor(overrides: Record<string, unknown> = {}) {
         tlsCaProfile: 'internal-ca'
       }
     ],
+    selection: null,
+    ...overrides
+  };
+}
+
+function fileLogEditor(overrides: Record<string, unknown> = {}) {
+  return {
+    record: collector('edge'),
+    sources: [{ name: 'payments', pathProfile: 'payments-logs' }],
     selection: null,
     ...overrides
   };

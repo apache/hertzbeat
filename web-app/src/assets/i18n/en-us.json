@@ -548,6 +548,24 @@
         "fileLogUnchanged_other": "{{count}} FileLog sources remain unchanged.",
         "schedule": "Every {{interval}}s · timeout {{timeout}}s"
       },
+      "fileLog": {
+        "title": "FileLog sources for {{name}}",
+        "manage": "Manage FileLog sources",
+        "success": "FileLog source configuration saved.",
+        "add": "Add FileLog source",
+        "empty": "No FileLog sources are configured.",
+        "editNamed": "Edit {{name}}",
+        "removeNamed": "Remove {{name}}",
+        "save": "Save source changes",
+        "back": "Back to runtime",
+        "backToList": "Back to source list",
+        "apply": "Apply source",
+        "name": "Source name",
+        "pathProfile": "Path profile reference name",
+        "referenceOnly": "Path profiles use Collector local preset reference names only, never file paths or globs.",
+        "prometheusUnchanged_one": "{{count}} Prometheus target remains unchanged.",
+        "prometheusUnchanged_other": "{{count}} Prometheus targets remain unchanged."
+      },
       "scraper": {
         "CPU": "CPU",
         "DISK": "Disk",

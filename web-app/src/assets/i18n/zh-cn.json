@@ -544,6 +544,24 @@
         "fileLogUnchanged_other": "{{count}} 个 FileLog 数据源保持不变。",
         "schedule": "每 {{interval}} 秒 · 超时 {{timeout}} 秒"
       },
+      "fileLog": {
+        "title": "{{name}} 的 FileLog 数据源",
+        "manage": "管理 FileLog 数据源",
+        "success": "FileLog 数据源配置已保存。",
+        "add": "添加 FileLog 数据源",
+        "empty": "尚未配置 FileLog 数据源。",
+        "editNamed": "编辑 {{name}}",
+        "removeNamed": "移除 {{name}}",
+        "save": "保存数据源更改",
+        "back": "返回运行时配置",
+        "backToList": "返回数据源列表",
+        "apply": "应用数据源",
+        "name": "数据源名称",
+        "pathProfile": "路径配置引用名称",
+        "referenceOnly": "路径配置仅接受 Collector 本地预置的引用名称，不接受文件路径或 Glob。",
+        "prometheusUnchanged_one": "{{count}} 个 Prometheus 目标保持不变。",
+        "prometheusUnchanged_other": "{{count}} 个 Prometheus 目标保持不变。"
+      },
       "scraper": {
         "CPU": "CPU",
         "DISK": "磁盘",

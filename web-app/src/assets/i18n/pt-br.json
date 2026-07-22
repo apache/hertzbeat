@@ -548,6 +548,24 @@
         "fileLogUnchanged_other": "{{count}} fontes FileLog permanecem inalteradas.",
         "schedule": "A cada {{interval}}s · limite {{timeout}}s"
       },
+      "fileLog": {
+        "title": "Fontes FileLog de {{name}}",
+        "manage": "Gerenciar fontes FileLog",
+        "success": "Configuração das fontes FileLog salva.",
+        "add": "Adicionar fonte FileLog",
+        "empty": "Nenhuma fonte FileLog está configurada.",
+        "editNamed": "Editar {{name}}",
+        "removeNamed": "Remover {{name}}",
+        "save": "Salvar alterações das fontes",
+        "back": "Voltar ao runtime",
+        "backToList": "Voltar à lista de fontes",
+        "apply": "Aplicar fonte",
+        "name": "Nome da fonte",
+        "pathProfile": "Nome da referência do perfil de caminho",
+        "referenceOnly": "Perfis de caminho usam apenas nomes de referência de presets locais do Collector, nunca caminhos de arquivo ou globs.",
+        "prometheusUnchanged_one": "{{count}} destino Prometheus permanece inalterado.",
+        "prometheusUnchanged_other": "{{count}} destinos Prometheus permanecem inalterados."
+      },
       "scraper": {
         "CPU": "CPU",
         "DISK": "Disco",

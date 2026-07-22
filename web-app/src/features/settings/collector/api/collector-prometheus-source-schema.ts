@@ -9,8 +9,9 @@ import { z } from 'zod';
 
 import { managedRuntimeSafeNamePattern } from '../model/collector-runtime-config-model';
 import { managedPrometheusLimits, type ManagedPrometheusTargetDraft } from '../model/collector-prometheus-source-model';
-import { replaceManagedOtelPrometheusTargets, type ManagedOtelRuntimeConfig } from './collector-runtime-config-schema';
+import type { ManagedOtelRuntimeConfig } from './collector-runtime-config-schema';
 import { managedRuntimeDurationSeconds } from './collector-runtime-duration';
+import { replaceManagedOtelPrometheusTargets } from './collector-runtime-source-update';
 
 const headerReferenceDraftSchema = z.object({ headerName: z.string(), secretReferenceName: z.string() }).strict();
 const prometheusTargetDraftSchema = z

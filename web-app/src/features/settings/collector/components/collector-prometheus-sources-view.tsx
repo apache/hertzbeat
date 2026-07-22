@@ -16,7 +16,7 @@ import {
   type ManagedPrometheusTargetSelection
 } from '../model/collector-prometheus-source-model';
 import { CollectorPrometheusTargetForm } from './collector-prometheus-target-form';
-import styles from './collector-prometheus-sources-view.module.css';
+import styles from './collector-runtime-sources-view.module.css';
 
 type Props = {
   view: ManagedPrometheusSourceView;

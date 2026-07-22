@@ -544,6 +544,24 @@
         "fileLogUnchanged_other": "{{count}} 個 FileLog 資料來源維持不變。",
         "schedule": "每 {{interval}} 秒 · 逾時 {{timeout}} 秒"
       },
+      "fileLog": {
+        "title": "{{name}} 的 FileLog 資料來源",
+        "manage": "管理 FileLog 資料來源",
+        "success": "FileLog 資料來源設定已儲存。",
+        "add": "新增 FileLog 資料來源",
+        "empty": "尚未設定 FileLog 資料來源。",
+        "editNamed": "編輯 {{name}}",
+        "removeNamed": "移除 {{name}}",
+        "save": "儲存資料來源變更",
+        "back": "返回執行階段設定",
+        "backToList": "返回資料來源清單",
+        "apply": "套用資料來源",
+        "name": "資料來源名稱",
+        "pathProfile": "路徑設定檔參照名稱",
+        "referenceOnly": "路徑設定檔僅接受 Collector 本機預設的參照名稱，不接受檔案路徑或 Glob。",
+        "prometheusUnchanged_one": "{{count}} 個 Prometheus 目標保持不變。",
+        "prometheusUnchanged_other": "{{count}} 個 Prometheus 目標保持不變。"
+      },
       "scraper": {
         "CPU": "CPU",
         "DISK": "磁碟",
