@@ -74,6 +74,7 @@ import org.apache.hertzbeat.warehouse.store.history.tsdb.AbstractHistoryDataStor
 import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader.ServerAvailability;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.vm.PromQlQueryContent;
 import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -119,6 +120,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 
     private final GreptimeServerAvailabilityProbe serverAvailabilityProbe;
 
+    @Autowired
     public GreptimeDbDataStorage(GreptimeProperties greptimeProperties, RestTemplate restTemplate,
                                  GreptimeSqlQueryExecutor greptimeSqlQueryExecutor) {
         this(greptimeProperties, restTemplate, greptimeSqlQueryExecutor,

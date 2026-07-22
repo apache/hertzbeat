@@ -62,6 +62,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -128,6 +131,28 @@ class GreptimeDbDataStorageTest {
             GreptimeDbDataStorage storage = new GreptimeDbDataStorage(greptimeProperties, restTemplate, greptimeSqlQueryExecutor);
             assertNotNull(storage);
             assertFalse(storage.isServerAvailable());
+        }
+    }
+
+    @Test
+    void springSelectsProductionConstructorWithoutDefaultConstructor() {
+        DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
+        beanFactory.registerSingleton("greptimeProperties", greptimeProperties);
+        beanFactory.registerSingleton("restTemplate", restTemplate);
+        beanFactory.registerSingleton("greptimeSqlQueryExecutor", greptimeSqlQueryExecutor);
+        AutowiredAnnotationBeanPostProcessor injectionProcessor = new AutowiredAnnotationBeanPostProcessor();
+        injectionProcessor.setBeanFactory(beanFactory);
+        beanFactory.addBeanPostProcessor(injectionProcessor);
+        beanFactory.registerBeanDefinition(
+                "greptimeDbDataStorage", new RootBeanDefinition(GreptimeDbDataStorage.class));
+
+        try (MockedStatic<GreptimeDB> mockedStatic = mockStatic(GreptimeDB.class)) {
+            mockedStatic.when(() -> GreptimeDB.create(any())).thenReturn(greptimeDb);
+
+            GreptimeDbDataStorage storage = beanFactory.getBean(GreptimeDbDataStorage.class);
+
+            assertNotNull(storage);
+            assertTrue(storage.isServerAvailable());
         }
     }
 
