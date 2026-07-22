@@ -113,6 +113,14 @@ final class ExternalLanguageProcessHarness implements AutoCloseable {
                 Map.entry("DOTNET_GENERATE_ASPNET_CERTIFICATE", "false"));
     }
 
+    Map<String, String> createDockerEnvironment(Path dockerBinary) throws IOException {
+        Path dockerConfig = Files.createDirectories(resolve("docker-config"));
+        Files.writeString(dockerConfig.resolve("config.json"), "{\"auths\":{}}\n");
+        return Map.of(
+                "PATH", dockerBinary.getParent() + ":/usr/bin:/bin:/usr/sbin:/sbin",
+                "DOCKER_CONFIG", dockerConfig.toString());
+    }
+
     Process start(List<String> command, Map<String, String> environment, String label) throws IOException {
         requireCommand(command);
         Path output = outputPath(label);
