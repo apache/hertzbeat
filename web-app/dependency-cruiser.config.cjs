@@ -105,6 +105,15 @@ module.exports = {
       }
     },
     {
+      name: 'settings-composition-public-entry-only',
+      severity: 'error',
+      from: { path: '^src/app/(?:router|refine/refine-runtime)[.]tsx$' },
+      to: {
+        path: '^src/features/settings/(?:message-server|token|system-config|label|object-store)/.+',
+        pathNot: '^src/features/settings/(?:message-server|token|system-config|label|object-store)/index[.]tsx?$'
+      }
+    },
+    {
       name: 'no-presentation-to-api',
       severity: 'error',
       from: {

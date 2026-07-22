@@ -307,6 +307,35 @@ test('rejects shell header dependencies on action side-effect owners', () => {
   assert.match(result.output, /shell-header-composition-only/);
 });
 
+test('keeps settings composition imports on feature public entries', () => {
+  const allowedFixture = createProject({
+    'src/features/settings/label/index.ts': 'export const LabelPage = true;',
+    'src/features/settings/token/index.ts': 'export const tokenDataProvider = true;',
+    'src/app/router.tsx': "import { LabelPage } from '@/features/settings/label'; export const route = LabelPage;",
+    'src/app/refine/refine-runtime.tsx':
+      "import { tokenDataProvider } from '@/features/settings/token'; export const provider = tokenDataProvider;"
+  });
+  const rejectedFixture = createProject({
+    'src/features/settings/label/index.ts': 'export const LabelPage = true;',
+    'src/features/settings/label/pages/label-page.tsx': 'export const LabelPage = true;',
+    'src/features/settings/token/index.ts': 'export const tokenDataProvider = true;',
+    'src/features/settings/token/provider/token-data-provider.ts': 'export const tokenDataProvider = true;',
+    'src/app/router.tsx':
+      "import { LabelPage } from '@/features/settings/label/pages/label-page'; export const route = LabelPage;",
+    'src/app/refine/refine-runtime.tsx':
+      "import { tokenDataProvider } from '@/features/settings/token/provider/token-data-provider'; export const provider = tokenDataProvider;"
+  });
+
+  const allowedResult = cruise(allowedFixture);
+  const rejectedResult = cruise(rejectedFixture);
+
+  assert.equal(allowedResult.status, 0, allowedResult.output);
+  assert.notEqual(rejectedResult.status, 0, rejectedResult.output);
+  assert.match(rejectedResult.output, /settings-composition-public-entry-only/);
+  assert.match(rejectedResult.output, /router[.]tsx/);
+  assert.match(rejectedResult.output, /refine-runtime[.]tsx/);
+});
+
 function createProject(files) {
   const directory = mkdtempSync(join(tmpdir(), 'hertzbeat-architecture-'));
   temporaryProjects.push(directory);
