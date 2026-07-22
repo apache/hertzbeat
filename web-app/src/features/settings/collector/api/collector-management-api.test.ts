@@ -9,7 +9,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { apiMessageDelete, apiMessageGet, apiMessagePut } from '@/core/http/api-message';
 
-import { CollectorContractError, loadCollectorManagementPage, mutateCollectors } from './collector-management-api';
+import {
+  CollectorContractError,
+  loadCollectorManagementPage,
+  loadCollectorMutationProofPage,
+  mutateCollectors
+} from './collector-management-api';
 
 vi.mock('@/core/http/api-message', async importOriginal => ({
   ...(await importOriginal<typeof import('@/core/http/api-message')>()),
@@ -62,6 +67,36 @@ describe('Collector management API', () => {
     await expect(loadCollectorManagementPage({ name: '', pageIndex: 0, pageSize: 8 })).rejects.toBeInstanceOf(
       CollectorContractError
     );
+  });
+
+  it('does not retain secret-bearing runtime diagnostics in collector query data', async () => {
+    get.mockResolvedValue(
+      page([
+        {
+          ...summary('edge'),
+          runtimeStatus: {
+            schemaVersion: 2,
+            state: 'RUNNING',
+            lastError: 'authorization=must-not-enter-query-data'
+          }
+        }
+      ])
+    );
+
+    const result = await loadCollectorManagementPage({ name: '', pageIndex: 2, pageSize: 15 });
+
+    expect(result.content[0]).not.toHaveProperty('runtimeStatus');
+    expect(JSON.stringify(result)).not.toContain('must-not-enter-query-data');
+  });
+
+  it('accepts an out-of-range empty Spring page only for authoritative mutation proof', async () => {
+    const response = { content: [], totalElements: 16, totalPages: 2, number: 2, size: 8 };
+    get.mockResolvedValue(response);
+
+    await expect(loadCollectorManagementPage({ name: '', pageIndex: 2, pageSize: 8 })).rejects.toBeInstanceOf(
+      CollectorContractError
+    );
+    await expect(loadCollectorMutationProofPage({ name: '', pageIndex: 2, pageSize: 8 })).resolves.toEqual(response);
   });
 
   it('uses repeated encoded collectors parameters for online, offline, and delete', async () => {

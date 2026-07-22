@@ -159,7 +159,6 @@ function collector(name: string, immutable = false) {
     pinMonitorNum: 2,
     dispatchMonitorNum: 3,
     updatedAt: '2026-07-22T10:00:00',
-    runtimeStatus: null,
     runtimeStatusReportedAt: null,
     instrumentationIntake: { state: 'unavailable', errorCode: 'intake_not_advertised' }
   };

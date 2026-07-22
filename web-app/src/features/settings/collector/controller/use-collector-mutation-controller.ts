@@ -10,7 +10,7 @@ import { App } from 'antd';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { loadCollectorManagementPage, mutateCollectors } from '../api/collector-management-api';
+import { loadCollectorMutationProofPage, mutateCollectors } from '../api/collector-management-api';
 import type {
   CollectorMutationAction,
   CollectorMutationCommand,
@@ -47,17 +47,18 @@ export function useCollectorMutationController(options: Options) {
   const confirmAction = useCallback(async () => {
     if (!pendingAction || mutating) return;
     const command = { action: pendingAction.action, collectors: pendingAction.collectors };
-    const nextQuery = mutationProofQuery(command, pendingAction.receipt);
+    const proofQuery = pendingAction.receipt.query;
     let proofPage: CollectorPage | undefined;
     setMutating(true);
     setMutationFailure(null);
     setProofFailure(false);
+    await options.queryClient.cancelQueries({ queryKey: collectorQueryKeys.page(proofQuery), exact: true });
     const result = await executeCollectorMutation(
       command,
       current => mutateCollectors(current.action, current.collectors),
       async () => {
-        proofPage = await loadCollectorManagementPage(nextQuery);
-        options.queryClient.setQueryData(collectorQueryKeys.page(nextQuery), proofPage);
+        proofPage = await loadCollectorMutationProofPage(proofQuery);
+        options.queryClient.setQueryData(collectorQueryKeys.page(proofQuery), proofPage);
         return proofPage.content;
       }
     );
@@ -65,6 +66,7 @@ export function useCollectorMutationController(options: Options) {
     setPendingAction(null);
     options.clearSelection();
     if (result.kind === 'confirmed') {
+      const nextQuery = mutationNavigationQuery(command, pendingAction.receipt);
       const originalQueryIsCurrent = sameQuery(pendingAction.receipt.query, options.queryRef.current);
       if (originalQueryIsCurrent && !sameQuery(nextQuery, options.queryRef.current)) {
         options.navigateQuery(nextQuery, true);
@@ -117,7 +119,7 @@ function useCollectorActionRequest(
   );
 }
 
-function mutationProofQuery(command: CollectorMutationCommand, receipt: CollectorDeletePageReceipt) {
+function mutationNavigationQuery(command: CollectorMutationCommand, receipt: CollectorDeletePageReceipt) {
   if (command.action !== 'delete' || command.collectors.length !== receipt.visibleRecords) return receipt.query;
   return collectorQueryAfterConfirmedDelete(receipt.query, receipt, command.collectors.length) ?? receipt.query;
 }

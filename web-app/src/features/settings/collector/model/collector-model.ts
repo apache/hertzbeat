@@ -19,7 +19,6 @@ export type CollectorRecord = {
   pinMonitorNum: number;
   dispatchMonitorNum: number;
   updatedAt: string | null;
-  runtimeStatus: unknown;
   runtimeStatusReportedAt: string | null;
   instrumentationIntake: CollectorInstrumentationIntake;
 };

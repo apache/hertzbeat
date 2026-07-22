@@ -65,17 +65,26 @@ const collectorPageSchema = z.object({
 });
 
 export function parseCollectorManagementPage(value: unknown, query: CollectorQuery): CollectorPage {
+  return parseCollectorPage(value, query, false);
+}
+
+export function parseCollectorMutationProofPage(value: unknown, query: CollectorQuery): CollectorPage {
+  return parseCollectorPage(value, query, true);
+}
+
+function parseCollectorPage(value: unknown, query: CollectorQuery, allowOutOfRangeEmpty: boolean): CollectorPage {
   const parsed = collectorPageSchema.safeParse(value);
   if (!parsed.success) throw new CollectorContractError();
   const page = parsed.data;
   const expectedPages = page.totalElements === 0 ? 0 : Math.ceil(page.totalElements / page.size);
   const expectedMaximumLength = Math.min(page.size, Math.max(0, page.totalElements - page.number * page.size));
+  const outOfRange = page.totalPages === 0 ? page.number !== 0 : page.number >= page.totalPages;
   if (
     page.number !== query.pageIndex ||
     page.size !== query.pageSize ||
     page.totalPages !== expectedPages ||
     page.content.length !== expectedMaximumLength ||
-    (page.totalPages === 0 ? page.number !== 0 : page.number >= page.totalPages)
+    (outOfRange && (!allowOutOfRangeEmpty || page.content.length !== 0))
   ) {
     throw new CollectorContractError();
   }
@@ -90,7 +99,6 @@ export function parseCollectorManagementPage(value: unknown, query: CollectorQue
       pinMonitorNum: summary.pinMonitorNum,
       dispatchMonitorNum: summary.dispatchMonitorNum,
       updatedAt: summary.collector.gmtUpdate,
-      runtimeStatus: summary.runtimeStatus,
       runtimeStatusReportedAt: summary.runtimeStatusReportedAt,
       instrumentationIntake: parseCollectorInstrumentationIntake(summary.instrumentationIntake, summary.collector.name)
     })),
