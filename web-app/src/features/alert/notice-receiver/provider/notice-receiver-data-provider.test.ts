@@ -494,6 +494,9 @@ describe('Notice Receiver provider input boundary', () => {
     };
     expect(readNoticeReceiverDraft(source)).toEqual(source);
     expect(readNoticeReceiverDraft({ ...source, agentId: 0 })).toMatchObject({ agentId: 0 });
+    expect(() => readNoticeReceiverDraft(Object.create(source) as unknown)).toThrow(
+      expect.objectContaining({ code: 'NOTICE_RECEIVER_VARIABLES_INVALID', statusCode: 400 })
+    );
 
     const incomplete = { ...source } as Record<string, unknown>;
     delete incomplete.serverChanToken;

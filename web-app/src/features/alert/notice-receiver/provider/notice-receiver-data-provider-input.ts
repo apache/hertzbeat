@@ -19,6 +19,7 @@ import type { GetListParams } from '@refinedev/core';
 import { z } from 'zod';
 
 import { createRefineHttpError } from '@/shared/refine/refine-http-error';
+import { hasOwnProperties } from '@/shared/validation/own-properties';
 
 import {
   createNoticeReceiverDraft,
@@ -75,6 +76,7 @@ const draftShape = {
   clearSecrets: stringArraySchema
 };
 const draftSchema = z.object(draftShape).passthrough();
+const draftFieldNames = Object.keys(draftShape).filter(key => key !== 'id');
 const nameFilterSchema = z.object({
   field: z.literal('name'),
   operator: z.literal('contains'),
@@ -102,8 +104,13 @@ export function readNoticeReceiverId(value: string | number): number {
 }
 
 export function readNoticeReceiverDraft(value: unknown, id?: number): NoticeReceiverDraft {
-  if (!hasCurrentDraftShape()) throw inputError('NOTICE_RECEIVER_VARIABLES_INVALID');
+  if (!hasCurrentDraftShape() || !hasOwnProperties(value, draftFieldNames)) {
+    throw inputError('NOTICE_RECEIVER_VARIABLES_INVALID');
+  }
   const source = parse(draftSchema, value, 'NOTICE_RECEIVER_VARIABLES_INVALID');
+  if (source.id !== undefined && !Object.hasOwn(value, 'id')) {
+    throw inputError('NOTICE_RECEIVER_VARIABLES_INVALID');
+  }
   if (id === undefined ? source.id !== undefined : source.id !== id) {
     throw inputError('NOTICE_RECEIVER_VARIABLES_INVALID');
   }
@@ -122,8 +129,7 @@ export function readNoticeReceiverDeleteRecord(value: unknown, id: number): Noti
 
 function hasCurrentDraftShape() {
   const baselineKeys = Object.keys(createNoticeReceiverDraft());
-  const schemaKeys = Object.keys(draftShape).filter(key => key !== 'id');
-  return baselineKeys.length === schemaKeys.length && baselineKeys.every(key => schemaKeys.includes(key));
+  return baselineKeys.length === draftFieldNames.length && baselineKeys.every(key => draftFieldNames.includes(key));
 }
 
 function readNameFilter(filters: GetListParams['filters']) {
