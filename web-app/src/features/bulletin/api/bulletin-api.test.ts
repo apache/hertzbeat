@@ -74,6 +74,23 @@ describe('bulletin api', () => {
     await expect(loadBulletinMetrics(7)).resolves.toEqual({ name: 'Ops', content: [] });
   });
 
+  it('forwards caller cancellation through list and metrics reads', async () => {
+    const controller = new AbortController();
+    http.apiMessageGet
+      .mockResolvedValueOnce({ content: [], totalElements: 0, totalPages: 0, number: 0, size: 8 })
+      .mockResolvedValueOnce({ name: 'Ops', content: [] });
+
+    await loadBulletins({ search: '', pageIndex: 0, pageSize: 8 }, controller.signal);
+    await loadBulletinMetrics(7, controller.signal);
+
+    expect(http.apiMessageGet).toHaveBeenNthCalledWith(1, '/api/bulletin?pageIndex=0&pageSize=8', {
+      signal: controller.signal
+    });
+    expect(http.apiMessageGet).toHaveBeenNthCalledWith(2, '/api/bulletin/metrics?id=7', {
+      signal: controller.signal
+    });
+  });
+
   it('normalizes the legacy no-data sentinel instead of exposing a healthy value', async () => {
     http.apiMessageGet.mockResolvedValueOnce({
       name: 'Ops',

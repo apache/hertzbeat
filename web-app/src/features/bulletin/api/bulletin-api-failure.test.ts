@@ -6,7 +6,7 @@ import { ApiMessageError } from '@/core/http/api-message';
 
 import { BulletinRequestFailure } from '../model/bulletin-failure';
 import { BulletinContractError } from './bulletin-schema';
-import { normalizeBulletinApiFailure } from './bulletin-api-failure';
+import { bulletinApiRequest, normalizeBulletinApiFailure } from './bulletin-api-failure';
 
 describe('Bulletin API failure boundary', () => {
   it.each([
@@ -64,5 +64,18 @@ describe('Bulletin API failure boundary', () => {
     const failure = new BulletinRequestFailure('unavailable', 'uncertain');
 
     expect(normalizeBulletinApiFailure(failure, 'list')).toBe(failure);
+  });
+
+  it('keeps caller cancellation out of the user-visible failure contract', async () => {
+    const controller = new AbortController();
+    controller.abort();
+
+    await expect(
+      bulletinApiRequest(
+        'list',
+        () => Promise.reject(new ApiMessageError('private abort', { cause: new DOMException('abort', 'AbortError') })),
+        controller.signal
+      )
+    ).rejects.toMatchObject({ name: 'AbortError', message: 'Request aborted' });
   });
 });

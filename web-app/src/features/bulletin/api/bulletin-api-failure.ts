@@ -18,10 +18,16 @@ export function normalizeBulletinApiFailure(reason: unknown, operation: Bulletin
 }
 
 /** Ensures raw transport and schema errors never leave a Bulletin API operation. */
-export async function bulletinApiRequest<T>(operation: BulletinApiOperation, request: () => Promise<T>): Promise<T> {
+export async function bulletinApiRequest<T>(
+  operation: BulletinApiOperation,
+  request: () => Promise<T>,
+  signal?: AbortSignal
+): Promise<T> {
   try {
     return await request();
   } catch (reason) {
+    // Caller cancellation retires query ownership; it is not availability evidence.
+    if (signal?.aborted) throw new DOMException('Request aborted', 'AbortError');
     throw normalizeBulletinApiFailure(reason, operation);
   }
 }

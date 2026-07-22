@@ -17,7 +17,7 @@ export function useBulletinListController(query: BulletinQuery) {
   const queryKey = bulletinQueryKeys.list(query);
   const list = useQuery({
     queryKey,
-    queryFn: () => loadBulletins(query),
+    queryFn: ({ signal }) => loadBulletins(query, signal),
     retry: false
   });
   const { refetch } = list;

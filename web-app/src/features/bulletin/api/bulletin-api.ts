@@ -36,11 +36,15 @@ export type { BulletinFailureKind } from '../model/bulletin-failure';
 const createProofPageSize = 25;
 const createProofMaxPages = 20;
 
-export async function loadBulletins(query: BulletinQuery) {
-  return bulletinApiRequest('list', async () => {
-    const page = parseBulletinPageWire(await apiMessageGet(buildBulletinListPath(query)));
-    return validatePageIdentity(page, query);
-  });
+export async function loadBulletins(query: BulletinQuery, signal?: AbortSignal) {
+  return bulletinApiRequest(
+    'list',
+    async () => {
+      const page = parseBulletinPageWire(await getBulletinApiResponse(buildBulletinListPath(query), signal));
+      return validatePageIdentity(page, query);
+    },
+    signal
+  );
 }
 
 export async function loadBulletin(id: number) {
@@ -53,9 +57,11 @@ export async function loadBulletin(id: number) {
   });
 }
 
-export async function loadBulletinMetrics(id: number) {
-  return bulletinApiRequest('metrics', async () =>
-    mapMetrics(parseMetricsWire(await apiMessageGet(`/api/bulletin/metrics?id=${id}`)))
+export async function loadBulletinMetrics(id: number, signal?: AbortSignal) {
+  return bulletinApiRequest(
+    'metrics',
+    async () => mapMetrics(parseMetricsWire(await getBulletinApiResponse(`/api/bulletin/metrics?id=${id}`, signal))),
+    signal
   );
 }
 
@@ -181,4 +187,8 @@ function mapMetricField(field: BulletinMetricFieldWire): BulletinMetricField {
     return { key: field.key, unit: '', value: null, status: 'no-data' };
   }
   return { key: field.key, unit: field.unit, value: field.value, status: 'value' };
+}
+
+function getBulletinApiResponse(path: string, signal?: AbortSignal) {
+  return signal ? apiMessageGet(path, { signal }) : apiMessageGet(path);
 }

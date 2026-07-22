@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { useQuery, type QueryClient } from '@tanstack/react-query';
+import { skipToken, useQuery, type QueryClient } from '@tanstack/react-query';
 
 import { loadBulletinMetrics } from '../api/bulletin-api';
 import { classifyBulletinFailure } from '../model/bulletin-failure';
@@ -12,8 +12,8 @@ const bulletinMetricsRefreshIntervalMs = 30_000;
 export function useBulletinMetrics(selectedId: number | null) {
   const query = useQuery({
     queryKey: bulletinQueryKeys.metrics(selectedId),
-    queryFn: () => loadBulletinMetrics(selectedId!),
-    enabled: selectedId != null,
+    // `enabled: false` still permits manual refetch; skipToken removes the unsafe null-id query function.
+    queryFn: selectedId == null ? skipToken : ({ signal }) => loadBulletinMetrics(selectedId, signal),
     retry: false,
     refetchInterval: bulletinMetricsRefreshIntervalMs
   });
@@ -30,7 +30,7 @@ export async function refreshSavedBulletinMetrics(client: QueryClient, id: numbe
   await client.invalidateQueries({ queryKey, exact: true, refetchType: 'none' });
   await client.fetchQuery({
     queryKey,
-    queryFn: () => loadBulletinMetrics(id),
+    queryFn: ({ signal }) => loadBulletinMetrics(id, signal),
     staleTime: 0
   });
 }

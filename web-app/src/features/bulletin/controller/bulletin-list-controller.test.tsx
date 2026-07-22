@@ -95,7 +95,7 @@ describe('Bulletin list controller', () => {
     );
 
     act(() => hook.result.current.select(7));
-    await waitFor(() => expect(api.loadBulletinMetrics).toHaveBeenCalledWith(7));
+    await waitFor(() => expect(api.loadBulletinMetrics).toHaveBeenCalledWith(7, expect.any(AbortSignal)));
     expect(
       client
         .getQueryCache()
@@ -145,7 +145,7 @@ describe('Bulletin list controller', () => {
     });
 
     act(() => hook.result.current.select(7));
-    await waitFor(() => expect(api.loadBulletinMetrics).toHaveBeenCalledWith(7));
+    await waitFor(() => expect(api.loadBulletinMetrics).toHaveBeenCalledWith(7, expect.any(AbortSignal)));
 
     hook.rerender({ list: { kind: 'loading' } });
     expect(hook.result.current.selectedId).toBe(7);
@@ -182,6 +182,31 @@ describe('Bulletin list controller', () => {
 
     expect(hook.result.current.selectedId).toBe(8);
     expect(hook.result.current.query).toEqual(secondQuery);
+  });
+
+  it('cancels the retired list request when the canonical query changes', async () => {
+    const requests: Array<{ query: BulletinQuery; signal: AbortSignal }> = [];
+    const firstQuery = { search: 'old', pageIndex: 0, pageSize: 8 };
+    const secondQuery = { ...firstQuery, search: 'latest' };
+    api.loadBulletins.mockImplementation((current: BulletinQuery, signal: AbortSignal) => {
+      requests.push({ query: current, signal });
+      if (current.search === 'latest') return Promise.resolve({ ...page([]), totalPages: 0 });
+      return new Promise((_resolve, reject) => {
+        signal.addEventListener('abort', () => reject(new DOMException('abort', 'AbortError')), { once: true });
+      });
+    });
+    const hook = renderHook(({ query }: { query: BulletinQuery }) => useBulletinListController(query), {
+      initialProps: { query: firstQuery },
+      wrapper: createWrapper()
+    });
+    await waitFor(() => expect(requests).toHaveLength(1));
+
+    hook.rerender({ query: secondQuery });
+
+    await waitFor(() => expect(hook.result.current.state).toEqual({ kind: 'empty' }));
+    expect(requests[0]?.signal.aborted).toBe(true);
+    expect(requests[1]).toMatchObject({ query: secondQuery });
+    expect(requests[1]?.signal).toBeInstanceOf(AbortSignal);
   });
 });
 
