@@ -26,22 +26,34 @@ export function readLabelListQuery(params: GetListParams) {
 }
 
 export function readLabelDraft(value: unknown): Partial<LabelRecord> & Pick<LabelRecord, 'name'> {
-  if (!value || typeof value !== 'object') invalidVariables();
-  const draft = value as Partial<LabelRecord>;
-  if (typeof draft.name !== 'string' || !draft.name.trim()) invalidVariables();
-  assertOptionalText(draft.tagValue);
-  assertOptionalText(draft.description);
-  assertLabelType(draft.type);
-  return draft as Partial<LabelRecord> & Pick<LabelRecord, 'name'>;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) invalidVariables();
+  const name = ownProperty(value, 'name');
+  const tagValue = ownProperty(value, 'tagValue');
+  const description = ownProperty(value, 'description');
+  const type = ownProperty(value, 'type');
+  if (typeof name !== 'string' || !name.trim()) invalidVariables();
+  assertOptionalText(tagValue);
+  assertOptionalText(description);
+  assertLabelType(type);
+  return {
+    name,
+    ...(tagValue === undefined ? {} : { tagValue }),
+    ...(description === undefined ? {} : { description }),
+    ...(type === undefined ? {} : { type })
+  };
 }
 
-function assertOptionalText(value: unknown) {
+function assertOptionalText(value: unknown): asserts value is string | undefined {
   if (value !== undefined && typeof value !== 'string') invalidVariables();
 }
 
-function assertLabelType(value: unknown) {
+function assertLabelType(value: unknown): asserts value is number | undefined {
   if (value === undefined) return;
   if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 0 || value > 3) invalidVariables();
+}
+
+function ownProperty(value: object, key: string): unknown {
+  return Object.hasOwn(value, key) ? Reflect.get(value, key) : undefined;
 }
 
 export function readLabelId(value: string | number) {

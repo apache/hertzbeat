@@ -133,6 +133,9 @@ describe('Label Refine data provider', () => {
         variables: { name: 'env', type: 'user' }
       })
     ).rejects.toMatchObject({ code: 'LABEL_VARIABLES_INVALID' });
+    await expect(
+      labelDataProvider.create({ resource: 'labels', variables: Object.create({ name: 'inherited' }) })
+    ).rejects.toMatchObject({ code: 'LABEL_VARIABLES_INVALID' });
     expect(labelApi.loadLabels).not.toHaveBeenCalled();
     expect(labelApi.saveLabel).not.toHaveBeenCalled();
     expect(labelApi.findCanonicalLabel).not.toHaveBeenCalled();
@@ -148,7 +151,7 @@ describe('Label Refine data provider', () => {
     await expect(
       labelDataProvider.create<LabelRecord, Partial<LabelRecord>>({
         resource: 'labels',
-        variables: { name: ' env ', tagValue: ' prod ', description: 'request value' }
+        variables: { id: 999, name: ' env ', tagValue: ' prod ', description: 'request value', creator: 'client' }
       })
     ).resolves.toEqual({ data: createdLabel });
     await expect(
@@ -158,7 +161,11 @@ describe('Label Refine data provider', () => {
         variables: { name: ' env ', tagValue: ' prod ', description: 'new request value' }
       })
     ).resolves.toEqual({ data: updatedLabel });
-    expect(labelApi.saveLabel).toHaveBeenNthCalledWith(1, expect.objectContaining({ name: ' env ' }), true);
+    expect(labelApi.saveLabel).toHaveBeenNthCalledWith(
+      1,
+      { name: ' env ', tagValue: ' prod ', description: 'request value' },
+      true
+    );
     expect(labelApi.saveLabel).toHaveBeenNthCalledWith(2, expect.objectContaining({ id: 7 }), false);
     expect(labelApi.findCanonicalLabel).toHaveBeenNthCalledWith(1, { name: 'env', tagValue: 'prod' });
     expect(labelApi.findCanonicalLabel).toHaveBeenNthCalledWith(2, { id: 7, name: 'env', tagValue: 'prod' });
