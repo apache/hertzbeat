@@ -18,6 +18,8 @@
 import { buildMonitorListPath } from '@/shared/navigation/app-paths';
 import type { RemotePageState } from '@/shared/remote-state';
 
+export const labelResourceName = 'labels' as const;
+
 export type LabelRecord = {
   id: number;
   name: string;

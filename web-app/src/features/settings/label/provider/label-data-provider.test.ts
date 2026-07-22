@@ -18,11 +18,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
-import { LabelTransportFailure } from '@/features/settings/label/api/label-api-failure';
-import { LabelRequestFailure } from '@/features/settings/label/model/label-failure';
-import { LabelContractError, type LabelRecord } from '@/features/settings/label/model/label-model';
 
-type LabelApi = typeof import('@/features/settings/label/api/label-api');
+import { LabelTransportFailure } from '../api/label-api-failure';
+import { LabelRequestFailure } from '../model/label-failure';
+import { LabelContractError, type LabelRecord } from '../model/label-model';
+
+type LabelApi = typeof import('../api/label-api');
 const canonical = vi.hoisted(() => ({ endpoint: '/canonical-label-endpoint' }));
 const labelApi = vi.hoisted(() => ({
   deleteLabel: vi.fn<LabelApi['deleteLabel']>(),
@@ -30,7 +31,7 @@ const labelApi = vi.hoisted(() => ({
   loadLabels: vi.fn<LabelApi['loadLabels']>(),
   saveLabel: vi.fn<LabelApi['saveLabel']>()
 }));
-vi.mock('@/features/settings/label/api/label-api', async importOriginal => ({
+vi.mock('../api/label-api', async importOriginal => ({
   ...(await importOriginal<LabelApi>()),
   ...labelApi,
   labelEndpoint: canonical.endpoint

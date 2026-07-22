@@ -18,22 +18,19 @@
 import { useList, type HttpError } from '@refinedev/core';
 import { useCallback, useMemo } from 'react';
 
-import { type LabelListState, type LabelRecord } from '../model/label-model';
+import { labelResourceName, type LabelListState, type LabelRecord } from '../model/label-model';
 import { classifyLabelReadFailure, labelProjectionConverged, type LabelMutationEvidence } from '../model/label-failure';
 import type { LabelDeletePageReceipt, LabelQuery } from '../model/label-query-model';
 import { useLabelActionsController } from './label-actions-controller';
 import { useLabelMutationController } from './label-mutation-controller';
-
-const labelResource = 'labels';
-const labelDataProvider = 'labels';
 
 export function useLabelResourceController(
   query: LabelQuery,
   reconcileConfirmedDelete?: (receipt: LabelDeletePageReceipt) => boolean
 ) {
   const list = useList<LabelRecord, HttpError>({
-    resource: labelResource,
-    dataProviderName: labelDataProvider,
+    resource: labelResourceName,
+    dataProviderName: labelResourceName,
     pagination: { currentPage: query.pageIndex + 1, pageSize: query.pageSize, mode: 'server' },
     filters: query.search ? [{ field: 'search', operator: 'contains', value: query.search }] : [],
     errorNotification: false

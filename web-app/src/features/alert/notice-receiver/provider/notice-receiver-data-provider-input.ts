@@ -18,6 +18,8 @@
 import type { GetListParams } from '@refinedev/core';
 import { z } from 'zod';
 
+import { createRefineHttpError } from '@/shared/refine/refine-http-error';
+
 import {
   createNoticeReceiverDraft,
   noticeReceiverPageSizes,
@@ -26,9 +28,7 @@ import {
   type NoticeReceiver,
   type NoticeReceiverDraft,
   type NoticeReceiverQuery
-} from '@/features/alert/notice-receiver/model/notice-receiver-model';
-
-import { createRefineHttpError } from '../refine-http-error';
+} from '../model/notice-receiver-model';
 
 const safeIntegerSchema = z.number().refine(Number.isSafeInteger);
 const positiveIntegerSchema = safeIntegerSchema.refine(value => value > 0);
@@ -92,11 +92,7 @@ export function readNoticeReceiverListQuery(params: GetListParams): NoticeReceiv
     params.pagination?.currentPage ?? 1,
     'NOTICE_RECEIVER_PAGINATION_INVALID'
   );
-  const pageSize = parse(
-    pageSizeSchema,
-    params.pagination?.pageSize ?? 8,
-    'NOTICE_RECEIVER_PAGINATION_INVALID'
-  );
+  const pageSize = parse(pageSizeSchema, params.pagination?.pageSize ?? 8, 'NOTICE_RECEIVER_PAGINATION_INVALID');
   const name = readNameFilter(params.filters);
   return { name, pageIndex: currentPage - 1, pageSize };
 }

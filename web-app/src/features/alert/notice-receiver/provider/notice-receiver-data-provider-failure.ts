@@ -1,17 +1,14 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import {
-  normalizeNoticeReceiverApiFailure,
-  type NoticeReceiverRequestPhase
-} from '@/features/alert/notice-receiver/api/notice-receiver-api-failure';
+import { isRefineHttpError, type RefineHttpError } from '@/shared/refine/refine-http-error';
+import { isDefiniteRefineWriteRejection, isRefineSourceUnavailable } from '@/shared/refine/refine-source-evidence';
+
+import { normalizeNoticeReceiverApiFailure, type NoticeReceiverRequestPhase } from '../api/notice-receiver-api-failure';
 import {
   NoticeReceiverRequestFailure,
   type NoticeReceiverFailureKind,
   type NoticeReceiverWriteOutcome
-} from '@/features/alert/notice-receiver/model/notice-receiver-failure';
-import { isDefiniteRefineWriteRejection, isRefineSourceUnavailable } from '@/shared/refine/refine-source-evidence';
-
-import { isRefineHttpError, type RefineHttpError } from '../refine-http-error';
+} from '../model/notice-receiver-failure';
 
 type NoticeReceiverProviderPhase = Exclude<NoticeReceiverRequestPhase, 'command'>;
 

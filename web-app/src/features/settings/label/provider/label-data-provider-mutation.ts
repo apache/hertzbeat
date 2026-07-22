@@ -5,11 +5,10 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { deleteLabel, findCanonicalLabel, saveLabel } from '@/features/settings/label/api/label-api';
-import {
-  isExplicitLabelTransportRejection,
-  LabelTransportFailure
-} from '@/features/settings/label/api/label-api-failure';
+import { createRefineHttpError, isRefineHttpError } from '@/shared/refine/refine-http-error';
+
+import { deleteLabel, findCanonicalLabel, saveLabel } from '../api/label-api';
+import { isExplicitLabelTransportRejection, LabelTransportFailure } from '../api/label-api-failure';
 import {
   createLabelDeleteEvidence,
   createLabelWriteEvidence,
@@ -18,16 +17,14 @@ import {
   type LabelMutationEvidence,
   type LabelWriteEvidence,
   type LabelWriteOutcome
-} from '@/features/settings/label/model/label-failure';
+} from '../model/label-failure';
 import {
   buildLabelExpectedWrite,
   labelSaveConverged,
   LabelContractError,
   type LabelIdentity,
   type LabelRecord
-} from '@/features/settings/label/model/label-model';
-
-import { createRefineHttpError, isRefineHttpError } from '../refine-http-error';
+} from '../model/label-model';
 import { toLabelIdentity } from './label-data-provider-input';
 
 export async function writeAndProveLabel(

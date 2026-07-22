@@ -33,14 +33,15 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useSession } from '@/core/auth/session-context';
 import { sessionQueryKey } from '@/core/auth/session-api';
 import { initializeI18n } from '@/core/i18n/i18n';
+import { noticeReceiverDataProvider, noticeReceiverResourceName } from '@/features/alert/notice-receiver';
 import { objectStoreDataProvider } from '@/features/settings/object-store';
+import { labelDataProvider, labelResourceName } from '@/features/settings/label';
 import { systemConfigDataProvider } from '@/features/settings/system-config';
 import { tokenDataProvider } from '@/features/settings/token';
 
 import { AppProviders } from '../providers';
 import { appRoutes } from '../router';
 import { alertSilenceDataProvider } from './resources/alert-silence-data-provider';
-import { labelDataProvider } from './resources/label-data-provider';
 import { noticeTemplateDataProvider } from './resources/notice-template-data-provider';
 
 const { authenticatedSession } = vi.hoisted(() => ({
@@ -99,6 +100,10 @@ describe('production Refine runtime', () => {
       'alert-silences|/alerts/silences|alert-silences'
     );
     expect(screen.getByTestId('alert-silence-provider')).toHaveTextContent('shared');
+    expect(screen.getByTestId('notice-receiver-resource')).toHaveTextContent(
+      `${noticeReceiverResourceName}|/settings/notifications/receivers|${noticeReceiverResourceName}`
+    );
+    expect(screen.getByTestId('notice-receiver-provider')).toHaveTextContent('shared');
     fireEvent.click(screen.getByRole('button', { name: 'Open runtime notification' }));
     expect(await screen.findByText('Runtime notification ready')).toBeInTheDocument();
     const mountedClients = mountSpy.mock.instances;
@@ -122,13 +127,14 @@ function RuntimeProbe({ onClient }: { onClient: (client: QueryClient) => void })
   useEffect(() => {
     onClient(queryClient);
   }, [onClient, queryClient]);
-  const labelResource = resources.find(resource => resource.name === 'labels');
+  const labelResource = resources.find(resource => resource.name === labelResourceName);
   const objectStoreResource = resources.find(resource => resource.name === 'object-store');
   const systemConfigResource = resources.find(resource => resource.name === 'system-config');
   const tokenResource = resources.find(resource => resource.name === 'tokens');
   const noticeTemplateResource = resources.find(resource => resource.name === 'notice-templates');
   const alertSilenceResource = resources.find(resource => resource.name === 'alert-silences');
-  const labelProvider = resolveProviderState(dataProvider, 'labels', labelDataProvider, true);
+  const noticeReceiverResource = resources.find(resource => resource.name === noticeReceiverResourceName);
+  const labelProvider = resolveProviderState(dataProvider, labelResourceName, labelDataProvider, true);
   const objectStoreProvider = resolveProviderState(dataProvider, 'object-store', objectStoreDataProvider, false);
   const labelResourceText = formatResource(labelResource);
   const objectStoreResourceText = formatResource(objectStoreResource);
@@ -145,6 +151,13 @@ function RuntimeProbe({ onClient }: { onClient: (client: QueryClient) => void })
   const noticeTemplateResourceText = formatResource(noticeTemplateResource);
   const alertSilenceProvider = resolveProviderState(dataProvider, 'alert-silences', alertSilenceDataProvider, false);
   const alertSilenceResourceText = formatResource(alertSilenceResource);
+  const noticeReceiverProvider = resolveProviderState(
+    dataProvider,
+    noticeReceiverResourceName,
+    noticeReceiverDataProvider,
+    false
+  );
+  const noticeReceiverResourceText = formatResource(noticeReceiverResource);
 
   return (
     <>
@@ -165,6 +178,8 @@ function RuntimeProbe({ onClient }: { onClient: (client: QueryClient) => void })
       <output data-testid="notice-template-provider">{noticeTemplateProvider}</output>
       <output data-testid="alert-silence-resource">{alertSilenceResourceText}</output>
       <output data-testid="alert-silence-provider">{alertSilenceProvider}</output>
+      <output data-testid="notice-receiver-resource">{noticeReceiverResourceText}</output>
+      <output data-testid="notice-receiver-provider">{noticeReceiverProvider}</output>
       <button
         type="button"
         onClick={() => notification.open?.({ message: 'Runtime notification ready', type: 'success' })}

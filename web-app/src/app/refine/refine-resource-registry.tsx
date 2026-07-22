@@ -24,6 +24,8 @@ import type { AccessControlProvider, ResourceProps } from '@refinedev/core';
 import type { ReactNode } from 'react';
 
 import { getAppRoute, type AppResourceRouteId } from '@/app/route-registry';
+import { noticeReceiverResourceName } from '@/features/alert/notice-receiver';
+import { labelResourceName } from '@/features/settings/label';
 import { systemConfigResourceName } from '@/features/settings/system-config';
 
 import type { ShellCapability, ShellResourceMeta, ShellTimePolicy } from '@/layout/shell/shell-navigation-model';
@@ -142,10 +144,11 @@ export const refineResources: ResourceProps[] = [
     timePolicy: 'none'
   }),
   routedNavigationResource('notice-receivers', {
+    name: noticeReceiverResourceName,
     parent: 'settings',
     icon: <BellOutlined />,
     order: 10,
-    dataProviderName: 'notice-receivers'
+    dataProviderName: noticeReceiverResourceName
   }),
   routedNavigationResource('notice-rules', {
     parent: 'settings',
@@ -178,10 +181,11 @@ export const refineResources: ResourceProps[] = [
     dataProviderName: systemConfigResourceName
   }),
   routedNavigationResource('labels', {
+    name: labelResourceName,
     parent: 'settings',
     icon: <TagsOutlined />,
     order: 70,
-    dataProviderName: 'labels'
+    dataProviderName: labelResourceName
   }),
   routedNavigationResource('object-store', {
     parent: 'settings',

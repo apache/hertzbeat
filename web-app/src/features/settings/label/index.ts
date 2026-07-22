@@ -16,3 +16,5 @@
  */
 
 export { LabelPage } from './pages/label-page';
+export { labelResourceName } from './model/label-model';
+export { labelDataProvider } from './provider/label-data-provider';

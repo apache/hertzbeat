@@ -22,14 +22,13 @@ import { QueryClient } from '@tanstack/react-query';
 import { Outlet } from 'react-router-dom';
 
 import { SessionProvider } from '@/core/auth/session-provider';
+import { noticeReceiverDataProvider, noticeReceiverResourceName } from '@/features/alert/notice-receiver';
+import { labelDataProvider, labelResourceName } from '@/features/settings/label';
 import { objectStoreDataProvider } from '@/features/settings/object-store';
 import { systemConfigDataProvider, systemConfigResourceName } from '@/features/settings/system-config';
 import { tokenDataProvider } from '@/features/settings/token';
-import { noticeReceiverResourceName } from '@/features/alert/notice-receiver/notice-receiver-resource';
 
 import { alertSilenceDataProvider } from './resources/alert-silence-data-provider';
-import { labelDataProvider } from './resources/label-data-provider';
-import { noticeReceiverDataProvider } from './resources/notice-receiver-data-provider';
 import { noticeRuleDataProvider } from './resources/notice-rule-data-provider';
 import { noticeTemplateDataProvider } from './resources/notice-template-data-provider';
 import { refineResources, shellAccessControlProvider } from './refine-resource-registry';
@@ -52,7 +51,7 @@ function createAppQueryClient() {
 
 const dataProviders = {
   default: labelDataProvider,
-  labels: labelDataProvider,
+  [labelResourceName]: labelDataProvider,
   'alert-silences': alertSilenceDataProvider,
   [noticeReceiverResourceName]: noticeReceiverDataProvider,
   'notice-rules': noticeRuleDataProvider,

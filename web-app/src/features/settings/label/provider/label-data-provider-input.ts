@@ -7,16 +7,14 @@
 
 import type { GetListParams } from '@refinedev/core';
 
-import type { LabelIdentity, LabelRecord } from '@/features/settings/label/model/label-model';
-import { isLabelPageSize } from '@/features/settings/label/model/label-query-model';
+import { createRefineHttpError } from '@/shared/refine/refine-http-error';
 
-import { createRefineHttpError } from '../refine-http-error';
-
-const labelResource = 'labels';
+import { labelResourceName, type LabelIdentity, type LabelRecord } from '../model/label-model';
+import { isLabelPageSize } from '../model/label-query-model';
 
 /** Validates Refine-shaped input before the Label provider can reach transport. */
 export function assertLabelResource(resource: string) {
-  if (resource !== labelResource) {
+  if (resource !== labelResourceName) {
     throw createRefineHttpError('Unsupported Label resource', 400, 'LABEL_RESOURCE_UNSUPPORTED');
   }
 }

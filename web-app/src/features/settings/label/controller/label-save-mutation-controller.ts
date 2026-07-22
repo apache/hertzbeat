@@ -12,11 +12,9 @@ import type { useTranslation } from 'react-i18next';
 import type { ExclusiveOperation } from '@/shared/exclusive-operation';
 
 import { createLabelWriteEvidence, type LabelMutationEvidence } from '../model/label-failure';
-import { buildLabelExpectedWrite, type LabelRecord } from '../model/label-model';
+import { buildLabelExpectedWrite, labelResourceName, type LabelRecord } from '../model/label-model';
 import { useLabelSaveRecoveryController } from './label-save-recovery-controller';
 
-const labelResource = 'labels';
-const labelDataProvider = 'labels';
 const listInvalidation = ['list'] as const;
 type Translate = ReturnType<typeof useTranslation>['t'];
 
@@ -108,8 +106,8 @@ function useUpdateLabel(
 
 function saveMutationOptions() {
   return {
-    resource: labelResource,
-    dataProviderName: labelDataProvider,
+    resource: labelResourceName,
+    dataProviderName: labelResourceName,
     invalidates: [...listInvalidation],
     successNotification: false as const,
     errorNotification: false as const
@@ -117,14 +115,19 @@ function saveMutationOptions() {
 }
 
 function createLabelParams(values: Partial<LabelRecord>) {
-  return { resource: labelResource, dataProviderName: labelDataProvider, invalidates: [...listInvalidation], values };
+  return {
+    resource: labelResourceName,
+    dataProviderName: labelResourceName,
+    invalidates: [...listInvalidation],
+    values
+  };
 }
 
 function updateLabelParams(record: LabelRecord, values: Partial<LabelRecord>) {
   return {
     id: record.id,
-    resource: labelResource,
-    dataProviderName: labelDataProvider,
+    resource: labelResourceName,
+    dataProviderName: labelResourceName,
     invalidates: [...listInvalidation],
     mutationMode: 'pessimistic' as const,
     values: { ...record, ...values, id: record.id }

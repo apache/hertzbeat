@@ -25,13 +25,13 @@ import type {
   UpdateResponse
 } from '@refinedev/core';
 
-import { labelEndpoint, loadLabels } from '@/features/settings/label/api/label-api';
-import { LabelTransportFailure } from '@/features/settings/label/api/label-api-failure';
-import { LabelRequestFailure } from '@/features/settings/label/model/label-failure';
-import { LabelContractError } from '@/features/settings/label/model/label-model';
 import { adaptRefineRecord, adaptRefineRecords } from '@/shared/refine/refine-provider-data';
+import { createRefineHttpError, toRefineHttpError } from '@/shared/refine/refine-http-error';
 
-import { createRefineHttpError, toRefineHttpError } from '../refine-http-error';
+import { labelEndpoint, loadLabels } from '../api/label-api';
+import { LabelTransportFailure } from '../api/label-api-failure';
+import { LabelRequestFailure } from '../model/label-failure';
+import { LabelContractError } from '../model/label-model';
 import { assertLabelResource, readLabelDraft, readLabelId, readLabelListQuery } from './label-data-provider-input';
 import { deleteAndProveLabel, toLabelRequestFailure, writeAndProveLabel } from './label-data-provider-mutation';
 

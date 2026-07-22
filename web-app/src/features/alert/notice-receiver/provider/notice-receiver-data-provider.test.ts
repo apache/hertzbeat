@@ -19,16 +19,13 @@ import type { GetListParams } from '@refinedev/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
-import { noticeApiEndpoint } from '@/features/alert/notice-api-endpoints';
-import { NoticeReceiverContractError } from '@/features/alert/notice-receiver/api/notice-receiver-api';
-import { NoticeReceiverRequestFailure } from '@/features/alert/notice-receiver/model/notice-receiver-failure';
-import * as noticeReceiverModel from '@/features/alert/notice-receiver/model/notice-receiver-model';
-import {
-  createNoticeReceiverDraft,
-  type NoticeReceiverDraft
-} from '@/features/alert/notice-receiver/model/notice-receiver-model';
+import { createRefineHttpError } from '@/shared/refine/refine-http-error';
 
-import { createRefineHttpError } from '../refine-http-error';
+import { noticeApiEndpoint } from '../../notice-api-endpoints';
+import { NoticeReceiverContractError } from '../api/notice-receiver-api';
+import { NoticeReceiverRequestFailure } from '../model/notice-receiver-failure';
+import * as noticeReceiverModel from '../model/notice-receiver-model';
+import { createNoticeReceiverDraft, type NoticeReceiverDraft } from '../model/notice-receiver-model';
 
 const api = vi.hoisted(() => ({
   deleteNoticeReceiver: vi.fn(),
@@ -36,8 +33,8 @@ const api = vi.hoisted(() => ({
   loadNoticeReceivers: vi.fn(),
   saveNoticeReceiver: vi.fn()
 }));
-vi.mock('@/features/alert/notice-receiver/api/notice-receiver-api', async importOriginal => ({
-  ...(await importOriginal<typeof import('@/features/alert/notice-receiver/api/notice-receiver-api')>()),
+vi.mock('../api/notice-receiver-api', async importOriginal => ({
+  ...(await importOriginal<typeof import('../api/notice-receiver-api')>()),
   ...api
 }));
 

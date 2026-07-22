@@ -22,12 +22,10 @@ import { useTranslation } from 'react-i18next';
 import { useExclusiveOperation, type ExclusiveOperation } from '@/shared/exclusive-operation';
 
 import { createLabelDeleteEvidence, type LabelMutationEvidence } from '../model/label-failure';
-import type { LabelRecord } from '../model/label-model';
+import { labelResourceName, type LabelRecord } from '../model/label-model';
 import { useLabelSaveMutationController } from './label-save-mutation-controller';
 import type { LabelSaveRecoveryController } from './label-save-recovery-controller';
 
-const labelResource = 'labels';
-const labelDataProvider = 'labels';
 const listInvalidation = ['list'] as const;
 type Translate = ReturnType<typeof useTranslation>['t'];
 
@@ -92,8 +90,8 @@ function useDeleteLabel(
 function deleteLabelParams(record: LabelRecord) {
   return {
     id: record.id,
-    resource: labelResource,
-    dataProviderName: labelDataProvider,
+    resource: labelResourceName,
+    dataProviderName: labelResourceName,
     invalidates: [...listInvalidation],
     mutationMode: 'pessimistic' as const,
     values: record,

@@ -17,6 +17,8 @@
 
 import { describe, expect, it, vi } from 'vitest';
 
+import { noticeReceiverDataProvider } from '@/features/alert/notice-receiver';
+
 const endpoint = vi.hoisted(() => ({ value: '/runtime-notice-contract' }));
 
 vi.mock('@/features/alert/notice-api-endpoints', async importOriginal => ({
@@ -24,7 +26,6 @@ vi.mock('@/features/alert/notice-api-endpoints', async importOriginal => ({
   noticeApiEndpoint: endpoint.value
 }));
 
-import { noticeReceiverDataProvider } from './notice-receiver-data-provider';
 import { noticeRuleDataProvider } from './notice-rule-data-provider';
 import { noticeTemplateDataProvider } from './notice-template-data-provider';
 

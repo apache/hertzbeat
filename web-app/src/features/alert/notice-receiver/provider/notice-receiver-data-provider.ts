@@ -16,25 +16,19 @@ import type {
   UpdateResponse
 } from '@refinedev/core';
 
+import { adaptRefineRecord, adaptRefineRecords } from '@/shared/refine/refine-provider-data';
+
+import { noticeApiEndpoint } from '../../notice-api-endpoints';
 import {
   deleteNoticeReceiver,
   loadNoticeReceiver,
   loadNoticeReceivers,
   saveNoticeReceiver
-} from '@/features/alert/notice-receiver/api/notice-receiver-api';
-import {
-  NoticeReceiverRequestFailure,
-  withNoticeReceiverMutation
-} from '@/features/alert/notice-receiver/model/notice-receiver-failure';
-import { noticeReceiverResourceName } from '@/features/alert/notice-receiver/notice-receiver-resource';
-import type {
-  NoticeReceiverDraft,
-  NoticeReceiverMutation
-} from '@/features/alert/notice-receiver/model/notice-receiver-model';
-import { requireNoticeReceiverConverged } from '@/features/alert/notice-receiver/model/notice-receiver-evidence';
-import { noticeApiEndpoint } from '@/features/alert/notice-api-endpoints';
-import { adaptRefineRecord, adaptRefineRecords } from '@/shared/refine/refine-provider-data';
-
+} from '../api/notice-receiver-api';
+import { requireNoticeReceiverConverged } from '../model/notice-receiver-evidence';
+import { NoticeReceiverRequestFailure, withNoticeReceiverMutation } from '../model/notice-receiver-failure';
+import type { NoticeReceiverDraft, NoticeReceiverMutation } from '../model/notice-receiver-model';
+import { noticeReceiverResourceName } from '../notice-receiver-resource';
 import {
   normalizeNoticeReceiverProviderFailure,
   readNoticeReceiverWriteInput
