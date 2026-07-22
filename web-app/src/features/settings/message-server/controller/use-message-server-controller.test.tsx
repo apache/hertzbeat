@@ -71,7 +71,7 @@ describe('useMessageServerController', () => {
     const missing = { status: 'missing' as const, config: null };
     api.loadEmailServerConfig.mockResolvedValue(email);
     api.loadSmsServerConfig.mockResolvedValue(missing);
-    api.saveEmailServerConfig.mockResolvedValue('Update config success');
+    api.saveEmailServerConfig.mockResolvedValue(emailEvidence());
     const { result } = renderHook(() => useMessageServerController(), { wrapper: wrapper() });
 
     await waitFor(() => expect(result.current.email.kind).toBe('configured'));
@@ -103,8 +103,8 @@ describe('useMessageServerController', () => {
   it('converges acknowledged email and SMS secret replacements through canonical rereads', async () => {
     api.loadEmailServerConfig.mockResolvedValue(emailEvidence());
     api.loadSmsServerConfig.mockResolvedValue(smsEvidence());
-    api.saveEmailServerConfig.mockResolvedValue('Update config success');
-    api.saveSmsServerConfig.mockResolvedValue('Update config success');
+    api.saveEmailServerConfig.mockResolvedValue(emailEvidence());
+    api.saveSmsServerConfig.mockResolvedValue(smsEvidence());
     const { result } = renderHook(() => useMessageServerController(), { wrapper: wrapper() });
 
     await waitFor(() => expect(result.current.email.kind).toBe('configured'));
@@ -161,7 +161,7 @@ describe('useMessageServerController', () => {
     };
     api.loadEmailServerConfig.mockResolvedValueOnce(email).mockRejectedValueOnce('offline');
     api.loadSmsServerConfig.mockResolvedValue({ status: 'missing', config: null });
-    api.saveEmailServerConfig.mockResolvedValue('Update config success');
+    api.saveEmailServerConfig.mockResolvedValue(emailEvidence());
     const { result } = renderHook(() => useMessageServerController(), { wrapper: wrapper() });
 
     await waitFor(() => expect(result.current.email.kind).toBe('configured'));
@@ -188,7 +188,7 @@ describe('useMessageServerController', () => {
     };
     api.loadEmailServerConfig.mockResolvedValueOnce(email).mockResolvedValueOnce({ status: 'missing', config: null });
     api.loadSmsServerConfig.mockResolvedValue({ status: 'missing', config: null });
-    api.saveEmailServerConfig.mockResolvedValue('Update config success');
+    api.saveEmailServerConfig.mockResolvedValue(emailEvidence());
     const { result } = renderHook(() => useMessageServerController(), { wrapper: wrapper() });
 
     await waitFor(() => expect(result.current.email.kind).toBe('configured'));
@@ -200,8 +200,8 @@ describe('useMessageServerController', () => {
   });
 
   it('deduplicates same-tick submissions per channel while allowing email and SMS to save concurrently', async () => {
-    const emailSave = deferred<string>();
-    const smsSave = deferred<string>();
+    const emailSave = deferred<ReturnType<typeof emailEvidence>>();
+    const smsSave = deferred<ReturnType<typeof smsEvidence>>();
     api.loadEmailServerConfig.mockResolvedValue(emailEvidence());
     api.loadSmsServerConfig.mockResolvedValue(smsEvidence());
     api.saveEmailServerConfig.mockReturnValue(emailSave.promise);
@@ -229,8 +229,8 @@ describe('useMessageServerController', () => {
     expect(api.saveSmsServerConfig).toHaveBeenCalledOnce();
     expect(result.current.emailSaveRecovery).toBeNull();
     expect(result.current.smsSaveRecovery).toBeNull();
-    emailSave.resolve('Update config success');
-    smsSave.resolve('Update config success');
+    emailSave.resolve(emailEvidence());
+    smsSave.resolve(smsEvidence());
     await act(async () => Promise.all([emailFirst!, emailSecond!, smsFirst!, smsSecond!]));
     expect(api.loadEmailServerConfig).toHaveBeenCalledTimes(2);
     expect(api.loadSmsServerConfig).toHaveBeenCalledTimes(2);
@@ -243,7 +243,7 @@ describe('useMessageServerController', () => {
     const firstSave = deferred<void>();
     api.loadEmailServerConfig.mockResolvedValue(emailEvidence());
     api.loadSmsServerConfig.mockResolvedValue({ status: 'missing', config: null });
-    api.saveEmailServerConfig.mockReturnValueOnce(firstSave.promise).mockResolvedValueOnce('Update config success');
+    api.saveEmailServerConfig.mockReturnValueOnce(firstSave.promise).mockResolvedValueOnce(emailEvidence());
     const { result } = renderHook(() => useMessageServerController(), { wrapper: wrapper() });
     await waitFor(() => expect(result.current.email.kind).toBe('configured'));
     act(() => {
@@ -337,7 +337,7 @@ describe('useMessageServerController', () => {
       .mockResolvedValueOnce(oldEvidence)
       .mockResolvedValueOnce(newEvidence);
     api.loadSmsServerConfig.mockResolvedValue({ status: 'missing', config: null });
-    api.saveEmailServerConfig.mockResolvedValue('Update config success');
+    api.saveEmailServerConfig.mockResolvedValue(emailEvidence());
     const { result } = renderHook(() => useMessageServerController(), { wrapper: wrapper() });
     await waitFor(() => expect(result.current.email.kind).toBe('configured'));
     act(() => {
@@ -366,7 +366,7 @@ describe('useMessageServerController', () => {
       .mockResolvedValueOnce(initial)
       .mockResolvedValueOnce(missingReplacement)
       .mockResolvedValueOnce(initial);
-    api.saveSmsServerConfig.mockResolvedValue('Update config success');
+    api.saveSmsServerConfig.mockResolvedValue(smsEvidence());
     const { result } = renderHook(() => useMessageServerController(), { wrapper: wrapper() });
     await waitFor(() => expect(result.current.sms.kind).toBe('configured'));
     act(() => result.current.actions.openSms());
@@ -398,7 +398,7 @@ describe('useMessageServerController', () => {
     if (typeof reread === 'string') api.loadEmailServerConfig.mockRejectedValueOnce(reread);
     else api.loadEmailServerConfig.mockResolvedValueOnce(reread);
     api.loadSmsServerConfig.mockResolvedValue({ status: 'missing', config: null });
-    api.saveEmailServerConfig.mockResolvedValue('Update config success');
+    api.saveEmailServerConfig.mockResolvedValue(emailEvidence());
     const { result, unmount } = renderHook(() => useMessageServerController(), { wrapper: wrapper() });
     await waitFor(() => expect(result.current.email.kind).toBe('configured'));
     act(() => result.current.actions.openEmail());
@@ -410,11 +410,11 @@ describe('useMessageServerController', () => {
     unmount();
   });
 
-  it('classifies write failure separately and releases the validation/save gate for a corrected draft', async () => {
+  it('classifies a permission rejection separately and releases the validation/save gate for a corrected draft', async () => {
     api.loadEmailServerConfig.mockResolvedValue(emailEvidence());
     api.loadSmsServerConfig.mockResolvedValue({ status: 'missing', config: null });
-    const rejected = new ApiMessageError('write rejected', { code: 42, status: 400 });
-    api.saveEmailServerConfig.mockRejectedValueOnce(rejected).mockResolvedValueOnce('Update config success');
+    const rejected = new ApiMessageError('permission rejected', { code: 42, status: 403 });
+    api.saveEmailServerConfig.mockRejectedValueOnce(rejected).mockResolvedValueOnce(emailEvidence());
     const { result } = renderHook(() => useMessageServerController(), { wrapper: wrapper() });
     await waitFor(() => expect(result.current.email.kind).toBe('configured'));
     act(() => {
@@ -500,7 +500,7 @@ describe('useMessageServerController', () => {
     const proof = deferred<ReturnType<typeof emailEvidence>>();
     api.loadEmailServerConfig.mockResolvedValueOnce(emailEvidence()).mockReturnValueOnce(proof.promise);
     api.loadSmsServerConfig.mockResolvedValue({ status: 'missing', config: null });
-    api.saveEmailServerConfig.mockResolvedValue('Update config success');
+    api.saveEmailServerConfig.mockResolvedValue(emailEvidence());
     const { result, unmount } = renderHook(() => useMessageServerController(), { wrapper: wrapper() });
     await waitFor(() => expect(result.current.email.kind).toBe('configured'));
     act(() => result.current.actions.openEmail());
@@ -520,7 +520,7 @@ describe('useMessageServerController', () => {
   it('does not start a save through an action retained after unmount', async () => {
     api.loadEmailServerConfig.mockResolvedValue(emailEvidence());
     api.loadSmsServerConfig.mockResolvedValue({ status: 'missing', config: null });
-    api.saveEmailServerConfig.mockResolvedValue('Update config success');
+    api.saveEmailServerConfig.mockResolvedValue(emailEvidence());
     const { result, unmount } = renderHook(() => useMessageServerController(), { wrapper: wrapper() });
     await waitFor(() => expect(result.current.email.kind).toBe('configured'));
     act(() => result.current.actions.openEmail());

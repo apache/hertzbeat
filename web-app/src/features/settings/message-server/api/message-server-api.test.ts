@@ -124,7 +124,29 @@ describe('message server API contract', () => {
   });
 
   it('posts only caller-built frozen payloads without placing secrets in URLs', async () => {
-    apiMessagePost.mockResolvedValue('Update config success');
+    const emailEvidence = {
+      status: 'configured',
+      config: {
+        type: 0,
+        emailHost: 'smtp.example.test',
+        emailUsername: 'ops@example.test',
+        emailPort: 587,
+        emailSsl: false,
+        emailStarttls: true,
+        enable: true,
+        configuredSecrets: ['emailPassword']
+      }
+    };
+    const smsEvidence = {
+      status: 'configured',
+      config: {
+        enable: true,
+        type: 'twilio',
+        options: { accountSid: 'account', twilioPhoneNumber: '+15550000000' },
+        configuredSecrets: ['authToken']
+      }
+    };
+    apiMessagePost.mockResolvedValueOnce(emailEvidence).mockResolvedValueOnce(smsEvidence);
     const email = {
       type: 0,
       emailHost: 'smtp.example.test',
@@ -141,15 +163,51 @@ describe('message server API contract', () => {
       options: { accountSid: 'account', twilioPhoneNumber: '+15550000000', authToken: 'new-token' }
     };
 
-    await expect(saveEmailServerConfig(email)).resolves.toBe('Update config success');
-    await expect(saveSmsServerConfig(sms)).resolves.toBe('Update config success');
+    await expect(saveEmailServerConfig(email)).resolves.toEqual(emailEvidence);
+    await expect(saveSmsServerConfig(sms)).resolves.toEqual(smsEvidence);
 
     expect(apiMessagePost).toHaveBeenNthCalledWith(1, '/api/config/email', email);
     expect(apiMessagePost).toHaveBeenNthCalledWith(2, '/api/config/sms', sms);
     expect(apiMessagePost.mock.calls.map(call => String(call[0])).join(' ')).not.toMatch(/new-secret|new-token/);
   });
 
-  it('keeps malformed successful Message data distinct from a valid mutation acknowledgement', async () => {
+  it('preserves an explicit missing mutation result without inventing configuration', async () => {
+    const missing = { status: 'missing', config: null };
+    apiMessagePost.mockResolvedValue(missing);
+
+    await expect(
+      saveEmailServerConfig({
+        type: 0,
+        emailHost: 'smtp.example.test',
+        emailUsername: 'ops@example.test',
+        emailPort: 587,
+        emailSsl: false,
+        emailStarttls: true,
+        enable: false
+      })
+    ).resolves.toEqual(missing);
+    await expect(saveSmsServerConfig({ enable: false, type: 'smslocal', options: {} })).resolves.toEqual(missing);
+  });
+
+  it.each(['Update config success', { status: 'configured', config: null }])(
+    'rejects legacy or malformed mutation result %#',
+    async response => {
+      apiMessagePost.mockResolvedValue(response);
+      await expect(
+        saveEmailServerConfig({
+          type: 0,
+          emailHost: 'smtp.example.test',
+          emailUsername: 'ops@example.test',
+          emailPort: 587,
+          emailSsl: false,
+          emailStarttls: true,
+          enable: true
+        })
+      ).rejects.toBeInstanceOf(MessageServerContractError);
+    }
+  );
+
+  it('rejects secret-bearing mutation evidence', async () => {
     apiMessagePost.mockResolvedValue({
       status: 'configured',
       config: {

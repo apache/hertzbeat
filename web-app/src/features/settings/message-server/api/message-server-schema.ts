@@ -50,9 +50,6 @@ const smsEvidenceSchema = z.discriminatedUnion('status', [
   z.object({ status: z.literal('configured'), config: smsConfigSchema }).strict(),
   z.object({ status: z.literal('missing'), config: z.null() }).strict()
 ]);
-// GeneralConfigController POST returns Message<String>; canonical configuration
-// evidence belongs to the subsequent GET and must never be inferred from this ack.
-const mutationResultSchema = z.string();
 
 export class MessageServerContractError extends Error {
   readonly code = 'MESSAGE_SERVER_RESPONSE_INVALID';
@@ -69,10 +66,6 @@ export function parseEmailEvidenceWire(value: unknown) {
 
 export function parseSmsEvidenceWire(value: unknown) {
   return parseSchema(smsEvidenceSchema, value, 'SMS server evidence');
-}
-
-export function parseMessageServerMutationResult(value: unknown) {
-  return parseSchema(mutationResultSchema, value, 'Message server mutation result');
 }
 
 function parseSchema<T extends z.ZodType>(schema: T, value: unknown, label: string): z.output<T> {

@@ -29,7 +29,7 @@ export type MessageServerSaveNotifications = {
 type SaveTransactionOptions<Draft, Evidence> = {
   draft: Draft | null;
   validate: (draft: Draft) => string[];
-  write: (draft: Draft) => Promise<string>;
+  write: (draft: Draft) => Promise<Evidence>;
   reread: () => Promise<{ data: Evidence | undefined; error: unknown }>;
   converged: (draft: Draft, evidence: Evidence) => boolean;
   canProveAmbiguousWrite: (draft: Draft) => boolean;
@@ -147,8 +147,8 @@ async function submitSave<Draft, Evidence>(
   let proofReceipt: ProofReceipt<Draft>;
   try {
     await options.write(draft);
-    // A valid success acknowledgement proves that the mutation returned
-    // normally. Canonical GET still owns persisted non-secret convergence.
+    // A valid safe response proves only that the mutation returned normally.
+    // Canonical GET still owns persisted non-secret convergence.
     proofReceipt = { phase: 'proof-after-acknowledgement', draft, failureKey: null };
   } catch (error) {
     if (isDefiniteMessageServerWriteRejection(error)) {

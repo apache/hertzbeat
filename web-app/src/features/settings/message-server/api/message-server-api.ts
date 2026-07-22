@@ -29,7 +29,6 @@ import {
 import {
   MessageServerContractError,
   parseEmailEvidenceWire,
-  parseMessageServerMutationResult,
   parseSmsEvidenceWire,
   type SmsEvidenceWire
 } from './message-server-schema';
@@ -58,11 +57,11 @@ export async function loadSmsServerConfig(signal?: AbortSignal) {
 }
 
 export async function saveEmailServerConfig(payload: EmailServerPayload) {
-  return parseMessageServerMutationResult(await apiMessagePost(emailServerEndpoint, payload));
+  return parseEmailEvidenceWire(await apiMessagePost(emailServerEndpoint, payload));
 }
 
 export async function saveSmsServerConfig(payload: SmsServerPayload) {
-  return parseMessageServerMutationResult(await apiMessagePost(smsServerEndpoint, payload));
+  return mapSmsEvidence(parseSmsEvidenceWire(await apiMessagePost(smsServerEndpoint, payload)));
 }
 
 export function classifyMessageServerReadError(error: unknown): MessageServerReadFailure {
