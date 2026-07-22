@@ -3,8 +3,8 @@
 import { Input, InputNumber, Select, Switch } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { AlertRuleDataType, AlertRuleDraft, AlertRuleKind } from '../alert-rule-model';
-import styles from '../alert-rule-editor-page.module.css';
+import type { AlertRuleDataType, AlertRuleDraft, AlertRuleKind } from '../model/alert-rule-model';
+import styles from '../shared/alert-rule-editor.module.css';
 
 type AlertRuleFieldsProps = {
   draft: AlertRuleDraft;

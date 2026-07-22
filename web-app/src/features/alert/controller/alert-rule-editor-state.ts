@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import type { AlertRuleDraft } from '../alert-rule-model';
+import type { AlertRuleDraft } from '../model/alert-rule-model';
 
 export type AlertRuleEditorFailure = 'missing' | 'unavailable' | 'error';
 export type AlertRuleEditorDetailState = { kind: 'loading' } | { kind: AlertRuleEditorFailure } | { kind: 'ready' };

@@ -8,7 +8,7 @@
 import { Alert, Button, Input, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import styles from '../alert-rule-list-page.module.css';
+import styles from '../shared/alert-rule-list.module.css';
 
 export function AlertRuleListHeading({ busy, create }: { busy: boolean; create: () => void }) {
   const { t } = useTranslation();

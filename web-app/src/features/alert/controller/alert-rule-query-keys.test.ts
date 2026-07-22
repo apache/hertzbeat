@@ -17,7 +17,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type { AlertRuleQuery } from '../alert-rule-model';
+import type { AlertRuleQuery } from '../model/alert-rule-model';
 import { alertRuleQueryKeys } from './alert-rule-query-keys';
 
 describe('Alert Rule Query Keys', () => {

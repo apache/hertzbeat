@@ -41,7 +41,7 @@ import {
   createAlertRuleDraft,
   type AlertRule,
   type AlertRuleQuery
-} from './alert-rule-model';
+} from '../model/alert-rule-model';
 
 vi.mock('@/core/http/api-message', async importOriginal => ({
   ...(await importOriginal<typeof import('@/core/http/api-message')>()),

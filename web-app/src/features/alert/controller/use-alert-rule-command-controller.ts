@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { alertRoutePaths } from '@/shared/navigation/app-paths';
 
-import { validateAlertRuleDraft, type AlertRuleDraft } from '../alert-rule-model';
+import { validateAlertRuleDraft, type AlertRuleDraft } from '../model/alert-rule-model';
 import type { AlertRuleEditorIdentityController, AlertRuleRouteUpdate } from './alert-rule-editor-state';
 import { useAlertRuleSaveOperation } from './use-alert-rule-save-operation';
 

@@ -17,7 +17,7 @@
 
 import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
 
-import { alertRuleApiRequest } from './api/alert-rule-api-failure';
+import { alertRuleApiRequest } from './alert-rule-api-failure';
 import {
   AlertRuleContractError,
   buildAlertRulePayload,
@@ -26,7 +26,7 @@ import {
   type AlertRule,
   type AlertRuleDraft,
   type AlertRuleQuery
-} from './alert-rule-model';
+} from '../model/alert-rule-model';
 import { parseAlertRuleDetail, parseAlertRulePage, parseAlertRulePreview } from './alert-rule-schema';
 
 export function buildAlertRuleListPath(query: AlertRuleQuery) {

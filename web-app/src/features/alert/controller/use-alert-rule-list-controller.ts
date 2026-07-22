@@ -19,7 +19,7 @@ import { App } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { alertRuleFailureKind, type AlertRuleListState, type AlertRulePage } from '../alert-rule-model';
+import { alertRuleFailureKind, type AlertRuleListState, type AlertRulePage } from '../model/alert-rule-model';
 import { createAlertRuleListActions } from './alert-rule-list-actions';
 import { useAlertRuleListOperations } from './use-alert-rule-list-operations';
 import { useAlertRuleListQueryController } from './use-alert-rule-list-query-controller';

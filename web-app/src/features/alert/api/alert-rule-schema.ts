@@ -24,7 +24,7 @@ import {
   type AlertRule,
   type AlertRulePage,
   type AlertRuleQuery
-} from './alert-rule-model';
+} from '../model/alert-rule-model';
 
 const safeIntegerSchema = z.number().refine(Number.isSafeInteger, 'Expected a safe integer');
 const positiveIntegerSchema = safeIntegerSchema.refine(value => value > 0, 'Expected a positive integer');

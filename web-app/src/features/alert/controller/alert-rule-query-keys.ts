@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { AlertRuleQuery } from '../alert-rule-model';
+import type { AlertRuleQuery } from '../model/alert-rule-model';
 
 const rootKey = ['alert-rules'] as const;
 

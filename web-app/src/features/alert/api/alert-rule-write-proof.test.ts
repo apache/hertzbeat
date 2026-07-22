@@ -23,7 +23,12 @@ vi.mock('./alert-rule-api', async importOriginal => ({
   ...api
 }));
 
-import { buildAlertRulePayload, createAlertRuleDraft, type AlertRule, type AlertRuleQuery } from './alert-rule-model';
+import {
+  buildAlertRulePayload,
+  createAlertRuleDraft,
+  type AlertRule,
+  type AlertRuleQuery
+} from '../model/alert-rule-model';
 import {
   AlertRuleCreateProofLimitError,
   captureAlertRuleCreateBaseline,

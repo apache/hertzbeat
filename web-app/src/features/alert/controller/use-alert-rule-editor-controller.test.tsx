@@ -27,7 +27,7 @@ import {
   AlertRuleRequestFailure,
   type AlertRule,
   type AlertRuleQuery
-} from '../alert-rule-model';
+} from '../model/alert-rule-model';
 import { useAlertRuleEditorController } from './use-alert-rule-editor-controller';
 
 const api = vi.hoisted(() => ({
@@ -37,8 +37,8 @@ const api = vi.hoisted(() => ({
   saveAlertRule: vi.fn()
 }));
 const notify = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn(), warning: vi.fn() }));
-vi.mock('../alert-rule-api', async importOriginal => ({
-  ...(await importOriginal<typeof import('../alert-rule-api')>()),
+vi.mock('../api/alert-rule-api', async importOriginal => ({
+  ...(await importOriginal<typeof import('../api/alert-rule-api')>()),
   ...api
 }));
 vi.mock('antd', async importOriginal => ({

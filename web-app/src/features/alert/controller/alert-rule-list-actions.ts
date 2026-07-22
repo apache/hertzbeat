@@ -9,7 +9,7 @@ import type { NavigateFunction } from 'react-router-dom';
 
 import { alertRoutePaths, buildAlertRuleEditPath } from '@/shared/navigation/app-paths';
 
-import type { AlertRulePage } from '../alert-rule-model';
+import type { AlertRulePage } from '../model/alert-rule-model';
 import type { AlertRuleListQueryController } from './use-alert-rule-list-query-controller';
 import type { AlertRuleListOperations } from './use-alert-rule-list-operations';
 

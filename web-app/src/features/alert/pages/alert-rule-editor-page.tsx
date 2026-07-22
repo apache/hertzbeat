@@ -18,15 +18,15 @@
 import { Alert, Button, Spin, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import styles from './alert-rule-editor-page.module.css';
-import { AlertRuleFields } from './components/alert-rule-fields';
+import { AlertRuleFields } from '../components/alert-rule-fields';
 import {
   useAlertRuleEditorController,
   type AlertRuleEditorDetailState,
   type AlertRuleEditorFailure,
   type AlertRulePreviewState,
   type AlertRuleSaveRecovery
-} from './controller/use-alert-rule-editor-controller';
+} from '../controller/use-alert-rule-editor-controller';
+import styles from '../shared/alert-rule-editor.module.css';
 
 function DetailEvidence({ state, retry }: { state: AlertRuleEditorDetailState; retry: () => unknown }) {
   const { t } = useTranslation();

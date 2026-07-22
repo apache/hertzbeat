@@ -8,8 +8,8 @@
 import { Button, Popconfirm, Space, Switch, Tag, Typography } from 'antd';
 import type { TFunction } from 'i18next';
 
-import type { AlertRule } from '../alert-rule-model';
-import styles from '../alert-rule-list-page.module.css';
+import type { AlertRule } from '../model/alert-rule-model';
+import styles from '../shared/alert-rule-list.module.css';
 
 export type AlertRuleColumnActions = {
   busy: boolean;

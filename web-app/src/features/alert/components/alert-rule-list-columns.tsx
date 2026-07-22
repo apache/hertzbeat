@@ -8,7 +8,7 @@
 import type { ColumnsType } from 'antd/es/table';
 import type { TFunction } from 'i18next';
 
-import type { AlertRule } from '../alert-rule-model';
+import type { AlertRule } from '../model/alert-rule-model';
 import {
   AlertRuleActionCell,
   AlertRuleEnabledCell,

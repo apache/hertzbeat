@@ -18,7 +18,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AlertRuleRequestFailure, type AlertRule } from '../alert-rule-model';
+import { AlertRuleRequestFailure, type AlertRule } from '../model/alert-rule-model';
 import { useAlertRuleListOperations } from './use-alert-rule-list-operations';
 
 const api = vi.hoisted(() => ({
@@ -27,8 +27,8 @@ const api = vi.hoisted(() => ({
   updateAlertRuleEnabled: vi.fn()
 }));
 
-vi.mock('../alert-rule-api', async importOriginal => ({
-  ...(await importOriginal<typeof import('../alert-rule-api')>()),
+vi.mock('../api/alert-rule-api', async importOriginal => ({
+  ...(await importOriginal<typeof import('../api/alert-rule-api')>()),
   ...api
 }));
 

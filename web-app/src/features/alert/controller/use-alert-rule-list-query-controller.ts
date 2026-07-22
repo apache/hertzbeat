@@ -9,7 +9,7 @@ import { useSearchParams } from 'react-router-dom';
 
 import { useStringQueryDraft } from '@/shared/query-context';
 
-import { readAlertRuleQuery, writeAlertRuleQuery, type AlertRuleQuery } from '../alert-rule-model';
+import { readAlertRuleQuery, writeAlertRuleQuery, type AlertRuleQuery } from '../model/alert-rule-model';
 
 /** Owns the Alert Rule list URL and its unsent search draft. */
 export function useAlertRuleListQueryController() {

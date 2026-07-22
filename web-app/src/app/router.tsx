@@ -124,21 +124,21 @@ export const appRoutes: RouteObject[] = [
               {
                 ...getAppRouteIdentity('alert-rules'),
                 lazy: async () => {
-                  const { AlertRuleListPage } = await import('@/features/alert/alert-rule-list-page');
+                  const { AlertRuleListPage } = await import('@/features/alert/pages/alert-rule-list-page');
                   return { Component: AlertRuleListPage };
                 }
               },
               {
                 ...getAppRouteIdentity('alert-rule-new'),
                 lazy: async () => {
-                  const { AlertRuleEditorPage } = await import('@/features/alert/alert-rule-editor-page');
+                  const { AlertRuleEditorPage } = await import('@/features/alert/pages/alert-rule-editor-page');
                   return { Component: () => <AlertRuleEditorPage mode="new" /> };
                 }
               },
               {
                 ...getAppRouteIdentity('alert-rule-edit'),
                 lazy: async () => {
-                  const { AlertRuleEditorPage } = await import('@/features/alert/alert-rule-editor-page');
+                  const { AlertRuleEditorPage } = await import('@/features/alert/pages/alert-rule-editor-page');
                   return { Component: () => <AlertRuleEditorPage mode="edit" /> };
                 }
               },

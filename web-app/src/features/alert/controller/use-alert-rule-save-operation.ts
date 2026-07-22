@@ -2,20 +2,20 @@
 
 import { useRef } from 'react';
 
-import { saveAlertRule } from '../alert-rule-api';
+import { saveAlertRule } from '../api/alert-rule-api';
 import {
   AlertRuleCreateIdentityUncertainError,
   captureAlertRuleCreateBaseline,
   proveCreatedAlertRule,
   proveUpdatedAlertRule
-} from '../alert-rule-write-proof';
+} from '../api/alert-rule-write-proof';
 import {
   alertRuleFailureKind,
   alertRuleWriteOutcome,
   buildAlertRulePayload,
   AlertRuleRequestFailure,
   type AlertRuleDraft
-} from '../alert-rule-model';
+} from '../model/alert-rule-model';
 import type {
   AlertRuleEditorIdentityController,
   AlertRuleEditorOperationIdentity,

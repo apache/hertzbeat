@@ -22,7 +22,7 @@ import {
   type AlertRule,
   type AlertRuleDraft,
   type AlertRulePage
-} from './alert-rule-model';
+} from '../model/alert-rule-model';
 
 export const maximumAlertRuleCreateProofPages = 10;
 

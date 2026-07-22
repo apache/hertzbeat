@@ -67,12 +67,12 @@ vi.mock('@/shared/navigation/app-paths', async importOriginal => ({
   buildAlertRuleEditPath: canonical.ruleEditPath
 }));
 vi.mock('@/features/alert/api/alert-api', () => alertApi);
-vi.mock('@/features/alert/alert-rule-api', async importOriginal => ({
-  ...(await importOriginal<typeof import('@/features/alert/alert-rule-api')>()),
+vi.mock('@/features/alert/api/alert-rule-api', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/features/alert/api/alert-rule-api')>()),
   ...ruleApi
 }));
-vi.mock('@/features/alert/alert-rule-write-proof', async importOriginal => ({
-  ...(await importOriginal<typeof import('@/features/alert/alert-rule-write-proof')>()),
+vi.mock('@/features/alert/api/alert-rule-write-proof', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/features/alert/api/alert-rule-write-proof')>()),
   ...ruleProof
 }));
 vi.mock('react-router-dom', async importOriginal => ({

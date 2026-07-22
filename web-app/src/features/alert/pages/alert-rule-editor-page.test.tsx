@@ -18,7 +18,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createAlertRuleDraft } from './alert-rule-model';
+import { createAlertRuleDraft } from '../model/alert-rule-model';
 import { AlertRuleEditorPage } from './alert-rule-editor-page';
 
 const controller = vi.hoisted(() => ({
@@ -30,7 +30,7 @@ const controller = vi.hoisted(() => ({
   state: {},
   updateDraft: vi.fn()
 }));
-vi.mock('./controller/use-alert-rule-editor-controller', () => ({ useAlertRuleEditorController: () => controller }));
+vi.mock('../controller/use-alert-rule-editor-controller', () => ({ useAlertRuleEditorController: () => controller }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 describe('AlertRuleEditorPage', () => {

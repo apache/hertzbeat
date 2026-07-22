@@ -4,8 +4,8 @@ import { App } from 'antd';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { previewAlertRule } from '../alert-rule-api';
-import { alertRuleFailureKind, type AlertRuleDraft } from '../alert-rule-model';
+import { previewAlertRule } from '../api/alert-rule-api';
+import { alertRuleFailureKind, type AlertRuleDraft } from '../model/alert-rule-model';
 import type { AlertRuleEditorIdentityController, AlertRuleRouteUpdate } from './alert-rule-editor-state';
 
 export function useAlertRulePreviewController(

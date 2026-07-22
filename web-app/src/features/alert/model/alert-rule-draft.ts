@@ -1,36 +1,14 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+/* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import type { RemotePageState } from '@/shared/remote-state';
-
-export const alertRulePageSizes = [8, 15, 25] as const;
-export const alertRuleTypes = [
-  'realtime_metric',
-  'periodic_metric',
-  'realtime_log',
-  'periodic_log',
-  'periodic_trace'
-] as const;
-
-export type AlertRuleQuery = { search: string; pageIndex: number; pageSize: number };
-export type AlertRuleKind = 'realtime' | 'periodic';
-export type AlertRuleDataType = 'metric' | 'log' | 'trace';
-export type AlertRuleType = (typeof alertRuleTypes)[number];
-export type AlertRuleDatasource = 'promql' | 'sql';
+import {
+  AlertRuleContractError,
+  alertRuleTypes,
+  type AlertRule,
+  type AlertRuleDatasource,
+  type AlertRuleDataType,
+  type AlertRuleKind,
+  type AlertRuleType
+} from './alert-rule-types';
 
 type AlertRuleWritableSnapshot = {
   type: AlertRuleType | null;
@@ -57,95 +35,6 @@ export type AlertRuleDraft = {
   persisted?: AlertRuleWritableSnapshot;
 };
 
-export type AlertRule = {
-  id: number;
-  name: string;
-  type: AlertRuleType | null;
-  datasource: AlertRuleDatasource | null;
-  expr: string | null;
-  period: number | null;
-  times: number | null;
-  labels: Record<string, string> | null;
-  annotations: Record<string, string> | null;
-  template: string | null;
-  enable: boolean;
-  creator?: string | null;
-  modifier?: string | null;
-  gmtCreate?: string | null;
-  gmtUpdate?: string | null;
-};
-
-export type AlertRulePage = {
-  content: AlertRule[];
-  totalElements: number;
-  totalPages: number;
-  number: number;
-  size: number;
-};
-
-export type AlertRuleListState = RemotePageState<AlertRule, 'unavailable' | 'error'>;
-export type AlertRuleFailureKind = 'missing' | 'unavailable' | 'error';
-export type AlertRuleWriteOutcome = 'rejected' | 'uncertain';
-
-export class AlertRuleContractError extends Error {
-  constructor(message: string, options?: ErrorOptions) {
-    super(message, options);
-    this.name = 'AlertRuleContractError';
-  }
-}
-
-export class AlertRuleMissingError extends Error {
-  constructor() {
-    super('Alert Rule detail is missing');
-    this.name = 'AlertRuleMissingError';
-  }
-}
-
-/**
- * Stable request evidence exposed by the Alert Rule API boundary. Transport
- * details stay private so controllers cannot depend on HTTP implementation.
- */
-export class AlertRuleRequestFailure extends Error {
-  constructor(
-    readonly kind: AlertRuleFailureKind,
-    readonly writeOutcome: AlertRuleWriteOutcome
-  ) {
-    super('Alert Rule request failed');
-    this.name = 'AlertRuleRequestFailure';
-  }
-}
-
-/** Maps domain failures to the read state understood by Alert Rule screens. */
-export function alertRuleFailureKind(error: unknown): AlertRuleFailureKind {
-  if (error instanceof AlertRuleMissingError) return 'missing';
-  return error instanceof AlertRuleRequestFailure ? error.kind : 'error';
-}
-
-/**
- * Returns rejected only when retrying the write is known to be safe. Unknown
- * outcomes remain uncertain and must proceed through canonical read proof.
- */
-export function alertRuleWriteOutcome(error: unknown): AlertRuleWriteOutcome {
-  if (error instanceof AlertRuleContractError) return 'rejected';
-  return error instanceof AlertRuleRequestFailure ? error.writeOutcome : 'uncertain';
-}
-
-export function readAlertRuleQuery(params: URLSearchParams): AlertRuleQuery {
-  const pageIndex = Number.parseInt(params.get('pageIndex') ?? '', 10);
-  const pageSize = Number.parseInt(params.get('pageSize') ?? '', 10);
-  return {
-    search: params.get('search')?.trim() ?? '',
-    pageIndex: Number.isFinite(pageIndex) && pageIndex >= 0 ? pageIndex : 0,
-    pageSize: alertRulePageSizes.includes(pageSize as (typeof alertRulePageSizes)[number]) ? pageSize : 8
-  };
-}
-
-export function writeAlertRuleQuery(query: AlertRuleQuery) {
-  const params = new URLSearchParams({ pageIndex: String(query.pageIndex), pageSize: String(query.pageSize) });
-  if (query.search) params.set('search', query.search);
-  return params;
-}
-
 export function createAlertRuleDraft(): AlertRuleDraft {
   return {
     name: '',
@@ -165,11 +54,10 @@ export function buildAlertRulePayload(draft: AlertRuleDraft) {
   const invalid = validateAlertRuleDraft(draft);
   if (invalid.length > 0) throw contract(`invalid writable fields: ${invalid.join(',')}`);
   const selectedType = typeForDraft(draft);
-  const type = preserveNullStrategy(draft, selectedType);
   return {
     ...(draft.id === undefined ? {} : { id: positiveInteger(draft.id, 'id') }),
     name: draft.name.trim(),
-    type,
+    type: preserveNullStrategy(draft, selectedType),
     datasource: resolveDatasource(draft, selectedType),
     expr: resolveNullableText(draft.expr, draft.persisted?.expr),
     period: draft.period,
@@ -256,22 +144,19 @@ function datasourceFor(type: AlertRuleType): AlertRuleDatasource {
 }
 
 function preserveNullStrategy(draft: AlertRuleDraft, selected: AlertRuleType) {
-  // Legacy rows may have no strategy. Keep null during an unrelated edit so a
-  // save does not silently modernize persisted behavior the operator never changed.
+  // Preserve a legacy null strategy until the operator changes the visible strategy.
   return draft.persisted?.type === null && selected === 'realtime_metric' ? null : selected;
 }
 
 function resolveDatasource(draft: AlertRuleDraft, selected: AlertRuleType) {
-  // Datasource is legacy persistence evidence. Recompute it only after the
-  // visible strategy changes; otherwise retain the canonical nullable value.
+  // Datasource is persistence evidence and changes only with the visible strategy.
   const displayedOriginal = draft.persisted?.type ?? 'realtime_metric';
   if (draft.persisted && selected === displayedOriginal) return draft.persisted.datasource;
   return datasourceFor(selected);
 }
 
 function resolveNullableText(value: string, original: string | null | undefined) {
-  // The editor displays legacy null as an empty field. Preserve null until the
-  // operator supplies text instead of converting it to an authoritative empty string.
+  // The editor displays legacy null as empty; retain null until the operator enters text.
   return original === null && !value.trim() ? null : value.trim();
 }
 

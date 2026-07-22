@@ -8,8 +8,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLayoutEffect, useRef } from 'react';
 
-import { loadAlertRules } from '../alert-rule-api';
-import type { AlertRuleQuery } from '../alert-rule-model';
+import { loadAlertRules } from '../api/alert-rule-api';
+import type { AlertRuleQuery } from '../model/alert-rule-model';
 import { alertRuleQueryKeys } from './alert-rule-query-keys';
 
 /** Keeps command projections bound to the latest route query. */

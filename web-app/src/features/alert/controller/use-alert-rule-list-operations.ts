@@ -19,7 +19,7 @@ import { useRef, useState } from 'react';
 
 import { useExclusiveOperation } from '@/shared/exclusive-operation';
 
-import { deleteAlertRules, loadAlertRule, updateAlertRuleEnabled } from '../alert-rule-api';
+import { deleteAlertRules, loadAlertRule, updateAlertRuleEnabled } from '../api/alert-rule-api';
 import {
   AlertRuleContractError,
   alertRuleFailureKind,
@@ -27,7 +27,7 @@ import {
   buildAlertRuleTogglePayload,
   type AlertRule,
   type AlertRulePage
-} from '../alert-rule-model';
+} from '../model/alert-rule-model';
 
 type OperationPhase = 'write' | 'proof' | 'projection';
 type OperationCommand = 'operating' | 'recovering' | 'idle';

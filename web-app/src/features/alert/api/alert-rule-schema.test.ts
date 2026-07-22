@@ -17,7 +17,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { AlertRuleContractError, AlertRuleMissingError, type AlertRuleQuery } from './alert-rule-model';
+import { AlertRuleContractError, AlertRuleMissingError, type AlertRuleQuery } from '../model/alert-rule-model';
 import { parseAlertRuleDetail, parseAlertRulePage, parseAlertRulePreview } from './alert-rule-schema';
 
 const query: AlertRuleQuery = { search: '', pageIndex: 0, pageSize: 8 };

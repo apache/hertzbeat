@@ -6,14 +6,14 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { alertRoutePaths } from '@/shared/navigation/app-paths';
 
-import { loadAlertRule } from '../alert-rule-api';
+import { loadAlertRule } from '../api/alert-rule-api';
 import {
   alertRuleFailureKind,
   alertRuleDraftFromDetail,
   createAlertRuleDraft,
   type AlertRuleDraft,
   type AlertRuleKind
-} from '../alert-rule-model';
+} from '../model/alert-rule-model';
 import {
   freshAlertRuleRouteState,
   type AlertRuleEditorDetailState,
