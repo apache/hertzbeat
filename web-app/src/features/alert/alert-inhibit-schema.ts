@@ -30,11 +30,13 @@ const positiveIntegerSchema = safeIntegerSchema.refine(value => value > 0, 'Expe
 const nonNegativeIntegerSchema = safeIntegerSchema.refine(value => value >= 0, 'Expected a non-negative integer');
 const nonBlankTextSchema = z.string().refine(value => Boolean(value.trim()), 'Expected non-blank text');
 const nullableLabelMapSchema = z.record(nonBlankTextSchema, z.string()).nullable();
-const nullableEqualLabelsSchema = z.array(nonBlankTextSchema)
+const nullableEqualLabelsSchema = z
+  .array(nonBlankTextSchema)
   .refine(labels => new Set(labels).size === labels.length, 'Expected unique labels')
   .nullable();
 const nullableAuditTextSchema = z.string().nullable().optional();
-const nullableLocalDateTimeSchema = z.string()
+const nullableLocalDateTimeSchema = z
+  .string()
   .refine(isLocalDateTime, 'Expected a Java local date-time')
   .nullable()
   .optional();
@@ -77,10 +79,10 @@ export function parseAlertInhibitPage(value: unknown, query: AlertInhibitQuery):
   if (page.totalPages !== Math.ceil(page.totalElements / page.size)) {
     throw new AlertInhibitContractError('totalPages is inconsistent');
   }
-  // The remaining authoritative row count is a tighter bound than page size
-  // on the final page and detects stale or combined response content.
-  const availableContent = Math.max(0, page.totalElements - page.number * page.size);
-  if (page.content.length > Math.min(page.size, availableContent)) {
+  // Ordinary Spring pages have an exact in-range cardinality; only pages beyond
+  // the authoritative range may be empty.
+  const expectedContentSize = Math.max(0, Math.min(page.size, page.totalElements - page.number * page.size));
+  if (page.content.length !== expectedContentSize) {
     throw new AlertInhibitContractError('Page content is inconsistent');
   }
   if (new Set(page.content.map(item => item.id)).size !== page.content.length) {
@@ -121,11 +123,15 @@ function isLocalDateTime(value: string) {
   const year = Number(yearText);
   const month = Number(monthText);
   const day = Number(dayText);
-  return month >= 1 && month <= 12
-    && day >= 1 && day <= daysInMonth(year, month)
-    && Number(hourText) <= 23
-    && Number(minuteText) <= 59
-    && Number(secondText) <= 59;
+  return (
+    month >= 1 &&
+    month <= 12 &&
+    day >= 1 &&
+    day <= daysInMonth(year, month) &&
+    Number(hourText) <= 23 &&
+    Number(minuteText) <= 59 &&
+    Number(secondText) <= 59
+  );
 }
 
 function daysInMonth(year: number, month: number) {

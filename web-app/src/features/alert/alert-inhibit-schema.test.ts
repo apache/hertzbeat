@@ -42,16 +42,23 @@ describe('alert inhibit wire schemas', () => {
     delete withoutAudit.gmtCreate;
     delete withoutAudit.gmtUpdate;
     expect(parseAlertInhibitDetail(withoutAudit)).toEqual(withoutAudit);
-    expect(parseAlertInhibitDetail({
-      ...persisted,
+    expect(
+      parseAlertInhibitDetail({
+        ...persisted,
+        sourceLabels: null,
+        targetLabels: null,
+        equalLabels: null,
+        enable: null,
+        gmtCreate: null,
+        gmtUpdate: null
+      })
+    ).toMatchObject({
       sourceLabels: null,
       targetLabels: null,
       equalLabels: null,
       enable: null,
       gmtCreate: null,
       gmtUpdate: null
-    })).toMatchObject({
-      sourceLabels: null, targetLabels: null, equalLabels: null, enable: null, gmtCreate: null, gmtUpdate: null
     });
   });
 
@@ -74,17 +81,84 @@ describe('alert inhibit wire schemas', () => {
 
   it('validates Spring page consistency, request identity, capacity, and unique ids', () => {
     const query = { search: '', pageIndex: 1, pageSize: 15 };
-    expect(parseAlertInhibitPage({
-      content: [persisted], totalElements: 16, totalPages: 2, number: 1, size: 15, ignored: true
-    }, query)).toEqual({ content: [persisted], totalElements: 16, totalPages: 2, number: 1, size: 15 });
-    expect(() => parseAlertInhibitPage({
-      content: [persisted], totalElements: 1, totalPages: 1, number: 0, size: 8
-    }, query)).toThrow(AlertInhibitContractError);
-    expect(() => parseAlertInhibitPage({
-      content: [persisted], totalElements: 16, totalPages: 1, number: 1, size: 15
-    }, query)).toThrow(AlertInhibitContractError);
-    expect(() => parseAlertInhibitPage({
-      content: [persisted, persisted], totalElements: 17, totalPages: 2, number: 1, size: 15
-    }, query)).toThrow(AlertInhibitContractError);
+    expect(
+      parseAlertInhibitPage(
+        {
+          content: [persisted],
+          totalElements: 16,
+          totalPages: 2,
+          number: 1,
+          size: 15,
+          ignored: true
+        },
+        query
+      )
+    ).toEqual({ content: [persisted], totalElements: 16, totalPages: 2, number: 1, size: 15 });
+    expect(() =>
+      parseAlertInhibitPage(
+        {
+          content: [persisted],
+          totalElements: 1,
+          totalPages: 1,
+          number: 0,
+          size: 8
+        },
+        query
+      )
+    ).toThrow(AlertInhibitContractError);
+    expect(() =>
+      parseAlertInhibitPage(
+        {
+          content: [persisted],
+          totalElements: 16,
+          totalPages: 1,
+          number: 1,
+          size: 15
+        },
+        query
+      )
+    ).toThrow(AlertInhibitContractError);
+    expect(() =>
+      parseAlertInhibitPage(
+        {
+          content: [persisted, persisted],
+          totalElements: 17,
+          totalPages: 2,
+          number: 1,
+          size: 15
+        },
+        query
+      )
+    ).toThrow(AlertInhibitContractError);
+  });
+
+  it.each([
+    [
+      'a short non-last page',
+      {
+        content: Array.from({ length: 7 }, (_, index) => ({ ...persisted, id: index + 1 })),
+        totalElements: 10,
+        totalPages: 2,
+        number: 0,
+        size: 8
+      },
+      { search: '', pageIndex: 0, pageSize: 8 }
+    ],
+    [
+      'a short last page',
+      { content: [persisted], totalElements: 10, totalPages: 2, number: 1, size: 8 },
+      { search: '', pageIndex: 1, pageSize: 8 }
+    ]
+  ])('rejects %s under an authoritative Spring total', (_name, page, query) => {
+    expect(() => parseAlertInhibitPage(page, query)).toThrow(AlertInhibitContractError);
+  });
+
+  it('accepts an empty page beyond the authoritative result range', () => {
+    expect(
+      parseAlertInhibitPage(
+        { content: [], totalElements: 10, totalPages: 2, number: 2, size: 8 },
+        { search: '', pageIndex: 2, pageSize: 8 }
+      )
+    ).toEqual({ content: [], totalElements: 10, totalPages: 2, number: 2, size: 8 });
   });
 });
