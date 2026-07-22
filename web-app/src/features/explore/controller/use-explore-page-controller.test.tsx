@@ -321,7 +321,10 @@ describe('Explore page controller', () => {
     });
     const query: ExploreQuery = { signal: 'logs', timeRange: 'last-30m', query: 'cached' };
     const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
-    client.setQueryData(exploreQueryKeys.history(query, undefined, 0), page([logRow({ body: 'cached' })]));
+    client.setQueryData(exploreQueryKeys.history(query, undefined, 0), {
+      signal: 'logs',
+      data: page([logRow({ body: 'cached' })])
+    });
 
     const routed = renderController(['/explore?signal=logs&query=cached'], 0, client);
 
@@ -335,6 +338,21 @@ describe('Explore page controller', () => {
     expect(api.loadLogSignal).toHaveBeenCalledOnce();
     routed.unmount();
     await waitFor(() => expect(refreshSignal?.aborted).toBe(true));
+  });
+
+  it('rejects cached history evidence owned by another signal', async () => {
+    api.loadMetricSignal.mockReturnValue(new Promise<MetricConsole>(() => undefined));
+    const query: ExploreQuery = { signal: 'metrics', timeRange: 'last-30m' };
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+    client.setQueryData(exploreQueryKeys.history(query, undefined, 0), {
+      signal: 'logs',
+      data: page([logRow({ body: 'wrong signal' })])
+    });
+
+    const routed = renderController(['/explore?signal=metrics'], 0, client);
+
+    await waitFor(() => expect(routed.current().result).toEqual({ kind: 'error' }));
+    routed.unmount();
   });
 });
 

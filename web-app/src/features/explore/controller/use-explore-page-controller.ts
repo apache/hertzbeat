@@ -38,7 +38,10 @@ import type { ExplorePageResult, LogRow, MetricConsole, TraceRow } from '../mode
 import { metricResultState, type MetricResultState } from '../model/explore-signal-model';
 import { exploreQueryKeys } from './explore-query-keys';
 
-type HistoricalData = MetricConsole | ExplorePageResult<LogRow> | ExplorePageResult<TraceRow>;
+type HistoricalEvidence =
+  | { signal: 'metrics'; data: MetricConsole }
+  | { signal: 'logs'; data: ExplorePageResult<LogRow> }
+  | { signal: 'traces'; data: ExplorePageResult<TraceRow> };
 export type ExplorePageResultState =
   | { kind: 'invalid' }
   | { kind: 'live' }
@@ -134,10 +137,10 @@ function exactWindow(query: ExploreQuery) {
     : undefined;
 }
 
-function loadHistorical(query: ExploreQuery, signal: AbortSignal): Promise<HistoricalData> {
-  if (query.signal === 'metrics') return loadMetricSignal(query, signal);
-  if (query.signal === 'logs') return loadLogSignal(query, signal);
-  return loadTraceSignal(query, signal);
+async function loadHistorical(query: ExploreQuery, signal: AbortSignal): Promise<HistoricalEvidence> {
+  if (query.signal === 'metrics') return { signal: 'metrics', data: await loadMetricSignal(query, signal) };
+  if (query.signal === 'logs') return { signal: 'logs', data: await loadLogSignal(query, signal) };
+  return { signal: 'traces', data: await loadTraceSignal(query, signal) };
 }
 
 function resolveResult(
@@ -145,7 +148,7 @@ function resolveResult(
   handoff: ReturnType<typeof exploreHandoffState>,
   pending: boolean,
   error: Error | null,
-  data: HistoricalData | undefined
+  evidence: HistoricalEvidence | undefined
 ): ExplorePageResultState {
   if (handoff === 'invalid') return { kind: 'invalid' };
   if (query.signal === 'logs' && query.live) return { kind: 'live' };
@@ -154,20 +157,20 @@ function resolveResult(
     const kind = classifyExploreSignalError(error);
     return { kind: kind === 'transport_error' || kind === 'contract_error' ? kind : 'error' };
   }
-  if (!data) return { kind: 'error' };
-  return resolveDataResult(query, data);
+  if (!evidence) return { kind: 'error' };
+  return resolveDataResult(query, evidence);
 }
 
-function resolveDataResult(query: ExploreQuery, data: HistoricalData): ExplorePageResultState {
-  if (query.signal === 'metrics') {
-    const metricData = data as MetricConsole;
-    return { kind: 'metric', state: metricResultState(metricData), data: metricData };
+function resolveDataResult(query: ExploreQuery, evidence: HistoricalEvidence): ExplorePageResultState {
+  if (query.signal !== evidence.signal) return { kind: 'error' };
+  if (evidence.signal === 'metrics') {
+    return { kind: 'metric', state: metricResultState(evidence.data), data: evidence.data };
   }
-  if (query.signal === 'logs') {
-    const page = data as ExplorePageResult<LogRow>;
+  if (evidence.signal === 'logs') {
+    const page = evidence.data;
     return { kind: page.totalElements === 0 ? 'empty' : 'ready', signal: 'logs', data: page };
   }
-  const page = data as ExplorePageResult<TraceRow>;
+  const page = evidence.data;
   return { kind: page.totalElements === 0 ? 'empty' : 'ready', signal: 'traces', data: page };
 }
 
