@@ -9,11 +9,15 @@ import { z } from 'zod';
 
 import {
   managedRuntimeFilterPresets,
+  managedRuntimeHostMetricsIntervalLimits,
   managedRuntimeHostScrapers,
-  managedRuntimeResourceDetectors
+  managedRuntimeResourceDetectors,
+  managedRuntimeSafeNamePattern
 } from '../model/collector-runtime-config-model';
+import { managedPrometheusLimits } from '../model/collector-prometheus-source-model';
+import { managedRuntimeDurationSeconds } from './collector-runtime-duration';
 
-const sourceNameSchema = z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/u);
+const sourceNameSchema = z.string().regex(managedRuntimeSafeNamePattern);
 const isoDurationSchema = z.string().regex(/^PT(?:(?:\d+)M)?(?:(?:\d+)S)?$/u);
 const resourceDetectorsSchema = uniqueEnumArray(managedRuntimeResourceDetectors);
 const filterPresetsSchema = uniqueEnumArray(managedRuntimeFilterPresets);
@@ -40,11 +44,26 @@ const reservedHeaders = new Set([
 ]);
 const headerNamePattern = /^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/u;
 
-const boundedHostDurationSchema = isoDurationSchema.refine(value => durationInRange(value, 10, 300));
-const timeoutDurationSchema = isoDurationSchema.refine(value => durationInRange(value, 1, 60));
+const hostMetricsIntervalDurationSchema = isoDurationSchema.refine(value =>
+  durationInRange(
+    value,
+    managedRuntimeHostMetricsIntervalLimits.minimum,
+    managedRuntimeHostMetricsIntervalLimits.maximum
+  )
+);
+const prometheusIntervalDurationSchema = isoDurationSchema.refine(value =>
+  durationInRange(
+    value,
+    managedPrometheusLimits.intervalSeconds.minimum,
+    managedPrometheusLimits.intervalSeconds.maximum
+  )
+);
+const timeoutDurationSchema = isoDurationSchema.refine(value =>
+  durationInRange(value, managedPrometheusLimits.timeoutSeconds.minimum, managedPrometheusLimits.timeoutSeconds.maximum)
+);
 const headerSecretRefsSchema = z
   .record(z.string(), sourceNameSchema)
-  .refine(headers => Object.keys(headers).length <= 8)
+  .refine(headers => Object.keys(headers).length <= managedPrometheusLimits.headerReferences)
   .refine(headers => Object.keys(headers).every(header => safeHeaderName(header)))
   .refine(headers => uniqueCaseInsensitive(Object.keys(headers)));
 
@@ -52,14 +71,14 @@ const prometheusTargetSchema = z
   .object({
     name: sourceNameSchema,
     endpoint: z.string().refine(safePrometheusUri),
-    interval: boundedHostDurationSchema,
+    interval: prometheusIntervalDurationSchema,
     timeout: timeoutDurationSchema,
     headerSecretRefs: headerSecretRefsSchema,
     tlsCaProfile: z.union([z.literal(''), sourceNameSchema])
   })
   .strict()
   .superRefine((target, context) => {
-    if (durationSeconds(target.timeout) > durationSeconds(target.interval)) {
+    if (managedRuntimeDurationSeconds(target.timeout) > managedRuntimeDurationSeconds(target.interval)) {
       context.addIssue({ code: 'custom', message: 'Prometheus timeout must not exceed its interval' });
     }
   });
@@ -71,8 +90,8 @@ const managedOtelRuntimeConfigSchema = z
     schemaVersion: z.union([z.literal(1), z.literal(2), z.literal(3)]),
     revision: z.number().int().positive().safe(),
     hostMetricsEnabled: z.boolean(),
-    hostMetricsInterval: boundedHostDurationSchema,
-    prometheusTargets: uniqueNamedArray(prometheusTargetSchema, 32),
+    hostMetricsInterval: hostMetricsIntervalDurationSchema,
+    prometheusTargets: uniqueNamedArray(prometheusTargetSchema, managedPrometheusLimits.targets),
     fileLogSources: uniqueNamedArray(fileLogSourceSchema, 16),
     environment: z.union([z.literal(''), sourceNameSchema]),
     resourceDetectors: resourceDetectorsSchema,
@@ -98,7 +117,11 @@ const coreDraftSchema = z
   .object({
     environment: z.union([z.literal(''), sourceNameSchema]),
     hostMetricsEnabled: z.boolean(),
-    hostMetricsIntervalSeconds: z.number().int().min(10).max(300),
+    hostMetricsIntervalSeconds: z
+      .number()
+      .int()
+      .min(managedRuntimeHostMetricsIntervalLimits.minimum)
+      .max(managedRuntimeHostMetricsIntervalLimits.maximum),
     hostMetricsScrapers: hostScrapersSchema,
     resourceDetectors: resourceDetectorsSchema,
     telemetryFilterPresets: filterPresetsSchema
@@ -135,8 +158,17 @@ export function buildManagedOtelRuntimeConfigUpdate(
   });
 }
 
-export function managedRuntimeDurationSeconds(value: string) {
-  return durationSeconds(value);
+export function replaceManagedOtelPrometheusTargets(
+  current: ManagedOtelRuntimeConfig | null,
+  prometheusTargets: unknown
+): ManagedOtelRuntimeConfig | null {
+  if (!current || current.revision >= Number.MAX_SAFE_INTEGER) return null;
+  return parseManagedOtelRuntimeConfig({
+    ...current,
+    schemaVersion: 3,
+    revision: current.revision + 1,
+    prometheusTargets
+  });
 }
 
 function uniqueEnumArray<const T extends readonly [string, ...string[]]>(values: T) {
@@ -153,14 +185,8 @@ function uniqueNamedArray<T extends z.ZodType<{ name: string }>>(schema: T, maxi
     .refine(items => new Set(items.map(item => item.name)).size === items.length);
 }
 
-function durationSeconds(value: string) {
-  const match = /^PT(?:(\d+)M)?(?:(\d+)S)?$/u.exec(value);
-  if (!match || (!match[1] && !match[2])) return Number.NaN;
-  return Number(match[1] ?? 0) * 60 + Number(match[2] ?? 0);
-}
-
 function durationInRange(value: string, minimum: number, maximum: number) {
-  const seconds = durationSeconds(value);
+  const seconds = managedRuntimeDurationSeconds(value);
   return Number.isSafeInteger(seconds) && seconds >= minimum && seconds <= maximum;
 }
 
@@ -196,7 +222,7 @@ function usesAdvancedSourcePolicy(config: ManagedOtelRuntimeConfig) {
     config.hostMetricsScrapers.some(scraper => !defaultScrapers.has(scraper)) ||
     config.prometheusTargets.some(
       target =>
-        durationSeconds(target.timeout) !== 10 ||
+        managedRuntimeDurationSeconds(target.timeout) !== managedPrometheusLimits.timeoutSeconds.defaultValue ||
         Object.keys(target.headerSecretRefs).length > 0 ||
         target.tlsCaProfile !== ''
     )

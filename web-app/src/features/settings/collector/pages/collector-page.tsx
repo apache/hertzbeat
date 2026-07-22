@@ -83,8 +83,19 @@ function CollectorDialogs({ controller }: { controller: ReturnType<typeof useCol
         loading={controller.runtimeLoading}
         saving={controller.runtimeSaving}
         failure={controller.runtimeFailure}
+        prometheusEditor={controller.prometheusEditor}
+        prometheusSaving={controller.prometheusSaving}
+        prometheusFailure={controller.prometheusFailure}
         onCancel={controller.actions.cancelRuntimeConfig}
         onSave={draft => void controller.actions.saveRuntimeConfig(draft)}
+        onOpenPrometheus={controller.actions.openPrometheusSources}
+        onSelectPrometheus={controller.actions.selectPrometheusTarget}
+        onApplyPrometheus={controller.actions.applyPrometheusTarget}
+        onRemovePrometheus={controller.actions.removePrometheusTarget}
+        onSavePrometheus={() => void controller.actions.savePrometheusSources()}
+        onCancelPrometheus={controller.actions.cancelPrometheusSources}
+        onClosePrometheus={controller.actions.closePrometheusSources}
+        onCancelPrometheusTarget={controller.actions.cancelPrometheusTarget}
       />
     </>
   );

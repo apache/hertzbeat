@@ -8,6 +8,7 @@
 import type { CollectorPageSize, CollectorQuery } from '../model/collector-query-model';
 import type { useCollectorIntakeController } from './use-collector-intake-controller';
 import type { useCollectorMutationController } from './use-collector-mutation-controller';
+import type { useCollectorPrometheusSourceController } from './use-collector-prometheus-source-controller';
 import type { useCollectorRuntimeConfigController } from './use-collector-runtime-config-controller';
 
 type ActionOptions = {
@@ -21,11 +22,12 @@ type ActionOptions = {
   mutation: ReturnType<typeof useCollectorMutationController>;
   intake: ReturnType<typeof useCollectorIntakeController>;
   runtime: ReturnType<typeof useCollectorRuntimeConfigController>;
+  prometheus: ReturnType<typeof useCollectorPrometheusSourceController>;
   refetch: () => unknown;
 };
 
 export function buildCollectorActions(options: ActionOptions) {
-  const managedBusy = () => options.intake.saving || options.runtime.busy;
+  const managedBusy = () => options.intake.saving || options.runtime.busy || options.prometheus.saving;
   return {
     setNameDraft: options.setNameDraft,
     submitName: () => {
@@ -50,6 +52,14 @@ export function buildCollectorActions(options: ActionOptions) {
     openRuntimeConfig: options.runtime.open,
     saveRuntimeConfig: options.runtime.save,
     cancelRuntimeConfig: options.runtime.cancel,
+    openPrometheusSources: options.prometheus.open,
+    selectPrometheusTarget: options.prometheus.select,
+    applyPrometheusTarget: options.prometheus.apply,
+    removePrometheusTarget: options.prometheus.remove,
+    savePrometheusSources: options.prometheus.save,
+    cancelPrometheusSources: options.prometheus.cancel,
+    closePrometheusSources: options.prometheus.close,
+    cancelPrometheusTarget: options.prometheus.cancelTarget,
     toggleSelection: (name: string, checked: boolean) => {
       if (options.mutation.mutating || managedBusy() || !options.visibleMutableNames.includes(name)) return;
       options.setSelected(

@@ -1,0 +1,11 @@
+.view,
+.list,
+.endpoint {
+  width: 100%;
+  min-width: 0;
+}
+
+.endpoint {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}

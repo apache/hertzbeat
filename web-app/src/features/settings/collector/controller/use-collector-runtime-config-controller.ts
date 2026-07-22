@@ -10,20 +10,19 @@ import { useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { loadCollectorRuntimeConfig, saveCollectorRuntimeConfig } from '../api/collector-runtime-config-api';
 import {
   buildManagedOtelRuntimeConfigUpdate,
-  managedRuntimeDurationSeconds,
   type ManagedOtelRuntimeConfig
 } from '../api/collector-runtime-config-schema';
-import { CollectorContractError, type CollectorMutationFailure, type CollectorRecord } from '../model/collector-model';
+import { managedRuntimeDurationSeconds } from '../api/collector-runtime-duration';
+import type { CollectorMutationFailure, CollectorRecord } from '../model/collector-model';
 import { sameCollectorQuery, type CollectorQuery } from '../model/collector-query-model';
 import type { ManagedRuntimeConfigView } from '../model/collector-runtime-config-model';
-import { classifyCollectorMutationFailure } from './collector-mutation';
-import { sameManagedRuntimeConfig } from './collector-runtime-config-proof';
+import { persistCollectorRuntimeConfig, readCollectorRuntimeConfig } from './collector-runtime-config-persistence';
 
 type RuntimeEditor = {
   record: CollectorRecord;
+  query: CollectorQuery;
   current: ManagedOtelRuntimeConfig | null;
   config: ManagedRuntimeConfigView | null;
 };
@@ -68,16 +67,21 @@ async function openRuntimeConfig(name: string, options: Options, controls: Runti
   if (!record) return;
   const receipt = { record, query: options.query, operation: ++controls.operationRef.current };
   controls.receiptRef.current = receipt;
-  controls.setEditor({ record, current: null, config: null });
+  controls.setEditor({ record, query: receipt.query, current: null, config: null });
   controls.setFailure(null);
   controls.setPhase('loading');
-  const result = await readRuntimeConfig(record.name);
+  const result = await readCollectorRuntimeConfig(record.name);
   const status = runtimeReceiptStatus(receipt, controls.operationRef.current, options.queryRef.current);
   if (status === 'superseded') return;
   if (status === 'stale-query') return closeRuntime(controls);
   controls.setPhase('idle');
   if (result.failure) return controls.setFailure(result.failure);
-  controls.setEditor({ record, current: result.config, config: runtimeConfigView(result.config) });
+  controls.setEditor({
+    record,
+    query: receipt.query,
+    current: result.config,
+    config: runtimeConfigView(result.config)
+  });
 }
 
 async function saveRuntimeConfig(
@@ -95,7 +99,7 @@ async function saveRuntimeConfig(
   controls.receiptRef.current = activeReceipt;
   controls.setPhase('saving');
   controls.setFailure(null);
-  const result = await persistRuntimeConfig(receipt.record.name, request);
+  const result = await persistCollectorRuntimeConfig(receipt.record.name, request);
   const status = runtimeReceiptStatus(activeReceipt, controls.operationRef.current, options.queryRef.current);
   if (status === 'superseded') return;
   if (status === 'stale-query') return closeRuntime(controls);
@@ -110,31 +114,6 @@ function cancelRuntimeConfig(controls: RuntimeControls) {
   if (controls.phase === 'saving') return;
   closeRuntime(controls);
   controls.setFailure(null);
-}
-
-async function readRuntimeConfig(collector: string) {
-  try {
-    return { config: await loadCollectorRuntimeConfig(collector), failure: null };
-  } catch (error) {
-    return { config: null, failure: classifyRuntimeFailure(error) };
-  }
-}
-
-async function persistRuntimeConfig(collector: string, request: ManagedOtelRuntimeConfig) {
-  try {
-    const response = await saveCollectorRuntimeConfig(collector, request);
-    const proof = await loadCollectorRuntimeConfig(collector);
-    // Both equalities are required so an unchanged server state cannot be reported as a successful write.
-    return sameManagedRuntimeConfig(request, response) && sameManagedRuntimeConfig(request, proof)
-      ? null
-      : ('validation' as const);
-  } catch (error) {
-    return classifyRuntimeFailure(error);
-  }
-}
-
-function classifyRuntimeFailure(error: unknown): CollectorMutationFailure {
-  return error instanceof CollectorContractError ? 'validation' : classifyCollectorMutationFailure(error);
 }
 
 function runtimeReceiptStatus(receipt: Receipt, operation: number, query: CollectorQuery) {

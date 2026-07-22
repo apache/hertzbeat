@@ -27,6 +27,8 @@ export const managedRuntimeHostScrapers = [
   'PAGING',
   'PROCESSES'
 ] as const;
+export const managedRuntimeSafeNamePattern = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/u;
+export const managedRuntimeHostMetricsIntervalLimits = { minimum: 10, maximum: 300 } as const;
 
 type ManagedRuntimeResourceDetector = (typeof managedRuntimeResourceDetectors)[number];
 type ManagedRuntimeFilterPreset = (typeof managedRuntimeFilterPresets)[number];
@@ -47,3 +49,14 @@ export type ManagedRuntimeConfigView = ManagedRuntimeCoreDraft & {
   prometheusTargetCount: number;
   fileLogSourceCount: number;
 };
+
+export function managedRuntimeCoreDraft(config: ManagedRuntimeConfigView): ManagedRuntimeCoreDraft {
+  return {
+    environment: config.environment,
+    hostMetricsEnabled: config.hostMetricsEnabled,
+    hostMetricsIntervalSeconds: config.hostMetricsIntervalSeconds,
+    hostMetricsScrapers: [...config.hostMetricsScrapers],
+    resourceDetectors: [...config.resourceDetectors],
+    telemetryFilterPresets: [...config.telemetryFilterPresets]
+  };
+}

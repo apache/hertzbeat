@@ -5,18 +5,27 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Alert, Checkbox, Empty, Form, Input, InputNumber, Modal, Skeleton, Switch, Typography } from 'antd';
+import { Alert, Checkbox, Empty, Form, Input, InputNumber, Modal, Skeleton, Switch } from 'antd';
 import type { FormInstance } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import type { CollectorMutationFailure, CollectorRecord } from '../model/collector-model';
 import {
+  managedRuntimeCoreDraft,
   managedRuntimeFilterPresets,
+  managedRuntimeHostMetricsIntervalLimits,
   managedRuntimeHostScrapers,
   managedRuntimeResourceDetectors,
   type ManagedRuntimeCoreDraft,
   type ManagedRuntimeConfigView
 } from '../model/collector-runtime-config-model';
+import {
+  type ManagedPrometheusSourceView,
+  type ManagedPrometheusTargetDraft,
+  type ManagedPrometheusTargetSelection
+} from '../model/collector-prometheus-source-model';
+import { CollectorPrometheusSourcesView } from './collector-prometheus-sources-view';
+import { CollectorRuntimeSourceSummary } from './collector-runtime-source-summary';
 
 type Props = {
   record: CollectorRecord | null;
@@ -24,33 +33,67 @@ type Props = {
   loading: boolean;
   saving: boolean;
   failure: CollectorMutationFailure | null;
+  prometheusEditor: ManagedPrometheusSourceView | null;
+  prometheusSaving: boolean;
+  prometheusFailure: CollectorMutationFailure | null;
   onCancel: () => void;
   onSave: (draft: ManagedRuntimeCoreDraft) => void;
+  onOpenPrometheus: () => void;
+  onSelectPrometheus: (selection: ManagedPrometheusTargetSelection) => void;
+  onApplyPrometheus: (target: ManagedPrometheusTargetDraft) => void;
+  onRemovePrometheus: (index: number) => void;
+  onSavePrometheus: () => void;
+  onCancelPrometheus: () => void;
+  onClosePrometheus: () => void;
+  onCancelPrometheusTarget: () => void;
 };
 
 export function CollectorRuntimeConfigDialog(props: Props) {
   const { t } = useTranslation();
   const [form] = Form.useForm<ManagedRuntimeCoreDraft>();
   if (!props.record) return null;
+  const prometheusEditor = props.prometheusEditor;
+  const prometheusOpen = prometheusEditor !== null;
+  const locked = props.saving || props.prometheusSaving;
   return (
     <Modal
       open
       destroyOnHidden
       width={720}
-      title={t('collectors.runtime.title', { name: props.record.name })}
+      title={t(prometheusOpen ? 'collectors.runtime.prometheus.title' : 'collectors.runtime.title', {
+        name: props.record.name
+      })}
       okText={t('collectors.runtime.save')}
       cancelText={t('common.cancel')}
       okButtonProps={{ disabled: props.loading || props.saving || !props.config }}
       cancelButtonProps={{ disabled: props.saving }}
       confirmLoading={props.saving}
-      closable={!props.saving}
-      keyboard={!props.saving}
+      footer={prometheusOpen ? null : undefined}
+      closable={!locked}
+      keyboard={!locked}
       maskClosable={false}
-      onCancel={props.onCancel}
+      onCancel={prometheusOpen ? props.onClosePrometheus : props.onCancel}
       onOk={() => form.submit()}
     >
-      {props.failure && <Alert type="error" showIcon message={t(`collectors.failure.${props.failure}`)} />}
-      <RuntimeConfigBody {...props} form={form} />
+      {prometheusEditor && props.config ? (
+        <CollectorPrometheusSourcesView
+          view={prometheusEditor}
+          fileLogSourceCount={props.config.fileLogSourceCount}
+          saving={props.prometheusSaving}
+          failure={props.prometheusFailure}
+          onSelect={props.onSelectPrometheus}
+          onApply={props.onApplyPrometheus}
+          onRemove={props.onRemovePrometheus}
+          onSave={props.onSavePrometheus}
+          onCancel={props.onCancelPrometheus}
+          onCancelTarget={props.onCancelPrometheusTarget}
+        />
+      ) : (
+        <>
+          {props.failure && <Alert type="error" showIcon message={t(`collectors.failure.${props.failure}`)} />}
+          <RuntimeConfigBody {...props} form={form} />
+        </>
+      )}
     </Modal>
   );
 }
@@ -76,13 +119,13 @@ function RuntimeConfigForm(
       form={props.form}
       layout="vertical"
       disabled={props.saving}
-      initialValues={initialValues(props.config)}
+      initialValues={managedRuntimeCoreDraft(props.config)}
       onFinish={props.onSave}
     >
       <RuntimeBasics />
       <RuntimeHostScrapers />
       <RuntimeGovernance />
-      <RuntimeSourceSummary config={props.config} />
+      <CollectorRuntimeSourceSummary config={props.config} onManagePrometheus={props.onOpenPrometheus} />
     </Form>
   );
 }
@@ -98,7 +141,11 @@ function RuntimeBasics() {
         <Switch />
       </Form.Item>
       <Form.Item name="hostMetricsIntervalSeconds" label={t('collectors.runtime.intervalSeconds')}>
-        <InputNumber min={10} max={300} precision={0} />
+        <InputNumber
+          min={managedRuntimeHostMetricsIntervalLimits.minimum}
+          max={managedRuntimeHostMetricsIntervalLimits.maximum}
+          precision={0}
+        />
       </Form.Item>
     </>
   );
@@ -143,49 +190,4 @@ function RuntimeGovernance() {
       </Form.Item>
     </>
   );
-}
-
-function RuntimeSourceSummary({ config }: { config: ManagedRuntimeConfigView }) {
-  const { t } = useTranslation();
-  return (
-    <Alert
-      type="info"
-      showIcon
-      message={t('collectors.runtime.sources')}
-      description={
-        <div>
-          <Typography.Text>
-            {t('collectors.runtime.schemaRevision', { schema: config.schemaVersion, revision: config.revision })}
-          </Typography.Text>
-          {config.schemaVersion < 3 && (
-            <>
-              <br />
-              <Typography.Text type="warning">{t('collectors.runtime.upgradeNotice')}</Typography.Text>
-            </>
-          )}
-          <br />
-          <Typography.Text>
-            {t('collectors.runtime.prometheusSummary', { count: config.prometheusTargetCount })}
-          </Typography.Text>
-          <br />
-          <Typography.Text>
-            {t('collectors.runtime.fileLogSummary', { count: config.fileLogSourceCount })}
-          </Typography.Text>
-          <br />
-          <Typography.Text type="secondary">{t('collectors.runtime.sourceNotice')}</Typography.Text>
-        </div>
-      }
-    />
-  );
-}
-
-function initialValues(config: ManagedRuntimeConfigView): ManagedRuntimeCoreDraft {
-  return {
-    environment: config.environment,
-    hostMetricsEnabled: config.hostMetricsEnabled,
-    hostMetricsIntervalSeconds: config.hostMetricsIntervalSeconds,
-    hostMetricsScrapers: [...config.hostMetricsScrapers],
-    resourceDetectors: [...config.resourceDetectors],
-    telemetryFilterPresets: [...config.telemetryFilterPresets]
-  };
 }

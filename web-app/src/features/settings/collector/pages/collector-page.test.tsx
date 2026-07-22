@@ -163,6 +163,8 @@ describe('CollectorPage', () => {
     expect(within(dialog).getByText('1 FileLog source')).toBeInTheDocument();
     expect(within(dialog).getByText('Source details are managed by dedicated editors.')).toBeInTheDocument();
     expect(within(dialog).getByText('Schema 3 · revision 7')).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Manage Prometheus targets' }));
+    expect(controller.actions.openPrometheusSources).toHaveBeenCalledTimes(1);
     expect(dialog).not.toHaveTextContent('payments-key-ref');
     expect(dialog).not.toHaveTextContent('internal-ca');
     expect(within(dialog).queryByLabelText(/token|secret|raw json/i)).not.toBeInTheDocument();
@@ -184,6 +186,89 @@ describe('CollectorPage', () => {
         telemetryFilterPresets: ['HEALTH_CHECK_TRACES']
       })
     );
+  });
+
+  it('manages the Prometheus list in the same dedicated dialog view without adding another row action', () => {
+    const controller = buildController({
+      runtimeEditor: { record: collector('edge'), config: runtimeConfig() },
+      prometheusEditor: prometheusEditor()
+    });
+    resource.useCollectorController.mockReturnValue(controller);
+    renderPage();
+
+    const dialog = screen.getByRole('dialog', { name: 'Prometheus sources for edge' });
+    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    expect(within(dialog).getByText('payments')).toBeInTheDocument();
+    expect(within(dialog).getByText('https://payments.example.test:9464/metrics')).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Edit payments' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Remove payments' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Add Prometheus target' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save source changes' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Back to runtime' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
+
+    expect(controller.actions.selectPrometheusTarget).toHaveBeenCalledWith(0);
+    expect(controller.actions.removePrometheusTarget).toHaveBeenCalledWith(0);
+    expect(controller.actions.selectPrometheusTarget).toHaveBeenCalledWith('new');
+    expect(controller.actions.savePrometheusSources).toHaveBeenCalledTimes(1);
+    expect(controller.actions.cancelPrometheusSources).toHaveBeenCalledTimes(1);
+    expect(controller.actions.closePrometheusSources).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: /configure edge prometheus/i })).not.toBeInTheDocument();
+  });
+
+  it('edits header secret reference names without accepting or displaying credential values', async () => {
+    const controller = buildController({
+      runtimeEditor: { record: collector('edge'), config: runtimeConfig() },
+      prometheusEditor: prometheusEditor({ selection: 0 }),
+      prometheusFailure: 'validation'
+    });
+    resource.useCollectorController.mockReturnValue(controller);
+    renderPage();
+
+    const dialog = screen.getByRole('dialog', { name: 'Prometheus sources for edge' });
+    expect(within(dialog).getByLabelText('Secret reference name')).toHaveValue('payments-key-ref');
+    expect(within(dialog).getByLabelText('Header name')).toHaveValue('X-Scrape-Key');
+    expect(
+      within(dialog).getByText('The Collector change was rejected. Review its current server state.')
+    ).toBeInTheDocument();
+    expect(within(dialog).queryByLabelText(/secret value|token|credential|raw json/i)).not.toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Remove header reference 1' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Add header reference' }));
+    fireEvent.change(within(dialog).getByLabelText('Header name'), { target: { value: 'X-Checkout-Key' } });
+    fireEvent.change(within(dialog).getByLabelText('Secret reference name'), {
+      target: { value: 'checkout-key-ref' }
+    });
+    fireEvent.change(within(dialog).getByLabelText('Target name'), { target: { value: 'checkout' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Apply target' }));
+
+    await waitFor(() =>
+      expect(controller.actions.applyPrometheusTarget).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'checkout',
+          headerSecretRefs: [{ headerName: 'X-Checkout-Key', secretReferenceName: 'checkout-key-ref' }]
+        })
+      )
+    );
+  });
+
+  it('disables adding a ninth header reference in the target form', () => {
+    const headerSecretRefs = Array.from({ length: 8 }, (_, index) => ({
+      headerName: `X-Key-${index}`,
+      secretReferenceName: `key-${index}`
+    }));
+    resource.useCollectorController.mockReturnValue(
+      buildController({
+        runtimeEditor: { record: collector('edge'), config: runtimeConfig() },
+        prometheusEditor: prometheusEditor({
+          selection: 0,
+          targets: [{ ...prometheusEditor().targets[0], headerSecretRefs }]
+        })
+      })
+    );
+    renderPage();
+
+    const dialog = screen.getByRole('dialog', { name: 'Prometheus sources for edge' });
+    expect(within(dialog).getByRole('button', { name: 'Add header reference' })).toBeDisabled();
   });
 
   it('disables the complete runtime form while writing and keeps classified failure inside it', () => {
@@ -342,6 +427,9 @@ function buildController(overrides: Record<string, unknown> = {}) {
     runtimeLoading: false,
     runtimeSaving: false,
     runtimeFailure: null,
+    prometheusEditor: null,
+    prometheusSaving: false,
+    prometheusFailure: null,
     selected: [],
     actions: {
       setNameDraft: vi.fn(),
@@ -356,6 +444,14 @@ function buildController(overrides: Record<string, unknown> = {}) {
       openRuntimeConfig: vi.fn(),
       saveRuntimeConfig: vi.fn(),
       cancelRuntimeConfig: vi.fn(),
+      openPrometheusSources: vi.fn(),
+      selectPrometheusTarget: vi.fn(),
+      applyPrometheusTarget: vi.fn(),
+      removePrometheusTarget: vi.fn(),
+      savePrometheusSources: vi.fn(),
+      cancelPrometheusSources: vi.fn(),
+      closePrometheusSources: vi.fn(),
+      cancelPrometheusTarget: vi.fn(),
       toggleSelection: vi.fn(),
       toggleAll: vi.fn(),
       cancelAction: vi.fn(),
@@ -431,6 +527,24 @@ function runtimeConfig(overrides: Record<string, unknown> = {}) {
     resourceDetectors: ['ENV', 'SYSTEM'] as const,
     telemetryFilterPresets: [] as const,
     hostMetricsScrapers: ['CPU', 'MEMORY'] as const,
+    ...overrides
+  };
+}
+
+function prometheusEditor(overrides: Record<string, unknown> = {}) {
+  return {
+    record: collector('edge'),
+    targets: [
+      {
+        name: 'payments',
+        endpoint: 'https://payments.example.test:9464/metrics',
+        intervalSeconds: 30,
+        timeoutSeconds: 10,
+        headerSecretRefs: [{ headerName: 'X-Scrape-Key', secretReferenceName: 'payments-key-ref' }],
+        tlsCaProfile: 'internal-ca'
+      }
+    ],
+    selection: null,
     ...overrides
   };
 }

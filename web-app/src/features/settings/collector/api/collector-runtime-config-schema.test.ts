@@ -8,6 +8,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildManagedOtelRuntimeConfigUpdate, parseManagedOtelRuntimeConfig } from './collector-runtime-config-schema';
+import { buildManagedOtelPrometheusTargetsUpdate } from './collector-prometheus-source-schema';
 
 describe('managed Collector runtime config schema', () => {
   it('reads a complete normalized legacy response and upgrades only editable core fields', () => {
@@ -143,6 +144,68 @@ describe('managed Collector runtime config schema', () => {
       })
     ).toBeNull();
   });
+
+  it('replaces only Prometheus targets while upgrading revision and preserving core and FileLog exactly', () => {
+    const current = parseManagedOtelRuntimeConfig(runtimeConfig());
+    const update = buildManagedOtelPrometheusTargetsUpdate(current, [
+      prometheusDraft({
+        name: 'checkout',
+        headerSecretRefs: [{ headerName: 'X-Scrape-Key', secretReferenceName: 'checkout-key-ref' }]
+      })
+    ]);
+
+    expect(update).toEqual({
+      ...current,
+      schemaVersion: 3,
+      revision: 8,
+      prometheusTargets: [
+        {
+          name: 'checkout',
+          endpoint: 'https://payments.example.test:9464/metrics',
+          interval: 'PT30S',
+          timeout: 'PT10S',
+          headerSecretRefs: { 'X-Scrape-Key': 'checkout-key-ref' },
+          tlsCaProfile: ''
+        }
+      ]
+    });
+    expect(update?.fileLogSources).toEqual(current?.fileLogSources);
+    expect(update?.environment).toBe(current?.environment);
+    expect(update?.hostMetricsScrapers).toEqual(current?.hostMetricsScrapers);
+  });
+
+  it('keeps target order exact and treats target names as case-sensitive', () => {
+    const update = buildManagedOtelPrometheusTargetsUpdate(parseManagedOtelRuntimeConfig(runtimeConfig()), [
+      prometheusDraft({ name: 'Payments' }),
+      prometheusDraft({ name: 'payments', endpoint: 'https://second.example.test/metrics' })
+    ]);
+
+    expect(update?.prometheusTargets.map(target => target.name)).toEqual(['Payments', 'payments']);
+  });
+
+  it.each([
+    ['credential URL', [prometheusDraft({ endpoint: 'https://user:secret@example.test/metrics' })]],
+    ['timeout beyond interval', [prometheusDraft({ intervalSeconds: 10, timeoutSeconds: 11 })]],
+    [
+      'reserved header',
+      [prometheusDraft({ headerSecretRefs: [{ headerName: 'Authorization', secretReferenceName: 'ref' }] })]
+    ],
+    [
+      'duplicate header',
+      [
+        prometheusDraft({
+          headerSecretRefs: [
+            { headerName: 'X-Key', secretReferenceName: 'one' },
+            { headerName: 'x-key', secretReferenceName: 'two' }
+          ]
+        })
+      ]
+    ],
+    ['secret-shaped extra field', [{ ...prometheusDraft(), secretValue: 'must-not-enter-config' }]],
+    ['more than 32 targets', Array.from({ length: 33 }, (_, index) => prometheusDraft({ name: `target-${index}` }))]
+  ])('rejects unsafe Prometheus editor draft: %s', (_label, draft) => {
+    expect(buildManagedOtelPrometheusTargetsUpdate(parseManagedOtelRuntimeConfig(runtimeConfig()), draft)).toBeNull();
+  });
 });
 
 function runtimeConfig(overrides: Record<string, unknown> = {}) {
@@ -181,5 +244,17 @@ function coreDraft() {
     hostMetricsScrapers: ['CPU', 'MEMORY'] as const,
     resourceDetectors: ['ENV', 'SYSTEM'] as const,
     telemetryFilterPresets: [] as const
+  };
+}
+
+function prometheusDraft(overrides: Record<string, unknown> = {}) {
+  return {
+    name: 'payments',
+    endpoint: 'https://payments.example.test:9464/metrics',
+    intervalSeconds: 30,
+    timeoutSeconds: 10,
+    headerSecretRefs: [],
+    tlsCaProfile: '',
+    ...overrides
   };
 }

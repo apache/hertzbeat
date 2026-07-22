@@ -18,6 +18,7 @@ import { readCollectorQuery, writeCollectorQuery, type CollectorQuery } from '..
 import { buildCollectorActions } from './collector-actions';
 import { useCollectorMutationController } from './use-collector-mutation-controller';
 import { useCollectorIntakeController } from './use-collector-intake-controller';
+import { useCollectorPrometheusSourceController } from './use-collector-prometheus-source-controller';
 import { useCollectorRuntimeConfigController } from './use-collector-runtime-config-controller';
 import { collectorQueryKeys } from './collector-query-keys';
 
@@ -46,9 +47,25 @@ export function useCollectorController() {
     records: state.records,
     locked: mutation.mutating || intake.saving
   });
+  const prometheus = useCollectorPrometheusSourceController({
+    queryRef: state.queryRef,
+    session: runtime.editor,
+    closeRuntime: runtime.cancel
+  });
   const listState = resolveCollectorListState(state.collectorQuery, mutation.proofFailure);
-  const busy = mutation.mutating || intake.saving || runtime.busy;
+  const busy = mutation.mutating || intake.saving || runtime.busy || prometheus.saving;
+  return collectorPageModel(state, mutation, intake, runtime, prometheus, listState, busy);
+}
 
+function collectorPageModel(
+  state: ReturnType<typeof useCollectorQueryState>,
+  mutation: ReturnType<typeof useCollectorMutationController>,
+  intake: ReturnType<typeof useCollectorIntakeController>,
+  runtime: ReturnType<typeof useCollectorRuntimeConfigController>,
+  prometheus: ReturnType<typeof useCollectorPrometheusSourceController>,
+  listState: CollectorListState,
+  busy: boolean
+) {
   return {
     query: state.query,
     nameDraft: state.nameDraft,
@@ -66,7 +83,17 @@ export function useCollectorController() {
     runtimeLoading: runtime.loading,
     runtimeSaving: runtime.saving,
     runtimeFailure: runtime.failure,
-    actions: buildCollectorActions({ ...state, mutation, intake, runtime, refetch: state.collectorQuery.refetch })
+    prometheusEditor: prometheus.editor,
+    prometheusSaving: prometheus.saving,
+    prometheusFailure: prometheus.failure,
+    actions: buildCollectorActions({
+      ...state,
+      mutation,
+      intake,
+      runtime,
+      prometheus,
+      refetch: state.collectorQuery.refetch
+    })
   };
 }
 
