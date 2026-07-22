@@ -224,5 +224,3 @@ function useDetectionNavigation(
 function responseFromState(state: InstrumentationDetectionState) {
   return 'response' in state ? state.response : undefined;
 }
-
-export type InstrumentationDetectionController = ReturnType<typeof useInstrumentationDetectionController>;

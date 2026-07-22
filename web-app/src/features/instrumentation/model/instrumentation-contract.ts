@@ -78,13 +78,13 @@ export type InstrumentationMethod = (typeof INSTRUMENTATION_METHODS)[number];
 export type InstrumentationEnvironment = (typeof INSTRUMENTATION_ENVIRONMENTS)[number];
 export type InstrumentationPlatform = (typeof INSTRUMENTATION_PLATFORMS)[number];
 export type InstrumentationSignal = (typeof INSTRUMENTATION_SIGNALS)[number];
-export type SignalCapability = (typeof INSTRUMENTATION_CAPABILITIES)[number];
-export type DetectionStatus = (typeof INSTRUMENTATION_DETECTION_STATUSES)[number];
+type SignalCapability = (typeof INSTRUMENTATION_CAPABILITIES)[number];
+type DetectionStatus = (typeof INSTRUMENTATION_DETECTION_STATUSES)[number];
 export type DetectionErrorCode = (typeof INSTRUMENTATION_DETECTION_ERROR_CODES)[number];
 export type PollingDecision = (typeof INSTRUMENTATION_POLLING_DECISIONS)[number];
 export type InstrumentationRequestErrorCode = (typeof INSTRUMENTATION_REQUEST_ERROR_CODES)[number];
 
-export type SignalValues<T> = { metrics: T; logs: T; traces: T };
+type SignalValues<T> = { metrics: T; logs: T; traces: T };
 
 export type ServiceIdentity = { name: string; namespace: string; environment: string };
 export type InstrumentationSelection = {
@@ -106,7 +106,7 @@ export type DetectionRequest = InstrumentationSelection & {
   startedAt: number;
 };
 
-export type OfficialDependency = {
+type OfficialDependency = {
   name: string;
   sourceUrl: string;
   version: string;
@@ -115,7 +115,7 @@ export type OfficialDependency = {
   official: boolean;
   bundledWithHertzBeat: boolean;
 };
-export type ArtifactVerification = {
+type ArtifactVerification = {
   name: string;
   downloadUrl: string;
   algorithm: string;
@@ -166,7 +166,7 @@ export type GuideSnippet = {
   content: string;
   secretPlaceholders: string[];
 };
-export type GuideStep = {
+type GuideStep = {
   id: string;
   type: (typeof INSTRUMENTATION_STEP_TYPES)[number];
   titleKey: string;

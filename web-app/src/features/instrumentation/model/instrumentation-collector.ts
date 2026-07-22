@@ -22,8 +22,8 @@ export const COLLECTOR_INTAKE_ERROR_CODES = [
   'intake_advertisement_unavailable'
 ] as const;
 
-export type CollectorIntakeCapability = (typeof COLLECTOR_INTAKE_CAPABILITIES)[number];
-export type CollectorIntakeErrorCode = (typeof COLLECTOR_INTAKE_ERROR_CODES)[number] | 'old_server';
+type CollectorIntakeCapability = (typeof COLLECTOR_INTAKE_CAPABILITIES)[number];
+type CollectorIntakeErrorCode = (typeof COLLECTOR_INTAKE_ERROR_CODES)[number] | 'old_server';
 export type CollectorInstrumentationIntake =
   | {
       status: 'available';

@@ -214,6 +214,3 @@ function instrumentationContextField(field: string): keyof QueryContext | undefi
   if (field === 'collectorId' || field === 'serviceName' || field === 'serviceNamespace') return field;
   return field === 'serviceEnvironment' ? 'environment' : undefined;
 }
-
-export type InstrumentationPageController = ReturnType<typeof useInstrumentationPageController>;
-export type InstrumentationSetupController = InstrumentationPageController['setup'];

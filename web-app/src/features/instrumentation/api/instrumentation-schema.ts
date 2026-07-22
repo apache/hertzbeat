@@ -50,7 +50,7 @@ export const instrumentationMessageEnvelopeSchema = z
   .strict();
 export type InstrumentationMessageEnvelope = z.output<typeof instrumentationMessageEnvelopeSchema>;
 
-export const instrumentationSelectionSchema = z.object({
+const instrumentationSelectionSchema = z.object({
   language: z.enum(INSTRUMENTATION_LANGUAGES),
   framework: z.enum(INSTRUMENTATION_FRAMEWORKS),
   method: z.enum(INSTRUMENTATION_METHODS),
@@ -58,7 +58,7 @@ export const instrumentationSelectionSchema = z.object({
   platform: z.enum(INSTRUMENTATION_PLATFORMS)
 });
 
-export const serviceIdentitySchema = z.object({
+const serviceIdentitySchema = z.object({
   name: textSchema,
   namespace: textSchema,
   environment: textSchema
