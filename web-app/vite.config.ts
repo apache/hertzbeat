@@ -56,6 +56,10 @@ export default defineConfig({
     chunkSizeWarningLimit: bundleLimits.chunkWarningKilobytes,
     rolldownOptions: {
       output: {
+        // Size-based vendor splitting can create circular chunks around CommonJS
+        // packages. Preserve source initialization order so the production bundle
+        // cannot execute React consumers before React itself is initialized.
+        strictExecutionOrder: true,
         codeSplitting: {
           groups: [
             {

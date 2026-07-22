@@ -17,6 +17,9 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { fileURLToPath } from 'node:url';
+
+import { loadConfigFromFile } from 'vite';
 
 import bundleLimits from './bundle-limits.json' with { type: 'json' };
 
@@ -28,4 +31,11 @@ test('vendor chunks stay within the application chunk warning boundary', () => {
   assert.ok(bundleLimits.vendorChunkMaxBytes <= chunkWarningBytes);
   assert.ok(bundleLimits.shellGzipBytes > 0);
   assert.ok(bundleLimits.totalJavaScriptBytes > chunkWarningBytes);
+});
+
+test('manual vendor splitting preserves dependency execution order', async () => {
+  const configFile = fileURLToPath(new URL('../vite.config.ts', import.meta.url));
+  const loadedConfig = await loadConfigFromFile({ command: 'build', mode: 'production' }, configFile);
+
+  assert.equal(loadedConfig?.config.build?.rolldownOptions?.output?.strictExecutionOrder, true);
 });
