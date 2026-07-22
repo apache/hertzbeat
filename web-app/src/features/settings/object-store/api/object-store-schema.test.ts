@@ -34,6 +34,7 @@ describe('object store response schema', () => {
     };
 
     expect(parseObjectStoreDraft(draft)).toEqual(draft);
+    expect(() => parseObjectStoreDraft(Object.create(draft) as unknown)).toThrow(ObjectStoreDraftContractError);
   });
 
   it.each([
