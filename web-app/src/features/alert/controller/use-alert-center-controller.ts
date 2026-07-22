@@ -16,10 +16,11 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { alertRoutePaths } from '@/shared/navigation/app-paths';
+import { useQueryDraft } from '@/shared/query-context';
 
 import { loadAlertGroups, loadAlertSummary } from '../api/alert-api';
 import {
@@ -46,17 +47,7 @@ export function useAlertCenterController() {
   const [params, setParams] = useSearchParams();
   const query = readAlertQuery(params);
   const source = writeAlertQuery(query).toString();
-  const canonicalDraft = draftFromQuery(query);
-  const [draftState, setDraftState] = useState({ source, value: canonicalDraft });
-  const queryChanged = draftState.source !== source;
-  const draft = queryChanged ? canonicalDraft : draftState.value;
-
-  useEffect(() => {
-    // The derived draft shows the URL immediately. Re-reading the canonical
-    // source here prevents an abandoned draft from reviving after Browser Back.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setDraftState(current => (current.source === source ? current : { source, value: draftFromSource(source) }));
-  }, [source]);
+  const draft = useAlertFilterDraft(query, source);
 
   const summaryQuery = useQuery({
     queryKey: alertCenterQueryKeys.summary(),
@@ -71,20 +62,20 @@ export function useAlertCenterController() {
     setParams(writeAlertQuery({ ...query, ...patch }));
   };
   const setDraft = (field: AlertDraftField, value: string) => {
-    setDraftState({ source, value: { ...draft, [field]: value } });
+    draft.setValue({ ...draft.value, [field]: value });
   };
   const submitFilters = () => {
     updateQuery({
-      search: draft.search.trim(),
-      serviceName: draft.serviceName.trim(),
-      serviceNamespace: draft.serviceNamespace.trim(),
-      environment: draft.environment.trim(),
+      search: draft.value.search.trim(),
+      serviceName: draft.value.serviceName.trim(),
+      serviceNamespace: draft.value.serviceNamespace.trim(),
+      environment: draft.value.environment.trim(),
       pageIndex: 0
     });
   };
 
   const state: AlertCenterState = {
-    draft,
+    draft: draft.value,
     list: resolveListState(listQuery),
     query,
     refreshing: summaryQuery.isFetching || listQuery.isFetching,
@@ -109,6 +100,19 @@ export function useAlertCenterController() {
   };
 }
 
+function useAlertFilterDraft(query: AlertQuery, source: string) {
+  const canonicalDraft = useMemo<AlertFilterDraft>(
+    () => ({
+      search: query.search,
+      serviceName: query.serviceName,
+      serviceNamespace: query.serviceNamespace,
+      environment: query.environment
+    }),
+    [query.environment, query.search, query.serviceName, query.serviceNamespace]
+  );
+  return useQueryDraft(source, canonicalDraft);
+}
+
 function resolveListState(query: {
   data: AlertPage | undefined;
   error: Error | null;
@@ -131,17 +135,4 @@ function resolveSummaryState(query: {
   if (query.isPending) return { kind: 'loading' };
   if (query.isError) return { kind: alertFailureKind(query.error) };
   return query.data ? { kind: 'ready', summary: query.data } : { kind: 'error' };
-}
-
-function draftFromQuery(query: AlertQuery): AlertFilterDraft {
-  return {
-    search: query.search,
-    serviceName: query.serviceName,
-    serviceNamespace: query.serviceNamespace,
-    environment: query.environment
-  };
-}
-
-function draftFromSource(source: string) {
-  return draftFromQuery(readAlertQuery(new URLSearchParams(source)));
 }

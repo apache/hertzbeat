@@ -106,6 +106,26 @@ describe('useMonitorListController URL evidence', () => {
     );
   });
 
+  it('does not revive an abandoned filter draft after navigating away and back', async () => {
+    const view = renderHook(() => ({ controller: useMonitorListController(), navigate: useNavigate() }), {
+      wrapper: wrapper(['/monitors?search=alpha', '/monitors?search=beta'], 0)
+    });
+    await waitFor(() => expect(view.result.current.controller.state.monitors.kind).toBe('ready'));
+
+    act(() => view.result.current.controller.actions.setSearch('abandoned alpha'));
+    expect(view.result.current.controller.state.draft.search).toBe('abandoned alpha');
+
+    act(() => {
+      void view.result.current.navigate(1);
+    });
+    await waitFor(() => expect(view.result.current.controller.state.draft.search).toBe('beta'));
+
+    act(() => {
+      void view.result.current.navigate(-1);
+    });
+    await waitFor(() => expect(view.result.current.controller.state.draft.search).toBe('alpha'));
+  });
+
   it.each([
     [new ApiMessageError('offline', { status: 503 }), 'unavailable'],
     [new MonitorContractError('bad page'), 'error']

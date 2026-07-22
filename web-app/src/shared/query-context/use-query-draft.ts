@@ -17,14 +17,14 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-type StringQueryDraft = {
+type QueryDraft<T> = {
   source: string;
-  value: string;
+  value: T;
 };
 
-/** Keeps unsubmitted text local while treating a changed URL source as authoritative. */
-export function useStringQueryDraft(source: string, canonicalValue: string) {
-  const [draft, setDraft] = useState<StringQueryDraft>({ source, value: canonicalValue });
+/** Keeps an unsubmitted draft local while treating a changed URL source as authoritative. */
+export function useQueryDraft<T>(source: string, canonicalValue: T) {
+  const [draft, setDraft] = useState<QueryDraft<T>>({ source, value: canonicalValue });
 
   // Derivation makes back/forward navigation visible without waiting for an effect or updating during render.
   const value = draft.source === source ? draft.value : canonicalValue;
@@ -37,11 +37,15 @@ export function useStringQueryDraft(source: string, canonicalValue: string) {
   }, [canonicalValue, source]);
 
   const setValue = useCallback(
-    (nextValue: string) => {
+    (nextValue: T) => {
       setDraft({ source, value: nextValue });
     },
     [source]
   );
 
   return { value, setValue };
+}
+
+export function useStringQueryDraft(source: string, canonicalValue: string) {
+  return useQueryDraft(source, canonicalValue);
 }

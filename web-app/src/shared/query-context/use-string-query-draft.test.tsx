@@ -18,7 +18,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { useStringQueryDraft } from './use-string-query-draft';
+import { useStringQueryDraft } from './use-query-draft';
 
 describe('useStringQueryDraft', () => {
   it('shows canonical navigation immediately and binds later edits to the new source', () => {

@@ -16,10 +16,11 @@
  */
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useMemo } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { monitorRoutePaths } from '@/shared/navigation/app-paths';
+import { useQueryDraft } from '@/shared/query-context';
 
 import { classifyMonitorReadError, loadMonitorApps, loadMonitors } from '../api/monitor-api';
 import {
@@ -41,14 +42,8 @@ export function useMonitorListController() {
   const [params, setParams] = useSearchParams();
   const query = readMonitorQuery(params);
   const source = writeMonitorQuery(query).toString();
-  const [draftState, setDraftState] = useState({ source, search: query.search, labels: query.labels });
-  const queryChanged = draftState.source !== source;
-  const draft = queryChanged
-    ? { search: query.search, labels: query.labels }
-    : {
-        search: draftState.search,
-        labels: draftState.labels
-      };
+  const canonicalDraft = useMemo(() => ({ search: query.search, labels: query.labels }), [query.labels, query.search]);
+  const draft = useQueryDraft(source, canonicalDraft);
   const { monitors, apps, reread } = useMonitorListResources(query);
   const records = monitors.data?.content;
   const selection = useMonitorSelection(monitorSelectionScope(query), records);
@@ -57,7 +52,7 @@ export function useMonitorListController() {
   return {
     state: {
       query,
-      draft,
+      draft: draft.value,
       operating: commands.operating,
       selectedIds: selection.selectedIds,
       monitors: resolveMonitorEvidence(monitors.isPending, monitors.error, monitors.data),
@@ -65,10 +60,11 @@ export function useMonitorListController() {
       refreshing: monitors.isFetching
     },
     actions: {
-      setSearch: (search: string) => setDraftState({ source, search, labels: draft.labels }),
-      setLabels: (labels: string) => setDraftState({ source, search: draft.search, labels }),
-      submitSearch: () => updateQuery({ search: draft.search.trim(), pageIndex: 0 }),
-      submitFilters: () => updateQuery({ search: draft.search.trim(), labels: draft.labels.trim(), pageIndex: 0 }),
+      setSearch: (search: string) => draft.setValue({ ...draft.value, search }),
+      setLabels: (labels: string) => draft.setValue({ ...draft.value, labels }),
+      submitSearch: () => updateQuery({ search: draft.value.search.trim(), pageIndex: 0 }),
+      submitFilters: () =>
+        updateQuery({ search: draft.value.search.trim(), labels: draft.value.labels.trim(), pageIndex: 0 }),
       changeApp: (app: string) => updateQuery({ app, pageIndex: 0 }),
       changeStatus: (status: string) => updateQuery({ status, pageIndex: 0 }),
       changePage: (page: number, pageSize: number) => updateQuery({ pageIndex: page - 1, pageSize }),
