@@ -20,4 +20,5 @@ set -eu
 repo_root=$(git rev-parse --show-toplevel)
 cd "$repo_root/web-app"
 
+node scripts/check-toolchain.mjs
 exec pnpm format:staged

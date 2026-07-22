@@ -12,9 +12,12 @@
     "dev": "vite --host 0.0.0.0 --port 4200",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
+    "toolchain:check": "node scripts/check-toolchain.mjs && node --test scripts/toolchain-contract.test.mjs",
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "format:staged": "cd .. && git-format-staged -f 'web-app/node_modules/.bin/prettier --config web-app/.prettierrc.cjs --ignore-path web-app/.prettierignore --ignore-unknown --stdin-filepath \"{}\"' 'web-app/*'",
+    "diff:check": "cd .. && git diff --check",
     "hooks:install": "git config extensions.worktreeConfig true && git config --worktree core.hooksPath \"$(git rev-parse --show-toplevel)/.githooks\"",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -22,7 +25,7 @@
     "i18n:check": "node scripts/check-cjk.mjs",
     "budget": "node scripts/check-bundle.mjs",
     "dead-code": "knip",
-    "verify": "pnpm architecture && pnpm i18n:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm budget && pnpm dead-code",
+    "verify": "pnpm toolchain:check && pnpm architecture && pnpm i18n:check && pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm budget && pnpm dead-code && pnpm diff:check",
     "prepare": "if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then pnpm hooks:install; fi"
   },
   "dependencies": {
