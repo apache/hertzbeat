@@ -36,7 +36,7 @@ import { initializeI18n } from '@/core/i18n/i18n';
 import { noticeReceiverDataProvider, noticeReceiverResourceName } from '@/features/alert/notice-receiver';
 import { noticeRuleDataProvider, noticeRuleResourceName } from '@/features/alert/notice-rule';
 import { noticeTemplateDataProvider, noticeTemplateResourceName } from '@/features/alert/notice-template';
-import { objectStoreDataProvider } from '@/features/settings/object-store';
+import { objectStoreDataProvider } from '@/features/settings/object-store/refine';
 import { labelDataProvider, labelResourceName } from '@/features/settings/label/refine';
 import { systemConfigDataProvider } from '@/features/settings/system-config/refine';
 import { tokenDataProvider } from '@/features/settings/token';

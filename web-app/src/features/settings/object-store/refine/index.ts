@@ -15,4 +15,4 @@
  * limitations under the License.
  */
 
-export { ObjectStorePage } from './pages/object-store-page';
+export { objectStoreDataProvider } from '../provider/object-store-data-provider';
