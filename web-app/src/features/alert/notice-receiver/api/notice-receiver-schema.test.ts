@@ -37,6 +37,26 @@ const page = {
 };
 
 describe('notice receiver wire schemas', () => {
+  it('drops standard Spring page metadata without relaxing receiver items', () => {
+    const springMetadata = {
+      empty: true,
+      first: true,
+      last: true,
+      numberOfElements: 0,
+      pageable: { pageNumber: 0, pageSize: 8 },
+      sort: { empty: true, sorted: false, unsorted: true }
+    };
+    expect(
+      parseNoticeReceiverPageWire(
+        { content: [], totalElements: 0, totalPages: 0, number: 0, size: 8, ...springMetadata },
+        { ...query, pageIndex: 0 }
+      )
+    ).toEqual({ content: [], totalElements: 0, totalPages: 0, number: 0, size: 8 });
+    expect(() =>
+      parseNoticeReceiverPageWire({ ...page, content: [{ ...receiver, accessToken: 'echoed-secret' }] }, query)
+    ).toThrow(NoticeReceiverContractError);
+  });
+
   it('normalizes absent audit metadata while keeping the response exact', () => {
     const { creator, modifier, gmtCreate, gmtUpdate } = parseNoticeReceiverWire({
       id: 7,

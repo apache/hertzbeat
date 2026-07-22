@@ -15,6 +15,32 @@ const custom = { id: 42, name: 'Custom', type: 1, preset: false, content: '${con
 const preset = { name: 'Built-in', type: 1, preset: true, content: '${content}' };
 
 describe('Notice Template wire schema', () => {
+  it('drops standard Spring page metadata without relaxing template items', () => {
+    const springPage = {
+      content: [preset],
+      totalElements: 1,
+      totalPages: 1,
+      number: 0,
+      size: 8,
+      empty: false,
+      first: true,
+      last: true,
+      numberOfElements: 1,
+      pageable: { pageNumber: 0, pageSize: 8 },
+      sort: { empty: true, sorted: false, unsorted: true }
+    };
+    expect(parseNoticeTemplatePageWire(springPage, query)).toEqual({
+      content: [preset],
+      totalElements: 1,
+      totalPages: 1,
+      number: 0,
+      size: 8
+    });
+    expect(() =>
+      parseNoticeTemplatePageWire({ ...springPage, content: [{ ...preset, telemetry: 'private' }] }, query)
+    ).toThrow(NoticeTemplateContractError);
+  });
+
   it('parses exact custom detail evidence and rejects unsupported primitive values', () => {
     expect(parseNoticeTemplateDetailWire(custom)).toEqual(custom);
 

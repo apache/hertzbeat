@@ -2,3 +2,4 @@
 
 export { compactTablePageSizes } from './page-size-options';
 export type { PagedCollection } from './paged-collection';
+export { createSpringPageSchema } from './spring-page-schema';

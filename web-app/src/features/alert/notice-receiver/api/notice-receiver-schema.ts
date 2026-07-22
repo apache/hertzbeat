@@ -7,11 +7,12 @@
 
 import { z } from 'zod';
 
+import { createSpringPageSchema } from '@/shared/pagination';
+
 import { noticeReceiverTypes, type NoticeReceiverType } from '../model/notice-receiver-catalog';
 import type { NoticeReceiverQuery } from '../model/notice-receiver-model';
 
 const safeIntegerSchema = z.number().refine(Number.isSafeInteger, 'Expected a safe integer');
-const nonNegativeIntegerSchema = safeIntegerSchema.refine(value => value >= 0, 'Expected a non-negative integer');
 const positiveIntegerSchema = safeIntegerSchema.refine(value => value > 0, 'Expected a positive integer');
 const nullableTextSchema = z
   .string()
@@ -41,15 +42,7 @@ const noticeReceiverSchema = z
   })
   .strict();
 
-const noticeReceiverPageSchema = z
-  .object({
-    content: z.array(noticeReceiverSchema),
-    totalElements: nonNegativeIntegerSchema,
-    totalPages: nonNegativeIntegerSchema,
-    number: nonNegativeIntegerSchema,
-    size: positiveIntegerSchema
-  })
-  .strict();
+const noticeReceiverPageSchema = createSpringPageSchema(noticeReceiverSchema);
 
 export const noticeReceiverOptionSchema = z
   .object({

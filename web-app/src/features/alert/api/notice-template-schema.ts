@@ -7,6 +7,8 @@
 
 import { z } from 'zod';
 
+import { createSpringPageSchema } from '@/shared/pagination';
+
 import { noticeReceiverTypes, type NoticeReceiverType } from '../notice-receiver/model/notice-receiver-catalog';
 import {
   NoticeTemplateContractError,
@@ -16,7 +18,6 @@ import {
 } from '../notice-template-model';
 
 const safeIntegerSchema = z.number().refine(Number.isSafeInteger);
-const nonNegativeIntegerSchema = safeIntegerSchema.refine(value => value >= 0);
 const positiveIntegerSchema = safeIntegerSchema.refine(value => value > 0);
 const requiredTextSchema = z.string().refine(value => value.trim().length > 0);
 const receiverTypeSchema = z.custom<NoticeReceiverType>(value => noticeReceiverTypes.some(type => type === value));
@@ -51,15 +52,7 @@ const customTemplateSchema = z
 
 const noticeTemplateSchema = z.discriminatedUnion('preset', [presetTemplateSchema, customTemplateSchema]);
 
-const noticeTemplatePageSchema = z
-  .object({
-    content: z.array(noticeTemplateSchema),
-    totalElements: nonNegativeIntegerSchema,
-    totalPages: nonNegativeIntegerSchema,
-    number: nonNegativeIntegerSchema,
-    size: positiveIntegerSchema
-  })
-  .strict();
+const noticeTemplatePageSchema = createSpringPageSchema(noticeTemplateSchema);
 
 export function parseNoticeTemplateDetailWire(value: unknown) {
   return mapNoticeTemplateWire(parseSchema(noticeTemplateSchema, value));
