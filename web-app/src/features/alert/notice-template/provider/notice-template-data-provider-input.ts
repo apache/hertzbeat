@@ -122,6 +122,9 @@ function readFilters(filters: GetListParams['filters']): Pick<NoticeTemplateQuer
 }
 
 export function readNoticeTemplateDraft(value: unknown, id?: number): NoticeTemplateDraft {
+  if (!ownsFields(value, ['name', 'type', 'content'])) {
+    throw inputError('NOTICE_TEMPLATE_VARIABLES_INVALID');
+  }
   const source = parse(draftSchema, value, 'NOTICE_TEMPLATE_VARIABLES_INVALID');
   const { id: sourceId, ...fields } = source;
   if (sourceId !== undefined && sourceId !== id) {
@@ -131,9 +134,13 @@ export function readNoticeTemplateDraft(value: unknown, id?: number): NoticeTemp
 }
 
 export function readNoticeTemplateDeleteVariables(value: unknown, id: number): NoticeTemplateDeleteVariables {
+  if (!ownsFields(value, ['record', 'query'])) throw inputError('NOTICE_TEMPLATE_VARIABLES_INVALID');
   const source = parse(deleteEnvelopeSchema, value, 'NOTICE_TEMPLATE_VARIABLES_INVALID');
   const record = parseDeleteIdentity(source.record, id);
   if (!source.query) throw inputError('NOTICE_TEMPLATE_DELETE_FORBIDDEN');
+  if (!ownsFields(source.query, ['name', 'preset', 'pageIndex', 'pageSize'])) {
+    throw inputError('NOTICE_TEMPLATE_VARIABLES_INVALID');
+  }
   const query = parse(deleteQuerySchema, source.query, 'NOTICE_TEMPLATE_VARIABLES_INVALID');
   return { record, query };
 }
@@ -143,11 +150,20 @@ export function readNoticeTemplateId(value: string | number): number {
 }
 
 function parseDeleteIdentity(value: unknown, id: number): DeleteRecordIdentity {
+  if (!ownsFields(value, ['id', 'backendId', 'preset'])) {
+    throw inputError('NOTICE_TEMPLATE_DELETE_FORBIDDEN');
+  }
   const result = deleteRecordIdentitySchema.safeParse(value);
   if (!result.success || result.data.backendId !== id || result.data.id !== `notice-template:custom:${id}`) {
     throw inputError('NOTICE_TEMPLATE_DELETE_FORBIDDEN');
   }
   return result.data;
+}
+
+/** Zod reads named properties through normal JavaScript lookup, so mutation
+ * authorization fields need an explicit own-property gate first. */
+function ownsFields(value: unknown, fields: readonly string[]) {
+  return value !== null && typeof value === 'object' && fields.every(field => Object.hasOwn(value, field));
 }
 
 function parse<T extends z.ZodType>(schema: T, value: unknown, code: string): z.output<T> {

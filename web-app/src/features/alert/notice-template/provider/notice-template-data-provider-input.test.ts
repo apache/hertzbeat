@@ -117,6 +117,14 @@ describe('Notice Template provider input boundary', () => {
         statusCode: 400
       })
     );
+    expect(() =>
+      readNoticeTemplateDraft(Object.create({ name: 'Inherited', type: 1, content: '${server}' }) as unknown)
+    ).toThrow(
+      expect.objectContaining({
+        code: 'NOTICE_TEMPLATE_VARIABLES_INVALID',
+        statusCode: 400
+      })
+    );
   });
 
   it('preserves delete proof query evidence and distinguishes forbidden identity', () => {
@@ -154,6 +162,14 @@ describe('Notice Template provider input boundary', () => {
         },
         42
       )
+    ).toThrow(
+      expect.objectContaining({
+        code: 'NOTICE_TEMPLATE_VARIABLES_INVALID',
+        statusCode: 400
+      })
+    );
+    expect(() =>
+      readNoticeTemplateDeleteVariables(Object.create({ record: resourceRecord, query }) as unknown, 42)
     ).toThrow(
       expect.objectContaining({
         code: 'NOTICE_TEMPLATE_VARIABLES_INVALID',
