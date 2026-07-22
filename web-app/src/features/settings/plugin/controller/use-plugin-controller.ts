@@ -13,6 +13,7 @@ import { PluginRequestError } from '../api/plugin-api';
 import { userCanWritePlugins, type PluginRecord } from '../model/plugin-model';
 import { pluginQueryKeys } from './plugin-query-keys';
 import { usePluginMutations } from './use-plugin-mutations';
+import { usePluginParams } from './use-plugin-params';
 import { usePluginQuery } from './use-plugin-query';
 import { usePluginUpload } from './use-plugin-upload';
 
@@ -22,6 +23,7 @@ export function usePluginController() {
   const canWrite = userCanWritePlugins(useSession().session?.roles ?? []);
   const changed = () => client.invalidateQueries({ queryKey: pluginQueryKeys.all });
   const upload = usePluginUpload(canWrite, changed);
+  const params = usePluginParams(canWrite, changed);
   const records = state.result.data?.content ?? [];
   const mutations = usePluginMutations({
     canWrite,
@@ -41,7 +43,8 @@ export function usePluginController() {
     selectedIds: state.selectedIds,
     listState: listState(state.result, state.query.search),
     pageSizes: state.pageSizes,
-    busy: upload.busy || mutations.busy,
+    busy: upload.busy || mutations.busy || params.busy,
+    params,
     uploadFailure: upload.failure,
     mutationFailure: mutations.failure,
     notice: mutations.notice,
@@ -51,6 +54,7 @@ export function usePluginController() {
     actions: {
       ...upload.actions,
       ...mutationActions,
+      openParams: (plugin: PluginRecord) => void params.actions.open(plugin),
       openUpload: () => {
         if (canWrite) clearOutcome();
         upload.actions.openUpload();

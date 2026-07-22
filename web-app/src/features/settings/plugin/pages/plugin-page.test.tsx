@@ -71,11 +71,25 @@ function pluginController(overrides: Record<string, unknown> = {}) {
     upload: null,
     uploadInvalid: { name: false, jarFile: false },
     deleteTarget: null,
+    params: {
+      editor: null,
+      failure: null,
+      invalid: [],
+      busy: false,
+      actions: {
+        open: vi.fn(),
+        cancel: vi.fn(),
+        save: vi.fn(),
+        updateValue: vi.fn(),
+        updatePassword: vi.fn()
+      }
+    },
     actions: {
       cancelDelete: vi.fn(),
       cancelUpload: vi.fn(),
       confirmDelete: vi.fn(),
       openUpload: vi.fn(),
+      openParams: vi.fn(),
       refresh: vi.fn(),
       requestDeleteOne: vi.fn(),
       requestDeleteSelected: vi.fn(),

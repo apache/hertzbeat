@@ -9,16 +9,31 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
 
-const messageApi = vi.hoisted(() => ({ delete: vi.fn(), get: vi.fn(), postForm: vi.fn(), put: vi.fn() }));
+const messageApi = vi.hoisted(() => ({
+  delete: vi.fn(),
+  get: vi.fn(),
+  post: vi.fn(),
+  postForm: vi.fn(),
+  put: vi.fn()
+}));
 vi.mock('@/core/http/api-message', async () => ({
   ...(await vi.importActual<typeof import('@/core/http/api-message')>('@/core/http/api-message')),
   apiMessageDelete: messageApi.delete,
   apiMessageGet: messageApi.get,
+  apiMessagePost: messageApi.post,
   apiMessagePostForm: messageApi.postForm,
   apiMessagePut: messageApi.put
 }));
 
-import { deletePlugins, loadPlugins, PluginRequestError, updatePluginStatus, uploadPlugin } from './plugin-api';
+import {
+  deletePlugins,
+  loadPluginParams,
+  loadPlugins,
+  PluginRequestError,
+  savePluginParams,
+  updatePluginStatus,
+  uploadPlugin
+} from './plugin-api';
 
 const page = { content: [], totalElements: 0, totalPages: 0, number: 0, size: 8 };
 
@@ -27,8 +42,20 @@ describe('plugin API', () => {
     vi.clearAllMocks();
     messageApi.get.mockResolvedValue(page);
     messageApi.postForm.mockResolvedValue(null);
+    messageApi.post.mockResolvedValue(true);
     messageApi.put.mockResolvedValue(null);
     messageApi.delete.mockResolvedValue(null);
+  });
+
+  it('loads and saves the frozen parameter endpoints', async () => {
+    messageApi.get.mockResolvedValue({ paramDefines: [], pluginParams: [] });
+    await loadPluginParams(17);
+    await savePluginParams({ pluginMetadataId: 17, params: [{ field: 'secret', intent: 'KEEP' }] });
+    expect(messageApi.get).toHaveBeenCalledWith('/api/plugin/params/define?pluginMetadataId=17');
+    expect(messageApi.post).toHaveBeenCalledWith('/api/plugin/params', {
+      pluginMetadataId: 17,
+      params: [{ field: 'secret', intent: 'KEEP' }]
+    });
   });
 
   it('uses exact zero-based list and trimmed search query parameters', async () => {

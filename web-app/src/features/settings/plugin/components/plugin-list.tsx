@@ -24,6 +24,7 @@ export function PluginList(props: {
   onPage: (pageIndex: number, pageSize: PluginPageSize) => void;
   onToggle: (plugin: PluginRecord) => void;
   onDelete: (plugin: PluginRecord) => void;
+  onConfigure: (plugin: PluginRecord) => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -93,9 +94,16 @@ function columns(props: Parameters<typeof PluginList>[0], t: TFunction): Columns
       title: t('common.actions'),
       key: 'actions',
       render: (_, plugin) => (
-        <Button danger disabled={!props.canWrite || props.busy} onClick={() => props.onDelete(plugin)}>
-          {t('common.delete')}
-        </Button>
+        <Space>
+          {plugin.paramCount !== undefined && plugin.paramCount > 0 && (
+            <Button disabled={!props.canWrite || props.busy} onClick={() => props.onConfigure(plugin)}>
+              {t('plugins.configureParams')}
+            </Button>
+          )}
+          <Button danger disabled={!props.canWrite || props.busy} onClick={() => props.onDelete(plugin)}>
+            {t('common.delete')}
+          </Button>
+        </Space>
       )
     }
   ];

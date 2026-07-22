@@ -13,12 +13,21 @@ import type { PropsWithChildren } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const api = vi.hoisted(() => ({ delete: vi.fn(), load: vi.fn(), toggle: vi.fn(), upload: vi.fn() }));
+const api = vi.hoisted(() => ({
+  delete: vi.fn(),
+  load: vi.fn(),
+  loadParams: vi.fn(),
+  saveParams: vi.fn(),
+  toggle: vi.fn(),
+  upload: vi.fn()
+}));
 const auth = vi.hoisted(() => ({ roles: ['ADMIN'] as string[] }));
 vi.mock('../api/plugin-api', async () => ({
   ...(await vi.importActual<typeof import('../api/plugin-api')>('../api/plugin-api')),
   deletePlugins: api.delete,
   loadPlugins: api.load,
+  loadPluginParams: api.loadParams,
+  savePluginParams: api.saveParams,
   updatePluginStatus: api.toggle,
   uploadPlugin: api.upload
 }));
@@ -36,6 +45,8 @@ describe('usePluginController', () => {
     auth.roles = ['ADMIN'];
     api.load.mockResolvedValue(page(records, 0, 2));
     api.upload.mockResolvedValue(null);
+    api.loadParams.mockResolvedValue({ paramDefines: [], pluginParams: [] });
+    api.saveParams.mockResolvedValue(true);
     api.toggle.mockResolvedValue(null);
     api.delete.mockResolvedValue(null);
   });

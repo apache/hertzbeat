@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 
 import { PluginDeleteDialog, PluginUploadDialog } from '../components/plugin-dialogs';
 import { PluginList } from '../components/plugin-list';
+import { PluginParamDialog } from '../components/plugin-param-dialog';
 import { usePluginController } from '../controller/use-plugin-controller';
 import styles from './plugin-page.module.css';
 
@@ -56,6 +57,7 @@ export function PluginPage() {
         onCancel={controller.actions.cancelDelete}
         onConfirm={() => void controller.actions.confirmDelete()}
       />
+      <PluginParamDialog controller={controller.params} />
     </div>
   );
 }
@@ -104,6 +106,7 @@ function PluginResults({ controller }: { controller: ReturnType<typeof usePlugin
       onPage={controller.actions.setPage}
       onToggle={plugin => void controller.actions.toggleStatus(plugin)}
       onDelete={controller.actions.requestDeleteOne}
+      onConfigure={controller.actions.openParams}
     />
   );
 }

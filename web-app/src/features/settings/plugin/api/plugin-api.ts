@@ -9,6 +9,7 @@ import {
   ApiMessageError,
   apiMessageDelete,
   apiMessageGet,
+  apiMessagePost,
   apiMessagePostForm,
   apiMessagePut
 } from '@/core/http/api-message';
@@ -19,7 +20,15 @@ import {
   type PluginQuery,
   type PluginUploadDraft
 } from '../model/plugin-model';
-import { PluginContractError, parsePluginPage, parsePluginWriteReceipt } from './plugin-schema';
+import type { PluginParamWrite } from '../model/plugin-params-model';
+import {
+  PluginContractError,
+  parsePluginPage,
+  parsePluginParamDefinition,
+  parsePluginParamWritePayload,
+  parsePluginParamWriteReceipt,
+  parsePluginWriteReceipt
+} from './plugin-schema';
 
 const pluginEndpoint = '/api/plugin';
 
@@ -61,6 +70,22 @@ export function deletePlugins(ids: number[]) {
   const params = new URLSearchParams();
   ids.forEach(id => params.append('ids', String(id)));
   return request(async () => parsePluginWriteReceipt(await apiMessageDelete(`${pluginEndpoint}?${params.toString()}`)));
+}
+
+export function loadPluginParams(pluginMetadataId: number) {
+  return request(async () =>
+    parsePluginParamDefinition(
+      await apiMessageGet(`${pluginEndpoint}/params/define?pluginMetadataId=${encodeURIComponent(pluginMetadataId)}`)
+    )
+  );
+}
+
+export function savePluginParams(payload: { pluginMetadataId: number; params: PluginParamWrite[] }) {
+  return request(async () =>
+    parsePluginParamWriteReceipt(
+      await apiMessagePost(`${pluginEndpoint}/params`, parsePluginParamWritePayload(payload))
+    )
+  );
 }
 
 function buildPluginPath(query: PluginQuery) {
