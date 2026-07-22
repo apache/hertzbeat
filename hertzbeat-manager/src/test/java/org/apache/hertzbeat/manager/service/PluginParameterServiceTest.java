@@ -334,6 +334,65 @@ class PluginParameterServiceTest {
                         new PluginParameterInput("retries", "9", null)))));
     }
 
+    @Test
+    void optionParametersPersistCanonicalWireValuesAndServerOwnedStringType() {
+        registry.registerDefinition(PLUGIN_ID, optionPluginConfig());
+
+        service.save(new PluginParameterSaveRequest(PLUGIN_ID, List.of(
+                new PluginParameterInput("mode", "FAST", null),
+                new PluginParameterInput("regions", "EU, us", null))));
+
+        ArgumentCaptor<List<PluginParam>> saved = ArgumentCaptor.forClass(List.class);
+        verify(pluginParamDao).saveAll(saved.capture());
+        PluginParam mode = saved.getValue().stream()
+                .filter(parameter -> "mode".equals(parameter.getField())).findFirst().orElseThrow();
+        PluginParam regions = saved.getValue().stream()
+                .filter(parameter -> "regions".equals(parameter.getField())).findFirst().orElseThrow();
+        assertEquals("fast", mode.getParamValue());
+        assertEquals("eu,us", regions.getParamValue());
+        assertEquals(CommonConstants.PARAM_TYPE_STRING, mode.getType());
+        assertEquals(CommonConstants.PARAM_TYPE_STRING, regions.getType());
+        assertEquals(saved.getValue(), registry.storedParameters(PLUGIN_ID));
+    }
+
+    @Test
+    void checkboxPersistenceRejectsEmptyDuplicateAndUnknownSelections() {
+        PluginConfig checkboxOnly = new PluginConfig();
+        checkboxOnly.setParams(List.of(optionDefinition("regions", "checkbox", "us", "eu")));
+        registry.registerDefinition(PLUGIN_ID, checkboxOnly);
+
+        assertThrows(IllegalArgumentException.class, () -> saveCheckbox(""));
+        assertThrows(IllegalArgumentException.class, () -> saveCheckbox("us,,eu"));
+        assertThrows(IllegalArgumentException.class, () -> saveCheckbox("us,US"));
+        IllegalArgumentException failure = assertThrows(IllegalArgumentException.class,
+                () -> saveCheckbox("us,caller-token"));
+        assertFalse(failure.getMessage().contains("caller-token"));
+        verify(pluginParamDao, never()).saveAll(anyList());
+    }
+
+    private void saveCheckbox(String value) {
+        service.save(new PluginParameterSaveRequest(
+                PLUGIN_ID, List.of(new PluginParameterInput("regions", value, null))));
+    }
+
+    private static PluginConfig optionPluginConfig() {
+        PluginConfig config = new PluginConfig();
+        config.setParams(List.of(
+                optionDefinition("mode", "radio", "fast", "safe"),
+                optionDefinition("regions", "checkbox", "us", "eu")));
+        return config;
+    }
+
+    private static RuntimeParamDefine optionDefinition(String field, String type, String... values) {
+        return RuntimeParamDefine.builder()
+                .field(field)
+                .type(type)
+                .required(true)
+                .options(java.util.Arrays.stream(values)
+                        .map(value -> new RuntimeParamDefine.Option(value, value)).toList())
+                .build();
+    }
+
     private static PluginConfig pluginConfig() {
         PluginConfig config = new PluginConfig();
         config.setParams(List.of(
