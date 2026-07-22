@@ -32,6 +32,7 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.warehouse.service.impl.MetricsDataServiceImpl;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.WarehouseStorageProbeException;
 import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataReader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -64,11 +65,18 @@ public class MetricsDataServiceTest {
 
     @Test
     public void testGetWarehouseStorageServerStatus() {
-        when(historyDataReader.isServerAvailable()).thenReturn(false);
+        when(historyDataReader.getServerAvailability())
+                .thenReturn(HistoryDataReader.ServerAvailability.UNAVAILABLE);
         assertFalse(metricsDataService.getWarehouseStorageServerStatus());
 
-        when(historyDataReader.isServerAvailable()).thenReturn(true);
+        when(historyDataReader.getServerAvailability())
+                .thenReturn(HistoryDataReader.ServerAvailability.AVAILABLE);
         assertTrue(metricsDataService.getWarehouseStorageServerStatus());
+
+        when(historyDataReader.getServerAvailability())
+                .thenThrow(new WarehouseStorageProbeException());
+        assertThrows(WarehouseStorageProbeException.class,
+                metricsDataService::getWarehouseStorageServerStatus);
     }
 
     @Test
