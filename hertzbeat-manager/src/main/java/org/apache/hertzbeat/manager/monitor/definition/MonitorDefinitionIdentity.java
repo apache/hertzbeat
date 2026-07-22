@@ -17,14 +17,24 @@
 
 package org.apache.hertzbeat.manager.monitor.definition;
 
-/** Version 1 monitor-definition detail. */
-public record MonitorDefinitionDetailResponse(
-        int schemaVersion,
-        String app,
-        String label,
-        MonitorDefinitionOrigin origin,
-        boolean editable,
-        boolean deletable,
-        String definition,
-        String revision) {
+import java.util.Locale;
+import java.util.regex.Pattern;
+
+/** Canonical monitor-definition identity rules shared by reads and commands. */
+public final class MonitorDefinitionIdentity {
+
+    private static final Pattern SAFE_APP = Pattern.compile("[A-Za-z0-9][A-Za-z0-9._-]{0,127}");
+
+    private MonitorDefinitionIdentity() {
+    }
+
+    public static void requireSafe(String app) {
+        if (app == null || !SAFE_APP.matcher(app).matches()) {
+            throw new MonitorDefinitionException(MonitorDefinitionErrorCode.INVALID_APP);
+        }
+    }
+
+    public static String normalize(String app) {
+        return app.toLowerCase(Locale.ROOT);
+    }
 }

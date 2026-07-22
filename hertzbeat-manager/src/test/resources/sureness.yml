@@ -22,6 +22,9 @@
 resourceRole:
   - /api/account/auth/refresh===post===[admin,user,guest]
   - /api/monitor-definitions/v1/validate===post===[admin]
+  - /api/monitor-definitions/v1===post===[admin]
+  - /api/monitor-definitions/v1/**===put===[admin]
+  - /api/monitor-definitions/v1/**===delete===[admin]
   - /api/monitor-definitions/v1/**===get===[admin,user,guest]
   - /api/apps/**===get===[admin,user,guest]
   - /api/monitor===get===[admin,user,guest]

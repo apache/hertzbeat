@@ -17,14 +17,12 @@
 
 package org.apache.hertzbeat.manager.monitor.definition;
 
-/** Version 1 monitor-definition detail. */
-public record MonitorDefinitionDetailResponse(
-        int schemaVersion,
-        String app,
-        String label,
-        MonitorDefinitionOrigin origin,
-        boolean editable,
-        boolean deletable,
-        String definition,
-        String revision) {
+/** Serialized command boundary for real definition persistence and runtime convergence. */
+public interface MonitorDefinitionCommandPort {
+
+    MonitorDefinitionSource create(String definition);
+
+    MonitorDefinitionSource update(String app, String expectedRevision, String definition);
+
+    MonitorDefinitionDeleteResponse delete(String app, String expectedRevision);
 }

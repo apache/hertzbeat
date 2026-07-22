@@ -17,14 +17,10 @@
 
 package org.apache.hertzbeat.manager.monitor.definition;
 
-/** Version 1 monitor-definition detail. */
-public record MonitorDefinitionDetailResponse(
-        int schemaVersion,
-        String app,
-        String label,
-        MonitorDefinitionOrigin origin,
-        boolean editable,
-        boolean deletable,
-        String definition,
-        String revision) {
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.validation.constraints.NotBlank;
+
+/** Exact body accepted by version 1 create and update commands. */
+@JsonIgnoreProperties(ignoreUnknown = false)
+public record MonitorDefinitionWriteRequest(@NotBlank String definition) {
 }

@@ -39,7 +39,7 @@ class MonitorDefinitionServiceTest {
     @BeforeEach
     void setUp() {
         sourceReader = mock(MonitorDefinitionSourceReader.class);
-        service = new MonitorDefinitionService(sourceReader);
+        service = new MonitorDefinitionService(sourceReader, mock(MonitorDefinitionCommandPort.class));
     }
 
     @Test

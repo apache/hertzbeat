@@ -17,14 +17,9 @@
 
 package org.apache.hertzbeat.manager.monitor.definition;
 
-/** Version 1 monitor-definition detail. */
-public record MonitorDefinitionDetailResponse(
+/** Stable version 1 delete result. */
+public record MonitorDefinitionDeleteResponse(
         int schemaVersion,
         String app,
-        String label,
-        MonitorDefinitionOrigin origin,
-        boolean editable,
-        boolean deletable,
-        String definition,
-        String revision) {
+        MonitorDefinitionDeleteDisposition disposition) {
 }

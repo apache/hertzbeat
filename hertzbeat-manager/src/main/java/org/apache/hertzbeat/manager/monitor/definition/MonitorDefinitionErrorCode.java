@@ -26,7 +26,14 @@ public enum MonitorDefinitionErrorCode {
     EXPECTED_APP_REQUIRED("monitor_definition_expected_app_required"),
     EXPECTED_APP_UNEXPECTED("monitor_definition_expected_app_unexpected"),
     UPDATE_TARGET_MISMATCH("monitor_definition_update_target_mismatch"),
-    IMMUTABLE("monitor_definition_immutable");
+    IMMUTABLE("monitor_definition_immutable"),
+    REVISION_REQUIRED("monitor_definition_revision_required"),
+    REVISION_INVALID("monitor_definition_revision_invalid"),
+    REVISION_CONFLICT("monitor_definition_revision_conflict"),
+    IN_USE("monitor_definition_in_use"),
+    PERSISTENCE_FAILED("monitor_definition_persistence_failed"),
+    RUNTIME_UPDATE_FAILED("monitor_definition_runtime_update_failed"),
+    STATE_UNCERTAIN("monitor_definition_state_uncertain");
 
     private final String value;
 

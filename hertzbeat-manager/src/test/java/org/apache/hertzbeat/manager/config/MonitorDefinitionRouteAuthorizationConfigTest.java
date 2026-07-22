@@ -35,6 +35,12 @@ class MonitorDefinitionRouteAuthorizationConfigTest {
             "  - /api/monitor-definitions/v1/validate===post===[admin]";
     private static final String READ_RULE =
             "  - /api/monitor-definitions/v1/**===get===[admin,user,guest]";
+    private static final String CREATE_RULE =
+            "  - /api/monitor-definitions/v1===post===[admin]";
+    private static final String UPDATE_RULE =
+            "  - /api/monitor-definitions/v1/**===put===[admin]";
+    private static final String DELETE_RULE =
+            "  - /api/monitor-definitions/v1/**===delete===[admin]";
     private static final List<String> SURENESS_CONFIGS = List.of(
             "hertzbeat-startup/src/main/resources/sureness.yml",
             "hertzbeat-manager/src/test/resources/sureness.yml",
@@ -59,6 +65,9 @@ class MonitorDefinitionRouteAuthorizationConfigTest {
         List<String> lines = Files.readAllLines(repoRoot().resolve(config));
         assertTrue(lines.contains(VALIDATE_RULE), () -> config + " must restrict validation to admin");
         assertTrue(lines.contains(READ_RULE), () -> config + " must allow existing read roles");
+        assertTrue(lines.contains(CREATE_RULE), () -> config + " must restrict create to admin");
+        assertTrue(lines.contains(UPDATE_RULE), () -> config + " must restrict update to admin");
+        assertTrue(lines.contains(DELETE_RULE), () -> config + " must restrict delete to admin");
     }
 
     private static Path repoRoot() {

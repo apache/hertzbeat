@@ -17,14 +17,21 @@
 
 package org.apache.hertzbeat.manager.monitor.definition;
 
-/** Version 1 monitor-definition detail. */
-public record MonitorDefinitionDetailResponse(
-        int schemaVersion,
-        String app,
-        String label,
-        MonitorDefinitionOrigin origin,
-        boolean editable,
-        boolean deletable,
-        String definition,
-        String revision) {
+import com.fasterxml.jackson.annotation.JsonValue;
+
+/** Result of removing an active definition. */
+public enum MonitorDefinitionDeleteDisposition {
+    REMOVED("removed"),
+    BUILTIN_RESTORED("builtin_restored");
+
+    private final String value;
+
+    MonitorDefinitionDeleteDisposition(String value) {
+        this.value = value;
+    }
+
+    @JsonValue
+    public String value() {
+        return value;
+    }
 }

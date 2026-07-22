@@ -37,7 +37,11 @@ import org.apache.hertzbeat.common.util.JexlCheckerUtil;
 import org.apache.hertzbeat.manager.dao.DefineDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.ParamDao;
+import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionCommandExecutor;
+import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionCommandState;
+import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionIdentity;
 import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionSource;
+import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionStateCommand;
 import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionSourceReader;
 import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionSourceRegistry;
 import org.apache.hertzbeat.manager.pojo.dto.Hierarchy;
@@ -87,7 +91,8 @@ import static java.util.Objects.isNull;
 @Service
 @Order(value = Ordered.HIGHEST_PRECEDENCE)
 @Slf4j
-public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader, InitializingBean {
+public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader, MonitorDefinitionCommandExecutor,
+        InitializingBean {
 
     private static final String PUSH_PROTOCOL_METRICS_NAME = "metrics";
     private static final String[] RISKY_DEFINE_TOKENS = {"ScriptEngineManager", "URLClassLoader", "!!",
@@ -131,7 +136,7 @@ public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader
     @Override
     public List<ParamDefineInfo> getAppParamDefines(String app) {
         if (StringUtils.isNotBlank(app)){
-            var appDefine = appDefines.get(app.toLowerCase());
+            var appDefine = appDefines.get(MonitorDefinitionIdentity.normalize(app));
             if (appDefine != null && appDefine.getParams() != null) {
                 return appDefine.getParams().stream().map(ParamDefineInfo::fromRuntime).toList();
             }
@@ -194,7 +199,7 @@ public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader
         if (StringUtils.isBlank(app)) {
             throw new IllegalArgumentException("The app can not null.");
         }
-        var appDefine = appDefines.get(app.toLowerCase());
+        var appDefine = appDefines.get(MonitorDefinitionIdentity.normalize(app));
         if (appDefine == null) {
             throw new IllegalArgumentException("The app " + app + " not support.");
         }
@@ -204,7 +209,7 @@ public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader
     @Override
     public Optional<Job> getAppDefineOption(String app) {
         if (StringUtils.isNotBlank(app)) {
-            Job appDefine = appDefines.get(app.toLowerCase());
+            Job appDefine = appDefines.get(MonitorDefinitionIdentity.normalize(app));
             return Optional.ofNullable(appDefine);
         }
         return Optional.empty();
@@ -214,7 +219,7 @@ public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader
     public List<String> getAppDefineMetricNames(String app) {
         List<String> metricNames = new ArrayList<>(16);
         if (StringUtils.isNotBlank(app)) {
-            var appDefine = appDefines.get(app.toLowerCase());
+            var appDefine = appDefines.get(MonitorDefinitionIdentity.normalize(app));
             if (appDefine == null) {
                 throw new IllegalArgumentException("The app " + app + " not support.");
             }
@@ -300,7 +305,7 @@ public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader
     @Override
     public List<Hierarchy> getAppHierarchy(String app, String lang) {
         LinkedList<Hierarchy> hierarchies = new LinkedList<>();
-        Job job = appDefines.get(app.toLowerCase());
+        Job job = appDefines.get(MonitorDefinitionIdentity.normalize(app));
         if (DispatchConstants.PROTOCOL_PUSH.equalsIgnoreCase(job.getApp())) {
             return hierarchies;
         }
@@ -414,10 +419,10 @@ public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader
     }
 
     @Override
-    public void applyMonitorDefineYml(String ymlContent, boolean isModify) {
+    public synchronized void applyMonitorDefineYml(String ymlContent, boolean isModify) {
         Job app = parseAndValidateMonitorDefinition(ymlContent, isModify);
         appDefineStore.save(app.getApp(), ymlContent);
-        Job originalJob = appDefines.get(app.getApp().toLowerCase());
+        Job originalJob = appDefines.get(MonitorDefinitionIdentity.normalize(app.getApp()));
         if (Objects.nonNull(originalJob)) {
             boolean hide = originalJob.isHide();
             app.setHide(hide);
@@ -434,6 +439,11 @@ public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader
     @Override
     public Job validate(String definition) {
         return parseAndValidateMonitorDefinition(definition, true);
+    }
+
+    @Override
+    public synchronized <T> T executeSerialized(MonitorDefinitionStateCommand<T> command) {
+        return command.execute(new CommandState());
     }
 
     private Job parseAndValidateMonitorDefinition(String definition, boolean isModify) {
@@ -460,13 +470,13 @@ public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader
     }
 
     private void registerBuiltinDefinition(Job job, String definition) {
-        String identity = job.getApp().toLowerCase();
+        String identity = MonitorDefinitionIdentity.normalize(job.getApp());
         definitionSourceRegistry.registerBuiltin(job, definition);
         appDefines.put(identity, job);
     }
 
     private void registerActiveDefinition(Job job, String definition) {
-        String identity = job.getApp().toLowerCase();
+        String identity = MonitorDefinitionIdentity.normalize(job.getApp());
         definitionSourceRegistry.registerActive(job, definition);
         appDefines.put(identity, job);
     }
@@ -489,7 +499,7 @@ public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader
             CommonUtil.validDefineI18n(param.getName(),  param.getField() + " param");
         }
         if (!isModify) {
-            Assert.isNull(appDefines.get(app.getApp().toLowerCase()),
+            Assert.isNull(appDefines.get(MonitorDefinitionIdentity.normalize(app.getApp())),
                 "monitoring template name " + app.getApp() + " already exists.");
         }
         Set<String> fieldsSet = new HashSet<>(16);
@@ -544,17 +554,21 @@ public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader
     }
 
     @Override
-    public void deleteMonitorDefine(String app) {
+    public synchronized void deleteMonitorDefine(String app) {
         var monitors = monitorDao.findMonitorsByAppEquals(app);
         if (monitors != null && !monitors.isEmpty()) {
             throw new IllegalArgumentException("Can not delete define which has monitoring instances.");
         }
         appDefineStore.delete(app);
+        publishActiveRemoval(app);
+    }
+
+    private void publishActiveRemoval(String app) {
         MonitorDefinitionSource effectiveSource = definitionSourceRegistry.removeActive(app);
         if (effectiveSource == null) {
-            appDefines.remove(app.toLowerCase());
+            appDefines.remove(MonitorDefinitionIdentity.normalize(app));
         } else {
-            appDefines.put(app.toLowerCase(), effectiveSource.job());
+            appDefines.put(MonitorDefinitionIdentity.normalize(app), effectiveSource.job());
         }
     }
 
@@ -568,7 +582,7 @@ public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader
             return;
         }
         for (var entry : templateMap.entrySet()) {
-            var app = entry.getKey().toLowerCase();
+            var app = MonitorDefinitionIdentity.normalize(entry.getKey());
             var appTemplate = entry.getValue();
             if (appTemplate == null) {
                 continue;
@@ -618,6 +632,51 @@ public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader
             appDefines.putAll(previousAppDefines);
             appDefineStore = previousAppDefineStore;
             throw error;
+        }
+    }
+
+    /** Named bindings for command state; command policy and compensation stay in the command service. */
+    private final class CommandState implements MonitorDefinitionCommandState {
+
+        @Override
+        public List<MonitorDefinitionSource> readAll() {
+            return AppServiceImpl.this.readAll();
+        }
+
+        @Override
+        public Job validate(String definition) {
+            return AppServiceImpl.this.validate(definition);
+        }
+
+        @Override
+        public void save(String app, String definition) {
+            appDefineStore.save(app, definition);
+        }
+
+        @Override
+        public void remove(String app) {
+            appDefineStore.delete(app);
+        }
+
+        @Override
+        public void publish(Job job, String definition) {
+            registerActiveDefinition(job, definition);
+        }
+
+        @Override
+        public void publishRemoval(String app) {
+            AppServiceImpl.this.publishActiveRemoval(app);
+        }
+
+        @Override
+        public boolean inUse(String app) {
+            List<Monitor> monitors = monitorDao.findMonitorsByAppEquals(app);
+            return monitors != null && !monitors.isEmpty();
+        }
+
+        @Override
+        public void updateRuntime(Job job) {
+            getMonitorService().updateAppCollectJob(job);
         }
     }
 
@@ -745,7 +804,7 @@ public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader
             if (rootUrl == null) return;
             var file = new File(rootUrl.getPath() + "define" + File.separator + "app-" + app + ".yml");
             if (file.exists()) file.delete();
-            appDefines.remove(app.toLowerCase());
+            appDefines.remove(MonitorDefinitionIdentity.normalize(app));
         }
     }
 
@@ -788,7 +847,7 @@ public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader
         @Override
         public void delete(String app) {
             getObjectStoreService().remove("define/app-" + app + ".yml");
-            appDefines.remove(app.toLowerCase());
+            appDefines.remove(MonitorDefinitionIdentity.normalize(app));
         }
     }
 
@@ -819,7 +878,7 @@ public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader
         @Override
         public void delete(String app) {
             defineDao.deleteById(app);
-            appDefines.remove(app.toLowerCase());
+            appDefines.remove(MonitorDefinitionIdentity.normalize(app));
         }
     }
 }

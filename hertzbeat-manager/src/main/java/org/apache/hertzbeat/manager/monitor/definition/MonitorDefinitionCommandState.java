@@ -17,14 +17,25 @@
 
 package org.apache.hertzbeat.manager.monitor.definition;
 
-/** Version 1 monitor-definition detail. */
-public record MonitorDefinitionDetailResponse(
-        int schemaVersion,
-        String app,
-        String label,
-        MonitorDefinitionOrigin origin,
-        boolean editable,
-        boolean deletable,
-        String definition,
-        String revision) {
+import java.util.List;
+import org.apache.hertzbeat.common.entity.job.Job;
+
+/** Minimal state and side-effect surface used by serialized definition commands. */
+public interface MonitorDefinitionCommandState {
+
+    List<MonitorDefinitionSource> readAll();
+
+    Job validate(String definition);
+
+    void save(String app, String definition);
+
+    void remove(String app);
+
+    void publish(Job job, String definition);
+
+    void publishRemoval(String app);
+
+    boolean inUse(String app);
+
+    void updateRuntime(Job job);
 }

@@ -23,5 +23,6 @@ public record MonitorDefinitionCatalogItem(
         String label,
         MonitorDefinitionOrigin origin,
         boolean editable,
-        boolean deletable) {
+        boolean deletable,
+        String revision) {
 }

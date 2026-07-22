@@ -29,9 +29,12 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -65,6 +68,32 @@ public class MonitorDefinitionController {
     public ResponseEntity<Message<MonitorDefinitionValidationResponse>> validate(
             @Valid @RequestBody MonitorDefinitionValidationRequest request) {
         return ResponseEntity.ok(Message.success(service.validate(request)));
+    }
+
+    @PostMapping(consumes = "application/json")
+    @Operation(summary = "Create a custom monitor definition")
+    public ResponseEntity<Message<MonitorDefinitionDetailResponse>> create(
+            @Valid @RequestBody MonitorDefinitionWriteRequest request,
+            @RequestParam(name = "lang", required = false) String lang) {
+        return ResponseEntity.ok(Message.success(service.create(request, lang)));
+    }
+
+    @PutMapping(path = "/{app}", consumes = "application/json")
+    @Operation(summary = "Conditionally update an active monitor definition")
+    public ResponseEntity<Message<MonitorDefinitionDetailResponse>> update(
+            @PathVariable String app,
+            @RequestHeader(name = "If-Match", required = false) String ifMatch,
+            @Valid @RequestBody MonitorDefinitionWriteRequest request,
+            @RequestParam(name = "lang", required = false) String lang) {
+        return ResponseEntity.ok(Message.success(service.update(app, ifMatch, request, lang)));
+    }
+
+    @DeleteMapping("/{app}")
+    @Operation(summary = "Conditionally delete an active monitor definition")
+    public ResponseEntity<Message<MonitorDefinitionDeleteResponse>> delete(
+            @PathVariable String app,
+            @RequestHeader(name = "If-Match", required = false) String ifMatch) {
+        return ResponseEntity.ok(Message.success(service.delete(app, ifMatch)));
     }
 
     @ExceptionHandler(MonitorDefinitionException.class)

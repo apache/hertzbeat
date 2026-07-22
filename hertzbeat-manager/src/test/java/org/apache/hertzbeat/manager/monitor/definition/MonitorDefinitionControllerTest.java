@@ -49,7 +49,8 @@ class MonitorDefinitionControllerTest {
     @Test
     void catalogReturnsOnlyTheFrozenVersionedShape() throws Exception {
         when(service.catalog("en-US")).thenReturn(new MonitorDefinitionCatalogResponse(1, List.of(
-                new MonitorDefinitionCatalogItem("jvm", "JVM", MonitorDefinitionOrigin.BUILTIN, false, false))));
+                new MonitorDefinitionCatalogItem(
+                        "jvm", "JVM", MonitorDefinitionOrigin.BUILTIN, false, false, "a".repeat(64)))));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/monitor-definitions/v1/catalog").param("lang", "en-US"))
                 .andExpect(status().isOk())
@@ -65,7 +66,8 @@ class MonitorDefinitionControllerTest {
     @Test
     void detailReturnsCanonicalIdentityAndRawDefinition() throws Exception {
         when(service.detail("mysql", "en-US")).thenReturn(new MonitorDefinitionDetailResponse(
-                1, "MySql", "MySQL", MonitorDefinitionOrigin.OVERRIDE, true, true, "app: MySql"));
+                1, "MySql", "MySQL", MonitorDefinitionOrigin.OVERRIDE, true, true,
+                "app: MySql", "b".repeat(64)));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/monitor-definitions/v1/mysql").param("lang", "en-US"))
                 .andExpect(status().isOk())
@@ -117,5 +119,58 @@ class MonitorDefinitionControllerTest {
                 .andExpect(jsonPath("$.code").value(1))
                 .andExpect(jsonPath("$.msg").value("monitor_definition_invalid"))
                 .andExpect(content().string(not(containsString("do-not-echo"))));
+    }
+
+    @Test
+    void createAndUpdateReturnAuthoritativeRevision() throws Exception {
+        MonitorDefinitionDetailResponse detail = new MonitorDefinitionDetailResponse(
+                1, "custom", "Custom", MonitorDefinitionOrigin.CUSTOM, true, true,
+                "app: custom", "c".repeat(64));
+        when(service.create(any(), org.mockito.ArgumentMatchers.eq("en-US"))).thenReturn(detail);
+        when(service.update(org.mockito.ArgumentMatchers.eq("custom"),
+                org.mockito.ArgumentMatchers.eq("\"" + "a".repeat(64) + "\""),
+                any(), org.mockito.ArgumentMatchers.eq("en-US"))).thenReturn(detail);
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/monitor-definitions/v1")
+                        .queryParam("lang", "en-US")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"definition\":\"app: custom\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.revision").value("c".repeat(64)));
+        mockMvc.perform(MockMvcRequestBuilders.put("/api/monitor-definitions/v1/custom")
+                        .queryParam("lang", "en-US")
+                        .header("If-Match", "\"" + "a".repeat(64) + "\"")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"definition\":\"app: custom\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.revision").value("c".repeat(64)));
+    }
+
+    @Test
+    void deleteReturnsStableDisposition() throws Exception {
+        when(service.delete("custom", "\"" + "a".repeat(64) + "\"")).thenReturn(
+                new MonitorDefinitionDeleteResponse(1, "custom", MonitorDefinitionDeleteDisposition.REMOVED));
+
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/monitor-definitions/v1/custom")
+                        .header("If-Match", "\"" + "a".repeat(64) + "\""))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.schemaVersion").value(1))
+                .andExpect(jsonPath("$.data.app").value("custom"))
+                .andExpect(jsonPath("$.data.disposition").value("removed"));
+    }
+
+    @Test
+    void writeFailureNeverLeaksDefinitionOrExceptionText() throws Exception {
+        when(service.update(org.mockito.ArgumentMatchers.eq("custom"), any(), any(), any()))
+                .thenThrow(new MonitorDefinitionException(MonitorDefinitionErrorCode.STATE_UNCERTAIN));
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/api/monitor-definitions/v1/custom")
+                        .header("If-Match", "\"" + "a".repeat(64) + "\"")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"definition\":\"secret-yaml\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.msg").value("monitor_definition_state_uncertain"))
+                .andExpect(content().string(not(containsString("secret-yaml"))))
+                .andExpect(content().string(not(containsString("exception"))));
     }
 }

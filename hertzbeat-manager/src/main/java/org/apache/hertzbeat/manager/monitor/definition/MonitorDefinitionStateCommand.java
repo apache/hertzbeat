@@ -17,14 +17,9 @@
 
 package org.apache.hertzbeat.manager.monitor.definition;
 
-/** Version 1 monitor-definition detail. */
-public record MonitorDefinitionDetailResponse(
-        int schemaVersion,
-        String app,
-        String label,
-        MonitorDefinitionOrigin origin,
-        boolean editable,
-        boolean deletable,
-        String definition,
-        String revision) {
+/** Work executed while the real definition owner holds its serialization boundary. */
+@FunctionalInterface
+public interface MonitorDefinitionStateCommand<T> {
+
+    T execute(MonitorDefinitionCommandState state);
 }
