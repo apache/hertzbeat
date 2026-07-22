@@ -17,6 +17,8 @@
 
 import { z } from 'zod';
 
+import { hasOwnProperties } from '@/shared/validation/own-properties';
+
 import {
   tokenExpirationDefinitions,
   isTokenScope,
@@ -84,7 +86,7 @@ export function parseGeneratedTokenReceipt(value: unknown): GeneratedTokenReceip
 }
 
 export function parseTokenGenerationDraft(value: unknown): TokenDraft {
-  if (!hasOwnTokenDraftFields(value)) throw new TokenApiContractError();
+  if (!hasOwnProperties(value, ['name', 'expireSeconds', 'scope'])) throw new TokenApiContractError();
   const result = tokenDraftInputSchema.safeParse(value);
   if (!result.success) throw new TokenApiContractError();
   return {
@@ -110,15 +112,4 @@ function mapTokenRecord(wire: TokenWire): TokenResourceRecord {
 
 function readKnownScope(value: string | null | undefined): TokenScope | null {
   return isTokenScope(value) ? value : null;
-}
-
-function hasOwnTokenDraftFields(value: unknown) {
-  return (
-    value !== null &&
-    typeof value === 'object' &&
-    !Array.isArray(value) &&
-    Object.hasOwn(value, 'name') &&
-    Object.hasOwn(value, 'expireSeconds') &&
-    Object.hasOwn(value, 'scope')
-  );
 }

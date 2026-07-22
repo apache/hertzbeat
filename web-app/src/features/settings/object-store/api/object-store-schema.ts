@@ -17,6 +17,8 @@
 
 import { z } from 'zod';
 
+import { hasOwnProperties } from '@/shared/validation/own-properties';
+
 import {
   ObjectStoreDraftContractError,
   ObjectStoreResourceContractError,
@@ -53,20 +55,10 @@ const mutationResultSchema = z.string();
 
 /** Parses untrusted Refine mutation variables before they enter the write API. */
 export function parseObjectStoreDraft(value: unknown): ObjectStoreDraft {
-  if (!ownsDraftEnvelope(value)) throw new ObjectStoreDraftContractError();
+  if (!hasOwnProperties(value, ['type', 'config'])) throw new ObjectStoreDraftContractError();
   const result = objectStoreDraftSchema.safeParse(value);
   if (!result.success) throw new ObjectStoreDraftContractError();
   return { type: result.data.type, config: copyDraftConfig(result.data.config) };
-}
-
-function ownsDraftEnvelope(value: unknown) {
-  return (
-    value !== null &&
-    typeof value === 'object' &&
-    !Array.isArray(value) &&
-    Object.hasOwn(value, 'type') &&
-    Object.hasOwn(value, 'config')
-  );
 }
 
 export function parseObjectStoreReadModel(value: unknown): ObjectStoreReadModel | null {
