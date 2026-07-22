@@ -32,4 +32,19 @@ describe('runtime preferences', () => {
     expect(readRuntimeLocale(storage)).toBe('pt-BR');
     expect(readRuntimeTheme(storage)).toBe('compact');
   });
+
+  it('treats unavailable browser storage as a non-fatal preference miss', () => {
+    const blockedStorage = {
+      getItem: () => {
+        throw new DOMException('blocked', 'SecurityError');
+      },
+      setItem: () => {
+        throw new DOMException('blocked', 'SecurityError');
+      }
+    };
+
+    expect(readRuntimeLocale(blockedStorage)).toBeNull();
+    expect(readRuntimeTheme(blockedStorage)).toBe('dark');
+    expect(() => persistSystemPreferences({ locale: 'en_US', theme: 'compact' }, blockedStorage)).not.toThrow();
+  });
 });

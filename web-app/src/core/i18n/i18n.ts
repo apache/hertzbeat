@@ -19,7 +19,7 @@ import i18next from 'i18next';
 
 import { readRuntimeLocale } from '@/core/runtime-preferences';
 
-import { supportedLocales, type SupportedLocale } from './locale';
+import { isSupportedLocale, supportedLocales, type SupportedLocale } from './locale';
 
 export type { SupportedLocale } from './locale';
 
@@ -52,7 +52,7 @@ let latestLocaleLoad = 0;
 let localePublication = Promise.resolve();
 
 export function resolveLocale(value?: string | null): SupportedLocale {
-  if (value && supportedLocales.includes(value as SupportedLocale)) return value as SupportedLocale;
+  if (isSupportedLocale(value)) return value;
   const language = value?.split('-')[0];
   return supportedLocales.find(locale => locale.startsWith(`${language}-`)) ?? 'en-US';
 }
@@ -103,8 +103,8 @@ function publishLatestLocale(locale: SupportedLocale, owner: number, signal?: Ab
   return publication;
 }
 
-function messageGroup(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+function messageGroup(value: unknown): object {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
 }
 
 export async function initializeI18n() {

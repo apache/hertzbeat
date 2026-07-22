@@ -24,5 +24,6 @@ describe('Ant Design locale bridge', () => {
     expect(resolveAntLocale('zh-CN').locale).toBe('zh-cn');
     expect(resolveAntLocale('ja-JP').locale).toBe('ja');
     expect(resolveAntLocale('unsupported').locale).toBe('en');
+    expect(resolveAntLocale('toString').locale).toBe('en');
   });
 });

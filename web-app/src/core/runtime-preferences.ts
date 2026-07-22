@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { supportedLocales, type SupportedLocale } from './i18n/locale';
+import { isSupportedLocale, type SupportedLocale } from './i18n/locale';
 
 type PreferenceStorage = Pick<Storage, 'getItem' | 'setItem'>;
 export type RuntimeTheme = 'default' | 'dark' | 'compact';
@@ -35,15 +35,15 @@ function browserStorage(): PreferenceStorage | undefined {
 export function readRuntimeLocale(
   storage: Pick<PreferenceStorage, 'getItem'> | undefined = browserStorage()
 ): SupportedLocale | null {
-  const locale = storage?.getItem(localeKey);
-  return supportedLocales.includes(locale as SupportedLocale) ? (locale as SupportedLocale) : null;
+  const locale = readPreference(storage, localeKey);
+  return isSupportedLocale(locale) ? locale : null;
 }
 
 export function readRuntimeTheme(
   storage: Pick<PreferenceStorage, 'getItem'> | undefined = browserStorage()
 ): RuntimeTheme {
-  const value = storage?.getItem(themeKey);
-  return themes.includes(value as RuntimeTheme) ? (value as RuntimeTheme) : 'dark';
+  const value = readPreference(storage, themeKey);
+  return isRuntimeTheme(value) ? value : 'dark';
 }
 
 export function persistSystemPreferences(
@@ -52,6 +52,27 @@ export function persistSystemPreferences(
 ) {
   if (!storage) return;
   const locale = config.locale.replace('_', '-');
-  if (supportedLocales.includes(locale as SupportedLocale)) storage.setItem(localeKey, locale);
-  if (themes.includes(config.theme as RuntimeTheme)) storage.setItem(themeKey, config.theme);
+  if (isSupportedLocale(locale)) writePreference(storage, localeKey, locale);
+  if (isRuntimeTheme(config.theme)) writePreference(storage, themeKey, config.theme);
+}
+
+function isRuntimeTheme(value: unknown): value is RuntimeTheme {
+  return themes.some(theme => theme === value);
+}
+
+function readPreference(storage: Pick<PreferenceStorage, 'getItem'> | undefined, key: string) {
+  try {
+    return storage?.getItem(key) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function writePreference(storage: Pick<PreferenceStorage, 'setItem'>, key: string, value: string) {
+  try {
+    storage.setItem(key, value);
+  } catch {
+    // Browser preference storage is optional. A quota or security failure must
+    // not turn an already successful server-side settings save into an error.
+  }
 }

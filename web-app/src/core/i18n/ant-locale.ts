@@ -21,8 +21,10 @@ import ptBR from 'antd/locale/pt_BR';
 import zhCN from 'antd/locale/zh_CN';
 import zhTW from 'antd/locale/zh_TW';
 
+import { isSupportedLocale } from './locale';
+
 const locales = { 'en-US': enUS, 'ja-JP': jaJP, 'pt-BR': ptBR, 'zh-CN': zhCN, 'zh-TW': zhTW } as const;
 
 export function resolveAntLocale(language?: string) {
-  return locales[language as keyof typeof locales] ?? enUS;
+  return isSupportedLocale(language) ? locales[language] : enUS;
 }
