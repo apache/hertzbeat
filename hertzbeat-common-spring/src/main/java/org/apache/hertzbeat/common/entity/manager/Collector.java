@@ -81,6 +81,11 @@ public class Collector {
     @Schema(title = "Versioned managed telemetry runtime configuration")
     private String runtimeConfig;
 
+    @Lob
+    @Column(name = "instrumentation_intake", columnDefinition = "TEXT")
+    @Schema(title = "Versioned safe application-instrumentation intake advertisement")
+    private String instrumentationIntake;
+
     @Schema(title = "The creator of this record", example = "tom")
     @CreatedBy
     private String creator;

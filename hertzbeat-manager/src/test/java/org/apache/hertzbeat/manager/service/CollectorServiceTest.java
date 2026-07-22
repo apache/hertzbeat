@@ -36,6 +36,8 @@ import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
+import org.apache.hertzbeat.manager.instrumentation.intake.CollectorIntakeAdvertisementReader;
+import org.apache.hertzbeat.manager.pojo.dto.CollectorInstrumentationIntake;
 import org.apache.hertzbeat.manager.scheduler.ConsistentHash;
 import org.apache.hertzbeat.manager.scheduler.netty.ManageServer;
 import org.apache.hertzbeat.manager.scheduler.runtime.CollectorRuntimeStatusRegistry;
@@ -77,6 +79,9 @@ public class CollectorServiceTest {
     private CollectorRuntimeStatusRegistry runtimeStatusRegistry;
 
     @Mock
+    private CollectorIntakeAdvertisementReader intakeAdvertisementReader;
+
+    @Mock
     private ApplicationContext applicationContext;
 
 
@@ -109,6 +114,21 @@ public class CollectorServiceTest {
 
         assertNull(summary.getRuntimeStatus());
         assertNull(summary.getRuntimeStatusReportedAt());
+    }
+
+    @Test
+    void mapsTheDedicatedIntakeReaderWithoutInferringCollectorConnectivity() {
+        Collector collector = Collector.builder().name("edge-intake").build();
+        PageRequest request = PageRequest.of(0, 1);
+        when(collectorDao.findAll(any(Specification.class), eq(request)))
+                .thenReturn(new PageImpl<>(List.of(collector), request, 1));
+        CollectorInstrumentationIntake intake = CollectorInstrumentationIntake.unavailable(
+                "edge-intake", CollectorInstrumentationIntake.ErrorCode.INTAKE_ADVERTISEMENT_INVALID);
+        when(intakeAdvertisementReader.read(collector)).thenReturn(intake);
+
+        var summary = collectorService.getCollectors("edge", 0, 1).getContent().getFirst();
+
+        assertEquals(intake, summary.getInstrumentationIntake());
     }
 
     @Test

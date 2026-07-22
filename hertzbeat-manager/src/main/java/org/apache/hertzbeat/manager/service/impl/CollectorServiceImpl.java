@@ -30,6 +30,7 @@ import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
+import org.apache.hertzbeat.manager.instrumentation.intake.CollectorIntakeAdvertisementReader;
 import org.apache.hertzbeat.manager.pojo.dto.CollectorInfo;
 import org.apache.hertzbeat.manager.pojo.dto.CollectorSummary;
 import org.apache.hertzbeat.manager.scheduler.AssignJobs;
@@ -67,6 +68,9 @@ public class CollectorServiceImpl implements CollectorService {
     @Autowired
     private CollectorRuntimeStatusRegistry runtimeStatusRegistry;
 
+    @Autowired
+    private CollectorIntakeAdvertisementReader intakeAdvertisementReader;
+
     @Override
     @Transactional(readOnly = true)
     public Page<CollectorSummary> getCollectors(String name, int pageIndex, Integer pageSize) {
@@ -86,7 +90,9 @@ public class CollectorServiceImpl implements CollectorService {
         List<CollectorSummary> collectorSummaryList = new LinkedList<>();
         for (Collector collector : collectors.getContent()) {
             CollectorSummary.CollectorSummaryBuilder summaryBuilder =
-                    CollectorSummary.builder().collector(CollectorInfo.fromEntity(collector));
+                    CollectorSummary.builder()
+                            .collector(CollectorInfo.fromEntity(collector))
+                            .instrumentationIntake(intakeAdvertisementReader.read(collector));
             ConsistentHash.Node node = consistentHash.getNode(collector.getName());
             if (node != null && node.getAssignJobs() != null) {
                 AssignJobs assignJobs = node.getAssignJobs();

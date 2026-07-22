@@ -200,6 +200,25 @@ class ReleaseReadinessRuntimeAssemblyTest {
     }
 
     @Test
+    void collectorIntakeAdvertisementBoundaryCoversSupportedRelationalDatabases() throws IOException {
+        for (Map.Entry<String, String> database : Map.of(
+                "mysql", "instrumentation_intake text null",
+                "postgresql", "instrumentation_intake text",
+                "h2", "instrumentation_intake clob").entrySet()) {
+            String migration = readRepoFile(
+                    "hertzbeat-startup/src/main/resources/db/migration/"
+                            + database.getKey()
+                            + "/V203__add_collector_instrumentation_intake.sql"
+            ).toLowerCase();
+
+            assertThat(migration)
+                    .as(database.getKey() + " migration should persist only the safe intake advertisement")
+                    .contains("hzb_collector")
+                    .contains(database.getValue());
+        }
+    }
+
+    @Test
     void entityGovernanceStateWorkspaceBoundaryLivesInV200Baseline() throws IOException {
         for (String database : List.of("mysql", "postgresql", "h2")) {
             String migration = readRepoFile(
