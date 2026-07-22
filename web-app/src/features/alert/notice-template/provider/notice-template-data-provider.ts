@@ -28,22 +28,23 @@ import type {
   UpdateResponse
 } from '@refinedev/core';
 
+import { adaptRefineRecord, adaptRefineRecords } from '@/shared/refine/refine-provider-data';
+
+import type { NoticeTemplateRequestPhase } from '../../api/notice-template-api-failure';
+import { NoticeTemplateRequestFailure } from '../../model/notice-template-failure';
+import { noticeApiEndpoint } from '../../api/notice-api-endpoints';
 import {
   deleteNoticeTemplate,
   loadNoticeTemplate,
   loadNoticeTemplates,
   saveNoticeTemplate
-} from '@/features/alert/notice-template-api';
-import type { NoticeTemplateRequestPhase } from '@/features/alert/api/notice-template-api-failure';
-import { NoticeTemplateRequestFailure } from '@/features/alert/model/notice-template-failure';
+} from '../../notice-template-api';
 import {
   noticeTemplateResourceRecord,
   type NoticeTemplate,
   type NoticeTemplateQuery
-} from '@/features/alert/notice-template-model';
-import { noticeApiEndpoint } from '@/features/alert/notice-api-endpoints';
-import { noticeTemplateCreateActionUrl, noticeTemplateResourceName } from '@/features/alert/notice-template-resource';
-import { adaptRefineRecord, adaptRefineRecords } from '@/shared/refine/refine-provider-data';
+} from '../../notice-template-model';
+import { noticeTemplateCreateActionUrl, noticeTemplateResourceName } from '../../notice-template-resource';
 
 import {
   normalizeNoticeTemplateProviderFailure,

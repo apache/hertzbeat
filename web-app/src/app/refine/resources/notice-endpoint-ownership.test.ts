@@ -19,15 +19,14 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { noticeReceiverDataProvider } from '@/features/alert/notice-receiver';
 import { noticeRuleDataProvider } from '@/features/alert/notice-rule';
+import { noticeTemplateDataProvider } from '@/features/alert/notice-template';
 
 const endpoint = vi.hoisted(() => ({ value: '/runtime-notice-contract' }));
 
-vi.mock('@/features/alert/notice-api-endpoints', async importOriginal => ({
-  ...(await importOriginal<typeof import('@/features/alert/notice-api-endpoints')>()),
+vi.mock('@/features/alert/api/notice-api-endpoints', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/features/alert/api/notice-api-endpoints')>()),
   noticeApiEndpoint: endpoint.value
 }));
-
-import { noticeTemplateDataProvider } from './notice-template-data-provider';
 
 describe('Notice endpoint ownership', () => {
   it('makes every Refine provider consume the shared runtime root contract', () => {

@@ -37,8 +37,8 @@ const controller = vi.hoisted(() => ({
   updateDraft: vi.fn()
 }));
 vi.mock('./controller/use-alert-inhibit-controller', () => ({ useAlertInhibitController: () => controller }));
-vi.mock('./alert-management-nav', () => ({ AlertManagementNav: () => <nav /> }));
-vi.mock('./alert-noise-control-nav', () => ({ AlertNoiseControlNav: () => <nav /> }));
+vi.mock('./components/alert-management-nav', () => ({ AlertManagementNav: () => <nav /> }));
+vi.mock('./components/alert-noise-control-nav', () => ({ AlertNoiseControlNav: () => <nav /> }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 const record = {

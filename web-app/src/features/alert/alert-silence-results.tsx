@@ -23,7 +23,7 @@ import { useTranslation } from 'react-i18next';
 import type { AlertSilenceListEvidence } from './alert-silence-page-model';
 import { alertSilencePageSizes, type AlertSilence, type AlertSilenceQuery } from './alert-silence-model';
 import { AlertSilenceActions } from './alert-silence-actions';
-import styles from './alert-policy-page.module.css';
+import styles from './shared/alert-policy-page.module.css';
 
 export function AlertSilenceResults({
   evidence,

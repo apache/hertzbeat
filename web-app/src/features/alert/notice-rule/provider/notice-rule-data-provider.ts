@@ -16,7 +16,7 @@ import type {
   UpdateResponse
 } from '@refinedev/core';
 
-import { noticeApiEndpoint } from '@/features/alert/notice-api-endpoints';
+import { noticeApiEndpoint } from '@/features/alert/api/notice-api-endpoints';
 import { adaptRefineRecord, adaptRefineRecords } from '@/shared/refine/refine-provider-data';
 
 import { loadNoticeRule, loadNoticeRules } from '../api/notice-rule-api';

@@ -117,7 +117,7 @@ export const appRoutes: RouteObject[] = [
               {
                 ...getAppRouteIdentity('alerts'),
                 lazy: async () => {
-                  const { AlertCenterPage } = await import('@/features/alert/alert-center-page');
+                  const { AlertCenterPage } = await import('@/features/alert/pages/alert-center-page');
                   return { Component: AlertCenterPage };
                 }
               },

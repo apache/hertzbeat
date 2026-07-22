@@ -19,7 +19,7 @@ import {
   type NoticeRuleQuery
 } from '../model/notice-rule-model';
 import { NoticeRuleContractError } from '../model/notice-rule-failure';
-import { noticeRuleEndpoint, noticeRulesEndpoint, noticeTemplatesEndpoint } from '../../notice-api-endpoints';
+import { noticeRuleEndpoint, noticeRulesEndpoint, noticeTemplatesEndpoint } from '../../api/notice-api-endpoints';
 import { noticeRuleApiRequest } from './notice-rule-api-failure';
 import { parseNoticeRule, parseNoticeRulePage, parseNoticeTemplates } from './notice-rule-schema';
 

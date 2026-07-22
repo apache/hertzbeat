@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import styles from './alert-policy-page.module.css';
+import styles from './shared/alert-policy-page.module.css';
 import { NoticeTemplateOverlays } from './components/notice-template-overlays';
 import { NoticeTemplateRecoveryAlert } from './components/notice-template-recovery-alert';
 import { NoticeTemplateResults } from './components/notice-template-results';

@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import styles from '../../alert-policy-page.module.css';
+import styles from '../../shared/alert-policy-page.module.css';
 import { NoticeReceiverEditor } from '../components/notice-receiver-editor';
 import {
   NoticeReceiverHeading,

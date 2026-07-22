@@ -19,15 +19,14 @@ import { Alert, Empty, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 
-import styles from '../alert-center-page.module.css';
+import styles from '../shared/alert-center.module.css';
 import {
   alertPageSizes,
   alertSeverities,
-  alertStatusColor,
   type AlertGroup,
   type AlertSeverity,
   type AlertStatus
-} from '../alert-model';
+} from '../model/alert-model';
 import type { AlertListState } from '../model/alert-center-view-model';
 import { AlertCenterRetryButton } from './alert-center-retry-button';
 
@@ -41,13 +40,7 @@ type AlertCenterResultsProps = {
   retry: () => unknown;
 };
 
-export function AlertCenterResults({
-  state,
-  pageIndex,
-  pageSize,
-  onPageChange,
-  retry
-}: AlertCenterResultsProps) {
+export function AlertCenterResults({ state, pageIndex, pageSize, onPageChange, retry }: AlertCenterResultsProps) {
   const { t } = useTranslation();
   if (state.kind === 'unavailable') {
     return (
@@ -99,9 +92,7 @@ function buildColumns(t: Translator): ColumnsType<AlertGroup> {
       title: t('alert.status.label'),
       dataIndex: 'status',
       width: 150,
-      render: (value: AlertStatus) => (
-        <Tag color={alertStatusColor(value)}>{t(`alert.status.${value}`)}</Tag>
-      )
+      render: (value: AlertStatus) => <Tag color={alertStatusColor(value)}>{t(`alert.status.${value}`)}</Tag>
     },
     {
       title: t('alert.severity.label'),
@@ -115,7 +106,11 @@ function buildColumns(t: Translator): ColumnsType<AlertGroup> {
           {Object.entries(row.commonLabels ?? {})
             .filter(([key]) => key !== 'severity')
             .slice(0, 4)
-            .map(([key, value]) => <Tag key={key}>{key}={value}</Tag>)}
+            .map(([key, value]) => (
+              <Tag key={key}>
+                {key}={value}
+              </Tag>
+            ))}
         </div>
       )
     },
@@ -130,6 +125,14 @@ function buildColumns(t: Translator): ColumnsType<AlertGroup> {
 
 function alertName(row: AlertGroup) {
   return row.commonLabels?.alertname || row.groupLabels?.alertname || `#${row.id}`;
+}
+
+/** Keeps Ant Design presentation tokens out of the Alert domain model. */
+function alertStatusColor(status: AlertStatus) {
+  if (status === 'firing') return 'red';
+  if (status === 'acknowledged') return 'gold';
+  if (status === 'resolved') return 'green';
+  return 'default';
 }
 
 function severityLabel(t: Translator, severity: string | undefined) {

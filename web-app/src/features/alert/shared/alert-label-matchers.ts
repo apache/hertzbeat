@@ -15,14 +15,25 @@
  * limitations under the License.
  */
 
-.page { display: grid; gap: 20px; }
-.heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
-.heading :global(.ant-typography) { margin: 0; }
-.toolbar { display: grid; grid-template-columns: minmax(220px, 1fr) 180px 180px auto auto; gap: 8px; }
-.summary { display: flex; flex-wrap: wrap; gap: 24px; padding-block: 4px; }
-.metric { min-width: 110px; }
-.metric span, .metric strong { display: block; }
-.metric span { color: var(--ant-color-text-secondary); font-size: 12px; }
-.metric strong { margin-top: 4px; font-size: 22px; }
-.labels { display: flex; flex-wrap: wrap; gap: 4px; }
-@media (max-width: 900px) { .toolbar { grid-template-columns: 1fr 1fr; } }
+export function parseLabelMatchers(value: string): Record<string, string> | null {
+  const result: Record<string, string> = {};
+  const matchers = value
+    .split(/[\n,]+/)
+    .map(matcher => matcher.trim())
+    .filter(Boolean);
+  if (matchers.length === 0) return null;
+  for (const matcher of matchers) {
+    const separator = matcher.search(/[:=]/);
+    const key = separator >= 0 ? matcher.slice(0, separator).trim() : '';
+    const matcherValue = separator >= 0 ? matcher.slice(separator + 1).trim() : '';
+    if (!key || !matcherValue) return null;
+    result[key] = matcherValue;
+  }
+  return result;
+}
+
+export function formatLabelMatchers(labels?: Record<string, string>) {
+  return Object.entries(labels ?? {})
+    .map(([key, value]) => `${key}:${value}`)
+    .join(', ');
+}

@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 
 import { createAlertGroupDraft, type AlertGroupDraft, type AlertGroupFailure } from '../alert-group-model';
 import type { AlertGroupOperationRecovery } from '../model/alert-group-operation-state';
-import styles from '../alert-policy-page.module.css';
+import styles from '../shared/alert-policy-page.module.css';
 import { AlertGroupRecovery } from './alert-group-recovery';
 
 const commonGroupLabels = ['alertname', 'instance', 'job', 'severity', 'service', 'host', 'env'];

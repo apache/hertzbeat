@@ -15,22 +15,23 @@
  * limitations under the License.
  */
 
-import type { AlertQuery } from '../alert-model';
+import type { AlertQuery } from '../model/alert-model';
 
 const rootKey = ['alert-center'] as const;
 
 export const alertCenterQueryKeys = {
   summary: () => [...rootKey, 'summary'] as const,
-  groups: (query: AlertQuery) => [
-    ...rootKey,
-    'groups',
-    query.search,
-    query.status,
-    query.severity,
-    query.serviceName,
-    query.serviceNamespace,
-    query.environment,
-    query.pageIndex,
-    query.pageSize
-  ] as const
+  groups: (query: AlertQuery) =>
+    [
+      ...rootKey,
+      'groups',
+      query.search,
+      query.status,
+      query.severity,
+      query.serviceName,
+      query.serviceNamespace,
+      query.environment,
+      query.pageIndex,
+      query.pageSize
+    ] as const
 };

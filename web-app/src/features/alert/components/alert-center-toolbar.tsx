@@ -18,14 +18,14 @@
 import { Button, Input, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import styles from '../alert-center-page.module.css';
+import styles from '../shared/alert-center.module.css';
 import {
   alertSeverities,
   alertStatusFilters,
   type AlertQuery,
   type AlertSeverity,
   type AlertStatusFilter
-} from '../alert-model';
+} from '../model/alert-model';
 import type { AlertDraftField, AlertFilterDraft } from '../model/alert-center-view-model';
 
 type AlertCenterToolbarProps = {

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { noticeTemplateEndpoint } from './notice-api-endpoints';
+import { noticeTemplateEndpoint } from './api/notice-api-endpoints';
 
 export const noticeTemplateResourceName = 'notice-templates';
 export const noticeTemplateCreateActionUrl = noticeTemplateEndpoint;

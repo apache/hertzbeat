@@ -17,7 +17,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { AlertContractError } from './alert-model';
+import { AlertContractError } from '../model/alert-model';
 import { parseAlertGroupPage, parseAlertSummary } from './alert-schema';
 
 const group = {

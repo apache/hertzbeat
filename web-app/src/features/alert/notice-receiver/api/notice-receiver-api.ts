@@ -24,7 +24,7 @@ import {
   type NoticeReceiverSecretKey,
   type NoticeReceiverType
 } from '../model/notice-receiver-model';
-import { noticeReceiverEndpoint, noticeReceiversEndpoint } from '../../notice-api-endpoints';
+import { noticeReceiverEndpoint, noticeReceiversEndpoint } from '../../api/notice-api-endpoints';
 import {
   NoticeReceiverContractError,
   parseNoticeReceiverMutationWire,

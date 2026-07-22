@@ -17,21 +17,15 @@
 
 import type { RemotePageState, RemotePayloadState } from '@/shared/remote-state';
 
-import type { AlertGroup, AlertQuery, AlertSummary } from '../alert-model';
+import type { AlertGroup, AlertQuery, AlertSummary } from './alert-model';
 
-export type AlertFilterDraft = Pick<
-  AlertQuery,
-  'search' | 'serviceName' | 'serviceNamespace' | 'environment'
->;
+export type AlertFilterDraft = Pick<AlertQuery, 'search' | 'serviceName' | 'serviceNamespace' | 'environment'>;
 
 export type AlertDraftField = keyof AlertFilterDraft;
 
 export type AlertListState = RemotePageState<AlertGroup, 'unavailable' | 'error'>;
 
-export type AlertSummaryState = RemotePayloadState<
-  { summary: AlertSummary },
-  'unavailable' | 'error'
->;
+export type AlertSummaryState = RemotePayloadState<{ summary: AlertSummary }, 'unavailable' | 'error'>;
 
 export type AlertCenterState = {
   draft: AlertFilterDraft;

@@ -18,14 +18,14 @@
 import type { GetListParams } from '@refinedev/core';
 import { z } from 'zod';
 
+import { createRefineHttpError } from '@/shared/refine/refine-http-error';
+
 import {
   noticeTemplatePageSizes,
   validateNoticeTemplateDraft,
   type NoticeTemplateDraft,
   type NoticeTemplateQuery
-} from '@/features/alert/notice-template-model';
-
-import { createRefineHttpError } from '../refine-http-error';
+} from '../../notice-template-model';
 
 type DeleteRecordIdentity = {
   id: string;
@@ -52,33 +52,39 @@ const presetFilterSchema = z.object({
   operator: z.literal('eq'),
   value: z.boolean()
 });
-const draftSchema = z.object({
-  id: positiveIntegerSchema.optional(),
-  name: z.string(),
-  type: z.custom<NoticeTemplateDraft['type']>(value => typeof value === 'number'),
-  content: z.string()
-}).superRefine((draft, context) => {
-  const { id, ...fields } = draft;
-  const candidate: NoticeTemplateDraft = id === undefined ? fields : { ...fields, id };
-  if (validateNoticeTemplateDraft(candidate).length > 0) {
-    context.addIssue({ code: 'custom', message: 'Draft failed domain validation' });
-  }
-});
+const draftSchema = z
+  .object({
+    id: positiveIntegerSchema.optional(),
+    name: z.string(),
+    type: z.custom<NoticeTemplateDraft['type']>(value => typeof value === 'number'),
+    content: z.string()
+  })
+  .superRefine((draft, context) => {
+    const { id, ...fields } = draft;
+    const candidate: NoticeTemplateDraft = id === undefined ? fields : { ...fields, id };
+    if (validateNoticeTemplateDraft(candidate).length > 0) {
+      context.addIssue({ code: 'custom', message: 'Draft failed domain validation' });
+    }
+  });
 const deleteEnvelopeSchema = z.object({
   record: z.unknown().optional(),
   query: z.unknown().optional()
 });
-const deleteRecordIdentitySchema = z.object({
-  id: z.string(),
-  backendId: positiveIntegerSchema,
-  preset: z.literal(false)
-}).passthrough();
-const deleteQuerySchema = z.object({
-  name: z.string(),
-  preset: z.boolean(),
-  pageIndex: nonNegativeIntegerSchema,
-  pageSize: pageSizeSchema
-}).passthrough();
+const deleteRecordIdentitySchema = z
+  .object({
+    id: z.string(),
+    backendId: positiveIntegerSchema,
+    preset: z.literal(false)
+  })
+  .passthrough();
+const deleteQuerySchema = z
+  .object({
+    name: z.string(),
+    preset: z.boolean(),
+    pageIndex: nonNegativeIntegerSchema,
+    pageSize: pageSizeSchema
+  })
+  .passthrough();
 
 export function readNoticeTemplateListQuery(params: GetListParams): NoticeTemplateQuery {
   if (params.sorters?.length) throw inputError('NOTICE_TEMPLATE_SORT_UNSUPPORTED');
@@ -90,11 +96,7 @@ export function readNoticeTemplateListQuery(params: GetListParams): NoticeTempla
     params.pagination?.currentPage ?? 1,
     'NOTICE_TEMPLATE_PAGINATION_INVALID'
   );
-  const pageSize = parse(
-    pageSizeSchema,
-    params.pagination?.pageSize ?? 8,
-    'NOTICE_TEMPLATE_PAGINATION_INVALID'
-  );
+  const pageSize = parse(pageSizeSchema, params.pagination?.pageSize ?? 8, 'NOTICE_TEMPLATE_PAGINATION_INVALID');
   const { name, preset } = readFilters(params.filters);
   return { name, preset, pageIndex: currentPage - 1, pageSize };
 }
@@ -142,11 +144,7 @@ export function readNoticeTemplateId(value: string | number): number {
 
 function parseDeleteIdentity(value: unknown, id: number): DeleteRecordIdentity {
   const result = deleteRecordIdentitySchema.safeParse(value);
-  if (
-    !result.success
-    || result.data.backendId !== id
-    || result.data.id !== `notice-template:custom:${id}`
-  ) {
+  if (!result.success || result.data.backendId !== id || result.data.id !== `notice-template:custom:${id}`) {
     throw inputError('NOTICE_TEMPLATE_DELETE_FORBIDDEN');
   }
   return result.data;

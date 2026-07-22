@@ -20,7 +20,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import en from '@/assets/i18n/en-us.json';
 
-import type { AlertGroup, AlertSummary, ServerLocalDateTime } from './alert-model';
+import type { AlertGroup, AlertSummary, ServerLocalDateTime } from '../model/alert-model';
 import { AlertCenterPage } from './alert-center-page';
 
 const controller = vi.hoisted(() => ({
@@ -36,20 +36,26 @@ const controller = vi.hoisted(() => ({
   submitFilters: vi.fn()
 }));
 
-vi.mock('./controller/use-alert-center-controller', () => ({ useAlertCenterController: () => controller }));
-vi.mock('./alert-management-nav', () => ({ AlertManagementNav: () => <nav data-testid="alert-nav" /> }));
+vi.mock('../controller/use-alert-center-controller', () => ({ useAlertCenterController: () => controller }));
+vi.mock('../components/alert-management-nav', () => ({ AlertManagementNav: () => <nav data-testid="alert-nav" /> }));
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string) => ({
-      'instrumentation.field.serviceName': en.instrumentation.field.serviceName,
-      'instrumentation.field.serviceNamespace': en.instrumentation.field.serviceNamespace,
-      'instrumentation.field.serviceEnvironment': en.instrumentation.field.serviceEnvironment
-    })[key] ?? key
+    t: (key: string) =>
+      ({
+        'instrumentation.field.serviceName': en.instrumentation.field.serviceName,
+        'instrumentation.field.serviceNamespace': en.instrumentation.field.serviceNamespace,
+        'instrumentation.field.serviceEnvironment': en.instrumentation.field.serviceEnvironment
+      })[key] ?? key
   })
 }));
 
 const summary: AlertSummary = {
-  total: 2, dealNum: 1, rate: 50, priorityWarningNum: 1, priorityCriticalNum: 0, priorityEmergencyNum: 0
+  total: 2,
+  dealNum: 1,
+  rate: 50,
+  priorityWarningNum: 1,
+  priorityCriticalNum: 0,
+  priorityEmergencyNum: 0
 };
 const record: AlertGroup = {
   id: 1,
@@ -130,7 +136,14 @@ function buildState(override: Record<string, unknown> = {}) {
     draft: { search: '', serviceName: '', serviceNamespace: '', environment: '' },
     list: { kind: 'ready', records: [record], total: 1 },
     query: {
-      search: '', status: '', severity: '', serviceName: '', serviceNamespace: '', environment: '', pageIndex: 0, pageSize: 8
+      search: '',
+      status: '',
+      severity: '',
+      serviceName: '',
+      serviceNamespace: '',
+      environment: '',
+      pageIndex: 0,
+      pageSize: 8
     },
     refreshing: false,
     summary: { kind: 'ready', summary },

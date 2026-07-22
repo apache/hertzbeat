@@ -18,29 +18,30 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
-import { noticeApiEndpoint } from '@/features/alert/notice-api-endpoints';
-import { NoticeTemplateRequestFailure } from '@/features/alert/model/notice-template-failure';
+import { createRefineHttpError } from '@/shared/refine/refine-http-error';
+
+import { NoticeTemplateRequestFailure } from '../../model/notice-template-failure';
+import { noticeApiEndpoint } from '../../api/notice-api-endpoints';
 import {
   NoticeTemplateContractError,
   type NoticeTemplate,
   type NoticeTemplateResourceRecord
-} from '@/features/alert/notice-template-model';
+} from '../../notice-template-model';
 
-type NoticeTemplateApi = typeof import('@/features/alert/notice-template-api');
+type NoticeTemplateApi = typeof import('../../notice-template-api');
 const api = vi.hoisted(() => ({
   deleteNoticeTemplate: vi.fn<NoticeTemplateApi['deleteNoticeTemplate']>(),
   loadNoticeTemplate: vi.fn<NoticeTemplateApi['loadNoticeTemplate']>(),
   loadNoticeTemplates: vi.fn<NoticeTemplateApi['loadNoticeTemplates']>(),
   saveNoticeTemplate: vi.fn<NoticeTemplateApi['saveNoticeTemplate']>()
 }));
-vi.mock('@/features/alert/notice-template-api', async importOriginal => ({
+vi.mock('../../notice-template-api', async importOriginal => ({
   ...(await importOriginal<NoticeTemplateApi>()),
   ...api
 }));
 
-import { noticeTemplateCreateActionUrl } from '@/features/alert/notice-template-resource';
+import { noticeTemplateCreateActionUrl } from '../../notice-template-resource';
 
-import { createRefineHttpError } from '../refine-http-error';
 import { noticeTemplateDataProvider } from './notice-template-data-provider';
 import {
   normalizeNoticeTemplateProviderFailure,

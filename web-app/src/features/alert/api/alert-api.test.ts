@@ -15,7 +15,7 @@ vi.mock('@/core/http/api-message', async importOriginal => ({
 import { ApiMessageError } from '@/core/http/api-message';
 
 import { buildAlertListPath, loadAlertGroups, loadAlertSummary } from './alert-api';
-import { AlertContractError, AlertRequestFailure } from './alert-model';
+import { AlertContractError, AlertRequestFailure } from '../model/alert-model';
 
 const query = {
   search: '',

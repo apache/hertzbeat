@@ -18,7 +18,7 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { AlertQuery } from '../alert-model';
+import type { AlertQuery } from '../model/alert-model';
 import type { AlertFilterDraft } from '../model/alert-center-view-model';
 import { AlertCenterToolbar } from './alert-center-toolbar';
 

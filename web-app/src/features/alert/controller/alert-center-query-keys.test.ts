@@ -17,7 +17,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type { AlertQuery } from '../alert-model';
+import type { AlertQuery } from '../model/alert-model';
 import { alertCenterQueryKeys } from './alert-center-query-keys';
 
 describe('Alert Center Query Keys', () => {

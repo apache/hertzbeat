@@ -17,7 +17,7 @@
 
 import { useTranslation } from 'react-i18next';
 
-import { AlertManagementNav } from './alert-management-nav';
+import { AlertManagementNav } from './components/alert-management-nav';
 import styles from './alert-rule-list-page.module.css';
 import { buildAlertRuleListColumns } from './components/alert-rule-list-columns';
 import {

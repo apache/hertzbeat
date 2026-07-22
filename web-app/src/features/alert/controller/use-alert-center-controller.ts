@@ -21,7 +21,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { alertRoutePaths } from '@/shared/navigation/app-paths';
 
-import { loadAlertGroups, loadAlertSummary } from '../alert-api';
+import { loadAlertGroups, loadAlertSummary } from '../api/alert-api';
 import {
   alertFailureKind,
   readAlertQuery,
@@ -31,7 +31,7 @@ import {
   type AlertSeverity,
   type AlertStatusFilter,
   type AlertSummary
-} from '../alert-model';
+} from '../model/alert-model';
 import type {
   AlertCenterState,
   AlertDraftField,

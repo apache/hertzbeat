@@ -18,15 +18,12 @@
 import { Alert, Skeleton, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { AlertSummary } from '../alert-model';
-import styles from '../alert-center-page.module.css';
+import type { AlertSummary } from '../model/alert-model';
+import styles from '../shared/alert-center.module.css';
 import type { AlertSummaryState } from '../model/alert-center-view-model';
 import { AlertCenterRetryButton } from './alert-center-retry-button';
 
-export function AlertCenterSummary({ state, retry }: {
-  state: AlertSummaryState;
-  retry: () => unknown;
-}) {
+export function AlertCenterSummary({ state, retry }: { state: AlertSummaryState; retry: () => unknown }) {
   const { t } = useTranslation();
   if (state.kind === 'loading') return <Skeleton active paragraph={false} />;
   if (state.kind === 'unavailable') {

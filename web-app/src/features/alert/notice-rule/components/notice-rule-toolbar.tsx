@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import { Button, Input, Typography } from "antd";
-import { useTranslation } from "react-i18next";
+import { Button, Input, Typography } from 'antd';
+import { useTranslation } from 'react-i18next';
 
-import styles from "../../alert-policy-page.module.css";
+import styles from '../../shared/alert-policy-page.module.css';
 
 type NoticeRuleToolbarProps = {
   name: string;
@@ -35,25 +35,25 @@ export function NoticeRuleToolbar(props: NoticeRuleToolbarProps) {
     <>
       <header className={styles.heading}>
         <div>
-          <Typography.Title level={2}>{t("noticeRules.title")}</Typography.Title>
-          <Typography.Text type="secondary">{t("noticeRules.description")}</Typography.Text>
+          <Typography.Title level={2}>{t('noticeRules.title')}</Typography.Title>
+          <Typography.Text type="secondary">{t('noticeRules.description')}</Typography.Text>
         </div>
         <Button type="primary" disabled={props.createDisabled} onClick={props.onCreate}>
-          {t("noticeRules.new")}
+          {t('noticeRules.new')}
         </Button>
       </header>
       <div className={styles.toolbar}>
         <Input
           allowClear
           value={props.name}
-          placeholder={t("noticeRules.search")}
-          onChange={(event) => props.onNameChange(event.target.value)}
+          placeholder={t('noticeRules.search')}
+          onChange={event => props.onNameChange(event.target.value)}
           onPressEnter={props.onQuery}
         />
         <Button type="primary" onClick={props.onQuery}>
-          {t("common.query")}
+          {t('common.query')}
         </Button>
-        <Button onClick={props.onRefresh}>{t("common.refresh")}</Button>
+        <Button onClick={props.onRefresh}>{t('common.refresh')}</Button>
       </div>
     </>
   );

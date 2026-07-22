@@ -18,7 +18,7 @@
 import { Button, Input, Select, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import styles from '../alert-policy-page.module.css';
+import styles from '../shared/alert-policy-page.module.css';
 import pageStyles from '../notice-template-page.module.css';
 
 type NoticeTemplateToolbarProps = {

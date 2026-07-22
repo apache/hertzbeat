@@ -17,8 +17,8 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { AlertContractError } from '@/features/alert/alert-model';
-import { parseAlertSummary as parseAlertCenterSummary } from '@/features/alert/alert-schema';
+import { parseAlertSummary as parseAlertCenterSummary } from '@/features/alert/api/alert-schema';
+import { AlertContractError } from '@/features/alert/model/alert-model';
 import { parseAlertSummary as parseDashboardAlertSummary } from '@/features/dashboard/api/dashboard-schema';
 import { DashboardContractError } from '@/features/dashboard/model/dashboard-model';
 import type { AlertSummaryWire } from '@/shared/alert-summary/alert-summary-contract';

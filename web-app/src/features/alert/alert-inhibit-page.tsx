@@ -18,9 +18,9 @@
 import { Button, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { AlertManagementNav } from './alert-management-nav';
-import { AlertNoiseControlNav } from './alert-noise-control-nav';
-import styles from './alert-policy-page.module.css';
+import { AlertManagementNav } from './components/alert-management-nav';
+import { AlertNoiseControlNav } from './components/alert-noise-control-nav';
+import styles from './shared/alert-policy-page.module.css';
 import { AlertInhibitEditor } from './components/alert-inhibit-editor';
 import { AlertInhibitRecovery } from './components/alert-inhibit-recovery';
 import { AlertInhibitDetailFailure, AlertInhibitResults } from './components/alert-inhibit-results';

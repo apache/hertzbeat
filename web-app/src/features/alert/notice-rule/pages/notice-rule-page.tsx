@@ -3,7 +3,7 @@
 import { Alert } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import styles from '../../alert-policy-page.module.css';
+import styles from '../../shared/alert-policy-page.module.css';
 import { NoticeRuleDetailEvidence } from '../components/notice-rule-detail-evidence';
 import { NoticeRuleEditor } from '../components/notice-rule-editor';
 import { NoticeRuleTable } from '../components/notice-rule-table';

@@ -21,8 +21,8 @@ import type { PropsWithChildren, ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AlertManagementNav } from '@/features/alert/alert-management-nav';
-import { AlertNoiseControlNav } from '@/features/alert/alert-noise-control-nav';
+import { AlertManagementNav } from '@/features/alert/components/alert-management-nav';
+import { AlertNoiseControlNav } from '@/features/alert/components/alert-noise-control-nav';
 import { useAlertCenterController } from '@/features/alert/controller/use-alert-center-controller';
 import { useAlertRuleEditorController } from '@/features/alert/controller/use-alert-rule-editor-controller';
 import { useAlertRuleListController } from '@/features/alert/controller/use-alert-rule-list-controller';
@@ -61,16 +61,20 @@ const ruleProof = vi.hoisted(() => ({
   proveUpdatedAlertRule: vi.fn()
 }));
 
-vi.mock('@/shared/navigation/app-paths', () => ({
+vi.mock('@/shared/navigation/app-paths', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/shared/navigation/app-paths')>()),
   alertRoutePaths: canonical.paths,
   buildAlertRuleEditPath: canonical.ruleEditPath
 }));
-vi.mock('@/features/alert/alert-api', () => alertApi);
+vi.mock('@/features/alert/api/alert-api', () => alertApi);
 vi.mock('@/features/alert/alert-rule-api', async importOriginal => ({
   ...(await importOriginal<typeof import('@/features/alert/alert-rule-api')>()),
   ...ruleApi
 }));
-vi.mock('@/features/alert/alert-rule-write-proof', () => ruleProof);
+vi.mock('@/features/alert/alert-rule-write-proof', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/features/alert/alert-rule-write-proof')>()),
+  ...ruleProof
+}));
 vi.mock('react-router-dom', async importOriginal => ({
   ...(await importOriginal<typeof import('react-router-dom')>()),
   useNavigate: () => navigate
@@ -147,6 +151,7 @@ describe('Alert route ownership', () => {
         times: 3
       })
     );
+    await waitFor(() => expect(editor.result.current.state.draft?.name).toBe('Canonical rule'));
     await act(async () => editor.result.current.save());
     expect(ruleApi.saveAlertRule).toHaveBeenCalledOnce();
     expect(navigate).toHaveBeenLastCalledWith(canonical.paths.rules);

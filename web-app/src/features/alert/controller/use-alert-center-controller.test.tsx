@@ -27,7 +27,7 @@ import {
   type AlertPage,
   type AlertQuery,
   type AlertSummary
-} from '../alert-model';
+} from '../model/alert-model';
 import { useAlertCenterController } from './use-alert-center-controller';
 
 const api = vi.hoisted(() => ({
@@ -35,7 +35,7 @@ const api = vi.hoisted(() => ({
   loadAlertSummary: vi.fn()
 }));
 
-vi.mock('../alert-api', () => ({
+vi.mock('../api/alert-api', () => ({
   loadAlertGroups: api.loadAlertGroups,
   loadAlertSummary: api.loadAlertSummary
 }));

@@ -1,19 +1,19 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
+import { isRefineHttpError, type RefineHttpError } from '@/shared/refine/refine-http-error';
+import { isDefiniteRefineWriteRejection, isRefineSourceUnavailable } from '@/shared/refine/refine-source-evidence';
+
 import {
   NOTICE_TEMPLATE_MISSING_API_CODE,
   normalizeNoticeTemplateApiFailure,
   type NoticeTemplateRequestPhase
-} from '@/features/alert/api/notice-template-api-failure';
+} from '../../api/notice-template-api-failure';
 import {
   NoticeTemplateRequestFailure,
   type NoticeTemplateFailureKind,
   type NoticeTemplateWriteOutcome
-} from '@/features/alert/model/notice-template-failure';
-import { NoticeTemplateContractError } from '@/features/alert/notice-template-model';
-import { isDefiniteRefineWriteRejection, isRefineSourceUnavailable } from '@/shared/refine/refine-source-evidence';
-
-import { isRefineHttpError, type RefineHttpError } from '../refine-http-error';
+} from '../../model/notice-template-failure';
+import { NoticeTemplateContractError } from '../../notice-template-model';
 
 export function normalizeNoticeTemplateProviderFailure(reason: unknown, phase: NoticeTemplateRequestPhase) {
   if (reason instanceof NoticeTemplateRequestFailure) return normalizeNoticeTemplateApiFailure(reason, phase);

@@ -35,6 +35,7 @@ import { sessionQueryKey } from '@/core/auth/session-api';
 import { initializeI18n } from '@/core/i18n/i18n';
 import { noticeReceiverDataProvider, noticeReceiverResourceName } from '@/features/alert/notice-receiver';
 import { noticeRuleDataProvider, noticeRuleResourceName } from '@/features/alert/notice-rule';
+import { noticeTemplateDataProvider, noticeTemplateResourceName } from '@/features/alert/notice-template';
 import { objectStoreDataProvider } from '@/features/settings/object-store';
 import { labelDataProvider, labelResourceName } from '@/features/settings/label';
 import { systemConfigDataProvider } from '@/features/settings/system-config';
@@ -43,7 +44,6 @@ import { tokenDataProvider } from '@/features/settings/token';
 import { AppProviders } from '../providers';
 import { appRoutes } from '../router';
 import { alertSilenceDataProvider } from './resources/alert-silence-data-provider';
-import { noticeTemplateDataProvider } from './resources/notice-template-data-provider';
 
 const { authenticatedSession } = vi.hoisted(() => ({
   authenticatedSession: {
@@ -94,7 +94,7 @@ describe('production Refine runtime', () => {
     expect(screen.getByTestId('token-resource')).toHaveTextContent('tokens|/settings/tokens|tokens');
     expect(screen.getByTestId('token-provider')).toHaveTextContent('shared');
     expect(screen.getByTestId('notice-template-resource')).toHaveTextContent(
-      'notice-templates|/settings/notifications/templates|notice-templates'
+      `${noticeTemplateResourceName}|/settings/notifications/templates|${noticeTemplateResourceName}`
     );
     expect(screen.getByTestId('notice-template-provider')).toHaveTextContent('shared');
     expect(screen.getByTestId('alert-silence-resource')).toHaveTextContent(
@@ -136,7 +136,7 @@ function RuntimeProbe({ onClient }: { onClient: (client: QueryClient) => void })
   const objectStoreResource = resources.find(resource => resource.name === 'object-store');
   const systemConfigResource = resources.find(resource => resource.name === 'system-config');
   const tokenResource = resources.find(resource => resource.name === 'tokens');
-  const noticeTemplateResource = resources.find(resource => resource.name === 'notice-templates');
+  const noticeTemplateResource = resources.find(resource => resource.name === noticeTemplateResourceName);
   const alertSilenceResource = resources.find(resource => resource.name === 'alert-silences');
   const noticeReceiverResource = resources.find(resource => resource.name === noticeReceiverResourceName);
   const noticeRuleResource = resources.find(resource => resource.name === noticeRuleResourceName);
@@ -150,7 +150,7 @@ function RuntimeProbe({ onClient }: { onClient: (client: QueryClient) => void })
   const tokenResourceText = formatResource(tokenResource);
   const noticeTemplateProvider = resolveProviderState(
     dataProvider,
-    'notice-templates',
+    noticeTemplateResourceName,
     noticeTemplateDataProvider,
     false
   );

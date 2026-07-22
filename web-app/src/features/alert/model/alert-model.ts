@@ -109,13 +109,6 @@ export function writeAlertQuery(query: AlertQuery) {
   return params;
 }
 
-export function alertStatusColor(status?: string) {
-  if (status === 'firing') return 'red';
-  if (status === 'acknowledged') return 'gold';
-  if (status === 'resolved') return 'green';
-  return 'default';
-}
-
 function readEnum<const T extends readonly string[]>(value: string | null, supported: T): '' | T[number] {
   const normalized = value?.trim().toLowerCase() ?? '';
   return supported.includes(normalized) ? normalized : '';

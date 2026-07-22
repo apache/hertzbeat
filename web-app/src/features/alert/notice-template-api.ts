@@ -24,7 +24,7 @@ import {
   type NoticeTemplateDraft,
   type NoticeTemplateQuery
 } from './notice-template-model';
-import { noticeTemplateEndpoint, noticeTemplatesEndpoint } from './notice-api-endpoints';
+import { noticeTemplateEndpoint, noticeTemplatesEndpoint } from './api/notice-api-endpoints';
 import { noticeTemplateCreateActionUrl } from './notice-template-resource';
 import { noticeTemplateApiRequest } from './api/notice-template-api-failure';
 import { parseNoticeTemplateDetailWire, parseNoticeTemplatePageWire } from './api/notice-template-schema';

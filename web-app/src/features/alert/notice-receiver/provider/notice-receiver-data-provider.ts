@@ -18,7 +18,7 @@ import type {
 
 import { adaptRefineRecord, adaptRefineRecords } from '@/shared/refine/refine-provider-data';
 
-import { noticeApiEndpoint } from '../../notice-api-endpoints';
+import { noticeApiEndpoint } from '../../api/notice-api-endpoints';
 import {
   deleteNoticeReceiver,
   loadNoticeReceiver,

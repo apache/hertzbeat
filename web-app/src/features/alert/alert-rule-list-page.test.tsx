@@ -32,7 +32,7 @@ const controller = vi.hoisted(() => ({
   toggle: vi.fn()
 }));
 vi.mock('./controller/use-alert-rule-list-controller', () => ({ useAlertRuleListController: () => controller }));
-vi.mock('./alert-management-nav', () => ({ AlertManagementNav: () => <nav /> }));
+vi.mock('./components/alert-management-nav', () => ({ AlertManagementNav: () => <nav /> }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 const record = {

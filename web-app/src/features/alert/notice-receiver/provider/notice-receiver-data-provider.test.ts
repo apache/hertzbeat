@@ -21,7 +21,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiMessageError } from '@/core/http/api-message';
 import { createRefineHttpError } from '@/shared/refine/refine-http-error';
 
-import { noticeApiEndpoint } from '../../notice-api-endpoints';
+import { noticeApiEndpoint } from '../../api/notice-api-endpoints';
 import { NoticeReceiverContractError } from '../api/notice-receiver-api';
 import { NoticeReceiverRequestFailure } from '../model/notice-receiver-failure';
 import * as noticeReceiverModel from '../model/notice-receiver-model';

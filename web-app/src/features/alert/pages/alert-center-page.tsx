@@ -18,12 +18,12 @@
 import { Button, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { AlertManagementNav } from './alert-management-nav';
-import styles from './alert-center-page.module.css';
-import { AlertCenterResults } from './components/alert-center-results';
-import { AlertCenterSummary } from './components/alert-center-summary';
-import { AlertCenterToolbar } from './components/alert-center-toolbar';
-import { useAlertCenterController } from './controller/use-alert-center-controller';
+import { AlertManagementNav } from '../components/alert-management-nav';
+import styles from '../shared/alert-center.module.css';
+import { AlertCenterResults } from '../components/alert-center-results';
+import { AlertCenterSummary } from '../components/alert-center-summary';
+import { AlertCenterToolbar } from '../components/alert-center-toolbar';
+import { useAlertCenterController } from '../controller/use-alert-center-controller';
 
 export function AlertCenterPage() {
   const { t } = useTranslation();
@@ -37,7 +37,13 @@ export function AlertCenterPage() {
           <Typography.Title level={2}>{t('alert.title')}</Typography.Title>
           <Typography.Text type="secondary">{t('alert.description')}</Typography.Text>
         </div>
-        <Button onClick={() => { void controller.manageRules(); }}>{t('alertRules.manage')}</Button>
+        <Button
+          onClick={() => {
+            void controller.manageRules();
+          }}
+        >
+          {t('alertRules.manage')}
+        </Button>
       </header>
       <AlertManagementNav />
       <AlertCenterToolbar
