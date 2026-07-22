@@ -58,9 +58,7 @@ class OtelPythonZeroCodeIntegrationTest {
 
         try (ExternalLanguageProcessHarness harness = ExternalLanguageProcessHarness.create("hertzbeat-python-zero-code-");
              OtelRuntimeTestSupport.OtlpCapture capture = new OtelRuntimeTestSupport.OtlpCapture()) {
-            assertTrue(harness.capture(
-                    List.of(pythonBinary.toString(), "--version"), Map.of(), Duration.ofSeconds(5))
-                    .startsWith("Python 3."));
+            assumeSupportedPython(harness, pythonBinary);
             Path virtualEnvironment = harness.createPythonVirtualEnvironment(pythonBinary);
             installCatalogPackages(harness, virtualEnvironment);
             Path application = harness.resolve("app.py");
@@ -82,11 +80,14 @@ class OtelPythonZeroCodeIntegrationTest {
                                 "--logs_exporter", "otlp", virtualEnvironment.resolve("bin/python").toString(),
                                 application.toString(), Integer.toString(instrumentedPort)),
                         instrumentedEnvironment(properties, virtualEnvironment), "python-instrumented");
-                awaitHttp(instrumented, instrumentedPort);
+                awaitHttp(harness, instrumented, "python-instrumented", instrumentedPort);
                 assertEquals(200, get(instrumentedPort, "/checkout").statusCode());
 
                 OtelRuntimeTestSupport.await(
-                        () -> hasPythonMetric(capture) && hasPythonServerSpan(capture), Duration.ofSeconds(45));
+                        () -> hasPythonMetric(capture)
+                                && hasPythonServerSpan(capture)
+                                && hasPythonPreviewLog(capture),
+                        Duration.ofSeconds(45));
                 assertTrue(hasPythonMetric(capture), "official Python zero-code metrics were not exported");
                 assertTrue(hasPythonServerSpan(capture), "official Python zero-code HTTP server span was not exported");
                 assertTrue(hasPythonPreviewLog(capture),
@@ -98,7 +99,7 @@ class OtelPythonZeroCodeIntegrationTest {
                         List.of(virtualEnvironment.resolve("bin/python").toString(),
                                 application.toString(), Integer.toString(plainPort)),
                         Map.of(), "python-uninstrumented");
-                awaitHttp(plain, plainPort);
+                awaitHttp(harness, plain, "python-uninstrumented", plainPort);
                 assertEquals(200, get(plainPort, "/checkout").statusCode());
                 assertTrue(plain.isAlive(), "the Python application must remain healthy without zero-code startup");
             } finally {
@@ -215,17 +216,24 @@ class OtelPythonZeroCodeIntegrationTest {
                 && COLLECTOR_ID.equals(attributes.get("hertzbeat.collector.id"));
     }
 
-    private void awaitHttp(Process process, int port) throws Exception {
-        OtelRuntimeTestSupport.await(() -> {
+    private void awaitHttp(
+            ExternalLanguageProcessHarness harness, Process process, String label, int port) throws Exception {
+        long deadline = System.nanoTime() + Duration.ofSeconds(20).toNanos();
+        while (System.nanoTime() < deadline) {
             if (!process.isAlive()) {
-                return false;
+                throw new IllegalStateException(harness.processDiagnostic(process, label));
             }
             try {
-                return get(port, "/health").statusCode() == 200;
+                if (get(port, "/health").statusCode() == 200) {
+                    return;
+                }
             } catch (Exception ignored) {
-                return false;
+                // Retry while the process remains alive and the bounded readiness deadline has not elapsed.
             }
-        }, Duration.ofSeconds(20));
+            Thread.sleep(50);
+        }
+        throw new IllegalStateException("Python HTTP application did not become ready; "
+                + harness.processDiagnostic(process, label));
     }
 
     private static HttpResponse<String> get(int port, String path) throws Exception {
@@ -242,6 +250,33 @@ class OtelPythonZeroCodeIntegrationTest {
         Assumptions.assumeTrue(Files.isRegularFile(path) && Files.isExecutable(path),
                 () -> environmentVariable + " must identify an executable file");
         return path;
+    }
+
+    private void assumeSupportedPython(
+            ExternalLanguageProcessHarness harness, Path pythonBinary) throws Exception {
+        String version;
+        try {
+            version = harness.capture(
+                    List.of(
+                            pythonBinary.toString(),
+                            "-I",
+                            "-c",
+                            "import sys; from http.server import BaseHTTPRequestHandler; "
+                                    + "print(f'{sys.version_info.major}.{sys.version_info.minor}')"),
+                    Map.of(),
+                    Duration.ofSeconds(5));
+        } catch (IllegalStateException exception) {
+            Assumptions.assumeTrue(false,
+                    () -> PYTHON_BINARY_ENV + " must provide an intact isolated Python standard library: "
+                            + exception.getMessage());
+            return;
+        }
+        String[] components = version.split("\\.");
+        boolean supported = components.length == 2
+                && "3".equals(components[0])
+                && Integer.parseInt(components[1]) >= 9;
+        Assumptions.assumeTrue(supported,
+                () -> PYTHON_BINARY_ENV + " must identify a supported Python 3.9+ interpreter, found " + version);
     }
 
     private int availablePort() throws Exception {

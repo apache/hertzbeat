@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.collector.runtime.otel;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,7 +36,11 @@ import java.util.regex.Pattern;
 final class ExternalLanguageProcessHarness implements AutoCloseable {
 
     private static final Pattern SAFE_LABEL = Pattern.compile("[A-Za-z0-9][A-Za-z0-9._-]{0,63}");
-    private static final int MAX_SHORT_OUTPUT = 1_024;
+    private static final Pattern SENSITIVE_OUTPUT = Pattern.compile(
+            "(?im)((?:authorization\\s*[:=]\\s*)?bearer|authorization|token|password|secret)"
+                    + "(\\s*[:=]\\s*|\\s+)[^\\r\\n]*");
+    private static final int MAX_SHORT_OUTPUT = 4_096;
+    private static final int MAX_DIAGNOSTIC_OUTPUT = 4_096;
 
     private final Path root;
     private final Path home;
@@ -106,11 +111,12 @@ final class ExternalLanguageProcessHarness implements AutoCloseable {
         }
         byte[] output = process.getInputStream().readAllBytes();
         processes.remove(process);
-        if (process.exitValue() != 0) {
-            throw new IllegalStateException("External short command failed with exit code " + process.exitValue());
-        }
         if (output.length > MAX_SHORT_OUTPUT) {
             throw new IllegalStateException("External short command exceeded its output limit");
+        }
+        if (process.exitValue() != 0) {
+            throw new IllegalStateException("External short command failed with exit code "
+                    + process.exitValue() + "; output:\n" + sanitizeOutput(output));
         }
         return new String(output, StandardCharsets.UTF_8).trim();
     }
@@ -128,6 +134,23 @@ final class ExternalLanguageProcessHarness implements AutoCloseable {
             process.waitFor(timeout.toMillis(), java.util.concurrent.TimeUnit.MILLISECONDS);
         }
         processes.remove(process);
+    }
+
+    String processDiagnostic(Process process, String label) throws IOException {
+        String state = process.isAlive()
+                ? "is still running"
+                : "exited with code " + process.exitValue();
+        Path output = diagnosticPath(label);
+        if (!Files.isRegularFile(output) || Files.size(output) == 0) {
+            return "external process " + state + "; recent output: <empty>";
+        }
+        long size = Files.size(output);
+        byte[] tail;
+        try (InputStream input = Files.newInputStream(output)) {
+            input.skipNBytes(Math.max(0, size - MAX_DIAGNOSTIC_OUTPUT));
+            tail = input.readNBytes(MAX_DIAGNOSTIC_OUTPUT);
+        }
+        return "external process " + state + "; recent output:\n" + sanitizeOutput(tail);
     }
 
     private ProcessBuilder processBuilder(List<String> command, Map<String, String> overrides) {
@@ -150,14 +173,24 @@ final class ExternalLanguageProcessHarness implements AutoCloseable {
     }
 
     private Path outputPath(String label) throws IOException {
-        if (label == null || !SAFE_LABEL.matcher(label).matches()) {
-            throw new IllegalArgumentException("External process label is invalid");
-        }
-        Path output = logs.resolve(label + ".log");
+        Path output = diagnosticPath(label);
         if (!Files.exists(output)) {
             Files.createFile(output);
         }
         return output;
+    }
+
+    private Path diagnosticPath(String label) {
+        if (label == null || !SAFE_LABEL.matcher(label).matches()) {
+            throw new IllegalArgumentException("External process label is invalid");
+        }
+        return logs.resolve(label + ".log");
+    }
+
+    private String sanitizeOutput(byte[] output) {
+        String safeOutput = new String(output, StandardCharsets.UTF_8)
+                .replaceAll("[\\p{Cc}&&[^\\r\\n\\t]]", "?");
+        return SENSITIVE_OUTPUT.matcher(safeOutput).replaceAll("$1=<redacted>").strip();
     }
 
     private void requireCommand(List<String> command) {
