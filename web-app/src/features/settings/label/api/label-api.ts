@@ -89,7 +89,7 @@ export async function findCanonicalLabel(identity: LabelIdentity) {
   return matches[0];
 }
 
-export function buildLabelListPath(query: LabelListRequest) {
+function buildLabelListPath(query: LabelListRequest) {
   const params = new URLSearchParams({
     pageIndex: String(query.pageIndex),
     pageSize: String(query.pageSize)

@@ -34,17 +34,9 @@ import {
   type SmsEvidenceWire
 } from './message-server-schema';
 
-export { smsProviderFieldContracts } from '../model/message-server-contract';
 export type {
-  EmailSecret,
-  EmailServerConfig,
-  EmailServerEvidence,
   EmailServerPayload,
   MessageServerReadFailure,
-  SmsProviderFieldContract,
-  SmsProviderType,
-  SmsSecret,
-  SmsServerConfig,
   SmsServerEvidence,
   SmsServerPayload
 } from '../model/message-server-contract';

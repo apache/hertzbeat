@@ -23,7 +23,7 @@ import { parseSystemConfig, parseSystemConfigMutationResult, parseTimezoneOption
 export type { SystemConfigValue, TimezoneOption };
 
 export const systemConfigApiRoot = '/api/config';
-export const systemConfigEndpoint = `${systemConfigApiRoot}/system`;
+const systemConfigEndpoint = `${systemConfigApiRoot}/system`;
 export const systemConfigTimezonesEndpoint = `${systemConfigApiRoot}/timezones`;
 
 export async function loadSystemConfig() {

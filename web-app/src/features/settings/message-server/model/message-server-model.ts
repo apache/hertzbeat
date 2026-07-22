@@ -25,7 +25,7 @@ import {
 } from './message-server-contract';
 import { activeSmsProviderValues, type SmsServerDraft } from './sms-provider-draft';
 
-export type { EmailSecret, SmsProviderType, SmsSecret } from './message-server-contract';
+export type { SmsProviderType } from './message-server-contract';
 export {
   activeSmsProviderValues,
   selectSmsProvider,
