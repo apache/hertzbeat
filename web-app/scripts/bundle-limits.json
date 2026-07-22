@@ -1,0 +1,7 @@
+{
+  "chunkWarningKilobytes": 650,
+  "vendorChunkMinBytes": 512000,
+  "vendorChunkMaxBytes": 614400,
+  "shellGzipBytes": 460800,
+  "totalJavaScriptBytes": 6291456
+}

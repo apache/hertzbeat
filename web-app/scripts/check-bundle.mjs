@@ -20,11 +20,14 @@ import { basename, join, resolve } from 'node:path';
 import process from 'node:process';
 import { gzipSync } from 'node:zlib';
 
+import bundleLimits from './bundle-limits.json' with { type: 'json' };
+
 const root = resolve(import.meta.dirname, '..');
 const dist = join(root, 'dist');
 const manifestPath = join(dist, '.vite', 'manifest.json');
-const shellGzipLimit = 450 * 1024;
-const totalRawLimit = 6 * 1024 * 1024;
+const chunkRawLimit = bundleLimits.chunkWarningKilobytes * 1024;
+const shellGzipLimit = bundleLimits.shellGzipBytes;
+const totalRawLimit = bundleLimits.totalJavaScriptBytes;
 
 if (!existsSync(manifestPath)) {
   console.error('Bundle budget failed: dist manifest is missing. Run pnpm build first.');
@@ -39,14 +42,18 @@ if (!entry?.file) {
 }
 
 const entryPath = join(dist, entry.file);
+const entryRaw = statSync(entryPath).size;
 const entryGzip = gzipSync(readFileSync(entryPath)).byteLength;
 const assetDirectory = join(dist, 'assets');
 const javaScriptAssets = readdirSync(assetDirectory)
   .filter(file => file.endsWith('.js'))
-  .map(file => join(assetDirectory, file));
-const totalRaw = javaScriptAssets.reduce((total, file) => total + statSync(file).size, 0);
+  .map(file => ({ file, size: statSync(join(assetDirectory, file)).size }));
+const totalRaw = javaScriptAssets.reduce((total, asset) => total + asset.size, 0);
 const failures = [];
 
+javaScriptAssets
+  .filter(asset => asset.size > chunkRawLimit)
+  .forEach(asset => failures.push(`chunk ${asset.file} is ${asset.size} bytes; limit is ${chunkRawLimit}`));
 if (entryGzip > shellGzipLimit) {
   failures.push(`shell ${entryGzip} bytes gzip exceeds ${shellGzipLimit}`);
 }
@@ -61,6 +68,6 @@ if (failures.length > 0) {
 }
 
 console.log(
-  `Bundle budget passed: ${basename(entry.file)} is ${entryGzip} bytes gzip; ` +
+  `Bundle budget passed: ${basename(entry.file)} is ${entryRaw} bytes raw / ${entryGzip} bytes gzip; ` +
     `total JavaScript is ${totalRaw} bytes.`
 );

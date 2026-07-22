@@ -19,6 +19,8 @@ import react from '@vitejs/plugin-react';
 import { fileURLToPath, URL } from 'node:url';
 import { configDefaults, defineConfig } from 'vitest/config';
 
+import bundleLimits from './scripts/bundle-limits.json' with { type: 'json' };
+
 const backendOrigin = process.env.BACKEND_ORIGIN || 'http://127.0.0.1:1157';
 const backendProxy = {
   target: backendOrigin,
@@ -51,7 +53,24 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: false,
     manifest: true,
-    chunkSizeWarningLimit: 650
+    chunkSizeWarningLimit: bundleLimits.chunkWarningKilobytes,
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            {
+              // Keep the policy package-agnostic so dependency upgrades do not require
+              // maintaining a fragile library list. The size window avoids both a
+              // monolithic vendor bundle and dozens of tiny initial requests.
+              name: 'vendor',
+              test: /node_modules[\\/]/,
+              minSize: bundleLimits.vendorChunkMinBytes,
+              maxSize: bundleLimits.vendorChunkMaxBytes
+            }
+          ]
+        }
+      }
+    }
   },
   test: {
     environment: 'jsdom',

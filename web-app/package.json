@@ -12,7 +12,7 @@
     "dev": "vite --host 0.0.0.0 --port 4200",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
-    "toolchain:check": "node scripts/check-toolchain.mjs && node --test scripts/toolchain-contract.test.mjs",
+    "toolchain:check": "node scripts/check-toolchain.mjs && node --test scripts/toolchain-contract.test.mjs scripts/bundle-limits-contract.test.mjs",
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
