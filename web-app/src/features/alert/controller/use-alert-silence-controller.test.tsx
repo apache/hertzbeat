@@ -31,8 +31,8 @@ import {
   AlertSilenceRequestFailure,
   buildAlertSilencePayload,
   type AlertSilence
-} from '../alert-silence-model';
-import { alertSilenceDetailDraft } from '../alert-silence-page-model';
+} from '../model/alert-silence-model';
+import { alertSilenceDetailDraft } from '../model/alert-silence-page-model';
 import { normalizeAlertSilenceApiFailure } from '../api/alert-silence-api-failure';
 
 const api = vi.hoisted(() => ({
@@ -42,8 +42,8 @@ const api = vi.hoisted(() => ({
   saveAlertSilence: vi.fn(),
   updateAlertSilenceEnabled: vi.fn()
 }));
-vi.mock('../alert-silence-api', async importOriginal => ({
-  ...(await importOriginal<typeof import('../alert-silence-api')>()),
+vi.mock('../api/alert-silence-api', async importOriginal => ({
+  ...(await importOriginal<typeof import('../api/alert-silence-api')>()),
   ...api
 }));
 

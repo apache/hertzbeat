@@ -33,7 +33,7 @@ import {
   AlertSilenceMissingError,
   AlertSilenceRequestFailure,
   createAlertSilenceDraft
-} from './alert-silence-model';
+} from '../model/alert-silence-model';
 
 const persisted = {
   id: 7,

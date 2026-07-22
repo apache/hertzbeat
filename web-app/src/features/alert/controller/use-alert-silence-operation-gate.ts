@@ -20,8 +20,8 @@ import { useEffect, useRef, useState } from 'react';
 import type { Dispatch, RefObject, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { alertSilenceFailureKind, alertSilenceWriteOutcome } from '../alert-silence-model';
-import type { AlertSilenceOperationKind, AlertSilenceRecovery } from '../alert-silence-page-model';
+import { alertSilenceFailureKind, alertSilenceWriteOutcome } from '../model/alert-silence-model';
+import type { AlertSilenceOperationKind, AlertSilenceRecovery } from '../model/alert-silence-page-model';
 
 export type AlertSilenceProjectionFailure = 'unavailable' | 'error';
 

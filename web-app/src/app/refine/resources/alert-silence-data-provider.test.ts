@@ -17,9 +17,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
-import { AlertSilenceRequestFailure, type AlertSilence } from '@/features/alert/alert-silence-model';
+import { AlertSilenceRequestFailure, type AlertSilence } from '@/features/alert/model/alert-silence-model';
 
-type AlertSilenceApi = typeof import('@/features/alert/alert-silence-api');
+type AlertSilenceApi = typeof import('@/features/alert/api/alert-silence-api');
 const api = vi.hoisted(() => ({
   deleteAlertSilence: vi.fn<AlertSilenceApi['deleteAlertSilence']>(),
   loadAlertSilence: vi.fn<AlertSilenceApi['loadAlertSilence']>(),
@@ -27,7 +27,7 @@ const api = vi.hoisted(() => ({
   saveAlertSilence: vi.fn<AlertSilenceApi['saveAlertSilence']>(),
   updateAlertSilenceEnabled: vi.fn<AlertSilenceApi['updateAlertSilenceEnabled']>()
 }));
-vi.mock('@/features/alert/alert-silence-api', async importOriginal => ({
+vi.mock('@/features/alert/api/alert-silence-api', async importOriginal => ({
   ...(await importOriginal<AlertSilenceApi>()),
   ...api
 }));

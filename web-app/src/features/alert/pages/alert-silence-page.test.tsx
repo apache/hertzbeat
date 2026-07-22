@@ -30,8 +30,8 @@ const api = vi.hoisted(() => ({
   saveAlertSilence: vi.fn(),
   updateAlertSilenceEnabled: vi.fn()
 }));
-vi.mock('./alert-silence-api', async importOriginal => ({
-  ...(await importOriginal<typeof import('./alert-silence-api')>()),
+vi.mock('../api/alert-silence-api', async importOriginal => ({
+  ...(await importOriginal<typeof import('../api/alert-silence-api')>()),
   ...api
 }));
 
@@ -41,7 +41,7 @@ import {
   AlertSilenceRequestFailure,
   buildAlertSilencePayload,
   type AlertSilenceDraft
-} from './alert-silence-model';
+} from '../model/alert-silence-model';
 
 const record = {
   id: 7,

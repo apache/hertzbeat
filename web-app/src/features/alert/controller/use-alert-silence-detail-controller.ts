@@ -20,15 +20,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Dispatch, RefObject, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { loadAlertSilence } from '../alert-silence-api';
-import type { AlertSilenceDetailState } from '../alert-silence-page-model';
+import { loadAlertSilence } from '../api/alert-silence-api';
+import type { AlertSilenceDetailState } from '../model/alert-silence-page-model';
 import {
   AlertSilenceContractError,
   alertSilenceFailureKind,
   alertSilenceDraftFromDetail,
   createAlertSilenceDraft,
   type AlertSilenceDraft
-} from '../alert-silence-model';
+} from '../model/alert-silence-model';
 
 export function useAlertSilenceDetailController(isBusy: () => boolean, isWriteLocked: () => boolean) {
   const { t } = useTranslation();

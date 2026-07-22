@@ -18,7 +18,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { AlertSilenceDraft } from './alert-silence-model';
+import type { AlertSilenceDraft } from '../model/alert-silence-model';
 
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 

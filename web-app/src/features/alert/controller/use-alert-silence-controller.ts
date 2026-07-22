@@ -21,8 +21,8 @@ import { useSearchParams } from 'react-router-dom';
 
 import { useStringQueryDraft } from '@/shared/query-context';
 
-import { loadAlertSilences } from '../alert-silence-api';
-import { alertSilenceDetailDraft, type AlertSilenceListEvidence } from '../alert-silence-page-model';
+import { loadAlertSilences } from '../api/alert-silence-api';
+import { alertSilenceDetailDraft, type AlertSilenceListEvidence } from '../model/alert-silence-page-model';
 import {
   readAlertSilenceQuery,
   alertSilenceFailureKind,
@@ -30,7 +30,7 @@ import {
   type AlertSilenceDraft,
   type AlertSilencePage,
   type AlertSilenceQuery
-} from '../alert-silence-model';
+} from '../model/alert-silence-model';
 import { alertSilenceQueryKeys } from './alert-silence-query-keys';
 import { useAlertSilenceDetailController } from './use-alert-silence-detail-controller';
 import { useAlertSilenceMutations } from './use-alert-silence-mutations';

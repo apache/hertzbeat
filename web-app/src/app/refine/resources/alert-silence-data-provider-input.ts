@@ -18,7 +18,7 @@
 import type { GetListParams } from '@refinedev/core';
 import { z } from 'zod';
 
-import { alertSilencePageSizes, type AlertSilenceQuery } from '@/features/alert/alert-silence-model';
+import { alertSilencePageSizes, type AlertSilenceQuery } from '@/features/alert/model/alert-silence-model';
 
 import { createRefineHttpError } from '../refine-http-error';
 

@@ -159,7 +159,7 @@ export const appRoutes: RouteObject[] = [
               {
                 ...getAppRouteIdentity('alert-silences'),
                 lazy: async () => {
-                  const { AlertSilencePage } = await import('@/features/alert/alert-silence-page');
+                  const { AlertSilencePage } = await import('@/features/alert/pages/alert-silence-page');
                   return { Component: AlertSilencePage };
                 }
               },

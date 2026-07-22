@@ -8,7 +8,11 @@
 import { ApiMessageError } from '@/core/http/api-message';
 import { apiMessageWriteOutcome } from '@/core/http/api-message-write-evidence';
 
-import { AlertSilenceMissingError, AlertSilenceRequestFailure, type AlertSilenceFailure } from '../alert-silence-model';
+import {
+  AlertSilenceMissingError,
+  AlertSilenceRequestFailure,
+  type AlertSilenceFailure
+} from '../model/alert-silence-model';
 
 const missingCode = 3;
 const unavailableStatuses = new Set([0, 502, 503, 504]);

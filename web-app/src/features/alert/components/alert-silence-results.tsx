@@ -20,10 +20,10 @@ import type { ColumnsType } from 'antd/es/table';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
-import type { AlertSilenceListEvidence } from './alert-silence-page-model';
-import { alertSilencePageSizes, type AlertSilence, type AlertSilenceQuery } from './alert-silence-model';
+import type { AlertSilenceListEvidence } from '../model/alert-silence-page-model';
+import { alertSilencePageSizes, type AlertSilence, type AlertSilenceQuery } from '../model/alert-silence-model';
 import { AlertSilenceActions } from './alert-silence-actions';
-import styles from './shared/alert-policy-page.module.css';
+import styles from '../shared/alert-policy-page.module.css';
 
 export function AlertSilenceResults({
   evidence,

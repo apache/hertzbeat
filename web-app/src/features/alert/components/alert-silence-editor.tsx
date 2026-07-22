@@ -18,11 +18,11 @@
 import { Input, Modal, Switch } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { AlertSilenceDraft } from './alert-silence-model';
-import type { AlertSilenceRecovery as RecoveryState } from './alert-silence-page-model';
-import styles from './alert-silence-editor.module.css';
+import type { AlertSilenceDraft } from '../model/alert-silence-model';
+import type { AlertSilenceRecovery as RecoveryState } from '../model/alert-silence-page-model';
+import styles from '../shared/alert-silence-editor.module.css';
 import { AlertSilenceScheduleFields } from './alert-silence-schedule-fields';
-import { AlertSilenceRecovery } from './components/alert-silence-recovery';
+import { AlertSilenceRecovery } from './alert-silence-recovery';
 
 interface AlertSilenceEditorProps {
   draft: AlertSilenceDraft;

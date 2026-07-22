@@ -15,11 +15,10 @@
  * limitations under the License.
  */
 
-.form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-.field { display: grid; align-content: start; gap: 7px; color: var(--ant-color-text-secondary); font-size: 13px; }
-.field :global(.ant-switch) { justify-self: start; }
-.wide { grid-column: 1 / -1; }
-.hint { color: var(--ant-color-text-tertiary); font-size: 12px; }
-.wide :global(.ant-picker), .field :global(.ant-picker) { width: 100%; }
-.weekdays :global(.ant-checkbox-group) { display: flex; flex-wrap: wrap; gap: 8px 16px; }
-@media (max-width: 700px) { .form { grid-template-columns: 1fr; } .wide { grid-column: auto; } }
+import { AlertSilenceView } from '../components/alert-silence-view';
+import { useAlertSilenceController } from '../controller/use-alert-silence-controller';
+
+export function AlertSilencePage() {
+  const controller = useAlertSilenceController();
+  return <AlertSilenceView {...controller} />;
+}

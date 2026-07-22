@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import type { AlertSilenceQuery } from '../alert-silence-model';
+import type { AlertSilenceQuery } from '../model/alert-silence-model';
 
 const rootKey = ['alert-silence-policies'] as const;
 

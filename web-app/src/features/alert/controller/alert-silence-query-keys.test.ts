@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type { AlertSilenceQuery } from '../alert-silence-model';
+import type { AlertSilenceQuery } from '../model/alert-silence-model';
 import { alertSilenceQueryKeys } from './alert-silence-query-keys';
 
 const query: AlertSilenceQuery = { search: 'maintenance', pageIndex: 2, pageSize: 15 };

@@ -24,7 +24,7 @@ vi.mock('antd', () => ({ App: { useApp: () => ({ message: feedback }) } }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 import { useAlertSilenceOperationGate } from './use-alert-silence-operation-gate';
-import { AlertSilenceRequestFailure } from '../alert-silence-model';
+import { AlertSilenceRequestFailure } from '../model/alert-silence-model';
 
 const labels = { success: 'operation.success', error: 'operation.error' };
 

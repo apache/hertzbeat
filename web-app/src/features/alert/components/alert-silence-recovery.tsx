@@ -3,7 +3,7 @@
 import { Alert, Button } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { AlertSilenceRecovery as RecoveryState } from '../alert-silence-page-model';
+import type { AlertSilenceRecovery as RecoveryState } from '../model/alert-silence-page-model';
 
 export function AlertSilenceRecovery({
   busy,

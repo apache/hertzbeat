@@ -13,7 +13,7 @@ import {
   AlertSilenceContractError,
   AlertSilenceMissingError,
   AlertSilenceRequestFailure
-} from '../alert-silence-model';
+} from '../model/alert-silence-model';
 import { normalizeAlertSilenceApiFailure } from './alert-silence-api-failure';
 
 describe('Alert Silence API failure boundary', () => {

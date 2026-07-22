@@ -17,7 +17,7 @@
 
 import { apiMessageDelete, apiMessageGet, apiMessagePost, apiMessagePut } from '@/core/http/api-message';
 
-import { alertSilenceApiRequest } from './api/alert-silence-api-failure';
+import { alertSilenceApiRequest } from './alert-silence-api-failure';
 import {
   buildAlertSilencePayload,
   buildAlertSilenceTogglePayload,
@@ -25,7 +25,7 @@ import {
   type AlertSilence,
   type AlertSilenceDraft,
   type AlertSilenceQuery
-} from './alert-silence-model';
+} from '../model/alert-silence-model';
 import { parseAlertSilenceDetail, parseAlertSilencePage } from './alert-silence-schema';
 
 export const alertSilenceEndpoint = '/api/alert/silence';

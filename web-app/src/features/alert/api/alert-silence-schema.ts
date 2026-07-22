@@ -23,7 +23,7 @@ import {
   type AlertSilence,
   type AlertSilencePage,
   type AlertSilenceQuery
-} from './alert-silence-model';
+} from '../model/alert-silence-model';
 
 const safeIntegerSchema = z.number().refine(Number.isSafeInteger, 'Expected a safe integer');
 const positiveIntegerSchema = safeIntegerSchema.refine(value => value > 0, 'Expected a positive integer');

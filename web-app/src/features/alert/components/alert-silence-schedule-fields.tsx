@@ -19,8 +19,8 @@ import { Checkbox, DatePicker, Radio, TimePicker } from 'antd';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 
-import { changeAlertSilenceType, type AlertSilenceDraft, type AlertSilenceType } from './alert-silence-model';
-import styles from './alert-silence-editor.module.css';
+import { changeAlertSilenceType, type AlertSilenceDraft, type AlertSilenceType } from '../model/alert-silence-model';
+import styles from '../shared/alert-silence-editor.module.css';
 
 const weekdayOrder = [7, 1, 2, 3, 4, 5, 6] as const;
 

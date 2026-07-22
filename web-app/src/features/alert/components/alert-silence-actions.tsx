@@ -18,7 +18,7 @@
 import { Button, Popconfirm, Space, Switch } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { AlertSilence } from './alert-silence-model';
+import type { AlertSilence } from '../model/alert-silence-model';
 
 export function AlertSilenceActions({
   silence,

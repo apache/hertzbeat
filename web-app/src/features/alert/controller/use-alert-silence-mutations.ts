@@ -23,7 +23,7 @@ import {
   loadAlertSilence,
   saveAlertSilence,
   updateAlertSilenceEnabled
-} from '../alert-silence-api';
+} from '../api/alert-silence-api';
 import {
   AlertSilenceContractError,
   alertSilenceFailureKind,
@@ -32,7 +32,7 @@ import {
   type AlertSilence,
   type AlertSilenceDraft,
   type AlertSilencePage
-} from '../alert-silence-model';
+} from '../model/alert-silence-model';
 import { useAlertSilenceOperationGate } from './use-alert-silence-operation-gate';
 
 const operationFeedback = {

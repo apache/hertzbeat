@@ -17,7 +17,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { AlertSilenceContractError, AlertSilenceMissingError } from './alert-silence-model';
+import { AlertSilenceContractError, AlertSilenceMissingError } from '../model/alert-silence-model';
 import { parseAlertSilenceDetail, parseAlertSilencePage } from './alert-silence-schema';
 
 const persisted = {

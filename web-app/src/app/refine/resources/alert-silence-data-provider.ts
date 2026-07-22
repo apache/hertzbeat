@@ -27,12 +27,12 @@ import type {
   UpdateResponse
 } from '@refinedev/core';
 
-import { loadAlertSilence, loadAlertSilences } from '@/features/alert/alert-silence-api';
+import { loadAlertSilence, loadAlertSilences } from '@/features/alert/api/alert-silence-api';
 import {
   AlertSilenceContractError,
   alertSilenceFailureKind,
   type AlertSilence
-} from '@/features/alert/alert-silence-model';
+} from '@/features/alert/model/alert-silence-model';
 import { adaptRefineRecord, adaptRefineRecords } from '@/shared/refine/refine-provider-data';
 
 import { createRefineHttpError, toRefineHttpError } from '../refine-http-error';

@@ -18,7 +18,7 @@
 import { Button, Input } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import styles from './shared/alert-policy-page.module.css';
+import styles from '../shared/alert-policy-page.module.css';
 
 export function AlertSilenceToolbar({
   search,

@@ -22,14 +22,14 @@ import {
   alertSilenceDetailDraft,
   type AlertSilenceViewActions,
   type AlertSilenceViewState
-} from './alert-silence-page-model';
-import { AlertManagementNav } from './components/alert-management-nav';
-import { AlertNoiseControlNav } from './components/alert-noise-control-nav';
+} from '../model/alert-silence-page-model';
+import { AlertManagementNav } from './alert-management-nav';
+import { AlertNoiseControlNav } from './alert-noise-control-nav';
 import { AlertSilenceEditor } from './alert-silence-editor';
 import { AlertSilenceResults } from './alert-silence-results';
 import { AlertSilenceToolbar } from './alert-silence-toolbar';
-import { AlertSilenceRecovery } from './components/alert-silence-recovery';
-import styles from './shared/alert-policy-page.module.css';
+import { AlertSilenceRecovery } from './alert-silence-recovery';
+import styles from '../shared/alert-policy-page.module.css';
 
 export function AlertSilenceView({
   state,
