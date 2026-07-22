@@ -91,6 +91,6 @@ public class OptionParamValidator implements ParamValidator {
     }
 
     private static IllegalArgumentException invalidOption() {
-        return new IllegalArgumentException("Option parameter value is invalid");
+        return ParamValidator.invalidParameter();
     }
 }
