@@ -24,10 +24,7 @@ import {
   parseStatusIncidentPage,
   parseStatusOrg
 } from './status-management-schema';
-import {
-  StatusManagementContractError,
-  StatusManagementMissingError
-} from '../model/status-management-contract';
+import { StatusManagementContractError, StatusManagementMissingError } from '../model/status-management-contract';
 
 const component = {
   id: 4,
@@ -61,18 +58,20 @@ const incident = {
 
 describe('Status Management wire schemas', () => {
   it('maps organization evidence through the public allowlist', () => {
-    expect(parseStatusOrg({
-      id: 2,
-      name: 'HertzBeat',
-      description: 'Status',
-      home: '/',
-      logo: '/logo.svg',
-      feedback: null,
-      color: '#5b6fd8',
-      state: 0,
-      creator: 'admin',
-      ignored: 'server-only'
-    })).toEqual({
+    expect(
+      parseStatusOrg({
+        id: 2,
+        name: 'HertzBeat',
+        description: 'Status',
+        home: '/',
+        logo: '/logo.svg',
+        feedback: null,
+        color: '#5b6fd8',
+        state: 0,
+        creator: 'admin',
+        ignored: 'server-only'
+      })
+    ).toEqual({
       id: 2,
       name: 'HertzBeat',
       description: 'Status',
@@ -103,17 +102,18 @@ describe('Status Management wire schemas', () => {
     ]) {
       expect(() => parseStatusComponentDetail(value)).toThrow(StatusManagementContractError);
     }
-    expect(() => parseStatusComponents([component, { ...component }]))
-      .toThrow(StatusManagementContractError);
+    expect(() => parseStatusComponents([component, { ...component }])).toThrow(StatusManagementContractError);
   });
 
   it('validates nested incident records, uniqueness, and parent identity', () => {
-    expect(parseStatusIncidentDetail({
-      ...incident,
-      ignored: 'server-only',
-      components: [{ ...component, ignored: 'nested-server-only' }],
-      contents: [{ ...content, ignored: 'nested-server-only' }]
-    })).toEqual(incident);
+    expect(
+      parseStatusIncidentDetail({
+        ...incident,
+        ignored: 'server-only',
+        components: [{ ...component, ignored: 'nested-server-only' }],
+        contents: [{ ...content, ignored: 'nested-server-only' }]
+      })
+    ).toEqual(incident);
     expect(() => parseStatusIncidentDetail(null)).toThrow(StatusManagementMissingError);
 
     for (const value of [
@@ -150,6 +150,49 @@ describe('Status Management wire schemas', () => {
     ]) {
       expect(() => parseStatusIncidentPage(value, query)).toThrow(StatusManagementContractError);
     }
+  });
+
+  it('requires the exact Spring Page row count while accepting an empty out-of-range page', () => {
+    const record = (id: number) => ({ ...incident, id, components: [], contents: [] });
+
+    expect(() =>
+      parseStatusIncidentPage(
+        {
+          content: Array.from({ length: 7 }, (_, index) => record(index + 1)),
+          totalElements: 9,
+          totalPages: 2,
+          number: 0,
+          size: 8
+        },
+        { search: '', pageIndex: 0, pageSize: 8 }
+      )
+    ).toThrow(StatusManagementContractError);
+
+    expect(() =>
+      parseStatusIncidentPage(
+        {
+          content: [],
+          totalElements: 9,
+          totalPages: 2,
+          number: 1,
+          size: 8
+        },
+        { search: '', pageIndex: 1, pageSize: 8 }
+      )
+    ).toThrow(StatusManagementContractError);
+
+    expect(
+      parseStatusIncidentPage(
+        {
+          content: [],
+          totalElements: 9,
+          totalPages: 2,
+          number: 3,
+          size: 8
+        },
+        { search: '', pageIndex: 3, pageSize: 8 }
+      ).content
+    ).toEqual([]);
   });
 
   it('does not retain rejected wire values in public errors', () => {

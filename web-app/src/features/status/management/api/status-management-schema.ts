@@ -117,10 +117,7 @@ export function parseStatusIncidentDetail(value: unknown): StatusIncidentRecord 
   return incident;
 }
 
-export function parseStatusIncidentPage(
-  value: unknown,
-  query: StatusIncidentQuery
-): StatusIncidentPage {
+export function parseStatusIncidentPage(value: unknown, query: StatusIncidentQuery): StatusIncidentPage {
   const wirePage = parseSchema(statusIncidentPageWireSchema, value);
   const page: StatusIncidentPage = {
     ...wirePage,
@@ -134,11 +131,8 @@ export function parseStatusIncidentPage(
     throw new StatusManagementContractError();
   }
   const remainingElements = Math.max(0, page.totalElements - page.number * page.size);
-  if (
-    page.totalPages !== Math.ceil(page.totalElements / page.size)
-    || page.content.length > Math.min(page.size, remainingElements)
-    || (page.content.length > 0 && remainingElements === 0)
-  ) {
+  const expectedContentLength = Math.min(page.size, remainingElements);
+  if (page.totalPages !== Math.ceil(page.totalElements / page.size) || page.content.length !== expectedContentLength) {
     throw new StatusManagementContractError();
   }
   return page;
@@ -158,9 +152,7 @@ function mapStatusOrg(wire: z.output<typeof statusOrgWireSchema>): StatusOrgReco
   };
 }
 
-function mapStatusComponent(
-  wire: z.output<typeof statusComponentWireSchema>
-): StatusComponentRecord {
+function mapStatusComponent(wire: z.output<typeof statusComponentWireSchema>): StatusComponentRecord {
   return {
     id: wire.id,
     orgId: wire.orgId,
@@ -174,9 +166,7 @@ function mapStatusComponent(
   };
 }
 
-function mapStatusIncidentContent(
-  wire: z.output<typeof statusIncidentContentWireSchema>
-) {
+function mapStatusIncidentContent(wire: z.output<typeof statusIncidentContentWireSchema>) {
   return {
     id: wire.id,
     incidentId: wire.incidentId,
@@ -187,9 +177,7 @@ function mapStatusIncidentContent(
   };
 }
 
-function mapStatusIncident(
-  wire: z.output<typeof statusIncidentWireSchema>
-): StatusIncidentRecord {
+function mapStatusIncident(wire: z.output<typeof statusIncidentWireSchema>): StatusIncidentRecord {
   return {
     id: wire.id,
     orgId: wire.orgId,
@@ -197,12 +185,8 @@ function mapStatusIncident(
     state: wire.state,
     ...(wire.startTime === undefined ? {} : { startTime: wire.startTime }),
     ...(wire.endTime === undefined ? {} : { endTime: wire.endTime }),
-    ...(wire.components === undefined
-      ? {}
-      : { components: wire.components?.map(mapStatusComponent) ?? null }),
-    ...(wire.contents === undefined
-      ? {}
-      : { contents: wire.contents?.map(mapStatusIncidentContent) ?? null }),
+    ...(wire.components === undefined ? {} : { components: wire.components?.map(mapStatusComponent) ?? null }),
+    ...(wire.contents === undefined ? {} : { contents: wire.contents?.map(mapStatusIncidentContent) ?? null }),
     ...mapAuditFields(wire)
   };
 }
