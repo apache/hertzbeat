@@ -8,7 +8,11 @@ import { useNoticeRuleQueryController } from './notice-rule-query-controller';
 
 describe('notice rule query controller', () => {
   it('converges search draft across Push, Back, and Forward', async () => {
-    render(<MemoryRouter initialEntries={['/settings/notifications/rules?pageIndex=0&pageSize=8']}><Probe /></MemoryRouter>);
+    render(
+      <MemoryRouter initialEntries={['/settings/notifications/rules?pageIndex=0&pageSize=8']}>
+        <Probe />
+      </MemoryRouter>
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Type' }));
     fireEvent.click(screen.getByRole('button', { name: 'Search' }));
     await waitFor(() => expect(screen.getByTestId('state')).toHaveTextContent('missing|missing'));
@@ -22,9 +26,21 @@ describe('notice rule query controller', () => {
 function Probe() {
   const controller = useNoticeRuleQueryController();
   const navigate = useNavigate();
-  return <><output data-testid="state">{`${controller.query.name}|${controller.name}`}</output>
-    <button type="button" onClick={() => controller.setName('missing')}>Type</button>
-    <button type="button" onClick={controller.search}>Search</button>
-    <button type="button" onClick={() => void navigate(-1)}>Back</button>
-    <button type="button" onClick={() => void navigate(1)}>Forward</button></>;
+  return (
+    <>
+      <output data-testid="state">{`${controller.query.name}|${controller.name}`}</output>
+      <button type="button" onClick={() => controller.setName('missing')}>
+        Type
+      </button>
+      <button type="button" onClick={controller.search}>
+        Search
+      </button>
+      <button type="button" onClick={() => void navigate(-1)}>
+        Back
+      </button>
+      <button type="button" onClick={() => void navigate(1)}>
+        Forward
+      </button>
+    </>
+  );
 }

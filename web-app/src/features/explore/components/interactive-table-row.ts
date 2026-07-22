@@ -15,17 +15,17 @@
  * limitations under the License.
  */
 
-import type { KeyboardEvent } from "react";
+import type { KeyboardEvent } from 'react';
 
 export function interactiveTableRow(activate: () => void) {
   return {
-    role: "row" as const,
+    role: 'row' as const,
     tabIndex: 0,
     onClick: activate,
     onKeyDown: (event: KeyboardEvent<HTMLTableRowElement>) => {
-      if (event.target !== event.currentTarget || (event.key !== "Enter" && event.key !== " ")) return;
+      if (event.target !== event.currentTarget || (event.key !== 'Enter' && event.key !== ' ')) return;
       event.preventDefault();
       activate();
-    },
+    }
   };
 }

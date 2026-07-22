@@ -15,6 +15,15 @@
  * limitations under the License.
  */
 
-.page { display: grid; min-width: 0; gap: 20px; }
-.heading { display: grid; gap: 4px; }
-.heading :global(.ant-typography) { margin: 0; }
+.page {
+  display: grid;
+  min-width: 0;
+  gap: 20px;
+}
+.heading {
+  display: grid;
+  gap: 4px;
+}
+.heading :global(.ant-typography) {
+  margin: 0;
+}

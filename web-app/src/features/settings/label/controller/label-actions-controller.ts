@@ -26,18 +26,24 @@ export function useLabelActionsController() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const notification = useNotification();
-  const copyLabel = useCallback(async (record: LabelRecord) => {
-    try {
-      await navigator.clipboard.writeText(buildLabelDisplayName(record));
-      notification.open?.(notice(t('labels.copySuccess'), 'success'));
-    } catch {
-      notification.open?.(notice(t('labels.copyFailed'), 'error'));
-    }
-  }, [notification, t]);
+  const copyLabel = useCallback(
+    async (record: LabelRecord) => {
+      try {
+        await navigator.clipboard.writeText(buildLabelDisplayName(record));
+        notification.open?.(notice(t('labels.copySuccess'), 'success'));
+      } catch {
+        notification.open?.(notice(t('labels.copyFailed'), 'error'));
+      }
+    },
+    [notification, t]
+  );
 
-  const inspectLabel = useCallback((record: LabelRecord) => {
-    void navigate(buildLabelMonitorPath(record));
-  }, [navigate]);
+  const inspectLabel = useCallback(
+    (record: LabelRecord) => {
+      void navigate(buildLabelMonitorPath(record));
+    },
+    [navigate]
+  );
 
   return { copyLabel, inspectLabel };
 }

@@ -30,10 +30,17 @@ import {
 
 describe('system configuration model', () => {
   it('normalizes unsupported backend values to explicit runtime defaults', () => {
-    expect(createSystemConfigDraft(null, { locale: 'zh-CN', timeZoneId: 'Asia/Shanghai', theme: 'dark' }))
-      .toEqual({ locale: 'zh_CN', timeZoneId: 'Asia/Shanghai', theme: 'dark' });
-    expect(createSystemConfigDraft({ locale: 'unknown', timeZoneId: '', theme: 'other' }, { locale: 'en-US', timeZoneId: 'UTC', theme: 'dark' }))
-      .toEqual({ locale: 'en_US', timeZoneId: 'UTC', theme: 'dark' });
+    expect(createSystemConfigDraft(null, { locale: 'zh-CN', timeZoneId: 'Asia/Shanghai', theme: 'dark' })).toEqual({
+      locale: 'zh_CN',
+      timeZoneId: 'Asia/Shanghai',
+      theme: 'dark'
+    });
+    expect(
+      createSystemConfigDraft(
+        { locale: 'unknown', timeZoneId: '', theme: 'other' },
+        { locale: 'en-US', timeZoneId: 'UTC', theme: 'dark' }
+      )
+    ).toEqual({ locale: 'en_US', timeZoneId: 'UTC', theme: 'dark' });
   });
 
   it('maps persisted locale identifiers to the runtime catalog', () => {
@@ -42,7 +49,11 @@ describe('system configuration model', () => {
   });
 
   it('requires every setting and compares normalized values', () => {
-    expect(validateSystemConfigDraft({ locale: '', timeZoneId: '', theme: '' })).toEqual(['locale', 'timeZoneId', 'theme']);
+    expect(validateSystemConfigDraft({ locale: '', timeZoneId: '', theme: '' })).toEqual([
+      'locale',
+      'timeZoneId',
+      'theme'
+    ]);
     const baseline = { locale: 'en_US' as const, timeZoneId: 'UTC', theme: 'dark' as const };
     expect(isSystemConfigDirty({ ...baseline }, baseline)).toBe(false);
     expect(isSystemConfigDirty({ ...baseline, timeZoneId: 'Asia/Shanghai' }, baseline)).toBe(true);
@@ -50,12 +61,14 @@ describe('system configuration model', () => {
 
   it('owns strict singleton and timezone resource identities', () => {
     expect(systemConfigResourceId).toBe('current');
-    expect(createSystemConfigResourceRecord({ locale: 'en_US', timeZoneId: 'UTC', theme: 'dark' }))
-      .toEqual({ id: 'current', locale: 'en_US', timeZoneId: 'UTC', theme: 'dark' });
+    expect(createSystemConfigResourceRecord({ locale: 'en_US', timeZoneId: 'UTC', theme: 'dark' })).toEqual({
+      id: 'current',
+      locale: 'en_US',
+      timeZoneId: 'UTC',
+      theme: 'dark'
+    });
     expect(systemTimezonesResourceId).toBe('timezones');
-    expect(createSystemTimezoneResourceRecord([
-      { zoneId: 'UTC', offset: 'UTC+00:00', displayName: 'UTC' }
-    ])).toEqual({
+    expect(createSystemTimezoneResourceRecord([{ zoneId: 'UTC', offset: 'UTC+00:00', displayName: 'UTC' }])).toEqual({
       id: 'timezones',
       items: [{ zoneId: 'UTC', offset: 'UTC+00:00', displayName: 'UTC' }]
     });
@@ -71,7 +84,8 @@ describe('system configuration model', () => {
     for (const value of malformed) {
       expect(() => createSystemConfigResourceRecord(value as never)).toThrow();
     }
-    expect(() => createSystemTimezoneResourceRecord([{ zoneId: '', offset: 'private', displayName: 'private' }]))
-      .toThrow();
+    expect(() =>
+      createSystemTimezoneResourceRecord([{ zoneId: '', offset: 'private', displayName: 'private' }])
+    ).toThrow();
   });
 });

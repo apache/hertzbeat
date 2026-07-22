@@ -37,10 +37,12 @@ describe('instrumentation locale contract', () => {
 type LocaleRoot = { instrumentation: Record<string, unknown> };
 
 function flatten(value: Record<string, unknown>, prefix = ''): string[] {
-  return Object.entries(value).flatMap(([key, item]) => {
-    const path = prefix ? `${prefix}.${key}` : key;
-    return item && typeof item === 'object' && !Array.isArray(item)
-      ? flatten(item as Record<string, unknown>, path)
-      : [path];
-  }).sort();
+  return Object.entries(value)
+    .flatMap(([key, item]) => {
+      const path = prefix ? `${prefix}.${key}` : key;
+      return item && typeof item === 'object' && !Array.isArray(item)
+        ? flatten(item as Record<string, unknown>, path)
+        : [path];
+    })
+    .sort();
 }

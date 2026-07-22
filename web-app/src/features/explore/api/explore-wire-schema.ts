@@ -17,11 +17,7 @@
 
 import { z } from 'zod';
 
-import {
-  ExploreSignalContractError,
-  type ExplorePageResult,
-  type JsonValue
-} from '../model/explore-signal-contract';
+import { ExploreSignalContractError, type ExplorePageResult, type JsonValue } from '../model/explore-signal-contract';
 
 export const nullableStringSchema = z.string().nullable();
 export const integerSchema = z.number().int().safe();
@@ -31,20 +27,24 @@ export const nullableNonNegativeIntegerSchema = nonNegativeIntegerSchema.nullabl
 
 // Java Long timestamps exceed JavaScript's safe-integer range in current API
 // responses. They must remain finite integers until the backend adopts strings.
-export const nullableJavaLongSchema = z.number().finite()
+export const nullableJavaLongSchema = z
+  .number()
+  .finite()
   .refine(Number.isInteger)
   .refine(value => value >= 0)
   .nullable();
 export const nullableStringMapSchema = z.record(z.string(), z.string()).nullable();
 
-export const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() => z.union([
-  z.null(),
-  z.boolean(),
-  z.number().finite(),
-  z.string(),
-  z.array(jsonValueSchema),
-  z.record(z.string(), jsonValueSchema)
-]));
+export const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
+  z.union([
+    z.null(),
+    z.boolean(),
+    z.number().finite(),
+    z.string(),
+    z.array(jsonValueSchema),
+    z.record(z.string(), jsonValueSchema)
+  ])
+);
 export const nullableJsonMapSchema = z.record(z.string(), jsonValueSchema).nullable();
 
 export function parseExplorePage<T>(
@@ -53,13 +53,15 @@ export function parseExplorePage<T>(
   pageSize: number,
   itemSchema: z.ZodType<T>
 ): ExplorePageResult<T> {
-  const result = z.object({
-    content: z.array(itemSchema),
-    totalElements: nonNegativeIntegerSchema,
-    totalPages: nonNegativeIntegerSchema,
-    number: nonNegativeIntegerSchema,
-    size: integerSchema.positive()
-  }).safeParse(value);
+  const result = z
+    .object({
+      content: z.array(itemSchema),
+      totalElements: nonNegativeIntegerSchema,
+      totalPages: nonNegativeIntegerSchema,
+      number: nonNegativeIntegerSchema,
+      size: integerSchema.positive()
+    })
+    .safeParse(value);
   if (!result.success) throw new ExploreSignalContractError();
 
   const page = result.data;

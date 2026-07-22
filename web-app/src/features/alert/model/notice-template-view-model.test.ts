@@ -22,8 +22,7 @@ import { noticeTemplateTime, noticeTemplateTypeLabelKey } from './notice-templat
 describe('Notice Template view model', () => {
   it('selects the newest available audit time without formatting policy', () => {
     expect(noticeTemplateTime({ gmtCreate: 10, gmtUpdate: 20 })).toBe(20);
-    expect(noticeTemplateTime({ gmtCreate: '2026-07-18T10:00:00', gmtUpdate: null }))
-      .toBe('2026-07-18T10:00:00');
+    expect(noticeTemplateTime({ gmtCreate: '2026-07-18T10:00:00', gmtUpdate: null })).toBe('2026-07-18T10:00:00');
     expect(noticeTemplateTime({ gmtCreate: null, gmtUpdate: null })).toBeNull();
   });
 

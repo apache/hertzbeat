@@ -31,7 +31,7 @@ export function LogResult({
   query,
   t,
   navigate,
-  live,
+  live
 }: {
   data?: ExplorePageResult<LogRow> | undefined;
   query: LogExploreQuery;

@@ -35,7 +35,11 @@ export type TraceDetailView = {
   openRelatedMetrics: () => void;
 };
 
-export function TraceResult({ data, t, trace }: {
+export function TraceResult({
+  data,
+  t,
+  trace
+}: {
   data: ExplorePageResult<TraceRow>;
   t: TFunction;
   trace: TraceDetailView;

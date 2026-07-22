@@ -40,7 +40,11 @@ describe('Explore workbench', () => {
 
   it('keeps signal navigation and shared time scope visible', () => {
     const updateQuery = vi.fn();
-    render(<I18nextProvider i18n={i18n}><WorkbenchSubject updateQuery={updateQuery} /></I18nextProvider>);
+    render(
+      <I18nextProvider i18n={i18n}>
+        <WorkbenchSubject updateQuery={updateQuery} />
+      </I18nextProvider>
+    );
 
     expect(screen.getByRole('combobox', { name: 'Time range' })).toBeInTheDocument();
     expect(screen.getByText('Last 30 minutes')).toBeInTheDocument();
@@ -48,27 +52,45 @@ describe('Explore workbench', () => {
     expect(updateQuery).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('tab', { name: 'Logs' }));
     expect(updateQuery).toHaveBeenCalledWith({
-      signal: 'logs', query: undefined, live: undefined, pageIndex: undefined
+      signal: 'logs',
+      query: undefined,
+      live: undefined,
+      pageIndex: undefined
     });
   });
 
   it('keeps raw log attributes behind an advanced disclosure', () => {
-    render(<I18nextProvider i18n={i18n}><QuerySubject /></I18nextProvider>);
+    render(
+      <I18nextProvider i18n={i18n}>
+        <QuerySubject />
+      </I18nextProvider>
+    );
     expect(screen.getByText('Advanced filters').closest('details')).not.toHaveAttribute('open');
   });
 
   it('edits optional QueryContext v1 dimensions as an instance and HTTP route template', () => {
     const query = {
-      signal: 'logs', timeRange: 'last-30m', instance: 'checkout-7d9', endpoint: '/checkout'
+      signal: 'logs',
+      timeRange: 'last-30m',
+      instance: 'checkout-7d9',
+      endpoint: '/checkout'
     } as const;
-    render(<I18nextProvider i18n={i18n}><ExploreQueryBar
-      query={query}
-      t={i18n.t}
-      updateQuery={vi.fn()}
-      submission={{
-        draft: draftFromQuery(query), errors: {}, updateField: vi.fn(), submit: vi.fn(), removeFilter: vi.fn()
-      }}
-    /></I18nextProvider>);
+    render(
+      <I18nextProvider i18n={i18n}>
+        <ExploreQueryBar
+          query={query}
+          t={i18n.t}
+          updateQuery={vi.fn()}
+          submission={{
+            draft: draftFromQuery(query),
+            errors: {},
+            updateField: vi.fn(),
+            submit: vi.fn(),
+            removeFilter: vi.fn()
+          }}
+        />
+      </I18nextProvider>
+    );
 
     expect(screen.getByPlaceholderText('Service instance ID')).toHaveValue('checkout-7d9');
     expect(screen.getByPlaceholderText('HTTP route template, for example /checkout')).toHaveValue('/checkout');
@@ -79,50 +101,72 @@ describe('Explore workbench', () => {
   it('delegates refresh without rewriting a scoped fixed window and exposes invalid handoffs', () => {
     const updateQuery = vi.fn();
     const refresh = vi.fn().mockResolvedValue(undefined);
-    render(<I18nextProvider i18n={i18n}><ExploreWorkbench
-      query={{
-        signal: 'metrics', timeRange: 'last-30m', serviceName: 'checkout-api', serviceNamespace: 'commerce',
-        environment: 'prod', collectorId: 'collector-east', start: 1_710_000_000_000, end: 1_710_000_005_000
-      }}
-      t={i18n.t}
-      updateQuery={updateQuery}
-      refresh={refresh}
-    /></I18nextProvider>);
+    render(
+      <I18nextProvider i18n={i18n}>
+        <ExploreWorkbench
+          query={{
+            signal: 'metrics',
+            timeRange: 'last-30m',
+            serviceName: 'checkout-api',
+            serviceNamespace: 'commerce',
+            environment: 'prod',
+            collectorId: 'collector-east',
+            start: 1_710_000_000_000,
+            end: 1_710_000_005_000
+          }}
+          t={i18n.t}
+          updateQuery={updateQuery}
+          refresh={refresh}
+        />
+      </I18nextProvider>
+    );
 
     expect(screen.getByText('Fixed time window')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
     expect(refresh).toHaveBeenCalledOnce();
     expect(updateQuery).not.toHaveBeenCalled();
     cleanup();
-    render(<I18nextProvider i18n={i18n}><ExploreWorkbench
-      query={{ signal: 'metrics', timeRange: 'last-30m', collectorId: 'collector-east', start: 2_000, end: 1_000 }}
-      t={i18n.t}
-      updateQuery={vi.fn()}
-      refresh={vi.fn().mockResolvedValue(undefined)}
-    /></I18nextProvider>);
+    render(
+      <I18nextProvider i18n={i18n}>
+        <ExploreWorkbench
+          query={{ signal: 'metrics', timeRange: 'last-30m', collectorId: 'collector-east', start: 2_000, end: 1_000 }}
+          t={i18n.t}
+          updateQuery={vi.fn()}
+          refresh={vi.fn().mockResolvedValue(undefined)}
+        />
+      </I18nextProvider>
+    );
     expect(screen.getByText(en.explore.handoffInvalid)).toBeInTheDocument();
   });
 });
 
 function WorkbenchSubject({ updateQuery }: { updateQuery: (changes: ExploreQueryPatch) => void }) {
   const { t } = useTranslation();
-  return <ExploreWorkbench
-    query={{ signal: 'metrics', timeRange: 'last-30m', query: 'http_requests_total' }}
-    t={t}
-    updateQuery={updateQuery}
-    refresh={vi.fn().mockResolvedValue(undefined)}
-  />;
+  return (
+    <ExploreWorkbench
+      query={{ signal: 'metrics', timeRange: 'last-30m', query: 'http_requests_total' }}
+      t={t}
+      updateQuery={updateQuery}
+      refresh={vi.fn().mockResolvedValue(undefined)}
+    />
+  );
 }
 
 function QuerySubject() {
   const { t } = useTranslation();
   const query = { signal: 'logs', timeRange: 'last-30m' } as const;
-  return <ExploreQueryBar
-    query={query}
-    t={t}
-    updateQuery={vi.fn()}
-    submission={{
-      draft: draftFromQuery(query), errors: {}, updateField: vi.fn(), submit: vi.fn(), removeFilter: vi.fn()
-    }}
-  />;
+  return (
+    <ExploreQueryBar
+      query={query}
+      t={t}
+      updateQuery={vi.fn()}
+      submission={{
+        draft: draftFromQuery(query),
+        errors: {},
+        updateField: vi.fn(),
+        submit: vi.fn(),
+        removeFilter: vi.fn()
+      }}
+    />
+  );
 }

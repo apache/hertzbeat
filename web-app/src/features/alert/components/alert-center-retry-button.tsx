@@ -20,5 +20,14 @@ import { useTranslation } from 'react-i18next';
 
 export function AlertCenterRetryButton({ onClick }: { onClick: () => unknown }) {
   const { t } = useTranslation();
-  return <Button size="small" onClick={() => { void onClick(); }}>{t('common.retry')}</Button>;
+  return (
+    <Button
+      size="small"
+      onClick={() => {
+        void onClick();
+      }}
+    >
+      {t('common.retry')}
+    </Button>
+  );
 }

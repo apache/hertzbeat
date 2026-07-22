@@ -23,20 +23,26 @@ describe('Status Management Query Keys', () => {
       pageSize: 8
     });
 
-    expect(statusManagementQueryKeys.incidents({
-      search: 'web',
-      pageIndex: 0,
-      pageSize: 8
-    })).not.toEqual(baseline);
-    expect(statusManagementQueryKeys.incidents({
-      search: 'api',
-      pageIndex: 1,
-      pageSize: 8
-    })).not.toEqual(baseline);
-    expect(statusManagementQueryKeys.incidents({
-      search: 'api',
-      pageIndex: 0,
-      pageSize: 20
-    })).not.toEqual(baseline);
+    expect(
+      statusManagementQueryKeys.incidents({
+        search: 'web',
+        pageIndex: 0,
+        pageSize: 8
+      })
+    ).not.toEqual(baseline);
+    expect(
+      statusManagementQueryKeys.incidents({
+        search: 'api',
+        pageIndex: 1,
+        pageSize: 8
+      })
+    ).not.toEqual(baseline);
+    expect(
+      statusManagementQueryKeys.incidents({
+        search: 'api',
+        pageIndex: 0,
+        pageSize: 20
+      })
+    ).not.toEqual(baseline);
   });
 });

@@ -28,18 +28,22 @@ type ContractRefreshActions = {
 
 export function useInstrumentationContractRefresh(actions: ContractRefreshActions) {
   const { clearSelection, clearGuide, resetFlow, refreshCatalog } = actions;
-  return useCallback(async (error: unknown) => {
-    if (!requiresCatalogRefresh(error)) return false;
-    clearSelection();
-    clearGuide();
-    resetFlow();
-    await refreshCatalog();
-    return true;
-  }, [clearGuide, clearSelection, refreshCatalog, resetFlow]);
+  return useCallback(
+    async (error: unknown) => {
+      if (!requiresCatalogRefresh(error)) return false;
+      clearSelection();
+      clearGuide();
+      resetFlow();
+      await refreshCatalog();
+      return true;
+    },
+    [clearGuide, clearSelection, refreshCatalog, resetFlow]
+  );
 }
 
 function requiresCatalogRefresh(error: unknown) {
-  return error instanceof InstrumentationContractError
-    || error instanceof InstrumentationRequestError
-    && error.machineCode !== 'instrumentation_context_invalid';
+  return (
+    error instanceof InstrumentationContractError ||
+    (error instanceof InstrumentationRequestError && error.machineCode !== 'instrumentation_context_invalid')
+  );
 }

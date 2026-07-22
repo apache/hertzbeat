@@ -21,7 +21,14 @@ import styles from './signal-result-frame.module.css';
 
 type MetaItem = { label: string; value: ReactNode };
 
-export function SignalResultFrame({ title, count, unit, meta = [], actions, children }: {
+export function SignalResultFrame({
+  title,
+  count,
+  unit,
+  meta = [],
+  actions,
+  children
+}: {
   title: string;
   count: number;
   unit?: string | undefined;
@@ -29,21 +36,40 @@ export function SignalResultFrame({ title, count, unit, meta = [], actions, chil
   actions?: ReactNode | undefined;
   children: ReactNode;
 }) {
-  return <section className={styles.frame}>
-    <header className={styles.header}>
-      <div className={styles.identity}>
-        <h3>{title}</h3>
-        <span>{count.toLocaleString()}{unit ? ` ${unit}` : ''}</span>
-      </div>
-      <div className={styles.headerTools}>
-        {meta.length > 0 && <dl className={styles.meta}>{meta.map(item => <div key={item.label}><dt>{item.label}</dt><dd>{item.value}</dd></div>)}</dl>}
-        {actions}
-      </div>
-    </header>
-    {children}
-  </section>;
+  return (
+    <section className={styles.frame}>
+      <header className={styles.header}>
+        <div className={styles.identity}>
+          <h3>{title}</h3>
+          <span>
+            {count.toLocaleString()}
+            {unit ? ` ${unit}` : ''}
+          </span>
+        </div>
+        <div className={styles.headerTools}>
+          {meta.length > 0 && (
+            <dl className={styles.meta}>
+              {meta.map(item => (
+                <div key={item.label}>
+                  <dt>{item.label}</dt>
+                  <dd>{item.value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          {actions}
+        </div>
+      </header>
+      {children}
+    </section>
+  );
 }
 
 export function SignalEmptyState({ title, hint }: { title: string; hint: string }) {
-  return <div className={styles.empty} role="status"><strong>{title}</strong><span>{hint}</span></div>;
+  return (
+    <div className={styles.empty} role="status">
+      <strong>{title}</strong>
+      <span>{hint}</span>
+    </div>
+  );
 }

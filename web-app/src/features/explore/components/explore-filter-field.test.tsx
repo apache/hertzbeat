@@ -29,9 +29,11 @@ describe('Explore filter field', () => {
   });
 
   it('renders the stable submission error mapping as an accessible field error', () => {
-    render(<ExploreFilterField id="explore-step" error="invalid_step" t={i18n.t}>
-      <input aria-describedby="explore-step-error" />
-    </ExploreFilterField>);
+    render(
+      <ExploreFilterField id="explore-step" error="invalid_step" t={i18n.t}>
+        <input aria-describedby="explore-step-error" />
+      </ExploreFilterField>
+    );
 
     expect(screen.getByRole('alert')).toHaveAttribute('id', 'explore-step-error');
     expect(screen.getByRole('alert')).toHaveTextContent(i18n.t('explore.submissionErrors.invalidStep'));

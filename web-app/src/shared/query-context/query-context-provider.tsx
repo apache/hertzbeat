@@ -30,13 +30,16 @@ export function QueryContextProvider({ children }: PropsWithChildren) {
     setParams(canonical, { replace: true });
   }, [canonical, canonicalSearch, currentSearch, setParams]);
 
-  const value = useMemo<QueryContextValue>(() => ({
-    context,
-    scopeKey: queryContextScopeKey(context),
-    update: patch => setParams(writeQueryContext(params, mergeQueryContext(context, patch))),
-    replace: next => setParams(writeQueryContext(params, next), { replace: true }),
-    clearFrom: field => setParams(writeQueryContext(params, clearQueryContext(context, field)))
-  }), [context, params, setParams]);
+  const value = useMemo<QueryContextValue>(
+    () => ({
+      context,
+      scopeKey: queryContextScopeKey(context),
+      update: patch => setParams(writeQueryContext(params, mergeQueryContext(context, patch))),
+      replace: next => setParams(writeQueryContext(params, next), { replace: true }),
+      clearFrom: field => setParams(writeQueryContext(params, clearQueryContext(context, field)))
+    }),
+    [context, params, setParams]
+  );
 
   return <QueryContextState.Provider value={value}>{children}</QueryContextState.Provider>;
 }

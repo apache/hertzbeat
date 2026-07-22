@@ -30,7 +30,7 @@ export function LogDetail({
   t,
   query,
   navigate,
-  onClose,
+  onClose
 }: {
   row?: LogRow | undefined;
   t: TFunction;
@@ -44,15 +44,17 @@ export function LogDetail({
       open={Boolean(row)}
       title={t('exploreLog.detail')}
       onClose={onClose}
-      extra={row?.traceId ? (
-        <Button
-          onClick={() => {
-            void navigate(buildCrossSignalPath(query, 'traces', { traceId: row.traceId ?? undefined }));
-          }}
-        >
-          {t('exploreLog.openTrace')}
-        </Button>
-      ) : undefined}
+      extra={
+        row?.traceId ? (
+          <Button
+            onClick={() => {
+              void navigate(buildCrossSignalPath(query, 'traces', { traceId: row.traceId ?? undefined }));
+            }}
+          >
+            {t('exploreLog.openTrace')}
+          </Button>
+        ) : undefined
+      }
     >
       {row && (
         <>
@@ -65,7 +67,7 @@ export function LogDetail({
               { key: 'time', label: t('explore.time'), children: formatLogTime(row) },
               { key: 'severity', label: t('explore.severity'), children: row.severityText ?? '—' },
               { key: 'trace', label: t('explore.traceId'), children: row.traceId ?? '—' },
-              { key: 'span', label: t('explore.spanId'), children: row.spanId ?? '—' },
+              { key: 'span', label: t('explore.spanId'), children: row.spanId ?? '—' }
             ]}
           />
           <OtlpAttributeSection title={t('exploreLog.resourceAttributes')} value={row.resource ?? undefined} />

@@ -16,14 +16,18 @@ describe('Bulletin Query Keys', () => {
 
   it('scopes dependencies, hierarchy, and metrics by their result inputs', () => {
     expect(bulletinQueryKeys.apps()).toEqual(['bulletin', 'dependencies', 'apps']);
-    expect(bulletinQueryKeys.monitors('website'))
-      .toEqual(['bulletin', 'dependencies', 'monitors', 'website']);
-    expect(bulletinQueryKeys.hierarchy('website', 'en-US'))
-      .toEqual(['bulletin', 'dependencies', 'hierarchy', 'website', 'en-US']);
-    expect(bulletinQueryKeys.hierarchy('website', 'en-US'))
-      .not.toEqual(bulletinQueryKeys.hierarchy('website', 'zh-CN'));
-    expect(bulletinQueryKeys.hierarchy('website', 'en-US'))
-      .not.toEqual(bulletinQueryKeys.hierarchy('redis', 'en-US'));
+    expect(bulletinQueryKeys.monitors('website')).toEqual(['bulletin', 'dependencies', 'monitors', 'website']);
+    expect(bulletinQueryKeys.hierarchy('website', 'en-US')).toEqual([
+      'bulletin',
+      'dependencies',
+      'hierarchy',
+      'website',
+      'en-US'
+    ]);
+    expect(bulletinQueryKeys.hierarchy('website', 'en-US')).not.toEqual(
+      bulletinQueryKeys.hierarchy('website', 'zh-CN')
+    );
+    expect(bulletinQueryKeys.hierarchy('website', 'en-US')).not.toEqual(bulletinQueryKeys.hierarchy('redis', 'en-US'));
     expect(bulletinQueryKeys.metrics(9)).toEqual(['bulletin', 'metrics', 9]);
     expect(bulletinQueryKeys.lists()).toEqual(['bulletin', 'lists']);
   });

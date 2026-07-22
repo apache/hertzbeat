@@ -20,23 +20,19 @@ import { useSearchParams } from 'react-router-dom';
 
 import { useStringQueryDraft } from '@/shared/query-context';
 
-import {
-  readNoticeTemplateQuery,
-  writeNoticeTemplateQuery,
-  type NoticeTemplateQuery
-} from '../notice-template-model';
+import { readNoticeTemplateQuery, writeNoticeTemplateQuery, type NoticeTemplateQuery } from '../notice-template-model';
 
 export function useNoticeTemplateQueryController() {
   const [params, setParams] = useSearchParams();
   const serializedParams = params.toString();
-  const query = useMemo(
-    () => readNoticeTemplateQuery(new URLSearchParams(serializedParams)),
-    [serializedParams]
-  );
+  const query = useMemo(() => readNoticeTemplateQuery(new URLSearchParams(serializedParams)), [serializedParams]);
   const { value: name, setValue: setName } = useStringQueryDraft(query.name, query.name);
-  const updateQuery = useCallback((patch: Partial<NoticeTemplateQuery>) => {
-    setParams(writeNoticeTemplateQuery({ ...query, ...patch }));
-  }, [query, setParams]);
+  const updateQuery = useCallback(
+    (patch: Partial<NoticeTemplateQuery>) => {
+      setParams(writeNoticeTemplateQuery({ ...query, ...patch }));
+    },
+    [query, setParams]
+  );
 
   return {
     changePage: (page: number, pageSize: number) => updateQuery({ pageIndex: page - 1, pageSize }),

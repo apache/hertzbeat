@@ -26,11 +26,16 @@ describe('api message errors', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('preserves the backend envelope code and message', async () => {
-    apiFetch.mockResolvedValue(new Response(JSON.stringify({
-      code: 15,
-      msg: 'Status Page Organization Not Found',
-      data: null
-    }), { status: 200 }));
+    apiFetch.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          code: 15,
+          msg: 'Status Page Organization Not Found',
+          data: null
+        }),
+        { status: 200 }
+      )
+    );
 
     await expect(apiMessageGet('/api/status/page/org')).rejects.toMatchObject({
       name: 'ApiMessageError',

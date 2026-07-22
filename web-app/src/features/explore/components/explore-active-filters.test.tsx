@@ -34,14 +34,19 @@ describe('Explore active filters', () => {
   it('delegates draft-owned removal without applying the query fallback', () => {
     const removeFilter = vi.fn(() => true);
     const updateQuery = vi.fn();
-    render(<ExploreActiveFilters
-      query={{
-        signal: 'logs', timeRange: 'last-30m', instance: 'checkout-7d9', severityText: 'ERROR'
-      }}
-      t={i18n.t}
-      updateQuery={updateQuery}
-      removeFilter={removeFilter}
-    />);
+    render(
+      <ExploreActiveFilters
+        query={{
+          signal: 'logs',
+          timeRange: 'last-30m',
+          instance: 'checkout-7d9',
+          severityText: 'ERROR'
+        }}
+        t={i18n.t}
+        updateQuery={updateQuery}
+        removeFilter={removeFilter}
+      />
+    );
 
     expect(screen.getByText('Severity: ERROR')).toBeInTheDocument();
     closeFilter('Instance: checkout-7d9');
@@ -53,12 +58,14 @@ describe('Explore active filters', () => {
   it('falls back to query removal for a filter outside the submission draft', () => {
     const removeFilter = vi.fn(() => false);
     const updateQuery = vi.fn();
-    render(<ExploreActiveFilters
-      query={{ signal: 'metrics', timeRange: 'last-30m', serviceNamespace: 'commerce' }}
-      t={i18n.t}
-      updateQuery={updateQuery}
-      removeFilter={removeFilter}
-    />);
+    render(
+      <ExploreActiveFilters
+        query={{ signal: 'metrics', timeRange: 'last-30m', serviceNamespace: 'commerce' }}
+        t={i18n.t}
+        updateQuery={updateQuery}
+        removeFilter={removeFilter}
+      />
+    );
 
     closeFilter('Namespace: commerce');
 

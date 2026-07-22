@@ -22,22 +22,42 @@ import styles from './dashboard.module.css';
 export function DashboardResults({ data }: { data: DashboardData }) {
   const { t } = useTranslation();
   const totals = monitorTotals(data.apps);
-  return <>
-    <section className={styles.metrics} aria-label={t('dashboard.monitorSummary')}>
-      <Statistic title={t('dashboard.total')} value={totals.total} />
-      <Statistic title={t('dashboard.available')} value={totals.available} />
-      <Statistic title={t('dashboard.unavailable')} value={totals.unavailable} />
-      <Statistic title={t('dashboard.alerts')} value={data.alert.total} />
-    </section>
-    <section className={styles.section}>
-      <Typography.Title level={4}>{t('dashboard.distribution')}</Typography.Title>
-      {data.apps.length === 0 ? <Empty description={t('dashboard.empty')} /> : <Table<AppCount>
-        rowKey={row => `${row.category}-${row.app}`} pagination={false} size="small" dataSource={data.apps}
-        columns={[{ title: t('dashboard.application'), dataIndex: 'app' },
-          { title: t('dashboard.category'), dataIndex: 'category' }, { title: t('dashboard.total'), dataIndex: 'size' },
-          { title: t('dashboard.available'), dataIndex: 'availableSize', render: (value: number) => <Tag color="green">{value}</Tag> },
-          { title: t('dashboard.unavailable'), dataIndex: 'unAvailableSize',
-            render: (value: number) => <Tag color={value > 0 ? 'red' : 'default'}>{value}</Tag> }]} />}
-    </section>
-  </>;
+  return (
+    <>
+      <section className={styles.metrics} aria-label={t('dashboard.monitorSummary')}>
+        <Statistic title={t('dashboard.total')} value={totals.total} />
+        <Statistic title={t('dashboard.available')} value={totals.available} />
+        <Statistic title={t('dashboard.unavailable')} value={totals.unavailable} />
+        <Statistic title={t('dashboard.alerts')} value={data.alert.total} />
+      </section>
+      <section className={styles.section}>
+        <Typography.Title level={4}>{t('dashboard.distribution')}</Typography.Title>
+        {data.apps.length === 0 ? (
+          <Empty description={t('dashboard.empty')} />
+        ) : (
+          <Table<AppCount>
+            rowKey={row => `${row.category}-${row.app}`}
+            pagination={false}
+            size="small"
+            dataSource={data.apps}
+            columns={[
+              { title: t('dashboard.application'), dataIndex: 'app' },
+              { title: t('dashboard.category'), dataIndex: 'category' },
+              { title: t('dashboard.total'), dataIndex: 'size' },
+              {
+                title: t('dashboard.available'),
+                dataIndex: 'availableSize',
+                render: (value: number) => <Tag color="green">{value}</Tag>
+              },
+              {
+                title: t('dashboard.unavailable'),
+                dataIndex: 'unAvailableSize',
+                render: (value: number) => <Tag color={value > 0 ? 'red' : 'default'}>{value}</Tag>
+              }
+            ]}
+          />
+        )}
+      </section>
+    </>
+  );
 }

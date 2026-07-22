@@ -27,11 +27,13 @@ export type PageResult<T> = {
   size: number;
 };
 
-const apiEnvelopeSchema = z.object({
-  code: z.number().int(),
-  msg: z.string().nullable().optional(),
-  data: z.unknown()
-}).strict();
+const apiEnvelopeSchema = z
+  .object({
+    code: z.number().int(),
+    msg: z.string().nullable().optional(),
+    data: z.unknown()
+  })
+  .strict();
 
 type ApiMessageErrorDetails = {
   code?: number;

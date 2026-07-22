@@ -12,35 +12,38 @@ import type { QueryContext } from '@/shared/query-context';
 
 import type { FlowStage, InstrumentationFlowDraft } from '../model/instrumentation-flow';
 import { clearFlowSelection } from '../model/instrumentation-flow';
-import {
-  parseInstrumentationProgress,
-  writeInstrumentationProgress
-} from '../model/instrumentation-progress';
+import { parseInstrumentationProgress, writeInstrumentationProgress } from '../model/instrumentation-progress';
 
 export function useInstrumentationProgressController(context: QueryContext) {
   const [params, setParams] = useSearchParams();
   const location = useLocation();
   const search = params.toString();
-  const restored = useMemo(
-    () => parseInstrumentationProgress(params, context),
-    [context, params]
-  );
+  const restored = useMemo(() => parseInstrumentationProgress(params, context), [context, params]);
   const stage = ephemeralStage(location.state) ?? restored.stage;
 
-  const setStage = useCallback((next: FlowStage, draft: InstrumentationFlowDraft) => {
-    const updated = writeInstrumentationProgress(params, draft, next);
-    setParams(updated, { state: next > 3 ? { instrumentationStage: next } : null });
-  }, [params, setParams]);
-  const persistDraft = useCallback((draft: InstrumentationFlowDraft) => {
-    const updated = writeInstrumentationProgress(params, draft, stage);
-    if (updated.toString() !== search) setParams(updated, { replace: true });
-  }, [params, search, setParams, stage]);
-  const clearMismatch = useCallback((draft: InstrumentationFlowDraft) => {
-    const updated = writeInstrumentationProgress(params, clearFlowSelection(draft), 1);
-    if (updated.toString() !== search || location.state != null) {
-      setParams(updated, { replace: true, state: null });
-    }
-  }, [location.state, params, search, setParams]);
+  const setStage = useCallback(
+    (next: FlowStage, draft: InstrumentationFlowDraft) => {
+      const updated = writeInstrumentationProgress(params, draft, next);
+      setParams(updated, { state: next > 3 ? { instrumentationStage: next } : null });
+    },
+    [params, setParams]
+  );
+  const persistDraft = useCallback(
+    (draft: InstrumentationFlowDraft) => {
+      const updated = writeInstrumentationProgress(params, draft, stage);
+      if (updated.toString() !== search) setParams(updated, { replace: true });
+    },
+    [params, search, setParams, stage]
+  );
+  const clearMismatch = useCallback(
+    (draft: InstrumentationFlowDraft) => {
+      const updated = writeInstrumentationProgress(params, clearFlowSelection(draft), 1);
+      if (updated.toString() !== search || location.state != null) {
+        setParams(updated, { replace: true, state: null });
+      }
+    },
+    [location.state, params, search, setParams]
+  );
 
   return { restored, search, stage, setStage, persistDraft, clearMismatch };
 }

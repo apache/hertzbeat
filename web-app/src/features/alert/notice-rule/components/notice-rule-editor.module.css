@@ -15,13 +15,57 @@
  * limitations under the License.
  */
 
-.form, .advancedFields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, .45fr); gap: 16px; }
-.field, .wideField { display: grid; gap: 7px; color: var(--ant-color-text-secondary); font-size: 13px; }
-.field :global(.ant-picker), .wideField :global(.ant-select) { width: 100%; }
-.wideField, .advanced { grid-column: 1 / -1; }
-.switchField { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--ant-color-text-secondary); font-size: 13px; }
-.advanced { border-top: 1px solid var(--ant-color-border-secondary); }
-.advanced :global(.ant-collapse-header) { padding-inline: 0 !important; }
-.advanced :global(.ant-collapse-content-box) { padding-inline: 0 !important; }
-.hint { grid-column: 1 / -1; color: var(--ant-color-text-tertiary); font-size: 12px; }
-@media (max-width: 700px) { .form, .advancedFields { grid-template-columns: 1fr; } .wideField, .advanced, .hint { grid-column: auto; } }
+.form,
+.advancedFields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.45fr);
+  gap: 16px;
+}
+.field,
+.wideField {
+  display: grid;
+  gap: 7px;
+  color: var(--ant-color-text-secondary);
+  font-size: 13px;
+}
+.field :global(.ant-picker),
+.wideField :global(.ant-select) {
+  width: 100%;
+}
+.wideField,
+.advanced {
+  grid-column: 1 / -1;
+}
+.switchField {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--ant-color-text-secondary);
+  font-size: 13px;
+}
+.advanced {
+  border-top: 1px solid var(--ant-color-border-secondary);
+}
+.advanced :global(.ant-collapse-header) {
+  padding-inline: 0 !important;
+}
+.advanced :global(.ant-collapse-content-box) {
+  padding-inline: 0 !important;
+}
+.hint {
+  grid-column: 1 / -1;
+  color: var(--ant-color-text-tertiary);
+  font-size: 12px;
+}
+@media (max-width: 700px) {
+  .form,
+  .advancedFields {
+    grid-template-columns: 1fr;
+  }
+  .wideField,
+  .advanced,
+  .hint {
+    grid-column: auto;
+  }
+}

@@ -45,10 +45,18 @@ function QueryProbe() {
       <output data-testid="location">{`${location.pathname}${location.search}`}</output>
       <output data-testid="query">{`${controller.query.name}|${controller.query.pageIndex}|${controller.query.pageSize}`}</output>
       <output data-testid="draft">{controller.name}</output>
-      <button type="button" onClick={() => controller.setName('no-such-receiver')}>Type missing receiver</button>
-      <button type="button" onClick={controller.search}>Search</button>
-      <button type="button" onClick={() => void navigate(-1)}>Back</button>
-      <button type="button" onClick={() => void navigate(1)}>Forward</button>
+      <button type="button" onClick={() => controller.setName('no-such-receiver')}>
+        Type missing receiver
+      </button>
+      <button type="button" onClick={controller.search}>
+        Search
+      </button>
+      <button type="button" onClick={() => void navigate(-1)}>
+        Back
+      </button>
+      <button type="button" onClick={() => void navigate(1)}>
+        Forward
+      </button>
     </>
   );
 }

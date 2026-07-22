@@ -12,9 +12,7 @@ import pt from '@/assets/i18n/pt-br.json';
 import zhCn from '@/assets/i18n/zh-cn.json';
 import zhTw from '@/assets/i18n/zh-tw.json';
 
-const submissionErrorKeys = [
-  'unsupportedAggregation', 'invalidStep', 'invalidDuration', 'minExceedsMax'
-] as const;
+const submissionErrorKeys = ['unsupportedAggregation', 'invalidStep', 'invalidDuration', 'minExceedsMax'] as const;
 
 const runtimeLocales = [en, ja, pt, zhCn, zhTw] as LocaleRoot[];
 

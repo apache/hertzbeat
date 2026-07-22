@@ -144,10 +144,7 @@ function OfficialStackHarness({
   return (
     <ConfigProvider>
       <AntApp>
-        <MemoryRouter
-          initialEntries={initialEntries}
-          {...(initialIndex === undefined ? {} : { initialIndex })}
-        >
+        <MemoryRouter initialEntries={initialEntries} {...(initialIndex === undefined ? {} : { initialIndex })}>
           <Refine
             dataProvider={provider}
             routerProvider={routerProvider}
@@ -176,13 +173,11 @@ function LabelTable({ expectedQueryClient }: { expectedQueryClient: QueryClient 
     SearchForm,
     LabelRecord
   >({
-      resource: 'labels',
-      syncWithLocation: true,
-      pagination: { currentPage: 1, pageSize: 2, mode: 'server' },
-      onSearch: ({ search }) => search?.trim()
-        ? [{ field: 'search', operator: 'contains', value: search.trim() }]
-        : []
-    });
+    resource: 'labels',
+    syncWithLocation: true,
+    pagination: { currentPage: 1, pageSize: 2, mode: 'server' },
+    onSearch: ({ search }) => (search?.trim() ? [{ field: 'search', operator: 'contains', value: search.trim() }] : [])
+  });
 
   return (
     <section>
@@ -196,8 +191,20 @@ function LabelTable({ expectedQueryClient }: { expectedQueryClient: QueryClient 
       </Form>
       <Button onClick={() => setCurrentPage?.(current => current + 1)}>Next page</Button>
       <Button onClick={() => void tableQuery.refetch()}>Refresh</Button>
-      <Button onClick={() => { void navigate(-1); }}>Back</Button>
-      <Button onClick={() => { void navigate(1); }}>Forward</Button>
+      <Button
+        onClick={() => {
+          void navigate(-1);
+        }}
+      >
+        Back
+      </Button>
+      <Button
+        onClick={() => {
+          void navigate(1);
+        }}
+      >
+        Forward
+      </Button>
       <Table<LabelRecord> {...tableProps} rowKey="id">
         <Table.Column<LabelRecord> dataIndex="name" title="Label" />
       </Table>

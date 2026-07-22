@@ -81,7 +81,9 @@
   padding: 11px;
   overflow: auto;
   color: var(--hb-text-primary);
-  font: 11px/1.55 ui-monospace, monospace;
+  font:
+    11px/1.55 ui-monospace,
+    monospace;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }

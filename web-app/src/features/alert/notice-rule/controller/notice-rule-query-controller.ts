@@ -21,9 +21,12 @@ export function useNoticeRuleQueryController() {
   const search = useCallback(() => {
     setSearchParams(writeNoticeRuleQuery({ ...query, name: name.trim(), pageIndex: 0 }));
   }, [name, query, setSearchParams]);
-  const changePage = useCallback((page: number, pageSize: number) => {
-    setSearchParams(writeNoticeRuleQuery({ ...query, pageIndex: page - 1, pageSize }));
-  }, [query, setSearchParams]);
+  const changePage = useCallback(
+    (page: number, pageSize: number) => {
+      setSearchParams(writeNoticeRuleQuery({ ...query, pageIndex: page - 1, pageSize }));
+    },
+    [query, setSearchParams]
+  );
 
   return { query, name, setName, search, changePage };
 }

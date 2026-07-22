@@ -22,7 +22,10 @@ import { persistSystemPreferences, readRuntimeLocale, readRuntimeTheme } from '.
 describe('runtime preferences', () => {
   it('uses stable dark defaults and persists only supported values', () => {
     const values = new Map<string, string>();
-    const storage = { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => values.set(key, value) };
+    const storage = {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => values.set(key, value)
+    };
     expect(readRuntimeTheme(storage)).toBe('dark');
     expect(readRuntimeLocale(storage)).toBeNull();
     persistSystemPreferences({ locale: 'pt_BR', theme: 'compact' }, storage);

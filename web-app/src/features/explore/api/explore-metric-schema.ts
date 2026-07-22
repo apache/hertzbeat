@@ -17,10 +17,7 @@
 
 import { z } from 'zod';
 
-import {
-  ExploreSignalContractError,
-  type MetricConsole
-} from '../model/explore-signal-contract';
+import { ExploreSignalContractError, type MetricConsole } from '../model/explore-signal-contract';
 import {
   jsonValueSchema,
   nullableIntegerSchema,
@@ -49,11 +46,13 @@ const metricFieldSchema = z.object({
 });
 
 const metricFrameSchema = z.object({
-  schema: z.object({
-    fields: z.array(metricFieldSchema).nullable(),
-    labels: nullableStringMapSchema,
-    meta: nullableStringMapSchema
-  }).nullable(),
+  schema: z
+    .object({
+      fields: z.array(metricFieldSchema).nullable(),
+      labels: nullableStringMapSchema,
+      meta: nullableStringMapSchema
+    })
+    .nullable(),
   data: z.array(z.array(jsonValueSchema)).nullable()
 });
 
@@ -64,11 +63,13 @@ const metricResultsSchema = z.object({
   frames: z.array(metricFrameSchema).nullable()
 });
 
-const metricStatsSchema = z.object({
-  totalSeries: nonNegativeIntegerSchema,
-  nonEmptySeries: nonNegativeIntegerSchema,
-  latestObservedAt: nullableNonNegativeIntegerSchema
-}).refine(stats => stats.nonEmptySeries <= stats.totalSeries);
+const metricStatsSchema = z
+  .object({
+    totalSeries: nonNegativeIntegerSchema,
+    nonEmptySeries: nonNegativeIntegerSchema,
+    latestObservedAt: nullableNonNegativeIntegerSchema
+  })
+  .refine(stats => stats.nonEmptySeries <= stats.totalSeries);
 
 const metricConsoleSchema: z.ZodType<MetricConsole> = z.object({
   context: metricContextSchema.nullable(),

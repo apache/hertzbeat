@@ -13,11 +13,6 @@ const rootKey = ['status-management'] as const;
 export const statusManagementQueryKeys = {
   org: () => [...rootKey, 'org'] as const,
   components: () => [...rootKey, 'components'] as const,
-  incidents: (query: StatusIncidentQuery) => [
-    ...rootKey,
-    'incidents',
-    query.search,
-    query.pageIndex,
-    query.pageSize
-  ] as const
+  incidents: (query: StatusIncidentQuery) =>
+    [...rootKey, 'incidents', query.search, query.pageIndex, query.pageSize] as const
 };

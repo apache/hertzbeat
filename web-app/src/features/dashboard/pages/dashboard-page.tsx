@@ -23,16 +23,30 @@ import styles from '../components/dashboard.module.css';
 export function DashboardPage() {
   const { t } = useTranslation();
   const dashboard = useDashboardController();
-  return <div className={styles.page}>
-    <header className={styles.heading}>
-      <div><Typography.Title level={2}>{t('dashboard.title')}</Typography.Title>
-        <Typography.Text type="secondary">{t('dashboard.description')}</Typography.Text></div>
-      <Button onClick={() => { void dashboard.refresh(); }}>{t('common.refresh')}</Button>
-    </header>
-    {dashboard.state.kind === 'loading' && <Skeleton active />}
-    {dashboard.state.kind === 'missing' && <Alert type="warning" showIcon message={t('dashboard.summaryUnavailable')} />}
-    {dashboard.state.kind === 'unavailable' && <Alert type="warning" showIcon message={t('common.unavailable')} />}
-    {dashboard.state.kind === 'error' && <Alert type="error" showIcon message={t('common.routeError.description')} />}
-    {(dashboard.state.kind === 'ready' || dashboard.state.kind === 'empty') && <DashboardResults data={dashboard.state.data} />}
-  </div>;
+  return (
+    <div className={styles.page}>
+      <header className={styles.heading}>
+        <div>
+          <Typography.Title level={2}>{t('dashboard.title')}</Typography.Title>
+          <Typography.Text type="secondary">{t('dashboard.description')}</Typography.Text>
+        </div>
+        <Button
+          onClick={() => {
+            void dashboard.refresh();
+          }}
+        >
+          {t('common.refresh')}
+        </Button>
+      </header>
+      {dashboard.state.kind === 'loading' && <Skeleton active />}
+      {dashboard.state.kind === 'missing' && (
+        <Alert type="warning" showIcon message={t('dashboard.summaryUnavailable')} />
+      )}
+      {dashboard.state.kind === 'unavailable' && <Alert type="warning" showIcon message={t('common.unavailable')} />}
+      {dashboard.state.kind === 'error' && <Alert type="error" showIcon message={t('common.routeError.description')} />}
+      {(dashboard.state.kind === 'ready' || dashboard.state.kind === 'empty') && (
+        <DashboardResults data={dashboard.state.data} />
+      )}
+    </div>
+  );
 }

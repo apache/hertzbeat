@@ -101,7 +101,10 @@ const traceDetailSchema: z.ZodType<TraceDetail> = z.object({
 
 export function parseTracePage(value: unknown, pageIndex: number, pageSize: number): ExplorePageResult<TraceRow> {
   const page = parseExplorePage(value, pageIndex, pageSize, traceRowSchema);
-  requireUnique(page.content.map(row => row.traceId), 'trace page contains duplicate traceId');
+  requireUnique(
+    page.content.map(row => row.traceId),
+    'trace page contains duplicate traceId'
+  );
   return page;
 }
 

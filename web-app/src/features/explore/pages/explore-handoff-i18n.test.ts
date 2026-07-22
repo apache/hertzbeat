@@ -29,8 +29,13 @@ import exploreZhCn from '@/assets/i18n/explore/zh-cn.json';
 import exploreZhTw from '@/assets/i18n/explore/zh-tw.json';
 
 const handoffKeys = [
-  'serviceNamespaceContext', 'collectorContext', 'handoffInvalid',
-  'traceId', 'spanId', 'traceIdContext', 'spanIdContext'
+  'serviceNamespaceContext',
+  'collectorContext',
+  'handoffInvalid',
+  'traceId',
+  'spanId',
+  'traceIdContext',
+  'spanIdContext'
 ] as const;
 
 describe('Explore handoff locale contract', () => {

@@ -33,19 +33,24 @@ export class TokenApiContractError extends Error {
   }
 }
 
-const safePositiveIntegerSchema = z.number().refine(Number.isSafeInteger).refine(value => value > 0);
+const safePositiveIntegerSchema = z
+  .number()
+  .refine(Number.isSafeInteger)
+  .refine(value => value > 0);
 const nullableTextSchema = z.string().nullish();
 // Spring serializes LocalDateTime as text. Numeric timestamps remain accepted
 // only for compatibility with the pre-migration frontend contract.
-const nullableTimestampSchema = z.union([
-  z.string().refine(value => value.trim() !== '' && Number.isFinite(Date.parse(value))),
-  z.number().finite()
-]).nullish();
+const nullableTimestampSchema = z
+  .union([z.string().refine(value => value.trim() !== '' && Number.isFinite(Date.parse(value))), z.number().finite()])
+  .nullish();
 
 const tokenWireSchema = z.object({
   id: safePositiveIntegerSchema,
   name: nullableTextSchema,
-  tokenMask: z.string().regex(/^.{4}\*{4}.{4}$/).nullish(),
+  tokenMask: z
+    .string()
+    .regex(/^.{4}\*{4}.{4}$/)
+    .nullish(),
   tokenScope: nullableTextSchema,
   workspaceId: nullableTextSchema,
   creator: nullableTextSchema,
@@ -60,12 +65,8 @@ const generatedTokenWireSchema = z.object({
 
 const tokenDraftInputSchema = z.object({
   name: z.string().refine(value => value.trim() !== ''),
-  expireSeconds: z.number().refine(value => (
-    tokenExpirationDefinitions.some(definition => definition.value === value)
-  )),
-  scope: z.string().refine(value => (
-    tokenScopeDefinitions.some(definition => definition.value === value)
-  ))
+  expireSeconds: z.number().refine(value => tokenExpirationDefinitions.some(definition => definition.value === value)),
+  scope: z.string().refine(value => tokenScopeDefinitions.some(definition => definition.value === value))
 });
 
 type TokenWire = z.output<typeof tokenWireSchema>;
@@ -107,7 +108,5 @@ function mapTokenRecord(wire: TokenWire): TokenResourceRecord {
 }
 
 function readKnownScope(value: string | null | undefined): TokenScope | null {
-  return tokenScopeDefinitions.some(definition => definition.value === value)
-    ? value as TokenScope
-    : null;
+  return tokenScopeDefinitions.some(definition => definition.value === value) ? (value as TokenScope) : null;
 }

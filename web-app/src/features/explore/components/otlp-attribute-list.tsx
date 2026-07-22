@@ -22,19 +22,27 @@ import styles from './otlp-attribute-list.module.css';
 type AttributeMap = Record<string, unknown> | Record<string, string>;
 
 export function OtlpAttributeSection({ title, value }: { title: string; value?: AttributeMap | undefined }) {
-  return <section className={styles.section}>
-    <Typography.Title level={5}>{title}</Typography.Title>
-    <OtlpAttributeList value={value} />
-  </section>;
+  return (
+    <section className={styles.section}>
+      <Typography.Title level={5}>{title}</Typography.Title>
+      <OtlpAttributeList value={value} />
+    </section>
+  );
 }
 
 export function OtlpAttributeList({ value }: { value?: AttributeMap | undefined }) {
   const entries = Object.entries(value ?? {});
   if (entries.length === 0) return <span>—</span>;
-  return <dl className={styles.list}>{entries.map(([key, item]) => <div key={key}>
-    <dt>{key}</dt>
-    <dd>{formatAttributeValue(item)}</dd>
-  </div>)}</dl>;
+  return (
+    <dl className={styles.list}>
+      {entries.map(([key, item]) => (
+        <div key={key}>
+          <dt>{key}</dt>
+          <dd>{formatAttributeValue(item)}</dd>
+        </div>
+      ))}
+    </dl>
+  );
 }
 
 function formatAttributeValue(value: unknown) {

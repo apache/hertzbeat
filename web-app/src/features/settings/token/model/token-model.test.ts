@@ -17,12 +17,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import {
-  createTokenDraft,
-  isTokenExpired,
-  tokenScopeLabelKey,
-  validateTokenDraft
-} from './token-model';
+import { createTokenDraft, isTokenExpired, tokenScopeLabelKey, validateTokenDraft } from './token-model';
 
 describe('token model', () => {
   it('keeps the simple form scoped without exposing a workspace field', () => {
@@ -32,7 +27,12 @@ describe('token model', () => {
 
   it('validates the generation draft without owning endpoint serialization', () => {
     expect(validateTokenDraft(createTokenDraft())).toEqual(['name']);
-    const draft = { ...createTokenDraft(), name: ' CI integration ', expireSeconds: 2_592_000, scope: 'readonly-query' as const };
+    const draft = {
+      ...createTokenDraft(),
+      name: ' CI integration ',
+      expireSeconds: 2_592_000,
+      scope: 'readonly-query' as const
+    };
     expect(validateTokenDraft(draft)).toEqual([]);
   });
 

@@ -27,7 +27,7 @@ describe('settings navigation ownership', () => {
   it('keeps settings route navigation in the application shell', () => {
     const duplicateNavigationOwners = Object.entries(featureSources)
       .filter(([path]) => !path.includes('.test.'))
-      .flatMap(([path, source]) => source.includes('@/shared/settings/settings-nav') ? [path] : []);
+      .flatMap(([path, source]) => (source.includes('@/shared/settings/settings-nav') ? [path] : []));
 
     expect(duplicateNavigationOwners).toEqual([]);
   });

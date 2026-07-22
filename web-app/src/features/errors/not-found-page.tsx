@@ -23,7 +23,11 @@ export function NotFoundPage() {
   return (
     <Result
       status="404"
-      title={<span role="heading" aria-level={1}>{t('common.notFound.title')}</span>}
+      title={
+        <span role="heading" aria-level={1}>
+          {t('common.notFound.title')}
+        </span>
+      }
       subTitle={t('common.notFound.description')}
     />
   );

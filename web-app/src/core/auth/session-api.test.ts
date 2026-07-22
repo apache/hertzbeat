@@ -17,13 +17,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  getSession,
-  loginSession,
-  logoutSession,
-  refreshSession,
-  SessionRequestError
-} from './session-api';
+import { getSession, loginSession, logoutSession, refreshSession, SessionRequestError } from './session-api';
 
 const authenticatedSession = {
   authenticated: true,
@@ -40,7 +34,8 @@ describe('UI session API contract', () => {
   afterEach(() => vi.unstubAllGlobals());
 
   it('uses the frozen GET, login POST, refresh POST, and logout DELETE endpoints', async () => {
-    const fetchMock = vi.fn<typeof fetch>()
+    const fetchMock = vi
+      .fn<typeof fetch>()
       .mockResolvedValueOnce(success(authenticatedSession))
       .mockResolvedValueOnce(success(authenticatedSession))
       .mockResolvedValueOnce(success(authenticatedSession))
@@ -83,18 +78,21 @@ describe('UI session API contract', () => {
   });
 
   it('rejects session payloads that expose tokens or violate authenticated identity', async () => {
-    const fetchMock = vi.fn<typeof fetch>()
+    const fetchMock = vi
+      .fn<typeof fetch>()
       .mockResolvedValueOnce(success({ ...authenticatedSession, token: 'must-not-cross-boundary' }))
       .mockResolvedValueOnce(success({ ...authenticatedSession, username: null }))
       .mockResolvedValueOnce(success({ ...authenticatedSession, roles: ['ADMIN', 'ADMIN'] }))
       .mockResolvedValueOnce(success({ ...authenticatedSession, expiresAt: 'not-a-timestamp' }))
-      .mockResolvedValueOnce(success({
-        authenticated: false,
-        username: 'unexpected',
-        roles: [],
-        workspaceId: null,
-        expiresAt: null
-      }));
+      .mockResolvedValueOnce(
+        success({
+          authenticated: false,
+          username: 'unexpected',
+          roles: [],
+          workspaceId: null,
+          expiresAt: null
+        })
+      );
     vi.stubGlobal('fetch', fetchMock);
 
     await expect(getSession()).rejects.toMatchObject({ kind: 'contract' });
@@ -105,13 +103,19 @@ describe('UI session API contract', () => {
   });
 
   it('rejects extra envelope fields without exposing backend payload details', async () => {
-    const fetchMock = vi.fn<typeof fetch>()
-      .mockResolvedValueOnce(new Response(JSON.stringify({
-        code: 0,
-        msg: null,
-        data: authenticatedSession,
-        token: 'must-not-cross-boundary'
-      }), { status: 200 }))
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            code: 0,
+            msg: null,
+            data: authenticatedSession,
+            token: 'must-not-cross-boundary'
+          }),
+          { status: 200 }
+        )
+      )
       .mockResolvedValueOnce(new Response(JSON.stringify({ code: 0, msg: null }), { status: 200 }));
     vi.stubGlobal('fetch', fetchMock);
 
@@ -128,11 +132,19 @@ describe('UI session API contract', () => {
   });
 
   it('classifies login rejection without exposing the raw backend message', async () => {
-    vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({
-      code: 16,
-      msg: 'internal authentication detail',
-      data: null
-    }), { status: 200 })));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn<typeof fetch>().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            code: 16,
+            msg: 'internal authentication detail',
+            data: null
+          }),
+          { status: 200 }
+        )
+      )
+    );
 
     let error: unknown;
     try {
@@ -146,11 +158,14 @@ describe('UI session API contract', () => {
   });
 
   it('distinguishes unavailable transport from a malformed response contract', async () => {
-    const fetchMock = vi.fn<typeof fetch>()
+    const fetchMock = vi
+      .fn<typeof fetch>()
       .mockRejectedValueOnce(new TypeError('network detail'))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ code: 0, data: { authenticated: false } }), {
-        status: 200
-      }));
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ code: 0, data: { authenticated: false } }), {
+          status: 200
+        })
+      );
     vi.stubGlobal('fetch', fetchMock);
 
     await expect(getSession()).rejects.toMatchObject({ kind: 'unavailable' });

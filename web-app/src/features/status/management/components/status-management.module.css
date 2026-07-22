@@ -4,13 +4,46 @@
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
-.page { display: grid; min-width: 0; gap: 20px; }
-.heading, .sectionHeading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
-.heading :global(.ant-typography), .sectionHeading :global(.ant-typography) { margin: 0; }
-.section { display: grid; gap: 16px; padding-top: 20px; border-top: 1px solid var(--ant-color-border-secondary); }
-.toolbar { display: grid; grid-template-columns: minmax(240px, 480px) auto auto; gap: 8px; }
-:global(.status-org-grid) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; max-width: 920px; }
+.page {
+  display: grid;
+  min-width: 0;
+  gap: 20px;
+}
+.heading,
+.sectionHeading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.heading :global(.ant-typography),
+.sectionHeading :global(.ant-typography) {
+  margin: 0;
+}
+.section {
+  display: grid;
+  gap: 16px;
+  padding-top: 20px;
+  border-top: 1px solid var(--ant-color-border-secondary);
+}
+.toolbar {
+  display: grid;
+  grid-template-columns: minmax(240px, 480px) auto auto;
+  gap: 8px;
+}
+:global(.status-org-grid) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 16px;
+  max-width: 920px;
+}
 @media (max-width: 700px) {
-  .heading, .sectionHeading { flex-direction: column; }
-  .toolbar, :global(.status-org-grid) { grid-template-columns: 1fr; }
+  .heading,
+  .sectionHeading {
+    flex-direction: column;
+  }
+  .toolbar,
+  :global(.status-org-grid) {
+    grid-template-columns: 1fr;
+  }
 }

@@ -17,11 +17,7 @@
 
 import { z } from 'zod';
 
-import {
-  ExploreSignalContractError,
-  type ExplorePageResult,
-  type LogRow
-} from '../model/explore-signal-contract';
+import { ExploreSignalContractError, type ExplorePageResult, type LogRow } from '../model/explore-signal-contract';
 import {
   jsonValueSchema,
   nullableJavaLongSchema,

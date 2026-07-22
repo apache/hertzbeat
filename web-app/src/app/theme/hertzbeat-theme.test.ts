@@ -46,17 +46,20 @@ describe('HertzBeat semantic theme', () => {
     expect(globalStyles.match(/--hb-nav-selected:\s*var\(--hb-bg-selected\);/g)).toHaveLength(1);
   });
 
-  it.each(['dark', 'default', 'compact'] as const)('enables the Ant variable contract for the %s theme', runtimeTheme => {
-    const themeConfig = createHertzBeatTheme(runtimeTheme);
-    const tokens = theme.getDesignToken(themeConfig);
+  it.each(['dark', 'default', 'compact'] as const)(
+    'enables the Ant variable contract for the %s theme',
+    runtimeTheme => {
+      const themeConfig = createHertzBeatTheme(runtimeTheme);
+      const tokens = theme.getDesignToken(themeConfig);
 
-    expect(themeConfig.cssVar).toBe(true);
-    expect(tokens).toMatchObject({
-      borderRadius: expect.any(Number),
-      colorBorderSecondary: expect.any(String),
-      colorError: expect.any(String),
-      colorFillQuaternary: expect.any(String),
-      colorTextSecondary: expect.any(String)
-    });
-  });
+      expect(themeConfig.cssVar).toBe(true);
+      expect(tokens).toMatchObject({
+        borderRadius: expect.any(Number),
+        colorBorderSecondary: expect.any(String),
+        colorError: expect.any(String),
+        colorFillQuaternary: expect.any(String),
+        colorTextSecondary: expect.any(String)
+      });
+    }
+  );
 });

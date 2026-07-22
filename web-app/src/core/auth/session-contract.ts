@@ -17,32 +17,31 @@
 
 import { z } from 'zod';
 
-const uniqueRolesSchema = z.array(z.string())
-  .refine(roles => new Set(roles).size === roles.length);
-const requiredIdentitySchema = z.string()
-  .refine(value => value.trim().length > 0);
-const nullableExpirationSchema = z.union([
-  z.string().refine(value => Number.isFinite(Date.parse(value))),
-  z.null()
-]);
+const uniqueRolesSchema = z.array(z.string()).refine(roles => new Set(roles).size === roles.length);
+const requiredIdentitySchema = z.string().refine(value => value.trim().length > 0);
+const nullableExpirationSchema = z.union([z.string().refine(value => Number.isFinite(Date.parse(value))), z.null()]);
 
 // Session responses are a security boundary. Strict objects reject accidental
 // credential or token fields instead of silently stripping them.
-const authenticatedSessionSchema = z.object({
-  authenticated: z.literal(true),
-  username: requiredIdentitySchema,
-  roles: uniqueRolesSchema,
-  workspaceId: requiredIdentitySchema,
-  expiresAt: nullableExpirationSchema
-}).strict();
+const authenticatedSessionSchema = z
+  .object({
+    authenticated: z.literal(true),
+    username: requiredIdentitySchema,
+    roles: uniqueRolesSchema,
+    workspaceId: requiredIdentitySchema,
+    expiresAt: nullableExpirationSchema
+  })
+  .strict();
 
-const anonymousSessionSchema = z.object({
-  authenticated: z.literal(false),
-  username: z.null(),
-  roles: z.tuple([]),
-  workspaceId: z.null(),
-  expiresAt: z.null()
-}).strict();
+const anonymousSessionSchema = z
+  .object({
+    authenticated: z.literal(false),
+    username: z.null(),
+    roles: z.tuple([]),
+    workspaceId: z.null(),
+    expiresAt: z.null()
+  })
+  .strict();
 
 export type UiSession = {
   authenticated: boolean;
@@ -57,11 +56,13 @@ export const uiSessionSchema: z.ZodType<UiSession> = z.discriminatedUnion('authe
   anonymousSessionSchema
 ]);
 
-export const sessionEnvelopeSchema = z.object({
-  code: z.number().int(),
-  data: z.unknown(),
-  msg: z.string().nullable().optional()
-}).strict();
+export const sessionEnvelopeSchema = z
+  .object({
+    code: z.number().int(),
+    data: z.unknown(),
+    msg: z.string().nullable().optional()
+  })
+  .strict();
 
 export type SessionEnvelope = z.output<typeof sessionEnvelopeSchema>;
 

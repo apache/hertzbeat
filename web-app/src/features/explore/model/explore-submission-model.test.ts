@@ -21,19 +21,21 @@ import { buildSubmissionPatch, draftFromQuery } from './explore-submission-model
 
 describe('explore submission model', () => {
   it('creates a controlled draft for only the selected signal', () => {
-    expect(draftFromQuery({
-      signal: 'metrics',
-      timeRange: 'last-30m',
-      serviceName: 'checkout',
-      environment: 'prod',
-      instance: 'checkout-7d9',
-      endpoint: '/checkout',
-      query: 'latency',
-      metricFilter: 'method=POST',
-      groupBy: 'service_name',
-      aggregation: 'avg',
-      step: '60'
-    })).toEqual({
+    expect(
+      draftFromQuery({
+        signal: 'metrics',
+        timeRange: 'last-30m',
+        serviceName: 'checkout',
+        environment: 'prod',
+        instance: 'checkout-7d9',
+        endpoint: '/checkout',
+        query: 'latency',
+        metricFilter: 'method=POST',
+        groupBy: 'service_name',
+        aggregation: 'avg',
+        step: '60'
+      })
+    ).toEqual({
       signal: 'metrics',
       serviceName: 'checkout',
       environment: 'prod',
@@ -46,14 +48,16 @@ describe('explore submission model', () => {
       stepSeconds: '60'
     });
 
-    expect(draftFromQuery({
-      signal: 'traces',
-      timeRange: 'last-30m',
-      traceId: 'trace-1',
-      minDurationMs: 10,
-      maxDurationMs: 500,
-      errorOnly: true
-    })).toEqual({
+    expect(
+      draftFromQuery({
+        signal: 'traces',
+        timeRange: 'last-30m',
+        traceId: 'trace-1',
+        minDurationMs: 10,
+        maxDurationMs: 500,
+        errorOnly: true
+      })
+    ).toEqual({
       signal: 'traces',
       serviceName: '',
       environment: '',
@@ -69,18 +73,20 @@ describe('explore submission model', () => {
   });
 
   it('trims a metric submission and enforces backend aggregation and step contracts', () => {
-    expect(buildSubmissionPatch({
-      signal: 'metrics',
-      serviceName: ' checkout ',
-      environment: ' prod ',
-      instance: ' checkout-7d9 ',
-      endpoint: ' /checkout ',
-      query: ' rate(http_requests_total[5m]) ',
-      metricFilter: ' method=POST ',
-      groupBy: ' service_name ',
-      aggregation: ' AVG ',
-      stepSeconds: ' 86400 '
-    })).toEqual({
+    expect(
+      buildSubmissionPatch({
+        signal: 'metrics',
+        serviceName: ' checkout ',
+        environment: ' prod ',
+        instance: ' checkout-7d9 ',
+        endpoint: ' /checkout ',
+        query: ' rate(http_requests_total[5m]) ',
+        metricFilter: ' method=POST ',
+        groupBy: ' service_name ',
+        aggregation: ' AVG ',
+        stepSeconds: ' 86400 '
+      })
+    ).toEqual({
       valid: true,
       patch: {
         serviceName: 'checkout',
@@ -97,10 +103,20 @@ describe('explore submission model', () => {
     });
 
     for (const stepSeconds of ['0', '86401', '60s', '60 seconds']) {
-      expect(buildSubmissionPatch({
-        signal: 'metrics', serviceName: '', environment: '', instance: '', endpoint: '', query: '', metricFilter: '', groupBy: '',
-        aggregation: 'p95', stepSeconds
-      })).toEqual({
+      expect(
+        buildSubmissionPatch({
+          signal: 'metrics',
+          serviceName: '',
+          environment: '',
+          instance: '',
+          endpoint: '',
+          query: '',
+          metricFilter: '',
+          groupBy: '',
+          aggregation: 'p95',
+          stepSeconds
+        })
+      ).toEqual({
         valid: false,
         errors: [
           { field: 'aggregation', code: 'unsupported_aggregation' },
@@ -111,21 +127,23 @@ describe('explore submission model', () => {
   });
 
   it('builds only log-owned fields even when runtime input is polluted', () => {
-    expect(buildSubmissionPatch({
-      signal: 'logs',
-      serviceName: '',
-      environment: ' prod ',
-      instance: '',
-      endpoint: '',
-      query: ' timeout ',
-      severityText: ' ERROR ',
-      traceId: ' trace-1 ',
-      spanId: ' span-1 ',
-      resourceFilter: ' service.version=1 ',
-      attributeFilter: ' http.status_code=500 ',
-      metricFilter: 'must-not-leak',
-      minDurationMs: '100'
-    } as never)).toEqual({
+    expect(
+      buildSubmissionPatch({
+        signal: 'logs',
+        serviceName: '',
+        environment: ' prod ',
+        instance: '',
+        endpoint: '',
+        query: ' timeout ',
+        severityText: ' ERROR ',
+        traceId: ' trace-1 ',
+        spanId: ' span-1 ',
+        resourceFilter: ' service.version=1 ',
+        attributeFilter: ' http.status_code=500 ',
+        metricFilter: 'must-not-leak',
+        minDurationMs: '100'
+      } as never)
+    ).toEqual({
       valid: true,
       patch: {
         serviceName: undefined,
@@ -144,10 +162,21 @@ describe('explore submission model', () => {
   });
 
   it('accepts only ordered safe-integer trace durations', () => {
-    expect(buildSubmissionPatch({
-      signal: 'traces', serviceName: '', environment: '', instance: '', endpoint: '', query: '', traceId: '', resourceFilter: '',
-      minDurationMs: ' 0 ', maxDurationMs: ' 9007199254740991 ', errorOnly: false
-    })).toEqual({
+    expect(
+      buildSubmissionPatch({
+        signal: 'traces',
+        serviceName: '',
+        environment: '',
+        instance: '',
+        endpoint: '',
+        query: '',
+        traceId: '',
+        resourceFilter: '',
+        minDurationMs: ' 0 ',
+        maxDurationMs: ' 9007199254740991 ',
+        errorOnly: false
+      })
+    ).toEqual({
       valid: true,
       patch: {
         serviceName: undefined,
@@ -171,8 +200,17 @@ describe('explore submission model', () => {
       ['200', '100', 'maxDurationMs', 'min_exceeds_max']
     ] as const) {
       const result = buildSubmissionPatch({
-        signal: 'traces', serviceName: '', environment: '', instance: '', endpoint: '', query: '', traceId: '', resourceFilter: '',
-        minDurationMs, maxDurationMs, errorOnly: false
+        signal: 'traces',
+        serviceName: '',
+        environment: '',
+        instance: '',
+        endpoint: '',
+        query: '',
+        traceId: '',
+        resourceFilter: '',
+        minDurationMs,
+        maxDurationMs,
+        errorOnly: false
       });
       expect(result).toEqual({ valid: false, errors: [{ field, code }] });
     }

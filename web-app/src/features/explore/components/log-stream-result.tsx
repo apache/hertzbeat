@@ -36,7 +36,7 @@ export function LogStreamResult({
   stream,
   query,
   t,
-  navigate,
+  navigate
 }: {
   stream: LiveLogView;
   query: LogExploreQuery;

@@ -32,17 +32,24 @@ function browserStorage(): PreferenceStorage | undefined {
   }
 }
 
-export function readRuntimeLocale(storage: Pick<PreferenceStorage, 'getItem'> | undefined = browserStorage()): SupportedLocale | null {
+export function readRuntimeLocale(
+  storage: Pick<PreferenceStorage, 'getItem'> | undefined = browserStorage()
+): SupportedLocale | null {
   const locale = storage?.getItem(localeKey);
-  return supportedLocales.includes(locale as SupportedLocale) ? locale as SupportedLocale : null;
+  return supportedLocales.includes(locale as SupportedLocale) ? (locale as SupportedLocale) : null;
 }
 
-export function readRuntimeTheme(storage: Pick<PreferenceStorage, 'getItem'> | undefined = browserStorage()): RuntimeTheme {
+export function readRuntimeTheme(
+  storage: Pick<PreferenceStorage, 'getItem'> | undefined = browserStorage()
+): RuntimeTheme {
   const value = storage?.getItem(themeKey);
-  return themes.includes(value as RuntimeTheme) ? value as RuntimeTheme : 'dark';
+  return themes.includes(value as RuntimeTheme) ? (value as RuntimeTheme) : 'dark';
 }
 
-export function persistSystemPreferences(config: { locale: string; theme: string }, storage: PreferenceStorage | undefined = browserStorage()) {
+export function persistSystemPreferences(
+  config: { locale: string; theme: string },
+  storage: PreferenceStorage | undefined = browserStorage()
+) {
   if (!storage) return;
   const locale = config.locale.replace('_', '-');
   if (supportedLocales.includes(locale as SupportedLocale)) storage.setItem(localeKey, locale);

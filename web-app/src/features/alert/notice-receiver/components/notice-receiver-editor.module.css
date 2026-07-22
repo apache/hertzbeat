@@ -15,10 +15,37 @@
  * limitations under the License.
  */
 
-.form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-.field { display: grid; align-content: start; gap: 7px; color: var(--ant-color-text-secondary); font-size: 13px; }
-.field :global(.ant-select), .field :global(.ant-input-number) { width: 100%; }
-.wide { grid-column: 1 / -1; }
-.test { justify-self: start; }
-.secretState { display: grid; gap: 5px; }
-@media (max-width: 700px) { .form { grid-template-columns: 1fr; } .wide { grid-column: auto; } }
+.form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.field {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  color: var(--ant-color-text-secondary);
+  font-size: 13px;
+}
+.field :global(.ant-select),
+.field :global(.ant-input-number) {
+  width: 100%;
+}
+.wide {
+  grid-column: 1 / -1;
+}
+.test {
+  justify-self: start;
+}
+.secretState {
+  display: grid;
+  gap: 5px;
+}
+@media (max-width: 700px) {
+  .form {
+    grid-template-columns: 1fr;
+  }
+  .wide {
+    grid-column: auto;
+  }
+}

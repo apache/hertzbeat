@@ -15,10 +15,42 @@
  * limitations under the License.
  */
 
-.form { display: grid; max-width: 820px; border-block: 1px solid var(--ant-color-border-secondary); }
-.field { display: grid; grid-template-columns: 190px minmax(0, 1fr); align-items: start; gap: 24px; padding: 18px 4px; }
-.field + .field { border-top: 1px solid var(--ant-color-border-secondary); }
-.label { padding-top: 6px; font-weight: 600; }
-.control { display: grid; gap: 6px; min-width: 0; }
-.actions { display: flex; align-items: center; gap: 10px; padding-top: 2px; }
-@media (max-width: 700px) { .field { grid-template-columns: 1fr; gap: 8px; } .label { padding-top: 0; } }
+.form {
+  display: grid;
+  max-width: 820px;
+  border-block: 1px solid var(--ant-color-border-secondary);
+}
+.field {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  align-items: start;
+  gap: 24px;
+  padding: 18px 4px;
+}
+.field + .field {
+  border-top: 1px solid var(--ant-color-border-secondary);
+}
+.label {
+  padding-top: 6px;
+  font-weight: 600;
+}
+.control {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 2px;
+}
+@media (max-width: 700px) {
+  .field {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .label {
+    padding-top: 0;
+  }
+}

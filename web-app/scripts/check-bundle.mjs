@@ -62,5 +62,5 @@ if (failures.length > 0) {
 
 console.log(
   `Bundle budget passed: ${basename(entry.file)} is ${entryGzip} bytes gzip; ` +
-  `total JavaScript is ${totalRaw} bytes.`
+    `total JavaScript is ${totalRaw} bytes.`
 );

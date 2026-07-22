@@ -8,18 +8,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import {
-  readNoticeReceiverQuery,
-  writeNoticeReceiverQuery
-} from '../model/notice-receiver-model';
+import { readNoticeReceiverQuery, writeNoticeReceiverQuery } from '../model/notice-receiver-model';
 
 export function useNoticeReceiverQueryController() {
   const [searchParams, setSearchParams] = useSearchParams();
   const locationSearch = searchParams.toString();
-  const query = useMemo(
-    () => readNoticeReceiverQuery(new URLSearchParams(locationSearch)),
-    [locationSearch]
-  );
+  const query = useMemo(() => readNoticeReceiverQuery(new URLSearchParams(locationSearch)), [locationSearch]);
   const canonicalSearch = useMemo(() => writeNoticeReceiverQuery(query).toString(), [query]);
   const [draft, setDraft] = useState({ query, value: query.name });
 
@@ -38,13 +32,19 @@ export function useNoticeReceiverQueryController() {
     setSearchParams(writeNoticeReceiverQuery({ ...query, name: name.trim(), pageIndex: 0 }));
   }, [name, query, setSearchParams]);
 
-  const changePage = useCallback((page: number, pageSize: number) => {
-    setSearchParams(writeNoticeReceiverQuery({ ...query, pageIndex: page - 1, pageSize }));
-  }, [query, setSearchParams]);
+  const changePage = useCallback(
+    (page: number, pageSize: number) => {
+      setSearchParams(writeNoticeReceiverQuery({ ...query, pageIndex: page - 1, pageSize }));
+    },
+    [query, setSearchParams]
+  );
 
-  const setName = useCallback((value: string) => {
-    setDraft({ query, value });
-  }, [query]);
+  const setName = useCallback(
+    (value: string) => {
+      setDraft({ query, value });
+    },
+    [query]
+  );
 
   return { query, name, setName, search, changePage };
 }

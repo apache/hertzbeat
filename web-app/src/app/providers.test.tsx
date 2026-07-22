@@ -43,7 +43,11 @@ describe('AppProviders theme contract', () => {
   });
 
   it('publishes Ant Design variables and keeps them enabled through runtime theme changes', async () => {
-    render(<AppProviders><ThemeProbe /></AppProviders>);
+    render(
+      <AppProviders>
+        <ThemeProbe />
+      </AppProviders>
+    );
 
     await screen.findByTestId('probe');
     expectAntVariableScope();

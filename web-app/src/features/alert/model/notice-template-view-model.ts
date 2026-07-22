@@ -18,13 +18,12 @@
 import { receiverTypeDefinitions } from '../notice-receiver/model/notice-receiver-model';
 import type { NoticeTemplateResourceRecord } from '../notice-template-model';
 
-export function noticeTemplateTime(
-  template: Pick<NoticeTemplateResourceRecord, 'gmtCreate' | 'gmtUpdate'>,
-) {
+export function noticeTemplateTime(template: Pick<NoticeTemplateResourceRecord, 'gmtCreate' | 'gmtUpdate'>) {
   return template.gmtUpdate ?? template.gmtCreate ?? null;
 }
 
 export function noticeTemplateTypeLabelKey(type: number) {
-  return receiverTypeDefinitions.find((definition) => definition.type === type)?.labelKey
-    ?? 'noticeReceivers.types.unknown';
+  return (
+    receiverTypeDefinitions.find(definition => definition.type === type)?.labelKey ?? 'noticeReceivers.types.unknown'
+  );
 }

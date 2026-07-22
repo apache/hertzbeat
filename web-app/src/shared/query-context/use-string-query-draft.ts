@@ -33,12 +33,15 @@ export function useStringQueryDraft(source: string, canonicalValue: string) {
     // Once navigation commits, discard the previous source so its abandoned draft cannot reappear on a later visit.
     // The rendered value already comes from canonicalValue, so this cleanup cannot expose the abandoned draft.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setDraft(current => current.source === source ? current : { source, value: canonicalValue });
+    setDraft(current => (current.source === source ? current : { source, value: canonicalValue }));
   }, [canonicalValue, source]);
 
-  const setValue = useCallback((nextValue: string) => {
-    setDraft({ source, value: nextValue });
-  }, [source]);
+  const setValue = useCallback(
+    (nextValue: string) => {
+      setDraft({ source, value: nextValue });
+    },
+    [source]
+  );
 
   return { value, setValue };
 }

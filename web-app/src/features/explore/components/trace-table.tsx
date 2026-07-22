@@ -38,19 +38,19 @@ export function TraceTable({ data, t, detailOpen, selectedTraceId, openTrace, ch
   return (
     <Table<TraceRow>
       className={styles.clickableTable ?? ''}
-      rowKey={(row) => row.traceId ?? row.rootSpanId ?? ''}
+      rowKey={row => row.traceId ?? row.rootSpanId ?? ''}
       size="small"
       dataSource={data.content ?? []}
       scroll={{ x: 900, y: 520 }}
-      onRow={(row) => interactiveTableRow(() => openTrace(row.traceId))}
-      rowClassName={(row) => selectedTraceId === row.traceId ? styles.selectedRow ?? '' : ''}
+      onRow={row => interactiveTableRow(() => openTrace(row.traceId))}
+      rowClassName={row => (selectedTraceId === row.traceId ? (styles.selectedRow ?? '') : '')}
       pagination={{
         current: data.number + 1,
         pageSize: data.size,
         total: data.totalElements,
         showSizeChanger: false,
         hideOnSinglePage: true,
-        onChange: changePage,
+        onChange: changePage
       }}
       columns={traceColumns(t, detailOpen)}
     />
@@ -62,20 +62,20 @@ function traceColumns(t: TFunction, detailOpen: boolean): ColumnsType<TraceRow> 
     {
       title: t('explore.time'),
       width: 190,
-      render: (_, row) => (row.startTime != null ? new Date(row.startTime).toLocaleString() : '—'),
+      render: (_, row) => (row.startTime != null ? new Date(row.startTime).toLocaleString() : '—')
     },
     { title: t('explore.service'), width: 180, dataIndex: 'serviceName' },
     { title: t('explore.operation'), dataIndex: 'rootSpanName', ellipsis: true },
     {
       title: t('explore.duration'),
       width: 120,
-      render: (_, row) => formatTraceDuration(traceDurationMs(row)),
+      render: (_, row) => formatTraceDuration(traceDurationMs(row))
     },
     {
       title: t('exploreTrace.status'),
       width: 100,
-      render: (_, row) => <Tag color={traceStatusTone(row)}>{row.status ?? '—'}</Tag>,
-    },
+      render: (_, row) => <Tag color={traceStatusTone(row)}>{row.status ?? '—'}</Tag>
+    }
   ];
   if (!detailOpen) {
     columns.push({ title: t('explore.traceId'), width: 220, dataIndex: 'traceId', ellipsis: true });

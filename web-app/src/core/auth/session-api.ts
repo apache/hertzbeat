@@ -17,12 +17,7 @@
 
 import { apiFetch } from '@/core/http/http-client';
 
-import {
-  sessionEnvelopeSchema,
-  uiSessionSchema,
-  type SessionEnvelope,
-  type UiSession
-} from './session-contract';
+import { sessionEnvelopeSchema, uiSessionSchema, type SessionEnvelope, type UiSession } from './session-contract';
 
 export const sessionQueryKey = ['ui-session'] as const;
 
@@ -50,11 +45,15 @@ export function getSession(options?: Pick<RequestInit, 'signal'>) {
 }
 
 export function loginSession(identifier: string, credential: string) {
-  return sessionRequest('/api/ui/session', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ type: 0, identifier, credential })
-  }, 'login');
+  return sessionRequest(
+    '/api/ui/session',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 0, identifier, credential })
+    },
+    'login'
+  );
 }
 
 export function refreshSession(options?: Pick<RequestInit, 'signal'>) {
@@ -104,7 +103,7 @@ function classifyHttpFailure(status: number, operation: SessionOperation): Sessi
 
 async function readResponseJson(response: Response) {
   try {
-    return await response.json() as unknown;
+    return (await response.json()) as unknown;
   } catch (cause) {
     throw new SessionRequestError('contract', { status: response.status, cause });
   }
