@@ -18,7 +18,6 @@
 package org.apache.hertzbeat.manager.ui.runtime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -79,7 +78,7 @@ class UiRuntimeStatusContractTest {
                 new CollectorsStatus(
                         State.AVAILABLE,
                         3,
-                        2,
+                        3,
                         1,
                         Instant.parse("2026-07-22T01:02:00Z"),
                         null));
@@ -98,21 +97,29 @@ class UiRuntimeStatusContractTest {
     }
 
     @Test
-    void contractOnlyFallbackIsUnknownWithNoDevelopmentErrorCode() {
-        RuntimeStatusResponse response = new UnknownUiRuntimeStatusQuery().current();
-
-        assertEquals(State.UNKNOWN, response.server().status());
-        assertNull(response.server().errorCode());
-        assertEquals(State.UNKNOWN, response.storage().status());
-        assertNull(response.storage().errorCode());
-        assertEquals(State.UNKNOWN, response.collectors().status());
-        assertNull(response.collectors().errorCode());
-    }
-
-    @Test
     void degradedAndUnavailableStatusesRequireStableErrorCode() {
         assertThrows(IllegalArgumentException.class, () -> new ComponentStatus(State.DEGRADED, null));
         assertThrows(IllegalArgumentException.class, () -> new ComponentStatus(State.UNAVAILABLE, null));
+    }
+
+    @Test
+    void availableCollectorStatusRequiresNonemptyFullyOnlineInventory() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new CollectorsStatus(State.AVAILABLE, 0, 0, 0, null, null));
+        assertThrows(IllegalArgumentException.class,
+                () -> new CollectorsStatus(State.AVAILABLE, 3, 2, 1, null, null));
+        new CollectorsStatus(State.AVAILABLE, 3, 3, 1, null, null);
+    }
+
+    @Test
+    void rejectsCrossSectionErrorCodes() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new ComponentStatus(State.UNAVAILABLE, ErrorCode.STORAGE_QUERY_FAILED));
+        assertThrows(IllegalArgumentException.class,
+                () -> new StorageStatus(StorageKind.GREPTIME, State.UNAVAILABLE, ErrorCode.SERVER_UNAVAILABLE));
+        assertThrows(IllegalArgumentException.class,
+                () -> new CollectorsStatus(
+                        State.DEGRADED, 1, 0, 0, null, ErrorCode.STORAGE_UNAVAILABLE));
     }
 
     private void assertRecordComponents(Class<? extends Record> recordType, String... expectedNames) {

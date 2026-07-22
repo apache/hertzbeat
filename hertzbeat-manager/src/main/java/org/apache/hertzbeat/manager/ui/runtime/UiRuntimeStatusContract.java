@@ -19,6 +19,7 @@ package org.apache.hertzbeat.manager.ui.runtime;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Objects;
 
 /** Version 1 public contract for the UI runtime-status endpoint. */
@@ -49,6 +50,7 @@ public final class UiRuntimeStatusContract {
 
         public ComponentStatus {
             validateStatus(status, errorCode);
+            requireSectionErrorCode(errorCode, ErrorCode.SERVER_UNAVAILABLE);
         }
     }
 
@@ -58,6 +60,8 @@ public final class UiRuntimeStatusContract {
         public StorageStatus {
             Objects.requireNonNull(kind, "kind");
             validateStatus(status, errorCode);
+            requireSectionErrorCode(
+                    errorCode, ErrorCode.STORAGE_UNAVAILABLE, ErrorCode.STORAGE_QUERY_FAILED);
         }
     }
 
@@ -67,6 +71,7 @@ public final class UiRuntimeStatusContract {
 
         public CollectorsStatus {
             validateStatus(status, errorCode);
+            requireSectionErrorCode(errorCode, ErrorCode.COLLECTOR_STATUS_UNAVAILABLE);
             if (status == State.AVAILABLE || status == State.DEGRADED) {
                 requireNonNegative(total, "total");
                 requireNonNegative(online, "online");
@@ -74,19 +79,28 @@ public final class UiRuntimeStatusContract {
                 if (online > total || runtimeHealthy > online) {
                     throw new IllegalArgumentException("Collector runtime counts must be internally consistent");
                 }
+                if (status == State.AVAILABLE && (total == 0 || !online.equals(total))) {
+                    throw new IllegalArgumentException("Available Collector inventory must be nonempty and fully online");
+                }
             } else if (total != null || online != null || runtimeHealthy != null || lastReportedAt != null) {
-                throw new IllegalArgumentException("Unknown Collector status cannot expose inferred counts");
+                throw new IllegalArgumentException("Unavailable or unknown Collector status cannot expose inferred counts");
             }
         }
     }
 
     private static void validateStatus(State status, ErrorCode errorCode) {
         Objects.requireNonNull(status, "status");
-        if (status == State.AVAILABLE && errorCode != null) {
-            throw new IllegalArgumentException("Available runtime status cannot have an error code");
+        if ((status == State.AVAILABLE || status == State.UNKNOWN) && errorCode != null) {
+            throw new IllegalArgumentException("Available or unknown runtime status cannot have an error code");
         }
         if ((status == State.DEGRADED || status == State.UNAVAILABLE) && errorCode == null) {
             throw new IllegalArgumentException("Degraded or unavailable runtime status requires a safe error code");
+        }
+    }
+
+    private static void requireSectionErrorCode(ErrorCode errorCode, ErrorCode... allowed) {
+        if (errorCode != null && Arrays.stream(allowed).noneMatch(errorCode::equals)) {
+            throw new IllegalArgumentException("Runtime status error code belongs to another section");
         }
     }
 

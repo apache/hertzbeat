@@ -23,11 +23,20 @@ import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 
 /**
  * Collector repository
  */
 public interface CollectorDao extends JpaRepository<Collector, Long>, JpaSpecificationExecutor<Collector> {
+
+    /** Minimal Collector inventory row for aggregate runtime status. */
+    interface CollectorStatusInventory {
+
+        String getName();
+
+        byte getStatus();
+    }
 
     /**
      * count collectors by runtime status
@@ -49,6 +58,13 @@ public interface CollectorDao extends JpaRepository<Collector, Long>, JpaSpecifi
      * @return collector list
      */
     List<Collector> findCollectorsByNameIn(List<String> names);
+
+    /**
+     * Load one inventory snapshot without either Collector CLOB field.
+     * @return registered Collector names and scheduling status
+     */
+    @Query("select c.name as name, c.status as status from Collector c")
+    List<CollectorStatusInventory> findStatusInventory();
 
     /**
      * delete collector by name
