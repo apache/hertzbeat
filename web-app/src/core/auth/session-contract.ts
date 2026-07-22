@@ -17,7 +17,11 @@
 
 import { z } from 'zod';
 
-const uniqueRolesSchema = z.array(z.string()).refine(roles => new Set(roles).size === roles.length);
+const normalizedRoleSchema = z
+  .string()
+  .transform(role => role.trim().toUpperCase())
+  .pipe(z.string().min(1));
+const uniqueRolesSchema = z.array(normalizedRoleSchema).transform(roles => [...new Set(roles)]);
 const requiredIdentitySchema = z.string().refine(value => value.trim().length > 0);
 const nullableExpirationSchema = z.union([z.string().refine(value => Number.isFinite(Date.parse(value))), z.null()]);
 

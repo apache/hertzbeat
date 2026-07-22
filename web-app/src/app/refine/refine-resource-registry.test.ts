@@ -8,8 +8,9 @@
 import { describe, expect, it } from 'vitest';
 
 import { routeRegistry } from '@/app/route-registry';
+import { uiSessionSchema } from '@/core/auth/session-contract';
 import { readShellResourceMeta } from '@/layout/shell/shell-navigation-model';
-import { refineResources } from './refine-resource-registry';
+import { refineResources, shellAccessControlProvider } from './refine-resource-registry';
 
 describe('Refine shell resource registry', () => {
   it('matches canonical resource paths and labels exactly', () => {
@@ -50,6 +51,39 @@ describe('Refine shell resource registry', () => {
       list: '/monitors',
       show: '/monitors/:monitorId'
     });
+  });
+
+  it('admits a normalized lowercase session role to an ADMIN resource', async () => {
+    const session = uiSessionSchema.parse({
+      authenticated: true,
+      username: 'operator',
+      roles: [' admin '],
+      workspaceId: 'default',
+      expiresAt: null
+    });
+
+    await expect(
+      shellAccessControlProvider.can({
+        resource: 'admin-proof',
+        action: 'list',
+        params: {
+          roles: session.roles,
+          resource: {
+            name: 'admin-proof',
+            meta: {
+              shell: {
+                capability: 'supported',
+                labelKey: 'settingsNavigation.monitorDefinitions',
+                navigation: true,
+                order: 1,
+                requiredRoles: ['ADMIN'],
+                timePolicy: 'none'
+              }
+            }
+          }
+        }
+      })
+    ).resolves.toEqual({ can: true });
   });
 });
 

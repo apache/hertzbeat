@@ -12,6 +12,8 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import type { PropsWithChildren } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { uiSessionSchema } from '@/core/auth/session-contract';
+
 import { MonitorDefinitionRequestError } from '../api/monitor-definition-api';
 
 const api = vi.hoisted(() => ({
@@ -167,6 +169,22 @@ describe('useMonitorDefinitionController', () => {
     expect(reader.result.current.canWrite).toBe(false);
     act(() => reader.result.current.actions.openCreate());
     expect(reader.result.current.workspace).toBeNull();
+  });
+
+  it('admits the real lowercase admin role after the shared session boundary normalizes it', async () => {
+    auth.roles = uiSessionSchema.parse({
+      authenticated: true,
+      username: 'admin',
+      roles: [' admin '],
+      workspaceId: 'default',
+      expiresAt: null
+    }).roles;
+
+    const { result } = renderController();
+    await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
+    expect(result.current.canWrite).toBe(true);
+    act(() => result.current.actions.openCreate());
+    expect(result.current.workspace).toMatchObject({ kind: 'edit', draft: { mode: 'create' } });
   });
 });
 

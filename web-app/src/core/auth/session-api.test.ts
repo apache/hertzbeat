@@ -77,12 +77,26 @@ describe('UI session API contract', () => {
     expect(fetchMock.mock.calls[1]?.[0]).not.toContain('credential-value');
   });
 
+  it('normalizes role case and whitespace once and keeps canonical roles unique', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn<typeof fetch>().mockResolvedValue(
+        success({
+          ...authenticatedSession,
+          roles: [' admin ', 'ADMIN', ' operator ', 'operator']
+        })
+      )
+    );
+
+    await expect(getSession()).resolves.toMatchObject({ roles: ['ADMIN', 'OPERATOR'] });
+  });
+
   it('rejects session payloads that expose tokens or violate authenticated identity', async () => {
     const fetchMock = vi
       .fn<typeof fetch>()
       .mockResolvedValueOnce(success({ ...authenticatedSession, token: 'must-not-cross-boundary' }))
       .mockResolvedValueOnce(success({ ...authenticatedSession, username: null }))
-      .mockResolvedValueOnce(success({ ...authenticatedSession, roles: ['ADMIN', 'ADMIN'] }))
+      .mockResolvedValueOnce(success({ ...authenticatedSession, roles: ['   '] }))
       .mockResolvedValueOnce(success({ ...authenticatedSession, expiresAt: 'not-a-timestamp' }))
       .mockResolvedValueOnce(
         success({
