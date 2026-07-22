@@ -47,7 +47,9 @@ function normalizeHierarchyNode(node: WireHierarchyNode): MonitorAppHierarchyNod
 export function parseMonitorAppHierarchy(value: unknown, requestedApp: string): MonitorAppHierarchyNode {
   const result = appHierarchySchema.safeParse(value);
   if (!result.success) throw new MonitorContractError();
-  const root = normalizeHierarchyNode(result.data[0]!);
+  const [wireRoot] = result.data;
+  if (!wireRoot) throw new MonitorContractError();
+  const root = normalizeHierarchyNode(wireRoot);
   if (root.value !== requestedApp) throw new MonitorContractError();
   return root;
 }

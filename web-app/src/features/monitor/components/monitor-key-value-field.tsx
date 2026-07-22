@@ -89,7 +89,7 @@ function useKeyValueRows(
     const keys = next.map(row => row.key.trim());
     const valid = keys.every(Boolean) && new Set(keys).size === keys.length;
     onValidityChange?.(valid);
-    if (valid) onChange(Object.fromEntries(next.map((row, index) => [keys[index]!, row.value])));
+    if (valid) onChange(Object.fromEntries(next.map(row => [row.key.trim(), row.value])));
   };
   const keys = rows.map(row => row.key.trim());
   return {

@@ -155,10 +155,11 @@ export async function loadNewMonitorEvidence(name: string, app: string, signal?:
   if (seenIds.size !== snapshot.totalElements) {
     throw new MonitorContractError('New monitor evidence does not contain the complete page snapshot');
   }
-  if (matches.length !== 1) {
+  const [match] = matches;
+  if (matches.length !== 1 || !match) {
     throw new MonitorContractError(`Expected one exact saved monitor, received ${matches.length}`);
   }
-  return loadMonitorDetail(matches[0]!.id, signal);
+  return loadMonitorDetail(match.id, signal);
 }
 
 function collectNewMonitorEvidence(
