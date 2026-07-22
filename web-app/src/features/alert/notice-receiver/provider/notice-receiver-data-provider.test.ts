@@ -243,10 +243,13 @@ describe('Notice Receiver Refine data provider', () => {
   });
 
   it('uses confirmed deleted mutation evidence without a redundant detail reread', async () => {
+    const deleteVariables = Object.assign(Object.create({ inheritedSecret: 'private-inherited' }), receiver, {
+      authorization: 'private-authorization'
+    }) as unknown;
     api.deleteNoticeReceiver.mockResolvedValue({ id: 7, status: 'deleted', receiver: null });
     await expect(
-      noticeReceiverDataProvider.deleteOne({ resource: 'notice-receivers', id: 7, variables: receiver })
-    ).resolves.toEqual({ data: receiver });
+      noticeReceiverDataProvider.deleteOne({ resource: 'notice-receivers', id: 7, variables: deleteVariables })
+    ).resolves.toEqual({ data: { id: 7 } });
     expect(api.deleteNoticeReceiver).toHaveBeenCalledWith(7);
     expect(api.loadNoticeReceiver).not.toHaveBeenCalled();
   });
@@ -571,7 +574,7 @@ describe('Notice Receiver provider input boundary', () => {
     );
   });
 
-  it('accepts only positive numeric ids and preserves the delete record identity', () => {
+  it('accepts only positive numeric ids and reconstructs the delete identity', () => {
     expect(readNoticeReceiverId(7)).toBe(7);
     for (const value of ['7', 0, 1.5]) {
       expect(() => readNoticeReceiverId(value)).toThrow(
@@ -583,7 +586,7 @@ describe('Notice Receiver provider input boundary', () => {
     }
 
     const record = { ...receiver, futureEvidence: 'kept' };
-    expect(readNoticeReceiverDeleteRecord(record, 7)).toBe(record);
+    expect(readNoticeReceiverDeleteRecord(record, 7)).toEqual({ id: 7 });
     expect(() => readNoticeReceiverDeleteRecord({ ...record, id: 8 }, 7)).toThrow(
       expect.objectContaining({
         code: 'NOTICE_RECEIVER_VARIABLES_INVALID',

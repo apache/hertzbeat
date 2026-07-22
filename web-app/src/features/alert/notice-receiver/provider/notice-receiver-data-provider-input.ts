@@ -26,7 +26,6 @@ import {
   noticeReceiverPageSizes,
   receiverTypeDefinitions,
   validateNoticeReceiverDraft,
-  type NoticeReceiver,
   type NoticeReceiverDraft,
   type NoticeReceiverQuery
 } from '../model/notice-receiver-model';
@@ -82,7 +81,7 @@ const nameFilterSchema = z.object({
   operator: z.literal('contains'),
   value: z.string()
 });
-const deleteRecordSchema = z.object({ id: positiveIntegerSchema }).passthrough();
+const deleteRecordSchema = z.object({ id: positiveIntegerSchema });
 
 export function readNoticeReceiverListQuery(params: GetListParams): NoticeReceiverQuery {
   if (params.sorters?.length) throw inputError('NOTICE_RECEIVER_SORT_UNSUPPORTED');
@@ -121,10 +120,11 @@ export function readNoticeReceiverDraft(value: unknown, id?: number): NoticeRece
   return draft;
 }
 
-export function readNoticeReceiverDeleteRecord(value: unknown, id: number): NoticeReceiver {
+export function readNoticeReceiverDeleteRecord(value: unknown, id: number) {
+  if (!hasOwnProperties(value, ['id'])) throw inputError('NOTICE_RECEIVER_VARIABLES_INVALID');
   const source = parse(deleteRecordSchema, value, 'NOTICE_RECEIVER_VARIABLES_INVALID');
   if (source.id !== id) throw inputError('NOTICE_RECEIVER_VARIABLES_INVALID');
-  return value as NoticeReceiver;
+  return { id: source.id };
 }
 
 function hasCurrentDraftShape() {
