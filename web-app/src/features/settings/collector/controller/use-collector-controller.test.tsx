@@ -22,6 +22,8 @@ import {
   mutateCollectors,
   saveCollectorInstrumentationIntake
 } from '../api/collector-management-api';
+import { loadCollectorRuntimeConfig, saveCollectorRuntimeConfig } from '../api/collector-runtime-config-api';
+import type { ManagedOtelRuntimeConfig } from '../api/collector-runtime-config-schema';
 import { useCollectorController } from './use-collector-controller';
 
 vi.mock('../api/collector-management-api', () => ({
@@ -31,6 +33,10 @@ vi.mock('../api/collector-management-api', () => ({
   saveCollectorInstrumentationIntake: vi.fn(),
   clearCollectorInstrumentationIntake: vi.fn()
 }));
+vi.mock('../api/collector-runtime-config-api', () => ({
+  loadCollectorRuntimeConfig: vi.fn(),
+  saveCollectorRuntimeConfig: vi.fn()
+}));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 const load = vi.mocked(loadCollectorManagementPage);
@@ -38,6 +44,8 @@ const loadProof = vi.mocked(loadCollectorMutationProofPage);
 const mutate = vi.mocked(mutateCollectors);
 const saveIntake = vi.mocked(saveCollectorInstrumentationIntake);
 const clearIntake = vi.mocked(clearCollectorInstrumentationIntake);
+const loadRuntime = vi.mocked(loadCollectorRuntimeConfig);
+const saveRuntime = vi.mocked(saveCollectorRuntimeConfig);
 let navigateRoute: NavigateFunction | undefined;
 
 describe('useCollectorController', () => {
@@ -338,6 +346,182 @@ describe('useCollectorController', () => {
     expect(result.current.intakeEditor).toBeNull();
     expect(result.current.intakeFailure).toBeNull();
   });
+
+  it('upgrades a legacy runtime config and proves its preserved schema-3 update by authoritative GET', async () => {
+    const legacy = runtimeConfig({ schemaVersion: 1, revision: 4, environment: '' });
+    const update = runtimeConfig({ revision: 5, environment: 'staging', hostMetricsInterval: 'PT45S' });
+    load.mockResolvedValue(page(0, [collector('edge')], 1));
+    loadRuntime.mockResolvedValueOnce(legacy).mockResolvedValueOnce(update);
+    saveRuntime.mockResolvedValue(update);
+    const { result } = renderHook(() => useCollectorController(), { wrapper: wrapper('/settings/collectors') });
+    await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
+
+    await act(async () => result.current.actions.openRuntimeConfig('edge'));
+    await waitFor(() =>
+      expect(result.current.runtimeEditor?.config).toMatchObject({
+        schemaVersion: 1,
+        revision: 4,
+        environment: '',
+        prometheusTargetCount: 1,
+        fileLogSourceCount: 1
+      })
+    );
+    await act(async () =>
+      result.current.actions.saveRuntimeConfig(runtimeDraft({ environment: 'staging', hostMetricsIntervalSeconds: 45 }))
+    );
+
+    expect(saveRuntime).toHaveBeenCalledWith('edge', update);
+    expect(loadRuntime).toHaveBeenNthCalledWith(2, 'edge');
+    expect(saveRuntime.mock.calls[0]?.[1]).toMatchObject({
+      schemaVersion: 3,
+      revision: 5,
+      prometheusTargets: legacy.prometheusTargets,
+      fileLogSources: legacy.fileLogSources
+    });
+    expect(result.current.runtimeEditor).toBeNull();
+    expect(result.current.runtimeFailure).toBeNull();
+  });
+
+  it('retains the runtime editor and rejects success when PUT response and authoritative GET disagree', async () => {
+    const current = runtimeConfig();
+    const update = runtimeConfig({ revision: 8, environment: 'staging' });
+    load.mockResolvedValue(page(0, [collector('edge')], 1));
+    loadRuntime.mockResolvedValueOnce(current).mockResolvedValueOnce(current);
+    saveRuntime.mockResolvedValue(update);
+    const { result } = renderHook(() => useCollectorController(), { wrapper: wrapper('/settings/collectors') });
+    await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
+    await act(async () => result.current.actions.openRuntimeConfig('edge'));
+    const successesBefore = document.body.textContent?.match(/collectors\.runtime\.success/gu)?.length ?? 0;
+
+    await act(async () => result.current.actions.saveRuntimeConfig(runtimeDraft({ environment: 'staging' })));
+
+    expect(result.current.runtimeEditor).not.toBeNull();
+    expect(result.current.runtimeFailure).toBe('validation');
+    expect(document.body.textContent?.match(/collectors\.runtime\.success/gu)?.length ?? 0).toBe(successesBefore);
+  });
+
+  it('rejects success when PUT response and reread both remain on the unchanged config', async () => {
+    const current = runtimeConfig();
+    load.mockResolvedValue(page(0, [collector('edge')], 1));
+    loadRuntime.mockResolvedValue(current);
+    saveRuntime.mockResolvedValue(current);
+    const { result } = renderHook(() => useCollectorController(), { wrapper: wrapper('/settings/collectors') });
+    await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
+    await act(async () => result.current.actions.openRuntimeConfig('edge'));
+
+    await act(async () => result.current.actions.saveRuntimeConfig(runtimeDraft({ environment: 'staging' })));
+
+    expect(result.current.runtimeEditor).not.toBeNull();
+    expect(result.current.runtimeFailure).toBe('validation');
+  });
+
+  it('rejects an invalid runtime draft before PUT and clears owned failure on cancel', async () => {
+    load.mockResolvedValue(page(0, [collector('edge')], 1));
+    loadRuntime.mockResolvedValue(runtimeConfig());
+    const { result } = renderHook(() => useCollectorController(), { wrapper: wrapper('/settings/collectors') });
+    await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
+    await act(async () => result.current.actions.openRuntimeConfig('edge'));
+
+    await act(async () => result.current.actions.saveRuntimeConfig(runtimeDraft({ hostMetricsIntervalSeconds: 9 })));
+    expect(saveRuntime).not.toHaveBeenCalled();
+    expect(result.current.runtimeFailure).toBe('validation');
+
+    act(() => result.current.actions.cancelRuntimeConfig());
+    expect(result.current.runtimeEditor).toBeNull();
+    expect(result.current.runtimeFailure).toBeNull();
+  });
+
+  it.each([
+    [new ApiMessageError('raw forbidden detail', { status: 403 }), 'permission'],
+    [new ApiMessageError('raw validation detail', { status: 422 }), 'validation'],
+    [new ApiMessageError('raw unavailable detail', { status: 503 }), 'unavailable'],
+    [new Error('raw generic detail'), 'error']
+  ] as const)('classifies runtime PUT failure without proof or raw state %#', async (error, failure) => {
+    load.mockResolvedValue(page(0, [collector('edge')], 1));
+    loadRuntime.mockResolvedValue(runtimeConfig());
+    saveRuntime.mockRejectedValue(error);
+    const { result } = renderHook(() => useCollectorController(), { wrapper: wrapper('/settings/collectors') });
+    await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
+    await act(async () => result.current.actions.openRuntimeConfig('edge'));
+
+    await act(async () => result.current.actions.saveRuntimeConfig(runtimeDraft()));
+
+    expect(result.current.runtimeEditor).not.toBeNull();
+    expect(result.current.runtimeFailure).toBe(failure);
+    expect(loadRuntime).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(result.current)).not.toContain('raw ');
+  });
+
+  it('does not let a late runtime completion publish into a newer semantic query', async () => {
+    const write = deferred<ReturnType<typeof runtimeConfig>>();
+    load.mockResolvedValueOnce(page(0, [collector('edge')], 1)).mockResolvedValueOnce(page(0, [collector('west')], 1));
+    loadRuntime.mockResolvedValue(runtimeConfig());
+    saveRuntime.mockReturnValue(write.promise);
+    const { result } = renderHook(() => useCollectorController(), { wrapper: wrapper('/settings/collectors') });
+    await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
+    await act(async () => result.current.actions.openRuntimeConfig('edge'));
+    let submission: Promise<void> | undefined;
+    act(() => {
+      submission = result.current.actions.saveRuntimeConfig(runtimeDraft());
+      void submission;
+    });
+    await waitFor(() => expect(saveRuntime).toHaveBeenCalledTimes(1));
+
+    act(() => void navigateRoute?.('/settings/collectors?pageIndex=0&pageSize=8&name=west'));
+    await waitFor(() => expect(result.current.query.name).toBe('west'));
+    write.resolve(runtimeConfig({ revision: 8 }));
+    await act(async () => submission);
+
+    expect(result.current.runtimeEditor).toBeNull();
+    expect(result.current.runtimeFailure).toBeNull();
+    expect(result.current.query.name).toBe('west');
+  });
+
+  it('cancels a runtime GET without letting its late result reopen the editor', async () => {
+    const read = deferred<ReturnType<typeof runtimeConfig>>();
+    load.mockResolvedValue(page(0, [collector('edge')], 1));
+    loadRuntime.mockReturnValue(read.promise);
+    const { result } = renderHook(() => useCollectorController(), { wrapper: wrapper('/settings/collectors') });
+    await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
+    let opening: Promise<void> | undefined;
+    act(() => {
+      opening = result.current.actions.openRuntimeConfig('edge');
+      void opening;
+    });
+    await waitFor(() => expect(result.current.runtimeLoading).toBe(true));
+
+    act(() => result.current.actions.cancelRuntimeConfig());
+    expect(result.current.runtimeEditor).toBeNull();
+    expect(result.current.runtimeFailure).toBeNull();
+    read.resolve(runtimeConfig());
+    await act(async () => opening);
+
+    expect(result.current.runtimeEditor).toBeNull();
+    expect(result.current.runtimeLoading).toBe(false);
+  });
+
+  it('does not let a cancelled Collector GET close a newer Collector editor', async () => {
+    const edgeRead = deferred<ReturnType<typeof runtimeConfig>>();
+    load.mockResolvedValue(page(0, [collector('edge'), collector('west')], 2));
+    loadRuntime.mockImplementation(name => (name === 'edge' ? edgeRead.promise : Promise.resolve(runtimeConfig())));
+    const { result } = renderHook(() => useCollectorController(), { wrapper: wrapper('/settings/collectors') });
+    await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
+    let edgeOpening: Promise<void> | undefined;
+    act(() => {
+      edgeOpening = result.current.actions.openRuntimeConfig('edge');
+      void edgeOpening;
+    });
+    await waitFor(() => expect(result.current.runtimeLoading).toBe(true));
+    act(() => result.current.actions.cancelRuntimeConfig());
+
+    await act(async () => result.current.actions.openRuntimeConfig('west'));
+    expect(result.current.runtimeEditor?.record.name).toBe('west');
+    edgeRead.resolve(runtimeConfig());
+    await act(async () => edgeOpening);
+
+    expect(result.current.runtimeEditor?.record.name).toBe('west');
+    expect(result.current.runtimeLoading).toBe(false);
+  });
 });
 
 function wrapper(initialEntry: string) {
@@ -431,4 +615,41 @@ function intakeUnavailable(
     | 'intake_advertisement_unavailable' = 'intake_not_advertised'
 ) {
   return { status: 'unavailable' as const, errorCode };
+}
+
+function runtimeConfig(overrides: Partial<ManagedOtelRuntimeConfig> = {}): ManagedOtelRuntimeConfig {
+  return {
+    schemaVersion: 3 as const,
+    revision: 7,
+    hostMetricsEnabled: true,
+    hostMetricsInterval: 'PT30S',
+    prometheusTargets: [
+      {
+        name: 'payments',
+        endpoint: 'https://payments.example.test:9464/metrics',
+        interval: 'PT30S',
+        timeout: 'PT5S',
+        headerSecretRefs: { 'X-Scrape-Key': 'payments-key-ref' },
+        tlsCaProfile: 'internal-ca'
+      }
+    ],
+    fileLogSources: [{ name: 'payments', pathProfile: 'payments-logs' }],
+    environment: 'production',
+    resourceDetectors: ['ENV', 'SYSTEM'],
+    telemetryFilterPresets: [],
+    hostMetricsScrapers: ['CPU', 'MEMORY'],
+    ...overrides
+  };
+}
+
+function runtimeDraft(overrides: Record<string, unknown> = {}) {
+  return {
+    environment: 'production',
+    hostMetricsEnabled: true,
+    hostMetricsIntervalSeconds: 30,
+    hostMetricsScrapers: ['CPU', 'MEMORY'],
+    resourceDetectors: ['ENV', 'SYSTEM'],
+    telemetryFilterPresets: [],
+    ...overrides
+  };
 }

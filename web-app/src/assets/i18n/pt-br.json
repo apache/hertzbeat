@@ -498,6 +498,52 @@
       "invalid": "Use endpoints HTTPS que correspondam exatamente às capacidades selecionadas.",
       "success": "O anúncio de entrada do coletor foi atualizado."
     },
+    "runtime": {
+      "configure": "Runtime",
+      "configureNamed": "Configurar runtime gerenciado de {{name}}",
+      "title": "Runtime gerenciado de {{name}}",
+      "save": "Salvar configuração de runtime",
+      "success": "A configuração do runtime gerenciado do coletor foi atualizada.",
+      "environment": "Ambiente",
+      "hostMetrics": "Métricas do host",
+      "intervalSeconds": "Intervalo das métricas do host (segundos)",
+      "scrapers": "Coletores de métricas do host",
+      "detectors": "Detectores de recurso",
+      "filterPresets": "Predefinições de filtro de telemetria",
+      "sources": "Fontes gerenciadas",
+      "prometheusSummary_one": "{{count}} destino Prometheus",
+      "prometheusSummary_other": "{{count}} destinos Prometheus",
+      "fileLogSummary_one": "{{count}} fonte FileLog",
+      "fileLogSummary_other": "{{count}} fontes FileLog",
+      "sourceNotice": "Os detalhes das fontes são gerenciados por editores dedicados.",
+      "schemaRevision": "Esquema {{schema}} · revisão {{revision}}",
+      "upgradeNotice": "Ao salvar, esta configuração será atualizada para o esquema 3.",
+      "loadFailed": "Não foi possível carregar a configuração de runtime. Feche e abra novamente para tentar de novo.",
+      "scraper": {
+        "CPU": "CPU",
+        "DISK": "Disco",
+        "FILESYSTEM": "Sistema de arquivos",
+        "LOAD": "Carga",
+        "MEMORY": "Memória",
+        "NETWORK": "Rede",
+        "PAGING": "Paginação",
+        "PROCESSES": "Processos"
+      },
+      "detector": {
+        "ENV": "Variáveis de ambiente",
+        "SYSTEM": "Sistema",
+        "DOCKER": "Docker",
+        "EC2": "Amazon EC2",
+        "ECS": "Amazon ECS",
+        "EKS": "Amazon EKS",
+        "GCP": "Google Cloud",
+        "AZURE": "Azure",
+        "AKS": "Azure AKS"
+      },
+      "filter": {
+        "HEALTH_CHECK_TRACES": "Traces de verificação de integridade"
+      }
+    },
     "failure": {
       "permission": "Você não tem permissão para alterar este coletor.",
       "validation": "A alteração foi rejeitada. Revise o estado atual no servidor.",

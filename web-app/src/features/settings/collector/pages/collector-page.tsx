@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { CollectorActionDialog } from '../components/collector-action-dialog';
 import { CollectorIntakeDialog } from '../components/collector-intake-dialog';
 import { CollectorList } from '../components/collector-list';
+import { CollectorRuntimeConfigDialog } from '../components/collector-runtime-config-dialog';
 import { CollectorToolbar } from '../components/collector-toolbar';
 import { useCollectorController } from '../controller/use-collector-controller';
 import type { CollectorMutationFailure } from '../model/collector-model';
@@ -27,7 +28,7 @@ export function CollectorPage() {
         <Typography.Title level={2}>{t('collectors.title')}</Typography.Title>
         <Typography.Text type="secondary">{t('collectors.description')}</Typography.Text>
       </header>
-      {!controller.intakeEditor && controller.mutationFailure && (
+      {!controller.intakeEditor && !controller.runtimeEditor && controller.mutationFailure && (
         <MutationFailure failure={controller.mutationFailure} />
       )}
       <div className={styles.toolbar}>
@@ -52,7 +53,16 @@ export function CollectorPage() {
         onSelectAll={controller.actions.toggleAll}
         onAction={controller.actions.requestAction}
         onIntake={controller.actions.openIntake}
+        onRuntime={name => void controller.actions.openRuntimeConfig(name)}
       />
+      <CollectorDialogs controller={controller} />
+    </div>
+  );
+}
+
+function CollectorDialogs({ controller }: { controller: ReturnType<typeof useCollectorController> }) {
+  return (
+    <>
       <CollectorActionDialog
         command={controller.pendingAction}
         pending={controller.mutating}
@@ -67,7 +77,16 @@ export function CollectorPage() {
         onSave={request => void controller.actions.saveIntake(request)}
         onClear={() => void controller.actions.clearIntake()}
       />
-    </div>
+      <CollectorRuntimeConfigDialog
+        record={controller.runtimeEditor?.record ?? null}
+        config={controller.runtimeEditor?.config ?? null}
+        loading={controller.runtimeLoading}
+        saving={controller.runtimeSaving}
+        failure={controller.runtimeFailure}
+        onCancel={controller.actions.cancelRuntimeConfig}
+        onSave={draft => void controller.actions.saveRuntimeConfig(draft)}
+      />
+    </>
   );
 }
 

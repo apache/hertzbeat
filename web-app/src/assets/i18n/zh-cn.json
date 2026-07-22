@@ -494,6 +494,52 @@
       "invalid": "请使用与所选能力严格对应的 HTTPS 端点。",
       "success": "采集器接收声明已刷新。"
     },
+    "runtime": {
+      "configure": "运行时",
+      "configureNamed": "配置 {{name}} 托管运行时",
+      "title": "{{name}} 的托管运行时",
+      "save": "保存运行时配置",
+      "success": "采集器托管运行时配置已刷新。",
+      "environment": "环境",
+      "hostMetrics": "主机指标",
+      "intervalSeconds": "主机指标间隔（秒）",
+      "scrapers": "主机指标采集器",
+      "detectors": "资源检测器",
+      "filterPresets": "遥测过滤预设",
+      "sources": "托管数据源",
+      "prometheusSummary_one": "{{count}} 个 Prometheus 目标",
+      "prometheusSummary_other": "{{count}} 个 Prometheus 目标",
+      "fileLogSummary_one": "{{count}} 个 FileLog 数据源",
+      "fileLogSummary_other": "{{count}} 个 FileLog 数据源",
+      "sourceNotice": "数据源明细由专用编辑器管理。",
+      "schemaRevision": "模式 {{schema}} · 修订 {{revision}}",
+      "upgradeNotice": "保存后此配置将升级到模式 3。",
+      "loadFailed": "无法加载运行时配置，请关闭后重新打开再试。",
+      "scraper": {
+        "CPU": "CPU",
+        "DISK": "磁盘",
+        "FILESYSTEM": "文件系统",
+        "LOAD": "负载",
+        "MEMORY": "内存",
+        "NETWORK": "网络",
+        "PAGING": "分页",
+        "PROCESSES": "进程"
+      },
+      "detector": {
+        "ENV": "环境变量",
+        "SYSTEM": "系统",
+        "DOCKER": "Docker",
+        "EC2": "Amazon EC2",
+        "ECS": "Amazon ECS",
+        "EKS": "Amazon EKS",
+        "GCP": "Google Cloud",
+        "AZURE": "Azure",
+        "AKS": "Azure AKS"
+      },
+      "filter": {
+        "HEALTH_CHECK_TRACES": "健康检查链路"
+      }
+    },
     "failure": {
       "permission": "你没有权限更改此采集器。",
       "validation": "服务器拒绝了采集器变更，请检查当前状态。",

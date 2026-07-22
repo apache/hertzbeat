@@ -47,6 +47,7 @@ describe('CollectorPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Search' }));
     fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
     fireEvent.click(screen.getByRole('button', { name: 'Configure edge intake' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Configure edge managed runtime' }));
     fireEvent.click(screen.getByRole('button', { name: 'Take edge offline' }));
     fireEvent.click(screen.getByTitle('Next Page'));
 
@@ -54,6 +55,7 @@ describe('CollectorPage', () => {
     expect(controller.actions.submitName).toHaveBeenCalledTimes(1);
     expect(controller.actions.refresh).toHaveBeenCalledTimes(1);
     expect(controller.actions.openIntake).toHaveBeenCalledWith('edge');
+    expect(controller.actions.openRuntimeConfig).toHaveBeenCalledWith('edge');
     expect(controller.actions.requestAction).toHaveBeenCalledWith('offline', ['edge']);
     expect(controller.actions.setPage).toHaveBeenCalledWith(1, 8);
     expect(
@@ -149,6 +151,100 @@ describe('CollectorPage', () => {
     expect(within(dialog).queryByLabelText('OTLP gRPC HTTPS endpoint')).not.toBeInTheDocument();
   });
 
+  it('edits only managed runtime core fields and keeps source policy as a redacted summary', async () => {
+    const controller = buildController({
+      runtimeEditor: { record: collector('edge'), config: runtimeConfig() }
+    });
+    resource.useCollectorController.mockReturnValue(controller);
+    renderPage();
+
+    const dialog = screen.getByRole('dialog', { name: 'Managed runtime for edge' });
+    expect(within(dialog).getByText('1 Prometheus target')).toBeInTheDocument();
+    expect(within(dialog).getByText('1 FileLog source')).toBeInTheDocument();
+    expect(within(dialog).getByText('Source details are managed by dedicated editors.')).toBeInTheDocument();
+    expect(within(dialog).getByText('Schema 3 · revision 7')).toBeInTheDocument();
+    expect(dialog).not.toHaveTextContent('payments-key-ref');
+    expect(dialog).not.toHaveTextContent('internal-ca');
+    expect(within(dialog).queryByLabelText(/token|secret|raw json/i)).not.toBeInTheDocument();
+
+    fireEvent.change(within(dialog).getByLabelText('Environment'), { target: { value: 'staging' } });
+    fireEvent.change(within(dialog).getByLabelText('Host metrics interval (seconds)'), { target: { value: '45' } });
+    fireEvent.click(within(dialog).getByRole('checkbox', { name: 'Disk' }));
+    fireEvent.click(within(dialog).getByRole('checkbox', { name: 'Docker' }));
+    fireEvent.click(within(dialog).getByRole('checkbox', { name: 'Health-check traces' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save runtime config' }));
+
+    await waitFor(() =>
+      expect(controller.actions.saveRuntimeConfig).toHaveBeenCalledWith({
+        environment: 'staging',
+        hostMetricsEnabled: true,
+        hostMetricsIntervalSeconds: 45,
+        hostMetricsScrapers: ['CPU', 'MEMORY', 'DISK'],
+        resourceDetectors: ['ENV', 'SYSTEM', 'DOCKER'],
+        telemetryFilterPresets: ['HEALTH_CHECK_TRACES']
+      })
+    );
+  });
+
+  it('disables the complete runtime form while writing and keeps classified failure inside it', () => {
+    resource.useCollectorController.mockReturnValue(
+      buildController({
+        runtimeEditor: { record: collector('edge'), config: runtimeConfig() },
+        runtimeBusy: true,
+        runtimeSaving: true,
+        runtimeFailure: 'permission'
+      })
+    );
+    renderPage();
+
+    const dialog = screen.getByRole('dialog', { name: 'Managed runtime for edge' });
+    expect(within(dialog).getByText('You do not have permission to change this Collector.')).toBeInTheDocument();
+    expect(within(dialog).getByLabelText('Environment')).toBeDisabled();
+    expect(within(dialog).getByLabelText('Host metrics interval (seconds)')).toBeDisabled();
+    expect(within(dialog).getByRole('checkbox', { name: 'CPU' })).toBeDisabled();
+  });
+
+  it('keeps an invalid runtime draft visibly classified inside the open editor', () => {
+    resource.useCollectorController.mockReturnValue(
+      buildController({
+        runtimeEditor: { record: collector('edge'), config: runtimeConfig() },
+        runtimeFailure: 'validation'
+      })
+    );
+    renderPage();
+
+    const dialog = screen.getByRole('dialog', { name: 'Managed runtime for edge' });
+    expect(
+      within(dialog).getByText('The Collector change was rejected. Review its current server state.')
+    ).toBeInTheDocument();
+  });
+
+  it('makes legacy upgrade intent explicit and keeps a failed GET distinct from loading', () => {
+    const legacy = runtimeConfig({ schemaVersion: 1, environment: '' });
+    resource.useCollectorController.mockReturnValue(
+      buildController({ runtimeEditor: { record: collector('edge'), config: legacy } })
+    );
+    renderPage();
+    let dialog = screen.getByRole('dialog', { name: 'Managed runtime for edge' });
+    expect(within(dialog).getByText('Schema 1 · revision 7')).toBeInTheDocument();
+    expect(within(dialog).getByText('Saving upgrades this configuration to schema 3.')).toBeInTheDocument();
+
+    cleanup();
+    resource.useCollectorController.mockReturnValue(
+      buildController({
+        runtimeEditor: { record: collector('edge'), config: null },
+        runtimeBusy: false,
+        runtimeFailure: 'unavailable'
+      })
+    );
+    renderPage();
+    dialog = screen.getByRole('dialog', { name: 'Managed runtime for edge' });
+    expect(
+      within(dialog).getByText('Runtime config could not be loaded. Close and reopen to retry.')
+    ).toBeInTheDocument();
+    expect(within(dialog).queryByTestId('runtime-config-loading')).not.toBeInTheDocument();
+  });
+
   it.each([
     ['permission', 'You do not have permission to change this Collector.'],
     ['validation', 'The Collector change was rejected. Review its current server state.'],
@@ -241,6 +337,11 @@ function buildController(overrides: Record<string, unknown> = {}) {
     pendingAction: null,
     intakeEditor: null,
     intakeSaving: false,
+    runtimeEditor: null,
+    runtimeBusy: false,
+    runtimeLoading: false,
+    runtimeSaving: false,
+    runtimeFailure: null,
     selected: [],
     actions: {
       setNameDraft: vi.fn(),
@@ -252,6 +353,9 @@ function buildController(overrides: Record<string, unknown> = {}) {
       saveIntake: vi.fn(),
       clearIntake: vi.fn(),
       cancelIntake: vi.fn(),
+      openRuntimeConfig: vi.fn(),
+      saveRuntimeConfig: vi.fn(),
+      cancelRuntimeConfig: vi.fn(),
       toggleSelection: vi.fn(),
       toggleAll: vi.fn(),
       cancelAction: vi.fn(),
@@ -301,6 +405,34 @@ function intakeUnavailable(
     | 'intake_advertisement_unavailable' = 'intake_not_advertised'
 ) {
   return { status: 'unavailable' as const, errorCode };
+}
+
+function runtimeConfig(overrides: Record<string, unknown> = {}) {
+  return {
+    schemaVersion: 3 as const,
+    revision: 7,
+    hostMetricsEnabled: true,
+    hostMetricsInterval: 'PT30S',
+    hostMetricsIntervalSeconds: 30,
+    prometheusTargets: [
+      {
+        name: 'payments',
+        endpoint: 'https://payments.example.test:9464/metrics',
+        interval: 'PT30S',
+        timeout: 'PT5S',
+        headerSecretRefs: { 'X-Scrape-Key': 'payments-key-ref' },
+        tlsCaProfile: 'internal-ca'
+      }
+    ],
+    fileLogSources: [{ name: 'payments', pathProfile: 'payments-logs' }],
+    prometheusTargetCount: 1,
+    fileLogSourceCount: 1,
+    environment: 'production',
+    resourceDetectors: ['ENV', 'SYSTEM'] as const,
+    telemetryFilterPresets: [] as const,
+    hostMetricsScrapers: ['CPU', 'MEMORY'] as const,
+    ...overrides
+  };
 }
 
 function renderPage() {

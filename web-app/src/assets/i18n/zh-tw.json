@@ -494,6 +494,52 @@
       "invalid": "請使用與所選能力嚴格對應的 HTTPS 端點。",
       "success": "採集器接收宣告已重新整理。"
     },
+    "runtime": {
+      "configure": "執行階段",
+      "configureNamed": "設定 {{name}} 受管執行階段",
+      "title": "{{name}} 的受管執行階段",
+      "save": "儲存執行階段設定",
+      "success": "採集器受管執行階段設定已重新整理。",
+      "environment": "環境",
+      "hostMetrics": "主機指標",
+      "intervalSeconds": "主機指標間隔（秒）",
+      "scrapers": "主機指標擷取器",
+      "detectors": "資源偵測器",
+      "filterPresets": "遙測篩選預設",
+      "sources": "受管資料來源",
+      "prometheusSummary_one": "{{count}} 個 Prometheus 目標",
+      "prometheusSummary_other": "{{count}} 個 Prometheus 目標",
+      "fileLogSummary_one": "{{count}} 個 FileLog 資料來源",
+      "fileLogSummary_other": "{{count}} 個 FileLog 資料來源",
+      "sourceNotice": "資料來源明細由專用編輯器管理。",
+      "schemaRevision": "結構描述 {{schema}} · 修訂 {{revision}}",
+      "upgradeNotice": "儲存後此設定將升級到結構描述 3。",
+      "loadFailed": "無法載入執行階段設定，請關閉後重新開啟再試。",
+      "scraper": {
+        "CPU": "CPU",
+        "DISK": "磁碟",
+        "FILESYSTEM": "檔案系統",
+        "LOAD": "負載",
+        "MEMORY": "記憶體",
+        "NETWORK": "網路",
+        "PAGING": "分頁",
+        "PROCESSES": "程序"
+      },
+      "detector": {
+        "ENV": "環境變數",
+        "SYSTEM": "系統",
+        "DOCKER": "Docker",
+        "EC2": "Amazon EC2",
+        "ECS": "Amazon ECS",
+        "EKS": "Amazon EKS",
+        "GCP": "Google Cloud",
+        "AZURE": "Azure",
+        "AKS": "Azure AKS"
+      },
+      "filter": {
+        "HEALTH_CHECK_TRACES": "健康檢查追蹤"
+      }
+    },
     "failure": {
       "permission": "你沒有權限變更此採集器。",
       "validation": "伺服器拒絕了採集器變更，請檢查目前狀態。",

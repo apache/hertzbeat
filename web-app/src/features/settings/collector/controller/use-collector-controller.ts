@@ -14,14 +14,11 @@ import { useSourceScopedValue, useStringQueryDraft } from '@/shared/query-contex
 
 import { loadCollectorManagementPage } from '../api/collector-management-api';
 import type { CollectorListState, CollectorPage } from '../model/collector-model';
-import {
-  readCollectorQuery,
-  writeCollectorQuery,
-  type CollectorPageSize,
-  type CollectorQuery
-} from '../model/collector-query-model';
+import { readCollectorQuery, writeCollectorQuery, type CollectorQuery } from '../model/collector-query-model';
+import { buildCollectorActions } from './collector-actions';
 import { useCollectorMutationController } from './use-collector-mutation-controller';
 import { useCollectorIntakeController } from './use-collector-intake-controller';
+import { useCollectorRuntimeConfigController } from './use-collector-runtime-config-controller';
 import { collectorQueryKeys } from './collector-query-keys';
 
 export function useCollectorController() {
@@ -43,8 +40,14 @@ export function useCollectorController() {
     queryClient,
     locked: mutation.mutating
   });
+  const runtime = useCollectorRuntimeConfigController({
+    query: state.query,
+    queryRef: state.queryRef,
+    records: state.records,
+    locked: mutation.mutating || intake.saving
+  });
   const listState = resolveCollectorListState(state.collectorQuery, mutation.proofFailure);
-  const busy = mutation.mutating || intake.saving;
+  const busy = mutation.mutating || intake.saving || runtime.busy;
 
   return {
     query: state.query,
@@ -58,7 +61,12 @@ export function useCollectorController() {
     pendingAction: mutation.pendingAction,
     intakeEditor: intake.editor,
     intakeSaving: intake.saving,
-    actions: buildCollectorActions({ ...state, mutation, intake, refetch: state.collectorQuery.refetch })
+    runtimeEditor: runtime.editor,
+    runtimeBusy: runtime.busy,
+    runtimeLoading: runtime.loading,
+    runtimeSaving: runtime.saving,
+    runtimeFailure: runtime.failure,
+    actions: buildCollectorActions({ ...state, mutation, intake, runtime, refetch: state.collectorQuery.refetch })
   };
 }
 
@@ -106,55 +114,6 @@ function useCollectorQueryState() {
     records,
     visibleMutableNames,
     navigateQuery
-  };
-}
-
-type ActionOptions = {
-  nameDraft: string;
-  queryRef: { current: CollectorQuery };
-  selected: string[];
-  visibleMutableNames: string[];
-  setNameDraft: (name: string) => void;
-  setSelected: (selected: string[]) => void;
-  navigateQuery: (next: CollectorQuery, replace?: boolean) => void;
-  mutation: ReturnType<typeof useCollectorMutationController>;
-  intake: ReturnType<typeof useCollectorIntakeController>;
-  refetch: () => unknown;
-};
-
-function buildCollectorActions(options: ActionOptions) {
-  return {
-    setNameDraft: options.setNameDraft,
-    submitName: () => {
-      const name = options.nameDraft.trim();
-      const current = options.queryRef.current;
-      options.navigateQuery({ ...current, name, pageIndex: name === current.name ? current.pageIndex : 0 });
-    },
-    setPage: (pageIndex: number, pageSize: CollectorPageSize) =>
-      options.navigateQuery({ ...options.queryRef.current, pageIndex, pageSize }),
-    refresh: () => {
-      if (!options.intake.saving) options.mutation.refresh(options.refetch);
-    },
-    requestAction: (action: Parameters<typeof options.mutation.requestAction>[0], collectors: string[]) => {
-      if (!options.intake.saving) options.mutation.requestAction(action, collectors);
-    },
-    cancelAction: options.mutation.cancelAction,
-    confirmAction: options.mutation.confirmAction,
-    openIntake: options.intake.open,
-    saveIntake: options.intake.save,
-    clearIntake: options.intake.clear,
-    cancelIntake: options.intake.cancel,
-    toggleSelection: (name: string, checked: boolean) => {
-      if (options.mutation.mutating || options.intake.saving || !options.visibleMutableNames.includes(name)) return;
-      options.setSelected(
-        checked ? [...new Set([...options.selected, name])] : options.selected.filter(candidate => candidate !== name)
-      );
-    },
-    toggleAll: (checked: boolean) => {
-      if (!options.mutation.mutating && !options.intake.saving) {
-        options.setSelected(checked ? options.visibleMutableNames : []);
-      }
-    }
   };
 }
 

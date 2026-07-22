@@ -26,8 +26,3 @@
 .toolbar :global(.ant-input-affix-wrapper) {
   max-width: 320px;
 }
-
-:global(.collector-row-actions) {
-  display: flex;
-  gap: 8px;
-}

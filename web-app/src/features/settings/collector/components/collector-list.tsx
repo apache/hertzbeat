@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Button, Checkbox, Empty, Pagination, Skeleton, Table, Tag, Typography } from 'antd';
+import { Checkbox, Empty, Pagination, Skeleton, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import type { CollectorListState, CollectorMutationAction, CollectorRecord } from '../model/collector-model';
 import { collectorPageSizes, type CollectorPageSize, type CollectorQuery } from '../model/collector-query-model';
 import { CollectorIntakeStateTag } from './collector-intake-state-tag';
+import { CollectorRowActions } from './collector-row-actions';
 
 type Props = {
   state: CollectorListState;
@@ -24,6 +25,7 @@ type Props = {
   onSelectAll: (checked: boolean) => void;
   onAction: (action: CollectorMutationAction, collectors: string[]) => void;
   onIntake: (name: string) => void;
+  onRuntime: (name: string) => void;
 };
 
 export function CollectorList(props: Props) {
@@ -142,52 +144,16 @@ function factColumns(t: TFunction): ColumnsType<CollectorRecord> {
   ];
 }
 
+function StateMessage({ title }: { title: string }) {
+  return <Empty description={title} />;
+}
+
 function actionColumn(props: Props, t: TFunction): ColumnsType<CollectorRecord>[number] {
   return {
     title: t('common.actions'),
     key: 'actions',
     fixed: 'right',
-    width: 320,
-    render: (_, record) => (
-      <div className="collector-row-actions">
-        <Button
-          size="small"
-          disabled={props.busy}
-          aria-label={t('collectors.intake.configureNamed', { name: record.name })}
-          onClick={() => props.onIntake(record.name)}
-        >
-          {t('collectors.intake.configure')}
-        </Button>
-        {record.immutable ? (
-          <Typography.Text type="secondary">{t('collectors.protected')}</Typography.Text>
-        ) : (
-          <>
-            <Button
-              size="small"
-              disabled={props.busy}
-              aria-label={t(record.online ? 'collectors.takeOfflineNamed' : 'collectors.takeOnlineNamed', {
-                name: record.name
-              })}
-              onClick={() => props.onAction(record.online ? 'offline' : 'online', [record.name])}
-            >
-              {t(record.online ? 'collectors.takeOffline' : 'collectors.takeOnline')}
-            </Button>
-            <Button
-              size="small"
-              danger
-              disabled={props.busy}
-              aria-label={t('collectors.deleteNamed', { name: record.name })}
-              onClick={() => props.onAction('delete', [record.name])}
-            >
-              {t('collectors.delete')}
-            </Button>
-          </>
-        )}
-      </div>
-    )
+    width: 420,
+    render: (_, record) => <CollectorRowActions {...props} record={record} t={t} />
   };
-}
-
-function StateMessage({ title }: { title: string }) {
-  return <Empty description={title} />;
 }

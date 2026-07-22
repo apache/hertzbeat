@@ -498,6 +498,52 @@
       "invalid": "選択した機能に正確に対応する HTTPS エンドポイントを使用してください。",
       "success": "コレクターの受信広告を更新しました。"
     },
+    "runtime": {
+      "configure": "ランタイム",
+      "configureNamed": "{{name}} の管理ランタイムを設定",
+      "title": "{{name}} の管理ランタイム",
+      "save": "ランタイム設定を保存",
+      "success": "コレクターの管理ランタイム設定を更新しました。",
+      "environment": "環境",
+      "hostMetrics": "ホストメトリクス",
+      "intervalSeconds": "ホストメトリクス間隔（秒）",
+      "scrapers": "ホストメトリクススクレイパー",
+      "detectors": "リソース検出器",
+      "filterPresets": "テレメトリフィルタープリセット",
+      "sources": "管理対象ソース",
+      "prometheusSummary_one": "Prometheus ターゲット {{count}} 件",
+      "prometheusSummary_other": "Prometheus ターゲット {{count}} 件",
+      "fileLogSummary_one": "FileLog ソース {{count}} 件",
+      "fileLogSummary_other": "FileLog ソース {{count}} 件",
+      "sourceNotice": "ソースの詳細は専用エディターで管理します。",
+      "schemaRevision": "スキーマ {{schema}}・リビジョン {{revision}}",
+      "upgradeNotice": "保存するとこの設定はスキーマ 3 に更新されます。",
+      "loadFailed": "ランタイム設定を読み込めませんでした。閉じてから再度開いてください。",
+      "scraper": {
+        "CPU": "CPU",
+        "DISK": "ディスク",
+        "FILESYSTEM": "ファイルシステム",
+        "LOAD": "負荷",
+        "MEMORY": "メモリ",
+        "NETWORK": "ネットワーク",
+        "PAGING": "ページング",
+        "PROCESSES": "プロセス"
+      },
+      "detector": {
+        "ENV": "環境変数",
+        "SYSTEM": "システム",
+        "DOCKER": "Docker",
+        "EC2": "Amazon EC2",
+        "ECS": "Amazon ECS",
+        "EKS": "Amazon EKS",
+        "GCP": "Google Cloud",
+        "AZURE": "Azure",
+        "AKS": "Azure AKS"
+      },
+      "filter": {
+        "HEALTH_CHECK_TRACES": "ヘルスチェックトレース"
+      }
+    },
     "failure": {
       "permission": "このコレクターを変更する権限がありません。",
       "validation": "コレクターの変更が拒否されました。現在の状態を確認してください。",

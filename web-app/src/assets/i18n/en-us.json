@@ -498,6 +498,52 @@
       "invalid": "Use HTTPS endpoints that exactly match the selected capabilities.",
       "success": "Collector intake advertisement refreshed."
     },
+    "runtime": {
+      "configure": "Runtime",
+      "configureNamed": "Configure {{name}} managed runtime",
+      "title": "Managed runtime for {{name}}",
+      "save": "Save runtime config",
+      "success": "Collector managed runtime configuration refreshed.",
+      "environment": "Environment",
+      "hostMetrics": "Host metrics",
+      "intervalSeconds": "Host metrics interval (seconds)",
+      "scrapers": "Host metrics scrapers",
+      "detectors": "Resource detectors",
+      "filterPresets": "Telemetry filter presets",
+      "sources": "Managed sources",
+      "prometheusSummary_one": "{{count}} Prometheus target",
+      "prometheusSummary_other": "{{count}} Prometheus targets",
+      "fileLogSummary_one": "{{count}} FileLog source",
+      "fileLogSummary_other": "{{count}} FileLog sources",
+      "sourceNotice": "Source details are managed by dedicated editors.",
+      "schemaRevision": "Schema {{schema}} · revision {{revision}}",
+      "upgradeNotice": "Saving upgrades this configuration to schema 3.",
+      "loadFailed": "Runtime config could not be loaded. Close and reopen to retry.",
+      "scraper": {
+        "CPU": "CPU",
+        "DISK": "Disk",
+        "FILESYSTEM": "Filesystem",
+        "LOAD": "Load",
+        "MEMORY": "Memory",
+        "NETWORK": "Network",
+        "PAGING": "Paging",
+        "PROCESSES": "Processes"
+      },
+      "detector": {
+        "ENV": "Environment variables",
+        "SYSTEM": "System",
+        "DOCKER": "Docker",
+        "EC2": "Amazon EC2",
+        "ECS": "Amazon ECS",
+        "EKS": "Amazon EKS",
+        "GCP": "Google Cloud",
+        "AZURE": "Azure",
+        "AKS": "Azure AKS"
+      },
+      "filter": {
+        "HEALTH_CHECK_TRACES": "Health-check traces"
+      }
+    },
     "failure": {
       "permission": "You do not have permission to change this Collector.",
       "validation": "The Collector change was rejected. Review its current server state.",

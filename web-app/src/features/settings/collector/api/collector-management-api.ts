@@ -69,7 +69,7 @@ export async function clearCollectorInstrumentationIntake(collector: string) {
   return requireExactIntakeResponse(response, collectorId);
 }
 
-function normalizeCollectorId(value: string) {
+export function normalizeCollectorId(value: string) {
   const collectorId = value.trim();
   if (
     !collectorId ||
