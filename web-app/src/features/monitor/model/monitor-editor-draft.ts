@@ -61,11 +61,10 @@ export function createMonitorEditorDraft(
     if (define.type === 'number') numberDefineRange(define);
   });
   const existing = detail?.params ?? [];
-  if (detail && existing.some(param => !defines.some(define => define.field === param.field))) {
-    throw new MonitorParamDraftError(
-      existing.find(param => !defines.some(define => define.field === param.field))!.field
-    );
-  }
+  const unsupportedParam = detail
+    ? existing.find(param => !defines.some(define => define.field === param.field))
+    : undefined;
+  if (unsupportedParam) throw new MonitorParamDraftError(unsupportedParam.field);
   return {
     monitor: detail
       ? normalizeMonitorSchedule(detail.monitor)
@@ -105,10 +104,12 @@ export function transitionMonitorEditorDraft(
   scrape: MonitorScrape
 ): MonitorEditorDraft {
   const previous = new Map(previousDefines.map(define => [define.field, define]));
+  const next = new Map(nextDefines.map(define => [define.field, define]));
   const current = new Map(draft.params.map(param => [param.field, param]));
   const defaults = buildMonitorParams(nextDefines);
   const params = defaults.map(param => {
-    const nextDefine = nextDefines.find(define => define.field === param.field)!;
+    const nextDefine = next.get(param.field);
+    if (!nextDefine) throw new MonitorParamDraftError(param.field);
     const previousDefine = previous.get(param.field);
     const existing = current.get(param.field);
     // Discovery-source credentials belong to that source and must never cross into another source draft.
