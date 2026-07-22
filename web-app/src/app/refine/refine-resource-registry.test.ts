@@ -8,8 +8,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { routeRegistry } from '@/app/route-registry';
-import type { ShellResourceMeta } from '@/layout/shell/shell-navigation-model';
-
+import { readShellResourceMeta } from '@/layout/shell/shell-navigation-model';
 import { refineResources } from './refine-resource-registry';
 
 describe('Refine shell resource registry', () => {
@@ -55,7 +54,7 @@ describe('Refine shell resource registry', () => {
 });
 
 function shellMeta(name: string) {
-  return refineResources.find(resource => resource.name === name)?.meta?.shell as ShellResourceMeta | undefined;
+  return readShellResourceMeta(refineResources.find(resource => resource.name === name)?.meta?.shell);
 }
 
 function compareResourceRoute(left: { list: string }, right: { list: string }) {

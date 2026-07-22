@@ -24,6 +24,42 @@ export type ShellResourceMeta = {
   actionTimePolicies?: Partial<Record<ShellResourceAction, ShellTimePolicy>>;
 };
 
+const shellCapabilities: readonly ShellCapability[] = ['supported', 'unknown', 'unsupported'];
+const shellTimePolicies: readonly ShellTimePolicy[] = ['global', 'route_owned', 'none', 'unknown'];
+const shellResourceActions: readonly ShellResourceAction[] = ['create', 'edit', 'list', 'show', 'clone'];
+
+/** Reads HertzBeat-owned metadata from Refine's intentionally untyped extension bag. */
+export function readShellResourceMeta(value: unknown): ShellResourceMeta | undefined {
+  const capability = property(value, 'capability');
+  const labelKey = property(value, 'labelKey');
+  const navigation = property(value, 'navigation');
+  const order = property(value, 'order');
+  const timePolicy = property(value, 'timePolicy');
+  if (
+    !isMember(shellCapabilities, capability) ||
+    typeof labelKey !== 'string' ||
+    typeof navigation !== 'boolean' ||
+    typeof order !== 'number' ||
+    !Number.isSafeInteger(order) ||
+    order < 0 ||
+    !isMember(shellTimePolicies, timePolicy)
+  ) {
+    return undefined;
+  }
+  const requiredRoles = stringArray(property(value, 'requiredRoles'));
+  const actionTimePolicies = readActionTimePolicies(property(value, 'actionTimePolicies'));
+  if (requiredRoles === null || actionTimePolicies === null) return undefined;
+  return {
+    capability,
+    labelKey,
+    navigation,
+    order,
+    timePolicy,
+    ...(requiredRoles ? { requiredRoles } : {}),
+    ...(actionTimePolicies ? { actionTimePolicies } : {})
+  };
+}
+
 export function resolveShellTimePolicy(shell: ShellResourceMeta | undefined, action: ShellResourceAction | undefined) {
   if (!shell) return 'unknown';
   return (action ? shell.actionTimePolicies?.[action] : undefined) ?? shell.timePolicy;
@@ -44,7 +80,7 @@ export type ShellNavigationItem = {
 export function buildShellNavigation(resources: readonly IResourceItem[]) {
   const items = new Map<string, ShellNavigationItem>();
   resources.forEach(resource => {
-    const shell = resource.meta?.shell as ShellResourceMeta | undefined;
+    const shell = readShellResourceMeta(resource.meta?.shell);
     if (!shell?.navigation) return;
     const item: ShellNavigationItem = {
       capability: shell.capability,
@@ -69,6 +105,33 @@ export function buildShellNavigation(resources: readonly IResourceItem[]) {
   });
   sortNavigation(roots);
   return roots;
+}
+
+function readActionTimePolicies(value: unknown): ShellResourceMeta['actionTimePolicies'] | null {
+  if (value === undefined) return undefined;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  if (Object.keys(value).some(key => !shellResourceActions.some(action => action === key))) return null;
+  const policies: Partial<Record<ShellResourceAction, ShellTimePolicy>> = {};
+  for (const action of shellResourceActions) {
+    const policy = property(value, action);
+    if (policy === undefined) continue;
+    if (!isMember(shellTimePolicies, policy)) return null;
+    policies[action] = policy;
+  }
+  return policies;
+}
+
+function stringArray(value: unknown): string[] | undefined | null {
+  if (value === undefined) return undefined;
+  return Array.isArray(value) && value.every(item => typeof item === 'string') ? value : null;
+}
+
+function property(value: unknown, key: PropertyKey): unknown {
+  return value && typeof value === 'object' ? Reflect.get(value, key) : undefined;
+}
+
+function isMember<T extends string>(values: readonly T[], value: unknown): value is T {
+  return typeof value === 'string' && values.some(candidate => candidate === value);
 }
 
 export function activeNavigationTrail(tree: readonly ShellNavigationItem[], pathname: string) {

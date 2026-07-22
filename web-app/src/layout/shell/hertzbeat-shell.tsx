@@ -14,7 +14,7 @@ import { GlobalTimeProvider, RouteTimeProvider, type TimeOwnership } from '@/sha
 
 import { ShellHeader } from './shell-header';
 import { ShellNavigation } from './shell-navigation';
-import { resolveShellTimePolicy, type ShellResourceMeta } from './shell-navigation-model';
+import { readShellResourceMeta, resolveShellTimePolicy } from './shell-navigation-model';
 import styles from './hertzbeat-shell.module.css';
 
 export function HertzBeatShell() {
@@ -31,7 +31,7 @@ function RouteOwnedShell() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const { action, resource } = useResourceParams();
-  const policy: TimeOwnership = resolveShellTimePolicy(resource?.meta?.shell as ShellResourceMeta | undefined, action);
+  const policy: TimeOwnership = resolveShellTimePolicy(readShellResourceMeta(resource?.meta?.shell), action);
   return (
     <RouteTimeProvider key={`${location.pathname}:${policy}`} policy={policy}>
       <div className={`${styles.shell} ${collapsed ? styles.shellCollapsed : ''}`}>

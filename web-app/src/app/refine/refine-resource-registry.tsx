@@ -29,7 +29,12 @@ import { noticeRuleResourceName } from '@/features/alert/notice-rule/refine';
 import { noticeTemplateResourceName } from '@/features/alert/notice-template';
 import { labelResourceName } from '@/features/settings/label/refine';
 import { systemConfigResourceName } from '@/features/settings/system-config/refine';
-import type { ShellCapability, ShellResourceMeta, ShellTimePolicy } from '@/layout/shell/shell-navigation-model';
+import {
+  readShellResourceMeta,
+  type ShellCapability,
+  type ShellResourceMeta,
+  type ShellTimePolicy
+} from '@/layout/shell/shell-navigation-model';
 
 import { alertSilenceResourceName } from './resources/alert-silence-data-provider';
 
@@ -245,7 +250,7 @@ function routedNavigationResource(routeId: AppResourceRouteId, resource: RoutedN
 }
 
 function resolveShellAccess(params: Parameters<AccessControlProvider['can']>[0]['params']) {
-  const shell = params?.resource?.meta?.shell as ShellResourceMeta | undefined;
+  const shell = readShellResourceMeta(params?.resource?.meta?.shell);
   if (!shell || shell.capability !== 'supported') return capabilityDenied(shell);
   const permitted = hasRequiredRole(shell.requiredRoles ?? [], stringRoles(params?.roles));
   return permitted ? { can: true } : { can: false, reason: 'ROLE_REQUIRED' };

@@ -7,7 +7,12 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { activeNavigationTrail, buildShellNavigation, resolveShellTimePolicy } from './shell-navigation-model';
+import {
+  activeNavigationTrail,
+  buildShellNavigation,
+  readShellResourceMeta,
+  resolveShellTimePolicy
+} from './shell-navigation-model';
 
 describe('shell navigation model', () => {
   const resources = [
@@ -55,6 +60,30 @@ describe('shell navigation model', () => {
     expect(resolveShellTimePolicy(shell, 'edit')).toBe('none');
     expect(resolveShellTimePolicy(shell, undefined)).toBe('none');
     expect(resolveShellTimePolicy(undefined, undefined)).toBe('unknown');
+  });
+
+  it('rejects malformed values from the untyped Refine metadata boundary', () => {
+    expect(readShellResourceMeta({ capability: 'supported' })).toBeUndefined();
+    expect(
+      readShellResourceMeta({
+        capability: 'supported',
+        labelKey: 'menu.monitors',
+        navigation: true,
+        order: 20,
+        timePolicy: 'none',
+        actionTimePolicies: { show: 'invalid' }
+      })
+    ).toBeUndefined();
+    expect(
+      readShellResourceMeta({
+        capability: 'supported',
+        labelKey: 'menu.monitors',
+        navigation: true,
+        order: 20,
+        timePolicy: 'none',
+        actionTimePolicies: { typo: 'global' }
+      })
+    ).toBeUndefined();
   });
 });
 
