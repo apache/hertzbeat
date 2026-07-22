@@ -98,8 +98,11 @@ export function parseAlertRulePage(value: unknown, query: AlertRuleQuery): Alert
   return { ...page, content: page.content.map(mapAlertRule) };
 }
 
-export function parseAlertRulePreview(value: unknown): Array<Record<string, unknown>> {
-  return parseSchema(alertRulePreviewSchema, value, 'Alert rule preview');
+export function parseAlertRulePreview(value: unknown): { matchCount: number } {
+  const rows = parseSchema(alertRulePreviewSchema, value, 'Alert rule preview');
+  // The editor only presents whether and how many rows matched. Discard the
+  // backend rows here so arbitrary query output never becomes route state.
+  return { matchCount: rows.length };
 }
 
 function mapAlertRule(source: z.output<typeof alertRuleSchema>): AlertRule {

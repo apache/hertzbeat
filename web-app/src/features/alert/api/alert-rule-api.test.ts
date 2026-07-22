@@ -194,7 +194,9 @@ describe('alert rule API', () => {
 
   it('previews a valid strategy and expression without requiring unrelated editor fields', async () => {
     vi.mocked(apiMessageGet).mockResolvedValue([{ value: 1 }]);
-    await expect(previewAlertRule({ ...createAlertRuleDraft(), expr: 'usage > 90' })).resolves.toEqual([{ value: 1 }]);
+    await expect(previewAlertRule({ ...createAlertRuleDraft(), expr: 'usage > 90' })).resolves.toEqual({
+      matchCount: 1
+    });
     expect(apiMessageGet).toHaveBeenCalledWith(
       '/api/alert/define/preview/promql?type=realtime_metric&expr=usage+%3E+90'
     );

@@ -8,7 +8,7 @@ export type AlertRulePreviewState =
   | { kind: 'idle' }
   | { kind: 'loading' }
   | { kind: 'empty' }
-  | { kind: 'ready'; records: Array<Record<string, unknown>> }
+  | { kind: 'ready'; matchCount: number }
   | { kind: 'unavailable' }
   | { kind: 'error' };
 

@@ -29,9 +29,11 @@ export function useAlertRulePreviewController(
     previewEpochRef.current = epoch;
     updateRoute({ preview: { kind: 'loading' } });
     try {
-      const records = await previewAlertRule(draft);
+      const evidence = await previewAlertRule(draft);
       if (!identity.isCurrent(owner) || previewEpochRef.current !== epoch) return;
-      updateRoute({ preview: records.length === 0 ? { kind: 'empty' } : { kind: 'ready', records } });
+      updateRoute({
+        preview: evidence.matchCount === 0 ? { kind: 'empty' } : { kind: 'ready', matchCount: evidence.matchCount }
+      });
     } catch (reason) {
       if (!identity.isCurrent(owner) || previewEpochRef.current !== epoch) return;
       const kind = alertRuleFailureKind(reason) === 'unavailable' ? 'unavailable' : 'error';

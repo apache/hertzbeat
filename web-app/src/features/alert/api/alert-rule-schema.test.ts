@@ -209,9 +209,14 @@ describe('alert rule wire schemas', () => {
     ).toThrow(AlertRuleContractError);
   });
 
-  it('accepts preview records and rejects arrays or primitives masquerading as rows', () => {
-    expect(parseAlertRulePreview([{ value: 1, service: 'checkout' }])).toEqual([{ value: 1, service: 'checkout' }]);
-    expect(parseAlertRulePreview([])).toEqual([]);
+  it('reduces preview rows to bounded count evidence', () => {
+    const preview = parseAlertRulePreview([
+      { value: 1, authorization: 'private-secret', nested: { payload: 'not retained' } }
+    ]);
+
+    expect(preview).toEqual({ matchCount: 1 });
+    expect(JSON.stringify(preview)).not.toContain('private-secret');
+    expect(parseAlertRulePreview([])).toEqual({ matchCount: 0 });
     expect(() => parseAlertRulePreview(null)).toThrow(AlertRuleContractError);
     expect(() => parseAlertRulePreview([[]])).toThrow(AlertRuleContractError);
     expect(() => parseAlertRulePreview([1])).toThrow(AlertRuleContractError);

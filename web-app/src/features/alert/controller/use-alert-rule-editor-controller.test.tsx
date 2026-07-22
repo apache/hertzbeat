@@ -66,7 +66,7 @@ describe('Alert Rule editor controller', () => {
     vi.clearAllMocks();
     api.loadAlertRule.mockResolvedValue(persisted);
     api.loadAlertRules.mockImplementation((query: AlertRuleQuery) => Promise.resolve(page(query, [])));
-    api.previewAlertRule.mockResolvedValue([]);
+    api.previewAlertRule.mockResolvedValue({ matchCount: 0 });
     api.saveAlertRule.mockResolvedValue(undefined);
   });
 
@@ -118,8 +118,8 @@ describe('Alert Rule editor controller', () => {
   });
 
   it.each([
-    [[], 'empty'],
-    [[{ value: 1 }], 'ready'],
+    [{ matchCount: 0 }, 'empty'],
+    [{ matchCount: 1 }, 'ready'],
     [new AlertRuleRequestFailure('unavailable', 'uncertain'), 'unavailable'],
     [new AlertRuleContractError('bad'), 'error']
   ])('keeps preview evidence distinct as %s', async (evidence, kind) => {
@@ -132,8 +132,8 @@ describe('Alert Rule editor controller', () => {
   });
 
   it('keeps only the latest same-route preview when completions arrive out of order', async () => {
-    const first = deferred<Array<Record<string, unknown>>>();
-    const second = deferred<Array<Record<string, unknown>>>();
+    const first = deferred<{ matchCount: number }>();
+    const second = deferred<{ matchCount: number }>();
     api.previewAlertRule.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
     const { result } = renderController('new', '/alerts/rules/new');
     act(() => result.current.updateDraft({ expr: 'usage > 90' }));
@@ -144,17 +144,17 @@ describe('Alert Rule editor controller', () => {
       firstPreview = result.current.preview();
       secondPreview = result.current.preview();
     });
-    act(() => second.resolve([{ request: 'latest' }]));
+    act(() => second.resolve({ matchCount: 2 }));
     await act(async () => secondPreview);
-    expect(result.current.state.preview).toEqual({ kind: 'ready', records: [{ request: 'latest' }] });
+    expect(result.current.state.preview).toEqual({ kind: 'ready', matchCount: 2 });
 
-    act(() => first.resolve([{ request: 'stale' }]));
+    act(() => first.resolve({ matchCount: 1 }));
     await act(async () => firstPreview);
-    expect(result.current.state.preview).toEqual({ kind: 'ready', records: [{ request: 'latest' }] });
+    expect(result.current.state.preview).toEqual({ kind: 'ready', matchCount: 2 });
   });
 
   it('does not let a stale preview completion replace current editor state', async () => {
-    const preview = deferred<Array<Record<string, unknown>>>();
+    const preview = deferred<{ matchCount: number }>();
     api.previewAlertRule.mockReturnValue(preview.promise);
     const { result } = renderController('new', '/alerts/rules/new');
     act(() => result.current.updateDraft({ expr: 'usage > 90' }));
@@ -164,7 +164,7 @@ describe('Alert Rule editor controller', () => {
     });
 
     act(() => result.current.updateDraft({ expr: 'usage > 95' }));
-    act(() => preview.resolve([{ request: 'stale' }]));
+    act(() => preview.resolve({ matchCount: 1 }));
     await act(async () => pending);
 
     expect(result.current.state.draft?.expr).toBe('usage > 95');
@@ -442,7 +442,7 @@ describe('Alert Rule editor controller', () => {
   });
 
   it('does not let stale preview overwrite a new route', async () => {
-    const oldPreview = deferred<Array<Record<string, unknown>>>();
+    const oldPreview = deferred<{ matchCount: number }>();
     api.previewAlertRule.mockReturnValue(oldPreview.promise);
     api.loadAlertRule.mockImplementation((id: number) => Promise.resolve({ ...persisted, id }));
     const routed = renderRouted(['/alerts/rules/new', '/alerts/rules/8/edit']);
@@ -453,7 +453,7 @@ describe('Alert Rule editor controller', () => {
     });
     await act(async () => routed.router.navigate(1));
     await waitFor(() => expect(routed.current().state.draft?.id).toBe(8));
-    act(() => oldPreview.resolve([{ stale: true }]));
+    act(() => oldPreview.resolve({ matchCount: 1 }));
     await act(async () => preview);
     expect(routed.current().state.preview.kind).toBe('idle');
   });

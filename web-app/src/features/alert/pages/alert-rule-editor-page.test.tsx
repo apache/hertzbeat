@@ -101,7 +101,7 @@ describe('AlertRuleEditorPage', () => {
   });
 
   it('renders ready preview and delegates draft, preview, save, and cancel', () => {
-    controller.state = buildState({ preview: { kind: 'ready', records: [{ value: 1 }] } });
+    controller.state = buildState({ preview: { kind: 'ready', matchCount: 1 } });
     render(<AlertRuleEditorPage mode="new" />);
     expect(screen.getByText('alertRules.previewSuccess')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('alertRules.name'), { target: { value: 'New' } });

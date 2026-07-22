@@ -58,7 +58,7 @@ function PreviewEvidence({ state }: { state: AlertRulePreviewState }) {
   if (state.kind === 'unavailable') return <Alert type="error" showIcon message={t('common.unavailable')} />;
   if (state.kind === 'error') return <Alert type="error" showIcon message={t('alertRules.previewFailed')} />;
   if (state.kind === 'empty') return <Alert type="warning" showIcon message={t('alertRules.previewEmpty')} />;
-  return <Alert type="success" showIcon message={t('alertRules.previewSuccess', { count: state.records.length })} />;
+  return <Alert type="success" showIcon message={t('alertRules.previewSuccess', { count: state.matchCount })} />;
 }
 
 function SaveEvidence({ failure }: { failure: AlertRuleEditorFailure | undefined }) {
