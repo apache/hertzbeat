@@ -222,6 +222,8 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         String monitorKey;
         if (metrics.isHasSubTask()) {
             monitorKey = job.getId() + "-" + metrics.getName() + "-sub-" + metrics.getSubTaskId();
+        } else if (metrics.getPrometheus() != null) {
+            monitorKey = String.valueOf(job.getId());
         } else {
             monitorKey = job.getId() + "-" + metrics.getName();
         }
