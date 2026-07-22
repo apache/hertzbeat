@@ -31,11 +31,11 @@ import {
   type AlertSilencePage,
   type AlertSilenceQuery
 } from '../alert-silence-model';
+import { alertSilenceQueryKeys } from './alert-silence-query-keys';
 import { useAlertSilenceDetailController } from './use-alert-silence-detail-controller';
 import { useAlertSilenceMutations } from './use-alert-silence-mutations';
 import type { AlertSilenceProjectionFailure } from './use-alert-silence-operation-gate';
 
-const listKey = (query: AlertSilenceQuery) => ['alert-silence-policies', query] as const;
 const createdProjectionPageSize = 25;
 
 export function useAlertSilenceController() {
@@ -55,7 +55,7 @@ export function useAlertSilenceController() {
   const rereadList = () => {
     const committedQuery = latestQuery.current;
     return queryClient.fetchQuery({
-      queryKey: listKey(committedQuery),
+      queryKey: alertSilenceQueryKeys.list(committedQuery),
       queryFn: ({ signal }) => loadAlertSilences(committedQuery, signal),
       staleTime: 0
     });
@@ -63,7 +63,7 @@ export function useAlertSilenceController() {
   const readCreatedProjection = (draft: AlertSilenceDraft) => {
     const projectionQuery = createdProjectionQuery(draft);
     return queryClient.fetchQuery({
-      queryKey: listKey(projectionQuery),
+      queryKey: alertSilenceQueryKeys.list(projectionQuery),
       queryFn: ({ signal }) => loadAlertSilences(projectionQuery, signal),
       staleTime: 0
     });
@@ -120,7 +120,7 @@ function createdProjectionQuery(draft: AlertSilenceDraft): AlertSilenceQuery {
 
 function useAlertSilenceList(query: AlertSilenceQuery, setParams: ReturnType<typeof useSearchParams>[1]) {
   const list = useQuery({
-    queryKey: listKey(query),
+    queryKey: alertSilenceQueryKeys.list(query),
     queryFn: ({ signal }) => loadAlertSilences(query, signal),
     retry: false
   });

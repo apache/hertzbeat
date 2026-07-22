@@ -111,6 +111,35 @@ describe('useAlertSilenceController', () => {
     await waitFor(() => expect(view.result.current.controller.state.search).toBe('three'));
   });
 
+  it('cancels an obsolete list read and never exposes it under the newer query', async () => {
+    const stale = deferred<ReturnType<typeof page>>();
+    let staleSignal: AbortSignal | undefined;
+    const current = { ...record, id: 8, name: 'Current projection' };
+    api.loadAlertSilences.mockImplementation((query, signal) => {
+      if (query.search === 'old') {
+        staleSignal = signal;
+        return stale.promise;
+      }
+      return Promise.resolve(page([current]));
+    });
+    const view = renderController(['/alerts/silences?search=old'], 0);
+    await waitFor(() => expect(staleSignal).toBeInstanceOf(AbortSignal));
+
+    act(() => {
+      void view.result.current.navigate('/alerts/silences?search=new');
+    });
+
+    await waitFor(() => expect(staleSignal?.aborted).toBe(true));
+    await waitFor(() => expect(view.result.current.controller.state.list).toMatchObject({ kind: 'ready' }));
+    expect(view.result.current.controller.state.list).toMatchObject({ records: [current] });
+
+    await act(async () => {
+      stale.resolve(page([{ ...record, name: 'Obsolete projection' }]));
+      await stale.promise;
+    });
+    expect(view.result.current.controller.state.list).toMatchObject({ records: [current] });
+  });
+
   it('normalizes an out-of-range nonzero page and proves the follow-up read', async () => {
     api.loadAlertSilences.mockImplementation(query =>
       Promise.resolve(
