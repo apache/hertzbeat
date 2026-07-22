@@ -15,7 +15,9 @@ import { refineResources, shellAccessControlProvider } from './refine-resource-r
 describe('Refine shell resource registry', () => {
   it('matches canonical resource paths and labels exactly', () => {
     const canonicalResources = routeRegistry
-      .flatMap(route => (route.resource ? [{ labelKey: route.resource.labelKey, list: route.path }] : []))
+      .flatMap(route =>
+        route.resource ? [{ labelKey: route.resource.labelKey, list: route.resource.listPath ?? route.path }] : []
+      )
       .sort(compareResourceRoute);
     const actualResources = refineResources
       .filter(resource => resource.list)
@@ -50,6 +52,9 @@ describe('Refine shell resource registry', () => {
       edit: '/monitors/:monitorId/edit',
       list: '/monitors',
       show: '/monitors/:monitorId'
+    });
+    expect(refineResources.find(resource => resource.name === 'alert-integrations')).toMatchObject({
+      list: '/alerts/integrations/webhook'
     });
   });
 

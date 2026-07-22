@@ -140,6 +140,12 @@ export const refineResources: ResourceProps[] = [
     dataProviderName: alertSilenceResourceName,
     timePolicy: 'none'
   }),
+  routedNavigationResource('alert-integrations', {
+    parent: 'alerts',
+    icon: <ApiOutlined />,
+    order: 50,
+    timePolicy: 'none'
+  }),
   routedNavigationResource('bulletin', {
     parent: 'shell-operations',
     icon: <ReadOutlined />,
@@ -259,7 +265,7 @@ function routedNavigationResource(routeId: AppResourceRouteId, resource: RoutedN
   return navigationResource({
     ...resource,
     name: resource.name ?? routeDefinition.id,
-    list: routeDefinition.path,
+    list: routeDefinition.resource.listPath ?? routeDefinition.path,
     labelKey: routeDefinition.resource.labelKey
   });
 }

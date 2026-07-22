@@ -506,6 +506,41 @@
       "error": "A operação da definição de monitor falhou."
     }
   },
+  "alertIntegrations": {
+    "menu": "Integrações de alertas externos",
+    "title": "Integração {{source}}",
+    "description": "Configure um emissor externo para relatar alertas pela entrada autenticada do HertzBeat.",
+    "sourcesLabel": "Fontes de integração",
+    "endpointTitle": "Use o endpoint de entrada",
+    "endpointDescription": "Envie uma solicitação POST ao endpoint derivado desta origem do HertzBeat.",
+    "method": "Método",
+    "backendSource": "Adaptador de backend",
+    "endpoint": "Endpoint",
+    "authorizationTitle": "Autentique todas as solicitações",
+    "authorizationDescription": "A entrada exige um token de API bearer no cabeçalho Authorization.",
+    "authorizationHeader": "Cabeçalho obrigatório",
+    "manageTokens": "Gerenciar tokens de API",
+    "senderTitle": "Configure o emissor",
+    "senderDescription": "Configure {{source}} para enviar sua carga nativa de alerta ao endpoint com o cabeçalho obrigatório.",
+    "gatewayWarning": "Se o emissor não puder definir o cabeçalho Authorization, use um gateway confiável gerenciado por um administrador. Nunca coloque um token na URL.",
+    "verifyTitle": "Verifique a entrega",
+    "healthDisclaimer": "A exibição destas instruções não comprova que a integração está saudável. Envie um alerta controlado e confirme o recebimento no HertzBeat.",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "copyFailed": "Falha ao copiar",
+    "sources": {
+      "webhook": "Webhook",
+      "prometheus": "Prometheus",
+      "alertmanager": "Alertmanager",
+      "skywalking": "SkyWalking",
+      "uptime-kuma": "Uptime Kuma",
+      "zabbix": "Zabbix",
+      "tencent": "Tencent Cloud",
+      "alibabacloud-sls": "Alibaba Cloud SLS",
+      "huaweicloud-ces": "Huawei Cloud CES",
+      "volcengine": "Volcengine"
+    }
+  },
   "plugins": {
     "title": "Gerenciamento de plugins",
     "description": "Envie jars de plugins e gerencie sua disponibilidade de execução.",

@@ -1,0 +1,125 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0.
+ */
+
+.layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 16px;
+}
+
+.rail,
+.guide {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+
+.source,
+.sourceSelected {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 42px;
+  gap: 10px;
+  padding: 8px 10px;
+  color: var(--ant-color-text);
+  text-align: left;
+  background: var(--ant-color-bg-container);
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius);
+  cursor: pointer;
+}
+
+.sourceSelected {
+  background: var(--ant-color-primary-bg);
+  border-color: var(--ant-color-primary-border);
+}
+
+.source img,
+.sourceSelected img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.step {
+  padding: 14px 16px;
+  background: var(--ant-color-bg-container);
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
+}
+
+.step header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.step header > span {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  color: var(--ant-color-primary-text);
+  background: var(--ant-color-primary-bg);
+  border-radius: 50%;
+}
+
+.step h3 {
+  margin: 0;
+}
+
+.facts {
+  display: flex;
+  gap: 24px;
+  margin: 0 0 12px;
+}
+
+.facts div {
+  display: flex;
+  gap: 8px;
+}
+
+.facts dt {
+  color: var(--ant-color-text-secondary);
+}
+
+.facts dd {
+  margin: 0;
+  font-family: var(--ant-font-family-code);
+}
+
+.contract {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 12px;
+  margin: 10px 0;
+}
+
+.contract > span {
+  grid-column: 1 / -1;
+}
+
+.contract pre {
+  min-width: 0;
+  margin: 0;
+  padding: 8px 10px;
+  overflow: auto;
+  background: var(--ant-color-fill-quaternary);
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius);
+}
+
+@media (max-width: 760px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .rail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

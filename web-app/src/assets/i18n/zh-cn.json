@@ -502,6 +502,41 @@
       "error": "监控定义操作失败。"
     }
   },
+  "alertIntegrations": {
+    "menu": "外部告警集成",
+    "title": "{{source}} 集成",
+    "description": "配置外部发送方，通过 HertzBeat 的认证入口上报告警。",
+    "sourcesLabel": "集成来源",
+    "endpointTitle": "使用告警入口",
+    "endpointDescription": "向根据当前 HertzBeat 来源生成的端点发送 POST 请求。",
+    "method": "方法",
+    "backendSource": "后端适配器",
+    "endpoint": "端点",
+    "authorizationTitle": "认证每个请求",
+    "authorizationDescription": "告警入口要求在 Authorization 请求头中提供 Bearer API 令牌。",
+    "authorizationHeader": "必需请求头",
+    "manageTokens": "管理 API 令牌",
+    "senderTitle": "配置发送方",
+    "senderDescription": "配置 {{source}}，使用必需请求头将其原生告警负载发送到端点。",
+    "gatewayWarning": "如果发送方无法设置 Authorization 请求头，请使用管理员维护的可信网关。切勿将令牌放入 URL。",
+    "verifyTitle": "验证投递",
+    "healthDisclaimer": "显示这些说明并不能证明集成健康。请发送受控告警并确认 HertzBeat 已接收。",
+    "copy": "复制",
+    "copied": "已复制",
+    "copyFailed": "复制失败",
+    "sources": {
+      "webhook": "Webhook",
+      "prometheus": "Prometheus",
+      "alertmanager": "Alertmanager",
+      "skywalking": "SkyWalking",
+      "uptime-kuma": "Uptime Kuma",
+      "zabbix": "Zabbix",
+      "tencent": "腾讯云",
+      "alibabacloud-sls": "阿里云 SLS",
+      "huaweicloud-ces": "华为云 CES",
+      "volcengine": "火山引擎"
+    }
+  },
   "plugins": {
     "title": "插件管理",
     "description": "上传插件 jar 并管理其运行状态。",

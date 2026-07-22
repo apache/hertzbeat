@@ -165,6 +165,13 @@ export const appRoutes: RouteObject[] = [
                 }
               },
               {
+                ...getAppRouteIdentity('alert-integrations'),
+                lazy: async () => {
+                  const { AlertIntegrationPage } = await import('@/features/alert/integration');
+                  return { Component: AlertIntegrationPage };
+                }
+              },
+              {
                 ...getAppRouteIdentity('notice-receivers'),
                 lazy: async () => {
                   const { NoticeReceiverPage } = await import('@/features/alert/notice-receiver');

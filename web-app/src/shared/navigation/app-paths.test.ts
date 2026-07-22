@@ -18,6 +18,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildAlertIntegrationPath,
   buildMonitorDetailPath,
   buildMonitorEditPath,
   buildMonitorListPath,
@@ -46,5 +47,9 @@ describe('application path builders', () => {
     expect(target).toBe('/monitors?app=website&labels=env%3Aprod');
     expect(target).not.toContain('private-token');
     expect(target).not.toContain('private-credential');
+  });
+
+  it('builds the canonical external-alert integration path without query data', () => {
+    expect(buildAlertIntegrationPath('prometheus')).toBe('/alerts/integrations/prometheus');
   });
 });

@@ -510,6 +510,41 @@
       "error": "The monitor definition operation failed."
     }
   },
+  "alertIntegrations": {
+    "menu": "External alert integrations",
+    "title": "{{source}} integration",
+    "description": "Configure an external sender to report alerts through HertzBeat's authenticated ingress.",
+    "sourcesLabel": "Integration sources",
+    "endpointTitle": "Use the ingress endpoint",
+    "endpointDescription": "Send a POST request to the endpoint derived from this HertzBeat origin.",
+    "method": "Method",
+    "backendSource": "Backend adapter",
+    "endpoint": "Endpoint",
+    "authorizationTitle": "Authenticate every request",
+    "authorizationDescription": "The ingress requires a bearer API token in the Authorization header.",
+    "authorizationHeader": "Required header",
+    "manageTokens": "Manage API tokens",
+    "senderTitle": "Configure the sender",
+    "senderDescription": "Configure {{source}} to send its native alert payload to the endpoint with the required header.",
+    "gatewayWarning": "If the sender cannot set the Authorization header, use an administrator-managed trusted gateway. Never place a token in the URL.",
+    "verifyTitle": "Verify delivery",
+    "healthDisclaimer": "Rendering these instructions does not prove the integration is healthy. Send a controlled alert and verify that HertzBeat receives it.",
+    "copy": "Copy",
+    "copied": "Copied",
+    "copyFailed": "Copy failed",
+    "sources": {
+      "webhook": "Webhook",
+      "prometheus": "Prometheus",
+      "alertmanager": "Alertmanager",
+      "skywalking": "SkyWalking",
+      "uptime-kuma": "Uptime Kuma",
+      "zabbix": "Zabbix",
+      "tencent": "Tencent Cloud",
+      "alibabacloud-sls": "Alibaba Cloud SLS",
+      "huaweicloud-ces": "Huawei Cloud CES",
+      "volcengine": "Volcengine"
+    }
+  },
   "plugins": {
     "title": "Plugin management",
     "description": "Upload plugin jars and manage their runtime availability.",

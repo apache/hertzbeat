@@ -502,6 +502,41 @@
       "error": "監控定義操作失敗。"
     }
   },
+  "alertIntegrations": {
+    "menu": "外部告警整合",
+    "title": "{{source}} 整合",
+    "description": "設定外部傳送端，透過 HertzBeat 的驗證入口上報告警。",
+    "sourcesLabel": "整合來源",
+    "endpointTitle": "使用告警入口",
+    "endpointDescription": "向依目前 HertzBeat 來源產生的端點傳送 POST 請求。",
+    "method": "方法",
+    "backendSource": "後端配接器",
+    "endpoint": "端點",
+    "authorizationTitle": "驗證每個請求",
+    "authorizationDescription": "告警入口要求在 Authorization 標頭中提供 Bearer API 權杖。",
+    "authorizationHeader": "必要標頭",
+    "manageTokens": "管理 API 權杖",
+    "senderTitle": "設定傳送端",
+    "senderDescription": "設定 {{source}}，使用必要標頭將其原生告警負載傳送到端點。",
+    "gatewayWarning": "如果傳送端無法設定 Authorization 標頭，請使用管理員維護的可信任閘道。切勿將權杖放入 URL。",
+    "verifyTitle": "驗證投遞",
+    "healthDisclaimer": "顯示這些說明並不能證明整合健康。請傳送受控告警並確認 HertzBeat 已接收。",
+    "copy": "複製",
+    "copied": "已複製",
+    "copyFailed": "複製失敗",
+    "sources": {
+      "webhook": "Webhook",
+      "prometheus": "Prometheus",
+      "alertmanager": "Alertmanager",
+      "skywalking": "SkyWalking",
+      "uptime-kuma": "Uptime Kuma",
+      "zabbix": "Zabbix",
+      "tencent": "騰訊雲",
+      "alibabacloud-sls": "阿里雲 SLS",
+      "huaweicloud-ces": "華為雲 CES",
+      "volcengine": "火山引擎"
+    }
+  },
   "plugins": {
     "title": "外掛程式管理",
     "description": "上傳外掛程式 jar 並管理其執行狀態。",

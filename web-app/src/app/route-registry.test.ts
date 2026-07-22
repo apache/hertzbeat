@@ -98,6 +98,18 @@ describe('route registry', () => {
     ]);
   });
 
+  it('registers external-alert integrations with a concrete navigation target', () => {
+    expect(getAppRoute('alert-integrations')).toMatchObject({
+      id: 'alert-integrations',
+      path: '/alerts/integrations/:source',
+      kind: 'page',
+      resource: {
+        labelKey: 'alertIntegrations.menu',
+        listPath: '/alerts/integrations/webhook'
+      }
+    });
+  });
+
   it('keeps the wildcard route out of Refine shell resources', () => {
     expect(routeRegistry.find(route => route.path === '*')?.resource).toBeUndefined();
   });

@@ -15,7 +15,12 @@
  * limitations under the License.
  */
 
-import { alertRoutePaths, applicationRoutePaths, monitorRoutePaths } from '@/shared/navigation/app-paths';
+import {
+  alertRoutePaths,
+  applicationRoutePaths,
+  buildAlertIntegrationPath,
+  monitorRoutePaths
+} from '@/shared/navigation/app-paths';
 import { settingsPaths } from '@/shared/settings/settings-routes';
 
 export type AppRouteDefinition = {
@@ -25,6 +30,7 @@ export type AppRouteDefinition = {
   kind: 'page' | 'redirect';
   resource?: {
     labelKey: string;
+    listPath?: string;
   };
 };
 
@@ -67,6 +73,9 @@ export const appRouteCatalog = {
   }),
   'alert-silences': pageRoute('alert-silences', alertRoutePaths.silences, {
     resource: { labelKey: 'alertSilences.title' }
+  }),
+  'alert-integrations': pageRoute('alert-integrations', alertRoutePaths.integrations, {
+    resource: { labelKey: 'alertIntegrations.menu', listPath: buildAlertIntegrationPath('webhook') }
   }),
   settings: redirectRoute('settings', settingsPaths.root, {
     resource: { labelKey: 'menu.settings' }

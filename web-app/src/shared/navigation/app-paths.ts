@@ -19,6 +19,7 @@ import { defaultAuthenticatedPath, loginPath, sessionLockPath } from '@/core/aut
 
 const alertCenterPath = '/alerts';
 const alertRuleListPath = `${alertCenterPath}/rules`;
+const alertIntegrationPath = `${alertCenterPath}/integrations/:source`;
 const monitorListPath = '/monitors';
 
 export const applicationRoutePaths = {
@@ -44,8 +45,13 @@ export const alertRoutePaths = {
   ruleEdit: `${alertRuleListPath}/:ruleId/edit`,
   groups: `${alertCenterPath}/groups`,
   inhibits: `${alertCenterPath}/inhibits`,
-  silences: `${alertCenterPath}/silences`
+  silences: `${alertCenterPath}/silences`,
+  integrations: alertIntegrationPath
 } as const;
+
+export function buildAlertIntegrationPath(source: string) {
+  return alertIntegrationPath.replace(':source', encodeURIComponent(source));
+}
 
 export function buildAlertRuleEditPath(ruleId: number) {
   return alertRoutePaths.ruleEdit.replace(':ruleId', String(ruleId));
