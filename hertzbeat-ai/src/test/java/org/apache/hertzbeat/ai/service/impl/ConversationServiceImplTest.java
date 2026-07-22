@@ -23,6 +23,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.usthe.sureness.subject.SubjectSum;
+import com.usthe.sureness.util.SurenessContextHolder;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
@@ -34,6 +36,7 @@ import org.apache.hertzbeat.ai.service.ChatClientProviderService;
 import org.apache.hertzbeat.common.entity.ai.ChatConversation;
 import org.apache.hertzbeat.common.entity.ai.ChatMessage;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -62,8 +65,15 @@ class ConversationServiceImplTest {
     @InjectMocks
     private ConversationServiceImpl conversationService;
 
+    @AfterEach
+    void clearSecurityContext() {
+        SurenessContextHolder.clear();
+    }
+
     @Test
     void streamChatShouldKeepCompleteConversationHistory() {
+        SubjectSum subject = org.mockito.Mockito.mock(SubjectSum.class);
+        SurenessContextHolder.bindSubject(subject);
         ChatConversation conversation = ChatConversation.builder()
             .id(CONVERSATION_ID)
             .title("已命名会话")
@@ -104,5 +114,6 @@ class ConversationServiceImplTest {
         ArgumentCaptor<ChatRequestContext> contextCaptor = ArgumentCaptor.forClass(ChatRequestContext.class);
         verify(chatClientProviderService).streamChat(contextCaptor.capture());
         assertEquals(history, contextCaptor.getValue().getConversationHistory());
+        assertEquals(subject, contextCaptor.getValue().getSubject());
     }
 }

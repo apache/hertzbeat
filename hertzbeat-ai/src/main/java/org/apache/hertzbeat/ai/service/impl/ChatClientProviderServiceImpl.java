@@ -19,10 +19,13 @@
 package org.apache.hertzbeat.ai.service.impl;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.ai.config.McpContextHolder;
+import org.apache.hertzbeat.ai.config.SecurityContextToolCallback;
 import org.apache.hertzbeat.ai.sop.model.SopDefinition;
 import org.apache.hertzbeat.ai.sop.model.SopParameter;
 import org.apache.hertzbeat.ai.sop.registry.SkillRegistry;
@@ -45,6 +48,7 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.tool.ToolCallbackProvider;
+import org.springframework.ai.tool.ToolCallback;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
@@ -125,11 +129,15 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
             // Build system prompt with dynamic skills list and conversation ID
             // The conversationId is injected into the prompt so AI can pass it to schedule tools
             String systemPrompt = buildSystemPrompt(context.getConversationId());
+            ToolCallback[] toolCallbacks = Arrays.stream(toolCallbackProvider.getToolCallbacks())
+                .map(SecurityContextToolCallback::new)
+                .toArray(ToolCallback[]::new);
 
             return chatClient.prompt()
                 .messages(messages)
                 .system(systemPrompt)
-                .tools(toolCallbackProvider)
+                .tools((Object[]) toolCallbacks)
+                .toolContext(McpContextHolder.createToolContext(context.getSubject()))
                 .stream()
                 .content()
                 .doOnComplete(() -> log.info("Streaming completed for conversation: {}", context.getConversationId()))
