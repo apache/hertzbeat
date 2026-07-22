@@ -70,10 +70,12 @@ public final class MonitorDefinitionSourceRegistry {
         }
     }
 
-    public void removeActive(String app) {
+    public MonitorDefinitionSource removeActive(String app) {
         synchronized (lock) {
-            active.remove(app.toLowerCase(Locale.ROOT));
+            String identity = app.toLowerCase(Locale.ROOT);
+            active.remove(identity);
             publishOutsideRebuild();
+            return snapshot.builtin().containsKey(identity) ? source(snapshot, identity) : null;
         }
     }
 

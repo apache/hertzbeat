@@ -24,6 +24,7 @@ import org.apache.hertzbeat.common.entity.manager.Define;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.manager.dao.DefineDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
+import org.apache.hertzbeat.manager.pojo.dto.FileDTO;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
 import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
@@ -37,9 +38,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.ObjectProvider;
 
+import java.io.ByteArrayInputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -56,6 +60,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -79,6 +85,12 @@ class AppServiceTest {
 
     @Mock
     private ObjectStoreConfigServiceImpl objectStoreConfigService;
+
+    @Mock
+    private ObjectProvider<ObjectStoreService> objectStoreServiceProvider;
+
+    @Mock
+    private ObjectStoreService objectStoreService;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -239,6 +251,73 @@ class AppServiceTest {
 
         assertFalse(appService.readAll().stream().anyMatch(source -> source.job().getApp().equals("previous")));
         assertTrue(appService.readAll().stream().anyMatch(source -> source.job().getApp().equals("current")));
+    }
+
+    @Test
+    void failedMonitorDefinitionRefreshRestoresRegistryAndLegacyInventory() {
+        Define previous = Define.builder().app("previous").content("app: previous").build();
+        ObjectStoreDTO<Object> database = new ObjectStoreDTO<>();
+        database.setType(ObjectStoreDTO.Type.DATABASE);
+        when(defineDao.findAll()).thenReturn(List.of(previous));
+        appService.onObjectStoreConfigChange(new ObjectStoreConfigChangeEvent(database));
+
+        FileDTO partial = FileDTO.builder()
+                .inputStream(new ByteArrayInputStream("app: partial".getBytes(StandardCharsets.UTF_8)))
+                .build();
+        FileDTO invalid = FileDTO.builder()
+                .inputStream(new ByteArrayInputStream("app: [invalid".getBytes(StandardCharsets.UTF_8)))
+                .build();
+        ObjectStoreDTO<Object> objectStore = new ObjectStoreDTO<>();
+        objectStore.setType(ObjectStoreDTO.Type.OBS);
+        when(objectStoreServiceProvider.getIfAvailable()).thenReturn(objectStoreService);
+        when(objectStoreService.list("define")).thenReturn(List.of(partial, invalid));
+
+        assertThrows(RuntimeException.class,
+                () -> appService.onObjectStoreConfigChange(new ObjectStoreConfigChangeEvent(objectStore)));
+
+        assertTrue(appService.getAllAppDefines().containsKey("previous"));
+        assertFalse(appService.getAllAppDefines().containsKey("partial"));
+        assertTrue(appService.readAll().stream().anyMatch(source -> source.job().getApp().equals("previous")));
+        assertFalse(appService.readAll().stream().anyMatch(source -> source.job().getApp().equals("partial")));
+
+        appService.deleteMonitorDefine("previous");
+        verify(defineDao).deleteById("previous");
+        verify(objectStoreService, never()).remove("define/app-previous.yml");
+    }
+
+    @Test
+    void deletingOverrideRestoresBuiltinAsEffectiveDefinition() {
+        Define override = Define.builder().app("jvm").content("app: jvm\nname:\n  en-US: Override").build();
+        ObjectStoreDTO<Object> config = new ObjectStoreDTO<>();
+        config.setType(ObjectStoreDTO.Type.DATABASE);
+        when(defineDao.findAll()).thenReturn(List.of(override));
+        appService.onObjectStoreConfigChange(new ObjectStoreConfigChangeEvent(config));
+
+        appService.deleteMonitorDefine("jvm");
+
+        MonitorDefinitionSource source = appService.readAll().stream()
+                .filter(item -> item.job().getApp().equals("jvm"))
+                .findFirst()
+                .orElseThrow();
+        assertTrue(source.builtin());
+        assertFalse(source.custom());
+        assertTrue(appService.getAllAppDefines().containsKey("jvm"));
+        assertFalse(appService.getAllAppDefines().get("jvm").getName().containsValue("Override"));
+    }
+
+    @Test
+    void deletingCustomRemovesEffectiveDefinition() {
+        Define custom = Define.builder().app("custom-delete").content("app: custom-delete").build();
+        ObjectStoreDTO<Object> config = new ObjectStoreDTO<>();
+        config.setType(ObjectStoreDTO.Type.DATABASE);
+        when(defineDao.findAll()).thenReturn(List.of(custom));
+        appService.onObjectStoreConfigChange(new ObjectStoreConfigChangeEvent(config));
+
+        appService.deleteMonitorDefine("custom-delete");
+
+        assertFalse(appService.getAllAppDefines().containsKey("custom-delete"));
+        assertFalse(appService.readAll().stream()
+                .anyMatch(source -> source.job().getApp().equals("custom-delete")));
     }
 
     @Test

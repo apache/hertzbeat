@@ -550,7 +550,12 @@ public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader
             throw new IllegalArgumentException("Can not delete define which has monitoring instances.");
         }
         appDefineStore.delete(app);
-        definitionSourceRegistry.removeActive(app);
+        MonitorDefinitionSource effectiveSource = definitionSourceRegistry.removeActive(app);
+        if (effectiveSource == null) {
+            appDefines.remove(app.toLowerCase());
+        } else {
+            appDefines.put(app.toLowerCase(), effectiveSource.job());
+        }
     }
 
     @Override
@@ -588,23 +593,32 @@ public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader
         refreshStore(event.getConfig());
     }
 
-    private void refreshStore(ObjectStoreDTO<?> objectStoreConfig) {
-        definitionSourceRegistry.rebuild(() -> {
-            appDefines.clear();
-            if (objectStoreConfig == null) {
-                appDefineStore = new DatabaseAppDefineStoreImpl();
-            } else {
-                if (objectStoreConfig.getType() == ObjectStoreDTO.Type.OBS) {
-                    appDefineStore = new ObjectStoreAppDefineStoreImpl();
-                } else if (objectStoreConfig.getType() == ObjectStoreDTO.Type.DATABASE) {
+    private synchronized void refreshStore(ObjectStoreDTO<?> objectStoreConfig) {
+        Map<String, Job> previousAppDefines = Map.copyOf(appDefines);
+        AppDefineStore previousAppDefineStore = appDefineStore;
+        try {
+            definitionSourceRegistry.rebuild(() -> {
+                appDefines.clear();
+                if (objectStoreConfig == null) {
                     appDefineStore = new DatabaseAppDefineStoreImpl();
                 } else {
-                    appDefineStore = new LocalFileAppDefineStoreImpl();
+                    if (objectStoreConfig.getType() == ObjectStoreDTO.Type.OBS) {
+                        appDefineStore = new ObjectStoreAppDefineStoreImpl();
+                    } else if (objectStoreConfig.getType() == ObjectStoreDTO.Type.DATABASE) {
+                        appDefineStore = new DatabaseAppDefineStoreImpl();
+                    } else {
+                        appDefineStore = new LocalFileAppDefineStoreImpl();
+                    }
                 }
-            }
-            jarAppDefineStore.loadAppDefines();
-            appDefineStore.loadAppDefines();
-        });
+                jarAppDefineStore.loadAppDefines();
+                appDefineStore.loadAppDefines();
+            });
+        } catch (RuntimeException | Error error) {
+            appDefines.clear();
+            appDefines.putAll(previousAppDefines);
+            appDefineStore = previousAppDefineStore;
+            throw error;
+        }
     }
 
     private interface AppDefineStore {
