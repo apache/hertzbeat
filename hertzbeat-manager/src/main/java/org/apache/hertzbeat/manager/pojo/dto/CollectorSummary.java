@@ -72,6 +72,16 @@ public class CollectorSummary {
                 : instrumentationIntake;
     }
 
+    public void setCollector(CollectorInfo collector) {
+        boolean hasDefaultIntake = instrumentationIntake == null
+                || instrumentationIntake.errorCode()
+                == CollectorInstrumentationIntake.ErrorCode.INTAKE_NOT_ADVERTISED;
+        this.collector = collector;
+        if (hasDefaultIntake) {
+            instrumentationIntake = CollectorInstrumentationIntake.notAdvertised(collectorIdOrUnknown(collector));
+        }
+    }
+
     private static String collectorIdOrUnknown(CollectorInfo collector) {
         return collector == null || collector.getName() == null || collector.getName().isBlank()
                 ? "unknown"

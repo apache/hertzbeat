@@ -45,29 +45,29 @@ public final class UiRuntimeStatusContract {
     }
 
     /** Status of the HertzBeat Server process surface. */
-    public record ComponentStatus(State state, ErrorCode errorCode) {
+    public record ComponentStatus(State status, ErrorCode errorCode) {
 
         public ComponentStatus {
-            validateState(state, errorCode);
+            validateStatus(status, errorCode);
         }
     }
 
     /** Status of the configured telemetry storage. */
-    public record StorageStatus(StorageKind kind, State state, ErrorCode errorCode) {
+    public record StorageStatus(StorageKind kind, State status, ErrorCode errorCode) {
 
         public StorageStatus {
             Objects.requireNonNull(kind, "kind");
-            validateState(state, errorCode);
+            validateStatus(status, errorCode);
         }
     }
 
     /** Aggregate Collector availability without telemetry payloads or credentials. */
-    public record CollectorsStatus(State state, Integer total, Integer online, Integer runtimeHealthy,
+    public record CollectorsStatus(State status, Integer total, Integer online, Integer runtimeHealthy,
                                    Instant lastReportedAt, ErrorCode errorCode) {
 
         public CollectorsStatus {
-            validateState(state, errorCode);
-            if (state == State.AVAILABLE || state == State.DEGRADED) {
+            validateStatus(status, errorCode);
+            if (status == State.AVAILABLE || status == State.DEGRADED) {
                 requireNonNegative(total, "total");
                 requireNonNegative(online, "online");
                 requireNonNegative(runtimeHealthy, "runtimeHealthy");
@@ -80,13 +80,13 @@ public final class UiRuntimeStatusContract {
         }
     }
 
-    private static void validateState(State state, ErrorCode errorCode) {
-        Objects.requireNonNull(state, "state");
-        if (state == State.AVAILABLE && errorCode != null) {
+    private static void validateStatus(State status, ErrorCode errorCode) {
+        Objects.requireNonNull(status, "status");
+        if (status == State.AVAILABLE && errorCode != null) {
             throw new IllegalArgumentException("Available runtime status cannot have an error code");
         }
-        if (state != State.AVAILABLE && errorCode == null) {
-            throw new IllegalArgumentException("Non-available runtime status requires a safe error code");
+        if ((status == State.DEGRADED || status == State.UNAVAILABLE) && errorCode == null) {
+            throw new IllegalArgumentException("Degraded or unavailable runtime status requires a safe error code");
         }
     }
 
@@ -133,7 +133,6 @@ public final class UiRuntimeStatusContract {
 
     /** Stable and non-sensitive runtime-status error reasons. */
     public enum ErrorCode {
-        RUNTIME_STATUS_NOT_IMPLEMENTED("runtime_status_not_implemented"),
         SERVER_UNAVAILABLE("server_unavailable"),
         STORAGE_UNAVAILABLE("storage_unavailable"),
         STORAGE_QUERY_FAILED("storage_query_failed"),

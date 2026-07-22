@@ -19,6 +19,7 @@ package org.apache.hertzbeat.manager.pojo.dto;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -86,6 +87,29 @@ class CollectorInstrumentationIntakeContractTest {
         assertEquals("edge-west", summary.getInstrumentationIntake().collectorId());
         assertEquals(State.UNAVAILABLE, summary.getInstrumentationIntake().state());
         assertEquals(ErrorCode.INTAKE_NOT_ADVERTISED, summary.getInstrumentationIntake().errorCode());
+    }
+
+    @Test
+    void beanStyleCollectorAssignmentSynchronizesOnlyTheDefaultIntakeIdentity() {
+        CollectorSummary summary = new CollectorSummary();
+
+        summary.setCollector(CollectorInfo.builder().name("edge-bean").build());
+
+        assertEquals("edge-bean", summary.getInstrumentationIntake().collectorId());
+        CollectorInstrumentationIntake explicitIntake = new CollectorInstrumentationIntake(
+                1,
+                "explicit-gateway",
+                State.AVAILABLE,
+                Gateway.SERVER,
+                List.of(Capability.OTLP_GRPC),
+                null,
+                "https://server.example.test:4317",
+                "Authorization",
+                null);
+        summary.setInstrumentationIntake(explicitIntake);
+        summary.setCollector(CollectorInfo.builder().name("edge-renamed").build());
+
+        assertSame(explicitIntake, summary.getInstrumentationIntake());
     }
 
     @Test

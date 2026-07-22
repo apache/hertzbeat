@@ -20,7 +20,6 @@ package org.apache.hertzbeat.manager.ui.runtime;
 import java.time.Clock;
 import org.apache.hertzbeat.manager.ui.runtime.UiRuntimeStatusContract.CollectorsStatus;
 import org.apache.hertzbeat.manager.ui.runtime.UiRuntimeStatusContract.ComponentStatus;
-import org.apache.hertzbeat.manager.ui.runtime.UiRuntimeStatusContract.ErrorCode;
 import org.apache.hertzbeat.manager.ui.runtime.UiRuntimeStatusContract.RuntimeStatusResponse;
 import org.apache.hertzbeat.manager.ui.runtime.UiRuntimeStatusContract.State;
 import org.apache.hertzbeat.manager.ui.runtime.UiRuntimeStatusContract.StorageKind;
@@ -29,7 +28,7 @@ import org.springframework.stereotype.Service;
 
 /** Contract-only M1 response until the runtime-status aggregation is implemented. */
 @Service
-final class UnavailableUiRuntimeStatusQuery implements UiRuntimeStatusQuery {
+final class UnknownUiRuntimeStatusQuery implements UiRuntimeStatusQuery {
 
     private final Clock clock = Clock.systemUTC();
 
@@ -38,17 +37,17 @@ final class UnavailableUiRuntimeStatusQuery implements UiRuntimeStatusQuery {
         return new RuntimeStatusResponse(
                 UiRuntimeStatusContract.CURRENT_SCHEMA_VERSION,
                 clock.instant(),
-                new ComponentStatus(State.UNKNOWN, ErrorCode.RUNTIME_STATUS_NOT_IMPLEMENTED),
+                new ComponentStatus(State.UNKNOWN, null),
                 new StorageStatus(
                         StorageKind.GREPTIME,
                         State.UNKNOWN,
-                        ErrorCode.RUNTIME_STATUS_NOT_IMPLEMENTED),
+                        null),
                 new CollectorsStatus(
                         State.UNKNOWN,
                         null,
                         null,
                         null,
                         null,
-                        ErrorCode.RUNTIME_STATUS_NOT_IMPLEMENTED));
+                        null));
     }
 }

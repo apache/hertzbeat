@@ -18,6 +18,8 @@
 package org.apache.hertzbeat.manager.ui.runtime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -47,11 +49,11 @@ class UiRuntimeStatusContractTest {
     @Test
     void freezesRuntimeStatusRecordFieldsAndWireEnums() {
         assertRecordComponents(RuntimeStatusResponse.class, "schemaVersion", "observedAt", "server", "storage", "collectors");
-        assertRecordComponents(ComponentStatus.class, "state", "errorCode");
-        assertRecordComponents(StorageStatus.class, "kind", "state", "errorCode");
+        assertRecordComponents(ComponentStatus.class, "status", "errorCode");
+        assertRecordComponents(StorageStatus.class, "kind", "status", "errorCode");
         assertRecordComponents(
                 CollectorsStatus.class,
-                "state",
+                "status",
                 "total",
                 "online",
                 "runtimeHealthy",
@@ -61,7 +63,6 @@ class UiRuntimeStatusContractTest {
         assertWireValues(StorageKind.values(), "greptime");
         assertWireValues(
                 ErrorCode.values(),
-                "runtime_status_not_implemented",
                 "server_unavailable",
                 "storage_unavailable",
                 "storage_query_failed",
@@ -88,10 +89,30 @@ class UiRuntimeStatusContractTest {
         mockMvc.perform(MockMvcRequestBuilders.get("/api/ui/runtime-status"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.schemaVersion").value(1))
-                .andExpect(jsonPath("$.data.server.state").value("available"))
+                .andExpect(jsonPath("$.data.server.status").value("available"))
                 .andExpect(jsonPath("$.data.storage.kind").value("greptime"))
+                .andExpect(jsonPath("$.data.storage.status").value("degraded"))
+                .andExpect(jsonPath("$.data.collectors.status").value("available"))
                 .andExpect(jsonPath("$.data.collectors.runtimeHealthy").value(1))
                 .andExpect(jsonPath("$.data.collectors.lastReportedAt").value("2026-07-22T01:02:00Z"));
+    }
+
+    @Test
+    void contractOnlyFallbackIsUnknownWithNoDevelopmentErrorCode() {
+        RuntimeStatusResponse response = new UnknownUiRuntimeStatusQuery().current();
+
+        assertEquals(State.UNKNOWN, response.server().status());
+        assertNull(response.server().errorCode());
+        assertEquals(State.UNKNOWN, response.storage().status());
+        assertNull(response.storage().errorCode());
+        assertEquals(State.UNKNOWN, response.collectors().status());
+        assertNull(response.collectors().errorCode());
+    }
+
+    @Test
+    void degradedAndUnavailableStatusesRequireStableErrorCode() {
+        assertThrows(IllegalArgumentException.class, () -> new ComponentStatus(State.DEGRADED, null));
+        assertThrows(IllegalArgumentException.class, () -> new ComponentStatus(State.UNAVAILABLE, null));
     }
 
     private void assertRecordComponents(Class<? extends Record> recordType, String... expectedNames) {
