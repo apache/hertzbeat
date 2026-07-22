@@ -15,27 +15,7 @@
  * limitations under the License.
  */
 
-export const COLLECTOR_INTAKE_CAPABILITIES = ['otlp_http_protobuf', 'otlp_grpc'] as const;
-export const COLLECTOR_INTAKE_ERROR_CODES = [
-  'intake_not_advertised',
-  'intake_advertisement_invalid',
-  'intake_advertisement_unavailable'
-] as const;
-
-type CollectorIntakeCapability = (typeof COLLECTOR_INTAKE_CAPABILITIES)[number];
-type CollectorIntakeErrorCode = (typeof COLLECTOR_INTAKE_ERROR_CODES)[number];
-export type CollectorInstrumentationIntake =
-  | {
-      status: 'available';
-      schemaVersion: 1;
-      collectorId: string;
-      gateway: 'collector' | 'server';
-      capabilities: readonly CollectorIntakeCapability[];
-      otlpHttpEndpoint: string | null;
-      otlpGrpcEndpoint: string | null;
-      authorizationHeader: 'Authorization';
-    }
-  | { status: 'unavailable'; errorCode: CollectorIntakeErrorCode };
+import type { CollectorInstrumentationIntake } from '@/shared/collector';
 
 export type CollectorTarget = {
   collectorId: string;

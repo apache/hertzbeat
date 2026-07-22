@@ -1,0 +1,33 @@
+.page {
+  display: grid;
+  gap: 20px;
+}
+
+.heading {
+  display: grid;
+  gap: 4px;
+}
+
+.heading :global(.ant-typography) {
+  margin: 0;
+}
+
+.toolbar {
+  width: 100%;
+}
+
+.toolbar > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+
+.toolbar :global(.ant-input-affix-wrapper) {
+  max-width: 320px;
+}
+
+:global(.collector-row-actions) {
+  display: flex;
+  gap: 8px;
+}

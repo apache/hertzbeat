@@ -86,6 +86,9 @@ export const appRouteCatalog = {
   tokens: pageRoute('tokens', settingsPaths.tokens, {
     resource: { labelKey: 'settingsNavigation.tokens' }
   }),
+  collectors: pageRoute('collectors', settingsPaths.collectors, {
+    resource: { labelKey: 'settingsNavigation.collectors' }
+  }),
   'system-settings': pageRoute('system-settings', settingsPaths.system, {
     resource: { labelKey: 'settingsNavigation.system' }
   }),

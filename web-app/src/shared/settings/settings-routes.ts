@@ -11,6 +11,7 @@ export const settingsPaths = {
   templates: '/settings/notifications/templates',
   channels: '/settings/notifications/channels',
   tokens: '/settings/tokens',
+  collectors: '/settings/collectors',
   system: '/settings/system',
   labels: '/settings/labels',
   objectStore: '/settings/storage/object-store',

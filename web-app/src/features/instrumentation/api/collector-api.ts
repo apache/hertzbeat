@@ -16,14 +16,10 @@
  */
 
 import { ApiMessageError, apiMessageGet } from '@/core/http/api-message';
+import { parseCollectorInstrumentationIntake } from '@/shared/collector';
 
-import {
-  availableCollectorIntakeSchema,
-  collectorPageSchema,
-  type CollectorSummaryWire,
-  unavailableCollectorIntakeSchema
-} from './collector-schema';
-import type { CollectorInstrumentationIntake, InstrumentationCollector } from '../model/instrumentation-collector';
+import { collectorPageSchema, type CollectorSummaryWire } from './collector-schema';
+import type { InstrumentationCollector } from '../model/instrumentation-collector';
 
 const collectorPageSize = 200;
 // Defensive UI safety policy: beyond 20 requests / 4,000 Select rows, fail instead of claiming partial inventory.
@@ -79,7 +75,7 @@ function mapCollector(summary: CollectorSummaryWire): InstrumentationCollector {
     name,
     address: ip,
     online: resolveCollectorOnline(summary.collector),
-    intake: parseInstrumentationIntake(summary.instrumentationIntake, name)
+    intake: parseCollectorInstrumentationIntake(summary.instrumentationIntake, name)
   };
 }
 
@@ -136,25 +132,4 @@ export function collectorReadFailureKind(error: unknown): CollectorReadFailureKi
   return error.cause !== undefined || error.status === undefined || error.status === 0 || error.status >= 500
     ? 'unavailable'
     : 'error';
-}
-
-function parseInstrumentationIntake(value: unknown, registeredCollectorId: string): CollectorInstrumentationIntake {
-  const available = availableCollectorIntakeSchema.safeParse(value);
-  if (available.success && available.data.collectorId === registeredCollectorId) {
-    return {
-      status: 'available',
-      schemaVersion: 1,
-      collectorId: registeredCollectorId,
-      gateway: available.data.gateway,
-      capabilities: available.data.capabilities,
-      otlpHttpEndpoint: available.data.otlpHttpEndpoint,
-      otlpGrpcEndpoint: available.data.otlpGrpcEndpoint,
-      authorizationHeader: 'Authorization'
-    };
-  }
-  const unavailable = unavailableCollectorIntakeSchema.safeParse(value);
-  if (unavailable.success && unavailable.data.collectorId === registeredCollectorId) {
-    return { status: 'unavailable', errorCode: unavailable.data.errorCode };
-  }
-  return { status: 'unavailable', errorCode: 'intake_advertisement_invalid' };
 }

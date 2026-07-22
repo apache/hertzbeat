@@ -182,6 +182,11 @@ export const refineResources: ResourceProps[] = [
     order: 50,
     dataProviderName: 'tokens'
   }),
+  routedNavigationResource('collectors', {
+    parent: 'settings',
+    icon: <ApiOutlined />,
+    order: 55
+  }),
   routedNavigationResource('system-settings', {
     name: systemConfigResourceName,
     parent: 'settings',

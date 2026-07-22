@@ -436,10 +436,60 @@
     "templates": "テンプレート",
     "channels": "チャネルサービス",
     "tokens": "API トークン",
+    "collectors": "コレクター",
     "system": "システム",
     "labels": "ラベル",
     "objectStore": "オブジェクトストレージ",
     "statusPage": "ステータスページ"
+  },
+  "collectors": {
+    "title": "コレクター管理",
+    "description": "登録済みコレクターと配信可用性を管理します。",
+    "search": "コレクターを検索",
+    "searchAction": "検索",
+    "empty": "条件に一致するコレクターはありません。",
+    "unavailable": "コレクターデータを利用できません。",
+    "name": "コレクター",
+    "status": "ステータス",
+    "mode": "モード",
+    "tasks": "タスク",
+    "pinned": "固定",
+    "dispatched": "配信済み",
+    "address": "アドレス",
+    "version": "バージョン",
+    "online": "オンライン",
+    "offline": "オフライン",
+    "protected": "保護対象",
+    "selectAll": "すべてのコレクターを選択",
+    "select": "{{name}} を選択",
+    "takeOnline": "オンラインにする",
+    "takeOffline": "オフラインにする",
+    "takeOnlineNamed": "{{name}} をオンラインにする",
+    "takeOfflineNamed": "{{name}} をオフラインにする",
+    "delete": "削除",
+    "deleteNamed": "{{name}} を削除",
+    "takeSelectedOnline": "選択項目をオンラインにする",
+    "takeSelectedOffline": "選択項目をオフラインにする",
+    "deleteSelected": "選択項目を削除",
+    "mutationSuccess": "コレクターの状態を更新しました。",
+    "failure": {
+      "permission": "このコレクターを変更する権限がありません。",
+      "validation": "コレクターの変更が拒否されました。現在の状態を確認してください。",
+      "unavailable": "変更を確認できません。更新してから再試行してください。",
+      "error": "変更に失敗しました。更新してから再試行してください。"
+    },
+    "confirm": {
+      "description": "選択した {{count}} 件のコレクターに適用します。",
+      "online": {
+        "single": "このコレクターをオンラインにしますか？",
+        "batch": "選択したコレクターをオンラインにしますか？"
+      },
+      "offline": {
+        "single": "このコレクターをオフラインにしますか？",
+        "batch": "選択したコレクターをオフラインにしますか？"
+      },
+      "delete": { "single": "このコレクターを削除しますか？", "batch": "選択したコレクターを削除しますか？" }
+    }
   },
   "labels": {
     "title": "ラベル",

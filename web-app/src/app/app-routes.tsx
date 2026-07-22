@@ -190,6 +190,13 @@ export const appRoutes: RouteObject[] = [
                 lazy: loadTokenPageRoute
               },
               {
+                ...getAppRouteIdentity('collectors'),
+                lazy: async () => {
+                  const { CollectorPage } = await import('@/features/settings/collector');
+                  return { Component: CollectorPage };
+                }
+              },
+              {
                 ...getAppRouteIdentity('system-settings'),
                 lazy: async () => {
                   const { SystemConfigPage } = await import('@/features/settings/system-config');

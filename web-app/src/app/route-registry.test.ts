@@ -115,4 +115,13 @@ describe('route registry', () => {
       resource: { labelKey: 'instrumentation.menu' }
     });
   });
+
+  it('registers Collector management at its canonical settings route', () => {
+    expect(getAppRoute('collectors')).toMatchObject({
+      id: 'collectors',
+      path: '/settings/collectors',
+      kind: 'page',
+      resource: { labelKey: 'settingsNavigation.collectors' }
+    });
+  });
 });

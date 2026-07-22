@@ -17,26 +17,13 @@
 
 import { z } from 'zod';
 
-import { COLLECTOR_INTAKE_CAPABILITIES, COLLECTOR_INTAKE_ERROR_CODES } from '../model/instrumentation-collector';
+export { availableCollectorIntakeSchema, unavailableCollectorIntakeSchema } from '@/shared/collector';
 
 const trimmedTextSchema = z
   .string()
   .min(1)
   .refine(value => value === value.trim());
-const collectorIdSchema = trimmedTextSchema
-  .max(128)
-  .refine(value => !Array.from(value).some(character => /\p{Cc}/u.test(character)));
-const publicHttpsEndpointSchema = trimmedTextSchema.refine(isPublicHttpsEndpoint);
 const collectorStatusSchema = z.union([z.literal(0), z.literal(1)]);
-const capabilitySchema = z
-  .array(z.enum(COLLECTOR_INTAKE_CAPABILITIES))
-  .min(1)
-  .max(COLLECTOR_INTAKE_CAPABILITIES.length)
-  .superRefine((capabilities, context) => {
-    if (new Set(capabilities).size !== capabilities.length) {
-      context.addIssue({ code: 'custom', message: 'Collector intake capabilities must be unique' });
-    }
-  });
 
 const collectorSummarySchema = z
   .object({
@@ -78,54 +65,3 @@ export const collectorPageSchema = z.object({
   number: z.number().int().nonnegative(),
   size: z.number().int().positive()
 });
-
-export const availableCollectorIntakeSchema = z
-  .object({
-    schemaVersion: z.literal(1),
-    collectorId: collectorIdSchema,
-    state: z.literal('available'),
-    gateway: z.enum(['collector', 'server']),
-    capabilities: capabilitySchema,
-    otlpHttpEndpoint: publicHttpsEndpointSchema.nullable(),
-    otlpGrpcEndpoint: publicHttpsEndpointSchema.nullable(),
-    authorizationHeader: z.literal('Authorization'),
-    errorCode: z.null()
-  })
-  .strict()
-  .superRefine((intake, context) => {
-    const httpMatches = intake.capabilities.includes('otlp_http_protobuf') === (intake.otlpHttpEndpoint !== null);
-    const grpcMatches = intake.capabilities.includes('otlp_grpc') === (intake.otlpGrpcEndpoint !== null);
-    if (!httpMatches || !grpcMatches) {
-      context.addIssue({ code: 'custom', message: 'Collector intake endpoints must match capabilities' });
-    }
-  });
-
-export const unavailableCollectorIntakeSchema = z
-  .object({
-    schemaVersion: z.literal(1),
-    collectorId: collectorIdSchema,
-    state: z.literal('unavailable'),
-    gateway: z.null(),
-    capabilities: z.array(z.never()).length(0),
-    otlpHttpEndpoint: z.null(),
-    otlpGrpcEndpoint: z.null(),
-    authorizationHeader: z.null(),
-    errorCode: z.enum(COLLECTOR_INTAKE_ERROR_CODES)
-  })
-  .strict();
-
-function isPublicHttpsEndpoint(value: string) {
-  try {
-    const endpoint = new URL(value);
-    return (
-      endpoint.protocol === 'https:' &&
-      Boolean(endpoint.hostname) &&
-      !endpoint.username &&
-      !endpoint.password &&
-      !endpoint.search &&
-      !endpoint.hash
-    );
-  } catch {
-    return false;
-  }
-}
