@@ -23,14 +23,17 @@ import { isCompletePublicStatusIncidentPage, publicStatusState } from '../model/
 import { publicStatusQueryKeys } from './public-status-query-keys';
 
 export function usePublicStatusController(): PublicStatusViewModel {
-  const org = useQuery({ queryKey: publicStatusQueryKeys.org(), queryFn: loadPublicStatusOrg });
+  const org = useQuery({
+    queryKey: publicStatusQueryKeys.org(),
+    queryFn: ({ signal }) => loadPublicStatusOrg({ signal })
+  });
   const components = useQuery({
     queryKey: publicStatusQueryKeys.components(),
-    queryFn: loadPublicStatusComponents
+    queryFn: ({ signal }) => loadPublicStatusComponents({ signal })
   });
   const incidents = useQuery({
     queryKey: publicStatusQueryKeys.incidents(),
-    queryFn: loadPublicStatusIncidents
+    queryFn: ({ signal }) => loadPublicStatusIncidents({ signal })
   });
   const state = publicStatusState(org.error, components.error, incidents.error);
 

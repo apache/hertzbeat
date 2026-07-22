@@ -100,4 +100,15 @@ describe('Status API failure boundary', () => {
     const domainError = new Error('domain validation failed');
     expect(normalizeStatusApiFailure(domainError)).toBe(domainError);
   });
+
+  it('preserves caller cancellation instead of presenting it as an unavailable status service', () => {
+    const cancellation = new DOMException('private browser abort reason', 'AbortError');
+    const normalized = normalizeStatusApiFailure(
+      new ApiMessageError('private transport abort', { cause: cancellation })
+    );
+
+    expect(normalized).toMatchObject({ name: 'AbortError', message: 'Request aborted' });
+    expect(normalized).not.toBe(cancellation);
+    expect(JSON.stringify(normalized)).not.toContain('private');
+  });
 });

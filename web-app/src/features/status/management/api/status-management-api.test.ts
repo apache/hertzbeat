@@ -211,6 +211,28 @@ describe('status page management API', () => {
     expect(apiMessageGet).toHaveBeenCalledWith('/api/status/page/incident/7', { signal: controller.signal });
   });
 
+  it('passes abort signals through every management read transport', async () => {
+    const controller = new AbortController();
+    apiMessageGet.mockImplementation((path: string) => {
+      if (path === '/api/status/page/org') return Promise.resolve(org);
+      if (path === '/api/status/page/component') return Promise.resolve([component]);
+      if (path === '/api/status/page/component/3') return Promise.resolve(component);
+      return Promise.resolve({ content: [incident], totalElements: 1, totalPages: 1, number: 0, size: 8 });
+    });
+
+    await loadStatusOrg(controller.signal);
+    await loadStatusComponents(controller.signal);
+    await loadStatusComponent(3, controller.signal);
+    await loadStatusIncidents({ search: '', pageIndex: 0, pageSize: 8 }, controller.signal);
+
+    expect(apiMessageGet).toHaveBeenNthCalledWith(1, '/api/status/page/org', { signal: controller.signal });
+    expect(apiMessageGet).toHaveBeenNthCalledWith(2, '/api/status/page/component', { signal: controller.signal });
+    expect(apiMessageGet).toHaveBeenNthCalledWith(3, '/api/status/page/component/3', { signal: controller.signal });
+    expect(apiMessageGet).toHaveBeenNthCalledWith(4, '/api/status/page/incident?pageIndex=0&pageSize=8', {
+      signal: controller.signal
+    });
+  });
+
   it('encodes incident search through URLSearchParams', async () => {
     apiMessageGet.mockResolvedValue({
       content: [],

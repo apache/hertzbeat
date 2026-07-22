@@ -413,7 +413,7 @@ describe('useStatusManagementController', () => {
     act(() => result.current.editComponent(component));
     act(() => result.current.saveComponent(updated));
 
-    await waitFor(() => expect(api.loadStatusComponent).toHaveBeenCalledWith(4));
+    await waitFor(() => expect(api.loadStatusComponent).toHaveBeenCalledWith(4, expect.any(AbortSignal)));
     expect(api.loadStatusComponents).toHaveBeenCalledTimes(2);
     await waitFor(() => expect(result.current.componentEditor).toBeUndefined());
 
@@ -769,7 +769,7 @@ describe('useStatusManagementController', () => {
     const updated = { ...incident, name: 'Updated' };
     api.loadStatusIncident.mockResolvedValueOnce(updated);
     act(() => result.current.saveIncident(updated));
-    await waitFor(() => expect(api.loadStatusIncident).toHaveBeenCalledWith(7));
+    await waitFor(() => expect(api.loadStatusIncident).toHaveBeenCalledWith(7, expect.any(AbortSignal)));
     await waitFor(() => expect(api.loadStatusIncidents).toHaveBeenCalledTimes(3));
 
     api.loadStatusIncident.mockRejectedValueOnce(new StatusManagementMissingError('incident'));
@@ -836,11 +836,14 @@ describe('useStatusManagementController', () => {
     });
     expect(recovered).toBe(true);
     await waitFor(() => expect(result.current.incidents).toEqual({ kind: 'empty' }));
-    expect(api.loadStatusIncidents).toHaveBeenLastCalledWith({
-      search: 'current',
-      pageIndex: 0,
-      pageSize: 8
-    });
+    expect(api.loadStatusIncidents).toHaveBeenLastCalledWith(
+      {
+        search: 'current',
+        pageIndex: 0,
+        pageSize: 8
+      },
+      expect.any(AbortSignal)
+    );
   });
 });
 

@@ -16,7 +16,11 @@
  */
 
 import { apiMessageGet } from '@/core/http/api-message';
-import { statusApiRequest, type StatusApiFailureContext } from '@/features/status/api/status-api-failure';
+import {
+  createStatusRequestCancellation,
+  statusApiRequest,
+  type StatusApiFailureContext
+} from '@/features/status/api/status-api-failure';
 
 import type { PublicStatusIncidentPage } from '../model/public-status-contract';
 import { isCompletePublicStatusIncidentPage } from '../model/public-status-model';
@@ -53,6 +57,7 @@ export async function loadPublicStatusIncidents(context?: PublicStatusQueryConte
 
   // The validated first page fixes the termination bound; every later page must keep that snapshot metadata.
   for (let pageIndex = 1; pageIndex < firstPage.totalPages; pageIndex += 1) {
+    if (context?.signal?.aborted) throw createStatusRequestCancellation();
     const page = await loadIncidentPage(pageIndex, context);
     assertContinuationPage(firstPage, page, pageIndex);
     pages.push(page);

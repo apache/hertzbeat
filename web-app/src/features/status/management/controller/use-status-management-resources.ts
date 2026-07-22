@@ -7,11 +7,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 
-import {
-  loadStatusComponents,
-  loadStatusIncidents,
-  loadStatusOrg
-} from '../api/status-management-api';
+import { loadStatusComponents, loadStatusIncidents, loadStatusOrg } from '../api/status-management-api';
 import type { StatusIncidentQuery } from '../model/status-incident-query';
 import { statusManagementQueryKeys } from './status-management-query-keys';
 
@@ -19,17 +15,17 @@ export function useStatusManagementResources(query: StatusIncidentQuery) {
   return {
     org: useQuery({
       queryKey: statusManagementQueryKeys.org(),
-      queryFn: loadStatusOrg,
+      queryFn: ({ signal }) => loadStatusOrg(signal),
       retry: false
     }),
     components: useQuery({
       queryKey: statusManagementQueryKeys.components(),
-      queryFn: loadStatusComponents,
+      queryFn: ({ signal }) => loadStatusComponents(signal),
       retry: false
     }),
     incidents: useQuery({
       queryKey: statusManagementQueryKeys.incidents(query),
-      queryFn: () => loadStatusIncidents(query),
+      queryFn: ({ signal }) => loadStatusIncidents(query, signal),
       retry: false
     })
   };

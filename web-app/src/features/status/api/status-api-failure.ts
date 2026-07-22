@@ -15,14 +15,23 @@ const statusOrgNotFoundMessage = 'Status Page Organization Not Found';
 
 export type StatusApiFailureContext = { resource?: 'organization' };
 
+export function createStatusRequestCancellation() {
+  return new DOMException('Request aborted', 'AbortError');
+}
+
 /** Converts transport/envelope evidence into a value safe for feature layers. */
 export function normalizeStatusApiFailure(error: unknown, context: StatusApiFailureContext = {}) {
   if (!(error instanceof ApiMessageError)) return error;
+  if (isAbortError(error.cause)) return createStatusRequestCancellation();
   if (context.resource === 'organization' && isExactStatusOrgNotFound(error)) {
     return new StatusOrgNotFoundError();
   }
 
   return new StatusRequestFailure(readFailureKind(error), apiMessageWriteOutcome(error));
+}
+
+function isAbortError(error: unknown): error is { name: 'AbortError' } {
+  return typeof error === 'object' && error !== null && 'name' in error && error.name === 'AbortError';
 }
 
 export async function statusApiRequest<T>(

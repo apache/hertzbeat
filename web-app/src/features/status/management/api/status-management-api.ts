@@ -38,14 +38,14 @@ const orgPath = '/api/status/page/org';
 const componentPath = '/api/status/page/component';
 const incidentPath = '/api/status/page/incident';
 
-export const loadStatusOrg = () =>
-  statusApiRequest(async () => parseStatusOrg(await apiMessageGet(orgPath)), { resource: 'organization' });
+export const loadStatusOrg = (signal?: AbortSignal) =>
+  statusApiRequest(async () => parseStatusOrg(await get(orgPath, signal)), { resource: 'organization' });
 export const saveStatusOrg = (org: StatusOrg) =>
   statusApiRequest(async () => parseStatusOrg(await apiMessagePost(orgPath, org)));
-export const loadStatusComponents = () =>
-  statusApiRequest(async () => parseStatusComponents(await apiMessageGet(componentPath)));
-export const loadStatusComponent = (id: number) =>
-  statusApiRequest(async () => parseStatusComponentDetail(await apiMessageGet(`${componentPath}/${id}`)));
+export const loadStatusComponents = (signal?: AbortSignal) =>
+  statusApiRequest(async () => parseStatusComponents(await get(componentPath, signal)));
+export const loadStatusComponent = (id: number, signal?: AbortSignal) =>
+  statusApiRequest(async () => parseStatusComponentDetail(await get(`${componentPath}/${id}`, signal)));
 export const saveStatusComponent = (component: StatusComponent, isNew: boolean) =>
   statusApiRequest(async () => {
     if (isNew) await apiMessagePost(componentPath, component);
@@ -55,14 +55,10 @@ export const deleteStatusComponent = (id: number) =>
   statusApiRequest(async () => {
     await apiMessageDelete(`${componentPath}/${id}`);
   });
-export const loadStatusIncidents = (query: StatusIncidentQuery) =>
-  statusApiRequest(async () => parseStatusIncidentPage(await apiMessageGet(buildStatusIncidentPath(query)), query));
+export const loadStatusIncidents = (query: StatusIncidentQuery, signal?: AbortSignal) =>
+  statusApiRequest(async () => parseStatusIncidentPage(await get(buildStatusIncidentPath(query), signal), query));
 export const loadStatusIncident = (id: number, signal?: AbortSignal) =>
-  statusApiRequest(async () =>
-    parseStatusIncidentDetail(
-      signal ? await apiMessageGet(`${incidentPath}/${id}`, { signal }) : await apiMessageGet(`${incidentPath}/${id}`)
-    )
-  );
+  statusApiRequest(async () => parseStatusIncidentDetail(await get(`${incidentPath}/${id}`, signal)));
 export const saveStatusIncident = (incident: StatusIncident, isNew: boolean) =>
   statusApiRequest(async () => {
     if (isNew) await apiMessagePost(incidentPath, incident);
@@ -80,6 +76,10 @@ export function buildStatusIncidentPath(query: StatusIncidentQuery) {
   });
   if (query.search) params.set('search', query.search);
   return `${incidentPath}?${params.toString()}`;
+}
+
+function get(path: string, signal?: AbortSignal) {
+  return signal ? apiMessageGet(path, { signal }) : apiMessageGet(path);
 }
 
 export type StatusManagementFailureKind = 'missing' | 'unavailable' | 'error';

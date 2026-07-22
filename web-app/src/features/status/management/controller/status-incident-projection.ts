@@ -17,15 +17,15 @@ export function projectStatusIncidents(
   queryClient: QueryClient,
   query: StatusIncidentQuery,
   committedDeletes: Set<number>,
-  before?: () => Promise<void>,
+  before?: (signal: AbortSignal) => Promise<void>,
   isCurrent?: () => boolean
 ) {
   return queryClient.fetchQuery({
     queryKey: statusManagementQueryKeys.incidents(query),
-    queryFn: async () => {
-      await before?.();
+    queryFn: async ({ signal }) => {
+      await before?.(signal);
       requireCurrentProjection(isCurrent);
-      const page = await loadStatusIncidents(query);
+      const page = await loadStatusIncidents(query, signal);
       requireCurrentProjection(isCurrent);
       if (page.content.some(record => record.id != null && committedDeletes.has(record.id))) {
         throw new StatusManagementContractError();
@@ -51,8 +51,8 @@ export function projectStatusIncidentUpdate(
     queryClient,
     query,
     committedDeletes,
-    async () => {
-      requireStatusIncidentWritable(await loadStatusIncident(id), value);
+    async signal => {
+      requireStatusIncidentWritable(await loadStatusIncident(id, signal), value);
     },
     isCurrent
   );

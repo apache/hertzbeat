@@ -137,6 +137,27 @@ describe('public status API', () => {
     expect(apiMessageGet).toHaveBeenNthCalledWith(2, '/api/status/page/public/incident?pageIndex=1&pageSize=20');
   });
 
+  it('stops a serial incident scan when its caller cancels after the current page', async () => {
+    const controller = new AbortController();
+    apiMessageGet.mockImplementationOnce(() => {
+      controller.abort(new DOMException('private caller reason', 'AbortError'));
+      return Promise.resolve(
+        incidentPage(
+          0,
+          2,
+          21,
+          Array.from({ length: 20 }, (_, index) => index + 1)
+        )
+      );
+    });
+
+    await expect(loadPublicStatusIncidents({ signal: controller.signal })).rejects.toMatchObject({
+      name: 'AbortError',
+      message: 'Request aborted'
+    });
+    expect(apiMessageGet).toHaveBeenCalledTimes(1);
+  });
+
   it('rejects a single first page whose positive size differs from the requested size', async () => {
     apiMessageGet.mockResolvedValueOnce({
       ...incidentPage(0, 1, 1, [1]),

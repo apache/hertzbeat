@@ -100,11 +100,14 @@ describe('StatusManagementPage', () => {
     const { container } = renderPage('/settings/status-page?pageIndex=3&pageSize=8');
 
     await waitFor(() =>
-      expect(api.loadStatusIncidents).toHaveBeenCalledWith({
-        search: '',
-        pageIndex: 3,
-        pageSize: 8
-      })
+      expect(api.loadStatusIncidents).toHaveBeenCalledWith(
+        {
+          search: '',
+          pageIndex: 3,
+          pageSize: 8
+        },
+        expect.any(AbortSignal)
+      )
     );
     await waitFor(() => expect(container.querySelector('.ant-pagination')).not.toBeNull());
     expect(screen.queryByText('No incidents in the selected period.')).not.toBeInTheDocument();

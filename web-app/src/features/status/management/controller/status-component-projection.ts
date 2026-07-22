@@ -15,16 +15,16 @@ import { statusManagementQueryKeys } from './status-management-query-keys';
 export function projectStatusComponents(
   queryClient: QueryClient,
   committedDeletes: Set<number>,
-  before?: () => Promise<void>,
+  before?: (signal: AbortSignal) => Promise<void>,
   validate?: (records: StatusComponent[]) => void,
   isCurrent?: () => boolean
 ) {
   return queryClient.fetchQuery({
     queryKey: statusManagementQueryKeys.components(),
-    queryFn: async () => {
-      await before?.();
+    queryFn: async ({ signal }) => {
+      await before?.(signal);
       requireCurrentProjection(isCurrent);
-      const records = await loadStatusComponents();
+      const records = await loadStatusComponents(signal);
       requireCurrentProjection(isCurrent);
       validate?.(records);
       if (records.some(record => record.id != null && committedDeletes.has(record.id))) {
@@ -49,8 +49,8 @@ export function projectStatusComponentUpdate(
   return projectStatusComponents(
     queryClient,
     committedDeletes,
-    async () => {
-      requireStatusComponentWritable(await loadStatusComponent(id), value);
+    async signal => {
+      requireStatusComponentWritable(await loadStatusComponent(id, signal), value);
     },
     undefined,
     isCurrent

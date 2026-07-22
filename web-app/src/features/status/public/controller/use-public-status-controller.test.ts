@@ -24,11 +24,21 @@ import type { PublicStatusComponent, PublicStatusIncidentPage, PublicStatusOrg }
 import { usePublicStatusController } from './use-public-status-controller';
 
 type QueryEvidence = { data?: unknown; error?: unknown; isPending: boolean };
+type QueryOptions = {
+  queryKey: readonly string[];
+  queryFn: (context: { signal: AbortSignal }) => unknown;
+};
 
 const reactQuery = vi.hoisted(() => ({
-  useQuery: vi.fn<(options: { queryKey: readonly string[] }) => QueryEvidence>()
+  useQuery: vi.fn<(options: QueryOptions) => QueryEvidence>()
 }));
 vi.mock('@tanstack/react-query', () => ({ useQuery: reactQuery.useQuery }));
+const api = vi.hoisted(() => ({
+  loadPublicStatusComponents: vi.fn(),
+  loadPublicStatusIncidents: vi.fn(),
+  loadPublicStatusOrg: vi.fn()
+}));
+vi.mock('../api/public-status-api', () => api);
 
 const org: PublicStatusOrg = { name: 'HertzBeat', description: 'Status', state: 'healthy' };
 const components: PublicStatusComponent[] = [{ id: 1, name: 'API', state: 'healthy' }];
@@ -45,7 +55,7 @@ describe('usePublicStatusController', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     setEvidence({ data: org }, { data: components }, { data: incidents });
-    reactQuery.useQuery.mockImplementation(({ queryKey }: { queryKey: readonly string[] }) => {
+    reactQuery.useQuery.mockImplementation(({ queryKey }: QueryOptions) => {
       const result = evidence.get(queryKey[0] ?? '');
       if (!result) throw new Error('Missing public status query evidence');
       return result;
@@ -61,6 +71,19 @@ describe('usePublicStatusController', () => {
       ['public-status-components'],
       ['public-status-incidents']
     ]);
+  });
+
+  it('passes each TanStack cancellation signal to the owning status API', async () => {
+    renderHook(() => usePublicStatusController());
+    const controller = new AbortController();
+
+    await Promise.all(
+      reactQuery.useQuery.mock.calls.map(([options]) => options.queryFn({ signal: controller.signal }))
+    );
+
+    expect(api.loadPublicStatusOrg).toHaveBeenCalledWith({ signal: controller.signal });
+    expect(api.loadPublicStatusComponents).toHaveBeenCalledWith({ signal: controller.signal });
+    expect(api.loadPublicStatusIncidents).toHaveBeenCalledWith({ signal: controller.signal });
   });
 
   it('keeps pending evidence ahead of cached data', () => {
