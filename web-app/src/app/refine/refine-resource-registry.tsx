@@ -24,7 +24,7 @@ import type { AccessControlProvider, ResourceProps } from '@refinedev/core';
 import type { ReactNode } from 'react';
 
 import { getAppRoute, type AppResourceRouteId } from '@/app/route-registry';
-import { noticeReceiverResourceName } from '@/features/alert/notice-receiver';
+import { noticeReceiverResourceName } from '@/features/alert/notice-receiver/refine';
 import { noticeRuleResourceName } from '@/features/alert/notice-rule';
 import { noticeTemplateResourceName } from '@/features/alert/notice-template';
 import { labelResourceName } from '@/features/settings/label/refine';

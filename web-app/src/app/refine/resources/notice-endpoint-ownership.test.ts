@@ -17,7 +17,7 @@
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { noticeReceiverDataProvider } from '@/features/alert/notice-receiver';
+import { noticeReceiverDataProvider } from '@/features/alert/notice-receiver/refine';
 import { noticeRuleDataProvider } from '@/features/alert/notice-rule';
 import { noticeTemplateDataProvider } from '@/features/alert/notice-template';
 

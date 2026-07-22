@@ -22,7 +22,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { Outlet } from 'react-router-dom';
 
 import { SessionProvider } from '@/core/auth/session-provider';
-import { noticeReceiverDataProvider, noticeReceiverResourceName } from '@/features/alert/notice-receiver';
+import { noticeReceiverDataProvider, noticeReceiverResourceName } from '@/features/alert/notice-receiver/refine';
 import { noticeRuleDataProvider, noticeRuleResourceName } from '@/features/alert/notice-rule';
 import { noticeTemplateDataProvider, noticeTemplateResourceName } from '@/features/alert/notice-template';
 import { labelDataProvider, labelResourceName } from '@/features/settings/label/refine';
