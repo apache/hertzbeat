@@ -28,12 +28,12 @@ import { noticeRuleQueryKeys } from './notice-rule-query-keys';
 export function useNoticeRuleOptions() {
   const receivers = useQuery({
     queryKey: noticeRuleQueryKeys.receiverOptions(),
-    queryFn: loadAllNoticeReceivers,
+    queryFn: ({ signal }) => loadAllNoticeReceivers(signal),
     staleTime: 30_000
   });
   const templates = useQuery({
     queryKey: noticeRuleQueryKeys.templateOptions(),
-    queryFn: loadAllNoticeTemplates,
+    queryFn: ({ signal }) => loadAllNoticeTemplates(signal),
     staleTime: 30_000
   });
   const failure = noticeRuleOptionFailure(receivers, templates);

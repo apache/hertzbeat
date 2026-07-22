@@ -57,9 +57,13 @@ export async function loadNoticeReceiver(id: number) {
   );
 }
 
-export async function loadAllNoticeReceiverOptions() {
+export async function loadAllNoticeReceiverOptions(signal?: AbortSignal) {
   return noticeReceiverApiRequest('collection', async () =>
-    parseNoticeReceiverOptionsWire(await apiMessageGet(`${noticeReceiversEndpoint}/all`))
+    parseNoticeReceiverOptionsWire(
+      await (signal
+        ? apiMessageGet(`${noticeReceiversEndpoint}/all`, { signal })
+        : apiMessageGet(`${noticeReceiversEndpoint}/all`))
+    )
   );
 }
 

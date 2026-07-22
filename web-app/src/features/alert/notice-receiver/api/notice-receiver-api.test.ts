@@ -72,6 +72,15 @@ describe('notice receiver API contract', () => {
     ]);
   });
 
+  it('forwards caller cancellation to the minimal rule-options transport', async () => {
+    const signal = new AbortController().signal;
+    http.apiMessageGet.mockResolvedValueOnce([]);
+
+    await loadAllNoticeReceiverOptions(signal);
+
+    expect(http.apiMessageGet).toHaveBeenCalledWith('/api/notice/receivers/all', { signal });
+  });
+
   it('normalizes transport failures at every API entry before they reach an adapter or controller', async () => {
     const draft = { ...createNoticeReceiverDraft(), name: 'Email', email: 'ops@example.test' };
     const update = { ...draft, id: 7 };

@@ -112,6 +112,18 @@ describe('notice rule API', () => {
       code: 'NOTICE_RECEIVER_RESPONSE_INVALID'
     });
   });
+
+  it('forwards caller cancellation to both option transports', async () => {
+    const signal = new AbortController().signal;
+    receiverApi.loadAll.mockResolvedValueOnce([]);
+    http.get.mockResolvedValueOnce([]);
+
+    await loadAllNoticeReceivers(signal);
+    await loadAllNoticeTemplates(signal);
+
+    expect(receiverApi.loadAll).toHaveBeenCalledWith(signal);
+    expect(http.get).toHaveBeenCalledWith('/api/notice/templates/all', { signal });
+  });
 });
 
 function transportFailure() {

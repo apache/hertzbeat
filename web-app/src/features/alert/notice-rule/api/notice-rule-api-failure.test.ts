@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { ApiMessageError } from '@/core/http/api-message';
 
 import { NoticeRuleContractError, NoticeRuleRequestFailure } from '../model/notice-rule-failure';
-import { normalizeNoticeRuleApiFailure } from './notice-rule-api-failure';
+import { normalizeNoticeRuleApiFailure, noticeRuleApiRequest } from './notice-rule-api-failure';
 
 describe('Notice Rule API failure boundary', () => {
   it.each([
@@ -70,5 +70,24 @@ describe('Notice Rule API failure boundary', () => {
     expect(normalizeNoticeRuleApiFailure(reason, 'collection')).toMatchObject({ kind: 'error' });
     expect(normalizeNoticeRuleApiFailure(reason, 'write')).toMatchObject({ kind: 'error' });
     expect(normalizeNoticeRuleApiFailure(sourceMissing, 'collection')).toMatchObject({ kind: 'error' });
+  });
+
+  it('keeps caller cancellation out of visible failure evidence and redacts transport details', async () => {
+    const controller = new AbortController();
+    controller.abort();
+
+    const failure = noticeRuleApiRequest(
+      () =>
+        Promise.reject(
+          new ApiMessageError('private option transport', {
+            cause: new DOMException('private abort detail', 'AbortError')
+          })
+        ),
+      'collection',
+      controller.signal
+    );
+
+    await expect(failure).rejects.toMatchObject({ name: 'AbortError', message: 'Request aborted' });
+    await expect(failure).rejects.not.toBeInstanceOf(NoticeRuleRequestFailure);
   });
 });

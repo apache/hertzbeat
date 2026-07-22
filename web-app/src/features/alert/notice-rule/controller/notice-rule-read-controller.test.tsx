@@ -1,14 +1,23 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { act, renderHook } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import type { PropsWithChildren } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   currentRefetch: vi.fn(),
+  loadReceivers: vi.fn(),
+  loadTemplates: vi.fn(),
   useList: vi.fn()
 }));
 
 vi.mock('@refinedev/core', () => ({ useList: mocks.useList }));
+vi.mock('../api/notice-rule-api', async importOriginal => ({
+  ...(await importOriginal<typeof import('../api/notice-rule-api')>()),
+  loadAllNoticeReceivers: mocks.loadReceivers,
+  loadAllNoticeTemplates: mocks.loadTemplates
+}));
 
 import type { NoticeRuleQuery } from '../model/notice-rule-model';
 import {
@@ -16,7 +25,7 @@ import {
   NoticeRuleDomainFailure,
   NoticeRuleRequestFailure
 } from '../model/notice-rule-failure';
-import { useNoticeRuleList } from './notice-rule-read-controller';
+import { useNoticeRuleList, useNoticeRuleOptions } from './notice-rule-read-controller';
 
 describe('notice rule authoritative list reread', () => {
   beforeEach(() => {
@@ -116,6 +125,46 @@ describe('notice rule authoritative list reread', () => {
     });
   });
 });
+
+describe('notice rule option reads', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('forwards TanStack signals and aborts both option reads when their owner unmounts', async () => {
+    const receiverRequest = pendingRequest();
+    const templateRequest = pendingRequest();
+    mocks.loadReceivers.mockImplementation(receiverRequest.load);
+    mocks.loadTemplates.mockImplementation(templateRequest.load);
+
+    const view = renderHook(() => useNoticeRuleOptions(), { wrapper: queryWrapper() });
+    await waitFor(() => {
+      expect(receiverRequest.signal()).toBeInstanceOf(AbortSignal);
+      expect(templateRequest.signal()).toBeInstanceOf(AbortSignal);
+    });
+
+    view.unmount();
+
+    expect(receiverRequest.signal()?.aborted).toBe(true);
+    expect(templateRequest.signal()?.aborted).toBe(true);
+  });
+});
+
+function pendingRequest() {
+  let requestSignal: AbortSignal | undefined;
+  return {
+    load: (signal: AbortSignal) => {
+      requestSignal = signal;
+      return new Promise<never>((_resolve, reject) => {
+        signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')), { once: true });
+      });
+    },
+    signal: () => requestSignal
+  };
+}
+
+function queryWrapper() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  return ({ children }: PropsWithChildren) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+}
 
 function deferred<T>() {
   let resolve!: (value: T) => void;

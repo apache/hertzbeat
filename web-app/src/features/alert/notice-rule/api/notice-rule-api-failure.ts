@@ -21,10 +21,16 @@ export function normalizeNoticeRuleApiFailure(reason: unknown, context: NoticeRu
   return new NoticeRuleRequestFailure(requestFailureKind(reason, context), writeOutcome(reason));
 }
 
-export async function noticeRuleApiRequest<T>(operation: () => Promise<T>, context: NoticeRuleApiContext): Promise<T> {
+export async function noticeRuleApiRequest<T>(
+  operation: () => Promise<T>,
+  context: NoticeRuleApiContext,
+  signal?: AbortSignal
+): Promise<T> {
   try {
     return await operation();
   } catch (reason) {
+    // Caller cancellation retires query ownership; it is not availability evidence.
+    if (signal?.aborted) throw new DOMException('Request aborted', 'AbortError');
     throw normalizeNoticeRuleApiFailure(reason, context);
   }
 }

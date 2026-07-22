@@ -41,23 +41,35 @@ export async function loadNoticeRule(id: number) {
   );
 }
 
-export async function loadAllNoticeReceivers() {
-  return noticeRuleApiRequest(async () => {
-    const receivers = await loadAllNoticeReceiverOptions();
-    if (receivers.some(item => item.id < 1) || new Set(receivers.map(item => item.id)).size !== receivers.length) {
-      throw new NoticeRuleContractError('NOTICE_RULE_RECEIVER_OPTIONS_INVALID');
-    }
-    return receivers;
-  }, 'collection');
+export async function loadAllNoticeReceivers(signal?: AbortSignal) {
+  return noticeRuleApiRequest(
+    async () => {
+      const receivers = await loadAllNoticeReceiverOptions(signal);
+      if (receivers.some(item => item.id < 1) || new Set(receivers.map(item => item.id)).size !== receivers.length) {
+        throw new NoticeRuleContractError('NOTICE_RULE_RECEIVER_OPTIONS_INVALID');
+      }
+      return receivers;
+    },
+    'collection',
+    signal
+  );
 }
 
-export async function loadAllNoticeTemplates() {
-  return noticeRuleApiRequest(async () => {
-    const templates = parseNoticeTemplates(await apiMessageGet(`${noticeTemplatesEndpoint}/all`));
-    const ids = templates.flatMap(item => (item.id == null ? [] : [item.id]));
-    if (new Set(ids).size !== ids.length) throw new NoticeRuleContractError('NOTICE_RULE_TEMPLATE_OPTIONS_INVALID');
-    return templates;
-  }, 'collection');
+export async function loadAllNoticeTemplates(signal?: AbortSignal) {
+  return noticeRuleApiRequest(
+    async () => {
+      const templates = parseNoticeTemplates(
+        await (signal
+          ? apiMessageGet(`${noticeTemplatesEndpoint}/all`, { signal })
+          : apiMessageGet(`${noticeTemplatesEndpoint}/all`))
+      );
+      const ids = templates.flatMap(item => (item.id == null ? [] : [item.id]));
+      if (new Set(ids).size !== ids.length) throw new NoticeRuleContractError('NOTICE_RULE_TEMPLATE_OPTIONS_INVALID');
+      return templates;
+    },
+    'collection',
+    signal
+  );
 }
 
 export async function loadAllNoticeRulesByName(name: string) {
