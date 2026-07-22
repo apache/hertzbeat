@@ -87,8 +87,9 @@ export async function proveBulletinCreated(draft: BulletinDraft, beforeIds: read
     const candidates = (await loadExactNameBulletins(draft.name)).filter(
       item => !before.has(item.id) && sameBulletin(item, draft)
     );
-    if (candidates.length !== 1) throw new BulletinContractError('Create evidence did not converge');
-    const saved = await loadBulletin(candidates[0]!.id);
+    const [candidate] = candidates;
+    if (candidates.length !== 1 || !candidate) throw new BulletinContractError('Create evidence did not converge');
+    const saved = await loadBulletin(candidate.id);
     if (!sameBulletin(saved, draft)) throw new BulletinContractError('Create detail evidence did not converge');
     return saved;
   });
