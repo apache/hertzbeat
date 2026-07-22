@@ -310,6 +310,7 @@
     "title": "ダッシュボード",
     "description": "監視の可用性と現在のアラート状況を確認します。",
     "monitorSummary": "監視概要",
+    "alertSummary": "アラート概要",
     "total": "監視合計",
     "available": "利用可能",
     "unavailable": "利用不可",
@@ -318,7 +319,16 @@
     "application": "アプリケーション",
     "category": "カテゴリ",
     "empty": "監視が設定されていません。",
-    "summaryUnavailable": "監視概要を利用できません。件数は非表示です。"
+    "monitorStates": {
+      "missing": "監視概要がありません。件数は非表示です。",
+      "unavailable": "監視概要を利用できません。件数は非表示です。",
+      "error": "監視概要を読み込めません。件数は非表示です。"
+    },
+    "alertStates": {
+      "missing": "アラート概要がありません。件数は非表示です。",
+      "unavailable": "アラート概要を利用できません。件数は非表示です。",
+      "error": "アラート概要を読み込めません。件数は非表示です。"
+    }
   },
   "bulletin": {
     "title": "監視ボード",

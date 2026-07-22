@@ -6,5 +6,7 @@
  */
 
 export const dashboardQueryKeys = {
-  summary: () => ['dashboard'] as const
+  all: () => ['dashboard'] as const,
+  monitorSummary: () => [...dashboardQueryKeys.all(), 'monitor-summary'] as const,
+  alertSummary: () => [...dashboardQueryKeys.all(), 'alert-summary'] as const
 };

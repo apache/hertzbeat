@@ -310,6 +310,7 @@
     "title": "Dashboard",
     "description": "Monitor availability and current alert posture.",
     "monitorSummary": "Monitor summary",
+    "alertSummary": "Alert summary",
     "total": "Total monitors",
     "available": "Available",
     "unavailable": "Unavailable",
@@ -318,7 +319,16 @@
     "application": "Application",
     "category": "Category",
     "empty": "No monitors are configured.",
-    "summaryUnavailable": "Monitor summary is unavailable. Counters are hidden."
+    "monitorStates": {
+      "missing": "Monitor summary is missing. Counters are hidden.",
+      "unavailable": "Monitor summary is unavailable. Counters are hidden.",
+      "error": "Monitor summary could not be loaded. Counters are hidden."
+    },
+    "alertStates": {
+      "missing": "Alert summary is missing. Counters are hidden.",
+      "unavailable": "Alert summary is unavailable. Counters are hidden.",
+      "error": "Alert summary could not be loaded. Counters are hidden."
+    }
   },
   "bulletin": {
     "title": "Bulletin",

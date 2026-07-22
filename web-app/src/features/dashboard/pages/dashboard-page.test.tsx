@@ -31,36 +31,58 @@ describe('DashboardPage', () => {
     cleanup();
     vi.clearAllMocks();
   });
-  it.each(['loading', 'missing', 'unavailable', 'error'] as const)(
-    'never renders Results or fake zero for %s',
-    kind => {
-      controller.useDashboardController.mockReturnValue({ state: { kind }, refresh: vi.fn() });
-      renderPage();
-      expect(screen.queryByLabelText(i18n.t('dashboard.monitorSummary'))).not.toBeInTheDocument();
-      expect(screen.queryByText(/^0$/)).not.toBeInTheDocument();
-    }
-  );
-  it('renders zero only from authoritative empty responses', () => {
+  it('keeps authoritative alert evidence visible when monitor summary is unavailable', () => {
     controller.useDashboardController.mockReturnValue({
-      state: {
-        kind: 'empty',
-        data: {
-          apps: [],
-          alert: {
-            total: 0,
-            dealNum: 0,
-            rate: 100,
-            priorityWarningNum: 0,
-            priorityCriticalNum: 0,
-            priorityEmergencyNum: 0
-          }
-        }
-      },
+      monitorState: { kind: 'unavailable' },
+      alertState: { kind: 'ready', summary: alert(7) },
+      refresh: vi.fn()
+    });
+    renderPage();
+    expect(screen.getByText(i18n.t('dashboard.monitorStates.unavailable'))).toBeInTheDocument();
+    expect(screen.getByLabelText(i18n.t('dashboard.alertSummary'))).toHaveTextContent('7');
+  });
+
+  it('keeps authoritative alert evidence visible while monitor summary loads', () => {
+    controller.useDashboardController.mockReturnValue({
+      monitorState: { kind: 'loading' },
+      alertState: { kind: 'ready', summary: alert(4) },
+      refresh: vi.fn()
+    });
+    renderPage();
+    expect(screen.getByLabelText(i18n.t('dashboard.alertSummary'))).toHaveTextContent('4');
+    expect(screen.getByLabelText(i18n.t('dashboard.monitorSummary'))).not.toHaveTextContent(/^0$/);
+  });
+
+  it('keeps authoritative monitor evidence visible when alert summary fails', () => {
+    controller.useDashboardController.mockReturnValue({
+      monitorState: { kind: 'ready', apps: [app] },
+      alertState: { kind: 'error' },
+      refresh: vi.fn()
+    });
+    renderPage();
+    expect(screen.getByLabelText(i18n.t('dashboard.monitorSummary'))).toHaveTextContent('3');
+    expect(screen.getByText(i18n.t('dashboard.alertStates.error'))).toBeInTheDocument();
+  });
+
+  it('never manufactures zero for pending or failed sections', () => {
+    controller.useDashboardController.mockReturnValue({
+      monitorState: { kind: 'loading' },
+      alertState: { kind: 'unavailable' },
+      refresh: vi.fn()
+    });
+    renderPage();
+    expect(screen.queryByText(/^0$/)).not.toBeInTheDocument();
+  });
+
+  it('renders zero only from each authoritative empty response', () => {
+    controller.useDashboardController.mockReturnValue({
+      monitorState: { kind: 'empty', apps: [] },
+      alertState: { kind: 'empty', summary: alert(0) },
       refresh: vi.fn()
     });
     renderPage();
     expect(screen.getByLabelText(i18n.t('dashboard.monitorSummary'))).toBeInTheDocument();
-    expect(screen.getAllByText('0').length).toBeGreaterThan(0);
+    expect(screen.getByLabelText(i18n.t('dashboard.alertSummary'))).toHaveTextContent('0');
     expect(screen.getByText(i18n.t('dashboard.empty'))).toBeInTheDocument();
   });
 });
@@ -70,4 +92,16 @@ function renderPage() {
       <DashboardPage />
     </I18nextProvider>
   );
+}
+
+const app = { app: 'mysql', category: 'db', size: 3, availableSize: 2, unAvailableSize: 1, unManageSize: 0 };
+function alert(total: number) {
+  return {
+    total,
+    dealNum: 0,
+    rate: total === 0 ? 100 : 0,
+    priorityWarningNum: 0,
+    priorityCriticalNum: 0,
+    priorityEmergencyNum: 0
+  };
 }

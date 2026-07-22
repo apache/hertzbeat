@@ -310,6 +310,7 @@
     "title": "仪表盘",
     "description": "查看监控可用性与当前告警态势。",
     "monitorSummary": "监控概览",
+    "alertSummary": "告警概览",
     "total": "监控总数",
     "available": "可用",
     "unavailable": "不可用",
@@ -318,7 +319,16 @@
     "application": "应用",
     "category": "类别",
     "empty": "尚未配置监控。",
-    "summaryUnavailable": "监控概览暂不可用，计数已隐藏。"
+    "monitorStates": {
+      "missing": "缺少监控概览，计数已隐藏。",
+      "unavailable": "监控概览暂不可用，计数已隐藏。",
+      "error": "监控概览加载失败，计数已隐藏。"
+    },
+    "alertStates": {
+      "missing": "缺少告警概览，计数已隐藏。",
+      "unavailable": "告警概览暂不可用，计数已隐藏。",
+      "error": "告警概览加载失败，计数已隐藏。"
+    }
   },
   "bulletin": {
     "title": "监控看板",

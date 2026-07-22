@@ -14,9 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Alert, Button, Skeleton, Typography } from 'antd';
+import { Button, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { DashboardResults } from '../components/dashboard-results';
+import { DashboardAlertSummary } from '../components/dashboard-alert-results';
+import { DashboardMonitorDistribution, DashboardMonitorSummary } from '../components/dashboard-monitor-results';
 import { useDashboardController } from '../controller/use-dashboard-controller';
 import styles from '../components/dashboard.module.css';
 
@@ -38,15 +39,15 @@ export function DashboardPage() {
           {t('common.refresh')}
         </Button>
       </header>
-      {dashboard.state.kind === 'loading' && <Skeleton active />}
-      {dashboard.state.kind === 'missing' && (
-        <Alert type="warning" showIcon message={t('dashboard.summaryUnavailable')} />
-      )}
-      {dashboard.state.kind === 'unavailable' && <Alert type="warning" showIcon message={t('common.unavailable')} />}
-      {dashboard.state.kind === 'error' && <Alert type="error" showIcon message={t('common.routeError.description')} />}
-      {(dashboard.state.kind === 'ready' || dashboard.state.kind === 'empty') && (
-        <DashboardResults data={dashboard.state.data} />
-      )}
+      <div className={styles.metrics}>
+        <section className={styles.monitorMetrics} aria-label={t('dashboard.monitorSummary')}>
+          <DashboardMonitorSummary state={dashboard.monitorState} />
+        </section>
+        <section className={styles.alertMetric} aria-label={t('dashboard.alertSummary')}>
+          <DashboardAlertSummary state={dashboard.alertState} />
+        </section>
+      </div>
+      <DashboardMonitorDistribution state={dashboard.monitorState} />
     </div>
   );
 }

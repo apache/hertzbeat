@@ -16,44 +16,52 @@
  */
 import { useQuery } from '@tanstack/react-query';
 import { loadDashboardAlertSummary, loadDashboardSummary } from '../api/dashboard-api';
-import { dashboardFailureKind, type DashboardData } from '../model/dashboard-model';
+import { dashboardFailureKind, type DashboardAlertState, type DashboardMonitorState } from '../model/dashboard-model';
 import { dashboardQueryKeys } from './dashboard-query-keys';
 
-export type DashboardState =
-  | { kind: 'loading' }
-  | { kind: 'missing' | 'unavailable' | 'error' }
-  | { kind: 'ready' | 'empty'; data: DashboardData };
+export const DASHBOARD_REFRESH_INTERVAL_MS = 30_000;
 
 export function useDashboardController() {
-  const query = useQuery({
-    queryKey: dashboardQueryKeys.summary(),
-    queryFn: async ({ signal }) => {
-      const [summary, alert] = await Promise.all([loadDashboardSummary(signal), loadDashboardAlertSummary(signal)]);
-      return { summary, alert };
-    },
+  const monitorQuery = useQuery({
+    queryKey: dashboardQueryKeys.monitorSummary(),
+    queryFn: ({ signal }) => loadDashboardSummary(signal),
     retry: false,
-    refetchInterval: 30_000
+    refetchInterval: DASHBOARD_REFRESH_INTERVAL_MS
+  });
+  const alertQuery = useQuery({
+    queryKey: dashboardQueryKeys.alertSummary(),
+    queryFn: ({ signal }) => loadDashboardAlertSummary(signal),
+    retry: false,
+    refetchInterval: DASHBOARD_REFRESH_INTERVAL_MS
   });
   return {
-    state: dashboardState(query.isPending, query.error, query.data),
-    refresh: () => query.refetch().then(() => undefined)
+    monitorState: monitorState(monitorQuery.isPending, monitorQuery.error, monitorQuery.data),
+    alertState: alertState(alertQuery.isPending, alertQuery.error, alertQuery.data),
+    refresh: async () => {
+      await Promise.allSettled([monitorQuery.refetch(), alertQuery.refetch()]);
+    }
   };
 }
 
-function dashboardState(
+function monitorState(
   pending: boolean,
   error: Error | null,
-  result:
-    | {
-        summary: Awaited<ReturnType<typeof loadDashboardSummary>>;
-        alert: Awaited<ReturnType<typeof loadDashboardAlertSummary>>;
-      }
-    | undefined
-): DashboardState {
+  result: Awaited<ReturnType<typeof loadDashboardSummary>> | undefined
+): DashboardMonitorState {
   if (pending) return { kind: 'loading' };
   if (error) return { kind: dashboardFailureKind(error) };
   if (!result) return { kind: 'error' };
-  if (result.summary.apps === null) return { kind: 'missing' };
-  const data = { apps: result.summary.apps, alert: result.alert };
-  return { kind: data.apps.length === 0 ? 'empty' : 'ready', data };
+  if (result.apps === null) return { kind: 'missing' };
+  return { kind: result.apps.length === 0 ? 'empty' : 'ready', apps: result.apps };
+}
+
+function alertState(
+  pending: boolean,
+  error: Error | null,
+  result: Awaited<ReturnType<typeof loadDashboardAlertSummary>> | undefined
+): DashboardAlertState {
+  if (pending) return { kind: 'loading' };
+  if (error) return { kind: dashboardFailureKind(error) };
+  if (!result) return { kind: 'missing' };
+  return { kind: result.total === 0 ? 'empty' : 'ready', summary: result };
 }

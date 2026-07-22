@@ -31,7 +31,18 @@ export type DashboardAlertSummary = {
   priorityCriticalNum: number;
   priorityEmergencyNum: number;
 };
-export type DashboardData = { apps: AppCount[]; alert: DashboardAlertSummary };
+export type DashboardMonitorState =
+  | { kind: 'loading' }
+  | { kind: 'missing' }
+  | { kind: 'unavailable' }
+  | { kind: 'error' }
+  | { kind: 'ready' | 'empty'; apps: AppCount[] };
+export type DashboardAlertState =
+  | { kind: 'loading' }
+  | { kind: 'missing' }
+  | { kind: 'unavailable' }
+  | { kind: 'error' }
+  | { kind: 'ready' | 'empty'; summary: DashboardAlertSummary };
 
 export class DashboardContractError extends Error {
   constructor(message: string, options?: ErrorOptions) {

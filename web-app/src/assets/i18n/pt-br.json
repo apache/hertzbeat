@@ -310,6 +310,7 @@
     "title": "Painel",
     "description": "Veja a disponibilidade dos monitores e os alertas atuais.",
     "monitorSummary": "Resumo de monitores",
+    "alertSummary": "Resumo de alertas",
     "total": "Total de monitores",
     "available": "Disponíveis",
     "unavailable": "Indisponíveis",
@@ -318,7 +319,16 @@
     "application": "Aplicação",
     "category": "Categoria",
     "empty": "Nenhum monitor configurado.",
-    "summaryUnavailable": "O resumo de monitores está indisponível. Os contadores foram ocultados."
+    "monitorStates": {
+      "missing": "O resumo de monitores está ausente. Os contadores foram ocultados.",
+      "unavailable": "O resumo de monitores está indisponível. Os contadores foram ocultados.",
+      "error": "Não foi possível carregar o resumo de monitores. Os contadores foram ocultados."
+    },
+    "alertStates": {
+      "missing": "O resumo de alertas está ausente. Os contadores foram ocultados.",
+      "unavailable": "O resumo de alertas está indisponível. Os contadores foram ocultados.",
+      "error": "Não foi possível carregar o resumo de alertas. Os contadores foram ocultados."
+    }
   },
   "bulletin": {
     "title": "Quadros",

@@ -310,6 +310,7 @@
     "title": "儀表板",
     "description": "查看監控可用性與目前告警狀態。",
     "monitorSummary": "監控摘要",
+    "alertSummary": "警報摘要",
     "total": "監控總數",
     "available": "可用",
     "unavailable": "不可用",
@@ -318,7 +319,16 @@
     "application": "應用程式",
     "category": "類別",
     "empty": "尚未設定監控。",
-    "summaryUnavailable": "監控摘要暫時無法使用，計數已隱藏。"
+    "monitorStates": {
+      "missing": "缺少監控摘要，計數已隱藏。",
+      "unavailable": "監控摘要暫時無法使用，計數已隱藏。",
+      "error": "監控摘要載入失敗，計數已隱藏。"
+    },
+    "alertStates": {
+      "missing": "缺少警報摘要，計數已隱藏。",
+      "unavailable": "警報摘要暫時無法使用，計數已隱藏。",
+      "error": "警報摘要載入失敗，計數已隱藏。"
+    }
   },
   "bulletin": {
     "title": "監控看板",

@@ -20,7 +20,7 @@ import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DashboardContractError, DashboardRequestFailure } from '../model/dashboard-model';
 import { dashboardQueryKeys } from './dashboard-query-keys';
-import { useDashboardController } from './use-dashboard-controller';
+import { DASHBOARD_REFRESH_INTERVAL_MS, useDashboardController } from './use-dashboard-controller';
 
 const api = vi.hoisted(() => ({ loadDashboardSummary: vi.fn(), loadDashboardAlertSummary: vi.fn() }));
 vi.mock('../api/dashboard-api', () => api);
@@ -33,74 +33,104 @@ describe('dashboard controller', () => {
   });
   afterEach(() => vi.useRealTimers());
 
-  it('exposes ready and authoritative empty without partial or fake data', async () => {
+  it('exposes independent ready and authoritative empty evidence', async () => {
     const ready = renderController();
     await waitFor(() =>
-      expect(ready.result.current.state).toMatchObject({ kind: 'ready', data: { alert: { total: 2 } } })
+      expect(ready.result.current).toMatchObject({
+        monitorState: { kind: 'ready', apps: [app] },
+        alertState: { kind: 'ready', summary: { total: 2 } }
+      })
     );
     ready.unmount();
     api.loadDashboardSummary.mockResolvedValue({ apps: [] });
     api.loadDashboardAlertSummary.mockResolvedValue(alert(0));
     const empty = renderController();
     await waitFor(() =>
-      expect(empty.result.current.state).toMatchObject({ kind: 'empty', data: { apps: [], alert: { total: 0 } } })
+      expect(empty.result.current).toMatchObject({
+        monitorState: { kind: 'empty', apps: [] },
+        alertState: { kind: 'empty', summary: { total: 0 } }
+      })
     );
+  });
+
+  it('publishes ready alert evidence while monitor evidence is still loading', async () => {
+    const monitor = deferred<{ apps: (typeof app)[] }>();
+    api.loadDashboardSummary.mockReturnValue(monitor.promise);
+    const view = renderController();
+
+    await waitFor(() =>
+      expect(view.result.current).toMatchObject({
+        monitorState: { kind: 'loading' },
+        alertState: { kind: 'ready', summary: { total: 2 } }
+      })
+    );
+
+    act(() => monitor.resolve({ apps: [app] }));
+    await waitFor(() => expect(view.result.current.monitorState.kind).toBe('ready'));
   });
 
   it.each([
     [{ apps: null }, alert(0), 'missing'],
     [new DashboardRequestFailure('unavailable'), alert(0), 'unavailable'],
     [new DashboardContractError('bad'), alert(0), 'error']
-  ] as const)('classifies incomplete evidence as %s without Results data', async (summary, alerts, kind) => {
+  ] as const)('classifies monitor evidence as %s without hiding ready alerts', async (summary, alerts, kind) => {
     if (summary instanceof Error) api.loadDashboardSummary.mockRejectedValue(summary);
     else api.loadDashboardSummary.mockResolvedValue(summary);
     api.loadDashboardAlertSummary.mockResolvedValue(alerts);
     const view = renderController();
-    await waitFor(() => expect(view.result.current.state).toEqual({ kind }));
+    await waitFor(() => expect(view.result.current.monitorState).toEqual({ kind }));
+    expect(view.result.current.alertState).toMatchObject({ kind: 'empty', summary: { total: 0 } });
   });
 
   it.each([
     [new DashboardRequestFailure('unavailable'), 'unavailable'],
     [new DashboardContractError('bad'), 'error'],
     [new Error('bad'), 'error']
-  ] as const)('withholds data when the alert source fails as %s', async (reason, kind) => {
+  ] as const)('classifies alert evidence as %s without hiding ready monitors', async (reason, kind) => {
     api.loadDashboardAlertSummary.mockRejectedValue(reason);
     const view = renderController();
-    await waitFor(() => expect(view.result.current.state).toEqual({ kind }));
-    expect(view.result.current.state).not.toHaveProperty('data');
+    await waitFor(() => expect(view.result.current.alertState).toEqual({ kind }));
+    expect(view.result.current.monitorState).toEqual({ kind: 'ready', apps: [app] });
   });
 
-  it('refreshes both sources and forwards one AbortSignal', async () => {
+  it('refreshes both sources independently and settles after one fails', async () => {
     const view = renderController();
-    await waitFor(() => expect(view.result.current.state.kind).toBe('ready'));
+    await waitFor(() => expect(view.result.current.monitorState.kind).toBe('ready'));
+    api.loadDashboardSummary.mockRejectedValueOnce(new DashboardRequestFailure('unavailable'));
+    api.loadDashboardAlertSummary.mockResolvedValueOnce(alert(9));
     await act(async () => {
       await view.result.current.refresh();
     });
     expect(api.loadDashboardSummary).toHaveBeenCalledTimes(2);
     expect(api.loadDashboardAlertSummary).toHaveBeenCalledTimes(2);
-    expect(api.loadDashboardSummary.mock.calls[1]?.[0]).toBe(api.loadDashboardAlertSummary.mock.calls[1]?.[0]);
+    expect(api.loadDashboardSummary.mock.calls[1]?.[0]).not.toBe(api.loadDashboardAlertSummary.mock.calls[1]?.[0]);
+    await waitFor(() => expect(view.result.current.monitorState).toEqual({ kind: 'unavailable' }));
+    expect(view.result.current.alertState).toMatchObject({ kind: 'ready', summary: { total: 9 } });
   });
 
-  it('reuses the feature-owned combined dashboard cache entry', async () => {
+  it('reuses separate feature-owned monitor and alert cache entries', async () => {
     const client = new QueryClient({
       defaultOptions: { queries: { retry: false, gcTime: 0, staleTime: Number.POSITIVE_INFINITY } }
     });
-    client.setQueryData(dashboardQueryKeys.summary(), {
-      summary: { apps: [app] },
-      alert: alert(7)
-    });
+    client.setQueryData(dashboardQueryKeys.monitorSummary(), { apps: [app] });
+    client.setQueryData(dashboardQueryKeys.alertSummary(), alert(7));
 
     const view = renderController(client);
 
     await waitFor(() =>
-      expect(view.result.current.state).toMatchObject({ kind: 'ready', data: { alert: { total: 7 } } })
+      expect(view.result.current).toMatchObject({
+        monitorState: { kind: 'ready', apps: [app] },
+        alertState: { kind: 'ready', summary: { total: 7 } }
+      })
     );
-    expect(dashboardQueryKeys.summary()).toEqual(['dashboard']);
+    expect(dashboardQueryKeys.monitorSummary()).toEqual(['dashboard', 'monitor-summary']);
+    expect(dashboardQueryKeys.alertSummary()).toEqual(['dashboard', 'alert-summary']);
     expect(api.loadDashboardSummary).not.toHaveBeenCalled();
     expect(api.loadDashboardAlertSummary).not.toHaveBeenCalled();
   });
 
-  it('auto refreshes the same combined query every 30 seconds', async () => {
+  it('auto refreshes both independent queries every 30 seconds', async () => {
+    expect(DASHBOARD_REFRESH_INTERVAL_MS).toBe(30_000);
     vi.useFakeTimers();
     const view = renderController();
     await act(async () => {
@@ -113,7 +143,8 @@ describe('dashboard controller', () => {
     });
     expect(api.loadDashboardSummary).toHaveBeenCalledTimes(2);
     expect(api.loadDashboardAlertSummary).toHaveBeenCalledTimes(2);
-    expect(view.result.current.state).toHaveProperty('data');
+    expect(view.result.current.monitorState).toHaveProperty('apps');
+    expect(view.result.current.alertState).toHaveProperty('summary');
   });
 });
 
@@ -133,4 +164,12 @@ function alert(total: number) {
     priorityCriticalNum: 0,
     priorityEmergencyNum: 0
   };
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>(complete => {
+    resolve = complete;
+  });
+  return { promise, resolve };
 }

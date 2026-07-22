@@ -35,6 +35,21 @@
   min-width: 120px;
 }
 
+.monitorMetrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px 56px;
+}
+
+.alertMetric {
+  min-width: 120px;
+}
+
+.summaryLoading,
+.summaryState {
+  min-width: 280px;
+}
+
 .section {
   min-height: 300px;
 }
