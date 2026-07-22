@@ -75,6 +75,28 @@ describe('useCollectorController', () => {
     expect(result.current.mutationFailure).toBe('validation');
   });
 
+  it('closes a pending action without writing when the semantic query changed before confirmation', async () => {
+    load.mockResolvedValueOnce(page(0, [collector('edge')], 1)).mockResolvedValueOnce(page(0, [collector('west')], 1));
+    mutate.mockResolvedValue(undefined);
+    const { result } = renderHook(() => useCollectorController(), { wrapper: wrapper('/settings/collectors') });
+    await waitFor(() => expect(result.current.listState.kind).toBe('ready'));
+
+    act(() => result.current.actions.requestAction('offline', ['edge']));
+    expect(result.current.pendingAction).not.toBeNull();
+    act(() => {
+      void navigateRoute?.('/settings/collectors?pageIndex=0&pageSize=8&name=west');
+    });
+    await waitFor(() => expect(result.current.query.name).toBe('west'));
+
+    await act(async () => result.current.actions.confirmAction());
+
+    expect(mutate).not.toHaveBeenCalled();
+    expect(loadProof).not.toHaveBeenCalled();
+    expect(result.current.pendingAction).toBeNull();
+    expect(result.current.mutating).toBe(false);
+    expect(result.current.mutationFailure).toBeNull();
+  });
+
   it('does not reread or repeat a permission-rejected write', async () => {
     const { ApiMessageError } = await import('@/core/http/api-message');
     load.mockResolvedValue(page(0, [collector('edge')], 1));

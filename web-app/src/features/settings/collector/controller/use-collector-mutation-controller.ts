@@ -46,6 +46,7 @@ export function useCollectorMutationController(options: Options) {
   const requestAction = useCollectorActionRequest(options, mutating, setMutationFailure, setPendingAction);
   const confirmAction = useCallback(async () => {
     if (!pendingAction || mutating) return;
+    if (!sameQuery(pendingAction.receipt.query, options.queryRef.current)) return setPendingAction(null);
     const command = { action: pendingAction.action, collectors: pendingAction.collectors };
     const proofQuery = pendingAction.receipt.query;
     let proofPage: CollectorPage | undefined;
