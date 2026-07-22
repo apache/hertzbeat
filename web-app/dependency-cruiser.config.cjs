@@ -124,6 +124,24 @@ module.exports = {
       }
     },
     {
+      name: 'alert-router-public-entry-only',
+      severity: 'error',
+      from: { path: '^src/app/router[.]tsx$' },
+      to: {
+        path: '^src/features/alert/notice-(?:receiver|rule)/.+',
+        pathNot: '^src/features/alert/notice-(?:receiver|rule)/index[.]tsx?$'
+      }
+    },
+    {
+      name: 'alert-refine-public-entry-only',
+      severity: 'error',
+      from: { path: '^src/app/refine/', pathNot: productionSource },
+      to: {
+        path: '^src/features/alert/notice-(?:receiver|rule)/.+',
+        pathNot: '^src/features/alert/notice-(?:receiver|rule)/refine/index[.]tsx?$'
+      }
+    },
+    {
       name: 'status-router-public-entry-only',
       severity: 'error',
       from: { path: '^src/app/router[.]tsx$' },

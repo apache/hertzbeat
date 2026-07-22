@@ -337,6 +337,33 @@ test('keeps settings composition imports on feature public entries', () => {
   assert.match(rejectedResult.output, /refine-runtime[.]tsx/);
 });
 
+test('separates Alert route and Refine public entries', () => {
+  const allowedFixture = createProject({
+    'src/features/alert/notice-rule/index.ts': 'export const NoticeRulePage = true;',
+    'src/features/alert/notice-rule/refine/index.ts': 'export const noticeRuleDataProvider = true;',
+    'src/app/router.tsx':
+      "import { NoticeRulePage } from '@/features/alert/notice-rule'; export const route = NoticeRulePage;",
+    'src/app/refine/refine-runtime.tsx':
+      "import { noticeRuleDataProvider } from '@/features/alert/notice-rule/refine'; export const provider = noticeRuleDataProvider;"
+  });
+  const rejectedFixture = createProject({
+    'src/features/alert/notice-rule/index.ts': 'export const NoticeRulePage = true;',
+    'src/features/alert/notice-rule/refine/index.ts': 'export const noticeRuleDataProvider = true;',
+    'src/app/router.tsx':
+      "import { noticeRuleDataProvider } from '@/features/alert/notice-rule/refine'; export const route = noticeRuleDataProvider;",
+    'src/app/refine/refine-runtime.tsx':
+      "import { NoticeRulePage } from '@/features/alert/notice-rule'; export const provider = NoticeRulePage;"
+  });
+
+  const allowedResult = cruise(allowedFixture);
+  const rejectedResult = cruise(rejectedFixture);
+
+  assert.equal(allowedResult.status, 0, allowedResult.output);
+  assert.notEqual(rejectedResult.status, 0, rejectedResult.output);
+  assert.match(rejectedResult.output, /alert-router-public-entry-only/);
+  assert.match(rejectedResult.output, /alert-refine-public-entry-only/);
+});
+
 test('keeps Status routes on the feature public entry', () => {
   const allowedFixture = createProject({
     'src/features/status/index.ts': 'export const PublicStatusPage = true;',

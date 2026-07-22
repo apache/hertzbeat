@@ -25,7 +25,7 @@ import type { ReactNode } from 'react';
 
 import { getAppRoute, type AppResourceRouteId } from '@/app/route-registry';
 import { noticeReceiverResourceName } from '@/features/alert/notice-receiver/refine';
-import { noticeRuleResourceName } from '@/features/alert/notice-rule';
+import { noticeRuleResourceName } from '@/features/alert/notice-rule/refine';
 import { noticeTemplateResourceName } from '@/features/alert/notice-template';
 import { labelResourceName } from '@/features/settings/label/refine';
 import { systemConfigResourceName } from '@/features/settings/system-config/refine';

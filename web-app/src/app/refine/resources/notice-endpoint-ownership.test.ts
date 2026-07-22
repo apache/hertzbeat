@@ -18,7 +18,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { noticeReceiverDataProvider } from '@/features/alert/notice-receiver/refine';
-import { noticeRuleDataProvider } from '@/features/alert/notice-rule';
+import { noticeRuleDataProvider } from '@/features/alert/notice-rule/refine';
 import { noticeTemplateDataProvider } from '@/features/alert/notice-template';
 
 const endpoint = vi.hoisted(() => ({ value: '/runtime-notice-contract' }));

@@ -23,7 +23,7 @@ import { Outlet } from 'react-router-dom';
 
 import { SessionProvider } from '@/core/auth/session-provider';
 import { noticeReceiverDataProvider, noticeReceiverResourceName } from '@/features/alert/notice-receiver/refine';
-import { noticeRuleDataProvider, noticeRuleResourceName } from '@/features/alert/notice-rule';
+import { noticeRuleDataProvider, noticeRuleResourceName } from '@/features/alert/notice-rule/refine';
 import { noticeTemplateDataProvider, noticeTemplateResourceName } from '@/features/alert/notice-template';
 import { labelDataProvider, labelResourceName } from '@/features/settings/label/refine';
 import { objectStoreDataProvider } from '@/features/settings/object-store/refine';
