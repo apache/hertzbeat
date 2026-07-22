@@ -124,4 +124,8 @@ describe('route registry', () => {
       resource: { labelKey: 'settingsNavigation.collectors' }
     });
   });
+
+  it('registers the session lock as a canonical passport-layout page', () => {
+    expect(getAppRoute('lock')).toEqual({ id: 'lock', path: '/passport/lock', layout: 'passport', kind: 'page' });
+  });
 });

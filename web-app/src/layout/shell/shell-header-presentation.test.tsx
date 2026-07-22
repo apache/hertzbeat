@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { TFunction } from 'i18next';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { ShellStatusSpine } from './shell-header-presentation';
+import { ShellHeaderActions, ShellStatusSpine } from './shell-header-presentation';
 
 const t = ((key: string, options?: Record<string, unknown>) =>
   options ? `${key}:${Object.values(options).join('|')}` : key) as TFunction;
@@ -127,5 +127,33 @@ describe('ShellStatusSpine', () => {
 
     expect(screen.getByTestId('shell-status-server')).toHaveAttribute('data-status', 'unknown');
     expect(screen.getByTestId('shell-status-collector')).toHaveTextContent('shell.status.collectorNotReported');
+  });
+});
+
+describe('ShellHeaderActions account menu', () => {
+  afterEach(cleanup);
+
+  it('offers Lock as a sibling of logout and dispatches the selected action only', async () => {
+    const onLock = vi.fn();
+    const onLogout = vi.fn();
+    render(
+      <ShellHeaderActions
+        accountName="operator"
+        loggingOut={false}
+        showRefresh={false}
+        t={t}
+        onRefresh={vi.fn()}
+        onOpenAlerts={vi.fn()}
+        onToggleTheme={vi.fn()}
+        onChangeLanguage={vi.fn()}
+        onLock={onLock}
+        onLogout={onLogout}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'shell.actions.user' }));
+    fireEvent.click(await screen.findByText('auth.lock.action'));
+    expect(onLock).toHaveBeenCalledOnce();
+    expect(onLogout).not.toHaveBeenCalled();
   });
 });

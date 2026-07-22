@@ -304,6 +304,16 @@
     "continue": "Continue anyway",
     "logout": "Sign out",
     "logoutFailed": "Unable to sign out. Try again.",
+    "lock": {
+      "action": "Lock",
+      "title": "Session locked",
+      "description": "Enter your password to continue this session.",
+      "workspace": "Workspace: {{workspace}}",
+      "unlock": "Unlock",
+      "invalidCredentials": "The password is incorrect.",
+      "sessionExpired": "The server session has expired. Sign out and sign in again.",
+      "admissionFailed": "Unable to lock this browser session. Try again."
+    },
     "defaultPassword": "This account is using the default password. Change it after signing in. Submit again to continue."
   },
   "dashboard": {

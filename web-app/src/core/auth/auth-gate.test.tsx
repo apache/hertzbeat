@@ -20,10 +20,14 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { SessionContext } from './session-context';
+import { sessionLockStorageKey } from './session-lock-storage';
 import { AuthGate } from './auth-gate';
 
 describe('AuthGate', () => {
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    window.sessionStorage.clear();
+  });
 
   it('lets the user retry a failed session request after the backend recovers', () => {
     const retry = vi.fn();
@@ -82,6 +86,41 @@ describe('AuthGate', () => {
     expect(redirect).toBe('/explore?serviceName=checkout#?tab=logs');
     expect(href).not.toContain('must-not-leak');
     expect(href).not.toContain('also-secret');
+  });
+
+  it.each([
+    JSON.stringify({ version: 1, username: 'operator', workspaceId: 'workspace-a', returnTo: '/dashboard' }),
+    '{malformed',
+    JSON.stringify({ version: 1, username: 'other', workspaceId: 'workspace-a', returnTo: '/dashboard' })
+  ])('blocks manual protected URLs after reload for valid, malformed, or mismatched lock evidence', marker => {
+    window.sessionStorage.setItem(sessionLockStorageKey, marker);
+    render(
+      <MemoryRouter initialEntries={['/explore?signal=logs']}>
+        <SessionContext.Provider
+          value={{
+            loading: false,
+            retry: vi.fn(),
+            session: {
+              authenticated: true,
+              username: 'operator',
+              workspaceId: 'workspace-a',
+              roles: ['ADMIN'],
+              expiresAt: null
+            }
+          }}
+        >
+          <Routes>
+            <Route element={<AuthGate />}>
+              <Route path="/explore" element={<div>protected content</div>} />
+            </Route>
+            <Route path="/passport/lock" element={<LocationProbe />} />
+          </Routes>
+        </SessionContext.Provider>
+      </MemoryRouter>
+    );
+
+    expect(screen.queryByText('protected content')).not.toBeInTheDocument();
+    expect(screen.getByTestId('location')).toHaveTextContent('/passport/lock');
   });
 });
 

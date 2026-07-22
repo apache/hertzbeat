@@ -304,6 +304,16 @@
     "continue": "仍然繼續",
     "logout": "登出",
     "logoutFailed": "登出失敗，請重試。",
+    "lock": {
+      "action": "鎖定",
+      "title": "工作階段已鎖定",
+      "description": "請輸入密碼以繼續目前工作階段。",
+      "workspace": "工作空間：{{workspace}}",
+      "unlock": "解除鎖定",
+      "invalidCredentials": "密碼不正確。",
+      "sessionExpired": "伺服器工作階段已過期，請登出後重新登入。",
+      "admissionFailed": "無法鎖定此瀏覽器工作階段，請重試。"
+    },
     "defaultPassword": "目前帳號仍使用預設密碼。登入後請立即修改；再次提交可繼續。"
   },
   "dashboard": {

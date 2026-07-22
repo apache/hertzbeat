@@ -13,11 +13,13 @@ import { useTranslation } from 'react-i18next';
 
 import { anonymousSession, logoutSession } from '@/core/auth/session-api';
 import { useSessionIdentityBoundary } from '@/core/auth/session-identity-context';
+import { buildSessionLockMarker } from '@/core/auth/session-lock-model';
+import { persistSessionLockMarker } from '@/core/auth/session-lock-storage';
 import { loadLocale, resolveLocale } from '@/core/i18n/i18n';
 import { supportedLocales, type SupportedLocale } from '@/core/i18n/locale';
 import { persistSystemPreferences, readRuntimeLocale } from '@/core/runtime-preferences';
 import { useRuntimeTheme } from '@/core/runtime-theme-context';
-import { alertRoutePaths } from '@/shared/navigation/app-paths';
+import { alertRoutePaths, applicationRoutePaths } from '@/shared/navigation/app-paths';
 import { useSharedTime } from '@/shared/time';
 
 export function useShellHeaderActionController() {
@@ -49,6 +51,15 @@ export function useShellHeaderActionController() {
   };
   const toggleTheme = () => setTheme(theme === 'default' ? 'dark' : 'default');
   const openAlerts = () => go({ to: alertRoutePaths.center, type: 'push' });
+  const lock = (session: Parameters<typeof buildSessionLockMarker>[0], returnTo: string) => {
+    const marker = buildSessionLockMarker(session, returnTo);
+    if (!marker || !persistSessionLockMarker(marker)) {
+      void message.error(t('auth.lock.admissionFailed'));
+      return false;
+    }
+    go({ to: applicationRoutePaths.lock, type: 'replace' });
+    return true;
+  };
 
   return {
     sharedTime,
@@ -57,6 +68,7 @@ export function useShellHeaderActionController() {
     changeLanguage,
     toggleTheme,
     openAlerts,
+    lock,
     logout
   };
 }

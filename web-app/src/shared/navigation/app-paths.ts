@@ -15,17 +15,18 @@
  * limitations under the License.
  */
 
-import { loginPath } from '@/core/auth/navigation';
+import { defaultAuthenticatedPath, loginPath, sessionLockPath } from '@/core/auth/navigation';
 
 const alertCenterPath = '/alerts';
 const alertRuleListPath = `${alertCenterPath}/rules`;
 const monitorListPath = '/monitors';
 
 export const applicationRoutePaths = {
-  dashboard: '/dashboard',
+  dashboard: defaultAuthenticatedPath,
   explore: '/explore',
   status: '/status',
-  login: loginPath
+  login: loginPath,
+  lock: sessionLockPath
 } as const;
 
 export const monitorRoutePaths = {

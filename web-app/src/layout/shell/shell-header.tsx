@@ -9,6 +9,7 @@ import { ClockCircleOutlined } from '@ant-design/icons';
 import { Button, Dropdown, type MenuProps } from 'antd';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 
 import { useSession } from '@/core/auth/session-context';
 import { useRuntimeStatusController } from '@/features/runtime-status';
@@ -21,6 +22,7 @@ import { useShellHeaderActionController } from './use-shell-header-action-contro
 export function ShellHeader({ collapsed }: { collapsed: boolean }) {
   const { t, i18n } = useTranslation();
   const { session } = useSession();
+  const location = useLocation();
   const actions = useShellHeaderActionController();
   const runtimeStatus = useRuntimeStatusController();
   const accountName = session?.username ?? '';
@@ -47,6 +49,9 @@ export function ShellHeader({ collapsed }: { collapsed: boolean }) {
           onOpenAlerts={actions.openAlerts}
           onToggleTheme={actions.toggleTheme}
           onChangeLanguage={() => void actions.changeLanguage()}
+          onLock={() => {
+            if (session) actions.lock(session, `${location.pathname}${location.search}${location.hash}`);
+          }}
           onLogout={() => void actions.logout()}
         />
       </div>

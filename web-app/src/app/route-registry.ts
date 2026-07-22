@@ -106,6 +106,7 @@ export const appRouteCatalog = {
   }),
   status: pageRoute('status', applicationRoutePaths.status, { layout: 'blank' }),
   login: pageRoute('login', applicationRoutePaths.login, { layout: 'passport' }),
+  lock: pageRoute('lock', applicationRoutePaths.lock, { layout: 'passport' }),
   'not-found': pageRoute('not-found', '*')
 } as const satisfies Record<string, AppRouteDefinition>;
 

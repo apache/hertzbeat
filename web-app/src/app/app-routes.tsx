@@ -45,6 +45,13 @@ export const appRoutes: RouteObject[] = [
         }
       },
       {
+        ...getAppRouteIdentity('lock'),
+        lazy: async () => {
+          const { SessionLockPage } = await import('@/features/auth');
+          return { Component: SessionLockPage };
+        }
+      },
+      {
         ...getAppRouteIdentity('status'),
         lazy: async () => {
           const { PublicStatusPage } = await import('@/features/status');

@@ -16,3 +16,4 @@
  */
 
 export { LoginPage } from './pages/login-page';
+export { SessionLockPage } from './pages/session-lock-page';

@@ -304,6 +304,16 @@
     "continue": "Continuar mesmo assim",
     "logout": "Sair",
     "logoutFailed": "Não foi possível sair. Tente novamente.",
+    "lock": {
+      "action": "Bloquear",
+      "title": "Sessão bloqueada",
+      "description": "Digite sua senha para continuar esta sessão.",
+      "workspace": "Espaço de trabalho: {{workspace}}",
+      "unlock": "Desbloquear",
+      "invalidCredentials": "A senha está incorreta.",
+      "sessionExpired": "A sessão do servidor expirou. Saia e entre novamente.",
+      "admissionFailed": "Não foi possível bloquear esta sessão do navegador. Tente novamente."
+    },
     "defaultPassword": "Esta conta usa a senha padrão. Altere-a após entrar; envie novamente para continuar."
   },
   "dashboard": {

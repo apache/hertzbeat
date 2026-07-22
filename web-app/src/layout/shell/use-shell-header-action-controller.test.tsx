@@ -8,6 +8,8 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { sessionLockStorageKey } from '@/core/auth/session-lock-storage';
+
 const runtime = vi.hoisted(() => ({
   changeLocale: vi.fn<(locale: string, options?: { signal?: AbortSignal }) => Promise<boolean>>(),
   go: vi.fn(),
@@ -55,7 +57,8 @@ vi.mock('@/shared/time', () => ({
   })
 }));
 vi.mock('@/shared/navigation/app-paths', () => ({
-  alertRoutePaths: { center: '/canonical-alerts' }
+  alertRoutePaths: { center: '/canonical-alerts' },
+  applicationRoutePaths: { lock: '/passport/lock' }
 }));
 
 import { useShellHeaderActionController } from './use-shell-header-action-controller';
@@ -63,6 +66,7 @@ import { useShellHeaderActionController } from './use-shell-header-action-contro
 describe('useShellHeaderActionController', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.sessionStorage.clear();
     runtime.readLocale.mockReturnValue('en-US');
     runtime.invalidateQueries.mockResolvedValue(undefined);
     runtime.changeLocale.mockResolvedValue(true);
@@ -186,6 +190,29 @@ describe('useShellHeaderActionController', () => {
 
     expect(runtime.logout).toHaveBeenCalledOnce();
     expect(runtime.replaceIdentity).toHaveBeenCalledWith({ authenticated: false });
+  });
+
+  it('synchronously admits a lock with only the current identity and sanitized return target', () => {
+    const { result } = renderHook(() => useShellHeaderActionController());
+
+    expect(
+      result.current.lock(
+        {
+          authenticated: true,
+          username: 'operator',
+          workspaceId: 'workspace-a',
+          roles: ['ADMIN'],
+          expiresAt: null
+        },
+        '/explore?signal=logs&access_token=must-not-store'
+      )
+    ).toBe(true);
+
+    expect(runtime.go).toHaveBeenCalledWith({ to: '/passport/lock', type: 'replace' });
+    const stored = window.sessionStorage.getItem(sessionLockStorageKey) ?? '';
+    expect(stored).toContain('"username":"operator"');
+    expect(stored).toContain('"returnTo":"/explore?signal=logs"');
+    expect(stored).not.toContain('must-not-store');
   });
 
   it('admits only one logout when triggered twice in the same tick', async () => {

@@ -304,6 +304,16 @@
     "continue": "仍然继续",
     "logout": "退出登录",
     "logoutFailed": "退出失败，请重试。",
+    "lock": {
+      "action": "锁定",
+      "title": "会话已锁定",
+      "description": "请输入密码以继续当前会话。",
+      "workspace": "工作空间：{{workspace}}",
+      "unlock": "解锁",
+      "invalidCredentials": "密码不正确。",
+      "sessionExpired": "服务器会话已过期，请退出后重新登录。",
+      "admissionFailed": "无法锁定此浏览器会话，请重试。"
+    },
     "defaultPassword": "当前账号仍在使用默认密码。登录后请立即修改；再次提交可继续。"
   },
   "dashboard": {

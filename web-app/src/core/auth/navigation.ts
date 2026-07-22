@@ -22,6 +22,8 @@ const MAX_NESTED_REDIRECT_DEPTH = 4;
 const redirectFieldNames = new Set(['redirect', 'redirectto', 'returnto', 'returnurl', 'continue', 'next']);
 
 export const loginPath = '/passport/login';
+export const sessionLockPath = '/passport/lock';
+export const defaultAuthenticatedPath = '/dashboard';
 
 export function safeRedirectTarget(value?: string | null) {
   return sanitizeLocalTarget(value, 0);

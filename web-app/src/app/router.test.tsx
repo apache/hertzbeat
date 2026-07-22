@@ -74,6 +74,7 @@ describe('application data router', () => {
         .map(route => ({ id: route.id, layout: getAppRoute(route.id as AppRouteId).layout }))
         .sort(compareRouteId)
     ).toEqual([
+      { id: 'lock', layout: 'passport' },
       { id: 'login', layout: 'passport' },
       { id: 'status', layout: 'blank' }
     ]);

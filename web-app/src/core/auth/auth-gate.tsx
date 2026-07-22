@@ -19,8 +19,9 @@ import { Alert, Button, Skeleton } from 'antd';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
-import { loginHref } from './navigation';
+import { loginHref, sessionLockPath } from './navigation';
 import { useSession } from './session-context';
+import { readSessionLockMarker } from './session-lock-storage';
 import { sessionFailureMessageKey } from './session-model';
 
 export function AuthGate() {
@@ -43,5 +44,6 @@ export function AuthGate() {
   if (!session?.authenticated) {
     return <Navigate replace to={loginHref(`${location.pathname}${location.search}${location.hash}`)} />;
   }
+  if (readSessionLockMarker().kind !== 'absent') return <Navigate replace to={sessionLockPath} />;
   return <Outlet />;
 }

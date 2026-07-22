@@ -9,6 +9,7 @@ import {
   BellOutlined,
   BgColorsOutlined,
   GlobalOutlined,
+  LockOutlined,
   LogoutOutlined,
   ReloadOutlined,
   UserOutlined
@@ -84,6 +85,7 @@ type ShellHeaderActionsProps = {
   onOpenAlerts: () => void;
   onToggleTheme: () => void;
   onChangeLanguage: () => void;
+  onLock: () => void;
   onLogout: () => void;
 };
 
@@ -96,6 +98,7 @@ export function ShellHeaderActions({
   onOpenAlerts,
   onToggleTheme,
   onChangeLanguage,
+  onLock,
   onLogout
 }: ShellHeaderActionsProps) {
   return (
@@ -107,8 +110,11 @@ export function ShellHeaderActions({
       <Dropdown
         trigger={['click']}
         menu={{
-          items: [{ key: 'logout', icon: <LogoutOutlined />, label: t('auth.logout'), disabled: loggingOut }],
-          onClick: onLogout
+          items: [
+            { key: 'lock', icon: <LockOutlined />, label: t('auth.lock.action'), disabled: loggingOut },
+            { key: 'logout', icon: <LogoutOutlined />, label: t('auth.logout'), disabled: loggingOut }
+          ],
+          onClick: info => dispatchAccountAction(info.key, onLock, onLogout)
         }}
       >
         <Button className={styles.accountButton ?? ''} type="text" aria-label={t('shell.actions.user')}>
@@ -120,6 +126,11 @@ export function ShellHeaderActions({
       </Dropdown>
     </div>
   );
+}
+
+function dispatchAccountAction(key: string, onLock: () => void, onLogout: () => void) {
+  if (key === 'lock') onLock();
+  if (key === 'logout') onLogout();
 }
 
 type StatusSlotProps = {
