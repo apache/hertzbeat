@@ -32,7 +32,7 @@ type DeleteRecordIdentity = {
   id: string;
   backendId: number;
   preset: false;
-} & Record<string, unknown>;
+};
 
 export type NoticeTemplateDeleteVariables = {
   record: DeleteRecordIdentity;
@@ -71,13 +71,11 @@ const deleteEnvelopeSchema = z.object({
   record: z.unknown().optional(),
   query: z.unknown().optional()
 });
-const deleteRecordIdentitySchema = z
-  .object({
-    id: z.string(),
-    backendId: positiveIntegerSchema,
-    preset: z.literal(false)
-  })
-  .passthrough();
+const deleteRecordIdentitySchema = z.object({
+  id: z.string(),
+  backendId: positiveIntegerSchema,
+  preset: z.literal(false)
+});
 const deleteQuerySchema = z
   .object({
     name: z.string(),

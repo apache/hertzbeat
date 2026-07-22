@@ -254,12 +254,12 @@ describe('Notice Template Refine data provider', () => {
     api.deleteNoticeTemplate.mockResolvedValue(undefined);
 
     await expect(
-      noticeTemplateDataProvider.deleteOne<NoticeTemplateResourceRecord>({
+      noticeTemplateDataProvider.deleteOne({
         resource: 'notice-templates',
         id: 42,
-        variables: { record: resourceRecord, query }
+        variables: { record: { ...resourceRecord, token: 'private-token' }, query }
       })
-    ).resolves.toEqual({ data: resourceRecord });
+    ).resolves.toEqual({ data: { id: resourceRecord.id, backendId: 42, preset: false } });
     expect(api.loadNoticeTemplate).not.toHaveBeenCalled();
     expect(api.loadNoticeTemplates).not.toHaveBeenCalled();
   });

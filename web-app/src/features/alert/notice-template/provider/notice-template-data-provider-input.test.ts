@@ -127,18 +127,21 @@ describe('Notice Template provider input boundary', () => {
     );
   });
 
-  it('preserves delete proof query evidence and distinguishes forbidden identity', () => {
+  it('reconstructs delete identity, preserves query evidence, and distinguishes forbidden identity', () => {
     const proofQuery = { ...query, futureEvidence: 'kept' };
     expect(
       readNoticeTemplateDeleteVariables(
         {
-          record: { ...resourceRecord, futureMetadata: 'ignored' },
+          record: { ...resourceRecord, token: 'private-token', futureMetadata: 'ignored' },
           query: proofQuery,
           futureEnvelope: true
         },
         42
       )
-    ).toEqual({ record: { ...resourceRecord, futureMetadata: 'ignored' }, query: proofQuery });
+    ).toEqual({
+      record: { id: resourceRecord.id, backendId: 42, preset: false },
+      query: proofQuery
+    });
 
     expect(() =>
       readNoticeTemplateDeleteVariables(
