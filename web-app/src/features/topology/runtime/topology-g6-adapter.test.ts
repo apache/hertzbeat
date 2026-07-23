@@ -3,7 +3,9 @@
 import { describe, expect, it } from 'vitest';
 
 import { externalPresentation, interaction, presentation } from '../components/topology-canvas-test-fixtures';
-import { topologyG6Data, topologyG6ElementOptions, topologyG6Options } from './topology-g6-adapter';
+import { topologyG6Options } from './topology-g6-adapter';
+import { topologyG6Data } from './topology-g6-data';
+import { topologyG6ElementOptions } from './topology-g6-options';
 
 describe('topology G6 graph language', () => {
   it('uses compact built-in hexagons with readable entity labels and neutral external targets', () => {

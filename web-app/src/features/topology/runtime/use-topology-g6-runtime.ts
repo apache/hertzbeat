@@ -2,40 +2,38 @@
 
 import { useCallback, useEffect, useRef, type RefObject } from 'react';
 
-import type { TopologyInteraction, TopologyPresentation } from '../model/topology-view-model';
+import { topologyG6Options } from './topology-g6-adapter';
+import { reconcileBootstrapInput, useTopologyGraphUpdates } from './topology-g6-draw-runtime';
+import { bindTopologyInteractionEvents, bindTopologyViewportEvents } from './topology-g6-events';
+import type {
+  TopologyG6Graph,
+  TopologyG6GraphRef,
+  TopologyG6InputRef,
+  TopologyG6Module,
+  TopologyG6RuntimeInput,
+  TopologyRuntimeState
+} from './topology-g6-runtime-contract';
 import {
-  topologyG6Data,
-  topologyG6ElementOptions,
-  topologyG6ExternalEdgeId,
-  topologyG6Options,
-  type TopologyG6Palette
-} from './topology-g6-adapter';
-type G6Module = typeof import('@antv/g6');
-type G6Graph = InstanceType<G6Module['Graph']>;
-type Viewport = { zoom: number; position: [number, number] };
-type GraphResources = { disposed: boolean; graph: G6Graph | undefined; observer: ResizeObserver | undefined };
-export type TopologyRuntimeState = { kind: 'loading' | 'ready' | 'failure' };
-type RuntimeCallbacks = {
-  onClearSelection: () => void;
-  onEdgeHover: (edgeId: string | null) => void;
-  onEdgeSelect: (edgeId: string) => void;
-  onNodeHover: (nodeId: string | null) => void;
-  onNodeSelect: (nodeId: string) => void;
-  onRuntimeStateChange: (state: TopologyRuntimeState) => void;
-  onScaleChange: (scale: number) => void;
+  fitTopologyGraph,
+  publishTopologyScale,
+  readTopologyViewport,
+  restoreOrFitTopologyGraph,
+  zoomTopologyGraph,
+  type ScaleSuppressions,
+  type TopologyViewport
+} from './topology-g6-viewport';
+
+type GraphResources = {
+  disposed: boolean;
+  graph: TopologyG6Graph | undefined;
+  observer: ResizeObserver | undefined;
 };
-type RuntimeInput = {
-  presentation: TopologyPresentation;
-  interaction: TopologyInteraction;
-  palette: TopologyG6Palette;
-  callbacks: RuntimeCallbacks;
-};
-type DrawInput = Pick<RuntimeInput, 'presentation' | 'interaction' | 'palette'>;
-type DrawDrain = { running: boolean; pending: DrawInput | undefined };
-type ScaleSuppressions = WeakMap<G6Graph, number>;
-export function useTopologyG6Runtime(host: RefObject<HTMLDivElement | null>, input: RuntimeInput) {
-  const graphRef = useRef<G6Graph | undefined>(undefined);
-  const viewportRef = useRef<Viewport | undefined>(undefined);
+
+export type { TopologyRuntimeState } from './topology-g6-runtime-contract';
+
+export function useTopologyG6Runtime(host: RefObject<HTMLDivElement | null>, input: TopologyG6RuntimeInput) {
+  const graphRef = useRef<TopologyG6Graph | undefined>(undefined);
+  const viewportRef = useRef<TopologyViewport | undefined>(undefined);
   const suppressedScaleEventsRef = useRef<ScaleSuppressions>(new WeakMap());
   const inputRef = useRef(input);
   useEffect(() => {
@@ -50,33 +48,18 @@ export function useTopologyG6Runtime(host: RefObject<HTMLDivElement | null>, inp
     input.presentation.graphStructureKey
   );
   useTopologyGraphUpdates(graphRef, inputRef, input);
-  const fit = useCallback(() => {
-    const graph = graphRef.current;
-    if (!graph) return;
-    suppressScaleEvents(suppressedScaleEventsRef.current, graph);
-    void fitWithinMaxScale(graph)
-      .then(() => {
-        const settled = releaseScaleEvents(suppressedScaleEventsRef.current, graph);
-        if (graphRef.current === graph && settled) {
-          publishScale(graph, inputRef);
-          publishState(inputRef, 'ready');
-        }
-      })
-      .catch(() => {
-        releaseScaleEvents(suppressedScaleEventsRef.current, graph);
-        if (graphRef.current === graph) publishState(inputRef, 'failure');
-      });
-  }, []);
-  const zoomIn = useCallback(() => zoomGraph(graphRef, inputRef, 1.2), []);
-  const zoomOut = useCallback(() => zoomGraph(graphRef, inputRef, 1 / 1.2), []);
+  const fit = useCallback(() => fitTopologyGraph(graphRef, inputRef, suppressedScaleEventsRef.current), []);
+  const zoomIn = useCallback(() => zoomTopologyGraph(graphRef, inputRef, 1.2), []);
+  const zoomOut = useCallback(() => zoomTopologyGraph(graphRef, inputRef, 1 / 1.2), []);
   return { fit, zoomIn, zoomOut };
 }
+
 function useTopologyBootstrap(
   host: RefObject<HTMLDivElement | null>,
-  graphRef: React.MutableRefObject<G6Graph | undefined>,
-  viewportRef: React.MutableRefObject<Viewport | undefined>,
+  graphRef: TopologyG6GraphRef,
+  viewportRef: React.MutableRefObject<TopologyViewport | undefined>,
   suppressedScaleEventsRef: React.MutableRefObject<ScaleSuppressions>,
-  inputRef: React.MutableRefObject<RuntimeInput>,
+  inputRef: TopologyG6InputRef,
   structureKey: string
 ) {
   useEffect(() => {
@@ -91,18 +74,18 @@ function useTopologyBootstrap(
         if (cancelled) return;
         const graph = createGraph(module, container, inputRef.current);
         resources.graph = graph;
-        bindInteractionEvents(graph, module, inputRef);
+        bindTopologyInteractionEvents(graph, module, inputRef);
         resources.observer = observeSize(container, graph);
         await graph.render();
         if (cancelled) return;
-        await restoreOrFit(graph, viewportRef.current);
+        await restoreOrFitTopologyGraph(graph, viewportRef.current);
         if (cancelled) return;
         await reconcileBootstrapInput(graph, inputRef, () => cancelled);
         if (cancelled) return;
         graphRef.current = graph;
         viewportRef.current = undefined;
-        bindViewportEvents(graph, module, inputRef, suppressedScaleEventsRef);
-        publishScale(graph, inputRef);
+        bindTopologyViewportEvents(graph, module, inputRef, suppressedScaleEventsRef.current);
+        publishTopologyScale(graph, inputRef);
         publishState(inputRef, 'ready');
       })
       .catch(() => {
@@ -116,80 +99,11 @@ function useTopologyBootstrap(
     };
   }, [graphRef, host, inputRef, structureKey, suppressedScaleEventsRef, viewportRef]);
 }
-function useTopologyGraphUpdates(
-  graphRef: React.MutableRefObject<G6Graph | undefined>,
-  inputRef: React.MutableRefObject<RuntimeInput>,
-  input: RuntimeInput
-) {
-  const drainsRef = useRef(new WeakMap<G6Graph, DrawDrain>());
-  const { interaction, palette, presentation } = input;
-  useEffect(() => {
-    const graph = graphRef.current;
-    if (!graph) return;
-    queueGraphInput(graph, { interaction, palette, presentation }, graphRef, inputRef, drainsRef.current);
-  }, [graphRef, inputRef, interaction, palette, presentation]);
-}
-function queueGraphInput(
-  graph: G6Graph,
-  input: DrawInput,
-  graphRef: React.MutableRefObject<G6Graph | undefined>,
-  inputRef: React.MutableRefObject<RuntimeInput>,
-  drains: WeakMap<G6Graph, DrawDrain>
-) {
-  const drain = drains.get(graph) ?? { running: false, pending: undefined };
-  drains.set(graph, drain);
-  // G6 draws are serialized per graph; replacing pending input coalesces bursts to the latest snapshot.
-  drain.pending = input;
-  if (drain.running) return;
-  drain.running = true;
-  void drainGraphInputs(graph, drain, graphRef, inputRef);
-}
-async function drainGraphInputs(
-  graph: G6Graph,
-  drain: DrawDrain,
-  graphRef: React.MutableRefObject<G6Graph | undefined>,
-  inputRef: React.MutableRefObject<RuntimeInput>
-) {
-  while (graphRef.current === graph && drain.pending) {
-    const next = drain.pending;
-    drain.pending = undefined;
-    try {
-      await drawGraphInput(graph, next.presentation, next.interaction, next.palette);
-      if (graphRef.current === graph && !drain.pending) publishState(inputRef, 'ready');
-    } catch {
-      if (graphRef.current === graph && !drain.pending) publishState(inputRef, 'failure');
-    }
-  }
-  drain.running = false;
-  if (graphRef.current !== graph) drain.pending = undefined;
-}
-async function drawGraphInput(
-  graph: G6Graph,
-  presentation: TopologyPresentation,
-  interaction: TopologyInteraction,
-  palette: TopologyG6Palette
-) {
-  const elements = topologyG6ElementOptions(palette);
-  graph.setNode(elements.node);
-  graph.setEdge(elements.edge);
-  graph.setData(topologyG6Data(presentation, interaction, palette));
-  await graph.draw();
-}
-async function reconcileBootstrapInput(
-  graph: G6Graph,
-  input: React.MutableRefObject<RuntimeInput>,
-  cancelled: () => boolean
-) {
-  let snapshot: RuntimeInput;
-  do {
-    snapshot = input.current;
-    await drawGraphInput(graph, snapshot.presentation, snapshot.interaction, snapshot.palette);
-  } while (!cancelled() && snapshot !== input.current);
-}
+
 function disposeGraph(
   resources: GraphResources,
-  graphRef: React.MutableRefObject<G6Graph | undefined>,
-  viewportRef: React.MutableRefObject<Viewport | undefined>,
+  graphRef: TopologyG6GraphRef,
+  viewportRef: React.MutableRefObject<TopologyViewport | undefined>,
   rememberViewport: boolean
 ) {
   if (resources.disposed) return;
@@ -197,113 +111,17 @@ function disposeGraph(
   resources.observer?.disconnect();
   const graph = resources.graph;
   if (!graph) return;
-  if (rememberViewport && graphRef.current === graph) viewportRef.current = readViewport(graph);
+  if (rememberViewport && graphRef.current === graph) viewportRef.current = readTopologyViewport(graph);
   graph.off();
   graph.destroy();
   if (graphRef.current === graph) graphRef.current = undefined;
 }
-function createGraph(module: G6Module, container: HTMLDivElement, input: RuntimeInput) {
+
+function createGraph(module: TopologyG6Module, container: HTMLDivElement, input: TopologyG6RuntimeInput) {
   return new module.Graph({ container, ...topologyG6Options(input.presentation, input.interaction, input.palette) });
 }
-function bindInteractionEvents(graph: G6Graph, module: G6Module, input: React.MutableRefObject<RuntimeInput>) {
-  graph.on(module.NodeEvent.CLICK, event =>
-    routeNodeEvent(event, input, input.current.callbacks.onNodeSelect, input.current.callbacks.onEdgeSelect)
-  );
-  graph.on(module.EdgeEvent.CLICK, event => withEventId(event, input.current.callbacks.onEdgeSelect));
-  graph.on(module.NodeEvent.POINTER_OVER, event =>
-    routeNodeEvent(event, input, input.current.callbacks.onNodeHover, input.current.callbacks.onEdgeHover)
-  );
-  graph.on(module.NodeEvent.POINTER_LEAVE, event => {
-    const routed = routeNodeEvent(
-      event,
-      input,
-      () => input.current.callbacks.onNodeHover(null),
-      () => input.current.callbacks.onEdgeHover(null)
-    );
-    if (!routed) input.current.callbacks.onNodeHover(null);
-  });
-  graph.on(module.EdgeEvent.POINTER_OVER, event => withEventId(event, input.current.callbacks.onEdgeHover));
-  graph.on(module.EdgeEvent.POINTER_LEAVE, () => input.current.callbacks.onEdgeHover(null));
-  graph.on(module.CanvasEvent.CLICK, () => input.current.callbacks.onClearSelection());
-}
-function bindViewportEvents(
-  graph: G6Graph,
-  module: G6Module,
-  input: React.MutableRefObject<RuntimeInput>,
-  suppressedScaleEvents: React.MutableRefObject<ScaleSuppressions>
-) {
-  graph.on(module.GraphEvent.AFTER_TRANSFORM, () => {
-    if (!suppressedScaleEvents.current.has(graph)) publishScale(graph, input);
-  });
-}
-function routeNodeEvent(
-  event: unknown,
-  input: React.MutableRefObject<RuntimeInput>,
-  onNode: (id: string) => void,
-  onExternalEdge: (id: string) => void
-) {
-  const id = eventId(event);
-  if (id === undefined) return false;
-  const edgeId = topologyG6ExternalEdgeId(input.current.presentation, id);
-  if (edgeId !== undefined) onExternalEdge(edgeId);
-  else onNode(id);
-  return true;
-}
-function withEventId(event: unknown, callback: (id: string) => void) {
-  const id = eventId(event);
-  if (id !== undefined) callback(id);
-}
-function eventId(event: unknown) {
-  if (!event || typeof event !== 'object' || !('target' in event)) return;
-  const target = event.target;
-  return target && typeof target === 'object' && 'id' in target && typeof target.id === 'string'
-    ? target.id
-    : undefined;
-}
-function publishState(input: React.MutableRefObject<RuntimeInput>, kind: TopologyRuntimeState['kind']) {
-  input.current.callbacks.onRuntimeStateChange({ kind });
-}
-function publishScale(graph: G6Graph, input: React.MutableRefObject<RuntimeInput>) {
-  const scale = graph.getZoom();
-  if (Number.isFinite(scale)) input.current.callbacks.onScaleChange(scale);
-}
-function zoomGraph(
-  graphRef: React.MutableRefObject<G6Graph | undefined>,
-  input: React.MutableRefObject<RuntimeInput>,
-  factor: number
-) {
-  const graph = graphRef.current;
-  if (!graph) return;
-  const current = graph.getZoom();
-  if (!Number.isFinite(current)) {
-    publishState(input, 'failure');
-    return;
-  }
-  void graph
-    .zoomTo(clampScale(current * factor), false)
-    .then(() => {
-      if (graphRef.current === graph) publishState(input, 'ready');
-    })
-    .catch(() => {
-      if (graphRef.current === graph) publishState(input, 'failure');
-    });
-}
-function clampScale(scale: number) {
-  return Math.min(2, Math.max(0.35, scale));
-}
-function suppressScaleEvents(suppressions: ScaleSuppressions, graph: G6Graph) {
-  suppressions.set(graph, (suppressions.get(graph) ?? 0) + 1);
-}
-function releaseScaleEvents(suppressions: ScaleSuppressions, graph: G6Graph) {
-  const remaining = (suppressions.get(graph) ?? 1) - 1;
-  if (remaining > 0) {
-    suppressions.set(graph, remaining);
-    return false;
-  }
-  suppressions.delete(graph);
-  return true;
-}
-function observeSize(container: HTMLDivElement, graph: G6Graph) {
+
+function observeSize(container: HTMLDivElement, graph: TopologyG6Graph) {
   if (typeof ResizeObserver === 'undefined') return undefined;
   const observer = new ResizeObserver(entries => {
     const { width, height } = entries[0]?.contentRect ?? {};
@@ -312,25 +130,7 @@ function observeSize(container: HTMLDivElement, graph: G6Graph) {
   observer.observe(container);
   return observer;
 }
-function readViewport(graph: G6Graph): Viewport | undefined {
-  const zoom = graph.getZoom();
-  const position = graph.getPosition();
-  const x = position[0];
-  const y = position[1];
-  if (typeof x !== 'number' || typeof y !== 'number' || ![zoom, x, y].every(Number.isFinite)) return undefined;
-  return { zoom: clampScale(zoom), position: [x, y] };
-}
-async function restoreOrFit(graph: G6Graph, viewport: Viewport | undefined) {
-  if (!viewport) {
-    await fitWithinMaxScale(graph);
-    return;
-  }
-  await graph.zoomTo(viewport.zoom, false);
-  await graph.translateTo(viewport.position, false);
-}
-async function fitWithinMaxScale(graph: G6Graph) {
-  await graph.fitView({ direction: 'both', when: 'always' }, false);
-  const scale = graph.getZoom();
-  if (!Number.isFinite(scale)) throw new Error('Invalid graph scale after fit.');
-  if (scale > 1) await graph.zoomTo(1, false);
+
+function publishState(input: TopologyG6InputRef, kind: TopologyRuntimeState['kind']) {
+  input.current.callbacks.onRuntimeStateChange({ kind });
 }
