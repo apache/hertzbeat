@@ -17,31 +17,38 @@
 
 package org.apache.hertzbeat.ai.sop.registry;
 
-
 import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.util.JsonUtil;
+import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.annotation.Tool;
-import org.springframework.ai.tool.annotation.ToolParam;
+import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ClassUtils;
+import org.springframework.util.ReflectionUtils;
 
 /**
- * Registry for all @Tool annotated methods.
- * Automatically discovers and registers tool methods on first use.
+ * Registry for Spring AI tools.
+ *
+ * <p>Scans beans containing {@link Tool} methods on first use and delegates argument deserialization,
+ * proxy method resolution, and result conversion to Spring AI's {@link MethodToolCallbackProvider}.
  */
 @Slf4j
 @Component
 public class ToolRegistry {
 
     private final ApplicationContext applicationContext;
-    private final Map<String, ToolMethod> tools = new HashMap<>();
+    private volatile Map<String, RegisteredTool> tools = Map.of();
     private volatile boolean initialized = false;
 
     @Autowired
@@ -49,16 +56,11 @@ public class ToolRegistry {
         this.applicationContext = applicationContext;
     }
 
-    /**
-     * Initialize the registry by scanning all beans for @Tool methods.
-     * Uses double-checked locking for thread safety.
-     */
     private void ensureInitialized() {
         if (!initialized) {
             synchronized (this) {
                 if (!initialized) {
-                    log.info("Scanning for @Tool annotated methods...");
-                    scanAllBeans();
+                    tools = scanAllBeans();
                     initialized = true;
                     log.info("Registered {} tool methods: {}", tools.size(), tools.keySet());
                 }
@@ -66,58 +68,79 @@ public class ToolRegistry {
         }
     }
 
-    private void scanAllBeans() {
-        String[] beanNames = applicationContext.getBeanDefinitionNames();
-        for (String beanName : beanNames) {
-            try {
-                Object bean = applicationContext.getBean(beanName);
-                scanBeanForTools(bean);
-            } catch (Exception e) {
-                // Skip beans that cannot be instantiated
-                log.trace("Skipping bean {}: {}", beanName, e.getMessage());
-            }
+    private Map<String, RegisteredTool> scanAllBeans() {
+        log.info("Scanning for @Tool annotated methods...");
+        List<Object> toolBeans = Arrays.stream(applicationContext.getBeanDefinitionNames())
+                .filter(this::containsToolMethod)
+                .map(applicationContext::getBean)
+                .toList();
+
+        if (toolBeans.isEmpty()) {
+            return Map.of();
         }
+
+        ToolCallback[] callbacks = MethodToolCallbackProvider.builder().toolObjects(toolBeans.toArray())
+                .build().getToolCallbacks();
+        Map<String, RegisteredTool> discoveredTools = new LinkedHashMap<>();
+        for (ToolCallback callback : callbacks) {
+            String toolName = callback.getToolDefinition().name();
+            discoveredTools.put(toolName, new RegisteredTool(callback, getRequiredParameters(callback)));
+        }
+        return Collections.unmodifiableMap(discoveredTools);
     }
 
-    private void scanBeanForTools(Object bean) {
-        Class<?> clazz = bean.getClass();
-        
-        // Handle Spring proxies
-        if (clazz.getName().contains("$$")) {
-            clazz = clazz.getSuperclass();
+    private boolean containsToolMethod(String beanName) {
+        Class<?> beanType = applicationContext.getType(beanName, false);
+        if (beanType == null) {
+            return false;
         }
-        
-        for (Method method : clazz.getMethods()) {
-            Tool toolAnnotation = method.getAnnotation(Tool.class);
-            if (toolAnnotation != null) {
-                String toolName = toolAnnotation.name();
-                if (toolName.isEmpty()) {
-                    toolName = method.getName();
-                }
-                
-                ToolMethod toolMethod = new ToolMethod(bean, method, toolAnnotation);
-                tools.put(toolName, toolMethod);
-                log.debug("Registered tool: {} -> {}.{}", 
-                        toolName, clazz.getSimpleName(), method.getName());
-            }
+        return Arrays.stream(ReflectionUtils.getDeclaredMethods(ClassUtils.getUserClass(beanType)))
+                .anyMatch(this::isToolMethod);
+    }
+
+    private boolean isToolMethod(Method method) {
+        return AnnotationUtils.findAnnotation(method, Tool.class) != null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Set<String> getRequiredParameters(ToolCallback callback) {
+        Map<String, Object> schema = JsonUtil.fromJson(callback.getToolDefinition().inputSchema(), Map.class);
+        if (schema == null || !(schema.get("required") instanceof List<?> required)) {
+            return Set.of();
         }
+        return required.stream()
+                .map(String::valueOf)
+                .collect(Collectors.toUnmodifiableSet());
     }
 
     /**
-     * Invoke a tool by name with the given arguments.
+     * Invokes a tool with the provided arguments.
      */
     public String invoke(String toolName, Map<String, Object> args) {
         ensureInitialized();
-        ToolMethod toolMethod = tools.get(toolName);
-        if (toolMethod == null) {
-            throw new IllegalArgumentException("Unknown tool: " + toolName 
+        RegisteredTool tool = tools.get(toolName);
+        if (tool == null) {
+            throw new IllegalArgumentException("Unknown tool: " + toolName
                     + ". Available tools: " + tools.keySet());
         }
-        return toolMethod.invoke(args);
+        Map<String, Object> safeArgs = args == null ? Map.of() : args;
+        validateRequiredParameters(tool.requiredParameters(), safeArgs);
+        String result = tool.callback().call(JsonUtil.toJson(safeArgs));
+        Object convertedResult = JsonUtil.fromJson(result, Object.class);
+        return convertedResult instanceof String text ? text : result;
+    }
+
+    private void validateRequiredParameters(Set<String> requiredParameters, Map<String, Object> args) {
+        for (String parameter : requiredParameters) {
+            Object value = args.get(parameter);
+            if (value == null || value instanceof String text && text.isBlank()) {
+                throw new IllegalArgumentException("Required tool parameter is missing: " + parameter);
+            }
+        }
     }
 
     /**
-     * Check if a tool exists.
+     * Checks whether a tool exists.
      */
     public boolean hasMethod(String toolName) {
         ensureInitialized();
@@ -125,166 +148,13 @@ public class ToolRegistry {
     }
 
     /**
-     * Get all registered tool names.
+     * Returns an immutable snapshot of all registered tool names.
      */
     public Set<String> getToolNames() {
         ensureInitialized();
         return Set.copyOf(tools.keySet());
     }
 
-    /**
-     * Get tool method info.
-     */
-    public ToolMethod getToolMethod(String toolName) {
-        ensureInitialized();
-        return tools.get(toolName);
-    }
-
-    /**
-     * Represents a registered tool method.
-     */
-    public static class ToolMethod {
-        private final Object bean;
-        private final Method method;
-        private final Tool annotation;
-        private final List<ParamInfo> paramInfos;
-
-        public ToolMethod(Object bean, Method method, Tool annotation) {
-            this.bean = bean;
-            this.method = method;
-            this.annotation = annotation;
-            this.paramInfos = extractParamInfos(method);
-        }
-
-        private List<ParamInfo> extractParamInfos(Method method) {
-            List<ParamInfo> infos = new ArrayList<>();
-            Parameter[] parameters = method.getParameters();
-            
-            for (Parameter param : parameters) {
-                ToolParam toolParam = param.getAnnotation(ToolParam.class);
-                String name = (toolParam != null && !toolParam.description().isEmpty()) 
-                        ? param.getName() : param.getName();
-                boolean required = toolParam != null && toolParam.required();
-                
-                infos.add(new ParamInfo(name, param.getType(), required));
-            }
-            
-            return infos;
-        }
-
-        /**
-         * Invoke this tool method with the given arguments.
-         */
-        public String invoke(Map<String, Object> args) {
-            Map<String, Object> safeArgs = args == null ? Map.of() : args;
-            Object[] methodArgs = new Object[paramInfos.size()];
-
-            for (int i = 0; i < paramInfos.size(); i++) {
-                ParamInfo paramInfo = paramInfos.get(i);
-                Object value = safeArgs.get(paramInfo.name);
-                if (paramInfo.required && isMissing(value)) {
-                    throw new IllegalArgumentException("Required tool parameter is missing: " + paramInfo.name);
-                }
-                methodArgs[i] = convertValue(value, paramInfo.type);
-            }
-
-            try {
-                Object result = method.invoke(bean, methodArgs);
-                return result != null ? result.toString() : "";
-                
-            } catch (Exception e) {
-                log.error("Failed to invoke tool {}: {}", annotation.name(), e.getMessage(), e);
-                throw new RuntimeException("Tool invocation failed: " + annotation.name(), e);
-            }
-        }
-
-        private boolean isMissing(Object value) {
-            return value == null || value instanceof String text && text.isBlank();
-        }
-
-        private Object convertValue(Object value, Class<?> targetType) {
-            if (value == null) {
-                return null;
-            }
-            
-            if (targetType.isAssignableFrom(value.getClass())) {
-                return value;
-            }
-            
-            String strValue = String.valueOf(value);
-            
-            if (targetType == String.class) {
-                return strValue;
-            } else if (targetType == Integer.class || targetType == int.class) {
-                return strValue.isEmpty() ? null : Integer.valueOf(strValue);
-            } else if (targetType == Long.class || targetType == long.class) {
-                return strValue.isEmpty() ? null : Long.valueOf(strValue);
-            } else if (targetType == Boolean.class || targetType == boolean.class) {
-                return Boolean.valueOf(strValue);
-            } else if (targetType == Byte.class || targetType == byte.class) {
-                return strValue.isEmpty() ? null : Byte.valueOf(strValue);
-            } else if (targetType == Double.class || targetType == double.class) {
-                return strValue.isEmpty() ? null : Double.valueOf(strValue);
-            } else if (targetType == Float.class || targetType == float.class) {
-                return strValue.isEmpty() ? null : Float.valueOf(strValue);
-            } else if (targetType == List.class) {
-                return parseList(strValue);
-            }
-            
-            return value;
-        }
-
-        @SuppressWarnings("unchecked")
-        private List<Long> parseList(String value) {
-            if (value == null || value.isEmpty()) {
-                return new ArrayList<>();
-            }
-            List<Long> result = new ArrayList<>();
-            for (String s : value.split(",")) {
-                if (!s.trim().isEmpty()) {
-                    result.add(Long.valueOf(s.trim()));
-                }
-            }
-            return result;
-        }
-
-        public String getName() {
-            return annotation.name();
-        }
-
-        public String getDescription() {
-            return annotation.description();
-        }
-
-        public List<ParamInfo> getParamInfos() {
-            return paramInfos;
-        }
-    }
-
-    /**
-     * Parameter information for a tool method.
-     */
-    public static class ParamInfo {
-        private final String name;
-        private final Class<?> type;
-        private final boolean required;
-
-        public ParamInfo(String name, Class<?> type, boolean required) {
-            this.name = name;
-            this.type = type;
-            this.required = required;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public Class<?> getType() {
-            return type;
-        }
-
-        public boolean isRequired() {
-            return required;
-        }
+    private record RegisteredTool(ToolCallback callback, Set<String> requiredParameters) {
     }
 }

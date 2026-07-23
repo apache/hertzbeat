@@ -37,6 +37,16 @@ import org.junit.jupiter.api.Test;
 class SopEngineImplTest {
 
     @Test
+    void executeSyncShouldReturnFailureForNullDefinition() {
+        SopEngineImpl engine = new SopEngineImpl(List.of());
+
+        SopResult result = engine.executeSync(null, Map.of());
+
+        assertEquals("FAILED", result.getStatus());
+        assertTrue(result.getError().contains("must not be null"));
+    }
+
+    @Test
     void executeSyncShouldRejectMissingRequiredParameter() {
         SopEngineImpl engine = new SopEngineImpl(List.of(new RecordingExecutor()));
 
