@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { entityPageSizes, entitySortFields, type EntitySummary } from '../model/entity-contract';
+import { localizeEntityCode } from '../model/entity-display';
 import type { EntityListViewActions, EntityListViewState } from '../model/entity-view-model';
 import styles from './entity-view.module.css';
 
@@ -153,11 +154,15 @@ function columns(t: (key: string) => string, open: (id: number) => void): Column
         </Button>
       )
     },
-    { title: t('entity.fields.type'), dataIndex: 'type', render: (value: string) => <Tag>{value}</Tag> },
+    {
+      title: t('entity.fields.type'),
+      dataIndex: 'type',
+      render: (value: string) => <Tag>{localizeEntityCode(t, 'type', value)}</Tag>
+    },
     {
       title: t('entity.fields.status'),
       dataIndex: 'status',
-      render: (value?: string) => (value ? <Tag>{value}</Tag> : '—')
+      render: (value?: string) => <Tag>{localizeEntityCode(t, 'status', value)}</Tag>
     },
     { title: t('entity.fields.environment'), dataIndex: 'environment', render: (value?: string) => value || '—' },
     { title: t('entity.fields.owner'), dataIndex: 'owner', render: (value?: string) => value || '—' },

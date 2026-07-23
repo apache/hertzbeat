@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { EntityDetailEvidence, EntityExploreSignal } from '../model/entity-view-model';
 import { entityExploreSignals } from '../model/entity-view-model';
+import { localizeEntityCode } from '../model/entity-display';
 import { EntityDetailMetadata } from './entity-detail-metadata';
 import styles from './entity-view.module.css';
 
@@ -43,9 +44,7 @@ function ReadyEntityDetail({
       <header className={styles.heading}>
         <div>
           <Typography.Title level={2}>{detail.entity.displayName || detail.entity.name}</Typography.Title>
-          <Typography.Text type="secondary">
-            {detail.entity.type} · {detail.entity.id}
-          </Typography.Text>
+          <Typography.Text type="secondary">{localizeEntityCode(t, 'type', detail.entity.type)}</Typography.Text>
         </div>
         <Space>
           <Button type="primary" onClick={actions.edit}>
@@ -74,7 +73,7 @@ function EntityEvidenceLists({ detail }: { detail: Extract<EntityDetailEvidence,
         empty={t('entity.missing.identities')}
         isEmpty={detail.identities.length === 0}
       >
-        <List size="small" dataSource={detail.identities} renderItem={identityItem} />
+        <List size="small" dataSource={detail.identities} renderItem={item => identityItem(t, item)} />
       </EvidenceSection>
       <EvidenceSection
         title={t('entity.sections.monitors')}
@@ -88,17 +87,20 @@ function EntityEvidenceLists({ detail }: { detail: Extract<EntityDetailEvidence,
         empty={t('entity.missing.relations')}
         isEmpty={detail.relations.length === 0}
       >
-        <List size="small" dataSource={detail.relations} renderItem={relationItem} />
+        <List size="small" dataSource={detail.relations} renderItem={item => relationItem(t, item)} />
       </EvidenceSection>
     </>
   );
 }
 
-function identityItem(item: Extract<EntityDetailEvidence, { kind: 'ready' }>['detail']['identities'][number]) {
+function identityItem(
+  t: (key: string) => string,
+  item: Extract<EntityDetailEvidence, { kind: 'ready' }>['detail']['identities'][number]
+) {
   return (
     <List.Item>
       <Space>
-        <Tag>{item.identityType}</Tag>
+        <Tag>{localizeEntityCode(t, 'identityType', item.identityType)}</Tag>
         <strong>{item.identityKey}</strong>
         <span>{item.identityValue}</span>
       </Space>
@@ -118,11 +120,14 @@ function monitorItem(item: Extract<EntityDetailEvidence, { kind: 'ready' }>['det
   );
 }
 
-function relationItem(item: Extract<EntityDetailEvidence, { kind: 'ready' }>['detail']['relations'][number]) {
+function relationItem(
+  t: (key: string) => string,
+  item: Extract<EntityDetailEvidence, { kind: 'ready' }>['detail']['relations'][number]
+) {
   return (
     <List.Item>
       <Space>
-        <Tag>{item.direction || '—'}</Tag>
+        <Tag>{localizeEntityCode(t, 'direction', item.direction)}</Tag>
         <strong>{item.relationType || '—'}</strong>
         <span>{item.entityName || item.targetRef || '—'}</span>
       </Space>

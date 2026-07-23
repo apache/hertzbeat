@@ -12,6 +12,7 @@ const entity = {
   type: 'service',
   name: 'checkout',
   environment: 'prod',
+  source: 'manual',
   labels: { region: 'east' },
   tags: ['critical']
 };
@@ -28,7 +29,7 @@ describe('EntityDetailView', () => {
       kind: 'ready',
       detail: {
         entity,
-        identities: [{ identityType: 'otlp', identityKey: 'service.name', identityValue: 'checkout' }],
+        identities: [{ identityType: 'derived', identityKey: 'service.name', identityValue: 'checkout' }],
         status: { status: 'degraded', reason: 'monitor down' },
         evidence: { logHintCount: 1 },
         boundMonitors: [{ id: 3, name: 'checkout-http', app: 'website', status: 2 }],
@@ -40,6 +41,12 @@ describe('EntityDetailView', () => {
     expect(screen.getByText('depends_on')).toBeInTheDocument();
     expect(screen.getByText('monitor down')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: i18n.t('common.edit') })).toBeInTheDocument();
+    expect(screen.getByText('Service')).toBeInTheDocument();
+    expect(screen.getByText('Degraded')).toBeInTheDocument();
+    expect(screen.getByText('Manual')).toBeInTheDocument();
+    expect(screen.getByText('Automatically recognized')).toBeInTheDocument();
+    expect(screen.getByText('Outgoing')).toBeInTheDocument();
+    expect(screen.queryByText(/service · 7/)).not.toBeInTheDocument();
   });
 
   it('offers only evidence-backed Explore handoffs', () => {
@@ -76,6 +83,8 @@ describe('EntityDetailView', () => {
     const evidence = screen.getByRole('region', { name: i18n.t('entity.sections.evidence') });
     expect(within(evidence).getAllByText('0')).toHaveLength(3);
     expect(within(evidence).getByText('2')).toBeInTheDocument();
+    expect(within(evidence).getByText('Recognition evidence count')).toBeInTheDocument();
+    expect(within(evidence).getByText('Log query hints')).toBeInTheDocument();
     expect(screen.getByText('region=east')).toBeInTheDocument();
     expect(screen.getByText('critical')).toBeInTheDocument();
   });

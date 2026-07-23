@@ -4,6 +4,7 @@ import { Descriptions, Space, Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import type { EntityDetail } from '../model/entity-contract';
+import { localizeEntityCode } from '../model/entity-display';
 import styles from './entity-view.module.css';
 
 export function EntityDetailMetadata({ detail }: { detail: EntityDetail }) {
@@ -29,12 +30,12 @@ function baseItems(t: (key: string) => string, detail: EntityDetail) {
     {
       key: 'status',
       label: t('entity.fields.status'),
-      children: detail.status?.status ? <Tag>{detail.status.status}</Tag> : '—'
+      children: <Tag>{localizeEntityCode(t, 'status', detail.status?.status)}</Tag>
     },
     { key: 'reason', label: t('entity.fields.reason'), children: detail.status?.reason || '—' },
     { key: 'environment', label: t('entity.fields.environment'), children: entity.environment || '—' },
     { key: 'owner', label: t('entity.fields.owner'), children: entity.owner || '—' },
-    { key: 'source', label: t('entity.fields.source'), children: entity.source || '—' },
+    { key: 'source', label: t('entity.fields.source'), children: localizeEntityCode(t, 'source', entity.source) },
     { key: 'lifecycle', label: t('entity.fields.lifecycle'), children: entity.lifecycle || '—' },
     { key: 'tier', label: t('entity.fields.tier'), children: entity.tier || '—' },
     { key: 'system', label: t('entity.fields.system'), children: entity.system || '—' },

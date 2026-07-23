@@ -80,13 +80,13 @@
     },
     "sections": {
       "evidence": "Operational evidence",
-      "identities": "Identities",
+      "identities": "Recognition evidence",
       "monitors": "Monitor bindings",
       "relations": "Relations"
     },
     "missing": {
       "evidence": "No operational evidence is available.",
-      "identities": "No identity evidence is available.",
+      "identities": "No recognition evidence is available.",
       "monitors": "No monitor bindings are available.",
       "relations": "No relation evidence is available."
     },
@@ -94,8 +94,45 @@
       "alerts": "Active alerts",
       "downMonitors": "Down monitors",
       "healthyMonitors": "Healthy monitors",
-      "identities": "Identities",
-      "logHints": "Log hints"
+      "identities": "Recognition evidence count",
+      "logHints": "Log query hints"
+    },
+    "values": {
+      "type": {
+        "service": "Service",
+        "host": "Host",
+        "system": "System",
+        "database": "Database",
+        "queue": "Queue",
+        "middleware": "Middleware",
+        "device": "Device",
+        "api": "API",
+        "endpoint": "Endpoint",
+        "k8s_workload": "Kubernetes workload"
+      },
+      "status": {
+        "unknown": "Unknown",
+        "healthy": "Healthy",
+        "degraded": "Degraded",
+        "critical": "Critical",
+        "paused": "Paused"
+      },
+      "source": {
+        "manual": "Manual",
+        "definition": "Definition",
+        "discovery": "Discovery",
+        "otel_resource": "OpenTelemetry resource",
+        "otel": "OpenTelemetry",
+        "telemetry": "Telemetry"
+      },
+      "direction": { "incoming": "Incoming", "outgoing": "Outgoing" },
+      "identityType": {
+        "derived": "Automatically recognized",
+        "manual": "Manually defined",
+        "otel_resource": "OpenTelemetry resource",
+        "otel": "OpenTelemetry",
+        "otlp": "OpenTelemetry"
+      }
     },
     "explore": { "metrics": "Explore metrics", "logs": "Explore logs" },
     "editor": {

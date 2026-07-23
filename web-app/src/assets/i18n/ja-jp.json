@@ -80,13 +80,13 @@
     },
     "sections": {
       "evidence": "運用証拠",
-      "identities": "識別情報",
+      "identities": "識別根拠",
       "monitors": "モニター関連付け",
       "relations": "関係"
     },
     "missing": {
       "evidence": "運用証拠はありません。",
-      "identities": "識別情報はありません。",
+      "identities": "識別根拠はありません。",
       "monitors": "モニター関連付けはありません。",
       "relations": "関係情報はありません。"
     },
@@ -94,8 +94,39 @@
       "alerts": "発生中アラート",
       "downMonitors": "異常モニター",
       "healthyMonitors": "正常モニター",
-      "identities": "識別情報",
-      "logHints": "ログ手掛かり"
+      "identities": "識別根拠数",
+      "logHints": "ログ検索の手掛かり"
+    },
+    "values": {
+      "type": {
+        "service": "サービス",
+        "host": "ホスト",
+        "system": "システム",
+        "database": "データベース",
+        "queue": "キュー",
+        "middleware": "ミドルウェア",
+        "device": "デバイス",
+        "api": "API",
+        "endpoint": "エンドポイント",
+        "k8s_workload": "Kubernetes ワークロード"
+      },
+      "status": { "unknown": "不明", "healthy": "正常", "degraded": "低下", "critical": "重大", "paused": "一時停止" },
+      "source": {
+        "manual": "手動",
+        "definition": "定義",
+        "discovery": "自動検出",
+        "otel_resource": "OpenTelemetry リソース",
+        "otel": "OpenTelemetry",
+        "telemetry": "テレメトリ"
+      },
+      "direction": { "incoming": "受信", "outgoing": "送信" },
+      "identityType": {
+        "derived": "自動認識",
+        "manual": "手動定義",
+        "otel_resource": "OpenTelemetry リソース",
+        "otel": "OpenTelemetry",
+        "otlp": "OpenTelemetry"
+      }
     },
     "explore": { "metrics": "メトリクスを検索", "logs": "ログを検索" },
     "editor": {

@@ -78,10 +78,10 @@
       "labels": "標籤",
       "tags": "標記"
     },
-    "sections": { "evidence": "運行證據", "identities": "身分", "monitors": "監控綁定", "relations": "關係" },
+    "sections": { "evidence": "運行證據", "identities": "識別依據", "monitors": "監控綁定", "relations": "關係" },
     "missing": {
       "evidence": "暫無運行證據。",
-      "identities": "沒有身分記錄。",
+      "identities": "沒有識別依據。",
       "monitors": "沒有監控綁定。",
       "relations": "沒有關係記錄。"
     },
@@ -89,8 +89,39 @@
       "alerts": "活躍警報",
       "downMonitors": "異常監控",
       "healthyMonitors": "正常監控",
-      "identities": "身分",
-      "logHints": "日誌線索"
+      "identities": "識別依據數",
+      "logHints": "日誌查詢線索"
+    },
+    "values": {
+      "type": {
+        "service": "服務",
+        "host": "主機",
+        "system": "系統",
+        "database": "資料庫",
+        "queue": "佇列",
+        "middleware": "中介軟體",
+        "device": "裝置",
+        "api": "API",
+        "endpoint": "端點",
+        "k8s_workload": "Kubernetes 工作負載"
+      },
+      "status": { "unknown": "未知", "healthy": "正常", "degraded": "降級", "critical": "嚴重", "paused": "已暫停" },
+      "source": {
+        "manual": "手動維護",
+        "definition": "定義檔",
+        "discovery": "自動探索",
+        "otel_resource": "OpenTelemetry 資源",
+        "otel": "OpenTelemetry",
+        "telemetry": "遙測資料"
+      },
+      "direction": { "incoming": "入站", "outgoing": "出站" },
+      "identityType": {
+        "derived": "自動識別",
+        "manual": "手動設定",
+        "otel_resource": "OpenTelemetry 資源",
+        "otel": "OpenTelemetry",
+        "otlp": "OpenTelemetry"
+      }
     },
     "explore": { "metrics": "查詢指標", "logs": "查詢日誌" },
     "editor": {

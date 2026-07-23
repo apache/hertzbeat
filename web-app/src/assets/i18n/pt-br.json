@@ -80,13 +80,13 @@
     },
     "sections": {
       "evidence": "Evidência operacional",
-      "identities": "Identidades",
+      "identities": "Evidências de identificação",
       "monitors": "Vínculos de monitor",
       "relations": "Relações"
     },
     "missing": {
       "evidence": "Nenhuma evidência operacional disponível.",
-      "identities": "Nenhuma evidência de identidade disponível.",
+      "identities": "Nenhuma evidência de identificação disponível.",
       "monitors": "Nenhum vínculo de monitor disponível.",
       "relations": "Nenhuma evidência de relação disponível."
     },
@@ -94,8 +94,45 @@
       "alerts": "Alertas ativos",
       "downMonitors": "Monitores inativos",
       "healthyMonitors": "Monitores saudáveis",
-      "identities": "Identidades",
-      "logHints": "Indícios de log"
+      "identities": "Quantidade de evidências de identificação",
+      "logHints": "Indícios para consulta de logs"
+    },
+    "values": {
+      "type": {
+        "service": "Serviço",
+        "host": "Host",
+        "system": "Sistema",
+        "database": "Banco de dados",
+        "queue": "Fila",
+        "middleware": "Middleware",
+        "device": "Dispositivo",
+        "api": "API",
+        "endpoint": "Endpoint",
+        "k8s_workload": "Carga de trabalho do Kubernetes"
+      },
+      "status": {
+        "unknown": "Desconhecido",
+        "healthy": "Saudável",
+        "degraded": "Degradado",
+        "critical": "Crítico",
+        "paused": "Pausado"
+      },
+      "source": {
+        "manual": "Manual",
+        "definition": "Definição",
+        "discovery": "Descoberta",
+        "otel_resource": "Recurso OpenTelemetry",
+        "otel": "OpenTelemetry",
+        "telemetry": "Telemetria"
+      },
+      "direction": { "incoming": "Entrada", "outgoing": "Saída" },
+      "identityType": {
+        "derived": "Reconhecido automaticamente",
+        "manual": "Definido manualmente",
+        "otel_resource": "Recurso OpenTelemetry",
+        "otel": "OpenTelemetry",
+        "otlp": "OpenTelemetry"
+      }
     },
     "explore": { "metrics": "Explorar métricas", "logs": "Explorar logs" },
     "editor": {

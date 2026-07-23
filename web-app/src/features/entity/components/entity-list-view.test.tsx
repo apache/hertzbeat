@@ -72,6 +72,33 @@ describe('EntityListView', () => {
     );
     fireEvent.click(screen.getByText('checkout'));
     expect(open).toHaveBeenCalledWith(7);
+    expect(screen.getByText('Service')).toBeInTheDocument();
+    expect(screen.getByText('Degraded')).toBeInTheDocument();
+    expect(screen.queryByText('service')).not.toBeInTheDocument();
+    expect(screen.queryByText('degraded')).not.toBeInTheDocument();
+  });
+
+  it('keeps unknown backend display codes inspectable without fabricating a translation', () => {
+    renderView({
+      evidence: {
+        kind: 'ready',
+        records: [
+          {
+            id: 9,
+            type: 'vendor_resource',
+            name: 'custom',
+            status: 'vendor_state',
+            identityCount: 0,
+            monitorCount: 0,
+            relationCount: 0,
+            activeAlertCount: 0
+          }
+        ],
+        total: 1
+      }
+    });
+    expect(screen.getByText('vendor_resource')).toBeInTheDocument();
+    expect(screen.getByText('vendor_state')).toBeInTheDocument();
   });
 });
 

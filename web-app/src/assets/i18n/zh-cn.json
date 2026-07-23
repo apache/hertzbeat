@@ -78,10 +78,10 @@
       "labels": "标签",
       "tags": "标记"
     },
-    "sections": { "evidence": "运行证据", "identities": "身份", "monitors": "监控绑定", "relations": "关系" },
+    "sections": { "evidence": "运行证据", "identities": "识别依据", "monitors": "监控绑定", "relations": "关系" },
     "missing": {
       "evidence": "暂无运行证据。",
-      "identities": "暂无身份记录。",
+      "identities": "暂无识别依据。",
       "monitors": "暂无监控绑定。",
       "relations": "暂无关系记录。"
     },
@@ -89,8 +89,39 @@
       "alerts": "活跃告警",
       "downMonitors": "异常监控",
       "healthyMonitors": "正常监控",
-      "identities": "身份",
-      "logHints": "日志线索"
+      "identities": "识别依据数",
+      "logHints": "日志查询线索"
+    },
+    "values": {
+      "type": {
+        "service": "服务",
+        "host": "主机",
+        "system": "系统",
+        "database": "数据库",
+        "queue": "队列",
+        "middleware": "中间件",
+        "device": "设备",
+        "api": "API",
+        "endpoint": "端点",
+        "k8s_workload": "Kubernetes 工作负载"
+      },
+      "status": { "unknown": "未知", "healthy": "正常", "degraded": "降级", "critical": "严重", "paused": "已暂停" },
+      "source": {
+        "manual": "手动维护",
+        "definition": "定义文件",
+        "discovery": "自动发现",
+        "otel_resource": "OpenTelemetry 资源",
+        "otel": "OpenTelemetry",
+        "telemetry": "遥测数据"
+      },
+      "direction": { "incoming": "入站", "outgoing": "出站" },
+      "identityType": {
+        "derived": "自动识别",
+        "manual": "手动配置",
+        "otel_resource": "OpenTelemetry 资源",
+        "otel": "OpenTelemetry",
+        "otlp": "OpenTelemetry"
+      }
     },
     "explore": { "metrics": "查询指标", "logs": "查询日志" },
     "editor": {
