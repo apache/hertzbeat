@@ -45,6 +45,14 @@ contract.
 - `environment` is the application deployment form (`vm`, `docker`, `kubernetes`, or
   `windows_service`). `service.environment` is the OpenTelemetry
   `deployment.environment.name` resource value.
+- Detection requires `service.name`, `service.namespace`, `service.environment`, `collectorId`, and
+  `startedAt`. `service.serviceInstanceId` (`service.instance.id`) and `service.endpoint`
+  (`http.route`) are optional advanced query context, not required onboarding inputs and not a
+  HertzBeat entity ID. When present, both values are trimmed, applied to every signal's detection
+  query, echoed in the safe detection context, and retained in every query jump.
+- `service.endpoint` accepts only a low-cardinality HTTP route template such as `/checkout/{id}`;
+  it is not a URL and must not contain a scheme, host, query string, fragment, whitespace, token, or
+  other high-cardinality request value.
 - `CollectorTarget` comes only from registered Collector information returned by `/api/collector`,
   or from an explicit operator endpoint entered for this form and retained only in memory. React must
   not default to an IP with ports 4318/4317, derive endpoints from the browser URL, or persist an
@@ -757,7 +765,9 @@ Request:
   "service": {
     "name": "checkout-api",
     "namespace": "commerce",
-    "environment": "prod"
+    "environment": "prod",
+    "serviceInstanceId": "checkout-7d9",
+    "endpoint": "/checkout/{id}"
   },
   "collectorId": "collector-east",
   "startedAt": 1710000000000
@@ -779,7 +789,9 @@ Response `data` after a real adapter receives Metrics and Traces while Logs rema
     "service": {
       "name": "checkout-api",
       "namespace": "commerce",
-      "environment": "prod"
+      "environment": "prod",
+      "serviceInstanceId": "checkout-7d9",
+      "endpoint": "/checkout/{id}"
     },
     "collectorId": "collector-east",
     "startedAt": 1710000000000
@@ -799,13 +811,15 @@ Response `data` after a real adapter receives Metrics and Traces while Logs rema
     "serviceNamespace": "commerce",
     "environment": "prod",
     "collectorId": "collector-east",
+    "serviceInstanceId": "checkout-7d9",
+    "endpoint": "/checkout/{id}",
     "startedAt": 1710000000000,
     "detectedAt": 1710000005000
   },
   "queryJumps": [
-    {"signal": "metrics", "enabled": true, "context": {"serviceName": "checkout-api", "serviceNamespace": "commerce", "environment": "prod", "collectorId": "collector-east", "startedAt": 1710000000000, "detectedAt": 1710000005000}},
-    {"signal": "logs", "enabled": false, "context": {"serviceName": "checkout-api", "serviceNamespace": "commerce", "environment": "prod", "collectorId": "collector-east", "startedAt": 1710000000000, "detectedAt": 1710000005000}},
-    {"signal": "traces", "enabled": true, "context": {"serviceName": "checkout-api", "serviceNamespace": "commerce", "environment": "prod", "collectorId": "collector-east", "startedAt": 1710000000000, "detectedAt": 1710000005000}}
+    {"signal": "metrics", "enabled": true, "context": {"serviceName": "checkout-api", "serviceNamespace": "commerce", "environment": "prod", "collectorId": "collector-east", "serviceInstanceId": "checkout-7d9", "endpoint": "/checkout/{id}", "startedAt": 1710000000000, "detectedAt": 1710000005000}},
+    {"signal": "logs", "enabled": false, "context": {"serviceName": "checkout-api", "serviceNamespace": "commerce", "environment": "prod", "collectorId": "collector-east", "serviceInstanceId": "checkout-7d9", "endpoint": "/checkout/{id}", "startedAt": 1710000000000, "detectedAt": 1710000005000}},
+    {"signal": "traces", "enabled": true, "context": {"serviceName": "checkout-api", "serviceNamespace": "commerce", "environment": "prod", "collectorId": "collector-east", "serviceInstanceId": "checkout-7d9", "endpoint": "/checkout/{id}", "startedAt": 1710000000000, "detectedAt": 1710000005000}}
   ]
 }
 ```
