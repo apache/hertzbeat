@@ -20,6 +20,7 @@ import { Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import type { FlowStage } from '../model/instrumentation-flow';
+import { buildInstrumentationScopeSummary, type InstrumentationScopeValue } from '../model/instrumentation-scope';
 import { InstrumentationDetection, type InstrumentationDetectionView } from './instrumentation-detection';
 import { InstrumentationGuide, type InstrumentationGuideSetup } from './instrumentation-guide';
 import { InstrumentationStageContent, type InstrumentationStageContentSetup } from './instrumentation-stage-content';
@@ -35,7 +36,6 @@ const stages = [
 const LAST_SETUP_STAGE = 3;
 const INSTALLATION_STAGE = 4;
 const DETECTION_STAGE = 5;
-const MISSING_SCOPE_VALUE = '—';
 
 type RunbookStage = (typeof stages)[number];
 type RunbookStageStatus = 'active' | 'complete' | 'locked';
@@ -96,34 +96,23 @@ export function InstrumentationRunbook({
 
 function ScopePanel({ setup }: { setup: InstrumentationRunbookSetup }) {
   const { t } = useTranslation();
-  const { language, framework, method } = findSelectionMetadata(setup);
-  const scope = [
-    ['deploymentEnvironment', t(`instrumentation.environment.${setup.draft.environment}`)],
-    ['platform', t(`instrumentation.platform.${setup.draft.platform}`)],
-    ['language', language ? t(language.labelKey) : MISSING_SCOPE_VALUE],
-    ['framework', framework ? t(framework.labelKey) : MISSING_SCOPE_VALUE],
-    ['method', method ? t(method.labelKey) : MISSING_SCOPE_VALUE],
-    ['collector', setup.draft.collectorId || MISSING_SCOPE_VALUE],
-    ['serviceName', setup.draft.serviceName || MISSING_SCOPE_VALUE],
-    ['serviceNamespace', setup.draft.serviceNamespace || MISSING_SCOPE_VALUE],
-    ['serviceEnvironment', setup.draft.serviceEnvironment || MISSING_SCOPE_VALUE],
-    ['token', t(setup.token ? 'instrumentation.tokenInMemory' : 'instrumentation.tokenMissing')]
-  ];
+  // The scope model receives only credential presence; the Token stays in the guide controller's memory.
+  const summary = buildInstrumentationScopeSummary(setup.stage, setup.draft, setup.catalog, Boolean(setup.token));
   return (
     <aside className={styles.scopePanel}>
       <Typography.Text className={styles.scopeTitle ?? ''}>{t('instrumentation.scope')}</Typography.Text>
       <dl>
-        {scope.map(([key, value]) => (
-          <div key={key}>
-            <dt>{t(`instrumentation.field.${key}`)}</dt>
-            <dd>{value}</dd>
+        {summary.rows.map(row => (
+          <div key={row.field}>
+            <dt>{t(`instrumentation.field.${row.field}`)}</dt>
+            <dd>{scopeValue(row.value, t)}</dd>
           </div>
         ))}
       </dl>
-      {method && (
+      {summary.signals && (
         <div className={styles.scopeSignals}>
           <Typography.Text type="secondary">{t('instrumentation.signalCapability')}</Typography.Text>
-          {Object.entries(method.signals).map(([signal, capability]) => (
+          {Object.entries(summary.signals).map(([signal, capability]) => (
             <span key={signal}>
               <b>{t(`instrumentation.signal.${signal}`)}</b>
               <em>{t(`instrumentation.capability.${capability}`)}</em>
@@ -138,13 +127,8 @@ function ScopePanel({ setup }: { setup: InstrumentationRunbookSetup }) {
   );
 }
 
-function findSelectionMetadata(setup: InstrumentationRunbookSetup) {
-  const selection = setup.draft.selection;
-  if (!selection) return {};
-  const language = setup.catalog?.languages.find(item => item.language === selection.language);
-  const framework = language?.frameworks.find(item => item.framework === selection.framework);
-  const method = framework?.methods.find(item => item.method === selection.method);
-  return { language, framework, method };
+function scopeValue(value: InstrumentationScopeValue, translate: (key: string) => string) {
+  return value.kind === 'translation' ? translate(value.key) : value.value;
 }
 
 function runbookStageStatus(stage: RunbookStage['id'], currentStage: FlowStage) {

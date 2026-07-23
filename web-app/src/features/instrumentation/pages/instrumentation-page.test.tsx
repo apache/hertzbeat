@@ -16,7 +16,7 @@
  */
 
 import { App } from 'antd';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -92,6 +92,27 @@ describe('InstrumentationPage', () => {
     fireEvent.click(language);
     expect(detection.reset).toHaveBeenCalledOnce();
     expect(setup.setStage).toHaveBeenCalledWith(2);
+  });
+
+  it('keeps the setup scope limited to choices confirmed by the current stage', () => {
+    useInstrumentationSetup.mockReturnValue({
+      ...setupFixture(),
+      stage: 1,
+      catalog,
+      token: 'memory-only-token'
+    });
+    useInstrumentationDetection.mockReturnValue(detectionFixture());
+    renderPage();
+
+    const scope = screen.getByText('SETUP SCOPE').closest('aside');
+    if (!scope) throw new Error('Expected the setup scope panel');
+    expect(within(scope).getByText('Deployment environment')).toBeInTheDocument();
+    expect(within(scope).getByText('Platform')).toBeInTheDocument();
+    for (const futureField of ['Language', 'Framework', 'Method', 'Collector', 'Service name', 'API token']) {
+      expect(within(scope).queryByText(futureField)).not.toBeInTheDocument();
+    }
+    expect(within(scope).getAllByRole('term')).toHaveLength(2);
+    expect(within(scope).queryByText('memory-only-token')).not.toBeInTheDocument();
   });
 
   it('keeps catalog, Collector unavailable, contract error, empty, and offline states distinct', () => {
