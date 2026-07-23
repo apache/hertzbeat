@@ -17,6 +17,7 @@
 
 import { CheckOutlined, LockOutlined } from '@ant-design/icons';
 import { Typography } from 'antd';
+import { useLayoutEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { FlowStage } from '../model/instrumentation-flow';
@@ -53,6 +54,14 @@ export function InstrumentationRunbook({
   detection: InstrumentationRunbookDetection;
 }) {
   const { t } = useTranslation();
+  const workspaceRef = useRef<HTMLDivElement>(null);
+  const previousStage = useRef(setup.stage);
+  useLayoutEffect(() => {
+    if (previousStage.current === setup.stage) return;
+    previousStage.current = setup.stage;
+    workspaceRef.current?.focus({ preventScroll: true });
+    workspaceRef.current?.scrollIntoView?.({ block: 'start' });
+  }, [setup.stage]);
   const startDetection = () => {
     setup.setStage(DETECTION_STAGE);
     detection.start();
@@ -74,14 +83,14 @@ export function InstrumentationRunbook({
             <li key={stage.id} className={runbookStageClassName(status)}>
               <button type="button" disabled={status === 'locked'} onClick={() => selectStage(stage.id)}>
                 <span>{marker}</span>
-                <strong>{t(`instrumentation.stage.${stage.key}`)}</strong>
+                <strong id={stageLabelId(stage.id)}>{t(`instrumentation.stage.${stage.key}`)}</strong>
               </button>
             </li>
           );
         })}
       </ol>
       <div className={styles.workspaceGrid}>
-        <div>
+        <div ref={workspaceRef} role="region" aria-labelledby={stageLabelId(setup.stage)} tabIndex={-1}>
           {setup.stage <= LAST_SETUP_STAGE && <InstrumentationStageContent setup={setup} />}
           {setup.stage === INSTALLATION_STAGE && (
             <InstrumentationGuide setup={setup} onStartDetection={startDetection} />
@@ -141,4 +150,8 @@ function runbookStageClassName(status: RunbookStageStatus) {
   if (status === 'active') return styles.stageActive;
   if (status === 'complete') return styles.stageComplete;
   return styles.stageLocked;
+}
+
+function stageLabelId(stage: FlowStage) {
+  return `instrumentation-stage-${stage}-label`;
 }

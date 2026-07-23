@@ -94,6 +94,56 @@ describe('InstrumentationPage', () => {
     expect(setup.setStage).toHaveBeenCalledWith(2);
   });
 
+  it('focuses and aligns the active workspace after forward and completed-stage navigation', () => {
+    const setup = { ...setupFixture(), stage: 4, catalog, guide };
+    const detection = detectionFixture();
+    useInstrumentationSetup.mockReturnValue(setup);
+    useInstrumentationDetection.mockReturnValue(detection);
+    const view = renderPage();
+
+    const workspace = screen.getByRole('region', { name: 'Install and configure' });
+    const scrollIntoView = vi.fn();
+    workspace.scrollIntoView = scrollIntoView;
+    fireEvent.click(screen.getByRole('button', { name: 'Start signal check' }));
+    expect(setup.setStage).toHaveBeenCalledWith(5);
+    expect(detection.start).toHaveBeenCalledOnce();
+
+    useInstrumentationSetup.mockReturnValue({ ...setup, stage: 5 });
+    view.rerender(pageElement());
+    expect(document.activeElement).toBe(workspace);
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start' });
+
+    scrollIntoView.mockClear();
+    fireEvent.click(screen.getByRole('button', { name: /Install and configure$/ }));
+    expect(setup.setStage).toHaveBeenCalledWith(4);
+    useInstrumentationSetup.mockReturnValue(setup);
+    view.rerender(pageElement());
+    expect(document.activeElement).toBe(workspace);
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start' });
+  });
+
+  it('does not move the viewport or steal field focus during a same-stage rerender', () => {
+    const setup = { ...setupFixture(), stage: 3, catalog };
+    useInstrumentationSetup.mockReturnValue(setup);
+    useInstrumentationDetection.mockReturnValue(detectionFixture());
+    const view = renderPage();
+
+    const workspace = screen.getByRole('region', { name: 'Service context' });
+    const scrollIntoView = vi.fn();
+    workspace.scrollIntoView = scrollIntoView;
+    const serviceName = screen.getByRole('textbox', { name: 'Service name' });
+    serviceName.focus();
+
+    useInstrumentationSetup.mockReturnValue({
+      ...setup,
+      draft: { ...setup.draft, serviceName: 'checkout-api-v2' }
+    });
+    view.rerender(pageElement());
+
+    expect(document.activeElement).toBe(serviceName);
+    expect(scrollIntoView).not.toHaveBeenCalled();
+  });
+
   it('keeps the setup scope limited to choices confirmed by the current stage', () => {
     useInstrumentationSetup.mockReturnValue({
       ...setupFixture(),
