@@ -19,7 +19,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { mergeQueryContext, useQueryContextOptional, type QueryContext } from '@/shared/query-context';
+import { useQueryContextOptional } from '@/shared/query-context';
 import { useSharedTimeOptional } from '@/shared/time';
 
 import { classifyExploreSignalError, loadLogSignal, loadMetricSignal, loadTraceSignal } from '../api/explore-api';
@@ -27,6 +27,7 @@ import { useExploreSubmission } from './use-explore-submission';
 import {
   buildExplorePath,
   exploreHandoffState,
+  mergeExploreContextChanges,
   exploreQueryContext,
   mergeExploreQuery,
   parseExploreQuery,
@@ -73,7 +74,7 @@ export function useExplorePageController() {
     staleTime: 0
   });
   const updateQuery = (changes: ExploreQueryPatch) => {
-    const next = mergeExploreQuery(query, mergeContextChanges(context, changes));
+    const next = mergeExploreQuery(query, mergeExploreContextChanges(context, changes));
     setSearchParams(searchFromPath(buildExplorePath(next)));
   };
   const submission = useExploreSubmission(query, patch =>
@@ -103,32 +104,6 @@ export function useExplorePageController() {
     openPath: (path: string) => {
       void navigate(path);
     }
-  };
-}
-
-const contextFields = [
-  'collectorId',
-  'serviceName',
-  'serviceNamespace',
-  'environment',
-  'instance',
-  'endpoint'
-] as const;
-
-function mergeContextChanges(context: QueryContext, changes: ExploreQueryPatch): ExploreQueryPatch {
-  if (!contextFields.some(field => Object.hasOwn(changes, field))) return changes;
-  const patch = Object.fromEntries(
-    contextFields.flatMap(field => (Object.hasOwn(changes, field) ? [[field, changes[field]]] : []))
-  ) as Partial<QueryContext>;
-  const next = mergeQueryContext(context, patch);
-  return {
-    ...changes,
-    collectorId: next.collectorId,
-    serviceName: next.serviceName,
-    serviceNamespace: next.serviceNamespace,
-    environment: next.environment,
-    instance: next.instance,
-    endpoint: next.endpoint
   };
 }
 

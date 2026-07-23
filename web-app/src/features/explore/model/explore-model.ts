@@ -25,7 +25,14 @@ import {
 } from './explore-query';
 
 import { applicationRoutePaths } from '@/shared/navigation/app-paths';
-import { parseQueryContext, writeQueryContext, type ExactTimeWindow, type QueryContext } from '@/shared/query-context';
+import {
+  mergeQueryContext,
+  parseQueryContext,
+  QUERY_CONTEXT_FIELDS,
+  writeQueryContext,
+  type ExactTimeWindow,
+  type QueryContext
+} from '@/shared/query-context';
 
 export {
   exploreHandoffState,
@@ -136,6 +143,25 @@ export function mergeExploreQuery(query: ExploreQuery, changes: ExploreQueryPatc
     signal: changes.signal ?? query.signal,
     timeRange: changes.timeRange ?? query.timeRange
   });
+}
+
+const exploreContextFields = Object.values(QUERY_CONTEXT_FIELDS);
+
+export function mergeExploreContextChanges(context: QueryContext, changes: ExploreQueryPatch): ExploreQueryPatch {
+  if (!exploreContextFields.some(field => Object.hasOwn(changes, field))) return changes;
+  const patch = Object.fromEntries(
+    exploreContextFields.flatMap(field => (Object.hasOwn(changes, field) ? [[field, changes[field]]] : []))
+  ) as Partial<QueryContext>;
+  const next = mergeQueryContext(context, patch);
+  return {
+    ...changes,
+    collectorId: next.collectorId,
+    serviceName: next.serviceName,
+    serviceNamespace: next.serviceNamespace,
+    environment: next.environment,
+    instance: next.instance,
+    endpoint: next.endpoint
+  };
 }
 
 export function buildCrossSignalPath(

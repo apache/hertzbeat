@@ -23,6 +23,8 @@ import {
   buildCrossSignalPath,
   buildExplorePath,
   exploreEvidenceScopeKey,
+  exploreQueryContext,
+  mergeExploreContextChanges,
   mergeExploreQuery,
   type TraceExploreQuery
 } from '../model/explore-model';
@@ -59,11 +61,12 @@ export function useTraceDetailController(query: TraceExploreQuery, openPath: (pa
   };
   const openRelatedMetrics = () => {
     if (state.kind !== 'ready') return;
+    const serviceName = state.selected?.serviceName ?? state.detail.serviceName ?? undefined;
     openPath(
       buildExplorePath(
         mergeExploreQuery(query, {
           signal: 'metrics',
-          serviceName: state.selected?.serviceName ?? state.detail.serviceName ?? undefined,
+          ...mergeExploreContextChanges(exploreQueryContext(query), { serviceName }),
           query: undefined,
           traceId: undefined,
           pageIndex: undefined

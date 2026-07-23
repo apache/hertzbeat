@@ -60,6 +60,41 @@ describe('Trace detail controller', () => {
     );
   });
 
+  it('preserves full context for trace logs and clears downstream identity when a span changes the metric service', async () => {
+    api.loadTraceDetail.mockResolvedValue(traceDetail('trace-1'));
+    const openPath = vi.fn();
+    const view = renderController(openPath);
+    const scopedQuery: TraceExploreQuery = {
+      signal: 'traces',
+      timeRange: 'last-30m',
+      collectorId: 'collector-east',
+      serviceName: 'checkout',
+      serviceNamespace: 'commerce',
+      environment: 'prod',
+      instance: 'checkout-7d9',
+      endpoint: '/checkout',
+      start: 1_000,
+      end: 2_000
+    };
+    view.rerender({ query: scopedQuery });
+    act(() => view.result.current.openTrace('trace-1'));
+    await waitFor(() => expect(view.result.current.state.kind).toBe('ready'));
+
+    act(() => view.result.current.openRelatedLogs());
+    expect(openPath).toHaveBeenLastCalledWith(
+      '/explore?signal=logs&timeRange=last-30m&collectorId=collector-east&serviceName=checkout' +
+        '&serviceNamespace=commerce&environment=prod&instance=checkout-7d9&endpoint=%2Fcheckout' +
+        '&traceId=trace-1&start=1000&end=2000'
+    );
+
+    act(() => view.result.current.selectSpan('span-2'));
+    act(() => view.result.current.openRelatedMetrics());
+    expect(openPath).toHaveBeenLastCalledWith(
+      '/explore?signal=metrics&timeRange=last-30m&collectorId=collector-east&serviceName=payments' +
+        '&start=1000&end=2000'
+    );
+  });
+
   it.each([
     ['missing', async () => new (await import('../model/explore-signal-contract')).ExploreSignalMissingError()],
     [
