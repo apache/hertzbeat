@@ -19,6 +19,9 @@ package org.apache.hertzbeat.manager.service.entity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -157,11 +160,9 @@ class EntityIntegrationHintServiceTest {
                 "direct",
                 false,
                 Map.of("service.name", List.of("checkout-api")));
-        when(entityMonitorQueryService.findMonitor(502L)).thenReturn(Optional.of(monitor502));
-        when(entityIdentityResolutionService.resolveMonitorBindingCandidates(monitor502))
-                .thenReturn(List.of(candidate));
-        when(entityMonitorBindService.findMonitorBindsByMonitorId(502L)).thenReturn(List.of());
-        when(entityMonitorQueryService.findMonitor(503L)).thenReturn(Optional.empty());
+        when(entityMonitorQueryService.findMonitorsByIds(List.of(502L, 503L))).thenReturn(List.of(monitor502));
+        when(entityIdentityResolutionService.resolveMonitorBindingCandidates(List.of(monitor502)))
+                .thenReturn(Map.of(502L, List.of(candidate)));
 
         Map<Long, List<EntityMonitorBindingCandidate>> candidates =
                 integrationHintService.getMonitorBindingCandidates(Arrays.asList(502L, 503L, 502L, null, -1L));
@@ -169,5 +170,9 @@ class EntityIntegrationHintServiceTest {
         assertEquals(List.of(502L, 503L), List.copyOf(candidates.keySet()));
         assertEquals(List.of(candidate), candidates.get(502L));
         assertTrue(candidates.get(503L).isEmpty());
+        verify(entityMonitorQueryService).findMonitorsByIds(List.of(502L, 503L));
+        verify(entityMonitorQueryService, never()).findMonitor(anyLong());
+        verify(entityIdentityResolutionService).resolveMonitorBindingCandidates(List.of(monitor502));
+        verify(entityIdentityResolutionService, never()).resolveMonitorBindingCandidates(monitor502);
     }
 }

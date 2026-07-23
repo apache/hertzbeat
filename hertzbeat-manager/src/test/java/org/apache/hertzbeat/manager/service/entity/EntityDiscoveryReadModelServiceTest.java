@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -132,7 +132,7 @@ class EntityDiscoveryReadModelServiceTest {
         assertEquals(0, result.totalElements());
         assertEquals(0, result.totalPages());
         assertEquals(List.of(), result.content());
-        verify(observeEntityService).getMonitorBindingCandidates(List.of());
+        verifyNoInteractions(observeEntityService);
     }
 
     @Test

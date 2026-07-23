@@ -38,6 +38,8 @@ public interface EntityMonitorBindDao extends JpaRepository<EntityMonitorBind, L
 
     List<EntityMonitorBind> findAllByMonitorId(Long monitorId);
 
+    List<EntityMonitorBind> findAllByMonitorIdInOrderByMonitorIdAscIdAsc(Collection<Long> monitorIds);
+
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM EntityMonitorBind bind WHERE bind.entityId = :entityId")
     void deleteAllByEntityId(@Param("entityId") Long entityId);

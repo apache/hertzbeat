@@ -67,7 +67,9 @@ public class EntityDiscoveryReadModelService {
                     .distinct()
                     .toList();
             Map<Long, List<EntityMonitorBindingCandidate>> candidates =
-                    observeEntityService.getMonitorBindingCandidates(monitorIds);
+                    monitorIds.isEmpty()
+                            ? Collections.emptyMap()
+                            : observeEntityService.getMonitorBindingCandidates(monitorIds);
             Map<Long, List<EntityMonitorBindingCandidate>> safeCandidates =
                     candidates == null ? Collections.emptyMap() : candidates;
             List<EntityDiscoveryReadModel.DiscoveryRow> content = monitors.stream()

@@ -289,4 +289,66 @@ class EntityIdentityResolutionServiceTest {
         assertEquals(0, identityResolutionService.defaultIdentityPriority("http.route"));
         assertEquals(0, identityResolutionService.defaultIdentityPriority("trace_id"));
     }
+
+    @Test
+    void resolveMonitorBindingCandidatesBatchesPageIdentityBindAndWorkspaceReads() {
+        Monitor checkout = Monitor.builder()
+                .id(601L)
+                .app("springboot3")
+                .name("checkout-api")
+                .labels(Map.of("service.name", "checkout-api"))
+                .build();
+        Monitor inventory = Monitor.builder()
+                .id(602L)
+                .app("springboot3")
+                .name("inventory-api")
+                .labels(Map.of("service.name", "inventory-api"))
+                .build();
+        EntityIdentity checkoutIdentity = EntityIdentity.builder()
+                .entityId(701L)
+                .identityKey("service.name")
+                .identityValue("checkout-api")
+                .normalizedValue("checkout-api")
+                .priority(100)
+                .build();
+        EntityIdentity inventoryIdentity = EntityIdentity.builder()
+                .entityId(702L)
+                .identityKey("service.name")
+                .identityValue("inventory-api")
+                .normalizedValue("inventory-api")
+                .priority(100)
+                .build();
+        EntityMonitorBind checkoutBind = EntityMonitorBind.builder()
+                .monitorId(601L)
+                .entityId(701L)
+                .build();
+        EntityMonitorBind unmatchedInventoryBind = EntityMonitorBind.builder()
+                .monitorId(602L)
+                .entityId(703L)
+                .build();
+        when(entityIdentityReadModelService.findMatchingIdentities(anySet(), anySet()))
+                .thenReturn(List.of(checkoutIdentity, inventoryIdentity));
+        when(entityMonitorBindService.findMonitorBindsByMonitorIds(List.of(601L, 602L)))
+                .thenReturn(Map.of(601L, List.of(checkoutBind), 602L, List.of(unmatchedInventoryBind)));
+        when(entityWorkspaceAccessService.findAccessibleEntitiesByIdsForRequestWorkspace(Set.of(701L, 702L, 703L)))
+                .thenReturn(List.of(
+                        ObserveEntity.builder().id(701L).name("checkout-api").type("service").build(),
+                        ObserveEntity.builder().id(702L).name("inventory-api").type("service").build(),
+                        ObserveEntity.builder().id(703L).name("bound-inventory").type("service").build()));
+
+        Map<Long, List<EntityMonitorBindingCandidate>> result =
+                identityResolutionService.resolveMonitorBindingCandidates(List.of(checkout, inventory));
+
+        assertEquals(List.of(601L, 602L), List.copyOf(result.keySet()));
+        assertEquals(1, result.get(601L).size());
+        assertTrue(result.get(601L).getFirst().isAlreadyBound());
+        assertEquals(2, result.get(602L).size());
+        assertEquals("direct", result.get(602L).getFirst().getRecommendation());
+        assertEquals("already_bound", result.get(602L).get(1).getRecommendation());
+        verify(entityIdentityReadModelService).findMatchingIdentities(anySet(), anySet());
+        verify(entityMonitorBindService).findMonitorBindsByMonitorIds(List.of(601L, 602L));
+        verify(entityMonitorBindService, never()).findMonitorBindsByMonitorId(org.mockito.ArgumentMatchers.anyLong());
+        verify(entityWorkspaceAccessService)
+                .findAccessibleEntitiesByIdsForRequestWorkspace(Set.of(701L, 702L, 703L));
+    }
 }

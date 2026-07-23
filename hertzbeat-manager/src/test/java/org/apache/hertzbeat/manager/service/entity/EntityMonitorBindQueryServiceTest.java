@@ -97,6 +97,30 @@ class EntityMonitorBindQueryServiceTest {
     }
 
     @Test
+    void findMonitorBindsByMonitorIdsBatchesAndGroupsPersistedBinds() {
+        List<Long> monitorIds = List.of(501L, 502L);
+        EntityMonitorBind firstBind = EntityMonitorBind.builder()
+                .id(402L)
+                .entityId(302L)
+                .monitorId(501L)
+                .build();
+        EntityMonitorBind secondBind = EntityMonitorBind.builder()
+                .id(403L)
+                .entityId(303L)
+                .monitorId(502L)
+                .build();
+        when(entityMonitorBindDao.findAllByMonitorIdInOrderByMonitorIdAscIdAsc(monitorIds))
+                .thenReturn(List.of(firstBind, secondBind));
+
+        Map<Long, List<EntityMonitorBind>> result =
+                entityMonitorBindQueryService.findMonitorBindsByMonitorIds(monitorIds);
+
+        assertEquals(List.of(firstBind), result.get(501L));
+        assertEquals(List.of(secondBind), result.get(502L));
+        verify(entityMonitorBindDao).findAllByMonitorIdInOrderByMonitorIdAscIdAsc(monitorIds);
+    }
+
+    @Test
     void findMonitorBindsByMonitorIdReturnsEmptyWithoutDaoLookupWhenMonitorIdMissing() {
         assertEquals(List.of(), entityMonitorBindQueryService.findMonitorBindsByMonitorId(null));
         verifyNoInteractions(entityMonitorBindDao);
