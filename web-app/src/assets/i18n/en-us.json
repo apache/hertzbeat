@@ -136,6 +136,17 @@
       }
     },
     "explore": { "metrics": "Explore metrics", "logs": "Explore logs" },
+    "delete": {
+      "action": "Delete resource",
+      "title": "Delete resource “{{name}}”?",
+      "description": "Deleting this catalog resource removes its recognition evidence, monitor associations, and relationships from the catalog. It does not delete monitored targets or telemetry data.",
+      "failure": {
+        "permission": "You do not have permission to delete this resource.",
+        "validation": "Resource deletion was rejected. Refresh and try again.",
+        "unavailable": "Deletion is temporarily unavailable. Try again later.",
+        "error": "The resource could not be deleted. Try again."
+      }
+    },
     "editor": {
       "addTitle": "Add resource",
       "editTitle": "Edit resource",

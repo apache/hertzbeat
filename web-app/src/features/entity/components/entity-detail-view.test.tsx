@@ -95,12 +95,39 @@ describe('EntityDetailView', () => {
     expect(within(evidence).getByText(i18n.t('entity.missing.evidence'))).toBeInTheDocument();
     expect(within(evidence).queryByText('0')).not.toBeInTheDocument();
   });
+
+  it('offers resource deletion and renders only localized redacted failures', () => {
+    const remove = vi.fn();
+    renderView(
+      { kind: 'ready', detail: { entity, identities: [], boundMonitors: [], relations: [] } },
+      () => undefined,
+      remove,
+      false,
+      'permission'
+    );
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('entity.delete.action') }));
+    expect(remove).toHaveBeenCalledOnce();
+    expect(screen.getByText(i18n.t('entity.delete.failure.permission'))).toBeInTheDocument();
+    expect(i18n.t('entity.delete.description')).toContain(
+      'recognition evidence, monitor associations, and relationships'
+    );
+    expect(i18n.t('entity.delete.description')).toContain('does not delete monitored targets or telemetry data');
+  });
 });
 
-function renderView(evidence: Parameters<typeof EntityDetailView>[0]['state']['evidence'], explore = () => undefined) {
+function renderView(
+  evidence: Parameters<typeof EntityDetailView>[0]['state']['evidence'],
+  explore = () => undefined,
+  remove = () => undefined,
+  deleting = false,
+  deleteFailure?: 'permission' | 'validation' | 'unavailable' | 'error'
+) {
   return render(
     <I18nextProvider i18n={i18n}>
-      <EntityDetailView state={{ evidence }} actions={{ back: () => undefined, edit: () => undefined, explore }} />
+      <EntityDetailView
+        state={{ evidence, deleting, ...(deleteFailure ? { deleteFailure } : {}) }}
+        actions={{ back: () => undefined, edit: () => undefined, explore, remove }}
+      />
     </I18nextProvider>
   );
 }

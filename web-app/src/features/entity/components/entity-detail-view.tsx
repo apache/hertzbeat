@@ -13,8 +13,12 @@ export function EntityDetailView({
   state,
   actions
 }: {
-  state: { evidence: EntityDetailEvidence };
-  actions: { back: () => void; edit: () => void; explore: (signal: EntityExploreSignal) => void };
+  state: {
+    evidence: EntityDetailEvidence;
+    deleting: boolean;
+    deleteFailure?: 'permission' | 'validation' | 'unavailable' | 'error';
+  };
+  actions: { back: () => void; edit: () => void; explore: (signal: EntityExploreSignal) => void; remove: () => void };
 }) {
   const { t } = useTranslation();
   const evidence = state.evidence;
@@ -27,15 +31,17 @@ export function EntityDetailView({
   if (evidence.kind === 'missing') return <Empty description={t('common.notFound.description')} />;
   if (evidence.kind === 'unavailable') return <Alert showIcon type="warning" message={t('common.unavailable')} />;
   if (evidence.kind === 'error') return <Alert showIcon type="error" message={t('common.routeError.description')} />;
-  return <ReadyEntityDetail detail={evidence.detail} actions={actions} />;
+  return <ReadyEntityDetail detail={evidence.detail} state={state} actions={actions} />;
 }
 
 function ReadyEntityDetail({
   detail,
+  state,
   actions
 }: {
   detail: Extract<EntityDetailEvidence, { kind: 'ready' }>['detail'];
-  actions: { back: () => void; edit: () => void; explore: (signal: EntityExploreSignal) => void };
+  state: { deleting: boolean; deleteFailure?: 'permission' | 'validation' | 'unavailable' | 'error' };
+  actions: { back: () => void; edit: () => void; explore: (signal: EntityExploreSignal) => void; remove: () => void };
 }) {
   const { t } = useTranslation();
   const signals = entityExploreSignals(detail);
@@ -50,6 +56,9 @@ function ReadyEntityDetail({
           <Button type="primary" onClick={actions.edit}>
             {t('common.edit')}
           </Button>
+          <Button danger disabled={state.deleting} loading={state.deleting} onClick={actions.remove}>
+            {t('entity.delete.action')}
+          </Button>
           {signals.map(signal => (
             <Button key={signal} onClick={() => actions.explore(signal)}>
               {t(`entity.explore.${signal}`)}
@@ -58,6 +67,9 @@ function ReadyEntityDetail({
           <Button onClick={actions.back}>{t('common.back')}</Button>
         </Space>
       </header>
+      {state.deleteFailure ? (
+        <Alert showIcon type="error" message={t(`entity.delete.failure.${state.deleteFailure}`)} />
+      ) : null}
       <EntityDetailMetadata detail={detail} />
       <EntityEvidenceLists detail={detail} />
     </div>

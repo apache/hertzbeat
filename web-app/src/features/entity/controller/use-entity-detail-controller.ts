@@ -1,9 +1,18 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { skipToken, useQuery } from '@tanstack/react-query';
+import { skipToken, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { App } from 'antd';
+import { useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
-import { classifyEntityDetailError, loadEntityDetail } from '../api/entity-api';
+import {
+  classifyEntityDeleteError,
+  classifyEntityDetailError,
+  deleteEntity,
+  loadEntityDetail
+} from '../api/entity-api';
+import type { EntityRecord } from '../model/entity-contract';
 import {
   buildEntityEditRoute,
   buildEntityExplorePath,
@@ -24,8 +33,12 @@ export function useEntityDetailController() {
     retry: false
   });
   const evidence = resolveDetail(id, result.isPending, result.error, result.data);
+  const deletion = useEntityDeletion(
+    evidence.kind === 'ready' ? evidence.detail.entity : undefined,
+    params.get('returnTo')
+  );
   return {
-    state: { evidence },
+    state: { evidence, ...deletion.state },
     actions: {
       back: () => {
         void navigate(safeEntityReturnTo(params.get('returnTo')));
@@ -36,9 +49,76 @@ export function useEntityDetailController() {
       },
       explore: (signal: EntityExploreSignal) => {
         if (evidence.kind === 'ready') void navigate(buildEntityExplorePath(evidence.detail, signal));
-      }
+      },
+      remove: deletion.remove
     }
   };
+}
+
+function useEntityDeletion(entity: EntityRecord | undefined, returnTo: string | null) {
+  const { t } = useTranslation();
+  const { modal } = App.useApp();
+  const client = useQueryClient();
+  const navigate = useNavigate();
+  const started = useRef(false);
+  const deletion = useMutation({
+    mutationFn: deleteExistingEntity,
+    onSuccess: async (_result, deletedId) => {
+      await invalidateDeletedEntity(client, deletedId);
+      void navigate(safeEntityReturnTo(returnTo), { replace: true });
+    }
+  });
+  const remove = () => {
+    if (!entity || deletion.isPending || started.current) return;
+    deletion.reset();
+    modal.confirm({
+      title: t('entity.delete.title', { name: entity.displayName || entity.name }),
+      content: t('entity.delete.description'),
+      okText: t('entity.delete.action'),
+      okButtonProps: { danger: true },
+      cancelText: t('common.cancel'),
+      onOk: async () => {
+        if (started.current) return;
+        started.current = true;
+        try {
+          await deletion.mutateAsync(entity.id);
+        } catch {
+          // The mutation exposes only a localized failure class after the confirmation closes.
+        } finally {
+          started.current = false;
+        }
+      }
+    });
+  };
+  return {
+    state: {
+      deleting: deletion.isPending,
+      ...(deletion.error ? { deleteFailure: visibleDeleteFailure(deletion.error) } : {})
+    },
+    remove
+  };
+}
+
+function visibleDeleteFailure(error: Error) {
+  const failure = classifyEntityDeleteError(error);
+  return failure === 'missing' ? ('error' as const) : failure;
+}
+
+async function deleteExistingEntity(id: number) {
+  try {
+    await deleteEntity(id);
+  } catch (error) {
+    if (classifyEntityDeleteError(error) === 'missing') return;
+    throw error;
+  }
+}
+
+function invalidateDeletedEntity(client: ReturnType<typeof useQueryClient>, id: number) {
+  return Promise.all([
+    client.invalidateQueries({ queryKey: entityQueryKeys.lists(), refetchType: 'none' }),
+    client.invalidateQueries({ queryKey: entityQueryKeys.detail(id), refetchType: 'none' }),
+    client.invalidateQueries({ queryKey: entityQueryKeys.editor(id), refetchType: 'none' })
+  ]);
 }
 
 function resolveDetail(

@@ -125,6 +125,17 @@
       }
     },
     "explore": { "metrics": "查詢指標", "logs": "查詢日誌" },
+    "delete": {
+      "action": "刪除資源",
+      "title": "刪除資源「{{name}}」？",
+      "description": "刪除此目錄資源會移除目錄中的識別依據、監控關聯和資源關係，但不會刪除受監控的目標或遙測資料。",
+      "failure": {
+        "permission": "你沒有刪除此資源的權限。",
+        "validation": "刪除資源的要求遭到拒絕，請重新整理後再試。",
+        "unavailable": "刪除服務暫時無法使用，請稍後再試。",
+        "error": "無法刪除資源，請再試一次。"
+      }
+    },
     "editor": {
       "addTitle": "新增資源",
       "editTitle": "編輯資源",

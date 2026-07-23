@@ -125,6 +125,17 @@
       }
     },
     "explore": { "metrics": "查询指标", "logs": "查询日志" },
+    "delete": {
+      "action": "删除资源",
+      "title": "删除资源“{{name}}”？",
+      "description": "删除此目录资源会移除目录中的识别依据、监控关联和资源关系，但不会删除被监控的目标或遥测数据。",
+      "failure": {
+        "permission": "你没有删除此资源的权限。",
+        "validation": "删除资源的请求被拒绝，请刷新后重试。",
+        "unavailable": "删除服务暂时不可用，请稍后重试。",
+        "error": "资源删除失败，请重试。"
+      }
+    },
     "editor": {
       "addTitle": "添加资源",
       "editTitle": "编辑资源",

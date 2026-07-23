@@ -136,6 +136,17 @@
       }
     },
     "explore": { "metrics": "Explorar métricas", "logs": "Explorar logs" },
+    "delete": {
+      "action": "Excluir recurso",
+      "title": "Excluir o recurso “{{name}}”?",
+      "description": "A exclusão deste recurso do catálogo remove suas evidências de identificação, associações de monitores e relações do catálogo. Ela não exclui os alvos monitorados nem os dados de telemetria.",
+      "failure": {
+        "permission": "Você não tem permissão para excluir este recurso.",
+        "validation": "A exclusão do recurso foi rejeitada. Atualize e tente novamente.",
+        "unavailable": "A exclusão está temporariamente indisponível. Tente novamente mais tarde.",
+        "error": "Não foi possível excluir o recurso. Tente novamente."
+      }
+    },
     "editor": {
       "addTitle": "Adicionar recurso",
       "editTitle": "Editar recurso",

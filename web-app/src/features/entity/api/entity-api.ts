@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { ApiMessageError, apiMessageGet } from '@/core/http/api-message';
+import { ApiMessageError, apiMessageDelete, apiMessageGet } from '@/core/http/api-message';
 import { EntityContractError, type EntityQuery } from '../model/entity-contract';
 import { writeEntityQuery } from '../model/entity-query';
 import { parseEntityDetail, parseEntityPage } from './entity-schema';
@@ -34,6 +34,10 @@ export async function loadEntityDetail(id: number, signal?: AbortSignal) {
   return detail;
 }
 
+export async function deleteEntity(id: number) {
+  await apiMessageDelete(`/api/entities/${id}`);
+}
+
 export function classifyEntityReadError(error: unknown): 'unavailable' | 'error' {
   if (error instanceof EntityContractError) return 'error';
   if (
@@ -53,4 +57,16 @@ export function classifyEntityDetailError(error: unknown): 'missing' | 'unavaila
     return 'missing';
   }
   return classifyEntityReadError(error);
+}
+
+export function classifyEntityDeleteError(
+  error: unknown
+): 'missing' | 'permission' | 'validation' | 'unavailable' | 'error' {
+  if (error instanceof ApiMessageError) {
+    if (error.status === 404 || (error.status === 200 && error.code === 15)) return 'missing';
+    if (error.status === 403) return 'permission';
+    if (error.code === 1 || [400, 409, 422].includes(error.status ?? 0)) return 'validation';
+    if (error.cause !== undefined || [0, 502, 503, 504].includes(error.status ?? 0)) return 'unavailable';
+  }
+  return 'error';
 }

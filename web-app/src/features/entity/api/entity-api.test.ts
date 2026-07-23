@@ -2,14 +2,22 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { apiMessageGet } = vi.hoisted(() => ({ apiMessageGet: vi.fn() }));
+const { apiMessageDelete, apiMessageGet } = vi.hoisted(() => ({ apiMessageDelete: vi.fn(), apiMessageGet: vi.fn() }));
 vi.mock('@/core/http/api-message', async importOriginal => ({
   ...(await importOriginal<typeof import('@/core/http/api-message')>()),
+  apiMessageDelete,
   apiMessageGet
 }));
 
+import { ApiMessageError } from '@/core/http/api-message';
 import { EntityContractError, type EntityQuery } from '../model/entity-contract';
-import { buildEntityListPath, loadEntityDetail, loadEntities } from './entity-api';
+import {
+  buildEntityListPath,
+  classifyEntityDeleteError,
+  deleteEntity,
+  loadEntityDetail,
+  loadEntities
+} from './entity-api';
 
 const query: EntityQuery = {
   search: 'checkout',
@@ -124,5 +132,23 @@ describe('entity API', () => {
     await expect(loadEntities(query)).rejects.toBeInstanceOf(EntityContractError);
     apiMessageGet.mockResolvedValueOnce({ entity: { entity: { ...entity, id: 0 } } });
     await expect(loadEntityDetail(7)).rejects.toBeInstanceOf(EntityContractError);
+  });
+
+  it('deletes exactly one resource through the shared envelope transport', async () => {
+    apiMessageDelete.mockResolvedValue(undefined);
+    await expect(deleteEntity(7)).resolves.toBeUndefined();
+    expect(apiMessageDelete).toHaveBeenCalledWith('/api/entities/7');
+  });
+
+  it.each([
+    [new ApiMessageError('private permission detail', { status: 403 }), 'permission'],
+    [new ApiMessageError('private validation detail', { code: 1, status: 200 }), 'validation'],
+    [new ApiMessageError('private conflict detail', { status: 409 }), 'validation'],
+    [new ApiMessageError('private unavailable detail', { status: 503 }), 'unavailable'],
+    [new ApiMessageError('private missing detail', { status: 404 }), 'missing'],
+    [new ApiMessageError('private deleted detail', { code: 15, status: 200 }), 'missing'],
+    [new Error('private generic detail'), 'error']
+  ] as const)('classifies delete failures without exposing backend text', (failure, expected) => {
+    expect(classifyEntityDeleteError(failure)).toBe(expected);
   });
 });
