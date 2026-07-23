@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useMemo, type PropsWithChildren } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 
 import {
   clearQueryContext,
@@ -19,6 +19,8 @@ import { QueryContextState, type QueryContextValue } from './query-context-conte
 
 export function QueryContextProvider({ children }: PropsWithChildren) {
   const [params, setParams] = useSearchParams();
+  const location = useLocation();
+  const routeState = location.state as unknown;
   const context = useMemo(() => parseQueryContext(params), [params]);
   const canonical = useMemo(() => writeQueryContext(params, context), [context, params]);
   const currentSearch = params.toString();
@@ -27,8 +29,8 @@ export function QueryContextProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     if (currentSearch === canonicalSearch) return;
     // Router remains the only history owner; this replace only removes forbidden or non-canonical fields.
-    setParams(canonical, { replace: true });
-  }, [canonical, canonicalSearch, currentSearch, setParams]);
+    setParams(canonical, { replace: true, state: routeState });
+  }, [canonical, canonicalSearch, currentSearch, routeState, setParams]);
 
   const value = useMemo<QueryContextValue>(
     () => ({

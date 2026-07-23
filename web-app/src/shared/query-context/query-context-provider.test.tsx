@@ -43,9 +43,36 @@ describe('QueryContextProvider', () => {
     await waitFor(() => expect(routed.router.state.location.search).toBe('?signal=metrics&collectorId=west'));
     expect(JSON.stringify(routed.current())).not.toContain('localStorage');
   });
+
+  it('canonicalizes once without losing route state or duplicating history', async () => {
+    const routeState = { instrumentationStage: 4, returnTo: 'instrumentation-scope' };
+    const routed = renderProvider(
+      [
+        '/explore?signal=logs&collectorId=previous',
+        {
+          pathname: '/explore',
+          search: '?signal=metrics&serviceName=checkout&collectorId=east&token=must-not-survive',
+          state: routeState
+        }
+      ],
+      1
+    );
+
+    await waitFor(() => expect(routed.router.state.location.search).not.toContain('token'));
+    expect(routed.router.state.location.state).toEqual(routeState);
+    const canonicalLocation = routed.router.state.location;
+    await act(async () => void (await Promise.resolve()));
+    expect(routed.router.state.location).toEqual(canonicalLocation);
+
+    await act(async () => routed.router.navigate(-1));
+    await waitFor(() => expect(routed.router.state.location.search).toContain('collectorId=previous'));
+  });
 });
 
-function renderProvider(entries: string[], initialIndex = 0) {
+function renderProvider(
+  entries: Array<string | { pathname: string; search: string; state: unknown }>,
+  initialIndex = 0
+) {
   let value: ReturnType<typeof useQueryContext> | undefined;
   function Probe() {
     value = useQueryContext();

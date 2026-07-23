@@ -17,6 +17,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { useState } from 'react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -25,11 +26,13 @@ import { buildDetectionRequest, buildGuideRequest } from '../model/instrumentati
 
 const api = vi.hoisted(() => ({
   loadCatalog: vi.fn(),
-  loadCollectors: vi.fn()
+  loadCollectors: vi.fn(),
+  renderGuide: vi.fn()
 }));
 vi.mock('../api/instrumentation-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/instrumentation-api')>()),
-  loadInstrumentationCatalog: api.loadCatalog
+  loadInstrumentationCatalog: api.loadCatalog,
+  renderInstrumentationGuide: api.renderGuide
 }));
 vi.mock('../api/collector-api', async importOriginal => ({
   ...(await importOriginal<typeof import('../api/collector-api')>()),
@@ -39,7 +42,10 @@ vi.mock('../api/collector-api', async importOriginal => ({
 import { useInstrumentationPageController } from './use-instrumentation-page-controller';
 
 describe('instrumentation page context synchronization', () => {
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+  });
 
   it('keeps a controlled service name through query-context persistence and restore', async () => {
     api.loadCatalog.mockResolvedValue(catalog);
@@ -108,11 +114,44 @@ describe('instrumentation page context synchronization', () => {
     );
     expect(screen.getByTestId('request-context')).toBeEmptyDOMElement();
   });
+
+  it('keeps a resolved guide and advances the routed flow after rendering', async () => {
+    api.loadCatalog.mockResolvedValue(catalog);
+    api.loadCollectors.mockResolvedValue([collector]);
+    api.renderGuide.mockResolvedValue(guide);
+    const router = renderContextProbe('&serviceName=checkout-api&serviceNamespace=commerce');
+    const routedStages: unknown[] = [];
+    const unsubscribe = router.subscribe(state => routedStages.push(state.location.state));
+    await waitFor(() => expect(screen.getByTestId('catalog-state')).toHaveTextContent('ready'));
+
+    fireEvent.change(screen.getByLabelText('api-token'), { target: { value: 'memory-only-token' } });
+    await waitFor(() => expect(screen.getByLabelText('api-token')).toHaveValue('memory-only-token'));
+    expect(router.state.location.search).not.toMatch(/token|secret/i);
+
+    fireEvent.click(screen.getByRole('button', { name: 'render-guide' }));
+
+    await waitFor(() => expect(api.renderGuide).toHaveBeenCalledOnce());
+    await waitFor(() => expect(screen.getByTestId('render-outcome')).toHaveTextContent('resolved'));
+    expect(api.renderGuide.mock.calls[0]?.[0]).toMatchObject({
+      service: { name: 'checkout-api', namespace: 'commerce', environment: 'review' },
+      collector: { collectorId: 'main-default-collector' }
+    });
+    expect(JSON.stringify(api.renderGuide.mock.calls[0]?.[0])).not.toContain('memory-only-token');
+    unsubscribe();
+    expect(routedStages.length).toBeGreaterThan(0);
+    expect(routedStages.every(state => JSON.stringify(state) === '{"instrumentationStage":4}')).toBe(true);
+    expect(router.state.location.state).toEqual({ instrumentationStage: 4 });
+    expect(screen.getByTestId('flow-stage')).toHaveTextContent('4');
+    expect(screen.getByTestId('guide-state')).toHaveTextContent('ready');
+    expect(screen.getByTestId('guide-id')).toHaveTextContent('configure');
+    expect(router.state.location.search).not.toMatch(/token|secret/i);
+  });
 });
 
 function renderContextProbe(additionalContext = '') {
   function Probe() {
     const { setup } = useInstrumentationPageController();
+    const [renderOutcome, setRenderOutcome] = useState('idle');
     const requests =
       setup.contextMissing.length === 0
         ? {
@@ -123,6 +162,10 @@ function renderContextProbe(additionalContext = '') {
     return (
       <>
         <output data-testid="catalog-state">{setup.catalogPending ? 'loading' : 'ready'}</output>
+        <output data-testid="flow-stage">{setup.stage}</output>
+        <output data-testid="guide-state">{setup.guideState.status}</output>
+        <output data-testid="guide-id">{setup.guide?.steps[0]?.id ?? ''}</output>
+        <output data-testid="render-outcome">{renderOutcome}</output>
         <output data-testid="draft-context">{JSON.stringify(serviceContext(setup.draft))}</output>
         <output data-testid="request-context">{requests ? JSON.stringify(requests) : ''}</output>
         <input
@@ -140,6 +183,18 @@ function renderContextProbe(additionalContext = '') {
           value={setup.draft.serviceEnvironment}
           onChange={event => setup.setContext('serviceEnvironment', event.target.value)}
         />
+        <input aria-label="api-token" value={setup.token} onChange={event => setup.setToken(event.target.value)} />
+        <button
+          type="button"
+          onClick={() => {
+            void setup.renderGuide().then(
+              () => setRenderOutcome('resolved'),
+              () => setRenderOutcome('rejected')
+            );
+          }}
+        >
+          render-guide
+        </button>
       </>
     );
   }
@@ -227,11 +282,42 @@ const collector = {
   name: 'main-default-collector',
   online: true,
   address: '127.0.0.1',
-  intake: { status: 'unavailable', errorCode: 'intake_not_advertised' }
+  intake: {
+    status: 'available',
+    schemaVersion: 1,
+    collectorId: 'main-default-collector',
+    gateway: 'collector',
+    capabilities: ['otlp_http_protobuf', 'otlp_grpc'],
+    otlpHttpEndpoint: 'https://collector.internal:4318',
+    otlpGrpcEndpoint: 'https://collector.internal:4317',
+    authorizationHeader: 'Authorization'
+  }
 } as const;
 const transientTarget = {
   collectorId: 'main-default-collector',
   otlpHttpEndpoint: 'http://collector.internal:4318',
   otlpGrpcEndpoint: 'http://collector.internal:4317',
   authorizationHeader: 'Authorization' as const
+};
+const guide = {
+  schemaVersion: 1,
+  selection: {
+    language: 'go',
+    framework: 'go_generic',
+    method: 'sdk',
+    environment: 'docker',
+    platform: 'linux_amd64'
+  },
+  signals: { metrics: 'supported', logs: 'preview', traces: 'supported' },
+  component,
+  secretPlaceholders: {},
+  steps: [
+    {
+      id: 'configure',
+      type: 'configure',
+      titleKey: 'instrumentation.step.configure',
+      executionLocationKey: 'instrumentation.location.application_environment',
+      snippets: []
+    }
+  ]
 };
