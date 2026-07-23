@@ -20,10 +20,14 @@ package org.apache.hertzbeat.common.util;
 import static org.apache.hertzbeat.common.util.AesUtil.aesDecode;
 import static org.apache.hertzbeat.common.util.AesUtil.aesEncode;
 import static org.apache.hertzbeat.common.util.AesUtil.isCiphertext;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Base64;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -43,10 +47,29 @@ class AesUtilTest {
     void testAesEncode() {
         String originalText = "This is a secret message";
         String encryptedText = aesEncode(originalText, VALID_KEY);
+        String secondEncryptedText = aesEncode(originalText, VALID_KEY);
         assertNotEquals(originalText, encryptedText);
+        assertNotEquals(encryptedText, secondEncryptedText);
+
+        byte[] encryptedPayload = Base64.getDecoder().decode(encryptedText);
+        byte[] secondEncryptedPayload = Base64.getDecoder().decode(secondEncryptedText);
+        assertArrayEquals(new byte[] {'H', 'B', 'A', '2'}, Arrays.copyOfRange(encryptedPayload, 0, 4));
+        assertFalse(Arrays.equals(
+                VALID_KEY.getBytes(StandardCharsets.UTF_8), Arrays.copyOfRange(encryptedPayload, 4, 20)));
+        assertFalse(Arrays.equals(
+                Arrays.copyOfRange(encryptedPayload, 4, 20),
+                Arrays.copyOfRange(secondEncryptedPayload, 4, 20)));
 
         String decryptedText = aesDecode(encryptedText, VALID_KEY);
         assertEquals(originalText, decryptedText);
+    }
+
+    @Test
+    void testLegacyCiphertextCanBeDecoded() {
+        String legacyCiphertext = "muJNZwhxg173v6EZAXb5TK8L5XlmDE5xmc9XTryH6Qk=";
+
+        assertEquals("This is a secret message", aesDecode(legacyCiphertext, VALID_KEY));
+        assertTrue(isCiphertext(legacyCiphertext, VALID_KEY));
     }
 
     @Test
