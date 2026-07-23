@@ -25,6 +25,7 @@ import { INSTRUMENTATION_SCHEMA_VERSION, type GuideSnippet } from '../model/inst
 import type { CollectorTarget, InstrumentationCollectorsState } from '../model/instrumentation-collector';
 import { instrumentationQueryKeys } from '../api/instrumentation-query-keys';
 import { validateFlowContext, type FlowStage } from '../model/instrumentation-flow';
+import { instrumentationProgressIdentity } from '../model/instrumentation-progress';
 import { buildInstrumentationSelectionOptions } from './instrumentation-selection-options';
 import { useInstrumentationCatalogController } from './use-instrumentation-catalog-controller';
 import { useInstrumentationContractRefresh } from './use-instrumentation-contract-refresh';
@@ -182,12 +183,13 @@ function usePersistInstrumentationDraft(
   draft: CatalogController['draft'],
   persistDraft: ProgressController['persistDraft']
 ) {
-  const persistedDraft = useRef<typeof draft | undefined>(undefined);
+  const persistedIdentity = useRef<string | undefined>(undefined);
+  const identity = instrumentationProgressIdentity(draft);
   useEffect(() => {
-    if (persistedDraft.current === draft) return;
-    persistedDraft.current = draft;
+    if (persistedIdentity.current === identity) return;
+    persistedIdentity.current = identity;
     persistDraft(draft);
-  }, [draft, persistDraft]);
+  }, [draft, identity, persistDraft]);
 }
 
 function useInstrumentationMismatchRecovery(

@@ -91,6 +91,16 @@ export function writeInstrumentationProgress(
   return params;
 }
 
+export function instrumentationProgressIdentity(draft: InstrumentationFlowDraft) {
+  return JSON.stringify([
+    draft.environment,
+    draft.platform,
+    draft.selection?.language,
+    draft.selection?.framework,
+    draft.selection?.method
+  ]);
+}
+
 function readStage(value: string | null): Extract<FlowStage, 1 | 2 | 3> {
   if (value === '2') return 2;
   if (value === '3') return 3;
