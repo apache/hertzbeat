@@ -452,7 +452,8 @@ button.timePolicy:hover {
   overflow-x: auto;
 }
 
-.content > * {
+:where(.content > *) {
+  grid-template-columns: minmax(0, 1fr);
   min-width: 0;
 }
 
