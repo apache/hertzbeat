@@ -9,6 +9,7 @@ export type {
   TopologyTimelineEvent
 } from './api/topology-schema';
 export { topologyQueryKeys } from './controller/topology-query-keys';
+export { useTopologyPageController } from './controller/use-topology-page-controller';
 export {
   TopologyContractError,
   parseTopologyQuery,
@@ -16,3 +17,10 @@ export {
   type TopologyFailure,
   type TopologyQuery
 } from './model/topology-model';
+export {
+  buildTopologyPresentation,
+  emptyTopologyInteraction,
+  type TopologyInteraction,
+  type TopologyMetricRow,
+  type TopologyPresentation
+} from './model/topology-view-model';
