@@ -36,7 +36,12 @@ import { LogOverviewStats, LogQueryOptions, LogService } from '../../../service/
 import { MemoryStorageService } from '../../../service/memory-storage.service';
 import { SignalContext } from '../../../service/observability.service';
 import { SignalNavigationComponent } from '../../observability/signal-navigation.component';
-import { moveSignalTimeRangeToNow, readSignalCapability, readSignalTimeRange, toSignalTimeContext } from '../../observability/signal-query-context';
+import {
+  moveSignalTimeRangeToNow,
+  readSignalCapability,
+  readSignalTimeRange,
+  toSignalTimeContext
+} from '../../observability/signal-query-context';
 import { SignalStorageGuideComponent } from '../../observability/signal-storage-guide.component';
 import { SignalTimeRangeComponent } from '../../observability/signal-time-range.component';
 import { LogStreamComponent } from '../log-stream/log-stream.component';
