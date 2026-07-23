@@ -11,6 +11,12 @@ export type {
 export { topologyQueryKeys } from './controller/topology-query-keys';
 export { useTopologyPageController } from './controller/use-topology-page-controller';
 export {
+  TopologyCanvas,
+  type TopologyCanvasHandle,
+  type TopologyCanvasProps,
+  type TopologyCanvasRuntimeState
+} from './components/topology-canvas';
+export {
   TopologyContractError,
   parseTopologyQuery,
   writeTopologyQuery,
