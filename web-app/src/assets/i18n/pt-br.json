@@ -36,7 +36,11 @@
   },
   "topology": {
     "title": "Topologia",
+    "context": {
+      "subtitle": "Evidências de relacionamento"
+    },
     "toolbar": {
+      "filter": "Filtrar",
       "focusEntity": "ID do recurso em foco",
       "depth": "Profundidade",
       "environment": "Ambiente",
@@ -63,6 +67,8 @@
       "runtimeFailure": "O renderizador do grafo está indisponível. A tabela continua acessível."
     },
     "table": {
+      "title": "Evidências de relacionamento",
+      "toggle": "Alternar evidências",
       "kind": "Tipo",
       "name": "Nome",
       "type": "Tipo / relação",
@@ -74,6 +80,19 @@
     "detail": {
       "title": "Detalhes da seleção",
       "none": "Selecione um nó ou uma aresta para inspecionar suas evidências.",
+      "identity": "Identidade",
+      "keyMetrics": "Métricas principais",
+      "upstream": "A montante ({{count}})",
+      "downstream": "A jusante ({{count}})",
+      "noRelations": "Nenhuma relação confirmada.",
+      "entityId": "ID do recurso",
+      "relationId": "ID da relação",
+      "firstSeen": "Visto primeiro",
+      "lastSeen": "Visto por último",
+      "openEntity": "Abrir recurso",
+      "querySignals": "Consultar sinais",
+      "openSourceEntity": "Abrir recurso de origem",
+      "querySourceSignals": "Consultar sinais de origem",
       "node": "Nó",
       "edge": "Aresta",
       "source": "Origem",

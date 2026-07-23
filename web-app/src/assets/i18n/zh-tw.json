@@ -36,7 +36,11 @@
   },
   "topology": {
     "title": "拓撲",
+    "context": {
+      "subtitle": "關係證據"
+    },
     "toolbar": {
+      "filter": "篩選",
       "focusEntity": "焦點資源 ID",
       "depth": "深度",
       "environment": "環境",
@@ -63,6 +67,8 @@
       "runtimeFailure": "圖形呈現器無法使用，表格證據仍可查看。"
     },
     "table": {
+      "title": "關係證據",
+      "toggle": "展開或收合證據",
       "kind": "類型",
       "name": "名稱",
       "type": "類型 / 關係",
@@ -74,6 +80,19 @@
     "detail": {
       "title": "選取詳情",
       "none": "選取節點或邊以檢查其證據。",
+      "identity": "身分資訊",
+      "keyMetrics": "關鍵指標",
+      "upstream": "上游（{{count}}）",
+      "downstream": "下游（{{count}}）",
+      "noRelations": "沒有已確認的關係。",
+      "entityId": "資源 ID",
+      "relationId": "關係 ID",
+      "firstSeen": "首次發現",
+      "lastSeen": "最後發現",
+      "openEntity": "開啟資源",
+      "querySignals": "查詢訊號",
+      "openSourceEntity": "開啟來源資源",
+      "querySourceSignals": "查詢來源訊號",
       "node": "節點",
       "edge": "邊",
       "source": "來源",

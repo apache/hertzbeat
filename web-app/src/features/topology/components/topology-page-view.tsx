@@ -1,13 +1,13 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Alert, Empty, Space, Spin, Statistic, Typography } from 'antd';
+import { Alert, Empty, Spin, Typography } from 'antd';
 import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { formatTopologyWindow } from '../model/topology-display';
 import type { TopologyPageActions, TopologyPageState } from '../model/topology-page-contract';
 import type { TopologyPresentation } from '../model/topology-view-model';
 import { TopologyCanvas, type TopologyCanvasHandle, type TopologyCanvasRuntimeState } from './topology-canvas';
+import { TopologyContextBand } from './topology-context-band';
 import { TopologyInspector } from './topology-detail-rail';
 import { TopologyMetricTable } from './topology-metric-table';
 import { TopologyToolbar } from './topology-toolbar';
@@ -39,10 +39,13 @@ export function TopologyPageView({
   const evidence = state.evidence;
   return (
     <div className={styles.page}>
-      <header className={styles.heading}>
-        <Typography.Title level={2}>{t('topology.title')}</Typography.Title>
-        {evidence.kind === 'ready' ? <TopologySummary state={state} /> : null}
-      </header>
+      {evidence.kind === 'ready' ? (
+        <TopologyContextBand presentation={evidence.presentation} query={state.query} />
+      ) : (
+        <header className={styles.heading}>
+          <Typography.Title level={2}>{t('topology.title')}</Typography.Title>
+        </header>
+      )}
       {state.query ? (
         <TopologyToolbar
           query={state.query}
@@ -104,13 +107,7 @@ function ReadyTopology({
   return (
     <>
       {state.refreshFailure ? <Alert showIcon type="warning" message={t('topology.evidence.refreshFailure')} /> : null}
-      {runtimeState.kind !== 'ready' ? (
-        <Alert
-          showIcon
-          type={runtimeState.kind === 'failure' ? 'error' : 'info'}
-          message={t(`topology.evidence.runtime${runtimeState.kind === 'failure' ? 'Failure' : 'Loading'}`)}
-        />
-      ) : null}
+      <TopologyRuntimeEvidence state={runtimeState} />
       <div className={workspaceClass}>
         <main className={styles.graphColumn}>
           <div className={styles.canvasFrame}>
@@ -139,6 +136,8 @@ function ReadyTopology({
           compact={compactInspector}
           presentation={presentation}
           interaction={interaction}
+          query={state.query}
+          actions={actions}
           onClose={actions.clearSelection}
         />
       </div>
@@ -146,19 +145,14 @@ function ReadyTopology({
   );
 }
 
-function TopologySummary({ state }: { state: TopologyPageViewProps['state'] }) {
-  const { i18n, t } = useTranslation();
-  if (state.evidence.kind !== 'ready') return null;
-  const { summary } = state.evidence.presentation;
-  const window = state.query?.window;
+function TopologyRuntimeEvidence({ state }: { state: TopologyCanvasRuntimeState }) {
+  const { t } = useTranslation();
+  if (state.kind === 'ready') return null;
   return (
-    <Space size="large">
-      <Statistic title={t('topology.summary.nodes')} value={summary.nodeCount} />
-      <Statistic title={t('topology.summary.edges')} value={summary.edgeCount} />
-      <Statistic
-        title={t('topology.summary.window')}
-        value={formatTopologyWindow(window, i18n.resolvedLanguage || i18n.language)}
-      />
-    </Space>
+    <Alert
+      showIcon
+      type={state.kind === 'failure' ? 'error' : 'info'}
+      message={t(`topology.evidence.runtime${state.kind === 'failure' ? 'Failure' : 'Loading'}`)}
+    />
   );
 }

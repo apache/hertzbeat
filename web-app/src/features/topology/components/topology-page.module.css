@@ -16,11 +16,69 @@
   margin: 0;
 }
 
+.contextBand {
+  display: flex;
+  min-height: 72px;
+  overflow: hidden;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius);
+  background: var(--ant-color-bg-container);
+}
+
+.contextTitle {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 180px;
+  padding: 12px 16px;
+}
+
+.contextTitle :global(.ant-typography) {
+  margin: 0;
+}
+
+.contextFacts {
+  display: flex;
+  flex: 0 1 auto;
+}
+
+.contextFact {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 112px;
+  padding: 10px 18px;
+  border-left: 1px solid var(--ant-color-border-secondary);
+}
+
+.contextFact:last-child {
+  min-width: 220px;
+}
+
+.toolbarSurface {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius);
+  background: var(--ant-color-bg-container);
+}
+
+.toolbarPrimary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .toolbar {
   display: grid;
-  grid-template-columns: 150px 120px repeat(3, minmax(130px, 1fr)) auto auto;
+  grid-template-columns: 150px 120px repeat(3, minmax(130px, 1fr)) auto;
   gap: 8px;
   align-items: center;
+  padding-top: 8px;
+  border-top: 1px solid var(--ant-color-border-secondary);
 }
 
 .toolbarActions {
@@ -31,9 +89,13 @@
 
 .workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 0;
   min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius);
+  background: var(--ant-color-bg-container);
 }
 
 .workspaceCompact {
@@ -43,29 +105,31 @@
 .graphColumn {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
   min-width: 0;
 }
 
 .canvasFrame {
-  height: 520px;
+  height: 620px;
   overflow: hidden;
-  border: 1px solid var(--ant-color-border-secondary);
-  border-radius: var(--ant-border-radius);
   background: var(--ant-color-bg-container);
 }
 
-.detailRail {
-  width: 340px;
-  min-height: 520px;
-  padding: 16px;
-  border: 1px solid var(--ant-color-border-secondary);
-  border-radius: var(--ant-border-radius);
+.evidenceSection {
+  border-top: 1px solid var(--ant-color-border-secondary);
   background: var(--ant-color-bg-container);
 }
 
-.detailRail :global(.ant-descriptions) {
-  margin-top: 12px;
+.evidenceHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 46px;
+  padding: 0 12px 0 16px;
+}
+
+.evidenceBody {
+  border-top: 1px solid var(--ant-color-border-secondary);
 }
 
 .centerEvidence {
@@ -84,11 +148,48 @@
   display: flex;
   justify-content: flex-end;
   width: 100%;
-  margin-top: 12px;
+  padding: 10px 12px;
 }
 
 @media (max-width: 1199px) {
   .toolbar {
     grid-template-columns: repeat(3, minmax(150px, 1fr));
+  }
+
+  .contextBand {
+    flex-direction: column;
+  }
+
+  .contextFacts {
+    border-top: 1px solid var(--ant-color-border-secondary);
+  }
+
+  .contextFact {
+    flex: 1;
+    border-left: 0;
+    border-right: 1px solid var(--ant-color-border-secondary);
+  }
+
+  .contextFact:last-child {
+    border-right: 0;
+  }
+}
+
+@media (max-width: 720px) {
+  .contextFacts {
+    flex-wrap: wrap;
+  }
+
+  .contextFact,
+  .contextFact:last-child {
+    min-width: 50%;
+  }
+
+  .toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .canvasFrame {
+    height: 520px;
   }
 }

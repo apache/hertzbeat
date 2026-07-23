@@ -1,0 +1,71 @@
+.detailRail {
+  width: 380px;
+  min-height: 620px;
+  padding: 16px;
+  overflow: auto;
+  border-left: 1px solid var(--ant-color-border-secondary);
+  background: var(--ant-color-bg-container);
+}
+
+.inspectorHeading {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.inspectorHeading :global(.ant-typography),
+.inspectorTitle :global(.ant-typography) {
+  margin: 0;
+}
+
+.inspectorContent {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.inspectorTitle {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inspectorSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.inspectorSection :global(.ant-descriptions-item-label) {
+  width: 112px;
+}
+
+.metricGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius);
+}
+
+.metricCell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px;
+  border-right: 1px solid var(--ant-color-border-secondary);
+}
+
+.metricCell:last-child {
+  border-right: 0;
+}
+
+.inspectorActions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inspectorActions :global(.ant-divider) {
+  margin: 0 0 2px;
+}

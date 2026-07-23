@@ -73,6 +73,54 @@ describe('TopologyPageView evidence', () => {
     expect(screen.getAllByText('payments.example').length).toBeGreaterThan(1);
   });
 
+  it('starts with the complete scope filter collapsed and keeps canvas actions available', () => {
+    renderLinkedView();
+
+    expect(screen.queryByLabelText(i18n.t('topology.toolbar.focusEntity'))).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: i18n.t('topology.toolbar.filter') })).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    );
+    expect(screen.getByRole('button', { name: i18n.t('topology.toolbar.fit') })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: i18n.t('common.refresh') })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('topology.toolbar.filter') }));
+
+    expect(screen.getByLabelText(i18n.t('topology.toolbar.focusEntity'))).toBeInTheDocument();
+    expect(screen.getAllByLabelText(i18n.t('topology.toolbar.depth')).length).toBeGreaterThan(0);
+    expect(screen.getByLabelText(i18n.t('topology.toolbar.environment'))).toBeInTheDocument();
+    expect(screen.getByLabelText(i18n.t('topology.toolbar.sourceKind'))).toBeInTheDocument();
+    expect(screen.getByLabelText(i18n.t('topology.toolbar.relationType'))).toBeInTheDocument();
+    expect(screen.getByLabelText(i18n.t('topology.toolbar.hideInternal'))).toBeInTheDocument();
+  });
+
+  it('keeps the context band limited to real counts and the exact window', () => {
+    renderLinkedView();
+    const contextBand = screen.getByRole('banner');
+
+    expect(within(contextBand).getByText(i18n.t('topology.summary.nodes'))).toBeInTheDocument();
+    expect(within(contextBand).getByText(i18n.t('topology.summary.edges'))).toBeInTheDocument();
+    expect(within(contextBand).getByText(i18n.t('topology.summary.window'))).toBeInTheDocument();
+    expect(contextBand).not.toHaveTextContent('healthy');
+    expect(contextBand).not.toHaveTextContent(i18n.t('topology.metrics.errorRate'));
+  });
+
+  it('keeps the evidence table interactive after collapsing and reopening its lower section', () => {
+    renderLinkedView();
+    const toggle = screen.getByRole('button', { name: i18n.t('topology.table.toggle') });
+
+    expect(screen.getByRole('table')).toBeInTheDocument();
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+
+    const edgeRow = screen.getByRole('row', { name: /payments\.example/ });
+    fireEvent.keyDown(edgeRow, { key: 'Enter' });
+    expect(screen.getAllByText('payments.example').length).toBeGreaterThan(1);
+  });
+
   it('opens compact node detail from canvas selection and clears selection when closed', () => {
     useCompactViewport();
     renderLinkedView();
@@ -82,7 +130,7 @@ describe('TopologyPageView evidence', () => {
     expect(within(drawer).getByText('checkout')).toBeInTheDocument();
     expect(screen.queryByRole('complementary', { name: i18n.t('topology.detail.title') })).not.toBeInTheDocument();
 
-    fireEvent.click(within(drawer).getByRole('button'));
+    fireEvent.click(within(drawer).getByRole('button', { name: 'Close' }));
     expect(JSON.parse(screen.getByTestId('topology-canvas').dataset.interaction!).selected).toEqual({ kind: 'none' });
     expect(screen.queryByRole('dialog', { name: i18n.t('topology.detail.title') })).not.toBeInTheDocument();
   });
@@ -93,7 +141,7 @@ describe('TopologyPageView evidence', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'canvas edge' }));
     expect(within(screen.getByRole('dialog')).getByText('payments.example')).toBeInTheDocument();
-    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button'));
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Close' }));
 
     const edgeRow = screen.getByRole('row', { name: /payments\.example/ });
     fireEvent.keyDown(edgeRow, { key: 'Enter' });
@@ -107,6 +155,50 @@ describe('TopologyPageView evidence', () => {
     expect(screen.getByRole('complementary', { name: i18n.t('topology.detail.title') })).toBeInTheDocument();
     expect(screen.queryByRole('dialog', { name: i18n.t('topology.detail.title') })).not.toBeInTheDocument();
     expect(screen.getAllByText(i18n.t('topology.detail.title'))).toHaveLength(1);
+  });
+
+  it('delegates selected-node entity and exact-window signal actions', () => {
+    const openEntity = vi.fn();
+    const querySignals = vi.fn();
+    renderLinkedView({
+      state: {
+        ...baseState,
+        query: { ...baseState.query!, window: { from: 1_000, to: 2_000 } }
+      },
+      actions: { ...baseActions, openEntity, querySignals }
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'canvas node' }));
+
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('topology.detail.openEntity') }));
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('topology.detail.querySignals') }));
+
+    expect(openEntity).toHaveBeenCalledWith(1);
+    expect(querySignals).toHaveBeenCalledWith(expect.objectContaining({ id: 'node-1', entityName: 'checkout' }), {
+      from: 1_000,
+      to: 2_000
+    });
+  });
+
+  it('labels and delegates selected-edge actions explicitly to the source entity', () => {
+    const openEntity = vi.fn();
+    const querySignals = vi.fn();
+    renderLinkedView({
+      state: {
+        ...baseState,
+        query: { ...baseState.query!, window: { from: 1_000, to: 2_000 } }
+      },
+      actions: { ...baseActions, openEntity, querySignals }
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'canvas edge' }));
+
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('topology.detail.openSourceEntity') }));
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('topology.detail.querySourceSignals') }));
+
+    expect(openEntity).toHaveBeenCalledWith(1);
+    expect(querySignals).toHaveBeenCalledWith(expect.objectContaining({ id: 'node-1', entityName: 'checkout' }), {
+      from: 1_000,
+      to: 2_000
+    });
   });
 
   it('switches inspector ownership on resize and removes its media listener on unmount', () => {
@@ -181,6 +273,7 @@ describe('TopologyPageView evidence', () => {
   it('accepts only integer focus entity values at the input boundary', () => {
     const changeScope = vi.fn();
     render(renderContent({ actions: { ...baseActions, changeScope } }));
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('topology.toolbar.filter') }));
     const input = screen.getByLabelText(i18n.t('topology.toolbar.focusEntity'));
 
     fireEvent.change(input, { target: { value: '7.5' } });
@@ -196,7 +289,7 @@ describe('TopologyPageView evidence', () => {
   it('shows the active exact window as compact localized time instead of epoch values', () => {
     const window = { from: 1_710_000_000_000, to: 1_710_003_600_000 };
     render(renderContent({ state: { ...baseState, query: { ...baseState.query!, window } } }));
-    const statistic = screen.getByText(i18n.t('topology.summary.window')).closest('.ant-statistic');
+    const statistic = screen.getByText(i18n.t('topology.summary.window')).parentElement;
 
     expect(statistic).not.toHaveTextContent(String(window.from));
     expect(statistic).not.toHaveTextContent(String(window.to));
@@ -226,13 +319,14 @@ describe('TopologyPageView evidence', () => {
 
 const presentation = buildTopologyPresentation(topologyGraph());
 
-function renderLinkedView() {
+function renderLinkedView(patch: Partial<TopologyPageViewProps> = {}) {
   function Harness() {
     const [interaction, setInteraction] = useState(emptyTopologyInteraction());
     return renderContent({
+      ...patch,
       interaction,
       actions: {
-        ...baseActions,
+        ...(patch.actions ?? baseActions),
         drilldown: row => setInteraction(value => drilldownTopologyRow(value, row)),
         clearSelection: () => setInteraction(value => clearTopologySelection(value)),
         clearHover: () => setInteraction(value => clearTopologyHover(value)),
@@ -320,6 +414,8 @@ const baseActions: TopologyPageViewProps['actions'] = {
   drilldown: () => undefined,
   hoverEdge: () => undefined,
   hoverNode: () => undefined,
+  openEntity: () => undefined,
+  querySignals: () => undefined,
   refresh: () => undefined,
   selectEdge: () => undefined,
   selectNode: () => undefined

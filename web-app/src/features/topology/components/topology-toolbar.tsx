@@ -1,6 +1,8 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
+import { AimOutlined, FilterOutlined, ReloadOutlined } from '@ant-design/icons';
 import { Button, Input, InputNumber, Select, Space, Switch, Typography } from 'antd';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { TopologyPageActions } from '../model/topology-page-contract';
@@ -17,8 +19,37 @@ type Props = {
 
 export function TopologyToolbar({ query, refreshing, changeScope, onFit, onRefresh }: Props) {
   const { t } = useTranslation();
+  const [expanded, setExpanded] = useState(false);
   return (
-    <div className={styles.toolbar}>
+    <section className={styles.toolbarSurface}>
+      <div className={styles.toolbarPrimary}>
+        <Button
+          icon={<FilterOutlined />}
+          aria-label={t('topology.toolbar.filter')}
+          aria-expanded={expanded}
+          aria-controls="topology-filter-surface"
+          onClick={() => setExpanded(value => !value)}
+        >
+          {t('topology.toolbar.filter')}
+        </Button>
+        <div className={styles.toolbarActions}>
+          <Button icon={<AimOutlined />} aria-label={t('topology.toolbar.fit')} onClick={onFit}>
+            {t('topology.toolbar.fit')}
+          </Button>
+          <Button icon={<ReloadOutlined />} aria-label={t('common.refresh')} loading={refreshing} onClick={onRefresh}>
+            {t('common.refresh')}
+          </Button>
+        </div>
+      </div>
+      {expanded ? <TopologyScopeFields query={query} changeScope={changeScope} /> : null}
+    </section>
+  );
+}
+
+function TopologyScopeFields({ query, changeScope }: Pick<Props, 'query' | 'changeScope'>) {
+  const { t } = useTranslation();
+  return (
+    <div id="topology-filter-surface" className={styles.toolbar}>
       <InputNumber<number>
         min={1}
         max={Number.MAX_SAFE_INTEGER}
@@ -32,7 +63,10 @@ export function TopologyToolbar({ query, refreshing, changeScope, onFit, onRefre
       <Select
         value={query.depth}
         aria-label={t('topology.toolbar.depth')}
-        options={topologyDepthValues.map(value => ({ value, label: `${t('topology.toolbar.depth')} ${value}` }))}
+        options={topologyDepthValues.map(value => ({
+          value,
+          label: `${t('topology.toolbar.depth')} ${value}`
+        }))}
         onChange={depth => changeScope({ depth })}
       />
       <ScopeInput
@@ -61,12 +95,6 @@ export function TopologyToolbar({ query, refreshing, changeScope, onFit, onRefre
         />
         <Typography.Text>{t('topology.toolbar.hideInternal')}</Typography.Text>
       </Space>
-      <div className={styles.toolbarActions}>
-        <Button onClick={onFit}>{t('topology.toolbar.fit')}</Button>
-        <Button loading={refreshing} onClick={onRefresh}>
-          {t('common.refresh')}
-        </Button>
-      </div>
     </div>
   );
 }

@@ -1,7 +1,9 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
+import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import { Button, Select, Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { TopologyPageActions } from '../model/topology-page-contract';
@@ -21,41 +23,62 @@ type Props = {
 
 export function TopologyMetricTable({ rows, interaction, edgeCount, pageIndex, pageSize, actions }: Props) {
   const { t } = useTranslation();
+  const [expanded, setExpanded] = useState(true);
   return (
-    <div>
-      <Table<TopologyMetricRow>
-        rowKey="rowKey"
-        size="small"
-        dataSource={rows}
-        columns={columns(t)}
-        rowClassName={row => (matches(row, interaction) ? styles.topologyRowActive! : '')}
-        onRow={row => ({
-          tabIndex: 0,
-          onClick: () => actions.drilldown(row),
-          onKeyDown: event => {
-            if (event.key === 'Enter') actions.drilldown(row);
-          },
-          onMouseEnter: () => hoverRow(row, actions),
-          onMouseLeave: actions.clearHover
-        })}
-        pagination={false}
-      />
-      <Space {...(styles.pagination ? { className: styles.pagination } : {})}>
-        <Button disabled={pageIndex === 0} onClick={() => actions.changePage(pageIndex - 1, pageSize)}>
-          {t('topology.pagination.previous')}
+    <section className={styles.evidenceSection}>
+      <div className={styles.evidenceHeading}>
+        <div>
+          <Typography.Text strong>{t('topology.table.title')}</Typography.Text>
+          <Typography.Text type="secondary"> ({rows.length})</Typography.Text>
+        </div>
+        <Button
+          type="text"
+          icon={expanded ? <DownOutlined /> : <UpOutlined />}
+          aria-label={t('topology.table.toggle')}
+          aria-expanded={expanded}
+          aria-controls="topology-evidence-table"
+          onClick={() => setExpanded(value => !value)}
+        >
+          {t('topology.table.toggle')}
         </Button>
-        <Typography.Text>{t('topology.pagination.page', { page: pageIndex + 1 })}</Typography.Text>
-        <Button disabled={edgeCount < pageSize} onClick={() => actions.changePage(pageIndex + 1, pageSize)}>
-          {t('topology.pagination.next')}
-        </Button>
-        <Select
-          value={pageSize}
-          aria-label={t('topology.pagination.pageSize')}
-          options={topologyPageSizes.map(value => ({ value, label: String(value) }))}
-          onChange={size => actions.changePage(0, size)}
-        />
-      </Space>
-    </div>
+      </div>
+      {expanded ? (
+        <div id="topology-evidence-table" className={styles.evidenceBody}>
+          <Table<TopologyMetricRow>
+            rowKey="rowKey"
+            size="small"
+            dataSource={rows}
+            columns={columns(t)}
+            rowClassName={row => (matches(row, interaction) ? styles.topologyRowActive! : '')}
+            onRow={row => ({
+              tabIndex: 0,
+              onClick: () => actions.drilldown(row),
+              onKeyDown: event => {
+                if (event.key === 'Enter') actions.drilldown(row);
+              },
+              onMouseEnter: () => hoverRow(row, actions),
+              onMouseLeave: actions.clearHover
+            })}
+            pagination={false}
+          />
+          <Space {...(styles.pagination ? { className: styles.pagination } : {})}>
+            <Button disabled={pageIndex === 0} onClick={() => actions.changePage(pageIndex - 1, pageSize)}>
+              {t('topology.pagination.previous')}
+            </Button>
+            <Typography.Text>{t('topology.pagination.page', { page: pageIndex + 1 })}</Typography.Text>
+            <Button disabled={edgeCount < pageSize} onClick={() => actions.changePage(pageIndex + 1, pageSize)}>
+              {t('topology.pagination.next')}
+            </Button>
+            <Select
+              value={pageSize}
+              aria-label={t('topology.pagination.pageSize')}
+              options={topologyPageSizes.map(value => ({ value, label: String(value) }))}
+              onChange={size => actions.changePage(0, size)}
+            />
+          </Space>
+        </div>
+      ) : null}
+    </section>
   );
 }
 

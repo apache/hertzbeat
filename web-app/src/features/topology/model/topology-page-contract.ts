@@ -1,5 +1,8 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
+import type { ExactTimeWindow } from '@/shared/query-context';
+
+import type { TopologyNode } from './topology-contract';
 import type { TopologyFailure, TopologyQuery, TopologyScopePatch } from './topology-model';
 import type { TopologyInteraction, TopologyMetricRow, TopologyPresentation } from './topology-view-model';
 
@@ -23,6 +26,8 @@ export type TopologyPageActions = {
   drilldown: (row: TopologyMetricRow) => void;
   hoverEdge: (edgeId: string) => void;
   hoverNode: (nodeId: string) => void;
+  openEntity: (entityId: number) => void;
+  querySignals: (node: TopologyNode, window: ExactTimeWindow) => void;
   refresh: () => void;
   selectEdge: (edgeId: string) => void;
   selectNode: (nodeId: string) => void;

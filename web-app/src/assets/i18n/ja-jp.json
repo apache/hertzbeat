@@ -36,7 +36,11 @@
   },
   "topology": {
     "title": "トポロジー",
+    "context": {
+      "subtitle": "関係の証拠"
+    },
     "toolbar": {
+      "filter": "フィルター",
       "focusEntity": "フォーカスリソース ID",
       "depth": "深度",
       "environment": "環境",
@@ -63,6 +67,8 @@
       "runtimeFailure": "グラフレンダラーを利用できません。表の証拠は引き続き確認できます。"
     },
     "table": {
+      "title": "関係の証拠",
+      "toggle": "証拠を切り替える",
       "kind": "種別",
       "name": "名前",
       "type": "タイプ / 関係",
@@ -74,6 +80,19 @@
     "detail": {
       "title": "選択の詳細",
       "none": "ノードまたはエッジを選択して証拠を確認します。",
+      "identity": "識別情報",
+      "keyMetrics": "主要メトリクス",
+      "upstream": "上流 ({{count}})",
+      "downstream": "下流 ({{count}})",
+      "noRelations": "確認済みの関係はありません。",
+      "entityId": "リソース ID",
+      "relationId": "関係 ID",
+      "firstSeen": "初回確認",
+      "lastSeen": "最終確認",
+      "openEntity": "リソースを開く",
+      "querySignals": "シグナルを照会",
+      "openSourceEntity": "ソースリソースを開く",
+      "querySourceSignals": "ソースシグナルを照会",
       "node": "ノード",
       "edge": "エッジ",
       "source": "ソース",

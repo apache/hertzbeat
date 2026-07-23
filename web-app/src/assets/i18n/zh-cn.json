@@ -36,7 +36,11 @@
   },
   "topology": {
     "title": "拓扑",
+    "context": {
+      "subtitle": "关系证据"
+    },
     "toolbar": {
+      "filter": "筛选",
       "focusEntity": "焦点资源 ID",
       "depth": "深度",
       "environment": "环境",
@@ -63,6 +67,8 @@
       "runtimeFailure": "图形渲染器不可用，表格证据仍可查看。"
     },
     "table": {
+      "title": "关系证据",
+      "toggle": "展开或收起证据",
       "kind": "类型",
       "name": "名称",
       "type": "类型 / 关系",
@@ -74,6 +80,19 @@
     "detail": {
       "title": "选择详情",
       "none": "选择节点或边以检查其证据。",
+      "identity": "身份信息",
+      "keyMetrics": "关键指标",
+      "upstream": "上游（{{count}}）",
+      "downstream": "下游（{{count}}）",
+      "noRelations": "没有已确认的关系。",
+      "entityId": "资源 ID",
+      "relationId": "关系 ID",
+      "firstSeen": "首次发现",
+      "lastSeen": "最后发现",
+      "openEntity": "打开资源",
+      "querySignals": "查询信号",
+      "openSourceEntity": "打开来源资源",
+      "querySourceSignals": "查询来源信号",
       "node": "节点",
       "edge": "边",
       "source": "来源",

@@ -36,7 +36,11 @@
   },
   "topology": {
     "title": "Topology",
+    "context": {
+      "subtitle": "Relationship evidence"
+    },
     "toolbar": {
+      "filter": "Filter",
       "focusEntity": "Focus entity ID",
       "depth": "Depth",
       "environment": "Environment",
@@ -63,6 +67,8 @@
       "runtimeFailure": "The graph renderer is unavailable. Table evidence remains accessible."
     },
     "table": {
+      "title": "Relationship evidence",
+      "toggle": "Toggle evidence",
       "kind": "Kind",
       "name": "Name",
       "type": "Type / relation",
@@ -74,6 +80,19 @@
     "detail": {
       "title": "Selection details",
       "none": "Select a node or edge to inspect its evidence.",
+      "identity": "Identity",
+      "keyMetrics": "Key metrics",
+      "upstream": "Upstream ({{count}})",
+      "downstream": "Downstream ({{count}})",
+      "noRelations": "No confirmed relations.",
+      "entityId": "Entity ID",
+      "relationId": "Relation ID",
+      "firstSeen": "First seen",
+      "lastSeen": "Last seen",
+      "openEntity": "Open entity",
+      "querySignals": "Query signals",
+      "openSourceEntity": "Open source entity",
+      "querySourceSignals": "Query source signals",
       "node": "Node",
       "edge": "Edge",
       "source": "Source",
