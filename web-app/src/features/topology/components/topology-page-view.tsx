@@ -8,9 +8,10 @@ import { formatTopologyWindow } from '../model/topology-display';
 import type { TopologyPageActions, TopologyPageState } from '../model/topology-page-contract';
 import type { TopologyPresentation } from '../model/topology-view-model';
 import { TopologyCanvas, type TopologyCanvasHandle, type TopologyCanvasRuntimeState } from './topology-canvas';
-import { TopologyDetailRail } from './topology-detail-rail';
+import { TopologyInspector } from './topology-detail-rail';
 import { TopologyMetricTable } from './topology-metric-table';
 import { TopologyToolbar } from './topology-toolbar';
+import { useCompactTopologyInspector } from './use-compact-topology-inspector';
 import styles from './topology-page.module.css';
 
 export type TopologyPageViewProps = {
@@ -96,6 +97,10 @@ function ReadyTopology({
   presentation: TopologyPresentation;
 }) {
   const { t } = useTranslation();
+  const compactInspector = useCompactTopologyInspector();
+  const workspaceClass = [styles.workspace, compactInspector ? styles.workspaceCompact : undefined]
+    .filter(Boolean)
+    .join(' ');
   return (
     <>
       {state.refreshFailure ? <Alert showIcon type="warning" message={t('topology.evidence.refreshFailure')} /> : null}
@@ -106,7 +111,7 @@ function ReadyTopology({
           message={t(`topology.evidence.runtime${runtimeState.kind === 'failure' ? 'Failure' : 'Loading'}`)}
         />
       ) : null}
-      <div className={styles.workspace}>
+      <div className={workspaceClass}>
         <main className={styles.graphColumn}>
           <div className={styles.canvasFrame}>
             <TopologyCanvas
@@ -130,7 +135,12 @@ function ReadyTopology({
             actions={actions}
           />
         </main>
-        <TopologyDetailRail presentation={presentation} interaction={interaction} />
+        <TopologyInspector
+          compact={compactInspector}
+          presentation={presentation}
+          interaction={interaction}
+          onClose={actions.clearSelection}
+        />
       </div>
     </>
   );

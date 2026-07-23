@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, renderHook, screen, within } from '@testing-library/react';
 import { useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -10,14 +10,17 @@ import type { TopologyGraph } from '../model/topology-contract';
 import type { TopologyCanvasProps, TopologyCanvasRuntimeState } from './topology-canvas';
 import {
   buildTopologyPresentation,
+  clearTopologySelection,
   clearTopologyHover,
   drilldownTopologyRow,
   emptyTopologyInteraction,
   hoverTopologyEdge,
   hoverTopologyNode,
+  selectTopologyEdge,
   selectTopologyNode
 } from '../model/topology-view-model';
 import { TopologyPageView, type TopologyPageViewProps } from './topology-page-view';
+import { useCompactTopologyInspector } from './use-compact-topology-inspector';
 
 const canvasBoundary = vi.hoisted(() => ({ fit: vi.fn() }));
 vi.mock('./topology-canvas', async () => {
@@ -28,6 +31,7 @@ vi.mock('./topology-canvas', async () => {
       return (
         <div data-testid="topology-canvas" data-interaction={JSON.stringify(props.interaction)}>
           <button onClick={() => props.onNodeSelect('node-1')}>canvas node</button>
+          <button onClick={() => props.onEdgeSelect('edge-external')}>canvas edge</button>
           <button onClick={() => props.onNodeHover('node-1')}>canvas node hover</button>
           <button onClick={() => props.onNodeHover(null)}>canvas node leave</button>
           <button onClick={() => props.onEdgeHover('edge-external')}>canvas edge hover</button>
@@ -43,7 +47,10 @@ describe('TopologyPageView evidence', () => {
     await initializeI18n();
     await loadLocale('en-US');
   });
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
 
   it.each(['loading', 'empty', 'permission', 'unavailable', 'contract', 'error'] as const)(
     'renders %s as distinct non-ready evidence',
@@ -64,6 +71,66 @@ describe('TopologyPageView evidence', () => {
     expect(screen.getByRole('row', { name: /payments\.example/ }).className).toContain('topologyRowActive');
     fireEvent.click(screen.getByRole('row', { name: /payments\.example/ }));
     expect(screen.getAllByText('payments.example').length).toBeGreaterThan(1);
+  });
+
+  it('opens compact node detail from canvas selection and clears selection when closed', () => {
+    useCompactViewport();
+    renderLinkedView();
+
+    fireEvent.click(screen.getByRole('button', { name: 'canvas node' }));
+    const drawer = screen.getByRole('dialog', { name: i18n.t('topology.detail.title') });
+    expect(within(drawer).getByText('checkout')).toBeInTheDocument();
+    expect(screen.queryByRole('complementary', { name: i18n.t('topology.detail.title') })).not.toBeInTheDocument();
+
+    fireEvent.click(within(drawer).getByRole('button'));
+    expect(JSON.parse(screen.getByTestId('topology-canvas').dataset.interaction!).selected).toEqual({ kind: 'none' });
+    expect(screen.queryByRole('dialog', { name: i18n.t('topology.detail.title') })).not.toBeInTheDocument();
+  });
+
+  it('opens compact edge detail from canvas and table keyboard selection', () => {
+    useCompactViewport();
+    renderLinkedView();
+
+    fireEvent.click(screen.getByRole('button', { name: 'canvas edge' }));
+    expect(within(screen.getByRole('dialog')).getByText('payments.example')).toBeInTheDocument();
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button'));
+
+    const edgeRow = screen.getByRole('row', { name: /payments\.example/ });
+    fireEvent.keyDown(edgeRow, { key: 'Enter' });
+    expect(within(screen.getByRole('dialog')).getByText('payments.example')).toBeInTheDocument();
+  });
+
+  it('keeps one companion rail and no duplicate drawer at wide viewport', () => {
+    renderLinkedView();
+    fireEvent.click(screen.getByRole('button', { name: 'canvas node' }));
+
+    expect(screen.getByRole('complementary', { name: i18n.t('topology.detail.title') })).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: i18n.t('topology.detail.title') })).not.toBeInTheDocument();
+    expect(screen.getAllByText(i18n.t('topology.detail.title'))).toHaveLength(1);
+  });
+
+  it('switches inspector ownership on resize and removes its media listener on unmount', () => {
+    const viewport = useViewport(false);
+    const view = renderLinkedView();
+    fireEvent.click(screen.getByRole('button', { name: 'canvas node' }));
+    expect(screen.getByRole('complementary', { name: i18n.t('topology.detail.title') })).toBeInTheDocument();
+
+    viewport.resize(true);
+    expect(screen.getByRole('dialog', { name: i18n.t('topology.detail.title') })).toBeInTheDocument();
+    expect(screen.queryByRole('complementary', { name: i18n.t('topology.detail.title') })).not.toBeInTheDocument();
+
+    viewport.resize(false);
+    expect(screen.getByRole('complementary', { name: i18n.t('topology.detail.title') })).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: i18n.t('topology.detail.title') })).not.toBeInTheDocument();
+
+    view.unmount();
+    expect(viewport.compactListenerCount()).toBe(0);
+  });
+
+  it('falls back to the persistent rail when matchMedia is unavailable', () => {
+    vi.stubGlobal('matchMedia', undefined);
+    const { result } = renderHook(() => useCompactTopologyInspector());
+    expect(result.current).toBe(false);
   });
 
   it('clears canvas and table hover to the exact none interaction state', () => {
@@ -167,14 +234,57 @@ function renderLinkedView() {
       actions: {
         ...baseActions,
         drilldown: row => setInteraction(value => drilldownTopologyRow(value, row)),
+        clearSelection: () => setInteraction(value => clearTopologySelection(value)),
         clearHover: () => setInteraction(value => clearTopologyHover(value)),
         hoverEdge: edgeId => setInteraction(value => hoverTopologyEdge(value, edgeId)),
         hoverNode: nodeId => setInteraction(value => hoverTopologyNode(value, nodeId)),
+        selectEdge: edgeId => setInteraction(value => selectTopologyEdge(value, edgeId)),
         selectNode: nodeId => setInteraction(value => selectTopologyNode(value, nodeId))
       }
     });
   }
   return render(<Harness />);
+}
+
+function useCompactViewport() {
+  return useViewport(true);
+}
+
+function useViewport(initialCompact: boolean) {
+  const compactQuery = '(max-width: 1199px)';
+  let compact = initialCompact;
+  const listeners = new Map<string, Set<(event: MediaQueryListEvent) => void>>();
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn((query: string) => {
+      const queryListeners = listeners.get(query) ?? new Set();
+      listeners.set(query, queryListeners);
+      return {
+        get matches() {
+          return query === compactQuery && compact;
+        },
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn((_event: string, update: (event: MediaQueryListEvent) => void) => {
+          queryListeners.add(update);
+        }),
+        removeEventListener: vi.fn((_event: string, update: (event: MediaQueryListEvent) => void) => {
+          queryListeners.delete(update);
+        }),
+        dispatchEvent: vi.fn()
+      };
+    })
+  );
+  return {
+    compactListenerCount: () => listeners.get(compactQuery)?.size ?? 0,
+    resize(nextCompact: boolean) {
+      compact = nextCompact;
+      const event = { matches: compact, media: compactQuery } as MediaQueryListEvent;
+      act(() => listeners.get(compactQuery)?.forEach(listener => listener(event)));
+    }
+  };
 }
 
 function renderView(patch: Partial<TopologyPageViewProps['state']>) {

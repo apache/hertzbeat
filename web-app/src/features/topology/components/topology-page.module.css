@@ -36,6 +36,10 @@
   min-width: 0;
 }
 
+.workspaceCompact {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .graphColumn {
   display: flex;
   flex-direction: column;
@@ -83,17 +87,8 @@
   margin-top: 12px;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1199px) {
   .toolbar {
     grid-template-columns: repeat(3, minmax(150px, 1fr));
-  }
-
-  .workspace {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .detailRail {
-    width: auto;
-    min-height: 0;
   }
 }

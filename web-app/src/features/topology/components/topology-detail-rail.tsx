@@ -1,28 +1,53 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Descriptions, Empty, Typography } from 'antd';
+import { Descriptions, Drawer, Empty, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import type { TopologyInteraction, TopologyPresentation } from '../model/topology-view-model';
 import { TopologyMetricValue } from './topology-metric-value';
 import styles from './topology-page.module.css';
 
-export function TopologyDetailRail({
+export function TopologyInspector({
+  compact,
   interaction,
-  presentation
+  presentation,
+  onClose
 }: {
+  compact: boolean;
   interaction: TopologyInteraction;
   presentation: TopologyPresentation;
+  onClose: () => void;
 }) {
   const { t } = useTranslation();
   const selected = resolveSelected(interaction, presentation);
+  const title = t('topology.detail.title');
+  if (compact) {
+    return (
+      <Drawer open={Boolean(selected)} title={title} onClose={onClose} destroyOnHidden>
+        {selected ? <TopologyDetailContent selected={selected} presentation={presentation} /> : null}
+      </Drawer>
+    );
+  }
   return (
-    <aside className={styles.detailRail}>
-      <Typography.Title level={5}>{t('topology.detail.title')}</Typography.Title>
+    <aside className={styles.detailRail} aria-label={title}>
+      <Typography.Title level={5}>{title}</Typography.Title>
       {!selected ? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('topology.detail.none')} /> : null}
-      {selected?.kind === 'node' ? <NodeDetail node={selected.value} /> : null}
-      {selected?.kind === 'edge' ? <EdgeDetail edge={selected.value} presentation={presentation} /> : null}
+      {selected ? <TopologyDetailContent selected={selected} presentation={presentation} /> : null}
     </aside>
+  );
+}
+
+function TopologyDetailContent({
+  selected,
+  presentation
+}: {
+  selected: NonNullable<ReturnType<typeof resolveSelected>>;
+  presentation: TopologyPresentation;
+}) {
+  return selected.kind === 'node' ? (
+    <NodeDetail node={selected.value} />
+  ) : (
+    <EdgeDetail edge={selected.value} presentation={presentation} />
   );
 }
 
