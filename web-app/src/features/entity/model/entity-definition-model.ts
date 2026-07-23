@@ -56,6 +56,17 @@ export function resetEntityDefinitionDraft(
   return { routeId, format, canonical, content: canonical };
 }
 
+export function currentEntityDefinitionDraft(
+  edited: { source: string; draft: EntityDefinitionDraft } | undefined,
+  source: string,
+  id: number | undefined,
+  format: EntityDefinitionFormat,
+  canonical: string | undefined
+) {
+  if (edited?.source === source) return edited.draft;
+  return id !== undefined && canonical !== undefined ? resetEntityDefinitionDraft(id, format, canonical) : undefined;
+}
+
 export function changeEntityDefinitionContent(draft: EntityDefinitionDraft, content: string): EntityDefinitionDraft {
   return { routeId: draft.routeId, format: draft.format, canonical: draft.canonical, content };
 }
