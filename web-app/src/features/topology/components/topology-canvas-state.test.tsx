@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { act, cleanup, render, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { interaction, presentation } from './topology-canvas-test-fixtures';
@@ -50,6 +50,7 @@ vi.mock('@antv/g6', () => ({
 vi.mock('antd', () => ({ theme: { useToken: () => ({ token: antTheme.token }) } }));
 
 import { TopologyCanvas } from './topology-canvas';
+import { useTopologyInteraction } from '../controller/use-topology-interaction';
 
 beforeEach(() => {
   runtime.instances.length = 0;
@@ -66,6 +67,24 @@ afterEach(() => {
 });
 
 describe('TopologyCanvas runtime evidence and palette', () => {
+  it('does not redraw a stable selected interaction after a runtime-ready parent rerender', async () => {
+    const view = render(<InteractionRuntimeHarness runtimeReady={false} />);
+    const graph = await renderedGraph();
+    await waitFor(() => expect(graph.draw).toHaveBeenCalledOnce());
+    graph.draw.mockClear();
+
+    fireEvent.click(screen.getByRole('button', { name: 'select node' }));
+    await waitFor(() => expect(graph.draw).toHaveBeenCalledOnce());
+    expect(screen.getByRole('status')).toHaveTextContent('node-a');
+    graph.draw.mockClear();
+
+    view.rerender(<InteractionRuntimeHarness runtimeReady />);
+
+    expect(screen.getByText('ready')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('node-a');
+    expect(graph.draw).not.toHaveBeenCalled();
+  });
+
   it('publishes only safe failure evidence and recovers after a later draw succeeds', async () => {
     const callbacks = eventCallbacks();
     const view = render(<TopologyCanvas {...props('structure-a', null, callbacks)} />);
@@ -251,4 +270,30 @@ function eventCallbacks() {
     onRuntimeStateChange: vi.fn(),
     onScaleChange: vi.fn()
   };
+}
+
+const stablePresentation = presentation('stable-structure');
+
+function InteractionRuntimeHarness({ runtimeReady }: { runtimeReady: boolean }) {
+  const { interaction: current, actions } = useTopologyInteraction('stable-scope', stablePresentation);
+  return (
+    <>
+      <button type="button" onClick={() => actions.selectNode('node-a')}>
+        select node
+      </button>
+      <span>{runtimeReady ? 'ready' : 'loading'}</span>
+      <output role="status">{current.selected.kind === 'node' ? current.selected.nodeId : 'none'}</output>
+      <TopologyCanvas
+        presentation={stablePresentation}
+        interaction={current}
+        onClearSelection={actions.clearSelection}
+        onEdgeHover={edgeId => (edgeId ? actions.hoverEdge(edgeId) : actions.clearHover())}
+        onEdgeSelect={actions.selectEdge}
+        onNodeHover={nodeId => (nodeId ? actions.hoverNode(nodeId) : actions.clearHover())}
+        onNodeSelect={actions.selectNode}
+        onRuntimeStateChange={() => undefined}
+        onScaleChange={() => undefined}
+      />
+    </>
+  );
 }

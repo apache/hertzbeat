@@ -141,6 +141,8 @@ export function reconcileTopologyInteraction(
   const edgeIds = new Set(presentation.graph.edges.map(edge => edge.id));
   const selected = exists(interaction.selected, nodeIds, edgeIds) ? interaction.selected : { kind: 'none' as const };
   const hover = exists(interaction.hover, nodeIds, edgeIds) ? interaction.hover : { kind: 'none' as const };
+  // Interaction identity is the G6 redraw boundary; preserve it to break runtime-ready feedback.
+  if (selected === interaction.selected && hover === interaction.hover) return interaction;
   return { selected, hover };
 }
 
