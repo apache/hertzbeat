@@ -15,8 +15,8 @@ export class EntityDiscoveryContractError extends Error {
 }
 
 export type EntityDiscoveryQuery = { search: string; pageIndex: number; pageSize: number };
-export type EntityDiscoveryMonitor = Pick<Monitor, 'id' | 'name' | 'app' | 'instance' | 'status'>;
-export type EntityDiscoveryMatch = 'already_bound' | 'direct' | 'suggested';
+type EntityDiscoveryMonitor = Pick<Monitor, 'id' | 'name' | 'app' | 'instance' | 'status'>;
+type EntityDiscoveryMatch = 'already_bound' | 'direct' | 'suggested';
 export type EntityDiscoveryCandidate = {
   resourceId: number;
   resourceName: string;

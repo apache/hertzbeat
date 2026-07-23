@@ -84,7 +84,7 @@ export function buildTopologyPresentation(graph: TopologyGraph): TopologyPresent
   };
 }
 
-export function topologyGraphStructureKey(graph: TopologyGraph) {
+function topologyGraphStructureKey(graph: TopologyGraph) {
   const nodes = graph.nodes.map(node => node.id).sort();
   const edges = graph.edges
     .map(edge => [

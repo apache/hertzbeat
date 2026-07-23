@@ -19,7 +19,7 @@ export type EntityDefinitionDraft = {
   previewedContent?: string;
   previewedFormat?: EntityDefinitionFormat;
 };
-export type EntityDefinitionEvidence =
+type EntityDefinitionEvidence =
   | { kind: 'loading' | 'missing' | 'permission' | 'unavailable' | 'contract' | 'error' }
   | { kind: 'ready'; resource: EditableEntityDto };
 export type EntityDefinitionViewModel = {
