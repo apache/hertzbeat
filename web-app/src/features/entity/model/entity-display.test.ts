@@ -11,7 +11,9 @@ describe('entity display codes', () => {
     expect(localizeEntityCode(translate, 'type', 'service')).toBe('translated:entity.values.type.service');
     expect(localizeEntityCode(translate, 'status', 'healthy')).toBe('translated:entity.values.status.healthy');
     expect(localizeEntityCode(translate, 'source', 'manual')).toBe('translated:entity.values.source.manual');
+    expect(localizeEntityCode(translate, 'source', 'derived')).toBe('translated:entity.values.source.derived');
     expect(localizeEntityCode(translate, 'direction', 'outgoing')).toBe('translated:entity.values.direction.outgoing');
+    expect(localizeEntityCode(translate, 'direction', 'related')).toBe('translated:entity.values.direction.related');
     expect(localizeEntityCode(translate, 'identityType', 'derived')).toBe(
       'translated:entity.values.identityType.derived'
     );

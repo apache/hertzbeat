@@ -5,8 +5,8 @@ import { entityStatuses, entityTypes } from './entity-editor-contract';
 const entityDisplayCodes = {
   type: entityTypes,
   status: entityStatuses,
-  source: ['manual', 'definition', 'discovery', 'otel_resource', 'otel', 'telemetry'],
-  direction: ['incoming', 'outgoing'],
+  source: ['manual', 'definition', 'discovery', 'derived', 'otel_resource', 'otel', 'telemetry'],
+  direction: ['incoming', 'outgoing', 'related'],
   identityType: ['derived', 'manual', 'otel_resource', 'otel', 'otlp']
 } as const;
 

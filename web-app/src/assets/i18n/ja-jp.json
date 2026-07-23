@@ -115,11 +115,12 @@
         "manual": "手動",
         "definition": "定義",
         "discovery": "自動検出",
+        "derived": "自動導出",
         "otel_resource": "OpenTelemetry リソース",
         "otel": "OpenTelemetry",
         "telemetry": "テレメトリ"
       },
-      "direction": { "incoming": "受信", "outgoing": "送信" },
+      "direction": { "incoming": "受信", "outgoing": "送信", "related": "関連" },
       "identityType": {
         "derived": "自動認識",
         "manual": "手動定義",

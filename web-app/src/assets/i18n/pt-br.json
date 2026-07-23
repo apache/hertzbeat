@@ -121,11 +121,12 @@
         "manual": "Manual",
         "definition": "Definição",
         "discovery": "Descoberta",
+        "derived": "Derivado automaticamente",
         "otel_resource": "Recurso OpenTelemetry",
         "otel": "OpenTelemetry",
         "telemetry": "Telemetria"
       },
-      "direction": { "incoming": "Entrada", "outgoing": "Saída" },
+      "direction": { "incoming": "Entrada", "outgoing": "Saída", "related": "Relacionado" },
       "identityType": {
         "derived": "Reconhecido automaticamente",
         "manual": "Definido manualmente",

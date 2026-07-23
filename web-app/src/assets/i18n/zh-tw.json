@@ -110,11 +110,12 @@
         "manual": "手動維護",
         "definition": "定義檔",
         "discovery": "自動探索",
+        "derived": "自動推導",
         "otel_resource": "OpenTelemetry 資源",
         "otel": "OpenTelemetry",
         "telemetry": "遙測資料"
       },
-      "direction": { "incoming": "入站", "outgoing": "出站" },
+      "direction": { "incoming": "入站", "outgoing": "出站", "related": "關聯" },
       "identityType": {
         "derived": "自動識別",
         "manual": "手動設定",
