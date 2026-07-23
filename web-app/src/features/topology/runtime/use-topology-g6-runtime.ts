@@ -32,24 +32,38 @@ type RuntimeInput = {
 };
 type DrawInput = Pick<RuntimeInput, 'presentation' | 'interaction' | 'palette'>;
 type DrawDrain = { running: boolean; pending: DrawInput | undefined };
+type ScaleSuppressions = WeakMap<G6Graph, number>;
 export function useTopologyG6Runtime(host: RefObject<HTMLDivElement | null>, input: RuntimeInput) {
   const graphRef = useRef<G6Graph | undefined>(undefined);
   const viewportRef = useRef<Viewport | undefined>(undefined);
+  const suppressedScaleEventsRef = useRef<ScaleSuppressions>(new WeakMap());
   const inputRef = useRef(input);
   useEffect(() => {
     inputRef.current = input;
   }, [input]);
-  useTopologyBootstrap(host, graphRef, viewportRef, inputRef, input.presentation.graphStructureKey);
+  useTopologyBootstrap(
+    host,
+    graphRef,
+    viewportRef,
+    suppressedScaleEventsRef,
+    inputRef,
+    input.presentation.graphStructureKey
+  );
   useTopologyGraphUpdates(graphRef, inputRef, input);
   const fit = useCallback(() => {
     const graph = graphRef.current;
     if (!graph) return;
-    void graph
-      .fitView({ direction: 'both', when: 'always' }, false)
+    suppressScaleEvents(suppressedScaleEventsRef.current, graph);
+    void fitWithinMaxScale(graph)
       .then(() => {
-        if (graphRef.current === graph) publishState(inputRef, 'ready');
+        const settled = releaseScaleEvents(suppressedScaleEventsRef.current, graph);
+        if (graphRef.current === graph && settled) {
+          publishScale(graph, inputRef);
+          publishState(inputRef, 'ready');
+        }
       })
       .catch(() => {
+        releaseScaleEvents(suppressedScaleEventsRef.current, graph);
         if (graphRef.current === graph) publishState(inputRef, 'failure');
       });
   }, []);
@@ -61,6 +75,7 @@ function useTopologyBootstrap(
   host: RefObject<HTMLDivElement | null>,
   graphRef: React.MutableRefObject<G6Graph | undefined>,
   viewportRef: React.MutableRefObject<Viewport | undefined>,
+  suppressedScaleEventsRef: React.MutableRefObject<ScaleSuppressions>,
   inputRef: React.MutableRefObject<RuntimeInput>,
   structureKey: string
 ) {
@@ -76,7 +91,7 @@ function useTopologyBootstrap(
         if (cancelled) return;
         const graph = createGraph(module, container, inputRef.current);
         resources.graph = graph;
-        bindEvents(graph, module, inputRef);
+        bindInteractionEvents(graph, module, inputRef);
         resources.observer = observeSize(container, graph);
         await graph.render();
         if (cancelled) return;
@@ -86,6 +101,8 @@ function useTopologyBootstrap(
         if (cancelled) return;
         graphRef.current = graph;
         viewportRef.current = undefined;
+        bindViewportEvents(graph, module, inputRef, suppressedScaleEventsRef);
+        publishScale(graph, inputRef);
         publishState(inputRef, 'ready');
       })
       .catch(() => {
@@ -97,7 +114,7 @@ function useTopologyBootstrap(
       cancelled = true;
       disposeGraph(resources, graphRef, viewportRef, true);
     };
-  }, [graphRef, host, inputRef, structureKey, viewportRef]);
+  }, [graphRef, host, inputRef, structureKey, suppressedScaleEventsRef, viewportRef]);
 }
 function useTopologyGraphUpdates(
   graphRef: React.MutableRefObject<G6Graph | undefined>,
@@ -188,7 +205,7 @@ function disposeGraph(
 function createGraph(module: G6Module, container: HTMLDivElement, input: RuntimeInput) {
   return new module.Graph({ container, ...topologyG6Options(input.presentation, input.interaction, input.palette) });
 }
-function bindEvents(graph: G6Graph, module: G6Module, input: React.MutableRefObject<RuntimeInput>) {
+function bindInteractionEvents(graph: G6Graph, module: G6Module, input: React.MutableRefObject<RuntimeInput>) {
   graph.on(module.NodeEvent.CLICK, event =>
     routeNodeEvent(event, input, input.current.callbacks.onNodeSelect, input.current.callbacks.onEdgeSelect)
   );
@@ -208,7 +225,16 @@ function bindEvents(graph: G6Graph, module: G6Module, input: React.MutableRefObj
   graph.on(module.EdgeEvent.POINTER_OVER, event => withEventId(event, input.current.callbacks.onEdgeHover));
   graph.on(module.EdgeEvent.POINTER_LEAVE, () => input.current.callbacks.onEdgeHover(null));
   graph.on(module.CanvasEvent.CLICK, () => input.current.callbacks.onClearSelection());
-  graph.on(module.GraphEvent.AFTER_TRANSFORM, () => publishScale(graph, input));
+}
+function bindViewportEvents(
+  graph: G6Graph,
+  module: G6Module,
+  input: React.MutableRefObject<RuntimeInput>,
+  suppressedScaleEvents: React.MutableRefObject<ScaleSuppressions>
+) {
+  graph.on(module.GraphEvent.AFTER_TRANSFORM, () => {
+    if (!suppressedScaleEvents.current.has(graph)) publishScale(graph, input);
+  });
 }
 function routeNodeEvent(
   event: unknown,
@@ -265,6 +291,18 @@ function zoomGraph(
 function clampScale(scale: number) {
   return Math.min(2, Math.max(0.35, scale));
 }
+function suppressScaleEvents(suppressions: ScaleSuppressions, graph: G6Graph) {
+  suppressions.set(graph, (suppressions.get(graph) ?? 0) + 1);
+}
+function releaseScaleEvents(suppressions: ScaleSuppressions, graph: G6Graph) {
+  const remaining = (suppressions.get(graph) ?? 1) - 1;
+  if (remaining > 0) {
+    suppressions.set(graph, remaining);
+    return false;
+  }
+  suppressions.delete(graph);
+  return true;
+}
 function observeSize(container: HTMLDivElement, graph: G6Graph) {
   if (typeof ResizeObserver === 'undefined') return undefined;
   const observer = new ResizeObserver(entries => {
@@ -284,9 +322,15 @@ function readViewport(graph: G6Graph): Viewport | undefined {
 }
 async function restoreOrFit(graph: G6Graph, viewport: Viewport | undefined) {
   if (!viewport) {
-    await graph.fitView({ direction: 'both', when: 'always' }, false);
+    await fitWithinMaxScale(graph);
     return;
   }
   await graph.zoomTo(viewport.zoom, false);
   await graph.translateTo(viewport.position, false);
+}
+async function fitWithinMaxScale(graph: G6Graph) {
+  await graph.fitView({ direction: 'both', when: 'always' }, false);
+  const scale = graph.getZoom();
+  if (!Number.isFinite(scale)) throw new Error('Invalid graph scale after fit.');
+  if (scale > 1) await graph.zoomTo(1, false);
 }

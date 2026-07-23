@@ -12,7 +12,7 @@ describe('topology G6 graph language', () => {
 
     expect(topologyG6Options(value, interaction(), palette).node).toMatchObject({
       type: 'hexagon',
-      style: { size: 52 }
+      style: { labelPlacement: 'bottom', size: 52 }
     });
     expect(data.nodes?.[0]).toMatchObject({
       type: 'hexagon',

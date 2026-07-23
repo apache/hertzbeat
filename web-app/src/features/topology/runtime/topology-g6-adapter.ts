@@ -81,7 +81,7 @@ export function topologyG6ElementOptions(palette: TopologyG6Palette): ElementOpt
         labelFontSize: 11,
         labelLineHeight: 14,
         labelMaxWidth: 132,
-        labelPlacement: 'center',
+        labelPlacement: 'bottom',
         lineWidth: 1.5,
         size: 52,
         stroke: palette.border

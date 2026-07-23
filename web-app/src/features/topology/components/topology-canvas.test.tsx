@@ -8,12 +8,22 @@ import { externalPresentation, interaction, presentation } from './topology-canv
 
 const runtime = vi.hoisted(() => {
   const instances: MockGraph[] = [];
+  let initialScale = 1;
   const Graph = vi.fn(function (options: unknown) {
     const graph = createMockGraph(options);
     instances.push(graph);
     return graph;
   });
-  return { Graph, instances };
+  return {
+    Graph,
+    instances,
+    get initialScale() {
+      return initialScale;
+    },
+    set initialScale(value: number) {
+      initialScale = value;
+    }
+  };
 });
 vi.mock('@antv/g6', () => ({
   CanvasEvent: { CLICK: 'canvas:click' },
@@ -49,6 +59,7 @@ describe('TopologyCanvas runtime lifecycle', () => {
   beforeEach(() => {
     runtime.instances.length = 0;
     runtime.Graph.mockClear();
+    runtime.initialScale = 1;
     resize.observers.length = 0;
     vi.stubGlobal('ResizeObserver', MockResizeObserver);
   });
@@ -95,6 +106,7 @@ describe('TopologyCanvas event and resource bridge', () => {
   beforeEach(() => {
     runtime.instances.length = 0;
     runtime.Graph.mockClear();
+    runtime.initialScale = 1;
     resize.observers.length = 0;
     vi.stubGlobal('ResizeObserver', MockResizeObserver);
   });
@@ -127,8 +139,10 @@ describe('TopologyCanvas event and resource bridge', () => {
 
     act(() => resize.observers[0]?.notify(640, 360));
     expect(graph.setSize).toHaveBeenCalledWith(640, 360);
+    graph.getZoom.mockClear();
     act(() => handle.current?.fit());
     expect(graph.fitView).toHaveBeenCalledTimes(2);
+    await waitFor(() => expect(graph.getZoom).toHaveBeenCalled());
     graph.getZoom.mockReturnValue(0.8);
     emit(graph, 'aftertransform');
     expect(callbacks.onScaleChange).toHaveBeenLastCalledWith(0.8);
@@ -160,6 +174,54 @@ describe('TopologyCanvas event and resource bridge', () => {
     graph.zoomTo.mockRejectedValueOnce(new Error('private zoom failure'));
     act(() => handle.current?.zoomIn());
     await waitFor(() => expect(callbacks.onRuntimeStateChange).toHaveBeenLastCalledWith({ kind: 'failure' }));
+  });
+
+  it('caps initial and manual fit at 100% while explicit zoom still reaches 200%', async () => {
+    runtime.initialScale = 2;
+    const callbacks = eventCallbacks();
+    const handle = createRef<TopologyCanvasHandle>();
+    render(<TopologyCanvas ref={handle} {...props(presentation('structure-a'), interaction(), callbacks)} />);
+    const graph = await renderedGraph();
+
+    await waitFor(() => expect(graph.zoomTo).toHaveBeenCalledWith(1, false));
+    expect(callbacks.onScaleChange).toHaveBeenLastCalledWith(1);
+
+    graph.getZoom.mockReturnValue(2);
+    act(() => handle.current?.fit());
+    await waitFor(() => expect(graph.zoomTo).toHaveBeenLastCalledWith(1, false));
+
+    graph.getZoom.mockReturnValue(1.95);
+    act(() => handle.current?.zoomIn());
+    await waitFor(() => expect(graph.zoomTo).toHaveBeenLastCalledWith(2, false));
+  });
+
+  it('publishes scale only after overlapping manual fits have both settled', async () => {
+    const firstFit = deferred<void>();
+    const secondFit = deferred<void>();
+    const callbacks = eventCallbacks();
+    const handle = createRef<TopologyCanvasHandle>();
+    render(<TopologyCanvas ref={handle} {...props(presentation('structure-a'), interaction(), callbacks)} />);
+    const graph = await renderedGraph();
+    await waitFor(() => expect(callbacks.onRuntimeStateChange).toHaveBeenLastCalledWith({ kind: 'ready' }));
+    graph.fitView.mockClear();
+    graph.getZoom.mockClear();
+    callbacks.onScaleChange.mockClear();
+    graph.fitView.mockImplementationOnce(() => firstFit.promise).mockImplementationOnce(() => secondFit.promise);
+
+    act(() => {
+      handle.current?.fit();
+      handle.current?.fit();
+    });
+    emit(graph, 'aftertransform');
+    expect(callbacks.onScaleChange).not.toHaveBeenCalled();
+
+    act(() => firstFit.resolve());
+    await waitFor(() => expect(graph.getZoom).toHaveBeenCalledOnce());
+    emit(graph, 'aftertransform');
+    expect(callbacks.onScaleChange).not.toHaveBeenCalled();
+
+    act(() => secondFit.resolve());
+    await waitFor(() => expect(callbacks.onScaleChange).toHaveBeenLastCalledWith(1));
   });
 
   it('maps synthetic external-target events to their edge without faking a node selection', async () => {
@@ -195,6 +257,7 @@ type MockGraph = ReturnType<typeof createMockGraph>;
 
 function createMockGraph(options: unknown) {
   const handlers = new Map<string, EventHandler>();
+  let scale = runtime.initialScale;
   return {
     options,
     handlers,
@@ -202,7 +265,7 @@ function createMockGraph(options: unknown) {
     draw: vi.fn().mockResolvedValue(undefined),
     fitView: vi.fn().mockResolvedValue(undefined),
     getPosition: vi.fn(() => [0, 0]),
-    getZoom: vi.fn(() => 1),
+    getZoom: vi.fn(() => scale),
     off: vi.fn(),
     on: vi.fn((event: string, handler: EventHandler) => handlers.set(event, handler)),
     render: vi.fn().mockResolvedValue(undefined),
@@ -211,7 +274,10 @@ function createMockGraph(options: unknown) {
     setNode: vi.fn(),
     setSize: vi.fn(),
     translateTo: vi.fn().mockResolvedValue(undefined),
-    zoomTo: vi.fn().mockResolvedValue(undefined)
+    zoomTo: vi.fn((nextScale: number) => {
+      scale = nextScale;
+      return Promise.resolve();
+    })
   };
 }
 
@@ -256,4 +322,12 @@ function props(
   callbacks = eventCallbacks()
 ) {
   return { presentation: value, interaction: current, ...callbacks };
+}
+
+function deferred<T>() {
+  let resolve: (value: T) => void = () => undefined;
+  const promise = new Promise<T>(done => {
+    resolve = done;
+  });
+  return { promise, resolve };
 }

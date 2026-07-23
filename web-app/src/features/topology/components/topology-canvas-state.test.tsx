@@ -61,6 +61,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
 
@@ -142,6 +143,30 @@ describe('TopologyCanvas bootstrap lifecycle', () => {
     expect(graph.draw).toHaveBeenCalledOnce();
   });
 
+  it('subscribes to viewport transforms only after initialization and then publishes the initialized scale', async () => {
+    const pending = deferred<void>();
+    const callbacks = eventCallbacks();
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    runtime.renderResult = pending.promise;
+    render(<TopologyCanvas {...props('structure-a', null, callbacks)} />);
+    const graph = await renderedGraph();
+    graph.getZoom.mockImplementation(() => {
+      if (runtime.renderResult) throw new Error('viewport is not initialized');
+      return 0.75;
+    });
+
+    expect(graph.handlers.has('aftertransform')).toBe(false);
+    act(() => graph.handlers.get('aftertransform')?.());
+    expect(graph.getZoom).not.toHaveBeenCalled();
+    expect(consoleError).not.toHaveBeenCalled();
+    pending.resolve();
+    runtime.renderResult = undefined;
+
+    await waitFor(() => expect(callbacks.onRuntimeStateChange).toHaveBeenLastCalledWith({ kind: 'ready' }));
+    expect(graph.handlers.has('aftertransform')).toBe(true);
+    expect(callbacks.onScaleChange).toHaveBeenLastCalledWith(0.75);
+  });
+
   it('disposes a rejected bootstrap once and publishes only safe failure evidence', async () => {
     const pending = deferred<void>();
     const callbacks = eventCallbacks();
@@ -166,14 +191,16 @@ describe('TopologyCanvas bootstrap lifecycle', () => {
 type MockGraph = ReturnType<typeof createMockGraph>;
 
 function createMockGraph(renderResult: Promise<void> | undefined) {
+  const handlers = new Map<string, () => void>();
   return {
+    handlers,
     destroy: vi.fn(),
     draw: vi.fn().mockResolvedValue(undefined),
     fitView: vi.fn().mockResolvedValue(undefined),
     getPosition: vi.fn(() => [0, 0]),
     getZoom: vi.fn(() => 1),
     off: vi.fn(),
-    on: vi.fn(),
+    on: vi.fn((event: string, handler: () => void) => handlers.set(event, handler)),
     render: vi.fn(() => renderResult ?? Promise.resolve()),
     setData: vi.fn(),
     setEdge: vi.fn(),

@@ -18,18 +18,16 @@ export function TopologyToolbar({ query, changeScope }: Props) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   return (
-    <section className={styles.toolbarSurface}>
-      <div className={styles.toolbarPrimary}>
-        <Button
-          icon={<FilterOutlined />}
-          aria-label={t('topology.toolbar.filter')}
-          aria-expanded={expanded}
-          aria-controls="topology-filter-surface"
-          onClick={() => setExpanded(value => !value)}
-        >
-          {t('topology.toolbar.filter')}
-        </Button>
-      </div>
+    <section className={styles.canvasFilter}>
+      <Button
+        icon={<FilterOutlined />}
+        aria-label={t('topology.toolbar.filter')}
+        aria-expanded={expanded}
+        aria-controls="topology-filter-surface"
+        onClick={() => setExpanded(value => !value)}
+      >
+        {t('topology.toolbar.filter')}
+      </Button>
       {expanded ? <TopologyScopeFields query={query} changeScope={changeScope} /> : null}
     </section>
   );
@@ -38,7 +36,7 @@ export function TopologyToolbar({ query, changeScope }: Props) {
 function TopologyScopeFields({ query, changeScope }: Pick<Props, 'query' | 'changeScope'>) {
   const { t } = useTranslation();
   return (
-    <div id="topology-filter-surface" className={styles.toolbar}>
+    <div id="topology-filter-surface" className={styles.canvasFilterFields}>
       <InputNumber<number>
         min={1}
         max={Number.MAX_SAFE_INTEGER}

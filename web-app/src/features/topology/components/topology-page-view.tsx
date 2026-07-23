@@ -10,7 +10,6 @@ import type { TopologyCanvasHandle, TopologyCanvasRuntimeState } from './topolog
 import { TopologyContextBand } from './topology-context-band';
 import { TopologyInspector } from './topology-detail-rail';
 import { TopologyGraphColumn } from './topology-graph-column';
-import { TopologyToolbar } from './topology-toolbar';
 import { useCompactTopologyInspector } from './use-compact-topology-inspector';
 import styles from './topology-page.module.css';
 
@@ -54,7 +53,6 @@ export function TopologyPageView({
           <Typography.Title level={2}>{t('topology.title')}</Typography.Title>
         </header>
       )}
-      {state.query ? <TopologyToolbar query={state.query} changeScope={actions.changeScope} /> : null}
       <TopologyEvidence
         state={state}
         actions={actions}

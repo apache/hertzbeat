@@ -75,23 +75,25 @@ describe('TopologyPageView evidence', () => {
 
   it('starts with the complete scope filter collapsed and keeps canvas actions available', () => {
     renderLinkedView();
+    const canvasFrame = screen.getByTestId('topology-canvas').parentElement;
+    if (!canvasFrame) throw new Error('The topology canvas frame is missing.');
 
     expect(screen.queryByLabelText(i18n.t('topology.toolbar.focusEntity'))).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: i18n.t('topology.toolbar.filter') })).toHaveAttribute(
+    expect(within(canvasFrame).getByRole('button', { name: i18n.t('topology.toolbar.filter') })).toHaveAttribute(
       'aria-expanded',
       'false'
     );
     expect(screen.getByRole('button', { name: i18n.t('topology.toolbar.fit') })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: i18n.t('common.refresh') })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: i18n.t('topology.toolbar.filter') }));
+    fireEvent.click(within(canvasFrame).getByRole('button', { name: i18n.t('topology.toolbar.filter') }));
 
-    expect(screen.getByLabelText(i18n.t('topology.toolbar.focusEntity'))).toBeInTheDocument();
-    expect(screen.getAllByLabelText(i18n.t('topology.toolbar.depth')).length).toBeGreaterThan(0);
-    expect(screen.getByLabelText(i18n.t('topology.toolbar.environment'))).toBeInTheDocument();
-    expect(screen.getByLabelText(i18n.t('topology.toolbar.sourceKind'))).toBeInTheDocument();
-    expect(screen.getByLabelText(i18n.t('topology.toolbar.relationType'))).toBeInTheDocument();
-    expect(screen.getByLabelText(i18n.t('topology.toolbar.hideInternal'))).toBeInTheDocument();
+    expect(within(canvasFrame).getByLabelText(i18n.t('topology.toolbar.focusEntity'))).toBeInTheDocument();
+    expect(within(canvasFrame).getAllByLabelText(i18n.t('topology.toolbar.depth')).length).toBeGreaterThan(0);
+    expect(within(canvasFrame).getByLabelText(i18n.t('topology.toolbar.environment'))).toBeInTheDocument();
+    expect(within(canvasFrame).getByLabelText(i18n.t('topology.toolbar.sourceKind'))).toBeInTheDocument();
+    expect(within(canvasFrame).getByLabelText(i18n.t('topology.toolbar.relationType'))).toBeInTheDocument();
+    expect(within(canvasFrame).getByLabelText(i18n.t('topology.toolbar.hideInternal'))).toBeInTheDocument();
   });
 
   it('keeps zoom, fit, exact scale, and refresh controls inside the canvas surface', () => {

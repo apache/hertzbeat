@@ -56,29 +56,36 @@
   min-width: 220px;
 }
 
-.toolbarSurface {
+.canvasFilter {
+  position: absolute;
+  z-index: 2;
+  top: 12px;
+  right: 12px;
+  left: 12px;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 8px;
+  pointer-events: none;
+}
+
+.canvasFilter > * {
+  pointer-events: auto;
+}
+
+.canvasFilterFields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(150px, 1fr));
+  gap: 8px;
+  align-items: center;
+  width: min(760px, 100%);
+  max-height: min(360px, calc(100vh - 180px));
   padding: 8px;
+  overflow: auto;
   border: 1px solid var(--ant-color-border-secondary);
   border-radius: var(--ant-border-radius);
   background: var(--ant-color-bg-container);
-}
-
-.toolbarPrimary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.toolbar {
-  display: grid;
-  grid-template-columns: 150px 120px repeat(3, minmax(130px, 1fr)) auto;
-  gap: 8px;
-  align-items: center;
-  padding-top: 8px;
-  border-top: 1px solid var(--ant-color-border-secondary);
+  box-shadow: var(--ant-box-shadow-tertiary);
 }
 
 .workspace {
@@ -179,10 +186,6 @@
 }
 
 @media (max-width: 1199px) {
-  .toolbar {
-    grid-template-columns: repeat(3, minmax(150px, 1fr));
-  }
-
   .contextBand {
     flex-direction: column;
   }
@@ -212,7 +215,7 @@
     min-width: 50%;
   }
 
-  .toolbar {
+  .canvasFilterFields {
     grid-template-columns: 1fr;
   }
 

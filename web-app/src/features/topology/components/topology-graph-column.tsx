@@ -8,6 +8,7 @@ import { TopologyCanvas, type TopologyCanvasHandle, type TopologyCanvasRuntimeSt
 import { TopologyCanvasControls } from './topology-canvas-controls';
 import { TopologyCanvasLegend } from './topology-canvas-legend';
 import { TopologyMetricTable } from './topology-metric-table';
+import { TopologyToolbar } from './topology-toolbar';
 import styles from './topology-page.module.css';
 
 type Props = {
@@ -54,6 +55,7 @@ export function TopologyGraphColumn({
           onRuntimeStateChange={onRuntimeStateChange}
           onScaleChange={onScaleChange}
         />
+        {state.query ? <TopologyToolbar query={state.query} changeScope={actions.changeScope} /> : null}
         <TopologyCanvasControls
           scale={scale}
           refreshing={state.refreshing}
