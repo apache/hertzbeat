@@ -20,6 +20,7 @@
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 
 import { LogService } from '../service/log.service';
+import { MemoryStorageService } from '../service/memory-storage.service';
 import { ObservabilityService } from '../service/observability.service';
 import { LogManageComponent } from './log/log-manage/log-manage.component';
 import { routes } from './routes-routing.module';
@@ -42,7 +43,7 @@ describe('Observability transition navigation', () => {
     ]);
     const route = { snapshot: { queryParamMap: convertToParamMap({}) } } as unknown as ActivatedRoute;
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
-    const component = new TraceManageComponent(observability, route, router);
+    const component = new TraceManageComponent(observability, route, router, new MemoryStorageService());
     component.selected = {
       summary: {
         traceId: 'trace-1',
@@ -72,7 +73,7 @@ describe('Observability transition navigation', () => {
     const logs = jasmine.createSpyObj<LogService>('LogService', ['list', 'overviewStats', 'trendStats']);
     const route = { snapshot: { queryParamMap: convertToParamMap({}) } } as unknown as ActivatedRoute;
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
-    const component = new LogManageComponent(logs, route, router);
+    const component = new LogManageComponent(logs, route, router, new MemoryStorageService());
     component.timeRange = [new Date(1_000), new Date(2_000)];
 
     component.openTrace({ traceId: 'trace-2', resource: { 'service.name': 'catalog' } });

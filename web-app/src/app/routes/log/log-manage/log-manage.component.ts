@@ -33,9 +33,16 @@ import { Subject, debounceTime, finalize, forkJoin, switchMap, takeUntil } from 
 
 import { LogEntry } from '../../../pojo/LogEntry';
 import { LogOverviewStats, LogQueryOptions, LogService } from '../../../service/log.service';
+import { MemoryStorageService } from '../../../service/memory-storage.service';
 import { SignalContext } from '../../../service/observability.service';
 import { SignalNavigationComponent } from '../../observability/signal-navigation.component';
-import { moveSignalTimeRangeToNow, readSignalTimeRange, toSignalTimeContext } from '../../observability/signal-query-context';
+import {
+  moveSignalTimeRangeToNow,
+  readSignalCapability,
+  readSignalTimeRange,
+  toSignalTimeContext
+} from '../../observability/signal-query-context';
+import { SignalStorageGuideComponent } from '../../observability/signal-storage-guide.component';
 import { SignalTimeRangeComponent } from '../../observability/signal-time-range.component';
 import { LogStreamComponent } from '../log-stream/log-stream.component';
 
@@ -63,6 +70,7 @@ export function trendBucketMillis(value: string): number {
     NzTableModule,
     NzTagModule,
     SignalNavigationComponent,
+    SignalStorageGuideComponent,
     SignalTimeRangeComponent,
     LogStreamComponent
   ],
@@ -95,9 +103,20 @@ export class LogManageComponent implements OnInit, OnDestroy {
   private readonly queryChanges = new Subject<void>();
   private readonly destroyed = new Subject<void>();
 
-  constructor(private logsService: LogService, private route: ActivatedRoute, private router: Router) {}
+  storageSupported = true;
+
+  constructor(
+    private logsService: LogService,
+    private route: ActivatedRoute,
+    private router: Router,
+    private storage: MemoryStorageService
+  ) {}
 
   ngOnInit(): void {
+    this.storageSupported = readSignalCapability(this.storage, 'log');
+    if (!this.storageSupported) {
+      return;
+    }
     const params = this.route.snapshot.queryParamMap;
     this.timeRange = readSignalTimeRange(params);
     this.mode = params.get('view') === 'stream' || this.route.snapshot.data['logMode'] === 'stream' ? 'stream' : 'query';

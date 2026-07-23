@@ -20,6 +20,7 @@
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { LogService } from '../../../service/log.service';
+import { MemoryStorageService } from '../../../service/memory-storage.service';
 import { LogManageComponent } from './log-manage.component';
 
 describe('LogManageComponent', () => {
@@ -27,7 +28,7 @@ describe('LogManageComponent', () => {
     const logs = jasmine.createSpyObj<LogService>('LogService', ['list', 'overviewStats', 'trendStats']);
     const route = { snapshot: { queryParamMap: { get: () => null }, data: {} } } as unknown as ActivatedRoute;
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
-    const component = new LogManageComponent(logs, route, router);
+    const component = new LogManageComponent(logs, route, router, new MemoryStorageService());
     component.timeRange = [new Date(1_000), new Date(2_000)];
 
     component.setMode('stream');

@@ -663,6 +663,11 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
+    public boolean supportsLogQuery() {
+        return true;
+    }
+
+    @Override
     public Map<String, Object> queryLogOverviewAggregate(LogQueryFilter filter) {
         try {
             StringBuilder sql = new StringBuilder("SELECT COUNT(*) AS total_count, ")

@@ -6,7 +6,7 @@ import { DA_SERVICE_TOKEN, ITokenService } from '@delon/auth';
 import { ALAIN_I18N_TOKEN, Menu, MenuService, SettingsService, TitleService } from '@delon/theme';
 import type { NzSafeAny } from 'ng-zorro-antd/core/types';
 import { NzIconService } from 'ng-zorro-antd/icon';
-import { Observable, zip } from 'rxjs';
+import { Observable, of, zip } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import { ICONS } from '../../../style-icons';
@@ -41,14 +41,15 @@ export class StartupService {
     return zip(
       this.i18n.loadLangData(defaultLang),
       this.httpClient.get('./assets/app-data.json', { headers: headers }),
-      this.httpClient.get(`/apps/hierarchy?lang=${defaultLang}`)
+      this.httpClient.get(`/apps/hierarchy?lang=${defaultLang}`),
+      this.httpClient.get('/observability/capability').pipe(catchError(() => of(null)))
     ).pipe(
       catchError((res: NzSafeAny) => {
         console.warn(`StartupService.load: Network request failed`, res);
         setTimeout(() => this.router.navigateByUrl(`/exception/500`));
         return [];
       }),
-      map(([langData, appData, menuData]: [Record<string, string>, NzSafeAny, NzSafeAny]) => {
+      map(([langData, appData, menuData, capabilityData]: [Record<string, string>, NzSafeAny, NzSafeAny, NzSafeAny]) => {
         // setting language data
         this.i18n.use(defaultLang, langData);
         // Application information: including site name, description, year
@@ -85,6 +86,7 @@ export class StartupService {
             item.hide = true;
           }
         });
+        this.storageService.putData('observabilityCapability', capabilityData?.data ?? null);
         this.storageService.putData('hierarchy', menuData.data);
         this.menuService.resume();
         this.titleService.suffix = appData.app.name;

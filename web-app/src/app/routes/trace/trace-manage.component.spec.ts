@@ -21,6 +21,7 @@ import { fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 
+import { MemoryStorageService } from '../../service/memory-storage.service';
 import { ObservabilityService, TraceListItem, TraceSpanNode } from '../../service/observability.service';
 import { TraceManageComponent } from './trace-manage.component';
 
@@ -62,7 +63,8 @@ describe('TraceManageComponent', () => {
     const component = new TraceManageComponent(
       jasmine.createSpyObj<ObservabilityService>('ObservabilityService', ['queryTraces', 'traceOverview', 'traceDetail']),
       { snapshot: { queryParamMap: convertToParamMap({}) } } as unknown as ActivatedRoute,
-      jasmine.createSpyObj<Router>('Router', ['navigate'])
+      jasmine.createSpyObj<Router>('Router', ['navigate']),
+      new MemoryStorageService()
     );
     const root = span('root', '', 'STATUS_CODE_OK');
     const child = span('child', 'root', 'STATUS_CODE_ERROR');
@@ -101,7 +103,7 @@ describe('TraceManageComponent', () => {
       }
     } as unknown as ActivatedRoute;
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
-    const component = new TraceManageComponent(observability, route, router);
+    const component = new TraceManageComponent(observability, route, router, new MemoryStorageService());
 
     component.ngOnInit();
     tick(250);
