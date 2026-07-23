@@ -8,16 +8,20 @@ import type { ExactTimeWindow } from '@/shared/query-context';
 
 import { classifyTopologyError, loadTopologyGraph } from '../api/topology-api';
 import {
+  changeTopologyPage,
+  changeTopologyScope,
   parseTopologyQuery,
+  withTopologyPageDefaults,
   writeTopologyQuery,
   type TopologyFailure,
-  type TopologyQuery
+  type TopologyQuery,
+  type TopologyScopePatch
 } from '../model/topology-model';
 import { buildTopologyPresentation, type TopologyPresentation } from '../model/topology-view-model';
 import { topologyQueryKeys } from './topology-query-keys';
 import { useTopologyInteraction } from './use-topology-interaction';
 
-type TopologyPageEvidence =
+export type TopologyPageEvidence =
   | { kind: 'loading' | 'permission' | 'unavailable' | 'contract' | 'error' }
   | { kind: 'empty' | 'ready'; presentation: TopologyPresentation };
 
@@ -26,9 +30,9 @@ type SettledGraph = { semanticScope: string; presentation: TopologyPresentation 
 const invalidQueryKey = ['topology', 'invalid'] as const;
 
 export function useTopologyPageController(options: ControllerOptions = {}) {
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const request = resolveTopologyRequest(params, options.effectiveWindow, options.refreshRevision ?? 0);
-  const semanticScope = request ? writeTopologyQuery(request.query).toString() : 'invalid';
+  const semanticScope = request?.semanticScope ?? 'invalid';
   const result = useQuery({
     queryKey: request?.key ?? invalidQueryKey,
     queryFn: request ? ({ signal }) => loadTopologyGraph(request.query, signal) : skipToken,
@@ -43,11 +47,31 @@ export function useTopologyPageController(options: ControllerOptions = {}) {
     state: topologyPageState(request?.query, presentation, interaction.interaction, result.isFetching, failure),
     actions: {
       ...interaction.actions,
+      changeScope: (patch: TopologyScopePatch) => {
+        updateRouteQuery(params, setParams, query => changeTopologyScope(query, patch));
+      },
+      changePage: (pageIndex: number, pageSize: number) => {
+        updateRouteQuery(params, setParams, query => changeTopologyPage(query, pageIndex, pageSize));
+      },
       refresh: () => {
         if (request) void result.refetch();
       }
     }
   };
+}
+
+export type TopologyPageController = ReturnType<typeof useTopologyPageController>;
+
+function updateRouteQuery(
+  params: URLSearchParams,
+  setParams: ReturnType<typeof useSearchParams>[1],
+  update: (query: TopologyQuery) => TopologyQuery
+) {
+  try {
+    setParams(writeTopologyQuery(update(parseTopologyQuery(params))));
+  } catch {
+    // Invalid URL evidence stays visible until the operator corrects the address.
+  }
 }
 
 function useSettledTopologyGraph(
@@ -72,13 +96,24 @@ function resolveTopologyRequest(
   refreshRevision: number
 ) {
   try {
-    const routeQuery = parseTopologyQuery(params);
+    const routeQuery = withTopologyPageDefaults(parseTopologyQuery(params));
     const query: TopologyQuery =
       routeQuery.window || !effectiveWindow ? routeQuery : { ...routeQuery, window: effectiveWindow };
-    return { query, key: topologyQueryKeys.graph(query, refreshRevision) };
+    return {
+      query,
+      key: topologyQueryKeys.graph(query, refreshRevision),
+      semanticScope: topologySemanticScope(routeQuery, effectiveWindow)
+    };
   } catch {
     return undefined;
   }
+}
+
+function topologySemanticScope(routeQuery: TopologyQuery, effectiveWindow: ExactTimeWindow | undefined) {
+  const routeScope = writeTopologyQuery(routeQuery).toString();
+  const inheritedDuration =
+    routeQuery.window || !effectiveWindow ? 'none' : String(effectiveWindow.to - effectiveWindow.from);
+  return `${routeScope}|inheritedDuration=${inheritedDuration}`;
 }
 
 function topologyPageState(

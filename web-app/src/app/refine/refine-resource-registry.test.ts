@@ -39,6 +39,7 @@ describe('Refine shell resource registry', () => {
 
   it('assigns global time only to routes whose active queries consume the shared window and revision', () => {
     expect(shellMeta('dashboard')).toMatchObject({ timePolicy: 'none' });
+    expect(shellMeta('topology')).toMatchObject({ timePolicy: 'global' });
     expect(shellMeta('explore')).toMatchObject({ timePolicy: 'route_owned' });
     expect(shellMeta('instrumentation')).toMatchObject({ timePolicy: 'none' });
     expect(shellMeta('alerts')).toMatchObject({ timePolicy: 'none' });
@@ -56,6 +57,17 @@ describe('Refine shell resource registry', () => {
     expect(refineResources.find(resource => resource.name === 'alert-integrations')).toMatchObject({
       list: '/alerts/integrations/webhook'
     });
+  });
+
+  it('places topology between Entities and Explore in the workspace navigation', () => {
+    const workspace = refineResources
+      .filter(resource => resource.meta?.parent === 'shell-workspace')
+      .sort((left, right) => Number(left.meta?.shell?.order) - Number(right.meta?.shell?.order))
+      .map(resource => resource.name);
+
+    expect(workspace).toEqual(expect.arrayContaining(['entities', 'topology', 'explore']));
+    expect(workspace.indexOf('entities')).toBeLessThan(workspace.indexOf('topology'));
+    expect(workspace.indexOf('topology')).toBeLessThan(workspace.indexOf('explore'));
   });
 
   it('admits a normalized lowercase session role to an ADMIN resource', async () => {

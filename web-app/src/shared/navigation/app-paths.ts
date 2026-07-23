@@ -25,6 +25,7 @@ const entityListPath = '/entities';
 
 export const applicationRoutePaths = {
   dashboard: defaultAuthenticatedPath,
+  topology: '/topology',
   explore: '/explore',
   status: '/status',
   login: loginPath,

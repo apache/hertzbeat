@@ -27,11 +27,82 @@
     "dashboard": "Painel",
     "monitors": "Monitores",
     "entities": "Recursos",
+    "topology": "Topologia",
     "explore": "Explorar",
     "alerts": "Alertas",
     "settings": "Configurações",
     "bulletin": "Quadros",
     "status": "Status"
+  },
+  "topology": {
+    "title": "Topologia",
+    "toolbar": {
+      "focusEntity": "ID do recurso em foco",
+      "depth": "Profundidade",
+      "environment": "Ambiente",
+      "sourceKind": "Tipo de origem",
+      "relationType": "Tipo de relação",
+      "hideInternal": "Ocultar internas",
+      "fit": "Ajustar grafo",
+      "all": "Todos"
+    },
+    "summary": {
+      "nodes": "Nós",
+      "edges": "Arestas",
+      "window": "Janela"
+    },
+    "evidence": {
+      "loading": "Carregando evidências de topologia…",
+      "empty": "Nenhuma evidência de topologia corresponde a este escopo.",
+      "permission": "Você não tem permissão para ver as evidências de topologia.",
+      "unavailable": "As evidências de topologia estão temporariamente indisponíveis.",
+      "contract": "O contrato da consulta ou resposta de topologia é inválido.",
+      "error": "Não foi possível carregar as evidências de topologia.",
+      "refreshFailure": "A atualização falhou. A última topologia confirmada permanece visível.",
+      "runtimeLoading": "Iniciando o renderizador do grafo…",
+      "runtimeFailure": "O renderizador do grafo está indisponível. A tabela continua acessível."
+    },
+    "table": {
+      "kind": "Tipo",
+      "name": "Nome",
+      "type": "Tipo / relação",
+      "requestRate": "Req/s",
+      "errorRate": "Taxa de erros",
+      "latencyP95": "Latência P95",
+      "externalTarget": "Destino externo"
+    },
+    "detail": {
+      "title": "Detalhes da seleção",
+      "none": "Selecione um nó ou uma aresta para inspecionar suas evidências.",
+      "node": "Nó",
+      "edge": "Aresta",
+      "source": "Origem",
+      "target": "Destino",
+      "environment": "Ambiente",
+      "namespace": "Namespace",
+      "status": "Status",
+      "relationType": "Tipo de relação",
+      "relationSource": "Origem da relação"
+    },
+    "metrics": {
+      "requestRate": "Taxa de requisições",
+      "requestCount": "Quantidade de requisições",
+      "errorRate": "Taxa de erros",
+      "errorCount": "Quantidade de erros",
+      "latencyP95": "Latência P95",
+      "latencyAvg": "Latência média",
+      "unavailable": "Indisponível"
+    },
+    "pagination": {
+      "previous": "Página anterior de arestas",
+      "next": "Próxima página de arestas",
+      "page": "Página de arestas {{page}}",
+      "pageSize": "Arestas por página"
+    },
+    "values": {
+      "node": "Nó",
+      "edge": "Aresta"
+    }
   },
   "entity": {
     "title": "Catálogo de recursos",

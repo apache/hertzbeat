@@ -1,0 +1,99 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 42px;
+}
+
+.heading :global(.ant-typography) {
+  margin: 0;
+}
+
+.toolbar {
+  display: grid;
+  grid-template-columns: 150px 120px repeat(3, minmax(130px, 1fr)) auto auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.toolbarActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 12px;
+  min-width: 0;
+}
+
+.graphColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.canvasFrame {
+  height: 520px;
+  overflow: hidden;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius);
+  background: var(--ant-color-bg-container);
+}
+
+.detailRail {
+  width: 340px;
+  min-height: 520px;
+  padding: 16px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius);
+  background: var(--ant-color-bg-container);
+}
+
+.detailRail :global(.ant-descriptions) {
+  margin-top: 12px;
+}
+
+.centerEvidence {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 320px;
+}
+
+.topologyRowActive > td {
+  background: var(--ant-control-item-bg-active) !important;
+}
+
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  margin-top: 12px;
+}
+
+@media (max-width: 1200px) {
+  .toolbar {
+    grid-template-columns: repeat(3, minmax(150px, 1fr));
+  }
+
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .detailRail {
+    width: auto;
+    min-height: 0;
+  }
+}

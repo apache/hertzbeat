@@ -7,6 +7,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
+import type { ExactTimeWindow } from '@/shared/query-context';
 import type { TopologyGraph } from '../api/topology-schema';
 import { topologyQueryKeys } from './topology-query-keys';
 
@@ -81,6 +82,35 @@ describe('topology page refresh revision and failure', () => {
     await waitFor(() => expect(view.current().state.refreshing).toBe(false));
   });
 
+  it('keeps canvas and selection when a shared refresh slides the same-duration window', async () => {
+    const view = renderController('/topology');
+    await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
+    act(() => view.current().actions.selectNode('2'));
+    const pending = deferred<TopologyGraph>();
+    api.loadTopologyGraph.mockReturnValueOnce(pending.promise);
+
+    act(() => view.setSharedTime({ window: { from: 2_000, to: 3_000 }, revision: 1 }));
+    await waitFor(() => expect(view.current().state.refreshing).toBe(true));
+    expect(view.current().state.evidence.kind).toBe('ready');
+    expect(view.current().state.interaction.selected).toEqual({ kind: 'node', nodeId: '2' });
+    act(() => pending.resolve(topologyGraph(['1', '2'])));
+    await waitFor(() => expect(view.current().state.refreshing).toBe(false));
+  });
+
+  it('clears stale graph and interaction when the inherited window duration changes', async () => {
+    const view = renderController('/topology');
+    await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
+    act(() => view.current().actions.selectNode('2'));
+    const pending = deferred<TopologyGraph>();
+    api.loadTopologyGraph.mockReturnValueOnce(pending.promise);
+
+    act(() => view.setSharedTime({ window: { from: 2_000, to: 4_000 }, revision: 1 }));
+    expect(view.current().state.evidence.kind).toBe('loading');
+    expect(view.current().state.interaction.selected).toEqual({ kind: 'none' });
+    act(() => pending.resolve(topologyGraph(['1'])));
+    await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
+  });
+
   it('keeps the ready graph and exposes only a safe failure kind when same-scope refresh fails', async () => {
     const view = renderController('/topology');
     await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
@@ -121,10 +151,12 @@ describe('topology page in-memory drilldown', () => {
 function renderController(entry: string) {
   let controller: ReturnType<typeof useTopologyPageController> | undefined;
   let setRevision: (revision: number) => void = () => undefined;
+  let setSharedTime: (value: { window: ExactTimeWindow; revision: number }) => void = () => undefined;
   function Probe() {
-    const [revision, updateRevision] = useState(0);
-    setRevision = updateRevision;
-    controller = useTopologyPageController({ refreshRevision: revision });
+    const [time, updateTime] = useState({ window: { from: 1_000, to: 2_000 }, revision: 0 });
+    setRevision = revision => updateTime(value => ({ ...value, revision }));
+    setSharedTime = updateTime;
+    controller = useTopologyPageController({ effectiveWindow: time.window, refreshRevision: time.revision });
     return null;
   }
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
@@ -138,6 +170,7 @@ function renderController(entry: string) {
     client,
     router,
     setRevision,
+    setSharedTime,
     current: () => {
       if (!controller) throw new Error('controller not mounted');
       return controller;

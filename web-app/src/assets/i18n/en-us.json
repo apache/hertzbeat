@@ -27,11 +27,82 @@
     "dashboard": "Dashboard",
     "monitors": "Monitors",
     "entities": "Resources",
+    "topology": "Topology",
     "explore": "Explore",
     "alerts": "Alerts",
     "settings": "Settings",
     "bulletin": "Bulletin",
     "status": "Status"
+  },
+  "topology": {
+    "title": "Topology",
+    "toolbar": {
+      "focusEntity": "Focus entity ID",
+      "depth": "Depth",
+      "environment": "Environment",
+      "sourceKind": "Source kind",
+      "relationType": "Relation type",
+      "hideInternal": "Hide internal",
+      "fit": "Fit graph",
+      "all": "All"
+    },
+    "summary": {
+      "nodes": "Nodes",
+      "edges": "Edges",
+      "window": "Window"
+    },
+    "evidence": {
+      "loading": "Loading topology evidence…",
+      "empty": "No topology evidence matches this scope.",
+      "permission": "You do not have permission to view topology evidence.",
+      "unavailable": "Topology evidence is temporarily unavailable.",
+      "contract": "The topology query or response contract is invalid.",
+      "error": "Topology evidence could not be loaded.",
+      "refreshFailure": "The refresh failed. The last confirmed topology remains visible.",
+      "runtimeLoading": "Starting graph renderer…",
+      "runtimeFailure": "The graph renderer is unavailable. Table evidence remains accessible."
+    },
+    "table": {
+      "kind": "Kind",
+      "name": "Name",
+      "type": "Type / relation",
+      "requestRate": "Req/s",
+      "errorRate": "Error rate",
+      "latencyP95": "P95 latency",
+      "externalTarget": "External target"
+    },
+    "detail": {
+      "title": "Selection details",
+      "none": "Select a node or edge to inspect its evidence.",
+      "node": "Node",
+      "edge": "Edge",
+      "source": "Source",
+      "target": "Target",
+      "environment": "Environment",
+      "namespace": "Namespace",
+      "status": "Status",
+      "relationType": "Relation type",
+      "relationSource": "Relation source"
+    },
+    "metrics": {
+      "requestRate": "Request rate",
+      "requestCount": "Request count",
+      "errorRate": "Error rate",
+      "errorCount": "Error count",
+      "latencyP95": "P95 latency",
+      "latencyAvg": "Average latency",
+      "unavailable": "Unavailable"
+    },
+    "pagination": {
+      "previous": "Previous edge page",
+      "next": "Next edge page",
+      "page": "Edge page {{page}}",
+      "pageSize": "Edges per page"
+    },
+    "values": {
+      "node": "Node",
+      "edge": "Edge"
+    }
   },
   "entity": {
     "title": "Resource catalog",

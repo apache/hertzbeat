@@ -110,6 +110,16 @@ describe('route registry', () => {
     expect(getAppRoute('entity-import')).toMatchObject({ id: 'entity-import', path: '/entities/import', kind: 'page' });
   });
 
+  it('registers topology as a canonical workspace resource page', () => {
+    expect(getAppRoute('topology')).toMatchObject({
+      id: 'topology',
+      path: '/topology',
+      kind: 'page',
+      resource: { labelKey: 'menu.topology' }
+    });
+    expectTypeOf<'topology'>().toMatchTypeOf<AppResourceRouteId>();
+  });
+
   it('registers existing resource definition editing centrally', () => {
     expect(getAppRoute('entity-definition')).toMatchObject({
       id: 'entity-definition',

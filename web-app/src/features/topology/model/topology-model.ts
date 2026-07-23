@@ -16,8 +16,14 @@ export type TopologyQuery = {
 };
 
 export type TopologyFailure = { kind: 'permission' | 'unavailable' | 'contract' | 'error' };
+export type TopologyScopePatch = Partial<
+  Pick<TopologyQuery, 'focusEntityId' | 'depth' | 'environment' | 'sourceKind' | 'relationType' | 'hideInternal'>
+>;
 
 const JAVA_INTEGER_MAX = 2_147_483_647;
+export const topologyDepthValues = [1, 2] as const;
+export const topologyPageSizes = [25, 50, 100] as const;
+export const topologyDefaultPageSize = topologyPageSizes[0];
 
 export function parseTopologyQuery(params: URLSearchParams): TopologyQuery {
   const focusEntityId = readInteger(params, 'focusEntityId', 1, Number.MAX_SAFE_INTEGER);
@@ -58,6 +64,22 @@ export function writeTopologyQuery(query: TopologyQuery) {
   writeInteger(next, 'pageIndex', query.pageIndex, 0, JAVA_INTEGER_MAX);
   writeInteger(next, 'pageSize', query.pageSize, 1, 200);
   return next;
+}
+
+export function changeTopologyScope(query: TopologyQuery, patch: TopologyScopePatch): TopologyQuery {
+  return { ...query, ...patch, pageIndex: 0 };
+}
+
+export function changeTopologyPage(query: TopologyQuery, pageIndex: number, pageSize: number): TopologyQuery {
+  return { ...query, pageIndex, pageSize };
+}
+
+export function withTopologyPageDefaults(query: TopologyQuery): TopologyQuery {
+  return {
+    ...query,
+    pageIndex: query.pageIndex ?? 0,
+    pageSize: query.pageSize ?? topologyDefaultPageSize
+  };
 }
 
 export class TopologyContractError extends Error {

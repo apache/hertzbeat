@@ -9,7 +9,12 @@ export type {
   TopologyTimelineEvent
 } from './api/topology-schema';
 export { topologyQueryKeys } from './controller/topology-query-keys';
-export { useTopologyPageController } from './controller/use-topology-page-controller';
+export {
+  useTopologyPageController,
+  type TopologyPageController,
+  type TopologyPageEvidence
+} from './controller/use-topology-page-controller';
+export { TopologyPage } from './pages/topology-page';
 export {
   TopologyCanvas,
   type TopologyCanvasHandle,
@@ -18,11 +23,19 @@ export {
 } from './components/topology-canvas';
 export {
   TopologyContractError,
+  changeTopologyPage,
+  changeTopologyScope,
   parseTopologyQuery,
+  topologyDefaultPageSize,
+  topologyDepthValues,
+  topologyPageSizes,
+  withTopologyPageDefaults,
   writeTopologyQuery,
   type TopologyFailure,
-  type TopologyQuery
+  type TopologyQuery,
+  type TopologyScopePatch
 } from './model/topology-model';
+export { formatTopologyWindow } from './model/topology-display';
 export {
   buildTopologyPresentation,
   emptyTopologyInteraction,

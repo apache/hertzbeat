@@ -23,6 +23,7 @@ import {
   buildMonitorDetailPath,
   buildMonitorEditPath,
   buildMonitorListPath,
+  applicationRoutePaths,
   entityRoutePaths,
   type MonitorListRouteContext
 } from './app-paths';
@@ -61,5 +62,9 @@ describe('application path builders', () => {
     expect(entityRoutePaths.import).toBe('/entities/import');
     expect(entityRoutePaths.definition).toBe('/entities/:entityId/definition');
     expect(buildEntityEditPath(7)).toBe('/entities/7/edit');
+  });
+
+  it('owns the topology page path centrally', () => {
+    expect(applicationRoutePaths.topology).toBe('/topology');
   });
 });

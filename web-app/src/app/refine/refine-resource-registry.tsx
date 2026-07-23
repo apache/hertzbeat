@@ -9,6 +9,7 @@ import {
   AlertOutlined,
   ApiOutlined,
   AppstoreOutlined,
+  ApartmentOutlined,
   BellOutlined,
   DashboardOutlined,
   DatabaseOutlined,
@@ -103,6 +104,12 @@ export const refineResources: ResourceProps[] = [
     order: 25,
     show: getAppRoute('entity-detail').path,
     timePolicy: 'none'
+  }),
+  routedNavigationResource('topology', {
+    parent: 'shell-workspace',
+    icon: <ApartmentOutlined />,
+    order: 27,
+    timePolicy: 'global'
   }),
   routedNavigationResource('explore', {
     parent: 'shell-workspace',

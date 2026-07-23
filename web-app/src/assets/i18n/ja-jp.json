@@ -27,11 +27,82 @@
     "dashboard": "ダッシュボード",
     "monitors": "監視センター",
     "entities": "リソース",
+    "topology": "トポロジー",
     "explore": "シグナル検索",
     "alerts": "アラートセンター",
     "settings": "設定",
     "bulletin": "監視ボード",
     "status": "ステータス"
+  },
+  "topology": {
+    "title": "トポロジー",
+    "toolbar": {
+      "focusEntity": "フォーカスリソース ID",
+      "depth": "深度",
+      "environment": "環境",
+      "sourceKind": "ソース種別",
+      "relationType": "関係タイプ",
+      "hideInternal": "内部関係を非表示",
+      "fit": "グラフを全体表示",
+      "all": "すべて"
+    },
+    "summary": {
+      "nodes": "ノード",
+      "edges": "エッジ",
+      "window": "時間範囲"
+    },
+    "evidence": {
+      "loading": "トポロジー証拠を読み込んでいます…",
+      "empty": "この範囲に一致するトポロジー証拠はありません。",
+      "permission": "トポロジー証拠を表示する権限がありません。",
+      "unavailable": "トポロジー証拠は一時的に利用できません。",
+      "contract": "トポロジーのクエリまたは応答契約が無効です。",
+      "error": "トポロジー証拠を読み込めませんでした。",
+      "refreshFailure": "更新に失敗しました。最後に確認されたトポロジーを表示しています。",
+      "runtimeLoading": "グラフレンダラーを起動しています…",
+      "runtimeFailure": "グラフレンダラーを利用できません。表の証拠は引き続き確認できます。"
+    },
+    "table": {
+      "kind": "種別",
+      "name": "名前",
+      "type": "タイプ / 関係",
+      "requestRate": "要求/秒",
+      "errorRate": "エラー率",
+      "latencyP95": "P95 遅延",
+      "externalTarget": "外部ターゲット"
+    },
+    "detail": {
+      "title": "選択の詳細",
+      "none": "ノードまたはエッジを選択して証拠を確認します。",
+      "node": "ノード",
+      "edge": "エッジ",
+      "source": "ソース",
+      "target": "ターゲット",
+      "environment": "環境",
+      "namespace": "名前空間",
+      "status": "状態",
+      "relationType": "関係タイプ",
+      "relationSource": "関係ソース"
+    },
+    "metrics": {
+      "requestRate": "要求率",
+      "requestCount": "要求数",
+      "errorRate": "エラー率",
+      "errorCount": "エラー数",
+      "latencyP95": "P95 遅延",
+      "latencyAvg": "平均遅延",
+      "unavailable": "利用不可"
+    },
+    "pagination": {
+      "previous": "前のエッジページ",
+      "next": "次のエッジページ",
+      "page": "エッジページ {{page}}",
+      "pageSize": "1 ページのエッジ数"
+    },
+    "values": {
+      "node": "ノード",
+      "edge": "エッジ"
+    }
   },
   "entity": {
     "title": "リソースカタログ",

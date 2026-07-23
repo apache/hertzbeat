@@ -61,6 +61,9 @@ export const appRouteCatalog = {
   'entity-edit': pageRoute('entity-edit', entityRoutePaths.edit),
   'entity-definition': pageRoute('entity-definition', entityRoutePaths.definition),
   'entity-detail': pageRoute('entity-detail', entityRoutePaths.detail),
+  topology: pageRoute('topology', applicationRoutePaths.topology, {
+    resource: { labelKey: 'menu.topology' }
+  }),
   explore: pageRoute('explore', applicationRoutePaths.explore, {
     resource: { labelKey: 'menu.explore' }
   }),

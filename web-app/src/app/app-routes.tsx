@@ -130,6 +130,13 @@ export const appRoutes: RouteObject[] = [
                 }
               },
               {
+                ...getAppRouteIdentity('topology'),
+                lazy: async () => {
+                  const { TopologyPage } = await import('@/features/topology');
+                  return { Component: TopologyPage };
+                }
+              },
+              {
                 ...getAppRouteIdentity('explore'),
                 lazy: async () => {
                   const { ExplorePage } = await import('@/features/explore');

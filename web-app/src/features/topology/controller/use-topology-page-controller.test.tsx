@@ -29,7 +29,7 @@ describe('topology page controller evidence and time scope', () => {
     const view = renderController('/topology?depth=2&start=1000&end=2000', { from: 3000, to: 4000 }, 4);
     await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
     expect(api.loadTopologyGraph).toHaveBeenCalledWith(
-      { depth: 2, window: { from: 1000, to: 2000 } },
+      { depth: 2, pageIndex: 0, pageSize: 25, window: { from: 1000, to: 2000 } },
       expect.any(AbortSignal)
     );
   });
@@ -38,7 +38,7 @@ describe('topology page controller evidence and time scope', () => {
     const view = renderController('/topology?depth=1', { from: 3000, to: 4000 }, 2);
     await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
     expect(api.loadTopologyGraph).toHaveBeenCalledWith(
-      { depth: 1, window: { from: 3000, to: 4000 } },
+      { depth: 1, pageIndex: 0, pageSize: 25, window: { from: 3000, to: 4000 } },
       expect.any(AbortSignal)
     );
   });
@@ -73,6 +73,29 @@ describe('topology page controller evidence and time scope', () => {
     api.loadTopologyGraph.mockResolvedValue(topologyGraph(['1']));
     const ready = renderController('/topology');
     await waitFor(() => expect(ready.current().state.evidence.kind).toBe('ready'));
+  });
+
+  it('updates upstream query fields through the canonical model and resets pagination', async () => {
+    const view = renderController(
+      '/topology?focusEntityId=7&depth=1&environment=prod&sourceKind=otel&relationType=calls&hideInternal=false&pageIndex=4&pageSize=25'
+    );
+    await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
+
+    act(() => view.current().actions.changeScope({ depth: 2, environment: 'stage', hideInternal: true }));
+    await waitFor(() =>
+      expect(view.router.state.location.search).toBe(
+        '?focusEntityId=7&depth=2&environment=stage&sourceKind=otel&relationType=calls&hideInternal=true&pageIndex=0&pageSize=25'
+      )
+    );
+  });
+
+  it('changes pagination without serializing the inherited shared window', async () => {
+    const view = renderController('/topology?depth=1&pageIndex=2&pageSize=25', { from: 3000, to: 4000 });
+    await waitFor(() => expect(view.current().state.evidence.kind).toBe('ready'));
+
+    act(() => view.current().actions.changePage(3, 50));
+    await waitFor(() => expect(view.router.state.location.search).toBe('?depth=1&pageIndex=3&pageSize=50'));
+    expect(view.router.state.location.search).not.toContain('start=');
   });
 });
 

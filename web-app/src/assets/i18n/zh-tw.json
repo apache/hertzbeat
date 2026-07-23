@@ -27,11 +27,82 @@
     "dashboard": "儀表板",
     "monitors": "監控中心",
     "entities": "資源目錄",
+    "topology": "拓撲",
     "explore": "訊號查詢",
     "alerts": "警報中心",
     "settings": "設定",
     "bulletin": "監控看板",
     "status": "狀態頁"
+  },
+  "topology": {
+    "title": "拓撲",
+    "toolbar": {
+      "focusEntity": "焦點資源 ID",
+      "depth": "深度",
+      "environment": "環境",
+      "sourceKind": "來源類型",
+      "relationType": "關係類型",
+      "hideInternal": "隱藏內部關係",
+      "fit": "調整畫布",
+      "all": "全部"
+    },
+    "summary": {
+      "nodes": "節點",
+      "edges": "邊",
+      "window": "時間範圍"
+    },
+    "evidence": {
+      "loading": "正在載入拓撲證據…",
+      "empty": "目前範圍沒有相符的拓撲證據。",
+      "permission": "你沒有查看拓撲證據的權限。",
+      "unavailable": "拓撲證據暫時無法使用。",
+      "contract": "拓撲查詢或回應契約無效。",
+      "error": "拓撲證據載入失敗。",
+      "refreshFailure": "重新整理失敗，繼續顯示上一次確認的拓撲。",
+      "runtimeLoading": "正在啟動圖形呈現器…",
+      "runtimeFailure": "圖形呈現器無法使用，表格證據仍可查看。"
+    },
+    "table": {
+      "kind": "類型",
+      "name": "名稱",
+      "type": "類型 / 關係",
+      "requestRate": "請求/秒",
+      "errorRate": "錯誤率",
+      "latencyP95": "P95 延遲",
+      "externalTarget": "外部目標"
+    },
+    "detail": {
+      "title": "選取詳情",
+      "none": "選取節點或邊以檢查其證據。",
+      "node": "節點",
+      "edge": "邊",
+      "source": "來源",
+      "target": "目標",
+      "environment": "環境",
+      "namespace": "命名空間",
+      "status": "狀態",
+      "relationType": "關係類型",
+      "relationSource": "關係來源"
+    },
+    "metrics": {
+      "requestRate": "請求速率",
+      "requestCount": "請求數",
+      "errorRate": "錯誤率",
+      "errorCount": "錯誤數",
+      "latencyP95": "P95 延遲",
+      "latencyAvg": "平均延遲",
+      "unavailable": "無法使用"
+    },
+    "pagination": {
+      "previous": "上一頁邊",
+      "next": "下一頁邊",
+      "page": "邊第 {{page}} 頁",
+      "pageSize": "每頁邊數"
+    },
+    "values": {
+      "node": "節點",
+      "edge": "邊"
+    }
   },
   "entity": {
     "title": "資源目錄",

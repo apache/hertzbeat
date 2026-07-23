@@ -27,11 +27,82 @@
     "dashboard": "仪表盘",
     "monitors": "监控中心",
     "entities": "资源目录",
+    "topology": "拓扑",
     "explore": "信号查询",
     "alerts": "告警中心",
     "settings": "设置",
     "bulletin": "监控看板",
     "status": "状态页"
+  },
+  "topology": {
+    "title": "拓扑",
+    "toolbar": {
+      "focusEntity": "焦点资源 ID",
+      "depth": "深度",
+      "environment": "环境",
+      "sourceKind": "来源类型",
+      "relationType": "关系类型",
+      "hideInternal": "隐藏内部关系",
+      "fit": "适配画布",
+      "all": "全部"
+    },
+    "summary": {
+      "nodes": "节点",
+      "edges": "边",
+      "window": "时间窗口"
+    },
+    "evidence": {
+      "loading": "正在加载拓扑证据…",
+      "empty": "当前范围没有匹配的拓扑证据。",
+      "permission": "你没有查看拓扑证据的权限。",
+      "unavailable": "拓扑证据暂不可用。",
+      "contract": "拓扑查询或响应契约无效。",
+      "error": "拓扑证据加载失败。",
+      "refreshFailure": "刷新失败，继续显示上一次确认的拓扑。",
+      "runtimeLoading": "正在启动图形渲染器…",
+      "runtimeFailure": "图形渲染器不可用，表格证据仍可查看。"
+    },
+    "table": {
+      "kind": "类型",
+      "name": "名称",
+      "type": "类型 / 关系",
+      "requestRate": "请求/秒",
+      "errorRate": "错误率",
+      "latencyP95": "P95 延迟",
+      "externalTarget": "外部目标"
+    },
+    "detail": {
+      "title": "选择详情",
+      "none": "选择节点或边以检查其证据。",
+      "node": "节点",
+      "edge": "边",
+      "source": "来源",
+      "target": "目标",
+      "environment": "环境",
+      "namespace": "命名空间",
+      "status": "状态",
+      "relationType": "关系类型",
+      "relationSource": "关系来源"
+    },
+    "metrics": {
+      "requestRate": "请求速率",
+      "requestCount": "请求数",
+      "errorRate": "错误率",
+      "errorCount": "错误数",
+      "latencyP95": "P95 延迟",
+      "latencyAvg": "平均延迟",
+      "unavailable": "不可用"
+    },
+    "pagination": {
+      "previous": "上一页边",
+      "next": "下一页边",
+      "page": "边第 {{page}} 页",
+      "pageSize": "每页边数"
+    },
+    "values": {
+      "node": "节点",
+      "edge": "边"
+    }
   },
   "entity": {
     "title": "资源目录",
