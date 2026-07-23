@@ -125,6 +125,32 @@
       }
     },
     "explore": { "metrics": "查詢指標", "logs": "查詢日誌" },
+    "discovery": {
+      "action": "探索資源",
+      "title": "探索資源",
+      "description": "依熟悉的監控名稱、位址或類型尋找目錄資源。",
+      "search": "搜尋監控名稱、位址或類型",
+      "back": "返回資源目錄",
+      "empty": "沒有符合搜尋條件的監控。",
+      "unavailable": "資源探索服務暫時無法使用。",
+      "error": "無法載入資源探索結果。",
+      "noCandidates": "找不到資源候選。",
+      "evidence": "符合依據",
+      "openResource": "開啟資源",
+      "viewCandidate": "查看候選",
+      "fields": {
+        "name": "監控名稱",
+        "address": "位址",
+        "type": "監控類型",
+        "status": "狀態",
+        "candidates": "資源候選"
+      },
+      "match": {
+        "already_bound": "已關聯",
+        "direct": "高度符合",
+        "suggested": "建議確認"
+      }
+    },
     "delete": {
       "action": "刪除資源",
       "title": "刪除資源「{{name}}」？",

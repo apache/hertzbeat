@@ -3,7 +3,12 @@
 import type { RemotePageState, RemotePayloadState } from '@/shared/remote-state';
 import { applicationRoutePaths, buildEntityEditPath, entityRoutePaths } from '@/shared/navigation/app-paths';
 import type { EntityDetail, EntityQuery, EntitySummary } from './entity-contract';
-import { readEntityQuery, writeEntityQuery } from './entity-query';
+import {
+  buildEntityDiscoveryPath,
+  defaultEntityDiscoveryQuery,
+  safeEntityDiscoveryPath
+} from './entity-discovery-model';
+import { safeEntityListPath, writeEntityQuery } from './entity-query';
 
 export const defaultEntityQuery: EntityQuery = {
   search: '',
@@ -38,6 +43,7 @@ export type EntityListViewActions = {
   changeSort: (sort: EntityQuery['sort'], order: EntityQuery['order']) => void;
   changePage: (page: number, pageSize: number) => void;
   refresh: () => void;
+  discover: () => void;
   create: () => void;
   open: (id: number) => void;
 };
@@ -50,11 +56,12 @@ export function buildEntityDetailPath(id: number, query: EntityQuery) {
 }
 
 export function safeEntityReturnTo(value: string | null) {
-  if (!value?.startsWith(`${entityRoutePaths.list}?`)) return entityRoutePaths.list;
-  const url = new URL(value, 'https://hertzbeat.local');
-  if (url.pathname !== entityRoutePaths.list) return entityRoutePaths.list;
-  const query = readEntityQuery(url.searchParams);
-  return `${entityRoutePaths.list}?${writeEntityQuery(query).toString()}`;
+  if (value?.startsWith(entityRoutePaths.discovery)) return safeEntityDiscoveryPath(value);
+  return safeEntityListPath(value);
+}
+
+export function buildEntityDiscoveryRoute(query: EntityQuery) {
+  return buildEntityDiscoveryPath(defaultEntityDiscoveryQuery, entityListPath(query));
 }
 
 export function buildEntityCreatePath(query: EntityQuery) {
@@ -71,6 +78,7 @@ export function buildEntityEditRoute(id: number, listReturnTo: string | null) {
 
 export function safeEntityEditorReturnTo(value: string | null, id?: number) {
   if (value?.startsWith(`${entityRoutePaths.list}?`)) return safeEntityReturnTo(value);
+  if (value?.startsWith(entityRoutePaths.discovery)) return safeEntityDiscoveryPath(value);
   if (!value?.startsWith('/') || id === undefined) return entityRoutePaths.list;
   const url = new URL(value, 'https://hertzbeat.local');
   const detail = entityRoutePaths.detail.replace(':entityId', String(id));
@@ -80,6 +88,7 @@ export function safeEntityEditorReturnTo(value: string | null, id?: number) {
 
 export function entityEditorListReturnTo(value: string) {
   if (value.startsWith(`${entityRoutePaths.list}?`)) return safeEntityReturnTo(value);
+  if (value.startsWith(entityRoutePaths.discovery)) return safeEntityDiscoveryPath(value);
   const url = new URL(value, 'https://hertzbeat.local');
   return safeEntityReturnTo(url.searchParams.get('returnTo'));
 }

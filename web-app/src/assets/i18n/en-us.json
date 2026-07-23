@@ -136,6 +136,32 @@
       }
     },
     "explore": { "metrics": "Explore metrics", "logs": "Explore logs" },
+    "discovery": {
+      "action": "Discover resources",
+      "title": "Discover resources",
+      "description": "Find catalog resources from familiar monitor names, addresses, and types.",
+      "search": "Search monitor name, address, or type",
+      "back": "Back to resource catalog",
+      "empty": "No monitors match this search.",
+      "unavailable": "Resource discovery is temporarily unavailable.",
+      "error": "Resource discovery could not be loaded.",
+      "noCandidates": "No resource candidates found.",
+      "evidence": "Matching evidence",
+      "openResource": "Open resource",
+      "viewCandidate": "View candidate",
+      "fields": {
+        "name": "Monitor name",
+        "address": "Address",
+        "type": "Monitor type",
+        "status": "Status",
+        "candidates": "Resource candidates"
+      },
+      "match": {
+        "already_bound": "Already associated",
+        "direct": "High match",
+        "suggested": "Suggested review"
+      }
+    },
     "delete": {
       "action": "Delete resource",
       "title": "Delete resource “{{name}}”?",

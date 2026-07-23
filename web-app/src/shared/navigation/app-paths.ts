@@ -40,6 +40,7 @@ export const monitorRoutePaths = {
 
 export const entityRoutePaths = {
   list: entityListPath,
+  discovery: `${entityListPath}/discovery`,
   create: `${entityListPath}/new`,
   detail: `${entityListPath}/:entityId`,
   edit: `${entityListPath}/:entityId/edit`

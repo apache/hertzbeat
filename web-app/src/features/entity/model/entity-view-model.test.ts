@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import type { EntityDetail } from './entity-contract';
 import {
   buildEntityCreatePath,
+  buildEntityDiscoveryRoute,
   buildEntityEditRoute,
   buildEntityExplorePath,
   entityExploreSignals,
@@ -61,6 +62,10 @@ describe('entity editor navigation', () => {
       pageSize: 10 as const
     };
     expect(buildEntityCreatePath(query)).toContain('/entities/new?returnTo=');
+    const discovery = buildEntityDiscoveryRoute(query);
+    expect(discovery).toContain('/entities/discovery?');
+    expect(decodeURIComponent(discovery)).toContain('/entities?');
+    expect(decodeURIComponent(discovery)).toContain('search=checkout');
     expect(buildEntityEditRoute(7, '/entities?search=checkout')).toContain('/entities/7/edit?returnTo=');
     expect(safeEntityEditorReturnTo('https://evil.example', 7)).toBe('/entities');
     expect(safeEntityEditorReturnTo('/entities/8', 7)).toBe('/entities');

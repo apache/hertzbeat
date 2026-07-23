@@ -98,6 +98,14 @@ describe('route registry', () => {
     ]);
   });
 
+  it('registers resource discovery as a canonical resource workflow page', () => {
+    expect(getAppRoute('entity-discovery')).toMatchObject({
+      id: 'entity-discovery',
+      path: '/entities/discovery',
+      kind: 'page'
+    });
+  });
+
   it('registers external-alert integrations with a concrete navigation target', () => {
     expect(getAppRoute('alert-integrations')).toMatchObject({
       id: 'alert-integrations',

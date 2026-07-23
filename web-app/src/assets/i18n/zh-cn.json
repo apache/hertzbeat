@@ -125,6 +125,32 @@
       }
     },
     "explore": { "metrics": "查询指标", "logs": "查询日志" },
+    "discovery": {
+      "action": "发现资源",
+      "title": "发现资源",
+      "description": "按熟悉的监控名称、地址或类型查找目录资源。",
+      "search": "搜索监控名称、地址或类型",
+      "back": "返回资源目录",
+      "empty": "没有符合搜索条件的监控。",
+      "unavailable": "资源发现服务暂时不可用。",
+      "error": "资源发现结果加载失败。",
+      "noCandidates": "未找到资源候选。",
+      "evidence": "匹配依据",
+      "openResource": "打开资源",
+      "viewCandidate": "查看候选",
+      "fields": {
+        "name": "监控名称",
+        "address": "地址",
+        "type": "监控类型",
+        "status": "状态",
+        "candidates": "资源候选"
+      },
+      "match": {
+        "already_bound": "已关联",
+        "direct": "高度匹配",
+        "suggested": "建议确认"
+      }
+    },
     "delete": {
       "action": "删除资源",
       "title": "删除资源“{{name}}”？",

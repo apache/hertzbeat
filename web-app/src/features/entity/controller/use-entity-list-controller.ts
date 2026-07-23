@@ -10,6 +10,7 @@ import { classifyEntityReadError, loadEntities } from '../api/entity-api';
 import { readEntityQuery, writeEntityQuery } from '../model/entity-query';
 import {
   buildEntityCreatePath,
+  buildEntityDiscoveryRoute,
   buildEntityDetailPath,
   type EntityFilterKey,
   type EntityListEvidence
@@ -50,6 +51,7 @@ export function useEntityListController() {
       refresh: () => {
         void client.invalidateQueries({ queryKey: entityQueryKeys.list(source) });
       },
+      discover: () => void navigate(buildEntityDiscoveryRoute(query)),
       create: () => void navigate(buildEntityCreatePath(query)),
       open: (id: number) => {
         if (location.pathname === entityRoutePaths.list) void navigate(buildEntityDetailPath(id, query));

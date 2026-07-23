@@ -130,6 +130,32 @@
       }
     },
     "explore": { "metrics": "メトリクスを検索", "logs": "ログを検索" },
+    "discovery": {
+      "action": "リソースを検出",
+      "title": "リソースを検出",
+      "description": "使い慣れたモニター名、アドレス、種類からカタログリソースを探します。",
+      "search": "モニター名、アドレス、種類を検索",
+      "back": "リソースカタログに戻る",
+      "empty": "検索条件に一致するモニターはありません。",
+      "unavailable": "リソース検出は一時的に利用できません。",
+      "error": "リソース検出結果を読み込めませんでした。",
+      "noCandidates": "リソース候補は見つかりませんでした。",
+      "evidence": "一致の根拠",
+      "openResource": "リソースを開く",
+      "viewCandidate": "候補を表示",
+      "fields": {
+        "name": "モニター名",
+        "address": "アドレス",
+        "type": "モニターの種類",
+        "status": "状態",
+        "candidates": "リソース候補"
+      },
+      "match": {
+        "already_bound": "関連付け済み",
+        "direct": "高い一致",
+        "suggested": "確認を推奨"
+      }
+    },
     "delete": {
       "action": "リソースを削除",
       "title": "リソース「{{name}}」を削除しますか？",

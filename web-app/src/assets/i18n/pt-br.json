@@ -136,6 +136,32 @@
       }
     },
     "explore": { "metrics": "Explorar métricas", "logs": "Explorar logs" },
+    "discovery": {
+      "action": "Descobrir recursos",
+      "title": "Descobrir recursos",
+      "description": "Encontre recursos do catálogo por nomes, endereços e tipos conhecidos de monitores.",
+      "search": "Pesquisar nome, endereço ou tipo do monitor",
+      "back": "Voltar ao catálogo de recursos",
+      "empty": "Nenhum monitor corresponde a esta pesquisa.",
+      "unavailable": "A descoberta de recursos está temporariamente indisponível.",
+      "error": "Não foi possível carregar a descoberta de recursos.",
+      "noCandidates": "Nenhum recurso candidato encontrado.",
+      "evidence": "Evidências da correspondência",
+      "openResource": "Abrir recurso",
+      "viewCandidate": "Ver candidato",
+      "fields": {
+        "name": "Nome do monitor",
+        "address": "Endereço",
+        "type": "Tipo de monitor",
+        "status": "Status",
+        "candidates": "Recursos candidatos"
+      },
+      "match": {
+        "already_bound": "Já associado",
+        "direct": "Alta correspondência",
+        "suggested": "Revisão sugerida"
+      }
+    },
     "delete": {
       "action": "Excluir recurso",
       "title": "Excluir o recurso “{{name}}”?",

@@ -1,6 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import { entityPageSizes, entitySortFields, entitySortOrders, type EntityQuery } from './entity-contract';
+import { entityRoutePaths } from '@/shared/navigation/app-paths';
 
 const filterKeys = [
   'search',
@@ -41,6 +42,14 @@ export function writeEntityQuery(query: EntityQuery, patch: Partial<EntityQuery>
     if (next[key]) params.set(key, next[key]);
   });
   return params;
+}
+
+export function safeEntityListPath(value?: string | null) {
+  if (!value?.startsWith('/')) return entityRoutePaths.list;
+  const url = new URL(value, 'https://hertzbeat.local');
+  if (url.pathname !== entityRoutePaths.list) return entityRoutePaths.list;
+  if (!url.search) return entityRoutePaths.list;
+  return `${entityRoutePaths.list}?${writeEntityQuery(readEntityQuery(url.searchParams)).toString()}`;
 }
 
 function pageIndex(value: string | null) {

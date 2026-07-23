@@ -55,6 +55,7 @@ export const appRouteCatalog = {
   entities: pageRoute('entities', entityRoutePaths.list, {
     resource: { labelKey: 'menu.entities' }
   }),
+  'entity-discovery': pageRoute('entity-discovery', entityRoutePaths.discovery),
   'entity-new': pageRoute('entity-new', entityRoutePaths.create),
   'entity-edit': pageRoute('entity-edit', entityRoutePaths.edit),
   'entity-detail': pageRoute('entity-detail', entityRoutePaths.detail),
