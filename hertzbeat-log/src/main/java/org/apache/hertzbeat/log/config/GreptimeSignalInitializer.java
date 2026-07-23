@@ -44,6 +44,7 @@ import org.springframework.web.client.RestTemplate;
 public class GreptimeSignalInitializer {
 
     private static final String TRACE_SCHEMA = "greptime/tables/hzb_traces.sql";
+    private static final String LOG_SCHEMA = "greptime/tables/hertzbeat_logs.sql";
     private static final String LOG_PIPELINE = "greptime/pipelines/hertzbeat_otlp_log_v1.yaml";
     private final GreptimeProperties greptimeProperties;
     private final GreptimeSqlQueryExecutor sqlQueryExecutor;
@@ -68,6 +69,9 @@ public class GreptimeSignalInitializer {
                     + "\"resource_attributes.service.namespace\" STRING NULL");
             sqlQueryExecutor.execute("ALTER TABLE hzb_traces ADD COLUMN IF NOT EXISTS "
                     + "\"resource_attributes.deployment.environment.name\" STRING NULL");
+            String logSchema = new ClassPathResource(LOG_SCHEMA)
+                    .getContentAsString(StandardCharsets.UTF_8).strip();
+            sqlQueryExecutor.execute(StringUtils.trimTrailingCharacter(logSchema, ';'));
             uploadLogPipeline(new ClassPathResource(LOG_PIPELINE)
                     .getContentAsString(StandardCharsets.UTF_8));
             if (sqlQueryExecutor.execute("SELECT 1 AS ready").isEmpty()) {

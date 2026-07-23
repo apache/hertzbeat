@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.ai.service.impl;
 
+import com.usthe.sureness.subject.SubjectSum;
+import com.usthe.sureness.util.SurenessContextHolder;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.dao.ChatConversationDao;
@@ -104,6 +106,8 @@ public class ConversationServiceImpl implements ConversationService {
         // Stream response from AI service
         StringBuilder fullResponse = new StringBuilder();
         ChatMessage finalChatMessage = chatMessage;
+        SubjectSum subject = SurenessContextHolder.getBindSubject();
+        context.setSubject(subject);
         return chatClientProviderService.streamChat(context)
             .map(chunk -> {
                 fullResponse.append(chunk);
