@@ -7,13 +7,9 @@ export type {
   TopologyNode,
   TopologyRedMetrics,
   TopologyTimelineEvent
-} from './api/topology-schema';
+} from './model/topology-contract';
 export { topologyQueryKeys } from './controller/topology-query-keys';
-export {
-  useTopologyPageController,
-  type TopologyPageController,
-  type TopologyPageEvidence
-} from './controller/use-topology-page-controller';
+export { useTopologyPageController } from './controller/use-topology-page-controller';
 export { TopologyPage } from './pages/topology-page';
 export {
   TopologyCanvas,
@@ -36,6 +32,12 @@ export {
   type TopologyScopePatch
 } from './model/topology-model';
 export { formatTopologyWindow } from './model/topology-display';
+export type {
+  TopologyPageActions,
+  TopologyPageController,
+  TopologyPageEvidence,
+  TopologyPageState
+} from './model/topology-page-contract';
 export {
   buildTopologyPresentation,
   emptyTopologyInteraction,

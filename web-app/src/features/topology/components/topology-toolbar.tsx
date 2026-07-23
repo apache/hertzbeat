@@ -3,14 +3,14 @@
 import { Button, Input, InputNumber, Select, Space, Switch, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import type { TopologyPageController } from '../controller/use-topology-page-controller';
+import type { TopologyPageActions } from '../model/topology-page-contract';
 import { topologyDepthValues, type TopologyQuery, type TopologyScopePatch } from '../model/topology-model';
 import styles from './topology-page.module.css';
 
 type Props = {
   query: TopologyQuery;
   refreshing: boolean;
-  changeScope: TopologyPageController['actions']['changeScope'];
+  changeScope: TopologyPageActions['changeScope'];
   onFit: () => void;
   onRefresh: () => void;
 };

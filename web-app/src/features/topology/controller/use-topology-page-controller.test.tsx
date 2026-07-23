@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiMessageError } from '@/core/http/api-message';
 import type { ExactTimeWindow } from '@/shared/query-context';
-import type { TopologyGraph } from '../api/topology-schema';
+import type { TopologyGraph } from '../model/topology-contract';
 import { TopologyContractError } from '../model/topology-model';
 
 const api = vi.hoisted(() => ({ loadTopologyGraph: vi.fn() }));

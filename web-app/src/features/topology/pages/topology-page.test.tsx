@@ -8,7 +8,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 import { RouteTimeContext, type SharedTimeValue } from '@/shared/time/time-context';
-import type { TopologyGraph } from '../api/topology-schema';
+import type { TopologyGraph } from '../model/topology-contract';
 
 const api = vi.hoisted(() => ({ loadTopologyGraph: vi.fn() }));
 const canvas = vi.hoisted(() => ({ fit: vi.fn() }));

@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import type { TopologyEdge, TopologyGraph, TopologyNode, TopologyRedMetrics } from '../api/topology-schema';
+import type { TopologyEdge, TopologyGraph, TopologyNode, TopologyRedMetrics } from './topology-contract';
 
 export type TopologyMetricRow =
   | {

@@ -4,7 +4,7 @@ import { Button, Select, Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 
-import type { TopologyPageController } from '../controller/use-topology-page-controller';
+import type { TopologyPageActions } from '../model/topology-page-contract';
 import { topologyPageSizes } from '../model/topology-model';
 import type { TopologyMetricRow, TopologyInteraction } from '../model/topology-view-model';
 import { TopologyMetricValue } from './topology-metric-value';
@@ -16,10 +16,7 @@ type Props = {
   edgeCount: number;
   pageIndex: number;
   pageSize: number;
-  actions: Pick<
-    TopologyPageController['actions'],
-    'changePage' | 'clearHover' | 'drilldown' | 'hoverEdge' | 'hoverNode'
-  >;
+  actions: Pick<TopologyPageActions, 'changePage' | 'clearHover' | 'drilldown' | 'hoverEdge' | 'hoverNode'>;
 };
 
 export function TopologyMetricTable({ rows, interaction, edgeCount, pageIndex, pageSize, actions }: Props) {

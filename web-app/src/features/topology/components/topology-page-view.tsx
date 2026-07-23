@@ -4,8 +4,8 @@ import { Alert, Empty, Space, Spin, Statistic, Typography } from 'antd';
 import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { TopologyPageController } from '../controller/use-topology-page-controller';
 import { formatTopologyWindow } from '../model/topology-display';
+import type { TopologyPageActions, TopologyPageState } from '../model/topology-page-contract';
 import type { TopologyPresentation } from '../model/topology-view-model';
 import { TopologyCanvas, type TopologyCanvasHandle, type TopologyCanvasRuntimeState } from './topology-canvas';
 import { TopologyDetailRail } from './topology-detail-rail';
@@ -14,9 +14,9 @@ import { TopologyToolbar } from './topology-toolbar';
 import styles from './topology-page.module.css';
 
 export type TopologyPageViewProps = {
-  state: Omit<TopologyPageController['state'], 'interaction'>;
-  actions: TopologyPageController['actions'];
-  interaction: TopologyPageController['state']['interaction'];
+  state: Omit<TopologyPageState, 'interaction'>;
+  actions: TopologyPageActions;
+  interaction: TopologyPageState['interaction'];
   canvasRef?: RefObject<TopologyCanvasHandle | null>;
   runtimeState?: TopologyCanvasRuntimeState;
   onRuntimeStateChange?: (state: TopologyCanvasRuntimeState) => void;

@@ -3,6 +3,13 @@
 import { z } from 'zod';
 
 import { TopologyContractError } from '../model/topology-model';
+import type {
+  TopologyEdge,
+  TopologyGraph,
+  TopologyNode,
+  TopologyRedMetrics,
+  TopologyTimelineEvent
+} from '../model/topology-contract';
 
 const positiveIdSchema = z.number().int().positive().max(Number.MAX_SAFE_INTEGER);
 const nullableIdSchema = positiveIdSchema.nullable();
@@ -14,7 +21,7 @@ const nullableTextSchema = nonblankSchema.nullable();
 const nullableMetricSchema = z.number().finite().nonnegative().nullable();
 const nullableCountSchema = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).nullable();
 
-const redMetricsSchema = z
+const redMetricsSchema: z.ZodType<TopologyRedMetrics> = z
   .object({
     requestRatePerSecond: nullableMetricSchema,
     requestCount: nullableCountSchema,
@@ -25,7 +32,7 @@ const redMetricsSchema = z
   })
   .strict();
 
-const nodeSchema = z
+const nodeSchema: z.ZodType<TopologyNode> = z
   .object({
     id: nonblankSchema,
     entityId: positiveIdSchema,
@@ -40,7 +47,7 @@ const nodeSchema = z
   })
   .strict();
 
-const edgeSchema = z
+const edgeSchema: z.ZodType<TopologyEdge> = z
   .object({
     id: nonblankSchema,
     relationId: nullableIdSchema,
@@ -62,7 +69,7 @@ const edgeSchema = z
   })
   .strict();
 
-const timelineEventSchema = z
+const timelineEventSchema: z.ZodType<TopologyTimelineEvent> = z
   .object({
     id: nonblankSchema,
     edgeId: nullableTextSchema,
@@ -76,7 +83,7 @@ const timelineEventSchema = z
   })
   .strict();
 
-const topologyGraphSchema = z
+const topologyGraphSchema: z.ZodType<TopologyGraph> = z
   .object({
     apiBacked: z.literal(true),
     focusEntityId: nullableIdSchema,
@@ -89,22 +96,13 @@ const topologyGraphSchema = z
   .strict()
   .superRefine(requireGraphInvariants);
 
-export type TopologyGraph = z.infer<typeof topologyGraphSchema>;
-export type TopologyNode = z.infer<typeof nodeSchema>;
-export type TopologyEdge = z.infer<typeof edgeSchema>;
-export type TopologyTimelineEvent = z.infer<typeof timelineEventSchema>;
-export type TopologyRedMetrics = z.infer<typeof redMetricsSchema>;
-
 export function parseTopologyGraph(value: unknown): TopologyGraph {
   const result = topologyGraphSchema.safeParse(value);
   if (!result.success) throw new TopologyContractError();
   return result.data;
 }
 
-function requireGraphInvariants(
-  graph: { nodes: z.infer<typeof nodeSchema>[]; edges: z.infer<typeof edgeSchema>[] },
-  context: z.RefinementCtx
-) {
+function requireGraphInvariants(graph: { nodes: TopologyNode[]; edges: TopologyEdge[] }, context: z.RefinementCtx) {
   const nodeIds = new Set<string>();
   graph.nodes.forEach((node, index) => {
     if (nodeIds.has(node.id)) {

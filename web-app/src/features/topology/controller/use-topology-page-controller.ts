@@ -17,19 +17,20 @@ import {
   type TopologyQuery,
   type TopologyScopePatch
 } from '../model/topology-model';
-import { buildTopologyPresentation, type TopologyPresentation } from '../model/topology-view-model';
+import type { TopologyPageController, TopologyPageEvidence, TopologyPageState } from '../model/topology-page-contract';
+import {
+  buildTopologyPresentation,
+  type TopologyInteraction,
+  type TopologyPresentation
+} from '../model/topology-view-model';
 import { topologyQueryKeys } from './topology-query-keys';
 import { useTopologyInteraction } from './use-topology-interaction';
-
-export type TopologyPageEvidence =
-  | { kind: 'loading' | 'permission' | 'unavailable' | 'contract' | 'error' }
-  | { kind: 'empty' | 'ready'; presentation: TopologyPresentation };
 
 type ControllerOptions = { effectiveWindow?: ExactTimeWindow; refreshRevision?: number };
 type SettledGraph = { semanticScope: string; presentation: TopologyPresentation };
 const invalidQueryKey = ['topology', 'invalid'] as const;
 
-export function useTopologyPageController(options: ControllerOptions = {}) {
+export function useTopologyPageController(options: ControllerOptions = {}): TopologyPageController {
   const [params, setParams] = useSearchParams();
   const request = resolveTopologyRequest(params, options.effectiveWindow, options.refreshRevision ?? 0);
   const semanticScope = request?.semanticScope ?? 'invalid';
@@ -59,8 +60,6 @@ export function useTopologyPageController(options: ControllerOptions = {}) {
     }
   };
 }
-
-export type TopologyPageController = ReturnType<typeof useTopologyPageController>;
 
 function updateRouteQuery(
   params: URLSearchParams,
@@ -119,10 +118,10 @@ function topologySemanticScope(routeQuery: TopologyQuery, effectiveWindow: Exact
 function topologyPageState(
   query: TopologyQuery | undefined,
   presentation: TopologyPresentation | undefined,
-  interaction: ReturnType<typeof useTopologyInteraction>['interaction'],
+  interaction: TopologyInteraction,
   fetching: boolean,
   failure: TopologyFailure | undefined
-) {
+): TopologyPageState {
   return {
     ...(query ? { query } : {}),
     evidence: resolveTopologyEvidence(Boolean(query), failure, presentation),

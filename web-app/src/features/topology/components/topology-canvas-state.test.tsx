@@ -3,7 +3,7 @@
 import { cleanup, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { interaction, presentation } from './topology-canvas.test-fixtures';
+import { interaction, presentation } from './topology-canvas-test-fixtures';
 
 const runtime = vi.hoisted(() => {
   const instances: MockGraph[] = [];

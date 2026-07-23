@@ -6,7 +6,7 @@ import { I18nextProvider } from 'react-i18next';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
-import type { TopologyGraph } from '../api/topology-schema';
+import type { TopologyGraph } from '../model/topology-contract';
 import type { TopologyCanvasProps, TopologyCanvasRuntimeState } from './topology-canvas';
 import {
   buildTopologyPresentation,

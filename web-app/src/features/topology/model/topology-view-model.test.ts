@@ -2,7 +2,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type { TopologyGraph } from '../api/topology-schema';
+import type { TopologyGraph } from './topology-contract';
 import {
   buildTopologyPresentation,
   clearTopologyHover,
