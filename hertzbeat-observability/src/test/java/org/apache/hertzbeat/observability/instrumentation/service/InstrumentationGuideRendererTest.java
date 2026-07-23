@@ -407,14 +407,23 @@ class InstrumentationGuideRendererTest {
                                 "./otel-go-instrumentation"),
                         List.of("OTEL_METRICS_EXPORTER=otlp", "OTEL_LOGS_EXPORTER=otlp")),
                 new RenderScenario(
-                        "generic sdk selection gate",
+                        "generic official sdk template",
                         Language.GENERIC,
                         Framework.GENERIC,
                         Method.SDK,
                         Environment.VM,
                         Platform.ANY,
-                        List.of("Select the concrete language adapter to receive pinned executable commands."),
-                        List.of()));
+                        List.of(
+                                "https://opentelemetry.io/docs/languages/",
+                                "official OpenTelemetry API, SDK, and OTLP exporter packages",
+                                "Initialize the official OpenTelemetry SDK before application startup",
+                                "OTEL_SERVICE_NAME and OTEL_RESOURCE_ATTRIBUTES",
+                                "Flush and shut down the providers",
+                                "same pinned language packages during the application image build"),
+                        List.of(
+                                "Select the concrete language adapter",
+                                "HertzBeat SDK",
+                                "HertzBeat Agent")));
     }
 
     private GuideRenderRequest request(

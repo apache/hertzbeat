@@ -27,8 +27,9 @@ contract.
 - New catalog entries and new optional response fields are additive. Consumers must ignore unknown
   fields and treat unknown enum values as unavailable until upgraded.
 - A concrete component uses `versionPolicy: "pinned"` and an exact upstream version. The generic SDK
-  fallback uses `versionPolicy: "language_specific"`; its eventual language adapter must pin a real
-  official package before rendering executable installation commands.
+  fallback uses `versionPolicy: "language_specific"` and renders an official language-SDK checklist,
+  not invented package coordinates or language APIs. Operators must choose and pin real official
+  packages from the linked upstream language guide before applying the template.
 - Versions are pinned and reviewed compatibility inputs, not a claim that they are the newest
   upstream releases. `dependencies` discloses every additional fixed SDK, exporter, or framework
   package used by a guide; these entries are manifest metadata and never HertzBeat dependencies.

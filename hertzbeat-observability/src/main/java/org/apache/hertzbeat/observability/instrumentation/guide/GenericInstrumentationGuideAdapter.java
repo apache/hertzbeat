@@ -22,9 +22,11 @@ import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApi
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.MethodOption;
 import org.springframework.stereotype.Component;
 
-/** Generic contract that intentionally defers executable commands to a pinned language adapter. */
+/** Generic official SDK template that defers language-specific packages and APIs to upstream docs. */
 @Component
 public class GenericInstrumentationGuideAdapter implements InstrumentationGuideAdapter {
+
+    private static final String OFFICIAL_LANGUAGE_GUIDE = "https://opentelemetry.io/docs/languages/";
 
     @Override
     public Language language() {
@@ -33,15 +35,31 @@ public class GenericInstrumentationGuideAdapter implements InstrumentationGuideA
 
     @Override
     public LanguageGuideSteps render(GuideRenderRequest request, MethodOption method) {
-        String notice = "Select the concrete language adapter to receive pinned executable commands.";
         return new LanguageGuideSteps(
                 GuideAdapterSupport.install(GuideAdapterSupport.snippet(
-                        "language-required", "text", notice)),
+                        "official-sdk-install-template",
+                        "text",
+                        "Follow " + OFFICIAL_LANGUAGE_GUIDE
+                                + " for the application language. Install the official OpenTelemetry API, SDK, "
+                                + "and OTLP exporter packages, and pin language-specific versions in the "
+                                + "application dependency manifest.")),
                 GuideAdapterSupport.start(GuideAdapterSupport.snippet(
-                        "language-required", "text", notice)),
+                        "official-sdk-start-template",
+                        "text",
+                        "Initialize the official OpenTelemetry SDK before application startup. "
+                                + "Build the Resource from OTEL_SERVICE_NAME and OTEL_RESOURCE_ATTRIBUTES; "
+                                + "configure the supported signal providers and OTLP exporters from the rendered "
+                                + "OTEL_EXPORTER_* environment; register the providers; then start the application. "
+                                + "Flush and shut down the providers during application shutdown.")),
                 GuideAdapterSupport.container(GuideAdapterSupport.snippet(
-                        "language-required", "text", notice)),
+                        "official-sdk-container-template",
+                        "text",
+                        "Install the same pinned language packages during the application image build. "
+                                + "Keep the rendered OTEL_* configuration in the runtime environment.")),
                 GuideAdapterSupport.disable(GuideAdapterSupport.snippet(
-                        "language-required", "text", notice)));
+                        "official-sdk-disable-template",
+                        "text",
+                        "Remove the official SDK initialization, rebuild if required by the language, and restart "
+                                + "the application. The application must remain independently runnable.")));
     }
 }
