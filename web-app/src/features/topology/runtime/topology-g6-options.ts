@@ -15,6 +15,12 @@ export type TopologyG6Palette = {
   warning: string;
 };
 
+export const topologyG6VisualGeometry = {
+  externalNodeSize: 58,
+  linkDistance: 150,
+  nodeSize: 64
+} as const;
+
 type ElementOptions = {
   edge: NonNullable<GraphOptions['edge']>;
   node: NonNullable<GraphOptions['node']>;
@@ -31,7 +37,7 @@ export function topologyG6ElementOptions(palette: TopologyG6Palette): ElementOpt
         labelFill: palette.text,
         labelFontSize: 10,
         labelPadding: [2, 4],
-        lineWidth: 1.5,
+        lineWidth: 2,
         stroke: palette.border
       },
       state: {
@@ -51,8 +57,8 @@ export function topologyG6ElementOptions(palette: TopologyG6Palette): ElementOpt
         labelLineHeight: 14,
         labelMaxWidth: 132,
         labelPlacement: 'bottom',
-        lineWidth: 1.5,
-        size: 52,
+        lineWidth: 2,
+        size: topologyG6VisualGeometry.nodeSize,
         stroke: palette.border
       },
       state: {

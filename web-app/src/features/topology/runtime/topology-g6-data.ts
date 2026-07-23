@@ -4,7 +4,7 @@ import type { GraphData } from '@antv/g6';
 
 import type { TopologyEdge } from '../model/topology-contract';
 import type { TopologyInteraction, TopologyPresentation } from '../model/topology-view-model';
-import type { TopologyG6Palette } from './topology-g6-options';
+import { topologyG6VisualGeometry, type TopologyG6Palette } from './topology-g6-options';
 
 type ExternalTarget = { edgeId: string; label: string; nodeId: string };
 type ExternalTargets = { edgeByNodeId: ReadonlyMap<string, string>; targets: ExternalTarget[] };
@@ -36,7 +36,7 @@ export function topologyG6Data(
         states: elementStates(node.id, interaction, 'node', emphasis),
         style: {
           labelText: `${node.entityName}\n${node.entityType}`,
-          size: 52,
+          size: topologyG6VisualGeometry.nodeSize,
           stroke: healthStroke(node.health, palette)
         }
       })),
@@ -48,7 +48,7 @@ export function topologyG6Data(
         style: {
           labelText: target.label,
           lineDash: [4, 3],
-          size: 48,
+          size: topologyG6VisualGeometry.externalNodeSize,
           stroke: palette.neutral
         }
       }))

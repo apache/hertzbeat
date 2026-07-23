@@ -8,21 +8,25 @@ import { topologyG6Data } from './topology-g6-data';
 import { topologyG6ElementOptions } from './topology-g6-options';
 
 describe('topology G6 graph language', () => {
-  it('uses compact built-in hexagons with readable entity labels and neutral external targets', () => {
+  it('uses readable built-in hexagons and relation spacing without oversized graph chrome', () => {
     const value = externalPresentation();
     const data = topologyG6Data(value, interaction(), palette);
 
     expect(topologyG6Options(value, interaction(), palette).node).toMatchObject({
       type: 'hexagon',
-      style: { labelPlacement: 'bottom', size: 52 }
+      style: { labelPlacement: 'bottom', lineWidth: 2, size: 64 }
+    });
+    expect(topologyG6Options(value, interaction(), palette).layout).toMatchObject({
+      linkDistance: 150,
+      nodeStrength: -180
     });
     expect(data.nodes?.[0]).toMatchObject({
       type: 'hexagon',
-      style: { labelText: 'checkout\nservice', size: 52, stroke: palette.success }
+      style: { labelText: 'checkout\nservice', size: 64, stroke: palette.success }
     });
     expect(data.nodes?.find(node => node.data?.externalTarget === true)).toMatchObject({
       type: 'hexagon',
-      style: { labelText: 'payments.example', lineDash: [4, 3], size: 48, stroke: palette.neutral }
+      style: { labelText: 'payments.example', lineDash: [4, 3], size: 58, stroke: palette.neutral }
     });
   });
 
@@ -141,7 +145,9 @@ describe('topology G6 external targets', () => {
     const external = data.nodes?.find(node => node.data?.externalTarget === true);
 
     expect(external?.id).not.toBe('external-target:edge-external');
-    expect(topologyG6ElementOptions(palette).edge).toMatchObject({ style: { endArrow: true } });
+    expect(topologyG6ElementOptions(palette).edge).toMatchObject({
+      style: { endArrow: true, lineWidth: 2 }
+    });
   });
 });
 

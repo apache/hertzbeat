@@ -30,7 +30,7 @@
   flex: 1 1 auto;
   flex-direction: column;
   justify-content: center;
-  min-width: 180px;
+  min-width: 160px;
   padding: 12px 16px;
 }
 
@@ -47,13 +47,13 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-width: 112px;
-  padding: 10px 18px;
+  min-width: 96px;
+  padding: 10px 14px;
   border-left: 1px solid var(--ant-color-border-secondary);
 }
 
 .contextFact:last-child {
-  min-width: 220px;
+  min-width: 190px;
 }
 
 .canvasFilter {
@@ -185,7 +185,7 @@
   padding: 10px 12px;
 }
 
-@media (max-width: 1199px) {
+@media (max-width: 720px) {
   .contextBand {
     flex-direction: column;
   }
@@ -203,9 +203,7 @@
   .contextFact:last-child {
     border-right: 0;
   }
-}
 
-@media (max-width: 720px) {
   .contextFacts {
     flex-wrap: wrap;
   }

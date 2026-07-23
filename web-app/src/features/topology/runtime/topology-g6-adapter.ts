@@ -4,7 +4,7 @@ import type { GraphOptions } from '@antv/g6';
 
 import type { TopologyInteraction, TopologyPresentation } from '../model/topology-view-model';
 import { topologyG6Data } from './topology-g6-data';
-import { topologyG6ElementOptions, type TopologyG6Palette } from './topology-g6-options';
+import { topologyG6ElementOptions, topologyG6VisualGeometry, type TopologyG6Palette } from './topology-g6-options';
 
 export type { TopologyG6Palette } from './topology-g6-options';
 
@@ -21,7 +21,7 @@ export function topologyG6Options(
     layout: {
       type: 'd3-force',
       animation: false,
-      linkDistance: 96,
+      linkDistance: topologyG6VisualGeometry.linkDistance,
       nodeStrength: -180
     },
     zoomRange: [0.35, 2]
