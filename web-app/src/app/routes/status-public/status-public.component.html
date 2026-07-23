@@ -92,6 +92,11 @@
       </div>
     </div>
     <div style="margin-top: 20px">
+      <div style="width: 60%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: flex-end">
+        <nz-select style="width: 120px" [(ngModel)]="historyDays" (ngModelChange)="onHistoryDaysChange()">
+          <nz-option *ngFor="let d of historyDaysOptions" [nzValue]="d" [nzLabel]="getHistoryDaysLabel(d)"></nz-option>
+        </nz-select>
+      </div>
       <div *ngFor="let component of componentStatus" class="component-status br-8">
         <div style="margin: 10px; display: flex; justify-content: space-between">
           <div style="font-weight: bold; font-size: 1rem">
@@ -119,7 +124,7 @@
             <span nz-icon style="margin-left: 5px" nzType="stop" nzTheme="outline"></span>
           </div>
         </div>
-        <div style="margin-left: 10px; margin-top: 10px; margin-bottom: 10px; display: flex">
+        <div style="margin-left: 10px; margin-top: 10px; margin-bottom: 10px; display: flex; gap: 2px">
           <div
             *ngFor="let historyItem of component.history"
             class="history-block br-8"
@@ -141,7 +146,7 @@
         </div>
         <div style="margin: 10px; display: flex; justify-content: space-between; font-size: 0.75rem">
           <span>{{ 'status.public.today' | i18n }}</span>
-          <span>{{ 'status.public.30-day' | i18n }}</span>
+          <span>{{ getHistoryDaysAgoLabel() }}</span>
         </div>
       </div>
     </div>

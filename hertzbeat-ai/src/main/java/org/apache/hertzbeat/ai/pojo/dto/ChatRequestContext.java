@@ -18,12 +18,13 @@
 
 package org.apache.hertzbeat.ai.pojo.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.usthe.sureness.subject.SubjectSum;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
 import org.apache.hertzbeat.common.entity.ai.ChatMessage;
 
 /**
@@ -47,4 +48,11 @@ public class ChatRequestContext {
      * Conversation history messages for context
      */
     private List<ChatMessage> conversationHistory;
+
+    /**
+     * Authenticated subject captured by the server. It cannot be supplied through client JSON and is never included
+     * in model messages.
+     */
+    @JsonIgnore
+    private SubjectSum subject;
 }
