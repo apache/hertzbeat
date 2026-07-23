@@ -8,7 +8,7 @@ import { useTopologyG6Runtime, type TopologyRuntimeState } from '../runtime/use-
 
 import styles from './topology-canvas.module.css';
 
-export type TopologyCanvasHandle = { fit: () => void };
+export type TopologyCanvasHandle = { fit: () => void; zoomIn: () => void; zoomOut: () => void };
 export type TopologyCanvasRuntimeState = TopologyRuntimeState;
 export type TopologyCanvasProps = {
   presentation: TopologyPresentation;
@@ -19,6 +19,7 @@ export type TopologyCanvasProps = {
   onNodeHover: (nodeId: string | null) => void;
   onNodeSelect: (nodeId: string) => void;
   onRuntimeStateChange: (state: TopologyCanvasRuntimeState) => void;
+  onScaleChange: (scale: number) => void;
 };
 
 export const TopologyCanvas = forwardRef<TopologyCanvasHandle, TopologyCanvasProps>(function TopologyCanvas(
@@ -30,14 +31,30 @@ export const TopologyCanvas = forwardRef<TopologyCanvasHandle, TopologyCanvasPro
   const palette = useMemo(
     () => ({
       border: token.colorBorder,
+      critical: token.colorError,
+      dimmed: token.colorTextDisabled,
       hover: token.colorInfo,
+      neutral: token.colorTextQuaternary,
       nodeFill: token.colorBgContainer,
       selected: token.colorPrimary,
-      text: token.colorText
+      success: token.colorSuccess,
+      text: token.colorText,
+      warning: token.colorWarning
     }),
-    [token.colorBgContainer, token.colorBorder, token.colorInfo, token.colorPrimary, token.colorText]
+    [
+      token.colorBgContainer,
+      token.colorBorder,
+      token.colorError,
+      token.colorInfo,
+      token.colorPrimary,
+      token.colorSuccess,
+      token.colorText,
+      token.colorTextDisabled,
+      token.colorTextQuaternary,
+      token.colorWarning
+    ]
   );
-  const fit = useTopologyG6Runtime(host, { presentation, interaction, palette, callbacks });
-  useImperativeHandle(ref, () => ({ fit }), [fit]);
+  const viewport = useTopologyG6Runtime(host, { presentation, interaction, palette, callbacks });
+  useImperativeHandle(ref, () => viewport, [viewport]);
   return <div ref={host} className={styles.topologyCanvas} />;
 });

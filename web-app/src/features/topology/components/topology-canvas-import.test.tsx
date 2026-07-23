@@ -61,6 +61,7 @@ function props() {
     onEdgeSelect: vi.fn(),
     onNodeHover: vi.fn(),
     onNodeSelect: vi.fn(),
-    onRuntimeStateChange: vi.fn()
+    onRuntimeStateChange: vi.fn(),
+    onScaleChange: vi.fn()
   };
 }

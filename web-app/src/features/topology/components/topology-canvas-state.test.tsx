@@ -29,9 +29,14 @@ const antTheme = vi.hoisted(() => ({
   token: {
     colorBgContainer: '#ffffff',
     colorBorder: '#d9d9d9',
+    colorError: '#ff4d4f',
     colorInfo: '#1677ff',
     colorPrimary: '#1677ff',
-    colorText: '#000000'
+    colorSuccess: '#52c41a',
+    colorText: '#000000',
+    colorTextDisabled: '#bfbfbf',
+    colorTextQuaternary: '#8c8c8c',
+    colorWarning: '#faad14'
   }
 }));
 
@@ -39,6 +44,7 @@ vi.mock('@antv/g6', () => ({
   CanvasEvent: { CLICK: 'canvas:click' },
   EdgeEvent: { CLICK: 'edge:click', POINTER_LEAVE: 'edge:pointerleave', POINTER_OVER: 'edge:pointerover' },
   Graph: runtime.Graph,
+  GraphEvent: { AFTER_TRANSFORM: 'aftertransform' },
   NodeEvent: { CLICK: 'node:click', POINTER_LEAVE: 'node:pointerleave', POINTER_OVER: 'node:pointerover' }
 }));
 vi.mock('antd', () => ({ theme: { useToken: () => ({ token: antTheme.token }) } }));
@@ -215,6 +221,7 @@ function eventCallbacks() {
     onEdgeSelect: vi.fn(),
     onNodeHover: vi.fn(),
     onNodeSelect: vi.fn(),
-    onRuntimeStateChange: vi.fn()
+    onRuntimeStateChange: vi.fn(),
+    onScaleChange: vi.fn()
   };
 }

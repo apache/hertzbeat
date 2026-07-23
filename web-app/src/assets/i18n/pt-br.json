@@ -50,6 +50,17 @@
       "fit": "Ajustar grafo",
       "all": "Todos"
     },
+    "canvas": {
+      "zoomOut": "Diminuir zoom",
+      "zoomIn": "Aumentar zoom"
+    },
+    "legend": {
+      "healthy": "Saudável",
+      "warning": "Alerta",
+      "critical": "Crítico",
+      "unknown": "Desconhecido",
+      "selected": "Caminho selecionado"
+    },
     "summary": {
       "nodes": "Nós",
       "edges": "Arestas",

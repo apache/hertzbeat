@@ -81,12 +81,6 @@
   border-top: 1px solid var(--ant-color-border-secondary);
 }
 
-.toolbarActions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
 .workspace {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 380px;
@@ -110,9 +104,42 @@
 }
 
 .canvasFrame {
+  position: relative;
   height: 620px;
   overflow: hidden;
   background: var(--ant-color-bg-container);
+}
+
+.canvasControls {
+  position: absolute;
+  z-index: 2;
+  top: 12px;
+  right: 12px;
+  box-shadow: var(--ant-box-shadow-tertiary);
+}
+
+.canvasScale {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  padding: 0 8px;
+  border-top: 1px solid var(--ant-color-border);
+  border-bottom: 1px solid var(--ant-color-border);
+  background: var(--ant-color-bg-container);
+  font-variant-numeric: tabular-nums;
+}
+
+.canvasLegend {
+  position: absolute;
+  z-index: 2;
+  bottom: 12px;
+  left: 12px;
+  padding: 6px 10px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius);
+  background: var(--ant-color-bg-container);
+  box-shadow: var(--ant-box-shadow-tertiary);
 }
 
 .evidenceSection {

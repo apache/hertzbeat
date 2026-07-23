@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { AimOutlined, FilterOutlined, ReloadOutlined } from '@ant-design/icons';
+import { FilterOutlined } from '@ant-design/icons';
 import { Button, Input, InputNumber, Select, Space, Switch, Typography } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,13 +11,10 @@ import styles from './topology-page.module.css';
 
 type Props = {
   query: TopologyQuery;
-  refreshing: boolean;
   changeScope: TopologyPageActions['changeScope'];
-  onFit: () => void;
-  onRefresh: () => void;
 };
 
-export function TopologyToolbar({ query, refreshing, changeScope, onFit, onRefresh }: Props) {
+export function TopologyToolbar({ query, changeScope }: Props) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   return (
@@ -32,14 +29,6 @@ export function TopologyToolbar({ query, refreshing, changeScope, onFit, onRefre
         >
           {t('topology.toolbar.filter')}
         </Button>
-        <div className={styles.toolbarActions}>
-          <Button icon={<AimOutlined />} aria-label={t('topology.toolbar.fit')} onClick={onFit}>
-            {t('topology.toolbar.fit')}
-          </Button>
-          <Button icon={<ReloadOutlined />} aria-label={t('common.refresh')} loading={refreshing} onClick={onRefresh}>
-            {t('common.refresh')}
-          </Button>
-        </div>
       </div>
       {expanded ? <TopologyScopeFields query={query} changeScope={changeScope} /> : null}
     </section>

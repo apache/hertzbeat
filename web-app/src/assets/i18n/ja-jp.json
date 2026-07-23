@@ -50,6 +50,17 @@
       "fit": "グラフを全体表示",
       "all": "すべて"
     },
+    "canvas": {
+      "zoomOut": "縮小",
+      "zoomIn": "拡大"
+    },
+    "legend": {
+      "healthy": "正常",
+      "warning": "警告",
+      "critical": "重大",
+      "unknown": "不明",
+      "selected": "選択中のパス"
+    },
     "summary": {
       "nodes": "ノード",
       "edges": "エッジ",

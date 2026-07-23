@@ -6,10 +6,10 @@ import { useTranslation } from 'react-i18next';
 
 import type { TopologyPageActions, TopologyPageState } from '../model/topology-page-contract';
 import type { TopologyPresentation } from '../model/topology-view-model';
-import { TopologyCanvas, type TopologyCanvasHandle, type TopologyCanvasRuntimeState } from './topology-canvas';
+import type { TopologyCanvasHandle, TopologyCanvasRuntimeState } from './topology-canvas';
 import { TopologyContextBand } from './topology-context-band';
 import { TopologyInspector } from './topology-detail-rail';
-import { TopologyMetricTable } from './topology-metric-table';
+import { TopologyGraphColumn } from './topology-graph-column';
 import { TopologyToolbar } from './topology-toolbar';
 import { useCompactTopologyInspector } from './use-compact-topology-inspector';
 import styles from './topology-page.module.css';
@@ -21,8 +21,12 @@ export type TopologyPageViewProps = {
   canvasRef?: RefObject<TopologyCanvasHandle | null>;
   runtimeState?: TopologyCanvasRuntimeState;
   onRuntimeStateChange?: (state: TopologyCanvasRuntimeState) => void;
+  scale: number;
   onFit: () => void;
   onRefresh: () => void;
+  onScaleChange?: (scale: number) => void;
+  onZoomIn: () => void;
+  onZoomOut: () => void;
 };
 
 export function TopologyPageView({
@@ -32,8 +36,12 @@ export function TopologyPageView({
   canvasRef,
   runtimeState = { kind: 'loading' },
   onRuntimeStateChange = () => undefined,
+  scale,
   onFit,
-  onRefresh
+  onRefresh,
+  onScaleChange = () => undefined,
+  onZoomIn,
+  onZoomOut
 }: TopologyPageViewProps) {
   const { t } = useTranslation();
   const evidence = state.evidence;
@@ -46,15 +54,7 @@ export function TopologyPageView({
           <Typography.Title level={2}>{t('topology.title')}</Typography.Title>
         </header>
       )}
-      {state.query ? (
-        <TopologyToolbar
-          query={state.query}
-          refreshing={state.refreshing}
-          changeScope={actions.changeScope}
-          onFit={onFit}
-          onRefresh={onRefresh}
-        />
-      ) : null}
+      {state.query ? <TopologyToolbar query={state.query} changeScope={actions.changeScope} /> : null}
       <TopologyEvidence
         state={state}
         actions={actions}
@@ -62,12 +62,18 @@ export function TopologyPageView({
         {...(canvasRef ? { canvasRef } : {})}
         runtimeState={runtimeState}
         onRuntimeStateChange={onRuntimeStateChange}
+        scale={scale}
+        onFit={onFit}
+        onRefresh={onRefresh}
+        onScaleChange={onScaleChange}
+        onZoomIn={onZoomIn}
+        onZoomOut={onZoomOut}
       />
     </div>
   );
 }
 
-function TopologyEvidence(props: Omit<TopologyPageViewProps, 'onFit' | 'onRefresh'>) {
+function TopologyEvidence(props: TopologyPageViewProps) {
   const { t } = useTranslation();
   const { state } = props;
   if (state.evidence.kind === 'loading') {
@@ -95,8 +101,14 @@ function ReadyTopology({
   canvasRef,
   runtimeState = { kind: 'loading' },
   onRuntimeStateChange = () => undefined,
+  scale,
+  onFit,
+  onRefresh,
+  onScaleChange = () => undefined,
+  onZoomIn,
+  onZoomOut,
   presentation
-}: Omit<TopologyPageViewProps, 'onFit' | 'onRefresh'> & {
+}: TopologyPageViewProps & {
   presentation: TopologyPresentation;
 }) {
   const { t } = useTranslation();
@@ -109,29 +121,20 @@ function ReadyTopology({
       {state.refreshFailure ? <Alert showIcon type="warning" message={t('topology.evidence.refreshFailure')} /> : null}
       <TopologyRuntimeEvidence state={runtimeState} />
       <div className={workspaceClass}>
-        <main className={styles.graphColumn}>
-          <div className={styles.canvasFrame}>
-            <TopologyCanvas
-              ref={canvasRef}
-              presentation={presentation}
-              interaction={interaction}
-              onClearSelection={actions.clearSelection}
-              onEdgeHover={edgeId => (edgeId ? actions.hoverEdge(edgeId) : actions.clearHover())}
-              onEdgeSelect={actions.selectEdge}
-              onNodeHover={nodeId => (nodeId ? actions.hoverNode(nodeId) : actions.clearHover())}
-              onNodeSelect={actions.selectNode}
-              onRuntimeStateChange={onRuntimeStateChange}
-            />
-          </div>
-          <TopologyMetricTable
-            rows={presentation.metricRows}
-            interaction={interaction}
-            edgeCount={presentation.summary.edgeCount}
-            pageIndex={state.query?.pageIndex ?? 0}
-            pageSize={state.query?.pageSize ?? 25}
-            actions={actions}
-          />
-        </main>
+        <TopologyGraphColumn
+          state={state}
+          actions={actions}
+          interaction={interaction}
+          {...(canvasRef ? { canvasRef } : {})}
+          presentation={presentation}
+          scale={scale}
+          onFit={onFit}
+          onRefresh={onRefresh}
+          onRuntimeStateChange={onRuntimeStateChange}
+          onScaleChange={onScaleChange}
+          onZoomIn={onZoomIn}
+          onZoomOut={onZoomOut}
+        />
         <TopologyInspector
           compact={compactInspector}
           presentation={presentation}

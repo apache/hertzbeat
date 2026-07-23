@@ -22,12 +22,12 @@ import {
 import { TopologyPageView, type TopologyPageViewProps } from './topology-page-view';
 import { useCompactTopologyInspector } from './use-compact-topology-inspector';
 
-const canvasBoundary = vi.hoisted(() => ({ fit: vi.fn() }));
+const canvasBoundary = vi.hoisted(() => ({ fit: vi.fn(), zoomIn: vi.fn(), zoomOut: vi.fn() }));
 vi.mock('./topology-canvas', async () => {
   const { forwardRef, useImperativeHandle } = await import('react');
   return {
     TopologyCanvas: forwardRef(function CanvasBoundary(props: TopologyCanvasProps, ref) {
-      useImperativeHandle(ref, () => ({ fit: canvasBoundary.fit }));
+      useImperativeHandle(ref, () => canvasBoundary);
       return (
         <div data-testid="topology-canvas" data-interaction={JSON.stringify(props.interaction)}>
           <button onClick={() => props.onNodeSelect('node-1')}>canvas node</button>
@@ -92,6 +92,27 @@ describe('TopologyPageView evidence', () => {
     expect(screen.getByLabelText(i18n.t('topology.toolbar.sourceKind'))).toBeInTheDocument();
     expect(screen.getByLabelText(i18n.t('topology.toolbar.relationType'))).toBeInTheDocument();
     expect(screen.getByLabelText(i18n.t('topology.toolbar.hideInternal'))).toBeInTheDocument();
+  });
+
+  it('keeps zoom, fit, exact scale, and refresh controls inside the canvas surface', () => {
+    const onFit = vi.fn();
+    const onZoomIn = vi.fn();
+    const onZoomOut = vi.fn();
+    const onRefresh = vi.fn();
+    render(renderContent({ scale: 1.4, onFit, onZoomIn, onZoomOut, onRefresh }));
+
+    const canvasFrame = screen.getByTestId('topology-canvas').parentElement;
+    if (!canvasFrame) throw new Error('The topology canvas frame is missing.');
+    expect(within(canvasFrame).getByText('140%')).toBeInTheDocument();
+    fireEvent.click(within(canvasFrame).getByRole('button', { name: i18n.t('topology.canvas.zoomOut') }));
+    fireEvent.click(within(canvasFrame).getByRole('button', { name: i18n.t('topology.canvas.zoomIn') }));
+    fireEvent.click(within(canvasFrame).getByRole('button', { name: i18n.t('topology.toolbar.fit') }));
+    fireEvent.click(within(canvasFrame).getByRole('button', { name: i18n.t('common.refresh') }));
+
+    expect(onZoomOut).toHaveBeenCalledOnce();
+    expect(onZoomIn).toHaveBeenCalledOnce();
+    expect(onFit).toHaveBeenCalledOnce();
+    expect(onRefresh).toHaveBeenCalledOnce();
   });
 
   it('keeps the context band limited to real counts and the exact window', () => {
@@ -394,8 +415,11 @@ function renderContent(patch: Partial<TopologyPageViewProps> = {}) {
         interaction={patch.interaction ?? emptyTopologyInteraction()}
         {...(patch.runtimeState ? { runtimeState: patch.runtimeState } : {})}
         {...(patch.onRuntimeStateChange ? { onRuntimeStateChange: patch.onRuntimeStateChange } : {})}
+        scale={patch.scale ?? 1}
         onFit={patch.onFit ?? (() => undefined)}
-        onRefresh={() => undefined}
+        onZoomIn={patch.onZoomIn ?? (() => undefined)}
+        onZoomOut={patch.onZoomOut ?? (() => undefined)}
+        onRefresh={patch.onRefresh ?? (() => undefined)}
       />
     </I18nextProvider>
   );

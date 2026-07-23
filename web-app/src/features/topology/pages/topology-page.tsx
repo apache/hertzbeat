@@ -15,6 +15,7 @@ export function TopologyPage() {
   });
   const canvasRef = useRef<TopologyCanvasHandle>(null);
   const [runtimeState, setRuntimeState] = useState<TopologyCanvasRuntimeState>({ kind: 'loading' });
+  const [scale, setScale] = useState(1);
   const { interaction, ...state } = controller.state;
   const refresh = time?.manualRefreshOwner === 'time_revision' ? time.requestRefresh : controller.actions.refresh;
   return (
@@ -25,7 +26,11 @@ export function TopologyPage() {
       canvasRef={canvasRef}
       runtimeState={runtimeState}
       onRuntimeStateChange={setRuntimeState}
+      scale={scale}
       onFit={() => canvasRef.current?.fit()}
+      onScaleChange={setScale}
+      onZoomIn={() => canvasRef.current?.zoomIn()}
+      onZoomOut={() => canvasRef.current?.zoomOut()}
       onRefresh={refresh}
     />
   );

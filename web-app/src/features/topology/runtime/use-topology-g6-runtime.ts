@@ -22,6 +22,7 @@ type RuntimeCallbacks = {
   onNodeHover: (nodeId: string | null) => void;
   onNodeSelect: (nodeId: string) => void;
   onRuntimeStateChange: (state: TopologyRuntimeState) => void;
+  onScaleChange: (scale: number) => void;
 };
 type RuntimeInput = {
   presentation: TopologyPresentation;
@@ -40,7 +41,7 @@ export function useTopologyG6Runtime(host: RefObject<HTMLDivElement | null>, inp
   }, [input]);
   useTopologyBootstrap(host, graphRef, viewportRef, inputRef, input.presentation.graphStructureKey);
   useTopologyGraphUpdates(graphRef, inputRef, input);
-  return useCallback(() => {
+  const fit = useCallback(() => {
     const graph = graphRef.current;
     if (!graph) return;
     void graph
@@ -52,6 +53,9 @@ export function useTopologyG6Runtime(host: RefObject<HTMLDivElement | null>, inp
         if (graphRef.current === graph) publishState(inputRef, 'failure');
       });
   }, []);
+  const zoomIn = useCallback(() => zoomGraph(graphRef, inputRef, 1.2), []);
+  const zoomOut = useCallback(() => zoomGraph(graphRef, inputRef, 1 / 1.2), []);
+  return { fit, zoomIn, zoomOut };
 }
 function useTopologyBootstrap(
   host: RefObject<HTMLDivElement | null>,
@@ -151,7 +155,7 @@ async function drawGraphInput(
   const elements = topologyG6ElementOptions(palette);
   graph.setNode(elements.node);
   graph.setEdge(elements.edge);
-  graph.setData(topologyG6Data(presentation, interaction));
+  graph.setData(topologyG6Data(presentation, interaction, palette));
   await graph.draw();
 }
 async function reconcileBootstrapInput(
@@ -204,6 +208,7 @@ function bindEvents(graph: G6Graph, module: G6Module, input: React.MutableRefObj
   graph.on(module.EdgeEvent.POINTER_OVER, event => withEventId(event, input.current.callbacks.onEdgeHover));
   graph.on(module.EdgeEvent.POINTER_LEAVE, () => input.current.callbacks.onEdgeHover(null));
   graph.on(module.CanvasEvent.CLICK, () => input.current.callbacks.onClearSelection());
+  graph.on(module.GraphEvent.AFTER_TRANSFORM, () => publishScale(graph, input));
 }
 function routeNodeEvent(
   event: unknown,
@@ -232,6 +237,34 @@ function eventId(event: unknown) {
 function publishState(input: React.MutableRefObject<RuntimeInput>, kind: TopologyRuntimeState['kind']) {
   input.current.callbacks.onRuntimeStateChange({ kind });
 }
+function publishScale(graph: G6Graph, input: React.MutableRefObject<RuntimeInput>) {
+  const scale = graph.getZoom();
+  if (Number.isFinite(scale)) input.current.callbacks.onScaleChange(scale);
+}
+function zoomGraph(
+  graphRef: React.MutableRefObject<G6Graph | undefined>,
+  input: React.MutableRefObject<RuntimeInput>,
+  factor: number
+) {
+  const graph = graphRef.current;
+  if (!graph) return;
+  const current = graph.getZoom();
+  if (!Number.isFinite(current)) {
+    publishState(input, 'failure');
+    return;
+  }
+  void graph
+    .zoomTo(clampScale(current * factor), false)
+    .then(() => {
+      if (graphRef.current === graph) publishState(input, 'ready');
+    })
+    .catch(() => {
+      if (graphRef.current === graph) publishState(input, 'failure');
+    });
+}
+function clampScale(scale: number) {
+  return Math.min(2, Math.max(0.35, scale));
+}
 function observeSize(container: HTMLDivElement, graph: G6Graph) {
   if (typeof ResizeObserver === 'undefined') return undefined;
   const observer = new ResizeObserver(entries => {
@@ -247,7 +280,7 @@ function readViewport(graph: G6Graph): Viewport | undefined {
   const x = position[0];
   const y = position[1];
   if (typeof x !== 'number' || typeof y !== 'number' || ![zoom, x, y].every(Number.isFinite)) return undefined;
-  return { zoom: Math.min(2, Math.max(0.35, zoom)), position: [x, y] };
+  return { zoom: clampScale(zoom), position: [x, y] };
 }
 async function restoreOrFit(graph: G6Graph, viewport: Viewport | undefined) {
   if (!viewport) {

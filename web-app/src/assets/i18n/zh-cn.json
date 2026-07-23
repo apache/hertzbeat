@@ -50,6 +50,17 @@
       "fit": "适配画布",
       "all": "全部"
     },
+    "canvas": {
+      "zoomOut": "缩小",
+      "zoomIn": "放大"
+    },
+    "legend": {
+      "healthy": "健康",
+      "warning": "警告",
+      "critical": "严重",
+      "unknown": "未知",
+      "selected": "已选路径"
+    },
     "summary": {
       "nodes": "节点",
       "edges": "边",

@@ -50,6 +50,17 @@
       "fit": "Fit graph",
       "all": "All"
     },
+    "canvas": {
+      "zoomOut": "Zoom out",
+      "zoomIn": "Zoom in"
+    },
+    "legend": {
+      "healthy": "Healthy",
+      "warning": "Warning",
+      "critical": "Critical",
+      "unknown": "Unknown",
+      "selected": "Selected path"
+    },
     "summary": {
       "nodes": "Nodes",
       "edges": "Edges",

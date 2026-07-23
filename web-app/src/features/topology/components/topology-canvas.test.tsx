@@ -19,6 +19,7 @@ vi.mock('@antv/g6', () => ({
   CanvasEvent: { CLICK: 'canvas:click' },
   EdgeEvent: { CLICK: 'edge:click', POINTER_LEAVE: 'edge:pointerleave', POINTER_OVER: 'edge:pointerover' },
   Graph: runtime.Graph,
+  GraphEvent: { AFTER_TRANSFORM: 'aftertransform' },
   NodeEvent: { CLICK: 'node:click', POINTER_LEAVE: 'node:pointerleave', POINTER_OVER: 'node:pointerover' }
 }));
 vi.mock('antd', () => ({
@@ -27,9 +28,14 @@ vi.mock('antd', () => ({
       token: {
         colorBgContainer: '#ffffff',
         colorBorder: '#d9d9d9',
+        colorError: '#ff4d4f',
         colorInfo: '#1677ff',
         colorPrimary: '#1677ff',
-        colorText: '#000000'
+        colorSuccess: '#52c41a',
+        colorText: '#000000',
+        colorTextDisabled: '#bfbfbf',
+        colorTextQuaternary: '#8c8c8c',
+        colorWarning: '#faad14'
       }
     })
   }
@@ -123,11 +129,37 @@ describe('TopologyCanvas event and resource bridge', () => {
     expect(graph.setSize).toHaveBeenCalledWith(640, 360);
     act(() => handle.current?.fit());
     expect(graph.fitView).toHaveBeenCalledTimes(2);
+    graph.getZoom.mockReturnValue(0.8);
+    emit(graph, 'aftertransform');
+    expect(callbacks.onScaleChange).toHaveBeenLastCalledWith(0.8);
 
     view.unmount();
     expect(resize.observers[0]?.disconnect).toHaveBeenCalledOnce();
     expect(graph.off).toHaveBeenCalledOnce();
     expect(graph.destroy).toHaveBeenCalledOnce();
+  });
+
+  it('exposes clamped zoom operations and publishes the exact scale after every graph transform', async () => {
+    const callbacks = eventCallbacks();
+    const handle = createRef<TopologyCanvasHandle>();
+    render(<TopologyCanvas ref={handle} {...props(presentation('structure-a'), interaction(), callbacks)} />);
+    const graph = await renderedGraph();
+
+    graph.getZoom.mockReturnValue(1.4);
+    emit(graph, 'aftertransform');
+    expect(callbacks.onScaleChange).toHaveBeenLastCalledWith(1.4);
+
+    graph.getZoom.mockReturnValue(1.95);
+    act(() => handle.current?.zoomIn());
+    await waitFor(() => expect(graph.zoomTo).toHaveBeenLastCalledWith(2, false));
+
+    graph.getZoom.mockReturnValue(0.36);
+    act(() => handle.current?.zoomOut());
+    await waitFor(() => expect(graph.zoomTo).toHaveBeenLastCalledWith(0.35, false));
+
+    graph.zoomTo.mockRejectedValueOnce(new Error('private zoom failure'));
+    act(() => handle.current?.zoomIn());
+    await waitFor(() => expect(callbacks.onRuntimeStateChange).toHaveBeenLastCalledWith({ kind: 'failure' }));
   });
 
   it('maps synthetic external-target events to their edge without faking a node selection', async () => {
@@ -213,6 +245,7 @@ function eventCallbacks() {
     onEdgeSelect: vi.fn(),
     onNodeHover: vi.fn(),
     onNodeSelect: vi.fn(),
+    onScaleChange: vi.fn(),
     onRuntimeStateChange: vi.fn()
   };
 }
