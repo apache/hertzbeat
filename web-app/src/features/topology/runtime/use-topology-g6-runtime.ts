@@ -6,6 +6,7 @@ import type { TopologyInteraction, TopologyPresentation } from '../model/topolog
 import {
   topologyG6Data,
   topologyG6ElementOptions,
+  topologyG6ExternalEdgeId,
   topologyG6Options,
   type TopologyG6Palette
 } from './topology-g6-adapter';
@@ -184,18 +185,49 @@ function createGraph(module: G6Module, container: HTMLDivElement, input: Runtime
   return new module.Graph({ container, ...topologyG6Options(input.presentation, input.interaction, input.palette) });
 }
 function bindEvents(graph: G6Graph, module: G6Module, input: React.MutableRefObject<RuntimeInput>) {
-  graph.on(module.NodeEvent.CLICK, event => withEventId(event, input.current.callbacks.onNodeSelect));
+  graph.on(module.NodeEvent.CLICK, event =>
+    routeNodeEvent(event, input, input.current.callbacks.onNodeSelect, input.current.callbacks.onEdgeSelect)
+  );
   graph.on(module.EdgeEvent.CLICK, event => withEventId(event, input.current.callbacks.onEdgeSelect));
-  graph.on(module.NodeEvent.POINTER_OVER, event => withEventId(event, input.current.callbacks.onNodeHover));
-  graph.on(module.NodeEvent.POINTER_LEAVE, () => input.current.callbacks.onNodeHover(null));
+  graph.on(module.NodeEvent.POINTER_OVER, event =>
+    routeNodeEvent(event, input, input.current.callbacks.onNodeHover, input.current.callbacks.onEdgeHover)
+  );
+  graph.on(module.NodeEvent.POINTER_LEAVE, event => {
+    const routed = routeNodeEvent(
+      event,
+      input,
+      () => input.current.callbacks.onNodeHover(null),
+      () => input.current.callbacks.onEdgeHover(null)
+    );
+    if (!routed) input.current.callbacks.onNodeHover(null);
+  });
   graph.on(module.EdgeEvent.POINTER_OVER, event => withEventId(event, input.current.callbacks.onEdgeHover));
   graph.on(module.EdgeEvent.POINTER_LEAVE, () => input.current.callbacks.onEdgeHover(null));
   graph.on(module.CanvasEvent.CLICK, () => input.current.callbacks.onClearSelection());
 }
+function routeNodeEvent(
+  event: unknown,
+  input: React.MutableRefObject<RuntimeInput>,
+  onNode: (id: string) => void,
+  onExternalEdge: (id: string) => void
+) {
+  const id = eventId(event);
+  if (id === undefined) return false;
+  const edgeId = topologyG6ExternalEdgeId(input.current.presentation, id);
+  if (edgeId !== undefined) onExternalEdge(edgeId);
+  else onNode(id);
+  return true;
+}
 function withEventId(event: unknown, callback: (id: string) => void) {
+  const id = eventId(event);
+  if (id !== undefined) callback(id);
+}
+function eventId(event: unknown) {
   if (!event || typeof event !== 'object' || !('target' in event)) return;
   const target = event.target;
-  if (target && typeof target === 'object' && 'id' in target && typeof target.id === 'string') callback(target.id);
+  return target && typeof target === 'object' && 'id' in target && typeof target.id === 'string'
+    ? target.id
+    : undefined;
 }
 function publishState(input: React.MutableRefObject<RuntimeInput>, kind: TopologyRuntimeState['kind']) {
   input.current.callbacks.onRuntimeStateChange({ kind });

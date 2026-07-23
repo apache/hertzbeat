@@ -48,3 +48,45 @@ export function presentation(
     graphStructureKey
   };
 }
+
+export function externalPresentation(): TopologyPresentation {
+  const base = presentation('external-structure');
+  const node = base.graph.nodes[0];
+  if (!node) throw new Error('The topology fixture requires a source node.');
+  return {
+    ...base,
+    graph: {
+      nodes: [
+        node,
+        {
+          ...node,
+          id: 'external-target:edge-external',
+          entityId: 2,
+          entityName: 'collision'
+        }
+      ],
+      edges: [
+        {
+          id: 'edge-external',
+          relationId: null,
+          sourceNodeId: node.id,
+          targetNodeId: null,
+          sourceEntityId: node.entityId,
+          targetEntityId: null,
+          targetRef: 'payments.example',
+          sampleTraceId: null,
+          sampleSpanId: null,
+          firstSeen: null,
+          lastSeen: null,
+          relationType: 'calls',
+          relationSource: 'trace',
+          status: 'active',
+          score: null,
+          evidenceBadges: [],
+          redMetrics: node.redMetrics
+        }
+      ]
+    },
+    summary: { ...base.summary, nodeCount: 2, edgeCount: 1 }
+  };
+}

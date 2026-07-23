@@ -4,7 +4,7 @@ import { act, cleanup, render, waitFor } from '@testing-library/react';
 import { createRef } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { interaction, presentation } from './topology-canvas-test-fixtures';
+import { externalPresentation, interaction, presentation } from './topology-canvas-test-fixtures';
 
 const runtime = vi.hoisted(() => {
   const instances: MockGraph[] = [];
@@ -128,6 +128,33 @@ describe('TopologyCanvas event and resource bridge', () => {
     expect(resize.observers[0]?.disconnect).toHaveBeenCalledOnce();
     expect(graph.off).toHaveBeenCalledOnce();
     expect(graph.destroy).toHaveBeenCalledOnce();
+  });
+
+  it('maps synthetic external-target events to their edge without faking a node selection', async () => {
+    const callbacks = eventCallbacks();
+    render(<TopologyCanvas {...props(externalPresentation(), interaction(), callbacks)} />);
+    const graph = await renderedGraph();
+    const options = graph.options as {
+      data?: { nodes?: Array<{ id?: string; data?: { externalTarget?: boolean } }> };
+    };
+    const externalId = options.data?.nodes?.find(node => node.data?.externalTarget)?.id;
+    if (!externalId) throw new Error('The external target was not rendered.');
+
+    emit(graph, 'node:click', externalId);
+    emit(graph, 'node:pointerover', externalId);
+    emit(graph, 'node:pointerleave', externalId);
+    expect(callbacks.onEdgeSelect).toHaveBeenCalledWith('edge-external');
+    expect(callbacks.onEdgeHover).toHaveBeenNthCalledWith(1, 'edge-external');
+    expect(callbacks.onEdgeHover).toHaveBeenLastCalledWith(null);
+    expect(callbacks.onNodeSelect).not.toHaveBeenCalled();
+    expect(callbacks.onNodeHover).not.toHaveBeenCalled();
+
+    emit(graph, 'node:click', 'node-a');
+    emit(graph, 'node:pointerover', 'node-a');
+    emit(graph, 'node:pointerleave', 'node-a');
+    expect(callbacks.onNodeSelect).toHaveBeenCalledWith('node-a');
+    expect(callbacks.onNodeHover).toHaveBeenNthCalledWith(1, 'node-a');
+    expect(callbacks.onNodeHover).toHaveBeenLastCalledWith(null);
   });
 });
 
