@@ -75,7 +75,13 @@ describe('instrumentation onboarding flow model', () => {
       expect.objectContaining({
         schemaVersion: 1,
         collector: expect.objectContaining({ collectorId: 'collector-east' }),
-        service: { name: 'checkout-api', namespace: 'commerce', environment: 'prod' }
+        service: {
+          name: 'checkout-api',
+          namespace: 'commerce',
+          environment: 'prod',
+          serviceInstanceId: 'checkout-7d9',
+          endpoint: '/checkout'
+        }
       })
     );
     expect(detection).toEqual(
@@ -120,6 +126,8 @@ describe('instrumentation onboarding flow model', () => {
       serviceNamespace: 'commerce',
       environment: 'prod',
       collectorId: 'collector-east',
+      instance: 'checkout-7d9',
+      endpoint: '/checkout',
       start: String(jumpContext.startedAt),
       end: String(jumpContext.detectedAt)
     });
@@ -193,6 +201,7 @@ const transientTarget = createTransientCollectorTarget({
 
 function configuredDraft() {
   let draft: InstrumentationFlowDraft = selectCatalogLanguage(createFlowDraft(), catalog, 'go');
+  draft = { ...draft, serviceInstanceId: 'checkout-7d9', endpoint: '/checkout' };
   draft = updateFlowContext(draft, 'collectorId', collector.collectorId);
   draft = updateFlowContext(draft, 'serviceName', 'checkout-api');
   draft = updateFlowContext(draft, 'serviceNamespace', 'commerce');
@@ -204,6 +213,8 @@ const jumpContext: QueryJumpContext = {
   serviceNamespace: 'commerce',
   environment: 'prod',
   collectorId: 'collector-east',
+  serviceInstanceId: 'checkout-7d9',
+  endpoint: '/checkout',
   startedAt: 1_710_000_000_000,
   detectedAt: 1_710_000_005_000
 };

@@ -53,7 +53,13 @@ const renderRequest: GuideRenderRequest = {
     otlpGrpcEndpoint: 'http://collector.internal:4317',
     authorizationHeader: 'Authorization'
   },
-  service: { name: 'checkout-api', namespace: 'commerce', environment: 'prod' }
+  service: {
+    name: 'checkout-api',
+    namespace: 'commerce',
+    environment: 'prod',
+    serviceInstanceId: 'checkout-7d9',
+    endpoint: '/checkout'
+  }
 };
 
 const detectionRequest: DetectionRequest = {
@@ -63,7 +69,13 @@ const detectionRequest: DetectionRequest = {
   method: 'zero_code',
   environment: 'docker',
   platform: 'linux_amd64',
-  service: { name: 'checkout-api', namespace: 'commerce', environment: 'prod' },
+  service: {
+    name: 'checkout-api',
+    namespace: 'commerce',
+    environment: 'prod',
+    serviceInstanceId: 'checkout-7d9',
+    endpoint: '/checkout'
+  },
   collectorId: 'collector-east',
   startedAt: 1_710_000_000_000
 };
@@ -204,6 +216,17 @@ describe('instrumentation v1 model', () => {
     });
     expect(response.queryJumps[0]).toMatchObject({ signal: 'metrics', enabled: true });
     expect(response.queryJumps[1]).toMatchObject({ signal: 'logs', enabled: false });
+    expect(response.context.service).toMatchObject({
+      serviceInstanceId: 'checkout-7d9',
+      endpoint: '/checkout'
+    });
+    expect(response.queryJumpContext).toMatchObject({
+      serviceInstanceId: 'checkout-7d9',
+      endpoint: '/checkout'
+    });
+    response.queryJumps.forEach(jump =>
+      expect(jump.context).toMatchObject({ serviceInstanceId: 'checkout-7d9', endpoint: '/checkout' })
+    );
 
     const unavailable = detectionFixture();
     unavailable.signals.logs = { status: 'unavailable', lastReceivedAt: null, errorCode: 'storage_unavailable' };
@@ -316,6 +339,8 @@ function detectionFixture() {
     serviceNamespace: 'commerce',
     environment: 'prod',
     collectorId: 'collector-east',
+    serviceInstanceId: 'checkout-7d9',
+    endpoint: '/checkout',
     startedAt: 1_710_000_000_000,
     detectedAt: 1_710_000_005_000
   };

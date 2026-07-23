@@ -34,7 +34,9 @@ describe('instrumentation progress URL contract', () => {
         collectorId: 'collector-east',
         serviceName: 'checkout-api',
         serviceNamespace: 'commerce',
-        environment: 'prod'
+        environment: 'prod',
+        instance: 'checkout-7d9',
+        endpoint: '/checkout'
       }
     );
 
@@ -54,7 +56,9 @@ describe('instrumentation progress URL contract', () => {
         collectorId: 'collector-east',
         serviceName: 'checkout-api',
         serviceNamespace: 'commerce',
-        serviceEnvironment: 'prod'
+        serviceEnvironment: 'prod',
+        serviceInstanceId: 'checkout-7d9',
+        endpoint: '/checkout'
       }
     });
     expect(JSON.stringify(progress)).not.toContain('must-not-survive');

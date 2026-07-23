@@ -121,5 +121,11 @@ function copySelection(selection: InstrumentationSelection): InstrumentationSele
 }
 
 function copyService(service: ServiceIdentity): ServiceIdentity {
-  return { name: service.name, namespace: service.namespace, environment: service.environment };
+  return {
+    name: service.name,
+    namespace: service.namespace,
+    environment: service.environment,
+    ...(service.serviceInstanceId ? { serviceInstanceId: service.serviceInstanceId } : {}),
+    ...(service.endpoint ? { endpoint: service.endpoint } : {})
+  };
 }

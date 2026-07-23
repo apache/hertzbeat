@@ -54,6 +54,8 @@ function detectionRequestIdentity(draft: InstrumentationFlowDraft) {
     draft.collectorId,
     draft.serviceName,
     draft.serviceNamespace,
-    draft.serviceEnvironment
+    draft.serviceEnvironment,
+    draft.serviceInstanceId,
+    draft.endpoint
   ]);
 }

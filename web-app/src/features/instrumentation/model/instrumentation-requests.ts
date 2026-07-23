@@ -82,7 +82,9 @@ export function buildExploreHandoff(signal: InstrumentationSignal, context: Quer
       collectorId: context.collectorId,
       serviceName: context.serviceName,
       serviceNamespace: context.serviceNamespace,
-      environment: context.environment
+      environment: context.environment,
+      instance: context.serviceInstanceId,
+      endpoint: context.endpoint
     },
     { from: context.startedAt, to: context.detectedAt }
   );
@@ -101,7 +103,17 @@ function serviceIdentity(draft: InstrumentationFlowDraft): ServiceIdentity {
   return {
     name: draft.serviceName.trim(),
     namespace: draft.serviceNamespace.trim(),
-    environment: draft.serviceEnvironment.trim()
+    environment: draft.serviceEnvironment.trim(),
+    ...optionalServiceIdentity(draft)
+  };
+}
+
+function optionalServiceIdentity(draft: InstrumentationFlowDraft) {
+  const serviceInstanceId = draft.serviceInstanceId?.trim();
+  const endpoint = draft.endpoint?.trim();
+  return {
+    ...(serviceInstanceId ? { serviceInstanceId } : {}),
+    ...(endpoint ? { endpoint } : {})
   };
 }
 

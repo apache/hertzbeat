@@ -67,14 +67,19 @@ describe('instrumentation detection controller', () => {
     );
     expect(result.current.state.status).toBe('complete');
     expect(result.current.queryHandoff('metrics')).toContain('signal=metrics');
+    expect(result.current.queryHandoff('traces')).toContain('signal=traces');
     expect(result.current.queryHandoff('logs')).toBeUndefined();
     act(() => result.current.openQuery('metrics'));
+    act(() => result.current.openQuery('traces'));
     expect(openPath).toHaveBeenCalledWith(
-      '/explore?signal=metrics&serviceName=checkout-api&serviceNamespace=commerce&environment=prod&collectorId=collector-east&start=1710000000000&end=1710000001000'
+      '/explore?signal=metrics&serviceName=checkout-api&serviceNamespace=commerce&environment=prod&collectorId=collector-east&instance=checkout-7d9&endpoint=%2Fcheckout&start=1710000000000&end=1710000001000'
     );
-    expect(openPath.mock.calls[0]?.[0]).not.toContain('token');
+    expect(openPath).toHaveBeenCalledWith(
+      '/explore?signal=traces&serviceName=checkout-api&serviceNamespace=commerce&environment=prod&collectorId=collector-east&instance=checkout-7d9&endpoint=%2Fcheckout&start=1710000000000&end=1710000001000'
+    );
+    expect(openPath.mock.calls.every(([path]) => !path.includes('token'))).toBe(true);
     act(() => result.current.openQuery('logs'));
-    expect(openPath).toHaveBeenCalledTimes(1);
+    expect(openPath).toHaveBeenCalledTimes(2);
   });
 
   it('does not navigate for disabled or non-received signal evidence', async () => {
@@ -298,7 +303,13 @@ const request = {
   method: 'sdk',
   environment: 'docker',
   platform: 'linux_amd64',
-  service: { name: 'checkout-api', namespace: 'commerce', environment: 'prod' },
+  service: {
+    name: 'checkout-api',
+    namespace: 'commerce',
+    environment: 'prod',
+    serviceInstanceId: 'checkout-7d9',
+    endpoint: '/checkout'
+  },
   collectorId: 'collector-east'
 } as const;
 
@@ -309,6 +320,8 @@ function response(current: DetectionRequest, decision: 'continue_polling' | 'com
     serviceNamespace: current.service.namespace,
     environment: current.service.environment,
     collectorId: current.collectorId,
+    serviceInstanceId: current.service.serviceInstanceId,
+    endpoint: current.service.endpoint,
     startedAt: current.startedAt,
     detectedAt
   };

@@ -36,6 +36,8 @@ export type InstrumentationFlowDraft = {
   serviceName: string;
   serviceNamespace: string;
   serviceEnvironment: string;
+  serviceInstanceId?: string | undefined;
+  endpoint?: string | undefined;
 };
 
 export function createFlowDraft(): InstrumentationFlowDraft {

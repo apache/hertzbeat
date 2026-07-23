@@ -148,6 +148,8 @@ function validateDetectionResponse(request: DetectionRequest, response: Detectio
     context.service.name !== request.service.name ||
     context.service.namespace !== request.service.namespace ||
     context.service.environment !== request.service.environment ||
+    context.service.serviceInstanceId !== request.service.serviceInstanceId ||
+    context.service.endpoint !== request.service.endpoint ||
     context.collectorId !== request.collectorId ||
     context.startedAt !== request.startedAt
   ) {

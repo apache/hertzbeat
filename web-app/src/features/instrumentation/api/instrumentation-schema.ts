@@ -61,7 +61,9 @@ const instrumentationSelectionSchema = z.object({
 const serviceIdentitySchema = z.object({
   name: textSchema,
   namespace: textSchema,
-  environment: textSchema
+  environment: textSchema,
+  serviceInstanceId: textSchema.optional(),
+  endpoint: textSchema.optional()
 });
 
 const capabilityValuesSchema = signalValues(z.enum(INSTRUMENTATION_CAPABILITIES));
@@ -169,6 +171,8 @@ const queryJumpContextSchema = z.object({
   serviceNamespace: textSchema,
   environment: textSchema,
   collectorId: textSchema,
+  serviceInstanceId: textSchema.optional(),
+  endpoint: textSchema.optional(),
   startedAt: positiveIntegerSchema,
   detectedAt: positiveIntegerSchema
 });

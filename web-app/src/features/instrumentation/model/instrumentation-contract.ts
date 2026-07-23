@@ -86,7 +86,13 @@ export type InstrumentationRequestErrorCode = (typeof INSTRUMENTATION_REQUEST_ER
 
 type SignalValues<T> = { metrics: T; logs: T; traces: T };
 
-export type ServiceIdentity = { name: string; namespace: string; environment: string };
+export type ServiceIdentity = {
+  name: string;
+  namespace: string;
+  environment: string;
+  serviceInstanceId?: string | undefined;
+  endpoint?: string | undefined;
+};
 export type InstrumentationSelection = {
   language: InstrumentationLanguage;
   framework: InstrumentationFramework;
@@ -191,6 +197,8 @@ export type QueryJumpContext = {
   serviceNamespace: string;
   environment: string;
   collectorId: string;
+  serviceInstanceId?: string | undefined;
+  endpoint?: string | undefined;
   startedAt: number;
   detectedAt: number;
 };

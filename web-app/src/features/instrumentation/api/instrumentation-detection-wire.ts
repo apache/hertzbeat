@@ -111,6 +111,10 @@ function validateDetectionContext(response: DetectionResponse) {
     serviceNamespace: response.context.service.namespace,
     environment: response.context.service.environment,
     collectorId: response.context.collectorId,
+    ...(response.context.service.serviceInstanceId
+      ? { serviceInstanceId: response.context.service.serviceInstanceId }
+      : {}),
+    ...(response.context.service.endpoint ? { endpoint: response.context.service.endpoint } : {}),
     startedAt: response.context.startedAt,
     detectedAt: response.detectedAt
   };
@@ -133,6 +137,8 @@ function validateMatchingContext(actual: QueryJumpContext, expected: QueryJumpCo
     'serviceNamespace',
     'environment',
     'collectorId',
+    'serviceInstanceId',
+    'endpoint',
     'startedAt',
     'detectedAt'
   ];

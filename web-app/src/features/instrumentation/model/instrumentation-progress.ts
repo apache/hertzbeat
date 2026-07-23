@@ -57,7 +57,9 @@ export function parseInstrumentationProgress(params: URLSearchParams, context: Q
     collectorId: context.collectorId ?? '',
     serviceName: context.serviceName ?? '',
     serviceNamespace: context.serviceNamespace ?? '',
-    serviceEnvironment: context.environment ?? ''
+    serviceEnvironment: context.environment ?? '',
+    ...(context.instance ? { serviceInstanceId: context.instance } : {}),
+    ...(context.endpoint ? { endpoint: context.endpoint } : {})
   };
   if (!mismatch && parsedSelection.selection) draft.selection = parsedSelection.selection;
   return {
