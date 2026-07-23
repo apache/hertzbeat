@@ -132,13 +132,16 @@ describe('TopologyCanvas bootstrap lifecycle', () => {
   it('updates G6 options from Ant tokens without rebuilding or fitting', async () => {
     const view = render(<TopologyCanvas {...props('structure-a')} />);
     const graph = await renderedGraph();
-    antTheme.token = { ...antTheme.token, colorPrimary: '#5b21b6' };
+    antTheme.token = { ...antTheme.token, colorPrimary: '#5b21b6', colorText: '#e8edf5' };
     view.rerender(<TopologyCanvas {...props('structure-a')} />);
 
     await waitFor(() => expect(graph.setNode).toHaveBeenCalled());
     expect(graph.setNode.mock.lastCall?.[0]).toMatchObject({
       state: { selected: { stroke: '#5b21b6' } }
     });
+    expect(decodeURIComponent(String(graph.setData.mock.lastCall?.[0]?.nodes?.[0]?.style?.iconSrc))).toContain(
+      'stroke="#e8edf5"'
+    );
     expect(runtime.Graph).toHaveBeenCalledOnce();
     expect(graph.fitView).toHaveBeenCalledOnce();
   });

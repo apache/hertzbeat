@@ -22,12 +22,48 @@ describe('topology G6 graph language', () => {
     });
     expect(data.nodes?.[0]).toMatchObject({
       type: 'hexagon',
-      style: { labelText: 'checkout\nservice', size: 64, stroke: palette.success }
+      data: {
+        iconKind: 'service',
+        iconLibrary: 'lucide-react',
+        iconName: 'server-cog',
+        iconSource: 'entity-type-catalog'
+      },
+      style: {
+        iconHeight: 18,
+        iconSrc: expect.stringContaining('data:image/svg+xml,'),
+        iconWidth: 18,
+        labelText: 'checkout\nservice',
+        size: 64,
+        stroke: palette.success
+      }
     });
     expect(data.nodes?.find(node => node.data?.externalTarget === true)).toMatchObject({
       type: 'hexagon',
-      style: { labelText: 'payments.example', lineDash: [4, 3], size: 58, stroke: palette.neutral }
+      data: {
+        iconKind: 'unknown',
+        iconLibrary: 'lucide-react',
+        iconName: 'circle-help',
+        iconSource: 'external-fallback'
+      },
+      style: {
+        iconSrc: expect.stringContaining('data:image/svg+xml,'),
+        labelText: 'payments.example',
+        lineDash: [4, 3],
+        size: 58,
+        stroke: palette.neutral
+      }
     });
+    expect(decodeURIComponent(iconSrc(data.nodes?.[0]?.style?.iconSrc))).toContain(`stroke="${palette.text}"`);
+  });
+
+  it('regenerates node icon sources from the active theme text color', () => {
+    const value = presentation('theme-icons');
+    const light = topologyG6Data(value, interaction(), palette).nodes?.[0]?.style?.iconSrc;
+    const darkPalette = { ...palette, text: '#e8edf5' };
+    const dark = topologyG6Data(value, interaction(), darkPalette).nodes?.[0]?.style?.iconSrc;
+
+    expect(light).not.toBe(dark);
+    expect(decodeURIComponent(iconSrc(dark))).toContain('stroke="#e8edf5"');
   });
 
   it('labels directed edges from available RED evidence and omits unavailable values', () => {
@@ -210,4 +246,9 @@ function topologyEdge(
     evidenceBadges: [],
     redMetrics
   };
+}
+
+function iconSrc(value: unknown) {
+  if (typeof value !== 'string') throw new Error('The topology node icon source is missing.');
+  return value;
 }

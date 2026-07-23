@@ -17,6 +17,7 @@ export type TopologyG6Palette = {
 
 export const topologyG6VisualGeometry = {
   externalNodeSize: 58,
+  iconSize: 18,
   linkDistance: 150,
   nodeSize: 64
 } as const;

@@ -2,9 +2,10 @@
 
 import type { GraphData } from '@antv/g6';
 
-import type { TopologyEdge } from '../model/topology-contract';
+import type { TopologyEdge, TopologyNode } from '../model/topology-contract';
 import type { TopologyInteraction, TopologyPresentation } from '../model/topology-view-model';
 import { topologyG6VisualGeometry, type TopologyG6Palette } from './topology-g6-options';
+import { resolveTopologyExternalIcon, resolveTopologyNodeIcon } from './topology-node-icon';
 
 type ExternalTarget = { edgeId: string; label: string; nodeId: string };
 type ExternalTargets = { edgeByNodeId: ReadonlyMap<string, string>; targets: ExternalTarget[] };
@@ -18,40 +19,15 @@ const externalTargetsCache = new WeakMap<TopologyPresentation, ExternalTargets>(
 export function topologyG6Data(
   presentation: TopologyPresentation,
   interaction: TopologyInteraction,
-  palette: Pick<TopologyG6Palette, 'critical' | 'neutral' | 'success' | 'warning'>
+  palette: Pick<TopologyG6Palette, 'critical' | 'neutral' | 'success' | 'text' | 'warning'>
 ): GraphData {
   const externalTargets = topologyG6ExternalTargets(presentation).targets;
   const externalTargetByEdge = new Map(externalTargets.map(target => [target.edgeId, target]));
   const emphasis = topologyEmphasis(presentation, interaction, externalTargetByEdge);
   return {
     nodes: [
-      ...presentation.graph.nodes.map(node => ({
-        id: node.id,
-        type: 'hexagon',
-        data: {
-          entityId: node.entityId,
-          health: node.health,
-          metrics: node.redMetrics
-        },
-        states: elementStates(node.id, interaction, 'node', emphasis),
-        style: {
-          labelText: `${node.entityName}\n${node.entityType}`,
-          size: topologyG6VisualGeometry.nodeSize,
-          stroke: healthStroke(node.health, palette)
-        }
-      })),
-      ...externalTargets.map(target => ({
-        id: target.nodeId,
-        type: 'hexagon',
-        data: { edgeId: target.edgeId, externalTarget: true },
-        states: externalTargetStates(target, interaction, emphasis),
-        style: {
-          labelText: target.label,
-          lineDash: [4, 3],
-          size: topologyG6VisualGeometry.externalNodeSize,
-          stroke: palette.neutral
-        }
-      }))
+      ...presentation.graph.nodes.map(node => topologyG6Node(node, interaction, emphasis, palette)),
+      ...externalTargets.map(target => topologyG6ExternalNode(target, interaction, emphasis, palette))
     ],
     edges: presentation.graph.edges.flatMap(edge => {
       const target = edge.targetNodeId ?? externalTargetByEdge.get(edge.id)?.nodeId;
@@ -69,6 +45,68 @@ export function topologyG6Data(
           ]
         : [];
     })
+  };
+}
+
+function topologyG6Node(
+  node: TopologyNode,
+  interaction: TopologyInteraction,
+  emphasis: Emphasis,
+  palette: Pick<TopologyG6Palette, 'critical' | 'neutral' | 'success' | 'text' | 'warning'>
+) {
+  const icon = resolveTopologyNodeIcon(node.entityType, palette.text);
+  return {
+    id: node.id,
+    type: 'hexagon',
+    data: {
+      entityId: node.entityId,
+      health: node.health,
+      iconKind: icon.iconKind,
+      iconLibrary: icon.iconLibrary,
+      iconName: icon.iconName,
+      iconSource: icon.iconSource,
+      metrics: node.redMetrics
+    },
+    states: elementStates(node.id, interaction, 'node', emphasis),
+    style: {
+      iconHeight: topologyG6VisualGeometry.iconSize,
+      iconSrc: icon.iconSrc,
+      iconWidth: topologyG6VisualGeometry.iconSize,
+      labelText: `${node.entityName}\n${node.entityType}`,
+      size: topologyG6VisualGeometry.nodeSize,
+      stroke: healthStroke(node.health, palette)
+    }
+  };
+}
+
+function topologyG6ExternalNode(
+  target: ExternalTarget,
+  interaction: TopologyInteraction,
+  emphasis: Emphasis,
+  palette: Pick<TopologyG6Palette, 'neutral' | 'text'>
+) {
+  const icon = resolveTopologyExternalIcon(palette.text);
+  return {
+    id: target.nodeId,
+    type: 'hexagon',
+    data: {
+      edgeId: target.edgeId,
+      externalTarget: true,
+      iconKind: icon.iconKind,
+      iconLibrary: icon.iconLibrary,
+      iconName: icon.iconName,
+      iconSource: icon.iconSource
+    },
+    states: externalTargetStates(target, interaction, emphasis),
+    style: {
+      iconHeight: topologyG6VisualGeometry.iconSize,
+      iconSrc: icon.iconSrc,
+      iconWidth: topologyG6VisualGeometry.iconSize,
+      labelText: target.label,
+      lineDash: [4, 3],
+      size: topologyG6VisualGeometry.externalNodeSize,
+      stroke: palette.neutral
+    }
   };
 }
 
