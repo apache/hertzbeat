@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Alert, Skeleton, Statistic } from 'antd';
+import { Skeleton, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import type { DashboardAlertState } from '../model/dashboard-model';
@@ -18,13 +18,22 @@ export function DashboardAlertSummary({ state }: { state: DashboardAlertState })
   }
   if (state.kind === 'missing' || state.kind === 'unavailable' || state.kind === 'error') {
     return (
-      <Alert
-        className={styles.summaryState ?? ''}
-        type={state.kind === 'error' ? 'error' : 'warning'}
-        showIcon
-        message={t(`dashboard.alertStates.${state.kind}`)}
-      />
+      <Typography.Text className={styles.summaryStatus ?? ''} type={state.kind === 'error' ? 'danger' : 'secondary'}>
+        {t(`dashboard.alertStates.${state.kind}`)}
+      </Typography.Text>
     );
   }
-  return <Statistic title={t('dashboard.alerts')} value={state.summary.total} />;
+  return (
+    <div className={styles.alertEvidence}>
+      <span className={styles.alertValue}>{state.summary.total}</span>
+      <div>
+        <div className={styles.metricLabel}>{t('dashboard.alerts')}</div>
+        <Typography.Text type="secondary">
+          {t(state.kind === 'empty' ? 'dashboard.alertEmpty' : 'dashboard.alertReady', {
+            count: state.summary.total
+          })}
+        </Typography.Text>
+      </div>
+    </div>
+  );
 }

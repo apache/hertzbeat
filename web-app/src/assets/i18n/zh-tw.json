@@ -667,8 +667,12 @@
   "dashboard": {
     "title": "儀表板",
     "description": "查看監控可用性與目前告警狀態。",
+    "operationsSummary": "維運摘要",
+    "operationsDescription": "分別呈現監控可用性與告警狀態，不混淆兩個資料來源。",
     "monitorSummary": "監控摘要",
     "alertSummary": "警報摘要",
+    "openMonitors": "前往監控中心",
+    "openAlerts": "前往告警中心",
     "total": "監控總數",
     "available": "可用",
     "unavailable": "不可用",
@@ -677,6 +681,8 @@
     "application": "應用程式",
     "category": "類別",
     "empty": "尚未設定監控。",
+    "alertEmpty": "目前警報摘要未回報活動告警。",
+    "alertReady": "目前警報摘要回報了 {{count}} 筆活動告警。",
     "monitorStates": {
       "missing": "缺少監控摘要，計數已隱藏。",
       "unavailable": "監控摘要暫時無法使用，計數已隱藏。",

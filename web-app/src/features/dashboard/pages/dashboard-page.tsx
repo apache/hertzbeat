@@ -16,6 +16,9 @@
  */
 import { Button, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
+
+import { alertRoutePaths, monitorRoutePaths } from '@/shared/navigation/app-paths';
 import { DashboardAlertSummary } from '../components/dashboard-alert-results';
 import { DashboardMonitorDistribution, DashboardMonitorSummary } from '../components/dashboard-monitor-results';
 import { useDashboardController } from '../controller/use-dashboard-controller';
@@ -39,14 +42,26 @@ export function DashboardPage() {
           {t('common.refresh')}
         </Button>
       </header>
-      <div className={styles.metrics}>
-        <section className={styles.monitorMetrics} aria-label={t('dashboard.monitorSummary')}>
+      <section className={styles.summaryBoard} aria-label={t('dashboard.operationsSummary')}>
+        <header className={styles.summaryBoardHeader}>
+          <Typography.Title level={4}>{t('dashboard.operationsSummary')}</Typography.Title>
+          <Typography.Text type="secondary">{t('dashboard.operationsDescription')}</Typography.Text>
+        </header>
+        <section className={styles.summaryRow} aria-label={t('dashboard.monitorSummary')}>
+          <div className={styles.summaryIdentity}>
+            <Typography.Text strong>{t('dashboard.monitorSummary')}</Typography.Text>
+            <Link to={monitorRoutePaths.list}>{t('dashboard.openMonitors')}</Link>
+          </div>
           <DashboardMonitorSummary state={dashboard.monitorState} />
         </section>
-        <section className={styles.alertMetric} aria-label={t('dashboard.alertSummary')}>
+        <section className={styles.summaryRow} aria-label={t('dashboard.alertSummary')}>
+          <div className={styles.summaryIdentity}>
+            <Typography.Text strong>{t('dashboard.alertSummary')}</Typography.Text>
+            <Link to={alertRoutePaths.center}>{t('dashboard.openAlerts')}</Link>
+          </div>
           <DashboardAlertSummary state={dashboard.alertState} />
         </section>
-      </div>
+      </section>
       <DashboardMonitorDistribution state={dashboard.monitorState} />
     </div>
   );

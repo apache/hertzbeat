@@ -14,10 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
+import { alertRoutePaths, monitorRoutePaths } from '@/shared/navigation/app-paths';
 const controller = vi.hoisted(() => ({ useDashboardController: vi.fn() }));
 vi.mock('../controller/use-dashboard-controller', () => controller);
 import { DashboardPage } from './dashboard-page';
@@ -40,6 +42,31 @@ describe('DashboardPage', () => {
     renderPage();
     expect(screen.getByText(i18n.t('dashboard.monitorStates.unavailable'))).toBeInTheDocument();
     expect(screen.getByLabelText(i18n.t('dashboard.alertSummary'))).toHaveTextContent('7');
+  });
+
+  it('presents unavailable monitors and an authoritative zero alert result as independent rows with registered actions', () => {
+    controller.useDashboardController.mockReturnValue({
+      monitorState: { kind: 'unavailable' },
+      alertState: { kind: 'empty', summary: alert(0) },
+      refresh: vi.fn()
+    });
+    renderPage();
+
+    const board = screen.getByLabelText(i18n.t('dashboard.operationsSummary'));
+    const monitor = within(board).getByLabelText(i18n.t('dashboard.monitorSummary'));
+    const alerts = within(board).getByLabelText(i18n.t('dashboard.alertSummary'));
+    expect(monitor).toHaveTextContent(i18n.t('dashboard.monitorStates.unavailable'));
+    expect(within(monitor).queryByText(/^0$/)).not.toBeInTheDocument();
+    expect(alerts).toHaveTextContent('0');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: i18n.t('dashboard.openMonitors') })).toHaveAttribute(
+      'href',
+      monitorRoutePaths.list
+    );
+    expect(screen.getByRole('link', { name: i18n.t('dashboard.openAlerts') })).toHaveAttribute(
+      'href',
+      alertRoutePaths.center
+    );
   });
 
   it('keeps authoritative alert evidence visible while monitor summary loads', () => {
@@ -81,16 +108,20 @@ describe('DashboardPage', () => {
       refresh: vi.fn()
     });
     renderPage();
-    expect(screen.getByLabelText(i18n.t('dashboard.monitorSummary'))).toBeInTheDocument();
+    const monitor = screen.getByLabelText(i18n.t('dashboard.monitorSummary'));
+    expect(monitor).toBeInTheDocument();
     expect(screen.getByLabelText(i18n.t('dashboard.alertSummary'))).toHaveTextContent('0');
-    expect(screen.getByText(i18n.t('dashboard.empty'))).toBeInTheDocument();
+    expect(within(monitor).getByText(i18n.t('dashboard.empty'))).toBeInTheDocument();
+    expect(screen.queryByText(i18n.t('dashboard.distribution'))).not.toBeInTheDocument();
   });
 });
 function renderPage() {
   return render(
-    <I18nextProvider i18n={i18n}>
-      <DashboardPage />
-    </I18nextProvider>
+    <MemoryRouter>
+      <I18nextProvider i18n={i18n}>
+        <DashboardPage />
+      </I18nextProvider>
+    </MemoryRouter>
   );
 }
 

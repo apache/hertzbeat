@@ -667,8 +667,12 @@
   "dashboard": {
     "title": "仪表盘",
     "description": "查看监控可用性与当前告警态势。",
+    "operationsSummary": "运维摘要",
+    "operationsDescription": "分别呈现监控可用性与告警态势，不混淆两个数据源。",
     "monitorSummary": "监控概览",
     "alertSummary": "告警概览",
+    "openMonitors": "进入监控中心",
+    "openAlerts": "进入告警中心",
     "total": "监控总数",
     "available": "可用",
     "unavailable": "不可用",
@@ -677,6 +681,8 @@
     "application": "应用",
     "category": "类别",
     "empty": "尚未配置监控。",
+    "alertEmpty": "当前告警概览未报告活动告警。",
+    "alertReady": "当前告警概览报告了 {{count}} 条活动告警。",
     "monitorStates": {
       "missing": "缺少监控概览，计数已隐藏。",
       "unavailable": "监控概览暂不可用，计数已隐藏。",

@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { Alert, Empty, Skeleton, Statistic, Table, Tag, Typography } from 'antd';
+import { Skeleton, Table, Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import { monitorTotals, type AppCount, type DashboardMonitorState } from '../model/dashboard-model';
@@ -18,41 +18,37 @@ export function DashboardMonitorSummary({ state }: { state: DashboardMonitorStat
   }
   if (state.kind === 'missing' || state.kind === 'unavailable' || state.kind === 'error') {
     return (
-      <Alert
-        className={styles.summaryState ?? ''}
-        type={state.kind === 'error' ? 'error' : 'warning'}
-        showIcon
-        message={t(`dashboard.monitorStates.${state.kind}`)}
-      />
+      <Typography.Text className={styles.summaryStatus ?? ''} type={state.kind === 'error' ? 'danger' : 'secondary'}>
+        {t(`dashboard.monitorStates.${state.kind}`)}
+      </Typography.Text>
     );
+  }
+  if (state.kind === 'empty') {
+    return <Typography.Text type="secondary">{t('dashboard.empty')}</Typography.Text>;
   }
   const totals = monitorTotals(state.apps);
   return (
-    <>
-      <Statistic title={t('dashboard.total')} value={totals.total} />
-      <Statistic title={t('dashboard.available')} value={totals.available} />
-      <Statistic title={t('dashboard.unavailable')} value={totals.unavailable} />
-    </>
+    <dl className={styles.monitorEvidence}>
+      <DashboardMetric label={t('dashboard.total')} value={totals.total} />
+      <DashboardMetric label={t('dashboard.available')} value={totals.available} />
+      <DashboardMetric label={t('dashboard.unavailable')} value={totals.unavailable} />
+    </dl>
   );
 }
 
 export function DashboardMonitorDistribution({ state }: { state: DashboardMonitorState }) {
   const { t } = useTranslation();
-  if (state.kind !== 'ready' && state.kind !== 'empty') return null;
+  if (state.kind !== 'ready') return null;
   return (
     <section className={styles.section}>
       <Typography.Title level={4}>{t('dashboard.distribution')}</Typography.Title>
-      {state.apps.length === 0 ? (
-        <Empty description={t('dashboard.empty')} />
-      ) : (
-        <Table<AppCount>
-          rowKey={row => `${row.category}-${row.app}`}
-          pagination={false}
-          size="small"
-          dataSource={state.apps}
-          columns={monitorColumns(t)}
-        />
-      )}
+      <Table<AppCount>
+        rowKey={row => `${row.category}-${row.app}`}
+        pagination={false}
+        size="small"
+        dataSource={state.apps}
+        columns={monitorColumns(t)}
+      />
     </section>
   );
 }
@@ -73,4 +69,13 @@ function monitorColumns(t: ReturnType<typeof useTranslation>['t']) {
       render: (value: number) => <Tag color={value > 0 ? 'red' : 'default'}>{value}</Tag>
     }
   ];
+}
+
+function DashboardMetric({ label, value }: { label: string; value: number }) {
+  return (
+    <div className={styles.metric}>
+      <dt className={styles.metricLabel}>{label}</dt>
+      <dd className={styles.metricValue}>{value}</dd>
+    </div>
+  );
 }

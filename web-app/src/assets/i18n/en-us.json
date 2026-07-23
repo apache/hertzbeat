@@ -678,8 +678,12 @@
   "dashboard": {
     "title": "Dashboard",
     "description": "Monitor availability and current alert posture.",
+    "operationsSummary": "Operational summary",
+    "operationsDescription": "Monitor availability and alert posture, reported independently.",
     "monitorSummary": "Monitor summary",
     "alertSummary": "Alert summary",
+    "openMonitors": "Open monitors",
+    "openAlerts": "Open alerts",
     "total": "Total monitors",
     "available": "Available",
     "unavailable": "Unavailable",
@@ -688,6 +692,8 @@
     "application": "Application",
     "category": "Category",
     "empty": "No monitors are configured.",
+    "alertEmpty": "No active alerts are reported by the current summary.",
+    "alertReady": "{{count}} active alerts are reported by the current summary.",
     "monitorStates": {
       "missing": "Monitor summary is missing. Counters are hidden.",
       "unavailable": "Monitor summary is unavailable. Counters are hidden.",

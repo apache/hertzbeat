@@ -17,39 +17,108 @@
 
 .page {
   display: grid;
-  gap: 20px;
+  gap: 16px;
+}
+
+.heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .heading :global(.ant-typography) {
   margin: 0;
 }
 
-.metrics {
+.summaryBoard {
+  border: 1px solid var(--hb-border-subtle);
+  border-radius: var(--hb-radius-control);
+  background: var(--hb-bg-raised);
+}
+
+.summaryBoardHeader {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+
+.summaryBoardHeader :global(.ant-typography) {
+  display: block;
+  margin: 0;
+}
+
+.summaryRow {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.35fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 24px;
+  min-height: 86px;
+  padding: 14px 16px;
+}
+
+.summaryRow + .summaryRow {
+  border-top: 1px solid var(--hb-border-subtle);
+}
+
+.summaryIdentity {
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+}
+
+.monitorEvidence {
   display: flex;
-  flex-wrap: wrap;
-  gap: 28px 56px;
-  padding: 8px 0 4px;
+  gap: 48px;
+  margin: 0;
 }
 
-.metrics > * {
-  min-width: 120px;
+.metric {
+  min-width: 92px;
 }
 
-.monitorMetrics {
+.metricLabel {
+  color: var(--hb-text-muted);
+  font-size: 12px;
+}
+
+.metricValue,
+.alertValue {
+  color: var(--hb-text-primary);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.metricValue {
+  margin: 3px 0 0;
+}
+
+.alertEvidence {
   display: flex;
-  flex-wrap: wrap;
-  gap: 28px 56px;
+  align-items: center;
+  gap: 14px;
 }
 
-.alertMetric {
-  min-width: 120px;
+.summaryStatus {
+  max-width: 680px;
 }
 
 .summaryLoading,
-.summaryState {
-  min-width: 280px;
+.summaryStatus {
+  min-width: 240px;
 }
 
 .section {
   min-height: 300px;
+}
+
+@media (max-width: 720px) {
+  .summaryRow {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .monitorEvidence {
+    gap: 24px;
+  }
 }

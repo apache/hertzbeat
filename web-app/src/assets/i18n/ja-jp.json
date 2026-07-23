@@ -675,8 +675,12 @@
   "dashboard": {
     "title": "ダッシュボード",
     "description": "監視の可用性と現在のアラート状況を確認します。",
+    "operationsSummary": "運用概要",
+    "operationsDescription": "監視の可用性とアラート状況を、それぞれの情報源から個別に表示します。",
     "monitorSummary": "監視概要",
     "alertSummary": "アラート概要",
+    "openMonitors": "監視を開く",
+    "openAlerts": "アラートを開く",
     "total": "監視合計",
     "available": "利用可能",
     "unavailable": "利用不可",
@@ -685,6 +689,8 @@
     "application": "アプリケーション",
     "category": "カテゴリ",
     "empty": "監視が設定されていません。",
+    "alertEmpty": "現在の概要では有効なアラートは報告されていません。",
+    "alertReady": "現在の概要で {{count}} 件の有効なアラートが報告されています。",
     "monitorStates": {
       "missing": "監視概要がありません。件数は非表示です。",
       "unavailable": "監視概要を利用できません。件数は非表示です。",

@@ -681,8 +681,12 @@
   "dashboard": {
     "title": "Painel",
     "description": "Veja a disponibilidade dos monitores e os alertas atuais.",
+    "operationsSummary": "Resumo operacional",
+    "operationsDescription": "Disponibilidade dos monitores e situação dos alertas, informadas de forma independente.",
     "monitorSummary": "Resumo de monitores",
     "alertSummary": "Resumo de alertas",
+    "openMonitors": "Abrir monitores",
+    "openAlerts": "Abrir alertas",
     "total": "Total de monitores",
     "available": "Disponíveis",
     "unavailable": "Indisponíveis",
@@ -691,6 +695,8 @@
     "application": "Aplicação",
     "category": "Categoria",
     "empty": "Nenhum monitor configurado.",
+    "alertEmpty": "O resumo atual não informa alertas ativos.",
+    "alertReady": "O resumo atual informa {{count}} alertas ativos.",
     "monitorStates": {
       "missing": "O resumo de monitores está ausente. Os contadores foram ocultados.",
       "unavailable": "O resumo de monitores está indisponível. Os contadores foram ocultados.",
