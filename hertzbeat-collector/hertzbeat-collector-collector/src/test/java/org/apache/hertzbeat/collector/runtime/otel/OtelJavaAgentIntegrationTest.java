@@ -37,6 +37,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
 import java.time.Duration;
 import java.util.HexFormat;
 import java.util.LinkedHashSet;
@@ -54,6 +55,12 @@ import org.slf4j.LoggerFactory;
 class OtelJavaAgentIntegrationTest {
 
     private static final String RUNTIME_BINARY_ENV = "HERTZBEAT_OTEL_RUNTIME_BINARY";
+    private static final String JAVA_AGENT_VERSION = "2.27.0";
+    private static final URI JAVA_AGENT_URI = URI.create(
+            "https://repo.maven.apache.org/maven2/io/opentelemetry/javaagent/opentelemetry-javaagent/"
+                    + JAVA_AGENT_VERSION + "/opentelemetry-javaagent-" + JAVA_AGENT_VERSION + ".jar");
+    private static final String JAVA_AGENT_SHA256 =
+            "bd01fea1304e8c8803fff827a0bdda02b2266742a85c62548053c6761474bb5b";
     private static final String SERVICE_NAME = "checkout-agent-demo";
     private static final String SERVICE_NAMESPACE = "storefront";
     private static final String ENVIRONMENT = "integration";
@@ -65,53 +72,59 @@ class OtelJavaAgentIntegrationTest {
     @Test
     void collectsRealApplicationMetricsCorrelatedLogsAndTraces() throws Exception {
         String runtimeBinary = requiredRuntimeBinary();
-        Path agentJar = requiredAgentJar();
-        Path applicationLog = Files.createDirectories(tempDir.resolve("logs")).resolve("application.json");
-        Files.createFile(applicationLog);
-        OtelRuntimeTestSupport.OtlpCapture capture = new OtelRuntimeTestSupport.OtlpCapture();
-        capture.start();
-        OtelRuntimeProperties properties = runtimeProperties(runtimeBinary, capture.port(), applicationLog);
-        OtelRuntimeSupervisor supervisor = OtelRuntimeTestSupport.supervisor(properties);
-        Process application = null;
-        try {
-            supervisor.start();
-            assertEquals(OtelRuntimeState.RUNNING, supervisor.snapshot().state());
+        try (ExternalLanguageProcessHarness harness =
+                     ExternalLanguageProcessHarness.create("hertzbeat-java-agent-")) {
+            Path agentJar = downloadVerifiedAgent(harness);
+            Path applicationLog = Files.createDirectories(tempDir.resolve("logs")).resolve("application.json");
+            Files.createFile(applicationLog);
+            OtelRuntimeTestSupport.OtlpCapture capture = new OtelRuntimeTestSupport.OtlpCapture();
+            capture.start();
+            OtelRuntimeProperties properties = runtimeProperties(runtimeBinary, capture.port(), applicationLog);
+            OtelRuntimeSupervisor supervisor = OtelRuntimeTestSupport.supervisor(properties);
+            Process application = null;
+            try {
+                supervisor.start();
+                assertEquals(OtelRuntimeState.RUNNING, supervisor.snapshot().state());
 
-            int applicationPort = availablePort();
-            application = startApplication(agentJar, applicationLog, applicationPort, properties, true);
-            awaitApplication(application, applicationPort);
-            assertEquals(200, get(applicationPort, "/checkout").statusCode());
-            assertEquals(500, get(applicationPort, "/failure").statusCode());
+                int applicationPort = availablePort();
+                application = startApplication(agentJar, applicationLog, applicationPort, properties, true);
+                awaitApplication(application, applicationPort);
+                assertEquals(200, get(applicationPort, "/checkout").statusCode());
+                assertEquals(500, get(applicationPort, "/failure").statusCode());
 
-            OtelRuntimeTestSupport.await(
-                    () -> hasJvmMetric(capture) && hasApplicationSignals(capture), Duration.ofSeconds(30));
+                OtelRuntimeTestSupport.await(
+                        () -> hasJvmMetric(capture) && hasApplicationSignals(capture), Duration.ofSeconds(30));
 
-            assertTrue(metricResources(capture).stream().anyMatch(OtelJavaAgentIntegrationTest::hasDetectionContext),
-                    () -> "metric resources: " + metricResources(capture));
-            assertTrue(logResources(capture).stream().anyMatch(OtelJavaAgentIntegrationTest::hasDetectionContext),
-                    () -> "log resources: " + logResources(capture));
-            assertTrue(traceResources(capture).stream().anyMatch(OtelJavaAgentIntegrationTest::hasDetectionContext),
-                    () -> "trace resources: " + traceResources(capture));
+                assertTrue(metricResources(capture).stream().anyMatch(
+                        OtelJavaAgentIntegrationTest::hasDetectionContext),
+                        () -> "metric resources: " + metricResources(capture));
+                assertTrue(logResources(capture).stream().anyMatch(
+                        OtelJavaAgentIntegrationTest::hasDetectionContext),
+                        () -> "log resources: " + logResources(capture));
+                assertTrue(traceResources(capture).stream().anyMatch(
+                        OtelJavaAgentIntegrationTest::hasDetectionContext),
+                        () -> "trace resources: " + traceResources(capture));
 
-            List<Span> spans = spans(capture);
-            assertTrue(spans.stream().anyMatch(span -> span.getName().contains("checkout")), spanNames(spans));
-            assertTrue(spans.stream().anyMatch(span -> span.getName().contains("inventory")), spanNames(spans));
-            assertTrue(spans.stream().anyMatch(span -> span.getName().toUpperCase().contains("SELECT")),
-                    spanNames(spans));
-            assertTrue(spans.stream().anyMatch(span -> span.getStatus().getCodeValue() == 2), spanNames(spans));
+                List<Span> spans = spans(capture);
+                assertTrue(spans.stream().anyMatch(span -> span.getName().contains("checkout")), spanNames(spans));
+                assertTrue(spans.stream().anyMatch(span -> span.getName().contains("inventory")), spanNames(spans));
+                assertTrue(spans.stream().anyMatch(span -> span.getName().toUpperCase().contains("SELECT")),
+                        spanNames(spans));
+                assertTrue(spans.stream().anyMatch(span -> span.getStatus().getCodeValue() == 2), spanNames(spans));
 
-            LogRecord correlatedLog = logs(capture).stream()
-                    .filter(log -> log.getBody().getStringValue().contains("checkout-completed"))
-                    .findFirst().orElseThrow();
-            assertFalse(correlatedLog.getTraceId().isEmpty());
-            assertFalse(correlatedLog.getSpanId().isEmpty());
-            Set<String> traceIds = new LinkedHashSet<>();
-            spans.forEach(span -> traceIds.add(hex(span.getTraceId())));
-            assertTrue(traceIds.contains(hex(correlatedLog.getTraceId())));
-        } finally {
-            stopApplication(application);
-            supervisor.close();
-            capture.close();
+                LogRecord correlatedLog = logs(capture).stream()
+                        .filter(log -> log.getBody().getStringValue().contains("checkout-completed"))
+                        .findFirst().orElseThrow();
+                assertFalse(correlatedLog.getTraceId().isEmpty());
+                assertFalse(correlatedLog.getSpanId().isEmpty());
+                Set<String> traceIds = new LinkedHashSet<>();
+                spans.forEach(span -> traceIds.add(hex(span.getTraceId())));
+                assertTrue(traceIds.contains(hex(correlatedLog.getTraceId())));
+            } finally {
+                stopApplication(application);
+                supervisor.close();
+                capture.close();
+            }
         }
     }
 
@@ -317,15 +330,33 @@ class OtelJavaAgentIntegrationTest {
         return binary;
     }
 
-    private static Path requiredAgentJar() {
-        return Stream.of(System.getProperty("java.class.path").split(System.getProperty("path.separator")))
-                .map(Path::of)
-                .filter(path -> path.getFileName() != null
-                        && path.getFileName().toString().startsWith("opentelemetry-javaagent-")
-                        && path.getFileName().toString().endsWith(".jar"))
-                .filter(Files::isRegularFile)
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("the official Java Agent test dependency is required"));
+    private static Path downloadVerifiedAgent(ExternalLanguageProcessHarness harness) throws Exception {
+        Path cache = Files.createDirectories(harness.resolve("java-agent-cache"));
+        Path agentJar = cache.resolve("opentelemetry-javaagent-" + JAVA_AGENT_VERSION + ".jar");
+        HttpRequest request = HttpRequest.newBuilder(JAVA_AGENT_URI)
+                .timeout(Duration.ofMinutes(2))
+                .GET()
+                .build();
+        HttpResponse<Path> response = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(15))
+                .followRedirects(HttpClient.Redirect.NEVER)
+                .build()
+                .send(request, HttpResponse.BodyHandlers.ofFile(agentJar));
+        assertEquals(200, response.statusCode(), "official Java Agent download status");
+        assertEquals(JAVA_AGENT_SHA256, sha256(agentJar), "official Java Agent " + JAVA_AGENT_VERSION + " digest");
+        return agentJar;
+    }
+
+    private static String sha256(Path file) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        try (var input = Files.newInputStream(file)) {
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = input.read(buffer)) >= 0) {
+                digest.update(buffer, 0, read);
+            }
+        }
+        return HexFormat.of().formatHex(digest.digest());
     }
 
     private static Path javaExecutable() {

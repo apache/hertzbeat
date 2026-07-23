@@ -287,39 +287,42 @@ def inspect_release_archive(path: Path) -> None:
     inspect_nested_member(payload, str(path), 0)
 
 
-def read_source_member(path: Path, suffix: str) -> bytes:
+def read_source_poms(path: Path) -> list[tuple[str, bytes]]:
     payload = path.read_bytes()
     if zipfile.is_zipfile(io.BytesIO(payload)):
         with zipfile.ZipFile(io.BytesIO(payload)) as archive:
-            matches = [name for name in archive.namelist() if normalized_name(name).endswith(suffix)]
-            if len(matches) != 1:
-                raise ReleasePolicyError(f"source archive must contain one {suffix}: {path}")
-            return archive.read(matches[0])
+            matches = [name for name in archive.namelist()
+                       if PurePosixPath(normalized_name(name)).name == "pom.xml"]
+            if not matches:
+                raise ReleasePolicyError(f"source archive must contain at least one pom.xml: {path}")
+            return [(name, archive.read(name)) for name in matches]
     with tarfile.open(fileobj=io.BytesIO(payload), mode="r:*") as archive:
         matches = [member for member in archive.getmembers()
-                   if member.isfile() and normalized_name(member.name).endswith(suffix)]
-        if len(matches) != 1:
-            raise ReleasePolicyError(f"source archive must contain one {suffix}: {path}")
-        extracted = archive.extractfile(matches[0])
-        if extracted is None:
-            raise ReleasePolicyError(f"cannot read source policy file: {matches[0].name}")
-        return extracted.read()
+                   if member.isfile() and PurePosixPath(normalized_name(member.name)).name == "pom.xml"]
+        if not matches:
+            raise ReleasePolicyError(f"source archive must contain at least one pom.xml: {path}")
+        poms = []
+        for member in matches:
+            extracted = archive.extractfile(member)
+            if extracted is None:
+                raise ReleasePolicyError(f"cannot read source POM: {member.name}")
+            poms.append((member.name, extracted.read()))
+        return poms
 
 
-def verify_source_java_agent_scope(path: Path) -> None:
-    pom = read_source_member(path, "hertzbeat-collector/hertzbeat-collector-collector/pom.xml")
-    root = ElementTree.fromstring(pom)
-    dependencies = []
-    for dependency in root.findall(".//{*}dependency"):
-        group_id = dependency.findtext("{*}groupId")
-        artifact_id = dependency.findtext("{*}artifactId")
-        if group_id == JAVA_AGENT_GROUP and artifact_id == JAVA_AGENT_ARTIFACT:
-            dependencies.append(dependency)
-    if len(dependencies) != 1:
-        raise ReleasePolicyError("source archive must contain exactly one approved Java Agent dependency")
-    scope = (dependencies[0].findtext("{*}scope") or "").strip()
-    if scope != "test":
-        raise ReleasePolicyError("approved Java Agent dependency must remain test scoped")
+def verify_source_has_no_java_agent_dependency(path: Path) -> None:
+    for pom_name, pom in read_source_poms(path):
+        pom_text = pom.decode("utf-8", errors="replace").lower()
+        if JAVA_AGENT_GROUP in pom_text and JAVA_AGENT_ARTIFACT in pom_text:
+            raise ReleasePolicyError(
+                f"source archive must not contain an application Java Agent coordinate: {pom_name}")
+        root = ElementTree.fromstring(pom)
+        for dependency in root.findall(".//{*}dependency"):
+            group_id = (dependency.findtext("{*}groupId") or "").strip()
+            artifact_id = (dependency.findtext("{*}artifactId") or "").strip()
+            if group_id == JAVA_AGENT_GROUP and artifact_id == JAVA_AGENT_ARTIFACT:
+                raise ReleasePolicyError(
+                    f"source archive must not contain an application Java Agent dependency: {pom_name}")
 
 
 def component_values(component: dict) -> str:
@@ -375,7 +378,7 @@ def main() -> int:
                 raise ReleasePolicyError(f"release input is missing: {path}")
         for path in args.source:
             inspect_release_archive(path)
-            verify_source_java_agent_scope(path)
+            verify_source_has_no_java_agent_dependency(path)
         for path in args.jvm + args.native:
             inspect_release_archive(path)
         for path in args.collector_sbom:

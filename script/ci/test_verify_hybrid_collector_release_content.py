@@ -45,6 +45,13 @@ TEST_POM = """<project xmlns="http://maven.apache.org/POM/4.0.0">
   </dependency></dependencies>
 </project>"""
 
+CLEAN_POM = """<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <dependencies><dependency>
+    <groupId>org.apache.hertzbeat</groupId>
+    <artifactId>hertzbeat-common</artifactId>
+  </dependency></dependencies>
+</project>"""
+
 
 def zip_bytes(entries: dict[str, bytes | str]) -> bytes:
     result = io.BytesIO()
@@ -78,22 +85,61 @@ class ReleaseContentPolicyTest(unittest.TestCase):
         path.write_bytes(payload)
         return path
 
-    def test_source_allows_only_test_scoped_java_agent_coordinate(self) -> None:
+    def test_source_allows_pom_without_java_agent_coordinate(self) -> None:
         source = self.write("source.zip", zip_bytes({
-            "release/hertzbeat-collector/hertzbeat-collector-collector/pom.xml": TEST_POM.format(scope="test"),
+            "release/hertzbeat-collector/hertzbeat-collector-collector/pom.xml": CLEAN_POM,
             "release/lib/ordinary.jar": zip_bytes({"META-INF/MANIFEST.MF": "Manifest-Version: 1.0\n"}),
         }))
 
         release_content.inspect_release_archive(source)
-        release_content.verify_source_java_agent_scope(source)
+        release_content.verify_source_has_no_java_agent_dependency(source)
 
-    def test_source_rejects_non_test_java_agent_coordinate(self) -> None:
-        source = self.write("source.zip", zip_bytes({
-            "release/hertzbeat-collector/hertzbeat-collector-collector/pom.xml": TEST_POM.format(scope="runtime"),
+    def test_source_rejects_java_agent_coordinate_in_every_scope(self) -> None:
+        for scope in ("test", "runtime"):
+            with self.subTest(scope=scope):
+                source = self.write(f"source-{scope}.zip", zip_bytes({
+                    "release/hertzbeat-collector/hertzbeat-collector-collector/pom.xml":
+                        TEST_POM.format(scope=scope),
+                }))
+
+                with self.assertRaises(release_content.ReleasePolicyError):
+                    release_content.verify_source_has_no_java_agent_dependency(source)
+
+    def test_source_rejects_java_agent_coordinate_in_any_pom(self) -> None:
+        source = self.write("source-with-agent-module.zip", zip_bytes({
+            "release/hertzbeat-collector/hertzbeat-collector-collector/pom.xml": CLEAN_POM,
+            "release/other-module/pom.xml": TEST_POM.format(scope="test"),
         }))
 
         with self.assertRaises(release_content.ReleasePolicyError):
-            release_content.verify_source_java_agent_scope(source)
+            release_content.verify_source_has_no_java_agent_dependency(source)
+
+    def test_source_rejects_property_aliased_java_agent_coordinate(self) -> None:
+        source = self.write("source-with-aliased-agent.zip", zip_bytes({
+            "release/pom.xml": """<project xmlns="http://maven.apache.org/POM/4.0.0">
+              <properties>
+                <agent.group>io.opentelemetry.javaagent</agent.group>
+                <agent.artifact>opentelemetry-javaagent</agent.artifact>
+              </properties>
+              <dependencies><dependency>
+                <groupId>${agent.group}</groupId>
+                <artifactId>${agent.artifact}</artifactId>
+                <scope>test</scope>
+              </dependency></dependencies>
+            </project>""",
+        }))
+
+        with self.assertRaises(release_content.ReleasePolicyError):
+            release_content.verify_source_has_no_java_agent_dependency(source)
+
+    def test_source_rejects_java_agent_file(self) -> None:
+        source = self.write("source-with-agent.zip", zip_bytes({
+            "release/hertzbeat-collector/hertzbeat-collector-collector/pom.xml": CLEAN_POM,
+            "release/deps/opentelemetry-javaagent-2.27.0.jar": b"agent-binary",
+        }))
+
+        with self.assertRaises(release_content.ReleasePolicyError):
+            release_content.inspect_release_archive(source)
 
     def test_renamed_java_agent_is_found_inside_nested_jvm_archive(self) -> None:
         renamed_agent = zip_bytes({
