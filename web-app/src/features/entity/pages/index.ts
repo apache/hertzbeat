@@ -2,5 +2,6 @@
 
 export { EntityDetailPage } from './entity-detail-page';
 export { EntityDiscoveryPage } from './entity-discovery-page';
+export { EntityImportPage } from './entity-import-page';
 export { EntityEditorPage } from './entity-editor-page';
 export { EntityListPage } from './entity-list-page';

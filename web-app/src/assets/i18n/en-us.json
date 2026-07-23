@@ -162,6 +162,30 @@
         "suggested": "Suggested review"
       }
     },
+    "import": {
+      "action": "Import definitions",
+      "title": "Import resource definitions",
+      "description": "Paste YAML, JSON, or curl inline data. Preview makes no changes; import happens only after confirmation.",
+      "format": "Definition format",
+      "formats": { "yaml": "YAML", "json": "JSON", "curl": "curl inline data" },
+      "content": "Resource definition content",
+      "previewAction": "Preview resources",
+      "confirmAction": "Confirm import",
+      "previewTitle": "Resource preview",
+      "zeroWrite": "Preview only — no resources have been created.",
+      "details": "Technical details",
+      "fields": { "owner": "Owner", "environment": "Environment", "namespace": "Namespace", "source": "Source" },
+      "associationSummary": "{{identities}} identity keys, {{monitors}} monitor associations, {{relations}} relationships",
+      "failure": {
+        "validation": "The definitions need changes before they can be imported.",
+        "permission": "You do not have permission to import resources.",
+        "unavailable": "Resource import is temporarily unavailable.",
+        "contract": "The server returned an invalid resource definition response.",
+        "error": "Resource import could not be completed."
+      },
+      "success": "{{count}} resources created.",
+      "returnToCatalog": "Return to resource catalog"
+    },
     "delete": {
       "action": "Delete resource",
       "title": "Delete resource “{{name}}”?",

@@ -162,6 +162,30 @@
         "suggested": "Revisão sugerida"
       }
     },
+    "import": {
+      "action": "Importar definições",
+      "title": "Importar definições de recursos",
+      "description": "Cole YAML, JSON ou dados inline de curl. A prévia não altera nada; a importação ocorre somente após a confirmação.",
+      "format": "Formato da definição",
+      "formats": { "yaml": "YAML", "json": "JSON", "curl": "Dados inline de curl" },
+      "content": "Conteúdo da definição do recurso",
+      "previewAction": "Visualizar recursos",
+      "confirmAction": "Confirmar importação",
+      "previewTitle": "Prévia dos recursos",
+      "zeroWrite": "Somente prévia — nenhum recurso foi criado.",
+      "details": "Detalhes técnicos",
+      "fields": { "owner": "Responsável", "environment": "Ambiente", "namespace": "Namespace", "source": "Origem" },
+      "associationSummary": "{{identities}} chaves de identidade, {{monitors}} associações de monitor, {{relations}} relações",
+      "failure": {
+        "validation": "As definições precisam de ajustes antes da importação.",
+        "permission": "Você não tem permissão para importar recursos.",
+        "unavailable": "A importação de recursos está temporariamente indisponível.",
+        "contract": "O servidor retornou uma resposta de definição de recurso inválida.",
+        "error": "Não foi possível concluir a importação de recursos."
+      },
+      "success": "{{count}} recursos criados.",
+      "returnToCatalog": "Voltar ao catálogo de recursos"
+    },
     "delete": {
       "action": "Excluir recurso",
       "title": "Excluir o recurso “{{name}}”?",

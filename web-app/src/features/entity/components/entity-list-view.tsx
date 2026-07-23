@@ -26,6 +26,7 @@ export function EntityListView({ state, actions }: EntityListViewProps) {
           <Button type="primary" onClick={actions.discover}>
             {t('entity.discovery.action')}
           </Button>
+          <Button onClick={actions.importDefinitions}>{t('entity.import.action')}</Button>
           <Button onClick={actions.create}>{t('entity.editor.addTitle')}</Button>
           <Button disabled={state.refreshing} onClick={actions.refresh}>
             {t('common.refresh')}

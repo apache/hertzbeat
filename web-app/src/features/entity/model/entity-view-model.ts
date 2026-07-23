@@ -9,6 +9,7 @@ import {
   safeEntityDiscoveryPath
 } from './entity-discovery-model';
 import { safeEntityListPath, writeEntityQuery } from './entity-query';
+import { buildEntityImportPath } from './entity-import-model';
 
 export const defaultEntityQuery: EntityQuery = {
   search: '',
@@ -44,6 +45,7 @@ export type EntityListViewActions = {
   changePage: (page: number, pageSize: number) => void;
   refresh: () => void;
   discover: () => void;
+  importDefinitions: () => void;
   create: () => void;
   open: (id: number) => void;
 };
@@ -62,6 +64,10 @@ export function safeEntityReturnTo(value: string | null) {
 
 export function buildEntityDiscoveryRoute(query: EntityQuery) {
   return buildEntityDiscoveryPath(defaultEntityDiscoveryQuery, entityListPath(query));
+}
+
+export function buildEntityImportRoute(query: EntityQuery) {
+  return buildEntityImportPath(entityListPath(query));
 }
 
 export function buildEntityCreatePath(query: EntityQuery) {

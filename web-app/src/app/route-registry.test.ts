@@ -106,6 +106,10 @@ describe('route registry', () => {
     });
   });
 
+  it('registers resource definition import as a canonical resource workflow page', () => {
+    expect(getAppRoute('entity-import')).toMatchObject({ id: 'entity-import', path: '/entities/import', kind: 'page' });
+  });
+
   it('registers external-alert integrations with a concrete navigation target', () => {
     expect(getAppRoute('alert-integrations')).toMatchObject({
       id: 'alert-integrations',

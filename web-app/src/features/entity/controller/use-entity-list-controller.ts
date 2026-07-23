@@ -11,6 +11,7 @@ import { readEntityQuery, writeEntityQuery } from '../model/entity-query';
 import {
   buildEntityCreatePath,
   buildEntityDiscoveryRoute,
+  buildEntityImportRoute,
   buildEntityDetailPath,
   type EntityFilterKey,
   type EntityListEvidence
@@ -52,6 +53,7 @@ export function useEntityListController() {
         void client.invalidateQueries({ queryKey: entityQueryKeys.list(source) });
       },
       discover: () => void navigate(buildEntityDiscoveryRoute(query)),
+      importDefinitions: () => void navigate(buildEntityImportRoute(query)),
       create: () => void navigate(buildEntityCreatePath(query)),
       open: (id: number) => {
         if (location.pathname === entityRoutePaths.list) void navigate(buildEntityDetailPath(id, query));

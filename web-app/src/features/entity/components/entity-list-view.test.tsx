@@ -27,6 +27,7 @@ describe('EntityListView', () => {
     expect(screen.getByPlaceholderText('Search resources')).toBeInTheDocument();
     expect(screen.getByText('No resources match the current filters.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Discover resources' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Import definitions' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add resource' })).toBeInTheDocument();
   });
 
@@ -115,6 +116,7 @@ function renderView(
     changePage: () => undefined,
     refresh: () => undefined,
     discover: () => undefined,
+    importDefinitions: () => undefined,
     create: () => undefined,
     open: () => undefined,
     ...actionsPatch

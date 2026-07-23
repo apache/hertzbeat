@@ -151,6 +151,30 @@
         "suggested": "建議確認"
       }
     },
+    "import": {
+      "action": "匯入定義",
+      "title": "匯入資源定義",
+      "description": "貼上 YAML、JSON 或 curl 行內資料。預覽不會產生變更，確認後才會匯入。",
+      "format": "定義格式",
+      "formats": { "yaml": "YAML", "json": "JSON", "curl": "curl 行內資料" },
+      "content": "資源定義內容",
+      "previewAction": "預覽資源",
+      "confirmAction": "確認匯入",
+      "previewTitle": "資源預覽",
+      "zeroWrite": "僅預覽——尚未建立任何資源。",
+      "details": "技術詳情",
+      "fields": { "owner": "負責人", "environment": "環境", "namespace": "命名空間", "source": "來源" },
+      "associationSummary": "{{identities}} 個身分鍵，{{monitors}} 個監控關聯，{{relations}} 個關係",
+      "failure": {
+        "validation": "定義需要修改後才能匯入。",
+        "permission": "您沒有匯入資源的權限。",
+        "unavailable": "資源匯入暫時無法使用。",
+        "contract": "伺服器傳回了無效的資源定義回應。",
+        "error": "無法完成資源匯入。"
+      },
+      "success": "已建立 {{count}} 個資源。",
+      "returnToCatalog": "返回資源目錄"
+    },
     "delete": {
       "action": "刪除資源",
       "title": "刪除資源「{{name}}」？",

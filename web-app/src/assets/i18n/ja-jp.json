@@ -156,6 +156,30 @@
         "suggested": "確認を推奨"
       }
     },
+    "import": {
+      "action": "定義をインポート",
+      "title": "リソース定義をインポート",
+      "description": "YAML、JSON、または curl のインラインデータを貼り付けます。プレビューでは変更されず、確認後にのみインポートされます。",
+      "format": "定義形式",
+      "formats": { "yaml": "YAML", "json": "JSON", "curl": "curl インラインデータ" },
+      "content": "リソース定義の内容",
+      "previewAction": "リソースをプレビュー",
+      "confirmAction": "インポートを確認",
+      "previewTitle": "リソースプレビュー",
+      "zeroWrite": "プレビューのみです。リソースはまだ作成されていません。",
+      "details": "技術的な詳細",
+      "fields": { "owner": "所有者", "environment": "環境", "namespace": "名前空間", "source": "ソース" },
+      "associationSummary": "ID キー {{identities}} 件、モニター関連付け {{monitors}} 件、関係 {{relations}} 件",
+      "failure": {
+        "validation": "インポートする前に定義を修正してください。",
+        "permission": "リソースをインポートする権限がありません。",
+        "unavailable": "リソースのインポートは一時的に利用できません。",
+        "contract": "サーバーから無効なリソース定義応答が返されました。",
+        "error": "リソースのインポートを完了できませんでした。"
+      },
+      "success": "{{count}} 件のリソースを作成しました。",
+      "returnToCatalog": "リソースカタログに戻る"
+    },
     "delete": {
       "action": "リソースを削除",
       "title": "リソース「{{name}}」を削除しますか？",

@@ -58,6 +58,7 @@ describe('application path builders', () => {
   it('builds canonical resource create and edit paths centrally', () => {
     expect(entityRoutePaths.create).toBe('/entities/new');
     expect(entityRoutePaths.discovery).toBe('/entities/discovery');
+    expect(entityRoutePaths.import).toBe('/entities/import');
     expect(buildEntityEditPath(7)).toBe('/entities/7/edit');
   });
 });

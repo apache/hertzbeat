@@ -2,5 +2,6 @@
 
 export { EntityDetailView } from './entity-detail-view';
 export { EntityDiscoveryView } from './entity-discovery-view';
+export { EntityImportView } from './entity-import-view';
 export { EntityEditorView } from './entity-editor-view';
 export { EntityListView } from './entity-list-view';

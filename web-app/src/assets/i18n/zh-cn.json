@@ -151,6 +151,30 @@
         "suggested": "建议确认"
       }
     },
+    "import": {
+      "action": "导入定义",
+      "title": "导入资源定义",
+      "description": "粘贴 YAML、JSON 或 curl 内联数据。预览不会产生更改，确认后才会导入。",
+      "format": "定义格式",
+      "formats": { "yaml": "YAML", "json": "JSON", "curl": "curl 内联数据" },
+      "content": "资源定义内容",
+      "previewAction": "预览资源",
+      "confirmAction": "确认导入",
+      "previewTitle": "资源预览",
+      "zeroWrite": "仅预览——尚未创建任何资源。",
+      "details": "技术详情",
+      "fields": { "owner": "负责人", "environment": "环境", "namespace": "命名空间", "source": "来源" },
+      "associationSummary": "{{identities}} 个身份键，{{monitors}} 个监控关联，{{relations}} 个关系",
+      "failure": {
+        "validation": "定义需要修改后才能导入。",
+        "permission": "您没有导入资源的权限。",
+        "unavailable": "资源导入暂时不可用。",
+        "contract": "服务器返回了无效的资源定义响应。",
+        "error": "无法完成资源导入。"
+      },
+      "success": "已创建 {{count}} 个资源。",
+      "returnToCatalog": "返回资源目录"
+    },
     "delete": {
       "action": "删除资源",
       "title": "删除资源“{{name}}”？",

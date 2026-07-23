@@ -124,6 +124,12 @@ export function parseEditableEntityDto(value: unknown): EditableEntityDto {
   return result.data as EditableEntityDto;
 }
 
+export function parseEditableEntityDtos(value: unknown): EditableEntityDto[] {
+  const result = z.array(editableEntityDtoSchema).min(1).max(100).safeParse(value);
+  if (!result.success) throw new EntityContractError('Resource definition response is invalid');
+  return result.data as EditableEntityDto[];
+}
+
 export function parseEntityCatalogSuggestions(value: unknown): EntityCatalogSuggestions {
   const result = suggestionsSchema.safeParse(value);
   if (!result.success) throw new EntityContractError('Entity suggestions response is invalid');
