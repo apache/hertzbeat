@@ -17,7 +17,9 @@
 
 package org.apache.hertzbeat.manager.service.entity;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -77,11 +79,12 @@ class EntityDefinitionDocumentRendererServiceTest {
     }
 
     @Test
-    void renderDefinitionDefaultsUnknownFormatToYaml() {
-        String rendered = rendererService.renderDefinition(serviceDefinition(), "toml");
+    void renderDefinitionRejectsUnknownFormatInsteadOfFallingBackToYaml() {
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> rendererService.renderDefinition(serviceDefinition(), "toml"));
 
-        assertTrue(rendered.contains("apiVersion: hertzbeat/v1"));
-        assertFalse(rendered.contains("\"apiVersion\""));
+        assertEquals("Entity definition format must be yaml or json.", exception.getMessage());
     }
 
     private EntityDefinition serviceDefinition() {

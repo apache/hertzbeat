@@ -317,12 +317,12 @@ public class EntityController {
     public ResponseEntity<Message<String>> getEntityDefinition(
             @Parameter(description = "Entity ID", example = "87584674384") @PathVariable("id") long id,
             @Parameter(description = "Definition format", example = "yaml") @RequestParam(defaultValue = "yaml") String format) {
-        EntityDto entityDto = observeEntityService.getEntityDto(id);
-        if (entityDto == null) {
+        String definition = observeEntityService.getEntityDefinition(id, format);
+        if (definition == null) {
             return ResponseEntity.ok(Message.fail(MONITOR_NOT_EXIST_CODE, "Entity not exist."));
         }
         Message<String> message = Message.success();
-        message.setData(observeEntityService.getEntityDefinition(id, format));
+        message.setData(definition);
         return ResponseEntity.ok(message);
     }
 

@@ -186,7 +186,7 @@ class EntityDefinitionDraftServiceTest {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> definitionDraftService.parseEntityDefinitionBundle(request, "team-a"));
 
-        assertEquals("Entity primary identity already exists: service.name=checkout-api.", exception.getMessage());
+        assertEquals("Entity primary identity already exists for key: service.name.", exception.getMessage());
     }
 
     @Test

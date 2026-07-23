@@ -49,6 +49,7 @@ public class EntityActivityWriteModelService {
     private static final String ACTIVITY_TYPE_CATALOG_UPDATE = "catalog_update";
     private static final String ACTIVITY_TYPE_DISCOVERY_GOVERNANCE = "discovery_governance";
     private static final String ACTIVITY_TYPE_SOURCE_UPDATE = "source_update";
+    private static final String DEFINITION_FAILURE_DETAIL = "Definition validation failed";
     private static final String BIND_SOURCE_TELEMETRY_DISCOVERY = "telemetry_discovery";
     private static final String TYPE_DATABASE = "database";
     private static final String TYPE_API = "api";
@@ -237,7 +238,7 @@ public class EntityActivityWriteModelService {
 
     private String buildDefinitionActivityDetail(ObserveEntity entity, RuntimeException exception) {
         if (exception != null) {
-            return defaultText(exception.getMessage(), exception.getClass().getSimpleName(), "Definition validation failed");
+            return DEFINITION_FAILURE_DETAIL;
         }
         String entityKind = defaultText(entity == null ? null : toDefinitionKind(entity.getType()), "entity");
         String detail = defaultText(

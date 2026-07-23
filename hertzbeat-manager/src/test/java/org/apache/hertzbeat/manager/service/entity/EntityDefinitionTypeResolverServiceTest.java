@@ -63,10 +63,10 @@ class EntityDefinitionTypeResolverServiceTest {
     void rejectsUnsupportedExplicitKindOrEntityTypeInsteadOfDefaultingToService() {
         IllegalArgumentException kind = assertThrows(IllegalArgumentException.class,
                 () -> resolverService.resolveDefinitionEntityType(Map.of("kind", "cache"), Map.of()));
-        assertEquals("Unsupported entity definition kind: cache.", kind.getMessage());
+        assertEquals("Unsupported entity definition kind.", kind.getMessage());
 
         IllegalArgumentException entityType = assertThrows(IllegalArgumentException.class,
                 () -> resolverService.resolveDefinitionEntityType(Map.of(), Map.of("entity_type", "cache")));
-        assertEquals("Unsupported entity definition entity type: cache.", entityType.getMessage());
+        assertEquals("Unsupported entity definition entity type.", entityType.getMessage());
     }
 }

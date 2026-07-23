@@ -220,8 +220,8 @@ public class EntityIdentityWriteModelService {
                 if (primaryRow.getIdentityKey().equals(matchingIdentity.getIdentityKey())
                         && primaryRow.getNormalizedValue().equals(matchingIdentity.getNormalizedValue())
                         && matchingIdentity.isPrimaryIdentity()) {
-                    throw new IllegalArgumentException("Entity primary identity already exists: "
-                            + primaryRow.getIdentityKey() + "=" + primaryRow.getIdentityValue() + ".");
+                    throw new IllegalArgumentException("Entity primary identity already exists for key: "
+                            + primaryRow.getIdentityKey() + ".");
                 }
             }
         }

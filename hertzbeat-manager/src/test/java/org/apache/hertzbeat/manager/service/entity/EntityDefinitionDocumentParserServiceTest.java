@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.manager.service.entity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
@@ -170,6 +171,98 @@ class EntityDefinitionDocumentParserServiceTest {
                 () -> documentParserService.parseDefinitionRecords(request));
 
         assertEquals("Entity definition must be a yaml or json object.", exception.getMessage());
+    }
+
+    @Test
+    void parseDefinitionRecordsRejectsUnknownFormatInsteadOfFallingBackToYaml() {
+        EntityDefinitionRequest request = new EntityDefinitionRequest();
+        request.setFormat("toml");
+        request.setContent("kind = service");
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> documentParserService.parseDefinitionRecords(request));
+
+        assertEquals("Entity definition format must be yaml, json, or curl.", exception.getMessage());
+    }
+
+    @Test
+    void parseDefinitionRecordsRejectsContentAboveCompatibilityLimit() {
+        EntityDefinitionRequest request = new EntityDefinitionRequest();
+        request.setFormat("yaml");
+        request.setContent("a".repeat(EntityDefinitionDocumentParserService.MAX_CONTENT_LENGTH + 1));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> documentParserService.parseDefinitionRecords(request));
+
+        assertEquals("Entity definition content exceeds the supported size.", exception.getMessage());
+    }
+
+    @Test
+    void parseDefinitionRecordsRejectsBundleAboveCompatibilityDocumentLimit() {
+        EntityDefinitionRequest request = new EntityDefinitionRequest();
+        request.setFormat("yaml");
+        StringBuilder content = new StringBuilder();
+        for (int index = 0; index <= EntityDefinitionDocumentParserService.MAX_DEFINITION_RECORDS; index++) {
+            content.append("---\nkind: service\nmetadata:\n  name: service-").append(index).append('\n');
+        }
+        request.setContent(content.toString());
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> documentParserService.parseDefinitionRecords(request));
+
+        assertEquals("Entity definition bundle exceeds the supported document limit.", exception.getMessage());
+    }
+
+    @Test
+    void parseDefinitionRecordsRejectsDeepJsonWithoutEchoingSensitiveContent() {
+        EntityDefinitionRequest request = new EntityDefinitionRequest();
+        request.setFormat("json");
+        String sensitiveValue = "token-do-not-echo";
+        request.setContent("{\"nested\":".repeat(EntityDefinitionDocumentParserService.MAX_NESTING_DEPTH + 1)
+                + "{\"credential\":\"" + sensitiveValue + "\"}"
+                + "}".repeat(EntityDefinitionDocumentParserService.MAX_NESTING_DEPTH + 1));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> documentParserService.parseDefinitionRecords(request));
+
+        assertEquals("Entity definition exceeds parser safety limits.", exception.getMessage());
+        assertFalse(exception.getMessage().contains(sensitiveValue));
+    }
+
+    @Test
+    void parseDefinitionRecordsRejectsYamlAliasExpansionWithoutEchoingSensitiveContent() {
+        EntityDefinitionRequest request = new EntityDefinitionRequest();
+        request.setFormat("yaml");
+        StringBuilder content = new StringBuilder("kind: service\nsecret: &secret [token-do-not-echo]\nrefs:\n");
+        for (int index = 0; index <= EntityDefinitionDocumentParserService.MAX_ALIASES_FOR_COLLECTIONS; index++) {
+            content.append("  - *secret\n");
+        }
+        request.setContent(content.toString());
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> documentParserService.parseDefinitionRecords(request));
+
+        assertEquals("Entity definition content is invalid.", exception.getMessage());
+        assertFalse(exception.getMessage().contains("token-do-not-echo"));
+    }
+
+    @Test
+    void parseDefinitionRecordsReturnsGenericMalformedJsonError() {
+        EntityDefinitionRequest request = new EntityDefinitionRequest();
+        request.setFormat("json");
+        request.setContent("{\"token\":\"token-do-not-echo\", invalid}");
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> documentParserService.parseDefinitionRecords(request));
+
+        assertEquals("Entity definition content is invalid.", exception.getMessage());
+        assertFalse(exception.getMessage().contains("token-do-not-echo"));
     }
 
     @SuppressWarnings("unchecked")

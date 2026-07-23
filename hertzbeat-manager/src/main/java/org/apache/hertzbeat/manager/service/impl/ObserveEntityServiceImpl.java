@@ -19,10 +19,12 @@ package org.apache.hertzbeat.manager.service.impl;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.observability.dto.entity.MonitorInfo;
+import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.manager.pojo.dto.EntityCatalogSuggestionsInfo;
 import org.apache.hertzbeat.manager.pojo.dto.EntityDefinitionActivityInfo;
 import org.apache.hertzbeat.manager.pojo.dto.EntityDefinitionRequest;
@@ -50,6 +52,8 @@ import org.apache.hertzbeat.manager.service.entity.EntityListReadModelService;
 import org.apache.hertzbeat.manager.service.entity.EntityMutationWorkflowService;
 import org.apache.hertzbeat.manager.service.entity.EntityValidationService;
 import org.springframework.data.domain.Page;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -103,33 +107,50 @@ public class ObserveEntityServiceImpl implements ObserveEntityService {
 
     @Override
     public EntityDto parseEntityDefinition(EntityDefinitionRequest definitionRequest, Long entityId) {
-        return entityDefinitionDraftService.parseEntityDefinition(definitionRequest, entityId);
+        return withDefinitionErrorBoundary(
+                () -> entityDefinitionDraftService.parseEntityDefinition(definitionRequest, entityId));
     }
 
     @Override
     public List<EntityDto> parseEntityDefinitionBundle(EntityDefinitionRequest definitionRequest) {
-        return entityDefinitionDraftService.parseEntityDefinitionBundle(definitionRequest);
+        return withDefinitionErrorBoundary(
+                () -> entityDefinitionDraftService.parseEntityDefinitionBundle(definitionRequest));
     }
 
     @Override
     public long addEntityByDefinition(EntityDefinitionRequest definitionRequest) {
-        return entityMutationWorkflowService.addEntityByDefinition(definitionRequest);
+        return withDefinitionErrorBoundary(
+                () -> entityMutationWorkflowService.addEntityByDefinition(definitionRequest));
     }
 
     @Override
     public List<Long> addEntitiesByDefinitionBundle(EntityDefinitionRequest definitionRequest) {
-        return entityMutationWorkflowService.addEntitiesByDefinitionBundle(definitionRequest);
+        return withDefinitionErrorBoundary(
+                () -> entityMutationWorkflowService.addEntitiesByDefinitionBundle(definitionRequest));
     }
 
     @Override
     public void modifyEntityByDefinition(long entityId, EntityDefinitionRequest definitionRequest) {
-        entityMutationWorkflowService.modifyEntityByDefinition(entityId, definitionRequest);
+        withDefinitionErrorBoundary(() -> {
+            entityMutationWorkflowService.modifyEntityByDefinition(entityId, definitionRequest);
+            return null;
+        });
     }
 
     @Override
     @Transactional(readOnly = true)
     public String getEntityDefinition(long entityId, String format) {
-        return entityDefinitionExportService.getEntityDefinition(entityId, format);
+        return withDefinitionErrorBoundary(() -> entityDefinitionExportService.getEntityDefinition(entityId, format));
+    }
+
+    private <T> T withDefinitionErrorBoundary(Supplier<T> action) {
+        try {
+            return action.get();
+        } catch (DataIntegrityViolationException exception) {
+            throw new IllegalArgumentException("Entity definition conflicts with existing data.");
+        } catch (DataAccessException exception) {
+            throw new CommonException("Entity definition service is temporarily unavailable.");
+        }
     }
 
     @Override
