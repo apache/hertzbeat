@@ -497,76 +497,76 @@
     }
   },
   "instrumentation": {
-    "title": "Instrument an application",
-    "menu": "Instrumentation",
-    "description": "Configure official OpenTelemetry, verify scoped signal reception, then investigate in Explore.",
-    "schemaVersion": "Contract v{{version}}",
-    "progress": "Instrumentation progress",
-    "scope": "SETUP SCOPE",
-    "scopeHelp": "This scope is reused for guide rendering, detection, and Explore handoff.",
-    "signalCapability": "Signal capability",
-    "preview": "Preview / WIP",
-    "official": "Official",
-    "online": "Online",
-    "offline": "Offline",
-    "catalogUnavailable": "The instrumentation catalog is unavailable.",
-    "catalogEmpty": "No instrumentation methods are available.",
-    "methodUnavailable": "No method supports this environment and platform.",
-    "collectorUnavailable": "Collector data is unavailable.",
-    "collectorEmpty": "No registered Collectors are available.",
-    "collectorOffline": "The selected Collector is offline.",
-    "renderUnavailable": "Installation guidance is unavailable for this selection.",
-    "componentInvalid": "The selected component is not an official external dependency.",
-    "tokenCopyNotice": "Add a token before copying a snippet that contains the authorization placeholder.",
-    "tokenRequired": "Token required",
-    "tokenInMemory": "In memory",
-    "tokenMissing": "Not provided",
-    "copySuccess": "Snippet copied.",
-    "copyFailed": "The snippet could not be copied.",
-    "queryUnavailable": "Query unavailable",
+    "title": "アプリケーションを計装",
+    "menu": "アプリケーション計装",
+    "description": "公式の OpenTelemetry を設定し、指定範囲のシグナル受信を確認してから Explore で調査します。",
+    "schemaVersion": "コントラクト v{{version}}",
+    "progress": "計装の進行状況",
+    "scope": "設定範囲",
+    "scopeHelp": "この範囲は、ガイドの生成、検出、Explore への引き継ぎで再利用されます。",
+    "signalCapability": "シグナル対応状況",
+    "preview": "プレビュー / 開発中",
+    "official": "公式",
+    "online": "オンライン",
+    "offline": "オフライン",
+    "catalogUnavailable": "計装カタログを利用できません。",
+    "catalogEmpty": "利用可能な計装方式がありません。",
+    "methodUnavailable": "この実行環境とプラットフォームに対応する方式がありません。",
+    "collectorUnavailable": "Collector のデータを利用できません。",
+    "collectorEmpty": "登録済みの Collector がありません。",
+    "collectorOffline": "選択した Collector はオフラインです。",
+    "renderUnavailable": "この選択に対応するインストールガイドを利用できません。",
+    "componentInvalid": "選択したコンポーネントは公式の外部依存関係ではありません。",
+    "tokenCopyNotice": "認証プレースホルダーを含むスニペットをコピーする前に Token を追加してください。",
+    "tokenRequired": "Token が必要です",
+    "tokenInMemory": "メモリ内のみ",
+    "tokenMissing": "未入力",
+    "copySuccess": "スニペットをコピーしました。",
+    "copyFailed": "スニペットをコピーできませんでした。",
+    "queryUnavailable": "クエリを利用できません",
     "stage": {
-      "environment": "Environment",
-      "environmentHelp": "Choose where the application runs and the target platform.",
-      "language": "Language and method",
-      "languageHelp": "Select only from methods returned by the versioned backend catalog.",
-      "context": "Service context",
-      "contextHelp": "Detection is limited to this Collector, service, namespace, environment, and setup window.",
-      "install": "Install and configure",
-      "installHelp": "Follow the structured steps rendered by the backend.",
-      "detect": "Verify signals",
-      "detectHelp": "Check scoped Metrics, Logs, and Traces without treating missing data as success."
+      "environment": "実行環境",
+      "environmentHelp": "アプリケーションの実行場所と対象プラットフォームを選択します。",
+      "language": "言語と方式",
+      "languageHelp": "バージョン管理されたバックエンドカタログが返す方式から選択します。",
+      "context": "サービスコンテキスト",
+      "contextHelp": "検出範囲は、この Collector、サービス、名前空間、環境、設定時間枠に限定されます。",
+      "install": "インストールと設定",
+      "installHelp": "バックエンドが生成した構造化手順に従ってください。",
+      "detect": "シグナルを確認",
+      "detectHelp": "指定範囲のメトリクス、ログ、トレースを確認し、データ欠落を成功として扱いません。"
     },
     "field": {
-      "deploymentEnvironment": "Deployment environment",
-      "platform": "Platform",
-      "language": "Language",
-      "languagePlaceholder": "Select a language",
-      "framework": "Framework",
-      "frameworkPlaceholder": "Select a framework",
-      "method": "Method",
+      "deploymentEnvironment": "デプロイ環境",
+      "platform": "プラットフォーム",
+      "language": "言語",
+      "languagePlaceholder": "言語を選択",
+      "framework": "フレームワーク",
+      "frameworkPlaceholder": "フレームワークを選択",
+      "method": "方式",
       "collector": "Collector",
-      "collectorPlaceholder": "Select a registered Collector",
-      "serviceName": "Service name",
-      "serviceNamespace": "Service namespace",
-      "serviceEnvironment": "Service environment",
+      "collectorPlaceholder": "登録済みの Collector を選択",
+      "serviceName": "サービス名",
+      "serviceNamespace": "サービス名前空間",
+      "serviceEnvironment": "サービス環境",
       "token": "API token",
-      "tokenMemory": "Memory only",
-      "tokenPlaceholder": "Paste the OTLP ingestion token"
+      "tokenMemory": "メモリ内のみ",
+      "tokenPlaceholder": "OTLP 取り込み Token を貼り付け"
     },
     "action": {
-      "continue": "Continue",
-      "render": "Render instructions",
-      "reviewContext": "Review context",
-      "startDetection": "Start signal check",
-      "retryDetection": "Retry detection",
-      "openExplore": "Open in Explore",
-      "copy": "Copy"
+      "continue": "続行",
+      "render": "手順を生成",
+      "reviewContext": "コンテキストを確認",
+      "startDetection": "シグナル確認を開始",
+      "retryDetection": "検出を再試行",
+      "openExplore": "Explore で開く",
+      "copy": "コピー"
     },
     "environment": {
-      "vm": "Host / VM",
+      "vm": "ホスト / VM",
       "docker": "Docker",
       "kubernetes": "Kubernetes",
-      "windows_service": "Windows service"
+      "windows_service": "Windows サービス"
     },
     "platform": {
       "linux_amd64": "Linux AMD64",
@@ -574,7 +574,7 @@
       "macos_amd64": "macOS AMD64",
       "macos_arm64": "macOS ARM64",
       "windows_amd64": "Windows AMD64",
-      "any": "Any supported platform"
+      "any": "対応する任意のプラットフォーム"
     },
     "language": {
       "java": "Java",
@@ -583,7 +583,7 @@
       "python": "Python",
       "php": "PHP",
       "go": "Go",
-      "generic": "Other language"
+      "generic": "その他の言語"
     },
     "framework": {
       "spring_boot": "Spring Boot",
@@ -596,56 +596,56 @@
       "php_generic": "PHP",
       "laravel": "Laravel",
       "go_generic": "Go",
-      "generic": "Generic"
+      "generic": "汎用"
     },
     "method": {
-      "zero_code": "Official zero-code",
-      "sdk": "Official SDK",
-      "ebpf": "eBPF zero-code"
+      "zero_code": "公式ゼロコード",
+      "sdk": "公式 SDK",
+      "ebpf": "eBPF ゼロコード"
     },
     "capability": {
-      "supported": "Supported",
-      "preview": "Preview",
-      "unsupported": "Unsupported"
+      "supported": "対応",
+      "preview": "プレビュー",
+      "unsupported": "非対応"
     },
     "signal": {
-      "metrics": "Metrics",
-      "logs": "Logs",
-      "traces": "Traces"
+      "metrics": "メトリクス",
+      "logs": "ログ",
+      "traces": "トレース"
     },
     "step": {
-      "install": "Install the official component",
-      "configure": "Configure OpenTelemetry",
-      "start": "Start the application",
-      "container": "Configure the container",
-      "disable": "Disable instrumentation"
+      "install": "公式コンポーネントをインストール",
+      "configure": "OpenTelemetry を設定",
+      "start": "アプリケーションを起動",
+      "container": "コンテナを設定",
+      "disable": "計装を無効化"
     },
     "location": {
-      "application_host": "Application host",
-      "application_environment": "Application environment",
-      "application_process": "Application process",
-      "container_definition": "Container definition"
+      "application_host": "アプリケーションホスト",
+      "application_environment": "アプリケーション環境",
+      "application_process": "アプリケーションプロセス",
+      "container_definition": "コンテナ定義"
     },
     "detection": {
-      "unavailable": "Signal detection is unavailable.",
-      "checking": "Checking for scoped telemetry.",
-      "notStarted": "Signal detection has not started.",
-      "waiting": "Waiting for telemetry within the onboarding window.",
+      "unavailable": "シグナル検出を利用できません。",
+      "checking": "指定範囲のテレメトリを確認しています。",
+      "notStarted": "シグナル検出はまだ開始されていません。",
+      "waiting": "設定時間枠内でテレメトリを待機しています。",
       "status": {
-        "waiting": "Waiting",
-        "received": "Received",
-        "unsupported": "Unsupported",
-        "unavailable": "Storage unavailable",
-        "error": "Detection error"
+        "waiting": "待機中",
+        "received": "受信済み",
+        "unsupported": "非対応",
+        "unavailable": "ストレージ利用不可",
+        "error": "検出エラー"
       },
       "error": {
-        "signal_not_received": "No scoped signal received yet.",
-        "signal_not_supported": "The selected method does not support this signal.",
-        "storage_unavailable": "Telemetry storage is unavailable.",
-        "storage_query_failed": "Telemetry storage could not be queried.",
-        "collector_unavailable": "The selected Collector is unavailable.",
-        "authentication_failed": "Telemetry authentication failed.",
-        "invalid_context": "The detection context is invalid."
+        "signal_not_received": "指定範囲のシグナルはまだ受信されていません。",
+        "signal_not_supported": "選択した方式はこのシグナルに対応していません。",
+        "storage_unavailable": "テレメトリストレージを利用できません。",
+        "storage_query_failed": "テレメトリストレージを照会できませんでした。",
+        "collector_unavailable": "選択した Collector を利用できません。",
+        "authentication_failed": "テレメトリ認証に失敗しました。",
+        "invalid_context": "検出コンテキストが無効です。"
       }
     }
   },

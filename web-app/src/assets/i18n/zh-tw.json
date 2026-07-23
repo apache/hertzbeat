@@ -489,76 +489,76 @@
     }
   },
   "instrumentation": {
-    "title": "Instrument an application",
-    "menu": "Instrumentation",
-    "description": "Configure official OpenTelemetry, verify scoped signal reception, then investigate in Explore.",
-    "schemaVersion": "Contract v{{version}}",
-    "progress": "Instrumentation progress",
-    "scope": "SETUP SCOPE",
-    "scopeHelp": "This scope is reused for guide rendering, detection, and Explore handoff.",
-    "signalCapability": "Signal capability",
-    "preview": "Preview / WIP",
-    "official": "Official",
-    "online": "Online",
-    "offline": "Offline",
-    "catalogUnavailable": "The instrumentation catalog is unavailable.",
-    "catalogEmpty": "No instrumentation methods are available.",
-    "methodUnavailable": "No method supports this environment and platform.",
-    "collectorUnavailable": "Collector data is unavailable.",
-    "collectorEmpty": "No registered Collectors are available.",
-    "collectorOffline": "The selected Collector is offline.",
-    "renderUnavailable": "Installation guidance is unavailable for this selection.",
-    "componentInvalid": "The selected component is not an official external dependency.",
-    "tokenCopyNotice": "Add a token before copying a snippet that contains the authorization placeholder.",
-    "tokenRequired": "Token required",
-    "tokenInMemory": "In memory",
-    "tokenMissing": "Not provided",
-    "copySuccess": "Snippet copied.",
-    "copyFailed": "The snippet could not be copied.",
-    "queryUnavailable": "Query unavailable",
+    "title": "為應用程式設定插樁",
+    "menu": "應用程式插樁",
+    "description": "設定官方 OpenTelemetry，驗證指定範圍內的訊號接收情況，然後在 Explore 中進行調查。",
+    "schemaVersion": "契約 v{{version}}",
+    "progress": "插樁設定進度",
+    "scope": "設定範圍",
+    "scopeHelp": "此範圍會重複用於產生指南、訊號偵測和 Explore 交接。",
+    "signalCapability": "訊號能力",
+    "preview": "預覽 / 開發中",
+    "official": "官方",
+    "online": "線上",
+    "offline": "離線",
+    "catalogUnavailable": "插樁目錄無法使用。",
+    "catalogEmpty": "沒有可用的插樁方式。",
+    "methodUnavailable": "沒有適用於此執行環境和平台的方式。",
+    "collectorUnavailable": "Collector 資料無法使用。",
+    "collectorEmpty": "沒有已註冊的 Collector。",
+    "collectorOffline": "所選 Collector 已離線。",
+    "renderUnavailable": "無法為目前選擇產生安裝指南。",
+    "componentInvalid": "所選元件不是官方外部相依項目。",
+    "tokenCopyNotice": "複製包含授權預留位置的程式碼片段前，請先新增 Token。",
+    "tokenRequired": "需要 Token",
+    "tokenInMemory": "僅保留在記憶體中",
+    "tokenMissing": "未提供",
+    "copySuccess": "已複製程式碼片段。",
+    "copyFailed": "無法複製程式碼片段。",
+    "queryUnavailable": "查詢無法使用",
     "stage": {
-      "environment": "Environment",
-      "environmentHelp": "Choose where the application runs and the target platform.",
-      "language": "Language and method",
-      "languageHelp": "Select only from methods returned by the versioned backend catalog.",
-      "context": "Service context",
-      "contextHelp": "Detection is limited to this Collector, service, namespace, environment, and setup window.",
-      "install": "Install and configure",
-      "installHelp": "Follow the structured steps rendered by the backend.",
-      "detect": "Verify signals",
-      "detectHelp": "Check scoped Metrics, Logs, and Traces without treating missing data as success."
+      "environment": "執行環境",
+      "environmentHelp": "選擇應用程式的執行位置和目標平台。",
+      "language": "語言和方式",
+      "languageHelp": "僅從版本化後端目錄傳回的方式中選擇。",
+      "context": "服務情境",
+      "contextHelp": "偵測僅限於此 Collector、服務、命名空間、環境和設定時間範圍。",
+      "install": "安裝並設定",
+      "installHelp": "按照後端產生的結構化步驟操作。",
+      "detect": "驗證訊號",
+      "detectHelp": "檢查指定範圍內的指標、日誌和追蹤，不會將缺少資料視為成功。"
     },
     "field": {
-      "deploymentEnvironment": "Deployment environment",
-      "platform": "Platform",
-      "language": "Language",
-      "languagePlaceholder": "Select a language",
-      "framework": "Framework",
-      "frameworkPlaceholder": "Select a framework",
-      "method": "Method",
+      "deploymentEnvironment": "部署環境",
+      "platform": "平台",
+      "language": "語言",
+      "languagePlaceholder": "選擇語言",
+      "framework": "框架",
+      "frameworkPlaceholder": "選擇框架",
+      "method": "方式",
       "collector": "Collector",
-      "collectorPlaceholder": "Select a registered Collector",
-      "serviceName": "Service name",
-      "serviceNamespace": "Service namespace",
-      "serviceEnvironment": "Service environment",
+      "collectorPlaceholder": "選擇已註冊的 Collector",
+      "serviceName": "服務名稱",
+      "serviceNamespace": "服務命名空間",
+      "serviceEnvironment": "服務環境",
       "token": "API token",
-      "tokenMemory": "Memory only",
-      "tokenPlaceholder": "Paste the OTLP ingestion token"
+      "tokenMemory": "僅記憶體",
+      "tokenPlaceholder": "貼上 OTLP 接收 Token"
     },
     "action": {
-      "continue": "Continue",
-      "render": "Render instructions",
-      "reviewContext": "Review context",
-      "startDetection": "Start signal check",
-      "retryDetection": "Retry detection",
-      "openExplore": "Open in Explore",
-      "copy": "Copy"
+      "continue": "繼續",
+      "render": "產生操作說明",
+      "reviewContext": "檢查情境",
+      "startDetection": "開始檢查訊號",
+      "retryDetection": "重試偵測",
+      "openExplore": "在 Explore 中開啟",
+      "copy": "複製"
     },
     "environment": {
-      "vm": "Host / VM",
+      "vm": "主機 / 虛擬機器",
       "docker": "Docker",
       "kubernetes": "Kubernetes",
-      "windows_service": "Windows service"
+      "windows_service": "Windows 服務"
     },
     "platform": {
       "linux_amd64": "Linux AMD64",
@@ -566,7 +566,7 @@
       "macos_amd64": "macOS AMD64",
       "macos_arm64": "macOS ARM64",
       "windows_amd64": "Windows AMD64",
-      "any": "Any supported platform"
+      "any": "任何支援的平台"
     },
     "language": {
       "java": "Java",
@@ -575,7 +575,7 @@
       "python": "Python",
       "php": "PHP",
       "go": "Go",
-      "generic": "Other language"
+      "generic": "其他語言"
     },
     "framework": {
       "spring_boot": "Spring Boot",
@@ -588,56 +588,56 @@
       "php_generic": "PHP",
       "laravel": "Laravel",
       "go_generic": "Go",
-      "generic": "Generic"
+      "generic": "通用"
     },
     "method": {
-      "zero_code": "Official zero-code",
-      "sdk": "Official SDK",
-      "ebpf": "eBPF zero-code"
+      "zero_code": "官方零程式碼",
+      "sdk": "官方 SDK",
+      "ebpf": "eBPF 零程式碼"
     },
     "capability": {
-      "supported": "Supported",
-      "preview": "Preview",
-      "unsupported": "Unsupported"
+      "supported": "支援",
+      "preview": "預覽",
+      "unsupported": "不支援"
     },
     "signal": {
-      "metrics": "Metrics",
-      "logs": "Logs",
-      "traces": "Traces"
+      "metrics": "指標",
+      "logs": "日誌",
+      "traces": "追蹤"
     },
     "step": {
-      "install": "Install the official component",
-      "configure": "Configure OpenTelemetry",
-      "start": "Start the application",
-      "container": "Configure the container",
-      "disable": "Disable instrumentation"
+      "install": "安裝官方元件",
+      "configure": "設定 OpenTelemetry",
+      "start": "啟動應用程式",
+      "container": "設定容器",
+      "disable": "停用插樁"
     },
     "location": {
-      "application_host": "Application host",
-      "application_environment": "Application environment",
-      "application_process": "Application process",
-      "container_definition": "Container definition"
+      "application_host": "應用程式主機",
+      "application_environment": "應用程式環境",
+      "application_process": "應用程式處理程序",
+      "container_definition": "容器定義"
     },
     "detection": {
-      "unavailable": "Signal detection is unavailable.",
-      "checking": "Checking for scoped telemetry.",
-      "notStarted": "Signal detection has not started.",
-      "waiting": "Waiting for telemetry within the onboarding window.",
+      "unavailable": "訊號偵測無法使用。",
+      "checking": "正在檢查指定範圍內的遙測資料。",
+      "notStarted": "尚未開始訊號偵測。",
+      "waiting": "正在設定時間範圍內等待遙測資料。",
       "status": {
-        "waiting": "Waiting",
-        "received": "Received",
-        "unsupported": "Unsupported",
-        "unavailable": "Storage unavailable",
-        "error": "Detection error"
+        "waiting": "等待中",
+        "received": "已接收",
+        "unsupported": "不支援",
+        "unavailable": "儲存空間無法使用",
+        "error": "偵測錯誤"
       },
       "error": {
-        "signal_not_received": "No scoped signal received yet.",
-        "signal_not_supported": "The selected method does not support this signal.",
-        "storage_unavailable": "Telemetry storage is unavailable.",
-        "storage_query_failed": "Telemetry storage could not be queried.",
-        "collector_unavailable": "The selected Collector is unavailable.",
-        "authentication_failed": "Telemetry authentication failed.",
-        "invalid_context": "The detection context is invalid."
+        "signal_not_received": "尚未收到指定範圍內的訊號。",
+        "signal_not_supported": "所選方式不支援此訊號。",
+        "storage_unavailable": "遙測儲存空間無法使用。",
+        "storage_query_failed": "無法查詢遙測儲存空間。",
+        "collector_unavailable": "所選 Collector 無法使用。",
+        "authentication_failed": "遙測驗證失敗。",
+        "invalid_context": "偵測情境無效。"
       }
     }
   },

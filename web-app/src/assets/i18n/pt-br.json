@@ -503,76 +503,76 @@
     }
   },
   "instrumentation": {
-    "title": "Instrument an application",
-    "menu": "Instrumentation",
-    "description": "Configure official OpenTelemetry, verify scoped signal reception, then investigate in Explore.",
-    "schemaVersion": "Contract v{{version}}",
-    "progress": "Instrumentation progress",
-    "scope": "SETUP SCOPE",
-    "scopeHelp": "This scope is reused for guide rendering, detection, and Explore handoff.",
-    "signalCapability": "Signal capability",
-    "preview": "Preview / WIP",
-    "official": "Official",
+    "title": "Instrumentar uma aplicação",
+    "menu": "Instrumentação",
+    "description": "Configure o OpenTelemetry oficial, verifique o recebimento de sinais no escopo e investigue no Explore.",
+    "schemaVersion": "Contrato v{{version}}",
+    "progress": "Progresso da instrumentação",
+    "scope": "ESCOPO DA CONFIGURAÇÃO",
+    "scopeHelp": "Este escopo é reutilizado na geração do guia, na detecção e no encaminhamento ao Explore.",
+    "signalCapability": "Compatibilidade de sinais",
+    "preview": "Prévia / Em desenvolvimento",
+    "official": "Oficial",
     "online": "Online",
-    "offline": "Offline",
-    "catalogUnavailable": "The instrumentation catalog is unavailable.",
-    "catalogEmpty": "No instrumentation methods are available.",
-    "methodUnavailable": "No method supports this environment and platform.",
-    "collectorUnavailable": "Collector data is unavailable.",
-    "collectorEmpty": "No registered Collectors are available.",
-    "collectorOffline": "The selected Collector is offline.",
-    "renderUnavailable": "Installation guidance is unavailable for this selection.",
-    "componentInvalid": "The selected component is not an official external dependency.",
-    "tokenCopyNotice": "Add a token before copying a snippet that contains the authorization placeholder.",
-    "tokenRequired": "Token required",
-    "tokenInMemory": "In memory",
-    "tokenMissing": "Not provided",
-    "copySuccess": "Snippet copied.",
-    "copyFailed": "The snippet could not be copied.",
-    "queryUnavailable": "Query unavailable",
+    "offline": "Desconectado",
+    "catalogUnavailable": "O catálogo de instrumentação está indisponível.",
+    "catalogEmpty": "Não há métodos de instrumentação disponíveis.",
+    "methodUnavailable": "Nenhum método é compatível com este ambiente e plataforma.",
+    "collectorUnavailable": "Os dados do Collector estão indisponíveis.",
+    "collectorEmpty": "Não há Collectors registrados disponíveis.",
+    "collectorOffline": "O Collector selecionado está desconectado.",
+    "renderUnavailable": "As instruções de instalação não estão disponíveis para esta seleção.",
+    "componentInvalid": "O componente selecionado não é uma dependência externa oficial.",
+    "tokenCopyNotice": "Adicione um Token antes de copiar um trecho que contenha o marcador de autorização.",
+    "tokenRequired": "Token obrigatório",
+    "tokenInMemory": "Somente na memória",
+    "tokenMissing": "Não informado",
+    "copySuccess": "Trecho copiado.",
+    "copyFailed": "Não foi possível copiar o trecho.",
+    "queryUnavailable": "Consulta indisponível",
     "stage": {
-      "environment": "Environment",
-      "environmentHelp": "Choose where the application runs and the target platform.",
-      "language": "Language and method",
-      "languageHelp": "Select only from methods returned by the versioned backend catalog.",
-      "context": "Service context",
-      "contextHelp": "Detection is limited to this Collector, service, namespace, environment, and setup window.",
-      "install": "Install and configure",
-      "installHelp": "Follow the structured steps rendered by the backend.",
-      "detect": "Verify signals",
-      "detectHelp": "Check scoped Metrics, Logs, and Traces without treating missing data as success."
+      "environment": "Ambiente",
+      "environmentHelp": "Escolha onde a aplicação é executada e a plataforma de destino.",
+      "language": "Linguagem e método",
+      "languageHelp": "Selecione apenas métodos retornados pelo catálogo versionado do backend.",
+      "context": "Contexto do serviço",
+      "contextHelp": "A detecção é limitada a este Collector, serviço, namespace, ambiente e janela de configuração.",
+      "install": "Instalar e configurar",
+      "installHelp": "Siga as etapas estruturadas geradas pelo backend.",
+      "detect": "Verificar sinais",
+      "detectHelp": "Verifique Métricas, Logs e Traces no escopo sem considerar dados ausentes como sucesso."
     },
     "field": {
-      "deploymentEnvironment": "Deployment environment",
-      "platform": "Platform",
-      "language": "Language",
-      "languagePlaceholder": "Select a language",
+      "deploymentEnvironment": "Ambiente de implantação",
+      "platform": "Plataforma",
+      "language": "Linguagem",
+      "languagePlaceholder": "Selecione uma linguagem",
       "framework": "Framework",
-      "frameworkPlaceholder": "Select a framework",
-      "method": "Method",
+      "frameworkPlaceholder": "Selecione um framework",
+      "method": "Método",
       "collector": "Collector",
-      "collectorPlaceholder": "Select a registered Collector",
-      "serviceName": "Service name",
-      "serviceNamespace": "Service namespace",
-      "serviceEnvironment": "Service environment",
+      "collectorPlaceholder": "Selecione um Collector registrado",
+      "serviceName": "Nome do serviço",
+      "serviceNamespace": "Namespace do serviço",
+      "serviceEnvironment": "Ambiente do serviço",
       "token": "API token",
-      "tokenMemory": "Memory only",
-      "tokenPlaceholder": "Paste the OTLP ingestion token"
+      "tokenMemory": "Somente na memória",
+      "tokenPlaceholder": "Cole o Token de ingestão OTLP"
     },
     "action": {
-      "continue": "Continue",
-      "render": "Render instructions",
-      "reviewContext": "Review context",
-      "startDetection": "Start signal check",
-      "retryDetection": "Retry detection",
-      "openExplore": "Open in Explore",
-      "copy": "Copy"
+      "continue": "Continuar",
+      "render": "Gerar instruções",
+      "reviewContext": "Revisar contexto",
+      "startDetection": "Iniciar verificação de sinais",
+      "retryDetection": "Tentar detecção novamente",
+      "openExplore": "Abrir no Explore",
+      "copy": "Copiar"
     },
     "environment": {
       "vm": "Host / VM",
       "docker": "Docker",
       "kubernetes": "Kubernetes",
-      "windows_service": "Windows service"
+      "windows_service": "Serviço do Windows"
     },
     "platform": {
       "linux_amd64": "Linux AMD64",
@@ -580,7 +580,7 @@
       "macos_amd64": "macOS AMD64",
       "macos_arm64": "macOS ARM64",
       "windows_amd64": "Windows AMD64",
-      "any": "Any supported platform"
+      "any": "Qualquer plataforma compatível"
     },
     "language": {
       "java": "Java",
@@ -589,7 +589,7 @@
       "python": "Python",
       "php": "PHP",
       "go": "Go",
-      "generic": "Other language"
+      "generic": "Outra linguagem"
     },
     "framework": {
       "spring_boot": "Spring Boot",
@@ -602,56 +602,56 @@
       "php_generic": "PHP",
       "laravel": "Laravel",
       "go_generic": "Go",
-      "generic": "Generic"
+      "generic": "Genérico"
     },
     "method": {
-      "zero_code": "Official zero-code",
-      "sdk": "Official SDK",
-      "ebpf": "eBPF zero-code"
+      "zero_code": "Zero-code oficial",
+      "sdk": "SDK oficial",
+      "ebpf": "Zero-code com eBPF"
     },
     "capability": {
-      "supported": "Supported",
-      "preview": "Preview",
-      "unsupported": "Unsupported"
+      "supported": "Compatível",
+      "preview": "Prévia",
+      "unsupported": "Não compatível"
     },
     "signal": {
-      "metrics": "Metrics",
+      "metrics": "Métricas",
       "logs": "Logs",
       "traces": "Traces"
     },
     "step": {
-      "install": "Install the official component",
-      "configure": "Configure OpenTelemetry",
-      "start": "Start the application",
-      "container": "Configure the container",
-      "disable": "Disable instrumentation"
+      "install": "Instalar o componente oficial",
+      "configure": "Configurar o OpenTelemetry",
+      "start": "Iniciar a aplicação",
+      "container": "Configurar o contêiner",
+      "disable": "Desativar a instrumentação"
     },
     "location": {
-      "application_host": "Application host",
-      "application_environment": "Application environment",
-      "application_process": "Application process",
-      "container_definition": "Container definition"
+      "application_host": "Host da aplicação",
+      "application_environment": "Ambiente da aplicação",
+      "application_process": "Processo da aplicação",
+      "container_definition": "Definição do contêiner"
     },
     "detection": {
-      "unavailable": "Signal detection is unavailable.",
-      "checking": "Checking for scoped telemetry.",
-      "notStarted": "Signal detection has not started.",
-      "waiting": "Waiting for telemetry within the onboarding window.",
+      "unavailable": "A detecção de sinais está indisponível.",
+      "checking": "Verificando a telemetria no escopo.",
+      "notStarted": "A detecção de sinais ainda não foi iniciada.",
+      "waiting": "Aguardando telemetria dentro da janela de configuração.",
       "status": {
-        "waiting": "Waiting",
-        "received": "Received",
-        "unsupported": "Unsupported",
-        "unavailable": "Storage unavailable",
-        "error": "Detection error"
+        "waiting": "Aguardando",
+        "received": "Recebido",
+        "unsupported": "Não compatível",
+        "unavailable": "Armazenamento indisponível",
+        "error": "Erro de detecção"
       },
       "error": {
-        "signal_not_received": "No scoped signal received yet.",
-        "signal_not_supported": "The selected method does not support this signal.",
-        "storage_unavailable": "Telemetry storage is unavailable.",
-        "storage_query_failed": "Telemetry storage could not be queried.",
-        "collector_unavailable": "The selected Collector is unavailable.",
-        "authentication_failed": "Telemetry authentication failed.",
-        "invalid_context": "The detection context is invalid."
+        "signal_not_received": "Nenhum sinal foi recebido no escopo ainda.",
+        "signal_not_supported": "O método selecionado não é compatível com este sinal.",
+        "storage_unavailable": "O armazenamento de telemetria está indisponível.",
+        "storage_query_failed": "Não foi possível consultar o armazenamento de telemetria.",
+        "collector_unavailable": "O Collector selecionado está indisponível.",
+        "authentication_failed": "A autenticação da telemetria falhou.",
+        "invalid_context": "O contexto de detecção é inválido."
       }
     }
   },

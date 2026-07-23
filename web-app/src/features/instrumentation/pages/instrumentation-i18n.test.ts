@@ -32,9 +32,44 @@ describe('instrumentation locale contract', () => {
     expect(expected).toContain('title');
     expect(expected).toContain('detection.status.unavailable');
   });
+
+  it('localizes representative visible guidance and operational states', () => {
+    for (const locale of [ja, pt, zhCn, zhTw] as LocaleRoot[]) {
+      const unchanged = localizedSentinels.filter(
+        path => readString(locale.instrumentation, path) === readString(en.instrumentation, path)
+      );
+      expect(unchanged).toEqual([]);
+    }
+  });
 });
 
 type LocaleRoot = { instrumentation: Record<string, unknown> };
+
+const localizedSentinels = [
+  'title',
+  'description',
+  'scopeHelp',
+  'catalogUnavailable',
+  'tokenCopyNotice',
+  'tokenInMemory',
+  'copyFailed',
+  'stage.environmentHelp',
+  'stage.contextHelp',
+  'stage.detectHelp',
+  'field.deploymentEnvironment',
+  'field.tokenMemory',
+  'action.continue',
+  'method.zero_code',
+  'method.sdk',
+  'capability.preview',
+  'detection.waiting',
+  'detection.status.waiting',
+  'detection.status.received',
+  'detection.status.unsupported',
+  'detection.status.unavailable',
+  'detection.status.error',
+  'detection.error.authentication_failed'
+] as const;
 
 function flatten(value: Record<string, unknown>, prefix = ''): string[] {
   return Object.entries(value)
@@ -45,4 +80,12 @@ function flatten(value: Record<string, unknown>, prefix = ''): string[] {
         : [path];
     })
     .sort();
+}
+
+function readString(value: Record<string, unknown>, path: string): string {
+  const result = path.split('.').reduce<unknown>((current, key) => {
+    return current && typeof current === 'object' ? (current as Record<string, unknown>)[key] : undefined;
+  }, value);
+  if (typeof result !== 'string') throw new Error(`Missing localized instrumentation string: ${path}`);
+  return result;
 }
