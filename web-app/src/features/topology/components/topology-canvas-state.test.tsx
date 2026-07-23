@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { cleanup, render, waitFor } from '@testing-library/react';
+import { act, cleanup, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { interaction, presentation } from './topology-canvas-test-fixtures';
@@ -74,6 +74,31 @@ describe('TopologyCanvas runtime evidence and palette', () => {
     await waitFor(() => expect(callbacks.onRuntimeStateChange).toHaveBeenLastCalledWith({ kind: 'ready' }));
     expect(runtime.Graph).toHaveBeenCalledOnce();
     expect(graph.fitView).toHaveBeenCalledOnce();
+  });
+
+  it('serializes rapid updates and applies the latest input after a pending draw', async () => {
+    const pending = deferred<void>();
+    const view = render(<TopologyCanvas {...props('structure-a')} />);
+    const graph = await renderedGraph();
+    await waitFor(() => expect(graph.draw).toHaveBeenCalledOnce());
+    graph.draw.mockClear();
+    graph.setData.mockClear();
+    graph.draw.mockImplementationOnce(() => pending.promise).mockResolvedValue(undefined);
+
+    view.rerender(<TopologyCanvas {...props('structure-a', 1)} />);
+    await waitFor(() => expect(graph.draw).toHaveBeenCalledOnce());
+    view.rerender(<TopologyCanvas {...props('structure-a', 2)} />);
+
+    expect(graph.draw).toHaveBeenCalledOnce();
+    expect(graph.setData.mock.lastCall?.[0]).toMatchObject({
+      nodes: [{ data: { metrics: { requestRatePerSecond: 1 } } }]
+    });
+
+    act(() => pending.resolve());
+    await waitFor(() => expect(graph.draw).toHaveBeenCalledTimes(2));
+    expect(graph.setData.mock.lastCall?.[0]).toMatchObject({
+      nodes: [{ data: { metrics: { requestRatePerSecond: 2 } } }]
+    });
   });
 });
 

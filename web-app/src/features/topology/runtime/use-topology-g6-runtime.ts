@@ -28,6 +28,8 @@ type RuntimeInput = {
   palette: TopologyG6Palette;
   callbacks: RuntimeCallbacks;
 };
+type DrawInput = Pick<RuntimeInput, 'presentation' | 'interaction' | 'palette'>;
+type DrawDrain = { running: boolean; pending: DrawInput | undefined };
 export function useTopologyG6Runtime(host: RefObject<HTMLDivElement | null>, input: RuntimeInput) {
   const graphRef = useRef<G6Graph | undefined>(undefined);
   const viewportRef = useRef<Viewport | undefined>(undefined);
@@ -97,21 +99,47 @@ function useTopologyGraphUpdates(
   inputRef: React.MutableRefObject<RuntimeInput>,
   input: RuntimeInput
 ) {
+  const drainsRef = useRef(new WeakMap<G6Graph, DrawDrain>());
+  const { interaction, palette, presentation } = input;
   useEffect(() => {
     const graph = graphRef.current;
     if (!graph) return;
-    let active = true;
-    void drawGraphInput(graph, input.presentation, input.interaction, input.palette)
-      .then(() => {
-        if (active) publishState(inputRef, 'ready');
-      })
-      .catch(() => {
-        if (active) publishState(inputRef, 'failure');
-      });
-    return () => {
-      active = false;
-    };
-  }, [graphRef, input.interaction, input.palette, input.presentation, inputRef]);
+    queueGraphInput(graph, { interaction, palette, presentation }, graphRef, inputRef, drainsRef.current);
+  }, [graphRef, inputRef, interaction, palette, presentation]);
+}
+function queueGraphInput(
+  graph: G6Graph,
+  input: DrawInput,
+  graphRef: React.MutableRefObject<G6Graph | undefined>,
+  inputRef: React.MutableRefObject<RuntimeInput>,
+  drains: WeakMap<G6Graph, DrawDrain>
+) {
+  const drain = drains.get(graph) ?? { running: false, pending: undefined };
+  drains.set(graph, drain);
+  // G6 draws are serialized per graph; replacing pending input coalesces bursts to the latest snapshot.
+  drain.pending = input;
+  if (drain.running) return;
+  drain.running = true;
+  void drainGraphInputs(graph, drain, graphRef, inputRef);
+}
+async function drainGraphInputs(
+  graph: G6Graph,
+  drain: DrawDrain,
+  graphRef: React.MutableRefObject<G6Graph | undefined>,
+  inputRef: React.MutableRefObject<RuntimeInput>
+) {
+  while (graphRef.current === graph && drain.pending) {
+    const next = drain.pending;
+    drain.pending = undefined;
+    try {
+      await drawGraphInput(graph, next.presentation, next.interaction, next.palette);
+      if (graphRef.current === graph && !drain.pending) publishState(inputRef, 'ready');
+    } catch {
+      if (graphRef.current === graph && !drain.pending) publishState(inputRef, 'failure');
+    }
+  }
+  drain.running = false;
+  if (graphRef.current !== graph) drain.pending = undefined;
 }
 async function drawGraphInput(
   graph: G6Graph,
