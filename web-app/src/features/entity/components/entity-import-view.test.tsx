@@ -55,6 +55,18 @@ describe('EntityImportView', () => {
     expect(screen.getByRole('button', { name: 'Preview resources' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Confirm import' })).toBeDisabled();
   });
+
+  it('renders ordered same-name resources without duplicate React row keys', () => {
+    const duplicatePreview = [
+      { ...preview[0]!, entity: { ...preview[0]!.entity, namespace: 'storefront' } },
+      { ...preview[0]!, entity: { ...preview[0]!.entity, namespace: 'backoffice' } }
+    ];
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    renderView({ preview: duplicatePreview });
+    expect(screen.getAllByText('checkout')).toHaveLength(2);
+    expect(consoleError.mock.calls.flat().join(' ')).not.toMatch(/same key|unique "key"/i);
+    consoleError.mockRestore();
+  });
 });
 
 function renderView(

@@ -42,13 +42,13 @@ export function classifyEntityImportError(error: unknown, content: string): Enti
 
 function withSafeMessage(kind: 'validation' | 'unavailable', message: string, content: string): EntityImportFailure {
   const normalized = message.trim();
-  const normalizedMessage = normalized.toLocaleLowerCase();
-  const contentFragments = content
-    .toLocaleLowerCase()
+  const hasControlCharacter = [...normalized].some(character => (character.codePointAt(0) ?? 32) < 32);
+  if (!normalized || normalized.length > 240 || hasControlCharacter) return { kind };
+  const messageFragments = normalized
+    .toLowerCase()
     .split(/[^\p{L}\p{N}_.:@/-]+/u)
     .filter(fragment => fragment.length >= 4);
-  const exposesContent = contentFragments.some(fragment => normalizedMessage.includes(fragment));
-  const hasControlCharacter = [...normalized].some(character => (character.codePointAt(0) ?? 32) < 32);
-  if (!normalized || normalized.length > 240 || hasControlCharacter || exposesContent) return { kind };
+  const normalizedContent = content.toLowerCase();
+  if (messageFragments.some(fragment => normalizedContent.includes(fragment))) return { kind };
   return { kind, message: normalized };
 }

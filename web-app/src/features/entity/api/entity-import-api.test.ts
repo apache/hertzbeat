@@ -70,4 +70,11 @@ describe('entity import API', () => {
     });
     expect(classifyEntityImportError(new Error('private'), '')).toEqual({ kind: 'error' });
   });
+
+  it('redacts a bounded server-message fragment from a maximum-sized definition without tokenizing the input', () => {
+    const content = `${'x'.repeat(3_000_000)}\nname: tail-secret`;
+    expect(
+      classifyEntityImportError(new ApiMessageError('Value tail-secret is invalid', { code: 1 }), content)
+    ).toEqual({ kind: 'validation' });
+  });
 });

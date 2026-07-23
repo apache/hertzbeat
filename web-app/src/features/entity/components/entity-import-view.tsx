@@ -67,30 +67,27 @@ export function EntityImportView({ state, actions }: EntityImportViewModel) {
 
 function ImportPreview({ resources }: { resources: EditableEntityDto[] }) {
   const { t } = useTranslation();
+  const rows = resources.map((resource, index) => ({ key: String(index), resource }));
   return (
     <section aria-label={t('entity.import.previewTitle')}>
       <Typography.Title level={3}>{t('entity.import.previewTitle')}</Typography.Title>
       <Alert showIcon type="info" message={t('entity.import.zeroWrite')} />
-      <Table<EditableEntityDto>
-        rowKey={row => `${row.entity.type}:${row.entity.name}`}
-        size="small"
-        pagination={false}
-        dataSource={resources}
-        columns={previewColumns(t)}
-      />
+      <Table<PreviewRow> rowKey="key" size="small" pagination={false} dataSource={rows} columns={previewColumns(t)} />
     </section>
   );
 }
 
-function previewColumns(t: (key: string) => string): ColumnsType<EditableEntityDto> {
+type PreviewRow = { key: string; resource: EditableEntityDto };
+
+function previewColumns(t: (key: string) => string): ColumnsType<PreviewRow> {
   return [
     {
       title: t('entity.fields.name'),
-      render: (_value, row) => <strong>{row.entity.displayName || row.entity.name}</strong>
+      render: (_value, row) => <strong>{row.resource.entity.displayName || row.resource.entity.name}</strong>
     },
     {
       title: t('entity.fields.type'),
-      render: (_value, row) => <Tag>{localizeEntityCode(t, 'type', row.entity.type)}</Tag>
+      render: (_value, row) => <Tag>{localizeEntityCode(t, 'type', row.resource.entity.type)}</Tag>
     },
     {
       title: t('entity.import.details'),
@@ -98,7 +95,13 @@ function previewColumns(t: (key: string) => string): ColumnsType<EditableEntityD
         <Collapse
           ghost
           size="small"
-          items={[{ key: 'details', label: t('entity.import.details'), children: <ImportDetails resource={row} /> }]}
+          items={[
+            {
+              key: 'details',
+              label: t('entity.import.details'),
+              children: <ImportDetails resource={row.resource} />
+            }
+          ]}
         />
       )
     }
