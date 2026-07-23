@@ -73,6 +73,8 @@ export function RouteTimeProvider({ children, policy }: PropsWithChildren<{ poli
   const [inherited] = useState(() => globalTimeWindow(global.state));
   const exact = parseExactTimeWindow(params);
   const invalidExact = policy === 'route_owned' && hasExactTimeWindowFields(params) && !exact;
+  // Relative route windows share the rolling refresh cadence; explicit URL windows remain immutable evidence.
+  const usesGlobalState = policy === 'global' || (policy === 'route_owned' && !hasExactTimeWindowFields(params));
   const [routeRefreshRevision, bumpRouteRefresh] = useReducer(revision => revision + 1, 0);
 
   useEffect(() => {
@@ -86,20 +88,20 @@ export function RouteTimeProvider({ children, policy }: PropsWithChildren<{ poli
     inherited,
     params,
     setParams,
-    bumpRouteRefresh
+    bumpRouteRefresh,
+    usesGlobalState
   );
 
   const value = useMemo<SharedTimeValue>(() => {
-    const globalOwned = policy === 'global';
     return {
       policy,
-      headerMode: headerTimeMode(policy),
+      headerMode: policy === 'route_owned' ? (exact ? 'exact_window' : 'hidden') : headerTimeMode(policy),
       manualRefreshOwner: manualRefreshOwner(policy),
-      window: resolveTimeWindow(policy, global.state, exact, inherited),
+      window: resolveTimeWindow(policy, global.state, exact, inherited, usesGlobalState),
       range: global.state.range,
-      autoRefreshMs: globalOwned ? global.state.autoRefreshMs : 0,
-      remainingMs: globalOwned ? global.state.remainingMs : null,
-      refreshRevision: globalOwned ? global.state.refreshRevision : routeRefreshRevision,
+      autoRefreshMs: usesGlobalState ? global.state.autoRefreshMs : 0,
+      remainingMs: usesGlobalState ? global.state.remainingMs : null,
+      refreshRevision: usesGlobalState ? global.state.refreshRevision : routeRefreshRevision,
       setRange,
       setAutoRefresh,
       commitWindow,
@@ -114,7 +116,8 @@ export function RouteTimeProvider({ children, policy }: PropsWithChildren<{ poli
     requestRefresh,
     routeRefreshRevision,
     setAutoRefresh,
-    setRange
+    setRange,
+    usesGlobalState
   ]);
 
   return <RouteTimeContext.Provider value={value}>{children}</RouteTimeContext.Provider>;
@@ -124,9 +127,10 @@ function resolveTimeWindow(
   policy: TimeOwnership,
   globalState: GlobalTimeState,
   routeWindow: ExactTimeWindow | undefined,
-  inheritedWindow: ExactTimeWindow
+  inheritedWindow: ExactTimeWindow,
+  usesGlobalState: boolean
 ): ExactTimeWindow | undefined {
-  if (policy === 'global') return globalTimeWindow(globalState);
+  if (usesGlobalState) return globalTimeWindow(globalState);
   if (policy === 'route_owned') return routeWindow ?? inheritedWindow;
   return undefined;
 }
@@ -137,15 +141,18 @@ function useRouteTimeCommands(
   inherited: ExactTimeWindow,
   params: URLSearchParams,
   setParams: ReturnType<typeof useSearchParams>[1],
-  bumpRouteRefresh: () => void
+  bumpRouteRefresh: () => void,
+  usesGlobalState: boolean
 ) {
   const setRange = useCallback(
     (range: GlobalTimeRange) => global.dispatch({ type: 'range', range, nowMs: Date.now() }),
     [global]
   );
   const setAutoRefresh = useCallback(
-    (intervalMs: number) => global.dispatch({ type: 'autoRefresh', intervalMs, nowMs: Date.now() }),
-    [global]
+    (intervalMs: number) => {
+      if (usesGlobalState) global.dispatch({ type: 'autoRefresh', intervalMs, nowMs: Date.now() });
+    },
+    [global, usesGlobalState]
   );
   const commitWindow = useCallback(
     (window: ExactTimeWindow) => {
@@ -156,9 +163,9 @@ function useRouteTimeCommands(
     [inherited, params, policy, setParams]
   );
   const requestRefresh = useCallback(() => {
-    if (policy === 'global') global.dispatch({ type: 'refresh', nowMs: Date.now() });
-    if (policy === 'route_owned') bumpRouteRefresh();
-  }, [bumpRouteRefresh, global, policy]);
+    if (usesGlobalState) global.dispatch({ type: 'refresh', nowMs: Date.now() });
+    else if (policy === 'route_owned') bumpRouteRefresh();
+  }, [bumpRouteRefresh, global, policy, usesGlobalState]);
   return { commitWindow, requestRefresh, setAutoRefresh, setRange };
 }
 

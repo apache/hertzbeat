@@ -18,6 +18,8 @@
 import { Alert, Button, Select, Typography } from 'antd';
 import type { TFunction } from 'i18next';
 
+import { globalAutoRefreshValues, type SharedTimeValue } from '@/shared/time';
+
 import {
   EXPLORE_TIME_RANGES,
   exploreHandoffState,
@@ -39,11 +41,13 @@ type Props = {
   t: TFunction;
   updateQuery: (changes: ExploreQueryPatch) => void;
   refresh: () => Promise<void>;
+  time: SharedTimeValue | null | undefined;
 };
 
-export function ExploreWorkbench({ query, t, updateQuery, refresh }: Props) {
+export function ExploreWorkbench({ query, t, updateQuery, refresh, time }: Props) {
   const handoffState = exploreHandoffState(query);
   const exactWindow = exploreUsesExactWindow(query);
+  const fixedWindowFields = query.start != null || query.end != null;
   const updateTimeRange = (value: string) => {
     if (!EXPLORE_TIME_RANGES.includes(value as ExploreTimeRange)) return;
     const timeRange = value as ExploreTimeRange;
@@ -57,9 +61,11 @@ export function ExploreWorkbench({ query, t, updateQuery, refresh }: Props) {
     <>
       <ExploreHeader
         exactWindow={exactWindow}
+        fixedWindowFields={fixedWindowFields}
         query={query}
         refresh={refresh}
         t={t}
+        time={time}
         updateTimeRange={updateTimeRange}
       />
       {handoffState === 'invalid' && <Alert type="warning" showIcon message={t('explore.handoffInvalid')} />}
@@ -70,12 +76,15 @@ export function ExploreWorkbench({ query, t, updateQuery, refresh }: Props) {
 
 function ExploreHeader({
   exactWindow,
+  fixedWindowFields,
   query,
   refresh,
   t,
+  time,
   updateTimeRange
-}: Pick<Props, 'query' | 'refresh' | 't'> & {
+}: Pick<Props, 'query' | 'refresh' | 't' | 'time'> & {
   exactWindow: boolean;
+  fixedWindowFields: boolean;
   updateTimeRange: (value: string) => void;
 }) {
   const exactOption = exactWindow
@@ -100,6 +109,25 @@ function ExploreHeader({
           ]}
           onChange={updateTimeRange}
         />
+        {!fixedWindowFields && time && (
+          <Select<number>
+            className={styles.timeRange ?? ''}
+            aria-label={
+              time.autoRefreshMs === 0
+                ? t('shell.time.autoRefreshOff')
+                : t('shell.time.autoRefreshSeconds', { seconds: time.autoRefreshMs / 1_000 })
+            }
+            value={time.autoRefreshMs}
+            options={globalAutoRefreshValues.map(interval => ({
+              value: interval,
+              label:
+                interval === 0
+                  ? t('shell.time.autoRefreshOff')
+                  : t('shell.time.autoRefreshSeconds', { seconds: interval / 1_000 })
+            }))}
+            onChange={interval => time.setAutoRefresh(interval)}
+          />
+        )}
         <Button onClick={() => void refresh()}>{t('common.refresh')}</Button>
       </div>
     </header>

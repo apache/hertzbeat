@@ -97,6 +97,7 @@ export function useExplorePageController() {
     handoff,
     submission,
     result: resolveResult(query, handoff, queryResult.isPending, queryResult.error, queryResult.data),
+    time: sharedTime,
     updateQuery,
     refresh,
     openPath: (path: string) => {

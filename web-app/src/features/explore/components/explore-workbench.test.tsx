@@ -26,6 +26,7 @@ import { ExploreQueryBar } from './explore-query-bar';
 import { ExploreWorkbench } from './explore-workbench';
 import type { ExploreQueryPatch } from '../model/explore-model';
 import { draftFromQuery } from '../model/explore-submission-model';
+import type { SharedTimeValue } from '@/shared/time';
 
 describe('Explore workbench', () => {
   beforeAll(async () => {
@@ -47,6 +48,7 @@ describe('Explore workbench', () => {
     );
 
     expect(screen.getByRole('combobox', { name: 'Time range' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /Auto refresh/u })).toBeInTheDocument();
     expect(screen.getByText('Last 30 minutes')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('tab', { name: 'Metrics' }));
     expect(updateQuery).not.toHaveBeenCalled();
@@ -57,6 +59,19 @@ describe('Explore workbench', () => {
       live: undefined,
       pageIndex: undefined
     });
+  });
+
+  it('offers only shared auto-refresh values for relative windows', () => {
+    const time = sharedTime();
+    render(
+      <I18nextProvider i18n={i18n}>
+        <WorkbenchSubject updateQuery={vi.fn()} time={time} />
+      </I18nextProvider>
+    );
+
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: /Auto refresh/u }));
+    fireEvent.click(screen.getByText('Auto refresh 30s'));
+    expect(time.setAutoRefresh).toHaveBeenCalledWith(30_000);
   });
 
   it('keeps raw log attributes behind an advanced disclosure', () => {
@@ -117,6 +132,7 @@ describe('Explore workbench', () => {
           t={i18n.t}
           updateQuery={updateQuery}
           refresh={refresh}
+          time={sharedTime({ autoRefreshMs: 0 })}
         />
       </I18nextProvider>
     );
@@ -133,14 +149,22 @@ describe('Explore workbench', () => {
           t={i18n.t}
           updateQuery={vi.fn()}
           refresh={vi.fn().mockResolvedValue(undefined)}
+          time={sharedTime()}
         />
       </I18nextProvider>
     );
     expect(screen.getByText(en.explore.handoffInvalid)).toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: /Auto refresh/u })).not.toBeInTheDocument();
   });
 });
 
-function WorkbenchSubject({ updateQuery }: { updateQuery: (changes: ExploreQueryPatch) => void }) {
+function WorkbenchSubject({
+  updateQuery,
+  time = sharedTime()
+}: {
+  updateQuery: (changes: ExploreQueryPatch) => void;
+  time?: SharedTimeValue;
+}) {
   const { t } = useTranslation();
   return (
     <ExploreWorkbench
@@ -148,8 +172,27 @@ function WorkbenchSubject({ updateQuery }: { updateQuery: (changes: ExploreQuery
       t={t}
       updateQuery={updateQuery}
       refresh={vi.fn().mockResolvedValue(undefined)}
+      time={time}
     />
   );
+}
+
+function sharedTime(override: Partial<SharedTimeValue> = {}): SharedTimeValue {
+  return {
+    policy: 'route_owned',
+    headerMode: 'exact_window',
+    manualRefreshOwner: 'time_revision',
+    window: { from: 1_000, to: 2_000 },
+    range: '30m',
+    autoRefreshMs: 0,
+    remainingMs: null,
+    refreshRevision: 0,
+    setRange: vi.fn(),
+    setAutoRefresh: vi.fn(),
+    commitWindow: vi.fn(),
+    requestRefresh: vi.fn(),
+    ...override
+  };
 }
 
 function QuerySubject() {

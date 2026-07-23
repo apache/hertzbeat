@@ -137,7 +137,7 @@ describe('Explore page controller', () => {
   });
 
   it.each(['metrics', 'logs', 'traces'] as const)(
-    'does not hide a 30 second %s refresh while route-owned shell auto-refresh is off',
+    'auto-refreshes the relative %s window once per 30 second shared tick without losing context or exact URL fields',
     async signal => {
       vi.useFakeTimers();
       try {
@@ -149,19 +149,33 @@ describe('Explore page controller', () => {
           paths.push(buildSignalApiPath(query, Date.now()));
           return Promise.resolve(signal === 'metrics' ? metricConsole([]) : page([]));
         });
-        const routed = renderController([`/explore?signal=${signal}`]);
+        const scope =
+          'collectorId=east&serviceName=checkout&serviceNamespace=commerce&environment=prod' +
+          '&instance=checkout-1&endpoint=%2Fcheckout&windowMode=preset';
+        const routed = renderController([`/explore?signal=${signal}&${scope}`]);
         await act(async () => {
           await vi.advanceTimersByTimeAsync(0);
         });
         expect(loader).toHaveBeenCalledTimes(1);
         expect(paths[0]).toContain('start=200000&end=2000000');
-        expect(routed.time()).toMatchObject({ policy: 'route_owned', autoRefreshMs: 0, refreshRevision: 0 });
+        expect(paths[0]).toContain(
+          'serviceName=checkout&serviceNamespace=commerce&environment=prod&collectorId=east' +
+            '&instance=checkout-1&endpoint=%2Fcheckout'
+        );
+        act(() => routed.time().setAutoRefresh(30_000));
+        expect(routed.time()).toMatchObject({ policy: 'route_owned', autoRefreshMs: 30_000, refreshRevision: 0 });
         const key = routed.router.state.location.key;
         expect(routed.router.state.location.search).not.toMatch(/[?&](?:start|end)=/u);
         await act(async () => {
           await vi.advanceTimersByTimeAsync(30_000);
         });
-        expect(loader).toHaveBeenCalledTimes(1);
+        expect(loader).toHaveBeenCalledTimes(2);
+        expect(paths[1]).toContain('start=230000&end=2030000');
+        expect(paths[1]).toContain(
+          'serviceName=checkout&serviceNamespace=commerce&environment=prod&collectorId=east' +
+            '&instance=checkout-1&endpoint=%2Fcheckout'
+        );
+        expect(routed.time().refreshRevision).toBe(1);
         expect(routed.router.state.location.key).toBe(key);
         expect(routed.router.state.location.search).not.toMatch(/[?&](?:start|end)=/u);
       } finally {
@@ -187,6 +201,8 @@ describe('Explore page controller', () => {
         await vi.advanceTimersByTimeAsync(0);
       });
       const key = routed.router.state.location.key;
+      act(() => routed.time().setAutoRefresh(30_000));
+      expect(routed.time()).toMatchObject({ autoRefreshMs: 0, refreshRevision: 0 });
       await act(async () => {
         await vi.advanceTimersByTimeAsync(30_000);
       });

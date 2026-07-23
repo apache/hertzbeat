@@ -17,7 +17,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { App } from 'antd';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -25,6 +25,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 import en from '@/assets/i18n/en-us.json';
 import { ApiMessageError } from '@/core/http/api-message';
+import { GlobalTimeProvider, RouteTimeProvider } from '@/shared/time';
 
 import { ExploreSignalContractError, type MetricConsole } from '../model/explore-signal-contract';
 
@@ -63,7 +64,10 @@ describe('ExplorePage instrumentation context boundary', () => {
     });
   });
 
-  afterEach(() => cleanup());
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+  });
 
   it('does not widen partial or reversed instrumentation scope into any signal query or SSE stream', async () => {
     const invalidEntries = [
@@ -94,6 +98,20 @@ describe('ExplorePage instrumentation context boundary', () => {
         expect.any(AbortSignal)
       )
     );
+  });
+
+  it('does not reconnect a live log SSE stream when the shared relative window auto-refreshes', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(2_000_000);
+    renderPage('/explore?signal=logs&live=true');
+    await act(async () => vi.advanceTimersByTimeAsync(0));
+    expect(api.openLogStream).toHaveBeenCalledOnce();
+
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: /Auto refresh/u }));
+    fireEvent.click(screen.getByText('Auto refresh 30s'));
+    await act(async () => vi.advanceTimersByTimeAsync(30_000));
+
+    expect(api.openLogStream).toHaveBeenCalledOnce();
   });
 
   it('preserves a complete scoped instrumentation handoff', async () => {
@@ -252,10 +270,14 @@ function renderPage(initialEntry: string) {
     <I18nextProvider i18n={i18n}>
       <QueryClientProvider client={client}>
         <MemoryRouter initialEntries={[initialEntry]}>
-          <App>
-            <ExplorePage />
-            <LocationProbe />
-          </App>
+          <GlobalTimeProvider>
+            <RouteTimeProvider policy="route_owned">
+              <App>
+                <ExplorePage />
+                <LocationProbe />
+              </App>
+            </RouteTimeProvider>
+          </GlobalTimeProvider>
         </MemoryRouter>
       </QueryClientProvider>
     </I18nextProvider>

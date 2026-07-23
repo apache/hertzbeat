@@ -40,6 +40,7 @@ export function ExplorePage() {
         t={t}
         updateQuery={controller.updateQuery}
         refresh={controller.refresh}
+        time={controller.time}
       />
       <ExploreQueryBar
         query={controller.query}

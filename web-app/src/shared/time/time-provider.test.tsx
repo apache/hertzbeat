@@ -5,15 +5,20 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import { act, render, waitFor } from '@testing-library/react';
+import { act, cleanup, render, waitFor } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { useSharedTime } from './time-context';
 import type { TimeOwnership } from './time-model';
 import { GlobalTimeProvider, RouteTimeProvider } from './time-provider';
 
 describe('RouteTimeProvider', () => {
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+  });
+
   it('derives route-owned exact time from canonical URL and converges on POP and refresh', async () => {
     const routed = renderTime(
       ['/explore?signal=logs&start=1000&end=2000', '/explore?signal=traces&start=3000&end=4000'],
@@ -47,7 +52,10 @@ describe('RouteTimeProvider', () => {
     global.unmount();
 
     const routeOwned = renderTime(['/explore?start=1000&end=2000'], 0, 'route_owned');
-    expect(routeOwned.current().window).toEqual({ from: 1_000, to: 2_000 });
+    expect(routeOwned.current()).toMatchObject({
+      window: { from: 1_000, to: 2_000 },
+      headerMode: 'exact_window'
+    });
     routeOwned.unmount();
 
     const none = renderTime(['/explore'], 0, 'none');
@@ -57,6 +65,45 @@ describe('RouteTimeProvider', () => {
     const unknown = renderTime(['/explore'], 0, 'unknown');
     expect(unknown.current().window).toBeUndefined();
     unknown.unmount();
+  });
+
+  it('shares global auto-refresh for a relative route-owned window without writing exact URL fields', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(2_000_000);
+    const routed = renderTime(['/explore?signal=metrics']);
+    const initial = routed.current().window;
+
+    act(() => routed.current().setAutoRefresh(30_000));
+    expect(routed.current()).toMatchObject({
+      headerMode: 'hidden',
+      autoRefreshMs: 30_000,
+      refreshRevision: 0
+    });
+    await act(async () => vi.advanceTimersByTimeAsync(30_000));
+
+    expect(routed.current()).toMatchObject({
+      window: { from: initial!.from + 30_000, to: initial!.to + 30_000 },
+      autoRefreshMs: 30_000,
+      refreshRevision: 1
+    });
+    expect(routed.router.state.location.search).toBe('?signal=metrics');
+  });
+
+  it('keeps an exact route-owned window fixed and rejects auto-refresh activation', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(2_000_000);
+    const routed = renderTime(['/explore?signal=traces&start=1000&end=2000']);
+
+    act(() => routed.current().setAutoRefresh(30_000));
+    await act(async () => vi.advanceTimersByTimeAsync(60_000));
+
+    expect(routed.current()).toMatchObject({
+      window: { from: 1_000, to: 2_000 },
+      autoRefreshMs: 0,
+      remainingMs: null,
+      refreshRevision: 0
+    });
+    expect(routed.router.state.location.search).toContain('start=1000&end=2000');
   });
 });
 
