@@ -1,10 +1,11 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Alert, Button, Descriptions, Empty, List, Space, Spin, Tag, Typography } from 'antd';
+import { Alert, Button, Empty, List, Space, Spin, Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import type { EntityDetailEvidence, EntityExploreSignal } from '../model/entity-view-model';
 import { entityExploreSignals } from '../model/entity-view-model';
+import { EntityDetailMetadata } from './entity-detail-metadata';
 import styles from './entity-view.module.css';
 
 export function EntityDetailView({
@@ -55,7 +56,7 @@ function ReadyEntityDetail({
           <Button onClick={actions.back}>{t('common.back')}</Button>
         </Space>
       </header>
-      <Descriptions bordered size="small" column={3} items={baseItems(t, detail)} />
+      <EntityDetailMetadata detail={detail} />
       <EntityEvidenceLists detail={detail} />
     </div>
   );
@@ -133,23 +134,4 @@ function EvidenceSection(props: { title: string; empty: string; isEmpty: boolean
       {props.isEmpty ? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={props.empty} /> : props.children}
     </section>
   );
-}
-
-function baseItems(t: (key: string) => string, detail: Extract<EntityDetailEvidence, { kind: 'ready' }>['detail']) {
-  const entity = detail.entity;
-  return [
-    {
-      key: 'status',
-      label: t('entity.fields.status'),
-      children: detail.status?.status ? <Tag>{detail.status.status}</Tag> : '—'
-    },
-    { key: 'reason', label: t('entity.fields.reason'), children: detail.status?.reason || '—' },
-    { key: 'environment', label: t('entity.fields.environment'), children: entity.environment || '—' },
-    { key: 'owner', label: t('entity.fields.owner'), children: entity.owner || '—' },
-    { key: 'source', label: t('entity.fields.source'), children: entity.source || '—' },
-    { key: 'lifecycle', label: t('entity.fields.lifecycle'), children: entity.lifecycle || '—' },
-    { key: 'tier', label: t('entity.fields.tier'), children: entity.tier || '—' },
-    { key: 'system', label: t('entity.fields.system'), children: entity.system || '—' },
-    { key: 'description', label: t('entity.fields.description'), children: entity.description || '—', span: 3 }
-  ];
 }

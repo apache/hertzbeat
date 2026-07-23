@@ -20,6 +20,30 @@ describe('EntityListView', () => {
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
   });
 
+  it('uses familiar resource-catalog language instead of exposing the internal domain model', () => {
+    renderView({ evidence: { kind: 'empty' } });
+    expect(screen.getByRole('heading', { name: 'Resource catalog' })).toBeInTheDocument();
+    expect(screen.getByText(/automatically unified/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Search resources')).toBeInTheDocument();
+    expect(screen.getByText('No resources match the current filters.')).toBeInTheDocument();
+  });
+
+  it('keeps secondary filters collapsed by default and preserves their values across disclosure', () => {
+    renderView({ query: { ...defaultEntityQuery, owner: 'sre', source: 'manual', tier: 'tier1' } });
+    expect(screen.queryByLabelText(i18n.t('entity.filters.owner'))).not.toBeInTheDocument();
+    expect(screen.getByText('3')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('entity.filters.showAdvanced') }));
+    expect(screen.getByLabelText(i18n.t('entity.filters.owner'))).toHaveValue('sre');
+    expect(screen.getByLabelText(i18n.t('entity.filters.source'))).toHaveValue('manual');
+    expect(screen.getByLabelText(i18n.t('entity.filters.tier'))).toHaveValue('tier1');
+
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('entity.filters.hideAdvanced') }));
+    expect(screen.queryByLabelText(i18n.t('entity.filters.owner'))).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('entity.filters.showAdvanced') }));
+    expect(screen.getByLabelText(i18n.t('entity.filters.owner'))).toHaveValue('sre');
+  });
+
   it('opens the selected row from the dense inventory table', () => {
     const open = vi.fn();
     renderView(

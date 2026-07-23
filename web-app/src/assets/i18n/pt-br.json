@@ -26,7 +26,7 @@
     "primary": "Navegação principal",
     "dashboard": "Painel",
     "monitors": "Monitores",
-    "entities": "Entidades",
+    "entities": "Recursos",
     "explore": "Explorar",
     "alerts": "Alertas",
     "settings": "Configurações",
@@ -34,11 +34,11 @@
     "status": "Status"
   },
   "entity": {
-    "title": "Entidades",
-    "description": "Inventário operacional e evidências somente leitura",
-    "empty": "Nenhuma entidade corresponde aos filtros atuais.",
+    "title": "Catálogo de recursos",
+    "description": "Serviços, hosts, bancos de dados e outros recursos são unificados automaticamente, sem exigir modelagem abstrata manual.",
+    "empty": "Nenhum recurso corresponde aos filtros atuais.",
     "filters": {
-      "search": "Pesquisar entidades",
+      "search": "Pesquisar recursos",
       "type": "Tipo",
       "status": "Status",
       "owner": "Responsável",
@@ -46,7 +46,9 @@
       "environment": "Ambiente",
       "lifecycle": "Ciclo de vida",
       "tier": "Nível",
-      "system": "Sistema"
+      "system": "Sistema",
+      "showAdvanced": "Filtros avançados",
+      "hideAdvanced": "Ocultar filtros avançados"
     },
     "sort": {
       "field": "Campo de ordenação",
@@ -72,13 +74,28 @@
       "monitors": "Monitores",
       "relations": "Relações",
       "alerts": "Alertas",
-      "description": "Descrição"
+      "description": "Descrição",
+      "labels": "Rótulos",
+      "tags": "Tags"
     },
-    "sections": { "identities": "Identidades", "monitors": "Vínculos de monitor", "relations": "Relações" },
+    "sections": {
+      "evidence": "Evidência operacional",
+      "identities": "Identidades",
+      "monitors": "Vínculos de monitor",
+      "relations": "Relações"
+    },
     "missing": {
+      "evidence": "Nenhuma evidência operacional disponível.",
       "identities": "Nenhuma evidência de identidade disponível.",
       "monitors": "Nenhum vínculo de monitor disponível.",
       "relations": "Nenhuma evidência de relação disponível."
+    },
+    "evidence": {
+      "alerts": "Alertas ativos",
+      "downMonitors": "Monitores inativos",
+      "healthyMonitors": "Monitores saudáveis",
+      "identities": "Identidades",
+      "logHints": "Indícios de log"
     },
     "explore": { "metrics": "Explorar métricas", "logs": "Explorar logs" }
   },

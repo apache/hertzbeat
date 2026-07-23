@@ -26,7 +26,7 @@
     "primary": "主導覽",
     "dashboard": "儀表板",
     "monitors": "監控中心",
-    "entities": "實體",
+    "entities": "資源目錄",
     "explore": "訊號查詢",
     "alerts": "警報中心",
     "settings": "設定",
@@ -34,11 +34,11 @@
     "status": "狀態頁"
   },
   "entity": {
-    "title": "實體",
-    "description": "唯讀維運資產與證據",
-    "empty": "目前篩選條件下沒有實體。",
+    "title": "資源目錄",
+    "description": "服務、主機、資料庫等資源會在此自動統一，無需理解或手動建立抽象實體模型。",
+    "empty": "沒有符合目前篩選條件的資源。",
     "filters": {
-      "search": "搜尋實體",
+      "search": "搜尋資源",
       "type": "類型",
       "status": "狀態",
       "owner": "負責人",
@@ -46,7 +46,9 @@
       "environment": "環境",
       "lifecycle": "生命週期",
       "tier": "等級",
-      "system": "系統"
+      "system": "系統",
+      "showAdvanced": "進階篩選",
+      "hideAdvanced": "收合進階篩選"
     },
     "sort": {
       "field": "排序欄位",
@@ -72,10 +74,24 @@
       "monitors": "監控",
       "relations": "關係",
       "alerts": "警報",
-      "description": "描述"
+      "description": "描述",
+      "labels": "標籤",
+      "tags": "標記"
     },
-    "sections": { "identities": "身分", "monitors": "監控綁定", "relations": "關係" },
-    "missing": { "identities": "沒有身分記錄。", "monitors": "沒有監控綁定。", "relations": "沒有關係記錄。" },
+    "sections": { "evidence": "運行證據", "identities": "身分", "monitors": "監控綁定", "relations": "關係" },
+    "missing": {
+      "evidence": "暫無運行證據。",
+      "identities": "沒有身分記錄。",
+      "monitors": "沒有監控綁定。",
+      "relations": "沒有關係記錄。"
+    },
+    "evidence": {
+      "alerts": "活躍警報",
+      "downMonitors": "異常監控",
+      "healthyMonitors": "正常監控",
+      "identities": "身分",
+      "logHints": "日誌線索"
+    },
     "explore": { "metrics": "查詢指標", "logs": "查詢日誌" }
   },
   "exploreMetric": {

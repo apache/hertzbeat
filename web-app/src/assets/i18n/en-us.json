@@ -26,7 +26,7 @@
     "primary": "Primary navigation",
     "dashboard": "Dashboard",
     "monitors": "Monitors",
-    "entities": "Entities",
+    "entities": "Resources",
     "explore": "Explore",
     "alerts": "Alerts",
     "settings": "Settings",
@@ -34,11 +34,11 @@
     "status": "Status"
   },
   "entity": {
-    "title": "Entities",
-    "description": "Read-only operational inventory and evidence",
-    "empty": "No entities match the current filters.",
+    "title": "Resource catalog",
+    "description": "Services, hosts, databases, and other resources are automatically unified here—no abstract data modeling required.",
+    "empty": "No resources match the current filters.",
     "filters": {
-      "search": "Search entities",
+      "search": "Search resources",
       "type": "Type",
       "status": "Status",
       "owner": "Owner",
@@ -46,7 +46,9 @@
       "environment": "Environment",
       "lifecycle": "Lifecycle",
       "tier": "Tier",
-      "system": "System"
+      "system": "System",
+      "showAdvanced": "Advanced filters",
+      "hideAdvanced": "Hide advanced filters"
     },
     "sort": {
       "field": "Sort field",
@@ -72,13 +74,28 @@
       "monitors": "Monitors",
       "relations": "Relations",
       "alerts": "Alerts",
-      "description": "Description"
+      "description": "Description",
+      "labels": "Labels",
+      "tags": "Tags"
     },
-    "sections": { "identities": "Identities", "monitors": "Monitor bindings", "relations": "Relations" },
+    "sections": {
+      "evidence": "Operational evidence",
+      "identities": "Identities",
+      "monitors": "Monitor bindings",
+      "relations": "Relations"
+    },
     "missing": {
+      "evidence": "No operational evidence is available.",
       "identities": "No identity evidence is available.",
       "monitors": "No monitor bindings are available.",
       "relations": "No relation evidence is available."
+    },
+    "evidence": {
+      "alerts": "Active alerts",
+      "downMonitors": "Down monitors",
+      "healthyMonitors": "Healthy monitors",
+      "identities": "Identities",
+      "logHints": "Log hints"
     },
     "explore": { "metrics": "Explore metrics", "logs": "Explore logs" }
   },

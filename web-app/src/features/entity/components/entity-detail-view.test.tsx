@@ -1,13 +1,20 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 import { EntityDetailView } from './entity-detail-view';
 
-const entity = { id: 7, type: 'service', name: 'checkout', environment: 'prod' };
+const entity = {
+  id: 7,
+  type: 'service',
+  name: 'checkout',
+  environment: 'prod',
+  labels: { region: 'east' },
+  tags: ['critical']
+};
 
 describe('EntityDetailView', () => {
   beforeAll(async () => {
@@ -46,6 +53,37 @@ describe('EntityDetailView', () => {
     fireEvent.click(screen.getByRole('button', { name: i18n.t('entity.explore.logs') }));
     expect(explore).toHaveBeenCalledWith('logs');
     expect(screen.queryByRole('button', { name: i18n.t('entity.explore.metrics') })).not.toBeInTheDocument();
+  });
+
+  it('renders compact real evidence and metadata while preserving numeric zero', () => {
+    renderView({
+      kind: 'ready',
+      detail: {
+        entity,
+        identities: [],
+        evidence: {
+          activeAlertCount: 0,
+          downMonitorCount: 0,
+          healthyMonitorCount: 2,
+          identityCount: 1,
+          logHintCount: 0
+        },
+        boundMonitors: [],
+        relations: []
+      }
+    });
+    const evidence = screen.getByRole('region', { name: i18n.t('entity.sections.evidence') });
+    expect(within(evidence).getAllByText('0')).toHaveLength(3);
+    expect(within(evidence).getByText('2')).toBeInTheDocument();
+    expect(screen.getByText('region=east')).toBeInTheDocument();
+    expect(screen.getByText('critical')).toBeInTheDocument();
+  });
+
+  it('labels absent evidence as missing instead of turning it into zeros', () => {
+    renderView({ kind: 'ready', detail: { entity, identities: [], boundMonitors: [], relations: [] } });
+    const evidence = screen.getByRole('region', { name: i18n.t('entity.sections.evidence') });
+    expect(within(evidence).getByText(i18n.t('entity.missing.evidence'))).toBeInTheDocument();
+    expect(within(evidence).queryByText('0')).not.toBeInTheDocument();
   });
 });
 

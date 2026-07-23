@@ -1,7 +1,8 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Alert, Button, Empty, Input, Select, Space, Spin, Table, Tag, Typography } from 'antd';
+import { Alert, Badge, Button, Empty, Input, Select, Space, Spin, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { entityPageSizes, entitySortFields, type EntitySummary } from '../model/entity-contract';
@@ -9,6 +10,7 @@ import type { EntityListViewActions, EntityListViewState } from '../model/entity
 import styles from './entity-view.module.css';
 
 export type EntityListViewProps = { state: EntityListViewState; actions: EntityListViewActions };
+const advancedFilterKeys = ['owner', 'source', 'lifecycle', 'tier', 'system'] as const;
 
 export function EntityListView({ state, actions }: EntityListViewProps) {
   const { t } = useTranslation();
@@ -31,41 +33,77 @@ export function EntityListView({ state, actions }: EntityListViewProps) {
 
 function EntityFilters({ state, actions }: EntityListViewProps) {
   const { t } = useTranslation();
-  const filterKeys = ['type', 'status', 'owner', 'source', 'environment', 'lifecycle', 'tier', 'system'] as const;
+  const [advanced, setAdvanced] = useState(false);
+  const advancedCount = advancedFilterKeys.filter(key => state.query[key].length > 0).length;
   return (
-    <div className={styles.filters}>
-      <Input.Search
-        allowClear
-        value={state.draft}
-        placeholder={t('entity.filters.search')}
-        onChange={event => actions.updateDraft(event.target.value)}
-        onSearch={actions.submit}
-      />
-      {filterKeys.map(key => (
-        <Input
-          key={key}
+    <div className={styles.filterStack}>
+      <div className={styles.filters}>
+        <Input.Search
           allowClear
-          value={state.query[key]}
-          aria-label={t(`entity.filters.${key}`)}
-          placeholder={t(`entity.filters.${key}`)}
-          onChange={event => actions.changeFilter(key, event.target.value.trim())}
+          value={state.draft}
+          placeholder={t('entity.filters.search')}
+          onChange={event => actions.updateDraft(event.target.value)}
+          onSearch={actions.submit}
         />
-      ))}
-      <Space.Compact>
-        <Select
-          aria-label={t('entity.sort.field')}
-          value={state.query.sort}
-          options={entitySortFields.map(value => ({ value, label: t(`entity.sort.${value}`) }))}
-          onChange={sort => actions.changeSort(sort, state.query.order)}
-        />
-        <Select
-          aria-label={t('entity.sort.order')}
-          value={state.query.order}
-          options={['asc', 'desc'].map(value => ({ value, label: t(`entity.sort.${value}`) }))}
-          onChange={order => actions.changeSort(state.query.sort, order)}
-        />
-      </Space.Compact>
+        <FilterInput filter="type" state={state} actions={actions} />
+        <FilterInput filter="status" state={state} actions={actions} />
+        <FilterInput filter="environment" state={state} actions={actions} />
+        <SortFields state={state} actions={actions} />
+        <Badge count={advancedCount} size="small">
+          <Button onClick={() => setAdvanced(value => !value)}>
+            {t(advanced ? 'entity.filters.hideAdvanced' : 'entity.filters.showAdvanced')}
+          </Button>
+        </Badge>
+      </div>
+      {advanced ? <AdvancedFilters state={state} actions={actions} /> : null}
     </div>
+  );
+}
+
+function AdvancedFilters({ state, actions }: EntityListViewProps) {
+  return (
+    <div className={styles.advancedFilters}>
+      {advancedFilterKeys.map(filter => (
+        <FilterInput key={filter} filter={filter} state={state} actions={actions} />
+      ))}
+    </div>
+  );
+}
+
+function FilterInput({
+  filter,
+  state,
+  actions
+}: EntityListViewProps & { filter: Parameters<EntityListViewActions['changeFilter']>[0] }) {
+  const { t } = useTranslation();
+  return (
+    <Input
+      allowClear
+      value={state.query[filter]}
+      aria-label={t(`entity.filters.${filter}`)}
+      placeholder={t(`entity.filters.${filter}`)}
+      onChange={event => actions.changeFilter(filter, event.target.value.trim())}
+    />
+  );
+}
+
+function SortFields({ state, actions }: EntityListViewProps) {
+  const { t } = useTranslation();
+  return (
+    <Space.Compact>
+      <Select
+        aria-label={t('entity.sort.field')}
+        value={state.query.sort}
+        options={entitySortFields.map(value => ({ value, label: t(`entity.sort.${value}`) }))}
+        onChange={sort => actions.changeSort(sort, state.query.order)}
+      />
+      <Select
+        aria-label={t('entity.sort.order')}
+        value={state.query.order}
+        options={['asc', 'desc'].map(value => ({ value, label: t(`entity.sort.${value}`) }))}
+        onChange={order => actions.changeSort(state.query.sort, order)}
+      />
+    </Space.Compact>
   );
 }
 

@@ -26,7 +26,7 @@
     "primary": "主导航",
     "dashboard": "仪表盘",
     "monitors": "监控中心",
-    "entities": "实体",
+    "entities": "资源目录",
     "explore": "信号查询",
     "alerts": "告警中心",
     "settings": "设置",
@@ -34,11 +34,11 @@
     "status": "状态页"
   },
   "entity": {
-    "title": "实体",
-    "description": "只读运维资产与证据",
-    "empty": "当前筛选条件下没有实体。",
+    "title": "资源目录",
+    "description": "服务、主机、数据库等资源会在此自动统一，无需理解或手工建模抽象实体。",
+    "empty": "没有符合当前筛选条件的资源。",
     "filters": {
-      "search": "搜索实体",
+      "search": "搜索资源",
       "type": "类型",
       "status": "状态",
       "owner": "负责人",
@@ -46,7 +46,9 @@
       "environment": "环境",
       "lifecycle": "生命周期",
       "tier": "等级",
-      "system": "系统"
+      "system": "系统",
+      "showAdvanced": "高级筛选",
+      "hideAdvanced": "收起高级筛选"
     },
     "sort": {
       "field": "排序字段",
@@ -72,10 +74,24 @@
       "monitors": "监控",
       "relations": "关系",
       "alerts": "告警",
-      "description": "描述"
+      "description": "描述",
+      "labels": "标签",
+      "tags": "标记"
     },
-    "sections": { "identities": "身份", "monitors": "监控绑定", "relations": "关系" },
-    "missing": { "identities": "暂无身份记录。", "monitors": "暂无监控绑定。", "relations": "暂无关系记录。" },
+    "sections": { "evidence": "运行证据", "identities": "身份", "monitors": "监控绑定", "relations": "关系" },
+    "missing": {
+      "evidence": "暂无运行证据。",
+      "identities": "暂无身份记录。",
+      "monitors": "暂无监控绑定。",
+      "relations": "暂无关系记录。"
+    },
+    "evidence": {
+      "alerts": "活跃告警",
+      "downMonitors": "异常监控",
+      "healthyMonitors": "正常监控",
+      "identities": "身份",
+      "logHints": "日志线索"
+    },
     "explore": { "metrics": "查询指标", "logs": "查询日志" }
   },
   "exploreMetric": {

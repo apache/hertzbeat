@@ -26,7 +26,7 @@
     "primary": "メインナビゲーション",
     "dashboard": "ダッシュボード",
     "monitors": "監視センター",
-    "entities": "エンティティ",
+    "entities": "リソース",
     "explore": "シグナル検索",
     "alerts": "アラートセンター",
     "settings": "設定",
@@ -34,11 +34,11 @@
     "status": "ステータス"
   },
   "entity": {
-    "title": "エンティティ",
-    "description": "読み取り専用の運用資産と証拠",
-    "empty": "現在の条件に一致するエンティティはありません。",
+    "title": "リソースカタログ",
+    "description": "サービス、ホスト、データベースなどのリソースは自動的に統合され、抽象エンティティの理解や手動モデリングは不要です。",
+    "empty": "現在の条件に一致するリソースはありません。",
     "filters": {
-      "search": "エンティティを検索",
+      "search": "リソースを検索",
       "type": "タイプ",
       "status": "状態",
       "owner": "所有者",
@@ -46,7 +46,9 @@
       "environment": "環境",
       "lifecycle": "ライフサイクル",
       "tier": "階層",
-      "system": "システム"
+      "system": "システム",
+      "showAdvanced": "詳細フィルター",
+      "hideAdvanced": "詳細フィルターを閉じる"
     },
     "sort": {
       "field": "並び替え項目",
@@ -72,13 +74,28 @@
       "monitors": "モニター",
       "relations": "関係",
       "alerts": "アラート",
-      "description": "説明"
+      "description": "説明",
+      "labels": "ラベル",
+      "tags": "タグ"
     },
-    "sections": { "identities": "識別情報", "monitors": "モニター関連付け", "relations": "関係" },
+    "sections": {
+      "evidence": "運用証拠",
+      "identities": "識別情報",
+      "monitors": "モニター関連付け",
+      "relations": "関係"
+    },
     "missing": {
+      "evidence": "運用証拠はありません。",
       "identities": "識別情報はありません。",
       "monitors": "モニター関連付けはありません。",
       "relations": "関係情報はありません。"
+    },
+    "evidence": {
+      "alerts": "発生中アラート",
+      "downMonitors": "異常モニター",
+      "healthyMonitors": "正常モニター",
+      "identities": "識別情報",
+      "logHints": "ログ手掛かり"
     },
     "explore": { "metrics": "メトリクスを検索", "logs": "ログを検索" }
   },

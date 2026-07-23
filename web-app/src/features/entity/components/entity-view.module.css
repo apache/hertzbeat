@@ -10,7 +10,16 @@
 .heading h2 {
   margin: 0;
 }
+.filterStack {
+  display: grid;
+  gap: 8px;
+}
 .filters {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(220px, 2fr) repeat(5, minmax(130px, 1fr));
+}
+.advancedFilters {
   display: grid;
   gap: 8px;
   grid-template-columns: repeat(5, minmax(140px, 1fr));
@@ -27,7 +36,8 @@
   margin: 0 0 8px;
 }
 @media (max-width: 1100px) {
-  .filters {
+  .filters,
+  .advancedFilters {
     grid-template-columns: repeat(3, minmax(140px, 1fr));
   }
 }
