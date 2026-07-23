@@ -97,7 +97,61 @@
       "identities": "識別情報",
       "logHints": "ログ手掛かり"
     },
-    "explore": { "metrics": "メトリクスを検索", "logs": "ログを検索" }
+    "explore": { "metrics": "メトリクスを検索", "logs": "ログを検索" },
+    "editor": {
+      "addTitle": "リソースを追加",
+      "editTitle": "リソースを編集",
+      "identityHint": "リソース種別と名前を指定すると、HertzBeat がリソースを自動的に認識して関連付けます。",
+      "suggestionsUnavailable": "候補を読み込めません。値は手動で入力できます。",
+      "showAdvanced": "詳細設定",
+      "hideAdvanced": "詳細設定を閉じる",
+      "fields": {
+        "type": "リソース種別",
+        "name": "名前",
+        "displayName": "表示名",
+        "namespace": "ネームスペース",
+        "environment": "環境",
+        "owner": "所有者",
+        "system": "システム",
+        "lifecycle": "ライフサイクル",
+        "tier": "ティア",
+        "criticality": "重要度",
+        "runbook": "ランブック",
+        "description": "説明",
+        "labels": "ラベル（1 行に key=value）",
+        "tags": "タグ（カンマ区切り）"
+      },
+      "types": {
+        "service": "サービス",
+        "host": "ホスト",
+        "system": "システム",
+        "database": "データベース",
+        "queue": "キュー",
+        "middleware": "ミドルウェア",
+        "device": "デバイス",
+        "api": "API",
+        "endpoint": "エンドポイント",
+        "k8s_workload": "Kubernetes ワークロード"
+      },
+      "criticalities": { "low": "低", "medium": "中", "high": "高", "critical": "最重要" },
+      "validation": {
+        "type": {
+          "required": "リソース種別を選択してください。",
+          "unsupported": "対応するリソース種別を選択してください。"
+        },
+        "name": { "required": "名前を入力してください。" },
+        "criticality": { "unsupported": "対応する重要度を選択してください。" },
+        "labels": { "invalid": "各ラベルを key=value 形式で 1 行ずつ入力してください。" }
+      },
+      "saveFailure": {
+        "permission": "このリソースを保存する権限がありません。",
+        "validation": "保存できませんでした。入力内容を確認してください。",
+        "unavailable": "保存機能を一時的に利用できません。後でもう一度お試しください。",
+        "error": "保存できませんでした。もう一度お試しください。"
+      },
+      "discardConfirm": "保存していない変更を破棄しますか？",
+      "discardAction": "変更を破棄"
+    }
   },
   "exploreMetric": {
     "series": "系列",

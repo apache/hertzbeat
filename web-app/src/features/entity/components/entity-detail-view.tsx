@@ -13,7 +13,7 @@ export function EntityDetailView({
   actions
 }: {
   state: { evidence: EntityDetailEvidence };
-  actions: { back: () => void; explore: (signal: EntityExploreSignal) => void };
+  actions: { back: () => void; edit: () => void; explore: (signal: EntityExploreSignal) => void };
 }) {
   const { t } = useTranslation();
   const evidence = state.evidence;
@@ -34,7 +34,7 @@ function ReadyEntityDetail({
   actions
 }: {
   detail: Extract<EntityDetailEvidence, { kind: 'ready' }>['detail'];
-  actions: { back: () => void; explore: (signal: EntityExploreSignal) => void };
+  actions: { back: () => void; edit: () => void; explore: (signal: EntityExploreSignal) => void };
 }) {
   const { t } = useTranslation();
   const signals = entityExploreSignals(detail);
@@ -48,6 +48,9 @@ function ReadyEntityDetail({
           </Typography.Text>
         </div>
         <Space>
+          <Button type="primary" onClick={actions.edit}>
+            {t('common.edit')}
+          </Button>
           {signals.map(signal => (
             <Button key={signal} onClick={() => actions.explore(signal)}>
               {t(`entity.explore.${signal}`)}

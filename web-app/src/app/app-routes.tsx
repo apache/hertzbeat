@@ -88,6 +88,20 @@ export const appRoutes: RouteObject[] = [
                 }
               },
               {
+                ...getAppRouteIdentity('entity-new'),
+                lazy: async () => {
+                  const { EntityEditorPage } = await import('@/features/entity');
+                  return { Component: () => <EntityEditorPage mode="new" /> };
+                }
+              },
+              {
+                ...getAppRouteIdentity('entity-edit'),
+                lazy: async () => {
+                  const { EntityEditorPage } = await import('@/features/entity');
+                  return { Component: () => <EntityEditorPage mode="edit" /> };
+                }
+              },
+              {
                 ...getAppRouteIdentity('entity-detail'),
                 lazy: async () => {
                   const { EntityDetailPage } = await import('@/features/entity');

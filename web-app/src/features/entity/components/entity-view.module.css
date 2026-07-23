@@ -2,6 +2,21 @@
   display: grid;
   gap: 16px;
 }
+
+.editorPage {
+  max-width: 760px;
+  display: grid;
+  gap: 16px;
+}
+
+.editorForm {
+  max-width: 640px;
+}
+
+.disclosure {
+  padding-inline: 0;
+  margin-bottom: 16px;
+}
 .heading {
   align-items: flex-start;
   display: flex;

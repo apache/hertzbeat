@@ -1,7 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
 import type { RemotePageState, RemotePayloadState } from '@/shared/remote-state';
-import { applicationRoutePaths, entityRoutePaths } from '@/shared/navigation/app-paths';
+import { applicationRoutePaths, buildEntityEditPath, entityRoutePaths } from '@/shared/navigation/app-paths';
 import type { EntityDetail, EntityQuery, EntitySummary } from './entity-contract';
 import { readEntityQuery, writeEntityQuery } from './entity-query';
 
@@ -38,6 +38,7 @@ export type EntityListViewActions = {
   changeSort: (sort: EntityQuery['sort'], order: EntityQuery['order']) => void;
   changePage: (page: number, pageSize: number) => void;
   refresh: () => void;
+  create: () => void;
   open: (id: number) => void;
 };
 export type EntityFilterKey = Exclude<keyof EntityQuery, 'search' | 'sort' | 'order' | 'pageIndex' | 'pageSize'>;
@@ -54,6 +55,37 @@ export function safeEntityReturnTo(value: string | null) {
   if (url.pathname !== entityRoutePaths.list) return entityRoutePaths.list;
   const query = readEntityQuery(url.searchParams);
   return `${entityRoutePaths.list}?${writeEntityQuery(query).toString()}`;
+}
+
+export function buildEntityCreatePath(query: EntityQuery) {
+  return withReturnTo(entityRoutePaths.create, entityListPath(query));
+}
+
+export function buildEntityEditRoute(id: number, listReturnTo: string | null) {
+  const detailReturnTo = withReturnTo(
+    entityRoutePaths.detail.replace(':entityId', String(id)),
+    safeEntityReturnTo(listReturnTo)
+  );
+  return withReturnTo(buildEntityEditPath(id), detailReturnTo);
+}
+
+export function safeEntityEditorReturnTo(value: string | null, id?: number) {
+  if (value?.startsWith(`${entityRoutePaths.list}?`)) return safeEntityReturnTo(value);
+  if (!value?.startsWith('/') || id === undefined) return entityRoutePaths.list;
+  const url = new URL(value, 'https://hertzbeat.local');
+  const detail = entityRoutePaths.detail.replace(':entityId', String(id));
+  if (url.pathname !== detail) return entityRoutePaths.list;
+  return withReturnTo(detail, safeEntityReturnTo(url.searchParams.get('returnTo')));
+}
+
+export function entityEditorListReturnTo(value: string) {
+  if (value.startsWith(`${entityRoutePaths.list}?`)) return safeEntityReturnTo(value);
+  const url = new URL(value, 'https://hertzbeat.local');
+  return safeEntityReturnTo(url.searchParams.get('returnTo'));
+}
+
+export function buildEntitySavedDetailPath(id: number, listReturnTo: string) {
+  return withReturnTo(entityRoutePaths.detail.replace(':entityId', String(id)), safeEntityReturnTo(listReturnTo));
 }
 
 export function entityExploreSignals(detail: EntityDetail): EntityExploreSignal[] {
@@ -80,4 +112,12 @@ function uniqueMonitorInstance(detail: EntityDetail) {
     ...new Set(detail.boundMonitors.map(monitor => monitor.instance).filter((value): value is string => Boolean(value)))
   ];
   return instances.length === 1 ? instances[0] : undefined;
+}
+
+function entityListPath(query: EntityQuery) {
+  return `${entityRoutePaths.list}?${writeEntityQuery(query).toString()}`;
+}
+
+function withReturnTo(path: string, returnTo: string) {
+  return `${path}?returnTo=${encodeURIComponent(returnTo)}`;
 }

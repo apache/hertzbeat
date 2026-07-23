@@ -39,6 +39,7 @@ describe('EntityDetailView', () => {
     expect(screen.getByText('checkout-http')).toBeInTheDocument();
     expect(screen.getByText('depends_on')).toBeInTheDocument();
     expect(screen.getByText('monitor down')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: i18n.t('common.edit') })).toBeInTheDocument();
   });
 
   it('offers only evidence-backed Explore handoffs', () => {
@@ -90,7 +91,7 @@ describe('EntityDetailView', () => {
 function renderView(evidence: Parameters<typeof EntityDetailView>[0]['state']['evidence'], explore = () => undefined) {
   return render(
     <I18nextProvider i18n={i18n}>
-      <EntityDetailView state={{ evidence }} actions={{ back: () => undefined, explore }} />
+      <EntityDetailView state={{ evidence }} actions={{ back: () => undefined, edit: () => undefined, explore }} />
     </I18nextProvider>
   );
 }

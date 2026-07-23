@@ -97,7 +97,58 @@
       "identities": "Identities",
       "logHints": "Log hints"
     },
-    "explore": { "metrics": "Explore metrics", "logs": "Explore logs" }
+    "explore": { "metrics": "Explore metrics", "logs": "Explore logs" },
+    "editor": {
+      "addTitle": "Add resource",
+      "editTitle": "Edit resource",
+      "identityHint": "Choose a type and name. HertzBeat automatically recognizes and links the resource.",
+      "suggestionsUnavailable": "Suggestions are unavailable. You can still enter values.",
+      "showAdvanced": "Advanced details",
+      "hideAdvanced": "Hide advanced details",
+      "fields": {
+        "type": "Resource type",
+        "name": "Name",
+        "displayName": "Display name",
+        "namespace": "Namespace",
+        "environment": "Environment",
+        "owner": "Owner",
+        "system": "System",
+        "lifecycle": "Lifecycle",
+        "tier": "Tier",
+        "criticality": "Criticality",
+        "runbook": "Runbook",
+        "description": "Description",
+        "labels": "Labels (one key=value per line)",
+        "tags": "Tags (comma separated)"
+      },
+      "types": {
+        "service": "Service",
+        "host": "Host",
+        "system": "System",
+        "database": "Database",
+        "queue": "Queue",
+        "middleware": "Middleware",
+        "device": "Device",
+        "api": "API",
+        "endpoint": "Endpoint",
+        "k8s_workload": "Kubernetes workload"
+      },
+      "criticalities": { "low": "Low", "medium": "Medium", "high": "High", "critical": "Critical" },
+      "validation": {
+        "type": { "required": "Resource type is required.", "unsupported": "Choose a supported resource type." },
+        "name": { "required": "Name is required." },
+        "criticality": { "unsupported": "Choose a supported criticality." },
+        "labels": { "invalid": "Enter each label as key=value on its own line." }
+      },
+      "saveFailure": {
+        "permission": "You do not have permission to save this resource.",
+        "validation": "The resource could not be saved. Review the fields and try again.",
+        "unavailable": "Saving is temporarily unavailable. Try again later.",
+        "error": "The resource could not be saved. Try again."
+      },
+      "discardConfirm": "Discard your unsaved changes?",
+      "discardAction": "Discard changes"
+    }
   },
   "exploreMetric": {
     "series": "Series",

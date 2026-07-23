@@ -26,6 +26,7 @@ describe('EntityListView', () => {
     expect(screen.getByText(/automatically unified/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Search resources')).toBeInTheDocument();
     expect(screen.getByText('No resources match the current filters.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add resource' })).toBeInTheDocument();
   });
 
   it('keeps secondary filters collapsed by default and preserves their values across disclosure', () => {
@@ -85,6 +86,7 @@ function renderView(
     changeSort: () => undefined,
     changePage: () => undefined,
     refresh: () => undefined,
+    create: () => undefined,
     open: () => undefined,
     ...actionsPatch
   };

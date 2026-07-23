@@ -21,9 +21,14 @@ export function EntityListView({ state, actions }: EntityListViewProps) {
           <Typography.Title level={2}>{t('entity.title')}</Typography.Title>
           <Typography.Text type="secondary">{t('entity.description')}</Typography.Text>
         </div>
-        <Button disabled={state.refreshing} onClick={actions.refresh}>
-          {t('common.refresh')}
-        </Button>
+        <Space>
+          <Button type="primary" onClick={actions.create}>
+            {t('entity.editor.addTitle')}
+          </Button>
+          <Button disabled={state.refreshing} onClick={actions.refresh}>
+            {t('common.refresh')}
+          </Button>
+        </Space>
       </header>
       <EntityFilters state={state} actions={actions} />
       <EntityResults state={state} actions={actions} />

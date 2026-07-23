@@ -8,7 +8,12 @@ import { useQueryDraft } from '@/shared/query-context';
 import { entityRoutePaths } from '@/shared/navigation/app-paths';
 import { classifyEntityReadError, loadEntities } from '../api/entity-api';
 import { readEntityQuery, writeEntityQuery } from '../model/entity-query';
-import { buildEntityDetailPath, type EntityFilterKey, type EntityListEvidence } from '../model/entity-view-model';
+import {
+  buildEntityCreatePath,
+  buildEntityDetailPath,
+  type EntityFilterKey,
+  type EntityListEvidence
+} from '../model/entity-view-model';
 import { entityQueryKeys } from './entity-query-keys';
 
 export function useEntityListController() {
@@ -45,6 +50,7 @@ export function useEntityListController() {
       refresh: () => {
         void client.invalidateQueries({ queryKey: entityQueryKeys.list(source) });
       },
+      create: () => void navigate(buildEntityCreatePath(query)),
       open: (id: number) => {
         if (location.pathname === entityRoutePaths.list) void navigate(buildEntityDetailPath(id, query));
       }

@@ -5,6 +5,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { classifyEntityDetailError, loadEntityDetail } from '../api/entity-api';
 import {
+  buildEntityEditRoute,
   buildEntityExplorePath,
   safeEntityReturnTo,
   type EntityDetailEvidence,
@@ -28,6 +29,10 @@ export function useEntityDetailController() {
     actions: {
       back: () => {
         void navigate(safeEntityReturnTo(params.get('returnTo')));
+      },
+      edit: () => {
+        if (evidence.kind === 'ready')
+          void navigate(buildEntityEditRoute(evidence.detail.entity.id, params.get('returnTo')));
       },
       explore: (signal: EntityExploreSignal) => {
         if (evidence.kind === 'ready') void navigate(buildEntityExplorePath(evidence.detail, signal));

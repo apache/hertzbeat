@@ -3,7 +3,13 @@
 import { describe, expect, it } from 'vitest';
 
 import type { EntityDetail } from './entity-contract';
-import { buildEntityExplorePath, entityExploreSignals } from './entity-view-model';
+import {
+  buildEntityCreatePath,
+  buildEntityEditRoute,
+  buildEntityExplorePath,
+  entityExploreSignals,
+  safeEntityEditorReturnTo
+} from './entity-view-model';
 
 describe('entity Explore handoff', () => {
   it('requires usable signal context instead of treating counts as query context', () => {
@@ -34,5 +40,32 @@ describe('entity Explore handoff', () => {
     };
     expect(entityExploreSignals(service)).toEqual(['metrics', 'logs']);
     expect(buildEntityExplorePath(service, 'logs')).toContain('serviceName=checkout');
+  });
+});
+
+describe('entity editor navigation', () => {
+  it('carries only canonical resource return targets into create and edit routes', () => {
+    const query = {
+      search: 'checkout',
+      type: '',
+      status: '',
+      owner: '',
+      source: '',
+      environment: '',
+      lifecycle: '',
+      tier: '',
+      system: '',
+      sort: 'gmtUpdate' as const,
+      order: 'desc' as const,
+      pageIndex: 0,
+      pageSize: 10 as const
+    };
+    expect(buildEntityCreatePath(query)).toContain('/entities/new?returnTo=');
+    expect(buildEntityEditRoute(7, '/entities?search=checkout')).toContain('/entities/7/edit?returnTo=');
+    expect(safeEntityEditorReturnTo('https://evil.example', 7)).toBe('/entities');
+    expect(safeEntityEditorReturnTo('/entities/8', 7)).toBe('/entities');
+    expect(safeEntityEditorReturnTo('/entities/7?returnTo=https%3A%2F%2Fevil.example', 7)).toBe(
+      '/entities/7?returnTo=%2Fentities'
+    );
   });
 });

@@ -97,7 +97,61 @@
       "identities": "Identidades",
       "logHints": "Indícios de log"
     },
-    "explore": { "metrics": "Explorar métricas", "logs": "Explorar logs" }
+    "explore": { "metrics": "Explorar métricas", "logs": "Explorar logs" },
+    "editor": {
+      "addTitle": "Adicionar recurso",
+      "editTitle": "Editar recurso",
+      "identityHint": "Escolha o tipo e o nome. O HertzBeat reconhece e associa o recurso automaticamente.",
+      "suggestionsUnavailable": "As sugestões estão indisponíveis. Você ainda pode inserir os valores.",
+      "showAdvanced": "Detalhes avançados",
+      "hideAdvanced": "Ocultar detalhes avançados",
+      "fields": {
+        "type": "Tipo de recurso",
+        "name": "Nome",
+        "displayName": "Nome de exibição",
+        "namespace": "Namespace",
+        "environment": "Ambiente",
+        "owner": "Responsável",
+        "system": "Sistema",
+        "lifecycle": "Ciclo de vida",
+        "tier": "Nível",
+        "criticality": "Criticidade",
+        "runbook": "Runbook",
+        "description": "Descrição",
+        "labels": "Rótulos (um key=value por linha)",
+        "tags": "Tags (separadas por vírgula)"
+      },
+      "types": {
+        "service": "Serviço",
+        "host": "Host",
+        "system": "Sistema",
+        "database": "Banco de dados",
+        "queue": "Fila",
+        "middleware": "Middleware",
+        "device": "Dispositivo",
+        "api": "API",
+        "endpoint": "Endpoint",
+        "k8s_workload": "Workload do Kubernetes"
+      },
+      "criticalities": { "low": "Baixa", "medium": "Média", "high": "Alta", "critical": "Crítica" },
+      "validation": {
+        "type": {
+          "required": "Selecione o tipo de recurso.",
+          "unsupported": "Selecione um tipo de recurso compatível."
+        },
+        "name": { "required": "Informe o nome." },
+        "criticality": { "unsupported": "Selecione uma criticidade compatível." },
+        "labels": { "invalid": "Informe cada rótulo como key=value em uma linha separada." }
+      },
+      "saveFailure": {
+        "permission": "Você não tem permissão para salvar este recurso.",
+        "validation": "Não foi possível salvar. Revise os campos e tente novamente.",
+        "unavailable": "O salvamento está temporariamente indisponível. Tente mais tarde.",
+        "error": "Não foi possível salvar o recurso. Tente novamente."
+      },
+      "discardConfirm": "Descartar as alterações não salvas?",
+      "discardAction": "Descartar alterações"
+    }
   },
   "exploreMetric": {
     "series": "Séries",

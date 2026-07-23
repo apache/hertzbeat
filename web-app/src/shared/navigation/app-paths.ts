@@ -40,7 +40,9 @@ export const monitorRoutePaths = {
 
 export const entityRoutePaths = {
   list: entityListPath,
-  detail: `${entityListPath}/:entityId`
+  create: `${entityListPath}/new`,
+  detail: `${entityListPath}/:entityId`,
+  edit: `${entityListPath}/:entityId/edit`
 } as const;
 
 /** Alert path templates shared by route registration and feature navigation. */
@@ -83,4 +85,8 @@ export function buildMonitorDetailPath(monitorId: number) {
 
 export function buildMonitorEditPath(monitorId: number) {
   return monitorRoutePaths.edit.replace(':monitorId', String(monitorId));
+}
+
+export function buildEntityEditPath(entityId: number) {
+  return entityRoutePaths.edit.replace(':entityId', String(entityId));
 }

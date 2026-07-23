@@ -92,7 +92,58 @@
       "identities": "身份",
       "logHints": "日志线索"
     },
-    "explore": { "metrics": "查询指标", "logs": "查询日志" }
+    "explore": { "metrics": "查询指标", "logs": "查询日志" },
+    "editor": {
+      "addTitle": "添加资源",
+      "editTitle": "编辑资源",
+      "identityHint": "选择资源类型并填写名称，HertzBeat 会自动识别并关联该资源。",
+      "suggestionsUnavailable": "暂时无法加载建议值，你仍可手动填写。",
+      "showAdvanced": "高级信息",
+      "hideAdvanced": "收起高级信息",
+      "fields": {
+        "type": "资源类型",
+        "name": "名称",
+        "displayName": "显示名称",
+        "namespace": "命名空间",
+        "environment": "环境",
+        "owner": "负责人",
+        "system": "所属系统",
+        "lifecycle": "生命周期",
+        "tier": "等级",
+        "criticality": "重要性",
+        "runbook": "运维手册",
+        "description": "描述",
+        "labels": "标签（每行一个 key=value）",
+        "tags": "分类标签（逗号分隔）"
+      },
+      "types": {
+        "service": "服务",
+        "host": "主机",
+        "system": "系统",
+        "database": "数据库",
+        "queue": "队列",
+        "middleware": "中间件",
+        "device": "设备",
+        "api": "API",
+        "endpoint": "端点",
+        "k8s_workload": "Kubernetes 工作负载"
+      },
+      "criticalities": { "low": "低", "medium": "中", "high": "高", "critical": "关键" },
+      "validation": {
+        "type": { "required": "请选择资源类型。", "unsupported": "请选择支持的资源类型。" },
+        "name": { "required": "请填写名称。" },
+        "criticality": { "unsupported": "请选择支持的重要性。" },
+        "labels": { "invalid": "请按每行 key=value 的格式填写标签。" }
+      },
+      "saveFailure": {
+        "permission": "你没有保存此资源的权限。",
+        "validation": "资源保存失败，请检查字段后重试。",
+        "unavailable": "保存服务暂时不可用，请稍后重试。",
+        "error": "资源保存失败，请重试。"
+      },
+      "discardConfirm": "放弃尚未保存的更改吗？",
+      "discardAction": "放弃更改"
+    }
   },
   "exploreMetric": {
     "series": "序列",

@@ -92,7 +92,58 @@
       "identities": "身分",
       "logHints": "日誌線索"
     },
-    "explore": { "metrics": "查詢指標", "logs": "查詢日誌" }
+    "explore": { "metrics": "查詢指標", "logs": "查詢日誌" },
+    "editor": {
+      "addTitle": "新增資源",
+      "editTitle": "編輯資源",
+      "identityHint": "選擇資源類型並填寫名稱，HertzBeat 會自動識別並關聯該資源。",
+      "suggestionsUnavailable": "暫時無法載入建議值，你仍可手動填寫。",
+      "showAdvanced": "進階資訊",
+      "hideAdvanced": "收合進階資訊",
+      "fields": {
+        "type": "資源類型",
+        "name": "名稱",
+        "displayName": "顯示名稱",
+        "namespace": "命名空間",
+        "environment": "環境",
+        "owner": "負責人",
+        "system": "所屬系統",
+        "lifecycle": "生命週期",
+        "tier": "等級",
+        "criticality": "重要性",
+        "runbook": "維運手冊",
+        "description": "描述",
+        "labels": "標籤（每行一個 key=value）",
+        "tags": "分類標籤（逗號分隔）"
+      },
+      "types": {
+        "service": "服務",
+        "host": "主機",
+        "system": "系統",
+        "database": "資料庫",
+        "queue": "佇列",
+        "middleware": "中介軟體",
+        "device": "裝置",
+        "api": "API",
+        "endpoint": "端點",
+        "k8s_workload": "Kubernetes 工作負載"
+      },
+      "criticalities": { "low": "低", "medium": "中", "high": "高", "critical": "關鍵" },
+      "validation": {
+        "type": { "required": "請選擇資源類型。", "unsupported": "請選擇支援的資源類型。" },
+        "name": { "required": "請填寫名稱。" },
+        "criticality": { "unsupported": "請選擇支援的重要性。" },
+        "labels": { "invalid": "請依每行 key=value 的格式填寫標籤。" }
+      },
+      "saveFailure": {
+        "permission": "你沒有儲存此資源的權限。",
+        "validation": "資源儲存失敗，請檢查欄位後重試。",
+        "unavailable": "儲存服務暫時無法使用，請稍後重試。",
+        "error": "資源儲存失敗，請重試。"
+      },
+      "discardConfirm": "放棄尚未儲存的變更嗎？",
+      "discardAction": "放棄變更"
+    }
   },
   "exploreMetric": {
     "series": "序列",

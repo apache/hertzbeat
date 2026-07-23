@@ -19,9 +19,11 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildAlertIntegrationPath,
+  buildEntityEditPath,
   buildMonitorDetailPath,
   buildMonitorEditPath,
   buildMonitorListPath,
+  entityRoutePaths,
   type MonitorListRouteContext
 } from './app-paths';
 
@@ -51,5 +53,10 @@ describe('application path builders', () => {
 
   it('builds the canonical external-alert integration path without query data', () => {
     expect(buildAlertIntegrationPath('prometheus')).toBe('/alerts/integrations/prometheus');
+  });
+
+  it('builds canonical resource create and edit paths centrally', () => {
+    expect(entityRoutePaths.create).toBe('/entities/new');
+    expect(buildEntityEditPath(7)).toBe('/entities/7/edit');
   });
 });
