@@ -60,7 +60,7 @@ const relationSchema = z
   .passthrough();
 const editableEntityInfoSchema = z
   .object({
-    id: z.number().int().positive().safe().optional(),
+    id: z.number().int().positive().safe().nullish(),
     type: z.enum(entityTypes),
     name: z.string().trim().min(1),
     displayName: optionalText,
@@ -121,13 +121,18 @@ const suggestionsSchema = z.object({
 export function parseEditableEntityDto(value: unknown): EditableEntityDto {
   const result = editableEntityDtoSchema.safeParse(value);
   if (!result.success) throw new EntityContractError('Editable entity response is invalid');
-  return result.data as EditableEntityDto;
+  return normalizeEditableEntityDto(result.data);
 }
 
 export function parseEditableEntityDtos(value: unknown): EditableEntityDto[] {
   const result = z.array(editableEntityDtoSchema).min(1).max(100).safeParse(value);
   if (!result.success) throw new EntityContractError('Resource definition response is invalid');
-  return result.data as EditableEntityDto[];
+  return result.data.map(normalizeEditableEntityDto);
+}
+
+function normalizeEditableEntityDto(value: z.output<typeof editableEntityDtoSchema>): EditableEntityDto {
+  const { id, ...entity } = value.entity;
+  return { ...value, entity: { ...entity, ...(id === null || id === undefined ? {} : { id }) } } as EditableEntityDto;
 }
 
 export function parseEntityCatalogSuggestions(value: unknown): EntityCatalogSuggestions {

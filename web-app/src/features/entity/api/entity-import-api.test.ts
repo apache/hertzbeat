@@ -15,20 +15,21 @@ import {
   previewEntityDefinitionBundle
 } from './entity-import-api';
 
-const dto = {
-  entity: { type: 'service', name: 'checkout' },
-  identities: [],
-  monitorBinds: [],
-  relations: []
-};
-
 describe('entity import API', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('uses the exact bundle parse path/body and reuses the editable DTO parser', async () => {
-    http.apiMessagePost.mockResolvedValue([dto]);
+    const draftDto = {
+      entity: { id: null, type: 'service', name: 'checkout', displayName: null, environment: 'prod' },
+      identities: null,
+      monitorBinds: null,
+      relations: null
+    };
+    http.apiMessagePost.mockResolvedValue([draftDto]);
     const request = { content: 'kind: service', format: 'yaml' as const };
-    await expect(previewEntityDefinitionBundle(request)).resolves.toEqual([dto]);
+    await expect(previewEntityDefinitionBundle(request)).resolves.toEqual([
+      { ...draftDto, entity: { type: 'service', name: 'checkout', displayName: null, environment: 'prod' } }
+    ]);
     expect(http.apiMessagePost).toHaveBeenCalledWith('/api/entities/definition/bundle/parse', request, undefined);
     http.apiMessagePost.mockResolvedValue([]);
     await expect(previewEntityDefinitionBundle(request)).rejects.toThrow('Resource definition response is invalid');

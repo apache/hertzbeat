@@ -39,6 +39,8 @@ describe('entity editor API', () => {
     http.apiMessageGet.mockResolvedValue(dto);
     await expect(loadEditableEntity(7)).resolves.toEqual(dto);
     expect(http.apiMessageGet).toHaveBeenCalledWith('/api/entities/7', undefined);
+    http.apiMessageGet.mockResolvedValue({ ...dto, entity: { ...dto.entity, id: null } });
+    await expect(loadEditableEntity(7)).rejects.toThrow('Editable entity does not match its request');
   });
 
   it('parses reusable suggestions while keeping them optional to the core form', async () => {
