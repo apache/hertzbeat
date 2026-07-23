@@ -40,7 +40,7 @@ export function TopologyMetricTable({ rows, interaction, edgeCount, pageIndex, p
         })}
         pagination={false}
       />
-      <Space className={styles.pagination}>
+      <Space {...(styles.pagination ? { className: styles.pagination } : {})}>
         <Button disabled={pageIndex === 0} onClick={() => actions.changePage(pageIndex - 1, pageSize)}>
           {t('topology.pagination.previous')}
         </Button>

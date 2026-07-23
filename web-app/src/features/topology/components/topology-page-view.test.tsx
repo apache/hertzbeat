@@ -188,8 +188,8 @@ function renderContent(patch: Partial<TopologyPageViewProps> = {}) {
         state={patch.state ?? baseState}
         actions={patch.actions ?? baseActions}
         interaction={patch.interaction ?? emptyTopologyInteraction()}
-        runtimeState={patch.runtimeState}
-        onRuntimeStateChange={patch.onRuntimeStateChange}
+        {...(patch.runtimeState ? { runtimeState: patch.runtimeState } : {})}
+        {...(patch.onRuntimeStateChange ? { onRuntimeStateChange: patch.onRuntimeStateChange } : {})}
         onFit={patch.onFit ?? (() => undefined)}
         onRefresh={() => undefined}
       />

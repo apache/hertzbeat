@@ -16,9 +16,14 @@ export type TopologyQuery = {
 };
 
 export type TopologyFailure = { kind: 'permission' | 'unavailable' | 'contract' | 'error' };
-export type TopologyScopePatch = Partial<
-  Pick<TopologyQuery, 'focusEntityId' | 'depth' | 'environment' | 'sourceKind' | 'relationType' | 'hideInternal'>
->;
+export type TopologyScopePatch = {
+  focusEntityId?: number | undefined;
+  depth?: TopologyQuery['depth'];
+  environment?: string | undefined;
+  sourceKind?: string | undefined;
+  relationType?: string | undefined;
+  hideInternal?: boolean | undefined;
+};
 
 const JAVA_INTEGER_MAX = 2_147_483_647;
 export const topologyDepthValues = [1, 2] as const;
@@ -67,7 +72,18 @@ export function writeTopologyQuery(query: TopologyQuery) {
 }
 
 export function changeTopologyScope(query: TopologyQuery, patch: TopologyScopePatch): TopologyQuery {
-  return { ...query, ...patch, pageIndex: 0 };
+  const next = { ...query, ...patch };
+  return {
+    depth: next.depth,
+    ...(next.focusEntityId === undefined ? {} : { focusEntityId: next.focusEntityId }),
+    ...(next.environment === undefined ? {} : { environment: next.environment }),
+    ...(next.sourceKind === undefined ? {} : { sourceKind: next.sourceKind }),
+    ...(next.window === undefined ? {} : { window: next.window }),
+    ...(next.relationType === undefined ? {} : { relationType: next.relationType }),
+    ...(next.hideInternal === undefined ? {} : { hideInternal: next.hideInternal }),
+    pageIndex: 0,
+    ...(next.pageSize === undefined ? {} : { pageSize: next.pageSize })
+  };
 }
 
 export function changeTopologyPage(query: TopologyQuery, pageIndex: number, pageSize: number): TopologyQuery {

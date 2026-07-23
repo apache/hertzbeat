@@ -2,7 +2,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { TopologyContractError, parseTopologyQuery, writeTopologyQuery } from './topology-model';
+import { changeTopologyScope, TopologyContractError, parseTopologyQuery, writeTopologyQuery } from './topology-model';
 
 describe('topology query model', () => {
   it('parses every explicit backend input and reuses an exact complete time window', () => {
@@ -33,6 +33,16 @@ describe('topology query model', () => {
     const query = parseTopologyQuery(new URLSearchParams('environment=%20&sourceKind=&relationType=%20'));
     expect(query).toEqual({ depth: 1 });
     expect(writeTopologyQuery(query).toString()).toBe('depth=1');
+  });
+
+  it('removes cleared optional scope fields instead of retaining undefined properties', () => {
+    const query = changeTopologyScope(
+      { depth: 2, focusEntityId: 10, environment: 'prod', pageIndex: 4, pageSize: 50 },
+      { focusEntityId: undefined, environment: undefined }
+    );
+    expect(query).toEqual({ depth: 2, pageIndex: 0, pageSize: 50 });
+    expect(query).not.toHaveProperty('focusEntityId');
+    expect(query).not.toHaveProperty('environment');
   });
 
   it.each([

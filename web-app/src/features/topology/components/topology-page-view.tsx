@@ -55,7 +55,7 @@ export function TopologyPageView({
         state={state}
         actions={actions}
         interaction={interaction}
-        canvasRef={canvasRef}
+        {...(canvasRef ? { canvasRef } : {})}
         runtimeState={runtimeState}
         onRuntimeStateChange={onRuntimeStateChange}
       />

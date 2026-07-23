@@ -19,12 +19,12 @@ export function TopologyToolbar({ query, refreshing, changeScope, onFit, onRefre
   const { t } = useTranslation();
   return (
     <div className={styles.toolbar}>
-      <InputNumber
+      <InputNumber<number>
         min={1}
         max={Number.MAX_SAFE_INTEGER}
         precision={0}
         step={1}
-        value={query.focusEntityId}
+        value={query.focusEntityId ?? null}
         aria-label={t('topology.toolbar.focusEntity')}
         placeholder={t('topology.toolbar.focusEntity')}
         onChange={value => changeScope({ focusEntityId: normalizeFocusEntityId(value) })}

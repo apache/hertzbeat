@@ -101,12 +101,13 @@ function metricItem(key: string, children: React.ReactNode, t: (key: string) => 
 }
 
 function resolveSelected(interaction: TopologyInteraction, presentation: TopologyPresentation) {
-  if (interaction.selected.kind === 'node') {
-    const value = presentation.graph.nodes.find(node => node.id === interaction.selected.nodeId);
+  const selected = interaction.selected;
+  if (selected.kind === 'node') {
+    const value = presentation.graph.nodes.find(node => node.id === selected.nodeId);
     return value ? ({ kind: 'node', value } as const) : undefined;
   }
-  if (interaction.selected.kind === 'edge') {
-    const value = presentation.graph.edges.find(edge => edge.id === interaction.selected.edgeId);
+  if (selected.kind === 'edge') {
+    const value = presentation.graph.edges.find(edge => edge.id === selected.edgeId);
     return value ? ({ kind: 'edge', value } as const) : undefined;
   }
   return undefined;
