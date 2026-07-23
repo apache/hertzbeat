@@ -1,18 +1,29 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { __iconNode as activityIconNode } from 'lucide-react/dist/esm/icons/activity.js';
-import { __iconNode as appWindowIconNode } from 'lucide-react/dist/esm/icons/app-window.js';
-import { __iconNode as circleHelpIconNode } from 'lucide-react/dist/esm/icons/circle-help.js';
-import { __iconNode as containerIconNode } from 'lucide-react/dist/esm/icons/container.js';
-import { __iconNode as databaseIconNode } from 'lucide-react/dist/esm/icons/database.js';
-import { __iconNode as inboxIconNode } from 'lucide-react/dist/esm/icons/inbox.js';
-import { __iconNode as memoryStickIconNode } from 'lucide-react/dist/esm/icons/memory-stick.js';
-import { __iconNode as routeIconNode } from 'lucide-react/dist/esm/icons/route.js';
-import { __iconNode as serverCogIconNode } from 'lucide-react/dist/esm/icons/server-cog.js';
-import { __iconNode as serverIconNode } from 'lucide-react/dist/esm/icons/server.js';
-import { __iconNode as triangleAlertIconNode } from 'lucide-react/dist/esm/icons/triangle-alert.js';
-import { __iconNode as workflowIconNode } from 'lucide-react/dist/esm/icons/workflow.js';
-import type { IconNode } from 'lucide-react';
+import appWindowSvg from '@phosphor-icons/core/assets/duotone/app-window-duotone.svg?raw';
+import cubeFocusSvg from '@phosphor-icons/core/assets/duotone/cube-focus-duotone.svg?raw';
+import cubeSvg from '@phosphor-icons/core/assets/duotone/cube-duotone.svg?raw';
+import databaseSvg from '@phosphor-icons/core/assets/duotone/database-duotone.svg?raw';
+import hardDrivesSvg from '@phosphor-icons/core/assets/duotone/hard-drives-duotone.svg?raw';
+import pathSvg from '@phosphor-icons/core/assets/duotone/path-duotone.svg?raw';
+import pulseSvg from '@phosphor-icons/core/assets/duotone/pulse-duotone.svg?raw';
+import questionSvg from '@phosphor-icons/core/assets/duotone/question-duotone.svg?raw';
+import queueSvg from '@phosphor-icons/core/assets/duotone/queue-duotone.svg?raw';
+import shareNetworkSvg from '@phosphor-icons/core/assets/duotone/share-network-duotone.svg?raw';
+import stackSvg from '@phosphor-icons/core/assets/duotone/stack-duotone.svg?raw';
+import warningSvg from '@phosphor-icons/core/assets/duotone/warning-duotone.svg?raw';
+import dockerSvg from 'devicon/icons/docker/docker-original.svg?raw';
+import javaSvg from 'devicon/icons/java/java-original.svg?raw';
+import kubernetesSvg from 'devicon/icons/kubernetes/kubernetes-original.svg?raw';
+import mongodbSvg from 'devicon/icons/mongodb/mongodb-original.svg?raw';
+import mysqlSvg from 'devicon/icons/mysql/mysql-original.svg?raw';
+import nodejsSvg from 'devicon/icons/nodejs/nodejs-original.svg?raw';
+import phpSvg from 'devicon/icons/php/php-original.svg?raw';
+import postgresqlSvg from 'devicon/icons/postgresql/postgresql-original.svg?raw';
+import pythonSvg from 'devicon/icons/python/python-original.svg?raw';
+import rabbitmqSvg from 'devicon/icons/rabbitmq/rabbitmq-original.svg?raw';
+import redisSvg from 'devicon/icons/redis/redis-original.svg?raw';
+import springSvg from 'devicon/icons/spring/spring-original.svg?raw';
 
 export type TopologyNodeIconKind =
   | 'application'
@@ -27,120 +38,156 @@ export type TopologyNodeIconKind =
   | 'resource'
   | 'alert'
   | 'unknown';
-export type TopologyNodeIconName =
-  | 'app-window'
-  | 'server-cog'
-  | 'route'
-  | 'database'
-  | 'memory-stick'
-  | 'inbox'
-  | 'workflow'
-  | 'container'
-  | 'activity'
-  | 'server'
-  | 'triangle-alert'
-  | 'circle-help';
 export type TopologyNodeIcon = {
+  assetPackageLicense: 'MIT';
   iconKind: TopologyNodeIconKind;
-  iconName: TopologyNodeIconName;
-  iconLibrary: 'lucide-react';
-  iconSource: 'entity-type-catalog' | 'external-fallback';
+  iconName: string;
+  iconLibrary: '@phosphor-icons/core' | 'devicon';
+  iconLibraryVersion: '2.1.1' | '2.17.0';
+  iconSource: 'entity-type-catalog' | 'technology-catalog' | 'technology-fallback' | 'external-fallback';
   iconSrc: string;
 };
-type IconCatalogEntry = {
-  iconKind: TopologyNodeIconKind;
-  iconName: TopologyNodeIconName;
+type IconCatalogEntry = Omit<TopologyNodeIcon, 'iconSource' | 'iconSrc'> & {
   aliases: readonly string[];
-  iconNode: IconNode;
+  rawSvg: string;
 };
 
-const topologyNodeIconCatalog: readonly IconCatalogEntry[] = [
-  entry('application', 'app-window', ['application', 'app'], appWindowIconNode),
-  entry('service', 'server-cog', ['service', 'api'], serverCogIconNode),
-  entry('endpoint', 'route', ['endpoint', 'route', 'path', 'url', '/api/'], routeIconNode),
-  entry('database', 'database', ['database', 'db', 'mysql', 'postgres', 'postgresql', 'mongo'], databaseIconNode),
-  entry('cache', 'memory-stick', ['cache', 'redis', 'memcached'], memoryStickIconNode),
-  entry('queue', 'inbox', ['queue', 'mq', 'broker', 'topic', 'messaging', 'kafka', 'rabbit'], inboxIconNode),
-  entry('middleware', 'workflow', ['middleware'], workflowIconNode),
-  entry(
+const genericCatalog: readonly IconCatalogEntry[] = [
+  phosphor('application', 'app-window', ['application', 'app'], appWindowSvg),
+  phosphor('service', 'cube', ['service', 'api'], cubeSvg),
+  phosphor('endpoint', 'path', ['endpoint', 'route', 'path', 'url', '/api/'], pathSvg),
+  phosphor('database', 'database', ['database', 'db'], databaseSvg),
+  phosphor('cache', 'stack', ['cache', 'memcached'], stackSvg),
+  phosphor('queue', 'queue', ['queue', 'mq', 'broker', 'topic', 'messaging'], queueSvg),
+  phosphor('middleware', 'share-network', ['middleware'], shareNetworkSvg),
+  phosphor(
     'k8s-workload',
-    'container',
-    ['k8s', 'kubernetes', 'workload', 'pod', 'deployment', 'daemonset', 'statefulset', 'job', 'cronjob'],
-    containerIconNode
+    'cube-focus',
+    ['workload', 'pod', 'deployment', 'daemonset', 'statefulset', 'job', 'cronjob'],
+    cubeFocusSvg
   ),
-  entry('monitor', 'activity', ['monitor', 'collector', 'agent', 'probe', 'check'], activityIconNode),
-  entry('resource', 'server', ['resource', 'host', 'node', 'server', 'vm', 'device'], serverIconNode),
-  entry('alert', 'triangle-alert', ['alert', 'incident', 'event'], triangleAlertIconNode),
-  entry('unknown', 'circle-help', [], circleHelpIconNode)
+  phosphor('monitor', 'pulse', ['monitor', 'collector', 'agent', 'probe', 'check'], pulseSvg),
+  phosphor('resource', 'hard-drives', ['resource', 'host', 'node', 'server', 'vm', 'device'], hardDrivesSvg),
+  phosphor('alert', 'warning', ['alert', 'incident', 'event'], warningSvg),
+  phosphor('unknown', 'question', [], questionSvg)
 ];
-const unknownIcon = topologyNodeIconCatalog[topologyNodeIconCatalog.length - 1]!;
+// Devicon is an MIT-licensed asset package; its technology marks remain property of their respective owners.
+// Match those marks from explicit entityType tokens only, never from an entity's display name.
+const technologyCatalog: readonly IconCatalogEntry[] = [
+  devicon('service', 'spring-original', ['spring', 'springboot'], springSvg),
+  devicon('k8s-workload', 'docker-original', ['docker'], dockerSvg),
+  devicon('service', 'java-original', ['java'], javaSvg),
+  devicon('service', 'nodejs-original', ['nodejs'], nodejsSvg),
+  devicon('service', 'python-original', ['python'], pythonSvg),
+  devicon('service', 'php-original', ['php'], phpSvg),
+  devicon('database', 'postgresql-original', ['postgresql', 'postgres'], postgresqlSvg),
+  devicon('database', 'mysql-original', ['mysql'], mysqlSvg),
+  devicon('database', 'mongodb-original', ['mongodb', 'mongo'], mongodbSvg),
+  devicon('cache', 'redis-original', ['redis'], redisSvg),
+  devicon('queue', 'rabbitmq-original', ['rabbitmq', 'rabbit'], rabbitmqSvg),
+  devicon('k8s-workload', 'kubernetes-original', ['kubernetes', 'k8s'], kubernetesSvg)
+];
+const technologyFallbackCatalog: readonly IconCatalogEntry[] = [phosphor('queue', 'queue', ['kafka'], queueSvg)];
+const unknownIcon = genericCatalog[genericCatalog.length - 1]!;
 const iconSrcCache = new Map<string, string>();
 const MAXIMUM_CACHED_ICON_SOURCES = 64;
 
-export function resolveTopologyNodeIcon(entityType: string | undefined, textColor: string): TopologyNodeIcon {
-  const normalized = (entityType ?? '').toLowerCase();
-  const endpoint = normalized.startsWith('/') || normalized.includes('/api/');
-  const matched = endpoint
-    ? topologyNodeIconCatalog.find(icon => icon.iconKind === 'endpoint')
-    : topologyNodeIconCatalog.find(
-        icon => icon.iconKind !== 'unknown' && icon.aliases.some(alias => normalized.includes(alias))
+export function resolveTopologyNodeIcon(entityType: string | undefined, color: string): TopologyNodeIcon {
+  const normalized = normalizeEntityType(entityType);
+  const technology = technologyCatalog.find(icon => icon.aliases.some(alias => normalized.tokens.has(alias)));
+  if (technology) return resolvedIcon(technology, color, 'technology-catalog');
+  const technologyFallback = technologyFallbackCatalog.find(icon =>
+    icon.aliases.some(alias => normalized.tokens.has(alias))
+  );
+  if (technologyFallback) return resolvedIcon(technologyFallback, color, 'technology-fallback');
+  const endpoint = normalized.value.startsWith('/') || normalized.value.includes('/api/');
+  const generic = endpoint
+    ? genericCatalog.find(icon => icon.iconKind === 'endpoint')
+    : genericCatalog.find(
+        icon => icon.iconKind !== 'unknown' && icon.aliases.some(alias => normalized.value.includes(alias))
       );
-  return resolvedIcon(matched ?? unknownIcon, textColor, 'entity-type-catalog');
+  return resolvedIcon(generic ?? unknownIcon, color, 'entity-type-catalog');
 }
 
-export function resolveTopologyExternalIcon(textColor: string): TopologyNodeIcon {
-  return resolvedIcon(unknownIcon, textColor, 'external-fallback');
+export function resolveTopologyExternalIcon(color: string): TopologyNodeIcon {
+  return resolvedIcon(unknownIcon, color, 'external-fallback');
 }
 
-function entry(
+function phosphor(
   iconKind: TopologyNodeIconKind,
-  iconName: TopologyNodeIconName,
+  iconName: string,
   aliases: readonly string[],
-  iconNode: IconNode
+  rawSvg: string
 ): IconCatalogEntry {
-  return { iconKind, iconName, aliases, iconNode };
+  return {
+    aliases,
+    assetPackageLicense: 'MIT',
+    iconKind,
+    iconLibrary: '@phosphor-icons/core',
+    iconLibraryVersion: '2.1.1',
+    iconName,
+    rawSvg
+  };
+}
+
+function devicon(
+  iconKind: TopologyNodeIconKind,
+  iconName: string,
+  aliases: readonly string[],
+  rawSvg: string
+): IconCatalogEntry {
+  return {
+    aliases,
+    assetPackageLicense: 'MIT',
+    iconKind,
+    iconLibrary: 'devicon',
+    iconLibraryVersion: '2.17.0',
+    iconName,
+    rawSvg
+  };
 }
 
 function resolvedIcon(
   icon: IconCatalogEntry,
-  textColor: string,
+  color: string,
   iconSource: TopologyNodeIcon['iconSource']
 ): TopologyNodeIcon {
   return {
+    assetPackageLicense: icon.assetPackageLicense,
     iconKind: icon.iconKind,
+    iconLibrary: icon.iconLibrary,
+    iconLibraryVersion: icon.iconLibraryVersion,
     iconName: icon.iconName,
-    iconLibrary: 'lucide-react',
     iconSource,
-    iconSrc: cachedLucideSvgDataUri(icon, textColor)
+    iconSrc: cachedOfficialSvgDataUri(icon, color)
   };
 }
 
-function cachedLucideSvgDataUri(icon: IconCatalogEntry, textColor: string) {
-  const key = `${icon.iconName}\0${textColor}`;
+function cachedOfficialSvgDataUri(icon: IconCatalogEntry, color: string) {
+  const themedColor = icon.iconLibrary === '@phosphor-icons/core' ? color : '';
+  const key = `${icon.iconLibrary}\0${icon.iconName}\0${themedColor}`;
   const cached = iconSrcCache.get(key);
   if (cached) return cached;
-  const iconSrc = lucideSvgDataUri(icon.iconNode, textColor);
-  // Theme editors may supply arbitrary colors; keep the redraw cache bounded.
+  const iconSrc = officialSvgDataUri(icon.rawSvg, themedColor);
   if (iconSrcCache.size >= MAXIMUM_CACHED_ICON_SOURCES) iconSrcCache.clear();
   iconSrcCache.set(key, iconSrc);
   return iconSrc;
 }
 
-function lucideSvgDataUri(iconNode: IconNode, textColor: string) {
-  const children = iconNode
-    .map(([tag, attributes]) => {
-      const encoded = Object.entries(attributes)
-        .filter(([name]) => name !== 'key')
-        .map(([name, value]) => `${name}="${escapeXml(value)}"`)
-        .join(' ');
-      return `<${tag}${encoded ? ` ${encoded}` : ''}/>`;
-    })
-    .join('');
-  const svg =
-    `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" ` +
-    `fill="none" stroke="${escapeXml(textColor)}" stroke-width="2" stroke-linecap="round" ` +
-    `stroke-linejoin="round">${children}</svg>`;
+function officialSvgDataUri(rawSvg: string, color: string) {
+  const source = color ? rawSvg.replaceAll('currentColor', escapeXml(color)) : rawSvg;
+  const normalizedSource = source.replace(
+    /<svg\b/,
+    '<svg x="2" y="2" width="20" height="20" preserveAspectRatio="xMidYMid meet"'
+  );
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">${normalizedSource}</svg>`;
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
+function normalizeEntityType(entityType: string | undefined) {
+  const value = (entityType ?? '').trim().toLowerCase();
+  const words = value.split(/[^a-z0-9]+/).filter(Boolean);
+  return { tokens: new Set([...words, words.join('')]), value };
 }
 
 function escapeXml(value: string) {

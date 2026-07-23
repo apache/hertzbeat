@@ -137,10 +137,15 @@ describe('TopologyCanvas bootstrap lifecycle', () => {
 
     await waitFor(() => expect(graph.setNode).toHaveBeenCalled());
     expect(graph.setNode.mock.lastCall?.[0]).toMatchObject({
-      state: { selected: { stroke: '#5b21b6' } }
+      state: {
+        selected: {
+          halo: true,
+          haloStroke: '#5b21b6'
+        }
+      }
     });
     expect(decodeURIComponent(String(graph.setData.mock.lastCall?.[0]?.nodes?.[0]?.style?.iconSrc))).toContain(
-      'stroke="#e8edf5"'
+      'fill="#5b21b6"'
     );
     expect(runtime.Graph).toHaveBeenCalledOnce();
     expect(graph.fitView).toHaveBeenCalledOnce();

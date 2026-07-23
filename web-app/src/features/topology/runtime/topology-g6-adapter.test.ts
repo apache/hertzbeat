@@ -14,7 +14,25 @@ describe('topology G6 graph language', () => {
 
     expect(topologyG6Options(value, interaction(), palette).node).toMatchObject({
       type: 'hexagon',
-      style: { labelPlacement: 'bottom', lineWidth: 2, size: 64 }
+      style: {
+        fill: palette.nodeFill,
+        halo: false,
+        labelPlacement: 'bottom',
+        lineWidth: 2.5,
+        size: 76
+      },
+      state: {
+        dimmed: { labelOpacity: 0.3, opacity: 0.2 },
+        path: { halo: true, haloStroke: palette.selected, haloStrokeOpacity: 0.12 },
+        selected: {
+          halo: true,
+          haloLineWidth: 12,
+          haloStroke: palette.selected,
+          haloStrokeOpacity: 0.22,
+          lineWidth: 2.5,
+          stroke: expect.any(Function)
+        }
+      }
     });
     expect(topologyG6Options(value, interaction(), palette).layout).toMatchObject({
       linkDistance: 150,
@@ -24,16 +42,16 @@ describe('topology G6 graph language', () => {
       type: 'hexagon',
       data: {
         iconKind: 'service',
-        iconLibrary: 'lucide-react',
-        iconName: 'server-cog',
+        iconLibrary: '@phosphor-icons/core',
+        iconName: 'cube',
         iconSource: 'entity-type-catalog'
       },
       style: {
-        iconHeight: 18,
+        iconHeight: 28,
         iconSrc: expect.stringContaining('data:image/svg+xml,'),
-        iconWidth: 18,
+        iconWidth: 28,
         labelText: 'checkout\nservice',
-        size: 64,
+        size: 76,
         stroke: palette.success
       }
     });
@@ -41,29 +59,31 @@ describe('topology G6 graph language', () => {
       type: 'hexagon',
       data: {
         iconKind: 'unknown',
-        iconLibrary: 'lucide-react',
-        iconName: 'circle-help',
+        iconLibrary: '@phosphor-icons/core',
+        iconName: 'question',
         iconSource: 'external-fallback'
       },
       style: {
         iconSrc: expect.stringContaining('data:image/svg+xml,'),
         labelText: 'payments.example',
         lineDash: [4, 3],
-        size: 58,
+        size: 70,
         stroke: palette.neutral
       }
     });
-    expect(decodeURIComponent(iconSrc(data.nodes?.[0]?.style?.iconSrc))).toContain(`stroke="${palette.text}"`);
+    expect(decodeURIComponent(iconSrc(data.nodes?.[0]?.style?.iconSrc))).toContain(`fill="${palette.selected}"`);
+    expect(nodeStateStroke(topologyG6ElementOptions(palette), 'selected', data.nodes?.[0])).toBe(palette.success);
   });
 
-  it('regenerates node icon sources from the active theme text color', () => {
+  it('regenerates generic node assets from the active entity color without changing health semantics', () => {
     const value = presentation('theme-icons');
     const light = topologyG6Data(value, interaction(), palette).nodes?.[0]?.style?.iconSrc;
-    const darkPalette = { ...palette, text: '#e8edf5' };
+    const darkPalette = { ...palette, selected: '#8b5cf6', text: '#e8edf5' };
     const dark = topologyG6Data(value, interaction(), darkPalette).nodes?.[0]?.style?.iconSrc;
 
     expect(light).not.toBe(dark);
-    expect(decodeURIComponent(iconSrc(dark))).toContain('stroke="#e8edf5"');
+    expect(decodeURIComponent(iconSrc(dark))).toContain('fill="#8b5cf6"');
+    expect(topologyG6Data(value, interaction(), darkPalette).nodes?.[0]?.style?.stroke).toBe(darkPalette.success);
   });
 
   it('labels directed edges from available RED evidence and omits unavailable values', () => {
@@ -120,13 +140,20 @@ describe('topology G6 graph language', () => {
     const node = value.graph.nodes[0];
     if (!node) throw new Error('The topology fixture requires a node.');
 
-    expect(
-      topologyG6Data(
-        { ...value, graph: { ...value.graph, nodes: [{ ...node, health: 'vendor-private-state' }] } },
-        interaction(),
-        palette
-      ).nodes?.[0]
-    ).toMatchObject({ style: { stroke: palette.neutral } });
+    const unknown = topologyG6Data(
+      {
+        ...value,
+        graph: {
+          ...value.graph,
+          nodes: [{ ...node, entityType: 'vendor-private-kind', health: 'vendor-private-state' }]
+        }
+      },
+      interaction(),
+      palette
+    ).nodes?.[0];
+
+    expect(unknown).toMatchObject({ data: { iconKind: 'unknown' }, style: { stroke: palette.neutral } });
+    expect(decodeURIComponent(iconSrc(unknown?.style?.iconSrc))).toContain(`fill="${palette.neutral}"`);
   });
 });
 
@@ -250,5 +277,19 @@ function topologyEdge(
 
 function iconSrc(value: unknown) {
   if (typeof value !== 'string') throw new Error('The topology node icon source is missing.');
+  return value;
+}
+
+function nodeStateStroke(
+  options: ReturnType<typeof topologyG6ElementOptions>,
+  state: string,
+  node: NonNullable<ReturnType<typeof topologyG6Data>['nodes']>[number] | undefined
+) {
+  const style = options.node.state?.[state];
+  if (!style || typeof style === 'function') throw new Error('The topology node state style is missing.');
+  const stroke = style.stroke;
+  if (typeof stroke !== 'function' || !node) throw new Error('The topology node state stroke mapper is missing.');
+  const value: unknown = Reflect.apply(stroke, {}, [node]);
+  if (typeof value !== 'string') throw new Error('The topology node state stroke mapper returned an invalid value.');
   return value;
 }

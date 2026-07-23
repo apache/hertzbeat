@@ -1,6 +1,6 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import type { GraphOptions } from '@antv/g6';
+import type { GraphOptions, NodeData } from '@antv/g6';
 
 export type TopologyG6Palette = {
   border: string;
@@ -16,10 +16,10 @@ export type TopologyG6Palette = {
 };
 
 export const topologyG6VisualGeometry = {
-  externalNodeSize: 58,
-  iconSize: 18,
+  externalNodeSize: 70,
+  iconSize: 28,
   linkDistance: 150,
-  nodeSize: 64
+  nodeSize: 76
 } as const;
 
 type ElementOptions = {
@@ -28,6 +28,10 @@ type ElementOptions = {
 };
 
 export function topologyG6ElementOptions(palette: TopologyG6Palette): ElementOptions {
+  const preserveHealthStroke = (node: NodeData) => {
+    const stroke = node.style?.stroke;
+    return typeof stroke === 'string' ? stroke : palette.border;
+  };
   return {
     edge: {
       style: {
@@ -58,15 +62,37 @@ export function topologyG6ElementOptions(palette: TopologyG6Palette): ElementOpt
         labelLineHeight: 14,
         labelMaxWidth: 132,
         labelPlacement: 'bottom',
-        lineWidth: 2,
+        halo: false,
+        lineWidth: 2.5,
         size: topologyG6VisualGeometry.nodeSize,
         stroke: palette.border
       },
       state: {
-        hover: { lineWidth: 2.5, stroke: palette.hover },
-        selected: { lineWidth: 3, stroke: palette.selected },
-        path: { lineWidth: 2.5, stroke: palette.selected },
-        dimmed: { labelOpacity: 0.32, opacity: 0.24, stroke: palette.dimmed }
+        hover: {
+          halo: true,
+          haloLineWidth: 8,
+          haloStroke: palette.hover,
+          haloStrokeOpacity: 0.16,
+          lineWidth: 2.5,
+          stroke: preserveHealthStroke
+        },
+        selected: {
+          halo: true,
+          haloLineWidth: 12,
+          haloStroke: palette.selected,
+          haloStrokeOpacity: 0.22,
+          lineWidth: 2.5,
+          stroke: preserveHealthStroke
+        },
+        path: {
+          halo: true,
+          haloLineWidth: 8,
+          haloStroke: palette.selected,
+          haloStrokeOpacity: 0.12,
+          lineWidth: 2.5,
+          stroke: preserveHealthStroke
+        },
+        dimmed: { labelOpacity: 0.3, opacity: 0.2 }
       }
     }
   };

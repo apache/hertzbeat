@@ -19,7 +19,7 @@ const externalTargetsCache = new WeakMap<TopologyPresentation, ExternalTargets>(
 export function topologyG6Data(
   presentation: TopologyPresentation,
   interaction: TopologyInteraction,
-  palette: Pick<TopologyG6Palette, 'critical' | 'neutral' | 'success' | 'text' | 'warning'>
+  palette: Pick<TopologyG6Palette, 'critical' | 'neutral' | 'selected' | 'success' | 'warning'>
 ): GraphData {
   const externalTargets = topologyG6ExternalTargets(presentation).targets;
   const externalTargetByEdge = new Map(externalTargets.map(target => [target.edgeId, target]));
@@ -52,9 +52,11 @@ function topologyG6Node(
   node: TopologyNode,
   interaction: TopologyInteraction,
   emphasis: Emphasis,
-  palette: Pick<TopologyG6Palette, 'critical' | 'neutral' | 'success' | 'text' | 'warning'>
+  palette: Pick<TopologyG6Palette, 'critical' | 'neutral' | 'selected' | 'success' | 'warning'>
 ) {
-  const icon = resolveTopologyNodeIcon(node.entityType, palette.text);
+  const candidateIcon = resolveTopologyNodeIcon(node.entityType, palette.selected);
+  const icon =
+    candidateIcon.iconKind === 'unknown' ? resolveTopologyNodeIcon(node.entityType, palette.neutral) : candidateIcon;
   return {
     id: node.id,
     type: 'hexagon',
@@ -83,9 +85,9 @@ function topologyG6ExternalNode(
   target: ExternalTarget,
   interaction: TopologyInteraction,
   emphasis: Emphasis,
-  palette: Pick<TopologyG6Palette, 'neutral' | 'text'>
+  palette: Pick<TopologyG6Palette, 'neutral'>
 ) {
-  const icon = resolveTopologyExternalIcon(palette.text);
+  const icon = resolveTopologyExternalIcon(palette.neutral);
   return {
     id: target.nodeId,
     type: 'hexagon',
