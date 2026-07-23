@@ -18,7 +18,7 @@
 import type { CatalogResponse, MethodOption } from './instrumentation-contract';
 import type { FlowStage, InstrumentationFlowDraft } from './instrumentation-flow';
 
-export type InstrumentationScopeField =
+type InstrumentationScopeField =
   | 'deploymentEnvironment'
   | 'platform'
   | 'language'
@@ -32,7 +32,7 @@ export type InstrumentationScopeField =
 
 export type InstrumentationScopeValue = { kind: 'translation'; key: string } | { kind: 'text'; value: string };
 
-export type InstrumentationScopeRow = {
+type InstrumentationScopeRow = {
   field: InstrumentationScopeField;
   value: InstrumentationScopeValue;
 };
