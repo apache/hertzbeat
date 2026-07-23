@@ -25,7 +25,7 @@ import rabbitmqSvg from 'devicon/icons/rabbitmq/rabbitmq-original.svg?raw';
 import redisSvg from 'devicon/icons/redis/redis-original.svg?raw';
 import springSvg from 'devicon/icons/spring/spring-original.svg?raw';
 
-export type TopologyNodeIconKind =
+type TopologyNodeIconKind =
   | 'application'
   | 'service'
   | 'endpoint'
