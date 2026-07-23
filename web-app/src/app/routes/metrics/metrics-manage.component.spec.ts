@@ -21,6 +21,7 @@ import { fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 
+import { MemoryStorageService } from '../../service/memory-storage.service';
 import { ObservabilityService } from '../../service/observability.service';
 import { MetricsManageComponent } from './metrics-manage.component';
 
@@ -53,7 +54,7 @@ describe('MetricsManageComponent', () => {
       snapshot: { queryParamMap: convertToParamMap({ start: 1_000, end: 2_000, step: 15 }) }
     } as unknown as ActivatedRoute;
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
-    const component = new MetricsManageComponent(observability, route, router);
+    const component = new MetricsManageComponent(observability, route, router, new MemoryStorageService());
 
     component.ngOnInit();
     tick(250);

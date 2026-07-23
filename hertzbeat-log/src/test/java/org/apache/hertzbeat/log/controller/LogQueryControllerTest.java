@@ -19,6 +19,7 @@ package org.apache.hertzbeat.log.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -57,10 +58,24 @@ class LogQueryControllerTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(historyDataReader.supportsLogQuery()).thenReturn(true);
         this.logQueryController = new LogQueryController(historyDataReader, new SignalWorkloadGuard());
         this.mockMvc = MockMvcBuilders.standaloneSetup(logQueryController)
                 .setControllerAdvice(new SignalWorkloadExceptionHandler())
                 .build();
+    }
+
+    @Test
+    void shouldReturnFriendlyFailureWhenLogQueryUnsupported() throws Exception {
+        when(historyDataReader.supportsLogQuery()).thenReturn(false);
+
+        for (String path : List.of("/api/logs/list", "/api/logs/stats/overview",
+                "/api/logs/stats/trace-coverage", "/api/logs/stats/trend")) {
+            mockMvc.perform(MockMvcRequestBuilders.get(path))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                    .andExpect(jsonPath("$.msg").isNotEmpty());
+        }
     }
 
     @Test

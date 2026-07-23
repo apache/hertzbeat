@@ -29,6 +29,7 @@ import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { Subject, debounceTime, finalize, forkJoin, switchMap, takeUntil } from 'rxjs';
 
+import { MemoryStorageService } from '../../service/memory-storage.service';
 import {
   ObservabilityService,
   SignalContext,
@@ -38,7 +39,8 @@ import {
   TraceSpanNode
 } from '../../service/observability.service';
 import { SignalNavigationComponent } from '../observability/signal-navigation.component';
-import { moveSignalTimeRangeToNow, readSignalTimeRange, toSignalTimeContext } from '../observability/signal-query-context';
+import { moveSignalTimeRangeToNow, readSignalCapability, readSignalTimeRange, toSignalTimeContext } from '../observability/signal-query-context';
+import { SignalStorageGuideComponent } from '../observability/signal-storage-guide.component';
 import { SignalTimeRangeComponent } from '../observability/signal-time-range.component';
 
 @Component({
@@ -54,6 +56,7 @@ import { SignalTimeRangeComponent } from '../observability/signal-time-range.com
     NzTableModule,
     NzTagModule,
     SignalNavigationComponent,
+    SignalStorageGuideComponent,
     SignalTimeRangeComponent
   ],
   templateUrl: './trace-manage.component.html',
@@ -84,9 +87,20 @@ export class TraceManageComponent implements OnInit, OnDestroy {
   private readonly queryChanges = new Subject<void>();
   private readonly destroyed = new Subject<void>();
 
-  constructor(private observability: ObservabilityService, private route: ActivatedRoute, private router: Router) {}
+  storageSupported = true;
+
+  constructor(
+    private observability: ObservabilityService,
+    private route: ActivatedRoute,
+    private router: Router,
+    private storage: MemoryStorageService
+  ) {}
 
   ngOnInit(): void {
+    this.storageSupported = readSignalCapability(this.storage, 'trace');
+    if (!this.storageSupported) {
+      return;
+    }
     const params = this.route.snapshot.queryParamMap;
     this.timeRange = readSignalTimeRange(params);
     this.traceId = params.get('traceId') || '';

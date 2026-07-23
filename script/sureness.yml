@@ -85,6 +85,7 @@ excludedResource:
   - /api/account/auth/**===*
   - /api/i18n/**===get
   - /api/apps/hierarchy===get
+  - /api/observability/capability===get
   - /api/push/**===*
   - /api/status/page/public/**===*
   - /api/manager/sse/**===*

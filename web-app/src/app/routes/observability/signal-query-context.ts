@@ -19,9 +19,19 @@
 
 import { ParamMap } from '@angular/router';
 
+import { MemoryStorageService } from '../../service/memory-storage.service';
+
 export interface SignalTimeContext {
   start?: number;
   end?: number;
+}
+
+export type SignalCapabilityKey = 'log' | 'trace' | 'metric';
+
+/** Reads the capability probe cached at startup; fail-open when the probe is missing. */
+export function readSignalCapability(storage: MemoryStorageService, key: SignalCapabilityKey): boolean {
+  const capability = storage.getData('observabilityCapability');
+  return capability == null || capability[key] !== false;
 }
 
 export type SignalTimePreset = '15m' | '30m' | '1h' | '3h' | '6h' | '12h' | '24h' | '7d';

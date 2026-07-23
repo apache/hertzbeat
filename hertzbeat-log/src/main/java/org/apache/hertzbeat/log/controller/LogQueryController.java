@@ -24,6 +24,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader;
 import org.springframework.data.domain.Page;
@@ -32,6 +33,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.dto.observability.LogQueryFilter;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
@@ -53,6 +55,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class LogQueryController {
 
     private static final int MAX_PAGE_SIZE = 200;
+
+    private static final String LOG_STORAGE_UNAVAILABLE_MSG =
+            "Log query is not supported by the current storage, please enable a log capable storage such as GreptimeDB";
 
     private final HistoryDataReader historyDataReader;
     private final SignalWorkloadGuard workloadGuard;
@@ -88,7 +93,7 @@ public class LogQueryController {
             @RequestParam(value = "pageIndex", required = false, defaultValue = "0") Integer pageIndex,
             @Parameter(description = "Number of items per page", example = "20")
             @RequestParam(value = "pageSize", required = false, defaultValue = "20") Integer pageSize) {
-        return workloadGuard.execute(Workload.LOG_LIST, () -> {
+        return executeIfLogSupported(Workload.LOG_LIST, () -> {
             LogQueryFilter filter = filter(start, end, traceId, spanId, severityNumber, severityText, search,
                     serviceName, serviceNamespace, environment, resource);
             Page<LogEntry> result = getPagedLogs(filter, pageIndex, pageSize);
@@ -118,7 +123,7 @@ public class LogQueryController {
             @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
             @RequestParam(value = "environment", required = false) String environment,
             @RequestParam(value = "resource", required = false) String resource) {
-        return workloadGuard.execute(Workload.LOG_AGGREGATE,
+        return executeIfLogSupported(Workload.LOG_AGGREGATE,
                 () -> doOverviewStats(filter(start, end, traceId, spanId, severityNumber, severityText, search,
                         serviceName, serviceNamespace, environment, resource)));
     }
@@ -149,7 +154,7 @@ public class LogQueryController {
             @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
             @RequestParam(value = "environment", required = false) String environment,
             @RequestParam(value = "resource", required = false) String resource) {
-        return workloadGuard.execute(Workload.LOG_AGGREGATE,
+        return executeIfLogSupported(Workload.LOG_AGGREGATE,
                 () -> doTraceCoverageStats(filter(start, end, traceId, spanId, severityNumber, severityText, search,
                         serviceName, serviceNamespace, environment, resource)));
     }
@@ -182,7 +187,7 @@ public class LogQueryController {
             @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
             @RequestParam(value = "environment", required = false) String environment,
             @RequestParam(value = "resource", required = false) String resource) {
-        return workloadGuard.execute(Workload.LOG_AGGREGATE,
+        return executeIfLogSupported(Workload.LOG_AGGREGATE,
                 () -> doTrendStats(filter(start, end, traceId, spanId, severityNumber, severityText, search,
                         serviceName, serviceNamespace, environment, resource)));
     }
@@ -191,6 +196,14 @@ public class LogQueryController {
         Map<String, Object> result = new HashMap<>();
         result.put("hourlyStats", historyDataReader.queryLogTrendAggregate(filter));
         return ResponseEntity.ok(Message.success(result));
+    }
+
+    private <T> ResponseEntity<Message<T>> executeIfLogSupported(Workload workload,
+                                                                 Supplier<ResponseEntity<Message<T>>> operation) {
+        if (!historyDataReader.supportsLogQuery()) {
+            return ResponseEntity.ok(Message.fail(CommonConstants.FAIL_CODE, LOG_STORAGE_UNAVAILABLE_MSG));
+        }
+        return workloadGuard.execute(workload, operation);
     }
 
     private LogQueryFilter filter(Long start, Long end, String traceId, String spanId, Integer severityNumber,

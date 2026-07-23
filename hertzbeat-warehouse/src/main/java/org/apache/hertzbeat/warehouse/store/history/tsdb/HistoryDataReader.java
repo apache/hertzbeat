@@ -34,6 +34,13 @@ public interface HistoryDataReader {
     boolean isServerAvailable();
 
     /**
+     * @return whether this storage supports observability log query
+     */
+    default boolean supportsLogQuery() {
+        return false;
+    }
+
+    /**
      * query history range metrics data from tsdb
      *
      * @param instance instance e.g. ip:port or ip or domain
