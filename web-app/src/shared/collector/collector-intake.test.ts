@@ -10,7 +10,8 @@ import { describe, expect, it } from 'vitest';
 import {
   collectorIntakeCanBeCleared,
   collectorIntakeState,
-  parseCollectorIntakeAdvertisementRequest
+  parseCollectorIntakeAdvertisementRequest,
+  parseCollectorInstrumentationIntake
 } from './collector-intake';
 
 describe('Collector intake advertisement request', () => {
@@ -78,6 +79,42 @@ describe('Collector intake advertisement request', () => {
 
 describe('Collector intake safe state', () => {
   it.each([
+    {
+      capabilities: ['otlp_http_protobuf'],
+      otlpHttpEndpoint: 'https://telemetry.example.test/v1/metrics',
+      otlpGrpcEndpoint: null
+    },
+    {
+      capabilities: ['otlp_grpc'],
+      otlpHttpEndpoint: null,
+      otlpGrpcEndpoint: 'https://telemetry.example.test:4317'
+    }
+  ] as const)('accepts a capability-matched single endpoint', intake => {
+    expect(parseCollectorInstrumentationIntake(availableIntake(intake), 'edge')).toEqual({
+      status: 'available',
+      schemaVersion: 1,
+      collectorId: 'edge',
+      gateway: 'server',
+      authorizationHeader: 'Authorization',
+      ...intake
+    });
+  });
+
+  it.each([
+    { capabilities: [], otlpHttpEndpoint: null, otlpGrpcEndpoint: null },
+    {
+      capabilities: ['otlp_http_protobuf'],
+      otlpHttpEndpoint: 'https://telemetry.example.test/v1/metrics',
+      otlpGrpcEndpoint: 'https://telemetry.example.test:4317'
+    }
+  ] as const)('rejects a both-null or capability-mismatched available intake', intake => {
+    expect(parseCollectorInstrumentationIntake(availableIntake(intake), 'edge')).toEqual({
+      status: 'unavailable',
+      errorCode: 'intake_advertisement_invalid'
+    });
+  });
+
+  it.each([
     [
       {
         status: 'available',
@@ -100,3 +137,19 @@ describe('Collector intake safe state', () => {
     expect(collectorIntakeCanBeCleared(intake)).toBe(clearable);
   });
 });
+
+function availableIntake(intake: {
+  capabilities: readonly ('otlp_http_protobuf' | 'otlp_grpc')[];
+  otlpHttpEndpoint: string | null;
+  otlpGrpcEndpoint: string | null;
+}) {
+  return {
+    schemaVersion: 1,
+    collectorId: 'edge',
+    state: 'available',
+    gateway: 'server',
+    authorizationHeader: 'Authorization',
+    errorCode: null,
+    ...intake
+  };
+}

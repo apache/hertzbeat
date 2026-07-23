@@ -208,6 +208,41 @@ describe('instrumentation guide controller', () => {
     expect(JSON.stringify(result.current.transientTarget)).not.toContain(collector.address);
   });
 
+  it.each([
+    {
+      capabilities: ['otlp_http_protobuf'],
+      otlpHttpEndpoint: target.otlpHttpEndpoint,
+      otlpGrpcEndpoint: null
+    },
+    {
+      capabilities: ['otlp_grpc'],
+      otlpHttpEndpoint: null,
+      otlpGrpcEndpoint: target.otlpGrpcEndpoint
+    }
+  ] as const)('renders with a capability-matched single advertised endpoint', async intake => {
+    renderInstrumentationGuide.mockResolvedValue(guide);
+    const singleCapabilityCollector: InstrumentationCollector = {
+      ...availableCollector,
+      intake: { ...availableCollector.intake, ...intake }
+    };
+    const { result } = renderGuideLifecycle(draft, [singleCapabilityCollector]);
+
+    await waitFor(() => expect(result.current.state.status).toBe('idle'));
+    await act(async () => void (await result.current.render()));
+
+    expect(renderInstrumentationGuide).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collector: {
+          collectorId: 'collector-east',
+          otlpHttpEndpoint: intake.otlpHttpEndpoint,
+          otlpGrpcEndpoint: intake.otlpGrpcEndpoint,
+          authorizationHeader: 'Authorization'
+        }
+      }),
+      expect.any(AbortSignal)
+    );
+  });
+
   it('preserves memory state across an identical inventory refresh and clears it on target identity change', async () => {
     renderInstrumentationGuide.mockResolvedValue(guide);
     const view = renderGuideLifecycle(draft, [availableCollector]);

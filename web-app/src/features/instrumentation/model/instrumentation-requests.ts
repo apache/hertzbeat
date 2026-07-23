@@ -50,11 +50,15 @@ export function buildGuideRequest(
 }
 
 export function createTransientCollectorTarget(target: CollectorTarget): CollectorTarget {
-  if (!target.collectorId.trim() || target.authorizationHeader !== 'Authorization') {
+  if (
+    !target.collectorId.trim() ||
+    target.authorizationHeader !== 'Authorization' ||
+    (target.otlpHttpEndpoint === null && target.otlpGrpcEndpoint === null)
+  ) {
     throw new Error('Collector intake endpoint context is invalid');
   }
-  requireSafeEndpoint(target.otlpHttpEndpoint);
-  requireSafeEndpoint(target.otlpGrpcEndpoint);
+  if (target.otlpHttpEndpoint !== null) requireSafeEndpoint(target.otlpHttpEndpoint);
+  if (target.otlpGrpcEndpoint !== null) requireSafeEndpoint(target.otlpGrpcEndpoint);
   return {
     collectorId: target.collectorId.trim(),
     otlpHttpEndpoint: target.otlpHttpEndpoint,

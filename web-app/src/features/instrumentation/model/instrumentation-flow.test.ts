@@ -102,7 +102,23 @@ describe('instrumentation onboarding flow model', () => {
     expect(() =>
       createTransientCollectorTarget({
         collectorId: 'collector-east',
+        otlpHttpEndpoint: null,
+        otlpGrpcEndpoint: null,
+        authorizationHeader: 'Authorization'
+      })
+    ).toThrow(/intake/i);
+    expect(() =>
+      createTransientCollectorTarget({
+        collectorId: 'collector-east',
         otlpHttpEndpoint: 'http://token@collector.internal:4318',
+        otlpGrpcEndpoint: 'http://collector.internal:4317',
+        authorizationHeader: 'Authorization'
+      })
+    ).toThrow(/endpoint/i);
+    expect(() =>
+      createTransientCollectorTarget({
+        collectorId: 'collector-east',
+        otlpHttpEndpoint: '',
         otlpGrpcEndpoint: 'http://collector.internal:4317',
         authorizationHeader: 'Authorization'
       })

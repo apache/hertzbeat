@@ -19,9 +19,9 @@ import type { CollectorInstrumentationIntake } from '@/shared/collector';
 
 export type CollectorTarget = {
   collectorId: string;
-  otlpHttpEndpoint: string;
-  otlpGrpcEndpoint: string;
-  authorizationHeader: string;
+  otlpHttpEndpoint: string | null;
+  otlpGrpcEndpoint: string | null;
+  authorizationHeader: 'Authorization';
 };
 
 export type InstrumentationCollector = {

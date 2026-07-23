@@ -71,37 +71,51 @@ describe('instrumentation v1 API', () => {
     await expect(loadInstrumentationCatalog()).resolves.toEqual({ schemaVersion: 1, languages: [] });
   });
 
-  it('renders through an allowlisted body that cannot carry a token', async () => {
-    apiFetch.mockResolvedValueOnce(
-      messageResponse({
+  it.each([
+    { otlpHttpEndpoint: 'http://collector.internal:4318', otlpGrpcEndpoint: null },
+    { otlpHttpEndpoint: null, otlpGrpcEndpoint: 'http://collector.internal:4317' }
+  ] as const)(
+    'renders a single intake endpoint through an allowlisted body that cannot carry a token',
+    async target => {
+      apiFetch.mockResolvedValueOnce(
+        messageResponse({
+          schemaVersion: 1,
+          selection,
+          signals: { metrics: 'supported', logs: 'unsupported', traces: 'supported' },
+          component: componentFixture(),
+          secretPlaceholders: {},
+          steps: []
+        })
+      );
+      const request = {
         schemaVersion: 1,
-        selection,
-        signals: { metrics: 'supported', logs: 'unsupported', traces: 'supported' },
-        component: componentFixture(),
-        secretPlaceholders: {},
-        steps: []
-      })
-    );
-    const request = {
-      schemaVersion: 1,
-      ...selection,
-      collector: {
-        collectorId: context.collectorId,
-        otlpHttpEndpoint: 'http://collector.internal:4318',
-        otlpGrpcEndpoint: 'http://collector.internal:4317',
-        authorizationHeader: 'Authorization'
-      },
-      service,
-      token: 'must-not-leave-memory'
-    } as GuideRenderRequest & { token: string };
+        ...selection,
+        collector: {
+          collectorId: context.collectorId,
+          ...target,
+          authorizationHeader: 'Authorization'
+        },
+        service,
+        token: 'must-not-leave-memory'
+      } as GuideRenderRequest & { token: string };
 
-    await renderInstrumentationGuide(request);
+      await renderInstrumentationGuide(request);
 
-    const [path, init] = apiFetch.mock.calls[0]!;
-    expect(path).toBe('/api/instrumentation/v1/render');
-    expect(path).not.toContain('must-not-leave-memory');
-    expect(JSON.parse(String(init.body))).toEqual(expect.not.objectContaining({ token: expect.anything() }));
-  });
+      const [path, init] = apiFetch.mock.calls[0]!;
+      expect(path).toBe('/api/instrumentation/v1/render');
+      expect(path).not.toContain('must-not-leave-memory');
+      expect(JSON.parse(String(init.body))).toEqual(
+        expect.objectContaining({
+          collector: {
+            collectorId: context.collectorId,
+            ...target,
+            authorizationHeader: 'Authorization'
+          }
+        })
+      );
+      expect(JSON.parse(String(init.body))).toEqual(expect.not.objectContaining({ token: expect.anything() }));
+    }
+  );
 
   it('detects through an allowlisted body and parses typed polling and jumps', async () => {
     apiFetch.mockResolvedValueOnce(messageResponse(detectionFixture()));
