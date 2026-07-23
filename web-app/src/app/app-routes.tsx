@@ -116,6 +116,13 @@ export const appRoutes: RouteObject[] = [
                 }
               },
               {
+                ...getAppRouteIdentity('entity-definition'),
+                lazy: async () => {
+                  const { EntityDefinitionPage } = await import('@/features/entity');
+                  return { Component: EntityDefinitionPage };
+                }
+              },
+              {
                 ...getAppRouteIdentity('entity-detail'),
                 lazy: async () => {
                   const { EntityDetailPage } = await import('@/features/entity');

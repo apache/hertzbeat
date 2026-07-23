@@ -41,6 +41,7 @@ describe('EntityDetailView', () => {
     expect(screen.getByText('depends_on')).toBeInTheDocument();
     expect(screen.getByText('monitor down')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: i18n.t('common.edit') })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Definition' })).toBeInTheDocument();
     expect(screen.getByText('Service')).toBeInTheDocument();
     expect(screen.getByText('Degraded')).toBeInTheDocument();
     expect(screen.getByText('Manual')).toBeInTheDocument();
@@ -126,7 +127,7 @@ function renderView(
     <I18nextProvider i18n={i18n}>
       <EntityDetailView
         state={{ evidence, deleting, ...(deleteFailure ? { deleteFailure } : {}) }}
-        actions={{ back: () => undefined, edit: () => undefined, explore, remove }}
+        actions={{ back: () => undefined, edit: () => undefined, definition: () => undefined, explore, remove }}
       />
     </I18nextProvider>
   );

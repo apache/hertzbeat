@@ -44,7 +44,8 @@ export const entityRoutePaths = {
   import: `${entityListPath}/import`,
   create: `${entityListPath}/new`,
   detail: `${entityListPath}/:entityId`,
-  edit: `${entityListPath}/:entityId/edit`
+  edit: `${entityListPath}/:entityId/edit`,
+  definition: `${entityListPath}/:entityId/definition`
 } as const;
 
 /** Alert path templates shared by route registration and feature navigation. */

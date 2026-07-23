@@ -9,7 +9,6 @@ export type EntityImportFormat = (typeof entityImportFormats)[number];
 export type EntityImportRequest = { content: string; format?: EntityImportFormat };
 export type EntityImportFailure = {
   kind: 'validation' | 'permission' | 'unavailable' | 'contract' | 'error';
-  message?: string;
 };
 export type EntityImportDraft = {
   content: string;

@@ -1,15 +1,15 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { Alert, Button, Collapse, Input, Select, Space, Table, Tag, Typography } from 'antd';
+import { Alert, Button, Input, Select, Space, Table, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 import { entityRoutePaths } from '@/shared/navigation/app-paths';
 import type { EditableEntityDto } from '../model/entity-editor-contract';
-import { localizeEntityCode } from '../model/entity-display';
 import { entityImportFormats, type EntityImportViewModel } from '../model/entity-import-model';
 import styles from './entity-view.module.css';
+import { EntityDefinitionSummary } from './entity-definition-summary';
 
 export function EntityImportView({ state, actions }: EntityImportViewModel) {
   const { t } = useTranslation();
@@ -25,7 +25,7 @@ export function EntityImportView({ state, actions }: EntityImportViewModel) {
         <Alert
           showIcon
           type={state.failure.kind === 'unavailable' ? 'warning' : 'error'}
-          message={state.failure.message ?? t(`entity.import.failure.${state.failure.kind}`)}
+          message={t(`entity.import.failure.${state.failure.kind}`)}
         />
       ) : null}
       <Space direction="vertical" size="middle">
@@ -82,54 +82,10 @@ type PreviewRow = { key: string; resource: EditableEntityDto };
 function previewColumns(t: (key: string) => string): ColumnsType<PreviewRow> {
   return [
     {
-      title: t('entity.fields.name'),
-      render: (_value, row) => <strong>{row.resource.entity.displayName || row.resource.entity.name}</strong>
-    },
-    {
-      title: t('entity.fields.type'),
-      render: (_value, row) => <Tag>{localizeEntityCode(t, 'type', row.resource.entity.type)}</Tag>
-    },
-    {
-      title: t('entity.import.details'),
-      render: (_value, row) => (
-        <Collapse
-          ghost
-          size="small"
-          items={[
-            {
-              key: 'details',
-              label: t('entity.import.details'),
-              children: <ImportDetails resource={row.resource} />
-            }
-          ]}
-        />
-      )
+      title: t('entity.import.previewTitle'),
+      render: (_value, row) => <EntityDefinitionSummary resource={row.resource} messageNamespace="entity.import" />
     }
   ];
-}
-
-function ImportDetails({ resource }: { resource: EditableEntityDto }) {
-  const { t } = useTranslation();
-  const entries = [
-    ['owner', resource.entity.owner],
-    ['environment', resource.entity.environment],
-    ['namespace', resource.entity.namespace],
-    ['source', resource.entity.source]
-  ].filter((entry): entry is [string, string] => Boolean(entry[1]));
-  return (
-    <Space direction="vertical" size={2}>
-      {entries.map(([key, value]) => (
-        <Typography.Text key={key}>{`${t(`entity.import.fields.${key}`)}: ${value}`}</Typography.Text>
-      ))}
-      <Typography.Text type="secondary">
-        {t('entity.import.associationSummary', {
-          identities: resource.identities?.length ?? 0,
-          monitors: resource.monitorBinds?.length ?? 0,
-          relations: resource.relations?.length ?? 0
-        })}
-      </Typography.Text>
-    </Space>
-  );
 }
 
 function ImportSuccess({

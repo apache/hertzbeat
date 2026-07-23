@@ -41,8 +41,8 @@ describe('EntityImportView', () => {
   it('keeps failure kinds distinct and shows ordered created resource links', () => {
     const { rerender } = renderView({ failure: { kind: 'permission' } });
     expect(screen.getByText('You do not have permission to import resources.')).toBeInTheDocument();
-    rerender(view({ failure: { kind: 'validation', message: 'Fix resource type' } }));
-    expect(screen.getByText('Fix resource type')).toBeInTheDocument();
+    rerender(view({ failure: { kind: 'validation' } }));
+    expect(screen.getByText('The definitions need changes before they can be imported.')).toBeInTheDocument();
     rerender(view({ createdIds: [41, 42], preview }));
     const links = screen.getAllByRole('link').filter(link => /^\/entities\/\d+$/.test(link.getAttribute('href') ?? ''));
     expect(links.map(link => link.getAttribute('href'))).toEqual(['/entities/41', '/entities/42']);

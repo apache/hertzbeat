@@ -18,7 +18,13 @@ export function EntityDetailView({
     deleting: boolean;
     deleteFailure?: 'permission' | 'validation' | 'unavailable' | 'error';
   };
-  actions: { back: () => void; edit: () => void; explore: (signal: EntityExploreSignal) => void; remove: () => void };
+  actions: {
+    back: () => void;
+    edit: () => void;
+    definition: () => void;
+    explore: (signal: EntityExploreSignal) => void;
+    remove: () => void;
+  };
 }) {
   const { t } = useTranslation();
   const evidence = state.evidence;
@@ -41,7 +47,13 @@ function ReadyEntityDetail({
 }: {
   detail: Extract<EntityDetailEvidence, { kind: 'ready' }>['detail'];
   state: { deleting: boolean; deleteFailure?: 'permission' | 'validation' | 'unavailable' | 'error' };
-  actions: { back: () => void; edit: () => void; explore: (signal: EntityExploreSignal) => void; remove: () => void };
+  actions: {
+    back: () => void;
+    edit: () => void;
+    definition: () => void;
+    explore: (signal: EntityExploreSignal) => void;
+    remove: () => void;
+  };
 }) {
   const { t } = useTranslation();
   const signals = entityExploreSignals(detail);
@@ -56,6 +68,7 @@ function ReadyEntityDetail({
           <Button type="primary" onClick={actions.edit}>
             {t('common.edit')}
           </Button>
+          <Button onClick={actions.definition}>{t('entity.definition.action')}</Button>
           <Button danger disabled={state.deleting} loading={state.deleting} onClick={actions.remove}>
             {t('entity.delete.action')}
           </Button>

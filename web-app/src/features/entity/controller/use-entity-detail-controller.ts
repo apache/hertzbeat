@@ -15,6 +15,7 @@ import {
 import type { EntityRecord } from '../model/entity-contract';
 import {
   buildEntityEditRoute,
+  buildEntityDefinitionRoute,
   buildEntityExplorePath,
   safeEntityReturnTo,
   type EntityDetailEvidence,
@@ -46,6 +47,11 @@ export function useEntityDetailController() {
       edit: () => {
         if (evidence.kind === 'ready')
           void navigate(buildEntityEditRoute(evidence.detail.entity.id, params.get('returnTo')));
+      },
+      definition: () => {
+        if (evidence.kind === 'ready') {
+          void navigate(buildEntityDefinitionRoute(evidence.detail.entity.id, params.get('returnTo')));
+        }
       },
       explore: (signal: EntityExploreSignal) => {
         if (evidence.kind === 'ready') void navigate(buildEntityExplorePath(evidence.detail, signal));

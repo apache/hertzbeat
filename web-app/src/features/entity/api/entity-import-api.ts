@@ -2,9 +2,10 @@
 
 import { z } from 'zod';
 
-import { ApiMessageError, apiMessagePost } from '@/core/http/api-message';
+import { apiMessagePost } from '@/core/http/api-message';
 import { EntityContractError } from '../model/entity-contract';
 import type { EntityImportFailure, EntityImportRequest } from '../model/entity-import-model';
+import { classifyEntityDefinitionError } from './entity-definition-error';
 import { parseEditableEntityDtos } from './entity-editor-schema';
 
 const parsePath = '/api/entities/definition/bundle/parse';
@@ -29,26 +30,8 @@ export async function commitEntityDefinitionBundle(
   return result.data;
 }
 
-export function classifyEntityImportError(error: unknown, content: string): EntityImportFailure {
-  if (error instanceof EntityContractError) return { kind: 'contract' };
-  if (error instanceof ApiMessageError) {
-    if (error.status === 401 || error.status === 403) return { kind: 'permission' };
-    if (error.code === 1) return withSafeMessage('validation', error.message, content);
-    if (error.code === 15) return withSafeMessage('unavailable', error.message, content);
-    if (error.cause !== undefined || [0, 502, 503, 504].includes(error.status ?? 0)) return { kind: 'unavailable' };
-  }
-  return { kind: 'error' };
-}
-
-function withSafeMessage(kind: 'validation' | 'unavailable', message: string, content: string): EntityImportFailure {
-  const normalized = message.trim();
-  const hasControlCharacter = [...normalized].some(character => (character.codePointAt(0) ?? 32) < 32);
-  if (!normalized || normalized.length > 240 || hasControlCharacter) return { kind };
-  const messageFragments = normalized
-    .toLowerCase()
-    .split(/[^\p{L}\p{N}_.:@/-]+/u)
-    .filter(fragment => fragment.length >= 4);
-  const normalizedContent = content.toLowerCase();
-  if (messageFragments.some(fragment => normalizedContent.includes(fragment))) return { kind };
-  return { kind, message: normalized };
+export function classifyEntityImportError(error: unknown): EntityImportFailure {
+  const failure = classifyEntityDefinitionError(error);
+  if (failure.kind === 'missing') return { kind: 'error' };
+  return { kind: failure.kind };
 }

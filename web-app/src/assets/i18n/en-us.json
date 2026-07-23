@@ -186,6 +186,46 @@
       "success": "{{count}} resources created.",
       "returnToCatalog": "Return to resource catalog"
     },
+    "definition": {
+      "action": "Definition",
+      "title": "Resource definition",
+      "back": "Back to resource",
+      "format": "Definition format",
+      "content": "Definition content",
+      "formatBlocked": "Reset your changes before switching format.",
+      "previewAction": "Preview changes",
+      "saveAction": "Save definition",
+      "resetAction": "Reset changes",
+      "previewTitle": "Definition preview",
+      "zeroWrite": "Preview only — the resource has not been changed.",
+      "details": "Technical details",
+      "associationSummary": "{{identities}} identity keys, {{monitors}} monitor associations, {{relations}} relationships",
+      "fields": { "owner": "Owner", "environment": "Environment", "namespace": "Namespace", "source": "Source" },
+      "missing": "Resource definition not found.",
+      "loadFailure": {
+        "permission": "You do not have permission to view this resource definition.",
+        "unavailable": "Resource definition is temporarily unavailable.",
+        "contract": "The server returned an invalid resource definition.",
+        "error": "Resource definition could not be loaded."
+      },
+      "failure": {
+        "missing": "This resource definition no longer exists.",
+        "permission": "You do not have permission to change this resource definition.",
+        "validation": "The definition needs changes before it can be saved.",
+        "unavailable": "Resource definition is temporarily unavailable.",
+        "contract": "The server returned an invalid resource definition response.",
+        "error": "Resource definition could not be saved."
+      },
+      "refreshFailure": {
+        "missing": "The definition was saved, but the current version could not be reloaded because the resource was not found.",
+        "permission": "The definition was saved, but you do not have permission to reload the current version.",
+        "validation": "The definition was saved, but the current version could not be reloaded.",
+        "unavailable": "The definition was saved, but the current version is temporarily unavailable.",
+        "contract": "The definition was saved, but the server returned an invalid response while reloading it.",
+        "error": "The definition was saved, but the current version could not be reloaded."
+      },
+      "saved": "Resource definition saved."
+    },
     "delete": {
       "action": "Delete resource",
       "title": "Delete resource “{{name}}”?",

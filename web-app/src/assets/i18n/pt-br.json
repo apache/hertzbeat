@@ -186,6 +186,46 @@
       "success": "{{count}} recursos criados.",
       "returnToCatalog": "Voltar ao catálogo de recursos"
     },
+    "definition": {
+      "action": "Definição",
+      "title": "Definição do recurso",
+      "back": "Voltar ao recurso",
+      "format": "Formato da definição",
+      "content": "Conteúdo da definição",
+      "formatBlocked": "Redefina suas alterações antes de trocar o formato.",
+      "previewAction": "Visualizar alterações",
+      "saveAction": "Salvar definição",
+      "resetAction": "Redefinir alterações",
+      "previewTitle": "Prévia da definição",
+      "zeroWrite": "Somente prévia — o recurso não foi alterado.",
+      "details": "Detalhes técnicos",
+      "associationSummary": "{{identities}} chaves de identidade, {{monitors}} associações de monitor, {{relations}} relações",
+      "fields": { "owner": "Responsável", "environment": "Ambiente", "namespace": "Namespace", "source": "Origem" },
+      "missing": "Definição do recurso não encontrada.",
+      "loadFailure": {
+        "permission": "Você não tem permissão para ver esta definição de recurso.",
+        "unavailable": "A definição do recurso está temporariamente indisponível.",
+        "contract": "O servidor retornou uma definição de recurso inválida.",
+        "error": "Não foi possível carregar a definição do recurso."
+      },
+      "failure": {
+        "missing": "Esta definição de recurso não existe mais.",
+        "permission": "Você não tem permissão para alterar esta definição de recurso.",
+        "validation": "A definição precisa de ajustes antes de ser salva.",
+        "unavailable": "A definição do recurso está temporariamente indisponível.",
+        "contract": "O servidor retornou uma resposta de definição de recurso inválida.",
+        "error": "Não foi possível salvar a definição do recurso."
+      },
+      "refreshFailure": {
+        "missing": "A definição foi salva, mas o recurso não foi encontrado ao recarregar a versão atual.",
+        "permission": "A definição foi salva, mas você não tem permissão para recarregar a versão atual.",
+        "validation": "A definição foi salva, mas não foi possível recarregar a versão atual.",
+        "unavailable": "A definição foi salva, mas a versão atual está temporariamente indisponível.",
+        "contract": "A definição foi salva, mas o servidor retornou uma resposta inválida ao recarregá-la.",
+        "error": "A definição foi salva, mas não foi possível recarregar a versão atual."
+      },
+      "saved": "Definição do recurso salva."
+    },
     "delete": {
       "action": "Excluir recurso",
       "title": "Excluir o recurso “{{name}}”?",

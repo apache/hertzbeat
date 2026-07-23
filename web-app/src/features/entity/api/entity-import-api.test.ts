@@ -49,33 +49,22 @@ describe('entity import API', () => {
     await expect(commitEntityDefinitionBundle({ content: '[{},{}]', format: 'json' }, 2)).rejects.toThrow();
   });
 
-  it('classifies failures and only exposes bounded code 1/15 server messages without pasted content', () => {
-    expect(classifyEntityImportError(new ApiMessageError('Fix resource type', { code: 1 }), 'secret-yaml')).toEqual({
-      kind: 'validation',
-      message: 'Fix resource type'
-    });
-    expect(
-      classifyEntityImportError(new ApiMessageError('secret-yaml is invalid', { code: 1 }), 'secret-yaml')
-    ).toEqual({
+  it('classifies failures without exposing server messages or pasted content', () => {
+    expect(classifyEntityImportError(new ApiMessageError('Fix resource type', { code: 1 }))).toEqual({
       kind: 'validation'
     });
-    expect(
-      classifyEntityImportError(new ApiMessageError('Value super-secret is invalid', { code: 1 }), 'name: super-secret')
-    ).toEqual({ kind: 'validation' });
-    expect(classifyEntityImportError(new ApiMessageError('Try again later', { code: 15 }), 'secret-yaml')).toEqual({
-      kind: 'unavailable',
-      message: 'Try again later'
+    expect(classifyEntityImportError(new ApiMessageError('secret-yaml is invalid', { code: 1 }))).toEqual({
+      kind: 'validation'
     });
-    expect(classifyEntityImportError(new ApiMessageError('private', { status: 401 }), '')).toEqual({
+    expect(classifyEntityImportError(new ApiMessageError('Value super-secret is invalid', { code: 1 }))).toEqual({
+      kind: 'validation'
+    });
+    expect(classifyEntityImportError(new ApiMessageError('Try again later', { code: 15 }))).toEqual({
+      kind: 'unavailable'
+    });
+    expect(classifyEntityImportError(new ApiMessageError('private', { status: 401 }))).toEqual({
       kind: 'permission'
     });
-    expect(classifyEntityImportError(new Error('private'), '')).toEqual({ kind: 'error' });
-  });
-
-  it('redacts a bounded server-message fragment from a maximum-sized definition without tokenizing the input', () => {
-    const content = `${'x'.repeat(3_000_000)}\nname: tail-secret`;
-    expect(
-      classifyEntityImportError(new ApiMessageError('Value tail-secret is invalid', { code: 1 }), content)
-    ).toEqual({ kind: 'validation' });
+    expect(classifyEntityImportError(new Error('private'))).toEqual({ kind: 'error' });
   });
 });

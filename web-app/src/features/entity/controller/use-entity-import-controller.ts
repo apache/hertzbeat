@@ -69,7 +69,7 @@ export function useEntityImportController(): EntityImportViewModel {
       const resources = await previewEntityDefinitionBundle(request);
       if (revision.current === requestedRevision) setDraft(current => previewedEntityImport(current, resources));
     } catch (error) {
-      if (revision.current === requestedRevision) setFailure(classifyEntityImportError(error, request.content));
+      if (revision.current === requestedRevision) setFailure(classifyEntityImportError(error));
     } finally {
       previewLock.current = false;
       setPreviewing(false);
@@ -88,7 +88,7 @@ export function useEntityImportController(): EntityImportViewModel {
       void client.invalidateQueries({ queryKey: entityQueryKeys.lists(), refetchType: 'none' });
       setCreatedIds(ids);
     } catch (error) {
-      setFailure(classifyEntityImportError(error, request.content));
+      setFailure(classifyEntityImportError(error));
     } finally {
       confirmLock.current = false;
       setConfirming(false);

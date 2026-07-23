@@ -180,6 +180,46 @@
       "success": "{{count}} 件のリソースを作成しました。",
       "returnToCatalog": "リソースカタログに戻る"
     },
+    "definition": {
+      "action": "定義",
+      "title": "リソース定義",
+      "back": "リソースに戻る",
+      "format": "定義形式",
+      "content": "定義内容",
+      "formatBlocked": "形式を切り替える前に変更をリセットしてください。",
+      "previewAction": "変更をプレビュー",
+      "saveAction": "定義を保存",
+      "resetAction": "変更をリセット",
+      "previewTitle": "定義プレビュー",
+      "zeroWrite": "プレビューのみです。リソースは変更されていません。",
+      "details": "技術的な詳細",
+      "associationSummary": "ID キー {{identities}} 件、モニター関連付け {{monitors}} 件、関係 {{relations}} 件",
+      "fields": { "owner": "所有者", "environment": "環境", "namespace": "名前空間", "source": "ソース" },
+      "missing": "リソース定義が見つかりません。",
+      "loadFailure": {
+        "permission": "このリソース定義を表示する権限がありません。",
+        "unavailable": "リソース定義は一時的に利用できません。",
+        "contract": "サーバーから無効なリソース定義が返されました。",
+        "error": "リソース定義を読み込めませんでした。"
+      },
+      "failure": {
+        "missing": "このリソース定義は存在しません。",
+        "permission": "このリソース定義を変更する権限がありません。",
+        "validation": "保存する前に定義を修正してください。",
+        "unavailable": "リソース定義は一時的に利用できません。",
+        "contract": "サーバーから無効なリソース定義応答が返されました。",
+        "error": "リソース定義を保存できませんでした。"
+      },
+      "refreshFailure": {
+        "missing": "定義は保存されましたが、再読み込み時にリソースが見つかりませんでした。",
+        "permission": "定義は保存されましたが、現在のバージョンを再読み込みする権限がありません。",
+        "validation": "定義は保存されましたが、現在のバージョンを再読み込みできませんでした。",
+        "unavailable": "定義は保存されましたが、現在のバージョンは一時的に利用できません。",
+        "contract": "定義は保存されましたが、再読み込み時にサーバーから無効な応答が返されました。",
+        "error": "定義は保存されましたが、現在のバージョンを再読み込みできませんでした。"
+      },
+      "saved": "リソース定義を保存しました。"
+    },
     "delete": {
       "action": "リソースを削除",
       "title": "リソース「{{name}}」を削除しますか？",

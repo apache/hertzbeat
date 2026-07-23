@@ -175,6 +175,46 @@
       "success": "已建立 {{count}} 個資源。",
       "returnToCatalog": "返回資源目錄"
     },
+    "definition": {
+      "action": "定義",
+      "title": "資源定義",
+      "back": "返回資源",
+      "format": "定義格式",
+      "content": "定義內容",
+      "formatBlocked": "切換格式前請重設變更。",
+      "previewAction": "預覽變更",
+      "saveAction": "儲存定義",
+      "resetAction": "重設變更",
+      "previewTitle": "定義預覽",
+      "zeroWrite": "僅預覽——資源尚未變更。",
+      "details": "技術詳情",
+      "associationSummary": "{{identities}} 個身分鍵，{{monitors}} 個監控關聯，{{relations}} 個關係",
+      "fields": { "owner": "負責人", "environment": "環境", "namespace": "命名空間", "source": "來源" },
+      "missing": "找不到資源定義。",
+      "loadFailure": {
+        "permission": "您沒有檢視此資源定義的權限。",
+        "unavailable": "資源定義暫時無法使用。",
+        "contract": "伺服器傳回了無效的資源定義。",
+        "error": "無法載入資源定義。"
+      },
+      "failure": {
+        "missing": "此資源定義已不存在。",
+        "permission": "您沒有變更此資源定義的權限。",
+        "validation": "定義需要修改後才能儲存。",
+        "unavailable": "資源定義暫時無法使用。",
+        "contract": "伺服器傳回了無效的資源定義回應。",
+        "error": "無法儲存資源定義。"
+      },
+      "refreshFailure": {
+        "missing": "定義已儲存，但重新載入時找不到該資源。",
+        "permission": "定義已儲存，但您沒有權限重新載入目前版本。",
+        "validation": "定義已儲存，但無法重新載入目前版本。",
+        "unavailable": "定義已儲存，但目前版本暫時無法使用。",
+        "contract": "定義已儲存，但重新載入時伺服器傳回了無效回應。",
+        "error": "定義已儲存，但無法重新載入目前版本。"
+      },
+      "saved": "資源定義已儲存。"
+    },
     "delete": {
       "action": "刪除資源",
       "title": "刪除資源「{{name}}」？",

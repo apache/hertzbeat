@@ -7,6 +7,8 @@ export const entityQueryKeys = {
   details: () => [...entityQueryKeys.all, 'detail'] as const,
   detail: (id: number | undefined) => [...entityQueryKeys.all, 'detail', id] as const,
   editor: (id: number | undefined) => [...entityQueryKeys.all, 'editor', id] as const,
+  definitions: () => [...entityQueryKeys.all, 'definition'] as const,
+  definition: (id: number | undefined, format: string) => [...entityQueryKeys.definitions(), id, format] as const,
   discovery: (scope: string) => [...entityQueryKeys.all, 'discovery', scope] as const,
   suggestions: () => [...entityQueryKeys.all, 'suggestions'] as const
 };

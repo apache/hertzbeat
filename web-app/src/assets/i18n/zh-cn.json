@@ -175,6 +175,46 @@
       "success": "已创建 {{count}} 个资源。",
       "returnToCatalog": "返回资源目录"
     },
+    "definition": {
+      "action": "定义",
+      "title": "资源定义",
+      "back": "返回资源",
+      "format": "定义格式",
+      "content": "定义内容",
+      "formatBlocked": "切换格式前请重置更改。",
+      "previewAction": "预览更改",
+      "saveAction": "保存定义",
+      "resetAction": "重置更改",
+      "previewTitle": "定义预览",
+      "zeroWrite": "仅预览——资源尚未更改。",
+      "details": "技术详情",
+      "associationSummary": "{{identities}} 个身份键，{{monitors}} 个监控关联，{{relations}} 个关系",
+      "fields": { "owner": "负责人", "environment": "环境", "namespace": "命名空间", "source": "来源" },
+      "missing": "未找到资源定义。",
+      "loadFailure": {
+        "permission": "您没有查看此资源定义的权限。",
+        "unavailable": "资源定义暂时不可用。",
+        "contract": "服务器返回了无效的资源定义。",
+        "error": "无法加载资源定义。"
+      },
+      "failure": {
+        "missing": "此资源定义已不存在。",
+        "permission": "您没有更改此资源定义的权限。",
+        "validation": "定义需要修改后才能保存。",
+        "unavailable": "资源定义暂时不可用。",
+        "contract": "服务器返回了无效的资源定义响应。",
+        "error": "无法保存资源定义。"
+      },
+      "refreshFailure": {
+        "missing": "定义已保存，但重新加载时未找到该资源。",
+        "permission": "定义已保存，但您没有权限重新加载当前版本。",
+        "validation": "定义已保存，但无法重新加载当前版本。",
+        "unavailable": "定义已保存，但当前版本暂时不可用。",
+        "contract": "定义已保存，但重新加载时服务器返回了无效响应。",
+        "error": "定义已保存，但无法重新加载当前版本。"
+      },
+      "saved": "资源定义已保存。"
+    },
     "delete": {
       "action": "删除资源",
       "title": "删除资源“{{name}}”？",

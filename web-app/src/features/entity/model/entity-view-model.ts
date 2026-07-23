@@ -10,6 +10,7 @@ import {
 } from './entity-discovery-model';
 import { safeEntityListPath, writeEntityQuery } from './entity-query';
 import { buildEntityImportPath } from './entity-import-model';
+import { buildEntityDefinitionRoute } from './entity-definition-model';
 
 export const defaultEntityQuery: EntityQuery = {
   search: '',
@@ -81,6 +82,8 @@ export function buildEntityEditRoute(id: number, listReturnTo: string | null) {
   );
   return withReturnTo(buildEntityEditPath(id), detailReturnTo);
 }
+
+export { buildEntityDefinitionRoute };
 
 export function safeEntityEditorReturnTo(value: string | null, id?: number) {
   if (value?.startsWith(`${entityRoutePaths.list}?`)) return safeEntityReturnTo(value);

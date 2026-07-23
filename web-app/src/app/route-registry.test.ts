@@ -110,6 +110,14 @@ describe('route registry', () => {
     expect(getAppRoute('entity-import')).toMatchObject({ id: 'entity-import', path: '/entities/import', kind: 'page' });
   });
 
+  it('registers existing resource definition editing centrally', () => {
+    expect(getAppRoute('entity-definition')).toMatchObject({
+      id: 'entity-definition',
+      path: '/entities/:entityId/definition',
+      kind: 'page'
+    });
+  });
+
   it('registers external-alert integrations with a concrete navigation target', () => {
     expect(getAppRoute('alert-integrations')).toMatchObject({
       id: 'alert-integrations',
