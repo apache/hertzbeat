@@ -65,6 +65,35 @@ export type TraceExploreQuery = SharedExploreQuery & {
 
 export type ExploreQuery = MetricExploreQuery | LogExploreQuery | TraceExploreQuery;
 
+export type ExploreQueryPatch = {
+  signal?: ExploreSignal | undefined;
+  timeRange?: ExploreTimeRange | undefined;
+  serviceName?: string | undefined;
+  serviceNamespace?: string | undefined;
+  environment?: string | undefined;
+  collectorId?: string | undefined;
+  instance?: string | undefined;
+  endpoint?: string | undefined;
+  query?: string | undefined;
+  windowMode?: 'preset' | undefined;
+  start?: number | undefined;
+  end?: number | undefined;
+  traceId?: string | undefined;
+  errorOnly?: boolean | undefined;
+  live?: boolean | undefined;
+  severityText?: string | undefined;
+  spanId?: string | undefined;
+  resourceFilter?: string | undefined;
+  attributeFilter?: string | undefined;
+  metricFilter?: string | undefined;
+  groupBy?: string | undefined;
+  aggregation?: string | undefined;
+  step?: string | undefined;
+  minDurationMs?: number | undefined;
+  maxDurationMs?: number | undefined;
+  pageIndex?: number | undefined;
+};
+
 export function timeRangeMilliseconds(timeRange: ExploreTimeRange) {
   const minutes: Record<ExploreTimeRange, number> = {
     'last-15m': 15,

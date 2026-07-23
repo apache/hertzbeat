@@ -20,6 +20,7 @@ import {
   exploreHandoffState,
   exploreUsesExactWindow,
   type ExploreQuery,
+  type ExploreQueryPatch,
   type ExploreSignal,
   type ExploreTimeRange
 } from './explore-query';
@@ -39,40 +40,12 @@ export {
   exploreUsesExactWindow,
   timeRangeMilliseconds,
   type ExploreQuery,
+  type ExploreQueryPatch,
   type ExploreSignal,
   type ExploreTimeRange,
   type LogExploreQuery,
   type TraceExploreQuery
 } from './explore-query';
-
-export type ExploreQueryPatch = {
-  signal?: ExploreSignal | undefined;
-  timeRange?: ExploreTimeRange | undefined;
-  serviceName?: string | undefined;
-  serviceNamespace?: string | undefined;
-  environment?: string | undefined;
-  collectorId?: string | undefined;
-  instance?: string | undefined;
-  endpoint?: string | undefined;
-  query?: string | undefined;
-  windowMode?: 'preset' | undefined;
-  start?: number | undefined;
-  end?: number | undefined;
-  traceId?: string | undefined;
-  errorOnly?: boolean | undefined;
-  live?: boolean | undefined;
-  severityText?: string | undefined;
-  spanId?: string | undefined;
-  resourceFilter?: string | undefined;
-  attributeFilter?: string | undefined;
-  metricFilter?: string | undefined;
-  groupBy?: string | undefined;
-  aggregation?: string | undefined;
-  step?: string | undefined;
-  minDurationMs?: number | undefined;
-  maxDurationMs?: number | undefined;
-  pageIndex?: number | undefined;
-};
 
 const DEFAULT_EXPLORE_QUERY: ExploreQuery = {
   signal: 'traces',
