@@ -1,7 +1,7 @@
 /* Licensed to the Apache Software Foundation (ASF) under the Apache License, Version 2.0. */
 
-import { useEffect, useRef, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef, useState, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
+import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { entityRoutePaths } from '@/shared/navigation/app-paths';
@@ -28,9 +28,7 @@ import { entityQueryKeys } from './entity-query-keys';
 export function useEntityImportController(): EntityImportViewModel {
   const navigate = useNavigate();
   const client = useQueryClient();
-  const location = useLocation();
-  const [params, setParams] = useSearchParams();
-  const returnTo = safeEntityImportReturnTo(params.get('returnTo'));
+  const returnTo = useCanonicalEntityImportReturnTo();
   const [draft, setDraft] = useState(initialEntityImportDraft);
   const [previewing, setPreviewing] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -41,13 +39,6 @@ export function useEntityImportController(): EntityImportViewModel {
   const previewLock = useRef(false);
   const confirmLock = useRef(false);
 
-  useEffect(() => {
-    const canonical = new URLSearchParams({ returnTo });
-    if (location.pathname === entityRoutePaths.import && params.toString() !== canonical.toString()) {
-      setParams(canonical, { replace: true });
-    }
-  }, [location.pathname, params, returnTo, setParams]);
-
   const invalidate = (next: typeof draft) => {
     if (confirmLock.current) return;
     revision.current += 1;
@@ -57,42 +48,15 @@ export function useEntityImportController(): EntityImportViewModel {
   };
   const changeContent = (content: string) => invalidate(changeEntityImportContent(draft, content));
   const changeFormat = (format: EntityImportFormat) => invalidate(changeEntityImportFormat(draft, format));
-
-  const preview = async () => {
-    if (!draft.content.trim() || previewLock.current || confirmLock.current || confirming) return;
-    const request = entityImportRequest(draft);
-    const requestedRevision = revision.current;
-    previewLock.current = true;
-    setPreviewing(true);
-    setFailure(undefined);
-    try {
-      const resources = await previewEntityDefinitionBundle(request);
-      if (revision.current === requestedRevision) setDraft(current => previewedEntityImport(current, resources));
-    } catch (error) {
-      if (revision.current === requestedRevision) setFailure(classifyEntityImportError(error));
-    } finally {
-      previewLock.current = false;
-      setPreviewing(false);
-    }
-  };
-
-  const confirm = async () => {
-    if (!canConfirmEntityImport(draft) || confirmLock.current || previewLock.current || previewing) return;
-    const request = entityImportRequest(draft);
-    const count = draft.preview?.length ?? 0;
-    confirmLock.current = true;
-    setConfirming(true);
-    setFailure(undefined);
-    try {
-      const ids = await commitEntityDefinitionBundle(request, count);
-      void client.invalidateQueries({ queryKey: entityQueryKeys.lists(), refetchType: 'none' });
-      setCreatedIds(ids);
-    } catch (error) {
-      setFailure(classifyEntityImportError(error));
-    } finally {
-      confirmLock.current = false;
-      setConfirming(false);
-    }
+  const runtime = {
+    revision,
+    previewLock,
+    confirmLock,
+    setDraft,
+    setPreviewing,
+    setConfirming,
+    setFailure,
+    setCreatedIds
   };
 
   return {
@@ -109,11 +73,80 @@ export function useEntityImportController(): EntityImportViewModel {
     actions: {
       changeContent,
       changeFormat,
-      preview: () => void preview(),
-      confirm: () => void confirm(),
+      preview: () => void previewImport(draft, confirming, runtime),
+      confirm: () => void confirmImport(draft, previewing, client, runtime),
       cancel: () => {
         if (!confirmLock.current) void navigate(returnTo);
       }
     }
   };
+}
+
+type ImportRuntime = {
+  revision: MutableRefObject<number>;
+  previewLock: MutableRefObject<boolean>;
+  confirmLock: MutableRefObject<boolean>;
+  setDraft: Dispatch<SetStateAction<typeof initialEntityImportDraft>>;
+  setPreviewing: Dispatch<SetStateAction<boolean>>;
+  setConfirming: Dispatch<SetStateAction<boolean>>;
+  setFailure: Dispatch<SetStateAction<EntityImportFailure | undefined>>;
+  setCreatedIds: Dispatch<SetStateAction<number[] | undefined>>;
+};
+
+function useCanonicalEntityImportReturnTo() {
+  const location = useLocation();
+  const [params, setParams] = useSearchParams();
+  const returnTo = safeEntityImportReturnTo(params.get('returnTo'));
+  useEffect(() => {
+    const canonical = new URLSearchParams({ returnTo });
+    if (location.pathname === entityRoutePaths.import && params.toString() !== canonical.toString()) {
+      setParams(canonical, { replace: true });
+    }
+  }, [location.pathname, params, returnTo, setParams]);
+  return returnTo;
+}
+
+async function previewImport(draft: typeof initialEntityImportDraft, confirming: boolean, runtime: ImportRuntime) {
+  if (!draft.content.trim() || runtime.previewLock.current || runtime.confirmLock.current || confirming) return;
+  const request = entityImportRequest(draft);
+  const requestedRevision = runtime.revision.current;
+  runtime.previewLock.current = true;
+  runtime.setPreviewing(true);
+  runtime.setFailure(undefined);
+  try {
+    const resources = await previewEntityDefinitionBundle(request);
+    if (runtime.revision.current === requestedRevision) {
+      runtime.setDraft(current => previewedEntityImport(current, resources));
+    }
+  } catch (error) {
+    if (runtime.revision.current === requestedRevision) runtime.setFailure(classifyEntityImportError(error));
+  } finally {
+    runtime.previewLock.current = false;
+    runtime.setPreviewing(false);
+  }
+}
+
+async function confirmImport(
+  draft: typeof initialEntityImportDraft,
+  previewing: boolean,
+  client: QueryClient,
+  runtime: ImportRuntime
+) {
+  if (!canConfirmEntityImport(draft) || runtime.confirmLock.current || runtime.previewLock.current || previewing)
+    return;
+  const request = entityImportRequest(draft);
+  const count = draft.preview?.length ?? 0;
+  runtime.confirmLock.current = true;
+  runtime.setConfirming(true);
+  runtime.setFailure(undefined);
+  try {
+    const ids = await commitEntityDefinitionBundle(request, count);
+    void client.invalidateQueries({ queryKey: entityQueryKeys.lists(), refetchType: 'none' });
+    runtime.setCreatedIds(ids);
+  } catch (error) {
+    runtime.setFailure(classifyEntityImportError(error));
+  } finally {
+    runtime.confirmLock.current = false;
+    runtime.setConfirming(false);
+  }
 }
