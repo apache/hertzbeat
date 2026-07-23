@@ -179,7 +179,8 @@ public class SopEngineImpl implements SopEngine {
             return resultBuilder.build();
             
         } catch (Exception e) {
-            log.error("Error executing SOP {}: {}", definition.getName(), e.getMessage(), e);
+            String sopName = definition == null ? "unknown" : definition.getName();
+            log.error("Error executing SOP {}: {}", sopName, e.getMessage(), e);
             return buildFailedResult(resultBuilder, stepResults, e.getMessage(), startTime);
         }
     }
