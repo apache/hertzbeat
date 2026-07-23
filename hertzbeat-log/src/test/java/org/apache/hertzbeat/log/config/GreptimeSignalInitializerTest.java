@@ -76,6 +76,8 @@ class GreptimeSignalInitializerTest {
                 "ALTER TABLE hzb_traces ADD COLUMN IF NOT EXISTS \"resource_attributes.service.namespace\""));
         sqlOrder.verify(sqlQueryExecutor).execute(org.mockito.ArgumentMatchers.startsWith(
                 "ALTER TABLE hzb_traces ADD COLUMN IF NOT EXISTS \"resource_attributes.deployment.environment.name\""));
+        sqlOrder.verify(sqlQueryExecutor).execute(org.mockito.ArgumentMatchers.contains(
+                "CREATE TABLE IF NOT EXISTS hertzbeat_logs"));
         sqlOrder.verify(sqlQueryExecutor).execute("SELECT 1 AS ready");
         verify(restTemplate).exchange(eq("http://127.0.0.1:4000/v1/pipelines/hertzbeat_otlp_log_v1"),
                 eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class));
