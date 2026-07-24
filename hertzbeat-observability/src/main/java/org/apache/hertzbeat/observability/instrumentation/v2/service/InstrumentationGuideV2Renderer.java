@@ -35,6 +35,9 @@ import org.apache.hertzbeat.observability.instrumentation.v2.api.Instrumentation
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.OtlpTransport;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationV2RequestException;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationV2RequestException.ErrorCode;
+import org.apache.hertzbeat.observability.instrumentation.v2.guide.InstrumentationSourceGuideV2Registry;
+import org.apache.hertzbeat.observability.instrumentation.v2.guide.InstrumentationSourceGuideV2Registry.GuideContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /** Renders validated v2 blocks while delegating application instructions to the v1 adapters. */
@@ -47,14 +50,25 @@ public class InstrumentationGuideV2Renderer {
     private final InstrumentationCatalogV2Service catalogService;
     private final InstrumentationIntakeProfileV2Service profileService;
     private final InstrumentationApplicationGuideV2Adapter applicationAdapter;
+    private final InstrumentationSourceGuideV2Registry sourceTemplates;
 
     public InstrumentationGuideV2Renderer(
             InstrumentationCatalogV2Service catalogService,
             InstrumentationIntakeProfileV2Service profileService,
             InstrumentationApplicationGuideV2Adapter applicationAdapter) {
+        this(catalogService, profileService, applicationAdapter, InstrumentationSourceGuideV2Registry.official());
+    }
+
+    @Autowired
+    public InstrumentationGuideV2Renderer(
+            InstrumentationCatalogV2Service catalogService,
+            InstrumentationIntakeProfileV2Service profileService,
+            InstrumentationApplicationGuideV2Adapter applicationAdapter,
+            InstrumentationSourceGuideV2Registry sourceTemplates) {
         this.catalogService = catalogService;
         this.profileService = profileService;
         this.applicationAdapter = applicationAdapter;
+        this.sourceTemplates = sourceTemplates;
     }
 
     public RenderResponse render(RenderRequest request) {
@@ -85,7 +99,8 @@ public class InstrumentationGuideV2Renderer {
             case APPLICATION -> applicationAdapter.blocks(
                     request, recipe, profile, target.endpoint(), target.protocol(), service);
             case QUICK_START -> quickStartBlocks(target, service, recipe);
-            case EXISTING_OPENTELEMETRY -> existingCollectorBlocks(target);
+            case EXISTING_OPENTELEMETRY -> sourceTemplates.render(
+                    recipe.id(), new GuideContext(target.endpoint(), target.protocol(), service));
         };
     }
 
@@ -148,39 +163,6 @@ public class InstrumentationGuideV2Renderer {
                 + " --otlp-attributes 'service.namespace=\"" + service.namespace() + "\"'"
                 + " --otlp-attributes 'deployment.environment.name=\"" + service.environment() + "\"' "
                 + countFlag;
-    }
-
-    private List<GuideBlock> existingCollectorBlocks(Target target) {
-        return List.of(
-                copyable(
-                        "configure_exporter",
-                        BlockType.CODE,
-                        "instrumentation.v2.block.configure_exporter",
-                        "instrumentation.location.otel_collector",
-                        "yaml",
-                        exporterFragment(target),
-                        null,
-                        List.of(TOKEN_NAME)),
-                note(
-                        "merge_exporter",
-                        "instrumentation.v2.block.merge_exporter",
-                        "instrumentation.v2.note.merge_exporter_into_each_pipeline",
-                        "instrumentation.location.otel_collector"),
-                note(
-                        "restart_collector",
-                        "instrumentation.v2.block.restart_collector",
-                        "instrumentation.v2.note.restart_collector_for_deployment",
-                        "instrumentation.location.otel_collector"),
-                check("validate_signals", "instrumentation.v2.check.detect_scoped_signals"));
-    }
-
-    private String exporterFragment(Target target) {
-        String exporter = "http/protobuf".equals(target.protocol()) ? "otlphttp/hertzbeat" : "otlp/hertzbeat";
-        return "exporters:\n"
-                + "  " + exporter + ":\n"
-                + "    endpoint: " + target.endpoint() + "\n"
-                + "    headers:\n"
-                + "      Authorization: \"Bearer " + TOKEN_MARKER + "\"";
     }
 
     private GuideBlock copyable(

@@ -231,7 +231,8 @@ class InstrumentationV2ReviewContractTest {
                 first.blocksPreview());
         assertThrows(
                 IllegalArgumentException.class,
-                () -> new CatalogResponse(2, catalog.sources(), List.of(first, duplicate)));
+                () -> new CatalogResponse(
+                        2, catalog.groups(), catalog.sources(), List.of(first, duplicate)));
 
         DetectionResponse detected = detectionService(
                 List.of(serverProfile()), ignored -> waitingSnapshot(), ignored -> null)

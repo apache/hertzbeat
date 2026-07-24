@@ -43,10 +43,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Version 2 typed instrumentation onboarding API. */
+/** Typed instrumentation onboarding API. */
 @RestController
-@RequestMapping(path = "/api/instrumentation/v2", produces = "application/json")
-@Tag(name = "Application Instrumentation V2 Controller")
+@RequestMapping(path = "/api/instrumentation", produces = "application/json")
+@Tag(name = "Application Instrumentation Controller")
 @RequiredArgsConstructor
 public class InstrumentationV2Controller {
 

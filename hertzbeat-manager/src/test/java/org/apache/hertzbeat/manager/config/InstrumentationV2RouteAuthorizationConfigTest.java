@@ -32,8 +32,8 @@ import org.junit.jupiter.api.function.Executable;
 class InstrumentationV2RouteAuthorizationConfigTest {
 
     private static final List<String> REQUIRED_RESOURCE_RULES = List.of(
-            "  - /api/instrumentation/v2/**===get===[admin,user,guest]",
-            "  - /api/instrumentation/v2/**===post===[admin,user]",
+            "  - /api/instrumentation/**===get===[admin,user,guest]",
+            "  - /api/instrumentation/**===post===[admin,user]",
             "  - /api/ui/runtime-status===get===[admin,user,guest]");
     private static final List<String> SURENESS_CONFIGS = List.of(
             "hertzbeat-startup/src/main/resources/sureness.yml",
@@ -47,7 +47,7 @@ class InstrumentationV2RouteAuthorizationConfigTest {
             "script/docker-compose/hertzbeat-postgresql-victoria-metrics/conf/sureness.yml");
 
     @Test
-    void shippedConfigsAuthorizeInstrumentationV2AndRuntimeStatus() {
+    void shippedConfigsAuthorizeInstrumentationAndRuntimeStatus() {
         List<Executable> checks = new ArrayList<>();
         for (String config : SURENESS_CONFIGS) {
             checks.add(() -> assertRequiredRules(config));
