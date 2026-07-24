@@ -185,6 +185,30 @@ describe('explore API paths', () => {
     expect(buildSignalApiPath(scoped, 4_000_000)).toContain('start=1710000000000&end=1710000005000');
   });
 
+  it.each([
+    ['metrics', '/api/ingestion/otlp/metrics/console?'],
+    ['logs', '/api/logs/list?'],
+    ['traces', '/api/traces/list?']
+  ] as const)('queries %s with an exact direct-server handoff window', (signal, prefix) => {
+    const path = buildSignalApiPath({
+      signal,
+      timeRange: 'last-15m',
+      intakeProfileId: 'primary-ingress',
+      serviceName: 'checkout-api',
+      serviceNamespace: 'commerce',
+      environment: 'prod',
+      start: 1_710_000_000_000,
+      end: 1_710_000_005_000
+    });
+
+    expect(path).toBe(
+      `${prefix}serviceName=checkout-api&serviceNamespace=commerce&environment=prod` +
+        '&start=1710000000000&end=1710000005000' +
+        (signal === 'metrics' ? '' : '&pageIndex=0&pageSize=20')
+    );
+    expect(path).not.toMatch(/intakeProfileId|collectorId/u);
+  });
+
   it('does not open HTTP or EventSource transport for a preset with residual timestamps', async () => {
     const invalid = {
       signal: 'logs' as const,

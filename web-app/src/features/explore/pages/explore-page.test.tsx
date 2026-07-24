@@ -72,6 +72,7 @@ describe('ExplorePage instrumentation context boundary', () => {
   it('does not widen partial or reversed instrumentation scope into any signal query or SSE stream', async () => {
     const invalidEntries = [
       '/explore?signal=metrics&serviceNamespace=commerce',
+      '/explore?signal=metrics&intakeProfileId=primary-ingress&serviceName=checkout&serviceNamespace=commerce&start=1000&end=2000',
       '/explore?signal=logs&serviceName=checkout&serviceNamespace=commerce&environment=prod&collectorId=east&start=2000&end=1000',
       '/explore?signal=traces&collectorId=east',
       '/explore?signal=logs&live=true&collectorId=east'
@@ -135,6 +136,35 @@ describe('ExplorePage instrumentation context boundary', () => {
       )
     );
   });
+
+  it.each(['metrics', 'logs', 'traces'] as const)(
+    'queries %s from a complete direct-server handoff without showing invalid context',
+    async signal => {
+      renderPage(
+        `/explore?signal=${signal}&intakeProfileId=primary-ingress&serviceName=checkout` +
+          '&serviceNamespace=commerce&environment=prod&start=1710000000000&end=1710000005000'
+      );
+      const loader =
+        signal === 'metrics' ? api.loadMetricSignal : signal === 'logs' ? api.loadLogSignal : api.loadTraceSignal;
+
+      await waitFor(() =>
+        expect(loader).toHaveBeenCalledWith(
+          expect.objectContaining({
+            signal,
+            intakeProfileId: 'primary-ingress',
+            serviceName: 'checkout',
+            serviceNamespace: 'commerce',
+            environment: 'prod',
+            collectorId: undefined,
+            start: 1_710_000_000_000,
+            end: 1_710_000_005_000
+          }),
+          expect.any(AbortSignal)
+        )
+      );
+      expect(screen.queryByText(en.explore.handoffInvalid)).not.toBeInTheDocument();
+    }
+  );
 
   it('drops an invalid URL filter and keeps typed controls local until a valid submission', async () => {
     renderPage('/explore?signal=metrics&page=4&aggregation=p95');

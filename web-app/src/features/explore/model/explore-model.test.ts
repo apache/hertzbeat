@@ -122,6 +122,63 @@ describe('explore query state', () => {
     expect(buildExplorePath(query)).not.toContain('token');
   });
 
+  it('accepts a complete direct-server handoff without requiring a Collector identity', () => {
+    const query = parseExploreQuery(
+      new URLSearchParams(
+        'signal=metrics&intakeProfileId=primary-ingress&serviceName=checkout-api' +
+          '&serviceNamespace=commerce&environment=prod&start=1710000000000&end=1710000005000' +
+          '&token=must-not-enter-explore'
+      )
+    );
+
+    expect(query).toMatchObject({
+      signal: 'metrics',
+      intakeProfileId: 'primary-ingress',
+      serviceName: 'checkout-api',
+      serviceNamespace: 'commerce',
+      environment: 'prod',
+      collectorId: undefined,
+      start: 1_710_000_000_000,
+      end: 1_710_000_005_000
+    });
+    expect(exploreHandoffState(query)).toBe('scoped');
+    expect(exploreUsesExactWindow(query)).toBe(true);
+    expect(buildExplorePath(query)).toBe(
+      '/explore?signal=metrics&timeRange=last-30m&intakeProfileId=primary-ingress&serviceName=checkout-api' +
+        '&serviceNamespace=commerce&environment=prod&start=1710000000000&end=1710000005000'
+    );
+    expect(buildExplorePath(query)).not.toContain('token');
+    expect(
+      exploreHandoffState(
+        parseExploreQuery(
+          new URLSearchParams(
+            'intakeProfileId=primary-ingress&serviceName=checkout-api&serviceNamespace=commerce&start=1000&end=2000'
+          )
+        )
+      )
+    ).toBe('invalid');
+    expect(
+      exploreHandoffState(
+        parseExploreQuery(
+          new URLSearchParams(
+            'intakeProfileId=primary-ingress&serviceName=checkout-api&serviceNamespace=commerce' +
+              '&environment=prod&start=2000&end=1000'
+          )
+        )
+      )
+    ).toBe('invalid');
+    expect(
+      exploreHandoffState(
+        parseExploreQuery(
+          new URLSearchParams(
+            'intakeProfileId=primary-ingress&serviceName=checkout-api&serviceNamespace=commerce' +
+              '&environment=prod&windowMode=preset&end=2000'
+          )
+        )
+      )
+    ).toBe('invalid');
+  });
+
   it('switches an exact handoff to a preset without dropping identity context and keeps normal submit refresh behavior', () => {
     const exact = parseExploreQuery(
       new URLSearchParams(

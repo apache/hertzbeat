@@ -236,6 +236,7 @@ function normalizeExploreQuery(
 ): ExploreQuery {
   const shared = {
     timeRange: query.timeRange,
+    intakeProfileId: query.intakeProfileId,
     serviceName: query.serviceName,
     serviceNamespace: query.serviceNamespace,
     environment: query.environment,

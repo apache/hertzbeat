@@ -108,10 +108,13 @@ export function timeRangeMilliseconds(timeRange: ExploreTimeRange) {
 }
 
 export function exploreHandoffState(query: ExploreQuery): 'none' | 'scoped' | 'invalid' {
-  if (![query.serviceNamespace, query.collectorId, query.windowMode].some(isPresent)) {
+  if (![query.serviceNamespace, query.intakeProfileId, query.collectorId, query.windowMode].some(isPresent)) {
     return 'none';
   }
-  if (![query.serviceName, query.serviceNamespace, query.environment, query.collectorId].every(isPresent))
+  if (
+    ![query.serviceName, query.serviceNamespace, query.environment].every(isPresent) ||
+    ![query.intakeProfileId, query.collectorId].some(isPresent)
+  )
     return 'invalid';
   if (query.windowMode === 'preset') {
     return !isPresent(query.start) && !isPresent(query.end) ? 'scoped' : 'invalid';
