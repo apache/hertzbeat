@@ -12,6 +12,7 @@ import {
   buildRenderRequest,
   emptyDraft,
   materializeBlock,
+  previousInstrumentationStage,
   selectSource,
   type ApplicationQuestion,
   type InstrumentationDraft
@@ -74,10 +75,19 @@ export function useDraftActions(
     state.setDraft({ ...initialDraft, intakeProfileId: defaultProfileId ?? '' });
     state.setStage('source');
   }, [catalog, defaultProfileId, resetResults, state]);
-  return { chooseSource, answerApplication, patchDraft, patchService, reset };
+  const goBack = useCallback(() => {
+    if (state.stage === 'source') return;
+    if (state.stage === 'install') resetResults();
+    state.setStage(previousInstrumentationStage(state.stage));
+  }, [resetResults, state]);
+  return { chooseSource, answerApplication, patchDraft, patchService, reset, goBack };
 }
 
-export function useGuideActions(state: InstrumentationControllerState, generationRef: RefObject<number>) {
+export function useGuideActions(
+  state: InstrumentationControllerState,
+  generationRef: RefObject<number>,
+  startedAtRef: RefObject<number | undefined>
+) {
   const renderGuide = useCallback(async () => {
     const currentGeneration = generationRef.current;
     state.setRendering(true);
@@ -85,6 +95,7 @@ export function useGuideActions(state: InstrumentationControllerState, generatio
     try {
       const value = await renderInstrumentationGuide(buildRenderRequest(state.draft));
       if (generationRef.current !== currentGeneration) return;
+      startedAtRef.current = Date.now();
       state.setGuide(value);
       state.setStage('install');
     } catch {
@@ -93,7 +104,7 @@ export function useGuideActions(state: InstrumentationControllerState, generatio
     } finally {
       if (generationRef.current === currentGeneration) state.setRendering(false);
     }
-  }, [generationRef, state]);
+  }, [generationRef, startedAtRef, state]);
   const copyBlock = useCallback(
     async (block: GuideBlock) => {
       if (!block.content) return;

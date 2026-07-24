@@ -59,7 +59,7 @@ export function useInstrumentationPageController() {
     timerRef,
     generationRef
   );
-  const guideActions = useGuideActions(state, generationRef);
+  const guideActions = useGuideActions(state, generationRef, startedAtRef);
   const detect = useDetection(
     state.draft,
     state.setDetection,
@@ -128,8 +128,13 @@ function useDetection(
   return useCallback(
     async function runDetection() {
       const currentGeneration = generationRef.current;
-      const start = startedAtRef.current ?? Date.now();
-      startedAtRef.current = start;
+      const start = startedAtRef.current;
+      if (start === undefined) {
+        setDetecting(false);
+        setDetectionError(true);
+        setDetection(undefined);
+        return;
+      }
       setDetecting(true);
       setDetectionError(false);
       try {

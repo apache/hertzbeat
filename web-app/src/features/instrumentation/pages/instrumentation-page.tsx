@@ -14,7 +14,6 @@ import { InstrumentationProgress } from '../components/instrumentation-progress'
 import { InstrumentationSourceStep } from '../components/instrumentation-source-step';
 import styles from '../components/instrumentation-shell.module.css';
 import { useInstrumentationPageController } from '../controller/use-instrumentation-page-controller';
-import { previousInstrumentationStage } from '../model/instrumentation-flow';
 
 export function InstrumentationPage() {
   const { t } = useTranslation();
@@ -28,10 +27,7 @@ export function InstrumentationPage() {
         </div>
         <Button onClick={page.reset}>{t('instrumentation.v2.startOver')}</Button>
       </header>
-      <InstrumentationProgress
-        stage={page.stage}
-        onBack={() => page.setStage(previousInstrumentationStage(page.stage))}
-      />
+      <InstrumentationProgress stage={page.stage} onBack={page.goBack} />
       {(page.catalogState === 'loading' || page.profilesState === 'loading') && <Skeleton active />}
       {(page.catalogState === 'error' || page.profilesState === 'error') && (
         <Alert type="error" showIcon message={t('instrumentation.v2.loadError')} />

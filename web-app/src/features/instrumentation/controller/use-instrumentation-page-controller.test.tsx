@@ -83,6 +83,51 @@ describe('useInstrumentationPageController', () => {
     expect(result.current.draft.framework).toBeUndefined();
     expect(result.current.draft.recipeId).toBeUndefined();
   });
+
+  it('freezes the detection window when the guide is ready and reuses it for polling', async () => {
+    const now = vi.spyOn(Date, 'now').mockReturnValue(1_000);
+    api.loadInstrumentationCatalog.mockResolvedValue(catalog);
+    api.loadIntakeProfiles.mockResolvedValue({
+      schemaVersion: 2,
+      status: 'available',
+      defaultProfileId: 'server-default',
+      profiles: [serverProfile]
+    });
+    api.renderInstrumentationGuide.mockResolvedValue({ schemaVersion: 2 });
+    api.detectInstrumentationSignals.mockResolvedValue({
+      polling: { decision: 'complete', deadlineAt: 10_000 }
+    });
+    const { result } = renderHook(() => useInstrumentationPageController(), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.draft.recipeId).toBe('telemetrygen'));
+    act(() =>
+      result.current.patchService({
+        name: 'checkout',
+        namespace: 'shop',
+        environment: 'prod'
+      })
+    );
+
+    await act(async () => result.current.renderGuide());
+    now.mockReturnValue(5_000);
+    act(() => result.current.setStage('detect'));
+    await act(async () => result.current.detect());
+    expect(api.detectInstrumentationSignals).toHaveBeenLastCalledWith(expect.objectContaining({ startedAt: 1_000 }));
+
+    now.mockReturnValue(6_000);
+    await act(async () => result.current.detect());
+    expect(api.detectInstrumentationSignals).toHaveBeenLastCalledWith(expect.objectContaining({ startedAt: 1_000 }));
+
+    act(() => result.current.goBack());
+    expect(result.current.stage).toBe('install');
+    act(() => result.current.goBack());
+    expect(result.current.stage).toBe('context');
+    now.mockReturnValue(7_000);
+    await act(async () => result.current.renderGuide());
+    now.mockReturnValue(8_000);
+    await act(async () => result.current.detect());
+    expect(api.detectInstrumentationSignals).toHaveBeenLastCalledWith(expect.objectContaining({ startedAt: 7_000 }));
+    now.mockRestore();
+  });
 });
 
 function createWrapper() {
