@@ -6,13 +6,14 @@
  */
 
 .shell {
+  --hb-shell-header-height: 46px;
   --hb-shell-sidebar-width: 220px;
   width: 100%;
   max-width: 100vw;
   min-height: 100vh;
   color: var(--hb-text-primary);
   background: var(--hb-bg-canvas);
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 .shellCollapsed {
@@ -25,7 +26,7 @@
   top: 0;
   display: grid;
   grid-template-columns: var(--hb-shell-sidebar-width) minmax(0, 1fr);
-  height: 46px;
+  height: var(--hb-shell-header-height);
   border-bottom: 1px solid var(--hb-border-subtle);
   background: var(--hb-bg-chrome);
   transition: grid-template-columns 160ms ease;
@@ -203,17 +204,18 @@ button.timePolicy:hover {
   grid-template-columns: var(--hb-shell-sidebar-width) minmax(0, 1fr);
   width: 100%;
   min-width: 0;
-  min-height: calc(100vh - 46px);
-  overflow: hidden;
+  min-height: calc(100vh - var(--hb-shell-header-height));
+  overflow-x: clip;
+  overflow-y: visible;
   transition: grid-template-columns 160ms ease;
 }
 
 .navigation {
   position: sticky;
-  top: 46px;
+  top: var(--hb-shell-header-height);
   display: grid;
   grid-template-rows: minmax(0, 1fr) 40px;
-  height: calc(100vh - 46px);
+  height: calc(100vh - var(--hb-shell-header-height));
   border-right: 1px solid var(--hb-border-subtle);
   background: var(--hb-bg-navigation);
   overflow: hidden;
@@ -446,7 +448,7 @@ button.timePolicy:hover {
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  min-height: calc(100vh - 46px);
+  min-height: calc(100vh - var(--hb-shell-header-height));
   padding: 22px 28px 40px;
   background: var(--hb-bg-canvas);
   overflow-x: auto;
