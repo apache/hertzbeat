@@ -50,11 +50,6 @@ export function selectSource(catalog: CatalogResponse, kind: Selection['sourceKi
   return { ...emptyDraft(), sourceKind: kind, ...selectionFromRecipe(recipe) };
 }
 
-export function selectRecipe(draft: InstrumentationDraft, recipe: Recipe): InstrumentationDraft {
-  if (recipe.kind !== draft.sourceKind) throw new Error('Recipe does not match source');
-  return { ...draft, ...selectionFromRecipe(recipe) };
-}
-
 export function applicationQuestionOptions(
   catalog: CatalogResponse,
   draft: InstrumentationDraft,

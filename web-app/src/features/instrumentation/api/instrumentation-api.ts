@@ -28,14 +28,14 @@ const requestCodes = new Set([
   'instrumentation_v2_intake_profile_unavailable'
 ]);
 
-export class InstrumentationApiError extends Error {
+class InstrumentationApiError extends Error {
   constructor(readonly httpStatus?: number) {
     super('Instrumentation request failed');
     this.name = 'InstrumentationApiError';
   }
 }
 
-export class InstrumentationRequestError extends Error {
+class InstrumentationRequestError extends Error {
   constructor(readonly machineCode: string) {
     super(machineCode);
     this.name = 'InstrumentationRequestError';

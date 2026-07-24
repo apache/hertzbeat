@@ -5,7 +5,6 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-export const INSTRUMENTATION_SCHEMA_VERSION = 2 as const;
 export const SOURCE_KINDS = ['quick_start', 'application', 'existing_opentelemetry'] as const;
 export const SIGNALS = ['metrics', 'logs', 'traces'] as const;
 export const BLOCK_TYPES = ['command', 'code', 'environment', 'download', 'note', 'warning', 'link', 'check'] as const;
@@ -14,10 +13,10 @@ export const POLLING_DECISIONS = ['continue_polling', 'complete', 'manual_retry'
 
 export type SourceKind = (typeof SOURCE_KINDS)[number];
 export type Signal = (typeof SIGNALS)[number];
-export type BlockType = (typeof BLOCK_TYPES)[number];
-export type DetectionStatus = (typeof DETECTION_STATUSES)[number];
-export type PollingDecision = (typeof POLLING_DECISIONS)[number];
-export type SignalValues<T> = { metrics: T; logs: T; traces: T };
+type BlockType = (typeof BLOCK_TYPES)[number];
+type DetectionStatus = (typeof DETECTION_STATUSES)[number];
+type PollingDecision = (typeof POLLING_DECISIONS)[number];
+type SignalValues<T> = { metrics: T; logs: T; traces: T };
 
 export type ServiceIdentity = {
   name: string;
@@ -27,7 +26,7 @@ export type ServiceIdentity = {
   endpoint?: string | undefined;
 };
 
-export type OfficialComponent = {
+type OfficialComponent = {
   name: string;
   sourceUrl: string;
   version: string | null;
@@ -75,7 +74,7 @@ export type CatalogResponse = {
   recipes: Recipe[];
 };
 
-export type IntakeProfile = {
+type IntakeProfile = {
   id: string;
   kind: 'server' | 'hertzbeat_collector' | 'external_otel_collector';
   availability: 'available' | 'unavailable';
