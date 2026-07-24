@@ -625,7 +625,7 @@ class MonitorServiceTest {
         } catch (IllegalArgumentException e) {
             assertEquals("Can not modify monitor's app type", e.getMessage());
         }
-        reset();
+        reset(monitorDao);
         Monitor existOkMonitor = Monitor.builder().jobId(1L).intervals(1).app("app").name("memory").instance("host")
                 .id(monitorId).build();
         when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existOkMonitor));
@@ -633,6 +633,110 @@ class MonitorServiceTest {
 
         assertThrows(MonitorDatabaseException.class,
                 () -> monitorService.modifyMonitor(dto.getMonitor(), dto.getParams(), null, null));
+
+        // Test logic: When scrape is not equal to static (and not null), and instance is empty, instance should be set to "unknown"
+        reset(monitorDao); // Reset the mock of monitorDao from previous code
+
+        long testSdMonitorId = 2L;
+        Monitor sdMonitor = Monitor.builder()
+                .id(testSdMonitorId)
+                .app("app")
+                .name("memory")
+                .scrape("custom_sd") // Not static
+                .instance("")        // Instance is empty
+                .intervals(1)
+                .build();
+
+        Monitor preSdMonitor = Monitor.builder()
+                .id(testSdMonitorId)
+                .app("app")
+                .name("memory")
+                .jobId(2L)
+                .status(CommonConstants.MONITOR_UP_CODE) // Ensure not paused state to proceed to following logic
+                .build();
+
+        List<Param> emptyParams = new ArrayList<>();
+        Job mockJob = new Job();
+        mockJob.setMetrics(new ArrayList<>());
+        mockJob.setParams(new ArrayList<>());
+
+        when(monitorDao.findById(testSdMonitorId)).thenReturn(Optional.of(preSdMonitor));
+        when(appService.getAppDefine("custom_sd")).thenReturn(mockJob); // Query job based on scrape
+        when(collectJobScheduling.updateAsyncCollectJob(any(Job.class))).thenReturn(2L);
+        when(monitorDao.save(any(Monitor.class))).thenReturn(sdMonitor);
+
+        assertDoesNotThrow(() -> monitorService.modifyMonitor(sdMonitor, emptyParams, null, null));
+
+        // Assert that instance is assigned as unknown
+        assertEquals("unknown", sdMonitor.getInstance());
+
+        // Test logic: Port verification (from none to exists, from exists to none)
+        // Scenario 1: Originally without port mark (or with one), now port has value in params
+        reset(monitorDao);
+
+        long testPortMonitorId = 3L;
+        Monitor portMonitor = Monitor.builder()
+                .id(testPortMonitorId)
+                .app("app")
+                .name("memory3")
+                .scrape(CommonConstants.SCRAPE_STATIC)
+                .instance("127.0.0.1")
+                .intervals(1)
+                .build();
+
+        Monitor prePortMonitor = Monitor.builder()
+                .id(testPortMonitorId)
+                .app("app")
+                .name("memory3")
+                .jobId(3L)
+                .status(CommonConstants.MONITOR_UP_CODE)
+                .build();
+
+        List<Param> portParams = new ArrayList<>();
+        portParams.add(Param.builder().field(MonitorServiceImpl.PARAM_FIELD_PORT).paramValue("8080").build());
+
+        when(monitorDao.findById(testPortMonitorId)).thenReturn(Optional.of(prePortMonitor));
+        when(appService.getAppDefine("app")).thenReturn(mockJob);
+        when(collectJobScheduling.updateAsyncCollectJob(any(Job.class))).thenReturn(3L);
+        when(monitorDao.save(any(Monitor.class))).thenReturn(portMonitor);
+
+        assertDoesNotThrow(() -> monitorService.modifyMonitor(portMonitor, portParams, null, null));
+
+        // Assert that instance appended the port
+        assertEquals("127.0.0.1:8080", portMonitor.getInstance());
+
+        // Scenario 2: Originally instance has port mark, now port has no value in params
+        reset(monitorDao);
+
+        long testNoPortMonitorId = 4L;
+        Monitor noPortMonitor = Monitor.builder()
+                .id(testNoPortMonitorId)
+                .app("app")
+                .name("memory")
+                .scrape(CommonConstants.SCRAPE_STATIC)
+                .instance("127.0.0.1:8080") // Original instance has port
+                .intervals(1)
+                .build();
+
+        Monitor preNoPortMonitor = Monitor.builder()
+                .id(testNoPortMonitorId)
+                .app("app")
+                .name("memory")
+                .jobId(4L)
+                .status(CommonConstants.MONITOR_UP_CODE)
+                .build();
+
+        List<Param> noPortParams = new ArrayList<>(); // empty
+
+        when(monitorDao.findById(testNoPortMonitorId)).thenReturn(Optional.of(preNoPortMonitor));
+        when(appService.getAppDefine("app")).thenReturn(mockJob);
+        when(collectJobScheduling.updateAsyncCollectJob(any(Job.class))).thenReturn(4L);
+        when(monitorDao.save(any(Monitor.class))).thenReturn(noPortMonitor);
+
+        assertDoesNotThrow(() -> monitorService.modifyMonitor(noPortMonitor, noPortParams, null, null));
+
+        // Assert that the port mark in instance is removed
+        assertEquals("127.0.0.1", noPortMonitor.getInstance());
     }
 
     @Test
