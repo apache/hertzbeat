@@ -21,7 +21,7 @@ vi.mock('../api/instrumentation-api', () => api);
 import { useInstrumentationPageController } from './use-instrumentation-page-controller';
 
 describe('useInstrumentationPageController', () => {
-  it('hydrates quick start from the catalog and reset without replacing application answers', async () => {
+  it('starts and resets without implicitly selecting quick start', async () => {
     api.loadInstrumentationCatalog.mockResolvedValue(catalog);
     api.loadIntakeProfiles.mockResolvedValue({
       schemaVersion: 2,
@@ -31,17 +31,23 @@ describe('useInstrumentationPageController', () => {
     });
     const harness = createHarness();
     const { result } = renderHook(() => useInstrumentationPageController(), { wrapper: harness.wrapper });
-    await waitFor(() => expect(result.current.draft.recipeId).toBe('telemetrygen'));
-    expect(result.current.draft).toMatchObject({
-      sourceKind: 'quick_start',
-      environment: 'docker',
-      platform: 'linux_amd64',
-      intakeProfileId: 'server-default'
+    await waitFor(() => expect(result.current.catalogState).toBe('ready'));
+    await waitFor(() => expect(result.current.draft.intakeProfileId).toBe('server-default'));
+    expect(harness.client.getQueryData(['instrumentation', 'catalog'])).toEqual(catalog);
+    expect(harness.client.getQueryData(['instrumentation', 'intake-profiles'])).toMatchObject({
+      defaultProfileId: 'server-default'
     });
+    expect(harness.client.getQueryData(['instrumentation', 'v2', 'catalog'])).toBeUndefined();
+    expect(result.current.draft).toMatchObject({ intakeProfileId: 'server-default' });
+    expect(result.current.draft.sourceKind).toBeUndefined();
+    expect(result.current.draft.sourceId).toBeUndefined();
+    expect(result.current.draft.recipeId).toBeUndefined();
+    expect(result.current.canContinueSource).toBe(false);
+    expect(result.current.sourceDirectoryRevision).toBe(0);
 
     act(() => result.current.chooseSource('java'));
     act(() => result.current.answerApplication('framework', 'java_jar'));
-    act(() => void harness.client.setQueryData(['instrumentation', 'v2', 'catalog'], { ...catalog }));
+    act(() => void harness.client.setQueryData(['instrumentation', 'catalog'], { ...catalog }));
     expect(result.current.draft).toMatchObject({
       sourceId: 'java',
       sourceKind: 'application',
@@ -66,13 +72,12 @@ describe('useInstrumentationPageController', () => {
 
     act(() => result.current.reset());
     expect(result.current.token).toBe('');
-    expect(result.current.draft).toMatchObject({
-      sourceKind: 'quick_start',
-      recipeId: 'telemetrygen',
-      environment: 'docker',
-      platform: 'linux_amd64',
-      intakeProfileId: 'server-default'
-    });
+    expect(result.current.draft).toMatchObject({ intakeProfileId: 'server-default' });
+    expect(result.current.draft.sourceKind).toBeUndefined();
+    expect(result.current.draft.sourceId).toBeUndefined();
+    expect(result.current.draft.recipeId).toBeUndefined();
+    expect(result.current.canContinueSource).toBe(false);
+    expect(result.current.sourceDirectoryRevision).toBe(1);
   });
 
   it('keeps the application cascade unresolved until the final compatible answer', async () => {
@@ -111,7 +116,9 @@ describe('useInstrumentationPageController', () => {
       polling: { decision: 'complete', deadlineAt: 10_000 }
     });
     const { result } = renderHook(() => useInstrumentationPageController(), { wrapper: createWrapper() });
-    await waitFor(() => expect(result.current.draft.recipeId).toBe('telemetrygen'));
+    await waitFor(() => expect(result.current.catalogState).toBe('ready'));
+    act(() => result.current.chooseSource('quick_start'));
+    expect(result.current.draft.recipeId).toBe('telemetrygen');
     act(() =>
       result.current.patchService({
         name: 'checkout',

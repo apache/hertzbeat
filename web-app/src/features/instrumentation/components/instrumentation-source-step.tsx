@@ -50,7 +50,7 @@ export function InstrumentationSourceStep(props: {
 function SourceDirectory(props: Parameters<typeof InstrumentationSourceStep>[0]) {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
-  const [groupId, setGroupId] = useState<string | undefined>(props.catalog.groups[0]?.id);
+  const [groupId, setGroupId] = useState<string>();
   const visible = useMemo(() => filteredSources(props.catalog, groupId, query, t), [groupId, props.catalog, query, t]);
   return (
     <>
@@ -62,9 +62,7 @@ function SourceDirectory(props: Parameters<typeof InstrumentationSourceStep>[0])
       <div className={styles.directory}>
         <div className={styles.sourceList}>
           {props.catalog.groups.map(group => {
-            const entries = visible.filter(
-              source => source.groupIds.includes(group.id) && (!query.trim() || source.groupIds[0] === group.id)
-            );
+            const entries = sourcesForGroup(visible, group.id, groupId, query);
             return entries.length ? (
               <section key={group.id} className={styles.sourceGroup}>
                 <Typography.Text strong>{translateBackend(t, group.labelKey)}</Typography.Text>
@@ -112,11 +110,15 @@ function SourceRow(props: { source: SourceEntry; selected: boolean; onSelect: (s
           </span>
         ))}
       </span>
-      <Tag color={source.support === 'preview' ? 'warning' : source.support === 'supported' ? 'success' : 'default'}>
-        {t(`instrumentation.capability.${source.support}`)}
-      </Tag>
+      <Tag color={supportTagColor(source.support)}>{t(`instrumentation.capability.${source.support}`)}</Tag>
     </button>
   );
+}
+
+function supportTagColor(support: SourceEntry['support']) {
+  if (support === 'preview') return 'warning';
+  if (support === 'supported') return 'success';
+  return 'default';
 }
 
 function ApplicationQuestions(
@@ -176,6 +178,12 @@ function filteredSources(catalog: CatalogResponse, groupId: string | undefined, 
       value.toLocaleLowerCase().includes(needle)
     );
   });
+}
+
+function sourcesForGroup(sources: SourceEntry[], groupId: string, selectedGroupId: string | undefined, query: string) {
+  const activeGroupId = query.trim() ? undefined : selectedGroupId;
+  if (activeGroupId) return activeGroupId === groupId ? sources : [];
+  return sources.filter(source => source.groupIds[0] === groupId);
 }
 
 function translateRecipe(t: TFunction, recipe: Recipe) {

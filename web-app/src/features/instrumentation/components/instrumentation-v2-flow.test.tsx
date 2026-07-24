@@ -46,11 +46,29 @@ describe('instrumentation v2 interaction', () => {
       />
     );
     expect(screen.getByRole('searchbox')).toBeVisible();
+    expect(screen.getByRole('button', { name: /instrumentation\.v2\.directory\.all.*4/ })).toBeVisible();
+    expect(screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.quick_start/ })).toBeVisible();
+    expect(screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.java/ })).toBeVisible();
+    expect(screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.logstash/ })).toBeVisible();
     expect(
       screen.getByRole('button', { name: /instrumentation\.v2\.directory\.group\.applications.*2/ })
     ).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: /instrumentation\.v2\.directory\.group\.logs.*2/ }));
     expect(screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.fluent_bit/ })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: /^instrumentation\.v2\.directory\.source\.quick_start/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^instrumentation\.v2\.directory\.source\.java/ })).toBeNull();
+    view.rerender(
+      <InstrumentationSourceStep
+        key="after-reset"
+        catalog={catalog}
+        sourceId="quick_start"
+        onSource={onSource}
+        onApplicationAnswer={onApplicationAnswer}
+      />
+    );
+    expect(screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.quick_start/ })).toBeVisible();
+    expect(screen.getByRole('button', { name: /^instrumentation\.v2\.directory\.source\.java/ })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: /instrumentation\.v2\.directory\.group\.logs.*2/ }));
     expect(screen.queryAllByRole('combobox')).toHaveLength(0);
     fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'logstash' } });
     expect(screen.getAllByRole('button', { name: /^instrumentation\.v2\.directory\.source\.logstash/ })).toHaveLength(

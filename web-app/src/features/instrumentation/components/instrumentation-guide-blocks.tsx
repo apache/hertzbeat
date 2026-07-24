@@ -76,7 +76,7 @@ function GuideBlockView(props: { block: GuideBlock; token: string; onCopy: (bloc
   const block = props.block;
   const copyable = Boolean(block.content);
   const tokenRequired = block.placeholders.includes('authorizationToken');
-  const alertType = block.type === 'warning' ? 'warning' : block.type === 'check' ? 'success' : 'info';
+  const alertType = guideAlertType(block.type);
   if (!copyable) {
     return (
       <Alert
@@ -110,6 +110,12 @@ function GuideBlockView(props: { block: GuideBlock; token: string; onCopy: (bloc
       {block.href && <a href={block.href}>{t('instrumentation.v2.openOfficialLink')}</a>}
     </article>
   );
+}
+
+function guideAlertType(blockType: GuideBlock['type']): 'warning' | 'success' | 'info' {
+  if (blockType === 'warning') return 'warning';
+  if (blockType === 'check') return 'success';
+  return 'info';
 }
 
 function visibleContent(block: GuideBlock, token: string) {

@@ -15,10 +15,12 @@ import type {
   RenderRequest,
   Selection,
   ServiceIdentity,
-  Signal
+  Signal,
+  SourceKind
 } from './instrumentation-v2-contract';
 
-export type InstrumentationDraft = Selection & {
+export type InstrumentationDraft = Omit<Selection, 'sourceKind'> & {
+  sourceKind?: SourceKind | undefined;
   sourceId?: string | undefined;
   intakeProfileId: string;
   service: ServiceIdentity;
@@ -35,7 +37,6 @@ export const APPLICATION_QUESTIONS: ApplicationQuestion[] = ['framework', 'metho
 const RECIPE_DIMENSIONS = ['language', 'framework', 'method', 'environment', 'platform'] as const;
 
 export const emptyDraft = (): InstrumentationDraft => ({
-  sourceKind: 'quick_start',
   intakeProfileId: '',
   service: { name: '', namespace: '', environment: '' }
 });
@@ -120,7 +121,9 @@ export function draftReady(draft: InstrumentationDraft) {
   }
 }
 
-function validateDraft(draft: InstrumentationDraft) {
+function validateDraft(
+  draft: InstrumentationDraft
+): asserts draft is InstrumentationDraft & { sourceKind: SourceKind; recipeId: string } {
   if (
     !draft.intakeProfileId ||
     !draft.service.name.trim() ||
@@ -129,7 +132,7 @@ function validateDraft(draft: InstrumentationDraft) {
   ) {
     throw new Error('Instrumentation context is incomplete');
   }
-  if (!draft.recipeId) throw new Error('Instrumentation recipe is required');
+  if (!draft.sourceKind || !draft.recipeId) throw new Error('Instrumentation selection is required');
 }
 
 function selectionFromRecipe(recipe?: Recipe): Partial<Selection> {

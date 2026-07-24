@@ -50,6 +50,7 @@ function SourceStage({ page }: { page: PageController }) {
   return (
     <>
       <InstrumentationSourceStep
+        key={page.sourceDirectoryRevision}
         catalog={page.catalog}
         {...(page.draft.sourceId ? { sourceId: page.draft.sourceId } : {})}
         {...(page.draft.recipeId ? { recipeId: page.draft.recipeId } : {})}

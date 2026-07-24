@@ -17,16 +17,15 @@ import {
   buildDetectionRequest,
   buildQueryJump,
   draftReady,
-  selectSource,
   type InstrumentationDraft
 } from '../model/instrumentation-flow';
-import type { CatalogResponse, DetectionResponse, Signal } from '../model/instrumentation-v2-contract';
+import type { DetectionResponse, Signal } from '../model/instrumentation-v2-contract';
 import { useDraftActions, useGuideActions } from './instrumentation-controller-actions';
 import { useInstrumentationControllerState } from './instrumentation-controller-state';
 
 const keys = {
-  catalog: ['instrumentation', 'v2', 'catalog'] as const,
-  profiles: ['instrumentation', 'v2', 'intake-profiles'] as const
+  catalog: ['instrumentation', 'catalog'] as const,
+  profiles: ['instrumentation', 'intake-profiles'] as const
 };
 
 export function useInstrumentationPageController() {
@@ -41,7 +40,6 @@ export function useInstrumentationPageController() {
   const timerRef = useRef<number | undefined>(undefined);
   const generationRef = useRef(0);
 
-  useQuickStartRecipe(catalogQuery.data, state.setDraft);
   useDefaultProfile(profilesQuery.data?.defaultProfileId, state.setDraft);
   useEffect(
     () => () => {
@@ -90,20 +88,6 @@ export function useInstrumentationPageController() {
     canContinueSource: Boolean(state.draft.recipeId),
     canRender: draftReady(state.draft)
   };
-}
-
-function useQuickStartRecipe(
-  catalog: CatalogResponse | undefined,
-  setDraft: (value: React.SetStateAction<InstrumentationDraft>) => void
-) {
-  useEffect(() => {
-    if (!catalog) return;
-    setDraft(current => {
-      if (current.sourceId || current.recipeId) return current;
-      const selection = selectSource(catalog, 'quick_start');
-      return { ...selection, intakeProfileId: current.intakeProfileId, service: current.service };
-    });
-  }, [catalog, setDraft]);
 }
 
 function useDefaultProfile(
@@ -162,5 +146,7 @@ function useDetection(
 }
 
 function queryState(query: { isPending: boolean; error: unknown }) {
-  return query.isPending ? ('loading' as const) : query.error ? ('error' as const) : ('ready' as const);
+  if (query.isPending) return 'loading' as const;
+  if (query.error) return 'error' as const;
+  return 'ready' as const;
 }

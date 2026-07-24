@@ -71,10 +71,10 @@ export function useDraftActions(
   );
   const reset = useCallback(() => {
     resetResults();
-    const initialDraft = catalog ? selectSource(catalog, 'quick_start') : emptyDraft();
-    state.setDraft({ ...initialDraft, intakeProfileId: defaultProfileId ?? '' });
+    state.setDraft({ ...emptyDraft(), intakeProfileId: defaultProfileId ?? '' });
     state.setStage('source');
-  }, [catalog, defaultProfileId, resetResults, state]);
+    state.setSourceDirectoryRevision(current => current + 1);
+  }, [defaultProfileId, resetResults, state]);
   const goBack = useBackAction(state, resetResults);
   return { chooseSource, answerApplication, patchDraft, patchService, reset, goBack };
 }

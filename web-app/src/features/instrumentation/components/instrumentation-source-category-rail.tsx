@@ -20,6 +20,9 @@ export function InstrumentationSourceCategoryRail(props: {
   const { t } = useTranslation();
   return (
     <nav className={styles.categoryRail} aria-label={t('instrumentation.v2.directory.categories')}>
+      <Button type={props.groupId ? 'text' : 'primary'} onClick={() => props.onGroup(undefined)}>
+        {t('instrumentation.v2.directory.all')} <span>{props.catalog.sources.length}</span>
+      </Button>
       {props.catalog.groups.map(group => (
         <Button
           key={group.id}

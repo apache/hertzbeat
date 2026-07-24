@@ -19,6 +19,7 @@ export function useInstrumentationControllerState() {
   const [detection, setDetection] = useState<DetectionResponse>();
   const [detecting, setDetecting] = useState(false);
   const [detectionError, setDetectionError] = useState(false);
+  const [sourceDirectoryRevision, setSourceDirectoryRevision] = useState(0);
   return {
     stage,
     setStage,
@@ -37,7 +38,9 @@ export function useInstrumentationControllerState() {
     detecting,
     setDetecting,
     detectionError,
-    setDetectionError
+    setDetectionError,
+    sourceDirectoryRevision,
+    setSourceDirectoryRevision
   };
 }
 
