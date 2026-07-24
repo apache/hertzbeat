@@ -30,6 +30,11 @@ PID_FILE="$LOGS_DIR/${project.artifactId}.pid"
 APP_PATH="$DEPLOY_DIR/$BINARY_NAME"
 SERVER_PORT=1159
 
+# Native web initialization may use a temporary document root as the default
+# relative path. Anchor the managed Runtime and its state to the release root.
+HERTZBEAT_HOME="${HERTZBEAT_HOME:-$DEPLOY_DIR}"
+export HERTZBEAT_HOME
+
 find_running_pid() {
     if [ -f "$PID_FILE" ]; then
         PID="$(cat "$PID_FILE" 2>/dev/null)"

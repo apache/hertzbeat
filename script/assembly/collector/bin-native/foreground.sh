@@ -24,6 +24,11 @@ DEPLOY_DIR=$(pwd)
 APP_PATH="$DEPLOY_DIR/$BINARY_NAME"
 CONF_DIR="$DEPLOY_DIR/config"
 
+# Native web initialization may use a temporary document root as the default
+# relative path. Anchor the managed Runtime and its state to the release root.
+HERTZBEAT_HOME="${HERTZBEAT_HOME:-$DEPLOY_DIR}"
+export HERTZBEAT_HOME
+
 if [ ! -x "$APP_PATH" ]; then
   echo "ERROR: native executable not found: $APP_PATH" >&2
   exit 1
