@@ -17,9 +17,10 @@ import {
   buildDetectionRequest,
   buildQueryJump,
   draftReady,
+  selectSource,
   type InstrumentationDraft
 } from '../model/instrumentation-flow';
-import type { DetectionResponse, Signal } from '../model/instrumentation-v2-contract';
+import type { CatalogResponse, DetectionResponse, Signal } from '../model/instrumentation-v2-contract';
 import { useDraftActions, useGuideActions } from './instrumentation-controller-actions';
 import { useInstrumentationControllerState } from './instrumentation-controller-state';
 
@@ -40,6 +41,7 @@ export function useInstrumentationPageController() {
   const timerRef = useRef<number | undefined>(undefined);
   const generationRef = useRef(0);
 
+  useQuickStartRecipe(catalogQuery.data, state.setDraft);
   useDefaultProfile(profilesQuery.data?.defaultProfileId, state.setDraft);
   useEffect(
     () => () => {
@@ -88,6 +90,20 @@ export function useInstrumentationPageController() {
     canContinueSource: Boolean(state.draft.recipeId),
     canRender: draftReady(state.draft)
   };
+}
+
+function useQuickStartRecipe(
+  catalog: CatalogResponse | undefined,
+  setDraft: (value: React.SetStateAction<InstrumentationDraft>) => void
+) {
+  useEffect(() => {
+    if (!catalog) return;
+    setDraft(current => {
+      if (current.sourceKind !== 'quick_start' || current.recipeId) return current;
+      const selection = selectSource(catalog, 'quick_start');
+      return { ...selection, intakeProfileId: current.intakeProfileId, service: current.service };
+    });
+  }, [catalog, setDraft]);
 }
 
 function useDefaultProfile(

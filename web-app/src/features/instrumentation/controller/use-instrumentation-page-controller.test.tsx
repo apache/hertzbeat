@@ -21,6 +21,40 @@ vi.mock('../api/instrumentation-api', () => api);
 import { useInstrumentationPageController } from './use-instrumentation-page-controller';
 
 describe('useInstrumentationPageController', () => {
+  it('hydrates quick start from the catalog and reset without replacing application answers', async () => {
+    api.loadInstrumentationCatalog.mockResolvedValue(catalog);
+    api.loadIntakeProfiles.mockResolvedValue({
+      schemaVersion: 2,
+      status: 'available',
+      defaultProfileId: 'server-default',
+      profiles: [serverProfile]
+    });
+    const harness = createHarness();
+    const { result } = renderHook(() => useInstrumentationPageController(), { wrapper: harness.wrapper });
+    await waitFor(() => expect(result.current.draft.recipeId).toBe('telemetrygen'));
+    expect(result.current.draft).toMatchObject({
+      sourceKind: 'quick_start',
+      environment: 'docker',
+      platform: 'linux_amd64',
+      intakeProfileId: 'server-default'
+    });
+
+    act(() => result.current.chooseSource('application'));
+    act(() => result.current.answerApplication('language', 'java'));
+    act(() => void harness.client.setQueryData(['instrumentation', 'v2', 'catalog'], { ...catalog }));
+    expect(result.current.draft).toMatchObject({ sourceKind: 'application', language: 'java' });
+    expect(result.current.draft.framework).toBeUndefined();
+
+    act(() => result.current.reset());
+    expect(result.current.draft).toMatchObject({
+      sourceKind: 'quick_start',
+      recipeId: 'telemetrygen',
+      environment: 'docker',
+      platform: 'linux_amd64',
+      intakeProfileId: 'server-default'
+    });
+  });
+
   it('keeps the application cascade unresolved until the final compatible answer', async () => {
     api.loadInstrumentationCatalog.mockResolvedValue(catalog);
     api.loadIntakeProfiles.mockResolvedValue({
@@ -52,14 +86,19 @@ describe('useInstrumentationPageController', () => {
 });
 
 function createWrapper() {
+  return createHarness().wrapper;
+}
+
+function createHarness() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return function Wrapper({ children }: PropsWithChildren) {
+  const wrapper = function Wrapper({ children }: PropsWithChildren) {
     return (
       <QueryClientProvider client={client}>
         <MemoryRouter>{children}</MemoryRouter>
       </QueryClientProvider>
     );
   };
+  return { client, wrapper };
 }
 
 const serverProfile = {
@@ -102,8 +141,12 @@ const recipe = (id: string, language: string, framework: string) => ({
   components: [],
   blocksPreview: ['environment' as const]
 });
+const quickRecipe = {
+  ...recipe('telemetrygen', 'shell', 'telemetrygen'),
+  kind: 'quick_start' as const
+};
 const catalog = {
   schemaVersion: 2,
   sources,
-  recipes: [recipe('java_spring', 'java', 'spring_boot'), recipe('node_express', 'nodejs', 'express')]
+  recipes: [quickRecipe, recipe('java_spring', 'java', 'spring_boot'), recipe('node_express', 'nodejs', 'express')]
 };

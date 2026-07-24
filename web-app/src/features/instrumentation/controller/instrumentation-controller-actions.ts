@@ -70,9 +70,10 @@ export function useDraftActions(
   );
   const reset = useCallback(() => {
     resetResults();
-    state.setDraft(emptyDraft());
+    const initialDraft = catalog ? selectSource(catalog, 'quick_start') : emptyDraft();
+    state.setDraft({ ...initialDraft, intakeProfileId: defaultProfileId ?? '' });
     state.setStage('source');
-  }, [resetResults, state]);
+  }, [catalog, defaultProfileId, resetResults, state]);
   return { chooseSource, answerApplication, patchDraft, patchService, reset };
 }
 
