@@ -89,7 +89,7 @@ class InstrumentationSourceCatalogV2ContractTest {
     }
 
     @Test
-    void preservesLegacyCatalogShapeAndExposesIndependentSourceCatalog() {
+    void exposesGroupsSourcesAndRecipesInSingleCatalog() {
         InstrumentationCatalogV2Service recipes =
                 new InstrumentationCatalogV2Service(new InstrumentationCatalogService());
         var catalog = recipes.catalog();

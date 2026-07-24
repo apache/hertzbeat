@@ -30,7 +30,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.apache.hertzbeat.observability.instrumentation.controller.InstrumentationController;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.DetectionErrorCode;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationCatalogV2.SourceKind;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationDetectionV2.DetectionStatus;
@@ -50,7 +49,6 @@ import org.apache.hertzbeat.observability.instrumentation.v2.service.Instrumenta
 import org.junit.jupiter.api.Test;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 class InstrumentationV2ContractTest {
@@ -61,7 +59,6 @@ class InstrumentationV2ContractTest {
     void freezesCanonicalSurfaceAndClosedWireEnums() throws Exception {
         RequestMapping mapping = InstrumentationV2Controller.class.getAnnotation(RequestMapping.class);
         assertEquals(List.of("/api/instrumentation"), List.of(mapping.path()));
-        assertNull(InstrumentationController.class.getAnnotation(RestController.class));
         assertEquals(
                 Set.of("/catalog", "/intake-profiles"),
                 java.util.Arrays.stream(InstrumentationV2Controller.class.getDeclaredMethods())

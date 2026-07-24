@@ -19,6 +19,7 @@ package org.apache.hertzbeat.observability.instrumentation.v2.guide;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.file.Path;
 import java.util.List;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.ServiceIdentity;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationGuideV2.BlockType;
@@ -45,6 +46,7 @@ class InstrumentationSourceGuideV2TemplatesTest {
         assertTrue(content.contains("HERTZBEAT_OTLP_TOKEN=${HERTZBEAT_TOKEN}"));
         assertTrue(content.contains("HERTZBEAT_OTLP_GRPC_LISTEN_ENDPOINT=127.0.0.1:4317"));
         assertTrue(content.contains("HERTZBEAT_OTLP_HTTP_LISTEN_ENDPOINT=127.0.0.1:4318"));
+        assertDetectionResourceContext(content);
         assertCommonSteps(blocks);
     }
 
@@ -54,6 +56,15 @@ class InstrumentationSourceGuideV2TemplatesTest {
         assertTrue(otel.contains("otlphttp/hertzbeat"));
         assertTrue(otel.contains("HERTZBEAT_TOKEN=${HERTZBEAT_TOKEN}"));
         assertTrue(otel.contains("Authorization: \"Bearer ${env:HERTZBEAT_TOKEN}\""));
+        assertTrue(otel.contains("resource/hertzbeat_context"));
+        assertTrue(otel.contains("key: service.name"));
+        assertTrue(otel.contains("value: \"checkout-api\""));
+        assertTrue(otel.contains("key: service.namespace"));
+        assertTrue(otel.contains("value: \"commerce\""));
+        assertTrue(otel.contains("key: deployment.environment.name"));
+        assertTrue(otel.contains("value: \"prod\""));
+        assertTrue(otel.contains("processors: [<existing-processors>, resource/hertzbeat_context]"));
+        assertTrue(otel.contains("exporters: [<existing-exporters>, otlphttp/hertzbeat]"));
 
         String logstash = content(registry.render("logstash", context));
         assertTrue(logstash.contains("tcplog/logstash"));
@@ -89,18 +100,30 @@ class InstrumentationSourceGuideV2TemplatesTest {
         String hostMetrics = content(registry.render("hertzbeat_host_metrics", context));
         assertTrue(hostMetrics.contains("HERTZBEAT_OTEL_HOST_METRICS_ENABLED=true"));
         assertTrue(hostMetrics.contains("HERTZBEAT_OTEL_HOST_METRICS_INTERVAL=<10s-to-5m>"));
+        assertDetectionResourceContext(hostMetrics);
 
         String prometheus = content(registry.render("hertzbeat_prometheus", context));
         assertTrue(prometheus.contains("collector:"));
         assertTrue(prometheus.contains("otel-runtime:"));
         assertTrue(prometheus.contains("prometheus-targets:"));
         assertTrue(prometheus.contains("endpoint: <http-or-https-metrics-endpoint>"));
+        assertDetectionResourceContext(prometheus);
 
         String fileLogs = content(registry.render("hertzbeat_file_logs", context));
         assertTrue(fileLogs.contains("file-log-allow-roots:"));
         assertTrue(fileLogs.contains("file-log-profiles:"));
         assertTrue(fileLogs.contains("file-log-sources:"));
         assertTrue(fileLogs.contains("path-profile: <administrator-approved-path-profile>"));
+        assertDetectionResourceContext(fileLogs);
+        String configuredPattern = fileLogs.lines()
+                .dropWhile(line -> !line.trim().equals("<administrator-approved-path-profile>:"))
+                .skip(1)
+                .map(String::trim)
+                .filter(line -> line.startsWith("- "))
+                .map(line -> line.substring(2))
+                .findFirst()
+                .orElseThrow();
+        assertTrue(Path.of(configuredPattern).isAbsolute());
 
         for (String recipeId : List.of(
                 "hertzbeat_hybrid_collector",
@@ -124,6 +147,12 @@ class InstrumentationSourceGuideV2TemplatesTest {
         assertTrue(blocks.stream().anyMatch(block -> block.type() == BlockType.CODE));
         assertTrue(blocks.stream().anyMatch(block -> block.type() == BlockType.NOTE));
         assertTrue(blocks.stream().anyMatch(block -> block.type() == BlockType.CHECK));
+    }
+
+    private void assertDetectionResourceContext(String content) {
+        assertTrue(content.contains(
+                "OTEL_RESOURCE_ATTRIBUTES=service.name=checkout-api,"
+                        + "service.namespace=commerce,deployment.environment.name=prod"));
     }
 
     private String content(List<GuideBlock> blocks) {
