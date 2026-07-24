@@ -36,6 +36,12 @@ import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus.FailureCo
 import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus.IntakeCredentialState;
 import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus.RuntimeState;
 import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus.RuntimeTelemetry;
+import org.apache.hertzbeat.common.entity.manager.Collector;
+import org.apache.hertzbeat.manager.dao.CollectorDao;
+import org.apache.hertzbeat.manager.instrumentation.intake.CollectorIntakeAdvertisementReader;
+import org.apache.hertzbeat.manager.instrumentation.intake.CollectorIntakeAdvertisementRequest;
+import org.apache.hertzbeat.manager.pojo.dto.CollectorInstrumentationIntake.Capability;
+import org.apache.hertzbeat.manager.pojo.dto.CollectorInstrumentationIntake.Gateway;
 import org.apache.hertzbeat.manager.scheduler.runtime.CollectorRuntimeStatusRegistry;
 import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationCollectorReadinessStore;
 import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationCollectorReadinessStore.ReadinessState;
@@ -48,8 +54,10 @@ class ManagerInstrumentationCollectorReadinessStoreTest {
     private static final Instant NOW = Instant.parse("2026-07-16T06:00:00Z");
 
     private final CollectorRuntimeStatusRegistry registry = mock(CollectorRuntimeStatusRegistry.class);
+    private final CollectorDao collectorDao = mock(CollectorDao.class);
+    private final CollectorIntakeAdvertisementReader intakeReader = mock(CollectorIntakeAdvertisementReader.class);
     private final ManagerInstrumentationCollectorReadinessStore store =
-            new ManagerInstrumentationCollectorReadinessStore(registry);
+            new ManagerInstrumentationCollectorReadinessStore(registry, collectorDao, intakeReader);
 
     @Test
     void reportsUnavailableWhenNoFreshHeartbeatExists() {
@@ -77,9 +85,26 @@ class ManagerInstrumentationCollectorReadinessStoreTest {
     }
 
     @Test
+    void treatsAvailableServerGatewayAsReadyWithoutCollectorRuntimeHeartbeat() {
+        Collector collector = mock(Collector.class);
+        when(collectorDao.findCollectorByName("edge-west")).thenReturn(Optional.of(collector));
+        when(intakeReader.read(collector)).thenReturn(new CollectorIntakeAdvertisementRequest(
+                1,
+                Gateway.SERVER,
+                List.of(Capability.OTLP_HTTP_PROTOBUF),
+                "https://server.example.com/api/otlp",
+                null).available("edge-west"));
+        when(registry.current("edge-west")).thenReturn(Optional.empty());
+
+        assertEquals(ReadinessState.AVAILABLE, store.readiness("edge-west").state());
+    }
+
+    @Test
     void managerAdapterIsThePrimaryReadinessPortWhenBothImplementationsExist() {
         new ApplicationContextRunner()
                 .withBean(CollectorRuntimeStatusRegistry.class, () -> registry)
+                .withBean(CollectorDao.class, () -> collectorDao)
+                .withBean(CollectorIntakeAdvertisementReader.class, () -> intakeReader)
                 .withBean(UnknownInstrumentationCollectorReadinessStore.class)
                 .withBean(ManagerInstrumentationCollectorReadinessStore.class)
                 .run(context -> assertThat(context.getBean(InstrumentationCollectorReadinessStore.class))

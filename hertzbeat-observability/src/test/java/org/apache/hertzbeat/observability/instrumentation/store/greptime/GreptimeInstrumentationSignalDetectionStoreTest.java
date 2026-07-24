@@ -313,7 +313,7 @@ class GreptimeInstrumentationSignalDetectionStoreTest {
         assertTrue(sql.contains("service_name = 'checkout''s-api'"));
         assertTrue(sql.contains("service_namespace = 'commerce''s'"));
         assertTrue(sql.contains("deployment_environment_name = 'prod''s'"));
-        assertTrue(sql.contains("hertzbeat_collector_id = 'collector''s'"));
+        assertTrue(sql.contains("hertzbeat_collector = 'collector''s'"));
         assertTrue(sql.contains("service_instance_id = 'checkout''s-7d9'"));
         assertTrue(sql.contains("http_route = '/checkout/{id}''s'"));
         assertTrue(sql.contains("greptime_timestamp >= to_timestamp_millis(" + STARTED_AT + ")"));
@@ -326,7 +326,7 @@ class GreptimeInstrumentationSignalDetectionStoreTest {
         assertTrue(sql.contains("service_name = 'checkout''s-api'"));
         assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"service.namespace\"]') = 'commerce''s'"));
         assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"deployment.environment.name\"]') = 'prod''s'"));
-        assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"hertzbeat.collector.id\"]') = 'collector''s'"));
+        assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"hertzbeat.collector\"]') = 'collector''s'"));
         assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"service.instance.id\"]') = 'checkout''s-7d9'"));
         assertTrue(sql.contains("json_get_string(log_attributes, '$[\"http.route\"]') = '/checkout/{id}''s'"));
         assertTrue(sql.contains("timestamp >= to_timestamp_millis(" + STARTED_AT + ")"));
@@ -339,7 +339,7 @@ class GreptimeInstrumentationSignalDetectionStoreTest {
         assertTrue(sql.contains("service_name = 'checkout''s-api'"));
         assertTrue(sql.contains("\"resource_attributes.service.namespace\" = 'commerce''s'"));
         assertTrue(sql.contains("\"resource_attributes.deployment.environment.name\" = 'prod''s'"));
-        assertTrue(sql.contains("\"resource_attributes.hertzbeat.collector.id\" = 'collector''s'"));
+        assertTrue(sql.contains("\"resource_attributes.hertzbeat.collector\" = 'collector''s'"));
         assertTrue(sql.contains("\"resource_attributes.service.instance.id\" = 'checkout''s-7d9'"));
         assertTrue(sql.contains("\"span_attributes.http.route\" = '/checkout/{id}''s'"));
         assertTrue(sql.contains("timestamp >= to_timestamp_millis(" + STARTED_AT + ")"));

@@ -323,6 +323,9 @@ class OtlpCorrelationEnricherTest {
         assertEquals("edge-west", resourceAttributes(logs).get("hertzbeat.collector.id"));
         assertEquals("edge-west", metricResourceAttributes(metrics).get("hertzbeat.collector.id"));
         assertEquals("edge-west", traceResourceAttributes(traces).get("hertzbeat.collector.id"));
+        assertEquals("edge-west", resourceAttributes(logs).get("hertzbeat.collector"));
+        assertEquals("edge-west", metricResourceAttributes(metrics).get("hertzbeat.collector"));
+        assertEquals("edge-west", traceResourceAttributes(traces).get("hertzbeat.collector"));
     }
 
     @Test

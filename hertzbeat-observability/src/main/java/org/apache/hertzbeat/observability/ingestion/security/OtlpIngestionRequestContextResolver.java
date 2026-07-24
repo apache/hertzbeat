@@ -52,6 +52,7 @@ public class OtlpIngestionRequestContextResolver {
         String collectorId = AuthTokenRequestContext.currentCollectorId();
         if (StringUtils.isNotBlank(collectorId)) {
             resolved.put(OtlpResourceSemanticAttributes.HERTZBEAT_COLLECTOR_ID, collectorId);
+            resolved.put(OtlpResourceSemanticAttributes.HERTZBEAT_COLLECTOR, collectorId);
         }
         return resolved;
     }

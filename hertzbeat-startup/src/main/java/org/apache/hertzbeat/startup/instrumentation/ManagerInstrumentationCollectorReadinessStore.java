@@ -17,11 +17,14 @@
 
 package org.apache.hertzbeat.startup.instrumentation;
 
-import lombok.RequiredArgsConstructor;
 import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus;
 import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus.FailureCode;
 import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus.IntakeCredentialState;
 import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus.RuntimeState;
+import org.apache.hertzbeat.manager.dao.CollectorDao;
+import org.apache.hertzbeat.manager.instrumentation.intake.CollectorIntakeAdvertisementReader;
+import org.apache.hertzbeat.manager.pojo.dto.CollectorInstrumentationIntake.Gateway;
+import org.apache.hertzbeat.manager.pojo.dto.CollectorInstrumentationIntake.State;
 import org.apache.hertzbeat.manager.scheduler.runtime.CollectorRuntimeStatusRegistry;
 import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationCollectorReadinessStore;
 import org.springframework.context.annotation.Primary;
@@ -35,18 +38,42 @@ import org.springframework.stereotype.Component;
  */
 @Primary
 @Component
-@RequiredArgsConstructor
 public class ManagerInstrumentationCollectorReadinessStore
         implements InstrumentationCollectorReadinessStore {
 
     private final CollectorRuntimeStatusRegistry runtimeStatusRegistry;
+    private final CollectorDao collectorDao;
+    private final CollectorIntakeAdvertisementReader intakeAdvertisementReader;
+
+    public ManagerInstrumentationCollectorReadinessStore(
+            CollectorRuntimeStatusRegistry runtimeStatusRegistry,
+            CollectorDao collectorDao,
+            CollectorIntakeAdvertisementReader intakeAdvertisementReader) {
+        this.runtimeStatusRegistry = runtimeStatusRegistry;
+        this.collectorDao = collectorDao;
+        this.intakeAdvertisementReader = intakeAdvertisementReader;
+    }
 
     @Override
     public CollectorReadiness readiness(String collectorId) {
+        if (hasAvailableServerGateway(collectorId)) {
+            return CollectorReadiness.available();
+        }
         return runtimeStatusRegistry.current(collectorId)
                 .map(CollectorRuntimeStatusRegistry.ReportedStatus::status)
                 .map(this::mapStatus)
                 .orElseGet(CollectorReadiness::unavailable);
+    }
+
+    /**
+     * Server-gateway intake does not depend on a Collector-hosted OTLP runtime heartbeat.
+     */
+    private boolean hasAvailableServerGateway(String collectorId) {
+        return collectorDao.findCollectorByName(collectorId)
+                .map(intakeAdvertisementReader::read)
+                .filter(intake -> intake.state() == State.AVAILABLE)
+                .map(intake -> intake.gateway() == Gateway.SERVER)
+                .orElse(false);
     }
 
     private CollectorReadiness mapStatus(ManagedOtelRuntimeStatus status) {

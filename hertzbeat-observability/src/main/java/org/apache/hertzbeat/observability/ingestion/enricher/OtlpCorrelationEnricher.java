@@ -64,6 +64,7 @@ public class OtlpCorrelationEnricher {
     public static final String ENTITY_TYPE_ATTRIBUTE = OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_TYPE;
     public static final String WORKSPACE_ID_ATTRIBUTE = OtlpResourceSemanticAttributes.HERTZBEAT_WORKSPACE_ID;
     public static final String COLLECTOR_ID_ATTRIBUTE = OtlpResourceSemanticAttributes.HERTZBEAT_COLLECTOR_ID;
+    public static final String COLLECTOR_ATTRIBUTE = OtlpResourceSemanticAttributes.HERTZBEAT_COLLECTOR;
 
     private static final String CONTENT_ENCODING_GZIP = "gzip";
     private static final Set<String> OTLP_HEX_ID_FIELDS = Set.of("traceId", "spanId", "parentSpanId");
@@ -193,6 +194,7 @@ public class OtlpCorrelationEnricher {
         upsertStringAttributeIfPresent(attributes, ENTITY_TYPE_ATTRIBUTE, context.entityType());
         upsertStringAttributeIfPresent(attributes, WORKSPACE_ID_ATTRIBUTE, context.workspaceId());
         upsertStringAttributeIfPresent(attributes, COLLECTOR_ID_ATTRIBUTE, context.collectorId());
+        upsertStringAttributeIfPresent(attributes, COLLECTOR_ATTRIBUTE, context.collectorId());
         return resource.toBuilder()
                 .clearAttributes()
                 .addAllAttributes(attributes)
@@ -205,6 +207,7 @@ public class OtlpCorrelationEnricher {
         upsertStringAttributeIfPresent(attributes, ENTITY_TYPE_ATTRIBUTE, context.entityType());
         upsertStringAttributeIfPresent(attributes, WORKSPACE_ID_ATTRIBUTE, context.workspaceId());
         upsertStringAttributeIfPresent(attributes, COLLECTOR_ID_ATTRIBUTE, context.collectorId());
+        upsertStringAttributeIfPresent(attributes, COLLECTOR_ATTRIBUTE, context.collectorId());
         return resource.toBuilder()
                 .clearAttributes()
                 .addAllAttributes(attributes)
@@ -217,6 +220,7 @@ public class OtlpCorrelationEnricher {
         addStringAttributeIfMissing(attributes, ENTITY_TYPE_ATTRIBUTE, context.entityType());
         upsertStringAttributeIfPresent(attributes, WORKSPACE_ID_ATTRIBUTE, context.workspaceId());
         upsertStringAttributeIfPresent(attributes, COLLECTOR_ID_ATTRIBUTE, context.collectorId());
+        upsertStringAttributeIfPresent(attributes, COLLECTOR_ATTRIBUTE, context.collectorId());
         return resource.toBuilder()
                 .clearAttributes()
                 .addAllAttributes(attributes)

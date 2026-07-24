@@ -66,12 +66,14 @@ class OtlpIngestionRequestContextResolverTest {
         Map<String, String> source = new LinkedHashMap<>();
         source.put("service.name", "checkout");
         source.put(OtlpCorrelationEnricher.WORKSPACE_ID_ATTRIBUTE, "spoofed");
+        source.put(OtlpCorrelationEnricher.COLLECTOR_ATTRIBUTE, "spoofed");
 
         Map<String, String> resolved = resolver.withWorkspaceResourceAttributes(source);
 
         assertEquals("checkout", resolved.get("service.name"));
         assertEquals("prod-west", resolved.get(OtlpCorrelationEnricher.WORKSPACE_ID_ATTRIBUTE));
         assertEquals("edge-west", resolved.get(OtlpCorrelationEnricher.COLLECTOR_ID_ATTRIBUTE));
+        assertEquals("edge-west", resolved.get(OtlpCorrelationEnricher.COLLECTOR_ATTRIBUTE));
         assertEquals("spoofed", source.get(OtlpCorrelationEnricher.WORKSPACE_ID_ATTRIBUTE));
     }
 

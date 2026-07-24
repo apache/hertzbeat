@@ -23,6 +23,7 @@ package org.apache.hertzbeat.observability.ingestion.semantic;
 public final class OtlpMetricSemanticLabels {
 
     public static final String HERTZBEAT_COLLECTOR_ID = "hertzbeat_collector_id";
+    public static final String HERTZBEAT_COLLECTOR = "hertzbeat_collector";
     public static final String HTTP_ROUTE = "http_route";
     public static final String SERVICE_INSTANCE_ID = "service_instance_id";
 

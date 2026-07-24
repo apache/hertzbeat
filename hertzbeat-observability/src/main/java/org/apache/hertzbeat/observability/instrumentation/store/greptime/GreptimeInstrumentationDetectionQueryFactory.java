@@ -20,6 +20,7 @@ package org.apache.hertzbeat.observability.instrumentation.store.greptime;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.hertzbeat.observability.ingestion.semantic.OtlpMetricSemanticLabels;
+import org.apache.hertzbeat.observability.ingestion.semantic.OtlpResourceSemanticAttributes;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Signal;
 import org.apache.hertzbeat.observability.instrumentation.store.InstrumentationSignalDetectionStore.DetectionCriteria;
 
@@ -44,7 +45,7 @@ final class GreptimeInstrumentationDetectionQueryFactory {
         filters.add(equalsColumn("service_name", criteria.serviceName()));
         filters.add(equalsColumn("service_namespace", criteria.serviceNamespace()));
         filters.add(equalsColumn("deployment_environment_name", criteria.environment()));
-        filters.add(equalsColumn(OtlpMetricSemanticLabels.HERTZBEAT_COLLECTOR_ID, criteria.collectorId()));
+        filters.add(equalsColumn(OtlpMetricSemanticLabels.HERTZBEAT_COLLECTOR, criteria.collectorId()));
         addOptionalColumn(filters, OtlpMetricSemanticLabels.SERVICE_INSTANCE_ID, criteria.serviceInstanceId());
         addOptionalColumn(filters, OtlpMetricSemanticLabels.HTTP_ROUTE, criteria.endpoint());
         addTimeWindow(filters, "greptime_timestamp", criteria);
@@ -57,7 +58,8 @@ final class GreptimeInstrumentationDetectionQueryFactory {
         filters.add(equalsColumn("service_name", criteria.serviceName()));
         filters.add(equalsResourceAttribute("service.namespace", criteria.serviceNamespace()));
         filters.add(equalsResourceAttribute("deployment.environment.name", criteria.environment()));
-        filters.add(equalsResourceAttribute("hertzbeat.collector.id", criteria.collectorId()));
+        filters.add(equalsResourceAttribute(
+                OtlpResourceSemanticAttributes.HERTZBEAT_COLLECTOR, criteria.collectorId()));
         addOptionalResourceAttribute(filters, "service.instance.id", criteria.serviceInstanceId());
         addOptionalJsonAttribute(filters, "log_attributes", "http.route", criteria.endpoint());
         addTimeWindow(filters, "timestamp", criteria);
@@ -72,7 +74,7 @@ final class GreptimeInstrumentationDetectionQueryFactory {
                 criteria.serviceNamespace()));
         filters.add(equalsColumn(quotedIdentifier("resource_attributes.deployment.environment.name"),
                 criteria.environment()));
-        filters.add(equalsColumn(quotedIdentifier("resource_attributes.hertzbeat.collector.id"),
+        filters.add(equalsColumn(quotedIdentifier("resource_attributes.hertzbeat.collector"),
                 criteria.collectorId()));
         addOptionalColumn(filters, quotedIdentifier("resource_attributes.service.instance.id"),
                 criteria.serviceInstanceId());
