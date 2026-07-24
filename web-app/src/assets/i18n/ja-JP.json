@@ -549,6 +549,8 @@
   "dashboard.monitors.sub-title": "モニターの分布",
   "dashboard.monitors.title": "監視概要",
   "dashboard.monitors.total": "モニター総数",
+  "dashboard.monitors.empty": "監視タスクはまだありません",
+  "dashboard.monitors.add": "監視を追加",
   "define.delete": "{{app}}を削除",
   "define.delete.confirm": "{{app}}監視タイプを削除してもよろしいですか？削除後、このタイプの監視を追加できなくなります。",
   "define.disable": "{{app}}を無効化",

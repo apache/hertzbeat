@@ -345,6 +345,8 @@
   "dashboard.alerts.deal": "Tratamento de Alarmes",
   "dashboard.alerts.deal-percent": "Taxa de Tratamento",
   "dashboard.monitors.total": "Total de Monitores",
+  "dashboard.monitors.empty": "Nenhum monitor ainda",
+  "dashboard.monitors.add": "Adicionar Monitor",
   "dashboard.monitors.title": "Visão Geral do Monitoramento",
   "dashboard.monitors.sub-title": "A Distribuição dos Monitores",
   "dashboard.monitors.formatter": " Monitores ",
