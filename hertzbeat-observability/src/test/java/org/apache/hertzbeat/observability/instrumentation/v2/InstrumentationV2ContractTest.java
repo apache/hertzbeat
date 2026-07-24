@@ -23,12 +23,17 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Map;
+import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.DetectionErrorCode;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationCatalogV2;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationCatalogV2.SourceKind;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationDetectionV2.DetectionStatus;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationDetectionV2.PollingDecision;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationDetectionV2.PollingInstruction;
+import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationDetectionV2.SignalDetection;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationGuideV2.BlockType;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationGuideV2.SecretPlaceholder;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationIntakeProfileV2.Availability;
@@ -87,6 +92,38 @@ class InstrumentationV2ContractTest {
                 .filter(recipe -> recipe.kind() == SourceKind.QUICK_START)
                 .flatMap(recipe -> recipe.components().stream())
                 .allMatch(component -> component.official() && !component.bundledWithHertzBeat()));
+    }
+
+    @Test
+    void omitsUnsetOptionalRecipeFieldsFromCatalogJson() {
+        JsonNode catalog = mapper.valueToTree(
+                new InstrumentationCatalogV2Service(new InstrumentationCatalogService()).catalog());
+        int recipesWithoutApplicationSelection = 0;
+
+        for (JsonNode recipe : catalog.path("recipes")) {
+            if ("quick_start".equals(recipe.path("kind").asText())
+                    || "existing_opentelemetry".equals(recipe.path("kind").asText())) {
+                recipesWithoutApplicationSelection++;
+                assertFalse(recipe.has("language"));
+                assertFalse(recipe.has("framework"));
+                assertFalse(recipe.has("method"));
+            }
+        }
+        assertEquals(2, recipesWithoutApplicationSelection);
+    }
+
+    @Test
+    void omitsUnsetOptionalDetectionFieldsFromJson() {
+        JsonNode waiting = mapper.valueToTree(
+                new SignalDetection(DetectionStatus.WAITING, null, DetectionErrorCode.SIGNAL_NOT_RECEIVED));
+        JsonNode received = mapper.valueToTree(
+                new SignalDetection(DetectionStatus.RECEIVED, 1_710_000_000_000L, null));
+        JsonNode complete = mapper.valueToTree(
+                new PollingInstruction(PollingDecision.COMPLETE, null, 1_710_000_120_000L));
+
+        assertFalse(waiting.has("lastReceivedAt"));
+        assertFalse(received.has("errorCode"));
+        assertFalse(complete.has("pollAfterMs"));
     }
 
     @Test
