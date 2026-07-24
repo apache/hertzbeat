@@ -144,6 +144,42 @@ class GreptimeInstrumentationSignalDetectionStoreTest {
     }
 
     @Test
+    void scopesDirectServerSignalsToRowsWithoutCollectorAttribution() {
+        GreptimeInstrumentationDetectionQueryFactory queryFactory =
+                new GreptimeInstrumentationDetectionQueryFactory();
+        DetectionCriteria directServer = criteria("checkout", "commerce", "prod", null);
+
+        String metrics = queryFactory.latestReceivedAt(METRICS, directServer);
+        String logs = queryFactory.latestReceivedAt(LOGS, directServer);
+        String traces = queryFactory.latestReceivedAt(TRACES, directServer);
+
+        assertTrue(metrics.contains("hertzbeat_collector IS NULL"));
+        assertTrue(logs.contains(
+                "json_get_string(resource_attributes, '$[\"hertzbeat.collector\"]') IS NULL"));
+        assertTrue(traces.contains("\"resource_attributes.hertzbeat.collector\" IS NULL"));
+        assertTrue(metrics.contains("service_namespace = 'commerce'"));
+        assertTrue(metrics.contains("deployment_environment_name = 'prod'"));
+        assertTrue(logs.contains("json_get_string(resource_attributes, '$[\"service.namespace\"]') = 'commerce'"));
+        assertTrue(logs.contains(
+                "json_get_string(resource_attributes, '$[\"deployment.environment.name\"]') = 'prod'"));
+        assertTrue(traces.contains("\"resource_attributes.service.namespace\" = 'commerce'"));
+        assertTrue(traces.contains("\"resource_attributes.deployment.environment.name\" = 'prod'"));
+        for (String sql : List.of(metrics, logs, traces)) {
+            assertTrue(sql.contains("service_name = 'checkout'"));
+            assertTrue(sql.contains(">= to_timestamp_millis(" + STARTED_AT + ")"));
+            assertTrue(sql.contains("< to_timestamp_millis(" + (DETECTED_AT + 1) + ")"));
+        }
+
+        DetectionCriteria collector = criteria("checkout", "commerce", "prod", "collector-1");
+        assertTrue(queryFactory.latestReceivedAt(METRICS, collector)
+                .contains("hertzbeat_collector = 'collector-1'"));
+        assertTrue(queryFactory.latestReceivedAt(LOGS, collector)
+                .contains("json_get_string(resource_attributes, '$[\"hertzbeat.collector\"]') = 'collector-1'"));
+        assertTrue(queryFactory.latestReceivedAt(TRACES, collector)
+                .contains("\"resource_attributes.hertzbeat.collector\" = 'collector-1'"));
+    }
+
+    @Test
     void doesNotAcceptStorageRowOlderThanTheOnboardingBoundary() {
         when(executorProvider.getIfAvailable()).thenReturn(executor);
         when(executor.executeStrict(anyString()))
