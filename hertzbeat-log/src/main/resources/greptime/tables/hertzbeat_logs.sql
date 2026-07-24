@@ -29,4 +29,4 @@ CREATE TABLE IF NOT EXISTS hertzbeat_logs (
   "resource" JSON NULL,
   "instrumentation_scope" JSON NULL,
   "dropped_attributes_count" INT NULL
-) WITH (append_mode = true);
+) WITH ('append_mode' = 'true');
