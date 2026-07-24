@@ -49,6 +49,7 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 
 import { LogEntry } from '../../../pojo/LogEntry';
+import { LocalStorageService } from '../../../service/local-storage.service';
 
 interface ExtendedLogEntry {
   original: LogEntry;
@@ -85,7 +86,8 @@ interface ExtendedLogEntry {
 export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
   @Input() embedded = false;
   // SSE connection and state
-  private eventSource!: EventSource;
+  private streamAbortController?: AbortController;
+  private reconnectTimer?: ReturnType<typeof setTimeout>;
   isConnected: boolean = false;
   isConnecting: boolean = false;
 
@@ -124,7 +126,12 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
   // ViewChild for log container
   @ViewChild(CdkVirtualScrollViewport) viewport!: CdkVirtualScrollViewport;
 
-  constructor(@Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService, private cdr: ChangeDetectorRef, private ngZone: NgZone) {}
+  constructor(
+    @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone,
+    private localStorageService: LocalStorageService
+  ) {}
 
   ngOnInit(): void {
     this.connectToLogStream();
@@ -148,7 +155,7 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private connectToLogStream(): void {
-    if (this.eventSource) {
+    if (this.streamAbortController) {
       this.disconnectFromLogStream();
     }
 
@@ -157,59 +164,108 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
     // Build filter parameters
     const filterParams = this.buildFilterParams();
     const url = `/api/logs/sse/subscribe${filterParams ? `?${filterParams}` : ''}`;
+    const token = this.localStorageService.getAuthorizationToken();
+    const headers: Record<string, string> = {
+      Accept: 'text/event-stream',
+      'Cache-Control': 'no-cache'
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    const abortController = new AbortController();
+    this.streamAbortController = abortController;
 
-    try {
-      this.eventSource = new EventSource(url);
+    this.ngZone.runOutsideAngular(() => {
+      fetch(url, {
+        method: 'GET',
+        headers,
+        signal: abortController.signal
+      })
+        .then(async response => {
+          if (!response.ok) {
+            throw new Error(`Log stream request failed with status ${response.status}`);
+          }
+          const reader = response.body?.getReader();
+          if (!reader) {
+            throw new Error('Log stream response has no readable body');
+          }
 
-      this.eventSource.onopen = () => {
-        this.ngZone.run(() => {
-          this.isConnected = true;
-          this.isConnecting = false;
-          this.cdr.markForCheck();
-        });
-      };
+          const decoder = new TextDecoder();
+          let buffer = '';
+          this.ngZone.run(() => {
+            this.isConnected = true;
+            this.isConnecting = false;
+            this.cdr.markForCheck();
+          });
 
-      // Run outside Angular zone to prevent change detection on every message
-      this.ngZone.runOutsideAngular(() => {
-        this.eventSource.addEventListener('LOG_EVENT', (evt: MessageEvent) => {
-          if (!this.isPaused) {
-            try {
-              const logEntry: LogEntry = JSON.parse(evt.data);
-              this.queueLogEntry(logEntry);
-            } catch (error) {
-              // Silently ignore parse errors in high TPS scenario
-              console.error(error);
+          while (!abortController.signal.aborted) {
+            const { value, done } = await reader.read();
+            if (done) {
+              throw new Error('Log stream connection closed');
+            }
+
+            buffer += decoder.decode(value, { stream: true });
+            const frames = buffer.split(/\r?\n\r?\n/);
+            buffer = frames.pop() ?? '';
+
+            for (const frame of frames) {
+              let eventType = '';
+              const dataLines: string[] = [];
+              for (const line of frame.split(/\r?\n/)) {
+                if (line.startsWith('event:')) {
+                  eventType = line.substring(6);
+                } else if (line.startsWith('data:')) {
+                  dataLines.push(line.substring(5));
+                }
+              }
+
+              if (eventType !== 'LOG_EVENT' || dataLines.length === 0 || this.isPaused) {
+                continue;
+              }
+
+              try {
+                const logEntry: LogEntry = JSON.parse(dataLines.join('\n'));
+                this.queueLogEntry(logEntry);
+              } catch (error) {
+                // A malformed event must not terminate a long-lived log stream.
+                console.error('Failed to parse log stream event:', error);
+              }
             }
           }
-        });
-      });
-
-      this.eventSource.onerror = error => {
-        this.ngZone.run(() => {
-          this.isConnected = false;
-          this.isConnecting = false;
-          this.cdr.markForCheck();
-        });
-
-        // Auto-reconnect after 5 seconds
-        setTimeout(() => {
-          if (!this.isConnected) {
-            this.connectToLogStream();
+        })
+        .catch(error => {
+          if (abortController.signal.aborted) {
+            return;
           }
-        }, 5000);
-      };
-    } catch (error) {
-      this.isConnecting = false;
-      console.error('Failed to create EventSource:', error);
-    }
+
+          console.error('Log stream connection error:', error);
+          this.ngZone.run(() => {
+            this.isConnected = false;
+            this.isConnecting = false;
+            this.cdr.markForCheck();
+          });
+
+          this.reconnectTimer = setTimeout(() => {
+            if (!this.isConnected && this.streamAbortController === abortController) {
+              this.streamAbortController = undefined;
+              this.connectToLogStream();
+            }
+          }, 5000);
+        });
+    });
   }
 
   private disconnectFromLogStream(): void {
-    if (this.eventSource) {
-      this.eventSource.close();
-      this.isConnected = false;
-      this.isConnecting = false;
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = undefined;
     }
+    if (this.streamAbortController) {
+      this.streamAbortController.abort();
+      this.streamAbortController = undefined;
+    }
+    this.isConnected = false;
+    this.isConnecting = false;
   }
 
   private buildFilterParams(): string {
