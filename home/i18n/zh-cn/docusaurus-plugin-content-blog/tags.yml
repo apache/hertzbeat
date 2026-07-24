@@ -1,0 +1,19 @@
+releases:
+  label: 版本发布
+  permalink: releases
+  description: Apache HertzBeat 的版本公告与产品更新。
+
+engineering:
+  label: 技术解析
+  permalink: engineering
+  description: 深入解析 Apache HertzBeat 的架构、原理与内部实现。
+
+tutorials:
+  label: 教程实践
+  permalink: tutorials
+  description: Apache HertzBeat 的部署、集成、使用教程与最佳实践。
+
+community:
+  label: 社区动态
+  permalink: community
+  description: Apache HertzBeat 社区的新闻、活动、里程碑与成员故事。

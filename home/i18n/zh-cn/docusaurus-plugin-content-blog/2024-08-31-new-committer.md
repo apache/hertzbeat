@@ -3,7 +3,8 @@ title: 热烈欢迎 HertzBeat 小伙伴新晋社区 Committer!
 author: aias00
 author_title: Hongyu Liu
 author_url: https://github.com/Aias00
-tags: [opensource, practice]
+tags: [community]
+description: Hongyu Liu 分享如何将参与 Apache ShenYu 和企业中间件监控的经验带入 HertzBeat，并逐步成长为 Committer。
 keywords:
   [
     open source monitoring system,
@@ -12,6 +13,7 @@ keywords:
     Apache Committer,
     HertzBeat,
   ]
+image: /img/blog/covers/new-committer-aias00.jpg
 ---
 
 ## 自我介绍

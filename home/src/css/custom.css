@@ -40,7 +40,7 @@
     --ifm-button-padding-vertical: 0.75rem;
     --ifm-button-border-radius: 9999px;
     --ifm-button-border-width: 0;
-    --ifm-navbar-height: 85px;
+    --ifm-navbar-height: 72px;
 
     --md-easing: cubic-bezier(0.2, 0, 0, 1);
     --md-transition-fast: 200ms var(--md-easing);
@@ -103,7 +103,7 @@ h3 {
 
 .navbar__logo {
     flex: 0 0 auto;
-    height: 2.5rem;
+    height: 2.25rem;
     margin-right: 0.5rem;
 }
 
@@ -115,6 +115,12 @@ h3 {
 @media (max-width : 1100px){
     .navbar__link {
         font-size: 12px;
+    }
+}
+
+@media (max-width: 996px) {
+    :root {
+        --ifm-navbar-height: 64px;
     }
 }
 

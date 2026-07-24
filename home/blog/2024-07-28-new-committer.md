@@ -1,10 +1,12 @@
 ---
 title: Welcome to HertzBeat Community Committer!
+description: Lin Dong shares his path into open source and contributions including WeChat notifications, AI integration, PrestoDB monitoring, bug fixes, and documentation.
 author: linDong
 author_title: linDong
 author_url: https://github.com/Yanshuming1
-tags: [opensource, practice]
+tags: [community]
 keywords: [open source monitoring system, alerting system]
+image: /img/blog/covers/new-committer-lindong.jpg
 ---
 
 ![HertzBeat](/img/blog/new-committer.png)

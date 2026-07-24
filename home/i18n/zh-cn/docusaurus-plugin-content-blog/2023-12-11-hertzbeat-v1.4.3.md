@@ -3,8 +3,10 @@ title: HertzBeat v1.4.3 发布，Prometheus兼容!
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource, practice]
+tags: [releases]
+description: HertzBeat 1.4.3 扩展 Prometheus 生态兼容性，新增 VictoriaMetrics 存储和 Spring Gateway 监控，并改进指标国际化。
 keywords: [open source monitoring system, alerting system]
+image: /img/blog/covers/hertzbeat-v1-4-3.jpg
 ---
 
 ## 什么是 HertzBeat?

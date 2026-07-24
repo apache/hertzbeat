@@ -88,9 +88,33 @@ MD 文章的相关格式规则您可以参考：[Markdown-lint-rules](https://gi
 |   |   |-- docs // 文档图片
 |   |   |-- home // 产品图片
 |   |   |-- icons // 图标
+|-- scripts
+|   `-- covers // 博客封面图模板与生成脚本
 |-- docusaurus.config.js
 |-- sidebars.js // 文档侧边栏菜单配置
 ```
+
+## 写一篇博客
+
+文章放在 `blog/` 下，翻译版本放在 `i18n/<语种>/docusaurus-plugin-content-blog/`，文件名保持一致。
+
+```yaml
+---
+title: Apache HertzBeat™ 1.8.0 版本发布公告
+author: Apache HertzBeat Community
+author_url: https://github.com/apache/hertzbeat
+tags: [releases]
+description: Apache HertzBeat 1.8.0 带来 AI 对话与 MCP 工具、日志监控，以及大幅性能提升。
+image: /img/blog/covers/hertzbeat-v1-8-0.jpg
+---
+```
+
+- **`tags`** —— 第一个必须是 `blog/tags.yml` 里定义的分类之一（`releases`、`engineering`、
+  `tutorials`、`community`），博客列表页的分类筛选依赖它。后面可以再加自由主题标签。
+- **`description`** —— 一到两句话。它同时是卡片摘要和搜索引擎摘要。不填的话
+  Docusaurus 会取正文第一段，通常是问候语或小标题。
+- **`image`** —— 可选。不填会自动生成同一视觉风格的封面，不会出现空缺。想配真实封面
+  参见 `home/scripts/covers/README.md`。
 
 ## 规范
 

@@ -3,7 +3,8 @@ title: Cloud Monitoring System HertzBeat v1.0 Officially Released
 author: tom
 author_title: tom
 author_url: https://github.com/tomsun28
-tags: [opensource]
+tags: [releases]
+image: /img/blog/covers/hertzbeat-v1-0.jpg
 ---
 
 HertzBeat, incubated by Dromara and open-sourced by TanCloud, is an open-source monitoring and alerting project that supports a variety of monitoring types including websites, APIs, PING, ports, databases, full-site, operating systems, middleware, etc.

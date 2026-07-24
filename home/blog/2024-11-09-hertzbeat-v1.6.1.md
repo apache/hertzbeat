@@ -1,10 +1,12 @@
 ---
 title: Announcement of Apache HertzBeat™ 1.6.1 Release
+description: Apache HertzBeat 1.6.1 expands infrastructure monitoring, adds Prometheus parsing and push support, NGQL queries, SMS alerts, and Docker Compose deployment.
 author: zhangshenghang
 author_title: zhangshenghang
 author_url: https://github.com/zhangshenghang
-tags: [opensource, practice]
+tags: [releases]
 keywords: [open source monitoring system, alerting system]
+image: /img/blog/covers/hertzbeat-v1-6-1.jpg
 ---
 
 Dear Community Members,

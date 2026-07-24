@@ -3,7 +3,9 @@ title: HertzBeat v1.2.2 发布！新增K8S监控等众多特性
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource]
+tags: [releases]
+description: HertzBeat 1.2.2 新增 Kubernetes、Docker、Spring Boot、Nacos、达梦和 openGauss 监控，并实验性支持 PromQL 采集。
+image: /img/blog/covers/hertzbeat-v1-2-2.jpg
 ---
 
 ## V1.2.2

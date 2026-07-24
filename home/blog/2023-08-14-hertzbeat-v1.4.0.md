@@ -1,10 +1,12 @@
 ---
-title: HertzBeat v1.4.0 released, cluster is coming! 
+title: HertzBeat v1.4.0 released, cluster is coming!
+description: HertzBeat 1.4.0 introduces independently deployed collector clusters for horizontal scaling, failover, and isolated-network monitoring.
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource, practice]
+tags: [releases]
 keywords: [open source monitoring system, alerting system, Linux monitoring]
+image: /img/blog/covers/hertzbeat-v1-4-0.jpg
 ---
 
 ![HertzBeat](/img/home/0.png)

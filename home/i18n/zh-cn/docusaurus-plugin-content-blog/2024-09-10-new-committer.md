@@ -3,7 +3,8 @@ title: 热烈欢迎 HertzBeat 小伙伴新晋社区 Committer!
 author: zuobiao-zhou
 author_title: Yuxuan Zhang
 author_url: https://github.com/zuobiao-zhou
-tags: [opensource, practice]
+tags: [community]
+description: 张宇轩回顾通过开源之夏加入社区，并贡献 OpenAI 账户监控、IMAP 协议、脚本系统监控和前端改进的经历。
 keywords:
   [
     open source monitoring system,
@@ -12,6 +13,7 @@ keywords:
     Apache Committer,
     HertzBeat,
   ]
+image: /img/blog/covers/new-committer-zuobiao.jpg
 ---
 
 ## 自我介绍

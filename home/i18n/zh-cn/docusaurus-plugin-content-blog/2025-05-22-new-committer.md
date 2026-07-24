@@ -3,7 +3,8 @@ title: 热烈欢迎 HertzBeat 小伙伴新晋社区 Committer!
 author: pwallk
 author_title: Kang Li
 author_url: https://github.com/pwallk
-tags: [opensource, practice]
+tags: [community]
+description: Kang Li 分享从在企业内部采用 HertzBeat，到修复数据库问题并贡献存储模板、SSH 隧道和文档改进的经历。
 keywords:
   [
     open source monitoring system,
@@ -12,6 +13,7 @@ keywords:
     Apache Committer,
     HertzBeat,
   ]
+image: /img/blog/covers/new-committer-pwallk.jpg
 ---
 
 > 大家好，非常荣幸受到社区的邀请，成为 Apache HertzBeat™ 项目的 Committer。

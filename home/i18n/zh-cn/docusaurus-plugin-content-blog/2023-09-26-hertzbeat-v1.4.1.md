@@ -3,8 +3,10 @@ title: 更好的用户体验, 开源实时监控 HertzBeat v1.4.1 发布
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource, practice]
+tags: [releases]
+description: HertzBeat 1.4.1 带来全新的登录页与仪表盘体验、采集器管理，并进一步提升监控能力和系统稳定性。
 keywords: [open source monitoring system, alerting system, Linux monitoring]
+image: /img/blog/covers/hertzbeat-v1-4-1.jpg
 ---
 
 哈喽大家好，时间很快两个月又过去了，HertzBeat 经过近两个月的迭代终于发布了 v1.4.1 版本。为什么是终于，因为有点难哈哈。我们参考 rocketmq 重构了 netty 的 server client 端模块，重构了采集器集群调度。比起上一版本有了更优雅的通讯代码，更完善全面的集群。

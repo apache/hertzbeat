@@ -1,10 +1,12 @@
 ---
 title: Welcome to HertzBeat Community Committer!
+description: Hongyu Liu shares how experience with Apache ShenYu and enterprise middleware monitoring led to deeper HertzBeat contributions and Committership.
 author: aias00
 author_title: Hongyu Liu
 author_url: https://github.com/Aias00
-tags: [opensource, practice]
+tags: [community]
 keywords: [open source monitoring system, alerting system, Apache, Apache Committer, HertzBeat]
+image: /img/blog/covers/new-committer-aias00.jpg
 ---
 
 ## Self-Introduction

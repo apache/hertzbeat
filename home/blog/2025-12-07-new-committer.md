@@ -1,9 +1,10 @@
 ---
 title: Welcome HertzBeat's New Community Committer!
+description: Ziqiu Guo describes adopting HertzBeat for financial software operations and contributing DolphinScheduler, macOS, and Synology NAS monitoring.
 author: Delei
 author_title: ZiQiu Guo
 author_url: https://github.com/delei
-tags: [opensource, practice]
+tags: [community]
 keywords:
   [
     open source monitoring system,
@@ -12,6 +13,7 @@ keywords:
     Apache Committer,
     HertzBeat,
   ]
+image: /img/blog/covers/new-committer-delei.jpg
 ---
 
 > Hello everyone, it's a great honor to be invited by the community to become Apache HertzBeat Committer.

@@ -1,10 +1,12 @@
 ---
 title: Announcement of Apache HertzBeat™ 1.7.1 Release
+description: Apache HertzBeat 1.7.1 adds industrial device monitoring, Eureka and Consul discovery, collector-side alerts, OpenTelemetry integration, and an AI assistant.
 author: tomsun28
 author_title: tomsun28
 author_url: https://github.com/zhangshenghang
-tags: [opensource, release]
+tags: [releases]
 keywords: [open source monitoring system, alerting system, HertzBeat, release]
+image: /img/blog/covers/hertzbeat-v1-7-1.jpg
 ---
 
 Dear Community Members,

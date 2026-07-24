@@ -3,7 +3,8 @@ title: Monitoring Practices for DynamicTp Thread Pooling Framework with HertzBea
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource, practice]
+tags: [tutorials]
+image: /img/blog/covers/monitor-dynamictp.jpg
 ---
 
 ## Monitoring practice for thread pooling framework DynamicTp using HertzBeat, 5 minutes

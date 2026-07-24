@@ -1,9 +1,11 @@
 ---
-title: HertzBeat v1.2.2！Support K8S Monitor And More.     
+title: HertzBeat v1.2.2！Support K8S Monitor And More.
+description: HertzBeat 1.2.2 expands monitoring to Kubernetes, Docker, Spring Boot, Nacos, DM and openGauss, with experimental PromQL collection.
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource]
+tags: [releases]
+image: /img/blog/covers/hertzbeat-v1-2-2.jpg
 ---
 
 ## v1.2.2

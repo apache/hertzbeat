@@ -3,8 +3,9 @@ title: 使用 HertzBeat 对物联网数据库 IoTDB 进行监控实践
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource, practice]
+tags: [tutorials]
 keywords: [开源监控系统, 开源数据库监控, IotDB数据库监控]
+image: /img/blog/covers/monitor-iotdb.jpg
 ---
 
 ## 使用 HertzBeat 对物联网数据库 IoTDB 进行监控实践，5分钟搞定

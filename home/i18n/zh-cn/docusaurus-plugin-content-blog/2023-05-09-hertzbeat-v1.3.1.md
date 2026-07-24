@@ -3,8 +3,10 @@ title: 50天36位贡献者，开源实时监控工具 HertzBeat v1.3.1 发布
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource, practice]
+tags: [releases]
+description: HertzBeat 1.3.1 新增多种时序存储、监控配置导入导出、告警静默，以及更多操作系统和应用监控模板。
 keywords: [open source monitoring system, alerting system, Linux monitoring]
+image: /img/blog/covers/hertzbeat-v1-3-1.jpg
 ---
 
 官网: hertzbeat.com | tancloud.cn

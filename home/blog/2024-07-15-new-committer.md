@@ -1,10 +1,12 @@
 ---
 title: Welcome to HertzBeat Community Committer!
+description: Liu Tianyou shares how adopting agentless monitoring led him to contribute documentation, NGQL metric queries, and NebulaGraph cluster monitoring.
 author: LiuTianyou
 author_title: LiuTianyou
 author_url: https://github.com/LiuTianyou
-tags: [opensource, practice]
+tags: [community]
 keywords: [open source monitoring system, alerting system]
+image: /img/blog/covers/new-committer-liutianyou.jpg
 ---
 
 ![HertzBeat](/img/blog/new-committer.png)

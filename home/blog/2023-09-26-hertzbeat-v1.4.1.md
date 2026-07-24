@@ -1,10 +1,12 @@
 ---
-title: HertzBeat v1.4.1 released, better experience! 
+title: HertzBeat v1.4.1 released, better experience!
+description: HertzBeat 1.4.1 delivers a redesigned login and dashboard experience, collector management, and further monitoring and stability improvements.
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource, practice]
+tags: [releases]
 keywords: [open source monitoring system, alerting system, Linux monitoring]
+image: /img/blog/covers/hertzbeat-v1-4-1.jpg
 ---
 
 ![HertzBeat](/img/home/0.png)

@@ -1,0 +1,632 @@
+[
+  {
+    "file": "hertzbeat-v1-8-0.jpg",
+    "headline": "Apache HertzBeat 1.8.0",
+    "kicker": "Releases",
+    "accent": "#a86ee0",
+    "accent2": "#7fb5e8",
+    "posts": [
+      "2026-02-05-hertzbeat-v1.8.0.md"
+    ]
+  },
+  {
+    "file": "new-committer-delei.jpg",
+    "headline": "Welcome Delei",
+    "kicker": "New Committer",
+    "accent": "#6fc7b4",
+    "accent2": "#8fb8ee",
+    "posts": [
+      "2025-12-07-new-committer.md"
+    ]
+  },
+  {
+    "file": "new-committer-duansg.jpg",
+    "headline": "Welcome Duansg",
+    "kicker": "New Committer",
+    "accent": "#7f9ce8",
+    "accent2": "#b98fe0",
+    "posts": [
+      "2025-10-31-new-committer.md"
+    ]
+  },
+  {
+    "file": "new-pmc-calvin.jpg",
+    "headline": "Calvin Joins the PMC",
+    "kicker": "Community",
+    "accent": "#e0a86e",
+    "accent2": "#c48fe8",
+    "posts": [
+      "2025-10-04-new-pmc.md"
+    ]
+  },
+  {
+    "file": "hertzbeat-v1-7-3.jpg",
+    "headline": "Apache HertzBeat 1.7.3",
+    "kicker": "Releases",
+    "accent": "#e08fb5",
+    "accent2": "#8fc4e8",
+    "posts": [
+      "2025-09-06-hertzbeat-v1.7.3.md"
+    ]
+  },
+  {
+    "file": "graduation.jpg",
+    "headline": "Graduates as an Apache<br>Top-Level Project",
+    "kicker": "Milestone",
+    "accent": "#e0a86e",
+    "accent2": "#a86ee0",
+    "posts": [
+      "2025-08-24-hertzbeat-graduation.md"
+    ]
+  },
+  {
+    "file": "new-committer-bigcyy.jpg",
+    "headline": "Welcome bigcyy",
+    "kicker": "New Committer",
+    "accent": "#6fc7b4",
+    "accent2": "#c48fe8",
+    "posts": [
+      "2025-07-11-new-committer.md"
+    ]
+  },
+  {
+    "file": "hertzbeat-v1-7-2.jpg",
+    "headline": "Apache HertzBeat 1.7.2",
+    "kicker": "Releases",
+    "accent": "#a86ee0",
+    "accent2": "#8fb8ee",
+    "posts": [
+      "2025-07-07-hertzbeat-v1.7.2.md"
+    ]
+  },
+  {
+    "file": "new-committer-masamiyui.jpg",
+    "headline": "Welcome MasamiYui",
+    "kicker": "New Committer",
+    "accent": "#7f9ce8",
+    "accent2": "#8fc4e8",
+    "posts": [
+      "2025-06-29-new-committer.md"
+    ]
+  },
+  {
+    "file": "hertzbeat-v1-7-1.jpg",
+    "headline": "Apache HertzBeat 1.7.1",
+    "kicker": "Releases",
+    "accent": "#c48fe8",
+    "accent2": "#7fb5e8",
+    "posts": [
+      "2025-06-10-hertzbeat-v1.7.1.md"
+    ]
+  },
+  {
+    "file": "new-committer-pwallk.jpg",
+    "headline": "Welcome pwallk",
+    "kicker": "New Committer",
+    "accent": "#e08fb5",
+    "accent2": "#b98fe0",
+    "posts": [
+      "2025-05-22-new-committer.md"
+    ]
+  },
+  {
+    "file": "new-ppmc-liutianyou.jpg",
+    "headline": "LiuTianyou Joins the PPMC",
+    "kicker": "Community",
+    "accent": "#6fc7b4",
+    "accent2": "#7f9ce8",
+    "posts": [
+      "2025-5-19-new-pmc.md"
+    ]
+  },
+  {
+    "file": "upgrade-guide-docker.jpg",
+    "headline": "Upgrade Guide<br>Docker Mode",
+    "kicker": "Tutorials",
+    "accent": "#7fb5e8",
+    "accent2": "#b98fe0",
+    "posts": [
+      "2025-04-23-hertzbeat-upgrade-guide-docker-mode.md"
+    ]
+  },
+  {
+    "file": "upgrade-guide-helm.jpg",
+    "headline": "Upgrade Guide<br>Helm Mode",
+    "kicker": "Tutorials",
+    "accent": "#6fc7b4",
+    "accent2": "#8fb8ee",
+    "posts": [
+      "2025-04-23-hertzbeat-upgrade-guide-from-v1.6.1-to-v1.7.0-helm-mode.md"
+    ]
+  },
+  {
+    "file": "hertzbeat-v1-7-0.jpg",
+    "headline": "Apache HertzBeat 1.7.0",
+    "kicker": "Releases",
+    "accent": "#a86ee0",
+    "accent2": "#8fc4e8",
+    "posts": [
+      "2025-04-10-hertzbeat-v1.7.0.md"
+    ]
+  },
+  {
+    "file": "new-pmc-zhangshenghang.jpg",
+    "headline": "Zhangshenghang Joins the PMC",
+    "kicker": "Community",
+    "accent": "#e0a86e",
+    "accent2": "#c48fe8",
+    "posts": [
+      "2025-04-06-new-pmc.md"
+    ]
+  },
+  {
+    "file": "metric-collection.jpg",
+    "headline": "How Metric Collection Works",
+    "kicker": "Engineering",
+    "accent": "#7f9ce8",
+    "accent2": "#a86ee0",
+    "posts": [
+      "2025-03-30-how-does-metrics-collection-work.md"
+    ]
+  },
+  {
+    "file": "new-committer-yunfan24.jpg",
+    "headline": "Welcome yunfan24",
+    "kicker": "New Committer",
+    "accent": "#e08fb5",
+    "accent2": "#7fb5e8",
+    "posts": [
+      "2025-03-10-new-committer.md"
+    ]
+  },
+  {
+    "file": "gsoc-2025.jpg",
+    "headline": "GSoC 2025<br>Recruitment",
+    "kicker": "Community",
+    "accent": "#a86ee0",
+    "accent2": "#7fb5e8",
+    "posts": [
+      "2025-03-03-gsoc-2025.md"
+    ]
+  },
+  {
+    "file": "custom-collector.jpg",
+    "headline": "Developing<br>Custom Collectors",
+    "kicker": "Engineering",
+    "accent": "#6fc7b4",
+    "accent2": "#8fb8ee",
+    "posts": [
+      "2024-11-24-custom-development.md"
+    ]
+  },
+  {
+    "file": "hertzbeat-v1-6-1.jpg",
+    "headline": "Apache HertzBeat 1.6.1",
+    "kicker": "Releases",
+    "accent": "#e0a86e",
+    "accent2": "#c48fe8",
+    "posts": [
+      "2024-11-09-hertzbeat-v1.6.1.md"
+    ]
+  },
+  {
+    "file": "new-committer-zuobiao.jpg",
+    "headline": "Welcome zuobiao-zhou",
+    "kicker": "New Committer",
+    "accent": "#7f9ce8",
+    "accent2": "#b98fe0",
+    "posts": [
+      "2024-09-10-new-committer.md"
+    ]
+  },
+  {
+    "file": "new-committer-aias00.jpg",
+    "headline": "Welcome aias00",
+    "kicker": "New Committer",
+    "accent": "#e08fb5",
+    "accent2": "#8fc4e8",
+    "posts": [
+      "2024-08-31-new-committer.md"
+    ]
+  },
+  {
+    "file": "new-committer-yuluo-yx.jpg",
+    "headline": "Welcome yuluo-yx",
+    "kicker": "New Committer",
+    "accent": "#c48fe8",
+    "accent2": "#7fb5e8",
+    "posts": [
+      "2024-08-18-new-committer.md"
+    ]
+  },
+  {
+    "file": "new-committer-kerwin612.jpg",
+    "headline": "Welcome kerwin612",
+    "kicker": "New Committer",
+    "accent": "#a86ee0",
+    "accent2": "#7fb5e8",
+    "posts": [
+      "2024-07-29-new-committer.md"
+    ]
+  },
+  {
+    "file": "new-committer-lindong.jpg",
+    "headline": "Welcome linDong",
+    "kicker": "New Committer",
+    "accent": "#6fc7b4",
+    "accent2": "#8fb8ee",
+    "posts": [
+      "2024-07-28-new-committer.md"
+    ]
+  },
+  {
+    "file": "new-committer-calvin979.jpg",
+    "headline": "Welcome Calvin979",
+    "kicker": "New Committer",
+    "accent": "#e0a86e",
+    "accent2": "#c48fe8",
+    "posts": [
+      "2024-07-27-new-committer.md"
+    ]
+  },
+  {
+    "file": "new-committer-liutianyou.jpg",
+    "headline": "Welcome LiuTianyou",
+    "kicker": "New Committer",
+    "accent": "#7f9ce8",
+    "accent2": "#b98fe0",
+    "posts": [
+      "2024-07-15-new-committer.md"
+    ]
+  },
+  {
+    "file": "new-committer-zhangshenghang.jpg",
+    "headline": "Welcome zhangshenghang",
+    "kicker": "New Committer",
+    "accent": "#e08fb5",
+    "accent2": "#8fc4e8",
+    "posts": [
+      "2024-07-08-new-committer.md"
+    ]
+  },
+  {
+    "file": "new-committer-crossoverjie.jpg",
+    "headline": "Welcome crossoverJie",
+    "kicker": "New Committer",
+    "accent": "#c48fe8",
+    "accent2": "#7fb5e8",
+    "posts": [
+      "2024-07-07-new-committer.md"
+    ]
+  },
+  {
+    "file": "hertzbeat-v1-6-0.jpg",
+    "headline": "Apache HertzBeat 1.6.0",
+    "kicker": "Releases",
+    "accent": "#a86ee0",
+    "accent2": "#7fb5e8",
+    "posts": [
+      "2024-06-15-hertzbeat-v1.6.0.md"
+    ]
+  },
+  {
+    "file": "upgrade-guide-v1-6-0.jpg",
+    "headline": "Upgrade Guide<br>to 1.6.0",
+    "kicker": "Tutorials",
+    "accent": "#6fc7b4",
+    "accent2": "#8fb8ee",
+    "posts": [
+      "2024-06-11-hertzbeat-v1.6.0-update.md"
+    ]
+  },
+  {
+    "file": "ospp-2024.jpg",
+    "headline": "OSPP 2024<br>Project Topics",
+    "kicker": "Community",
+    "accent": "#e0a86e",
+    "accent2": "#c48fe8",
+    "posts": [
+      "2024-05-09-hertzbeat-ospp-subject-introduction.md"
+    ]
+  },
+  {
+    "file": "donated-to-apache.jpg",
+    "headline": "Donated to the<br>Apache Incubator",
+    "kicker": "Milestone",
+    "accent": "#7f9ce8",
+    "accent2": "#b98fe0",
+    "posts": [
+      "2024-04-17-to-apache.md"
+    ]
+  },
+  {
+    "file": "hertzbeat-v1-4-4.jpg",
+    "headline": "HertzBeat 1.4.4",
+    "kicker": "Releases",
+    "accent": "#e08fb5",
+    "accent2": "#8fc4e8",
+    "posts": [
+      "2024-01-18-hertzbeat-v1.4.4.md"
+    ]
+  },
+  {
+    "file": "new-committer-2024-01.jpg",
+    "headline": "Welcome New Committer",
+    "kicker": "New Committer",
+    "accent": "#c48fe8",
+    "accent2": "#7fb5e8",
+    "posts": [
+      "2024-01-11-new-committer.md"
+    ]
+  },
+  {
+    "file": "hertzbeat-v1-4-3.jpg",
+    "headline": "HertzBeat 1.4.3",
+    "kicker": "Releases",
+    "accent": "#a86ee0",
+    "accent2": "#7fb5e8",
+    "posts": [
+      "2023-12-11-hertzbeat-v1.4.3.md"
+    ]
+  },
+  {
+    "file": "hertzbeat-v1-4-2.jpg",
+    "headline": "HertzBeat 1.4.2",
+    "kicker": "Releases",
+    "accent": "#6fc7b4",
+    "accent2": "#8fb8ee",
+    "posts": [
+      "2023-11-12-hertzbeat-v1.4.2.md"
+    ]
+  },
+  {
+    "file": "hertzbeat-v1-4-1.jpg",
+    "headline": "HertzBeat 1.4.1",
+    "kicker": "Releases",
+    "accent": "#e0a86e",
+    "accent2": "#c48fe8",
+    "posts": [
+      "2023-09-26-hertzbeat-v1.4.1.md"
+    ]
+  },
+  {
+    "file": "new-committer-2023-08.jpg",
+    "headline": "Welcome New Committer",
+    "kicker": "New Committer",
+    "accent": "#7f9ce8",
+    "accent2": "#b98fe0",
+    "posts": [
+      "2023-08-28-new-committer.md"
+    ]
+  },
+  {
+    "file": "hertzbeat-v1-4-0.jpg",
+    "headline": "HertzBeat 1.4.0<br>Cluster Edition",
+    "kicker": "Releases",
+    "accent": "#e08fb5",
+    "accent2": "#8fc4e8",
+    "posts": [
+      "2023-08-14-hertzbeat-v1.4.0.md"
+    ]
+  },
+  {
+    "file": "hertzbeat-v1-3-2.jpg",
+    "headline": "HertzBeat 1.3.2",
+    "kicker": "Releases",
+    "accent": "#c48fe8",
+    "accent2": "#7fb5e8",
+    "posts": [
+      "2023-07-05-hertzbeat-v1.3.2.md"
+    ]
+  },
+  {
+    "file": "monitor-greptimedb.jpg",
+    "headline": "GreptimeDB Storage",
+    "kicker": "Tutorials",
+    "accent": "#a86ee0",
+    "accent2": "#7fb5e8",
+    "posts": [
+      "2023-05-11-greptimedb-store.md"
+    ]
+  },
+  {
+    "file": "hertzbeat-v1-3-1.jpg",
+    "headline": "HertzBeat 1.3.1",
+    "kicker": "Releases",
+    "accent": "#6fc7b4",
+    "accent2": "#8fb8ee",
+    "posts": [
+      "2023-05-09-hertzbeat-v1.3.1.md"
+    ]
+  },
+  {
+    "file": "monitor-springboot2.jpg",
+    "headline": "Monitoring SpringBoot 2",
+    "kicker": "Tutorials",
+    "accent": "#e0a86e",
+    "accent2": "#c48fe8",
+    "posts": [
+      "2023-03-22-monitor-springboot2.md"
+    ]
+  },
+  {
+    "file": "hertzbeat-v1-3-0.jpg",
+    "headline": "HertzBeat 1.3.0",
+    "kicker": "Releases",
+    "accent": "#7f9ce8",
+    "accent2": "#b98fe0",
+    "posts": [
+      "2023-03-15-hertzbeat-v1.3.0.md"
+    ]
+  },
+  {
+    "file": "monitor-linux.jpg",
+    "headline": "Monitoring Linux",
+    "kicker": "Tutorials",
+    "accent": "#e08fb5",
+    "accent2": "#8fc4e8",
+    "posts": [
+      "2023-02-15-monitor-linux.md"
+    ]
+  },
+  {
+    "file": "monitor-mysql.jpg",
+    "headline": "Monitoring MySQL",
+    "kicker": "Tutorials",
+    "accent": "#c48fe8",
+    "accent2": "#7fb5e8",
+    "posts": [
+      "2023-02-11-monitor-mysql.md"
+    ]
+  },
+  {
+    "file": "new-committer-2023-02.jpg",
+    "headline": "Two New Committers",
+    "kicker": "New Committer",
+    "accent": "#a86ee0",
+    "accent2": "#7fb5e8",
+    "posts": [
+      "2023-02-10-new-committer.md"
+    ]
+  },
+  {
+    "file": "monitor-dynamictp.jpg",
+    "headline": "Monitoring DynamicTp",
+    "kicker": "Tutorials",
+    "accent": "#6fc7b4",
+    "accent2": "#8fb8ee",
+    "posts": [
+      "2023-02-02-monitor-dynamic-tp.md"
+    ]
+  },
+  {
+    "file": "monitor-shenyu.jpg",
+    "headline": "Monitoring Apache ShenYu",
+    "kicker": "Tutorials",
+    "accent": "#e0a86e",
+    "accent2": "#c48fe8",
+    "posts": [
+      "2023-01-08-monitor-shenyu.md"
+    ]
+  },
+  {
+    "file": "monitor-iotdb.jpg",
+    "headline": "Monitoring Apache IoTDB",
+    "kicker": "Tutorials",
+    "accent": "#7f9ce8",
+    "accent2": "#b98fe0",
+    "posts": [
+      "2023-01-05-monitor-iotdb.md"
+    ]
+  },
+  {
+    "file": "hertzbeat-v1-2-3.jpg",
+    "headline": "HertzBeat 1.2.3",
+    "kicker": "Releases",
+    "accent": "#e08fb5",
+    "accent2": "#8fc4e8",
+    "posts": [
+      "2022-12-28-hertzbeat-v1.2.3.md"
+    ]
+  },
+  {
+    "file": "new-committer-2022-12.jpg",
+    "headline": "Two New Committers",
+    "kicker": "New Committer",
+    "accent": "#c48fe8",
+    "accent2": "#7fb5e8",
+    "posts": [
+      "2022-12-19-new-committer.md"
+    ]
+  },
+  {
+    "file": "hertzbeat-v1-2-2.jpg",
+    "headline": "HertzBeat 1.2.2",
+    "kicker": "Releases",
+    "accent": "#a86ee0",
+    "accent2": "#7fb5e8",
+    "posts": [
+      "2022-11-28-hertzbeat-v1.2.2.md"
+    ]
+  },
+  {
+    "file": "hertzbeat-v1-2-0.jpg",
+    "headline": "HertzBeat 1.2.0",
+    "kicker": "Releases",
+    "accent": "#6fc7b4",
+    "accent2": "#8fb8ee",
+    "posts": [
+      "2022-10-08-hertzbeat-v1.2.0.md"
+    ]
+  },
+  {
+    "file": "monitor-ssl-cert.jpg",
+    "headline": "SSL Certificate<br>Expiry Monitoring",
+    "kicker": "Tutorials",
+    "accent": "#e0a86e",
+    "accent2": "#c48fe8",
+    "posts": [
+      "2022-09-10-ssl-practice.md"
+    ]
+  },
+  {
+    "file": "hertzbeat-v1-1-3.jpg",
+    "headline": "HertzBeat 1.1.3",
+    "kicker": "Releases",
+    "accent": "#7f9ce8",
+    "accent2": "#b98fe0",
+    "posts": [
+      "2022-09-04-hertzbeat-v1.1.3.md"
+    ]
+  },
+  {
+    "file": "hertzbeat-v1-1-1.jpg",
+    "headline": "HertzBeat 1.1.1",
+    "kicker": "Releases",
+    "accent": "#e08fb5",
+    "accent2": "#8fc4e8",
+    "posts": [
+      "2022-07-10-hertzbeat-v1.1.1.md"
+    ]
+  },
+  {
+    "file": "hertzbeat-v1-1-0-b.jpg",
+    "headline": "HertzBeat 1.1.0",
+    "kicker": "Releases",
+    "accent": "#c48fe8",
+    "accent2": "#7fb5e8",
+    "posts": [
+      "2022-06-22-one-step-up.md"
+    ]
+  },
+  {
+    "file": "hertzbeat-v1-1-0.jpg",
+    "headline": "HertzBeat 1.1.0",
+    "kicker": "Releases",
+    "accent": "#a86ee0",
+    "accent2": "#7fb5e8",
+    "posts": [
+      "2022-06-19-hertzbeat-v1.1.0.md"
+    ]
+  },
+  {
+    "file": "hertzbeat-v1-0.jpg",
+    "headline": "HertzBeat 1.0",
+    "kicker": "Releases",
+    "accent": "#6fc7b4",
+    "accent2": "#8fb8ee",
+    "posts": [
+      "2022-06-01-hertzbeat-v1.0.md"
+    ]
+  },
+  {
+    "file": "upgrade-guide-v1-7-0-zh.jpg",
+    "headline": "Upgrade Guide<br>to 1.7.0",
+    "kicker": "Tutorials",
+    "accent": "#7f9ce8",
+    "accent2": "#8fc4e8",
+    "posts": [
+      "2025-04-23-hertzbeat-v1.7.0-docker-and-helm-upgrade-guide.md"
+    ]
+  }
+]

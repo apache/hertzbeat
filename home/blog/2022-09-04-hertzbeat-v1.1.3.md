@@ -1,9 +1,11 @@
 ---
 title: Cloud monitoring system HertzBeat v1.1.3 released!
+description: HertzBeat 1.1.3 adds Kafka monitoring, SSL certificate expiration monitoring, longer history queries, and monitoring interface improvements.
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource]
+tags: [releases]
+image: /img/blog/covers/hertzbeat-v1-1-3.jpg
 ---
 
 ## V1.1.3

@@ -1,10 +1,12 @@
 ---
 title: Becoming an Apache Committer is a recognition of my participation in open source
+description: Shown Ji reflects on becoming a HertzBeat Committer, contributing through unit tests and code fixes, and helping more developers enter open source.
 author: yuluo-yx
 author_title: Shown Ji
 author_url: https://github.com/yuluo-yx
-tags: [opensource, practice]
+tags: [community]
 keywords: [open source monitoring system, alerting system, Apache, Apache Committer, HertzBeat]
+image: /img/blog/covers/new-committer-yuluo-yx.jpg
 ---
 
 ## My open source journey

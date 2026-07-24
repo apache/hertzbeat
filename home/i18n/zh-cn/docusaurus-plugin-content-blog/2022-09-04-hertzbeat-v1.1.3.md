@@ -3,7 +3,9 @@ title: 云监控系统 HertzBeat v1.1.3 发布！
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource]
+tags: [releases]
+description: HertzBeat 1.1.3 新增 Kafka 监控和 SSL 证书到期监控，扩展历史数据查询范围，并优化监控界面体验。
+image: /img/blog/covers/hertzbeat-v1-1-3.jpg
 ---
 
 Home: hertzbeat.com | tancloud.cn

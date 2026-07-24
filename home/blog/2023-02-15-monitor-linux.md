@@ -3,8 +3,9 @@ title: Monitoring Linux Operating Systems Using Open Source Real-Time Monitoring
 author: tom
 author_title: tom
 author_url: https://github.com/tomsun28
-tags: [opensource, practice]
+tags: [tutorials]
 keywords: [Open source monitoring tool, operating system monitoring, Linux monitoring]
+image: /img/blog/covers/monitor-linux.jpg
 ---
 
 ## Use the open source real-time monitoring tool HertzBeat to monitor and alarm the Linux operating system, and it will be done in 5 minutes

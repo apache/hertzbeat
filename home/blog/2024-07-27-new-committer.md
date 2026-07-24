@@ -1,10 +1,12 @@
 ---
 title: Welcome to HertzBeat Community Committer!
+description: Calvin describes progressing from a documentation fix to contributing DNS and registry monitoring and HTTP service discovery to HertzBeat.
 author: Calvin979
 author_title: Calvin979
 author_url: https://github.com/Calvin979
-tags: [opensource, practice]
+tags: [community]
 keywords: [open source monitoring system, alerting system]
+image: /img/blog/covers/new-committer-calvin979.jpg
 ---
 
 ![HertzBeat](/img/blog/new-committer.png)

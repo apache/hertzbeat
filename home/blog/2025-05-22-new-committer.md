@@ -1,9 +1,10 @@
 ---
 title: Welcome HertzBeat's New Community Committer!
+description: Kang Li describes adopting HertzBeat for internal monitoring and progressing from a database bug fix to storage templates, SSH tunnels, and documentation improvements.
 author: pwallk
 author_title: Kang Li
 author_url: https://github.com/pwallk
-tags: [opensource, practice]
+tags: [community]
 keywords:
   [
     open source monitoring system,
@@ -12,6 +13,7 @@ keywords:
     Apache Committer,
     HertzBeat,
   ]
+image: /img/blog/covers/new-committer-pwallk.jpg
 ---
 
 > Hello everyone, it's a great honor to be invited by the community to become a Committer of the Apache HertzBeat™ project.

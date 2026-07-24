@@ -1,10 +1,12 @@
 ---
 title: Announcement of Apache HertzBeat™ 1.8.0 Release
+description: Apache HertzBeat 1.8.0 introduces AI chat and MCP tooling, new QuestDB, iDRAC and Jenkins integrations, log monitoring, and major performance improvements.
 author: Apache HertzBeat Community
 author_title: Apache HertzBeat Community
 author_url: https://github.com/apache/hertzbeat
-tags: [opensource, release, v1.8.0]
+tags: [releases]
 keywords: [open source monitoring system, alerting system, HertzBeat, release, v1.8.0, Apache]
+image: /img/blog/covers/hertzbeat-v1-8-0.jpg
 ---
 
 Dear Community Members,

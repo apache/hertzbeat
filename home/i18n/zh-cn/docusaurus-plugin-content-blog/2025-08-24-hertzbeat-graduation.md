@@ -2,7 +2,9 @@
 title: Apache HertzBeat™ 毕业成为 Apache 顶级项目！
 author: 铁甲小宝
 author_url: https://github.com/TJxiaobao
-tags: [opensource, apache]
+tags: [community]
+description: Apache HertzBeat 经过 17 个月孵化正式成为 Apache 顶级项目，标志着社区治理、技术能力和全球协作迈入新阶段。
+image: /img/blog/covers/graduation.jpg
 ---
 
 > **我们的开源项目的里程碑时刻**

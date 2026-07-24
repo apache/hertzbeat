@@ -3,8 +3,9 @@ title: Use the open source real-time monitoring tool HertzBeat to monitor and al
 author: tom
 author_title: tom
 author_url: https://github.com/tomsun28
-tags: [opensource, practice]
+tags: [tutorials]
 Keywords: [Open source monitoring tool, open source database monitoring, Mysql database monitoring]
+image: /img/blog/covers/monitor-mysql.jpg
 ---
 
 ## Use the open source real-time monitoring tool HertzBeat to monitor and alarm the Mysql database, and it will be done in 5 minutes

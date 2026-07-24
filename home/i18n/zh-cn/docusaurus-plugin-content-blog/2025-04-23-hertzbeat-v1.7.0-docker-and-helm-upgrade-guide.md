@@ -1,3 +1,9 @@
+---
+tags: [tutorials]
+description: 按照数据备份、配置检查、镜像更新和服务验证步骤，完成 HertzBeat 1.7.0 的 Docker 部署升级。
+image: /img/blog/covers/upgrade-guide-v1-7-0-zh.jpg
+---
+
 # hertzbeat 升级指导-docker模式
 
 ## Docker 方式升级 - Mysql数据库

@@ -3,7 +3,8 @@ title: 热烈欢迎 HertzBeat 小伙伴新晋社区 Committer!
 author: Delei
 author_title: ZiQiu Guo
 author_url: https://github.com/delei
-tags: [opensource, practice]
+tags: [community]
+description: ZiQiu Guo 分享在金融软件运维中采用 HertzBeat，并贡献 DolphinScheduler、macOS 和群晖 NAS 监控的经历。
 keywords:
   [
     open source monitoring system,
@@ -12,6 +13,7 @@ keywords:
     Apache Committer,
     HertzBeat,
   ]
+image: /img/blog/covers/new-committer-delei.jpg
 ---
 
 > 大家好，非常荣幸收到社区邀请，成为 Apache HertzBeat™ Committer。

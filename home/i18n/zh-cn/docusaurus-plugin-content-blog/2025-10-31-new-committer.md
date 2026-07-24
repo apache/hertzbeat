@@ -3,7 +3,8 @@ title: 热烈欢迎 HertzBeat 小伙伴新晋社区 Committer!
 author: Duansg
 author_title: SiGuo Duan
 author_url: https://github.com/Duansg
-tags: [opensource, practice]
+tags: [community]
+description: 段嗣国分享通过 Prometheus 解析、告警、监控集成、性能和稳定性等大量贡献成长为 Committer 的历程。
 keywords:
   [
     open source monitoring system,
@@ -12,6 +13,7 @@ keywords:
     Apache Committer,
     HertzBeat,
   ]
+image: /img/blog/covers/new-committer-duansg.jpg
 ---
 
 > 大家好，非常荣幸收到社区邀请，成为 Apache HertzBeat™ Committer。

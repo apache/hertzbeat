@@ -1,3 +1,8 @@
+---
+tags: [tutorials]
+image: /img/blog/covers/upgrade-guide-v1-6-0.jpg
+---
+
 # HertzBeat 1.6.0 升级指南
 
 ## 注意：该指南适用于1.5.0向1.6.0版本升级

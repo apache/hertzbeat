@@ -3,7 +3,8 @@ title: 使用 HertzBeat 对 线程池框架 DynamicTp 的监控实践
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource, practice]
+tags: [tutorials]
+image: /img/blog/covers/monitor-dynamictp.jpg
 ---
 
 ## 使用 HertzBeat 对 线程池框架 DynamicTp 进行监控实践，5分钟搞定

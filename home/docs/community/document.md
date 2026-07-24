@@ -88,9 +88,37 @@ MD format configuration file in the project: [.markdownlint-cli2.jsonc](https://
 |   |   |-- docs // document picture
 |   |   |-- home // product picture
 |   |   |-- icons // icon
+|-- scripts
+|   `-- covers // blog cover image template and generator
 |-- docusaurus.config.js
 |-- sidebars.js // document sidebar menu configuration
 ```
+
+## Writing a blog post
+
+A post lives in `blog/` and, when translated, in
+`i18n/<locale>/docusaurus-plugin-content-blog/` under the same file name.
+
+```yaml
+---
+title: Announcement of Apache HertzBeat™ 1.8.0 Release
+author: Apache HertzBeat Community
+author_url: https://github.com/apache/hertzbeat
+tags: [releases]
+description: Apache HertzBeat 1.8.0 introduces AI chat and MCP tooling, log monitoring, and major performance improvements.
+image: /img/blog/covers/hertzbeat-v1-8-0.jpg
+---
+```
+
+- **`tags`** — start with exactly one category from `blog/tags.yml`
+  (`releases`, `engineering`, `tutorials`, `community`). It drives the category
+  filter on the blog list page. Add free-form topic tags after it if useful.
+- **`description`** — one or two sentences. It becomes the card summary *and* the
+  search-engine snippet. Without it Docusaurus falls back to the first block of
+  the post, which is usually a greeting or a heading.
+- **`image`** — optional. Posts without one get a generated cover in the same
+  visual style, so nothing looks broken. To add a real cover, see
+  `home/scripts/covers/README.md`.
 
 ## Specification
 

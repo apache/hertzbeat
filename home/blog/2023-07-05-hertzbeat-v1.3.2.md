@@ -1,10 +1,12 @@
 ---
-title: Open source monitoring HertzBeat v1.3.2 released, Easier to use 
+title: Open source monitoring HertzBeat v1.3.2 released, Easier to use
+description: HertzBeat 1.3.2 expands operating-system and database monitoring, adds alert convergence, Kafka queues, and web-based mail configuration.
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource, practice]
+tags: [releases]
 keywords: [open source monitoring system, alerting system, Linux monitoring]
+image: /img/blog/covers/hertzbeat-v1-3-2.jpg
 ---
 
 Website: hertzbeat.com | tancloud.cn

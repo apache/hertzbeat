@@ -3,8 +3,10 @@ title: 开源实时监控 HertzBeat v1.3.2 发布, 更稳定更易用
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource, practice]
+tags: [releases]
+description: HertzBeat 1.3.2 扩展操作系统和数据库监控，新增告警收敛、Kafka 消息队列及页面化邮件服务器配置。
 keywords: [open source monitoring system, alerting system, Linux monitoring]
+image: /img/blog/covers/hertzbeat-v1-3-2.jpg
 ---
 
 官网: hertzbeat.com | tancloud.cn

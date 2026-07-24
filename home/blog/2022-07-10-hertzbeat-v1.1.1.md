@@ -1,9 +1,11 @@
 ---
-title: HertzBeat v1.1.1 is Publish！   
+title: HertzBeat v1.1.1 is Publish！
+description: HertzBeat 1.1.1 enhances custom monitoring with reusable collected metrics, improves alert channel configuration, and fixes stability issues.
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-tags: [opensource]
+tags: [releases]
+image: /img/blog/covers/hertzbeat-v1-1-1.jpg
 ---
 
 > Friendly Cloud Monitoring Tool.

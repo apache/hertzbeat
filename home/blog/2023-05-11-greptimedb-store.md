@@ -3,8 +3,9 @@ title: GreptimeDB & HertzBeat, using the open source temporal database GreptimeD
 author: tom
 author_title: tom
 author_url: https://github.com/tomsun28
-tags: [opensource, practice]
+tags: [tutorials, engineering]
 keywords: [open source monitoring system, open source temporal database, HertzBeat, GreptimeDB]
+image: /img/blog/covers/monitor-greptimedb.jpg
 ---
 
 ## Using GreptimeDB, an open source temporal database, to store metrics for open source real-time monitoring HertzBeat

@@ -1,10 +1,12 @@
 ---
 title: Announcement of Apache HertzBeat™ 1.7.0 Release
+description: Apache HertzBeat 1.7.0 adds per-metric refresh intervals, HTTP service discovery, a redesigned alerting module, and Apache Arrow data structures.
 author: tomsun28
 author_title: tomsun28
 author_url: https://github.com/zhangshenghang
-tags: [opensource, release]
+tags: [releases]
 keywords: [open source monitoring system, alerting system, HertzBeat, release]
+image: /img/blog/covers/hertzbeat-v1-7-0.jpg
 ---
 
 Dear Community Members,
