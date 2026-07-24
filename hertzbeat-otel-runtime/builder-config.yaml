@@ -37,3 +37,8 @@ providers:
   - gomod: go.opentelemetry.io/collector/confmap/provider/envprovider v1.50.0
   - gomod: go.opentelemetry.io/collector/confmap/provider/fileprovider v1.50.0
   - gomod: go.opentelemetry.io/collector/confmap/provider/yamlprovider v1.50.0
+
+# Keep the generated runtime on the reviewed dependency floor until the
+# upstream Collector component graph requires the same or a newer version.
+replaces:
+  - golang.org/x/text => golang.org/x/text v0.39.0

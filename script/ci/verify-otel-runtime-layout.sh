@@ -51,6 +51,12 @@ for component in hostmetricsreceiver prometheusreceiver filelogreceiver otlprece
   fi
 done
 
+if ! grep -Fq -- '- golang.org/x/text => golang.org/x/text v0.39.0' \
+    "$runtime_dir/builder-config.yaml"; then
+  echo "the Runtime must pin golang.org/x/text to the reviewed vulnerability-free version" >&2
+  exit 1
+fi
+
 for pipeline_component in hostmetrics prometheus filelog otlp memory_limiter resource_detection \
     resource attributes filter batch otlphttp health_check file_storage sending_queue queue_size traces; do
   if ! grep -q "$pipeline_component" "$runtime_dir/config/collector-config.test.yaml"; then
