@@ -534,6 +534,12 @@
         "available": "Available",
         "unavailable": "Unavailable"
       },
+      "stage": {
+        "source": "Source",
+        "context": "Context",
+        "install": "Install",
+        "detect": "Detect"
+      },
       "source": {
         "quick_start": "Send test data",
         "quick_start_description": "Verify the telemetry path with generated OpenTelemetry data.",

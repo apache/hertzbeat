@@ -4,7 +4,7 @@
  * governing permissions and limitations under the License.
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
@@ -12,32 +12,53 @@ vi.mock('react-i18next', () => ({
     t: (key: string, options?: { defaultValue?: string }) => options?.defaultValue ?? key
   })
 }));
+const notifications = vi.hoisted(() => ({ success: vi.fn(), warning: vi.fn() }));
+vi.mock('antd', async importOriginal => {
+  const actual = await importOriginal<typeof import('antd')>();
+  return { ...actual, App: { useApp: () => ({ message: notifications }) } };
+});
 
 import { InstrumentationContextStep } from './instrumentation-context-step';
 import { InstrumentationDetectionPanel } from './instrumentation-detection-panel';
 import { InstrumentationGuideBlocks } from './instrumentation-guide-blocks';
+import { InstrumentationProgress } from './instrumentation-progress';
 import { InstrumentationSourceStep } from './instrumentation-source-step';
 
-afterEach(() => vi.clearAllMocks());
+afterEach(() => {
+  cleanup();
+  vi.clearAllMocks();
+});
 
 describe('instrumentation v2 interaction', () => {
-  it('presents source choices in backend order and reveals recipes only for applications', () => {
+  it('presents source choices in backend order and reveals ordered questions only for applications', () => {
     const onSource = vi.fn();
+    const onApplicationAnswer = vi.fn();
     const view = render(
-      <InstrumentationSourceStep catalog={catalog} sourceKind="quick_start" onSource={onSource} onRecipe={vi.fn()} />
+      <InstrumentationSourceStep
+        catalog={catalog}
+        sourceKind="quick_start"
+        onSource={onSource}
+        onApplicationAnswer={onApplicationAnswer}
+      />
     );
     expect(screen.getAllByRole('radio').map(item => item.getAttribute('value'))).toEqual([
       'quick_start',
       'application',
       'existing_opentelemetry'
     ]);
-    expect(screen.queryByText('instrumentation.v2.recipeLabel')).not.toBeInTheDocument();
+    expect(screen.queryAllByRole('combobox')).toHaveLength(0);
     fireEvent.click(screen.getAllByRole('radio')[1]!);
     expect(onSource).toHaveBeenCalledWith('application');
     view.rerender(
-      <InstrumentationSourceStep catalog={catalog} sourceKind="application" onSource={onSource} onRecipe={vi.fn()} />
+      <InstrumentationSourceStep
+        catalog={catalog}
+        sourceKind="application"
+        onSource={onSource}
+        onApplicationAnswer={onApplicationAnswer}
+      />
     );
-    expect(screen.getByText('instrumentation.v2.recipeLabel')).toBeInTheDocument();
+    expect(screen.getAllByRole('combobox')).toHaveLength(1);
+    expect(screen.queryByText('instrumentation.v2.recipeLabel')).not.toBeInTheDocument();
   });
 
   it('keeps unconfigured and discovery unavailable destinations distinct', () => {
@@ -93,6 +114,30 @@ describe('instrumentation v2 interaction', () => {
     expect(openButtons.map(button => button.hasAttribute('disabled'))).toEqual([false, true, true]);
     expect(screen.getByText('instrumentation.detection.status.waiting')).toBeInTheDocument();
     expect(screen.getByText('instrumentation.detection.status.unsupported')).toBeInTheDocument();
+  });
+
+  it('handles token validation and clipboard rejection without an unhandled promise', async () => {
+    const onCopy = vi.fn().mockRejectedValue(new Error('private token must not surface'));
+    render(
+      <InstrumentationGuideBlocks
+        guide={guide}
+        token="invalid token"
+        onToken={vi.fn()}
+        onCopy={onCopy}
+        onDetect={vi.fn()}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'instrumentation.action.copy' }));
+    await waitFor(() => expect(notifications.warning).toHaveBeenCalledWith('instrumentation.copyFailed'));
+    expect(JSON.stringify(notifications.warning.mock.calls)).not.toContain('private token');
+  });
+
+  it('shows compact progress and an explicit non-destructive Back action', () => {
+    const onBack = vi.fn();
+    render(<InstrumentationProgress stage="install" onBack={onBack} />);
+    expect(screen.getByText('instrumentation.v2.stage.detect')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'common.back' }));
+    expect(onBack).toHaveBeenCalledOnce();
   });
 });
 

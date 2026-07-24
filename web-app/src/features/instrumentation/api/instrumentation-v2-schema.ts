@@ -14,54 +14,18 @@ import {
   SIGNALS,
   SOURCE_KINDS
 } from '../model/instrumentation-v2-contract';
-
-const text = z.string().min(1);
-const key = z.string().regex(/^[a-z0-9_.]{1,160}$/);
-const timestamp = z.number().int().positive();
-const capability = z.enum(['supported', 'preview', 'unsupported']);
-const signalValues = <T extends z.ZodType>(value: T) =>
-  z.object({ metrics: value, logs: value, traces: value }).strict();
-const service = z
-  .object({
-    name: text,
-    namespace: text,
-    environment: text,
-    serviceInstanceId: text.optional(),
-    endpoint: text.optional()
-  })
-  .strict();
-const component = z
-  .object({
-    name: text,
-    sourceUrl: z.string().url(),
-    version: text.nullable(),
-    versionPolicy: z.enum(['pinned', 'language_specific']),
-    license: text,
-    installationLocationKey: key,
-    official: z.literal(true),
-    bundledWithHertzBeat: z.literal(false),
-    dependencies: z.array(
-      z.object({
-        name: text,
-        sourceUrl: z.string().url(),
-        version: text,
-        license: text,
-        purposeKey: key,
-        official: z.literal(true),
-        bundledWithHertzBeat: z.literal(false)
-      })
-    ),
-    artifacts: z.array(
-      z.object({
-        name: text,
-        downloadUrl: z.string().url(),
-        algorithm: text,
-        digest: text,
-        provenanceUrl: z.string().url()
-      })
-    )
-  })
-  .strict();
+import {
+  capability,
+  component,
+  explicitHttps,
+  guideBlock,
+  key,
+  profileError,
+  service,
+  signalValues,
+  text,
+  timestamp
+} from './instrumentation-v2-schema-parts';
 const selection = {
   sourceKind: z.enum(SOURCE_KINDS),
   recipeId: text.optional(),
@@ -78,33 +42,59 @@ const intakeProfile = z
     availability: z.enum(['available', 'unavailable']),
     gateway: z.enum(['server', 'collector', 'external']).optional(),
     supportedTransports: z.array(z.enum(['http_protobuf', 'grpc'])),
-    httpsEndpoints: z
-      .object({ http_protobuf: z.string().url().optional(), grpc: z.string().url().optional() })
-      .strict(),
+    httpsEndpoints: z.object({ http_protobuf: explicitHttps.optional(), grpc: explicitHttps.optional() }).strict(),
     authHeaderName: text.optional(),
     collectorId: text.optional(),
-    errorCode: text.optional()
+    errorCode: profileError.optional()
   })
   .strict()
-  .superRefine((value, context) => {
-    const endpointCount = Object.values(value.httpsEndpoints).length;
-    if (
-      value.availability === 'available' &&
-      (!value.gateway ||
-        value.supportedTransports.length === 0 ||
-        value.supportedTransports.length !== endpointCount ||
-        value.authHeaderName !== 'Authorization' ||
-        value.errorCode)
-    ) {
-      context.addIssue({ code: 'custom', message: 'available profile connectivity is invalid' });
-    }
-    if (
-      value.availability === 'unavailable' &&
-      (value.gateway || value.supportedTransports.length || endpointCount || value.authHeaderName || !value.errorCode)
-    ) {
-      context.addIssue({ code: 'custom', message: 'unavailable profile advertised connectivity' });
-    }
-  });
+  .superRefine(validateIntakeProfile);
+
+type IntakeProfile = z.infer<typeof intakeProfile>;
+
+function hasValidCollectorIdentity(value: IntakeProfile) {
+  return value.kind === 'hertzbeat_collector' ? Boolean(value.collectorId) : value.collectorId === undefined;
+}
+
+function validateIntakeProfile(value: IntakeProfile, context: z.RefinementCtx) {
+  if (value.availability === 'available' && !hasValidAvailableConnectivity(value)) {
+    context.addIssue({ code: 'custom', message: 'available profile connectivity is invalid' });
+  }
+  if (value.availability === 'unavailable' && hasAdvertisedConnectivity(value)) {
+    context.addIssue({ code: 'custom', message: 'unavailable profile advertised connectivity' });
+  }
+}
+
+function hasValidAvailableConnectivity(value: IntakeProfile) {
+  const endpointCount = Object.values(value.httpsEndpoints).length;
+  const expectedGateway = {
+    server: 'server',
+    hertzbeat_collector: 'collector',
+    external_otel_collector: 'external'
+  }[value.kind];
+  const transportsMatch = value.supportedTransports.every(transport => Boolean(value.httpsEndpoints[transport]));
+  return (
+    Boolean(value.gateway) &&
+    value.supportedTransports.length > 0 &&
+    value.supportedTransports.length === endpointCount &&
+    transportsMatch &&
+    value.authHeaderName === 'Authorization' &&
+    !value.errorCode &&
+    value.gateway === expectedGateway &&
+    hasValidCollectorIdentity(value)
+  );
+}
+
+function hasAdvertisedConnectivity(value: IntakeProfile) {
+  return Boolean(
+    value.gateway ||
+    value.supportedTransports.length ||
+    Object.values(value.httpsEndpoints).length ||
+    value.authHeaderName ||
+    !value.errorCode ||
+    !hasValidCollectorIdentity(value)
+  );
+}
 
 export const catalogSchema = z
   .object({
@@ -149,55 +139,34 @@ export const intakeProfilesSchema = z
     profiles: z.array(intakeProfile)
   })
   .strict()
-  .superRefine((value, context) => {
-    if (value.status === 'available' && value.profiles.length === 0) {
-      context.addIssue({ code: 'custom', message: 'available discovery requires profiles' });
-    }
-    if (value.status === 'unconfigured' && (value.profiles.length || value.errorCode || value.defaultProfileId)) {
-      context.addIssue({ code: 'custom', message: 'unconfigured discovery must be empty' });
-    }
-    if (
-      value.status === 'unavailable' &&
-      (value.errorCode !== 'intake_profile_discovery_unavailable' || value.profiles.length || value.defaultProfileId)
-    ) {
-      context.addIssue({ code: 'custom', message: 'unavailable discovery is invalid' });
-    }
-    if (
-      value.defaultProfileId &&
-      !value.profiles.some(profile => profile.id === value.defaultProfileId && profile.availability === 'available')
-    ) {
-      context.addIssue({ code: 'custom', message: 'default profile is invalid' });
-    }
-  });
+  .superRefine(validateIntakeProfiles);
 
-const guideBlock = z
-  .object({
-    id: text,
-    type: z.enum(BLOCK_TYPES),
-    titleKey: key,
-    bodyKey: key.optional(),
-    executionLocationKey: key,
-    language: text.optional(),
-    content: text.optional(),
-    href: z.string().url().optional(),
-    placeholders: z.array(z.literal('authorizationToken'))
-  })
-  .strict()
-  .superRefine((value, context) => {
-    const copyable = ['command', 'code', 'environment', 'download'].includes(value.type);
-    if (copyable !== Boolean(value.content) || (copyable && value.bodyKey) || (!copyable && value.content)) {
-      context.addIssue({ code: 'custom', message: 'guide block content does not match type' });
-    }
-    if (['note', 'warning', 'check'].includes(value.type) && !value.bodyKey) {
-      context.addIssue({ code: 'custom', message: 'explanatory block requires body key' });
-    }
-    if (value.type === 'link' && !value.href) {
-      context.addIssue({ code: 'custom', message: 'link block requires href' });
-    }
-    if (value.placeholders.includes('authorizationToken') && !value.content?.includes('${HERTZBEAT_TOKEN}')) {
-      context.addIssue({ code: 'custom', message: 'secret marker is missing' });
-    }
-  });
+type IntakeProfiles = z.infer<typeof intakeProfilesSchema>;
+
+function validateIntakeProfiles(value: IntakeProfiles, context: z.RefinementCtx) {
+  if (value.status === 'available' && value.profiles.length === 0) {
+    context.addIssue({ code: 'custom', message: 'available discovery requires profiles' });
+  }
+  if (value.status === 'unconfigured' && (value.profiles.length || value.errorCode || value.defaultProfileId)) {
+    context.addIssue({ code: 'custom', message: 'unconfigured discovery must be empty' });
+  }
+  if (value.status === 'unavailable' && !isValidUnavailableDiscovery(value)) {
+    context.addIssue({ code: 'custom', message: 'unavailable discovery is invalid' });
+  }
+  if (value.defaultProfileId && !hasAvailableDefaultProfile(value)) {
+    context.addIssue({ code: 'custom', message: 'default profile is invalid' });
+  }
+}
+
+function isValidUnavailableDiscovery(value: IntakeProfiles) {
+  return (
+    value.errorCode === 'intake_profile_discovery_unavailable' && value.profiles.length === 0 && !value.defaultProfileId
+  );
+}
+
+function hasAvailableDefaultProfile(value: IntakeProfiles) {
+  return value.profiles.some(profile => profile.id === value.defaultProfileId && profile.availability === 'available');
+}
 
 export const renderSchema = z
   .object({
@@ -234,7 +203,21 @@ const jumpContext = z
   .strict();
 const signalDetection = z
   .object({ status: z.enum(DETECTION_STATUSES), lastReceivedAt: timestamp.optional(), errorCode: text.optional() })
-  .strict();
+  .strict()
+  .superRefine(validateSignalDetection);
+
+type SignalDetection = z.infer<typeof signalDetection>;
+
+function validateSignalDetection(value: SignalDetection, context: z.RefinementCtx) {
+  const valid = {
+    received: Boolean(value.lastReceivedAt) && !value.errorCode,
+    waiting: !value.lastReceivedAt && value.errorCode === 'signal_not_received',
+    unsupported: !value.lastReceivedAt && value.errorCode === 'signal_not_supported',
+    unavailable: !value.lastReceivedAt && Boolean(value.errorCode),
+    error: Boolean(value.errorCode)
+  }[value.status];
+  if (!valid) context.addIssue({ code: 'custom', message: `${value.status} signal evidence is invalid` });
+}
 
 export const detectionSchema = z
   .object({
@@ -265,7 +248,22 @@ export const detectionSchema = z
     if ((value.polling.decision === 'continue_polling') !== Boolean(value.polling.pollAfterMs)) {
       context.addIssue({ code: 'custom', message: 'polling delay does not match decision' });
     }
+    validateQueryJumps(value, context);
   });
+
+type Detection = z.infer<typeof detectionSchema>;
+
+function validateQueryJumps(value: Detection, context: z.RefinementCtx) {
+  for (const jump of value.queryJumps) {
+    const signal = value.signals[jump.signal];
+    if (JSON.stringify(jump.context) !== JSON.stringify(value.queryJumpContext)) {
+      context.addIssue({ code: 'custom', message: 'query jump context must match shared context' });
+    }
+    if (jump.enabled !== (signal.status === 'received')) {
+      context.addIssue({ code: 'custom', message: 'query jump enabled state must match received signal' });
+    }
+  }
+}
 
 export const messageEnvelopeSchema = z
   .object({ code: z.number().int(), msg: z.string().nullable().optional(), data: z.unknown() })

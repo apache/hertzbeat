@@ -8,8 +8,14 @@ import { Radio, Select, Space, Tag, Typography } from 'antd';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
-import { recipeDimensions } from '../model/instrumentation-flow';
-import type { CatalogResponse, Recipe, SourceKind } from '../model/instrumentation-v2-contract';
+import {
+  APPLICATION_QUESTIONS,
+  applicationQuestionOptions,
+  type ApplicationQuestion,
+  type InstrumentationDraft
+} from '../model/instrumentation-flow';
+import { SOURCE_KINDS, type CatalogResponse, type Recipe, type SourceKind } from '../model/instrumentation-v2-contract';
+import { translateBackend } from './instrumentation-i18n';
 import styles from './instrumentation-shell.module.css';
 
 export function InstrumentationSourceStep(props: {
@@ -22,11 +28,20 @@ export function InstrumentationSourceStep(props: {
   environment?: string;
   platform?: string;
   onSource: (kind: SourceKind) => void;
-  onRecipe: (recipe: Recipe) => void;
+  onApplicationAnswer: (field: ApplicationQuestion, value: string) => void;
 }) {
   const { t } = useTranslation();
-  const recipes = props.catalog.recipes.filter(recipe => recipe.kind === props.sourceKind);
-  const dimensions = recipeDimensions(recipes);
+  const draft: InstrumentationDraft = {
+    sourceKind: props.sourceKind,
+    intakeProfileId: '',
+    service: { name: '', namespace: '', environment: '' },
+    ...(props.recipeId ? { recipeId: props.recipeId } : {}),
+    ...(props.language ? { language: props.language } : {}),
+    ...(props.framework ? { framework: props.framework } : {}),
+    ...(props.method ? { method: props.method } : {}),
+    ...(props.environment ? { environment: props.environment } : {}),
+    ...(props.platform ? { platform: props.platform } : {})
+  };
   return (
     <section className={styles.section} aria-labelledby="instrumentation-source-title">
       <Typography.Title id="instrumentation-source-title" level={4}>
@@ -35,7 +50,10 @@ export function InstrumentationSourceStep(props: {
       <Radio.Group
         className={styles.sourceList!}
         value={props.sourceKind}
-        onChange={event => props.onSource(event.target.value)}
+        onChange={event => {
+          const kind: unknown = event.target.value;
+          if (SOURCE_KINDS.includes(kind as SourceKind)) props.onSource(kind as SourceKind);
+        }}
       >
         {props.catalog.sources.map(source => (
           <Radio key={source.kind} value={source.kind} className={styles.sourceRow!}>
@@ -46,62 +64,52 @@ export function InstrumentationSourceStep(props: {
           </Radio>
         ))}
       </Radio.Group>
-      {props.sourceKind === 'application' && (
-        <Space direction="vertical" className={styles.fullWidth!}>
-          <Typography.Text strong>{t('instrumentation.v2.recipeLabel')}</Typography.Text>
-          <Select
-            value={props.recipeId ?? null}
-            placeholder={t('instrumentation.v2.chooseRecipe')}
-            options={recipes.map(recipe => ({
-              value: recipe.id,
-              label: (
-                <span>
-                  {translateBackend(t, recipe.labelKey)}{' '}
-                  {recipe.preview && <Tag color="warning">{t('instrumentation.preview')}</Tag>}
-                </span>
-              )
-            }))}
-            onChange={id => {
-              const recipe = recipes.find(item => item.id === id);
-              if (recipe) props.onRecipe(recipe);
-            }}
-          />
-          {(
-            [
-              ['language', dimensions.languages],
-              ['framework', dimensions.frameworks],
-              ['method', dimensions.methods],
-              ['environment', dimensions.environments],
-              ['platform', dimensions.platforms]
-            ] as const
-          ).map(([field, values]) => (
-            <label key={field}>
-              <Typography.Text strong>
-                {t(`instrumentation.field.${field === 'environment' ? 'deploymentEnvironment' : field}`)}
-              </Typography.Text>
-              <Select
-                value={props[field] ?? null}
-                options={values.map(value => ({
-                  value,
-                  label: t(`instrumentation.${field}.${value}`, { defaultValue: value })
-                }))}
-                onChange={value => {
-                  const recipe = recipes.find(item =>
-                    field === 'environment' || field === 'platform'
-                      ? item[`${field}s`].includes(value)
-                      : item[field] === value
-                  );
-                  if (recipe) props.onRecipe(recipe);
-                }}
-              />
-            </label>
-          ))}
-        </Space>
-      )}
+      {props.sourceKind === 'application' && <ApplicationQuestions {...props} draft={draft} />}
     </section>
   );
 }
 
-export function translateBackend(t: TFunction, key: string) {
-  return t(key, { defaultValue: t('instrumentation.v2.unknownGuidance') });
+function ApplicationQuestions(
+  props: Parameters<typeof InstrumentationSourceStep>[0] & {
+    draft: InstrumentationDraft;
+  }
+) {
+  const { t } = useTranslation();
+  const selectedRecipe = props.catalog.recipes.find(recipe => recipe.id === props.recipeId);
+  const firstUnanswered = APPLICATION_QUESTIONS.findIndex(field => !props[field]);
+  const visibleQuestions =
+    firstUnanswered < 0 ? APPLICATION_QUESTIONS : APPLICATION_QUESTIONS.slice(0, firstUnanswered + 1);
+  return (
+    <Space direction="vertical" className={styles.fullWidth!}>
+      {visibleQuestions.map(field => (
+        <label key={field}>
+          <Typography.Text strong>
+            {t(`instrumentation.field.${field === 'environment' ? 'deploymentEnvironment' : field}`)}
+          </Typography.Text>
+          <Select
+            value={props[field] ?? null}
+            options={applicationQuestionOptions(props.catalog, props.draft, field).map(value => ({
+              value,
+              label: t(`instrumentation.${field}.${value}`, { defaultValue: value })
+            }))}
+            onChange={value => props.onApplicationAnswer(field, value)}
+          />
+        </label>
+      ))}
+      {selectedRecipe && (
+        <Typography.Text type="secondary">
+          {translateRecipe(t, selectedRecipe)}
+          {selectedRecipe.preview && <Tag color="warning">{t('instrumentation.preview')}</Tag>}
+        </Typography.Text>
+      )}
+    </Space>
+  );
+}
+
+function translateRecipe(t: TFunction, recipe: Recipe) {
+  const fallback = (['language', 'framework', 'method'] as const)
+    .flatMap(field => (recipe[field] ? [[field, recipe[field]]] : []))
+    .map(([field, value]) => t(`instrumentation.${field}.${value}`, { defaultValue: value }))
+    .join(' · ');
+  return t(recipe.labelKey, { defaultValue: fallback });
 }

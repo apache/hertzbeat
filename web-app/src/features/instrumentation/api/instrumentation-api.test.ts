@@ -9,7 +9,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const { apiFetch } = vi.hoisted(() => ({ apiFetch: vi.fn() }));
 vi.mock('@/core/http/http-client', () => ({ apiFetch }));
 
-import { loadInstrumentationCatalog, loadIntakeProfiles, renderInstrumentationGuide } from './instrumentation-api';
+import {
+  InstrumentationContractError,
+  loadInstrumentationCatalog,
+  loadIntakeProfiles,
+  renderInstrumentationGuide
+} from './instrumentation-api';
 
 describe('instrumentation v2 API', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -42,7 +47,7 @@ describe('instrumentation v2 API', () => {
       .mockResolvedValueOnce(response({ schemaVersion: 2, status: 'unconfigured', profiles: [] }));
     await loadInstrumentationCatalog();
     await loadIntakeProfiles();
-    expect(apiFetch.mock.calls.map(call => call[0])).toEqual([
+    expect(apiFetch.mock.calls.map(call => String(call[0]))).toEqual([
       '/api/instrumentation/v2/catalog',
       '/api/instrumentation/v2/intake-profiles'
     ]);
@@ -61,7 +66,21 @@ describe('instrumentation v2 API', () => {
     const [path, init] = apiFetch.mock.calls[0]!;
     expect(path).toBe('/api/instrumentation/v2/render');
     expect(String(init.body)).not.toContain('must-never-leave-memory');
-    expect(JSON.parse(String(init.body))).not.toHaveProperty('token');
+    const serializedRequest: unknown = JSON.parse(String(init.body));
+    expect(serializedRequest).not.toHaveProperty('token');
+  });
+
+  it('rejects mismatched response context with a stable non-sensitive contract error', async () => {
+    apiFetch.mockResolvedValueOnce(response({ ...renderFixture(), recipeId: 'other-recipe' }));
+    const promise = renderInstrumentationGuide({
+      schemaVersion: 2,
+      sourceKind: 'quick_start',
+      recipeId: 'opentelemetry_telemetrygen',
+      intakeProfileId: 'server-default',
+      service: { name: 'checkout', namespace: 'shop', environment: 'prod' }
+    });
+    await expect(promise).rejects.toBeInstanceOf(InstrumentationContractError);
+    await expect(promise).rejects.not.toHaveProperty('cause');
   });
 });
 

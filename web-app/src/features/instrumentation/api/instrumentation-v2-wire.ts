@@ -16,8 +16,8 @@ import type {
 import { catalogSchema, detectionSchema, intakeProfilesSchema, renderSchema } from './instrumentation-v2-schema';
 
 export class InstrumentationContractError extends Error {
-  constructor(label: string, cause: unknown) {
-    super(`${label} did not match instrumentation schema v2`, { cause });
+  constructor(label: string, cause?: unknown) {
+    super(`${label} did not match instrumentation schema v2`, cause === undefined ? undefined : { cause });
     this.name = 'InstrumentationContractError';
   }
 }

@@ -55,7 +55,7 @@ export const renderInstrumentationGuide = (value: RenderRequest, signal?: AbortS
       parsed.intakeProfile.id !== value.intakeProfileId ||
       !sameService(parsed.service, value.service)
     ) {
-      throw new InstrumentationContractError('render response did not match request');
+      throw new InstrumentationContractError('render response did not match request', undefined);
     }
     return parsed;
   });
@@ -69,7 +69,7 @@ export const detectInstrumentationSignals = (value: DetectionRequest, signal?: A
       parsed.context.startedAt !== value.startedAt ||
       !sameService(parsed.context.service, value.service)
     ) {
-      throw new InstrumentationContractError('detection response did not match request');
+      throw new InstrumentationContractError('detection response did not match request', undefined);
     }
     return parsed;
   });

@@ -22,6 +22,21 @@ export type InstrumentationDraft = Selection & {
   intakeProfileId: string;
   service: ServiceIdentity;
 };
+export type ApplicationQuestion = 'language' | 'framework' | 'method' | 'environment' | 'platform';
+export type InstrumentationStage = 'source' | 'context' | 'install' | 'detect';
+export const INSTRUMENTATION_STAGES: InstrumentationStage[] = ['source', 'context', 'install', 'detect'];
+
+export function previousInstrumentationStage(stage: InstrumentationStage): InstrumentationStage {
+  const index = INSTRUMENTATION_STAGES.indexOf(stage);
+  return INSTRUMENTATION_STAGES[Math.max(0, index - 1)]!;
+}
+export const APPLICATION_QUESTIONS: ApplicationQuestion[] = [
+  'language',
+  'framework',
+  'method',
+  'environment',
+  'platform'
+];
 
 export const emptyDraft = (): InstrumentationDraft => ({
   sourceKind: 'quick_start',
@@ -40,14 +55,37 @@ export function selectRecipe(draft: InstrumentationDraft, recipe: Recipe): Instr
   return { ...draft, ...selectionFromRecipe(recipe) };
 }
 
-export function recipeDimensions(recipes: Recipe[]) {
-  return {
-    languages: unique(recipes.map(item => item.language)),
-    frameworks: unique(recipes.map(item => item.framework)),
-    methods: unique(recipes.map(item => item.method)),
-    environments: unique(recipes.flatMap(item => item.environments)),
-    platforms: unique(recipes.flatMap(item => item.platforms))
-  };
+export function applicationQuestionOptions(
+  catalog: CatalogResponse,
+  draft: InstrumentationDraft,
+  field: ApplicationQuestion
+) {
+  const index = APPLICATION_QUESTIONS.indexOf(field);
+  const candidates = applicationRecipes(catalog).filter(recipe =>
+    APPLICATION_QUESTIONS.slice(0, index).every(parent => recipeHas(recipe, parent, draft[parent]))
+  );
+  return unique(candidates.flatMap(recipe => recipeValues(recipe, field)));
+}
+
+export function answerApplicationQuestion(
+  draft: InstrumentationDraft,
+  catalog: CatalogResponse,
+  field: ApplicationQuestion,
+  value: string
+) {
+  if (!applicationQuestionOptions(catalog, draft, field).includes(value)) {
+    throw new Error('Application answer is not available');
+  }
+  const index = APPLICATION_QUESTIONS.indexOf(field);
+  const next = { ...draft, [field]: value };
+  delete next.recipeId;
+  for (const dependent of APPLICATION_QUESTIONS.slice(index + 1)) delete next[dependent];
+  if (APPLICATION_QUESTIONS.some(answer => !next[answer])) return next;
+  const recipe = applicationRecipes(catalog).find(candidate =>
+    APPLICATION_QUESTIONS.every(answer => recipeHas(candidate, answer, next[answer]))
+  );
+  if (!recipe) throw new Error('Application recipe did not resolve');
+  return { ...next, recipeId: recipe.id };
 }
 
 export function buildRenderRequest(draft: InstrumentationDraft): RenderRequest {
@@ -129,4 +167,19 @@ function copySelection(value: Selection): Selection {
 
 function unique(values: Array<string | undefined>) {
   return [...new Set(values.filter((value): value is string => Boolean(value)))];
+}
+
+function applicationRecipes(catalog: CatalogResponse) {
+  return catalog.recipes.filter(recipe => recipe.kind === 'application');
+}
+
+function recipeValues(recipe: Recipe, field: ApplicationQuestion): string[] {
+  if (field === 'environment') return recipe.environments;
+  if (field === 'platform') return recipe.platforms;
+  const value = recipe[field];
+  return value ? [value] : [];
+}
+
+function recipeHas(recipe: Recipe, field: ApplicationQuestion, value: string | undefined) {
+  return Boolean(value && recipeValues(recipe, field).includes(value));
 }

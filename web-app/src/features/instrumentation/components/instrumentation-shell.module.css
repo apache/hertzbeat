@@ -1,8 +1,14 @@
 .page {
   width: 100%;
-  max-width: 980px;
   display: grid;
   gap: 20px;
+}
+
+.progress {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
 }
 
 .heading {

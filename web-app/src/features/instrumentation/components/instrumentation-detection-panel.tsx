@@ -47,33 +47,38 @@ export function InstrumentationDetectionPanel(props: {
       <Typography.Title id="instrumentation-detection-title" level={4}>
         {t('instrumentation.stage.detect')}
       </Typography.Title>
-      {SIGNALS.map(signal => {
-        const result = props.response?.signals[signal];
-        const jump = props.response?.queryJumps.find(item => item.signal === signal);
-        return (
-          <div key={signal} className={styles.signalRow}>
-            <Space>
-              <strong>{t(`instrumentation.signal.${signal}`)}</strong>
-              <Tag color={statusColor(result?.status)}>{t(`instrumentation.detection.status.${result?.status}`)}</Tag>
-            </Space>
-            {result?.lastReceivedAt && (
-              <Typography.Text type="secondary">{new Date(result.lastReceivedAt).toLocaleString()}</Typography.Text>
-            )}
-            {result?.errorCode && (
-              <Typography.Text type="secondary">
-                {t(`instrumentation.detection.error.${result.errorCode}`, { defaultValue: t('common.unavailable') })}
-              </Typography.Text>
-            )}
-            <Button size="small" disabled={!jump?.enabled} onClick={() => props.onOpen(signal)}>
-              {t('instrumentation.action.openExplore')}
-            </Button>
-          </div>
-        );
-      })}
+      {SIGNALS.map(signal => (
+        <SignalRow key={signal} signal={signal} response={props.response!} onOpen={props.onOpen} />
+      ))}
       {props.response.polling.decision === 'manual_retry' && (
         <Button onClick={props.onRetry}>{t('instrumentation.action.retryDetection')}</Button>
       )}
     </section>
+  );
+}
+
+function SignalRow(props: { signal: Signal; response: DetectionResponse; onOpen: (signal: Signal) => void }) {
+  const { t } = useTranslation();
+  const result = props.response.signals[props.signal];
+  const jump = props.response.queryJumps.find(item => item.signal === props.signal);
+  return (
+    <div className={styles.signalRow}>
+      <Space>
+        <strong>{t(`instrumentation.signal.${props.signal}`)}</strong>
+        <Tag color={statusColor(result.status)}>{t(`instrumentation.detection.status.${result.status}`)}</Tag>
+      </Space>
+      {result.lastReceivedAt && (
+        <Typography.Text type="secondary">{new Date(result.lastReceivedAt).toLocaleString()}</Typography.Text>
+      )}
+      {result.errorCode && (
+        <Typography.Text type="secondary">
+          {t(`instrumentation.detection.error.${result.errorCode}`, { defaultValue: t('common.unavailable') })}
+        </Typography.Text>
+      )}
+      <Button size="small" disabled={!jump?.enabled} onClick={() => props.onOpen(props.signal)}>
+        {t('instrumentation.action.openExplore')}
+      </Button>
+    </div>
   );
 }
 

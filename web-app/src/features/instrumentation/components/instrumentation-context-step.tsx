@@ -31,6 +31,11 @@ export function InstrumentationContextStep(props: {
       />
     );
   }
+  return <AvailableContextStep {...props} />;
+}
+
+function AvailableContextStep(props: Parameters<typeof InstrumentationContextStep>[0]) {
+  const { t } = useTranslation();
   const available = props.profiles.profiles.filter(profile => profile.availability === 'available');
   const defaultProfile = available.find(profile => profile.id === props.profiles.defaultProfileId);
   const alternatives = props.profiles.profiles.filter(profile => profile.id !== defaultProfile?.id);
@@ -40,21 +45,7 @@ export function InstrumentationContextStep(props: {
         {t('instrumentation.v2.contextTitle')}
       </Typography.Title>
       <div className={styles.formGrid}>
-        <Field
-          label={t('instrumentation.field.serviceName')}
-          value={props.service.name}
-          onChange={name => props.onService({ name })}
-        />
-        <Field
-          label={t('instrumentation.field.serviceNamespace')}
-          value={props.service.namespace}
-          onChange={namespace => props.onService({ namespace })}
-        />
-        <Field
-          label={t('instrumentation.field.serviceEnvironment')}
-          value={props.service.environment}
-          onChange={environment => props.onService({ environment })}
-        />
+        <ServiceFields service={props.service} onService={props.onService} />
       </div>
       <Space direction="vertical" className={styles.fullWidth!}>
         <Typography.Text strong>{t('instrumentation.v2.destination')}</Typography.Text>
@@ -86,6 +77,29 @@ export function InstrumentationContextStep(props: {
       </Button>
       {props.renderError && <Alert type="error" showIcon message={t('instrumentation.v2.renderError')} />}
     </section>
+  );
+}
+
+function ServiceFields(props: { service: ServiceIdentity; onService: (patch: Partial<ServiceIdentity>) => void }) {
+  const { t } = useTranslation();
+  return (
+    <>
+      <Field
+        label={t('instrumentation.field.serviceName')}
+        value={props.service.name}
+        onChange={name => props.onService({ name })}
+      />
+      <Field
+        label={t('instrumentation.field.serviceNamespace')}
+        value={props.service.namespace}
+        onChange={namespace => props.onService({ namespace })}
+      />
+      <Field
+        label={t('instrumentation.field.serviceEnvironment')}
+        value={props.service.environment}
+        onChange={environment => props.onService({ environment })}
+      />
+    </>
   );
 }
 

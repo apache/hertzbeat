@@ -4,11 +4,11 @@
  * governing permissions and limitations under the License.
  */
 
-import { Alert, Button, Descriptions, Input, Space, Tag, Typography } from 'antd';
+import { Alert, App, Button, Descriptions, Input, Space, Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import type { GuideBlock, RenderResponse } from '../model/instrumentation-v2-contract';
-import { translateBackend } from './instrumentation-source-step';
+import { translateBackend } from './instrumentation-i18n';
 import styles from './instrumentation-guide.module.css';
 
 export function InstrumentationGuideBlocks(props: {
@@ -19,6 +19,15 @@ export function InstrumentationGuideBlocks(props: {
   onDetect: () => void;
 }) {
   const { t } = useTranslation();
+  const { message } = App.useApp();
+  const copy = async (block: GuideBlock) => {
+    try {
+      await props.onCopy(block);
+      message.success(t('instrumentation.copySuccess'));
+    } catch {
+      message.warning(t('instrumentation.copyFailed'));
+    }
+  };
   return (
     <section className={styles.guide} aria-labelledby="instrumentation-guide-title">
       <Typography.Title id="instrumentation-guide-title" level={4}>
@@ -32,7 +41,24 @@ export function InstrumentationGuideBlocks(props: {
         aria-label={t('instrumentation.field.token')}
       />
       <Typography.Text type="secondary">{t('instrumentation.field.tokenMemory')}</Typography.Text>
-      {props.guide.components.map(component => (
+      <GuideSummary guide={props.guide} />
+      <div className={styles.blocks}>
+        {props.guide.blocks.map(block => (
+          <GuideBlockView key={block.id} block={block} token={props.token} onCopy={copy} />
+        ))}
+      </div>
+      <Button type="primary" onClick={props.onDetect}>
+        {t('instrumentation.action.startDetection')}
+      </Button>
+    </section>
+  );
+}
+
+function GuideSummary({ guide }: { guide: RenderResponse }) {
+  const { t } = useTranslation();
+  return (
+    <>
+      {guide.components.map(component => (
         <Descriptions key={component.name} size="small" column={4} className={styles.component!}>
           <Descriptions.Item label={t('instrumentation.v2.component')}>
             <a href={component.sourceUrl}>{component.name}</a>
@@ -48,20 +74,12 @@ export function InstrumentationGuideBlocks(props: {
       ))}
       <Space wrap>
         {(['metrics', 'logs', 'traces'] as const).map(signal => (
-          <Tag key={signal} color={props.guide.signals[signal] === 'preview' ? 'warning' : 'default'}>
-            {t(`instrumentation.signal.${signal}`)} · {t(`instrumentation.capability.${props.guide.signals[signal]}`)}
+          <Tag key={signal} color={guide.signals[signal] === 'preview' ? 'warning' : 'default'}>
+            {t(`instrumentation.signal.${signal}`)} · {t(`instrumentation.capability.${guide.signals[signal]}`)}
           </Tag>
         ))}
       </Space>
-      <div className={styles.blocks}>
-        {props.guide.blocks.map(block => (
-          <GuideBlockView key={block.id} block={block} token={props.token} onCopy={props.onCopy} />
-        ))}
-      </div>
-      <Button type="primary" onClick={props.onDetect}>
-        {t('instrumentation.action.startDetection')}
-      </Button>
-    </section>
+    </>
   );
 }
 
