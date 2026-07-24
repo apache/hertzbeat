@@ -492,6 +492,77 @@
     "title": "為應用程式設定插樁",
     "menu": "應用程式插樁",
     "description": "設定官方 OpenTelemetry，驗證指定範圍內的訊號接收情況，然後在 Explore 中進行調查。",
+    "v2": {
+      "title": "連接遙測資料",
+      "description": "選擇要連接的對象、設定目的地，並逐項驗證訊號。",
+      "connectTitle": "要連接什麼？",
+      "contextTitle": "服務與目的地",
+      "installTitle": "安裝並設定",
+      "recipeLabel": "插樁方案",
+      "chooseRecipe": "選擇後端支援的方案",
+      "destination": "目的地",
+      "advancedDestination": "進階：使用其他 Collector 或外部目的地",
+      "component": "元件",
+      "version": "版本",
+      "license": "授權條款",
+      "openOfficialLink": "開啟官方文件",
+      "unknownGuidance": "指南可用，但尚未安裝對應的本地化說明。",
+      "startOver": "重新開始",
+      "loadError": "插樁引導目前無法使用。",
+      "renderError": "無法產生所選安裝指南。",
+      "profile": {
+        "unconfigured": "尚未設定遙測目的地。",
+        "unavailable": "無法探索目的地。"
+      },
+      "profileKind": {
+        "server": "HertzBeat Server",
+        "hertzbeat_collector": "HertzBeat Collector",
+        "external_otel_collector": "外部 OpenTelemetry Collector"
+      },
+      "profileAvailability": {
+        "available": "可用",
+        "unavailable": "無法使用"
+      },
+      "stage": {
+        "source": "來源",
+        "context": "情境",
+        "install": "安裝",
+        "detect": "偵測"
+      },
+      "source": {
+        "quick_start": "傳送測試資料",
+        "quick_start_description": "使用產生的 OpenTelemetry 資料驗證遙測路徑。",
+        "application": "為應用程式設定插樁",
+        "application_description": "為應用程式執行階段選擇官方插樁方案。",
+        "existing_opentelemetry": "連接現有 OpenTelemetry",
+        "existing_opentelemetry_description": "將現有 OpenTelemetry 管線指向 HertzBeat。"
+      },
+      "recipe": {
+        "opentelemetry_telemetrygen": "OpenTelemetry 遙測資料產生器",
+        "existing_otlp": "現有 OTLP 管線"
+      },
+      "block": {
+        "install_telemetrygen": "安裝 telemetrygen",
+        "send_metrics": "傳送測試指標",
+        "send_logs": "傳送測試日誌",
+        "send_traces": "傳送測試追蹤",
+        "cleanup_telemetrygen": "清理測試處理程序",
+        "configure_exporter": "設定 OTLP exporter",
+        "merge_exporter": "將 exporter 合併至各條管線",
+        "restart_collector": "重新啟動 Collector",
+        "validate_signals": "驗證訊號接收情況",
+        "official_source": "開啟官方元件原始碼",
+        "no_persistence": "不會在 HertzBeat 端建立安裝程式"
+      },
+      "note": {
+        "telemetrygen_no_persistence": "僅在本次驗證中執行官方工具，並在完成後將其移除。",
+        "merge_exporter_into_each_pipeline": "在每條需要傳送資料的訊號管線中參照該 exporter。",
+        "restart_collector_for_deployment": "使用一般部署流程重新啟動 Collector。"
+      },
+      "check": {
+        "detect_scoped_signals": "返回 HertzBeat，偵測與此服務範圍完全相符的遙測資料。"
+      }
+    },
     "schemaVersion": "契約 v{{version}}",
     "progress": "插樁設定進度",
     "scope": "設定範圍",
@@ -616,7 +687,10 @@
       "application_host": "應用程式主機",
       "application_environment": "應用程式環境",
       "application_process": "應用程式處理程序",
-      "container_definition": "容器定義"
+      "container_definition": "容器定義",
+      "hertzbeat_ui": "HertzBeat",
+      "otel_collector": "OpenTelemetry Collector",
+      "external": "外部文件"
     },
     "detection": {
       "unavailable": "訊號偵測無法使用。",

@@ -562,6 +562,7 @@
         "merge_exporter": "Merge the exporter into each pipeline",
         "restart_collector": "Restart the Collector",
         "validate_signals": "Validate signal reception",
+        "official_source": "Open the official component source",
         "no_persistence": "No HertzBeat-side installer is created"
       },
       "note": {
@@ -699,7 +700,8 @@
       "application_process": "Application process",
       "container_definition": "Container definition",
       "hertzbeat_ui": "HertzBeat",
-      "otel_collector": "OpenTelemetry Collector"
+      "otel_collector": "OpenTelemetry Collector",
+      "external": "External documentation"
     },
     "detection": {
       "unavailable": "Signal detection is unavailable.",

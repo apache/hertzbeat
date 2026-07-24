@@ -500,6 +500,77 @@
     "title": "アプリケーションを計装",
     "menu": "アプリケーション計装",
     "description": "公式の OpenTelemetry を設定し、指定範囲のシグナル受信を確認してから Explore で調査します。",
+    "v2": {
+      "title": "テレメトリを接続",
+      "description": "接続対象を選択し、送信先を設定して、各シグナルを確認します。",
+      "connectTitle": "何を接続しますか？",
+      "contextTitle": "サービスと送信先",
+      "installTitle": "インストールと設定",
+      "recipeLabel": "計装レシピ",
+      "chooseRecipe": "バックエンドが対応するレシピを選択",
+      "destination": "送信先",
+      "advancedDestination": "詳細設定：別の Collector または外部送信先を使用",
+      "component": "コンポーネント",
+      "version": "バージョン",
+      "license": "ライセンス",
+      "openOfficialLink": "公式ドキュメントを開く",
+      "unknownGuidance": "ガイドは利用できますが、ローカライズされた説明がインストールされていません。",
+      "startOver": "最初からやり直す",
+      "loadError": "計装オンボーディングを利用できません。",
+      "renderError": "選択したインストールガイドを生成できませんでした。",
+      "profile": {
+        "unconfigured": "テレメトリ送信先が設定されていません。",
+        "unavailable": "送信先を検出できません。"
+      },
+      "profileKind": {
+        "server": "HertzBeat Server",
+        "hertzbeat_collector": "HertzBeat Collector",
+        "external_otel_collector": "外部 OpenTelemetry Collector"
+      },
+      "profileAvailability": {
+        "available": "利用可能",
+        "unavailable": "利用不可"
+      },
+      "stage": {
+        "source": "ソース",
+        "context": "コンテキスト",
+        "install": "インストール",
+        "detect": "検出"
+      },
+      "source": {
+        "quick_start": "テストデータを送信",
+        "quick_start_description": "生成した OpenTelemetry データでテレメトリ経路を確認します。",
+        "application": "アプリケーションを計装",
+        "application_description": "アプリケーションランタイム向けの公式レシピを選択します。",
+        "existing_opentelemetry": "既存の OpenTelemetry を接続",
+        "existing_opentelemetry_description": "既存の OpenTelemetry パイプラインを HertzBeat に接続します。"
+      },
+      "recipe": {
+        "opentelemetry_telemetrygen": "OpenTelemetry テレメトリジェネレーター",
+        "existing_otlp": "既存の OTLP パイプライン"
+      },
+      "block": {
+        "install_telemetrygen": "telemetrygen をインストール",
+        "send_metrics": "テストメトリクスを送信",
+        "send_logs": "テストログを送信",
+        "send_traces": "テストトレースを送信",
+        "cleanup_telemetrygen": "テストプロセスをクリーンアップ",
+        "configure_exporter": "OTLP exporter を設定",
+        "merge_exporter": "各パイプラインに exporter を追加",
+        "restart_collector": "Collector を再起動",
+        "validate_signals": "シグナル受信を確認",
+        "official_source": "公式コンポーネントのソースを開く",
+        "no_persistence": "HertzBeat 側にインストーラーは作成されません"
+      },
+      "note": {
+        "telemetrygen_no_persistence": "この確認でのみ公式ツールを実行し、完了後に削除してください。",
+        "merge_exporter_into_each_pipeline": "送信する各シグナルパイプラインから exporter を参照してください。",
+        "restart_collector_for_deployment": "通常のデプロイ手順で Collector を再起動してください。"
+      },
+      "check": {
+        "detect_scoped_signals": "HertzBeat に戻り、このサービス範囲に一致するテレメトリを検出します。"
+      }
+    },
     "schemaVersion": "コントラクト v{{version}}",
     "progress": "計装の進行状況",
     "scope": "設定範囲",
@@ -624,7 +695,10 @@
       "application_host": "アプリケーションホスト",
       "application_environment": "アプリケーション環境",
       "application_process": "アプリケーションプロセス",
-      "container_definition": "コンテナ定義"
+      "container_definition": "コンテナ定義",
+      "hertzbeat_ui": "HertzBeat",
+      "otel_collector": "OpenTelemetry Collector",
+      "external": "外部ドキュメント"
     },
     "detection": {
       "unavailable": "シグナル検出を利用できません。",

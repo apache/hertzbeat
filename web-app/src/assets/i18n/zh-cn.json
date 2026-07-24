@@ -492,6 +492,77 @@
     "title": "为应用配置插桩",
     "menu": "应用插桩",
     "description": "配置官方 OpenTelemetry，验证指定范围内的信号接收情况，然后在 Explore 中排查。",
+    "v2": {
+      "title": "接入遥测数据",
+      "description": "选择要接入的对象，配置目标位置，并逐项验证信号。",
+      "connectTitle": "要接入什么？",
+      "contextTitle": "服务与目标位置",
+      "installTitle": "安装并配置",
+      "recipeLabel": "插桩方案",
+      "chooseRecipe": "选择后端支持的方案",
+      "destination": "目标位置",
+      "advancedDestination": "高级：使用其他 Collector 或外部目标位置",
+      "component": "组件",
+      "version": "版本",
+      "license": "许可证",
+      "openOfficialLink": "打开官方文档",
+      "unknownGuidance": "指南可用，但尚未安装对应的本地化说明。",
+      "startOver": "重新开始",
+      "loadError": "插桩引导当前不可用。",
+      "renderError": "无法生成所选安装指南。",
+      "profile": {
+        "unconfigured": "尚未配置遥测目标位置。",
+        "unavailable": "无法发现目标位置。"
+      },
+      "profileKind": {
+        "server": "HertzBeat Server",
+        "hertzbeat_collector": "HertzBeat Collector",
+        "external_otel_collector": "外部 OpenTelemetry Collector"
+      },
+      "profileAvailability": {
+        "available": "可用",
+        "unavailable": "不可用"
+      },
+      "stage": {
+        "source": "来源",
+        "context": "上下文",
+        "install": "安装",
+        "detect": "检测"
+      },
+      "source": {
+        "quick_start": "发送测试数据",
+        "quick_start_description": "使用生成的 OpenTelemetry 数据验证遥测链路。",
+        "application": "为应用配置插桩",
+        "application_description": "为应用运行时选择官方插桩方案。",
+        "existing_opentelemetry": "接入现有 OpenTelemetry",
+        "existing_opentelemetry_description": "将现有 OpenTelemetry 管道指向 HertzBeat。"
+      },
+      "recipe": {
+        "opentelemetry_telemetrygen": "OpenTelemetry 遥测数据生成器",
+        "existing_otlp": "现有 OTLP 管道"
+      },
+      "block": {
+        "install_telemetrygen": "安装 telemetrygen",
+        "send_metrics": "发送测试指标",
+        "send_logs": "发送测试日志",
+        "send_traces": "发送测试链路",
+        "cleanup_telemetrygen": "清理测试进程",
+        "configure_exporter": "配置 OTLP exporter",
+        "merge_exporter": "将 exporter 合并到各条管道",
+        "restart_collector": "重启 Collector",
+        "validate_signals": "验证信号接收情况",
+        "official_source": "打开官方组件源代码",
+        "no_persistence": "不会在 HertzBeat 端创建安装程序"
+      },
+      "note": {
+        "telemetrygen_no_persistence": "仅在本次验证中运行官方工具，并在完成后将其移除。",
+        "merge_exporter_into_each_pipeline": "在每条需要发送数据的信号管道中引用该 exporter。",
+        "restart_collector_for_deployment": "使用常规部署流程重启 Collector。"
+      },
+      "check": {
+        "detect_scoped_signals": "返回 HertzBeat，检测与此服务范围完全匹配的遥测数据。"
+      }
+    },
     "schemaVersion": "契约 v{{version}}",
     "progress": "插桩配置进度",
     "scope": "配置范围",
@@ -616,7 +687,10 @@
       "application_host": "应用主机",
       "application_environment": "应用环境",
       "application_process": "应用进程",
-      "container_definition": "容器定义"
+      "container_definition": "容器定义",
+      "hertzbeat_ui": "HertzBeat",
+      "otel_collector": "OpenTelemetry Collector",
+      "external": "外部文档"
     },
     "detection": {
       "unavailable": "信号检测不可用。",

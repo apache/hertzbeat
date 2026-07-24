@@ -506,6 +506,77 @@
     "title": "Instrumentar uma aplicação",
     "menu": "Instrumentação",
     "description": "Configure o OpenTelemetry oficial, verifique o recebimento de sinais no escopo e investigue no Explore.",
+    "v2": {
+      "title": "Conectar telemetria",
+      "description": "Escolha o que será conectado, configure um destino e verifique cada sinal.",
+      "connectTitle": "O que você deseja conectar?",
+      "contextTitle": "Serviço e destino",
+      "installTitle": "Instalar e configurar",
+      "recipeLabel": "Receita de instrumentação",
+      "chooseRecipe": "Escolha uma receita compatível com o backend",
+      "destination": "Destino",
+      "advancedDestination": "Avançado: usar outro Collector ou destino externo",
+      "component": "Componente",
+      "version": "Versão",
+      "license": "Licença",
+      "openOfficialLink": "Abrir documentação oficial",
+      "unknownGuidance": "O guia está disponível, mas a descrição localizada não está instalada.",
+      "startOver": "Recomeçar",
+      "loadError": "A integração de instrumentação está indisponível.",
+      "renderError": "Não foi possível gerar o guia de instalação selecionado.",
+      "profile": {
+        "unconfigured": "Nenhum destino de telemetria está configurado.",
+        "unavailable": "A descoberta de destinos está indisponível."
+      },
+      "profileKind": {
+        "server": "HertzBeat Server",
+        "hertzbeat_collector": "HertzBeat Collector",
+        "external_otel_collector": "OpenTelemetry Collector externo"
+      },
+      "profileAvailability": {
+        "available": "Disponível",
+        "unavailable": "Indisponível"
+      },
+      "stage": {
+        "source": "Origem",
+        "context": "Contexto",
+        "install": "Instalar",
+        "detect": "Detectar"
+      },
+      "source": {
+        "quick_start": "Enviar dados de teste",
+        "quick_start_description": "Verifique o caminho da telemetria com dados OpenTelemetry gerados.",
+        "application": "Instrumentar uma aplicação",
+        "application_description": "Escolha uma receita oficial para o runtime da aplicação.",
+        "existing_opentelemetry": "Conectar OpenTelemetry existente",
+        "existing_opentelemetry_description": "Direcione um pipeline OpenTelemetry existente para o HertzBeat."
+      },
+      "recipe": {
+        "opentelemetry_telemetrygen": "Gerador de telemetria OpenTelemetry",
+        "existing_otlp": "Pipeline OTLP existente"
+      },
+      "block": {
+        "install_telemetrygen": "Instalar o telemetrygen",
+        "send_metrics": "Enviar métricas de teste",
+        "send_logs": "Enviar logs de teste",
+        "send_traces": "Enviar traces de teste",
+        "cleanup_telemetrygen": "Encerrar o processo de teste",
+        "configure_exporter": "Configurar o exporter OTLP",
+        "merge_exporter": "Adicionar o exporter a cada pipeline",
+        "restart_collector": "Reiniciar o Collector",
+        "validate_signals": "Validar o recebimento de sinais",
+        "official_source": "Abrir o código-fonte oficial do componente",
+        "no_persistence": "Nenhum instalador é criado no HertzBeat"
+      },
+      "note": {
+        "telemetrygen_no_persistence": "Execute a ferramenta oficial apenas nesta verificação e remova-a depois.",
+        "merge_exporter_into_each_pipeline": "Referencie o exporter em cada pipeline de sinal que deve ser enviado.",
+        "restart_collector_for_deployment": "Use o fluxo normal de implantação para reiniciar o Collector."
+      },
+      "check": {
+        "detect_scoped_signals": "Volte ao HertzBeat e detecte a telemetria correspondente exatamente a este escopo de serviço."
+      }
+    },
     "schemaVersion": "Contrato v{{version}}",
     "progress": "Progresso da instrumentação",
     "scope": "ESCOPO DA CONFIGURAÇÃO",
@@ -630,7 +701,10 @@
       "application_host": "Host da aplicação",
       "application_environment": "Ambiente da aplicação",
       "application_process": "Processo da aplicação",
-      "container_definition": "Definição do contêiner"
+      "container_definition": "Definição do contêiner",
+      "hertzbeat_ui": "HertzBeat",
+      "otel_collector": "OpenTelemetry Collector",
+      "external": "Documentação externa"
     },
     "detection": {
       "unavailable": "A detecção de sinais está indisponível.",
