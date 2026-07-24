@@ -134,6 +134,36 @@ describe('instrumentation v2 interaction', () => {
     expect(screen.getByText('instrumentation.detection.status.unsupported')).toBeInTheDocument();
   });
 
+  it('describes a component without a version as not applicable rather than unavailable', () => {
+    render(
+      <InstrumentationGuideBlocks
+        guide={{
+          ...guide,
+          components: [
+            {
+              name: 'OpenTelemetry Collector',
+              sourceUrl: 'https://github.com/open-telemetry/opentelemetry-collector',
+              version: null,
+              versionPolicy: 'language_specific',
+              license: 'Apache-2.0',
+              installationLocationKey: 'instrumentation.location.otel_collector',
+              official: true,
+              bundledWithHertzBeat: false,
+              dependencies: [],
+              artifacts: []
+            }
+          ]
+        }}
+        token=""
+        onToken={vi.fn()}
+        onCopy={vi.fn().mockResolvedValue(undefined)}
+        onDetect={vi.fn()}
+      />
+    );
+    expect(screen.getByText('instrumentation.v2.versionNotApplicable')).toBeInTheDocument();
+    expect(screen.queryByText('common.unavailable')).not.toBeInTheDocument();
+  });
+
   it('handles token validation and clipboard rejection without an unhandled promise', async () => {
     const onCopy = vi.fn().mockRejectedValue(new Error('private token must not surface'));
     render(

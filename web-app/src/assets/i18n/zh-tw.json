@@ -504,6 +504,7 @@
       "advancedDestination": "進階：使用其他 Collector 或外部目的地",
       "component": "元件",
       "version": "版本",
+      "versionNotApplicable": "不適用",
       "license": "授權條款",
       "openOfficialLink": "開啟官方文件",
       "unknownGuidance": "指南可用，但尚未安裝對應的本地化說明。",

@@ -518,6 +518,7 @@
       "advancedDestination": "Avançado: usar outro Collector ou destino externo",
       "component": "Componente",
       "version": "Versão",
+      "versionNotApplicable": "Não se aplica",
       "license": "Licença",
       "openOfficialLink": "Abrir documentação oficial",
       "unknownGuidance": "O guia está disponível, mas a descrição localizada não está instalada.",

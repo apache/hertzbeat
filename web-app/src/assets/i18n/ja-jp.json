@@ -512,6 +512,7 @@
       "advancedDestination": "詳細設定：別の Collector または外部送信先を使用",
       "component": "コンポーネント",
       "version": "バージョン",
+      "versionNotApplicable": "該当なし",
       "license": "ライセンス",
       "openOfficialLink": "公式ドキュメントを開く",
       "unknownGuidance": "ガイドは利用できますが、ローカライズされた説明がインストールされていません。",

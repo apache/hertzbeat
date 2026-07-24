@@ -515,6 +515,7 @@
       "advancedDestination": "Advanced: use another Collector or external destination",
       "component": "Component",
       "version": "Version",
+      "versionNotApplicable": "Not applicable",
       "license": "License",
       "openOfficialLink": "Open official documentation",
       "unknownGuidance": "Guidance is available, but its localized description is not installed.",

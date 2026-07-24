@@ -504,6 +504,7 @@
       "advancedDestination": "高级：使用其他 Collector 或外部目标位置",
       "component": "组件",
       "version": "版本",
+      "versionNotApplicable": "不适用",
       "license": "许可证",
       "openOfficialLink": "打开官方文档",
       "unknownGuidance": "指南可用，但尚未安装对应的本地化说明。",

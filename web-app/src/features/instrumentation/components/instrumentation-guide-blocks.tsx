@@ -64,7 +64,7 @@ function GuideSummary({ guide }: { guide: RenderResponse }) {
             <a href={component.sourceUrl}>{component.name}</a>
           </Descriptions.Item>
           <Descriptions.Item label={t('instrumentation.v2.version')}>
-            {component.version ?? t('common.unavailable')}
+            {component.version ?? t('instrumentation.v2.versionNotApplicable')}
           </Descriptions.Item>
           <Descriptions.Item label={t('instrumentation.v2.license')}>{component.license}</Descriptions.Item>
           <Descriptions.Item label={t('instrumentation.official')}>
