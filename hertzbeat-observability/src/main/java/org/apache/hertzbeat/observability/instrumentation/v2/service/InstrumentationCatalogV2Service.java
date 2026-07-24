@@ -102,7 +102,7 @@ public class InstrumentationCatalogV2Service {
     private SourceOption source(SourceKind kind) {
         String suffix = kind.code();
         return new SourceOption(
-                kind, "instrumentation.v2.source." + suffix, "instrumentation.v2.source." + suffix + ".description");
+                kind, "instrumentation.v2.source." + suffix, "instrumentation.v2.source." + suffix + "_description");
     }
 
     private RecipeOption quickStart() {

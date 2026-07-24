@@ -73,6 +73,12 @@ class InstrumentationV2ContractTest {
         assertEquals(List.of(SourceKind.QUICK_START, SourceKind.APPLICATION, SourceKind.EXISTING_OPENTELEMETRY),
                 catalog.sources().stream().map(InstrumentationCatalogV2.SourceOption::kind).toList());
         assertTrue(catalog.sources().stream().allMatch(source -> source.labelKey().startsWith("instrumentation.v2.")));
+        assertEquals(
+                List.of(
+                        "instrumentation.v2.source.quick_start_description",
+                        "instrumentation.v2.source.application_description",
+                        "instrumentation.v2.source.existing_opentelemetry_description"),
+                catalog.sources().stream().map(InstrumentationCatalogV2.SourceOption::descriptionKey).toList());
         assertTrue(catalog.recipes().stream().allMatch(recipe -> recipe.blocksPreview().size() <= 8));
         assertTrue(catalog.recipes().stream()
                 .filter(recipe -> recipe.kind() == SourceKind.APPLICATION)
