@@ -102,6 +102,8 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     private static final String LABEL_KEY_FIELD = "__field__";
     private static final String LABEL_KEY_INSTANCE = "instance";
     private static final String LOG_TABLE_NAME = WarehouseConstants.LOG_TABLE_NAME;
+    private static final String TRACE_TABLE_NAME = "hzb_traces";
+    private static final String HTTP_ROUTE = "http.route";
     private static final String NATIVE_LOG_SELECT_COLUMNS = "timestamp, trace_id, span_id, severity_number, "
             + "severity_text, body, log_attributes, resource_attributes, hertzbeat_event_id, log_record_uid, "
             + "hertzbeat_ingest_id, hertzbeat_entity_id, hertzbeat_workspace_id, service_name";
@@ -1318,7 +1320,9 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         }
 
         appendJsonAttributeConditions(conditions, "resource_attributes", resourceFilters);
-        appendJsonAttributeConditions(conditions, "log_attributes", attributeFilters);
+        appendLogAttributeConditions(
+                conditions, startTime, endTime, workspaceId, serviceName, serviceNamespace,
+                environment, resourceFilters, attributeFilters);
 
         if (requireServiceName) {
             conditions.add("service_name IS NOT NULL");
@@ -1360,6 +1364,113 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                 .map(entry -> jsonAttributeCondition(columnName, entry.getKey(), entry.getValue()))
                 .filter(StringUtils::hasText)
                 .forEach(conditions::add);
+    }
+
+    private void appendLogAttributeConditions(
+            List<String> conditions,
+            Long startTime,
+            Long endTime,
+            String workspaceId,
+            String serviceName,
+            String serviceNamespace,
+            String environment,
+            Map<String, String> resourceFilters,
+            Map<String, String> attributeFilters) {
+        if (attributeFilters == null || attributeFilters.isEmpty()) {
+            return;
+        }
+        attributeFilters.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> logAttributeCondition(
+                        entry.getKey(), entry.getValue(), startTime, endTime, workspaceId,
+                        serviceName, serviceNamespace, environment, resourceFilters))
+                .filter(StringUtils::hasText)
+                .forEach(conditions::add);
+    }
+
+    private String logAttributeCondition(
+            String key,
+            String value,
+            Long startTime,
+            Long endTime,
+            String workspaceId,
+            String serviceName,
+            String serviceNamespace,
+            String environment,
+            Map<String, String> resourceFilters) {
+        String directCondition = jsonAttributeCondition("log_attributes", key, value);
+        if (!HTTP_ROUTE.equals(key) || !StringUtils.hasText(value) || value.trim().startsWith("!")) {
+            return directCondition;
+        }
+        String route = value.trim();
+        List<String> traceConditions = traceCorrelationConditions(
+                startTime, endTime, workspaceId, serviceName, serviceNamespace, environment, resourceFilters);
+        traceConditions.add(quotedIdentifier("span_attributes." + HTTP_ROUTE)
+                + " = '" + safeString(route) + "'");
+        traceConditions.add("trace_id IS NOT NULL");
+        // Log records normally carry trace/span IDs instead of copying HTTP span attributes.
+        // The subquery keeps route filtering precise while retaining the complete outer log scope.
+        return "(" + directCondition + " OR trace_id IN (SELECT trace_id FROM " + TRACE_TABLE_NAME
+                + " WHERE " + String.join(" AND ", traceConditions) + "))";
+    }
+
+    private List<String> traceCorrelationConditions(
+            Long startTime,
+            Long endTime,
+            String workspaceId,
+            String serviceName,
+            String serviceNamespace,
+            String environment,
+            Map<String, String> resourceFilters) {
+        List<String> conditions = new ArrayList<>();
+        if (startTime != null && endTime != null) {
+            conditions.add("timestamp >= to_timestamp_millis(" + startTime + ")"
+                    + " AND timestamp <= to_timestamp_millis(" + endTime + ")");
+        }
+        if (StringUtils.hasText(serviceName)) {
+            conditions.add("service_name = '" + safeString(serviceName.trim()) + "'");
+        }
+        addTraceResourceCondition(conditions, "service.namespace", serviceNamespace);
+        addTraceResourceCondition(conditions, "deployment.environment.name", environment);
+        if (resourceFilters != null) {
+            resourceFilters.entrySet().stream()
+                    .sorted(Map.Entry.comparingByKey())
+                    .forEach(entry -> addTraceResourceCondition(conditions, entry.getKey(), entry.getValue()));
+        }
+        if (StringUtils.hasText(workspaceId)) {
+            String escaped = safeString(workspaceId.trim());
+            String workspaceColumn = quotedIdentifier("resource_attributes.hertzbeat.workspace_id");
+            // Flattened trace tables expose only the canonical HertzBeat
+            // workspace column. Referencing optional JSON aliases as columns
+            // makes the whole correlation query fail during SQL planning.
+            String workspaceMatch = workspaceColumn + " = '" + escaped + "'";
+            conditions.add("default".equals(escaped)
+                    ? "(" + workspaceMatch + " OR " + workspaceColumn + " IS NULL OR "
+                            + workspaceColumn + " = '')"
+                    : workspaceMatch);
+        }
+        return conditions;
+    }
+
+    private void addTraceResourceCondition(List<String> conditions, String key, String value) {
+        if (!StringUtils.hasText(key) || !StringUtils.hasText(value)) {
+            return;
+        }
+        String trimmedValue = value.trim();
+        boolean negate = trimmedValue.startsWith("!");
+        String expectedValue = negate ? trimmedValue.substring(1) : trimmedValue;
+        if (!StringUtils.hasText(expectedValue)) {
+            return;
+        }
+        String expression = quotedIdentifier("resource_attributes." + key.trim());
+        String equals = expression + " = '" + safeString(expectedValue) + "'";
+        conditions.add(negate
+                ? "(" + expression + " IS NULL OR " + expression + " != '" + safeString(expectedValue) + "')"
+                : equals);
+    }
+
+    private String quotedIdentifier(String identifier) {
+        return "\"" + identifier.replace("\"", "\"\"") + "\"";
     }
 
     private String jsonAttributeCondition(String columnName, String key, String value) {

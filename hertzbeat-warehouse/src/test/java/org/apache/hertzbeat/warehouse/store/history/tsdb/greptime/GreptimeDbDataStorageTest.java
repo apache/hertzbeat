@@ -469,6 +469,39 @@ class GreptimeDbDataStorageTest {
     }
 
     @Test
+    void testQueryLogsCorrelatesEndpointThroughTraceWithinTheSameScope() {
+        try (MockedStatic<GreptimeDB> mockedStatic = mockStatic(GreptimeDB.class)) {
+            mockedStatic.when(() -> GreptimeDB.create(any())).thenReturn(greptimeDb);
+            greptimeDbDataStorage = new GreptimeDbDataStorage(
+                    greptimeProperties, restTemplate, greptimeSqlQueryExecutor);
+            when(greptimeSqlQueryExecutor.execute(anyString())).thenReturn(createNativeLogRows());
+
+            greptimeDbDataStorage.queryLogsByMultipleConditionsWithPagination(
+                    1710000000000L, 1710000060000L, null, null, null, null, null, 0, 20,
+                    Set.of(), false, "default", "checkout", "payments", "prod",
+                    Map.of("service.instance.id", "checkout-7d9", "hertzbeat.collector", "collector-a"),
+                    Map.of("http.route", "/checkout"));
+
+            ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(greptimeSqlQueryExecutor).execute(sqlCaptor.capture());
+            String sql = sqlCaptor.getValue();
+            assertTrue(sql.contains(
+                    "json_get_string(log_attributes, '$[\"http.route\"]') = '/checkout' OR trace_id IN "
+                            + "(SELECT trace_id FROM hzb_traces"));
+            assertTrue(sql.contains("\"span_attributes.http.route\" = '/checkout'"));
+            assertTrue(sql.contains("\"resource_attributes.service.namespace\" = 'payments'"));
+            assertTrue(sql.contains("\"resource_attributes.deployment.environment.name\" = 'prod'"));
+            assertTrue(sql.contains("\"resource_attributes.service.instance.id\" = 'checkout-7d9'"));
+            assertTrue(sql.contains("\"resource_attributes.hertzbeat.collector\" = 'collector-a'"));
+            assertTrue(sql.contains("\"resource_attributes.hertzbeat.workspace_id\" = 'default'"));
+            assertTrue(sql.contains("\"resource_attributes.hertzbeat.workspace_id\" IS NULL"));
+            assertFalse(sql.contains("\"resource_attributes.workspace.id\""));
+            assertTrue(sql.contains("timestamp >= to_timestamp_millis(1710000000000)"));
+            assertTrue(sql.contains("timestamp <= to_timestamp_millis(1710000060000)"));
+        }
+    }
+
+    @Test
     void testCountLogsCanPushDownWorkspaceScope() {
         try (MockedStatic<GreptimeDB> mockedStatic = mockStatic(GreptimeDB.class)) {
             mockedStatic.when(() -> GreptimeDB.create(any())).thenReturn(greptimeDb);

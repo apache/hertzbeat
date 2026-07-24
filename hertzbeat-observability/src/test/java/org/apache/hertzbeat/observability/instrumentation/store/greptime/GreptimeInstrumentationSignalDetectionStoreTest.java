@@ -365,6 +365,8 @@ class GreptimeInstrumentationSignalDetectionStoreTest {
         assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"hertzbeat.collector\"]') = 'collector''s'"));
         assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"service.instance.id\"]') = 'checkout''s-7d9'"));
         assertTrue(sql.contains("json_get_string(log_attributes, '$[\"http.route\"]') = '/checkout/{id}''s'"));
+        assertTrue(sql.contains("OR trace_id IN (SELECT trace_id FROM hzb_traces"));
+        assertTrue(sql.contains("\"span_attributes.http.route\" = '/checkout/{id}''s'"));
         assertTrue(sql.contains("timestamp >= to_timestamp_millis(" + STARTED_AT + ")"));
         assertTrue(sql.contains("timestamp < to_timestamp_millis(" + (DETECTED_AT + 1) + ")"));
     }

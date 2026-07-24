@@ -896,13 +896,10 @@ public class LogQueryServiceImpl implements LogQueryService {
                             start, end, traceId, spanId, severityNumber, severityText, search, offset, resolvedPageSize,
                             hiddenServiceNames, requireServiceName, null, serviceName, serviceNamespace, environment,
                             resourceFilters, attributeFilters);
-                    List<LogEntry> filteredLogs = filterQueryLogs(pagedLogs,
+                    return storageFilteredPage(
+                            pagedLogs, pageRequest, totalElements, offset,
                             serviceName, serviceNamespace, environment, resourceFilters, attributeFilters,
                             hideInternal, hideNoise);
-                    long safeTotal = filteredLogs.size() < (pagedLogs == null ? 0 : pagedLogs.size())
-                            ? offset + filteredLogs.size()
-                            : totalElements;
-                    return new PageImpl<>(filteredLogs, pageRequest, safeTotal);
                 } else if (hasServiceContext(serviceName, serviceNamespace, environment)) {
                     Set<String> hiddenServiceNames = hiddenServiceNames(hideInternal, hideNoise);
                     boolean requireServiceName = shouldRequireServiceName(hideInternal, hideNoise);
@@ -1034,6 +1031,10 @@ public class LogQueryServiceImpl implements LogQueryService {
                                 hiddenServiceNames, requireServiceName, normalizedWorkspaceId,
                                 resourceFilters, attributeFilters);
                     }
+                    return storageFilteredPage(
+                            pagedLogs, pageRequest, totalElements, offset,
+                            serviceName, serviceNamespace, environment, resourceFilters, attributeFilters,
+                            hideInternal, hideNoise);
                 } else if (hasServiceContext(serviceName, serviceNamespace, environment)) {
                     pagedLogs = historyDataReader.queryLogsByMultipleConditionsWithPagination(
                             start, end, traceId, spanId, severityNumber, severityText, search, offset, pageSize,
@@ -1082,6 +1083,37 @@ public class LogQueryServiceImpl implements LogQueryService {
             }
         }
         return new PageImpl<>(Collections.emptyList(), pageRequest, 0);
+    }
+
+    private Page<LogEntry> storageFilteredPage(
+            List<LogEntry> pagedLogs,
+            PageRequest pageRequest,
+            long totalElements,
+            int offset,
+            String serviceName,
+            String serviceNamespace,
+            String environment,
+            Map<String, String> resourceFilters,
+            Map<String, String> attributeFilters,
+            boolean hideInternal,
+            boolean hideNoise) {
+        // A storage reader that accepts attribute predicates owns their semantics. In particular,
+        // an HTTP route may match a log through its trace ID even when the log record itself does
+        // not duplicate the span's http.route attribute.
+        Map<String, String> rowAttributeFilters = attributeFilters;
+        String endpoint = attributeFilters == null ? null : attributeFilters.get("http.route");
+        if (StringUtils.hasText(endpoint) && !endpoint.startsWith(LOG_FILTER_NEGATION_PREFIX)) {
+            Map<String, String> remainingFilters = new LinkedHashMap<>(attributeFilters);
+            remainingFilters.remove("http.route");
+            rowAttributeFilters = remainingFilters;
+        }
+        List<LogEntry> guardedLogs = filterQueryLogs(
+                pagedLogs, serviceName, serviceNamespace, environment,
+                resourceFilters, rowAttributeFilters, hideInternal, hideNoise);
+        long safeTotal = guardedLogs.size() < (pagedLogs == null ? 0 : pagedLogs.size())
+                ? offset + guardedLogs.size()
+                : totalElements;
+        return new PageImpl<>(guardedLogs, pageRequest, safeTotal);
     }
 
     private Page<LogEntry> getRowFilteredPagedLogs(Long start, Long end, String traceId, String spanId,

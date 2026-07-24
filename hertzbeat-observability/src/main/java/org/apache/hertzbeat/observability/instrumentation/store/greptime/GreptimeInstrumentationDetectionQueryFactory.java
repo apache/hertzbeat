@@ -34,7 +34,7 @@ final class GreptimeInstrumentationDetectionQueryFactory {
     String latestReceivedAt(Signal signal, DetectionCriteria criteria) {
         return switch (signal) {
             case METRICS -> metricsQuery(criteria);
-            case LOGS -> jsonResourceQuery(LOGS_TABLE, criteria);
+            case LOGS -> logsQuery(criteria);
             case TRACES -> flattenedTraceResourceQuery(criteria);
             default -> throw new IllegalArgumentException("Unsupported signal");
         };
@@ -53,7 +53,7 @@ final class GreptimeInstrumentationDetectionQueryFactory {
                 + " WHERE " + String.join(" AND ", filters);
     }
 
-    private String jsonResourceQuery(String table, DetectionCriteria criteria) {
+    private String logsQuery(DetectionCriteria criteria) {
         List<String> filters = new ArrayList<>();
         filters.add(equalsColumn("service_name", criteria.serviceName()));
         filters.add(equalsResourceAttribute("service.namespace", criteria.serviceNamespace()));
@@ -61,13 +61,18 @@ final class GreptimeInstrumentationDetectionQueryFactory {
         filters.add(nullableEqualsResourceAttribute(
                 OtlpResourceSemanticAttributes.HERTZBEAT_COLLECTOR, criteria.collectorId()));
         addOptionalResourceAttribute(filters, "service.instance.id", criteria.serviceInstanceId());
-        addOptionalJsonAttribute(filters, "log_attributes", "http.route", criteria.endpoint());
+        addLogEndpointScope(filters, criteria);
         addTimeWindow(filters, "timestamp", criteria);
-        return "SELECT MAX(timestamp) AS last_received_at FROM " + table
+        return "SELECT MAX(timestamp) AS last_received_at FROM " + LOGS_TABLE
                 + " WHERE " + String.join(" AND ", filters);
     }
 
     private String flattenedTraceResourceQuery(DetectionCriteria criteria) {
+        return "SELECT MAX(timestamp) AS last_received_at FROM " + TRACES_TABLE
+                + " WHERE " + String.join(" AND ", flattenedTraceFilters(criteria));
+    }
+
+    private List<String> flattenedTraceFilters(DetectionCriteria criteria) {
         List<String> filters = new ArrayList<>();
         filters.add(equalsColumn("service_name", criteria.serviceName()));
         filters.add(equalsColumn(quotedIdentifier("resource_attributes.service.namespace"),
@@ -81,8 +86,20 @@ final class GreptimeInstrumentationDetectionQueryFactory {
                 criteria.serviceInstanceId());
         addOptionalColumn(filters, quotedIdentifier("span_attributes.http.route"), criteria.endpoint());
         addTimeWindow(filters, "timestamp", criteria);
-        return "SELECT MAX(timestamp) AS last_received_at FROM " + TRACES_TABLE
-                + " WHERE " + String.join(" AND ", filters);
+        return filters;
+    }
+
+    private void addLogEndpointScope(List<String> filters, DetectionCriteria criteria) {
+        if (criteria.endpoint() == null) {
+            return;
+        }
+        String directEndpoint = equalsJsonAttribute("log_attributes", "http.route", criteria.endpoint());
+        String correlatedTrace = "trace_id IN (SELECT trace_id FROM " + TRACES_TABLE
+                + " WHERE " + String.join(" AND ", flattenedTraceFilters(criteria)) + ")";
+        // Application logs normally carry trace/span IDs, not HTTP span attributes. Correlating
+        // against a trace in the same service, collector and time scope preserves endpoint
+        // precision without requiring users to duplicate http.route onto every log record.
+        filters.add("(" + directEndpoint + " OR " + correlatedTrace + ")");
     }
 
     private String equalsColumn(String column, String value) {

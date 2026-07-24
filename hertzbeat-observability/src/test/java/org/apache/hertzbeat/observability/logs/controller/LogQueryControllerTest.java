@@ -877,6 +877,48 @@ class LogQueryControllerTest {
     }
 
     @Test
+    void testListLogsKeepsEndpointMatchesCorrelatedByTraceInStorage() throws Exception {
+        LogEntry correlatedLog = LogEntry.builder()
+                .timeUnixNano(1734005477630000000L)
+                .traceId("trace-checkout")
+                .severityText("INFO")
+                .body("checkout completed")
+                .resource(new HashMap<>(java.util.Map.of(
+                        "service.name", "checkout",
+                        "service.instance.id", "checkout-7d9",
+                        "hertzbeat.workspace_id", "default")))
+                .attributes(new HashMap<>())
+                .build();
+
+        AuthTokenRequestContext.bindWorkspaceId("default");
+        when(historyDataReader.countLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq("default"), org.mockito.ArgumentMatchers.<Map<String, String>>any(),
+                org.mockito.ArgumentMatchers.<Map<String, String>>any())).thenReturn(1L);
+        when(historyDataReader.queryLogsByMultipleConditionsWithPagination(any(), any(), any(), any(), any(), any(),
+                any(), eq(0), eq(20), anySet(), eq(false), eq("default"),
+                org.mockito.ArgumentMatchers.<Map<String, String>>any(),
+                org.mockito.ArgumentMatchers.<Map<String, String>>any()))
+                .thenReturn(List.of(correlatedLog));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/list")
+                        .param("instance", "checkout-7d9")
+                        .param("endpoint", "/checkout"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.totalElements").value(1))
+                .andExpect(jsonPath("$.data.content[0].body").value("checkout completed"));
+
+        verify(historyDataReader).countLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq("default"), eq(Map.of("service.instance.id", "checkout-7d9")),
+                eq(Map.of("http.route", "/checkout")));
+        verify(historyDataReader).queryLogsByMultipleConditionsWithPagination(
+                any(), any(), any(), any(), any(), any(), any(), eq(0), eq(20),
+                anySet(), eq(false), eq("default"), eq(Map.of("service.instance.id", "checkout-7d9")),
+                eq(Map.of("http.route", "/checkout")));
+    }
+
+    @Test
     void testListLogsPushesResourceAndAttributeExcludeFiltersIntoStorageWhenSupported() throws Exception {
         LogEntry filteredLog = LogEntry.builder()
                 .timeUnixNano(1734005477630000000L)
