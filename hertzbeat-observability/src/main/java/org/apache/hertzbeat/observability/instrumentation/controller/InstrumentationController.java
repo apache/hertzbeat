@@ -20,7 +20,6 @@ package org.apache.hertzbeat.observability.instrumentation.controller;
 import static org.apache.hertzbeat.common.constants.CommonConstants.PARAM_INVALID_CODE;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.CatalogResponse;
@@ -39,15 +38,10 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Version 1 application instrumentation onboarding API.
+ * Internal compatibility facade retained for the application instrumentation services.
  */
-@RestController
-@RequestMapping(path = "/api/instrumentation/v1", produces = "application/json")
-@Tag(name = "Application Instrumentation Controller")
 @RequiredArgsConstructor
 public class InstrumentationController {
 

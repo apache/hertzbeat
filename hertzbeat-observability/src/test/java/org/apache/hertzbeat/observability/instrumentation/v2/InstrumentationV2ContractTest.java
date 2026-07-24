@@ -26,10 +26,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import org.apache.hertzbeat.observability.instrumentation.controller.InstrumentationController;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.DetectionErrorCode;
-import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationCatalogV2;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationCatalogV2.SourceKind;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationDetectionV2.DetectionStatus;
 import org.apache.hertzbeat.observability.instrumentation.v2.api.InstrumentationDetectionV2.PollingDecision;
@@ -46,6 +48,9 @@ import org.apache.hertzbeat.observability.instrumentation.v2.controller.Instrume
 import org.apache.hertzbeat.observability.instrumentation.service.InstrumentationCatalogService;
 import org.apache.hertzbeat.observability.instrumentation.v2.service.InstrumentationCatalogV2Service;
 import org.junit.jupiter.api.Test;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 class InstrumentationV2ContractTest {
@@ -53,9 +58,26 @@ class InstrumentationV2ContractTest {
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Test
-    void freezesVersionedSurfaceAndClosedWireEnums() throws Exception {
+    void freezesCanonicalSurfaceAndClosedWireEnums() throws Exception {
         RequestMapping mapping = InstrumentationV2Controller.class.getAnnotation(RequestMapping.class);
-        assertEquals(List.of("/api/instrumentation/v2"), List.of(mapping.path()));
+        assertEquals(List.of("/api/instrumentation"), List.of(mapping.path()));
+        assertNull(InstrumentationController.class.getAnnotation(RestController.class));
+        assertEquals(
+                Set.of("/catalog", "/intake-profiles"),
+                java.util.Arrays.stream(InstrumentationV2Controller.class.getDeclaredMethods())
+                        .map(method -> method.getAnnotation(GetMapping.class))
+                        .filter(java.util.Objects::nonNull)
+                        .flatMap(annotation -> java.util.Arrays.stream(annotation.value()))
+                        .collect(java.util.stream.Collectors.toUnmodifiableSet()));
+        assertEquals(
+                Set.of("/render", "/detect"),
+                java.util.Arrays.stream(InstrumentationV2Controller.class.getDeclaredMethods())
+                        .map(method -> method.getAnnotation(PostMapping.class))
+                        .filter(java.util.Objects::nonNull)
+                        .flatMap(annotation -> java.util.stream.Stream.concat(
+                                java.util.Arrays.stream(annotation.value()),
+                                java.util.Arrays.stream(annotation.path())))
+                        .collect(java.util.stream.Collectors.toUnmodifiableSet()));
         assertEquals("\"quick_start\"", mapper.writeValueAsString(SourceKind.QUICK_START));
         assertEquals("\"application\"", mapper.writeValueAsString(SourceKind.APPLICATION));
         assertEquals("\"existing_opentelemetry\"", mapper.writeValueAsString(SourceKind.EXISTING_OPENTELEMETRY));
@@ -74,17 +96,13 @@ class InstrumentationV2ContractTest {
     @Test
     void exposesTypedSourceCatalogInsteadOfLocalizedTutorialContent() {
         var catalog = new InstrumentationCatalogV2Service(new InstrumentationCatalogService()).catalog();
+        JsonNode json = mapper.valueToTree(catalog);
 
         assertEquals(2, catalog.schemaVersion());
-        assertEquals(List.of(SourceKind.QUICK_START, SourceKind.APPLICATION, SourceKind.EXISTING_OPENTELEMETRY),
-                catalog.sources().stream().map(InstrumentationCatalogV2.SourceOption::kind).toList());
-        assertTrue(catalog.sources().stream().allMatch(source -> source.labelKey().startsWith("instrumentation.v2.")));
-        assertEquals(
-                List.of(
-                        "instrumentation.v2.source.quick_start_description",
-                        "instrumentation.v2.source.application_description",
-                        "instrumentation.v2.source.existing_opentelemetry_description"),
-                catalog.sources().stream().map(InstrumentationCatalogV2.SourceOption::descriptionKey).toList());
+        assertEquals(Set.of("schemaVersion", "groups", "sources", "recipes"), fieldNames(json));
+        assertTrue(catalog.sources().size() >= 35);
+        assertTrue(catalog.sources().stream()
+                .allMatch(source -> source.labelKey().startsWith("instrumentation.v2.directory.")));
         assertTrue(catalog.recipes().stream().allMatch(recipe -> recipe.blocksPreview().size() <= 8));
         assertTrue(catalog.recipes().stream()
                 .filter(recipe -> recipe.kind() == SourceKind.APPLICATION)
@@ -125,7 +143,7 @@ class InstrumentationV2ContractTest {
                 assertFalse(recipe.has("method"));
             }
         }
-        assertEquals(2, recipesWithoutApplicationSelection);
+        assertTrue(recipesWithoutApplicationSelection >= 2);
     }
 
     @Test
@@ -189,6 +207,12 @@ class InstrumentationV2ContractTest {
         assertNull(uri.getUserInfo(), value);
         assertNull(uri.getRawQuery(), value);
         assertNull(uri.getRawFragment(), value);
+    }
+
+    private Set<String> fieldNames(JsonNode node) {
+        Set<String> names = new HashSet<>();
+        node.fieldNames().forEachRemaining(names::add);
+        return names;
     }
 
     @Test

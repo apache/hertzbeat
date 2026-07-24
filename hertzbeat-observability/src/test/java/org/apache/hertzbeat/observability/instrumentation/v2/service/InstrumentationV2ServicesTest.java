@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Environment;
 import org.apache.hertzbeat.observability.instrumentation.api.InstrumentationApiContract.Platform;
@@ -80,10 +81,13 @@ class InstrumentationV2ServicesTest {
 
         assertEquals("https://otel.example.test/v1", response.intakeProfile()
                 .httpsEndpoints().get(OtlpTransport.HTTP_PROTOBUF));
-        assertTrue(response.blocks().getFirst().content().contains("https://otel.example.test/v1"));
-        assertTrue(response.blocks().getFirst().content().contains("${HERTZBEAT_TOKEN}"));
-        assertTrue(response.blocks().getFirst().content().contains("otlphttp/hertzbeat"));
-        assertFalse(response.blocks().getFirst().content().contains("pipelines:"));
+        String rendered = response.blocks().stream()
+                .map(block -> block.content() == null ? "" : block.content())
+                .collect(java.util.stream.Collectors.joining("\n"));
+        assertTrue(rendered.contains("https://otel.example.test/v1"));
+        assertTrue(rendered.contains("${HERTZBEAT_TOKEN}"));
+        assertTrue(rendered.contains("otlphttp/hertzbeat"));
+        assertFalse(rendered.contains("pipelines:"));
         String json = new ObjectMapper().writeValueAsString(response);
         assertFalse(json.contains("secret-value"));
         assertFalse(json.contains("entityId"));
@@ -116,6 +120,83 @@ class InstrumentationV2ServicesTest {
                 response.blocks().size(),
                 new HashSet<>(response.blocks().stream().map(block -> block.id()).toList()).size());
         assertTrue(response.components().stream().allMatch(component -> !component.bundledWithHertzBeat()));
+    }
+
+    @Test
+    void rendersCatalogSourceTemplateAndDetectsOnlyItsDeclaredSignals() {
+        InstrumentationIntakeProfileV2Service profiles =
+                new InstrumentationIntakeProfileV2Service(() -> List.of(serverProfile()));
+        InstrumentationGuideV2Renderer renderer = new InstrumentationGuideV2Renderer(
+                catalog(),
+                profiles,
+                new InstrumentationApplicationGuideV2Adapter(
+                        catalog(), InstrumentationGuideAdapterRegistry.official()));
+
+        var rendered = renderer.render(new RenderRequest(
+                2,
+                SourceKind.EXISTING_OPENTELEMETRY,
+                "logstash",
+                null,
+                null,
+                null,
+                Environment.VM,
+                Platform.ANY,
+                "server-primary",
+                service()));
+        String guide = rendered.blocks().stream()
+                .map(block -> block.content() == null ? "" : block.content())
+                .collect(java.util.stream.Collectors.joining("\n"));
+        assertTrue(guide.contains("tcplog/logstash"));
+        assertTrue(guide.contains("service.namespace"));
+
+        var store = (org.apache.hertzbeat.observability.instrumentation.store.InstrumentationSignalDetectionStore)
+                ignored -> new DetectionSnapshot(Map.of(
+                        Signal.METRICS, SignalObservation.received(STARTED_AT + 1_000L),
+                        Signal.LOGS, SignalObservation.received(STARTED_AT + 1_000L),
+                        Signal.TRACES, SignalObservation.received(STARTED_AT + 1_000L)));
+        var detected = new InstrumentationDetectionV2Service(
+                catalog(), profiles, store, () -> DETECTED_AT).detect(new DetectionRequest(
+                2,
+                SourceKind.EXISTING_OPENTELEMETRY,
+                "logstash",
+                null,
+                null,
+                null,
+                Environment.VM,
+                Platform.ANY,
+                service(),
+                "server-primary",
+                STARTED_AT));
+        assertEquals(DetectionStatus.UNSUPPORTED, detected.signals().get(Signal.METRICS).status());
+        assertEquals(DetectionStatus.RECEIVED, detected.signals().get(Signal.LOGS).status());
+        assertEquals(DetectionStatus.UNSUPPORTED, detected.signals().get(Signal.TRACES).status());
+    }
+
+    @Test
+    void rejectsDiscoveryOnlySourceBeforeStorageQuery() {
+        AtomicInteger queries = new AtomicInteger();
+        InstrumentationDetectionV2Service detection = new InstrumentationDetectionV2Service(
+                catalog(),
+                new InstrumentationIntakeProfileV2Service(() -> List.of(serverProfile())),
+                ignored -> {
+                    queries.incrementAndGet();
+                    return new DetectionSnapshot(Map.of());
+                },
+                () -> DETECTED_AT);
+
+        assertThrows(InstrumentationV2RequestException.class, () -> detection.detect(new DetectionRequest(
+                2,
+                SourceKind.EXISTING_OPENTELEMETRY,
+                "fluent_bit",
+                null,
+                null,
+                null,
+                Environment.VM,
+                Platform.ANY,
+                service(),
+                "server-primary",
+                STARTED_AT)));
+        assertEquals(0, queries.get());
     }
 
     @Test
