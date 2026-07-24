@@ -22,7 +22,7 @@ describe('topology query keys', () => {
     const base = topologyQueryKeys.graph(fullQuery, 3);
     expect(base).toEqual([
       'topology',
-      { context: '["","","","prod","",""]', window: '1000:2000', refreshRevision: 3 },
+      { context: '["","","","","prod","",""]', window: '1000:2000', refreshRevision: 3 },
       {
         focusEntityId: 10,
         depth: 2,

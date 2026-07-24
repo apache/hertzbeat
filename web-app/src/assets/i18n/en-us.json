@@ -503,6 +503,70 @@
     "title": "Instrument an application",
     "menu": "Instrumentation",
     "description": "Configure official OpenTelemetry, verify scoped signal reception, then investigate in Explore.",
+    "v2": {
+      "title": "Connect telemetry",
+      "description": "Choose what you are connecting, configure a destination, and verify each signal.",
+      "connectTitle": "What do you want to connect?",
+      "contextTitle": "Service and destination",
+      "installTitle": "Install and configure",
+      "recipeLabel": "Instrumentation recipe",
+      "chooseRecipe": "Choose a backend-supported recipe",
+      "destination": "Destination",
+      "advancedDestination": "Advanced: use another Collector or external destination",
+      "component": "Component",
+      "version": "Version",
+      "license": "License",
+      "openOfficialLink": "Open official documentation",
+      "unknownGuidance": "Guidance is available, but its localized description is not installed.",
+      "startOver": "Start over",
+      "loadError": "Instrumentation onboarding is unavailable.",
+      "renderError": "The selected installation guidance could not be rendered.",
+      "profile": {
+        "unconfigured": "No telemetry destination is configured.",
+        "unavailable": "Destination discovery is unavailable."
+      },
+      "profileKind": {
+        "server": "HertzBeat Server",
+        "hertzbeat_collector": "HertzBeat Collector",
+        "external_otel_collector": "External OpenTelemetry Collector"
+      },
+      "profileAvailability": {
+        "available": "Available",
+        "unavailable": "Unavailable"
+      },
+      "source": {
+        "quick_start": "Send test data",
+        "quick_start_description": "Verify the telemetry path with generated OpenTelemetry data.",
+        "application": "Instrument an application",
+        "application_description": "Choose an official recipe for an application runtime.",
+        "existing_opentelemetry": "Connect existing OpenTelemetry",
+        "existing_opentelemetry_description": "Point an existing OpenTelemetry pipeline at HertzBeat."
+      },
+      "recipe": {
+        "opentelemetry_telemetrygen": "OpenTelemetry telemetry generator",
+        "existing_otlp": "Existing OTLP pipeline"
+      },
+      "block": {
+        "install_telemetrygen": "Install telemetrygen",
+        "send_metrics": "Send test metrics",
+        "send_logs": "Send test logs",
+        "send_traces": "Send test traces",
+        "cleanup_telemetrygen": "Clean up the test process",
+        "configure_exporter": "Configure the OTLP exporter",
+        "merge_exporter": "Merge the exporter into each pipeline",
+        "restart_collector": "Restart the Collector",
+        "validate_signals": "Validate signal reception",
+        "no_persistence": "No HertzBeat-side installer is created"
+      },
+      "note": {
+        "telemetrygen_no_persistence": "Run the official tool only for this verification and remove it afterward.",
+        "merge_exporter_into_each_pipeline": "Reference the exporter from every signal pipeline you want to send.",
+        "restart_collector_for_deployment": "Use your normal deployment workflow to restart the Collector."
+      },
+      "check": {
+        "detect_scoped_signals": "Return to HertzBeat and detect telemetry for this exact service scope."
+      }
+    },
     "schemaVersion": "Contract v{{version}}",
     "progress": "Instrumentation progress",
     "scope": "SETUP SCOPE",
@@ -627,7 +691,9 @@
       "application_host": "Application host",
       "application_environment": "Application environment",
       "application_process": "Application process",
-      "container_definition": "Container definition"
+      "container_definition": "Container definition",
+      "hertzbeat_ui": "HertzBeat",
+      "otel_collector": "OpenTelemetry Collector"
     },
     "detection": {
       "unavailable": "Signal detection is unavailable.",

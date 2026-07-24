@@ -25,6 +25,7 @@ type SharedExploreQuery = {
   serviceName?: string | undefined;
   serviceNamespace?: string | undefined;
   environment?: string | undefined;
+  intakeProfileId?: string | undefined;
   collectorId?: string | undefined;
   instance?: string | undefined;
   endpoint?: string | undefined;
@@ -71,6 +72,7 @@ export type ExploreQueryPatch = {
   serviceName?: string | undefined;
   serviceNamespace?: string | undefined;
   environment?: string | undefined;
+  intakeProfileId?: string | undefined;
   collectorId?: string | undefined;
   instance?: string | undefined;
   endpoint?: string | undefined;

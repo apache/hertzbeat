@@ -46,6 +46,16 @@ describe('instrumentation v2 wire contracts', () => {
           kind: 'quick_start',
           labelKey: 'instrumentation.v2.source.quick_start',
           descriptionKey: 'instrumentation.v2.source.quick_start_description'
+        },
+        {
+          kind: 'application',
+          labelKey: 'instrumentation.v2.source.application',
+          descriptionKey: 'instrumentation.v2.source.application_description'
+        },
+        {
+          kind: 'existing_opentelemetry',
+          labelKey: 'instrumentation.v2.source.existing_opentelemetry',
+          descriptionKey: 'instrumentation.v2.source.existing_opentelemetry_description'
         }
       ],
       recipes: [

@@ -60,7 +60,7 @@ describe('Explore Query Key factory', () => {
     expect(exploreQueryKeys.history(metricQuery, window, 3)).toEqual([
       'explore-history',
       {
-        context: '["collector-east","checkout","commerce","prod","checkout-1","/checkout"]',
+        context: '["","collector-east","checkout","commerce","prod","checkout-1","/checkout"]',
         window: '1000:2000',
         refreshRevision: 3
       },

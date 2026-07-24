@@ -1,0 +1,198 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+
+import { fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, options?: { defaultValue?: string }) => options?.defaultValue ?? key
+  })
+}));
+
+import { InstrumentationContextStep } from './instrumentation-context-step';
+import { InstrumentationDetectionPanel } from './instrumentation-detection-panel';
+import { InstrumentationGuideBlocks } from './instrumentation-guide-blocks';
+import { InstrumentationSourceStep } from './instrumentation-source-step';
+
+afterEach(() => vi.clearAllMocks());
+
+describe('instrumentation v2 interaction', () => {
+  it('presents source choices in backend order and reveals recipes only for applications', () => {
+    const onSource = vi.fn();
+    const view = render(
+      <InstrumentationSourceStep catalog={catalog} sourceKind="quick_start" onSource={onSource} onRecipe={vi.fn()} />
+    );
+    expect(screen.getAllByRole('radio').map(item => item.getAttribute('value'))).toEqual([
+      'quick_start',
+      'application',
+      'existing_opentelemetry'
+    ]);
+    expect(screen.queryByText('instrumentation.v2.recipeLabel')).not.toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole('radio')[1]!);
+    expect(onSource).toHaveBeenCalledWith('application');
+    view.rerender(
+      <InstrumentationSourceStep catalog={catalog} sourceKind="application" onSource={onSource} onRecipe={vi.fn()} />
+    );
+    expect(screen.getByText('instrumentation.v2.recipeLabel')).toBeInTheDocument();
+  });
+
+  it('keeps unconfigured and discovery unavailable destinations distinct', () => {
+    const props = {
+      profileId: '',
+      service: { name: '', namespace: '', environment: '' },
+      canRender: false,
+      rendering: false,
+      renderError: false,
+      onProfile: vi.fn(),
+      onService: vi.fn(),
+      onRender: vi.fn()
+    };
+    const view = render(
+      <InstrumentationContextStep profiles={{ schemaVersion: 2, status: 'unconfigured', profiles: [] }} {...props} />
+    );
+    expect(screen.getByText('instrumentation.v2.profile.unconfigured')).toBeInTheDocument();
+    view.rerender(
+      <InstrumentationContextStep
+        profiles={{
+          schemaVersion: 2,
+          status: 'unavailable',
+          errorCode: 'intake_profile_discovery_unavailable',
+          profiles: []
+        }}
+        {...props}
+      />
+    );
+    expect(screen.getByText('instrumentation.v2.profile.unavailable')).toBeInTheDocument();
+  });
+
+  it('does not render the memory-only token and enables only backend query jumps', () => {
+    render(
+      <>
+        <InstrumentationGuideBlocks
+          guide={guide}
+          token="valid-token-123"
+          onToken={vi.fn()}
+          onCopy={vi.fn().mockResolvedValue(undefined)}
+          onDetect={vi.fn()}
+        />
+        <InstrumentationDetectionPanel
+          response={detection}
+          detecting={false}
+          error={false}
+          onRetry={vi.fn()}
+          onOpen={vi.fn()}
+        />
+      </>
+    );
+    expect(screen.queryByText('valid-token-123')).not.toBeInTheDocument();
+    const openButtons = screen.getAllByRole('button', { name: 'instrumentation.action.openExplore' });
+    expect(openButtons.map(button => button.hasAttribute('disabled'))).toEqual([false, true, true]);
+    expect(screen.getByText('instrumentation.detection.status.waiting')).toBeInTheDocument();
+    expect(screen.getByText('instrumentation.detection.status.unsupported')).toBeInTheDocument();
+  });
+});
+
+const catalog = {
+  schemaVersion: 2 as const,
+  sources: [
+    {
+      kind: 'quick_start' as const,
+      labelKey: 'instrumentation.v2.source.quick_start',
+      descriptionKey: 'instrumentation.v2.source.quick_start_description'
+    },
+    {
+      kind: 'application' as const,
+      labelKey: 'instrumentation.v2.source.application',
+      descriptionKey: 'instrumentation.v2.source.application_description'
+    },
+    {
+      kind: 'existing_opentelemetry' as const,
+      labelKey: 'instrumentation.v2.source.existing_opentelemetry',
+      descriptionKey: 'instrumentation.v2.source.existing_opentelemetry_description'
+    }
+  ],
+  recipes: [
+    {
+      id: 'java_spring',
+      kind: 'application' as const,
+      labelKey: 'instrumentation.v2.recipe.java_spring',
+      preview: false,
+      language: 'java',
+      framework: 'spring_boot',
+      method: 'zero_code',
+      environments: ['docker'],
+      platforms: ['linux_amd64'],
+      signals: { metrics: 'supported' as const, logs: 'preview' as const, traces: 'supported' as const },
+      components: [],
+      blocksPreview: ['environment' as const]
+    }
+  ]
+};
+
+const context = {
+  serviceName: 'checkout',
+  serviceNamespace: 'shop',
+  environment: 'prod',
+  intakeProfileId: 'server-default',
+  startedAt: 1000,
+  detectedAt: 2000
+};
+const guide = {
+  schemaVersion: 2 as const,
+  sourceKind: 'quick_start' as const,
+  recipeId: 'opentelemetry_telemetrygen',
+  intakeProfile: {
+    id: 'server-default',
+    kind: 'server' as const,
+    availability: 'available' as const,
+    gateway: 'server' as const,
+    supportedTransports: ['http_protobuf' as const],
+    httpsEndpoints: { http_protobuf: 'https://example.test/otlp' },
+    authHeaderName: 'Authorization'
+  },
+  service: { name: 'checkout', namespace: 'shop', environment: 'prod' },
+  signals: { metrics: 'supported' as const, logs: 'supported' as const, traces: 'supported' as const },
+  components: [],
+  secretPlaceholders: {
+    authorizationToken: { marker: '${HERTZBEAT_TOKEN}' as const, kind: 'authorization_token' as const }
+  },
+  blocks: [
+    {
+      id: 'send',
+      type: 'command' as const,
+      titleKey: 'instrumentation.v2.block.send_metrics',
+      executionLocationKey: 'instrumentation.location.application_host',
+      language: 'shell',
+      content: 'token=${HERTZBEAT_TOKEN}',
+      placeholders: ['authorizationToken' as const]
+    }
+  ]
+};
+const detection = {
+  schemaVersion: 2 as const,
+  detectedAt: 2000,
+  context: {
+    sourceKind: 'quick_start' as const,
+    recipeId: 'opentelemetry_telemetrygen',
+    service: guide.service,
+    intakeProfileId: 'server-default',
+    startedAt: 1000,
+    windowEndAt: 2000
+  },
+  signals: {
+    metrics: { status: 'received' as const, lastReceivedAt: 1900 },
+    logs: { status: 'waiting' as const, errorCode: 'signal_not_received' },
+    traces: { status: 'unsupported' as const, errorCode: 'signal_not_supported' }
+  },
+  polling: { decision: 'complete' as const, deadlineAt: 3000 },
+  queryJumpContext: context,
+  queryJumps: [
+    { signal: 'metrics' as const, enabled: true, context },
+    { signal: 'logs' as const, enabled: false, context },
+    { signal: 'traces' as const, enabled: false, context }
+  ]
+};

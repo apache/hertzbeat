@@ -85,7 +85,26 @@ const intakeProfile = z
     collectorId: text.optional(),
     errorCode: text.optional()
   })
-  .strict();
+  .strict()
+  .superRefine((value, context) => {
+    const endpointCount = Object.values(value.httpsEndpoints).length;
+    if (
+      value.availability === 'available' &&
+      (!value.gateway ||
+        value.supportedTransports.length === 0 ||
+        value.supportedTransports.length !== endpointCount ||
+        value.authHeaderName !== 'Authorization' ||
+        value.errorCode)
+    ) {
+      context.addIssue({ code: 'custom', message: 'available profile connectivity is invalid' });
+    }
+    if (
+      value.availability === 'unavailable' &&
+      (value.gateway || value.supportedTransports.length || endpointCount || value.authHeaderName || !value.errorCode)
+    ) {
+      context.addIssue({ code: 'custom', message: 'unavailable profile advertised connectivity' });
+    }
+  });
 
 export const catalogSchema = z
   .object({
@@ -110,7 +129,16 @@ export const catalogSchema = z
         .strict()
     )
   })
-  .strict();
+  .strict()
+  .superRefine((value, context) => {
+    const order = value.sources.map(source => source.kind).join(',');
+    if (order !== 'quick_start,application,existing_opentelemetry') {
+      context.addIssue({ code: 'custom', message: 'source order is invalid' });
+    }
+    if (new Set(value.recipes.map(recipe => recipe.id)).size !== value.recipes.length) {
+      context.addIssue({ code: 'custom', message: 'recipe IDs must be unique' });
+    }
+  });
 
 export const intakeProfilesSchema = z
   .object({
@@ -134,6 +162,12 @@ export const intakeProfilesSchema = z
     ) {
       context.addIssue({ code: 'custom', message: 'unavailable discovery is invalid' });
     }
+    if (
+      value.defaultProfileId &&
+      !value.profiles.some(profile => profile.id === value.defaultProfileId && profile.availability === 'available')
+    ) {
+      context.addIssue({ code: 'custom', message: 'default profile is invalid' });
+    }
   });
 
 const guideBlock = z
@@ -148,7 +182,22 @@ const guideBlock = z
     href: z.string().url().optional(),
     placeholders: z.array(z.literal('authorizationToken'))
   })
-  .strict();
+  .strict()
+  .superRefine((value, context) => {
+    const copyable = ['command', 'code', 'environment', 'download'].includes(value.type);
+    if (copyable !== Boolean(value.content) || (copyable && value.bodyKey) || (!copyable && value.content)) {
+      context.addIssue({ code: 'custom', message: 'guide block content does not match type' });
+    }
+    if (['note', 'warning', 'check'].includes(value.type) && !value.bodyKey) {
+      context.addIssue({ code: 'custom', message: 'explanatory block requires body key' });
+    }
+    if (value.type === 'link' && !value.href) {
+      context.addIssue({ code: 'custom', message: 'link block requires href' });
+    }
+    if (value.placeholders.includes('authorizationToken') && !value.content?.includes('${HERTZBEAT_TOKEN}')) {
+      context.addIssue({ code: 'custom', message: 'secret marker is missing' });
+    }
+  });
 
 export const renderSchema = z
   .object({

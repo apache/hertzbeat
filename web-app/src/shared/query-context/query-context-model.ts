@@ -9,6 +9,7 @@ import { isSensitiveFieldName } from '@/core/security/sensitive-field';
 import { applicationRoutePaths } from '@/shared/navigation/app-paths';
 
 export type QueryContext = {
+  intakeProfileId?: string | undefined;
   collectorId?: string | undefined;
   serviceName?: string | undefined;
   serviceNamespace?: string | undefined;
@@ -22,6 +23,7 @@ export type SignalKind = 'metrics' | 'logs' | 'traces';
 export type ExactTimeWindow = { from: number; to: number };
 
 export const QUERY_CONTEXT_FIELDS = {
+  intakeProfileId: 'intakeProfileId',
   collectorId: 'collectorId',
   serviceName: 'serviceName',
   serviceNamespace: 'serviceNamespace',
@@ -93,6 +95,7 @@ export function buildSignalHandoffPath(signal: SignalKind, context: QueryContext
   append(params, 'serviceName', context.serviceName);
   append(params, 'serviceNamespace', context.serviceNamespace);
   append(params, 'environment', context.environment);
+  append(params, 'intakeProfileId', context.intakeProfileId);
   append(params, 'collectorId', context.collectorId);
   append(params, 'instance', context.instance);
   append(params, 'endpoint', context.endpoint);

@@ -84,7 +84,7 @@ describe('shared query context model', () => {
     expect(first).not.toEqual(switched);
     expect(first).not.toEqual(refreshed);
     expect(queryContextScopeKey(checkout)).toBe(
-      '["collector-east","checkout","commerce","prod","checkout-7d9","/checkout"]'
+      '["","collector-east","checkout","commerce","prod","checkout-7d9","/checkout"]'
     );
   });
 
@@ -96,7 +96,7 @@ describe('shared query context model', () => {
 
   it('keeps fixed field order and stable defaults independently of object key order', () => {
     expect(queryContextScopeKey({ serviceName: 'checkout', collectorId: 'collector-east' })).toBe(
-      '["collector-east","checkout","","","",""]'
+      '["","collector-east","checkout","","","",""]'
     );
   });
 });

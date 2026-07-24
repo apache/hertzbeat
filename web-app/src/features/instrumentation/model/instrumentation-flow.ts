@@ -2,215 +2,131 @@
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-import {
-  type CatalogResponse,
-  type InstrumentationEnvironment,
-  type InstrumentationFramework,
-  type InstrumentationLanguage,
-  type InstrumentationMethod,
-  type InstrumentationPlatform,
-  type InstrumentationSelection,
-  type MethodOption
-} from './instrumentation-contract';
+import { buildSignalHandoffPath } from '@/shared/query-context/query-context-model';
 
-export type FlowStage = 1 | 2 | 3 | 4 | 5;
-export type FlowContextField = 'collectorId' | 'serviceName' | 'serviceNamespace' | 'serviceEnvironment';
-export type InstrumentationFlowDraft = {
-  environment: InstrumentationEnvironment;
-  platform: InstrumentationPlatform;
-  selection?: InstrumentationSelection;
-  collectorId: string;
-  serviceName: string;
-  serviceNamespace: string;
-  serviceEnvironment: string;
-  serviceInstanceId?: string | undefined;
-  endpoint?: string | undefined;
+import type {
+  CatalogResponse,
+  DetectionRequest,
+  QueryJumpContext,
+  Recipe,
+  RenderRequest,
+  Selection,
+  ServiceIdentity,
+  Signal
+} from './instrumentation-v2-contract';
+
+export type InstrumentationDraft = Selection & {
+  intakeProfileId: string;
+  service: ServiceIdentity;
 };
 
-export function createFlowDraft(): InstrumentationFlowDraft {
+export const emptyDraft = (): InstrumentationDraft => ({
+  sourceKind: 'quick_start',
+  intakeProfileId: '',
+  service: { name: '', namespace: '', environment: '' }
+});
+
+export function selectSource(catalog: CatalogResponse, kind: Selection['sourceKind']): InstrumentationDraft {
+  const recipes = catalog.recipes.filter(recipe => recipe.kind === kind);
+  const recipe = kind === 'application' ? undefined : recipes[0];
+  return { ...emptyDraft(), sourceKind: kind, ...selectionFromRecipe(recipe) };
+}
+
+export function selectRecipe(draft: InstrumentationDraft, recipe: Recipe): InstrumentationDraft {
+  if (recipe.kind !== draft.sourceKind) throw new Error('Recipe does not match source');
+  return { ...draft, ...selectionFromRecipe(recipe) };
+}
+
+export function recipeDimensions(recipes: Recipe[]) {
   return {
-    environment: 'docker',
-    platform: 'linux_amd64',
-    collectorId: '',
-    serviceName: '',
-    serviceNamespace: '',
-    serviceEnvironment: ''
+    languages: unique(recipes.map(item => item.language)),
+    frameworks: unique(recipes.map(item => item.framework)),
+    methods: unique(recipes.map(item => item.method)),
+    environments: unique(recipes.flatMap(item => item.environments)),
+    platforms: unique(recipes.flatMap(item => item.platforms))
   };
 }
 
-export function availableEnvironments(catalog: CatalogResponse) {
-  return unique(
-    catalog.languages.flatMap(language =>
-      language.frameworks.flatMap(framework => framework.methods.flatMap(method => method.environments))
-    )
+export function buildRenderRequest(draft: InstrumentationDraft): RenderRequest {
+  validateDraft(draft);
+  return { schemaVersion: 2, ...copySelection(draft), intakeProfileId: draft.intakeProfileId, service: draft.service };
+}
+
+export function buildDetectionRequest(draft: InstrumentationDraft, startedAt: number): DetectionRequest {
+  return { ...buildRenderRequest(draft), startedAt };
+}
+
+export function materializeBlock(content: string, placeholders: string[], token: string) {
+  if (!placeholders.includes('authorizationToken')) return content;
+  const value = token.trim();
+  if (!/^[A-Za-z0-9._~-]{8,4096}$/.test(value)) throw new Error('Token is invalid');
+  return content.replaceAll('${HERTZBEAT_TOKEN}', value);
+}
+
+export function buildQueryJump(signal: Signal, context: QueryJumpContext) {
+  return buildSignalHandoffPath(
+    signal,
+    {
+      serviceName: context.serviceName,
+      serviceNamespace: context.serviceNamespace,
+      environment: context.environment,
+      intakeProfileId: context.intakeProfileId,
+      collectorId: context.collectorId,
+      instance: context.serviceInstanceId,
+      endpoint: context.endpoint
+    },
+    { from: context.startedAt, to: context.detectedAt }
   );
 }
 
-export function availablePlatforms(catalog: CatalogResponse, environment: InstrumentationEnvironment) {
-  return unique(
-    catalog.languages.flatMap(language =>
-      language.frameworks.flatMap(framework =>
-        framework.methods
-          .filter(method => method.environments.includes(environment))
-          .flatMap(method => method.platforms)
-      )
-    )
-  );
+export function draftReady(draft: InstrumentationDraft) {
+  try {
+    validateDraft(draft);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
-export function selectFlowEnvironment(
-  draft: InstrumentationFlowDraft,
-  catalog: CatalogResponse,
-  environment: InstrumentationEnvironment,
-  platform?: InstrumentationPlatform
-) {
-  const platforms = availablePlatforms(catalog, environment);
-  const next = {
-    ...draft,
-    environment,
-    platform: platform && platforms.includes(platform) ? platform : (platforms[0] ?? 'any')
+function validateDraft(draft: InstrumentationDraft) {
+  if (
+    !draft.intakeProfileId ||
+    !draft.service.name.trim() ||
+    !draft.service.namespace.trim() ||
+    !draft.service.environment.trim()
+  ) {
+    throw new Error('Instrumentation context is incomplete');
+  }
+  if (!draft.recipeId) throw new Error('Instrumentation recipe is required');
+}
+
+function selectionFromRecipe(recipe?: Recipe): Partial<Selection> {
+  if (!recipe) return {};
+  return {
+    recipeId: recipe.id,
+    ...(recipe.language ? { language: recipe.language } : {}),
+    ...(recipe.framework ? { framework: recipe.framework } : {}),
+    ...(recipe.method ? { method: recipe.method } : {}),
+    ...(recipe.environments[0] ? { environment: recipe.environments[0] } : {}),
+    ...(recipe.platforms[0] ? { platform: recipe.platforms[0] } : {})
   };
-  return next.selection ? reconcileOrClear(next, catalog, next.selection.language, next.selection.framework) : next;
 }
 
-export function selectFlowPlatform(
-  draft: InstrumentationFlowDraft,
-  catalog: CatalogResponse,
-  platform: InstrumentationPlatform
-) {
-  const next = { ...draft, platform };
-  return next.selection ? reconcileOrClear(next, catalog, next.selection.language, next.selection.framework) : next;
+function copySelection(value: Selection): Selection {
+  return {
+    sourceKind: value.sourceKind,
+    ...(value.recipeId ? { recipeId: value.recipeId } : {}),
+    ...(value.language ? { language: value.language } : {}),
+    ...(value.framework ? { framework: value.framework } : {}),
+    ...(value.method ? { method: value.method } : {}),
+    ...(value.environment ? { environment: value.environment } : {}),
+    ...(value.platform ? { platform: value.platform } : {})
+  };
 }
 
-export function selectCatalogLanguage(
-  draft: InstrumentationFlowDraft,
-  catalog: CatalogResponse,
-  language: InstrumentationLanguage
-) {
-  return reconcileSelection(draft, catalog, language);
-}
-
-export function selectCatalogFramework(
-  draft: InstrumentationFlowDraft,
-  catalog: CatalogResponse,
-  framework: InstrumentationFramework
-) {
-  if (!draft.selection) throw new Error('Select a language before a framework');
-  return reconcileSelection(draft, catalog, draft.selection.language, framework);
-}
-
-export function selectCatalogMethod(
-  draft: InstrumentationFlowDraft,
-  catalog: CatalogResponse,
-  method: InstrumentationMethod
-) {
-  if (!draft.selection) throw new Error('Select a language before a method');
-  const options = compatibleMethods(catalog, draft, draft.selection.language, draft.selection.framework);
-  if (!options.some(option => option.method === method)) throw new Error(`Unsupported method: ${method}`);
-  return { ...draft, selection: { ...draft.selection, method } };
-}
-
-export function updateFlowContext(draft: InstrumentationFlowDraft, field: FlowContextField, value: string) {
-  return { ...draft, [field]: value };
-}
-
-export function reconcileFlowCatalog(draft: InstrumentationFlowDraft, catalog: CatalogResponse) {
-  if (!draft.selection) return draft;
-  const methods = compatibleMethods(catalog, draft, draft.selection.language, draft.selection.framework);
-  if (methods.some(option => option.method === draft.selection?.method)) return draft;
-  try {
-    return reconcileSelection(draft, catalog, draft.selection.language, draft.selection.framework);
-  } catch {
-    return clearFlowSelection(draft);
-  }
-}
-
-export function clearFlowSelection(draft: InstrumentationFlowDraft): InstrumentationFlowDraft {
-  if (!draft.selection) return draft;
-  const next = { ...draft };
-  delete next.selection;
-  return next;
-}
-
-export function validateFlowContext(draft: InstrumentationFlowDraft) {
-  const fields: FlowContextField[] = ['collectorId', 'serviceName', 'serviceNamespace', 'serviceEnvironment'];
-  return fields.filter(field => !draft[field].trim());
-}
-
-export function compatibleMethods(
-  catalog: CatalogResponse,
-  draft: Pick<InstrumentationFlowDraft, 'environment' | 'platform'>,
-  language: InstrumentationLanguage,
-  framework: InstrumentationFramework
-): MethodOption[] {
-  return (
-    catalog.languages
-      .find(item => item.language === language)
-      ?.frameworks.find(item => item.framework === framework)
-      ?.methods.filter(
-        method =>
-          method.environments.includes(draft.environment) &&
-          (method.platforms.includes(draft.platform) || method.platforms.includes('any'))
-      ) ?? []
-  );
-}
-
-function reconcileSelection(
-  draft: InstrumentationFlowDraft,
-  catalog: CatalogResponse,
-  language: InstrumentationLanguage,
-  requestedFramework?: InstrumentationFramework
-) {
-  const languageOption = catalog.languages.find(item => item.language === language);
-  if (!languageOption) throw new Error(`Unsupported language: ${language}`);
-  const frameworkOptions = requestedFramework
-    ? languageOption.frameworks.filter(item => item.framework === requestedFramework)
-    : languageOption.frameworks;
-  for (const framework of frameworkOptions) {
-    const methods = compatibleMethods(catalog, draft, language, framework.framework);
-    const method = methods.find(option => !option.preview) ?? methods[0];
-    if (method) {
-      return {
-        ...draft,
-        selection: {
-          language,
-          framework: framework.framework,
-          method: method.method,
-          environment: draft.environment,
-          platform: draft.platform
-        }
-      };
-    }
-  }
-  throw new Error(`No compatible ${language} instrumentation method`);
-}
-
-function reconcileOrClear(
-  draft: InstrumentationFlowDraft,
-  catalog: CatalogResponse,
-  language: InstrumentationLanguage,
-  framework: InstrumentationFramework
-) {
-  try {
-    return reconcileSelection(draft, catalog, language, framework);
-  } catch {
-    return clearFlowSelection(draft);
-  }
-}
-
-function unique<T>(values: T[]) {
-  return [...new Set(values)];
+function unique(values: Array<string | undefined>) {
+  return [...new Set(values.filter((value): value is string => Boolean(value)))];
 }

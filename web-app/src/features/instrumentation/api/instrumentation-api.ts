@@ -2,168 +2,139 @@
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
 import { apiFetch } from '@/core/http/http-client';
 
-import {
-  INSTRUMENTATION_REQUEST_ERROR_CODES,
-  type DetectionRequest,
-  type DetectionResponse,
-  type GuideRenderRequest,
-  type GuideRenderResponse,
-  type InstrumentationRequestErrorCode
-} from '../model/instrumentation-contract';
-import {
-  buildDetectionPayload,
-  buildGuideRenderPayload,
-  parseCatalogResponse,
-  parseDetectionResponse,
-  parseGuideRenderResponse
-} from './instrumentation-wire';
+import type { DetectionRequest, RenderRequest } from '../model/instrumentation-v2-contract';
+import { messageEnvelopeSchema } from './instrumentation-v2-schema';
 import {
   InstrumentationContractError,
-  instrumentationMessageEnvelopeSchema,
-  type InstrumentationMessageEnvelope
-} from './instrumentation-schema';
+  parseCatalogResponse,
+  parseDetectionResponse,
+  parseIntakeProfilesResponse,
+  parseRenderResponse
+} from './instrumentation-v2-wire';
 
-export { InstrumentationContractError } from './instrumentation-schema';
+export { InstrumentationContractError } from './instrumentation-v2-wire';
 
-const INSTRUMENTATION_API_PATH = '/api/instrumentation/v1';
+const ROOT = '/api/instrumentation/v2';
+const requestCodes = new Set([
+  'instrumentation_v2_schema_unsupported',
+  'instrumentation_v2_selection_invalid',
+  'instrumentation_v2_context_invalid',
+  'instrumentation_v2_intake_profile_not_found',
+  'instrumentation_v2_intake_profile_unavailable'
+]);
+
+export class InstrumentationApiError extends Error {
+  constructor(readonly httpStatus?: number) {
+    super('Instrumentation request failed');
+    this.name = 'InstrumentationApiError';
+  }
+}
 
 export class InstrumentationRequestError extends Error {
-  constructor(readonly machineCode: InstrumentationRequestErrorCode) {
+  constructor(readonly machineCode: string) {
     super(machineCode);
     this.name = 'InstrumentationRequestError';
   }
 }
 
-export class InstrumentationApiError extends Error {
-  constructor(
-    message: string,
-    readonly httpStatus?: number
-  ) {
-    super(message);
-    this.name = 'InstrumentationApiError';
-  }
-}
+export const loadInstrumentationCatalog = (signal?: AbortSignal) =>
+  request(`${ROOT}/catalog`, get(signal), parseCatalogResponse);
+export const loadIntakeProfiles = (signal?: AbortSignal) =>
+  request(`${ROOT}/intake-profiles`, get(signal), parseIntakeProfilesResponse);
+export const renderInstrumentationGuide = (value: RenderRequest, signal?: AbortSignal) =>
+  request(`${ROOT}/render`, post(copyRequest(value), signal), response => {
+    const parsed = parseRenderResponse(response);
+    if (
+      parsed.sourceKind !== value.sourceKind ||
+      parsed.recipeId !== value.recipeId ||
+      parsed.intakeProfile.id !== value.intakeProfileId ||
+      !sameService(parsed.service, value.service)
+    ) {
+      throw new InstrumentationContractError('render response did not match request');
+    }
+    return parsed;
+  });
+export const detectInstrumentationSignals = (value: DetectionRequest, signal?: AbortSignal) =>
+  request(`${ROOT}/detect`, post(copyRequest(value), signal), response => {
+    const parsed = parseDetectionResponse(response);
+    if (
+      parsed.context.sourceKind !== value.sourceKind ||
+      parsed.context.recipeId !== value.recipeId ||
+      parsed.context.intakeProfileId !== value.intakeProfileId ||
+      parsed.context.startedAt !== value.startedAt ||
+      !sameService(parsed.context.service, value.service)
+    ) {
+      throw new InstrumentationContractError('detection response did not match request');
+    }
+    return parsed;
+  });
 
-export function loadInstrumentationCatalog(signal?: AbortSignal) {
-  return requestInstrumentation(
-    `${INSTRUMENTATION_API_PATH}/catalog`,
-    { method: 'GET', ...(signal ? { signal } : {}) },
-    parseCatalogResponse
-  );
-}
-
-export function renderInstrumentationGuide(request: GuideRenderRequest, signal?: AbortSignal) {
-  return requestInstrumentation(
-    `${INSTRUMENTATION_API_PATH}/render`,
-    jsonRequest(buildGuideRenderPayload(request), signal),
-    value => validateGuideResponse(request, parseGuideRenderResponse(value))
-  );
-}
-
-export function detectInstrumentationSignals(request: DetectionRequest, signal?: AbortSignal) {
-  return requestInstrumentation(
-    `${INSTRUMENTATION_API_PATH}/detect`,
-    jsonRequest(buildDetectionPayload(request), signal),
-    value => validateDetectionResponse(request, parseDetectionResponse(value))
-  );
-}
-
-function jsonRequest(body: GuideRenderRequest | DetectionRequest, signal?: AbortSignal): RequestInit {
-  return {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-    ...(signal ? { signal } : {})
-  };
-}
-
-async function requestInstrumentation<T>(path: string, init: RequestInit, parse: (value: unknown) => T): Promise<T> {
+async function request<T>(path: string, init: RequestInit, parse: (value: unknown) => T): Promise<T> {
   let response: Response;
   try {
     response = await apiFetch(path, init);
   } catch {
-    // Transport implementations may include request bodies or credentials in
-    // their error text. Nothing below this boundary exposes that cause.
-    throw new InstrumentationApiError('Instrumentation request failed');
+    throw new InstrumentationApiError();
   }
-  if (!response.ok) {
-    throw new InstrumentationApiError(`Instrumentation request failed with HTTP ${response.status}`, response.status);
-  }
-
-  let rawEnvelope: unknown;
+  if (!response.ok) throw new InstrumentationApiError(response.status);
+  let json: unknown;
   try {
-    rawEnvelope = await response.json();
+    json = await response.json();
   } catch {
-    throw new InstrumentationApiError('Instrumentation response was not valid JSON');
+    throw new InstrumentationApiError(response.status);
   }
-
-  const envelope = parseMessageEnvelope(rawEnvelope);
-  if (envelope.code !== 0) throwMessageError(envelope);
-  return parse(envelope.data);
-}
-
-function parseMessageEnvelope(value: unknown): InstrumentationMessageEnvelope {
-  const result = instrumentationMessageEnvelopeSchema.safeParse(value);
-  if (result.success) return result.data;
-  throw new InstrumentationApiError('Instrumentation response envelope was invalid');
-}
-
-function throwMessageError(envelope: InstrumentationMessageEnvelope): never {
-  if (envelope.code === 1 && isRequestErrorCode(envelope.msg)) {
-    throw new InstrumentationRequestError(envelope.msg);
+  const envelope = messageEnvelopeSchema.safeParse(json);
+  if (!envelope.success) throw new InstrumentationApiError(response.status);
+  if (envelope.data.code !== 0) {
+    const code = envelope.data.msg;
+    if (code && requestCodes.has(code)) throw new InstrumentationRequestError(code);
+    throw new InstrumentationApiError(response.status);
   }
-  throw new InstrumentationApiError('Instrumentation request failed');
+  return parse(envelope.data.data);
 }
 
-function isRequestErrorCode(value: string | null | undefined): value is InstrumentationRequestErrorCode {
-  return value !== undefined && INSTRUMENTATION_REQUEST_ERROR_CODES.some(code => code === value);
+const get = (signal?: AbortSignal): RequestInit => ({ method: 'GET', ...(signal ? { signal } : {}) });
+const post = (body: RenderRequest | DetectionRequest, signal?: AbortSignal): RequestInit => ({
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(body),
+  ...(signal ? { signal } : {})
+});
+
+function copyRequest<T extends RenderRequest | DetectionRequest>(value: T): T {
+  // An explicit allowlist keeps browser-only token state out of transport and errors.
+  return {
+    schemaVersion: 2,
+    sourceKind: value.sourceKind,
+    ...(value.recipeId ? { recipeId: value.recipeId } : {}),
+    ...(value.language ? { language: value.language } : {}),
+    ...(value.framework ? { framework: value.framework } : {}),
+    ...(value.method ? { method: value.method } : {}),
+    ...(value.environment ? { environment: value.environment } : {}),
+    ...(value.platform ? { platform: value.platform } : {}),
+    intakeProfileId: value.intakeProfileId,
+    service: {
+      name: value.service.name,
+      namespace: value.service.namespace,
+      environment: value.service.environment,
+      ...(value.service.serviceInstanceId ? { serviceInstanceId: value.service.serviceInstanceId } : {}),
+      ...(value.service.endpoint ? { endpoint: value.service.endpoint } : {})
+    },
+    ...('startedAt' in value ? { startedAt: value.startedAt } : {})
+  } as T;
 }
 
-function validateGuideResponse(request: GuideRenderRequest, response: GuideRenderResponse) {
-  if (!sameSelection(request, response.selection)) {
-    throw new InstrumentationContractError('Guide response selection did not match the request');
-  }
-  return response;
-}
-
-function validateDetectionResponse(request: DetectionRequest, response: DetectionResponse) {
-  const context = response.context;
-  if (
-    !sameSelection(request, context) ||
-    context.service.name !== request.service.name ||
-    context.service.namespace !== request.service.namespace ||
-    context.service.environment !== request.service.environment ||
-    context.service.serviceInstanceId !== request.service.serviceInstanceId ||
-    context.service.endpoint !== request.service.endpoint ||
-    context.collectorId !== request.collectorId ||
-    context.startedAt !== request.startedAt
-  ) {
-    throw new InstrumentationContractError('Detection response context did not match the request');
-  }
-  return response;
-}
-
-function sameSelection(left: GuideRenderRequest | DetectionRequest, right: GuideRenderResponse['selection']) {
+function sameService(left: RenderRequest['service'], right: RenderRequest['service']) {
   return (
-    left.language === right.language &&
-    left.framework === right.framework &&
-    left.method === right.method &&
+    left.name === right.name &&
+    left.namespace === right.namespace &&
     left.environment === right.environment &&
-    left.platform === right.platform
+    left.serviceInstanceId === right.serviceInstanceId &&
+    left.endpoint === right.endpoint
   );
 }

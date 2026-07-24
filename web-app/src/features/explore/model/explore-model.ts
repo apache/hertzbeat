@@ -92,6 +92,7 @@ export function buildExplorePath(query: ExploreQuery) {
 
 export function exploreQueryContext(query: ExploreQuery): QueryContext {
   return {
+    intakeProfileId: query.intakeProfileId,
     collectorId: query.collectorId,
     serviceName: query.serviceName,
     serviceNamespace: query.serviceNamespace,
@@ -128,6 +129,7 @@ export function mergeExploreContextChanges(context: QueryContext, changes: Explo
   const next = mergeQueryContext(context, patch);
   return {
     ...changes,
+    intakeProfileId: next.intakeProfileId,
     collectorId: next.collectorId,
     serviceName: next.serviceName,
     serviceNamespace: next.serviceNamespace,
