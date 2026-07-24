@@ -713,7 +713,7 @@
               [nzData]="previewData"
               [nzSize]="'small'"
               [nzLoading]="previewTableLoading"
-              [nzScroll]="previewData.length > 3 ? { y: '180px' } : {}"
+              [nzScroll]="previewData.length > 3 ? { x: 'max-content', y: '180px' } : { x: 'max-content' }"
               [nzShowPagination]="false"
             >
               <thead>
@@ -788,7 +788,7 @@
               [nzData]="previewData"
               [nzSize]="'small'"
               [nzLoading]="previewTableLoading"
-              [nzScroll]="previewData.length > 3 ? { y: '180px' } : {}"
+              [nzScroll]="previewData.length > 3 ? { x: 'max-content', y: '180px' } : { x: 'max-content' }"
               [nzShowPagination]="false"
             >
               <thead>
