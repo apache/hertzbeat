@@ -592,6 +592,8 @@
   "dashboard.monitors.sub-title": "监控类型纳管数量分布",
   "dashboard.monitors.title": "监控总览",
   "dashboard.monitors.total": "监控总量",
+  "dashboard.monitors.empty": "暂无监控任务",
+  "dashboard.monitors.add": "添加监控",
   "define.delete": "删除 {{app}}",
   "define.delete.confirm": "请确认是否删除 {{app}} 监控类型? 删除后无法添加此类监控。",
   "define.disable": "禁用 {{app}}",

@@ -155,3 +155,36 @@
     transition: 0.2s;
   }
 }
+
+.dashboard-empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 16px;
+
+  ::ng-deep .ant-empty-image {
+    height: 80px;
+  }
+
+  .empty-title {
+    margin-top: 2px;
+    font-size: 16px;
+    font-weight: 600;
+    color: @heading-color;
+  }
+
+  .empty-add-btn {
+    margin-top: 14px;
+    height: 38px;
+    padding: 0 24px;
+    font-size: 14px;
+    border-radius: 19px;
+    box-shadow: 0 4px 12px fade(@primary-color, 30%);
+    transition: transform 0.25s, box-shadow 0.25s;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px fade(@primary-color, 40%);
+    }
+  }
+}

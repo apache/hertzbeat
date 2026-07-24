@@ -585,6 +585,8 @@
   "dashboard.monitors.sub-title": "모니터링 분포 현황",
   "dashboard.monitors.title": "모니터링 개요",
   "dashboard.monitors.total": "전체 모니터링 수",
+  "dashboard.monitors.empty": "모니터링 작업이 없습니다",
+  "dashboard.monitors.add": "모니터링 추가",
   "define.delete": "{{app}} 삭제",
   "define.delete.confirm": "{{app}} 모니터링 유형을 삭제하시겠습니까? 삭제 후에는 이 유형의 모니터링을 추가할 수 없습니다.",
   "define.disable": "{{app}} 비활성화",

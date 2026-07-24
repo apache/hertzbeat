@@ -589,6 +589,8 @@
   "dashboard.monitors.sub-title": "The Distribution Of Monitors",
   "dashboard.monitors.title": "Monitoring Overview",
   "dashboard.monitors.total": "Monitor Total",
+  "dashboard.monitors.empty": "No monitors yet",
+  "dashboard.monitors.add": "Add Monitor",
   "define.delete": "Delete {{app}}",
   "define.delete.confirm": "Please confirm whether to delete {{app}} monitoring type? This type of monitoring cannot be added after deletion.",
   "define.disable": "Disable {{app}}",
