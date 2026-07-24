@@ -29,6 +29,8 @@ final class GreptimeInstrumentationDetectionQueryFactory {
     private static final String METRICS_TABLE = "greptime_physical_table";
     private static final String LOGS_TABLE = "hertzbeat_logs";
     private static final String TRACES_TABLE = "hzb_traces";
+    private static final String DIRECT_SERVER_COLLECTOR_METRIC_LABEL = "hertzbeat_collector";
+    private static final String DIRECT_SERVER_COLLECTOR_RESOURCE_ATTRIBUTE = "hertzbeat.collector";
 
     String latestReceivedAt(Signal signal, DetectionCriteria criteria) {
         return switch (signal) {
@@ -44,7 +46,10 @@ final class GreptimeInstrumentationDetectionQueryFactory {
         filters.add(equalsColumn("service_name", criteria.serviceName()));
         filters.add(equalsColumn("service_namespace", criteria.serviceNamespace()));
         filters.add(equalsColumn("deployment_environment_name", criteria.environment()));
-        filters.add(equalsColumn(OtlpMetricSemanticLabels.HERTZBEAT_COLLECTOR_ID, criteria.collectorId()));
+        filters.add(collectorColumnPredicate(
+                DIRECT_SERVER_COLLECTOR_METRIC_LABEL,
+                OtlpMetricSemanticLabels.HERTZBEAT_COLLECTOR_ID,
+                criteria.collectorId()));
         addOptionalColumn(filters, OtlpMetricSemanticLabels.SERVICE_INSTANCE_ID, criteria.serviceInstanceId());
         addOptionalColumn(filters, OtlpMetricSemanticLabels.HTTP_ROUTE, criteria.endpoint());
         addTimeWindow(filters, "greptime_timestamp", criteria);
@@ -57,7 +62,7 @@ final class GreptimeInstrumentationDetectionQueryFactory {
         filters.add(equalsColumn("service_name", criteria.serviceName()));
         filters.add(equalsResourceAttribute("service.namespace", criteria.serviceNamespace()));
         filters.add(equalsResourceAttribute("deployment.environment.name", criteria.environment()));
-        filters.add(equalsResourceAttribute("hertzbeat.collector.id", criteria.collectorId()));
+        filters.add(collectorResourcePredicate(criteria.collectorId()));
         addOptionalResourceAttribute(filters, "service.instance.id", criteria.serviceInstanceId());
         addOptionalJsonAttribute(filters, "log_attributes", "http.route", criteria.endpoint());
         addTimeWindow(filters, "timestamp", criteria);
@@ -72,7 +77,9 @@ final class GreptimeInstrumentationDetectionQueryFactory {
                 criteria.serviceNamespace()));
         filters.add(equalsColumn(quotedIdentifier("resource_attributes.deployment.environment.name"),
                 criteria.environment()));
-        filters.add(equalsColumn(quotedIdentifier("resource_attributes.hertzbeat.collector.id"),
+        filters.add(collectorColumnPredicate(
+                quotedIdentifier("resource_attributes." + DIRECT_SERVER_COLLECTOR_RESOURCE_ATTRIBUTE),
+                quotedIdentifier("resource_attributes.hertzbeat.collector.id"),
                 criteria.collectorId()));
         addOptionalColumn(filters, quotedIdentifier("resource_attributes.service.instance.id"),
                 criteria.serviceInstanceId());
@@ -93,6 +100,18 @@ final class GreptimeInstrumentationDetectionQueryFactory {
     private String equalsJsonAttribute(String column, String attribute, String value) {
         return "json_get_string(" + column + ", '$[\"" + attribute + "\"]') = '"
                 + escapeSql(value) + "'";
+    }
+
+    private String collectorColumnPredicate(String directServerColumn, String collectorIdColumn, String collectorId) {
+        return collectorId == null ? directServerColumn + " IS NULL" : equalsColumn(collectorIdColumn, collectorId);
+    }
+
+    private String collectorResourcePredicate(String collectorId) {
+        if (collectorId == null) {
+            return "json_get_string(resource_attributes,'$[\""
+                    + DIRECT_SERVER_COLLECTOR_RESOURCE_ATTRIBUTE + "\"]') IS NULL";
+        }
+        return equalsResourceAttribute("hertzbeat.collector.id", collectorId);
     }
 
     private void addOptionalColumn(List<String> filters, String column, String value) {
