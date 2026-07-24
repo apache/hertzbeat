@@ -1967,6 +1967,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                 resolvedServiceNamespace,
                 resolvedEnvironment,
                 null,
+                null,
                 start,
                 end
         );
@@ -2008,6 +2009,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                             trimToNull(snapshot.getServiceName()),
                             trimToNull(snapshot.getServiceNamespace()),
                             trimToNull(snapshot.getEnvironmentName()),
+                            null,
                             operationName,
                             resolvedStart,
                             resolvedEnd
@@ -2547,6 +2549,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                 trimToNull(candidate.getServiceName()),
                 trimToNull(candidate.getServiceNamespace()),
                 trimToNull(candidate.getEnvironment()),
+                trimToNull(candidate.getCollectorId()),
                 trimToNull(candidate.getOperationName()),
                 resolvedStart,
                 resolvedEnd

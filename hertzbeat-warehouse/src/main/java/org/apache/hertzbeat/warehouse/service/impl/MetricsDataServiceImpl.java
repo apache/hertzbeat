@@ -36,6 +36,7 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.warehouse.service.MetricsDataService;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader.ServerAvailability;
 import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataReader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -68,7 +69,8 @@ public class MetricsDataServiceImpl implements MetricsDataService {
 
     @Override
     public Boolean getWarehouseStorageServerStatus() {
-        return historyDataReaders.stream().anyMatch(HistoryDataReader::isServerAvailable);
+        return historyDataReaders.stream()
+                .anyMatch(reader -> reader.getServerAvailability() == ServerAvailability.AVAILABLE);
     }
 
     @Override

@@ -22,6 +22,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 /**
  * Refresh Token Response
@@ -33,8 +34,10 @@ import lombok.NoArgsConstructor;
 @Schema(description = "flash token response")
 public class RefreshTokenResponse {
     @Schema(title = "Access Token")
+    @ToString.Exclude
     private String token;
 
     @Schema(title = "Refresh Token")
+    @ToString.Exclude
     private String refreshToken;
 }

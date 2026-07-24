@@ -61,15 +61,15 @@ public class AlibabaCloudSlsExternAlertService implements ExternAlertService {
         List<AlibabaCloudSlsExternAlert> externAlerts = new ArrayList<>();
         if (BooleanUtils.isTrue(JsonUtil.isArray(content))) {
             TypeReference<List<AlibabaCloudSlsExternAlert>> typeReference = new TypeReference<>() {};
-            externAlerts = JsonUtil.fromJson(content, typeReference);
+            externAlerts = JsonUtil.fromJsonQuietly(content, typeReference);
         } else {
-            AlibabaCloudSlsExternAlert externAlert = JsonUtil.fromJson(content, AlibabaCloudSlsExternAlert.class);
+            AlibabaCloudSlsExternAlert externAlert = JsonUtil.fromJsonQuietly(content, AlibabaCloudSlsExternAlert.class);
             if (null != externAlert) {
                 externAlerts.add(externAlert);
             }
         }
         if (null == externAlerts || externAlerts.isEmpty()) {
-            log.warn("Failure to parse external alert content. content: {}", content);
+            log.warn("Failed to parse Alibaba Cloud SLS external alert content");
             return;
         }
         for (AlibabaCloudSlsExternAlert externAlert : externAlerts) {

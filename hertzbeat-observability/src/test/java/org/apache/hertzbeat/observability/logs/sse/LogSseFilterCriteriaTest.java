@@ -191,6 +191,45 @@ class LogSseFilterCriteriaTest {
     }
 
     @Test
+    void matchesOnlyCanonicalCollectorResourceContext() {
+        LogEntry selectedCollectorLog = LogEntry.builder()
+                .resource(java.util.Map.of("hertzbeat.collector.id", "collector-a"))
+                .build();
+        LogEntry otherCollectorLog = LogEntry.builder()
+                .resource(java.util.Map.of("hertzbeat.collector.id", "collector-b"))
+                .build();
+        LogEntry unscopedLog = LogEntry.builder().resource(java.util.Map.of()).build();
+
+        filterCriteria.setCollectorId("collector-a");
+
+        assertTrue(filterCriteria.matches(selectedCollectorLog));
+        assertFalse(filterCriteria.matches(otherCollectorLog));
+        assertFalse(filterCriteria.matches(unscopedLog));
+    }
+
+    @Test
+    void matchesOnlyCanonicalInstanceAndHttpRouteContext() {
+        LogEntry selectedLog = LogEntry.builder()
+                .resource(java.util.Map.of("service.instance.id", "checkout-7d9"))
+                .attributes(java.util.Map.of("http.route", "/checkout"))
+                .build();
+        LogEntry otherInstance = LogEntry.builder()
+                .resource(java.util.Map.of("service.instance.id", "checkout-other"))
+                .attributes(java.util.Map.of("http.route", "/checkout"))
+                .build();
+        LogEntry missingRoute = LogEntry.builder()
+                .resource(java.util.Map.of("service.instance.id", "checkout-7d9"))
+                .build();
+
+        filterCriteria.setInstance("checkout-7d9");
+        filterCriteria.setEndpoint("/checkout");
+
+        assertTrue(filterCriteria.matches(selectedLog));
+        assertFalse(filterCriteria.matches(otherInstance));
+        assertFalse(filterCriteria.matches(missingRoute));
+    }
+
+    @Test
     void testMatchesWithResourceAndAttributeFilters() {
         LogEntry checkoutLog = LogEntry.builder()
                 .severityText("INFO")

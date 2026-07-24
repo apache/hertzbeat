@@ -44,12 +44,14 @@ class OtlpIngestionRequestContextResolverTest {
     @Test
     void shouldResolveAuthenticatedWorkspaceIntoCorrelationContext() {
         AuthTokenRequestContext.bindWorkspaceId(" prod-west ");
+        AuthTokenRequestContext.bindCollectorId(" edge-west ");
 
         OtlpCorrelationContext context = resolver.currentCorrelationContext();
 
         assertNull(context.ingestId());
         assertNull(context.entityId());
         assertEquals("prod-west", context.workspaceId());
+        assertEquals("edge-west", context.collectorId());
     }
 
     @Test
@@ -60,6 +62,7 @@ class OtlpIngestionRequestContextResolverTest {
     @Test
     void shouldApplyAuthenticatedWorkspaceToResourceAttributes() {
         AuthTokenRequestContext.bindWorkspaceId("prod-west");
+        AuthTokenRequestContext.bindCollectorId("edge-west");
         Map<String, String> source = new LinkedHashMap<>();
         source.put("service.name", "checkout");
         source.put(OtlpCorrelationEnricher.WORKSPACE_ID_ATTRIBUTE, "spoofed");
@@ -68,6 +71,7 @@ class OtlpIngestionRequestContextResolverTest {
 
         assertEquals("checkout", resolved.get("service.name"));
         assertEquals("prod-west", resolved.get(OtlpCorrelationEnricher.WORKSPACE_ID_ATTRIBUTE));
+        assertEquals("edge-west", resolved.get(OtlpCorrelationEnricher.COLLECTOR_ID_ATTRIBUTE));
         assertEquals("spoofed", source.get(OtlpCorrelationEnricher.WORKSPACE_ID_ATTRIBUTE));
     }
 

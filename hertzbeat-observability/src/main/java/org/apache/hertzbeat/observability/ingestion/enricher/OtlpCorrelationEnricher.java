@@ -63,6 +63,7 @@ public class OtlpCorrelationEnricher {
     public static final String ENTITY_ID_ATTRIBUTE = OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_ID;
     public static final String ENTITY_TYPE_ATTRIBUTE = OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_TYPE;
     public static final String WORKSPACE_ID_ATTRIBUTE = OtlpResourceSemanticAttributes.HERTZBEAT_WORKSPACE_ID;
+    public static final String COLLECTOR_ID_ATTRIBUTE = OtlpResourceSemanticAttributes.HERTZBEAT_COLLECTOR_ID;
 
     private static final String CONTENT_ENCODING_GZIP = "gzip";
     private static final Set<String> OTLP_HEX_ID_FIELDS = Set.of("traceId", "spanId", "parentSpanId");
@@ -124,7 +125,8 @@ public class OtlpCorrelationEnricher {
         OtlpCorrelationContext resolvedContext = context == null ? OtlpCorrelationContext.empty() : context;
         if (StringUtils.isBlank(resolvedContext.entityId())
                 && StringUtils.isBlank(resolvedContext.entityType())
-                && StringUtils.isBlank(resolvedContext.workspaceId())) {
+                && StringUtils.isBlank(resolvedContext.workspaceId())
+                && StringUtils.isBlank(resolvedContext.collectorId())) {
             return source;
         }
         ExportMetricsServiceRequest.Builder requestBuilder = source.toBuilder().clearResourceMetrics();
@@ -166,7 +168,8 @@ public class OtlpCorrelationEnricher {
         OtlpCorrelationContext resolvedContext = context == null ? OtlpCorrelationContext.empty() : context;
         if (StringUtils.isBlank(resolvedContext.entityId())
                 && StringUtils.isBlank(resolvedContext.entityType())
-                && StringUtils.isBlank(resolvedContext.workspaceId())) {
+                && StringUtils.isBlank(resolvedContext.workspaceId())
+                && StringUtils.isBlank(resolvedContext.collectorId())) {
             return source;
         }
         ExportTraceServiceRequest.Builder requestBuilder = source.toBuilder().clearResourceSpans();
@@ -181,13 +184,15 @@ public class OtlpCorrelationEnricher {
     private Resource enrichResource(Resource resource, OtlpCorrelationContext context) {
         if (StringUtils.isBlank(context.entityId())
                 && StringUtils.isBlank(context.entityType())
-                && StringUtils.isBlank(context.workspaceId())) {
+                && StringUtils.isBlank(context.workspaceId())
+                && StringUtils.isBlank(context.collectorId())) {
             return resource;
         }
         List<KeyValue> attributes = new ArrayList<>(resource.getAttributesList());
         upsertStringAttributeIfPresent(attributes, ENTITY_ID_ATTRIBUTE, context.entityId());
         upsertStringAttributeIfPresent(attributes, ENTITY_TYPE_ATTRIBUTE, context.entityType());
         upsertStringAttributeIfPresent(attributes, WORKSPACE_ID_ATTRIBUTE, context.workspaceId());
+        upsertStringAttributeIfPresent(attributes, COLLECTOR_ID_ATTRIBUTE, context.collectorId());
         return resource.toBuilder()
                 .clearAttributes()
                 .addAllAttributes(attributes)
@@ -199,6 +204,7 @@ public class OtlpCorrelationEnricher {
         upsertStringAttributeIfPresent(attributes, ENTITY_ID_ATTRIBUTE, context.entityId());
         upsertStringAttributeIfPresent(attributes, ENTITY_TYPE_ATTRIBUTE, context.entityType());
         upsertStringAttributeIfPresent(attributes, WORKSPACE_ID_ATTRIBUTE, context.workspaceId());
+        upsertStringAttributeIfPresent(attributes, COLLECTOR_ID_ATTRIBUTE, context.collectorId());
         return resource.toBuilder()
                 .clearAttributes()
                 .addAllAttributes(attributes)
@@ -210,6 +216,7 @@ public class OtlpCorrelationEnricher {
         addStringAttributeIfMissing(attributes, ENTITY_ID_ATTRIBUTE, context.entityId());
         addStringAttributeIfMissing(attributes, ENTITY_TYPE_ATTRIBUTE, context.entityType());
         upsertStringAttributeIfPresent(attributes, WORKSPACE_ID_ATTRIBUTE, context.workspaceId());
+        upsertStringAttributeIfPresent(attributes, COLLECTOR_ID_ATTRIBUTE, context.collectorId());
         return resource.toBuilder()
                 .clearAttributes()
                 .addAllAttributes(attributes)

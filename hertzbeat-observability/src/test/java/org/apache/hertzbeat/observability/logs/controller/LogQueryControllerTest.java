@@ -830,14 +830,20 @@ class LogQueryControllerTest {
                         "service.version", "1.2.3",
                         "hertzbeat.entity_id", "42",
                         "hertzbeat.entity_type", "service",
+                        "hertzbeat.collector.id", "collector-a",
+                        "service.instance.id", "checkout-7d9",
                         "hertzbeat.workspace_id", "team-a")))
-                .attributes(new HashMap<>(java.util.Map.of("http.route", "/checkout")))
+                .attributes(new HashMap<>(java.util.Map.of(
+                        "error.type", "Timeout",
+                        "http.route", "/checkout")))
                 .build();
 
         Map<String, String> expectedResourceFilters = Map.of(
                 "service.version", "1.2.3",
                 "hertzbeat.entity_id", "42",
-                "hertzbeat.entity_type", "service"
+                "hertzbeat.entity_type", "service",
+                "hertzbeat.collector.id", "collector-a",
+                "service.instance.id", "checkout-7d9"
         );
         AuthTokenRequestContext.bindWorkspaceId("team-a");
         when(historyDataReader.countLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any(),
@@ -852,8 +858,11 @@ class LogQueryControllerTest {
         mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/list")
                         .param("entityId", "42")
                         .param("entityType", "service")
+                        .param("collectorId", "collector-a")
+                        .param("instance", "checkout-7d9")
+                        .param("endpoint", "/checkout")
                         .param("resourceFilter", "service.version=1.2.3")
-                        .param("attributeFilter", "http.route:/checkout"))
+                        .param("attributeFilter", "error.type=Timeout"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.data.content.length()").value(1))
@@ -861,10 +870,10 @@ class LogQueryControllerTest {
 
         verify(historyDataReader).countLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any(),
                 anySet(), eq(false), eq("team-a"), eq(expectedResourceFilters),
-                eq(Map.of("http.route", "/checkout")));
+                eq(Map.of("error.type", "Timeout", "http.route", "/checkout")));
         verify(historyDataReader).queryLogsByMultipleConditionsWithPagination(any(), any(), any(), any(), any(), any(),
                 any(), eq(0), eq(20), anySet(), eq(false), eq("team-a"),
-                eq(expectedResourceFilters), eq(Map.of("http.route", "/checkout")));
+                eq(expectedResourceFilters), eq(Map.of("error.type", "Timeout", "http.route", "/checkout")));
     }
 
     @Test

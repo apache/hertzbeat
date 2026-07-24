@@ -71,6 +71,10 @@ public class EntityMonitorBindService {
         return entityMonitorBindQueryService.findMonitorBindsByMonitorId(monitorId);
     }
 
+    public Map<Long, List<EntityMonitorBind>> findMonitorBindsByMonitorIds(List<Long> monitorIds) {
+        return entityMonitorBindQueryService.findMonitorBindsByMonitorIds(monitorIds);
+    }
+
     public long countMonitorBinds(Long entityId) {
         return entityMonitorBindQueryService.countMonitorBinds(entityId);
     }

@@ -52,6 +52,7 @@ public class LogSseController {
     @GetMapping(path = "/subscribe")
     @Operation(summary = "Subscribe to log events with optional filtering", description = "Subscribe to log events with optional filtering")
     public ResponseEntity<SseEmitter> subscribe(@ModelAttribute LogSseFilterCriteria filterCriteria) {
+        filterCriteria.normalizeQueryContext();
         return ResponseEntity.ok()
                 .contentType(MediaType.TEXT_EVENT_STREAM)
                 .header("Cache-Control", "no-cache, no-transform")

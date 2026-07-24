@@ -17,20 +17,28 @@
 
 package org.apache.hertzbeat.collector.dispatch.entrance;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
 import io.netty.channel.Channel;
+import java.time.Instant;
+import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import org.apache.hertzbeat.collector.dispatch.CollectorInfoProperties;
+import org.apache.hertzbeat.collector.dispatch.CollectorRuntimeStatusProvider;
 import org.apache.hertzbeat.collector.dispatch.DispatchProperties;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
 import org.apache.hertzbeat.collector.timer.TimerDispatch;
+import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.support.CommonThreadPool;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.remoting.RemotingClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -67,6 +75,9 @@ class CollectServerTest {
     @Mock
     private CollectorInfoProperties infoProperties;
 
+    @Mock
+    private CollectorRuntimeStatusProvider runtimeStatusProvider;
+
     private CollectServer collectServer;
 
     private CollectServer.CollectNettyEventListener collectNettyEventListener;
@@ -79,7 +90,8 @@ class CollectServerTest {
         when(entranceProperties.getNetty()).thenReturn(nettyProperties);
         when(properties.getEntrance()).thenReturn(entranceProperties);
 
-        collectServer = new CollectServer(collectJobService, timerDispatch, properties, threadPool, infoProperties);
+        collectServer = new CollectServer(collectJobService, timerDispatch, properties, threadPool, infoProperties,
+                Optional.of(runtimeStatusProvider), Optional.empty());
         collectNettyEventListener = collectServer.new CollectNettyEventListener();
     }
 
@@ -140,6 +152,75 @@ class CollectServerTest {
         ScheduledExecutorService scheduledExecutor =
                 (ScheduledExecutorService) ReflectionTestUtils.getField(collectServer, "scheduledExecutor");
         assertNotNull(scheduledExecutor);
+    }
+
+    @Test
+    void heartbeatCarriesCurrentRuntimeStatus() {
+        when(runtimeStatusProvider.status()).thenReturn(runtimeStatus());
+
+        ClusterMsg.Message heartbeat = collectServer.createHeartbeatMessage("collector1");
+
+        ManagedOtelRuntimeStatus status = JsonUtil.fromJson(
+                heartbeat.getMsg().toStringUtf8(), ManagedOtelRuntimeStatus.class);
+        assertEquals(11, status.activeRevision());
+    }
+
+    @Test
+    void runtimeStatusFailureDoesNotBreakCollectorHeartbeat() {
+        when(runtimeStatusProvider.status()).thenThrow(
+                new IllegalStateException("Authorization: Bearer collector-secret-token"));
+
+        ClusterMsg.Message heartbeat = collectServer.createHeartbeatMessage("collector1");
+
+        assertTrue(heartbeat.getMsg().isEmpty());
+    }
+
+    @Test
+    void failedOptionalRuntimeDoesNotTakeAgentlessCollectorOffline() {
+        RemotingClient remotingClient = mock(RemotingClient.class);
+        ReflectionTestUtils.setField(collectServer, "remotingClient", remotingClient);
+        when(collectJobService.getCollectorIdentity()).thenReturn("collector1");
+        when(collectJobService.getCollectorMode()).thenReturn("mode1");
+        when(infoProperties.getIp()).thenReturn("127.0.0.1");
+        when(infoProperties.getVersion()).thenReturn("1.0");
+        when(runtimeStatusProvider.status()).thenReturn(runtimeStatus(
+                ManagedOtelRuntimeStatus.RuntimeState.FAILED,
+                ManagedOtelRuntimeStatus.FailureCode.PROCESS_CRASH));
+
+        collectNettyEventListener.onChannelActive(mock(Channel.class));
+        ManagedOtelRuntimeStatus reported = JsonUtil.fromJson(
+                collectServer.createHeartbeatMessage("collector1").getMsg().toStringUtf8(),
+                ManagedOtelRuntimeStatus.class);
+
+        verify(timerDispatch).goOnline();
+        verify(remotingClient).sendMsg(any(ClusterMsg.Message.class));
+        assertEquals(ManagedOtelRuntimeStatus.RuntimeState.FAILED, reported.state());
+        assertEquals(ManagedOtelRuntimeStatus.FailureCode.PROCESS_CRASH, reported.failureCode());
+    }
+
+    private ManagedOtelRuntimeStatus runtimeStatus() {
+        return runtimeStatus(
+                ManagedOtelRuntimeStatus.RuntimeState.RUNNING,
+                ManagedOtelRuntimeStatus.FailureCode.NONE);
+    }
+
+    private ManagedOtelRuntimeStatus runtimeStatus(
+            ManagedOtelRuntimeStatus.RuntimeState state, ManagedOtelRuntimeStatus.FailureCode failureCode) {
+        return new ManagedOtelRuntimeStatus(
+                ManagedOtelRuntimeStatus.CURRENT_SCHEMA_VERSION,
+                true,
+                state,
+                12,
+                11,
+                state == ManagedOtelRuntimeStatus.RuntimeState.RUNNING ? 4201 : -1,
+                ManagedOtelRuntimeStatus.IntakeCredentialState.CONFIGURED,
+                0,
+                Instant.parse("2026-07-15T06:00:00Z"),
+                "",
+                failureCode,
+                ManagedOtelRuntimeStatus.RuntimeTelemetry.unavailable(false),
+                java.util.List.of()
+        );
     }
 
 }

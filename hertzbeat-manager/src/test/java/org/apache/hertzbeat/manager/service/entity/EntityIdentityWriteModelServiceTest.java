@@ -241,7 +241,7 @@ class EntityIdentityWriteModelServiceTest {
         IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class,
                 () -> identityWriteModelService.replaceIdentities(entity, List.of(sharedPrimary)));
 
-        assertEquals("Entity primary identity already exists: service.name=shared-checkout.", thrown.getMessage());
+        assertEquals("Entity primary identity already exists for key: service.name.", thrown.getMessage());
     }
 
     @Test

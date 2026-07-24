@@ -22,6 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.netty.channel.Channel;
@@ -37,6 +39,7 @@ import org.apache.hertzbeat.common.config.VirtualThreadProperties;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.manager.scheduler.CollectorJobScheduler;
 import org.apache.hertzbeat.manager.scheduler.SchedulerProperties;
+import org.apache.hertzbeat.manager.scheduler.runtime.CollectorRuntimeStatusRegistry;
 import org.apache.hertzbeat.remoting.RemotingServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -64,12 +67,15 @@ class ManageServerTest {
     @Mock
     private CommonDataQueue commonDataQueue;
 
+    @Mock
+    private CollectorRuntimeStatusRegistry runtimeStatusRegistry;
+
     private ManageServer manageServer;
 
     @BeforeEach
     void setUp() {
         manageServer = new ManageServer(schedulerProperties(), collectorJobScheduler, commonThreadPool,
-                collectorAlertHandler, commonDataQueue, new VirtualThreadProperties());
+                collectorAlertHandler, commonDataQueue, new VirtualThreadProperties(), runtimeStatusRegistry);
         ReflectionTestUtils.setField(manageServer, "remotingServer", mock(RemotingServer.class));
     }
 
@@ -99,6 +105,7 @@ class ManageServerTest {
 
         assertTrue(latch.await(5, TimeUnit.SECONDS));
         assertTrue(virtualThread.get());
+        verify(runtimeStatusRegistry, timeout(1000)).remove("collector-1");
     }
 
     @Test

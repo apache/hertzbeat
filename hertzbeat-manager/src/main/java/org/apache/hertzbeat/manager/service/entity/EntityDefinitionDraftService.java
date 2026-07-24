@@ -178,8 +178,8 @@ public class EntityDefinitionDraftService {
                 if (matchingIdentity.isPrimaryIdentity()
                         && primaryIdentity.identityKey().equals(matchingIdentity.getIdentityKey())
                         && primaryIdentity.normalizedValue().equals(matchingIdentity.getNormalizedValue())) {
-                    throw new IllegalArgumentException("Entity primary identity already exists: "
-                            + primaryIdentity.identityKey() + "=" + primaryIdentity.identityValue() + ".");
+                    throw new IllegalArgumentException("Entity primary identity already exists for key: "
+                            + primaryIdentity.identityKey() + ".");
                 }
             }
         }

@@ -53,7 +53,7 @@ public class EntityDefinitionTypeResolverService {
             return normalizedKind;
         }
         if (isUnsupportedExplicitKind(rawKind)) {
-            throw new IllegalArgumentException("Unsupported entity definition kind: " + rawKind + ".");
+            throw new IllegalArgumentException("Unsupported entity definition kind.");
         }
 
         String rawEntityType = defaultText(
@@ -67,7 +67,7 @@ public class EntityDefinitionTypeResolverService {
             return normalizedEntityType;
         }
         if (StringUtils.hasText(rawEntityType)) {
-            throw new IllegalArgumentException("Unsupported entity definition entity type: " + rawEntityType + ".");
+            throw new IllegalArgumentException("Unsupported entity definition entity type.");
         }
 
         return defaultText(

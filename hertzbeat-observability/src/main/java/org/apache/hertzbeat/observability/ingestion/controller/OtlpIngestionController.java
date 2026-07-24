@@ -31,6 +31,7 @@ import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsInventor
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpRelatedMetricsDto;
 import org.apache.hertzbeat.observability.ingestion.red.OtlpIngestionRedSummaryService;
 import org.apache.hertzbeat.observability.ingestion.service.OtlpIngestionWorkspaceService;
+import org.apache.hertzbeat.observability.metrics.service.CollectorScopedMetricsQueryService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -48,6 +49,7 @@ public class OtlpIngestionController {
 
     private final OtlpIngestionWorkspaceService otlpIngestionWorkspaceService;
     private final OtlpIngestionRedSummaryService otlpIngestionRedSummaryService;
+    private final CollectorScopedMetricsQueryService collectorScopedMetricsQueryService;
 
     @GetMapping("/overview")
     @Operation(summary = "Unified OTLP ingestion overview")
@@ -85,6 +87,9 @@ public class OtlpIngestionController {
             @RequestParam(value = "serviceName", required = false) String serviceName,
             @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
             @RequestParam(value = "environment", required = false) String environment,
+            @RequestParam(value = "collectorId", required = false) String collectorId,
+            @RequestParam(value = "instance", required = false) String instance,
+            @RequestParam(value = "endpoint", required = false) String endpoint,
             @RequestParam(value = "query", required = false) String query,
             @RequestParam(value = "filter", required = false) String filter,
             @RequestParam(value = "groupBy", required = false) String groupBy,
@@ -93,9 +98,11 @@ public class OtlpIngestionController {
             @RequestParam(value = "step", required = false) String step,
             @RequestParam(value = "limit", required = false) String limit,
             @RequestParam(value = "operationName", required = false) String operationName) {
-        return ResponseEntity.ok(Message.success(otlpIngestionWorkspaceService.getMetricsConsole(
-                entityId, entityType, start, end, serviceName, serviceNamespace, environment, query, filter, groupBy, aggregation,
-                temporalAggregation, step, limit, operationName)));
+        return ResponseEntity.ok(Message.success(collectorScopedMetricsQueryService.query(
+                new CollectorScopedMetricsQueryService.Request(
+                        entityId, entityType, start, end, serviceName, serviceNamespace, environment, collectorId,
+                        instance, endpoint, query, filter, groupBy, aggregation, temporalAggregation, step, limit,
+                        operationName))));
     }
 
     @GetMapping("/metrics/inventory")

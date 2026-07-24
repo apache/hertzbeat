@@ -20,8 +20,15 @@ package org.apache.hertzbeat.collector.dispatch.entrance;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.protobuf.ByteString;
 import io.netty.channel.Channel;
+import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.dispatch.CollectorInfoProperties;
+import org.apache.hertzbeat.collector.dispatch.CollectorRuntimeConfigApplier;
+import org.apache.hertzbeat.collector.dispatch.CollectorRuntimeStatusProvider;
 import org.apache.hertzbeat.collector.dispatch.DispatchProperties;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
 import org.apache.hertzbeat.collector.dispatch.entrance.processor.CollectCyclicDataProcessor;
@@ -33,6 +40,7 @@ import org.apache.hertzbeat.collector.dispatch.entrance.processor.GoOnlineProces
 import org.apache.hertzbeat.collector.dispatch.entrance.processor.HeartbeatProcessor;
 import org.apache.hertzbeat.collector.timer.TimerDispatch;
 import org.apache.hertzbeat.common.entity.dto.CollectorInfo;
+import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.support.CommonThreadPool;
 import org.apache.hertzbeat.common.util.JsonUtil;
@@ -44,11 +52,6 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
-
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 
 /**
  * collect server
@@ -65,7 +68,11 @@ public class CollectServer implements CommandLineRunner {
     private final TimerDispatch timerDispatch;
 
     private final CollectorInfoProperties infoProperties;
-    
+
+    private final Optional<CollectorRuntimeStatusProvider> runtimeStatusProvider;
+
+    private final Optional<CollectorRuntimeConfigApplier> runtimeConfigApplier;
+
     private RemotingClient remotingClient;
 
     private ScheduledExecutorService scheduledExecutor;
@@ -74,7 +81,9 @@ public class CollectServer implements CommandLineRunner {
                          final TimerDispatch timerDispatch,
                          final DispatchProperties properties,
                          final CommonThreadPool threadPool,
-                         final CollectorInfoProperties infoProperties) {
+                         final CollectorInfoProperties infoProperties,
+                         final Optional<CollectorRuntimeStatusProvider> runtimeStatusProvider,
+                         final Optional<CollectorRuntimeConfigApplier> runtimeConfigApplier) {
         if (properties == null || properties.getEntrance() == null || properties.getEntrance().getNetty() == null) {
             log.error("init error, please config dispatch entrance netty props in application.yml");
             throw new IllegalArgumentException("please config dispatch entrance netty props");
@@ -87,6 +96,8 @@ public class CollectServer implements CommandLineRunner {
         this.timerDispatch = timerDispatch;
         this.collectJobService.setCollectServer(this);
         this.infoProperties = infoProperties;
+        this.runtimeStatusProvider = runtimeStatusProvider;
+        this.runtimeConfigApplier = runtimeConfigApplier;
         this.init(properties, threadPool);
     }
 
@@ -97,7 +108,8 @@ public class CollectServer implements CommandLineRunner {
         nettyClientConfig.setServerPort(nettyProperties.getManagerPort());
         this.remotingClient = new NettyRemotingClient(nettyClientConfig, new CollectNettyEventListener(), threadPool);
 
-        this.remotingClient.registerProcessor(ClusterMsg.MessageType.HEARTBEAT, new HeartbeatProcessor());
+        this.remotingClient.registerProcessor(
+                ClusterMsg.MessageType.HEARTBEAT, new HeartbeatProcessor(runtimeConfigApplier));
         this.remotingClient.registerProcessor(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK, new CollectCyclicDataProcessor(this));
         this.remotingClient.registerProcessor(ClusterMsg.MessageType.DELETE_CYCLIC_TASK, new DeleteCyclicTaskProcessor(this));
         this.remotingClient.registerProcessor(ClusterMsg.MessageType.ISSUE_ONE_TIME_TASK, new CollectOneTimeDataProcessor(this));
@@ -163,13 +175,9 @@ public class CollectServer implements CommandLineRunner {
                 // schedule send heartbeat message
                 scheduledExecutor.scheduleAtFixedRate(() -> {
                     try {
-                        ClusterMsg.Message heartbeat = ClusterMsg.Message.newBuilder()
-                                .setIdentity(identity)
-                                .setDirection(ClusterMsg.Direction.REQUEST)
-                                .setType(ClusterMsg.MessageType.HEARTBEAT)
-                                .build();
+                        ClusterMsg.Message heartbeat = createHeartbeatMessage(identity);
                         CollectServer.this.sendMsg(heartbeat);
-                        log.info("collector send cluster server heartbeat, time: {}.", System.currentTimeMillis());   
+                        log.info("collector send cluster server heartbeat, time: {}.", System.currentTimeMillis());
                     } catch (Exception e) {
                         log.error("schedule send heartbeat to server error.{}", e.getMessage());
                     }
@@ -180,6 +188,30 @@ public class CollectServer implements CommandLineRunner {
         @Override
         public void onChannelIdle(Channel channel) {
             log.info("handle idle event triggered. collector is going offline.");
+        }
+    }
+
+    ClusterMsg.Message createHeartbeatMessage(String identity) {
+        ClusterMsg.Message.Builder heartbeat = ClusterMsg.Message.newBuilder()
+                .setIdentity(identity)
+                .setDirection(ClusterMsg.Direction.REQUEST)
+                .setType(ClusterMsg.MessageType.HEARTBEAT);
+        ManagedOtelRuntimeStatus status = runtimeStatus();
+        if (status != null) {
+            String encodedStatus = JsonUtil.toJson(status);
+            if (encodedStatus != null) {
+                heartbeat.setMsg(ByteString.copyFromUtf8(encodedStatus));
+            }
+        }
+        return heartbeat.build();
+    }
+
+    private ManagedOtelRuntimeStatus runtimeStatus() {
+        try {
+            return runtimeStatusProvider.map(CollectorRuntimeStatusProvider::status).orElse(null);
+        } catch (RuntimeException ignored) {
+            log.warn("Unable to report optional telemetry runtime status");
+            return null;
         }
     }
 }

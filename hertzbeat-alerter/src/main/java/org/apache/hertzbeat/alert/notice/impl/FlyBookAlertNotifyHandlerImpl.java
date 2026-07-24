@@ -63,13 +63,13 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
             if (entity.getStatusCode() == HttpStatus.OK) {
                 assert entity.getBody() != null;
                 if (entity.getBody().getCode() == null || entity.getBody().getCode() == 0) {
-                    log.debug("Send feiShu webHook: {} Success", webHookUrl);
+                    log.debug("Send FeiShu webhook success");
                 } else {
-                    log.warn("Send feiShu webHook: {} Failed: {}", webHookUrl, entity.getBody().getMsg());
+                    log.warn("Send FeiShu webhook failed with code {}", entity.getBody().getCode());
                     throw new AlertNoticeException(entity.getBody().getMsg());
                 }
             } else {
-                log.warn("Send feiShu webHook: {} Failed: {}", webHookUrl, entity.getBody());
+                log.warn("Send FeiShu webhook failed with status {}", entity.getStatusCode());
                 throw new AlertNoticeException("Http StatusCode " + entity.getStatusCode());
             }
         } catch (Exception e) {

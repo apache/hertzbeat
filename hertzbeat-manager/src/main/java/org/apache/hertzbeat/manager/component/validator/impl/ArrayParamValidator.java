@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.manager.component.validator.impl;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.hertzbeat.manager.component.validator.ParamValidator;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorParam;
 import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
@@ -34,13 +36,23 @@ public class ArrayParamValidator implements ParamValidator {
 
     @Override
     public void validate(ParamDefineInfo paramDefine, MonitorParam param) {
-        String[] arrays = param.getParamValue().split(",");
-        if (arrays.length == 0) {
-            throw new IllegalArgumentException("Param field " + paramDefine.getField() + " value "
-                    + param.getParamValue() + " is invalid arrays value");
+        String value = param.getParamValue();
+        if (value == null) {
+            throw ParamValidator.invalidParameter();
         }
-        if (param.getParamValue().startsWith("[") && param.getParamValue().endsWith("]")) {
-            param.setParamValue(param.getParamValue().substring(1, param.getParamValue().length() - 1));
+        value = value.trim();
+        if (value.startsWith("[") && value.endsWith("]")) {
+            value = value.substring(1, value.length() - 1);
         }
+        String[] elements = value.split(",", -1);
+        List<String> normalized = new ArrayList<>(elements.length);
+        for (String element : elements) {
+            String trimmed = element.trim();
+            if (trimmed.isEmpty()) {
+                throw ParamValidator.invalidParameter();
+            }
+            normalized.add(trimmed);
+        }
+        param.setParamValue(String.join(",", normalized));
     }
 }

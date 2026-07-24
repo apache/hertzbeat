@@ -35,6 +35,7 @@ import tools.jackson.databind.json.JsonMapper;
 @Service
 public class EntityDefinitionDocumentRendererService {
 
+    private static final String FORMAT_YAML = "yaml";
     private static final String FORMAT_JSON = "json";
     private static final ObjectMapper PRETTY_JSON_MAPPER = JsonMapper.builder().build();
 
@@ -57,10 +58,14 @@ public class EntityDefinitionDocumentRendererService {
     }
 
     private String normalizeDefinitionFormat(String format) {
-        if (FORMAT_JSON.equalsIgnoreCase(defaultText(format, ""))) {
+        String normalizedFormat = defaultText(format, "").trim();
+        if (FORMAT_JSON.equalsIgnoreCase(normalizedFormat)) {
             return FORMAT_JSON;
         }
-        return "yaml";
+        if (!StringUtils.hasText(normalizedFormat) || FORMAT_YAML.equalsIgnoreCase(normalizedFormat)) {
+            return FORMAT_YAML;
+        }
+        throw new IllegalArgumentException("Entity definition format must be yaml or json.");
     }
 
     private Map<String, Object> toDefinitionMap(EntityDefinition definition) {

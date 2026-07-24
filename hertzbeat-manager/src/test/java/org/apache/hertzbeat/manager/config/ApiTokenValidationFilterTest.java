@@ -189,6 +189,54 @@ class ApiTokenValidationFilterTest {
     }
 
     @Test
+    void testManagedCollectorTokenBindsIdentityForAllowedSignal() throws Exception {
+        String managedToken = "collector-token";
+        when(request.getHeader(NetworkConstants.AUTHORIZATION)).thenReturn("Bearer " + managedToken);
+        when(request.getRequestURI()).thenReturn("/api/otlp/v1/metrics");
+        when(accountService.checkTokenStatus(managedToken, AuthTokenScopes.OTLP_INGEST)).thenReturn(null);
+        when(accountService.checkManagedTokenAccess("admin", List.of("admin"))).thenReturn(null);
+        SubjectSum subject = mockManagedSubjectWithClaims();
+        when(principalMap.getPrincipal(AuthTokenScopes.CLAIM_TOKEN_AUDIENCE))
+                .thenReturn(AuthTokenScopes.MANAGED_COLLECTOR_AUDIENCE);
+        when(principalMap.getPrincipal(AuthTokenScopes.CLAIM_COLLECTOR_ID)).thenReturn("edge-west");
+        when(principalMap.getPrincipal(AuthTokenScopes.CLAIM_ALLOWED_SIGNALS))
+                .thenReturn(List.of("metrics", "logs", "traces"));
+
+        try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
+            mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subject);
+
+            org.junit.jupiter.api.Assertions.assertTrue(filter.preHandle(request, response, new Object()));
+            org.junit.jupiter.api.Assertions.assertEquals("edge-west", AuthTokenRequestContext.currentCollectorId());
+
+            filter.afterCompletion(request, response, new Object(), null);
+            org.junit.jupiter.api.Assertions.assertNull(AuthTokenRequestContext.currentCollectorId());
+        }
+    }
+
+    @Test
+    void testManagedCollectorTokenRejectsUnallowedSignal() throws Exception {
+        String managedToken = "collector-token";
+        when(request.getHeader(NetworkConstants.AUTHORIZATION)).thenReturn("Bearer " + managedToken);
+        when(request.getRequestURI()).thenReturn("/api/otlp/v1/traces");
+        when(accountService.checkTokenStatus(managedToken, AuthTokenScopes.OTLP_INGEST)).thenReturn(null);
+        when(accountService.checkManagedTokenAccess("admin", List.of("admin"))).thenReturn(null);
+        when(response.getWriter()).thenReturn(new PrintWriter(new StringWriter()));
+        SubjectSum subject = mockManagedSubjectWithClaims();
+        when(principalMap.getPrincipal(AuthTokenScopes.CLAIM_TOKEN_AUDIENCE))
+                .thenReturn(AuthTokenScopes.MANAGED_COLLECTOR_AUDIENCE);
+        when(principalMap.getPrincipal(AuthTokenScopes.CLAIM_COLLECTOR_ID)).thenReturn("edge-west");
+        when(principalMap.getPrincipal(AuthTokenScopes.CLAIM_ALLOWED_SIGNALS)).thenReturn(List.of("metrics"));
+
+        try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
+            mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subject);
+
+            org.junit.jupiter.api.Assertions.assertFalse(filter.preHandle(request, response, new Object()));
+            verify(response).setStatus(401);
+            verify(accountService, never()).touchTokenLastUsedTime(managedToken);
+        }
+    }
+
+    @Test
     void testManagedTokenWorkspaceHeaderRequiresWorkspaceBoundary() throws Exception {
         String managedToken = "managed-token";
         when(request.getHeader(NetworkConstants.AUTHORIZATION)).thenReturn("Bearer " + managedToken);

@@ -44,9 +44,9 @@ public class UptimeKumaExternAlertServiceImpl implements ExternAlertService {
 
     @Override
     public void addExternAlert(String content) {
-        UptimeKumaExternAlert alert = JsonUtil.fromJson(content, UptimeKumaExternAlert.class);
+        UptimeKumaExternAlert alert = JsonUtil.fromJsonQuietly(content, UptimeKumaExternAlert.class);
         if (alert == null) {
-            log.warn("parse extern alert content failed! content: {}", content);
+            log.warn("Failed to parse Uptime Kuma external alert content");
             return;
         }
         SingleAlert singleAlert = new UptimeKumaAlertConverter().convert(alert);
@@ -105,7 +105,7 @@ public class UptimeKumaExternAlertServiceImpl implements ExternAlertService {
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 return sdf.parse(timeStr).getTime();
             } catch (ParseException e) {
-                log.error("Failed to parse time: {}", timeStr);
+                log.error("Failed to parse Uptime Kuma external alert time");
                 throw new IllegalArgumentException("Failed to parse time: " + timeStr, e);
             }
         }

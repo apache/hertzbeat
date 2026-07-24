@@ -83,6 +83,18 @@ public class AuthToken {
     @Builder.Default
     private String workspaceId = AuthTokenScopes.DEFAULT_WORKSPACE_ID;
 
+    @Schema(title = "Token audience", example = "managed-collector", accessMode = READ_ONLY)
+    @Column(name = "token_audience", length = 32)
+    private String tokenAudience;
+
+    @Schema(title = "Bound Collector identity", example = "edge-west", accessMode = READ_ONLY)
+    @Column(name = "collector_id", length = 128)
+    private String collectorId;
+
+    @Schema(title = "Allowed OTLP signals", example = "metrics,logs,traces", accessMode = READ_ONLY)
+    @Column(name = "allowed_signals", length = 64)
+    private String allowedSignals;
+
     @Schema(title = "Token status: 0-active", accessMode = READ_ONLY)
     @Column(nullable = false)
     @Builder.Default

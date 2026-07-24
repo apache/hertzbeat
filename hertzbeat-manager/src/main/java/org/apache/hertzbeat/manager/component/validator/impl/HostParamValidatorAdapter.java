@@ -42,8 +42,7 @@ public class HostParamValidatorAdapter implements ParamValidator {
     @Override
     public void validate(ParamDefineInfo paramDefine, MonitorParam param) {
         if (!hostValidator.isValid(param.getParamValue(), null)) {
-            throw new IllegalArgumentException("Params field " + paramDefine.getField() + " value "
-                    + param.getParamValue() + " is invalid host value.");
+            throw ParamValidator.invalidParameter();
         }
     }
 }

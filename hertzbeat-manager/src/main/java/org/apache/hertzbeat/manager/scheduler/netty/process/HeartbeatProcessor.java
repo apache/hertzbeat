@@ -17,9 +17,14 @@
 
 package org.apache.hertzbeat.manager.scheduler.netty.process;
 
+import com.google.protobuf.ByteString;
 import io.netty.channel.ChannelHandlerContext;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeConfig;
+import org.apache.hertzbeat.common.entity.dto.ManagedOtelRuntimeStatus;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.scheduler.netty.ManageServer;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingProcessor;
 
@@ -52,8 +57,45 @@ public class HeartbeatProcessor implements NettyRemotingProcessor {
         if (log.isDebugEnabled()) {
             log.debug("server receive collector {} heartbeat", message.getIdentity());
         }
-        return ClusterMsg.Message.newBuilder()
-                .setType(ClusterMsg.MessageType.HEARTBEAT)
-                .build();
+        ManagedOtelRuntimeStatus status = reportRuntimeStatus(identity, message);
+        ClusterMsg.Message.Builder response = ClusterMsg.Message.newBuilder()
+                .setIdentity(identity)
+                .setDirection(ClusterMsg.Direction.RESPONSE)
+                .setType(ClusterMsg.MessageType.HEARTBEAT);
+        desiredConfig(identity, status).ifPresent(config -> response.setMsg(
+                ByteString.copyFromUtf8(JsonUtil.toJson(config))));
+        return response.build();
+    }
+
+    private ManagedOtelRuntimeStatus reportRuntimeStatus(String identity, ClusterMsg.Message message) {
+        if (message.getMsg().isEmpty()) {
+            return null;
+        }
+        try {
+            ManagedOtelRuntimeStatus status = JsonUtil.fromJson(
+                    message.getMsg().toStringUtf8(), ManagedOtelRuntimeStatus.class);
+            if (status != null) {
+                manageServer.getRuntimeStatusRegistry().report(identity, status);
+            }
+            return status;
+        } catch (RuntimeException error) {
+            log.warn("Ignoring invalid telemetry runtime status from Collector {}: {}", identity, error.getMessage());
+            return null;
+        }
+    }
+
+    private Optional<ManagedOtelRuntimeConfig> desiredConfig(
+            String identity, ManagedOtelRuntimeStatus status) {
+        if (manageServer.getRuntimeConfigService() == null) {
+            return Optional.empty();
+        }
+        try {
+            return manageServer.getRuntimeConfigService().current(identity)
+                    .filter(config -> status == null || config.revision() > status.desiredRevision());
+        } catch (RuntimeException error) {
+            log.warn("Unable to load optional telemetry runtime configuration for Collector {}: {}",
+                    identity, error.getMessage());
+            return Optional.empty();
+        }
     }
 }

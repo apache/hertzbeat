@@ -78,7 +78,7 @@ class EntityActivityWriteModelServiceTest {
     void recordDefinitionActivityFailureDelegatesStoredWorkspaceFallbackToRecordBoundary() {
         activityWriteModelService.recordDefinitionActivityFailure(
                 12L, "definition_update", "yaml",
-                new IllegalArgumentException("Entity name can not be blank"), null);
+                new IllegalArgumentException("identity=token-do-not-persist"), null);
 
         verify(entityActivityRecordWriteModelService).recordActivity(
                 eq(12L),
@@ -86,7 +86,7 @@ class EntityActivityWriteModelServiceTest {
                 eq("yaml"),
                 eq("error"),
                 eq("Definition update failed"),
-                eq("Entity name can not be blank"),
+                eq("Definition validation failed"),
                 isNull(),
                 isNull());
     }

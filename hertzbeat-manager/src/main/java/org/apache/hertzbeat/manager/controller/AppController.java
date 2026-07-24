@@ -52,12 +52,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(path = "/api/apps", produces = {APPLICATION_JSON_VALUE})
 public class AppController {
 
-    private static final String[] RISKY_STR_ARR = {"ScriptEngineManager", "URLClassLoader", "!!",
-            "ClassLoader", "AnnotationConfigApplicationContext", "FileSystemXmlApplicationContext",
-            "GenericXmlApplicationContext", "GenericGroovyApplicationContext", "GroovyScriptEngine",
-            "GroovyClassLoader", "GroovyShell", "ScriptEngine", "ScriptEngineFactory", "XmlWebApplicationContext",
-            "ClassPathXmlApplicationContext", "MarshalOutputStream", "InflaterOutputStream", "FileOutputStream"};
-
     @Autowired
     private AppService appService;
 
@@ -111,27 +105,13 @@ public class AppController {
     @PostMapping(path = "/define/yml")
     @Operation(summary = "Add new monitoring type define yml", description = "Add new monitoring type define yml")
     public ResponseEntity<Message<Void>> newAppDefineYml(@Valid @RequestBody MonitorDefineDto defineDto) {
-        return ResponseUtil.handle(() -> {
-            for (String riskyToken : RISKY_STR_ARR) {
-                if (defineDto.getDefine().contains(riskyToken)) {
-                    throw new RuntimeException("can not has malicious remote script");
-                }
-            }
-            appService.applyMonitorDefineYml(defineDto.getDefine(), false);
-        });
+        return ResponseUtil.handle(() -> appService.applyMonitorDefineYml(defineDto.getDefine(), false));
     }
 
     @PutMapping(path = "/define/yml")
     @Operation(summary = "Update monitoring type define yml", description = "Update monitoring type define yml")
     public ResponseEntity<Message<Void>> updateAppDefineYml(@Valid @RequestBody MonitorDefineDto defineDto) {
-        return ResponseUtil.handle(() -> {
-            for (String riskyToken : RISKY_STR_ARR) {
-                if (defineDto.getDefine().contains(riskyToken)) {
-                    throw new RuntimeException("can not has malicious remote script");
-                }
-            }
-            appService.applyMonitorDefineYml(defineDto.getDefine(), true);
-        });
+        return ResponseUtil.handle(() -> appService.applyMonitorDefineYml(defineDto.getDefine(), true));
     }
 
     @GetMapping(path = "/hierarchy")

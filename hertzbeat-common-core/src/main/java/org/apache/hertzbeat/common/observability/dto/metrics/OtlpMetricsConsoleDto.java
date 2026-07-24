@@ -50,7 +50,6 @@ public class OtlpMetricsConsoleDto {
      * Resolved OTLP metrics console context.
      */
     @Data
-    @AllArgsConstructor
     @NoArgsConstructor
     public static class Context {
 
@@ -66,11 +65,47 @@ public class OtlpMetricsConsoleDto {
 
         private String environment;
 
+        private String collectorId;
+
+        private String instance;
+
+        private String endpoint;
+
         private String operationName;
 
         private Long start;
 
         private Long end;
+
+        public Context(Long entityId, String entityType, String entityName, String serviceName,
+                       String serviceNamespace, String environment, String collectorId, String instance,
+                       String endpoint, String operationName, Long start, Long end) {
+            this.entityId = entityId;
+            this.entityType = entityType;
+            this.entityName = entityName;
+            this.serviceName = serviceName;
+            this.serviceNamespace = serviceNamespace;
+            this.environment = environment;
+            this.collectorId = collectorId;
+            this.instance = instance;
+            this.endpoint = endpoint;
+            this.operationName = operationName;
+            this.start = start;
+            this.end = end;
+        }
+
+        public Context(Long entityId, String entityType, String entityName, String serviceName,
+                       String serviceNamespace, String environment, String collectorId,
+                       String operationName, Long start, Long end) {
+            this(entityId, entityType, entityName, serviceName, serviceNamespace, environment, collectorId,
+                    null, null, operationName, start, end);
+        }
+
+        public Context(Long entityId, String entityType, String entityName, String serviceName,
+                       String serviceNamespace, String environment, String operationName, Long start, Long end) {
+            this(entityId, entityType, entityName, serviceName, serviceNamespace, environment, null,
+                    null, null, operationName, start, end);
+        }
     }
 
     /**

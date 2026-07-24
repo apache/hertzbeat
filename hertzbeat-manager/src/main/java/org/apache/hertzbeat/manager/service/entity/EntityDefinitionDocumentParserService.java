@@ -26,7 +26,9 @@ import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.pojo.dto.EntityDefinitionRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 /**
  * Parses raw entity definition requests into ordered document records.
@@ -34,52 +36,90 @@ import org.yaml.snakeyaml.Yaml;
 @Service
 public class EntityDefinitionDocumentParserService {
 
+    private static final String FORMAT_YAML = "yaml";
     private static final String FORMAT_JSON = "json";
     private static final String FORMAT_CURL = "curl";
 
+    // 3,145,728 preserves SnakeYAML 2.2's prior default code-point limit and applies it to JSON and cURL too.
+    static final int MAX_CONTENT_LENGTH = 3 * 1024 * 1024;
+    // One hundred records preserves the manager's existing bounded-batch convention for a single atomic request.
+    static final int MAX_DEFINITION_RECORDS = 100;
+    // Fifty keeps SnakeYAML's compatibility defaults and applies the same defensive depth to JSON input.
+    static final int MAX_NESTING_DEPTH = 50;
+    // Fifty preserves SnakeYAML's default alias allowance while making the limit explicit for this untrusted boundary.
+    static final int MAX_ALIASES_FOR_COLLECTIONS = 50;
+
     public List<Map<String, Object>> parseDefinitionRecords(EntityDefinitionRequest definitionRequest) {
-        DefinitionPayload payload = extractDefinitionPayload(definitionRequest.getContent(), definitionRequest.getFormat());
-        String format = normalizeDefinitionFormat(payload.format(), payload.content());
-        return parseDefinitionDocuments(payload.content(), format);
+        try {
+            DefinitionPayload payload = extractDefinitionPayload(
+                    definitionRequest.getContent(), definitionRequest.getFormat());
+            String format = normalizeDefinitionFormat(payload.format(), payload.content());
+            return parseDefinitionDocuments(payload.content(), format);
+        } catch (DefinitionInputException exception) {
+            throw exception;
+        } catch (RuntimeException exception) {
+            throw invalidInput("Entity definition content is invalid.");
+        }
     }
 
     private List<Map<String, Object>> parseDefinitionDocuments(String payload, String format) {
         if (FORMAT_JSON.equals(format)) {
-            return toDefinitionRecords(JsonUtil.fromJson(payload, Object.class));
+            validateJsonNesting(payload);
+            Object parsed = JsonUtil.fromJsonQuietly(payload, Object.class);
+            if (parsed == null) {
+                throw invalidInput("Entity definition content is invalid.");
+            }
+            return toDefinitionRecords(parsed);
         }
+        LoaderOptions loaderOptions = new LoaderOptions();
+        loaderOptions.setCodePointLimit(MAX_CONTENT_LENGTH);
+        loaderOptions.setNestingDepthLimit(MAX_NESTING_DEPTH);
+        loaderOptions.setMaxAliasesForCollections(MAX_ALIASES_FOR_COLLECTIONS);
         List<Map<String, Object>> documents = new ArrayList<>();
-        for (Object document : new Yaml().loadAll(payload)) {
+        for (Object document : new Yaml(new SafeConstructor(loaderOptions)).loadAll(payload)) {
             if (document == null) {
                 continue;
             }
-            documents.addAll(toDefinitionRecords(document));
+            appendDefinitionRecords(document, documents);
         }
         return documents;
     }
 
     private List<Map<String, Object>> toDefinitionRecords(Object value) {
+        List<Map<String, Object>> documents = new ArrayList<>();
+        appendDefinitionRecords(value, documents);
+        return documents;
+    }
+
+    private void appendDefinitionRecords(Object value, List<Map<String, Object>> documents) {
         if (value instanceof List<?> items) {
-            List<Map<String, Object>> documents = new ArrayList<>();
             for (Object item : items) {
                 if (item == null) {
                     continue;
                 }
-                documents.addAll(toDefinitionRecords(item));
+                appendDefinitionRecords(item, documents);
             }
-            return documents;
+            return;
         }
         if (value instanceof Map<?, ?> rawMap && isKubernetesList(rawMap)) {
-            return toDefinitionRecords(rawMap.get("items"));
+            appendDefinitionRecords(rawMap.get("items"), documents);
+            return;
         }
-        return List.of(toDefinitionRecord(value));
+        if (documents.size() >= MAX_DEFINITION_RECORDS) {
+            throw invalidInput("Entity definition bundle exceeds the supported document limit.");
+        }
+        documents.add(toDefinitionRecord(value));
     }
 
     private DefinitionPayload extractDefinitionPayload(String content, String format) {
+        if (content != null && content.codePointCount(0, content.length()) > MAX_CONTENT_LENGTH) {
+            throw invalidInput("Entity definition content exceeds the supported size.");
+        }
         String trimmed = content == null ? null : content.trim();
         if (!StringUtils.hasText(trimmed)) {
-            throw new IllegalArgumentException("Entity definition content can not be blank.");
+            throw invalidInput("Entity definition content can not be blank.");
         }
-        if (!FORMAT_CURL.equalsIgnoreCase(defaultText(format, ""))) {
+        if (!FORMAT_CURL.equalsIgnoreCase(defaultText(format, "").trim())) {
             return new DefinitionPayload(trimmed, format);
         }
         String payload = extractCurlDataPayload(trimmed);
@@ -168,10 +208,11 @@ public class EntityDefinitionDocumentParserService {
     }
 
     private DefinitionPayload unwrapCurlRequestEnvelope(String payload, String format) {
-        if (!JsonUtil.isJsonStr(payload)) {
+        if (!JsonUtil.isJsonLike(payload)) {
             return new DefinitionPayload(payload, format);
         }
-        Object parsed = JsonUtil.fromJson(payload, Object.class);
+        validateJsonNesting(payload);
+        Object parsed = JsonUtil.fromJsonQuietly(payload, Object.class);
         if (!(parsed instanceof Map<?, ?> rawMap)) {
             return new DefinitionPayload(payload, format);
         }
@@ -187,16 +228,22 @@ public class EntityDefinitionDocumentParserService {
     }
 
     private String normalizeDefinitionFormat(String format, String payload) {
-        String normalizedFormat = defaultText(format, "").toLowerCase(Locale.ROOT);
-        if (FORMAT_JSON.equals(normalizedFormat) || JsonUtil.isJsonStr(payload)) {
+        String normalizedFormat = defaultText(format, "").trim().toLowerCase(Locale.ROOT);
+        if (FORMAT_JSON.equals(normalizedFormat)) {
             return FORMAT_JSON;
         }
-        return "yaml";
+        if (FORMAT_YAML.equals(normalizedFormat)) {
+            return FORMAT_YAML;
+        }
+        if (!normalizedFormat.isEmpty() && !FORMAT_CURL.equals(normalizedFormat)) {
+            throw invalidInput("Entity definition format must be yaml, json, or curl.");
+        }
+        return JsonUtil.isJsonLike(payload) ? FORMAT_JSON : FORMAT_YAML;
     }
 
     private Map<String, Object> toDefinitionRecord(Object value) {
         if (!(value instanceof Map<?, ?> rawMap)) {
-            throw new IllegalArgumentException("Entity definition must be a yaml or json object.");
+            throw invalidInput("Entity definition must be a yaml or json object.");
         }
         Map<String, Object> result = new LinkedHashMap<>();
         for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
@@ -209,6 +256,41 @@ public class EntityDefinitionDocumentParserService {
 
     private boolean isKubernetesList(Map<?, ?> rawMap) {
         return "List".equals(rawMap.get("kind")) && rawMap.containsKey("items");
+    }
+
+    private void validateJsonNesting(String payload) {
+        int depth = 0;
+        boolean inString = false;
+        boolean escaped = false;
+        for (int index = 0; index < payload.length(); index++) {
+            char current = payload.charAt(index);
+            if (inString) {
+                if (current == '"' && !escaped) {
+                    inString = false;
+                }
+                escaped = current == '\\' && !escaped;
+                if (current != '\\') {
+                    escaped = false;
+                }
+                continue;
+            }
+            if (current == '"') {
+                inString = true;
+                continue;
+            }
+            if (current == '{' || current == '[') {
+                depth++;
+                if (depth > MAX_NESTING_DEPTH) {
+                    throw invalidInput("Entity definition exceeds parser safety limits.");
+                }
+            } else if (current == '}' || current == ']') {
+                depth--;
+            }
+        }
+    }
+
+    private DefinitionInputException invalidInput(String message) {
+        return new DefinitionInputException(message);
     }
 
     private String defaultText(String... values) {
@@ -224,5 +306,12 @@ public class EntityDefinitionDocumentParserService {
     }
 
     private record DefinitionPayload(String content, String format) {
+    }
+
+    private static final class DefinitionInputException extends IllegalArgumentException {
+
+        private DefinitionInputException(String message) {
+            super(message);
+        }
     }
 }

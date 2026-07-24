@@ -71,8 +71,10 @@ import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.TimePeriodUtil;
 import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.AbstractHistoryDataStorage;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader.ServerAvailability;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.vm.PromQlQueryContent;
 import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -116,8 +118,18 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 
     private final GreptimeSqlQueryExecutor greptimeSqlQueryExecutor;
 
+    private final GreptimeServerAvailabilityProbe serverAvailabilityProbe;
+
+    @Autowired
     public GreptimeDbDataStorage(GreptimeProperties greptimeProperties, RestTemplate restTemplate,
                                  GreptimeSqlQueryExecutor greptimeSqlQueryExecutor) {
+        this(greptimeProperties, restTemplate, greptimeSqlQueryExecutor,
+                createServerAvailabilityProbe(greptimeProperties));
+    }
+
+    GreptimeDbDataStorage(GreptimeProperties greptimeProperties, RestTemplate restTemplate,
+                          GreptimeSqlQueryExecutor greptimeSqlQueryExecutor,
+                          GreptimeServerAvailabilityProbe serverAvailabilityProbe) {
         if (greptimeProperties == null) {
             log.error("init error, please config Warehouse GreptimeDB props in application.yml");
             throw new IllegalArgumentException("please config Warehouse GreptimeDB props");
@@ -125,10 +137,23 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         this.restTemplate = restTemplate;
         this.greptimeProperties = greptimeProperties;
         this.greptimeSqlQueryExecutor = greptimeSqlQueryExecutor;
+        this.serverAvailabilityProbe = Objects.requireNonNull(serverAvailabilityProbe);
         serverAvailable = initGreptimeDbClient(greptimeProperties);
         if (serverAvailable) {
             applyDatabaseTtlIfConfigured(greptimeProperties);
         }
+    }
+
+    private static GreptimeServerAvailabilityProbe createServerAvailabilityProbe(GreptimeProperties properties) {
+        return properties == null ? null : new GreptimeServerAvailabilityProbe(properties.httpEndpoint());
+    }
+
+    @Override
+    public ServerAvailability getServerAvailability() {
+        if (!serverAvailable) {
+            return ServerAvailability.UNAVAILABLE;
+        }
+        return serverAvailabilityProbe.current();
     }
 
     private boolean initGreptimeDbClient(GreptimeProperties greptimeProperties) {

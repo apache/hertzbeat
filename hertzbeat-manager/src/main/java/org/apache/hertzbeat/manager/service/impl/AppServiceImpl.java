@@ -37,6 +37,13 @@ import org.apache.hertzbeat.common.util.JexlCheckerUtil;
 import org.apache.hertzbeat.manager.dao.DefineDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.ParamDao;
+import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionCommandExecutor;
+import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionCommandState;
+import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionIdentity;
+import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionSource;
+import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionStateCommand;
+import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionSourceReader;
+import org.apache.hertzbeat.manager.monitor.definition.MonitorDefinitionSourceRegistry;
 import org.apache.hertzbeat.manager.pojo.dto.Hierarchy;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
@@ -59,7 +66,6 @@ import org.springframework.util.StreamUtils;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -85,9 +91,15 @@ import static java.util.Objects.isNull;
 @Service
 @Order(value = Ordered.HIGHEST_PRECEDENCE)
 @Slf4j
-public class AppServiceImpl implements AppService, InitializingBean {
+public class AppServiceImpl implements AppService, MonitorDefinitionSourceReader, MonitorDefinitionCommandExecutor,
+        InitializingBean {
 
     private static final String PUSH_PROTOCOL_METRICS_NAME = "metrics";
+    private static final String[] RISKY_DEFINE_TOKENS = {"ScriptEngineManager", "URLClassLoader", "!!",
+            "ClassLoader", "AnnotationConfigApplicationContext", "FileSystemXmlApplicationContext",
+            "GenericXmlApplicationContext", "GenericGroovyApplicationContext", "GroovyScriptEngine",
+            "GroovyClassLoader", "GroovyShell", "ScriptEngine", "ScriptEngineFactory", "XmlWebApplicationContext",
+            "ClassPathXmlApplicationContext", "MarshalOutputStream", "InflaterOutputStream", "FileOutputStream"};
 
     private final MonitorDao monitorDao;
     private final ObjectStoreConfigServiceImpl objectStoreConfigService;
@@ -98,6 +110,7 @@ public class AppServiceImpl implements AppService, InitializingBean {
     private final ObjectProvider<ObjectStoreService> objectStoreServiceProvider;
 
     private final Map<String, Job> appDefines = new ConcurrentHashMap<>();
+    private final MonitorDefinitionSourceRegistry definitionSourceRegistry = new MonitorDefinitionSourceRegistry();
     private AppDefineStore appDefineStore;
     private final AppDefineStore jarAppDefineStore = new JarAppDefineStoreImpl();
 
@@ -123,7 +136,7 @@ public class AppServiceImpl implements AppService, InitializingBean {
     @Override
     public List<ParamDefineInfo> getAppParamDefines(String app) {
         if (StringUtils.isNotBlank(app)){
-            var appDefine = appDefines.get(app.toLowerCase());
+            var appDefine = appDefines.get(MonitorDefinitionIdentity.normalize(app));
             if (appDefine != null && appDefine.getParams() != null) {
                 return appDefine.getParams().stream().map(ParamDefineInfo::fromRuntime).toList();
             }
@@ -186,7 +199,7 @@ public class AppServiceImpl implements AppService, InitializingBean {
         if (StringUtils.isBlank(app)) {
             throw new IllegalArgumentException("The app can not null.");
         }
-        var appDefine = appDefines.get(app.toLowerCase());
+        var appDefine = appDefines.get(MonitorDefinitionIdentity.normalize(app));
         if (appDefine == null) {
             throw new IllegalArgumentException("The app " + app + " not support.");
         }
@@ -196,7 +209,7 @@ public class AppServiceImpl implements AppService, InitializingBean {
     @Override
     public Optional<Job> getAppDefineOption(String app) {
         if (StringUtils.isNotBlank(app)) {
-            Job appDefine = appDefines.get(app.toLowerCase());
+            Job appDefine = appDefines.get(MonitorDefinitionIdentity.normalize(app));
             return Optional.ofNullable(appDefine);
         }
         return Optional.empty();
@@ -206,7 +219,7 @@ public class AppServiceImpl implements AppService, InitializingBean {
     public List<String> getAppDefineMetricNames(String app) {
         List<String> metricNames = new ArrayList<>(16);
         if (StringUtils.isNotBlank(app)) {
-            var appDefine = appDefines.get(app.toLowerCase());
+            var appDefine = appDefines.get(MonitorDefinitionIdentity.normalize(app));
             if (appDefine == null) {
                 throw new IllegalArgumentException("The app " + app + " not support.");
             }
@@ -292,7 +305,7 @@ public class AppServiceImpl implements AppService, InitializingBean {
     @Override
     public List<Hierarchy> getAppHierarchy(String app, String lang) {
         LinkedList<Hierarchy> hierarchies = new LinkedList<>();
-        Job job = appDefines.get(app.toLowerCase());
+        Job job = appDefines.get(MonitorDefinitionIdentity.normalize(app));
         if (DispatchConstants.PROTOCOL_PUSH.equalsIgnoreCase(job.getApp())) {
             return hierarchies;
         }
@@ -406,24 +419,66 @@ public class AppServiceImpl implements AppService, InitializingBean {
     }
 
     @Override
-    public void applyMonitorDefineYml(String ymlContent, boolean isModify) {
-        var yaml = new Yaml();
-        Job app;
-        try {
-            app = yaml.loadAs(ymlContent, Job.class);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            throw new IllegalArgumentException("parse yml error: " + e.getMessage());
-        }
-        verifyDefineAppContent(app, isModify);
+    public synchronized void applyMonitorDefineYml(String ymlContent, boolean isModify) {
+        Job app = parseAndValidateMonitorDefinition(ymlContent, isModify);
         appDefineStore.save(app.getApp(), ymlContent);
-        Job originalJob = appDefines.get(app.getApp().toLowerCase());
+        Job originalJob = appDefines.get(MonitorDefinitionIdentity.normalize(app.getApp()));
         if (Objects.nonNull(originalJob)) {
             boolean hide = originalJob.isHide();
             app.setHide(hide);
         }
-        appDefines.put(app.getApp().toLowerCase(), app);
+        registerActiveDefinition(app, ymlContent);
         getMonitorService().updateAppCollectJob(app);
+    }
+
+    @Override
+    public List<MonitorDefinitionSource> readAll() {
+        return definitionSourceRegistry.readAll();
+    }
+
+    @Override
+    public Job validate(String definition) {
+        return parseAndValidateMonitorDefinition(definition, true);
+    }
+
+    @Override
+    public synchronized <T> T executeSerialized(MonitorDefinitionStateCommand<T> command) {
+        return command.execute(new CommandState());
+    }
+
+    private Job parseAndValidateMonitorDefinition(String definition, boolean isModify) {
+        requireSafeMonitorDefinition(definition);
+        Job app;
+        try {
+            app = new Yaml().loadAs(definition, Job.class);
+        } catch (RuntimeException error) {
+            throw new IllegalArgumentException("monitor definition yaml is invalid");
+        }
+        verifyDefineAppContent(app, isModify);
+        return app;
+    }
+
+    private static void requireSafeMonitorDefinition(String definition) {
+        if (definition == null) {
+            throw new IllegalArgumentException("monitor definition is required");
+        }
+        for (String riskyToken : RISKY_DEFINE_TOKENS) {
+            if (definition.contains(riskyToken)) {
+                throw new IllegalArgumentException("monitor definition contains a prohibited token");
+            }
+        }
+    }
+
+    private void registerBuiltinDefinition(Job job, String definition) {
+        String identity = MonitorDefinitionIdentity.normalize(job.getApp());
+        definitionSourceRegistry.registerBuiltin(job, definition);
+        appDefines.put(identity, job);
+    }
+
+    private void registerActiveDefinition(Job job, String definition) {
+        String identity = MonitorDefinitionIdentity.normalize(job.getApp());
+        definitionSourceRegistry.registerActive(job, definition);
+        appDefines.put(identity, job);
     }
 
     private void verifyDefineAppContent(Job app, boolean isModify) {
@@ -444,7 +499,7 @@ public class AppServiceImpl implements AppService, InitializingBean {
             CommonUtil.validDefineI18n(param.getName(),  param.getField() + " param");
         }
         if (!isModify) {
-            Assert.isNull(appDefines.get(app.getApp().toLowerCase()),
+            Assert.isNull(appDefines.get(MonitorDefinitionIdentity.normalize(app.getApp())),
                 "monitoring template name " + app.getApp() + " already exists.");
         }
         Set<String> fieldsSet = new HashSet<>(16);
@@ -499,12 +554,22 @@ public class AppServiceImpl implements AppService, InitializingBean {
     }
 
     @Override
-    public void deleteMonitorDefine(String app) {
+    public synchronized void deleteMonitorDefine(String app) {
         var monitors = monitorDao.findMonitorsByAppEquals(app);
         if (monitors != null && !monitors.isEmpty()) {
             throw new IllegalArgumentException("Can not delete define which has monitoring instances.");
         }
         appDefineStore.delete(app);
+        publishActiveRemoval(app);
+    }
+
+    private void publishActiveRemoval(String app) {
+        MonitorDefinitionSource effectiveSource = definitionSourceRegistry.removeActive(app);
+        if (effectiveSource == null) {
+            appDefines.remove(MonitorDefinitionIdentity.normalize(app));
+        } else {
+            appDefines.put(MonitorDefinitionIdentity.normalize(app), effectiveSource.job());
+        }
     }
 
     @Override
@@ -517,7 +582,7 @@ public class AppServiceImpl implements AppService, InitializingBean {
             return;
         }
         for (var entry : templateMap.entrySet()) {
-            var app = entry.getKey().toLowerCase();
+            var app = MonitorDefinitionIdentity.normalize(entry.getKey());
             var appTemplate = entry.getValue();
             if (appTemplate == null) {
                 continue;
@@ -542,20 +607,77 @@ public class AppServiceImpl implements AppService, InitializingBean {
         refreshStore(event.getConfig());
     }
 
-    private void refreshStore(ObjectStoreDTO<?> objectStoreConfig) {
-        if (objectStoreConfig == null) {
-            appDefineStore = new DatabaseAppDefineStoreImpl();
-        } else {
-            if (objectStoreConfig.getType() == ObjectStoreDTO.Type.OBS) {
-                appDefineStore = new ObjectStoreAppDefineStoreImpl();
-            } else if (objectStoreConfig.getType() == ObjectStoreDTO.Type.DATABASE) {
-                appDefineStore = new DatabaseAppDefineStoreImpl();
-            } else {
-                appDefineStore = new LocalFileAppDefineStoreImpl();
-            }
+    private synchronized void refreshStore(ObjectStoreDTO<?> objectStoreConfig) {
+        Map<String, Job> previousAppDefines = Map.copyOf(appDefines);
+        AppDefineStore previousAppDefineStore = appDefineStore;
+        try {
+            definitionSourceRegistry.rebuild(() -> {
+                appDefines.clear();
+                if (objectStoreConfig == null) {
+                    appDefineStore = new DatabaseAppDefineStoreImpl();
+                } else {
+                    if (objectStoreConfig.getType() == ObjectStoreDTO.Type.OBS) {
+                        appDefineStore = new ObjectStoreAppDefineStoreImpl();
+                    } else if (objectStoreConfig.getType() == ObjectStoreDTO.Type.DATABASE) {
+                        appDefineStore = new DatabaseAppDefineStoreImpl();
+                    } else {
+                        appDefineStore = new LocalFileAppDefineStoreImpl();
+                    }
+                }
+                jarAppDefineStore.loadAppDefines();
+                appDefineStore.loadAppDefines();
+            });
+        } catch (RuntimeException | Error error) {
+            appDefines.clear();
+            appDefines.putAll(previousAppDefines);
+            appDefineStore = previousAppDefineStore;
+            throw error;
         }
-        jarAppDefineStore.loadAppDefines();
-        appDefineStore.loadAppDefines();
+    }
+
+    /** Named bindings for command state; command policy and compensation stay in the command service. */
+    private final class CommandState implements MonitorDefinitionCommandState {
+
+        @Override
+        public List<MonitorDefinitionSource> readAll() {
+            return AppServiceImpl.this.readAll();
+        }
+
+        @Override
+        public Job validate(String definition) {
+            return AppServiceImpl.this.validate(definition);
+        }
+
+        @Override
+        public void save(String app, String definition) {
+            appDefineStore.save(app, definition);
+        }
+
+        @Override
+        public void remove(String app) {
+            appDefineStore.delete(app);
+        }
+
+        @Override
+        public void publish(Job job, String definition) {
+            registerActiveDefinition(job, definition);
+        }
+
+        @Override
+        public void publishRemoval(String app) {
+            AppServiceImpl.this.publishActiveRemoval(app);
+        }
+
+        @Override
+        public boolean inUse(String app) {
+            List<Monitor> monitors = monitorDao.findMonitorsByAppEquals(app);
+            return monitors != null && !monitors.isEmpty();
+        }
+
+        @Override
+        public void updateRuntime(Job job) {
+            getMonitorService().updateAppCollectJob(job);
+        }
     }
 
     private interface AppDefineStore {
@@ -589,12 +711,13 @@ public class AppServiceImpl implements AppService, InitializingBean {
                 var resources = resolver.getResources("classpath:define/*.yml");
                 for (var resource : resources) {
                     try (var inputStream = resource.getInputStream()) {
-                        var app = yaml.loadAs(inputStream, Job.class);
+                        String definition = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+                        var app = yaml.loadAs(definition, Job.class);
                         if (app == null || StringUtils.isBlank(app.getApp())) {
                             log.warn("skip invalid internal app define resource: {}", resource.getDescription());
                             continue;
                         }
-                        appDefines.put(app.getApp().toLowerCase(), app);
+                        registerBuiltinDefinition(app, definition);
                     } catch (IOException | RuntimeException e) {
                         log.error("load internal app define failed: {}", resource.getDescription(), e);
                     }
@@ -639,9 +762,10 @@ public class AppServiceImpl implements AppService, InitializingBean {
             Yaml yaml = new Yaml();
             for (var appFile : Objects.requireNonNull(directory.listFiles())) {
                 if (appFile.isFile() && (appFile.getName().endsWith("yml") || appFile.getName().endsWith("yaml"))) {
-                    try (var is = new FileInputStream(appFile)) {
-                        var app = yaml.loadAs(is, Job.class);
-                        if (app != null) appDefines.put(app.getApp().toLowerCase(), app);
+                    try {
+                        String definition = FileUtils.readFileToString(appFile, StandardCharsets.UTF_8);
+                        var app = yaml.loadAs(definition, Job.class);
+                        if (app != null) registerActiveDefinition(app, definition);
                     } catch (Exception e) {
                         log.error(e.getMessage());
                     }
@@ -680,7 +804,7 @@ public class AppServiceImpl implements AppService, InitializingBean {
             if (rootUrl == null) return;
             var file = new File(rootUrl.getPath() + "define" + File.separator + "app-" + app + ".yml");
             if (file.exists()) file.delete();
-            appDefines.remove(app.toLowerCase());
+            appDefines.remove(MonitorDefinitionIdentity.normalize(app));
         }
     }
 
@@ -690,9 +814,15 @@ public class AppServiceImpl implements AppService, InitializingBean {
             var objectStoreService = getObjectStoreService();
             Yaml yaml = new Yaml();
             objectStoreService.list("define").forEach(it -> {
-                if (it.getInputStream() != null) {
-                    var app = yaml.loadAs(it.getInputStream(), Job.class);
-                    if (app != null) appDefines.put(app.getApp().toLowerCase(), app);
+                var inputStream = it.getInputStream();
+                if (inputStream != null) {
+                    try (inputStream) {
+                        String definition = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
+                        var app = yaml.loadAs(definition, Job.class);
+                        if (app != null) registerActiveDefinition(app, definition);
+                    } catch (IOException error) {
+                        throw new IllegalStateException("monitor definition object could not be read");
+                    }
                 }
             });
             return true;
@@ -717,7 +847,7 @@ public class AppServiceImpl implements AppService, InitializingBean {
         @Override
         public void delete(String app) {
             getObjectStoreService().remove("define/app-" + app + ".yml");
-            appDefines.remove(app.toLowerCase());
+            appDefines.remove(MonitorDefinitionIdentity.normalize(app));
         }
     }
 
@@ -727,7 +857,7 @@ public class AppServiceImpl implements AppService, InitializingBean {
             Yaml yaml = new Yaml();
             defineDao.findAll().forEach(define -> {
                 var app = yaml.loadAs(define.getContent(), Job.class);
-                if (app != null) appDefines.put(define.getApp().toLowerCase(), app);
+                if (app != null) registerActiveDefinition(app, define.getContent());
             });
             return true;
         }
@@ -748,7 +878,7 @@ public class AppServiceImpl implements AppService, InitializingBean {
         @Override
         public void delete(String app) {
             defineDao.deleteById(app);
-            appDefines.remove(app.toLowerCase());
+            appDefines.remove(MonitorDefinitionIdentity.normalize(app));
         }
     }
 }

@@ -788,7 +788,8 @@ class OtlpIngestionWorkspaceServiceImplTest {
         );
         String expectedQuery = groupedMetricPromql("__name__=\"http_server_request_duration_count\", "
                 + "service_name=\"checkout\", service_namespace=\"commerce\", deployment_environment_name=\"prod\", "
-                + "span_kind=\"server\", http_route=~\"/checkout.*\"");
+                + "span_kind=\"server\", http_route=~\"/checkout.*\", "
+                + "hertzbeat_collector_id=\"collector-east\"");
         DatasourceQueryData emptyQueryData = new DatasourceQueryData("otlp-metrics-console", 200, null, List.of());
         when(metricQueryRepository.hasPromqlExecutor()).thenReturn(true);
         when(metricQueryRepository.queryPromqlRange(
@@ -807,7 +808,8 @@ class OtlpIngestionWorkspaceServiceImplTest {
                 "commerce",
                 "prod",
                 null,
-                "span.kind=\"server\" and http.route=~\"/checkout.*\"",
+                "span.kind=\"server\" and http.route=~\"/checkout.*\" "
+                        + "and hertzbeat_collector_id=\"collector-east\"",
                 null,
                 null
         );

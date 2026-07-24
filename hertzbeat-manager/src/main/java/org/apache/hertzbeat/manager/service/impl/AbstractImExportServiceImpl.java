@@ -31,6 +31,7 @@ import org.apache.hertzbeat.manager.config.ManagerSseManager;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.service.ImExportService;
 import org.apache.hertzbeat.manager.service.MonitorService;
+import org.apache.hertzbeat.manager.service.helper.MonitorInstanceCanonicalizer;
 import org.apache.hertzbeat.base.service.LabelService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
@@ -158,13 +159,21 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         if (exportMonitor.getParams() == null) {
             return null;
         }
-        return exportMonitor.getParams().stream()
+        String host = exportMonitor.getParams().stream()
                 .filter(param -> "host".equals(param.getField()))
                 .map(ParamDTO::getValue)
                 .filter(StringUtils::hasText)
                 .map(String::trim)
                 .findFirst()
                 .orElse(null);
+        String port = exportMonitor.getParams().stream()
+                .filter(param -> "port".equals(param.getField()))
+                .map(ParamDTO::getValue)
+                .filter(StringUtils::hasText)
+                .map(String::trim)
+                .findFirst()
+                .orElse(null);
+        return host == null ? null : MonitorInstanceCanonicalizer.canonicalize(true, host, port);
     }
 
     protected String fileNamePrefix() {

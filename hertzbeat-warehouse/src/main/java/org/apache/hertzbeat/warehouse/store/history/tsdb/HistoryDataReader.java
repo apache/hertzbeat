@@ -28,10 +28,29 @@ import org.apache.hertzbeat.common.entity.log.LogEntry;
  */
 public interface HistoryDataReader {
 
+    /** Result of a bounded storage reachability observation. */
+    enum ServerAvailability {
+        AVAILABLE,
+        UNAVAILABLE
+    }
+
     /**
      * @return data storage available
      */
     boolean isServerAvailable();
+
+    /**
+     * Performs the storage adapter's reachability observation when one is available.
+     *
+     * <p>The compatibility default retains existing storage behavior. Remote adapters may override
+     * this method with a bounded probe and throw {@link WarehouseStorageProbeException} when the
+     * probe contract itself fails.</p>
+     *
+     * @return observed server availability
+     */
+    default ServerAvailability getServerAvailability() {
+        return isServerAvailable() ? ServerAvailability.AVAILABLE : ServerAvailability.UNAVAILABLE;
+    }
 
     private static boolean hasLogAttributeFilters(Map<String, String> resourceFilters,
                                                   Map<String, String> attributeFilters) {

@@ -25,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 public final class AuthTokenRequestContext {
 
     private static final ThreadLocal<String> WORKSPACE_ID = new ThreadLocal<>();
+    private static final ThreadLocal<String> COLLECTOR_ID = new ThreadLocal<>();
 
     private AuthTokenRequestContext() {
     }
@@ -32,7 +33,7 @@ public final class AuthTokenRequestContext {
     public static void bindWorkspaceId(String workspaceId) {
         String normalized = StringUtils.trimToNull(workspaceId);
         if (normalized == null) {
-            clear();
+            WORKSPACE_ID.remove();
             return;
         }
         WORKSPACE_ID.set(AuthTokenScopes.normalizeWorkspaceId(normalized));
@@ -42,7 +43,21 @@ public final class AuthTokenRequestContext {
         return WORKSPACE_ID.get();
     }
 
+    public static void bindCollectorId(String collectorId) {
+        String normalized = StringUtils.trimToNull(collectorId);
+        if (normalized == null) {
+            COLLECTOR_ID.remove();
+            return;
+        }
+        COLLECTOR_ID.set(normalized);
+    }
+
+    public static String currentCollectorId() {
+        return COLLECTOR_ID.get();
+    }
+
     public static void clear() {
         WORKSPACE_ID.remove();
+        COLLECTOR_ID.remove();
     }
 }

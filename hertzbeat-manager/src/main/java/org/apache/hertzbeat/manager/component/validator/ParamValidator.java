@@ -25,6 +25,12 @@ import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
  */
 public interface ParamValidator {
 
+    String INVALID_PARAMETER_MESSAGE = "Parameter value is invalid";
+
+    static IllegalArgumentException invalidParameter() {
+        return new IllegalArgumentException(INVALID_PARAMETER_MESSAGE);
+    }
+
     /**
      * Check if the validator supports the given parameter type
      *

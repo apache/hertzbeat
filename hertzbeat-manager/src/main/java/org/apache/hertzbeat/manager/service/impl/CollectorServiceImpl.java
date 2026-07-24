@@ -30,11 +30,13 @@ import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
+import org.apache.hertzbeat.manager.instrumentation.intake.CollectorIntakeAdvertisementReader;
 import org.apache.hertzbeat.manager.pojo.dto.CollectorInfo;
 import org.apache.hertzbeat.manager.pojo.dto.CollectorSummary;
 import org.apache.hertzbeat.manager.scheduler.AssignJobs;
 import org.apache.hertzbeat.manager.scheduler.ConsistentHash;
 import org.apache.hertzbeat.manager.scheduler.netty.ManageServer;
+import org.apache.hertzbeat.manager.scheduler.runtime.CollectorRuntimeStatusRegistry;
 import org.apache.hertzbeat.manager.service.CollectorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -63,6 +65,12 @@ public class CollectorServiceImpl implements CollectorService {
     @Autowired(required = false)
     private ManageServer manageServer;
 
+    @Autowired
+    private CollectorRuntimeStatusRegistry runtimeStatusRegistry;
+
+    @Autowired
+    private CollectorIntakeAdvertisementReader intakeAdvertisementReader;
+
     @Override
     @Transactional(readOnly = true)
     public Page<CollectorSummary> getCollectors(String name, int pageIndex, Integer pageSize) {
@@ -82,13 +90,18 @@ public class CollectorServiceImpl implements CollectorService {
         List<CollectorSummary> collectorSummaryList = new LinkedList<>();
         for (Collector collector : collectors.getContent()) {
             CollectorSummary.CollectorSummaryBuilder summaryBuilder =
-                    CollectorSummary.builder().collector(CollectorInfo.fromEntity(collector));
+                    CollectorSummary.builder()
+                            .collector(CollectorInfo.fromEntity(collector))
+                            .instrumentationIntake(intakeAdvertisementReader.read(collector));
             ConsistentHash.Node node = consistentHash.getNode(collector.getName());
             if (node != null && node.getAssignJobs() != null) {
                 AssignJobs assignJobs = node.getAssignJobs();
                 summaryBuilder.pinMonitorNum(assignJobs.getPinnedJobs().size());
                 summaryBuilder.dispatchMonitorNum(assignJobs.getJobs().size());
             }
+            runtimeStatusRegistry.current(collector.getName()).ifPresent(reported -> summaryBuilder
+                    .runtimeStatus(reported.status())
+                    .runtimeStatusReportedAt(reported.receivedAt()));
             collectorSummaryList.add(summaryBuilder.build());
         }
         return new PageImpl<>(collectorSummaryList, pageRequest, collectors.getTotalElements());

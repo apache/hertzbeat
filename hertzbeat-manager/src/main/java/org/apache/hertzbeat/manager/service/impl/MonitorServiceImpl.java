@@ -24,7 +24,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.grafana.GrafanaDashboard;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
@@ -35,7 +34,6 @@ import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.support.event.MonitorDeletedEvent;
 
-import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.hertzbeat.common.util.JexlCheckerUtil;
 import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
 import org.apache.hertzbeat.grafana.service.DashboardService;
@@ -65,6 +63,7 @@ import org.apache.hertzbeat.manager.service.entity.OldMonitorServiceDiscoveryBin
 import org.apache.hertzbeat.manager.service.entity.OldMonitorServiceDiscoveryExpansionService;
 import org.apache.hertzbeat.manager.service.entity.OldMonitorStatusWriteModelService;
 import org.apache.hertzbeat.manager.service.helper.MonitorImExportHelper;
+import org.apache.hertzbeat.manager.service.helper.MonitorInstanceCanonicalizer;
 import org.apache.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDetectException;
 import org.apache.hertzbeat.warehouse.service.WarehouseService;
@@ -72,6 +71,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
+import org.springframework.scheduling.support.CronExpression;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -98,8 +98,15 @@ public class MonitorServiceImpl implements MonitorService {
     public static final String PATTERN_HTTP = "(?i)http://";
     public static final String PATTERN_HTTPS = "(?i)https://";
     private static final Long MONITOR_ID_TMP = 1000000000L;
+    public static final String PARAM_FIELD_HOST = "host";
     public static final String PARAM_FIELD_PORT = "port";
     private static final String MONITOR_COPY_SUFFIX = "_copy";
+    private static final String SCHEDULE_INTERVAL = "interval";
+    private static final String SCHEDULE_CRON = "cron";
+    private static final String PUSH_APP = "push";
+    private static final int PUSH_MIN_INTERVAL_SECONDS = 1;
+    private static final int DEFAULT_MIN_INTERVAL_SECONDS = 10;
+    private static final int MAX_INTERVAL_SECONDS = 604800;
 
     @Autowired
     private ParamValidatorManager paramValidatorManager;
@@ -162,6 +169,7 @@ public class MonitorServiceImpl implements MonitorService {
     @Transactional(rollbackFor = Exception.class)
     public void addMonitor(Monitor monitor, List<Param> params, String collector, GrafanaDashboard grafanaDashboard)
             throws RuntimeException {
+        applyScheduleContract(monitor);
         // Apply for monitor id
         long monitorId = SnowFlakeIdGenerator.generateId();
         Map<String, String> labels = monitor.getLabels();
@@ -178,7 +186,6 @@ public class MonitorServiceImpl implements MonitorService {
         Job appDefine = appService.getAppDefine(app);
         if (!isStatic) {
             appDefine.setSd(true);
-            monitor.setInstance("unknow");
         }
         if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
             appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
@@ -188,18 +195,17 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setCyclic(true);
         appDefine.setTimestamp(System.currentTimeMillis());
 
-        String instance = monitor.getInstance();
-        // The port field may be null
+        Param hostParam = params.stream()
+                .filter(param -> PARAM_FIELD_HOST.equals(param.getField()))
+                .findFirst()
+                .orElse(null);
         Param portParam = params.stream()
                 .filter(param -> PARAM_FIELD_PORT.equals(param.getField()))
                 .findFirst()
                 .orElse(null);
-        String portWithMark = (Objects.isNull(portParam) || !StringUtils.hasText(portParam.getParamValue()))
-                ? ""
-                : SignConstants.DOUBLE_MARK + portParam.getParamValue();
-        if (!IpDomainUtil.isHasPortWithMark(instance)) {
-            instance = instance + portWithMark;
-        }
+        String instance = MonitorInstanceCanonicalizer.canonicalize(isStatic,
+                Objects.isNull(hostParam) ? null : hostParam.getParamValue(),
+                Objects.isNull(portParam) ? null : portParam.getParamValue());
         monitor.setInstance(instance);
 
         Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
@@ -266,6 +272,11 @@ public class MonitorServiceImpl implements MonitorService {
         var monitorInfo = monitorDto.getMonitorInfo();
         monitorInfo.setInstance(StringUtils.hasText(monitorInfo.getInstance()) ? monitorInfo.getInstance().trim() : null);
         monitorInfo.setName(monitorInfo.getName().trim());
+        ScheduleValues schedule = validateSchedule(monitorInfo.getApp(), monitorInfo.getScheduleType(),
+                monitorInfo.getCronExpression(), monitorInfo.getIntervals());
+        monitorInfo.setScheduleType(schedule.type());
+        monitorInfo.setCronExpression(schedule.cronExpression());
+        monitorInfo.setIntervals(schedule.intervalSeconds());
         Monitor monitor = monitorInfo.toEntity();
         Map<String, MonitorParam> paramMap = monitorDto.getParamInfos()
                 .stream()
@@ -324,6 +335,44 @@ public class MonitorServiceImpl implements MonitorService {
         checkJobFields(monitorDto.getMonitor().getApp());
     }
 
+    private static void applyScheduleContract(Monitor monitor) {
+        ScheduleValues schedule = validateSchedule(monitor.getApp(), monitor.getScheduleType(),
+                monitor.getCronExpression(), monitor.getIntervals());
+        monitor.setScheduleType(schedule.type());
+        monitor.setCronExpression(schedule.cronExpression());
+        monitor.setIntervals(schedule.intervalSeconds());
+    }
+
+    private static ScheduleValues validateSchedule(
+            String app, String scheduleType, String cronExpression, Integer intervalSeconds) {
+        String type = StringUtils.hasText(scheduleType) ? scheduleType.trim() : SCHEDULE_INTERVAL;
+        int minimum = PUSH_APP.equals(app) ? PUSH_MIN_INTERVAL_SECONDS : DEFAULT_MIN_INTERVAL_SECONDS;
+        if (SCHEDULE_INTERVAL.equals(type)) {
+            int normalizedInterval = intervalSeconds == null ? minimum : intervalSeconds;
+            if (normalizedInterval < minimum || normalizedInterval > MAX_INTERVAL_SECONDS) {
+                throw new IllegalArgumentException(
+                        "Interval must be between " + minimum + " and " + MAX_INTERVAL_SECONDS + " seconds");
+            }
+            return new ScheduleValues(type, null, normalizedInterval);
+        }
+        if (SCHEDULE_CRON.equals(type)) {
+            if (!StringUtils.hasText(cronExpression)) {
+                throw new IllegalArgumentException("Cron expression is required");
+            }
+            String expression = cronExpression.trim();
+            try {
+                CronExpression.parse(expression);
+            } catch (IllegalArgumentException exception) {
+                throw new IllegalArgumentException("Invalid cron expression", exception);
+            }
+            return new ScheduleValues(type, expression, minimum);
+        }
+        throw new IllegalArgumentException("Schedule type must be interval or cron");
+    }
+
+    private record ScheduleValues(String type, String cronExpression, int intervalSeconds) {
+    }
+
     private void checkJobFields(String app) {
         if (null == app || app.trim().isEmpty()) {
             return;
@@ -368,6 +417,7 @@ public class MonitorServiceImpl implements MonitorService {
             // The type of monitoring cannot be modified
             throw new IllegalArgumentException("Can not modify monitor's app type");
         }
+        applyScheduleContract(monitor);
         Map<String, String> labels = monitor.getLabels();
         if (labels == null) {
             labels = new HashMap<>(8);
@@ -375,22 +425,20 @@ public class MonitorServiceImpl implements MonitorService {
         }
         oldMonitorLabelWriteModelService.saveNewLabels(labels);
 
-        String instance = monitor.getInstance();
-        // The port field may be null
+        boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape())
+                || !StringUtils.hasText(monitor.getScrape());
+        Param hostParam = params.stream()
+                .filter(param -> PARAM_FIELD_HOST.equals(param.getField()))
+                .findFirst()
+                .orElse(null);
         Param portParam = params.stream()
                 .filter(param -> PARAM_FIELD_PORT.equals(param.getField()))
                 .findFirst()
                 .orElse(null);
-        String portWithMark = (Objects.isNull(portParam) || !StringUtils.hasText(portParam.getParamValue()))
-                ? ""
-                : SignConstants.DOUBLE_MARK + portParam.getParamValue();
-        if (Objects.nonNull(instance)) {
-            instance = instance + portWithMark;
-        }
+        String instance = MonitorInstanceCanonicalizer.canonicalize(isStatic,
+                Objects.isNull(hostParam) ? null : hostParam.getParamValue(),
+                Objects.isNull(portParam) ? null : portParam.getParamValue());
         monitor.setInstance(instance);
-
-        boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape())
-                || !StringUtils.hasText(monitor.getScrape());
         if (preMonitor.getStatus() != CommonConstants.MONITOR_PAUSED_CODE) {
             // Construct the collection task Job entity
             String app = isStatic ? monitor.getApp() : monitor.getScrape();

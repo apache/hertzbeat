@@ -80,6 +80,17 @@ public interface AccountService extends ObservabilityAccessTokenGateway {
             throws AuthenticationException;
 
     /**
+     * Generate an OTLP intake token bound to one managed Collector.
+     *
+     * @param collectorId Collector identity
+     * @param workspaceId workspace boundary
+     * @param expireSeconds optional expiration time in seconds
+     * @return token string, shown only at creation time
+     */
+    String generateCollectorIntakeToken(String collectorId, String workspaceId, Long expireSeconds)
+            throws AuthenticationException;
+
+    /**
      * List all API tokens
      *
      * @return list of auth tokens
@@ -90,7 +101,8 @@ public interface AccountService extends ObservabilityAccessTokenGateway {
      * Delete/revoke an API token by id
      *
      * @param id token id
+     * @return {@code true} only when the revoked state is confirmed by a database reread
      */
-    void deleteToken(Long id) throws AuthenticationException;
+    boolean deleteToken(Long id) throws AuthenticationException;
 
 }

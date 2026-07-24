@@ -307,6 +307,25 @@ class OtlpCorrelationEnricherTest {
     }
 
     @Test
+    void upsertsAuthenticatedCollectorIdentityAcrossSignals() {
+        OtlpCorrelationContext context = new OtlpCorrelationContext(
+                null, null, null, "workspace-1", "edge-west");
+
+        ExportLogsServiceRequest logs = enricher.enrichLogs(
+                logsRequest(List.of(logRecord("body-one")),
+                        stringAttribute("hertzbeat.collector.id", "spoofed")),
+                context);
+        ExportMetricsServiceRequest metrics = enricher.enrichMetrics(
+                metricsRequest(stringAttribute("hertzbeat.collector.id", "spoofed")), context);
+        ExportTraceServiceRequest traces = enricher.enrichTraces(
+                traceRequest(stringAttribute("hertzbeat.collector.id", "spoofed")), context);
+
+        assertEquals("edge-west", resourceAttributes(logs).get("hertzbeat.collector.id"));
+        assertEquals("edge-west", metricResourceAttributes(metrics).get("hertzbeat.collector.id"));
+        assertEquals("edge-west", traceResourceAttributes(traces).get("hertzbeat.collector.id"));
+    }
+
+    @Test
     void leavesTraceResourceAttributesUnchangedWhenCorrelationContextIsEmpty() {
         ExportTraceServiceRequest request = traceRequest(stringAttribute("service.name", "checkout"));
 
@@ -364,9 +383,10 @@ class OtlpCorrelationEnricherTest {
         assertEquals("workspace-protobuf", protobufResourceAttributes.get("hertzbeat.workspace_id"));
     }
 
-    private ExportLogsServiceRequest logsRequest(List<LogRecord> records) {
+    private ExportLogsServiceRequest logsRequest(List<LogRecord> records, KeyValue... resourceAttributes) {
         return ExportLogsServiceRequest.newBuilder()
                 .addResourceLogs(ResourceLogs.newBuilder()
+                        .setResource(Resource.newBuilder().addAllAttributes(List.of(resourceAttributes)).build())
                         .addScopeLogs(ScopeLogs.newBuilder()
                                 .addAllLogRecords(records)
                                 .build())

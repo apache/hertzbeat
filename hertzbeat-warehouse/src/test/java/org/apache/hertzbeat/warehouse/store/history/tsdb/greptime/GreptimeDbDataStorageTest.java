@@ -53,6 +53,7 @@ import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader.ServerAvailability;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.vm.PromQlQueryContent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,6 +62,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -84,6 +88,9 @@ class GreptimeDbDataStorageTest {
 
     @Mock
     private GreptimeDB greptimeDb;
+
+    @Mock
+    private GreptimeServerAvailabilityProbe serverAvailabilityProbe;
 
     private GreptimeDbDataStorage greptimeDbDataStorage;
 
@@ -128,6 +135,28 @@ class GreptimeDbDataStorageTest {
     }
 
     @Test
+    void springSelectsProductionConstructorWithoutDefaultConstructor() {
+        DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
+        beanFactory.registerSingleton("greptimeProperties", greptimeProperties);
+        beanFactory.registerSingleton("restTemplate", restTemplate);
+        beanFactory.registerSingleton("greptimeSqlQueryExecutor", greptimeSqlQueryExecutor);
+        AutowiredAnnotationBeanPostProcessor injectionProcessor = new AutowiredAnnotationBeanPostProcessor();
+        injectionProcessor.setBeanFactory(beanFactory);
+        beanFactory.addBeanPostProcessor(injectionProcessor);
+        beanFactory.registerBeanDefinition(
+                "greptimeDbDataStorage", new RootBeanDefinition(GreptimeDbDataStorage.class));
+
+        try (MockedStatic<GreptimeDB> mockedStatic = mockStatic(GreptimeDB.class)) {
+            mockedStatic.when(() -> GreptimeDB.create(any())).thenReturn(greptimeDb);
+
+            GreptimeDbDataStorage storage = beanFactory.getBean(GreptimeDbDataStorage.class);
+
+            assertNotNull(storage);
+            assertTrue(storage.isServerAvailable());
+        }
+    }
+
+    @Test
     void testConstructorAppliesDatabaseTtlWhenConfigured() {
         when(greptimeProperties.expireTime()).thenReturn("1d");
         when(greptimeSqlQueryExecutor.execute("ALTER DATABASE hertzbeat SET 'ttl'='1d'"))
@@ -138,6 +167,23 @@ class GreptimeDbDataStorageTest {
             GreptimeDbDataStorage storage = new GreptimeDbDataStorage(greptimeProperties, restTemplate, greptimeSqlQueryExecutor);
             assertNotNull(storage);
             verify(greptimeSqlQueryExecutor).execute("ALTER DATABASE hertzbeat SET 'ttl'='1d'");
+        }
+    }
+
+    @Test
+    void delegatesRuntimeReachabilityToTheBoundedHttpProbe() {
+        when(serverAvailabilityProbe.current())
+                .thenReturn(ServerAvailability.UNAVAILABLE)
+                .thenReturn(ServerAvailability.AVAILABLE);
+
+        try (MockedStatic<GreptimeDB> mockedStatic = mockStatic(GreptimeDB.class)) {
+            mockedStatic.when(() -> GreptimeDB.create(any())).thenReturn(greptimeDb);
+            GreptimeDbDataStorage storage = new GreptimeDbDataStorage(
+                    greptimeProperties, restTemplate, greptimeSqlQueryExecutor, serverAvailabilityProbe);
+
+            assertEquals(ServerAvailability.UNAVAILABLE, storage.getServerAvailability());
+            assertEquals(ServerAvailability.AVAILABLE, storage.getServerAvailability());
+            verify(serverAvailabilityProbe, times(2)).current();
         }
     }
 

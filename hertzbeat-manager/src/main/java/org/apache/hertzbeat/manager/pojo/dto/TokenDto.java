@@ -23,6 +23,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 /**
  * Refresh token dto
@@ -36,6 +37,7 @@ public class TokenDto {
     
     @Schema(description = "token")
     @NotBlank(message = "token can not null")
+    @ToString.Exclude
     private String token;
 
 }

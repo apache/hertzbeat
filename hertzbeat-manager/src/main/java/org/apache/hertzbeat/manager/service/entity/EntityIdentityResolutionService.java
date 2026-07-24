@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -45,6 +46,7 @@ public class EntityIdentityResolutionService {
 
     private static final String RECOMMEND_DIRECT = "direct";
     private static final String RECOMMEND_SUGGESTED = "suggested";
+    private static final String RECOMMEND_ALREADY_BOUND = "already_bound";
 
     private static final Set<String> HOST_LIKE_APPS = Set.of(
             "linux", "windows", "macos", "darwin", "centos", "debian", "ubuntu", "almalinux",
@@ -101,6 +103,89 @@ public class EntityIdentityResolutionService {
     public List<EntityMonitorBindingCandidate> resolveMonitorBindingCandidates(Monitor monitor,
                                                                                String requestWorkspaceId) {
         return resolveMonitorBindingCandidates(monitor, requestWorkspaceId, false);
+    }
+
+    public Map<Long, List<EntityMonitorBindingCandidate>> resolveMonitorBindingCandidates(List<Monitor> monitors) {
+        if (monitors == null || monitors.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Map<Long, Monitor> acceptedMonitors = new LinkedHashMap<>();
+        monitors.stream()
+                .filter(Objects::nonNull)
+                .filter(monitor -> monitor.getId() != null)
+                .limit(100)
+                .forEach(monitor -> acceptedMonitors.putIfAbsent(monitor.getId(), monitor));
+        if (acceptedMonitors.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        Map<Long, Map<String, String>> identitiesByMonitorId = new LinkedHashMap<>();
+        Set<String> identityKeys = new LinkedHashSet<>();
+        Set<String> identityValues = new LinkedHashSet<>();
+        acceptedMonitors.forEach((monitorId, monitor) -> {
+            Map<String, String> identities = extractMonitorIdentityCandidates(monitor);
+            identitiesByMonitorId.put(monitorId, identities);
+            identityKeys.addAll(identities.keySet());
+            identityValues.addAll(identities.values());
+        });
+        List<EntityIdentity> matchedIdentities = identityKeys.isEmpty() || identityValues.isEmpty()
+                ? Collections.emptyList()
+                : entityIdentityReadModelService.findMatchingIdentities(identityKeys, identityValues);
+        Map<IdentityMatchKey, List<EntityIdentity>> identitiesByMatch = new LinkedHashMap<>();
+        if (matchedIdentities != null) {
+            matchedIdentities.stream()
+                    .filter(Objects::nonNull)
+                    .filter(identity -> identity.getIdentityKey() != null && identity.getNormalizedValue() != null)
+                    .forEach(identity -> identitiesByMatch.computeIfAbsent(
+                            new IdentityMatchKey(identity.getIdentityKey(), identity.getNormalizedValue()),
+                            ignored -> new ArrayList<>()).add(identity));
+        }
+
+        List<Long> monitorIds = List.copyOf(acceptedMonitors.keySet());
+        Map<Long, List<EntityMonitorBind>> bindsByMonitorId =
+                entityMonitorBindService.findMonitorBindsByMonitorIds(monitorIds);
+        Map<Long, Set<Long>> boundEntityIdsByMonitorId = new LinkedHashMap<>();
+        Set<Long> accessibleEntityIds = new LinkedHashSet<>();
+        monitorIds.forEach(monitorId -> {
+            Set<Long> boundEntityIds = (bindsByMonitorId == null
+                    ? Collections.<EntityMonitorBind>emptyList()
+                    : bindsByMonitorId.getOrDefault(monitorId, Collections.emptyList())).stream()
+                    .filter(Objects::nonNull)
+                    .map(EntityMonitorBind::getEntityId)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+            boundEntityIdsByMonitorId.put(monitorId, boundEntityIds);
+            accessibleEntityIds.addAll(boundEntityIds);
+        });
+
+        Map<Long, Map<Long, BindingCandidateAccumulator>> candidatesByMonitorId = new LinkedHashMap<>();
+        identitiesByMonitorId.forEach((monitorId, monitorIdentities) -> {
+            Map<Long, BindingCandidateAccumulator> candidates = new LinkedHashMap<>();
+            monitorIdentities.forEach((identityKey, normalizedValue) -> identitiesByMatch
+                    .getOrDefault(new IdentityMatchKey(identityKey, normalizedValue), Collections.emptyList())
+                    .forEach(identity -> {
+                        BindingCandidateAccumulator accumulator = candidates.computeIfAbsent(identity.getEntityId(),
+                                ignored -> new BindingCandidateAccumulator());
+                        accumulator.score += matchScore(identity);
+                        accumulator.matchedIdentities
+                                .computeIfAbsent(identity.getIdentityKey(), ignored -> new ArrayList<>())
+                                .add(identity.getIdentityValue());
+                    }));
+            candidatesByMonitorId.put(monitorId, candidates);
+            accessibleEntityIds.addAll(candidates.keySet());
+        });
+
+        List<ObserveEntity> accessibleEntities = accessibleEntityIds.isEmpty()
+                ? Collections.emptyList()
+                : entityWorkspaceAccessService.findAccessibleEntitiesByIdsForRequestWorkspace(accessibleEntityIds);
+        Map<Long, ObserveEntity> entityMap = accessibleEntities.stream()
+                .collect(Collectors.toMap(ObserveEntity::getId, item -> item, (left, right) -> left));
+        Map<Long, List<EntityMonitorBindingCandidate>> result = new LinkedHashMap<>();
+        monitorIds.forEach(monitorId -> result.put(monitorId, buildBatchCandidates(
+                candidatesByMonitorId.getOrDefault(monitorId, Collections.emptyMap()),
+                boundEntityIdsByMonitorId.getOrDefault(monitorId, Collections.emptySet()),
+                entityMap)));
+        return result;
     }
 
     public void refreshAutoMonitorBinds(Monitor monitor) {
@@ -204,6 +289,34 @@ public class EntityIdentityResolutionService {
         );
     }
 
+    private List<EntityMonitorBindingCandidate> buildBatchCandidates(
+            Map<Long, BindingCandidateAccumulator> candidateAccumulators,
+            Set<Long> boundEntityIds,
+            Map<Long, ObserveEntity> entityMap) {
+        List<EntityMonitorBindingCandidate> candidates = candidateAccumulators.entrySet().stream()
+                .map(entry -> toBindingCandidate(entry.getKey(), entry.getValue(), entityMap, boundEntityIds))
+                .filter(Objects::nonNull)
+                .sorted(Comparator.comparing(EntityMonitorBindingCandidate::getScore).reversed())
+                .collect(Collectors.toCollection(ArrayList::new));
+        Set<Long> candidateEntityIds = candidates.stream()
+                .map(EntityMonitorBindingCandidate::getEntityId)
+                .collect(Collectors.toSet());
+        boundEntityIds.stream()
+                .filter(entityId -> !candidateEntityIds.contains(entityId))
+                .map(entityMap::get)
+                .filter(Objects::nonNull)
+                .map(entity -> new EntityMonitorBindingCandidate(
+                        entity.getId(),
+                        entity.getDisplayName() == null ? entity.getName() : entity.getDisplayName(),
+                        entity.getType(),
+                        0,
+                        RECOMMEND_ALREADY_BOUND,
+                        true,
+                        Collections.emptyMap()))
+                .forEach(candidates::add);
+        return candidates;
+    }
+
     private Map<String, String> extractMonitorIdentityCandidates(Monitor monitor) {
         Map<String, String> identities = new LinkedHashMap<>();
         putSupportedCandidates(identities, monitor.getLabels());
@@ -301,5 +414,8 @@ public class EntityIdentityResolutionService {
             }
             return finalScore;
         }
+    }
+
+    private record IdentityMatchKey(String identityKey, String normalizedValue) {
     }
 }

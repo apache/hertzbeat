@@ -36,21 +36,18 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.hertzbeat.common.constants.PluginType;
-import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.manager.PluginItem;
 import org.apache.hertzbeat.common.entity.manager.PluginMetadata;
 import org.apache.hertzbeat.common.entity.plugin.PluginConfig;
@@ -58,12 +55,12 @@ import org.apache.hertzbeat.common.entity.plugin.PluginContext;
 import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.manager.dao.PluginItemDao;
 import org.apache.hertzbeat.manager.dao.PluginMetadataDao;
-import org.apache.hertzbeat.manager.dao.PluginParamDao;
-import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 import org.apache.hertzbeat.manager.pojo.dto.PluginUpload;
-import org.apache.hertzbeat.manager.pojo.dto.PluginParam;
-import org.apache.hertzbeat.manager.pojo.dto.PluginParametersVO;
+import org.apache.hertzbeat.manager.service.PluginParameterService;
 import org.apache.hertzbeat.manager.service.PluginService;
+import org.apache.hertzbeat.manager.service.plugin.AfterCommitPublisher;
+import org.apache.hertzbeat.manager.service.plugin.PluginArtifactLifecycle;
+import org.apache.hertzbeat.manager.service.plugin.PluginParameterRegistry;
 import org.apache.hertzbeat.plugin.PostAlertPlugin;
 import org.apache.hertzbeat.plugin.Plugin;
 import org.apache.hertzbeat.plugin.PostCollectPlugin;
@@ -83,13 +80,17 @@ import org.yaml.snakeyaml.error.YAMLException;
 @RequiredArgsConstructor
 public class PluginServiceImpl implements PluginService {
 
-    private static final String PLUGIN_LIB_DIR_PROPERTY = "hertzbeat.plugin.lib.dir";
-
     private final PluginMetadataDao metadataDao;
 
     private final PluginItemDao itemDao;
 
-    private final PluginParamDao pluginParamDao;
+    private final PluginParameterService pluginParameterService;
+
+    private final PluginParameterRegistry pluginParameterRegistry;
+
+    private final AfterCommitPublisher afterCommitPublisher;
+
+    private final PluginArtifactLifecycle pluginArtifactLifecycle;
 
     public static Map<Class<?>, PluginType> PLUGIN_TYPE_MAPPING = new HashMap<>();
 
@@ -99,56 +100,52 @@ public class PluginServiceImpl implements PluginService {
     private static final Map<String, Boolean> PLUGIN_ENABLE_STATUS = new ConcurrentHashMap<>();
 
     /**
-     * plugin param define
-     */
-    private static final Map<Long, PluginConfig> PARAMS_CONFIG_MAP = new ConcurrentHashMap<>();
-
-    /**
-     * plugin params
-     */
-    private static final Map<Long, List<Configmap>> PARAMS_MAP = new ConcurrentHashMap<>();
-
-    /**
      * pluginItem Mapping pluginId
      */
     private static final Map<String, Long> ITEM_TO_PLUGINMETADATAID_MAP = new ConcurrentHashMap<>();
 
     private final List<URLClassLoader> pluginClassLoaders = new ArrayList<>();
 
+    private final ReentrantReadWriteLock pluginClassLoaderLock = new ReentrantReadWriteLock();
+
     @Override
     @Transactional
     public void deletePlugins(Set<Long> ids) {
-        List<PluginMetadata> plugins = metadataDao.findAllById(ids);
+        if (ids == null || ids.stream().anyMatch(id -> id == null)) {
+            throw new IllegalArgumentException("Plugin ids are required");
+        }
+        Set<Long> pluginIds = Set.copyOf(ids);
+        List<PluginMetadata> plugins = metadataDao.findAllById(pluginIds);
+        PluginArtifactLifecycle.Deletion artifactDeletion = pluginArtifactLifecycle.prepareDeletion(
+                plugins.stream().map(PluginMetadata::getJarFilePath).toList());
         // disable the plugins that need to be removed
         for (PluginMetadata plugin : plugins) {
             plugin.setEnableStatus(false);
-            updateStatus(plugin);
+            updateStatus(plugin, false, false);
         }
-        // reload classloader
-        loadJarToClassLoader();
-        for (PluginMetadata plugin : plugins) {
-            try {
-                // delete jar file
-                File jarFile = new File(plugin.getJarFilePath());
-                if (jarFile.exists()) {
-                    FileUtils.delete(jarFile);
-                }
-                // removing jar files that are dependencies for the plugin
-                File otherLibDir = new File(getOtherLibDir(plugin.getJarFilePath()));
-                if (otherLibDir.exists()) {
-                    FileUtils.deleteDirectory(otherLibDir);
-                }
-                // delete metadata
-                metadataDao.deleteById(plugin.getId());
-                syncPluginParamMap(plugin.getId(), null, true);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+        plugins.forEach(plugin -> metadataDao.deleteById(plugin.getId()));
+        afterCommitPublisher.publish(() -> completeDeletedPlugins(pluginIds, artifactDeletion));
+        pluginParameterService.deleteByPluginIds(pluginIds);
 
+    }
+
+    private void completeDeletedPlugins(Set<Long> ids, PluginArtifactLifecycle.Deletion artifactDeletion) {
+        try {
+            loadJarToClassLoader();
+        } catch (RuntimeException exception) {
+            log.error("Failed to reload plugin runtime after committed deletion");
         }
-        pluginParamDao.deletePluginParamsByPluginMetadataIdIn(ids);
-        syncPluginStatus();
-
+        try {
+            ids.forEach(pluginParameterRegistry::remove);
+        } catch (RuntimeException exception) {
+            log.error("Failed to remove committed plugin parameter state");
+        }
+        try {
+            syncPluginStatus();
+        } catch (RuntimeException exception) {
+            log.error("Failed to converge plugin status after committed deletion");
+        }
+        pluginArtifactLifecycle.deleteCommitted(artifactDeletion);
     }
 
     /**
@@ -162,52 +159,29 @@ public class PluginServiceImpl implements PluginService {
     }
 
     @Override
+    @Transactional
     public void updateStatus(PluginMetadata plugin) {
+        updateStatus(plugin, true, true);
+    }
+
+    private void updateStatus(PluginMetadata plugin, boolean reloadRuntime, boolean publishStatus) {
+        if (plugin == null || plugin.getId() == null || plugin.getEnableStatus() == null) {
+            throw new IllegalArgumentException("Plugin id and enable status are required");
+        }
         Optional<PluginMetadata> pluginMetadata = metadataDao.findById(plugin.getId());
         if (pluginMetadata.isPresent()) {
             PluginMetadata metadata = pluginMetadata.get();
             metadata.setEnableStatus(plugin.getEnableStatus());
             metadataDao.save(metadata);
-            syncSinglePluginStatus(metadata);
+            if (publishStatus) {
+                afterCommitPublisher.publish(() -> syncSinglePluginStatus(metadata));
+            }
+            if (reloadRuntime) {
+                afterCommitPublisher.publish(this::loadJarToClassLoader);
+            }
         } else {
             throw new IllegalArgumentException("The plugin is not existed");
         }
-    }
-
-    @Override
-    public PluginParametersVO getParamDefine(Long pluginMetadataId) {
-
-        PluginParametersVO pluginParametersVO = new PluginParametersVO();
-        if (PARAMS_CONFIG_MAP.containsKey(pluginMetadataId)) {
-            PluginConfig config = PARAMS_CONFIG_MAP.get(pluginMetadataId);
-            List<PluginParam> paramsByPluginMetadataId = pluginParamDao.findParamsByPluginMetadataId(pluginMetadataId);
-            pluginParametersVO.setParamDefines(Optional.ofNullable(config).map(PluginConfig::getParams)
-                    .orElse(new ArrayList<>()).stream().map(ParamDefineInfo::fromRuntime).toList());
-            pluginParametersVO.setPluginParams(paramsByPluginMetadataId);
-            return pluginParametersVO;
-        }
-        return pluginParametersVO;
-    }
-
-    @Override
-    @Transactional
-    public void savePluginParam(List<PluginParam> params) {
-        if (CollectionUtils.isEmpty(params)) {
-            return;
-        }
-        pluginParamDao.deletePluginParamsByPluginMetadataId(params.get(0).getPluginMetadataId());
-        pluginParamDao.flush();
-        pluginParamDao.saveAll(params);
-        syncPluginParamMap(params.get(0).getPluginMetadataId(), params, false);
-    }
-
-    private void syncPluginParamMap(Long pluginMetadataId, List<PluginParam> params, boolean isDelete) {
-        if (isDelete) {
-            PARAMS_MAP.remove(pluginMetadataId);
-            return;
-        }
-        List<Configmap> configmapList = params.stream().map(item -> new Configmap(item.getField(), item.getParamValue(), item.getType())).toList();
-        PARAMS_MAP.put(pluginMetadataId, configmapList);
     }
 
     static {
@@ -251,8 +225,8 @@ public class PluginServiceImpl implements PluginService {
                                     pluginImplementationCount.incrementAndGet();
                                 }
                             });
-                        } catch (ClassNotFoundException e) {
-                            System.err.println("Failed to load class: " + className);
+                        } catch (ClassNotFoundException exception) {
+                            log.error("Plugin archive contains an unloadable class");
                         }
                     }
                     if ((entry.getName().contains("define")) && (entry.getName().endsWith(".yml") || entry.getName().endsWith(".yaml"))) {
@@ -263,14 +237,14 @@ public class PluginServiceImpl implements PluginService {
                 if (pluginItems.isEmpty()) {
                     throw new CommonException("Illegal plug-ins, please refer to https://hertzbeat.apache.org/docs/help/plugin/");
                 }
-            } catch (IOException e) {
-                log.error("Error reading JAR file:{}", jarFile.getAbsoluteFile(), e);
-                throw new CommonException("Error reading JAR file: " + jarFile.getAbsolutePath());
+            } catch (IOException exception) {
+                log.error("Failed to read plugin archive");
+                throw new CommonException("Failed to read plugin archive");
             }
-        } catch (MalformedURLException e) {
-            log.error("Invalid JAR file URL: {}", jarFile.getAbsoluteFile(), e);
-            throw new CommonException("Invalid JAR file URL: " + jarFile.getAbsolutePath());
-        } catch (YAMLException e) {
+        } catch (MalformedURLException exception) {
+            log.error("Failed to resolve plugin archive URL");
+            throw new CommonException("Failed to resolve plugin archive URL");
+        } catch (YAMLException exception) {
             throw new CommonException("YAML the file format is incorrect");
         }
         metadata.setItems(pluginItems);
@@ -283,16 +257,7 @@ public class PluginServiceImpl implements PluginService {
      * @param file the file to validate
      */
     private void validateFilePath(File file) {
-        try {
-            String canonicalPath = file.getCanonicalPath();
-            String expectedDir = resolvePluginLibDir().getCanonicalPath();
-            if (!canonicalPath.equals(expectedDir) && !canonicalPath.startsWith(expectedDir + File.separator)) {
-                throw new CommonException("File is outside the allowed directory: " + canonicalPath);
-            }
-        } catch (IOException e) {
-            log.error("Error validating file path: {}", file.getAbsolutePath(), e);
-            throw new CommonException("Error validating file path: " + file.getAbsolutePath());
-        }
+        pluginArtifactLifecycle.requireManagedJar(file);
     }
 
     /**
@@ -308,68 +273,54 @@ public class PluginServiceImpl implements PluginService {
 
     private void validateMetadata(PluginMetadata metadata) {
         if (metadataDao.countPluginMetadataByName(metadata.getName()) != 0) {
-            throw new CommonException("A plugin named " + metadata.getName() + " already exists");
+            throw new CommonException("A plugin with this name already exists");
         }
     }
 
     @Override
-    @SneakyThrows
     @Transactional
     public void savePlugin(PluginUpload pluginUpload) {
-        File extLibDir = resolvePluginLibDir();
-        String fileName = pluginUpload.getJarFile().getOriginalFilename();
-        validateFileName(fileName);
-        fileName = UUID.randomUUID().toString().replace("-", "") + "_" + fileName;
-        File destFile = new File(extLibDir, fileName);
-        FileUtils.createParentDirectories(destFile);
-        pluginUpload.getJarFile().transferTo(destFile);
-        List<PluginItem> pluginItems;
-        PluginMetadata pluginMetadata;
+        if (pluginUpload == null || pluginUpload.getJarFile() == null || pluginUpload.getEnableStatus() == null
+                || pluginUpload.getName() == null || pluginUpload.getName().isBlank()) {
+            throw new CommonException("Plugin upload fields are required");
+        }
+        File destFile = pluginArtifactLifecycle.createUploadTarget(
+                pluginUpload.getJarFile().getOriginalFilename());
+        pluginArtifactLifecycle.registerUploadRollbackCleanup(destFile);
         try {
+            pluginUpload.getJarFile().transferTo(destFile);
             PluginMetadata parsed = validateJarFile(destFile);
-            pluginItems = parsed.getItems();
-            pluginMetadata = PluginMetadata.builder()
+            List<PluginItem> pluginItems = parsed.getItems();
+            PluginMetadata pluginMetadata = PluginMetadata.builder()
                 .name(pluginUpload.getName())
-                .enableStatus(true)
+                .enableStatus(pluginUpload.getEnableStatus())
                 .paramCount(parsed.getParamCount())
                 .items(pluginItems).jarFilePath(destFile.getAbsolutePath())
                 .gmtCreate(LocalDateTime.now())
                 .build();
             validateMetadata(pluginMetadata);
-        } catch (Exception e) {
-            // verification failed, delete file
-            FileUtils.delete(destFile);
-            throw e;
-        }
-        // save plugin metadata
-        metadataDao.save(pluginMetadata);
-        itemDao.saveAll(pluginItems);
-        // load jar to classloader
-        loadJarToClassLoader();
-        // sync enabled status
-        syncPluginStatus();
-    }
-
-    /**
-     * validate file name if file name is invalid, throw exception
-     *
-     * @param fileName file name
-     */
-    private void validateFileName(String fileName) {
-        if (fileName == null) {
+            metadataDao.save(pluginMetadata);
+            itemDao.saveAll(pluginItems);
+            afterCommitPublisher.publish(this::completeSavedPlugin);
+        } catch (CommonException exception) {
+            pluginArtifactLifecycle.cleanupFailedUpload(destFile);
+            throw exception;
+        } catch (Exception exception) {
+            pluginArtifactLifecycle.cleanupFailedUpload(destFile);
             throw new CommonException("Failed to upload plugin");
         }
-        if (fileName.matches(".*(\\.\\.|[\n\t\r/\\\\]).*")) {
-            throw new CommonException("Invalid plugin file name: " + fileName);
-        }
     }
 
-    private File resolvePluginLibDir() {
+    private void completeSavedPlugin() {
         try {
-            return new File(System.getProperty(PLUGIN_LIB_DIR_PROPERTY, "plugin-lib")).getCanonicalFile();
-        } catch (IOException e) {
-            log.error("Error resolving plugin lib dir", e);
-            throw new CommonException("Error resolving plugin lib dir: " + e.getMessage());
+            loadJarToClassLoader();
+        } catch (RuntimeException exception) {
+            log.error("Failed to reload plugin runtime after committed upload");
+        }
+        try {
+            syncPluginStatus();
+        } catch (RuntimeException exception) {
+            log.error("Failed to converge plugin status after committed upload");
         }
     }
 
@@ -430,54 +381,44 @@ public class PluginServiceImpl implements PluginService {
         }
     }
 
-    @PostConstruct
-    private void initParams() {
-        try {
-            List<PluginParam> params = pluginParamDao.findAll();
-            Map<Long, List<PluginParam>> content = params.stream()
-                .collect(Collectors.groupingBy(PluginParam::getPluginMetadataId));
-
-            for (Map.Entry<Long, List<PluginParam>> entry : content.entrySet()) {
-                syncPluginParamMap(entry.getKey(), entry.getValue(), false);
-            }
-        } catch (Exception e) {
-            log.error("Failed to init params:{}", e.getMessage());
-            throw new CommonException("Failed to init params:" + e.getMessage());
-        }
-    }
-
     /**
      * load jar to classloader
      */
     @PostConstruct
     private void loadJarToClassLoader() {
+        pluginClassLoaderLock.writeLock().lock();
         try {
-            for (URLClassLoader pluginClassLoader : pluginClassLoaders) {
-                if (pluginClassLoader != null) {
-                    pluginClassLoader.close();
+            try {
+                for (URLClassLoader pluginClassLoader : pluginClassLoaders) {
+                    if (pluginClassLoader != null) {
+                        pluginClassLoader.close();
+                    }
+                }
+            } catch (IOException exception) {
+                throw new CommonException("Failed to reload plugin runtime");
+            }
+
+            if (!pluginClassLoaders.isEmpty()) {
+                pluginClassLoaders.clear();
+                System.gc();
+            }
+            pluginParameterRegistry.clearDefinitions();
+            List<PluginMetadata> plugins = metadataDao.findPluginMetadataByEnableStatusTrue();
+            for (PluginMetadata metadata : plugins) {
+                try {
+                    File managedJar = pluginArtifactLifecycle.requireManagedJar(new File(metadata.getJarFilePath()));
+                    List<URL> urls = loadLibInPlugin(managedJar.getPath(), metadata.getId());
+                    urls.add(managedJar.toURI().toURL());
+                    pluginClassLoaders.add(
+                            new URLClassLoader(urls.toArray(new URL[0]), Plugin.class.getClassLoader()));
+                } catch (MalformedURLException exception) {
+                    throw new CommonException("Failed to reload plugin runtime");
+                } catch (IOException exception) {
+                    log.error("Plugin artifact is unavailable during runtime reload");
                 }
             }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        if (!pluginClassLoaders.isEmpty()) {
-            pluginClassLoaders.clear();
-            System.gc();
-        }
-        PARAMS_CONFIG_MAP.clear();
-        List<PluginMetadata> plugins = metadataDao.findPluginMetadataByEnableStatusTrue();
-        for (PluginMetadata metadata : plugins) {
-            try {
-                List<URL> urls = loadLibInPlugin(metadata.getJarFilePath(), metadata.getId());
-                urls.add(new File(metadata.getJarFilePath()).toURI().toURL());
-                pluginClassLoaders.add(new URLClassLoader(urls.toArray(new URL[0]), Plugin.class.getClassLoader()));
-            } catch (MalformedURLException e) {
-                log.error("Failed to load plugin:{}", e.getMessage());
-                throw new CommonException("Failed to load plugin:" + e.getMessage());
-            } catch (IOException exception) {
-                log.error("{} plugin file is missing, please delete the plugin and upload it again", metadata.getName());
-            }
+        } finally {
+            pluginClassLoaderLock.writeLock().unlock();
         }
     }
 
@@ -500,7 +441,7 @@ public class PluginServiceImpl implements PluginService {
                 File file = new File(libDir, entry.getName());
                 String canonicalLibDir = libDir.getCanonicalPath() + File.separator;
                 if (!file.getCanonicalPath().startsWith(canonicalLibDir)) {
-                    throw new IOException("Zip Slip detected: " + entry.getName());
+                    throw new IOException("Invalid plugin archive entry");
                 }
                 if (entry.isDirectory()) {
                     continue;
@@ -522,7 +463,7 @@ public class PluginServiceImpl implements PluginService {
                 }
                 if ((entry.getName().contains("define")) && (entry.getName().endsWith(".yml") || entry.getName().endsWith(".yaml"))) {
                     PluginConfig config = readPluginConfig(jarFile, entry);
-                    PARAMS_CONFIG_MAP.put(pluginMetadataId, config);
+                    pluginParameterRegistry.registerDefinition(pluginMetadataId, config);
                 }
             }
         }
@@ -547,29 +488,38 @@ public class PluginServiceImpl implements PluginService {
 
     @Override
     public <T> void pluginExecute(Class<T> clazz, Consumer<T> execute) {
-        for (URLClassLoader pluginClassLoader : pluginClassLoaders) {
-            ServiceLoader<T> load = ServiceLoader.load(clazz, pluginClassLoader);
-            for (T t : load) {
-                if (pluginIsEnable(t.getClass())) {
-                    execute.accept(t);
+        pluginClassLoaderLock.readLock().lock();
+        try {
+            for (URLClassLoader pluginClassLoader : pluginClassLoaders) {
+                ServiceLoader<T> loaded = ServiceLoader.load(clazz, pluginClassLoader);
+                for (T plugin : loaded) {
+                    if (pluginIsEnable(plugin.getClass())) {
+                        execute.accept(plugin);
+                    }
                 }
             }
+        } finally {
+            pluginClassLoaderLock.readLock().unlock();
         }
     }
 
     @Override
     public <T> void pluginExecute(Class<T> clazz, BiConsumer<T, PluginContext> execute) {
-        for (URLClassLoader pluginClassLoader : pluginClassLoaders) {
-            ServiceLoader<T> load = ServiceLoader.load(clazz, pluginClassLoader);
-            for (T t : load) {
-                if (!pluginIsEnable(t.getClass())) {
-                    continue;
+        pluginClassLoaderLock.readLock().lock();
+        try {
+            for (URLClassLoader pluginClassLoader : pluginClassLoaders) {
+                ServiceLoader<T> loaded = ServiceLoader.load(clazz, pluginClassLoader);
+                for (T plugin : loaded) {
+                    if (!pluginIsEnable(plugin.getClass())) {
+                        continue;
+                    }
+                    Long pluginId = ITEM_TO_PLUGINMETADATAID_MAP.get(plugin.getClass().getName());
+                    PluginContext context = pluginParameterRegistry.runtimeContext(pluginId);
+                    execute.accept(plugin, context);
                 }
-                Long pluginId = ITEM_TO_PLUGINMETADATAID_MAP.get(t.getClass().getName());
-                List<Configmap> configmapList = PARAMS_MAP.get(pluginId);
-                PluginContext context = PluginContext.builder().params(configmapList).build();
-                execute.accept(t, context);
             }
+        } finally {
+            pluginClassLoaderLock.readLock().unlock();
         }
     }
 }

@@ -48,9 +48,9 @@ public class PrometheusExternAlertService implements ExternAlertService {
     public void addExternAlert(String content) {
 
         TypeReference<List<PrometheusExternAlert>> typeReference = new TypeReference<>() {};
-        List<PrometheusExternAlert> alerts = JsonUtil.fromJson(content, typeReference);
+        List<PrometheusExternAlert> alerts = JsonUtil.fromJsonQuietly(content, typeReference);
         if (alerts == null || alerts.isEmpty()) {
-            log.warn("parse prometheus extern alert content failed! content: {}", content);
+            log.warn("Failed to parse Prometheus external alert content");
             return;
         }
         for (PrometheusExternAlert alert : alerts) {

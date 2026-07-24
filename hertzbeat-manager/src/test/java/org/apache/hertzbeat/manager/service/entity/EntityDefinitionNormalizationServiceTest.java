@@ -153,6 +153,6 @@ class EntityDefinitionNormalizationServiceTest {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> normalizationService.normalizeDefinition(record));
 
-        assertEquals("Unsupported entity definition kind: cache.", exception.getMessage());
+        assertEquals("Unsupported entity definition kind.", exception.getMessage());
     }
 }

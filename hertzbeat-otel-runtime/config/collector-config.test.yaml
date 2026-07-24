@@ -1,0 +1,128 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements. See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 127.0.0.1:14317
+        max_recv_msg_size_mib: 4
+      http:
+        endpoint: 127.0.0.1:14318
+        max_request_body_size: 4194304
+  hostmetrics:
+    collection_interval: 10s
+    scrapers:
+      cpu:
+      disk:
+      filesystem:
+      load:
+      memory:
+      network:
+      paging:
+      processes:
+  prometheus/validation:
+    config:
+      scrape_configs:
+        - job_name: validation
+          scrape_interval: 30s
+          static_configs:
+            - targets: ['127.0.0.1:19464']
+  filelog/validation:
+    include:
+      - ${env:HERTZBEAT_OTEL_TEST_LOG}
+    start_at: end
+    storage: file_storage
+    max_log_size: 1MiB
+    max_concurrent_files: 32
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 256
+    spike_limit_mib: 64
+  resource_detection:
+    detectors: [env, system]
+    timeout: 2s
+    override: false
+    system:
+      hostname_sources: [os]
+  resource:
+    attributes:
+      - key: service.name
+        value: hertzbeat-otel-runtime
+        action: upsert
+      - key: hertzbeat.collector.id
+        value: ${env:HERTZBEAT_COLLECTOR_ID}
+        action: upsert
+      - key: hertzbeat.runtime
+        value: otel
+        action: upsert
+      - key: hertzbeat.workspace_id
+        value: ${env:HERTZBEAT_WORKSPACE_ID}
+        action: upsert
+      - pattern: '(?i)^(authorization|proxy-authorization|cookie|set-cookie|x-api-key|api[-_]?key|access[-_]?token|refresh[-_]?token|http\.request\.header\.(authorization|cookie)|http\.response\.header\.set_cookie)$'
+        action: delete
+  attributes/sanitize:
+    actions:
+      - pattern: '(?i)^(authorization|proxy-authorization|cookie|set-cookie|x-api-key|api[-_]?key|access[-_]?token|refresh[-_]?token|http\.request\.header\.(authorization|cookie)|http\.response\.header\.set_cookie)$'
+        action: delete
+  filter/health_checks:
+    error_mode: ignore
+    traces:
+      span:
+        - 'attributes["http.route"] == "/health"'
+        - 'attributes["http.route"] == "/healthz"'
+        - 'attributes["http.route"] == "/readyz"'
+        - 'attributes["http.route"] == "/livez"'
+  batch:
+    send_batch_size: 1024
+    timeout: 5s
+
+exporters:
+  otlphttp:
+    endpoint: ${env:HERTZBEAT_OTLP_HTTP_ENDPOINT}
+    headers:
+      Authorization: Bearer ${env:HERTZBEAT_OTLP_TOKEN}
+    compression: gzip
+    retry_on_failure:
+      enabled: true
+      initial_interval: 1s
+      max_interval: 30s
+      max_elapsed_time: 0s
+    sending_queue:
+      enabled: true
+      num_consumers: 4
+      block_on_overflow: false
+      sizer: requests
+      queue_size: 2048
+      storage: file_storage
+
+extensions:
+  health_check:
+    endpoint: 127.0.0.1:${env:HERTZBEAT_OTEL_HEALTH_PORT}
+  file_storage:
+    directory: ${env:HERTZBEAT_OTEL_FILE_STORAGE_DIR}
+    timeout: 1s
+    max_size: 67108864
+    fsync: true
+    create_directory: false
+    recreate: false
+
+service:
+  extensions: [health_check, file_storage]
+  pipelines:
+    metrics:
+      receivers: [hostmetrics, prometheus/validation, otlp]
+      processors: [memory_limiter, resource_detection, resource, attributes/sanitize, batch]
+      exporters: [otlphttp]
+    logs:
+      receivers: [filelog/validation, otlp]
+      processors: [memory_limiter, resource_detection, resource, attributes/sanitize, batch]
+      exporters: [otlphttp]
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resource_detection, resource, attributes/sanitize, filter/health_checks, batch]
+      exporters: [otlphttp]

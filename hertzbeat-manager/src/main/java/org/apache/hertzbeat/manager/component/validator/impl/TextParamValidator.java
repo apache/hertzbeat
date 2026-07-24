@@ -35,9 +35,8 @@ public class TextParamValidator implements ParamValidator {
     @Override
     public void validate(ParamDefineInfo paramDefine, MonitorParam param) {
         Short limit = paramDefine.getLimit();
-        if (limit != null && param.getParamValue().length() > limit) {
-            throw new IllegalArgumentException("Params field " + paramDefine.getField() + " type "
-                    + paramDefine.getType() + " over limit " + limit);
+        if (param.getParamValue() == null || (limit != null && param.getParamValue().length() > limit)) {
+            throw ParamValidator.invalidParameter();
         }
     }
 }

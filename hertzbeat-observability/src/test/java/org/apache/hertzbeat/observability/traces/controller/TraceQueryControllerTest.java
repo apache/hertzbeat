@@ -68,7 +68,7 @@ class TraceQueryControllerTest {
         );
         when(entityTraceQueryService.queryTraceList(
                 1L, 100L, 200L, "trace-1", true, "checkout", "commerce", "prod",
-                "service.version=1.2.3 and hertzbeat.entity_type=\"service\"", "GET /checkout",
+                "service.version=1.2.3 and hertzbeat.entity_type=\"service\" and hertzbeat.collector.id=\"collector-a\"", "GET /checkout",
                 100L, 500L, 2, 50, true, null, "http.route CONTAINS checkout"))
                 .thenReturn(new PageImpl<>(List.of(item), PageRequest.of(2, 50), 1));
 
@@ -82,6 +82,7 @@ class TraceQueryControllerTest {
                         .param("serviceName", "checkout")
                         .param("serviceNamespace", "commerce")
                         .param("environment", "prod")
+                        .param("collectorId", "collector-a")
                         .param("resourceFilter", "service.version=1.2.3")
                         .param("attributeFilter", "http.route CONTAINS checkout")
                         .param("operationName", "GET /checkout")
@@ -97,7 +98,7 @@ class TraceQueryControllerTest {
 
         verify(entityTraceQueryService).queryTraceList(
                 1L, 100L, 200L, "trace-1", true, "checkout", "commerce", "prod",
-                "service.version=1.2.3 and hertzbeat.entity_type=\"service\"", "GET /checkout",
+                "service.version=1.2.3 and hertzbeat.entity_type=\"service\" and hertzbeat.collector.id=\"collector-a\"", "GET /checkout",
                 100L, 500L, 2, 50, true, null, "http.route CONTAINS checkout");
     }
 
@@ -137,6 +138,31 @@ class TraceQueryControllerTest {
         verify(entityTraceQueryService).queryTraceList(
                 null, 100L, 200L, null, false, "checkout", null, "prod",
                 null, "POST /checkout", 100L, 500L, 0, 20, null, "entrypoint", null);
+    }
+
+    @Test
+    void shouldMapInstanceAndHttpRouteToStrictTraceFilters() throws Exception {
+        when(entityTraceQueryService.queryTraceList(
+                null, 100L, 200L, null, false, "checkout", "commerce", "prod",
+                "service.instance.id=\"checkout-7d9\"", null, null, null, 0, 20, null, null,
+                "http.route=\"/checkout\""))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
+
+        mockMvc.perform(get("/api/traces/list")
+                        .param("start", "100")
+                        .param("end", "200")
+                        .param("errorOnly", "false")
+                        .param("serviceName", "checkout")
+                        .param("serviceNamespace", "commerce")
+                        .param("environment", "prod")
+                        .param("instance", "checkout-7d9")
+                        .param("endpoint", "/checkout"))
+                .andExpect(status().isOk());
+
+        verify(entityTraceQueryService).queryTraceList(
+                null, 100L, 200L, null, false, "checkout", "commerce", "prod",
+                "service.instance.id=\"checkout-7d9\"", null, null, null, 0, 20, null, null,
+                "http.route=\"/checkout\"");
     }
 
     @Test

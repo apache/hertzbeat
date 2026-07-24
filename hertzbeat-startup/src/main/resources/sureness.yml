@@ -21,6 +21,17 @@
 # eg: /api/v1/source2===get===[] means /api/v1/source2===get can not access by any role.
 resourceRole:
   - /api/account/auth/refresh===post===[admin,user,guest]
+  - /api/monitor-definitions/v1/validate===post===[admin]
+  - /api/monitor-definitions/v1===post===[admin]
+  - /api/monitor-definitions/v1/**===put===[admin]
+  - /api/monitor-definitions/v1/**===delete===[admin]
+  - /api/monitor-definitions/v1/**===get===[admin,user,guest]
+  - /api/plugin===get===[admin]
+  - /api/plugin===post===[admin]
+  - /api/plugin===put===[admin]
+  - /api/plugin===delete===[admin]
+  - /api/plugin/**===get===[admin]
+  - /api/plugin/**===post===[admin]
   - /api/apps/**===get===[admin,user,guest]
   - /api/monitor===get===[admin,user,guest]
   - /api/monitor/**===get===[admin,user,guest]
@@ -48,6 +59,7 @@ resourceRole:
   - /api/alert/**===delete===[admin]
   - /api/alerts/**===get===[admin,user,guest]
   - /api/alerts/**===post===[admin,user]
+  - /api/v2/alerts===post===[admin,user]
   - /api/alerts/**===put===[admin,user]
   - /api/alerts/**===delete===[admin]
   - /api/notice/**===get===[admin,user,guest]
@@ -111,8 +123,10 @@ excludedResource:
   - /api/alert/sse/**===*
   - /api/logs/sse/**===*
   - /api/account/auth/**===*
-  - /api/ui/session===*
-  - /api/ui/session/**===*
+  - /api/ui/session===get
+  - /api/ui/session===post
+  - /api/ui/session===delete
+  - /api/ui/session/refresh===post
   - /api/i18n/**===get
   - /api/apps/hierarchy===get
   - /api/push/**===*

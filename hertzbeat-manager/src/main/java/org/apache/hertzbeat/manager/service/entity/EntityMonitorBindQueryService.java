@@ -74,6 +74,29 @@ public class EntityMonitorBindQueryService {
         return entityMonitorBindDao.findAllByMonitorId(monitorId);
     }
 
+    public Map<Long, List<EntityMonitorBind>> findMonitorBindsByMonitorIds(List<Long> monitorIds) {
+        if (CollectionUtils.isEmpty(monitorIds)) {
+            return Map.of();
+        }
+        List<Long> acceptedMonitorIds = monitorIds.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        if (CollectionUtils.isEmpty(acceptedMonitorIds)) {
+            return Map.of();
+        }
+        Map<Long, List<EntityMonitorBind>> bindsByMonitorId = new LinkedHashMap<>();
+        entityMonitorBindDao.findAllByMonitorIdInOrderByMonitorIdAscIdAsc(acceptedMonitorIds)
+                .forEach(bind -> {
+                    if (bind == null || bind.getMonitorId() == null) {
+                        return;
+                    }
+                    bindsByMonitorId.computeIfAbsent(bind.getMonitorId(), ignored -> new java.util.ArrayList<>())
+                            .add(bind);
+                });
+        return bindsByMonitorId;
+    }
+
     public long countMonitorBinds(Long entityId) {
         return entityMonitorBindDao.countByEntityId(entityId);
     }

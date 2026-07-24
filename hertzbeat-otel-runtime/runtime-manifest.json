@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "runtimeVersion": "2.0.0-phase1",
+  "otelCoreVersion": "0.156.0",
+  "otelContribVersion": "0.156.0",
+  "controlProtocol": "loopback-health-v1",
+  "desiredConfigSchema": 3,
+  "componentInventorySha256": "0e5ea24b7a4cb6ac112d7d269674691a6f210678a560b4b1a47679c1c4ad1dac"
+}

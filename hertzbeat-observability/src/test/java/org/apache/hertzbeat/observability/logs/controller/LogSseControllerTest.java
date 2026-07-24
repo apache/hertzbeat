@@ -103,8 +103,11 @@ class LogSseControllerTest {
         String spanId = "abcdef1234567890";
         String entityId = "42";
         String entityType = "service";
+        String collectorId = "collector-a";
+        String instance = "checkout-7d9";
+        String endpoint = "/checkout";
         String resourceFilter = "service.version=1.2.3";
-        String attributeFilter = "http.route:/checkout";
+        String attributeFilter = "error.type=Timeout";
 
         // When: A request is made with all filter parameters
         mockMvc.perform(get("/api/logs/sse/subscribe")
@@ -114,6 +117,9 @@ class LogSseControllerTest {
                         .param("spanId", spanId)
                         .param("entityId", entityId)
                         .param("entityType", entityType)
+                        .param("collectorId", collectorId)
+                        .param("instance", instance)
+                        .param("endpoint", endpoint)
                         .param("resourceFilter", resourceFilter)
                         .param("attributeFilter", attributeFilter)
                         .accept(MediaType.TEXT_EVENT_STREAM_VALUE))
@@ -129,8 +135,13 @@ class LogSseControllerTest {
         Assertions.assertEquals(capturedCriteria.getSpanId(), spanId);
         Assertions.assertEquals(capturedCriteria.getEntityId(), entityId);
         Assertions.assertEquals(capturedCriteria.getEntityType(), entityType);
-        Assertions.assertEquals(capturedCriteria.getResourceFilter(), resourceFilter);
-        Assertions.assertEquals(capturedCriteria.getAttributeFilter(), attributeFilter);
+        Assertions.assertEquals(capturedCriteria.getCollectorId(), collectorId);
+        Assertions.assertEquals(capturedCriteria.getInstance(), instance);
+        Assertions.assertEquals(capturedCriteria.getEndpoint(), endpoint);
+        Assertions.assertEquals(capturedCriteria.getResourceFilter(),
+                resourceFilter + " and service.instance.id=\"checkout-7d9\"");
+        Assertions.assertEquals(capturedCriteria.getAttributeFilter(),
+                attributeFilter + " and http.route=\"/checkout\"");
     }
 
     @Test

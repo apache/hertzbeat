@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager.component.validator.impl;
 
+import org.apache.hertzbeat.manager.component.validator.ParamValidator;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorParam;
 import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ArrayParamValidatorTest {
@@ -45,30 +47,33 @@ class ArrayParamValidatorTest {
         ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setType("array");
         MonitorParam param = new MonitorParam();
-        param.setParamValue("val1,val2");
+        param.setParamValue(" val1, val2 ");
 
         assertDoesNotThrow(() -> validator.validate(paramDefine, param));
+        assertEquals("val1,val2", param.getParamValue());
     }
 
     @Test
-    void validate_ValidArrayWithBrackets() {
+    void validate_NormalizesBracketArray() {
         ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setType("array");
         MonitorParam param = new MonitorParam();
-        param.setParamValue("[val1,val2]");
+        param.setParamValue("[ val1, val2 ]");
 
         validator.validate(paramDefine, param);
         assertEquals("val1,val2", param.getParamValue());
     }
 
     @Test
-    void validate_EmptyArray() {
+    void validate_RejectsEmptyElementsWithoutEchoingCallerValue() {
         ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setType("array");
         paramDefine.setField("tags");
         MonitorParam param = new MonitorParam();
-        param.setParamValue("");
-        assertDoesNotThrow(() -> validator.validate(paramDefine, param));
-        assertEquals("", param.getParamValue());
+        param.setParamValue("Authorization:Bearer caller-token,");
+
+        IllegalArgumentException failure = assertThrows(
+                IllegalArgumentException.class, () -> validator.validate(paramDefine, param));
+        assertEquals(ParamValidator.INVALID_PARAMETER_MESSAGE, failure.getMessage());
     }
 }

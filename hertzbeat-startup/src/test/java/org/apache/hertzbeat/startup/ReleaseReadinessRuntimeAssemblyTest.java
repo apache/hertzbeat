@@ -166,6 +166,59 @@ class ReleaseReadinessRuntimeAssemblyTest {
     }
 
     @Test
+    void collectorIntakeTokenBoundaryCoversSupportedRelationalDatabases() throws IOException {
+        for (String database : List.of("mysql", "postgresql", "h2")) {
+            String migration = readRepoFile(
+                    "hertzbeat-startup/src/main/resources/db/migration/"
+                            + database
+                            + "/V201__add_collector_intake_token_boundary.sql"
+            ).toLowerCase();
+
+            assertThat(migration)
+                    .as(database + " migration should persist the managed Collector token boundary")
+                    .contains("token_audience")
+                    .contains("collector_id")
+                    .contains("allowed_signals")
+                    .contains("idx_hzb_auth_token_collector");
+        }
+    }
+
+    @Test
+    void collectorRuntimeConfigBoundaryCoversSupportedRelationalDatabases() throws IOException {
+        for (String database : List.of("mysql", "postgresql", "h2")) {
+            String migration = readRepoFile(
+                    "hertzbeat-startup/src/main/resources/db/migration/"
+                            + database
+                            + "/V202__add_collector_runtime_config.sql"
+            ).toLowerCase();
+
+            assertThat(migration)
+                    .as(database + " migration should persist semantic Collector runtime intent")
+                    .contains("hzb_collector")
+                    .contains("runtime_config");
+        }
+    }
+
+    @Test
+    void collectorIntakeAdvertisementBoundaryCoversSupportedRelationalDatabases() throws IOException {
+        for (Map.Entry<String, String> database : Map.of(
+                "mysql", "instrumentation_intake text null",
+                "postgresql", "instrumentation_intake text",
+                "h2", "instrumentation_intake clob").entrySet()) {
+            String migration = readRepoFile(
+                    "hertzbeat-startup/src/main/resources/db/migration/"
+                            + database.getKey()
+                            + "/V203__add_collector_instrumentation_intake.sql"
+            ).toLowerCase();
+
+            assertThat(migration)
+                    .as(database.getKey() + " migration should persist only the safe intake advertisement")
+                    .contains("hzb_collector")
+                    .contains(database.getValue());
+        }
+    }
+
+    @Test
     void entityGovernanceStateWorkspaceBoundaryLivesInV200Baseline() throws IOException {
         for (String database : List.of("mysql", "postgresql", "h2")) {
             String migration = readRepoFile(

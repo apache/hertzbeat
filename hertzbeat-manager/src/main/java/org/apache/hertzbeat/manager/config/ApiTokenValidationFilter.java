@@ -96,6 +96,11 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
                     if (rejectReason != null) {
                         return writeError(response, HttpStatus.UNAUTHORIZED, rejectReason);
                     }
+                    rejectReason = bindManagedCollectorBoundary(request, subject);
+                    if (rejectReason != null) {
+                        return writeError(response, HttpStatus.UNAUTHORIZED, rejectReason);
+                    }
+                    touchTokenLastUsedTime(token);
                 } catch (RuntimeException e) {
                     log.warn("Managed token validation failed", e);
                     return writeError(response, HttpStatus.SERVICE_UNAVAILABLE, TOKEN_VALIDATION_UNAVAILABLE);
@@ -120,7 +125,6 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
      * 1. Only managed tokens (with "managed" claim) are validated — legacy tokens pass through
      * 2. Token must exist and be active in the database (not deleted/revoked)
      * 3. Token owner must still exist, remain active, and still own the claimed roles
-     * If the token is valid, updates the last used time.
      * </p>
      */
     private String checkManagedToken(SubjectSum subject, String token, String requiredScope, String workspaceId) {
@@ -134,12 +138,15 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
         if (rejectReason != null) {
             return rejectReason;
         }
+        return null;
+    }
+
+    private void touchTokenLastUsedTime(String token) {
         try {
             accountService.touchTokenLastUsedTime(token);
         } catch (RuntimeException e) {
             log.debug("Failed to update token last used time", e);
         }
-        return null;
     }
 
     private boolean isManagedToken(SubjectSum subject) {
@@ -171,6 +178,44 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
     private String getCurrentUserId(SubjectSum subject) {
         Object principal = subject.getPrincipal();
         return principal == null ? null : String.valueOf(principal);
+    }
+
+    private String bindManagedCollectorBoundary(HttpServletRequest request, SubjectSum subject) {
+        PrincipalMap principalMap = subject.getPrincipalMap();
+        if (principalMap == null || !AuthTokenScopes.MANAGED_COLLECTOR_AUDIENCE.equals(
+                principalMap.getPrincipal(AuthTokenScopes.CLAIM_TOKEN_AUDIENCE))) {
+            return null;
+        }
+        Object collectorIdClaim = principalMap.getPrincipal(AuthTokenScopes.CLAIM_COLLECTOR_ID);
+        String collectorId = collectorIdClaim == null
+                ? null
+                : StringUtils.trimToNull(String.valueOf(collectorIdClaim));
+        if (collectorId == null) {
+            return "Collector intake token has no Collector identity";
+        }
+        String signal = resolveOtlpSignal(request.getRequestURI());
+        Object allowedSignals = principalMap.getPrincipal(AuthTokenScopes.CLAIM_ALLOWED_SIGNALS);
+        if (signal == null || !(allowedSignals instanceof List<?> signals) || !signals.contains(signal)) {
+            return "Collector intake token does not allow this signal";
+        }
+        AuthTokenRequestContext.bindCollectorId(collectorId);
+        return null;
+    }
+
+    private String resolveOtlpSignal(String requestUri) {
+        if (requestUri == null) {
+            return null;
+        }
+        if (requestUri.startsWith("/api/logs/otlp") || requestUri.endsWith("/logs")) {
+            return "logs";
+        }
+        if (requestUri.endsWith("/metrics")) {
+            return "metrics";
+        }
+        if (requestUri.endsWith("/traces")) {
+            return "traces";
+        }
+        return null;
     }
 
     private String resolveRequiredScope(HttpServletRequest request) {

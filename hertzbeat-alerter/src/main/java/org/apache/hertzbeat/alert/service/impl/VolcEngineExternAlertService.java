@@ -55,16 +55,16 @@ public class VolcEngineExternAlertService implements ExternAlertService {
 
     @Override
     public void addExternAlert(String content) {
-        JsonNode root = JsonUtil.fromJson(content);
+        JsonNode root = JsonUtil.fromJsonQuietly(content);
         if (root == null) {
-            log.warn("parse extern alert content failed! content: {}", content);
+            log.warn("Failed to parse VolcEngine external alert content");
             return;
         }
         String type = root.get("Type").asText();
         if (VolcEngineExternMetricAlert.ALERT_TYPE_EVENT.equals(type)) {
-            VolcEngineExternEventAlert eventAlert = JsonUtil.fromJson(content, VolcEngineExternEventAlert.class);
+            VolcEngineExternEventAlert eventAlert = JsonUtil.fromJsonQuietly(content, VolcEngineExternEventAlert.class);
             if (eventAlert == null) {
-                log.warn("parse extern event alert content failed! content: {}", content);
+                log.warn("Failed to parse VolcEngine external event alert content");
                 return;
             }
             SingleAlert singleAlert = new VolcEngineAlertConverter().convertEventToSingleAlert(eventAlert);
@@ -72,9 +72,10 @@ public class VolcEngineExternAlertService implements ExternAlertService {
 
         } else {
             // deal with metric alert
-            VolcEngineExternMetricAlert report = JsonUtil.fromJson(content, VolcEngineExternMetricAlert.class);
+            VolcEngineExternMetricAlert report = JsonUtil.fromJsonQuietly(
+                    content, VolcEngineExternMetricAlert.class);
             if (report == null) {
-                log.warn("parse extern metrics alert content failed! content: {}", content);
+                log.warn("Failed to parse VolcEngine external metrics alert content");
                 return;
             }
             for (SingleAlert singleAlert : new VolcEngineAlertConverter().convertMetricAlertToSingeAlert(report)) {

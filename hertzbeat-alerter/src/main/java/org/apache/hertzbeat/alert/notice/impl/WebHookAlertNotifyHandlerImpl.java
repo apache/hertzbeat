@@ -61,9 +61,9 @@ final class WebHookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
             HttpEntity<String> alertHttpEntity = new HttpEntity<>(webhookJson, headers);
             ResponseEntity<String> entity = restTemplate.postForEntity(hookUrl, alertHttpEntity, String.class);
             if (entity.getStatusCode().value() < HttpStatus.BAD_REQUEST.value()) {
-                log.debug("Send WebHook: {} Success", hookUrl);
+                log.debug("Send webhook success");
             } else {
-                log.warn("Send WebHook: {} Failed: {}", hookUrl, entity.getBody());
+                log.warn("Send webhook failed with status {}", entity.getStatusCode());
                 throw new AlertNoticeException("Http StatusCode " + entity.getStatusCode());
             }
         } catch (Exception e) {

@@ -67,13 +67,22 @@ public class EntityIntegrationHintService {
         if (CollectionUtils.isEmpty(monitorIds)) {
             return Collections.emptyMap();
         }
-        Map<Long, List<EntityMonitorBindingCandidate>> result = new LinkedHashMap<>();
-        monitorIds.stream()
+        List<Long> acceptedMonitorIds = monitorIds.stream()
                 .filter(java.util.Objects::nonNull)
                 .filter(monitorId -> monitorId > 0)
                 .distinct()
                 .limit(100)
-                .forEach(monitorId -> result.put(monitorId, getMonitorBindingCandidates(monitorId)));
+                .toList();
+        if (CollectionUtils.isEmpty(acceptedMonitorIds)) {
+            return Collections.emptyMap();
+        }
+        List<Monitor> monitors = entityMonitorQueryService.findMonitorsByIds(acceptedMonitorIds);
+        Map<Long, List<EntityMonitorBindingCandidate>> resolvedCandidates = CollectionUtils.isEmpty(monitors)
+                ? Collections.emptyMap()
+                : entityIdentityResolutionService.resolveMonitorBindingCandidates(monitors);
+        Map<Long, List<EntityMonitorBindingCandidate>> result = new LinkedHashMap<>();
+        acceptedMonitorIds.forEach(monitorId -> result.put(
+                monitorId, resolvedCandidates.getOrDefault(monitorId, Collections.emptyList())));
         return result;
     }
 

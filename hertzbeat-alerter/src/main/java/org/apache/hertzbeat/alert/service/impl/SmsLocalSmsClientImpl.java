@@ -61,7 +61,7 @@ public class SmsLocalSmsClientImpl implements SmsClient {
     @Override
     public void sendMessage(NoticeReceiver receiver, NoticeTemplate noticeTemplate, GroupAlert alert) {
         if (Objects.isNull(receiver) || Objects.isNull(alert)) {
-            log.warn("receiver and alert can not be null! receiver: {}, alert:{}", receiver, alert);
+            log.warn("Receiver and alert must not be null");
             return;
         }
 
@@ -112,10 +112,10 @@ public class SmsLocalSmsClientImpl implements SmsClient {
                     throw new SendMessageException(errorCode + ":" + msgid);
                 }
 
-                log.info("Successfully sent SMS to phone: {}", receiver.getPhone());
+                log.info("Successfully sent SMS notification");
             }
         } catch (Exception e) {
-            log.error("Failed to send SMS: {}", e.getMessage());
+            log.error("Failed to send SMS: {}", e.getClass().getSimpleName());
             throw new SendMessageException(e.getMessage());
         }
 

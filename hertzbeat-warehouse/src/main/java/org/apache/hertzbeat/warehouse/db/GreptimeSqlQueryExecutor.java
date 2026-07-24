@@ -65,6 +65,24 @@ public class GreptimeSqlQueryExecutor extends SqlQueryExecutor {
 
     @Override
     public List<Map<String, Object>> execute(String queryString) {
+        return execute(queryString, false);
+    }
+
+    /**
+     * Executes a read query and rejects malformed or unsuccessful Greptime responses.
+     *
+     * <p>This strict path is intended for callers that must distinguish a valid empty result from a
+     * storage/query failure. The existing {@link #execute(String)} behavior remains unchanged for
+     * compatibility with current warehouse consumers.</p>
+     *
+     * @param queryString SQL read query
+     * @return mapped result rows, possibly empty for a valid query with no rows
+     */
+    public List<Map<String, Object>> executeStrict(String queryString) {
+        return execute(queryString, true);
+    }
+
+    private List<Map<String, Object>> execute(String queryString, boolean strict) {
         List<Map<String, Object>> results = new LinkedList<>();
 
         HttpHeaders headers = new HttpHeaders();
@@ -97,22 +115,30 @@ public class GreptimeSqlQueryExecutor extends SqlQueryExecutor {
         }
 
         if (responseEntity == null) {
+            if (strict) {
+                throw new IllegalStateException("GreptimeDB SQL query returned no HTTP response");
+            }
             log.error("query metrics data from greptime failed. null response");
             return results;
         }
 
         if (responseEntity.getStatusCode().is2xxSuccessful()) {
             GreptimeSqlQueryContent responseBody = responseEntity.getBody();
+            validateStrictResponse(responseBody, strict);
             // GreptimeDB SQL HTTP API may not return 'code' field in successful response
             // Check if output exists and is not empty
             if (responseBody != null && responseBody.getOutput() != null && !responseBody.getOutput().isEmpty()) {
 
                 for (GreptimeSqlQueryContent.Output output : responseBody.getOutput()) {
+                    validateStrictOutput(output, strict);
                     if (output != null && output.getRecords() != null && output.getRecords().getRows() != null) {
                         GreptimeSqlQueryContent.Output.Records.Schema schema = output.getRecords().getSchema();
                         List<List<Object>> rows = output.getRecords().getRows();
 
                         for (List<Object> row : rows) {
+                            if (strict && row == null) {
+                                throw new IllegalStateException("GreptimeDB SQL query returned a null row");
+                            }
                             if (row == null) {
                                 continue;
                             }
@@ -128,9 +154,36 @@ public class GreptimeSqlQueryExecutor extends SqlQueryExecutor {
                 }
             }
         } else {
+            if (strict) {
+                throw new IllegalStateException("GreptimeDB SQL query returned an unsuccessful HTTP status");
+            }
             log.error("query metrics data from greptime failed. {}", responseEntity);
         }
         return results;
+    }
+
+    private void validateStrictResponse(GreptimeSqlQueryContent responseBody, boolean strict) {
+        if (!strict) {
+            return;
+        }
+        if (responseBody == null) {
+            throw new IllegalStateException("GreptimeDB SQL query returned no response body");
+        }
+        if (responseBody.getCode() != null && responseBody.getCode() != 0) {
+            throw new IllegalStateException("GreptimeDB SQL query returned an error code");
+        }
+        if (responseBody.getOutput() == null || responseBody.getOutput().isEmpty()) {
+            throw new IllegalStateException("GreptimeDB SQL query returned no output");
+        }
+    }
+
+    private void validateStrictOutput(GreptimeSqlQueryContent.Output output, boolean strict) {
+        if (!strict) {
+            return;
+        }
+        if (output == null || output.getRecords() == null || output.getRecords().getRows() == null) {
+            throw new IllegalStateException("GreptimeDB SQL query returned malformed output");
+        }
     }
 
     @Override

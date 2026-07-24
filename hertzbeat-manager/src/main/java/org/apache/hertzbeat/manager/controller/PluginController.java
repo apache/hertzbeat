@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager.controller;
 
+import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -26,13 +27,15 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.manager.PluginMetadata;
+import org.apache.hertzbeat.manager.pojo.dto.PluginParameterSaveRequest;
 import org.apache.hertzbeat.manager.pojo.dto.PluginUpload;
-import org.apache.hertzbeat.manager.pojo.dto.PluginParam;
 import org.apache.hertzbeat.manager.pojo.dto.PluginParametersVO;
+import org.apache.hertzbeat.manager.service.PluginParameterService;
 import org.apache.hertzbeat.manager.service.PluginService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -50,7 +53,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class PluginController {
 
+    private static final String OPERATION_FAILED = "plugin_operation_failed";
+
     private final PluginService pluginService;
+
+    private final PluginParameterService pluginParameterService;
 
     @PostMapping
     @Operation(summary = "upload plugin", description = "upload plugin")
@@ -91,15 +98,20 @@ public class PluginController {
     @GetMapping("/params/define")
     @Operation(summary = "get param define", description = "get param define by jar path")
     public ResponseEntity<Message<PluginParametersVO>> getParamDefine(@RequestParam Long pluginMetadataId) {
-        PluginParametersVO plugins = pluginService.getParamDefine(pluginMetadataId);
+        PluginParametersVO plugins = pluginParameterService.getParameters(pluginMetadataId);
         return ResponseEntity.ok(Message.success(plugins));
     }
 
     @PostMapping("/params")
     @Operation(summary = "get param define", description = "get param define by jar path")
-    public ResponseEntity<Message<Boolean>> saveParams(@RequestBody List<PluginParam> pluginParams) {
-        pluginService.savePluginParam(pluginParams);
+    public ResponseEntity<Message<Boolean>> saveParams(@RequestBody PluginParameterSaveRequest request) {
+        pluginParameterService.save(request);
         return ResponseEntity.ok(Message.success(true));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Message<Void>> operationFailed() {
+        return ResponseEntity.ok(Message.fail(FAIL_CODE, OPERATION_FAILED));
     }
 
 }

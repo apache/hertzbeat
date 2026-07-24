@@ -30,4 +30,6 @@ public class NettyClientConfig {
     private int serverPort;
 
     private int connectTimeoutMillis = 10000;
+
+    private int reconnectDelayMillis = 10000;
 }
