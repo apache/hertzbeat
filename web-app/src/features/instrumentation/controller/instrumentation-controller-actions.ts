@@ -75,12 +75,16 @@ export function useDraftActions(
     state.setDraft({ ...initialDraft, intakeProfileId: defaultProfileId ?? '' });
     state.setStage('source');
   }, [catalog, defaultProfileId, resetResults, state]);
-  const goBack = useCallback(() => {
+  const goBack = useBackAction(state, resetResults);
+  return { chooseSource, answerApplication, patchDraft, patchService, reset, goBack };
+}
+
+function useBackAction(state: InstrumentationControllerState, resetResults: () => void) {
+  return useCallback(() => {
     if (state.stage === 'source') return;
     if (state.stage === 'install') resetResults();
     state.setStage(previousInstrumentationStage(state.stage));
   }, [resetResults, state]);
-  return { chooseSource, answerApplication, patchDraft, patchService, reset, goBack };
 }
 
 export function useGuideActions(
