@@ -35,7 +35,7 @@
     "lint": "npm run lint:fix && npm run lint:style",
     "lint:ts": "ng lint",
     "lint:fix": "ng lint --fix",
-    "lint:style": "stylelint \"src/**/*.less\" --syntax less --fix",
+    "lint:style": "stylelint \"src/**/*.less\" --fix",
     "package": "ng build --configuration production"
   },
   "private": true,
@@ -124,6 +124,7 @@
     "lint-staged": "13.3.0",
     "ng-alain": "17.3.1",
     "node-fetch": "2.7.0",
+    "postcss-less": "6.0.0",
     "prettier": "2.8.8",
     "protractor": "7.0.0",
     "source-map-explorer": "2.5.3",
