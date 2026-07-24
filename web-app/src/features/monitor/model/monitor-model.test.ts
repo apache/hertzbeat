@@ -68,17 +68,19 @@ describe('monitor list model', () => {
     expect(monitorStatusKey(8)).toBe('monitor.status.unknown');
   });
 
-  it('keeps supported Prometheus creation while excluding system and explicitly hidden apps', () => {
+  it('keeps hide=true apps available for creation while excluding system and invalid apps', () => {
     expect(
       monitorAppOptions([
         { category: 'http', value: 'website', label: 'Website' },
         { category: 'auto', value: 'prometheus', label: 'Prometheus' },
         { category: '__system__', value: 'internal', label: 'Internal' },
-        { category: 'http', value: 'hidden', label: 'Hidden', hide: true }
+        { category: 'database', value: 'mysql', label: 'MySQL', hide: true },
+        { category: 'http', value: '', label: 'Invalid' }
       ])
     ).toEqual([
       { value: 'website', label: 'Website' },
-      { value: 'prometheus', label: 'Prometheus' }
+      { value: 'prometheus', label: 'Prometheus' },
+      { value: 'mysql', label: 'MySQL' }
     ]);
   });
 

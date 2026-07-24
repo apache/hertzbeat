@@ -233,6 +233,15 @@ describe('useMonitorEditorController', () => {
     expect(routed.current().state.draft).toBeUndefined();
   });
 
+  it('keeps a hide=true application as a valid creation source', async () => {
+    api.loadMonitorApps.mockResolvedValue([{ category: 'database', value: 'mysql', label: 'MySQL', hide: true }]);
+    const routed = renderController('new', '/monitors/new?app=mysql');
+
+    await waitFor(() => expect(routed.current().state.draft?.monitor.app).toBe('mysql'));
+    expect(routed.router.state.location.search).toBe('?app=mysql');
+    expect(api.loadMonitorParamDefines).toHaveBeenCalledWith('mysql', expect.any(AbortSignal));
+  });
+
   it('keeps the application chooser ready when scrape is present without an application', async () => {
     const routed = renderController('new', '/monitors/new?scrape=http_sd');
 

@@ -55,8 +55,9 @@ export function monitorAppOptions(items: MonitorAppItem[]) {
     .map(item => ({ value: item.value as string, label: item.label || (item.value as string) }));
 }
 
+// Backend `hide` controls main-menu layout only; it does not disable Monitor creation.
 export function isSelectableMonitorApp(item: MonitorAppItem) {
-  return Boolean(item.value) && item.hide !== true && item.category !== '__system__';
+  return Boolean(item.value) && item.category !== '__system__';
 }
 
 export function monitorStatusKey(status: number) {
