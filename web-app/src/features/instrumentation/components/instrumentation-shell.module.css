@@ -66,6 +66,16 @@
   width: 100%;
 }
 
+.question {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+}
+
+.questionSelect {
+  width: 100%;
+}
+
 @media (max-width: 760px) {
   .heading,
   .formGrid {

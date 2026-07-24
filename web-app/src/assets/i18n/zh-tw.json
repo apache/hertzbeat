@@ -507,6 +507,7 @@
       "license": "授權條款",
       "openOfficialLink": "開啟官方文件",
       "unknownGuidance": "指南可用，但尚未安裝對應的本地化說明。",
+      "questionPlaceholder": "請選擇一個選項",
       "startOver": "重新開始",
       "loadError": "插樁引導目前無法使用。",
       "renderError": "無法產生所選安裝指南。",

@@ -5,6 +5,7 @@
  */
 
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
@@ -23,6 +24,7 @@ import { InstrumentationDetectionPanel } from './instrumentation-detection-panel
 import { InstrumentationGuideBlocks } from './instrumentation-guide-blocks';
 import { InstrumentationProgress } from './instrumentation-progress';
 import { InstrumentationSourceStep } from './instrumentation-source-step';
+import shellCss from './instrumentation-shell.module.css?raw';
 
 afterEach(() => {
   cleanup();
@@ -59,6 +61,22 @@ describe('instrumentation v2 interaction', () => {
     );
     expect(screen.getAllByRole('combobox')).toHaveLength(1);
     expect(screen.queryByText('instrumentation.v2.recipeLabel')).not.toBeInTheDocument();
+  });
+
+  it('provides a usable localized application question sequence', async () => {
+    render(<ApplicationQuestionHarness />);
+    const language = screen.getByRole('combobox', { name: /^instrumentation\.field\.language/ });
+    expect(screen.getByText('instrumentation.v2.questionPlaceholder')).toBeVisible();
+    expect(shellCss).toMatch(/\.question\s*\{[^}]*display:\s*grid[^}]*width:\s*100%/);
+    expect(shellCss).toMatch(/\.questionSelect\s*\{[^}]*width:\s*100%/);
+    fireEvent.mouseDown(language);
+    fireEvent.click(await screen.findByTitle('java'));
+
+    const framework = await screen.findByRole('combobox', { name: /^instrumentation\.field\.framework/ });
+    expect(framework).toBeEnabled();
+    fireEvent.mouseDown(framework);
+    fireEvent.click(await screen.findByTitle('spring_boot'));
+    expect(await screen.findByRole('combobox', { name: /^instrumentation\.field\.method/ })).toBeEnabled();
   });
 
   it('keeps unconfigured and discovery unavailable destinations distinct', () => {
@@ -140,6 +158,19 @@ describe('instrumentation v2 interaction', () => {
     expect(onBack).toHaveBeenCalledOnce();
   });
 });
+
+function ApplicationQuestionHarness() {
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  return (
+    <InstrumentationSourceStep
+      catalog={catalog}
+      sourceKind="application"
+      {...answers}
+      onSource={vi.fn()}
+      onApplicationAnswer={(field, value) => setAnswers(current => ({ ...current, [field]: value }))}
+    />
+  );
+}
 
 const catalog = {
   schemaVersion: 2 as const,

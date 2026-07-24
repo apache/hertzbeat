@@ -82,12 +82,14 @@ function ApplicationQuestions(
   return (
     <Space direction="vertical" className={styles.fullWidth!}>
       {visibleQuestions.map(field => (
-        <label key={field}>
+        <label key={field} className={styles.question}>
           <Typography.Text strong>
             {t(`instrumentation.field.${field === 'environment' ? 'deploymentEnvironment' : field}`)}
           </Typography.Text>
           <Select
+            className={styles.questionSelect!}
             value={props[field] ?? null}
+            placeholder={t('instrumentation.v2.questionPlaceholder')}
             options={applicationQuestionOptions(props.catalog, props.draft, field).map(value => ({
               value,
               label: t(`instrumentation.${field}.${value}`, { defaultValue: value })

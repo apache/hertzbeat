@@ -521,6 +521,7 @@
       "license": "Licença",
       "openOfficialLink": "Abrir documentação oficial",
       "unknownGuidance": "O guia está disponível, mas a descrição localizada não está instalada.",
+      "questionPlaceholder": "Selecione uma opção",
       "startOver": "Recomeçar",
       "loadError": "A integração de instrumentação está indisponível.",
       "renderError": "Não foi possível gerar o guia de instalação selecionado.",

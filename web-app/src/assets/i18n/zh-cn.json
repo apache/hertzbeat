@@ -507,6 +507,7 @@
       "license": "许可证",
       "openOfficialLink": "打开官方文档",
       "unknownGuidance": "指南可用，但尚未安装对应的本地化说明。",
+      "questionPlaceholder": "请选择一个选项",
       "startOver": "重新开始",
       "loadError": "插桩引导当前不可用。",
       "renderError": "无法生成所选安装指南。",

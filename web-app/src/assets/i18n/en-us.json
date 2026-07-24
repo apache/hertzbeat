@@ -518,6 +518,7 @@
       "license": "License",
       "openOfficialLink": "Open official documentation",
       "unknownGuidance": "Guidance is available, but its localized description is not installed.",
+      "questionPlaceholder": "Select an option",
       "startOver": "Start over",
       "loadError": "Instrumentation onboarding is unavailable.",
       "renderError": "The selected installation guidance could not be rendered.",

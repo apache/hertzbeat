@@ -515,6 +515,7 @@
       "license": "ライセンス",
       "openOfficialLink": "公式ドキュメントを開く",
       "unknownGuidance": "ガイドは利用できますが、ローカライズされた説明がインストールされていません。",
+      "questionPlaceholder": "選択してください",
       "startOver": "最初からやり直す",
       "loadError": "計装オンボーディングを利用できません。",
       "renderError": "選択したインストールガイドを生成できませんでした。",
