@@ -289,17 +289,25 @@ describe('useMonitorEditorController', () => {
 
   it('requires exact-id reread convergence before edit navigation', async () => {
     const hostDefine = { ...headersDefine, field: 'host', type: 'host', name: { 'en-US': 'Host' } };
+    const portDefine = { ...headersDefine, field: 'port', type: 'number', name: { 'en-US': 'Port' } };
     const exactDetail = {
       ...detail,
-      monitor: { ...detail.monitor, instance: 'example.com', labels: {}, annotations: {} },
-      params: [{ id: 4, monitorId: 7, field: 'host', type: 1, paramValue: 'example.com' }]
+      monitor: { ...detail.monitor, instance: '127.0.0.1:4210', labels: {}, annotations: {} },
+      params: [
+        { id: 4, monitorId: 7, field: 'host', type: 1, paramValue: '127.0.0.1' },
+        { id: 5, monitorId: 7, field: 'port', type: 0, paramValue: '4210' }
+      ]
     };
-    api.loadMonitorParamDefines.mockResolvedValue([hostDefine]);
+    api.loadMonitorParamDefines.mockResolvedValue([hostDefine, portDefine]);
     api.loadMonitorDetail.mockResolvedValue(exactDetail);
     const routed = renderController('edit', '/monitors/7/edit?returnTo=%2Fmonitors%3Fapp%3Dwebsite');
     await waitFor(() => expect(routed.current().state.draft?.monitor.id).toBe(7));
     await act(async () => routed.current().actions.save());
-    expect(api.saveMonitor).toHaveBeenCalledWith('edit', expect.anything(), expect.any(AbortSignal));
+    expect(api.saveMonitor).toHaveBeenCalledWith(
+      'edit',
+      expect.objectContaining({ monitor: expect.objectContaining({ instance: '127.0.0.1' }) }),
+      expect.any(AbortSignal)
+    );
     expect(api.loadMonitorDetail).toHaveBeenLastCalledWith(7, expect.any(AbortSignal));
     expect(routed.client.getQueryData(monitorQueryKeys.detail(7))).toEqual(exactDetail);
     expect(routed.router.state.location.pathname).toBe('/monitors');

@@ -32,14 +32,14 @@ export function buildMonitorPayload(
     return { ...param, paramValue: serializeParamDraft(param, define) };
   });
   const host = serializedParams.find(param => param.field === 'host')?.paramValue;
-  const port = serializedParams.find(param => param.field === 'port')?.paramValue;
   return {
     monitor: {
       ...monitor,
       name: monitor.name?.trim(),
       labels: monitor.labels ?? {},
       annotations: monitor.annotations ?? {},
-      instance: derivedMonitorInstance(monitor.scrape, host, port)
+      // The backend owns static port concatenation; including it here makes edit append the same port twice.
+      instance: submittedMonitorInstance(monitor.scrape, host)
     },
     collector: collector.trim() || null,
     params: serializedParams,
@@ -65,24 +65,7 @@ function serializeParamDraft(param: MonitorParamDraft, define: MonitorParamDefin
   throw new MonitorParamDraftError(param.field);
 }
 
-function derivedMonitorInstance(
-  scrape: string | null | undefined,
-  host: string | null | undefined,
-  port: string | null | undefined
-) {
+function submittedMonitorInstance(scrape: string | null | undefined, host: string | null | undefined) {
   if (scrape && scrape !== 'static') return MONITOR_DISCOVERY_INSTANCE;
-  const normalizedHost = host?.trim() ?? '';
-  const normalizedPort = port?.trim() ?? '';
-  if (!normalizedHost || !normalizedPort) return normalizedHost;
-  return appendAuthorityPort(normalizedHost, normalizedPort);
-}
-
-function appendAuthorityPort(host: string, port: string) {
-  // Parse URI authority before generic colon checks so URL paths and IPv6 literals retain their structure.
-  const uri = /^([a-z][a-z0-9+.-]*:\/\/)(\[[^\]]+\]|[^/:?#]+)(:\d+)?(.*)$/i.exec(host);
-  if (uri) return uri[3] ? host : `${uri[1]}${uri[2]}:${port}${uri[4]}`;
-  const bracketedIpv6 = /^(\[[^\]]+\])(?::\d+)?$/.exec(host);
-  if (bracketedIpv6) return /\]:\d+$/.test(host) ? host : `${bracketedIpv6[1]}:${port}`;
-  if ((host.match(/:/g)?.length ?? 0) > 1) return `[${host}]:${port}`;
-  return /:\d+$/.test(host) ? host : `${host}:${port}`;
+  return host?.trim() ?? '';
 }

@@ -77,16 +77,16 @@ describe('Monitor editor payload', () => {
   });
 
   it.each([
-    ['domain with port', ' example.com ', '443', 'example.com:443'],
-    ['IPv4 with port', '127.0.0.1', '8080', '127.0.0.1:8080'],
+    ['domain with port', ' example.com ', '443', 'example.com'],
+    ['IPv4 with port', '127.0.0.1', '8080', '127.0.0.1'],
     ['existing numeric port', 'example.com:8443', '443', 'example.com:8443'],
-    ['URL authority', 'https://example.com/path', '443', 'https://example.com:443/path'],
+    ['URL authority', 'https://example.com/path', '443', 'https://example.com/path'],
     ['URL with numeric port', 'https://example.com:8443/path', '443', 'https://example.com:8443/path'],
-    ['bracketed IPv6 authority', '[::1]', '443', '[::1]:443'],
+    ['bracketed IPv6 authority', '[::1]', '443', '[::1]'],
     ['bracketed IPv6 with numeric port', '[::1]:8443', '443', '[::1]:8443'],
-    ['unbracketed IPv6 authority', '::1', '443', '[::1]:443'],
+    ['unbracketed IPv6 authority', '::1', '443', '::1'],
     ['blank port', 'example.com', ' ', 'example.com']
-  ])('derives one exact static instance for %s', (_label, host, port, expected) => {
+  ])('submits only the trimmed static host for %s', (_label, host, port, expected) => {
     const payload = buildMonitorPayload(
       { app: 'website', scrape: 'static', name: 'home', instance: 'ignored', status: 0 },
       '',
@@ -97,6 +97,65 @@ describe('Monitor editor payload', () => {
       [define({ field: 'host', type: 'host' }), define({ field: 'port', type: 'number' })]
     );
     expect(payload.monitor.instance).toBe(expected);
+  });
+
+  it('accepts the backend-owned static port suffix and rejects the wrong authority', () => {
+    const payload = buildMonitorPayload(
+      { app: 'website', scrape: 'static', name: 'home', instance: 'ignored', status: 0 },
+      '',
+      [
+        { field: 'host', type: 1, paramValue: '127.0.0.1' },
+        { field: 'port', type: 0, paramValue: '4210' }
+      ],
+      [define({ field: 'host', type: 'host' }), define({ field: 'port', type: 'number' })]
+    );
+    const proof = {
+      monitor: { ...payload.monitor, id: 7, instance: '127.0.0.1:4210' } as Monitor,
+      collector: null,
+      params: payload.params,
+      grafanaDashboard: payload.grafanaDashboard,
+      metrics: []
+    };
+
+    expect(monitorWritableConverged('edit', payload, proof)).toBe(true);
+    expect(
+      monitorWritableConverged('edit', payload, {
+        ...proof,
+        monitor: { ...proof.monitor, instance: '127.0.0.2:4210' }
+      })
+    ).toBe(false);
+    expect(
+      monitorWritableConverged('edit', payload, {
+        ...proof,
+        monitor: { ...proof.monitor, instance: '127.0.0.1:4211' }
+      })
+    ).toBe(false);
+  });
+
+  it.each([
+    ['domain with port', 'example.com:8443', 'example.com:8443'],
+    ['unbracketed IPv6', '::1', '::1'],
+    ['bracketed IPv6', '[::1]', '[::1]:443'],
+    ['URL with authority port and path', 'https://example.com:8443/path', 'https://example.com:8443/path:443']
+  ])('mirrors backend create instance persistence for %s', (_label, host, expected) => {
+    const payload = buildMonitorPayload(
+      { app: 'website', scrape: 'static', name: 'home', instance: 'ignored', status: 0 },
+      '',
+      [
+        { field: 'host', type: 1, paramValue: host },
+        { field: 'port', type: 0, paramValue: '443' }
+      ],
+      [define({ field: 'host', type: 'host' }), define({ field: 'port', type: 'number' })]
+    );
+    const proof = {
+      monitor: { ...payload.monitor, id: 7, instance: expected } as Monitor,
+      collector: null,
+      params: payload.params,
+      grafanaDashboard: payload.grafanaDashboard,
+      metrics: []
+    };
+
+    expect(monitorWritableConverged('new', payload, proof)).toBe(true);
   });
 
   it('uses the exact service-discovery sentinel and requires exact reread convergence', () => {

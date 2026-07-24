@@ -38,18 +38,38 @@ export function monitorWritableConverged(
   before?: MonitorDetail
 ) {
   return (
-    sameMonitor(payload, detail) &&
+    sameMonitor(mode, payload, detail) &&
     (payload.collector ?? null) === (detail.collector ?? null) &&
     sameParams(payload.params, detail.params ?? [], mode, defines, before?.params ?? []) &&
     sameGrafana(payload, detail)
   );
 }
 
-function sameMonitor(payload: MonitorMutationPayload, detail: MonitorDetail) {
+function sameMonitor(mode: 'new' | 'edit', payload: MonitorMutationPayload, detail: MonitorDetail) {
   return (
     monitorWritableKeys.every(key => sameValue(payload.monitor[key], detail.monitor[key])) &&
-    detail.monitor.instance === payload.monitor.instance
+    monitorInstanceConverged(mode, payload, detail.monitor.instance)
   );
+}
+
+function monitorInstanceConverged(
+  mode: 'new' | 'edit',
+  payload: MonitorMutationPayload,
+  actual: string | null | undefined
+) {
+  const submitted = payload.monitor.instance ?? '';
+  if (payload.monitor.scrape && payload.monitor.scrape !== 'static') return actual === submitted;
+  const port = payload.params.find(param => param.field === 'port')?.paramValue?.trim() ?? '';
+  if (!port) return actual === submitted;
+  // Create preserves an explicit submitted port; edit always appends the canonical port parameter.
+  const expected = mode === 'new' && backendDetectsPort(submitted) ? submitted : `${submitted}:${port}`;
+  return actual === expected;
+}
+
+function backendDetectsPort(host: string) {
+  // Mirror IpDomainUtil.isHasPortWithMark: only the final colon-delimited segment determines create behavior.
+  const parts = host.split(':');
+  return parts.length >= 2 && /^\d+$/.test(parts[parts.length - 1] ?? '');
 }
 
 function sameGrafana(payload: MonitorMutationPayload, detail: MonitorDetail) {
