@@ -34,6 +34,7 @@ describe('shell content layout contract', () => {
     expect(contentRule).toMatch(/grid-template-columns:\s*minmax\(0,\s*1fr\)/);
     expect(contentRule).toMatch(/overflow-x:\s*auto/);
     expect(contentRule).not.toMatch(/overflow-x:\s*(hidden|clip)/);
+    expect(routeChildRule).toMatch(/width:\s*100%/);
     expect(routeChildRule).toMatch(/min-width:\s*0/);
     expect(routeChildRule).toMatch(/grid-template-columns:\s*minmax\(0,\s*1fr\)/);
   });

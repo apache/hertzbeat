@@ -456,6 +456,7 @@ button.timePolicy:hover {
 
 :where(.content > *) {
   grid-template-columns: minmax(0, 1fr);
+  width: 100%;
   min-width: 0;
 }
 
