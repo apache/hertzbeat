@@ -4,19 +4,18 @@
  * governing permissions and limitations under the License.
  */
 
-import { Alert, App, Button, Descriptions, Input, Space, Tag, Typography } from 'antd';
+import { Alert, App, Button, Descriptions, Space, Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import type { GuideBlock, RenderResponse } from '../model/instrumentation-v2-contract';
+import { materializeBlock } from '../model/instrumentation-flow';
 import { translateBackend } from './instrumentation-i18n';
 import styles from './instrumentation-guide.module.css';
 
 export function InstrumentationGuideBlocks(props: {
   guide: RenderResponse;
   token: string;
-  onToken: (value: string) => void;
   onCopy: (block: GuideBlock) => Promise<void>;
-  onDetect: () => void;
 }) {
   const { t } = useTranslation();
   const { message } = App.useApp();
@@ -33,23 +32,12 @@ export function InstrumentationGuideBlocks(props: {
       <Typography.Title id="instrumentation-guide-title" level={4}>
         {t('instrumentation.v2.installTitle')}
       </Typography.Title>
-      <Input.Password
-        value={props.token}
-        autoComplete="off"
-        placeholder={t('instrumentation.field.tokenPlaceholder')}
-        onChange={event => props.onToken(event.target.value)}
-        aria-label={t('instrumentation.field.token')}
-      />
-      <Typography.Text type="secondary">{t('instrumentation.field.tokenMemory')}</Typography.Text>
       <GuideSummary guide={props.guide} />
       <div className={styles.blocks}>
         {props.guide.blocks.map(block => (
           <GuideBlockView key={block.id} block={block} token={props.token} onCopy={copy} />
         ))}
       </div>
-      <Button type="primary" onClick={props.onDetect}>
-        {t('instrumentation.action.startDetection')}
-      </Button>
     </section>
   );
 }
@@ -117,9 +105,18 @@ function GuideBlockView(props: { block: GuideBlock; token: string; onCopy: (bloc
         </Button>
       </Space>
       <pre>
-        <code>{block.content}</code>
+        <code>{visibleContent(block, props.token)}</code>
       </pre>
       {block.href && <a href={block.href}>{t('instrumentation.v2.openOfficialLink')}</a>}
     </article>
   );
+}
+
+function visibleContent(block: GuideBlock, token: string) {
+  if (!block.content || !token.trim()) return block.content;
+  try {
+    return materializeBlock(block.content, block.placeholders, token);
+  } catch {
+    return block.content;
+  }
 }

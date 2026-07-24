@@ -4,6 +4,64 @@
   gap: 16px;
 }
 
+.workspace {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) 300px;
+  align-items: start;
+  gap: 16px;
+}
+
+.summary,
+.statusRail {
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--hb-border);
+  padding: 12px;
+  background: var(--hb-bg-raised);
+}
+
+.statusRail {
+  position: sticky;
+  top: calc(var(--hb-shell-header-height) + 16px);
+}
+
+.railHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.summaryRow,
+.tokenField {
+  display: grid;
+  gap: 4px;
+}
+
+.statusRail code {
+  overflow-wrap: anywhere;
+  color: var(--hb-text-secondary);
+  font-size: 11px;
+}
+
+.statusRail .signalRow {
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    'header action'
+    'evidence evidence';
+}
+
+.statusRail .signalRow > :first-child {
+  grid-area: header;
+}
+
+.statusRail .signalRow > :nth-child(2) {
+  grid-area: evidence;
+}
+
+.statusRail .signalRow > :last-child {
+  grid-area: action;
+}
+
 .guide h4,
 .detection h4 {
   margin: 0;
@@ -49,4 +107,14 @@
   gap: 12px;
   min-height: 48px;
   border-bottom: 1px solid var(--hb-border);
+}
+
+@media (max-width: 1100px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .statusRail {
+    position: static;
+  }
 }

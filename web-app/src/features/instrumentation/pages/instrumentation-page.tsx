@@ -4,12 +4,11 @@
  * governing permissions and limitations under the License.
  */
 
-import { Alert, Button, Skeleton, Space, Typography } from 'antd';
+import { Alert, Button, Skeleton, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import { InstrumentationContextStep } from '../components/instrumentation-context-step';
-import { InstrumentationDetectionPanel } from '../components/instrumentation-detection-panel';
-import { InstrumentationGuideBlocks } from '../components/instrumentation-guide-blocks';
+import { InstrumentationGuideWorkspace } from '../components/instrumentation-guide-workspace';
 import { InstrumentationProgress } from '../components/instrumentation-progress';
 import { InstrumentationSourceStep } from '../components/instrumentation-source-step';
 import styles from '../components/instrumentation-shell.module.css';
@@ -42,8 +41,7 @@ type PageController = ReturnType<typeof useInstrumentationPageController>;
 function InstrumentationStageContent({ page }: { page: PageController }) {
   if (page.stage === 'source') return <SourceStage page={page} />;
   if (page.stage === 'context') return <ContextStage page={page} />;
-  if (page.stage === 'install') return <InstallStage page={page} />;
-  return <DetectStage page={page} />;
+  return <InstallStage page={page} />;
 }
 
 function SourceStage({ page }: { page: PageController }) {
@@ -53,9 +51,8 @@ function SourceStage({ page }: { page: PageController }) {
     <>
       <InstrumentationSourceStep
         catalog={page.catalog}
-        sourceKind={page.draft.sourceKind}
+        {...(page.draft.sourceId ? { sourceId: page.draft.sourceId } : {})}
         {...(page.draft.recipeId ? { recipeId: page.draft.recipeId } : {})}
-        {...(page.draft.language ? { language: page.draft.language } : {})}
         {...(page.draft.framework ? { framework: page.draft.framework } : {})}
         {...(page.draft.method ? { method: page.draft.method } : {})}
         {...(page.draft.environment ? { environment: page.draft.environment } : {})}
@@ -88,31 +85,24 @@ function ContextStage({ page }: { page: PageController }) {
 }
 
 function InstallStage({ page }: { page: PageController }) {
-  if (!page.guide) return null;
+  if (!page.guide || !page.catalog) return null;
   return (
-    <InstrumentationGuideBlocks
+    <InstrumentationGuideWorkspace
+      catalog={page.catalog}
+      draft={page.draft}
       guide={page.guide}
       token={page.token}
       onToken={page.setToken}
       onCopy={page.copyBlock}
-      onDetect={() => {
-        page.setStage('detect');
-        void page.detect();
+      detecting={page.detecting}
+      detectionError={page.detectionError}
+      {...(page.detection ? { detection: page.detection } : {})}
+      onEdit={() => {
+        page.goBack();
+        page.setStage('source');
       }}
+      onDetect={() => void page.detect()}
+      onOpen={page.openQuery}
     />
-  );
-}
-
-function DetectStage({ page }: { page: PageController }) {
-  return (
-    <Space direction="vertical" className={styles.fullWidth!}>
-      <InstrumentationDetectionPanel
-        {...(page.detection ? { response: page.detection } : {})}
-        detecting={page.detecting}
-        error={page.detectionError}
-        onRetry={() => void page.detect()}
-        onOpen={page.openQuery}
-      />
-    </Space>
   );
 }

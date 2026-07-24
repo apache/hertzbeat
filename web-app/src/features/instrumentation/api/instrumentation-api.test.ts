@@ -10,64 +10,78 @@ const { apiFetch } = vi.hoisted(() => ({ apiFetch: vi.fn() }));
 vi.mock('@/core/http/http-client', () => ({ apiFetch }));
 
 import {
+  detectInstrumentationSignals,
   InstrumentationContractError,
   loadInstrumentationCatalog,
   loadIntakeProfiles,
   renderInstrumentationGuide
 } from './instrumentation-api';
 
-describe('instrumentation v2 API', () => {
+describe('instrumentation API', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('uses only the frozen v2 read endpoints', async () => {
+  it('uses only the frozen public read endpoints', async () => {
     apiFetch
       .mockResolvedValueOnce(
         response({
           schemaVersion: 2,
+          groups: [{ id: 'quick_start', labelKey: 'instrumentation.v2.directory.group.quick_start' }],
           sources: [
             {
-              kind: 'quick_start',
-              labelKey: 'instrumentation.v2.source.quick_start',
-              descriptionKey: 'instrumentation.v2.source.quick_start_description'
-            },
-            {
-              kind: 'application',
-              labelKey: 'instrumentation.v2.source.application',
-              descriptionKey: 'instrumentation.v2.source.application_description'
-            },
-            {
-              kind: 'existing_opentelemetry',
-              labelKey: 'instrumentation.v2.source.existing_opentelemetry',
-              descriptionKey: 'instrumentation.v2.source.existing_opentelemetry_description'
+              id: 'quick_start',
+              labelKey: 'instrumentation.v2.directory.source.quick_start',
+              descriptionKey: 'instrumentation.v2.directory.source.quick_start_description',
+              iconKey: 'quick-start',
+              groupIds: ['quick_start'],
+              support: 'supported',
+              sourceKind: 'quick_start',
+              recipeIds: ['opentelemetry_telemetrygen'],
+              signals: { metrics: 'supported', logs: 'supported', traces: 'supported' }
             }
           ],
-          recipes: []
+          recipes: [
+            {
+              id: 'opentelemetry_telemetrygen',
+              kind: 'quick_start',
+              labelKey: 'instrumentation.v2.recipe.telemetrygen',
+              preview: false,
+              environments: ['docker'],
+              platforms: ['linux_amd64'],
+              signals: { metrics: 'supported', logs: 'supported', traces: 'supported' },
+              components: [],
+              blocksPreview: ['command']
+            }
+          ]
         })
       )
       .mockResolvedValueOnce(response({ schemaVersion: 2, status: 'unconfigured', profiles: [] }));
     await loadInstrumentationCatalog();
     await loadIntakeProfiles();
     expect(apiFetch.mock.calls.map(call => String(call[0]))).toEqual([
-      '/api/instrumentation/v2/catalog',
-      '/api/instrumentation/v2/intake-profiles'
+      '/api/instrumentation/catalog',
+      '/api/instrumentation/intake-profiles'
     ]);
   });
 
   it('allowlists render fields so a memory-only token cannot enter transport', async () => {
-    apiFetch.mockResolvedValueOnce(response(renderFixture()));
-    await renderInstrumentationGuide({
+    const request = {
       schemaVersion: 2,
       sourceKind: 'quick_start',
       recipeId: 'opentelemetry_telemetrygen',
       intakeProfileId: 'server-default',
-      service: { name: 'checkout', namespace: 'shop', environment: 'prod' },
-      token: 'must-never-leave-memory'
-    } as never);
+      service: { name: 'checkout', namespace: 'shop', environment: 'prod' }
+    } as const;
+    apiFetch.mockResolvedValueOnce(response(renderFixture()));
+    await renderInstrumentationGuide({ ...request, token: 'must-never-leave-memory' } as never);
     const [path, init] = apiFetch.mock.calls[0]!;
-    expect(path).toBe('/api/instrumentation/v2/render');
+    expect(path).toBe('/api/instrumentation/render');
     expect(String(init.body)).not.toContain('must-never-leave-memory');
     const serializedRequest: unknown = JSON.parse(String(init.body));
     expect(serializedRequest).not.toHaveProperty('token');
+
+    apiFetch.mockResolvedValueOnce(response(detectionFixture()));
+    await detectInstrumentationSignals({ ...request, startedAt: 1_000 });
+    expect(apiFetch.mock.calls[1]?.[0]).toBe('/api/instrumentation/detect');
   });
 
   it('rejects mismatched response context with a stable non-sensitive contract error', async () => {
@@ -89,6 +103,41 @@ function response(data: unknown) {
     status: 200,
     headers: { 'Content-Type': 'application/json' }
   });
+}
+
+function detectionFixture() {
+  const context = {
+    serviceName: 'checkout',
+    serviceNamespace: 'shop',
+    environment: 'prod',
+    intakeProfileId: 'server-default',
+    startedAt: 1_000,
+    detectedAt: 2_000
+  };
+  return {
+    schemaVersion: 2,
+    detectedAt: 2_000,
+    context: {
+      sourceKind: 'quick_start',
+      recipeId: 'opentelemetry_telemetrygen',
+      service: { name: 'checkout', namespace: 'shop', environment: 'prod' },
+      intakeProfileId: 'server-default',
+      startedAt: 1_000,
+      windowEndAt: 3_000
+    },
+    signals: {
+      metrics: { status: 'received', lastReceivedAt: 1_900 },
+      logs: { status: 'waiting', errorCode: 'signal_not_received' },
+      traces: { status: 'unsupported', errorCode: 'signal_not_supported' }
+    },
+    polling: { decision: 'complete', deadlineAt: 3_000 },
+    queryJumpContext: context,
+    queryJumps: [
+      { signal: 'metrics', enabled: true, context },
+      { signal: 'logs', enabled: false, context },
+      { signal: 'traces', enabled: false, context }
+    ]
+  };
 }
 
 function renderFixture() {

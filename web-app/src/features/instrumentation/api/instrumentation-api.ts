@@ -19,7 +19,7 @@ import {
 
 export { InstrumentationContractError } from './instrumentation-v2-wire';
 
-const ROOT = '/api/instrumentation/v2';
+const ROOT = '/api/instrumentation';
 const requestCodes = new Set([
   'instrumentation_v2_schema_unsupported',
   'instrumentation_v2_selection_invalid',

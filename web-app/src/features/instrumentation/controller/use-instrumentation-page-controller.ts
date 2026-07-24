@@ -99,7 +99,7 @@ function useQuickStartRecipe(
   useEffect(() => {
     if (!catalog) return;
     setDraft(current => {
-      if (current.sourceKind !== 'quick_start' || current.recipeId) return current;
+      if (current.sourceId || current.recipeId) return current;
       const selection = selectSource(catalog, 'quick_start');
       return { ...selection, intakeProfileId: current.intakeProfileId, service: current.service };
     });

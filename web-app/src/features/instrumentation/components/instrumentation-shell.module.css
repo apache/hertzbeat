@@ -32,23 +32,103 @@
 
 .sourceList {
   display: grid;
-  border: 1px solid var(--hb-border);
-  border-radius: var(--hb-radius-control);
+  gap: 16px;
 }
 
 .sourceRow {
-  margin: 0;
-  padding: 16px;
-  border-bottom: 1px solid var(--hb-border);
+  width: 100%;
+  min-height: 64px;
+  display: grid;
+  grid-template-columns: 36px minmax(180px, 1fr) minmax(210px, auto) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--hb-border);
+  border-bottom: 0;
+  background: var(--hb-bg-raised);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .sourceRow:last-child {
-  border-bottom: 0;
+  border-bottom: 1px solid var(--hb-border);
 }
 
-.sourceRow span {
+.sourceRow:hover:not(:disabled),
+.sourceRowSelected {
+  border-color: var(--hb-brand-accent);
+  background: var(--hb-bg-canvas);
+}
+
+.sourceRow:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.sourceCopy {
   display: grid;
-  gap: 4px;
+  gap: 2px;
+}
+
+.sourceIcon {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  font-size: 28px;
+  color: var(--hb-brand-accent);
+}
+
+.directory {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  align-items: start;
+  gap: 20px;
+}
+
+.sourceGroup {
+  display: grid;
+}
+
+.sourceGroup > :first-child {
+  padding: 0 0 8px;
+}
+
+.categoryRail {
+  position: sticky;
+  top: calc(var(--hb-shell-header-height) + 16px);
+  display: grid;
+  border-left: 1px solid var(--hb-border);
+  padding-left: 12px;
+}
+
+.categoryRail button {
+  display: flex;
+  justify-content: space-between;
+  text-align: left;
+}
+
+.capabilities {
+  display: flex;
+  gap: 6px;
+}
+
+.capabilities span {
+  border: 1px solid var(--hb-border);
+  border-radius: 2px;
+  padding: 2px 5px;
+  color: var(--hb-text-secondary);
+  font-size: 11px;
+}
+
+.capabilities [data-capability='supported'] {
+  border-color: var(--hb-status-available);
+  color: var(--hb-status-available);
+}
+
+.capabilities [data-capability='preview'] {
+  border-color: var(--hb-status-degraded);
+  color: var(--hb-status-degraded);
 }
 
 .formGrid {
@@ -78,11 +158,18 @@
 
 @media (max-width: 760px) {
   .heading,
-  .formGrid {
+  .formGrid,
+  .directory,
+  .sourceRow {
     grid-template-columns: 1fr;
   }
 
   .heading {
     display: grid;
+  }
+
+  .categoryRail {
+    position: static;
+    grid-row: 1;
   }
 }

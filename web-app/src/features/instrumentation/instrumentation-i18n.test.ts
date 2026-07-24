@@ -13,7 +13,65 @@ import zhCn from '@/assets/i18n/zh-cn.json';
 import zhTw from '@/assets/i18n/zh-tw.json';
 
 const locales = { 'en-US': en, 'zh-CN': zhCn, 'zh-TW': zhTw, 'ja-JP': ja, 'pt-BR': pt };
+const directoryGroups = [
+  'quick_start',
+  'applications',
+  'collectors',
+  'logs',
+  'infrastructure',
+  'cloud',
+  'databases',
+  'messaging'
+] as const;
+const directorySources = [
+  'quick_start',
+  'java',
+  'dotnet',
+  'nodejs',
+  'python',
+  'php',
+  'go',
+  'other_languages',
+  'ruby',
+  'rust',
+  'elixir',
+  'swift',
+  'cpp',
+  'hertzbeat_hybrid_collector',
+  'opentelemetry_collector',
+  'logstash',
+  'vector',
+  'hertzbeat_host_metrics',
+  'hertzbeat_prometheus',
+  'hertzbeat_file_logs',
+  'fluent_bit',
+  'fluentd',
+  'syslog',
+  'http_logs',
+  'docker',
+  'kubernetes',
+  'nginx',
+  'postgresql',
+  'mysql',
+  'redis',
+  'mongodb',
+  'kafka',
+  'rabbitmq',
+  'aws_ec2',
+  'aws_rds',
+  'aws_lambda',
+  'aws_eks',
+  'azure_vm',
+  'azure_aks',
+  'gcp_compute_engine',
+  'gcp_gke'
+] as const;
 const backendKeys = [
+  ...directoryGroups.map(group => `instrumentation.v2.directory.group.${group}`),
+  ...directorySources.flatMap(source => [
+    `instrumentation.v2.directory.source.${source}`,
+    `instrumentation.v2.directory.source.${source}_description`
+  ]),
   'instrumentation.v2.source.quick_start',
   'instrumentation.v2.source.quick_start_description',
   'instrumentation.v2.source.application',

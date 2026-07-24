@@ -7,25 +7,19 @@
 
 import { z } from 'zod';
 
-import {
-  BLOCK_TYPES,
-  DETECTION_STATUSES,
-  POLLING_DECISIONS,
-  SIGNALS,
-  SOURCE_KINDS
-} from '../model/instrumentation-v2-contract';
+import { DETECTION_STATUSES, POLLING_DECISIONS, SIGNALS, SOURCE_KINDS } from '../model/instrumentation-v2-contract';
 import {
   capability,
   component,
   explicitHttps,
   guideBlock,
-  key,
   profileError,
   service,
   signalValues,
   text,
   timestamp
 } from './instrumentation-v2-schema-parts';
+export { catalogSchema } from './instrumentation-catalog-schema';
 const selection = {
   sourceKind: z.enum(SOURCE_KINDS),
   recipeId: text.optional(),
@@ -95,40 +89,6 @@ function hasAdvertisedConnectivity(value: IntakeProfile) {
     !hasValidCollectorIdentity(value)
   );
 }
-
-export const catalogSchema = z
-  .object({
-    schemaVersion: z.literal(2),
-    sources: z.array(z.object({ kind: z.enum(SOURCE_KINDS), labelKey: key, descriptionKey: key }).strict()),
-    recipes: z.array(
-      z
-        .object({
-          id: text,
-          kind: z.enum(SOURCE_KINDS),
-          labelKey: key,
-          preview: z.boolean(),
-          language: text.optional(),
-          framework: text.optional(),
-          method: text.optional(),
-          environments: z.array(text),
-          platforms: z.array(text),
-          signals: signalValues(capability),
-          components: z.array(component),
-          blocksPreview: z.array(z.enum(BLOCK_TYPES))
-        })
-        .strict()
-    )
-  })
-  .strict()
-  .superRefine((value, context) => {
-    const order = value.sources.map(source => source.kind).join(',');
-    if (order !== 'quick_start,application,existing_opentelemetry') {
-      context.addIssue({ code: 'custom', message: 'source order is invalid' });
-    }
-    if (new Set(value.recipes.map(recipe => recipe.id)).size !== value.recipes.length) {
-      context.addIssue({ code: 'custom', message: 'recipe IDs must be unique' });
-    }
-  });
 
 export const intakeProfilesSchema = z
   .object({

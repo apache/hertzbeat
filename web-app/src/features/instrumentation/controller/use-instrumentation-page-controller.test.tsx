@@ -39,13 +39,33 @@ describe('useInstrumentationPageController', () => {
       intakeProfileId: 'server-default'
     });
 
-    act(() => result.current.chooseSource('application'));
-    act(() => result.current.answerApplication('language', 'java'));
+    act(() => result.current.chooseSource('java'));
+    act(() => result.current.answerApplication('framework', 'java_jar'));
     act(() => void harness.client.setQueryData(['instrumentation', 'v2', 'catalog'], { ...catalog }));
-    expect(result.current.draft).toMatchObject({ sourceKind: 'application', language: 'java' });
-    expect(result.current.draft.framework).toBeUndefined();
+    expect(result.current.draft).toMatchObject({
+      sourceId: 'java',
+      sourceKind: 'application',
+      language: 'java',
+      framework: 'java_jar'
+    });
+
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    const block = {
+      id: 'configure',
+      type: 'code' as const,
+      titleKey: 'instrumentation.v2.block.configure',
+      executionLocationKey: 'instrumentation.location.application',
+      content: 'Authorization=valid-token-marker:${HERTZBEAT_TOKEN}',
+      placeholders: ['authorizationToken' as const]
+    };
+    act(() => result.current.setToken('valid-token-123'));
+    await act(async () => result.current.copyBlock(block));
+    expect(writeText).toHaveBeenCalledWith('Authorization=valid-token-marker:valid-token-123');
+    expect(block.content).toContain('${HERTZBEAT_TOKEN}');
 
     act(() => result.current.reset());
+    expect(result.current.token).toBe('');
     expect(result.current.draft).toMatchObject({
       sourceKind: 'quick_start',
       recipeId: 'telemetrygen',
@@ -66,22 +86,15 @@ describe('useInstrumentationPageController', () => {
     const { result } = renderHook(() => useInstrumentationPageController(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.catalogState).toBe('ready'));
 
-    act(() => result.current.chooseSource('application'));
+    act(() => result.current.chooseSource('java'));
     expect(result.current.draft.recipeId).toBeUndefined();
     expect(result.current.canContinueSource).toBe(false);
-    act(() => result.current.answerApplication('language', 'java'));
     act(() => result.current.answerApplication('framework', 'spring_boot'));
-    act(() => result.current.answerApplication('method', 'zero_code'));
-    act(() => result.current.answerApplication('environment', 'docker'));
-    expect(result.current.draft.recipeId).toBeUndefined();
-    act(() => result.current.answerApplication('platform', 'linux_amd64'));
     expect(result.current.draft.recipeId).toBe('java_spring');
     expect(result.current.canContinueSource).toBe(true);
 
-    act(() => result.current.answerApplication('language', 'nodejs'));
-    expect(result.current.draft).toMatchObject({ language: 'nodejs' });
-    expect(result.current.draft.framework).toBeUndefined();
-    expect(result.current.draft.recipeId).toBeUndefined();
+    act(() => result.current.chooseSource('nodejs'));
+    expect(result.current.draft).toMatchObject({ sourceId: 'nodejs', language: 'nodejs', recipeId: 'node_express' });
   });
 
   it('freezes the detection window when the guide is ready and reuses it for polling', async () => {
@@ -109,7 +122,6 @@ describe('useInstrumentationPageController', () => {
 
     await act(async () => result.current.renderGuide());
     now.mockReturnValue(5_000);
-    act(() => result.current.setStage('detect'));
     await act(async () => result.current.detect());
     expect(api.detectInstrumentationSignals).toHaveBeenLastCalledWith(expect.objectContaining({ startedAt: 1_000 }));
 
@@ -117,8 +129,6 @@ describe('useInstrumentationPageController', () => {
     await act(async () => result.current.detect());
     expect(api.detectInstrumentationSignals).toHaveBeenLastCalledWith(expect.objectContaining({ startedAt: 1_000 }));
 
-    act(() => result.current.goBack());
-    expect(result.current.stage).toBe('install');
     act(() => result.current.goBack());
     expect(result.current.stage).toBe('context');
     now.mockReturnValue(7_000);
@@ -155,21 +165,43 @@ const serverProfile = {
   httpsEndpoints: { http_protobuf: 'https://example.test/otlp' },
   authHeaderName: 'Authorization'
 };
+const groups = [
+  { id: 'quick_start', labelKey: 'instrumentation.v2.directory.group.quick_start' },
+  { id: 'applications', labelKey: 'instrumentation.v2.directory.group.applications' }
+] as const;
 const sources = [
   {
-    kind: 'quick_start',
-    labelKey: 'instrumentation.v2.source.quick_start',
-    descriptionKey: 'instrumentation.v2.source.quick_start_description'
+    id: 'quick_start',
+    labelKey: 'instrumentation.v2.directory.source.quick_start',
+    descriptionKey: 'instrumentation.v2.directory.source.quick_start_description',
+    iconKey: 'quick-start',
+    groupIds: ['quick_start'],
+    support: 'supported',
+    sourceKind: 'quick_start',
+    recipeIds: ['telemetrygen'],
+    signals: { metrics: 'supported', logs: 'supported', traces: 'supported' }
   },
   {
-    kind: 'application',
-    labelKey: 'instrumentation.v2.source.application',
-    descriptionKey: 'instrumentation.v2.source.application_description'
+    id: 'java',
+    labelKey: 'instrumentation.v2.directory.source.java',
+    descriptionKey: 'instrumentation.v2.directory.source.java_description',
+    iconKey: 'java',
+    groupIds: ['applications'],
+    support: 'supported',
+    sourceKind: 'application',
+    recipeIds: ['java_spring', 'java_jar'],
+    signals: { metrics: 'supported', logs: 'supported', traces: 'supported' }
   },
   {
-    kind: 'existing_opentelemetry',
-    labelKey: 'instrumentation.v2.source.existing_opentelemetry',
-    descriptionKey: 'instrumentation.v2.source.existing_opentelemetry_description'
+    id: 'nodejs',
+    labelKey: 'instrumentation.v2.directory.source.nodejs',
+    descriptionKey: 'instrumentation.v2.directory.source.nodejs_description',
+    iconKey: 'nodejs',
+    groupIds: ['applications'],
+    support: 'supported',
+    sourceKind: 'application',
+    recipeIds: ['node_express'],
+    signals: { metrics: 'supported', logs: 'supported', traces: 'supported' }
   }
 ] as const;
 const recipe = (id: string, language: string, framework: string) => ({
@@ -192,6 +224,12 @@ const quickRecipe = {
 };
 const catalog = {
   schemaVersion: 2,
+  groups,
   sources,
-  recipes: [quickRecipe, recipe('java_spring', 'java', 'spring_boot'), recipe('node_express', 'nodejs', 'express')]
+  recipes: [
+    quickRecipe,
+    recipe('java_spring', 'java', 'spring_boot'),
+    recipe('java_jar', 'java', 'java_jar'),
+    recipe('node_express', 'nodejs', 'express')
+  ]
 };

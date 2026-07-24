@@ -38,24 +38,37 @@ const jumpContext = {
 };
 
 describe('instrumentation v2 wire contracts', () => {
-  it('parses backend-owned catalog order and option values', () => {
+  it('parses the backend-owned source directory without accepting legacy source shapes', () => {
     const value = parseCatalogResponse({
       schemaVersion: 2,
+      groups: [
+        { id: 'quick_start', labelKey: 'instrumentation.v2.directory.group.quick_start' },
+        { id: 'applications', labelKey: 'instrumentation.v2.directory.group.applications' }
+      ],
       sources: [
         {
-          kind: 'quick_start',
-          labelKey: 'instrumentation.v2.source.quick_start',
-          descriptionKey: 'instrumentation.v2.source.quick_start_description'
+          id: 'quick_start',
+          labelKey: 'instrumentation.v2.directory.source.quick_start',
+          descriptionKey: 'instrumentation.v2.directory.source.quick_start_description',
+          iconKey: 'quick-start',
+          groupIds: ['quick_start'],
+          support: 'supported',
+          sourceKind: 'quick_start',
+          recipeIds: ['opentelemetry_telemetrygen'],
+          signals: { metrics: 'supported', logs: 'supported', traces: 'supported' },
+          documentationUrl: 'https://opentelemetry.io/docs/'
         },
         {
-          kind: 'application',
-          labelKey: 'instrumentation.v2.source.application',
-          descriptionKey: 'instrumentation.v2.source.application_description'
-        },
-        {
-          kind: 'existing_opentelemetry',
-          labelKey: 'instrumentation.v2.source.existing_opentelemetry',
-          descriptionKey: 'instrumentation.v2.source.existing_opentelemetry_description'
+          id: 'java',
+          labelKey: 'instrumentation.v2.directory.source.java',
+          descriptionKey: 'instrumentation.v2.directory.source.java_description',
+          iconKey: 'java',
+          groupIds: ['applications'],
+          support: 'supported',
+          sourceKind: 'application',
+          recipeIds: ['java_spring'],
+          signals: { metrics: 'supported', logs: 'preview', traces: 'supported' },
+          documentationUrl: 'https://opentelemetry.io/docs/languages/java/'
         }
       ],
       recipes: [
@@ -69,10 +82,87 @@ describe('instrumentation v2 wire contracts', () => {
           signals: { metrics: 'supported', logs: 'supported', traces: 'supported' },
           components: [component],
           blocksPreview: ['command', 'environment', 'check']
+        },
+        {
+          id: 'java_spring',
+          kind: 'application',
+          labelKey: 'instrumentation.recipe.java_spring',
+          preview: false,
+          language: 'java',
+          framework: 'spring_boot',
+          method: 'zero_code',
+          environments: ['docker'],
+          platforms: ['linux_amd64'],
+          signals: { metrics: 'supported', logs: 'preview', traces: 'supported' },
+          components: [component],
+          blocksPreview: ['environment']
         }
       ]
     });
+    expect(Object.keys(value)).toEqual(['schemaVersion', 'groups', 'sources', 'recipes']);
+    expect(value.sources[1]?.recipeIds).toEqual(['java_spring']);
     expect(value.recipes[0]?.id).toBe('opentelemetry_telemetrygen');
+  });
+
+  it('keeps unsupported catalog entries discoverable but non-selectable', () => {
+    const source = parseCatalogResponse({
+      schemaVersion: 2,
+      groups: [{ id: 'logs', labelKey: 'instrumentation.v2.directory.group.logs' }],
+      sources: [
+        {
+          id: 'fluent_bit',
+          labelKey: 'instrumentation.v2.directory.source.fluent_bit',
+          descriptionKey: 'instrumentation.v2.directory.source.fluent_bit_description',
+          iconKey: 'fluent-bit',
+          groupIds: ['logs'],
+          support: 'unsupported',
+          recipeIds: [],
+          signals: { metrics: 'unsupported', logs: 'unsupported', traces: 'unsupported' }
+        }
+      ],
+      recipes: []
+    }).sources[0];
+    expect(source).toMatchObject({ id: 'fluent_bit', support: 'unsupported' });
+    expect(source).not.toHaveProperty('sourceKind');
+  });
+
+  it('rejects unknown source groups and inconsistent unsupported entries', () => {
+    const base = {
+      schemaVersion: 2,
+      groups: [{ id: 'logs', labelKey: 'instrumentation.v2.directory.group.logs' }],
+      recipes: []
+    };
+    const source = {
+      id: 'fluent_bit',
+      labelKey: 'instrumentation.v2.directory.source.fluent_bit',
+      descriptionKey: 'instrumentation.v2.directory.source.fluent_bit_description',
+      iconKey: 'fluent-bit',
+      groupIds: ['missing'],
+      support: 'unsupported',
+      recipeIds: [],
+      signals: { metrics: 'unsupported', logs: 'unsupported', traces: 'unsupported' }
+    };
+    expect(() => parseCatalogResponse({ ...base, sources: [source] })).toThrow();
+    expect(() =>
+      parseCatalogResponse({
+        ...base,
+        sources: [{ ...source, groupIds: ['logs'], sourceKind: 'application', recipeIds: ['java_spring'] }]
+      })
+    ).toThrow();
+    expect(() =>
+      parseCatalogResponse({
+        ...base,
+        sources: [
+          {
+            ...source,
+            groupIds: ['logs'],
+            support: 'preview',
+            sourceKind: 'existing_opentelemetry',
+            recipeIds: ['missing']
+          }
+        ]
+      })
+    ).toThrow();
   });
 
   it.each([

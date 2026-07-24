@@ -70,11 +70,26 @@ export type Recipe = {
 
 export type CatalogResponse = {
   schemaVersion: 2;
-  sources: Array<{ kind: SourceKind; labelKey: string; descriptionKey: string }>;
+  groups: SourceGroup[];
+  sources: SourceEntry[];
   recipes: Recipe[];
 };
 
-type IntakeProfile = {
+export type SourceGroup = { id: string; labelKey: string };
+export type SourceEntry = {
+  id: string;
+  labelKey: string;
+  descriptionKey: string;
+  iconKey: string;
+  groupIds: string[];
+  support: 'supported' | 'preview' | 'unsupported';
+  sourceKind?: SourceKind | undefined;
+  recipeIds: string[];
+  signals: SignalValues<'supported' | 'preview' | 'unsupported'>;
+  documentationUrl?: string | undefined;
+};
+
+export type IntakeProfile = {
   id: string;
   kind: 'server' | 'hertzbeat_collector' | 'external_otel_collector';
   availability: 'available' | 'unavailable';

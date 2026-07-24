@@ -99,6 +99,16 @@ function ServiceFields(props: { service: ServiceIdentity; onService: (patch: Par
         value={props.service.environment}
         onChange={environment => props.onService({ environment })}
       />
+      <Field
+        label={t('instrumentation.field.serviceInstanceId')}
+        value={props.service.serviceInstanceId ?? ''}
+        onChange={serviceInstanceId => props.onService({ serviceInstanceId: serviceInstanceId || undefined })}
+      />
+      <Field
+        label={t('instrumentation.field.endpoint')}
+        value={props.service.endpoint ?? ''}
+        onChange={endpoint => props.onService({ endpoint: endpoint || undefined })}
+      />
     </>
   );
 }

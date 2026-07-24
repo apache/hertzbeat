@@ -17,7 +17,7 @@ import {
   type ApplicationQuestion,
   type InstrumentationDraft
 } from '../model/instrumentation-flow';
-import type { CatalogResponse, GuideBlock, SourceKind } from '../model/instrumentation-v2-contract';
+import type { CatalogResponse, GuideBlock } from '../model/instrumentation-v2-contract';
 import type { InstrumentationControllerState } from './instrumentation-controller-state';
 
 export function useDraftActions(
@@ -40,10 +40,10 @@ export function useDraftActions(
     startedAtRef.current = undefined;
   }, [generationRef, startedAtRef, state, timerRef]);
   const chooseSource = useCallback(
-    (kind: SourceKind) => {
+    (sourceId: string) => {
       if (!catalog) return;
       resetResults();
-      state.setDraft({ ...selectSource(catalog, kind), intakeProfileId: defaultProfileId ?? '' });
+      state.setDraft({ ...selectSource(catalog, sourceId), intakeProfileId: defaultProfileId ?? '' });
     },
     [catalog, defaultProfileId, resetResults, state]
   );

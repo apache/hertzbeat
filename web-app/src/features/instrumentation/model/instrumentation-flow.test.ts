@@ -18,35 +18,29 @@ import type { CatalogResponse } from './instrumentation-v2-contract';
 describe('instrumentation v2 flow', () => {
   it('skips application dimensions for quick start and existing OpenTelemetry', () => {
     expect(selectSource(catalog, 'quick_start')).toMatchObject({
+      sourceId: 'quick_start',
       sourceKind: 'quick_start',
       recipeId: 'opentelemetry_telemetrygen'
     });
-    expect(selectSource(catalog, 'existing_opentelemetry')).toMatchObject({
+    expect(selectSource(catalog, 'opentelemetry_collector')).toMatchObject({
+      sourceId: 'opentelemetry_collector',
       sourceKind: 'existing_opentelemetry',
       recipeId: 'existing_otlp'
     });
   });
 
-  it('cascades application questions by selected parents and preserves compatible ancestors', () => {
-    const start = selectSource(catalog, 'application');
-    const java = answerApplicationQuestion(start, catalog, 'language', 'java');
-    expect(applicationQuestionOptions(catalog, java, 'framework')).toEqual(['spring_boot', 'java_jar']);
-    const jar = answerApplicationQuestion(java, catalog, 'framework', 'java_jar');
+  it('asks only source-scoped unresolved application dimensions', () => {
+    const start = selectSource(catalog, 'java');
+    expect(start).toMatchObject({ sourceId: 'java', sourceKind: 'application', language: 'java' });
+    expect(applicationQuestionOptions(catalog, start, 'framework')).toEqual(['spring_boot', 'java_jar']);
+    expect(applicationQuestionOptions(catalog, start, 'method')).toEqual([]);
+    const jar = answerApplicationQuestion(start, catalog, 'framework', 'java_jar');
     expect(jar).toMatchObject({ language: 'java', framework: 'java_jar' });
-    expect(jar.recipeId).toBeUndefined();
-    const method = answerApplicationQuestion(jar, catalog, 'method', 'sdk');
-    const environment = answerApplicationQuestion(method, catalog, 'environment', 'vm');
-    const platform = answerApplicationQuestion(environment, catalog, 'platform', 'linux_amd64');
-    expect(platform.recipeId).toBe('java_jar_sdk');
+    expect(jar.recipeId).toBe('java_jar_sdk');
   });
 
-  it('resets stale dependent answers to deterministic backend defaults', () => {
-    const java = answerApplicationQuestion(selectSource(catalog, 'application'), catalog, 'language', 'java');
-    const jar = answerApplicationQuestion(java, catalog, 'framework', 'java_jar');
-    const node = answerApplicationQuestion(jar, catalog, 'language', 'nodejs');
-    expect(node).toMatchObject({ language: 'nodejs' });
-    expect(node.framework).toBeUndefined();
-    expect(node.recipeId).toBeUndefined();
+  it('blocks unsupported catalog entries from selection', () => {
+    expect(() => selectSource(catalog, 'fluent_bit')).toThrow('Instrumentation source is unavailable');
   });
 
   it('materializes the secret only at copy time and validates it first', () => {
@@ -81,7 +75,23 @@ describe('instrumentation v2 flow', () => {
 
 const catalog = {
   schemaVersion: 2,
-  sources: [],
+  groups: [
+    { id: 'quick_start', labelKey: 'instrumentation.v2.directory.group.quick_start' },
+    { id: 'applications', labelKey: 'instrumentation.v2.directory.group.applications' },
+    { id: 'collectors', labelKey: 'instrumentation.v2.directory.group.collectors' },
+    { id: 'logs', labelKey: 'instrumentation.v2.directory.group.logs' }
+  ],
+  sources: [
+    source('quick_start', ['quick_start'], 'quick_start', ['opentelemetry_telemetrygen']),
+    source('java', ['applications'], 'application', ['java_spring', 'java_jar_sdk']),
+    source('opentelemetry_collector', ['collectors'], 'existing_opentelemetry', ['existing_otlp']),
+    {
+      ...source('fluent_bit', ['logs'], 'existing_opentelemetry', []),
+      support: 'unsupported',
+      sourceKind: undefined,
+      signals: { metrics: 'unsupported', logs: 'unsupported', traces: 'unsupported' }
+    }
+  ],
   recipes: [
     {
       id: 'opentelemetry_telemetrygen',
@@ -149,3 +159,22 @@ const catalog = {
     }
   ]
 } satisfies CatalogResponse;
+
+function source(
+  id: string,
+  groupIds: string[],
+  sourceKind: 'quick_start' | 'application' | 'existing_opentelemetry',
+  recipeIds: string[]
+) {
+  return {
+    id,
+    labelKey: `instrumentation.v2.directory.source.${id}`,
+    descriptionKey: `instrumentation.v2.directory.source.${id}_description`,
+    iconKey: id.replaceAll('_', '-'),
+    groupIds,
+    support: 'supported' as const,
+    sourceKind,
+    recipeIds,
+    signals: { metrics: 'supported' as const, logs: 'supported' as const, traces: 'supported' as const }
+  };
+}
