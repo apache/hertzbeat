@@ -106,6 +106,8 @@ class InstrumentationSourceGuideV2TemplatesTest {
         assertTrue(prometheus.contains("collector:"));
         assertTrue(prometheus.contains("otel-runtime:"));
         assertTrue(prometheus.contains("prometheus-targets:"));
+        assertTrue(prometheus.contains("- name: \"checkout-api\""));
+        assertFalse(prometheus.contains("<safe-target-name>"));
         assertTrue(prometheus.contains("endpoint: <http-or-https-metrics-endpoint>"));
         assertDetectionResourceContext(prometheus);
 
@@ -113,6 +115,8 @@ class InstrumentationSourceGuideV2TemplatesTest {
         assertTrue(fileLogs.contains("file-log-allow-roots:"));
         assertTrue(fileLogs.contains("file-log-profiles:"));
         assertTrue(fileLogs.contains("file-log-sources:"));
+        assertTrue(fileLogs.contains("- name: \"checkout-api\""));
+        assertFalse(fileLogs.contains("<safe-source-name>"));
         assertTrue(fileLogs.contains("path-profile: <administrator-approved-path-profile>"));
         assertDetectionResourceContext(fileLogs);
         String configuredPattern = fileLogs.lines()

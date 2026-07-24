@@ -192,7 +192,7 @@ final class InstrumentationSourceGuideV2Templates {
     static List<GuideBlock> prometheus(GuideContext context) {
         String configuration = runtimePrefix()
                 + "    prometheus-targets:\n"
-                + "      - name: <safe-target-name>\n"
+                + "      - name: \"" + context.service().name() + "\"\n"
                 + "        endpoint: <http-or-https-metrics-endpoint>\n"
                 + "        interval: <10s-to-5m>\n"
                 + "        timeout: <1s-to-1m>";
@@ -207,7 +207,7 @@ final class InstrumentationSourceGuideV2Templates {
                 + "      <administrator-approved-path-profile>:\n"
                 + "        - /var/log/<administrator-approved-service>/*.log\n"
                 + "    file-log-sources:\n"
-                + "      - name: <safe-source-name>\n"
+                + "      - name: \"" + context.service().name() + "\"\n"
                 + "        path-profile: <administrator-approved-path-profile>";
         return common("hertzbeat_collector", hybridEnvironment(context), "yaml", configuration);
     }
